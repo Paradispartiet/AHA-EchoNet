@@ -11,35 +11,45 @@
 <body>
   <h1>AHA Chat – Innsiktsmotor V1</h1>
 
+  <!-- Tema-valg -->
   <div class="row">
     <label for="theme-id">Tema-ID (theme_id)</label>
     <input id="theme-id" type="text" placeholder="th_motstand_prokrastinering" />
   </div>
 
+  <!-- Chat-input + Send-knapp -->
   <div class="row">
     <label for="msg">Skriv til AHA (chat-melding):</label>
     <textarea id="msg" placeholder="Skriv om noe du vil forstå bedre …"></textarea>
+    <button id="btn-send">Send</button>
   </div>
 
-  <div class="buttons">
-    <button id="btn-add">Legg til melding</button>
-
-    <button id="btn-insights">Vis innsikter</button>
-    <button id="btn-status">Tema-status</button>
-    <button id="btn-synth">Syntese</button>
-    <button id="btn-path">Sti</button>
-    <button id="btn-sem">Semantikk</button>
-    <button id="btn-auto">Auto-artefakt</button>
-    <button id="btn-agent">AHA-agent</button>
-    <button id="btn-dim">Dimensjoner</button>
-    <button id="btn-dial">Dialektikk</button>
-    <button id="btn-topics">Alle tema</button>
-    <button id="btn-export">Eksport JSON</button>
-
-    <button id="btn-reset">Nullstill</button>
+  <!-- Chat-logg (boblene havner her) -->
+  <div class="row">
+    <label>Chat-logg</label>
+    <div id="chat-log" class="chat-log"></div>
   </div>
 
-  <pre id="out"></pre>
+  <!-- Innsikts-panel (motor-visning) -->
+  <div class="row">
+    <label>Innsiktspanel</label>
+    <div class="buttons">
+      <button id="btn-insights">Vis innsikter</button>
+      <button id="btn-status">Tema-status</button>
+      <button id="btn-synth">Syntese</button>
+      <button id="btn-path">Sti</button>
+      <button id="btn-sem">Semantikk</button>
+      <button id="btn-auto">Auto-artefakt</button>
+      <button id="btn-agent">AHA-agent</button>
+      <button id="btn-dim">Dimensjoner</button>
+      <button id="btn-dial">Dialektikk</button>
+      <button id="btn-topics">Alle tema</button>
+      <button id="btn-export">Eksport JSON</button>
+      <button id="btn-reset">Nullstill</button>
+    </div>
+
+    <pre id="out"></pre>
+  </div>
 
   <!-- Motoren -->
   <script src="insightsChamber.js"></script>
@@ -56,7 +66,10 @@
             console.log("Service worker registrert:", reg.scope);
           })
           .catch((err) => {
-            console.error("Feil ved registrering av service worker:", err);
+            console.error(
+              "Feil ved registrering av service worker:",
+              err
+            );
           });
       });
     }
