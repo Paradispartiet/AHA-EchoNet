@@ -1,0 +1,73 @@
+body {
+  margin: 0;
+  padding: 16px;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #050814;
+  color: #f5f5f5;
+}
+
+h1 {
+  margin-top: 0;
+  font-size: 20px;
+}
+
+.row {
+  margin-bottom: 12px;
+}
+
+label {
+  font-size: 13px;
+  opacity: 0.8;
+  display: block;
+  margin-bottom: 4px;
+}
+
+input[type="text"],
+textarea {
+  width: 100%;
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid #333;
+  background: #080c1f;
+  color: #f5f5f5;
+  box-sizing: border-box;
+}
+
+textarea {
+  height: 120px;
+  resize: vertical;
+}
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 12px 0;
+}
+
+button {
+  padding: 6px 10px;
+  border-radius: 4px;
+  border: 1px solid #444;
+  background: #161b33;
+  color: #f5f5f5;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #202747;
+}
+
+pre#out {
+  margin-top: 12px;
+  padding: 10px;
+  border-radius: 4px;
+  background: #02030a;
+  border: 1px solid #222;
+  font-size: 12px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  max-height: 50vh;
+  overflow: auto;
+}
