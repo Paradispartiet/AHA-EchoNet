@@ -1,12 +1,10 @@
 // ahaChat.js
-// ─────────────────────────────────────────────
-// AHA Chat – ren klient over InsightsEngine
-// ─────────────────────────────────────────────
+// Kobler AHA InsightsEngine til en enkel chat-side
 
 const SUBJECT_ID = "sub_laring";
 const STORAGE_KEY = "aha_insight_chamber_v1";
 
-// ── Lagring av kammer ───────────────────────
+// ── Lagring ──────────────────────────────────
 
 function loadChamberFromStorage() {
   try {
@@ -48,28 +46,6 @@ function log(msg) {
   const el = getOutEl();
   if (!el) return;
   el.textContent += msg + "\n";
-}
-
-function getChatLogEl() {
-  return document.getElementById("chat-log");
-}
-
-function addChatMessage(text, sender) {
-  const logEl = getChatLogEl();
-  if (!logEl) return;
-
-  const row = document.createElement("div");
-  row.className = "msg-row " + (sender === "user" ? "user" : "system");
-
-  const bubble = document.createElement("div");
-  bubble.className = "msg-bubble";
-  bubble.textContent = text;
-
-  row.appendChild(bubble);
-  logEl.appendChild(row);
-
-  // auto-scroll til bunn
-  logEl.scrollTop = logEl.scrollHeight;
 }
 
 // ── AHA operations (bruker motoren) ──────────
@@ -294,6 +270,8 @@ function showAutoArtifactForCurrentTopic() {
   }
 }
 
+// ── AHA-agent – samme logikk, bare med motor ─
+
 function suggestNextActionForCurrentTopic() {
   const chamber = loadChamberFromStorage();
   const themeId = getCurrentThemeId();
@@ -332,6 +310,7 @@ function suggestNextActionForCurrentTopic() {
   log("AHA-agent – forslag for tema " + themeId + ":");
   log("");
 
+  // 1) Beskrivelse
   log("1) Slik jeg leser innsiktskammeret ditt nå:");
   log(
     "- Du har " +
@@ -372,6 +351,8 @@ function suggestNextActionForCurrentTopic() {
   }
 
   log("");
+
+  // 2) Hovedmodus
   log("2) Hva motoren mener er neste naturlige steg:");
 
   if (stats.insight_saturation < 30) {
@@ -397,23 +378,33 @@ function suggestNextActionForCurrentTopic() {
   } else {
     if (stats.concept_density >= 60) {
       log(
-        "- Temaet er ganske mettet og begrepstetthet høy. Neste steg er å skrive dette ut som en kort tekst " +
+        "- Temaet er ganske mettet og begrepstett. Neste steg er egentlig å skrive dette ut som en kort tekst " +
           "eller artikkel: Hva har du lært om deg selv her, og hvilke prinsipper tar du med deg videre?"
       );
     } else {
       log(
-        "- Du har mange innsikter, men språket er fortsatt hverdagslig. " +
+        "- Du har mange innsikter, men språket er fortsatt ganske hverdagslig. " +
           "Neste steg er å prøve å samle det til 3–4 nøkkelbegreper eller overskrifter som beskriver det viktigste."
       );
     }
   }
 
   log("");
+
+  // 3) Mikro-handlinger
   log("3) Konkrete mikro-forslag du kan teste:");
-  log("- Skriv én setning som starter med «Når dette skjer, pleier jeg…».");
-  log("- Skriv én setning som starter med «Et lite eksperiment jeg kunne testet er…».");
-  log("- Skriv én setning som starter med «Hvis dette faktisk fungerte bedre, ville livet mitt blitt litt mer…».");
+  log(
+    "- Skriv én setning som starter med «Når dette skjer, pleier jeg…»."
+  );
+  log(
+    "- Skriv én setning som starter med «Et lite eksperiment jeg kunne testet er…»."
+  );
+  log(
+    "- Skriv én setning som starter med «Hvis dette faktisk fungerte bedre, ville livet mitt blitt litt mer…»."
+  );
 }
+
+// ── Dimensjoner ──────────────────────────────
 
 function showDimensionSummaryForCurrentTopic() {
   const chamber = loadChamberFromStorage();
@@ -427,17 +418,23 @@ function showDimensionSummaryForCurrentTopic() {
   clearOutput();
 
   if (insights.length === 0) {
-    log("Ingen innsikter å analysere dimensjoner av ennå for tema: " + themeId);
+    log(
+      "Ingen innsikter å analysere dimensjoner av ennå for tema: " +
+        themeId
+    );
     return;
   }
 
-  const counts = InsightsEngine.computeDimensionsSummary(insights);
+  const counts =
+    InsightsEngine.computeDimensionsSummary(insights);
 
   log("Dimensjonsfordeling for tema " + themeId + ":");
   Object.entries(counts).forEach(([dim, v]) => {
     if (v > 0) log("- " + dim + ": " + v + " innsikt(er)");
   });
 }
+
+// ── Dialektikk (teser/kontrateser/syntese) ───
 
 function showDialecticViewForCurrentTopic() {
   const chamber = loadChamberFromStorage();
@@ -451,30 +448,41 @@ function showDialecticViewForCurrentTopic() {
   clearOutput();
 
   if (insights.length === 0) {
-    log("Ingen innsikter å lage dialektikk av ennå for tema: " + themeId);
+    log(
+      "Ingen innsikter å lage dialektikk av ennå for tema: " +
+        themeId
+    );
     return;
   }
 
+  // Teser: negative/blandet + ofte/alltid
   const theses = insights.filter((ins) => {
     const sem = ins.semantic || {};
     return (
-      (sem.valence === "negativ" || sem.valence === "blandet") &&
-      (sem.frequency === "ofte" || sem.frequency === "alltid")
+      (sem.valence === "negativ" ||
+        sem.valence === "blandet") &&
+      (sem.frequency === "ofte" ||
+        sem.frequency === "alltid")
     );
   });
 
+  // Kontrateser: positive/nøytrale + ofte/alltid
   const antitheses = insights.filter((ins) => {
     const sem = ins.semantic || {};
     return (
-      (sem.valence === "positiv" || sem.valence === "nøytral") &&
-      (sem.frequency === "ofte" || sem.frequency === "alltid")
+      (sem.valence === "positiv" ||
+        sem.valence === "nøytral") &&
+      (sem.frequency === "ofte" ||
+        sem.frequency === "alltid")
     );
   });
 
   log("Dialektisk visning for tema " + themeId + ":");
   log("");
 
-  log("1) Teser (vanskelige mønstre som skjer ofte/alltid):");
+  log(
+    "1) Teser (det som oppleves problematisk og skjer ofte/alltid):"
+  );
   if (theses.length === 0) {
     log("- Ingen tydelige teser funnet.");
   } else {
@@ -484,7 +492,9 @@ function showDialecticViewForCurrentTopic() {
   }
   log("");
 
-  log("2) Kontrateser (ressurser/lyspunkter som skjer ofte/alltid):");
+  log(
+    "2) Kontrateser (ressurser / lyspunkter som også skjer ofte/alltid):"
+  );
   if (antitheses.length === 0) {
     log("- Ingen tydelige kontrateser funnet.");
   } else {
@@ -497,32 +507,37 @@ function showDialecticViewForCurrentTopic() {
   log("3) Syntese (V1 – enkel tekst):");
   if (theses.length === 0 && antitheses.length === 0) {
     log(
-      "- Motoren ser ikke sterke motsetninger ennå. Neste steg er å utforske både det vanskelige " +
-        "og det som fungerer litt, slik at det blir noe å lage syntese av."
+      "- Motoren ser ikke noen sterke motsetninger ennå. Neste steg er å utforske både det vanskelige " +
+        "og det som faktisk fungerer litt, slik at det blir noe å lage syntese av."
     );
   } else if (theses.length > 0 && antitheses.length === 0) {
     log(
-      "- Bildet er mest preget av det som er vanskelig. Syntesen nå er: «Dette er et tema der " +
-        "det negative dominerer. Neste steg er å lete etter små unntak der det går litt bedre, " +
+      "- Foreløpig er bildet mest preget av det som er vanskelig. Syntesen nå er: «Dette er et tema der " +
+        "det negative dominerer. Neste steg er å lete etter små unntak eller situasjoner der det går litt bedre, " +
         "for å ha noe å bygge videre på.»"
     );
   } else if (theses.length === 0 && antitheses.length > 0) {
     log(
-      "- Du har flere gode spor og erfaringer. Syntesen nå er: «Dette temaet rommer flere gode erfaringer. " +
-        "Neste steg er å se om det fortsatt finnes noe som skurrer, eller om du kan bygge videre på det positive.»"
+      "- Her ser det ut som du allerede har en del ressurser og lyspunkter. Syntesen nå er: «Dette temaet " +
+        "rommer flere gode erfaringer. Neste steg er å undersøke om det fortsatt finnes noe som skurrer, " +
+        "eller om du faktisk kan begynne å bygge videre på det positive.»"
     );
   } else {
     log(
-      "- Motoren ser både tydelige vanskeligheter og ressurser. Syntesen: «Dette er et område hvor du både sliter " +
-        "og har noen gode spor. Neste steg er å undersøke hvordan du kan ta med deg det som fungerer inn i " +
-        "situasjonene som er vanskeligst.»"
+      "- Motoren ser både tydelige vanskeligheter og tydelige ressurser. En enkel syntese er: «Dette er et " +
+        "område hvor du både sliter og samtidig har noen gode spor. Neste steg er å undersøke hvordan du kan " +
+        "ta med deg det som fungerer inn i situasjonene som er vanskeligst.»"
     );
   }
 }
 
+// ── Tema-oversikt & eksport ──────────────────
+
 function showAllTopicsOverview() {
   const chamber = loadChamberFromStorage();
-  const overview = InsightsEngine.computeTopicsOverview(chamber);
+  const overview = InsightsEngine.computeTopicsOverview(
+    chamber
+  );
 
   clearOutput();
 
@@ -562,7 +577,6 @@ function exportChamberJson() {
 function setupUI() {
   const txt = document.getElementById("msg");
   const btnSend = document.getElementById("btn-send");
-
   const btnInsights = document.getElementById("btn-insights");
   const btnStatus = document.getElementById("btn-status");
   const btnSynth = document.getElementById("btn-synth");
@@ -578,27 +592,19 @@ function setupUI() {
 
   btnSend.addEventListener("click", () => {
     const val = (txt.value || "").trim();
-    if (!val) return;
-
-    // chat-boble
-    addChatMessage(val, "user");
-
-    const n = handleUserMessage(val);
-
-    addChatMessage(
-      `AHA: Jeg har lagt til ${n} setning(er) i innsiktskammeret for tema «${getCurrentThemeId()}».`,
-      "system"
-    );
-
-    txt.value = "";
-  });
-
-  // Send på Enter (Shift+Enter = ny linje)
-  txt.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      btnSend.click();
+    if (!val) {
+      alert("Skriv noe først 😊");
+      return;
     }
+    const n = handleUserMessage(val);
+    log(
+      "Melding lagt til i temaet «" +
+        getCurrentThemeId() +
+        "». (" +
+        n +
+        " setning(er) analysert)"
+    );
+    txt.value = "";
   });
 
   btnInsights.addEventListener("click", showInsightsForCurrentTopic);
@@ -616,15 +622,12 @@ function setupUI() {
   btnReset.addEventListener("click", () => {
     localStorage.removeItem(STORAGE_KEY);
     clearOutput();
-    const logEl = getChatLogEl();
-    if (logEl) logEl.textContent = "";
-    addChatMessage("Innsiktskammer nullstilt (alle tema slettet).", "system");
+    log("Innsiktskammer nullstilt (alle tema slettet).");
   });
 
   clearOutput();
-  addChatMessage(
-    "Hei! Jeg er AHA Chat. Skriv om et tema du vil forstå bedre, så bygger jeg innsikt i bakgrunnen.",
-    "system"
+  log(
+    "AHA Chat – Innsiktsmotor V1 klar. Velg tema-id, skriv en tanke og trykk «Send»."
   );
 }
 
