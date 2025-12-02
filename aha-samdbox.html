@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <title>AHA V1 – Innsiktsmotor-sandbox</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 16px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #050814;
+      color: #f5f5f5;
+    }
+
+    h1 {
+      margin-top: 0;
+      font-size: 20px;
+    }
+
+    .row {
+      margin-bottom: 12px;
+    }
+
+    label {
+      font-size: 13px;
+      opacity: 0.8;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 6px 8px;
+      border-radius: 4px;
+      border: 1px solid #333;
+      background: #080c1f;
+      color: #f5f5f5;
+    }
+
+    textarea {
+      width: 100%;
+      height: 120px;
+      padding: 8px;
+      border-radius: 4px;
+      border: 1px solid #333;
+      resize: vertical;
+      background: #080c1f;
+      color: #f5f5f5;
+    }
+
+    .buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 12px 0;
+    }
+
+    button {
+      padding: 6px 10px;
+      border-radius: 4px;
+      border: 1px solid #444;
+      background: #161b33;
+      color: #f5f5f5;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #202747;
+    }
+
+    pre#out {
+      margin-top: 12px;
+      padding: 10px;
+      border-radius: 4px;
+      background: #02030a;
+      border: 1px solid #222;
+      font-size: 12px;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      max-height: 50vh;
+      overflow: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>AHA V1 – Innsiktsmotor-sandbox</h1>
+
+  <div class="row">
+    <label for="theme-id">Tema-ID (theme_id) – f.eks. <code>th_motstand_prokrastinering</code></label>
+    <input id="theme-id" type="text" placeholder="th_default" />
+  </div>
+
+  <div class="row">
+    <label for="msg">Skriv en tanke / tekst (AHA-chat-melding):</label>
+    <textarea id="msg" placeholder="Skriv om noe du vil forstå bedre, f.eks. utsettelse, relasjon, kreativitet …"></textarea>
+  </div>
+
+  <div class="buttons">
+    <button id="btn-add">Legg til melding</button>
+
+    <button id="btn-insights">Vis innsikter</button>
+    <button id="btn-status">Tema-status</button>
+    <button id="btn-synth">Syntese</button>
+    <button id="btn-path">Sti</button>
+    <button id="btn-sem">Semantikk</button>
+    <button id="btn-auto">Auto-artefakt</button>
+    <button id="btn-agent">AHA-agent</button>
+    <button id="btn-dim">Dimensjoner</button>
+    <button id="btn-dial">Dialektikk</button>
+    <button id="btn-topics">Alle tema</button>
+    <button id="btn-export">Eksport JSON</button>
+
+    <button id="btn-reset">Nullstill kammer</button>
+  </div>
+
+  <pre id="out"></pre>
+
+  <!-- Viktig: motoren må lastes før sandbox-koblingen -->
+  <script src="insightsChamber.js"></script>
+  <script src="ahaSandbox.js"></script>
+</body>
+</html>
