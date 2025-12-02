@@ -106,7 +106,7 @@ function buildTopicSummary(chamber, themeId) {
   // 1) Overordnet status
   lines.push(
     `Dette temaet har ${stats.insight_count} innsikt(er) ` +
-    `(metningsgrad ${stats.insight_saturation}/100, begrepstetthet ${stats.concept_density}/100).`
+      `(metningsgrad ${stats.insight_saturation}/100, begrepstetthet ${stats.concept_density}/100).`
   );
   lines.push(
     `Motoren mener dette egner seg best som: ${stats.artifact_type}.`
@@ -149,7 +149,7 @@ function buildTopicSummary(chamber, themeId) {
   if (krav + hindring > 0) {
     lines.push(
       `Mange setninger inneholder enten «må/burde/skal» eller «klarer ikke/får ikke til», ` +
-      `som tyder på både indre krav og opplevd hindring i dette temaet.`
+        `som tyder på både indre krav og opplevd hindring i dette temaet.`
     );
   }
 
@@ -171,7 +171,7 @@ function buildTopicSummary(chamber, themeId) {
   if (freqOfteAlltid > 0 && neg > 0) {
     lines.push(
       "Samlet sett beskriver du et mønster som både skjer ofte og oppleves som krevende – " +
-      "altså et område hvor det kan være mye å hente på å utforske videre."
+        "altså et område hvor det kan være mye å hente på å utforske videre."
     );
   } else if (freqOfteAlltid > 0 && pos > 0 && neg === 0) {
     lines.push(
@@ -216,15 +216,15 @@ function showInsightsForCurrentTopic() {
     const sem = ins.semantic || {};
     log(
       (idx + 1) +
-      ". " +
-      ins.title +
-      " (score: " +
-      ins.strength.total_score +
-      ", freq: " +
-      (sem.frequency || "ukjent") +
-      ", valens: " +
-      (sem.valence || "nøytral") +
-      ")"
+        ". " +
+        ins.title +
+        " (score: " +
+        ins.strength.total_score +
+        ", freq: " +
+        (sem.frequency || "ukjent") +
+        ", valens: " +
+        (sem.valence || "nøytral") +
+        ")"
     );
   });
 
@@ -248,6 +248,9 @@ function showTopicStatus() {
   log("- Innsikter: " + stats.insight_count);
   log("- Innsiktsmetningsgrad: " + stats.insight_saturation + "/100");
   log("- Begrepstetthet: " + stats.concept_density + "/100");
+  if (stats.user_phase) {
+    log("- Fase (lesning av prosess): " + stats.user_phase);
+  }
   log("→ Foreslått form: " + stats.artifact_type);
 }
 
@@ -692,6 +695,91 @@ function exportChamberJson() {
   log(JSON.stringify(chamber, null, 2));
 }
 
+// ── Meta-motor: global brukerprofil ──────────
+
+function showMetaProfileForUser() {
+  const chamber = loadChamberFromStorage();
+
+  clearOutput();
+
+  if (typeof MetaInsightsEngine === "undefined") {
+    log("MetaInsightsEngine er ikke lastet. Sjekk at metaInsightsEngine.js er inkludert i index.html.");
+    return;
+  }
+
+  const profile = MetaInsightsEngine.buildUserMetaProfile(
+    chamber,
+    SUBJECT_ID
+  );
+
+  if (!profile) {
+    log("Ingen meta-profil tilgjengelig ennå.");
+    return;
+  }
+
+  log("META-PROFIL for " + SUBJECT_ID + ":\n");
+
+  // Globalt bilde
+  const g = profile.global;
+  log("GLOBALT BILDE:");
+  log(
+    "- Gjennomsnittlig metning på tvers av tema: " +
+      Math.round(g.avg_saturation) +
+      " / 100"
+  );
+  log(
+    "- Press-indeks (krav+hindring vs mulighet): " +
+      g.pressure_index.toFixed(2)
+  );
+  log(
+    "- Negativitetsindeks (andel negativ valens): " +
+      g.negativity_index.toFixed(2)
+  );
+  log(
+    "- Antall fastlåste tema: " +
+      g.stuck_topics +
+      ", integrasjons-tema: " +
+      g.integration_topics
+  );
+
+  // Mønstre på tvers
+  if (profile.patterns && profile.patterns.length > 0) {
+    log("\nMØNSTRE PÅ TVERS AV TEMA:");
+    profile.patterns.forEach((p) => {
+      log(
+        "• " +
+          p.description +
+          " (tema: " +
+          p.themes.join(", ") +
+          ")"
+      );
+    });
+  } else {
+    log("\nIngen tydelige kryss-tema-mønstre oppdaget ennå.");
+  }
+
+  // Litt temaoversikt m/fase
+  if (profile.topics && profile.topics.length > 0) {
+    log("\nTEMAER I PROFILEN:");
+    profile.topics.forEach((t) => {
+      log(
+        "- " +
+          t.theme_id +
+          ": " +
+          t.stats.insight_count +
+          " innsikter, metning " +
+          t.stats.insight_saturation +
+          "/100, fase: " +
+          (t.stats.user_phase || "ukjent")
+      );
+    });
+  }
+
+  // (Hvis du vil debugge alt, kan du åpne JSON også:)
+  // log("\nRÅPROFIL (JSON):");
+  // log(JSON.stringify(profile, null, 2));
+}
+
 // ── Setup ────────────────────────────────────
 
 function setupUI() {
@@ -710,6 +798,7 @@ function setupUI() {
   const btnExport = document.getElementById("btn-export");
   const btnReset = document.getElementById("btn-reset");
   const btnNarr = document.getElementById("btn-narrative");
+  const btnMeta = document.getElementById("btn-meta");
 
   btnSend.addEventListener("click", () => {
     const val = (txt.value || "").trim();
@@ -739,7 +828,10 @@ function setupUI() {
   btnDial.addEventListener("click", showDialecticViewForCurrentTopic);
   btnTopics.addEventListener("click", showAllTopicsOverview);
   btnExport.addEventListener("click", exportChamberJson);
-    btnNarr.addEventListener("click", showNarrativeForCurrentTopic);
+  btnNarr.addEventListener("click", showNarrativeForCurrentTopic);
+  if (btnMeta) {
+    btnMeta.addEventListener("click", showMetaProfileForUser);
+  }
 
   btnReset.addEventListener("click", () => {
     localStorage.removeItem(STORAGE_KEY);
@@ -749,7 +841,7 @@ function setupUI() {
 
   clearOutput();
   log(
-    "AHA Chat – Innsiktsmotor V1 klar. Velg tema-id, skriv en tanke og trykk «Send»."
+    "AHA Chat – Innsiktsmotor V1 + Metamotor klar. Velg tema-id, skriv en tanke og trykk «Send»."
   );
 }
 
