@@ -182,6 +182,19 @@ function buildTopicSummary(chamber, themeId) {
   return lines.join("\n");
 }
 
+function showNarrativeForCurrentTopic() {
+  const chamber = loadChamberFromStorage();
+  const themeId = getCurrentThemeId();
+  clearOutput();
+
+  const txt = InsightsEngine.createNarrativeForTopic(
+    chamber,
+    SUBJECT_ID,
+    themeId
+  );
+  log(txt);
+}
+
 function showInsightsForCurrentTopic() {
   const chamber = loadChamberFromStorage();
   const themeId = getCurrentThemeId();
