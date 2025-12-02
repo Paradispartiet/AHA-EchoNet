@@ -283,6 +283,122 @@
     };
   }
 
+  // ── Narrativ analyse (V1) ──────────────────
+  // Forsøker å fange:
+  // - aktør (jeg/vi/man/alle)
+  // - normbrudd (snyte, ta mer enn kvoten, jukse osv.)
+  // - begrunnelse/bagatellisering ("det har ikke så mye å si", "bare litt")
+  // - systemeffekt ("når alle", "til slutt går det galt")
+  // - moralsk tone (kritikk av egoisme, normbrudd osv.)
+  function analyzeNarrative(text) {
+    const lower = text.toLowerCase();
+    const containsAny = (list) => list.some((w) => lower.includes(w));
+
+    // Aktør
+    let actor = null;
+    if (/\bjeg\b/.test(lower)) actor = "jeg";
+    else if (/\bvi\b/.test(lower)) actor = "vi";
+    else if (/\bman\b/.test(lower)) actor = "man";
+    else if (/\balle\b/.test(lower) || /\bfolk\b/.test(lower)) actor = "alle";
+    else if (/\bde\b/.test(lower)) actor = "de";
+
+    // Normbrudd – ting som peker på å bryte regler / ta mer enn egen del
+    let norm_break = null;
+    if (
+      containsAny([
+        "snyter på skatten",
+        "snyte på skatten",
+        "snyter",
+        "snyte",
+        "jukser",
+        "jukse",
+        "over kvoten",
+        "mer enn kvoten",
+        "ta mer enn",
+        "tar mer enn",
+        "skipper unna",
+        "snike",
+        "sniker meg unna",
+        "bryter reglene"
+      ])
+    ) {
+      norm_break = "normbrudd";
+    }
+
+    // Begrunnelse / bagatellisering
+    let justification = null;
+    if (
+      containsAny([
+        "har ikke så mye å si",
+        "har ikke så mye og si",
+        "det har ikke så mye å si",
+        "det spiller ingen rolle",
+        "spiller ingen rolle",
+        "bare litt",
+        "bare denne gangen",
+        "alle gjør det",
+        "alle gjør jo det",
+        "hva gjør det vel"
+      ])
+    ) {
+      justification = "bagatellisering";
+    }
+
+    // Systemeffekt – at det blir alvorlig når mange gjør det samme
+    let systemic_effect = null;
+    if (
+      containsAny([
+        "når alle tenker slikt",
+        "når alle tenker sånn",
+        "når alle gjør det",
+        "hvis alle gjør det",
+        "hvis alle tenker sånn",
+        "hvis alle tenker slikt",
+        "til slutt går det galt",
+        "til slutt forsvinner",
+        "systemet kollapser",
+        "kollapser",
+        "går tomt",
+        "blir ødelagt"
+      ])
+    ) {
+      systemic_effect = "systemeffekt";
+    }
+
+    // Moralsk tone – eksplisitt kritikk av egoisme / hensynsløshet
+    let moral_tone = null;
+    if (
+      containsAny([
+        "egoisme",
+        "egoistisk",
+        "hensynsløs",
+        "usolidarisk",
+        "urettferdig"
+      ])
+    ) {
+      moral_tone = "kritisk";
+    } else if (
+      containsAny([
+        "bør",
+        "må",
+        "riktig",
+        "rettferdig",
+        "ta hensyn",
+        "vise hensyn"
+      ])
+    ) {
+      moral_tone = "normativ";
+    }
+
+    return {
+      actor,
+      norm_break,
+      justification,
+      systemic_effect,
+      moral_tone
+    };
+  }
+  
   // ── Dimensjoner ────────────────────────────
 
   function analyzeDimensions(text) {
@@ -425,10 +541,11 @@
     };
   }
 
-  function createInsightFromSignal(signal) {
+    function createInsightFromSignal(signal) {
     const title = generateTitleFromText(signal.text);
     const semantic = analyzeSentenceSemantics(signal.text);
     const dimensions = analyzeDimensions(signal.text);
+    const narrative = analyzeNarrative(signal.text); // ⬅ NY LINJE
 
     return {
       id: generateInsightId(),
@@ -443,7 +560,8 @@
       first_seen: signal.timestamp,
       last_updated: signal.timestamp,
       semantic,
-      dimensions
+      dimensions,
+      narrative // ⬅ NY LINJE
     };
   }
 
