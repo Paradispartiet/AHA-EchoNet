@@ -2,14 +2,14 @@
 <html lang="no">
 <head>
   <meta charset="UTF-8" />
-  <title>AHA Chat – Innsiktsmotor V1</title>
+  <title>AHA Chat – Innsiktsmotor + Metamotor</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <!-- Ekstern CSS -->
   <link rel="stylesheet" href="aha-chat.css" />
 </head>
 <body>
-  <h1>AHA Chat – Innsiktsmotor V1</h1>
+  <h1>AHA Chat – Innsiktsmotor V1 + Meta</h1>
 
   <!-- Tema-valg -->
   <div class="row">
@@ -45,6 +45,7 @@
       <button id="btn-dial">Dialektikk</button>
       <button id="btn-narrative">Narrativ innsikt</button>
       <button id="btn-topics">Alle tema</button>
+      <button id="btn-meta">Meta-profil</button>
       <button id="btn-export">Eksport JSON</button>
       <button id="btn-reset">Nullstill</button>
     </div>
@@ -54,6 +55,7 @@
 
   <!-- Motoren -->
   <script src="insightsChamber.js"></script>
+  <!-- Meta-motoren (bygger global brukerprofil + mønstre på tvers) -->
   <script src="metaInsightsEngine.js"></script>
   <!-- Kobling mellom chat-UI og motor (ahaChat) -->
   <script src="ahaChat.js"></script>
