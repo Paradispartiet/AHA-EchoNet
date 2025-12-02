@@ -786,7 +786,7 @@
     return "kort";
   }
 
-  function computeTopicStats(chamber, subjectId, themeId) {
+    function computeTopicStats(chamber, subjectId, themeId) {
     const insights = getInsightsForTopic(
       chamber,
       subjectId,
@@ -799,13 +799,22 @@
       density
     );
 
+    // NYTT: bruk semantikk til å finne fase
+    const counts = computeSemanticCounts(insights);
+    const userPhase = computeUserPhase(
+      saturation,
+      density,
+      counts
+    );
+
     return {
       topic_id: themeId,
       subject_id: subjectId,
       insight_saturation: saturation,
       concept_density: density,
       artifact_type: artifactType,
-      insight_count: insights.length
+      insight_count: insights.length,
+      user_phase: userPhase // ← ekstra felt, bryter ingenting
     };
   }
 
