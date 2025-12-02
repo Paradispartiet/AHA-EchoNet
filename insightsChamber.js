@@ -525,6 +525,75 @@
     return Array.from(dims);
   }
 
+
+  function semanticSimilarityBetweenSignalAndInsight(signal, insight) {
+    // 1) Tekstlikhet (Jaccard)
+    const textSim = textSimilarity(signal.text, insight.summary || "");
+
+    // 2) Semantikk på signalet
+    const sigSem = analyzeSentenceSemantics(signal.text);
+    const sigDims = analyzeDimensions(signal.text);
+
+    const insSem = insight.semantic || null;
+    const insDims = insight.dimensions || [];
+
+    let semScore = 0;
+    let semWeight = 0;
+
+    // Frekvens ("alltid", "ofte", "sjelden", "ukjent")
+    if (insSem && sigSem.frequency !== "ukjent" && insSem.frequency !== "ukjent") {
+      semWeight += 1;
+      if (sigSem.frequency === insSem.frequency) {
+        semScore += 1;
+      }
+    }
+
+    // Valens (positiv/negativ/blandet/nøytral)
+    if (insSem) {
+      semWeight += 1;
+      if (sigSem.valence === insSem.valence) {
+        semScore += 1;
+      }
+    }
+
+    // Modalitet (krav/mulighet/hindring/nøytral)
+    if (insSem && sigSem.modality !== "nøytral" && insSem.modality !== "nøytral") {
+      semWeight += 1;
+      if (sigSem.modality === insSem.modality) {
+        semScore += 1;
+      }
+    }
+
+    // Tid (nå/fortid/fremtid/blandet)
+    if (insSem && sigSem.time_ref !== "blandet" && insSem.time_ref !== "blandet") {
+      semWeight += 1;
+      if (sigSem.time_ref === insSem.time_ref) {
+        semScore += 1;
+      }
+    }
+
+    // Dimensjoner (emosjon/tanke/atferd/kropp/relasjon)
+    if (sigDims.length && insDims.length) {
+      const setA = new Set(sigDims);
+      const setB = new Set(insDims);
+      let inter = 0;
+      for (const d of setA) if (setB.has(d)) inter++;
+      const uni = setA.size + setB.size - inter || 1;
+      const dimSim = inter / uni;
+
+      semScore += dimSim;
+      semWeight += 1;
+    }
+
+    const semanticSim = semWeight > 0 ? semScore / semWeight : 0;
+
+    // Kombiner tekst + semantikk
+    const alpha = 0.6; // hvor mye vekt tekst har vs semantikk
+    const finalSim = alpha * textSim + (1 - alpha) * semanticSim;
+
+    return Math.max(0, Math.min(1, finalSim));
+  }
+  
   // ── Innsiktskammer / Insight-objekter ──────
 
   function createEmptyChamber() {
@@ -582,7 +651,7 @@
     );
   }
 
-  function addSignalToChamber(chamber, signal) {
+    function addSignalToChamber(chamber, signal) {
     const candidates = getInsightsForTopic(
       chamber,
       signal.subject_id,
@@ -592,14 +661,14 @@
     let best = null;
     let bestSim = 0;
     for (const ins of candidates) {
-      const sim = textSimilarity(signal.text, ins.summary);
+      const sim = semanticSimilarityBetweenSignalAndInsight(signal, ins);
       if (sim > bestSim) {
         bestSim = sim;
         best = ins;
       }
     }
 
-    const THRESHOLD = 0.5;
+    const THRESHOLD = 0.5; // kan finjusteres senere
     if (best && bestSim >= THRESHOLD) {
       reinforceInsight(best, signal);
     } else {
@@ -608,7 +677,7 @@
 
     return chamber;
   }
-
+  
   // ── Tekst → setninger ──────────────────────
 
   function splitIntoSentences(text) {
@@ -825,6 +894,39 @@
     return counts;
   }
 
+  function computeUserPhase(saturation, density, counts) {
+    // Enkel heuristikk basert på metningsgrad + semantikk
+
+    if (saturation < 30) {
+      return "utforskning"; // lite innsikt, lite metning
+    }
+
+    // Mellomnivå: vi ser mønstrene begynne å ta form
+    if (saturation >= 30 && saturation < 60) {
+      const krav = counts.modality.krav;
+      const hindring = counts.modality.hindring;
+      const mulighet = counts.modality.mulighet;
+
+      if (krav + hindring > mulighet) {
+        return "press"; // mye "må/burde/klarer ikke"
+      }
+      return "mønster"; // mer nøytral/mulighetspreget
+    }
+
+    // Høy metning: temaet er "tett" i kammeret
+    if (saturation >= 60) {
+      const negativ = counts.valence.negativ;
+      const positiv = counts.valence.positiv;
+
+      if (negativ > positiv) {
+        return "fastlåst"; // mettet + mye negativ valens
+      }
+      return "integrasjon"; // mettet + mer positiv/balansert
+    }
+
+    return "utforskning";
+  }
+  
   // ── Dimensjons-sammendrag ──────────────────
 
   function computeDimensionsSummary(insights) {
