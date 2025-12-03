@@ -340,15 +340,28 @@ function showInsightsForCurrentTopic() {
   );
 
   clearOutput();
+  clearPanel();
 
   if (insights.length === 0) {
     log("Ingen innsikter ennå for tema: " + themeId);
     return;
   }
 
+  const stats = InsightsEngine.computeTopicStats(
+    chamber,
+    SUBJECT_ID,
+    themeId
+  );
+  const sem = InsightsEngine.computeSemanticCounts(insights);
+  const dims = InsightsEngine.computeDimensionsSummary(insights);
+
+  // 1) Vis pent panel
+  renderTopicPanel(themeId, stats, sem, dims, insights);
+
+  // 2) Behold enkel tekstliste + meta-sammendrag i loggen som "debug"
   log("Innsikter for temaet: " + themeId);
   insights.forEach((ins, idx) => {
-    const sem = ins.semantic || {};
+    const semLocal = ins.semantic || {};
     log(
       (idx + 1) +
         ". " +
@@ -356,9 +369,9 @@ function showInsightsForCurrentTopic() {
         " (score: " +
         ins.strength.total_score +
         ", freq: " +
-        (sem.frequency || "ukjent") +
+        (semLocal.frequency || "ukjent") +
         ", valens: " +
-        (sem.valence || "nøytral") +
+        (semLocal.valence || "nøytral") +
         ")"
     );
   });
