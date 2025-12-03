@@ -283,6 +283,91 @@
     };
   }
 
+
+
+    function computeDepthHeuristic(semantic, dimensions, semiotic) {
+    let score = 0;
+
+    // Meta-språk (refleksjon)
+    if (semantic && semantic.meta === "meta") {
+      score += 3;
+    }
+
+    // Blandet valens tyder ofte på kompleksitet/integrasjon
+    if (semantic && semantic.valence === "blandet") {
+      score += 2;
+    }
+
+    // Flere dimensjoner aktiv samtidig (tanke + følelse + atferd...)
+    const dimCount = Array.isArray(dimensions)
+      ? dimensions.length
+      : 0;
+    if (dimCount >= 3) {
+      score += 2;
+    } else if (dimCount === 2) {
+      score += 1;
+    }
+
+    // Kropp + negativ valens → ofte "tunge" innsikter
+    if (
+      semiotic &&
+      semiotic.domains &&
+      semiotic.domains.body &&
+      semantic &&
+      semantic.valence === "negativ"
+    ) {
+      score += 2;
+    }
+
+    // Mange emojis eller kraftig tegnbruk kan tyde på intensitet
+    if (semiotic && Array.isArray(semiotic.emojis)) {
+      if (semiotic.emojis.length >= 3) score += 1;
+    }
+    if (semiotic && semiotic.markers && semiotic.markers.exclamation) {
+      score += 1;
+    }
+
+    return score;
+  }
+
+
+    function classifyInsightType(semantic, dimensions, semiotic) {
+    if (!semantic) return "uklassifisert";
+
+    const isPress =
+      semantic.modality === "krav" &&
+      semantic.valence === "negativ";
+
+    const isOpportunity =
+      semantic.modality === "mulighet" &&
+      semantic.valence === "positiv";
+
+    const hasMeta = semantic.meta === "meta";
+    const dimCount = Array.isArray(dimensions)
+      ? dimensions.length
+      : 0;
+
+    if (isPress) {
+      return "press";
+    }
+
+    if (isOpportunity && dimCount >= 2) {
+      return "oppdagelse";
+    }
+
+    if (
+      hasMeta &&
+      semantic.valence === "blandet" &&
+      dimCount >= 2
+    ) {
+      return "integrasjon";
+    }
+
+    return "uklassifisert";
+  }
+
+  
+
   // ── Narrativ analyse (V1) ──────────────────
   // Forsøker å fange:
   // - aktør (jeg/vi/man/alle)
