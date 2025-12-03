@@ -1,0 +1,68 @@
+[
+  {
+    "emne_id": "em_mus_musikk_som_sosial_energi",
+    "subject_id": "musikk",
+    "title": "Musikk som sosial energi",
+    "short_label": "Sosial energi",
+    "description": "Hvordan musikk organiserer følelser, fellesskap og identitet gjennom scener, miljøer, festivaler og klubbkultur.",
+    "keywords": [
+      "fellesskap",
+      "subkulturer",
+      "scener",
+      "festivaler",
+      "identitet"
+    ],
+    "dimensions": [
+      "sosial",
+      "kultur",
+      "identitet"
+    ],
+    "core_concepts": [
+      "scene",
+      "fellesskap",
+      "affekt",
+      "kropp",
+      "teknologi"
+    ],
+    "blindspots": [
+      "marginaliserte tradisjoner og minoritetsmusikk",
+      "kulturelle hierarkier mellom finkultur og lavkultur"
+    ],
+    "related_routes": [],
+    "related_places": [],
+    "related_quizzes": [],
+    "status": "core"
+  },
+  {
+    "emne_id": "em_mus_lydlandskap_byen",
+    "subject_id": "musikk",
+    "title": "Byen som lydlandskap",
+    "short_label": "Lydlandskap",
+    "description": "Hvordan klubber, kirker, parker og studioer gjør byen til et lydkart der ulike sjangre og miljøer setter spor.",
+    "keywords": [
+      "lydlandskap",
+      "klubb",
+      "kirke",
+      "studio",
+      "scener"
+    ],
+    "dimensions": [
+      "geografi",
+      "historie",
+      "kultur"
+    ],
+    "core_concepts": [
+      "rytme",
+      "klang",
+      "scene"
+    ],
+    "blindspots": [
+      "teknologiens skjulte rolle som komponist",
+      "bransjens maktforhold"
+    ],
+    "related_routes": [],
+    "related_places": [],
+    "related_quizzes": [],
+    "status": "core"
+  }
+]
