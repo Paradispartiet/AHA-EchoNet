@@ -1262,42 +1262,6 @@ function renderAHAAgentResponse(res) {
 }
 
 
-// ── Kall AHA-AI for gjeldende tema ───────────────────────
-
-async function callAHAAgentForCurrentTopic() {
-  const themeId = getCurrentThemeId();
-  const state = buildAIStateForTheme(themeId);
-
-  clearOutput();
-  log("AHA-AI: Leser innsiktskammeret for tema " + themeId + " …");
-  log("");
-
-  // Din Codespaces-backend:
-  const API_BASE =
-    "https://fluffy-funicular-g4vqgqx4jgj93vrqp-3001.app.github.dev";
-
-  try {
-    const res = await fetch(API_BASE + "/api/aha-agent", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(state),
-    });
-
-    if (!res.ok) {
-      throw new Error("HTTP " + res.status + " " + res.statusText);
-    }
-
-    const data = await res.json();
-    renderAHAAgentResponse(data);
-  } catch (e) {
-    log("Feil ved kall til AHA-AI: " + e.message);
-    log("");
-    log("DEBUG – state som ble sendt:");
-    log(JSON.stringify(state, null, 2));
-  }
-}
 
 
 
