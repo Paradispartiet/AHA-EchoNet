@@ -1,0 +1,77 @@
+[
+  {
+    "emne_id": "em_naer_felt_arbeid_verdiskaping",
+    "subject_id": "naeringsliv",
+    "title": "Næringsliv som arbeid og verdiskaping",
+    "short_label": "Arbeid & verdiskaping",
+    "description": "Hvordan arbeid, produksjon, handel, tjenester og teknologiske skift kobles sammen i prosesser som skaper og omformer verdi i byen.",
+    "keywords": [
+      "arbeid",
+      "verdiskaping",
+      "industri",
+      "handel",
+      "tjenester",
+      "innovasjon",
+      "kapital"
+    ],
+    "dimensions": [
+      "arbeidsliv",
+      "økonomi",
+      "byutvikling"
+    ],
+    "core_concepts": [
+      "verdiskaping",
+      "arbeid",
+      "kapital",
+      "infrastruktur",
+      "produksjon",
+      "distribusjon",
+      "innovasjon",
+      "forbruk"
+    ],
+    "blindspots": [
+      "usynlig arbeid (omsorg, hjemmefront, uformell økonomi)",
+      "miljøkostnader og ressursbruk",
+      "økonomisk ulikhet og ekskludering",
+      "arbeid som ikke registreres som produktivt"
+    ],
+    "related_routes": [],
+    "related_places": [],
+    "related_quizzes": [],
+    "status": "core"
+  },
+  {
+    "emne_id": "em_naer_geografi_infrastruktur",
+    "subject_id": "naeringsliv",
+    "title": "Økonomiens geografi og infrastruktur",
+    "short_label": "Økonomisk geografi",
+    "description": "Industristrøk, havner, logistikkpunkter, finansdistrikter og kontorparker som viser hvordan næringslivets infrastruktur organiserer byen.",
+    "keywords": [
+      "industristrøk",
+      "havner",
+      "logistikk",
+      "kontorbygg",
+      "finans",
+      "arbeidssteder"
+    ],
+    "dimensions": [
+      "geografi",
+      "infrastruktur",
+      "arbeidsliv"
+    ],
+    "core_concepts": [
+      "infrastruktur",
+      "produksjon",
+      "distribusjon",
+      "kapitalstrømmer"
+    ],
+    "blindspots": [
+      "logistikkens usynlige rom (kabling, datasentre, lager)",
+      "makt til kapital og eierskap i byrommet"
+    ],
+    "related_routes": [],
+    "related_places": [],
+    "related_quizzes": [],
+    "status": "core"
+  }
+]
