@@ -694,32 +694,48 @@
       text: messageText.trim()
     };
   }
+function createInsightFromSignal(signal) {
+  const title = generateTitleFromText(signal.text);
+  const semantic = analyzeSentenceSemantics(signal.text);
+  const dimensions = analyzeDimensions(signal.text);
+  const narrative = analyzeNarrative(signal.text);
+  const concepts = extractConcepts(signal.text);
+  const semiotic = analyzeSemioticSignals(signal.text);
 
-      function createInsightFromSignal(signal) {
-    const title = generateTitleFromText(signal.text);
-    const semantic = analyzeSentenceSemantics(signal.text);
-    const dimensions = analyzeDimensions(signal.text);
-    const narrative = analyzeNarrative(signal.text); // ⬅ eksisterende
-    const concepts = extractConcepts(signal.text);   // ⬅ NY LINJE
+  const depthScore = computeDepthHeuristic(
+    semantic,
+    dimensions,
+    semiotic
+  );
+  const insightType = classifyInsightType(
+    semantic,
+    dimensions,
+    semiotic
+  );
 
-    return {
-      id: generateInsightId(),
-      subject_id: signal.subject_id,
-      theme_id: signal.theme_id,
-      title,
-      summary: signal.text,
-      strength: {
-        evidence_count: 1,
-        total_score: 10,
-      },
-      first_seen: signal.timestamp,
-      last_updated: signal.timestamp,
-      semantic,
-      dimensions,
-      narrative,   // ⬅ behold
-      concepts,    // ⬅ NYTT FELT
-    };
-  }
+  const insight = {
+    id: generateInsightId(),
+    subject_id: signal.subject_id,
+    theme_id: signal.theme_id,
+    title,
+    summary: signal.text,
+    strength: {
+      evidence_count: 1,
+      total_score: Math.min(100, 10 + depthScore),
+    },
+    depth_score: depthScore,
+    insight_type: insightType,
+    first_seen: signal.timestamp,
+    last_updated: signal.timestamp,
+    semantic,
+    dimensions,
+    narrative,
+    concepts,
+    semiotic,
+  };
+
+  return insight;
+}
 
   
   function getInsightsForTopic(chamber, subjectId, themeId) {
