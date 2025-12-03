@@ -738,6 +738,79 @@
     );
   }
 
+  // ── Hjelpere for semiotikk ─────────────────────
+
+  function containsAnyInLower(lowerText, phrases) {
+    return phrases.some((p) => lowerText.includes(p));
+  }
+
+  function extractEmojis(text) {
+    // Fanger en del vanlige emojis (ikke perfekt, men godt nok)
+    const match = text.match(/[\u{1F300}-\u{1FAFF}]/gu);
+    return match || [];
+  }
+
+  function analyzeSemioticSignals(text) {
+    const lower = text.toLowerCase();
+
+    const emojis = extractEmojis(text);
+
+    const markers = {
+      heart: /❤️|💜|💙|💚|💛|🧡|💕|💖|💗/.test(text),
+      stars: /⭐|✨|🌟/.test(text),
+      arrow: /→|←|↔|⇄|->|<-/.test(text),
+      exclamation: /!{2,}/.test(text), // mange utropstegn
+    };
+
+    const domains = {
+      body: containsAnyInLower(lower, [
+        "hjertet banker",
+        "klump i magen",
+        "knute i magen",
+        "kvalm",
+        "svetter",
+        "skjelver",
+        "stiv i nakken",
+        "rygg",
+        "pusten",
+        "pusten går",
+        "tung i kroppen",
+      ]),
+      space: containsAnyInLower(lower, [
+        "rommet",
+        "scenen",
+        "døren",
+        "korridor",
+        "gatehjørne",
+        "hjørnet",
+        "mørkt rom",
+        "lyssetting",
+        "spotlight",
+        "salen",
+        "lokalet",
+      ]),
+      tech: containsAnyInLower(lower, [
+        "skjermen",
+        "skjerm",
+        "mobilen",
+        "telefonen",
+        "appen",
+        "chatten",
+        "feed",
+        "notifikasjon",
+        "varsling",
+        "pc-en",
+        "laptopen",
+      ]),
+    };
+
+    return {
+      emojis,
+      markers,
+      domains,
+    };
+  }
+  
   // ── Begrepsanalyse per innsikt ─────────────
 
   function normalizeConceptToken(token) {
