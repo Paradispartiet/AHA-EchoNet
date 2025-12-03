@@ -1,0 +1,71 @@
+[
+  {
+    "emne_id": "em_pop_symboler_og_masseoppmerksomhet",
+    "subject_id": "populaerkultur",
+    "title": "Symboler og masseoppmerksomhet",
+    "short_label": "Masseoppmerksomhet",
+    "description": "Hvordan serier, filmer, spill, memes og ikoner organiserer hva som føles aktuelt, relevant og sitérbart i samtiden.",
+    "keywords": [
+      "symboler",
+      "memes",
+      "ikoner",
+      "trender",
+      "massekultur"
+    ],
+    "dimensions": [
+      "medier",
+      "psykologi",
+      "kultur"
+    ],
+    "core_concepts": [
+      "sirkulasjon",
+      "masse",
+      "ikon",
+      "identitet",
+      "narrativ",
+      "medier",
+      "algoritme",
+      "trend"
+    ],
+    "blindspots": [
+      "politisk kraft forkledd som bare underholdning",
+      "algoritmers styring av hva som blir synlig",
+      "økonomiens logikk bak hype og virale øyeblikk"
+    ],
+    "related_routes": [],
+    "related_places": [],
+    "related_quizzes": [],
+    "status": "core"
+  },
+  {
+    "emne_id": "em_pop_byen_som_scene",
+    "subject_id": "populaerkultur",
+    "title": "Byen som scene for populærkultur",
+    "short_label": "Byen som scene",
+    "description": "Hvordan gater, bydeler, studioer og lokasjoner blir ikoniske gjennom TV, film, musikkvideoer og internettkultur.",
+    "keywords": [
+      "filmlokasjoner",
+      "TV-studio",
+      "klubbscener",
+      "ikoniske gatehjørner"
+    ],
+    "dimensions": [
+      "geografi",
+      "medier",
+      "identitet"
+    ],
+    "core_concepts": [
+      "ikon",
+      "narrativ",
+      "trend"
+    ],
+    "blindspots": [
+      "hvem som aldri får plass i de store formatene",
+      "det usynlige arbeidet bak glatte flater (redaksjon, teknikk, moderering)"
+    ],
+    "related_routes": [],
+    "related_places": [],
+    "related_quizzes": [],
+    "status": "core"
+  }
+]
