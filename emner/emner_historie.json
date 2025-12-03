@@ -1,0 +1,46 @@
+[
+  {
+    "emne_id": "em_his_industriby_1900",
+    "subject_id": "historie",
+    "title": "Industriby på 1900-tallet",
+    "short_label": "Industriby 1900",
+    "description": "Arbeidsliv, klasse og byutvikling i overgangen til industrisamfunnet.",
+    "keywords": ["industriby", "arbeiderklasse", "fabrikker", "byutvikling"],
+    "dimensions": ["arbeidsliv", "byutvikling", "økonomi"],
+    "core_concepts": [
+      "industriell urbanisering",
+      "arbeiderklassen som historisk kraft",
+      "boligforhold i arbeiderstrøk"
+    ],
+    "blindspots": [
+      "kvinners arbeid",
+      "migrasjon og minoriteter"
+    ],
+    "related_routes": ["rt_industriby_01"],
+    "related_places": ["pl_havna_01", "pl_fabrikk_02"],
+    "related_quizzes": ["qz_historie_industriby"],
+    "status": "core"
+  },
+  {
+    "emne_id": "em_his_okkupasjon_byen",
+    "subject_id": "historie",
+    "title": "Okkupasjon og motstand i byen",
+    "short_label": "Okkupasjon & motstand",
+    "description": "Hvordan krig og okkupasjon preger hverdagsliv, byrom og minnekultur.",
+    "keywords": ["2. verdenskrig", "okkupasjon", "motstandsbevegelse"],
+    "dimensions": ["krig", "politikk", "minnekultur"],
+    "core_concepts": [
+      "okkupasjonshverdag",
+      "sivilt mot",
+      "minnesmerker og glemsel"
+    ],
+    "blindspots": [
+      "samarbeid og gråsoner",
+      "barns erfaringer under okkupasjon"
+    ],
+    "related_routes": ["rt_okkupasjon_01"],
+    "related_places": ["pl_festning_01", "pl_minne_02"],
+    "related_quizzes": ["qz_historie_okkupasjon"],
+    "status": "core"
+  }
+]
