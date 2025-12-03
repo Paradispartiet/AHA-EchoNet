@@ -405,87 +405,149 @@ function buildTopicSummary(chamber, themeId) {
   const dims = InsightsEngine.computeDimensionsSummary(insights);
 
   const total = insights.length || 1;
-
   const lines = [];
 
-  // 1) Overordnet status
-  lines.push(
-    `Dette temaet har ${stats.insight_count} innsikt(er) ` +
-      `(metningsgrad ${stats.insight_saturation}/100, begrepstetthet ${stats.concept_density}/100).`
-  );
-  lines.push(
-    `Motoren mener dette egner seg best som: ${stats.artifact_type}.`
-  );
+  // 1) Overordnet bilde: hvor mye har du sagt + fase
+  const sat = stats.insight_saturation || 0;
+  const phase = stats.user_phase || null;
 
-  // 2) Frekvens / hvor ofte skjer det
-  const freqOfteAlltid = sem.frequency.ofte + sem.frequency.alltid;
-  if (freqOfteAlltid > 0) {
-    const andel = Math.round((freqOfteAlltid / total) * 100);
+  if (sat < 20) {
     lines.push(
-      `${andel}% av innsiktene beskriver noe som skjer «ofte» eller «alltid» – altså et ganske stabilt mønster.`
+      "Dette ser ut som et tema du så vidt har begynt å utforske – det er lite samlet materiale ennå."
+    );
+  } else if (sat < 60) {
+    lines.push(
+      "Her begynner det å tegne seg et mønster – du har skrevet en del, men det er fortsatt i bevegelse."
+    );
+  } else {
+    lines.push(
+      "Her har du ganske høy metningsgrad – du har sagt mye om dette, og det ser ut som et tydelig mønster i livet ditt."
     );
   }
 
-  // 3) Valens / emosjonell farge
-  const neg = sem.valence.negativ;
-  const pos = sem.valence.positiv;
+  if (phase) {
+    const phaseTextMap = {
+      utforskning:
+        "Motoren leser deg som i en utforskningsfase: du undersøker, beskriver og prøver å forstå hva som egentlig skjer.",
+      mønster:
+        "Motoren leser deg som i mønsterfasen: du har begynt å se gjentakelser og kan nesten beskrive dette som en regel.",
+      press:
+        "Motoren leser mye indre trykk her – mye «må/burde» og opplevelse av krav rundt dette temaet.",
+      fastlåst:
+        "Motoren leser dette som mer fastlåst: mye trykk og ubehag, og lite opplevelse av handlingsrom akkurat nå.",
+      integrasjon:
+        "Motoren leser deg som i integrasjonsfase: du er i ferd med å flette det du har forstått inn i hverdagen."
+    };
+    const phaseText = phaseTextMap[phase];
+    if (phaseText) lines.push(phaseText);
+  }
+
+  // 2) Hvor ofte skjer det – er dette enkelthendelser eller mønster?
+  const freqOfteAlltid =
+    (sem.frequency.ofte || 0) + (sem.frequency.alltid || 0);
+  if (freqOfteAlltid > 0) {
+    const andel = Math.round((freqOfteAlltid / total) * 100);
+    if (andel >= 60) {
+      lines.push(
+        "Det du beskriver her skjer for det meste «ofte» eller «alltid» – altså et ganske stabilt mønster, ikke bare enkelthendelser."
+      );
+    } else {
+      lines.push(
+        "Noe av dette skjer «ofte» eller «alltid», men ikke alt – det er både tydelige mønstre og mer sporadiske situasjoner."
+      );
+    }
+  }
+
+  // 3) Emosjonell farge: hvordan kjennes dette temaet ut?
+  const neg = sem.valence.negativ || 0;
+  const pos = sem.valence.positiv || 0;
   if (neg > 0 || pos > 0) {
     const andelNeg = Math.round((neg / total) * 100);
     const andelPos = Math.round((pos / total) * 100);
 
     if (neg > 0 && pos === 0) {
       lines.push(
-        `${andelNeg}% av innsiktene har negativ valens (stress, ubehag, vanskelige følelser).`
+        "Språket ditt her er nesten bare negativt – du beskriver dette området som ganske tungt eller krevende."
       );
     } else if (pos > 0 && neg === 0) {
       lines.push(
-        `${andelPos}% av innsiktene har positiv valens – det er en del ressurser og lyspunkter her.`
+        "Her bruker du mest positive formuleringer – dette ser ut som et område med ressurser, lyspunkter eller flyt."
       );
     } else {
       lines.push(
-        `${andelNeg}% av innsiktene er negative og ${andelPos}% er positive – temaet rommer både vanskelige ting og ressurser.`
+        `Du har både negative og positive beskrivelser her (ca. ${andelNeg}% negative og ${andelPos}% positive) – temaet rommer både det som er vanskelig og det som faktisk fungerer.`
       );
     }
   }
 
-  // 4) Krav / hindring
-  const krav = sem.modality.krav;
-  const hindring = sem.modality.hindring;
+  // 4) Krav / hindring – opplevd trykk
+  const krav = sem.modality.krav || 0;
+  const hindring = sem.modality.hindring || 0;
   if (krav + hindring > 0) {
+    if (krav > 0 && hindring > 0) {
+      lines.push(
+        "Du bruker en del språk som «må/burde/skal» sammen med «klarer ikke/får ikke til» – både indre krav og opplevd hindring er tydelig til stede."
+      );
+    } else if (krav > 0) {
+      lines.push(
+        "Det er en del «må/burde/skal» i språket ditt – mye fokus på krav og forventninger til deg selv."
+      );
+    } else if (hindring > 0) {
+      lines.push(
+        "Du beskriver flere «klarer ikke/får ikke til»-situasjoner – mer fokus på hindringer enn på muligheter."
+      );
+    }
+  }
+
+  // 5) Hva handler det mest om? (dimensjoner)
+  const fokus = [];
+  if (dims.emosjon > 0) fokus.push("følelser");
+  if (dims.tanke > 0) fokus.push("tanker og tolkninger");
+  if (dims.atferd > 0) fokus.push("konkrete handlinger");
+  if (dims.kropp > 0) fokus.push("kroppslige reaksjoner");
+  if (dims.relasjon > 0) fokus.push("relasjoner til andre");
+
+  if (fokus.length === 1) {
+    lines.push("Du skriver mest om " + fokus[0] + " i dette temaet.");
+  } else if (fokus.length > 1) {
+    const last = fokus.pop();
     lines.push(
-      `Mange setninger inneholder enten «må/burde/skal» eller «klarer ikke/får ikke til», ` +
-        `som tyder på både indre krav og opplevd hindring i dette temaet.`
+      "Du beskriver dette temaet mest gjennom " +
+        fokus.join(", ") +
+        " og " +
+        last +
+        "."
     );
   }
 
-  // 5) Dimensjoner: hva handler det mest om?
-  const dimLabels = [];
-  if (dims.emosjon > 0) dimLabels.push("følelser (emosjon)");
-  if (dims.atferd > 0) dimLabels.push("konkret atferd/handling");
-  if (dims.tanke > 0) dimLabels.push("tanker og tolkninger");
-  if (dims.kropp > 0) dimLabels.push("kroppslige reaksjoner");
-  if (dims.relasjon > 0) dimLabels.push("relasjoner til andre");
-
-  if (dimLabels.length > 0) {
+  // 6) Et lite meta-blikk: hvor ligger potensialet?
+  if (sat < 30) {
     lines.push(
-      "Innsiktene handler særlig om: " + dimLabels.join(", ") + "."
+      "Motorens lesning: dette er et tema som kan ha godt av litt mer utforskning før du prøver å endre noe konkret."
     );
+  } else if (sat >= 30 && sat < 60) {
+    if (neg > 0 && freqOfteAlltid > 0) {
+      lines.push(
+        "Motorens lesning: du har nok materiale her til å lage en liten «sti» – velge én typisk situasjon og teste et lite eksperiment."
+      );
+    } else {
+      lines.push(
+        "Motorens lesning: du er midt i et område hvor det gir mening å samle trådene til noen få setninger eller en enkel plan."
+      );
+    }
+  } else {
+    if (stats.concept_density >= 60) {
+      lines.push(
+        "Motorens lesning: dette begynner å ligne en ferdig innsikt – det kan være nyttig å skrive en kort tekst om hva du faktisk har lært her."
+      );
+    } else {
+      lines.push(
+        "Motorens lesning: du har mye materiale, men språket er fortsatt ganske hverdagslig – neste steg kan være å kondensere det til noen få klare begreper eller overskrifter."
+      );
+    }
   }
 
-  // 6) Konklusjon / meta-insikt
-  const freqAlltid = sem.frequency.alltid;
-  if (freqOfteAlltid > 0 && neg > 0) {
-    lines.push(
-      "Samlet sett beskriver du et mønster som både skjer ofte og oppleves som krevende – " +
-        "altså et område hvor det kan være mye å hente på å utforske videre."
-    );
-  } else if (freqOfteAlltid > 0 && pos > 0 && neg === 0) {
-    lines.push(
-      "Samlet sett ser dette ut som et område der du har flere gode spor som gjentar seg ofte."
-    );
-  }
-
-  return lines.join("\n");
+  return lines.join("\n\n");
 }
 
 // ── Narrativ innsikt ─────────────────────────
