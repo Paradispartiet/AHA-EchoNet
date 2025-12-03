@@ -1,7 +1,7 @@
 // sw.js
 // Enkel service worker for AHA Chat – offline + cache av app-shell
 
-const CACHE_NAME = "aha-chat-v1.0.0.103";
+const CACHE_NAME = "aha-chat-v1.0.0.104";
 
 // Justér stier hvis nettstedet ligger i en undermappe
 const ASSETS = [
