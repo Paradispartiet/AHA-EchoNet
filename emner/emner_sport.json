@@ -1,0 +1,71 @@
+[
+  {
+    "emne_id": "em_sport_kropp_konkurranse",
+    "subject_id": "sport",
+    "title": "Kropp, konkurranse og ritual",
+    "short_label": "Kropp & konkurranse",
+    "description": "Hvordan regler, trening, disiplin og konkurranse former kroppen og skaper felles ritualer rundt prestasjon og kamp.",
+    "keywords": [
+      "kropp",
+      "konkurranse",
+      "ritual",
+      "prestasjon",
+      "fair play"
+    ],
+    "dimensions": [
+      "kropp",
+      "kultur",
+      "psykologi"
+    ],
+    "core_concepts": [
+      "kropp",
+      "energi",
+      "prestasjon",
+      "ritual",
+      "regler",
+      "fellesskap",
+      "statistikk",
+      "symbolikk"
+    ],
+    "blindspots": [
+      "kroppspress, skader og utslitthet",
+      "økonomiske strukturer og korrupsjon",
+      "kjønn, klasse og ulik tilgang"
+    ],
+    "related_routes": [],
+    "related_places": [],
+    "related_quizzes": [],
+    "status": "core"
+  },
+  {
+    "emne_id": "em_sport_idrettsgeografi",
+    "subject_id": "sport",
+    "title": "Idrettens geografi i byen",
+    "short_label": "Idrettsgeografi",
+    "description": "Hvordan baner, stadioner, haller og uformelle lekeplasser skaper et kart av idrettsøyeblikk og hverdagsidrett.",
+    "keywords": [
+      "arenaer",
+      "baner",
+      "klubber",
+      "hverdagsidrett"
+    ],
+    "dimensions": [
+      "geografi",
+      "fellesskap",
+      "historie"
+    ],
+    "core_concepts": [
+      "fellesskap",
+      "symbolikk",
+      "ritual"
+    ],
+    "blindspots": [
+      "usynlig arbeid bak prestasjon (frivillige, foreldre)",
+      "hvem som ikke får tilgang til anlegg og utstyr"
+    ],
+    "related_routes": [],
+    "related_places": [],
+    "related_quizzes": [],
+    "status": "core"
+  }
+]
