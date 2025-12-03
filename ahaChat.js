@@ -48,6 +48,8 @@ function log(msg) {
   el.textContent += msg + "\n";
 }
 
+// ── Panel-hjelpere ──────────────────────────
+
 function getPanelEl() {
   return document.getElementById("panel");
 }
@@ -62,7 +64,7 @@ function renderDimChip(label, count) {
   return `<span class="dim-chip">${label} <span class="dim-chip-count">${count}</span></span>`;
 }
 
-// Hovedpanelet for ett tema
+// Visuelt panel for ett tema (brukes av "Vis innsikter")
 function renderTopicPanel(themeId, stats, sem, dims, insights) {
   const panel = getPanelEl();
   if (!panel) return;
@@ -179,6 +181,174 @@ function renderTopicPanel(themeId, stats, sem, dims, insights) {
       </div>`
           : ""
       }
+    </div>
+  `;
+}
+
+// Panel for "Tema-status"
+function renderStatusPanel(themeId, stats) {
+  const panel = getPanelEl();
+  if (!panel) return;
+
+  const phase = stats.user_phase || "ukjent";
+  const phaseLabelMap = {
+    utforskning: "Utforskning",
+    mønster: "Mønster",
+    press: "Press",
+    fastlåst: "Fastlåst",
+    integrasjon: "Integrasjon"
+  };
+  const phaseLabel = phaseLabelMap[phase] || phase;
+  const phaseClass = "phase-pill phase-" + phase;
+
+  const saturation = stats.insight_saturation || 0;
+  const density = stats.concept_density || 0;
+
+  panel.innerHTML = `
+    <div class="insight-panel">
+      <div class="insight-panel-header">
+        <div class="insight-panel-title">
+          Status for tema: <span class="theme-id">${themeId}</span>
+        </div>
+        <div class="${phaseClass}">${phaseLabel}</div>
+      </div>
+
+      <div class="panel-grid">
+        <div class="panel-card">
+          <div class="stat-label">Metningsgrad</div>
+          <div class="stat-value">${saturation} / 100</div>
+          <div class="bar">
+            <div class="bar-fill" style="width:${saturation}%;"></div>
+          </div>
+          <div class="stat-sub">
+            Innsikter: ${stats.insight_count}
+          </div>
+        </div>
+
+        <div class="panel-card">
+          <div class="stat-label">Begrepstetthet</div>
+          <div class="stat-value">${density} / 100</div>
+          <div class="bar">
+            <div class="bar-fill" style="width:${density}%;"></div>
+          </div>
+          <div class="stat-sub">
+            Foreslått form: ${stats.artifact_type}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// Panel for Meta-profil (globalt bilde)
+function renderMetaPanel(profile) {
+  const panel = getPanelEl();
+  if (!panel) return;
+
+  const g = profile.global || {
+    avg_saturation: 0,
+    pressure_index: 0,
+    negativity_index: 0,
+    stuck_topics: 0,
+    integration_topics: 0
+  };
+
+  const avgSat = Math.round(g.avg_saturation || 0);
+  const press = g.pressure_index || 0;
+  const negIdx = g.negativity_index || 0;
+
+  const phases = g.phases || {};
+
+  const topicsHtml =
+    profile.topics && profile.topics.length
+      ? profile.topics
+          .map((t) => {
+            const phase = t.stats.user_phase || "ukjent";
+            const phaseClass = "phase-pill phase-" + phase;
+            return `
+          <li>
+            <div class="insight-title">${t.theme_id}</div>
+            <div class="insight-meta">
+              Innsikter: ${t.stats.insight_count},
+              metning: ${t.stats.insight_saturation}/100,
+              tetthet: ${t.stats.concept_density}/100
+            </div>
+            <div class="${phaseClass}" style="margin-top:4px; display:inline-block;">
+              ${phase}
+            </div>
+          </li>
+        `;
+          })
+          .join("")
+      : "<li>Ingen tema ennå.</li>";
+
+  const patternsHtml =
+    profile.patterns && profile.patterns.length
+      ? profile.patterns
+          .map(
+            (p) => `
+        <li>
+          <div class="insight-title">${p.description}</div>
+          <div class="insight-meta">Tema: ${p.themes.join(", ")}</div>
+        </li>
+      `
+          )
+          .join("")
+      : "<li>Ingen tydelige kryss-tema-mønstre ennå.</li>";
+
+  panel.innerHTML = `
+    <div class="insight-panel">
+      <div class="insight-panel-header">
+        <div class="insight-panel-title">
+          Meta-profil for <span class="theme-id">${profile.subject_id}</span>
+        </div>
+      </div>
+
+      <div class="panel-grid">
+        <div class="panel-card">
+          <div class="stat-label">Metning (globalt)</div>
+          <div class="stat-value">${avgSat} / 100</div>
+          <div class="bar">
+            <div class="bar-fill" style="width:${avgSat}%;"></div>
+          </div>
+          <div class="stat-sub">
+            Fastlåste tema: ${g.stuck_topics || 0},
+            integrasjons-tema: ${g.integration_topics || 0}
+          </div>
+        </div>
+
+        <div class="panel-card">
+          <div class="stat-label">Trykk & stemning</div>
+          <div class="stat-sub">
+            Press-indeks (krav/hindring vs mulighet): ${press.toFixed(2)}
+          </div>
+          <div class="stat-sub">
+            Negativitetsindeks (andel negativ valens): ${negIdx.toFixed(2)}
+          </div>
+          <div class="stat-sub" style="margin-top:4px;">
+            Faser:
+            utforskning: ${phases.utforskning || 0},
+            mønster: ${phases.mønster || 0},
+            press: ${phases.press || 0},
+            fastlåst: ${phases.fastlåst || 0},
+            integrasjon: ${phases.integrasjon || 0}
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-card panel-card-full">
+        <div class="stat-label">Temaer</div>
+        <ul class="insight-list">
+          ${topicsHtml}
+        </ul>
+      </div>
+
+      <div class="panel-card panel-card-full">
+        <div class="stat-label">Kryss-tema-mønstre</div>
+        <ul class="insight-list">
+          ${patternsHtml}
+        </ul>
+      </div>
     </div>
   `;
 }
@@ -303,6 +473,7 @@ function buildTopicSummary(chamber, themeId) {
   }
 
   // 6) Konklusjon / meta-insikt
+  const freqAlltid = sem.frequency.alltid;
   if (freqOfteAlltid > 0 && neg > 0) {
     lines.push(
       "Samlet sett beskriver du et mønster som både skjer ofte og oppleves som krevende – " +
@@ -317,10 +488,13 @@ function buildTopicSummary(chamber, themeId) {
   return lines.join("\n");
 }
 
+// ── Narrativ innsikt ─────────────────────────
+
 function showNarrativeForCurrentTopic() {
   const chamber = loadChamberFromStorage();
   const themeId = getCurrentThemeId();
   clearOutput();
+  clearPanel();
 
   const txt = InsightsEngine.createNarrativeForTopic(
     chamber,
@@ -329,6 +503,8 @@ function showNarrativeForCurrentTopic() {
   );
   log(txt);
 }
+
+// ── Innsikter pr tema ────────────────────────
 
 function showInsightsForCurrentTopic() {
   const chamber = loadChamberFromStorage();
@@ -355,10 +531,10 @@ function showInsightsForCurrentTopic() {
   const sem = InsightsEngine.computeSemanticCounts(insights);
   const dims = InsightsEngine.computeDimensionsSummary(insights);
 
-  // 1) Vis pent panel
+  // Panel-visning
   renderTopicPanel(themeId, stats, sem, dims, insights);
 
-  // 2) Behold enkel tekstliste + meta-sammendrag i loggen som "debug"
+  // Tekstlig liste + meta-sammendrag
   log("Innsikter for temaet: " + themeId);
   insights.forEach((ins, idx) => {
     const semLocal = ins.semantic || {};
@@ -382,6 +558,8 @@ function showInsightsForCurrentTopic() {
   log(summary);
 }
 
+// ── Tema-status ──────────────────────────────
+
 function showTopicStatus() {
   const chamber = loadChamberFromStorage();
   const themeId = getCurrentThemeId();
@@ -392,6 +570,10 @@ function showTopicStatus() {
   );
 
   clearOutput();
+  clearPanel();
+
+  renderStatusPanel(themeId, stats);
+
   log("Status for tema " + themeId + ":");
   log("- Innsikter: " + stats.insight_count);
   log("- Innsiktsmetningsgrad: " + stats.insight_saturation + "/100");
@@ -401,6 +583,8 @@ function showTopicStatus() {
   }
   log("→ Foreslått form: " + stats.artifact_type);
 }
+
+// ── Syntese / sti / semantikk / auto-artefakt ─────────
 
 function showSynthesisForCurrentTopic() {
   const chamber = loadChamberFromStorage();
@@ -415,6 +599,7 @@ function showSynthesisForCurrentTopic() {
     themeId
   );
   clearOutput();
+  clearPanel();
   log(txt);
 }
 
@@ -429,6 +614,7 @@ function showPathForCurrentTopic() {
 
   const steps = InsightsEngine.createPathSteps(insights, 5);
   clearOutput();
+  clearPanel();
   log("Foreslått sti for temaet " + themeId + ":");
   steps.forEach((s) => log(s));
 }
@@ -443,6 +629,7 @@ function showSemanticSummaryForCurrentTopic() {
   );
 
   clearOutput();
+  clearPanel();
 
   if (insights.length === 0) {
     log("Ingen innsikter å oppsummere ennå for tema: " + themeId);
@@ -503,6 +690,7 @@ function showAutoArtifactForCurrentTopic() {
   );
 
   clearOutput();
+  clearPanel();
 
   if (insights.length === 0) {
     log("Ingen innsikter ennå – ingen artefakt å vise for tema: " + themeId);
@@ -541,7 +729,7 @@ function showAutoArtifactForCurrentTopic() {
   }
 }
 
-// ── AHA-agent – samme logikk, bare med motor ─
+// ── AHA-agent ────────────────────────────────
 
 function suggestNextActionForCurrentTopic() {
   const chamber = loadChamberFromStorage();
@@ -553,6 +741,7 @@ function suggestNextActionForCurrentTopic() {
   );
 
   clearOutput();
+  clearPanel();
 
   if (insights.length === 0) {
     log(
@@ -649,7 +838,7 @@ function suggestNextActionForCurrentTopic() {
   } else {
     if (stats.concept_density >= 60) {
       log(
-        "- Temaet er ganske mettet og begrepstett. Neste steg er egentlig å skrive dette ut som en kort tekst " +
+        "- Temaet er ganske mettet og begrepstettt. Neste steg er egentlig å skrive dette ut som en kort tekst " +
           "eller artikkel: Hva har du lært om deg selv her, og hvilke prinsipper tar du med deg videre?"
       );
     } else {
@@ -687,6 +876,7 @@ function showDimensionSummaryForCurrentTopic() {
   );
 
   clearOutput();
+  clearPanel();
 
   if (insights.length === 0) {
     log(
@@ -705,7 +895,7 @@ function showDimensionSummaryForCurrentTopic() {
   });
 }
 
-// ── Dialektikk (teser/kontrateser/syntese) ───
+// ── Dialektikk ───────────────────────────────
 
 function showDialecticViewForCurrentTopic() {
   const chamber = loadChamberFromStorage();
@@ -717,6 +907,7 @@ function showDialecticViewForCurrentTopic() {
   );
 
   clearOutput();
+  clearPanel();
 
   if (insights.length === 0) {
     log(
@@ -811,6 +1002,7 @@ function showAllTopicsOverview() {
   );
 
   clearOutput();
+  clearPanel();
 
   if (overview.length === 0) {
     log("Ingen innsikter lagret ennå – ingen tema å vise.");
@@ -839,6 +1031,7 @@ function showAllTopicsOverview() {
 function exportChamberJson() {
   const chamber = loadChamberFromStorage();
   clearOutput();
+  clearPanel();
   log("Eksport av innsiktskammer (JSON):");
   log(JSON.stringify(chamber, null, 2));
 }
@@ -849,6 +1042,7 @@ function showMetaProfileForUser() {
   const chamber = loadChamberFromStorage();
 
   clearOutput();
+  clearPanel();
 
   if (typeof MetaInsightsEngine === "undefined") {
     log("MetaInsightsEngine er ikke lastet. Sjekk at metaInsightsEngine.js er inkludert i index.html.");
@@ -865,11 +1059,12 @@ function showMetaProfileForUser() {
     return;
   }
 
-  log("META-PROFIL for " + SUBJECT_ID + ":\n");
+  // Panelvisning
+  renderMetaPanel(profile);
 
-  // Globalt bilde
+  // Enkel tekstlig oppsummering
   const g = profile.global;
-  log("GLOBALT BILDE:");
+  log("META-PROFIL for " + SUBJECT_ID + ":\n");
   log(
     "- Gjennomsnittlig metning på tvers av tema: " +
       Math.round(g.avg_saturation) +
@@ -890,7 +1085,6 @@ function showMetaProfileForUser() {
       g.integration_topics
   );
 
-  // Mønstre på tvers
   if (profile.patterns && profile.patterns.length > 0) {
     log("\nMØNSTRE PÅ TVERS AV TEMA:");
     profile.patterns.forEach((p) => {
@@ -905,27 +1099,6 @@ function showMetaProfileForUser() {
   } else {
     log("\nIngen tydelige kryss-tema-mønstre oppdaget ennå.");
   }
-
-  // Litt temaoversikt m/fase
-  if (profile.topics && profile.topics.length > 0) {
-    log("\nTEMAER I PROFILEN:");
-    profile.topics.forEach((t) => {
-      log(
-        "- " +
-          t.theme_id +
-          ": " +
-          t.stats.insight_count +
-          " innsikter, metning " +
-          t.stats.insight_saturation +
-          "/100, fase: " +
-          (t.stats.user_phase || "ukjent")
-      );
-    });
-  }
-
-  // (Hvis du vil debugge alt, kan du åpne JSON også:)
-  // log("\nRÅPROFIL (JSON):");
-  // log(JSON.stringify(profile, null, 2));
 }
 
 // ── Setup ────────────────────────────────────
@@ -984,10 +1157,12 @@ function setupUI() {
   btnReset.addEventListener("click", () => {
     localStorage.removeItem(STORAGE_KEY);
     clearOutput();
+    clearPanel();
     log("Innsiktskammer nullstilt (alle tema slettet).");
   });
 
   clearOutput();
+  clearPanel();
   log(
     "AHA Chat – Innsiktsmotor V1 + Metamotor klar. Velg tema-id, skriv en tanke og trykk «Send»."
   );
