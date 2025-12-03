@@ -1215,53 +1215,6 @@ function buildAIStateForTheme(themeId) {
   };
 }
 
-// ── Vis svar fra AHA-AI i loggen ───────────────
-
-function renderAHAAgentResponse(res) {
-  clearOutput();
-
-  if (!res) {
-    log("AHA-AI: Fikk ikke noe svar.");
-    return;
-  }
-
-  log("AHA-AI for tema " + (res.theme_id || getCurrentThemeId()) + ":");
-  log("");
-
-  if (res.summary) {
-    log("SAMMENDRAG:");
-    log(res.summary);
-    log("");
-  }
-
-  if (Array.isArray(res.what_i_see) && res.what_i_see.length > 0) {
-    log("DET JEG SER:");
-    res.what_i_see.forEach((line, idx) => {
-      log("  " + (idx + 1) + ". " + line);
-    });
-    log("");
-  }
-
-  if (Array.isArray(res.next_steps) && res.next_steps.length > 0) {
-    log("NESTE STEG:");
-    res.next_steps.forEach((line, idx) => {
-      log("  " + (idx + 1) + ". " + line);
-    });
-    log("");
-  }
-
-  if (res.one_question) {
-    log("SPØRSMÅL TIL DEG:");
-    log(res.one_question);
-    log("");
-  }
-
-  if (res.tone) {
-    log("(Tone: " + res.tone + ")");
-  }
-}
-
-
 
 
 
