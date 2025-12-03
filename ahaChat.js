@@ -1280,13 +1280,11 @@ async function callAHAAgentForCurrentTopic() {
   try {
     // ⚠️ Her antar vi at du har / lager et backend-endepunkt
     // som kaller en modell (OpenAI el.l.) med dette state-objektet.
-    const res = await fetch("/api/aha-agent", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(state),
-    });
+    const res = await fetch("http://localhost:3001/api/aha-agent", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(state),
+});
 
     if (!res.ok) {
       throw new Error("HTTP " + res.status + " " + res.statusText);
