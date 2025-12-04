@@ -1226,12 +1226,13 @@ function showMetaProfileForUser() {
   }
 }
 
-// ─────────────────────────────────────────────────────────
-// IMPORT FROM HISTORY GO → AHA
-// ─────────────────────────────────────────────────────────
+// ── Import fra History Go (delt localStorage) ─────────────────
 
+// Tar inn payload fra History Go og lager signaler i AHA-kammeret
 function importHistoryGoData(payload) {
-  let chamber = loadChamberFromStorage();
+  if (!payload) return;
+
+  const chamber = loadChamberFromStorage();
   const subjectId = "sub_historygo";
 
   const notes = Array.isArray(payload.notes) ? payload.notes : [];
@@ -1239,51 +1240,61 @@ function importHistoryGoData(payload) {
 
   // 1) Notater → signaler
   notes.forEach((n) => {
-    if (!n || !n.text) return;
-    const themeId = n.categoryId || "ukjent";
+    if (!n.text) return;
+    const themeId = n.categoryId || n.category || "ukjent";
 
-    const signal = InsightsEngine.createSignalFromMessage(
+    const sig = InsightsEngine.createSignalFromMessage(
       n.text,
       subjectId,
       themeId
     );
-
-    signal.source = "historygo_note";
-    signal.meta = {
-      personId: n.personId || null,
-      placeId: n.placeId || null,
-      type: n.type || "note",
-      createdAt:
-        n.createdAt || payload.exported_at || new Date().toISOString(),
-    };
-
-    chamber = InsightsEngine.addSignalToChamber(chamber, signal);
+    // Overstyr timestamp hvis vi har noe bedre
+    sig.timestamp = n.createdAt || payload.exported_at || sig.timestamp;
+    InsightsEngine.addSignalToChamber(chamber, sig);
   });
 
-  // 2) Dialoger → brukerturns → signaler
+  // 2) Dialoger → bare bruker-tekst inn
   dialogs.forEach((dlg) => {
-    if (!dlg || !dlg.text) return;
     const themeId = dlg.categoryId || "ukjent";
 
-    const signal = InsightsEngine.createSignalFromMessage(
-      dlg.text,
-      subjectId,
-      themeId
-    );
-
-    signal.source = "historygo_dialog";
-    signal.meta = {
-      personId: dlg.personId || null,
-      createdAt:
-        dlg.createdAt || payload.exported_at || new Date().toISOString(),
-    };
-
-    chamber = InsightsEngine.addSignalToChamber(chamber, signal);
+    (dlg.turns || [])
+      .filter((t) => t.from === "user" && t.text)
+      .forEach((t) => {
+        const sig = InsightsEngine.createSignalFromMessage(
+          t.text,
+          subjectId,
+          themeId
+        );
+        sig.timestamp = dlg.created_at || payload.exported_at || sig.timestamp;
+        InsightsEngine.addSignalToChamber(chamber, sig);
+      });
   });
 
   saveChamberToStorage(chamber);
 }
 
+// Leser buffer fra lokalStorage og kaller importHistoryGoData
+function importHistoryGoDataFromSharedStorage() {
+  clearOutput();
+  const raw = localStorage.getItem("aha_import_payload_v1");
+  if (!raw) {
+    log(
+      "Fant ingen History Go-data å importere (aha_import_payload_v1 er tom)."
+    );
+    return;
+  }
+
+  try {
+    const payload = JSON.parse(raw);
+    importHistoryGoData(payload);
+    log("Importerte History Go-data fra lokal storage.");
+    if (payload.exported_at) {
+      log("Eksportert fra History Go: " + payload.exported_at);
+    }
+  } catch (e) {
+    log("Klarte ikke å lese History Go-data: " + e.message);
+  }
+}
 
 // ── Vis svar fra AHA-AI i panelet / loggen ───────────────
 
@@ -1386,6 +1397,7 @@ function setupUI() {
   const btnNarr = document.getElementById("btn-narrative");
   const btnMeta = document.getElementById("btn-meta");
   const btnAI = document.getElementById("btn-ai"); // NY
+    const btnImportHG = document.getElementById("btn-import-hg");
   // ...
 
   btnSend.addEventListener("click", () => {
@@ -1414,7 +1426,7 @@ function setupUI() {
   btnAgent.addEventListener("click", suggestNextActionForCurrentTopic);
   btnDim.addEventListener("click", showDimensionSummaryForCurrentTopic);
   btnDial.addEventListener("click", showDialecticViewForCurrentTopic);
-  btnTopics.addEventListener("click", showAllTopicsOverview);
+    btnTopics.addEventListener("click", showAllTopicsOverview);
   btnExport.addEventListener("click", exportChamberJson);
   btnNarr.addEventListener("click", showNarrativeForCurrentTopic);
 
@@ -1423,6 +1435,9 @@ function setupUI() {
   }
   if (btnAI) {
     btnAI.addEventListener("click", callAHAAgentForCurrentTopic);
+  }
+  if (btnImportHG) {
+    btnImportHG.addEventListener("click", importHistoryGoDataFromSharedStorage);
   }
 
   btnReset.addEventListener("click", () => {
