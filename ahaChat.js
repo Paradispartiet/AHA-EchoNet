@@ -1226,6 +1226,62 @@ function showMetaProfileForUser() {
   }
 }
 
+// ─────────────────────────────────────────────────────────
+// IMPORT FROM HISTORY GO → AHA
+// ─────────────────────────────────────────────────────────
+
+function importHistoryGoData(payload) {
+  let chamber = loadChamberFromStorage();
+  const subjectId = "sub_historygo";
+
+  const notes = Array.isArray(payload.notes) ? payload.notes : [];
+  const dialogs = Array.isArray(payload.dialogs) ? payload.dialogs : [];
+
+  // Notater → signaler
+  notes.forEach((n) => {
+    if (!n || !n.text) return;
+    const themeId = n.categoryId || "ukjent";
+
+    const signal = InsightsEngine.createSignalFromMessage(
+      n.text,
+      subjectId,
+      themeId
+    );
+
+    signal.source = "historygo_note";
+    signal.meta = {
+      personId: n.personId || null,
+      placeId: n.placeId || null,
+      type: n.type || "note",
+      createdAt: n.createdAt || payload.exported_at || new Date().toISOString()
+    };
+
+    chamber = InsightsEngine.addSignalToChamber(chamber, signal);
+  });
+
+  // Dialoger → brukerturns → signaler
+  dialogs.forEach((dlg) => {
+    if (!dlg || !dlg.text) return;
+    const themeId = dlg.categoryId || "ukjent";
+
+    const signal = InsightsEngine.createSignalFromMessage(
+      dlg.text,
+      subjectId,
+      themeId
+    );
+
+    signal.source = "historygo_dialog";
+    signal.meta = {
+      personId: dlg.personId || null,
+      createdAt: dlg.createdAt || payload.exported_at || new Date().toISOString()
+    };
+
+    chamber = InsightsEngine.addSignalToChamber(chamber, signal);
+  });
+
+  saveChamberToStorage(chamber);
+}
+
 // ── Vis svar fra AHA-AI i panelet / loggen ───────────────
 
 function renderAHAAgentResponse(res) {
