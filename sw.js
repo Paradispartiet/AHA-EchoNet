@@ -1,39 +1,18 @@
 // sw.js
-// Service worker for AHA Chat – offline + cache av app-shell + emne-filer
+// Enkel service worker for AHA Chat – offline + cache av app-shell
+// NY: blander oss ikke inn i API-kall / andre domener
 
-// ⚠️ Husk å bump'e versjonen når du endrer ASSETS
-const CACHE_NAME = "aha-chat-v1.0.0.112";
+const CACHE_NAME = "aha-chat-v1.0.0.200";
 
 // Justér stier hvis nettstedet ligger i en undermappe
 const ASSETS = [
   "/",                 // forsiden (på GitHub Pages user-site)
   "/index.html",
   "/aha-chat.css",
-
-  // Motorer
   "/insightsChamber.js",
   "/metaInsightsEngine.js",
-
-  // Emne-motor
-  "/emnerLoader.js",
-  "/ahaEmneMatcher.js",
-
-  // Felt-profiler
   "/ahaFieldProfiles.js",
-
-  // UI / glue
-  "/ahaChat.js",
-
-  // Emne-JSON (for offline emner per fag)
-  "/emner/emner_historie.json",
-  "/emner/emner_by.json",
-  "/emner/emner_kunst.json",
-  "/emner/emner_musikk.json",
-  "/emner/emner_natur.json",
-  "/emner/emner_vitenskap.json",
-  "/emner/emner_litteratur.json",
-  "/emner/emner_popkultur.json",
-  "/emner/emner_naeringsliv.json"
+  "/ahaChat.js"
 ];
 
 // Install – cache grunnfilene
@@ -60,8 +39,21 @@ self.addEventListener("activate", (event) => {
   );
 });
 
-// Fetch – prøv cache først, deretter nettverk + legg i cache
+// Fetch – cache bare samme origin, aldri API-kall
 self.addEventListener("fetch", (event) => {
+  const url = new URL(event.request.url);
+
+  // 1) Ikke rør API-kall til /api/aha-agent (de skal rett til backend)
+  if (url.pathname.startsWith("/api/aha-agent")) {
+    return; // lar request gå rett til nettverket
+  }
+
+  // 2) Ikke rør cross-origin (f.eks. Codespaces-backend på annen port/host)
+  if (url.origin !== self.location.origin) {
+    return;
+  }
+
+  // Vanlig app-shell caching for egne filer
   event.respondWith(
     caches.match(event.request).then((cached) => {
       if (cached) {
@@ -74,7 +66,6 @@ self.addEventListener("fetch", (event) => {
           caches.open(CACHE_NAME).then((cache) => {
             cache.put(event.request, clone);
           });
-
           return response;
         })
         .catch(() => {
