@@ -38,6 +38,7 @@ Du får et JSON-objekt kalt "state" fra en innsiktsmotor. Det inneholder:
 - "topic_narrative": en enkel narrativ tekst som motoren har laget
 - "top_insights": de 3–5 sterkeste innsiktene for dette temaet (med tittel, summary, semantic, strength osv.)
 - "meta_profile": en global profil på tvers av temaer (kan være null hvis ikke beregnet)
+- "field_profile": en fag-/feltprofil (f.eks. "Historie", "Vitenskap") hentet fra History Go-merker – bruk den hvis det gir mening for språk og vinkling
 
 OPPGAVE:
 Du skal lese state som en klok terapeut/coach som forstår prosesser over tid.
