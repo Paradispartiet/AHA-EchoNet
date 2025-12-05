@@ -11,11 +11,8 @@
 <body>
   <h1>AHA Chat – Innsiktsmotor V1 + Meta</h1>
 
-   <!-- Tema-valg -->
-  <div class="row">
-    <label for="theme-id">Tema-ID (theme_id)</label>
-    <input id="theme-id" type="text" placeholder="th_motstand_prokrastinering" />
-  </div>
+     <!-- Tema-ID (theme_id) – AVANSERT, SKJULT FOR BRUKER -->
+  <input id="theme-id" type="hidden" value="th_default" />
 
   <!-- Felt / fag-linse (subject_id) -->
   <div class="row">
@@ -34,18 +31,20 @@
     </select>
   </div>
 
-  <!-- NY: Tema-velger basert på faktiske tema i kammeret -->
+  <!-- (FJERNET) Tema-velger basert på faktiske tema i kammeret -->
+  <!--
   <div class="row">
     <label for="theme-picker">Velg eksisterende tema</label>
     <select id="theme-picker" size="6">
       <option value="">(ingen tema ennå)</option>
     </select>
   </div>
+  -->
 
   <!-- Chat-input + Send-knapp -->
   <div class="row">
     <label for="msg">Skriv til AHA (chat-melding):</label>
-    <textarea id="msg" placeholder="Skriv om noe du vil forstå bedre …"></textarea>
+    <textarea id="msg" placeholder="Skriv et notat / innsikt …"></textarea>
     <button id="btn-send">Send</button>
   </div>
 
@@ -54,6 +53,18 @@
     <label>Chat-logg</label>
     <div id="chat-log" class="chat-log"></div>
   </div>
+
+  <!-- Emnekatalog – bruk eksisterende emner_filer -->
+  <div class="row">
+    <label>Emnekatalog (felt + emner)</label>
+    <div id="emne-panel" class="emne-panel">
+      <div id="emne-fields" class="emne-fields"></div>
+      <div id="emne-list" class="emne-list"></div>
+    </div>
+  </div>
+  
+  <!-- Innsikts-panel (motor-visning) -->
+  <div class="buttons">
 
   <!-- Innsikts-panel (motor-visning) -->
   <div class="buttons">
