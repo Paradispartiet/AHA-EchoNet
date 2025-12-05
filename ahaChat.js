@@ -133,6 +133,68 @@ function log(msg) {
   el.textContent += msg + "\n";
 }
 
+function getFieldProfileForTheme(themeId) {
+  if (typeof HG_FIELD_PROFILES === "undefined") return null;
+  return HG_FIELD_PROFILES[themeId] || null;
+}
+
+function buildAIStateForTheme(themeId) {
+  const chamber = loadChamberFromStorage();
+
+  const insights = InsightsEngine.getInsightsForTopic(
+    chamber,
+    SUBJECT_ID,
+    themeId
+  );
+  const stats = InsightsEngine.computeTopicStats(
+    chamber,
+    SUBJECT_ID,
+    themeId
+  );
+  const sem = InsightsEngine.computeSemanticCounts(insights);
+  const dims = InsightsEngine.computeDimensionsSummary(insights);
+  const narrative = InsightsEngine.createNarrativeForTopic(
+    chamber,
+    SUBJECT_ID,
+    themeId
+  );
+
+  let metaProfile = null;
+  if (typeof MetaInsightsEngine !== "undefined") {
+    try {
+      metaProfile = MetaInsightsEngine.buildUserMetaProfile(
+        chamber,
+        SUBJECT_ID
+      );
+    } catch (e) {
+      console.warn("MetaInsightsEngine feilet:", e);
+    }
+  }
+
+  const topInsights = (insights || [])
+    .slice()
+    .sort(
+      (a, b) =>
+        (b.strength?.total_score || 0) -
+        (a.strength?.total_score || 0)
+    )
+    .slice(0, 5);
+
+  const fieldProfile = getFieldProfileForTheme(themeId);
+
+  return {
+    user_id: SUBJECT_ID,
+    theme_id: themeId,
+    topic_stats: stats,
+    topic_semantics: sem,
+    topic_dimensions: dims,
+    topic_narrative: narrative,
+    top_insights: topInsights,
+    meta_profile: metaProfile,
+    field_profile: fieldProfile   // 👈 nytt: hele merket/feltet
+  };
+}
+
 // ── Panel-hjelpere ──────────────────────────
 
 function getPanelEl() {
