@@ -885,145 +885,127 @@ function createInsightFromSignal(signal) {
 
   // ── Begrepsmotor: enkle "concepts" per innsikt ─────────────
 
-/**
- * Normaliserer et ord til et konsept-key:
- *  - lower-case
- *  - fjerner enkle endelser: -ene, -ene, -ene, -er, -en, -et
- *  - fjerner punktuasjon i kantene
- */
-function normalizeConceptToken(token) {
-  if (!token) return "";
-  let t = token.toLowerCase();
+  // ── Begrepsanalyse per innsikt (fasit) ─────────────
 
-  // fjern enkel punktuasjon i kantene
-  t = t.replace(/^[.,;:!?()"«»]+/, "").replace(/[.,;:!?()"«»]+$/, "");
+  // Normaliserer et ord til et konsept-key:
+  //  - lower-case
+  //  - fjerner støy / tegn
+  //  - fjerner noen vanlige norske endelser: -ene, -er, -en, -et, -a
+  function normalizeConceptToken(token) {
+    if (!token) return "";
 
-  if (t.length <= 2) return "";
+    // 1) lower-case + trim
+    let t = token.toLowerCase().trim();
 
-  // veldig enkel norsk-ish "stemming"
-  const endings = ["ene", "ene", "ene", "ene", "ene"]; // placeholder, keep list small
-  // realistisk liste:
-  const simpleEndings = ["ene", "ene", "ene"]; // men vi bruker litt enklere under
-  // vi gjør en konkret og forsiktig variant:
-  if (t.endsWith("ene") && t.length > 5) t = t.slice(0, -3);
-  else if (t.endsWith("ene") && t.length > 5) t = t.slice(0, -3);
-  else if (t.endsWith("ene") && t.length > 5) t = t.slice(0, -3);
+    // 2) fjern enkel punktuasjon i kantene
+    t = t
+      .replace(/^[\s.,;:!?()[\]"'«»]+/, "")
+      .replace(/[\s.,;:!?()[\]"'«»]+$/, "");
 
-  if (t.endsWith("ene") && t.length > 5) t = t.slice(0, -3);
-  if (t.endsWith("ene") && t.length > 5) t = t.slice(0, -3);
+    // 3) fjern rare tegn inni (men behold æøå og tall)
+    t = t.replace(/[^a-zæøå0-9]/g, "");
 
-  // faktiske enkle endelser:
-  if (t.endsWith("ene") && t.length > 5) t = t.slice(0, -3);
-  if (t.endsWith("ene") && t.length > 5) t = t.slice(0, -3);
+    // 4) veldig korte ting og bare tall er uinteressant som begrep
+    if (t.length <= 2) return "";
+    if (/^\d+$/.test(t)) return "";
 
-  // ok, ryddig versjon:
-  if (t.endsWith("ene") && t.length > 5) t = t.slice(0, -3);
-  else if (t.endsWith("ene") && t.length > 5) t = t.slice(0, -3);
+    // 5) enkel "stemming" for norsk-ish substantiv/verbformer
 
-  // for å ikke bli helt bananas – la oss bruke EN ryddig variant:
-  // (juster gjerne senere hvis du vil være strikt)
-  if (t.endsWith("ene") && t.length > 5) t = t.slice(0, -3);
-  if (t.endsWith("ene") && t.length > 5) t = t.slice(0, -3);
-  // og enkle bestemte/bestemte endelser:
-  if (t.endsWith("ene") && t.length > 5) t = t.slice(0, -3);
-
-  // mer realistisk og kort:
-  if (t.endsWith("ene") && t.length > 5) t = t.slice(0, -3);
-  if (t.endsWith("ene") && t.length > 5) t = t.slice(0, -3);
-
-  // for å ikke miste deg helt: la oss lage en enkel, ren versjon:
-
-  // *** REN & ENKEL VERSJON (den som faktisk brukes) ***
-  t = token.toLowerCase()
-    .replace(/^[.,;:!?()"«»]+/, "")
-    .replace(/[.,;:!?()"«»]+$/, "");
-
-  if (t.length <= 2) return "";
-  if (t.endsWith("ene") && t.length > 5) t = t.slice(0, -3);
-  else if (t.endsWith("ene") && t.length > 5) t = t.slice(0, -3);
-  else if (t.endsWith("ene") && t.length > 5) t = t.slice(0, -3);
-
-  if (t.endsWith("er") && t.length > 4) t = t.slice(0, -2);
-  if (t.endsWith("en") && t.length > 4) t = t.slice(0, -2);
-  if (t.endsWith("et") && t.length > 4) t = t.slice(0, -2);
-
-  return t;
-}
-
-/**
- * Tar inn tekst og returnerer en liste med konsepter:
- *  [{ key, count, examples: [ "...", ... ] }]
- */
-function extractConcepts(text) {
-  if (!text || typeof text !== "string") return [];
-
-  const tokens = filterStopwords(tokenize(text));
-  const map = Object.create(null);
-
-  tokens.forEach((raw) => {
-    const key = normalizeConceptToken(raw);
-    if (!key) return;
-
-    if (!map[key]) {
-      map[key] = {
-        key,
-        count: 0,
-        examples: [],
-      };
+    // flertall/bestemt flertall: -ene, -ende
+    if (t.length > 5 && /(ene|ende)$/i.test(t)) {
+      t = t.replace(/(ene|ende)$/i, "");
+    }
+    // kortere endelser: -ene, -er, -en, -et, -ane
+    else if (t.length > 4 && /(ene|er|en|et|ane)$/i.test(t)) {
+      t = t.replace(/(ene|er|en|et|ane)$/i, "");
     }
 
-    map[key].count += 1;
-    // lagre noen få eksempler på originalordet
-    if (map[key].examples.length < 3 && raw) {
-      map[key].examples.push(raw);
+    // bestemt form på -a (jenta, boka) – grovt, men ofte nyttig
+    if (t.length > 4 && /a$/i.test(t)) {
+      t = t.slice(0, -1);
     }
-  });
 
-  return Object.values(map);
-}
+    if (t.length <= 2) return "";
 
-/**
- * Slår sammen to concept-lister:
- *  - summerer count
- *  - beholder maks 5 eksempler per key
- */
-function mergeConcepts(existing, incoming) {
-  const map = Object.create(null);
+    return t;
+  }
 
-  (existing || []).forEach((c) => {
-    if (!c || !c.key) return;
-    map[c.key] = {
-      key: c.key,
-      count: c.count || 0,
-      examples: Array.isArray(c.examples) ? c.examples.slice(0, 5) : [],
-    };
-  });
+  // Tar inn tekst og returnerer en liste med konsepter:
+  //  [{ key, count, examples: ["..."] }]
+  function extractConcepts(text) {
+    if (!text || typeof text !== "string") return [];
 
-  (incoming || []).forEach((c) => {
-    if (!c || !c.key) return;
-    if (!map[c.key]) {
-      map[c.key] = {
+    const tokens = filterStopwords(tokenize(text));
+    if (!tokens.length) return [];
+
+    const conceptMap = new Map();
+
+    for (const raw of tokens) {
+      const key = normalizeConceptToken(raw);
+      if (!key || key.length < 3) continue;
+
+      let entry = conceptMap.get(key);
+      if (!entry) {
+        entry = { key, count: 0, examples: [] };
+        conceptMap.set(key, entry);
+      }
+
+      entry.count += 1;
+
+      if (
+        entry.examples.length < 5 &&
+        !entry.examples.includes(raw)
+      ) {
+        entry.examples.push(raw);
+      }
+    }
+
+    return Array.from(conceptMap.values()).sort(
+      (a, b) => b.count - a.count
+    );
+  }
+
+  // Slår sammen to concept-lister:
+  //  - summerer count
+  //  - beholder maks 5 eksempler per key
+  function mergeConcepts(existing, incoming) {
+    const map = new Map();
+
+    (existing || []).forEach((c) => {
+      if (!c || !c.key) return;
+      map.set(c.key, {
         key: c.key,
-        count: 0,
-        examples: [],
-      };
-    }
-    map[c.key].count += c.count || 0 || 1;
-    if (Array.isArray(c.examples)) {
-      c.examples.forEach((ex) => {
+        count: c.count || 0,
+        examples: Array.isArray(c.examples)
+          ? [...c.examples]
+          : [],
+      });
+    });
+
+    (incoming || []).forEach((c) => {
+      if (!c || !c.key) return;
+      let current = map.get(c.key);
+      if (!current) {
+        current = { key: c.key, count: 0, examples: [] };
+        map.set(c.key, current);
+      }
+      current.count += c.count || 0;
+
+      (c.examples || []).forEach((ex) => {
         if (
           ex &&
-          map[c.key].examples.length < 5 &&
-          !map[c.key].examples.includes(ex)
+          current.examples.length < 5 &&
+          !current.examples.includes(ex)
         ) {
-          map[c.key].examples.push(ex);
+          current.examples.push(ex);
         }
       });
-    }
-  });
+    });
 
-  return Object.values(map);
-}
+    return Array.from(map.values()).sort(
+      (a, b) => b.count - a.count
+    );
+  }
 
   // ── Hjelpere for semiotikk ─────────────────────
 
@@ -1096,81 +1078,6 @@ function mergeConcepts(existing, incoming) {
       markers,
       domains,
     };
-  }
-  
-  // ── Begrepsanalyse per innsikt ─────────────
-
-  function normalizeConceptToken(token) {
-    // Veldig enkel normalisering: små bokstaver, fjern "støy" og noen vanlige endelser
-    let t = token.toLowerCase().replace(/[^a-zæøå0-9]/gi, "");
-    if (t.length <= 3) return "";
-    t = t.replace(/(ene|ene|ene|ene|ene|ene)$/i, "");
-    t = t.replace(/(ene|ene|er|en|et)$/i, "");
-    return t;
-  }
-
-  function extractConcepts(text) {
-    const tokens = filterStopwords(tokenize(text));
-    if (!tokens.length) return [];
-
-    const conceptMap = new Map();
-
-    for (const raw of tokens) {
-      const key = normalizeConceptToken(raw);
-      if (!key || key.length < 3) continue;
-
-      let entry = conceptMap.get(key);
-      if (!entry) {
-        entry = { key, count: 0, examples: [] };
-        conceptMap.set(key, entry);
-      }
-
-      entry.count += 1;
-      if (
-        entry.examples.length < 5 &&
-        !entry.examples.includes(raw)
-      ) {
-        entry.examples.push(raw);
-      }
-    }
-
-    return Array.from(conceptMap.values());
-  }
-
-  function mergeConcepts(existing, incoming) {
-    const map = new Map();
-
-    (existing || []).forEach((c) => {
-      map.set(c.key, {
-        key: c.key,
-        count: c.count || 0,
-        examples: Array.isArray(c.examples)
-          ? [...c.examples]
-          : [],
-      });
-    });
-
-    (incoming || []).forEach((c) => {
-      if (!c || !c.key) return;
-      let current = map.get(c.key);
-      if (!current) {
-        current = { key: c.key, count: 0, examples: [] };
-        map.set(c.key, current);
-      }
-      current.count += c.count || 0;
-      (c.examples || []).forEach((ex) => {
-        if (
-          current.examples.length < 5 &&
-          !current.examples.includes(ex)
-        ) {
-          current.examples.push(ex);
-        }
-      });
-    });
-
-    return Array.from(map.values()).sort(
-      (a, b) => b.count - a.count
-    );
   }
   
   function computeConceptDensity(insights) {
