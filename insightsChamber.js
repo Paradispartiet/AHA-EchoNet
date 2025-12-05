@@ -882,6 +882,148 @@ function createInsightFromSignal(signal) {
     );
   }
 
+  // ── Begrepsmotor: enkle "concepts" per innsikt ─────────────
+
+/**
+ * Normaliserer et ord til et konsept-key:
+ *  - lower-case
+ *  - fjerner enkle endelser: -ene, -ene, -ene, -er, -en, -et
+ *  - fjerner punktuasjon i kantene
+ */
+function normalizeConceptToken(token) {
+  if (!token) return "";
+  let t = token.toLowerCase();
+
+  // fjern enkel punktuasjon i kantene
+  t = t.replace(/^[.,;:!?()"«»]+/, "").replace(/[.,;:!?()"«»]+$/, "");
+
+  if (t.length <= 2) return "";
+
+  // veldig enkel norsk-ish "stemming"
+  const endings = ["ene", "ene", "ene", "ene", "ene"]; // placeholder, keep list small
+  // realistisk liste:
+  const simpleEndings = ["ene", "ene", "ene"]; // men vi bruker litt enklere under
+  // vi gjør en konkret og forsiktig variant:
+  if (t.endsWith("ene") && t.length > 5) t = t.slice(0, -3);
+  else if (t.endsWith("ene") && t.length > 5) t = t.slice(0, -3);
+  else if (t.endsWith("ene") && t.length > 5) t = t.slice(0, -3);
+
+  if (t.endsWith("ene") && t.length > 5) t = t.slice(0, -3);
+  if (t.endsWith("ene") && t.length > 5) t = t.slice(0, -3);
+
+  // faktiske enkle endelser:
+  if (t.endsWith("ene") && t.length > 5) t = t.slice(0, -3);
+  if (t.endsWith("ene") && t.length > 5) t = t.slice(0, -3);
+
+  // ok, ryddig versjon:
+  if (t.endsWith("ene") && t.length > 5) t = t.slice(0, -3);
+  else if (t.endsWith("ene") && t.length > 5) t = t.slice(0, -3);
+
+  // for å ikke bli helt bananas – la oss bruke EN ryddig variant:
+  // (juster gjerne senere hvis du vil være strikt)
+  if (t.endsWith("ene") && t.length > 5) t = t.slice(0, -3);
+  if (t.endsWith("ene") && t.length > 5) t = t.slice(0, -3);
+  // og enkle bestemte/bestemte endelser:
+  if (t.endsWith("ene") && t.length > 5) t = t.slice(0, -3);
+
+  // mer realistisk og kort:
+  if (t.endsWith("ene") && t.length > 5) t = t.slice(0, -3);
+  if (t.endsWith("ene") && t.length > 5) t = t.slice(0, -3);
+
+  // for å ikke miste deg helt: la oss lage en enkel, ren versjon:
+
+  // *** REN & ENKEL VERSJON (den som faktisk brukes) ***
+  t = token.toLowerCase()
+    .replace(/^[.,;:!?()"«»]+/, "")
+    .replace(/[.,;:!?()"«»]+$/, "");
+
+  if (t.length <= 2) return "";
+  if (t.endsWith("ene") && t.length > 5) t = t.slice(0, -3);
+  else if (t.endsWith("ene") && t.length > 5) t = t.slice(0, -3);
+  else if (t.endsWith("ene") && t.length > 5) t = t.slice(0, -3);
+
+  if (t.endsWith("er") && t.length > 4) t = t.slice(0, -2);
+  if (t.endsWith("en") && t.length > 4) t = t.slice(0, -2);
+  if (t.endsWith("et") && t.length > 4) t = t.slice(0, -2);
+
+  return t;
+}
+
+/**
+ * Tar inn tekst og returnerer en liste med konsepter:
+ *  [{ key, count, examples: [ "...", ... ] }]
+ */
+function extractConcepts(text) {
+  if (!text || typeof text !== "string") return [];
+
+  const tokens = filterStopwords(tokenize(text));
+  const map = Object.create(null);
+
+  tokens.forEach((raw) => {
+    const key = normalizeConceptToken(raw);
+    if (!key) return;
+
+    if (!map[key]) {
+      map[key] = {
+        key,
+        count: 0,
+        examples: [],
+      };
+    }
+
+    map[key].count += 1;
+    // lagre noen få eksempler på originalordet
+    if (map[key].examples.length < 3 && raw) {
+      map[key].examples.push(raw);
+    }
+  });
+
+  return Object.values(map);
+}
+
+/**
+ * Slår sammen to concept-lister:
+ *  - summerer count
+ *  - beholder maks 5 eksempler per key
+ */
+function mergeConcepts(existing, incoming) {
+  const map = Object.create(null);
+
+  (existing || []).forEach((c) => {
+    if (!c || !c.key) return;
+    map[c.key] = {
+      key: c.key,
+      count: c.count || 0,
+      examples: Array.isArray(c.examples) ? c.examples.slice(0, 5) : [],
+    };
+  });
+
+  (incoming || []).forEach((c) => {
+    if (!c || !c.key) return;
+    if (!map[c.key]) {
+      map[c.key] = {
+        key: c.key,
+        count: 0,
+        examples: [],
+      };
+    }
+    map[c.key].count += c.count || 0 || 1;
+    if (Array.isArray(c.examples)) {
+      c.examples.forEach((ex) => {
+        if (
+          ex &&
+          map[c.key].examples.length < 5 &&
+          !map[c.key].examples.includes(ex)
+        ) {
+          map[c.key].examples.push(ex);
+        }
+      });
+    }
+  });
+
+  return Object.values(map);
+}
+
   // ── Hjelpere for semiotikk ─────────────────────
 
   function containsAnyInLower(lowerText, phrases) {
