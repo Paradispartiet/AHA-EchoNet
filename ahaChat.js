@@ -1648,7 +1648,7 @@ function setupUI() {
         log("→ Klarte ikke å matche emne (se console).");
       }
     }
-
+});
   
     btnInsights.addEventListener("click", showInsightsForCurrentTopic);
   btnStatus.addEventListener("click", showTopicStatus);
