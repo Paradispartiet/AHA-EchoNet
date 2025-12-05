@@ -2,7 +2,7 @@
 // Felt-profiler fra History Go-merker – brukes som linse i AHA
 // themeId = samme som kategori/merke: "historie", "vitenskap", "subkultur", "litteratur", ...
 
-export const HG_FIELD_PROFILES = {
+window.HG_FIELD_PROFILES = {
   historie: {
     id: "historie",
     label: "Historie",
@@ -31,7 +31,7 @@ export const HG_FIELD_PROFILES = {
     id: "vitenskap",
     label: "Vitenskap",
     ingress:
-      "Vitenskap er produksjon av forklaringer gjennom måling, testing og modellering – et system som gjør verden målbar og sammenlignbar.", // 
+      "Vitenskap er produksjon av forklaringer gjennom måling, testing og modellering – et system som gjør verden målbar og sammenlignbar.",
     coreConcepts: [
       "Observasjon",
       "Evidens",
@@ -41,7 +41,7 @@ export const HG_FIELD_PROFILES = {
       "Replikasjon",
       "Paradigme",
       "Standardisering"
-    ], // 
+    ],
     dimensions: [
       "normativ: objektivitet, reproduserbarhet, standardisering",
       "doxa: «det som kan måles er sant»",
@@ -51,7 +51,7 @@ export const HG_FIELD_PROFILES = {
       "geografisk: laboratorier, observatorier, kunnskapskart i byen",
       "temporal: paradigmeskifter og vitenskapelige brudd",
       "blindsoner: det som ikke kan tallfestes, makt og hierarkier"
-    ] // 
+    ]
   },
 
   kunst: {
@@ -155,7 +155,7 @@ export const HG_FIELD_PROFILES = {
     id: "subkultur",
     label: "Subkultur",
     ingress:
-      "Subkultur handler om miljøer som går på tvers av, eller i opposisjon til, det etablerte – byoriginaler, miljøer, scener og motkultur.", // 
+      "Subkultur handler om miljøer som går på tvers av, eller i opposisjon til, det etablerte – byoriginaler, miljøer, scener og motkultur.",
     coreConcepts: [
       "Motstand",
       "Tilgjengelighet",
@@ -227,7 +227,7 @@ export const HG_FIELD_PROFILES = {
     id: "politikk",
     label: "Politikk & samfunn",
     ingress:
-      "Politikk-merket ser på hvordan makt fordeles, beslutninger tas og hvem som får definere «det normale».", // 
+      "Politikk-merket ser på hvordan makt fordeles, beslutninger tas og hvem som får definere «det normale».",
     coreConcepts: [
       "Makt",
       "Institusjon",
@@ -275,7 +275,7 @@ export const HG_FIELD_PROFILES = {
     id: "litteratur",
     label: "Litteratur",
     ingress:
-      "Litteratur er produksjon av mening gjennom språk – fortelling, estetikk, symbolbruk og hvordan tekster former verdensforståelse.", // 
+      "Litteratur er produksjon av mening gjennom språk – fortelling, estetikk, symbolbruk og hvordan tekster former verdensforståelse.",
     coreConcepts: [
       "Fortelling",
       "Språk",
@@ -283,7 +283,7 @@ export const HG_FIELD_PROFILES = {
       "Estetikk",
       "Perspektiv",
       "Tolkning"
-    ], // 
+    ],
     dimensions: [
       "normativ: estetisk kvalitet, originalitet, kulturell verdi",
       "doxa: «litteratur er bare tekst»",
@@ -293,6 +293,6 @@ export const HG_FIELD_PROFILES = {
       "geografisk: kafeer, bibliotek, hjem, scener i byen",
       "temporal: epoker, kanon, språkhistorie",
       "blindsoner: hvem som ikke kommer til orde, undertrykte språk"
-    ] // 
+    ]
   }
 };
