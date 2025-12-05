@@ -232,3 +232,77 @@ pre#out {
   font-size: 11px;
   opacity: 0.8;
 }
+
+/* ── Emnekatalog ─────────────────────────── */
+
+.emne-panel {
+  background: #070b1a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 8px;
+  display: flex;
+  gap: 8px;
+  max-height: 220px;
+}
+
+.emne-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 120px;
+}
+
+.emne-field-btn {
+  font-size: 12px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.03);
+  cursor: pointer;
+  text-align: left;
+}
+
+.emne-field-btn.active {
+  background: rgba(25, 118, 210, 0.25);
+  border-color: rgba(25, 118, 210, 0.8);
+}
+
+.emne-list {
+  flex: 1;
+  overflow-y: auto;
+  max-height: 200px;
+  padding-right: 4px;
+}
+
+.emne-item {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 4px 0;
+  font-size: 12px;
+}
+
+.emne-title {
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+
+.emne-desc {
+  font-size: 11px;
+  opacity: 0.9;
+  margin-bottom: 4px;
+}
+
+.emne-use-btn {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+}
+
+.emne-list-loading,
+.emne-list-empty,
+.emne-list-error {
+  font-size: 11px;
+  opacity: 0.8;
+}
