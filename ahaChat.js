@@ -1226,6 +1226,24 @@ function showMetaProfileForUser() {
   }
 }
 
+  // Toppbegreper – enkel liste
+  if (profile.concepts && profile.concepts.length > 0) {
+    log("\nToppbegreper på tvers av tema:");
+    profile.concepts.slice(0, 20).forEach((c) => {
+      const themeStr = (c.themes || []).join(", ");
+      log(
+        "• " +
+          c.key +
+          " (" +
+          c.total_count +
+          ") – tema: " +
+          themeStr
+      );
+    });
+  } else {
+    log("\nIngen begreper registrert ennå (skriv litt mer tekst).");
+  }
+
 // ── Import fra History Go (delt localStorage) ─────────────────
 
 // Tar inn payload fra History Go og lager signaler i AHA-kammeret
