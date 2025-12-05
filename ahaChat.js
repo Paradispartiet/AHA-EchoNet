@@ -1255,63 +1255,6 @@ function exportChamberJson() {
 }
 
 
-// ── Bygg state-pakke til AHA-AI for ett tema ─────────────
-
-function buildAIStateForTheme(themeId) {
-  const chamber = loadChamberFromStorage();
-
-  const insights = InsightsEngine.getInsightsForTopic(
-    chamber,
-    SUBJECT_ID,
-    themeId
-  );
-  const stats = InsightsEngine.computeTopicStats(
-    chamber,
-    SUBJECT_ID,
-    themeId
-  );
-  const sem = InsightsEngine.computeSemanticCounts(insights);
-  const dims = InsightsEngine.computeDimensionsSummary(insights);
-  const narrative = InsightsEngine.createNarrativeForTopic(
-    chamber,
-    SUBJECT_ID,
-    themeId
-  );
-
-  // Meta-profil på tvers av tema – hvis meta-motoren er lastet
-  let metaProfile = null;
-  if (typeof MetaInsightsEngine !== "undefined") {
-    try {
-      metaProfile = MetaInsightsEngine.buildUserMetaProfile(
-        chamber,
-        SUBJECT_ID
-      );
-    } catch (e) {
-      console.warn("MetaInsightsEngine feilet:", e);
-    }
-  }
-
-  // Ta med topp 5 innsikter sortert på styrke
-  const topInsights = (insights || [])
-    .slice()
-    .sort(
-      (a, b) =>
-        (b.strength?.total_score || 0) -
-        (a.strength?.total_score || 0)
-    )
-    .slice(0, 5);
-
-  return {
-    user_id: SUBJECT_ID,
-    theme_id: themeId,
-    topic_stats: stats,
-    topic_semantics: sem,
-    topic_dimensions: dims,
-    topic_narrative: narrative,
-    top_insights: topInsights,
-    meta_profile: metaProfile,
-  };
-}
 
 
 
