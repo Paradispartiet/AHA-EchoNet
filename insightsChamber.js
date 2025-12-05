@@ -780,6 +780,7 @@ function createInsightFromSignal(signal) {
 }
 
   function reinforceInsight(insight, signal) {
+    if (!insight || !signal) return insight;
   insight.strength.evidence_count += 1;
   insight.last_updated = signal.timestamp;
 
