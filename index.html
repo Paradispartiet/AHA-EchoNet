@@ -11,18 +11,35 @@
 <body>
   <h1>AHA Chat – Innsiktsmotor V1 + Meta</h1>
 
-  <!-- Tema-valg -->
+   <!-- Tema-valg -->
   <div class="row">
     <label for="theme-id">Tema-ID (theme_id)</label>
     <input id="theme-id" type="text" placeholder="th_motstand_prokrastinering" />
+  </div>
+
+  <!-- Felt / fag-linse (subject_id) -->
+  <div class="row">
+    <label for="field-id">Felt / fag (subject_id)</label>
+    <select id="field-id">
+      <option value="">(ingen valgt – generelt)</option>
+      <option value="historie">Historie</option>
+      <option value="vitenskap">Vitenskap</option>
+      <option value="kunst">Kunst & kultur</option>
+      <option value="litteratur">Litteratur</option>
+      <option value="musikk">Musikk</option>
+      <option value="sport">Sport</option>
+      <option value="naeringsliv">Næringsliv</option>
+      <option value="politikk">Politikk</option>
+      <option value="populaerkultur">Popkultur</option>
+    </select>
   </div>
 
   <!-- NY: Tema-velger basert på faktiske tema i kammeret -->
   <div class="row">
     <label for="theme-picker">Velg eksisterende tema</label>
     <select id="theme-picker" size="6">
-  <option value="">(ingen tema ennå)</option>
-</select>
+      <option value="">(ingen tema ennå)</option>
+    </select>
   </div>
 
   <!-- Chat-input + Send-knapp -->
