@@ -333,6 +333,52 @@
 
     return summary;
   }
+
+  // ── Begrepskart på tvers av tema ────────────────────────
+  function buildConceptIndex(enrichedInsights) {
+    const index = Object.create(null);
+
+    (enrichedInsights || []).forEach((ins) => {
+      const themeId = ins.theme_id || "ukjent";
+      (ins.concepts || []).forEach((c) => {
+        if (!c || !c.key) return;
+        if (!index[c.key]) {
+          index[c.key] = {
+            key: c.key,
+            total_count: 0,
+            themes: new Set(),
+            examples: [],
+          };
+        }
+
+        index[c.key].total_count += c.count || 1;
+        index[c.key].themes.add(themeId);
+
+        if (Array.isArray(c.examples)) {
+          c.examples.forEach((ex) => {
+            if (
+              ex &&
+              index[c.key].examples.length < 5 &&
+              !index[c.key].examples.includes(ex)
+            ) {
+              index[c.key].examples.push(ex);
+            }
+          });
+        }
+      });
+    });
+
+    const arr = Object.values(index).map((entry) => ({
+      key: entry.key,
+      total_count: entry.total_count,
+      theme_count: entry.themes.size,
+      themes: Array.from(entry.themes),
+      examples: entry.examples,
+    }));
+
+    arr.sort((a, b) => b.total_count - a.total_count);
+    return arr;
+  }
   
   // ── Hovedfunksjon: bygg meta-profil for en bruker ───────
 
@@ -369,6 +415,8 @@
       chamber,
       subjectId
     );
+    
+    const concepts = buildConceptIndex(enrichedInsights);
 
     // Bygg globalt begrepskart basert på alle berikede innsikter
     const conceptIndex = buildConceptIndex(enrichedInsights);
@@ -394,6 +442,7 @@
     detectCrossTopicPatterns,
     enrichInsightsWithLifecycle,
     computeInsightLifecycle,
+    buildConceptIndex,
   };
 
   if (typeof module !== "undefined" && module.exports) {
