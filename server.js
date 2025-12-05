@@ -17,7 +17,7 @@ if (!process.env.OPENAI_API_KEY) {
   process.exit(1);
 }
 
-// OpenAI-klient
+// OpenAI-klient – MÅ være med
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
