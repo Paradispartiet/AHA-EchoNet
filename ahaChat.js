@@ -54,12 +54,68 @@ function refreshThemePicker() {
   });
 }
 
-// ── UI helpers ───────────────────────────────
+// ─ UI helpers ───────────────────────────────
 
+// Pek på tema-scrollen (select#theme-picker i index.html)
+const themePicker = document.getElementById("theme-picker");
+
+// Hent gjeldende tema-id:
+// 1) fra scrollen hvis noe er valgt
+// 2) hvis ikke, fra tekstfeltet #theme-id (fallback)
+// 3) ellers "th_default"
 function getCurrentThemeId() {
+  if (themePicker && themePicker.value) {
+    return themePicker.value;
+  }
+
   const input = document.getElementById("theme-id");
   const val = input && input.value.trim();
   return val || "th_default";
+}
+
+// Fyll scrollen med alle temaer som faktisk finnes i kammeret
+function refreshThemePicker() {
+  if (!themePicker) return;
+
+  const chamber = loadChamberFromStorage();
+  const overview =
+    InsightsEngine.computeTopicsOverview(chamber) || [];
+
+  // husk hva som er valgt nå (hvis noe)
+  const current = themePicker.value;
+
+  // nullstill
+  themePicker.innerHTML = "";
+
+  if (!overview.length) {
+    const opt = document.createElement("option");
+    opt.value = "";
+    opt.textContent = "(ingen tema ennå)";
+    themePicker.appendChild(opt);
+    return;
+  }
+
+  overview.forEach((t) => {
+    const opt = document.createElement("option");
+    opt.value = t.topic_id;
+    opt.textContent = `${t.topic_id} (${t.insight_count})`;
+    themePicker.appendChild(opt);
+  });
+
+  // prøv å beholde tidligere valg
+  if (current) {
+    const stillExists = overview.some(
+      (t) => t.topic_id === current
+    );
+    if (stillExists) {
+      themePicker.value = current;
+    }
+  }
+
+  // hvis ingenting valgt, velg første
+  if (!themePicker.value && overview.length > 0) {
+    themePicker.value = overview[0].topic_id;
+  }
 }
 
 function getOutEl() {
