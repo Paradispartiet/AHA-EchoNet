@@ -704,12 +704,13 @@
 }
   
 function createInsightFromSignal(signal) {
-  const title = generateTitleFromText(signal.text);
-  const semantic = analyzeSentenceSemantics(signal.text);
-  const dimensions = analyzeDimensions(signal.text);
-  const narrative = analyzeNarrative(signal.text);
-  const concepts = extractConcepts(signal.text);
-  const semiotic = analyzeSemioticSignals(signal.text);
+  const text = (signal.text || "").trim();
+  const title = generateTitleFromText(text);
+  const semantic = analyzeSentenceSemantics(text);
+  const dimensions = analyzeDimensions(text);
+  const narrative = analyzeNarrative(text);
+  const concepts = extractConcepts(text);
+  const semiotic = analyzeSemioticSignals(text);
 
   const depthScore = computeDepthHeuristic(
     semantic,
@@ -726,8 +727,15 @@ function createInsightFromSignal(signal) {
     id: generateInsightId(),
     subject_id: signal.subject_id,
     theme_id: signal.theme_id,
+
+    // NYTT: viderefør kontekst-aksene fra signalet
+    place_id: signal.place_id || null,
+    person_id: signal.person_id || null,
+    field_id: signal.field_id || null,
+    emner: Array.isArray(signal.emner) ? signal.emner.slice() : [],
+
     title,
-    summary: signal.text,
+    summary: text,
     strength: {
       evidence_count: 1,
       total_score: Math.min(100, 10 + depthScore),
@@ -745,7 +753,6 @@ function createInsightFromSignal(signal) {
 
   return insight;
 }
-
   
   function getInsightsForTopic(chamber, subjectId, themeId) {
     return chamber.insights.filter(
