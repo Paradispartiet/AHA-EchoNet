@@ -23,7 +23,8 @@ label {
 }
 
 input[type="text"],
-textarea {
+textarea,
+select {
   width: 100%;
   padding: 8px;
   border-radius: 4px;
