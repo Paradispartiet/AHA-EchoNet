@@ -685,15 +685,24 @@
     return { insights: [] };
   }
 
-  function createSignalFromMessage(messageText, subjectId, themeId) {
-    return {
-      id: generateSignalId(),
-      timestamp: nowIso(),
-      subject_id: subjectId,
-      theme_id: themeId,
-      text: messageText.trim()
-    };
-  }
+  function createSignalFromMessage(messageText, subjectId, themeId, context) {
+  const ctx = context || {};
+
+  return {
+    id: generateSignalId(),
+    timestamp: nowIso(),
+    subject_id: subjectId,
+    theme_id: themeId,
+    text: (messageText || "").trim(),
+
+    // NYTT: valgfri kontekst-akse (fra History Go / AHA / andre)
+    place_id: ctx.place_id || null,
+    person_id: ctx.person_id || null,
+    field_id: ctx.field_id || null,
+    emner: Array.isArray(ctx.emner) ? ctx.emner.slice() : []
+  };
+}
+  
 function createInsightFromSignal(signal) {
   const title = generateTitleFromText(signal.text);
   const semantic = analyzeSentenceSemantics(signal.text);
