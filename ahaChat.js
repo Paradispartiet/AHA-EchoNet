@@ -454,6 +454,10 @@ function handleUserMessage(messageText) {
     );
     chamber = InsightsEngine.addSignalToChamber(chamber, signal);
     saveChamberToStorage(chamber);
+
+    // 🔄 oppdater tema-scrollen når noe nytt er lagt til
+    refreshThemePicker();
+
     return 1;
   }
 
@@ -467,6 +471,10 @@ function handleUserMessage(messageText) {
   });
 
   saveChamberToStorage(chamber);
+
+  // 🔄 oppdater tema-scrollen også her
+  refreshThemePicker();
+
   return sentences.length;
 }
 
