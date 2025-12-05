@@ -1462,7 +1462,7 @@ async function callAHAAgentForCurrentTopic() {
   log("AHA-AI: Leser innsiktskammeret for tema " + themeId + " …");
   log("");
 
-  const API_BASE = "https://fluffy-funicular-g4vqgqx4jgj93vrqp-3001.app.github.dev";
+const API_BASE = "https://didactic-cod-wrj9q964j4ww3vj5v-3001.app.github.dev";
 
   try {
     const res = await fetch(API_BASE + "/api/aha-agent", {
