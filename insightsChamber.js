@@ -1030,6 +1030,290 @@ function createInsightFromSignal(signal) {
     );
   }
 
+// ── Koherens, terminologi, logiske mønstre, meta-begreper ─────────────
+
+function computeCoherence(text) {
+  if (!text || typeof text !== "string") return 0;
+
+  const raw = text.trim();
+  if (!raw) return 0;
+
+  const lower = raw.toLowerCase();
+
+  // Del enkelt i setninger
+  const sentences = raw
+    .split(/[.!?…]+/g)
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  // 1) Tell logiske bindere
+  const connectors = [
+    "fordi",
+    "derfor",
+    "dermed",
+    "sånn at",
+    "slik at",
+    "samtidig",
+    "likevel",
+    "mens",
+    "derimot",
+    "på den andre siden",
+    "på den ene siden",
+  ];
+  let connectorCount = 0;
+  for (const c of connectors) {
+    if (lower.includes(c)) connectorCount++;
+  }
+
+  // 2) Tematisk overlapp mellom nabosetninger (enkel Jaccard-ish)
+  function sentenceTokens(s) {
+    return s
+      .toLowerCase()
+      .replace(/[^a-zæøå0-9\s]/gi, " ")
+      .split(/\s+/)
+      .filter(Boolean);
+  }
+
+  const sets = sentences.map((s) => new Set(sentenceTokens(s)));
+
+  let overlapSum = 0;
+  let pairs = 0;
+  for (let i = 0; i < sets.length - 1; i++) {
+    const a = sets[i];
+    const b = sets[i + 1];
+    if (!a.size || !b.size) continue;
+
+    let inter = 0;
+    const union = new Set(a);
+    for (const t of b) {
+      if (a.has(t)) inter++;
+      union.add(t);
+    }
+    const j = union.size ? inter / union.size : 0;
+    overlapSum += j;
+    pairs++;
+  }
+
+  const avgOverlap = pairs ? overlapSum / pairs : 0;
+
+  // 3) Sett sammen til 0–10-score (max 4 fra connectives, 6 fra overlapp)
+  const connectorScore = Math.min(connectorCount, 4); // 0–4
+  const overlapScore = Math.max(0, Math.min(avgOverlap * 6, 6)); // 0–6
+
+  let score = connectorScore + overlapScore;
+  if (score > 10) score = 10;
+  if (score < 0) score = 0;
+
+  return score;
+}
+
+function computeTerminologyDensity(text) {
+  if (!text || typeof text !== "string") return 0;
+
+  const tokens = filterStopwords(tokenize(text));
+  if (!tokens.length) return 0;
+
+  const lowerTokens = tokens.map((t) => t.toLowerCase());
+
+  const technicalSuffixes = [
+    "sjon",
+    "asjon",
+    "ering",
+    "itet",
+    "isme",
+    "logi",
+    "grafi",
+  ];
+
+  const technicalWordList = [
+    "industri",
+    "teknologi",
+    "struktur",
+    "prosess",
+    "funksjon",
+    "kontekst",
+    "narrativ",
+    "institusjon",
+    "identitet",
+    "analyse",
+    "perspektiv",
+    "diskurs",
+  ];
+
+  let technicalCount = 0;
+
+  for (const tok of lowerTokens) {
+    if (tok.length >= 12) {
+      technicalCount++;
+      continue;
+    }
+    if (technicalWordList.includes(tok)) {
+      technicalCount++;
+      continue;
+    }
+    if (technicalSuffixes.some((suf) => tok.endsWith(suf))) {
+      technicalCount++;
+      continue;
+    }
+  }
+
+  const density = technicalCount / lowerTokens.length;
+  if (density < 0) return 0;
+  if (density > 1) return 1;
+  return density;
+}
+
+function computeLogicalPatterns(text) {
+  if (!text || typeof text !== "string") {
+    return {
+      causal: 0,
+      inferential: 0,
+      contrast: 0,
+      balancing: 0,
+    };
+  }
+
+  const lower = text.toLowerCase();
+
+  const causalPhrases = [
+    "fordi",
+    "på grunn av",
+    "som følge av",
+    "førte til",
+    "det gjør at",
+    "det fører til",
+    "derfor",
+    "dermed",
+  ];
+  const inferentialPhrases = [
+    "tyder på",
+    "betyr at",
+    "viser at",
+    "indikerer at",
+  ];
+  const contrastPhrases = [
+    "men",
+    "likevel",
+    "derimot",
+    "samtidig",
+    "på den andre siden",
+  ];
+  const balancingPhrases = [
+    "på den ene siden",
+    "på den andre siden",
+  ];
+
+  function countOccurrences(haystack, needle) {
+    let count = 0;
+    let idx = haystack.indexOf(needle);
+    while (idx !== -1) {
+      count++;
+      idx = haystack.indexOf(needle, idx + needle.length);
+    }
+    return count;
+  }
+
+  let causal = 0;
+  for (const p of causalPhrases) {
+    causal += countOccurrences(lower, p);
+  }
+
+  let inferential = 0;
+  for (const p of inferentialPhrases) {
+    inferential += countOccurrences(lower, p);
+  }
+
+  let contrast = 0;
+  for (const p of contrastPhrases) {
+    contrast += countOccurrences(lower, p);
+  }
+
+  let balancing = 0;
+  for (const p of balancingPhrases) {
+    balancing += countOccurrences(lower, p);
+  }
+
+  return {
+    causal,
+    inferential,
+    contrast,
+    balancing,
+  };
+}
+
+function computeMetaConcepts(concepts) {
+  if (!Array.isArray(concepts) || !concepts.length) {
+    return [];
+  }
+
+  const keys = concepts
+    .map((c) => (c && c.key ? c.key.toLowerCase() : null))
+    .filter(Boolean);
+
+  const domainMap = {
+    kropp: [
+      "kropp",
+      "energi",
+      "sliten",
+      "utmattet",
+      "uro",
+      "rastløs",
+      "belastning",
+      "stress",
+    ],
+    tid: [
+      "tid",
+      "fremtid",
+      "fortid",
+      "plan",
+      "struktur",
+      "utvikling",
+      "prosess",
+      "deadline",
+    ],
+    arbeid: [
+      "arbeid",
+      "jobb",
+      "industri",
+      "produksjon",
+      "effektivitet",
+      "rutiner",
+      "skift",
+      "kontor",
+    ],
+    samfunn: [
+      "samfunn",
+      "lokalsamfunn",
+      "institusjon",
+      "stat",
+      "offentlig",
+      "befolkning",
+      "kollektiv",
+      "historie",
+      "politikk",
+    ],
+    teknologi: [
+      "teknologi",
+      "maskin",
+      "data",
+      "digital",
+      "system",
+      "plattform",
+      "skjerm",
+    ],
+  };
+
+  const hits = new Set();
+
+  for (const [domain, words] of Object.entries(domainMap)) {
+    if (words.some((w) => keys.includes(w))) {
+      hits.add(domain);
+    }
+  }
+
+  return Array.from(hits);
+}
+  
   // ── Hjelpere for semiotikk ─────────────────────
 
   function containsAnyInLower(lowerText, phrases) {
