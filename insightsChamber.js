@@ -749,8 +749,15 @@ function createInsightFromSignal(signal) {
     narrative,
     concepts,
     semiotic,
+
+    coherence: computeCoherence(signal.text),
+    terminology: computeTerminologyDensity(signal.text),
+    logical: computeLogicalPatterns(signal.text),
+    meta_concepts: computeMetaConcepts(concepts),
+ 
   };
 
+  
   return insight;
 }
   
