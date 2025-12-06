@@ -63,8 +63,6 @@
     </div>
   </div>
   
-  <!-- Innsikts-panel (motor-visning) -->
-  <div class="buttons">
 
   <!-- Innsikts-panel (motor-visning) -->
   <div class="buttons">
@@ -89,6 +87,15 @@
   <!-- Nytt, visuelt innsiktspanel -->
   <div id="panel"></div>
 
+<div id="aha-debug-panel" style="margin-top: 1rem;">
+  <button id="aha-debug-insights-btn">Vis rå innsikter for tema</button>
+  <button id="aha-debug-stats-btn">Vis rå stats for tema</button>
+
+  <h3>Debug</h3>
+  <textarea id="aha-debug-output"
+            style="width: 100%; min-height: 140px; font-family: monospace;"></textarea>
+</div>
+    
   <!-- Debug / rå tekst-logg (beholder vi) -->
   <pre id="out"></pre>
 
