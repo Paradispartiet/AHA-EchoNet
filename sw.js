@@ -1,79 +1,90 @@
 // sw.js
-// Enkel service worker for AHA Chat – offline + cache av app-shell
-// NY: blander oss ikke inn i API-kall / andre domener
+// AHA Chat – enkel service worker med NETWORK-FIRST strategi
+// Prøver alltid nett først, bruker cache som fallback (slik at nye deploys synes med en gang)
 
-const CACHE_NAME = "aha-chat-v3.0.4.205";
+const CACHE_NAME = "aha-chat-v4.0.100";
 
-// Justér stier hvis nettstedet ligger i en undermappe
+// Filer vi gjerne vil ha tilgjengelig offline (app-shell)
 const ASSETS = [
-  "/",                 // forsiden (på GitHub Pages user-site)
+  "/",
   "/index.html",
   "/aha-chat.css",
   "/insightsChamber.js",
   "/metaInsightsEngine.js",
   "/ahaFieldProfiles.js",
-  "/ahaChat.js"
+  "/ahaChat.js",
+  "/emnerLoader.js",
+  "/ahaEmneMatcher.js"
 ];
 
-// Install – cache grunnfilene
+// Install – legg basisfilene i cache
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS);
-    })
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
   );
+  // Ta over så fort som mulig
+  self.skipWaiting();
 });
 
-// Activate – rydde bort gamle cache-versjoner
+// Activate – slett gamle cache-versjoner
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
+    caches.keys().then((keys) =>
+      Promise.all(
         keys.map((key) => {
           if (key !== CACHE_NAME) {
             return caches.delete(key);
           }
         })
-      );
-    })
+      )
+    )
   );
+  self.clients.claim();
 });
 
-// Fetch – cache bare samme origin, aldri API-kall
+// Fetch – NETWORK FIRST for samme origin, rør ikke API / andre domener
 self.addEventListener("fetch", (event) => {
-  const url = new URL(event.request.url);
+  const req = event.request;
+  const url = new URL(req.url);
 
-  // 1) Ikke rør API-kall til /api/aha-agent (de skal rett til backend)
+  // 1) Ikke rør API-kall (la de gå rett til backend)
   if (url.pathname.startsWith("/api/aha-agent")) {
-    return; // lar request gå rett til nettverket
+    return; // ingen respondWith → vanlig nettverksrequest
   }
 
-  // 2) Ikke rør cross-origin (f.eks. Codespaces-backend på annen port/host)
+  // 2) Ikke rør cross-origin (andre domener/ports)
   if (url.origin !== self.location.origin) {
     return;
   }
 
-  // Vanlig app-shell caching for egne filer
-  event.respondWith(
-    caches.match(event.request).then((cached) => {
-      if (cached) {
-        return cached;
-      }
+  // Bare GET-forespørsler håndteres
+  if (req.method !== "GET") {
+    return;
+  }
 
-      return fetch(event.request)
-        .then((response) => {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, clone);
-          });
-          return response;
-        })
-        .catch(() => {
+  // NETWORK FIRST: prøv nett, fallback til cache
+  event.respondWith(
+    fetch(req)
+      .then((networkRes) => {
+        // Oppdater cache i bakgrunnen
+        const resClone = networkRes.clone();
+        caches.open(CACHE_NAME).then((cache) => {
+          cache.put(req, resClone);
+        });
+        return networkRes;
+      })
+      .catch(() => {
+        // Offline eller nettfeil → prøv cache
+        return caches.match(req).then((cached) => {
+          if (cached) {
+            return cached;
+          }
+          // Hvis vi ikke finner noe, gi en enkel offline-respons
           return new Response(
             "Du er offline, og denne ressursen finnes ikke i cachen ennå.",
             { status: 503, statusText: "Offline" }
           );
         });
-    })
+      })
   );
 });
