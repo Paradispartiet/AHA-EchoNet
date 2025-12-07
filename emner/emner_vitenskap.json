@@ -1,43 +1,140 @@
 [
-  {
-    "emne_id": "em_vit_sannhet_måling_modeller",
-    "subject_id": "vitenskap",
-    "title": "Sannhetsproduksjon gjennom måling og modeller",
-    "short_label": "Måling & modeller",
-    "description": "Hvordan instrumenter, metoder og modeller bestemmer hva som regnes som sant, og hvilke fenomener som blir synlige eller usynlige.",
-    "keywords": [
-      "måling",
-      "modeller",
-      "kalibrering",
-      "standardisering",
-      "evidens"
-    ],
-    "dimensions": [
-      "metode",
-      "teknologi",
-      "epistemologi"
-    ],
-    "core_concepts": [
-      "observasjon",
-      "evidens",
-      "hypotese",
-      "modell",
-      "kalibrering",
-      "replikasjon",
-      "paradigme",
-      "standardisering"
-    ],
-    "blindspots": [
-      "fenomener som ikke kan tallfestes",
-      "ikke-målbare erfaringer",
-      "teknologiens usynlige føringer",
-      "felt som marginaliseres fordi de ikke passer i modeller"
-    ],
-    "related_routes": [],
-    "related_places": [],
-    "related_quizzes": [],
-    "status": "core"
-  },
+ {
+  "emne_id": "em_vit_sannhet_måling_modeller",
+  "subject_id": "vitenskap",
+
+  "area_id": "vit_metode",
+  "area_label": "Vitenskapelig metode og sannhet",
+  "level": 2,
+
+  "title": "Sannhetsproduksjon gjennom måling og modeller",
+  "short_label": "Måling & modeller",
+  "description": "Hvordan instrumenter, metoder og modeller bestemmer hva som regnes som sant, og hvilke fenomener som blir synlige eller usynlige.",
+
+  "keywords": [
+    "måling",
+    "modeller",
+    "kalibrering",
+    "standardisering",
+    "evidens",
+    "data",
+    "instrumenter",
+    "indikatorer",
+    "statistikk",
+    "usikkerhet",
+    "prognoser",
+    "simulering",
+    "modelltolkning",
+    "målemetoder"
+  ],
+
+  "dimensions": [
+    "metode",
+    "teknologi",
+    "epistemologi"
+  ],
+
+  "core_concepts": [
+    "observasjon",
+    "evidens",
+    "hypotese",
+    "modell",
+    "kalibrering",
+    "replikasjon",
+    "paradigme",
+    "standardisering",
+
+    "måling",
+    "instrumentering",
+    "datainnsamling",
+    "variabler",
+    "operasjonalisering",
+    "representasjon",
+    "forenkling",
+    "modellgrunnlag",
+    "antakelser",
+
+    "måleusikkerhet",
+    "støy",
+    "signaler",
+    "dataprosessering",
+    "parametrisering",
+    "avvik",
+    "grenseverdier",
+    "skala",
+
+    "modellvalidering",
+    "modellbegrensninger",
+    "simulering",
+    "generaliserbarhet",
+    "forklaringskraft",
+
+    "metodologi",
+    "protokoller",
+    "systematikk"
+  ],
+
+  "blindspots": [
+    "fenomener som ikke kan tallfestes",
+    "ikke-målbare erfaringer",
+    "teknologiens usynlige føringer",
+    "felt som marginaliseres fordi de ikke passer i modeller"
+  ],
+
+  "methods": [
+    "Spør hvilke fenomener som faktisk kan måles, og hva som faller utenfor.",
+    "Se etter hvordan målemetoder blir kalibrert og standardisert over tid.",
+    "Undersøk hvordan usikkerhet kommuniseres eller skjules i tall, grafer og modeller.",
+    "Spør hvem som definerer hva som teller som evidens i denne situasjonen.",
+    "Vurder hva som går tapt når virkeligheten forenkles til modeller og indikatorer.",
+    "Sammenlign hvordan ulike modeller beskriver det samme fenomenet, og hvilke antakelser som varierer.",
+    "Se etter hvilke data som regnes som 'støy' og derfor filtreres bort.",
+    "Analyser hvordan resultater fra modeller brukes i beslutninger, og hvor mye rom det er for fortolkning.",
+    "Spør hvilke grupper eller perspektiver som ikke blir synlige gjennom målingene som brukes."
+  ],
+
+  "analysis_axes": [
+    "modell vs virkelighet",
+    "målt vs ikke-målt",
+    "presisjon vs tolkning",
+    "laboratorium vs hverdagsliv",
+    "data vs erfaring",
+    "indikatorer vs helhetsforståelse",
+    "kvalitativ vs kvantitativ kunnskap",
+    "usikkerhet som tall vs usikkerhet som fortelling",
+    "ekspertperspektiv vs lekfolkperspektiv"
+  ],
+
+  "key_terms": [
+    "sannhet",
+    "usikkerhet",
+    "evidens",
+    "indikator",
+    "målemetode",
+    "tallfesting",
+    "grenseverdi",
+    "datagrunnlag",
+    "representasjon",
+    "fortolkning",
+    "operasjonalisering",
+    "datakvalitet",
+    "måleusikkerhet",
+    "støy",
+    "signal",
+    "aggregert data",
+    "modellforutsetninger",
+    "modellvalidering",
+    "scenarier",
+    "prognoser",
+    "kalibrering",
+    "standardisering"
+  ],
+
+  "related_routes": [],
+  "related_places": [],
+  "related_quizzes": [],
+  "status": "core"
+},
 
 {
   "emne_id": "em_vit_byen_som_kunnskapskart",
