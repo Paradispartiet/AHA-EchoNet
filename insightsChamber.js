@@ -1446,36 +1446,116 @@ function computeMetaConcepts(concepts) {
   }
 
     function computeTopicStats(chamber, subjectId, themeId) {
-    const insights = getInsightsForTopic(
-      chamber,
-      subjectId,
-      themeId
-    );
-    const saturation = computeInsightSaturation(insights);
-    const density = computeConceptDensity(insights);
-    const artifactType = decideArtifactType(
-      saturation,
-      density
-    );
+  const insights = getInsightsForTopic(
+    chamber,
+    subjectId,
+    themeId
+  );
 
-    // NYTT: bruk semantikk til å finne fase
-    const counts = computeSemanticCounts(insights);
-    const userPhase = computeUserPhase(
-      saturation,
-      density,
-      counts
-    );
+  const saturation = computeInsightSaturation(insights);
+  const density = computeConceptDensity(insights);
+  const artifactType = decideArtifactType(
+    saturation,
+    density
+  );
 
-    return {
-      topic_id: themeId,
-      subject_id: subjectId,
-      insight_saturation: saturation,
-      concept_density: density,
-      artifact_type: artifactType,
-      insight_count: insights.length,
-      user_phase: userPhase // ← ekstra felt, bryter ingenting
-    };
+  // Semantikk → fase
+  const counts = computeSemanticCounts(insights);
+  const userPhase = computeUserPhase(
+    saturation,
+    density,
+    counts
+  );
+
+  // ── NYTT: tekstlig / faglig analyse aggregert per tema ──
+  let avgCoherence = 0;
+  let avgTerminology = 0;
+
+  const logicalAgg = {
+    causal: 0,
+    inferential: 0,
+    contrast: 0,
+    balancing: 0,
+  };
+
+  const metaConceptCounts = Object.create(null);
+  const n = insights.length;
+
+  if (n > 0) {
+    insights.forEach((ins) => {
+      // Koherens og terminologi er tall per innsikt
+      const coh =
+        typeof ins.coherence === "number" ? ins.coherence : 0;
+      const term =
+        typeof ins.terminology === "number"
+          ? ins.terminology
+          : 0;
+
+      avgCoherence += coh;
+      avgTerminology += term;
+
+      // Logiske mønstre – liten struktur per innsikt
+      const lp = ins.logical || {};
+      if (typeof lp.causal === "number") {
+        logicalAgg.causal += lp.causal;
+      }
+      if (typeof lp.inferential === "number") {
+        logicalAgg.inferential += lp.inferential;
+      }
+      if (typeof lp.contrast === "number") {
+        logicalAgg.contrast += lp.contrast;
+      }
+      if (typeof lp.balancing === "number") {
+        logicalAgg.balancing += lp.balancing;
+      }
+
+      // Meta-begreper – domenenøkler per innsikt
+      if (Array.isArray(ins.meta_concepts)) {
+        ins.meta_concepts.forEach((key) => {
+          if (!key) return;
+          metaConceptCounts[key] =
+            (metaConceptCounts[key] || 0) + 1;
+        });
+      }
+    });
+
+    avgCoherence = avgCoherence / n;
+    avgTerminology = avgTerminology / n;
+
+    logicalAgg.causal = logicalAgg.causal / n;
+    logicalAgg.inferential = logicalAgg.inferential / n;
+    logicalAgg.contrast = logicalAgg.contrast / n;
+    logicalAgg.balancing = logicalAgg.balancing / n;
   }
+
+  const metaConceptKeys = Object.keys(metaConceptCounts);
+  const metaConceptTop = metaConceptKeys
+    .map((key) => ({
+      key,
+      count: metaConceptCounts[key],
+    }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 10);
+
+  return {
+    topic_id: themeId,
+    subject_id: subjectId,
+    insight_saturation: saturation,
+    concept_density: density,
+    artifact_type: artifactType,
+    insight_count: n,
+    user_phase: userPhase,
+
+    // ── nye felt ──
+    avg_coherence: avgCoherence,         // gj.snitt 0–10
+    avg_terminology: avgTerminology,     // gj.snitt 0–1
+    logical_patterns: logicalAgg,        // gj.snitt per innsikt
+    meta_concepts: {
+      unique_count: metaConceptKeys.length,
+      top: metaConceptTop,              // [{ key, count }]
+    },
+  };
+}
 
   // ── Semantisk telling ──────────────────────
 
