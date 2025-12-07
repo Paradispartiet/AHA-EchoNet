@@ -2,73 +2,253 @@
   {
     "emne_id": "em_naer_felt_arbeid_verdiskaping",
     "subject_id": "naeringsliv",
+
+    "area_id": "naer_arbeid",
+    "area_label": "Arbeidsliv, produksjon og verdiskaping",
+    "level": 2,
+
     "title": "Næringsliv som arbeid og verdiskaping",
-    "short_label": "Arbeid & verdiskaping",
-    "description": "Hvordan arbeid, produksjon, handel, tjenester og teknologiske skift kobles sammen i prosesser som skaper og omformer verdi i byen.",
+    "short_label": "Arbeid & Verdiskaping",
+    "description": "Hvordan arbeid, produksjon, kapital, teknologi, handel og organisering skaper økonomisk og sosial verdi i byen – og hvem som får, mister eller står utenfor disse verdistrømmene.",
+
     "keywords": [
       "arbeid",
       "verdiskaping",
-      "industri",
-      "handel",
+      "produksjon",
       "tjenester",
+      "industri",
       "innovasjon",
-      "kapital"
+      "kapital",
+      "arbeidskraft",
+      "økonomi",
+      "lønnsarbeid",
+      "kompetanse",
+      "teknologisk endring",
+      "arbeidsdeling",
+      "marked"
     ],
+
     "dimensions": [
       "arbeidsliv",
       "økonomi",
-      "byutvikling"
+      "teknologi",
+      "organisering",
+      "fordeling"
     ],
+
     "core_concepts": [
       "verdiskaping",
-      "arbeid",
       "kapital",
-      "infrastruktur",
+      "arbeid",
+      "arbeidskraft",
       "produksjon",
-      "distribusjon",
+      "produktivitet",
+      "arbeidsdeling",
+      "kompetanse",
+      "arbeidsorganisering",
+      "arbeidsgiver",
+      "arbeidstaker",
+      "lønnsarbeid",
+      "marked",
+      "etterspørsel",
+      "tilbud",
+      "forbruk",
+      "økonomiske insentiver",
+      "kapitalavkastning",
+      "profittmotiv",
+      "forretningsmodell",
       "innovasjon",
-      "forbruk"
+      "automatisering",
+      "digitalisering",
+      "platformøkonomi",
+      "gig-økonomi",
+      "uformell økonomi",
+      "skyggeøkonomi",
+      "verdikjede",
+      "logistikk",
+      "arbeidsmiljø",
+      "arbeidsrettigheter",
+      "fagforeninger",
+      "kollektive avtaler",
+      "entreprenørskap"
     ],
+
     "blindspots": [
-      "usynlig arbeid (omsorg, hjemmefront, uformell økonomi)",
-      "miljøkostnader og ressursbruk",
-      "økonomisk ulikhet og ekskludering",
-      "arbeid som ikke registreres som produktivt"
+      "omsorgsarbeid og emosjonelt arbeid som ikke regnes som økonomisk verdiskaping",
+      "arbeid som ikke registreres (hjemmearbeid, frivillighet, uformell økonomi)",
+      "miljøkostnader som ikke prises inn i varer og tjenester",
+      "maktstrukturer som skjules bak 'markedskrefter'",
+      "arbeidskraft som behandles som ressurs, ikke mennesker",
+      "uro og stress som resultat av økonomisk logikk",
+      "teknologisk utvikling som driver sosial ulikhet"
     ],
+
+    "methods": [
+      "Kartlegg hvilke typer arbeid som finnes i området – produksjon, tjenesteyting, omsorg, teknologi, uformelt arbeid.",
+      "Se etter hvordan produksjon, distribusjon og salg henger sammen i lokale verdikjeder.",
+      "Undersøk hvilke former for arbeid som er synlige, og hvilke som foregår bak kulissene.",
+      "Analyser hvordan arbeid er organisert: hierarkier, team, skift, frilans, gig-plattformer.",
+      "Spør hvem som har gevinst av verdiskaping – og hvem som skaper verdiene.",
+      "Se etter hvilke arbeidsplasser som dominerer i området, og hvilke som forsvinner.",
+      "Studer hvilken kompetanse som etterspørres – og hvordan det former mulighetene for folk.",
+      "Vurder hvordan teknologi endrer arbeidsformer over tid (automatisering, digitalisering).",
+      "Kartlegg forholdet mellom arbeidstid, lønn, trygghet, helse og muligheter."
+    ],
+
+    "analysis_axes": [
+      "kapital vs arbeid",
+      "produktivitet vs livskvalitet",
+      "formelle jobber vs uformell økonomi",
+      "stabilitet vs fleksibilitet",
+      "arbeidsstyrke vs teknologi",
+      "profittmotiv vs samfunnsansvar",
+      "industriell produksjon vs tjenesteøkonomi",
+      "menneskelig kompetanse vs maskinell automatisering",
+      "synlig arbeid vs skjult arbeid",
+      "arbeid som behov vs arbeid som identitet"
+    ],
+
+    "key_terms": [
+      "arbeidskraft",
+      "verdikjede",
+      "kapital",
+      "lønnsarbeid",
+      "arbeidsdeling",
+      "produksjon",
+      "tjenestesektor",
+      "platformøkonomi",
+      "gig-økonomi",
+      "inntektsmodell",
+      "økonomisk verdiskaping",
+      "omstilling",
+      "innovasjon",
+      "arbeidsrettigheter",
+      "kollektive avtaler",
+      "arbeidstilsyn",
+      "arbeidsmiljø",
+      "menneskelig kapital"
+    ],
+
     "related_routes": [],
     "related_places": [],
     "related_quizzes": [],
     "status": "core"
   },
+
   {
     "emne_id": "em_naer_geografi_infrastruktur",
     "subject_id": "naeringsliv",
+
+    "area_id": "naer_geografi",
+    "area_label": "Økonomisk geografi, logistikk og infrastruktur",
+    "level": 2,
+
     "title": "Økonomiens geografi og infrastruktur",
     "short_label": "Økonomisk geografi",
-    "description": "Industristrøk, havner, logistikkpunkter, finansdistrikter og kontorparker som viser hvordan næringslivets infrastruktur organiserer byen.",
+    "description": "Hvordan havner, industrielle områder, kontorparker, datasentre, transportårer og finansielle knutepunkt organiserer økonomiske strømmer i byen – og hvem som får tilgang til hvilke ressurser.",
+
     "keywords": [
       "industristrøk",
       "havner",
       "logistikk",
       "kontorbygg",
       "finans",
-      "arbeidssteder"
+      "handelsstrømmer",
+      "datasentre",
+      "lager",
+      "transport",
+      "verdikjeder"
     ],
+
     "dimensions": [
       "geografi",
       "infrastruktur",
-      "arbeidsliv"
+      "kapital",
+      "arbeidsliv",
+      "makt"
     ],
+
     "core_concepts": [
       "infrastruktur",
+      "logistikk",
+      "havner",
+      "transportårer",
       "produksjon",
       "distribusjon",
-      "kapitalstrømmer"
+      "kapitalstrømmer",
+      "forsyningskjeder",
+      "verdikjeder",
+      "kontorlandskap",
+      "finansdistrikt",
+      "økonomiske sentra",
+      "lokaliseringsteori",
+      "byplanlegging",
+      "industriell geografi",
+      "næringsklynger",
+      "datasentre",
+      "vareflyt",
+      "import",
+      "eksport",
+      "arbeidsreiser",
+      "pendling",
+      "kommersiell eiendom",
+      "eierskapsstruktur",
+      "strategisk plassering"
     ],
+
     "blindspots": [
-      "logistikkens usynlige rom (kabling, datasentre, lager)",
-      "makt til kapital og eierskap i byrommet"
+      "logistikkens skjulte rom – lager, datasentre, kabler, trafoknutepunkter",
+      "kapitaleierskap som bestemmer hva som bygges og hvor",
+      "miljøbelastning fra industri og transport som ikke er synlig i bybildet",
+      "arbeidsforhold i logistikk og transport som ikke sees i glansbildet av næringslivet",
+      "risikoer i globale forsyningskjeder som påvirker lokal økonomi"
     ],
+
+    "methods": [
+      "Kartlegg hvor industri, lager, logistikkpunkter og havner ligger i byen.",
+      "Se etter hvilke transportårer som forbinder disse – vei, jernbane, havn, flyplass.",
+      "Analyser hvilke typer arbeidsplasser som er knyttet til disse nodene.",
+      "Spør hvem som kontrollerer infrastrukturen: bedrifter, stat, internasjonale selskaper.",
+      "Undersøk hvordan global handel påvirker lokale økonomier og arbeidsplasser.",
+      "Studer hvordan finansdistrikter trekker til seg spesifikke typer kompetanse.",
+      "Se etter hvilke bedrifter og bygg som fungerer som noder i verdikjeder.",
+      "Kartlegg hvordan digital infrastruktur (datasentre, fiberkabler) påvirker byens økonomi.",
+      "Vurder hvilke områder som får investeringer og hvilke som blir hengende etter."
+    ],
+
+    "analysis_axes": [
+      "kapitalintensive områder vs arbeidsintensive områder",
+      "global økonomi vs lokal økonomi",
+      "synlig næring (industri) vs usynlig næring (datasentre, logistikk)",
+      "formell infrastruktur vs skjult infrastruktur",
+      "planlagt utvikling vs markedsdrevet utvikling",
+      "tilgjengelighet vs eksklusivitet",
+      "produksjon vs konsum",
+      "importavhengighet vs selvforsyning",
+      "fysisk vareflyt vs digital verdistrøm"
+    ],
+
+    "key_terms": [
+      "logistikk",
+      "infrastruktur",
+      "forsyningskjede",
+      "verdikjede",
+      "finansdistrikt",
+      "datasenter",
+      "lokalisering",
+      "transportåre",
+      "kapitalstrøm",
+      "industriell geografi",
+      "næringsklynge",
+      "eiendomsutvikling",
+      "økonomisk node",
+      "global handel",
+      "import",
+      "eksport",
+      "varestrøm",
+      "arbeidsreiser"
+    ],
+
     "related_routes": [],
     "related_places": [],
     "related_quizzes": [],
