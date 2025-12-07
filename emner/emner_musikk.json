@@ -2,64 +2,426 @@
   {
     "emne_id": "em_mus_musikk_som_sosial_energi",
     "subject_id": "musikk",
+
+    "area_id": "mus_sosial",
+    "area_label": "Musikk, scener og sosial energi",
+    "level": 2,
+
     "title": "Musikk som sosial energi",
     "short_label": "Sosial energi",
-    "description": "Hvordan musikk organiserer følelser, fellesskap og identitet gjennom scener, miljøer, festivaler og klubbkultur.",
+    "description": "Hvordan musikk organiserer følelser, fellesskap og identitet gjennom scener, miljøer, festivaler og klubbkultur – og hvordan ulike sjangre skaper forskjellige sosiale rom.",
+
     "keywords": [
       "fellesskap",
       "subkulturer",
       "scener",
       "festivaler",
-      "identitet"
+      "klubbkultur",
+      "konserter",
+      "identitet",
+      "fankultur"
     ],
+
     "dimensions": [
       "sosial",
       "kultur",
-      "identitet"
+      "identitet",
+      "kropp"
     ],
+
     "core_concepts": [
       "scene",
+      "musikkmiljø",
       "fellesskap",
       "affekt",
       "kropp",
-      "teknologi"
+      "rytme",
+      "dansegulv",
+      "konsertopplevelse",
+      "subkultur",
+      "sjangerkoder",
+      "symboler og estetikk",
+      "festivalritualer",
+      "klubbkultur",
+      "publikum-energi",
+      "call-and-response",
+      "singalong",
+      "marginaliserte tradisjoner",
+      "minoritetsmusikk",
+      "finklutur vs lavkultur",
+      "soundtrack til livsfaser"
     ],
+
     "blindspots": [
-      "marginaliserte tradisjoner og minoritetsmusikk",
-      "kulturelle hierarkier mellom finkultur og lavkultur"
+      "marginaliserte tradisjoner og minoritetsmusikk som ikke får scenetid",
+      "kulturelle hierarkier mellom 'finkultur' og 'lavkultur'",
+      "kjønn, klasse og etnisitet i hvem som føler seg velkommen i ulike miljøer",
+      "hvordan rus, sikkerhet og økonomi preger festival- og klubbopplevelser"
     ],
+
+    "methods": [
+      "Kartlegg hvilke musikkmiljøer som finnes i en by/vennekrets.",
+      "Se etter hvordan klesstil, språk og kroppsspråk varierer mellom sjangre.",
+      "Analyser ritualer rundt konserter og festivaler (før, under, etter).",
+      "Spør hvem som føler seg hjemme/utenfor på ulike scener.",
+      "Undersøk hvordan enkelte låter blir 'viktige' for et miljø eller en generasjon."
+    ],
+
+    "analysis_axes": [
+      "inkludering vs ekskludering",
+      "subkultur vs mainstream",
+      "kroppslig ekstase vs kontroll",
+      "fellesskap vs individ-fokus",
+      "finkultur vs lavkultur"
+    ],
+
+    "key_terms": [
+      "scene",
+      "subkultur",
+      "klubbkultur",
+      "festivalritualer",
+      "affekt",
+      "fankultur"
+    ],
+
     "related_routes": [],
     "related_places": [],
     "related_quizzes": [],
     "status": "core"
   },
+
   {
     "emne_id": "em_mus_lydlandskap_byen",
     "subject_id": "musikk",
+
+    "area_id": "mus_geografi",
+    "area_label": "Lydlandskap, by og steder",
+    "level": 2,
+
     "title": "Byen som lydlandskap",
     "short_label": "Lydlandskap",
-    "description": "Hvordan klubber, kirker, parker og studioer gjør byen til et lydkart der ulike sjangre og miljøer setter spor.",
+    "description": "Hvordan klubber, kirker, parker, øvingslokaler og studioer gjør byen til et lydkart der ulike sjangre, tradisjoner og miljøer setter spor gjennom lyd.",
+
     "keywords": [
       "lydlandskap",
       "klubb",
       "kirke",
       "studio",
-      "scener"
+      "øving",
+      "scener",
+      "gatebuskere",
+      "konsertsteder"
     ],
+
     "dimensions": [
       "geografi",
       "historie",
-      "kultur"
+      "kultur",
+      "arkitektur"
     ],
+
     "core_concepts": [
-      "rytme",
-      "klang",
-      "scene"
+      "rytme i byen",
+      "klangrom",
+      "akustikk",
+      "scene",
+      "klubbrom",
+      "konsertsal",
+      "kirkerom",
+      "gate-lyd",
+      "lydforurensning",
+      "stillegater",
+      "soundscapes",
+      "musikkminner knyttet til steder",
+      "bykart av lyder",
+      "historiske musikksteder",
+      "gentrifisering og lyd"
     ],
+
     "blindspots": [
-      "teknologiens skjulte rolle som komponist",
-      "bransjens maktforhold"
+      "teknologiens skjulte rolle som 'komponist' av byens lyd (høyttalere, PA, streaming)",
+      "bransjens maktforhold i hvilke steder som får leve videre",
+      "nabolag som mister scener og øvingslokaler til bolig/commerce",
+      "folk som opplever lydlandskapet primært som støy, ikke som kultur"
     ],
+
+    "methods": [
+      "Gå en runde i byen og noter hvilke lyder som dominerer hvor.",
+      "Kartlegg hvor live-musikk faktisk finnes – og hvor den har forsvunnet.",
+      "Analyser forskjell på akustikken i club, kirke, park og sal.",
+      "Se etter hvilke sjangre som knyttes til hvilke bydeler.",
+      "Undersøk hvordan naboer og myndigheter påvirker lydnivå og åpningstider."
+    ],
+
+    "analysis_axes": [
+      "kultur vs støy",
+      "akustisk vs elektronisk lyd",
+      "historiske musikksteder vs nye konsepter",
+      "kommersielle scener vs grasrotsteder"
+    ],
+
+    "key_terms": [
+      "soundscape",
+      "akustikk",
+      "bylyd",
+      "musikkminner",
+      "gentrifisering av scener"
+    ],
+
+    "related_routes": [],
+    "related_places": [],
+    "related_quizzes": [],
+    "status": "core"
+  },
+
+  {
+    "emne_id": "em_mus_okonomi_bransje_makt",
+    "subject_id": "musikk",
+
+    "area_id": "mus_okonomi",
+    "area_label": "Musikkøkonomi, bransje og makt",
+    "level": 2,
+
+    "title": "Musikkbransje, økonomi og makt",
+    "short_label": "Bransje & makt",
+    "description": "Hvordan plateselskap, strømmetjenester, booking, management og rettigheter styrer hvem som blir hørt, hva som lønner seg å lage, og hvordan musikk presenteres.",
+
+    "keywords": [
+      "plateselskap",
+      "strømming",
+      "rettigheter",
+      "royalties",
+      "booking",
+      "management",
+      "label",
+      "bransje"
+    ],
+
+    "dimensions": [
+      "økonomi",
+      "makt",
+      "kultur",
+      "arbeidsliv"
+    ],
+
+    "core_concepts": [
+      "musikkindustri",
+      "rettighetsfordeling",
+      "royalties",
+      "mastere",
+      "publiseringsrettigheter",
+      "bookingnettverk",
+      "festivaløkonomi",
+      "synlighet i strømmetjenester",
+      "playliste-makt",
+      "bransjetopper vs DIY",
+      "gatekeeping",
+      "bransjefestivaler",
+      "turneøkonomi",
+      "support-jobber",
+      "honorarstrukturer"
+    ],
+
+    "blindspots": [
+      "underbetalte musikere bak suksesshistorier",
+      "ulike vilkår for små og store aktører i strømmetjenester",
+      "mangfold og kjønnsbalanse i bransjetoppene",
+      "hvordan økonomisk risiko veltes over på artister"
+    ],
+
+    "methods": [
+      "Analyser krediteringen på et album: hvem tjener på hva?",
+      "Se etter hvordan artister snakker om økonomi i intervjuer.",
+      "Undersøk hvordan spillelisteplass påvirker karrierer.",
+      "Kartlegg hvilke festivaler og scener som går igjen for 'gjennombrudd'.",
+      "Spør hvilke strukturer som gjør det vanskelig å leve av musikk."
+    ],
+
+    "analysis_axes": [
+      "industri vs kunst",
+      "major label vs indie",
+      "strømming vs fysisk salg",
+      "kortsiktig hit-fokus vs langsiktig katalogbygging"
+    ],
+
+    "key_terms": [
+      "royalties",
+      "publiseringsrettigheter",
+      "playliste-makt",
+      "gatekeeping",
+      "DIY-artist",
+      "turneøkonomi"
+    ],
+
+    "related_routes": [],
+    "related_places": [],
+    "related_quizzes": [],
+    "status": "core"
+  },
+
+  {
+    "emne_id": "em_mus_teknologi_produksjon_distribusjon",
+    "subject_id": "musikk",
+
+    "area_id": "mus_teknologi",
+    "area_label": "Teknologi, produksjon og distribusjon",
+    "level": 2,
+
+    "title": "Teknologi, produksjon og distribusjon",
+    "short_label": "Teknologi & produksjon",
+    "description": "Hvordan studioer, programvare, instrumenter, opptaksteknologi og plattformer former selve lyden, arbeidsmåter og hvem som kan lage og spre musikk.",
+
+    "keywords": [
+      "studio",
+      "DAW",
+      "innspilling",
+      "mikser",
+      "mastering",
+      "sampling",
+      "remix",
+      "distribusjon",
+      "strømming"
+    ],
+
+    "dimensions": [
+      "teknologi",
+      "arbeidsliv",
+      "kultur",
+      "estetikk"
+    ],
+
+    "core_concepts": [
+      "produksjonskjede",
+      "innspilling",
+      "miksing",
+      "mastering",
+      "lyddesign",
+      "sampling",
+      "remixing",
+      "preset-kultur",
+      "lo-fi vs hi-fi",
+      "hjemmestudio",
+      "studiohierarkier",
+      "bruk av AI-verktøy",
+      "plattformformater (kortvideo, stories, full-lengde)",
+      "distribusjonsledd",
+      "DIY-produksjon"
+    ],
+
+    "blindspots": [
+      "hvem som har råd til utstyr, rom og tid til å produsere",
+      "hvordan standardpreset og maler gjør lydbildet likt",
+      "energi- og ressursbruk i studio- og turnédrift",
+      "hvordan nye verktøy endrer hva som regnes som 'ekte' musikk"
+    ],
+
+    "methods": [
+      "Kartlegg hvilke verktøy som brukes for å lage én låt (fra demo til utgivelse).",
+      "Se etter hvordan tekniske begrensninger påvirker sjangre og sound.",
+      "Sammenlign eldre innspillinger med moderne remastere.",
+      "Analyser hvilke plattformformater musikken distribueres i.",
+      "Undersøk hvordan teknologi senker terskelen for noen – og skaper nye barrierer for andre."
+    ],
+
+    "analysis_axes": [
+      "analogt vs digitalt",
+      "studio vs hjemmestudio",
+      "menneskelig spill vs programmering",
+      "råopptak vs tung postproduksjon",
+      "tilgjengelighet vs likriktning"
+    ],
+
+    "key_terms": [
+      "lydproduksjon",
+      "DAW",
+      "sampling",
+      "remix",
+      "hjemmestudio",
+      "distribusjonsplattform"
+    ],
+
+    "related_routes": [],
+    "related_places": [],
+    "related_quizzes": [],
+    "status": "core"
+  },
+
+  {
+    "emne_id": "em_mus_lytting_kropp_folelser",
+    "subject_id": "musikk",
+
+    "area_id": "mus_lytting",
+    "area_label": "Lytting, kropp og følelser",
+    "level": 2,
+
+    "title": "Lytting, kropp og følelser",
+    "short_label": "Lytting & følelser",
+    "description": "Hvordan musikk påvirker kropp, humør, minner og tanker – og hvordan vi bruker musikk til regulering, trøst, feiring og fokus i hverdagen.",
+
+    "keywords": [
+      "lytting",
+      "følelser",
+      "stemning",
+      "minner",
+      "regulering",
+      "fokus",
+      "terapi"
+    ],
+
+    "dimensions": [
+      "psykologi",
+      "kropp",
+      "minne",
+      "identitet"
+    ],
+
+    "core_concepts": [
+      "affekt",
+      "stemningsregulering",
+      "musikk og minner",
+      "kroppslige reaksjoner",
+      "musikalske triggers",
+      "konsertkatarsis",
+      "indre bilder",
+      "repetisjonslytting",
+      "personlige spillelister",
+      "musikk i terapi",
+      "bakgrunnsmusikk",
+      "fokusmusikk",
+      "soundtrack til hverdagsritualer"
+    ],
+
+    "blindspots": [
+      "overforbruk av musikk som flukt fra vanskelige følelser",
+      "hørsel og fysisk belastning (volum, ørepropper, tinnitus)",
+      "hvordan algoritmer styrer hvilke følelser vi 'mates' med",
+      "mennesker som ikke tåler mye lyd/musikk i hverdagen"
+    ],
+
+    "methods": [
+      "Observer hvordan du selv bruker musikk gjennom en dag/uke.",
+      "Se hvilke låter du kobler til bestemte minner eller personer.",
+      "Analyser spillelistene dine: hvilke stemninger dominerer?",
+      "Eksperimenter med å endre musikkvalg og se hvordan det påvirker kropp og fokus.",
+      "Spør hvordan musikk brukes i terapi, ritualer, idrett og arbeid."
+    ],
+
+    "analysis_axes": [
+      "regulering vs flukt",
+      "intens lytting vs bakgrunnslytting",
+      "felles lytting vs privat lytting",
+      "kontrollert eksponering vs passiv lydstrøm"
+    ],
+
+    "key_terms": [
+      "stemningsregulering",
+      "affekt",
+      "musikkminner",
+      "konsertkatarsis",
+      "bakgrunnsmusikk",
+      "fokusmusikk"
+    ],
+
     "related_routes": [],
     "related_places": [],
     "related_quizzes": [],
