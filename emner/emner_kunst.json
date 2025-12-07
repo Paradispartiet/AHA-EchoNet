@@ -2,212 +2,364 @@
   {
     "emne_id": "em_kunst_institusjoner_kanon",
     "subject_id": "kunst",
+
+    "area_id": "kunst_felt",
+    "area_label": "Kunstfeltet, institusjoner og kanon",
+    "level": 2,
+
     "title": "Kunstinstitusjoner og kanon i byen",
-    "short_label": "Institusjoner og kanon",
-    "description": "Museer, gallerier, samlinger og akademier som bestemmer hva som regnes som «kunst», og hvem som slipper inn i historien.",
+    "short_label": "Institusjoner & kanon",
+    "description": "Museer, gallerier, samlinger og akademier som bestemmer hva som regnes som kunst, hvem som får synlighet, og hvordan kanon formes gjennom utvalg, kuratering og maktforhold.",
+
     "keywords": [
-      "museum",
-      "galleri",
-      "kunstakademi",
-      "kanon",
-      "samlinger"
+      "museum", "galleri", "samling", "kanon", "kurator", 
+      "institusjoner", "arkiv", "ekspertise", "kunsthistorie",
+      "institusjonell makt", "samfunnsminne"
     ],
+
     "dimensions": [
-      "institusjoner",
-      "historie",
-      "symbolsk makt"
+      "institusjoner", "historie", "symbolsk makt", "økonomi"
     ],
+
     "core_concepts": [
-      "kanon",
-      "kuratering",
-      "institusjonell makt",
-      "symbolsk kapital",
-      "arkiv",
-      "utelatelser"
+      "kanon", "kuratering", "institusjonell makt", "symbolsk kapital",
+      "arkivpraksis", "innsamlingspolitikk", "eksklusjon", "smakshierarki",
+      "kuratoriske tradisjoner", "utstillingsdesign", "museumskultur",
+      "offentlig finansiering", "donasjoner", "samlingspolitikk",
+      "vern", "autentisitet", "gestaltning", "autoritet",
+      "kunsthistorisk periodisering", "modernisme", "avantgarde",
+      "institusjonell kritikk", "kunstmarkedets rolle", "maktkamper",
+      "kulturell kapital", "elitisme", "fagfellevurdering"
     ],
+
     "blindspots": [
-      "selvlærte og uformelle kunstnere",
-      "kunst utenfor institusjonene",
-      "lokale tradisjoner som ikke samles inn"
+      "selvlærte og uformelle kunstnere som ikke blir arkivert",
+      "kunst utenfor vestlige kanontradisjoner",
+      "hvilke verk som anses verdifulle fordi markedet sier det",
+      "kunstformer som ikke passer inn i museale rammer",
+      "hverdagslige visuelle uttrykk som ignoreres"
     ],
-    "related_routes": [],
-    "related_places": [],
-    "related_quizzes": [],
+
+    "methods": [
+      "Analyser hvordan samlinger bygges og hvem som bestemmer hva som kjøpes inn.",
+      "Se hvilke kunstnere som mangler representasjon.",
+      "Undersøk hvordan utstillinger forteller historien om kunstfeltet.",
+      "Spør hvilke verk som blir vurdert som 'ekte' eller 'viktige'.",
+      "Kartlegg hvordan institusjoner legitimerer egen autoritet."
+    ],
+
+    "analysis_axes": [
+      "inkludering vs ekskludering",
+      "elitisme vs tilgjengelighet",
+      "kanon vs perifer kunst",
+      "historisk kontinuitet vs brudd",
+      "markedets smak vs institusjonens smak",
+      "arkivert kunst vs tapt kunst"
+    ],
+
+    "key_terms": [
+      "kanon", "institusjonell makt", "kuratorisk praksis", 
+      "symbolsk kapital", "samling", "arkiv", "autentisitet",
+      "periodisering", "utstillingspolitikk"
+    ],
+
     "status": "core"
   },
+
   {
     "emne_id": "em_kunst_offentlig_kunst_monumenter",
     "subject_id": "kunst",
+
+    "area_id": "kunst_offentlig",
+    "area_label": "Offentlig kunst og minnekultur",
+    "level": 2,
+
     "title": "Offentlig kunst, monumenter og byidentitet",
     "short_label": "Offentlig kunst",
-    "description": "Skulpturer, utsmykninger og monumenter som former hvordan byen ser seg selv – og hva som regnes som viktig å huske.",
+    "description": "Skulpturer, utsmykninger, minnesmerker og monumenter som former offentlig minnekultur, identitet og hvilke historier som løftes fram eller skjules.",
+
     "keywords": [
-      "offentlig kunst",
-      "monumenter",
-      "utsmykning",
-      "byidentitet",
-      "minnekultur"
+      "offentlig kunst", "monument", "minnekultur", "utsmykning",
+      "statuer", "symboler", "kollektiv hukommelse"
     ],
+
     "dimensions": [
-      "estetikk",
-      "politikk",
-      "offentlig rom"
+      "estetikk", "offentlig rom", "politikk", "historie"
     ],
+
     "core_concepts": [
-      "symbolsk makt",
-      "representasjon",
-      "kontroversielle monumenter",
-      "lokal identitet",
-      "temporær kunst"
+      "symbolsk makt", "representasjon", "kontroversielle monumenter",
+      "historiefortelling", "minnekultur", "ikonografi",
+      "kollektiv identitet", "ritualisering", "nasjonale symboler",
+      "offentlig finansiering", "misminne", "historisk taushet",
+      "privatisering av det offentlige rom", "visuell ideologi"
     ],
+
     "blindspots": [
-      "de som aldri får en statue",
-      "hverdagslig dekor som faktisk betyr mye",
-      "midlertidige verk som forsvinner fra hukommelsen"
+      "de som aldri får et monument",
+      "hvem som opplever seg representert – og hvem som ikke gjør det",
+      "symbolsk vold skjult bak estetikk",
+      "monumenter som ikke viser konflikter"
     ],
-    "related_routes": [],
-    "related_places": [],
-    "related_quizzes": [],
+
+    "methods": [
+      "Spør: hvem er representert i byrommet – og hvorfor?",
+      "Analyser kontroverser rundt statuer og minnesmerker.",
+      "Kartlegg hva slags historier som fortelles – og hva som utelates.",
+      "Se på hvordan publikum bruker og tolker monumenter.",
+      "Vurder forholdet mellom estetikk og politisk funksjon."
+    ],
+
+    "analysis_axes": [
+      "påkostet kunst vs hverdagslige uttrykk",
+      "offisiell historie vs motfortellinger",
+      "varig kunst vs midlertidig kunst",
+      "symbolsk handling vs materiell virkning"
+    ],
+
+    "key_terms": [
+      "ikonografi", "minnekultur", "symbolsk makt", 
+      "representasjon", "offentlig rom", "ritualisering"
+    ],
+
     "status": "core"
   },
+
   {
     "emne_id": "em_kunst_undergrunn_selvorganisert",
     "subject_id": "kunst",
+
+    "area_id": "kunst_undergrunn",
+    "area_label": "Undergrunn, subkultur og selvorganisering",
+    "level": 2,
+
     "title": "Undergrunn, selvorganiserte scener og atelierer",
-    "short_label": "Undergrunnsscener",
-    "description": "Kollektiver, atelierfellesskap, squat-lokaler, uavhengige gallerier og midlertidige scener der nye uttrykk prøves ut før de eventuelt blir «offisielle».",
+    "short_label": "Undergrunn & scener",
+    "description": "Kollektiver, atelierfellesskap, squat-lokaler, uavhengige gallerier og midlertidige scener der nye uttrykk, praksiser og estetiske språk utvikles.",
+
     "keywords": [
-      "undergrunn",
-      "atelier",
-      "kunstkollektiv",
-      "uavhengige gallerier",
-      "DIY"
+      "undergrunn", "atelier", "kunstkollektiv", "DIY", "subkultur",
+      "deltakerkultur", "alternativ scene"
     ],
+
     "dimensions": [
-      "kulturproduksjon",
-      "økonomi",
-      "geografi"
+      "kulturproduksjon", "økonomi", "geografi", "identitet"
     ],
+
     "core_concepts": [
-      "subkultur",
-      "prekær økonomi",
-      "midlertidige rom",
-      "eksperimentell praksis",
-      "sceneknutepunkter"
+      "subkultur", "prekær økonomi", "selvorganisering", "midlertidige rom",
+      "alternativ infrastruktur", "eksperimentell praksis", "sceneknutepunkter",
+      "lokal kreativitet", "grassroots-bevegelser", 
+      "uformell økonomi", "nettverk", "frittflytende identitet",
+      "kunstnerisk risiko", "kollektiv produksjon", "fravær av gatekeeping"
     ],
+
     "blindspots": [
-      "utmattelse og brenning i selvorganiserte miljøer",
-      "klasse og arv i hvem som har råd til å «satse»",
-      "dokumentasjon av det som skjer utenfor institusjon"
+      "utmattelse og økonomisk sårbarhet",
+      "klasseprivilegier som avgjør hvem som kan ‘satse’",
+      "manglende dokumentasjon av det som skjer utenfor institusjon",
+      "midlertidige rom som forsvinner før de anerkjennes"
     ],
-    "related_routes": [],
-    "related_places": [],
-    "related_quizzes": [],
+
+    "methods": [
+      "Kartlegg hvilke rom som brukes midlertidig til kunstproduksjon.",
+      "Se etter økonomiske og sosiale vilkår for undergrunnsmiljøer.",
+      "Analyser hvilke estetiske språk som oppstår før institusjonene fanger dem.",
+      "Identifiser lokale nettverk og scener.",
+      "Spør hvem som faktisk har råd til å delta."
+    ],
+
+    "analysis_axes": [
+      "institusjon vs undergrunn",
+      "penger vs frihet",
+      "stabilitet vs improvisasjon",
+      "profesjonell praksis vs DIY",
+      "synlig vs skjult kultur"
+    ],
+
+    "key_terms": [
+      "prekær økonomi", "selvorganisering", "grassroots",
+      "subkultur", "alternativ scene", "kollektiv praksis"
+    ],
+
     "status": "core"
   },
+
   {
     "emne_id": "em_kunst_politisk_kunst_aktivisme",
     "subject_id": "kunst",
+
+    "area_id": "kunst_politikk",
+    "area_label": "Kunst, offentlighet og politikk",
+    "level": 2,
+
     "title": "Kunst som politisk handling og aktivisme",
     "short_label": "Politisk kunst",
-    "description": "Kunstprosjekter, aksjoner, plakater, graffiti og performancer som forsøker å gripe inn i offentligheten og forandre noe, ikke bare beskrive.",
+    "description": "Graffiti, plakater, performance, aksjoner og kunstprosjekter som søker å gripe inn i offentligheten, skape friksjon og endre hvordan verden forstås.",
+
     "keywords": [
-      "politisk kunst",
-      "aktivisme",
-      "graffiti",
-      "plakatkunst",
-      "performance"
+      "politisk kunst", "aktivisme", "graffiti", "aksjon", "offentlig debatt",
+      "intervensjon", "visuell motstand"
     ],
+
     "dimensions": [
-      "politikk",
-      "offentlighet",
-      "estetikk"
+      "politikk", "offentlighet", "estetikk", "risiko"
     ],
+
     "core_concepts": [
-      "intervensjon",
-      "motbilder",
-      "agitprop",
-      "mothegemoniske fortellinger",
-      "symbolsk handling"
+      "intervensjon", "motbilder", "agitprop",
+      "performativ handling", "mothegemoniske fortellinger",
+      "subversjon", "estetisk protest", "risiko", "sensur",
+      "gatekunst", "uautoriserte uttrykk", "publikumsreaksjon",
+      "symbolsk handling", "aktivistiske strategier"
     ],
+
     "blindspots": [
-      "risikoen kunstnere tar personlig",
-      "hvordan slike prosjekter arkiveres (eller ikke)",
-      "grense mellom kunst, reklame og propaganda"
+      "kunstneres faktiske risiko og straff",
+      "hvordan slike prosjekter arkiveres eller slettes",
+      "grensen mellom kunst, reklame og propaganda",
+      "aktører som utnytter aktivisme estetisk"
     ],
-    "related_routes": [],
-    "related_places": [],
-    "related_quizzes": [],
+
+    "methods": [
+      "Analyser hvor i byen intervensjoner skjer og hvorfor.",
+      "Se etter hvilke normer kunsten utfordrer.",
+      "Spør hvilken risiko kunstneren tar.",
+      "Kartlegg hvem som reagerer — og hvordan.",
+      "Undersøk hvordan verk dokumenteres eller forsvinner."
+    ],
+
+    "analysis_axes": [
+      "kunst vs propaganda",
+      "risiko vs trygghet",
+      "tillatelse vs ulovlighet",
+      "estetikk vs politisk effekt"
+    ],
+
+    "key_terms": [
+      "agitprop", "intervensjon", "subversjon", 
+      "sensur", "symbolsk handling", "gatekunst"
+    ],
+
     "status": "core"
   },
+
   {
     "emne_id": "em_kunst_hverdagsestetikk",
     "subject_id": "kunst",
+
+    "area_id": "kunst_hverdag",
+    "area_label": "Hverdagsestetikk og visuell kultur",
+    "level": 2,
+
     "title": "Hverdagsestetikk og visuell kultur",
-    "short_label": "Hverdagsestetikk",
-    "description": "Skilt, butikkfasader, interiører, klesstiler, tatoveringer og sosiale medier som former det visuelle miljøet vi lever i til daglig.",
+    "short_label": "Visuell kultur",
+    "description": "Skilt, butikkfasader, interiører, klær, tatoveringer og digitale uttrykk som former det visuelle miljøet vi lever i og klassestrukturer som uttrykkes i stilvalg.",
+
     "keywords": [
-      "visuell kultur",
-      "skilt",
-      "butikkfasader",
-      "interiør",
-      "stil",
-      "tatoveringer"
+      "visuell kultur", "skilt", "interiør", "stil", "digital estetikk",
+      "branding", "tatoveringer", "fasader"
     ],
+
     "dimensions": [
-      "estetikk",
-      "forbruk",
-      "identitet"
+      "estetikk", "forbruk", "identitet", "hverdag"
     ],
+
     "core_concepts": [
-      "estetisering av hverdagen",
-      "branding",
-      "stil som klassespråk",
-      "visuelle normer",
-      "selfie-vennlige steder"
+      "estetisering av hverdagen", "branding", "stil som klassespråk",
+      "symbolske markører", "visuelle normer", "kommersielle estetikkregimer",
+      "digital selvpresentasjon", "influenser-estetikk", 
+      "reklamespråk", "designlogikk", "spatial estetikk",
+      "kropp som bilde", "tatoveringskultur", "gateestetikk",
+      "materialitet", "slitasje-estetikk"
     ],
+
     "blindspots": [
-      "slitasje, skitt og improviserte løsninger som også er estetikk",
-      "kulturelle koder som ekskluderer noen",
-      "de som ikke kjenner reglene for «riktig» stil"
+      "skitt, slitasje og improviserte løsninger som også er estetikk",
+      "forbrukspress skjult bak 'personlig stil'",
+      "stil som ekskluderer og markerer klasseposisjon",
+      "digitale algoritmer som bestemmer visuell smak"
     ],
-    "related_routes": [],
-    "related_places": [],
-    "related_quizzes": [],
-    "status": "experimental"
+
+    "methods": [
+      "Kartlegg visuelle mønstre i et område: skilt, farger, materialer.",
+      "Se etter hvilke estetiske normer som gjelder.",
+      "Undersøk hvilke grupper som bruker hvilke stiler.",
+      "Analyser visuelle uttrykk i sosiale medier opp mot byrom.",
+      "Vurder hvordan estetikk styrer opplevelsen av inkludering/ekskludering."
+    ],
+
+    "analysis_axes": [
+      "kommersiell estetikk vs personlig uttrykk",
+      "stil som klassemarkør vs stil som identitet",
+      "renhet vs slitasje",
+      "fysisk estetikk vs digital estetikk"
+    ],
+
+    "key_terms": [
+      "branding", "stilnormer", "visuelle markører", 
+      "digital estetikk", "gateestetikk"
+    ],
+
+    "status": "core"
   },
+
   {
     "emne_id": "em_kunst_tverrfaglig_kunst_by",
     "subject_id": "kunst",
+
+    "area_id": "kunst_teknologi",
+    "area_label": "Kunst, byrom og teknologi",
+    "level": 2,
+
     "title": "Kunst i kryssfeltet mellom by, natur og teknologi",
-    "short_label": "Kunst i kryssfeltet",
-    "description": "Lysinstallasjoner, lydverk, digitale projeksjoner og site-specific prosjekter som bruker byen (og naturen rundt) som materiale.",
+    "short_label": "Kunst & teknologi",
+    "description": "Lysinstallasjoner, lydverk, AR/VR, digitale projeksjoner og stedsspesifikke verk som bruker byen og naturens rom som materiale.",
+
     "keywords": [
-      "lysinstallasjon",
-      "lydkunst",
-      "site-specific",
-      "digital kunst",
-      "byrom"
+      "lysinstallasjon", "lydkunst", "site-specific", "digital kunst",
+      "interaktiv kunst", "AR", "VR", "immersive", "byrom"
     ],
+
     "dimensions": [
-      "teknologi",
-      "geografi",
-      "estetikk"
+      "teknologi", "geografi", "estetikk", "interaksjon"
     ],
+
     "core_concepts": [
-      "stedsspesifikk kunst",
-      "immersive opplevelser",
-      "sensorisk kartlegging",
-      "interaksjon mellom kropp og rom"
+      "stedsspesifikk kunst", "immersive opplevelser", "sensorisk kartlegging",
+      "lysdesign", "lydrom", "visualisering", "algoritmiske verk",
+      "interaktivitet", "publikumsbevegelse", "kropp-i-rom",
+      "materialitet", "tekno-estetikk", "data som materiale",
+      "projeksjon", "responsiv arkitektur"
     ],
+
     "blindspots": [
-      "energibruk og miljøavtrykk fra teknisk krevende verk",
+      "energibruk og miljøavtrykk fra teknologi",
       "tilgjengelighet for publikum med ulike funksjonsnivå",
-      "hvordan slike verk dokumenteres når de er borte"
+      "hvordan dokumentere verk som forsvinner etter endt visning",
+      "teknologisk spektakel som skjuler svakt innhold"
     ],
-    "related_routes": [],
-    "related_places": [],
-    "related_quizzes": [],
-    "status": "experimental"
+
+    "methods": [
+      "Analyser forholdet mellom teknologi og sted.",
+      "Kartlegg publikumsbevegelser og respons.",
+      "Se etter hvilke sanser som aktiveres – og hvilke som ikke gjør det.",
+      "Undersøk material- og energibruken bak verkene.",
+      "Spør hva teknologien tilfører som ikke kunne gjøres ellers."
+    ],
+
+    "analysis_axes": [
+      "teknologi som verktøy vs teknologi som innhold",
+      "immersjon vs avstand",
+      "midlertidighet vs varighet",
+      "kropp vs projeksjon"
+    ],
+
+    "key_terms": [
+      "immersiv kunst", "lydrom", "projeksjon", "teknologisk estetikk",
+      "interaksjon", "responsiv arkitektur"
+    ],
+
+    "status": "core"
   }
 ]
