@@ -42,12 +42,13 @@
       "pålitelig vs upålitelig forteller",
       "synsvinkel",
       "karakter",
+      "indre monolog",
       "stemme",
       "dialog",
       "språkregister",
       "symbolsk makt",
       "metafor",
-      "motiver",
+      "motiv",
       "tema",
       "intertekstualitet",
       "kanon",
@@ -71,7 +72,7 @@
       "sjangeruttrykk som regnes som 'lavkultur' og derfor undervurderes",
       "dagbøker, brev, notater og muntlig tradisjon som ikke arkiveres som 'litteratur'",
       "klasse- og kjønnsbias i hvilke forfattere som får plass i skolekanon",
-      "litteratur som formet folks verdensbilde, men som aldri fikk klassikerstatus"
+      "litteratur som formet folks verdensbilde, men aldri fikk klassikerstatus"
     ],
 
     "methods": [
@@ -124,7 +125,7 @@
 
     "title": "Litterær geografi: Oslo som tekst",
     "short_label": "Oslo som tekst",
-    "description": "Hvordan kaféer, leiligheter, gater, scener, forlag og bibliotek gjør byen til et litterært kart av steder, figurer og stemmer – både i fiksjon og i virkeligheten.",
+    "description": "Hvordan kafeer, leiligheter, scener, forlag og bibliotek gjør byen til et litterært kart av steder, figurer og stemmer – både i fiksjon og i virkeligheten.",
 
     "keywords": [
       "litterær by",
@@ -148,7 +149,7 @@
     "core_concepts": [
       "fortelling knyttet til sted",
       "litterær geografi",
-      "symbolsk kart",
+      "symbolsk bykart",
       "by som tekst",
       "forfattersteder",
       "kafeer som skrive- og møteplasser",
@@ -197,6 +198,260 @@
       "kulturelle knutepunkt",
       "litterært miljø",
       "nasjonal litterær offentlighet"
+    ],
+
+    "related_routes": [],
+    "related_places": [],
+    "related_quizzes": [],
+    "status": "core"
+  },
+
+  {
+    "emne_id": "em_lit_leserrolle_lesemater",
+    "subject_id": "litteratur",
+
+    "area_id": "lit_lesing",
+    "area_label": "Leserrolle, lesemåter og tolkning",
+    "level": 2,
+
+    "title": "Leserrolle og lesemåter",
+    "short_label": "Leser & lesing",
+    "description": "Hvordan forskjellige måter å lese på – fortolkende, escapistisk, kritisk, analytisk – skaper ulike opplevelser og innsikter, og hvordan leseren selv blir medprodusent av mening.",
+
+    "keywords": [
+      "leserrolle",
+      "lesemåter",
+      "tolkning",
+      "leserrespons",
+      "nærlesning",
+      "skumlesning",
+      "kritisk lesing"
+    ],
+
+    "dimensions": [
+      "identitet",
+      "kognisjon",
+      "estetikk",
+      "pedagogikk"
+    ],
+
+    "core_concepts": [
+      "leserrolle",
+      "implisitt leser",
+      "konkret leser",
+      "leserrespons",
+      "nærlesning",
+      "skumlesning",
+      "kritisk lesing",
+      "affektiv lesing",
+      "identifikasjon",
+      "motstand mot tekst",
+      "reading against the grain",
+      "lesestrategier",
+      "forforståelse",
+      "tolkningsrammer",
+      "livserfaring som filter",
+      "lesepraksis i skole vs fritid"
+    ],
+
+    "blindspots": [
+      "lesere som aldri ser seg selv representert i tekstene de får i skole og medier",
+      "lesing som plikt og prestasjon heller enn som utforskning",
+      "hvordan ulike kognitive stiler påvirker lesemåter",
+      "digitale lesevaner som endrer tålmodighet og dybde"
+    ],
+
+    "methods": [
+      "Spør: Hvordan pleier du å lese – og endrer det seg med sjanger og medium?",
+      "Undersøk hvilke tekster du vender tilbake til og hvorfor.",
+      "Se etter situasjoner hvor du går inn i eller ut av identifikasjon med karakterer.",
+      "Sammenlign opplevelsen av å lese på skjerm og på papir.",
+      "Analyser hvordan skolelesing har preget synet ditt på litteratur.",
+      "Prøv å lese en kjent tekst på en annen måte (f.eks. feministisk, klassekritisk, postkolonialt)."
+    ],
+
+    "analysis_axes": [
+      "identifikasjon vs distanse",
+      "nærlesning vs skumlesning",
+      "flukt/escapisme vs kritisk lesing",
+      "privat lesing vs kollektiv diskusjon",
+      "skjermlesing vs papirlesing"
+    ],
+
+    "key_terms": [
+      "implisitt leser",
+      "leserrespons",
+      "nærlesning",
+      "kritisk lesing",
+      "reading against the grain",
+      "forforståelse"
+    ],
+
+    "related_routes": [],
+    "related_places": [],
+    "related_quizzes": [],
+    "status": "core"
+  },
+
+  {
+    "emne_id": "em_lit_sjanger_normer_eksperiment",
+    "subject_id": "litteratur",
+
+    "area_id": "lit_sjanger",
+    "area_label": "Sjanger, normer og eksperiment",
+    "level": 2,
+
+    "title": "Sjanger, normer og eksperiment",
+    "short_label": "Sjanger & normer",
+    "description": "Hvordan sjangre som roman, krim, fantasy, lyrikk, essay og fanfiction både setter rammer for hva som er 'lov', og åpner rom for eksperiment som kan bryte normene.",
+
+    "keywords": [
+      "sjanger",
+      "normer",
+      "krim",
+      "fantasy",
+      "lyrikk",
+      "essay",
+      "eksperimentell litteratur",
+      "fanfiction"
+    ],
+
+    "dimensions": [
+      "estetikk",
+      "marked",
+      "identitet",
+      "kultur"
+    ],
+
+    "core_concepts": [
+      "sjangerkontrakt",
+      "konvensjoner",
+      "troper",
+      "forventningshorisont",
+      "formeksperiment",
+      "metafiksjon",
+      "fragmentarisk form",
+      "autofiksjon",
+      "genreblanding",
+      "krimstruktur",
+      "fantasyverden",
+      "lyrisk jeg",
+      "essayistisk stemme",
+      "populærlitteratur vs 'høylitteratur'"
+    ],
+
+    "blindspots": [
+      "hvordan marked og forlag styrer hvilke sjangeruttrykk som dominerer",
+      "forakt for bestemte sjangre som 'kvinnelitteratur', romantikk, krim, ungdomsserier",
+      "ikke-publiserte eksperimenter og småforlagsscener som forsvinner ut av historien",
+      "språk og form som oppfattes som 'for vanskelig' og derfor ikke når ut til mange"
+    ],
+
+    "methods": [
+      "Kartlegg hvilke sjangre du selv leser – og hvilke du aldri har prøvd.",
+      "Analyser forventningene du har når du åpner en krim vs en diktsamling.",
+      "Se etter hvordan tekst bryter eller leker med sjangerkonvensjoner.",
+      "Undersøk hvordan sjanger henger sammen med kjønn, alder og klasse i markedsføring.",
+      "Les en tekst du kjenner, men tenk: Hva hvis denne var skrevet som krim/lyrikk/fantasy?"
+    ],
+
+    "analysis_axes": [
+      "konvensjon vs brudd",
+      "populærlitteratur vs kanonisert litteratur",
+      "markedets logikk vs kunstnerisk risiko",
+      "forventningsstyrt lesing vs åpent eksperiment"
+    ],
+
+    "key_terms": [
+      "sjangerkontrakt",
+      "troper",
+      "forventningshorisont",
+      "autofiksjon",
+      "metafiksjon",
+      "populærlitteratur"
+    ],
+
+    "related_routes": [],
+    "related_places": [],
+    "related_quizzes": [],
+    "status": "core"
+  },
+
+  {
+    "emne_id": "em_lit_livsskriving_dagboker_brev",
+    "subject_id": "litteratur",
+
+    "area_id": "lit_livsskriving",
+    "area_label": "Livsskriving, dagbøker og brev",
+    "level": 2,
+
+    "title": "Livsskriving: dagbøker, brev og notater",
+    "short_label": "Livsskriving",
+    "description": "Hvordan dagbøker, brev, notatbøker, chatlogger og andre personlige tekster både er kilder til historisk kunnskap og steder der mennesker prøver å forstå seg selv.",
+
+    "keywords": [
+      "dagbok",
+      "brev",
+      "notat",
+      "memoar",
+      "selvbiografi",
+      "livsskriving",
+      "chatlogger",
+      "personlige arkiv"
+    ],
+
+    "dimensions": [
+      "identitet",
+      "minne",
+      "historie",
+      "intimitet"
+    ],
+
+    "core_concepts": [
+      "selvrepresentasjon",
+      "livsfortelling",
+      "minnearbeid",
+      "arkivering av hverdagsliv",
+      "intimitet i tekst",
+      "skrive for seg selv vs for andre",
+      "jeg-stemme",
+      "tidslag i dagbøker",
+      "brevveksling",
+      "personlige arkiv",
+      "selvredigering",
+      "det usagte",
+      "skam og stolthet i tekst"
+    ],
+
+    "blindspots": [
+      "hvem som får arkivplass, og hvem som ikke gjør det",
+      "digitale plattformer som lagrer og eier intime tekster",
+      "liv som aldri skrives ned, men som kunne endret historien",
+      "farene ved å lese dagbøker og brev som 'ren sannhet'"
+    ],
+
+    "methods": [
+      "Spør: Hvilke deler av livet kan du skrive om – og hvilke kan du ikke?",
+      "Analyser forskjellen på å skrive for deg selv og å skrive i sosiale medier.",
+      "Se etter hvordan tidsforskyvning fungerer i dagbøker (nåtid vs etterpå-blikk).",
+      "Tenk gjennom hvilke personlige arkiv som finnes rundt deg – og hvem som har tilgang.",
+      "Undersøk hvordan historikere bruker dagbøker og brev som kilder, og hvilke stemmer som dermed blir hørt."
+    ],
+
+    "analysis_axes": [
+      "privat vs offentlig skrift",
+      "umiddelbar skriving vs senere redigering",
+      "minnearbeid vs spontan utblåsning",
+      "arkivert liv vs uregistrert liv"
+    ],
+
+    "key_terms": [
+      "livsskriving",
+      "selvrepresentasjon",
+      "minnearbeid",
+      "personlige arkiv",
+      "intimitet i tekst",
+      "dagbokskilde"
     ],
 
     "related_routes": [],
