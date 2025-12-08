@@ -961,52 +961,53 @@ function createInsightFromSignal(signal) {
 function extractConcepts(text) {
   if (!text || typeof text !== "string") return [];
 
-  const tokens = filterStopwords(tokenize(text));
-  if (!tokens.length) return [];
+  const rawTokens = tokenize(text);
+  if (!rawTokens.length) return [];
 
   const conceptMap = new Map();
 
-  for (const raw of tokens) {
-    const key = normalizeConceptToken(raw);
-    if (!key || key.length <= 3) continue; // litt strengere på lengde
+  for (let token of rawTokens) {
+    // 1. normaliser token først
+    let key = normalizeConceptToken(token);
+    if (!key) continue;
 
+    // 2. filter etter normalisering (IKKE før!)
+    if (STOPWORDS.has(key)) continue;
+    if (key.length <= 3) continue;
+    if (!/^[a-zæøå]+$/.test(key)) continue;
+
+    // 3. Opprett entry
     let entry = conceptMap.get(key);
     if (!entry) {
       entry = { key, count: 0, examples: [] };
       conceptMap.set(key, entry);
     }
 
-    // boost faglige ordformer litt (bruk key, ikke t)
+    // 4. fag-boost
     if (
-      key.endsWith("het") ||   // modernitet, frihet
-      key.endsWith("else") ||  // forståelse, handlingsevne
-      key.endsWith("skap") ||  // fellesskap, borgerskap
-      key.endsWith("sjon") ||  // transformasjon, industrialisering
+      key.endsWith("het") ||
+      key.endsWith("else") ||
+      key.endsWith("skap") ||
+      key.endsWith("sjon") ||
       key.endsWith("isering") ||
-      key.endsWith("ologi") || // epistemologi, sosiologi
-      key.endsWith("dom") ||   // eiendom, ungdom
-      key.endsWith("ning")     // styring, tolkning
+      key.endsWith("ologi") ||
+      key.endsWith("dom") ||
+      key.endsWith("ning")
     ) {
       entry.count += 2;
     }
 
-    // grunn-count
+    // 5. vanlig count
     entry.count += 1;
 
-    // lagre noen få eksempler (her: rå-ordet slik det stod)
-    if (
-      entry.examples.length < 5 &&
-      !entry.examples.includes(raw)
-    ) {
-      entry.examples.push(raw);
+    // 6. lagre noen få eksempler
+    if (entry.examples.length < 5 && !entry.examples.includes(token)) {
+      entry.examples.push(token);
     }
   }
 
-  return Array.from(conceptMap.values()).sort(
-    (a, b) => b.count - a.count
-  );
+  return Array.from(conceptMap.values()).sort((a, b) => b.count - a.count);
 }
-
   // Slår sammen to concept-lister:
   //  - summerer count
   //  - beholder maks 5 eksempler per key
