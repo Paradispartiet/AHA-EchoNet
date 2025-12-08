@@ -443,7 +443,9 @@ function renderTopicPanel(themeId, stats, sem, dims, insights) {
       </div>`
           : ""
       }
-    </div>
+
+      ${conceptHtml}
+    </div> <!-- slutt på .panel-grid -->
   `;
 }
 
