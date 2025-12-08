@@ -1331,7 +1331,99 @@ function exportChamberJson() {
 
 
 
+function showConceptsForCurrentTopic() {
+  const chamber = loadChamberFromStorage();
+  const themeId = getCurrentThemeId();
+  const insights = InsightsEngine.getInsightsForTopic(
+    chamber,
+    SUBJECT_ID,
+    themeId
+  );
 
+  clearOutput();
+  clearPanel();
+
+  if (!insights || insights.length === 0) {
+    log("Ingen innsikter ennå for tema: " + themeId);
+    return;
+  }
+
+  // Bruk meta-motorens buildConceptIndex hvis den finnes
+  let conceptIndex = [];
+  if (
+    typeof MetaInsightsEngine !== "undefined" &&
+    typeof MetaInsightsEngine.buildConceptIndex === "function"
+  ) {
+    conceptIndex = MetaInsightsEngine.buildConceptIndex(insights);
+  } else {
+    // Fallback: bygg en enkel indeks lokalt
+    const map = new Map();
+    (insights || []).forEach((ins) => {
+      (ins.concepts || []).forEach((c) => {
+        if (!c || !c.key) return;
+        let entry = map.get(c.key);
+        if (!entry) {
+          entry = {
+            key: c.key,
+            total_count: 0,
+            examples: [],
+          };
+          map.set(c.key, entry);
+        }
+        entry.total_count += c.count || 1;
+        (c.examples || []).forEach((ex) => {
+          if (
+            ex &&
+            entry.examples.length < 3 &&
+            !entry.examples.includes(ex)
+          ) {
+            entry.examples.push(ex);
+          }
+        });
+      });
+    });
+    conceptIndex = Array.from(map.values()).sort(
+      (a, b) => b.total_count - a.total_count
+    );
+  }
+
+  if (!conceptIndex.length) {
+    log("Ingen begreper funnet ennå for tema: " + themeId);
+    return;
+  }
+
+  // Tekstlig liste i loggen
+  log('Begreper i tema "' + themeId + '":\n');
+  conceptIndex.slice(0, 40).forEach((c) => {
+    log("• " + c.key + " (" + c.total_count + ")");
+  });
+
+  // Enkel visuell liste i panelet
+  const panel = getPanelEl();
+  if (panel) {
+    panel.innerHTML = `
+      <div class="insight-panel">
+        <div class="insight-panel-header">
+          <div class="insight-panel-title">
+            Begreper i tema: <code>${themeId}</code>
+          </div>
+        </div>
+        <div class="concept-list">
+          ${conceptIndex
+            .slice(0, 40)
+            .map(
+              (c) => `
+            <span class="concept-pill" title="Brukt ${c.total_count} ganger">
+              ${c.key}
+            </span>
+          `
+            )
+            .join("")}
+        </div>
+      </div>
+    `;
+  }
+}
 
 // ── Meta-motor: global brukerprofil ──────────
 
@@ -1769,6 +1861,7 @@ function setupUI() {
   const btnPath = document.getElementById("btn-path");
   const btnSem = document.getElementById("btn-sem");
   const btnAuto = document.getElementById("btn-auto");
+  const btnConcepts = document.getElementById("btn-concepts");
   const btnAgent = document.getElementById("btn-agent");
   const btnDim = document.getElementById("btn-dim");
   const btnDial = document.getElementById("btn-dial");
