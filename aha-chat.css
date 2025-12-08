@@ -306,3 +306,20 @@ pre#out {
   font-size: 11px;
   opacity: 0.8;
 }
+
+.concept-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.5rem;
+}
+
+.concept-pill {
+  display: inline-block;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.15);
+  font-size: 0.8rem;
+  white-space: nowrap;
+  opacity: 0.9;
+}
