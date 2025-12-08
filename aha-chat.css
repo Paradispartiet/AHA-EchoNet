@@ -315,11 +315,48 @@ pre#out {
 }
 
 .concept-pill {
-  display: inline-block;
-  padding: 0.1rem 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.1rem 0.6rem;
   border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.15);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(8, 15, 30, 0.9);
   font-size: 0.8rem;
+  cursor: pointer;
   white-space: nowrap;
-  opacity: 0.9;
+}
+
+.concept-pill:hover {
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.concept-count {
+  opacity: 0.7;
+  font-size: 0.75rem;
+}
+
+.concept-path {
+  margin-top: 0.75rem;
+  font-size: 0.85rem;
+}
+
+.concept-path-header {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.concept-path-list {
+  padding-left: 1.2rem;
+  margin: 0.25rem 0 0;
+}
+
+.concept-path-step {
+  margin-bottom: 0.35rem;
+}
+
+.concept-path-hint,
+.concept-path-empty {
+  opacity: 0.8;
+  font-size: 0.8rem;
 }
