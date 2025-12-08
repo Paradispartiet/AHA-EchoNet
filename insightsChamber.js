@@ -1714,6 +1714,150 @@ function computeMetaConcepts(concepts) {
     });
   }
 
+  // ── Begrepssti for ett begrep ──────────────────────────
+  // Bygger en "tankerekke" for et begrep på tvers av innsikter:
+  // - første gang begrepet dukker opp
+  // - hvor det er sterkest / mest ladet
+  // - midt i utviklingen
+  // - hvordan du snakker om det nå
+  function createConceptPathForConcept(insights, conceptKey, maxSteps) {
+    const limit = maxSteps || 5;
+
+    if (!conceptKey || !conceptKey.trim()) {
+      return ["Ingen begrepssti: du må velge et begrep først."];
+    }
+
+    const key = conceptKey.trim().toLowerCase();
+
+    const candidates = (insights || []).filter((ins) =>
+      (ins.concepts || []).some(
+        (c) => c && typeof c.key === "string" && c.key.toLowerCase() === key
+      )
+    );
+
+    if (candidates.length === 0) {
+      return [
+        'Ingen innsikter for begrepet "' + key + '" ennå i dette temaet.',
+      ];
+    }
+
+    // Sorter på tid
+    const sorted = candidates
+      .slice()
+      .sort((a, b) =>
+        (a.first_seen || a.timestamp || "").localeCompare(
+          b.first_seen || b.timestamp || ""
+        )
+      );
+
+    // Hvis få treff: bare vis alle i rekkefølge
+    if (sorted.length <= limit) {
+      return sorted.map((ins, idx) => {
+        return (
+          idx +
+          1 +
+          ". " +
+          "«" +
+          key +
+          "» – " +
+          (ins.summary || ins.text || "")
+        );
+      });
+    }
+
+    // Hjelper: hvor "sterk" er bruken av begrepet i dette insightet?
+    function getConceptStrength(ins) {
+      const concept = (ins.concepts || []).find(
+        (c) => c && typeof c.key === "string" && c.key.toLowerCase() === key
+      );
+      const base = concept ? concept.count || 1 : 1;
+
+      const sem = ins.semantic || {};
+      const intensity = sem.intensity || "middels";
+      const val = sem.valence || "nøytral";
+
+      let bonus = 0;
+      if (intensity === "høy") bonus += 2;
+      else if (intensity === "middels") bonus += 1;
+
+      if (val === "negativ") bonus += 2;
+      else if (val === "blandet") bonus += 1;
+
+      return base + bonus;
+    }
+
+    const first = sorted[0];
+    const last = sorted[sorted.length - 1];
+
+    // Finn det mest "ladede" insightet for begrepet
+    let strongest = null;
+    let strongestScore = -Infinity;
+    sorted.forEach((ins) => {
+      const s = getConceptStrength(ins);
+      if (s > strongestScore) {
+        strongestScore = s;
+        strongest = ins;
+      }
+    });
+
+    // Ta et punkt omtrent midt i utviklingen
+    const mid = sorted[Math.floor(sorted.length / 2)];
+
+    const picked = [];
+    function add(ins) {
+      if (!ins) return;
+      if (!picked.includes(ins)) picked.push(ins);
+    }
+
+    add(first);
+    add(strongest);
+    add(mid);
+    add(last);
+
+    // Hvis vi fortsatt har plass, fyll på med andre sterke kandidater
+    if (picked.length < limit) {
+      const remaining = sorted.filter((ins) => !picked.includes(ins));
+      remaining
+        .sort((a, b) => getConceptStrength(b) - getConceptStrength(a))
+        .slice(0, limit - picked.length)
+        .forEach(add);
+    }
+
+    // Sorter valgt sti kronologisk
+    picked.sort((a, b) =>
+      (a.first_seen || a.timestamp || "").localeCompare(
+        b.first_seen || b.timestamp || ""
+      )
+    );
+
+    // Formater output som tankerekke
+    return picked.map((ins, idx) => {
+      const parts = [];
+
+      if (ins === first) parts.push("første gang du nevner begrepet");
+      if (ins === last) parts.push("slik du snakker om det nå");
+      if (ins === strongest) parts.push("mest ladet bruk");
+      if (ins === mid && ins !== first && ins !== last)
+        parts.push("midt i utviklingen");
+
+      const role =
+        parts.length > 0 ? " (" + parts.join(", ") + ")" : "";
+
+      const txt = ins.summary || ins.text || "";
+
+      return (
+        idx +
+        1 +
+        ". «" +
+        key +
+        "»" +
+        role +
+        ": " +
+        txt
+      );
+    });
+  }
+  
   // ── Syntese-tekst ──────────────────────────
 
   function createSynthesisText(insights, themeId) {
