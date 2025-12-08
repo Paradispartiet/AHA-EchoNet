@@ -1579,7 +1579,7 @@ function showMetaProfileForUser() {
       (g.integration_topics || 0)
   );
 
-  if (profile.patterns && profile.patterns.length > 0) {
+    if (profile.patterns && profile.patterns.length > 0) {
     log("\nMØNSTRE PÅ TVERS AV TEMA:");
     profile.patterns.forEach((p) => {
       log(
@@ -1593,6 +1593,37 @@ function showMetaProfileForUser() {
   } else {
     log("\nIngen tydelige kryss-tema-mønstre oppdaget ennå.");
   }
+
+  // ── Fagprofil: samfunnsvitenskapelige spor ──
+  const academic = profile.academic;
+  if (academic && academic.clusters && academic.clusters.length) {
+    const activeClusters = academic.clusters.filter((c) => c.score > 0);
+
+    if (activeClusters.length > 0) {
+      log("\nFAGPROFIL – samfunnsvitenskapelige teoriklynger:");
+
+      activeClusters.slice(0, 6).forEach((c) => {
+        const rel = Math.round((c.relative || 0) * 100);
+        const hits = c.hits && c.hits.length
+          ? " (begrep: " + c.hits.join(", ") + ")"
+          : "";
+        log("• " + c.label + " – " + rel + "% styrke" + hits);
+      });
+
+      if (academic.disciplines && academic.disciplines.length) {
+        log("\nFordeling på fagtradisjoner:");
+        academic.disciplines.forEach((d) => {
+          const rel = Math.round((d.relative || 0) * 100);
+          log("• " + d.id + ": " + rel + "%");
+        });
+      }
+    } else {
+      log("\nFAGPROFIL: Ingen tydelige teorispor ennå – for lite faglige begreper.");
+    }
+  } else {
+    log("\nFAGPROFIL: Ikke nok data til å bygge fagprofil ennå.");
+  }
+}
 
   // Toppbegreper – enkel liste
   if (profile.concepts && profile.concepts.length > 0) {
