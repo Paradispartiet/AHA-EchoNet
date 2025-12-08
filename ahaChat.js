@@ -295,6 +295,73 @@ function renderTopicPanel(themeId, stats, sem, dims, insights) {
 
   const topInsights = insights.slice(0, 3);
 
+  // Begrepsanalyse for dette temaet (POS-filter + multiword)
+  let coreConcepts = [];
+  let multiConcepts = [];
+
+  if (
+    typeof MetaInsightsEngine !== "undefined" &&
+    Array.isArray(insights) &&
+    insights.length
+  ) {
+    try {
+      // Gjenbruker global buildConceptIndex, men nå på innsikter for dette temaet
+      const conceptIndex = MetaInsightsEngine.buildConceptIndex(
+        insights
+      );
+
+      coreConcepts = MetaInsightsEngine
+        .posFilterConcepts(conceptIndex)
+        .slice(0, 12); // topp 12 kjernebegreper
+
+      multiConcepts = MetaInsightsEngine
+        .extractMultiwordConcepts(conceptIndex)
+        .slice(0, 10); // topp 10 multiword
+    } catch (e) {
+      console.warn("Begrepsanalyse feilet for tema", themeId, e);
+    }
+  }
+
+  const conceptHtml =
+    coreConcepts.length || multiConcepts.length
+      ? `
+      <div class="panel-card panel-card-full">
+        <div class="stat-label">Begreper i dette temaet</div>
+
+        ${
+          coreConcepts.length
+            ? `
+        <div class="stat-sub">Kjernebegreper (substantiv-ish)</div>
+        <div class="dim-chips">
+          ${coreConcepts
+            .map(
+              (c) =>
+                `<span class="dim-chip">${c.key}</span>`
+            )
+            .join("")}
+        </div>`
+            : ""
+        }
+
+        ${
+          multiConcepts.length
+            ? `
+        <div class="stat-sub" style="margin-top:4px;">
+          Sammensatte begreper (2–4 ord)
+        </div>
+        <div class="dim-chips">
+          ${multiConcepts
+            .map(
+              (c) =>
+                `<span class="dim-chip">${c.key}</span>`
+            )
+            .join("")}
+        </div>`
+            : ""
+        }
+      </div>`
+      : "";
+
   panel.innerHTML = `
     <div class="insight-panel">
       <div class="insight-panel-header">
