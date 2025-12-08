@@ -1398,7 +1398,7 @@ function showConceptsForCurrentTopic() {
     log("• " + c.key + " (" + c.total_count + ")");
   });
 
-  // Enkel visuell liste i panelet
+  // Enkel visuell liste i panelet – nå klikkbar
   const panel = getPanelEl();
   if (panel) {
     panel.innerHTML = `
@@ -1407,21 +1407,36 @@ function showConceptsForCurrentTopic() {
           <div class="insight-panel-title">
             Begreper i tema: <code>${themeId}</code>
           </div>
+          <div class="insight-panel-subtitle">
+            Klikk på et begrep for å se en tankerekke (begrepssti).
+          </div>
         </div>
         <div class="concept-list">
           ${conceptIndex
             .slice(0, 40)
             .map(
               (c) => `
-            <span class="concept-pill" title="Brukt ${c.total_count} ganger">
+            <button
+              class="concept-pill"
+              data-concept="${c.key}"
+              title="Brukt ${c.total_count} ganger"
+            >
               ${c.key}
-            </span>
+              <span class="concept-count">(${c.total_count})</span>
+            </button>
           `
             )
             .join("")}
         </div>
+        <div id="concept-path" class="concept-path">
+          <p class="concept-path-hint">
+            Velg et begrep over for å se hvordan du har brukt det over tid.
+          </p>
+        </div>
       </div>
     `;
+
+    setupConceptPanelInteractions();
   }
 }
 
