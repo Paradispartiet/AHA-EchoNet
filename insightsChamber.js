@@ -868,43 +868,46 @@ function createInsightFromSignal(signal) {
   // ── TopicStats: metning + tetthet ──────────
 
   const STOPWORDS = new Set([
-    "og",
-    "i",
-    "på",
-    "som",
-    "for",
-    "med",
-    "til",
-    "det",
-    "den",
-    "de",
-    "er",
-    "en",
-    "et",
-    "å",
-    "jeg",
-    "du",
-    "vi",
-    "dere",
-    "han",
-    "hun",
-    "oss",
-    "av",
-    "fra",
-    "men",
-    "om",
-    "så"
-  ]);
+  // grunnleggende funksjonsord
+  "og", "i", "på", "som", "for", "med", "til", "av", "fra", "om", "så",
+  "men", "da", "når", "hvor", "hvordan",
 
+  // artikler / pronomen
+  "det", "dette", "den", "de", "en", "et",
+  "jeg", "du", "vi", "dere", "han", "hun", "oss",
+
+  // hjelpeverb / modale
+  "er", "var", "ble", "bli", "blir",
+  "kan", "kunne", "ville", "skal", "skulle", "må", "måtte",
+
+  // småord / fyllord
+  "ikke", "bare", "alt", "selv", "opp", "ned", "mellom",
+
+  // feiltokens vi så i testen
+  "ogs", "ell"
+]);
+
+  
   function tokenize(text) {
     return text.toLowerCase().split(/\W+/).filter(Boolean);
   }
 
   function filterStopwords(tokens) {
-    return tokens.filter(
-      (t) => t.length > 2 && !STOPWORDS.has(t)
-    );
-  }
+  return tokens.filter((t) => {
+    if (!t) return false;
+
+    // min. lengde – kast "var", "kan" osv.
+    if (t.length <= 3) return false;
+
+    // kun rene bokstav-ord (fjerner rsm/ell-artefakter, tall, blanding)
+    if (!/^[a-zæøå]+$/.test(t)) return false;
+
+    // ikke ta med stopwords
+    if (STOPWORDS.has(t)) return false;
+
+    return true;
+  });
+}
 
   // ── Begrepsmotor: enkle "concepts" per innsikt ─────────────
 
@@ -953,40 +956,58 @@ function createInsightFromSignal(signal) {
     return t;
   }
 
+  if (/^[a-zæøå]+$/.test(t) === false) return false; // fjern rsm-type tokens
+
   // Tar inn tekst og returnerer en liste med konsepter:
-  //  [{ key, count, examples: ["..."] }]
-  function extractConcepts(text) {
-    if (!text || typeof text !== "string") return [];
+//  [{ key, count, examples: ["..."] }]
+function extractConcepts(text) {
+  if (!text || typeof text !== "string") return [];
 
-    const tokens = filterStopwords(tokenize(text));
-    if (!tokens.length) return [];
+  const tokens = filterStopwords(tokenize(text));
+  if (!tokens.length) return [];
 
-    const conceptMap = new Map();
+  const conceptMap = new Map();
 
-    for (const raw of tokens) {
-      const key = normalizeConceptToken(raw);
-      if (!key || key.length < 3) continue;
+  for (const raw of tokens) {
+    const key = normalizeConceptToken(raw);
+    if (!key || key.length <= 3) continue; // litt strengere på lengde
 
-      let entry = conceptMap.get(key);
-      if (!entry) {
-        entry = { key, count: 0, examples: [] };
-        conceptMap.set(key, entry);
-      }
-
-      entry.count += 1;
-
-      if (
-        entry.examples.length < 5 &&
-        !entry.examples.includes(raw)
-      ) {
-        entry.examples.push(raw);
-      }
+    let entry = conceptMap.get(key);
+    if (!entry) {
+      entry = { key, count: 0, examples: [] };
+      conceptMap.set(key, entry);
     }
 
-    return Array.from(conceptMap.values()).sort(
-      (a, b) => b.count - a.count
-    );
+    // boost faglige ordformer litt (bruk key, ikke t)
+    if (
+      key.endsWith("het") ||   // modernitet, frihet
+      key.endsWith("else") ||  // forståelse, handlingsevne
+      key.endsWith("skap") ||  // fellesskap, borgerskap
+      key.endsWith("sjon") ||  // transformasjon, industrialisering
+      key.endsWith("isering") ||
+      key.endsWith("ologi") || // epistemologi, sosiologi
+      key.endsWith("dom") ||   // eiendom, ungdom
+      key.endsWith("ning")     // styring, tolkning
+    ) {
+      entry.count += 2;
+    }
+
+    // grunn-count
+    entry.count += 1;
+
+    // lagre noen få eksempler (her: rå-ordet slik det stod)
+    if (
+      entry.examples.length < 5 &&
+      !entry.examples.includes(raw)
+    ) {
+      entry.examples.push(raw);
+    }
   }
+
+  return Array.from(conceptMap.values()).sort(
+    (a, b) => b.count - a.count
+  );
+}
 
   // Slår sammen to concept-lister:
   //  - summerer count
