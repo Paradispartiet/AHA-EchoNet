@@ -1440,6 +1440,58 @@ function showConceptsForCurrentTopic() {
   }
 }
 
+let conceptPanelBound = false;
+
+function setupConceptPanelInteractions() {
+  const panel = getPanelEl();
+  if (!panel || conceptPanelBound) return;
+
+  panel.addEventListener("click", (ev) => {
+    const btn = ev.target.closest(".concept-pill");
+    if (!btn) return;
+
+    const conceptKey = btn.getAttribute("data-concept");
+    if (!conceptKey) return;
+
+    const chamber = loadChamberFromStorage();
+    const themeId = getCurrentThemeId();
+    const insights = InsightsEngine.getInsightsForTopic(
+      chamber,
+      SUBJECT_ID,
+      themeId
+    );
+
+    // NY motor-funksjon – må være eksportert fra InsightsEngine
+    const steps = InsightsEngine.createConceptPathForConcept(
+      insights,
+      conceptKey,
+      6
+    );
+
+    const pathEl = document.getElementById("concept-path");
+    if (!pathEl) return;
+
+    if (!steps || !steps.length) {
+      pathEl.innerHTML =
+        '<p class="concept-path-empty">Fant ingen tydelig sti for begrepet.</p>';
+      return;
+    }
+
+    pathEl.innerHTML = `
+      <div class="concept-path-header">
+        Tankerekke for begrepet: <code>${conceptKey}</code>
+      </div>
+      <ol class="concept-path-list">
+        ${steps
+          .map((s) => `<li class="concept-path-step">${s}</li>`)
+          .join("")}
+      </ol>
+    `;
+  });
+
+  conceptPanelBound = true;
+}
+
 // ── Meta-motor: global brukerprofil ──────────
 
 // ── Meta-motor: global brukerprofil ──────────
