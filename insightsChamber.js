@@ -956,8 +956,6 @@ function createInsightFromSignal(signal) {
     return t;
   }
 
-  if (/^[a-zæøå]+$/.test(t) === false) return false; // fjern rsm-type tokens
-
   // Tar inn tekst og returnerer en liste med konsepter:
 //  [{ key, count, examples: ["..."] }]
 function extractConcepts(text) {
