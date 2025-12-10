@@ -1,5 +1,5 @@
 // emnerLoader.js
-// Felles, enkel loader for emne-filer
+// Felles, enkel loader for emne-filer (History Go / AHA)
 
 window.Emner = (function () {
   const EMNER_INDEX = {
@@ -13,10 +13,11 @@ window.Emner = (function () {
     populaerkultur: "/emner/emner_populaerkultur.json",
     naeringsliv:    "/emner/emner_naeringsliv.json",
 
-    // de tre som manglet:
+    // de som manglet før:
     sport:          "/emner/emner_sport.json",
     politikk:       "/emner/emner_politikk.json",
-    subkultur:      "/emner/emner_subkultur.json"
+    subkultur:      "/emner/emner_subkultur.json",
+    psykologi:      "/emner/emner_psykologi.json"   // NY
   };
 
   async function loadForSubject(subjectId) {
