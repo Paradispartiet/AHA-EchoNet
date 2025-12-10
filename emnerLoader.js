@@ -1,18 +1,17 @@
 // emnerLoader.js
-// Felles, enkel loader for emne-filer
+// AHA leser emner direkte fra History GO-mappa
 
 window.Emner = (function () {
   const EMNER_INDEX = {
-    historie: "/emner/emner_historie.json",
-    by: "/emner/emner_by.json",
-    kunst: "/emner/emner_kunst.json",
-    // legg til flere: musikk, sport, osv.
-    musikk: "/emner/emner_musikk.json",
-    natur: "/emner/emner_natur.json",
-    vitenskap: "/emner/emner_vitenskap.json",
-    litteratur: "/emner/emner_litteratur.json",
-    populaerkultur: "/emner/emner_popkultur.json",
-    naeringsliv: "/emner/emner_naeringsliv.json"
+    historie:       "/historygo/emner/emner_historie.json",
+    by:             "/historygo/emner/emner_by.json",
+    kunst:          "/historygo/emner/emner_kunst.json",
+    musikk:         "/historygo/emner/emner_musikk.json",
+    natur:          "/historygo/emner/emner_natur.json",
+    vitenskap:      "/historygo/emner/emner_vitenskap.json",
+    litteratur:     "/historygo/emner/emner_litteratur.json",
+    populaerkultur: "/historygo/emner/emner_populaerkultur.json",
+    naeringsliv:    "/historygo/emner/emner_naeringsliv.json"
   };
 
   async function loadForSubject(subjectId) {
@@ -26,7 +25,5 @@ window.Emner = (function () {
     return res.json();
   }
 
-  return {
-    loadForSubject
-  };
+  return { loadForSubject };
 })();
