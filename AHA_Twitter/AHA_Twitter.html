@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+
+<html lang="no">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AHA·NET — Innsiktsstrøm</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=Instrument+Sans:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #0d0e0f;
+    --surface: #141516;
+    --surface2: #1c1e1f;
+    --border: #242627;
+    --border-subtle: #1a1c1d;
+    --accent: #c8f066;
+    --accent2: #66c8f0;
+    --accent3: #f0a366;
+    --text: #e8e6e0;
+    --text-dim: #8a8680;
+    --text-muted: #4a4845;
+    --tag-bg: rgba(200,240,102,0.08);
+    --tag-border: rgba(200,240,102,0.2);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Instrument Sans', sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.35;
+  }
+
+.app {
+display: grid;
+grid-template-columns: 240px 1fr 300px;
+min-height: 100vh;
+max-width: 1300px;
+margin: 0 auto;
+}
+
+/* ── TOPBAR ── */
+.topbar {
+position: fixed; top: 0; left: 0; right: 0;
+display: flex; align-items: center; justify-content: space-between;
+padding: 16px 32px;
+background: rgba(13,14,15,0.94);
+backdrop-filter: blur(18px);
+border-bottom: 1px solid var(–border);
+z-index: 200;
+animation: fadeDown 0.5s ease both;
+}
+.logo {
+font-family: ‘DM Serif Display’, serif;
+font-size: 21px; letter-spacing: -0.02em;
+display: flex; align-items: center; gap: 8px;
+text-decoration: none; color: var(–text);
+}
+.logo span { color: var(–accent); }
+.logo-dot { width: 8px; height: 8px; background: var(–accent); border-radius: 50%; animation: pulse 2s ease infinite; }
+.topbar-center {
+display: flex; gap: 4px;
+background: var(–surface); border: 1px solid var(–border);
+border-radius: 100px; padding: 4px;
+}
+.tab-btn {
+padding: 6px 18px; border-radius: 100px; border: none;
+font-family: ‘DM Mono’, monospace; font-size: 12px;
+cursor: pointer; transition: all 0.2s;
+background: transparent; color: var(–text-muted);
+letter-spacing: 0.04em;
+}
+.tab-btn.active { background: var(–accent); color: #0d0e0f; font-weight: 600; }
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+.btn-compose {
+background: var(–accent); color: #0d0e0f;
+border: none; padding: 8px 18px; border-radius: 100px;
+font-family: ‘Instrument Sans’, sans-serif; font-size: 13px; font-weight: 600;
+cursor: pointer; transition: all 0.2s;
+}
+.btn-compose:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(200,240,102,0.35); }
+.avatar-sm {
+width: 34px; height: 34px; border-radius: 50%;
+background: linear-gradient(135deg, var(–accent2), var(–accent3));
+display: flex; align-items: center; justify-content: center;
+font-size: 13px; font-weight: 600; color: #0d0e0f;
+cursor: pointer; border: 2px solid var(–border); transition: border-color 0.2s;
+}
+.avatar-sm:hover { border-color: var(–accent); }
+
+/* ── SIDEBAR LEFT ── */
+.sidebar-left {
+padding: 88px 16px 28px;
+border-right: 1px solid var(–border);
+position: sticky; top: 0; height: 100vh; overflow-y: auto;
+animation: fadeIn 0.6s ease both 0.1s;
+}
+.nav-label {
+font-family: ‘DM Mono’, monospace; font-size: 10px;
+letter-spacing: 0.12em; color: var(–text-muted);
+text-transform: uppercase; padding: 0 10px;
+margin-bottom: 6px; margin-top: 22px;
+}
+.nav-label:first-child { margin-top: 0; }
+.nav-item {
+display: flex; align-items: center; gap: 10px;
+padding: 9px 10px; border-radius: 10px; cursor: pointer;
+transition: all 0.15s; color: var(–text-dim); font-size: 14px;
+margin-bottom: 2px; text-decoration: none; border: 1px solid transparent;
+}
+.nav-item:hover { background: var(–surface2); color: var(–text); }
+.nav-item.active { background: var(–tag-bg); color: var(–accent); border-color: var(–tag-border); }
+.nav-icon { font-size: 15px; width: 20px; text-align: center; }
+.nav-badge {
+margin-left: auto; background: var(–accent); color: #0d0e0f;
+font-size: 10px; font-weight: 700; padding: 2px 7px;
+border-radius: 100px; font-family: ‘DM Mono’, monospace;
+}
+.trend-item {
+display: flex; justify-content: space-between; align-items: center;
+padding: 7px 10px; border-radius: 8px; cursor: pointer; transition: background 0.15s;
+margin-bottom: 2px;
+}
+.trend-item:hover { background: var(–surface2); }
+.trend-name { font-family: ‘DM Mono’, monospace; font-size: 12px; color: var(–accent2); }
+.trend-count { font-family: ‘DM Mono’, monospace; font-size: 10px; color: var(–text-muted); }
+
+/* ── MAIN ── */
+.feed-main {
+padding-top: 65px;
+border-right: 1px solid var(–border);
+min-height: 100vh;
+animation: fadeIn 0.6s ease both 0.15s;
+}
+
+/* ── VIEW PANELS ── */
+.view { display: none; }
+.view.active { display: block; }
+
+/* ── FEED HEADER ── */
+.feed-header {
+padding: 18px 26px;
+border-bottom: 1px solid var(–border);
+display: flex; align-items: center; justify-content: space-between;
+position: sticky; top: 65px;
+background: rgba(13,14,15,0.92); backdrop-filter: blur(12px); z-index: 50;
+}
+.feed-title { font-family: ‘DM Serif Display’, serif; font-size: 17px; letter-spacing: -0.02em; }
+.feed-filters { display: flex; gap: 5px; }
+.filter-chip {
+padding: 5px 13px; border-radius: 100px; font-size: 11px;
+font-family: ‘DM Mono’, monospace; cursor: pointer; transition: all 0.15s;
+border: 1px solid var(–border); color: var(–text-dim); background: transparent;
+}
+.filter-chip:hover { color: var(–text); border-color: var(–text-muted); }
+.filter-chip.active { background: var(–tag-bg); border-color: var(–tag-border); color: var(–accent); }
+
+/* ── COMPOSE ── */
+.compose-box {
+padding: 18px 26px; border-bottom: 1px solid var(–border);
+display: flex; gap: 13px; background: var(–surface);
+}
+.compose-right { flex: 1; }
+.compose-input {
+width: 100%; background: transparent; border: none; outline: none;
+color: var(–text); font-family: ‘Instrument Sans’, sans-serif;
+font-size: 15px; line-height: 1.6; resize: none; min-height: 56px; padding-top: 2px;
+}
+.compose-input::placeholder { color: var(–text-muted); }
+.compose-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
+.compose-tools { display: flex; gap: 6px; }
+.compose-tool {
+background: transparent; border: none; color: var(–text-muted);
+cursor: pointer; font-size: 15px; padding: 4px 6px;
+border-radius: 6px; transition: all 0.15s;
+}
+.compose-tool:hover { color: var(–accent); background: var(–tag-bg); }
+.compose-submit {
+background: var(–accent); color: #0d0e0f; border: none;
+padding: 7px 17px; border-radius: 100px;
+font-family: ‘Instrument Sans’, sans-serif; font-size: 13px; font-weight: 600;
+cursor: pointer; transition: all 0.2s;
+}
+.compose-submit:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(200,240,102,0.3); }
+
+/* ── POST CARD ── */
+.post-card {
+padding: 20px 26px; border-bottom: 1px solid var(–border-subtle);
+display: flex; gap: 13px;
+transition: background 0.15s; cursor: pointer;
+animation: slideUp 0.4s ease both;
+}
+.post-card:hover { background: var(–surface); }
+.post-avatar {
+width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+display: flex; align-items: center; justify-content: center;
+font-size: 13px; font-weight: 600; color: #0d0e0f; font-family: ‘DM Mono’, monospace;
+}
+.post-right { flex: 1; min-width: 0; }
+.post-meta {
+display: flex; align-items: center; gap: 7px;
+margin-bottom: 5px; flex-wrap: wrap;
+}
+.post-author { font-weight: 600; font-size: 14px; }
+.post-handle { font-family: ‘DM Mono’, monospace; font-size: 11px; color: var(–text-muted); }
+.post-time { font-family: ‘DM Mono’, monospace; font-size: 11px; color: var(–text-muted); margin-left: auto; }
+.post-text { font-size: 15px; color: var(–text); line-height: 1.65; margin-bottom: 10px; }
+.insight-quote {
+background: rgba(200,240,102,0.055);
+border-left: 2px solid var(–accent);
+padding: 9px 13px; border-radius: 0 8px 8px 0;
+margin: 9px 0; font-style: italic;
+font-family: ‘DM Serif Display’, serif; font-size: 15px;
+line-height: 1.5; color: var(–text);
+}
+.post-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 12px; }
+.post-tag {
+font-family: ‘DM Mono’, monospace; font-size: 10px;
+padding: 3px 9px; border-radius: 100px;
+border: 1px solid var(–tag-border); color: var(–accent);
+background: var(–tag-bg); letter-spacing: 0.04em; transition: all 0.15s;
+}
+.post-tag.b { color: var(–accent2); background: rgba(102,200,240,0.06); border-color: rgba(102,200,240,0.2); }
+.post-tag.o { color: var(–accent3); background: rgba(240,163,102,0.06); border-color: rgba(240,163,102,0.2); }
+.resonance-row { display: flex; align-items: center; gap: 8px; margin-bottom: 11px; }
+.res-label { font-family: ‘DM Mono’, monospace; font-size: 10px; color: var(–text-muted); text-transform: uppercase; letter-spacing: 0.08em; flex-shrink: 0; }
+.res-track { flex: 1; height: 3px; background: var(–border); border-radius: 100px; overflow: hidden; }
+.res-fill { height: 100%; border-radius: 100px; background: linear-gradient(90deg, var(–accent2), var(–accent)); width: 0%; transition: width 1.2s ease; }
+.res-score { font-family: ‘DM Mono’, monospace; font-size: 11px; color: var(–accent); flex-shrink: 0; }
+.post-actions { display: flex; gap: 16px; }
+.act-btn {
+display: flex; align-items: center; gap: 5px;
+background: transparent; border: none; color: var(–text-muted);
+cursor: pointer; font-size: 12px; font-family: ‘DM Mono’, monospace;
+padding: 4px 0; transition: all 0.15s; border-radius: 6px;
+}
+.act-btn:hover { color: var(–accent); }
+.act-btn.liked { color: #f066a3; }
+.act-btn span { font-size: 14px; }
+.aha-link-btn {
+margin-left: auto; padding: 4px 11px;
+border: 1px solid var(–border); border-radius: 100px;
+font-size: 11px; white-space: nowrap;
+}
+.aha-link-btn:hover { border-color: var(–tag-border); background: var(–tag-bg); color: var(–accent); }
+
+/* ── AHA PANEL (slide-in) ── */
+.aha-panel {
+position: fixed; top: 0; right: 0; width: 420px; height: 100vh;
+background: var(–surface); border-left: 1px solid var(–border);
+z-index: 300; transform: translateX(100%);
+transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+display: flex; flex-direction: column;
+box-shadow: -20px 0 60px rgba(0,0,0,0.5);
+}
+.aha-panel.open { transform: translateX(0); }
+.aha-panel-header {
+padding: 20px 22px; border-bottom: 1px solid var(–border);
+display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+}
+.aha-panel-title { font-family: ‘DM Serif Display’, serif; font-size: 17px; display: flex; align-items: center; gap: 8px; }
+.aha-panel-title span { color: var(–accent); }
+.aha-panel-close {
+background: transparent; border: none; color: var(–text-dim);
+font-size: 20px; cursor: pointer; padding: 4px; border-radius: 6px; transition: all 0.15s;
+}
+.aha-panel-close:hover { color: var(–text); background: var(–surface2); }
+.aha-context-card {
+margin: 14px 18px; padding: 12px 14px;
+background: var(–surface2); border-radius: 10px;
+border-left: 2px solid var(–accent); font-size: 13px; color: var(–text-dim); line-height: 1.5;
+font-style: italic; font-family: ‘DM Serif Display’, serif; flex-shrink: 0;
+}
+.aha-messages {
+flex: 1; overflow-y: auto; padding: 0 18px 16px;
+display: flex; flex-direction: column; gap: 10px;
+}
+.aha-msg {
+padding: 10px 13px; border-radius: 12px; font-size: 14px; line-height: 1.55;
+max-width: 88%; animation: slideUp 0.3s ease both;
+}
+.aha-msg.user {
+background: var(–accent); color: #0d0e0f;
+align-self: flex-end; border-radius: 12px 12px 2px 12px; font-weight: 500;
+}
+.aha-msg.ai {
+background: var(–surface2); color: var(–text);
+align-self: flex-start; border-radius: 12px 12px 12px 2px;
+border: 1px solid var(–border);
+}
+.aha-msg.ai .msg-label {
+font-family: ‘DM Mono’, monospace; font-size: 9px; color: var(–accent);
+letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 4px;
+}
+.aha-typing { display: flex; gap: 4px; padding: 12px 13px; align-self: flex-start; }
+.aha-typing span {
+width: 6px; height: 6px; background: var(–text-muted); border-radius: 50%;
+animation: bounce 1.2s ease infinite;
+}
+.aha-typing span:nth-child(2) { animation-delay: 0.2s; }
+.aha-typing span:nth-child(3) { animation-delay: 0.4s; }
+.aha-input-row {
+padding: 14px 18px; border-top: 1px solid var(–border);
+display: flex; gap: 10px; flex-shrink: 0;
+}
+.aha-input {
+flex: 1; background: var(–surface2); border: 1px solid var(–border);
+border-radius: 10px; padding: 10px 14px;
+color: var(–text); font-family: ‘Instrument Sans’, sans-serif; font-size: 14px;
+outline: none; resize: none; transition: border-color 0.2s;
+}
+.aha-input:focus { border-color: var(–tag-border); }
+.aha-input::placeholder { color: var(–text-muted); }
+.aha-send {
+background: var(–accent); color: #0d0e0f; border: none;
+width: 40px; height: 40px; border-radius: 10px;
+font-size: 16px; cursor: pointer; flex-shrink: 0;
+display: flex; align-items: center; justify-content: center;
+transition: all 0.2s; align-self: flex-end;
+}
+.aha-send:hover { transform: scale(1.05); }
+.aha-overlay {
+position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+z-index: 299; opacity: 0; pointer-events: none; transition: opacity 0.3s;
+}
+.aha-overlay.open { opacity: 1; pointer-events: all; }
+
+/* ── PHOTO GRID ── */
+.photo-grid-header {
+padding: 18px 26px; border-bottom: 1px solid var(–border);
+display: flex; align-items: center; justify-content: space-between;
+position: sticky; top: 65px;
+background: rgba(13,14,15,0.92); backdrop-filter: blur(12px); z-index: 50;
+}
+.grid-filters { display: flex; gap: 5px; }
+.photo-grid { padding: 20px 26px; }
+.grid-masonry {
+columns: 3; column-gap: 10px;
+}
+.grid-item {
+break-inside: avoid; margin-bottom: 10px;
+border-radius: 12px; overflow: hidden;
+position: relative; cursor: pointer;
+transition: transform 0.2s; animation: slideUp 0.4s ease both;
+}
+.grid-item:hover { transform: scale(1.01); }
+.grid-item:hover .grid-overlay { opacity: 1; }
+.grid-img {
+width: 100%; display: block;
+background: var(–surface2);
+min-height: 120px;
+}
+.grid-overlay {
+position: absolute; inset: 0;
+background: linear-gradient(to top, rgba(13,14,15,0.85) 0%, transparent 50%);
+opacity: 0; transition: opacity 0.2s;
+display: flex; flex-direction: column; justify-content: flex-end; padding: 12px;
+}
+.grid-overlay-author { font-size: 12px; font-weight: 600; color: var(–text); }
+.grid-overlay-tag { font-family: ‘DM Mono’, monospace; font-size: 10px; color: var(–accent); margin-top: 2px; }
+.grid-overlay-likes { font-family: ‘DM Mono’, monospace; font-size: 10px; color: var(–text-dim); margin-top: 4px; }
+.grid-item:nth-child(1) { animation-delay: 0.05s; }
+.grid-item:nth-child(2) { animation-delay: 0.1s; }
+.grid-item:nth-child(3) { animation-delay: 0.15s; }
+.grid-item:nth-child(4) { animation-delay: 0.2s; }
+.grid-item:nth-child(5) { animation-delay: 0.25s; }
+.grid-item:nth-child(6) { animation-delay: 0.3s; }
+.grid-item:nth-child(7) { animation-delay: 0.35s; }
+.grid-item:nth-child(8) { animation-delay: 0.4s; }
+.grid-item:nth-child(9) { animation-delay: 0.45s; }
+
+/* SVG placeholder images */
+.placeholder-img {
+width: 100%; display: block; border-radius: 0;
+}
+
+/* ── SIDEBAR RIGHT ── */
+.sidebar-right {
+padding: 88px 18px 28px;
+position: sticky; top: 0; height: 100vh; overflow-y: auto;
+animation: fadeIn 0.6s ease both 0.2s;
+}
+.widget {
+background: var(–surface); border: 1px solid var(–border);
+border-radius: 13px; padding: 16px; margin-bottom: 14px;
+}
+.widget-title { font-family: ‘DM Serif Display’, serif; font-size: 15px; margin-bottom: 12px; }
+.pulse-item {
+display: flex; gap: 9px; padding: 9px; border-radius: 9px;
+background: var(–surface2); border: 1px solid var(–border-subtle);
+cursor: pointer; transition: all 0.15s; margin-bottom: 8px;
+}
+.pulse-item:last-child { margin-bottom: 0; }
+.pulse-item:hover { border-color: var(–tag-border); background: var(–tag-bg); }
+.pulse-dot { width: 7px; height: 7px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+.pulse-text { font-size: 12px; color: var(–text-dim); font-family: ‘DM Serif Display’, serif; font-style: italic; line-height: 1.5; }
+.pulse-meta { font-family: ‘DM Mono’, monospace; font-size: 10px; color: var(–text-muted); margin-top: 3px; }
+.suggest-item { display: flex; align-items: center; gap: 9px; padding: 7px 0; border-bottom: 1px solid var(–border-subtle); }
+.suggest-item:last-child { border-bottom: none; }
+.suggest-info { flex: 1; }
+.suggest-name { font-size: 13px; font-weight: 600; }
+.suggest-handle { font-family: ‘DM Mono’, monospace; font-size: 11px; color: var(–text-muted); }
+.follow-btn {
+background: transparent; border: 1px solid var(–border); color: var(–text-dim);
+padding: 5px 12px; border-radius: 100px; font-size: 11px;
+font-family: ‘DM Mono’, monospace; cursor: pointer; transition: all 0.15s; white-space: nowrap;
+}
+.follow-btn:hover { border-color: var(–accent); color: var(–accent); background: var(–tag-bg); }
+.score-row { margin-bottom: 10px; }
+.score-label-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
+.score-label { font-size: 12px; color: var(–text-dim); }
+.score-val { font-family: ‘DM Mono’, monospace; font-size: 12px; color: var(–accent); }
+
+/* ── TOAST ── */
+.toast {
+position: fixed; top: 80px; left: 50%;
+transform: translateX(-50%) translateY(-10px);
+background: var(–accent); color: #0d0e0f;
+padding: 8px 20px; border-radius: 100px;
+font-size: 13px; font-weight: 600; font-family: ‘DM Mono’, monospace;
+opacity: 0; pointer-events: none; transition: all 0.3s; z-index: 500;
+box-shadow: 0 4px 24px rgba(200,240,102,0.4);
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ── ANIMATIONS ── */
+@keyframes fadeDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.5; transform:scale(0.8); } }
+@keyframes bounce { 0%,80%,100% { transform:scale(0); } 40% { transform:scale(1); } }
+
+.post-card:nth-child(1) { animation-delay: 0.08s; }
+.post-card:nth-child(2) { animation-delay: 0.16s; }
+.post-card:nth-child(3) { animation-delay: 0.24s; }
+.post-card:nth-child(4) { animation-delay: 0.32s; }
+.post-card:nth-child(5) { animation-delay: 0.40s; }
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(–border); border-radius: 100px; }
+
+@media (max-width: 900px) {
+.app { grid-template-columns: 1fr; }
+.sidebar-left, .sidebar-right { display: none; }
+.aha-panel { width: 100%; }
+.grid-masonry { columns: 2; }
+}
+</style>
+
+</head>
+<body>
+
+<!-- AHA PANEL OVERLAY -->
+
+<div class="aha-overlay" id="ahaOverlay" onclick="closeAha()"></div>
+
+<!-- AHA SLIDE-IN PANEL -->
+
+<div class="aha-panel" id="ahaPanel">
+  <div class="aha-panel-header">
+    <div class="aha-panel-title">◈ <span>AHA</span>-chat · Innsikt</div>
+    <button class="aha-panel-close" onclick="closeAha()">✕</button>
+  </div>
+  <div class="aha-context-card" id="ahaContext">Laster kontekst fra innlegg…</div>
+  <div class="aha-messages" id="ahaMessages"></div>
+  <div class="aha-input-row">
+    <textarea class="aha-input" id="ahaInput" placeholder="Still et spørsmål om denne innsikten…" rows="2"
+      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAha();}"></textarea>
+    <button class="aha-send" onclick="sendAha()">↑</button>
+  </div>
+</div>
+
+<div class="app">
+
+  <!-- TOPBAR -->
+
+  <header class="topbar">
+    <a class="logo" href="index.html">
+      <div class="logo-dot"></div>
+      AHA<span>·</span>NET
+    </a>
+    <div class="topbar-center">
+      <button class="tab-btn active" onclick="switchTab('feed',this)">◈ Strøm</button>
+      <button class="tab-btn" onclick="switchTab('photos',this)">◎ Bilder</button>
+      <button class="tab-btn" onclick="openAha(null)">⬡ AHA-chat</button>
+    </div>
+    <div class="topbar-right">
+      <button class="btn-compose" onclick="focusCompose()">+ Del innsikt</button>
+      <div class="avatar-sm">A</div>
+    </div>
+  </header>
+
+  <!-- SIDEBAR LEFT -->
+
+  <aside class="sidebar-left">
+    <div class="nav-label">Navigasjon</div>
+    <a class="nav-item active" onclick="switchTab('feed',null);setActive(this)">
+      <span class="nav-icon">◈</span> Strøm
+    </a>
+    <a class="nav-item" onclick="switchTab('photos',null);setActive(this)">
+      <span class="nav-icon">◎</span> Bilder
+    </a>
+    <a class="nav-item" href="#">
+      <span class="nav-icon">◎</span> Utforsk
+    </a>
+    <a class="nav-item" href="#">
+      <span class="nav-icon">◎</span> Varsler <span class="nav-badge">3</span>
+    </a>
+    <a class="nav-item" href="#">
+      <span class="nav-icon">⬡</span> Mine innsikter <span class="nav-badge">14</span>
+    </a>
+    <a class="nav-item" onclick="openAha(null)">
+      <span class="nav-icon">◈</span> AHA-chat
+    </a>
+    <a class="nav-item" href="#">
+      <span class="nav-icon">◷</span> Profil
+    </a>
+
+```
+<div class="nav-label" style="margin-top:28px">Trending</div>
+<div class="trend-item"><span class="trend-name">#bevissthet</span><span class="trend-count">38</span></div>
+<div class="trend-item"><span class="trend-name">#demokrati</span><span class="trend-count">21</span></div>
+<div class="trend-item"><span class="trend-name">#AI-etikk</span><span class="trend-count">19</span></div>
+<div class="trend-item"><span class="trend-name">#tillit</span><span class="trend-count">17</span></div>
+<div class="trend-item"><span class="trend-name">#kunnskap</span><span class="trend-count">12</span></div>
+<div class="trend-item"><span class="trend-name">#EchoNet</span><span class="trend-count">9</span></div>
+```
+
+  </aside>
+
+  <!-- MAIN CONTENT -->
+
+  <main class="feed-main">
+
+```
+<!-- ── FEED VIEW ── -->
+<div class="view active" id="view-feed">
+  <div class="feed-header">
+    <div class="feed-title">Innsiktsstrøm</div>
+    <div class="feed-filters">
+      <button class="filter-chip active" onclick="setFilter(this)">Alle</button>
+      <button class="filter-chip" onclick="setFilter(this)">Følger</button>
+      <button class="filter-chip" onclick="setFilter(this)">Topp</button>
+    </div>
+  </div>
+
+  <div class="compose-box" id="compose">
+    <div class="post-avatar" style="background:linear-gradient(135deg,#c8f066,#66c8f0)">A</div>
+    <div class="compose-right">
+      <textarea class="compose-input" id="composeInput" placeholder="Del en innsikt, tanke eller oppdagelse…" rows="3"></textarea>
+      <div class="compose-footer">
+        <div class="compose-tools">
+          <button class="compose-tool" title="Legg til emne">⬡</button>
+          <button class="compose-tool" title="Fra AHA-chat" onclick="openAha(null)">◈</button>
+          <button class="compose-tool" title="Bilde">◎</button>
+        </div>
+        <button class="compose-submit" onclick="publishPost()">Publiser</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="feed">
+
+    <article class="post-card" data-insight="Ekte lytting er ikke passiv. Det er den mest aktive formen for tilstedeværelse vi har." data-topic="#kommunikasjon">
+      <div class="post-avatar" style="background:linear-gradient(135deg,#f0a366,#f066a3)">MR</div>
+      <div class="post-right">
+        <div class="post-meta">
+          <span class="post-author">Maria Rønning</span>
+          <span class="post-handle">@m.rønning</span>
+          <span class="post-time">3t</span>
+        </div>
+        <div class="post-text">Vi snakket i AHA-chat om hva som skjer når vi faktisk lytter — ikke bare venter på tur til å snakke. Noe åpner seg.</div>
+        <div class="insight-quote">"Ekte lytting er ikke passiv. Det er den mest aktive formen for tilstedeværelse vi har."</div>
+        <div class="resonance-row"><span class="res-label">Resonans</span><div class="res-track"><div class="res-fill" data-val="82"></div></div><span class="res-score">82</span></div>
+        <div class="post-tags"><span class="post-tag">#kommunikasjon</span><span class="post-tag b">#tilstedeværelse</span><span class="post-tag o">#relasjoner</span></div>
+        <div class="post-actions">
+          <button class="act-btn liked" onclick="toggleLike(event,this)"><span>♥</span> 47</button>
+          <button class="act-btn"><span>◎</span> 12</button>
+          <button class="act-btn"><span>↺</span> 8</button>
+          <button class="act-btn aha-link-btn" onclick="openAhaFromPost(event,this)">Utforsk i AHA ◈</button>
+        </div>
+      </div>
+    </article>
+
+    <article class="post-card" data-insight="Språket skaper illusjonen av konflikt. Vi er enige om mer enn vi tror." data-topic="#demokrati">
+      <div class="post-avatar" style="background:linear-gradient(135deg,#66c8f0,#9966f0)">TL</div>
+      <div class="post-right">
+        <div class="post-meta">
+          <span class="post-author">Tor Lunde</span>
+          <span class="post-handle">@tor.lunde</span>
+          <span class="post-time">5t</span>
+        </div>
+        <div class="post-text">Etter en lang samtale om demokrati kom vi frem til noe overraskende: vi er enige om mye mer enn vi tror — men vi bruker forskjellige ord. Språket skaper illusjonen av konflikt.</div>
+        <div class="resonance-row"><span class="res-label">Resonans</span><div class="res-track"><div class="res-fill" data-val="91"></div></div><span class="res-score">91</span></div>
+        <div class="post-tags"><span class="post-tag">#demokrati</span><span class="post-tag b">#språk</span><span class="post-tag">#konsensus</span></div>
+        <div class="post-actions">
+          <button class="act-btn" onclick="toggleLike(event,this)"><span>♥</span> 93</button>
+          <button class="act-btn"><span>◎</span> 31</button>
+          <button class="act-btn"><span>↺</span> 24</button>
+          <button class="act-btn aha-link-btn" onclick="openAhaFromPost(event,this)">Utforsk i AHA ◈</button>
+        </div>
+      </div>
+    </article>
+
+    <article class="post-card" data-insight="Det beste verktøyet er det som hjelper deg stille bedre spørsmål, ikke gi deg svar." data-topic="#AI-etikk">
+      <div class="post-avatar" style="background:linear-gradient(135deg,#c8f066,#f0e866)">KH</div>
+      <div class="post-right">
+        <div class="post-meta">
+          <span class="post-author">Kaja Haugen</span>
+          <span class="post-handle">@kaja.h</span>
+          <span class="post-time">7t</span>
+        </div>
+        <div class="post-text">Kan AI virkelig forstå kontekst? Ikke bare mønster, men mening? AHA-chat hjelper meg å tenke — men ikke å konkludere. Kanskje det er hele poenget.</div>
+        <div class="insight-quote">"Det beste verktøyet er det som hjelper deg stille bedre spørsmål, ikke gi deg svar."</div>
+        <div class="resonance-row"><span class="res-label">Resonans</span><div class="res-track"><div class="res-fill" data-val="74"></div></div><span class="res-score">74</span></div>
+        <div class="post-tags"><span class="post-tag">#AI-etikk</span><span class="post-tag o">#bevissthet</span><span class="post-tag b">#kunnskap</span></div>
+        <div class="post-actions">
+          <button class="act-btn" onclick="toggleLike(event,this)"><span>♥</span> 61</button>
+          <button class="act-btn"><span>◎</span> 18</button>
+          <button class="act-btn"><span>↺</span> 15</button>
+          <button class="act-btn aha-link-btn" onclick="openAhaFromPost(event,this)">Utforsk i AHA ◈</button>
+        </div>
+      </div>
+    </article>
+
+    <article class="post-card" data-insight="Tillitssamfunnet bygges samtale for samtale — ikke gjennom lovgiving." data-topic="#tillit">
+      <div class="post-avatar" style="background:linear-gradient(135deg,#f066a3,#f0a366)">EV</div>
+      <div class="post-right">
+        <div class="post-meta">
+          <span class="post-author">Erik Vold</span>
+          <span class="post-handle">@e.vold</span>
+          <span class="post-time">1d</span>
+        </div>
+        <div class="post-text">Tillitssamfunnet er ikke noe vi kan lovgifte frem. Det bygges samtale for samtale, handling for handling. EchoNet er et forsøk på å gjøre det — uten agenda, uten reklame.</div>
+        <div class="resonance-row"><span class="res-label">Resonans</span><div class="res-track"><div class="res-fill" data-val="88"></div></div><span class="res-score">88</span></div>
+        <div class="post-tags"><span class="post-tag">#tillit</span><span class="post-tag">#samfunn</span><span class="post-tag b">#EchoNet</span></div>
+        <div class="post-actions">
+          <button class="act-btn" onclick="toggleLike(event,this)"><span>♥</span> 129</button>
+          <button class="act-btn"><span>◎</span> 44</button>
+          <button class="act-btn"><span>↺</span> 37</button>
+          <button class="act-btn aha-link-btn" onclick="openAhaFromPost(event,this)">Utforsk i AHA ◈</button>
+        </div>
+      </div>
+    </article>
+
+    <article class="post-card" data-insight="Innsikt er et øyeblikk av forståelse som endrer måten du ser resten." data-topic="#innsikt">
+      <div class="post-avatar" style="background:linear-gradient(135deg,#9966f0,#66c8f0)">SB</div>
+      <div class="post-right">
+        <div class="post-meta">
+          <span class="post-author">Sofie Berg</span>
+          <span class="post-handle">@sofie.berg</span>
+          <span class="post-time">1d</span>
+        </div>
+        <div class="post-text">Innsikt er ikke informasjon. Informasjon er råstoff. Innsikt er det som skjer når råstoffet møter erfaring, kontekst og vilje til å se noe nytt.</div>
+        <div class="insight-quote">"Innsikt er et øyeblikk av forståelse som endrer måten du ser resten."</div>
+        <div class="resonance-row"><span class="res-label">Resonans</span><div class="res-track"><div class="res-fill" data-val="96"></div></div><span class="res-score">96</span></div>
+        <div class="post-tags"><span class="post-tag">#innsikt</span><span class="post-tag o">#kunnskap</span><span class="post-tag">#bevissthet</span></div>
+        <div class="post-actions">
+          <button class="act-btn liked" onclick="toggleLike(event,this)"><span>♥</span> 214</button>
+          <button class="act-btn"><span>◎</span> 78</button>
+          <button class="act-btn"><span>↺</span> 61</button>
+          <button class="act-btn aha-link-btn" onclick="openAhaFromPost(event,this)">Utforsk i AHA ◈</button>
+        </div>
+      </div>
+    </article>
+
+  </div>
+</div>
+
+<!-- ── PHOTO GRID VIEW ── -->
+<div class="view" id="view-photos">
+  <div class="photo-grid-header">
+    <div class="feed-title">Bildestrøm</div>
+    <div class="grid-filters">
+      <button class="filter-chip active" onclick="setFilter(this)">Alle</button>
+      <button class="filter-chip" onclick="setFilter(this)">Populære</button>
+      <button class="filter-chip" onclick="setFilter(this)">Følger</button>
+    </div>
+  </div>
+  <div class="photo-grid">
+    <div class="grid-masonry" id="photoGrid"></div>
+  </div>
+</div>
+```
+
+  </main>
+
+  <!-- SIDEBAR RIGHT -->
+
+  <aside class="sidebar-right">
+    <div class="widget">
+      <div class="widget-title">⬡ Dagens metainnsikt</div>
+      <div class="pulse-item">
+        <div class="pulse-dot" style="background:#c8f066"></div>
+        <div><div class="pulse-text">"Fellesskap dannes ikke av enighet, men av villigheten til å forstå hverandre."</div><div class="pulse-meta">Syntese · 14 samtaler · #tillit</div></div>
+      </div>
+      <div class="pulse-item">
+        <div class="pulse-dot" style="background:#66c8f0"></div>
+        <div><div class="pulse-text">"Teknologi er nøytral — det er intensjonen bak som former virkeligheten."</div><div class="pulse-meta">Syntese · 9 samtaler · #AI-etikk</div></div>
+      </div>
+      <div class="pulse-item">
+        <div class="pulse-dot" style="background:#f0a366"></div>
+        <div><div class="pulse-text">"Fremtiden tilhører dem som stiller de riktige spørsmålene."</div><div class="pulse-meta">Syntese · 7 samtaler · #kunnskap</div></div>
+      </div>
+    </div>
+
+```
+<div class="widget">
+  <div class="widget-title">◎ Hvem å følge</div>
+  <div class="suggest-item">
+    <div class="post-avatar" style="width:34px;height:34px;background:linear-gradient(135deg,#c8f066,#66c8f0);font-size:11px">AR</div>
+    <div class="suggest-info"><div class="suggest-name">Anders Rø</div><div class="suggest-handle">@a.rø · Filosof</div></div>
+    <button class="follow-btn" onclick="toggleFollow(this)">Følg</button>
+  </div>
+  <div class="suggest-item">
+    <div class="post-avatar" style="width:34px;height:34px;background:linear-gradient(135deg,#f066a3,#9966f0);font-size:11px">LK</div>
+    <div class="suggest-info"><div class="suggest-name">Linn Kvist</div><div class="suggest-handle">@linn.k · Forsker</div></div>
+    <button class="follow-btn" onclick="toggleFollow(this)">Følg</button>
+  </div>
+  <div class="suggest-item">
+    <div class="post-avatar" style="width:34px;height:34px;background:linear-gradient(135deg,#f0e866,#f0a366);font-size:11px">JN</div>
+    <div class="suggest-info"><div class="suggest-name">Jonas Nesse</div><div class="suggest-handle">@j.nesse · Skribent</div></div>
+    <button class="follow-btn" onclick="toggleFollow(this)">Følg</button>
+  </div>
+</div>
+
+<div class="widget">
+  <div class="widget-title">◈ Din innsikts-score</div>
+  <div class="score-row"><div class="score-label-row"><span class="score-label">Samtaler denne uken</span><span class="score-val">7</span></div><div class="res-track"><div class="res-fill" data-val="70" style="background:linear-gradient(90deg,var(--accent2),var(--accent))"></div></div></div>
+  <div class="score-row"><div class="score-label-row"><span class="score-label">Innsikter destillert</span><span class="score-val">14</span></div><div class="res-track"><div class="res-fill" data-val="58" style="background:linear-gradient(90deg,var(--accent3),var(--accent))"></div></div></div>
+  <div class="score-row"><div class="score-label-row"><span class="score-label">Resonans snitt</span><span class="score-val">84</span></div><div class="res-track"><div class="res-fill" data-val="84"></div></div></div>
+</div>
+```
+
+  </aside>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ── TABS ── */
+function switchTab(name, btn) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  if (name === 'photos') buildPhotoGrid();
+}
+
+function setActive(el) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function setFilter(el) {
+  el.closest('.feed-filters, .grid-filters').querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+}
+
+/* ── COMPOSE ── */
+function focusCompose() {
+  switchTab('feed', document.querySelector('.tab-btn'));
+  setTimeout(() => {
+    document.getElementById('composeInput').focus();
+    document.getElementById('compose').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 100);
+}
+
+function publishPost() {
+  const input = document.getElementById('composeInput');
+  const text = input.value.trim();
+  if (!text) return;
+  const colors = [
+    'linear-gradient(135deg,#c8f066,#66c8f0)',
+    'linear-gradient(135deg,#f0a366,#f066a3)',
+    'linear-gradient(135deg,#9966f0,#c8f066)',
+  ];
+  const tags = ['#innsikt','#tanker','#utforskning','#oppdagelse'];
+  const col = colors[Math.floor(Math.random() * colors.length)];
+  const tag = tags[Math.floor(Math.random() * tags.length)];
+  const val = Math.floor(Math.random() * 30 + 30);
+  const card = document.createElement('article');
+  card.className = 'post-card';
+  card.dataset.insight = text.length > 80 ? text.slice(0,80)+'…' : text;
+  card.dataset.topic = tag;
+  card.style.animationDelay = '0s';
+  card.innerHTML = `
+    <div class="post-avatar" style="background:${col}">A</div>
+    <div class="post-right">
+      <div class="post-meta">
+        <span class="post-author">Deg</span>
+        <span class="post-handle">@deg</span>
+        <span class="post-time">Nå</span>
+      </div>
+      <div class="post-text">${text}</div>
+      <div class="resonance-row"><span class="res-label">Resonans</span><div class="res-track"><div class="res-fill" data-val="${val}"></div></div><span class="res-score">${val}</span></div>
+      <div class="post-tags"><span class="post-tag">${tag}</span></div>
+      <div class="post-actions">
+        <button class="act-btn" onclick="toggleLike(event,this)"><span>♥</span> 0</button>
+        <button class="act-btn"><span>◎</span> 0</button>
+        <button class="act-btn"><span>↺</span> 0</button>
+        <button class="act-btn aha-link-btn" onclick="openAhaFromPost(event,this)">Utforsk i AHA ◈</button>
+      </div>
+    </div>`;
+  const feed = document.getElementById('feed');
+  feed.insertBefore(card, feed.firstChild);
+  animateFills(card);
+  input.value = '';
+  showToast('✓ Innsikt publisert');
+}
+
+/* ── LIKE ── */
+function toggleLike(e, btn) {
+  e.stopPropagation();
+  const liked = btn.classList.contains('liked');
+  const n = parseInt(btn.textContent.trim().split(/\s+/).pop());
+  btn.classList.toggle('liked');
+  btn.innerHTML = `<span>♥</span> ${liked ? n-1 : n+1}`;
+}
+
+/* ── FOLLOW ── */
+function toggleFollow(btn) {
+  if (btn.textContent === 'Følg') { btn.textContent = '✓ Følger'; btn.style.color = 'var(--accent)'; btn.style.borderColor = 'var(--tag-border)'; }
+  else { btn.textContent = 'Følg'; btn.style.color = ''; btn.style.borderColor = ''; }
+}
+
+/* ── AHA PANEL ── */
+let currentInsight = null;
+
+function openAha(insightText) {
+  currentInsight = insightText;
+  const ctx = document.getElementById('ahaContext');
+  const msgs = document.getElementById('ahaMessages');
+  if (insightText) {
+    ctx.textContent = '"' + insightText + '"';
+    msgs.innerHTML = '';
+    addAhaMsg('ai', 'Hei! Jeg har lest innsikten. Hva vil du utforske dypere — konteksten, implikasjonene, eller noe helt annet?');
+  } else {
+    ctx.textContent = 'Åpen samtale — still meg hva som helst.';
+    msgs.innerHTML = '';
+    addAhaMsg('ai', 'Hei! Velkommen til AHA-chat. Hva tenker du på i dag?');
+  }
+  document.getElementById('ahaPanel').classList.add('open');
+  document.getElementById('ahaOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('ahaInput').focus(), 350);
+}
+
+function openAhaFromPost(e, btn) {
+  e.stopPropagation();
+  const card = btn.closest('.post-card');
+  const insight = card.dataset.insight || card.querySelector('.post-text').textContent;
+  openAha(insight);
+}
+
+function closeAha() {
+  document.getElementById('ahaPanel').classList.remove('open');
+  document.getElementById('ahaOverlay').classList.remove('open');
+}
+
+function addAhaMsg(role, text) {
+  const msgs = document.getElementById('ahaMessages');
+  const div = document.createElement('div');
+  div.className = 'aha-msg ' + role;
+  if (role === 'ai') div.innerHTML = `<div class="msg-label">AHA</div>${text}`;
+  else div.textContent = text;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function showTyping() {
+  const msgs = document.getElementById('ahaMessages');
+  const t = document.createElement('div');
+  t.className = 'aha-typing'; t.id = 'ahaTyping';
+  t.innerHTML = '<span></span><span></span><span></span>';
+  msgs.appendChild(t);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+function removeTyping() {
+  const t = document.getElementById('ahaTyping');
+  if (t) t.remove();
+}
+
+async function sendAha() {
+  const input = document.getElementById('ahaInput');
+  const text = input.value.trim();
+  if (!text) return;
+  addAhaMsg('user', text);
+  input.value = '';
+  showTyping();
+
+  // Build context for AHA AI
+  const contextNote = currentInsight
+    ? `Du er AHA — en innsiktsmotor. Brukeren utforsker denne innsikten: "${currentInsight}". Svar på norsk, konsist og tankeprovoserende. Spill tilbake med motspørsmål eller nye perspektiver.`
+    : `Du er AHA — en innsiktsmotor på plattformen AHA·EchoNet. Hjelp brukeren å destillere tanker til innsikter. Svar på norsk, konsist og tankeprovoserende.`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: contextNote,
+        messages: [{ role: 'user', content: text }]
+      })
+    });
+    const data = await res.json();
+    removeTyping();
+    const reply = data.content?.find(b => b.type === 'text')?.text || 'Hmm, noe gikk galt.';
+    addAhaMsg('ai', reply);
+  } catch {
+    removeTyping();
+    addAhaMsg('ai', 'Kunne ikke koble til AHA-motoren akkurat nå. Prøv igjen.');
+  }
+}
+
+/* ── PHOTO GRID ── */
+const photoData = [
+  { author: 'Maria R', tag: '#tilstedeværelse', likes: 142, h: 220, c: ['#c8f066','#0d3a1a'] },
+  { author: 'Tor L', tag: '#demokrati', likes: 89, h: 160, c: ['#66c8f0','#0a1f2e'] },
+  { author: 'Kaja H', tag: '#AI-etikk', likes: 201, h: 290, c: ['#9966f0','#1a0a30'] },
+  { author: 'Erik V', tag: '#tillit', likes: 67, h: 180, c: ['#f0a366','#2e1a08'] },
+  { author: 'Sofie B', tag: '#innsikt', likes: 310, h: 240, c: ['#f066a3','#2e0818'] },
+  { author: 'Anders R', tag: '#kunnskap', likes: 55, h: 170, c: ['#f0e866','#2e2a08'] },
+  { author: 'Linn K', tag: '#bevissthet', likes: 178, h: 260, c: ['#c8f066','#1a2e08'] },
+  { author: 'Jonas N', tag: '#samfunn', likes: 94, h: 150, c: ['#66c8f0','#081a2e'] },
+  { author: 'Maria R', tag: '#kommunikasjon', likes: 133, h: 210, c: ['#f0a366','#2e1808'] },
+];
+
+function buildPhotoGrid() {
+  const grid = document.getElementById('photoGrid');
+  if (grid.children.length) return; // already built
+  photoData.forEach((p, i) => {
+    const item = document.createElement('div');
+    item.className = 'grid-item';
+    item.style.animationDelay = (i * 0.06) + 's';
+    const svg = `<svg class="placeholder-img" height="${p.h}" viewBox="0 0 200 ${p.h}" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="g${i}" cx="40%" cy="40%">
+          <stop offset="0%" stop-color="${p.c[0]}" stop-opacity="0.4"/>
+          <stop offset="100%" stop-color="${p.c[1]}"/>
+        </radialGradient>
+      </defs>
+      <rect width="200" height="${p.h}" fill="url(#g${i})"/>
+      <circle cx="${60+i*17%80}" cy="${p.h*0.4}" r="${30+i*8%40}" fill="${p.c[0]}" opacity="0.15"/>
+      <circle cx="${140-i*11%60}" cy="${p.h*0.7}" r="${20+i*12%30}" fill="${p.c[0]}" opacity="0.1"/>
+      <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle"
+        font-family="serif" font-size="13" fill="${p.c[0]}" opacity="0.7">${p.tag}</text>
+    </svg>`;
+    item.innerHTML = svg + `<div class="grid-overlay">
+      <div class="grid-overlay-author">${p.author}</div>
+      <div class="grid-overlay-tag">${p.tag}</div>
+      <div class="grid-overlay-likes">♥ ${p.likes}</div>
+    </div>`;
+    grid.appendChild(item);
+  });
+}
+
+/* ── RESONANCE BARS ── */
+function animateFills(root) {
+  (root || document).querySelectorAll('.res-fill[data-val]').forEach((bar, i) => {
+    const val = bar.dataset.val;
+    bar.style.width = '0%';
+    setTimeout(() => { bar.style.width = val + '%'; }, 400 + i * 80);
+  });
+}
+
+/* ── TOAST ── */
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+/* ── INIT ── */
+window.addEventListener('load', () => {
+  animateFills();
+});
+</script>
+
+</body>
+</html>
