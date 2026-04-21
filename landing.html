@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+
+<html lang="no">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AHA·NET — Innsiktsplattformen</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=Instrument+Sans:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0a0b0c;
+    --surface: #111213;
+    --surface2: #181a1b;
+    --border: #222425;
+    --accent: #c8f066;
+    --accent2: #66c8f0;
+    --accent3: #f0a366;
+    --accent4: #f066a3;
+    --text: #eae8e2;
+    --text-dim: #888480;
+    --text-muted: #444240;
+    --tag-bg: rgba(200,240,102,0.07);
+    --tag-border: rgba(200,240,102,0.18);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Instrument Sans', sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+/* GRAIN */
+body::before {
+content: ‘’;
+position: fixed; inset: 0;
+background-image: url(“data:image/svg+xml,%3Csvg viewBox=‘0 0 200 200’ xmlns=‘http://www.w3.org/2000/svg’%3E%3Cfilter id=‘n’%3E%3CfeTurbulence type=‘fractalNoise’ baseFrequency=‘0.85’ numOctaves=‘4’ stitchTiles=‘stitch’/%3E%3C/filter%3E%3Crect width=‘100%25’ height=‘100%25’ filter=‘url(%23n)’ opacity=‘0.045’/%3E%3C/svg%3E”);
+pointer-events: none; z-index: 9999; opacity: 0.5;
+}
+
+/* NAV */
+nav {
+position: fixed; top: 0; left: 0; right: 0;
+display: flex; align-items: center; justify-content: space-between;
+padding: 18px 48px;
+background: rgba(10,11,12,0.88); backdrop-filter: blur(20px);
+border-bottom: 1px solid var(–border);
+z-index: 100; animation: fadeDown 0.6s ease both;
+}
+.nav-logo {
+font-family: ‘DM Serif Display’, serif;
+font-size: 22px; letter-spacing: -0.02em;
+color: var(–text); text-decoration: none;
+display: flex; align-items: center; gap: 9px;
+}
+.nav-logo span { color: var(–accent); }
+.live-dot { width: 8px; height: 8px; background: var(–accent); border-radius: 50%; animation: pulse 2s ease infinite; }
+.nav-links { display: flex; align-items: center; gap: 32px; }
+.nav-link {
+font-family: ‘DM Mono’, monospace; font-size: 12px;
+letter-spacing: 0.06em; color: var(–text-dim); text-decoration: none;
+transition: color 0.2s; text-transform: uppercase;
+}
+.nav-link:hover { color: var(–text); }
+.nav-cta {
+background: var(–accent); color: #0a0b0c; border: none;
+padding: 10px 22px; border-radius: 100px;
+font-family: ‘Instrument Sans’, sans-serif; font-size: 14px; font-weight: 600;
+cursor: pointer; text-decoration: none; transition: all 0.2s; display: inline-block;
+}
+.nav-cta:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(200,240,102,0.35); }
+
+/* HERO */
+.hero {
+min-height: 100vh;
+display: flex; flex-direction: column; align-items: center; justify-content: center;
+text-align: center; padding: 120px 48px 80px;
+position: relative; overflow: hidden;
+}
+
+/* Background orbs */
+.orb {
+position: absolute; border-radius: 50%;
+filter: blur(100px); pointer-events: none; opacity: 0.12;
+}
+.orb1 { width: 600px; height: 600px; background: var(–accent); top: -200px; left: -200px; animation: drift1 18s ease infinite; }
+.orb2 { width: 500px; height: 500px; background: var(–accent2); bottom: -150px; right: -150px; animation: drift2 22s ease infinite; }
+.orb3 { width: 400px; height: 400px; background: var(–accent4); top: 30%; left: 60%; animation: drift1 14s ease infinite reverse; }
+
+.hero-eyebrow {
+font-family: ‘DM Mono’, monospace; font-size: 11px;
+letter-spacing: 0.18em; text-transform: uppercase;
+color: var(–accent); border: 1px solid var(–tag-border);
+background: var(–tag-bg); padding: 6px 16px; border-radius: 100px;
+margin-bottom: 28px; display: inline-block;
+animation: fadeUp 0.7s ease both 0.2s;
+}
+
+.hero-title {
+font-family: ‘DM Serif Display’, serif;
+font-size: clamp(44px, 7vw, 88px);
+letter-spacing: -0.03em; line-height: 1.05;
+margin-bottom: 24px;
+animation: fadeUp 0.7s ease both 0.35s;
+}
+.hero-title em { font-style: italic; color: var(–accent); }
+.hero-title .line2 { color: var(–text-dim); }
+
+.hero-sub {
+font-size: 18px; color: var(–text-dim); max-width: 560px;
+line-height: 1.7; margin-bottom: 44px;
+animation: fadeUp 0.7s ease both 0.5s;
+}
+
+.hero-actions {
+display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;
+animation: fadeUp 0.7s ease both 0.65s;
+}
+.btn-primary {
+background: var(–accent); color: #0a0b0c; border: none;
+padding: 14px 30px; border-radius: 100px;
+font-family: ‘Instrument Sans’, sans-serif; font-size: 15px; font-weight: 600;
+cursor: pointer; text-decoration: none; display: inline-block;
+transition: all 0.25s;
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(200,240,102,0.4); }
+.btn-secondary {
+background: transparent; color: var(–text-dim);
+border: 1px solid var(–border); padding: 14px 30px; border-radius: 100px;
+font-family: ‘Instrument Sans’, sans-serif; font-size: 15px;
+cursor: pointer; text-decoration: none; display: inline-block;
+transition: all 0.2s;
+}
+.btn-secondary:hover { border-color: var(–text-muted); color: var(–text); }
+
+/* STATS BAR */
+.stats-bar {
+display: flex; gap: 0; margin-top: 72px; width: 100%; max-width: 700px;
+background: var(–surface); border: 1px solid var(–border); border-radius: 16px;
+overflow: hidden; animation: fadeUp 0.7s ease both 0.8s;
+}
+.stat-item { flex: 1; padding: 20px 28px; text-align: center; border-right: 1px solid var(–border); }
+.stat-item:last-child { border-right: none; }
+.stat-num { font-family: ‘DM Serif Display’, serif; font-size: 28px; color: var(–accent); margin-bottom: 4px; }
+.stat-label { font-family: ‘DM Mono’, monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(–text-muted); }
+
+/* LIVE FEED PREVIEW */
+.feed-preview {
+background: var(–surface); border: 1px solid var(–border);
+border-radius: 18px; overflow: hidden; max-width: 500px;
+margin: 56px auto 0; box-shadow: 0 32px 80px rgba(0,0,0,0.5);
+animation: fadeUp 0.8s ease both 1s;
+}
+.fp-header {
+padding: 14px 18px; border-bottom: 1px solid var(–border);
+display: flex; align-items: center; gap: 8px;
+}
+.fp-title { font-family: ‘DM Mono’, monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(–text-muted); }
+.fp-live { font-family: ‘DM Mono’, monospace; font-size: 10px; color: var(–accent); background: var(–tag-bg); border: 1px solid var(–tag-border); padding: 2px 9px; border-radius: 100px; margin-left: auto; }
+.fp-item { padding: 14px 18px; border-bottom: 1px solid var(–border-subtle, #18191a); display: flex; gap: 11px; }
+.fp-item:last-child { border-bottom: none; }
+.fp-avatar { width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: #0a0b0c; font-family: ‘DM Mono’, monospace; }
+.fp-content { flex: 1; }
+.fp-meta { display: flex; gap: 6px; align-items: center; margin-bottom: 3px; }
+.fp-author { font-size: 12px; font-weight: 600; }
+.fp-time { font-family: ‘DM Mono’, monospace; font-size: 10px; color: var(–text-muted); }
+.fp-text { font-size: 13px; color: var(–text-dim); line-height: 1.5; }
+.fp-quote { font-family: ‘DM Serif Display’, serif; font-style: italic; font-size: 13px; color: var(–text); margin-top: 6px; border-left: 2px solid var(–accent); padding-left: 10px; }
+.fp-res { display: flex; align-items: center; gap: 7px; margin-top: 8px; }
+.fp-res-label { font-family: ‘DM Mono’, monospace; font-size: 9px; color: var(–text-muted); text-transform: uppercase; letter-spacing: 0.08em; }
+.fp-bar { flex: 1; height: 2px; background: var(–border); border-radius: 100px; }
+.fp-bar-fill { height: 100%; border-radius: 100px; background: linear-gradient(90deg, var(–accent2), var(–accent)); }
+
+/* SECTION */
+section { padding: 100px 48px; max-width: 1200px; margin: 0 auto; }
+
+.section-label {
+font-family: ‘DM Mono’, monospace; font-size: 11px;
+letter-spacing: 0.16em; text-transform: uppercase;
+color: var(–accent); margin-bottom: 16px;
+}
+.section-title {
+font-family: ‘DM Serif Display’, serif;
+font-size: clamp(32px, 4vw, 52px); letter-spacing: -0.025em;
+line-height: 1.1; margin-bottom: 16px;
+}
+.section-title em { font-style: italic; color: var(–accent); }
+.section-sub { font-size: 17px; color: var(–text-dim); max-width: 520px; line-height: 1.7; margin-bottom: 56px; }
+
+/* HOW IT WORKS */
+.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+.step {
+background: var(–surface); border: 1px solid var(–border);
+border-radius: 16px; padding: 28px 26px;
+transition: all 0.25s; position: relative; overflow: hidden;
+}
+.step::before {
+content: ‘’;
+position: absolute; top: 0; left: 0; right: 0; height: 2px;
+background: linear-gradient(90deg, transparent, var(–accent), transparent);
+opacity: 0; transition: opacity 0.3s;
+}
+.step:hover { border-color: var(–tag-border); transform: translateY(-3px); }
+.step:hover::before { opacity: 1; }
+.step-num {
+font-family: ‘DM Mono’, monospace; font-size: 11px;
+letter-spacing: 0.1em; color: var(–accent); margin-bottom: 14px;
+}
+.step-icon { font-size: 28px; margin-bottom: 14px; }
+.step-title { font-family: ‘DM Serif Display’, serif; font-size: 20px; margin-bottom: 10px; }
+.step-text { font-size: 14px; color: var(–text-dim); line-height: 1.65; }
+
+/* FEATURES */
+.features { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+.feature {
+background: var(–surface); border: 1px solid var(–border);
+border-radius: 16px; padding: 28px; transition: all 0.2s;
+}
+.feature:hover { border-color: var(–tag-border); }
+.feature-icon { font-size: 24px; margin-bottom: 14px; }
+.feature-title { font-family: ‘DM Serif Display’, serif; font-size: 20px; margin-bottom: 8px; }
+.feature-text { font-size: 14px; color: var(–text-dim); line-height: 1.65; }
+.feature-badge {
+display: inline-block; margin-top: 12px;
+font-family: ‘DM Mono’, monospace; font-size: 10px;
+letter-spacing: 0.08em; padding: 3px 10px; border-radius: 100px;
+color: var(–accent); background: var(–tag-bg); border: 1px solid var(–tag-border);
+}
+
+/* MANIFESTO */
+.manifesto-section {
+padding: 100px 48px;
+background: var(–surface);
+border-top: 1px solid var(–border);
+border-bottom: 1px solid var(–border);
+text-align: center;
+}
+.manifesto-text {
+font-family: ‘DM Serif Display’, serif;
+font-size: clamp(22px, 3.5vw, 40px);
+line-height: 1.4; max-width: 820px; margin: 0 auto;
+letter-spacing: -0.02em;
+}
+.manifesto-text em { font-style: italic; color: var(–accent); }
+.manifesto-author {
+font-family: ‘DM Mono’, monospace; font-size: 12px;
+color: var(–text-muted); margin-top: 24px; letter-spacing: 0.08em;
+}
+
+/* CTA SECTION */
+.cta-section {
+text-align: center; padding: 120px 48px;
+position: relative; overflow: hidden;
+}
+.cta-orb {
+position: absolute; width: 800px; height: 800px;
+background: radial-gradient(circle, rgba(200,240,102,0.06), transparent 70%);
+top: 50%; left: 50%; transform: translate(-50%,-50%);
+border-radius: 50%; pointer-events: none;
+}
+.cta-title {
+font-family: ‘DM Serif Display’, serif;
+font-size: clamp(36px, 5vw, 64px); letter-spacing: -0.03em;
+line-height: 1.1; margin-bottom: 20px;
+position: relative;
+}
+.cta-title em { font-style: italic; color: var(–accent); }
+.cta-sub { font-size: 17px; color: var(–text-dim); max-width: 480px; margin: 0 auto 40px; line-height: 1.7; position: relative; }
+
+/* FOOTER */
+footer {
+padding: 40px 48px;
+border-top: 1px solid var(–border);
+display: flex; align-items: center; justify-content: space-between;
+flex-wrap: wrap; gap: 16px;
+}
+.footer-logo { font-family: ‘DM Serif Display’, serif; font-size: 18px; color: var(–text-dim); }
+.footer-logo span { color: var(–accent); }
+.footer-links { display: flex; gap: 24px; }
+.footer-link { font-family: ‘DM Mono’, monospace; font-size: 11px; letter-spacing: 0.08em; color: var(–text-muted); text-decoration: none; text-transform: uppercase; transition: color 0.2s; }
+.footer-link:hover { color: var(–text); }
+.footer-copy { font-family: ‘DM Mono’, monospace; font-size: 11px; color: var(–text-muted); }
+
+/* Divider */
+.divider { width: 100%; height: 1px; background: var(–border); }
+
+/* ANIMATIONS */
+@keyframes fadeDown { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
+@keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.5;transform:scale(0.8);} }
+@keyframes drift1 { 0%,100%{transform:translate(0,0);}33%{transform:translate(30px,-20px);}66%{transform:translate(-20px,30px);} }
+@keyframes drift2 { 0%,100%{transform:translate(0,0);}33%{transform:translate(-25px,20px);}66%{transform:translate(20px,-25px);} }
+
+/* Scroll reveal */
+.reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.7s ease, transform 0.7s ease; }
+.reveal.in { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 900px) {
+nav { padding: 14px 20px; }
+.nav-links { display: none; }
+section { padding: 60px 20px; }
+.steps, .features { grid-template-columns: 1fr; }
+.stats-bar { flex-direction: column; }
+.stat-item { border-right: none; border-bottom: 1px solid var(–border); }
+.manifesto-section { padding: 60px 20px; }
+footer { flex-direction: column; gap: 20px; padding: 32px 20px; }
+}
+</style>
+
+</head>
+<body>
+
+<!-- NAV -->
+
+<nav>
+  <a class="nav-logo" href="#">
+    <div class="live-dot"></div>
+    AHA<span>·</span>NET
+  </a>
+  <div class="nav-links">
+    <a class="nav-link" href="#how">Slik virker det</a>
+    <a class="nav-link" href="#features">Funksjoner</a>
+    <a class="nav-link" href="aha-twitter.html">Strøm</a>
+    <a class="nav-link" href="#">Om oss</a>
+  </div>
+  <a class="nav-cta" href="aha-twitter.html">Gå til plattformen →</a>
+</nav>
+
+<!-- HERO -->
+
+<div class="hero">
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="orb orb3"></div>
+
+  <div class="hero-eyebrow">◈ Ingen reklame · Gratis · Trygt</div>
+
+  <h1 class="hero-title">
+    Samtaler som<br>
+    <em>blir til innsikter</em><br>
+    <span class="line2">— delt med verden</span>
+  </h1>
+
+  <p class="hero-sub">
+    AHA·NET er en fri, reklamefri plattform som gjør samtaler om til innsikter.
+    En innsiktsmaskin, et sosialt nettverk og en chat — i ett.
+  </p>
+
+  <div class="hero-actions">
+    <a class="btn-primary" href="aha-twitter.html">Utforsk innsiktsstrømmen</a>
+    <a class="btn-secondary" href="#">Lær mer om AHA-chat</a>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat-item">
+      <div class="stat-num">0 kr</div>
+      <div class="stat-label">Alltid gratis</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">0</div>
+      <div class="stat-label">Annonser</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">100%</div>
+      <div class="stat-label">Trygt & åpent</div>
+    </div>
+  </div>
+
+  <!-- Live feed preview -->
+
+  <div class="feed-preview">
+    <div class="fp-header">
+      <span class="fp-title">Innsiktsstrøm</span>
+      <span class="fp-live">● LIVE</span>
+    </div>
+    <div class="fp-item">
+      <div class="fp-avatar" style="background:linear-gradient(135deg,#f0a366,#f066a3)">MR</div>
+      <div class="fp-content">
+        <div class="fp-meta"><span class="fp-author">Maria R.</span><span class="fp-time">3t</span></div>
+        <div class="fp-quote">"Ekte lytting er den mest aktive formen for tilstedeværelse."</div>
+        <div class="fp-res"><span class="fp-res-label">Resonans</span><div class="fp-bar"><div class="fp-bar-fill" style="width:82%"></div></div></div>
+      </div>
+    </div>
+    <div class="fp-item">
+      <div class="fp-avatar" style="background:linear-gradient(135deg,#9966f0,#66c8f0)">SB</div>
+      <div class="fp-content">
+        <div class="fp-meta"><span class="fp-author">Sofie B.</span><span class="fp-time">1d</span></div>
+        <div class="fp-quote">"Innsikt er et øyeblikk som endrer måten du ser resten."</div>
+        <div class="fp-res"><span class="fp-res-label">Resonans</span><div class="fp-bar"><div class="fp-bar-fill" style="width:96%"></div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+
+<section id="how">
+  <div class="section-label">Slik virker det</div>
+  <h2 class="section-title reveal">Fra <em>samtale</em><br>til innsikt</h2>
+  <p class="section-sub reveal">AHA·NET er ikke et vanlig sosialt nettverk. Det er en innsiktsmaskin som destillerer samtaler til meningsfull kunnskap.</p>
+
+  <div class="steps">
+    <div class="step reveal">
+      <div class="step-num">01</div>
+      <div class="step-icon">◈</div>
+      <div class="step-title">Chat med AHA</div>
+      <div class="step-text">Ha en samtale med AHA-chat om hva som helst — filosofi, demokrati, hverdagsliv. AHA matcher temaer automatisk og bygger forståelse.</div>
+    </div>
+    <div class="step reveal" style="transition-delay:0.1s">
+      <div class="step-num">02</div>
+      <div class="step-icon">⬡</div>
+      <div class="step-title">Innsikter destilleres</div>
+      <div class="step-text">Motoren identifiserer kjernen i samtalen — de setningene som inneholder ekte innsikt — og gjør dem klare til å deles.</div>
+    </div>
+    <div class="step reveal" style="transition-delay:0.2s">
+      <div class="step-num">03</div>
+      <div class="step-icon">◎</div>
+      <div class="step-title">Del med verden</div>
+      <div class="step-text">Publiser innsikten til strømmen. Andre kan resonere, kommentere og utforske videre i sin egen AHA-chat.</div>
+    </div>
+  </div>
+</section>
+
+<div class="manifesto-section">
+  <p class="manifesto-text reveal">
+    Vi tror at <em>innsikt</em> — ikke støy — er det som gjør samfunn sterkere.
+    Ingen algoritmer som skaper sinne. Ingen annonser som selger oppmerksomheten din.
+    Bare mennesker som <em>tenker høyt, sammen.</em>
+  </p>
+  <div class="manifesto-author reveal">— Paradispartiet / AHA·EchoNet</div>
+</div>
+
+<!-- FEATURES -->
+
+<section id="features">
+  <div class="section-label">Funksjoner</div>
+  <h2 class="section-title reveal">Alt du trenger.<br><em>Ingenting du ikke trenger.</em></h2>
+  <p class="section-sub reveal">Et fullt sosialt nettverk — med chat, strøm og bilder — men bygget rundt innsikt, ikke engasjement.</p>
+
+  <div class="features">
+    <div class="feature reveal">
+      <div class="feature-icon">◈</div>
+      <div class="feature-title">AHA-chat · Innsiktsmotor</div>
+      <div class="feature-text">En AI-drevet chat som ikke bare svarer — den destillerer. Matcher emner automatisk, bygger syntese på tvers av samtaler og hjelper deg å tenke klarere.</div>
+      <span class="feature-badge">Powered by Claude AI</span>
+    </div>
+    <div class="feature reveal" style="transition-delay:0.1s">
+      <div class="feature-icon">◎</div>
+      <div class="feature-title">Innsiktsstrøm</div>
+      <div class="feature-text">En Twitter-lignende feed der hvert innlegg har en resonans-score, emne-tags og direkte kobling til AHA-chat for å utforske dypere.</div>
+      <span class="feature-badge">Ingen algoritme-manipulasjon</span>
+    </div>
+    <div class="feature reveal" style="transition-delay:0.05s">
+      <div class="feature-icon">⬡</div>
+      <div class="feature-title">Bildestrøm</div>
+      <div class="feature-text">Del bilder og visuelle innsikter — Instagram-inspirert, men uten filtre og likes som primær valuta. Kontekst og innsikt kommer først.</div>
+      <span class="feature-badge">Reklamefri</span>
+    </div>
+    <div class="feature reveal" style="transition-delay:0.15s">
+      <div class="feature-icon">◷</div>
+      <div class="feature-title">Meta-innsikter</div>
+      <div class="feature-text">Plattformen syntetiserer innsikter på tvers av alle samtaler og lager daglige meta-innsikter — kollektiv visdom i konsentrert form.</div>
+      <span class="feature-badge">Open source</span>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+
+<div class="cta-section">
+  <div class="cta-orb"></div>
+  <h2 class="cta-title reveal">Klar til å tenke<br><em>høyt, sammen?</em></h2>
+  <p class="cta-sub reveal">Bli med på AHA·NET — plattformen som gjør samtaler om til innsikter. Gratis. Alltid.</p>
+  <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;position:relative">
+    <a class="btn-primary reveal" href="aha-twitter.html">Gå til strømmen →</a>
+    <a class="btn-secondary reveal" href="https://github.com/Paradispartiet/AHA-EchoNet" target="_blank" style="transition-delay:0.1s">Se kildekoden på GitHub</a>
+  </div>
+</div>
+
+<!-- FOOTER -->
+
+<footer>
+  <div class="footer-logo">AHA<span>·</span>NET</div>
+  <div class="footer-links">
+    <a class="footer-link" href="#">Personvern</a>
+    <a class="footer-link" href="#">Vilkår</a>
+    <a class="footer-link" href="https://github.com/Paradispartiet/AHA-EchoNet">GitHub</a>
+    <a class="footer-link" href="#">Kontakt</a>
+  </div>
+  <div class="footer-copy">© 2025 Paradispartiet</div>
+</footer>
+
+<script>
+  // Scroll reveal
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.add('in'); observer.unobserve(e.target); }
+    });
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+
+</body>
+</html>
