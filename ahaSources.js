@@ -55,6 +55,15 @@
     }
   }
 
+  function persistSourceEvent(event) {
+    if (!global.AHARepository?.saveSourceEvent) return;
+    global.AHARepository.saveSourceEvent(event).then((result) => {
+      if (result?.ok === false && result.error) {
+        console.warn("AHASources: database-save feilet", result.error);
+      }
+    });
+  }
+
   function addSourceEvent(input) {
     const event = createSourceEvent(input);
     if (!event.title && !event.text) return null;
@@ -62,6 +71,7 @@
     const events = loadSourceEvents();
     events.unshift(event);
     saveSourceEvents(events);
+    persistSourceEvent(event);
 
     try {
       global.dispatchEvent(new CustomEvent("aha:source-event-added", { detail: event }));
