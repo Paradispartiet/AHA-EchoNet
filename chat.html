@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <title>AHA Chat – Innsiktsmotor + Metamotor</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="aha-chat.css" />
+</head>
+<body>
+  <p><a href="index.html">← AHA Dashboard</a></p>
+  <h1>AHA Chat – Innsiktsmotor V1 + Meta</h1>
+
+  <input id="theme-id" type="hidden" value="th_default" />
+
+  <div class="row">
+    <label for="field-id">Felt / fag (subject_id)</label>
+    <select id="field-id">
+      <option value="">(ingen valgt – generelt)</option>
+      <option value="historie">Historie</option>
+      <option value="vitenskap">Vitenskap</option>
+      <option value="kunst">Kunst & kultur</option>
+      <option value="litteratur">Litteratur</option>
+      <option value="musikk">Musikk</option>
+      <option value="sport">Sport</option>
+      <option value="naeringsliv">Næringsliv</option>
+      <option value="politikk">Politikk</option>
+      <option value="populaerkultur">Popkultur</option>
+    </select>
+  </div>
+
+  <div class="row">
+    <label for="msg">Skriv til AHA (chat-melding):</label>
+    <textarea id="msg" placeholder="Skriv et notat / innsikt …"></textarea>
+    <button id="btn-send">Send</button>
+  </div>
+
+  <div class="row">
+    <label>Chat-logg</label>
+    <div id="chat-log" class="chat-log"></div>
+  </div>
+
+  <div class="buttons">
+    <button id="btn-insights">Vis innsikter</button>
+    <button id="btn-status">Tema-status</button>
+    <button id="btn-concepts">Begreper</button>
+    <button id="btn-synth">Syntese</button>
+    <button id="btn-path">Sti</button>
+    <button id="btn-sem">Semantikk</button>
+    <button id="btn-auto">Auto-artefakt</button>
+    <button id="btn-dim">Dimensjoner</button>
+    <button id="btn-dial">Dialektikk</button>
+    <button id="btn-narrative">Narrativ innsikt</button>
+    <button id="btn-topics">Alle tema</button>
+    <button id="btn-meta">Meta-profil</button>
+    <button id="btn-agent">AHA-agent</button>
+    <button id="btn-ai">AHA-AI</button>
+    <button id="btn-export">Eksport JSON</button>
+    <button id="btn-import-hg">Importer History Go</button>
+    <button id="btn-reset">Nullstill</button>
+  </div>
+
+  <div id="panel"></div>
+
+  <div id="aha-debug-panel" style="margin-top: 1rem;">
+    <button id="aha-debug-insights-btn">Vis rå innsikter for tema</button>
+    <button id="aha-debug-stats-btn">Vis rå stats for tema</button>
+    <h3>Debug</h3>
+    <textarea id="aha-debug-output" style="width: 100%; min-height: 140px; font-family: monospace;"></textarea>
+  </div>
+
+  <pre id="out"></pre>
+
+  <script src="insightsChamber.js"></script>
+  <script src="metaInsightsEngine.js"></script>
+  <script src="ahaFieldProfiles.js"></script>
+  <script src="ahaSources.js"></script>
+  <script src="ahaIngest.js"></script>
+  <script src="ahaChat.js"></script>
+  <script src="ahaHistoryGoImport.js"></script>
+</body>
+</html>
