@@ -1,0 +1,6 @@
+.module-card img,
+.module-card video {
+  display: block;
+  max-height: 520px;
+  object-fit: contain;
+}
