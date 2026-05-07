@@ -19,11 +19,26 @@ Schemaet oppretter tabeller for:
 - `aha_insta_posts`
 - `aha_imports`
 
+## Kjør policies
+
+Etter at tabellene finnes:
+
+1. Åpne SQL Editor.
+2. Lim inn innholdet fra `supabase/policies.sql`.
+3. Kjør SQL-en.
+
+Policy-modellen i denne første versjonen er enkel:
+
+```text
+Supabase auth user id = aha_profiles.id
+Alle AHA-rader må ha profile_id = auth.uid()
+```
+
 ## RLS
 
 Row Level Security er aktivert på alle tabeller.
 
-Denne første PR-en legger ikke inn åpne public policies. Det betyr at frontend kan forsøke å lagre til Supabase, men reell skriving krever auth/policies i neste steg. LocalStorage fortsetter å fungere uansett.
+Frontend kan skrive til Supabase først når bruker er innlogget med Supabase Auth og policyene er kjørt. LocalStorage fortsetter å fungere uansett.
 
 ## Frontend-konfig
 

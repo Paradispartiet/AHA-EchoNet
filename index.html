@@ -15,6 +15,17 @@
       <p>Personlig dashboard for chat, notes, galleri, feed, Insta og valgfri History Go-import.</p>
     </header>
 
+    <section class="aha-panel" aria-label="AHA innlogging">
+      <h2>Innlogging</h2>
+      <p id="aha-auth-status">Sjekker innlogging …</p>
+      <form id="aha-auth-form" class="module-form">
+        <input id="aha-auth-email" type="email" placeholder="E-post" autocomplete="email" />
+        <button type="submit">Send innloggingslenke</button>
+      </form>
+      <button id="aha-auth-signout" type="button">Logg ut</button>
+      <p id="aha-auth-output"></p>
+    </section>
+
     <section class="aha-grid" aria-label="AHA moduler">
       <a class="aha-tile" href="chat.html"><strong>AHA Chat</strong><span>Refleksjon og innsiktsmotor</span></a>
       <a class="aha-tile" href="notes.html"><strong>Notes</strong><span>Egne notater og tekster</span></a>
@@ -37,6 +48,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="ahaConfig.js"></script>
   <script src="ahaDb.js"></script>
+  <script src="ahaAuth.js"></script>
   <script src="ahaRepository.js"></script>
   <script src="ahaSources.js"></script>
   <script src="ahaIngest.js"></script>

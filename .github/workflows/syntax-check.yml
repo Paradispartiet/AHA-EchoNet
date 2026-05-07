@@ -9,6 +9,7 @@ on:
       - main
       - build-aha-components-historygo-import
       - add-supabase-database-layer
+      - add-auth-and-rls-policies
   workflow_dispatch:
 
 jobs:
@@ -43,6 +44,7 @@ jobs:
             "ahaInsta.js"
             "ahaDashboard.js"
             "ahaDb.js"
+            "ahaAuth.js"
             "ahaRepository.js"
             "ahaConfig.js"
           )

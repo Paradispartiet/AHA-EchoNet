@@ -13,6 +13,12 @@
     return global.AHADb?.getClient?.() || null;
   }
 
+  async function getProfileId(explicitProfileId) {
+    if (explicitProfileId) return explicitProfileId;
+    if (!global.AHAAuth?.getProfileId) return null;
+    return await global.AHAAuth.getProfileId();
+  }
+
   async function insert(table, record) {
     const db = client();
     if (!db) return fallback();
@@ -39,12 +45,14 @@
     return value && typeof value === "object" && !Array.isArray(value) ? value : {};
   }
 
-  function saveSourceEvent(event) {
+  async function saveSourceEvent(event) {
     const e = cleanObject(event);
-    if (!e.id) return Promise.resolve(fallback("missing_id"));
+    if (!e.id) return fallback("missing_id");
+    const profileId = await getProfileId(e.profile_id);
+    if (!profileId) return fallback("not_signed_in");
     return insert("aha_source_events", {
       id: e.id,
-      profile_id: e.profile_id || null,
+      profile_id: profileId,
       source_type: e.source_type || null,
       source_app: e.source_app || null,
       content_type: e.content_type || null,
@@ -58,12 +66,14 @@
     });
   }
 
-  function saveNote(note) {
+  async function saveNote(note) {
     const n = cleanObject(note);
-    if (!n.id) return Promise.resolve(fallback("missing_id"));
+    if (!n.id) return fallback("missing_id");
+    const profileId = await getProfileId(n.profile_id);
+    if (!profileId) return fallback("not_signed_in");
     return insert("aha_notes", {
       id: n.id,
-      profile_id: n.profile_id || null,
+      profile_id: profileId,
       title: n.title || null,
       text: n.text || null,
       tags: cleanArray(n.tags),
@@ -72,12 +82,14 @@
     });
   }
 
-  function saveGalleryItem(item) {
+  async function saveGalleryItem(item) {
     const g = cleanObject(item);
-    if (!g.id) return Promise.resolve(fallback("missing_id"));
+    if (!g.id) return fallback("missing_id");
+    const profileId = await getProfileId(g.profile_id);
+    if (!profileId) return fallback("not_signed_in");
     return insert("aha_gallery_items", {
       id: g.id,
-      profile_id: g.profile_id || null,
+      profile_id: profileId,
       type: g.type || null,
       title: g.title || null,
       description: g.description || null,
@@ -93,12 +105,14 @@
     });
   }
 
-  function saveFeedPost(post) {
+  async function saveFeedPost(post) {
     const p = cleanObject(post);
-    if (!p.id) return Promise.resolve(fallback("missing_id"));
+    if (!p.id) return fallback("missing_id");
+    const profileId = await getProfileId(p.profile_id);
+    if (!profileId) return fallback("not_signed_in");
     return insert("aha_feed_posts", {
       id: p.id,
-      profile_id: p.profile_id || null,
+      profile_id: profileId,
       text: p.text || null,
       tags: cleanArray(p.tags),
       meta: cleanObject(p.meta),
@@ -106,12 +120,14 @@
     });
   }
 
-  function saveInstaPost(post) {
+  async function saveInstaPost(post) {
     const p = cleanObject(post);
-    if (!p.id) return Promise.resolve(fallback("missing_id"));
+    if (!p.id) return fallback("missing_id");
+    const profileId = await getProfileId(p.profile_id);
+    if (!profileId) return fallback("not_signed_in");
     return insert("aha_insta_posts", {
       id: p.id,
-      profile_id: p.profile_id || null,
+      profile_id: profileId,
       title: p.title || null,
       caption: p.caption || null,
       src: p.src || null,
@@ -122,12 +138,14 @@
     });
   }
 
-  function saveImport(importRecord) {
+  async function saveImport(importRecord) {
     const r = cleanObject(importRecord);
     const id = r.id || `import_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
+    const profileId = await getProfileId(r.profile_id);
+    if (!profileId) return fallback("not_signed_in");
     return insert("aha_imports", {
       id,
-      profile_id: r.profile_id || null,
+      profile_id: profileId,
       source_app: r.source_app || "historygo",
       payload: cleanObject(r.payload),
       counts: cleanObject(r.counts),
