@@ -18,6 +18,15 @@
     localStorage.setItem(KEY, JSON.stringify(Array.isArray(items) ? items : []));
   }
 
+  function persistPost(post) {
+    if (!window.AHARepository?.saveInstaPost) return;
+    window.AHARepository.saveInstaPost(post).then((result) => {
+      if (result?.ok === false && result.error) {
+        console.warn("AHAInsta: database-save feilet", result.error);
+      }
+    });
+  }
+
   function escapeHtml(value) {
     return String(value ?? "")
       .replaceAll("&", "&amp;")
@@ -57,6 +66,8 @@
       src: String(input.src || "").trim(),
       caption: String(input.caption || "").trim(),
       content_type: /\.(mp4|webm|ogg)(\?|#|$)/i.test(String(input.src || "")) ? "video" : "image",
+      tags: Array.isArray(input.tags) ? input.tags : [],
+      meta: {},
       created_at: new Date().toISOString()
     };
     if (!post.title && !post.caption && !post.src) return null;
@@ -64,6 +75,7 @@
     const posts = load();
     posts.unshift(post);
     save(posts);
+    persistPost(post);
 
     window.AHAIngest?.ingest?.({
       source_type: "insta_post",
