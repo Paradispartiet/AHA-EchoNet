@@ -1,0 +1,53 @@
+body {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.module-header {
+  margin-bottom: 24px;
+}
+
+.module-form {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.module-form input,
+.module-form textarea {
+  width: 100%;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.06);
+  color: inherit;
+}
+
+.module-form textarea {
+  min-height: 140px;
+}
+
+.module-list {
+  display: grid;
+  gap: 14px;
+}
+
+.module-card {
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 16px;
+  padding: 16px;
+  background: rgba(255,255,255,0.05);
+}
+
+.module-card img,
+.module-card video {
+  max-width: 100%;
+  border-radius: 12px;
+  margin-top: 10px;
+}
+
+.module-meta {
+  opacity: 0.72;
+  font-size: 0.9rem;
+}
