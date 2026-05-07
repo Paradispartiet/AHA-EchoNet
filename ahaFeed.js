@@ -18,6 +18,15 @@
     localStorage.setItem(KEY, JSON.stringify(Array.isArray(items) ? items : []));
   }
 
+  function persistPost(post) {
+    if (!window.AHARepository?.saveFeedPost) return;
+    window.AHARepository.saveFeedPost(post).then((result) => {
+      if (result?.ok === false && result.error) {
+        console.warn("AHAFeed: database-save feilet", result.error);
+      }
+    });
+  }
+
   function escapeHtml(value) {
     return String(value ?? "")
       .replaceAll("&", "&amp;")
@@ -43,6 +52,8 @@
     const post = {
       id: `feed_${Date.now()}_${Math.floor(Math.random() * 100000)}`,
       text: String(input.text || "").trim(),
+      tags: Array.isArray(input.tags) ? input.tags : [],
+      meta: {},
       created_at: new Date().toISOString()
     };
     if (!post.text) return null;
@@ -50,6 +61,7 @@
     const posts = load();
     posts.unshift(post);
     save(posts);
+    persistPost(post);
 
     window.AHAIngest?.ingest?.({
       source_type: "feed_post",

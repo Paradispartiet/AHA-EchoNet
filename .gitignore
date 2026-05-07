@@ -1,0 +1,6 @@
+.env
+.env.local
+.env.*.local
+ahaConfig.local.js
+.DS_Store
+node_modules/

@@ -18,6 +18,15 @@
     localStorage.setItem(KEY, JSON.stringify(Array.isArray(items) ? items : []));
   }
 
+  function persistItem(item) {
+    if (!window.AHARepository?.saveGalleryItem) return;
+    window.AHARepository.saveGalleryItem(item).then((result) => {
+      if (result?.ok === false && result.error) {
+        console.warn("AHAGallery: database-save feilet", result.error);
+      }
+    });
+  }
+
   function escapeHtml(value) {
     return String(value ?? "")
       .replaceAll("&", "&amp;")
@@ -57,6 +66,13 @@
       title: String(input.title || "").trim(),
       description: String(input.description || "").trim(),
       src: String(input.src || "").trim(),
+      thumbnail: String(input.thumbnail || input.src || "").trim(),
+      source_type: "gallery",
+      source_app: "aha_gallery",
+      user_created: true,
+      imported: false,
+      tags: Array.isArray(input.tags) ? input.tags : [],
+      meta: {},
       created_at: new Date().toISOString()
     };
     if (!item.title && !item.description && !item.src) return null;
@@ -64,6 +80,7 @@
     const items = load();
     items.unshift(item);
     save(items);
+    persistItem(item);
 
     window.AHAIngest?.ingest?.({
       source_type: "gallery",
