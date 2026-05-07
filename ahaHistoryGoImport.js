@@ -25,6 +25,20 @@
     return global.AHAIngest.ingest(input);
   }
 
+  function persistImport(payload, counts) {
+    if (!global.AHARepository?.saveImport) return;
+    global.AHARepository.saveImport({
+      source_app: "historygo",
+      payload: obj(payload),
+      counts: obj(counts),
+      created_at: new Date().toISOString()
+    }).then((result) => {
+      if (result?.ok === false && result.error) {
+        console.warn("AHAHistoryGoImport: database-save feilet", result.error);
+      }
+    });
+  }
+
   function collectNextUpSignal(chamber, nextupLearningSignal, fallbackTimestamp) {
     const signal = obj(nextupLearningSignal);
     if (!Object.keys(signal).length) return 0;
@@ -206,6 +220,8 @@
       notes: collectNoteSignals(p.notes, "historygo_note", fallbackTimestamp),
       dialogs: collectNoteSignals(p.dialogs, "historygo_dialog", fallbackTimestamp)
     };
+
+    persistImport(p, counts);
 
     try {
       global.dispatchEvent(new CustomEvent("aha:historygo-imported", { detail: counts }));
