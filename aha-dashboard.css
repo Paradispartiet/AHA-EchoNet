@@ -1,0 +1,73 @@
+.aha-dashboard {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 32px 24px;
+}
+
+.aha-hero {
+  margin-bottom: 28px;
+}
+
+.aha-hero .eyebrow {
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.72;
+}
+
+.aha-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 14px;
+  margin: 24px 0;
+}
+
+.aha-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 120px;
+  padding: 18px;
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 18px;
+  background: rgba(255,255,255,0.06);
+  color: inherit;
+  text-decoration: none;
+  text-align: left;
+}
+
+.aha-tile strong {
+  font-size: 1.15rem;
+}
+
+.aha-tile span {
+  opacity: 0.72;
+}
+
+.aha-button-tile {
+  cursor: pointer;
+  font: inherit;
+}
+
+.aha-panel {
+  margin-top: 24px;
+  padding: 18px;
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 18px;
+  background: rgba(255,255,255,0.05);
+}
+
+.aha-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+}
+
+.aha-stat {
+  padding: 12px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.06);
+}
+
+.aha-dashboard-output {
+  white-space: pre-wrap;
+}
