@@ -12,6 +12,14 @@
     return Boolean(getClient());
   }
 
+  function getRedirectUrl() {
+    return String(
+      global.AHA_AUTH_REDIRECT_URL ||
+      global.AHA_APP_URL ||
+      "https://paradispartiet.github.io/AHA-EchoNet/"
+    ).trim();
+  }
+
   async function getSession() {
     const client = getClient();
     if (!client) return null;
@@ -55,10 +63,9 @@
     const client = getClient();
     if (!client) return { ok: false, reason: "not_configured" };
 
-    const redirectTo = global.location?.href || undefined;
     const { data, error } = await client.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: redirectTo }
+      options: { emailRedirectTo: getRedirectUrl() }
     });
 
     if (error) return { ok: false, error };
@@ -111,7 +118,7 @@
         const result = await signInWithEmail(email);
         if (output) {
           output.textContent = result.ok
-            ? "Sjekk e-posten for innloggingslenke."
+            ? `Sjekk e-posten for innloggingslenke. Redirect: ${getRedirectUrl()}`
             : `Innlogging feilet: ${result.error?.message || result.reason || "ukjent feil"}`;
         }
         renderAuthStatus();
@@ -140,6 +147,7 @@
 
   global.AHAAuth = {
     isReady,
+    getRedirectUrl,
     getSession,
     getUser,
     getProfileId,
