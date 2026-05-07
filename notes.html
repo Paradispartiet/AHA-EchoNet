@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <title>AHA Notes</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="aha-chat.css" />
+  <link rel="stylesheet" href="ahaModule.css" />
+  <link rel="stylesheet" href="aha-notes.css" />
+</head>
+<body>
+  <p><a href="index.html">← AHA Dashboard</a></p>
+  <header class="module-header">
+    <h1>AHA Notes</h1>
+    <p>Egne notater og tekster. Alt lagres lokalt og sendes inn i eksisterende AHA-motor via AHAIngest.</p>
+  </header>
+
+  <form id="note-form" class="module-form">
+    <input id="note-title" type="text" placeholder="Tittel" />
+    <textarea id="note-text" placeholder="Skriv notat …"></textarea>
+    <button type="submit">Lagre notat</button>
+  </form>
+
+  <section>
+    <h2>Lagrede notater</h2>
+    <div id="notes-list" class="module-list"></div>
+  </section>
+
+  <script src="insightsChamber.js"></script>
+  <script src="metaInsightsEngine.js"></script>
+  <script src="ahaFieldProfiles.js"></script>
+  <script src="ahaSources.js"></script>
+  <script src="ahaIngest.js"></script>
+  <script src="ahaNotes.js"></script>
+</body>
+</html>
