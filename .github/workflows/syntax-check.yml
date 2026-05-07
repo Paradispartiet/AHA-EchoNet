@@ -30,7 +30,7 @@ jobs:
           set -euo pipefail
 
           files=(
-            "ahaChatMvp.js"
+            "ahaChat.js"
             "insightsChamber.js"
             "metaInsightsEngine.js"
             "ahaSources.js"
