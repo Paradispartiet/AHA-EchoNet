@@ -1,0 +1,54 @@
+name: AHA syntax check
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+      - build-aha-components-historygo-import
+  workflow_dispatch:
+
+jobs:
+  node-check:
+    name: Node syntax check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Check JavaScript syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          files=(
+            "ahaChat.js"
+            "insightsChamber.js"
+            "metaInsightsEngine.js"
+            "ahaSources.js"
+            "ahaIngest.js"
+            "ahaHistoryGoImport.js"
+            "ahaNotes.js"
+            "ahaGallery.js"
+            "ahaFeed.js"
+            "ahaInsta.js"
+            "ahaDashboard.js"
+          )
+
+          for file in "${files[@]}"; do
+            if [[ -f "$file" ]]; then
+              echo "Checking $file"
+              node --check "$file"
+            else
+              echo "Missing expected file: $file"
+              exit 1
+            fi
+          done
