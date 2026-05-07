@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <title>AHA Insta</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="aha-chat.css" />
+  <link rel="stylesheet" href="ahaModule.css" />
+  <link rel="stylesheet" href="aha-feed.css" />
+</head>
+<body>
+  <p><a href="index.html">← AHA Dashboard</a></p>
+  <header class="module-header">
+    <h1>AHA Insta</h1>
+    <p>Bilde- og videoposter med caption. Første MVP bruker URL/path, ikke filopplasting.</p>
+  </header>
+
+  <form id="insta-form" class="module-form">
+    <input id="insta-title" type="text" placeholder="Tittel" />
+    <input id="insta-src" type="text" placeholder="Bilde-/video-url eller path" />
+    <textarea id="insta-caption" placeholder="Caption …"></textarea>
+    <button type="submit">Publiser lokalt</button>
+  </form>
+
+  <section>
+    <h2>Poster</h2>
+    <div id="insta-list" class="module-list"></div>
+  </section>
+
+  <script src="insightsChamber.js"></script>
+  <script src="metaInsightsEngine.js"></script>
+  <script src="ahaFieldProfiles.js"></script>
+  <script src="ahaSources.js"></script>
+  <script src="ahaIngest.js"></script>
+  <script src="ahaInsta.js"></script>
+</body>
+</html>
