@@ -8,6 +8,7 @@ on:
     branches:
       - main
       - build-aha-components-historygo-import
+      - add-supabase-database-layer
   workflow_dispatch:
 
 jobs:
@@ -41,6 +42,9 @@ jobs:
             "ahaFeed.js"
             "ahaInsta.js"
             "ahaDashboard.js"
+            "ahaDb.js"
+            "ahaRepository.js"
+            "ahaConfig.js"
           )
 
           for file in "${files[@]}"; do
