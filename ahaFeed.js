@@ -1,0 +1,86 @@
+// ahaFeed.js
+
+(function () {
+  "use strict";
+
+  const KEY = "aha_feed_posts_v1";
+
+  function load() {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(KEY) || "[]");
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function save(items) {
+    localStorage.setItem(KEY, JSON.stringify(Array.isArray(items) ? items : []));
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;");
+  }
+
+  function render() {
+    const mount = document.getElementById("feed-list");
+    if (!mount) return;
+    const posts = load();
+    mount.innerHTML = posts.length
+      ? posts.map((post) => `
+        <article class="module-card">
+          <p>${escapeHtml(post.text || "")}</p>
+          <div class="module-meta">${escapeHtml(post.created_at || "")}</div>
+        </article>
+      `).join("")
+      : "<p>Ingen poster ennå.</p>";
+  }
+
+  function addPost(input) {
+    const post = {
+      id: `feed_${Date.now()}_${Math.floor(Math.random() * 100000)}`,
+      text: String(input.text || "").trim(),
+      created_at: new Date().toISOString()
+    };
+    if (!post.text) return null;
+
+    const posts = load();
+    posts.unshift(post);
+    save(posts);
+
+    window.AHAIngest?.ingest?.({
+      source_type: "feed_post",
+      source_app: "aha_feed",
+      content_type: "text",
+      title: "AHA Feed-post",
+      text: post.text,
+      user_created: true,
+      imported: false,
+      created_at: post.created_at,
+      meta: { feed_post_id: post.id }
+    });
+
+    render();
+    return post;
+  }
+
+  function bind() {
+    const form = document.getElementById("feed-form");
+    if (!form) return;
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const text = document.getElementById("feed-text");
+      addPost({ text: text?.value });
+      if (text) text.value = "";
+    });
+    render();
+  }
+
+  window.AHAFeed = { load, save, addPost, render };
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bind);
+  else bind();
+})();
