@@ -18,6 +18,15 @@
     localStorage.setItem(KEY, JSON.stringify(Array.isArray(items) ? items : []));
   }
 
+  function persistNote(note) {
+    if (!window.AHARepository?.saveNote) return;
+    window.AHARepository.saveNote(note).then((result) => {
+      if (result?.ok === false && result.error) {
+        console.warn("AHANotes: database-save feilet", result.error);
+      }
+    });
+  }
+
   function escapeHtml(value) {
     return String(value ?? "")
       .replaceAll("&", "&amp;")
@@ -45,6 +54,7 @@
       id: `note_${Date.now()}_${Math.floor(Math.random() * 100000)}`,
       title: String(input.title || "").trim(),
       text: String(input.text || "").trim(),
+      tags: Array.isArray(input.tags) ? input.tags : [],
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
@@ -53,6 +63,7 @@
     const notes = load();
     notes.unshift(note);
     save(notes);
+    persistNote(note);
 
     window.AHAIngest?.ingest?.({
       source_type: "note",
