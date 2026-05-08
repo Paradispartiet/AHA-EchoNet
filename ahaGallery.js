@@ -18,6 +18,26 @@
     localStorage.setItem(KEY, JSON.stringify(Array.isArray(items) ? items : []));
   }
 
+  async function pushLocalToDatabase(items) {
+    if (!window.AHARepository?.saveGalleryItem) return { ok: false, fallback: "localStorage" };
+    const results = [];
+    for (const item of items) {
+      results.push(await window.AHARepository.saveGalleryItem(item));
+    }
+    return { ok: results.some((r) => r?.ok), results };
+  }
+
+  async function syncFromDatabase() {
+    if (!window.AHARepository?.loadGalleryItems) return { ok: false, fallback: "localStorage" };
+    const local = load();
+    if (local.length) await pushLocalToDatabase(local);
+    const result = await window.AHARepository.loadGalleryItems();
+    if (!result?.ok || !Array.isArray(result.data)) return result || { ok: false };
+    save(result.data);
+    render(result.data);
+    return result;
+  }
+
   function persistItem(item) {
     if (!window.AHARepository?.saveGalleryItem) return;
     window.AHARepository.saveGalleryItem(item).then((result) => {
@@ -43,10 +63,10 @@
     return `<img src="${escapeHtml(value)}" alt="" loading="lazy" />`;
   }
 
-  function render() {
+  function render(source) {
     const mount = document.getElementById("gallery-list");
     if (!mount) return;
-    const items = load();
+    const items = Array.isArray(source) ? source : load();
     mount.innerHTML = items.length
       ? items.map((item) => `
         <article class="module-card">
@@ -94,7 +114,7 @@
       meta: { gallery_item_id: item.id, src: item.src, media_type: item.type }
     });
 
-    render();
+    render(items);
     return item;
   }
 
@@ -112,9 +132,11 @@
       if (description) description.value = "";
     });
     render();
+    syncFromDatabase();
+    window.addEventListener("aha:auth-ready", syncFromDatabase);
   }
 
-  window.AHAGallery = { load, save, addItem, render };
+  window.AHAGallery = { load, save, syncFromDatabase, addItem, render };
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bind);
   else bind();

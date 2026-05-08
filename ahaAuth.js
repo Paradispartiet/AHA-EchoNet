@@ -20,6 +20,12 @@
     ).trim();
   }
 
+  function emitAuthReady(user) {
+    try {
+      global.dispatchEvent(new CustomEvent("aha:auth-ready", { detail: { user: user || null } }));
+    } catch {}
+  }
+
   async function getSession() {
     const client = getClient();
     if (!client) return null;
@@ -77,6 +83,7 @@
     if (!client) return { ok: false, reason: "not_configured" };
     const { error } = await client.auth.signOut();
     if (error) return { ok: false, error };
+    emitAuthReady(null);
     return { ok: true };
   }
 
@@ -87,21 +94,23 @@
 
   async function renderAuthStatus() {
     const mount = document.getElementById("aha-auth-status");
-    if (!mount) return;
 
     if (!isReady()) {
-      mount.textContent = "Database ikke konfigurert. Appen bruker localStorage.";
+      if (mount) mount.textContent = "Database ikke konfigurert. Appen bruker localStorage.";
+      emitAuthReady(null);
       return;
     }
 
     const user = await getUser();
     if (!user) {
-      mount.textContent = "Ikke innlogget. LocalStorage fungerer fortsatt.";
+      if (mount) mount.textContent = "Ikke innlogget. LocalStorage fungerer fortsatt.";
+      emitAuthReady(null);
       return;
     }
 
     await ensureProfile(user.email);
-    mount.textContent = `Innlogget: ${user.email || user.id}`;
+    if (mount) mount.textContent = `Innlogget: ${user.email || user.id}`;
+    emitAuthReady(user);
   }
 
   function bindAuthPanel() {

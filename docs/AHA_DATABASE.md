@@ -1,12 +1,12 @@
 # AHA Database
 
-AHA-EchoNet har nå et valgfritt Supabase/Postgres-lag.
+AHA-EchoNet har et valgfritt Supabase/Postgres-lag.
 
 Database-laget er et tillegg til localStorage-MVP-en:
 
 ```text
 localStorage fungerer alltid
-Supabase brukes hvis konfigurert
+Supabase brukes hvis konfigurert og bruker er innlogget
 appen skal ikke krasje hvis Supabase mangler
 ```
 
@@ -16,17 +16,23 @@ appen skal ikke krasje hvis Supabase mangler
 ahaDb.js
 = bootstrap for Supabase-klient
 
+ahaAuth.js
+= Supabase Auth-bro og auth-ready event
+
 ahaRepository.js
-= felles repository-lag for database-save
+= felles repository-lag for database-save og database-read
 
 supabase/schema.sql
 = tabeller
 
+supabase/policies.sql
+= RLS policies
+
 supabase/README.md
-= hvordan schema kjøres
+= hvordan schema og policies kjøres
 
 ahaConfig.js
-= tom runtime-konfig / placeholder
+= runtime-konfig
 
 ahaConfig.example.js
 = eksempel for lokal konfig
@@ -55,7 +61,7 @@ aha_insta_posts
 aha_imports
 ```
 
-## Modulflyt
+## Modulflyt ved lagring
 
 ```text
 Notes/Galleri/Feed/Insta/History Go-import
@@ -64,14 +70,38 @@ Notes/Galleri/Feed/Insta/History Go-import
 → AHAIngest sender tekstlig materiale til eksisterende AHA-motor
 ```
 
+## Modulflyt ved innlogging / sync
+
+```text
+AHAAuth sender aha:auth-ready
+→ modulen pusher lokale elementer til Supabase med upsert
+→ modulen leser samme tabell tilbake fra Supabase
+→ localStorage oppdateres som cache
+→ UI rendres fra oppdatert datasett
+```
+
+Denne regelen hindrer at lokale data forsvinner ved innlogging, samtidig som Supabase blir sann kilde når bruker er innlogget.
+
+## Repository-read
+
+`ahaRepository.js` har read-funksjoner for:
+
+```text
+loadSourceEvents()
+loadNotes()
+loadGalleryItems()
+loadFeedPosts()
+loadInstaPosts()
+loadImports()
+loadDashboardCounts()
+```
+
 ## Ikke gjort ennå
 
 ```text
-- auth
-- bruker/profilkobling
-- database-read tilbake til UI
+- database-read for selve innsiktskammeret
 - filopplasting
 - Supabase Storage
 - bilde-/videoanalyse
-- live sync mellom enheter
+- sanntids/live sync
 ```
