@@ -18,6 +18,15 @@
     localStorage.setItem(KEY, JSON.stringify(Array.isArray(items) ? items : []));
   }
 
+  async function syncFromDatabase() {
+    if (!window.AHARepository?.loadNotes) return { ok: false, fallback: "localStorage" };
+    const result = await window.AHARepository.loadNotes();
+    if (!result?.ok || !Array.isArray(result.data)) return result || { ok: false };
+    save(result.data);
+    render(result.data);
+    return result;
+  }
+
   function persistNote(note) {
     if (!window.AHARepository?.saveNote) return;
     window.AHARepository.saveNote(note).then((result) => {
@@ -34,10 +43,10 @@
       .replaceAll(">", "&gt;");
   }
 
-  function render() {
+  function render(source) {
     const mount = document.getElementById("notes-list");
     if (!mount) return;
-    const notes = load();
+    const notes = Array.isArray(source) ? source : load();
     mount.innerHTML = notes.length
       ? notes.map((note) => `
         <article class="module-card">
@@ -77,7 +86,7 @@
       meta: { note_id: note.id }
     });
 
-    render();
+    render(notes);
     return note;
   }
 
@@ -93,9 +102,11 @@
       if (text) text.value = "";
     });
     render();
+    syncFromDatabase();
+    window.addEventListener("aha:auth-ready", syncFromDatabase);
   }
 
-  window.AHANotes = { load, save, addNote, render };
+  window.AHANotes = { load, save, syncFromDatabase, addNote, render };
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bind);
   else bind();
