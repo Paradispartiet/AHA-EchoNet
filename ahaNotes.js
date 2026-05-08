@@ -18,8 +18,19 @@
     localStorage.setItem(KEY, JSON.stringify(Array.isArray(items) ? items : []));
   }
 
+  async function pushLocalToDatabase(items) {
+    if (!window.AHARepository?.saveNote) return { ok: false, fallback: "localStorage" };
+    const results = [];
+    for (const note of items) {
+      results.push(await window.AHARepository.saveNote(note));
+    }
+    return { ok: results.some((r) => r?.ok), results };
+  }
+
   async function syncFromDatabase() {
     if (!window.AHARepository?.loadNotes) return { ok: false, fallback: "localStorage" };
+    const local = load();
+    if (local.length) await pushLocalToDatabase(local);
     const result = await window.AHARepository.loadNotes();
     if (!result?.ok || !Array.isArray(result.data)) return result || { ok: false };
     save(result.data);
