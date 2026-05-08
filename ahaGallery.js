@@ -18,8 +18,19 @@
     localStorage.setItem(KEY, JSON.stringify(Array.isArray(items) ? items : []));
   }
 
+  async function pushLocalToDatabase(items) {
+    if (!window.AHARepository?.saveGalleryItem) return { ok: false, fallback: "localStorage" };
+    const results = [];
+    for (const item of items) {
+      results.push(await window.AHARepository.saveGalleryItem(item));
+    }
+    return { ok: results.some((r) => r?.ok), results };
+  }
+
   async function syncFromDatabase() {
     if (!window.AHARepository?.loadGalleryItems) return { ok: false, fallback: "localStorage" };
+    const local = load();
+    if (local.length) await pushLocalToDatabase(local);
     const result = await window.AHARepository.loadGalleryItems();
     if (!result?.ok || !Array.isArray(result.data)) return result || { ok: false };
     save(result.data);
