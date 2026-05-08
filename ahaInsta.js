@@ -18,6 +18,15 @@
     localStorage.setItem(KEY, JSON.stringify(Array.isArray(items) ? items : []));
   }
 
+  async function syncFromDatabase() {
+    if (!window.AHARepository?.loadInstaPosts) return { ok: false, fallback: "localStorage" };
+    const result = await window.AHARepository.loadInstaPosts();
+    if (!result?.ok || !Array.isArray(result.data)) return result || { ok: false };
+    save(result.data);
+    render(result.data);
+    return result;
+  }
+
   function persistPost(post) {
     if (!window.AHARepository?.saveInstaPost) return;
     window.AHARepository.saveInstaPost(post).then((result) => {
@@ -43,10 +52,10 @@
     return `<img src="${escapeHtml(value)}" alt="" loading="lazy" />`;
   }
 
-  function render() {
+  function render(source) {
     const mount = document.getElementById("insta-list");
     if (!mount) return;
-    const posts = load();
+    const posts = Array.isArray(source) ? source : load();
     mount.innerHTML = posts.length
       ? posts.map((post) => `
         <article class="module-card">
@@ -89,7 +98,7 @@
       meta: { insta_post_id: post.id, src: post.src }
     });
 
-    render();
+    render(posts);
     return post;
   }
 
@@ -107,9 +116,11 @@
       if (caption) caption.value = "";
     });
     render();
+    syncFromDatabase();
+    window.addEventListener("aha:auth-ready", syncFromDatabase);
   }
 
-  window.AHAInsta = { load, save, addPost, render };
+  window.AHAInsta = { load, save, syncFromDatabase, addPost, render };
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bind);
   else bind();
