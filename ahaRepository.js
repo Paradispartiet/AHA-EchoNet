@@ -37,6 +37,55 @@
     }
   }
 
+  async function list(table, options = {}) {
+    const db = client();
+    if (!db) return fallback();
+
+    const profileId = await getProfileId(options.profile_id);
+    if (!profileId) return fallback("not_signed_in");
+
+    try {
+      let query = db
+        .from(table)
+        .select(options.select || "*")
+        .eq("profile_id", profileId);
+
+      if (options.orderBy) {
+        query = query.order(options.orderBy, { ascending: options.ascending === true });
+      }
+
+      if (Number.isFinite(options.limit)) {
+        query = query.limit(options.limit);
+      }
+
+      const { data, error } = await query;
+      if (error) return { ok: false, error };
+      return { ok: true, data: Array.isArray(data) ? data : [] };
+    } catch (error) {
+      return { ok: false, error };
+    }
+  }
+
+  async function count(table) {
+    const db = client();
+    if (!db) return fallback();
+
+    const profileId = await getProfileId();
+    if (!profileId) return fallback("not_signed_in");
+
+    try {
+      const { count: total, error } = await db
+        .from(table)
+        .select("id", { count: "exact", head: true })
+        .eq("profile_id", profileId);
+
+      if (error) return { ok: false, error };
+      return { ok: true, count: total || 0 };
+    } catch (error) {
+      return { ok: false, error };
+    }
+  }
+
   function cleanArray(value) {
     return Array.isArray(value) ? value : [];
   }
@@ -153,12 +202,67 @@
     });
   }
 
+  function loadSourceEvents(options = {}) {
+    return list("aha_source_events", { orderBy: "created_at", limit: options.limit || 200 });
+  }
+
+  function loadNotes(options = {}) {
+    return list("aha_notes", { orderBy: "created_at", limit: options.limit || 200 });
+  }
+
+  function loadGalleryItems(options = {}) {
+    return list("aha_gallery_items", { orderBy: "created_at", limit: options.limit || 200 });
+  }
+
+  function loadFeedPosts(options = {}) {
+    return list("aha_feed_posts", { orderBy: "created_at", limit: options.limit || 200 });
+  }
+
+  function loadInstaPosts(options = {}) {
+    return list("aha_insta_posts", { orderBy: "created_at", limit: options.limit || 200 });
+  }
+
+  function loadImports(options = {}) {
+    return list("aha_imports", { orderBy: "created_at", limit: options.limit || 50 });
+  }
+
+  async function loadDashboardCounts() {
+    const tables = {
+      source_events: "aha_source_events",
+      notes: "aha_notes",
+      gallery: "aha_gallery_items",
+      feed: "aha_feed_posts",
+      insta: "aha_insta_posts",
+      imports: "aha_imports"
+    };
+
+    const entries = await Promise.all(
+      Object.entries(tables).map(async ([key, table]) => [key, await count(table)])
+    );
+
+    const counts = {};
+    const errors = [];
+    entries.forEach(([key, result]) => {
+      if (result?.ok) counts[key] = result.count || 0;
+      else errors.push({ key, result });
+    });
+
+    return errors.length ? { ok: false, counts, errors } : { ok: true, counts };
+  }
+
   global.AHARepository = {
     saveSourceEvent,
     saveNote,
     saveGalleryItem,
     saveFeedPost,
     saveInstaPost,
-    saveImport
+    saveImport,
+    loadSourceEvents,
+    loadNotes,
+    loadGalleryItems,
+    loadFeedPosts,
+    loadInstaPosts,
+    loadImports,
+    loadDashboardCounts
   };
 })(window);
