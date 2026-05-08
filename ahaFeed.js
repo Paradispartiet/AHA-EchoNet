@@ -18,6 +18,15 @@
     localStorage.setItem(KEY, JSON.stringify(Array.isArray(items) ? items : []));
   }
 
+  async function syncFromDatabase() {
+    if (!window.AHARepository?.loadFeedPosts) return { ok: false, fallback: "localStorage" };
+    const result = await window.AHARepository.loadFeedPosts();
+    if (!result?.ok || !Array.isArray(result.data)) return result || { ok: false };
+    save(result.data);
+    render(result.data);
+    return result;
+  }
+
   function persistPost(post) {
     if (!window.AHARepository?.saveFeedPost) return;
     window.AHARepository.saveFeedPost(post).then((result) => {
@@ -34,10 +43,10 @@
       .replaceAll(">", "&gt;");
   }
 
-  function render() {
+  function render(source) {
     const mount = document.getElementById("feed-list");
     if (!mount) return;
-    const posts = load();
+    const posts = Array.isArray(source) ? source : load();
     mount.innerHTML = posts.length
       ? posts.map((post) => `
         <article class="module-card">
@@ -75,7 +84,7 @@
       meta: { feed_post_id: post.id }
     });
 
-    render();
+    render(posts);
     return post;
   }
 
@@ -89,9 +98,11 @@
       if (text) text.value = "";
     });
     render();
+    syncFromDatabase();
+    window.addEventListener("aha:auth-ready", syncFromDatabase);
   }
 
-  window.AHAFeed = { load, save, addPost, render };
+  window.AHAFeed = { load, save, syncFromDatabase, addPost, render };
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bind);
   else bind();
