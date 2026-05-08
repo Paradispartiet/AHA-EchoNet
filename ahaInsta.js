@@ -18,8 +18,19 @@
     localStorage.setItem(KEY, JSON.stringify(Array.isArray(items) ? items : []));
   }
 
+  async function pushLocalToDatabase(items) {
+    if (!window.AHARepository?.saveInstaPost) return { ok: false, fallback: "localStorage" };
+    const results = [];
+    for (const post of items) {
+      results.push(await window.AHARepository.saveInstaPost(post));
+    }
+    return { ok: results.some((r) => r?.ok), results };
+  }
+
   async function syncFromDatabase() {
     if (!window.AHARepository?.loadInstaPosts) return { ok: false, fallback: "localStorage" };
+    const local = load();
+    if (local.length) await pushLocalToDatabase(local);
     const result = await window.AHARepository.loadInstaPosts();
     if (!result?.ok || !Array.isArray(result.data)) return result || { ok: false };
     save(result.data);
