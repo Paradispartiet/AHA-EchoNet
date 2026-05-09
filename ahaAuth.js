@@ -5,6 +5,12 @@
   "use strict";
 
   const AUTH_TIMEOUT_MS = 8000;
+  const GENERIC_DISPLAY_NAMES = new Set([
+    "logg inn med aha",
+    "din aha-profil",
+    "opprett aha-profil",
+    "ikke innlogget"
+  ]);
 
   function getClient() {
     return global.AHADb?.getClient?.() || null;
@@ -32,6 +38,27 @@
       hash.get("access_token") ||
       hash.get("refresh_token") ||
       hash.get("type") === "magiclink"
+    );
+  }
+
+  function cleanText(value) {
+    return String(value || "").trim().replace(/\s+/g, " ");
+  }
+
+  function isGenericDisplayName(value) {
+    const clean = cleanText(value).toLowerCase();
+    return !clean || GENERIC_DISPLAY_NAMES.has(clean);
+  }
+
+  function getUserDisplayName(user) {
+    const metadata = user?.user_metadata || {};
+    return cleanText(
+      metadata.full_name ||
+      metadata.name ||
+      metadata.display_name ||
+      metadata.user_name ||
+      metadata.preferred_username ||
+      ""
     );
   }
 
@@ -127,8 +154,11 @@
     if (!user?.id) return { ok: false, reason: "not_signed_in" };
 
     const existing = await loadProfile(user);
-    const cleanDisplayName = String(displayName || "").trim();
-    const nextDisplayName = cleanDisplayName || existing?.data?.display_name || null;
+    const cleanDisplayName = cleanText(displayName);
+    const metadataDisplayName = getUserDisplayName(user);
+    const existingDisplayName = cleanText(existing?.data?.display_name);
+    const shouldReplaceExisting = isGenericDisplayName(existingDisplayName);
+    const nextDisplayName = cleanDisplayName || (shouldReplaceExisting ? metadataDisplayName : existingDisplayName) || null;
 
     const profile = {
       id: user.id,
@@ -147,7 +177,7 @@
   }
 
   async function saveProfileName(displayName) {
-    const cleanDisplayName = String(displayName || "").trim();
+    const cleanDisplayName = cleanText(displayName);
     if (!cleanDisplayName) return { ok: false, reason: "missing_display_name" };
     return await ensureProfile(cleanDisplayName);
   }
@@ -221,7 +251,7 @@
     }
 
     const profile = await ensureProfile();
-    const displayName = String(profile?.data?.display_name || "").trim();
+    const displayName = cleanText(profile?.data?.display_name);
     if (mount) {
       mount.textContent = displayName
         ? `Innlogget: ${displayName}`
@@ -241,7 +271,7 @@
       hasAuthParams: hasAuthParams(),
       callback,
       hasSession: Boolean(session),
-      user: user ? { id: user.id, email: user.email || null } : null,
+      user: user ? { id: user.id, email: user.email || null, metadata_name: getUserDisplayName(user) || null } : null,
       profile
     };
   }
@@ -270,7 +300,7 @@
     if (form && emailInput) {
       form.addEventListener("submit", async (event) => {
         event.preventDefault();
-        const email = String(emailInput.value || "").trim();
+        const email = cleanText(emailInput.value);
         if (!email) return;
         const submitButton = form.querySelector('button[type="submit"]');
         if (submitButton) submitButton.disabled = true;
