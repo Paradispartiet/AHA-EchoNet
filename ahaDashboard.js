@@ -151,9 +151,23 @@
     setText("aha-module-insta-status", resolveModuleLabel(stats, "insta", "innlegg", "innlegg"));
 
     const importCount = statValue(stats, "imports");
-    if (hasHistoryGoPayload()) setText("aha-module-historygo-status", "Import funnet");
-    else if (importCount > 0) setText("aha-module-historygo-status", `${importCount} importer`);
-    else setText("aha-module-historygo-status", "Ikke importert");
+    if (importCount > 0) setText("aha-module-historygo-status", `${importCount} ${importCount === 1 ? "import" : "importer"}`);
+    else setText("aha-module-historygo-status", "Ingen import");
+  }
+
+  function bindHistoryGoHomeTile() {
+    const tile = $("aha-historygo-home");
+    if (!tile || tile.dataset.ahaDashboardBound === "true") return;
+    tile.dataset.ahaDashboardBound = "true";
+    tile.addEventListener("click", () => {
+      window.location.href = "/History-Go/";
+    });
+    tile.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        window.location.href = "/History-Go/";
+      }
+    });
   }
 
   function renderStatCards(stats, sourceLabel, authState) {
@@ -293,6 +307,7 @@
 
   function bind() {
     bindProfileNameForm();
+    bindHistoryGoHomeTile();
     renderDashboard();
     window.addEventListener("aha:source-event-added", renderDashboard);
     window.addEventListener("aha:historygo-imported", renderDashboard);

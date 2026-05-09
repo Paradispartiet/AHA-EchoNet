@@ -436,6 +436,32 @@ input:focus { border-color: var(--aha-yellow); box-shadow: 0 0 0 3px rgba(246,20
 .aha-tile span:not(.aha-tile-icon) { color: var(--aha-muted); line-height: 1.35; }
 .aha-tile small { margin-top: auto; width: fit-content; padding: 7px 10px; border-radius: 999px; background: rgba(255,255,255,.08); color: var(--aha-text); font-weight: 800; }
 .aha-button-tile { font: inherit; }
+.aha-home-tile { cursor: pointer; }
+.aha-tile-actions { display: flex; gap: 10px; align-items: center; margin-top: 8px; flex-wrap: wrap; }
+.aha-tile-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 9px 14px;
+  font-weight: 800;
+  font-size: .88rem;
+  text-decoration: none;
+  border: 1px solid transparent;
+}
+.aha-tile-btn-primary {
+  background: rgba(246,200,0,.2);
+  border-color: rgba(246,200,0,.45);
+  color: #ffe68a;
+}
+.aha-tile-btn-secondary {
+  background: rgba(255,255,255,.08);
+  border-color: rgba(255,255,255,.18);
+  color: var(--aha-text);
+  cursor: pointer;
+}
+.aha-tile-btn-primary:hover,
+.aha-tile-btn-secondary:hover { filter: brightness(1.08); }
 
 .aha-panel { padding: 20px; }
 .aha-panel-head { justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
