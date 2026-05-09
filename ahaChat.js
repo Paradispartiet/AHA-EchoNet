@@ -105,6 +105,56 @@
     return chunks.length;
   }
 
+  function buildAIState() {
+    const chamber = loadChamberFromStorage();
+    const insights = currentInsights();
+    const topInsights = insights.slice(0, 8).map((ins) => ({
+      id: ins.id,
+      title: ins.title || "Innsikt",
+      summary: ins.summary || "",
+      concepts: ins.concepts || [],
+      theme_id: ins.theme_id || null,
+      subject_id: ins.subject_id || null
+    }));
+    const concepts = [];
+    topInsights.forEach((ins) => (ins.concepts || []).forEach((c) => concepts.push(c)));
+    const metaProfile = global.MetaInsightsEngine?.buildUserMetaProfile?.(chamber, SUBJECT_ID) || {};
+    return {
+      top_insights: topInsights,
+      concepts,
+      meta_profile: metaProfile
+    };
+  }
+
+  async function askAhaAgent(message) {
+    const apiBase = String(global.AHA_AGENT_API || "").trim().replace(/\/$/, "");
+    if (!apiBase) throw new Error("missing_api_base");
+
+    let similar = [];
+    if (global.AHAEmbeddings?.findSimilarToText) {
+      try {
+        const simRes = await global.AHAEmbeddings.findSimilarToText(message, { limit: 5 });
+        if (simRes?.ok) similar = simRes.matches || [];
+      } catch (err) {
+        console.warn("Klarte ikke hente similar insights", err);
+      }
+    }
+
+    const body = {
+      message,
+      ai_state: buildAIState(),
+      similar_insights: similar,
+      profile: {}
+    };
+    const res = await fetch(`${apiBase}/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    });
+    if (!res.ok) throw new Error(`chat_http_${res.status}`);
+    return res.json();
+  }
+
   function showInsights() {
     const insights = currentInsights();
     renderPanel(
@@ -150,12 +200,31 @@
     const button = document.getElementById("btn-send");
     const textarea = document.getElementById("msg");
     if (button && textarea) {
-      button.addEventListener("click", () => {
+      button.addEventListener("click", async () => {
         const text = textarea.value.trim();
         if (!text) return;
         appendChat("user", text);
         const count = handleUserMessage(text);
         appendChat("aha", `Registrert ${count} signal${count === 1 ? "" : "er"}.`);
+        try {
+          const agent = await askAhaAgent(text);
+          const reply = String(agent?.reply || "").trim() || "AHA-agenten returnerte tomt svar.";
+          appendChat("aha", reply);
+          global.AHAIngest?.ingest?.({
+            source_type: "aha_agent",
+            source_app: "aha_chat",
+            content_type: "text",
+            title: "AHA-agent svar",
+            text: reply,
+            user_created: false,
+            imported: false,
+            created_at: new Date().toISOString(),
+            meta: { response_id: agent?.response_id || null, model: agent?.model || null }
+          });
+        } catch (err) {
+          console.warn("AHA-agent utilgjengelig", err);
+          appendChat("aha", "AHA-agenten er ikke tilgjengelig akkurat nå.");
+        }
         textarea.value = "";
       });
     }
@@ -173,7 +242,9 @@
   global.AHAChat = {
     loadChamberFromStorage,
     saveChamberToStorage,
-    handleUserMessage
+    handleUserMessage,
+    askAhaAgent,
+    buildAIState
   };
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bind);
