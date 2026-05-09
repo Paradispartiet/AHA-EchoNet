@@ -4,6 +4,9 @@
   "description": "AHA AI-agent backend for innsiktsmotoren",
   "main": "server.js",
   "type": "module",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
     "start": "node server.js"
   },

@@ -146,6 +146,7 @@
   async function enrichWithEmbedding(signal) {
     if (!signal || !signal.text) return;
     if (!global.AHAEmbeddings || typeof global.AHAEmbeddings.embedAndStore !== "function") return;
+    if (typeof global.AHAEmbeddings.isConfigured === "function" && !global.AHAEmbeddings.isConfigured()) return;
 
     const chamber = loadChamber();
     const insights = chamber?.insights || [];

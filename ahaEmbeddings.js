@@ -15,9 +15,18 @@
 (function (global) {
   "use strict";
 
-  const ENDPOINT = (global.AHA_AGENT_API || "/api/aha-agent").replace(/\/$/, "");
   const DEFAULT_MODEL = "voyage-multilingual-2";
   const TABLE = "aha_insight_embeddings";
+
+  function endpoint() {
+    const raw = String(global.AHA_AGENT_API || "").trim();
+    if (!raw) return null;
+    return raw.replace(/\/$/, "");
+  }
+
+  function isConfigured() {
+    return Boolean(endpoint());
+  }
 
   function db() {
     return global.AHADb?.getClient?.() || null;
@@ -29,7 +38,9 @@
   }
 
   async function callEmbed(texts, inputType) {
-    const res = await fetch(`${ENDPOINT}/embed`, {
+    const ep = endpoint();
+    if (!ep) throw new Error("no_backend: AHA_AGENT_API er ikke konfigurert");
+    const res = await fetch(`${ep}/embed`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ texts, input_type: inputType || "document" })
@@ -39,6 +50,21 @@
       throw new Error(`embed_http_${res.status}: ${body.slice(0, 200)}`);
     }
     return res.json();
+  }
+
+  // Sjekker at backend faktisk er nådbar og at Voyage-nøkkelen er
+  // satt. Brukes av dashboard/UI for å vise om embedding-laget er
+  // klar, og av verifiserings-snippet i docs.
+  async function health() {
+    const ep = endpoint();
+    if (!ep) return { ok: false, reason: "no_backend" };
+    try {
+      const res = await fetch(`${ep}/health`);
+      if (!res.ok) return { ok: false, reason: `http_${res.status}` };
+      return { ok: true, ...(await res.json()) };
+    } catch (err) {
+      return { ok: false, reason: "fetch_failed", error: String(err) };
+    }
   }
 
   function summarize(insight) {
@@ -219,6 +245,8 @@
     embedAllPending,
     findSimilarToText,
     findSimilarToInsight,
+    health,
+    isConfigured,
     DEFAULT_MODEL
   };
 })(window);
