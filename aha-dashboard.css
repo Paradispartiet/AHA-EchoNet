@@ -132,7 +132,52 @@ button {
   cursor: pointer;
 }
 
+button:disabled {
+  cursor: wait;
+  opacity: .68;
+}
+
 button:hover { filter: brightness(1.07); }
+
+.aha-google-button {
+  width: 100%;
+  min-height: 48px;
+  margin-top: 16px;
+  background: #ffffff;
+  color: #171717;
+  border: 1px solid rgba(255,255,255,.18);
+}
+
+.aha-google-button::before {
+  content: "G";
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background: #f1f1f1;
+  color: #111;
+  font-weight: 950;
+}
+
+.aha-auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 16px 0 2px;
+  color: var(--aha-muted);
+  font-size: .86rem;
+  font-weight: 800;
+}
+
+.aha-auth-divider::before,
+.aha-auth-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: rgba(255,255,255,.13);
+}
 
 .aha-status-pill,
 .aha-profile-auth-state {
