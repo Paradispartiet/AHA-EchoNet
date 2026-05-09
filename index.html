@@ -14,7 +14,7 @@
         <span class="aha-brand-mark">A</span>
         <span>
           <strong>AHA</strong>
-          <small>EchoNet</small>
+          <small>personlig innsiktsmotor</small>
         </span>
       </a>
 
@@ -28,25 +28,22 @@
       </section>
 
       <div class="aha-header-actions">
-        <form id="aha-auth-form" class="aha-auth-inline" aria-label="Logg inn med AHA">
-          <input id="aha-auth-email" type="email" placeholder="E-post" autocomplete="email" />
-          <button type="submit">Send lenke</button>
-        </form>
+        <a class="aha-ghost-link" href="chat.html">Åpne chat</a>
         <button id="aha-auth-signout" class="aha-ghost-button is-hidden" type="button">Logg ut</button>
       </div>
     </header>
 
     <section class="aha-hero-profile" aria-label="AHA-profil">
       <div class="aha-profile-main-card">
-        <div class="aha-profile-glow" aria-hidden="true"></div>
         <div class="aha-profile-topline">
-          <p class="eyebrow">AHA = jeg</p>
           <span id="aha-auth-status" class="aha-profile-auth-state">Sjekker innlogging …</span>
+          <span class="aha-profile-label">Din AHA</span>
         </div>
 
         <div class="aha-profile-body">
           <div id="aha-profile-avatar" class="aha-profile-avatar">A</div>
           <div class="aha-profile-copy">
+            <p class="eyebrow">AHA = jeg</p>
             <h1 id="aha-profile-name">Din AHA-profil</h1>
             <p id="aha-profile-subtitle">Dette er din personlige innsiktsmotor.</p>
             <div class="aha-profile-id-row">
@@ -57,12 +54,12 @@
         </div>
 
         <form id="aha-profile-name-form" class="aha-profile-name-form is-hidden" aria-label="Opprett AHA-profilnavn">
-          <label for="aha-profile-name-input">AHA-profilnavn</label>
+          <label for="aha-profile-name-input">Opprett AHA-navn</label>
           <div class="aha-profile-name-row">
-            <input id="aha-profile-name-input" type="text" maxlength="80" placeholder="Skriv navnet som AHA og History Go skal bruke" />
-            <button type="submit">Lagre AHA-profil</button>
+            <input id="aha-profile-name-input" type="text" maxlength="80" placeholder="Navnet AHA og History Go skal bruke" />
+            <button type="submit">Lagre</button>
           </div>
-          <p id="aha-profile-name-output">Navnet lagres i AHA-profilen og blir sann kilde for History Go.</p>
+          <p id="aha-profile-name-output">AHA-navnet lagres som sann kilde i profilen din.</p>
         </form>
 
         <div id="aha-profile-stats" class="aha-profile-stats" aria-label="AHA nøkkeltall">
@@ -75,17 +72,22 @@
         </div>
       </div>
 
-      <aside id="aha-login-card" class="aha-login-card" aria-label="Innlogging">
-        <h2>Logg inn for å aktivere AHA</h2>
-        <p>Send en magic link og gjør AHA til din personlige profil, med Supabase som sann kilde når du er innlogget.</p>
+      <aside id="aha-login-card" class="aha-side-card" aria-label="Innlogging">
+        <p class="eyebrow">Konto</p>
+        <h2>Logg inn med AHA</h2>
+        <p>Send en magic link. Når du er inne, blir denne siden din personlige profilflate.</p>
+        <form id="aha-auth-form" class="aha-auth-inline" aria-label="Logg inn med AHA">
+          <input id="aha-auth-email" type="email" placeholder="E-post" autocomplete="email" />
+          <button type="submit">Send lenke</button>
+        </form>
         <p id="aha-auth-output" class="aha-auth-output"></p>
       </aside>
     </section>
 
     <section class="aha-section-heading" aria-label="AHA moduler overskrift">
       <p class="eyebrow">Moduler</p>
-      <h2>Gå videre fra profilen din</h2>
-      <p>AHA samler chat, notater, minner, feed og import fra History Go i én personlig innsiktsflate.</p>
+      <h2>Arbeidsflaten din</h2>
+      <p>Start i profilen. Gå videre til chat, notater, galleri, feed, insta eller History Go-import når du trenger det.</p>
     </section>
 
     <section class="aha-grid" aria-label="AHA moduler">
