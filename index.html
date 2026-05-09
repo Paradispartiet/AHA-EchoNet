@@ -9,34 +9,132 @@
 </head>
 <body>
   <main class="aha-dashboard">
-    <header class="aha-hero">
-      <p class="eyebrow">AHA-EchoNet</p>
-      <h1>AHA = jeg</h1>
-      <p>Personlig dashboard for chat, notes, galleri, feed, Insta og valgfri History Go-import.</p>
+    <header class="aha-app-header" aria-label="AHA toppfelt">
+      <a class="aha-brand" href="index.html" aria-label="AHA forsiden">
+        <span class="aha-brand-mark">A</span>
+        <span>
+          <strong>AHA</strong>
+          <small>EchoNet</small>
+        </span>
+      </a>
+
+      <section class="aha-user-strip" aria-label="Innlogget bruker">
+        <div id="aha-header-avatar" class="aha-avatar">A</div>
+        <div class="aha-user-copy">
+          <span id="aha-header-status" class="aha-status-pill is-loading">Sjekker innlogging …</span>
+          <strong id="aha-header-name">Ikke innlogget</strong>
+          <small id="aha-header-meta">AHA-profil ikke lastet</small>
+        </div>
+      </section>
+
+      <div class="aha-header-actions">
+        <form id="aha-auth-form" class="aha-auth-inline" aria-label="Logg inn med AHA">
+          <input id="aha-auth-email" type="email" placeholder="E-post" autocomplete="email" />
+          <button type="submit">Send lenke</button>
+        </form>
+        <button id="aha-auth-signout" class="aha-ghost-button" type="button">Logg ut</button>
+      </div>
     </header>
 
-    <section class="aha-panel" aria-label="AHA innlogging">
-      <h2>Innlogging</h2>
-      <p id="aha-auth-status">Sjekker innlogging …</p>
-      <form id="aha-auth-form" class="module-form">
-        <input id="aha-auth-email" type="email" placeholder="E-post" autocomplete="email" />
-        <button type="submit">Send innloggingslenke</button>
-      </form>
-      <button id="aha-auth-signout" type="button">Logg ut</button>
-      <p id="aha-auth-output"></p>
+    <section class="aha-hero-profile" aria-label="AHA-profil">
+      <div class="aha-profile-main-card">
+        <div class="aha-profile-glow" aria-hidden="true"></div>
+        <div class="aha-profile-topline">
+          <p class="eyebrow">AHA = jeg</p>
+          <span id="aha-auth-status" class="aha-profile-auth-state">Sjekker innlogging …</span>
+        </div>
+
+        <div class="aha-profile-body">
+          <div id="aha-profile-avatar" class="aha-profile-avatar">A</div>
+          <div class="aha-profile-copy">
+            <h1 id="aha-profile-name">Din AHA-profil</h1>
+            <p id="aha-profile-subtitle">Dette er din personlige innsiktsmotor.</p>
+            <div class="aha-profile-id-row">
+              <span>AHA-ID</span>
+              <strong id="aha-profile-id">Ikke innlogget</strong>
+            </div>
+          </div>
+        </div>
+
+        <form id="aha-profile-name-form" class="aha-profile-name-form" aria-label="Opprett AHA-profilnavn">
+          <label for="aha-profile-name-input">AHA-profilnavn</label>
+          <div class="aha-profile-name-row">
+            <input id="aha-profile-name-input" type="text" maxlength="80" placeholder="Skriv navnet som AHA og History Go skal bruke" />
+            <button type="submit">Lagre AHA-profil</button>
+          </div>
+          <p id="aha-profile-name-output">Navnet lagres i AHA-profilen og blir sann kilde for History Go.</p>
+        </form>
+
+        <div id="aha-profile-stats" class="aha-profile-stats" aria-label="AHA nøkkeltall">
+          <div class="aha-mini-stat"><strong>0</strong><span>Innsikter</span></div>
+          <div class="aha-mini-stat"><strong>0</strong><span>Notater</span></div>
+          <div class="aha-mini-stat"><strong>0</strong><span>Galleri</span></div>
+          <div class="aha-mini-stat"><strong>0</strong><span>Feed</span></div>
+          <div class="aha-mini-stat"><strong>Ikke funnet</strong><span>History Go</span></div>
+          <div class="aha-mini-stat"><strong>—</strong><span>Sist oppdatert</span></div>
+        </div>
+      </div>
+
+      <aside id="aha-login-card" class="aha-login-card" aria-label="Innlogging">
+        <h2>Logg inn for å aktivere AHA</h2>
+        <p>Send en magic link og gjør AHA til din personlige profil, med Supabase som sann kilde når du er innlogget.</p>
+        <p id="aha-auth-output" class="aha-auth-output"></p>
+      </aside>
+    </section>
+
+    <section class="aha-section-heading" aria-label="AHA moduler overskrift">
+      <p class="eyebrow">Moduler</p>
+      <h2>Gå videre fra profilen din</h2>
+      <p>AHA samler chat, notater, minner, feed og import fra History Go i én personlig innsiktsflate.</p>
     </section>
 
     <section class="aha-grid" aria-label="AHA moduler">
-      <a class="aha-tile" href="chat.html"><strong>AHA Chat</strong><span>Refleksjon og innsiktsmotor</span></a>
-      <a class="aha-tile" href="notes.html"><strong>Notes</strong><span>Egne notater og tekster</span></a>
-      <a class="aha-tile" href="gallery.html"><strong>Galleri</strong><span>Bilder, minner og visuelle uttrykk</span></a>
-      <a class="aha-tile" href="feed.html"><strong>Feed / Twitter</strong><span>Korte poster og delte innsikter</span></a>
-      <a class="aha-tile" href="insta.html"><strong>AHA Insta</strong><span>Bilde- og videostrøm</span></a>
-      <button class="aha-tile aha-button-tile" id="btn-import-hg" type="button"><strong>Importer History Go</strong><span>Les aha_import_payload_v1</span></button>
+      <a class="aha-tile" href="chat.html" data-module="source_events">
+        <span class="aha-tile-icon">✦</span>
+        <strong>AHA Chat</strong>
+        <span>Refleksjon og innsiktsmotor</span>
+        <small id="aha-module-chat-status">0 innsikter</small>
+      </a>
+      <a class="aha-tile" href="notes.html" data-module="notes">
+        <span class="aha-tile-icon">✎</span>
+        <strong>Notes</strong>
+        <span>Egne notater og tekster</span>
+        <small id="aha-module-notes-status">0 notater</small>
+      </a>
+      <a class="aha-tile" href="gallery.html" data-module="gallery">
+        <span class="aha-tile-icon">▧</span>
+        <strong>Galleri</strong>
+        <span>Bilder, minner og visuelle uttrykk</span>
+        <small id="aha-module-gallery-status">0 minner</small>
+      </a>
+      <a class="aha-tile" href="feed.html" data-module="feed">
+        <span class="aha-tile-icon">#</span>
+        <strong>Feed / Twitter</strong>
+        <span>Korte poster og delte innsikter</span>
+        <small id="aha-module-feed-status">0 poster</small>
+      </a>
+      <a class="aha-tile" href="insta.html" data-module="insta">
+        <span class="aha-tile-icon">◉</span>
+        <strong>AHA Insta</strong>
+        <span>Bilde- og videostrøm</span>
+        <small id="aha-module-insta-status">0 innlegg</small>
+      </a>
+      <button class="aha-tile aha-button-tile" id="btn-import-hg" type="button" data-module="imports">
+        <span class="aha-tile-icon">⌁</span>
+        <strong>Importer History Go</strong>
+        <span>Les aha_import_payload_v1</span>
+        <small id="aha-module-historygo-status">Ikke importert</small>
+      </button>
     </section>
 
-    <section class="aha-panel">
-      <h2>Status</h2>
+    <section class="aha-panel aha-status-panel">
+      <div class="aha-panel-head">
+        <div>
+          <p class="eyebrow">System</p>
+          <h2>AHA-status</h2>
+        </div>
+        <span id="aha-status-updated" class="aha-status-updated">Oppdaterer …</span>
+      </div>
       <div id="aha-dashboard-stats" class="aha-stats">Laster status …</div>
       <pre id="out" class="aha-dashboard-output"></pre>
     </section>

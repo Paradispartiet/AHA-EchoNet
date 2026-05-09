@@ -20,9 +20,9 @@
     ).trim();
   }
 
-  function emitAuthReady(user) {
+  function emitAuthReady(user, profile = null) {
     try {
-      global.dispatchEvent(new CustomEvent("aha:auth-ready", { detail: { user: user || null } }));
+      global.dispatchEvent(new CustomEvent("aha:auth-ready", { detail: { user: user || null, profile: profile || null } }));
     } catch {}
   }
 
@@ -42,6 +42,24 @@
     return session?.user || null;
   }
 
+  async function loadProfile(explicitUser) {
+    const client = getClient();
+    if (!client) return { ok: false, reason: "not_configured" };
+
+    const user = explicitUser?.id ? explicitUser : await getUser();
+    if (!user?.id) return { ok: false, reason: "not_signed_in" };
+
+    const { data, error } = await client
+      .from("aha_profiles")
+      .select("id, display_name, created_at, updated_at")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (error) return { ok: false, error };
+    if (!data) return { ok: false, reason: "missing_profile", profile_id: user.id };
+    return { ok: true, data };
+  }
+
   async function ensureProfile(displayName) {
     const client = getClient();
     if (!client) return { ok: false, reason: "not_configured" };
@@ -49,9 +67,13 @@
     const user = await getUser();
     if (!user?.id) return { ok: false, reason: "not_signed_in" };
 
+    const existing = await loadProfile(user);
+    const cleanDisplayName = String(displayName || "").trim();
+    const nextDisplayName = cleanDisplayName || existing?.data?.display_name || null;
+
     const profile = {
       id: user.id,
-      display_name: displayName || user.email || "AHA-bruker",
+      display_name: nextDisplayName,
       updated_at: new Date().toISOString()
     };
 
@@ -63,6 +85,12 @@
 
     if (error) return { ok: false, error };
     return { ok: true, data };
+  }
+
+  async function saveProfileName(displayName) {
+    const cleanDisplayName = String(displayName || "").trim();
+    if (!cleanDisplayName) return { ok: false, reason: "missing_display_name" };
+    return await ensureProfile(cleanDisplayName);
   }
 
   async function signInWithEmail(email) {
@@ -83,7 +111,7 @@
     if (!client) return { ok: false, reason: "not_configured" };
     const { error } = await client.auth.signOut();
     if (error) return { ok: false, error };
-    emitAuthReady(null);
+    emitAuthReady(null, null);
     return { ok: true };
   }
 
@@ -97,20 +125,25 @@
 
     if (!isReady()) {
       if (mount) mount.textContent = "Database ikke konfigurert. Appen bruker localStorage.";
-      emitAuthReady(null);
+      emitAuthReady(null, null);
       return;
     }
 
     const user = await getUser();
     if (!user) {
       if (mount) mount.textContent = "Ikke innlogget. LocalStorage fungerer fortsatt.";
-      emitAuthReady(null);
+      emitAuthReady(null, null);
       return;
     }
 
-    await ensureProfile(user.email);
-    if (mount) mount.textContent = `Innlogget: ${user.email || user.id}`;
-    emitAuthReady(user);
+    const profile = await ensureProfile();
+    const displayName = String(profile?.data?.display_name || "").trim();
+    if (mount) {
+      mount.textContent = displayName
+        ? `Innlogget: ${displayName}`
+        : `Innlogget: ${user.email || user.id}. Opprett AHA-profilnavn.`;
+    }
+    emitAuthReady(user, profile?.data || null);
   }
 
   function bindAuthPanel() {
@@ -160,7 +193,9 @@
     getSession,
     getUser,
     getProfileId,
+    loadProfile,
     ensureProfile,
+    saveProfileName,
     signInWithEmail,
     signOut,
     renderAuthStatus,
