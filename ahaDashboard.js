@@ -14,15 +14,6 @@
     }
   }
 
-  function readObject(key) {
-    try {
-      const parsed = JSON.parse(localStorage.getItem(key) || "{}");
-      return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
-    } catch {
-      return {};
-    }
-  }
-
   function hasHistoryGoPayload() {
     return Boolean(String(localStorage.getItem("aha_import_payload_v1") || "").trim());
   }
@@ -40,8 +31,13 @@
   }
 
   async function databaseStats() {
-    if (!window.AHARepository?.loadDashboardCounts) return { ok: false, fallback: "missing_repository" };
-    return await window.AHARepository.loadDashboardCounts();
+    try {
+      if (!window.AHARepository?.loadDashboardCounts) return { ok: false, fallback: "missing_repository" };
+      return await window.AHARepository.loadDashboardCounts();
+    } catch (error) {
+      console.warn("AHADashboard: databaseStats feilet", error);
+      return { ok: false, fallback: "error", error };
+    }
   }
 
   function $(id) {
@@ -93,26 +89,34 @@
 
   function localDataSourceLabel(dbResult) {
     if (dbResult?.ok && dbResult.counts) return "Supabase";
-    if (dbResult?.fallback === "not_signed_in") return "localStorage";
     return "localStorage";
   }
 
   async function loadAuthState() {
-    const user = await window.AHAAuth?.getUser?.();
-    let profileResult = null;
-    if (user?.id && window.AHAAuth?.loadProfile) {
-      profileResult = await window.AHAAuth.loadProfile(user);
-      if (profileResult?.reason === "missing_profile" && window.AHAAuth?.ensureProfile) {
-        await window.AHAAuth.ensureProfile();
+    try {
+      const user = await window.AHAAuth?.getUser?.();
+      let profileResult = null;
+      if (user?.id && window.AHAAuth?.loadProfile) {
         profileResult = await window.AHAAuth.loadProfile(user);
+        if (profileResult?.reason === "missing_profile" && window.AHAAuth?.ensureProfile) {
+          await window.AHAAuth.ensureProfile();
+          profileResult = await window.AHAAuth.loadProfile(user);
+        }
       }
-    }
 
-    return {
-      user: user || null,
-      profile: profileResult?.ok ? profileResult.data : null,
-      profileResult
-    };
+      return {
+        user: user || null,
+        profile: profileResult?.ok ? profileResult.data : null,
+        profileResult
+      };
+    } catch (error) {
+      console.warn("AHADashboard: loadAuthState feilet", error);
+      return {
+        user: null,
+        profile: null,
+        profileResult: { ok: false, reason: "auth_error", error }
+      };
+    }
   }
 
   function renderProfileStats(stats, sourceLabel) {
@@ -225,23 +229,35 @@
   }
 
   async function renderDashboard() {
-    const authState = await loadAuthState();
-    const local = localStats();
-    let dbResult = { ok: false, fallback: "not_loaded" };
-    let stats = local;
+    try {
+      const authState = await loadAuthState();
+      const local = localStats();
+      let dbResult = { ok: false, fallback: "not_loaded" };
+      let stats = local;
 
-    if (authState.user?.id) {
-      dbResult = await databaseStats();
-      if (dbResult?.ok && dbResult.counts) stats = { ...local, ...dbResult.counts };
+      if (authState.user?.id) {
+        dbResult = await databaseStats();
+        if (dbResult?.ok && dbResult.counts) stats = { ...local, ...dbResult.counts };
+      }
+
+      const sourceLabel = localDataSourceLabel(dbResult);
+      lastState = { authState, stats, sourceLabel };
+
+      renderIdentity(authState);
+      renderProfileStats(stats, sourceLabel);
+      renderModuleStatus(stats);
+      renderStatCards(stats, sourceLabel, authState);
+    } catch (error) {
+      console.warn("AHADashboard: renderDashboard feilet", error);
+      const authState = { user: null, profile: null, profileResult: { ok: false, reason: "render_error", error } };
+      const stats = localStats();
+      lastState = { authState, stats, sourceLabel: "localStorage", error };
+      renderIdentity(authState);
+      renderProfileStats(stats, "localStorage");
+      renderModuleStatus(stats);
+      renderStatCards(stats, "localStorage", authState);
+      setText("aha-auth-output", "Dashboardet bruker localStorage fordi en innlastingsfeil oppstod.");
     }
-
-    const sourceLabel = localDataSourceLabel(dbResult);
-    lastState = { authState, stats, sourceLabel };
-
-    renderIdentity(authState);
-    renderProfileStats(stats, sourceLabel);
-    renderModuleStatus(stats);
-    renderStatCards(stats, sourceLabel, authState);
   }
 
   async function saveProfileName(event) {
