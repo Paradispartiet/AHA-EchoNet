@@ -382,6 +382,191 @@
     return Array.from(set).sort();
   }
 
+  // ── Korpus-bevisst lemmatisering ───────────────────────
+  // Norsk har bøyning som gjør at "klasse" og "klassen" eller
+  // "diskurs" og "diskursen" blir to forskjellige konsepter i
+  // ekstraktoren. Vi kollapser dem ved å se etter en kortere variant
+  // som faktisk forekommer i korpuset – det er tryggere enn blind
+  // stemming, fordi vi bare slår sammen ord brukeren faktisk har sagt.
+  function tryLemma(key, frequency, _depth) {
+    if (!key || key.length < 5) return key;
+    const depth = _depth || 0;
+    if (depth > 4) return key;
+
+    // Trinn 1: utvetydige suffikser kan vi alltid kollapse, og deretter
+    // forsøke neste runde rekursivt – "klassens" → "klasse" → "klasse".
+    if (key.length >= 7 && key.endsWith("ets")) return tryLemma(key.slice(0, -1), frequency, depth + 1);
+    if (key.length >= 6 && key.endsWith("ens")) return tryLemma(key.slice(0, -2), frequency, depth + 1);
+    if (key.length >= 6 && key.endsWith("ene")) return tryLemma(key.slice(0, -2), frequency, depth + 1);
+    if (key.length >= 6 && key.endsWith("ane")) return tryLemma(key.slice(0, -2), frequency, depth + 1);
+
+    // Trinn 2: tvetydige suffikser. Lag kandidater og velg den som
+    // faktisk finnes i korpuset; prioritér høyere frekvens, deretter
+    // lengre (= mer spesifikk) lemma. "klasse" vinner over "klass".
+    const candidates = [];
+    if (key.length >= 6 && key.endsWith("et")) candidates.push(key.slice(0, -2));
+    if (key.length >= 6 && key.endsWith("en")) {
+      candidates.push(key.slice(0, -1)); // drop "n"
+      candidates.push(key.slice(0, -2)); // drop "en"
+    }
+    if (key.length >= 7 && key.endsWith("er")) {
+      candidates.push(key.slice(0, -1)); // drop "r" (jenter → jente)
+      candidates.push(key.slice(0, -2)); // drop "er" (muligheter → mulighet)
+    }
+    if (key.length >= 6 && key.endsWith("a")) candidates.push(key.slice(0, -1));
+
+    const baseFreq = frequency.get(key) || 0;
+    const evaluated = candidates
+      .filter((c) => c.length >= 4)
+      .map((c) => ({ c, f: frequency.get(c) || 0 }))
+      .filter((e) => e.f >= 1)
+      .sort((a, b) => (b.f - a.f) || (b.c.length - a.c.length));
+
+    if (evaluated.length && evaluated[0].f >= baseFreq) {
+      return evaluated[0].c;
+    }
+    return key;
+  }
+
+  function buildLemmaMap(insights) {
+    const frequency = new Map();
+    (insights || []).forEach((ins) => {
+      (ins?.concepts || []).forEach((c) => {
+        const k = String(c?.key || c?.label || "").toLowerCase();
+        if (!k) return;
+        frequency.set(k, (frequency.get(k) || 0) + (c.count || 1));
+      });
+    });
+
+    const lemmaMap = new Map();
+    frequency.forEach((_count, key) => {
+      lemmaMap.set(key, tryLemma(key, frequency));
+    });
+    return lemmaMap;
+  }
+
+  function canonicalizeConcepts(insights) {
+    if (!Array.isArray(insights) || !insights.length) return insights || [];
+    const lemmaMap = buildLemmaMap(insights);
+
+    return insights.map((ins) => {
+      if (!ins?.concepts?.length) return ins;
+      const merged = new Map();
+      ins.concepts.forEach((c) => {
+        const original = String(c?.key || c?.label || "").toLowerCase();
+        if (!original) return;
+        const lemma = lemmaMap.get(original) || original;
+        let entry = merged.get(lemma);
+        if (!entry) {
+          entry = { key: lemma, count: 0, examples: [] };
+          merged.set(lemma, entry);
+        }
+        entry.count += c.count || 1;
+        (c.examples || []).forEach((ex) => {
+          if (ex && entry.examples.length < 5 && !entry.examples.includes(ex)) {
+            entry.examples.push(ex);
+          }
+        });
+      });
+      return { ...ins, concepts: Array.from(merged.values()).sort((a, b) => b.count - a.count) };
+    });
+  }
+
+  // ── Frase-indeks (bigrammer/trigrammer + PMI) ──────────
+  // Trekker ut sammensatte uttrykk fra insight.summary. PMI rangerer
+  // hvor "kollokativt" et uttrykk er — "kollektiv bevissthet" stiger,
+  // "og deretter" faller.
+  const PHRASE_STOPWORDS = new Set([
+    "og", "i", "på", "som", "for", "med", "til", "av", "fra", "om", "så",
+    "men", "da", "når", "hvor", "hvordan",
+    "det", "dette", "den", "de", "en", "et",
+    "jeg", "du", "vi", "dere", "han", "hun", "oss", "meg", "deg", "seg",
+    "er", "var", "ble", "bli", "blir", "har", "hadde", "har",
+    "kan", "kunne", "ville", "skal", "skulle", "må", "måtte",
+    "ikke", "bare", "alt", "selv", "opp", "ned", "mellom",
+    "hvis", "også", "også", "kanskje", "litt", "veldig", "mer", "mest",
+    "noen", "noe", "alle", "ingen", "samme", "annen", "andre"
+  ]);
+
+  function tokenizeSummary(text) {
+    return String(text || "")
+      .toLowerCase()
+      .split(/[^a-z0-9æøå]+/)
+      .filter((t) => t && t.length >= 3 && !PHRASE_STOPWORDS.has(t));
+  }
+
+  function buildPhraseIndex(insights, options) {
+    const opts = options || {};
+    const minN = opts.minN || 2;
+    const maxN = opts.maxN || 3;
+    const minCount = opts.minCount || 2;
+    const minPmi = opts.minPmi || 1.0;
+    const maxPhrases = opts.maxPhrases || 60;
+
+    const wordCount = new Map();
+    const phraseCount = new Map();
+    const phraseExamples = new Map();
+    const phraseThemes = new Map();
+    let totalWindows = 0;
+
+    (insights || []).forEach((ins) => {
+      const tokens = tokenizeSummary(ins?.summary || ins?.title || "");
+      if (!tokens.length) return;
+      const themeId = ins.theme_id || "ukjent";
+      tokens.forEach((t) => wordCount.set(t, (wordCount.get(t) || 0) + 1));
+      totalWindows += tokens.length;
+
+      for (let n = minN; n <= maxN; n++) {
+        for (let i = 0; i + n <= tokens.length; i++) {
+          const slice = tokens.slice(i, i + n);
+          // Hopp over fraser som starter eller slutter med rene kvantorer
+          // for å unngå "veldig stor" / "mer komplisert"-støy.
+          const phrase = slice.join(" ");
+          phraseCount.set(phrase, (phraseCount.get(phrase) || 0) + 1);
+          if (!phraseThemes.has(phrase)) phraseThemes.set(phrase, new Set());
+          phraseThemes.get(phrase).add(themeId);
+          if (!phraseExamples.has(phrase)) phraseExamples.set(phrase, []);
+          const exList = phraseExamples.get(phrase);
+          if (exList.length < 3 && !exList.includes(ins.id)) exList.push(ins.id);
+        }
+      }
+    });
+
+    if (totalWindows === 0) return [];
+
+    const phrases = [];
+    phraseCount.forEach((count, phrase) => {
+      if (count < minCount) return;
+      const words = phrase.split(" ");
+      if (words.some((w) => PHRASE_STOPWORDS.has(w))) return;
+
+      // PMI = log2(P(phrase) / Π P(word_i))
+      const pPhrase = count / totalWindows;
+      let logProduct = 0;
+      let valid = true;
+      for (const w of words) {
+        const c = wordCount.get(w) || 0;
+        if (!c) { valid = false; break; }
+        logProduct += Math.log2(c / totalWindows);
+      }
+      if (!valid) return;
+      const pmi = Math.log2(pPhrase) - logProduct;
+      if (pmi < minPmi) return;
+
+      phrases.push({
+        phrase,
+        count,
+        pmi: round3(pmi),
+        themes: Array.from(phraseThemes.get(phrase) || []),
+        examples: phraseExamples.get(phrase) || []
+      });
+    });
+
+    return phrases
+      .sort((a, b) => (b.pmi - a.pmi) || (b.count - a.count))
+      .slice(0, maxPhrases);
+  }
+
   // ── Konsept-graf (co-occurrence + PMI) ─────────────────
   // Bygger et nettverk der to konsepter får en kant hvis de opptrer i
   // samme insight. Vekten er antall fellesinsikter; PMI/NPMI rangerer
@@ -1153,13 +1338,18 @@
 
     const globalProfile = computeGlobalSemanticProfile(topicProfiles);
     const patterns = detectCrossTopicPatterns(topicProfiles, globalProfile);
-    const enrichedInsights = enrichInsightsWithLifecycle(chamber, subjectId);
+    const rawEnriched = enrichInsightsWithLifecycle(chamber, subjectId);
+    // Lemmatiser konseptnøkler korpus-bevisst før resten av analysene.
+    // Slik regner vi "klassen" og "klasse" som samme begrep i graf,
+    // tidslinje og spennings-laget.
+    const enrichedInsights = canonicalizeConcepts(rawEnriched);
     const conceptIndex = buildConceptIndex(enrichedInsights);
     const semioticProfile = buildSemioticProfile(enrichedInsights);
     const academicProfile = buildAcademicProfile(enrichedInsights);
     const cooccurrence = buildConceptCoOccurrenceGraph(enrichedInsights);
     const temporal = buildTemporalProfile(enrichedInsights);
     const tensions = buildTensionProfile(enrichedInsights);
+    const phrases = buildPhraseIndex(enrichedInsights);
 
     const partial = {
       subject_id: subjectId,
@@ -1170,6 +1360,7 @@
       patterns,
       insights: enrichedInsights,
       concepts: conceptIndex,
+      phrases,
       cooccurrence,
       temporal,
       tensions
@@ -1193,7 +1384,9 @@
     buildConceptCoOccurrenceGraph,
     buildTemporalProfile,
     buildTensionProfile,
-    buildRecommendations
+    buildRecommendations,
+    canonicalizeConcepts,
+    buildPhraseIndex
   };
 
   if (typeof module !== "undefined" && module.exports) {
