@@ -705,6 +705,235 @@
     };
   }
 
+  // ── Spennings-/motsigelsesdetektor ─────────────────────
+  // Ser etter tilfeller der samme konsept / tema bærer motstridende
+  // valens eller modalitet på tvers av insights — det vi normalt
+  // ville oppfattet som ambivalens, paradoks eller bevegelse.
+  function buildTensionProfile(enrichedInsights, options) {
+    const opts = options || {};
+    const minInsightCount = opts.minInsightCount || 2;
+    const insights = (enrichedInsights || []).filter((ins) => ins && ins.semantic);
+
+    function emptyValenceDist() {
+      return { positiv: 0, negativ: 0, blandet: 0, nøytral: 0 };
+    }
+    function emptyModalityDist() {
+      return { krav: 0, mulighet: 0, hindring: 0, nøytral: 0 };
+    }
+
+    // Per konsept
+    const perConcept = new Map();
+    for (const ins of insights) {
+      const valence = ins.semantic.valence || "nøytral";
+      const modality = ins.semantic.modality || "nøytral";
+      const themeId = ins.theme_id || "ukjent";
+      const time = new Date(ins.first_seen || ins.last_updated || 0).getTime() || 0;
+
+      uniqueConceptKeys(ins.concepts).forEach((key) => {
+        let entry = perConcept.get(key);
+        if (!entry) {
+          entry = {
+            key,
+            insight_count: 0,
+            themes: new Set(),
+            valence: emptyValenceDist(),
+            modality: emptyModalityDist(),
+            samples: []
+          };
+          perConcept.set(key, entry);
+        }
+        entry.insight_count += 1;
+        entry.themes.add(themeId);
+        entry.valence[valence] = (entry.valence[valence] || 0) + 1;
+        entry.modality[modality] = (entry.modality[modality] || 0) + 1;
+        entry.samples.push({
+          insight_id: ins.id,
+          theme_id: themeId,
+          valence,
+          modality,
+          time,
+          summary: (ins.summary || ins.title || "").slice(0, 200)
+        });
+      });
+    }
+
+    function valenceTension(dist) {
+      const pos = dist.positiv || 0;
+      const neg = dist.negativ || 0;
+      const total = pos + neg;
+      if (total < 2) return 0;
+      const p = pos / total;
+      const balance = 1 - Math.abs(p - 0.5) * 2; // 1 hvis 50/50, 0 hvis 100/0
+      const coverage = Math.min(total / 6, 1);
+      return round3(balance * coverage);
+    }
+
+    function modalityConflict(dist) {
+      const krav = dist.krav || 0;
+      const hindring = dist.hindring || 0;
+      const mulighet = dist.mulighet || 0;
+      const negSide = krav + hindring;
+      const posSide = mulighet;
+      const total = negSide + posSide;
+      if (total < 2) return 0;
+      const p = negSide / total;
+      const balance = 1 - Math.abs(p - 0.5) * 2;
+      const coverage = Math.min(total / 6, 1);
+      return round3(balance * coverage);
+    }
+
+    const concept_tensions = Array.from(perConcept.values())
+      .filter((entry) => entry.insight_count >= minInsightCount)
+      .map((entry) => {
+        const tension_score = valenceTension(entry.valence);
+        const conflict_score = modalityConflict(entry.modality);
+        return {
+          key: entry.key,
+          insight_count: entry.insight_count,
+          theme_count: entry.themes.size,
+          themes: Array.from(entry.themes),
+          valence: entry.valence,
+          modality: entry.modality,
+          tension_score,
+          conflict_score,
+          combined: round3((tension_score + conflict_score) / 2),
+          samples: entry.samples
+        };
+      })
+      .filter((entry) => entry.tension_score > 0 || entry.conflict_score > 0)
+      .sort((a, b) => b.combined - a.combined);
+
+    // Per tema – fordeling, dominerende polaritet, og sekvens-flips
+    const perTheme = new Map();
+    for (const ins of insights) {
+      const themeId = ins.theme_id || "ukjent";
+      let t = perTheme.get(themeId);
+      if (!t) {
+        t = {
+          theme_id: themeId,
+          insight_count: 0,
+          valence: emptyValenceDist(),
+          modality: emptyModalityDist(),
+          ordered: []
+        };
+        perTheme.set(themeId, t);
+      }
+      t.insight_count += 1;
+      t.valence[ins.semantic.valence || "nøytral"] += 1;
+      t.modality[ins.semantic.modality || "nøytral"] += 1;
+      t.ordered.push({
+        time: new Date(ins.first_seen || 0).getTime() || 0,
+        valence: ins.semantic.valence || "nøytral"
+      });
+    }
+
+    const theme_tensions = Array.from(perTheme.values()).map((t) => {
+      const seq = t.ordered.sort((a, b) => a.time - b.time).map((x) => x.valence);
+      let flips = 0;
+      let lastPolar = null;
+      for (const v of seq) {
+        if (v === "positiv" || v === "negativ") {
+          if (lastPolar && lastPolar !== v) flips += 1;
+          lastPolar = v;
+        }
+      }
+      const total = t.insight_count || 1;
+      const dominant =
+        t.valence.positiv > t.valence.negativ ? "positiv"
+          : t.valence.negativ > t.valence.positiv ? "negativ"
+            : "balansert";
+      return {
+        theme_id: t.theme_id,
+        insight_count: t.insight_count,
+        valence: t.valence,
+        modality: t.modality,
+        dominant_polarity: dominant,
+        valence_flip_count: flips,
+        valence_flip_ratio: round3(flips / Math.max(1, total - 1)),
+        tension_score: valenceTension(t.valence),
+        conflict_score: modalityConflict(t.modality)
+      };
+    }).sort((a, b) => b.tension_score - a.tension_score);
+
+    // Cross-theme: konsepter som har motsatt polaritet i ulike tema
+    const cross_theme = [];
+    for (const entry of perConcept.values()) {
+      if (entry.themes.size < 2) continue;
+      const byTheme = new Map();
+      for (const s of entry.samples) {
+        let bt = byTheme.get(s.theme_id);
+        if (!bt) {
+          bt = { theme_id: s.theme_id, valence: emptyValenceDist(), modality: emptyModalityDist(), count: 0 };
+          byTheme.set(s.theme_id, bt);
+        }
+        bt.count += 1;
+        bt.valence[s.valence] = (bt.valence[s.valence] || 0) + 1;
+        bt.modality[s.modality] = (bt.modality[s.modality] || 0) + 1;
+      }
+      const themesList = Array.from(byTheme.values());
+      const hasPos = themesList.some((t) => (t.valence.positiv || 0) > (t.valence.negativ || 0));
+      const hasNeg = themesList.some((t) => (t.valence.negativ || 0) > (t.valence.positiv || 0));
+      if (hasPos && hasNeg) {
+        cross_theme.push({
+          key: entry.key,
+          themes: themesList.map((t) => ({
+            theme_id: t.theme_id,
+            count: t.count,
+            valence: t.valence,
+            dominant:
+              t.valence.positiv > t.valence.negativ ? "positiv"
+                : t.valence.negativ > t.valence.positiv ? "negativ"
+                  : "balansert"
+          }))
+        });
+      }
+    }
+    cross_theme.sort((a, b) => b.themes.reduce((s, t) => s + t.count, 0) - a.themes.reduce((s, t) => s + t.count, 0));
+
+    // Paradoks-par: to insights i samme tema med felles konsept og motsatt valens
+    const paradox_pairs = [];
+    const seenPairs = new Set();
+    const themeIndex = new Map();
+    for (const ins of insights) {
+      const themeId = ins.theme_id || "ukjent";
+      if (!themeIndex.has(themeId)) themeIndex.set(themeId, []);
+      themeIndex.get(themeId).push(ins);
+    }
+    themeIndex.forEach((list) => {
+      for (let i = 0; i < list.length; i++) {
+        for (let j = i + 1; j < list.length; j++) {
+          const a = list[i];
+          const b = list[j];
+          const va = a.semantic?.valence;
+          const vb = b.semantic?.valence;
+          if (!((va === "positiv" && vb === "negativ") || (va === "negativ" && vb === "positiv"))) continue;
+          const ka = new Set(uniqueConceptKeys(a.concepts));
+          const shared = uniqueConceptKeys(b.concepts).filter((k) => ka.has(k));
+          if (!shared.length) continue;
+          const pairKey = [a.id, b.id].sort().join("||");
+          if (seenPairs.has(pairKey)) continue;
+          seenPairs.add(pairKey);
+          paradox_pairs.push({
+            theme_id: a.theme_id || "ukjent",
+            shared_concepts: shared,
+            insight_a: { id: a.id, valence: va, summary: (a.summary || a.title || "").slice(0, 200), first_seen: a.first_seen || null },
+            insight_b: { id: b.id, valence: vb, summary: (b.summary || b.title || "").slice(0, 200), first_seen: b.first_seen || null },
+            type: "valence_flip"
+          });
+        }
+      }
+    });
+    paradox_pairs.sort((x, y) => y.shared_concepts.length - x.shared_concepts.length);
+
+    return {
+      total_insights: insights.length,
+      concept_tensions: concept_tensions.slice(0, opts.maxConcepts || 30),
+      theme_tensions,
+      cross_theme: cross_theme.slice(0, opts.maxCrossTheme || 20),
+      paradox_pairs: paradox_pairs.slice(0, opts.maxParadoxes || 20)
+    };
+  }
+
   function buildUserMetaProfile(chamber, subjectId) {
     if (!IE) return null;
 
@@ -724,6 +953,7 @@
     const academicProfile = buildAcademicProfile(enrichedInsights);
     const cooccurrence = buildConceptCoOccurrenceGraph(enrichedInsights);
     const temporal = buildTemporalProfile(enrichedInsights);
+    const tensions = buildTensionProfile(enrichedInsights);
 
     return {
       subject_id: subjectId,
@@ -735,7 +965,8 @@
       insights: enrichedInsights,
       concepts: conceptIndex,
       cooccurrence,
-      temporal
+      temporal,
+      tensions
     };
   }
 
@@ -753,7 +984,8 @@
     buildAcademicProfileFromConcepts,
     buildSemioticProfile,
     buildConceptCoOccurrenceGraph,
-    buildTemporalProfile
+    buildTemporalProfile,
+    buildTensionProfile
   };
 
   if (typeof module !== "undefined" && module.exports) {
