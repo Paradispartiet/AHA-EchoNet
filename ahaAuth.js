@@ -4,7 +4,7 @@
 (function (global) {
   "use strict";
 
-  let authCallbackHandled = false;
+  const AUTH_TIMEOUT_MS = 8000;
 
   function getClient() {
     return global.AHADb?.getClient?.() || null;
@@ -49,29 +49,31 @@
     } catch {}
   }
 
-  async function handleAuthCallback() {
-    if (authCallbackHandled) return { ok: true, skipped: true };
-    authCallbackHandled = true;
+  function withTimeout(promise, ms, label) {
+    return Promise.race([
+      promise,
+      new Promise((_, reject) => {
+        setTimeout(() => reject(new Error(`${label || "auth"} timed out after ${ms}ms`)), ms);
+      })
+    ]);
+  }
 
-    const client = getClient();
-    if (!client) return { ok: false, reason: "not_configured" };
+  async function handleAuthCallback() {
     if (!hasAuthParams()) return { ok: true, skipped: true };
 
     try {
-      const query = new URLSearchParams(global.location.search || "");
-      const code = query.get("code");
-      if (code && typeof client.auth.exchangeCodeForSession === "function") {
-        const { data, error } = await client.auth.exchangeCodeForSession(code);
-        if (error) return { ok: false, error };
-        cleanAuthUrl();
-        return { ok: true, data };
-      }
+      const client = getClient();
+      if (!client) return { ok: false, reason: "not_configured" };
 
-      const { data, error } = await client.auth.getSession();
+      // Supabase browser client handles the PKCE URL exchange because AHADb uses:
+      // detectSessionInUrl: true + flowType: "pkce".
+      // Do not manually call exchangeCodeForSession here; that caused double handling.
+      const { data, error } = await withTimeout(client.auth.getSession(), AUTH_TIMEOUT_MS, "auth callback");
       if (error) return { ok: false, error };
-      cleanAuthUrl();
-      return { ok: true, data };
+      if (data?.session) cleanAuthUrl();
+      return { ok: true, session_found: Boolean(data?.session) };
     } catch (error) {
+      console.warn("AHAAuth: callback handling failed", error);
       return { ok: false, error };
     }
   }
@@ -79,13 +81,19 @@
   async function getSession() {
     const client = getClient();
     if (!client) return null;
-    await handleAuthCallback();
-    const { data, error } = await client.auth.getSession();
-    if (error) {
-      console.warn("AHAAuth: kunne ikke hente session", error);
+
+    try {
+      const { data, error } = await withTimeout(client.auth.getSession(), AUTH_TIMEOUT_MS, "getSession");
+      if (error) {
+        console.warn("AHAAuth: kunne ikke hente session", error);
+        return null;
+      }
+      if (data?.session && hasAuthParams()) cleanAuthUrl();
+      return data?.session || null;
+    } catch (error) {
+      console.warn("AHAAuth: getSession timeout/feil", error);
       return null;
     }
-    return data?.session || null;
   }
 
   async function getUser() {
@@ -168,7 +176,7 @@
       provider: cleanProvider,
       options: {
         redirectTo: getRedirectUrl(),
-        queryParams: cleanProvider === "google" ? { access_type: "offline", prompt: "select_account" } : undefined
+        queryParams: cleanProvider === "google" ? { prompt: "select_account" } : undefined
       }
     });
 
@@ -202,11 +210,12 @@
     const callbackResult = await handleAuthCallback();
     if (!callbackResult?.ok) {
       console.warn("AHAAuth: auth callback feilet", callbackResult?.error || callbackResult?.reason);
+      if (mount) mount.textContent = "Kunne ikke fullføre innlogging. Prøv igjen.";
     }
 
     const user = await getUser();
     if (!user) {
-      if (mount) mount.textContent = "Ikke innlogget. LocalStorage fungerer fortsatt.";
+      if (mount && callbackResult?.ok) mount.textContent = "Ikke innlogget. LocalStorage fungerer fortsatt.";
       emitAuthReady(null, null);
       return;
     }
@@ -219,6 +228,22 @@
         : `Innlogget: ${user.email || user.id}. Opprett AHA-profilnavn.`;
     }
     emitAuthReady(user, profile?.data || null);
+  }
+
+  async function debugAuthState() {
+    const callback = await handleAuthCallback();
+    const session = await getSession();
+    const user = session?.user || null;
+    let profile = null;
+    if (user?.id) profile = await loadProfile(user);
+    return {
+      href: global.location.href,
+      hasAuthParams: hasAuthParams(),
+      callback,
+      hasSession: Boolean(session),
+      user: user ? { id: user.id, email: user.email || null } : null,
+      profile
+    };
   }
 
   function bindAuthPanel() {
@@ -295,6 +320,7 @@
     signInWithProvider,
     signOut,
     renderAuthStatus,
+    debugAuthState,
     bindAuthPanel
   };
 
