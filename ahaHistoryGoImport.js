@@ -241,7 +241,8 @@
   function bindImportButton() {
     const btn = document.getElementById("btn-import-hg");
     if (!btn) return;
-    btn.addEventListener("click", () => {
+    btn.addEventListener("click", (event) => {
+      event.stopPropagation();
       const out = document.getElementById("out");
       try {
         const counts = importHistoryGoDataFromSharedStorage();

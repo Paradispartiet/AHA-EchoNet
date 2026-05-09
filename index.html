@@ -114,12 +114,16 @@
         <span>Bilde- og videostrøm</span>
         <small id="aha-module-insta-status">0 innlegg</small>
       </a>
-      <button class="aha-tile aha-button-tile" id="btn-import-hg" type="button" data-module="imports">
+      <article class="aha-tile aha-home-tile" id="aha-historygo-home" data-module="imports" role="link" tabindex="0" aria-label="Åpne History Go">
         <span class="aha-tile-icon">⌁</span>
-        <strong>Importer History Go</strong>
-        <span>Les aha_import_payload_v1</span>
-        <small id="aha-module-historygo-status">Ikke importert</small>
-      </button>
+        <strong>History Go</strong>
+        <span>Åpne History Go-universet ditt</span>
+        <div class="aha-tile-actions">
+          <a class="aha-tile-btn aha-tile-btn-primary" href="/History-Go/">Åpne History Go</a>
+          <button class="aha-tile-btn aha-tile-btn-secondary" id="btn-import-hg" type="button">Importer data</button>
+        </div>
+        <small id="aha-module-historygo-status">Ingen import</small>
+      </article>
     </section>
 
     <section class="aha-panel aha-status-panel">
