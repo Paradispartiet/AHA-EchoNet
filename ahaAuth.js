@@ -157,6 +157,25 @@
     return { ok: true, data };
   }
 
+  async function signInWithProvider(provider) {
+    const client = getClient();
+    if (!client) return { ok: false, reason: "not_configured" };
+
+    const cleanProvider = String(provider || "").trim().toLowerCase();
+    if (!cleanProvider) return { ok: false, reason: "missing_provider" };
+
+    const { data, error } = await client.auth.signInWithOAuth({
+      provider: cleanProvider,
+      options: {
+        redirectTo: getRedirectUrl(),
+        queryParams: cleanProvider === "google" ? { access_type: "offline", prompt: "select_account" } : undefined
+      }
+    });
+
+    if (error) return { ok: false, error };
+    return { ok: true, data };
+  }
+
   async function signOut() {
     const client = getClient();
     if (!client) return { ok: false, reason: "not_configured" };
@@ -182,7 +201,7 @@
 
     const callbackResult = await handleAuthCallback();
     if (!callbackResult?.ok) {
-      console.warn("AHAAuth: magic link callback feilet", callbackResult?.error || callbackResult?.reason);
+      console.warn("AHAAuth: auth callback feilet", callbackResult?.error || callbackResult?.reason);
     }
 
     const user = await getUser();
@@ -205,20 +224,38 @@
   function bindAuthPanel() {
     const form = document.getElementById("aha-auth-form");
     const emailInput = document.getElementById("aha-auth-email");
+    const googleButton = document.getElementById("aha-auth-google");
     const signOutButton = document.getElementById("aha-auth-signout");
     const output = document.getElementById("aha-auth-output");
+
+    if (googleButton) {
+      googleButton.addEventListener("click", async () => {
+        googleButton.disabled = true;
+        if (output) output.textContent = "Åpner Google-innlogging …";
+        const result = await signInWithProvider("google");
+        if (!result.ok) {
+          googleButton.disabled = false;
+          if (output) {
+            output.textContent = `Google-innlogging feilet: ${result.error?.message || result.reason || "ukjent feil"}. Sjekk at Google provider er aktivert i Supabase.`;
+          }
+        }
+      });
+    }
 
     if (form && emailInput) {
       form.addEventListener("submit", async (event) => {
         event.preventDefault();
         const email = String(emailInput.value || "").trim();
         if (!email) return;
+        const submitButton = form.querySelector('button[type="submit"]');
+        if (submitButton) submitButton.disabled = true;
         const result = await signInWithEmail(email);
         if (output) {
           output.textContent = result.ok
             ? "Sjekk e-posten for innloggingslenke. Åpne lenken, og gå tilbake til AHA-vinduet hvis Gmail åpner et nytt Safari-vindu."
             : `Innlogging feilet: ${result.error?.message || result.reason || "ukjent feil"}`;
         }
+        if (!result.ok && submitButton) submitButton.disabled = false;
         renderAuthStatus();
       });
     }
@@ -255,6 +292,7 @@
     ensureProfile,
     saveProfileName,
     signInWithEmail,
+    signInWithProvider,
     signOut,
     renderAuthStatus,
     bindAuthPanel
