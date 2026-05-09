@@ -231,14 +231,18 @@
     return allConcepts.filter((c) => Array.isArray(c.themes) && c.themes.includes(themeId));
   }
 
-  const THEORY_CLUSTERS = [
+  // Hardkodet fallback. Den lastes inn ved oppstart og blir overskrevet
+  // av theoryClustersLoader så snart theoryClusters.json er hentet.
+  // Holder den minimal (kun de fem kjerneklyngene) for å unngå at vi
+  // har data både her og i JSON-filen som driver fra hverandre.
+  let _theoryClusters = [
     {
       id: "marx",
       label: "Marx / kritisk politisk økonomi",
       family: "kritisk",
       disciplines: ["sosiologi", "historie"],
       weight: 1.2,
-      keywords: ["klasse", "kapitalisme", "utbytting", "produksjonsmidler", "ideologi", "historisk materialisme"]
+      keywords: ["klasse", "kapitalisme", "utbytting", "ideologi"]
     },
     {
       id: "weber",
@@ -246,7 +250,7 @@
       family: "fortolkende",
       disciplines: ["sosiologi"],
       weight: 1.0,
-      keywords: ["rasjonalisering", "byråkrati", "myndighet", "legitimitet", "makt", "idealtyper"]
+      keywords: ["rasjonalisering", "byråkrati", "legitimitet", "makt"]
     },
     {
       id: "durkheim",
@@ -254,7 +258,7 @@
       family: "strukturfunksjonell",
       disciplines: ["sosiologi"],
       weight: 1.0,
-      keywords: ["solidaritet", "anomi", "kollektiv bevissthet", "sosiale fakta"]
+      keywords: ["solidaritet", "anomi", "kollektiv bevissthet"]
     },
     {
       id: "foucault",
@@ -262,7 +266,7 @@
       family: "poststrukturalistisk",
       disciplines: ["sosiologi", "filosofi", "historie"],
       weight: 1.3,
-      keywords: ["diskurs", "makt", "kunnskapsregime", "governmentality", "normalisering", "subjektivering", "disiplinering"]
+      keywords: ["diskurs", "makt", "normalisering", "disiplinering"]
     },
     {
       id: "bourdieu",
@@ -270,16 +274,57 @@
       family: "praksisteori",
       disciplines: ["sosiologi"],
       weight: 1.3,
-      keywords: ["felt", "habitus", "symbolsk orden", "symbolsk vold", "kapital", "kulturell kapital", "sosial kapital", "doxa"]
+      keywords: ["felt", "habitus", "symbolsk vold", "kapital", "doxa"]
     }
   ];
 
+  function setTheoryClusters(clusters) {
+    if (!Array.isArray(clusters) || !clusters.length) return false;
+    _theoryClusters = clusters;
+    return true;
+  }
+
+  function getTheoryClusters() {
+    return _theoryClusters.slice();
+  }
+
+  // Fuzzy match mellom et søkeord (fra teori-JSON) og et konsept-key
+  // (fra brukerens insights). Treffer både eksakt, substring i begge
+  // retninger, og en delt prefix på ≥ 5 tegn (slik at "kapitalisme"
+  // også fanges av søkeordet "kapital", og omvendt). Returnerer en
+  // objekt med hint om hvordan match-en skjedde, slik at vi kan
+  // forklare scoringen.
+  function fuzzyKeywordMatch(keyword, concept) {
+    if (!keyword || !concept) return null;
+    const kw = String(keyword).toLowerCase().trim();
+    const co = String(concept).toLowerCase().trim();
+    if (!kw || !co) return null;
+
+    if (kw === co) return { type: "exact", strength: 1.0 };
+    if (co.includes(kw) && kw.length >= 4) return { type: "concept_contains_keyword", strength: 0.9 };
+    if (kw.includes(co) && co.length >= 5) return { type: "keyword_contains_concept", strength: 0.85 };
+
+    // Fellesprefix-match. Kun aktuelt for enkeltord.
+    if (kw.indexOf(" ") === -1 && co.indexOf(" ") === -1) {
+      const minLen = 5;
+      let i = 0;
+      while (i < kw.length && i < co.length && kw[i] === co[i]) i++;
+      if (i >= minLen) {
+        const ratio = i / Math.max(kw.length, co.length);
+        if (ratio >= 0.6) return { type: "shared_prefix", strength: round3(0.5 + 0.4 * ratio) };
+      }
+    }
+    return null;
+  }
+
   function buildAcademicProfileFromConcepts(conceptIndex) {
-    const clusters = THEORY_CLUSTERS.map((cluster) => ({
+    const clusterDefs = _theoryClusters || [];
+    const clusters = clusterDefs.map((cluster) => ({
       id: cluster.id,
       label: cluster.label,
       family: cluster.family || null,
       disciplines: cluster.disciplines || [],
+      thinkers: cluster.thinkers || [],
       score: 0,
       hits: []
     }));
@@ -292,19 +337,39 @@
       if (!key) return;
       totalConcepts += freq;
 
-      THEORY_CLUSTERS.forEach((cluster, idx) => {
-        const hit = cluster.keywords.some((kw) => key.includes(kw));
-        if (!hit) return;
-        clusters[idx].score += freq * (cluster.weight || 1);
-        if (clusters[idx].hits.length < 10 && !clusters[idx].hits.includes(key)) {
-          clusters[idx].hits.push(key);
+      clusterDefs.forEach((cluster, idx) => {
+        let bestMatch = null;
+        for (const kw of cluster.keywords || []) {
+          const m = fuzzyKeywordMatch(kw, key);
+          if (m && (!bestMatch || m.strength > bestMatch.strength)) {
+            bestMatch = { keyword: kw, ...m };
+            if (bestMatch.strength >= 1) break;
+          }
+        }
+        if (!bestMatch) return;
+        clusters[idx].score += freq * (cluster.weight || 1) * bestMatch.strength;
+        const existing = clusters[idx].hits.find((h) => h.concept === key);
+        if (existing) {
+          existing.weight += freq * bestMatch.strength;
+        } else if (clusters[idx].hits.length < 12) {
+          clusters[idx].hits.push({
+            concept: key,
+            keyword: bestMatch.keyword,
+            match_type: bestMatch.type,
+            weight: round3(freq * bestMatch.strength)
+          });
         }
       });
     });
 
+    clusters.forEach((c) => {
+      c.score = round3(c.score);
+      c.hits.sort((a, b) => b.weight - a.weight);
+    });
+
     const maxScore = clusters.reduce((max, cluster) => Math.max(max, cluster.score), 0);
     const normalizedClusters = clusters
-      .map((cluster) => ({ ...cluster, relative: maxScore > 0 ? cluster.score / maxScore : 0 }))
+      .map((cluster) => ({ ...cluster, relative: maxScore > 0 ? round3(cluster.score / maxScore) : 0 }))
       .sort((a, b) => b.score - a.score);
 
     const disciplineMap = {};
@@ -314,10 +379,10 @@
       });
     });
 
-    const disciplineList = Object.keys(disciplineMap).map((id) => ({ id, score: disciplineMap[id] }));
+    const disciplineList = Object.keys(disciplineMap).map((id) => ({ id, score: round3(disciplineMap[id]) }));
     const maxDisc = disciplineList.reduce((max, discipline) => Math.max(max, discipline.score), 0);
     const disciplines = disciplineList
-      .map((discipline) => ({ ...discipline, relative: maxDisc > 0 ? discipline.score / maxDisc : 0 }))
+      .map((discipline) => ({ ...discipline, relative: maxDisc > 0 ? round3(discipline.score / maxDisc) : 0 }))
       .sort((a, b) => b.score - a.score);
 
     return { total_concepts: totalConcepts, clusters: normalizedClusters, disciplines };
@@ -1386,7 +1451,10 @@
     buildTensionProfile,
     buildRecommendations,
     canonicalizeConcepts,
-    buildPhraseIndex
+    buildPhraseIndex,
+    setTheoryClusters,
+    getTheoryClusters,
+    fuzzyKeywordMatch
   };
 
   if (typeof module !== "undefined" && module.exports) {
