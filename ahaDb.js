@@ -35,7 +35,9 @@
     cachedClient = global.supabase.createClient(url, key, {
       auth: {
         persistSession: true,
-        autoRefreshToken: true
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        flowType: "implicit"
       }
     });
     return cachedClient;

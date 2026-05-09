@@ -4,6 +4,8 @@
 (function (global) {
   "use strict";
 
+  let authCallbackHandled = false;
+
   function getClient() {
     return global.AHADb?.getClient?.() || null;
   }
@@ -20,15 +22,64 @@
     ).trim();
   }
 
+  function hasAuthParams() {
+    const query = new URLSearchParams(global.location.search || "");
+    const hash = new URLSearchParams(String(global.location.hash || "").replace(/^#/, ""));
+    return Boolean(
+      query.get("code") ||
+      query.get("access_token") ||
+      query.get("refresh_token") ||
+      hash.get("access_token") ||
+      hash.get("refresh_token") ||
+      hash.get("type") === "magiclink"
+    );
+  }
+
+  function cleanAuthUrl() {
+    if (!hasAuthParams()) return;
+    const cleanUrl = `${global.location.origin}${global.location.pathname}`;
+    try {
+      global.history.replaceState({}, document.title, cleanUrl);
+    } catch {}
+  }
+
   function emitAuthReady(user, profile = null) {
     try {
       global.dispatchEvent(new CustomEvent("aha:auth-ready", { detail: { user: user || null, profile: profile || null } }));
     } catch {}
   }
 
+  async function handleAuthCallback() {
+    if (authCallbackHandled) return { ok: true, skipped: true };
+    authCallbackHandled = true;
+
+    const client = getClient();
+    if (!client) return { ok: false, reason: "not_configured" };
+    if (!hasAuthParams()) return { ok: true, skipped: true };
+
+    try {
+      const query = new URLSearchParams(global.location.search || "");
+      const code = query.get("code");
+      if (code && typeof client.auth.exchangeCodeForSession === "function") {
+        const { data, error } = await client.auth.exchangeCodeForSession(code);
+        if (error) return { ok: false, error };
+        cleanAuthUrl();
+        return { ok: true, data };
+      }
+
+      const { data, error } = await client.auth.getSession();
+      if (error) return { ok: false, error };
+      cleanAuthUrl();
+      return { ok: true, data };
+    } catch (error) {
+      return { ok: false, error };
+    }
+  }
+
   async function getSession() {
     const client = getClient();
     if (!client) return null;
+    await handleAuthCallback();
     const { data, error } = await client.auth.getSession();
     if (error) {
       console.warn("AHAAuth: kunne ikke hente session", error);
@@ -129,6 +180,11 @@
       return;
     }
 
+    const callbackResult = await handleAuthCallback();
+    if (!callbackResult?.ok) {
+      console.warn("AHAAuth: magic link callback feilet", callbackResult?.error || callbackResult?.reason);
+    }
+
     const user = await getUser();
     if (!user) {
       if (mount) mount.textContent = "Ikke innlogget. LocalStorage fungerer fortsatt.";
@@ -160,7 +216,7 @@
         const result = await signInWithEmail(email);
         if (output) {
           output.textContent = result.ok
-            ? `Sjekk e-posten for innloggingslenke. Redirect: ${getRedirectUrl()}`
+            ? "Sjekk e-posten for innloggingslenke. Åpne lenken, og gå tilbake til AHA-vinduet hvis Gmail åpner et nytt Safari-vindu."
             : `Innlogging feilet: ${result.error?.message || result.reason || "ukjent feil"}`;
         }
         renderAuthStatus();
@@ -190,6 +246,8 @@
   global.AHAAuth = {
     isReady,
     getRedirectUrl,
+    hasAuthParams,
+    handleAuthCallback,
     getSession,
     getUser,
     getProfileId,
