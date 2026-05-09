@@ -17,7 +17,7 @@ services:
     runtime: node
     plan: free
     region: frankfurt
-    branch: claude/improve-insights-engine-bmIPe
+    branch: main
     buildCommand: npm ci --omit=dev
     startCommand: node server.js
     healthCheckPath: /api/aha-agent/health
