@@ -362,6 +362,349 @@
     return summary;
   }
 
+  function round3(n) {
+    if (!Number.isFinite(n)) return 0;
+    return Math.round(n * 1000) / 1000;
+  }
+
+  function isoDay(value) {
+    const dt = new Date(value);
+    if (Number.isNaN(dt.getTime())) return null;
+    return dt.toISOString().slice(0, 10);
+  }
+
+  function uniqueConceptKeys(concepts) {
+    const set = new Set();
+    (concepts || []).forEach((c) => {
+      const key = String(c?.key || c?.label || "").trim().toLowerCase();
+      if (key.length > 2) set.add(key);
+    });
+    return Array.from(set).sort();
+  }
+
+  // ── Konsept-graf (co-occurrence + PMI) ─────────────────
+  // Bygger et nettverk der to konsepter får en kant hvis de opptrer i
+  // samme insight. Vekten er antall fellesinsikter; PMI/NPMI rangerer
+  // hvor "spesifikk" assosiasjonen er (filtrerer bort generiske ord).
+  function buildConceptCoOccurrenceGraph(enrichedInsights, options) {
+    const opts = options || {};
+    const minPairCount = opts.minPairCount || 2;
+    const maxEdges = opts.maxEdges || 200;
+    const maxNodes = opts.maxNodes || 120;
+
+    const conceptCount = new Map();
+    const conceptThemes = new Map();
+    const pairCount = new Map();
+    const pairThemes = new Map();
+
+    let totalInsights = 0;
+
+    for (const ins of enrichedInsights || []) {
+      const keys = uniqueConceptKeys(ins?.concepts);
+      if (!keys.length) continue;
+      totalInsights += 1;
+      const themeId = ins.theme_id || "ukjent";
+
+      keys.forEach((k) => {
+        conceptCount.set(k, (conceptCount.get(k) || 0) + 1);
+        if (!conceptThemes.has(k)) conceptThemes.set(k, new Set());
+        conceptThemes.get(k).add(themeId);
+      });
+
+      for (let i = 0; i < keys.length; i++) {
+        for (let j = i + 1; j < keys.length; j++) {
+          const pk = keys[i] + "||" + keys[j];
+          pairCount.set(pk, (pairCount.get(pk) || 0) + 1);
+          if (!pairThemes.has(pk)) pairThemes.set(pk, new Set());
+          pairThemes.get(pk).add(themeId);
+        }
+      }
+    }
+
+    if (totalInsights === 0) {
+      return { nodes: [], edges: [], total_insights: 0, total_concepts: 0, total_pairs: 0 };
+    }
+
+    const N = totalInsights;
+    const edges = [];
+    pairCount.forEach((count, key) => {
+      if (count < minPairCount) return;
+      const [a, b] = key.split("||");
+      const ca = conceptCount.get(a) || 1;
+      const cb = conceptCount.get(b) || 1;
+      const pAB = count / N;
+      const pmi = Math.log2((count * N) / (ca * cb));
+      const npmi = pAB > 0 ? pmi / Math.max(1e-9, -Math.log2(pAB)) : 0;
+      edges.push({
+        source: a,
+        target: b,
+        count,
+        pmi: round3(pmi),
+        npmi: round3(npmi),
+        themes: Array.from(pairThemes.get(key) || [])
+      });
+    });
+
+    edges.sort((x, y) => (y.npmi - x.npmi) || (y.count - x.count));
+    const limitedEdges = edges.slice(0, maxEdges);
+
+    const nodeKeys = new Set();
+    limitedEdges.forEach((e) => {
+      nodeKeys.add(e.source);
+      nodeKeys.add(e.target);
+    });
+    Array.from(conceptCount.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, maxNodes)
+      .forEach(([k]) => nodeKeys.add(k));
+
+    const nodes = Array.from(nodeKeys)
+      .map((key) => ({
+        key,
+        count: conceptCount.get(key) || 0,
+        theme_count: (conceptThemes.get(key) || new Set()).size,
+        themes: Array.from(conceptThemes.get(key) || [])
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, maxNodes);
+
+    const keptKeys = new Set(nodes.map((n) => n.key));
+    const filteredEdges = limitedEdges.filter(
+      (e) => keptKeys.has(e.source) && keptKeys.has(e.target)
+    );
+
+    // Naboliste – nyttig for "hvilke konsepter henger sammen med X?".
+    const neighbors = {};
+    filteredEdges.forEach((e) => {
+      if (!neighbors[e.source]) neighbors[e.source] = [];
+      if (!neighbors[e.target]) neighbors[e.target] = [];
+      neighbors[e.source].push({ key: e.target, count: e.count, npmi: e.npmi });
+      neighbors[e.target].push({ key: e.source, count: e.count, npmi: e.npmi });
+    });
+    Object.keys(neighbors).forEach((k) => {
+      neighbors[k].sort((a, b) => (b.npmi - a.npmi) || (b.count - a.count));
+    });
+
+    return {
+      nodes,
+      edges: filteredEdges,
+      neighbors,
+      total_insights: totalInsights,
+      total_concepts: conceptCount.size,
+      total_pairs: pairCount.size
+    };
+  }
+
+  // ── Tidslinje + sekvensmønstre ─────────────────────────
+  // Bruker first_seen / last_updated på insights som proxy for når
+  // konsepter dukket opp i en brukers tenkning. Detekterer rekkefølge
+  // (A før B med X dagers etterslep), aktivitet per dag, og skifte i
+  // fokus mellom forrige og nåværende vindu.
+  function buildTemporalProfile(enrichedInsights, options) {
+    const opts = options || {};
+    const insights = (enrichedInsights || []).filter((ins) => ins && ins.first_seen);
+    if (!insights.length) {
+      return {
+        first_seen: null,
+        last_seen: null,
+        span_days: 0,
+        daily_activity: [],
+        concept_emergence: [],
+        theme_emergence: [],
+        emergence_pairs: [],
+        recent_focus: { window_days: opts.recentDays || 14, insights: 0, concepts: [], themes: [] },
+        velocity: { recent_count: 0, previous_count: 0, delta: 0, trend: "stabil" }
+      };
+    }
+
+    const now = opts.now ? new Date(opts.now) : new Date();
+    const recentDays = opts.recentDays || 14;
+    const dayMs = 86400000;
+
+    const dayBuckets = new Map();
+    const conceptFirst = new Map();
+    const conceptLast = new Map();
+    const conceptCount = new Map();
+    const conceptThemes = new Map();
+    const themeFirst = new Map();
+    const themeLast = new Map();
+    const themeCount = new Map();
+
+    let firstOverall = null;
+    let lastOverall = null;
+
+    for (const ins of insights) {
+      const first = new Date(ins.first_seen);
+      const last = new Date(ins.last_updated || ins.first_seen);
+      if (!firstOverall || first < firstOverall) firstOverall = first;
+      if (!lastOverall || last > lastOverall) lastOverall = last;
+
+      const dayKey = isoDay(first);
+      if (dayKey) {
+        const bucket = dayBuckets.get(dayKey) || { day: dayKey, insights: 0, themes: new Set() };
+        bucket.insights += 1;
+        if (ins.theme_id) bucket.themes.add(ins.theme_id);
+        dayBuckets.set(dayKey, bucket);
+      }
+
+      const themeId = ins.theme_id || "ukjent";
+      if (!themeFirst.has(themeId) || first < themeFirst.get(themeId)) themeFirst.set(themeId, first);
+      if (!themeLast.has(themeId) || last > themeLast.get(themeId)) themeLast.set(themeId, last);
+      themeCount.set(themeId, (themeCount.get(themeId) || 0) + 1);
+
+      (ins.concepts || []).forEach((c) => {
+        const key = String(c?.key || c?.label || "").trim().toLowerCase();
+        if (!key) return;
+        if (!conceptFirst.has(key) || first < conceptFirst.get(key)) conceptFirst.set(key, first);
+        if (!conceptLast.has(key) || last > conceptLast.get(key)) conceptLast.set(key, last);
+        conceptCount.set(key, (conceptCount.get(key) || 0) + (c.count || 1));
+        if (!conceptThemes.has(key)) conceptThemes.set(key, new Set());
+        conceptThemes.get(key).add(themeId);
+      });
+    }
+
+    const spanDays = round3((lastOverall - firstOverall) / dayMs);
+
+    const daily_activity = Array.from(dayBuckets.values())
+      .map((b) => ({ day: b.day, insights: b.insights, themes: Array.from(b.themes) }))
+      .sort((a, b) => (a.day < b.day ? -1 : 1));
+
+    const concept_emergence = Array.from(conceptFirst.entries())
+      .map(([key, first]) => {
+        const last = conceptLast.get(key) || first;
+        return {
+          key,
+          first_seen: first.toISOString(),
+          last_seen: last.toISOString(),
+          span_days: round3((last - first) / dayMs),
+          count: conceptCount.get(key) || 0,
+          themes: Array.from(conceptThemes.get(key) || [])
+        };
+      })
+      .sort((a, b) => (a.first_seen < b.first_seen ? -1 : 1));
+
+    const theme_emergence = Array.from(themeFirst.entries())
+      .map(([id, first]) => {
+        const last = themeLast.get(id) || first;
+        return {
+          theme_id: id,
+          first_seen: first.toISOString(),
+          last_seen: last.toISOString(),
+          span_days: round3((last - first) / dayMs),
+          insights: themeCount.get(id) || 0
+        };
+      })
+      .sort((a, b) => (a.first_seen < b.first_seen ? -1 : 1));
+
+    // Sekvenspar: blant topp-N konsepter, hvilke dukker opp før hvilke
+    // og med hvor mange dagers etterslep? Dette er en grov proxy for
+    // "tenkningen min beveget seg fra X til Y".
+    const topN = opts.topConcepts || 12;
+    const maxLag = opts.maxLagDays || 60;
+    const top = concept_emergence
+      .filter((c) => c.count >= 2)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, topN);
+
+    const emergence_pairs = [];
+    for (let i = 0; i < top.length; i++) {
+      for (let j = 0; j < top.length; j++) {
+        if (i === j) continue;
+        const a = top[i];
+        const b = top[j];
+        const lagDays = (new Date(b.first_seen) - new Date(a.first_seen)) / dayMs;
+        if (lagDays > 0 && lagDays <= maxLag) {
+          emergence_pairs.push({
+            before: a.key,
+            after: b.key,
+            lag_days: round3(lagDays),
+            count_before: a.count,
+            count_after: b.count
+          });
+        }
+      }
+    }
+    emergence_pairs.sort((x, y) => x.lag_days - y.lag_days);
+
+    const recentCutoff = new Date(now.getTime() - recentDays * dayMs);
+    const previousCutoff = new Date(now.getTime() - 2 * recentDays * dayMs);
+
+    const recentInsights = [];
+    const previousInsights = [];
+    const recentConceptCount = new Map();
+    const previousConceptCount = new Map();
+    const recentThemeCount = new Map();
+
+    for (const ins of insights) {
+      const t = new Date(ins.last_updated || ins.first_seen);
+      const inRecent = t >= recentCutoff;
+      const inPrevious = !inRecent && t >= previousCutoff;
+      if (!inRecent && !inPrevious) continue;
+      const target = inRecent ? recentInsights : previousInsights;
+      target.push(ins);
+
+      if (inRecent) {
+        const themeId = ins.theme_id || "ukjent";
+        recentThemeCount.set(themeId, (recentThemeCount.get(themeId) || 0) + 1);
+      }
+
+      const bucket = inRecent ? recentConceptCount : previousConceptCount;
+      (ins.concepts || []).forEach((c) => {
+        const key = String(c?.key || c?.label || "").trim().toLowerCase();
+        if (!key) return;
+        bucket.set(key, (bucket.get(key) || 0) + (c.count || 1));
+      });
+    }
+
+    const recent_focus = {
+      window_days: recentDays,
+      insights: recentInsights.length,
+      concepts: Array.from(recentConceptCount.entries())
+        .map(([key, count]) => ({ key, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 20),
+      themes: Array.from(recentThemeCount.entries())
+        .map(([theme_id, count]) => ({ theme_id, count }))
+        .sort((a, b) => b.count - a.count),
+      // Konsepter som har dukket opp mye i siste vindu, men ikke i forrige.
+      emerging: Array.from(recentConceptCount.entries())
+        .filter(([k, c]) => c >= 2 && (previousConceptCount.get(k) || 0) === 0)
+        .map(([key, count]) => ({ key, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 10),
+      // Konsepter som har avtatt sterkt mellom vinduene.
+      fading: Array.from(previousConceptCount.entries())
+        .filter(([k, c]) => c >= 2 && (recentConceptCount.get(k) || 0) === 0)
+        .map(([key, count]) => ({ key, prev_count: count }))
+        .sort((a, b) => b.prev_count - a.prev_count)
+        .slice(0, 10)
+    };
+
+    const velocity = {
+      recent_count: recentInsights.length,
+      previous_count: previousInsights.length,
+      delta: recentInsights.length - previousInsights.length,
+      trend:
+        recentInsights.length > previousInsights.length
+          ? "økende"
+          : recentInsights.length < previousInsights.length
+            ? "avtakende"
+            : "stabil"
+    };
+
+    return {
+      first_seen: firstOverall ? firstOverall.toISOString() : null,
+      last_seen: lastOverall ? lastOverall.toISOString() : null,
+      span_days: spanDays,
+      daily_activity,
+      concept_emergence,
+      theme_emergence,
+      emergence_pairs: emergence_pairs.slice(0, 30),
+      recent_focus,
+      velocity
+    };
+  }
+
   function buildUserMetaProfile(chamber, subjectId) {
     if (!IE) return null;
 
@@ -379,6 +722,8 @@
     const conceptIndex = buildConceptIndex(enrichedInsights);
     const semioticProfile = buildSemioticProfile(enrichedInsights);
     const academicProfile = buildAcademicProfile(enrichedInsights);
+    const cooccurrence = buildConceptCoOccurrenceGraph(enrichedInsights);
+    const temporal = buildTemporalProfile(enrichedInsights);
 
     return {
       subject_id: subjectId,
@@ -388,7 +733,9 @@
       academic: academicProfile,
       patterns,
       insights: enrichedInsights,
-      concepts: conceptIndex
+      concepts: conceptIndex,
+      cooccurrence,
+      temporal
     };
   }
 
@@ -404,7 +751,9 @@
     extractMultiwordConcepts,
     buildAcademicProfile,
     buildAcademicProfileFromConcepts,
-    buildSemioticProfile
+    buildSemioticProfile,
+    buildConceptCoOccurrenceGraph,
+    buildTemporalProfile
   };
 
   if (typeof module !== "undefined" && module.exports) {
