@@ -934,6 +934,212 @@
     };
   }
 
+  // ── Anbefalingslag ──────────────────────────────────────
+  // Tar et ferdig meta-bilde og foreslår hvor brukeren bør se neste
+  // gang: tema som så vidt er berørt, gamle innsikter som er relevante
+  // igjen, konsepter som ligger isolert og venter på å kobles, par som
+  // har sterk assosiasjon men få belegg, refleksjons-prompts for tema
+  // som er fastlåst eller spennings-fylt, og emner som så vidt er
+  // streifet av matcheren.
+  function buildRecommendations(profile, options) {
+    const opts = options || {};
+    const empty = {
+      next_topics: [],
+      resurface_insights: [],
+      underexplored_concepts: [],
+      bridging_pairs: [],
+      unstick_prompts: [],
+      emne_suggestions: []
+    };
+    if (!profile) return empty;
+
+    const insights = profile.insights || [];
+    const cooc = profile.cooccurrence || { nodes: [], edges: [], neighbors: {} };
+    const temporal = profile.temporal || { recent_focus: { concepts: [], themes: [], emerging: [] } };
+    const tensions = profile.tensions || { concept_tensions: [], theme_tensions: [], paradox_pairs: [] };
+    const topics = profile.topics || [];
+
+    const recentConceptKeys = new Set(
+      (temporal.recent_focus?.concepts || []).slice(0, 10).map((c) => c.key)
+    );
+
+    // ── next_topics ─────
+    const themeCounts = new Map();
+    const themeShared = new Map();
+    insights.forEach((ins) => {
+      const id = ins.theme_id || "ukjent";
+      themeCounts.set(id, (themeCounts.get(id) || 0) + 1);
+      if (!themeShared.has(id)) themeShared.set(id, 0);
+      uniqueConceptKeys(ins.concepts).forEach((k) => {
+        if (recentConceptKeys.has(k)) themeShared.set(id, themeShared.get(id) + 1);
+      });
+    });
+
+    const next_topics = Array.from(themeCounts.entries())
+      .map(([theme_id, count]) => {
+        const shared = themeShared.get(theme_id) || 0;
+        const score = round3(shared / Math.max(1, Math.sqrt(count)));
+        return {
+          theme_id,
+          insight_count: count,
+          shared_concepts_with_recent: shared,
+          score
+        };
+      })
+      .filter((t) => t.shared_concepts_with_recent >= 1 && t.insight_count <= (opts.maxThemeCount || 3))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, opts.maxNextTopics || 5)
+      .map((t) => ({
+        ...t,
+        reason: "Tema med koblinger til det du tenker mye på akkurat nå, men få insights."
+      }));
+
+    // ── resurface_insights ─────
+    const now = opts.now ? new Date(opts.now) : new Date();
+    const dayMs = 86400000;
+    const oldThresholdDays = opts.oldThresholdDays || 21;
+    const resurface_insights = insights
+      .map((ins) => {
+        const lastTime = new Date(ins.last_updated || ins.first_seen || 0).getTime();
+        if (!lastTime) return null;
+        const ageDays = (now.getTime() - lastTime) / dayMs;
+        if (ageDays < oldThresholdDays) return null;
+        const overlap = uniqueConceptKeys(ins.concepts).filter((k) => recentConceptKeys.has(k));
+        if (!overlap.length) return null;
+        return {
+          insight_id: ins.id,
+          theme_id: ins.theme_id || "ukjent",
+          summary: (ins.summary || ins.title || "").slice(0, 200),
+          shared_concepts: overlap,
+          last_updated: ins.last_updated || ins.first_seen,
+          age_days: round3(ageDays),
+          reason: "Eldre refleksjon som deler konsepter med det du jobber med nå."
+        };
+      })
+      .filter(Boolean)
+      .sort((a, b) => b.shared_concepts.length - a.shared_concepts.length || b.age_days - a.age_days)
+      .slice(0, opts.maxResurface || 6);
+
+    // ── underexplored_concepts ─────
+    const underexplored_concepts = (cooc.nodes || [])
+      .filter((n) => n.count >= 2 && n.theme_count <= 1)
+      .map((n) => {
+        const neighbors = (cooc.neighbors && cooc.neighbors[n.key]) || [];
+        return {
+          key: n.key,
+          count: n.count,
+          theme_count: n.theme_count,
+          themes: n.themes,
+          neighbor_count: neighbors.length,
+          top_neighbors: neighbors.slice(0, 3),
+          reason:
+            neighbors.length === 0
+              ? "Konseptet dukker opp, men kobler seg ikke til noe annet ennå."
+              : "Konseptet er smalt forankret — bare ett tema bærer det."
+        };
+      })
+      .sort((a, b) => b.count - a.count)
+      .slice(0, opts.maxUnderexplored || 6);
+
+    // ── bridging_pairs ─────
+    const bridging_pairs = (cooc.edges || [])
+      .filter((e) => e.npmi >= (opts.bridgeMinNpmi || 0.7) && e.count <= (opts.bridgeMaxCount || 3))
+      .slice(0, opts.maxBridging || 6)
+      .map((e) => ({
+        source: e.source,
+        target: e.target,
+        count: e.count,
+        npmi: e.npmi,
+        themes: e.themes,
+        reason: "Sterk assosiasjon, men foreløpig sjelden — verdt å tenke videre på."
+      }));
+
+    // ── unstick_prompts ─────
+    const phaseByTheme = {};
+    topics.forEach((t) => {
+      phaseByTheme[t.theme_id] = t.stats?.user_phase || "utforskning";
+    });
+    const themeTensionByTheme = new Map();
+    (tensions.theme_tensions || []).forEach((t) => themeTensionByTheme.set(t.theme_id, t));
+
+    const unstick_prompts = [];
+    const seenThemes = new Set();
+    topics.forEach((t) => {
+      const themeId = t.theme_id;
+      if (seenThemes.has(themeId)) return;
+      const phase = phaseByTheme[themeId];
+      const tt = themeTensionByTheme.get(themeId);
+      const isStuck = phase === "fastlåst" || phase === "press";
+      const isTense = tt && (tt.tension_score >= 0.4 || tt.valence_flip_count >= 2);
+      if (!isStuck && !isTense) return;
+      seenThemes.add(themeId);
+
+      const conceptForTheme = (tensions.concept_tensions || []).find((c) =>
+        (c.themes || []).includes(themeId)
+      );
+      const paradoxForTheme = (tensions.paradox_pairs || []).find((p) => p.theme_id === themeId);
+
+      if (conceptForTheme) {
+        unstick_prompts.push({
+          theme_id: themeId,
+          prompt: `Du har lest "${conceptForTheme.key}" i "${themeId}" både positivt og negativt. Hva endret seg mellom de to lesningene?`,
+          basis: { type: "concept_tension", concept: conceptForTheme.key, phase }
+        });
+      } else if (paradoxForTheme) {
+        unstick_prompts.push({
+          theme_id: themeId,
+          prompt: `To av refleksjonene dine om "${themeId}" peker i motsatt retning rundt "${paradoxForTheme.shared_concepts[0]}". Hvilken av dem stemmer best i dag?`,
+          basis: { type: "paradox", concepts: paradoxForTheme.shared_concepts, phase }
+        });
+      } else if (isStuck) {
+        unstick_prompts.push({
+          theme_id: themeId,
+          prompt: `"${themeId}" virker fastlåst nå. Hvilket konsept ville du flyttet vekk fra først hvis du fikk velge?`,
+          basis: { type: "phase_only", phase }
+        });
+      }
+    });
+
+    // ── emne_suggestions ─────
+    const emneByKey = new Map();
+    insights.forEach((ins) => {
+      (ins.emne_matches || []).forEach((m) => {
+        const id = m?.emne_id;
+        if (!id) return;
+        let entry = emneByKey.get(id);
+        if (!entry) {
+          entry = {
+            emne_id: id,
+            title: m.title,
+            short_label: m.short_label,
+            subject_id: m.subject_id,
+            area_label: m.area_label || null,
+            count: 0
+          };
+          emneByKey.set(id, entry);
+        }
+        entry.count += 1;
+      });
+    });
+    const emne_suggestions = Array.from(emneByKey.values())
+      .filter((e) => e.count >= 1 && e.count <= (opts.emneMaxCount || 2))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, opts.maxEmne || 6)
+      .map((e) => ({
+        ...e,
+        reason: "Tema som teksten din berører, men foreløpig bare i forbifarten."
+      }));
+
+    return {
+      next_topics,
+      resurface_insights,
+      underexplored_concepts,
+      bridging_pairs,
+      unstick_prompts,
+      emne_suggestions
+    };
+  }
+
   function buildUserMetaProfile(chamber, subjectId) {
     if (!IE) return null;
 
@@ -955,7 +1161,7 @@
     const temporal = buildTemporalProfile(enrichedInsights);
     const tensions = buildTensionProfile(enrichedInsights);
 
-    return {
+    const partial = {
       subject_id: subjectId,
       topics: topicProfiles,
       global: globalProfile,
@@ -968,6 +1174,7 @@
       temporal,
       tensions
     };
+    return { ...partial, recommendations: buildRecommendations(partial) };
   }
 
   const MetaInsightsEngine = {
@@ -985,7 +1192,8 @@
     buildSemioticProfile,
     buildConceptCoOccurrenceGraph,
     buildTemporalProfile,
-    buildTensionProfile
+    buildTensionProfile,
+    buildRecommendations
   };
 
   if (typeof module !== "undefined" && module.exports) {
