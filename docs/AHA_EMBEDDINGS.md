@@ -1,6 +1,6 @@
-# AHA Embeddings
+# AHA Embeddings + AI Agent
 
-Semantisk lag for innsiktsmotoren. Hver insight får en vektor som
+Semantisk lag for innsiktsmotoren + svarende AHA-agent. Hver insight får en vektor som
 representerer betydningen av teksten, lagret i Supabase pgvector. Det
 gir oss tre nye ting:
 
@@ -9,11 +9,12 @@ gir oss tre nye ting:
    og lignende analyser når det er nok data.
 3. **Cross-insight similarity** – "hvilke andre insights ligner på
    denne?" uten å være avhengig av delt vokabular.
+4. **AHA-agent chat** – respons basert på AHA-state + lignende innsikter.
 
 ## Komponenter
 
 ```text
-server.js                          – Express-backend som kaller Voyage
+server.js                          – Express-backend som kaller Voyage + OpenAI
 ahaEmbeddings.js                   – klient (browser)
 supabase/embeddings.sql            – pgvector-tabell + RPC
 docs/AHA_EMBEDDINGS.md             – dette dokumentet
@@ -24,8 +25,7 @@ docs/AHA_EMBEDDINGS.md             – dette dokumentet
 Backend krever:
 
 - Node 20+
-- Pakker som ligger i `package.json` (`express`, `cors`, `openai` er
-  igjen for fremtidig bruk men ikke i bruk her)
+- Pakker som ligger i `package.json` (`express`, `cors`, `openai`)
 - Voyage AI-konto med API-nøkkel (https://www.voyageai.com)
 
 Klient krever:
@@ -37,7 +37,9 @@ Klient krever:
 
 ```sh
 VOYAGE_API_KEY=...                   # Påkrevd
+OPENAI_API_KEY=...                   # Påkrevd for /chat
 VOYAGE_MODEL=voyage-multilingual-2   # Default; 1024 dim, multilingual
+OPENAI_MODEL=gpt-4.1-mini            # Default for chat
 PORT=3030                            # Default
 ALLOWED_ORIGINS=https://paradispartiet.github.io,http://localhost:3000
 ```
@@ -59,8 +61,8 @@ Repoen inkluderer en `render.yaml` Blueprint:
 1. Logg inn på [render.com](https://render.com) med GitHub-kontoen.
 2. **New +** → **Blueprint** → velg `Paradispartiet/AHA-EchoNet`.
 3. Render leser `render.yaml`, oppretter tjenesten `aha-agent`, og
-   spør om `VOYAGE_API_KEY` (markert som secret). Lim inn nøkkelen —
-   den lagres hos Render og blir aldri skrevet til git.
+   spør om `VOYAGE_API_KEY` og `OPENAI_API_KEY` (markert som secrets).
+   Lim inn nøklene — de lagres hos Render og blir aldri skrevet til git.
 4. Etter første deploy får du en URL som
    `https://aha-agent-xyz.onrender.com`.
 5. Verifiser:
@@ -102,6 +104,15 @@ For lokal utvikling: sett `window.AHA_AGENT_API = "http://localhost:3030/api/aha
 i `ahaConfig.local.js`.
 
 `sw.js` lar `/api/aha-agent/*` gå rett til nettverket uten cache.
+
+## Endepunkter
+
+- `GET /api/aha-agent/health` – health + embedding-konfig.
+- `POST /api/aha-agent/embed` – semantisk minne/embeddings (Voyage).
+- `POST /api/aha-agent/chat` – svarende AHA-agent (OpenAI Responses API).
+
+`VOYAGE_API_KEY` brukes kun for `/embed`, `OPENAI_API_KEY` brukes kun
+for `/chat`. Ingen nøkler skal ligge i frontend.
 
 ## Sett opp pgvector
 
@@ -232,3 +243,7 @@ samme Supabase-prosjekt som auth.
   dem i konsept-graf på meta-laget.
 - Re-embed når en insight endrer summary betydelig (tracker kun
   `updated_at` i dag).
+   curl -X POST https://aha-agent-xyz.onrender.com/api/aha-agent/chat \
+     -H "Content-Type: application/json" \
+     -d '{"message":"Hva ser du i innsiktene mine?","ai_state":{"top_insights":[],"concepts":[],"meta_profile":{}},"similar_insights":[]}'
+   # { "ok": true, "reply": "...", "model": "...", "response_id": "..." }

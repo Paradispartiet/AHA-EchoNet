@@ -7,11 +7,14 @@
 
 import express from "express";
 import cors from "cors";
+import OpenAI from "openai";
 
 const PORT = Number(process.env.PORT || 3030);
 const VOYAGE_API_KEY = process.env.VOYAGE_API_KEY;
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const VOYAGE_MODEL = process.env.VOYAGE_MODEL || "voyage-multilingual-2";
 const VOYAGE_URL = process.env.VOYAGE_URL || "https://api.voyageai.com/v1/embeddings";
+const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4.1-mini";
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS ||
   "https://paradispartiet.github.io,http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173"
 ).split(",").map((s) => s.trim()).filter(Boolean);
@@ -19,6 +22,11 @@ const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS ||
 if (!VOYAGE_API_KEY) {
   console.warn("[aha-agent] VOYAGE_API_KEY er ikke satt – /embed vil feile.");
 }
+if (!OPENAI_API_KEY) {
+  console.warn("[aha-agent] OPENAI_API_KEY er ikke satt – /chat vil feile.");
+}
+
+const openai = OPENAI_API_KEY ? new OpenAI({ apiKey: OPENAI_API_KEY }) : null;
 
 const app = express();
 app.use(express.json({ limit: "1mb" }));
@@ -102,6 +110,55 @@ app.post("/api/aha-agent/embed", async (req, res) => {
     });
   } catch (err) {
     console.error("[aha-agent] embed crashed", err);
+    res.status(500).json({ ok: false, error: "internal_error" });
+  }
+});
+
+app.post("/api/aha-agent/chat", async (req, res) => {
+  try {
+    if (!OPENAI_API_KEY || !openai) {
+      return res.status(503).json({ ok: false, error: "missing_openai_api_key" });
+    }
+
+    const body = req.body || {};
+    const message = body.message;
+    const aiState = body.ai_state && typeof body.ai_state === "object" ? body.ai_state : {};
+    const similarInsights = Array.isArray(body.similar_insights) ? body.similar_insights : [];
+    const profile = body.profile && typeof body.profile === "object" ? body.profile : {};
+
+    if (typeof message !== "string" || !message.trim()) {
+      return res.status(400).json({ ok: false, error: "invalid_message" });
+    }
+    if (body.ai_state != null && (typeof body.ai_state !== "object" || Array.isArray(body.ai_state))) {
+      return res.status(400).json({ ok: false, error: "invalid_ai_state" });
+    }
+
+    const systemInstruction = "Du er AHA-agenten. Du er ikke en generell chatbot. Du svarer ut fra AHA-state: innsikter, begreper, metaprofil, dimensjoner, narrativ, lignende innsikter og brukerens egne data. Du skal hjelpe brukeren å forstå hva materialet deres viser. Svar kort, presist og strukturerende.\n\nSvar alltid med disse fire delene:\n1. Kort svar\n2. Hva AHA ser\n3. Begreper / mønstre\n4. Neste beste spørsmål eller læringssteg";
+
+    const response = await openai.responses.create({
+      model: OPENAI_MODEL,
+      input: [
+        { role: "system", content: systemInstruction },
+        {
+          role: "user",
+          content: JSON.stringify({
+            message: message.trim(),
+            ai_state: aiState,
+            similar_insights: similarInsights,
+            profile
+          })
+        }
+      ]
+    });
+
+    res.json({
+      ok: true,
+      reply: response.output_text || "",
+      model: response.model || OPENAI_MODEL,
+      response_id: response.id || null
+    });
+  } catch (err) {
+    console.error("[aha-agent] chat crashed", err);
     res.status(500).json({ ok: false, error: "internal_error" });
   }
 });
