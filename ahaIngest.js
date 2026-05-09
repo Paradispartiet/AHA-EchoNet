@@ -83,6 +83,13 @@
       console.warn("AHAIngest: emne-berikelse feilet", err);
     });
 
+    // Tilsvarende fire-and-forget: send insighten gjennom embedding-
+    // tjenesten og lagre vektoren i Supabase. Krever innlogget bruker
+    // og at /api/aha-agent/embed svarer; ellers no-op.
+    enrichWithEmbedding(signal).catch((err) => {
+      console.warn("AHAIngest: embedding-berikelse feilet", err);
+    });
+
     return { ok: true, sourceEvent: src, signal };
   }
 
@@ -136,5 +143,34 @@
     } catch {}
   }
 
-  global.AHAIngest = { ingest, enrichWithEmneMatcher };
+  async function enrichWithEmbedding(signal) {
+    if (!signal || !signal.text) return;
+    if (!global.AHAEmbeddings || typeof global.AHAEmbeddings.embedAndStore !== "function") return;
+
+    const chamber = loadChamber();
+    const insights = chamber?.insights || [];
+    if (!insights.length) return;
+
+    let target = null;
+    for (let i = insights.length - 1; i >= 0; i--) {
+      const ins = insights[i];
+      if (ins.subject_id !== signal.subject_id || ins.theme_id !== signal.theme_id) continue;
+      if (ins.last_updated === signal.timestamp || ins.first_seen === signal.timestamp) {
+        target = ins;
+        break;
+      }
+    }
+    if (!target) return;
+
+    const result = await global.AHAEmbeddings.embedAndStore(target);
+    if (!result?.ok) return;
+
+    try {
+      global.dispatchEvent(new CustomEvent("aha:embedding-stored", {
+        detail: { insight_id: target.id }
+      }));
+    } catch {}
+  }
+
+  global.AHAIngest = { ingest, enrichWithEmneMatcher, enrichWithEmbedding };
 })(window);
