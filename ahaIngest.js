@@ -76,8 +76,102 @@
       global.dispatchEvent(new CustomEvent("aha:ingested", { detail: { sourceEvent: src, signal } }));
     } catch {}
 
+    // Fire-and-forget berikelse: la emne-matcheren foreslå hvilke
+    // fagområder/emner teksten ligner mest på, og fest dem på den
+    // resulterende insighten. Hovedflyten skal aldri vente på dette.
+    enrichWithEmneMatcher(signal).catch((err) => {
+      console.warn("AHAIngest: emne-berikelse feilet", err);
+    });
+
+    // Tilsvarende fire-and-forget: send insighten gjennom embedding-
+    // tjenesten og lagre vektoren i Supabase. Krever innlogget bruker
+    // og at /api/aha-agent/embed svarer; ellers no-op.
+    enrichWithEmbedding(signal).catch((err) => {
+      console.warn("AHAIngest: embedding-berikelse feilet", err);
+    });
+
     return { ok: true, sourceEvent: src, signal };
   }
 
-  global.AHAIngest = { ingest };
+  async function enrichWithEmneMatcher(signal) {
+    if (!signal || !signal.text) return;
+    if (!global.AHAEmneMatcher || typeof global.AHAEmneMatcher.matchAllSubjects !== "function") return;
+
+    const matches = await global.AHAEmneMatcher.matchAllSubjects(signal.text, { topN: 3 });
+    if (!Array.isArray(matches) || !matches.length) return;
+
+    const chamber = loadChamber();
+    const insights = chamber?.insights || [];
+    if (!insights.length) return;
+
+    // Finn insighten som dette signalet endte opp på. Matchen skjer rett
+    // etter addSignalToChamber, så insighten er enten siste opprettede
+    // (signal seedet en ny) eller den med last_updated === signal.timestamp.
+    let target = null;
+    for (let i = insights.length - 1; i >= 0; i--) {
+      const ins = insights[i];
+      if (ins.subject_id !== signal.subject_id || ins.theme_id !== signal.theme_id) continue;
+      if (ins.last_updated === signal.timestamp || ins.first_seen === signal.timestamp) {
+        target = ins;
+        break;
+      }
+    }
+    if (!target) return;
+
+    const existing = Array.isArray(target.emner) ? target.emner.slice() : [];
+    const existingSet = new Set(existing);
+    matches.forEach((m) => {
+      if (m.emne_id && !existingSet.has(m.emne_id)) {
+        existing.push(m.emne_id);
+        existingSet.add(m.emne_id);
+      }
+    });
+    target.emner = existing;
+
+    const subjectSet = new Set(target.matched_subjects || []);
+    matches.forEach((m) => m.subject_id && subjectSet.add(m.subject_id));
+    target.matched_subjects = Array.from(subjectSet);
+
+    target.emne_matches = matches;
+
+    saveChamber(chamber);
+
+    try {
+      global.dispatchEvent(new CustomEvent("aha:emne-matched", {
+        detail: { signal, matches, insight_id: target.id }
+      }));
+    } catch {}
+  }
+
+  async function enrichWithEmbedding(signal) {
+    if (!signal || !signal.text) return;
+    if (!global.AHAEmbeddings || typeof global.AHAEmbeddings.embedAndStore !== "function") return;
+    if (typeof global.AHAEmbeddings.isConfigured === "function" && !global.AHAEmbeddings.isConfigured()) return;
+
+    const chamber = loadChamber();
+    const insights = chamber?.insights || [];
+    if (!insights.length) return;
+
+    let target = null;
+    for (let i = insights.length - 1; i >= 0; i--) {
+      const ins = insights[i];
+      if (ins.subject_id !== signal.subject_id || ins.theme_id !== signal.theme_id) continue;
+      if (ins.last_updated === signal.timestamp || ins.first_seen === signal.timestamp) {
+        target = ins;
+        break;
+      }
+    }
+    if (!target) return;
+
+    const result = await global.AHAEmbeddings.embedAndStore(target);
+    if (!result?.ok) return;
+
+    try {
+      global.dispatchEvent(new CustomEvent("aha:embedding-stored", {
+        detail: { insight_id: target.id }
+      }));
+    } catch {}
+  }
+
+  global.AHAIngest = { ingest, enrichWithEmneMatcher, enrichWithEmbedding };
 })(window);

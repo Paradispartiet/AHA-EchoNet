@@ -1,0 +1,230 @@
+{
+  "version": 1,
+  "updated": "2026-05-09",
+  "note": "Datadrevet teorikartlegging. Klyngene brukes av MetaInsightsEngine.buildAcademicProfile for å si noe om hvilke teoretiske rammer brukerens konsepter ligner på. keywords matches ufullstendig (substring + felles prefix), så bøyde og sammensatte former også fanges opp.",
+  "clusters": [
+    {
+      "id": "marx",
+      "label": "Marx / kritisk politisk økonomi",
+      "family": "kritisk",
+      "disciplines": ["sosiologi", "historie", "filosofi"],
+      "weight": 1.2,
+      "thinkers": ["Karl Marx", "Friedrich Engels", "Rosa Luxemburg"],
+      "keywords": [
+        "klasse",
+        "klassekamp",
+        "kapitalisme",
+        "kapital",
+        "utbytting",
+        "fremmedgjøring",
+        "alienasjon",
+        "produksjonsmidler",
+        "ideologi",
+        "historisk materialisme",
+        "merverdi",
+        "varefetisjisme",
+        "proletariat",
+        "borgerskap",
+        "revolusjon"
+      ]
+    },
+    {
+      "id": "weber",
+      "label": "Weber / handling og rasjonalisering",
+      "family": "fortolkende",
+      "disciplines": ["sosiologi", "historie"],
+      "weight": 1.0,
+      "thinkers": ["Max Weber"],
+      "keywords": [
+        "rasjonalisering",
+        "byråkrati",
+        "byråkratisering",
+        "myndighet",
+        "legitimitet",
+        "makt",
+        "idealtype",
+        "verdier",
+        "protestantisk etikk",
+        "karisma",
+        "embetsverk",
+        "avfortrylling"
+      ]
+    },
+    {
+      "id": "durkheim",
+      "label": "Durkheim / sosial integrasjon",
+      "family": "strukturfunksjonell",
+      "disciplines": ["sosiologi"],
+      "weight": 1.0,
+      "thinkers": ["Émile Durkheim"],
+      "keywords": [
+        "solidaritet",
+        "mekanisk solidaritet",
+        "organisk solidaritet",
+        "anomi",
+        "kollektiv bevissthet",
+        "sosiale fakta",
+        "ritual",
+        "hellig",
+        "profan",
+        "samfunnskontrakt"
+      ]
+    },
+    {
+      "id": "foucault",
+      "label": "Foucault / makt, diskurs, styringsregimer",
+      "family": "poststrukturalistisk",
+      "disciplines": ["sosiologi", "filosofi", "historie"],
+      "weight": 1.3,
+      "thinkers": ["Michel Foucault"],
+      "keywords": [
+        "diskurs",
+        "makt",
+        "kunnskapsregime",
+        "epistème",
+        "governmentality",
+        "biopolitikk",
+        "biomakt",
+        "normalisering",
+        "subjektivering",
+        "disiplinering",
+        "panoptikon",
+        "selvteknologier",
+        "arkeologi",
+        "genealogi"
+      ]
+    },
+    {
+      "id": "bourdieu",
+      "label": "Bourdieu / felt, habitus, kapital",
+      "family": "praksisteori",
+      "disciplines": ["sosiologi", "antropologi"],
+      "weight": 1.3,
+      "thinkers": ["Pierre Bourdieu"],
+      "keywords": [
+        "felt",
+        "habitus",
+        "kulturell kapital",
+        "sosial kapital",
+        "økonomisk kapital",
+        "symbolsk kapital",
+        "symbolsk vold",
+        "symbolsk orden",
+        "doxa",
+        "praksis",
+        "smak",
+        "distinksjon",
+        "reproduksjon"
+      ]
+    },
+    {
+      "id": "kritisk_teori",
+      "label": "Kritisk teori / Frankfurterskolen",
+      "family": "kritisk",
+      "disciplines": ["filosofi", "sosiologi"],
+      "weight": 1.2,
+      "thinkers": ["Theodor Adorno", "Max Horkheimer", "Herbert Marcuse", "Jürgen Habermas"],
+      "keywords": [
+        "instrumentell fornuft",
+        "kulturindustri",
+        "opplysningens dialektikk",
+        "kommunikativ handling",
+        "offentlighet",
+        "system",
+        "livsverden",
+        "ideologikritikk",
+        "totaladministrert samfunn",
+        "konformitet",
+        "frigjøring"
+      ]
+    },
+    {
+      "id": "fenomenologi",
+      "label": "Fenomenologi / kroppslig erfaring",
+      "family": "fortolkende",
+      "disciplines": ["filosofi", "psykologi"],
+      "weight": 1.0,
+      "thinkers": ["Edmund Husserl", "Maurice Merleau-Ponty", "Martin Heidegger"],
+      "keywords": [
+        "intensjonalitet",
+        "livsverden",
+        "kroppslig erfaring",
+        "den levde kroppen",
+        "værensanalyse",
+        "tilstedeværelse",
+        "bevissthet",
+        "horisont",
+        "fenomen",
+        "epoché",
+        "stemthet",
+        "kasthet"
+      ]
+    },
+    {
+      "id": "post_kolonial",
+      "label": "Postkolonial teori / orientalisme",
+      "family": "kritisk",
+      "disciplines": ["litteraturvitenskap", "sosiologi", "historie"],
+      "weight": 1.1,
+      "thinkers": ["Edward Said", "Gayatri Spivak", "Frantz Fanon", "Homi Bhabha"],
+      "keywords": [
+        "orientalisme",
+        "kolonialisme",
+        "dekolonisering",
+        "subaltern",
+        "den andre",
+        "hybriditet",
+        "mimicry",
+        "den tredje verden",
+        "rase",
+        "rasifisering",
+        "imperialisme",
+        "vestliggjøring"
+      ]
+    },
+    {
+      "id": "pragmatisme",
+      "label": "Pragmatisme / handling og erfaring",
+      "family": "praksisteori",
+      "disciplines": ["filosofi", "psykologi"],
+      "weight": 0.9,
+      "thinkers": ["John Dewey", "William James", "Charles Sanders Peirce", "Richard Rorty"],
+      "keywords": [
+        "erfaring",
+        "vane",
+        "habit",
+        "handling",
+        "konsekvens",
+        "problemløsning",
+        "demokrati",
+        "abduksjon",
+        "fallibilisme",
+        "antidualisme",
+        "praksis"
+      ]
+    },
+    {
+      "id": "sti_psykologi",
+      "label": "Psykologisk innsikt / selvforståelse",
+      "family": "fortolkende",
+      "disciplines": ["psykologi"],
+      "weight": 0.9,
+      "thinkers": ["Carl Rogers", "Donald Winnicott", "Carl Gustav Jung", "Viktor Frankl"],
+      "keywords": [
+        "selvbilde",
+        "tilknytning",
+        "skygge",
+        "individuasjon",
+        "mening",
+        "mestring",
+        "indre kritiker",
+        "forsvarsmekanisme",
+        "bevisstgjøring",
+        "integrering",
+        "regulering",
+        "aksept",
+        "selvempati"
+      ]
+    }
+  ]
+}

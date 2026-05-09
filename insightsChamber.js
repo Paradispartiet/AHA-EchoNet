@@ -63,12 +63,16 @@
 
   // ── Tekstlikhet (Jaccard) ───────────────────
 
+  // \W i JS-regex inneholder ikke æøå – derfor splitter vi eksplisitt
+  // på alt som ikke er en latinsk eller norsk bokstav/siffer.
+  const TOKEN_SPLIT_RE = /[^a-z0-9æøå]+/;
+
   function textSimilarity(a, b) {
     const tokensA = new Set(
-      a.toLowerCase().split(/\W+/).filter((t) => t.length > 2)
+      a.toLowerCase().split(TOKEN_SPLIT_RE).filter((t) => t.length > 2)
     );
     const tokensB = new Set(
-      b.toLowerCase().split(/\W+/).filter((t) => t.length > 2)
+      b.toLowerCase().split(TOKEN_SPLIT_RE).filter((t) => t.length > 2)
     );
     if (tokensA.size === 0 || tokensB.size === 0) return 0;
 
@@ -887,9 +891,21 @@ function createInsightFromSignal(signal) {
   "ogs", "ell"
 ]);
 
+  // Vanlige norske verb-preteritum/partisipp som ellers blir til
+  // "konsepter". Listen skal være kort og treffsikker; alt annet
+  // håndteres av canonicalizeConcepts i meta-laget.
+  const VERB_PRETERITUM = new Set([
+    "snakket", "diskuterte", "tenkte", "kjente", "merket", "syntes",
+    "sa", "skrev", "leste", "hørte", "så", "fikk", "fant",
+    "tenker", "snakker", "skriver", "leser", "hører",
+    "forteller", "fortalte", "spurte", "spør",
+    "begynte", "begynner", "endte", "ender", "ble", "blir",
+    "gjorde", "gjør", "klarte", "klarer"
+  ]);
+
   
   function tokenize(text) {
-    return text.toLowerCase().split(/\W+/).filter(Boolean);
+    return text.toLowerCase().split(TOKEN_SPLIT_RE).filter(Boolean);
   }
 
   function filterStopwords(tokens) {
@@ -952,9 +968,11 @@ function extractConcepts(text) {
     // STOPWORDS MÅ HAMRE PÅ DEN NORMALISERTE VERSJONEN
     if (STOPWORDS.has(norm)) continue;
 
-    // ord som “begrepet”, “snakket”, “diskuterte” → fjernes her:
-    if (norm.endsWith("et") && norm.length <= 8) continue; 
-    if (norm.endsWith("et") && norm.startsWith("begrep")) continue;
+    // Kast typiske verb-preteritum / partisipper (snakket, diskuterte
+    // osv.). Den gamle regelen "endsWith('et') && length<=8" tok også
+    // legitime substantiv som "arbeidet", "barnet", "huset", "året".
+    if (VERB_PRETERITUM.has(norm)) continue;
+    if (norm.startsWith("begrep") && norm.endsWith("et")) continue;
 
     // min-lengde og rent innehold
     if (norm.length <= 3) continue;
