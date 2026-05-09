@@ -1,13 +1,16 @@
 :root {
   --aha-bg: #07080d;
-  --aha-panel: rgba(255,255,255,.075);
-  --aha-panel-strong: rgba(255,255,255,.11);
-  --aha-line: rgba(255,255,255,.14);
+  --aha-surface: #11131b;
+  --aha-card: rgba(255,255,255,.072);
+  --aha-card-soft: rgba(255,255,255,.045);
+  --aha-line: rgba(255,255,255,.13);
+  --aha-line-yellow: rgba(246,200,0,.38);
   --aha-yellow: #f6c800;
+  --aha-yellow-soft: rgba(246,200,0,.14);
   --aha-text: #f7f3df;
   --aha-muted: rgba(247,243,223,.68);
   --aha-green: #87f7ae;
-  --aha-shadow: 0 24px 80px rgba(0,0,0,.42);
+  --aha-shadow: 0 26px 80px rgba(0,0,0,.42);
 }
 
 * { box-sizing: border-box; }
@@ -15,39 +18,54 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background: radial-gradient(circle at 12% 0%, rgba(246,200,0,.18), transparent 34%), linear-gradient(145deg, var(--aha-bg), #11131d 54%, #07080d);
+  background:
+    radial-gradient(circle at 18% -8%, rgba(246,200,0,.18), transparent 34%),
+    radial-gradient(circle at 92% 10%, rgba(255,255,255,.055), transparent 28%),
+    linear-gradient(145deg, var(--aha-bg), #11131d 58%, #07080d);
   color: var(--aha-text);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgba(255,255,255,.026) 1px, transparent 1px), linear-gradient(rgba(255,255,255,.026) 1px, transparent 1px);
+  background-size: 52px 52px;
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,.55), transparent 72%);
 }
 
 .aha-dashboard {
-  width: min(1180px, 100%);
+  position: relative;
+  width: min(1160px, 100%);
   margin: 0 auto;
-  padding: 22px;
+  padding: 20px;
 }
 
 .aha-app-header {
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 20;
   display: grid;
-  grid-template-columns: auto minmax(220px, 1fr) auto;
+  grid-template-columns: 220px minmax(0, 1fr) auto;
   align-items: center;
-  gap: 16px;
-  margin: 0 0 22px;
-  padding: 14px;
+  gap: 14px;
+  margin-bottom: 22px;
+  padding: 12px;
   border: 1px solid var(--aha-line);
-  border-radius: 28px;
+  border-radius: 24px;
   background: rgba(7,8,13,.82);
   backdrop-filter: blur(18px);
-  box-shadow: 0 18px 54px rgba(0,0,0,.28);
+  box-shadow: 0 18px 54px rgba(0,0,0,.22);
 }
 
 .aha-brand,
 .aha-user-strip,
 .aha-header-actions,
-.aha-auth-inline,
 .aha-profile-body,
 .aha-profile-name-row,
+.aha-auth-inline,
 .aha-panel-head {
   display: flex;
   align-items: center;
@@ -55,6 +73,7 @@ body {
 }
 
 .aha-brand {
+  min-width: 0;
   color: inherit;
   text-decoration: none;
 }
@@ -65,35 +84,89 @@ body {
   display: grid;
   place-items: center;
   border-radius: 999px;
-  background: radial-gradient(circle at 30% 22%, #fff4a6, var(--aha-yellow) 46%, #9b7800);
+  background: radial-gradient(circle at 30% 20%, #fff6b5, var(--aha-yellow) 45%, #9b7800);
   color: #12100a;
   font-weight: 950;
-  box-shadow: 0 0 0 3px rgba(246,200,0,.18), 0 18px 44px rgba(246,200,0,.16);
+  box-shadow: 0 0 0 3px rgba(246,200,0,.14), 0 18px 44px rgba(246,200,0,.14);
 }
 
-.aha-brand-mark { width: 48px; height: 48px; font-size: 1.35rem; }
-.aha-avatar { width: 42px; height: 42px; flex: 0 0 auto; }
-.aha-profile-avatar { width: 104px; height: 104px; font-size: 2.15rem; flex: 0 0 auto; }
-.aha-brand strong, .aha-brand small, .aha-user-copy strong, .aha-user-copy small { display: block; }
-.aha-brand small, .aha-user-copy small, .aha-profile-copy p, .aha-section-heading p, .aha-login-card p, .aha-profile-name-form p, .aha-auth-output, .aha-status-updated { color: var(--aha-muted); }
-.aha-user-strip { min-width: 0; padding: 8px 10px; border-radius: 20px; background: rgba(255,255,255,.055); }
+.aha-brand-mark { width: 46px; height: 46px; font-size: 1.25rem; }
+.aha-avatar { width: 44px; height: 44px; flex: 0 0 auto; }
+.aha-profile-avatar { width: 112px; height: 112px; font-size: 2.2rem; flex: 0 0 auto; }
+
+.aha-brand strong,
+.aha-brand small,
+.aha-user-copy strong,
+.aha-user-copy small,
+.aha-mini-stat strong,
+.aha-mini-stat span,
+.aha-stat strong,
+.aha-stat span { display: block; }
+
+.aha-brand small,
+.aha-user-copy small,
+.aha-profile-copy p,
+.aha-section-heading p,
+.aha-side-card p,
+.aha-profile-name-form p,
+.aha-auth-output,
+.aha-status-updated { color: var(--aha-muted); }
+
+.aha-user-strip {
+  justify-self: center;
+  width: min(100%, 480px);
+  min-width: 0;
+  padding: 8px 11px;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 999px;
+  background: rgba(255,255,255,.055);
+}
+
 .aha-user-copy { min-width: 0; }
 .aha-user-copy strong, .aha-user-copy small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .aha-header-actions { justify-content: flex-end; }
+
+.aha-ghost-link,
+.aha-ghost-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  border: 1px solid var(--aha-line);
+  border-radius: 999px;
+  background: rgba(255,255,255,.065);
+  color: var(--aha-text);
+  padding: 10px 14px;
+  text-decoration: none;
+  font-weight: 850;
+}
+
+button {
+  border: 0;
+  border-radius: 999px;
+  background: var(--aha-yellow);
+  color: #12100a;
+  padding: 12px 16px;
+  font: inherit;
+  font-weight: 920;
+  cursor: pointer;
+}
+
+button:hover,
+.aha-ghost-link:hover { filter: brightness(1.07); }
 
 .aha-status-pill,
 .aha-profile-auth-state {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   width: fit-content;
-  margin-bottom: 4px;
-  padding: 4px 9px;
+  padding: 5px 10px;
   border-radius: 999px;
   background: rgba(255,255,255,.09);
   color: var(--aha-muted);
   font-size: .78rem;
-  font-weight: 800;
+  font-weight: 850;
 }
 
 .aha-status-pill::before,
@@ -110,96 +183,261 @@ body {
 .aha-status-pill.is-signed-in::before,
 .aha-profile-auth-state.is-signed-in::before { background: var(--aha-green); }
 .aha-status-pill.is-missing-profile,
-.aha-profile-auth-state.is-missing-profile { background: rgba(246,200,0,.14); color: #ffde59; }
+.aha-profile-auth-state.is-missing-profile { background: var(--aha-yellow-soft); color: #ffe27a; }
 .aha-status-pill.is-missing-profile::before,
 .aha-profile-auth-state.is-missing-profile::before { background: var(--aha-yellow); }
-.aha-auth-inline.is-hidden, .aha-ghost-button.is-hidden, .aha-login-card.is-hidden, .aha-profile-name-form.is-hidden { display: none !important; }
 
-input, button { font: inherit; }
-.aha-auth-inline input, .aha-profile-name-row input {
-  min-width: 210px;
-  border: 1px solid var(--aha-line);
-  border-radius: 999px;
-  background: rgba(255,255,255,.08);
-  color: var(--aha-text);
-  padding: 11px 14px;
-  outline: none;
+.aha-auth-inline.is-hidden,
+.aha-ghost-button.is-hidden,
+.aha-side-card.is-hidden,
+.aha-login-card.is-hidden,
+.aha-profile-name-form.is-hidden { display: none !important; }
+
+.aha-hero-profile {
+  display: grid;
+  grid-template-columns: minmax(0, 1.8fr) minmax(260px, .72fr);
+  gap: 18px;
+  align-items: stretch;
+  margin-bottom: 34px;
 }
-.aha-profile-name-row input { flex: 1; border-radius: 16px; }
-.aha-auth-inline input:focus, .aha-profile-name-row input:focus { border-color: var(--aha-yellow); box-shadow: 0 0 0 3px rgba(246,200,0,.18); }
 
-button {
-  border: 0;
-  border-radius: 999px;
-  background: var(--aha-yellow);
-  color: #12100a;
-  padding: 11px 15px;
-  font-weight: 900;
-  cursor: pointer;
-}
-.aha-ghost-button { border: 1px solid var(--aha-line); background: rgba(255,255,255,.07); color: var(--aha-text); }
-button:hover { filter: brightness(1.06); }
-
-.aha-hero-profile { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 18px; align-items: stretch; margin-bottom: 30px; }
-.aha-profile-main-card, .aha-login-card, .aha-panel, .aha-tile {
+.aha-profile-main-card,
+.aha-side-card,
+.aha-panel,
+.aha-tile {
   position: relative;
   overflow: hidden;
   border: 1px solid var(--aha-line);
-  border-radius: 30px;
-  background: linear-gradient(145deg, rgba(255,255,255,.10), rgba(255,255,255,.045));
+  border-radius: 32px;
+  background: linear-gradient(145deg, rgba(255,255,255,.10), rgba(255,255,255,.04));
   box-shadow: var(--aha-shadow);
 }
-.aha-profile-main-card { min-height: 380px; padding: 26px; }
-.aha-profile-topline { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 26px; }
-.eyebrow { margin: 0 0 8px; letter-spacing: .12em; text-transform: uppercase; color: var(--aha-yellow); font-size: .78rem; font-weight: 950; }
-.aha-profile-copy h1 { margin: 0; font-size: clamp(2rem, 6vw, 4.6rem); line-height: .95; letter-spacing: -.06em; }
-.aha-profile-copy p { margin: 12px 0 0; line-height: 1.45; }
-.aha-profile-id-row { display: inline-flex; align-items: center; gap: 10px; margin-top: 16px; padding: 8px 12px; border-radius: 999px; background: rgba(255,255,255,.07); color: var(--aha-muted); }
+
+.aha-profile-main-card {
+  min-height: 440px;
+  padding: clamp(22px, 4vw, 36px);
+}
+
+.aha-profile-main-card::after {
+  content: "";
+  position: absolute;
+  right: -120px;
+  bottom: -160px;
+  width: 420px;
+  height: 420px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(246,200,0,.22), transparent 65%);
+  pointer-events: none;
+}
+
+.aha-profile-topline {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 34px;
+  position: relative;
+  z-index: 1;
+}
+
+.aha-profile-label {
+  color: var(--aha-muted);
+  font-size: .92rem;
+  font-weight: 800;
+}
+
+.aha-profile-body {
+  align-items: center;
+  gap: 24px;
+  position: relative;
+  z-index: 1;
+}
+
+.eyebrow {
+  margin: 0 0 10px;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+  color: var(--aha-yellow);
+  font-size: .78rem;
+  font-weight: 950;
+}
+
+.aha-profile-copy h1 {
+  margin: 0;
+  max-width: 780px;
+  font-size: clamp(2.4rem, 7vw, 5.8rem);
+  line-height: .9;
+  letter-spacing: -.075em;
+}
+
+.aha-profile-copy p {
+  max-width: 560px;
+  margin: 16px 0 0;
+  line-height: 1.5;
+  font-size: clamp(1rem, 2vw, 1.18rem);
+}
+
+.aha-profile-id-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 18px;
+  padding: 9px 13px;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 999px;
+  background: rgba(255,255,255,.065);
+  color: var(--aha-muted);
+}
+
 .aha-profile-id-row strong { color: var(--aha-text); }
 
-.aha-profile-name-form { margin-top: 22px; padding: 16px; border: 1px solid rgba(246,200,0,.25); border-radius: 22px; background: rgba(246,200,0,.08); }
+.aha-profile-name-form {
+  position: relative;
+  z-index: 2;
+  margin-top: 26px;
+  padding: 16px;
+  border: 1px solid rgba(246,200,0,.24);
+  border-radius: 22px;
+  background: rgba(246,200,0,.08);
+}
+
 .aha-profile-name-form label { display: block; margin-bottom: 9px; font-weight: 900; }
 .aha-profile-name-form p, .aha-auth-output { margin: 10px 0 0; }
-.aha-profile-stats { display: grid; grid-template-columns: repeat(6, minmax(0,1fr)); gap: 10px; margin-top: 24px; }
-.aha-mini-stat, .aha-stat { padding: 13px; border-radius: 18px; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.08); }
-.aha-mini-stat strong, .aha-mini-stat span, .aha-stat strong, .aha-stat span { display: block; }
-.aha-mini-stat strong, .aha-stat strong { color: var(--aha-text); font-size: 1.12rem; }
-.aha-mini-stat span, .aha-stat span { margin-top: 4px; color: var(--aha-muted); font-size: .84rem; }
 
-.aha-login-card { padding: 22px; }
-.aha-login-card h2 { margin: 0 0 10px; font-size: 1.55rem; }
-.aha-login-card p { line-height: 1.45; }
-.aha-section-heading { margin: 4px 0 16px; }
-.aha-section-heading h2, .aha-panel h2 { margin: 0; font-size: clamp(1.45rem, 3vw, 2.15rem); }
-.aha-section-heading p { margin: 8px 0 0; }
+input {
+  width: 100%;
+  min-height: 46px;
+  border: 1px solid var(--aha-line);
+  border-radius: 16px;
+  background: rgba(255,255,255,.08);
+  color: var(--aha-text);
+  padding: 12px 14px;
+  font: inherit;
+  outline: none;
+}
 
-.aha-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 16px; margin: 0 0 28px; }
-.aha-tile { min-height: 190px; display: flex; flex-direction: column; gap: 10px; padding: 20px; color: inherit; text-decoration: none; text-align: left; transition: transform .16s ease, border-color .16s ease, background .16s ease; }
-.aha-tile:hover { transform: translateY(-3px); border-color: rgba(246,200,0,.42); background: linear-gradient(145deg, rgba(246,200,0,.13), rgba(255,255,255,.06)); }
-.aha-tile-icon { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 16px; background: rgba(246,200,0,.15); color: var(--aha-yellow); font-weight: 950; font-size: 1.25rem; }
-.aha-tile strong { font-size: 1.24rem; }
+input:focus { border-color: var(--aha-yellow); box-shadow: 0 0 0 3px rgba(246,200,0,.18); }
+.aha-profile-name-row input { flex: 1; }
+
+.aha-profile-stats {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0,1fr));
+  gap: 10px;
+  margin-top: 34px;
+}
+
+.aha-mini-stat,
+.aha-stat {
+  padding: 14px;
+  border: 1px solid rgba(255,255,255,.075);
+  border-radius: 18px;
+  background: rgba(255,255,255,.065);
+}
+
+.aha-mini-stat strong,
+.aha-stat strong { color: var(--aha-text); font-size: 1.12rem; }
+.aha-mini-stat span,
+.aha-stat span { margin-top: 5px; color: var(--aha-muted); font-size: .84rem; }
+
+.aha-side-card {
+  align-self: stretch;
+  padding: 22px;
+  background: linear-gradient(165deg, rgba(246,200,0,.12), rgba(255,255,255,.045));
+}
+
+.aha-side-card h2 {
+  margin: 0 0 10px;
+  font-size: clamp(1.45rem, 3vw, 2.1rem);
+  letter-spacing: -.04em;
+}
+
+.aha-side-card p { line-height: 1.48; }
+.aha-auth-inline { flex-direction: column; align-items: stretch; margin-top: 16px; }
+
+.aha-section-heading {
+  margin: 0 0 16px;
+  max-width: 720px;
+}
+
+.aha-section-heading h2,
+.aha-panel h2 {
+  margin: 0;
+  font-size: clamp(1.6rem, 3vw, 2.35rem);
+  letter-spacing: -.04em;
+}
+
+.aha-section-heading p { margin: 8px 0 0; line-height: 1.45; }
+
+.aha-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0,1fr));
+  gap: 14px;
+  margin-bottom: 28px;
+}
+
+.aha-tile {
+  min-height: 176px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
+  color: inherit;
+  text-decoration: none;
+  text-align: left;
+  transition: transform .16s ease, border-color .16s ease, background .16s ease;
+}
+
+.aha-tile:hover {
+  transform: translateY(-3px);
+  border-color: var(--aha-line-yellow);
+  background: linear-gradient(145deg, rgba(246,200,0,.12), rgba(255,255,255,.05));
+}
+
+.aha-tile-icon {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 16px;
+  background: var(--aha-yellow-soft);
+  color: var(--aha-yellow);
+  font-weight: 950;
+  font-size: 1.25rem;
+}
+
+.aha-tile strong { font-size: 1.18rem; }
 .aha-tile span:not(.aha-tile-icon) { color: var(--aha-muted); line-height: 1.35; }
 .aha-tile small { margin-top: auto; width: fit-content; padding: 7px 10px; border-radius: 999px; background: rgba(255,255,255,.08); color: var(--aha-text); font-weight: 800; }
 .aha-button-tile { font: inherit; }
-.aha-panel { margin-top: 0; padding: 20px; }
+
+.aha-panel { padding: 20px; }
 .aha-panel-head { justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
 .aha-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(155px,1fr)); gap: 10px; }
-.aha-stat-source { border-color: rgba(246,200,0,.25); background: rgba(246,200,0,.08); }
-.aha-dashboard-output { max-height: 280px; overflow: auto; margin: 14px 0 0; padding: 14px; border-radius: 18px; background: rgba(0,0,0,.22); color: var(--aha-muted); white-space: pre-wrap; }
+.aha-stat-source { border-color: rgba(246,200,0,.24); background: rgba(246,200,0,.08); }
+.aha-dashboard-output { max-height: 260px; overflow: auto; margin: 14px 0 0; padding: 14px; border-radius: 18px; background: rgba(0,0,0,.22); color: var(--aha-muted); white-space: pre-wrap; }
 
 @media (max-width: 940px) {
-  .aha-app-header, .aha-hero-profile { grid-template-columns: 1fr; }
-  .aha-header-actions, .aha-auth-inline, .aha-profile-name-row { width: 100%; flex-direction: column; align-items: stretch; }
-  .aha-auth-inline input, .aha-profile-name-row input { min-width: 0; width: 100%; }
+  .aha-app-header,
+  .aha-hero-profile { grid-template-columns: 1fr; }
+  .aha-user-strip { justify-self: stretch; width: 100%; }
+  .aha-header-actions { justify-content: stretch; }
+  .aha-ghost-link, .aha-ghost-button { flex: 1; }
   .aha-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
   .aha-profile-stats { grid-template-columns: repeat(3, minmax(0,1fr)); }
 }
 
 @media (max-width: 620px) {
   .aha-dashboard { padding: 14px; }
-  .aha-profile-main-card, .aha-login-card, .aha-panel, .aha-tile, .aha-app-header { border-radius: 22px; }
+  .aha-profile-main-card,
+  .aha-side-card,
+  .aha-panel,
+  .aha-tile,
+  .aha-app-header { border-radius: 22px; }
   .aha-profile-body { flex-direction: column; align-items: flex-start; }
   .aha-profile-avatar { width: 82px; height: 82px; }
-  .aha-grid, .aha-profile-stats { grid-template-columns: 1fr; }
-  .aha-tile { min-height: 160px; }
+  .aha-grid,
+  .aha-profile-stats { grid-template-columns: 1fr; }
+  .aha-tile { min-height: 150px; }
 }
