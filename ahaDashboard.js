@@ -193,20 +193,16 @@
     const displayName = cleanName(profile?.display_name || "");
     const signedIn = Boolean(user?.id);
     const missingProfile = signedIn && !displayName;
-    const visibleName = displayName || user?.email || "Ikke innlogget";
     const profileTitle = displayName || (signedIn ? "Opprett AHA-profil" : "Din AHA-profil");
     const avatarText = initials(displayName || user?.email || "AHA");
     const statusText = !signedIn ? "Ikke innlogget" : missingProfile ? "Mangler profilnavn" : "Innlogget";
     const statusClass = !signedIn ? "is-signed-out" : missingProfile ? "is-missing-profile" : "is-signed-in";
 
-    setText("aha-header-name", visibleName);
-    setText("aha-header-meta", signedIn ? `AHA-ID: ${shortId(user.id)}` : "Logg inn for personlig profil");
     setText("aha-profile-name", profileTitle);
     setText("aha-profile-subtitle", signedIn
       ? "Dette er din personlige innsiktsmotor."
       : "Logg inn for å gjøre AHA til din personlige innsiktsmotor.");
     setText("aha-profile-id", signedIn ? shortId(user.id) : "Ikke innlogget");
-    setText("aha-header-avatar", avatarText);
     setText("aha-profile-avatar", avatarText);
     setText("aha-header-status", statusText);
     setText("aha-auth-status", statusText);
