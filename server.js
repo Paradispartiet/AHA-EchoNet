@@ -48,6 +48,9 @@ app.get("/api/aha-agent/health", (_req, res) => {
     service: "aha-agent",
     embed_model: VOYAGE_MODEL,
     has_key: Boolean(VOYAGE_API_KEY),
+    has_openai_key: Boolean(OPENAI_API_KEY),
+    openai_model: OPENAI_MODEL,
+    has_voyage_key: Boolean(VOYAGE_API_KEY),
     time: new Date().toISOString()
   });
 });
@@ -135,31 +138,56 @@ app.post("/api/aha-agent/chat", async (req, res) => {
 
     const systemInstruction = "Du er AHA-agenten. Du er ikke en generell chatbot. Du svarer ut fra AHA-state: innsikter, begreper, metaprofil, dimensjoner, narrativ, lignende innsikter og brukerens egne data. Du skal hjelpe brukeren å forstå hva materialet deres viser. Svar kort, presist og strukturerende.\n\nSvar alltid med disse fire delene:\n1. Kort svar\n2. Hva AHA ser\n3. Begreper / mønstre\n4. Neste beste spørsmål eller læringssteg";
 
-    const response = await openai.responses.create({
-      model: OPENAI_MODEL,
-      input: [
-        { role: "system", content: systemInstruction },
-        {
-          role: "user",
-          content: JSON.stringify({
-            message: message.trim(),
-            ai_state: aiState,
-            similar_insights: similarInsights,
-            profile
-          })
-        }
-      ]
+    const userPayload = JSON.stringify({
+      message: message.trim(),
+      ai_state: aiState,
+      similar_insights: similarInsights,
+      profile
     });
+
+    let reply = "";
+    let model = OPENAI_MODEL;
+    let responseId = null;
+
+    if (openai.responses && typeof openai.responses.create === "function") {
+      const response = await openai.responses.create({
+        model: OPENAI_MODEL,
+        input: [
+          { role: "system", content: systemInstruction },
+          { role: "user", content: userPayload }
+        ]
+      });
+      reply = response.output_text || "";
+      model = response.model || OPENAI_MODEL;
+      responseId = response.id || null;
+    } else {
+      const completion = await openai.chat.completions.create({
+        model: OPENAI_MODEL,
+        messages: [
+          { role: "system", content: systemInstruction },
+          { role: "user", content: userPayload }
+        ]
+      });
+      reply = completion.choices?.[0]?.message?.content || "";
+      model = completion.model || OPENAI_MODEL;
+      responseId = completion.id || null;
+    }
 
     res.json({
       ok: true,
-      reply: response.output_text || "",
-      model: response.model || OPENAI_MODEL,
-      response_id: response.id || null
+      reply,
+      model,
+      response_id: responseId
     });
   } catch (err) {
     console.error("[aha-agent] chat crashed", err);
-    res.status(500).json({ ok: false, error: "internal_error" });
+    res.status(500).json({
+      ok: false,
+      error: "openai_error",
+      message: err?.message || "Unknown OpenAI error",
+      status: err?.status || err?.code || null,
+      type: err?.type || null
+    });
   }
 });
 
