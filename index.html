@@ -34,13 +34,15 @@
         <div class="aha-profile-body">
           <div id="aha-profile-avatar" class="aha-profile-avatar">A</div>
           <div class="aha-profile-copy">
-            <p class="eyebrow">AHA = jeg</p>
-            <h1 id="aha-profile-name">Din AHA-profil</h1>
-            <p id="aha-profile-subtitle">Dette er din personlige innsiktsmotor.</p>
+            <p class="eyebrow">AHA</p>
+            <h1 id="aha-profile-name">Min AHA-profil</h1>
+            <p id="aha-profile-subtitle">Din personlige innsiktsmotor</p>
+            <p id="aha-profile-connection" class="aha-profile-connection">Logget inn · History Go koblet til</p>
             <div class="aha-profile-id-row">
               <span>AHA-ID</span>
               <strong id="aha-profile-id">Ikke innlogget</strong>
             </div>
+            <a class="aha-tile-btn aha-tile-btn-secondary aha-profile-link" href="auth-callback.html">Åpne profil</a>
           </div>
         </div>
 
@@ -77,14 +79,43 @@
       </aside>
     </section>
 
+    <section class="aha-panel aha-action-panel" aria-label="Hovedhandlinger">
+      <p class="eyebrow">Neste steg</p>
+      <h2>Hva vil du gjøre nå?</h2>
+      <div class="aha-action-buttons">
+        <a class="aha-cta-primary" href="chat.html">Snakk med AHA</a>
+        <div class="aha-cta-secondary-row">
+          <button class="aha-cta-secondary" id="btn-import-hg-primary" type="button">Importer fra History Go</button>
+          <a class="aha-cta-secondary" href="#aha-insights-activity">Se mine innsikter</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="aha-panel aha-historygo-panel" aria-label="History Go">
+      <p class="eyebrow">History Go</p>
+      <h2>Samle og importer</h2>
+      <p>Samle steder, personer, badges og kunnskap – og importer det til AHA.</p>
+      <div class="aha-tile-actions">
+        <a class="aha-tile-btn aha-tile-btn-primary" href="/History-Go/">Åpne History Go</a>
+        <button class="aha-tile-btn aha-tile-btn-secondary" id="btn-import-hg-secondary" type="button">Importer data til AHA</button>
+      </div>
+    </section>
+
+    <section class="aha-panel aha-insights-panel" id="aha-insights-activity" aria-label="Mine innsikter">
+      <p class="eyebrow">Mine innsikter</p>
+      <h2>Siste aktivitet</h2>
+      <p id="aha-latest-insight">Ingen importerte innsikter ennå</p>
+      <small id="aha-insight-empty-hint">Importer fra History Go eller start en samtale med AHA.</small>
+    </section>
+
     <section class="aha-section-heading" aria-label="AHA moduler overskrift">
       <p class="eyebrow">Moduler</p>
       <h2>Arbeidsflaten din</h2>
-      <p>Start i profilen. Gå videre til chat, notater, galleri, feed, insta eller History Go-import når du trenger det.</p>
+      <p>Snakk, samle, forstå og bygg videre i AHA.</p>
     </section>
 
     <section class="aha-grid" aria-label="AHA moduler">
-      <a class="aha-tile" href="chat.html" data-module="source_events">
+      <a class="aha-tile aha-tile-priority" href="chat.html" data-module="source_events">
         <span class="aha-tile-icon">✦</span>
         <strong>AHA Chat</strong>
         <span>Refleksjon og innsiktsmotor</span>
@@ -114,7 +145,7 @@
         <span>Bilde- og videostrøm</span>
         <small id="aha-module-insta-status">0 innlegg</small>
       </a>
-      <article class="aha-tile aha-home-tile" id="aha-historygo-home" data-module="imports" role="link" tabindex="0" aria-label="Åpne History Go">
+      <article class="aha-tile aha-home-tile aha-tile-priority" id="aha-historygo-home" data-module="imports" role="link" tabindex="0" aria-label="Åpne History Go">
         <span class="aha-tile-icon">⌁</span>
         <strong>History Go</strong>
         <span>Åpne History Go-universet ditt</span>
@@ -137,6 +168,13 @@
       <div id="aha-dashboard-stats" class="aha-stats">Laster status …</div>
       <pre id="out" class="aha-dashboard-output"></pre>
     </section>
+
+    <nav class="aha-mobile-nav" aria-label="Mobilnavigasjon">
+      <a href="index.html" aria-current="page">Home</a>
+      <a href="chat.html">Chat</a>
+      <a href="#aha-insights-activity">Innsikter</a>
+      <a href="auth-callback.html">Profil</a>
+    </nav>
   </main>
 
   <script src="insightsChamber.js"></script>
