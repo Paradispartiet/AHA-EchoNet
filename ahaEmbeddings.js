@@ -240,6 +240,59 @@
     return { ok: true, matches };
   }
 
+  // Kalibrerer merge-terskler basert på observerte similarity-scores.
+  // Dette påvirker ikke eksisterende embedding-flyt; funksjonen er kun
+  // et analyseverktøy som kan kalles eksplisitt fra UI/devtools.
+  function calibrateMergeThresholds(scores, options) {
+    const raw = Array.isArray(scores) ? scores : [];
+    const values = raw
+      .map((v) => Number(v))
+      .filter((v) => Number.isFinite(v))
+      .sort((a, b) => a - b);
+
+    if (!values.length) {
+      return {
+        ok: false,
+        reason: "no_scores",
+        count: 0,
+        thresholds: { strict: 0.92, balanced: 0.85, broad: 0.75 }
+      };
+    }
+
+    const opts = options || {};
+    const q = (p) => {
+      const n = values.length;
+      if (n === 1) return values[0];
+      const idx = Math.max(0, Math.min(n - 1, (n - 1) * p));
+      const lo = Math.floor(idx);
+      const hi = Math.ceil(idx);
+      if (lo === hi) return values[lo];
+      const t = idx - lo;
+      return values[lo] * (1 - t) + values[hi] * t;
+    };
+
+    const floor = Number.isFinite(opts.min) ? Number(opts.min) : 0.5;
+    const ceil = Number.isFinite(opts.max) ? Number(opts.max) : 0.99;
+    const clamp = (v) => Math.max(floor, Math.min(ceil, Number(v)));
+
+    const strict = clamp(q(0.9));
+    const balanced = clamp(q(0.75));
+    const broad = clamp(q(0.6));
+
+    return {
+      ok: true,
+      count: values.length,
+      min: values[0],
+      max: values[values.length - 1],
+      median: q(0.5),
+      thresholds: {
+        strict: Math.max(strict, balanced, broad),
+        balanced: Math.max(Math.min(strict, balanced), broad),
+        broad: Math.min(strict, balanced, broad)
+      }
+    };
+  }
+
   global.AHAEmbeddings = {
     embedAndStore,
     embedAllPending,
@@ -247,6 +300,7 @@
     findSimilarToInsight,
     health,
     isConfigured,
+    calibrateMergeThresholds,
     DEFAULT_MODEL
   };
 })(window);
