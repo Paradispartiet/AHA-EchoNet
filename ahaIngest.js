@@ -46,6 +46,18 @@
     const text = String(src.text || src.title || inp.text || inp.title || "").trim();
 
     if (!text) return { ok: false, reason: "empty_text", sourceEvent };
+
+    // skip_insight: kilden vil at materialet skal logges som source event,
+    // men IKKE bli en ordinær brukerinnsikt. Brukes f.eks. for AHA-agentens
+    // egne svar — de skal vises i chat og ligge i source-loggen, men ikke
+    // forurense innsiktskammeret med AI-oppsummeringer.
+    if (inp.skip_insight === true || src.skip_insight === true) {
+      try {
+        global.dispatchEvent(new CustomEvent("aha:source-only", { detail: { sourceEvent: src } }));
+      } catch {}
+      return { ok: true, sourceEvent: src, signal: null, meta: null, skipped_insight: true };
+    }
+
     if (!global.InsightsEngine) return { ok: false, reason: "missing_InsightsEngine", sourceEvent };
 
     const themeId = String(
@@ -93,7 +105,7 @@
     // Fire-and-forget berikelse: la emne-matcheren foreslå hvilke
     // fagområder/emner teksten ligner mest på, og fest dem på den
     // resulterende insighten. Hovedflyten skal aldri vente på dette.
-    enrichWithEmneMatcher(signal).catch((err) => {
+    enrichWithEmneMatcher(signal, meta).catch((err) => {
       console.warn("AHAIngest: emne-berikelse feilet", err);
     });
 
@@ -120,7 +132,7 @@
     return false;
   }
 
-  async function enrichWithEmneMatcher(signal) {
+  async function enrichWithEmneMatcher(signal, meta) {
     if (!signal || !signal.text) return;
     if (!global.AHAEmneMatcher || typeof global.AHAEmneMatcher.matchAllSubjects !== "function") return;
     // History Go har egen lærings-/innsiktsmotor og eksporterer allerede
@@ -135,16 +147,22 @@
     const insights = chamber?.insights || [];
     if (!insights.length) return;
 
-    // Finn insighten som dette signalet endte opp på. Matchen skjer rett
-    // etter addSignalToChamber, så insighten er enten siste opprettede
-    // (signal seedet en ny) eller den med last_updated === signal.timestamp.
+    // Foretrukket: hent insight via meta.insight_id fra
+    // addSignalToChamberWithMeta. Det gjør at vi treffer riktig insight
+    // selv om flere signaler ingestes tett etter hverandre og
+    // last_updated-feltet endres mens denne async-jobben venter.
     let target = null;
-    for (let i = insights.length - 1; i >= 0; i--) {
-      const ins = insights[i];
-      if (ins.subject_id !== signal.subject_id || ins.theme_id !== signal.theme_id) continue;
-      if (ins.last_updated === signal.timestamp || ins.first_seen === signal.timestamp) {
-        target = ins;
-        break;
+    if (meta?.insight_id) {
+      target = insights.find((ins) => ins.id === meta.insight_id) || null;
+    }
+    if (!target) {
+      for (let i = insights.length - 1; i >= 0; i--) {
+        const ins = insights[i];
+        if (ins.subject_id !== signal.subject_id || ins.theme_id !== signal.theme_id) continue;
+        if (ins.last_updated === signal.timestamp || ins.first_seen === signal.timestamp) {
+          target = ins;
+          break;
+        }
       }
     }
     if (!target) return;

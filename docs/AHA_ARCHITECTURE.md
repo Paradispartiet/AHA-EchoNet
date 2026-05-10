@@ -103,6 +103,24 @@ Hvis `AHAIngest` ikke er lastet på siden (f.eks. en eldre cache), faller
 chat tilbake til å skrive direkte til `InsightsEngine.addSignalToChamber`
 og logge source event manuelt. Standardflyten er ingest.
 
+### AHA-agentens svar er ikke brukerinnsikter
+
+AHA-agentens egne svar vises i chatten og logges i source-loggen, men
+skal **ikke** bli ordinære insights — AI-oppsummeringer hører ikke
+hjemme i innsiktskammeret. `AHAIngest.ingest(input)` aksepterer derfor
+flagget `skip_insight: true`:
+
+```text
+input.skip_insight === true
+  → AHASources logger source eventet
+  → ingest hopper over createSignalFromMessage og addSignalToChamber
+  → ingest fyrer aha:source-only i stedet for aha:ingested
+  → returnerer { ok: true, signal: null, meta: null, skipped_insight: true }
+```
+
+Brukermeldinger fra chat ingestes som vanlig (uten `skip_insight`).
+Agent-svaret ingestes med `skip_insight: true`.
+
 ## ahaEmneMatcher er et forslagssystem
 
 `ahaEmneMatcher.js` brukes av `AHAIngest` til å foreslå hvilke emner en

@@ -253,6 +253,10 @@
           const agent = await askAhaAgent(text);
           const reply = String(agent?.reply || "").trim() || "AHA-agenten returnerte tomt svar.";
           appendChat("aha", reply);
+          // AHA-agentens egne svar skal vises i chatten og logges som
+          // source event, men IKKE bli en ordinær brukerinnsikt. AI-
+          // oppsummeringer hører ikke hjemme i innsiktskammeret. skip_insight
+          // får AHAIngest til å stoppe etter source-event-loggen.
           global.AHAIngest?.ingest?.({
             source_type: "aha_agent",
             source_app: "aha_chat",
@@ -261,6 +265,7 @@
             text: reply,
             user_created: false,
             imported: false,
+            skip_insight: true,
             created_at: new Date().toISOString(),
             meta: { response_id: agent?.response_id || null, model: agent?.model || null }
           });
