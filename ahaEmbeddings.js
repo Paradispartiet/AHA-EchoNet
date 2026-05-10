@@ -243,6 +243,8 @@
   // Kalibrerer merge-terskler basert på observerte similarity-scores.
   // Dette påvirker ikke eksisterende embedding-flyt; funksjonen er kun
   // et analyseverktøy som kan kalles eksplisitt fra UI/devtools.
+  // Lavnivå: tar en tallrekke. Bruk calibrateMergeThresholdsForChamber
+  // hvis du vil starte fra et chamber-objekt.
   function calibrateMergeThresholds(scores, options) {
     const raw = Array.isArray(scores) ? scores : [];
     const values = raw
@@ -293,6 +295,205 @@
     };
   }
 
+  // Henter embeddings fra Supabase for alle insights i chamberet (hopper
+  // over de som har merged_into satt), grupperer på subject_id+theme_id,
+  // beregner cosine for alle par innen samme gruppe, og returnerer rå
+  // scores, histogram, topp-K mest like par, per-gruppe statistikk og
+  // terskler. Ren analyse: ingen skriving, ingen merging.
+  async function calibrateMergeThresholdsForChamber(chamber, options) {
+    const opts = options || {};
+    const insights = (chamber?.insights || []).filter(
+      (i) => i && i.id && !i.merged_into
+    );
+    if (insights.length < 2) {
+      return {
+        ok: false,
+        reason: "not_enough_insights",
+        insight_count: insights.length
+      };
+    }
+
+    const client = db();
+    if (!client) return { ok: false, reason: "no_supabase" };
+    const pid = await profileId();
+    if (!pid) return { ok: false, reason: "not_signed_in" };
+
+    const ids = insights.map((i) => i.id);
+    const rows = [];
+    const chunkSize = 500;
+    for (let i = 0; i < ids.length; i += chunkSize) {
+      const slice = ids.slice(i, i + chunkSize);
+      const { data, error } = await client
+        .from(TABLE)
+        .select("id, subject_id, theme_id, embedding")
+        .in("id", slice);
+      if (error) return { ok: false, error };
+      if (data) rows.push(...data);
+    }
+
+    const byId = new Map();
+    insights.forEach((ins) => byId.set(ins.id, ins));
+
+    const items = [];
+    for (const r of rows) {
+      let vec = r.embedding;
+      if (typeof vec === "string") {
+        try { vec = JSON.parse(vec); } catch { vec = null; }
+      }
+      if (!Array.isArray(vec) || !vec.length) continue;
+      const ins = byId.get(r.id);
+      if (!ins) continue;
+      let norm = 0;
+      for (let i = 0; i < vec.length; i++) norm += vec[i] * vec[i];
+      norm = Math.sqrt(norm);
+      if (!Number.isFinite(norm) || norm === 0) continue;
+      const unit = new Array(vec.length);
+      for (let i = 0; i < vec.length; i++) unit[i] = vec[i] / norm;
+      items.push({
+        id: r.id,
+        subject_id: r.subject_id || ins.subject_id || null,
+        theme_id: r.theme_id || ins.theme_id || null,
+        title: ins.title || "",
+        summary: ins.summary || "",
+        unit
+      });
+    }
+
+    const missingEmbeddings = insights.length - items.length;
+
+    if (items.length < 2) {
+      return {
+        ok: false,
+        reason: "not_enough_embeddings",
+        insight_count: insights.length,
+        embedded_count: items.length,
+        missing_embeddings: missingEmbeddings
+      };
+    }
+
+    const groupKey = (it) => `${it.subject_id || ""}::${it.theme_id || ""}`;
+    const groupMap = new Map();
+    for (const it of items) {
+      const k = groupKey(it);
+      if (!groupMap.has(k)) groupMap.set(k, []);
+      groupMap.get(k).push(it);
+    }
+
+    const scores = [];
+    const allPairs = [];
+    const groupStats = [];
+
+    for (const [key, list] of groupMap) {
+      if (list.length < 2) {
+        groupStats.push({
+          key,
+          subject_id: list[0]?.subject_id || null,
+          theme_id: list[0]?.theme_id || null,
+          insight_count: list.length,
+          pair_count: 0,
+          min: null,
+          median: null,
+          max: null
+        });
+        continue;
+      }
+      const groupScores = [];
+      for (let i = 0; i < list.length; i++) {
+        const a = list[i].unit;
+        for (let j = i + 1; j < list.length; j++) {
+          const b = list[j].unit;
+          let dot = 0;
+          const len = a.length < b.length ? a.length : b.length;
+          for (let k = 0; k < len; k++) dot += a[k] * b[k];
+          if (dot > 1) dot = 1;
+          else if (dot < -1) dot = -1;
+          scores.push(dot);
+          groupScores.push(dot);
+          allPairs.push({
+            a: list[i].id,
+            b: list[j].id,
+            score: dot,
+            subject_id: list[i].subject_id || null,
+            theme_id: list[i].theme_id || null,
+            a_title: list[i].title,
+            b_title: list[j].title
+          });
+        }
+      }
+      const sorted = groupScores.slice().sort((x, y) => x - y);
+      const n = sorted.length;
+      const median = n % 2
+        ? sorted[(n - 1) / 2]
+        : (sorted[n / 2 - 1] + sorted[n / 2]) / 2;
+      groupStats.push({
+        key,
+        subject_id: list[0].subject_id || null,
+        theme_id: list[0].theme_id || null,
+        insight_count: list.length,
+        pair_count: n,
+        min: sorted[0],
+        median,
+        max: sorted[n - 1]
+      });
+    }
+
+    if (!scores.length) {
+      return {
+        ok: false,
+        reason: "no_pairs",
+        insight_count: insights.length,
+        embedded_count: items.length,
+        missing_embeddings: missingEmbeddings,
+        groups: groupStats,
+        thresholds: { strict: 0.92, balanced: 0.85, broad: 0.75 }
+      };
+    }
+
+    const binCount = Math.max(5, Math.min(Number(opts.bins) || 20, 100));
+    const histLo = -1;
+    const histHi = 1;
+    const histogram = [];
+    for (let i = 0; i < binCount; i++) {
+      histogram.push({
+        lo: histLo + (i * (histHi - histLo)) / binCount,
+        hi: histLo + ((i + 1) * (histHi - histLo)) / binCount,
+        count: 0
+      });
+    }
+    for (const s of scores) {
+      let idx = Math.floor(((s - histLo) / (histHi - histLo)) * binCount);
+      if (idx >= binCount) idx = binCount - 1;
+      else if (idx < 0) idx = 0;
+      histogram[idx].count += 1;
+    }
+
+    const topK = Math.max(1, Math.min(Number(opts.topK) || 20, 200));
+    const topPairs = allPairs
+      .slice()
+      .sort((a, b) => b.score - a.score)
+      .slice(0, topK);
+
+    const calib = calibrateMergeThresholds(scores, opts);
+
+    return {
+      ok: true,
+      insight_count: insights.length,
+      embedded_count: items.length,
+      missing_embeddings: missingEmbeddings,
+      pair_count: scores.length,
+      scores,
+      histogram,
+      topPairs,
+      groups: groupStats,
+      thresholds: calib.thresholds,
+      stats: {
+        min: calib.min,
+        max: calib.max,
+        median: calib.median
+      }
+    };
+  }
+
   global.AHAEmbeddings = {
     embedAndStore,
     embedAllPending,
@@ -301,6 +502,7 @@
     health,
     isConfigured,
     calibrateMergeThresholds,
+    calibrateMergeThresholdsForChamber,
     DEFAULT_MODEL
   };
 })(window);
