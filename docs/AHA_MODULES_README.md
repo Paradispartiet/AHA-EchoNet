@@ -635,3 +635,47 @@ Fase 1-moduler som nå finnes i Home:
 15. groups
 16. search
 17. privacy
+
+## Canonical modulregistry: `ahaModules.js`
+
+`ahaModules.js` er canonical kilde for hvilke moduler som finnes i AHA Home.
+Alle moduler skal defineres her med `id`, `title`, `type`, `status`, `href`, `description`, `phase`.
+
+### Moduler, type og status
+
+1. `profile` — type: `personal`, status: `shell`
+2. `chat` — type: `core`, status: `active`
+3. `insights` — type: `knowledge`, status: `shell`
+4. `lists` — type: `knowledge`, status: `shell`
+5. `paths` — type: `knowledge`, status: `shell`
+6. `mindmap` — type: `knowledge`, status: `shell`
+7. `historygo` — type: `historygo`, status: `active`
+8. `gallery` — type: `personal`, status: `active`
+9. `notes` — type: `personal`, status: `active`
+10. `insta` — type: `personal`, status: `active`
+11. `feed` — type: `social`, status: `active`
+12. `meet` — type: `social`, status: `shell`
+13. `music` — type: `personal`, status: `shell`
+14. `avisa` — type: `publishing`, status: `shell`
+15. `groups` — type: `social`, status: `shell`
+16. `search` — type: `system`, status: `shell`
+17. `privacy` — type: `system`, status: `shell`
+
+## Byggerekkefølge
+
+1. Modulskall
+2. Datakontrakt
+3. AHA Chat + Innsikter
+4. History Go-kobling
+5. Graph / Tankekart
+6. Grupper / EchoNet
+
+## Felles datakontrakt (på tvers av moduler)
+
+```js
+{ id, title, type, source, createdAt, tags, linkedItems }
+```
+
+## Regel for leveranse
+
+"Alle moduler skal finnes synlig fra start, men bare kjernefunksjonene bygges dypt først."
