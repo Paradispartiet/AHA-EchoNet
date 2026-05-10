@@ -57,19 +57,26 @@
   function render(source) {
     const mount = document.getElementById("notes-list");
     if (!mount) return;
-    const notes = Array.isArray(source) ? source : load();
+    const notes = (Array.isArray(source) ? source : load()).filter((note) => !note?.deleted_at);
     mount.innerHTML = notes.length
       ? notes.map((note) => `
         <article class="module-card">
           <h3>${escapeHtml(note.title || "Uten tittel")}</h3>
           <p>${escapeHtml(note.text || "")}</p>
-          <div class="module-meta">${escapeHtml(note.created_at || "")}</div>
+          <div class="module-meta">
+            ${escapeHtml(note.created_at || "")}
+            ${note.last_source_event_id ? ` · source: ${escapeHtml(note.last_source_event_id)}` : ""}
+          </div>
+          <div class="module-actions">
+            <button type="button" data-note-edit="${escapeHtml(note.id)}">Rediger</button>
+            <button type="button" data-note-delete="${escapeHtml(note.id)}">Slett</button>
+          </div>
         </article>
       `).join("")
       : "<p>Ingen notater ennå.</p>";
   }
 
-  function addNote(input) {
+  async function addNote(input) {
     const note = {
       id: `note_${Date.now()}_${Math.floor(Math.random() * 100000)}`,
       title: String(input.title || "").trim(),
@@ -80,12 +87,7 @@
     };
     if (!note.title && !note.text) return null;
 
-    const notes = load();
-    notes.unshift(note);
-    save(notes);
-    persistNote(note);
-
-    window.AHAIngest?.ingest?.({
+    const ingestResult = await window.AHAIngest?.ingest?.({
       source_type: "note",
       source_app: "aha_notes",
       content_type: "text",
@@ -97,8 +99,69 @@
       meta: { note_id: note.id }
     });
 
+    if (ingestResult?.sourceEvent?.id) {
+      note.last_source_event_id = ingestResult.sourceEvent.id;
+    }
+
+    const notes = load();
+    notes.unshift(note);
+    save(notes);
+    persistNote(note);
     render(notes);
     return note;
+  }
+
+  async function updateNote(id, changes = {}) {
+    const notes = load();
+    const index = notes.findIndex((note) => note.id === id);
+    if (index < 0) return null;
+
+    const current = notes[index];
+    const updated = {
+      ...current,
+      title: String(changes.title ?? current.title ?? "").trim(),
+      text: String(changes.text ?? current.text ?? "").trim(),
+      updated_at: new Date().toISOString()
+    };
+
+    const ingestResult = await window.AHAIngest?.ingest?.({
+      source_type: "note_edit",
+      source_app: "aha_notes",
+      content_type: "text",
+      title: updated.title,
+      text: updated.text,
+      user_created: true,
+      imported: false,
+      created_at: updated.updated_at,
+      meta: { note_id: updated.id }
+    });
+
+    if (ingestResult?.sourceEvent?.id) {
+      updated.last_source_event_id = ingestResult.sourceEvent.id;
+    }
+
+    notes[index] = updated;
+    save(notes);
+    persistNote(updated);
+    render(notes);
+    return updated;
+  }
+
+  function deleteNote(id) {
+    const notes = load();
+    const index = notes.findIndex((note) => note.id === id);
+    if (index < 0) return null;
+    const now = new Date().toISOString();
+    const deleted = {
+      ...notes[index],
+      deleted_at: now,
+      updated_at: now
+    };
+    notes[index] = deleted;
+    save(notes);
+    persistNote(deleted);
+    render(notes);
+    return deleted;
   }
 
   function bind() {
@@ -112,12 +175,31 @@
       if (title) title.value = "";
       if (text) text.value = "";
     });
+    const list = document.getElementById("notes-list");
+    list?.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      const editId = target.dataset.noteEdit;
+      const deleteId = target.dataset.noteDelete;
+      if (editId) {
+        const notes = load();
+        const note = notes.find((n) => n.id === editId && !n.deleted_at);
+        if (!note) return;
+        const nextTitle = window.prompt("Rediger tittel", note.title || "");
+        if (nextTitle === null) return;
+        const nextText = window.prompt("Rediger tekst", note.text || "");
+        if (nextText === null) return;
+        updateNote(editId, { title: nextTitle, text: nextText });
+      }
+      if (deleteId) deleteNote(deleteId);
+    });
+
     render();
     syncFromDatabase();
     window.addEventListener("aha:auth-ready", syncFromDatabase);
   }
 
-  window.AHANotes = { load, save, syncFromDatabase, addNote, render };
+  window.AHANotes = { load, save, syncFromDatabase, addNote, updateNote, deleteNote, render };
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bind);
   else bind();

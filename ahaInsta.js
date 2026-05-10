@@ -66,20 +66,21 @@
   function render(source) {
     const mount = document.getElementById("insta-list");
     if (!mount) return;
-    const posts = Array.isArray(source) ? source : load();
+    const posts = (Array.isArray(source) ? source : load()).filter((post) => !post?.deleted_at);
     mount.innerHTML = posts.length
       ? posts.map((post) => `
         <article class="module-card">
           <h3>${escapeHtml(post.title || "Uten tittel")}</h3>
           ${renderMedia(post.src)}
           <p>${escapeHtml(post.caption || "")}</p>
-          <div class="module-meta">${escapeHtml(post.created_at || "")}</div>
+          <div class="module-meta">${escapeHtml(post.created_at || "")}${post.last_source_event_id ? ` · source: ${escapeHtml(post.last_source_event_id)}` : ""}</div>
+          <div class="module-actions"><button type="button" data-insta-delete="${escapeHtml(post.id)}">Slett</button></div>
         </article>
       `).join("")
       : "<p>Ingen Insta-poster ennå.</p>";
   }
 
-  function addPost(input) {
+  async function addPost(input) {
     const post = {
       id: `insta_${Date.now()}_${Math.floor(Math.random() * 100000)}`,
       title: String(input.title || "").trim(),
@@ -92,12 +93,7 @@
     };
     if (!post.title && !post.caption && !post.src) return null;
 
-    const posts = load();
-    posts.unshift(post);
-    save(posts);
-    persistPost(post);
-
-    window.AHAIngest?.ingest?.({
+    const ingestResult = await window.AHAIngest?.ingest?.({
       source_type: "insta_post",
       source_app: "aha_insta",
       content_type: post.content_type,
@@ -109,8 +105,26 @@
       meta: { insta_post_id: post.id, src: post.src }
     });
 
+    if (ingestResult?.sourceEvent?.id) post.last_source_event_id = ingestResult.sourceEvent.id;
+
+    const posts = load();
+    posts.unshift(post);
+    save(posts);
+    persistPost(post);
+
     render(posts);
     return post;
+  }
+
+  function deletePost(id) {
+    const entries = load();
+    const index = entries.findIndex((entry) => entry.id === id);
+    if (index < 0) return null;
+    entries[index] = { ...entries[index], deleted_at: new Date().toISOString() };
+    save(entries);
+    persistPost(entries[index]);
+    render(entries);
+    return entries[index];
   }
 
   function bind() {
@@ -126,12 +140,19 @@
       if (src) src.value = "";
       if (caption) caption.value = "";
     });
+    document.getElementById("insta-list")?.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      const id = target.dataset.instaDelete;
+      if (id) deletePost(id);
+    });
+
     render();
     syncFromDatabase();
     window.addEventListener("aha:auth-ready", syncFromDatabase);
   }
 
-  window.AHAInsta = { load, save, syncFromDatabase, addPost, render };
+  window.AHAInsta = { load, save, syncFromDatabase, addPost, deletePost, render };
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bind);
   else bind();

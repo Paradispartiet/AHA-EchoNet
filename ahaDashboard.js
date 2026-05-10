@@ -18,14 +18,18 @@
     return Boolean(String(localStorage.getItem("aha_import_payload_v1") || "").trim());
   }
 
+  function countActive(items) {
+    return items.filter((item) => !item?.deleted_at).length;
+  }
+
   function localStats() {
     const imports = readArray("aha_imports_v1").length;
     return {
       source_events: readArray("aha_source_events_v1").length,
-      notes: readArray("aha_notes_v1").length,
-      gallery: readArray("aha_gallery_v1").length,
-      feed: readArray("aha_feed_posts_v1").length,
-      insta: readArray("aha_insta_posts_v1").length,
+      notes: countActive(readArray("aha_notes_v1")),
+      gallery: countActive(readArray("aha_gallery_v1")),
+      feed: countActive(readArray("aha_feed_posts_v1")),
+      insta: countActive(readArray("aha_insta_posts_v1")),
       imports: imports + (hasHistoryGoPayload() ? 1 : 0)
     };
   }

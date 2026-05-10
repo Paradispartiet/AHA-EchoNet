@@ -66,20 +66,21 @@
   function render(source) {
     const mount = document.getElementById("gallery-list");
     if (!mount) return;
-    const items = Array.isArray(source) ? source : load();
+    const items = (Array.isArray(source) ? source : load()).filter((item) => !item?.deleted_at);
     mount.innerHTML = items.length
       ? items.map((item) => `
         <article class="module-card">
           <h3>${escapeHtml(item.title || "Uten tittel")}</h3>
           <p>${escapeHtml(item.description || "")}</p>
           ${renderMedia(item.src)}
-          <div class="module-meta">${escapeHtml(item.created_at || "")}</div>
+          <div class="module-meta">${escapeHtml(item.created_at || "")}${item.last_source_event_id ? ` · source: ${escapeHtml(item.last_source_event_id)}` : ""}</div>
+          <div class="module-actions"><button type="button" data-gallery-delete="${escapeHtml(item.id)}">Slett</button></div>
         </article>
       `).join("")
       : "<p>Ingen galleriobjekter ennå.</p>";
   }
 
-  function addItem(input) {
+  async function addItem(input) {
     const item = {
       id: `gal_${Date.now()}_${Math.floor(Math.random() * 100000)}`,
       type: /\.(mp4|webm|ogg)(\?|#|$)/i.test(String(input.src || "")) ? "video" : "image",
@@ -97,12 +98,7 @@
     };
     if (!item.title && !item.description && !item.src) return null;
 
-    const items = load();
-    items.unshift(item);
-    save(items);
-    persistItem(item);
-
-    window.AHAIngest?.ingest?.({
+    const ingestResult = await window.AHAIngest?.ingest?.({
       source_type: "gallery",
       source_app: "aha_gallery",
       content_type: item.type,
@@ -114,8 +110,26 @@
       meta: { gallery_item_id: item.id, src: item.src, media_type: item.type }
     });
 
+    if (ingestResult?.sourceEvent?.id) item.last_source_event_id = ingestResult.sourceEvent.id;
+
+    const items = load();
+    items.unshift(item);
+    save(items);
+    persistItem(item);
+
     render(items);
     return item;
+  }
+
+  function deleteItem(id) {
+    const entries = load();
+    const index = entries.findIndex((entry) => entry.id === id);
+    if (index < 0) return null;
+    entries[index] = { ...entries[index], deleted_at: new Date().toISOString() };
+    save(entries);
+    persistItem(entries[index]);
+    render(entries);
+    return entries[index];
   }
 
   function bind() {
@@ -131,12 +145,19 @@
       if (src) src.value = "";
       if (description) description.value = "";
     });
+    document.getElementById("gallery-list")?.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      const id = target.dataset.galleryDelete;
+      if (id) deleteItem(id);
+    });
+
     render();
     syncFromDatabase();
     window.addEventListener("aha:auth-ready", syncFromDatabase);
   }
 
-  window.AHAGallery = { load, save, syncFromDatabase, addItem, render };
+  window.AHAGallery = { load, save, syncFromDatabase, addItem, deleteItem, render };
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bind);
   else bind();
