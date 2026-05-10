@@ -843,6 +843,7 @@ function createInsightFromSignal(signal) {
     let best = null;
     let bestSim = 0;
     for (const ins of candidates) {
+      if (ins.merged_into) continue;
       const sim = semanticSimilarityBetweenSignalAndInsight(signal, ins);
       if (sim > bestSim) {
         bestSim = sim;
