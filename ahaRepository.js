@@ -127,7 +127,9 @@
       text: n.text || null,
       tags: cleanArray(n.tags),
       created_at: n.created_at || new Date().toISOString(),
-      updated_at: n.updated_at || n.created_at || new Date().toISOString()
+      updated_at: n.updated_at || n.created_at || new Date().toISOString(),
+      deleted_at: n.deleted_at || null,
+      last_source_event_id: n.last_source_event_id || null
     });
   }
 
@@ -150,7 +152,9 @@
       imported: g.imported === true,
       tags: cleanArray(g.tags),
       meta: cleanObject(g.meta),
-      created_at: g.created_at || new Date().toISOString()
+      created_at: g.created_at || new Date().toISOString(),
+      deleted_at: g.deleted_at || null,
+      last_source_event_id: g.last_source_event_id || null
     });
   }
 
@@ -165,7 +169,9 @@
       text: p.text || null,
       tags: cleanArray(p.tags),
       meta: cleanObject(p.meta),
-      created_at: p.created_at || new Date().toISOString()
+      created_at: p.created_at || new Date().toISOString(),
+      deleted_at: p.deleted_at || null,
+      last_source_event_id: p.last_source_event_id || null
     });
   }
 
@@ -183,7 +189,9 @@
       content_type: p.content_type || null,
       tags: cleanArray(p.tags),
       meta: cleanObject(p.meta),
-      created_at: p.created_at || new Date().toISOString()
+      created_at: p.created_at || new Date().toISOString(),
+      deleted_at: p.deleted_at || null,
+      last_source_event_id: p.last_source_event_id || null
     });
   }
 
@@ -272,6 +280,27 @@
     }
   }
 
+  async function countActive(table) {
+    const db = client();
+    if (!db) return fallback();
+
+    const profileId = await getProfileId();
+    if (!profileId) return fallback("not_signed_in");
+
+    try {
+      const { count: total, error } = await db
+        .from(table)
+        .select("id", { count: "exact", head: true })
+        .eq("profile_id", profileId)
+        .is("deleted_at", null);
+
+      if (error) return { ok: false, error };
+      return { ok: true, count: total || 0 };
+    } catch (error) {
+      return { ok: false, error };
+    }
+  }
+
   async function loadDashboardCounts() {
     const tables = {
       source_events: "aha_source_events",
@@ -283,7 +312,7 @@
     };
 
     const entries = await Promise.all(
-      Object.entries(tables).map(async ([key, table]) => [key, await count(table)])
+      Object.entries(tables).map(async ([key, table]) => [key, await (["notes", "gallery", "feed", "insta"].includes(key) ? countActive(table) : count(table))])
     );
 
     const counts = {};
