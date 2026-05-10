@@ -1,143 +1,17 @@
 // ahaGallery.js
-
 (function () {
   "use strict";
-
   const KEY = "aha_gallery_v1";
-
-  function load() {
-    try {
-      const parsed = JSON.parse(localStorage.getItem(KEY) || "[]");
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
-  }
-
-  function save(items) {
-    localStorage.setItem(KEY, JSON.stringify(Array.isArray(items) ? items : []));
-  }
-
-  async function pushLocalToDatabase(items) {
-    if (!window.AHARepository?.saveGalleryItem) return { ok: false, fallback: "localStorage" };
-    const results = [];
-    for (const item of items) {
-      results.push(await window.AHARepository.saveGalleryItem(item));
-    }
-    return { ok: results.some((r) => r?.ok), results };
-  }
-
-  async function syncFromDatabase() {
-    if (!window.AHARepository?.loadGalleryItems) return { ok: false, fallback: "localStorage" };
-    const local = load();
-    if (local.length) await pushLocalToDatabase(local);
-    const result = await window.AHARepository.loadGalleryItems();
-    if (!result?.ok || !Array.isArray(result.data)) return result || { ok: false };
-    save(result.data);
-    render(result.data);
-    return result;
-  }
-
-  function persistItem(item) {
-    if (!window.AHARepository?.saveGalleryItem) return;
-    window.AHARepository.saveGalleryItem(item).then((result) => {
-      if (result?.ok === false && result.error) {
-        console.warn("AHAGallery: database-save feilet", result.error);
-      }
-    });
-  }
-
-  function escapeHtml(value) {
-    return String(value ?? "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;");
-  }
-
-  function renderMedia(src) {
-    const value = String(src || "").trim();
-    if (!value) return "";
-    if (/\.(mp4|webm|ogg)(\?|#|$)/i.test(value)) {
-      return `<video src="${escapeHtml(value)}" controls></video>`;
-    }
-    return `<img src="${escapeHtml(value)}" alt="" loading="lazy" />`;
-  }
-
-  function render(source) {
-    const mount = document.getElementById("gallery-list");
-    if (!mount) return;
-    const items = Array.isArray(source) ? source : load();
-    mount.innerHTML = items.length
-      ? items.map((item) => `
-        <article class="module-card">
-          <h3>${escapeHtml(item.title || "Uten tittel")}</h3>
-          <p>${escapeHtml(item.description || "")}</p>
-          ${renderMedia(item.src)}
-          <div class="module-meta">${escapeHtml(item.created_at || "")}</div>
-        </article>
-      `).join("")
-      : "<p>Ingen galleriobjekter ennå.</p>";
-  }
-
-  function addItem(input) {
-    const item = {
-      id: `gal_${Date.now()}_${Math.floor(Math.random() * 100000)}`,
-      type: /\.(mp4|webm|ogg)(\?|#|$)/i.test(String(input.src || "")) ? "video" : "image",
-      title: String(input.title || "").trim(),
-      description: String(input.description || "").trim(),
-      src: String(input.src || "").trim(),
-      thumbnail: String(input.thumbnail || input.src || "").trim(),
-      source_type: "gallery",
-      source_app: "aha_gallery",
-      user_created: true,
-      imported: false,
-      tags: Array.isArray(input.tags) ? input.tags : [],
-      meta: {},
-      created_at: new Date().toISOString()
-    };
-    if (!item.title && !item.description && !item.src) return null;
-
-    const items = load();
-    items.unshift(item);
-    save(items);
-    persistItem(item);
-
-    window.AHAIngest?.ingest?.({
-      source_type: "gallery",
-      source_app: "aha_gallery",
-      content_type: item.type,
-      title: item.title,
-      text: [item.title, item.description].filter(Boolean).join("\n"),
-      user_created: true,
-      imported: false,
-      created_at: item.created_at,
-      meta: { gallery_item_id: item.id, src: item.src, media_type: item.type }
-    });
-
-    render(items);
-    return item;
-  }
-
-  function bind() {
-    const form = document.getElementById("gallery-form");
-    if (!form) return;
-    form.addEventListener("submit", (event) => {
-      event.preventDefault();
-      const title = document.getElementById("gallery-title");
-      const src = document.getElementById("gallery-src");
-      const description = document.getElementById("gallery-description");
-      addItem({ title: title?.value, src: src?.value, description: description?.value });
-      if (title) title.value = "";
-      if (src) src.value = "";
-      if (description) description.value = "";
-    });
-    render();
-    syncFromDatabase();
-    window.addEventListener("aha:auth-ready", syncFromDatabase);
-  }
-
-  window.AHAGallery = { load, save, syncFromDatabase, addItem, render };
-
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bind);
-  else bind();
+  const load = () => { try { const p = JSON.parse(localStorage.getItem(KEY) || "[]"); return Array.isArray(p) ? p : []; } catch { return []; } };
+  const save = (items) => localStorage.setItem(KEY, JSON.stringify(Array.isArray(items) ? items : []));
+  const active = (items) => (Array.isArray(items) ? items : []).filter((x) => !x?.deleted_at);
+  const esc = (v) => String(v ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+  const media = (src) => /\.(mp4|webm|ogg)(\?|#|$)/i.test(String(src||"")) ? "video" : "image";
+  function persistItem(item) { window.AHARepository?.saveGalleryItem?.(item).then((r) => { if (r?.ok===false && r.error) console.warn("AHAGallery: database-save feilet", r.error); }); }
+  function renderMedia(src) { const v = String(src||"").trim(); if (!v) return ""; return media(v)==="video" ? `<video src="${esc(v)}" controls></video>` : `<img src="${esc(v)}" alt="" loading="lazy" />`; }
+  function render(source){ const m=document.getElementById("gallery-list"); if(!m) return; const items=active(Array.isArray(source)?source:load()); m.innerHTML=items.length?items.map((item)=>`<article class="module-card"><h3>${esc(item.title||"Uten tittel")}</h3><p>${esc(item.description||"")}</p>${renderMedia(item.src)}<div class="module-meta">${esc(item.created_at||"")}${item.last_source_event_id?` · source: ${esc(item.last_source_event_id)}`:""}</div><div class="module-actions"><button type="button" data-action="delete" data-id="${esc(item.id)}">Slett</button></div></article>`).join(""):'<p>Ingen galleriobjekter ennå.</p>'; }
+  function addItem(input){ const item={ id:`gal_${Date.now()}_${Math.floor(Math.random()*100000)}`, type:media(input.src), title:String(input.title||"").trim(), description:String(input.description||"").trim(), src:String(input.src||"").trim(), thumbnail:String(input.thumbnail||input.src||"").trim(), source_type:"gallery", source_app:"aha_gallery", user_created:true, imported:false, tags:Array.isArray(input.tags)?input.tags:[], meta:{}, created_at:new Date().toISOString(), deleted_at:null, last_source_event_id:null}; if(!item.title&&!item.description&&!item.src) return null; const res=window.AHAIngest?.ingest?.({source_type:"gallery",source_app:"aha_gallery",content_type:item.type,title:item.title,text:[item.title,item.description].filter(Boolean).join("\n"),user_created:true,imported:false,created_at:item.created_at,meta:{gallery_item_id:item.id,src:item.src,media_type:item.type}}); if(res?.sourceEvent?.id) item.last_source_event_id=res.sourceEvent.id; const items=load(); items.unshift(item); save(items); persistItem(item); render(items); return item; }
+  function deleteItem(id){ const items=load(); const i=items.findIndex((x)=>x.id===id&&!x.deleted_at); if(i<0) return false; items[i]={...items[i],deleted_at:new Date().toISOString()}; save(items); persistItem(items[i]); render(items); return true; }
+  function bind(){ const form=document.getElementById("gallery-form"); if(form){ form.addEventListener("submit",(e)=>{e.preventDefault(); const t=document.getElementById("gallery-title"); const s=document.getElementById("gallery-src"); const d=document.getElementById("gallery-description"); addItem({title:t?.value,src:s?.value,description:d?.value}); if(t)t.value=""; if(s)s.value=""; if(d)d.value="";}); } document.getElementById("gallery-list")?.addEventListener("click",(e)=>{ const b=e.target.closest("button[data-action='delete'][data-id]"); if(b) deleteItem(b.dataset.id);}); render(); }
+  window.AHAGallery={load,save,addItem,deleteItem,render}; if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",bind); else bind();
 })();

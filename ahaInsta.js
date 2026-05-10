@@ -1,138 +1,17 @@
 // ahaInsta.js
-
 (function () {
   "use strict";
-
-  const KEY = "aha_insta_posts_v1";
-
-  function load() {
-    try {
-      const parsed = JSON.parse(localStorage.getItem(KEY) || "[]");
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
-  }
-
-  function save(items) {
-    localStorage.setItem(KEY, JSON.stringify(Array.isArray(items) ? items : []));
-  }
-
-  async function pushLocalToDatabase(items) {
-    if (!window.AHARepository?.saveInstaPost) return { ok: false, fallback: "localStorage" };
-    const results = [];
-    for (const post of items) {
-      results.push(await window.AHARepository.saveInstaPost(post));
-    }
-    return { ok: results.some((r) => r?.ok), results };
-  }
-
-  async function syncFromDatabase() {
-    if (!window.AHARepository?.loadInstaPosts) return { ok: false, fallback: "localStorage" };
-    const local = load();
-    if (local.length) await pushLocalToDatabase(local);
-    const result = await window.AHARepository.loadInstaPosts();
-    if (!result?.ok || !Array.isArray(result.data)) return result || { ok: false };
-    save(result.data);
-    render(result.data);
-    return result;
-  }
-
-  function persistPost(post) {
-    if (!window.AHARepository?.saveInstaPost) return;
-    window.AHARepository.saveInstaPost(post).then((result) => {
-      if (result?.ok === false && result.error) {
-        console.warn("AHAInsta: database-save feilet", result.error);
-      }
-    });
-  }
-
-  function escapeHtml(value) {
-    return String(value ?? "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;");
-  }
-
-  function renderMedia(src) {
-    const value = String(src || "").trim();
-    if (!value) return "";
-    if (/\.(mp4|webm|ogg)(\?|#|$)/i.test(value)) {
-      return `<video src="${escapeHtml(value)}" controls></video>`;
-    }
-    return `<img src="${escapeHtml(value)}" alt="" loading="lazy" />`;
-  }
-
-  function render(source) {
-    const mount = document.getElementById("insta-list");
-    if (!mount) return;
-    const posts = Array.isArray(source) ? source : load();
-    mount.innerHTML = posts.length
-      ? posts.map((post) => `
-        <article class="module-card">
-          <h3>${escapeHtml(post.title || "Uten tittel")}</h3>
-          ${renderMedia(post.src)}
-          <p>${escapeHtml(post.caption || "")}</p>
-          <div class="module-meta">${escapeHtml(post.created_at || "")}</div>
-        </article>
-      `).join("")
-      : "<p>Ingen Insta-poster ennå.</p>";
-  }
-
-  function addPost(input) {
-    const post = {
-      id: `insta_${Date.now()}_${Math.floor(Math.random() * 100000)}`,
-      title: String(input.title || "").trim(),
-      src: String(input.src || "").trim(),
-      caption: String(input.caption || "").trim(),
-      content_type: /\.(mp4|webm|ogg)(\?|#|$)/i.test(String(input.src || "")) ? "video" : "image",
-      tags: Array.isArray(input.tags) ? input.tags : [],
-      meta: {},
-      created_at: new Date().toISOString()
-    };
-    if (!post.title && !post.caption && !post.src) return null;
-
-    const posts = load();
-    posts.unshift(post);
-    save(posts);
-    persistPost(post);
-
-    window.AHAIngest?.ingest?.({
-      source_type: "insta_post",
-      source_app: "aha_insta",
-      content_type: post.content_type,
-      title: post.title,
-      text: [post.title, post.caption].filter(Boolean).join("\n"),
-      user_created: true,
-      imported: false,
-      created_at: post.created_at,
-      meta: { insta_post_id: post.id, src: post.src }
-    });
-
-    render(posts);
-    return post;
-  }
-
-  function bind() {
-    const form = document.getElementById("insta-form");
-    if (!form) return;
-    form.addEventListener("submit", (event) => {
-      event.preventDefault();
-      const title = document.getElementById("insta-title");
-      const src = document.getElementById("insta-src");
-      const caption = document.getElementById("insta-caption");
-      addPost({ title: title?.value, src: src?.value, caption: caption?.value });
-      if (title) title.value = "";
-      if (src) src.value = "";
-      if (caption) caption.value = "";
-    });
-    render();
-    syncFromDatabase();
-    window.addEventListener("aha:auth-ready", syncFromDatabase);
-  }
-
-  window.AHAInsta = { load, save, syncFromDatabase, addPost, render };
-
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bind);
-  else bind();
+  const KEY="aha_insta_posts_v1";
+  const load=()=>{try{const p=JSON.parse(localStorage.getItem(KEY)||"[]"); return Array.isArray(p)?p:[];}catch{return[];}};
+  const save=(items)=>localStorage.setItem(KEY,JSON.stringify(Array.isArray(items)?items:[]));
+  const active=(items)=>(Array.isArray(items)?items:[]).filter((x)=>!x?.deleted_at);
+  const esc=(v)=>String(v??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
+  const type=(src)=>/\.(mp4|webm|ogg)(\?|#|$)/i.test(String(src||""))?"video":"image";
+  function persistPost(post){window.AHARepository?.saveInstaPost?.(post).then((r)=>{if(r?.ok===false&&r.error)console.warn("AHAInsta: database-save feilet",r.error);});}
+  function renderMedia(src){const v=String(src||"").trim(); if(!v)return""; return type(v)==="video"?`<video src="${esc(v)}" controls></video>`:`<img src="${esc(v)}" alt="" loading="lazy" />`;}
+  function render(source){const m=document.getElementById("insta-list"); if(!m)return; const posts=active(Array.isArray(source)?source:load()); m.innerHTML=posts.length?posts.map((p)=>`<article class="module-card"><h3>${esc(p.title||"Uten tittel")}</h3>${renderMedia(p.src)}<p>${esc(p.caption||"")}</p><div class="module-meta">${esc(p.created_at||"")}${p.last_source_event_id?` · source: ${esc(p.last_source_event_id)}`:""}</div><div class="module-actions"><button type="button" data-action="delete" data-id="${esc(p.id)}">Slett</button></div></article>`).join(""):'<p>Ingen Insta-poster ennå.</p>';}
+  function addPost(input){const post={id:`insta_${Date.now()}_${Math.floor(Math.random()*100000)}`,title:String(input.title||"").trim(),src:String(input.src||"").trim(),caption:String(input.caption||"").trim(),content_type:type(input.src),tags:Array.isArray(input.tags)?input.tags:[],meta:{},created_at:new Date().toISOString(),deleted_at:null,last_source_event_id:null}; if(!post.title&&!post.caption&&!post.src) return null; const res=window.AHAIngest?.ingest?.({source_type:"insta_post",source_app:"aha_insta",content_type:post.content_type,title:post.title,text:[post.title,post.caption].filter(Boolean).join("\n"),user_created:true,imported:false,created_at:post.created_at,meta:{insta_post_id:post.id,src:post.src}}); if(res?.sourceEvent?.id) post.last_source_event_id=res.sourceEvent.id; const posts=load(); posts.unshift(post); save(posts); persistPost(post); render(posts); return post;}
+  function deletePost(id){const posts=load(); const i=posts.findIndex((p)=>p.id===id&&!p.deleted_at); if(i<0)return false; posts[i]={...posts[i],deleted_at:new Date().toISOString()}; save(posts); persistPost(posts[i]); render(posts); return true;}
+  function bind(){const form=document.getElementById("insta-form"); if(form){form.addEventListener("submit",(e)=>{e.preventDefault(); const t=document.getElementById("insta-title"); const s=document.getElementById("insta-src"); const c=document.getElementById("insta-caption"); addPost({title:t?.value,src:s?.value,caption:c?.value}); if(t)t.value=""; if(s)s.value=""; if(c)c.value="";});} document.getElementById("insta-list")?.addEventListener("click",(e)=>{const b=e.target.closest("button[data-action='delete'][data-id]"); if(b) deletePost(b.dataset.id);}); render();}
+  window.AHAInsta={load,save,addPost,deletePost,render}; if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",bind); else bind();
 })();
