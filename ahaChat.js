@@ -214,11 +214,42 @@
 
   function showConcepts() {
     const insights = currentInsights();
-    const concepts = [];
+    const concepts = new Set();
+    const rawTerms = new Set();
+    const claims = new Set();
+    const patterns = new Set();
+    const markers = new Set();
+
     insights.forEach((ins) => {
-      (ins.concepts || []).forEach((c) => concepts.push(c.key || c.label || c));
+      (ins.concepts || []).forEach((c) => {
+        const label = (c && (c.label || c.key)) || c;
+        if (label) concepts.add(label);
+      });
+      (ins.raw_terms || []).forEach((c) => {
+        const label = (c && (c.key || c.label)) || c;
+        if (label) rawTerms.add(label);
+      });
+      (ins.claims || []).forEach((c) => {
+        const label = c && c.text;
+        if (label) claims.add(label);
+      });
+      (ins.patterns || []).forEach((c) => {
+        const label = (c && (c.label || c.key)) || c;
+        if (label) patterns.add(label);
+      });
+      (ins.markers || []).forEach((c) => {
+        const label = c && c.value;
+        if (label) markers.add(label);
+      });
     });
-    out(JSON.stringify([...new Set(concepts)].filter(Boolean), null, 2));
+
+    out(JSON.stringify({
+      concepts: [...concepts].filter(Boolean),
+      patterns: [...patterns].filter(Boolean),
+      claims: [...claims].filter(Boolean),
+      markers: [...markers].filter(Boolean),
+      raw_terms: [...rawTerms].filter(Boolean)
+    }, null, 2));
   }
 
   function showMeta() {
