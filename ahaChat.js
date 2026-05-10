@@ -173,7 +173,12 @@
     let similar = [];
     if (global.AHAEmbeddings?.findSimilarToText) {
       try {
-        const simRes = await global.AHAEmbeddings.findSimilarToText(message, { limit: 5 });
+        const simRes = await global.AHAEmbeddings.findSimilarToText(message, {
+          limit: 5,
+          // Filtrer ut insights som er sammenslått inn i andre, slik at
+          // merged sources ikke konkurrerer som aktive kandidater.
+          chamber: loadChamberFromStorage()
+        });
         if (simRes?.ok) similar = simRes.matches || [];
       } catch (err) {
         console.warn("Klarte ikke hente similar insights", err);
@@ -325,6 +330,26 @@
     return true;
   }
 
+  function refreshTargetEmbedding(target) {
+    if (!target?.id) return;
+    if (!global.AHAEmbeddings || typeof global.AHAEmbeddings.embedAndStore !== "function") return;
+    if (typeof global.AHAEmbeddings.isConfigured === "function" && !global.AHAEmbeddings.isConfigured()) return;
+    // Fire-and-forget: target-insighten har fått ny mening gjennom
+    // merge (concepts, claims, patterns, markers, emner). Vi re-embed-er
+    // den så semantisk søk treffer den nye representasjonen, men
+    // hovedflyten venter aldri på dette.
+    global.AHAEmbeddings.embedAndStore(target).then((result) => {
+      if (!result?.ok) return;
+      try {
+        global.dispatchEvent(new CustomEvent("aha:embedding-refreshed", {
+          detail: { insight_id: target.id, reason: "merge_confirmed" }
+        }));
+      } catch {}
+    }).catch((err) => {
+      console.warn("AHAChat: re-embed etter merge feilet", err);
+    });
+  }
+
   function applyMergeAction(action, sourceId, targetId) {
     if (!sourceId || !targetId) return false;
     const chamber = loadChamberFromStorage();
@@ -338,6 +363,11 @@
     if (!changed) return false;
 
     saveChamberToStorage(chamber);
+
+    if (action === "confirm-merge") {
+      const target = (chamber.insights || []).find((ins) => ins.id === targetId);
+      if (target) refreshTargetEmbedding(target);
+    }
 
     try {
       global.dispatchEvent(new CustomEvent("aha:merge-resolved", {
