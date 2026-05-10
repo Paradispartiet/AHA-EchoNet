@@ -1,0 +1,609 @@
+# AHA-EchoNet – Modul-README
+
+Dette dokumentet låser modulplanen for AHA-EchoNet og brukes som arbeids-README for ferdigstilling av alle modulene.
+
+## Grunnprinsipp
+
+```text
+AHA = brukerens personlige innsiktsmotor
+History Go = det brukeren samler
+EchoNet = den kollektive overbygningen
+AHA-EchoNet = den personlige AHA-flaten som kan kobles til EchoNet
+```
+
+AHA skal ikke være en underdel av History Go. History Go kan sende materiale til AHA, men AHA skal kunne fungere selvstendig med brukerens egne samtaler, notater, bilder, poster, minner og innsikter.
+
+Fast regel:
+
+```text
+Motoren finnes.
+Ikke lag ny motor.
+Gi motoren riktige innganger.
+```
+
+Alle nye moduler skal sende kildemateriale inn via eksisterende source/ingest-flyt:
+
+```text
+source event
+→ AHASources
+→ AHAIngest
+→ InsightsEngine.createSignalFromMessage(...)
+→ InsightsEngine.addSignalToChamber(...)
+→ aha_insight_chamber_v1
+→ MetaInsightsEngine
+```
+
+## Moduloversikt
+
+### 1. AHA Home / Dashboard
+
+Ansvar:
+- personlig startside
+- innlogget status
+- profilkort
+- modulnavigasjon
+- lokale og databasebaserte nøkkeltall
+- History Go-importstatus
+- siste aktivitet
+
+Eksisterende filer:
+- `index.html`
+- `ahaDashboard.js`
+- `aha-dashboard.css`
+
+Status:
+- finnes
+- viser modulkort
+- viser profil/innlogging
+- viser counts for source events, notes, gallery, feed, insta og imports
+- har History Go-importknapper
+
+Mangler før ferdig:
+- mer presis profilside
+- tydeligere siste innsikter
+- egen modul for samlet AHA-score / progresjon
+- bedre visning av History Go-progresjon, ikke bare importstatus
+
+### 2. AHA Chat
+
+Ansvar:
+- personlig samtale med AHA
+- sende brukermeldinger inn i AHAIngest
+- vise innsikter fra samtalen
+- bokmerker/høyre rail
+- eksport til innsikt, liste, sti og AHAavisa senere
+
+Eksisterende filer:
+- `chat.html`
+- `ahaChat.js`
+- `aha-chat.css`
+
+Status:
+- finnes
+- er skilt ut fra dashboard
+- laster eksisterende motor
+- har feltvalg, quick actions, chatlogg, composer og insight rail
+- har importknapp for History Go
+
+Mangler før ferdig:
+- tydelig bokmerke-kolonne
+- “lag liste”, “lag sti”, “send til AHAavisa” som faktiske handlinger
+- bedre visning av hvilke innsikter som ble skapt fra hvilken melding
+- samtaletråder / thread history
+- full kobling til backend for chat-historikk
+
+### 3. Innsiktsmotor
+
+Ansvar:
+- innsiktskort
+- begreper
+- source events
+- meta-mønstre
+- begrepstetthet
+- semantisk resonans
+- merge suggestions
+- embedding-kobling
+
+Eksisterende filer:
+- `insightsChamber.js`
+- `metaInsightsEngine.js`
+- `ahaSources.js`
+- `ahaIngest.js`
+- `ahaEmbeddings.js`
+
+Status:
+- canonical motor finnes
+- AHAIngest finnes som felles bro
+- AHASources finnes som rå kildelogg
+- AHAIngest hopper over emnematching for History Go-importert materiale
+- embedding-berikelse finnes som fire-and-forget dersom konfigurert
+
+Mangler før ferdig:
+- egen UI-side for innsikter
+- visning av source → insight-sporbarhet
+- visning av merge suggestions
+- manuell godkjenning/avvisning av emneforslag
+- begrepstetthet og resonans som synlige metrikker
+- samlet innsiktsarkiv med filtrering
+
+### 4. Lister
+
+Ansvar:
+- favoritter
+- gjøremål
+- begrepslister
+- prosesslister
+- kvalitetslister
+- AI-genererte lister
+- delte lister senere
+
+Status:
+- ikke ferdig som egen modul
+- ideen finnes i arkitekturen, men ikke som egen side/dataflyt
+
+Mangler før ferdig:
+- `lists.html`
+- `ahaLists.js`
+- `aha-lists.css`
+- localStorage-key `aha_lists_v1`
+- listeobjekt med `id`, `title`, `type`, `items`, `source_event_ids`, `insight_ids`, `created_at`, `updated_at`
+- handling fra chat/insight: “legg til i liste”
+
+### 5. Stier
+
+Ansvar:
+- kronologisk læringsreise
+- tematisk utvikling over tid
+- samtale → innsikt → handling
+- History Go-progresjon som læringsløp
+- publiserbare stier senere
+
+Status:
+- ikke ferdig som egen modul
+
+Mangler før ferdig:
+- `paths.html`
+- `ahaPaths.js`
+- `aha-paths.css`
+- localStorage-key `aha_paths_v1`
+- stiobjekt med `steps`, `source_event_ids`, `insight_ids`, `historygo_refs`
+- visning som tidslinje
+- knapp fra chat/insight: “lag sti”
+
+### 6. Tankekart / Graph
+
+Ansvar:
+- visuelle noder
+- koblinger mellom samtaler, innsikter, begreper, steder, personer og objekter
+- vise hvordan en innsikt oppstod
+- koble AHA-data og History Go-import
+
+Status:
+- ikke ferdig som egen modul
+
+Mangler før ferdig:
+- `mindmap.html` eller `graph.html`
+- `ahaGraph.js`
+- `aha-graph.css`
+- node/edge-modell
+- enkel førstevisning uten tung grafmotor
+- senere: force graph / canvas / SVG
+
+### 7. History Go-modul
+
+Ansvar:
+- åpne History Go
+- importere `aha_import_payload_v1`
+- vise importstatus
+- vise samlet History Go-progresjon i AHA
+- la AHA tolke History Go-materiale uten å blande motorene
+
+Eksisterende filer:
+- `ahaHistoryGoImport.js`
+- History Go-panel i `index.html`
+
+Status:
+- importadapter finnes
+- leser `aha_import_payload_v1`
+- importerer `nextup_learning_signal`, `hg_learning_log_v1`, `hg_insights_events_v1`, `knowledge_universe`, `notes`, `dialogs`
+- sender materialet via AHAIngest
+- lagrer import i database hvis AHARepository er tilgjengelig
+
+Mangler før ferdig:
+- egen `historygo.html` i AHA med oversikt
+- bedre visning av hva som ble importert
+- deduplisering av importerte signaler
+- Groundhopper-statistikk fra History Go
+- badges/personer/steder som metadata-visning
+
+### 8. AHA Gallery
+
+Ansvar:
+- brukerens personlige galleri
+- bilder, videoer, minner, AI-bilder, visuelle uttrykk
+- sende beskrivelser/captions inn i AHAIngest
+
+Eksisterende filer:
+- `gallery.html`
+- `ahaGallery.js`
+- `aha-gallery.css`
+
+Status:
+- finnes
+- bruker localStorage-key `aha_gallery_v1`
+- kan legge til bilde/video via URL/path
+- lagrer til Supabase via AHARepository hvis mulig
+- sender tekstlig materiale inn via AHAIngest
+
+Mangler før ferdig:
+- ekte filopplasting / storage
+- bedre minnefelt
+- kobling til History Go-bilder
+- kobling til AHA Insta
+- visning som personlig galleri, ikke bare liste
+
+### 9. AHA Notes
+
+Ansvar:
+- egne notater og tekster
+- skriveflate
+- sende notater til AHAIngest
+- senere koble notater til innsikter, lister og stier
+
+Eksisterende filer:
+- `notes.html`
+- `ahaNotes.js`
+- `aha-notes.css`
+
+Status:
+- finnes
+- bruker localStorage-key `aha_notes_v1`
+- lagrer tittel og tekst
+- syncer til Supabase via AHARepository hvis mulig
+- sender notat inn via AHAIngest
+
+Mangler før ferdig:
+- redigering/sletting
+- tags i UI
+- kobling til innsikter
+- “send til liste/sti/artikkel”
+- bedre skriveopplevelse
+
+### 10. AHA Insta
+
+Ansvar:
+- bilde-/videostrøm
+- caption-basert refleksjon
+- mer visuell sosial/personlig publisering enn Gallery
+
+Eksisterende filer:
+- `insta.html`
+- `ahaInsta.js`
+- `aha-feed.css`
+
+Status:
+- finnes
+- bruker localStorage-key `aha_insta_posts_v1`
+- kan legge til tittel, media-path og caption
+- lagrer til Supabase via AHARepository hvis mulig
+- sender caption/tekst inn via AHAIngest
+
+Mangler før ferdig:
+- egen `aha-insta.css`
+- ordentlig bildegrid/feed-design
+- kobling til Gallery
+- reaksjoner/kommentarer senere
+- ekte media-upload
+
+### 11. AHA Feed / Twitter
+
+Ansvar:
+- korte tekstposter
+- tråder senere
+- delte innsikter
+- sosial refleksjonsfeed
+
+Eksisterende filer:
+- `feed.html`
+- `ahaFeed.js`
+- `aha-feed.css`
+
+Status:
+- finnes
+- bruker localStorage-key `aha_feed_posts_v1`
+- lagrer korte poster
+- syncer til Supabase via AHARepository hvis mulig
+- sender poster inn via AHAIngest
+
+Mangler før ferdig:
+- tråder
+- repost/sitat
+- kobling til innsiktskort
+- visning av “post fra innsikt”
+- senere sosial deling
+
+### 12. AHA Meet
+
+Ansvar:
+- kunnskapsbasert matching
+- personer med lignende temaer/interesser
+- møter, grupper, relasjoner
+
+Status:
+- ikke ferdig som modul
+
+Mangler før ferdig:
+- `meet.html`
+- `ahaMeet.js`
+- `aha-meet.css`
+- lokal førsteversjon med interesser og forslag
+- senere matching basert på innsikter/resonans
+
+### 13. AHA Music
+
+Ansvar:
+- spillelister
+- stemning
+- musikknotater
+- minner og kulturelle koblinger
+
+Status:
+- ikke ferdig som modul
+
+Mangler før ferdig:
+- `music.html`
+- `ahaMusic.js`
+- `aha-music.css`
+- localStorage-key `aha_music_v1`
+- enkel lagring av låt/spilleliste/notat
+- ingest av tekstlig refleksjon rundt musikk
+
+### 14. AHAavisa
+
+Ansvar:
+- gjøre innsikter til artikler
+- artikler, utkast, seksjoner, magasiner
+- publiseringspipeline
+- bruke innsiktsmetning/begrepstetthet som kriterier
+
+Status:
+- ikke ferdig som modul i repoet
+- konseptet er definert i arkitekturen
+
+Mangler før ferdig:
+- `avisa.html`
+- `ahaAvisa.js`
+- `aha-avisa.css`
+- localStorage-key `aha_articles_v1`
+- artikkelutkast fra insight/liste/sti
+- status: `draft`, `ready`, `published`
+- seksjoner: nyheter, politikk, studier, kultur, sport, debatt osv.
+
+### 15. Grupper / Sirkler
+
+Ansvar:
+- delte rom
+- delt chat
+- delt innsiktsbibliotek
+- medlemmer/roller
+- felles lister/stier
+- senere EchoNet-kollektiv hukommelse
+
+Status:
+- ikke ferdig i frontend
+- ikke ferdig i Supabase-schema
+
+Mangler før ferdig:
+- `groups.html`
+- `ahaGroups.js`
+- `aha-groups.css`
+- tabeller for grupper, medlemskap, delte source events og delte innsikter
+- først lokal prototype, senere database/RLS
+
+### 16. Søk / Bibliotek
+
+Ansvar:
+- samlet søk på tvers av AHA
+- samtaler, source events, innsikter, notes, gallery, feed, insta, History Go-import
+- senere semantisk søk via embeddings
+
+Status:
+- ikke ferdig som egen UI-modul
+- embeddings-lag finnes delvis
+
+Mangler før ferdig:
+- `search.html`
+- `ahaSearch.js`
+- `aha-search.css`
+- enkel lokal tekstsøk først
+- senere semantisk søk via `AHAEmbeddings.findSimilarToText(...)`
+
+### 17. Personvern / Kontroll
+
+Ansvar:
+- hva lagres
+- hva deles
+- eksport
+- slett
+- samtykke
+- private/offentlige data
+- History Go-importkontroll
+
+Status:
+- delvis teknisk grunnlag finnes gjennom Auth, localStorage, Supabase og importmerking
+- ikke ferdig som brukerflate
+
+Mangler før ferdig:
+- `privacy.html`
+- `ahaPrivacy.js`
+- `aha-privacy.css`
+- eksport av alle `aha_*` keys
+- slettemuligheter per modul
+- samtykkepanel
+- tydelig dataoversikt
+
+## Eksisterende grunnmur i repoet
+
+Finnes nå:
+
+```text
+index.html                 # Dashboard
+chat.html                  # Chat
+notes.html                 # Notes
+gallery.html               # Gallery
+feed.html                  # Feed / Twitter
+insta.html                 # Insta
+
+insightsChamber.js         # canonical innsiktsmotor
+metaInsightsEngine.js      # metamotor
+ahaSources.js              # source-event logg
+ahaIngest.js               # felles ingest-bro
+ahaHistoryGoImport.js      # History Go-importadapter
+ahaDashboard.js            # dashboardlogikk
+ahaNotes.js                # notes-modul
+ahaGallery.js              # galleri-modul
+ahaFeed.js                 # feed-modul
+ahaInsta.js                # insta-modul
+ahaRepository.js           # Supabase persistence-fallback
+ahaAuth.js                 # Supabase Auth
+supabase/schema.sql        # første databaseschema
+```
+
+## Nåværende ferdighetsgrad
+
+```text
+Kjerne/motor:           65–75 %
+Dashboard:              55–65 %
+Chat:                   45–55 %
+Notes:                  40–50 %
+Gallery:                35–45 %
+Feed/Twitter:           35–45 %
+Insta:                  35–45 %
+History Go-import:      50–60 %
+Lister:                 0–10 %
+Stier:                  0–10 %
+Tankekart/Graph:        0–10 %
+AHA Meet:               0–5 %
+AHA Music:              0–5 %
+AHAavisa:               0–10 %
+Grupper/Sirkler:        0–10 %
+Søk/Bibliotek:          10–20 %
+Personvern/Kontroll:    10–20 %
+```
+
+## Riktig ferdigstillingsrekkefølge
+
+### Fase 1 – Stabiliser eksisterende moduler
+
+Mål:
+- sikre at Dashboard, Chat, Notes, Gallery, Feed, Insta og History Go-import fungerer uten feil
+- ingen nye store funksjoner før grunnflyten er stabil
+
+Oppgaver:
+1. Kjør `node --check` på alle JS-filer.
+2. Test at hver modul lagrer i localStorage.
+3. Test at hver modul sender source event til `aha_source_events_v1`.
+4. Test at hver modul skaper insight i `aha_insight_chamber_v1`.
+5. Test at Supabase fallback ikke stopper lokal bruk.
+6. Test at History Go-import ikke bruker ahaEmneMatcher.
+7. Legg til slett/rediger i Notes, Feed, Gallery og Insta.
+
+### Fase 2 – Bygg manglende strukturmoduler
+
+Bygg i denne rekkefølgen:
+1. Innsiktsarkiv / `insights.html`
+2. Lister / `lists.html`
+3. Stier / `paths.html`
+4. Søk / `search.html`
+5. Privacy / `privacy.html`
+
+Dette gir AHA reell arbeidsverdi før vi bygger sosiale/kollektive lag.
+
+### Fase 3 – Bygg visuell forståelse
+
+Bygg:
+1. Tankekart / Graph
+2. source → insight-sporbarhet
+3. begrepskart
+4. merge-suggestions UI
+5. emneforslag med godkjenn/avvis
+
+### Fase 4 – Bygg publisering
+
+Bygg:
+1. AHAavisa som draft-modul
+2. artikkelutkast fra innsikt/liste/sti
+3. seksjoner
+4. publiseringsstatus
+5. eksport til HTML/Markdown
+
+### Fase 5 – Bygg sosiale moduler
+
+Bygg:
+1. AHA Meet
+2. Grupper/Sirkler
+3. delte innsikter
+4. felles lister/stier
+5. senere EchoNet-kollektiv hukommelse
+
+### Fase 6 – Bygg kulturmoduler
+
+Bygg:
+1. AHA Music
+2. bedre Gallery/Insta-kobling
+3. EchoCanon senere
+
+## Neste konkrete utviklingsprompt
+
+```text
+Du jobber i repoet `Paradispartiet/AHA-EchoNet`.
+
+Oppgave:
+Ferdigstill stabiliseringsfase 1 for eksisterende AHA-moduler.
+
+Les først faktisk:
+- README.md
+- docs/AHA_ARCHITECTURE.md
+- docs/AHA_MODULES_README.md
+- index.html
+- chat.html
+- notes.html
+- gallery.html
+- feed.html
+- insta.html
+- ahaDashboard.js
+- ahaChat.js
+- ahaSources.js
+- ahaIngest.js
+- ahaHistoryGoImport.js
+- ahaNotes.js
+- ahaGallery.js
+- ahaFeed.js
+- ahaInsta.js
+- ahaRepository.js
+- supabase/schema.sql
+
+Kjør deretter `node --check` på alle JS-filene over.
+
+Mål:
+1. Ikke lag ny motor.
+2. Ikke endre History-Go-repoet.
+3. Ikke bygg backend på nytt.
+4. Stabiliser eksisterende moduler.
+5. Sørg for at alle eksisterende moduler bruker samme source/ingest-kontrakt.
+6. Legg til rediger/slett der det mangler i Notes, Gallery, Feed og Insta.
+7. Legg til enkel visning av source-event-id / insight-kobling der det er naturlig.
+8. Ikke gjør stor visuell redesign.
+9. Ikke legg inn midlertidige hacks.
+
+Akseptansekriterier:
+- Notes kan opprette, redigere og slette notat.
+- Gallery kan opprette og slette galleriobjekt.
+- Feed kan opprette og slette post.
+- Insta kan opprette og slette post.
+- Alle nye/endrede elementer lagres i riktig localStorage-key.
+- Nye elementer sendes via AHAIngest.
+- Sletting sletter ikke historiske source events automatisk, men kan markere originalelementet som slettet i modulens egen storage.
+- Dashboard counts oppdateres etter endringer.
+- `node --check` passerer for alle endrede JS-filer.
+```
