@@ -868,6 +868,41 @@ function createInsightFromSignal(signal) {
     );
 }
 
+  // ── emne_suggestion lifecycle ────────────────
+  // Forslag fra ahaEmneMatcher kan kun løftes til bekreftet emne via en
+  // eksplisitt brukerhandling. confirmEmneSuggestion legger emne_id på
+  // insight.emner og markerer suggestion som "confirmed". dismiss
+  // markerer den som "dismissed" slik at samme forslag ikke surfaces
+  // igjen i UI. Begge er destruktiv-safe: ingen forslag slettes, andre
+  // status-felter beholdes urørt.
+  function confirmEmneSuggestion(insight, emneId) {
+    if (!insight || !emneId) return false;
+    const id = String(emneId);
+    const list = Array.isArray(insight.emne_suggestions) ? insight.emne_suggestions : [];
+    const suggestion = list.find((s) => s && s.emne_id === id);
+    if (!suggestion) return false;
+    suggestion.status = "confirmed";
+    suggestion.confirmed_at = new Date().toISOString();
+    const emner = Array.isArray(insight.emner) ? insight.emner.slice() : [];
+    if (!emner.includes(id)) emner.push(id);
+    insight.emner = emner;
+    const subjects = new Set(Array.isArray(insight.matched_subjects) ? insight.matched_subjects : []);
+    if (suggestion.subject_id) subjects.add(suggestion.subject_id);
+    insight.matched_subjects = Array.from(subjects);
+    return true;
+  }
+
+  function dismissEmneSuggestion(insight, emneId) {
+    if (!insight || !emneId) return false;
+    const id = String(emneId);
+    const list = Array.isArray(insight.emne_suggestions) ? insight.emne_suggestions : [];
+    const suggestion = list.find((s) => s && s.emne_id === id);
+    if (!suggestion) return false;
+    suggestion.status = "dismissed";
+    suggestion.dismissed_at = new Date().toISOString();
+    return true;
+  }
+
     function _addSignalToChamberCore(chamber, signal) {
     const candidates = getInsightsForTopic(
       chamber,
@@ -2589,7 +2624,9 @@ function getConceptsForTheme(chamber, subjectId, themeId) {
     analyzeTextLayers,
   mergeConcepts,
   dedupeByKey,
-  getConceptsForTheme
+  getConceptsForTheme,
+  confirmEmneSuggestion,
+  dismissEmneSuggestion
   };
 
   if (typeof module !== "undefined" && module.exports) {
