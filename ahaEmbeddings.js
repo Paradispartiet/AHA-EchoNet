@@ -71,6 +71,58 @@
     return String(insight?.summary || insight?.title || "").slice(0, 4000).trim();
   }
 
+  // Bygger semantisk rikere embedding-input enn bare summary. Etter en
+  // brukerbekreftet merge endres ikke nødvendigvis summary, men insighten
+  // får ny mening gjennom evidence, concepts, claims, patterns, markers
+  // og emner. Vi inkluderer derfor alle lag — med summary først så
+  // signal er sterkest der — og truncerer til 4000 tegn til slutt.
+  function buildEmbeddingText(insight) {
+    if (!insight) return "";
+    const lines = [];
+
+    const title = String(insight.title || "").trim();
+    const summary = String(insight.summary || "").trim();
+    if (title) lines.push(title);
+    if (summary && summary !== title) lines.push(summary);
+
+    const conceptLabels = (insight.concepts || [])
+      .map((c) => (c && (c.label || c.key)) || "")
+      .filter(Boolean);
+    if (conceptLabels.length) lines.push(`Begreper: ${conceptLabels.join(", ")}`);
+
+    const patternLabels = (insight.patterns || [])
+      .map((p) => (p && (p.label || p.key)) || "")
+      .filter(Boolean);
+    if (patternLabels.length) lines.push(`Mønstre: ${patternLabels.join(", ")}`);
+
+    const claimTexts = (insight.claims || [])
+      .map((c) => (c && c.text) || "")
+      .filter(Boolean);
+    if (claimTexts.length) lines.push(`Påstander: ${claimTexts.join(" · ")}`);
+
+    const markerValues = (insight.markers || [])
+      .map((m) => (m && m.value) || "")
+      .filter(Boolean);
+    if (markerValues.length) lines.push(`Markører: ${markerValues.join(", ")}`);
+
+    const emneIds = Array.isArray(insight.emner) ? insight.emner.filter(Boolean) : [];
+    if (emneIds.length) lines.push(`Emner: ${emneIds.join(", ")}`);
+
+    // raw_terms tas med kun som lavprioritert hale, og kuttet til topp 8
+    // etter count, slik at hyppige stopword-aktige ord ikke drukner
+    // semantikken over.
+    const rawTerms = (insight.raw_terms || [])
+      .filter((t) => t && t.key)
+      .sort((a, b) => (b.count || 0) - (a.count || 0))
+      .slice(0, 8)
+      .map((t) => t.key);
+    if (rawTerms.length) lines.push(`Termer: ${rawTerms.join(", ")}`);
+
+    const text = lines.join("\n").trim();
+    if (!text) return summarize(insight);
+    return text.slice(0, 4000);
+  }
+
   async function storeEmbedding(insight, embedding, model) {
     const client = db();
     if (!client) return { ok: false, reason: "no_supabase" };
@@ -99,7 +151,9 @@
 
   async function embedAndStore(insight) {
     if (!insight?.id) return { ok: false, reason: "missing_id" };
-    const text = summarize(insight);
+    // Embedding-tekst er det rikere semantiske representasjonen,
+    // men summary-kolonnen skal forbli human-readable.
+    const text = buildEmbeddingText(insight);
     if (!text) return { ok: false, reason: "empty_text" };
     try {
       const result = await callEmbed([text], "document");
@@ -137,7 +191,7 @@
 
     const have = new Set((existing || []).map((r) => r.id));
     const pending = insights.filter(
-      (i) => i.id && !have.has(i.id) && summarize(i)
+      (i) => i.id && !have.has(i.id) && !i.merged_into && buildEmbeddingText(i)
     );
     if (!pending.length) return { ok: true, embedded: 0, pending: 0 };
 
@@ -149,7 +203,7 @@
       const batch = pending.slice(i, i + batchSize);
       try {
         const result = await callEmbed(
-          batch.map((b) => summarize(b)),
+          batch.map((b) => buildEmbeddingText(b)),
           "document"
         );
         const embs = result?.embeddings || [];
@@ -185,6 +239,25 @@
     return { ok: true, embedded, errors, pending: pending.length };
   }
 
+  // Bygger et set med id-er for insights som er sammenslått inn i andre.
+  // Brukes til klientside-filtrering av semantiske resultater så en
+  // merged source ikke konkurrerer med target som aktiv kandidat.
+  function mergedIdsFromChamber(chamber) {
+    const list = Array.isArray(chamber?.insights) ? chamber.insights : [];
+    const ids = new Set();
+    list.forEach((ins) => {
+      if (ins && ins.id && ins.merged_into) ids.add(ins.id);
+    });
+    return ids;
+  }
+
+  function dropMergedMatches(matches, chamber) {
+    if (!Array.isArray(matches) || !matches.length) return matches || [];
+    const merged = mergedIdsFromChamber(chamber);
+    if (!merged.size) return matches;
+    return matches.filter((m) => m && m.id && !merged.has(m.id));
+  }
+
   async function findSimilarToText(text, options) {
     const opts = options || {};
     if (!text || !String(text).trim()) return { ok: false, reason: "empty" };
@@ -196,15 +269,22 @@
       const emb = result?.embeddings?.[0];
       if (!Array.isArray(emb)) return { ok: false, reason: "no_embedding" };
 
+      const limit = opts.limit || 10;
+      // Hent litt ekstra hvis vi har en chamber å filtrere mot, slik at
+      // vi fortsatt har nok kandidater igjen etter at merged sources er
+      // luket ut. 2× pluss en konstant er rikelig i praksis.
+      const matchCount = opts.chamber ? Math.max(limit * 2, limit + 5) : limit;
+
       const { data, error } = await client.rpc("aha_match_insights", {
         query_embedding: emb,
-        match_count: opts.limit || 10,
+        match_count: matchCount,
         similarity_threshold: opts.threshold == null ? 0.5 : opts.threshold,
         filter_subject_id: opts.subject_id || null,
         filter_theme_id: opts.theme_id || null
       });
       if (error) return { ok: false, error };
-      return { ok: true, matches: data || [] };
+      const matches = dropMergedMatches(data || [], opts.chamber).slice(0, limit);
+      return { ok: true, matches };
     } catch (err) {
       console.warn("AHAEmbeddings.findSimilarToText feilet", err);
       return { ok: false, error: err };
@@ -225,18 +305,22 @@
     if (selErr) return { ok: false, error: selErr };
     if (!row?.embedding) return { ok: false, reason: "no_embedding_for_insight" };
 
+    const limit = opts.limit || 10;
+    const matchCount = opts.chamber ? Math.max(limit * 2, limit + 5) + 1 : limit + 1;
+
     const { data, error } = await client.rpc("aha_match_insights", {
       query_embedding: row.embedding,
-      match_count: (opts.limit || 10) + 1,
+      match_count: matchCount,
       similarity_threshold: opts.threshold == null ? 0.5 : opts.threshold,
       filter_subject_id: opts.subject_id || row.subject_id || null,
       filter_theme_id: opts.theme_id || null
     });
     if (error) return { ok: false, error };
 
-    const matches = (data || [])
-      .filter((m) => m.id !== insightId)
-      .slice(0, opts.limit || 10);
+    const matches = dropMergedMatches(
+      (data || []).filter((m) => m.id !== insightId),
+      opts.chamber
+    ).slice(0, limit);
     return { ok: true, matches };
   }
 
@@ -639,6 +723,7 @@
     calibrateMergeThresholds,
     calibrateMergeThresholdsForChamber,
     findMergeCandidate,
+    buildEmbeddingText,
     DEFAULT_MODEL
   };
 })(window);
