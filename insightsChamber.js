@@ -713,7 +713,7 @@ function createInsightFromSignal(signal) {
   const semantic = analyzeSentenceSemantics(text);
   const dimensions = analyzeDimensions(text);
   const narrative = analyzeNarrative(text);
-  const concepts = extractConcepts(text);
+  const layers = analyzeTextLayers(text);
   const semiotic = analyzeSemioticSignals(text);
 
   const depthScore = computeDepthHeuristic(
@@ -751,17 +751,26 @@ function createInsightFromSignal(signal) {
     semantic,
     dimensions,
     narrative,
-    concepts,
+
+    // Tekstlag: skiller råord, ekte begreper, påstander, mønstre og
+    // markører. concepts er strenge meningsenheter — råord ligger i
+    // raw_terms.
+    raw_terms: layers.raw_terms,
+    concepts: layers.concepts,
+    claims: layers.claims,
+    patterns: layers.patterns,
+    markers: layers.markers,
+
     semiotic,
 
     coherence: computeCoherence(signal.text),
     terminology: computeTerminologyDensity(signal.text),
     logical: computeLogicalPatterns(signal.text),
-    meta_concepts: computeMetaConcepts(concepts),
- 
+    meta_concepts: computeMetaConcepts(layers.concepts),
+
   };
 
-  
+
   return insight;
 }
   
@@ -811,12 +820,38 @@ function createInsightFromSignal(signal) {
   insight.strength.evidence_count += 1;
   insight.last_updated = signal.timestamp;
 
-  // Oppdater begreper basert på den nye teksten
-  const newConcepts = extractConcepts(signal.text);
-  insight.concepts = mergeConcepts(
-    insight.concepts || [],
-    newConcepts
+  // Oppdater alle tekstlag basert på det nye signalet. mergeConcepts
+  // beholder eksisterende {key, count, examples} og dedupeByKey håndterer
+  // de øvrige lagene per key/normalized/value.
+  const newLayers = analyzeTextLayers(signal.text);
+
+  insight.raw_terms = mergeConcepts(
+    Array.isArray(insight.raw_terms) ? insight.raw_terms : [],
+    newLayers.raw_terms
   );
+
+  insight.concepts = dedupeByKey(
+    (Array.isArray(insight.concepts) ? insight.concepts : []).concat(newLayers.concepts),
+    "key"
+  );
+
+  insight.claims = dedupeByKey(
+    (Array.isArray(insight.claims) ? insight.claims : []).concat(newLayers.claims),
+    "normalized"
+  );
+
+  insight.patterns = dedupeByKey(
+    (Array.isArray(insight.patterns) ? insight.patterns : []).concat(newLayers.patterns),
+    "key"
+  );
+
+  // markers er flatere – dedupe per type:value via en sammensatt key.
+  insight.markers = dedupeByKey(
+    (Array.isArray(insight.markers) ? insight.markers : [])
+      .concat(newLayers.markers)
+      .map((m) => Object.assign({}, m, { _k: `${m.type}:${m.value}` })),
+    "_k"
+  ).map((m) => { delete m._k; return m; });
 
   // Oppdater semiotikk basert på den nye teksten
   const newSemiotic = analyzeSemioticSignals(signal.text);
@@ -945,92 +980,428 @@ function createInsightFromSignal(signal) {
   });
 }
 
-  // ── Begrepsmotor: enkle "concepts" per innsikt ─────────────
+  // ── Tekst-lag: råord, begreper, påstander, mønstre, markører ─────
+  //
+  // Tidligere ble alle filtrerte tokens omtalt som "concepts". Det
+  // forurenset innsiktskammeret med vanlige ord (folk, bruker, where,
+  // dette ...). Denne seksjonen splitter ut analysen i fem klare lag:
+  //
+  //   raw_terms  – rensede tokens som kan brukes til søk/frekvens
+  //   concepts   – kondenserte meningsbærende begreper (lexicon-treff)
+  //   claims     – sterke formuleringer/påstander fra teksten
+  //   patterns   – tolkede tilbakevendende mønstre
+  //   markers    – hashtags, emojis og symboler
+  //
+  // Concepts og patterns er bevisst lexicon-baserte: de skal være
+  // kondenserte meningsenheter, ikke tilfeldige enkeltord.
 
-  // ── Begrepsanalyse per innsikt (fasit) ─────────────
-
-  // Normaliserer et ord til et konsept-key:
+  // Normaliserer et ord til en stabil token-key:
   //  - lower-case
-  //  - fjerner støy / tegn
-  //  - fjerner noen vanlige norske endelser: -ene, -er, -en, -et, -a
+  //  - fjerner tegnsetting i start/slutt
+  //  - fjerner alle ikke-bokstaver
+  // Brukes både av raw-term-laget og det konservative concept-fallback.
   function normalizeConceptToken(t) {
-  if (!t) return "";
-
-  // 1. Gjør om til små bokstaver
-  t = t.toLowerCase();
-
-  // 2. Fjern tegnsetting i start/slutt
-  t = t.replace(/^[^a-zæøå]+|[^a-zæøå]+$/g, "");
-
-  // 3. Fjern interne tegn som splitter ord (men IKKE kutt ordet)
-  t = t.replace(/[^a-zæøå]/g, "");
-
-  // 4. BEHOLD hele ordet – ikke gjør stemming eller truncation
-  return t;
-}
-
-  // Tar inn tekst og returnerer en liste med konsepter:
-//  [{ key, count, examples: ["..."] }]
-function extractConcepts(text) {
-  if (!text || typeof text !== "string") return [];
-
-  const rawTokens = tokenize(text);
-  if (!rawTokens.length) return [];
-
-  const conceptMap = new Map();
-
-  for (let token of rawTokens) {
-    // NORMALISER FØR ALT ANNET
-    let norm = normalizeConceptToken(token);
-
-    if (!norm) continue;
-
-    // STOPWORDS MÅ HAMRE PÅ DEN NORMALISERTE VERSJONEN
-    if (STOPWORDS.has(norm)) continue;
-
-    // Kast typiske verb-preteritum / partisipper (snakket, diskuterte
-    // osv.). Den gamle regelen "endsWith('et') && length<=8" tok også
-    // legitime substantiv som "arbeidet", "barnet", "huset", "året".
-    if (VERB_PRETERITUM.has(norm)) continue;
-    if (norm.startsWith("begrep") && norm.endsWith("et")) continue;
-
-    // min-lengde og rent innehold
-    if (norm.length <= 3) continue;
-    if (!/^[a-zæøå]+$/.test(norm)) continue;
-
-    // få eller oppdelt feil → fjern
-    if (norm === "else") continue;
-    if (norm === "eller") continue;
-
-    let entry = conceptMap.get(norm);
-    if (!entry) {
-      entry = { key: norm, count: 0, examples: [] };
-      conceptMap.set(norm, entry);
-    }
-
-    // Faglig boost
-    if (
-      norm.endsWith("het") ||
-      norm.endsWith("else") ||
-      norm.endsWith("skap") ||
-      norm.endsWith("sjon") ||
-      norm.endsWith("ering") ||
-      norm.endsWith("ologi") ||
-      norm.endsWith("dom") ||
-      norm.endsWith("ning")
-    ) {
-      entry.count += 2;
-    }
-
-    entry.count += 1;
-
-    if (entry.examples.length < 5 && !entry.examples.includes(token)) {
-      entry.examples.push(token);
-    }
+    if (!t) return "";
+    t = t.toLowerCase();
+    t = t.replace(/^[^a-zæøå]+|[^a-zæøå]+$/g, "");
+    t = t.replace(/[^a-zæøå]/g, "");
+    return t;
   }
 
-  return Array.from(conceptMap.values()).sort((a, b) => b.count - a.count);
-}
+
+  // Begrepsleksikon. Hvert oppslag matcher ett eller flere triggere
+  // (substreng, lower-case, leksikalt). Treff produserer ett
+  // concept-objekt med stabil key og menneskelesbar label.
+  const CONCEPT_LEXICON = [
+    {
+      key: "kommunikasjonsbarrierer",
+      label: "kommunikasjonsbarrierer",
+      triggers: [
+        "snakke ferdig", "siste taler", "smalltalk",
+        "everything starts with a lie", "starts with a lie",
+        "lying to each other", "communication barrier"
+      ]
+    },
+    {
+      key: "ekte_kontakt",
+      label: "ekte kontakt",
+      triggers: [
+        "ekte kontakt", "real connection", "real people",
+        "where are all the real"
+      ]
+    },
+    {
+      key: "sosial_fremmedgjoring",
+      label: "sosial fremmedgjøring",
+      triggers: [
+        "strangers forever", "remain strangers", "fremmedgjøring",
+        "alienation", "fremmed for hverandre"
+      ]
+    },
+    {
+      key: "normalitet_som_felle",
+      label: "normalitet som felle",
+      triggers: [
+        "normal er en felle", "normal is a trap",
+        "normaliteten", "normalitet"
+      ]
+    },
+    {
+      key: "relasjonell_avstand",
+      label: "relasjonell avstand",
+      triggers: [
+        "forskyver", "push apart", "relasjonell avstand"
+      ]
+    },
+    {
+      key: "selvtillitens_fravar",
+      label: "selvtillitens fravær",
+      triggers: [
+        "where did all the confidence go", "confidence is gone",
+        "confidence go", "selvtillit"
+      ]
+    },
+    {
+      key: "smilies_som_trygghetsmarkor",
+      label: "smilies som trygghetsmarkør",
+      triggers: ["smilies", "smiley", "emojis som trygghet"]
+    },
+    {
+      key: "oversvommelse_av_tanker",
+      label: "oversvømmelse av tanker",
+      triggers: [
+        "stopfloodingmythoughts", "flooding my thoughts",
+        "flooding thoughts", "oversvømme tanker"
+      ]
+    },
+    {
+      key: "overfladisk_konsensus",
+      label: "overfladisk konsensus",
+      triggers: [
+        "enige med siste taler", "agree with the last speaker",
+        "surface consensus", "overfladisk konsensus"
+      ]
+    },
+    {
+      key: "ulikhet_som_tiltrekning",
+      label: "ulikhet som tiltrekning",
+      triggers: [
+        "ulikheter tiltrekker", "opposites attract",
+        "potensielle partner", "ulikhet tiltrekker"
+      ]
+    }
+  ];
+
+  // Mønsterleksikon: tolkende, høyere abstraksjonsnivå enn concepts.
+  const PATTERN_LEXICON = [
+    {
+      key: "kritikk_av_overfladisk_kommunikasjon",
+      label: "kritikk av overfladisk kommunikasjon",
+      triggers: [
+        "snakke ferdig", "siste taler", "everything starts with a lie",
+        "smalltalk", "lying"
+      ]
+    },
+    {
+      key: "lengsel_etter_ekte_kontakt",
+      label: "lengsel etter ekte kontakt",
+      triggers: ["real people", "where are all the real", "ekte kontakt"]
+    },
+    {
+      key: "paradoks_tiltrekning_avstand",
+      label: "paradoks mellom tiltrekning og avstand",
+      triggers: [
+        "tiltrekker, men forskyver", "ulikheter tiltrekker",
+        "ulikheter forskyver", "tiltrekn", "forskyver"
+      ]
+    },
+    {
+      key: "skepsis_til_normalitet",
+      label: "skepsis til normalitet",
+      triggers: [
+        "normal er en felle", "normal is a trap", "normaliteten"
+      ]
+    },
+    {
+      key: "fremmedhet_mellom_mennesker",
+      label: "fremmedhet mellom mennesker",
+      triggers: ["strangers forever", "remain strangers", "fremmed for"]
+    }
+  ];
+
+  // Ord som aldri skal regnes som ekte concepts, uansett endelse eller
+  // frekvens. Listen er bevisst kort og kompletteres av STOPWORDS /
+  // VERB_PRETERITUM som allerede finnes for raw-term-laget.
+  const STRICT_CONCEPT_BLOCKLIST = new Set([
+    // funksjonsord / pronomen som slipper gjennom raw-term-filteret
+    "where", "with", "only", "around", "dette", "denne", "både",
+    "bruker", "brukere", "folk", "egen", "egne",
+    // generiske verb / refleksiver
+    "snakke", "snakker", "snakket", "finnes", "finne", "viser",
+    "lage", "lager", "laget", "liker", "likte",
+    // tilfeldige substantiver vi ofte ser i meta-tekst
+    "listen", "ordene", "oppgaven", "eksempel", "eksempler",
+    // metaord fra instruksjoner
+    "concepts", "raw_terms", "patterns", "markers", "struktur",
+    "begreper", "mønstre", "markører",
+    // generiske vurderingsord
+    "svak", "tilfeldig", "riktig", "forbedret", "vanlig"
+  ]);
+
+  // Norsk + engelske abstrakte endelser som hever et enkeltord til
+  // kandidat-concept. Brukes som fallback når ordet ikke matcher
+  // lexicon, men ser klart abstrakt ut og ikke er i blocklist.
+  const ABSTRACT_SUFFIXES = [
+    "het", "else", "skap", "sjon", "ering", "ologi", "dom", "ning",
+    "isme", "bar",
+    "tion", "ness", "ity", "ism", "ment"
+  ];
+
+  function endsWithAny(word, suffixes) {
+    return suffixes.some((s) => word.endsWith(s));
+  }
+
+  // Liten dedupe-helper for objektlister: slår sammen poster med samme
+  // verdi for keyName. count summeres. Andre felter beholdes fra
+  // første forekomst.
+  function dedupeByKey(list, keyName) {
+    const map = new Map();
+    (list || []).forEach((item) => {
+      if (!item) return;
+      const key = item[keyName];
+      if (key === undefined || key === null || key === "") return;
+      const existing = map.get(key);
+      if (!existing) {
+        map.set(key, Object.assign({}, item, { count: item.count || 1 }));
+      } else {
+        existing.count = (existing.count || 0) + (item.count || 1);
+        if (Array.isArray(item.triggers_matched) && Array.isArray(existing.triggers_matched)) {
+          const set = new Set(existing.triggers_matched);
+          item.triggers_matched.forEach((t) => set.add(t));
+          existing.triggers_matched = Array.from(set);
+        }
+      }
+    });
+    return Array.from(map.values());
+  }
+
+  // ── Lag 1: raw_terms ─────────────────────────
+  // Samme algoritme som den gamle extractConcepts, men resultatet er
+  // eksplisitt rå tokens — IKKE begreper. Brukes til søk/frekvens.
+  function extractRawTerms(text) {
+    if (!text || typeof text !== "string") return [];
+
+    const rawTokens = tokenize(text);
+    if (!rawTokens.length) return [];
+
+    const termMap = new Map();
+
+    for (const token of rawTokens) {
+      const norm = normalizeConceptToken(token);
+      if (!norm) continue;
+      if (STOPWORDS.has(norm)) continue;
+      if (VERB_PRETERITUM.has(norm)) continue;
+      if (norm.startsWith("begrep") && norm.endsWith("et")) continue;
+      if (norm.length <= 3) continue;
+      if (!/^[a-zæøå]+$/.test(norm)) continue;
+      if (norm === "else" || norm === "eller") continue;
+
+      let entry = termMap.get(norm);
+      if (!entry) {
+        entry = { key: norm, count: 0, examples: [] };
+        termMap.set(norm, entry);
+      }
+
+      if (
+        norm.endsWith("het") ||
+        norm.endsWith("else") ||
+        norm.endsWith("skap") ||
+        norm.endsWith("sjon") ||
+        norm.endsWith("ering") ||
+        norm.endsWith("ologi") ||
+        norm.endsWith("dom") ||
+        norm.endsWith("ning")
+      ) {
+        entry.count += 2;
+      }
+
+      entry.count += 1;
+
+      if (entry.examples.length < 5 && !entry.examples.includes(token)) {
+        entry.examples.push(token);
+      }
+    }
+
+    return Array.from(termMap.values()).sort((a, b) => b.count - a.count);
+  }
+
+  // ── Lag 2: concepts ─────────────────────────
+  // Strenge meningsbærende begreper. Først lexicon-match (substreng på
+  // lowercased tekst), deretter et lite, konservativt fallback for
+  // enkeltord med abstrakte endelser som ikke står i blocklist.
+  function extractConcepts(text) {
+    if (!text || typeof text !== "string") return [];
+
+    const lower = text.toLowerCase();
+    const concepts = [];
+
+    // 1) Lexicon-treff
+    CONCEPT_LEXICON.forEach((entry) => {
+      const matched = (entry.triggers || []).filter((t) => t && lower.includes(t.toLowerCase()));
+      if (!matched.length) return;
+      concepts.push({
+        key: entry.key,
+        label: entry.label,
+        count: matched.length,
+        source: "lexicon",
+        triggers_matched: matched
+      });
+    });
+
+    // 2) Konservativt fallback for enkeltord med abstrakte endelser
+    const seen = new Set(concepts.map((c) => c.key));
+    const rawTokens = tokenize(text);
+    for (const token of rawTokens) {
+      const norm = normalizeConceptToken(token);
+      if (!norm) continue;
+      if (norm.length < 6) continue;
+      if (STOPWORDS.has(norm)) continue;
+      if (VERB_PRETERITUM.has(norm)) continue;
+      if (STRICT_CONCEPT_BLOCKLIST.has(norm)) continue;
+      if (!endsWithAny(norm, ABSTRACT_SUFFIXES)) continue;
+      if (seen.has(norm)) continue;
+      concepts.push({
+        key: norm,
+        label: norm,
+        count: 1,
+        source: "suffix",
+        triggers_matched: [token]
+      });
+      seen.add(norm);
+    }
+
+    return concepts;
+  }
+
+  // ── Lag 3: claims ─────────────────────────
+  // Sterke formuleringer/påstander. Behold brukerens originale
+  // formulering. Heuristikk: 3–18 ord, og enten et "claim-signal"
+  // (kopula, modal, absolutt, retorisk åpning), eller ren
+  // utropsformulering med stort startord.
+  const CLAIM_SIGNALS = [
+    " er en ", " er ", "blir en ", " er at ",
+    " is ", " are ", " is a ", "starts with",
+    "remain", "remains", "forever",
+    "alle ", "ingen ", "alltid", "aldri",
+    "everyone", "nobody", "no one", "always", "never",
+    "everything", "nothing",
+    "where ", "why ",
+    "tiltrekker", "forskyver"
+  ];
+
+  function extractClaims(text) {
+    if (!text || typeof text !== "string") return [];
+
+    const segments = text
+      .split(/[.!?\n]+/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    const claims = [];
+    const seen = new Set();
+
+    segments.forEach((segment) => {
+      const wordCount = segment.split(/\s+/).filter(Boolean).length;
+      if (wordCount < 3 || wordCount > 18) return;
+
+      const lower = segment.toLowerCase();
+      const hasSignal = CLAIM_SIGNALS.some((sig) => lower.includes(sig));
+      if (!hasSignal) return;
+
+      // Filtrer rene markør-/hashtag-strenger.
+      if (/^#\S+$/.test(segment)) return;
+
+      const normalized = lower.replace(/\s+/g, " ").trim();
+      if (seen.has(normalized)) return;
+      seen.add(normalized);
+
+      claims.push({
+        text: segment.replace(/\s+/g, " ").trim(),
+        normalized,
+        count: 1
+      });
+    });
+
+    return claims;
+  }
+
+  // ── Lag 4: patterns ─────────────────────────
+  // Lexicon-basert mønsterdeteksjon. Output er tolkende labels, ikke
+  // ord fra teksten.
+  function extractPatterns(text) {
+    if (!text || typeof text !== "string") return [];
+
+    const lower = text.toLowerCase();
+    const patterns = [];
+
+    PATTERN_LEXICON.forEach((entry) => {
+      const matched = (entry.triggers || []).filter((t) => t && lower.includes(t.toLowerCase()));
+      if (!matched.length) return;
+      patterns.push({
+        key: entry.key,
+        label: entry.label,
+        count: matched.length,
+        triggers_matched: matched
+      });
+    });
+
+    return patterns;
+  }
+
+  // ── Lag 5: markers ─────────────────────────
+  // Hashtags, emojis og spesialsymboler. Behold original casing for
+  // hashtags slik at #stopFloodingmythoughts ikke blir #stopfloodingmythoughts.
+  function extractMarkers(text) {
+    if (!text || typeof text !== "string") return [];
+
+    const markers = [];
+    const seen = new Set();
+
+    function add(type, value) {
+      if (!value) return;
+      const k = `${type}:${value}`;
+      if (seen.has(k)) {
+        const existing = markers.find((m) => m.type === type && m.value === value);
+        if (existing) existing.count += 1;
+        return;
+      }
+      seen.add(k);
+      markers.push({ type, value, count: 1 });
+    }
+
+    const hashtagRe = /#[\p{L}\p{N}_]+/gu;
+    let m;
+    while ((m = hashtagRe.exec(text)) !== null) {
+      add("hashtag", m[0]);
+    }
+
+    extractEmojis(text).forEach((e) => add("emoji", e));
+
+    return markers;
+  }
+
+  // ── Felles inngang: hele tekstanalysen ────────
+  function analyzeTextLayers(text) {
+    return {
+      raw_terms: extractRawTerms(text),
+      concepts: extractConcepts(text),
+      claims: extractClaims(text),
+      patterns: extractPatterns(text),
+      markers: extractMarkers(text)
+    };
+  }
+
+
   // Slår sammen to concept-lister:
   //  - summerer count
   //  - beholder maks 5 eksempler per key
@@ -2211,7 +2582,13 @@ function getConceptsForTheme(chamber, subjectId, themeId) {
     computeTopicsOverview,
     createNarrativeForTopic,
     extractConcepts,
+    extractRawTerms,
+    extractClaims,
+    extractPatterns,
+    extractMarkers,
+    analyzeTextLayers,
   mergeConcepts,
+  dedupeByKey,
   getConceptsForTheme
   };
 
