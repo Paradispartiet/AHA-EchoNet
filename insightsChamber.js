@@ -833,7 +833,7 @@ function createInsightFromSignal(signal) {
     );
 }
 
-    function addSignalToChamber(chamber, signal) {
+    function _addSignalToChamberCore(chamber, signal) {
     const candidates = getInsightsForTopic(
       chamber,
       signal.subject_id,
@@ -853,11 +853,30 @@ function createInsightFromSignal(signal) {
     const THRESHOLD = 0.5; // kan finjusteres senere
     if (best && bestSim >= THRESHOLD) {
       reinforceInsight(best, signal);
-    } else {
-      chamber.insights.push(createInsightFromSignal(signal));
+      return {
+        chamber,
+        action: "reinforced",
+        insight_id: best.id,
+        lexical_sim: bestSim
+      };
     }
+    const created = createInsightFromSignal(signal);
+    chamber.insights.push(created);
+    return {
+      chamber,
+      action: "created",
+      insight_id: created.id,
+      lexical_sim: bestSim
+    };
+  }
 
+    function addSignalToChamber(chamber, signal) {
+    _addSignalToChamberCore(chamber, signal);
     return chamber;
+  }
+
+  function addSignalToChamberWithMeta(chamber, signal) {
+    return _addSignalToChamberCore(chamber, signal);
   }
   
   // ── Tekst → setninger ──────────────────────
@@ -2178,6 +2197,7 @@ function getConceptsForTheme(chamber, subjectId, themeId) {
     createEmptyChamber,
     createSignalFromMessage,
     addSignalToChamber,
+    addSignalToChamberWithMeta,
     splitIntoSentences,
     getInsightsForTopic,
     computeTopicStats,
