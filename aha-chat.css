@@ -79,6 +79,20 @@ pre#out { max-height: 22vh; overflow:auto; white-space: pre-wrap; }
 .emne-confirm-btn:hover { background: #1d2a55; }
 .emne-dismiss-btn:hover { background: #2a1d1d; }
 
+.merge-suggestion-panel { background: #14193a; border: 1px solid var(--aha-border); border-radius: 12px; padding: 10px 12px; margin-bottom: 12px; }
+.merge-suggestion-panel h3 { margin: 0 0 4px; font-size: 13px; }
+.merge-suggestion-hint { margin: 0 0 8px; color: var(--aha-muted); font-size: 11px; line-height: 1.4; }
+.merge-suggestion-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.merge-suggestion { display: flex; gap: 10px; align-items: flex-start; justify-content: space-between; background: #0f1730; border: 1px solid var(--aha-border); border-radius: 10px; padding: 8px 10px; }
+.merge-suggestion-text { flex: 1 1 auto; font-size: 12px; color: var(--aha-text); }
+.merge-suggestion-row { margin: 0; line-height: 1.4; }
+.merge-suggestion-label { color: var(--aha-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; margin-right: 4px; }
+.merge-suggestion-meta { display: block; margin-top: 4px; color: var(--aha-muted); font-size: 11px; }
+.merge-suggestion-actions { display: flex; flex-direction: column; gap: 4px; flex: 0 0 auto; }
+.merge-confirm-btn, .merge-dismiss-btn { font-size: 11px; padding: 4px 10px; border-radius: 6px; border: 1px solid var(--aha-border); background: #161b33; color: var(--aha-text); cursor: pointer; }
+.merge-confirm-btn:hover { background: #1d2a55; }
+.merge-dismiss-btn:hover { background: #2a1d1d; }
+
 .composer-wrap { position: fixed; left: 0; right: 0; bottom: 0; background: linear-gradient(180deg, rgba(5,8,20,0), rgba(5,8,20,0.85) 24%, rgba(5,8,20,1)); padding: 12px 16px 16px; }
 .composer-row { background: var(--aha-surface); border: 1px solid var(--aha-border); border-radius: 14px; padding: 12px; }
 #msg { min-height: 84px; max-height: 160px; resize: vertical; }

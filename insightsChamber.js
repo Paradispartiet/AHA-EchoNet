@@ -903,6 +903,153 @@ function createInsightFromSignal(signal) {
     return true;
   }
 
+  // ── merge_suggestion lifecycle ──────────────
+  // Embedding-laget kan foreslå at to insights er samme tanke. Tidligere
+  // var det suggestion-only via aha:merge-suggested-event. Nå
+  // persisteres forslagene i chamberet og kan løftes til faktisk merge
+  // av brukeren. Ingen automerge.
+  function findInsightById(chamber, id) {
+    if (!chamber || !id) return null;
+    return (chamber.insights || []).find((ins) => ins && ins.id === id) || null;
+  }
+
+  function isMergeDismissed(chamber, sourceId, targetId) {
+    const list = Array.isArray(chamber?.merge_dismissals) ? chamber.merge_dismissals : [];
+    return list.some((d) =>
+      d &&
+      ((d.source_id === sourceId && d.target_id === targetId) ||
+       (d.source_id === targetId && d.target_id === sourceId))
+    );
+  }
+
+  // Lagre et nytt merge-forslag på chamberet. No-op hvis paret allerede
+  // er foreslått (uavhengig av retning) eller dismissed. Returnerer
+  // suggestion-objektet hvis det ble lagret, ellers null.
+  function recordMergeSuggestion(chamber, suggestion) {
+    if (!chamber || !suggestion) return null;
+    const sourceId = suggestion.source_id || suggestion.source_insight_id;
+    const targetId = suggestion.target_id || suggestion.candidate_id;
+    if (!sourceId || !targetId || sourceId === targetId) return null;
+
+    const list = Array.isArray(chamber.merge_suggestions) ? chamber.merge_suggestions : [];
+    const exists = list.some((s) =>
+      s &&
+      s.status === "pending" &&
+      ((s.source_id === sourceId && s.target_id === targetId) ||
+       (s.source_id === targetId && s.target_id === sourceId))
+    );
+    if (exists) return null;
+    if (isMergeDismissed(chamber, sourceId, targetId)) return null;
+
+    const entry = {
+      source_id: sourceId,
+      target_id: targetId,
+      similarity: Number.isFinite(suggestion.similarity) ? Number(suggestion.similarity) : null,
+      threshold: Number.isFinite(suggestion.threshold) ? Number(suggestion.threshold) : null,
+      source_summary: String(suggestion.source_summary || "").slice(0, 400),
+      target_summary: String(suggestion.target_summary || suggestion.candidate_summary || "").slice(0, 400),
+      suggested_at: suggestion.suggested_at || new Date().toISOString(),
+      status: "pending"
+    };
+    chamber.merge_suggestions = list.concat([entry]);
+    return entry;
+  }
+
+  // Slår sammen sourceInsight inn i targetInsight. Setter merged_into,
+  // kopierer evidens og tekstlag, og oppdaterer last_updated. No-op
+  // hvis enten innsikt mangler, source allerede har merged_into, eller
+  // sourceId === targetId.
+  function confirmMerge(chamber, sourceId, targetId) {
+    if (!chamber || !sourceId || !targetId || sourceId === targetId) return false;
+    const source = findInsightById(chamber, sourceId);
+    const target = findInsightById(chamber, targetId);
+    if (!source || !target) return false;
+    if (source.merged_into) return false;
+
+    target.strength = target.strength || { evidence_count: 0, total_score: 0 };
+    source.strength = source.strength || { evidence_count: 0, total_score: 0 };
+    target.strength.evidence_count = (target.strength.evidence_count || 0) + (source.strength.evidence_count || 1);
+    const baseDepth = target.depth_score || 0;
+    target.strength.total_score = Math.min(100, target.strength.evidence_count * 10 + baseDepth);
+
+    target.raw_terms = mergeConcepts(
+      Array.isArray(target.raw_terms) ? target.raw_terms : [],
+      Array.isArray(source.raw_terms) ? source.raw_terms : []
+    );
+    target.concepts = dedupeByKey(
+      (Array.isArray(target.concepts) ? target.concepts : []).concat(
+        Array.isArray(source.concepts) ? source.concepts : []
+      ),
+      "key"
+    );
+    target.claims = dedupeByKey(
+      (Array.isArray(target.claims) ? target.claims : []).concat(
+        Array.isArray(source.claims) ? source.claims : []
+      ),
+      "normalized"
+    );
+    target.patterns = dedupeByKey(
+      (Array.isArray(target.patterns) ? target.patterns : []).concat(
+        Array.isArray(source.patterns) ? source.patterns : []
+      ),
+      "key"
+    );
+    const targetMarkers = Array.isArray(target.markers) ? target.markers : [];
+    const sourceMarkers = Array.isArray(source.markers) ? source.markers : [];
+    target.markers = dedupeByKey(
+      targetMarkers.concat(sourceMarkers).map((m) => Object.assign({}, m, { _k: `${m.type}:${m.value}` })),
+      "_k"
+    ).map((m) => { delete m._k; return m; });
+    const targetEmner = new Set(Array.isArray(target.emner) ? target.emner : []);
+    (Array.isArray(source.emner) ? source.emner : []).forEach((e) => targetEmner.add(e));
+    target.emner = Array.from(targetEmner);
+
+    source.merged_into = target.id;
+    source.merged_at = new Date().toISOString();
+    target.last_updated = source.merged_at;
+
+    const list = Array.isArray(chamber.merge_suggestions) ? chamber.merge_suggestions : [];
+    list.forEach((s) => {
+      if (!s || s.status !== "pending") return;
+      const a = s.source_id;
+      const b = s.target_id;
+      if ((a === sourceId && b === targetId) || (a === targetId && b === sourceId)) {
+        s.status = "confirmed";
+        s.confirmed_at = source.merged_at;
+        s.merged_source_id = sourceId;
+        s.merged_target_id = targetId;
+      }
+    });
+
+    return true;
+  }
+
+  function dismissMergeSuggestion(chamber, sourceId, targetId) {
+    if (!chamber || !sourceId || !targetId || sourceId === targetId) return false;
+    const list = Array.isArray(chamber.merge_suggestions) ? chamber.merge_suggestions : [];
+    let touched = false;
+    list.forEach((s) => {
+      if (!s || s.status !== "pending") return;
+      const a = s.source_id;
+      const b = s.target_id;
+      if ((a === sourceId && b === targetId) || (a === targetId && b === sourceId)) {
+        s.status = "dismissed";
+        s.dismissed_at = new Date().toISOString();
+        touched = true;
+      }
+    });
+    const dismissals = Array.isArray(chamber.merge_dismissals) ? chamber.merge_dismissals : [];
+    if (!isMergeDismissed(chamber, sourceId, targetId)) {
+      chamber.merge_dismissals = dismissals.concat([{
+        source_id: sourceId,
+        target_id: targetId,
+        dismissed_at: new Date().toISOString()
+      }]);
+      touched = true;
+    }
+    return touched;
+  }
+
     function _addSignalToChamberCore(chamber, signal) {
     const candidates = getInsightsForTopic(
       chamber,
@@ -2626,7 +2773,11 @@ function getConceptsForTheme(chamber, subjectId, themeId) {
   dedupeByKey,
   getConceptsForTheme,
   confirmEmneSuggestion,
-  dismissEmneSuggestion
+  dismissEmneSuggestion,
+  confirmMerge,
+  dismissMergeSuggestion,
+  recordMergeSuggestion,
+  isMergeDismissed
   };
 
   if (typeof module !== "undefined" && module.exports) {
