@@ -40,7 +40,7 @@ body::before {
   position: relative;
   width: min(1160px, 100%);
   margin: 0 auto;
-  padding: 20px;
+  padding: 24px 20px 96px;
 }
 
 .aha-app-header {
@@ -382,7 +382,7 @@ input:focus { border-color: var(--aha-yellow); box-shadow: 0 0 0 3px rgba(246,20
 .aha-auth-inline { flex-direction: column; align-items: stretch; margin-top: 16px; }
 
 .aha-section-heading {
-  margin: 0 0 16px;
+  margin: 0 0 18px;
   max-width: 720px;
 }
 
@@ -398,8 +398,8 @@ input:focus { border-color: var(--aha-yellow); box-shadow: 0 0 0 3px rgba(246,20
 .aha-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0,1fr));
-  gap: 14px;
-  margin-bottom: 28px;
+  gap: 16px;
+  margin-bottom: 34px;
 }
 
 .aha-tile {
@@ -433,6 +433,11 @@ input:focus { border-color: var(--aha-yellow); box-shadow: 0 0 0 3px rgba(246,20
 }
 
 .aha-tile strong { font-size: 1.18rem; }
+.aha-tile-priority {
+  border-color: rgba(246,200,0,.34);
+  background: linear-gradient(145deg, rgba(246,200,0,.15), rgba(255,255,255,.05));
+}
+.aha-tile-priority strong { font-size: 1.28rem; }
 .aha-tile span:not(.aha-tile-icon) { color: var(--aha-muted); line-height: 1.35; }
 .aha-tile small { margin-top: auto; width: fit-content; padding: 7px 10px; border-radius: 999px; background: rgba(255,255,255,.08); color: var(--aha-text); font-weight: 800; }
 .aha-button-tile { font: inherit; }
@@ -464,6 +469,56 @@ input:focus { border-color: var(--aha-yellow); box-shadow: 0 0 0 3px rgba(246,20
 .aha-tile-btn-secondary:hover { filter: brightness(1.08); }
 
 .aha-panel { padding: 20px; }
+.aha-action-panel,
+.aha-historygo-panel,
+.aha-insights-panel {
+  margin-bottom: 20px;
+  border-radius: 30px;
+}
+.aha-action-buttons {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+}
+.aha-cta-primary,
+.aha-cta-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  border-radius: 999px;
+  padding: 12px 18px;
+  font-weight: 900;
+  text-decoration: none;
+}
+.aha-cta-primary {
+  background: var(--aha-yellow);
+  color: #12100a;
+}
+.aha-cta-secondary-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.aha-cta-secondary {
+  border: 1px solid var(--aha-line);
+  background: rgba(255,255,255,.08);
+  color: var(--aha-text);
+}
+.aha-profile-connection {
+  margin-top: 10px;
+  font-size: .95rem;
+  color: #ffe27a;
+}
+.aha-profile-link { margin-top: 14px; width: fit-content; }
+.aha-insights-panel small {
+  display: block;
+  margin-top: 8px;
+  color: var(--aha-muted);
+}
+.aha-mobile-nav {
+  display: none;
+}
 .aha-panel-head { justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
 .aha-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(155px,1fr)); gap: 10px; }
 .aha-stat-source { border-color: rgba(246,200,0,.24); background: rgba(246,200,0,.08); }
@@ -475,6 +530,7 @@ input:focus { border-color: var(--aha-yellow); box-shadow: 0 0 0 3px rgba(246,20
   .aha-header-actions { justify-content: flex-start; }
   .aha-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
   .aha-profile-stats { grid-template-columns: repeat(3, minmax(0,1fr)); }
+  .aha-cta-secondary-row { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 620px) {
@@ -489,4 +545,31 @@ input:focus { border-color: var(--aha-yellow); box-shadow: 0 0 0 3px rgba(246,20
   .aha-grid,
   .aha-profile-stats { grid-template-columns: 1fr; }
   .aha-tile { min-height: 150px; }
+  .aha-mobile-nav {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    z-index: 10;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    padding: 9px;
+    border: 1px solid var(--aha-line);
+    border-radius: 18px;
+    background: rgba(7,8,13,.92);
+    backdrop-filter: blur(8px);
+  }
+  .aha-mobile-nav a {
+    text-decoration: none;
+    color: var(--aha-text);
+    font-size: .82rem;
+    text-align: center;
+    padding: 8px 6px;
+    border-radius: 12px;
+  }
+  .aha-mobile-nav a[aria-current="page"] {
+    background: var(--aha-yellow-soft);
+    color: #ffe27a;
+  }
 }

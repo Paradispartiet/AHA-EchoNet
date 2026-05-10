@@ -125,12 +125,12 @@
     if (!mount) return;
 
     const rows = [
+      [statValue(stats, "imports"), "History Go-data"],
       [statValue(stats, "source_events"), "Innsikter"],
       [statValue(stats, "notes"), "Notater"],
       [statValue(stats, "gallery"), "Galleri"],
-      [statValue(stats, "feed"), "Feed"],
-      [historyGo ? "Funnet" : "Ikke funnet", "History Go"],
-      [formatTime(), "Sist oppdatert"]
+      [historyGo ? "Koblet til" : "Ikke koblet", "History Go"],
+      [historyGo ? formatTime() : "Ingen import", "Sist importert"]
     ];
 
     mount.innerHTML = rows.map(([value, label]) => `
@@ -214,8 +214,11 @@
 
     setText("aha-profile-name", profileTitle);
     setText("aha-profile-subtitle", signedIn
-      ? "Dette er din personlige innsiktsmotor."
-      : "Logg inn for å gjøre AHA til din personlige innsiktsmotor.");
+      ? "Din personlige innsiktsmotor"
+      : "Logg inn for å gjøre AHA personlig.");
+    setText("aha-profile-connection", signedIn
+      ? hasHistoryGoPayload() ? "Logget inn · History Go koblet til" : "Logget inn · Klar for History Go-import"
+      : "Ikke logget inn · Koble til for å bygge innsikt");
     setText("aha-profile-id", signedIn ? shortId(user.id) : "Ikke innlogget");
     setText("aha-profile-avatar", avatarText);
     setText("aha-header-status", statusText);
@@ -238,6 +241,36 @@
     if (nameInput && displayName) nameInput.value = displayName;
   }
 
+  function renderInsightsActivity(stats) {
+    const sourceEvents = statValue(stats, "source_events");
+    const imports = statValue(stats, "imports");
+    if (sourceEvents > 0) {
+      setText("aha-latest-insight", `Du har ${sourceEvents} ${sourceEvents === 1 ? "innsikt" : "innsikter"} tilgjengelig.`);
+      setText("aha-insight-empty-hint", "Åpne chat eller innsikter for å bygge videre.");
+      return;
+    }
+    if (imports > 0) {
+      setText("aha-latest-insight", "Import fullført. Klar for første innsiktssamtale.");
+      setText("aha-insight-empty-hint", "Snakk med AHA for å tolke det du har samlet.");
+      return;
+    }
+    setText("aha-latest-insight", "Ingen importerte innsikter ennå");
+    setText("aha-insight-empty-hint", "Importer fra History Go eller start en samtale med AHA.");
+  }
+
+  function bindImportButtons() {
+    const importButtons = ["btn-import-hg-primary", "btn-import-hg-secondary"];
+    importButtons.forEach((id) => {
+      const button = $(id);
+      if (!button || button.dataset.ahaDashboardBound === "true") return;
+      button.dataset.ahaDashboardBound = "true";
+      button.addEventListener("click", () => {
+        const importTrigger = $("btn-import-hg");
+        if (importTrigger) importTrigger.click();
+      });
+    });
+  }
+
   async function renderDashboard() {
     try {
       const authState = await loadAuthState();
@@ -257,6 +290,7 @@
       renderProfileStats(stats, sourceLabel);
       renderModuleStatus(stats);
       renderStatCards(stats, sourceLabel, authState);
+      renderInsightsActivity(stats);
     } catch (error) {
       console.warn("AHADashboard: renderDashboard feilet", error);
       const authState = { user: null, profile: null, profileResult: { ok: false, reason: "render_error", error } };
@@ -266,6 +300,7 @@
       renderProfileStats(stats, "localStorage");
       renderModuleStatus(stats);
       renderStatCards(stats, "localStorage", authState);
+      renderInsightsActivity(stats);
       setText("aha-auth-output", "Dashboardet bruker localStorage fordi en innlastingsfeil oppstod.");
     }
   }
@@ -308,6 +343,7 @@
   function bind() {
     bindProfileNameForm();
     bindHistoryGoHomeTile();
+    bindImportButtons();
     renderDashboard();
     window.addEventListener("aha:source-event-added", renderDashboard);
     window.addEventListener("aha:historygo-imported", renderDashboard);
