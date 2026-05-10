@@ -31,6 +31,8 @@ create table if not exists public.aha_notes (
   profile_id uuid null references public.aha_profiles(id) on delete set null,
   title text,
   text text,
+  deleted_at timestamptz null,
+  last_source_event_id text null,
   tags jsonb not null default '[]'::jsonb,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -48,6 +50,8 @@ create table if not exists public.aha_gallery_items (
   source_app text,
   user_created boolean not null default true,
   imported boolean not null default false,
+  deleted_at timestamptz null,
+  last_source_event_id text null,
   tags jsonb not null default '[]'::jsonb,
   meta jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now()
@@ -57,6 +61,8 @@ create table if not exists public.aha_feed_posts (
   id text primary key,
   profile_id uuid null references public.aha_profiles(id) on delete set null,
   text text,
+  deleted_at timestamptz null,
+  last_source_event_id text null,
   tags jsonb not null default '[]'::jsonb,
   meta jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now()
@@ -69,6 +75,8 @@ create table if not exists public.aha_insta_posts (
   caption text,
   src text,
   content_type text,
+  deleted_at timestamptz null,
+  last_source_event_id text null,
   tags jsonb not null default '[]'::jsonb,
   meta jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now()
@@ -97,3 +105,23 @@ create index if not exists idx_aha_gallery_items_created_at on public.aha_galler
 create index if not exists idx_aha_feed_posts_created_at on public.aha_feed_posts(created_at desc);
 create index if not exists idx_aha_insta_posts_created_at on public.aha_insta_posts(created_at desc);
 create index if not exists idx_aha_imports_created_at on public.aha_imports(created_at desc);
+
+-- Soft-delete + source-event trace columns for existing installations.
+-- create table if not exists does not add new columns to existing tables,
+-- so these alter statements make the schema safe to rerun.
+
+alter table public.aha_notes
+  add column if not exists deleted_at timestamptz null,
+  add column if not exists last_source_event_id text null;
+
+alter table public.aha_gallery_items
+  add column if not exists deleted_at timestamptz null,
+  add column if not exists last_source_event_id text null;
+
+alter table public.aha_feed_posts
+  add column if not exists deleted_at timestamptz null,
+  add column if not exists last_source_event_id text null;
+
+alter table public.aha_insta_posts
+  add column if not exists deleted_at timestamptz null,
+  add column if not exists last_source_event_id text null;
