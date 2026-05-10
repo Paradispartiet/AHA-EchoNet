@@ -277,17 +277,26 @@
     </li>`;
   }
 
-  function resolveEmneSuggestionAction(target) {
+  function resolvePanelAction(target) {
     if (!target) return null;
     const button = target.closest && target.closest("[data-action]");
     if (!button) return null;
     const action = button.getAttribute("data-action");
-    if (action !== "confirm-emne" && action !== "dismiss-emne") return null;
-    return {
-      action,
-      insightId: button.getAttribute("data-insight-id") || "",
-      emneId: button.getAttribute("data-emne-id") || ""
-    };
+    if (action === "confirm-emne" || action === "dismiss-emne") {
+      return {
+        action,
+        insightId: button.getAttribute("data-insight-id") || "",
+        emneId: button.getAttribute("data-emne-id") || ""
+      };
+    }
+    if (action === "confirm-merge" || action === "dismiss-merge") {
+      return {
+        action,
+        sourceId: button.getAttribute("data-source-id") || "",
+        targetId: button.getAttribute("data-target-id") || ""
+      };
+    }
+    return null;
   }
 
   function applyEmneSuggestionAction(action, insightId, emneId) {
@@ -316,23 +325,84 @@
     return true;
   }
 
-  function bindEmneSuggestionHandler() {
+  function applyMergeAction(action, sourceId, targetId) {
+    if (!sourceId || !targetId) return false;
+    const chamber = loadChamberFromStorage();
+    const engine = global.InsightsEngine || {};
+    let changed = false;
+    if (action === "confirm-merge" && typeof engine.confirmMerge === "function") {
+      changed = engine.confirmMerge(chamber, sourceId, targetId);
+    } else if (action === "dismiss-merge" && typeof engine.dismissMergeSuggestion === "function") {
+      changed = engine.dismissMergeSuggestion(chamber, sourceId, targetId);
+    }
+    if (!changed) return false;
+
+    saveChamberToStorage(chamber);
+
+    try {
+      global.dispatchEvent(new CustomEvent("aha:merge-resolved", {
+        detail: { source_id: sourceId, target_id: targetId, action }
+      }));
+    } catch {}
+
+    return true;
+  }
+
+  function bindPanelActionHandler() {
     const panel = document.getElementById("panel");
-    if (!panel || panel.dataset.ahaEmneBound === "true") return;
-    panel.dataset.ahaEmneBound = "true";
+    if (!panel || panel.dataset.ahaPanelBound === "true") return;
+    panel.dataset.ahaPanelBound = "true";
     panel.addEventListener("click", (event) => {
-      const resolved = resolveEmneSuggestionAction(event.target);
+      const resolved = resolvePanelAction(event.target);
       if (!resolved) return;
       event.preventDefault();
-      const ok = applyEmneSuggestionAction(resolved.action, resolved.insightId, resolved.emneId);
+      let ok = false;
+      if (resolved.action === "confirm-emne" || resolved.action === "dismiss-emne") {
+        ok = applyEmneSuggestionAction(resolved.action, resolved.insightId, resolved.emneId);
+      } else if (resolved.action === "confirm-merge" || resolved.action === "dismiss-merge") {
+        ok = applyMergeAction(resolved.action, resolved.sourceId, resolved.targetId);
+      }
       if (ok) showInsights();
     });
   }
 
+  function renderMergeSuggestionsSection() {
+    const chamber = loadChamberFromStorage();
+    const suggestions = (Array.isArray(chamber.merge_suggestions) ? chamber.merge_suggestions : [])
+      .filter((s) => s && s.status === "pending");
+    if (!suggestions.length) return "";
+
+    const items = suggestions.map((s) => {
+      const sourceSummary = escHtml((s.source_summary || s.source_id || "").slice(0, 120));
+      const targetSummary = escHtml((s.target_summary || s.target_id || "").slice(0, 120));
+      const sim = Number.isFinite(s.similarity) ? s.similarity.toFixed(2) : "?";
+      const sourceId = escHtml(s.source_id || "");
+      const targetId = escHtml(s.target_id || "");
+      return `<li class="merge-suggestion">
+        <div class="merge-suggestion-text">
+          <div class="merge-suggestion-row"><span class="merge-suggestion-label">Ny:</span> ${sourceSummary}</div>
+          <div class="merge-suggestion-row"><span class="merge-suggestion-label">Ligner på:</span> ${targetSummary}</div>
+          <small class="merge-suggestion-meta">cosine ${sim}</small>
+        </div>
+        <div class="merge-suggestion-actions">
+          <button type="button" class="merge-confirm-btn" data-action="confirm-merge" data-source-id="${sourceId}" data-target-id="${targetId}">Slå sammen</button>
+          <button type="button" class="merge-dismiss-btn" data-action="dismiss-merge" data-source-id="${sourceId}" data-target-id="${targetId}">Ignorer</button>
+        </div>
+      </li>`;
+    }).join("");
+
+    return `<section class="merge-suggestion-panel">
+      <h3>Foreslåtte sammenslåinger</h3>
+      <p class="merge-suggestion-hint">Embedding-laget mener disse innsiktene kan være samme tanke. Ingenting slås sammen før du bekrefter.</p>
+      <ul class="merge-suggestion-list">${items}</ul>
+    </section>`;
+  }
+
   function showInsights() {
     const insights = currentInsights();
+    const mergeSection = renderMergeSuggestionsSection();
     renderPanel(
-      `<div class="insight-panel"><h2>Innsikter</h2>${
+      `<div class="insight-panel">${mergeSection}<h2>Innsikter</h2>${
         insights.length
           ? `<ul class="insight-list">${insights.map(renderInsightCard).join("")}</ul>`
           : "<p>Ingen innsikter ennå.</p>"
@@ -456,7 +526,15 @@
       });
     });
 
-    bindEmneSuggestionHandler();
+    bindPanelActionHandler();
+
+    // Når et nytt merge-forslag persisteres på chamberet, re-rendr
+    // panelet hvis det vises. UI-en henter forslagene rett fra
+    // localStorage, så den trenger bare et signal om å oppdatere seg.
+    global.addEventListener("aha:merge-suggested", () => {
+      const panel = document.getElementById("panel");
+      if (panel && panel.querySelector(".insight-panel")) showInsights();
+    });
 
     updateEmptyState();
   }

@@ -254,6 +254,15 @@
     try {
       const suggestion = await global.AHAEmbeddings.findMergeCandidate(target, chamber);
       if (!suggestion?.ok || !suggestion.candidate) return;
+
+      // Skip pairs the user has already dismissed. Avoids re-surfacing
+      // the same suggestion every time a new signal lands on either side.
+      const engine = global.InsightsEngine || {};
+      if (typeof engine.isMergeDismissed === "function" &&
+          engine.isMergeDismissed(chamber, target.id, suggestion.candidate.id)) {
+        return;
+      }
+
       const detail = {
         source_insight_id: target.id,
         source_summary: target.summary || target.title || "",
@@ -261,6 +270,21 @@
         similarity: suggestion.similarity,
         threshold: suggestion.threshold
       };
+
+      // Persist suggestion on the chamber so the UI can list pending
+      // ones across reloads, not only in-flight events.
+      if (typeof engine.recordMergeSuggestion === "function") {
+        const persisted = engine.recordMergeSuggestion(chamber, {
+          source_id: target.id,
+          target_id: suggestion.candidate.id,
+          similarity: suggestion.similarity,
+          threshold: suggestion.threshold,
+          source_summary: target.summary || target.title || "",
+          target_summary: suggestion.candidate.summary || suggestion.candidate.title || ""
+        });
+        if (persisted) saveChamber(chamber);
+      }
+
       console.info(
         "[aha:merge-suggested]",
         `source=${target.id}`,
