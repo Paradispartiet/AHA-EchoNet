@@ -19,6 +19,14 @@ Schemaet oppretter tabeller for:
 - `aha_insta_posts`
 - `aha_imports`
 
+For semantisk søk i innsiktskammeret:
+
+- `supabase/embeddings.sql` oppretter `aha_insight_embeddings` + pgvector + RPC-en `aha_match_insights`.
+
+For sync av hele insight-kammeret per innlogget profil:
+
+- `supabase/chamber.sql` oppretter `aha_insight_chambers` (én rad per profile_id med kammeret som JSONB).
+
 ## Kjør policies
 
 Etter at tabellene finnes:
@@ -26,6 +34,8 @@ Etter at tabellene finnes:
 1. Åpne SQL Editor.
 2. Lim inn innholdet fra `supabase/policies.sql`.
 3. Kjør SQL-en.
+4. Kjør `supabase/embeddings.sql` hvis du vil ha semantisk søk + AHA-agent.
+5. Kjør `supabase/chamber.sql` hvis du vil ha chamber-sync på tvers av enheter.
 
 Policy-modellen i denne første versjonen er enkel:
 

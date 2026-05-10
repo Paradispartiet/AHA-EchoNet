@@ -20,7 +20,17 @@
 
   function saveChamberToStorage(chamber) {
     try {
+      // Stempler hvert lokale skriv med tidspunkt så ahaChamberSync kan
+      // sammenligne mot Supabase sin updated_at i pull-fasen.
+      if (chamber && typeof chamber === "object") {
+        chamber._local_updated_at = new Date().toISOString();
+      }
       localStorage.setItem(STORAGE_KEY, JSON.stringify(chamber));
+      try {
+        global.dispatchEvent(new CustomEvent("aha:chamber-saved", {
+          detail: { source: "ahaChat", insight_count: (chamber?.insights || []).length }
+        }));
+      } catch {}
     } catch (e) {
       console.warn("Kunne ikke lagre innsiktskammer.", e);
     }
