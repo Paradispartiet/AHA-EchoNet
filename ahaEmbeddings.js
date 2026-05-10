@@ -240,6 +240,141 @@
     return { ok: true, matches };
   }
 
+  // Read-only: leter etter den mest like insight i samme subject+theme
+  // som har lagret embedding, og returnerer den hvis cosine-likheten
+  // er over suggestThreshold. Muterer ingenting. Brukes av ingest-laget
+  // til å fyre aha:merge-suggested-event som suggestion-only signal.
+  async function findMergeCandidate(insight, chamber, options) {
+    const opts = options || {};
+    const suggestThreshold = Number.isFinite(opts.suggestThreshold)
+      ? Number(opts.suggestThreshold)
+      : 0.70;
+
+    if (!insight?.id) {
+      return { ok: false, reason: "missing_source", threshold: suggestThreshold };
+    }
+
+    const candidates = (chamber?.insights || []).filter(
+      (i) =>
+        i &&
+        i.id &&
+        i.id !== insight.id &&
+        !i.merged_into &&
+        i.subject_id === insight.subject_id &&
+        i.theme_id === insight.theme_id
+    );
+    if (!candidates.length) {
+      return { ok: false, reason: "no_candidates", threshold: suggestThreshold };
+    }
+
+    const client = db();
+    if (!client) {
+      return { ok: false, reason: "no_supabase", threshold: suggestThreshold };
+    }
+    const pid = await profileId();
+    if (!pid) {
+      return { ok: false, reason: "not_signed_in", threshold: suggestThreshold };
+    }
+
+    const { data: srcRow, error: srcErr } = await client
+      .from(TABLE)
+      .select("embedding")
+      .eq("id", insight.id)
+      .maybeSingle();
+    if (srcErr) return { ok: false, error: srcErr, threshold: suggestThreshold };
+
+    let srcVec = srcRow?.embedding;
+    if (typeof srcVec === "string") {
+      try { srcVec = JSON.parse(srcVec); } catch { srcVec = null; }
+    }
+    if (!Array.isArray(srcVec) || !srcVec.length) {
+      return {
+        ok: false,
+        reason: "no_source_embedding",
+        threshold: suggestThreshold
+      };
+    }
+
+    let srcNorm = 0;
+    for (let i = 0; i < srcVec.length; i++) srcNorm += srcVec[i] * srcVec[i];
+    srcNorm = Math.sqrt(srcNorm);
+    if (!Number.isFinite(srcNorm) || srcNorm === 0) {
+      return {
+        ok: false,
+        reason: "no_source_embedding",
+        threshold: suggestThreshold
+      };
+    }
+    const srcUnit = new Array(srcVec.length);
+    for (let i = 0; i < srcVec.length; i++) srcUnit[i] = srcVec[i] / srcNorm;
+
+    const ids = candidates.map((c) => c.id);
+    const rows = [];
+    const chunkSize = 500;
+    for (let i = 0; i < ids.length; i += chunkSize) {
+      const slice = ids.slice(i, i + chunkSize);
+      const { data, error } = await client
+        .from(TABLE)
+        .select("id, embedding")
+        .in("id", slice);
+      if (error) return { ok: false, error, threshold: suggestThreshold };
+      if (data) rows.push(...data);
+    }
+
+    let bestId = null;
+    let bestSim = -Infinity;
+    for (const r of rows) {
+      let v = r.embedding;
+      if (typeof v === "string") {
+        try { v = JSON.parse(v); } catch { v = null; }
+      }
+      if (!Array.isArray(v) || !v.length) continue;
+      let n = 0;
+      for (let i = 0; i < v.length; i++) n += v[i] * v[i];
+      n = Math.sqrt(n);
+      if (!Number.isFinite(n) || n === 0) continue;
+      const len = v.length < srcUnit.length ? v.length : srcUnit.length;
+      let dot = 0;
+      for (let i = 0; i < len; i++) dot += (v[i] / n) * srcUnit[i];
+      if (dot > 1) dot = 1;
+      else if (dot < -1) dot = -1;
+      if (dot > bestSim) {
+        bestSim = dot;
+        bestId = r.id;
+      }
+    }
+
+    if (bestId == null || !Number.isFinite(bestSim)) {
+      return {
+        ok: false,
+        reason: "no_candidate_embeddings",
+        threshold: suggestThreshold
+      };
+    }
+    if (bestSim < suggestThreshold) {
+      return {
+        ok: false,
+        reason: "below_threshold",
+        similarity: bestSim,
+        threshold: suggestThreshold
+      };
+    }
+    const candidate = candidates.find((c) => c.id === bestId) || null;
+    if (!candidate) {
+      return {
+        ok: false,
+        reason: "candidate_not_in_chamber",
+        threshold: suggestThreshold
+      };
+    }
+    return {
+      ok: true,
+      candidate,
+      similarity: bestSim,
+      threshold: suggestThreshold
+    };
+  }
+
   // Kalibrerer merge-terskler basert på observerte similarity-scores.
   // Dette påvirker ikke eksisterende embedding-flyt; funksjonen er kun
   // et analyseverktøy som kan kalles eksplisitt fra UI/devtools.
@@ -503,6 +638,7 @@
     isConfigured,
     calibrateMergeThresholds,
     calibrateMergeThresholdsForChamber,
+    findMergeCandidate,
     DEFAULT_MODEL
   };
 })(window);

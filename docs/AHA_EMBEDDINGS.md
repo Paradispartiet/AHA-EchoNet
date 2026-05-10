@@ -164,6 +164,52 @@ venter aldri på dette: hvis backend er nede eller brukeren ikke er
 logget inn, går alt videre uten feil. Når embeddingen faktisk lander,
 sendes `aha:embedding-stored` så UI-en kan oppdatere seg.
 
+## Suggestion-only merge events
+
+Etter at en ny insight har fått lagret embedding, kan ingest-laget
+foreslå at insighten ligner nok på en eksisterende insight til at de
+*kan* være samme tanke. Dette er bevisst kun et forslag — det muterer
+ingenting og lager ikke `merged_into`-pekere.
+
+Forutsetninger for at suggestion fyres:
+
+1. Lexical-laget i `addSignalToChamberWithMeta` returnerte
+   `action: "created"` (en faktisk ny insight). Hvis lexical allerede
+   reinforced en eksisterende insight, hopper embedding-laget over.
+2. `AHAEmbeddings.findMergeCandidate(insight, chamber)` finner en
+   kandidat i samme `subject_id + theme_id`, som ikke har
+   `merged_into`, og hvor cosine-similaritet ≥ `suggestThreshold`
+   (default 0.70 — ikke lås den enda, dette er en kalibreringsperiode).
+
+Når begge er oppfylt, fyres et CustomEvent på `window`:
+
+```js
+window.addEventListener("aha:merge-suggested", (e) => {
+  const {
+    source_insight_id,   // den nye insighten
+    source_summary,      // dens summary (eller title som fallback)
+    candidate,           // hele kandidat-insight-objektet fra chamber
+    similarity,          // cosine i [-1, 1]
+    threshold            // terskelen som ble brukt
+  } = e.detail;
+  console.log("merge suggestion:", source_insight_id, "->", candidate.id, similarity);
+});
+```
+
+Samme info logges også som `console.info("[aha:merge-suggested] ...")`
+så du ser forslag mens du jobber i devtools uten å sette opp listener.
+
+**Dette er suggestion-only.** Det finnes ingen `confirmMerge`-funksjon,
+ingen UI som spør brukeren, og ingen auto-merge. Eventet er ment som
+fundament for senere arbeid: når terskelen er kalibrert med
+`calibrateMergeThresholdsForChamber`, kan vi bygge UI som viser
+forslagene og lar brukeren bekrefte. Inntil videre er målet bare å
+samle observasjoner uten å mutere chamber.
+
+`ingest()` returnerer også `{ meta }` med
+`{ action: "created" | "reinforced", insight_id, lexical_sim }` slik at
+kallere kan se hva lexical-laget bestemte uten å lytte på events.
+
 ## Felter i Supabase-tabellen
 
 | kolonne          | type             | beskrivelse                              |
