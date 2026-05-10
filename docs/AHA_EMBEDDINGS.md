@@ -223,11 +223,115 @@ Render-miljøet.
 Hvis steg 3 feiler med RLS-error: migrasjonen er ikke kjørt mot
 samme Supabase-prosjekt som auth.
 
+## Embedding-basert merge-suggestion (suggestion-only)
+
+Dette laget er **lagt på toppen** av eksisterende lexical merge i
+`addSignalToChamber`. Det merger ingenting av seg selv. Når ingest
+seder en helt ny insight (`action === "created"` fra
+`addSignalToChamberWithMeta`) og embedding er lagret, sjekker
+`enrichWithEmbedding` om det finnes en eksisterende insight i samme
+`subject_id` + `theme_id` med cosine-similarity over `suggestThreshold`
+(default 0.70). Hvis ja, fyrer den bare et event:
+
+```js
+window.addEventListener("aha:merge-suggested", (e) => {
+  console.log("merge-forslag:", e.detail);
+  // detail: {
+  //   source_id: "ins_...",          // den nye insighten
+  //   candidate: {                   // toppkandidat fra aha_match_insights
+  //     id, similarity, subject_id, theme_id, summary, ...
+  //   },
+  //   candidates: [...],             // alle over terskel, sortert
+  //   source_summary: "..."
+  // }
+});
+```
+
+Ingenting i chamber muteres. Ingen `merged_into` settes. Ingen
+insight slettes. Dette er **bare et signal** vi kan logge, samle og
+evaluere før vi bygger UI eller skrur på auto-merge.
+
+I konsollen vil hver suggestion også printes som `[aha:merge-suggested]
+src_id ↔ cand_id sim=0.823 ...` så det er lett å spotte i
+fanen mens du jobber.
+
+## Kalibrer terskel mot eget kammer
+
+Før vi låser `suggestThreshold` til en konkret verdi: kjør
+kalibreringen. Den henter alle dine embeddings, beregner cosine for
+alle par i samme subject+theme, og gir histogram + topp-K.
+
+```js
+const chamber = window.loadChamberFromStorage();
+const calib = await AHAEmbeddings.calibrateMergeThresholds(chamber, {
+  minThreshold: 0.5,   // ignorer par under denne (støy)
+  topK: 25
+});
+console.log(`rows=${calib.rows} pairs≥0.5=${calib.pair_count}`);
+console.log("histogram (par per 0.05-bin):");
+console.table(calib.histogram);
+console.log("topp-25 par:");
+console.table(calib.top.map((p) => ({
+  sim: p.similarity.toFixed(3),
+  theme: p.theme_id,
+  a: p.summary_a,
+  b: p.summary_b
+})));
+```
+
+Hva du ser etter:
+- **Hvor faller fordelingen.** Hvis det er en tydelig "knekk" i
+  histogrammet (mange par i 0.55–0.70, få i 0.70–0.85, en haug i
+  0.85+), settes `suggestThreshold` rett over støygulvet og en
+  evt. `autoMergeThreshold` over knekken.
+- **Topp-25-tabellen.** Les selv: hvor mange av de øverste parene
+  er reelle duplikater? Hvis topp-10 alle ser ut som "samme tanke
+  uttrykt to måter", er 0.70 for lavt — løft til der duplikatene
+  slutter.
+- **Falske naboer.** Par med høy similarity som ikke er duplikater
+  forteller oss at vi trenger mer kontekst (f.eks. emne-filter på
+  toppen av subject+theme), ikke bare en høyere terskel.
+
+Sett gjerne `suggestThreshold` per ingest:
+
+```js
+// I konsollen, override default for testing:
+window.AHAEmbeddings._suggestThreshold = 0.75;
+// (hvis du vil — koden bruker default 0.70 nå)
+```
+
+## Loggesnutt for å samle suggestions over tid
+
+```js
+window.__ahaSuggestions = window.__ahaSuggestions || [];
+window.addEventListener("aha:merge-suggested", (e) => {
+  window.__ahaSuggestions.push({
+    at: new Date().toISOString(),
+    source_id: e.detail.source_id,
+    cand_id: e.detail.candidate.id,
+    sim: e.detail.candidate.similarity,
+    src: e.detail.source_summary,
+    cand: e.detail.candidate.summary?.slice(0, 200)
+  });
+});
+// Etter en økt:
+console.table(window.__ahaSuggestions);
+```
+
+Bruk dette for å bygge en liste av observerte forslag og evaluere
+om kvaliteten er god nok før vi skrur på bekreftelses-UI eller
+auto-merge.
+
 ## Senere steg (ikke gjort ennå)
 
-- Bruke embedding-similarity i `addSignalToChamber` for å avgjøre om
-  et signal skal merges inn i en eksisterende insight, i stedet for
-  dagens 0.5-text-sim-heuristikk. Krever async-versjon av ingest.
+- **Bekreftelses-API:** `AHAIngest.confirmMerge(sourceId, targetId)`
+  som faktisk setter `merged_into: targetId` på source-insighten,
+  flytter signaler over, og fyrer `aha:insight-merged`. Designet,
+  ikke bygd.
+- **Auto-merge-terskel** (over en empirisk kalibrert grense). Krever
+  først at suggestion-kvaliteten er evaluert.
+- **`merged_into`-aware UI:** vis sammenslåtte insights med en pil
+  inn til target-insighten, mulighet for å angre.
 - Lagre frase-vektorer (`buildPhraseIndex`) i samme tabell og bruke
   dem i konsept-graf på meta-laget.
 - Re-embed når en insight endrer summary betydelig (tracker kun

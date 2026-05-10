@@ -240,11 +240,144 @@
     return { ok: true, matches };
   }
 
+  // ── Merge-forslag (suggestion-only, ingen auto-merge) ─────────
+  //
+  // findMergeCandidate ser om en gitt insight har et nært slektning i
+  // samme subject/theme. Den verken merger eller skriver merged_into —
+  // den gir bare tilbake en kandidat som caller (ahaIngest) emitter
+  // som aha:merge-suggested-event.
+  async function findMergeCandidate(insight, chamber, options) {
+    const opts = options || {};
+    if (!isConfigured()) return { ok: false, reason: "no_backend" };
+    if (!insight?.id) return { ok: false, reason: "missing_insight" };
+
+    const text = String(insight.summary || "").trim();
+    if (!text) return { ok: false, reason: "empty_summary" };
+
+    const suggestThreshold = opts.suggestThreshold == null ? 0.70 : opts.suggestThreshold;
+
+    const r = await findSimilarToText(text, {
+      limit: 10,
+      threshold: suggestThreshold,
+      subject_id: insight.subject_id || null,
+      theme_id: insight.theme_id || null
+    });
+    if (!r.ok) return r;
+
+    const insightsById = new Map(
+      (chamber?.insights || []).map((c) => [c.id, c])
+    );
+
+    const matches = (r.matches || [])
+      .filter((m) => {
+        if (!m.id || m.id === insight.id) return false;
+        const c = insightsById.get(m.id);
+        if (!c) return false;
+        if (c.merged_into) return false;
+        return c.subject_id === insight.subject_id &&
+               c.theme_id === insight.theme_id;
+      });
+
+    return {
+      ok: true,
+      candidate: matches[0] || null,
+      candidates: matches
+    };
+  }
+
+  // ── Kalibrering ──────────────────────────────────────────────
+  //
+  // calibrateMergeThresholds laster ALLE embeddings for innlogget
+  // bruker, beregner cosine for alle par i samme subject+theme, og
+  // returnerer:
+  //   - pairs: [{ a_id, b_id, similarity, summary_a, summary_b }, ...]
+  //   - histogram: antall par i bins [0.5,0.55), [0.55,0.6) ... [0.95,1.0]
+  //   - top: topp-K par sortert på similarity
+  // Caller bruker dette til å sette suggestThreshold empirisk i stedet
+  // for å gjette.
+  function cosineSim(a, b) {
+    if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return 0;
+    let dot = 0, na = 0, nb = 0;
+    for (let i = 0; i < a.length; i++) {
+      dot += a[i] * b[i];
+      na += a[i] * a[i];
+      nb += b[i] * b[i];
+    }
+    if (!na || !nb) return 0;
+    return dot / (Math.sqrt(na) * Math.sqrt(nb));
+  }
+
+  async function calibrateMergeThresholds(chamber, options) {
+    const opts = options || {};
+    const minThreshold = opts.minThreshold == null ? 0.5 : opts.minThreshold;
+    const topK = opts.topK || 25;
+
+    const client = db();
+    if (!client) return { ok: false, reason: "no_supabase" };
+
+    const profileId = await global.AHAAuth?.getProfileId?.();
+    if (!profileId) return { ok: false, reason: "not_authenticated" };
+
+    const { data, error } = await client
+      .from(TABLE)
+      .select("id, subject_id, theme_id, embedding")
+      .eq("profile_id", profileId);
+    if (error) return { ok: false, error };
+
+    const rows = (data || []).filter((r) => Array.isArray(r.embedding) && r.embedding.length);
+    if (rows.length < 2) return { ok: true, pairs: [], histogram: {}, top: [], rows: rows.length };
+
+    const insightsById = new Map(
+      (chamber?.insights || []).map((c) => [c.id, c])
+    );
+
+    const pairs = [];
+    for (let i = 0; i < rows.length; i++) {
+      for (let j = i + 1; j < rows.length; j++) {
+        const a = rows[i], b = rows[j];
+        if (a.subject_id !== b.subject_id) continue;
+        if (a.theme_id !== b.theme_id) continue;
+        const sim = cosineSim(a.embedding, b.embedding);
+        if (sim < minThreshold) continue;
+        pairs.push({
+          a_id: a.id,
+          b_id: b.id,
+          similarity: sim,
+          subject_id: a.subject_id,
+          theme_id: a.theme_id,
+          summary_a: insightsById.get(a.id)?.summary?.slice(0, 120) || "",
+          summary_b: insightsById.get(b.id)?.summary?.slice(0, 120) || ""
+        });
+      }
+    }
+
+    pairs.sort((x, y) => y.similarity - x.similarity);
+
+    const bins = ["0.50", "0.55", "0.60", "0.65", "0.70", "0.75", "0.80", "0.85", "0.90", "0.95"];
+    const histogram = Object.fromEntries(bins.map((b) => [b, 0]));
+    for (const p of pairs) {
+      const lo = Math.min(0.95, Math.floor(p.similarity * 20) / 20);
+      const key = lo.toFixed(2);
+      if (key in histogram) histogram[key] += 1;
+    }
+
+    return {
+      ok: true,
+      rows: rows.length,
+      pair_count: pairs.length,
+      histogram,
+      top: pairs.slice(0, topK),
+      pairs
+    };
+  }
+
   global.AHAEmbeddings = {
     embedAndStore,
     embedAllPending,
     findSimilarToText,
     findSimilarToInsight,
+    findMergeCandidate,
+    calibrateMergeThresholds,
     health,
     isConfigured,
     DEFAULT_MODEL

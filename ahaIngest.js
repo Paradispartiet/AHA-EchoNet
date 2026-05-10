@@ -69,8 +69,10 @@
     signal.meta = src.meta || {};
 
     const chamber = loadChamber();
-    const next = global.InsightsEngine.addSignalToChamber(chamber, signal);
-    saveChamber(next);
+    const meta = global.InsightsEngine.addSignalToChamberWithMeta
+      ? global.InsightsEngine.addSignalToChamberWithMeta(chamber, signal)
+      : { chamber: global.InsightsEngine.addSignalToChamber(chamber, signal), action: null, insight_id: null };
+    saveChamber(meta.chamber);
 
     try {
       global.dispatchEvent(new CustomEvent("aha:ingested", { detail: { sourceEvent: src, signal } }));
@@ -86,11 +88,11 @@
     // Tilsvarende fire-and-forget: send insighten gjennom embedding-
     // tjenesten og lagre vektoren i Supabase. Krever innlogget bruker
     // og at /api/aha-agent/embed svarer; ellers no-op.
-    enrichWithEmbedding(signal).catch((err) => {
+    enrichWithEmbedding(signal, meta).catch((err) => {
       console.warn("AHAIngest: embedding-berikelse feilet", err);
     });
 
-    return { ok: true, sourceEvent: src, signal };
+    return { ok: true, sourceEvent: src, signal, action: meta.action, insight_id: meta.insight_id };
   }
 
   async function enrichWithEmneMatcher(signal) {
@@ -143,7 +145,7 @@
     } catch {}
   }
 
-  async function enrichWithEmbedding(signal) {
+  async function enrichWithEmbedding(signal, ingestMeta) {
     if (!signal || !signal.text) return;
     if (!global.AHAEmbeddings || typeof global.AHAEmbeddings.embedAndStore !== "function") return;
     if (typeof global.AHAEmbeddings.isConfigured === "function" && !global.AHAEmbeddings.isConfigured()) return;
@@ -153,12 +155,17 @@
     if (!insights.length) return;
 
     let target = null;
-    for (let i = insights.length - 1; i >= 0; i--) {
-      const ins = insights[i];
-      if (ins.subject_id !== signal.subject_id || ins.theme_id !== signal.theme_id) continue;
-      if (ins.last_updated === signal.timestamp || ins.first_seen === signal.timestamp) {
-        target = ins;
-        break;
+    if (ingestMeta?.insight_id) {
+      target = insights.find((ins) => ins.id === ingestMeta.insight_id) || null;
+    }
+    if (!target) {
+      for (let i = insights.length - 1; i >= 0; i--) {
+        const ins = insights[i];
+        if (ins.subject_id !== signal.subject_id || ins.theme_id !== signal.theme_id) continue;
+        if (ins.last_updated === signal.timestamp || ins.first_seen === signal.timestamp) {
+          target = ins;
+          break;
+        }
       }
     }
     if (!target) return;
@@ -171,6 +178,33 @@
         detail: { insight_id: target.id }
       }));
     } catch {}
+
+    // Bare se etter merge-kandidater hvis lexical-laget seedet en NY
+    // insight. Hvis dagens motor allerede merget signalet inn i en
+    // eksisterende, er jobben gjort.
+    if (ingestMeta?.action !== "created") return;
+    if (typeof global.AHAEmbeddings.findMergeCandidate !== "function") return;
+
+    const cand = await global.AHAEmbeddings.findMergeCandidate(target, loadChamber());
+    if (!cand?.ok || !cand.candidate) return;
+
+    // Suggestion-only. Ingen auto-merge, ingen sletting, ingen mutasjon
+    // av chamber. Caller (UI eller test-loop) avgjør hva som skjer.
+    const detail = {
+      source_id: target.id,
+      candidate: cand.candidate,
+      candidates: cand.candidates,
+      source_summary: target.summary?.slice(0, 200) || ""
+    };
+    try {
+      global.dispatchEvent(new CustomEvent("aha:merge-suggested", { detail }));
+    } catch {}
+    console.info(
+      "[aha:merge-suggested]",
+      `${target.id} ↔ ${cand.candidate.id}`,
+      `sim=${Number(cand.candidate.similarity).toFixed(3)}`,
+      target.summary?.slice(0, 80)
+    );
   }
 
   global.AHAIngest = { ingest, enrichWithEmneMatcher, enrichWithEmbedding };

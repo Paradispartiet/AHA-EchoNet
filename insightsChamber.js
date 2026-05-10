@@ -833,32 +833,53 @@ function createInsightFromSignal(signal) {
     );
 }
 
-    function addSignalToChamber(chamber, signal) {
-    const candidates = getInsightsForTopic(
-      chamber,
-      signal.subject_id,
-      signal.theme_id
-    );
+    // Intern: gjør selve merge-beslutningen og muterer chamber.
+    // Returnerer metadata om hva som skjedde, slik at caller (ahaIngest)
+    // kan fyre embedding-basert merge-suggestion bare når en NY insight
+    // ble opprettet.
+    function _addSignalToChamberCore(chamber, signal) {
+      const candidates = getInsightsForTopic(
+        chamber,
+        signal.subject_id,
+        signal.theme_id
+      );
 
-    let best = null;
-    let bestSim = 0;
-    for (const ins of candidates) {
-      const sim = semanticSimilarityBetweenSignalAndInsight(signal, ins);
-      if (sim > bestSim) {
-        bestSim = sim;
-        best = ins;
+      let best = null;
+      let bestSim = 0;
+      for (const ins of candidates) {
+        // Hopp over insights som allerede er merget bort.
+        if (ins.merged_into) continue;
+        const sim = semanticSimilarityBetweenSignalAndInsight(signal, ins);
+        if (sim > bestSim) {
+          bestSim = sim;
+          best = ins;
+        }
       }
+
+      const THRESHOLD = 0.5; // kan finjusteres senere
+      if (best && bestSim >= THRESHOLD) {
+        reinforceInsight(best, signal);
+        return { action: "reinforced", insight_id: best.id, lexical_sim: bestSim };
+      }
+      const created = createInsightFromSignal(signal);
+      chamber.insights.push(created);
+      return { action: "created", insight_id: created.id, lexical_sim: bestSim };
     }
 
-    const THRESHOLD = 0.5; // kan finjusteres senere
-    if (best && bestSim >= THRESHOLD) {
-      reinforceInsight(best, signal);
-    } else {
-      chamber.insights.push(createInsightFromSignal(signal));
+    // Eksisterende API: returnerer chamber. ahaChat.js og andre call-sites
+    // gjør chamber = addSignalToChamber(...) og må fortsatt funke uendret.
+    function addSignalToChamber(chamber, signal) {
+      _addSignalToChamberCore(chamber, signal);
+      return chamber;
     }
 
-    return chamber;
-  }
+    // Nytt API for ahaIngest.js: returnerer { chamber, action, insight_id, lexical_sim }
+    // slik at fire-and-forget-laget vet om signalet seedet en ny insight
+    // (action === "created") eller ble absorbert (action === "reinforced").
+    function addSignalToChamberWithMeta(chamber, signal) {
+      const meta = _addSignalToChamberCore(chamber, signal);
+      return { chamber, ...meta };
+    }
   
   // ── Tekst → setninger ──────────────────────
 
@@ -2178,6 +2199,7 @@ function getConceptsForTheme(chamber, subjectId, themeId) {
     createEmptyChamber,
     createSignalFromMessage,
     addSignalToChamber,
+    addSignalToChamberWithMeta,
     splitIntoSentences,
     getInsightsForTopic,
     computeTopicStats,
