@@ -114,48 +114,7 @@
       <p>Snakk, samle, forstå og bygg videre i AHA.</p>
     </section>
 
-    <section class="aha-grid" aria-label="AHA moduler">
-      <a class="aha-tile aha-tile-priority" href="chat.html" data-module="source_events">
-        <span class="aha-tile-icon">✦</span>
-        <strong>AHA Chat</strong>
-        <span>Refleksjon og innsiktsmotor</span>
-        <small id="aha-module-chat-status">0 innsikter</small>
-      </a>
-      <a class="aha-tile" href="notes.html" data-module="notes">
-        <span class="aha-tile-icon">✎</span>
-        <strong>Notes</strong>
-        <span>Egne notater og tekster</span>
-        <small id="aha-module-notes-status">0 notater</small>
-      </a>
-      <a class="aha-tile" href="gallery.html" data-module="gallery">
-        <span class="aha-tile-icon">▧</span>
-        <strong>Galleri</strong>
-        <span>Bilder, minner og visuelle uttrykk</span>
-        <small id="aha-module-gallery-status">0 minner</small>
-      </a>
-      <a class="aha-tile" href="feed.html" data-module="feed">
-        <span class="aha-tile-icon">#</span>
-        <strong>Feed / Twitter</strong>
-        <span>Korte poster og delte innsikter</span>
-        <small id="aha-module-feed-status">0 poster</small>
-      </a>
-      <a class="aha-tile" href="insta.html" data-module="insta">
-        <span class="aha-tile-icon">◉</span>
-        <strong>AHA Insta</strong>
-        <span>Bilde- og videostrøm</span>
-        <small id="aha-module-insta-status">0 innlegg</small>
-      </a>
-      <article class="aha-tile aha-home-tile aha-tile-priority" id="aha-historygo-home" data-module="imports" role="link" tabindex="0" aria-label="Åpne History Go">
-        <span class="aha-tile-icon">⌁</span>
-        <strong>History Go</strong>
-        <span>Åpne History Go-universet ditt</span>
-        <div class="aha-tile-actions">
-          <a class="aha-tile-btn aha-tile-btn-primary" href="/History-Go/">Åpne History Go</a>
-          <button class="aha-tile-btn aha-tile-btn-secondary" id="btn-import-hg" type="button">Importer data</button>
-        </div>
-        <small id="aha-module-historygo-status">Ingen import</small>
-      </article>
-    </section>
+    <section id="aha-modules-grid" class="aha-grid" aria-label="AHA moduler"></section>
 
     <section class="aha-panel aha-status-panel">
       <div class="aha-panel-head">
@@ -199,6 +158,7 @@
   <script src="ahaEmbeddings.js"></script>
   <script src="ahaIngest.js"></script>
   <script src="ahaHistoryGoImport.js"></script>
+  <script src="ahaModules.js"></script>
   <script src="ahaDashboard.js"></script>
 </body>
 </html>

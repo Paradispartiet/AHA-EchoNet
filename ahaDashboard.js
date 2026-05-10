@@ -5,6 +5,26 @@
 
   let lastState = null;
 
+  const MODULE_ICONS = {
+    profile: "◌",
+    chat: "✦",
+    insights: "◎",
+    lists: "☰",
+    paths: "↠",
+    mindmap: "⎔",
+    historygo: "⌁",
+    gallery: "▧",
+    notes: "✎",
+    insta: "◉",
+    feed: "#",
+    meet: "⟡",
+    music: "♫",
+    avisa: "📰",
+    groups: "◍",
+    search: "⌕",
+    privacy: "⚑"
+  };
+
   function readArray(key) {
     try {
       const parsed = JSON.parse(localStorage.getItem(key) || "[]");
@@ -123,6 +143,51 @@
     }
   }
 
+
+  function moduleStatusLine(module, stats) {
+    const map = {
+      chat: resolveModuleLabel(stats, "source_events", "innsikt", "innsikter"),
+      notes: resolveModuleLabel(stats, "notes", "notat", "notater"),
+      gallery: resolveModuleLabel(stats, "gallery", "minne", "minner"),
+      feed: resolveModuleLabel(stats, "feed", "post", "poster"),
+      insta: resolveModuleLabel(stats, "insta", "innlegg", "innlegg")
+    };
+    if (module.id === "historygo") {
+      const importCount = statValue(stats, "imports");
+      return importCount > 0 ? `${importCount} ${importCount === 1 ? "import" : "importer"}` : "Ingen import";
+    }
+    if (map[module.id]) return map[module.id];
+    return module.status === "active" ? "Klar" : "Kommer";
+  }
+
+  function renderModules(stats) {
+    const grid = $("aha-modules-grid");
+    if (!grid) return;
+    const modules = Array.isArray(window.AHA_MODULES) ? window.AHA_MODULES : [];
+    grid.innerHTML = modules.map((module) => {
+      const isPriority = ["chat", "historygo"].includes(module.id);
+      const tileClass = `aha-tile${isPriority ? " aha-tile-priority" : ""}`;
+      const icon = MODULE_ICONS[module.id] || "◌";
+      const status = moduleStatusLine(module, stats);
+      const cardInner = `
+        <span class="aha-tile-icon">${icon}</span>
+        <strong>${module.title}</strong>
+        <span>${module.description}</span>
+        <small id="aha-module-${module.id}-status">${status}</small>
+      `;
+
+      if (module.id === "historygo") {
+        return `<article class="${tileClass} aha-home-tile" id="aha-historygo-home" data-module="imports" role="link" tabindex="0" aria-label="Åpne History Go">${cardInner}
+          <div class="aha-tile-actions">
+            <a class="aha-tile-btn aha-tile-btn-primary" href="/History-Go/">Åpne History Go</a>
+            <button class="aha-tile-btn aha-tile-btn-secondary" id="btn-import-hg" type="button">Importer data</button>
+          </div>
+        </article>`;
+      }
+
+      return `<a class="${tileClass}" href="${module.href}" data-module="${module.id}">${cardInner}</a>`;
+    }).join("");
+  }
   function renderProfileStats(stats, sourceLabel) {
     const historyGo = hasHistoryGoPayload() || statValue(stats, "imports") > 0;
     const mount = $("aha-profile-stats");
@@ -290,6 +355,9 @@
       const sourceLabel = localDataSourceLabel(dbResult);
       lastState = { authState, stats, sourceLabel };
 
+      renderModules(stats);
+      bindHistoryGoHomeTile();
+      bindImportButtons();
       renderIdentity(authState);
       renderProfileStats(stats, sourceLabel);
       renderModuleStatus(stats);
@@ -300,6 +368,9 @@
       const authState = { user: null, profile: null, profileResult: { ok: false, reason: "render_error", error } };
       const stats = localStats();
       lastState = { authState, stats, sourceLabel: "localStorage", error };
+      renderModules(stats);
+      bindHistoryGoHomeTile();
+      bindImportButtons();
       renderIdentity(authState);
       renderProfileStats(stats, "localStorage");
       renderModuleStatus(stats);
@@ -346,8 +417,6 @@
 
   function bind() {
     bindProfileNameForm();
-    bindHistoryGoHomeTile();
-    bindImportButtons();
     renderDashboard();
     window.addEventListener("aha:source-event-added", renderDashboard);
     window.addEventListener("aha:historygo-imported", renderDashboard);

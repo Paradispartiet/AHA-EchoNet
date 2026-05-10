@@ -607,3 +607,31 @@ Akseptansekriterier:
 - Dashboard counts oppdateres etter endringer.
 - `node --check` passerer for alle endrede JS-filer.
 ```
+
+## Modulregistry (fase 1 grunnmur)
+
+AHA Home bruker nå en felles modulregistry i `ahaModules.js`.
+
+- Registryen definerer alle hovedmoduler med `id`, `title`, `type`, `status`, `href`, `description` og `phase`.
+- `ahaDashboard.js` renderer modul-kortene fra registryen i stedet for hardkodede kort i `index.html`.
+- Moduler som ikke er dype ennå har egne placeholder-sider slik at inngangen er synlig fra dag 1.
+
+Fase 1-moduler som nå finnes i Home:
+
+1. profile
+2. chat
+3. insights
+4. lists
+5. paths
+6. mindmap
+7. historygo
+8. gallery
+9. notes
+10. insta
+11. feed
+12. meet
+13. music
+14. avisa
+15. groups
+16. search
+17. privacy
