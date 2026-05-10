@@ -226,6 +226,52 @@
     return list("aha_imports", { orderBy: "created_at", limit: options.limit || 50 });
   }
 
+  async function saveChamber(chamber) {
+    const db = client();
+    if (!db) return fallback();
+    const profileId = await getProfileId();
+    if (!profileId) return fallback("not_signed_in");
+
+    const safeChamber = cleanObject(chamber);
+    const insights = cleanArray(safeChamber.insights);
+
+    try {
+      const { data, error } = await db
+        .from("aha_insight_chambers")
+        .upsert({
+          profile_id: profileId,
+          chamber: safeChamber,
+          insight_count: insights.length,
+          updated_at: safeChamber._local_updated_at || new Date().toISOString()
+        }, { onConflict: "profile_id" })
+        .select()
+        .single();
+      if (error) return { ok: false, error };
+      return { ok: true, data };
+    } catch (error) {
+      return { ok: false, error };
+    }
+  }
+
+  async function loadChamber() {
+    const db = client();
+    if (!db) return fallback();
+    const profileId = await getProfileId();
+    if (!profileId) return fallback("not_signed_in");
+
+    try {
+      const { data, error } = await db
+        .from("aha_insight_chambers")
+        .select("chamber, insight_count, updated_at")
+        .eq("profile_id", profileId)
+        .maybeSingle();
+      if (error) return { ok: false, error };
+      return { ok: true, data: data || null };
+    } catch (error) {
+      return { ok: false, error };
+    }
+  }
+
   async function loadDashboardCounts() {
     const tables = {
       source_events: "aha_source_events",
@@ -257,12 +303,14 @@
     saveFeedPost,
     saveInstaPost,
     saveImport,
+    saveChamber,
     loadSourceEvents,
     loadNotes,
     loadGalleryItems,
     loadFeedPosts,
     loadInstaPosts,
     loadImports,
+    loadChamber,
     loadDashboardCounts
   };
 })(window);

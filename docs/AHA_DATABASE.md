@@ -22,11 +22,20 @@ ahaAuth.js
 ahaRepository.js
 = felles repository-lag for database-save og database-read
 
+ahaChamberSync.js
+= toveis sync av insight-kammer mellom localStorage og Supabase
+
 supabase/schema.sql
 = tabeller
 
 supabase/policies.sql
 = RLS policies
+
+supabase/chamber.sql
+= aha_insight_chambers + RLS for chamber-sync
+
+supabase/embeddings.sql
+= aha_insight_embeddings + pgvector for semantisk søk
 
 supabase/README.md
 = hvordan schema og policies kjøres
@@ -59,6 +68,8 @@ aha_gallery_items
 aha_feed_posts
 aha_insta_posts
 aha_imports
+aha_insight_embeddings (semantic search, valgfri)
+aha_insight_chambers (chamber-sync, valgfri)
 ```
 
 ## Modulflyt ved lagring
@@ -96,12 +107,33 @@ loadImports()
 loadDashboardCounts()
 ```
 
+## Chamber-sync
+
+`aha_insight_chambers` lagrer hele insight-kammeret per profile som JSONB.
+`ahaChamberSync.js` håndterer toveis sync:
+
+```text
+- Lokale skriv via saveChamberToStorage / saveChamberFallback setter
+  chamber._local_updated_at og dispatcher aha:chamber-saved.
+- ahaChamberSync lytter og pusher til Supabase via AHARepository.saveChamber
+  med 1.5 s debounce.
+- På aha:auth-ready trekker ahaChamberSync remote chamber via
+  AHARepository.loadChamber og sammenligner:
+    - remote tomt        → push local
+    - local tomt         → ta remote (writeLocal + aha:chamber-replaced)
+    - begge har innhold  → last write wins via _local_updated_at vs
+                           updated_at
+```
+
+Hvis Supabase / auth / repository ikke er tilgjengelig, oppfører
+modulen seg som no-op. localStorage er alltid sann kilde lokalt.
+
 ## Ikke gjort ennå
 
 ```text
-- database-read for selve innsiktskammeret
 - filopplasting
 - Supabase Storage
 - bilde-/videoanalyse
-- sanntids/live sync
+- sanntids/live sync (real-time channels)
+- multi-device konfliktoppløsning utover last-write-wins
 ```

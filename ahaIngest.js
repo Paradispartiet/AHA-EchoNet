@@ -17,7 +17,15 @@
   }
 
   function saveChamberFallback(chamber) {
+    if (chamber && typeof chamber === "object") {
+      chamber._local_updated_at = new Date().toISOString();
+    }
     localStorage.setItem(CHAMBER_KEY, JSON.stringify(chamber));
+    try {
+      global.dispatchEvent(new CustomEvent("aha:chamber-saved", {
+        detail: { source: "ahaIngest", insight_count: (chamber?.insights || []).length }
+      }));
+    } catch {}
   }
 
   function loadChamber() {
