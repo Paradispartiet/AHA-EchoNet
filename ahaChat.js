@@ -51,6 +51,22 @@
     div.className = `chat-line chat-line-${role}`;
     div.textContent = text;
     log.appendChild(div);
+    log.scrollTop = log.scrollHeight;
+    updateEmptyState();
+  }
+
+  function updateEmptyState() {
+    const empty = document.getElementById("empty-state");
+    const log = document.getElementById("chat-log");
+    if (!empty || !log) return;
+    empty.style.display = log.children.length ? "none" : "block";
+  }
+
+  function setComposerText(value) {
+    const textarea = document.getElementById("msg");
+    if (!textarea) return;
+    textarea.value = value;
+    textarea.focus();
   }
 
   function currentInsights() {
@@ -194,6 +210,9 @@
     localStorage.removeItem(STORAGE_KEY);
     out("AHA-kammer nullstilt.");
     renderPanel("");
+    const log = document.getElementById("chat-log");
+    if (log) log.innerHTML = "";
+    updateEmptyState();
   }
 
   function bind() {
@@ -235,6 +254,15 @@
     document.getElementById("btn-meta")?.addEventListener("click", showMeta);
     document.getElementById("btn-export")?.addEventListener("click", () => out(JSON.stringify(loadChamberFromStorage(), null, 2)));
     document.getElementById("btn-reset")?.addEventListener("click", reset);
+
+    document.querySelectorAll(".quick-action-btn, .suggestion-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const prompt = String(btn.getAttribute("data-prompt") || "").trim();
+        if (prompt) setComposerText(prompt + " ");
+      });
+    });
+
+    updateEmptyState();
   }
 
   global.loadChamberFromStorage = global.loadChamberFromStorage || loadChamberFromStorage;

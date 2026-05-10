@@ -7,50 +7,102 @@
   <link rel="stylesheet" href="aha-chat.css" />
 </head>
 <body>
-  <p><a href="index.html">← AHA Dashboard</a></p>
-  <h1>AHA Chat – Innsiktsmotor V1 + Meta</h1>
-
   <input id="theme-id" type="hidden" value="th_default" />
 
-  <div class="row">
-    <label for="field-id">Felt / fag (subject_id)</label>
-    <select id="field-id">
-      <option value="">(ingen valgt – generelt)</option>
-      <option value="historie">Historie</option>
-      <option value="vitenskap">Vitenskap</option>
-      <option value="kunst">Kunst & kultur</option>
-      <option value="litteratur">Litteratur</option>
-      <option value="musikk">Musikk</option>
-      <option value="sport">Sport</option>
-      <option value="naeringsliv">Næringsliv</option>
-      <option value="politikk">Politikk</option>
-      <option value="populaerkultur">Popkultur</option>
-    </select>
-  </div>
+  <div class="app-shell">
+    <header class="chat-header">
+      <div class="chat-header-top">
+        <a class="back-link" href="index.html">← AHA Home</a>
+        <span class="profile-indicator">Min AHA</span>
+      </div>
+      <div class="chat-title-wrap">
+        <h1>AHA Chat</h1>
+        <p>Din personlige innsiktsmotor</p>
+      </div>
+      <div class="chat-status-row">
+        <span class="status-pill">Klar</span>
+      </div>
+    </header>
 
-  <div class="row">
-    <label for="msg">Skriv til AHA (chat-melding):</label>
-    <textarea id="msg" placeholder="Skriv et notat / innsikt …"></textarea>
-    <button id="btn-send">Send</button>
-  </div>
+    <main class="chat-layout">
+      <section class="chat-main">
+        <div class="row field-select-row">
+          <label for="field-id">Felt / fag</label>
+          <select id="field-id">
+            <option value="">(ingen valgt – generelt)</option>
+            <option value="historie">Historie</option>
+            <option value="vitenskap">Vitenskap</option>
+            <option value="kunst">Kunst & kultur</option>
+            <option value="litteratur">Litteratur</option>
+            <option value="musikk">Musikk</option>
+            <option value="sport">Sport</option>
+            <option value="naeringsliv">Næringsliv</option>
+            <option value="politikk">Politikk</option>
+            <option value="populaerkultur">Popkultur</option>
+          </select>
+        </div>
 
-  <div class="row">
-    <label>Chat-logg</label>
-    <div id="chat-log" class="chat-log"></div>
-  </div>
+        <div class="quick-actions" aria-label="Samtalemodus">
+          <button class="quick-action-btn" data-prompt="Reflekter over dette:">Reflekter</button>
+          <button class="quick-action-btn" data-prompt="Sorter dette i tydelige punkter:">Sorter</button>
+          <button class="quick-action-btn" data-prompt="Lag en punktliste for dette:">Lag liste</button>
+          <button class="quick-action-btn" data-prompt="Lag innsikt basert på dette:">Lag innsikt</button>
+          <button class="quick-action-btn" data-prompt="Koble dette til History Go og finn mønstre:">Koble til History Go</button>
+        </div>
 
-  <div class="buttons">
-    <button id="btn-insights">Vis innsikter</button>
-    <button id="btn-status">Tema-status</button>
-    <button id="btn-concepts">Begreper</button>
-    <button id="btn-meta">Meta-profil</button>
-    <button id="btn-export">Eksport JSON</button>
-    <button id="btn-import-hg">Importer History Go</button>
-    <button id="btn-reset">Nullstill</button>
-  </div>
+        <section id="empty-state" class="empty-state" aria-live="polite">
+          <h2>Hva vil du forstå i dag?</h2>
+          <p>AHA hjelper deg å samle tanker, finne mønstre og gjøre samtaler til innsikt.</p>
+          <div class="suggestions">
+            <button class="suggestion-btn" data-prompt="Oppsummer dagen min">Oppsummer dagen min</button>
+            <button class="suggestion-btn" data-prompt="Sorter tankene mine">Sorter tankene mine</button>
+            <button class="suggestion-btn" data-prompt="Lag en læringssti">Lag en læringssti</button>
+            <button class="suggestion-btn" data-prompt="Importer fra History Go">Importer fra History Go</button>
+          </div>
+        </section>
 
-  <div id="panel"></div>
-  <pre id="out"></pre>
+        <div class="chat-log-wrap">
+          <label for="chat-log">Samtale</label>
+          <div id="chat-log" class="chat-log" aria-live="polite"></div>
+        </div>
+      </section>
+
+      <aside class="insight-rail">
+        <section class="insight-placeholder-card">
+          <h2>Innsikter fra samtalen</h2>
+          <p>Når AHA finner viktige poenger, vises de her.</p>
+          <div class="insight-actions">
+            <button id="btn-insights" type="button">Lagre som innsikt</button>
+            <button type="button">Se alle innsikter</button>
+          </div>
+          <!-- Frontend-placeholder: viser struktur for innsiktslag før dedikert datamodell/ruting er koblet på. -->
+        </section>
+
+        <div class="buttons utility-buttons">
+          <button id="btn-status">Tema-status</button>
+          <button id="btn-concepts">Begreper</button>
+          <button id="btn-meta">Meta-profil</button>
+          <button id="btn-export">Eksport JSON</button>
+          <button id="btn-import-hg">Importer History Go</button>
+          <button id="btn-reset">Nullstill</button>
+        </div>
+
+        <div id="panel"></div>
+        <pre id="out"></pre>
+      </aside>
+    </main>
+
+    <footer class="composer-wrap">
+      <div class="row composer-row">
+        <label for="msg">Skriv til AHA</label>
+        <textarea id="msg" placeholder="Skriv til AHA…"></textarea>
+        <div class="composer-actions">
+          <button class="secondary-action" type="button">Lag innsikt</button>
+          <button id="btn-send" class="send-btn" type="button">Send</button>
+        </div>
+      </div>
+    </footer>
+  </div>
 
   <script src="insightsChamber.js"></script>
   <script src="metaInsightsEngine.js"></script>
