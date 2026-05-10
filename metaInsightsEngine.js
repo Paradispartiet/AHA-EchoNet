@@ -1351,18 +1351,25 @@
     });
 
     // ── emne_suggestions ─────
+    // Leser fra ins.emne_suggestions (nytt provisorisk forslag-felt skrevet
+    // av ahaEmneMatcher via AHAIngest). Fallback til ins.emne_matches for
+    // bakoverkompatibilitet med kammere som ble fylt før suggestion-felt
+    // ble innført.
     const emneByKey = new Map();
     insights.forEach((ins) => {
-      (ins.emne_matches || []).forEach((m) => {
-        const id = m?.emne_id;
+      const list = Array.isArray(ins.emne_suggestions) && ins.emne_suggestions.length
+        ? ins.emne_suggestions
+        : Array.isArray(ins.emne_matches) ? ins.emne_matches : [];
+      list.forEach((m) => {
+        const id = m && m.emne_id;
         if (!id) return;
         let entry = emneByKey.get(id);
         if (!entry) {
           entry = {
             emne_id: id,
-            title: m.title,
-            short_label: m.short_label,
-            subject_id: m.subject_id,
+            title: m.title || m.label || null,
+            short_label: m.short_label || m.label || null,
+            subject_id: m.subject_id || null,
             area_label: m.area_label || null,
             count: 0
           };

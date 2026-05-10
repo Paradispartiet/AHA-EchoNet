@@ -305,19 +305,44 @@ Disse kan importeres som tekstlige AHA-signaler, men de skal merkes tydelig som 
 
 ## Emnematcher-status
 
-`emnerLoader.js` og `ahaEmneMatcher.js` var en tidlig prototype for å matche tekst mot emner.
-
-De skal ikke være hovedinngang for History Go-import.
-
-Mulig fremtidig bruk:
+`emnerLoader.js` og `ahaEmneMatcher.js` brukes nå som et forslagssystem
+inne i `AHAIngest`, ikke som hovedmotor.
 
 ```text
-- fallback for ren AHA Chat
-- fallback for Notes uten metadata
-- manuell klassifisering av selvlagde tekster
+ahaEmneMatcher kan automatisk foreslå emner.
+ahaEmneMatcher gjør ikke forslagene til bekreftede emner.
 ```
 
-Men for History Go-import skal AHA-EchoNet stole på History Go sin egen lokale lærings-/innsiktsmotor og den eksporterte payloaden.
+For rå AHA-tekst (chat, notes, feed, galleri, insta) skriver `AHAIngest`
+matcherens treff til et provisorisk felt på insighten:
+
+```text
+emne_suggestions: [
+  {
+    emne_id,
+    subject_id,
+    label,
+    score,
+    confidence,
+    source: "ahaEmneMatcher",
+    status: "suggested",
+    created_at
+  }
+]
+```
+
+`target.emner` og `target.matched_subjects` røres ikke automatisk —
+de er forbeholdt brukerbekreftede eller importerte (HG) emner. UI kan
+senere lese `emne_suggestions` og la brukeren bekrefte eller avvise hvert
+forslag.
+
+`AHAIngest` fyrer `aha:emne-suggested` når nye forslag legges til.
+
+For History Go-import skal AHA-EchoNet stole på History Go sin egen
+lokale lærings-/innsiktsmotor og den eksporterte payloaden. `AHAIngest`
+hopper eksplisitt over `ahaEmneMatcher` for alt importert materiale
+(`imported: true`, `source_app: "historygo"` eller `source_type` som
+starter med `"historygo"`).
 
 ## Personlig AHA uten History Go
 

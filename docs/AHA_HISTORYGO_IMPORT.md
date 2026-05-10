@@ -78,3 +78,23 @@ Hvert item blir et AHA-signal.
 History Go er en valgfri kilde til AHA. History Go er ikke grunnlaget for personlig AHA.
 
 AHA skal primært forstå brukerens selvlagde materiale: chat, notes, galleri, feed, Insta, egne tekster og minner.
+
+## ahaEmneMatcher kjøres ikke på History Go-import
+
+`AHAIngest` har en eksplisitt guard som hopper over `ahaEmneMatcher` for
+alt importert materiale. Guarden ser etter `imported: true`,
+`source_app: "historygo"`, `source_type` som starter med `"historygo"`,
+eller tilsvarende felt i `meta`. Resultatet:
+
+```text
+AHA Chat / Notes / Feed / Galleri / Insta / rå personlig tekst
+  → kan få emne_suggestions fra ahaEmneMatcher
+
+History Go-import
+  → får ikke nye emne_suggestions fra ahaEmneMatcher
+  → bruker History Go sin egen eksporterte metadata:
+    concepts, related_emner, categoryId, place_id, person_id
+```
+
+History Go er kanonisk for sine egne emner. AHA skal ikke gjette dem
+på nytt.

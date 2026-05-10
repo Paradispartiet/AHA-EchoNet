@@ -89,11 +89,36 @@
 
     const themeId = getThemeId();
     const fieldId = getFieldId();
-    let chamber = loadChamberFromStorage();
 
     const sentences = global.InsightsEngine.splitIntoSentences(text);
     const chunks = sentences.length ? sentences : [text];
 
+    if (global.AHAIngest && typeof global.AHAIngest.ingest === "function") {
+      // AHAIngest håndterer både source event-loggen, signal-konstruksjon
+      // og innlegging i innsiktskammeret. Dobbeltlagring av source events
+      // unngås ved at vi ikke lenger kaller AHASources.addSourceEvent her.
+      chunks.forEach((chunk) => {
+        global.AHAIngest.ingest({
+          source_type: "chat",
+          source_app: "aha_chat",
+          content_type: "text",
+          title: "AHA Chat-melding",
+          text: chunk,
+          user_created: true,
+          imported: false,
+          created_at: new Date().toISOString(),
+          subject_id: SUBJECT_ID,
+          theme_id: themeId,
+          field_id: fieldId,
+          meta: { theme_id: themeId, field_id: fieldId }
+        });
+      });
+      return chunks.length;
+    }
+
+    // Fallback hvis AHAIngest ikke er lastet: skriv direkte til motoren
+    // og logg source event manuelt slik vi alltid har gjort.
+    let chamber = loadChamberFromStorage();
     chunks.forEach((chunk) => {
       const signal = global.InsightsEngine.createSignalFromMessage(
         chunk,
@@ -103,7 +128,6 @@
       );
       chamber = global.InsightsEngine.addSignalToChamber(chamber, signal);
     });
-
     saveChamberToStorage(chamber);
 
     global.AHASources?.addSourceEvent?.({

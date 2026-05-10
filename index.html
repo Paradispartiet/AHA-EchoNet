@@ -187,8 +187,14 @@
   <script src="ahaAuth.js"></script>
   <script src="ahaRepository.js"></script>
   <script src="ahaSources.js"></script>
-  <script src="emnerLoader.js"></script>
-  <script src="ahaEmneMatcher.js"></script>
+  <!--
+    Dashboard kaller ikke ingest direkte. History Go-importer som går
+    gjennom AHAIngest hopper over ahaEmneMatcher uansett (imported = true),
+    så dashboard trenger verken emnerLoader.js eller ahaEmneMatcher.js.
+    Filene beholdes i prosjektet og lastes fortsatt fra chat/notes/
+    feed/gallery/insta-sidene som kan trenge dem til provisoriske
+    emne_suggestions på rå AHA-tekst.
+  -->
   <script src="ahaEmbeddings.js"></script>
   <script src="ahaIngest.js"></script>
   <script src="ahaHistoryGoImport.js"></script>
