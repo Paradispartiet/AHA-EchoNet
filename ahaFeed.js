@@ -57,18 +57,19 @@
   function render(source) {
     const mount = document.getElementById("feed-list");
     if (!mount) return;
-    const posts = Array.isArray(source) ? source : load();
+    const posts = (Array.isArray(source) ? source : load()).filter((post) => !post?.deleted_at);
     mount.innerHTML = posts.length
       ? posts.map((post) => `
         <article class="module-card">
           <p>${escapeHtml(post.text || "")}</p>
-          <div class="module-meta">${escapeHtml(post.created_at || "")}</div>
+          <div class="module-meta">${escapeHtml(post.created_at || "")}${post.last_source_event_id ? ` · source: ${escapeHtml(post.last_source_event_id)}` : ""}</div>
+          <div class="module-actions"><button type="button" data-feed-delete="${escapeHtml(post.id)}">Slett</button></div>
         </article>
       `).join("")
       : "<p>Ingen poster ennå.</p>";
   }
 
-  function addPost(input) {
+  async function addPost(input) {
     const post = {
       id: `feed_${Date.now()}_${Math.floor(Math.random() * 100000)}`,
       text: String(input.text || "").trim(),
@@ -78,12 +79,7 @@
     };
     if (!post.text) return null;
 
-    const posts = load();
-    posts.unshift(post);
-    save(posts);
-    persistPost(post);
-
-    window.AHAIngest?.ingest?.({
+    const ingestResult = await window.AHAIngest?.ingest?.({
       source_type: "feed_post",
       source_app: "aha_feed",
       content_type: "text",
@@ -95,8 +91,26 @@
       meta: { feed_post_id: post.id }
     });
 
+    if (ingestResult?.sourceEvent?.id) post.last_source_event_id = ingestResult.sourceEvent.id;
+
+    const posts = load();
+    posts.unshift(post);
+    save(posts);
+    persistPost(post);
+
     render(posts);
     return post;
+  }
+
+  function deletePost(id) {
+    const entries = load();
+    const index = entries.findIndex((entry) => entry.id === id);
+    if (index < 0) return null;
+    entries[index] = { ...entries[index], deleted_at: new Date().toISOString() };
+    save(entries);
+    persistPost(entries[index]);
+    render(entries);
+    return entries[index];
   }
 
   function bind() {
@@ -108,12 +122,19 @@
       addPost({ text: text?.value });
       if (text) text.value = "";
     });
+    document.getElementById("feed-list")?.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      const id = target.dataset.feedDelete;
+      if (id) deletePost(id);
+    });
+
     render();
     syncFromDatabase();
     window.addEventListener("aha:auth-ready", syncFromDatabase);
   }
 
-  window.AHAFeed = { load, save, syncFromDatabase, addPost, render };
+  window.AHAFeed = { load, save, syncFromDatabase, addPost, deletePost, render };
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bind);
   else bind();
