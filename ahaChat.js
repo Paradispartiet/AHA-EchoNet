@@ -486,13 +486,90 @@
     }, null, 2));
   }
 
+  function renderMetaSection(label, items) {
+    const list = (items || []).filter(Boolean);
+    if (!list.length) return "";
+    const body = list.map((item) => `<li>${item}</li>`).join("");
+    return `<section class="meta-section">
+      <h4 class="meta-section-label">${escHtml(label)}</h4>
+      <ul class="meta-section-list">${body}</ul>
+    </section>`;
+  }
+
+  function renderMetaProfile(profile) {
+    if (!profile || typeof profile !== "object") return "";
+
+    const recent = profile.temporal?.recent_focus || {};
+    const tensions = profile.tensions || {};
+    const recs = profile.recommendations || {};
+    const totalInsights = Array.isArray(profile.insights) ? profile.insights.length : 0;
+    const window = recent.window_days ? ` (siste ${recent.window_days} dager)` : "";
+
+    const recentConcepts = (recent.concepts || []).slice(0, 6).map((c) =>
+      `${escHtml(c.key)} <span class="meta-count">×${c.count}</span>`
+    );
+    const emerging = (recent.emerging || []).slice(0, 5).map((c) =>
+      `${escHtml(c.key)} <span class="meta-count">×${c.count}</span>`
+    );
+    const fading = (recent.fading || []).slice(0, 5).map((c) =>
+      `${escHtml(c.key)} <span class="meta-count">tidligere ×${c.prev_count}</span>`
+    );
+    const conceptTensions = (tensions.concept_tensions || []).slice(0, 5).map((t) =>
+      `${escHtml(t.key)} <span class="meta-count">spenning ${Number(t.combined).toFixed(2)}</span>`
+    );
+    const paradoxes = (tensions.paradox_pairs || []).slice(0, 5).map((p) => {
+      const shared = (p.shared_concepts || []).slice(0, 3).map(escHtml).join(", ");
+      const themeText = p.theme_id ? ` i <em>${escHtml(p.theme_id)}</em>` : "";
+      return `${shared || "(begreper)"}${themeText}`;
+    });
+    const unstick = (recs.unstick_prompts || []).slice(0, 4).map((u) =>
+      escHtml(u.prompt || "")
+    );
+    const resurface = (recs.resurface_insights || []).slice(0, 4).map((r) =>
+      `${escHtml((r.summary || "").slice(0, 160))} <span class="meta-count">${escHtml((r.shared_concepts || []).join(", "))}</span>`
+    );
+    const bridging = (recs.bridging_pairs || []).slice(0, 4).map((b) =>
+      `${escHtml(b.source)} ↔ ${escHtml(b.target)} <span class="meta-count">npmi ${Number(b.npmi).toFixed(2)}</span>`
+    );
+    const underexplored = (recs.underexplored_concepts || []).slice(0, 5).map((u) =>
+      `${escHtml(u.key)} <span class="meta-count">×${u.count} · ${escHtml(u.reason || "")}</span>`
+    );
+
+    const sections = [
+      renderMetaSection(`Det du tenker mest på${window}`, recentConcepts),
+      renderMetaSection("Nye temaer som dukker opp", emerging),
+      renderMetaSection("Tankegods som har stilnet", fading),
+      renderMetaSection("Spenninger jeg ser", conceptTensions),
+      renderMetaSection("Paradokser i materialet", paradoxes),
+      renderMetaSection("Spørsmål som kan løsne fastlåsthet", unstick),
+      renderMetaSection("Refleksjoner verdt å hente frem", resurface),
+      renderMetaSection("Koblinger verdt å tenke videre på", bridging),
+      renderMetaSection("Tanker som ikke kobler seg ennå", underexplored)
+    ].filter(Boolean).join("");
+
+    if (!sections) {
+      return `<div class="meta-profile">
+        <h3>Hva AHA ser i materialet ditt</h3>
+        <p class="meta-empty">AHA har ennå ikke nok å gå på. Skriv mer i chat eller importer fra History Go.</p>
+      </div>`;
+    }
+
+    return `<div class="meta-profile">
+      <h3>Hva AHA ser i materialet ditt</h3>
+      <p class="meta-meta">${totalInsights} innsikter analysert.</p>
+      ${sections}
+    </div>`;
+  }
+
   function showMeta() {
     const chamber = loadChamberFromStorage();
     if (!global.MetaInsightsEngine?.buildUserMetaProfile) {
       out("MetaInsightsEngine mangler buildUserMetaProfile.");
       return;
     }
-    out(JSON.stringify(global.MetaInsightsEngine.buildUserMetaProfile(chamber, SUBJECT_ID), null, 2));
+    const profile = global.MetaInsightsEngine.buildUserMetaProfile(chamber, SUBJECT_ID);
+    renderPanel(renderMetaProfile(profile));
+    out("");
   }
 
   function reset() {
