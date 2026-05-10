@@ -9,6 +9,7 @@ window.AHA_SUPABASE_URL = window.AHA_SUPABASE_URL || "https://wshmybqyksrwkawqle
 window.AHA_SUPABASE_PUBLISHABLE_KEY = window.AHA_SUPABASE_PUBLISHABLE_KEY || "sb_publishable_fgfxuPJBpZ9CFcYufBBgjg_8YEmi13m";
 
 // AI-agent backend (server.js). Tom streng = embedding er deaktivert.
-// Sett til "https://<din-backend>/api/aha-agent" når server.js er deployet,
-// eller bruk relativ "/api/aha-agent" hvis backend kjøres på samme origin.
-window.AHA_AGENT_API = window.AHA_AGENT_API || "";
+// Default peker på Render-deployet av server.js. For lokal utvikling
+// kan du overstyre i ahaConfig.local.js, f.eks.
+//   window.AHA_AGENT_API = "http://localhost:3030/api/aha-agent";
+window.AHA_AGENT_API = window.AHA_AGENT_API || "https://aha-agent-7a3y.onrender.com/api/aha-agent";
