@@ -195,12 +195,65 @@
     return res.json();
   }
 
+  function escHtml(value) {
+    return String(value || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function renderLayerChips(items, getLabel) {
+    const labels = (items || [])
+      .map((item) => {
+        const label = getLabel(item);
+        return label ? escHtml(label) : "";
+      })
+      .filter(Boolean);
+    if (!labels.length) return "";
+    return `<div class="insight-layer-chips">${labels
+      .map((label) => `<span class="insight-chip">${label}</span>`)
+      .join("")}</div>`;
+  }
+
+  function renderInsightCard(ins) {
+    const title = escHtml(ins.title || "Innsikt");
+    const summary = escHtml(ins.summary || "");
+
+    const conceptsHtml = renderLayerChips(ins.concepts, (c) => c?.label || c?.key);
+    const patternsHtml = renderLayerChips(ins.patterns, (p) => p?.label || p?.key);
+    const markersHtml = renderLayerChips(ins.markers, (m) => m?.value);
+
+    const claims = (ins.claims || [])
+      .map((c) => (c && c.text) || "")
+      .filter(Boolean);
+    const claimsHtml = claims.length
+      ? `<ul class="insight-claims">${claims
+          .map((q) => `<li>“${escHtml(q)}”</li>`)
+          .join("")}</ul>`
+      : "";
+
+    const sections = [
+      conceptsHtml ? `<div class="insight-section"><span class="insight-section-label">Begreper</span>${conceptsHtml}</div>` : "",
+      patternsHtml ? `<div class="insight-section"><span class="insight-section-label">Mønstre</span>${patternsHtml}</div>` : "",
+      claimsHtml ? `<div class="insight-section"><span class="insight-section-label">Påstander</span>${claimsHtml}</div>` : "",
+      markersHtml ? `<div class="insight-section"><span class="insight-section-label">Markører</span>${markersHtml}</div>` : ""
+    ].filter(Boolean).join("");
+
+    return `<li class="insight-card">
+      <strong class="insight-card-title">${title}</strong>
+      ${summary ? `<p class="insight-card-summary">${summary}</p>` : ""}
+      ${sections}
+    </li>`;
+  }
+
   function showInsights() {
     const insights = currentInsights();
     renderPanel(
       `<div class="insight-panel"><h2>Innsikter</h2>${
         insights.length
-          ? `<ul>${insights.map((ins) => `<li><strong>${ins.title || "Innsikt"}</strong><br>${ins.summary || ""}</li>`).join("")}</ul>`
+          ? `<ul class="insight-list">${insights.map(renderInsightCard).join("")}</ul>`
           : "<p>Ingen innsikter ennå.</p>"
       }</div>`
     );
