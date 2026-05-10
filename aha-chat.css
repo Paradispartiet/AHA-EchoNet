@@ -93,6 +93,17 @@ pre#out { max-height: 22vh; overflow:auto; white-space: pre-wrap; }
 .merge-confirm-btn:hover { background: #1d2a55; }
 .merge-dismiss-btn:hover { background: #2a1d1d; }
 
+.meta-profile { display: flex; flex-direction: column; gap: 10px; }
+.meta-profile h3 { margin: 0 0 4px; font-size: 14px; }
+.meta-meta { margin: 0 0 8px; color: var(--aha-muted); font-size: 11px; }
+.meta-empty { margin: 0; color: var(--aha-muted); font-size: 12px; }
+.meta-section { background: #0f1730; border: 1px solid var(--aha-border); border-radius: 10px; padding: 8px 12px; }
+.meta-section-label { margin: 0 0 6px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--aha-muted); font-weight: 600; }
+.meta-section-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.meta-section-list li { font-size: 12px; line-height: 1.4; color: var(--aha-text); }
+.meta-count { color: var(--aha-muted); font-size: 11px; margin-left: 4px; }
+.meta-section-list em { font-style: italic; color: var(--aha-muted); }
+
 .composer-wrap { position: fixed; left: 0; right: 0; bottom: 0; background: linear-gradient(180deg, rgba(5,8,20,0), rgba(5,8,20,0.85) 24%, rgba(5,8,20,1)); padding: 12px 16px 16px; }
 .composer-row { background: var(--aha-surface); border: 1px solid var(--aha-border); border-radius: 14px; padding: 12px; }
 #msg { min-height: 84px; max-height: 160px; resize: vertical; }
