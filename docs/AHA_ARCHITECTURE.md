@@ -91,3 +91,66 @@ aha_insta_posts_v1
 AHA-EchoNet skal kunne fungere uten History Go. Primære kilder er brukerens egne chatmeldinger, notater, galleriobjekter, feedposter og Insta-poster.
 
 History Go-import er valgfri og skal merkes tydelig som importert materiale.
+
+## AHA Chat går gjennom AHAIngest
+
+AHA Chat sine bruker-meldinger sendes via `AHAIngest.ingest(...)` på linje
+med Notes, Galleri, Feed, Insta og History Go-import. Felles ingest-rør
+sørger for at samme source-event-logg, embedding-berikelse og
+merge-suggestion-flyt brukes for alle AHA-moduler.
+
+Hvis `AHAIngest` ikke er lastet på siden (f.eks. en eldre cache), faller
+chat tilbake til å skrive direkte til `InsightsEngine.addSignalToChamber`
+og logge source event manuelt. Standardflyten er ingest.
+
+### AHA-agentens svar er ikke brukerinnsikter
+
+AHA-agentens egne svar vises i chatten og logges i source-loggen, men
+skal **ikke** bli ordinære insights — AI-oppsummeringer hører ikke
+hjemme i innsiktskammeret. `AHAIngest.ingest(input)` aksepterer derfor
+flagget `skip_insight: true`:
+
+```text
+input.skip_insight === true
+  → AHASources logger source eventet
+  → ingest hopper over createSignalFromMessage og addSignalToChamber
+  → ingest fyrer aha:source-only i stedet for aha:ingested
+  → returnerer { ok: true, signal: null, meta: null, skipped_insight: true }
+```
+
+Brukermeldinger fra chat ingestes som vanlig (uten `skip_insight`).
+Agent-svaret ingestes med `skip_insight: true`.
+
+## ahaEmneMatcher er et forslagssystem
+
+`ahaEmneMatcher.js` brukes av `AHAIngest` til å foreslå hvilke emner en
+rå AHA-tekst sannsynligvis berører. Matcheren skriver ikke bekreftede
+emner — den skriver provisoriske forslag på insighten:
+
+```text
+emne_suggestions: [
+  {
+    emne_id,
+    subject_id,
+    label,
+    score,
+    confidence,
+    source: "ahaEmneMatcher",
+    status: "suggested",
+    created_at,
+    ...
+  }
+]
+```
+
+Forslagene er ikke brukerbekreftet, og `target.emner` /
+`target.matched_subjects` røres ikke automatisk. UI kan senere lese
+`emne_suggestions` og la brukeren bekrefte eller avvise hvert forslag.
+
+`AHAIngest` fyrer `aha:emne-suggested` når nye forslag legges til.
+
+History Go-importerte signaler skal ikke emnematches på nytt — `AHAIngest`
+hopper over `enrichWithEmneMatcher` for alt med `imported: true`,
+`source_app: "historygo"` eller `source_type` som starter med
+`"historygo"`. AHA stoler på History Go sin egen eksporterte metadata
+(concepts, related_emner, categoryId, place_id, person_id).
