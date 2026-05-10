@@ -217,6 +217,31 @@
       .join("")}</div>`;
   }
 
+  function renderEmneSuggestions(insight) {
+    const list = Array.isArray(insight.emne_suggestions) ? insight.emne_suggestions : [];
+    const open = list.filter((s) => s && s.emne_id && (s.status || "suggested") === "suggested");
+    if (!open.length) return "";
+
+    const items = open.map((s) => {
+      const label = escHtml(s.label || s.short_label || s.title || s.emne_id);
+      const subject = s.subject_id ? `<small class="emne-subject">${escHtml(s.subject_id)}</small>` : "";
+      const insightId = escHtml(insight.id || "");
+      const emneId = escHtml(s.emne_id);
+      return `<li class="emne-suggestion">
+        <span class="emne-suggestion-label">${label}${subject}</span>
+        <span class="emne-suggestion-actions">
+          <button type="button" class="emne-confirm-btn" data-action="confirm-emne" data-insight-id="${insightId}" data-emne-id="${emneId}">Legg til</button>
+          <button type="button" class="emne-dismiss-btn" data-action="dismiss-emne" data-insight-id="${insightId}" data-emne-id="${emneId}">Ignorer</button>
+        </span>
+      </li>`;
+    }).join("");
+
+    return `<div class="insight-section">
+      <span class="insight-section-label">Foreslåtte emner</span>
+      <ul class="emne-suggestion-list">${items}</ul>
+    </div>`;
+  }
+
   function renderInsightCard(ins) {
     const title = escHtml(ins.title || "Innsikt");
     const summary = escHtml(ins.summary || "");
@@ -224,6 +249,8 @@
     const conceptsHtml = renderLayerChips(ins.concepts, (c) => c?.label || c?.key);
     const patternsHtml = renderLayerChips(ins.patterns, (p) => p?.label || p?.key);
     const markersHtml = renderLayerChips(ins.markers, (m) => m?.value);
+    const emnerHtml = renderLayerChips((ins.emner || []).map((e) => ({ key: e })), (e) => e?.key);
+    const suggestionsHtml = renderEmneSuggestions(ins);
 
     const claims = (ins.claims || [])
       .map((c) => (c && c.text) || "")
@@ -238,14 +265,68 @@
       conceptsHtml ? `<div class="insight-section"><span class="insight-section-label">Begreper</span>${conceptsHtml}</div>` : "",
       patternsHtml ? `<div class="insight-section"><span class="insight-section-label">Mønstre</span>${patternsHtml}</div>` : "",
       claimsHtml ? `<div class="insight-section"><span class="insight-section-label">Påstander</span>${claimsHtml}</div>` : "",
-      markersHtml ? `<div class="insight-section"><span class="insight-section-label">Markører</span>${markersHtml}</div>` : ""
+      markersHtml ? `<div class="insight-section"><span class="insight-section-label">Markører</span>${markersHtml}</div>` : "",
+      emnerHtml ? `<div class="insight-section"><span class="insight-section-label">Bekreftede emner</span>${emnerHtml}</div>` : "",
+      suggestionsHtml
     ].filter(Boolean).join("");
 
-    return `<li class="insight-card">
+    return `<li class="insight-card" data-insight-id="${escHtml(ins.id || "")}">
       <strong class="insight-card-title">${title}</strong>
       ${summary ? `<p class="insight-card-summary">${summary}</p>` : ""}
       ${sections}
     </li>`;
+  }
+
+  function resolveEmneSuggestionAction(target) {
+    if (!target) return null;
+    const button = target.closest && target.closest("[data-action]");
+    if (!button) return null;
+    const action = button.getAttribute("data-action");
+    if (action !== "confirm-emne" && action !== "dismiss-emne") return null;
+    return {
+      action,
+      insightId: button.getAttribute("data-insight-id") || "",
+      emneId: button.getAttribute("data-emne-id") || ""
+    };
+  }
+
+  function applyEmneSuggestionAction(action, insightId, emneId) {
+    if (!insightId || !emneId) return false;
+    const chamber = loadChamberFromStorage();
+    const insight = (chamber.insights || []).find((ins) => ins.id === insightId);
+    if (!insight) return false;
+
+    const engine = global.InsightsEngine || {};
+    let changed = false;
+    if (action === "confirm-emne" && typeof engine.confirmEmneSuggestion === "function") {
+      changed = engine.confirmEmneSuggestion(insight, emneId);
+    } else if (action === "dismiss-emne" && typeof engine.dismissEmneSuggestion === "function") {
+      changed = engine.dismissEmneSuggestion(insight, emneId);
+    }
+    if (!changed) return false;
+
+    saveChamberToStorage(chamber);
+
+    try {
+      global.dispatchEvent(new CustomEvent("aha:emne-suggestion-resolved", {
+        detail: { insight_id: insightId, emne_id: emneId, action }
+      }));
+    } catch {}
+
+    return true;
+  }
+
+  function bindEmneSuggestionHandler() {
+    const panel = document.getElementById("panel");
+    if (!panel || panel.dataset.ahaEmneBound === "true") return;
+    panel.dataset.ahaEmneBound = "true";
+    panel.addEventListener("click", (event) => {
+      const resolved = resolveEmneSuggestionAction(event.target);
+      if (!resolved) return;
+      event.preventDefault();
+      const ok = applyEmneSuggestionAction(resolved.action, resolved.insightId, resolved.emneId);
+      if (ok) showInsights();
+    });
   }
 
   function showInsights() {
@@ -374,6 +455,8 @@
         if (prompt) setComposerText(prompt + " ");
       });
     });
+
+    bindEmneSuggestionHandler();
 
     updateEmptyState();
   }
