@@ -771,3 +771,8 @@ AHA-EchoNet skal være den personlige hovedmotoren.
 History Go skal være en selvstendig samlingsmotor.
 Importen skal være eksplisitt, merket og valgfri.
 AHA-komponentene skal alle mate samme eksisterende motor.
+
+## Modulskall i AHA Home
+
+AHA Home bruker en felles modulregistry i `ahaModules.js` for å vise alle hovedmoduler fra start.
+Eksisterende kjerneflater (Dashboard, Chat, Notes, Gallery, Feed, Insta) beholdes, mens øvrige moduler er tilgjengelige som synlige placeholder-innganger for videre bygging.
