@@ -670,11 +670,41 @@ Alle moduler skal defineres her med `id`, `title`, `type`, `status`, `href`, `de
 5. Graph / Tankekart
 6. Grupper / EchoNet
 
-## Felles datakontrakt (på tvers av moduler)
+## Fase 2 – Felles AHA-datakontrakt
+
+`ahaContracts.js` er et felles kontraktlag for modulobjekter i AHA.
+Eksisterende moduler beholder sine modulspesifikke felter, men kan i tillegg lagre et felles `base`-objekt som koblingslag.
+Dette gjør at senere moduler som søk, lister, stier, mindmap og AHAavisa kan koble data på tvers uten ny motor.
+
+Felles basekontrakt:
 
 ```js
-{ id, title, type, source, createdAt, tags, linkedItems }
+{
+  id,
+  title,
+  type,
+  source,
+  createdAt,
+  updatedAt,
+  tags,
+  linkedItems,
+  meta
+}
 ```
+
+Linked item-kontrakt:
+
+```js
+{
+  id,
+  type,
+  source,
+  title
+}
+```
+
+Regel:
+"Modulspesifikke data skal beholdes, men alle moduler skal etter hvert ha et felles base-lag slik at AHA kan koble, søke, listeføre og visualisere objekter på tvers."
 
 ## Regel for leveranse
 

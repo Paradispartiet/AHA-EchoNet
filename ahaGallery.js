@@ -81,9 +81,10 @@
   }
 
   async function addItem(input) {
+    const mediaType = /\.(mp4|webm|ogg)(\?|#|$)/i.test(String(input.src || "")) ? "video" : "image";
     const item = {
       id: `gal_${Date.now()}_${Math.floor(Math.random() * 100000)}`,
-      type: /\.(mp4|webm|ogg)(\?|#|$)/i.test(String(input.src || "")) ? "video" : "image",
+      type: mediaType,
       title: String(input.title || "").trim(),
       description: String(input.description || "").trim(),
       src: String(input.src || "").trim(),
@@ -96,6 +97,17 @@
       meta: {},
       created_at: new Date().toISOString()
     };
+    const baseContract = window.AHAContracts?.createBaseItem?.({
+      id: item.id,
+      title: item.title || "Galleriobjekt",
+      type: mediaType === "video" ? "gallery_video" : "gallery_image",
+      source: "aha_gallery",
+      createdAt: item.created_at,
+      updatedAt: item.created_at,
+      tags: item.tags,
+      meta: { gallery_item_id: item.id, src: item.src }
+    });
+    if (baseContract) item.base = baseContract;
     if (!item.title && !item.description && !item.src) return null;
 
     const ingestResult = await window.AHAIngest?.ingest?.({

@@ -81,16 +81,28 @@
   }
 
   async function addPost(input) {
+    const contentType = /\.(mp4|webm|ogg)(\?|#|$)/i.test(String(input.src || "")) ? "video" : "image";
     const post = {
       id: `insta_${Date.now()}_${Math.floor(Math.random() * 100000)}`,
       title: String(input.title || "").trim(),
       src: String(input.src || "").trim(),
       caption: String(input.caption || "").trim(),
-      content_type: /\.(mp4|webm|ogg)(\?|#|$)/i.test(String(input.src || "")) ? "video" : "image",
+      content_type: contentType,
       tags: Array.isArray(input.tags) ? input.tags : [],
       meta: {},
       created_at: new Date().toISOString()
     };
+    const baseContract = window.AHAContracts?.createBaseItem?.({
+      id: post.id,
+      title: post.title || "AHA Insta-post",
+      type: contentType === "video" ? "insta_video" : "insta_image",
+      source: "aha_insta",
+      createdAt: post.created_at,
+      updatedAt: post.created_at,
+      tags: post.tags,
+      meta: { insta_post_id: post.id, src: post.src }
+    });
+    if (baseContract) post.base = baseContract;
     if (!post.title && !post.caption && !post.src) return null;
 
     const ingestResult = await window.AHAIngest?.ingest?.({

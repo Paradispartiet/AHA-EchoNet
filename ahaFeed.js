@@ -77,6 +77,17 @@
       meta: {},
       created_at: new Date().toISOString()
     };
+    const baseContract = window.AHAContracts?.createBaseItem?.({
+      id: post.id,
+      title: "AHA Feed-post",
+      type: "feed_post",
+      source: "aha_feed",
+      createdAt: post.created_at,
+      updatedAt: post.created_at,
+      tags: post.tags,
+      meta: { feed_post_id: post.id }
+    });
+    if (baseContract) post.base = baseContract;
     if (!post.text) return null;
 
     const ingestResult = await window.AHAIngest?.ingest?.({
