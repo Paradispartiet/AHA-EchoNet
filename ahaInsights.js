@@ -25,8 +25,17 @@
     return text || fallback;
   }
 
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll("\"", "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
   function ts(item) {
-    const raw = item?.created_at || item?.createdAt || item?.updated_at || item?.updatedAt || "";
+    const raw = item?.updated_at || item?.updatedAt || item?.last_updated || item?.lastUpdated || item?.created_at || item?.createdAt || item?.first_seen || item?.firstSeen || "";
     const t = Date.parse(raw);
     return Number.isFinite(t) ? t : 0;
   }
@@ -61,8 +70,8 @@
       raw: insight,
       title: asText(insight?.title || insight?.heading || insight?.label || base?.title, "Innsikt"),
       summary: asText(insight?.summary || insight?.text || insight?.content || insight?.claim, "Ingen oppsummering ennå."),
-      date: asText(insight?.created_at || insight?.createdAt || insight?.updated_at || insight?.updatedAt, "Ukjent tidspunkt"),
-      sourceEventId: asText(insight?.source_event_id, ""),
+      date: asText(insight?.updated_at || insight?.updatedAt || insight?.last_updated || insight?.lastUpdated || insight?.created_at || insight?.createdAt || insight?.first_seen || insight?.firstSeen, "Ukjent tidspunkt"),
+      sourceEventId: asText(insight?.source_event_id || insight?.sourceEventId || insight?.source_id || insight?.sourceId || insight?.event_id || insight?.eventId, ""),
       terms: asArray(insight?.terms).concat(asArray(insight?.tokens), asArray(insight?.keywords)).filter(Boolean),
       topic: asText(insight?.topic || insight?.emne || insight?.category, ""),
       confidence: insight?.confidence ?? insight?.score ?? null
@@ -76,7 +85,7 @@
 
   function findSourceById(sourceEvents, id) {
     if (!id) return null;
-    return sourceEvents.find((ev) => String(ev?.id || "") === String(id)) || null;
+    return sourceEvents.find((ev) => String(ev?.id || ev?.event_id || ev?.source_event_id || "") === String(id)) || null;
   }
 
   function countArray(data) {
@@ -87,24 +96,24 @@
     const card = document.createElement("article");
     card.className = "insight-card insight-archive-card";
 
-    const terms = view.terms.slice(0, 8).map((t) => `<span class="insight-chip">${String(t)}</span>`).join("");
+    const terms = view.terms.slice(0, 8).map((t) => `<span class="insight-chip">${escapeHtml(t)}</span>`).join("");
     const sourceHtml = sourceEvent
-      ? `<div class="insight-source"><strong>Kilde:</strong> ${asText(sourceEvent.source_type, "ukjent")} · ${asText(sourceEvent.source_app, "ukjent")}</div>
-         <div class="insight-source-preview">${eventPreview(sourceEvent)}</div>
-         <div class="insight-source-time">${asText(sourceEvent.created_at, "Ukjent tidspunkt")}</div>
-         <a class="aha-tile-btn" href="#source-${asText(sourceEvent.id, "")}">Åpne kilde</a>`
+      ? `<div class="insight-source"><strong>Kilde:</strong> ${escapeHtml(asText(sourceEvent.source_type, "ukjent"))} · ${escapeHtml(asText(sourceEvent.source_app, "ukjent"))}</div>
+         <div class="insight-source-preview">${escapeHtml(eventPreview(sourceEvent))}</div>
+         <div class="insight-source-time">${escapeHtml(asText(sourceEvent.created_at, "Ukjent tidspunkt"))}</div>
+         <a class="aha-tile-btn" href="#source-${escapeHtml(asText(sourceEvent.id, ""))}">Åpne kilde</a>`
       : `<div class="insight-source-missing">Ingen kilde koblet ennå</div>`;
 
     card.innerHTML = `
       <header class="insight-card-head">
-        <h3>${view.title}</h3>
-        <span class="insight-chip">${view.date}</span>
+        <h3>${escapeHtml(view.title)}</h3>
+        <span class="insight-chip">${escapeHtml(view.date)}</span>
       </header>
-      <p class="insight-card-summary">${view.summary}</p>
+      <p class="insight-card-summary">${escapeHtml(view.summary)}</p>
       <div class="insight-meta-row">
-        ${view.topic ? `<span class="insight-chip">Emne: ${view.topic}</span>` : ""}
-        ${view.confidence !== null ? `<span class="insight-chip">Score: ${Number(view.confidence).toFixed(2)}</span>` : ""}
-        ${view.sourceEventId ? `<span class="insight-chip">Kilde-ID: ${view.sourceEventId}</span>` : ""}
+        ${view.topic ? `<span class="insight-chip">Emne: ${escapeHtml(view.topic)}</span>` : ""}
+        ${view.confidence !== null ? `<span class="insight-chip">Score: ${escapeHtml(Number(view.confidence).toFixed(2))}</span>` : ""}
+        ${view.sourceEventId ? `<span class="insight-chip">Kilde-ID: ${escapeHtml(view.sourceEventId)}</span>` : ""}
       </div>
       ${terms ? `<div class="insight-layer-chips">${terms}</div>` : ""}
       <section class="insight-source-block">${sourceHtml}</section>
@@ -156,9 +165,9 @@
         <span class="insight-chip">Meta insights: ${metaInsights.length}</span>
       </div>
       <div class="meta-columns">
-        <div><h4>Emneforslag</h4><ul>${list(emne, (x) => `<li>${asText(x?.label || x?.title || x?.emne_id, "Forslag")}</li>`) || "<li>Ingen ennå</li>"}</ul></div>
-        <div><h4>Merge suggestions</h4><ul>${list(merge, (x) => `<li>${asText(x?.reason || x?.description || x?.id, "Forslag")}</li>`) || "<li>Ingen ennå</li>"}</ul></div>
-        <div><h4>Patterns / Meta</h4><ul>${list(patterns.concat(metaInsights), (x) => `<li>${asText(x?.description || x?.title || x?.id, "Meta")}</li>`) || "<li>Ingen ennå</li>"}</ul></div>
+        <div><h4>Emneforslag</h4><ul>${list(emne, (x) => `<li>${escapeHtml(asText(x?.label || x?.title || x?.emne_id, "Forslag"))}</li>`) || "<li>Ingen ennå</li>"}</ul></div>
+        <div><h4>Merge suggestions</h4><ul>${list(merge, (x) => `<li>${escapeHtml(asText(x?.reason || x?.description || x?.id, "Forslag"))}</li>`) || "<li>Ingen ennå</li>"}</ul></div>
+        <div><h4>Patterns / Meta</h4><ul>${list(patterns.concat(metaInsights), (x) => `<li>${escapeHtml(asText(x?.description || x?.title || x?.id, "Meta"))}</li>`) || "<li>Ingen ennå</li>"}</ul></div>
       </div>
     `;
   }
