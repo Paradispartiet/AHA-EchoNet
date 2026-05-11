@@ -8,7 +8,7 @@
       id: "profile",
       title: "AHA Profil",
       type: "personal",
-      status: "shell",
+      status: "active",
       href: "profile.html",
       description: "Brukerens personlige representasjonslag: profil, innlogging, progresjon, galleri og innsikter.",
       phase: 1
@@ -35,7 +35,7 @@
       id: "lists",
       title: "Lister",
       type: "knowledge",
-      status: "shell",
+      status: "active",
       href: "lists.html",
       description: "Favoritter, gjøremål og AI-støttede lister koblet til innsikter.",
       phase: 1

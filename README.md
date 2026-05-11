@@ -73,6 +73,8 @@ Det skal ikke lages en ny parallell AHA-motor. Nye moduler skal kobles inn i eks
 
 `insights.html` er nå første visningsmodul for innsiktskammeret og leser eksisterende innsiktsdata uten å endre kontraktene.
 
+`lists.html` er nå første modul som samler AHA-objekter på tvers via referanser fra innsikter, notater, feed, galleri og insta.
+
 ### 2. History Go-innsiktsmotoren
 
 History Go har sin egen lokale innsikts- og læringsmotor.
