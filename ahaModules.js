@@ -8,7 +8,7 @@
       id: "profile",
       title: "AHA Profil",
       type: "personal",
-      status: "shell",
+      status: "active",
       href: "profile.html",
       description: "Brukerens personlige representasjonslag: profil, innlogging, progresjon, galleri og innsikter.",
       phase: 1
@@ -125,7 +125,7 @@
       id: "avisa",
       title: "AHAavisa",
       type: "publishing",
-      status: "shell",
+      status: "active",
       href: "avisa.html",
       description: "Kuraterte historier og personlige oppsummeringer basert på innsikter.",
       phase: 2
