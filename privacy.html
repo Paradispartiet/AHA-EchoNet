@@ -3,24 +3,62 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Personvern</title>
+  <title>Personvern / Kontroll</title>
   <link rel="stylesheet" href="aha-chat.css" />
   <link rel="stylesheet" href="aha-dashboard.css" />
+  <link rel="stylesheet" href="aha-privacy.css" />
 </head>
 <body>
-  <main class="aha-dashboard" style="max-width: 900px;">
+  <main class="aha-dashboard" style="max-width: 1100px;">
     <section class="aha-panel">
-      <p class="eyebrow">AHA Modulskall</p>
-      <h1>Personvern</h1>
-      <p>
-        Personvernmodulen skal vise hva som lagres, hva som deles, eksport- og
-        slettemuligheter, privat/offentlig status, lokal/importert data og
-        samtykke til deling og kollektiv læring.
-      </p>
-      <div class="aha-tile-actions">
+      <p class="eyebrow">AHA System · Fase 3H</p>
+      <h1>Personvern / Kontroll</h1>
+      <p>Se hva som lagres lokalt, styr samtykker, eksporter AHA-data og slett lokale AHA-nøkler med eksplisitt tekstbekreftelse.</p>
+      <div class="aha-tile-actions privacy-actions">
         <a class="aha-tile-btn aha-tile-btn-primary" href="index.html">Tilbake til AHA Home</a>
+        <button id="privacy-refresh" type="button" class="aha-tile-btn">Oppdater</button>
+        <button id="privacy-export" type="button" class="aha-tile-btn">Eksporter AHA-data</button>
+      </div>
+      <p id="privacy-action-message" class="privacy-action-message"></p>
+    </section>
+
+    <section class="aha-panel">
+      <h2>Personvernstatus</h2>
+      <div id="privacy-status" class="privacy-status-grid"></div>
+    </section>
+
+    <section class="aha-panel">
+      <h2>Samtykke</h2>
+      <form id="privacy-settings-form" class="privacy-form">
+        <label class="privacy-check"><input type="checkbox" name="localOnly" /> <span><strong>Lokal modus</strong><br />AHA arbeider lokalt først.</span></label>
+        <label class="privacy-check"><input type="checkbox" name="allowCollectiveLearning" /> <span><strong>Kollektiv læring</strong><br />Tillat senere deling til kollektiv EchoNet-læring.</span></label>
+        <label class="privacy-check"><input type="checkbox" name="allowPublicPublishing" /> <span><strong>Offentlig publisering</strong><br />Tillat at materiale senere kan markeres for publisering.</span></label>
+        <label class="privacy-check"><input type="checkbox" name="allowSocialSharing" /> <span><strong>Sosial deling</strong><br />Tillat senere deling i sosiale AHA-flater.</span></label>
+        <label class="privacy-check"><input type="checkbox" name="allowHistoryGoImport" /> <span><strong>History Go-import</strong><br />Tillat at History Go-data kan importeres til AHA.</span></label>
+        <label class="privacy-check"><input type="checkbox" name="allowAnalytics" /> <span><strong>Analytics</strong><br />Tillat lokal/teknisk analyse senere.</span></label>
+        <button type="submit" class="aha-tile-btn aha-tile-btn-primary">Lagre innstillinger</button>
+        <p id="privacy-updated-at" class="privacy-small"></p>
+      </form>
+    </section>
+
+    <section class="aha-panel">
+      <h2>Datarapport</h2>
+      <p class="privacy-small">History Go-nøkler vises for transparens, men kan ikke slettes her i første versjon.</p>
+      <div id="privacy-storage-report" class="privacy-storage-list"></div>
+    </section>
+
+    <section class="aha-panel">
+      <h2>Forklaring</h2>
+      <div class="privacy-explain-grid">
+        <article class="privacy-explain-card"><h3>Lokal data</h3><p>Data som ligger i nettleserens localStorage på denne enheten.</p></article>
+        <article class="privacy-explain-card"><h3>Kollektiv læring</h3><p>Et fremtidig samtykke for å dele utvalgt materiale til EchoNet-lag.</p></article>
+        <article class="privacy-explain-card"><h3>Publisering</h3><p>Et fremtidig samtykke for å markere materiale som publiserbart.</p></article>
+        <article class="privacy-explain-card"><h3>Sletting</h3><p>AHA-nøkler kan slettes lokalt først etter at du skriver SLETT.</p></article>
       </div>
     </section>
   </main>
+
+  <script src="ahaContracts.js"></script>
+  <script src="ahaPrivacy.js"></script>
 </body>
 </html>
