@@ -8,7 +8,7 @@
       id: "profile",
       title: "AHA Profil",
       type: "personal",
-      status: "active",
+      status: "shell",
       href: "profile.html",
       description: "Brukerens personlige representasjonslag: profil, innlogging, progresjon, galleri og innsikter.",
       phase: 1
