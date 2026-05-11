@@ -71,6 +71,8 @@ index.html
 
 Det skal ikke lages en ny parallell AHA-motor. Nye moduler skal kobles inn i eksisterende motor.
 
+`insights.html` er nå første visningsmodul for innsiktskammeret og leser eksisterende innsiktsdata uten å endre kontraktene.
+
 ### 2. History Go-innsiktsmotoren
 
 History Go har sin egen lokale innsikts- og læringsmotor.

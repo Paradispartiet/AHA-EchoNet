@@ -119,12 +119,18 @@ Status:
 - embedding-berikelse finnes som fire-and-forget dersom konfigurert
 
 Mangler før ferdig:
-- egen UI-side for innsikter
 - visning av source → insight-sporbarhet
 - visning av merge suggestions
 - manuell godkjenning/avvisning av emneforslag
 - begrepstetthet og resonans som synlige metrikker
 - samlet innsiktsarkiv med filtrering
+
+
+Fase 3 (første leveranse):
+- `insights.html` er nå første faktiske innsiktsarkiv.
+- `ahaInsights.js` leser eksisterende `aha_insight_chamber_v1` og `aha_source_events_v1`.
+- Modulen gjør ikke ny analyse/motorarbeid, men visualiserer eksisterende innsikter og metafelter.
+- Neste steg senere: handlinger som “send til liste”, “send til sti”, “send til AHAavisa”.
 
 ### 4. Lister
 

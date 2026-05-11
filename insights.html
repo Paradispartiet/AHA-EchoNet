@@ -6,21 +6,49 @@
   <title>Innsikter</title>
   <link rel="stylesheet" href="aha-chat.css" />
   <link rel="stylesheet" href="aha-dashboard.css" />
+  <link rel="stylesheet" href="aha-insights.css" />
 </head>
 <body>
-  <main class="aha-dashboard" style="max-width: 900px;">
+  <main class="aha-dashboard insights-page" style="max-width: 1100px;">
     <section class="aha-panel">
-      <p class="eyebrow">AHA Modulskall</p>
+      <p class="eyebrow">AHA Innsiktsarkiv</p>
       <h1>Innsikter</h1>
-      <p>
-        Innsiktsmodulen skal samle innsiktskort, begreper, tokens/nøkkelord,
-        smilies/reaksjoner og semantiske koblinger med metrikker som
-        begrepstetthet, resonans og innsiktsmetning.
-      </p>
+      <p>Her ser du innsikter som allerede er laget i AHA-motoren, med koblinger til source events der det finnes.</p>
       <div class="aha-tile-actions">
         <a class="aha-tile-btn aha-tile-btn-primary" href="index.html">Tilbake til AHA Home</a>
+        <button id="insights-refresh" type="button">Oppdater</button>
       </div>
     </section>
+
+    <section class="aha-panel">
+      <div id="insights-stats" class="insight-meta-row"></div>
+      <div class="insights-controls">
+        <label>
+          Søk
+          <input id="insights-search" type="search" placeholder="Søk i tittel, tekst og begreper" />
+        </label>
+        <label>
+          Filter
+          <select id="insights-filter">
+            <option value="all">Alle</option>
+            <option value="with_source">Med kilde</option>
+            <option value="without_source">Uten kilde</option>
+            <option value="with_terms">Med begreper</option>
+            <option value="emne">Emneforslag</option>
+            <option value="merge">Merge suggestions</option>
+          </select>
+        </label>
+      </div>
+    </section>
+
+    <section id="insights-list" class="insights-grid"></section>
+    <section id="insights-meta" class="aha-panel"></section>
   </main>
+
+  <script src="insightsChamber.js"></script>
+  <script src="metaInsightsEngine.js"></script>
+  <script src="ahaContracts.js"></script>
+  <script src="ahaSources.js"></script>
+  <script src="ahaInsights.js"></script>
 </body>
 </html>
