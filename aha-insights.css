@@ -1,0 +1,66 @@
+.insights-controls {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 1fr 220px;
+}
+
+.insights-controls input,
+.insights-controls select {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid var(--aha-line);
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--aha-text);
+  padding: 10px;
+}
+
+.insights-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.insight-archive-card h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.insight-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.insight-source-block {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--aha-border);
+}
+
+.insight-source-preview,
+.insight-source-time,
+.insight-source-missing {
+  font-size: 12px;
+  color: var(--aha-muted);
+  margin-top: 4px;
+}
+
+.meta-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.meta-columns h4 {
+  margin: 0 0 6px;
+  font-size: 12px;
+}
+
+.meta-columns ul {
+  margin: 0;
+  padding-left: 16px;
+}

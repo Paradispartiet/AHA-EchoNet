@@ -26,7 +26,7 @@
       id: "insights",
       title: "Innsikter",
       type: "knowledge",
-      status: "shell",
+      status: "active",
       href: "insights.html",
       description: "Samlet innsiktsarkiv med sporbarhet fra source events og meta-mønstre.",
       phase: 1
