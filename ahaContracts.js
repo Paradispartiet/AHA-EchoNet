@@ -9,12 +9,19 @@
     return `${prefix}_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
   }
 
+  function safeObject(value) {
+    return value && typeof value === "object" && !Array.isArray(value) ? value : {};
+  }
+
   function normalizeTags(tags) {
-    if (!Array.isArray(tags)) return [];
+    const raw = Array.isArray(tags)
+      ? tags
+      : (typeof tags === "string" ? tags.split(",") : []);
+
     const seen = new Set();
     const out = [];
 
-    tags.forEach((tag) => {
+    raw.forEach((tag) => {
       const value = String(tag || "").trim();
       if (!value) return;
       const key = value.toLowerCase();
@@ -27,16 +34,14 @@
   }
 
   function createLinkedItem(input) {
-    const src = input && typeof input === "object" ? input : {};
+    const src = safeObject(input);
+    const id = String(src.id || src.ref_id || "").trim();
 
     return {
-      id: String(src.id || uid("lnk")).trim(),
+      id,
       type: String(src.type || "reference").trim() || "reference",
-      ref_id: String(src.ref_id || src.id || "").trim(),
-      title: String(src.title || "").trim(),
-      source_type: String(src.source_type || "").trim(),
-      source_app: String(src.source_app || "").trim(),
-      meta: src.meta && typeof src.meta === "object" && !Array.isArray(src.meta) ? src.meta : {}
+      source: String(src.source || src.source_app || src.source_type || "aha").trim() || "aha",
+      title: String(src.title || "").trim()
     };
   }
 
@@ -45,55 +50,51 @@
 
     return items
       .map((item) => createLinkedItem(item))
-      .filter((item) => item.ref_id);
+      .filter((item) => item.id || item.title);
   }
 
   function createBaseItem(input) {
-    const src = input && typeof input === "object" ? input : {};
+    const src = safeObject(input);
     const now = new Date().toISOString();
 
     return {
       id: String(src.id || uid("aha")).trim(),
-      module: String(src.module || "unknown").trim() || "unknown",
-      type: String(src.type || "item").trim() || "item",
       title: String(src.title || "").trim(),
-      text: String(src.text || "").trim(),
+      type: String(src.type || "item").trim() || "item",
+      source: String(src.source || src.source_app || src.source_type || "aha").trim() || "aha",
+      createdAt: src.createdAt || src.created_at || now,
+      updatedAt: src.updatedAt || src.updated_at || src.createdAt || src.created_at || now,
       tags: normalizeTags(src.tags),
-      linked_items: normalizeLinkedItems(src.linked_items),
-      source_type: String(src.source_type || "").trim(),
-      source_app: String(src.source_app || "aha").trim() || "aha",
-      user_created: src.user_created !== false,
-      imported: src.imported === true,
-      created_at: src.created_at || now,
-      updated_at: src.updated_at || src.created_at || now,
-      meta: src.meta && typeof src.meta === "object" && !Array.isArray(src.meta) ? src.meta : {}
+      linkedItems: normalizeLinkedItems(src.linkedItems || src.linked_items),
+      meta: safeObject(src.meta)
     };
   }
 
   function normalizeBaseItem(input, defaults) {
-    const base = createBaseItem(input);
-    const defs = defaults && typeof defaults === "object" ? defaults : {};
+    const src = safeObject(input);
+    const defs = safeObject(defaults);
+    const now = new Date().toISOString();
 
-    if (!base.module && defs.module) base.module = String(defs.module).trim() || "unknown";
-    if (!base.type && defs.type) base.type = String(defs.type).trim() || "item";
-    if (!base.source_type && defs.source_type) base.source_type = String(defs.source_type).trim();
-    if (!base.source_app && defs.source_app) base.source_app = String(defs.source_app).trim() || "aha";
+    const merged = {
+      id: src.id || defs.id || uid("aha"),
+      title: src.title || defs.title || "",
+      type: src.type || defs.type || "item",
+      source: src.source || defs.source || src.source_app || src.source_type || defs.source_app || defs.source_type || "aha",
+      createdAt: src.createdAt || src.created_at || defs.createdAt || defs.created_at || now,
+      updatedAt: src.updatedAt || src.updated_at || defs.updatedAt || defs.updated_at || src.createdAt || src.created_at || defs.createdAt || defs.created_at || now,
+      tags: src.tags !== undefined ? src.tags : defs.tags,
+      linkedItems: src.linkedItems !== undefined ? src.linkedItems : (src.linked_items !== undefined ? src.linked_items : (defs.linkedItems !== undefined ? defs.linkedItems : defs.linked_items)),
+      meta: src.meta !== undefined ? src.meta : defs.meta
+    };
 
-    if (!base.title && defs.title) base.title = String(defs.title).trim();
-    if (!base.text && defs.text) base.text = String(defs.text).trim();
-
-    return base;
+    return createBaseItem(merged);
   }
 
   function isValidBaseItem(item) {
     if (!item || typeof item !== "object") return false;
     if (!String(item.id || "").trim()) return false;
-    if (!String(item.module || "").trim()) return false;
     if (!String(item.type || "").trim()) return false;
-    if (!String(item.created_at || "").trim()) return false;
-    if (!Array.isArray(item.tags)) return false;
-    if (!Array.isArray(item.linked_items)) return false;
-
+    if (!String(item.source || "").trim()) return false;
     return true;
   }
 

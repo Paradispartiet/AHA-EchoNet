@@ -85,6 +85,17 @@
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
+    const baseContract = window.AHAContracts?.createBaseItem?.({
+      id: note.id,
+      title: note.title || "Notat",
+      type: "note",
+      source: "aha_notes",
+      createdAt: note.created_at,
+      updatedAt: note.updated_at,
+      tags: note.tags,
+      meta: { note_id: note.id }
+    });
+    if (baseContract) note.base = baseContract;
     if (!note.title && !note.text) return null;
 
     const ingestResult = await window.AHAIngest?.ingest?.({
