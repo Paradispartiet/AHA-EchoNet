@@ -83,6 +83,8 @@ AHAavisa kan nå lage lokale artikkelutkast fra innsikter, lister, stier og nota
 
 Tankekart kan nå vise lokale koblinger mellom AHA-objekter som noder og referansebaserte edges.
 
+Personvern / Kontroll kan nå vise lokal datarapport, eksportere AHA-data og lagre lokale samtykkeinnstillinger.
+
 ### 2. History Go-innsiktsmotoren
 
 History Go har sin egen lokale innsikts- og læringsmotor.
