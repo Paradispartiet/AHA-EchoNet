@@ -84,11 +84,7 @@
     return value || "th_default";
   }
 
-  function getFieldId() {
-    const select = document.getElementById("field-id");
-    const value = select && String(select.value || "").trim();
-    return value || null;
-  }
+  function getFieldId() { return null; }
 
   function out(message) {
     const el = document.getElementById("out");
@@ -125,6 +121,24 @@
     highlightBtn.addEventListener("click", () => toggleHighlight(row, text));
 
     row.appendChild(div);
+    const categories = Array.isArray(options?.categoryChips) ? options.categoryChips.filter(Boolean).slice(0, 8) : [];
+    if (categories.length) {
+      const chips = document.createElement("div");
+      chips.className = "message-category-chips";
+      chips.setAttribute("aria-label", "Bygg-videre-kategorier");
+      categories.forEach((label) => {
+        const chip = document.createElement("button");
+        chip.type = "button";
+        chip.className = "message-category-chip";
+        chip.textContent = String(label);
+        chip.addEventListener("click", () => {
+          setComposerText(`Bygg videre på svaret med fokus på "${label}".`);
+          setStatusNote(`La inn forslag for videre arbeid: ${label}`);
+        });
+        chips.appendChild(chip);
+      });
+      row.appendChild(chips);
+    }
     row.appendChild(highlightBtn);
     log.appendChild(row);
     log.scrollTop = log.scrollHeight;
@@ -738,7 +752,7 @@
         try {
           const agent = await askAhaAgent(text);
           const reply = String(agent?.reply || "").trim() || "AHA-agenten returnerte tomt svar.";
-          appendChat("aha", reply);
+          appendChat("aha", reply, { categoryChips: suggestCategoryChips() });
           // AHA-agentens egne svar skal vises i chatten og logges som
           // source event, men IKKE bli en ordinær brukerinnsikt. AI-
           // oppsummeringer hører ikke hjemme i innsiktskammeret. skip_insight
@@ -769,6 +783,7 @@
     document.getElementById("btn-meta")?.addEventListener("click", showMeta);
     document.getElementById("btn-export")?.addEventListener("click", () => out(JSON.stringify(loadChamberFromStorage(), null, 2)));
     document.getElementById("btn-reset")?.addEventListener("click", reset);
+    bindActionChips();
 
     bindPanelActionHandler();
 
@@ -787,6 +802,51 @@
       log.addEventListener("scroll", renderHighlightsRail);
       window.addEventListener("resize", renderHighlightsRail);
     }
+  }
+
+  function suggestCategoryChips() {
+    const insights = currentInsights().slice(0, 6);
+    const labels = [];
+    insights.forEach((ins) => {
+      (ins.emner || []).forEach((emne) => labels.push(emne));
+      (ins.concepts || []).forEach((concept) => labels.push(concept?.label || concept?.key));
+      (ins.patterns || []).forEach((pattern) => labels.push(pattern?.label || pattern?.key));
+    });
+    return [...new Set(labels.filter(Boolean))].slice(0, 8);
+  }
+
+  function bindActionChips() {
+    const prompts = {
+      reflekter: "Hjelp meg å reflektere over dette steg for steg.",
+      sorter: "Sorter dette i tydelige temaer og kategorier.",
+      oppsummer: "Oppsummer dagen min kort og tydelig.",
+      sorter_tanker: "Sorter tankene mine i hovedspor og neste steg.",
+      lag_liste: "Lag en punktliste av det viktigste her.",
+      lag_innsikt: "Trekk ut innsikter fra dette.",
+      lag_laringssti: "Lag en læringssti med progresjon og neste handling.",
+      koble_hg: "Vis hvordan dette kan kobles til History Go.",
+      import_hg: ""
+    };
+    document.querySelectorAll("[data-chat-action]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const action = btn.getAttribute("data-chat-action");
+        if (action === "lag_innsikt") {
+          showInsights();
+          setStatusNote("Innsiktspanelet er oppdatert.");
+          return;
+        }
+        if (action === "import_hg") {
+          document.getElementById("btn-import-hg")?.click();
+          return;
+        }
+        if (action === "koble_hg") {
+          setComposerText(prompts[action] || "");
+          setStatusNote("Kobling til History Go kan utforskes direkte i chatten.");
+          return;
+        }
+        setComposerText(prompts[action] || "");
+      });
+    });
   }
 
   global.loadChamberFromStorage = global.loadChamberFromStorage || loadChamberFromStorage;
