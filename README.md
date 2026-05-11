@@ -787,3 +787,5 @@ AHA-komponentene skal alle mate samme eksisterende motor.
 AHA Home bruker en felles modulregistry i `ahaModules.js` for å vise alle hovedmoduler fra start.
 `ahaContracts.js` er felles datakontrakt for modulobjekter slik at moduler kan kobles sammen på tvers uten å endre eksisterende motorflyt.
 Eksisterende kjerneflater (Dashboard, Chat, Notes, Gallery, Feed, Insta) beholdes, mens øvrige moduler er tilgjengelige som synlige placeholder-innganger for videre bygging.
+
+Søk / Bibliotek kan nå finne lokale AHA-objekter på tvers av chat-derived insights, notes, feed, gallery, insta, lists, paths og AHAavisa.

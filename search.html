@@ -3,24 +3,56 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Søk</title>
+  <title>Søk / Bibliotek</title>
   <link rel="stylesheet" href="aha-chat.css" />
   <link rel="stylesheet" href="aha-dashboard.css" />
+  <link rel="stylesheet" href="aha-search.css" />
 </head>
 <body>
   <main class="aha-dashboard" style="max-width: 900px;">
     <section class="aha-panel">
-      <p class="eyebrow">AHA Modulskall</p>
-      <h1>Søk</h1>
-      <p>
-        Søkemodulen skal gi samlet søk i samtaler, innsiktskort, notater,
-        History Go-steder, personer, objekter, badges, artikler, språkleksikon,
-        lister og stier.
-      </p>
-      <div class="aha-tile-actions">
+      <p class="eyebrow">AHA Modul</p>
+      <h1>Søk / Bibliotek</h1>
+      <p>Lokalt samlet, read-only søk på tvers av AHA-objekter fra innsikter, notater, feed, galleri, insta, lister, stier og AHAavisa.</p>
+      <div class="aha-search-top-actions">
         <a class="aha-tile-btn aha-tile-btn-primary" href="index.html">Tilbake til AHA Home</a>
+        <button id="search-refresh" type="button" class="aha-tile-btn">Oppdater</button>
       </div>
     </section>
+
+    <section class="aha-panel">
+      <h2>Søk</h2>
+      <div class="aha-search-form">
+        <input id="search-query" type="search" placeholder="Søk i tittel, tekst, tags, source og type" autocomplete="off" />
+        <div class="aha-search-filters">
+          <label>
+            Source
+            <select id="search-source-filter">
+              <option value="">Alle kilder</option>
+            </select>
+          </label>
+          <label>
+            Type
+            <select id="search-type-filter">
+              <option value="">Alle typer</option>
+            </select>
+          </label>
+        </div>
+      </div>
+    </section>
+
+    <section class="aha-panel">
+      <h2>Statistikk</h2>
+      <div id="search-stats" class="aha-search-stats"></div>
+    </section>
+
+    <section class="aha-panel">
+      <h2>Resultater</h2>
+      <div id="search-results" class="aha-search-results"></div>
+    </section>
   </main>
+
+  <script src="ahaContracts.js"></script>
+  <script src="ahaSearch.js"></script>
 </body>
 </html>

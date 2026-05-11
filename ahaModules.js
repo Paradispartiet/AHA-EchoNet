@@ -143,7 +143,7 @@
       id: "search",
       title: "Søk",
       type: "system",
-      status: "shell",
+      status: "active",
       href: "search.html",
       description: "Tverrgående søk i samtaler, notater, galleri, feed og importerte kilder.",
       phase: 2
