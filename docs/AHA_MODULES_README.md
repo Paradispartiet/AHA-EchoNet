@@ -150,6 +150,10 @@ Fase 3 (første leveranse):
 - `ahaSearch.js` indekserer lokale objekter fra insights/source events/notes/gallery/feed/insta/lists/paths/articles.
 - Søket er read-only og skriver ikke tilbake til andre moduler.
 - Semantisk søk og embeddings kommer senere.
+- `mindmap.html` er nå første graph/tankekart-modul.
+- `ahaMindmap.js` visualiserer koblinger mellom source events, insights, lists, paths, articles og øvrige AHA-objekter.
+- Første versjon er read-only og DOM-basert.
+- Semantisk graph/embeddings/avansert visualisering kommer senere.
 
 ### 4. Lister
 

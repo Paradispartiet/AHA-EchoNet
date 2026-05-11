@@ -53,7 +53,7 @@
       id: "mindmap",
       title: "Tankekart",
       type: "knowledge",
-      status: "shell",
+      status: "active",
       href: "mindmap.html",
       description: "Visuell graf for sammenhenger mellom samtaler, innsikter og begreper.",
       phase: 1
