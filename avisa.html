@@ -6,21 +6,54 @@
   <title>AHAavisa</title>
   <link rel="stylesheet" href="aha-chat.css" />
   <link rel="stylesheet" href="aha-dashboard.css" />
+  <link rel="stylesheet" href="aha-avisa.css" />
 </head>
 <body>
-  <main class="aha-dashboard" style="max-width: 900px;">
+  <main class="aha-dashboard" style="max-width: 960px;">
     <section class="aha-panel">
-      <p class="eyebrow">AHA Modulskall</p>
+      <p class="eyebrow">AHA Modul</p>
       <h1>AHAavisa</h1>
-      <p>
-        AHAavisa skal støtte artikkelutkast, publiserbare innsikter, seksjoner,
-        magasinformat, klar-til-publisering-status samt metrikker for
-        innsiktsmetning, begrepstetthet og kilde/forankring.
-      </p>
+      <p>Bygg lokale artikkelutkast basert på referanser fra innsikter, lister, stier og notater.</p>
       <div class="aha-tile-actions">
         <a class="aha-tile-btn aha-tile-btn-primary" href="index.html">Tilbake til AHA Home</a>
+        <button id="avisa-refresh-btn" type="button">Oppdater</button>
       </div>
     </section>
+
+    <section class="aha-panel">
+      <h2>Opprett artikkelutkast</h2>
+      <label>Tittel
+        <input id="avisa-title" type="text" placeholder="Tittel" />
+      </label>
+      <label>Seksjon
+        <select id="avisa-section">
+          <option value="nyheter">nyheter</option><option value="kultur">kultur</option><option value="politikk">politikk</option>
+          <option value="sport">sport</option><option value="teknologi">teknologi</option><option value="filosofi">filosofi</option>
+          <option value="historygo">historygo</option><option value="aha">aha</option><option value="debatt">debatt</option><option value="notater" selected>notater</option>
+        </select>
+      </label>
+      <label>Kort ingress/summary
+        <textarea id="avisa-summary" rows="3" placeholder="Ingress"></textarea>
+      </label>
+      <label>Tags (komma-separert)
+        <input id="avisa-tags" type="text" placeholder="tag1, tag2" />
+      </label>
+      <button id="avisa-create-btn" type="button">Lag artikkelutkast</button>
+    </section>
+
+    <section class="aha-panel avisa-overview">
+      <h2>Oversikt</h2>
+      <div class="avisa-badges">
+        <span class="avisa-badge">Utkast: <strong id="avisa-draft-count">0</strong></span>
+        <span class="avisa-badge">Ready: <strong id="avisa-ready-count">0</strong></span>
+        <span class="avisa-badge">Referanser: <strong id="avisa-refs-count">0</strong></span>
+      </div>
+    </section>
+
+    <section id="avisa-articles"></section>
   </main>
+
+  <script src="ahaContracts.js"></script>
+  <script src="ahaAvisa.js"></script>
 </body>
 </html>

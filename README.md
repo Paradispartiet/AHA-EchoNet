@@ -79,6 +79,8 @@ Innsiktskort kan nå legges direkte i AHA-lister som referanser.
 
 Stier kan nå bygges av innsikter, lister og notater som referanser.
 
+AHAavisa kan nå lage lokale artikkelutkast fra innsikter, lister, stier og notater som referanser.
+
 ### 2. History Go-innsiktsmotoren
 
 History Go har sin egen lokale innsikts- og læringsmotor.

@@ -141,6 +141,11 @@ Fase 3 (første leveranse):
 - `ahaPaths.js` bygger lærings-/prosess-stier av referanser til `insights` / `lists` / `notes`.
 - Stier kopierer ikke hele objekter, men lagrer `source`, `type`, `refId`.
 - Dette utvider flyten til `Chat → Innsikt → Liste → Sti`.
+- `avisa.html` er nå første AHAavisa-modul.
+- `ahaAvisa.js` lager lokale artikkelutkast.
+- Artikler kan bygges av referanser til `insights` / `lists` / `paths` / `notes`.
+- AHAavisa kopierer ikke hele objekter, men lagrer `source`, `type`, `refId`.
+- Dette utvider flyten til `Chat → Innsikt → Liste → Sti → Artikkelutkast`.
 
 ### 4. Lister
 
