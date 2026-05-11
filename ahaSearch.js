@@ -57,7 +57,15 @@
   }
 
   function normalizeDate(item) {
-    return item?.updatedAt || item?.updated_at || item?.createdAt || item?.created_at || "";
+    return item?.updatedAt
+      || item?.updated_at
+      || item?.lastUpdated
+      || item?.last_updated
+      || item?.createdAt
+      || item?.created_at
+      || item?.firstSeen
+      || item?.first_seen
+      || "";
   }
 
   function itemTimestamp(item) {
@@ -125,7 +133,7 @@
 
     asArray(loadByKey(STORAGE_KEYS.sourceEvents, [])).forEach((event, index) => {
       const base = withBase(event, { type: asText(event?.source_type, "source_event"), source: "aha_source_events" });
-      const refId = asText(event?.id || base?.id, `source_event_idx_${index}`);
+      const refId = asText(event?.id || event?.event_id || event?.source_event_id || base?.id, `source_event_idx_${index}`);
       out.push(createSearchItem({
         id: `source_event_${refId}`,
         title: asText(event?.source_type || event?.source_app, "Source event"),
