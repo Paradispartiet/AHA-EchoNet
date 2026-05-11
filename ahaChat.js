@@ -6,6 +6,48 @@
 
   const SUBJECT_ID = "sub_laring";
   const STORAGE_KEY = "aha_insight_chamber_v1";
+  const HIGHLIGHTS_STORAGE_KEY = "aha_chat_highlights_v1";
+  const CHAT_THREAD_ID = "default_thread";
+  function getThreadId() {
+    return CHAT_THREAD_ID;
+  }
+
+  function normalizePreview(text) {
+    return String(text || "")
+      .toLowerCase()
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, 80);
+  }
+
+  function shortHash(input) {
+    let hash = 5381;
+    const value = String(input || "");
+    for (let i = 0; i < value.length; i += 1) {
+      hash = ((hash << 5) + hash) + value.charCodeAt(i);
+      hash |= 0;
+    }
+    return Math.abs(hash).toString(36);
+  }
+
+  function makeStableMessageId(role, text, createdAt) {
+    const key = `${String(role || "").trim()}|${String(createdAt || "").trim()}|${normalizePreview(text)}`;
+    return `msg_${shortHash(key)}`;
+  }
+
+  function loadHighlights() {
+    try {
+      const raw = localStorage.getItem(HIGHLIGHTS_STORAGE_KEY);
+      const parsed = raw ? JSON.parse(raw) : {};
+      return parsed && typeof parsed === "object" ? parsed : {};
+    } catch {
+      return {};
+    }
+  }
+
+  function saveHighlights(highlights) {
+    localStorage.setItem(HIGHLIGHTS_STORAGE_KEY, JSON.stringify(highlights || {}));
+  }
 
   function loadChamberFromStorage() {
     try {
@@ -54,15 +96,94 @@
     el.textContent = String(message || "");
   }
 
-  function appendChat(role, text) {
+  function appendChat(role, text, options) {
     const log = document.getElementById("chat-log");
     if (!log) return;
+    const createdAt = String(options?.createdAt || new Date().toISOString());
+    const messageId = String(options?.messageId || makeStableMessageId(role, text, createdAt));
+    const row = document.createElement("article");
+    row.className = `chat-line-row chat-line-row-${role}`;
+    row.dataset.messageId = messageId;
+    row.dataset.createdAt = createdAt;
+
     const div = document.createElement("div");
     div.className = `chat-line chat-line-${role}`;
+    div.id = `chat-message-${messageId}`;
     div.textContent = text;
-    log.appendChild(div);
+
+    const highlightBtn = document.createElement("button");
+    highlightBtn.type = "button";
+    highlightBtn.className = "highlight-toggle-btn";
+    highlightBtn.setAttribute("aria-label", "Marker melding som highlight");
+    highlightBtn.setAttribute("title", "Highlight");
+    highlightBtn.textContent = "✦";
+    highlightBtn.addEventListener("click", () => toggleHighlight(row, text));
+
+    row.appendChild(div);
+    row.appendChild(highlightBtn);
+    log.appendChild(row);
     log.scrollTop = log.scrollHeight;
+    syncMessageHighlightState(row);
+    renderHighlightsRail();
     updateEmptyState();
+  }
+
+  function previewText(text) {
+    return String(text || "").trim().replace(/\s+/g, " ").slice(0, 96);
+  }
+
+  function toggleHighlight(row, text) {
+    const messageId = row?.dataset?.messageId;
+    if (!messageId) return;
+    const threadId = getThreadId();
+    const all = loadHighlights();
+    const thread = all[threadId] || {};
+    if (thread[messageId]) {
+      delete thread[messageId];
+    } else {
+      thread[messageId] = { messageId, createdAt: row.dataset.createdAt || new Date().toISOString(), preview: previewText(text) };
+    }
+    all[threadId] = thread;
+    saveHighlights(all);
+    syncMessageHighlightState(row);
+    renderHighlightsRail();
+  }
+
+  function isHighlighted(messageId) {
+    const thread = loadHighlights()[getThreadId()] || {};
+    return Boolean(thread[messageId]);
+  }
+
+  function syncMessageHighlightState(row) {
+    const messageId = row?.dataset?.messageId;
+    if (!messageId) return;
+    row.classList.toggle("is-highlighted", isHighlighted(messageId));
+  }
+
+  function renderHighlightsRail() {
+    const rail = document.getElementById("chat-highlights-rail");
+    const log = document.getElementById("chat-log");
+    if (!rail || !log) return;
+    rail.innerHTML = "";
+    const thread = loadHighlights()[getThreadId()] || {};
+    const rows = Array.from(log.querySelectorAll(".chat-line-row"));
+    const max = Math.max(1, log.scrollHeight - log.clientHeight);
+    rows.forEach((row) => {
+      const messageId = row.dataset.messageId;
+      if (!thread[messageId]) return;
+      const marker = document.createElement("button");
+      marker.type = "button";
+      marker.className = "highlight-rail-marker";
+      const offset = Math.max(0, row.offsetTop - 8);
+      const ratio = Math.min(1, Math.max(0, offset / max));
+      marker.style.top = `${ratio * 100}%`;
+      marker.title = thread[messageId].preview || "Highlight";
+      marker.setAttribute("aria-label", `Gå til highlight: ${thread[messageId].preview || "melding"}`);
+      marker.addEventListener("click", () => {
+        row.scrollIntoView({ behavior: "smooth", block: "center" });
+      });
+      rail.appendChild(marker);
+    });
   }
 
   function updateEmptyState() {
@@ -70,6 +191,7 @@
     const log = document.getElementById("chat-log");
     if (!empty || !log) return;
     empty.style.display = log.children.length ? "none" : "block";
+    renderHighlightsRail();
   }
 
   function setComposerText(value) {
@@ -584,10 +706,12 @@
 
   function reset() {
     localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(HIGHLIGHTS_STORAGE_KEY);
     out("AHA-kammer nullstilt.");
     renderPanel("");
     const log = document.getElementById("chat-log");
     if (log) log.innerHTML = "";
+    renderHighlightsRail();
     updateEmptyState();
   }
 
@@ -654,6 +778,12 @@
     });
 
     updateEmptyState();
+    renderHighlightsRail();
+    const log = document.getElementById("chat-log");
+    if (log) {
+      log.addEventListener("scroll", renderHighlightsRail);
+      window.addEventListener("resize", renderHighlightsRail);
+    }
   }
 
   global.loadChamberFromStorage = global.loadChamberFromStorage || loadChamberFromStorage;
