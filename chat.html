@@ -42,23 +42,9 @@
           </select>
         </div>
 
-        <div class="quick-actions" aria-label="Samtalemodus">
-          <button class="quick-action-btn" data-prompt="Reflekter over dette:">Reflekter</button>
-          <button class="quick-action-btn" data-prompt="Sorter dette i tydelige punkter:">Sorter</button>
-          <button class="quick-action-btn" data-prompt="Lag en punktliste for dette:">Lag liste</button>
-          <button class="quick-action-btn" data-prompt="Lag innsikt basert på dette:">Lag innsikt</button>
-          <button class="quick-action-btn" data-prompt="Koble dette til History Go og finn mønstre:">Koble til History Go</button>
-        </div>
-
         <section id="empty-state" class="empty-state" aria-live="polite">
           <h2>Hva vil du forstå i dag?</h2>
           <p>AHA hjelper deg å samle tanker, finne mønstre og gjøre samtaler til innsikt.</p>
-          <div class="suggestions">
-            <button class="suggestion-btn" data-prompt="Oppsummer dagen min">Oppsummer dagen min</button>
-            <button class="suggestion-btn" data-prompt="Sorter tankene mine">Sorter tankene mine</button>
-            <button class="suggestion-btn" data-prompt="Lag en læringssti">Lag en læringssti</button>
-            <button class="suggestion-btn" data-prompt="Importer fra History Go">Importer fra History Go</button>
-          </div>
         </section>
 
         <div class="chat-log-wrap">
@@ -74,21 +60,21 @@
         <section class="insight-placeholder-card">
           <h2>Innsikter fra samtalen</h2>
           <p>Når AHA finner viktige poenger, vises de her.</p>
-          <div class="insight-actions">
-            <button id="btn-insights" type="button">Lagre som innsikt</button>
-            <button type="button">Se alle innsikter</button>
-          </div>
+          <p class="insight-inline-hint">Trykk «Lag innsikt» ved siden av Send når du vil hente ut innsikter.</p>
           <!-- Frontend-placeholder: viser struktur for innsiktslag før dedikert datamodell/ruting er koblet på. -->
         </section>
 
-        <div class="buttons utility-buttons">
-          <button id="btn-status">Tema-status</button>
-          <button id="btn-concepts">Begreper</button>
-          <button id="btn-meta">Meta-profil</button>
-          <button id="btn-export">Eksport JSON</button>
-          <button id="btn-import-hg">Importer History Go</button>
-          <button id="btn-reset">Nullstill</button>
-        </div>
+        <details class="utility-menu">
+          <summary>Mer</summary>
+          <div class="buttons utility-buttons">
+            <button id="btn-status">Tema-status</button>
+            <button id="btn-concepts">Begreper</button>
+            <button id="btn-meta">Meta-profil</button>
+            <button id="btn-export">Eksport JSON</button>
+            <button id="btn-import-hg">Importer History Go</button>
+            <button id="btn-reset">Nullstill</button>
+          </div>
+        </details>
 
         <div id="panel"></div>
         <pre id="out"></pre>
@@ -100,9 +86,10 @@
         <label for="msg">Skriv til AHA</label>
         <textarea id="msg" placeholder="Skriv til AHA…"></textarea>
         <div class="composer-actions">
-          <button class="secondary-action" type="button">Lag innsikt</button>
+          <button id="btn-insights" class="secondary-action" type="button">Lag innsikt</button>
           <button id="btn-send" class="send-btn" type="button">Send</button>
         </div>
+        <div id="chat-status-note" class="chat-status-note" aria-live="polite"></div>
       </div>
     </footer>
   </div>
