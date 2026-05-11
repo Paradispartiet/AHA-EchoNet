@@ -8,15 +8,31 @@
   const STORAGE_KEY = "aha_insight_chamber_v1";
   const HIGHLIGHTS_STORAGE_KEY = "aha_chat_highlights_v1";
   const CHAT_THREAD_ID = "default_thread";
-  let chatMessageCounter = 0;
-
-  function makeMessageId() {
-    chatMessageCounter += 1;
-    return `msg_${Date.now()}_${chatMessageCounter}`;
-  }
-
   function getThreadId() {
     return CHAT_THREAD_ID;
+  }
+
+  function normalizePreview(text) {
+    return String(text || "")
+      .toLowerCase()
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, 80);
+  }
+
+  function shortHash(input) {
+    let hash = 5381;
+    const value = String(input || "");
+    for (let i = 0; i < value.length; i += 1) {
+      hash = ((hash << 5) + hash) + value.charCodeAt(i);
+      hash |= 0;
+    }
+    return Math.abs(hash).toString(36);
+  }
+
+  function makeStableMessageId(role, text, createdAt) {
+    const key = `${String(role || "").trim()}|${String(createdAt || "").trim()}|${normalizePreview(text)}`;
+    return `msg_${shortHash(key)}`;
   }
 
   function loadHighlights() {
@@ -80,11 +96,11 @@
     el.textContent = String(message || "");
   }
 
-  function appendChat(role, text) {
+  function appendChat(role, text, options) {
     const log = document.getElementById("chat-log");
     if (!log) return;
-    const messageId = makeMessageId();
-    const createdAt = new Date().toISOString();
+    const createdAt = String(options?.createdAt || new Date().toISOString());
+    const messageId = String(options?.messageId || makeStableMessageId(role, text, createdAt));
     const row = document.createElement("article");
     row.className = "chat-line-row";
     row.dataset.messageId = messageId;
