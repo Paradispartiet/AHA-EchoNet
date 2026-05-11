@@ -131,6 +131,10 @@ Fase 3 (første leveranse):
 - `ahaInsights.js` leser eksisterende `aha_insight_chamber_v1` og `aha_source_events_v1`.
 - Modulen gjør ikke ny analyse/motorarbeid, men visualiserer eksisterende innsikter og metafelter.
 - Neste steg senere: handlinger som “send til liste”, “send til sti”, “send til AHAavisa”.
+- `lists.html` er nå første koblingsmodul etter innsikter.
+- `ahaLists.js` samler referanser til `insights` / `notes` / `feed` / `gallery` / `insta`.
+- Lister kopierer ikke hele objekter, men lagrer referanser med `source`, `type`, `refId`.
+- Neste steg blir “send insight til liste” direkte fra `insights.html`.
 
 ### 4. Lister
 

@@ -35,7 +35,7 @@
       id: "lists",
       title: "Lister",
       type: "knowledge",
-      status: "shell",
+      status: "active",
       href: "lists.html",
       description: "Favoritter, gjøremål og AI-støttede lister koblet til innsikter.",
       phase: 1

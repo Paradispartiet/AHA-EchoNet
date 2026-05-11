@@ -1,0 +1,82 @@
+.aha-lists-layout {
+  display: grid;
+  gap: 16px;
+}
+
+.aha-list-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.aha-list-stat-card {
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: rgba(255,255,255,.03);
+}
+
+.aha-list-stat-card strong {
+  display: block;
+  font-size: 1.3rem;
+}
+
+.aha-list-form-grid,
+.aha-list-add-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.aha-list-form-grid textarea,
+.aha-list-form-grid input,
+.aha-list-form-grid select,
+.aha-list-add-row select {
+  width: 100%;
+  background: rgba(255,255,255,.04);
+  color: inherit;
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.aha-list-card {
+  display: grid;
+  gap: 10px;
+}
+
+.aha-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.aha-list-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.aha-list-badge {
+  display: inline-block;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.16);
+  background: rgba(255,255,255,.06);
+  padding: 3px 8px;
+  font-size: .8rem;
+}
+
+.aha-list-items {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 8px;
+}
+
+.aha-list-item-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+}
