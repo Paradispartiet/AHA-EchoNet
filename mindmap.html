@@ -6,21 +6,63 @@
   <title>Tankekart</title>
   <link rel="stylesheet" href="aha-chat.css" />
   <link rel="stylesheet" href="aha-dashboard.css" />
+  <link rel="stylesheet" href="aha-mindmap.css" />
 </head>
 <body>
-  <main class="aha-dashboard" style="max-width: 900px;">
+  <main class="aha-dashboard" style="max-width: 1200px;">
     <section class="aha-panel">
-      <p class="eyebrow">AHA Modulskall</p>
+      <p class="eyebrow">AHA Graph · Fase 3G</p>
       <h1>Tankekart</h1>
-      <p>
-        Tankekartmodulen skal visualisere begrepsnoder, koblinger mellom
-        samtaler, History Go-steder/personer/objekter og innsikter, inkludert
-        sporbarhet: «hvor kom denne innsikten fra?».
-      </p>
+      <p>Read-only visning av lokale koblinger mellom source events, innsikter, lister, stier, artikler og øvrige AHA-objekter.</p>
       <div class="aha-tile-actions">
         <a class="aha-tile-btn aha-tile-btn-primary" href="index.html">Tilbake til AHA Home</a>
+        <button id="mindmap-refresh" type="button" class="aha-tile-btn">Oppdater</button>
+      </div>
+    </section>
+
+    <section class="aha-panel mindmap-stats">
+      <div class="mindmap-stat"><strong id="mindmap-stats-nodes">0</strong><span>Noder</span></div>
+      <div class="mindmap-stat"><strong id="mindmap-stats-edges">0</strong><span>Koblinger</span></div>
+      <div class="mindmap-stat"><strong id="mindmap-stats-node-types">0</strong><span>Node-typer</span></div>
+      <div class="mindmap-stat"><strong id="mindmap-stats-edge-types">0</strong><span>Edge-typer</span></div>
+    </section>
+
+    <section class="aha-panel mindmap-filters">
+      <label>Node-type
+        <select id="mindmap-node-type">
+          <option value="all">Alle</option>
+        </select>
+      </label>
+      <label>Edge-type
+        <select id="mindmap-edge-type">
+          <option value="all">Alle</option>
+        </select>
+      </label>
+      <label>Søk
+        <input id="mindmap-search" type="search" placeholder="Søk i tittel, type, source, refId" />
+      </label>
+    </section>
+
+    <section class="mindmap-grid">
+      <section class="aha-panel">
+        <h2>Noder</h2>
+        <div id="mindmap-node-list" class="mindmap-list"></div>
+      </section>
+      <section class="aha-panel">
+        <h2>Koblinger</h2>
+        <div id="mindmap-edge-list" class="mindmap-list"></div>
+      </section>
+    </section>
+
+    <section class="aha-panel">
+      <h2>Node-detaljer</h2>
+      <div id="mindmap-details" class="mindmap-details">
+        <p>Velg en node for å se detaljer.</p>
       </div>
     </section>
   </main>
+
+  <script src="ahaContracts.js"></script>
+  <script src="ahaMindmap.js"></script>
 </body>
 </html>

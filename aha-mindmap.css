@@ -1,0 +1,56 @@
+.mindmap-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.mindmap-stat {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 10px;
+  text-align: center;
+}
+
+.mindmap-stat strong { display: block; font-size: 1.3rem; }
+
+.mindmap-filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.mindmap-filters label { display: flex; flex-direction: column; gap: 6px; }
+
+.mindmap-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 900px) { .mindmap-grid { grid-template-columns: 1fr; } }
+
+.mindmap-list { display: grid; gap: 10px; }
+
+.mindmap-card {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.mindmap-card.is-selected { border-color: #82a7ff; }
+.mindmap-card h3 { margin: 0 0 6px 0; font-size: 1rem; }
+.mindmap-meta { margin: 4px 0; font-size: 0.9rem; opacity: 0.9; }
+
+.mindmap-badge {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 2px 8px;
+  background: rgba(130, 167, 255, 0.2);
+  border: 1px solid rgba(130, 167, 255, 0.35);
+  font-size: 0.75rem;
+  margin-right: 6px;
+}
+
+.mindmap-details p { margin: 6px 0; }

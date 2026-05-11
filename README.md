@@ -81,6 +81,8 @@ Stier kan nå bygges av innsikter, lister og notater som referanser.
 
 AHAavisa kan nå lage lokale artikkelutkast fra innsikter, lister, stier og notater som referanser.
 
+Tankekart kan nå vise lokale koblinger mellom AHA-objekter som noder og referansebaserte edges.
+
 ### 2. History Go-innsiktsmotoren
 
 History Go har sin egen lokale innsikts- og læringsmotor.
