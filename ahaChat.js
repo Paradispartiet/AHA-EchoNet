@@ -125,13 +125,16 @@
     if (categories.length) {
       const chips = document.createElement("div");
       chips.className = "message-category-chips";
-      chips.setAttribute("aria-label", "Foreslåtte kategorier");
+      chips.setAttribute("aria-label", "Bygg-videre-kategorier");
       categories.forEach((label) => {
         const chip = document.createElement("button");
         chip.type = "button";
         chip.className = "message-category-chip";
         chip.textContent = String(label);
-        chip.addEventListener("click", () => setComposerText(`Bruk denne meldingen i kategorien "${label}" og bygg videre.`));
+        chip.addEventListener("click", () => {
+          setComposerText(`Bygg videre på svaret med fokus på "${label}".`);
+          setStatusNote(`La inn forslag for videre arbeid: ${label}`);
+        });
         chips.appendChild(chip);
       });
       row.appendChild(chips);

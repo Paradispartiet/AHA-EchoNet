@@ -65,6 +65,8 @@ textarea, select { width:100%; border-radius: 10px; border:1px solid var(--aha-b
 .insight-placeholder-card { background: #0f1730; border:1px solid var(--aha-border); border-radius: 12px; padding: 12px; }
 .insight-placeholder-card h2 { margin:0 0 6px; font-size: 16px; }
 .insight-placeholder-card p { margin:0 0 10px; color: var(--aha-muted); font-size: 13px; }
+.insight-placeholder-list { margin: 0; padding-left: 18px; display: grid; gap: 6px; color: var(--aha-muted); font-size: 12px; }
+.insight-placeholder-list strong { color: var(--aha-text); font-weight: 600; }
 .insight-actions { display:flex; gap:8px; flex-wrap:wrap; }
 .insight-inline-hint { margin: 0; color: var(--aha-muted); font-size: 12px; }
 .utility-menu { margin-top: 10px; }
