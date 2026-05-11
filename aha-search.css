@@ -1,0 +1,86 @@
+.aha-search-top-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.aha-search-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.aha-search-form input,
+.aha-search-form select {
+  width: 100%;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid #d6d8de;
+  border-radius: 0.55rem;
+  font: inherit;
+}
+
+.aha-search-filters {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.aha-search-filters label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.95rem;
+}
+
+.aha-search-stats,
+.aha-search-tags {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.aha-search-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: #eef2ff;
+  border: 1px solid #d8def8;
+  font-size: 0.84rem;
+}
+
+.aha-search-results {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.aha-search-card {
+  border: 1px solid #e2e4ea;
+  border-radius: 0.7rem;
+  padding: 0.8rem;
+  background: #fff;
+}
+
+.aha-search-card-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.aha-search-card h3 {
+  margin: 0;
+}
+
+.aha-search-meta {
+  color: #61667a;
+  font-size: 0.85rem;
+}
+
+.aha-search-actions {
+  margin-top: 0.55rem;
+}
+
+.aha-search-link {
+  font-weight: 600;
+}

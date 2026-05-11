@@ -146,6 +146,10 @@ Fase 3 (første leveranse):
 - Artikler kan bygges av referanser til `insights` / `lists` / `paths` / `notes`.
 - AHAavisa kopierer ikke hele objekter, men lagrer `source`, `type`, `refId`.
 - Dette utvider flyten til `Chat → Innsikt → Liste → Sti → Artikkelutkast`.
+- `search.html` er nå første samlede AHA-bibliotek.
+- `ahaSearch.js` indekserer lokale objekter fra insights/source events/notes/gallery/feed/insta/lists/paths/articles.
+- Søket er read-only og skriver ikke tilbake til andre moduler.
+- Semantisk søk og embeddings kommer senere.
 
 ### 4. Lister
 
