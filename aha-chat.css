@@ -33,6 +33,13 @@ body {
 label { display:block; font-size: 12px; color: var(--aha-muted); margin-bottom: 6px; }
 textarea, select { width:100%; border-radius: 10px; border:1px solid var(--aha-border); background: #080c1f; color: var(--aha-text); padding: 10px; }
 
+.action-section { background: var(--aha-surface-2); border:1px solid var(--aha-border); border-radius: 12px; padding: 10px 12px; margin-bottom: 12px; }
+.action-section h2 { margin: 0 0 8px; font-size: 14px; }
+.action-groups { display: grid; gap: 8px; }
+.action-group-label { display: block; font-size: 11px; color: var(--aha-muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: .04em; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.action-chip { border-radius: 999px; padding: 6px 10px; font-size: 12px; background: #141c3a; }
+
 .empty-state { background: var(--aha-surface-2); border:1px dashed rgba(255,255,255,0.2); border-radius: 14px; padding: 16px; margin-bottom: 12px; }
 .empty-state h2 { margin:0 0 6px; font-size: 20px; }
 .empty-state p { margin:0; color: var(--aha-muted); }
@@ -44,6 +51,8 @@ textarea, select { width:100%; border-radius: 10px; border:1px solid var(--aha-b
 .chat-line-row-user { justify-content: flex-end; }
 .chat-line-row-aha { justify-content: flex-start; }
 .chat-line { max-width: 85%; padding: 10px 12px; border-radius: 14px; line-height: 1.4; word-break: break-word; }
+.message-category-chips { display:flex; flex-wrap:wrap; gap:6px; margin-top: 6px; max-width: 85%; }
+.message-category-chip { border-radius: 999px; padding: 4px 8px; font-size: 11px; background: #111936; border-color: rgba(255,211,71,0.45); color: var(--aha-accent); }
 .chat-line-user { align-self: flex-end; background: rgba(255,211,71,0.13); border: 1px solid rgba(255,211,71,0.45); }
 .chat-line-aha { align-self: flex-start; background: #0c1329; border: 1px solid var(--aha-border); }
 .highlight-toggle-btn { flex: 0 0 auto; margin-top: 4px; width: 20px; height: 20px; border-radius: 999px; padding: 0; font-size: 12px; line-height: 1; color: rgba(255,211,71,0.72); background: transparent; border: 1px solid rgba(255,211,71,0.24); opacity: 0.65; }

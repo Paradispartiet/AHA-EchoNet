@@ -26,21 +26,35 @@
 
     <main class="chat-layout">
       <section class="chat-main">
-        <div class="row field-select-row">
-          <label for="field-id">Felt / fag</label>
-          <select id="field-id">
-            <option value="">(ingen valgt – generelt)</option>
-            <option value="historie">Historie</option>
-            <option value="vitenskap">Vitenskap</option>
-            <option value="kunst">Kunst & kultur</option>
-            <option value="litteratur">Litteratur</option>
-            <option value="musikk">Musikk</option>
-            <option value="sport">Sport</option>
-            <option value="naeringsliv">Næringsliv</option>
-            <option value="politikk">Politikk</option>
-            <option value="populaerkultur">Popkultur</option>
-          </select>
-        </div>
+        <section class="action-section" aria-label="Handlinger">
+          <h2>Handlinger</h2>
+          <div class="action-groups">
+            <div class="action-group">
+              <span class="action-group-label">Samtale</span>
+              <div class="chips">
+                <button type="button" class="action-chip" data-chat-action="reflekter">Reflekter</button>
+                <button type="button" class="action-chip" data-chat-action="sorter">Sorter</button>
+                <button type="button" class="action-chip" data-chat-action="oppsummer">Oppsummer dagen min</button>
+                <button type="button" class="action-chip" data-chat-action="sorter_tanker">Sorter tankene mine</button>
+              </div>
+            </div>
+            <div class="action-group">
+              <span class="action-group-label">Struktur</span>
+              <div class="chips">
+                <button type="button" class="action-chip" data-chat-action="lag_liste">Lag liste</button>
+                <button type="button" class="action-chip" data-chat-action="lag_innsikt">Lag innsikt</button>
+                <button type="button" class="action-chip" data-chat-action="lag_laringssti">Lag læringssti</button>
+              </div>
+            </div>
+            <div class="action-group">
+              <span class="action-group-label">Koblinger</span>
+              <div class="chips">
+                <button type="button" class="action-chip" data-chat-action="koble_hg">Koble til History Go</button>
+                <button type="button" class="action-chip" data-chat-action="import_hg">Importer fra History Go</button>
+              </div>
+            </div>
+          </div>
+        </section>
 
         <section id="empty-state" class="empty-state" aria-live="polite">
           <h2>Hva vil du forstå i dag?</h2>
@@ -59,8 +73,14 @@
       <aside class="insight-rail">
         <section class="insight-placeholder-card">
           <h2>Innsikter fra samtalen</h2>
-          <p>Når AHA finner viktige poenger, vises de her.</p>
+          <p>Når AHA finner viktige poenger, vises de her. Panelet brukes til innsikt, kategorisering, begrepskoblinger og videre arbeid.</p>
           <p class="insight-inline-hint">Trykk «Lag innsikt» ved siden av Send når du vil hente ut innsikter.</p>
+          <div class="insight-actions">
+            <button type="button" class="action-chip" data-chat-action="lag_innsikt">Lag innsikt</button>
+            <button type="button" class="action-chip" data-chat-action="sorter">Kategoriser</button>
+            <button type="button" class="action-chip" data-chat-action="reflekter">Koble til begreper</button>
+            <button type="button" class="action-chip" data-chat-action="lag_laringssti">Bygg videre</button>
+          </div>
           <!-- Frontend-placeholder: viser struktur for innsiktslag før dedikert datamodell/ruting er koblet på. -->
         </section>
 
