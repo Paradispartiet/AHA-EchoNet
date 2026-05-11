@@ -75,6 +75,8 @@ Det skal ikke lages en ny parallell AHA-motor. Nye moduler skal kobles inn i eks
 
 `lists.html` er nå første modul som samler AHA-objekter på tvers via referanser fra innsikter, notater, feed, galleri og insta.
 
+Innsiktskort kan nå legges direkte i AHA-lister som referanser.
+
 ### 2. History Go-innsiktsmotoren
 
 History Go har sin egen lokale innsikts- og læringsmotor.
