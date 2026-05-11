@@ -137,6 +137,10 @@ Fase 3 (første leveranse):
 - Innsikter kan nå sendes direkte til Lister fra innsiktskort i `insights.html`.
 - Lister lagrer fortsatt bare referanser til innsikter via `source`, `type`, `refId`.
 - Dette fullfører første reelle arbeidsflyt: `Chat → Innsikt → Liste`.
+- `paths.html` er nå første stier-modul.
+- `ahaPaths.js` bygger lærings-/prosess-stier av referanser til `insights` / `lists` / `notes`.
+- Stier kopierer ikke hele objekter, men lagrer `source`, `type`, `refId`.
+- Dette utvider flyten til `Chat → Innsikt → Liste → Sti`.
 
 ### 4. Lister
 

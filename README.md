@@ -77,6 +77,8 @@ Det skal ikke lages en ny parallell AHA-motor. Nye moduler skal kobles inn i eks
 
 Innsiktskort kan nå legges direkte i AHA-lister som referanser.
 
+Stier kan nå bygges av innsikter, lister og notater som referanser.
+
 ### 2. History Go-innsiktsmotoren
 
 History Go har sin egen lokale innsikts- og læringsmotor.
