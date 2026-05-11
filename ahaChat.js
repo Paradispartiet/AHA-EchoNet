@@ -102,7 +102,7 @@
     const createdAt = String(options?.createdAt || new Date().toISOString());
     const messageId = String(options?.messageId || makeStableMessageId(role, text, createdAt));
     const row = document.createElement("article");
-    row.className = "chat-line-row";
+    row.className = `chat-line-row chat-line-row-${role}`;
     row.dataset.messageId = messageId;
     row.dataset.createdAt = createdAt;
 

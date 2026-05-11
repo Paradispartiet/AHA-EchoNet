@@ -45,6 +45,8 @@ textarea, select { width:100%; border-radius: 10px; border:1px solid var(--aha-b
 .chat-log-shell { position: relative; }
 .chat-log { min-height: 260px; max-height: 54vh; overflow:auto; padding: 6px 22px 6px 6px; display:flex; flex-direction:column; gap:10px; }
 .chat-line-row { position: relative; display: flex; align-items: flex-start; gap: 8px; }
+.chat-line-row-user { justify-content: flex-end; }
+.chat-line-row-aha { justify-content: flex-start; }
 .chat-line { max-width: 85%; padding: 10px 12px; border-radius: 14px; line-height: 1.4; word-break: break-word; }
 .chat-line-user { align-self: flex-end; background: rgba(255,211,71,0.13); border: 1px solid rgba(255,211,71,0.45); }
 .chat-line-aha { align-self: flex-start; background: #0c1329; border: 1px solid var(--aha-border); }
