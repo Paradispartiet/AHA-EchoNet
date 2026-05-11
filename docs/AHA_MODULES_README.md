@@ -134,7 +134,9 @@ Fase 3 (første leveranse):
 - `lists.html` er nå første koblingsmodul etter innsikter.
 - `ahaLists.js` samler referanser til `insights` / `notes` / `feed` / `gallery` / `insta`.
 - Lister kopierer ikke hele objekter, men lagrer referanser med `source`, `type`, `refId`.
-- Neste steg blir “send insight til liste” direkte fra `insights.html`.
+- Innsikter kan nå sendes direkte til Lister fra innsiktskort i `insights.html`.
+- Lister lagrer fortsatt bare referanser til innsikter via `source`, `type`, `refId`.
+- Dette fullfører første reelle arbeidsflyt: `Chat → Innsikt → Liste`.
 
 ### 4. Lister
 

@@ -48,6 +48,38 @@
   margin-top: 4px;
 }
 
+.insight-list-linker {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--aha-border);
+}
+
+.insight-list-linker label {
+  display: block;
+  font-size: 12px;
+}
+
+.insight-list-linker select {
+  width: 100%;
+  margin-top: 4px;
+  border-radius: 10px;
+  border: 1px solid var(--aha-line);
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--aha-text);
+  padding: 8px;
+}
+
+.insight-list-linker button {
+  margin-top: 8px;
+}
+
+.insight-list-status,
+.insight-list-empty {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--aha-muted);
+}
+
 .meta-columns {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));

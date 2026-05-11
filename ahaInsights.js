@@ -92,9 +92,44 @@
     return Array.isArray(data) ? data.length : 0;
   }
 
-  function createInsightCard(view, sourceEvent) {
+  function getInsightRefId(insight, index) {
+    return asText(insight?.id || insight?.base?.id || insight?.source_event_id || insight?.sourceEventId || insight?.source_id || insight?.sourceId || insight?.event_id || insight?.eventId, `insight_idx_${index}`);
+  }
+
+  function getInsightTitle(insight) {
+    return asText(insight?.title || insight?.heading || insight?.label || insight?.summary, "Innsikt");
+  }
+
+  function getActiveLists() {
+    if (!global.AHALists?.loadLists) return [];
+    return asArray(global.AHALists.loadLists()).filter((list) => !list?.deletedAt);
+  }
+
+  function sendInsightToList(listId, insight, index) {
+    if (!global.AHALists?.addItemToList) {
+      return { ok: false, reason: "lists_unavailable", message: "Lister er ikke tilgjengelig." };
+    }
+    const refId = getInsightRefId(insight, index);
+    const title = getInsightTitle(insight);
+    const item = {
+      id: `insight_${refId}`,
+      title,
+      type: "insight",
+      source: "aha_insights",
+      refId,
+      addedAt: new Date().toISOString(),
+      meta: { index, sourceEventId: asText(insight?.source_event_id || insight?.sourceEventId, "") }
+    };
+    const result = global.AHALists.addItemToList(listId, item);
+    if (!result) return { ok: false, reason: "add_failed", message: "Kunne ikke legge til i listen." };
+    if (result?.items) return { ok: true, reason: "duplicate", message: "Finnes allerede i listen" };
+    return { ok: true, reason: "added", message: "Lagt til i liste" };
+  }
+
+  function createInsightCard(view, sourceEvent, insight, index) {
     const card = document.createElement("article");
     card.className = "insight-card insight-archive-card";
+    const lists = getActiveLists();
 
     const terms = view.terms.slice(0, 8).map((t) => `<span class="insight-chip">${escapeHtml(t)}</span>`).join("");
     const sourceHtml = sourceEvent
@@ -103,6 +138,26 @@
          <div class="insight-source-time">${escapeHtml(asText(sourceEvent.created_at, "Ukjent tidspunkt"))}</div>
          <a class="aha-tile-btn" href="#source-${escapeHtml(asText(sourceEvent.id, ""))}">Åpne kilde</a>`
       : `<div class="insight-source-missing">Ingen kilde koblet ennå</div>`;
+
+    const listSection = lists.length
+      ? `
+      <section class="insight-list-linker">
+        <label>
+          Velg liste
+          <select data-insight-list-select="${escapeHtml(String(index))}">
+            <option value="">Velg liste</option>
+            ${lists.map((list) => `<option value="${escapeHtml(list.id)}">${escapeHtml(list.title)}</option>`).join("")}
+          </select>
+        </label>
+        <button type="button" class="aha-tile-btn" data-insight-add-to-list="${escapeHtml(String(index))}">Legg i liste</button>
+        <div class="insight-list-status" data-insight-list-status="${escapeHtml(String(index))}"></div>
+      </section>
+    `
+      : `
+      <section class="insight-list-linker">
+        <p class="insight-list-empty">Ingen lister ennå. <a href="lists.html">Lag en liste først.</a></p>
+      </section>
+    `;
 
     card.innerHTML = `
       <header class="insight-card-head">
@@ -117,7 +172,10 @@
       </div>
       ${terms ? `<div class="insight-layer-chips">${terms}</div>` : ""}
       <section class="insight-source-block">${sourceHtml}</section>
+      ${listSection}
     `;
+    card.dataset.insightIndex = String(index);
+    card._insightRaw = insight;
 
     return card;
   }
@@ -182,6 +240,7 @@
     const listEl = document.getElementById("insights-list");
 
     const filtered = applyFilters(insights, sourceEvents, search, filter);
+    const indexedInsights = filtered.map((ins) => ({ insight: ins, originalIndex: insights.indexOf(ins) }));
 
     const stats = document.getElementById("insights-stats");
     if (stats) {
@@ -195,13 +254,15 @@
 
     if (listEl) {
       listEl.innerHTML = "";
-      if (!filtered.length) {
+      if (!indexedInsights.length) {
         listEl.innerHTML = '<article class="insight-card"><p class="insight-card-summary">Ingen innsikter matcher søk/filter ennå.</p></article>';
       } else {
-        filtered.forEach((ins) => {
+        indexedInsights.forEach(({ insight, originalIndex }) => {
+          const safeIndex = originalIndex >= 0 ? originalIndex : 0;
+          const ins = insight;
           const view = normalizeInsightForView(ins);
           const sourceEvent = findSourceById(sourceEvents, view.sourceEventId);
-          listEl.appendChild(createInsightCard(view, sourceEvent));
+          listEl.appendChild(createInsightCard(view, sourceEvent, ins, safeIndex));
         });
       }
     }
@@ -221,6 +282,24 @@
     if (refreshBtn) refreshBtn.addEventListener("click", refresh);
     if (search) search.addEventListener("input", render);
     if (filter) filter.addEventListener("change", render);
+    document.getElementById("insights-list")?.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      const index = target.dataset.insightAddToList;
+      if (!index) return;
+      const card = target.closest(".insight-card");
+      if (!card) return;
+      const select = card.querySelector(`[data-insight-list-select="${index}"]`);
+      const status = card.querySelector(`[data-insight-list-status="${index}"]`);
+      if (!(select instanceof HTMLSelectElement) || !(status instanceof HTMLElement)) return;
+      if (!select.value) {
+        status.textContent = "Velg en liste først";
+        return;
+      }
+      const insight = card._insightRaw;
+      const result = sendInsightToList(select.value, insight, Number(index));
+      status.textContent = result.message;
+    });
 
     render();
   }
@@ -230,7 +309,8 @@
     loadSourceEvents,
     getInsights,
     render,
-    refresh
+    refresh,
+    sendInsightToList
   };
 
   if (document.readyState === "loading") {
