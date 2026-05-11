@@ -95,6 +95,11 @@
     if (!el) return;
     el.textContent = String(message || "");
   }
+  function setStatusNote(message) {
+    const el = document.getElementById("chat-status-note");
+    if (!el) return;
+    el.textContent = String(message || "");
+  }
 
   function appendChat(role, text, options) {
     const log = document.getElementById("chat-log");
@@ -147,6 +152,7 @@
     saveHighlights(all);
     syncMessageHighlightState(row);
     renderHighlightsRail();
+    setStatusNote(thread[messageId] ? "Highlight lagret." : "Highlight fjernet.");
   }
 
   function isHighlighted(messageId) {
@@ -168,9 +174,11 @@
     const thread = loadHighlights()[getThreadId()] || {};
     const rows = Array.from(log.querySelectorAll(".chat-line-row"));
     const max = Math.max(1, log.scrollHeight - log.clientHeight);
+    let markerCount = 0;
     rows.forEach((row) => {
       const messageId = row.dataset.messageId;
       if (!thread[messageId]) return;
+      markerCount += 1;
       const marker = document.createElement("button");
       marker.type = "button";
       marker.className = "highlight-rail-marker";
@@ -184,6 +192,7 @@
       });
       rail.appendChild(marker);
     });
+    rail.classList.toggle("is-empty", markerCount === 0);
   }
 
   function updateEmptyState() {
@@ -708,6 +717,7 @@
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(HIGHLIGHTS_STORAGE_KEY);
     out("AHA-kammer nullstilt.");
+    setStatusNote("Nullstilt lokalt kammer og highlights.");
     renderPanel("");
     const log = document.getElementById("chat-log");
     if (log) log.innerHTML = "";
@@ -724,7 +734,7 @@
         if (!text) return;
         appendChat("user", text);
         const count = handleUserMessage(text);
-        appendChat("aha", `Registrert ${count} signal${count === 1 ? "" : "er"}.`);
+        if (count > 0) setStatusNote(`Lagret ${count} signal${count === 1 ? "" : "er"} i bakgrunnen.`);
         try {
           const agent = await askAhaAgent(text);
           const reply = String(agent?.reply || "").trim() || "AHA-agenten returnerte tomt svar.";
@@ -759,13 +769,6 @@
     document.getElementById("btn-meta")?.addEventListener("click", showMeta);
     document.getElementById("btn-export")?.addEventListener("click", () => out(JSON.stringify(loadChamberFromStorage(), null, 2)));
     document.getElementById("btn-reset")?.addEventListener("click", reset);
-
-    document.querySelectorAll(".quick-action-btn, .suggestion-btn").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const prompt = String(btn.getAttribute("data-prompt") || "").trim();
-        if (prompt) setComposerText(prompt + " ");
-      });
-    });
 
     bindPanelActionHandler();
 
