@@ -70,6 +70,7 @@ index.html
 ```
 
 Det skal ikke lages en ny parallell AHA-motor. Nye moduler skal kobles inn i eksisterende motor.
+`insights.html` er nå første visningsmodul for innsiktskammeret, og leser eksisterende chamber/source-data uten å endre dataformat.
 
 ### 2. History Go-innsiktsmotoren
 

@@ -92,6 +92,13 @@ Mangler før ferdig:
 - samtaletråder / thread history
 - full kobling til backend for chat-historikk
 
+### Fase 3 – Innsikter (første kunnskapsflate)
+
+- `insights.html` er nå første faktiske innsiktsarkiv i AHA.
+- `ahaInsights.js` leser eksisterende `aha_insight_chamber_v1` og `aha_source_events_v1`.
+- Modulen gjør ikke ny analyse/motorarbeid, men visualiserer eksisterende innsikter og source-koblinger.
+- Neste steg senere: handlinger som «send til liste», «send til sti» og «send til AHAavisa».
+
 ### 3. Innsiktsmotor
 
 Ansvar:
