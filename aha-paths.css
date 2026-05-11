@@ -1,0 +1,57 @@
+.aha-path-form {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.aha-path-form input,
+.aha-path-form select,
+.aha-path-form textarea {
+  width: 100%;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid #d4d8e2;
+  border-radius: 8px;
+  font: inherit;
+}
+
+.aha-path-stats,
+.aha-path-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.aha-path-badge {
+  background: #eef2ff;
+  color: #1e2d64;
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.86rem;
+}
+
+.aha-path-card { margin-top: 1rem; }
+
+.aha-path-header,
+.aha-path-step-row,
+.aha-path-add-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.aha-path-add-row select {
+  flex: 1;
+  min-width: 0;
+  padding: 0.45rem 0.5rem;
+}
+
+.aha-path-steps {
+  margin: 0.8rem 0 0;
+  padding-left: 1rem;
+}
+
+.aha-path-step-row {
+  list-style: none;
+  border-top: 1px solid #eceff6;
+  padding: 0.55rem 0;
+}

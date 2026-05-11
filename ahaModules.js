@@ -44,7 +44,7 @@
       id: "paths",
       title: "Stier",
       type: "knowledge",
-      status: "shell",
+      status: "active",
       href: "paths.html",
       description: "Læringsreiser over tid: samtale → innsikt → handling.",
       phase: 1

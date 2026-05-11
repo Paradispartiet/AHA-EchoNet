@@ -6,21 +6,59 @@
   <title>Stier</title>
   <link rel="stylesheet" href="aha-chat.css" />
   <link rel="stylesheet" href="aha-dashboard.css" />
+  <link rel="stylesheet" href="aha-paths.css" />
 </head>
 <body>
   <main class="aha-dashboard" style="max-width: 900px;">
     <section class="aha-panel">
-      <p class="eyebrow">AHA Modulskall</p>
+      <p class="eyebrow">AHA Stier</p>
       <h1>Stier</h1>
-      <p>
-        Stimodulen skal vise læringsstier med kronologisk utvikling, tema over
-        tid, sammenhengen samtale → innsikt → handling, History Go-progresjon
-        og publiserbare stier.
-      </p>
+      <p>Bygg lærings- og prosess-stier med referanser fra innsikter, lister og notater.</p>
       <div class="aha-tile-actions">
         <a class="aha-tile-btn aha-tile-btn-primary" href="index.html">Tilbake til AHA Home</a>
+        <button id="paths-refresh" class="aha-tile-btn" type="button">Oppdater</button>
       </div>
     </section>
+
+    <section class="aha-panel">
+      <h2>Opprett sti</h2>
+      <form id="path-create-form" class="aha-path-form">
+        <label for="path-title">Tittel</label>
+        <input id="path-title" required type="text" placeholder="F.eks. Læringsløp vår 2026" />
+
+        <label for="path-type">Type</label>
+        <select id="path-type">
+          <option value="learning">learning</option>
+          <option value="process">process</option>
+          <option value="project">project</option>
+          <option value="habit">habit</option>
+          <option value="reading">reading</option>
+          <option value="historygo">historygo</option>
+          <option value="publishing">publishing</option>
+        </select>
+
+        <label for="path-description">Beskrivelse</label>
+        <textarea id="path-description" rows="3" placeholder="Kort forklaring av stien"></textarea>
+
+        <label for="path-tags">Tags (komma-separert)</label>
+        <input id="path-tags" type="text" placeholder="læring, fokus, skriv" />
+
+        <button type="submit" class="aha-tile-btn aha-tile-btn-primary">Lag sti</button>
+      </form>
+    </section>
+
+    <section class="aha-panel">
+      <h2>Oversikt</h2>
+      <div class="aha-path-stats">
+        <span class="aha-path-badge">Stier: <strong id="paths-count">0</strong></span>
+        <span class="aha-path-badge">Steg totalt: <strong id="path-steps-count">0</strong></span>
+      </div>
+    </section>
+
+    <section id="paths-list" class="aha-path-list"></section>
   </main>
+
+  <script src="ahaContracts.js"></script>
+  <script src="ahaPaths.js"></script>
 </body>
 </html>
