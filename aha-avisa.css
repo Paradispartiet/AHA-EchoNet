@@ -18,3 +18,4 @@
 .section-filter button.is-active { border:1px solid #4864e8; background:#eef3ff; }
 .local-publish-note { margin:8px 0; font-size:.92rem; color:#27324a; }
 .group-draft-badge { display:inline-block; background:#f2edff; color:#46238a; padding:3px 8px; border-radius:12px; font-size:.82rem; margin:4px 0; }
+.avisa-layer-badge { background:#e8f6ef; color:#185d36; }

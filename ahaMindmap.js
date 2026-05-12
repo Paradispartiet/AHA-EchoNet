@@ -131,7 +131,9 @@
     asArray(raw.articles).filter((article) => !article?.deletedAt).forEach((article) => {
       const refId = asText(article?.id, "");
       if (!refId) return;
-      const node = { id: nodeId("article", "aha_avisa", refId), title: asText(article?.title, "Artikkel"), type: "article", source: "aha_avisa", refId, href: "avisa.html", meta: {} };
+      const publicationLayer = asText(article?.publicationLayer, "").toLowerCase()
+        || (asText(article?.meta?.createdFromGroupId, "") || asArray(article?.references).some((ref) => asText(ref?.source, "") === "aha_groups") ? "group" : "personal");
+      const node = { id: nodeId("article", "aha_avisa", refId), title: asText(article?.title, "Artikkel"), type: "article", source: "aha_avisa", refId, href: "avisa.html", meta: { publicationLayer } };
       addNode(nodes, nodeIndex, node);
       registerRef(node);
     });

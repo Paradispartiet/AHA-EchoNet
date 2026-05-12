@@ -187,6 +187,9 @@ Fase 3 (første leveranse):
 - Lokal publisering sender ikke data ut, og er kun lokal markering i nettleseren.
 - Artikler kan grupperes og filtreres etter section i AHAavisa.
 - Gruppeutkast vises med badge og lenke tilbake til gruppe.
+- Fase 5B: AHAavisa har nå tre lokale publiseringslag: `personal`, `group` og `public_candidate`.
+- Offentlig kandidat er bare lokal markering, ikke publisering.
+- Gruppeavis kobles til `aha_groups_v1`.
 
 ### 4. Lister
 

@@ -49,10 +49,20 @@
         <span class="avisa-badge">Ready: <strong id="avisa-ready-count">0</strong></span>
         <span class="avisa-badge">Publisert lokalt: <strong id="avisa-published-count">0</strong></span>
         <span class="avisa-badge">Seksjoner: <strong id="avisa-sections-count">0</strong></span>
+        <span class="avisa-badge">Personlig: <strong id="avisa-personal-count">0</strong></span>
+        <span class="avisa-badge">Gruppeavis: <strong id="avisa-group-count">0</strong></span>
+        <span class="avisa-badge">Offentlig kandidat: <strong id="avisa-public-candidate-count">0</strong></span>
         <span class="avisa-badge">Siste oppdatering: <strong id="avisa-last-updated">-</strong></span>
       </div>
       <div id="avisa-privacy-warning" class="local-publish-note" hidden></div>
       <p class="local-publish-note">“Publiser lokalt” betyr bare at artikkelen markeres som lokal publisert i denne nettleseren. Ingen data sendes ut. Ekte publisering kommer senere.</p>
+      <p class="local-publish-note">Offentlig kandidat betyr at artikkelen kan vurderes senere for offentlig AHAavisa/Paradisavisa-format. Ingenting publiseres nå.</p>
+      <div class="section-filter" id="avisa-layer-filter" role="group" aria-label="Filtrer publiseringslag">
+        <button type="button" data-layer-filter="all" class="is-active">Alle</button>
+        <button type="button" data-layer-filter="personal">Personlig avis</button>
+        <button type="button" data-layer-filter="group">Gruppeavis</button>
+        <button type="button" data-layer-filter="public_candidate">Offentlig kandidatlag</button>
+      </div>
       <div class="section-filter" id="avisa-section-filter" role="group" aria-label="Filtrer seksjon">
         <button type="button" data-section-filter="alle" class="is-active">Alle</button>
         <button type="button" data-section-filter="aha">aha</button>
