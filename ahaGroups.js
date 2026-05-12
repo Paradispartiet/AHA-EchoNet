@@ -10,6 +10,7 @@
   const ALLOWED_GROUP_TYPES = ["circle", "project", "learning", "publishing", "historygo", "private"];
   const ALLOWED_MEMBER_ROLES = ["owner", "editor", "member", "observer"];
   const ALLOWED_MEMBER_STATUS = ["local", "invited_later", "inactive"];
+  const LIBRARY_FILTERS = ["all", "insights", "lists", "paths", "articles", "notes", "feed"];
 
   function safeParse(raw, fallback) {
     try {
@@ -267,6 +268,94 @@
     return out;
   }
 
+  function safeDecodeHash(value) {
+    try {
+      return decodeURIComponent(value);
+    } catch {
+      return "";
+    }
+  }
+
+  function hashGroupId() {
+    const raw = String(global.location.hash || "").replace(/^#/, "").trim();
+    if (!raw) return "";
+    if (raw.startsWith("group=")) return safeDecodeHash(raw.slice(6));
+    return safeDecodeHash(raw);
+  }
+
+  function setHashGroupId(groupId) {
+    global.location.hash = groupId ? `group=${encodeURIComponent(groupId)}` : "";
+  }
+
+  function resolveModuleHref(source) {
+    if (source === "aha_insights") return "insights.html";
+    if (source === "aha_lists") return "lists.html";
+    if (source === "aha_paths") return "paths.html";
+    if (source === "aha_avisa") return "avisa.html";
+    if (source === "aha_notes") return "notes.html";
+    if (source === "aha_feed") return "feed.html";
+    return "index.html";
+  }
+
+  function previewForObject(item) {
+    return asText(item?.summary || item?.description || item?.text || item?.body || item?.label || "", "");
+  }
+
+  function resolveReferenceObject(ref) {
+    const source = asText(ref?.source, "");
+    const refId = asText(ref?.refId, "");
+    if (!source || !refId) return null;
+    if (source === "aha_insights") {
+      const chamber = asObject(safeParse(localStorage.getItem("aha_insight_chamber_v1") || "{}", {}));
+      const items = asArray(chamber.insights);
+      for (let i = 0; i < items.length; i += 1) {
+        const item = items[i];
+        if (item?.deletedAt || item?.deleted_at) continue;
+        const candidates = [
+          item?.id, item?.base?.id, item?.source_event_id, item?.sourceEventId, item?.source_id, item?.sourceId, item?.event_id, item?.eventId, `insight_idx_${i}`
+        ].map((x) => asText(x, ""));
+        if (candidates.includes(refId)) return item;
+      }
+      return null;
+    }
+    const sources = {
+      aha_lists: "aha_lists_v1",
+      aha_paths: "aha_paths_v1",
+      aha_avisa: "aha_articles_v1",
+      aha_notes: "aha_notes_v1",
+      aha_feed: "aha_feed_posts_v1"
+    };
+    const key = sources[source];
+    if (!key) return null;
+    return asArray(safeParse(localStorage.getItem(key) || "[]", []))
+      .filter((item) => !item?.deletedAt && !item?.deleted_at)
+      .find((item) => asText(item?.id, "") === refId) || null;
+  }
+
+  function referenceFilterMatches(filter, ref) {
+    if (filter === "all") return true;
+    if (filter === "insights") return ref.source === "aha_insights";
+    if (filter === "lists") return ref.source === "aha_lists";
+    if (filter === "paths") return ref.source === "aha_paths";
+    if (filter === "articles") return ref.source === "aha_avisa";
+    if (filter === "notes") return ref.source === "aha_notes";
+    if (filter === "feed") return ref.source === "aha_feed";
+    return true;
+  }
+
+  function buildGroupActivity(group) {
+    const out = [];
+    if (group.createdAt) out.push({ at: group.createdAt, label: "Gruppe opprettet" });
+    if (group.updatedAt) out.push({ at: group.updatedAt, label: "Gruppe oppdatert" });
+    group.members.forEach((member) => {
+      if (member.addedAt) out.push({ at: member.addedAt, label: `Medlem lagt til: ${member.name} (${member.role})` });
+    });
+    group.references.forEach((ref) => {
+      if (ref.addedAt) out.push({ at: ref.addedAt, label: `Referanse lagt til: ${ref.title}` });
+    });
+    return out.sort((a, b) => Date.parse(b.at || "") - Date.parse(a.at || "")).slice(0, 10);
+  }
+
   function loadPrivacySettings() {
     return asObject(safeParse(localStorage.getItem(PRIVACY_KEY) || "{}", {}));
   }
@@ -277,6 +366,9 @@
 
     const groups = loadGroups().filter((group) => !group.deletedAt);
     const references = collectAvailableGroupReferences();
+    const activeGroupId = hashGroupId();
+    const activeGroup = groups.find((g) => g.id === activeGroupId) || null;
+    const activeFilter = LIBRARY_FILTERS.includes(asText(root.getAttribute("data-library-filter"), "all")) ? root.getAttribute("data-library-filter") : "all";
     const privacy = loadPrivacySettings();
 
     const memberCount = groups.reduce((sum, g) => sum + g.members.length, 0);
@@ -322,6 +414,19 @@
         </div>
       </section>
 
+      <section class="aha-panel groups-selector-panel">
+        <h2>Velg aktiv gruppe</h2>
+        ${groups.length ? `
+          <div class="groups-selector-row">
+            <select id="groups-active-select">
+              <option value="">Velg gruppe</option>
+              ${groups.map((group) => `<option value="${escapeHtml(group.id)}" ${activeGroup && activeGroup.id === group.id ? "selected" : ""}>${escapeHtml(group.title)}</option>`).join("")}
+            </select>
+            <button type="button" class="aha-tile-btn" id="groups-open-active-btn">Åpne gruppe</button>
+          </div>
+        ` : "<p>Ingen grupper finnes ennå.</p>"}
+      </section>
+
       <section class="groups-card-list">
         ${groups.map((group) => `
           <article class="aha-panel groups-card" data-group-id="${escapeHtml(group.id)}">
@@ -333,7 +438,10 @@
             <p>Tags: ${group.tags.length ? group.tags.map((tag) => `<span class="groups-tag">${escapeHtml(tag)}</span>`).join(" ") : "Ingen"}</p>
             <p>Opprettet: ${escapeHtml(group.createdAt)} · Oppdatert: ${escapeHtml(group.updatedAt)}</p>
             <p>Medlemmer: ${escapeHtml(String(group.members.length))} · Referanser: ${escapeHtml(String(group.references.length))}</p>
-            <button type="button" class="aha-tile-btn" data-action="delete-group" data-group-id="${escapeHtml(group.id)}">Slett gruppe</button>
+            <div class="aha-tile-actions">
+              <button type="button" class="aha-tile-btn" data-action="open-workspace" data-group-id="${escapeHtml(group.id)}">Åpne arbeidsrom</button>
+              <button type="button" class="aha-tile-btn" data-action="delete-group" data-group-id="${escapeHtml(group.id)}">Slett gruppe</button>
+            </div>
 
             <section class="groups-subsection">
               <h4>Medlemmer</h4>
@@ -373,6 +481,61 @@
           </article>
         `).join("")}
       </section>
+
+      ${activeGroup ? `
+        <section class="aha-panel groups-workspace">
+          <header class="groups-workspace-header">
+            <div>
+              <p class="eyebrow">Gruppe-arbeidsrom</p>
+              <h2>${escapeHtml(activeGroup.title)}</h2>
+            </div>
+            <div class="aha-tile-actions">
+              <button type="button" class="aha-tile-btn" id="groups-back-overview-btn">Til gruppeoversikt</button>
+              <button type="button" class="aha-tile-btn" id="groups-workspace-refresh-btn">Oppdater</button>
+            </div>
+          </header>
+          <p>Type: ${escapeHtml(activeGroup.type)}</p>
+          <p>Beskrivelse: ${escapeHtml(activeGroup.description || "Ingen beskrivelse")}</p>
+          <p>Tags: ${activeGroup.tags.length ? activeGroup.tags.map((tag) => `<span class="groups-tag">${escapeHtml(tag)}</span>`).join(" ") : "Ingen"}</p>
+          <p>Opprettet: ${escapeHtml(activeGroup.createdAt)} · Oppdatert: ${escapeHtml(activeGroup.updatedAt)}</p>
+          <p>Medlemmer: ${escapeHtml(String(activeGroup.members.length))} · Referanser: ${escapeHtml(String(activeGroup.references.length))}</p>
+
+          <section class="groups-subsection">
+            <h3>Medlemmer</h3>
+            <ul class="groups-list">
+              ${activeGroup.members.length ? activeGroup.members.map((member) => `<li><span>${escapeHtml(member.name)} · ${escapeHtml(member.role)} · ${escapeHtml(member.status)} · ${escapeHtml(member.addedAt)}</span><button type="button" data-action="remove-member" data-group-id="${escapeHtml(activeGroup.id)}" data-member-id="${escapeHtml(member.id)}">Fjern</button></li>`).join("") : "<li>Ingen medlemmer ennå.</li>"}
+            </ul>
+            <form class="groups-inline-form" data-action="add-member" data-group-id="${escapeHtml(activeGroup.id)}">
+              <input type="text" name="memberName" placeholder="Lokalt navn" required />
+              <select name="memberRole">${ALLOWED_MEMBER_ROLES.map((role) => `<option value="${escapeHtml(role)}">${escapeHtml(role)}</option>`).join("")}</select>
+              <button type="submit">Legg til medlem</button>
+            </form>
+          </section>
+
+          <section class="groups-subsection groups-shared-library">
+            <h3>Delt bibliotek</h3>
+            <div class="groups-filter-row">
+              ${LIBRARY_FILTERS.map((filter) => `<button type="button" class="aha-tile-btn ${activeFilter === filter ? "aha-tile-btn-primary" : ""}" data-action="set-library-filter" data-filter="${escapeHtml(filter)}">${escapeHtml(filter)}</button>`).join("")}
+            </div>
+            <ul class="groups-list">
+              ${activeGroup.references.filter((ref) => referenceFilterMatches(activeFilter, ref)).length
+                ? activeGroup.references.filter((ref) => referenceFilterMatches(activeFilter, ref)).map((ref) => {
+                  const obj = resolveReferenceObject(ref);
+                  const preview = obj ? previewForObject(obj) : "";
+                  return `<li><span><strong>${escapeHtml(ref.title)}</strong> · ${escapeHtml(ref.type)} · ${escapeHtml(ref.source)} · ${escapeHtml(ref.refId)}${preview ? `<br/><small>${escapeHtml(preview.slice(0, 160))}</small>` : ""}${obj ? "" : "<br/><small>Referansen finnes, men objektet ble ikke funnet.</small>"}<br/><a href="${escapeHtml(resolveModuleHref(ref.source))}">Åpne modul</a></span><button type="button" data-action="remove-reference" data-group-id="${escapeHtml(activeGroup.id)}" data-reference-id="${escapeHtml(ref.id)}">Fjern</button></li>`;
+                }).join("")
+                : "<li>Ingen referanser i valgt filter.</li>"}
+            </ul>
+          </section>
+
+          <section class="groups-subsection">
+            <h3>Gruppeaktivitet</h3>
+            <ul class="groups-list groups-activity-list">
+              ${buildGroupActivity(activeGroup).length ? buildGroupActivity(activeGroup).map((item) => `<li><span>${escapeHtml(item.label)}</span><small>${escapeHtml(item.at)}</small></li>`).join("") : "<li>Ingen aktivitet ennå.</li>"}
+            </ul>
+          </section>
+        </section>
+      ` : ""}
     `;
 
     bindEvents(references);
@@ -381,6 +544,13 @@
   function bindEvents(availableReferences) {
     const refreshBtn = document.getElementById("groups-refresh-btn");
     if (refreshBtn) refreshBtn.addEventListener("click", refresh);
+    const workspaceRefreshBtn = document.getElementById("groups-workspace-refresh-btn");
+    if (workspaceRefreshBtn) workspaceRefreshBtn.addEventListener("click", refresh);
+    const backBtn = document.getElementById("groups-back-overview-btn");
+    if (backBtn) backBtn.addEventListener("click", () => { setHashGroupId(""); refresh(); });
+    const activeSelect = document.getElementById("groups-active-select");
+    const openActiveBtn = document.getElementById("groups-open-active-btn");
+    if (openActiveBtn && activeSelect) openActiveBtn.addEventListener("click", () => { setHashGroupId(asText(activeSelect.value, "")); refresh(); });
 
     const createForm = document.getElementById("groups-create-form");
     if (createForm) {
@@ -401,6 +571,19 @@
     document.querySelectorAll('[data-action="delete-group"]').forEach((button) => {
       button.addEventListener("click", () => {
         deleteGroup(button.getAttribute("data-group-id"));
+        refresh();
+      });
+    });
+    document.querySelectorAll('[data-action="open-workspace"]').forEach((button) => {
+      button.addEventListener("click", () => {
+        setHashGroupId(button.getAttribute("data-group-id"));
+        refresh();
+      });
+    });
+    document.querySelectorAll('[data-action="set-library-filter"]').forEach((button) => {
+      button.addEventListener("click", () => {
+        const root = document.getElementById("groups-root");
+        if (root) root.setAttribute("data-library-filter", asText(button.getAttribute("data-filter"), "all"));
         refresh();
       });
     });
