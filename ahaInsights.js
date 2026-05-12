@@ -104,6 +104,26 @@
     if (!global.AHALists?.loadLists) return [];
     return asArray(global.AHALists.loadLists()).filter((list) => !list?.deletedAt);
   }
+  function getActiveGroups() {
+    if (!global.AHAGroups?.getActiveGroups) return [];
+    return asArray(global.AHAGroups.getActiveGroups());
+  }
+  function sendInsightToGroup(groupId, insight, index) {
+    if (!global.AHAGroups?.addReferenceToGroupByObject) {
+      return { ok: false, message: "Grupper er ikke tilgjengelig." };
+    }
+    const refId = getInsightRefId(insight, index);
+    const result = global.AHAGroups.addReferenceToGroupByObject(groupId, {
+      title: getInsightTitle(insight),
+      type: "insight",
+      source: "aha_insights",
+      refId,
+      meta: { index }
+    });
+    if (!result) return { ok: false, message: "Kunne ikke legge til i gruppe." };
+    if (result?.references) return { ok: true, message: "Finnes allerede i gruppen" };
+    return { ok: true, message: "Lagt i gruppe" };
+  }
 
   function sendInsightToList(listId, insight, index) {
     if (!global.AHALists?.addItemToList) {
@@ -137,6 +157,7 @@
     const card = document.createElement("article");
     card.className = "insight-card insight-archive-card";
     const lists = getActiveLists();
+    const groups = getActiveGroups();
 
     const terms = view.terms.slice(0, 8).map((t) => `<span class="insight-chip">${escapeHtml(t)}</span>`).join("");
     const sourceHtml = sourceEvent
@@ -165,6 +186,25 @@
         <p class="insight-list-empty">Ingen lister ennå. <a href="lists.html">Lag en liste først.</a></p>
       </section>
     `;
+    const groupSection = groups.length
+      ? `
+      <section class="insight-list-linker">
+        <label>
+          Velg gruppe
+          <select class="gruppe-select" data-insight-group-select="${escapeHtml(String(index))}">
+            <option value="">Velg gruppe</option>
+            ${groups.map((group) => `<option value="${escapeHtml(group.id)}">${escapeHtml(group.title)}</option>`).join("")}
+          </select>
+        </label>
+        <button type="button" class="aha-tile-btn gruppe-knapp" data-insight-add-to-group="${escapeHtml(String(index))}">Legg i gruppe</button>
+        <div class="insight-list-status statuslinje" data-insight-group-status="${escapeHtml(String(index))}"></div>
+      </section>
+    `
+      : `
+      <section class="insight-list-linker">
+        <p class="insight-list-empty statuslinje">Ingen grupper ennå. <a href="groups.html">Lag en gruppe først.</a></p>
+      </section>
+    `;
 
     card.innerHTML = `
       <header class="insight-card-head">
@@ -181,6 +221,7 @@
       <div class="insight-subject-links-host"></div>
       <section class="insight-source-block">${sourceHtml}</section>
       ${listSection}
+      ${groupSection}
     `;
     card.dataset.insightIndex = String(index);
     card._insightRaw = insight;
@@ -302,19 +343,35 @@
       const target = event.target;
       if (!(target instanceof HTMLElement)) return;
       const index = target.dataset.insightAddToList;
-      if (!index) return;
-      const card = target.closest(".insight-card");
-      if (!card) return;
-      const select = card.querySelector(`[data-insight-list-select="${index}"]`);
-      const status = card.querySelector(`[data-insight-list-status="${index}"]`);
-      if (!(select instanceof HTMLSelectElement) || !(status instanceof HTMLElement)) return;
-      if (!select.value) {
-        status.textContent = "Velg en liste først";
+      if (index) {
+        const card = target.closest(".insight-card");
+        if (!card) return;
+        const select = card.querySelector(`[data-insight-list-select="${index}"]`);
+        const status = card.querySelector(`[data-insight-list-status="${index}"]`);
+        if (!(select instanceof HTMLSelectElement) || !(status instanceof HTMLElement)) return;
+        if (!select.value) {
+          status.textContent = "Velg en liste først";
+          return;
+        }
+        const insight = card._insightRaw;
+        const result = sendInsightToList(select.value, insight, Number(index));
+        status.textContent = result.message;
         return;
       }
-      const insight = card._insightRaw;
-      const result = sendInsightToList(select.value, insight, Number(index));
-      status.textContent = result.message;
+      const groupIndex = target.dataset.insightAddToGroup;
+      if (!groupIndex) return;
+      const groupCard = target.closest(".insight-card");
+      if (!groupCard) return;
+      const groupSelect = groupCard.querySelector(`[data-insight-group-select="${groupIndex}"]`);
+      const groupStatus = groupCard.querySelector(`[data-insight-group-status="${groupIndex}"]`);
+      if (!(groupSelect instanceof HTMLSelectElement) || !(groupStatus instanceof HTMLElement)) return;
+      if (!groupSelect.value) {
+        groupStatus.textContent = "Velg en gruppe først";
+        return;
+      }
+      const groupInsight = groupCard._insightRaw;
+      const groupResult = sendInsightToGroup(groupSelect.value, groupInsight, Number(groupIndex));
+      groupStatus.textContent = groupResult.message;
     });
 
     render();
@@ -326,7 +383,8 @@
     getInsights,
     render,
     refresh,
-    sendInsightToList
+    sendInsightToList,
+    sendInsightToGroup
   };
 
   if (document.readyState === "loading") {

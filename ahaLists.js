@@ -228,6 +228,7 @@
 
   function render() {
     const lists = loadLists().filter((list) => !list.deletedAt);
+    const groups = global.AHAGroups?.getActiveGroups ? asArray(global.AHAGroups.getActiveGroups()) : [];
     const allItems = collectAvailableItems();
     const statsLists = document.getElementById("lists-count");
     const statsItems = document.getElementById("list-items-count");
@@ -280,6 +281,16 @@
               ${options}
             </select>
             <button type="button" data-list-add="${escapeHtml(list.id)}">Legg til</button>
+          </div>
+          <div class="aha-list-add-row">
+            ${groups.length ? `
+            <select class="gruppe-select" data-list-group-select="${escapeHtml(list.id)}">
+              <option value="">Velg gruppe</option>
+              ${groups.map((group) => `<option value="${escapeHtml(group.id)}">${escapeHtml(group.title)}</option>`).join("")}
+            </select>
+            <button type="button" class="gruppe-knapp" data-list-add-group="${escapeHtml(list.id)}">Legg liste i gruppe</button>
+            <div class="statuslinje" data-list-group-status="${escapeHtml(list.id)}"></div>
+            ` : `<p class="statuslinje">Ingen grupper ennå. <a href="groups.html">Lag en gruppe først.</a></p>`}
           </div>
           <ul class="aha-list-items">${itemsHtml}</ul>
         </article>
@@ -337,6 +348,22 @@
         addItemToList(addPayload, found);
         select.value = "";
         render();
+      }
+      const addGroupPayload = target.dataset.listAddGroup;
+      if (addGroupPayload) {
+        const select = document.querySelector(`[data-list-group-select="${addGroupPayload}"]`);
+        const status = document.querySelector(`[data-list-group-status="${addGroupPayload}"]`);
+        if (!(select instanceof HTMLSelectElement) || !(status instanceof HTMLElement)) return;
+        if (!select.value) { status.textContent = "Velg en gruppe først"; return; }
+        const currentList = loadLists().find((list) => list.id === addGroupPayload && !list.deletedAt);
+        if (!currentList || !global.AHAGroups?.addReferenceToGroupByObject) return;
+        const result = global.AHAGroups.addReferenceToGroupByObject(select.value, {
+          title: currentList.title,
+          type: "list",
+          source: "aha_lists",
+          refId: currentList.id
+        });
+        status.textContent = result?.references ? "Finnes allerede i gruppen" : (result ? "Lagt i gruppe" : "Kunne ikke legge til i gruppe.");
       }
     });
 

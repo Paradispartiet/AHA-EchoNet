@@ -233,6 +233,7 @@
     const refsCountEl = document.getElementById("avisa-refs-count");
 
     const articles = loadArticles().filter((article) => !article.deletedAt);
+    const groups = global.AHAGroups?.getActiveGroups ? asArray(global.AHAGroups.getActiveGroups()) : [];
     const availableRefs = collectAvailableArticleSources();
     const draftCount = articles.filter((a) => a.status === "draft").length;
     const readyCount = articles.filter((a) => a.status === "ready").length;
@@ -293,6 +294,16 @@
                 ${options}
               </select>
               <button type="button" data-avisa-add-ref="${escapeHtml(article.id)}">Legg til referanse</button>
+            </div>
+            <div class="avisa-ref-add">
+              ${groups.length ? `
+              <select class="gruppe-select" data-avisa-group-select="${escapeHtml(article.id)}">
+                <option value="">Velg gruppe</option>
+                ${groups.map((group) => `<option value="${escapeHtml(group.id)}">${escapeHtml(group.title)}</option>`).join("")}
+              </select>
+              <button type="button" class="gruppe-knapp" data-avisa-add-group="${escapeHtml(article.id)}">Legg artikkel i gruppe</button>
+              <div class="statuslinje" data-avisa-group-status="${escapeHtml(article.id)}"></div>
+              ` : `<p class="statuslinje">Ingen grupper ennå. <a href="groups.html">Lag en gruppe først.</a></p>`}
             </div>
           </section>
         </article>
@@ -359,6 +370,23 @@
         if (!match) return;
         addReferenceToArticle(addRefArticle, match);
         render();
+      }
+      const addGroupArticle = target.getAttribute("data-avisa-add-group");
+      if (addGroupArticle) {
+        const card = target.closest(".avisa-article-card") || target.closest("article");
+        const groupSelect = card?.querySelector("[data-avisa-group-select]");
+        const groupStatus = card?.querySelector("[data-avisa-group-status]");
+        if (!(groupSelect instanceof HTMLSelectElement) || !(groupStatus instanceof HTMLElement)) return;
+        if (!groupSelect.value) { groupStatus.textContent = "Velg en gruppe først"; return; }
+        const article = loadArticles().find((item) => item.id === addGroupArticle && !item.deletedAt);
+        if (!article || !global.AHAGroups?.addReferenceToGroupByObject) return;
+        const result = global.AHAGroups.addReferenceToGroupByObject(groupSelect.value, {
+          title: article.title,
+          type: "article",
+          source: "aha_avisa",
+          refId: article.id
+        });
+        groupStatus.textContent = result?.references ? "Finnes allerede i gruppen" : (result ? "Lagt i gruppe" : "Kunne ikke legge til i gruppe.");
       }
     });
   }

@@ -242,6 +242,7 @@
 
   function render() {
     const paths = loadPaths().filter((path) => !path.deletedAt);
+    const groups = global.AHAGroups?.getActiveGroups ? asArray(global.AHAGroups.getActiveGroups()) : [];
     const availableItems = collectAvailablePathItems();
 
     const pathsCount = document.getElementById("paths-count");
@@ -296,6 +297,16 @@
             </select>
             <button type="button" data-step-add="${escapeHtml(path.id)}">Legg til steg</button>
           </div>
+          <div class="aha-path-add-row">
+            ${groups.length ? `
+            <select class="gruppe-select" data-path-group-select="${escapeHtml(path.id)}">
+              <option value="">Velg gruppe</option>
+              ${groups.map((group) => `<option value="${escapeHtml(group.id)}">${escapeHtml(group.title)}</option>`).join("")}
+            </select>
+            <button type="button" class="gruppe-knapp" data-path-add-group="${escapeHtml(path.id)}">Legg sti i gruppe</button>
+            <div class="statuslinje" data-path-group-status="${escapeHtml(path.id)}"></div>
+            ` : `<p class="statuslinje">Ingen grupper ennå. <a href="groups.html">Lag en gruppe først.</a></p>`}
+          </div>
           <ul class="aha-path-steps">${stepsHtml}</ul>
         </article>
       `;
@@ -344,6 +355,24 @@
       }
 
       const stepRemove = target.dataset.stepRemove;
+      const addGroupPath = target.dataset.pathAddGroup;
+      if (addGroupPath) {
+        const card = target.closest(".aha-path-card") || target.closest("article");
+        const groupSelect = card?.querySelector("[data-path-group-select]");
+        const groupStatus = card?.querySelector("[data-path-group-status]");
+        if (!(groupSelect instanceof HTMLSelectElement) || !(groupStatus instanceof HTMLElement)) return;
+        if (!groupSelect.value) { groupStatus.textContent = "Velg en gruppe først"; return; }
+        const currentPath = loadPaths().find((path) => path.id === addGroupPath && !path.deletedAt);
+        if (!currentPath || !global.AHAGroups?.addReferenceToGroupByObject) return;
+        const result = global.AHAGroups.addReferenceToGroupByObject(groupSelect.value, {
+          title: currentPath.title,
+          type: "path",
+          source: "aha_paths",
+          refId: currentPath.id
+        });
+        groupStatus.textContent = result?.references ? "Finnes allerede i gruppen" : (result ? "Lagt i gruppe" : "Kunne ikke legge til i gruppe.");
+        return;
+      }
       if (!stepRemove) return;
       const [pathId, stepId] = stepRemove.split("::");
       if (!pathId || !stepId) return;
