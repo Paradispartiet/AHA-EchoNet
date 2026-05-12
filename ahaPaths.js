@@ -357,8 +357,9 @@
       const stepRemove = target.dataset.stepRemove;
       const addGroupPath = target.dataset.pathAddGroup;
       if (addGroupPath) {
-        const groupSelect = document.querySelector(`[data-path-group-select="${CSS.escape(addGroupPath)}"]`);
-        const groupStatus = document.querySelector(`[data-path-group-status="${CSS.escape(addGroupPath)}"]`);
+        const card = target.closest(".aha-path-card") || target.closest("article");
+        const groupSelect = card?.querySelector("[data-path-group-select]");
+        const groupStatus = card?.querySelector("[data-path-group-status]");
         if (!(groupSelect instanceof HTMLSelectElement) || !(groupStatus instanceof HTMLElement)) return;
         if (!groupSelect.value) { groupStatus.textContent = "Velg en gruppe først"; return; }
         const currentPath = loadPaths().find((path) => path.id === addGroupPath && !path.deletedAt);

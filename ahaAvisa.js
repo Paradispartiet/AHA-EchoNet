@@ -373,8 +373,9 @@
       }
       const addGroupArticle = target.getAttribute("data-avisa-add-group");
       if (addGroupArticle) {
-        const groupSelect = document.querySelector(`[data-avisa-group-select="${CSS.escape(addGroupArticle)}"]`);
-        const groupStatus = document.querySelector(`[data-avisa-group-status="${CSS.escape(addGroupArticle)}"]`);
+        const card = target.closest(".avisa-article-card") || target.closest("article");
+        const groupSelect = card?.querySelector("[data-avisa-group-select]");
+        const groupStatus = card?.querySelector("[data-avisa-group-status]");
         if (!(groupSelect instanceof HTMLSelectElement) || !(groupStatus instanceof HTMLElement)) return;
         if (!groupSelect.value) { groupStatus.textContent = "Velg en gruppe først"; return; }
         const article = loadArticles().find((item) => item.id === addGroupArticle && !item.deletedAt);

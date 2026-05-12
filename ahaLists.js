@@ -363,7 +363,7 @@
           source: "aha_lists",
           refId: currentList.id
         });
-        status.textContent = result?.items ? "Finnes allerede i gruppen" : (result ? "Lagt i gruppe" : "Kunne ikke legge til i gruppe.");
+        status.textContent = result?.references ? "Finnes allerede i gruppen" : (result ? "Lagt i gruppe" : "Kunne ikke legge til i gruppe.");
       }
     });
 
