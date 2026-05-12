@@ -87,6 +87,7 @@ Personvern / Kontroll kan nå vise lokal datarapport, eksportere AHA-data og lag
 AHA Home / Profil samler nå lokal status fra innsikter, notes, galleri, feed, insta, lister, stier, AHAavisa, History Go-import og personvern.
 Grupper / Sirkler kan nå lage lokale grupperom med medlemmer og referanser til AHA-objekter, uten ekte deling ennå.
 Grupper / Sirkler har nå lokale arbeidsrom som viser medlemmer, delt bibliotek, resolved referanser og gruppeaktivitet.
+Gruppe-arbeidsrom kan nå lage lokale AHAavisa-utkast basert på gruppens delte bibliotek og referanser.
 
 Innsikter, lister, stier og AHAavisa-utkast kan nå legges direkte i lokale Grupper / Sirkler som referanser.
 Grupper / Sirkler er nå synlige i AHA Home, Søk/Bibliotek, Tankekart og Personvern/Kontroll.

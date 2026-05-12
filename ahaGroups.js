@@ -268,6 +268,78 @@
     return out;
   }
 
+
+  function createArticleDraftFromGroup(groupId) {
+    const targetId = asText(groupId, "");
+    if (!targetId) return null;
+
+    const group = getActiveGroups().find((item) => item.id === targetId);
+    if (!group) return null;
+
+    const avisa = global.AHAAvisa;
+    if (!avisa || typeof avisa.createArticle !== "function") return null;
+
+    const baseTags = normalizeTags(group.tags);
+    const tags = normalizeTags(baseTags.concat(["gruppe", "sirkel"]));
+    const title = asText(group.title, "Uten navn");
+
+    const articleInput = {
+      title,
+      section: "aha",
+      status: "draft",
+      summary: asText(group.description, "Utkast basert på gruppe/sirkel."),
+      body: `Dette utkastet er opprettet fra gruppen/sirkelen "${title}". Det bygger på gruppens delte bibliotek og lokale referanser.`,
+      tags,
+      source: "aha_avisa",
+      meta: {
+        createdFromGroupId: group.id,
+        createdFromGroupTitle: title,
+        source: "aha_groups"
+      }
+    };
+
+    const created = avisa.createArticle(articleInput);
+    if (!created) return null;
+
+    const fullArticle = typeof avisa.updateArticle === "function"
+      ? avisa.updateArticle(created.id, {
+        section: articleInput.section,
+        status: "draft",
+        summary: articleInput.summary,
+        body: articleInput.body,
+        tags: articleInput.tags,
+        source: "aha_avisa",
+        meta: articleInput.meta
+      })
+      : created;
+
+    const articleId = asText(fullArticle?.id || created.id, "");
+    if (!articleId) return null;
+
+    if (typeof avisa.addReferenceToArticle === "function") {
+      asArray(group.references).forEach((ref) => {
+        avisa.addReferenceToArticle(articleId, {
+          title: asText(ref?.title, "Referanse"),
+          type: asText(ref?.type, "reference"),
+          source: asText(ref?.source, ""),
+          refId: asText(ref?.refId || ref?.ref_id, ""),
+          meta: asObject(ref?.meta)
+        });
+      });
+      avisa.addReferenceToArticle(articleId, {
+        title,
+        type: "group",
+        source: "aha_groups",
+        refId: group.id,
+        meta: { createdFrom: "group_workspace" }
+      });
+    }
+
+    return (typeof avisa.loadArticles === "function"
+      ? asArray(avisa.loadArticles()).find((article) => article.id === articleId)
+      : null) || fullArticle || created;
+  }
+
   function safeDecodeHash(value) {
     try {
       return decodeURIComponent(value);
@@ -501,6 +573,16 @@
           <p>Medlemmer: ${escapeHtml(String(activeGroup.members.length))} · Referanser: ${escapeHtml(String(activeGroup.references.length))}</p>
 
           <section class="groups-subsection">
+            <h3>AHAavisa-utkast</h3>
+            <p>Lag et lokalt artikkelutkast basert på gruppens tittel, beskrivelse og referanser.</p>
+            <div class="aha-tile-actions">
+              <button type="button" class="aha-tile-btn aha-tile-btn-primary" id="groups-create-avisa-draft-btn" data-group-id="${escapeHtml(activeGroup.id)}">Lag AHAavisa-utkast fra gruppe</button>
+              <a class="aha-tile-btn" href="avisa.html">Åpne AHAavisa</a>
+            </div>
+            <p class="groups-statusline" id="groups-avisa-draft-status" aria-live="polite"></p>
+          </section>
+
+          <section class="groups-subsection">
             <h3>Medlemmer</h3>
             <ul class="groups-list">
               ${activeGroup.members.length ? activeGroup.members.map((member) => `<li><span>${escapeHtml(member.name)} · ${escapeHtml(member.role)} · ${escapeHtml(member.status)} · ${escapeHtml(member.addedAt)}</span><button type="button" data-action="remove-member" data-group-id="${escapeHtml(activeGroup.id)}" data-member-id="${escapeHtml(member.id)}">Fjern</button></li>`).join("") : "<li>Ingen medlemmer ennå.</li>"}
@@ -616,6 +698,20 @@
       });
     });
 
+    const createDraftBtn = document.getElementById("groups-create-avisa-draft-btn");
+    if (createDraftBtn) {
+      createDraftBtn.addEventListener("click", () => {
+        const groupId = asText(createDraftBtn.getAttribute("data-group-id"), "");
+        const statusEl = document.getElementById("groups-avisa-draft-status");
+        const created = createArticleDraftFromGroup(groupId);
+        if (statusEl) {
+          statusEl.innerHTML = created
+            ? `Artikkelutkast opprettet. <a href="avisa.html">Åpne AHAavisa</a>`
+            : "Kunne ikke opprette artikkelutkast";
+        }
+      });
+    }
+
     document.querySelectorAll('form[data-action="add-reference"]').forEach((form) => {
       form.addEventListener("submit", (event) => {
         event.preventDefault();
@@ -644,6 +740,7 @@
     addReferenceToGroupByObject,
     removeReferenceFromGroup,
     collectAvailableGroupReferences,
+    createArticleDraftFromGroup,
     render,
     refresh
   };
