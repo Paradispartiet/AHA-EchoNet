@@ -11,8 +11,9 @@
   const NOTES_KEY = "aha_notes_v1";
 
   const ALLOWED_SECTIONS = ["nyheter", "kultur", "politikk", "sport", "teknologi", "filosofi", "historygo", "aha", "debatt", "notater"];
-  const ALLOWED_STATUS = ["draft", "ready", "published"];
-  const ACTIVE_STATUS = ["draft", "ready"];
+  const ALLOWED_STATUS = ["draft", "review", "ready", "published_local"];
+  const SECTION_FILTERS = ["alle", "aha", "grupper", "historygo", "kultur", "annet"];
+  let currentSectionFilter = "alle";
 
   function safeParse(raw, fallback) {
     try {
@@ -45,6 +46,12 @@
   function normalizeStatus(status) {
     const normalized = asText(status, "draft").toLowerCase();
     return ALLOWED_STATUS.includes(normalized) ? normalized : "draft";
+  }
+
+  function formatDateLabel(value) {
+    if (!value) return "-";
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString("no-NO");
   }
 
   function normalizeReference(input) {
@@ -140,7 +147,7 @@
       source: current.source || "aha_avisa"
     });
 
-    if (!ACTIVE_STATUS.includes(next.status) && next.status !== "published") next.status = "draft";
+    if (!ALLOWED_STATUS.includes(next.status)) next.status = "draft";
     articles[index] = next;
     saveArticles(articles);
     return next;
@@ -148,6 +155,18 @@
 
   function deleteArticle(id) {
     return updateArticle(id, { deletedAt: new Date().toISOString() });
+  }
+
+  function setArticleStatus(articleId, status) {
+    const normalizedStatus = normalizeStatus(status);
+    if (!ALLOWED_STATUS.includes(normalizedStatus)) return null;
+    return updateArticle(articleId, { status: normalizedStatus });
+  }
+
+  function getSectionBucket(section) {
+    const normalized = asText(section, "annet").toLowerCase();
+    if (["aha", "grupper", "historygo", "kultur"].includes(normalized)) return normalized;
+    return "annet";
   }
 
   function addReferenceToArticle(articleId, referenceInput) {
@@ -229,19 +248,35 @@
   function render() {
     const mount = document.getElementById("avisa-articles");
     const draftCountEl = document.getElementById("avisa-draft-count");
+    const reviewCountEl = document.getElementById("avisa-review-count");
     const readyCountEl = document.getElementById("avisa-ready-count");
-    const refsCountEl = document.getElementById("avisa-refs-count");
+    const publishedCountEl = document.getElementById("avisa-published-count");
+    const sectionsCountEl = document.getElementById("avisa-sections-count");
+    const lastUpdatedEl = document.getElementById("avisa-last-updated");
+    const privacyWarningEl = document.getElementById("avisa-privacy-warning");
 
     const articles = loadArticles().filter((article) => !article.deletedAt);
     const groups = global.AHAGroups?.getActiveGroups ? asArray(global.AHAGroups.getActiveGroups()) : [];
     const availableRefs = collectAvailableArticleSources();
     const draftCount = articles.filter((a) => a.status === "draft").length;
+    const reviewCount = articles.filter((a) => a.status === "review").length;
     const readyCount = articles.filter((a) => a.status === "ready").length;
-    const refsCount = articles.reduce((sum, a) => sum + a.references.length, 0);
+    const publishedCount = articles.filter((a) => a.status === "published_local").length;
+    const sectionCount = new Set(articles.map((a) => asText(a.section, "notater"))).size;
+    const latestUpdatedAt = articles.map((a) => Date.parse(a.updatedAt || "")).filter((v) => Number.isFinite(v)).sort((a, b) => b - a)[0];
 
     if (draftCountEl) draftCountEl.textContent = String(draftCount);
+    if (reviewCountEl) reviewCountEl.textContent = String(reviewCount);
     if (readyCountEl) readyCountEl.textContent = String(readyCount);
-    if (refsCountEl) refsCountEl.textContent = String(refsCount);
+    if (publishedCountEl) publishedCountEl.textContent = String(publishedCount);
+    if (sectionsCountEl) sectionsCountEl.textContent = String(sectionCount);
+    if (lastUpdatedEl) lastUpdatedEl.textContent = latestUpdatedAt ? formatDateLabel(new Date(latestUpdatedAt).toISOString()) : "-";
+
+    const allowPublicPublishing = global.AHAPrivacy?.loadSettings?.().allowPublicPublishing;
+    if (privacyWarningEl) {
+      privacyWarningEl.hidden = Boolean(allowPublicPublishing);
+      privacyWarningEl.textContent = "Offentlig publisering er ikke samtykket til. Lokal publisering sender likevel ikke data ut.";
+    }
 
     if (!mount) return;
     if (!articles.length) {
@@ -253,7 +288,13 @@
       `<option value="${escapeHtml(`${ref.source}::${ref.refId}`)}">${escapeHtml(ref.title)} (${escapeHtml(ref.type)})</option>`
     )).join("");
 
-    mount.innerHTML = articles.map((article) => {
+    const filteredArticles = articles.filter((article) => currentSectionFilter === "alle" || getSectionBucket(article.section) === currentSectionFilter);
+
+    mount.innerHTML = filteredArticles.map((article) => {
+      const groupMetaId = asText(article?.meta?.createdFromGroupId, "");
+      const groupMetaTitle = asText(article?.meta?.createdFromGroupTitle, "");
+      const hasGroupRef = article.references.some((ref) => ref.source === "aha_groups");
+      const hasGroupDraft = Boolean(groupMetaId || hasGroupRef);
       const tags = asArray(article.tags).map((tag) => `<span class="avisa-badge">${escapeHtml(tag)}</span>`).join("");
       const refs = article.references.length
         ? article.references.map((ref) => `
@@ -271,18 +312,21 @@
         <article class="aha-panel avisa-article" data-avisa-article-id="${escapeHtml(article.id)}">
           <header class="avisa-header-row">
             <h3>${escapeHtml(article.title)}</h3>
-            <span class="avisa-badge avisa-status">${escapeHtml(article.status)}</span>
+            <span class="avisa-badge avisa-status status-badge status-${escapeHtml(article.status)}">${escapeHtml(article.status)}</span>
           </header>
+          ${hasGroupDraft ? `<p class="group-draft-badge">Gruppeutkast${groupMetaTitle ? ` · ${escapeHtml(groupMetaTitle)}` : ""}${groupMetaId ? ` · <a href="groups.html#group=${escapeHtml(groupMetaId)}">åpne gruppe</a>` : ""}</p>` : ""}
           <p class="module-meta">Seksjon: ${escapeHtml(article.section)} · Opprettet: ${escapeHtml(article.createdAt)} · Oppdatert: ${escapeHtml(article.updatedAt)}</p>
           <p>${escapeHtml(article.summary || "Ingen ingress ennå.")}</p>
           <div class="avisa-tags">${tags || "<span class='module-meta'>Ingen tags.</span>"}</div>
           <label>Brødtekst
             <textarea data-avisa-body="${escapeHtml(article.id)}">${escapeHtml(article.body)}</textarea>
           </label>
-          <div class="aha-tile-actions">
+          <div class="aha-tile-actions status-actions">
             <button type="button" data-avisa-save-body="${escapeHtml(article.id)}">Lagre tekst</button>
-            <button type="button" data-avisa-set-ready="${escapeHtml(article.id)}">Marker klar</button>
-            <button type="button" data-avisa-set-draft="${escapeHtml(article.id)}">Sett tilbake til utkast</button>
+            <button type="button" data-avisa-status-review="${escapeHtml(article.id)}">Send til review</button>
+            <button type="button" data-avisa-status-ready="${escapeHtml(article.id)}">Marker ready</button>
+            <button type="button" data-avisa-status-published="${escapeHtml(article.id)}">Publiser lokalt</button>
+            <button type="button" data-avisa-status-draft="${escapeHtml(article.id)}">Tilbake til draft</button>
             <button type="button" data-avisa-delete="${escapeHtml(article.id)}">Slett utkast</button>
           </div>
           <section>
@@ -308,7 +352,7 @@
           </section>
         </article>
       `;
-    }).join("");
+    }).join("") || '<article class="aha-panel"><p>Ingen artikler i valgt seksjonsfilter.</p></article>';
   }
 
   function refresh() { render(); }
@@ -342,11 +386,14 @@
         return;
       }
 
-      const readyId = target.getAttribute("data-avisa-set-ready");
-      if (readyId) { updateArticle(readyId, { status: "ready" }); render(); return; }
-
-      const draftId = target.getAttribute("data-avisa-set-draft");
-      if (draftId) { updateArticle(draftId, { status: "draft" }); render(); return; }
+      const reviewId = target.getAttribute("data-avisa-status-review");
+      if (reviewId) { setArticleStatus(reviewId, "review"); render(); return; }
+      const readyId = target.getAttribute("data-avisa-status-ready");
+      if (readyId) { setArticleStatus(readyId, "ready"); render(); return; }
+      const publishedId = target.getAttribute("data-avisa-status-published");
+      if (publishedId) { setArticleStatus(publishedId, "published_local"); render(); return; }
+      const draftId = target.getAttribute("data-avisa-status-draft");
+      if (draftId) { setArticleStatus(draftId, "draft"); render(); return; }
 
       const deleteId = target.getAttribute("data-avisa-delete");
       if (deleteId) { deleteArticle(deleteId); render(); return; }
@@ -388,6 +435,13 @@
         });
         groupStatus.textContent = result?.references ? "Finnes allerede i gruppen" : (result ? "Lagt i gruppe" : "Kunne ikke legge til i gruppe.");
       }
+
+      const filter = target.getAttribute("data-section-filter");
+      if (filter && SECTION_FILTERS.includes(filter)) {
+        currentSectionFilter = filter;
+        document.querySelectorAll("[data-section-filter]").forEach((button) => button.classList.toggle("is-active", button.getAttribute("data-section-filter") === filter));
+        render();
+      }
     });
   }
 
@@ -399,6 +453,7 @@
     deleteArticle,
     addReferenceToArticle,
     removeReferenceFromArticle,
+    setArticleStatus,
     collectAvailableArticleSources,
     render,
     refresh

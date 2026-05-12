@@ -183,6 +183,10 @@ Fase 3 (første leveranse):
 - Fase 4F: Gruppe-arbeidsrom har nå lokal rapport/oppsummering.
 - Rapporten teller referanser, resolved/missing, artikkelutkast og publiseringsmodenhet.
 - Rapporten er read-only og bruker ikke AI/API ennå.
+- Fase 5A: AHAavisa har nå lokal statusflyt med `draft` / `review` / `ready` / `published_local`.
+- Lokal publisering sender ikke data ut, og er kun lokal markering i nettleseren.
+- Artikler kan grupperes og filtreres etter section i AHAavisa.
+- Gruppeutkast vises med badge og lenke tilbake til gruppe.
 
 ### 4. Lister
 
