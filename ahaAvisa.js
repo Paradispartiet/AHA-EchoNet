@@ -11,8 +11,8 @@
   const NOTES_KEY = "aha_notes_v1";
 
   const ALLOWED_SECTIONS = ["nyheter", "kultur", "politikk", "sport", "teknologi", "filosofi", "historygo", "aha", "debatt", "notater"];
-  const ALLOWED_STATUS = ["draft", "ready", "published"];
-  const ACTIVE_STATUS = ["draft", "ready"];
+  const ALLOWED_STATUS = ["draft", "review", "ready", "published_local"];
+  const ACTIVE_STATUS = ["draft", "review", "ready", "published_local"];
   const ALLOWED_PUBLICATION_LAYERS = ["personal", "group", "public_candidate"];
   const PRIVACY_KEY = "aha_privacy_settings_v1";
 
@@ -168,10 +168,16 @@
       source: current.source || "aha_avisa"
     });
 
-    if (!ACTIVE_STATUS.includes(next.status) && next.status !== "published") next.status = "draft";
+    if (!ACTIVE_STATUS.includes(next.status)) next.status = "draft";
     articles[index] = next;
     saveArticles(articles);
     return next;
+  }
+
+  function setArticleStatus(articleId, status) {
+    const candidate = asText(status, "").toLowerCase();
+    if (!ALLOWED_STATUS.includes(candidate)) return null;
+    return updateArticle(articleId, { status: candidate });
   }
 
   function setArticlePublicationLayer(articleId, layer) {
@@ -273,7 +279,9 @@
   function render() {
     const mount = document.getElementById("avisa-articles");
     const draftCountEl = document.getElementById("avisa-draft-count");
+    const reviewCountEl = document.getElementById("avisa-review-count");
     const readyCountEl = document.getElementById("avisa-ready-count");
+    const publishedLocalCountEl = document.getElementById("avisa-published-local-count");
     const refsCountEl = document.getElementById("avisa-refs-count");
     const personalCountEl = document.getElementById("avisa-personal-count");
     const groupCountEl = document.getElementById("avisa-group-count");
@@ -287,14 +295,18 @@
     const groups = global.AHAGroups?.getActiveGroups ? asArray(global.AHAGroups.getActiveGroups()) : [];
     const availableRefs = collectAvailableArticleSources();
     const draftCount = allArticles.filter((a) => a.status === "draft").length;
+    const reviewCount = allArticles.filter((a) => a.status === "review").length;
     const readyCount = allArticles.filter((a) => a.status === "ready").length;
+    const publishedLocalCount = allArticles.filter((a) => a.status === "published_local").length;
     const refsCount = allArticles.reduce((sum, a) => sum + a.references.length, 0);
     const personalCount = allArticles.filter((a) => a.publicationLayer === "personal").length;
     const groupCount = allArticles.filter((a) => a.publicationLayer === "group").length;
     const publicCandidateCount = allArticles.filter((a) => a.publicationLayer === "public_candidate").length;
 
     if (draftCountEl) draftCountEl.textContent = String(draftCount);
+    if (reviewCountEl) reviewCountEl.textContent = String(reviewCount);
     if (readyCountEl) readyCountEl.textContent = String(readyCount);
+    if (publishedLocalCountEl) publishedLocalCountEl.textContent = String(publishedLocalCount);
     if (refsCountEl) refsCountEl.textContent = String(refsCount);
     if (personalCountEl) personalCountEl.textContent = String(personalCount);
     if (groupCountEl) groupCountEl.textContent = String(groupCount);
@@ -305,7 +317,7 @@
       const warning = privacy.allowPublicPublishing === false
         ? "Offentlig publisering er ikke samtykket til. Kandidatmerking er bare lokal."
         : "Offentlig kandidat betyr at artikkelen kan vurderes senere for offentlig AHAavisa/Paradisavisa-format. Ingenting publiseres nå.";
-      layerNoticeEl.textContent = warning;
+      layerNoticeEl.textContent = `${warning} published_local er kun lokal status i nettleseren og sender ingen data ut.`;
     }
 
     if (!mount) return;
@@ -348,8 +360,10 @@
           </label>
           <div class="aha-tile-actions">
             <button type="button" data-avisa-save-body="${escapeHtml(article.id)}">Lagre tekst</button>
-            <button type="button" data-avisa-set-ready="${escapeHtml(article.id)}">Marker klar</button>
-            <button type="button" data-avisa-set-draft="${escapeHtml(article.id)}">Sett tilbake til utkast</button>
+            <button type="button" data-avisa-set-review="${escapeHtml(article.id)}">Send til review</button>
+            <button type="button" data-avisa-set-ready="${escapeHtml(article.id)}">Marker ready</button>
+            <button type="button" data-avisa-set-published-local="${escapeHtml(article.id)}">Publiser lokalt</button>
+            <button type="button" data-avisa-set-draft="${escapeHtml(article.id)}">Tilbake til draft</button>
             <button type="button" data-avisa-set-layer-personal="${escapeHtml(article.id)}">Sett som personlig</button>
             <button type="button" data-avisa-set-layer-group="${escapeHtml(article.id)}">Sett som gruppeavis</button>
             <button type="button" data-avisa-set-layer-public="${escapeHtml(article.id)}">Marker som offentlig kandidat</button>
@@ -414,11 +428,17 @@
         return;
       }
 
+      const reviewId = target.getAttribute("data-avisa-set-review");
+      if (reviewId) { setArticleStatus(reviewId, "review"); render(); return; }
+
       const readyId = target.getAttribute("data-avisa-set-ready");
-      if (readyId) { updateArticle(readyId, { status: "ready" }); render(); return; }
+      if (readyId) { setArticleStatus(readyId, "ready"); render(); return; }
+
+      const publishedLocalId = target.getAttribute("data-avisa-set-published-local");
+      if (publishedLocalId) { setArticleStatus(publishedLocalId, "published_local"); render(); return; }
 
       const draftId = target.getAttribute("data-avisa-set-draft");
-      if (draftId) { updateArticle(draftId, { status: "draft" }); render(); return; }
+      if (draftId) { setArticleStatus(draftId, "draft"); render(); return; }
 
       const personalLayerId = target.getAttribute("data-avisa-set-layer-personal");
       if (personalLayerId) { setArticlePublicationLayer(personalLayerId, "personal"); render(); return; }
@@ -477,6 +497,7 @@
     saveArticles,
     createArticle,
     updateArticle,
+    setArticleStatus,
     setArticlePublicationLayer,
     deleteArticle,
     addReferenceToArticle,
