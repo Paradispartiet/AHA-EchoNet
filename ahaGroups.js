@@ -222,7 +222,10 @@
     const chamber = asObject(safeParse(localStorage.getItem("aha_insight_chamber_v1") || "{}", {}));
     asArray(chamber.insights).forEach((item, index) => {
       if (item?.deletedAt || item?.deleted_at) return;
-      const refId = asText(item?.id, `insight_idx_${index}`);
+      const refId = asText(
+        item?.id || item?.base?.id || item?.source_event_id || item?.sourceEventId || item?.source_id || item?.sourceId || item?.event_id || item?.eventId,
+        `insight_idx_${index}`
+      );
       out.push({ title: asText(item?.title || item?.heading || item?.label || item?.summary || item?.text, "Innsikt"), type: "insight", source: "aha_insights", refId });
     });
   }
@@ -242,7 +245,7 @@
     collectFromInsightChamber(out);
     out.push(...collectFromArrayKey("aha_lists_v1", "list", "aha_lists", (item) => item?.title || "Liste"));
     out.push(...collectFromArrayKey("aha_paths_v1", "path", "aha_paths", (item) => item?.title || "Sti"));
-    out.push(...collectFromArrayKey("aha_articles_v1", "article", "aha_articles", (item) => item?.title || "Artikkel"));
+    out.push(...collectFromArrayKey("aha_articles_v1", "article", "aha_avisa", (item) => item?.title || "Artikkel"));
     out.push(...collectFromArrayKey("aha_notes_v1", "note", "aha_notes", (item) => item?.title || item?.text || "Notat"));
     out.push(...collectFromArrayKey("aha_feed_posts_v1", "feed_post", "aha_feed", (item) => item?.text || item?.title || "Feed-post"));
     return out;
