@@ -134,7 +134,7 @@
       id: "groups",
       title: "Grupper",
       type: "social",
-      status: "shell",
+      status: "active",
       href: "groups.html",
       description: "Fellesrom for samarbeid, deling og kollektiv EchoNet-bygging.",
       phase: 2

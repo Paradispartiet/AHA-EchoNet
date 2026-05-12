@@ -85,6 +85,7 @@ Tankekart kan nå vise lokale koblinger mellom AHA-objekter som noder og referan
 
 Personvern / Kontroll kan nå vise lokal datarapport, eksportere AHA-data og lagre lokale samtykkeinnstillinger.
 AHA Home / Profil samler nå lokal status fra innsikter, notes, galleri, feed, insta, lister, stier, AHAavisa, History Go-import og personvern.
+Grupper / Sirkler kan nå lage lokale grupperom med medlemmer og referanser til AHA-objekter, uten ekte deling ennå.
 
 ### 2. History Go-innsiktsmotoren
 
