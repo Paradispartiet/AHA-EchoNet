@@ -302,6 +302,7 @@
       const items = asArray(chamber.insights);
       for (let i = 0; i < items.length; i += 1) {
         const item = items[i];
+        if (item?.deletedAt || item?.deleted_at) continue;
         const candidates = [
           item?.id, item?.base?.id, item?.source_event_id, item?.sourceEventId, item?.source_id, item?.sourceId, item?.event_id, item?.eventId, `insight_idx_${i}`
         ].map((x) => asText(x, ""));
@@ -318,7 +319,9 @@
     };
     const key = sources[source];
     if (!key) return null;
-    return asArray(safeParse(localStorage.getItem(key) || "[]", [])).find((item) => asText(item?.id, "") === refId) || null;
+    return asArray(safeParse(localStorage.getItem(key) || "[]", []))
+      .filter((item) => !item?.deletedAt && !item?.deleted_at)
+      .find((item) => asText(item?.id, "") === refId) || null;
   }
 
   function referenceFilterMatches(filter, ref) {
