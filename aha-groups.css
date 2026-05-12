@@ -90,3 +90,30 @@
 .groups-activity-list li {
   align-items: baseline;
 }
+
+.groups-report-grid {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  margin-bottom: 8px;
+}
+
+.groups-report-card {
+  border: 1px solid #d8d8e8;
+  border-radius: 8px;
+  padding: 8px;
+  display: grid;
+  gap: 4px;
+}
+
+.groups-report-card strong {
+  font-size: 18px;
+}
+
+.groups-report-list li {
+  align-items: center;
+}
+
+.groups-readiness strong {
+  text-transform: lowercase;
+}

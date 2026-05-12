@@ -802,3 +802,5 @@ Eksisterende kjerneflater (Dashboard, Chat, Notes, Gallery, Feed, Insta) beholde
 Søk / Bibliotek kan nå finne lokale AHA-objekter på tvers av chat-derived insights, notes, feed, gallery, insta, lists, paths og AHAavisa.
 
 History Go-modulen i AHA viser nå importstatus, payload-oppsummering og importerte AHA source events uten automatisk import.
+
+Gruppe-arbeidsrom viser nå en lokal grupperapport med referansestatus, utkaststatus og publiseringsmodenhet.
