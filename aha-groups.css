@@ -69,3 +69,24 @@
 .groups-privacy-note {
   font-weight: 600;
 }
+
+.groups-selector-row,
+.groups-workspace-header,
+.groups-filter-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.groups-workspace-header {
+  justify-content: space-between;
+}
+
+.groups-shared-library .groups-list li {
+  align-items: flex-start;
+}
+
+.groups-activity-list li {
+  align-items: baseline;
+}

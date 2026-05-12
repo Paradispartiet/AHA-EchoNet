@@ -173,6 +173,10 @@ Fase 3 (første leveranse):
 - Fase 4C: Grupper er nå koblet inn i AHA Home/Profile, Søk/Bibliotek, Tankekart og Personvern/Kontroll.
 - `aha_groups_v1` inngår nå i systemstatus, søk, graph og eksport/sletting.
 - Graph viser gruppe → referanse-koblinger via `group_references`.
+- Fase 4D: Grupper har nå lokale arbeidsrom/detaljvisning i `groups.html`.
+- Arbeidsrommet resolver referanser read-only fra AHA-kilder (insights/lister/stier/artikler/notater/feed).
+- Grupper lagrer fortsatt bare referanser, ikke kopier av objekter.
+- Gruppeaktivitet beregnes fra eksisterende metadata (`createdAt`, `updatedAt`, `addedAt`), ikke ny event-logg.
 
 ### 4. Lister
 
