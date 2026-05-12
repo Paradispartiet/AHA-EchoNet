@@ -1,5 +1,6 @@
 .avisa-overview .avisa-badges { display:flex; gap:10px; flex-wrap:wrap; }
 .avisa-badge { background:#eef3ff; color:#1c2b4a; border-radius:999px; padding:4px 10px; font-size:.9rem; }
+.avisa-stats { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px; }
 .avisa-article textarea { width:100%; min-height:140px; margin-top:6px; }
 .avisa-ref-list { margin:10px 0; padding-left:18px; }
 .avisa-ref-list li { display:flex; justify-content:space-between; gap:8px; margin:6px 0; }
@@ -8,3 +9,12 @@
 .avisa-tags { margin:8px 0; display:flex; gap:6px; flex-wrap:wrap; }
 .avisa-header-row { display:flex; justify-content:space-between; align-items:center; gap:12px; }
 .avisa-status { text-transform:uppercase; font-size:.75rem; }
+.status-badge.status-draft { background:#eef3ff; }
+.status-badge.status-review { background:#fff5d6; }
+.status-badge.status-ready { background:#e7f8e9; }
+.status-badge.status-published_local { background:#e7f0ff; }
+.status-actions { margin:10px 0; }
+.section-filter { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+.section-filter button.is-active { border:1px solid #4864e8; background:#eef3ff; }
+.local-publish-note { margin:8px 0; font-size:.92rem; color:#27324a; }
+.group-draft-badge { display:inline-block; background:#f2edff; color:#46238a; padding:3px 8px; border-radius:12px; font-size:.82rem; margin:4px 0; }

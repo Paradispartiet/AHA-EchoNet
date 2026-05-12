@@ -43,10 +43,23 @@
 
     <section class="aha-panel avisa-overview">
       <h2>Oversikt</h2>
-      <div class="avisa-badges">
-        <span class="avisa-badge">Utkast: <strong id="avisa-draft-count">0</strong></span>
+      <div class="avisa-stats">
+        <span class="avisa-badge">Draft: <strong id="avisa-draft-count">0</strong></span>
+        <span class="avisa-badge">Review: <strong id="avisa-review-count">0</strong></span>
         <span class="avisa-badge">Ready: <strong id="avisa-ready-count">0</strong></span>
-        <span class="avisa-badge">Referanser: <strong id="avisa-refs-count">0</strong></span>
+        <span class="avisa-badge">Publisert lokalt: <strong id="avisa-published-count">0</strong></span>
+        <span class="avisa-badge">Seksjoner: <strong id="avisa-sections-count">0</strong></span>
+        <span class="avisa-badge">Siste oppdatering: <strong id="avisa-last-updated">-</strong></span>
+      </div>
+      <div id="avisa-privacy-warning" class="local-publish-note" hidden></div>
+      <p class="local-publish-note">“Publiser lokalt” betyr bare at artikkelen markeres som lokal publisert i denne nettleseren. Ingen data sendes ut. Ekte publisering kommer senere.</p>
+      <div class="section-filter" id="avisa-section-filter" role="group" aria-label="Filtrer seksjon">
+        <button type="button" data-section-filter="alle" class="is-active">Alle</button>
+        <button type="button" data-section-filter="aha">aha</button>
+        <button type="button" data-section-filter="grupper">grupper</button>
+        <button type="button" data-section-filter="historygo">historygo</button>
+        <button type="button" data-section-filter="kultur">kultur</button>
+        <button type="button" data-section-filter="annet">annet</button>
       </div>
     </section>
 
@@ -55,6 +68,7 @@
 
   <script src="ahaContracts.js"></script>
   <script src="ahaGroups.js"></script>
+  <script src="ahaPrivacy.js"></script>
   <script src="ahaAvisa.js"></script>
 </body>
 </html>
