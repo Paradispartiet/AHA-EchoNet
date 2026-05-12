@@ -1,0 +1,15 @@
+{
+  "subject_id": "natur",
+  "subject_label": "Natur og omgivelser",
+  "emner": [
+    {
+      "emne_id": "parker_torg_fellesskap_natur",
+      "title": "Parker, torg og sosialt fellesskap",
+      "core_concepts": ["grøntområde", "park", "trivsel", "nærnatur", "fellesskap"],
+      "keywords": ["utelek", "rekreasjon", "miljø", "helse"],
+      "thinkers": ["Elinor Ostrom"],
+      "summary": "Grønne byrom som naturkontakt i hverdagen og sosial ressurs for lokalsamfunn.",
+      "description": "Viser hvordan parker og åpne områder virker inn på livskvalitet, fellesskap og aktivitet."
+    }
+  ]
+}

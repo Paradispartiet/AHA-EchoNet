@@ -1,6 +1,31 @@
 {
   "subjects": [
     {
+      "subject_id": "by",
+      "subject_label": "By og samfunnsrom",
+      "file": "by.json"
+    },
+    {
+      "subject_id": "kultur_kunst",
+      "subject_label": "Kultur og kunst",
+      "file": "kultur_kunst.json"
+    },
+    {
+      "subject_id": "natur",
+      "subject_label": "Natur og omgivelser",
+      "file": "natur.json"
+    },
+    {
+      "subject_id": "sport_lek",
+      "subject_label": "Sport og lek",
+      "file": "sport_lek.json"
+    },
+    {
+      "subject_id": "psykologi_pedagogikk",
+      "subject_label": "Psykologi og pedagogikk",
+      "file": "psykologi_pedagogikk.json"
+    },
+    {
       "subject_id": "politikk",
       "subject_label": "Politikk & samfunn",
       "file": "politikk.json"

@@ -271,7 +271,7 @@
     const fieldId = getFieldId();
 
     const sentences = global.InsightsEngine.splitIntoSentences(text);
-    const chunks = sentences.length ? sentences : [text];
+    const chunks = groupSentencesForInsights(sentences, text);
 
     if (global.AHAIngest && typeof global.AHAIngest.ingest === "function") {
       // AHAIngest håndterer både source event-loggen, signal-konstruksjon
@@ -323,6 +323,23 @@
     });
 
     return chunks.length;
+  }
+
+  function groupSentencesForInsights(sentences, fallbackText) {
+    const safeSentences = Array.isArray(sentences) ? sentences.filter(Boolean) : [];
+    if (!safeSentences.length) return [fallbackText];
+    if (safeSentences.length <= 3) return safeSentences;
+
+    const targetChunks = Math.min(5, Math.max(3, Math.round(safeSentences.length / 3)));
+    const chunkSize = Math.ceil(safeSentences.length / targetChunks);
+    const grouped = [];
+
+    for (let i = 0; i < safeSentences.length; i += chunkSize) {
+      const part = safeSentences.slice(i, i + chunkSize).join(". ").trim();
+      if (part) grouped.push(part.endsWith(".") ? part : `${part}.`);
+    }
+
+    return grouped.length ? grouped.slice(0, 5) : [fallbackText];
   }
 
   function buildAIState() {

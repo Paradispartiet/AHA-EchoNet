@@ -93,6 +93,15 @@
     return collector.length > before ? boost : 0;
   }
 
+  const GENERIC_TERMS = new Set(["kunnskap", "mennesker", "sted", "samfunn"]);
+
+  function termWeight(term, fieldBoost) {
+    const token = String(term || "").trim().toLowerCase();
+    if (!token) return 0;
+    if (GENERIC_TERMS.has(token)) return Math.max(0.2, fieldBoost * 0.2);
+    return fieldBoost;
+  }
+
   async function matchText(text, options) {
     const source = options?.source || "text";
     const maxResults = Math.min(8, Number(options?.maxResults) || 8);
@@ -120,20 +129,49 @@
 
       (subject.emner || []).forEach((emne) => {
         const found = [];
-        let score = 0;
-        score += scanField(target, emne.title, 3, found);
-        score += scanField(target, emne.core_concepts, 3, found);
-        score += scanField(target, emne.keywords, 2, found);
-        score += scanField(target, emne.thinkers, 3, found);
-        score += scanField(target, emne.summary, 1, found);
-        score += scanField(target, emne.description, 1, found);
-        score += scanField(target, emne.learning_goals, 1, found);
-        score += scanField(target, emne.checkpoints, 1, found);
+        const fieldHits = {
+          title: [],
+          core: [],
+          keywords: [],
+          thinkers: [],
+          summary: [],
+          description: [],
+          goals: [],
+          checkpoints: []
+        };
 
-        if (!score) return;
+        scanField(target, emne.title, 3, fieldHits.title);
+        scanField(target, emne.core_concepts, 3, fieldHits.core);
+        scanField(target, emne.keywords, 2, fieldHits.keywords);
+        scanField(target, emne.thinkers, 3, fieldHits.thinkers);
+        scanField(target, emne.summary, 1, fieldHits.summary);
+        scanField(target, emne.description, 1, fieldHits.description);
+        scanField(target, emne.learning_goals, 1, fieldHits.goals);
+        scanField(target, emne.checkpoints, 1, fieldHits.checkpoints);
 
-        const thinkerHit = (emne.thinkers || []).some((t) => found.includes(t));
-        const conceptHit = (emne.core_concepts || []).some((c) => found.includes(c));
+        const weightedHits = []
+          .concat(fieldHits.title.map((term) => termWeight(term, 3)))
+          .concat(fieldHits.core.map((term) => termWeight(term, 3)))
+          .concat(fieldHits.keywords.map((term) => termWeight(term, 2)))
+          .concat(fieldHits.thinkers.map((term) => termWeight(term, 3)))
+          .concat(fieldHits.summary.map((term) => termWeight(term, 1)))
+          .concat(fieldHits.description.map((term) => termWeight(term, 1)))
+          .concat(fieldHits.goals.map((term) => termWeight(term, 1)))
+          .concat(fieldHits.checkpoints.map((term) => termWeight(term, 1)));
+
+        const uniqueFound = Array.from(new Set(Object.values(fieldHits).flat()));
+        if (!uniqueFound.length) return;
+
+        let score = weightedHits.reduce((sum, value) => sum + value, 0);
+        const thematicDiversityBonus = Math.max(0, uniqueFound.length - 1) * 1.2;
+        score += thematicDiversityBonus;
+
+        const strongFieldHit = fieldHits.title.length + fieldHits.core.length;
+        if (strongFieldHit > 0) score += 1.5 + strongFieldHit * 0.5;
+        if (uniqueFound.length === 1 && GENERIC_TERMS.has(uniqueFound[0].toLowerCase())) score = Math.min(score, 0.5);
+
+        const thinkerHit = (emne.thinkers || []).some((t) => uniqueFound.includes(t));
+        const conceptHit = (emne.core_concepts || []).some((c) => uniqueFound.includes(c));
         const type = thinkerHit ? "thinker" : conceptHit ? "concept" : "emne";
 
         addMatch(matches, `emne:${subject.subject_id}:${emne.emne_id}`, {
@@ -143,7 +181,7 @@
           title: emne.title,
           type,
           score,
-          matched_terms: Array.from(new Set(found)),
+          matched_terms: uniqueFound,
           source
         });
       });
