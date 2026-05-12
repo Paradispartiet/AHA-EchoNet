@@ -17,7 +17,7 @@
         <a class="aha-tile-btn aha-tile-btn-secondary" href="index.html">Tilbake til AHA Home</a>
         <a class="aha-tile-btn aha-tile-btn-primary" href="/History-Go/">Åpne History Go</a>
         <button class="aha-tile-btn aha-tile-btn-secondary" id="btn-hg-refresh" type="button">Oppdater</button>
-        <button class="aha-tile-btn aha-tile-btn-primary" id="btn-import-hg" type="button">Importer fra History Go</button>
+        <button class="aha-tile-btn aha-tile-btn-primary" id="btn-hg-import" type="button">Importer fra History Go</button>
       </div>
       <p id="hg-import-status" class="aha-muted"></p>
     </section>
@@ -96,7 +96,7 @@
         var refreshBtn = document.getElementById("btn-hg-refresh");
         if (refreshBtn) refreshBtn.addEventListener("click", refreshStatus);
 
-        var importBtn = document.getElementById("btn-import-hg");
+        var importBtn = document.getElementById("btn-hg-import");
         if (importBtn) importBtn.addEventListener("click", importFromHistoryGo);
 
         window.addEventListener("aha:historygo-imported", refreshStatus);
