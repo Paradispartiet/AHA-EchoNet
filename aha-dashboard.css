@@ -615,3 +615,33 @@ input:focus { border-color: var(--aha-yellow); box-shadow: 0 0 0 3px rgba(246,20
   display: grid;
   gap: 6px;
 }
+
+.aha-historygo-payload-list {
+  margin: 0;
+  padding-left: 20px;
+  display: grid;
+  gap: 6px;
+}
+
+.aha-historygo-event-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.aha-historygo-event-list li {
+  border: 1px solid var(--aha-line);
+  border-radius: 12px;
+  padding: 10px;
+  background: var(--aha-card-soft);
+  display: grid;
+  gap: 4px;
+}
+
+.aha-historygo-event-list p,
+.aha-historygo-event-list small {
+  margin: 0;
+  color: var(--aha-muted);
+}

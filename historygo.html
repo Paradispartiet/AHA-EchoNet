@@ -3,25 +3,105 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>History Go</title>
+  <title>History Go i AHA</title>
   <link rel="stylesheet" href="aha-chat.css" />
   <link rel="stylesheet" href="aha-dashboard.css" />
 </head>
 <body>
-  <main class="aha-dashboard" style="max-width: 900px;">
+  <main class="aha-dashboard" style="max-width: 960px;">
     <section class="aha-panel">
-      <p class="eyebrow">AHA Modulskall</p>
-      <h1>History Go</h1>
-      <p>
-        Denne modulen skal gi åpning til History Go, importstatus, besøkte
-        steder, samlet kunnskap, Groundhopper-statistikk, badges, personer,
-        lag/fotballspillere og funksjon for å sende materiale til AHA.
-      </p>
+      <p class="eyebrow">AHA Modul</p>
+      <h1>History Go i AHA</h1>
+      <p>History Go er samlings- og læringsuniverset. AHA leser importert materiale som personlig innsikt.</p>
       <div class="aha-tile-actions">
-        <a class="aha-tile-btn aha-tile-btn-primary" href="/History-Go/">Åpne History Go</a>
         <a class="aha-tile-btn aha-tile-btn-secondary" href="index.html">Tilbake til AHA Home</a>
+        <a class="aha-tile-btn aha-tile-btn-primary" href="/History-Go/">Åpne History Go</a>
+        <button class="aha-tile-btn aha-tile-btn-secondary" id="btn-hg-refresh" type="button">Oppdater</button>
+        <button class="aha-tile-btn aha-tile-btn-primary" id="btn-import-hg" type="button">Importer fra History Go</button>
       </div>
+      <p id="hg-import-status" class="aha-muted"></p>
+    </section>
+
+    <section class="aha-panel">
+      <h2>Status</h2>
+      <div id="hg-status-cards" class="aha-profile-status-grid"></div>
+    </section>
+
+    <section class="aha-panel">
+      <h2>Payload-oppsummering</h2>
+      <ul id="hg-payload-summary" class="aha-historygo-payload-list"></ul>
+    </section>
+
+    <section class="aha-panel">
+      <h2>Importerte AHA-events</h2>
+      <p>Antall importerte source events: <strong id="hg-imported-events-total">0</strong></p>
+      <h3>Counts by source_type</h3>
+      <ul id="hg-imported-source-type-counts" class="aha-historygo-payload-list"></ul>
+      <h3>Siste 10 importerte source events</h3>
+      <ul id="hg-imported-events-list" class="aha-historygo-event-list"></ul>
+    </section>
+
+    <section class="aha-panel">
+      <h2>Importerte innsikter</h2>
+      <p>Antall innsikter med History Go-importsignal: <strong id="hg-imported-insights-count">0</strong></p>
+    </section>
+
+    <section class="aha-panel">
+      <h2>Forklaring</h2>
+      <ul class="aha-historygo-payload-list">
+        <li>History Go samler steder, personer, badges og kunnskap.</li>
+        <li>AHA importerer dette som signaler.</li>
+        <li>AHA lager ikke ny History Go-motor.</li>
+        <li>Import skjer bare når brukeren trykker import.</li>
+      </ul>
     </section>
   </main>
+
+  <script src="insightsChamber.js"></script>
+  <script src="ahaSources.js"></script>
+  <script src="ahaIngest.js"></script>
+  <script src="ahaHistoryGoImport.js"></script>
+  <script src="ahaHistoryGoStatus.js"></script>
+  <script>
+    (function () {
+      "use strict";
+
+      function setStatus(message) {
+        var el = document.getElementById("hg-import-status");
+        if (el) el.textContent = message;
+      }
+
+      function refreshStatus() {
+        if (window.AHAHistoryGoStatus && typeof window.AHAHistoryGoStatus.refresh === "function") {
+          window.AHAHistoryGoStatus.refresh();
+        }
+      }
+
+      function importFromHistoryGo() {
+        if (!window.AHAHistoryGoImport || typeof window.AHAHistoryGoImport.importHistoryGoDataFromSharedStorage !== "function") {
+          setStatus("Importadapter mangler.");
+          return;
+        }
+        try {
+          var counts = window.AHAHistoryGoImport.importHistoryGoDataFromSharedStorage();
+          setStatus("Import fullført: " + JSON.stringify(counts));
+        } catch (error) {
+          setStatus(error && error.message ? error.message : "Import feilet.");
+        }
+        refreshStatus();
+      }
+
+      document.addEventListener("DOMContentLoaded", function () {
+        refreshStatus();
+        var refreshBtn = document.getElementById("btn-hg-refresh");
+        if (refreshBtn) refreshBtn.addEventListener("click", refreshStatus);
+
+        var importBtn = document.getElementById("btn-import-hg");
+        if (importBtn) importBtn.addEventListener("click", importFromHistoryGo);
+
+        window.addEventListener("aha:historygo-imported", refreshStatus);
+      });
+    })();
+  </script>
 </body>
 </html>
