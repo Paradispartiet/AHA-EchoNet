@@ -183,6 +183,9 @@ Fase 3 (første leveranse):
 - Fase 4F: Gruppe-arbeidsrom har nå lokal rapport/oppsummering.
 - Rapporten teller referanser, resolved/missing, artikkelutkast og publiseringsmodenhet.
 - Rapporten er read-only og bruker ikke AI/API ennå.
+- Fase 5B: AHAavisa har nå tre lokale publiseringslag: personlig, gruppe og offentlig kandidat.
+- Offentlig kandidat er bare lokal markering, ikke publisering.
+- Gruppeavis kobles til `aha_groups_v1`.
 
 ### 4. Lister
 

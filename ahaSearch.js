@@ -272,18 +272,19 @@
       const refId = asText(article?.id || base?.id, "");
       if (!refId) return;
       const refs = asArray(article?.references).map((ref) => asText(ref?.title, "")).filter(Boolean).join(" ");
+      const publicationLayer = asText(article?.publicationLayer || (article?.meta?.createdFromGroupId ? "group" : "personal"), "personal");
       out.push(createSearchItem({
         id: `article_${refId}`,
         title: asText(article?.title, "Artikkelutkast"),
         type: "article",
         source: "aha_avisa",
         refId,
-        text: `${asText(article?.summary, "")} ${asText(article?.body, "")} ${refs}`.trim(),
+        text: `${asText(article?.summary, "")} ${asText(article?.body, "")} ${refs} ${publicationLayer}`.trim(),
         tags: article?.tags || base?.tags,
         createdAt: base?.createdAt,
         updatedAt: base?.updatedAt,
         href: "avisa.html",
-        meta: { referenceCount: asArray(article?.references).length }
+        meta: { referenceCount: asArray(article?.references).length, publicationLayer }
       }));
     });
 

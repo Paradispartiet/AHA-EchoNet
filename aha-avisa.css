@@ -8,3 +8,5 @@
 .avisa-tags { margin:8px 0; display:flex; gap:6px; flex-wrap:wrap; }
 .avisa-header-row { display:flex; justify-content:space-between; align-items:center; gap:12px; }
 .avisa-status { text-transform:uppercase; font-size:.75rem; }
+
+.avisa-layer { background:#e7f7ef; color:#14532d; }

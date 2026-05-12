@@ -13,6 +13,8 @@
   const ALLOWED_SECTIONS = ["nyheter", "kultur", "politikk", "sport", "teknologi", "filosofi", "historygo", "aha", "debatt", "notater"];
   const ALLOWED_STATUS = ["draft", "ready", "published"];
   const ACTIVE_STATUS = ["draft", "ready"];
+  const ALLOWED_PUBLICATION_LAYERS = ["personal", "group", "public_candidate"];
+  const PRIVACY_KEY = "aha_privacy_settings_v1";
 
   function safeParse(raw, fallback) {
     try {
@@ -45,6 +47,31 @@
   function normalizeStatus(status) {
     const normalized = asText(status, "draft").toLowerCase();
     return ALLOWED_STATUS.includes(normalized) ? normalized : "draft";
+  }
+
+
+  function inferPublicationLayer(src) {
+    const meta = safeObject(src?.meta);
+    if (meta.createdFromGroupId) return "group";
+    const refs = asArray(src?.references);
+    const hasGroupRef = refs.some((ref) => asText(ref?.source, "") === "aha_groups");
+    return hasGroupRef ? "group" : "personal";
+  }
+
+  function normalizePublicationLayer(layer, src) {
+    const candidate = asText(layer, "").toLowerCase();
+    if (ALLOWED_PUBLICATION_LAYERS.includes(candidate)) return candidate;
+    return inferPublicationLayer(src);
+  }
+
+  function layerLabel(layer) {
+    if (layer === "group") return "Gruppe";
+    if (layer === "public_candidate") return "Offentlig kandidat";
+    return "Personlig";
+  }
+
+  function loadPrivacySettings() {
+    return safeObject(safeParse(localStorage.getItem(PRIVACY_KEY) || "{}", {}));
   }
 
   function normalizeReference(input) {
@@ -83,6 +110,7 @@
       tags,
       references: asArray(src.references).map((ref) => normalizeReference(ref)).filter((ref) => ref.source && ref.refId),
       source: asText(src.source, "aha_avisa"),
+      publicationLayer: normalizePublicationLayer(src.publicationLayer, src),
       meta: safeObject(src.meta),
       deletedAt: src.deletedAt || src.deleted_at || ""
     };
@@ -144,6 +172,22 @@
     articles[index] = next;
     saveArticles(articles);
     return next;
+  }
+
+  function setArticlePublicationLayer(articleId, layer) {
+    const candidate = asText(layer, "").toLowerCase();
+    if (!ALLOWED_PUBLICATION_LAYERS.includes(candidate)) return null;
+    const normalizedLayer = candidate;
+    const articles = loadArticles();
+    const index = articles.findIndex((article) => article.id === articleId);
+    if (index < 0) return null;
+    articles[index] = normalizeArticle({
+      ...articles[index],
+      publicationLayer: normalizedLayer,
+      updatedAt: new Date().toISOString()
+    });
+    saveArticles(articles);
+    return articles[index];
   }
 
   function deleteArticle(id) {
@@ -231,17 +275,38 @@
     const draftCountEl = document.getElementById("avisa-draft-count");
     const readyCountEl = document.getElementById("avisa-ready-count");
     const refsCountEl = document.getElementById("avisa-refs-count");
+    const personalCountEl = document.getElementById("avisa-personal-count");
+    const groupCountEl = document.getElementById("avisa-group-count");
+    const publicCountEl = document.getElementById("avisa-public-candidate-count");
+    const layerFilter = document.getElementById("avisa-layer-filter");
+    const layerNoticeEl = document.getElementById("avisa-layer-notice");
 
-    const articles = loadArticles().filter((article) => !article.deletedAt);
+    const allArticles = loadArticles().filter((article) => !article.deletedAt);
+    const selectedLayer = asText(layerFilter?.value, "all");
+    const articles = selectedLayer === "all" ? allArticles : allArticles.filter((article) => article.publicationLayer === selectedLayer);
     const groups = global.AHAGroups?.getActiveGroups ? asArray(global.AHAGroups.getActiveGroups()) : [];
     const availableRefs = collectAvailableArticleSources();
-    const draftCount = articles.filter((a) => a.status === "draft").length;
-    const readyCount = articles.filter((a) => a.status === "ready").length;
-    const refsCount = articles.reduce((sum, a) => sum + a.references.length, 0);
+    const draftCount = allArticles.filter((a) => a.status === "draft").length;
+    const readyCount = allArticles.filter((a) => a.status === "ready").length;
+    const refsCount = allArticles.reduce((sum, a) => sum + a.references.length, 0);
+    const personalCount = allArticles.filter((a) => a.publicationLayer === "personal").length;
+    const groupCount = allArticles.filter((a) => a.publicationLayer === "group").length;
+    const publicCandidateCount = allArticles.filter((a) => a.publicationLayer === "public_candidate").length;
 
     if (draftCountEl) draftCountEl.textContent = String(draftCount);
     if (readyCountEl) readyCountEl.textContent = String(readyCount);
     if (refsCountEl) refsCountEl.textContent = String(refsCount);
+    if (personalCountEl) personalCountEl.textContent = String(personalCount);
+    if (groupCountEl) groupCountEl.textContent = String(groupCount);
+    if (publicCountEl) publicCountEl.textContent = String(publicCandidateCount);
+
+    const privacy = loadPrivacySettings();
+    if (layerNoticeEl) {
+      const warning = privacy.allowPublicPublishing === false
+        ? "Offentlig publisering er ikke samtykket til. Kandidatmerking er bare lokal."
+        : "Offentlig kandidat betyr at artikkelen kan vurderes senere for offentlig AHAavisa/Paradisavisa-format. Ingenting publiseres nå.";
+      layerNoticeEl.textContent = warning;
+    }
 
     if (!mount) return;
     if (!articles.length) {
@@ -272,8 +337,10 @@
           <header class="avisa-header-row">
             <h3>${escapeHtml(article.title)}</h3>
             <span class="avisa-badge avisa-status">${escapeHtml(article.status)}</span>
+            <span class="avisa-badge avisa-layer">${escapeHtml(layerLabel(article.publicationLayer))}</span>
           </header>
-          <p class="module-meta">Seksjon: ${escapeHtml(article.section)} · Opprettet: ${escapeHtml(article.createdAt)} · Oppdatert: ${escapeHtml(article.updatedAt)}</p>
+          <p class="module-meta">Seksjon: ${escapeHtml(article.section)} · Lag: ${escapeHtml(article.publicationLayer)} · Opprettet: ${escapeHtml(article.createdAt)} · Oppdatert: ${escapeHtml(article.updatedAt)}</p>
+          ${(article.meta?.createdFromGroupId || article.references.some((ref) => ref.source === "aha_groups")) ? `<p class="module-meta">Gruppekobling: <a href="groups.html#group=${escapeHtml(article.meta?.createdFromGroupId || article.references.find((ref) => ref.source === "aha_groups")?.refId || "")}">${escapeHtml(article.meta?.createdFromGroupTitle || article.references.find((ref) => ref.source === "aha_groups")?.title || "Åpne gruppe")}</a></p>` : ""}
           <p>${escapeHtml(article.summary || "Ingen ingress ennå.")}</p>
           <div class="avisa-tags">${tags || "<span class='module-meta'>Ingen tags.</span>"}</div>
           <label>Brødtekst
@@ -283,6 +350,9 @@
             <button type="button" data-avisa-save-body="${escapeHtml(article.id)}">Lagre tekst</button>
             <button type="button" data-avisa-set-ready="${escapeHtml(article.id)}">Marker klar</button>
             <button type="button" data-avisa-set-draft="${escapeHtml(article.id)}">Sett tilbake til utkast</button>
+            <button type="button" data-avisa-set-layer-personal="${escapeHtml(article.id)}">Sett som personlig</button>
+            <button type="button" data-avisa-set-layer-group="${escapeHtml(article.id)}">Sett som gruppeavis</button>
+            <button type="button" data-avisa-set-layer-public="${escapeHtml(article.id)}">Marker som offentlig kandidat</button>
             <button type="button" data-avisa-delete="${escapeHtml(article.id)}">Slett utkast</button>
           </div>
           <section>
@@ -329,6 +399,8 @@
     }
 
     if (refreshBtn) refreshBtn.addEventListener("click", refresh);
+    const layerFilter = document.getElementById("avisa-layer-filter");
+    if (layerFilter) layerFilter.addEventListener("change", render);
 
     document.addEventListener("click", function (event) {
       const target = event.target;
@@ -347,6 +419,15 @@
 
       const draftId = target.getAttribute("data-avisa-set-draft");
       if (draftId) { updateArticle(draftId, { status: "draft" }); render(); return; }
+
+      const personalLayerId = target.getAttribute("data-avisa-set-layer-personal");
+      if (personalLayerId) { setArticlePublicationLayer(personalLayerId, "personal"); render(); return; }
+
+      const groupLayerId = target.getAttribute("data-avisa-set-layer-group");
+      if (groupLayerId) { setArticlePublicationLayer(groupLayerId, "group"); render(); return; }
+
+      const publicLayerId = target.getAttribute("data-avisa-set-layer-public");
+      if (publicLayerId) { setArticlePublicationLayer(publicLayerId, "public_candidate"); render(); return; }
 
       const deleteId = target.getAttribute("data-avisa-delete");
       if (deleteId) { deleteArticle(deleteId); render(); return; }
@@ -396,6 +477,7 @@
     saveArticles,
     createArticle,
     updateArticle,
+    setArticlePublicationLayer,
     deleteArticle,
     addReferenceToArticle,
     removeReferenceFromArticle,

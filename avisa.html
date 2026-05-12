@@ -47,7 +47,19 @@
         <span class="avisa-badge">Utkast: <strong id="avisa-draft-count">0</strong></span>
         <span class="avisa-badge">Ready: <strong id="avisa-ready-count">0</strong></span>
         <span class="avisa-badge">Referanser: <strong id="avisa-refs-count">0</strong></span>
+        <span class="avisa-badge">Personlig: <strong id="avisa-personal-count">0</strong></span>
+        <span class="avisa-badge">Gruppeavis: <strong id="avisa-group-count">0</strong></span>
+        <span class="avisa-badge">Offentlig kandidat: <strong id="avisa-public-candidate-count">0</strong></span>
       </div>
+      <label>Filtrer publiseringslag
+        <select id="avisa-layer-filter">
+          <option value="all">Alle</option>
+          <option value="personal">Personlig avis</option>
+          <option value="group">Gruppeavis</option>
+          <option value="public_candidate">Offentlig kandidatlag</option>
+        </select>
+      </label>
+      <p id="avisa-layer-notice" class="module-meta"></p>
     </section>
 
     <section id="avisa-articles"></section>
