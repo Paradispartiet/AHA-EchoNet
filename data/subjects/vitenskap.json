@@ -1,0 +1,28 @@
+{
+  "subject_id": "vitenskap",
+  "subject_label": "Vitenskap & filosofi",
+  "emner": [
+    {
+      "emne_id": "dialektikk_selvbevissthet",
+      "title": "Dialektikk og selvbevissthet",
+      "core_concepts": ["selvbevissthet", "godt/ondt", "antagonistiske krefter", "aksjon/reaksjon"],
+      "keywords": ["dialektikk", "erkjennelse", "motsigelser"],
+      "thinkers": ["Hegel", "Nietzsche"],
+      "learning_goals": ["forstå dialektisk tenkning", "analysere motsetninger i moral"],
+      "checkpoints": ["kan forklare tese-antitese-bevegelse", "kan knytte selvbevissthet til konflikt"],
+      "summary": "Utforsker hvordan motsetninger driver utvikling i tanke og samfunn.",
+      "description": "Ser på hvordan subjektet formes gjennom kamp, negasjon og refleksjon."
+    },
+    {
+      "emne_id": "makt_kunnskap",
+      "title": "Makt, kunnskap og institusjoner",
+      "core_concepts": ["makt", "institusjon", "normalisering"],
+      "keywords": ["fengsel", "disiplin", "kontroll"],
+      "thinkers": ["Foucault", "Agamben"],
+      "learning_goals": ["forstå forholdet mellom kunnskap og styring"],
+      "checkpoints": ["kan identifisere institusjonelle maktformer"],
+      "summary": "Teorier om hvordan sannhet og normer produseres i systemer.",
+      "description": "Knytter vitenskapelig kategorisering til politisk praksis og kontrollregimer."
+    }
+  ]
+}

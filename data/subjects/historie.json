@@ -1,0 +1,17 @@
+{
+  "subject_id": "historie",
+  "subject_label": "Historie",
+  "emner": [
+    {
+      "emne_id": "poblenes_historie",
+      "title": "Pøblens historie og underfra-perspektiv",
+      "core_concepts": ["pøblens historie", "tilsidesatte", "underkuede"],
+      "keywords": ["folkelig motstand", "sosial historie", "historie nedenfra"],
+      "thinkers": ["Marx", "Fanon"],
+      "learning_goals": ["kunne lese historien fra de marginaliserte sitt ståsted"],
+      "checkpoints": ["kan sammenligne elitehistorie og underfra-historie"],
+      "summary": "Historieforståelse med fokus på dem som vanligvis ikke skriver historien selv.",
+      "description": "Gir et blikk på konflikt, motstand og erfaringene til samfunnets randgrupper."
+    }
+  ]
+}

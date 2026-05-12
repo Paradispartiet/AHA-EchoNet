@@ -97,6 +97,29 @@
     el.textContent = String(message || "");
   }
 
+  function renderSubjectChips(row, matches) {
+    const links = Array.isArray(matches) ? matches : [];
+    if (!row || !links.length) return;
+    const wrap = document.createElement("section");
+    wrap.className = "subject-links";
+    wrap.innerHTML = '<span class="subject-links-label">Fagkoblinger</span>';
+    const chips = document.createElement("div");
+    chips.className = "subject-link-chips";
+    links.forEach((item) => {
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "subject-link-chip";
+      chip.textContent = String(item?.title || item?.subject_label || "Fagkobling");
+      chip.addEventListener("click", () => {
+        setComposerText(`Bygg videre på dette med utgangspunkt i [${chip.textContent}].`);
+        setStatusNote(`La inn fagkobling: ${chip.textContent}`);
+      });
+      chips.appendChild(chip);
+    });
+    wrap.appendChild(chips);
+    row.appendChild(wrap);
+  }
+
   function appendChat(role, text, options) {
     const log = document.getElementById("chat-log");
     if (!log) return;
@@ -122,6 +145,7 @@
 
     row.appendChild(div);
     const categories = Array.isArray(options?.categoryChips) ? options.categoryChips.filter(Boolean).slice(0, 8) : [];
+    const subjectMatches = Array.isArray(options?.subjectMatches) ? options.subjectMatches.slice(0, 8) : [];
     if (categories.length) {
       const chips = document.createElement("div");
       chips.className = "message-category-chips";
@@ -139,6 +163,7 @@
       });
       row.appendChild(chips);
     }
+    if (subjectMatches.length) renderSubjectChips(row, subjectMatches);
     row.appendChild(highlightBtn);
     log.appendChild(row);
     log.scrollTop = log.scrollHeight;
@@ -752,7 +777,10 @@
         try {
           const agent = await askAhaAgent(text);
           const reply = String(agent?.reply || "").trim() || "AHA-agenten returnerte tomt svar.";
-          appendChat("aha", reply, { categoryChips: suggestCategoryChips() });
+          const subjectMatches = global.AHASubjectEngine?.matchText
+            ? await global.AHASubjectEngine.matchText(`${text} ${reply}`, { source: "chat" })
+            : [];
+          appendChat("aha", reply, { categoryChips: suggestCategoryChips(), subjectMatches });
           // AHA-agentens egne svar skal vises i chatten og logges som
           // source event, men IKKE bli en ordinær brukerinnsikt. AI-
           // oppsummeringer hører ikke hjemme i innsiktskammeret. skip_insight

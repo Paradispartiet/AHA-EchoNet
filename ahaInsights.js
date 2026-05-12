@@ -126,6 +126,13 @@
     return { ok: true, reason: "added", message: "Lagt til i liste" };
   }
 
+  function renderSubjectLinks(matches) {
+    const items = Array.isArray(matches) ? matches.slice(0, 8) : [];
+    if (!items.length) return "";
+    const chips = items.map((item) => `<span class="subject-link-chip insight-subject-chip">${escapeHtml(asText(item?.title || item?.subject_label, "Fagkobling"))}</span>`).join("");
+    return `<section class="subject-links insight-subject-links"><span class="subject-links-label">Fagkoblinger</span><div class="subject-link-chips">${chips}</div></section>`;
+  }
+
   function createInsightCard(view, sourceEvent, insight, index) {
     const card = document.createElement("article");
     card.className = "insight-card insight-archive-card";
@@ -171,11 +178,20 @@
         ${view.sourceEventId ? `<span class="insight-chip">Kilde-ID: ${escapeHtml(view.sourceEventId)}</span>` : ""}
       </div>
       ${terms ? `<div class="insight-layer-chips">${terms}</div>` : ""}
+      <div class="insight-subject-links-host"></div>
       <section class="insight-source-block">${sourceHtml}</section>
       ${listSection}
     `;
     card.dataset.insightIndex = String(index);
     card._insightRaw = insight;
+
+    if (global.AHASubjectEngine?.matchInsight) {
+      global.AHASubjectEngine.matchInsight(insight).then((matches) => {
+        const host = card.querySelector(".insight-subject-links-host");
+        if (!host) return;
+        host.innerHTML = renderSubjectLinks(matches);
+      }).catch(() => {});
+    }
 
     return card;
   }
