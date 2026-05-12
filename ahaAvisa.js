@@ -12,8 +12,11 @@
 
   const ALLOWED_SECTIONS = ["nyheter", "kultur", "politikk", "sport", "teknologi", "filosofi", "historygo", "aha", "debatt", "notater"];
   const ALLOWED_STATUS = ["draft", "review", "ready", "published_local"];
+  const ALLOWED_PUBLICATION_LAYERS = ["personal", "group", "public_candidate"];
   const SECTION_FILTERS = ["alle", "aha", "grupper", "historygo", "kultur", "annet"];
+  const LAYER_FILTERS = ["all", "personal", "group", "public_candidate"];
   let currentSectionFilter = "alle";
+  let currentLayerFilter = "all";
 
   function safeParse(raw, fallback) {
     try {
@@ -46,6 +49,14 @@
   function normalizeStatus(status) {
     const normalized = asText(status, "draft").toLowerCase();
     return ALLOWED_STATUS.includes(normalized) ? normalized : "draft";
+  }
+
+  function inferPublicationLayer(src) {
+    const explicit = asText(src?.publicationLayer, "").toLowerCase();
+    if (ALLOWED_PUBLICATION_LAYERS.includes(explicit)) return explicit;
+    const groupId = asText(src?.meta?.createdFromGroupId, "");
+    const hasGroupRef = asArray(src?.references).some((ref) => asText(ref?.source, "") === "aha_groups");
+    return (groupId || hasGroupRef) ? "group" : "personal";
   }
 
   function formatDateLabel(value) {
@@ -90,6 +101,7 @@
       tags,
       references: asArray(src.references).map((ref) => normalizeReference(ref)).filter((ref) => ref.source && ref.refId),
       source: asText(src.source, "aha_avisa"),
+      publicationLayer: inferPublicationLayer(src),
       meta: safeObject(src.meta),
       deletedAt: src.deletedAt || src.deleted_at || ""
     };
@@ -161,6 +173,24 @@
     const normalizedStatus = normalizeStatus(status);
     if (!ALLOWED_STATUS.includes(normalizedStatus)) return null;
     return updateArticle(articleId, { status: normalizedStatus });
+  }
+
+  function setArticlePublicationLayer(articleId, layer) {
+    const normalizedLayer = asText(layer, "").toLowerCase();
+    if (!ALLOWED_PUBLICATION_LAYERS.includes(normalizedLayer)) return null;
+    const articles = loadArticles();
+    const index = articles.findIndex((article) => article.id === articleId);
+    if (index < 0) return null;
+    const current = articles[index];
+    const updated = normalizeArticle({
+      ...current,
+      publicationLayer: normalizedLayer,
+      updatedAt: new Date().toISOString(),
+      references: current.references
+    });
+    articles[index] = updated;
+    saveArticles(articles);
+    return updated;
   }
 
   function getSectionBucket(section) {
@@ -254,6 +284,9 @@
     const sectionsCountEl = document.getElementById("avisa-sections-count");
     const lastUpdatedEl = document.getElementById("avisa-last-updated");
     const privacyWarningEl = document.getElementById("avisa-privacy-warning");
+    const personalCountEl = document.getElementById("avisa-personal-count");
+    const groupCountEl = document.getElementById("avisa-group-count");
+    const publicCandidateCountEl = document.getElementById("avisa-public-candidate-count");
 
     const articles = loadArticles().filter((article) => !article.deletedAt);
     const groups = global.AHAGroups?.getActiveGroups ? asArray(global.AHAGroups.getActiveGroups()) : [];
@@ -263,6 +296,9 @@
     const readyCount = articles.filter((a) => a.status === "ready").length;
     const publishedCount = articles.filter((a) => a.status === "published_local").length;
     const sectionCount = new Set(articles.map((a) => asText(a.section, "notater"))).size;
+    const personalCount = articles.filter((a) => a.publicationLayer === "personal").length;
+    const groupCount = articles.filter((a) => a.publicationLayer === "group").length;
+    const publicCandidateCount = articles.filter((a) => a.publicationLayer === "public_candidate").length;
     const latestUpdatedAt = articles.map((a) => Date.parse(a.updatedAt || "")).filter((v) => Number.isFinite(v)).sort((a, b) => b - a)[0];
 
     if (draftCountEl) draftCountEl.textContent = String(draftCount);
@@ -270,12 +306,15 @@
     if (readyCountEl) readyCountEl.textContent = String(readyCount);
     if (publishedCountEl) publishedCountEl.textContent = String(publishedCount);
     if (sectionsCountEl) sectionsCountEl.textContent = String(sectionCount);
+    if (personalCountEl) personalCountEl.textContent = String(personalCount);
+    if (groupCountEl) groupCountEl.textContent = String(groupCount);
+    if (publicCandidateCountEl) publicCandidateCountEl.textContent = String(publicCandidateCount);
     if (lastUpdatedEl) lastUpdatedEl.textContent = latestUpdatedAt ? formatDateLabel(new Date(latestUpdatedAt).toISOString()) : "-";
 
     const allowPublicPublishing = global.AHAPrivacy?.loadSettings?.().allowPublicPublishing;
     if (privacyWarningEl) {
       privacyWarningEl.hidden = Boolean(allowPublicPublishing);
-      privacyWarningEl.textContent = "Offentlig publisering er ikke samtykket til. Lokal publisering sender likevel ikke data ut.";
+      privacyWarningEl.textContent = "Offentlig publisering er ikke samtykket til. Kandidatmerking er bare lokal.";
     }
 
     if (!mount) return;
@@ -288,7 +327,10 @@
       `<option value="${escapeHtml(`${ref.source}::${ref.refId}`)}">${escapeHtml(ref.title)} (${escapeHtml(ref.type)})</option>`
     )).join("");
 
-    const filteredArticles = articles.filter((article) => currentSectionFilter === "alle" || getSectionBucket(article.section) === currentSectionFilter);
+    const filteredArticles = articles.filter((article) => (
+      (currentSectionFilter === "alle" || getSectionBucket(article.section) === currentSectionFilter)
+      && (currentLayerFilter === "all" || article.publicationLayer === currentLayerFilter)
+    ));
 
     mount.innerHTML = filteredArticles.map((article) => {
       const groupMetaId = asText(article?.meta?.createdFromGroupId, "");
@@ -313,8 +355,10 @@
           <header class="avisa-header-row">
             <h3>${escapeHtml(article.title)}</h3>
             <span class="avisa-badge avisa-status status-badge status-${escapeHtml(article.status)}">${escapeHtml(article.status)}</span>
+            <span class="avisa-badge avisa-layer-badge">${article.publicationLayer === "group" ? "Gruppe" : (article.publicationLayer === "public_candidate" ? "Offentlig kandidat" : "Personlig")}</span>
           </header>
           ${hasGroupDraft ? `<p class="group-draft-badge">Gruppeutkast${groupMetaTitle ? ` · ${escapeHtml(groupMetaTitle)}` : ""}${groupMetaId ? ` · <a href="groups.html#group=${escapeHtml(groupMetaId)}">åpne gruppe</a>` : ""}</p>` : ""}
+          ${article.publicationLayer === "public_candidate" ? `<p class="module-meta">Offentlig kandidat betyr at artikkelen kan vurderes senere for offentlig AHAavisa/Paradisavisa-format. Ingenting publiseres nå.</p>` : ""}
           <p class="module-meta">Seksjon: ${escapeHtml(article.section)} · Opprettet: ${escapeHtml(article.createdAt)} · Oppdatert: ${escapeHtml(article.updatedAt)}</p>
           <p>${escapeHtml(article.summary || "Ingen ingress ennå.")}</p>
           <div class="avisa-tags">${tags || "<span class='module-meta'>Ingen tags.</span>"}</div>
@@ -327,6 +371,9 @@
             <button type="button" data-avisa-status-ready="${escapeHtml(article.id)}">Marker ready</button>
             <button type="button" data-avisa-status-published="${escapeHtml(article.id)}">Publiser lokalt</button>
             <button type="button" data-avisa-status-draft="${escapeHtml(article.id)}">Tilbake til draft</button>
+            <button type="button" data-avisa-layer-personal="${escapeHtml(article.id)}">Sett som personlig</button>
+            <button type="button" data-avisa-layer-group="${escapeHtml(article.id)}">Sett som gruppeavis</button>
+            <button type="button" data-avisa-layer-public-candidate="${escapeHtml(article.id)}">Marker som offentlig kandidat</button>
             <button type="button" data-avisa-delete="${escapeHtml(article.id)}">Slett utkast</button>
           </div>
           <section>
@@ -398,6 +445,13 @@
       const deleteId = target.getAttribute("data-avisa-delete");
       if (deleteId) { deleteArticle(deleteId); render(); return; }
 
+      const personalLayerId = target.getAttribute("data-avisa-layer-personal");
+      if (personalLayerId) { setArticlePublicationLayer(personalLayerId, "personal"); render(); return; }
+      const groupLayerId = target.getAttribute("data-avisa-layer-group");
+      if (groupLayerId) { setArticlePublicationLayer(groupLayerId, "group"); render(); return; }
+      const candidateLayerId = target.getAttribute("data-avisa-layer-public-candidate");
+      if (candidateLayerId) { setArticlePublicationLayer(candidateLayerId, "public_candidate"); render(); return; }
+
       const removeRef = target.getAttribute("data-avisa-remove-ref");
       if (removeRef) {
         const [articleId, refId] = removeRef.split("::");
@@ -442,6 +496,13 @@
         document.querySelectorAll("[data-section-filter]").forEach((button) => button.classList.toggle("is-active", button.getAttribute("data-section-filter") === filter));
         render();
       }
+
+      const layerFilter = target.getAttribute("data-layer-filter");
+      if (layerFilter && LAYER_FILTERS.includes(layerFilter)) {
+        currentLayerFilter = layerFilter;
+        document.querySelectorAll("[data-layer-filter]").forEach((button) => button.classList.toggle("is-active", button.getAttribute("data-layer-filter") === layerFilter));
+        render();
+      }
     });
   }
 
@@ -454,6 +515,7 @@
     addReferenceToArticle,
     removeReferenceFromArticle,
     setArticleStatus,
+    setArticlePublicationLayer,
     collectAvailableArticleSources,
     render,
     refresh
