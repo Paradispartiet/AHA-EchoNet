@@ -1,0 +1,15 @@
+{
+  "subject_id": "psykologi_pedagogikk",
+  "subject_label": "Psykologi og pedagogikk",
+  "emner": [
+    {
+      "emne_id": "lek_laring_kreativitet_psyk",
+      "title": "Lek, læring og kreativitet",
+      "core_concepts": ["lek", "læring", "kreativitet", "motivasjon", "utvikling"],
+      "keywords": ["barn", "pedagogikk", "sosial læring", "fantasi", "trygghet"],
+      "thinkers": ["John Dewey", "Donald Winnicott"],
+      "summary": "Lek forstått som kunnskapsform og grunnlag for emosjonell, sosial og kognitiv vekst.",
+      "description": "Undersøker sammenhengen mellom fri utforskning, relasjoner, språk og dyp læring."
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "subject_id": "kultur_kunst",
+  "subject_label": "Kultur og kunst",
+  "emner": [
+    {
+      "emne_id": "kropp_bevegelse_hverdagskultur",
+      "title": "Kropp, bevegelse og hverdagskultur",
+      "core_concepts": ["kropp", "bevegelse", "hverdagskultur", "uttrykk", "deltakelse"],
+      "keywords": ["rytme", "lekende praksis", "gatekultur", "kreativ utfoldelse"],
+      "thinkers": ["Pierre Bourdieu", "Richard Sennett"],
+      "summary": "Analyserer hvordan kropp og bevegelse bærer språk, tilhørighet og kulturell mening.",
+      "description": "Knytter estetikk, hverdagsliv og fysiske praksiser til sosial læring og felles identitet."
+    }
+  ]
+}

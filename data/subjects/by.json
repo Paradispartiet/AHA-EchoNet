@@ -1,0 +1,24 @@
+{
+  "subject_id": "by",
+  "subject_label": "By og samfunnsrom",
+  "emner": [
+    {
+      "emne_id": "byrom_lek_offentlighet",
+      "title": "Byrom, lek og offentlighet",
+      "core_concepts": ["byrom", "lek", "offentlighet", "frihet", "hverdagsliv"],
+      "keywords": ["gate", "nabolag", "åpen plass", "barn", "inkludering"],
+      "thinkers": ["Jane Jacobs", "Henri Lefebvre"],
+      "summary": "Utforsker hvordan lek og deltakelse i byrom skaper demokratiske, åpne og levende steder.",
+      "description": "Ser på byen som sosial læringsarena der kropp, fantasi og møteplasser former offentlig kultur."
+    },
+    {
+      "emne_id": "parker_torg_fellesskap",
+      "title": "Parker, torg og sosialt fellesskap",
+      "core_concepts": ["park", "torg", "fellesskap", "møteplass", "sosial tillit"],
+      "keywords": ["nærmiljø", "samvær", "uformelle møteplasser", "tilhørighet"],
+      "thinkers": ["Ray Oldenburg"],
+      "summary": "Parker og torg som viktige hverdagsarenaer for samhold, trygghet og lokal kultur.",
+      "description": "Tematiserer hvordan tilgjengelige uteområder styrker relasjoner mellom mennesker på tvers av bakgrunn."
+    }
+  ]
+}

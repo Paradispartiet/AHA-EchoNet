@@ -1,0 +1,15 @@
+{
+  "subject_id": "sport_lek",
+  "subject_label": "Sport og lek",
+  "emner": [
+    {
+      "emne_id": "lek_laring_kreativitet",
+      "title": "Lek, læring og kreativitet",
+      "core_concepts": ["lek", "læring", "kreativitet", "fantasi", "mestring"],
+      "keywords": ["utforskning", "nysgjerrighet", "spill", "samhandling"],
+      "thinkers": ["Lev Vygotskij", "Johan Huizinga"],
+      "summary": "Lek som drivkraft for læring, samspill og skapende tenkning.",
+      "description": "Fokuserer på hvordan fri lek utvikler språk, samarbeid, problemløsing og selvtillit."
+    }
+  ]
+}
