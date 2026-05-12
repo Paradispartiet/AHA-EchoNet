@@ -269,6 +269,87 @@
   }
 
 
+
+  function collectGroupArticleDrafts(groupId) {
+    const targetId = asText(groupId, "");
+    if (!targetId) return [];
+    const articles = asArray(safeParse(localStorage.getItem("aha_articles_v1") || "[]", []));
+    return articles.filter((article) => {
+      if (article?.deletedAt || article?.deleted_at) return false;
+      const metaGroupId = asText(article?.meta?.createdFromGroupId, "");
+      if (metaGroupId && metaGroupId === targetId) return true;
+      return asArray(article?.references).some((ref) => asText(ref?.source, "") === "aha_groups" && asText(ref?.refId || ref?.ref_id, "") === targetId);
+    });
+  }
+
+  function buildGroupReport(groupId) {
+    const targetId = asText(groupId, "");
+    if (!targetId) return null;
+
+    const group = getActiveGroups().find((item) => item.id === targetId);
+    if (!group) return null;
+
+    const references = asArray(group.references);
+    const referencesByType = {};
+    const referencesBySource = {};
+    let resolvedCount = 0;
+
+    references.forEach((ref) => {
+      const type = asText(ref?.type, "reference");
+      const source = asText(ref?.source, "aha");
+      referencesByType[type] = (referencesByType[type] || 0) + 1;
+      referencesBySource[source] = (referencesBySource[source] || 0) + 1;
+      if (resolveReferenceObject(ref)) resolvedCount += 1;
+    });
+
+    const referencesCount = references.length;
+    const missingCount = Math.max(0, referencesCount - resolvedCount);
+    const articleDrafts = collectGroupArticleDrafts(group.id);
+    const articleDraftCount = articleDrafts.length;
+    const readyArticleDraftCount = articleDrafts.filter((article) => asText(article?.status, "").toLowerCase() === "ready").length;
+
+    const dominantTypes = Object.entries(referencesByType)
+      .sort((a, b) => {
+        if (b[1] !== a[1]) return b[1] - a[1];
+        return a[0].localeCompare(b[0]);
+      })
+      .slice(0, 3)
+      .map((entry) => entry[0]);
+
+    let publishingReadiness = "low";
+    if (referencesCount >= 2) publishingReadiness = "medium";
+    if (referencesCount >= 5 && articleDraftCount > 0) publishingReadiness = "high";
+    if (readyArticleDraftCount > 0) publishingReadiness = "ready";
+
+    const suggestedNextActions = [];
+    if (group.members.length === 0) suggestedNextActions.push("Legg til lokale medlemmer/roller.");
+    if (referencesCount === 0) suggestedNextActions.push("Legg til innsikter, lister, stier eller notater i gruppen.");
+    if (missingCount > 0) suggestedNextActions.push("Sjekk referanser som ikke lenger finnes.");
+    if (articleDraftCount === 0) suggestedNextActions.push("Lag et AHAavisa-utkast fra gruppen.");
+    if (readyArticleDraftCount > 0) suggestedNextActions.push("Vurder publiseringsflyt senere.");
+    if (!suggestedNextActions.length) suggestedNextActions.push("Bygg videre på delt bibliotek.");
+
+    return {
+      groupId: group.id,
+      title: group.title,
+      type: group.type,
+      description: group.description,
+      tags: normalizeTags(group.tags),
+      membersCount: group.members.length,
+      referencesCount,
+      referencesByType,
+      referencesBySource,
+      resolvedCount,
+      missingCount,
+      articleDraftCount,
+      readyArticleDraftCount,
+      dominantTypes,
+      suggestedNextActions,
+      publishingReadiness,
+      generatedAt: new Date().toISOString()
+    };
+  }
+
   function createArticleDraftFromGroup(groupId) {
     const targetId = asText(groupId, "");
     if (!targetId) return null;
@@ -440,6 +521,7 @@
     const references = collectAvailableGroupReferences();
     const activeGroupId = hashGroupId();
     const activeGroup = groups.find((g) => g.id === activeGroupId) || null;
+    const activeReport = activeGroup ? buildGroupReport(activeGroup.id) : null;
     const activeFilter = LIBRARY_FILTERS.includes(asText(root.getAttribute("data-library-filter"), "all")) ? root.getAttribute("data-library-filter") : "all";
     const privacy = loadPrivacySettings();
 
@@ -580,6 +662,31 @@
               <a class="aha-tile-btn" href="avisa.html">Åpne AHAavisa</a>
             </div>
             <p class="groups-statusline" id="groups-avisa-draft-status" aria-live="polite"></p>
+          </section>
+
+          <section class="groups-subsection">
+            <h3>Grupperapport</h3>
+            <div class="groups-report-grid">
+              <article class="groups-report-card"><strong>${escapeHtml(String(activeReport.referencesCount))}</strong><span>Referanser</span></article>
+              <article class="groups-report-card"><strong>${escapeHtml(String(activeReport.resolvedCount))}</strong><span>Resolved</span></article>
+              <article class="groups-report-card"><strong>${escapeHtml(String(activeReport.missingCount))}</strong><span>Mangler</span></article>
+              <article class="groups-report-card"><strong>${escapeHtml(String(activeReport.articleDraftCount))}</strong><span>AHAavisa-utkast</span></article>
+              <article class="groups-report-card"><strong>${escapeHtml(String(activeReport.readyArticleDraftCount))}</strong><span>Ready-utkast</span></article>
+              <article class="groups-report-card groups-readiness"><strong>${escapeHtml(activeReport.publishingReadiness)}</strong><span>Publiseringsmodenhet</span></article>
+            </div>
+            <p>Dominante typer: ${activeReport.dominantTypes.length ? activeReport.dominantTypes.map((type) => `<span class="groups-tag">${escapeHtml(type)}</span>`).join(" ") : "Ingen"}</p>
+            <h4>Kilder</h4>
+            <ul class="groups-list groups-report-list">
+              ${Object.keys(activeReport.referencesBySource).length
+                ? Object.entries(activeReport.referencesBySource).map(([source, count]) => `<li><span>${escapeHtml(source)}</span><strong>${escapeHtml(String(count))}</strong></li>`).join("")
+                : "<li>Ingen kilder registrert.</li>"}
+            </ul>
+            <h4>Forslag til neste steg</h4>
+            <ul class="groups-list groups-report-list">
+              ${activeReport.suggestedNextActions.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}
+            </ul>
+            ${activeReport.articleDraftCount > 0 ? '<p><a href="avisa.html">Se gruppeutkast i AHAavisa</a></p>' : ''}
+            <p><small>Generert: ${escapeHtml(activeReport.generatedAt)}</small></p>
           </section>
 
           <section class="groups-subsection">
@@ -740,6 +847,7 @@
     addReferenceToGroupByObject,
     removeReferenceFromGroup,
     collectAvailableGroupReferences,
+    buildGroupReport,
     createArticleDraftFromGroup,
     render,
     refresh

@@ -180,6 +180,9 @@ Fase 3 (første leveranse):
 - Fase 4E: Gruppe-arbeidsrom kan nå opprette lokale AHAavisa-utkast.
 - Utkastet lagrer bare referanser, ikke kopier av gruppeobjekter.
 - Dette er lokal draft-generering, ikke publisering.
+- Fase 4F: Gruppe-arbeidsrom har nå lokal rapport/oppsummering.
+- Rapporten teller referanser, resolved/missing, artikkelutkast og publiseringsmodenhet.
+- Rapporten er read-only og bruker ikke AI/API ennå.
 
 ### 4. Lister
 
