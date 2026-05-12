@@ -1,0 +1,71 @@
+.groups-create-panel textarea,
+.groups-create-panel input,
+.groups-create-panel select,
+.groups-inline-form input,
+.groups-inline-form select {
+  width: 100%;
+}
+
+.groups-form-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.groups-card-list {
+  display: grid;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.groups-card header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.groups-badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.groups-badge,
+.groups-tag {
+  border: 1px solid #ccd;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 12px;
+}
+
+.groups-subsection {
+  margin-top: 12px;
+  border-top: 1px solid #e2e2ef;
+  padding-top: 10px;
+}
+
+.groups-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.groups-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+}
+
+.groups-inline-form {
+  margin-top: 8px;
+  display: grid;
+  grid-template-columns: 2fr 1fr auto;
+  gap: 6px;
+}
+
+.groups-privacy-note {
+  font-weight: 600;
+}

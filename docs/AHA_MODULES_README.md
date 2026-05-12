@@ -162,6 +162,11 @@ Fase 3 (første leveranse):
 - Modulen viser `aha_import_payload_v1`, History Go localStorage-status og importerte AHA source events.
 - Import skjer bare manuelt via knappetrykk.
 - Modulen bygger ikke History Go inn i AHA og lager ikke ny motor.
+- `groups.html` er nå første lokale Grupper/Sirkler-modul.
+- `ahaGroups.js` lager lokale grupperom med medlemmer og referanser.
+- Grupper lagrer bare referanser til AHA-objekter (`source`, `type`, `refId`).
+- Ekte deling/backend/invitasjoner kommer senere.
+- Modulen respekterer personvernstatus ved å vise sosial deling av/på.
 
 ### 4. Lister
 
