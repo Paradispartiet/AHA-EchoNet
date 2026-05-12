@@ -71,7 +71,10 @@
   }
 
   function loadPrivacySettings() {
-    return safeObject(safeParse(localStorage.getItem(PRIVACY_KEY) || "{}", {}));
+    const parsed = safeObject(safeParse(localStorage.getItem(PRIVACY_KEY) || "{}", {}));
+    return {
+      allowPublicPublishing: parsed.allowPublicPublishing === true
+    };
   }
 
   function normalizeReference(input) {
