@@ -170,6 +170,9 @@ Fase 3 (første leveranse):
 - Fase 4B: Innsikter, lister, stier og AHAavisa-utkast kan nå legges direkte i lokale grupper som referanser.
 - Grupper lagrer fortsatt bare `source`, `type`, `refId`, `title`.
 - Ingen ekte deling/backend er bygget.
+- Fase 4C: Grupper er nå koblet inn i AHA Home/Profile, Søk/Bibliotek, Tankekart og Personvern/Kontroll.
+- `aha_groups_v1` inngår nå i systemstatus, søk, graph og eksport/sletting.
+- Graph viser gruppe → referanse-koblinger via `group_references`.
 
 ### 4. Lister
 

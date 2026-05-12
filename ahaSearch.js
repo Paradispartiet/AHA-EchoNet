@@ -13,7 +13,8 @@
     insta: "aha_insta_posts_v1",
     lists: "aha_lists_v1",
     paths: "aha_paths_v1",
-    articles: "aha_articles_v1"
+    articles: "aha_articles_v1",
+    groups: "aha_groups_v1"
   };
 
   let allItems = [];
@@ -283,6 +284,28 @@
         updatedAt: base?.updatedAt,
         href: "avisa.html",
         meta: { referenceCount: asArray(article?.references).length }
+      }));
+    });
+
+    asArray(loadByKey(STORAGE_KEYS.groups, [])).filter((group) => !group?.deletedAt && !group?.deleted_at).forEach((group, index) => {
+      const base = withBase(group, { type: "group", source: "aha_groups" });
+      const refId = asText(group?.id || base?.id, "");
+      if (!refId) return;
+      const memberNames = asArray(group?.members).map((member) => asText(member?.name || member?.title, "")).filter(Boolean).join(" ");
+      const referenceTitles = asArray(group?.references).map((ref) => asText(ref?.title, "")).filter(Boolean).join(" ");
+      const tags = normalizeTags(group?.tags || base?.tags);
+      out.push(createSearchItem({
+        id: `group_${refId}`,
+        title: asText(group?.title, "Gruppe"),
+        type: "group",
+        source: "aha_groups",
+        refId,
+        text: `${asText(group?.description, "")} ${memberNames} ${referenceTitles} ${tags.join(" ")}`.trim(),
+        tags,
+        createdAt: base?.createdAt,
+        updatedAt: base?.updatedAt,
+        href: "groups.html",
+        meta: { index }
       }));
     });
 
