@@ -177,6 +177,9 @@ Fase 3 (første leveranse):
 - Arbeidsrommet resolver referanser read-only fra AHA-kilder (insights/lister/stier/artikler/notater/feed).
 - Grupper lagrer fortsatt bare referanser, ikke kopier av objekter.
 - Gruppeaktivitet beregnes fra eksisterende metadata (`createdAt`, `updatedAt`, `addedAt`), ikke ny event-logg.
+- Fase 4E: Gruppe-arbeidsrom kan nå opprette lokale AHAavisa-utkast.
+- Utkastet lagrer bare referanser, ikke kopier av gruppeobjekter.
+- Dette er lokal draft-generering, ikke publisering.
 
 ### 4. Lister
 
