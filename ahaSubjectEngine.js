@@ -94,6 +94,7 @@
   }
 
   const GENERIC_TERMS = new Set(["kunnskap", "mennesker", "sted", "samfunn"]);
+  const SEMANTIC_FIELDS = ["title", "core", "keywords", "thinkers", "summary", "description", "goals", "checkpoints"];
 
   function termWeight(term, fieldBoost) {
     const token = String(term || "").trim().toLowerCase();
@@ -163,12 +164,22 @@
         if (!uniqueFound.length) return;
 
         let score = weightedHits.reduce((sum, value) => sum + value, 0);
-        const thematicDiversityBonus = Math.max(0, uniqueFound.length - 1) * 1.2;
+        const thematicDiversityBonus = Math.max(0, uniqueFound.length - 1) * 1.35;
         score += thematicDiversityBonus;
+
+        const fieldsWithHits = SEMANTIC_FIELDS.filter((field) => (fieldHits[field] || []).length > 0).length;
+        if (fieldsWithHits > 1) score += (fieldsWithHits - 1) * 0.8;
 
         const strongFieldHit = fieldHits.title.length + fieldHits.core.length;
         if (strongFieldHit > 0) score += 1.5 + strongFieldHit * 0.5;
-        if (uniqueFound.length === 1 && GENERIC_TERMS.has(uniqueFound[0].toLowerCase())) score = Math.min(score, 0.5);
+
+        const genericTermsFound = uniqueFound.filter((term) => GENERIC_TERMS.has(String(term || "").toLowerCase()));
+        const nonGenericHits = uniqueFound.length - genericTermsFound.length;
+        if (nonGenericHits === 0) {
+          score = Math.min(score, 0.45);
+        } else if (genericTermsFound.length > 0) {
+          score -= genericTermsFound.length * 0.2;
+        }
 
         const thinkerHit = (emne.thinkers || []).some((t) => uniqueFound.includes(t));
         const conceptHit = (emne.core_concepts || []).some((c) => uniqueFound.includes(c));

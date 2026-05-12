@@ -328,15 +328,38 @@
   function groupSentencesForInsights(sentences, fallbackText) {
     const safeSentences = Array.isArray(sentences) ? sentences.filter(Boolean) : [];
     if (!safeSentences.length) return [fallbackText];
-    if (safeSentences.length <= 3) return safeSentences;
+    if (safeSentences.length <= 2) return [safeSentences.join(". ").trim() + "."];
 
-    const targetChunks = Math.min(5, Math.max(3, Math.round(safeSentences.length / 3)));
-    const chunkSize = Math.ceil(safeSentences.length / targetChunks);
+    const totalChars = safeSentences.reduce((sum, s) => sum + s.length, 0);
+    const estTargetFromLength = Math.round(totalChars / 220);
+    const targetChunks = Math.min(5, Math.max(3, estTargetFromLength));
+    const idealChunkSize = Math.ceil(safeSentences.length / targetChunks);
     const grouped = [];
+    let cursor = 0;
 
-    for (let i = 0; i < safeSentences.length; i += chunkSize) {
-      const part = safeSentences.slice(i, i + chunkSize).join(". ").trim();
-      if (part) grouped.push(part.endsWith(".") ? part : `${part}.`);
+    while (cursor < safeSentences.length) {
+      const take = safeSentences.slice(cursor, cursor + idealChunkSize);
+      const tentative = take.join(". ").trim();
+      if (!tentative) {
+        cursor += idealChunkSize;
+        continue;
+      }
+
+      const prev = grouped[grouped.length - 1] || "";
+      const shouldMergeIntoPrev = tentative.length < 90 && grouped.length > 0;
+      if (shouldMergeIntoPrev) {
+        grouped[grouped.length - 1] = `${prev.replace(/\.\s*$/, "")}. ${tentative}`.trim();
+      } else {
+        grouped.push(tentative.endsWith(".") ? tentative : `${tentative}.`);
+      }
+
+      cursor += idealChunkSize;
+      if (grouped.length >= 5) break;
+    }
+
+    if (cursor < safeSentences.length && grouped.length) {
+      const tail = safeSentences.slice(cursor).join(". ").trim();
+      if (tail) grouped[grouped.length - 1] = `${grouped[grouped.length - 1].replace(/\.\s*$/, "")}. ${tail}`.trim();
     }
 
     return grouped.length ? grouped.slice(0, 5) : [fallbackText];
