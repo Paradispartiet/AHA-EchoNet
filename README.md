@@ -794,3 +794,5 @@ AHA Home bruker en felles modulregistry i `ahaModules.js` for å vise alle hoved
 Eksisterende kjerneflater (Dashboard, Chat, Notes, Gallery, Feed, Insta) beholdes, mens øvrige moduler er tilgjengelige som synlige placeholder-innganger for videre bygging.
 
 Søk / Bibliotek kan nå finne lokale AHA-objekter på tvers av chat-derived insights, notes, feed, gallery, insta, lists, paths og AHAavisa.
+
+History Go-modulen i AHA viser nå importstatus, payload-oppsummering og importerte AHA source events uten automatisk import.

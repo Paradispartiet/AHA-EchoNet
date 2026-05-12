@@ -158,6 +158,10 @@ Fase 3 (første leveranse):
 - `ahaProfile.js` leser lokale AHA- og History Go-nøkler read-only.
 - Modulen viser nøkkeltall, siste aktivitet, History Go-status og personvernstatus.
 - Modulen lager ikke ny motor og skriver ikke til andre modulers storage.
+- `historygo.html` er nå AHA sin History Go-status/importmodul.
+- Modulen viser `aha_import_payload_v1`, History Go localStorage-status og importerte AHA source events.
+- Import skjer bare manuelt via knappetrykk.
+- Modulen bygger ikke History Go inn i AHA og lager ikke ny motor.
 
 ### 4. Lister
 
