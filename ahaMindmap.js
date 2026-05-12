@@ -13,7 +13,8 @@
     notes: "aha_notes_v1",
     feed: "aha_feed_posts_v1",
     gallery: "aha_gallery_v1",
-    insta: "aha_insta_posts_v1"
+    insta: "aha_insta_posts_v1",
+    groups: "aha_groups_v1"
   };
 
   const TYPE_LABELS = {
@@ -25,7 +26,8 @@
     note: "Notat",
     feed_post: "Feed-post",
     gallery_item: "Galleriobjekt",
-    insta_post: "Insta-post"
+    insta_post: "Insta-post",
+    group: "Gruppe"
   };
 
   let graphState = { nodes: [], edges: [], selectedNodeId: "" };
@@ -168,6 +170,14 @@
       registerRef(node);
     });
 
+    asArray(raw.groups).filter((group) => !group?.deletedAt && !group?.deleted_at).forEach((group) => {
+      const refId = asText(group?.id, "");
+      if (!refId) return;
+      const node = { id: nodeId("group", "aha_groups", refId), title: asText(group?.title, "Gruppe"), type: "group", source: "aha_groups", refId, href: "groups.html", meta: {} };
+      addNode(nodes, nodeIndex, node);
+      registerRef(node);
+    });
+
     return { nodes, nodeIndex, refIndex };
   }
 
@@ -231,6 +241,14 @@
       });
     });
 
+    asArray(raw.groups).filter((group) => !group?.deletedAt && !group?.deleted_at).forEach((group) => {
+      const fromId = nodeId("group", "aha_groups", asText(group?.id, ""));
+      asArray(group?.references).forEach((ref) => {
+        const toId = resolveRef(nodeBundle.refIndex, ref);
+        addEdge(fromId, toId, "group_references", "gruppe-referanse", { referenceId: ref?.id || "" });
+      });
+    });
+
     return edges;
   }
 
@@ -244,7 +262,8 @@
       notes: loadByKey(STORAGE_KEYS.notes, []),
       feed: loadByKey(STORAGE_KEYS.feed, []),
       gallery: loadByKey(STORAGE_KEYS.gallery, []),
-      insta: loadByKey(STORAGE_KEYS.insta, [])
+      insta: loadByKey(STORAGE_KEYS.insta, []),
+      groups: loadByKey(STORAGE_KEYS.groups, [])
     };
 
     const nodeBundle = buildNodes(raw);

@@ -11,6 +11,7 @@
     lists: "aha_lists_v1",
     paths: "aha_paths_v1",
     articles: "aha_articles_v1",
+    groups: "aha_groups_v1",
     privacy: "aha_privacy_settings_v1",
     importPayload: "aha_import_payload_v1",
     unlocks: "hg_unlocks_v1",
@@ -51,9 +52,12 @@
     const lists = loadArray(KEYS.lists).filter((x) => !isDeleted(x));
     const paths = loadArray(KEYS.paths).filter((x) => !isDeleted(x));
     const articles = loadArray(KEYS.articles).filter((x) => !isDeleted(x));
+    const groups = loadArray(KEYS.groups).filter((x) => !isDeleted(x));
     const insights = asArray(chamber.insights).filter((x) => !isDeleted(x));
 
-    const all = insights.concat(sourceEvents, notes, gallery, feed, insta, lists, paths, articles);
+    const groupMembersCount = groups.reduce((sum, group) => sum + asArray(group?.members).length, 0);
+    const groupReferencesCount = groups.reduce((sum, group) => sum + asArray(group?.references).length, 0);
+    const all = insights.concat(sourceEvents, notes, gallery, feed, insta, lists, paths, articles, groups);
     const latestTs = all.reduce((max, item) => Math.max(max, ts(item)), 0);
 
     return {
@@ -66,6 +70,9 @@
       listsCount: lists.length,
       pathsCount: paths.length,
       articlesCount: articles.length,
+      groupsCount: groups.length,
+      groupMembersCount,
+      groupReferencesCount,
       readyArticlesCount: articles.filter((a) => String(a?.status || "").toLowerCase() === "ready").length,
       lastActivityAt: latestTs ? new Date(latestTs).toISOString() : ""
     };
@@ -80,7 +87,8 @@
       [KEYS.insta, "insta_post", "aha_insta", "insta.html"],
       [KEYS.lists, "list", "aha_lists", "lists.html"],
       [KEYS.paths, "path", "aha_paths", "paths.html"],
-      [KEYS.articles, "article", "aha_avisa", "avisa.html"]
+      [KEYS.articles, "article", "aha_avisa", "avisa.html"],
+      [KEYS.groups, "group", "aha_groups", "groups.html"]
     ];
 
     const out = [];
@@ -141,7 +149,8 @@
       const cards = [
         ["Innsikter", status.insightsCount], ["Source events", status.sourceEventsCount], ["Notater", status.notesCount], ["Galleri", status.galleryCount],
         ["Feed", status.feedCount], ["Insta", status.instaCount], ["Lister", status.listsCount], ["Stier", status.pathsCount],
-        ["Artikler", status.articlesCount], ["Ready-artikler", status.readyArticlesCount]
+        ["Artikler", status.articlesCount], ["Ready-artikler", status.readyArticlesCount], ["Grupper", status.groupsCount],
+        ["Gruppemedlemmer", status.groupMembersCount], ["Gruppereferanser", status.groupReferencesCount]
       ];
       statusEl.innerHTML = cards.map(([l, v]) => `<article class="aha-status-card"><strong>${escapeHtml(String(v))}</strong><span>${escapeHtml(l)}</span></article>`).join("");
     }
