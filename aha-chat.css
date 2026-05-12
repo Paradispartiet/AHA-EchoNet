@@ -143,3 +143,8 @@ pre#out { max-height: 22vh; overflow:auto; white-space: pre-wrap; }
   .chat-line { max-width: 92%; }
   .chat-title-wrap h1 { font-size: 21px; }
 }
+
+.subject-links { margin-top: 6px; max-width: 85%; }
+.subject-links-label { display:block; font-size:10px; text-transform:uppercase; letter-spacing:.05em; color: rgba(176,206,255,0.75); margin-bottom: 4px; }
+.subject-link-chips { display:flex; flex-wrap:wrap; gap:6px; }
+.subject-link-chip { border-radius: 999px; padding: 4px 8px; font-size: 11px; background: rgba(99,132,255,0.16); border:1px solid rgba(136,164,255,0.45); color: #d7e3ff; }

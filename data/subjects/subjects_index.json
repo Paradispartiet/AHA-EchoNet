@@ -1,0 +1,19 @@
+{
+  "subjects": [
+    {
+      "subject_id": "politikk",
+      "subject_label": "Politikk & samfunn",
+      "file": "politikk.json"
+    },
+    {
+      "subject_id": "historie",
+      "subject_label": "Historie",
+      "file": "historie.json"
+    },
+    {
+      "subject_id": "vitenskap",
+      "subject_label": "Vitenskap & filosofi",
+      "file": "vitenskap.json"
+    }
+  ]
+}

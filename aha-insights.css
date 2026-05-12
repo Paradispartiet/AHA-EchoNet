@@ -96,3 +96,6 @@
   margin: 0;
   padding-left: 16px;
 }
+
+.insight-subject-links { margin-top: 8px; }
+.insight-subject-chip { display:inline-flex; }
