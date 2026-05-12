@@ -87,6 +87,8 @@ Personvern / Kontroll kan nå vise lokal datarapport, eksportere AHA-data og lag
 AHA Home / Profil samler nå lokal status fra innsikter, notes, galleri, feed, insta, lister, stier, AHAavisa, History Go-import og personvern.
 Grupper / Sirkler kan nå lage lokale grupperom med medlemmer og referanser til AHA-objekter, uten ekte deling ennå.
 
+Innsikter, lister, stier og AHAavisa-utkast kan nå legges direkte i lokale Grupper / Sirkler som referanser.
+
 ### 2. History Go-innsiktsmotoren
 
 History Go har sin egen lokale innsikts- og læringsmotor.

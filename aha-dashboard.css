@@ -645,3 +645,8 @@ input:focus { border-color: var(--aha-yellow); box-shadow: 0 0 0 3px rgba(246,20
   margin: 0;
   color: var(--aha-muted);
 }
+
+.gruppe-select { min-width: 180px; }
+.gruppe-knapp { white-space: nowrap; }
+.statuslinje { font-size: 0.9rem; opacity: 0.85; margin-top: 4px; }
+

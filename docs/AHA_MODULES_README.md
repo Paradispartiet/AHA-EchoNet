@@ -167,6 +167,9 @@ Fase 3 (første leveranse):
 - Grupper lagrer bare referanser til AHA-objekter (`source`, `type`, `refId`).
 - Ekte deling/backend/invitasjoner kommer senere.
 - Modulen respekterer personvernstatus ved å vise sosial deling av/på.
+- Fase 4B: Innsikter, lister, stier og AHAavisa-utkast kan nå legges direkte i lokale grupper som referanser.
+- Grupper lagrer fortsatt bare `source`, `type`, `refId`, `title`.
+- Ingen ekte deling/backend er bygget.
 
 ### 4. Lister
 

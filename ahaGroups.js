@@ -102,6 +102,10 @@
     return asArray(safeParse(localStorage.getItem(GROUPS_KEY) || "[]", [])).map((g) => normalizeGroup(g));
   }
 
+  function getActiveGroups() {
+    return loadGroups().filter((group) => !group.deletedAt);
+  }
+
   function saveGroups(groups) {
     localStorage.setItem(GROUPS_KEY, JSON.stringify(asArray(groups)));
     return asArray(groups);
@@ -202,6 +206,18 @@
     groups[idx] = normalizeGroup(group);
     saveGroups(groups);
     return candidate;
+  }
+
+  function addReferenceToGroupByObject(groupId, objectInput) {
+    const src = asObject(objectInput);
+    const reference = {
+      title: asText(src.title, "Referanse"),
+      type: asText(src.type, "reference"),
+      source: asText(src.source, "aha"),
+      refId: asText(src.refId || src.ref_id, ""),
+      meta: asObject(src.meta)
+    };
+    return addReferenceToGroup(groupId, reference);
   }
 
   function removeReferenceFromGroup(groupId, referenceId) {
@@ -434,6 +450,7 @@
 
   global.AHAGroups = {
     loadGroups,
+    getActiveGroups,
     saveGroups,
     createGroup,
     updateGroup,
@@ -441,6 +458,7 @@
     addMemberToGroup,
     removeMemberFromGroup,
     addReferenceToGroup,
+    addReferenceToGroupByObject,
     removeReferenceFromGroup,
     collectAvailableGroupReferences,
     render,
