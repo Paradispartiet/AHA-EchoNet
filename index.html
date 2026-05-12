@@ -91,13 +91,41 @@
       </div>
     </section>
 
+    <section class="aha-panel" aria-label="AHA Home profilstatus">
+      <p class="eyebrow">AHA Home</p>
+      <h2>Din personlige innsiktsflate.</h2>
+      <div class="aha-status-stack">
+        <strong id="aha-home-profile-name">Lokal AHA-bruker</strong>
+        <span id="aha-home-profile-mode">Lokal modus</span>
+        <small id="aha-home-last-activity">Ingen aktivitet registrert</small>
+      </div>
+      <div id="aha-profile-status-grid" class="aha-profile-status-grid" aria-label="Nøkkeltall"></div>
+    </section>
+
+    <section class="aha-panel" aria-label="Siste aktivitet">
+      <p class="eyebrow">Siste aktivitet</p>
+      <h2>Siste 10 objekter</h2>
+      <ul id="aha-recent-activity" class="aha-activity-list"></ul>
+    </section>
+
     <section class="aha-panel aha-historygo-panel" aria-label="History Go">
       <p class="eyebrow">History Go</p>
       <h2>Samle og importer</h2>
       <p>Samle steder, personer, badges og kunnskap – og importer det til AHA.</p>
       <div class="aha-tile-actions">
         <a class="aha-tile-btn aha-tile-btn-primary" href="/History-Go/">Åpne History Go</a>
+        <a class="aha-tile-btn aha-tile-btn-secondary" href="historygo.html">AHA History Go-status</a>
         <button class="aha-tile-btn aha-tile-btn-secondary" id="btn-import-hg-secondary" type="button">Importer data til AHA</button>
+      </div>
+      <div id="aha-historygo-status" class="aha-historygo-status"></div>
+    </section>
+
+    <section class="aha-panel" aria-label="Personvernstatus">
+      <p class="eyebrow">Personvern</p>
+      <h2>Kontrollstatus</h2>
+      <div id="aha-privacy-status" class="aha-privacy-status"></div>
+      <div class="aha-tile-actions">
+        <a class="aha-tile-btn aha-tile-btn-secondary" href="privacy.html">Personvern / Kontroll</a>
       </div>
     </section>
 
@@ -115,6 +143,21 @@
     </section>
 
     <section id="aha-modules-grid" class="aha-grid" aria-label="AHA moduler"></section>
+
+    <section class="aha-panel" aria-label="Neste handlinger">
+      <p class="eyebrow">Snarveier</p>
+      <h2>Neste handlinger</h2>
+      <div class="aha-tile-actions">
+        <a class="aha-tile-btn aha-tile-btn-primary" href="chat.html">Åpne Chat</a>
+        <a class="aha-tile-btn aha-tile-btn-secondary" href="insights.html">Se Innsikter</a>
+        <a class="aha-tile-btn aha-tile-btn-secondary" href="lists.html">Lag Liste</a>
+        <a class="aha-tile-btn aha-tile-btn-secondary" href="paths.html">Bygg Sti</a>
+        <a class="aha-tile-btn aha-tile-btn-secondary" href="avisa.html">Skriv AHAavisa-utkast</a>
+        <a class="aha-tile-btn aha-tile-btn-secondary" href="search.html">Søk i bibliotek</a>
+        <a class="aha-tile-btn aha-tile-btn-secondary" href="mindmap.html">Se Tankekart</a>
+        <a class="aha-tile-btn aha-tile-btn-secondary" href="privacy.html">Personvern / Kontroll</a>
+      </div>
+    </section>
 
     <section class="aha-panel aha-status-panel">
       <div class="aha-panel-head">
@@ -160,6 +203,7 @@
   <script src="ahaContracts.js"></script>
   <script src="ahaHistoryGoImport.js"></script>
   <script src="ahaModules.js"></script>
+  <script src="ahaProfile.js"></script>
   <script src="ahaDashboard.js"></script>
 </body>
 </html>

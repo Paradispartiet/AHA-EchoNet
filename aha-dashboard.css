@@ -573,3 +573,45 @@ input:focus { border-color: var(--aha-yellow); box-shadow: 0 0 0 3px rgba(246,20
     color: #ffe27a;
   }
 }
+
+.aha-profile-status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.aha-status-card {
+  border: 1px solid var(--aha-line);
+  border-radius: 14px;
+  padding: 10px;
+  background: var(--aha-card-soft);
+}
+
+.aha-activity-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.aha-activity-list li {
+  border: 1px solid var(--aha-line);
+  border-radius: 12px;
+  padding: 10px;
+  background: var(--aha-card-soft);
+  display: grid;
+  gap: 4px;
+}
+
+.aha-activity-list small,
+.aha-status-stack { color: var(--aha-muted); }
+
+.aha-historygo-status,
+.aha-privacy-status { margin-top: 10px; }
+
+.aha-status-stack {
+  display: grid;
+  gap: 6px;
+}

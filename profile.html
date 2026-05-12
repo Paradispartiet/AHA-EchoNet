@@ -10,22 +10,48 @@
 <body>
   <main class="aha-dashboard" style="max-width: 900px;">
     <section class="aha-panel">
-      <p class="eyebrow">AHA Modulskall</p>
+      <p class="eyebrow">AHA Home</p>
       <h1>AHA Profil</h1>
-      <p>
-        Profilmodulen skal være brukerens personlige oversikt: hvem du er,
-        innlogget status, profilkort, History Go-progresjon, personlig galleri
-        og samlet innsikt/AHA-score.
-      </p>
-      <ul>
-        <li>Identitet og profilnavn</li>
-        <li>Innlogging og koblingsstatus</li>
-        <li>Personlig progresjon og AHA-score</li>
-      </ul>
+      <p>Din personlige innsiktsflate.</p>
+      <div class="aha-status-stack">
+        <strong id="aha-home-profile-name">Lokal AHA-bruker</strong>
+        <span id="aha-home-profile-mode">Lokal modus</span>
+        <small id="aha-home-last-activity">Ingen aktivitet registrert</small>
+      </div>
+      <div id="aha-profile-status-grid" class="aha-profile-status-grid"></div>
+    </section>
+
+    <section class="aha-panel">
+      <p class="eyebrow">Siste aktivitet</p>
+      <h2>Siste 10 objekter</h2>
+      <ul id="aha-recent-activity" class="aha-activity-list"></ul>
+    </section>
+
+    <section class="aha-panel">
+      <p class="eyebrow">History Go</p>
+      <h2>Status</h2>
+      <div id="aha-historygo-status" class="aha-historygo-status"></div>
+      <div class="aha-tile-actions"><a class="aha-tile-btn aha-tile-btn-secondary" href="historygo.html">Åpne History Go-status</a></div>
+    </section>
+
+    <section class="aha-panel">
+      <p class="eyebrow">Personvern</p>
+      <h2>Kontrollstatus</h2>
+      <div id="aha-privacy-status" class="aha-privacy-status"></div>
+      <div class="aha-tile-actions"><a class="aha-tile-btn aha-tile-btn-secondary" href="privacy.html">Personvern / Kontroll</a></div>
+    </section>
+
+    <section class="aha-panel">
+      <p class="eyebrow">Moduler</p>
+      <h2>Arbeidsflaten din</h2>
+      <section id="aha-modules-grid" class="aha-grid" aria-label="AHA moduler"></section>
       <div class="aha-tile-actions">
         <a class="aha-tile-btn aha-tile-btn-primary" href="index.html">Tilbake til AHA Home</a>
       </div>
     </section>
   </main>
+  <script src="ahaModules.js"></script>
+  <script src="ahaDashboard.js"></script>
+  <script src="ahaProfile.js"></script>
 </body>
 </html>

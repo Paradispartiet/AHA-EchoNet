@@ -154,6 +154,10 @@ Fase 3 (første leveranse):
 - `ahaMindmap.js` visualiserer koblinger mellom source events, insights, lists, paths, articles og øvrige AHA-objekter.
 - Første versjon er read-only og DOM-basert.
 - Semantisk graph/embeddings/avansert visualisering kommer senere.
+- AHA Home / Profil samler nå status fra aktive moduler i en felles personlig flate.
+- `ahaProfile.js` leser lokale AHA- og History Go-nøkler read-only.
+- Modulen viser nøkkeltall, siste aktivitet, History Go-status og personvernstatus.
+- Modulen lager ikke ny motor og skriver ikke til andre modulers storage.
 
 ### 4. Lister
 
