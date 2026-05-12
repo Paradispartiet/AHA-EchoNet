@@ -152,7 +152,7 @@
       id: "privacy",
       title: "Personvern",
       type: "system",
-      status: "shell",
+      status: "active",
       href: "privacy.html",
       description: "Transparens, datakontroll og samtykke for hele AHA-laget.",
       phase: 1
