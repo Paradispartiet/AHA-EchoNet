@@ -148,12 +148,8 @@
 
   function clearStorageKey(key, confirmation) {
     const def = STORAGE_DEFINITIONS.find((entry) => entry.key === key);
-    if (!def || !def.canClear) {
-      return { ok: false, reason: "not_allowed" };
-    }
-    if (confirmation !== "SLETT") {
-      return { ok: false, reason: "missing_confirmation" };
-    }
+    if (!def || !def.canClear) return { ok: false, reason: "not_allowed" };
+    if (confirmation !== "SLETT") return { ok: false, reason: "missing_confirmation" };
     localStorage.removeItem(key);
     return { ok: true, key };
   }
@@ -258,7 +254,8 @@
       if (!(target instanceof HTMLElement)) return;
       const key = target.dataset.clearKey;
       if (!key) return;
-      const input = document.querySelector(`[data-clear-confirm="${CSS.escape(key)}"]`);
+      const card = target.closest(".privacy-storage-card");
+      const input = card?.querySelector("[data-clear-confirm]");
       const confirmation = input instanceof HTMLInputElement ? input.value : "";
       const result = clearStorageKey(key, confirmation);
       const message = document.getElementById("privacy-action-message");
