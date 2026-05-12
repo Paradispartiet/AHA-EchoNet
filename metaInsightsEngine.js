@@ -19,7 +19,7 @@
 
   function listThemesForSubject(chamber, subjectId) {
     const themes = new Set();
-    const insights = chamber?.insights || [];
+    const insights = IE?.getActiveInsights ? IE.getActiveInsights(chamber) : (chamber?.insights || []);
 
     for (const ins of insights) {
       if (ins.subject_id === subjectId && ins.theme_id) {
@@ -46,7 +46,7 @@
   }
 
   function enrichInsightsWithLifecycle(chamber, subjectId) {
-    const insights = chamber?.insights || [];
+    const insights = IE?.getActiveInsights ? IE.getActiveInsights(chamber) : (chamber?.insights || []);
     const now = new Date();
 
     return insights

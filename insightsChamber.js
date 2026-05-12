@@ -726,6 +726,13 @@ function createInsightFromSignal(signal) {
     dimensions,
     semiotic
   );
+  const functionalType = classifyFunctionalType(
+    text,
+    semantic,
+    dimensions,
+    narrative,
+    layers
+  );
 
   const insight = {
     id: generateInsightId(),
@@ -745,7 +752,9 @@ function createInsightFromSignal(signal) {
       total_score: Math.min(100, 10 + depthScore),
     },
     depth_score: depthScore,
+    status: "suggested",
     insight_type: insightType,
+    functional_type: functionalType,
     first_seen: signal.timestamp,
     last_updated: signal.timestamp,
     semantic,
@@ -773,9 +782,39 @@ function createInsightFromSignal(signal) {
 
   return insight;
 }
+
+  function classifyFunctionalType(text, semantic, dimensions, narrative, layers) {
+    const raw = String(text || "").trim();
+    if (!raw) return "observation";
+    const lower = raw.toLowerCase();
+    const claims = Array.isArray(layers?.claims) ? layers.claims : [];
+    const patterns = Array.isArray(layers?.patterns) ? layers.patterns : [];
+
+    if (/[?？]\s*$/.test(raw) || lower.startsWith("hvorfor") || lower.startsWith("hvordan")) return "question";
+    if (/(\bskal\b|\bbør\b|\bvil\b).*(\bgjøre\b|\bteste\b|\bstarte\b)/.test(lower)) return "task";
+    if (/(\bproblem\b|\bsliter\b|\bklarer ikke\b|\bvanskelig\b|\bfastlåst\b)/.test(lower)) return "problem";
+    if (/(\bløsning\b|\bkan løse\b|\bfungerer når\b|\bhjelper\b)/.test(lower)) return "solution";
+    if (/(\bbeslutter\b|\bhar bestemt\b|\bvalgte\b|\bvedtak\b)/.test(lower)) return "decision";
+    if (/\ber\s+en\b|\ber\s+et\b|\bbetyr\b|\bdefinerer\b/.test(lower)) return "definition";
+    if (semantic?.has_contrast || patterns.some((p) => p?.type === "contrast")) return "contradiction";
+    if (patterns.length > 0 || semantic?.frequency === "alltid" || semantic?.frequency === "ofte") return "pattern";
+    if ((narrative?.agency || "") === "refleksjon") return "learning_point";
+    if ((dimensions || []).includes("fortid") || /(\bhusker\b|\bfør\b|\btidligere\b)/.test(lower)) return "memory";
+    if (claims.length > 0) return "principle";
+    return "observation";
+  }
+
+  function getActiveInsights(chamber) {
+    const insights = Array.isArray(chamber?.insights) ? chamber.insights : [];
+    return insights.filter((ins) => {
+      if (!ins || ins.merged_into) return false;
+      const status = String(ins.status || "suggested").toLowerCase();
+      return status !== "archived" && status !== "rejected" && status !== "merged";
+    });
+  }
   
   function getInsightsForTopic(chamber, subjectId, themeId) {
-    return chamber.insights.filter(
+    return getActiveInsights(chamber).filter(
       (ins) =>
         ins.subject_id === subjectId &&
         ins.theme_id === themeId
@@ -2754,6 +2793,8 @@ function getConceptsForTheme(chamber, subjectId, themeId) {
     addSignalToChamberWithMeta,
     splitIntoSentences,
     getInsightsForTopic,
+    getActiveInsights,
+    classifyFunctionalType,
     computeTopicStats,
     computeSemanticCounts,
     computeDimensionsSummary,
