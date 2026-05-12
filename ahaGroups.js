@@ -268,11 +268,19 @@
     return out;
   }
 
+  function safeDecodeHash(value) {
+    try {
+      return decodeURIComponent(value);
+    } catch {
+      return "";
+    }
+  }
+
   function hashGroupId() {
     const raw = String(global.location.hash || "").replace(/^#/, "").trim();
     if (!raw) return "";
-    if (raw.startsWith("group=")) return decodeURIComponent(raw.slice(6));
-    return decodeURIComponent(raw);
+    if (raw.startsWith("group=")) return safeDecodeHash(raw.slice(6));
+    return safeDecodeHash(raw);
   }
 
   function setHashGroupId(groupId) {
