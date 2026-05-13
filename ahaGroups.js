@@ -472,17 +472,23 @@
       return null;
     }
     const sources = {
-      aha_lists: "aha_lists_v1",
-      aha_paths: "aha_paths_v1",
-      aha_avisa: "aha_articles_v1",
-      aha_notes: "aha_notes_v1",
-      aha_feed: "aha_feed_posts_v1"
+      aha_lists: { key: "aha_lists_v1", fallbackPrefix: "list" },
+      aha_paths: { key: "aha_paths_v1", fallbackPrefix: "path" },
+      aha_avisa: { key: "aha_articles_v1", fallbackPrefix: "article" },
+      aha_notes: { key: "aha_notes_v1", fallbackPrefix: "note" },
+      aha_feed: { key: "aha_feed_posts_v1", fallbackPrefix: "feed_post" }
     };
-    const key = sources[source];
-    if (!key) return null;
-    return asArray(safeParse(localStorage.getItem(key) || "[]", []))
-      .filter((item) => !item?.deletedAt && !item?.deleted_at)
-      .find((item) => asText(item?.id, "") === refId) || null;
+    const sourceConfig = sources[source];
+    if (!sourceConfig?.key) return null;
+    const items = asArray(safeParse(localStorage.getItem(sourceConfig.key) || "[]", []));
+    for (let i = 0; i < items.length; i += 1) {
+      const item = items[i];
+      if (item?.deletedAt || item?.deleted_at) continue;
+      const fallbackId = `${sourceConfig.fallbackPrefix}_idx_${i}`;
+      const candidates = [item?.id, fallbackId].map((x) => asText(x, ""));
+      if (candidates.includes(refId)) return item;
+    }
+    return null;
   }
 
   function referenceFilterMatches(filter, ref) {
