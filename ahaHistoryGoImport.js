@@ -208,9 +208,16 @@
   }
 
   function importHistoryGoData(payload) {
-    if (typeof global.loadChamberFromStorage !== "function" || typeof global.saveChamberToStorage !== "function") {
+    if (!payload || (typeof payload !== "object" && typeof payload !== "string")) {
       return {
-        error: "Chamber-adapter mangler.",
+        error: "Ugyldig payload.",
+        importedSignals: 0
+      };
+    }
+
+    if (!global.AHAIngest || typeof global.AHAIngest.ingest !== "function") {
+      return {
+        error: "AHAIngest mangler.",
         importedSignals: 0
       };
     }
