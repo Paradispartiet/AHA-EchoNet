@@ -93,7 +93,7 @@
   }
 
   function getInsightRefId(insight, index) {
-    return asText(insight?.id || insight?.base?.id, `insight_idx_${index}`);
+    return asText(insight?.id || insight?.base?.id || insight?.source_event_id || insight?.sourceEventId || insight?.source_id || insight?.sourceId || insight?.event_id || insight?.eventId, `insight_idx_${index}`);
   }
 
   function getInsightTitle(insight) {
