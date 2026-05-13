@@ -25,6 +25,47 @@
     return global.AHAIngest.ingest(input);
   }
 
+  function writeJsonToStorage(key, value) {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  function applyPayloadToRuntimeAndStorage(payload) {
+    const p = obj(payload);
+    const applied = [];
+
+    const writeObject = (key, value) => {
+      if (!value || typeof value !== "object" || Array.isArray(value)) return;
+      if (writeJsonToStorage(key, value)) applied.push(key);
+    };
+
+    const writeArray = (key, value) => {
+      if (!Array.isArray(value)) return;
+      if (writeJsonToStorage(key, value)) applied.push(key);
+    };
+
+    writeObject("knowledge_universe", p.knowledge_universe);
+    writeArray("hg_learning_log_v1", p.hg_learning_log_v1);
+    writeArray("hg_insights_events_v1", p.hg_insights_events_v1);
+    writeObject("merits_by_category", p.merits_by_category);
+    writeArray("people_collected", p.people_collected);
+
+    if (global.merits && p.merits_by_category && typeof p.merits_by_category === "object") {
+      Object.keys(global.merits).forEach((key) => delete global.merits[key]);
+      Object.assign(global.merits, p.merits_by_category);
+    }
+
+    if (global.peopleCollected && Array.isArray(p.people_collected)) {
+      global.peopleCollected.splice(0, global.peopleCollected.length, ...p.people_collected);
+    }
+
+    return applied;
+  }
+
   function persistImport(payload, counts) {
     if (!global.AHARepository?.saveImport) return;
     global.AHARepository.saveImport({
@@ -218,6 +259,7 @@
     const p = typeof payload === "string" ? JSON.parse(payload) : obj(payload);
     const fallbackTimestamp = p.exported_at || new Date().toISOString();
     const chamber = null;
+    const appliedStorageKeys = applyPayloadToRuntimeAndStorage(p);
 
     const counts = {
       nextup: collectNextUpSignal(chamber, p.nextup_learning_signal || p.nextup?.learning_signal, fallbackTimestamp),
@@ -225,7 +267,8 @@
       insight_events: collectInsightEventSignals(chamber, p.hg_insights_events_v1, fallbackTimestamp),
       knowledge: collectKnowledgeSignals(chamber, p.knowledge_universe, fallbackTimestamp),
       notes: collectNoteSignals(p.notes, "historygo_note", fallbackTimestamp),
-      dialogs: collectNoteSignals(p.dialogs, "historygo_dialog", fallbackTimestamp)
+      dialogs: collectNoteSignals(p.dialogs, "historygo_dialog", fallbackTimestamp),
+      storage_keys_applied: appliedStorageKeys.length
     };
 
     persistImport(p, counts);
