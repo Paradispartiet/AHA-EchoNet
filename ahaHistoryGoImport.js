@@ -272,7 +272,19 @@
       };
     }
 
-    const p = typeof payload === "string" ? JSON.parse(payload) : obj(payload);
+    let p;
+    if (typeof payload === "string") {
+      try {
+        p = JSON.parse(payload);
+      } catch {
+        return {
+          error: "Ugyldig payload.",
+          importedSignals: 0
+        };
+      }
+    } else {
+      p = obj(payload);
+    }
     const fallbackTimestamp = p.exported_at || new Date().toISOString();
     const chamber = null;
     const appliedStorageKeys = applyPayloadToRuntimeAndStorage(p);
