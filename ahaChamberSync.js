@@ -24,6 +24,39 @@
   let pushInflight = false;
   let pushPending = false;
   let lastPulledAt = null;
+  let syncDisabled = false;
+
+
+
+  function disableSync(reason, error) {
+    syncDisabled = true;
+    if (pushTimer) {
+      clearTimeout(pushTimer);
+      pushTimer = null;
+    }
+    pushPending = false;
+    console.warn("AHAChamberSync: sync deaktivert", reason, error || "");
+  }
+
+  function isPermanentSchemaError(error) {
+    const code = error?.code || "";
+    const message = String(error?.message || error || "").toLowerCase();
+    return code === "42P01" || message.includes("relation") || message.includes("does not exist");
+  }
+
+  function deriveLocalTime(chamber) {
+    const items = Array.isArray(chamber?.insights) ? chamber.insights : [];
+    let maxTime = 0;
+    for (const item of items) {
+      const candidates = [item?.updated_at, item?.created_at, item?.timestamp, item?.saved_at, item?.date];
+      for (const value of candidates) {
+        if (!value) continue;
+        const t = new Date(value).getTime();
+        if (Number.isFinite(t) && t > maxTime) maxTime = t;
+      }
+    }
+    return maxTime;
+  }
 
   function readLocal() {
     try {
@@ -56,6 +89,7 @@
   }
 
   function isReady() {
+    if (syncDisabled) return false;
     return Boolean(global.AHARepository?.saveChamber && global.AHARepository?.loadChamber);
   }
 
@@ -90,6 +124,7 @@
         } catch {}
       } else if (result?.error) {
         console.warn("AHAChamberSync: push feilet", result.error);
+        if (isPermanentSchemaError(result.error)) disableSync("schema_missing", result.error);
       }
       return result;
     } finally {
@@ -135,7 +170,16 @@
     // Begge har innhold. Compare _local_updated_at vs remote updated_at.
     const localTs = localChamber._local_updated_at || null;
     const remoteTime = remoteUpdatedAt ? new Date(remoteUpdatedAt).getTime() : 0;
-    const localTime = localTs ? new Date(localTs).getTime() : 0;
+    const hasLocalMarker = Boolean(localTs);
+    const localTime = hasLocalMarker ? new Date(localTs).getTime() : deriveLocalTime(localChamber);
+
+    // Legacy data uten _local_updated_at: unngå å overskrive lokalt innhold
+    // med remote med mindre vi tydelig kan bevise at remote er nyere.
+    if (!hasLocalMarker && localCount > 0 && (!localTime || localTime >= remoteTime)) {
+      schedulePush();
+      lastPulledAt = remoteUpdatedAt;
+      return { ok: true, action: "kept_local_legacy_no_marker", remoteCount, localCount };
+    }
 
     if (localTime > remoteTime) {
       schedulePush();
