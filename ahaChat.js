@@ -812,9 +812,9 @@
       button.addEventListener("click", async () => {
         const text = textarea.value.trim();
         if (!text) return;
-        textarea.value = "";
         appendChat("user", text);
         const count = handleUserMessage(text);
+        textarea.value = "";
         if (count > 0) setStatusNote(`Lagret ${count} signal${count === 1 ? "" : "er"} i bakgrunnen.`);
         try {
           const agent = await askAhaAgent(text);
