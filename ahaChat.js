@@ -812,6 +812,7 @@
       button.addEventListener("click", async () => {
         const text = textarea.value.trim();
         if (!text) return;
+        textarea.value = "";
         appendChat("user", text);
         const count = handleUserMessage(text);
         if (count > 0) setStatusNote(`Lagret ${count} signal${count === 1 ? "" : "er"} i bakgrunnen.`);
@@ -842,7 +843,6 @@
           console.warn("AHA-agent utilgjengelig", err);
           appendChat("aha", "AHA-agenten er ikke tilgjengelig akkurat nå.");
         }
-        textarea.value = "";
       });
     }
 
