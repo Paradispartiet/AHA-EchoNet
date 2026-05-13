@@ -26,6 +26,7 @@ For semantisk søk i innsiktskammeret:
 For sync av hele insight-kammeret per innlogget profil:
 
 - `supabase/chamber.sql` oppretter `aha_insight_chambers` (én rad per profile_id med kammeret som JSONB).
+- `supabase/chamber.sql` er trygg å kjøre flere ganger (policyer droppes med `if exists` før de opprettes på nytt).
 
 ## Kjør policies
 

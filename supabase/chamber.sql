@@ -16,6 +16,10 @@ create table if not exists public.aha_insight_chambers (
 
 alter table public.aha_insight_chambers enable row level security;
 
+drop policy if exists "aha_insight_chambers_select_own" on public.aha_insight_chambers;
+drop policy if exists "aha_insight_chambers_insert_own" on public.aha_insight_chambers;
+drop policy if exists "aha_insight_chambers_update_own" on public.aha_insight_chambers;
+
 create policy "aha_insight_chambers_select_own"
   on public.aha_insight_chambers
   for select
