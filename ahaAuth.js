@@ -310,7 +310,7 @@
             ? "Sjekk e-posten for innloggingslenke. Åpne lenken, og gå tilbake til AHA-vinduet hvis Gmail åpner et nytt Safari-vindu."
             : `Innlogging feilet: ${result.error?.message || result.reason || "ukjent feil"}`;
         }
-        if (!result.ok && submitButton) submitButton.disabled = false;
+        if (submitButton) submitButton.disabled = false;
         renderAuthStatus();
       });
     }
