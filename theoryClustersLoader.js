@@ -7,7 +7,7 @@
 (function (global) {
   "use strict";
 
-  const URL = "/theoryClusters.json";
+  const URL = new URL("theoryClusters.json", global.document?.baseURI || global.location?.href || "/").toString();
   let _cache = null;
   let _pending = null;
 
@@ -35,8 +35,7 @@
       })
       .catch((err) => {
         console.warn("TheoryClustersLoader: kunne ikke laste", URL, err);
-        _cache = [];
-        return _cache;
+        return [];
       })
       .finally(() => {
         _pending = null;
