@@ -327,6 +327,27 @@
     setText("aha-insight-empty-hint", "Importer fra History Go eller start en samtale med AHA.");
   }
 
+
+  function bindHistoryGoImportTrigger() {
+    const importButton = $("btn-import-hg");
+    if (!importButton || importButton.dataset.ahaDashboardBound === "true") return;
+    importButton.dataset.ahaDashboardBound = "true";
+    importButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (typeof window.AHAHistoryGoImport?.importHistoryGoDataFromSharedStorage !== "function") {
+        console.warn("AHADashboard: importfunksjon for History Go mangler");
+        return;
+      }
+
+      try {
+        window.AHAHistoryGoImport.importHistoryGoDataFromSharedStorage();
+      } catch (error) {
+        console.warn("AHADashboard: History Go-import feilet", error);
+      }
+    });
+  }
+
   function bindImportButtons() {
     const importButtons = ["btn-import-hg-primary", "btn-import-hg-secondary"];
     importButtons.forEach((id) => {
@@ -357,6 +378,7 @@
 
       renderModules(stats);
       bindHistoryGoHomeTile();
+      bindHistoryGoImportTrigger();
       bindImportButtons();
       renderIdentity(authState);
       renderProfileStats(stats, sourceLabel);
@@ -370,6 +392,7 @@
       lastState = { authState, stats, sourceLabel: "localStorage", error };
       renderModules(stats);
       bindHistoryGoHomeTile();
+      bindHistoryGoImportTrigger();
       bindImportButtons();
       renderIdentity(authState);
       renderProfileStats(stats, "localStorage");
