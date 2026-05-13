@@ -12,6 +12,15 @@
     "ikke innlogget"
   ]);
 
+  const PROFILE_ID_STORAGE_KEY = "aha_profile_id";
+
+  function cacheProfileId(profileId) {
+    try {
+      if (profileId) localStorage.setItem(PROFILE_ID_STORAGE_KEY, String(profileId));
+      else localStorage.removeItem(PROFILE_ID_STORAGE_KEY);
+    } catch {}
+  }
+
   function getClient() {
     return global.AHADb?.getClient?.() || null;
   }
@@ -219,13 +228,16 @@
     if (!client) return { ok: false, reason: "not_configured" };
     const { error } = await client.auth.signOut();
     if (error) return { ok: false, error };
+    cacheProfileId(null);
     emitAuthReady(null, null);
     return { ok: true };
   }
 
   async function getProfileId() {
     const user = await getUser();
-    return user?.id || null;
+    const profileId = user?.id || null;
+    cacheProfileId(profileId);
+    return profileId;
   }
 
   async function renderAuthStatus() {
@@ -233,6 +245,7 @@
 
     if (!isReady()) {
       if (mount) mount.textContent = "Database ikke konfigurert. Appen bruker localStorage.";
+      cacheProfileId(null);
       emitAuthReady(null, null);
       return;
     }
@@ -246,10 +259,12 @@
     const user = await getUser();
     if (!user) {
       if (mount && callbackResult?.ok) mount.textContent = "Ikke innlogget. LocalStorage fungerer fortsatt.";
+      cacheProfileId(null);
       emitAuthReady(null, null);
       return;
     }
 
+    cacheProfileId(user.id);
     const profile = await ensureProfile();
     const displayName = cleanText(profile?.data?.display_name);
     if (mount) {
