@@ -417,7 +417,8 @@
       for (let i = 0; i < v.length; i++) n += v[i] * v[i];
       n = Math.sqrt(n);
       if (!Number.isFinite(n) || n === 0) continue;
-      const len = v.length < srcUnit.length ? v.length : srcUnit.length;
+      if (v.length !== srcUnit.length) continue;
+      const len = srcUnit.length;
       let dot = 0;
       for (let i = 0; i < len; i++) dot += (v[i] / n) * srcUnit[i];
       if (dot > 1) dot = 1;
