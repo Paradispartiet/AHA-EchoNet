@@ -32,6 +32,7 @@
 
   function asArray(value) { return Array.isArray(value) ? value : []; }
   function asObject(value) { return value && typeof value === "object" && !Array.isArray(value) ? value : {}; }
+  const UNLOCK_META_KEYS = new Set(["byQuiz", "index"]);
 
   function countBestEffort(value) {
     if (Array.isArray(value)) return value.length;
@@ -44,6 +45,16 @@
       else count += 1;
     });
     return count;
+  }
+
+  function countHistoryGoUnlocks(unlocks) {
+    if (Array.isArray(unlocks)) return unlocks.length;
+    const data = asObject(unlocks);
+    if (!Object.keys(data).length) return 0;
+    if (data.byQuiz && typeof data.byQuiz === "object" && !Array.isArray(data.byQuiz)) {
+      return Object.keys(data.byQuiz).length;
+    }
+    return Object.keys(data).filter((key) => !UNLOCK_META_KEYS.has(key)).length;
   }
 
   function readRaw(key) {
@@ -62,7 +73,7 @@
       hasImportPayload: Boolean(String(payloadRaw || "").trim()),
       visitedPlacesCount: countBestEffort(visitedPlaces),
       peopleCollectedCount: countBestEffort(people),
-      unlocksCount: countBestEffort(unlocks),
+      unlocksCount: countHistoryGoUnlocks(unlocks),
       progressExists: Boolean(String(progressRaw || "").trim()),
       lastImportAt: String(payload.exported_at || payload.exportedAt || payload.updated_at || payload.updatedAt || "").trim()
     };
@@ -87,6 +98,17 @@
     return event?.imported === true || event?.source_app === "historygo" || sourceType.startsWith("historygo");
   }
 
+  function isHistoryGoImportedInsight(insight, sourceEventsById) {
+    if (!insight || typeof insight !== "object") return false;
+    if (insight.import_source === "historygo") return true;
+    const sourceIds = Array.isArray(insight.source_event_ids) ? insight.source_event_ids : [];
+    for (let i = 0; i < sourceIds.length; i += 1) {
+      const event = sourceEventsById[String(sourceIds[i])];
+      if (isHistoryGoImportedEvent(event)) return true;
+    }
+    return false;
+  }
+
   function collectImportedAhaEvents() {
     const events = asArray(safeParse(readRaw(KEYS.sourceEvents), []));
     const importedEvents = events.filter(isHistoryGoImportedEvent);
@@ -96,13 +118,15 @@
       bySourceType[key] = (bySourceType[key] || 0) + 1;
     });
 
+    const sourceEventsById = {};
+    events.forEach((event) => {
+      const eventId = String(event?.id || "").trim();
+      if (eventId) sourceEventsById[eventId] = event;
+    });
+
     const chamber = asObject(safeParse(readRaw(KEYS.chamber), {}));
     const insights = asArray(chamber.insights);
-    const importedInsightsCount = insights.filter((insight) => {
-      const sourceType = String(insight?.source_type || insight?.meta?.source_type || "").trim();
-      const sourceApp = String(insight?.source_app || insight?.meta?.source_app || "").trim();
-      return insight?.imported === true || insight?.meta?.imported === true || sourceApp === "historygo" || sourceType.startsWith("historygo");
-    }).length;
+    const importedInsightsCount = insights.filter((insight) => isHistoryGoImportedInsight(insight, sourceEventsById)).length;
 
     return {
       totalCount: importedEvents.length,
