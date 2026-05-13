@@ -631,7 +631,7 @@
                   : "<li>Ingen referanser ennå.</li>"}
               </ul>
               <form class="groups-inline-form" data-action="add-reference" data-group-id="${escapeHtml(group.id)}">
-                <select name="referenceKey">
+                <select name="referenceKey" required>
                   <option value="">Velg objekt</option>
                   ${references.map((ref, index) => `<option value="${escapeHtml(String(index))}">${escapeHtml(`${ref.title} (${ref.type} · ${ref.source})`)}</option>`).join("")}
                 </select>
@@ -829,8 +829,10 @@
       form.addEventListener("submit", (event) => {
         event.preventDefault();
         const formData = new FormData(form);
-        const idx = Number(formData.get("referenceKey"));
-        if (!Number.isFinite(idx) || !availableReferences[idx]) return;
+        const rawReferenceKey = formData.get("referenceKey");
+        if (rawReferenceKey === null || rawReferenceKey === "") return;
+        const idx = Number(rawReferenceKey);
+        if (!Number.isInteger(idx) || !availableReferences[idx]) return;
         addReferenceToGroup(form.getAttribute("data-group-id"), availableReferences[idx]);
         form.reset();
         refresh();
