@@ -40,6 +40,34 @@
     return Number.isFinite(t) ? t : 0;
   }
 
+  function readDateValue(item) {
+    return asText(
+      item?.updated_at
+      || item?.updatedAt
+      || item?.last_updated
+      || item?.lastUpdated
+      || item?.created_at
+      || item?.createdAt
+      || item?.first_seen
+      || item?.firstSeen,
+      "Ukjent tidspunkt"
+    );
+  }
+
+  function readSourceEventId(item) {
+    const candidates = [
+      item?.source_event_id,
+      item?.sourceEventId,
+      item?.source_id,
+      item?.sourceId,
+      item?.event_id,
+      item?.eventId,
+      Array.isArray(item?.source_event_ids) ? item.source_event_ids[0] : null,
+      Array.isArray(item?.sourceEventIds) ? item.sourceEventIds[0] : null
+    ];
+    return asText(candidates.find((value) => value !== null && value !== undefined && String(value).trim() !== ""), "");
+  }
+
   function loadChamber() {
     const raw = localStorage.getItem(CHAMBER_KEY);
     const parsed = safeParse(raw || "{}", { insights: [] });
@@ -70,8 +98,8 @@
       raw: insight,
       title: asText(insight?.title || insight?.heading || insight?.label || base?.title, "Innsikt"),
       summary: asText(insight?.summary || insight?.text || insight?.content || insight?.claim, "Ingen oppsummering ennå."),
-      date: asText(insight?.updated_at || insight?.updatedAt || insight?.last_updated || insight?.lastUpdated || insight?.created_at || insight?.createdAt || insight?.first_seen || insight?.firstSeen, "Ukjent tidspunkt"),
-      sourceEventId: asText(insight?.source_event_id || insight?.sourceEventId || insight?.source_id || insight?.sourceId || insight?.event_id || insight?.eventId, ""),
+      date: readDateValue(insight),
+      sourceEventId: readSourceEventId(insight),
       terms: asArray(insight?.terms).concat(asArray(insight?.tokens), asArray(insight?.keywords)).filter(Boolean),
       topic: asText(insight?.topic || insight?.emne || insight?.category, ""),
       confidence: insight?.confidence ?? insight?.score ?? null
@@ -138,7 +166,7 @@
       source: "aha_insights",
       refId,
       addedAt: new Date().toISOString(),
-      meta: { index, sourceEventId: asText(insight?.source_event_id || insight?.sourceEventId, "") }
+      meta: { index, sourceEventId: readSourceEventId(insight) }
     };
     const result = global.AHALists.addItemToList(listId, item);
     if (!result) return { ok: false, reason: "add_failed", message: "Kunne ikke legge til i listen." };
