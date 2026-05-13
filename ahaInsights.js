@@ -89,6 +89,31 @@
     return items;
   }
 
+  function normalizeTerms(insight) {
+    const conceptTerms = asArray(insight?.concepts)
+      .map((concept) => {
+        if (typeof concept === "string") return concept;
+        return concept?.term || concept?.label || concept?.name || concept?.key || "";
+      });
+
+    const rawTermKeys = asArray(insight?.raw_terms)
+      .map((term) => {
+        if (typeof term === "string") return term;
+        return term?.key || term?.term || term?.label || term?.name || "";
+      });
+
+    return asArray(insight?.terms)
+      .concat(
+        asArray(insight?.tokens),
+        asArray(insight?.keywords),
+        rawTermKeys,
+        asArray(insight?.rawTerms),
+        conceptTerms
+      )
+      .map((term) => asText(term, ""))
+      .filter(Boolean);
+  }
+
   function normalizeInsightForView(insight) {
     const base = global.AHAContracts?.normalizeBaseItem
       ? global.AHAContracts.normalizeBaseItem(insight, { type: "insight", source: "aha" })
@@ -100,7 +125,7 @@
       summary: asText(insight?.summary || insight?.text || insight?.content || insight?.claim, "Ingen oppsummering ennå."),
       date: readDateValue(insight),
       sourceEventId: readSourceEventId(insight),
-      terms: asArray(insight?.terms).concat(asArray(insight?.tokens), asArray(insight?.keywords)).filter(Boolean),
+      terms: normalizeTerms(insight),
       topic: asText(insight?.topic || insight?.emne || insight?.category, ""),
       confidence: insight?.confidence ?? insight?.score ?? null
     };
