@@ -84,6 +84,11 @@
         }
         try {
           var counts = window.AHAHistoryGoImport.importHistoryGoDataFromSharedStorage();
+          if (counts && counts.error) {
+            setStatus(counts.error);
+            refreshStatus();
+            return;
+          }
           setStatus("Import fullført: " + JSON.stringify(counts));
         } catch (error) {
           setStatus(error && error.message ? error.message : "Import feilet.");

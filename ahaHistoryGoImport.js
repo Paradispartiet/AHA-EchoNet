@@ -208,6 +208,13 @@
   }
 
   function importHistoryGoData(payload) {
+    if (typeof global.loadChamberFromStorage !== "function" || typeof global.saveChamberToStorage !== "function") {
+      return {
+        error: "Chamber-adapter mangler.",
+        importedSignals: 0
+      };
+    }
+
     const p = typeof payload === "string" ? JSON.parse(payload) : obj(payload);
     const fallbackTimestamp = p.exported_at || new Date().toISOString();
     const chamber = null;

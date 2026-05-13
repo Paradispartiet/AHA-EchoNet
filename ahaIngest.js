@@ -43,6 +43,14 @@
     saveChamberFallback(chamber);
   }
 
+  function markInsightImportSource(chamber, meta, sourceApp) {
+    if (!chamber || !Array.isArray(chamber.insights) || !meta?.insight_id || !sourceApp) return false;
+    const target = chamber.insights.find((insight) => insight?.id === meta.insight_id);
+    if (!target || target.import_source === sourceApp) return false;
+    target.import_source = sourceApp;
+    return true;
+  }
+
   function ingest(input) {
     const sourceEvent = global.AHASources?.addSourceEvent?.(input) || null;
     // AHASources.createSourceEvent stripper top-level theme_id / subject_id /
@@ -104,6 +112,7 @@
     } else {
       global.InsightsEngine.addSignalToChamber(chamber, signal);
     }
+    markInsightImportSource(chamber, meta, signal.source_app);
     saveChamber(chamber);
 
     try {
