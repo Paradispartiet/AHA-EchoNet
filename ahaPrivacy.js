@@ -243,8 +243,9 @@
       const form = event.currentTarget;
       if (!(form instanceof HTMLFormElement)) return;
       const next = {};
-      new FormData(form).forEach((value, key) => {
-        next[key] = value === "on";
+      form.querySelectorAll('input[type="checkbox"][name]').forEach((input) => {
+        if (!(input instanceof HTMLInputElement)) return;
+        next[input.name] = input.checked;
       });
       saveSettings(next);
       refresh();
