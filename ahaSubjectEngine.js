@@ -81,16 +81,19 @@
 
   function scanField(text, values, boost, collector) {
     const normalized = String(text || "").toLowerCase();
-    const before = collector.length;
     const terms = Array.isArray(values) ? values : [values];
+    let matched = false;
 
     terms.forEach((term) => {
       const clean = String(term || "").trim();
       if (!clean) return;
-      if (normalized.includes(clean.toLowerCase())) collector.push(clean);
+      if (normalized.includes(clean.toLowerCase())) {
+        collector.push(clean);
+        matched = true;
+      }
     });
 
-    return collector.length > before ? boost : 0;
+    return matched ? boost : 0;
   }
 
   const GENERIC_TERMS = new Set(["kunnskap", "mennesker", "sted", "samfunn"]);
