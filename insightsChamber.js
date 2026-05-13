@@ -685,44 +685,6 @@
   
   // ── Innsiktskammer / Insight-objekter ──────
 
-
-
-  function classifyFunctionalType(text, semantic, narrative, patterns) {
-    const lower = (text || "").toLowerCase();
-
-    const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const hasStandaloneMarker = (marker) => {
-      const safeMarker = escapeRegex(marker);
-      const matcher = new RegExp(`(^|[^\p{L}\p{N}])${safeMarker}($|[^\p{L}\p{N}])`, "u");
-      return matcher.test(lower);
-    };
-
-    const learningMarkers = [
-      "lærte",
-      "lært",
-      "innså",
-      "innser",
-      "forstår",
-      "skjønner",
-      "oppdaget",
-      "reflekterer",
-      "erfaringen er",
-      "poenget er"
-    ];
-
-    const isLearningPoint =
-      semantic?.meta === "meta" ||
-      learningMarkers.some((marker) => hasStandaloneMarker(marker));
-
-    if (isLearningPoint) return "learning_point";
-
-    if (patterns.length > 0 || semantic?.frequency === "alltid" || semantic?.frequency === "ofte") return "pattern";
-
-    if (narrative?.norm_break || narrative?.systemic_effect) return "norm_case";
-
-    return "episode";
-  }
-
   function createEmptyChamber() {
     return { insights: [] };
   }
@@ -764,12 +726,6 @@ function createInsightFromSignal(signal) {
     dimensions,
     semiotic
   );
-  const functionalType = classifyFunctionalType(
-    text,
-    semantic,
-    narrative,
-    Array.isArray(layers.patterns) ? layers.patterns : []
-  );
 
   const insight = {
     id: generateInsightId(),
@@ -790,7 +746,6 @@ function createInsightFromSignal(signal) {
     },
     depth_score: depthScore,
     insight_type: insightType,
-    functional_type: functionalType,
     first_seen: signal.timestamp,
     last_updated: signal.timestamp,
     semantic,
