@@ -87,7 +87,19 @@
       meta: src.meta !== undefined ? src.meta : defs.meta
     };
 
-    return createBaseItem(merged);
+    const base = createBaseItem(merged);
+
+    if (!String(src.type || "").trim() && defs.type !== undefined) {
+      base.type = String(defs.type).trim() || "item";
+    }
+
+    const srcSource = String(src.source || src.source_app || src.source_type || "").trim();
+    if (!srcSource && (defs.source !== undefined || defs.source_app !== undefined || defs.source_type !== undefined)) {
+      const defaultSource = String(defs.source || defs.source_app || defs.source_type || "").trim();
+      base.source = defaultSource || "aha";
+    }
+
+    return base;
   }
 
   function isValidBaseItem(item) {
