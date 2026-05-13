@@ -238,21 +238,7 @@
     return importHistoryGoData(raw);
   }
 
-  function bindImportButton() {
-    const btn = document.getElementById("btn-import-hg");
-    if (!btn) return;
-    btn.addEventListener("click", (event) => {
-      event.stopPropagation();
-      const out = document.getElementById("out");
-      try {
-        const counts = importHistoryGoDataFromSharedStorage();
-        if (out) out.textContent = `History Go importert:\n${JSON.stringify(counts, null, 2)}`;
-      } catch (e) {
-        if (out) out.textContent = e.message;
-        console.warn(e);
-      }
-    });
-  }
+  // Import-knapp håndteres av historygo.html for å unngå dobbelt-binding.
 
   global.AHAHistoryGoImport = {
     PAYLOAD_KEY,
@@ -264,9 +250,4 @@
     collectNextUpSignal
   };
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", bindImportButton);
-  } else {
-    bindImportButton();
-  }
 })(window);
