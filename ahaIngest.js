@@ -291,7 +291,8 @@
       // Persist suggestion on the chamber so the UI can list pending
       // ones across reloads, not only in-flight events.
       if (typeof engine.recordMergeSuggestion === "function") {
-        const persisted = engine.recordMergeSuggestion(chamber, {
+        const latestChamber = loadChamber();
+        const persisted = engine.recordMergeSuggestion(latestChamber, {
           source_id: target.id,
           target_id: suggestion.candidate.id,
           similarity: suggestion.similarity,
@@ -299,7 +300,7 @@
           source_summary: target.summary || target.title || "",
           target_summary: suggestion.candidate.summary || suggestion.candidate.title || ""
         });
-        if (persisted) saveChamber(chamber);
+        if (persisted) saveChamber(latestChamber);
       }
 
       console.info(
