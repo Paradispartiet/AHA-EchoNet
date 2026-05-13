@@ -61,6 +61,25 @@
     return items;
   }
 
+  function normalizeTerms(insight) {
+    const conceptTerms = asArray(insight?.concepts)
+      .map((concept) => {
+        if (typeof concept === "string") return concept;
+        return concept?.term || concept?.label || concept?.name || "";
+      });
+
+    return asArray(insight?.terms)
+      .concat(
+        asArray(insight?.tokens),
+        asArray(insight?.keywords),
+        asArray(insight?.raw_terms),
+        asArray(insight?.rawTerms),
+        conceptTerms
+      )
+      .map((term) => asText(term, ""))
+      .filter(Boolean);
+  }
+
   function normalizeInsightForView(insight) {
     const base = global.AHAContracts?.normalizeBaseItem
       ? global.AHAContracts.normalizeBaseItem(insight, { type: "insight", source: "aha" })
@@ -72,7 +91,7 @@
       summary: asText(insight?.summary || insight?.text || insight?.content || insight?.claim, "Ingen oppsummering ennå."),
       date: asText(insight?.updated_at || insight?.updatedAt || insight?.last_updated || insight?.lastUpdated || insight?.created_at || insight?.createdAt || insight?.first_seen || insight?.firstSeen, "Ukjent tidspunkt"),
       sourceEventId: asText(insight?.source_event_id || insight?.sourceEventId || insight?.source_id || insight?.sourceId || insight?.event_id || insight?.eventId, ""),
-      terms: asArray(insight?.terms).concat(asArray(insight?.tokens), asArray(insight?.keywords)).filter(Boolean),
+      terms: normalizeTerms(insight),
       topic: asText(insight?.topic || insight?.emne || insight?.category, ""),
       confidence: insight?.confidence ?? insight?.score ?? null
     };
