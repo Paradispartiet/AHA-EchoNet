@@ -801,7 +801,7 @@ function createInsightFromSignal(signal) {
     if (semantic?.has_contrast || patterns.some((p) => p?.type === "contrast")) return "contradiction";
     const isLearningPoint =
       semantic?.meta === "meta" ||
-      /\b(lærte|lært|innså|innser|forstår|skjønner|oppdaget|reflekterer|erfaringen er|poenget er)\b/.test(lower);
+      /(?:^|[^\p{L}\p{N}_])(lærte|lært|innså|innser|forstår|skjønner|oppdaget|reflekterer|erfaringen er|poenget er)(?=$|[^\p{L}\p{N}_])/u.test(lower);
     if (isLearningPoint) return "learning_point";
     if (patterns.length > 0 || semantic?.frequency === "alltid" || semantic?.frequency === "ofte") return "pattern";
     if ((dimensions || []).includes("fortid") || /(\bhusker\b|\bfør\b|\btidligere\b)/.test(lower)) return "memory";
