@@ -797,8 +797,11 @@ function createInsightFromSignal(signal) {
     if (/(\bbeslutter\b|\bhar bestemt\b|\bvalgte\b|\bvedtak\b)/.test(lower)) return "decision";
     if (/\ber\s+en\b|\ber\s+et\b|\bbetyr\b|\bdefinerer\b/.test(lower)) return "definition";
     if (semantic?.has_contrast || patterns.some((p) => p?.type === "contrast")) return "contradiction";
+    const isLearningPoint =
+      semantic?.meta === "meta" ||
+      /\b(lærte|lært|innså|innser|forstår|skjønner|oppdaget|reflekterer|erfaringen er|poenget er)\b/.test(lower);
+    if (isLearningPoint) return "learning_point";
     if (patterns.length > 0 || semantic?.frequency === "alltid" || semantic?.frequency === "ofte") return "pattern";
-    if ((narrative?.agency || "") === "refleksjon") return "learning_point";
     if ((dimensions || []).includes("fortid") || /(\bhusker\b|\bfør\b|\btidligere\b)/.test(lower)) return "memory";
     if (claims.length > 0) return "principle";
     return "observation";
