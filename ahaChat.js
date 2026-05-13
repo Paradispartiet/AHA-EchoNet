@@ -251,10 +251,11 @@
 
   function currentInsights() {
     const chamber = loadChamberFromStorage();
-    return global.InsightsEngine.getInsightsForTopic(
-      chamber,
-      SUBJECT_ID,
-      getThemeId()
+    const active = typeof global.InsightsEngine.getActiveInsights === "function"
+      ? global.InsightsEngine.getActiveInsights(chamber)
+      : (chamber?.insights || []);
+    return active.filter(
+      (ins) => ins.subject_id === SUBJECT_ID && ins.theme_id === getThemeId()
     );
   }
 
