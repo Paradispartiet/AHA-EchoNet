@@ -73,7 +73,7 @@
       title: asText(src.title, "Referanse"),
       type: asText(src.type, "reference"),
       source: asText(src.source, "aha"),
-      refId: asText(src.refId || src.ref_id, ""),
+      refId: asText(src.refId ?? src.ref_id, ""),
       addedAt: src.addedAt || src.added_at || now,
       meta: asObject(src.meta)
     };
@@ -192,7 +192,8 @@
 
   function addReferenceToGroup(groupId, referenceInput) {
     const groups = loadGroups();
-    const idx = groups.findIndex((g) => g.id === groupId && !g.deletedAt);
+    const lookupId = String(groupId);
+    const idx = groups.findIndex((g) => String(g.id) === lookupId && !g.deletedAt);
     if (idx < 0) return null;
     const group = groups[idx];
 
@@ -215,7 +216,7 @@
       title: asText(src.title, "Referanse"),
       type: asText(src.type, "reference"),
       source: asText(src.source, "aha"),
-      refId: asText(src.refId || src.ref_id, ""),
+      refId: asText(src.refId ?? src.ref_id, ""),
       meta: asObject(src.meta)
     };
     return addReferenceToGroup(groupId, reference);
