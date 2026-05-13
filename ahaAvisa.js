@@ -311,10 +311,12 @@
     if (publicCandidateCountEl) publicCandidateCountEl.textContent = String(publicCandidateCount);
     if (lastUpdatedEl) lastUpdatedEl.textContent = latestUpdatedAt ? formatDateLabel(new Date(latestUpdatedAt).toISOString()) : "-";
 
-    const allowPublicPublishing = global.AHAPrivacy?.loadSettings?.().allowPublicPublishing;
+    const publicPublishingAllowed = global.AHAPrivacy?.loadSettings?.().allowPublicPublishing === true;
     if (privacyWarningEl) {
-      privacyWarningEl.hidden = Boolean(allowPublicPublishing);
-      privacyWarningEl.textContent = "Offentlig publisering er ikke samtykket til. Kandidatmerking er bare lokal.";
+      privacyWarningEl.hidden = false;
+      privacyWarningEl.textContent = publicPublishingAllowed
+        ? "Offentlig kandidat betyr at artikkelen kan vurderes senere for offentlig AHAavisa/Paradisavisa-format. Ingenting publiseres nå."
+        : "Offentlig publisering er ikke samtykket til. Kandidatmerking er bare lokal.";
     }
 
     if (!mount) return;
@@ -358,7 +360,7 @@
             <span class="avisa-badge avisa-layer-badge">${article.publicationLayer === "group" ? "Gruppe" : (article.publicationLayer === "public_candidate" ? "Offentlig kandidat" : "Personlig")}</span>
           </header>
           ${hasGroupDraft ? `<p class="group-draft-badge">Gruppeutkast${groupMetaTitle ? ` · ${escapeHtml(groupMetaTitle)}` : ""}${groupMetaId ? ` · <a href="groups.html#group=${escapeHtml(groupMetaId)}">åpne gruppe</a>` : ""}</p>` : ""}
-          ${article.publicationLayer === "public_candidate" ? `<p class="module-meta">Offentlig kandidat betyr at artikkelen kan vurderes senere for offentlig AHAavisa/Paradisavisa-format. Ingenting publiseres nå.</p>` : ""}
+          ${article.publicationLayer === "public_candidate" ? `<p class="module-meta">${publicPublishingAllowed ? "Offentlig kandidat betyr at artikkelen kan vurderes senere for offentlig AHAavisa/Paradisavisa-format. Ingenting publiseres nå." : "Offentlig publisering er ikke samtykket til. Kandidatmerking er bare lokal."}</p>` : ""}
           <p class="module-meta">Seksjon: ${escapeHtml(article.section)} · Opprettet: ${escapeHtml(article.createdAt)} · Oppdatert: ${escapeHtml(article.updatedAt)}</p>
           <p>${escapeHtml(article.summary || "Ingen ingress ennå.")}</p>
           <div class="avisa-tags">${tags || "<span class='module-meta'>Ingen tags.</span>"}</div>
