@@ -6,6 +6,9 @@
 
   const PAYLOAD_KEY = "aha_import_payload_v1";
 
+  let importSaveChain = Promise.resolve();
+  let latestImportSaveToken = 0;
+
   function s(value) {
     return String(value ?? "").trim();
   }
@@ -27,16 +30,22 @@
 
   function persistImport(payload, counts) {
     if (!global.AHARepository?.saveImport) return;
-    global.AHARepository.saveImport({
-      source_app: "historygo",
-      payload: obj(payload),
-      counts: obj(counts),
-      created_at: new Date().toISOString()
-    }).then((result) => {
-      if (result?.ok === false && result.error) {
-        console.warn("AHAHistoryGoImport: database-save feilet", result.error);
-      }
-    });
+    latestImportSaveToken += 1;
+    const requestToken = latestImportSaveToken;
+    importSaveChain = importSaveChain
+      .catch(() => null)
+      .then(async () => {
+        if (requestToken !== latestImportSaveToken) return;
+        const result = await global.AHARepository.saveImport({
+          source_app: "historygo",
+          payload: obj(payload),
+          counts: obj(counts),
+          created_at: new Date().toISOString()
+        });
+        if (result?.ok === false && result.error) {
+          console.warn("AHAHistoryGoImport: database-save feilet", result.error);
+        }
+      });
   }
 
   function collectNextUpSignal(chamber, nextupLearningSignal, fallbackTimestamp) {
