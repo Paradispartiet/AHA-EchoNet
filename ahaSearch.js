@@ -81,8 +81,8 @@
         title: asText(item?.title, ""),
         type: asText(item?.type, defaults.type || "item"),
         source: asText(item?.source, defaults.source || "aha"),
-        createdAt: item?.createdAt || item?.created_at || new Date().toISOString(),
-        updatedAt: item?.updatedAt || item?.updated_at || item?.createdAt || item?.created_at || new Date().toISOString(),
+        createdAt: item?.createdAt || item?.created_at || item?.firstSeen || item?.first_seen || new Date().toISOString(),
+        updatedAt: item?.updatedAt || item?.updated_at || item?.lastUpdated || item?.last_updated || item?.createdAt || item?.created_at || item?.firstSeen || item?.first_seen || new Date().toISOString(),
         tags: normalizeTags(item?.tags),
         meta: item?.meta && typeof item.meta === "object" && !Array.isArray(item.meta) ? item.meta : {}
       };
