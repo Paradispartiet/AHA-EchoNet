@@ -54,9 +54,11 @@
   function inferPublicationLayer(src) {
     const explicit = asText(src?.publicationLayer, "").toLowerCase();
     if (ALLOWED_PUBLICATION_LAYERS.includes(explicit)) return explicit;
+
     const groupId = asText(src?.meta?.createdFromGroupId, "");
     const hasGroupRef = asArray(src?.references).some((ref) => asText(ref?.source, "") === "aha_groups");
-    return (groupId || hasGroupRef) ? "group" : "personal";
+    if (groupId || hasGroupRef) return "group";
+    return "personal";
   }
 
   function formatDateLabel(value) {
