@@ -690,9 +690,29 @@
   function classifyFunctionalType(text, semantic, narrative, patterns) {
     const lower = (text || "").toLowerCase();
 
+    const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const hasStandaloneMarker = (marker) => {
+      const safeMarker = escapeRegex(marker);
+      const matcher = new RegExp(`(^|[^\p{L}\p{N}])${safeMarker}($|[^\p{L}\p{N}])`, "u");
+      return matcher.test(lower);
+    };
+
+    const learningMarkers = [
+      "lærte",
+      "lært",
+      "innså",
+      "innser",
+      "forstår",
+      "skjønner",
+      "oppdaget",
+      "reflekterer",
+      "erfaringen er",
+      "poenget er"
+    ];
+
     const isLearningPoint =
       semantic?.meta === "meta" ||
-      /\b(lærte|lært|innså|innser|forstår|skjønner|oppdaget|reflekterer|erfaringen er|poenget er)\b/.test(lower);
+      learningMarkers.some((marker) => hasStandaloneMarker(marker));
 
     if (isLearningPoint) return "learning_point";
 
