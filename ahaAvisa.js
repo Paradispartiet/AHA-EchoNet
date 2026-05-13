@@ -52,7 +52,7 @@
   }
 
   function inferPublicationLayer(src) {
-    const explicit = asText(src?.publicationLayer, "").toLowerCase();
+    const explicit = asText(src?.publicationLayer || src?.publication_layer, "").toLowerCase();
     if (ALLOWED_PUBLICATION_LAYERS.includes(explicit)) return explicit;
 
     const groupId = asText(src?.meta?.createdFromGroupId, "");
