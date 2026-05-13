@@ -208,7 +208,7 @@
     });
 
     asArray(loadRawByKey(LISTS_KEY, []))
-      .filter((list) => !list?.deletedAt)
+      .filter((list) => !list?.deletedAt && !list?.deleted_at)
       .forEach((list) => {
         const refId = asText(list?.id, "");
         if (!refId) return;
