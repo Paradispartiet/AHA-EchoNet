@@ -154,7 +154,8 @@
     };
     if (module.id === "historygo") {
       const importCount = statValue(stats, "imports");
-      return importCount > 0 ? `${importCount} ${importCount === 1 ? "import" : "importer"}` : "Ingen import";
+      if (importCount > 0) return `${importCount} ${importCount === 1 ? "import" : "importer"}`;
+      return hasHistoryGoPayload() ? "1 import" : "Ingen import";
     }
     if (map[module.id]) return map[module.id];
     return module.status === "active" ? "Klar" : "Kommer";
@@ -221,7 +222,7 @@
 
     const importCount = statValue(stats, "imports");
     if (importCount > 0) setText("aha-module-historygo-status", `${importCount} ${importCount === 1 ? "import" : "importer"}`);
-    else setText("aha-module-historygo-status", "Ingen import");
+    else setText("aha-module-historygo-status", hasHistoryGoPayload() ? "1 import" : "Ingen import");
   }
 
   function bindHistoryGoHomeTile() {
@@ -232,6 +233,7 @@
       window.location.href = "/History-Go/";
     });
     tile.addEventListener("keydown", (event) => {
+      if (event.target !== tile) return;
       if (event.key === "Enter" || event.key === " ") {
         event.preventDefault();
         window.location.href = "/History-Go/";
