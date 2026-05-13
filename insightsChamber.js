@@ -703,7 +703,8 @@
     place_id: ctx.place_id || null,
     person_id: ctx.person_id || null,
     field_id: ctx.field_id || null,
-    emner: Array.isArray(ctx.emner) ? ctx.emner.slice() : []
+    emner: Array.isArray(ctx.emner) ? ctx.emner.slice() : [],
+    source_event_id: ctx.source_event_id || null
   };
 }
   
@@ -744,6 +745,7 @@ function createInsightFromSignal(signal) {
     person_id: signal.person_id || null,
     field_id: signal.field_id || null,
     emner: Array.isArray(signal.emner) ? signal.emner.slice() : [],
+    source_event_ids: signal.source_event_id ? [signal.source_event_id] : [],
 
     title,
     summary: text,
@@ -901,6 +903,12 @@ function createInsightFromSignal(signal) {
     insight.semiotic || null,
     newSemiotic
   );
+
+  if (signal.source_event_id) {
+    const ids = new Set(Array.isArray(insight.source_event_ids) ? insight.source_event_ids : []);
+    ids.add(signal.source_event_id);
+    insight.source_event_ids = Array.from(ids);
+  }
 
   // Bruk dybdescoren som "grunnfjell" + evidens
       const baseDepth = insight.depth_score || 0;
