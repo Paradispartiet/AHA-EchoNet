@@ -97,8 +97,20 @@
     el.textContent = String(message || "");
   }
 
+
+  function dedupeSubjectMatches(matches) {
+    const list = Array.isArray(matches) ? matches : [];
+    const seen = new Set();
+    return list.filter((item) => {
+      const key = [item?.subject_id || "", item?.emne_id || "", (item?.title || item?.subject_label || "").toLowerCase()].join("|");
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
   function renderSubjectChips(row, matches) {
-    const links = Array.isArray(matches) ? matches : [];
+    const links = dedupeSubjectMatches(matches);
     if (!row || !links.length) return;
     const wrap = document.createElement("section");
     wrap.className = "subject-links";

@@ -201,7 +201,15 @@
       });
     });
 
-    return Array.from(matches.values()).sort((a, b) => b.score - a.score).slice(0, maxResults);
+    const deduped = [];
+    const seen = new Set();
+    Array.from(matches.values()).sort((a, b) => b.score - a.score).forEach((m) => {
+      const key = [m?.subject_id || "", m?.emne_id || "", String(m?.title || m?.subject_label || "").toLowerCase()].join("|");
+      if (!key || seen.has(key)) return;
+      seen.add(key);
+      deduped.push(m);
+    });
+    return deduped.slice(0, maxResults);
   }
 
   function flattenValue(value) {

@@ -199,8 +199,20 @@
     return { ok: true, reason: "added", message: "Lagt til i liste" };
   }
 
+
+  function dedupeSubjectMatches(matches) {
+    const list = Array.isArray(matches) ? matches : [];
+    const seen = new Set();
+    return list.filter((item) => {
+      const key = [item?.subject_id || "", item?.emne_id || "", (item?.title || item?.subject_label || "").toLowerCase()].join("|");
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
   function renderSubjectLinks(matches) {
-    const items = Array.isArray(matches) ? matches.slice(0, 8) : [];
+    const items = dedupeSubjectMatches(matches).slice(0, 8);
     if (!items.length) return "";
     const chips = items.map((item) => `<span class="subject-link-chip insight-subject-chip">${escapeHtml(asText(item?.title || item?.subject_label, "Fagkobling"))}</span>`).join("");
     return `<section class="subject-links insight-subject-links"><span class="subject-links-label">Fagkoblinger</span><div class="subject-link-chips">${chips}</div></section>`;
