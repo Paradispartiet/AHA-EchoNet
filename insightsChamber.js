@@ -715,6 +715,16 @@ function createInsightFromSignal(signal) {
   const dimensions = analyzeDimensions(text);
   const narrative = analyzeNarrative(text);
   const layers = analyzeTextLayers(text);
+  const candidateConcepts = Array.isArray(signal?.candidate_concepts)
+    ? signal.candidate_concepts
+      .map((label) => {
+        const cleanLabel = String(label || "").trim();
+        const key = toConceptKey(cleanLabel);
+        if (!cleanLabel || !key) return null;
+        return { key, label: cleanLabel, count: 1, source: "candidate" };
+      })
+      .filter(Boolean)
+    : [];
   const semiotic = analyzeSemioticSignals(text);
 
   const depthScore = computeDepthHeuristic(
@@ -767,7 +777,7 @@ function createInsightFromSignal(signal) {
     // markører. concepts er strenge meningsenheter — råord ligger i
     // raw_terms.
     raw_terms: layers.raw_terms,
-    concepts: layers.concepts,
+    concepts: dedupeByKey(layers.concepts.concat(candidateConcepts), "key"),
     claims: layers.claims,
     patterns: layers.patterns,
     markers: layers.markers,
@@ -1238,6 +1248,10 @@ function createInsightFromSignal(signal) {
     t = t.replace(/^[^a-zæøå]+|[^a-zæøå]+$/g, "");
     t = t.replace(/[^a-zæøå]/g, "");
     return t;
+  }
+
+  function toConceptKey(value) {
+    return normalizeConceptToken(String(value || "").trim());
   }
 
 
