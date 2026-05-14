@@ -52,13 +52,16 @@
   }
 
   function ingest(input) {
-    const sourceEvent = global.AHASources?.addSourceEvent?.(input) || null;
+    const inp = input || {};
+    const parentSourceId = String(inp.parent_source_event_id || "").trim();
+    const sourceEvent = parentSourceId
+      ? (global.AHASources?.createSourceEvent ? global.AHASources.createSourceEvent(Object.assign({}, inp, { id: parentSourceId })) : Object.assign({}, inp, { id: parentSourceId }))
+      : (global.AHASources?.addSourceEvent?.(inp) || null);
     // AHASources.createSourceEvent stripper top-level theme_id / subject_id /
     // field_id og beholder bare det som er en del av source-event-schemaet.
     // For å unngå at theme_id forsvinner inn i ingest, leser vi fra both
     // det lagrede source-eventet og det opprinnelige input-objektet.
-    const src = sourceEvent || input || {};
-    const inp = input || {};
+    const src = sourceEvent || inp || {};
     const text = String(src.text || src.title || inp.text || inp.title || "").trim();
 
     if (!text) return { ok: false, reason: "empty_text", sourceEvent };
@@ -89,6 +92,9 @@
       themeId,
       {
         source_event_id: src.id || null,
+        parent_source_event_id: parentSourceId || src.meta?.parent_source_event_id || null,
+        chunk_index: inp.chunk_index ?? src.meta?.chunk_index ?? null,
+        chunk_count: inp.chunk_count ?? src.meta?.chunk_count ?? null,
         source_type: src.source_type || null,
         source_app: src.source_app || null,
         imported: src.imported === true,
@@ -100,10 +106,17 @@
     );
 
     signal.source_event_id = src.id || null;
+    signal.parent_source_event_id = parentSourceId || src.meta?.parent_source_event_id || null;
+    signal.chunk_index = inp.chunk_index ?? src.meta?.chunk_index ?? null;
+    signal.chunk_count = inp.chunk_count ?? src.meta?.chunk_count ?? null;
     signal.source_type = src.source_type || null;
     signal.source_app = src.source_app || null;
     signal.imported = src.imported === true;
-    signal.meta = src.meta || {};
+    signal.meta = Object.assign({}, src.meta || {}, {
+      parent_source_event_id: parentSourceId || src.meta?.parent_source_event_id || null,
+      chunk_index: inp.chunk_index ?? src.meta?.chunk_index ?? null,
+      chunk_count: inp.chunk_count ?? src.meta?.chunk_count ?? null
+    });
 
     const chamber = loadChamber();
     let meta = null;

@@ -274,10 +274,8 @@
     const chunks = buildSemanticInsightCandidates(text);
 
     if (global.AHAIngest && typeof global.AHAIngest.ingest === "function") {
-      // AHAIngest håndterer både source event-loggen, signal-konstruksjon
-      // og innlegging i innsiktskammeret. Dobbeltlagring av source events
-      // unngås ved at vi ikke lenger kaller AHASources.addSourceEvent her.
-      const payload = {
+      const createdAt = new Date().toISOString();
+      const basePayload = {
         source_type: "chat",
         source_app: "aha_chat",
         content_type: "text",
@@ -285,22 +283,35 @@
         text,
         user_created: true,
         imported: false,
-        created_at: new Date().toISOString(),
+        created_at: createdAt,
         subject_id: SUBJECT_ID,
         theme_id: themeId,
         field_id: fieldId,
         meta: { theme_id: themeId, field_id: fieldId }
       };
-      if (typeof global.AHAIngest.ingestWithCandidates === "function") {
-        global.AHAIngest.ingestWithCandidates(payload, chunks);
-      } else {
-        chunks.forEach((chunk) => global.AHAIngest.ingest(Object.assign({}, payload, { text: chunk })));
-      }
+
+      const parentResult = global.AHAIngest.ingest(Object.assign({}, basePayload, { skip_insight: true }));
+      const parentId = parentResult?.sourceEvent?.id || null;
+
+      chunks.forEach((chunk, idx) => {
+        global.AHAIngest.ingest(Object.assign({}, basePayload, {
+          text: chunk,
+          parent_source_event_id: parentId,
+          chunk_index: idx + 1,
+          chunk_count: chunks.length,
+          source_type: "chat_chunk",
+          meta: {
+            theme_id: themeId,
+            field_id: fieldId,
+            parent_source_event_id: parentId,
+            chunk_index: idx + 1,
+            chunk_count: chunks.length
+          }
+        }));
+      });
       return chunks.length;
     }
 
-    // Fallback hvis AHAIngest ikke er lastet: skriv direkte til motoren
-    // og logg source event manuelt slik vi alltid har gjort.
     let chamber = loadChamberFromStorage();
     chunks.forEach((chunk) => {
       const signal = global.InsightsEngine.createSignalFromMessage(
@@ -328,6 +339,7 @@
     return chunks.length;
   }
 
+
   function buildSemanticInsightCandidates(text, options) {
     const raw = String(text || "").trim();
     if (!raw) return [];
@@ -335,53 +347,59 @@
       .split(/(?<=[.!?…])\s+|\n+/)
       .map((s) => s.trim())
       .filter(Boolean);
-    if (sentences.length <= 2 || raw.length < 180) return [raw];
 
-    const minInsights = Number(options?.minInsights || 1);
-    const maxInsights = Math.min(5, Math.max(1, Number(options?.maxInsights || 5)));
-    const desired = raw.length < 320 ? 2 : raw.length < 700 ? 3 : 4;
-    const target = Math.min(maxInsights, Math.max(minInsights, desired));
+    if (sentences.length <= 2 || raw.length < 240) return [raw];
 
-    const themeRules = [
-      { type: "principle", re: /\b(kunnskap|prinsipp|lærer|læring|forstå|innsikt|erfaring)\b/i },
-      { type: "problem", re: /\b(problem|straff|fengsel|vold|kontroll|krise|konflikt|ondt)\b/i },
-      { type: "solution", re: /\b(løsning|kan|bør|må|frihet|legalisering|sikkerhet|reform)\b/i },
-      { type: "contrast", re: /\b(men|samtidig|likevel|på den ene siden|på den andre siden)\b/i },
-      { type: "question", re: /\?|\b(hvorfor|hvordan|hva om)\b/i }
-    ];
+    const maxChunks = Math.min(5, Math.max(1, Number(options?.maxInsights || 5)));
+    const desired = raw.length < 600 ? 3 : raw.length < 1100 ? 4 : 5;
+    const target = Math.min(maxChunks, Math.max(3, desired));
 
-    const groups = [];
-    const used = new Set();
-    themeRules.forEach((rule) => {
-      const idxs = [];
-      sentences.forEach((sentence, idx) => {
-        if (!used.has(idx) && rule.re.test(sentence)) idxs.push(idx);
-      });
-      if (!idxs.length) return;
-      idxs.forEach((idx) => used.add(idx));
-      groups.push({ type: rule.type, text: idxs.map((idx) => sentences[idx]).join(" ") });
-    });
-    if (used.size < sentences.length) {
-      const rest = sentences.filter((_, idx) => !used.has(idx)).join(" ");
-      if (rest) groups.push({ type: "observation", text: rest });
+    const chunks = [];
+    const chunkSize = Math.max(2, Math.ceil(sentences.length / target));
+    for (let i = 0; i < sentences.length; i += chunkSize) {
+      chunks.push(sentences.slice(i, i + chunkSize).join(" "));
     }
 
-    const deduped = [];
-    const seen = new Set();
-    groups.forEach((group) => {
-      const clean = String(group.text || "").replace(/\s+/g, " ").trim();
-      if (!clean || clean.length < 60) return;
-      const key = clean.toLowerCase().slice(0, 160);
-      if (seen.has(key)) return;
-      seen.add(key);
-      deduped.push(clean);
-    });
+    function mergeSmall(arr) {
+      const minChars = 180;
+      const list = arr.slice();
+      let i = 0;
+      while (i < list.length) {
+        if (list.length <= 1) break;
+        if (list[i].length >= minChars) {
+          i += 1;
+          continue;
+        }
+        if (i === list.length - 1) {
+          list[i - 1] = `${list[i - 1]} ${list[i]}`.trim();
+          list.splice(i, 1);
+          continue;
+        }
+        const leftLen = i > 0 ? list[i - 1].length : Number.MAX_SAFE_INTEGER;
+        const rightLen = list[i + 1].length;
+        if (leftLen <= rightLen && i > 0) {
+          list[i - 1] = `${list[i - 1]} ${list[i]}`.trim();
+          list.splice(i, 1);
+          i -= 1;
+        } else {
+          list[i + 1] = `${list[i]} ${list[i + 1]}`.trim();
+          list.splice(i, 1);
+        }
+      }
+      return list;
+    }
 
-    if (!deduped.length) return [raw];
-    if (deduped.length <= target) return deduped;
-
-    return deduped.slice(0, target);
+    let merged = mergeSmall(chunks).map((c) => c.replace(/\s+/g, " ").trim()).filter(Boolean);
+    if (merged.length > 5) {
+      const compact = [];
+      const per = Math.ceil(merged.length / 5);
+      for (let i = 0; i < merged.length; i += per) compact.push(merged.slice(i, i + per).join(" "));
+      merged = mergeSmall(compact);
+    }
+    if (merged.length === 1) return [raw];
+    return merged.slice(0, 5);
   }
+
 
   function buildAIState() {
     const chamber = loadChamberFromStorage();
