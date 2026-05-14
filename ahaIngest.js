@@ -136,6 +136,70 @@
     return { ok: true, sourceEvent: src, signal, meta };
   }
 
+  function ingestWithCandidates(input, candidates) {
+    const baseInput = Object.assign({}, input || {}, { skip_insight: true });
+    const sourceOnly = ingest(baseInput);
+    if (!sourceOnly?.ok) return sourceOnly;
+
+    const sourceEvent = sourceOnly.sourceEvent || input || {};
+    const themeId = String(
+      sourceEvent.theme_id || input?.theme_id || sourceEvent.meta?.theme_id || sourceEvent.source_type || "self"
+    ).trim() || "self";
+    const subjectId = String(
+      sourceEvent.subject_id || input?.subject_id || sourceEvent.meta?.subject_id || "sub_laring"
+    ).trim() || "sub_laring";
+
+    const list = Array.isArray(candidates) ? candidates : [];
+    const chamber = loadChamber();
+    const items = [];
+
+    list.forEach((candidate) => {
+      const text = String(candidate || "").trim();
+      if (!text) return;
+      const signal = global.InsightsEngine.createSignalFromMessage(
+        text,
+        subjectId,
+        themeId,
+        {
+          source_event_id: sourceEvent.id || null,
+          source_type: sourceEvent.source_type || null,
+          source_app: sourceEvent.source_app || null,
+          imported: sourceEvent.imported === true,
+          place_id: sourceEvent.meta?.place_id || sourceEvent.place_id || null,
+          person_id: sourceEvent.meta?.person_id || sourceEvent.person_id || null,
+          field_id: sourceEvent.field_id || input?.field_id || sourceEvent.meta?.field_id || sourceEvent.theme_id || null,
+          emner: Array.isArray(sourceEvent.meta?.related_emner) ? sourceEvent.meta.related_emner : []
+        }
+      );
+      signal.source_event_id = sourceEvent.id || null;
+      signal.source_type = sourceEvent.source_type || null;
+      signal.source_app = sourceEvent.source_app || null;
+      signal.imported = sourceEvent.imported === true;
+      signal.meta = sourceEvent.meta || {};
+
+      let meta = null;
+      if (typeof global.InsightsEngine.addSignalToChamberWithMeta === "function") {
+        meta = global.InsightsEngine.addSignalToChamberWithMeta(chamber, signal);
+      } else {
+        global.InsightsEngine.addSignalToChamber(chamber, signal);
+      }
+      markInsightImportSource(chamber, meta, signal.source_app);
+      items.push({ signal, meta });
+    });
+
+    saveChamber(chamber);
+    items.forEach(({ signal, meta }) => {
+      enrichWithEmneMatcher(signal, meta).catch((err) => {
+        console.warn("AHAIngest: emne-berikelse feilet", err);
+      });
+      enrichWithEmbedding(signal, meta).catch((err) => {
+        console.warn("AHAIngest: embedding-berikelse feilet", err);
+      });
+    });
+
+    return { ok: true, sourceEvent, items };
+  }
+
   function isHistoryGoSignal(signal) {
     if (!signal) return false;
     if (signal.imported === true) return true;
@@ -316,5 +380,5 @@
     }
   }
 
-  global.AHAIngest = { ingest, enrichWithEmneMatcher, enrichWithEmbedding };
+  global.AHAIngest = { ingest, ingestWithCandidates, enrichWithEmneMatcher, enrichWithEmbedding };
 })(window);
