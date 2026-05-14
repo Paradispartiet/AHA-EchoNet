@@ -140,6 +140,12 @@
     const baseInput = Object.assign({}, input || {}, { skip_insight: true });
     const sourceOnly = ingest(baseInput);
     if (!sourceOnly?.ok) return sourceOnly;
+    if (
+      !global.InsightsEngine ||
+      typeof global.InsightsEngine.createSignalFromMessage !== "function"
+    ) {
+      return { ok: false, reason: "insights_engine_unavailable", items: [] };
+    }
 
     const sourceEvent = sourceOnly.sourceEvent || input || {};
     const themeId = String(
