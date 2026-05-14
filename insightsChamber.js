@@ -2903,14 +2903,35 @@ function getConceptsForTheme(chamber, subjectId, themeId) {
     return node;
   }
 
+  function normalizeConceptItems(list) {
+    return (Array.isArray(list) ? list : [])
+      .map((item) => {
+        if (!item) return null;
+        const key = String(item.key || item.label || "").trim();
+        if (!key) return null;
+        return {
+          ...item,
+          key,
+          label: item.label || key,
+          count: item.count || 1
+        };
+      })
+      .filter(Boolean);
+  }
+
   function buildConceptGraph(chamber) {
     const insights = getActiveInsights(chamber);
     const nodes = Object.create(null);
     const edgeMap = new Map();
     const rememberEdge = (from, to, type, insightId) => {
-      const key = `${from}||${to}||${type}`;
+      const pair = type === "co_occurs" ? [from, to].sort() : [from, to];
+      const key = `${pair[0]}||${pair[1]}||${type}`;
       if (!edgeMap.has(key)) edgeMap.set(key, { from, to, type, weight: 0, insight_ids: [] });
       const edge = edgeMap.get(key);
+      if (type === "co_occurs") {
+        edge.from = pair[0];
+        edge.to = pair[1];
+      }
       edge.weight += 1;
       if (insightId && !edge.insight_ids.includes(insightId)) edge.insight_ids.push(insightId);
     };
@@ -2918,7 +2939,7 @@ function getConceptsForTheme(chamber, subjectId, themeId) {
     insights.forEach((ins, index) => {
       const insightId = ins.id || `ins_${index}`;
       const ts = readInsightTimestamp(ins);
-      const concepts = dedupeByKey(Array.isArray(ins.concepts) ? ins.concepts : [])
+      const concepts = dedupeByKey(normalizeConceptItems(ins.concepts), "key")
         .map((c) => ({ id: normalizeNodeId(c?.key || c?.label, "concept"), label: c?.label || c?.key || "begrep", count: c?.count || 1 }))
         .filter((c) => c.id);
       const thinkers = (Array.isArray(ins.thinkers) ? ins.thinkers : []).map((t) => ({ id: normalizeNodeId(t, "thinker"), label: String(t) })).filter((t) => t.label);
@@ -2954,7 +2975,7 @@ function getConceptsForTheme(chamber, subjectId, themeId) {
     const graph = buildConceptGraph(chamber || { insights: [insight] });
     const links = Array.isArray(insight?.theoretical_links) ? insight.theoretical_links : [];
     const haystack = `${insight?.title || ""} ${insight?.summary || ""}`.toLowerCase();
-    const concepts = dedupeByKey(Array.isArray(insight?.concepts) ? insight.concepts : []);
+    const concepts = dedupeByKey(normalizeConceptItems(insight?.concepts), "key");
     return links.map((link) => {
       const label = String(link?.theory || link?.name || "").trim();
       const id = normalizeNodeId(label, "theory");
@@ -3006,7 +3027,7 @@ function getConceptsForTheme(chamber, subjectId, themeId) {
     const insights = getActiveInsights(chamber);
     const buckets = new Map();
     insights.forEach((ins, idx) => {
-      const concepts = dedupeByKey(Array.isArray(ins.concepts) ? ins.concepts : []).map((c) => String(c?.key || "").toLowerCase()).filter(Boolean).sort();
+      const concepts = dedupeByKey(normalizeConceptItems(ins.concepts), "key").map((c) => String(c?.key || "").toLowerCase()).filter(Boolean).sort();
       const theories = (ins.theories || []).concat(ins.thinkers || []).map((x) => String(x || "").trim()).filter(Boolean).sort();
       const clusterKey = `${ins.subject_id || "s"}|${ins.theme_id || "t"}|${concepts.slice(0, 4).join(",")}|${theories.slice(0, 2).join(",")}`;
       if (!buckets.has(clusterKey)) buckets.set(clusterKey, { id: `cluster_${buckets.size + 1}`, title: ins.theme_id || "Cluster", concepts: new Set(), theories: new Set(), insight_ids: [], strength: 0 });
