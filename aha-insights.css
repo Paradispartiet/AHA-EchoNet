@@ -99,3 +99,8 @@
 
 .insight-subject-links { margin-top: 8px; }
 .insight-subject-chip { display:inline-flex; }
+.insight-theory-links { display: grid; gap: 6px; }
+.insight-theory-link { background: rgba(255, 255, 255, 0.02); border: 1px solid var(--aha-border); border-radius: 8px; padding: 6px 8px; }
+.insight-theory-link p { margin: 0; font-size: 11px; line-height: 1.35; color: var(--aha-muted); }
+.insight-theory-link p + p { margin-top: 2px; }
+.insight-theory-key { color: var(--aha-text); font-weight: 600; }
