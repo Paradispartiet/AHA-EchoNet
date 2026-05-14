@@ -64,7 +64,7 @@
   function extractTermValue(entry) {
     if (typeof entry === "string") return entry;
     if (!entry || typeof entry !== "object") return "";
-    return entry?.term || entry?.label || entry?.name || entry?.text || entry?.value || "";
+    return entry?.term || entry?.label || entry?.name || entry?.text || entry?.value || entry?.key || "";
   }
 
   function normalizeTerms(insight) {
