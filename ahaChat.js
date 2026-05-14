@@ -331,10 +331,7 @@
   function buildSemanticInsightCandidates(text, options) {
     const raw = String(text || "").trim();
     if (!raw) return [];
-    const sentences = raw
-      .split(/(?<=[.!?…])\s+|\n+/)
-      .map((s) => s.trim())
-      .filter(Boolean);
+    const sentences = splitIntoSentences(raw);
     if (sentences.length <= 2 || raw.length < 180) return [raw];
 
     const minInsights = Number(options?.minInsights || 1);
@@ -381,6 +378,22 @@
     if (deduped.length <= target) return deduped;
 
     return deduped.slice(0, target);
+  }
+
+  function splitIntoSentences(text) {
+    const normalized = String(text || "").replace(/\r\n?/g, "\n");
+    const paragraphs = normalized.split(/\n+/).map((part) => part.trim()).filter(Boolean);
+    const chunks = [];
+
+    paragraphs.forEach((paragraph) => {
+      const matches = paragraph.match(/[^.!?…]+[.!?…]+|[^.!?…]+$/g) || [];
+      matches.forEach((match) => {
+        const chunk = String(match || "").trim();
+        if (chunk) chunks.push(chunk);
+      });
+    });
+
+    return chunks;
   }
 
   function buildAIState() {
