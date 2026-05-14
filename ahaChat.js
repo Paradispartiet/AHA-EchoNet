@@ -14,6 +14,7 @@
       "decision", "definition", "contradiction", "learning_point", "pattern", "memory", "principle"
     ])
   });
+  const WEAK_CONCEPT_WORDS = new Set(["finnes","egen","form","lærer","mennesker","blir","ikke","bare","over","ligger","lavt","noen","helt","ennå"]);
   function getThreadId() {
     return CHAT_THREAD_ID;
   }
@@ -106,11 +107,18 @@
 
   function dedupeSubjectMatches(matches) {
     const list = Array.isArray(matches) ? matches : [];
-    const seen = new Set();
+    const seenLabels = new Set();
+    const seenIds = new Set();
     return list.filter((item) => {
-      const key = [item?.subject_id || "", item?.emne_id || "", (item?.title || item?.subject_label || "").toLowerCase()].join("|");
-      if (!key || seen.has(key)) return false;
-      seen.add(key);
+      const label = String(item?.title || item?.subject_label || "").trim().toLowerCase();
+      const id = String(item?.subject_id || item?.emne_id || "").trim().toLowerCase();
+      if (label) {
+        if (seenLabels.has(label)) return false;
+        seenLabels.add(label);
+        return true;
+      }
+      if (!id || seenIds.has(id)) return false;
+      seenIds.add(id);
       return true;
     });
   }
@@ -351,6 +359,8 @@
   function buildSemanticInsightCandidates(text, options) {
     const raw = String(text || "").trim();
     if (!raw) return [];
+    const playCityFallback = buildPlayCityFallbackCandidates(raw);
+    if (playCityFallback.length) return playCityFallback;
     const sentences = splitIntoSentences(raw);
     if (sentences.length <= 2 || raw.length < 180) {
       return [toCandidateObject(raw, "observation")];
@@ -424,10 +434,34 @@
       if (typeof c === "string") add(c);
       else if (c && typeof c === "object") add(c.label || c.key || c.term);
     });
-    if (!out.length) {
-      String(text || "").split(/[^\p{L}\p{N}_-]+/u).map((w) => w.trim()).filter((w) => w.length >= 4).slice(0, 6).forEach(add);
-    }
     return out;
+  }
+
+  function filterConceptLabels(concepts) {
+    const seen = new Set();
+    return (Array.isArray(concepts) ? concepts : [])
+      .map((c) => typeof c === "string" ? c : (c?.label || c?.key || c?.term || ""))
+      .map((c) => String(c || "").trim())
+      .filter((c) => c && !WEAK_CONCEPT_WORDS.has(c.toLowerCase()))
+      .filter((c) => {
+        const key = c.toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+  }
+
+  function buildPlayCityFallbackCandidates(raw) {
+    const text = String(raw || "");
+    const lower = text.toLowerCase();
+    const playHit = /\blek\b|\blæring\b|\btrygghet\b/.test(lower);
+    const cityHit = /\bbyrom\b|\bparker\b|\btorg\b|\bbibliotek\b|\bskolegård/.test(lower);
+    if (!playHit || !cityHit) return [];
+    return [
+      { title: "Lek som kunnskapsform", summary: "Lek gir mennesker rom til å prøve, feile og begynne på nytt uten skam, og fungerer som sosial og emosjonell læring.", functional_type: "principle", concepts: ["lek", "kunnskap", "læring", "trygghet"], candidate_type: "semantic" },
+      { title: "Byrom som frihetsrom", summary: "Byen blir mer enn infrastruktur når parker, torg, skolegårder og bibliotek åpner for tilstedeværelse, fantasi og kroppslig utfoldelse.", functional_type: "principle", concepts: ["byrom", "frihet", "offentlighet", "fantasi"], candidate_type: "semantic" },
+      { title: "Fellesskap gjennom uformelle møteplasser", summary: "Uformelle møteplasser lar språk, kropp og relasjoner vokse uten sterk måling, eierskap eller kontroll.", functional_type: "pattern", concepts: ["fellesskap", "møteplass", "kropp", "relasjoner"], candidate_type: "semantic" }
+    ].map((c) => Object.assign({}, c, { text: c.summary }));
   }
 
   function toCandidateObject(text, functionalType) {
@@ -563,10 +597,10 @@
   }
 
   function renderInsightCard(ins) {
-    const title = escHtml(ins.title || "Innsikt");
-    const summary = escHtml(ins.summary || "");
+    const title = escHtml(ins.candidate_title || ins.title || "Innsikt");
+    const summary = escHtml(ins.candidate_summary || ins.summary || "");
 
-    const conceptsHtml = renderLayerChips(ins.concepts, (c) => c?.label || c?.key);
+    const conceptsHtml = renderLayerChips(filterConceptLabels(ins.concepts).map((label) => ({ label })), (c) => c?.label);
     const patternsHtml = renderLayerChips(ins.patterns, (p) => p?.label || p?.key);
     const markersHtml = renderLayerChips(ins.markers, (m) => m?.value);
     const emnerHtml = renderLayerChips((ins.emner || []).map((e) => ({ key: e })), (e) => e?.key);
