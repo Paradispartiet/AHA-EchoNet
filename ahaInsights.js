@@ -6,6 +6,7 @@
 
   const CHAMBER_KEY = "aha_insight_chamber_v1";
   const EVENTS_KEY = "aha_source_events_v1";
+  const WEAK_CONCEPT_WORDS = new Set(["finnes", "egen", "form", "lærer", "mennesker", "blir", "ikke", "bare", "over", "ligger", "lavt", "noen", "helt", "ennå"]);
 
   function safeParse(raw, fallback) {
     try {
@@ -111,7 +112,7 @@
         conceptTerms
       )
       .map((term) => asText(term, ""))
-      .filter(Boolean);
+      .filter((term) => term && !WEAK_CONCEPT_WORDS.has(term.toLowerCase()));
   }
 
   function normalizeInsightForView(insight) {
@@ -202,11 +203,18 @@
 
   function dedupeSubjectMatches(matches) {
     const list = Array.isArray(matches) ? matches : [];
-    const seen = new Set();
+    const seenLabels = new Set();
+    const seenIds = new Set();
     return list.filter((item) => {
-      const key = [item?.subject_id || "", item?.emne_id || "", (item?.title || item?.subject_label || "").toLowerCase()].join("|");
-      if (!key || seen.has(key)) return false;
-      seen.add(key);
+      const label = String(item?.title || item?.subject_label || "").trim().toLowerCase();
+      const id = String(item?.subject_id || item?.emne_id || "").trim().toLowerCase();
+      if (label) {
+        if (seenLabels.has(label)) return false;
+        seenLabels.add(label);
+        return true;
+      }
+      if (!id || seenIds.has(id)) return false;
+      seenIds.add(id);
       return true;
     });
   }
