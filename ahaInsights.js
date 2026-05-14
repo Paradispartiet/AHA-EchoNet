@@ -131,7 +131,7 @@
       theories: asArray(insight?.theories).map((x) => asText(x, "")).filter(Boolean).slice(0, 5),
       traditions: asArray(insight?.traditions).map((x) => asText(x, "")).filter(Boolean).slice(0, 5),
       theoreticalLinks: asArray(insight?.theoretical_links)
-        .map((x) => ({ name: asText(x?.name, ""), relation: asText(x?.relation, "") }))
+        .map((x) => ({ name: asText(x?.name, ""), theory: asText(x?.theory, ""), relation: asText(x?.relation, "") }))
         .filter((x) => x.name && x.relation)
         .slice(0, 5),
       topic: asText(insight?.topic || insight?.emne || insight?.category, ""),
@@ -233,6 +233,54 @@
     return `<section class="subject-links insight-subject-links"><span class="subject-links-label">Fagkoblinger</span><div class="subject-link-chips">${chips}</div></section>`;
   }
 
+  function dedupeTheoryLabels(labels, excludedLower) {
+    const seen = new Set();
+    const excluded = excludedLower || new Set();
+    return asArray(labels)
+      .map((label) => asText(label, ""))
+      .filter((label) => {
+        if (!label) return false;
+        const key = label.toLowerCase();
+        if (seen.has(key) || excluded.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+  }
+
+  function renderTheorySection(view) {
+    const links = asArray(view.theoreticalLinks)
+      .map((link) => ({
+        thinker: asText(link?.name, ""),
+        theory: asText(link?.theory, ""),
+        relation: asText(link?.relation, "")
+      }))
+      .filter((link) => link.thinker && link.relation)
+      .slice(0, 3);
+
+    const linkedThinkers = new Set(links.map((link) => link.thinker.toLowerCase()));
+    const fallbackChips = dedupeTheoryLabels(
+      view.thinkers.concat(view.theories, view.traditions),
+      linkedThinkers
+    ).slice(0, 8);
+
+    if (!links.length && !fallbackChips.length) return "";
+
+    const linksHtml = links.length
+      ? `<div class="insight-theory-links">${links.map((link) => `
+          <article class="insight-theory-link">
+            <p><span class="insight-theory-key">Tenker:</span> ${escapeHtml(link.thinker)}</p>
+            ${link.theory ? `<p><span class="insight-theory-key">Teori:</span> ${escapeHtml(link.theory)}</p>` : ""}
+            <p><span class="insight-theory-key">Kobling:</span> ${escapeHtml(link.relation)}</p>
+          </article>
+      `).join("")}</div>`
+      : "";
+    const chipsHtml = fallbackChips.length
+      ? `<div class="insight-layer-chips">${fallbackChips.map((chip) => `<span class="insight-chip">${escapeHtml(chip)}</span>`).join("")}</div>`
+      : "";
+
+    return `<section class="insight-section"><span class="insight-section-label">Teori</span>${linksHtml}${chipsHtml}</section>`;
+  }
+
   function createInsightCard(view, sourceEvent, insight, index) {
     const card = document.createElement("article");
     card.className = "insight-card insight-archive-card";
@@ -240,12 +288,7 @@
     const groups = getActiveGroups();
 
     const terms = view.terms.slice(0, 8).map((t) => `<span class="insight-chip">${escapeHtml(t)}</span>`).join("");
-    const theoryChips = view.thinkers.concat(view.theories, view.traditions)
-      .slice(0, 8)
-      .map((t) => `<span class="insight-chip">${escapeHtml(t)}</span>`).join("");
-    const theoryLines = view.theoreticalLinks
-      .map((link) => `<li><strong>${escapeHtml(link.name)}:</strong> ${escapeHtml(link.relation)}</li>`)
-      .join("");
+    const theorySection = renderTheorySection(view);
     const sourceHtml = sourceEvent
       ? `<div class="insight-source"><strong>Kilde:</strong> ${escapeHtml(asText(sourceEvent.source_type, "ukjent"))} · ${escapeHtml(asText(sourceEvent.source_app, "ukjent"))}</div>
          <div class="insight-source-preview">${escapeHtml(eventPreview(sourceEvent))}</div>
@@ -304,7 +347,7 @@
         ${view.sourceEventId ? `<span class="insight-chip">Kilde-ID: ${escapeHtml(view.sourceEventId)}</span>` : ""}
       </div>
       ${terms ? `<div class="insight-layer-chips">${terms}</div>` : ""}
-      ${(theoryChips || theoryLines) ? `<section class="insight-section"><span class="insight-section-label">Teori</span>${theoryChips ? `<div class="insight-layer-chips">${theoryChips}</div>` : ""}${theoryLines ? `<ul class="insight-claims">${theoryLines}</ul>` : ""}</section>` : ""}
+      ${theorySection}
       <div class="insight-subject-links-host"></div>
       <section class="insight-source-block">${sourceHtml}</section>
       ${listSection}

@@ -737,6 +737,58 @@
     </div>`;
   }
 
+  function dedupeTheoryLabels(labels, excludedLower) {
+    const seen = new Set();
+    const excluded = excludedLower || new Set();
+    return (Array.isArray(labels) ? labels : [])
+      .map((label) => String(label || "").trim())
+      .filter((label) => {
+        if (!label) return false;
+        const key = label.toLowerCase();
+        if (excluded.has(key) || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+  }
+
+  function buildTheorySection(ins) {
+    const links = (Array.isArray(ins.theoretical_links) ? ins.theoretical_links : [])
+      .map((item) => ({
+        thinker: String(item?.name || "").trim(),
+        theory: String(item?.theory || "").trim(),
+        relation: String(item?.relation || "").trim()
+      }))
+      .filter((item) => item.thinker && item.relation)
+      .slice(0, 3);
+
+    const linkedThinkers = new Set(links.map((item) => item.thinker.toLowerCase()));
+    const fallbackTheoryChips = dedupeTheoryLabels(
+      []
+        .concat(Array.isArray(ins.thinkers) ? ins.thinkers : [])
+        .concat(Array.isArray(ins.theories) ? ins.theories : [])
+        .concat(Array.isArray(ins.traditions) ? ins.traditions : []),
+      linkedThinkers
+    );
+
+    if (!links.length && !fallbackTheoryChips.length) return "";
+
+    const linksHtml = links.length
+      ? `<div class="insight-theory-links">${links
+        .map((item) => `<article class="insight-theory-link">
+            <p><span class="insight-theory-key">Tenker:</span> ${escHtml(item.thinker)}</p>
+            ${item.theory ? `<p><span class="insight-theory-key">Teori:</span> ${escHtml(item.theory)}</p>` : ""}
+            <p><span class="insight-theory-key">Kobling:</span> ${escHtml(item.relation)}</p>
+          </article>`)
+        .join("")}</div>`
+      : "";
+
+    const fallbackChipsHtml = fallbackTheoryChips.length
+      ? renderLayerChips(fallbackTheoryChips.map((label) => ({ label })), (x) => x?.label)
+      : "";
+
+    return `<div class="insight-section"><span class="insight-section-label">Teori</span>${linksHtml}${fallbackChipsHtml}</div>`;
+  }
+
   function renderInsightCard(ins) {
     const title = escHtml(ins.candidate_title || ins.title || "Innsikt");
     const summary = escHtml(ins.candidate_summary || ins.summary || "");
@@ -745,23 +797,7 @@
     const patternsHtml = renderLayerChips(ins.patterns, (p) => p?.label || p?.key);
     const markersHtml = renderLayerChips(ins.markers, (m) => m?.value);
     const emnerHtml = renderLayerChips((ins.emner || []).map((e) => ({ key: e })), (e) => e?.key);
-    const theoryChips = renderLayerChips(
-      []
-        .concat(Array.isArray(ins.thinkers) ? ins.thinkers : [])
-        .concat(Array.isArray(ins.theories) ? ins.theories : [])
-        .concat(Array.isArray(ins.traditions) ? ins.traditions : [])
-        .map((label) => ({ label })),
-      (x) => x?.label
-    );
-    const theoryLinks = (Array.isArray(ins.theoretical_links) ? ins.theoretical_links : [])
-      .map((item) => {
-        const name = String(item?.name || "").trim();
-        const relation = String(item?.relation || "").trim();
-        if (!name || !relation) return "";
-        return `<li><strong>${escHtml(name)}:</strong> ${escHtml(relation)}</li>`;
-      })
-      .filter(Boolean)
-      .join("");
+    const theorySection = buildTheorySection(ins);
     const suggestionsHtml = renderEmneSuggestions(ins);
 
     const claims = (ins.claims || [])
@@ -779,7 +815,7 @@
       claimsHtml ? `<div class="insight-section"><span class="insight-section-label">Påstander</span>${claimsHtml}</div>` : "",
       markersHtml ? `<div class="insight-section"><span class="insight-section-label">Markører</span>${markersHtml}</div>` : "",
       emnerHtml ? `<div class="insight-section"><span class="insight-section-label">Bekreftede emner</span>${emnerHtml}</div>` : "",
-      (theoryChips || theoryLinks) ? `<div class="insight-section"><span class="insight-section-label">Teori</span>${theoryChips}${theoryLinks ? `<ul class="insight-claims">${theoryLinks}</ul>` : ""}</div>` : "",
+      theorySection,
       suggestionsHtml
     ].filter(Boolean).join("");
 
