@@ -303,7 +303,7 @@
     };
 
     try {
-      const res = await fetch(`${apiBase}/insight-candidates`, {
+      const res = await fetch(`${apiBase}/api/aha-agent/insight-candidates`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body)
