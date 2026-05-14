@@ -8,6 +8,12 @@
   const STORAGE_KEY = "aha_insight_chamber_v1";
   const HIGHLIGHTS_STORAGE_KEY = "aha_chat_highlights_v1";
   const CHAT_THREAD_ID = "default_thread";
+  const AHA_INSIGHT_CONTRACT = Object.freeze({
+    FUNCTIONAL_TYPES: new Set([
+      "observation", "question", "task", "problem", "solution",
+      "decision", "definition", "contradiction", "learning_point", "pattern", "memory", "principle"
+    ])
+  });
   function getThreadId() {
     return CHAT_THREAD_ID;
   }
@@ -315,8 +321,10 @@
     // og logg source event manuelt slik vi alltid har gjort.
     let chamber = loadChamberFromStorage();
     chunks.forEach((chunk) => {
+      const text = typeof chunk === "string" ? chunk : String(chunk?.text || chunk?.summary || chunk?.title || "").trim();
+      if (!text) return;
       const signal = global.InsightsEngine.createSignalFromMessage(
-        chunk,
+        text,
         SUBJECT_ID,
         themeId,
         { field_id: fieldId }
@@ -344,7 +352,9 @@
     const raw = String(text || "").trim();
     if (!raw) return [];
     const sentences = splitIntoSentences(raw);
-    if (sentences.length <= 2 || raw.length < 180) return [raw];
+    if (sentences.length <= 2 || raw.length < 180) {
+      return [toCandidateObject(raw, "observation")];
+    }
 
     const minInsights = Number(options?.minInsights || 1);
     const maxInsights = Math.min(5, Math.max(1, Number(options?.maxInsights || 5)));
@@ -383,13 +393,55 @@
       const key = clean.toLowerCase().slice(0, 160);
       if (seen.has(key)) return;
       seen.add(key);
-      deduped.push(clean);
+      deduped.push(toCandidateObject(clean, group.type));
     });
 
-    if (!deduped.length) return [raw];
+    if (!deduped.length) return [toCandidateObject(raw, "observation")];
     if (deduped.length <= target) return deduped;
 
     return deduped.slice(0, target);
+  }
+
+  function normalizeFunctionalType(value) {
+    const raw = String(value || "").trim().toLowerCase();
+    const mapped = raw === "contrast" ? "contradiction" : raw;
+    if (AHA_INSIGHT_CONTRACT.FUNCTIONAL_TYPES.has(mapped)) return mapped;
+    return "observation";
+  }
+
+  function normalizeCandidateConcepts(concepts, text) {
+    const out = [];
+    const seen = new Set();
+    const add = (value) => {
+      const label = String(value || "").trim();
+      if (!label) return;
+      const key = label.toLowerCase();
+      if (seen.has(key)) return;
+      seen.add(key);
+      out.push(label);
+    };
+    (Array.isArray(concepts) ? concepts : []).forEach((c) => {
+      if (typeof c === "string") add(c);
+      else if (c && typeof c === "object") add(c.label || c.key || c.term);
+    });
+    if (!out.length) {
+      String(text || "").split(/[^\p{L}\p{N}_-]+/u).map((w) => w.trim()).filter((w) => w.length >= 4).slice(0, 6).forEach(add);
+    }
+    return out;
+  }
+
+  function toCandidateObject(text, functionalType) {
+    const clean = String(text || "").replace(/\s+/g, " ").trim();
+    const summary = clean.length > 220 ? `${clean.slice(0, 217)}…` : clean;
+    const concepts = normalizeCandidateConcepts([], clean);
+    return {
+      title: summary.split(/[.!?…]/)[0].slice(0, 80) || "Innsikt",
+      summary,
+      text: clean,
+      functional_type: normalizeFunctionalType(functionalType),
+      concepts,
+      candidate_type: "semantic"
+    };
   }
 
   function splitIntoSentences(text) {
