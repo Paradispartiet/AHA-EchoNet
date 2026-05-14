@@ -1150,7 +1150,7 @@
         if (!text) return;
         appendChat("user", text);
         const count = handleUserMessage(text);
-        handleUserMessageInsightCandidatesInBackground(text)
+        void handleUserMessageInsightCandidatesInBackground(text)
           .then((aiCount) => {
             if (aiCount > 0) setStatusNote(`Beriket med ${aiCount} AI-signal${aiCount === 1 ? "" : "er"} i bakgrunnen.`);
           })
