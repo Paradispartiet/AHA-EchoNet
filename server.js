@@ -44,29 +44,40 @@ const INSIGHT_FUNCTIONAL_TYPES = new Set([
   "decision"
 ]);
 
-function safeParseJsonCandidatePayload(raw) {
+function parseCandidatePayload(raw, depth = 0) {
+  if (depth > 3 || raw == null) return [];
   if (Array.isArray(raw)) return raw;
-  if (!raw || typeof raw !== "object") return [];
-  if (Array.isArray(raw.candidates)) return raw.candidates;
-  if (typeof raw.output_text === "string") {
+
+  if (typeof raw === "string") {
+    const trimmed = raw.trim();
+    if (!trimmed) return [];
     try {
-      const parsed = JSON.parse(raw.output_text);
-      if (Array.isArray(parsed)) return parsed;
-      if (parsed && typeof parsed === "object" && Array.isArray(parsed.candidates)) return parsed.candidates;
+      return parseCandidatePayload(JSON.parse(trimmed), depth + 1);
     } catch {
       return [];
     }
   }
+
+  if (typeof raw !== "object") return [];
+  if (Array.isArray(raw.candidates)) return raw.candidates;
+  if (typeof raw.output_text === "string") return parseCandidatePayload(raw.output_text, depth + 1);
   return [];
+}
+
+function safeParseJsonCandidatePayload(raw) {
+  return parseCandidatePayload(raw);
 }
 
 function sanitizeInsightCandidate(candidate, fallbackText) {
   if (!candidate || typeof candidate !== "object") return null;
-  const rawText = String(candidate.text || candidate.summary || fallbackText || "").replace(/\s+/g, " ").trim();
+  const normalizedText = typeof candidate.text === "string" ? candidate.text : "";
+  const normalizedSummary = typeof candidate.summary === "string" ? candidate.summary : "";
+  const rawText = String(normalizedText || normalizedSummary || fallbackText || "").replace(/\s+/g, " ").trim();
   if (!rawText) return null;
 
-  const rawSummary = String(candidate.summary || rawText).replace(/\s+/g, " ").trim();
-  const derivedTitle = rawSummary.split(/[.!?…]/)[0] || "Innsikt";
+  const rawSummary = String(normalizedSummary || rawText).replace(/\s+/g, " ").trim();
+  const titleSource = rawSummary || rawText;
+  const derivedTitle = String(titleSource.split(/[.!?…]/)[0] || "").replace(/\s+/g, " ").trim();
   const rawTitle = String(candidate.title || derivedTitle).replace(/\s+/g, " ").trim();
   if (!rawTitle || !rawSummary) return null;
 
@@ -304,6 +315,7 @@ app.post("/api/aha-agent/insight-candidates", async (req, res) => {
     let model = OPENAI_MODEL;
     let responseId = null;
     let parsedPayload = null;
+    let rawOutputPreview = "";
 
     if (openai.responses && typeof openai.responses.create === "function") {
       const response = await openai.responses.create({
@@ -315,7 +327,8 @@ app.post("/api/aha-agent/insight-candidates", async (req, res) => {
       });
       model = response.model || OPENAI_MODEL;
       responseId = response.id || null;
-      parsedPayload = safeParseJsonCandidatePayload(response.output_text || "");
+      rawOutputPreview = String(response.output_text || "").slice(0, 400);
+      parsedPayload = response.output_text || "";
     } else {
       const completion = await openai.chat.completions.create({
         model: OPENAI_MODEL,
@@ -340,13 +353,22 @@ app.post("/api/aha-agent/insight-candidates", async (req, res) => {
       .map((item) => sanitizeInsightCandidate(item, text))
       .filter(Boolean)
       .slice(0, 5);
-
-    return res.json({
+    const responseBody = {
       ok: true,
       candidates,
       model,
       response_id: responseId
-    });
+    };
+
+    if (process.env.NODE_ENV !== "production") {
+      responseBody.debug = {
+        raw_output_preview: rawOutputPreview,
+        raw_candidate_count: rawCandidates.length,
+        sanitized_candidate_count: candidates.length
+      };
+    }
+
+    return res.json(responseBody);
   } catch (err) {
     console.error("[aha-agent] insight-candidates crashed", err);
     return res.status(500).json({
