@@ -760,7 +760,7 @@ function createInsightFromSignal(signal) {
     depth_score: depthScore,
     status: "suggested",
     insight_type: insightType,
-    functional_type: String(signal.candidate_functional_type || "").trim() || functionalType,
+    functional_type: normalizeCandidateFunctionalType(signal.candidate_functional_type) || functionalType,
     first_seen: signal.timestamp,
     last_updated: signal.timestamp,
     semantic,
@@ -798,6 +798,16 @@ function createInsightFromSignal(signal) {
 
   return insight;
 }
+
+  function normalizeCandidateFunctionalType(value) {
+    const allowed = new Set([
+      "observation", "principle", "decision", "question", "problem", "solution",
+      "pattern", "task", "definition", "contradiction", "memory", "learning_point"
+    ]);
+    const raw = String(value || "").trim().toLowerCase();
+    const mapped = raw === "contrast" ? "contradiction" : raw;
+    return allowed.has(mapped) ? mapped : "";
+  }
 
   function classifyFunctionalType(text, semantic, dimensions, narrative, layers) {
     const raw = String(text || "").trim();

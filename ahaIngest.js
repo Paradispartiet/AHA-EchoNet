@@ -43,6 +43,24 @@
     saveChamberFallback(chamber);
   }
 
+  function normalizeCandidateConcepts(concepts) {
+    const list = Array.isArray(concepts) ? concepts : [];
+    const out = [];
+    const seen = new Set();
+    list.forEach((item) => {
+      let value = "";
+      if (typeof item === "string") value = item;
+      else if (item && typeof item === "object") value = item.label || item.key || item.term || item.name || "";
+      const label = String(value || "").trim();
+      if (!label) return;
+      const normalized = label.toLowerCase();
+      if (seen.has(normalized)) return;
+      seen.add(normalized);
+      out.push(label);
+    });
+    return out;
+  }
+
   function markInsightImportSource(chamber, meta, sourceApp) {
     if (!chamber || !Array.isArray(chamber.insights) || !meta?.insight_id || !sourceApp) return false;
     const target = chamber.insights.find((insight) => insight?.id === meta.insight_id);
@@ -165,9 +183,7 @@
         ? String(candidate.text || candidate.summary || candidate.title || "").trim()
         : String(candidate || "").trim();
       if (!candidateText) return;
-      const candidateConcepts = isObjectCandidate && Array.isArray(candidate.concepts)
-        ? candidate.concepts.map((c) => String(c || "").trim()).filter(Boolean)
-        : [];
+      const candidateConcepts = isObjectCandidate ? normalizeCandidateConcepts(candidate.concepts) : [];
       const signal = global.InsightsEngine.createSignalFromMessage(
         candidateText,
         subjectId,
