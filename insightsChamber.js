@@ -704,13 +704,17 @@
     person_id: ctx.person_id || null,
     field_id: ctx.field_id || null,
     emner: Array.isArray(ctx.emner) ? ctx.emner.slice() : [],
-    source_event_id: ctx.source_event_id || null
+    source_event_id: ctx.source_event_id || null,
+    candidate_title: ctx.candidate_title || null,
+    candidate_summary: ctx.candidate_summary || null,
+    candidate_functional_type: ctx.candidate_functional_type || null,
+    candidate_concepts: Array.isArray(ctx.candidate_concepts) ? ctx.candidate_concepts.slice() : []
   };
 }
   
 function createInsightFromSignal(signal) {
   const text = (signal.text || "").trim();
-  const title = generateTitleFromText(text);
+  const title = String(signal.candidate_title || "").trim() || generateTitleFromText(text);
   const semantic = analyzeSentenceSemantics(text);
   const dimensions = analyzeDimensions(text);
   const narrative = analyzeNarrative(text);
@@ -748,7 +752,7 @@ function createInsightFromSignal(signal) {
     source_event_ids: signal.source_event_id ? [signal.source_event_id] : [],
 
     title,
-    summary: text,
+    summary: String(signal.candidate_summary || "").trim() || text,
     strength: {
       evidence_count: 1,
       total_score: Math.min(100, 10 + depthScore),
@@ -756,7 +760,7 @@ function createInsightFromSignal(signal) {
     depth_score: depthScore,
     status: "suggested",
     insight_type: insightType,
-    functional_type: functionalType,
+    functional_type: normalizeCandidateFunctionalType(signal.candidate_functional_type) || functionalType,
     first_seen: signal.timestamp,
     last_updated: signal.timestamp,
     semantic,
@@ -767,7 +771,17 @@ function createInsightFromSignal(signal) {
     // markører. concepts er strenge meningsenheter — råord ligger i
     // raw_terms.
     raw_terms: layers.raw_terms,
-    concepts: layers.concepts,
+    concepts: dedupeByKey(
+      layers.concepts.concat(
+        (Array.isArray(signal.candidate_concepts) ? signal.candidate_concepts : []).map((label) => ({
+          key: slugify(label),
+          label: String(label || "").trim(),
+          source: "candidate",
+          count: 1
+        }))
+      ).filter((item) => item && item.key && item.label),
+      "key"
+    ),
     claims: layers.claims,
     patterns: layers.patterns,
     markers: layers.markers,
@@ -784,6 +798,16 @@ function createInsightFromSignal(signal) {
 
   return insight;
 }
+
+  function normalizeCandidateFunctionalType(value) {
+    const allowed = new Set([
+      "observation", "principle", "decision", "question", "problem", "solution",
+      "pattern", "task", "definition", "contradiction", "memory", "learning_point"
+    ]);
+    const raw = String(value || "").trim().toLowerCase();
+    const mapped = raw === "contrast" ? "contradiction" : raw;
+    return allowed.has(mapped) ? mapped : "";
+  }
 
   function classifyFunctionalType(text, semantic, dimensions, narrative, layers) {
     const raw = String(text || "").trim();

@@ -43,6 +43,24 @@
     saveChamberFallback(chamber);
   }
 
+  function normalizeCandidateConcepts(concepts) {
+    const list = Array.isArray(concepts) ? concepts : [];
+    const out = [];
+    const seen = new Set();
+    list.forEach((item) => {
+      let value = "";
+      if (typeof item === "string") value = item;
+      else if (item && typeof item === "object") value = item.label || item.key || item.term || item.name || "";
+      const label = String(value || "").trim();
+      if (!label) return;
+      const normalized = label.toLowerCase();
+      if (seen.has(normalized)) return;
+      seen.add(normalized);
+      out.push(label);
+    });
+    return out;
+  }
+
   function markInsightImportSource(chamber, meta, sourceApp) {
     if (!chamber || !Array.isArray(chamber.insights) || !meta?.insight_id || !sourceApp) return false;
     const target = chamber.insights.find((insight) => insight?.id === meta.insight_id);
@@ -160,10 +178,14 @@
     const items = [];
 
     list.forEach((candidate) => {
-      const text = String(candidate || "").trim();
-      if (!text) return;
+      const isObjectCandidate = candidate && typeof candidate === "object" && !Array.isArray(candidate);
+      const candidateText = isObjectCandidate
+        ? String(candidate.text || candidate.summary || candidate.title || "").trim()
+        : String(candidate || "").trim();
+      if (!candidateText) return;
+      const candidateConcepts = isObjectCandidate ? normalizeCandidateConcepts(candidate.concepts) : [];
       const signal = global.InsightsEngine.createSignalFromMessage(
-        text,
+        candidateText,
         subjectId,
         themeId,
         {
@@ -174,7 +196,11 @@
           place_id: sourceEvent.meta?.place_id || sourceEvent.place_id || null,
           person_id: sourceEvent.meta?.person_id || sourceEvent.person_id || null,
           field_id: sourceEvent.field_id || input?.field_id || sourceEvent.meta?.field_id || sourceEvent.theme_id || null,
-          emner: Array.isArray(sourceEvent.meta?.related_emner) ? sourceEvent.meta.related_emner : []
+          emner: Array.isArray(sourceEvent.meta?.related_emner) ? sourceEvent.meta.related_emner : [],
+          candidate_title: isObjectCandidate ? String(candidate.title || "").trim() : "",
+          candidate_summary: isObjectCandidate ? String(candidate.summary || "").trim() : "",
+          candidate_functional_type: isObjectCandidate ? String(candidate.functional_type || candidate.candidate_type || "").trim() : "",
+          candidate_concepts: candidateConcepts
         }
       );
       signal.source_event_id = sourceEvent.id || null;
@@ -182,6 +208,12 @@
       signal.source_app = sourceEvent.source_app || null;
       signal.imported = sourceEvent.imported === true;
       signal.meta = sourceEvent.meta || {};
+      if (isObjectCandidate) {
+        signal.candidate_title = String(candidate.title || "").trim() || null;
+        signal.candidate_summary = String(candidate.summary || "").trim() || null;
+        signal.candidate_functional_type = String(candidate.functional_type || candidate.candidate_type || "").trim() || null;
+        signal.candidate_concepts = candidateConcepts;
+      }
 
       let meta = null;
       if (typeof global.InsightsEngine.addSignalToChamberWithMeta === "function") {
