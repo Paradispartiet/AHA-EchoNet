@@ -68,6 +68,32 @@
     target.import_source = sourceApp;
     return true;
   }
+  function normalizeSimpleStringList(list, maxItems) {
+    const values = Array.isArray(list) ? list : [];
+    const out = [];
+    const seen = new Set();
+    values.forEach((item) => {
+      const label = String(item || "").trim();
+      if (!label) return;
+      const key = label.toLowerCase();
+      if (seen.has(key)) return;
+      seen.add(key);
+      out.push(label);
+    });
+    return out.slice(0, maxItems);
+  }
+  function normalizeTheoreticalLinks(list, maxItems) {
+    const values = Array.isArray(list) ? list : [];
+    const out = [];
+    values.forEach((item) => {
+      if (!item || typeof item !== "object") return;
+      const name = String(item.name || "").trim();
+      const relation = String(item.relation || "").trim();
+      if (!name || !relation) return;
+      out.push({ name, relation });
+    });
+    return out.slice(0, maxItems);
+  }
 
   function ingest(input) {
     const sourceEvent = global.AHASources?.addSourceEvent?.(input) || null;
@@ -184,6 +210,10 @@
         : String(candidate || "").trim();
       if (!candidateText) return;
       const candidateConcepts = isObjectCandidate ? normalizeCandidateConcepts(candidate.concepts) : [];
+      const candidateThinkers = isObjectCandidate ? normalizeSimpleStringList(candidate.thinkers, 5) : [];
+      const candidateTheories = isObjectCandidate ? normalizeSimpleStringList(candidate.theories, 5) : [];
+      const candidateTraditions = isObjectCandidate ? normalizeSimpleStringList(candidate.traditions, 5) : [];
+      const candidateTheoreticalLinks = isObjectCandidate ? normalizeTheoreticalLinks(candidate.theoretical_links, 5) : [];
       const signal = global.InsightsEngine.createSignalFromMessage(
         candidateText,
         subjectId,
@@ -200,7 +230,11 @@
           candidate_title: isObjectCandidate ? String(candidate.title || "").trim() : "",
           candidate_summary: isObjectCandidate ? String(candidate.summary || "").trim() : "",
           candidate_functional_type: isObjectCandidate ? String(candidate.functional_type || candidate.candidate_type || "").trim() : "",
-          candidate_concepts: candidateConcepts
+          candidate_concepts: candidateConcepts,
+          candidate_thinkers: candidateThinkers,
+          candidate_theories: candidateTheories,
+          candidate_traditions: candidateTraditions,
+          candidate_theoretical_links: candidateTheoreticalLinks
         }
       );
       signal.source_event_id = sourceEvent.id || null;
@@ -213,6 +247,10 @@
         signal.candidate_summary = String(candidate.summary || "").trim() || null;
         signal.candidate_functional_type = String(candidate.functional_type || candidate.candidate_type || "").trim() || null;
         signal.candidate_concepts = candidateConcepts;
+        signal.candidate_thinkers = candidateThinkers;
+        signal.candidate_theories = candidateTheories;
+        signal.candidate_traditions = candidateTraditions;
+        signal.candidate_theoretical_links = candidateTheoreticalLinks;
       }
 
       let meta = null;

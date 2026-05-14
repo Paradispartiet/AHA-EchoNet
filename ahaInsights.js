@@ -127,6 +127,13 @@
       date: readDateValue(insight),
       sourceEventId: readSourceEventId(insight),
       terms: normalizeTerms(insight),
+      thinkers: asArray(insight?.thinkers).map((x) => asText(x, "")).filter(Boolean).slice(0, 5),
+      theories: asArray(insight?.theories).map((x) => asText(x, "")).filter(Boolean).slice(0, 5),
+      traditions: asArray(insight?.traditions).map((x) => asText(x, "")).filter(Boolean).slice(0, 5),
+      theoreticalLinks: asArray(insight?.theoretical_links)
+        .map((x) => ({ name: asText(x?.name, ""), relation: asText(x?.relation, "") }))
+        .filter((x) => x.name && x.relation)
+        .slice(0, 5),
       topic: asText(insight?.topic || insight?.emne || insight?.category, ""),
       confidence: insight?.confidence ?? insight?.score ?? null
     };
@@ -233,6 +240,12 @@
     const groups = getActiveGroups();
 
     const terms = view.terms.slice(0, 8).map((t) => `<span class="insight-chip">${escapeHtml(t)}</span>`).join("");
+    const theoryChips = view.thinkers.concat(view.theories, view.traditions)
+      .slice(0, 8)
+      .map((t) => `<span class="insight-chip">${escapeHtml(t)}</span>`).join("");
+    const theoryLines = view.theoreticalLinks
+      .map((link) => `<li><strong>${escapeHtml(link.name)}:</strong> ${escapeHtml(link.relation)}</li>`)
+      .join("");
     const sourceHtml = sourceEvent
       ? `<div class="insight-source"><strong>Kilde:</strong> ${escapeHtml(asText(sourceEvent.source_type, "ukjent"))} · ${escapeHtml(asText(sourceEvent.source_app, "ukjent"))}</div>
          <div class="insight-source-preview">${escapeHtml(eventPreview(sourceEvent))}</div>
@@ -291,6 +304,7 @@
         ${view.sourceEventId ? `<span class="insight-chip">Kilde-ID: ${escapeHtml(view.sourceEventId)}</span>` : ""}
       </div>
       ${terms ? `<div class="insight-layer-chips">${terms}</div>` : ""}
+      ${(theoryChips || theoryLines) ? `<section class="insight-section"><span class="insight-section-label">Teori</span>${theoryChips ? `<div class="insight-layer-chips">${theoryChips}</div>` : ""}${theoryLines ? `<ul class="insight-claims">${theoryLines}</ul>` : ""}</section>` : ""}
       <div class="insight-subject-links-host"></div>
       <section class="insight-source-block">${sourceHtml}</section>
       ${listSection}

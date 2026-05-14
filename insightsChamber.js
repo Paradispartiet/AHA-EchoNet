@@ -708,7 +708,11 @@
     candidate_title: ctx.candidate_title || null,
     candidate_summary: ctx.candidate_summary || null,
     candidate_functional_type: ctx.candidate_functional_type || null,
-    candidate_concepts: Array.isArray(ctx.candidate_concepts) ? ctx.candidate_concepts.slice() : []
+    candidate_concepts: Array.isArray(ctx.candidate_concepts) ? ctx.candidate_concepts.slice() : [],
+    candidate_thinkers: Array.isArray(ctx.candidate_thinkers) ? ctx.candidate_thinkers.slice(0, 5) : [],
+    candidate_theories: Array.isArray(ctx.candidate_theories) ? ctx.candidate_theories.slice(0, 5) : [],
+    candidate_traditions: Array.isArray(ctx.candidate_traditions) ? ctx.candidate_traditions.slice(0, 5) : [],
+    candidate_theoretical_links: Array.isArray(ctx.candidate_theoretical_links) ? ctx.candidate_theoretical_links.slice(0, 5) : []
   };
 }
   
@@ -761,6 +765,10 @@ function createInsightFromSignal(signal) {
     status: "suggested",
     insight_type: insightType,
     functional_type: normalizeCandidateFunctionalType(signal.candidate_functional_type) || functionalType,
+    thinkers: Array.isArray(signal.candidate_thinkers) ? signal.candidate_thinkers.slice(0, 5) : [],
+    theories: Array.isArray(signal.candidate_theories) ? signal.candidate_theories.slice(0, 5) : [],
+    traditions: Array.isArray(signal.candidate_traditions) ? signal.candidate_traditions.slice(0, 5) : [],
+    theoretical_links: Array.isArray(signal.candidate_theoretical_links) ? signal.candidate_theoretical_links.slice(0, 5) : [],
     first_seen: signal.timestamp,
     last_updated: signal.timestamp,
     semantic,
@@ -910,6 +918,37 @@ function createInsightFromSignal(signal) {
     (Array.isArray(insight.concepts) ? insight.concepts : []).concat(newLayers.concepts),
     "key"
   );
+  const mergeStringList = (a, b, maxItems) => {
+    const out = [];
+    const seen = new Set();
+    const add = (value) => {
+      const label = String(value || "").trim();
+      if (!label) return;
+      const key = label.toLowerCase();
+      if (seen.has(key)) return;
+      seen.add(key);
+      out.push(label);
+    };
+    (Array.isArray(a) ? a : []).forEach(add);
+    (Array.isArray(b) ? b : []).forEach(add);
+    return out.slice(0, maxItems);
+  };
+  insight.thinkers = mergeStringList(insight.thinkers, signal.candidate_thinkers, 5);
+  insight.theories = mergeStringList(insight.theories, signal.candidate_theories, 5);
+  insight.traditions = mergeStringList(insight.traditions, signal.candidate_traditions, 5);
+  insight.theoretical_links = dedupeByKey(
+    (Array.isArray(insight.theoretical_links) ? insight.theoretical_links : [])
+      .concat(Array.isArray(signal.candidate_theoretical_links) ? signal.candidate_theoretical_links : [])
+      .map((item) => {
+        if (!item || typeof item !== "object") return null;
+        const name = String(item.name || "").trim();
+        const relation = String(item.relation || "").trim();
+        if (!name || !relation) return null;
+        return { name, relation, _k: `${name.toLowerCase()}|${relation.toLowerCase()}` };
+      })
+      .filter(Boolean),
+    "_k"
+  ).map((item) => ({ name: item.name, relation: item.relation })).slice(0, 5);
 
   insight.claims = dedupeByKey(
     (Array.isArray(insight.claims) ? insight.claims : []).concat(newLayers.claims),
