@@ -290,14 +290,71 @@
     if (panel) panel.innerHTML = html;
   }
 
-  function handleUserMessage(messageText) {
+  async function generateAIInsightCandidates(text, context) {
+    const raw = String(text || "").trim();
+    if (!raw) return [];
+    const apiBase = String(global.AHA_AGENT_API || "").trim().replace(/\/$/, "");
+    if (!apiBase) return [];
+
+    const body = {
+      text: raw,
+      context: context || {},
+      format: "insight_candidates_v1"
+    };
+
+    try {
+      const res = await fetch(`${apiBase}/insight-candidates`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+      if (!res.ok) return [];
+      const data = await res.json();
+      const candidates = Array.isArray(data?.candidates) ? data.candidates : (Array.isArray(data) ? data : []);
+      return candidates
+        .map((candidate) => normalizeInsightCandidate(candidate))
+        .filter(Boolean)
+        .slice(0, 5);
+    } catch (err) {
+      console.warn("AI insight-candidates utilgjengelig", err);
+      return [];
+    }
+  }
+
+  function normalizeInsightCandidate(candidate) {
+    if (!candidate || typeof candidate !== "object") return null;
+    const text = String(candidate.text || candidate.summary || "").replace(/\s+/g, " ").trim();
+    if (!text) return null;
+    const summary = String(candidate.summary || text).replace(/\s+/g, " ").trim();
+    const title = String(candidate.title || summary.split(/[.!?…]/)[0] || "Innsikt").trim().slice(0, 120);
+    if (!title || !summary) return null;
+
+    const concepts = filterConceptLabels(normalizeCandidateConcepts(candidate.concepts || [], text)).slice(0, 8);
+
+    return {
+      title,
+      summary: summary.length > 320 ? `${summary.slice(0, 317)}…` : summary,
+      text,
+      functional_type: normalizeFunctionalType(candidate.functional_type),
+      concepts,
+      candidate_type: "ai"
+    };
+  }
+
+  async function handleUserMessage(messageText) {
     const text = String(messageText || "").trim();
     if (!text || !global.InsightsEngine) return 0;
 
     const themeId = getThemeId();
     const fieldId = getFieldId();
 
-    const chunks = buildSemanticInsightCandidates(text);
+    const aiCandidates = await generateAIInsightCandidates(text, {
+      subject_id: SUBJECT_ID,
+      theme_id: themeId,
+      field_id: fieldId,
+      ai_state: buildAIState()
+    });
+    const chunks = aiCandidates.length ? aiCandidates : buildSemanticInsightCandidates(text, { minInsights: 1, maxInsights: 5 });
 
     if (global.AHAIngest && typeof global.AHAIngest.ingest === "function") {
       // AHAIngest håndterer både source event-loggen, signal-konstruksjon
@@ -941,7 +998,7 @@
         const text = textarea.value.trim();
         if (!text) return;
         appendChat("user", text);
-        const count = handleUserMessage(text);
+        const count = await handleUserMessage(text);
         textarea.value = "";
         if (count > 0) setStatusNote(`Lagret ${count} signal${count === 1 ? "" : "er"} i bakgrunnen.`);
         try {
