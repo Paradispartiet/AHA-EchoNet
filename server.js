@@ -294,7 +294,7 @@ app.post("/api/aha-agent/insight-candidates", async (req, res) => {
       return res.status(400).json({ ok: false, error: "invalid_context" });
     }
 
-    const systemInstruction = "Du lager insight candidates for AHA. Returner KUN gyldig JSON. Ingen markdown, ingen forklaring utenfor JSON. Maks 5 candidates. Minst 1 candidate hvis teksten har innhold. Norske titler og sammendrag. Title skal være presis og ikke et rått tekstutdrag. Summary skal være 1–2 setninger. Concepts skal være korte, meningsfulle begreper. functional_type må være en av: principle, observation, pattern, question, problem, solution, learning_point, definition, contradiction, memory, task, decision. Kandidater KAN i tillegg ha thinkers, theories, traditions og theoretical_links når teksten tydelig tilsier teorikobling; ikke tving dette frem. theoretical_links er objekter med feltene name og relation.";
+    const systemInstruction = "Du lager insight candidates for AHA. Returner KUN gyldig JSON, uten markdown eller forklarende tekst utenfor JSON. Returner et objekt med feltet candidates (array). Lag 2–5 candidates for mellomlange eller lange tekster, og 1–3 for korte tekster. Ikke bruk generiske titler som «Observasjon», «Innsikt» eller «Analyse» når teksten har tydelig tema. Hver candidate skal ha presis norsk title og summary (1–2 setninger) som tilfører semantisk verdi, ikke rå avskrift av tekststarten. Concepts skal være korte, konkrete og meningsfulle begreper. functional_type må være en av: principle, observation, pattern, question, problem, solution, learning_point, definition, contradiction, memory, task, decision. Hvis teksten handler om lek, byrom, offentlighet, fellesskap, hverdagsliv eller læring, skal minst én relevant candidate få teorikobling når det faglig passer. Vurder særlig Johan Huizinga, D.W. Winnicott, Jane Jacobs, Henri Lefebvre og Richard Sennett. Bruk teorikoblinger bare når de faktisk passer teksten. theoretical_links skal være objekter med feltene name og relation, der relation forklarer hvorfor koblingen passer.";
     const userPayload = JSON.stringify({
       text,
       context: context || {},
@@ -340,10 +340,6 @@ app.post("/api/aha-agent/insight-candidates", async (req, res) => {
       .map((item) => sanitizeInsightCandidate(item, text))
       .filter(Boolean)
       .slice(0, 5);
-
-    if (!candidates.length) {
-      candidates.push(sanitizeInsightCandidate({ summary: text, title: "Observasjon", functional_type: "observation", concepts: [] }, text));
-    }
 
     return res.json({
       ok: true,

@@ -326,6 +326,7 @@
       return candidates
         .map((candidate) => normalizeInsightCandidate(candidate))
         .filter(Boolean)
+        .filter((candidate) => !isWeakInsightCandidate(candidate, raw))
         .slice(0, 5);
     } catch (err) {
       console.warn("AI insight-candidates utilgjengelig", err);
@@ -359,6 +360,41 @@
       theoretical_links: theoreticalLinks,
       candidate_type: "ai"
     };
+  }
+
+  function isWeakInsightCandidate(candidate, sourceText) {
+    if (!candidate || typeof candidate !== "object") return true;
+
+    const title = String(candidate.title || "").replace(/\s+/g, " ").trim();
+    const titleLower = title.toLowerCase();
+    const genericTitles = new Set(["observasjon", "innsikt", "analyse"]);
+
+    const summary = String(candidate.summary || candidate.text || "").replace(/\s+/g, " ").trim();
+    const summaryLower = summary.toLowerCase();
+    const source = String(sourceText || "").replace(/\s+/g, " ").trim();
+    const sourceLower = source.toLowerCase();
+    const sourceStart = sourceLower.slice(0, 220);
+
+    const concepts = Array.isArray(candidate.concepts) ? candidate.concepts : [];
+    const conceptWords = concepts
+      .map((item) => String(item || "").trim().toLowerCase())
+      .filter(Boolean);
+    const nonWeakConcepts = conceptWords.filter((word) => !WEAK_CONCEPT_WORDS.has(word));
+    const hasTheory = Boolean(
+      (Array.isArray(candidate.thinkers) && candidate.thinkers.length) ||
+      (Array.isArray(candidate.theories) && candidate.theories.length) ||
+      (Array.isArray(candidate.traditions) && candidate.traditions.length) ||
+      (Array.isArray(candidate.theoretical_links) && candidate.theoretical_links.length)
+    );
+
+    if (!title || genericTitles.has(titleLower)) return true;
+    if (!summary) return true;
+    if (sourceStart && (summaryLower === sourceStart || sourceStart.startsWith(summaryLower) || summaryLower.startsWith(sourceStart))) return true;
+    if (sourceStart && summaryLower.slice(0, 140) === sourceStart.slice(0, 140)) return true;
+    if (!conceptWords.length && !hasTheory) return true;
+    if (conceptWords.length > 0 && nonWeakConcepts.length === 0 && !hasTheory) return true;
+
+    return false;
   }
 
   async function handleUserMessage(messageText) {
