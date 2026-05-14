@@ -399,6 +399,37 @@
     const metaInsights = asArray(chamber?.meta_insights);
 
     const list = (items, mapper) => items.slice(0, 5).map(mapper).join("");
+    const recurringThemes = global.InsightsEngine?.getRecurringThemes
+      ? global.InsightsEngine.getRecurringThemes(chamber, { windows: [14, 30] })
+      : {};
+    const conceptGraph = global.InsightsEngine?.buildConceptGraph
+      ? global.InsightsEngine.buildConceptGraph(chamber)
+      : { nodes: {}, edges: [] };
+    const theoryLinks = asArray(chamber?.insights)
+      .filter((insight) => asArray(insight?.theoretical_links).length > 0)
+      .flatMap((insight) => {
+        if (!global.InsightsEngine?.scoreTheoryRelevance) return [];
+        return asArray(global.InsightsEngine.scoreTheoryRelevance(insight, chamber)).map((link) => ({
+          name: asText(link?.name, ""),
+          theory: asText(link?.theory, ""),
+          relation: asText(link?.relation, ""),
+          score: Number(link?.relevance_score || 0)
+        }));
+      })
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 6);
+    const tensions = global.InsightsEngine?.detectTensions
+      ? asArray(global.InsightsEngine.detectTensions(chamber))
+      : [];
+    const trackedTensions = ["frihet ↔ kontroll", "trygghet ↔ risiko", "fellesskap ↔ eierskap", "lek ↔ kontroll"];
+    const visibleTensions = tensions.filter((item) => trackedTensions.includes(String(item?.title || "").toLowerCase()));
+    const graphNodes = Object.values(conceptGraph?.nodes || {});
+    const conceptNodeCount = graphNodes.filter((node) => node?.type === "concept").length;
+    const theoryNodeCount = graphNodes.filter((node) => node?.type === "theory" || node?.type === "thinker").length;
+    const topEdges = asArray(conceptGraph?.edges).filter((edge) => edge?.type === "co_occurs").sort((a, b) => (b?.weight || 0) - (a?.weight || 0)).slice(0, 3);
+    const themes14d = asArray(recurringThemes?.["14d"]?.top_concepts).slice(0, 4);
+    const themes30d = asArray(recurringThemes?.["30d"]?.top_concepts).slice(0, 4);
+    const topTheoryPeople = asArray(recurringThemes?.["30d"]?.top_theories).slice(0, 4);
 
     target.innerHTML = `
       <h2>Meta / forslag</h2>
@@ -414,6 +445,31 @@
         <div><h4>Merge suggestions</h4><ul>${list(merge, (x) => `<li>${escapeHtml(asText(x?.reason || x?.description || x?.id, "Forslag"))}</li>`) || "<li>Ingen ennå</li>"}</ul></div>
         <div><h4>Patterns / Meta</h4><ul>${list(patterns.concat(metaInsights), (x) => `<li>${escapeHtml(asText(x?.description || x?.title || x?.id, "Meta"))}</li>`) || "<li>Ingen ennå</li>"}</ul></div>
       </div>
+      <section class="knowledge-map-block">
+        <h3>Kunnskapskart</h3>
+        <div class="knowledge-map-grid">
+          <article class="knowledge-card">
+            <h4>Tilbakevendende tema</h4>
+            <p class="knowledge-sub">14d: ${themes14d.length ? themes14d.map((item) => `${escapeHtml(item.key)} (${item.count})`).join(", ") : "Ingen tydelige begreper ennå."}</p>
+            <p class="knowledge-sub">30d: ${themes30d.length ? themes30d.map((item) => `${escapeHtml(item.key)} (${item.count})`).join(", ") : "Mangler data for siste 30 dager."}</p>
+            <p class="knowledge-sub">Teori/tenkere: ${topTheoryPeople.length ? topTheoryPeople.map((item) => `${escapeHtml(item.key)} (${item.count})`).join(", ") : "Ingen teorikoblinger funnet ennå."}</p>
+          </article>
+          <article class="knowledge-card">
+            <h4>Begrepsgraf</h4>
+            <p class="knowledge-sub">Begrepsnoder: <strong>${conceptNodeCount}</strong></p>
+            <p class="knowledge-sub">Teori-/tenkernoder: <strong>${theoryNodeCount}</strong></p>
+            <p class="knowledge-sub">Sterkeste co-occurs: ${topEdges.length ? topEdges.map((edge) => `${escapeHtml(edge.from)} ↔ ${escapeHtml(edge.to)} (${edge.weight})`).join(", ") : "Ingen samforekomst-koblinger ennå."}</p>
+          </article>
+          <article class="knowledge-card">
+            <h4>Teorikoblinger</h4>
+            ${theoryLinks.length ? `<ul>${theoryLinks.map((link) => `<li><strong>${escapeHtml(link.name || link.theory || "Ukjent")}</strong> · score ${escapeHtml(link.score.toFixed(2))}${link.relation ? ` · ${escapeHtml(link.relation)}` : ""}</li>`).join("")}</ul>` : "<p class='knowledge-sub'>Ingen teoretiske koblinger å score ennå.</p>"}
+          </article>
+          <article class="knowledge-card">
+            <h4>Spenninger</h4>
+            ${visibleTensions.length ? `<ul>${visibleTensions.map((item) => `<li><strong>${escapeHtml(item.title)}</strong> · styrke ${escapeHtml(String(item.strength || 0))}</li>`).join("")}</ul>` : "<p class='knowledge-sub'>Ingen av de prioriterte spenningsparene er oppdaget ennå.</p>"}
+          </article>
+        </div>
+      </section>
     `;
   }
 
