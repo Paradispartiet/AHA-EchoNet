@@ -2877,7 +2877,7 @@ function getConceptsForTheme(chamber, subjectId, themeId) {
 
   function normalizeNodeId(value, fallbackPrefix) {
     const raw = String(value || "").trim();
-    if (!raw) return `${fallbackPrefix}_${Math.floor(Math.random() * 100000)}`;
+    if (!raw) return "";
     return raw.toLowerCase();
   }
 
