@@ -330,6 +330,10 @@
     if (!title || !summary) return null;
 
     const concepts = filterConceptLabels(normalizeCandidateConcepts(candidate.concepts || [], text)).slice(0, 8);
+    const thinkers = normalizeSimpleStringList(candidate.thinkers, 5);
+    const theories = normalizeSimpleStringList(candidate.theories, 5);
+    const traditions = normalizeSimpleStringList(candidate.traditions, 5);
+    const theoreticalLinks = normalizeTheoreticalLinks(candidate.theoretical_links, 5);
 
     return {
       title,
@@ -337,6 +341,10 @@
       text,
       functional_type: normalizeFunctionalType(candidate.functional_type),
       concepts,
+      thinkers,
+      theories,
+      traditions,
+      theoretical_links: theoreticalLinks,
       candidate_type: "ai"
     };
   }
@@ -492,6 +500,34 @@
       else if (c && typeof c === "object") add(c.label || c.key || c.term);
     });
     return out;
+  }
+  function normalizeSimpleStringList(list, max) {
+    const out = [];
+    const seen = new Set();
+    (Array.isArray(list) ? list : []).forEach((item) => {
+      const value = String(item || "").trim();
+      if (!value) return;
+      const key = value.toLowerCase();
+      if (seen.has(key)) return;
+      seen.add(key);
+      out.push(value);
+    });
+    return out.slice(0, Math.max(1, Number(max || 5)));
+  }
+  function normalizeTheoreticalLinks(list, max) {
+    const out = [];
+    const seen = new Set();
+    (Array.isArray(list) ? list : []).forEach((item) => {
+      if (!item || typeof item !== "object") return;
+      const name = String(item.name || "").trim();
+      const relation = String(item.relation || "").trim();
+      if (!name || !relation) return;
+      const key = `${name.toLowerCase()}|${relation.toLowerCase()}`;
+      if (seen.has(key)) return;
+      seen.add(key);
+      out.push({ name, relation });
+    });
+    return out.slice(0, Math.max(1, Number(max || 5)));
   }
 
   function filterConceptLabels(concepts) {
@@ -661,6 +697,23 @@
     const patternsHtml = renderLayerChips(ins.patterns, (p) => p?.label || p?.key);
     const markersHtml = renderLayerChips(ins.markers, (m) => m?.value);
     const emnerHtml = renderLayerChips((ins.emner || []).map((e) => ({ key: e })), (e) => e?.key);
+    const theoryChips = renderLayerChips(
+      []
+        .concat(Array.isArray(ins.thinkers) ? ins.thinkers : [])
+        .concat(Array.isArray(ins.theories) ? ins.theories : [])
+        .concat(Array.isArray(ins.traditions) ? ins.traditions : [])
+        .map((label) => ({ label })),
+      (x) => x?.label
+    );
+    const theoryLinks = (Array.isArray(ins.theoretical_links) ? ins.theoretical_links : [])
+      .map((item) => {
+        const name = String(item?.name || "").trim();
+        const relation = String(item?.relation || "").trim();
+        if (!name || !relation) return "";
+        return `<li><strong>${escHtml(name)}:</strong> ${escHtml(relation)}</li>`;
+      })
+      .filter(Boolean)
+      .join("");
     const suggestionsHtml = renderEmneSuggestions(ins);
 
     const claims = (ins.claims || [])
@@ -678,6 +731,7 @@
       claimsHtml ? `<div class="insight-section"><span class="insight-section-label">Påstander</span>${claimsHtml}</div>` : "",
       markersHtml ? `<div class="insight-section"><span class="insight-section-label">Markører</span>${markersHtml}</div>` : "",
       emnerHtml ? `<div class="insight-section"><span class="insight-section-label">Bekreftede emner</span>${emnerHtml}</div>` : "",
+      (theoryChips || theoryLinks) ? `<div class="insight-section"><span class="insight-section-label">Teori</span>${theoryChips}${theoryLinks ? `<ul class="insight-claims">${theoryLinks}</ul>` : ""}</div>` : "",
       suggestionsHtml
     ].filter(Boolean).join("");
 

@@ -78,6 +78,28 @@ function sanitizeInsightCandidate(candidate, fallbackText) {
     .map((item) => String(item || "").replace(/\s+/g, " ").trim())
     .filter(Boolean)
     .slice(0, 8);
+  const thinkers = (Array.isArray(candidate.thinkers) ? candidate.thinkers : [])
+    .map((item) => String(item || "").replace(/\s+/g, " ").trim())
+    .filter(Boolean)
+    .slice(0, 5);
+  const theories = (Array.isArray(candidate.theories) ? candidate.theories : [])
+    .map((item) => String(item || "").replace(/\s+/g, " ").trim())
+    .filter(Boolean)
+    .slice(0, 5);
+  const traditions = (Array.isArray(candidate.traditions) ? candidate.traditions : [])
+    .map((item) => String(item || "").replace(/\s+/g, " ").trim())
+    .filter(Boolean)
+    .slice(0, 5);
+  const theoretical_links = (Array.isArray(candidate.theoretical_links) ? candidate.theoretical_links : [])
+    .map((item) => {
+      if (!item || typeof item !== "object") return null;
+      const name = String(item.name || "").replace(/\s+/g, " ").trim();
+      const relation = String(item.relation || "").replace(/\s+/g, " ").trim();
+      if (!name || !relation) return null;
+      return { name: name.slice(0, 120), relation: relation.slice(0, 240) };
+    })
+    .filter(Boolean)
+    .slice(0, 5);
 
   return {
     title: rawTitle.slice(0, 140),
@@ -85,6 +107,10 @@ function sanitizeInsightCandidate(candidate, fallbackText) {
     text: rawText.slice(0, 1200),
     functional_type: functionalType,
     concepts,
+    thinkers,
+    theories,
+    traditions,
+    theoretical_links,
     candidate_type: "ai"
   };
 }
@@ -268,7 +294,7 @@ app.post("/api/aha-agent/insight-candidates", async (req, res) => {
       return res.status(400).json({ ok: false, error: "invalid_context" });
     }
 
-    const systemInstruction = "Du lager insight candidates for AHA. Returner KUN gyldig JSON. Ingen markdown, ingen forklaring utenfor JSON. Maks 5 candidates. Minst 1 candidate hvis teksten har innhold. Norske titler og sammendrag. Title skal være presis og ikke et rått tekstutdrag. Summary skal være 1–2 setninger. Concepts skal være korte, meningsfulle begreper. functional_type må være en av: principle, observation, pattern, question, problem, solution, learning_point, definition, contradiction, memory, task, decision.";
+    const systemInstruction = "Du lager insight candidates for AHA. Returner KUN gyldig JSON. Ingen markdown, ingen forklaring utenfor JSON. Maks 5 candidates. Minst 1 candidate hvis teksten har innhold. Norske titler og sammendrag. Title skal være presis og ikke et rått tekstutdrag. Summary skal være 1–2 setninger. Concepts skal være korte, meningsfulle begreper. functional_type må være en av: principle, observation, pattern, question, problem, solution, learning_point, definition, contradiction, memory, task, decision. Kandidater KAN i tillegg ha thinkers, theories, traditions og theoretical_links når teksten tydelig tilsier teorikobling; ikke tving dette frem. theoretical_links er objekter med feltene name og relation.";
     const userPayload = JSON.stringify({
       text,
       context: context || {},
