@@ -704,13 +704,18 @@
     person_id: ctx.person_id || null,
     field_id: ctx.field_id || null,
     emner: Array.isArray(ctx.emner) ? ctx.emner.slice() : [],
-    source_event_id: ctx.source_event_id || null
+    source_event_id: ctx.source_event_id || null,
+    candidate_title: ctx.candidate_title || null,
+    candidate_summary: ctx.candidate_summary || null,
+    candidate_concepts: Array.isArray(ctx.candidate_concepts) ? ctx.candidate_concepts.slice() : [],
+    candidate_functional_type: ctx.candidate_functional_type || null,
+    candidate_type: ctx.candidate_type || null
   };
 }
   
 function createInsightFromSignal(signal) {
   const text = (signal.text || "").trim();
-  const title = generateTitleFromText(text);
+  const title = String(signal.candidate_title || "").trim() || generateTitleFromText(text);
   const semantic = analyzeSentenceSemantics(text);
   const dimensions = analyzeDimensions(text);
   const narrative = analyzeNarrative(text);
@@ -727,7 +732,7 @@ function createInsightFromSignal(signal) {
     dimensions,
     semiotic
   );
-  const functionalType = classifyFunctionalType(
+  const functionalType = String(signal.candidate_functional_type || "").trim() || classifyFunctionalType(
     text,
     semantic,
     dimensions,
@@ -748,7 +753,7 @@ function createInsightFromSignal(signal) {
     source_event_ids: signal.source_event_id ? [signal.source_event_id] : [],
 
     title,
-    summary: text,
+    summary: String(signal.candidate_summary || "").trim() || text,
     strength: {
       evidence_count: 1,
       total_score: Math.min(100, 10 + depthScore),
@@ -767,7 +772,12 @@ function createInsightFromSignal(signal) {
     // markører. concepts er strenge meningsenheter — råord ligger i
     // raw_terms.
     raw_terms: layers.raw_terms,
-    concepts: layers.concepts,
+    concepts: dedupeByKey(
+      layers.concepts.concat(
+        (Array.isArray(signal.candidate_concepts) ? signal.candidate_concepts : []).map((term) => ({ key: String(term || "").trim().toLowerCase(), count: 1, examples: [String(term || "").trim()] }))
+      ).filter((item) => item?.key),
+      "key"
+    ),
     claims: layers.claims,
     patterns: layers.patterns,
     markers: layers.markers,

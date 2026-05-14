@@ -200,10 +200,23 @@
   }
 
   function renderSubjectLinks(matches) {
-    const items = Array.isArray(matches) ? matches.slice(0, 8) : [];
+    const items = dedupeSubjectLinks(matches).slice(0, 8);
     if (!items.length) return "";
     const chips = items.map((item) => `<span class="subject-link-chip insight-subject-chip">${escapeHtml(asText(item?.title || item?.subject_label, "Fagkobling"))}</span>`).join("");
     return `<section class="subject-links insight-subject-links"><span class="subject-links-label">Fagkoblinger</span><div class="subject-link-chips">${chips}</div></section>`;
+  }
+  function dedupeSubjectLinks(matches) {
+    const list = Array.isArray(matches) ? matches : [];
+    const seen = new Set();
+    return list.filter((item) => {
+      const title = String(item?.title || item?.subject_label || "").trim().toLowerCase();
+      const subjectId = String(item?.subject_id || "").trim().toLowerCase();
+      const emneId = String(item?.emne_id || "").trim().toLowerCase();
+      const key = `${title}::${subjectId}::${emneId}`;
+      if (!title || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
   }
 
   function createInsightCard(view, sourceEvent, insight, index) {

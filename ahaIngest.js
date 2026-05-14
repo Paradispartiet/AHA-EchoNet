@@ -154,8 +154,16 @@
     const items = [];
 
     list.forEach((candidate) => {
-      const text = String(candidate || "").trim();
+      const isObjectCandidate = candidate && typeof candidate === "object" && !Array.isArray(candidate);
+      const text = String(isObjectCandidate ? (candidate.text || candidate.summary || candidate.title || "") : candidate || "").trim();
       if (!text) return;
+      const candidateMeta = isObjectCandidate ? {
+        candidate_title: String(candidate.title || "").trim() || null,
+        candidate_summary: String(candidate.summary || "").trim() || null,
+        candidate_concepts: Array.isArray(candidate.concepts) ? candidate.concepts.slice(0, 20) : [],
+        candidate_functional_type: String(candidate.functional_type || "").trim() || null,
+        candidate_type: String(candidate.candidate_type || "").trim() || null
+      } : null;
       const signal = global.InsightsEngine.createSignalFromMessage(
         text,
         subjectId,
@@ -168,14 +176,19 @@
           place_id: sourceEvent.meta?.place_id || sourceEvent.place_id || null,
           person_id: sourceEvent.meta?.person_id || sourceEvent.person_id || null,
           field_id: sourceEvent.field_id || input?.field_id || sourceEvent.meta?.field_id || sourceEvent.theme_id || null,
-          emner: Array.isArray(sourceEvent.meta?.related_emner) ? sourceEvent.meta.related_emner : []
+          emner: Array.isArray(sourceEvent.meta?.related_emner) ? sourceEvent.meta.related_emner : [],
+          candidate_title: candidateMeta?.candidate_title || null,
+          candidate_summary: candidateMeta?.candidate_summary || null,
+          candidate_concepts: candidateMeta?.candidate_concepts || [],
+          candidate_functional_type: candidateMeta?.candidate_functional_type || null,
+          candidate_type: candidateMeta?.candidate_type || null
         }
       );
       signal.source_event_id = sourceEvent.id || null;
       signal.source_type = sourceEvent.source_type || null;
       signal.source_app = sourceEvent.source_app || null;
       signal.imported = sourceEvent.imported === true;
-      signal.meta = sourceEvent.meta || {};
+      signal.meta = Object.assign({}, sourceEvent.meta || {}, candidateMeta || {});
 
       let meta = null;
       if (typeof global.InsightsEngine.addSignalToChamberWithMeta === "function") {

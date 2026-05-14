@@ -78,6 +78,18 @@
     }
     previous.matched_terms = Array.from(new Set(previous.matched_terms.concat(payload.matched_terms)));
   }
+  function dedupeMatches(matches) {
+    const seen = new Set();
+    return matches.filter((item) => {
+      const title = String(item?.title || item?.subject_label || "").trim().toLowerCase();
+      const subjectId = String(item?.subject_id || "").trim().toLowerCase();
+      const emneId = String(item?.emne_id || "").trim().toLowerCase();
+      const dedupeKey = `${title}::${subjectId}::${emneId}`;
+      if (!title || seen.has(dedupeKey)) return false;
+      seen.add(dedupeKey);
+      return true;
+    });
+  }
 
   function scanField(text, values, boost, collector) {
     const normalized = String(text || "").toLowerCase();
@@ -201,7 +213,7 @@
       });
     });
 
-    return Array.from(matches.values()).sort((a, b) => b.score - a.score).slice(0, maxResults);
+    return dedupeMatches(Array.from(matches.values()).sort((a, b) => b.score - a.score)).slice(0, maxResults);
   }
 
   function flattenValue(value) {

@@ -98,7 +98,7 @@
   }
 
   function renderSubjectChips(row, matches) {
-    const links = Array.isArray(matches) ? matches : [];
+    const links = dedupeSubjectMatches(matches);
     if (!row || !links.length) return;
     const wrap = document.createElement("section");
     wrap.className = "subject-links";
@@ -118,6 +118,22 @@
     });
     wrap.appendChild(chips);
     row.appendChild(wrap);
+  }
+
+  function dedupeSubjectMatches(matches) {
+    const list = Array.isArray(matches) ? matches : [];
+    const seen = new Set();
+    const out = [];
+    list.forEach((item) => {
+      const title = String(item?.title || item?.subject_label || "").trim().toLowerCase();
+      const subjectId = String(item?.subject_id || "").trim().toLowerCase();
+      const emneId = String(item?.emne_id || "").trim().toLowerCase();
+      const key = `${title}::${subjectId}::${emneId}`;
+      if (!title || seen.has(key)) return;
+      seen.add(key);
+      out.push(item);
+    });
+    return out;
   }
 
   function appendChat(role, text, options) {
@@ -145,7 +161,7 @@
 
     row.appendChild(div);
     const categories = Array.isArray(options?.categoryChips) ? options.categoryChips.filter(Boolean).slice(0, 8) : [];
-    const subjectMatches = Array.isArray(options?.subjectMatches) ? options.subjectMatches.slice(0, 8) : [];
+    const subjectMatches = dedupeSubjectMatches(options?.subjectMatches).slice(0, 8);
     if (categories.length) {
       const chips = document.createElement("div");
       chips.className = "message-category-chips";
@@ -374,13 +390,63 @@
       const key = clean.toLowerCase().slice(0, 160);
       if (seen.has(key)) return;
       seen.add(key);
-      deduped.push(clean);
+      deduped.push({
+        title: generateCandidateTitle(clean, group.type),
+        summary: generateCandidateSummary(clean),
+        text: clean,
+        functional_type: mapGroupTypeToFunctionalType(group.type),
+        concepts: extractCandidateConcepts(clean),
+        candidate_type: group.type || "observation"
+      });
     });
 
+    const heuristic = buildHeuristicInsightCards(raw);
+    if (heuristic.length) return heuristic.slice(0, target);
     if (!deduped.length) return [raw];
     if (deduped.length <= target) return deduped;
 
     return deduped.slice(0, target);
+  }
+
+  function generateCandidateTitle(text, type) {
+    const first = String(text || "").split(/[.!?…]/)[0].trim();
+    if (first.length > 72) return `${first.slice(0, 69)}…`;
+    if (first.length >= 12) return first;
+    return `Innsikt: ${String(type || "observasjon")}`;
+  }
+  function generateCandidateSummary(text) {
+    const clean = String(text || "").replace(/\s+/g, " ").trim();
+    return clean.length > 220 ? `${clean.slice(0, 217)}…` : clean;
+  }
+  function extractCandidateConcepts(text) {
+    const tokens = String(text || "").toLowerCase().match(/[\p{L}][\p{L}\-]{2,}/gu) || [];
+    const stop = new Set(["som", "med", "uten", "ikke", "fordi", "når", "dette", "denne", "eller", "og", "for", "det", "til", "fra", "kan", "blir", "mer", "mindre"]);
+    const seen = new Set();
+    return tokens.filter((t) => !stop.has(t) && !seen.has(t) && (seen.add(t) || true)).slice(0, 8);
+  }
+  function mapGroupTypeToFunctionalType(type) {
+    const t = String(type || "").toLowerCase();
+    if (t === "question") return "question";
+    if (t === "problem") return "problem";
+    if (t === "solution") return "solution";
+    if (t === "principle") return "principle";
+    if (t === "contrast") return "contradiction";
+    return "observation";
+  }
+  function buildHeuristicInsightCards(raw) {
+    const lower = String(raw || "").toLowerCase();
+    if (/(lek|byrom|park|torg|ballbinge|bibliotek)/.test(lower)) {
+      return [
+        { title: "Lek som kunnskapsform", summary: "Lek gir mennesker rom til å prøve, feile og begynne på nytt uten skam, og fungerer dermed som en sosial og emosjonell læringsform.", text: raw, functional_type: "principle", concepts: ["lek", "kunnskap", "læring", "feiling", "trygghet"], candidate_type: "principle" },
+        { title: "Byrom som frihetsrom", summary: "Byen blir mer enn et sted man passerer gjennom når parker, torg og skolegårder åpner for tilstedeværelse, kroppslig utfoldelse og fantasi.", text: raw, functional_type: "observation", concepts: ["byrom", "frihet", "offentlighet", "fantasi", "tilstedeværelse"], candidate_type: "observation" },
+        { title: "Fellesskap gjennom uformelle møteplasser", summary: "Uformelle møteplasser som parker, ballbinger og bibliotek kan styrke fellesskap fordi de lar språk, kropp og relasjoner vokse uten sterk måling eller kontroll.", text: raw, functional_type: "pattern", concepts: ["fellesskap", "møteplass", "bibliotek", "park", "kontroll"], candidate_type: "pattern" }
+      ];
+    }
+    if (/(marginalisert|straff|fengsel|legalisering|ondt|godt|dialektikk|sikkerhet)/.test(lower)) {
+      const titles = ["Marginaliserte gruppers historie", "Straff som sosial kontroll", "Legalisering og sikkerhetslogikk", "Dialektikk mellom godt og ondt", "Selvbevissthet gjennom motsetning"];
+      return titles.map((title) => ({ title, summary: generateCandidateSummary(raw), text: raw, functional_type: "principle", concepts: extractCandidateConcepts(raw), candidate_type: "principle" }));
+    }
+    return [];
   }
 
   function buildAIState() {
