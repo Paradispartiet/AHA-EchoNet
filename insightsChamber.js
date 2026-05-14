@@ -2875,6 +2875,175 @@ function getConceptsForTheme(chamber, subjectId, themeId) {
   return arr;
 }
 
+  function normalizeNodeId(value, fallbackPrefix) {
+    const raw = String(value || "").trim();
+    if (!raw) return `${fallbackPrefix}_${Math.floor(Math.random() * 100000)}`;
+    return raw.toLowerCase();
+  }
+
+  function readInsightTimestamp(insight) {
+    return String(
+      insight?.last_updated ||
+      insight?.first_seen ||
+      insight?.updated_at ||
+      insight?.created_at ||
+      nowIso()
+    );
+  }
+
+  function ensureGraphNode(nodes, id, label, type, ts, insightId, countDelta) {
+    if (!nodes[id]) {
+      nodes[id] = { id, label, type, count: 0, first_seen: ts, last_seen: ts, source_insight_ids: [] };
+    }
+    const node = nodes[id];
+    node.count += countDelta || 1;
+    if (ts < node.first_seen) node.first_seen = ts;
+    if (ts > node.last_seen) node.last_seen = ts;
+    if (insightId && !node.source_insight_ids.includes(insightId)) node.source_insight_ids.push(insightId);
+    return node;
+  }
+
+  function buildConceptGraph(chamber) {
+    const insights = getActiveInsights(chamber);
+    const nodes = Object.create(null);
+    const edgeMap = new Map();
+    const rememberEdge = (from, to, type, insightId) => {
+      const key = `${from}||${to}||${type}`;
+      if (!edgeMap.has(key)) edgeMap.set(key, { from, to, type, weight: 0, insight_ids: [] });
+      const edge = edgeMap.get(key);
+      edge.weight += 1;
+      if (insightId && !edge.insight_ids.includes(insightId)) edge.insight_ids.push(insightId);
+    };
+
+    insights.forEach((ins, index) => {
+      const insightId = ins.id || `ins_${index}`;
+      const ts = readInsightTimestamp(ins);
+      const concepts = dedupeByKey(Array.isArray(ins.concepts) ? ins.concepts : [])
+        .map((c) => ({ id: normalizeNodeId(c?.key || c?.label, "concept"), label: c?.label || c?.key || "begrep", count: c?.count || 1 }))
+        .filter((c) => c.id);
+      const thinkers = (Array.isArray(ins.thinkers) ? ins.thinkers : []).map((t) => ({ id: normalizeNodeId(t, "thinker"), label: String(t) })).filter((t) => t.label);
+      const theories = (Array.isArray(ins.theories) ? ins.theories : []).map((t) => ({ id: normalizeNodeId(t, "theory"), label: String(t) })).filter((t) => t.label);
+      const traditions = (Array.isArray(ins.traditions) ? ins.traditions : []).map((t) => ({ id: normalizeNodeId(t, "tradition"), label: String(t) })).filter((t) => t.label);
+
+      concepts.forEach((c) => ensureGraphNode(nodes, c.id, c.label, "concept", ts, insightId, c.count));
+      thinkers.forEach((t) => ensureGraphNode(nodes, t.id, t.label, "thinker", ts, insightId, 1));
+      theories.forEach((t) => ensureGraphNode(nodes, t.id, t.label, "theory", ts, insightId, 1));
+      traditions.forEach((t) => ensureGraphNode(nodes, t.id, t.label, "tradition", ts, insightId, 1));
+
+      for (let i = 0; i < concepts.length; i++) {
+        for (let j = i + 1; j < concepts.length; j++) rememberEdge(concepts[i].id, concepts[j].id, "co_occurs", insightId);
+      }
+
+      const links = Array.isArray(ins.theoretical_links) ? ins.theoretical_links : [];
+      links.forEach((link) => {
+        const thinkerId = normalizeNodeId(link?.name, "thinker");
+        const theoryId = normalizeNodeId(link?.theory, "theory");
+        if (link?.name) ensureGraphNode(nodes, thinkerId, link.name, "thinker", ts, insightId, 1);
+        if (link?.theory) ensureGraphNode(nodes, theoryId, link.theory, "theory", ts, insightId, 1);
+        concepts.forEach((c) => {
+          if (link?.name) rememberEdge(c.id, thinkerId, "theory_link", insightId);
+          if (link?.theory) rememberEdge(c.id, theoryId, "theory_link", insightId);
+        });
+      });
+    });
+
+    return { nodes, edges: Array.from(edgeMap.values()) };
+  }
+
+  function scoreTheoryRelevance(insight, chamber) {
+    const graph = buildConceptGraph(chamber || { insights: [insight] });
+    const links = Array.isArray(insight?.theoretical_links) ? insight.theoretical_links : [];
+    const haystack = `${insight?.title || ""} ${insight?.summary || ""}`.toLowerCase();
+    const concepts = dedupeByKey(Array.isArray(insight?.concepts) ? insight.concepts : []);
+    return links.map((link) => {
+      const label = String(link?.theory || link?.name || "").trim();
+      const id = normalizeNodeId(label, "theory");
+      const node = graph.nodes[id];
+      let score = link?.relation ? 0.35 : 0;
+      if (label && haystack.includes(label.toLowerCase())) score += 0.25;
+      const linkedConcepts = concepts.filter((c) => haystack.includes(String(c?.key || "").toLowerCase())).length;
+      score += Math.min(0.25, linkedConcepts * 0.08);
+      if ((node?.count || 0) > 1) score += 0.15;
+      return { ...link, relevance_score: Math.max(0, Math.min(1, Number(score.toFixed(3)))) };
+    });
+  }
+
+  function getRecurringThemes(chamber, options) {
+    const opts = options || {};
+    const now = opts.now ? new Date(opts.now) : new Date();
+    const daysList = opts.windows || [7, 14, 30];
+    const insights = getActiveInsights(chamber);
+    const result = {};
+    daysList.forEach((days) => {
+      const fromTs = now.getTime() - days * 86400000;
+      const conceptCount = new Map();
+      const theoryCount = new Map();
+      insights.forEach((ins) => {
+        const t = Date.parse(readInsightTimestamp(ins));
+        if (!Number.isFinite(t) || t < fromTs) return;
+        (ins.concepts || []).forEach((c) => {
+          const key = String(c?.key || "").trim().toLowerCase();
+          if (key) conceptCount.set(key, (conceptCount.get(key) || 0) + (c?.count || 1));
+        });
+        (ins.theories || []).forEach((x) => {
+          const key = String(x || "").trim();
+          if (key) theoryCount.set(key, (theoryCount.get(key) || 0) + 1);
+        });
+        (ins.thinkers || []).forEach((x) => {
+          const key = String(x || "").trim();
+          if (key) theoryCount.set(key, (theoryCount.get(key) || 0) + 1);
+        });
+      });
+      result[`${days}d`] = {
+        top_concepts: Array.from(conceptCount.entries()).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([key, count]) => ({ key, count })),
+        top_theories: Array.from(theoryCount.entries()).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([key, count]) => ({ key, count }))
+      };
+    });
+    return result;
+  }
+
+  function clusterInsights(chamber) {
+    const insights = getActiveInsights(chamber);
+    const buckets = new Map();
+    insights.forEach((ins, idx) => {
+      const concepts = dedupeByKey(Array.isArray(ins.concepts) ? ins.concepts : []).map((c) => String(c?.key || "").toLowerCase()).filter(Boolean).sort();
+      const theories = (ins.theories || []).concat(ins.thinkers || []).map((x) => String(x || "").trim()).filter(Boolean).sort();
+      const clusterKey = `${ins.subject_id || "s"}|${ins.theme_id || "t"}|${concepts.slice(0, 4).join(",")}|${theories.slice(0, 2).join(",")}`;
+      if (!buckets.has(clusterKey)) buckets.set(clusterKey, { id: `cluster_${buckets.size + 1}`, title: ins.theme_id || "Cluster", concepts: new Set(), theories: new Set(), insight_ids: [], strength: 0 });
+      const bucket = buckets.get(clusterKey);
+      concepts.forEach((c) => bucket.concepts.add(c));
+      theories.forEach((t) => bucket.theories.add(t));
+      bucket.insight_ids.push(ins.id || `ins_${idx}`);
+      bucket.strength += 1;
+    });
+    return Array.from(buckets.values()).map((c) => ({ ...c, concepts: Array.from(c.concepts), theories: Array.from(c.theories) })).sort((a, b) => b.strength - a.strength);
+  }
+
+  function detectTensions(chamber) {
+    const markers = [" men ", " samtidig", " likevel", "på den ene siden", "på den andre siden"];
+    const polePairs = [["frihet", "kontroll"], ["trygghet", "risiko"], ["fellesskap", "eierskap"], ["lek", "kontroll"]];
+    const insights = getActiveInsights(chamber);
+    const tensions = [];
+    polePairs.forEach((pair, idx) => {
+      const hits = insights.filter((ins) => {
+        const text = ` ${(ins.title || "")} ${(ins.summary || "")} `.toLowerCase();
+        const hasMarker = markers.some((m) => text.includes(m));
+        const hasPair = text.includes(pair[0]) && text.includes(pair[1]);
+        return hasMarker || hasPair;
+      });
+      if (!hits.length) return;
+      tensions.push({
+        id: `tension_${idx + 1}`,
+        title: `${pair[0]} ↔ ${pair[1]}`,
+        poles: pair,
+        insight_ids: hits.map((h, i) => h.id || `ins_${i}`),
+        concepts: Array.from(new Set(hits.flatMap((h) => (h.concepts || []).map((c) => c?.key).filter(Boolean)))),
+        strength: hits.length
+      });
+    });
+    return tensions;
+  }
+
 
   // ── Public API ─────────────────────────────
 
@@ -2906,6 +3075,11 @@ function getConceptsForTheme(chamber, subjectId, themeId) {
   mergeConcepts,
   dedupeByKey,
   getConceptsForTheme,
+  buildConceptGraph,
+  scoreTheoryRelevance,
+  getRecurringThemes,
+  clusterInsights,
+  detectTensions,
   confirmEmneSuggestion,
   dismissEmneSuggestion,
   confirmMerge,
