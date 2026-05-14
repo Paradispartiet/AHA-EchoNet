@@ -397,20 +397,14 @@
     return false;
   }
 
-  async function handleUserMessage(messageText) {
+  function ingestUserMessageWithCandidates(messageText, candidates) {
     const text = String(messageText || "").trim();
     if (!text || !global.InsightsEngine) return 0;
 
     const themeId = getThemeId();
     const fieldId = getFieldId();
-
-    const aiCandidates = await generateAIInsightCandidates(text, {
-      subject_id: SUBJECT_ID,
-      theme_id: themeId,
-      field_id: fieldId,
-      ai_state: buildAIState()
-    });
-    const chunks = aiCandidates.length ? aiCandidates : buildSemanticInsightCandidates(text, { minInsights: 1, maxInsights: 5 });
+    const localCandidates = buildSemanticInsightCandidates(text, { minInsights: 1, maxInsights: 5 });
+    const chunks = Array.isArray(candidates) && candidates.length ? candidates : localCandidates;
 
     if (global.AHAIngest && typeof global.AHAIngest.ingest === "function") {
       // AHAIngest håndterer både source event-loggen, signal-konstruksjon
@@ -467,6 +461,25 @@
     });
 
     return chunks.length;
+  }
+
+  function handleUserMessage(messageText) {
+    return ingestUserMessageWithCandidates(messageText);
+  }
+
+  async function handleUserMessageInsightCandidatesInBackground(messageText) {
+    const text = String(messageText || "").trim();
+    if (!text || !global.InsightsEngine) return 0;
+    const themeId = getThemeId();
+    const fieldId = getFieldId();
+    const aiCandidates = await generateAIInsightCandidates(text, {
+      subject_id: SUBJECT_ID,
+      theme_id: themeId,
+      field_id: fieldId,
+      ai_state: buildAIState()
+    });
+    if (!aiCandidates.length) return 0;
+    return ingestUserMessageWithCandidates(text, aiCandidates);
   }
 
   function buildSemanticInsightCandidates(text, options) {
@@ -1136,7 +1149,14 @@
         const text = textarea.value.trim();
         if (!text) return;
         appendChat("user", text);
-        const count = await handleUserMessage(text);
+        const count = handleUserMessage(text);
+        void handleUserMessageInsightCandidatesInBackground(text)
+          .then((aiCount) => {
+            if (aiCount > 0) setStatusNote(`Beriket med ${aiCount} AI-signal${aiCount === 1 ? "" : "er"} i bakgrunnen.`);
+          })
+          .catch((err) => {
+            console.warn("AI insight-candidates bakgrunnsjobb feilet", err);
+          });
         textarea.value = "";
         if (count > 0) setStatusNote(`Lagret ${count} signal${count === 1 ? "" : "er"} i bakgrunnen.`);
         try {
