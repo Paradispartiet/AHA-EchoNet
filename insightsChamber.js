@@ -773,12 +773,20 @@ function createInsightFromSignal(signal) {
     raw_terms: layers.raw_terms,
     concepts: dedupeByKey(
       layers.concepts.concat(
-        (Array.isArray(signal.candidate_concepts) ? signal.candidate_concepts : []).map((label) => ({
-          key: slugify(label),
-          label: String(label || "").trim(),
-          source: "candidate",
-          count: 1
-        }))
+        (Array.isArray(signal.candidate_concepts) ? signal.candidate_concepts : [])
+          .map((label) => {
+            const normalizedLabel = String(label || "").trim();
+            if (!normalizedLabel) return null;
+            const key = candidateConceptLabelToKey(normalizedLabel);
+            if (!key) return null;
+            return {
+              key,
+              label: normalizedLabel,
+              source: "candidate",
+              count: 1
+            };
+          })
+          .filter(Boolean)
       ).filter((item) => item && item.key && item.label),
       "key"
     ),
@@ -1262,6 +1270,17 @@ function createInsightFromSignal(signal) {
     t = t.replace(/^[^a-zæøå]+|[^a-zæøå]+$/g, "");
     t = t.replace(/[^a-zæøå]/g, "");
     return t;
+  }
+
+
+  function candidateConceptLabelToKey(label) {
+    const normalized = String(label || "").trim().toLowerCase();
+    if (!normalized) return "";
+    return normalized
+      .replace(/[\s\/]+/g, "_")
+      .replace(/[^a-z0-9æøå_]/g, "")
+      .replace(/_+/g, "_")
+      .replace(/^_+|_+$/g, "");
   }
 
 
