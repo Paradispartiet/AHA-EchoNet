@@ -290,11 +290,23 @@
     if (panel) panel.innerHTML = html;
   }
 
+
+  function buildAhaAgentUrl(path) {
+    const rawBase = String(global.AHA_AGENT_API || "").trim();
+    if (!rawBase) return "";
+
+    const base = rawBase.replace(/\/+$/, "");
+    const normalizedPath = `/${String(path || "").trim().replace(/^\/+/, "")}`;
+    const hasApiBase = /\/api\/aha-agent$/i.test(base);
+    const rootBase = hasApiBase ? base : `${base}/api/aha-agent`;
+    return `${rootBase}${normalizedPath}`;
+  }
+
   async function generateAIInsightCandidates(text, context) {
     const raw = String(text || "").trim();
     if (!raw) return [];
-    const apiBase = String(global.AHA_AGENT_API || "").trim().replace(/\/$/, "");
-    if (!apiBase) return [];
+    const insightCandidatesUrl = buildAhaAgentUrl("insight-candidates");
+    if (!insightCandidatesUrl) return [];
 
     const body = {
       text: raw,
@@ -303,7 +315,7 @@
     };
 
     try {
-      const res = await fetch(`${apiBase}/api/aha-agent/insight-candidates`, {
+      const res = await fetch(insightCandidatesUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body)
