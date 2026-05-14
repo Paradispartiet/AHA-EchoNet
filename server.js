@@ -23,11 +23,71 @@ if (!VOYAGE_API_KEY) {
   console.warn("[aha-agent] VOYAGE_API_KEY er ikke satt – /embed vil feile.");
 }
 if (!OPENAI_API_KEY) {
-  console.warn("[aha-agent] OPENAI_API_KEY er ikke satt – /chat vil feile.");
+  console.warn("[aha-agent] OPENAI_API_KEY er ikke satt – /chat og /insight-candidates vil feile.");
 }
 
 const openai = OPENAI_API_KEY ? new OpenAI({ apiKey: OPENAI_API_KEY }) : null;
 
+
+const INSIGHT_FUNCTIONAL_TYPES = new Set([
+  "principle",
+  "observation",
+  "pattern",
+  "question",
+  "problem",
+  "solution",
+  "learning_point",
+  "definition",
+  "contradiction",
+  "memory",
+  "task",
+  "decision"
+]);
+
+function safeParseJsonCandidatePayload(raw) {
+  if (Array.isArray(raw)) return raw;
+  if (!raw || typeof raw !== "object") return [];
+  if (Array.isArray(raw.candidates)) return raw.candidates;
+  if (typeof raw.output_text === "string") {
+    try {
+      const parsed = JSON.parse(raw.output_text);
+      if (Array.isArray(parsed)) return parsed;
+      if (parsed && typeof parsed === "object" && Array.isArray(parsed.candidates)) return parsed.candidates;
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
+
+function sanitizeInsightCandidate(candidate, fallbackText) {
+  if (!candidate || typeof candidate !== "object") return null;
+  const rawText = String(candidate.text || candidate.summary || fallbackText || "").replace(/\s+/g, " ").trim();
+  if (!rawText) return null;
+
+  const rawSummary = String(candidate.summary || rawText).replace(/\s+/g, " ").trim();
+  const derivedTitle = rawSummary.split(/[.!?…]/)[0] || "Innsikt";
+  const rawTitle = String(candidate.title || derivedTitle).replace(/\s+/g, " ").trim();
+  if (!rawTitle || !rawSummary) return null;
+
+  const functionalType = INSIGHT_FUNCTIONAL_TYPES.has(candidate.functional_type)
+    ? candidate.functional_type
+    : "observation";
+
+  const concepts = (Array.isArray(candidate.concepts) ? candidate.concepts : [])
+    .map((item) => String(item || "").replace(/\s+/g, " ").trim())
+    .filter(Boolean)
+    .slice(0, 8);
+
+  return {
+    title: rawTitle.slice(0, 140),
+    summary: rawSummary.slice(0, 320),
+    text: rawText.slice(0, 1200),
+    functional_type: functionalType,
+    concepts,
+    candidate_type: "ai"
+  };
+}
 const app = express();
 app.use(express.json({ limit: "1mb" }));
 app.use(
@@ -182,6 +242,92 @@ app.post("/api/aha-agent/chat", async (req, res) => {
   } catch (err) {
     console.error("[aha-agent] chat crashed", err);
     res.status(500).json({
+      ok: false,
+      error: "openai_error",
+      message: err?.message || "Unknown OpenAI error",
+      status: err?.status || err?.code || null,
+      type: err?.type || null
+    });
+  }
+});
+
+
+app.post("/api/aha-agent/insight-candidates", async (req, res) => {
+  try {
+    if (!OPENAI_API_KEY || !openai) {
+      return res.status(503).json({ ok: false, error: "missing_openai_api_key" });
+    }
+
+    const body = req.body || {};
+    const text = typeof body.text === "string" ? body.text.trim() : "";
+    const context = body.context;
+
+    if (!text) return res.status(400).json({ ok: false, error: "invalid_text" });
+    if (text.length > 8000) return res.status(400).json({ ok: false, error: "text_too_long", limit: 8000 });
+    if (context != null && (typeof context !== "object" || Array.isArray(context))) {
+      return res.status(400).json({ ok: false, error: "invalid_context" });
+    }
+
+    const systemInstruction = "Du lager insight candidates for AHA. Returner KUN gyldig JSON. Ingen markdown, ingen forklaring utenfor JSON. Maks 5 candidates. Minst 1 candidate hvis teksten har innhold. Norske titler og sammendrag. Title skal være presis og ikke et rått tekstutdrag. Summary skal være 1–2 setninger. Concepts skal være korte, meningsfulle begreper. functional_type må være en av: principle, observation, pattern, question, problem, solution, learning_point, definition, contradiction, memory, task, decision.";
+    const userPayload = JSON.stringify({
+      text,
+      context: context || {},
+      format: body.format || "insight_candidates_v1"
+    });
+
+    let model = OPENAI_MODEL;
+    let responseId = null;
+    let parsedPayload = null;
+
+    if (openai.responses && typeof openai.responses.create === "function") {
+      const response = await openai.responses.create({
+        model: OPENAI_MODEL,
+        input: [
+          { role: "system", content: systemInstruction },
+          { role: "user", content: userPayload }
+        ]
+      });
+      model = response.model || OPENAI_MODEL;
+      responseId = response.id || null;
+      parsedPayload = safeParseJsonCandidatePayload(response.output_text || "");
+    } else {
+      const completion = await openai.chat.completions.create({
+        model: OPENAI_MODEL,
+        response_format: { type: "json_object" },
+        messages: [
+          { role: "system", content: systemInstruction },
+          { role: "user", content: userPayload }
+        ]
+      });
+      model = completion.model || OPENAI_MODEL;
+      responseId = completion.id || null;
+      const rawContent = completion.choices?.[0]?.message?.content || "{}";
+      try {
+        parsedPayload = JSON.parse(rawContent);
+      } catch {
+        parsedPayload = null;
+      }
+    }
+
+    const rawCandidates = safeParseJsonCandidatePayload(parsedPayload);
+    const candidates = rawCandidates
+      .map((item) => sanitizeInsightCandidate(item, text))
+      .filter(Boolean)
+      .slice(0, 5);
+
+    if (!candidates.length) {
+      candidates.push(sanitizeInsightCandidate({ summary: text, title: "Observasjon", functional_type: "observation", concepts: [] }, text));
+    }
+
+    return res.json({
+      ok: true,
+      candidates,
+      model,
+      response_id: responseId
+    });
+  } catch (err) {
+    console.error("[aha-agent] insight-candidates crashed", err);
+    return res.status(500).json({
       ok: false,
       error: "openai_error",
       message: err?.message || "Unknown OpenAI error",
