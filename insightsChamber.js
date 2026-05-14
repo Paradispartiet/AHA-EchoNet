@@ -1251,7 +1251,13 @@ function createInsightFromSignal(signal) {
   }
 
   function toConceptKey(value) {
-    return normalizeConceptToken(String(value || "").trim());
+    const raw = String(value || "").trim().toLowerCase();
+    if (!raw) return "";
+    const key = raw
+      .replace(/[^a-zæøå]+/g, "_")
+      .replace(/^_+|_+$/g, "")
+      .replace(/_+/g, "_");
+    return key;
   }
 
 
