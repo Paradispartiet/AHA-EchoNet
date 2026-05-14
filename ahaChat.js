@@ -271,29 +271,31 @@
     const themeId = getThemeId();
     const fieldId = getFieldId();
 
-    const sentences = global.InsightsEngine.splitIntoSentences(text);
-    const chunks = groupSentencesForInsights(sentences, text);
+    const chunks = buildSemanticInsightCandidates(text);
 
     if (global.AHAIngest && typeof global.AHAIngest.ingest === "function") {
       // AHAIngest håndterer både source event-loggen, signal-konstruksjon
       // og innlegging i innsiktskammeret. Dobbeltlagring av source events
       // unngås ved at vi ikke lenger kaller AHASources.addSourceEvent her.
-      chunks.forEach((chunk) => {
-        global.AHAIngest.ingest({
-          source_type: "chat",
-          source_app: "aha_chat",
-          content_type: "text",
-          title: "AHA Chat-melding",
-          text: chunk,
-          user_created: true,
-          imported: false,
-          created_at: new Date().toISOString(),
-          subject_id: SUBJECT_ID,
-          theme_id: themeId,
-          field_id: fieldId,
-          meta: { theme_id: themeId, field_id: fieldId }
-        });
-      });
+      const payload = {
+        source_type: "chat",
+        source_app: "aha_chat",
+        content_type: "text",
+        title: "AHA Chat-melding",
+        text,
+        user_created: true,
+        imported: false,
+        created_at: new Date().toISOString(),
+        subject_id: SUBJECT_ID,
+        theme_id: themeId,
+        field_id: fieldId,
+        meta: { theme_id: themeId, field_id: fieldId }
+      };
+      if (typeof global.AHAIngest.ingestWithCandidates === "function") {
+        global.AHAIngest.ingestWithCandidates(payload, chunks);
+      } else {
+        chunks.forEach((chunk) => global.AHAIngest.ingest(Object.assign({}, payload, { text: chunk })));
+      }
       return chunks.length;
     }
 
@@ -326,44 +328,59 @@
     return chunks.length;
   }
 
-  function groupSentencesForInsights(sentences, fallbackText) {
-    const safeSentences = Array.isArray(sentences) ? sentences.filter(Boolean) : [];
-    if (!safeSentences.length) return [fallbackText];
-    if (safeSentences.length <= 2) return [safeSentences.join(". ").trim() + "."];
+  function buildSemanticInsightCandidates(text, options) {
+    const raw = String(text || "").trim();
+    if (!raw) return [];
+    const sentences = raw
+      .split(/(?<=[.!?…])\s+|\n+/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (sentences.length <= 2 || raw.length < 180) return [raw];
 
-    const totalChars = safeSentences.reduce((sum, s) => sum + s.length, 0);
-    const estTargetFromLength = Math.round(totalChars / 220);
-    const targetChunks = Math.min(5, Math.max(3, estTargetFromLength));
-    const idealChunkSize = Math.ceil(safeSentences.length / targetChunks);
-    const grouped = [];
-    let cursor = 0;
+    const minInsights = Number(options?.minInsights || 1);
+    const maxInsights = Math.min(5, Math.max(1, Number(options?.maxInsights || 5)));
+    const desired = raw.length < 320 ? 2 : raw.length < 700 ? 3 : 4;
+    const target = Math.min(maxInsights, Math.max(minInsights, desired));
 
-    while (cursor < safeSentences.length) {
-      const take = safeSentences.slice(cursor, cursor + idealChunkSize);
-      const tentative = take.join(". ").trim();
-      if (!tentative) {
-        cursor += idealChunkSize;
-        continue;
-      }
+    const themeRules = [
+      { type: "principle", re: /\b(kunnskap|prinsipp|lærer|læring|forstå|innsikt|erfaring)\b/i },
+      { type: "problem", re: /\b(problem|straff|fengsel|vold|kontroll|krise|konflikt|ondt)\b/i },
+      { type: "solution", re: /\b(løsning|kan|bør|må|frihet|legalisering|sikkerhet|reform)\b/i },
+      { type: "contrast", re: /\b(men|samtidig|likevel|på den ene siden|på den andre siden)\b/i },
+      { type: "question", re: /\?|\b(hvorfor|hvordan|hva om)\b/i }
+    ];
 
-      const prev = grouped[grouped.length - 1] || "";
-      const shouldMergeIntoPrev = tentative.length < 90 && grouped.length > 0;
-      if (shouldMergeIntoPrev) {
-        grouped[grouped.length - 1] = `${prev.replace(/\.\s*$/, "")}. ${tentative}`.trim();
-      } else {
-        grouped.push(tentative.endsWith(".") ? tentative : `${tentative}.`);
-      }
-
-      cursor += idealChunkSize;
-      if (grouped.length >= 5) break;
+    const groups = [];
+    const used = new Set();
+    themeRules.forEach((rule) => {
+      const idxs = [];
+      sentences.forEach((sentence, idx) => {
+        if (!used.has(idx) && rule.re.test(sentence)) idxs.push(idx);
+      });
+      if (!idxs.length) return;
+      idxs.forEach((idx) => used.add(idx));
+      groups.push({ type: rule.type, text: idxs.map((idx) => sentences[idx]).join(" ") });
+    });
+    if (used.size < sentences.length) {
+      const rest = sentences.filter((_, idx) => !used.has(idx)).join(" ");
+      if (rest) groups.push({ type: "observation", text: rest });
     }
 
-    if (cursor < safeSentences.length && grouped.length) {
-      const tail = safeSentences.slice(cursor).join(". ").trim();
-      if (tail) grouped[grouped.length - 1] = `${grouped[grouped.length - 1].replace(/\.\s*$/, "")}. ${tail}`.trim();
-    }
+    const deduped = [];
+    const seen = new Set();
+    groups.forEach((group) => {
+      const clean = String(group.text || "").replace(/\s+/g, " ").trim();
+      if (!clean || clean.length < 60) return;
+      const key = clean.toLowerCase().slice(0, 160);
+      if (seen.has(key)) return;
+      seen.add(key);
+      deduped.push(clean);
+    });
 
-    return grouped.length ? grouped.slice(0, 5) : [fallbackText];
+    if (!deduped.length) return [raw];
+    if (deduped.length <= target) return deduped;
+
+    return deduped.slice(0, target);
   }
 
   function buildAIState() {
