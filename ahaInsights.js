@@ -61,23 +61,31 @@
     return items;
   }
 
-  function normalizeTerms(insight) {
-    const conceptTerms = asArray(insight?.concepts)
-      .map((concept) => {
-        if (typeof concept === "string") return concept;
-        return concept?.term || concept?.label || concept?.name || "";
-      });
+  function extractTermValue(entry) {
+    if (typeof entry === "string") return entry;
+    if (!entry || typeof entry !== "object") return "";
+    return entry?.term || entry?.label || entry?.name || entry?.text || entry?.value || "";
+  }
 
-    return asArray(insight?.terms)
+  function normalizeTerms(insight) {
+    const collected = asArray(insight?.terms)
       .concat(
         asArray(insight?.tokens),
         asArray(insight?.keywords),
         asArray(insight?.raw_terms),
         asArray(insight?.rawTerms),
-        conceptTerms
+        asArray(insight?.concepts)
       )
-      .map((term) => asText(term, ""))
+      .map((entry) => asText(extractTermValue(entry), ""))
       .filter(Boolean);
+
+    const seen = new Set();
+    return collected.filter((term) => {
+      const key = term.toLocaleLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
   }
 
   function normalizeInsightForView(insight) {
