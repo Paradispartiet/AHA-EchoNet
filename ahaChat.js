@@ -17,7 +17,7 @@
       "decision", "definition", "contradiction", "learning_point", "pattern", "memory", "principle"
     ])
   });
-  const WEAK_CONCEPT_WORDS = new Set(["finnes","egen","form","lærer","mennesker","blir","ikke","bare","over","ligger","lavt","noen","helt","ennå"]);
+  const WEAK_CONCEPT_WORDS = new Set(["finnes","egen","form","lærer","mennesker","blir","ikke","bare","over","ligger","lavt","noen","helt","ennå","norske","norsk","moderne","viktig","viktigste","store","små","nye","gamle","tydelig","særlig","mildt","sagt"]);
   function getThreadId() {
     return CHAT_THREAD_ID;
   }
@@ -1416,7 +1416,10 @@
     const text = String(raw || "").toLowerCase();
     if (!text) return "general";
 
-    const projectSignals = /(prosjekt|app|funksjon|repo|prompt|merge|backend|frontend|modul|data|layout|kode|deploy|bug|commit|pull request|pr\b)/i;
+    const opinionSignals = /(regjering|statsråd|arbeiderpartiet|støre-regjeringen|kulturminister|finansdepartementet|medier|redaktørstyrte medier|journalistikk|ytringsfrihet|mediepolitikk|momsfritak|moms|skatteetaten|schibsted|vg\b|aftenposten|tv2|medietilsyn(?:et)?|kronikk|kritikk|prinsipp|frie ord|offentlighet|norske medier|annonseinntekter|utenlandske plattformer|økonomisk bærekraft|handlingsrom)/i;
+    if (opinionSignals.test(text)) return "opinion_article";
+
+    const projectSignals = /(prosjekt|app|kode|koding|repo|repository|prompt|merge|backend|frontend|ui\b|ux\b|fil(?:er)?|funksjon(?:er)?|komponent|modul|deploy|bug|commit|pull request|pr\b|branch|api|database|test(?:er)?|refaktor)/i;
     if (projectSignals.test(text)) return "project_note";
 
     const daySignals = /(i dag|idag|dagen min|jeg våknet|jeg hentet|jeg leverte|på jobb|etterpå|i kveld|i morges|vi dro|jeg gjorde|formiddag|ettermiddag)/i;
@@ -1558,9 +1561,9 @@
 
   function takeKeywords(text, maxItems) {
     const tokens = String(text || "").toLowerCase().match(/[a-zæøå0-9]{2,}/g) || [];
-    const stop = new Set(["litt","henne","han","hun","hadde","har","var","være","vært","blir","ble","blitt","dette","denne","disse","fordi","kanskje","hvorfor","etter","veldig","ikke","bare","også","med","som","skal","mellom","uten","noen","noe","alle","der","her","nå","fortsatt","først","tredje","runden","gammel","gamle","unge","godt","dårlig","helt","ennå","eller","men","jeg","meg","min","mine","du","deg","din","de","dem","den","det","en","ei","et","på","i","av","til","fra","og","å"]);
+    const stop = new Set(["litt","henne","han","hun","hadde","har","var","være","vært","blir","ble","blitt","dette","denne","disse","fordi","kanskje","hvorfor","etter","veldig","ikke","bare","også","med","som","skal","mellom","uten","noen","noe","alle","der","her","nå","fortsatt","først","tredje","runden","gammel","gamle","unge","godt","dårlig","helt","ennå","eller","men","jeg","meg","min","mine","du","deg","din","de","dem","den","det","en","ei","et","på","i","av","til","fra","og","å","norske","norsk","moderne","viktig","viktigste","store","små","nye","gamle","tydelig","særlig","mildt","sagt"]);
     const weakVerbs = new Set(["gjorde","gjør","gjort","tenkte","tenker","synes","sier","sa","våknet","hentet","leverte","dro","kom","går","gikk"]);
-    const whitelist = new Set(["kurbad","hageanlegg","dame","telefon","kongo","relasjon","kjærlighet","skyld","skam","fremmedhet","ensomhet","uro","observasjon","nomade","nomadisme","begjær","forfatter","forfatterliv","reise","frihet","kontroll","rus","kropp","språk","møte","minner","konflikt","lengsel","by","park","sted","leilighet","samtale","vennskap","risiko"]);
+    const whitelist = new Set(["kurbad","hageanlegg","dame","telefon","kongo","relasjon","kjærlighet","skyld","skam","fremmedhet","ensomhet","uro","observasjon","nomade","nomadisme","begjær","forfatter","forfatterliv","reise","frihet","kontroll","rus","kropp","språk","møte","minner","konflikt","lengsel","by","park","sted","leilighet","samtale","vennskap","risiko","momsfritak","mediepolitikk","redaktørstyrte","medier","ytringsfrihet","medieøkonomi","journalistikk","regjering","kulturminister","finansdepartementet","annonseinntekter","plattformer","offentlighet","handlingsrom","schibsted","medietilsynet"]);
     const counts = new Map();
     const scores = new Map();
     tokens.forEach((token) => {
@@ -1674,6 +1677,36 @@
     } else if (textType === "literary_fragment") {
       reflection = "Teksten drives av scene, motiv, sansning og rytme mer enn av dagboklogg. Konflikten ligger i spenningen mellom stemning og bevegelse.";
       day = "Ikke dagbokmateriale – ingen dagsoppsummering laget.";
+    } else if (textType === "opinion_article") {
+      reflection = "Teksten er en argumenterende mediepolitisk kommentar: den peker på konflikt mellom politisk støtte til redaktørstyrte medier og praktiske grep som kan svekke økonomien i journalistikken.";
+      sortItems = [
+        { label: "Hovedpåstand", text: sentences[0] || "Presiser kjernen i kritikken i én skarp setning." },
+        { label: "Konflikt / dobbelt signal", text: sentences[1] || "Vis tydelig avstanden mellom retorisk støtte og praktisk politikk." },
+        { label: "Historisk bakgrunn", text: sentences[2] || "Knytt poenget til historikken om momsfritak og frie ord." },
+        { label: "Økonomisk konsekvens", text: sentences[3] || "Beskriv hvordan endringer påvirker medieøkonomi, språk og konkurransekraft." },
+        { label: "Aktører", text: sentences[4] || "Navngi nøkkelaktører som regjering, mediehus, departement og tilsyn." },
+        { label: "Politisk kritikk", text: sentences[5] || "Spiss kritikken av prioriteringene mellom politiske løfter og budsjetthensyn." },
+        { label: "Avsluttende poeng", text: "Avslutt med tydelig konsekvens for norsk offentlighet og journalistikk." }
+      ];
+      day = "Ikke dagbokmateriale – ingen dagsoppsummering laget.";
+      thoughts = {
+        hovedspor: "Teksten bygger en hovedpåstand om at regjeringens mediepolitikk sender doble signaler og svekker grunnlaget for redaktørstyrte medier.",
+        lose_tanker: "Historikk om momsfritak, kritikk av kulturministeren og press fra globale plattformer kan strammes i tydeligere avsnitt.",
+        neste_steg: "Stram overgangen mellom historisk prinsipp, dagens regelendring og konsekvensen for norske medier."
+      };
+      list = [
+        "Gard Steiro kritiserer regjeringens doble signaler.",
+        "Momsfritaket beskrives som et historisk prinsipp for frie ord.",
+        "Endringer for levende bilder rammer moderne redaktørstyrte mediehus.",
+        "TV2, VG, Aftenposten og Schibsted brukes som konkrete referanser.",
+        "Kulturministerens handlingsrom fremstilles som svakt mot Finansdepartementet.",
+        "Norske medier presses av globale plattformer og fallende annonseinntekter."
+      ];
+      path = [
+        "Spiss hovedpåstanden.",
+        "Skill historisk bakgrunn fra dagens konflikt.",
+        "Avslutt med tydelig konsekvens for norsk offentlighet og medieøkonomi."
+      ];
     } else if (textType === "project_note") {
       reflection = "Dette er et prosjektnotat med tydelig problem og mål. Neste gevinst ligger i å koble løsning til konkrete filer/funksjoner.";
       sortItems = ["Problem","Løsning","Filer/funksjoner","Neste steg"].map((label, idx) => ({ label, text: sentences[idx] || "Trenger kort presisering i teksten." }));
@@ -1696,6 +1729,10 @@
       if (evidence.hasWriterLife) localInsights.push("Forfatterlivet blir en måte å gi uro form og retning.");
       if (evidence.hasShameGuilt) localInsights.push("Skyld, skam og selvforsvar skaper tekstens indre friksjon.");
       if (!localInsights.length) localInsights.push("Dagbokformen bærer en assosiativ bevegelse som kan strammes med tydeligere motivspor.");
+    } else if (textType === "opinion_article") {
+      localInsights.push("Teksten bruker momsfritaket som symbol på forholdet mellom stat og fri presse.");
+      localInsights.push("Hovedkonflikten ligger mellom politisk retorikk og økonomisk praksis.");
+      localInsights.push("Argumentet styrkes når historisk prinsipp kobles til moderne medieteknologi og globale plattformer.");
     } else {
       localInsights.push(`Mønster: ${keywords[0] || "temaet"} går igjen og bærer teksten.`);
       localInsights.push(reply ? `AHA-responsen peker videre på: ${toSentences(reply)[0] || reply}` : "Videre innsikt kan styrkes med mer konkret tekst.");
