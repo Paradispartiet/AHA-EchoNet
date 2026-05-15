@@ -1364,15 +1364,49 @@
     return String(text || "").split(/(?<=[.!?])\s+|\n+/).map((part) => part.trim()).filter(Boolean);
   }
 
+  function detectTextType(raw) {
+    const text = String(raw || "").toLowerCase();
+    if (!text) return "general";
+
+    const projectSignals = /(prosjekt|app|funksjon|repo|prompt|merge|backend|frontend|modul|data|layout|kode|deploy|bug|commit|pull request|pr\b)/i;
+    if (projectSignals.test(text)) return "project_note";
+
+    const theorySignals = /(teori|modell|bevissthet|kunnskap|hypotese|begrep|premiss|epistem|system|metode)/i;
+    if (theorySignals.test(text)) return "theory_idea";
+
+    const daySignals = /(i dag|idag|dagen min|jeg våknet|jeg hentet|jeg leverte|på jobb|etterpå|i kveld|i morges|vi dro|jeg gjorde|formiddag|ettermiddag)/i;
+    const literaryDiarySignals = /(jeg trodde|jeg burde|jeg er lei|jeg skjønner|jeg tenkte|her om dagen|i forrigårs|fortsatt|neste uke|ringe|savn|sinne|kjærlighet|skyld|skam|fremmedhet|forfatter|poetisk|skrive|tekst|leve vilt|reise|nomad|kurbad|hageanlegg|leilighet|telefon|park|møte)/i;
+    const literaryFragmentSignals = /(scene|stemning|rytme|lys|mørke|rommet|gaten|kropp|språk|vind|lukt|hud|sans)/i;
+
+    const sentenceCount = toSentences(text).length;
+    const pronounCount = (text.match(/\bjeg\b/g) || []).length;
+
+    if (pronounCount >= 3 && literaryDiarySignals.test(text) && sentenceCount >= 4) return "literary_diary";
+    if (daySignals.test(text)) return "day_log";
+    if (literaryFragmentSignals.test(text) && sentenceCount >= 2) return "literary_fragment";
+    if (pronounCount >= 4 && sentenceCount >= 5 && literaryDiarySignals.test(text)) return "literary_diary";
+    return "general";
+  }
+
   function takeKeywords(text, maxItems) {
-    const tokens = String(text || "").toLowerCase().match(/[a-zæøå0-9]{4,}/g) || [];
-    const stop = new Set(["dette","dager","fordi","skulle","kanskje","hvorfor","etter","veldig","ikke","bare","også","med","som","skal","være","mellom"]);
+    const tokens = String(text || "").toLowerCase().match(/[a-zæøå0-9]{2,}/g) || [];
+    const stop = new Set(["litt","henne","han","hun","hadde","har","var","være","vært","blir","ble","blitt","dette","denne","disse","fordi","kanskje","hvorfor","etter","veldig","ikke","bare","også","med","som","skal","mellom","uten","noen","noe","alle","der","her","nå","fortsatt","først","tredje","runden","gammel","gamle","unge","godt","dårlig","helt","ennå","eller","men","jeg","meg","min","mine","du","deg","din","de","dem","den","det","en","ei","et","på","i","av","til","fra","og","å"]);
+    const weakVerbs = new Set(["gjorde","gjør","gjort","tenkte","tenker","synes","sier","sa","våknet","hentet","leverte","dro","kom","går","gikk"]);
+    const whitelist = new Set(["kurbad","hageanlegg","dame","telefon","kongo","relasjon","kjærlighet","skyld","skam","fremmedhet","ensomhet","uro","observasjon","nomade","nomadisme","begjær","forfatter","forfatterliv","reise","frihet","kontroll","rus","kropp","språk","møte","minner","konflikt","lengsel","by","park","sted","leilighet","samtale","vennskap","risiko"]);
     const counts = new Map();
+    const scores = new Map();
     tokens.forEach((token) => {
+      if (token.length < 4) return;
       if (stop.has(token)) return;
-      counts.set(token, (counts.get(token) || 0) + 1);
+      if (weakVerbs.has(token)) return;
+      const freq = (counts.get(token) || 0) + 1;
+      counts.set(token, freq);
+      let score = freq;
+      if (whitelist.has(token)) score += 3;
+      if (token.length >= 8) score += 1;
+      scores.set(token, score);
     });
-    return Array.from(counts.entries()).sort((a,b)=>b[1]-a[1]).slice(0, maxItems).map(([word]) => word);
+    return Array.from(scores.entries()).sort((a,b)=>b[1]-a[1]).slice(0, maxItems).map(([word]) => word);
   }
 
   function loadAutoOutputs() {
@@ -1385,41 +1419,57 @@
   function buildAutoOutputs(userText, ahaReply) {
     const raw = String(userText || "").trim();
     const reply = String(ahaReply || "").trim();
+    const textType = detectTextType(raw);
     const sentences = toSentences(raw);
     const keywords = takeKeywords(raw, 5);
-    const hasDaySignals = /(i dag|idag|morges|formiddag|ettermiddag|kveld|i natt|jobben|møte|trening|middag)/i.test(raw) || sentences.length >= 4;
-    const reflection = raw.length < 32
-      ? "Jeg ser et frø av et tema her. Del litt mer om hva som står på spill, så kan jeg speile retningen tydeligere."
-      : `Du jobber trolig med ${keywords[0] || "et viktig tema"}, og spenningen virker å stå mellom ${keywords[1] || "ønske"} og ${keywords[2] || "gjennomføring"}.`;
-    const sortItems = (keywords.length ? keywords : ["retning","utfordring","handling"]).slice(0, 4).map((key, idx) => ({
-      label: key.charAt(0).toUpperCase() + key.slice(1),
-      text: sentences[idx] || `Dette peker på et tema rundt ${key}.`
-    }));
-    const day = hasDaySignals
-      ? (sentences.slice(0,3).join(" ") || "Dagen inneholder flere spor som henger sammen.")
-      : "Ikke nok dagsmateriale ennå.";
-    const thoughts = {
-      hovedspor: sentences[0] || "Trenger mer tekst for å finne hovedspor.",
-      lose_tanker: sentences.slice(1,3).join(" ") || "Noen løse tanker vil dukke opp når du skriver litt mer.",
-      neste_steg: `Ta ett konkret neste steg: ${keywords[0] ? `skriv hva du vil oppnå med ${keywords[0]}` : "beskriv ønsket resultat i én setning"}.`
-    };
-    const list = sentences.slice(0,5).map((item) => item.replace(/^[-•]\s*/, ""));
-    if (!list.length) list.push("Legg inn litt mer kontekst, så lager jeg en skarp liste.");
-    const chamberInsights = currentInsights().slice(-3).map((ins) => ins.summary || ins.title).filter(Boolean);
-    const insightCards = chamberInsights.length
-      ? chamberInsights.slice(0,3)
-      : [
-          `Mønster: ${keywords[0] || "temaet"} går igjen og kan være en nøkkel for fremdrift.`,
-          `Spenning: Du vil både skape klarhet og beholde fleksibilitet i veien videre.`,
-          reply ? `Responsen fra AHA peker mot: ${toSentences(reply)[0] || reply}` : "Skriv litt mer for å få dypere innsikter."
-        ].slice(0,3);
-    const path = [
-      `Forstå: Sett ord på kjernen i "${keywords[0] || "situasjonen"}".`,
-      `Strukturere: Del inn i 2-3 spor og velg hva som haster mest.`,
-      `Gjøre videre: Avtal én handling du kan gjøre i løpet av neste døgn.`
-    ];
+    const baseList = sentences.slice(0,6).map((item) => item.replace(/^[-•]\s*/, ""));
+    let reflection = "Jeg ser et tydelig tema. Del gjerne litt mer for skarpere sortering.";
+    let sortItems = (keywords.length ? keywords : ["retning","utfordring","handling"]).slice(0, 4).map((key, idx) => ({ label: key.charAt(0).toUpperCase() + key.slice(1), text: sentences[idx] || `Dette peker på et tema rundt ${key}.` }));
+    let day = "Ikke nok dagsmateriale ennå.";
+    let thoughts = { hovedspor: sentences[0] || "Trenger mer tekst for å finne hovedspor.", lose_tanker: sentences.slice(1,3).join(" ") || "Noen løse tanker vil dukke opp når du skriver mer.", neste_steg: "Velg ett tydelig spor og skriv én presis setning videre." };
+    let list = baseList;
+    let path = ["Forstå hva teksten egentlig handler om.", "Sorter materialet i 2–3 tydelige spor.", "Velg ett neste grep og skriv videre."];
 
-    return { reflection, sortItems, day, thoughts, list, insightCards, path };
+    if (textType === "literary_diary") {
+      reflection = "Dette er en dagboktekst der fortelleren beveger seg mellom observasjon og selvforklaring. Ytre scener brukes til å vise indre uro, lengsel og drift mot frihet.";
+      sortItems = ["Åpningsscene / sted","Relasjonen til S","Møter med fremmede","Reise, nomadisme og forfatterliv","Skyld, skam og selvforsvar"].slice(0,4).map((label, idx) => ({ label, text: sentences[idx] || "Dette sporet er til stede i teksten." }));
+      day = "Dagbokfragmentet går fra observerende scener til relasjonell uro, videre gjennom møter og samtaler, før det åpner mot reise, frihet og forfatterliv.";
+      thoughts = { hovedspor: "Fortelleren prøver å forstå seg selv gjennom observasjoner av andre og en urolig relasjon.", lose_tanker: "Sted, telefoner, fremmede møter og vandring peker mot sosial fremmedhet og frihetslengsel.", neste_steg: "Velg om teksten skal strammes rundt relasjonen, vandringen eller ideen om et nomadisk forfatterliv." };
+      list = ["Åpningsscene ved sted/hageanlegg","Observasjon av mennesker i bevegelse","Uro og kontaktbehov hos fortelleren","Telefon og relasjonell spenning","Møter med fremmede","Reise/frihet/forfatterliv som motiv"].slice(0,6);
+      path = ["Finn bærende motiv: relasjon, fremmedhet, nomadisme, skyld eller observasjon.", "Velg struktur: kronologisk dagbok, assosiativ vandring eller scene-kapittel.", "Stram teksten: behold konkrete scener og kutt forklaringer som gjentar selvforsvar."];
+    } else if (textType === "day_log") {
+      reflection = `Dette leses som en dagslogg med fokus på ${keywords[0] || "hendelser"}, og et tydelig behov for å se mønster i dagen.`;
+      day = `Kort dagsoppsummering: ${sentences.slice(0,2).join(" ") || "Flere hendelser gjennom dagen."} Viktigst nå: ${keywords[0] || "ett tydelig neste punkt"}.`;
+      path = ["Oppsummer hendelsene kort.", "Finn ett mønster eller én følelse som gikk igjen.", "Velg én ting du tar med videre i morgen."];
+    } else if (textType === "literary_fragment") {
+      reflection = "Teksten drives av scene, motiv, sansning og rytme mer enn av dagboklogg. Konflikten ligger i spenningen mellom stemning og bevegelse.";
+      day = "Ikke dagbokmateriale – ingen dagsoppsummering laget.";
+    } else if (textType === "project_note") {
+      reflection = "Dette er et prosjektnotat med tydelig problem og mål. Neste gevinst ligger i å koble løsning til konkrete filer/funksjoner.";
+      sortItems = ["Problem","Løsning","Filer/funksjoner","Neste steg"].map((label, idx) => ({ label, text: sentences[idx] || "Trenger kort presisering i teksten." }));
+      path = ["Definer målet i én setning.", "Sorter oppgaver etter problem/løsning/filer.", "Velg neste konkrete handling."];
+    } else if (textType === "theory_idea") {
+      reflection = "Dette er en idé-/teoritekst der begreper og premisser bygges opp stegvis.";
+      sortItems = ["Hovedpåstand","Begreper","Premisser","Mulige innvendinger","Videre utvikling"].slice(0,4).map((label, idx) => ({ label, text: sentences[idx] || "Presiser dette punktet videre." }));
+    }
+
+    if (!list.length) list.push("Legg inn litt mer kontekst, så lager jeg en skarp liste.");
+    const localInsights = [];
+    if (textType === "literary_diary") {
+      localInsights.push("Dagbokformen lar møter og observasjoner speile fortellerens indre uro.");
+      localInsights.push("Relasjonen fungerer som anker for lengsel, skyld og selvforsvar.");
+      localInsights.push("Teksten drives mer av assosiativ bevegelse enn lineær handling.");
+    } else {
+      localInsights.push(`Mønster: ${keywords[0] || "temaet"} går igjen og bærer teksten.`);
+      localInsights.push(reply ? `AHA-responsen peker videre på: ${toSentences(reply)[0] || reply}` : "Videre innsikt kan styrkes med mer konkret tekst.");
+    }
+    const overlap = currentInsights()
+      .map((ins) => String(ins.summary || ins.title || ""))
+      .filter((text) => keywords.some((k) => text.toLowerCase().includes(k)))
+      .slice(-2);
+    const insightCards = [...localInsights, ...overlap].slice(0, 3);
+
+    return { textType, reflection, sortItems, day, thoughts, list: list.slice(0, 6), insightCards, path: path.slice(0, 3) };
   }
 
   function renderAutoOutputPayload(payload) {
