@@ -43,8 +43,9 @@
 
     <main class="chat-layout">
       <section class="chat-main">
-        <section class="action-section" aria-label="Handlinger">
-          <h2>Verktøy</h2>
+        <section class="action-section" aria-label="Output-filtre">
+          <h2>Vis analyser</h2>
+          <p class="action-section-hint">AHA analyserer automatisk etter hver melding. Bruk disse for å fokusere visningen.</p>
           <div class="action-groups">
             <div class="action-group">
               <span class="action-group-label">Samtale</span>
@@ -72,6 +73,8 @@
             </div>
           </div>
         </section>
+
+        <section id="aha-auto-output" class="aha-auto-output" aria-live="polite"></section>
 
         <section id="empty-state" class="empty-state" aria-live="polite">
           <h2>Hva vil du forstå i dag?</h2>
