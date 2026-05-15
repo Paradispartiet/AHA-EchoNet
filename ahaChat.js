@@ -1053,7 +1053,75 @@
     </section>`;
   }
 
-  function renderMetaProfile(profile) {
+
+
+  function renderKnowledgeMapSection(chamber, profile) {
+    const safeChamber = chamber && typeof chamber === "object" ? chamber : {};
+    const recurringThemes = global.InsightsEngine?.getRecurringThemes
+      ? global.InsightsEngine.getRecurringThemes(safeChamber, { windows: [14, 30] })
+      : {};
+    const conceptGraph = global.InsightsEngine?.buildConceptGraph
+      ? global.InsightsEngine.buildConceptGraph(safeChamber)
+      : { nodes: {}, edges: [] };
+
+    const theoryLinks = (Array.isArray(safeChamber?.insights) ? safeChamber.insights : [])
+      .flatMap((insight) => {
+        if (!global.InsightsEngine?.scoreTheoryRelevance) return [];
+        return (global.InsightsEngine.scoreTheoryRelevance(insight, safeChamber) || []).map((link) => ({
+          name: String(link?.name || link?.theory || "Ukjent"),
+          relation: String(link?.relation || ""),
+          score: Number(link?.relevance_score || link?.score || 0)
+        }));
+      })
+      .filter((link) => Number.isFinite(link.score))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 4);
+
+    const tensions = global.InsightsEngine?.detectTensions
+      ? (global.InsightsEngine.detectTensions(safeChamber) || [])
+      : [];
+
+    const graphNodes = Object.values(conceptGraph?.nodes || {});
+    const conceptNodeCount = graphNodes.filter((node) => node?.type === "concept").length;
+    const theoryNodeCount = graphNodes.filter((node) => node?.type === "theory" || node?.type === "thinker").length;
+    const topEdges = (conceptGraph?.edges || [])
+      .filter((edge) => edge?.type === "co_occurs")
+      .sort((a, b) => (b?.weight || 0) - (a?.weight || 0))
+      .slice(0, 3);
+
+    const themes14d = (recurringThemes?.["14d"]?.top_concepts || []).slice(0, 3);
+    const themes30d = (recurringThemes?.["30d"]?.top_concepts || []).slice(0, 3);
+    const topTheoryPeople = (recurringThemes?.["30d"]?.top_theories || []).slice(0, 3);
+    const visibleTensions = tensions.slice(0, 4);
+
+    return `<section class="knowledge-map-block">
+      <h3>Kunnskapskart</h3>
+      <div class="knowledge-map-grid">
+        <article class="knowledge-card">
+          <h4>Tilbakevendende tema</h4>
+          <p class="knowledge-sub">14d: ${themes14d.length ? themes14d.map((item) => `${escHtml(item.key)} (${item.count})`).join(", ") : "Ingen tydelige begreper ennå."}</p>
+          <p class="knowledge-sub">30d: ${themes30d.length ? themes30d.map((item) => `${escHtml(item.key)} (${item.count})`).join(", ") : "Mangler data for siste 30 dager."}</p>
+          <p class="knowledge-sub">Teori/tenkere: ${topTheoryPeople.length ? topTheoryPeople.map((item) => `${escHtml(item.key)} (${item.count})`).join(", ") : "Ingen teorikoblinger funnet ennå."}</p>
+        </article>
+        <article class="knowledge-card">
+          <h4>Begrepsgraf</h4>
+          <p class="knowledge-sub">Begrepsnoder: <strong>${conceptNodeCount}</strong></p>
+          <p class="knowledge-sub">Teori-/tenkernoder: <strong>${theoryNodeCount}</strong></p>
+          <p class="knowledge-sub">Sterkeste co-occurs: ${topEdges.length ? topEdges.map((edge) => `${escHtml(edge.from)} ↔ ${escHtml(edge.to)} (${edge.weight})`).join(", ") : "Ingen samforekomst-koblinger ennå."}</p>
+        </article>
+        <article class="knowledge-card">
+          <h4>Teorikoblinger</h4>
+          ${theoryLinks.length ? `<ul>${theoryLinks.map((link) => `<li><strong>${escHtml(link.name)}</strong> · score ${escHtml(link.score.toFixed(2))}${link.relation ? ` · ${escHtml(link.relation)}` : ""}</li>`).join("")}</ul>` : "<p class='knowledge-sub'>Ingen teoretiske koblinger å score ennå.</p>"}
+        </article>
+        <article class="knowledge-card">
+          <h4>Spenninger</h4>
+          ${visibleTensions.length ? `<ul>${visibleTensions.map((item) => `<li><strong>${escHtml(String(item?.title || "Ukjent"))}</strong> · styrke ${escHtml(String(item?.strength || 0))}</li>`).join("")}</ul>` : "<p class='knowledge-sub'>Ingen spenningspar oppdaget ennå.</p>"}
+        </article>
+      </div>
+    </section>`;
+  }
+
+  function renderMetaProfile(profile, chamber) {
     if (!profile || typeof profile !== "object") return "";
 
     const recent = profile.temporal?.recent_focus || {};
@@ -1104,10 +1172,13 @@
       renderMetaSection("Tanker som ikke kobler seg ennå", underexplored)
     ].filter(Boolean).join("");
 
+    const knowledgeMap = renderKnowledgeMapSection(chamber, profile);
+
     if (!sections) {
       return `<div class="meta-profile">
         <h3>Hva AHA ser i materialet ditt</h3>
         <p class="meta-empty">AHA har ennå ikke nok å gå på. Skriv mer i chat eller importer fra History Go.</p>
+        ${knowledgeMap}
       </div>`;
     }
 
@@ -1115,6 +1186,7 @@
       <h3>Hva AHA ser i materialet ditt</h3>
       <p class="meta-meta">${totalInsights} innsikter analysert.</p>
       ${sections}
+      ${knowledgeMap}
     </div>`;
   }
 
@@ -1125,7 +1197,7 @@
       return;
     }
     const profile = global.MetaInsightsEngine.buildUserMetaProfile(chamber, SUBJECT_ID);
-    renderPanel(renderMetaProfile(profile));
+    renderPanel(renderMetaProfile(profile, chamber));
     out("");
   }
 
