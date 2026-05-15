@@ -650,3 +650,81 @@ input:focus { border-color: var(--aha-yellow); box-shadow: 0 0 0 3px rgba(246,20
 .gruppe-knapp { white-space: nowrap; }
 .statuslinje { font-size: 0.9rem; opacity: 0.85; margin-top: 4px; }
 
+
+/* App-layout refactor */
+html, body { max-width: 100%; overflow-x: hidden; }
+.aha-dashboard { width: min(1320px, 100%); padding-bottom: 110px; }
+.aha-app-header { padding: 10px 14px; border-radius: 18px; margin-bottom: 14px; }
+.aha-brand-mark { width: 38px; height: 38px; font-size: 1rem; }
+
+.aha-profile-strip {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) minmax(260px,340px);
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.aha-profile-main-card { min-height: 0; padding: 16px 18px; border-radius: 22px; }
+.aha-profile-main-card::after { display: none; }
+.aha-profile-topline { margin-bottom: 14px; }
+.aha-profile-body { align-items: flex-start; gap: 14px; }
+.aha-profile-avatar { width: 64px; height: 64px; font-size: 1.4rem; }
+.aha-profile-copy h1 { font-size: clamp(1.4rem, 3vw, 2rem); line-height: 1.06; letter-spacing: -.02em; }
+.aha-profile-copy p { margin-top: 8px; font-size: .95rem; max-width: none; }
+.aha-profile-id-row { margin-top: 10px; padding: 6px 10px; font-size: .82rem; }
+.aha-profile-quick-actions { margin-left: auto; display: grid; gap: 8px; min-width: 210px; }
+.aha-profile-quick-actions .aha-cta-primary,
+.aha-profile-quick-actions .aha-cta-secondary { min-height: 40px; padding: 8px 12px; }
+
+.aha-side-card { border-radius: 22px; padding: 16px; }
+.aha-side-card h2 { font-size: 1.25rem; }
+
+.aha-app-shell {
+  display: grid;
+  grid-template-columns: 220px minmax(0,1fr) 260px;
+  gap: 14px;
+  align-items: start;
+}
+.aha-panel { border-radius: 22px; padding: 16px; }
+.aha-home-panel, .aha-status-panel { max-height: calc(100vh - 210px); overflow: auto; }
+
+.aha-modules-panel h2, .aha-home-panel h2, .aha-status-panel h2 { font-size: 1.2rem; }
+.aha-grid { grid-template-columns: 1fr; gap: 8px; margin-bottom: 0; }
+.aha-tile { min-height: 0; padding: 12px; border-radius: 16px; gap: 6px; }
+.aha-tile strong { font-size: .98rem; }
+.aha-tile span:not(.aha-tile-icon) { font-size: .82rem; }
+.aha-tile-icon { width: 30px; height: 30px; font-size: .95rem; border-radius: 10px; }
+.aha-tile small { padding: 4px 8px; font-size: .75rem; }
+
+.aha-panel-subtitle { margin: 0; color: var(--aha-muted); font-size: .88rem; }
+.aha-action-buttons { margin-top: 12px; }
+.aha-cta-primary, .aha-cta-secondary { min-height: 42px; }
+.aha-cta-secondary-row { grid-template-columns: repeat(3, minmax(0,1fr)); }
+.aha-profile-stats { grid-template-columns: repeat(3, minmax(0,1fr)); margin-top: 12px; }
+.aha-mini-stat { padding: 10px; border-radius: 14px; }
+.aha-mini-stat strong { font-size: 1rem; }
+
+.aha-next-panel, .aha-activity-panel { margin-top: 12px; border-radius: 16px; background: rgba(255,255,255,.03); }
+.aha-next-panel h3, .aha-activity-panel h3 { margin: 0 0 8px; font-size: 1rem; }
+.aha-tech-status { margin-top: 10px; }
+.aha-tech-status summary { cursor: pointer; color: var(--aha-muted); font-weight: 700; }
+.aha-dashboard-output { margin-top: 8px; max-height: 150px; }
+
+@media (max-width: 1080px) {
+  .aha-app-shell { grid-template-columns: 200px minmax(0,1fr); }
+  .aha-status-panel { grid-column: 1 / -1; max-height: none; }
+}
+@media (max-width: 820px) {
+  .aha-profile-strip { grid-template-columns: 1fr; }
+  .aha-profile-quick-actions { margin-left: 0; min-width: 0; width: 100%; grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .aha-app-shell { grid-template-columns: 1fr; }
+  .aha-home-panel, .aha-status-panel { max-height: none; overflow: visible; }
+  .aha-modules-panel .aha-grid { display: flex; overflow-x: auto; gap: 8px; padding-bottom: 4px; }
+  .aha-modules-panel .aha-grid > * { flex: 0 0 220px; }
+}
+@media (max-width: 620px) {
+  .aha-dashboard { padding: 12px 12px 120px; }
+  .aha-profile-quick-actions { grid-template-columns: 1fr; }
+  .aha-cta-secondary-row { grid-template-columns: 1fr; }
+  .aha-profile-stats { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .aha-mobile-nav { bottom: 10px; }
+}
