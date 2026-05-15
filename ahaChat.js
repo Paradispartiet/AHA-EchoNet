@@ -8,6 +8,9 @@
   const STORAGE_KEY = "aha_insight_chamber_v1";
   const HIGHLIGHTS_STORAGE_KEY = "aha_chat_highlights_v1";
   const CHAT_THREAD_ID = "default_thread";
+
+  const AUTO_OUTPUT_STORAGE_KEY = "aha_chat_auto_outputs_v1";
+
   const AHA_INSIGHT_CONTRACT = Object.freeze({
     FUNCTIONAL_TYPES: new Set([
       "observation", "question", "task", "problem", "solution",
@@ -1345,13 +1348,131 @@
   function reset() {
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(HIGHLIGHTS_STORAGE_KEY);
+    localStorage.removeItem(AUTO_OUTPUT_STORAGE_KEY);
     out("AHA-kammer nullstilt.");
     setStatusNote("Nullstilt lokalt kammer og highlights.");
     renderPanel("");
     const log = document.getElementById("chat-log");
     if (log) log.innerHTML = "";
+    const autoOutput = document.getElementById("aha-auto-output");
+    if (autoOutput) autoOutput.innerHTML = "";
     renderHighlightsRail();
     updateEmptyState();
+  }
+
+  function toSentences(text) {
+    return String(text || "").split(/(?<=[.!?])\s+|\n+/).map((part) => part.trim()).filter(Boolean);
+  }
+
+  function takeKeywords(text, maxItems) {
+    const tokens = String(text || "").toLowerCase().match(/[a-zæøå0-9]{4,}/g) || [];
+    const stop = new Set(["dette","dager","fordi","skulle","kanskje","hvorfor","etter","veldig","ikke","bare","også","med","som","skal","være","mellom"]);
+    const counts = new Map();
+    tokens.forEach((token) => {
+      if (stop.has(token)) return;
+      counts.set(token, (counts.get(token) || 0) + 1);
+    });
+    return Array.from(counts.entries()).sort((a,b)=>b[1]-a[1]).slice(0, maxItems).map(([word]) => word);
+  }
+
+  function loadAutoOutputs() {
+    try {
+      const raw = localStorage.getItem(AUTO_OUTPUT_STORAGE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+  }
+
+  function buildAutoOutputs(userText, ahaReply) {
+    const raw = String(userText || "").trim();
+    const reply = String(ahaReply || "").trim();
+    const sentences = toSentences(raw);
+    const keywords = takeKeywords(raw, 5);
+    const hasDaySignals = /(i dag|idag|morges|formiddag|ettermiddag|kveld|i natt|jobben|møte|trening|middag)/i.test(raw) || sentences.length >= 4;
+    const reflection = raw.length < 32
+      ? "Jeg ser et frø av et tema her. Del litt mer om hva som står på spill, så kan jeg speile retningen tydeligere."
+      : `Du jobber trolig med ${keywords[0] || "et viktig tema"}, og spenningen virker å stå mellom ${keywords[1] || "ønske"} og ${keywords[2] || "gjennomføring"}.`;
+    const sortItems = (keywords.length ? keywords : ["retning","utfordring","handling"]).slice(0, 4).map((key, idx) => ({
+      label: key.charAt(0).toUpperCase() + key.slice(1),
+      text: sentences[idx] || `Dette peker på et tema rundt ${key}.`
+    }));
+    const day = hasDaySignals
+      ? (sentences.slice(0,3).join(" ") || "Dagen inneholder flere spor som henger sammen.")
+      : "Ikke nok dagsmateriale ennå.";
+    const thoughts = {
+      hovedspor: sentences[0] || "Trenger mer tekst for å finne hovedspor.",
+      lose_tanker: sentences.slice(1,3).join(" ") || "Noen løse tanker vil dukke opp når du skriver litt mer.",
+      neste_steg: `Ta ett konkret neste steg: ${keywords[0] ? `skriv hva du vil oppnå med ${keywords[0]}` : "beskriv ønsket resultat i én setning"}.`
+    };
+    const list = sentences.slice(0,5).map((item) => item.replace(/^[-•]\s*/, ""));
+    if (!list.length) list.push("Legg inn litt mer kontekst, så lager jeg en skarp liste.");
+    const chamberInsights = currentInsights().slice(-3).map((ins) => ins.summary || ins.title).filter(Boolean);
+    const insightCards = chamberInsights.length
+      ? chamberInsights.slice(0,3)
+      : [
+          `Mønster: ${keywords[0] || "temaet"} går igjen og kan være en nøkkel for fremdrift.`,
+          `Spenning: Du vil både skape klarhet og beholde fleksibilitet i veien videre.`,
+          reply ? `Responsen fra AHA peker mot: ${toSentences(reply)[0] || reply}` : "Skriv litt mer for å få dypere innsikter."
+        ].slice(0,3);
+    const path = [
+      `Forstå: Sett ord på kjernen i "${keywords[0] || "situasjonen"}".`,
+      `Strukturere: Del inn i 2-3 spor og velg hva som haster mest.`,
+      `Gjøre videre: Avtal én handling du kan gjøre i løpet av neste døgn.`
+    ];
+
+    return { reflection, sortItems, day, thoughts, list, insightCards, path };
+  }
+
+  function renderAutoOutputPayload(payload) {
+    const host = document.getElementById("aha-auto-output");
+    if (!host || !payload) return;
+    const safeSortItems = Array.isArray(payload.sortItems) ? payload.sortItems : [];
+    const safeList = Array.isArray(payload.list) ? payload.list : [];
+    const safeInsightCards = Array.isArray(payload.insightCards) ? payload.insightCards : [];
+    const safePath = Array.isArray(payload.path) ? payload.path : [];
+    host.innerHTML = `
+      <div class="auto-output-head">
+        <h2>AHA etterarbeid</h2>
+        <p>Automatisk analyse av siste melding og svar.</p>
+      </div>
+      <section class="auto-output-group" data-group="samtale">
+        <h3>Samtale</h3>
+        <div class="auto-output-grid">
+          <article class="auto-card" data-auto-card="reflekter"><h4>Refleksjon</h4><p>${escHtml(payload.reflection)}</p></article>
+          <article class="auto-card" data-auto-card="sorter"><h4>Sortering</h4><ul>${safeSortItems.map((item)=>`<li><strong>${escHtml(item?.label)}:</strong> ${escHtml(item?.text)}</li>`).join("")}</ul></article>
+          <article class="auto-card" data-auto-card="oppsummer"><h4>Dagsoppsummering</h4><p>${escHtml(payload.day)}</p></article>
+          <article class="auto-card" data-auto-card="sorter_tanker"><h4>Tankesortering</h4><p><strong>Hovedspor:</strong> ${escHtml(payload?.thoughts?.hovedspor)}</p><p><strong>Løse tanker:</strong> ${escHtml(payload?.thoughts?.lose_tanker)}</p><p><strong>Mulig neste steg:</strong> ${escHtml(payload?.thoughts?.neste_steg)}</p></article>
+        </div>
+      </section>
+      <section class="auto-output-group" data-group="struktur">
+        <h3>Struktur</h3>
+        <div class="auto-output-grid">
+          <article class="auto-card" data-auto-card="lag_liste"><h4>Liste</h4><ul>${safeList.map((point)=>`<li>${escHtml(point)}</li>`).join("")}</ul></article>
+          <article class="auto-card" data-auto-card="lag_innsikt"><h4>Innsikt</h4><ul>${safeInsightCards.map((point)=>`<li>${escHtml(point)}</li>`).join("")}</ul></article>
+          <article class="auto-card" data-auto-card="lag_laringssti"><h4>Læringssti</h4><ol>${safePath.map((step)=>`<li>${escHtml(step)}</li>`).join("")}</ol></article>
+        </div>
+      </section>`;
+  }
+
+  function renderAutoOutputs(userText, ahaReply) {
+    const payload = buildAutoOutputs(userText, ahaReply);
+    localStorage.setItem(AUTO_OUTPUT_STORAGE_KEY, JSON.stringify(payload));
+    renderAutoOutputPayload(payload);
+  }
+
+  function focusAutoCard(action) {
+    const host = document.getElementById("aha-auto-output");
+    if (!host) return;
+    host.querySelectorAll(".auto-card").forEach((card) => card.classList.remove("is-focused"));
+    const target = host.querySelector(`[data-auto-card="${action}"]`);
+    if (!target) return;
+    target.classList.add("is-focused");
+    target.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+
+  function restoreAutoOutputFromStorage() {
+    const cache = loadAutoOutputs();
+    if (!cache) return;
+    renderAutoOutputPayload(cache);
   }
 
   function bind() {
@@ -1379,6 +1500,7 @@
             ? await global.AHASubjectEngine.matchText(`${text} ${reply}`, { source: "chat" })
             : [];
           appendChat("aha", reply, { categoryChips: suggestCategoryChips(), subjectMatches });
+          try { renderAutoOutputs(text, reply); } catch (autoErr) { console.warn("Auto-output feilet", autoErr); }
           // AHA-agentens egne svar skal vises i chatten og logges som
           // source event, men IKKE bli en ordinær brukerinnsikt. AI-
           // oppsummeringer hører ikke hjemme i innsiktskammeret. skip_insight
@@ -1398,6 +1520,7 @@
         } catch (err) {
           console.warn("AHA-agent utilgjengelig", err);
           appendChat("aha", "AHA-agenten er ikke tilgjengelig akkurat nå.");
+          try { renderAutoOutputs(text, ""); } catch (autoErr) { console.warn("Auto-output feilet", autoErr); }
         }
       });
     }
@@ -1412,6 +1535,7 @@
     bindActionChips();
 
     bindPanelActionHandler();
+    restoreAutoOutputFromStorage();
 
     // Når et nytt merge-forslag persisteres på chamberet, re-rendr
     // panelet hvis det vises. UI-en henter forslagene rett fra
@@ -1442,35 +1566,20 @@
   }
 
   function bindActionChips() {
-    const prompts = {
-      reflekter: "Hjelp meg å reflektere over dette steg for steg.",
-      sorter: "Sorter dette i tydelige temaer og kategorier.",
-      oppsummer: "Oppsummer dagen min kort og tydelig.",
-      sorter_tanker: "Sorter tankene mine i hovedspor og neste steg.",
-      lag_liste: "Lag en punktliste av det viktigste her.",
-      lag_innsikt: "Trekk ut innsikter fra dette.",
-      lag_laringssti: "Lag en læringssti med progresjon og neste handling.",
-      koble_hg: "Vis hvordan dette kan kobles til History Go.",
-      import_hg: ""
-    };
     document.querySelectorAll("[data-chat-action]").forEach((btn) => {
       btn.addEventListener("click", () => {
         const action = btn.getAttribute("data-chat-action");
-        if (action === "lag_innsikt") {
-          showInsights();
-          setStatusNote("Innsiktspanelet er oppdatert.");
-          return;
-        }
         if (action === "import_hg") {
           document.getElementById("btn-import-hg")?.click();
           return;
         }
         if (action === "koble_hg") {
-          setComposerText(prompts[action] || "");
-          setStatusNote("Kobling til History Go kan utforskes direkte i chatten.");
+          setStatusNote("Koblinger vises gjennom innsikter og fagkoblinger i chatten.");
           return;
         }
-        setComposerText(prompts[action] || "");
+        if (action === "lag_innsikt") showInsights();
+        focusAutoCard(action);
+        setStatusNote("Viser valgt analysekort.");
       });
     });
   }
