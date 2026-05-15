@@ -1389,42 +1389,42 @@
 
   function buildLiteraryDiarySortItems(raw, sentences) {
     const text = String(raw || "");
-    const short = (value) => String(value || "").replace(/\s+/g, " ").trim().slice(0, 170);
+    const normalizedText = ` ${text.toLowerCase()} `;
     const categoryDefs = [
       {
         label: "Åpningsscene / sted",
         signals: ["kurbad", "hageanlegg", "park", "leilighet", "sted", "badet", "middelhavet", "utkikkspunkt", "parker"],
-        summary: "Åpningsscenen forankrer teksten i sted og blikk før den indre bevegelsen tar over."
+        summary: "Stedsscener forankrer teksten i konkrete omgivelser."
       },
       {
         label: "Relasjonen til S",
         signals: [" s ", " henne", " ring", "ringer", "telefon", "slutt å ring", "tilbake", "såret", "sint", "kjærlighet", "prinsesse"],
-        summary: "Telefonene og kontakten med S samler lengsel, selvforsvar og uavklart konflikt."
+        summary: "Relasjonen til S er et tydelig spor i dagbokbevegelsen."
       },
       {
         label: "Sosial uro og selvbilde",
         signals: ["fjern", "snakke med noen", "selvhevdende", "dårlig samvittighet", "ikke jeg heller", "burde", "skam", "skyld", "uro"],
-        summary: "Fortelleren veksler mellom uro, selvkritikk og forsøk på å holde et sosialt selvbilde."
+        summary: "Sosial uro og selvvurdering preger fortellerstemmen."
       },
       {
         label: "Møter med fremmede",
         signals: ["kongo", "mann", "fyr", "longboard", "sykepleier", "vingård", "kompisen", "venn", "hule", "knivdrap"],
-        summary: "Møter med fremmede fungerer som speil for fortellerens rastløshet og retning."
+        summary: "Møter med fremmede utvider tekstens sosiale rom."
       },
       {
         label: "Reise, nomadisme og forfatterliv",
         signals: ["england", "fotballkamper", "reise", "biarriz", "campe", "middelhavet", "nomader", "forfatter", "poetisk", "leve vilt"],
-        summary: "Reise og nomadiske bilder blir koblet til ønsket om frihet og et forfatterliv."
+        summary: "Reise, nomadisme eller skrivende selvbilde er til stede i teksten."
       },
       {
         label: "Rus og drift",
         signals: ["røyka", "weed", "feber", "trøkk", "vilt"],
-        summary: "Rus og kroppslig trøkk markerer en drift mot intensitet og kontrolltap."
+        summary: "Rus eller intensitet markerer et eget driftsspor."
       },
       {
         label: "Skyld, skam og selvforsvar",
         signals: ["dårlig samvittighet", "skyld", "skam", "såret", "sint", "dårlig behandlet", "behandlet henne", "ingen rett"],
-        summary: "Skyld og skam samles i et spor der fortelleren både angrer og forsvarer seg."
+        summary: "Skyld, skam eller selvforsvar skaper tydelig indre friksjon."
       }
     ];
 
@@ -1441,6 +1441,11 @@
       .map((def) => {
         const hit = matchesForCategory(def);
         if (!hit) return null;
+        if (def.label === "Relasjonen til S") {
+          const hasConflict = ["slutt å ring", "såret", "sint", "dårlig behandlet", "ingen rett"].some((s) => normalizedText.includes(normalize(s)));
+          if (hasConflict) return { label: def.label, text: "Relasjonen til S kombinerer kontaktbehov med tydelig konflikt." };
+          return { label: def.label, text: "Relasjonen til S er et tydelig relasjonelt spor." };
+        }
         return { label: def.label, text: def.summary };
       })
       .filter(Boolean)
@@ -1452,6 +1457,52 @@
       { label: "Relasjonelt spor", text: "Relasjoner og kontaktforsøk driver den indre bevegelsen fremover." },
       { label: "Indre uro", text: "Understrømmen er uro, selvforklaring og søken etter frihet." }
     ];
+  }
+
+  function collectLiteraryDiaryEvidence(raw, sentences) {
+    const text = String(raw || "");
+    const normalizedText = ` ${text.toLowerCase()} `;
+    const normalize = (v) => ` ${String(v || "").toLowerCase()} `;
+    const hasAny = (signals) => signals.some((signal) => normalizedText.includes(normalize(signal)));
+    const matchLine = (signals) => (sentences || []).find((line) => {
+      const norm = normalize(line);
+      return signals.some((signal) => norm.includes(normalize(signal)));
+    }) || "";
+
+    const evidence = {
+      hasPlaceScene: hasAny(["kurbad", "hageanlegg", "park", "leilighet", "badet", "middelhavet", "utkikkspunkt", "sted", "by"]),
+      hasSRelation: hasAny([" s ", " henne", "tilbake", "såret", "sint", "prinsesse", "kjærlighet", "slutt å ring"]),
+      hasPhone: hasAny(["ring", "ringer", "telefon", "svarte", "hørte", "slutt å ring"]),
+      hasStrangers: hasAny(["kongo", "mann", "fyr", "longboard", "sykepleier", "vingård", "kompisen", "venn", "hule", "knivdrap"]),
+      hasTravel: hasAny(["england", "biarriz", "campe", "middelhavet", "reise", "fotballkamper"]),
+      hasNomadism: hasAny(["nomade", "nomader", "nomadisme"]),
+      hasWriterLife: hasAny(["forfatter", "poetisk", "skrive", "tekst", "leve vilt"]),
+      hasShameGuilt: hasAny(["skyld", "skam", "dårlig samvittighet", "såret", "sint", "dårlig behandlet", "ingen rett"]),
+      hasSocialUnease: hasAny(["fjern", "snakke med noen", "selvhevdende", "ikke jeg heller", "fremmedhet", "uro"]),
+      hasSubstanceOrIntensity: hasAny(["røyka", "weed", "feber", "trøkk", "vilt"]),
+      hasInnerMonologue: hasAny(["jeg trodde", "jeg burde", "jeg er lei", "jeg skjønner", "jeg tenkte", "jeg burde tenkt"]),
+      matchedThemes: []
+    };
+
+    const themes = [];
+    if (evidence.hasPlaceScene) themes.push("sted");
+    if (evidence.hasSRelation) themes.push("relasjon");
+    if (evidence.hasPhone) themes.push("telefonkontakt");
+    if (evidence.hasStrangers) themes.push("møter");
+    if (evidence.hasTravel) themes.push("reise");
+    if (evidence.hasNomadism) themes.push("nomadisme");
+    if (evidence.hasWriterLife) themes.push("forfatterliv");
+    if (evidence.hasShameGuilt) themes.push("skyld/skam");
+    if (evidence.hasSocialUnease) themes.push("sosial uro");
+    if (evidence.hasSubstanceOrIntensity) themes.push("intensitet");
+    if (evidence.hasInnerMonologue) themes.push("indre monolog");
+    evidence.matchedThemes = themes;
+    evidence.textSnippets = {
+      place: matchLine(["kurbad", "hageanlegg", "park", "leilighet", "badet", "middelhavet", "utkikkspunkt", "sted", "by"]),
+      relation: matchLine([" s ", " henne", "tilbake", "såret", "sint", "prinsesse", "kjærlighet", "slutt å ring"]),
+      phone: matchLine(["ring", "ringer", "telefon", "svarte", "hørte", "slutt å ring"])
+    };
+    return evidence;
   }
 
   function takeKeywords(text, maxItems) {
@@ -1497,12 +1548,72 @@
     let path = ["Forstå hva teksten egentlig handler om.", "Sorter materialet i 2–3 tydelige spor.", "Velg ett neste grep og skriv videre."];
 
     if (textType === "literary_diary") {
-      reflection = "Dette er en dagboktekst der fortelleren beveger seg mellom observasjon og selvforklaring. Ytre scener brukes til å vise indre uro, lengsel og drift mot frihet.";
+      const evidence = collectLiteraryDiaryEvidence(raw, sentences);
+      const reflectionParts = ["Dette er en dagboktekst der fortelleren beveger seg mellom observasjon og selvforklaring."];
+      if (evidence.hasPlaceScene) reflectionParts.push("Stedsscener gir teksten forankring.");
+      if (evidence.hasSRelation) reflectionParts.push("Relasjonen til S samler lengsel og selvforsvar.");
+      if (evidence.hasStrangers) reflectionParts.push("Møter med fremmede utvider teksten sosialt.");
+      if (evidence.hasTravel || evidence.hasNomadism) reflectionParts.push("Reise- og nomademotivet åpner mot frihet og drift.");
+      if (evidence.hasWriterLife) reflectionParts.push("Forfatterlivet ligger som et selvbilde og en mulig retning.");
+      if (evidence.hasShameGuilt) reflectionParts.push("Skyld og skam skaper indre friksjon.");
+      if (evidence.matchedThemes.length <= 2) reflectionParts.push("Teksten bør analyseres som dagbokprosa, men trenger tydeligere motivspor for skarpere etterarbeid.");
+      reflection = reflectionParts.join(" ");
       sortItems = buildLiteraryDiarySortItems(raw, sentences);
-      day = "Dagbokfragmentet går fra observerende scener til relasjonell uro, videre gjennom møter og samtaler, før det åpner mot reise, frihet og forfatterliv.";
-      thoughts = { hovedspor: "Fortelleren prøver å forstå seg selv gjennom observasjoner av andre og en urolig relasjon.", lose_tanker: "Sted, telefoner, fremmede møter og vandring peker mot sosial fremmedhet og frihetslengsel.", neste_steg: "Velg om teksten skal strammes rundt relasjonen, vandringen eller ideen om et nomadisk forfatterliv." };
-      list = ["Åpningsscene ved sted/hageanlegg","Observasjon av mennesker i bevegelse","Uro og kontaktbehov hos fortelleren","Telefon og relasjonell spenning","Møter med fremmede","Reise/frihet/forfatterliv som motiv"].slice(0,6);
-      path = ["Finn bærende motiv: relasjon, fremmedhet, nomadisme, skyld eller observasjon.", "Velg struktur: kronologisk dagbok, assosiativ vandring eller scene-kapittel.", "Stram teksten: behold konkrete scener og kutt forklaringer som gjentar selvforsvar."];
+      const dayBits = [];
+      if (evidence.hasPlaceScene) dayBits.push("sted");
+      if (evidence.hasSRelation) dayBits.push("relasjon");
+      if (evidence.hasPhone) dayBits.push("telefonkontakt");
+      if (evidence.hasStrangers) dayBits.push("møtepunkt");
+      if (evidence.hasTravel || evidence.hasNomadism) dayBits.push("drift mot frihet");
+      if (evidence.hasShameGuilt || evidence.hasSocialUnease) dayBits.push("indre uro");
+      day = dayBits.length ? `Dagbokfragmentet beveger seg gjennom ${dayBits.slice(0, 4).join(", ")}.` : "Dagbokfragmentet samler observasjoner og indre vurderinger i en assosiativ bevegelse.";
+
+      let hovedspor = "Fortelleren forsøker å forstå seg selv gjennom dagbokformens bevegelser.";
+      if (evidence.hasPlaceScene && evidence.hasInnerMonologue) hovedspor = "Fortelleren bruker ytre observasjoner til å nærme seg egen uro.";
+      else if (evidence.hasSRelation) hovedspor = "Relasjonen til S fungerer som tekstens emosjonelle anker.";
+      else if (evidence.hasTravel || evidence.hasNomadism || evidence.hasWriterLife) hovedspor = "Teksten søker mot frihet, bevegelse og et selvbilde som skrivende nomade.";
+      const loose = [];
+      if (evidence.hasPhone) loose.push("telefonkontakt");
+      if (evidence.hasStrangers) loose.push("møter med fremmede");
+      if (evidence.hasShameGuilt) loose.push("skyld/skam");
+      if (evidence.hasSocialUnease) loose.push("sosial uro");
+      if (evidence.hasWriterLife) loose.push("forfatterspor");
+      const loseTanker = loose.length ? `Løse spor i teksten: ${loose.slice(0, 4).join(", ")}.` : "Løse spor finnes, men motivene er foreløpig svakt markert.";
+      let nesteSteg = "Velg ett motiv og la de andre scenene speile det.";
+      if (evidence.hasSRelation) nesteSteg = "Velg om relasjonen skal være tekstens hovedakse eller bare ett spor.";
+      else if (evidence.hasTravel || evidence.hasNomadism) nesteSteg = "Velg om reisemotivet skal bære slutten.";
+      else if (evidence.hasPlaceScene) nesteSteg = "Stram stedsscenene slik at de peker mot samme indre bevegelse.";
+      thoughts = { hovedspor, lose_tanker: loseTanker, neste_steg: nesteSteg };
+
+      const evidenceList = [];
+      if (evidence.hasPlaceScene) evidenceList.push("Stedsscener åpner dagbokbevegelsen.");
+      if (evidence.hasSRelation) evidenceList.push("Relasjonen til S skaper emosjonelt anker.");
+      if (evidence.hasPhone) evidenceList.push("Telefonkontakt gir konflikt og nærhet på avstand.");
+      if (evidence.hasStrangers) evidenceList.push("Møter med fremmede bryter teksten opp.");
+      if (evidence.hasTravel) evidenceList.push("Reiseplaner åpner mot frihet og forflytning.");
+      if (evidence.hasWriterLife) evidenceList.push("Forfatterliv brukes som selvbilde.");
+      if (evidence.hasShameGuilt) evidenceList.push("Skyld/skam gir indre friksjon.");
+      if (evidence.hasSocialUnease) evidenceList.push("Sosial uro preger fortellerens selvbilde.");
+      if (evidenceList.length < 3) {
+        evidenceList.push("Jeg-fortelleren samler observasjoner og vurderinger.");
+        evidenceList.push("Teksten beveger seg assosiativt mer enn lineært.");
+      }
+      list = evidenceList.slice(0, 6);
+
+      const motive = evidence.hasSRelation ? "relasjon" : evidence.hasTravel ? "reise" : evidence.hasPlaceScene ? "stedsscener" : evidence.hasInnerMonologue ? "indre monolog" : "observasjon";
+      const structure = evidence.hasPlaceScene ? "sted" : evidence.hasSRelation ? "relasjon" : evidence.hasStrangers ? "møte" : evidence.hasInnerMonologue ? "indre monolog" : "vandring";
+      const tighten = evidence.hasSRelation
+        ? "Avklar om relasjonen skal være hovedakse eller sidebevegelse."
+        : evidence.hasPlaceScene
+          ? "La stedsscenene peke tydeligere mot samme indre uro."
+          : evidence.hasTravel
+            ? "La reisen fungere som avslutning eller kontrapunkt."
+            : "Kutt forklaringer som gjentar samme selvforsvar.";
+      path = [
+        `Finn bærende motiv: ${motive}.`,
+        `Velg struktur: ${structure}.`,
+        `Stram teksten: ${tighten}`
+      ];
     } else if (textType === "day_log") {
       reflection = `Dette leses som en dagslogg med fokus på ${keywords[0] || "hendelser"}, og et tydelig behov for å se mønster i dagen.`;
       day = `Kort dagsoppsummering: ${sentences.slice(0,2).join(" ") || "Flere hendelser gjennom dagen."} Viktigst nå: ${keywords[0] || "ett tydelig neste punkt"}.`;
@@ -1522,9 +1633,14 @@
     if (!list.length) list.push("Legg inn litt mer kontekst, så lager jeg en skarp liste.");
     const localInsights = [];
     if (textType === "literary_diary") {
-      localInsights.push("Dagbokformen lar møter og observasjoner speile fortellerens indre uro.");
-      localInsights.push("Relasjonen fungerer som anker for lengsel, skyld og selvforsvar.");
-      localInsights.push("Teksten drives mer av assosiativ bevegelse enn lineær handling.");
+      const evidence = collectLiteraryDiaryEvidence(raw, sentences);
+      if (evidence.hasPlaceScene && evidence.hasInnerMonologue) localInsights.push("Ytre steder brukes til å speile fortellerens indre bevegelse.");
+      if (evidence.hasSRelation) localInsights.push("Relasjonen fungerer som et emosjonelt anker i dagbokbevegelsen.");
+      if (evidence.hasStrangers) localInsights.push("Møter med fremmede gjør teksten sosialt urolig og uforutsigbar.");
+      if (evidence.hasTravel || evidence.hasNomadism) localInsights.push("Reise og nomadisme brukes som bilder på frihet og ny identitet.");
+      if (evidence.hasWriterLife) localInsights.push("Forfatterlivet blir en måte å gi uro form og retning.");
+      if (evidence.hasShameGuilt) localInsights.push("Skyld, skam og selvforsvar skaper tekstens indre friksjon.");
+      if (!localInsights.length) localInsights.push("Dagbokformen bærer en assosiativ bevegelse som kan strammes med tydeligere motivspor.");
     } else {
       localInsights.push(`Mønster: ${keywords[0] || "temaet"} går igjen og bærer teksten.`);
       localInsights.push(reply ? `AHA-responsen peker videre på: ${toSentences(reply)[0] || reply}` : "Videre innsikt kan styrkes med mer konkret tekst.");
