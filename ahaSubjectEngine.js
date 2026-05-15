@@ -14,7 +14,7 @@
   const BASE_PATH = "data/subjects/";
   const INDEX_FILE = "subjects_index.json";
   const cache = { index: null, subjects: {} };
-  const NOISE_TERMS = new Set(["illustrasjon","logo","annonsørinnhold","annonsorinnhold","annonse","sponset","les","også","ogsa","årets","arets","populære","populaere","kjole","kjoler","bryllupsgjesten","sesongens","favoritter","refleksjon","innsikt","samtale","analyse"]);
+  const NOISE_TERMS = new Set(["illustrasjon","logo","annonsørinnhold","annonsorinnhold","annonse","sponset","les","også","ogsa","årets","arets","populære","populaere","kjole","kjoler","bryllupsgjesten","sesongens","favoritter","refleksjon","innsikt","samtale","analyse","nødvendighet","nodvendighet"]);
   function cleanAnalysisText(text) {
     if (global.AHAAnalysisText?.cleanTextForAnalysis) return global.AHAAnalysisText.cleanTextForAnalysis(text);
     return String(text || "");
@@ -227,7 +227,33 @@
       if ((m?.matched_terms || []).length === 0) return;
       deduped.push(m);
     });
-    return deduped.slice(0, maxResults);
+    const sorted = deduped.sort((a, b) => b.score - a.score);
+    if (!sorted.length) return [];
+
+    const bestScore = Number(sorted[0]?.score || 0);
+    const highSignalFloor = Math.max(bestScore * 0.45, bestScore - 4);
+    const strongCandidates = sorted.filter((m) => Number(m?.score || 0) >= highSignalFloor);
+    const maxKept = Math.min(maxResults, 6);
+
+    const familyCounts = new Map();
+    strongCandidates.forEach((m) => {
+      const key = String(m?.subject_id || "unknown");
+      familyCounts.set(key, (familyCounts.get(key) || 0) + 1);
+    });
+    const dominantFamilyEntry = Array.from(familyCounts.entries()).sort((a, b) => b[1] - a[1])[0] || null;
+    const dominantFamily = dominantFamilyEntry?.[1] >= 4 ? dominantFamilyEntry[0] : null;
+
+    const filtered = strongCandidates.filter((m) => {
+      if (!dominantFamily || m?.subject_id === dominantFamily) return true;
+      const terms = Array.isArray(m?.matched_terms) ? m.matched_terms : [];
+      const directOverlap = terms.filter((term) => {
+        const t = String(term || "").toLowerCase().trim();
+        return t && !NOISE_TERMS.has(t) && t.length >= 4;
+      });
+      return directOverlap.length >= 2;
+    });
+
+    return filtered.slice(0, maxKept);
   }
 
   function flattenValue(value) {

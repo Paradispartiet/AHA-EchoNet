@@ -6,7 +6,8 @@
 
   const CHAMBER_KEY = "aha_insight_chamber_v1";
   const EVENTS_KEY = "aha_source_events_v1";
-  const WEAK_CONCEPT_WORDS = new Set(["finnes", "egen", "form", "lærer", "mennesker", "blir", "ikke", "bare", "over", "ligger", "lavt", "noen", "helt", "ennå"]);
+  const WEAK_CONCEPT_WORDS = new Set(["finnes", "egen", "form", "lærer", "mennesker", "blir", "ikke", "bare", "over", "ligger", "lavt", "noen", "helt", "ennå", "refleksjon", "innsikt", "samtale", "analyse", "nødvendighet", "nodvendighet"]);
+  const INSIGHT_NOISE_PATTERN = /\b(les også|les ogsa|annonsørinnhold|annonsorinnhold|logo|illustrasjon|annonse|sponset|kjolefavoritter|bryllupsgjesten)\b/ig;
 
   function safeParse(raw, fallback) {
     try {
@@ -24,6 +25,25 @@
   function asText(value, fallback) {
     const text = String(value || "").trim();
     return text || fallback;
+  }
+
+  function cleanTextForAnalysis(raw) {
+    if (global.AHAAnalysisText?.cleanTextForAnalysis) return global.AHAAnalysisText.cleanTextForAnalysis(raw);
+    return String(raw || "");
+  }
+
+  function sanitizeInsightText(text) {
+    let value = cleanTextForAnalysis(text);
+    value = String(value || "").replace(/les\s+også\s*:[^.!?\n]*(?:[.!?]|$)/ig, " ");
+    value = value.replace(INSIGHT_NOISE_PATTERN, " ");
+    return value.replace(/\s+/g, " ").trim();
+  }
+
+  function isMostlyNoise(text) {
+    const tokens = String(text || "").toLowerCase().split(/\s+/).filter(Boolean);
+    if (!tokens.length) return true;
+    const weak = tokens.filter((token) => WEAK_CONCEPT_WORDS.has(token)).length;
+    return weak >= Math.max(3, Math.ceil(tokens.length * 0.75));
   }
 
   function escapeHtml(value) {
@@ -122,8 +142,8 @@
 
     return {
       raw: insight,
-      title: asText(insight?.title || insight?.heading || insight?.label || base?.title, "Innsikt"),
-      summary: asText(insight?.summary || insight?.text || insight?.content || insight?.claim, "Ingen oppsummering ennå."),
+      title: sanitizeInsightText(asText(insight?.title || insight?.heading || insight?.label || base?.title, "Innsikt")),
+      summary: sanitizeInsightText(asText(insight?.summary || insight?.text || insight?.content || insight?.claim, "Ingen oppsummering ennå.")),
       date: readDateValue(insight),
       sourceEventId: readSourceEventId(insight),
       terms: normalizeTerms(insight),
@@ -333,6 +353,8 @@
   }
 
   function createInsightCard(view, sourceEvent, insight, index) {
+    if (!view?.title && !view?.summary) return null;
+    if (isMostlyNoise(`${view.title} ${view.summary}`)) return null;
     const card = document.createElement("article");
     card.className = "insight-card insight-archive-card";
     const lists = getActiveLists();
@@ -422,6 +444,7 @@
     const q = String(query || "").toLowerCase().trim();
     return insights.filter((ins) => {
       const view = normalizeInsightForView(ins);
+      if (isMostlyNoise(`${view.title} ${view.summary}`)) return false;
       const sourceEvent = findSourceById(eventsById, view.sourceEventId);
       const haystack = [
         view.title,
@@ -544,7 +567,8 @@
           const ins = insight;
           const view = normalizeInsightForView(ins);
           const sourceEvent = findSourceById(sourceEvents, view.sourceEventId);
-          listEl.appendChild(createInsightCard(view, sourceEvent, ins, safeIndex));
+          const card = createInsightCard(view, sourceEvent, ins, safeIndex);
+          if (card) listEl.appendChild(card);
         });
       }
     }

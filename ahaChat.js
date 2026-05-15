@@ -17,7 +17,8 @@
       "decision", "definition", "contradiction", "learning_point", "pattern", "memory", "principle"
     ])
   });
-  const WEAK_CONCEPT_WORDS = new Set(["illustrasjon","logo","annonsørinnhold","annonsorinnhold","annonse","sponset","les","også","ogsa","les også","les ogsa","årets","arets","populære","populaere","kjole","kjoler","bryllupsgjesten","sesongens","favoritter","finnes","egen","form","lærer","mennesker","blir","ikke","bare","over","ligger","lavt","noen","helt","ennå","norske","norsk","moderne","viktig","viktigste","store","små","nye","gamle","tydelig","særlig","mildt","sagt","refleksjon","innsikt","samtale","analyse"]);
+  const WEAK_CONCEPT_WORDS = new Set(["illustrasjon","logo","annonsørinnhold","annonsorinnhold","annonse","sponset","les","også","ogsa","les også","les ogsa","årets","arets","populære","populaere","kjole","kjoler","bryllupsgjesten","sesongens","favoritter","finnes","egen","form","lærer","mennesker","blir","ikke","bare","over","ligger","lavt","noen","helt","ennå","norske","norsk","moderne","viktig","viktigste","store","små","nye","gamle","tydelig","særlig","mildt","sagt","refleksjon","innsikt","samtale","analyse","nødvendighet","nodvendighet"]);
+  const INSIGHT_NOISE_PATTERN = /\b(les også|les ogsa|annonsørinnhold|annonsorinnhold|logo|illustrasjon|annonse|sponset|kjolefavoritter|bryllupsgjesten)\b/ig;
   function getThreadId() {
     return CHAT_THREAD_ID;
   }
@@ -806,8 +807,11 @@
   }
 
   function renderInsightCard(ins) {
-    const title = escHtml(ins.candidate_title || ins.title || "Innsikt");
-    const summary = escHtml(ins.candidate_summary || ins.summary || "");
+    const cleanTitleRaw = sanitizeInsightText(ins.candidate_title || ins.title || "Innsikt");
+    const cleanSummaryRaw = sanitizeInsightText(ins.candidate_summary || ins.summary || "");
+    if (shouldHideInsightCard(cleanTitleRaw, cleanSummaryRaw)) return "";
+    const title = escHtml(cleanTitleRaw || "Innsikt");
+    const summary = escHtml(cleanSummaryRaw || "");
 
     const conceptsHtml = renderLayerChips(filterConceptLabels(ins.concepts).map((label) => ({ label })), (c) => c?.label);
     const patternsHtml = renderLayerChips(ins.patterns, (p) => p?.label || p?.key);
@@ -1451,6 +1455,24 @@
       cleaned.push(stripped);
     });
     return cleaned.join("\n");
+  }
+
+  function sanitizeInsightText(text) {
+    let value = cleanArticleText(text);
+    value = String(value || "").replace(/les\s+også\s*:[^.!?\n]*(?:[.!?]|$)/ig, " ");
+    value = value.replace(INSIGHT_NOISE_PATTERN, " ");
+    return value.replace(/\s+/g, " ").trim();
+  }
+
+  function shouldHideInsightCard(title, summary) {
+    const combined = `${String(title || "")} ${String(summary || "")}`.trim();
+    if (!combined) return true;
+    const normalized = sanitizeInsightText(combined);
+    if (!normalized) return true;
+    const tokens = normalized.toLowerCase().split(/\s+/).filter(Boolean);
+    if (!tokens.length) return true;
+    const weakCount = tokens.filter((token) => WEAK_CONCEPT_WORDS.has(token)).length;
+    return weakCount >= Math.max(3, Math.ceil(tokens.length * 0.75));
   }
 
   function toSentences(text) {

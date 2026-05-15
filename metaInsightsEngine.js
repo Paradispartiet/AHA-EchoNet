@@ -17,6 +17,17 @@
     );
   }
   const ANALYSIS_NOISE_TERMS = new Set(["illustrasjon","logo","annonsørinnhold","annonsorinnhold","annonse","sponset","les også","les ogsa","les","også","ogsa","årets","arets","populære","populaere","kjole","kjoler","bryllupsgjesten","sesongens","favoritter"]);
+  const INSIGHT_NOISE_PATTERN = /\b(les også|les ogsa|annonsørinnhold|annonsorinnhold|logo|illustrasjon|annonse|sponset|kjolefavoritter|bryllupsgjesten)\b/ig;
+  function cleanTextForDisplay(raw) {
+    const base = global.AHAAnalysisText?.cleanTextForAnalysis
+      ? global.AHAAnalysisText.cleanTextForAnalysis(raw)
+      : String(raw || "");
+    return String(base || "")
+      .replace(/les\s+også\s*:[^.!?\n]*(?:[.!?]|$)/ig, " ")
+      .replace(INSIGHT_NOISE_PATTERN, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
 
   function listThemesForSubject(chamber, subjectId) {
     const themes = new Set();
@@ -1003,7 +1014,7 @@
           valence,
           modality,
           time,
-          summary: (ins.summary || ins.title || "").slice(0, 200)
+          summary: cleanTextForDisplay(ins.summary || ins.title || "").slice(0, 200)
         });
       });
     }
@@ -1167,8 +1178,8 @@
           paradox_pairs.push({
             theme_id: a.theme_id || "ukjent",
             shared_concepts: shared,
-            insight_a: { id: a.id, valence: va, summary: (a.summary || a.title || "").slice(0, 200), first_seen: a.first_seen || null },
-            insight_b: { id: b.id, valence: vb, summary: (b.summary || b.title || "").slice(0, 200), first_seen: b.first_seen || null },
+            insight_a: { id: a.id, valence: va, summary: cleanTextForDisplay(a.summary || a.title || "").slice(0, 200), first_seen: a.first_seen || null },
+            insight_b: { id: b.id, valence: vb, summary: cleanTextForDisplay(b.summary || b.title || "").slice(0, 200), first_seen: b.first_seen || null },
             type: "valence_flip"
           });
         }
@@ -1260,7 +1271,7 @@
         return {
           insight_id: ins.id,
           theme_id: ins.theme_id || "ukjent",
-          summary: (ins.summary || ins.title || "").slice(0, 200),
+          summary: cleanTextForDisplay(ins.summary || ins.title || "").slice(0, 200),
           shared_concepts: overlap,
           last_updated: ins.last_updated || ins.first_seen,
           age_days: round3(ageDays),
