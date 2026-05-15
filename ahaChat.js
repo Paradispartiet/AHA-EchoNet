@@ -1374,13 +1374,16 @@
     const daySignals = /(i dag|idag|dagen min|jeg våknet|jeg hentet|jeg leverte|på jobb|etterpå|i kveld|i morges|vi dro|jeg gjorde|formiddag|ettermiddag)/i;
     const literaryDiarySignals = /(jeg trodde|jeg burde|jeg er lei|jeg skjønner|jeg tenkte|her om dagen|i forrigårs|fortsatt|neste uke|ringe|savn|sinne|kjærlighet|skyld|skam|fremmedhet|forfatter|poetisk|skrive|tekst|leve vilt|reise|nomad|kurbad|hageanlegg|leilighet|telefon|park|møte)/i;
     const literaryFragmentSignals = /(scene|stemning|rytme|lys|mørke|rommet|gaten|kropp|språk|vind|lukt|hud|sans)/i;
-    const theorySignals = /(teori|modell|bevissthet|kunnskap|hypotese|begrep|premiss|epistem|system|metode)/i;
+    const theoryStrongSignals = /(teori|modell|bevissthet|hypotese|begrep|premiss|epistem)/i;
+    const theoryWeakSignals = /(kunnskap|system|metode)/i;
 
     const sentenceCount = toSentences(text).length;
     const pronounCount = (text.match(/\bjeg\b/g) || []).length;
 
+    const hasDiaryShape = pronounCount >= 2 && sentenceCount >= 3;
     if (pronounCount >= 3 && literaryDiarySignals.test(text) && sentenceCount >= 4) return "literary_diary";
-    if (theorySignals.test(text)) return "theory_idea";
+    if (theoryStrongSignals.test(text)) return "theory_idea";
+    if (theoryWeakSignals.test(text) && !hasDiaryShape && !literaryDiarySignals.test(text)) return "theory_idea";
     if (daySignals.test(text)) return "day_log";
     if (literaryFragmentSignals.test(text) && sentenceCount >= 2) return "literary_fragment";
     if (pronounCount >= 4 && sentenceCount >= 5 && literaryDiarySignals.test(text)) return "literary_diary";
@@ -1553,7 +1556,9 @@
       if (evidence.hasPlaceScene) reflectionParts.push("Stedsscener gir teksten forankring.");
       if (evidence.hasSRelation) reflectionParts.push("Relasjonen til S samler lengsel og selvforsvar.");
       if (evidence.hasStrangers) reflectionParts.push("Møter med fremmede utvider teksten sosialt.");
-      if (evidence.hasTravel || evidence.hasNomadism) reflectionParts.push("Reise- og nomademotivet åpner mot frihet og drift.");
+      if (evidence.hasTravel && evidence.hasNomadism) reflectionParts.push("Reise- og nomademotivet åpner mot frihet og drift.");
+      else if (evidence.hasTravel) reflectionParts.push("Reisemotivet åpner mot frihet og drift.");
+      else if (evidence.hasNomadism) reflectionParts.push("Nomademotivet åpner mot frihet og drift.");
       if (evidence.hasWriterLife) reflectionParts.push("Forfatterlivet ligger som et selvbilde og en mulig retning.");
       if (evidence.hasShameGuilt) reflectionParts.push("Skyld og skam skaper indre friksjon.");
       if (evidence.matchedThemes.length <= 2) reflectionParts.push("Teksten bør analyseres som dagbokprosa, men trenger tydeligere motivspor for skarpere etterarbeid.");
@@ -1571,7 +1576,7 @@
       let hovedspor = "Fortelleren forsøker å forstå seg selv gjennom dagbokformens bevegelser.";
       if (evidence.hasPlaceScene && evidence.hasInnerMonologue) hovedspor = "Fortelleren bruker ytre observasjoner til å nærme seg egen uro.";
       else if (evidence.hasSRelation) hovedspor = "Relasjonen til S fungerer som tekstens emosjonelle anker.";
-      else if (evidence.hasTravel || evidence.hasNomadism || evidence.hasWriterLife) hovedspor = "Teksten søker mot frihet, bevegelse og et selvbilde som skrivende nomade.";
+      else if (evidence.hasTravel || evidence.hasNomadism || evidence.hasWriterLife) hovedspor = "Teksten søker mot frihet, bevegelse og et skrivende selvbilde.";
       const loose = [];
       if (evidence.hasPhone) loose.push("telefonkontakt");
       if (evidence.hasStrangers) loose.push("møter med fremmede");
@@ -1637,7 +1642,9 @@
       if (evidence.hasPlaceScene && evidence.hasInnerMonologue) localInsights.push("Ytre steder brukes til å speile fortellerens indre bevegelse.");
       if (evidence.hasSRelation) localInsights.push("Relasjonen fungerer som et emosjonelt anker i dagbokbevegelsen.");
       if (evidence.hasStrangers) localInsights.push("Møter med fremmede gjør teksten sosialt urolig og uforutsigbar.");
-      if (evidence.hasTravel || evidence.hasNomadism) localInsights.push("Reise og nomadisme brukes som bilder på frihet og ny identitet.");
+      if (evidence.hasTravel && evidence.hasNomadism) localInsights.push("Reise og nomadisme brukes som bilder på frihet og ny identitet.");
+      else if (evidence.hasTravel) localInsights.push("Reisemotivet brukes som bilde på frihet og ny retning.");
+      else if (evidence.hasNomadism) localInsights.push("Nomadisme brukes som bilde på frihet og identitet i bevegelse.");
       if (evidence.hasWriterLife) localInsights.push("Forfatterlivet blir en måte å gi uro form og retning.");
       if (evidence.hasShameGuilt) localInsights.push("Skyld, skam og selvforsvar skaper tekstens indre friksjon.");
       if (!localInsights.length) localInsights.push("Dagbokformen bærer en assosiativ bevegelse som kan strammes med tydeligere motivspor.");
