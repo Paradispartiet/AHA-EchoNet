@@ -5,6 +5,34 @@
   "use strict";
 
   const CHAMBER_KEY = "aha_insight_chamber_v1";
+  const ANALYSIS_NOISE_TERMS = Object.freeze(["illustrasjon","logo","annonsørinnhold","annonsorinnhold","annonse","sponset","les også","les ogsa","årets","arets","populære","populaere","kjole","kjoler","bryllupsgjesten","sesongens","favoritter"]);
+  const ANALYSIS_NOISE_WORDS = new Set(ANALYSIS_NOISE_TERMS.flatMap((v) => String(v).split(/\s+/)));
+
+  function cleanTextForAnalysis(raw) {
+    const lines = String(raw || "").split(/\r?\n/);
+    const cleaned = [];
+    const seen = new Set();
+    lines.forEach((line) => {
+      let text = String(line || "").trim();
+      if (!text) return;
+      text = text
+        .replace(/(^|[\s(>])les\s+også\s*:[^.!?\n]{0,220}/ig, " ")
+        .replace(/(^|[\s(>])les\s+ogsa\s*:[^.!?\n]{0,220}/ig, " ")
+        .replace(/\b(annonsørinnhold|annonsorinnhold|sponset|annonse)\b/ig, " ")
+        .replace(/illustrasjon\s*:[^.!?\n]{0,220}/ig, " ")
+        .replace(/\blogo\b/ig, " ")
+        .replace(/\s{2,}/g, " ")
+        .trim();
+      if (!text) return;
+      if (/^les\s+også\s*:|^les\s+ogsa\s*:/i.test(text)) return;
+      if (/^(annonsørinnhold|annonsorinnhold|sponset|annonse|logo)$/i.test(text)) return;
+      const lowered = text.toLowerCase().replace(/\s+/g, " ");
+      if (seen.has(lowered)) return;
+      seen.add(lowered);
+      cleaned.push(text);
+    });
+    return cleaned.join("\n");
+  }
 
   function readChamberFallback() {
     try {
@@ -103,7 +131,7 @@
     // det lagrede source-eventet og det opprinnelige input-objektet.
     const src = sourceEvent || input || {};
     const inp = input || {};
-    const text = String(src.text || src.title || inp.text || inp.title || "").trim();
+    const text = cleanTextForAnalysis(src.text || src.title || inp.text || inp.title || "");
 
     if (!text) return { ok: false, reason: "empty_text", sourceEvent };
 
@@ -208,14 +236,15 @@
       const candidateText = isObjectCandidate
         ? String(candidate.text || candidate.summary || candidate.title || "").trim()
         : String(candidate || "").trim();
-      if (!candidateText) return;
+      const normalizedCandidateText = cleanTextForAnalysis(candidateText);
+      if (!normalizedCandidateText) return;
       const candidateConcepts = isObjectCandidate ? normalizeCandidateConcepts(candidate.concepts) : [];
       const candidateThinkers = isObjectCandidate ? normalizeSimpleStringList(candidate.thinkers, 5) : [];
       const candidateTheories = isObjectCandidate ? normalizeSimpleStringList(candidate.theories, 5) : [];
       const candidateTraditions = isObjectCandidate ? normalizeSimpleStringList(candidate.traditions, 5) : [];
       const candidateTheoreticalLinks = isObjectCandidate ? normalizeTheoreticalLinks(candidate.theoretical_links, 5) : [];
       const signal = global.InsightsEngine.createSignalFromMessage(
-        candidateText,
+        normalizedCandidateText,
         subjectId,
         themeId,
         {
@@ -297,7 +326,7 @@
     // ikke gjette emner på nytt for importert materiale.
     if (isHistoryGoSignal(signal)) return;
 
-    const matches = await global.AHAEmneMatcher.matchAllSubjects(signal.text, { topN: 3 });
+    const matches = await global.AHAEmneMatcher.matchAllSubjects(cleanTextForAnalysis(signal.text), { topN: 3 });
     if (!Array.isArray(matches) || !matches.length) return;
 
     const chamber = loadChamber();
@@ -456,5 +485,9 @@
     }
   }
 
-  global.AHAIngest = { ingest, ingestWithCandidates, enrichWithEmneMatcher, enrichWithEmbedding };
+  global.AHAIngest = { ingest, ingestWithCandidates, enrichWithEmneMatcher, enrichWithEmbedding, cleanTextForAnalysis, ANALYSIS_NOISE_TERMS, ANALYSIS_NOISE_WORDS };
+  global.AHAAnalysisText = global.AHAAnalysisText || {};
+  global.AHAAnalysisText.cleanTextForAnalysis = cleanTextForAnalysis;
+  global.AHAAnalysisText.noiseTerms = ANALYSIS_NOISE_TERMS.slice();
+  global.AHAAnalysisText.noiseWords = Array.from(ANALYSIS_NOISE_WORDS);
 })(window);

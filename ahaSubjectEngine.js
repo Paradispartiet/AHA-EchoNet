@@ -14,6 +14,11 @@
   const BASE_PATH = "data/subjects/";
   const INDEX_FILE = "subjects_index.json";
   const cache = { index: null, subjects: {} };
+  const NOISE_TERMS = new Set(["illustrasjon","logo","annonsørinnhold","annonsorinnhold","annonse","sponset","les","også","ogsa","årets","arets","populære","populaere","kjole","kjoler","bryllupsgjesten","sesongens","favoritter"]);
+  function cleanAnalysisText(text) {
+    if (global.AHAAnalysisText?.cleanTextForAnalysis) return global.AHAAnalysisText.cleanTextForAnalysis(text);
+    return String(text || "");
+  }
 
   // ------------------------------------------------------------
   // 1) DATA LOADING LAYER (kan erstattes av felles loader senere)
@@ -109,7 +114,7 @@
   async function matchText(text, options) {
     const source = options?.source || "text";
     const maxResults = Math.min(8, Number(options?.maxResults) || 8);
-    const target = String(text || "").trim();
+    const target = cleanAnalysisText(text).trim();
     if (!target) return [];
 
     const subjects = await loadAllSubjects();
@@ -163,7 +168,7 @@
           .concat(fieldHits.goals.map((term) => termWeight(term, 1)))
           .concat(fieldHits.checkpoints.map((term) => termWeight(term, 1)));
 
-        const uniqueFound = Array.from(new Set(Object.values(fieldHits).flat()));
+        const uniqueFound = Array.from(new Set(Object.values(fieldHits).flat())).filter((term) => !NOISE_TERMS.has(String(term || "").toLowerCase()));
         if (!uniqueFound.length) return;
 
         let score = weightedHits.reduce((sum, value) => sum + value, 0);
@@ -207,6 +212,7 @@
       const key = [m?.subject_id || "", m?.emne_id || "", String(m?.title || m?.subject_label || "").toLowerCase()].join("|");
       if (!key || seen.has(key)) return;
       seen.add(key);
+      if ((m?.matched_terms || []).length === 0) return;
       deduped.push(m);
     });
     return deduped.slice(0, maxResults);

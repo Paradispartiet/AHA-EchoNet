@@ -17,7 +17,7 @@
       "decision", "definition", "contradiction", "learning_point", "pattern", "memory", "principle"
     ])
   });
-  const WEAK_CONCEPT_WORDS = new Set(["illustrasjon","logo","annonsørinnhold","annonsorinnhold","årets","arets","populære","populaere","kjoler","bryllupsgjesten","les","også","ogsa","finnes","egen","form","lærer","mennesker","blir","ikke","bare","over","ligger","lavt","noen","helt","ennå","norske","norsk","moderne","viktig","viktigste","store","små","nye","gamle","tydelig","særlig","mildt","sagt"]);
+  const WEAK_CONCEPT_WORDS = new Set(["illustrasjon","logo","annonsørinnhold","annonsorinnhold","annonse","sponset","les","også","ogsa","les også","les ogsa","årets","arets","populære","populaere","kjole","kjoler","bryllupsgjesten","sesongens","favoritter","finnes","egen","form","lærer","mennesker","blir","ikke","bare","over","ligger","lavt","noen","helt","ennå","norske","norsk","moderne","viktig","viktigste","store","små","nye","gamle","tydelig","særlig","mildt","sagt"]);
   function getThreadId() {
     return CHAT_THREAD_ID;
   }
@@ -1433,6 +1433,9 @@
   }
 
   function cleanArticleText(raw) {
+    if (global.AHAAnalysisText?.cleanTextForAnalysis) {
+      return global.AHAAnalysisText.cleanTextForAnalysis(raw);
+    }
     const lines = String(raw || "").split(/\r?\n/);
     const cleaned = [];
     const seen = new Set();
@@ -1950,8 +1953,9 @@
         try {
           const agent = await askAhaAgent(text);
           const reply = String(agent?.reply || "").trim() || "AHA-agenten returnerte tomt svar.";
+          const analysisText = cleanArticleText(text);
           const subjectMatches = global.AHASubjectEngine?.matchText
-            ? await global.AHASubjectEngine.matchText(`${text} ${reply}`, { source: "chat" })
+            ? await global.AHASubjectEngine.matchText(analysisText, { source: "chat", textType: detectTextType(text) })
             : [];
           appendChat("aha", reply, { categoryChips: suggestCategoryChips(), subjectMatches });
           try { renderAutoOutputs(text, reply); } catch (autoErr) { console.warn("Auto-output feilet", autoErr); }

@@ -1246,8 +1246,14 @@ function createInsightFromSignal(signal) {
   "ikke", "bare", "alt", "selv", "opp", "ned", "mellom",
 
   // feiltokens vi så i testen
-  "ogs", "ell"
+  "ogs", "ell",
+  "illustrasjon","logo","annonsørinnhold","annonsorinnhold","annonse","sponset","les","også","ogsa","årets","arets","populære","populaere","kjole","kjoler","bryllupsgjesten","sesongens","favoritter"
 ]);
+  const ANALYSIS_NOISE_TERMS = new Set(["illustrasjon","logo","annonsørinnhold","annonsorinnhold","annonse","sponset","les også","les ogsa","årets","arets","populære","populaere","kjole","kjoler","bryllupsgjesten","sesongens","favoritter"]);
+  function cleanAnalysisText(text) {
+    if (global.AHAAnalysisText?.cleanTextForAnalysis) return global.AHAAnalysisText.cleanTextForAnalysis(text);
+    return String(text || "");
+  }
 
   // Vanlige norske verb-preteritum/partisipp som ellers blir til
   // "konsepter". Listen skal være kort og treffsikker; alt annet
@@ -1503,6 +1509,7 @@ function createInsightFromSignal(signal) {
   // Samme algoritme som den gamle extractConcepts, men resultatet er
   // eksplisitt rå tokens — IKKE begreper. Brukes til søk/frekvens.
   function extractRawTerms(text) {
+    text = cleanAnalysisText(text);
     if (!text || typeof text !== "string") return [];
 
     const rawTokens = tokenize(text);
@@ -1519,6 +1526,7 @@ function createInsightFromSignal(signal) {
       if (norm.length <= 3) continue;
       if (!/^[a-zæøå]+$/.test(norm)) continue;
       if (norm === "else" || norm === "eller") continue;
+      if (ANALYSIS_NOISE_TERMS.has(norm)) continue;
 
       let entry = termMap.get(norm);
       if (!entry) {
@@ -1554,6 +1562,7 @@ function createInsightFromSignal(signal) {
   // lowercased tekst), deretter et lite, konservativt fallback for
   // enkeltord med abstrakte endelser som ikke står i blocklist.
   function extractConcepts(text) {
+    text = cleanAnalysisText(text);
     if (!text || typeof text !== "string") return [];
 
     const lower = text.toLowerCase();
@@ -1581,7 +1590,7 @@ function createInsightFromSignal(signal) {
       if (norm.length < 6) continue;
       if (STOPWORDS.has(norm)) continue;
       if (VERB_PRETERITUM.has(norm)) continue;
-      if (STRICT_CONCEPT_BLOCKLIST.has(norm)) continue;
+      if (STRICT_CONCEPT_BLOCKLIST.has(norm) || ANALYSIS_NOISE_TERMS.has(norm)) continue;
       if (!endsWithAny(norm, ABSTRACT_SUFFIXES)) continue;
       if (seen.has(norm)) continue;
       concepts.push({
