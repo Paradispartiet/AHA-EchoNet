@@ -1364,15 +1364,169 @@
     return String(text || "").split(/(?<=[.!?])\s+|\n+/).map((part) => part.trim()).filter(Boolean);
   }
 
+  function detectTextType(raw) {
+    const text = String(raw || "").toLowerCase();
+    if (!text) return "general";
+
+    const projectSignals = /(prosjekt|app|funksjon|repo|prompt|merge|backend|frontend|modul|data|layout|kode|deploy|bug|commit|pull request|pr\b)/i;
+    if (projectSignals.test(text)) return "project_note";
+
+    const daySignals = /(i dag|idag|dagen min|jeg våknet|jeg hentet|jeg leverte|på jobb|etterpå|i kveld|i morges|vi dro|jeg gjorde|formiddag|ettermiddag)/i;
+    const literaryDiarySignals = /(jeg trodde|jeg burde|jeg er lei|jeg skjønner|jeg tenkte|her om dagen|i forrigårs|fortsatt|neste uke|ringe|savn|sinne|kjærlighet|skyld|skam|fremmedhet|forfatter|poetisk|skrive|tekst|leve vilt|reise|nomad|kurbad|hageanlegg|leilighet|telefon|park|møte)/i;
+    const literaryFragmentSignals = /(scene|stemning|rytme|lys|mørke|rommet|gaten|kropp|språk|vind|lukt|hud|sans)/i;
+    const theoryStrongSignals = /(teori|modell|bevissthet|hypotese|begrep|premiss|epistem)/i;
+    const theoryWeakSignals = /(kunnskap|system|metode)/i;
+
+    const sentenceCount = toSentences(text).length;
+    const pronounCount = (text.match(/\bjeg\b/g) || []).length;
+
+    const hasDiaryShape = pronounCount >= 2 && sentenceCount >= 3;
+    if (pronounCount >= 3 && literaryDiarySignals.test(text) && sentenceCount >= 4) return "literary_diary";
+    if (theoryStrongSignals.test(text)) return "theory_idea";
+    if (theoryWeakSignals.test(text) && !hasDiaryShape && !literaryDiarySignals.test(text)) return "theory_idea";
+    if (daySignals.test(text)) return "day_log";
+    if (literaryFragmentSignals.test(text) && sentenceCount >= 2) return "literary_fragment";
+    if (pronounCount >= 4 && sentenceCount >= 5 && literaryDiarySignals.test(text)) return "literary_diary";
+    return "general";
+  }
+
+  function buildLiteraryDiarySortItems(raw, sentences) {
+    const text = String(raw || "");
+    const normalizedText = ` ${text.toLowerCase()} `;
+    const categoryDefs = [
+      {
+        label: "Åpningsscene / sted",
+        signals: ["kurbad", "hageanlegg", "park", "leilighet", "sted", "badet", "middelhavet", "utkikkspunkt", "parker"],
+        summary: "Stedsscener forankrer teksten i konkrete omgivelser."
+      },
+      {
+        label: "Relasjonen til S",
+        signals: [" s ", " henne", " ring", "ringer", "telefon", "slutt å ring", "tilbake", "såret", "sint", "kjærlighet", "prinsesse"],
+        summary: "Relasjonen til S er et tydelig spor i dagbokbevegelsen."
+      },
+      {
+        label: "Sosial uro og selvbilde",
+        signals: ["fjern", "snakke med noen", "selvhevdende", "dårlig samvittighet", "ikke jeg heller", "burde", "skam", "skyld", "uro"],
+        summary: "Sosial uro og selvvurdering preger fortellerstemmen."
+      },
+      {
+        label: "Møter med fremmede",
+        signals: ["kongo", "mann", "fyr", "longboard", "sykepleier", "vingård", "kompisen", "venn", "hule", "knivdrap"],
+        summary: "Møter med fremmede utvider tekstens sosiale rom."
+      },
+      {
+        label: "Reise, nomadisme og forfatterliv",
+        signals: ["england", "fotballkamper", "reise", "biarriz", "campe", "middelhavet", "nomader", "forfatter", "poetisk", "leve vilt"],
+        summary: "Reise, nomadisme eller skrivende selvbilde er til stede i teksten."
+      },
+      {
+        label: "Rus og drift",
+        signals: ["røyka", "weed", "feber", "trøkk", "vilt"],
+        summary: "Rus eller intensitet markerer et eget driftsspor."
+      },
+      {
+        label: "Skyld, skam og selvforsvar",
+        signals: ["dårlig samvittighet", "skyld", "skam", "såret", "sint", "dårlig behandlet", "behandlet henne", "ingen rett"],
+        summary: "Skyld, skam eller selvforsvar skaper tydelig indre friksjon."
+      }
+    ];
+
+    const normalize = (v) => ` ${String(v || "").toLowerCase()} `;
+    const matchesForCategory = (def) => {
+      const found = (sentences || []).find((line) => {
+        const normalized = normalize(line);
+        return def.signals.some((signal) => normalized.includes(normalize(signal)));
+      });
+      return found ? short(found) : "";
+    };
+
+    const sortItems = categoryDefs
+      .map((def) => {
+        const hit = matchesForCategory(def);
+        if (!hit) return null;
+        if (def.label === "Relasjonen til S") {
+          const hasConflict = ["slutt å ring", "såret", "sint", "dårlig behandlet", "ingen rett"].some((s) => normalizedText.includes(normalize(s)));
+          if (hasConflict) return { label: def.label, text: "Relasjonen til S kombinerer kontaktbehov med tydelig konflikt." };
+          return { label: def.label, text: "Relasjonen til S er et tydelig relasjonelt spor." };
+        }
+        return { label: def.label, text: def.summary };
+      })
+      .filter(Boolean)
+      .slice(0, 5);
+
+    if (sortItems.length) return sortItems;
+    return [
+      { label: "Scener og observasjoner", text: "Teksten bygger mening gjennom konkrete scener og observerende blikk." },
+      { label: "Relasjonelt spor", text: "Relasjoner og kontaktforsøk driver den indre bevegelsen fremover." },
+      { label: "Indre uro", text: "Understrømmen er uro, selvforklaring og søken etter frihet." }
+    ];
+  }
+
+  function collectLiteraryDiaryEvidence(raw, sentences) {
+    const text = String(raw || "");
+    const normalizedText = ` ${text.toLowerCase()} `;
+    const normalize = (v) => ` ${String(v || "").toLowerCase()} `;
+    const hasAny = (signals) => signals.some((signal) => normalizedText.includes(normalize(signal)));
+    const matchLine = (signals) => (sentences || []).find((line) => {
+      const norm = normalize(line);
+      return signals.some((signal) => norm.includes(normalize(signal)));
+    }) || "";
+
+    const evidence = {
+      hasPlaceScene: hasAny(["kurbad", "hageanlegg", "park", "leilighet", "badet", "middelhavet", "utkikkspunkt", "sted", "by"]),
+      hasSRelation: hasAny([" s ", " henne", "tilbake", "såret", "sint", "prinsesse", "kjærlighet", "slutt å ring"]),
+      hasPhone: hasAny(["ring", "ringer", "telefon", "svarte", "hørte", "slutt å ring"]),
+      hasStrangers: hasAny(["kongo", "mann", "fyr", "longboard", "sykepleier", "vingård", "kompisen", "venn", "hule", "knivdrap"]),
+      hasTravel: hasAny(["england", "biarriz", "campe", "middelhavet", "reise", "fotballkamper"]),
+      hasNomadism: hasAny(["nomade", "nomader", "nomadisme"]),
+      hasWriterLife: hasAny(["forfatter", "poetisk", "skrive", "tekst", "leve vilt"]),
+      hasShameGuilt: hasAny(["skyld", "skam", "dårlig samvittighet", "såret", "sint", "dårlig behandlet", "ingen rett"]),
+      hasSocialUnease: hasAny(["fjern", "snakke med noen", "selvhevdende", "ikke jeg heller", "fremmedhet", "uro"]),
+      hasSubstanceOrIntensity: hasAny(["røyka", "weed", "feber", "trøkk", "vilt"]),
+      hasInnerMonologue: hasAny(["jeg trodde", "jeg burde", "jeg er lei", "jeg skjønner", "jeg tenkte", "jeg burde tenkt"]),
+      matchedThemes: []
+    };
+
+    const themes = [];
+    if (evidence.hasPlaceScene) themes.push("sted");
+    if (evidence.hasSRelation) themes.push("relasjon");
+    if (evidence.hasPhone) themes.push("telefonkontakt");
+    if (evidence.hasStrangers) themes.push("møter");
+    if (evidence.hasTravel) themes.push("reise");
+    if (evidence.hasNomadism) themes.push("nomadisme");
+    if (evidence.hasWriterLife) themes.push("forfatterliv");
+    if (evidence.hasShameGuilt) themes.push("skyld/skam");
+    if (evidence.hasSocialUnease) themes.push("sosial uro");
+    if (evidence.hasSubstanceOrIntensity) themes.push("intensitet");
+    if (evidence.hasInnerMonologue) themes.push("indre monolog");
+    evidence.matchedThemes = themes;
+    evidence.textSnippets = {
+      place: matchLine(["kurbad", "hageanlegg", "park", "leilighet", "badet", "middelhavet", "utkikkspunkt", "sted", "by"]),
+      relation: matchLine([" s ", " henne", "tilbake", "såret", "sint", "prinsesse", "kjærlighet", "slutt å ring"]),
+      phone: matchLine(["ring", "ringer", "telefon", "svarte", "hørte", "slutt å ring"])
+    };
+    return evidence;
+  }
+
   function takeKeywords(text, maxItems) {
-    const tokens = String(text || "").toLowerCase().match(/[a-zæøå0-9]{4,}/g) || [];
-    const stop = new Set(["dette","dager","fordi","skulle","kanskje","hvorfor","etter","veldig","ikke","bare","også","med","som","skal","være","mellom"]);
+    const tokens = String(text || "").toLowerCase().match(/[a-zæøå0-9]{2,}/g) || [];
+    const stop = new Set(["litt","henne","han","hun","hadde","har","var","være","vært","blir","ble","blitt","dette","denne","disse","fordi","kanskje","hvorfor","etter","veldig","ikke","bare","også","med","som","skal","mellom","uten","noen","noe","alle","der","her","nå","fortsatt","først","tredje","runden","gammel","gamle","unge","godt","dårlig","helt","ennå","eller","men","jeg","meg","min","mine","du","deg","din","de","dem","den","det","en","ei","et","på","i","av","til","fra","og","å"]);
+    const weakVerbs = new Set(["gjorde","gjør","gjort","tenkte","tenker","synes","sier","sa","våknet","hentet","leverte","dro","kom","går","gikk"]);
+    const whitelist = new Set(["kurbad","hageanlegg","dame","telefon","kongo","relasjon","kjærlighet","skyld","skam","fremmedhet","ensomhet","uro","observasjon","nomade","nomadisme","begjær","forfatter","forfatterliv","reise","frihet","kontroll","rus","kropp","språk","møte","minner","konflikt","lengsel","by","park","sted","leilighet","samtale","vennskap","risiko"]);
     const counts = new Map();
+    const scores = new Map();
     tokens.forEach((token) => {
+      if (token.length < 4) return;
       if (stop.has(token)) return;
-      counts.set(token, (counts.get(token) || 0) + 1);
+      if (weakVerbs.has(token)) return;
+      const freq = (counts.get(token) || 0) + 1;
+      counts.set(token, freq);
+      let score = freq;
+      if (whitelist.has(token)) score += 3;
+      if (token.length >= 8) score += 1;
+      scores.set(token, score);
     });
-    return Array.from(counts.entries()).sort((a,b)=>b[1]-a[1]).slice(0, maxItems).map(([word]) => word);
+    return Array.from(scores.entries()).sort((a,b)=>b[1]-a[1]).slice(0, maxItems).map(([word]) => word);
   }
 
   function loadAutoOutputs() {
@@ -1385,41 +1539,126 @@
   function buildAutoOutputs(userText, ahaReply) {
     const raw = String(userText || "").trim();
     const reply = String(ahaReply || "").trim();
+    const textType = detectTextType(raw);
     const sentences = toSentences(raw);
     const keywords = takeKeywords(raw, 5);
-    const hasDaySignals = /(i dag|idag|morges|formiddag|ettermiddag|kveld|i natt|jobben|møte|trening|middag)/i.test(raw) || sentences.length >= 4;
-    const reflection = raw.length < 32
-      ? "Jeg ser et frø av et tema her. Del litt mer om hva som står på spill, så kan jeg speile retningen tydeligere."
-      : `Du jobber trolig med ${keywords[0] || "et viktig tema"}, og spenningen virker å stå mellom ${keywords[1] || "ønske"} og ${keywords[2] || "gjennomføring"}.`;
-    const sortItems = (keywords.length ? keywords : ["retning","utfordring","handling"]).slice(0, 4).map((key, idx) => ({
-      label: key.charAt(0).toUpperCase() + key.slice(1),
-      text: sentences[idx] || `Dette peker på et tema rundt ${key}.`
-    }));
-    const day = hasDaySignals
-      ? (sentences.slice(0,3).join(" ") || "Dagen inneholder flere spor som henger sammen.")
-      : "Ikke nok dagsmateriale ennå.";
-    const thoughts = {
-      hovedspor: sentences[0] || "Trenger mer tekst for å finne hovedspor.",
-      lose_tanker: sentences.slice(1,3).join(" ") || "Noen løse tanker vil dukke opp når du skriver litt mer.",
-      neste_steg: `Ta ett konkret neste steg: ${keywords[0] ? `skriv hva du vil oppnå med ${keywords[0]}` : "beskriv ønsket resultat i én setning"}.`
-    };
-    const list = sentences.slice(0,5).map((item) => item.replace(/^[-•]\s*/, ""));
-    if (!list.length) list.push("Legg inn litt mer kontekst, så lager jeg en skarp liste.");
-    const chamberInsights = currentInsights().slice(-3).map((ins) => ins.summary || ins.title).filter(Boolean);
-    const insightCards = chamberInsights.length
-      ? chamberInsights.slice(0,3)
-      : [
-          `Mønster: ${keywords[0] || "temaet"} går igjen og kan være en nøkkel for fremdrift.`,
-          `Spenning: Du vil både skape klarhet og beholde fleksibilitet i veien videre.`,
-          reply ? `Responsen fra AHA peker mot: ${toSentences(reply)[0] || reply}` : "Skriv litt mer for å få dypere innsikter."
-        ].slice(0,3);
-    const path = [
-      `Forstå: Sett ord på kjernen i "${keywords[0] || "situasjonen"}".`,
-      `Strukturere: Del inn i 2-3 spor og velg hva som haster mest.`,
-      `Gjøre videre: Avtal én handling du kan gjøre i løpet av neste døgn.`
-    ];
+    const baseList = sentences.slice(0,6).map((item) => item.replace(/^[-•]\s*/, ""));
+    let reflection = "Jeg ser et tydelig tema. Del gjerne litt mer for skarpere sortering.";
+    let sortItems = (keywords.length ? keywords : ["retning","utfordring","handling"]).slice(0, 4).map((key, idx) => ({ label: key.charAt(0).toUpperCase() + key.slice(1), text: sentences[idx] || `Dette peker på et tema rundt ${key}.` }));
+    let day = "Ikke nok dagsmateriale ennå.";
+    let thoughts = { hovedspor: sentences[0] || "Trenger mer tekst for å finne hovedspor.", lose_tanker: sentences.slice(1,3).join(" ") || "Noen løse tanker vil dukke opp når du skriver mer.", neste_steg: "Velg ett tydelig spor og skriv én presis setning videre." };
+    let list = baseList;
+    let path = ["Forstå hva teksten egentlig handler om.", "Sorter materialet i 2–3 tydelige spor.", "Velg ett neste grep og skriv videre."];
 
-    return { reflection, sortItems, day, thoughts, list, insightCards, path };
+    if (textType === "literary_diary") {
+      const evidence = collectLiteraryDiaryEvidence(raw, sentences);
+      const reflectionParts = ["Dette er en dagboktekst der fortelleren beveger seg mellom observasjon og selvforklaring."];
+      if (evidence.hasPlaceScene) reflectionParts.push("Stedsscener gir teksten forankring.");
+      if (evidence.hasSRelation) reflectionParts.push("Relasjonen til S samler lengsel og selvforsvar.");
+      if (evidence.hasStrangers) reflectionParts.push("Møter med fremmede utvider teksten sosialt.");
+      if (evidence.hasTravel && evidence.hasNomadism) reflectionParts.push("Reise- og nomademotivet åpner mot frihet og drift.");
+      else if (evidence.hasTravel) reflectionParts.push("Reisemotivet åpner mot frihet og drift.");
+      else if (evidence.hasNomadism) reflectionParts.push("Nomademotivet åpner mot frihet og drift.");
+      if (evidence.hasWriterLife) reflectionParts.push("Forfatterlivet ligger som et selvbilde og en mulig retning.");
+      if (evidence.hasShameGuilt) reflectionParts.push("Skyld og skam skaper indre friksjon.");
+      if (evidence.matchedThemes.length <= 2) reflectionParts.push("Teksten bør analyseres som dagbokprosa, men trenger tydeligere motivspor for skarpere etterarbeid.");
+      reflection = reflectionParts.join(" ");
+      sortItems = buildLiteraryDiarySortItems(raw, sentences);
+      const dayBits = [];
+      if (evidence.hasPlaceScene) dayBits.push("sted");
+      if (evidence.hasSRelation) dayBits.push("relasjon");
+      if (evidence.hasPhone) dayBits.push("telefonkontakt");
+      if (evidence.hasStrangers) dayBits.push("møtepunkt");
+      if (evidence.hasTravel || evidence.hasNomadism) dayBits.push("drift mot frihet");
+      if (evidence.hasShameGuilt || evidence.hasSocialUnease) dayBits.push("indre uro");
+      day = dayBits.length ? `Dagbokfragmentet beveger seg gjennom ${dayBits.slice(0, 4).join(", ")}.` : "Dagbokfragmentet samler observasjoner og indre vurderinger i en assosiativ bevegelse.";
+
+      let hovedspor = "Fortelleren forsøker å forstå seg selv gjennom dagbokformens bevegelser.";
+      if (evidence.hasPlaceScene && evidence.hasInnerMonologue) hovedspor = "Fortelleren bruker ytre observasjoner til å nærme seg egen uro.";
+      else if (evidence.hasSRelation) hovedspor = "Relasjonen til S fungerer som tekstens emosjonelle anker.";
+      else if (evidence.hasTravel || evidence.hasNomadism || evidence.hasWriterLife) hovedspor = "Teksten søker mot frihet, bevegelse og et skrivende selvbilde.";
+      const loose = [];
+      if (evidence.hasPhone) loose.push("telefonkontakt");
+      if (evidence.hasStrangers) loose.push("møter med fremmede");
+      if (evidence.hasShameGuilt) loose.push("skyld/skam");
+      if (evidence.hasSocialUnease) loose.push("sosial uro");
+      if (evidence.hasWriterLife) loose.push("forfatterspor");
+      const loseTanker = loose.length ? `Løse spor i teksten: ${loose.slice(0, 4).join(", ")}.` : "Løse spor finnes, men motivene er foreløpig svakt markert.";
+      let nesteSteg = "Velg ett motiv og la de andre scenene speile det.";
+      if (evidence.hasSRelation) nesteSteg = "Velg om relasjonen skal være tekstens hovedakse eller bare ett spor.";
+      else if (evidence.hasTravel || evidence.hasNomadism) nesteSteg = "Velg om reisemotivet skal bære slutten.";
+      else if (evidence.hasPlaceScene) nesteSteg = "Stram stedsscenene slik at de peker mot samme indre bevegelse.";
+      thoughts = { hovedspor, lose_tanker: loseTanker, neste_steg: nesteSteg };
+
+      const evidenceList = [];
+      if (evidence.hasPlaceScene) evidenceList.push("Stedsscener åpner dagbokbevegelsen.");
+      if (evidence.hasSRelation) evidenceList.push("Relasjonen til S skaper emosjonelt anker.");
+      if (evidence.hasPhone) evidenceList.push("Telefonkontakt gir konflikt og nærhet på avstand.");
+      if (evidence.hasStrangers) evidenceList.push("Møter med fremmede bryter teksten opp.");
+      if (evidence.hasTravel) evidenceList.push("Reiseplaner åpner mot frihet og forflytning.");
+      if (evidence.hasWriterLife) evidenceList.push("Forfatterliv brukes som selvbilde.");
+      if (evidence.hasShameGuilt) evidenceList.push("Skyld/skam gir indre friksjon.");
+      if (evidence.hasSocialUnease) evidenceList.push("Sosial uro preger fortellerens selvbilde.");
+      if (evidenceList.length < 3) {
+        evidenceList.push("Jeg-fortelleren samler observasjoner og vurderinger.");
+        evidenceList.push("Teksten beveger seg assosiativt mer enn lineært.");
+      }
+      list = evidenceList.slice(0, 6);
+
+      const motive = evidence.hasSRelation ? "relasjon" : evidence.hasTravel ? "reise" : evidence.hasPlaceScene ? "stedsscener" : evidence.hasInnerMonologue ? "indre monolog" : "observasjon";
+      const structure = evidence.hasPlaceScene ? "sted" : evidence.hasSRelation ? "relasjon" : evidence.hasStrangers ? "møte" : evidence.hasInnerMonologue ? "indre monolog" : "vandring";
+      const tighten = evidence.hasSRelation
+        ? "Avklar om relasjonen skal være hovedakse eller sidebevegelse."
+        : evidence.hasPlaceScene
+          ? "La stedsscenene peke tydeligere mot samme indre uro."
+          : evidence.hasTravel
+            ? "La reisen fungere som avslutning eller kontrapunkt."
+            : "Kutt forklaringer som gjentar samme selvforsvar.";
+      path = [
+        `Finn bærende motiv: ${motive}.`,
+        `Velg struktur: ${structure}.`,
+        `Stram teksten: ${tighten}`
+      ];
+    } else if (textType === "day_log") {
+      reflection = `Dette leses som en dagslogg med fokus på ${keywords[0] || "hendelser"}, og et tydelig behov for å se mønster i dagen.`;
+      day = `Kort dagsoppsummering: ${sentences.slice(0,2).join(" ") || "Flere hendelser gjennom dagen."} Viktigst nå: ${keywords[0] || "ett tydelig neste punkt"}.`;
+      path = ["Oppsummer hendelsene kort.", "Finn ett mønster eller én følelse som gikk igjen.", "Velg én ting du tar med videre i morgen."];
+    } else if (textType === "literary_fragment") {
+      reflection = "Teksten drives av scene, motiv, sansning og rytme mer enn av dagboklogg. Konflikten ligger i spenningen mellom stemning og bevegelse.";
+      day = "Ikke dagbokmateriale – ingen dagsoppsummering laget.";
+    } else if (textType === "project_note") {
+      reflection = "Dette er et prosjektnotat med tydelig problem og mål. Neste gevinst ligger i å koble løsning til konkrete filer/funksjoner.";
+      sortItems = ["Problem","Løsning","Filer/funksjoner","Neste steg"].map((label, idx) => ({ label, text: sentences[idx] || "Trenger kort presisering i teksten." }));
+      path = ["Definer målet i én setning.", "Sorter oppgaver etter problem/løsning/filer.", "Velg neste konkrete handling."];
+    } else if (textType === "theory_idea") {
+      reflection = "Dette er en idé-/teoritekst der begreper og premisser bygges opp stegvis.";
+      sortItems = ["Hovedpåstand","Begreper","Premisser","Mulige innvendinger","Videre utvikling"].slice(0,4).map((label, idx) => ({ label, text: sentences[idx] || "Presiser dette punktet videre." }));
+    }
+
+    if (!list.length) list.push("Legg inn litt mer kontekst, så lager jeg en skarp liste.");
+    const localInsights = [];
+    if (textType === "literary_diary") {
+      const evidence = collectLiteraryDiaryEvidence(raw, sentences);
+      if (evidence.hasPlaceScene && evidence.hasInnerMonologue) localInsights.push("Ytre steder brukes til å speile fortellerens indre bevegelse.");
+      if (evidence.hasSRelation) localInsights.push("Relasjonen fungerer som et emosjonelt anker i dagbokbevegelsen.");
+      if (evidence.hasStrangers) localInsights.push("Møter med fremmede gjør teksten sosialt urolig og uforutsigbar.");
+      if (evidence.hasTravel && evidence.hasNomadism) localInsights.push("Reise og nomadisme brukes som bilder på frihet og ny identitet.");
+      else if (evidence.hasTravel) localInsights.push("Reisemotivet brukes som bilde på frihet og ny retning.");
+      else if (evidence.hasNomadism) localInsights.push("Nomadisme brukes som bilde på frihet og identitet i bevegelse.");
+      if (evidence.hasWriterLife) localInsights.push("Forfatterlivet blir en måte å gi uro form og retning.");
+      if (evidence.hasShameGuilt) localInsights.push("Skyld, skam og selvforsvar skaper tekstens indre friksjon.");
+      if (!localInsights.length) localInsights.push("Dagbokformen bærer en assosiativ bevegelse som kan strammes med tydeligere motivspor.");
+    } else {
+      localInsights.push(`Mønster: ${keywords[0] || "temaet"} går igjen og bærer teksten.`);
+      localInsights.push(reply ? `AHA-responsen peker videre på: ${toSentences(reply)[0] || reply}` : "Videre innsikt kan styrkes med mer konkret tekst.");
+    }
+    const overlap = currentInsights()
+      .map((ins) => String(ins.summary || ins.title || ""))
+      .filter((text) => keywords.some((k) => text.toLowerCase().includes(k)))
+      .slice(-2);
+    const insightCards = [...localInsights, ...overlap].slice(0, 3);
+
+    return { textType, reflection, sortItems, day, thoughts, list: list.slice(0, 6), insightCards, path: path.slice(0, 3) };
   }
 
   function renderAutoOutputPayload(payload) {
