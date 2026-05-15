@@ -158,15 +158,21 @@
       const idEl = document.getElementById("aha-chat-profile-id");
       const avatarEl = document.getElementById("aha-chat-profile-avatar");
 
-      function updateProfileCard() {
-        const fallbackName = localStorage.getItem("aha_profile_name") || "Min AHA-profil";
-        if (nameEl) nameEl.textContent = fallbackName;
+      function updateProfileCard(event) {
+        const detail = event && event.detail ? event.detail : null;
+        const eventDisplayName = String(detail?.profile?.display_name || "").trim();
+        const eventUserId = String(detail?.user?.id || "").trim();
+        const cachedName = String(localStorage.getItem("aha_profile_name") || "").trim();
+        const cachedProfileId = String(localStorage.getItem("aha_profile_id") || "").trim();
 
-        const cachedProfileId = localStorage.getItem("aha_profile_id");
-        if (idEl) idEl.textContent = cachedProfileId || "Ikke innlogget";
-        if (statusEl) statusEl.textContent = cachedProfileId ? "Logget inn" : "Lokal modus";
+        const displayName = eventDisplayName || cachedName || "Min AHA-profil";
+        const profileId = eventUserId || cachedProfileId;
 
-        const initial = String(fallbackName || "A").trim().charAt(0).toUpperCase() || "A";
+        if (nameEl) nameEl.textContent = displayName;
+        if (idEl) idEl.textContent = profileId || "Ikke innlogget";
+        if (statusEl) statusEl.textContent = profileId ? "Logget inn" : "Lokal modus";
+
+        const initial = String(displayName || "A").trim().charAt(0).toUpperCase() || "A";
         if (avatarEl) avatarEl.textContent = initial;
       }
 
