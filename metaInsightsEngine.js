@@ -1284,7 +1284,7 @@
           top_neighbors: neighbors.slice(0, 3),
           reason:
             neighbors.length === 0
-              ? "Konseptet dukker opp, men kobler seg ikke til noe annet ennå."
+              ? "Begrepet er nytt i materialet og trenger flere tekster før AHA kan koble det sikkert."
               : "Konseptet er smalt forankret — bare ett tema bærer det."
         };
       })
