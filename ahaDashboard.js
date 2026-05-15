@@ -309,13 +309,18 @@
 
     const form = $("aha-auth-form");
     const signOut = $("aha-auth-signout");
-    const loginCard = $("aha-login-card");
+    const loginModal = $("aha-login-modal");
+    const loginOpen = $("aha-open-login-modal");
     const profileNameForm = $("aha-profile-name-form");
     const nameInput = $("aha-profile-name-input");
 
     form?.classList.toggle("is-hidden", signedIn);
     signOut?.classList.toggle("is-hidden", !signedIn);
-    loginCard?.classList.toggle("is-hidden", signedIn);
+    loginOpen?.classList.toggle("is-hidden", signedIn);
+    if (signedIn) {
+      loginModal?.classList.add("is-hidden");
+      loginModal?.setAttribute("aria-hidden", "true");
+    }
     profileNameForm?.classList.toggle("is-hidden", !missingProfile);
 
     if (nameInput && displayName) nameInput.value = displayName;
@@ -449,8 +454,34 @@
     form.addEventListener("submit", saveProfileName);
   }
 
+  function bindLoginModal() {
+    const modal = $("aha-login-modal");
+    const openButton = $("aha-open-login-modal");
+    const closeButton = $("aha-close-login-modal");
+    const backdrop = $("aha-login-modal-backdrop");
+    if (!modal || !openButton || !closeButton || !backdrop || modal.dataset.ahaDashboardBound === "true") return;
+    modal.dataset.ahaDashboardBound = "true";
+
+    const closeModal = () => {
+      modal.classList.add("is-hidden");
+      modal.setAttribute("aria-hidden", "true");
+    };
+    const openModal = () => {
+      modal.classList.remove("is-hidden");
+      modal.setAttribute("aria-hidden", "false");
+    };
+
+    openButton.addEventListener("click", openModal);
+    closeButton.addEventListener("click", closeModal);
+    backdrop.addEventListener("click", closeModal);
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") closeModal();
+    });
+  }
+
   function bind() {
     bindProfileNameForm();
+    bindLoginModal();
     renderDashboard();
     window.addEventListener("aha:source-event-added", renderDashboard);
     window.addEventListener("aha:historygo-imported", renderDashboard);

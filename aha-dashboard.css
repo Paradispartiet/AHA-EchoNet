@@ -734,3 +734,55 @@ html, body { max-width: 100%; overflow-x: hidden; }
   .aha-profile-stats { grid-template-columns: repeat(2, minmax(0,1fr)); }
   .aha-mobile-nav { bottom: 10px; }
 }
+
+/* Compact header + login modal layout (post-PR #129 cleanup) */
+.aha-app-header {
+  position: sticky;
+  top: 10px;
+  z-index: 25;
+  grid-template-columns: minmax(0,1fr) minmax(0,1fr) minmax(0,1.4fr);
+  gap: 10px 16px;
+  align-items: center;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+}
+.aha-header-meta { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+.aha-header-profile { display:flex; align-items:center; gap:10px; min-width:0; }
+.aha-header-profile .aha-profile-avatar { width:44px; height:44px; font-size:1rem; box-shadow:none; }
+.aha-header-profile .aha-profile-copy { min-width:0; }
+.aha-header-profile #aha-profile-name { display:block; font-size:1rem; line-height:1.2; }
+.aha-header-profile #aha-profile-subtitle,
+.aha-header-profile #aha-profile-connection { margin:2px 0 0; font-size:.8rem; }
+.aha-header-profile .aha-profile-id-row { margin-top:6px; padding:4px 9px; font-size:.74rem; }
+.aha-header-actions { justify-content:flex-end; flex-wrap:wrap; }
+.aha-header-actions .aha-cta-primary,
+.aha-header-actions .aha-cta-secondary,
+.aha-header-actions .aha-ghost-button { min-height:38px; padding:8px 12px; }
+.aha-profile-name-form { margin:0; grid-column: 1 / -1; padding:10px; border-radius:12px; background:rgba(255,255,255,.05); }
+.aha-profile-name-form label { margin-bottom:6px; font-size:.82rem; }
+
+.aha-login-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  padding: 16px 12px;
+}
+.aha-login-modal.is-hidden { display:none !important; }
+.aha-login-modal-backdrop { position:absolute; inset:0; background:rgba(3,4,8,.72); }
+.aha-login-modal-dialog {
+  position: relative;
+  z-index: 1;
+  width: min(520px, calc(100vw - 24px));
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+  padding: 18px;
+  border-radius: 22px;
+}
+.aha-login-close { margin-left:auto; margin-bottom:10px; display:flex; }
+
+@media (max-width: 980px) {
+  .aha-app-header { grid-template-columns: 1fr; top: 0; }
+  .aha-header-actions { justify-content:flex-start; }
+}
