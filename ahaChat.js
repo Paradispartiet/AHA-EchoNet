@@ -1172,6 +1172,10 @@
     </section>`;
   }
 
+  function chamberHasKnowledgeMapData(chamber) {
+    return Boolean(chamber && Array.isArray(chamber.insights) && chamber.insights.length);
+  }
+
   function renderMetaProfile(profile, chamber) {
     if (!profile || typeof profile !== "object") return "";
 
@@ -1252,6 +1256,24 @@
     out("");
   }
 
+  function showKnowledgeMap() {
+    const chamber = loadChamberFromStorage();
+    const hasData = chamberHasKnowledgeMapData(chamber);
+    if (!global.MetaInsightsEngine?.buildUserMetaProfile) {
+      out("MetaInsightsEngine mangler buildUserMetaProfile.");
+      return;
+    }
+    const profile = global.MetaInsightsEngine.buildUserMetaProfile(chamber, SUBJECT_ID);
+    const content = hasData
+      ? renderKnowledgeMapSection(chamber, profile)
+      : `<section class="knowledge-map-block">
+          <h3>Kunnskapskart</h3>
+          <p class="meta-empty">AHA har ikke nok innsikter til å bygge kunnskapskart ennå.</p>
+        </section>`;
+    renderPanel(`<div class="insight-panel">${content}</div>`);
+    out("");
+  }
+
   function reset() {
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(HIGHLIGHTS_STORAGE_KEY);
@@ -1316,6 +1338,7 @@
     document.getElementById("btn-status")?.addEventListener("click", showStatus);
     document.getElementById("btn-concepts")?.addEventListener("click", showConcepts);
     document.getElementById("btn-meta")?.addEventListener("click", showMeta);
+    document.getElementById("btn-knowledge-map")?.addEventListener("click", showKnowledgeMap);
     document.getElementById("btn-export")?.addEventListener("click", () => out(JSON.stringify(loadChamberFromStorage(), null, 2)));
     document.getElementById("btn-reset")?.addEventListener("click", reset);
     bindActionChips();
