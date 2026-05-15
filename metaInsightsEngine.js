@@ -18,15 +18,25 @@
   }
   const ANALYSIS_NOISE_TERMS = new Set(["illustrasjon","logo","annonsørinnhold","annonsorinnhold","annonse","sponset","les også","les ogsa","les","også","ogsa","årets","arets","populære","populaere","kjole","kjoler","bryllupsgjesten","sesongens","favoritter"]);
   const INSIGHT_NOISE_PATTERN = /\b(les også|les ogsa|annonsørinnhold|annonsorinnhold|logo|illustrasjon|annonse|sponset|kjolefavoritter|bryllupsgjesten)\b/ig;
+  const LEADING_PUNCTUATION_PATTERN = /^[\s"'“”«».,:;|\-–—]+/;
+  const LES_OGSA_TEASER_PATTERN = /(«|»|"|')?\s*les\s+også\s*:?\s*[^.!?\n]*(?:[.!?]|$)/ig;
+  const TEASER_TITLE_PATTERN = /^(når\s+vekst\s+blir\s+en\s+trussel)\b/i;
   function cleanTextForDisplay(raw) {
     const base = global.AHAAnalysisText?.cleanTextForAnalysis
       ? global.AHAAnalysisText.cleanTextForAnalysis(raw)
       : String(raw || "");
-    return String(base || "")
-      .replace(/les\s+også\s*:[^.!?\n]*(?:[.!?]|$)/ig, " ")
+    let value = String(base || "")
+      .replace(LES_OGSA_TEASER_PATTERN, " ")
       .replace(INSIGHT_NOISE_PATTERN, " ")
       .replace(/\s+/g, " ")
       .trim();
+    value = value.replace(LEADING_PUNCTUATION_PATTERN, "").trim();
+    if (TEASER_TITLE_PATTERN.test(value)) {
+      const nextSentence = value.search(/[.!?]\s+[A-ZÆØÅ]/);
+      value = nextSentence >= 0 ? value.slice(nextSentence + 1) : "";
+      value = value.replace(LEADING_PUNCTUATION_PATTERN, "").trim();
+    }
+    return /^[\s"'“”«».,:;|\-–—]+$/.test(value) ? "" : value;
   }
 
   function listThemesForSubject(chamber, subjectId) {

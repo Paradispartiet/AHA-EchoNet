@@ -103,6 +103,12 @@
 
   const GENERIC_TERMS = new Set(["kunnskap", "mennesker", "sted", "samfunn"]);
   const SEMANTIC_FIELDS = ["title", "core", "keywords", "thinkers", "summary", "description", "goals", "checkpoints"];
+  function countRelevantTerms(terms) {
+    return (Array.isArray(terms) ? terms : []).filter((term) => {
+      const t = String(term || "").toLowerCase().trim();
+      return t && !NOISE_TERMS.has(t) && !GENERIC_TERMS.has(t) && t.length >= 3;
+    }).length;
+  }
 
   function termWeight(term, fieldBoost) {
     const token = String(term || "").trim().toLowerCase();
@@ -231,28 +237,31 @@
     if (!sorted.length) return [];
 
     const bestScore = Number(sorted[0]?.score || 0);
-    const highSignalFloor = Math.max(bestScore * 0.45, bestScore - 4);
-    const strongCandidates = sorted.filter((m) => Number(m?.score || 0) >= highSignalFloor);
+    const globalFloor = Math.max(bestScore * 0.45, bestScore - 4);
     const maxKept = Math.min(maxResults, 6);
 
     const familyCounts = new Map();
-    strongCandidates.forEach((m) => {
+    sorted.forEach((m) => {
       const key = String(m?.subject_id || "unknown");
       familyCounts.set(key, (familyCounts.get(key) || 0) + 1);
     });
     const dominantFamilyEntry = Array.from(familyCounts.entries()).sort((a, b) => b[1] - a[1])[0] || null;
-    const dominantFamily = dominantFamilyEntry?.[1] >= 4 ? dominantFamilyEntry[0] : null;
+    const dominantFamily = dominantFamilyEntry?.[1] >= 2 ? dominantFamilyEntry[0] : null;
+    const dominantFamilyFloor = bestScore * 0.25;
 
-    const filtered = strongCandidates.filter((m) => {
-      if (!dominantFamily || m?.subject_id === dominantFamily) return true;
-      const terms = Array.isArray(m?.matched_terms) ? m.matched_terms : [];
-      const directOverlap = terms.filter((term) => {
-        const t = String(term || "").toLowerCase().trim();
-        return t && !NOISE_TERMS.has(t) && t.length >= 4;
-      });
-      return directOverlap.length >= 2;
+    const dominantHits = [];
+    const outsideHits = [];
+    sorted.forEach((m) => {
+      const score = Number(m?.score || 0);
+      const relevantTermCount = countRelevantTerms(m?.matched_terms);
+      if (dominantFamily && m?.subject_id === dominantFamily) {
+        if (score >= dominantFamilyFloor && relevantTermCount >= 1) dominantHits.push(m);
+        return;
+      }
+      if (score >= globalFloor && relevantTermCount >= 2) outsideHits.push(m);
     });
 
+    const filtered = dominantHits.concat(outsideHits).sort((a, b) => b.score - a.score);
     return filtered.slice(0, maxKept);
   }
 

@@ -19,6 +19,9 @@
   });
   const WEAK_CONCEPT_WORDS = new Set(["illustrasjon","logo","annonsørinnhold","annonsorinnhold","annonse","sponset","les","også","ogsa","les også","les ogsa","årets","arets","populære","populaere","kjole","kjoler","bryllupsgjesten","sesongens","favoritter","finnes","egen","form","lærer","mennesker","blir","ikke","bare","over","ligger","lavt","noen","helt","ennå","norske","norsk","moderne","viktig","viktigste","store","små","nye","gamle","tydelig","særlig","mildt","sagt","refleksjon","innsikt","samtale","analyse","nødvendighet","nodvendighet"]);
   const INSIGHT_NOISE_PATTERN = /\b(les også|les ogsa|annonsørinnhold|annonsorinnhold|logo|illustrasjon|annonse|sponset|kjolefavoritter|bryllupsgjesten)\b/ig;
+  const LEADING_PUNCTUATION_PATTERN = /^[\s"'“”«».,:;|\-–—]+/;
+  const LES_OGSA_TEASER_PATTERN = /(«|»|"|')?\s*les\s+også\s*:?\s*[^.!?\n]*(?:[.!?]|$)/ig;
+  const TEASER_TITLE_PATTERN = /^(når\s+vekst\s+blir\s+en\s+trussel)\b/i;
   function getThreadId() {
     return CHAT_THREAD_ID;
   }
@@ -1459,9 +1462,17 @@
 
   function sanitizeInsightText(text) {
     let value = cleanArticleText(text);
-    value = String(value || "").replace(/les\s+også\s*:[^.!?\n]*(?:[.!?]|$)/ig, " ");
+    value = String(value || "").replace(LES_OGSA_TEASER_PATTERN, " ");
     value = value.replace(INSIGHT_NOISE_PATTERN, " ");
-    return value.replace(/\s+/g, " ").trim();
+    value = value.replace(/\s+/g, " ").trim();
+    value = value.replace(LEADING_PUNCTUATION_PATTERN, "").trim();
+    if (TEASER_TITLE_PATTERN.test(value)) {
+      const nextSentence = value.search(/[.!?]\s+[A-ZÆØÅ]/);
+      value = nextSentence >= 0 ? value.slice(nextSentence + 1) : "";
+      value = value.replace(LEADING_PUNCTUATION_PATTERN, "").trim();
+    }
+    if (!value || /^[\s"'“”«».,:;|\-–—]+$/.test(value)) return "";
+    return value;
   }
 
   function shouldHideInsightCard(title, summary) {
