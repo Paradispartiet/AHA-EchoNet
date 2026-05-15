@@ -1412,15 +1412,97 @@
     return String(text || "").split(/(?<=[.!?])\s+|\n+/).map((part) => part.trim()).filter(Boolean);
   }
 
+  function collectOpinionArticleEvidence(raw, sentences) {
+    const text = String(raw || "");
+    const lowered = text.toLowerCase();
+    const normalize = (v) => ` ${String(v || "").toLowerCase()} `;
+    const normalizedText = ` ${lowered} `;
+    const hasAny = (signals) => signals.some((signal) => normalizedText.includes(normalize(signal)));
+    const findLine = (signals) => (sentences || []).find((line) => {
+      const normalized = normalize(line);
+      return signals.some((signal) => normalized.includes(normalize(signal)));
+    }) || "";
+    const signals = {
+      government: ["regjering", "statsråd", "arbeiderpartiet", "støre-regjeringen", "kulturminister", "finansdepartementet"],
+      namedGovernment: ["støre-regjeringen", "arbeiderpartiet", "kulturminister", "finansdepartementet"],
+      mediaPolicy: ["mediepolitikk", "journalistikk", "redaktørstyrte medier", "norske medier", "medietilsyn", "medietilsynet", "mediene"],
+      vatOrTax: ["momsfritak", "moms", "skatteetaten", "avgift", "avgiftsbelegge", "momsregime"],
+      pressFreedom: ["ytringsfrihet", "frie ord", "fri presse", "offentlighet"],
+      editorControlledMedia: ["redaktørstyrte medier", "redaktørstyrt", "redaktøransvar"],
+      historicalBackground: ["1935", "1970", "lang historie", "historisk", "fritaket har"],
+      economicConsequence: ["økonomi", "medieøkonomi", "bærekraftig", "beløp", "millioner", "annonseinntekter", "handlingsrom"],
+      globalPlatforms: ["utenlandske plattformer", "internasjonale aktører", "engelsk", "annonseinntektene forsvinner"],
+      politicalCritique: ["kritikk", "tilbakeskritt", "doble signaler", "undergraver", "svekker", "ikke sterk nok", "virker ikke"]
+    };
+    const actorDefs = [
+      { label: "VG", signals: [" vg ", " vg,", " vg.", " vg?", " vg!"] },
+      { label: "Aftenposten", signals: ["aftenposten"] },
+      { label: "TV2", signals: ["tv2", "tv 2"] },
+      { label: "Schibsted", signals: ["schibsted"] },
+      { label: "Gard Steiro", signals: ["gard steiro"] },
+      { label: "Medietilsynet", signals: ["medietilsynet", "medietilsyn"] },
+      { label: "Regjeringen", signals: ["regjering", "støre-regjeringen"] },
+      { label: "Kulturministeren", signals: ["kulturminister"] },
+      { label: "Finansdepartementet", signals: ["finansdepartementet"] }
+    ];
+    const actors = actorDefs.filter((item) => item.signals.some((signal) => normalizedText.includes(normalize(signal)))).map((item) => item.label);
+    const evidence = {
+      hasGovernment: hasAny(signals.government),
+      hasNamedGovernment: hasAny(signals.namedGovernment),
+      hasMediaPolicy: hasAny(signals.mediaPolicy),
+      hasVatOrTax: hasAny(signals.vatOrTax),
+      hasPressFreedom: hasAny(signals.pressFreedom),
+      hasEditorControlledMedia: hasAny(signals.editorControlledMedia),
+      hasHistoricalBackground: hasAny(signals.historicalBackground),
+      hasEconomicConsequence: hasAny(signals.economicConsequence),
+      hasNamedMediaActors: actors.some((actor) => ["VG", "Aftenposten", "TV2", "Schibsted", "Gard Steiro", "Medietilsynet"].includes(actor)),
+      hasGlobalPlatforms: hasAny(signals.globalPlatforms),
+      hasPoliticalCritique: hasAny(signals.politicalCritique),
+      actors,
+      matchedThemes: [],
+      textSnippets: {
+        claim: findLine([...signals.government, ...signals.mediaPolicy, ...signals.vatOrTax, ...signals.pressFreedom]) || (sentences[0] || ""),
+        conflict: findLine(signals.politicalCritique),
+        history: findLine(signals.historicalBackground),
+        economy: findLine(signals.economicConsequence),
+        publicSphere: findLine(signals.pressFreedom),
+        platforms: findLine(signals.globalPlatforms)
+      }
+    };
+    const themes = [];
+    if (evidence.hasGovernment) themes.push("government");
+    if (evidence.hasMediaPolicy) themes.push("media-policy");
+    if (evidence.hasVatOrTax) themes.push("vat-tax");
+    if (evidence.hasPressFreedom) themes.push("press-freedom");
+    if (evidence.hasHistoricalBackground) themes.push("history");
+    if (evidence.hasEconomicConsequence) themes.push("economy");
+    if (evidence.hasNamedMediaActors) themes.push("actors");
+    if (evidence.hasGlobalPlatforms) themes.push("global-platforms");
+    if (evidence.hasPoliticalCritique) themes.push("political-critique");
+    evidence.matchedThemes = themes;
+    return evidence;
+  }
+
   function detectTextType(raw) {
     const text = String(raw || "").toLowerCase();
     if (!text) return "general";
 
-    const opinionSignals = /(regjering|statsråd|arbeiderpartiet|støre-regjeringen|kulturminister|finansdepartementet|medier|redaktørstyrte medier|journalistikk|ytringsfrihet|mediepolitikk|momsfritak|moms|skatteetaten|schibsted|vg\b|aftenposten|tv2|medietilsyn(?:et)?|kronikk|kritikk|prinsipp|frie ord|offentlighet|norske medier|annonseinntekter|utenlandske plattformer|økonomisk bærekraft|handlingsrom)/i;
-    if (opinionSignals.test(text)) return "opinion_article";
-
     const projectSignals = /(prosjekt|app|kode|koding|repo|repository|prompt|merge|backend|frontend|ui\b|ux\b|fil(?:er)?|funksjon(?:er)?|komponent|modul|deploy|bug|commit|pull request|pr\b|branch|api|database|test(?:er)?|refaktor)/i;
     if (projectSignals.test(text)) return "project_note";
+    const opinionEvidence = collectOpinionArticleEvidence(text, toSentences(text));
+    let opinionScore = 0;
+    if (opinionEvidence.hasGovernment) opinionScore += 2;
+    if (opinionEvidence.hasMediaPolicy) opinionScore += 2;
+    if (opinionEvidence.hasVatOrTax) opinionScore += 2;
+    if (opinionEvidence.hasPressFreedom) opinionScore += 2;
+    if (opinionEvidence.hasHistoricalBackground) opinionScore += 1;
+    if (opinionEvidence.hasEconomicConsequence) opinionScore += 1;
+    if (opinionEvidence.hasNamedMediaActors) opinionScore += 1;
+    if (opinionEvidence.hasGlobalPlatforms) opinionScore += 1;
+    if (opinionEvidence.hasPoliticalCritique) opinionScore += 1;
+    const hasNamedActorWithPolicy = opinionEvidence.hasNamedMediaActors && (opinionEvidence.hasVatOrTax || opinionEvidence.hasMediaPolicy);
+    const hasGovernmentMediaCritique = opinionEvidence.hasGovernment && opinionEvidence.hasMediaPolicy && opinionEvidence.hasPoliticalCritique;
+    if (opinionScore >= 4 || hasNamedActorWithPolicy || hasGovernmentMediaCritique) return "opinion_article";
 
     const daySignals = /(i dag|idag|dagen min|jeg våknet|jeg hentet|jeg leverte|på jobb|etterpå|i kveld|i morges|vi dro|jeg gjorde|formiddag|ettermiddag)/i;
     const literaryDiarySignals = /(jeg trodde|jeg burde|jeg er lei|jeg skjønner|jeg tenkte|her om dagen|i forrigårs|fortsatt|neste uke|ringe|savn|sinne|kjærlighet|skyld|skam|fremmedhet|forfatter|poetisk|skrive|tekst|leve vilt|reise|nomad|kurbad|hageanlegg|leilighet|telefon|park|møte)/i;
@@ -1678,34 +1760,43 @@
       reflection = "Teksten drives av scene, motiv, sansning og rytme mer enn av dagboklogg. Konflikten ligger i spenningen mellom stemning og bevegelse.";
       day = "Ikke dagbokmateriale – ingen dagsoppsummering laget.";
     } else if (textType === "opinion_article") {
-      reflection = "Teksten er en argumenterende mediepolitisk kommentar: den peker på konflikt mellom politisk støtte til redaktørstyrte medier og praktiske grep som kan svekke økonomien i journalistikken.";
-      sortItems = [
-        { label: "Hovedpåstand", text: sentences[0] || "Presiser kjernen i kritikken i én skarp setning." },
-        { label: "Konflikt / dobbelt signal", text: sentences[1] || "Vis tydelig avstanden mellom retorisk støtte og praktisk politikk." },
-        { label: "Historisk bakgrunn", text: sentences[2] || "Knytt poenget til historikken om momsfritak og frie ord." },
-        { label: "Økonomisk konsekvens", text: sentences[3] || "Beskriv hvordan endringer påvirker medieøkonomi, språk og konkurransekraft." },
-        { label: "Aktører", text: sentences[4] || "Navngi nøkkelaktører som regjering, mediehus, departement og tilsyn." },
-        { label: "Politisk kritikk", text: sentences[5] || "Spiss kritikken av prioriteringene mellom politiske løfter og budsjetthensyn." },
-        { label: "Avsluttende poeng", text: "Avslutt med tydelig konsekvens for norsk offentlighet og journalistikk." }
-      ];
+      const evidence = collectOpinionArticleEvidence(raw, sentences);
+      const reflectionParts = [];
+      if (evidence.hasGovernment && evidence.hasMediaPolicy) reflectionParts.push("Teksten bygger en politisk/mediepolitisk kritikk av forholdet mellom regjeringens signaler og medienes vilkår.");
+      else reflectionParts.push("Teksten fremstår som en argumenterende kommentar med politisk og samfunnsmessig konflikt.");
+      if (evidence.hasVatOrTax) reflectionParts.push("Momsfritak/momsregime brukes som sentralt konfliktpunkt.");
+      if (evidence.hasPressFreedom) reflectionParts.push("Fri presse/ytringsfrihet brukes som prinsipielt anker.");
+      if (evidence.hasEconomicConsequence) reflectionParts.push("Argumentasjonen kobles til økonomisk handlingsrom og medieøkonomi.");
+      if (evidence.hasGlobalPlatforms) reflectionParts.push("Konkurranse fra globale plattformer brukes som pressfaktor.");
+      reflection = reflectionParts.join(" ");
+      const dynamicSortItems = [{ label: "Hovedpåstand", text: evidence.textSnippets.claim || sentences[0] || "Presiser kjernen i argumentasjonen." }];
+      if (evidence.hasGovernment && evidence.hasPoliticalCritique) dynamicSortItems.push({ label: "Konflikt / dobbelt signal", text: evidence.textSnippets.conflict || "Vis tydelig avstanden mellom politisk retorikk og praktisk politikk." });
+      if (evidence.hasHistoricalBackground) dynamicSortItems.push({ label: "Historisk bakgrunn", text: evidence.textSnippets.history || "Knytt argumentet til historisk ramme og tidligere prinsipper." });
+      if (evidence.hasEconomicConsequence) dynamicSortItems.push({ label: "Økonomisk konsekvens", text: evidence.textSnippets.economy || "Beskriv økonomiske følger for medieøkonomi og handlingsrom." });
+      if (evidence.actors.length) dynamicSortItems.push({ label: "Aktører", text: `Aktører i teksten: ${evidence.actors.join(", ")}.` });
+      if (evidence.hasPoliticalCritique) dynamicSortItems.push({ label: "Politisk kritikk", text: evidence.textSnippets.conflict || "Spiss kritikken av prioriteringer og ansvar." });
+      if (evidence.hasPressFreedom) dynamicSortItems.push({ label: "Offentlighet / ytringsfrihet", text: evidence.textSnippets.publicSphere || "Forklar hvorfor saken berører offentlighet og fri presse." });
+      if (evidence.hasGlobalPlatforms) dynamicSortItems.push({ label: "Globale plattformer", text: evidence.textSnippets.platforms || "Vis hvordan globale plattformer påvirker norske medievilkår." });
+      sortItems = dynamicSortItems;
       day = "Ikke dagbokmateriale – ingen dagsoppsummering laget.";
       thoughts = {
-        hovedspor: "Teksten bygger en hovedpåstand om at regjeringens mediepolitikk sender doble signaler og svekker grunnlaget for redaktørstyrte medier.",
-        lose_tanker: "Historikk om momsfritak, kritikk av kulturministeren og press fra globale plattformer kan strammes i tydeligere avsnitt.",
-        neste_steg: "Stram overgangen mellom historisk prinsipp, dagens regelendring og konsekvensen for norske medier."
+        hovedspor: evidence.textSnippets.claim || "Teksten har et tydelig hovedspor i den politiske argumentasjonen.",
+        lose_tanker: "Skill bakgrunn, konflikt og konsekvens tydeligere dersom flere spor glir inn i hverandre.",
+        neste_steg: "Stram overgangen mellom hovedpåstand, konfliktpunkt og samfunnsmessig konsekvens."
       };
-      list = [
-        "Gard Steiro kritiserer regjeringens doble signaler.",
-        "Momsfritaket beskrives som et historisk prinsipp for frie ord.",
-        "Endringer for levende bilder rammer moderne redaktørstyrte mediehus.",
-        "TV2, VG, Aftenposten og Schibsted brukes som konkrete referanser.",
-        "Kulturministerens handlingsrom fremstilles som svakt mot Finansdepartementet.",
-        "Norske medier presses av globale plattformer og fallende annonseinntekter."
-      ];
+      const dynamicList = [];
+      if (evidence.hasGovernment && evidence.hasMediaPolicy) dynamicList.push("Teksten kritiserer politiske signaler om medienes vilkår.");
+      if (evidence.hasVatOrTax) dynamicList.push("Moms/momsfritak brukes som hovedkonflikt.");
+      if (evidence.hasHistoricalBackground) dynamicList.push("Historien om fritaket brukes som bakgrunn.");
+      if (evidence.hasEconomicConsequence) dynamicList.push("Økonomiske konsekvenser brukes til å skjerpe argumentet.");
+      if (evidence.hasNamedMediaActors && evidence.actors.length) dynamicList.push(`Aktører i teksten: ${evidence.actors.join(", ")}.`);
+      if (evidence.hasGlobalPlatforms) dynamicList.push("Globale plattformer brukes som pressfaktor.");
+      if (evidence.hasPressFreedom) dynamicList.push("Ytringsfrihet/fri presse brukes som prinsipielt anker.");
+      list = dynamicList.slice(0, 6);
       path = [
         "Spiss hovedpåstanden.",
-        "Skill historisk bakgrunn fra dagens konflikt.",
-        "Avslutt med tydelig konsekvens for norsk offentlighet og medieøkonomi."
+        "Skill bakgrunn, konflikt og konsekvens.",
+        "Avslutt med tydelig samfunnsmessig betydning."
       ];
     } else if (textType === "project_note") {
       reflection = "Dette er et prosjektnotat med tydelig problem og mål. Neste gevinst ligger i å koble løsning til konkrete filer/funksjoner.";
@@ -1730,9 +1821,12 @@
       if (evidence.hasShameGuilt) localInsights.push("Skyld, skam og selvforsvar skaper tekstens indre friksjon.");
       if (!localInsights.length) localInsights.push("Dagbokformen bærer en assosiativ bevegelse som kan strammes med tydeligere motivspor.");
     } else if (textType === "opinion_article") {
-      localInsights.push("Teksten bruker momsfritaket som symbol på forholdet mellom stat og fri presse.");
-      localInsights.push("Hovedkonflikten ligger mellom politisk retorikk og økonomisk praksis.");
-      localInsights.push("Argumentet styrkes når historisk prinsipp kobles til moderne medieteknologi og globale plattformer.");
+      const evidence = collectOpinionArticleEvidence(raw, sentences);
+      if (evidence.hasVatOrTax && evidence.hasPressFreedom) localInsights.push("Teksten gjør avgiftspolitikk til et spørsmål om fri presse.");
+      if (evidence.hasGovernment && evidence.hasPoliticalCritique) localInsights.push("Hovedkonflikten ligger mellom politisk retorikk og praktisk politikk.");
+      if (evidence.hasHistoricalBackground && evidence.hasEconomicConsequence) localInsights.push("Argumentet styrkes når historisk prinsipp kobles til dagens økonomiske konsekvens.");
+      if (evidence.hasGlobalPlatforms) localInsights.push("Globale plattformer brukes som kontrast til norske mediers sårbarhet.");
+      if (!localInsights.length) localInsights.push("Kommentarteksten blir sterkere når hovedpåstand, konflikt og konsekvens skilles tydeligere.");
     } else {
       localInsights.push(`Mønster: ${keywords[0] || "temaet"} går igjen og bærer teksten.`);
       localInsights.push(reply ? `AHA-responsen peker videre på: ${toSentences(reply)[0] || reply}` : "Videre innsikt kan styrkes med mer konkret tekst.");
