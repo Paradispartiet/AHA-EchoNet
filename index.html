@@ -17,49 +17,39 @@
           <small>personlig innsiktsmotor</small>
         </span>
       </a>
-
-      <div class="aha-header-actions">
+      <div class="aha-header-meta">
         <span id="aha-header-status" class="aha-status-pill is-loading">Sjekker innlogging …</span>
+        <span id="aha-auth-status" class="aha-profile-auth-state">Sjekker innlogging …</span>
+      </div>
+      <div class="aha-header-profile">
+        <div id="aha-profile-avatar" class="aha-profile-avatar">A</div>
+        <div class="aha-profile-copy">
+          <strong id="aha-profile-name">Min AHA-profil</strong>
+          <p id="aha-profile-subtitle">Din personlige innsiktsmotor</p>
+          <p id="aha-profile-connection" class="aha-profile-connection">Logget inn · History Go koblet til</p>
+          <div class="aha-profile-id-row"><span>AHA-ID</span><strong id="aha-profile-id">Ikke innlogget</strong></div>
+        </div>
+      </div>
+      <div class="aha-header-actions">
+        <a class="aha-cta-primary" href="chat.html">Snakk med AHA</a>
+        <button class="aha-cta-secondary" id="btn-import-hg-primary" type="button">Importer fra History Go</button>
+        <button id="aha-open-login-modal" class="aha-ghost-button" type="button">Logg inn</button>
         <button id="aha-auth-signout" class="aha-ghost-button is-hidden" type="button">Logg ut</button>
       </div>
+      <form id="aha-profile-name-form" class="aha-profile-name-form is-hidden" aria-label="Opprett AHA-profilnavn">
+        <label for="aha-profile-name-input">Opprett AHA-navn</label>
+        <div class="aha-profile-name-row">
+          <input id="aha-profile-name-input" type="text" maxlength="80" placeholder="Navnet AHA og History Go skal bruke" />
+          <button type="submit">Lagre</button>
+        </div>
+        <p id="aha-profile-name-output">AHA-navnet lagres som sann kilde i profilen din.</p>
+      </form>
     </header>
 
-    <section class="aha-profile-strip" aria-label="AHA-profil">
-      <div class="aha-profile-main-card">
-        <div class="aha-profile-topline">
-          <span id="aha-auth-status" class="aha-profile-auth-state">Sjekker innlogging …</span>
-          <span class="aha-profile-label">Din AHA</span>
-        </div>
-
-        <div class="aha-profile-body">
-          <div id="aha-profile-avatar" class="aha-profile-avatar">A</div>
-          <div class="aha-profile-copy">
-            <p class="eyebrow">AHA</p>
-            <h1 id="aha-profile-name">Min AHA-profil</h1>
-            <p id="aha-profile-subtitle">Din personlige innsiktsmotor</p>
-            <p id="aha-profile-connection" class="aha-profile-connection">Logget inn · History Go koblet til</p>
-            <div class="aha-profile-id-row">
-              <span>AHA-ID</span>
-              <strong id="aha-profile-id">Ikke innlogget</strong>
-            </div>
-          </div>
-          <div class="aha-profile-quick-actions">
-            <a class="aha-cta-primary" href="chat.html">Snakk med AHA</a>
-            <button class="aha-cta-secondary" id="btn-import-hg-primary" type="button">Importer fra History Go</button>
-          </div>
-        </div>
-
-        <form id="aha-profile-name-form" class="aha-profile-name-form is-hidden" aria-label="Opprett AHA-profilnavn">
-          <label for="aha-profile-name-input">Opprett AHA-navn</label>
-          <div class="aha-profile-name-row">
-            <input id="aha-profile-name-input" type="text" maxlength="80" placeholder="Navnet AHA og History Go skal bruke" />
-            <button type="submit">Lagre</button>
-          </div>
-          <p id="aha-profile-name-output">AHA-navnet lagres som sann kilde i profilen din.</p>
-        </form>
-      </div>
-
-      <aside id="aha-login-card" class="aha-side-card" aria-label="Innlogging">
+    <div id="aha-login-modal" class="aha-login-modal is-hidden" aria-hidden="true">
+      <div class="aha-login-modal-backdrop" id="aha-login-modal-backdrop"></div>
+      <aside id="aha-login-card" class="aha-side-card aha-login-modal-dialog" aria-label="Innlogging" role="dialog" aria-modal="true">
+        <button id="aha-close-login-modal" class="aha-ghost-button aha-login-close" type="button">Lukk</button>
         <p class="eyebrow">Konto</p>
         <h2>Logg inn med AHA</h2>
         <p>Bruk Google for rask innlogging, eller send en magic link på e-post.</p>
@@ -71,7 +61,7 @@
         </form>
         <p id="aha-auth-output" class="aha-auth-output"></p>
       </aside>
-    </section>
+    </div>
 
     <section class="aha-app-shell" aria-label="AHA appflate">
       <aside class="aha-panel aha-modules-panel" aria-label="Modulmeny">
