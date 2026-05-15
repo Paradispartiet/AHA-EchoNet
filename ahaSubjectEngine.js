@@ -14,7 +14,7 @@
   const BASE_PATH = "data/subjects/";
   const INDEX_FILE = "subjects_index.json";
   const cache = { index: null, subjects: {} };
-  const NOISE_TERMS = new Set(["illustrasjon","logo","annonsørinnhold","annonsorinnhold","annonse","sponset","les","også","ogsa","årets","arets","populære","populaere","kjole","kjoler","bryllupsgjesten","sesongens","favoritter"]);
+  const NOISE_TERMS = new Set(["illustrasjon","logo","annonsørinnhold","annonsorinnhold","annonse","sponset","les","også","ogsa","årets","arets","populære","populaere","kjole","kjoler","bryllupsgjesten","sesongens","favoritter","refleksjon","innsikt","samtale","analyse"]);
   function cleanAnalysisText(text) {
     if (global.AHAAnalysisText?.cleanTextForAnalysis) return global.AHAAnalysisText.cleanTextForAnalysis(text);
     return String(text || "");
@@ -180,6 +180,18 @@
 
         const strongFieldHit = fieldHits.title.length + fieldHits.core.length;
         if (strongFieldHit > 0) score += 1.5 + strongFieldHit * 0.5;
+
+        const highSignalTerms = new Set([
+          "omstilling", "grønn omstilling", "gront skifte", "grønt skifte", "bærekraft", "baerekraft",
+          "oljeavhengighet", "fossil økonomi", "naturvern", "naturhensyn", "arealnøytralitet",
+          "fornybar energi", "solceller", "vindkraft", "sirkulærøkonomi", "sirkulaerokonomi",
+          "gjenbruk", "reparasjon", "samiske rettigheter", "urfolk", "lokalsamfunn"
+        ]);
+        const highSignalHitCount = uniqueFound.filter((term) => highSignalTerms.has(String(term || "").toLowerCase())).length;
+        if (highSignalHitCount > 0) score += highSignalHitCount * 1.75;
+
+        if (uniqueFound.length >= 3) score += 1.2;
+        if (uniqueFound.length >= 5) score += 2.2;
 
         const genericTermsFound = uniqueFound.filter((term) => GENERIC_TERMS.has(String(term || "").toLowerCase()));
         const nonGenericHits = uniqueFound.length - genericTermsFound.length;
