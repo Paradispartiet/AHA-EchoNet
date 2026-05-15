@@ -1120,63 +1120,70 @@
 
   function renderConceptNetwork(graphData) {
     const graph = graphData && typeof graphData === "object" ? graphData : {};
-    const edges = Array.isArray(graph.edges) ? graph.edges : [];
-    const sortedConnections = edges
+    const strongestPairs = Array.isArray(graph?.strongest_pairs) ? graph.strongest_pairs : [];
+    const strongestEdges = strongestPairs.map((pair) => ({
+      from: String(pair?.from || pair?.a || "").trim(),
+      to: String(pair?.to || pair?.b || "").trim(),
+      weight: Number(pair?.weight || pair?.score || pair?.count || 0),
+      type: "co_occurs"
+    }));
+    const coOccursEdges = (Array.isArray(graph?.edges) ? graph.edges : [])
       .filter((edge) => edge?.type === "co_occurs" && edge?.from && edge?.to)
-      .sort((a, b) => (Number(b?.weight || 0) - Number(a?.weight || 0)))
+      .map((edge) => ({ from: String(edge.from).trim(), to: String(edge.to).trim(), weight: Number(edge.weight || 0), type: "co_occurs" }));
+    const mergedByKey = new Map();
+    [...strongestEdges, ...coOccursEdges].forEach((edge) => {
+      if (!edge.from || !edge.to || edge.from === edge.to) return;
+      const pairKey = [edge.from, edge.to].sort((a, b) => a.localeCompare(b)).join("::");
+      const prev = mergedByKey.get(pairKey);
+      if (!prev || edge.weight > prev.weight) mergedByKey.set(pairKey, edge);
+    });
+
+    const sortedConnections = Array.from(mergedByKey.values())
+      .sort((a, b) => b.weight - a.weight)
       .slice(0, 8);
 
-    if (!sortedConnections.length) {
+    if (sortedConnections.length < 2) {
       return "<p class='knowledge-sub'>For få koblinger til å bygge nettverk ennå.</p>";
     }
 
-    const nodeCounts = new Map();
+    const nodeStrength = new Map();
     sortedConnections.forEach((edge) => {
-      const weight = Number(edge?.weight || 0);
-      const from = String(edge.from).trim();
-      const to = String(edge.to).trim();
-      if (!from || !to) return;
-      nodeCounts.set(from, (nodeCounts.get(from) || 0) + Math.max(1, weight));
-      nodeCounts.set(to, (nodeCounts.get(to) || 0) + Math.max(1, weight));
+      const baseWeight = Math.max(1, Number(edge.weight || 0));
+      nodeStrength.set(edge.from, (nodeStrength.get(edge.from) || 0) + baseWeight);
+      nodeStrength.set(edge.to, (nodeStrength.get(edge.to) || 0) + baseWeight);
     });
 
-    const topConcepts = Array.from(nodeCounts.entries())
+    const topConcepts = Array.from(nodeStrength.entries())
       .sort((a, b) => (b[1] - a[1]) || a[0].localeCompare(b[0]))
       .slice(0, 5)
-      .map(([name]) => name);
+      .map(([concept]) => concept);
 
     if (topConcepts.length < 2) {
       return "<p class='knowledge-sub'>For få koblinger til å bygge nettverk ennå.</p>";
     }
 
     const topSet = new Set(topConcepts);
-    const filteredEdges = sortedConnections.filter((edge) => topSet.has(edge.from) && topSet.has(edge.to));
-    const networkEdges = filteredEdges.length ? filteredEdges : sortedConnections.slice(0, Math.min(3, sortedConnections.length));
-
-    const adjacency = new Map();
-    networkEdges.forEach((edge) => {
-      const from = String(edge.from).trim();
-      const to = String(edge.to).trim();
-      if (!from || !to) return;
-      if (!adjacency.has(from)) adjacency.set(from, []);
-      if (!adjacency.has(to)) adjacency.set(to, []);
-      adjacency.get(from).push({ target: to, weight: Number(edge.weight || 0) });
-      adjacency.get(to).push({ target: from, weight: Number(edge.weight || 0) });
-    });
-
-    const orderedRoots = topConcepts.filter((name) => adjacency.has(name));
-    if (!orderedRoots.length) {
+    const networkEdges = sortedConnections.filter((edge) => topSet.has(edge.from) && topSet.has(edge.to));
+    if (!networkEdges.length) {
       return "<p class='knowledge-sub'>For få koblinger til å bygge nettverk ennå.</p>";
     }
 
-    const rows = orderedRoots.map((name) => {
-      const links = (adjacency.get(name) || [])
+    const adjacency = new Map();
+    networkEdges.forEach((edge) => {
+      if (!adjacency.has(edge.from)) adjacency.set(edge.from, []);
+      if (!adjacency.has(edge.to)) adjacency.set(edge.to, []);
+      adjacency.get(edge.from).push({ target: edge.to, weight: edge.weight });
+      adjacency.get(edge.to).push({ target: edge.from, weight: edge.weight });
+    });
+
+    const rows = topConcepts.map((concept) => {
+      const links = (adjacency.get(concept) || [])
         .sort((a, b) => (b.weight - a.weight) || a.target.localeCompare(b.target))
         .slice(0, 3);
       const children = links.length
-        ? `<ul class="concept-network-links">${links.map((entry) => `<li><span class="concept-node-badge">${escHtml(entry.target)}</span></li>`).join("")}</ul>`
+        ? `<ul class="concept-network-links">${links.map((entry) => `<li><span class="concept-link-line"></span><span class="concept-node-badge">${escHtml(entry.target)}</span></li>`).join("")}</ul>`
         : `<p class="knowledge-sub concept-network-empty">Ingen sterke koblinger registrert for dette begrepet ennå.</p>`;
-      return `<li class="concept-network-item"><span class="concept-node-badge">${escHtml(name)}</span>${children}</li>`;
+      return `<li class="concept-network-item"><span class="concept-node-badge">${escHtml(concept)}</span>${children}</li>`;
     }).join("");
 
     return `<div class="concept-network" aria-label="Begrepsnettverk">
