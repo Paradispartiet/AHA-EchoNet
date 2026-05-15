@@ -127,10 +127,7 @@
   }
 
   function renderSubjectChips(row, matches) {
-    const links = dedupeSubjectMatches(matches).filter((item) => {
-      const line = `${item?.title || ""} ${(item?.matched_terms || []).join(" ")}`.toLowerCase();
-      return /(klima|omstilling|natur|areal|energi|industri|sirkul|lokalsamfunn|makt|samisk|urfolk|fossil|fornybar)/.test(line);
-    });
+    const links = dedupeSubjectMatches(matches);
     if (!row || !links.length) return;
     const wrap = document.createElement("section");
     wrap.className = "subject-links";
@@ -1415,6 +1412,26 @@
     updateEmptyState();
   }
 
+  function isBoilerplateLine(trimmed) {
+    const text = String(trimmed || "").trim();
+    if (!text) return true;
+    const lowered = text.toLowerCase();
+    if (/^les\s+også\s*:/i.test(text)) return true;
+    if (/^illustrasjon\s*:/i.test(text)) return true;
+    if (/^(annonsørinnhold|annonsorinnhold|logo|sponset|annonse)$/i.test(text)) return true;
+    if (text.length <= 48 && /(annonsørinnhold|annonsorinnhold|logo|sponset|annonse|kjøp nå|kjop na)/i.test(lowered)) return true;
+    return false;
+  }
+
+  function stripInlineBoilerplate(text) {
+    let value = String(text || "");
+    value = value.replace(/\b(annonsørinnhold|annonsorinnhold|sponset)\b/ig, " ");
+    value = value.replace(/\blogo\b/ig, " ");
+    value = value.replace(/illustrasjon\s*:[^.!?\n]{0,120}/ig, " ");
+    value = value.replace(/\s{2,}/g, " ").trim();
+    return value;
+  }
+
   function cleanArticleText(raw) {
     const lines = String(raw || "").split(/\r?\n/);
     const cleaned = [];
@@ -1422,15 +1439,13 @@
     lines.forEach((line) => {
       const trimmed = String(line || "").trim();
       if (!trimmed) return;
-      const lowered = trimmed.toLowerCase();
-      if (/^les\s+også\s*:/i.test(trimmed)) return;
-      if (/(annonsørinnhold|annonsorinnhold)/i.test(lowered)) return;
-      if (/^(logo|illustrasjon)\s*:/i.test(trimmed)) return;
-      if (/(kjøp\s+nå|sponset|annonse)/i.test(lowered)) return;
-      const compact = lowered.replace(/\s+/g, " ");
+      if (isBoilerplateLine(trimmed)) return;
+      const stripped = stripInlineBoilerplate(trimmed);
+      if (!stripped || isBoilerplateLine(stripped)) return;
+      const compact = stripped.toLowerCase().replace(/\s+/g, " ");
       if (seen.has(compact)) return;
       seen.add(compact);
-      cleaned.push(trimmed);
+      cleaned.push(stripped);
     });
     return cleaned.join("\n");
   }
