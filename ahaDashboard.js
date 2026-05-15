@@ -311,6 +311,7 @@
     const signOut = $("aha-auth-signout");
     const loginModal = $("aha-login-modal");
     const loginOpen = $("aha-open-login-modal");
+    const profileNameModal = $("aha-profile-name-modal");
     const profileNameForm = $("aha-profile-name-form");
     const nameInput = $("aha-profile-name-input");
 
@@ -322,6 +323,13 @@
       loginModal?.setAttribute("aria-hidden", "true");
     }
     profileNameForm?.classList.toggle("is-hidden", !missingProfile);
+    if (signedIn && missingProfile) {
+      profileNameModal?.classList.remove("is-hidden");
+      profileNameModal?.setAttribute("aria-hidden", "false");
+    } else {
+      profileNameModal?.classList.add("is-hidden");
+      profileNameModal?.setAttribute("aria-hidden", "true");
+    }
 
     if (nameInput && displayName) nameInput.value = displayName;
   }
@@ -479,9 +487,29 @@
     });
   }
 
+  function bindProfileNameModal() {
+    const modal = $("aha-profile-name-modal");
+    const closeButton = $("aha-close-profile-name-modal");
+    const backdrop = $("aha-profile-name-modal-backdrop");
+    if (!modal || !closeButton || !backdrop || modal.dataset.ahaDashboardBound === "true") return;
+    modal.dataset.ahaDashboardBound = "true";
+
+    const closeModal = () => {
+      modal.classList.add("is-hidden");
+      modal.setAttribute("aria-hidden", "true");
+    };
+
+    closeButton.addEventListener("click", closeModal);
+    backdrop.addEventListener("click", closeModal);
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") closeModal();
+    });
+  }
+
   function bind() {
     bindProfileNameForm();
     bindLoginModal();
+    bindProfileNameModal();
     renderDashboard();
     window.addEventListener("aha:source-event-added", renderDashboard);
     window.addEventListener("aha:historygo-imported", renderDashboard);
