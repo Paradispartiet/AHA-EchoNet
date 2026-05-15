@@ -1371,21 +1371,87 @@
     const projectSignals = /(prosjekt|app|funksjon|repo|prompt|merge|backend|frontend|modul|data|layout|kode|deploy|bug|commit|pull request|pr\b)/i;
     if (projectSignals.test(text)) return "project_note";
 
-    const theorySignals = /(teori|modell|bevissthet|kunnskap|hypotese|begrep|premiss|epistem|system|metode)/i;
-    if (theorySignals.test(text)) return "theory_idea";
-
     const daySignals = /(i dag|idag|dagen min|jeg våknet|jeg hentet|jeg leverte|på jobb|etterpå|i kveld|i morges|vi dro|jeg gjorde|formiddag|ettermiddag)/i;
     const literaryDiarySignals = /(jeg trodde|jeg burde|jeg er lei|jeg skjønner|jeg tenkte|her om dagen|i forrigårs|fortsatt|neste uke|ringe|savn|sinne|kjærlighet|skyld|skam|fremmedhet|forfatter|poetisk|skrive|tekst|leve vilt|reise|nomad|kurbad|hageanlegg|leilighet|telefon|park|møte)/i;
     const literaryFragmentSignals = /(scene|stemning|rytme|lys|mørke|rommet|gaten|kropp|språk|vind|lukt|hud|sans)/i;
+    const theorySignals = /(teori|modell|bevissthet|kunnskap|hypotese|begrep|premiss|epistem|system|metode)/i;
 
     const sentenceCount = toSentences(text).length;
     const pronounCount = (text.match(/\bjeg\b/g) || []).length;
 
     if (pronounCount >= 3 && literaryDiarySignals.test(text) && sentenceCount >= 4) return "literary_diary";
+    if (theorySignals.test(text)) return "theory_idea";
     if (daySignals.test(text)) return "day_log";
     if (literaryFragmentSignals.test(text) && sentenceCount >= 2) return "literary_fragment";
     if (pronounCount >= 4 && sentenceCount >= 5 && literaryDiarySignals.test(text)) return "literary_diary";
     return "general";
+  }
+
+  function buildLiteraryDiarySortItems(raw, sentences) {
+    const text = String(raw || "");
+    const short = (value) => String(value || "").replace(/\s+/g, " ").trim().slice(0, 170);
+    const categoryDefs = [
+      {
+        label: "Åpningsscene / sted",
+        signals: ["kurbad", "hageanlegg", "park", "leilighet", "sted", "badet", "middelhavet", "utkikkspunkt", "parker"],
+        summary: "Åpningsscenen forankrer teksten i sted og blikk før den indre bevegelsen tar over."
+      },
+      {
+        label: "Relasjonen til S",
+        signals: [" s ", " henne", " ring", "ringer", "telefon", "slutt å ring", "tilbake", "såret", "sint", "kjærlighet", "prinsesse"],
+        summary: "Telefonene og kontakten med S samler lengsel, selvforsvar og uavklart konflikt."
+      },
+      {
+        label: "Sosial uro og selvbilde",
+        signals: ["fjern", "snakke med noen", "selvhevdende", "dårlig samvittighet", "ikke jeg heller", "burde", "skam", "skyld", "uro"],
+        summary: "Fortelleren veksler mellom uro, selvkritikk og forsøk på å holde et sosialt selvbilde."
+      },
+      {
+        label: "Møter med fremmede",
+        signals: ["kongo", "mann", "fyr", "longboard", "sykepleier", "vingård", "kompisen", "venn", "hule", "knivdrap"],
+        summary: "Møter med fremmede fungerer som speil for fortellerens rastløshet og retning."
+      },
+      {
+        label: "Reise, nomadisme og forfatterliv",
+        signals: ["england", "fotballkamper", "reise", "biarriz", "campe", "middelhavet", "nomader", "forfatter", "poetisk", "leve vilt"],
+        summary: "Reise og nomadiske bilder blir koblet til ønsket om frihet og et forfatterliv."
+      },
+      {
+        label: "Rus og drift",
+        signals: ["røyka", "weed", "feber", "trøkk", "vilt"],
+        summary: "Rus og kroppslig trøkk markerer en drift mot intensitet og kontrolltap."
+      },
+      {
+        label: "Skyld, skam og selvforsvar",
+        signals: ["dårlig samvittighet", "skyld", "skam", "såret", "sint", "dårlig behandlet", "behandlet henne", "ingen rett"],
+        summary: "Skyld og skam samles i et spor der fortelleren både angrer og forsvarer seg."
+      }
+    ];
+
+    const normalize = (v) => ` ${String(v || "").toLowerCase()} `;
+    const matchesForCategory = (def) => {
+      const found = (sentences || []).find((line) => {
+        const normalized = normalize(line);
+        return def.signals.some((signal) => normalized.includes(normalize(signal)));
+      });
+      return found ? short(found) : "";
+    };
+
+    const sortItems = categoryDefs
+      .map((def) => {
+        const hit = matchesForCategory(def);
+        if (!hit) return null;
+        return { label: def.label, text: def.summary };
+      })
+      .filter(Boolean)
+      .slice(0, 5);
+
+    if (sortItems.length) return sortItems;
+    return [
+      { label: "Scener og observasjoner", text: "Teksten bygger mening gjennom konkrete scener og observerende blikk." },
+      { label: "Relasjonelt spor", text: "Relasjoner og kontaktforsøk driver den indre bevegelsen fremover." },
+      { label: "Indre uro", text: "Understrømmen er uro, selvforklaring og søken etter frihet." }
+    ];
   }
 
   function takeKeywords(text, maxItems) {
@@ -1432,7 +1498,7 @@
 
     if (textType === "literary_diary") {
       reflection = "Dette er en dagboktekst der fortelleren beveger seg mellom observasjon og selvforklaring. Ytre scener brukes til å vise indre uro, lengsel og drift mot frihet.";
-      sortItems = ["Åpningsscene / sted","Relasjonen til S","Møter med fremmede","Reise, nomadisme og forfatterliv","Skyld, skam og selvforsvar"].slice(0,4).map((label, idx) => ({ label, text: sentences[idx] || "Dette sporet er til stede i teksten." }));
+      sortItems = buildLiteraryDiarySortItems(raw, sentences);
       day = "Dagbokfragmentet går fra observerende scener til relasjonell uro, videre gjennom møter og samtaler, før det åpner mot reise, frihet og forfatterliv.";
       thoughts = { hovedspor: "Fortelleren prøver å forstå seg selv gjennom observasjoner av andre og en urolig relasjon.", lose_tanker: "Sted, telefoner, fremmede møter og vandring peker mot sosial fremmedhet og frihetslengsel.", neste_steg: "Velg om teksten skal strammes rundt relasjonen, vandringen eller ideen om et nomadisk forfatterliv." };
       list = ["Åpningsscene ved sted/hageanlegg","Observasjon av mennesker i bevegelse","Uro og kontaktbehov hos fortelleren","Telefon og relasjonell spenning","Møter med fremmede","Reise/frihet/forfatterliv som motiv"].slice(0,6);
