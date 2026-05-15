@@ -1193,6 +1193,37 @@
 
 
 
+  function normalizeConceptKey(value) {
+    return String(value || "").trim().toLowerCase();
+  }
+
+  function buildCurrentFocusConceptSet(recurringThemes, conceptGraph, profile) {
+    const fromRecent = (profile?.temporal?.recent_focus?.concepts || [])
+      .slice(0, 12)
+      .map((item) => normalizeConceptKey(item?.key));
+    const from14d = (recurringThemes?.["14d"]?.top_concepts || [])
+      .slice(0, 12)
+      .map((item) => normalizeConceptKey(item?.key));
+    const fromGraph = Object.values(conceptGraph?.nodes || {})
+      .filter((node) => node?.type === "concept")
+      .sort((a, b) => Number(b?.count || 0) - Number(a?.count || 0))
+      .slice(0, 15)
+      .map((node) => normalizeConceptKey(node?.key || node?.id || node?.label));
+
+    return new Set([...fromRecent, ...from14d, ...fromGraph].filter(Boolean));
+  }
+
+  function tensionOverlapsFocus(item, focusSet) {
+    if (!item || !(focusSet instanceof Set) || !focusSet.size) return false;
+    const raw = String(item?.title || item?.key || "").toLowerCase();
+    const pair = raw
+      .split(/↔|<->|↔|—|-|vs\.?/i)
+      .map((part) => normalizeConceptKey(part))
+      .filter(Boolean);
+    if (!pair.length) return false;
+    return pair.some((concept) => focusSet.has(concept));
+  }
+
   function renderKnowledgeMapSection(chamber, profile) {
     const safeChamber = chamber && typeof chamber === "object" ? chamber : {};
     const recurringThemes = global.InsightsEngine?.getRecurringThemes
@@ -1211,18 +1242,28 @@
     const graphNodes = Object.values(conceptGraph?.nodes || {});
     const conceptNodeCount = graphNodes.filter((node) => node?.type === "concept").length;
     const theoryNodeCount = graphNodes.filter((node) => node?.type === "theory" || node?.type === "thinker").length;
-    const topEdges = (conceptGraph?.edges || [])
+    const focusConcepts = buildCurrentFocusConceptSet(recurringThemes, conceptGraph, profile);
+    const prioritizedEdges = (conceptGraph?.edges || [])
       .filter((edge) => edge?.type === "co_occurs")
+      .filter((edge) => {
+        const from = normalizeConceptKey(edge?.from);
+        const to = normalizeConceptKey(edge?.to);
+        return focusConcepts.has(from) || focusConcepts.has(to);
+      });
+    const edgePool = prioritizedEdges.length ? prioritizedEdges : (conceptGraph?.edges || []).filter((edge) => edge?.type === "co_occurs");
+    const topEdges = edgePool
       .sort((a, b) => (b?.weight || 0) - (a?.weight || 0))
       .slice(0, 3);
 
     const themes14d = (recurringThemes?.["14d"]?.top_concepts || []).slice(0, 3);
     const themes30d = (recurringThemes?.["30d"]?.top_concepts || []).slice(0, 3);
     const topTheoryPeople = collectTheoryPeople(safeChamber, recurringThemes?.["30d"]?.top_theories, 4);
-    const visibleTensions = tensions.slice(0, 4);
+    const visibleTensions = tensions
+      .filter((item) => tensionOverlapsFocus(item, focusConcepts))
+      .slice(0, 4);
 
     return `<section class="knowledge-map-block">
-      <h3>Kunnskapskart</h3>
+      <h3>Kunnskapskart for hele chamberet</h3>
       <div class="knowledge-map-grid">
         <article class="knowledge-card">
           <h4>Tilbakevendende tema</h4>
@@ -1244,7 +1285,7 @@
         </article>
         <article class="knowledge-card">
           <h4>Spenninger</h4>
-          ${visibleTensions.length ? `<ul>${visibleTensions.map((item) => `<li><strong>${escHtml(String(item?.title || "Ukjent"))}</strong> · styrke ${escHtml(String(item?.strength || 0))}</li>`).join("")}</ul>` : "<p class='knowledge-sub'>Ingen spenningspar oppdaget ennå.</p>"}
+          ${visibleTensions.length ? `<ul>${visibleTensions.map((item) => `<li><strong>${escHtml(String(item?.title || "Ukjent"))}</strong> · styrke ${escHtml(String(item?.strength || 0))}</li>`).join("")}</ul>` : "<p class='knowledge-sub'>Ingen spenninger koblet til de nyeste temaene ennå.</p>"}
         </article>
       </div>
     </section>`;
@@ -1302,22 +1343,22 @@
       renderMetaSection("Spørsmål som kan løsne fastlåsthet", unstick),
       renderMetaSection("Refleksjoner verdt å hente frem", resurface),
       renderMetaSection("Koblinger verdt å tenke videre på", bridging),
-      renderMetaSection("Tanker som ikke kobler seg ennå", underexplored)
+      renderMetaSection("Nye begreper som trenger flere koblinger", underexplored)
     ].filter(Boolean).join("");
 
     const knowledgeMap = renderKnowledgeMapSection(chamber, profile);
 
     if (!sections) {
       return `<div class="meta-profile">
-        <h3>Hva AHA ser i materialet ditt</h3>
+        <h3>Hva AHA ser i hele materialet ditt</h3>
         <p class="meta-empty">AHA har ennå ikke nok å gå på. Skriv mer i chat eller importer fra History Go.</p>
         ${knowledgeMap}
       </div>`;
     }
 
     return `<div class="meta-profile">
-      <h3>Hva AHA ser i materialet ditt</h3>
-      <p class="meta-meta">${totalInsights} innsikter analysert.</p>
+      <h3>Hva AHA ser i hele materialet ditt</h3>
+      <p class="meta-meta">${totalInsights} innsikter analysert på tvers av hele chamberet.</p>
       ${sections}
       ${knowledgeMap}
     </div>`;
@@ -1345,7 +1386,7 @@
     const content = hasData
       ? renderKnowledgeMapSection(chamber, profile)
       : `<section class="knowledge-map-block">
-          <h3>Kunnskapskart</h3>
+          <h3>Kunnskapskart for hele chamberet</h3>
           <p class="meta-empty">AHA har ikke nok innsikter til å bygge kunnskapskart ennå.</p>
         </section>`;
     renderPanel(`<div class="insight-panel">${content}</div>`);
