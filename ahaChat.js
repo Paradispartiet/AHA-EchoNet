@@ -1115,6 +1115,72 @@
       .slice(0, Math.max(1, Number(maxItems || 4)));
   }
 
+  function renderConceptNetwork(graphData) {
+    const graph = graphData && typeof graphData === "object" ? graphData : {};
+    const edges = Array.isArray(graph.edges) ? graph.edges : [];
+    const sortedConnections = edges
+      .filter((edge) => edge?.type === "co_occurs" && edge?.from && edge?.to)
+      .sort((a, b) => (Number(b?.weight || 0) - Number(a?.weight || 0)))
+      .slice(0, 8);
+
+    if (!sortedConnections.length) {
+      return "<p class='knowledge-sub'>For få koblinger til å bygge nettverk ennå.</p>";
+    }
+
+    const nodeCounts = new Map();
+    sortedConnections.forEach((edge) => {
+      const weight = Number(edge?.weight || 0);
+      const from = String(edge.from).trim();
+      const to = String(edge.to).trim();
+      if (!from || !to) return;
+      nodeCounts.set(from, (nodeCounts.get(from) || 0) + Math.max(1, weight));
+      nodeCounts.set(to, (nodeCounts.get(to) || 0) + Math.max(1, weight));
+    });
+
+    const topConcepts = Array.from(nodeCounts.entries())
+      .sort((a, b) => (b[1] - a[1]) || a[0].localeCompare(b[0]))
+      .slice(0, 5)
+      .map(([name]) => name);
+
+    if (topConcepts.length < 2) {
+      return "<p class='knowledge-sub'>For få koblinger til å bygge nettverk ennå.</p>";
+    }
+
+    const topSet = new Set(topConcepts);
+    const filteredEdges = sortedConnections.filter((edge) => topSet.has(edge.from) && topSet.has(edge.to));
+    const networkEdges = filteredEdges.length ? filteredEdges : sortedConnections.slice(0, Math.min(3, sortedConnections.length));
+
+    const adjacency = new Map();
+    networkEdges.forEach((edge) => {
+      const from = String(edge.from).trim();
+      const to = String(edge.to).trim();
+      if (!from || !to) return;
+      if (!adjacency.has(from)) adjacency.set(from, []);
+      if (!adjacency.has(to)) adjacency.set(to, []);
+      adjacency.get(from).push({ target: to, weight: Number(edge.weight || 0) });
+      adjacency.get(to).push({ target: from, weight: Number(edge.weight || 0) });
+    });
+
+    const orderedRoots = topConcepts.filter((name) => adjacency.has(name));
+    if (!orderedRoots.length) {
+      return "<p class='knowledge-sub'>For få koblinger til å bygge nettverk ennå.</p>";
+    }
+
+    const rows = orderedRoots.map((name) => {
+      const links = (adjacency.get(name) || [])
+        .sort((a, b) => (b.weight - a.weight) || a.target.localeCompare(b.target))
+        .slice(0, 3);
+      const children = links.length
+        ? `<ul class="concept-network-links">${links.map((entry) => `<li><span class="concept-node-badge">${escHtml(entry.target)}</span></li>`).join("")}</ul>`
+        : `<p class="knowledge-sub concept-network-empty">Ingen sterke koblinger registrert for dette begrepet ennå.</p>`;
+      return `<li class="concept-network-item"><span class="concept-node-badge">${escHtml(name)}</span>${children}</li>`;
+    }).join("");
+
+    return `<div class="concept-network" aria-label="Begrepsnettverk">
+      <ul class="concept-network-list">${rows}</ul>
+    </div>`;
+  }
+
 
 
   function renderKnowledgeMapSection(chamber, profile) {
@@ -1159,6 +1225,8 @@
           <p class="knowledge-sub">Begrepsnoder: <strong>${conceptNodeCount}</strong></p>
           <p class="knowledge-sub">Teori-/tenkernoder: <strong>${theoryNodeCount}</strong></p>
           <p class="knowledge-sub">Sterkeste co-occurs: ${topEdges.length ? topEdges.map((edge) => `${escHtml(edge.from)} ↔ ${escHtml(edge.to)} (${edge.weight})`).join(", ") : "Ingen samforekomst-koblinger ennå."}</p>
+          <h5 class="knowledge-mini-title">Begrepsnettverk</h5>
+          ${renderConceptNetwork(conceptGraph)}
         </article>
         <article class="knowledge-card">
           <h4>Teorikoblinger</h4>
