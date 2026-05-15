@@ -857,17 +857,19 @@ html, body { max-width: 100%; overflow-x: hidden; }
 
 @media (max-width: 980px) {
   .aha-app-header {
-    grid-template-columns: minmax(0,1fr) auto;
+    grid-template-columns: minmax(0, 1fr) auto;
     grid-template-areas:
       "brand actions"
-      "meta meta"
-      "profile profile";
-    max-height: none;
+      "meta profile";
+    max-height: 96px;
+    align-items: center;
   }
   .aha-brand { grid-area: brand; }
   .aha-header-actions { grid-area: actions; justify-content: flex-end; flex-wrap: wrap; }
-  .aha-header-meta { grid-area: meta; }
-  .aha-header-profile { grid-area: profile; }
+  .aha-header-meta { grid-area: meta; min-width: 0; }
+  .aha-header-profile { grid-area: profile; min-width: 0; justify-content: flex-end; }
+  .aha-header-profile #aha-profile-subtitle,
+  .aha-header-profile #aha-profile-connection { display: none; }
 }
 
 @media (max-width: 620px) {
