@@ -10,7 +10,6 @@
   const CHAT_THREAD_ID = "default_thread";
 
   const AUTO_OUTPUT_STORAGE_KEY = "aha_chat_auto_outputs_v1";
-  const AUTO_OUTPUT_CARD_ORDER = ["refleksjon", "sortering", "dagsoppsummering", "tankesortering", "liste", "innsikt", "laringssti"];
 
   const AHA_INSIGHT_CONTRACT = Object.freeze({
     FUNCTIONAL_TYPES: new Set([
@@ -1349,11 +1348,14 @@
   function reset() {
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(HIGHLIGHTS_STORAGE_KEY);
+    localStorage.removeItem(AUTO_OUTPUT_STORAGE_KEY);
     out("AHA-kammer nullstilt.");
     setStatusNote("Nullstilt lokalt kammer og highlights.");
     renderPanel("");
     const log = document.getElementById("chat-log");
     if (log) log.innerHTML = "";
+    const autoOutput = document.getElementById("aha-auto-output");
+    if (autoOutput) autoOutput.innerHTML = "";
     renderHighlightsRail();
     updateEmptyState();
   }
@@ -1385,7 +1387,6 @@
     const reply = String(ahaReply || "").trim();
     const sentences = toSentences(raw);
     const keywords = takeKeywords(raw, 5);
-    const first = sentences[0] || raw || "";
     const hasDaySignals = /(i dag|idag|morges|formiddag|ettermiddag|kveld|i natt|jobben|møte|trening|middag)/i.test(raw) || sentences.length >= 4;
     const reflection = raw.length < 32
       ? "Jeg ser et frø av et tema her. Del litt mer om hva som står på spill, så kan jeg speile retningen tydeligere."
@@ -1421,11 +1422,13 @@
     return { reflection, sortItems, day, thoughts, list, insightCards, path };
   }
 
-  function renderAutoOutputs(userText, ahaReply) {
+  function renderAutoOutputPayload(payload) {
     const host = document.getElementById("aha-auto-output");
-    if (!host) return;
-    const payload = buildAutoOutputs(userText, ahaReply);
-    localStorage.setItem(AUTO_OUTPUT_STORAGE_KEY, JSON.stringify(payload));
+    if (!host || !payload) return;
+    const safeSortItems = Array.isArray(payload.sortItems) ? payload.sortItems : [];
+    const safeList = Array.isArray(payload.list) ? payload.list : [];
+    const safeInsightCards = Array.isArray(payload.insightCards) ? payload.insightCards : [];
+    const safePath = Array.isArray(payload.path) ? payload.path : [];
     host.innerHTML = `
       <div class="auto-output-head">
         <h2>AHA etterarbeid</h2>
@@ -1434,20 +1437,26 @@
       <section class="auto-output-group" data-group="samtale">
         <h3>Samtale</h3>
         <div class="auto-output-grid">
-          <article class="auto-card" data-auto-card="reflekter"><h4>Refleksjon</h4><p>${payload.reflection}</p></article>
-          <article class="auto-card" data-auto-card="sorter"><h4>Sortering</h4><ul>${payload.sortItems.map((item)=>`<li><strong>${item.label}:</strong> ${item.text}</li>`).join("")}</ul></article>
-          <article class="auto-card" data-auto-card="oppsummer"><h4>Dagsoppsummering</h4><p>${payload.day}</p></article>
-          <article class="auto-card" data-auto-card="sorter_tanker"><h4>Tankesortering</h4><p><strong>Hovedspor:</strong> ${payload.thoughts.hovedspor}</p><p><strong>Løse tanker:</strong> ${payload.thoughts.lose_tanker}</p><p><strong>Mulig neste steg:</strong> ${payload.thoughts.neste_steg}</p></article>
+          <article class="auto-card" data-auto-card="reflekter"><h4>Refleksjon</h4><p>${escHtml(payload.reflection)}</p></article>
+          <article class="auto-card" data-auto-card="sorter"><h4>Sortering</h4><ul>${safeSortItems.map((item)=>`<li><strong>${escHtml(item?.label)}:</strong> ${escHtml(item?.text)}</li>`).join("")}</ul></article>
+          <article class="auto-card" data-auto-card="oppsummer"><h4>Dagsoppsummering</h4><p>${escHtml(payload.day)}</p></article>
+          <article class="auto-card" data-auto-card="sorter_tanker"><h4>Tankesortering</h4><p><strong>Hovedspor:</strong> ${escHtml(payload?.thoughts?.hovedspor)}</p><p><strong>Løse tanker:</strong> ${escHtml(payload?.thoughts?.lose_tanker)}</p><p><strong>Mulig neste steg:</strong> ${escHtml(payload?.thoughts?.neste_steg)}</p></article>
         </div>
       </section>
       <section class="auto-output-group" data-group="struktur">
         <h3>Struktur</h3>
         <div class="auto-output-grid">
-          <article class="auto-card" data-auto-card="lag_liste"><h4>Liste</h4><ul>${payload.list.map((point)=>`<li>${point}</li>`).join("")}</ul></article>
-          <article class="auto-card" data-auto-card="lag_innsikt"><h4>Innsikt</h4><ul>${payload.insightCards.map((point)=>`<li>${point}</li>`).join("")}</ul></article>
-          <article class="auto-card" data-auto-card="lag_laringssti"><h4>Læringssti</h4><ol>${payload.path.map((step)=>`<li>${step}</li>`).join("")}</ol></article>
+          <article class="auto-card" data-auto-card="lag_liste"><h4>Liste</h4><ul>${safeList.map((point)=>`<li>${escHtml(point)}</li>`).join("")}</ul></article>
+          <article class="auto-card" data-auto-card="lag_innsikt"><h4>Innsikt</h4><ul>${safeInsightCards.map((point)=>`<li>${escHtml(point)}</li>`).join("")}</ul></article>
+          <article class="auto-card" data-auto-card="lag_laringssti"><h4>Læringssti</h4><ol>${safePath.map((step)=>`<li>${escHtml(step)}</li>`).join("")}</ol></article>
         </div>
       </section>`;
+  }
+
+  function renderAutoOutputs(userText, ahaReply) {
+    const payload = buildAutoOutputs(userText, ahaReply);
+    localStorage.setItem(AUTO_OUTPUT_STORAGE_KEY, JSON.stringify(payload));
+    renderAutoOutputPayload(payload);
   }
 
   function focusAutoCard(action) {
@@ -1462,9 +1471,8 @@
 
   function restoreAutoOutputFromStorage() {
     const cache = loadAutoOutputs();
-    const host = document.getElementById("aha-auto-output");
-    if (!cache || !host) return;
-    host.innerHTML = "";
+    if (!cache) return;
+    renderAutoOutputPayload(cache);
   }
 
   function bind() {
