@@ -169,6 +169,57 @@
     if (!global.AHAGroups?.getActiveGroups) return [];
     return asArray(global.AHAGroups.getActiveGroups());
   }
+  function buildDedupedTheoryLinks(chamber, maxItems) {
+    const bestByKey = new Map();
+    asArray(chamber?.insights).forEach((insight) => {
+      if (!global.InsightsEngine?.scoreTheoryRelevance) return;
+      asArray(global.InsightsEngine.scoreTheoryRelevance(insight, chamber)).forEach((link) => {
+        const name = asText(link?.name || link?.theory, "").trim();
+        const relation = asText(link?.relation, "").trim();
+        const score = Number(link?.relevance_score || link?.score || 0);
+        if (!name || !relation || !Number.isFinite(score)) return;
+        const key = `${name.toLowerCase()}|${relation.toLowerCase()}`;
+        const current = bestByKey.get(key);
+        if (!current || score > current.score) {
+          bestByKey.set(key, {
+            name,
+            relation: relation.length > 160 ? `${relation.slice(0, 157)}…` : relation,
+            score
+          });
+        }
+      });
+    });
+    return Array.from(bestByKey.values())
+      .sort((a, b) => b.score - a.score)
+      .slice(0, Math.max(1, Number(maxItems || 4)));
+  }
+  function collectTheoryPeople(chamber, recurringTopTheories, maxItems) {
+    const counts = new Map();
+    const add = (value) => {
+      const label = asText(value, "").trim();
+      if (!label) return;
+      const key = label.toLowerCase();
+      const existing = counts.get(key);
+      if (existing) existing.count += 1;
+      else counts.set(key, { key: label, count: 1 });
+    };
+    asArray(recurringTopTheories).forEach((item) => {
+      const key = asText(item?.key, "").trim();
+      if (!key) return;
+      counts.set(key.toLowerCase(), { key, count: Number(item?.count || 1) });
+    });
+    asArray(chamber?.insights).forEach((insight) => {
+      asArray(insight?.thinkers).forEach(add);
+      asArray(insight?.theories).forEach(add);
+      asArray(insight?.theoretical_links).forEach((link) => {
+        add(link?.name);
+        add(link?.theory);
+      });
+    });
+    return Array.from(counts.values())
+      .sort((a, b) => (b.count - a.count) || a.key.localeCompare(b.key))
+      .slice(0, Math.max(1, Number(maxItems || 4)));
+  }
   function sendInsightToGroup(groupId, insight, index) {
     if (!global.AHAGroups?.addReferenceToGroupByObject) {
       return { ok: false, message: "Grupper er ikke tilgjengelig." };
@@ -405,19 +456,7 @@
     const conceptGraph = global.InsightsEngine?.buildConceptGraph
       ? global.InsightsEngine.buildConceptGraph(chamber)
       : { nodes: {}, edges: [] };
-    const theoryLinks = asArray(chamber?.insights)
-      .filter((insight) => asArray(insight?.theoretical_links).length > 0)
-      .flatMap((insight) => {
-        if (!global.InsightsEngine?.scoreTheoryRelevance) return [];
-        return asArray(global.InsightsEngine.scoreTheoryRelevance(insight, chamber)).map((link) => ({
-          name: asText(link?.name, ""),
-          theory: asText(link?.theory, ""),
-          relation: asText(link?.relation, ""),
-          score: Number(link?.relevance_score || 0)
-        }));
-      })
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 6);
+    const theoryLinks = buildDedupedTheoryLinks(chamber, 4);
     const tensions = global.InsightsEngine?.detectTensions
       ? asArray(global.InsightsEngine.detectTensions(chamber))
       : [];
@@ -429,7 +468,7 @@
     const topEdges = asArray(conceptGraph?.edges).filter((edge) => edge?.type === "co_occurs").sort((a, b) => (b?.weight || 0) - (a?.weight || 0)).slice(0, 3);
     const themes14d = asArray(recurringThemes?.["14d"]?.top_concepts).slice(0, 4);
     const themes30d = asArray(recurringThemes?.["30d"]?.top_concepts).slice(0, 4);
-    const topTheoryPeople = asArray(recurringThemes?.["30d"]?.top_theories).slice(0, 4);
+    const topTheoryPeople = collectTheoryPeople(chamber, recurringThemes?.["30d"]?.top_theories, 4);
 
     target.innerHTML = `
       <h2>Meta / forslag</h2>
@@ -462,7 +501,7 @@
           </article>
           <article class="knowledge-card">
             <h4>Teorikoblinger</h4>
-            ${theoryLinks.length ? `<ul>${theoryLinks.map((link) => `<li><strong>${escapeHtml(link.name || link.theory || "Ukjent")}</strong> · score ${escapeHtml(link.score.toFixed(2))}${link.relation ? ` · ${escapeHtml(link.relation)}` : ""}</li>`).join("")}</ul>` : "<p class='knowledge-sub'>Ingen teoretiske koblinger å score ennå.</p>"}
+            ${theoryLinks.length ? `<ul>${theoryLinks.map((link) => `<li><strong>${escapeHtml(link.name || "Ukjent")}</strong> · ${escapeHtml(link.score.toFixed(2))}${link.relation ? ` · ${escapeHtml(link.relation)}` : ""}</li>`).join("")}</ul>` : "<p class='knowledge-sub'>Ingen teoretiske koblinger å score ennå.</p>"}
           </article>
           <article class="knowledge-card">
             <h4>Spenninger</h4>

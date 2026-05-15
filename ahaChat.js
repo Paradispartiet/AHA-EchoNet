@@ -1053,6 +1053,68 @@
     </section>`;
   }
 
+  function buildDedupedTheoryLinks(chamber, maxItems) {
+    const safeChamber = chamber && typeof chamber === "object" ? chamber : {};
+    const bestByKey = new Map();
+    (Array.isArray(safeChamber?.insights) ? safeChamber.insights : []).forEach((insight) => {
+      if (!global.InsightsEngine?.scoreTheoryRelevance) return;
+      const scored = global.InsightsEngine.scoreTheoryRelevance(insight, safeChamber) || [];
+      scored.forEach((link) => {
+        const name = String(link?.name || link?.theory || "Ukjent").trim();
+        const relation = String(link?.relation || "").trim();
+        if (!name || !relation) return;
+        const score = Number(link?.relevance_score || link?.score || 0);
+        if (!Number.isFinite(score)) return;
+        const key = `${name.toLowerCase()}|${relation.toLowerCase()}`;
+        const current = bestByKey.get(key);
+        if (!current || score > current.score) {
+          bestByKey.set(key, {
+            name,
+            relation: relation.length > 160 ? `${relation.slice(0, 157)}…` : relation,
+            score
+          });
+        }
+      });
+    });
+    return Array.from(bestByKey.values())
+      .sort((a, b) => b.score - a.score)
+      .slice(0, Math.max(1, Number(maxItems || 4)));
+  }
+
+  function collectTheoryPeople(chamber, recurringTopTheories, maxItems) {
+    const counts = new Map();
+    const add = (value) => {
+      const label = String(value || "").trim();
+      if (!label) return;
+      const key = label.toLowerCase();
+      const prev = counts.get(key);
+      if (prev) {
+        prev.count += 1;
+      } else {
+        counts.set(key, { key: label, count: 1 });
+      }
+    };
+
+    (Array.isArray(recurringTopTheories) ? recurringTopTheories : []).forEach((item) => {
+      if (!item || !item.key) return;
+      counts.set(String(item.key).trim().toLowerCase(), { key: String(item.key).trim(), count: Number(item.count || 1) });
+    });
+
+    (Array.isArray(chamber?.insights) ? chamber.insights : []).forEach((insight) => {
+      (Array.isArray(insight?.thinkers) ? insight.thinkers : []).forEach(add);
+      (Array.isArray(insight?.theories) ? insight.theories : []).forEach(add);
+      (Array.isArray(insight?.theoretical_links) ? insight.theoretical_links : []).forEach((link) => {
+        add(link?.name);
+        add(link?.theory);
+      });
+    });
+
+    return Array.from(counts.values())
+      .filter((item) => item.key)
+      .sort((a, b) => (b.count - a.count) || a.key.localeCompare(b.key))
+      .slice(0, Math.max(1, Number(maxItems || 4)));
+  }
+
 
 
   function renderKnowledgeMapSection(chamber, profile) {
@@ -1064,18 +1126,7 @@
       ? global.InsightsEngine.buildConceptGraph(safeChamber)
       : { nodes: {}, edges: [] };
 
-    const theoryLinks = (Array.isArray(safeChamber?.insights) ? safeChamber.insights : [])
-      .flatMap((insight) => {
-        if (!global.InsightsEngine?.scoreTheoryRelevance) return [];
-        return (global.InsightsEngine.scoreTheoryRelevance(insight, safeChamber) || []).map((link) => ({
-          name: String(link?.name || link?.theory || "Ukjent"),
-          relation: String(link?.relation || ""),
-          score: Number(link?.relevance_score || link?.score || 0)
-        }));
-      })
-      .filter((link) => Number.isFinite(link.score))
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 4);
+    const theoryLinks = buildDedupedTheoryLinks(safeChamber, 4);
 
     const tensions = global.InsightsEngine?.detectTensions
       ? (global.InsightsEngine.detectTensions(safeChamber) || [])
@@ -1091,7 +1142,7 @@
 
     const themes14d = (recurringThemes?.["14d"]?.top_concepts || []).slice(0, 3);
     const themes30d = (recurringThemes?.["30d"]?.top_concepts || []).slice(0, 3);
-    const topTheoryPeople = (recurringThemes?.["30d"]?.top_theories || []).slice(0, 3);
+    const topTheoryPeople = collectTheoryPeople(safeChamber, recurringThemes?.["30d"]?.top_theories, 4);
     const visibleTensions = tensions.slice(0, 4);
 
     return `<section class="knowledge-map-block">
@@ -1111,7 +1162,7 @@
         </article>
         <article class="knowledge-card">
           <h4>Teorikoblinger</h4>
-          ${theoryLinks.length ? `<ul>${theoryLinks.map((link) => `<li><strong>${escHtml(link.name)}</strong> · score ${escHtml(link.score.toFixed(2))}${link.relation ? ` · ${escHtml(link.relation)}` : ""}</li>`).join("")}</ul>` : "<p class='knowledge-sub'>Ingen teoretiske koblinger å score ennå.</p>"}
+          ${theoryLinks.length ? `<ul>${theoryLinks.map((link) => `<li><strong>${escHtml(link.name)}</strong> · ${escHtml(link.score.toFixed(2))}${link.relation ? ` · ${escHtml(link.relation)}` : ""}</li>`).join("")}</ul>` : "<p class='knowledge-sub'>Ingen teoretiske koblinger å score ennå.</p>"}
         </article>
         <article class="knowledge-card">
           <h4>Spenninger</h4>
