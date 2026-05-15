@@ -1,0 +1,54 @@
+{
+  "subject_id": "klima_omstilling",
+  "subject_label": "Klima, natur og omstilling",
+  "emner": [
+    {
+      "emne_id": "klima_omstilling_baerekraft",
+      "title": "Klima og omstilling",
+      "core_concepts": ["omstilling", "grønn omstilling", "bærekraft", "grønt skifte", "naturens tålegrenser", "oljeavhengighet", "fossil økonomi"],
+      "keywords": ["omstillingskommisjon", "klimapolitikk", "utslipp", "grønne jobber"],
+      "summary": "Hvordan samfunn går fra oljeavhengighet til bærekraftige systemer innen naturens tålegrenser.",
+      "description": "Kobler klimaansvar, grønn omstilling og avhengighet av fossil økonomi."
+    },
+    {
+      "emne_id": "naturvern_arealpolitikk",
+      "title": "Naturvern og arealpolitikk",
+      "core_concepts": ["naturhensyn", "naturvern", "arealnøytralitet", "urørt natur", "villrein", "villaks", "nedbygging", "naturens premisser"],
+      "keywords": ["arealpolitikk", "naturinngrep", "økosystem", "biologisk mangfold"],
+      "summary": "Arealpolitikk som balanserer samfunnsutvikling med vern av natur og økosystemer.",
+      "description": "Setter naturens premisser i sentrum for beslutninger om utbygging og inngrep."
+    },
+    {
+      "emne_id": "energi_industri_omstilling",
+      "title": "Energi og industri",
+      "core_concepts": ["fornybar energi", "solceller", "vindkraft", "kraft", "elektrifisering", "oljesokkelen", "fastlandsindustri"],
+      "keywords": ["energimiks", "nettkapasitet", "industriomstilling", "energisikkerhet"],
+      "summary": "Omstilling av energi- og industrisystemer fra fossil avhengighet til fornybare løsninger.",
+      "description": "Fokuserer på kraftbehov, elektrifisering og prioriteringer mellom olje og fastlandsindustri."
+    },
+    {
+      "emne_id": "sirkulaerokonomi_lokale_jobber",
+      "title": "Sirkulærøkonomi",
+      "core_concepts": ["sirkulærøkonomi", "gjenbruk", "reparasjon", "grønne jobber", "verdiskaping"],
+      "keywords": ["ressurseffektivitet", "materialstrøm", "lokal industri", "ombruk"],
+      "summary": "Verdiskaping gjennom gjenbruk, reparasjon og lengre levetid for produkter og materialer.",
+      "description": "Utforsker hvordan sirkulærøkonomi gir arbeidsplasser og reduserer naturbelastning."
+    },
+    {
+      "emne_id": "lokalsamfunn_maktfordeling",
+      "title": "Lokalsamfunn og maktfordeling",
+      "core_concepts": ["lokalsamfunn", "kommuneøkonomi", "sentralmakt", "folk i nord", "lokal verdiskaping", "maktfordeling"],
+      "keywords": ["distriktspolitikk", "kommuner", "demokratisk kontroll", "lokalt selvstyre"],
+      "summary": "Hvem som får makt og gevinster i omstilling: lokalsamfunn, regioner eller sentrale myndigheter.",
+      "description": "Analyserer spenningen mellom sentralmakt og lokal verdiskaping i nord og resten av landet."
+    },
+    {
+      "emne_id": "samiske_urfolksrettigheter",
+      "title": "Samiske rettigheter og urfolksrettigheter",
+      "core_concepts": ["samiske rettigheter", "samisk kultur", "urfolk", "urfolksrettigheter", "menneskerettigheter", "naturinngrep i nord"],
+      "keywords": ["konsultasjonsplikt", "reindrift", "kulturvern", "inngrepssaker"],
+      "summary": "Urfolks- og menneskerettigheter i møte med naturinngrep, energiutbygging og arealpolitikk i nord.",
+      "description": "Belyser hvordan samisk kultur og rettigheter påvirkes av statlige og industrielle inngrep."
+    }
+  ]
+}

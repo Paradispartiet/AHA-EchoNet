@@ -39,6 +39,11 @@
       "subject_id": "vitenskap",
       "subject_label": "Vitenskap & filosofi",
       "file": "vitenskap.json"
+    },
+    {
+      "subject_id": "klima_omstilling",
+      "subject_label": "Klima, natur og omstilling",
+      "file": "klima_omstilling.json"
     }
   ]
 }
