@@ -16,6 +16,7 @@
       "MetaInsightsEngine: Fant ikke InsightsEngine. Pass på at insightsChamber.js lastes før metaInsightsEngine.js."
     );
   }
+  const ANALYSIS_NOISE_TERMS = new Set(["illustrasjon","logo","annonsørinnhold","annonsorinnhold","annonse","sponset","les også","les ogsa","les","også","ogsa","årets","arets","populære","populaere","kjole","kjoler","bryllupsgjesten","sesongens","favoritter"]);
 
   function listThemesForSubject(chamber, subjectId) {
     const themes = new Set();
@@ -442,7 +443,7 @@
     const set = new Set();
     (concepts || []).forEach((c) => {
       const key = String(c?.key || c?.label || "").trim().toLowerCase();
-      if (key.length > 2) set.add(key);
+      if (key.length > 2 && !ANALYSIS_NOISE_TERMS.has(key)) set.add(key);
     });
     return Array.from(set).sort();
   }
@@ -498,7 +499,7 @@
     (insights || []).forEach((ins) => {
       (ins?.concepts || []).forEach((c) => {
         const k = String(c?.key || c?.label || "").toLowerCase();
-        if (!k) return;
+        if (!k || ANALYSIS_NOISE_TERMS.has(k)) return;
         frequency.set(k, (frequency.get(k) || 0) + (c.count || 1));
       });
     });
@@ -519,7 +520,7 @@
       const merged = new Map();
       ins.concepts.forEach((c) => {
         const original = String(c?.key || c?.label || "").toLowerCase();
-        if (!original) return;
+        if (!original || ANALYSIS_NOISE_TERMS.has(original)) return;
         const lemma = lemmaMap.get(original) || original;
         let entry = merged.get(lemma);
         if (!entry) {
