@@ -17,7 +17,7 @@
       "decision", "definition", "contradiction", "learning_point", "pattern", "memory", "principle"
     ])
   });
-  const WEAK_CONCEPT_WORDS = new Set(["finnes","egen","form","lærer","mennesker","blir","ikke","bare","over","ligger","lavt","noen","helt","ennå","norske","norsk","moderne","viktig","viktigste","store","små","nye","gamle","tydelig","særlig","mildt","sagt"]);
+  const WEAK_CONCEPT_WORDS = new Set(["illustrasjon","logo","annonsørinnhold","annonsorinnhold","årets","arets","populære","populaere","kjoler","bryllupsgjesten","les","også","ogsa","finnes","egen","form","lærer","mennesker","blir","ikke","bare","over","ligger","lavt","noen","helt","ennå","norske","norsk","moderne","viktig","viktigste","store","små","nye","gamle","tydelig","særlig","mildt","sagt"]);
   function getThreadId() {
     return CHAT_THREAD_ID;
   }
@@ -1313,9 +1313,13 @@
     const fading = (recent.fading || []).slice(0, 5).map((c) =>
       `${escHtml(c.key)} <span class="meta-count">tidligere ×${c.prev_count}</span>`
     );
-    const conceptTensions = (tensions.concept_tensions || []).slice(0, 5).map((t) =>
-      `${escHtml(t.key)} <span class="meta-count">spenning ${Number(t.combined).toFixed(2)}</span>`
-    );
+    const conceptTensions = (tensions.concept_tensions || []).slice(0, 5).map((t) => {
+      const key = String(t?.key || "");
+      const hasPair = /↔|<->|vs\.?|\s-\s|—/.test(key);
+      return hasPair
+        ? `${escHtml(key)} <span class="meta-count">spenning ${Number(t.combined).toFixed(2)}</span>`
+        : "Ingen tydelig todelt spenning ennå.";
+    });
     const paradoxes = (tensions.paradox_pairs || []).slice(0, 5).map((p) => {
       const shared = (p.shared_concepts || []).slice(0, 3).map(escHtml).join(", ");
       const themeText = p.theme_id ? ` i <em>${escHtml(p.theme_id)}</em>` : "";
@@ -1408,13 +1412,51 @@
     updateEmptyState();
   }
 
+  function isBoilerplateLine(trimmed) {
+    const text = String(trimmed || "").trim();
+    if (!text) return true;
+    const lowered = text.toLowerCase();
+    if (/^les\s+også\s*:/i.test(text)) return true;
+    if (/^illustrasjon\s*:/i.test(text)) return true;
+    if (/^(annonsørinnhold|annonsorinnhold|logo|sponset|annonse)$/i.test(text)) return true;
+    if (text.length <= 48 && /(annonsørinnhold|annonsorinnhold|logo|sponset|annonse|kjøp nå|kjop na)/i.test(lowered)) return true;
+    return false;
+  }
+
+  function stripInlineBoilerplate(text) {
+    let value = String(text || "");
+    value = value.replace(/\b(annonsørinnhold|annonsorinnhold|sponset)\b/ig, " ");
+    value = value.replace(/\blogo\b/ig, " ");
+    value = value.replace(/illustrasjon\s*:[^.!?\n]{0,120}/ig, " ");
+    value = value.replace(/\s{2,}/g, " ").trim();
+    return value;
+  }
+
+  function cleanArticleText(raw) {
+    const lines = String(raw || "").split(/\r?\n/);
+    const cleaned = [];
+    const seen = new Set();
+    lines.forEach((line) => {
+      const trimmed = String(line || "").trim();
+      if (!trimmed) return;
+      if (isBoilerplateLine(trimmed)) return;
+      const stripped = stripInlineBoilerplate(trimmed);
+      if (!stripped || isBoilerplateLine(stripped)) return;
+      const compact = stripped.toLowerCase().replace(/\s+/g, " ");
+      if (seen.has(compact)) return;
+      seen.add(compact);
+      cleaned.push(stripped);
+    });
+    return cleaned.join("\n");
+  }
+
   function toSentences(text) {
     return String(text || "").split(/(?<=[.!?])\s+|\n+/).map((part) => part.trim()).filter(Boolean);
   }
 
   function collectOpinionArticleEvidence(raw, sentences) {
-    const text = String(raw || "");
-    const lowered = text.toLowerCase();
+    const text = cleanArticleText(raw);
+    const lowered = String(text || "").toLowerCase();
     const normalize = (v) => ` ${String(v || "").toLowerCase()} `;
     const normalizedText = ` ${lowered} `;
     const hasAny = (signals) => signals.some((signal) => normalizedText.includes(normalize(signal)));
@@ -1423,98 +1465,96 @@
       return signals.some((signal) => normalized.includes(normalize(signal)));
     }) || "";
     const signals = {
-      government: ["regjering", "statsråd", "arbeiderpartiet", "støre-regjeringen", "kulturminister", "finansdepartementet"],
-      namedGovernment: ["støre-regjeringen", "arbeiderpartiet", "kulturminister", "finansdepartementet"],
-      mediaPolicy: ["mediepolitikk", "journalistikk", "redaktørstyrte medier", "norske medier", "medietilsyn", "medietilsynet", "mediene"],
-      vatOrTax: ["momsfritak", "moms", "skatteetaten", "avgift", "avgiftsbelegge", "momsregime"],
-      pressFreedom: ["ytringsfrihet", "frie ord", "fri presse", "offentlighet"],
-      editorControlledMedia: ["redaktørstyrte medier", "redaktørstyrt", "redaktøransvar"],
-      historicalBackground: ["1935", "1970", "lang historie", "historisk", "fritaket har"],
-      economicConsequence: ["økonomi", "medieøkonomi", "bærekraftig", "beløp", "millioner", "annonseinntekter", "handlingsrom"],
-      globalPlatforms: ["utenlandske plattformer", "internasjonale aktører", "engelsk", "annonseinntektene forsvinner"],
-      politicalCritique: ["kritikk", "tilbakeskritt", "doble signaler", "undergraver", "svekker", "ikke sterk nok", "virker ikke"]
+      government: ["regjering", "storting", "statsråd", "statsrad", "departement", "kommisjon", "omstillingskommisjon", "kommune", "lokalsamfunn", "sentralmakt"],
+      party: ["mdg", "arbeiderpartiet", "høyre", "hoyre", "sv", "venstre", "sp", "frp", "rødt", "rodt"],
+      policyProposal: ["plan", "mandat", "kommisjon", "omstilling", "arealnøytralitet", "arealnoytralitet", "sirkulærøkonomi", "sirkulaerokonomi", "grønn vekst", "gronn vekst", "grønne jobber", "gronne jobber", "naturens premisser"],
+      climateTransition: ["omstilling", "grønn omstilling", "gronn omstilling", "bærekraft", "baerekraft", "bærekraftig samfunn", "grønt skifte", "fremtidsrettet", "naturens tålegrenser", "naturens talegrenser"],
+      oilFossil: ["olje", "oljeavhengig", "fossilt", "fossil", "oljesokkelen", "oljeindustri", "forurense", "utslippsregnskap"],
+      natureProtection: ["natur", "naturhensyn", "villrein", "villaks", "urørt natur", "urort natur", "arealnøytralitet", "arealnoytralitet", "nedbygging", "bygge ned", "naturens premisser"],
+      indigenousRights: ["samiske rettigheter", "samisk kultur", "samer", "urfolk"],
+      energyPolicy: ["fornybar", "solceller", "vindkraft", "kraft", "elektrifisere", "fastlandsindustrien"],
+      circularEconomy: ["sirkulærøkonomi", "sirkulaerokonomi", "gjenbruk", "reparasjon", "arbeidsplasser", "verdiskaping"],
+      localCommunities: ["lokalsamfunn", "kommuneøkonomi", "folk i nord", "nord", "finmarking", "oslo", "sentralmakt"],
+      economicConsequence: ["økonomi", "okonomi", "arbeidsplasser", "verdiskaping", "kostnad", "kostnader", "konsekvens"],
+      politicalCritique: ["kritikk", "undergraver", "svekker", "feiler", "ikke godt nok", "dobbelt signal", "naiv", "uansvarlig"],
+      rhetoricalQuestions: ["hva er det egentlig", "hva skal vi bli", "hvorfor", "?"],
+      articleBoilerplate: ["les også", "annonsørinnhold", "illustrasjon", "logo"]
     };
-    const actorDefs = [
-      { label: "VG", signals: [" vg ", " vg,", " vg.", " vg?", " vg!"] },
-      { label: "Aftenposten", signals: ["aftenposten"] },
-      { label: "TV2", signals: ["tv2", "tv 2"] },
-      { label: "Schibsted", signals: ["schibsted"] },
-      { label: "Gard Steiro", signals: ["gard steiro"] },
-      { label: "Medietilsynet", signals: ["medietilsynet", "medietilsyn"] },
-      { label: "Regjeringen", signals: ["regjering", "støre-regjeringen"] },
-      { label: "Kulturministeren", signals: ["kulturminister"] },
-      { label: "Finansdepartementet", signals: ["finansdepartementet"] }
-    ];
-    const actors = actorDefs.filter((item) => item.signals.some((signal) => normalizedText.includes(normalize(signal)))).map((item) => item.label);
+    const actorDefs = ["MDG","Arbeiderpartiet","Høyre","SV","Venstre","Sp","Frp","Rødt","regjeringen","Støre-regjeringen","omstillingskommisjonen","John Arne Markussen","kulturministeren","Finansdepartementet","stortinget","statsråd","kommisjon","kommune","lokalsamfunn"];
+    const actors = actorDefs.filter((name) => normalizedText.includes(normalize(name)));
     const evidence = {
       hasGovernment: hasAny(signals.government),
-      hasNamedGovernment: hasAny(signals.namedGovernment),
-      hasMediaPolicy: hasAny(signals.mediaPolicy),
-      hasVatOrTax: hasAny(signals.vatOrTax),
-      hasPressFreedom: hasAny(signals.pressFreedom),
-      hasEditorControlledMedia: hasAny(signals.editorControlledMedia),
-      hasHistoricalBackground: hasAny(signals.historicalBackground),
+      hasPoliticalActor: hasAny(signals.government) || actors.length > 0,
+      hasParty: hasAny(signals.party),
+      hasPolicyProposal: hasAny(signals.policyProposal),
+      hasClimateTransition: hasAny(signals.climateTransition),
+      hasOilFossil: hasAny(signals.oilFossil),
+      hasNatureProtection: hasAny(signals.natureProtection),
+      hasIndigenousRights: hasAny(signals.indigenousRights),
+      hasEnergyPolicy: hasAny(signals.energyPolicy),
+      hasCircularEconomy: hasAny(signals.circularEconomy),
+      hasLocalCommunities: hasAny(signals.localCommunities),
       hasEconomicConsequence: hasAny(signals.economicConsequence),
-      hasNamedMediaActors: actors.some((actor) => ["VG", "Aftenposten", "TV2", "Schibsted", "Gard Steiro", "Medietilsynet"].includes(actor)),
-      hasGlobalPlatforms: hasAny(signals.globalPlatforms),
       hasPoliticalCritique: hasAny(signals.politicalCritique),
+      hasRhetoricalQuestions: hasAny(signals.rhetoricalQuestions),
+      hasArticleBoilerplate: hasAny(signals.articleBoilerplate),
       actors,
       matchedThemes: [],
       textSnippets: {
-        claim: findLine([...signals.government, ...signals.mediaPolicy, ...signals.vatOrTax, ...signals.pressFreedom]) || (sentences[0] || ""),
+        claim: findLine([].concat(signals.policyProposal, signals.climateTransition, signals.oilFossil)) || (sentences[0] || ""),
         conflict: findLine(signals.politicalCritique),
-        history: findLine(signals.historicalBackground),
-        economy: findLine(signals.economicConsequence),
-        publicSphere: findLine(signals.pressFreedom),
-        platforms: findLine(signals.globalPlatforms)
+        nature: findLine(signals.natureProtection),
+        energy: findLine(signals.energyPolicy),
+        local: findLine(signals.localCommunities)
       }
     };
     const themes = [];
-    if (evidence.hasGovernment) themes.push("government");
-    if (evidence.hasMediaPolicy) themes.push("media-policy");
-    if (evidence.hasVatOrTax) themes.push("vat-tax");
-    if (evidence.hasPressFreedom) themes.push("press-freedom");
-    if (evidence.hasHistoricalBackground) themes.push("history");
-    if (evidence.hasEconomicConsequence) themes.push("economy");
-    if (evidence.hasNamedMediaActors) themes.push("actors");
-    if (evidence.hasGlobalPlatforms) themes.push("global-platforms");
-    if (evidence.hasPoliticalCritique) themes.push("political-critique");
+    if (evidence.hasClimateTransition) themes.push("klima-omstilling");
+    if (evidence.hasOilFossil) themes.push("olje-fossil");
+    if (evidence.hasNatureProtection) themes.push("natur-areal");
+    if (evidence.hasIndigenousRights) themes.push("samiske-rettigheter");
+    if (evidence.hasEnergyPolicy) themes.push("energi-industri");
+    if (evidence.hasCircularEconomy) themes.push("sirkulaerokonomi");
+    if (evidence.hasLocalCommunities) themes.push("lokalsamfunn-makt");
     evidence.matchedThemes = themes;
     return evidence;
   }
 
   function detectTextType(raw) {
-    const text = String(raw || "").toLowerCase();
+    const text = cleanArticleText(raw).toLowerCase();
     if (!text) return "general";
 
-    const projectSignals = /(prosjekt|app|kode|koding|repo|repository|prompt|merge|backend|frontend|ui\b|ux\b|fil(?:er)?|funksjon(?:er)?|komponent|modul|deploy|bug|commit|pull request|pr\b|branch|api|database|test(?:er)?|refaktor)/i;
-    if (projectSignals.test(text)) return "project_note";
     const opinionEvidence = collectOpinionArticleEvidence(text, toSentences(text));
     let opinionScore = 0;
-    if (opinionEvidence.hasGovernment) opinionScore += 2;
-    if (opinionEvidence.hasMediaPolicy) opinionScore += 2;
-    if (opinionEvidence.hasVatOrTax) opinionScore += 2;
-    if (opinionEvidence.hasPressFreedom) opinionScore += 2;
-    if (opinionEvidence.hasHistoricalBackground) opinionScore += 1;
-    if (opinionEvidence.hasEconomicConsequence) opinionScore += 1;
-    if (opinionEvidence.hasNamedMediaActors) opinionScore += 1;
-    if (opinionEvidence.hasGlobalPlatforms) opinionScore += 1;
+    if (opinionEvidence.hasPoliticalActor) opinionScore += 2;
+    if (opinionEvidence.hasParty) opinionScore += 1;
+    if (opinionEvidence.hasPolicyProposal) opinionScore += 1;
+    if (opinionEvidence.hasClimateTransition) opinionScore += 2;
+    if (opinionEvidence.hasOilFossil) opinionScore += 2;
+    if (opinionEvidence.hasNatureProtection) opinionScore += 2;
+    if (opinionEvidence.hasIndigenousRights) opinionScore += 1;
+    if (opinionEvidence.hasEnergyPolicy) opinionScore += 1;
+    if (opinionEvidence.hasCircularEconomy) opinionScore += 1;
+    if (opinionEvidence.hasLocalCommunities) opinionScore += 1;
     if (opinionEvidence.hasPoliticalCritique) opinionScore += 1;
-    const hasNamedActorWithPolicy = opinionEvidence.hasNamedMediaActors && (opinionEvidence.hasVatOrTax || opinionEvidence.hasMediaPolicy);
-    const hasGovernmentMediaCritique = opinionEvidence.hasGovernment && opinionEvidence.hasMediaPolicy && opinionEvidence.hasPoliticalCritique;
-    if (opinionScore >= 4 || hasNamedActorWithPolicy || hasGovernmentMediaCritique) return "opinion_article";
+    if (opinionEvidence.hasRhetoricalQuestions) opinionScore += 1;
 
     const daySignals = /(i dag|idag|dagen min|jeg våknet|jeg hentet|jeg leverte|på jobb|etterpå|i kveld|i morges|vi dro|jeg gjorde|formiddag|ettermiddag)/i;
     const literaryDiarySignals = /(jeg trodde|jeg burde|jeg er lei|jeg skjønner|jeg tenkte|her om dagen|i forrigårs|fortsatt|neste uke|ringe|savn|sinne|kjærlighet|skyld|skam|fremmedhet|forfatter|poetisk|skrive|tekst|leve vilt|reise|nomad|kurbad|hageanlegg|leilighet|telefon|park|møte)/i;
     const literaryFragmentSignals = /(scene|stemning|rytme|lys|mørke|rommet|gaten|kropp|språk|vind|lukt|hud|sans)/i;
     const theoryStrongSignals = /(teori|modell|bevissthet|hypotese|begrep|premiss|epistem)/i;
     const theoryWeakSignals = /(kunnskap|system|metode)/i;
-
     const sentenceCount = toSentences(text).length;
     const pronounCount = (text.match(/\bjeg\b/g) || []).length;
-
     const hasDiaryShape = pronounCount >= 2 && sentenceCount >= 3;
     if (pronounCount >= 3 && literaryDiarySignals.test(text) && sentenceCount >= 4) return "literary_diary";
+
+    const hasStrongOpinion = opinionScore >= 5 || ((opinionEvidence.hasPoliticalActor || opinionEvidence.hasParty) && (opinionEvidence.hasClimateTransition || opinionEvidence.hasOilFossil || opinionEvidence.hasNatureProtection));
+    if (hasStrongOpinion) return "opinion_article";
+
+    const strongProjectSignals = /(repo|repository|kode|koding|prompt|merge|pull request|\bpr\b|branch|commit|backend|frontend|\bui\b|\bux\b|\bapi\b|database|javascript|css|html|supabase|vercel|github|fil\b)/i;
+    if (strongProjectSignals.test(text)) return "project_note";
+
     if (theoryStrongSignals.test(text)) return "theory_idea";
     if (theoryWeakSignals.test(text) && !hasDiaryShape && !literaryDiarySignals.test(text)) return "theory_idea";
     if (daySignals.test(text)) return "day_log";
@@ -1673,8 +1713,9 @@
     const raw = String(userText || "").trim();
     const reply = String(ahaReply || "").trim();
     const textType = detectTextType(raw);
-    const sentences = toSentences(raw);
-    const keywords = takeKeywords(raw, 5);
+    const analysisText = cleanArticleText(raw);
+    const sentences = toSentences(analysisText);
+    const keywords = takeKeywords(analysisText, 5);
     const baseList = sentences.slice(0,6).map((item) => item.replace(/^[-•]\s*/, ""));
     let reflection = "Jeg ser et tydelig tema. Del gjerne litt mer for skarpere sortering.";
     let sortItems = (keywords.length ? keywords : ["retning","utfordring","handling"]).slice(0, 4).map((key, idx) => ({ label: key.charAt(0).toUpperCase() + key.slice(1), text: sentences[idx] || `Dette peker på et tema rundt ${key}.` }));
@@ -1761,43 +1802,38 @@
       day = "Ikke dagbokmateriale – ingen dagsoppsummering laget.";
     } else if (textType === "opinion_article") {
       const evidence = collectOpinionArticleEvidence(raw, sentences);
-      const reflectionParts = [];
-      if (evidence.hasGovernment && evidence.hasMediaPolicy) reflectionParts.push("Teksten bygger en politisk/mediepolitisk kritikk av forholdet mellom regjeringens signaler og medienes vilkår.");
-      else reflectionParts.push("Teksten fremstår som en argumenterende kommentar med politisk og samfunnsmessig konflikt.");
-      if (evidence.hasVatOrTax) reflectionParts.push("Momsfritak/momsregime brukes som sentralt konfliktpunkt.");
-      if (evidence.hasPressFreedom) reflectionParts.push("Fri presse/ytringsfrihet brukes som prinsipielt anker.");
-      if (evidence.hasEconomicConsequence) reflectionParts.push("Argumentasjonen kobles til økonomisk handlingsrom og medieøkonomi.");
-      if (evidence.hasGlobalPlatforms) reflectionParts.push("Konkurranse fra globale plattformer brukes som pressfaktor.");
+      const reflectionParts = ["Teksten fremstår som en argumenterende kommentar med politisk og samfunnsmessig konflikt."];
+      if (evidence.hasClimateTransition && evidence.hasOilFossil) reflectionParts.push("Teksten bygger en politisk argumentasjon for omstilling fra oljeavhengighet til et bærekraftig samfunn.");
+      if (evidence.hasNatureProtection) reflectionParts.push("Naturhensyn brukes som ramme for hva slags utvikling teksten mener er legitim.");
+      if (evidence.hasLocalCommunities) reflectionParts.push("Teksten kobler grønn omstilling til lokalsamfunn og maktfordeling.");
+      if (evidence.hasIndigenousRights) reflectionParts.push("Samiske rettigheter inngår som en del av tekstens kritikk av natur- og industripolitikk.");
       reflection = reflectionParts.join(" ");
       const dynamicSortItems = [{ label: "Hovedpåstand", text: evidence.textSnippets.claim || sentences[0] || "Presiser kjernen i argumentasjonen." }];
-      if (evidence.hasGovernment && evidence.hasPoliticalCritique) dynamicSortItems.push({ label: "Konflikt / dobbelt signal", text: evidence.textSnippets.conflict || "Vis tydelig avstanden mellom politisk retorikk og praktisk politikk." });
-      if (evidence.hasHistoricalBackground) dynamicSortItems.push({ label: "Historisk bakgrunn", text: evidence.textSnippets.history || "Knytt argumentet til historisk ramme og tidligere prinsipper." });
-      if (evidence.hasEconomicConsequence) dynamicSortItems.push({ label: "Økonomisk konsekvens", text: evidence.textSnippets.economy || "Beskriv økonomiske følger for medieøkonomi og handlingsrom." });
-      if (evidence.actors.length) dynamicSortItems.push({ label: "Aktører", text: `Aktører i teksten: ${evidence.actors.join(", ")}.` });
-      if (evidence.hasPoliticalCritique) dynamicSortItems.push({ label: "Politisk kritikk", text: evidence.textSnippets.conflict || "Spiss kritikken av prioriteringer og ansvar." });
-      if (evidence.hasPressFreedom) dynamicSortItems.push({ label: "Offentlighet / ytringsfrihet", text: evidence.textSnippets.publicSphere || "Forklar hvorfor saken berører offentlighet og fri presse." });
-      if (evidence.hasGlobalPlatforms) dynamicSortItems.push({ label: "Globale plattformer", text: evidence.textSnippets.platforms || "Vis hvordan globale plattformer påvirker norske medievilkår." });
+      if (evidence.hasPoliticalCritique || evidence.hasRhetoricalQuestions) dynamicSortItems.push({ label: "Konflikt / retorisk spørsmål", text: evidence.textSnippets.conflict || "Vis tydelig hvor konflikten står." });
+      if (evidence.actors.length) dynamicSortItems.push({ label: "Politisk aktør", text: `Aktører i teksten: ${evidence.actors.join(", ")}.` });
+      if (evidence.hasClimateTransition) dynamicSortItems.push({ label: "Omstilling / klimapolitikk", text: evidence.textSnippets.claim || "Spiss omstillingsargumentet." });
+      if (evidence.hasOilFossil) dynamicSortItems.push({ label: "Olje og fossil avhengighet", text: "Vis hva teksten vil bort fra i fossiløkonomien." });
+      if (evidence.hasNatureProtection) dynamicSortItems.push({ label: "Natur og areal", text: evidence.textSnippets.nature || "Knytt naturhensyn til politiske valg." });
+      if (evidence.hasIndigenousRights) dynamicSortItems.push({ label: "Samiske rettigheter", text: "Vis hvordan urfolksrettigheter påvirkes av politikken." });
+      if (evidence.hasEnergyPolicy) dynamicSortItems.push({ label: "Energi og industri", text: evidence.textSnippets.energy || "Knytt energivalg til industriell omstilling." });
+      if (evidence.hasLocalCommunities) dynamicSortItems.push({ label: "Lokalsamfunn / maktfordeling", text: evidence.textSnippets.local || "Vis maktspørsmålet mellom sentrum og lokalt nivå." });
+      if (evidence.hasCircularEconomy) dynamicSortItems.push({ label: "Sirkulærøkonomi / nye arbeidsplasser", text: "Koble gjenbruk/reparasjon til arbeidsplasser og verdiskaping." });
       sortItems = dynamicSortItems;
       day = "Ikke dagbokmateriale – ingen dagsoppsummering laget.";
       thoughts = {
-        hovedspor: evidence.textSnippets.claim || "Teksten har et tydelig hovedspor i den politiske argumentasjonen.",
-        lose_tanker: "Skill bakgrunn, konflikt og konsekvens tydeligere dersom flere spor glir inn i hverandre.",
-        neste_steg: "Stram overgangen mellom hovedpåstand, konfliktpunkt og samfunnsmessig konsekvens."
+        hovedspor: evidence.textSnippets.claim || "Teksten svarer på hva samfunnet skal omstilles fra og til.",
+        lose_tanker: "Retoriske spørsmål, naturhensyn og industripolitikk kan skilles tydeligere i egne avsnitt.",
+        neste_steg: "Stram overgangen mellom omstillingsbehovet, kritikken og den konkrete planen for grønn verdiskaping."
       };
       const dynamicList = [];
-      if (evidence.hasGovernment && evidence.hasMediaPolicy) dynamicList.push("Teksten kritiserer politiske signaler om medienes vilkår.");
-      if (evidence.hasVatOrTax) dynamicList.push("Moms/momsfritak brukes som hovedkonflikt.");
-      if (evidence.hasHistoricalBackground) dynamicList.push("Historien om fritaket brukes som bakgrunn.");
-      if (evidence.hasEconomicConsequence) dynamicList.push("Økonomiske konsekvenser brukes til å skjerpe argumentet.");
-      if (evidence.hasNamedMediaActors && evidence.actors.length) dynamicList.push(`Aktører i teksten: ${evidence.actors.join(", ")}.`);
-      if (evidence.hasGlobalPlatforms) dynamicList.push("Globale plattformer brukes som pressfaktor.");
-      if (evidence.hasPressFreedom) dynamicList.push("Ytringsfrihet/fri presse brukes som prinsipielt anker.");
+      if (evidence.hasClimateTransition) dynamicList.push("Teksten svarer på hva Norge skal omstilles fra og til.");
+      if (evidence.hasOilFossil) dynamicList.push("Oljeavhengighet settes opp mot bærekraftig samfunn.");
+      if (evidence.hasNatureProtection || evidence.hasIndigenousRights) dynamicList.push("Naturhensyn og samiske rettigheter brukes som ramme.");
+      if (evidence.hasParty || evidence.actors.some((a) => /mdg/i.test(a))) dynamicList.push("Politiske aktører knyttes til omstillingskommisjon og retning.");
+      if (evidence.hasCircularEconomy) dynamicList.push("Sirkulærøkonomi, gjenbruk og reparasjon løftes som nye arbeidsplasser.");
+      if (evidence.hasLocalCommunities) dynamicList.push("Lokalsamfunn og maktfordeling brukes som del av løsningen.");
       list = dynamicList.slice(0, 6);
-      path = [
-        "Spiss hovedpåstanden.",
-        "Skill bakgrunn, konflikt og konsekvens.",
-        "Avslutt med tydelig samfunnsmessig betydning."
-      ];
+      path = ["Spiss hovedpåstanden.", "Skill bakgrunn, konflikt og løsning.", "Avslutt med tydelig samfunnsmessig konsekvens."];
     } else if (textType === "project_note") {
       reflection = "Dette er et prosjektnotat med tydelig problem og mål. Neste gevinst ligger i å koble løsning til konkrete filer/funksjoner.";
       sortItems = ["Problem","Løsning","Filer/funksjoner","Neste steg"].map((label, idx) => ({ label, text: sentences[idx] || "Trenger kort presisering i teksten." }));
@@ -1822,10 +1858,10 @@
       if (!localInsights.length) localInsights.push("Dagbokformen bærer en assosiativ bevegelse som kan strammes med tydeligere motivspor.");
     } else if (textType === "opinion_article") {
       const evidence = collectOpinionArticleEvidence(raw, sentences);
-      if (evidence.hasVatOrTax && evidence.hasPressFreedom) localInsights.push("Teksten gjør avgiftspolitikk til et spørsmål om fri presse.");
-      if (evidence.hasGovernment && evidence.hasPoliticalCritique) localInsights.push("Hovedkonflikten ligger mellom politisk retorikk og praktisk politikk.");
-      if (evidence.hasHistoricalBackground && evidence.hasEconomicConsequence) localInsights.push("Argumentet styrkes når historisk prinsipp kobles til dagens økonomiske konsekvens.");
-      if (evidence.hasGlobalPlatforms) localInsights.push("Globale plattformer brukes som kontrast til norske mediers sårbarhet.");
+      if (evidence.hasClimateTransition && evidence.hasNatureProtection) localInsights.push("Teksten gjør grønn omstilling til et spørsmål om både klima og naturhensyn.");
+      if (evidence.hasOilFossil && evidence.hasClimateTransition) localInsights.push("Hovedkonflikten ligger mellom fossil økonomi og et bærekraftig samfunn.");
+      if ((evidence.hasLocalCommunities || evidence.hasCircularEconomy) && evidence.hasEconomicConsequence) localInsights.push("Argumentet styrkes når lokale arbeidsplasser og økonomisk omstilling kobles sammen.");
+      if (evidence.hasIndigenousRights) localInsights.push("Urfolksrettigheter brukes som et korrektiv i natur- og industripolitikken.");
       if (!localInsights.length) localInsights.push("Kommentarteksten blir sterkere når hovedpåstand, konflikt og konsekvens skilles tydeligere.");
     } else {
       localInsights.push(`Mønster: ${keywords[0] || "temaet"} går igjen og bærer teksten.`);
