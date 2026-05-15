@@ -36,14 +36,6 @@
         <button id="aha-open-login-modal" class="aha-ghost-button" type="button">Logg inn</button>
         <button id="aha-auth-signout" class="aha-ghost-button is-hidden" type="button">Logg ut</button>
       </div>
-      <form id="aha-profile-name-form" class="aha-profile-name-form is-hidden" aria-label="Opprett AHA-profilnavn">
-        <label for="aha-profile-name-input">Opprett AHA-navn</label>
-        <div class="aha-profile-name-row">
-          <input id="aha-profile-name-input" type="text" maxlength="80" placeholder="Navnet AHA og History Go skal bruke" />
-          <button type="submit">Lagre</button>
-        </div>
-        <p id="aha-profile-name-output">AHA-navnet lagres som sann kilde i profilen din.</p>
-      </form>
     </header>
 
     <div id="aha-login-modal" class="aha-login-modal is-hidden" aria-hidden="true">
@@ -60,6 +52,14 @@
           <button type="submit">Send lenke</button>
         </form>
         <p id="aha-auth-output" class="aha-auth-output"></p>
+        <form id="aha-profile-name-form" class="aha-profile-name-form is-hidden" aria-label="Opprett AHA-profilnavn">
+          <label for="aha-profile-name-input">Opprett AHA-navn</label>
+          <div class="aha-profile-name-row">
+            <input id="aha-profile-name-input" type="text" maxlength="80" placeholder="Navnet AHA og History Go skal bruke" />
+            <button type="submit">Lagre</button>
+          </div>
+          <p id="aha-profile-name-output">AHA-navnet lagres som sann kilde i profilen din.</p>
+        </form>
       </aside>
     </div>
 
