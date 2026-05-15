@@ -165,7 +165,16 @@
     const grid = $("aha-modules-grid");
     if (!grid) return;
     const modules = Array.isArray(window.AHA_MODULES) ? window.AHA_MODULES : [];
-    grid.innerHTML = modules.map((module) => {
+    const preferredOrder = ["chat","insights","historygo","gallery","notes","feed","avisa","profile","search","privacy"];
+    const orderedModules = [...modules].sort((a, b) => {
+      const ai = preferredOrder.indexOf(a?.id);
+      const bi = preferredOrder.indexOf(b?.id);
+      const aRank = ai === -1 ? 999 : ai;
+      const bRank = bi === -1 ? 999 : bi;
+      if (aRank !== bRank) return aRank - bRank;
+      return String(a?.title || "").localeCompare(String(b?.title || ""), "no");
+    });
+    grid.innerHTML = orderedModules.map((module) => {
       const isPriority = ["chat", "historygo"].includes(module.id);
       const tileClass = `aha-tile${isPriority ? " aha-tile-priority" : ""}`;
       const icon = MODULE_ICONS[module.id] || "◌";
