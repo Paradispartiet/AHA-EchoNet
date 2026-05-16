@@ -10,6 +10,7 @@
   const CHAT_THREAD_ID = "default_thread";
 
   const AUTO_OUTPUT_STORAGE_KEY = "aha_chat_auto_outputs_v1";
+  const AFTERWORK_STORAGE_KEY = "aha_afterwork_v1";
 
   const AHA_INSIGHT_CONTRACT = Object.freeze({
     FUNCTIONAL_TYPES: new Set([
@@ -1431,6 +1432,7 @@
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(HIGHLIGHTS_STORAGE_KEY);
     localStorage.removeItem(AUTO_OUTPUT_STORAGE_KEY);
+    localStorage.removeItem(AFTERWORK_STORAGE_KEY);
     out("AHA-kammer nullstilt.");
     setStatusNote("Nullstilt lokalt kammer og highlights.");
     renderPanel("");
@@ -1761,11 +1763,152 @@
     return Array.from(scores.entries()).sort((a,b)=>b[1]-a[1]).slice(0, maxItems).map(([word]) => word);
   }
 
+  function sourceHash(text) {
+    const normalized = String(text || "").toLowerCase().replace(/\s+/g, " ").trim();
+    return normalized ? shortHash(normalized) : "";
+  }
+
   function loadAutoOutputs() {
     try {
       const raw = localStorage.getItem(AUTO_OUTPUT_STORAGE_KEY);
-      return raw ? JSON.parse(raw) : null;
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== "object") return null;
+      // Bakoverkompatibilitet: gammel cache var ren payload.
+      if (parsed.payload && typeof parsed.payload === "object") return parsed;
+      return { payload: parsed };
     } catch { return null; }
+  }
+
+  function loadAfterworkEntries() {
+    try {
+      const raw = localStorage.getItem(AFTERWORK_STORAGE_KEY);
+      const parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function saveAfterworkEntries(entries) {
+    localStorage.setItem(AFTERWORK_STORAGE_KEY, JSON.stringify(Array.isArray(entries) ? entries : []));
+  }
+
+  function normalizeSubjectLinks(subjectMatches) {
+    const seen = new Set();
+    const list = Array.isArray(subjectMatches) ? subjectMatches : [];
+    return list.map((match) => {
+      const normalized = {};
+      if (match && typeof match === "object") {
+        if (match.id != null) normalized.id = match.id;
+        if (match.title != null) normalized.title = String(match.title);
+        else if (match.subject_label != null) normalized.title = String(match.subject_label);
+        if (match.subject_id != null) normalized.subject_id = match.subject_id;
+        else if (match.emne_id != null) normalized.subject_id = match.emne_id;
+        if (match.score != null && Number.isFinite(Number(match.score))) normalized.score = Number(match.score);
+        if (Array.isArray(match.matched_terms)) normalized.matched_terms = match.matched_terms.map((term) => String(term));
+      }
+      return normalized;
+    }).filter((item) => {
+      const key = `${String(item.subject_id || "")}|${String(item.title || "").toLowerCase()}`;
+      if (!key || key === "|") return false;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    }).slice(0, 12);
+  }
+
+  function deriveConceptsFromAfterwork(payload, fallbackKeywords, subjectLinks) {
+    const concepts = [];
+    const safePayloadKeywords = Array.isArray(payload?.keywords) ? payload.keywords : [];
+    const safeFallbackKeywords = Array.isArray(fallbackKeywords) ? fallbackKeywords : [];
+    const safeSubjectLinks = Array.isArray(subjectLinks) ? subjectLinks : [];
+    safePayloadKeywords.forEach((word) => concepts.push(String(word).trim().toLowerCase()));
+    safeFallbackKeywords.forEach((word) => concepts.push(String(word).trim().toLowerCase()));
+    safeSubjectLinks.forEach((link) => {
+      (Array.isArray(link?.matched_terms) ? link.matched_terms : []).forEach((term) => {
+        const value = String(term || "").trim().toLowerCase();
+        if (value) concepts.push(value);
+      });
+    });
+    const textType = String(payload?.textType || "").trim().toLowerCase();
+    if (textType) concepts.push(textType);
+    return Array.from(new Set(concepts.filter(Boolean))).slice(0, 16);
+  }
+
+  function makeAfterworkObject(payload, sourceText, options) {
+    const source = String(sourceText || "").trim();
+    const normalizedPayload = payload && typeof payload === "object" ? payload : {};
+    const sourceTextHash = sourceHash(source);
+    const safeSortItems = Array.isArray(normalizedPayload.sortItems) ? normalizedPayload.sortItems : [];
+    const safeThoughts = normalizedPayload.thoughts && typeof normalizedPayload.thoughts === "object" ? normalizedPayload.thoughts : {};
+    const safeList = Array.isArray(normalizedPayload.list) ? normalizedPayload.list : [];
+    const safeInsights = Array.isArray(normalizedPayload.insightCards) ? normalizedPayload.insightCards : [];
+    const safePath = Array.isArray(normalizedPayload.path) ? normalizedPayload.path : [];
+    const safeSubjectMatches = Array.isArray(options?.subjectMatches) ? options.subjectMatches : (Array.isArray(normalizedPayload.subjectMatches) ? normalizedPayload.subjectMatches : []);
+    const subjectLinks = normalizeSubjectLinks(safeSubjectMatches);
+    const keywords = takeKeywords(source, 8);
+    const concepts = deriveConceptsFromAfterwork(normalizedPayload, keywords, subjectLinks);
+    const structuralLabels = safeSortItems
+      .map((item) => String(item?.label || "").trim())
+      .filter(Boolean)
+      .slice(0, 12);
+    return {
+      id: `afterwork_${Date.now()}_${shortHash(`${sourceTextHash}|${JSON.stringify(normalizedPayload)}`)}`,
+      type: "aha_afterwork",
+      source: "chat",
+      textType: normalizedPayload.textType || detectTextType(source),
+      createdAt: new Date().toISOString(),
+      sourceTextHash,
+      sourceTextPreview: source.replace(/\s+/g, " ").slice(0, 180),
+      reflection: String(normalizedPayload.reflection || ""),
+      sortItems: safeSortItems,
+      daySummary: String(normalizedPayload.day || ""),
+      thoughtSorting: {
+        hovedspor: String(safeThoughts.hovedspor || ""),
+        lose_tanker: String(safeThoughts.lose_tanker || ""),
+        neste_steg: String(safeThoughts.neste_steg || "")
+      },
+      list: safeList,
+      insights: safeInsights,
+      learningPath: safePath,
+      subjectLinks,
+      keywords,
+      concepts,
+      structuralLabels
+    };
+  }
+
+  function saveAutoOutputAsAfterwork(payload, sourceText, options) {
+    const source = String(sourceText || "").trim();
+    if (!source) return { saved: false, reason: "missing_source_text", entry: null };
+    const entry = makeAfterworkObject(payload, source, options);
+    const entries = loadAfterworkEntries();
+    const payloadSignature = shortHash(JSON.stringify({
+      reflection: entry.reflection,
+      sortItems: entry.sortItems,
+      daySummary: entry.daySummary,
+      thoughtSorting: entry.thoughtSorting,
+      list: entry.list,
+      insights: entry.insights,
+      learningPath: entry.learningPath
+    }));
+    const exists = entries.some((item) => {
+      const existingSignature = shortHash(JSON.stringify({
+        reflection: item?.reflection || "",
+        sortItems: Array.isArray(item?.sortItems) ? item.sortItems : [],
+        daySummary: item?.daySummary || "",
+        thoughtSorting: item?.thoughtSorting || {},
+        list: Array.isArray(item?.list) ? item.list : [],
+        insights: Array.isArray(item?.insights) ? item.insights : [],
+        learningPath: Array.isArray(item?.learningPath) ? item.learningPath : []
+      }));
+      return String(item?.sourceTextHash || "") === entry.sourceTextHash && existingSignature === payloadSignature;
+    });
+    if (exists) return { saved: false, reason: "duplicate", entry: null };
+    entries.push(entry);
+    saveAfterworkEntries(entries);
+    return { saved: true, reason: "saved", entry };
   }
 
   function buildAutoOutputs(userText, ahaReply) {
@@ -2054,12 +2197,41 @@
           <article class="auto-card" data-auto-card="lag_innsikt"><h4>Innsikt</h4><ul>${safeInsightCards.map((point)=>`<li>${escHtml(point)}</li>`).join("")}</ul></article>
           <article class="auto-card" data-auto-card="lag_laringssti"><h4>Læringssti</h4><ol>${safePath.map((step)=>`<li>${escHtml(step)}</li>`).join("")}</ol></article>
         </div>
-      </section>`;
+      </section>
+      <div class="auto-output-actions">
+        <button id="btn-save-afterwork" type="button">Lagre etterarbeid</button>
+      </div>`;
+
+    const saveButton = host.querySelector("#btn-save-afterwork");
+    if (saveButton) {
+      const sourceText = String(host.dataset.sourceText || "").trim();
+      if (!sourceText) saveButton.disabled = true;
+      saveButton.addEventListener("click", () => {
+        const result = saveAutoOutputAsAfterwork(payload, host.dataset.sourceText || "", {
+          subjectMatches: payload?.subjectMatches
+        });
+        if (result.reason === "missing_source_text") {
+          setStatusNote("Kan ikke lagre: kildetekst mangler. Send teksten på nytt.");
+          return;
+        }
+        setStatusNote(result.saved ? "Etterarbeid lagret" : "Dette etterarbeidet er allerede lagret");
+      });
+    }
   }
 
-  function renderAutoOutputs(userText, ahaReply) {
+  function renderAutoOutputs(userText, ahaReply, options = {}) {
     const payload = buildAutoOutputs(userText, ahaReply);
-    localStorage.setItem(AUTO_OUTPUT_STORAGE_KEY, JSON.stringify(payload));
+    payload.subjectMatches = Array.isArray(options.subjectMatches) ? options.subjectMatches : [];
+    const sourceText = String(userText || "");
+    localStorage.setItem(AUTO_OUTPUT_STORAGE_KEY, JSON.stringify({
+      payload,
+      sourceText,
+      sourceTextHash: sourceHash(sourceText),
+      sourceTextPreview: sourceText.replace(/\s+/g, " ").slice(0, 180),
+      createdAt: new Date().toISOString()
+    }));
+    const host = document.getElementById("aha-auto-output");
+    if (host) host.dataset.sourceText = sourceText;
     renderAutoOutputPayload(payload);
   }
 
@@ -2076,7 +2248,11 @@
   function restoreAutoOutputFromStorage() {
     const cache = loadAutoOutputs();
     if (!cache) return;
-    renderAutoOutputPayload(cache);
+    const payload = cache?.payload && typeof cache.payload === "object" ? cache.payload : cache;
+    const sourceText = String(cache?.sourceText || "");
+    const host = document.getElementById("aha-auto-output");
+    if (host) host.dataset.sourceText = sourceText;
+    renderAutoOutputPayload(payload);
   }
 
   function bind() {
@@ -2105,7 +2281,7 @@
             ? await global.AHASubjectEngine.matchText(analysisText, { source: "chat", textType: detectTextType(text) })
             : [];
           appendChat("aha", reply, { categoryChips: suggestCategoryChips(), subjectMatches });
-          try { renderAutoOutputs(text, reply); } catch (autoErr) { console.warn("Auto-output feilet", autoErr); }
+          try { renderAutoOutputs(text, reply, { subjectMatches }); } catch (autoErr) { console.warn("Auto-output feilet", autoErr); }
           // AHA-agentens egne svar skal vises i chatten og logges som
           // source event, men IKKE bli en ordinær brukerinnsikt. AI-
           // oppsummeringer hører ikke hjemme i innsiktskammeret. skip_insight
@@ -2125,7 +2301,7 @@
         } catch (err) {
           console.warn("AHA-agent utilgjengelig", err);
           appendChat("aha", "AHA-agenten er ikke tilgjengelig akkurat nå.");
-          try { renderAutoOutputs(text, ""); } catch (autoErr) { console.warn("Auto-output feilet", autoErr); }
+          try { renderAutoOutputs(text, "", { subjectMatches: [] }); } catch (autoErr) { console.warn("Auto-output feilet", autoErr); }
         }
       });
     }
@@ -2135,7 +2311,12 @@
     document.getElementById("btn-concepts")?.addEventListener("click", showConcepts);
     document.getElementById("btn-meta")?.addEventListener("click", showMeta);
     document.getElementById("btn-knowledge-map")?.addEventListener("click", showKnowledgeMap);
-    document.getElementById("btn-export")?.addEventListener("click", () => out(JSON.stringify(loadChamberFromStorage(), null, 2)));
+    document.getElementById("btn-export")?.addEventListener("click", () => {
+      out(JSON.stringify({
+        chamber: loadChamberFromStorage(),
+        aha_afterwork_v1: loadAfterworkEntries()
+      }, null, 2));
+    });
     document.getElementById("btn-reset")?.addEventListener("click", reset);
     bindActionChips();
 
