@@ -1207,9 +1207,9 @@
         .sort((a, b) => (b.weight - a.weight) || a.target.localeCompare(b.target))
         .slice(0, 3);
       const children = links.length
-        ? `<ul class="concept-network-links">${links.map((entry) => `<li><span class="concept-link-line"></span><span class="concept-node-badge">${escHtml(entry.target)}</span></li>`).join("")}</ul>`
+        ? `<ul class="concept-network-links">${links.map((entry) => `<li><span class="concept-link-line"></span><span class="concept-node-badge">${escHtml(displayConceptLabel(entry.target))}</span></li>`).join("")}</ul>`
         : `<p class="knowledge-sub concept-network-empty">Ingen sterke koblinger registrert for dette begrepet ennå.</p>`;
-      return `<li class="concept-network-item"><span class="concept-node-badge">${escHtml(concept)}</span>${children}</li>`;
+      return `<li class="concept-network-item"><span class="concept-node-badge">${escHtml(displayConceptLabel(concept))}</span>${children}</li>`;
     }).join("");
 
     return `<div class="concept-network" aria-label="Begrepsnettverk">
@@ -1218,6 +1218,10 @@
   }
 
 
+
+  function displayConceptLabel(value) {
+    return String(value || "").replace(/_/g, " ").trim();
+  }
 
   function normalizeConceptKey(value) {
     return String(value || "").trim().toLowerCase();
@@ -1293,15 +1297,15 @@
       <div class="knowledge-map-grid">
         <article class="knowledge-card">
           <h4>Tilbakevendende tema</h4>
-          <p class="knowledge-sub">14d: ${themes14d.length ? themes14d.map((item) => `${escHtml(item.key)} (${item.count})`).join(", ") : "Ingen tydelige begreper ennå."}</p>
-          <p class="knowledge-sub">30d: ${themes30d.length ? themes30d.map((item) => `${escHtml(item.key)} (${item.count})`).join(", ") : "Mangler data for siste 30 dager."}</p>
-          <p class="knowledge-sub">Teori/tenkere: ${topTheoryPeople.length ? topTheoryPeople.map((item) => `${escHtml(item.key)} (${item.count})`).join(", ") : "Ingen teorikoblinger funnet ennå."}</p>
+          <p class="knowledge-sub">14d: ${themes14d.length ? themes14d.map((item) => `${escHtml(displayConceptLabel(item.key))} (${item.count})`).join(", ") : "Ingen tydelige begreper ennå."}</p>
+          <p class="knowledge-sub">30d: ${themes30d.length ? themes30d.map((item) => `${escHtml(displayConceptLabel(item.key))} (${item.count})`).join(", ") : "Mangler data for siste 30 dager."}</p>
+          <p class="knowledge-sub">Teori/tenkere: ${topTheoryPeople.length ? topTheoryPeople.map((item) => `${escHtml(displayConceptLabel(item.key))} (${item.count})`).join(", ") : "Ingen teorikoblinger funnet ennå."}</p>
         </article>
         <article class="knowledge-card">
           <h4>Begrepsgraf</h4>
           <p class="knowledge-sub">Begrepsnoder: <strong>${conceptNodeCount}</strong></p>
           <p class="knowledge-sub">Teori-/tenkernoder: <strong>${theoryNodeCount}</strong></p>
-          <p class="knowledge-sub">Sterkeste co-occurs: ${topEdges.length ? topEdges.map((edge) => `${escHtml(edge.from)} ↔ ${escHtml(edge.to)} (${edge.weight})`).join(", ") : "Ingen samforekomst-koblinger ennå."}</p>
+          <p class="knowledge-sub">Sterkeste co-occurs: ${topEdges.length ? topEdges.map((edge) => `${escHtml(displayConceptLabel(edge.from))} ↔ ${escHtml(displayConceptLabel(edge.to))} (${edge.weight})`).join(", ") : "Ingen samforekomst-koblinger ennå."}</p>
           <h5 class="knowledge-mini-title">Begrepsnettverk</h5>
           ${renderConceptNetwork(conceptGraph)}
         </article>
@@ -1331,13 +1335,13 @@
     const window = recent.window_days ? ` (siste ${recent.window_days} dager)` : "";
 
     const recentConcepts = (recent.concepts || []).slice(0, 6).map((c) =>
-      `${escHtml(c.key)} <span class="meta-count">×${c.count}</span>`
+      `${escHtml(displayConceptLabel(c.key))} <span class="meta-count">×${c.count}</span>`
     );
     const emerging = (recent.emerging || []).slice(0, 5).map((c) =>
-      `${escHtml(c.key)} <span class="meta-count">×${c.count}</span>`
+      `${escHtml(displayConceptLabel(c.key))} <span class="meta-count">×${c.count}</span>`
     );
     const fading = (recent.fading || []).slice(0, 5).map((c) =>
-      `${escHtml(c.key)} <span class="meta-count">tidligere ×${c.prev_count}</span>`
+      `${escHtml(displayConceptLabel(c.key))} <span class="meta-count">tidligere ×${c.prev_count}</span>`
     );
     const conceptTensions = (tensions.concept_tensions || []).slice(0, 5).map((t) => {
       const key = String(t?.key || "");
@@ -1355,13 +1359,13 @@
       escHtml(u.prompt || "")
     );
     const resurface = (recs.resurface_insights || []).slice(0, 4).map((r) =>
-      `${escHtml((r.summary || "").slice(0, 160))} <span class="meta-count">${escHtml((r.shared_concepts || []).join(", "))}</span>`
+      `${escHtml((r.summary || "").slice(0, 160))} <span class="meta-count">${escHtml((r.shared_concepts || []).map((concept) => displayConceptLabel(concept)).join(", "))}</span>`
     );
     const bridging = (recs.bridging_pairs || []).slice(0, 4).map((b) =>
-      `${escHtml(b.source)} ↔ ${escHtml(b.target)} <span class="meta-count">npmi ${Number(b.npmi).toFixed(2)}</span>`
+      `${escHtml(displayConceptLabel(b.source))} ↔ ${escHtml(displayConceptLabel(b.target))} <span class="meta-count">npmi ${Number(b.npmi).toFixed(2)}</span>`
     );
     const underexplored = (recs.underexplored_concepts || []).slice(0, 5).map((u) =>
-      `${escHtml(u.key)} <span class="meta-count">×${u.count} · ${escHtml(u.reason || "")}</span>`
+      `${escHtml(displayConceptLabel(u.key))} <span class="meta-count">×${u.count} · ${escHtml(u.reason || "")}</span>`
     );
 
     const sections = [
@@ -1862,7 +1866,7 @@
         sentence(`Teksten forsøker å ${lowerFirst(quality.textIntent)}`),
         sentence(`Den sentrale bevegelsen går fra ${lowerFirst(quality.centralMovement)}`),
         sentence(`Den retoriske styrken ligger i ${lowerFirst(quality.rhetoricalPower)}`),
-        sentence(`Det som bør skjerpes, er ${lowerFirst(quality.editorialNextStep)}`)
+        sentence(`Det som bør skjerpes, er ${lowerFirst(quality.weaknessPhrase)}`)
       ].filter(Boolean).join(" ");
       sortItems = [
         { label: "Hovedpåstand", text: quality.thesis },
@@ -1955,6 +1959,7 @@
     let sharperEnding = "Avslutt med én tydelig konsekvens: hva samfunnet taper hvis kursen ikke endres.";
     let keyConcepts = ["hovedpåstand", "konflikt", "belegg", "konsekvens"];
     let policySolution = "Teksten antyder en løsning, men den bør formuleres tydeligere.";
+    let weaknessPhrase = "overgangen mellom problemforståelse og løsning";
 
     if (domain === "climate_transition") {
       textIntent = "svare på hva Norge skal omstilles fra og til";
@@ -1980,6 +1985,7 @@
       sharperEnding = "Avslutt med hva Norge risikerer å tape økonomisk, økologisk og sosialt dersom omstillingen utsettes.";
       keyConcepts = ["omstilling", "oljeavhengighet", "naturhensyn", "lokal verdiskaping"];
       policySolution = "Teksten peker på en overgang fra fossil kapitalbinding til fornybar energi, lokal verdiskaping og sirkulærøkonomi.";
+      weaknessPhrase = "overgangen mellom kritikk og konkret plan";
       if (evidence.hasCircularEconomy) keyConcepts.push("sirkulærøkonomi");
       if (evidence.hasIndigenousRights) keyConcepts.push("samiske rettigheter");
     } else if (domain === "media_policy") {
@@ -1995,12 +2001,14 @@
       sharperEnding = "Avslutt med hva offentligheten mister når økonomiske rammer svekker redaktørstyrt journalistikk.";
       keyConcepts = ["mediepolitikk", "ytringsfrihet", "moms", "redaktørstyrte medier"];
       policySolution = "Teksten peker mot mediepolitiske rammer som styrker redaktørstyrt journalistikk og økonomisk handlingsrom.";
+      weaknessPhrase = "broen mellom prinsipiell mediekritikk og konkret virkemiddel";
     } else if (domain === "general_political") {
       textIntent = "tolke en politisk konflikt og argumentere for en alternativ prioritering.";
       centralMovement = "diagnose av dagens politiske kurs til et mer forpliktende forslag om retning.";
       rhetoricalPower = "at teksten tydeliggjør hvem som vinner og taper på dagens prioriteringer.";
       keyConcepts = ["politisk konflikt", "prioritering", "belegg", "konsekvens"];
       policySolution = "Teksten peker mot en tydeligere politisk prioritering enn dagens kurs.";
+      weaknessPhrase = "overgangen mellom problemforståelse og løsning";
     }
     const suggestedStructure = [
       "Spiss hovedpåstanden til én setning tidlig i teksten.",
@@ -2009,8 +2017,13 @@
       "Marker tydelig vendepunktet fra kritikk til løsning.",
       "Avslutt med en tydelig samfunnskonsekvens dersom kursen videreføres."
     ];
-    const editorialNextStep = weaknesses[0] || "stramme overgangen mellom kritikk og konkret plan.";
-    return { domain, textIntent, centralMovement, rhetoricalPower, thesis, conflict, argumentLine, strengths, weaknesses, missingLinks, suggestedStructure, editorialNextStep, sharperEnding, keyConcepts, policySolution };
+    const editorialNextStepByDomain = {
+      climate_transition: "Stram overgangen mellom kritikk og konkret plan ved å vise hvilke grep som flytter investeringer, kraft og kompetanse.",
+      media_policy: "Vis tydeligere hvordan foreslåtte virkemidler påvirker redaksjonell kapasitet og økonomisk handlingsrom.",
+      general_political: "Bygg en klarere bro fra kritikk til forslag, med ett konkret belegg."
+    };
+    const editorialNextStep = editorialNextStepByDomain[domain] || (weaknesses[0] || "Stram overgangen mellom kritikk og konkret plan.");
+    return { domain, textIntent, centralMovement, rhetoricalPower, thesis, conflict, argumentLine, strengths, weaknesses, weaknessPhrase, missingLinks, suggestedStructure, editorialNextStep, sharperEnding, keyConcepts, policySolution };
   }
 
   function renderAutoOutputPayload(payload) {
