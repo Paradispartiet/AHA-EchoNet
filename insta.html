@@ -12,15 +12,42 @@
   <p><a href="index.html">← AHA Dashboard</a></p>
   <header class="module-header">
     <h1>AHA Insta</h1>
-    <p>Bilde- og videoposter med caption. Første MVP bruker URL/path, ikke filopplasting.</p>
+    <p>En enkel bilde- og videoapp uten reklame. Publiser, migrer fra Instagram eller importer fra enheten din.</p>
   </header>
 
+  <section class="module-form insta-import-focus">
+    <h2>Flytt fra Instagram</h2>
+    <p>Ta med deg egne bilder, videoer, captions og stories fra Instagram-eksporten din.</p>
+    <ol class="insta-import-steps">
+      <li>Last ned data fra Instagram</li>
+      <li>Last opp eksportfilene her</li>
+      <li>Velg hva du vil importere</li>
+      <li>Forhåndsvis importen</li>
+      <li>Publiser eller lagre privat</li>
+    </ol>
+    <label for="insta-import-files">Last opp eksportfiler</label>
+    <input id="insta-import-files" type="file" multiple accept=".json,.zip,image/*,video/*" webkitdirectory directory />
+    <div id="insta-import-status" class="module-meta"></div>
+    <div id="insta-import-preview" class="module-list"></div>
+  </section>
+
   <form id="insta-form" class="module-form">
+    <h2>Publiser ny post</h2>
     <input id="insta-title" type="text" placeholder="Tittel" />
     <input id="insta-src" type="text" placeholder="Bilde-/video-url eller path" />
     <textarea id="insta-caption" placeholder="Caption …"></textarea>
     <button type="submit">Publiser lokalt</button>
   </form>
+
+  <section class="module-form">
+    <h2>Importer fra enhet</h2>
+    <p>Bruk samme opplaster over for enkeltfiler fra enheten din (bilde/video/json).</p>
+  </section>
+
+  <section>
+    <h2>Stories</h2>
+    <div id="insta-stories" class="module-list"></div>
+  </section>
 
   <section>
     <h2>Poster</h2>
