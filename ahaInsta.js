@@ -5,6 +5,10 @@
   const STORIES_KEY = "aha_insta_stories_v1";
   const IMPORT_SESSIONS_KEY = "aha_insta_import_sessions_v1";
   const IMPORT_PREVIEW_KEY = "aha_insta_import_preview_v1";
+  const PROFILE_KEY = "aha_insta_profile_v1";
+  const LIKES_KEY = "aha_insta_likes_v1";
+  const COMMENTS_KEY = "aha_insta_comments_v1";
+  const FOLLOWS_KEY = "aha_insta_follows_v1";
   const MAX_MEDIA_DATA_URL_SIZE = 10 * 1024 * 1024;
 
   const createId = (prefix) => `${prefix}_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
@@ -322,6 +326,29 @@
     renderImportPreview();
     return { sessionId: session.id, items: preview.items, errors };
   }
+
+  function loadProfile() { try { const p = JSON.parse(localStorage.getItem(PROFILE_KEY) || "null"); return p && typeof p === "object" ? p : null; } catch { return null; } }
+  function saveProfile(profile) { localStorage.setItem(PROFILE_KEY, JSON.stringify(profile || null)); return profile; }
+  function ensureProfile() { const p=loadProfile(); if (p?.username) return p; const t=nowIso(); const next={id:p?.id||createId("user"),username:p?.username||"meg",displayName:p?.displayName||"Meg",bio:p?.bio||"",avatar:p?.avatar||"",created_at:p?.created_at||t,updated_at:t}; saveProfile(next); return next; }
+  function loadLikes() { return readArray(LIKES_KEY); }
+  function saveLikes(v) { writeArray(LIKES_KEY, v); }
+  function hasLiked(postId) { const me=ensureProfile(); return loadLikes().some((l)=>l.post_id===postId && l.user_id===me.id); }
+  function getLikeCount(postId) { return loadLikes().filter((l)=>l.post_id===postId).length; }
+  function toggleLike(postId) { const me=ensureProfile(); const likes=loadLikes(); const i=likes.findIndex((l)=>l.post_id===postId && l.user_id===me.id); if (i>=0) likes.splice(i,1); else likes.push({id:createId("like"),post_id:postId,user_id:me.id,created_at:nowIso()}); saveLikes(likes); render(); }
+  function loadComments() { return readArray(COMMENTS_KEY); }
+  function saveComments(v) { writeArray(COMMENTS_KEY, v); }
+  function addComment(postId, text) { const t=String(text||"").trim(); if(!t) return null; const me=ensureProfile(); const all=loadComments(); all.push({id:createId("comment"),post_id:postId,user_id:me.id,username:me.username,text:t,created_at:nowIso(),deleted_at:null}); saveComments(all); render(); }
+  function deleteComment(commentId) { const me=ensureProfile(); const all=loadComments(); const i=all.findIndex((c)=>c.id===commentId && c.user_id===me.id); if(i<0) return null; all[i]={...all[i],deleted_at:nowIso()}; saveComments(all); render(); }
+  function getCommentsForPost(postId) { return loadComments().filter((c)=>c.post_id===postId && !c.deleted_at); }
+  function loadFollows() { return readArray(FOLLOWS_KEY); }
+  function saveFollows(v) { writeArray(FOLLOWS_KEY, v); }
+  function isFollowing(username) { const me=ensureProfile(); return loadFollows().some((f)=>f.follower_id===me.id && f.following_username===username); }
+  function toggleFollow(username) { const me=ensureProfile(); const all=loadFollows(); const i=all.findIndex((f)=>f.follower_id===me.id && f.following_username===username); if(i>=0) all.splice(i,1); else all.push({id:createId("follow"),follower_id:me.id,following_id:`user_${username}`,following_username:username,created_at:nowIso()}); saveFollows(all); renderProfile(); render(); }
+  let currentFeedFilter = "all";
+  function setFeedFilter(filter) { currentFeedFilter=["all","following","mine"].includes(filter)?filter:"all"; renderFeedControls(); render(); }
+  function getFilteredPosts(posts) { const me=ensureProfile(); if(currentFeedFilter==="mine") return posts.filter((p)=>(p.ownerUsername||me.username)===me.username); if(currentFeedFilter==="following") { const f=new Set(loadFollows().filter((x)=>x.follower_id===me.id).map((x)=>x.following_username)); return posts.filter((p)=>{ const owner=p.ownerUsername||me.username; return owner===me.username || f.has(owner);}); } return posts; }
+  function renderFeedControls() { const m=document.getElementById("insta-feed-controls"); if(!m) return; const btn=(k,t)=>`<button type="button" data-feed-filter="${k}" class="${currentFeedFilter===k?"is-active":""}">${t}</button>`; m.innerHTML=`<div class="insta-feed-controls">${btn("all","Alle poster")}${btn("following","Følger")}${btn("mine","Mine poster")}</div>`; }
+  function renderProfile() { const p=ensureProfile(); const posts=load().filter((x)=>!x.deleted_at && (x.ownerUsername||p.username)===p.username).length; const followers=loadFollows().filter((f)=>f.following_username===p.username).length; const following=loadFollows().filter((f)=>f.follower_id===p.id).length; const m=document.getElementById("insta-profile-card"); if(!m) return; m.innerHTML=`<article class="module-card insta-profile-card">${p.avatar?`<img class="insta-avatar" src="${escapeHtml(p.avatar)}" alt="avatar"/>`:""}<strong>${escapeHtml(p.displayName||"Meg")}</strong><div>@${escapeHtml(p.username||"meg")}</div><p>${escapeHtml(p.bio||"")}</p><div class="module-meta">poster:${posts} · følgere:${followers} · følger:${following}</div></article>`; }
 
   function persistPost(post) {
     if (!window.AHARepository?.saveInstaPost) return;
