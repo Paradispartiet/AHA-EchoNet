@@ -1432,6 +1432,7 @@
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(HIGHLIGHTS_STORAGE_KEY);
     localStorage.removeItem(AUTO_OUTPUT_STORAGE_KEY);
+    localStorage.removeItem(AFTERWORK_STORAGE_KEY);
     out("AHA-kammer nullstilt.");
     setStatusNote("Nullstilt lokalt kammer og highlights.");
     renderPanel("");
