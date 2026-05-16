@@ -34,6 +34,25 @@
       .slice(0, 80);
   }
 
+  function stripTrailingPunctuation(text) {
+    return String(text || "")
+      .trim()
+      .replace(/[.!?;,:\s…]+$/u, "")
+      .trim();
+  }
+
+  function lowerFirst(text) {
+    const value = String(text || "").trim();
+    if (!value) return "";
+    return value.charAt(0).toLowerCase() + value.slice(1);
+  }
+
+  function sentence(text) {
+    const cleaned = stripTrailingPunctuation(text);
+    if (!cleaned) return "";
+    return `${cleaned}.`;
+  }
+
   function shortHash(input) {
     let hash = 5381;
     const value = String(input || "");
@@ -1839,14 +1858,19 @@
     } else if (textType === "opinion_article") {
       const evidence = collectOpinionArticleEvidence(raw, sentences);
       const quality = buildOpinionArticleQualityAnalysis(raw, evidence, sentences);
-      reflection = `Teksten forsøker å ${quality.textIntent}. Den sentrale bevegelsen går fra ${quality.centralMovement}. Den retoriske kraften ligger særlig i ${quality.rhetoricalPower}. Det som bør skjerpes nå er ${quality.editorialNextStep}.`;
+      reflection = [
+        sentence(`Teksten forsøker å ${lowerFirst(quality.textIntent)}`),
+        sentence(`Den sentrale bevegelsen går fra ${lowerFirst(quality.centralMovement)}`),
+        sentence(`Den retoriske styrken ligger i ${lowerFirst(quality.rhetoricalPower)}`),
+        sentence(`Det som bør skjerpes, er ${lowerFirst(quality.editorialNextStep)}`)
+      ].filter(Boolean).join(" ");
       sortItems = [
         { label: "Hovedpåstand", text: quality.thesis },
         { label: "Motpart / konflikt", text: quality.conflict },
         { label: "Tekstens vendepunkt", text: quality.argumentLine },
         { label: "Belegg", text: quality.strengths[1] || quality.strengths[0] || "Teksten har flere belegg, men de bør prioriteres tydeligere." },
         { label: "Retorisk grep", text: quality.strengths[2] || "Teksten løfter konflikten med tydelige kontraster mellom dagens kurs og alternativ retning." },
-        { label: "Politisk løsning", text: quality.suggestedStructure[1] || "Løsningsdelen bør komme tidligere i argumentrekken." },
+        { label: "Politisk løsning", text: quality.policySolution || "Teksten antyder en løsning, men den bør formuleres tydeligere." },
         { label: "Svak overgang", text: quality.missingLinks[0] || "Overgangen mellom konflikt og tiltak må bli tydeligere for leseren." },
         { label: "Mulig sluttpoeng", text: quality.sharperEnding }
       ];
@@ -1902,7 +1926,8 @@
       .map((ins) => String(ins.summary || ins.title || ""))
       .filter((text) => keywords.some((k) => text.toLowerCase().includes(k)))
       .slice(-2);
-    const insightCards = [...localInsights, ...overlap].slice(0, 3);
+    const maxInsightCards = textType === "opinion_article" ? 4 : 3;
+    const insightCards = [...localInsights, ...overlap].slice(0, maxInsightCards);
 
     return { textType, reflection, sortItems, day, thoughts, list: list.slice(0, 6), insightCards, path: path.slice(0, 5) };
   }
@@ -1929,11 +1954,12 @@
     let missingLinks = ["Leseren trenger en tydeligere bro mellom problembeskrivelse og prioriterte tiltak.", "Det bør synliggjøres hvem som faktisk får ansvar og effekt av tiltakene."];
     let sharperEnding = "Avslutt med én tydelig konsekvens: hva samfunnet taper hvis kursen ikke endres.";
     let keyConcepts = ["hovedpåstand", "konflikt", "belegg", "konsekvens"];
+    let policySolution = "Teksten antyder en løsning, men den bør formuleres tydeligere.";
 
     if (domain === "climate_transition") {
-      textIntent = "svare på hva Norge skal omstilles fra og til, og gjøre omstilling til et spørsmål om natur, makt og økonomi.";
-      centralMovement = "kritikk av oljeavhengighet til forslag om fornybar energi, lokal verdiskaping og en mer sirkulær økonomi.";
-      rhetoricalPower = "at omstilling løftes fra teknologispråk til samfunnsspråk om natur, arbeid og beslutningsmakt.";
+      textIntent = "svare på hva Norge skal omstilles fra og til";
+      centralMovement = "kritikk av oljeavhengighet til forslag om fornybar energi, lokal verdiskaping og sirkulærøkonomi";
+      rhetoricalPower = "at omstilling løftes fra teknologispråk til samfunnsspråk: natur, arbeid og beslutningsmakt";
       thesis = "Norge må omstilles fra fossil oljeavhengighet til et bærekraftig samfunn innenfor naturens tålegrenser.";
       conflict = "Teksten retter seg mot en politikk som lover grønn retning, men fortsatt binder ressurser til fossil logikk.";
       argumentLine = "Argumentasjonen går fra kritikk av dagens modell til en plan for energiomstilling, lokal makt og naturhensyn.";
@@ -1953,6 +1979,7 @@
       ];
       sharperEnding = "Avslutt med hva Norge risikerer å tape økonomisk, økologisk og sosialt dersom omstillingen utsettes.";
       keyConcepts = ["omstilling", "oljeavhengighet", "naturhensyn", "lokal verdiskaping"];
+      policySolution = "Teksten peker på en overgang fra fossil kapitalbinding til fornybar energi, lokal verdiskaping og sirkulærøkonomi.";
       if (evidence.hasCircularEconomy) keyConcepts.push("sirkulærøkonomi");
       if (evidence.hasIndigenousRights) keyConcepts.push("samiske rettigheter");
     } else if (domain === "media_policy") {
@@ -1967,11 +1994,13 @@
       missingLinks = ["Det bør vises tydeligere hvordan foreslåtte virkemidler faktisk påvirker redaksjonell kapasitet.", "Argumentet trenger en klar prioritering mellom ulike mediepolitiske tiltak."];
       sharperEnding = "Avslutt med hva offentligheten mister når økonomiske rammer svekker redaktørstyrt journalistikk.";
       keyConcepts = ["mediepolitikk", "ytringsfrihet", "moms", "redaktørstyrte medier"];
+      policySolution = "Teksten peker mot mediepolitiske rammer som styrker redaktørstyrt journalistikk og økonomisk handlingsrom.";
     } else if (domain === "general_political") {
       textIntent = "tolke en politisk konflikt og argumentere for en alternativ prioritering.";
       centralMovement = "diagnose av dagens politiske kurs til et mer forpliktende forslag om retning.";
       rhetoricalPower = "at teksten tydeliggjør hvem som vinner og taper på dagens prioriteringer.";
       keyConcepts = ["politisk konflikt", "prioritering", "belegg", "konsekvens"];
+      policySolution = "Teksten peker mot en tydeligere politisk prioritering enn dagens kurs.";
     }
     const suggestedStructure = [
       "Spiss hovedpåstanden til én setning tidlig i teksten.",
@@ -1981,7 +2010,7 @@
       "Avslutt med en tydelig samfunnskonsekvens dersom kursen videreføres."
     ];
     const editorialNextStep = weaknesses[0] || "stramme overgangen mellom kritikk og konkret plan.";
-    return { domain, textIntent, centralMovement, rhetoricalPower, thesis, conflict, argumentLine, strengths, weaknesses, missingLinks, suggestedStructure, editorialNextStep, sharperEnding, keyConcepts };
+    return { domain, textIntent, centralMovement, rhetoricalPower, thesis, conflict, argumentLine, strengths, weaknesses, missingLinks, suggestedStructure, editorialNextStep, sharperEnding, keyConcepts, policySolution };
   }
 
   function renderAutoOutputPayload(payload) {
