@@ -144,7 +144,7 @@
           createdAt: item?.createdAt || "",
           concepts,
           insightsCount: asArray(item?.insights).length,
-          learningPathCount: asArray(item?.learningPaths).length
+          learningPathCount: asArray(item?.learningPath || item?.learningPaths).length
         };
       });
   }
