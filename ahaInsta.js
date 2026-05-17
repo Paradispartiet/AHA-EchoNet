@@ -327,28 +327,287 @@
     return { sessionId: session.id, items: preview.items, errors };
   }
 
-  function loadProfile() { try { const p = JSON.parse(localStorage.getItem(PROFILE_KEY) || "null"); return p && typeof p === "object" ? p : null; } catch { return null; } }
-  function saveProfile(profile) { localStorage.setItem(PROFILE_KEY, JSON.stringify(profile || null)); return profile; }
-  function ensureProfile() { const p=loadProfile(); if (p?.username) return p; const t=nowIso(); const next={id:p?.id||createId("user"),username:p?.username||"meg",displayName:p?.displayName||"Meg",bio:p?.bio||"",avatar:p?.avatar||"",created_at:p?.created_at||t,updated_at:t}; saveProfile(next); return next; }
+  function loadProfile() {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(PROFILE_KEY) || "null");
+      return parsed && typeof parsed === "object" ? parsed : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function saveProfile(profile) {
+    localStorage.setItem(PROFILE_KEY, JSON.stringify(profile || null));
+    // TODO: persist profile/likes/comments/follows via AHARepository/backend
+    return profile;
+  }
+
+  function ensureProfile() {
+    const existing = loadProfile();
+    if (existing?.username) return existing;
+
+    const timestamp = nowIso();
+    const profile = {
+      id: existing?.id || createId("user"),
+      username: existing?.username || "meg",
+      displayName: existing?.displayName || "Meg",
+      bio: existing?.bio || "",
+      avatar: existing?.avatar || "",
+      created_at: existing?.created_at || timestamp,
+      updated_at: timestamp
+    };
+
+    saveProfile(profile);
+    return profile;
+  }
+
   function loadLikes() { return readArray(LIKES_KEY); }
-  function saveLikes(v) { writeArray(LIKES_KEY, v); }
-  function hasLiked(postId) { const me=ensureProfile(); return loadLikes().some((l)=>l.post_id===postId && l.user_id===me.id); }
-  function getLikeCount(postId) { return loadLikes().filter((l)=>l.post_id===postId).length; }
-  function toggleLike(postId) { const me=ensureProfile(); const likes=loadLikes(); const i=likes.findIndex((l)=>l.post_id===postId && l.user_id===me.id); if (i>=0) likes.splice(i,1); else likes.push({id:createId("like"),post_id:postId,user_id:me.id,created_at:nowIso()}); saveLikes(likes); render(); }
+  function saveLikes(items) { writeArray(LIKES_KEY, items); }
   function loadComments() { return readArray(COMMENTS_KEY); }
-  function saveComments(v) { writeArray(COMMENTS_KEY, v); }
-  function addComment(postId, text) { const t=String(text||"").trim(); if(!t) return null; const me=ensureProfile(); const all=loadComments(); all.push({id:createId("comment"),post_id:postId,user_id:me.id,username:me.username,text:t,created_at:nowIso(),deleted_at:null}); saveComments(all); render(); }
-  function deleteComment(commentId) { const me=ensureProfile(); const all=loadComments(); const i=all.findIndex((c)=>c.id===commentId && c.user_id===me.id); if(i<0) return null; all[i]={...all[i],deleted_at:nowIso()}; saveComments(all); render(); }
-  function getCommentsForPost(postId) { return loadComments().filter((c)=>c.post_id===postId && !c.deleted_at); }
+  function saveComments(items) { writeArray(COMMENTS_KEY, items); }
   function loadFollows() { return readArray(FOLLOWS_KEY); }
-  function saveFollows(v) { writeArray(FOLLOWS_KEY, v); }
-  function isFollowing(username) { const me=ensureProfile(); return loadFollows().some((f)=>f.follower_id===me.id && f.following_username===username); }
-  function toggleFollow(username) { const me=ensureProfile(); const all=loadFollows(); const i=all.findIndex((f)=>f.follower_id===me.id && f.following_username===username); if(i>=0) all.splice(i,1); else all.push({id:createId("follow"),follower_id:me.id,following_id:`user_${username}`,following_username:username,created_at:nowIso()}); saveFollows(all); renderProfile(); render(); }
+  function saveFollows(items) { writeArray(FOLLOWS_KEY, items); }
+
+  function hasLiked(postId) {
+    const profile = ensureProfile();
+    return loadLikes().some((like) => like.post_id === postId && like.user_id === profile.id);
+  }
+
+  function getLikeCount(postId) {
+    return loadLikes().filter((like) => like.post_id === postId).length;
+  }
+
+  function toggleLike(postId) {
+    const profile = ensureProfile();
+    const likes = loadLikes();
+    const index = likes.findIndex((like) => like.post_id === postId && like.user_id === profile.id);
+
+    if (index >= 0) likes.splice(index, 1);
+    else likes.push({ id: createId("like"), post_id: postId, user_id: profile.id, created_at: nowIso() });
+
+    saveLikes(likes);
+    renderProfile();
+    render();
+  }
+
+  function addComment(postId, text) {
+    const trimmed = String(text || "").trim();
+    if (!trimmed) return null;
+
+    const profile = ensureProfile();
+    const comments = loadComments();
+    const comment = {
+      id: createId("comment"),
+      post_id: postId,
+      user_id: profile.id,
+      username: profile.username,
+      text: trimmed,
+      created_at: nowIso(),
+      deleted_at: null
+    };
+
+    comments.push(comment);
+    saveComments(comments);
+    render();
+    return comment;
+  }
+
+  function deleteComment(commentId) {
+    const profile = ensureProfile();
+    const comments = loadComments();
+    const index = comments.findIndex((comment) => comment.id === commentId && comment.user_id === profile.id);
+    if (index < 0) return null;
+
+    comments[index] = { ...comments[index], deleted_at: nowIso() };
+    saveComments(comments);
+    render();
+    return comments[index];
+  }
+
+  function getCommentsForPost(postId) {
+    return loadComments().filter((comment) => comment.post_id === postId && !comment.deleted_at);
+  }
+
+  function isFollowing(username) {
+    const profile = ensureProfile();
+    return loadFollows().some((follow) => follow.follower_id === profile.id && follow.following_username === username);
+  }
+
+  function toggleFollow(username) {
+    const profile = ensureProfile();
+    const follows = loadFollows();
+    const index = follows.findIndex((follow) => follow.follower_id === profile.id && follow.following_username === username);
+
+    if (index >= 0) follows.splice(index, 1);
+    else follows.push({ id: createId("follow"), follower_id: profile.id, following_id: `user_${username}`, following_username: username, created_at: nowIso() });
+
+    saveFollows(follows);
+    renderProfile();
+    render();
+  }
+
   let currentFeedFilter = "all";
-  function setFeedFilter(filter) { currentFeedFilter=["all","following","mine"].includes(filter)?filter:"all"; renderFeedControls(); render(); }
-  function getFilteredPosts(posts) { const me=ensureProfile(); if(currentFeedFilter==="mine") return posts.filter((p)=>(p.ownerUsername||me.username)===me.username); if(currentFeedFilter==="following") { const f=new Set(loadFollows().filter((x)=>x.follower_id===me.id).map((x)=>x.following_username)); return posts.filter((p)=>{ const owner=p.ownerUsername||me.username; return owner===me.username || f.has(owner);}); } return posts; }
-  function renderFeedControls() { const m=document.getElementById("insta-feed-controls"); if(!m) return; const btn=(k,t)=>`<button type="button" data-feed-filter="${k}" class="${currentFeedFilter===k?"is-active":""}">${t}</button>`; m.innerHTML=`<div class="insta-feed-controls">${btn("all","Alle poster")}${btn("following","Følger")}${btn("mine","Mine poster")}</div>`; }
-  function renderProfile() { const p=ensureProfile(); const posts=load().filter((x)=>!x.deleted_at && (x.ownerUsername||p.username)===p.username).length; const followers=loadFollows().filter((f)=>f.following_username===p.username).length; const following=loadFollows().filter((f)=>f.follower_id===p.id).length; const m=document.getElementById("insta-profile-card"); if(!m) return; m.innerHTML=`<article class="module-card insta-profile-card">${p.avatar?`<img class="insta-avatar" src="${escapeHtml(p.avatar)}" alt="avatar"/>`:""}<strong>${escapeHtml(p.displayName||"Meg")}</strong><div>@${escapeHtml(p.username||"meg")}</div><p>${escapeHtml(p.bio||"")}</p><div class="module-meta">poster:${posts} · følgere:${followers} · følger:${following}</div></article>`; }
+
+  function setFeedFilter(filter) {
+    currentFeedFilter = ["all", "following", "mine"].includes(filter) ? filter : "all";
+    renderFeedControls();
+    render();
+  }
+
+  function getFilteredPosts(posts) {
+    const profile = ensureProfile();
+    if (currentFeedFilter === "mine") {
+      return posts.filter((post) => getPostOwner(post).username === profile.username);
+    }
+
+    if (currentFeedFilter === "following") {
+      const following = new Set(loadFollows().filter((entry) => entry.follower_id === profile.id).map((entry) => entry.following_username));
+      return posts.filter((post) => {
+        const owner = getPostOwner(post).username;
+        return owner === profile.username || following.has(owner);
+      });
+    }
+
+    return posts;
+  }
+
+  function renderFeedControls() {
+    const mount = document.getElementById("insta-feed-controls");
+    if (!mount) return;
+
+    const button = (value, label) => `<button type="button" data-feed-filter="${value}" class="${currentFeedFilter === value ? "is-active" : ""}">${label}</button>`;
+    mount.innerHTML = `<div class="insta-feed-controls">${button("all", "Alle poster")}${button("following", "Følger")}${button("mine", "Mine poster")}</div>`;
+  }
+
+  function normalizeUsername(value) {
+    return String(value || "").trim().replace(/^@+/, "").trim() || "meg";
+  }
+
+  function populateProfileForm() {
+    const profile = ensureProfile();
+    const username = document.getElementById("insta-profile-username");
+    const displayName = document.getElementById("insta-profile-display-name");
+    const bio = document.getElementById("insta-profile-bio");
+    const avatar = document.getElementById("insta-profile-avatar");
+
+    if (username) username.value = profile.username || "";
+    if (displayName) displayName.value = profile.displayName || "";
+    if (bio) bio.value = profile.bio || "";
+    if (avatar) avatar.value = profile.avatar || "";
+  }
+
+  function bindProfileForm() {
+    document.getElementById("insta-profile-save")?.addEventListener("click", () => {
+      const existing = ensureProfile();
+      const username = normalizeUsername(document.getElementById("insta-profile-username")?.value);
+      const displayName = String(document.getElementById("insta-profile-display-name")?.value || "").trim() || username;
+      const bio = String(document.getElementById("insta-profile-bio")?.value || "").trim();
+      const avatar = String(document.getElementById("insta-profile-avatar")?.value || "").trim();
+
+      saveProfile({
+        ...existing,
+        id: existing.id,
+        created_at: existing.created_at,
+        username,
+        displayName,
+        bio,
+        avatar,
+        updated_at: nowIso()
+      });
+
+      renderProfile();
+      render();
+    });
+  }
+
+  function renderProfile() {
+    const profile = ensureProfile();
+    const postCount = load().filter((post) => !post.deleted_at && getPostOwner(post).username === profile.username).length;
+    const followerCount = loadFollows().filter((entry) => entry.following_username === profile.username).length;
+    const followingCount = loadFollows().filter((entry) => entry.follower_id === profile.id).length;
+
+    const mount = document.getElementById("insta-profile-card");
+    if (!mount) return;
+
+    mount.innerHTML = `
+      <article class="module-card insta-profile-card">
+        ${profile.avatar ? `<img class="insta-avatar" src="${escapeHtml(profile.avatar)}" alt="avatar"/>` : ""}
+        <strong>${escapeHtml(profile.displayName || "Meg")}</strong>
+        <div>@${escapeHtml(profile.username || "meg")}</div>
+        <p>${escapeHtml(profile.bio || "")}</p>
+        <div class="module-meta">poster:${postCount} · følgere:${followerCount} · følger:${followingCount}</div>
+      </article>
+    `;
+  }
+
+  function getPostOwner(post) {
+    const profile = ensureProfile();
+    const username = String(post?.ownerUsername || "").trim() || profile.username;
+    const id = String(post?.ownerId || "").trim() || profile.id;
+    return { id, username };
+  }
+
+  function renderComments(post) {
+    const me = ensureProfile();
+    const comments = getCommentsForPost(post.id);
+
+    const list = comments.length
+      ? comments
+          .map((comment) => `
+            <li class="insta-comment-item">
+              <span><strong>@${escapeHtml(comment.username)}:</strong> ${escapeHtml(comment.text)}</span>
+              ${comment.user_id === me.id ? `<button type="button" data-insta-delete-comment="${escapeHtml(comment.id)}">Slett</button>` : ""}
+            </li>
+          `)
+          .join("")
+      : '<li class="insta-comment-item">Ingen kommentarer ennå.</li>';
+
+    return `
+      <ul class="insta-comments">${list}</ul>
+      <div class="insta-comment-input">
+        <input type="text" data-insta-comment-input="${escapeHtml(post.id)}" placeholder="Skriv kommentar …" />
+        <button type="button" data-insta-comment="${escapeHtml(post.id)}">Kommenter</button>
+      </div>
+    `;
+  }
+
+  function renderSocialRow(post) {
+    const me = ensureProfile();
+    const owner = getPostOwner(post);
+    const canFollow = !!owner.username && owner.username !== me.username;
+    const followButton = canFollow
+      ? `<button type="button" data-insta-follow="${escapeHtml(owner.username)}">${isFollowing(owner.username) ? "Unfollow" : "Følg"}</button>`
+      : "";
+
+    return `
+      <div class="insta-social-row">
+        <span class="module-meta">@${escapeHtml(owner.username)}</span>
+        ${followButton}
+        <button type="button" data-insta-like="${escapeHtml(post.id)}">${hasLiked(post.id) ? "Likt" : "Lik"}</button>
+        <span>${getLikeCount(post.id)} liker</span>
+        <span>${getCommentsForPost(post.id).length} kommentarer</span>
+      </div>
+    `;
+  }
+
+  function renderPostCard(post) {
+    return `
+      <article class="module-card">
+        ${renderMedia(post.src, post.content_type)}
+        <h3>${escapeHtml(post.title || "Uten tittel")}</h3>
+        <p>${escapeHtml(post.caption || "")}</p>
+        <div class="module-meta">
+          ${escapeHtml(post.created_at || "")}
+          ${post.originalInstagramDate ? ` · opprinnelig: ${escapeHtml(post.originalInstagramDate)}` : ""}
+          ${post.imported ? " · Importert fra Instagram" : ""}
+          ${post.last_source_event_id ? ` · source: ${escapeHtml(post.last_source_event_id)}` : ""}
+        </div>
+        ${renderSocialRow(post)}
+        ${renderComments(post)}
+        <div class="module-actions"><button type="button" data-insta-delete="${escapeHtml(post.id)}">Slett</button></div>
+      </article>
+    `;
+  }
 
   function persistPost(post) {
     if (!window.AHARepository?.saveInstaPost) return;
@@ -433,6 +692,7 @@
 
     const preview = loadImportPreview();
     const selectedItems = preview.filter((item) => selectedIds.has(item.id));
+    const profile = ensureProfile();
     const posts = load();
     const stories = loadStories();
 
@@ -440,7 +700,8 @@
       if (item.type === "story") {
         stories.unshift({
           id: createId("story"),
-          ownerId: "local",
+          ownerId: profile.id,
+          ownerUsername: profile.username,
           mediaType: item.mediaType,
           src: item.src,
           caption: item.caption || item.title || "",
@@ -470,6 +731,10 @@
         source_type: "instagram_export",
         visibility,
         originalInstagramDate: item.originalInstagramDate || null,
+        ownerId: profile.id,
+        ownerUsername: profile.username,
+        like_count: 0,
+        comment_count: 0,
         meta: { import_session_id: options.sessionId || null }
       };
 
@@ -598,30 +863,19 @@
     const mount = document.getElementById("insta-list");
     if (!mount) return;
 
-    const posts = (Array.isArray(source) ? source : load()).filter((post) => !post?.deleted_at);
+    const activePosts = (Array.isArray(source) ? source : load()).filter((post) => !post?.deleted_at);
+    const posts = getFilteredPosts(activePosts);
     if (!posts.length) {
-      mount.innerHTML = "<p>Ingen Insta-poster ennå.</p>";
+      const emptyText = currentFeedFilter === "mine"
+        ? "Ingen egne poster ennå."
+        : currentFeedFilter === "following"
+          ? "Ingen poster fra folk du følger ennå."
+          : "Ingen Insta-poster ennå.";
+      mount.innerHTML = `<p>${emptyText}</p>`;
       return;
     }
 
-    mount.innerHTML = posts
-      .map(
-        (post) => `
-          <article class="module-card">
-            <h3>${escapeHtml(post.title || "Uten tittel")}</h3>
-            ${renderMedia(post.src, post.content_type)}
-            <p>${escapeHtml(post.caption || "")}</p>
-            <div class="module-meta">
-              ${escapeHtml(post.created_at || "")}
-              ${post.originalInstagramDate ? ` · opprinnelig: ${escapeHtml(post.originalInstagramDate)}` : ""}
-              ${post.imported ? " · Importert fra Instagram" : ""}
-              ${post.last_source_event_id ? ` · source: ${escapeHtml(post.last_source_event_id)}` : ""}
-            </div>
-            <div class="module-actions"><button type="button" data-insta-delete="${escapeHtml(post.id)}">Slett</button></div>
-          </article>
-        `
-      )
-      .join("");
+    mount.innerHTML = posts.map((post) => renderPostCard(post)).join("");
   }
 
   function deletePost(postId) {
@@ -637,6 +891,7 @@
   }
 
   async function addPost(input) {
+    const profile = ensureProfile();
     const src = String(input.src || "").trim();
     const contentType = detectMediaType(src) === "video" ? "video" : "image";
 
@@ -648,6 +903,11 @@
       content_type: contentType,
       tags: Array.isArray(input.tags) ? input.tags : [],
       meta: {},
+      ownerId: profile.id,
+      ownerUsername: profile.username,
+      visibility: "public",
+      like_count: 0,
+      comment_count: 0,
       created_at: nowIso()
     };
 
@@ -711,7 +971,25 @@
       const target = event.target;
       if (!(target instanceof HTMLElement)) return;
       if (target.dataset.instaDelete) deletePost(target.dataset.instaDelete);
+      if (target.dataset.instaLike) toggleLike(target.dataset.instaLike);
+      if (target.dataset.instaFollow) toggleFollow(target.dataset.instaFollow);
+      if (target.dataset.instaDeleteComment) deleteComment(target.dataset.instaDeleteComment);
+      if (target.dataset.instaComment) {
+        const postId = target.dataset.instaComment;
+        const input = document.querySelector(`[data-insta-comment-input="${postId}"]`);
+        addComment(postId, input?.value || "");
+        if (input) input.value = "";
+      }
     });
+
+    document.getElementById("insta-feed-controls")?.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      if (target.dataset.feedFilter) setFeedFilter(target.dataset.feedFilter);
+    });
+
+    bindProfileForm();
+    populateProfileForm();
 
     const importHandler = (event) => parseInstagramExport(event.target.files);
     document.getElementById("insta-import-files")?.addEventListener("change", importHandler);
@@ -732,6 +1010,8 @@
       completeInstagramImport({ selectedIds, visibility, connectIngest, sessionId });
     });
 
+    renderProfile();
+    renderFeedControls();
     render();
     renderStories();
     renderImportStatus();
@@ -741,6 +1021,27 @@
   }
 
   window.AHAInsta = {
+    loadProfile,
+    saveProfile,
+    ensureProfile,
+    renderProfile,
+    loadLikes,
+    saveLikes,
+    toggleLike,
+    getLikeCount,
+    hasLiked,
+    loadComments,
+    saveComments,
+    addComment,
+    deleteComment,
+    getCommentsForPost,
+    loadFollows,
+    saveFollows,
+    toggleFollow,
+    isFollowing,
+    renderFeedControls,
+    setFeedFilter,
+    getFilteredPosts,
     load,
     save,
     loadStories,
