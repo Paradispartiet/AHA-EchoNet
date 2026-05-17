@@ -225,3 +225,17 @@ pre#out { max-height: 22vh; overflow:auto; white-space: pre-wrap; }
 @media (max-width: 720px) {
   .auto-output-grid { grid-template-columns: 1fr; }
 }
+
+.saved-afterwork-panel { display: grid; gap: 10px; }
+.saved-afterwork-panel h2 { margin: 0; font-size: 14px; }
+.saved-afterwork-list { display: grid; gap: 8px; }
+.saved-afterwork-card { background: linear-gradient(150deg, rgba(16,26,54,0.92), rgba(10,16,34,0.9)); border: 1px solid var(--aha-border); border-radius: 10px; padding: 10px; display: grid; gap: 8px; }
+.saved-afterwork-meta { margin: 0; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; color: var(--aha-muted); font-size: 11px; }
+.saved-afterwork-preview { margin: 0; font-size: 12px; line-height: 1.4; }
+.saved-afterwork-concepts { display: flex; flex-wrap: wrap; gap: 6px; }
+.saved-afterwork-section h4 { margin: 0 0 4px; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--aha-accent); }
+.saved-afterwork-section p { margin: 0 0 4px; font-size: 12px; color: var(--aha-muted); }
+.saved-afterwork-section ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.saved-afterwork-actions { display: flex; justify-content: flex-end; }
+.saved-afterwork-actions button { font-size: 11px; padding: 4px 8px; }
+.saved-afterwork-subjects ul { padding-left: 14px; }
