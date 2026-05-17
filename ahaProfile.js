@@ -12,6 +12,7 @@
     paths: "aha_paths_v1",
     articles: "aha_articles_v1",
     groups: "aha_groups_v1",
+    afterwork: "aha_afterwork_v1",
     privacy: "aha_privacy_settings_v1",
     importPayload: "aha_import_payload_v1",
     unlocks: "hg_unlocks_v1",
@@ -53,11 +54,12 @@
     const paths = loadArray(KEYS.paths).filter((x) => !isDeleted(x));
     const articles = loadArray(KEYS.articles).filter((x) => !isDeleted(x));
     const groups = loadArray(KEYS.groups).filter((x) => !isDeleted(x));
+    const afterwork = loadArray(KEYS.afterwork).filter((x) => !isDeleted(x));
     const insights = asArray(chamber.insights).filter((x) => !isDeleted(x));
 
     const groupMembersCount = groups.reduce((sum, group) => sum + asArray(group?.members).length, 0);
     const groupReferencesCount = groups.reduce((sum, group) => sum + asArray(group?.references).length, 0);
-    const all = insights.concat(sourceEvents, notes, gallery, feed, insta, lists, paths, articles, groups);
+    const all = insights.concat(sourceEvents, notes, gallery, feed, insta, lists, paths, articles, groups, afterwork);
     const latestTs = all.reduce((max, item) => Math.max(max, ts(item)), 0);
 
     return {
@@ -71,6 +73,7 @@
       pathsCount: paths.length,
       articlesCount: articles.length,
       groupsCount: groups.length,
+      afterworkCount: afterwork.length,
       groupMembersCount,
       groupReferencesCount,
       readyArticlesCount: articles.filter((a) => String(a?.status || "").toLowerCase() === "ready").length,
@@ -106,7 +109,44 @@
         });
       });
     });
+    loadArray(KEYS.afterwork).filter((item) => !isDeleted(item)).forEach((item, index) => {
+      const title = asText(item?.reflection || item?.sourceTextPreview || item?.textType || "AHA etterarbeid", "AHA etterarbeid");
+      out.push({
+        id: asText(item?.id, `aha_afterwork_${index}`),
+        title,
+        type: "aha_afterwork",
+        source: "aha_afterwork",
+        createdAt: item?.createdAt || "",
+        updatedAt: item?.updatedAt || item?.createdAt || "",
+        href: "chat.html"
+      });
+    });
     return out.sort((a, b) => ts(b) - ts(a)).slice(0, 10);
+  }
+
+  function collectAfterworkArchive(limit = 5) {
+    const maxItems = Number.isFinite(Number(limit)) ? Math.max(0, Number(limit)) : 5;
+    return loadArray(KEYS.afterwork)
+      .filter((item) => !isDeleted(item))
+      .sort((a, b) => ts(b) - ts(a))
+      .slice(0, maxItems)
+      .map((item, index) => {
+        const reflection = asText(item?.reflection, "");
+        const preview = asText(item?.sourceTextPreview, "");
+        const fallbackTitle = "AHA etterarbeid";
+        const title = reflection || preview || fallbackTitle;
+        const concepts = asArray(item?.concepts).map((concept) => asText(concept?.label || concept?.name || concept, "")).filter(Boolean).slice(0, 5);
+        return {
+          id: asText(item?.id, `aha_afterwork_${index}`),
+          title,
+          preview,
+          textType: asText(item?.textType, ""),
+          createdAt: item?.createdAt || "",
+          concepts,
+          insightsCount: asArray(item?.insights).length,
+          learningPathCount: asArray(item?.learningPath || item?.learningPaths).length
+        };
+      });
   }
 
   function collectHistoryGoStatus() {
@@ -150,7 +190,7 @@
         ["Innsikter", status.insightsCount], ["Source events", status.sourceEventsCount], ["Notater", status.notesCount], ["Galleri", status.galleryCount],
         ["Feed", status.feedCount], ["Insta", status.instaCount], ["Lister", status.listsCount], ["Stier", status.pathsCount],
         ["Artikler", status.articlesCount], ["Ready-artikler", status.readyArticlesCount], ["Grupper", status.groupsCount],
-        ["Gruppemedlemmer", status.groupMembersCount], ["Gruppereferanser", status.groupReferencesCount]
+        ["Gruppemedlemmer", status.groupMembersCount], ["Gruppereferanser", status.groupReferencesCount], ["Etterarbeid", status.afterworkCount]
       ];
       statusEl.innerHTML = cards.map(([l, v]) => `<article class="aha-status-card"><strong>${escapeHtml(String(v))}</strong><span>${escapeHtml(l)}</span></article>`).join("");
     }
@@ -172,11 +212,33 @@
     if (modeEl) modeEl.textContent = privacy.localOnly ? "Lokal modus" : "Tilkoblet modus";
     const lastEl = document.getElementById("aha-home-last-activity");
     if (lastEl) lastEl.textContent = status.lastActivityAt || "Ingen aktivitet registrert";
+
+    const afterworkArchiveEl = document.getElementById("aha-afterwork-archive");
+    if (afterworkArchiveEl) {
+      const archiveItems = collectAfterworkArchive(5);
+      if (!archiveItems.length) {
+        afterworkArchiveEl.innerHTML = "<p class=\"aha-afterwork-empty\">Ingen lagrede etterarbeid ennå. Start i AHA Chat.</p>";
+      } else {
+        afterworkArchiveEl.innerHTML = `<div class="aha-afterwork-list">${archiveItems.map((item) => {
+          const conceptsMarkup = item.concepts.length
+            ? `<div class="aha-afterwork-chips">${item.concepts.map((concept) => `<span>${escapeHtml(concept)}</span>`).join("")}</div>`
+            : "";
+          const dateText = escapeHtml(item.createdAt || "Ukjent dato");
+          return `<article class="aha-afterwork-card">
+            <small class="aha-afterwork-meta">${dateText}</small>
+            <p>${escapeHtml(item.title)}</p>
+            ${conceptsMarkup}
+            <small class="aha-afterwork-meta">Innsikter: ${escapeHtml(String(item.insightsCount))} · Sti: ${escapeHtml(String(item.learningPathCount))}</small>
+            <a class="aha-tile-btn aha-tile-btn-secondary" href="chat.html">Åpne i chat</a>
+          </article>`;
+        }).join("")}</div>`;
+      }
+    }
   }
 
   function refresh() { render(); }
 
-  global.AHAProfile = { collectProfileStatus, collectRecentActivity, collectHistoryGoStatus, collectPrivacyStatus, render, refresh };
+  global.AHAProfile = { collectProfileStatus, collectRecentActivity, collectHistoryGoStatus, collectPrivacyStatus, collectAfterworkArchive, render, refresh };
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", render);
   else render();
