@@ -887,6 +887,12 @@
         afterworkId: button.getAttribute("data-afterwork-id") || ""
       };
     }
+    if (action === "build-from-afterwork") {
+      return {
+        action,
+        afterworkId: button.getAttribute("data-afterwork-id") || ""
+      };
+    }
     if (action === "confirm-merge" || action === "dismiss-merge") {
       return {
         action,
@@ -987,8 +993,11 @@
       } else if (resolved.action === "delete-afterwork") {
         deleteAfterworkEntry(resolved.afterworkId);
         ok = true;
+      } else if (resolved.action === "build-from-afterwork") {
+        buildFromAfterworkEntry(resolved.afterworkId);
+        ok = true;
       }
-      if (ok && resolved.action !== "delete-afterwork") showInsights();
+      if (ok && resolved.action !== "delete-afterwork" && resolved.action !== "build-from-afterwork") showInsights();
     });
   }
 
@@ -1887,7 +1896,7 @@
       <div class="saved-afterwork-concepts">${conceptLine}</div>
       <p class="saved-afterwork-meta">Innsikter: ${escHtml(String(insightsCount))} · Læringssti-steg: ${escHtml(String(pathCount))}</p>
       ${renderAfterworkSubjectLinks(safeEntry.subjectLinks)}
-      <div class="saved-afterwork-actions"><button type="button" data-action="delete-afterwork" data-afterwork-id="${id}">Slett</button></div>
+      <div class="saved-afterwork-actions"><button type="button" data-action="build-from-afterwork" data-afterwork-id="${id}">Bygg videre</button><button type="button" data-action="delete-afterwork" data-afterwork-id="${id}">Slett</button></div>
       <details>
         <summary>Vis detaljer</summary>
         <section class="saved-afterwork-section"><h4>Refleksjon</h4><p>${escHtml(safeEntry.reflection || "")}</p></section>
@@ -1910,6 +1919,74 @@
       return;
     }
     renderPanel(`<div class="saved-afterwork-panel"><h2>Lagrede etterarbeid</h2><div class="saved-afterwork-list">${entries.map(renderAfterworkEntry).join("")}</div></div>`);
+  }
+
+  function buildAfterworkPrompt(entry) {
+    const safeEntry = entry && typeof entry === "object" ? entry : {};
+    const lines = ["Bygg videre på dette AHA-etterarbeidet."];
+
+    const sourceTextPreview = String(safeEntry.sourceTextPreview || "").trim();
+    if (sourceTextPreview) {
+      lines.push("", "Kilde:", sourceTextPreview);
+    }
+
+    const reflection = String(safeEntry.reflection || "").trim();
+    if (reflection) {
+      lines.push("", "Refleksjon:", reflection);
+    }
+
+    const insights = (Array.isArray(safeEntry.insights) ? safeEntry.insights : []).map((item) => String(item || "").trim()).filter(Boolean).slice(0, 4);
+    if (insights.length) {
+      lines.push("", "Hovedinnsikter:");
+      insights.forEach((item) => lines.push(`- ${item}`));
+    }
+
+    const learningPath = (Array.isArray(safeEntry.learningPath) ? safeEntry.learningPath : []).map((item) => String(item || "").trim()).filter(Boolean).slice(0, 5);
+    if (learningPath.length) {
+      lines.push("", "Læringssti:");
+      learningPath.forEach((item) => lines.push(`- ${item}`));
+    }
+
+    const subjectLinks = (Array.isArray(safeEntry.subjectLinks) ? safeEntry.subjectLinks : [])
+      .map((item) => String(item?.title || item?.subject_label || item?.subject_id || "").trim())
+      .filter(Boolean)
+      .slice(0, 6);
+    if (subjectLinks.length) {
+      lines.push("", "Fagkoblinger:");
+      subjectLinks.forEach((item) => lines.push(`- ${item}`));
+    }
+
+    const concepts = (Array.isArray(safeEntry.concepts) ? safeEntry.concepts : [])
+      .map((item) => String(item || "").trim())
+      .filter(Boolean)
+      .slice(0, 6);
+    if (concepts.length) {
+      lines.push("", "Begreper:", concepts.join(", "));
+    }
+
+    lines.push("", "Lag et konkret neste steg basert på dette.");
+    return lines.join("\n").trim();
+  }
+
+  function buildFromAfterworkEntry(entryId) {
+    const id = String(entryId || "").trim();
+    if (!id) {
+      setStatusNote("Fant ikke lagret etterarbeid.");
+      return;
+    }
+    const entry = loadAfterworkEntries().find((item) => String(item?.id || "") === id);
+    if (!entry) {
+      setStatusNote("Fant ikke lagret etterarbeid.");
+      return;
+    }
+
+    const msg = document.getElementById("msg");
+    if (!msg) return;
+
+    msg.value = buildAfterworkPrompt(entry);
+    msg.focus();
+    msg.dispatchEvent(new Event("input", { bubbles: true }));
+    setStatusNote("Etterarbeid lagt inn i skrivefeltet.");
   }
 
   function deleteAfterworkEntry(entryId) {
