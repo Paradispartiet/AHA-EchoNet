@@ -977,6 +977,129 @@
     };
   }
 
+
+  const DOMAIN_CONCEPT_TENSION_PAIRS = [
+    {
+      source: "oljeproduksjon",
+      target: "grønn omstilling",
+      sourceTerms: ["oljeproduksjon", "oljeutvinning", "oljeindustri", "oljealderen", "oljesokkelen"],
+      targetTerms: ["grønn omstilling", "grønt skifte", "omstilling", "fornybar"]
+    },
+    {
+      source: "oljeavhengighet",
+      target: "bærekraft",
+      sourceTerms: ["oljeavhengighet", "fossilavhengighet", "fossilt", "fossil"],
+      targetTerms: ["bærekraft", "bærekraftig samfunn", "naturens tålegrenser"]
+    },
+    {
+      source: "fossil økonomi",
+      target: "fornybar økonomi",
+      sourceTerms: ["fossil økonomi", "fossil", "oljeindustri", "kapitalbinding"],
+      targetTerms: ["fornybar økonomi", "fornybar energi", "fornybar", "grønn verdiskaping"]
+    },
+    {
+      source: "sentralmakt",
+      target: "lokalsamfunn",
+      sourceTerms: ["sentralmakt", "sentralregjering", "sentralstyring", "oslo"],
+      targetTerms: ["lokalsamfunn", "kommuneøkonomi", "lokal makt", "folk i nord"]
+    },
+    {
+      source: "naturvern",
+      target: "industriutvikling",
+      sourceTerms: ["naturvern", "naturhensyn", "arealnøytralitet", "urørt natur", "naturens premisser"],
+      targetTerms: ["industriutvikling", "industri", "industriprosjekter", "bygge framtidens industri"]
+    },
+    {
+      source: "grønn vekst",
+      target: "naturens tålegrenser",
+      sourceTerms: ["grønn vekst", "vekst"],
+      targetTerms: ["naturens tålegrenser", "livsgrunnlaget", "naturens premisser"]
+    },
+    {
+      source: "overforbruk",
+      target: "sirkulærøkonomi",
+      sourceTerms: ["overforbruk", "forbruk"],
+      targetTerms: ["sirkulærøkonomi", "gjenbruk", "reparasjon"]
+    },
+    {
+      source: "sentralisering",
+      target: "desentralisering",
+      sourceTerms: ["sentralisering", "sentralmakt", "sentralstyring"],
+      targetTerms: ["desentralisering", "lokalsamfunn", "kommuneøkonomi", "lokal makt"]
+    }
+  ];
+
+  function normalizeTensionText(value) {
+    return String(value || "")
+      .toLowerCase()
+      .normalize("NFKC")
+      .replace(/[^a-z0-9æøå\s-]/gi, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function conceptListHasAnyTerm(concepts, terms) {
+    const normalizedTerms = (terms || []).map(normalizeTensionText).filter(Boolean);
+    if (!normalizedTerms.length) return false;
+    const conceptValues = (concepts || []).map((c) => normalizeTensionText(c?.key || c?.label || c)).filter(Boolean);
+    if (!conceptValues.length) return false;
+    return conceptValues.some((value) => normalizedTerms.some((term) => value.includes(term) || term.includes(value)));
+  }
+
+  function insightHasAnyTerm(insight, terms) {
+    const normalizedTerms = (terms || []).map(normalizeTensionText).filter(Boolean);
+    if (!normalizedTerms.length) return false;
+    const text = normalizeTensionText([insight?.title, insight?.summary].filter(Boolean).join(" "));
+    const textMatch = normalizedTerms.some((term) => text.includes(term));
+    if (textMatch) return true;
+    return conceptListHasAnyTerm(insight?.concepts, normalizedTerms);
+  }
+
+  function buildConceptPairTensions(enrichedInsights, options) {
+    const opts = options || {};
+    const insights = Array.isArray(enrichedInsights) ? enrichedInsights : [];
+    const pairs = opts.domainConceptTensionPairs || DOMAIN_CONCEPT_TENSION_PAIRS;
+    const reason = "Begge begrepene opptrer i samme argumenterende materiale som motsatte retninger.";
+
+    return pairs.map((pair) => {
+      let sourceHits = 0;
+      let targetHits = 0;
+      let sameInsightHits = 0;
+      const themes = new Set();
+      const examples = [];
+
+      insights.forEach((ins) => {
+        const hasSource = insightHasAnyTerm(ins, pair.sourceTerms || []);
+        const hasTarget = insightHasAnyTerm(ins, pair.targetTerms || []);
+        if (!hasSource && !hasTarget) return;
+        if (hasSource) sourceHits += 1;
+        if (hasTarget) targetHits += 1;
+        if (hasSource && hasTarget) sameInsightHits += 1;
+        if (ins?.theme_id) themes.add(ins.theme_id);
+        const sample = cleanTextForDisplay(ins?.summary || ins?.title || "").slice(0, 220);
+        if (sample && examples.length < 3 && !examples.includes(sample)) examples.push(sample);
+      });
+
+      if (!(sourceHits > 0 && targetHits > 0)) return null;
+      const evidence_count = sourceHits + targetHits + sameInsightHits;
+      const strength = sameInsightHits * 2 + Math.min(sourceHits, targetHits);
+
+      return {
+        source: pair.source,
+        target: pair.target,
+        strength,
+        evidence_count,
+        source_hits: sourceHits,
+        target_hits: targetHits,
+        same_insight_hits: sameInsightHits,
+        themes: Array.from(themes),
+        examples,
+        reason
+      };
+    }).filter(Boolean)
+      .sort((a, b) => (b.same_insight_hits - a.same_insight_hits) || (b.strength - a.strength) || (b.evidence_count - a.evidence_count));
+  }
+
   // ── Spennings-/motsigelsesdetektor ─────────────────────
   // Ser etter tilfeller der samme konsept / tema bærer motstridende
   // valens eller modalitet på tvers av insights — det vi normalt
@@ -1202,7 +1325,8 @@
       concept_tensions: concept_tensions.slice(0, opts.maxConcepts || 30),
       theme_tensions,
       cross_theme: cross_theme.slice(0, opts.maxCrossTheme || 20),
-      paradox_pairs: paradox_pairs.slice(0, opts.maxParadoxes || 20)
+      paradox_pairs: paradox_pairs.slice(0, opts.maxParadoxes || 20),
+      concept_pair_tensions: buildConceptPairTensions(enrichedInsights, opts).slice(0, opts.maxConceptPairTensions || 12)
     };
   }
 

@@ -1307,9 +1307,34 @@
     const themes14d = (recurringThemes?.["14d"]?.top_concepts || []).slice(0, 3);
     const themes30d = (recurringThemes?.["30d"]?.top_concepts || []).slice(0, 3);
     const topTheoryPeople = collectTheoryPeople(safeChamber, recurringThemes?.["30d"]?.top_theories, 4);
-    const visibleTensions = tensions
+    const profileTensions = profile?.tensions || {};
+    const conceptPairTensions = (profileTensions.concept_pair_tensions || [])
+      .filter((item) => tensionOverlapsFocus({ title: `${item?.source || ""} ↔ ${item?.target || ""}` }, focusConcepts))
+      .slice(0, 4)
+      .map((item) => ({
+        title: `${item?.source || "Ukjent"} ↔ ${item?.target || "Ukjent"}`,
+        strength: item?.strength || 0
+      }));
+    const paradoxTensions = (profileTensions.paradox_pairs || [])
+      .slice(0, 4)
+      .map((item) => ({
+        title: (item?.shared_concepts || []).slice(0, 2).join(" ↔ ") || "Paradoks",
+        strength: (item?.shared_concepts || []).length || 0
+      }));
+    const conceptScoreTensions = (profileTensions.concept_tensions || [])
+      .filter((item) => tensionOverlapsFocus(item, focusConcepts))
+      .slice(0, 4)
+      .map((item) => ({ title: item?.key || "Ukjent", strength: item?.combined || 0 }));
+    const fallbackTensions = tensions
       .filter((item) => tensionOverlapsFocus(item, focusConcepts))
       .slice(0, 4);
+    const visibleTensions = conceptPairTensions.length
+      ? conceptPairTensions
+      : paradoxTensions.length
+        ? paradoxTensions
+        : conceptScoreTensions.length
+          ? conceptScoreTensions
+          : fallbackTensions;
 
     return `<section class="knowledge-map-block">
       <h3>Kunnskapskart for hele chamberet</h3>
@@ -1362,6 +1387,9 @@
     const fading = (recent.fading || []).slice(0, 5).map((c) =>
       `${escHtml(displayConceptLabel(c.key))} <span class="meta-count">tidligere ×${c.prev_count}</span>`
     );
+    const conceptPairTensions = (tensions.concept_pair_tensions || []).slice(0, 5).map((t) => (
+      `${escHtml(displayConceptLabel(t?.source))} ↔ ${escHtml(displayConceptLabel(t?.target))} <span class="meta-count">styrke ${escHtml(String(t?.strength || 0))}</span>`
+    ));
     const conceptTensions = (tensions.concept_tensions || []).slice(0, 5).map((t) => {
       const key = String(t?.key || "");
       const hasPair = /↔|<->|vs\.?|\s-\s|—/.test(key);
@@ -1391,7 +1419,7 @@
       renderMetaSection(`Det du tenker mest på${window}`, recentConcepts),
       renderMetaSection("Nye temaer som dukker opp", emerging),
       renderMetaSection("Tankegods som har stilnet", fading),
-      renderMetaSection("Spenninger jeg ser", conceptTensions),
+      renderMetaSection("Spenninger jeg ser", conceptPairTensions.length ? conceptPairTensions : (paradoxes.length ? paradoxes : conceptTensions)),
       renderMetaSection("Paradokser i materialet", paradoxes),
       renderMetaSection("Spørsmål som kan løsne fastlåsthet", unstick),
       renderMetaSection("Refleksjoner verdt å hente frem", resurface),
