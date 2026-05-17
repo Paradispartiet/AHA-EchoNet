@@ -40,3 +40,13 @@
   width: 100%;
   border-radius: 8px;
 }
+
+.insta-profile-card { margin-top: 0.75rem; }
+.insta-avatar { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; }
+.insta-feed-controls { display:flex; gap:.5rem; margin: .5rem 0 1rem; }
+.insta-feed-controls .is-active { font-weight: 700; }
+.insta-social-row { display:flex; gap:.5rem; align-items:center; flex-wrap: wrap; margin-top:.5rem; }
+.insta-comments { margin-top:.5rem; display:flex; flex-direction:column; gap:.35rem; }
+.insta-comment { font-size:.9rem; }
+.insta-comment-input { display:flex; gap:.4rem; margin-top:.4rem; }
+.insta-comment-input input { flex:1; }
