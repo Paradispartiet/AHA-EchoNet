@@ -1819,6 +1819,24 @@
   }
 
   function deriveConceptsFromAfterwork(payload, fallbackKeywords, subjectLinks) {
+    const AFTERWORK_NOISE_CONCEPTS = new Set([
+      "annonsørinnhold",
+      "annonse",
+      "logo",
+      "illustrasjon",
+      "les også",
+      "kjolevalg",
+      "kjole",
+      "kjoler",
+      "bryllupsgjesten",
+      "terrasse",
+      "plank",
+      "garanti",
+      "årets",
+      "populære",
+      "sikre",
+      "nydelige"
+    ]);
     const concepts = [];
     const safePayloadKeywords = Array.isArray(payload?.keywords) ? payload.keywords : [];
     const safeFallbackKeywords = Array.isArray(fallbackKeywords) ? fallbackKeywords : [];
@@ -1833,7 +1851,8 @@
     });
     const textType = String(payload?.textType || "").trim().toLowerCase();
     if (textType) concepts.push(textType);
-    return Array.from(new Set(concepts.filter(Boolean))).slice(0, 16);
+    const uniqueConcepts = Array.from(new Set(concepts.filter(Boolean)));
+    return uniqueConcepts.filter((concept) => !AFTERWORK_NOISE_CONCEPTS.has(concept)).slice(0, 16);
   }
 
   function makeAfterworkObject(payload, sourceText, options) {
@@ -1847,7 +1866,8 @@
     const safePath = Array.isArray(normalizedPayload.path) ? normalizedPayload.path : [];
     const safeSubjectMatches = Array.isArray(options?.subjectMatches) ? options.subjectMatches : (Array.isArray(normalizedPayload.subjectMatches) ? normalizedPayload.subjectMatches : []);
     const subjectLinks = normalizeSubjectLinks(safeSubjectMatches);
-    const keywords = takeKeywords(source, 8);
+    const analysisSource = cleanArticleText(source);
+    const keywords = takeKeywords(analysisSource, 8);
     const concepts = deriveConceptsFromAfterwork(normalizedPayload, keywords, subjectLinks);
     const structuralLabels = safeSortItems
       .map((item) => String(item?.label || "").trim())
