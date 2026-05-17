@@ -739,6 +739,11 @@
       .replace(/'/g, "&#39;");
   }
 
+  function normalizeDisplayText(value) {
+    return String(value || "")
+      .replace(/underviser(\s+)viktigheten/gi, (_match, gap) => `understreker${gap}viktigheten`);
+  }
+
   function renderLayerChips(items, getLabel) {
     const labels = (items || [])
       .map((item) => {
@@ -833,8 +838,8 @@
     const cleanTitleRaw = sanitizeInsightText(ins.candidate_title || ins.title || "Innsikt");
     const cleanSummaryRaw = sanitizeInsightText(ins.candidate_summary || ins.summary || "");
     if (shouldHideInsightCard(cleanTitleRaw, cleanSummaryRaw)) return "";
-    const title = escHtml(cleanTitleRaw || "Innsikt");
-    const summary = escHtml(cleanSummaryRaw || "");
+    const title = escHtml(normalizeDisplayText(cleanTitleRaw || "Innsikt"));
+    const summary = escHtml(normalizeDisplayText(cleanSummaryRaw || ""));
 
     const conceptsHtml = renderLayerChips(filterConceptLabels(ins.concepts).map((label) => ({ label })), (c) => c?.label);
     const patternsHtml = renderLayerChips(ins.patterns, (p) => p?.label || p?.key);
@@ -1309,25 +1314,26 @@
     const topTheoryPeople = collectTheoryPeople(safeChamber, recurringThemes?.["30d"]?.top_theories, 4);
     const profileTensions = profile?.tensions || {};
     const conceptPairTensions = (profileTensions.concept_pair_tensions || [])
-      .filter((item) => tensionOverlapsFocus({ title: `${item?.source || ""} ↔ ${item?.target || ""}` }, focusConcepts))
-      .slice(0, 4)
+      .slice()
+      .sort((a, b) => (Number(b?.strength) || 0) - (Number(a?.strength) || 0))
+      .slice(0, 5)
       .map((item) => ({
         title: `${item?.source || "Ukjent"} ↔ ${item?.target || "Ukjent"}`,
         strength: item?.strength || 0
       }));
     const paradoxTensions = (profileTensions.paradox_pairs || [])
-      .slice(0, 4)
+      .slice(0, 5)
       .map((item) => ({
         title: (item?.shared_concepts || []).slice(0, 2).join(" ↔ ") || "Paradoks",
         strength: (item?.shared_concepts || []).length || 0
       }));
     const conceptScoreTensions = (profileTensions.concept_tensions || [])
       .filter((item) => tensionOverlapsFocus(item, focusConcepts))
-      .slice(0, 4)
+      .slice(0, 5)
       .map((item) => ({ title: item?.key || "Ukjent", strength: item?.combined || 0 }));
     const fallbackTensions = tensions
       .filter((item) => tensionOverlapsFocus(item, focusConcepts))
-      .slice(0, 4);
+      .slice(0, 5);
     const visibleTensions = conceptPairTensions.length
       ? conceptPairTensions
       : paradoxTensions.length
@@ -1851,14 +1857,14 @@
   function renderAfterworkArray(title, items) {
     const list = Array.isArray(items) ? items.filter(Boolean) : [];
     if (!list.length) return "";
-    const rendered = list.map((item) => `<li>${escHtml(item)}</li>`).join("");
+    const rendered = list.map((item) => `<li>${escHtml(normalizeDisplayText(item))}</li>`).join("");
     return `<section class="saved-afterwork-section"><h4>${escHtml(title)}</h4><ul>${rendered}</ul></section>`;
   }
 
   function renderAfterworkSortItems(sortItems) {
     const list = Array.isArray(sortItems) ? sortItems : [];
     if (!list.length) return "";
-    const rendered = list.map((item) => `<li><strong>${escHtml(item?.label || "Punkt")}:</strong> ${escHtml(item?.text || "")}</li>`).join("");
+    const rendered = list.map((item) => `<li><strong>${escHtml(normalizeDisplayText(item?.label || "Punkt"))}:</strong> ${escHtml(normalizeDisplayText(item?.text || ""))}</li>`).join("");
     return `<section class="saved-afterwork-section"><h4>Sortering</h4><ul>${rendered}</ul></section>`;
   }
 
@@ -1867,7 +1873,7 @@
     if (typeof thoughtSorting === "string") {
       const text = thoughtSorting.trim();
       if (!text) return "";
-      return `<section class="saved-afterwork-section"><h4>Tankesortering</h4><p>${escHtml(text)}</p></section>`;
+      return `<section class="saved-afterwork-section"><h4>Tankesortering</h4><p>${escHtml(normalizeDisplayText(text))}</p></section>`;
     }
 
     if (!thoughtSorting || typeof thoughtSorting !== "object") return "";
@@ -1887,9 +1893,9 @@
     const nextStep = getFirstText(["neste_steg", "nesteSteg", "nextStep"]);
 
     const lines = [];
-    if (mainTrack) lines.push(`<p><strong>Hovedspor:</strong> ${escHtml(mainTrack)}</p>`);
-    if (looseThoughts) lines.push(`<p><strong>Løse tanker:</strong> ${escHtml(looseThoughts)}</p>`);
-    if (nextStep) lines.push(`<p><strong>Neste steg:</strong> ${escHtml(nextStep)}</p>`);
+    if (mainTrack) lines.push(`<p><strong>Hovedspor:</strong> ${escHtml(normalizeDisplayText(mainTrack))}</p>`);
+    if (looseThoughts) lines.push(`<p><strong>Løse tanker:</strong> ${escHtml(normalizeDisplayText(looseThoughts))}</p>`);
+    if (nextStep) lines.push(`<p><strong>Neste steg:</strong> ${escHtml(normalizeDisplayText(nextStep))}</p>`);
 
     if (!lines.length) return "";
     return `<section class="saved-afterwork-section"><h4>Tankesortering</h4>${lines.join("")}</section>`;
@@ -1901,7 +1907,7 @@
     const rendered = list.map((link) => {
       const title = String(link?.title || link?.subject_id || "Fagkobling");
       const subject = link?.subject_id ? ` <small>(${escHtml(link.subject_id)})</small>` : "";
-      return `<li>${escHtml(title)}${subject}</li>`;
+      return `<li>${escHtml(normalizeDisplayText(title))}${subject}</li>`;
     }).join("");
     return `<section class="saved-afterwork-section saved-afterwork-subjects"><h4>Fagkoblinger</h4><ul>${rendered}</ul></section>`;
   }
@@ -1916,18 +1922,18 @@
     const conceptLine = conceptPool.length ? conceptPool.map((item) => `<span class="insight-chip">${escHtml(item)}</span>`).join("") : '<span class="insight-chip">Ingen begreper</span>';
     const insightsCount = Array.isArray(safeEntry.insights) ? safeEntry.insights.length : 0;
     const pathCount = Array.isArray(safeEntry.learningPath) ? safeEntry.learningPath.length : 0;
-    const daySummarySection = safeEntry.daySummary ? `<section class="saved-afterwork-section"><h4>Dagsoppsummering</h4><p>${escHtml(safeEntry.daySummary)}</p></section>` : "";
+    const daySummarySection = safeEntry.daySummary ? `<section class="saved-afterwork-section"><h4>Dagsoppsummering</h4><p>${escHtml(normalizeDisplayText(safeEntry.daySummary))}</p></section>` : "";
 
     return `<article class="saved-afterwork-card" data-afterwork-id="${id}">
       <div class="saved-afterwork-meta"><strong>${escHtml(createdAt)}</strong><span>${escHtml(textType)}</span></div>
-      <p class="saved-afterwork-preview">${escHtml(preview)}</p>
+      <p class="saved-afterwork-preview">${escHtml(normalizeDisplayText(preview))}</p>
       <div class="saved-afterwork-concepts">${conceptLine}</div>
       <p class="saved-afterwork-meta">Innsikter: ${escHtml(String(insightsCount))} · Læringssti-steg: ${escHtml(String(pathCount))}</p>
       ${renderAfterworkSubjectLinks(safeEntry.subjectLinks)}
       <div class="saved-afterwork-actions"><button type="button" data-action="build-from-afterwork" data-afterwork-id="${id}">Bygg videre</button><button type="button" data-action="delete-afterwork" data-afterwork-id="${id}">Slett</button></div>
       <details>
         <summary>Vis detaljer</summary>
-        <section class="saved-afterwork-section"><h4>Refleksjon</h4><p>${escHtml(safeEntry.reflection || "")}</p></section>
+        <section class="saved-afterwork-section"><h4>Refleksjon</h4><p>${escHtml(normalizeDisplayText(safeEntry.reflection || ""))}</p></section>
         ${renderAfterworkSortItems(safeEntry.sortItems)}
         ${daySummarySection}
         ${renderAfterworkThoughtSorting(safeEntry.thoughtSorting)}
@@ -1935,7 +1941,7 @@
         ${renderAfterworkArray("Innsikt", safeEntry.insights)}
         ${renderAfterworkArray("Læringssti", safeEntry.learningPath)}
         ${renderAfterworkSubjectLinks(safeEntry.subjectLinks)}
-        <section class="saved-afterwork-section"><h4>Kildepreview</h4><p>${escHtml(preview)}</p></section>
+        <section class="saved-afterwork-section"><h4>Kildepreview</h4><p>${escHtml(normalizeDisplayText(preview))}</p></section>
       </details>
     </article>`;
   }
@@ -1946,7 +1952,7 @@
       renderPanel('<div class="saved-afterwork-panel"><p>Ingen lagrede etterarbeid ennå. Trykk Lagre etterarbeid etter en analyse.</p></div>');
       return;
     }
-    renderPanel(`<div class="saved-afterwork-panel"><h2>Lagrede etterarbeid</h2><div class="saved-afterwork-list">${entries.map(renderAfterworkEntry).join("")}</div></div>`);
+    renderPanel(`<div class="saved-afterwork-panel"><div class="saved-afterwork-list">${entries.map(renderAfterworkEntry).join("")}</div></div>`);
   }
 
   function buildAfterworkPrompt(entry) {
