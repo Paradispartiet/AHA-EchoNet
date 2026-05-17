@@ -953,3 +953,62 @@ html, body { max-width: 100%; overflow-x: hidden; }
   .aha-header-actions .aha-cta-secondary,
   .aha-header-actions .aha-ghost-button { min-height: 34px; font-size: .78rem; padding: 6px 9px; }
 }
+
+.aha-meta-profile-panel {
+  border: 1px solid var(--aha-line-yellow);
+  background: linear-gradient(145deg, rgba(246,200,0,.06), rgba(255,255,255,.03));
+}
+
+.aha-meta-profile-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.aha-meta-profile-section {
+  border: 1px solid var(--aha-line);
+  border-radius: 12px;
+  background: rgba(8,10,16,.66);
+  padding: 10px;
+}
+
+.aha-meta-profile-section h4 {
+  margin: 0 0 8px;
+  font-size: .86rem;
+  color: #ffe27a;
+}
+
+.aha-meta-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.aha-meta-chip {
+  display: inline-flex;
+  border-radius: 999px;
+  border: 1px solid rgba(246,200,0,.3);
+  background: rgba(246,200,0,.1);
+  color: #ffe89c;
+  padding: 3px 8px;
+  font-size: .78rem;
+}
+
+.aha-meta-line-list,
+.aha-meta-mini-list {
+  margin: 0;
+  padding-left: 16px;
+  color: var(--aha-muted);
+  display: grid;
+  gap: 5px;
+}
+
+.aha-meta-mini-list li small {
+  color: #ffe27a;
+}
+
+@media (max-width: 620px) {
+  .aha-meta-profile-grid {
+    grid-template-columns: 1fr;
+  }
+}
