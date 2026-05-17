@@ -608,6 +608,58 @@ input:focus { border-color: var(--aha-yellow); box-shadow: 0 0 0 3px rgba(246,20
 .aha-activity-list small,
 .aha-status-stack { color: var(--aha-muted); }
 
+.aha-afterwork-archive {
+  border: 1px solid var(--aha-line-yellow);
+  background: linear-gradient(145deg, rgba(246,200,0,.08), rgba(255,255,255,.03));
+}
+
+.aha-afterwork-list {
+  display: grid;
+  gap: 10px;
+}
+
+.aha-afterwork-card {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid var(--aha-line);
+  background: rgba(8,10,16,.72);
+}
+
+.aha-afterwork-card p {
+  margin: 0;
+  color: var(--aha-text);
+}
+
+.aha-afterwork-meta {
+  color: var(--aha-muted);
+  font-size: .8rem;
+}
+
+.aha-afterwork-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.aha-afterwork-chips span {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(246,200,0,.36);
+  background: rgba(246,200,0,.12);
+  color: #ffe27a;
+  border-radius: 999px;
+  padding: 3px 9px;
+  font-size: .76rem;
+  font-weight: 700;
+}
+
+.aha-afterwork-empty {
+  margin: 0;
+  color: var(--aha-muted);
+}
+
 .aha-historygo-status,
 .aha-privacy-status { margin-top: 10px; }
 
