@@ -18,8 +18,10 @@
     unlocks: "hg_unlocks_v1",
     visitedPlaces: "visited_places",
     peopleCollected: "people_collected",
-    historyProgress: "historygo_progress"
+    historyProgress: "historygo_progress",
+    pendingChatPrompt: "aha_pending_chat_prompt_v1"
   };
+  let latestMetaProfile = null;
 
   const PRIVACY_DEFAULTS = {
     localOnly: true,
@@ -280,6 +282,73 @@
     };
   }
 
+  function savePendingChatPrompt(prompt) {
+    if (typeof prompt !== "string") return false;
+    const trimmedPrompt = prompt.trim();
+    if (!trimmedPrompt) return false;
+    const payload = {
+      type: "meta_profile_prompt",
+      source: "aha_home",
+      createdAt: new Date().toISOString(),
+      prompt: trimmedPrompt
+    };
+    try {
+      localStorage.setItem(KEYS.pendingChatPrompt, JSON.stringify(payload));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  function buildMetaTensionPrompt(item) {
+    const source = asText(item?.source, "Ukjent");
+    const target = asText(item?.target, "Ukjent");
+    const strength = Number(item?.strength || 0) || 0;
+    return `Bygg videre på denne AHA-spenningen:
+
+${source} ↔ ${target}
+Styrke: ${strength}
+
+Forklar hva spenningen betyr i materialet mitt, hvilke tekster/ideer den henger sammen med, og foreslå ett konkret neste steg.`;
+  }
+
+  function buildMetaConceptPrompt(item, kind) {
+    const noun = kind === "theme" ? "AHA-hovedtema" : "AHA-begrep";
+    const label = asText(item?.label, "Ukjent");
+    const count = Number(item?.count || 0) || 0;
+    return `Bygg videre på dette ${noun}:
+
+${label} ×${count}
+
+Forklar hvordan dette begrepet går igjen i materialet mitt, hvilke mulige retninger det peker mot, og foreslå ett konkret neste steg.`;
+  }
+
+  function buildMetaSubjectPrompt(item) {
+    const label = asText(item?.label, "Ukjent");
+    return `Bygg videre på denne AHA-fagkoblingen:
+
+${label}
+
+Forklar hvordan materialet mitt kan kobles til dette fagområdet, og foreslå en konkret vei videre.`;
+  }
+
+  function handleMetaProfileAction(event) {
+    const button = event?.target?.closest?.("button[data-action]");
+    if (!button || !latestMetaProfile) return;
+    const action = button.getAttribute("data-action") || "";
+    const index = Number.parseInt(button.getAttribute("data-index") || "", 10);
+    if (!Number.isInteger(index) || index < 0) return;
+
+    let prompt = "";
+    if (action === "meta-build-theme") prompt = buildMetaConceptPrompt(asArray(latestMetaProfile.topThemes)[index], "theme");
+    if (action === "meta-build-concept") prompt = buildMetaConceptPrompt(asArray(latestMetaProfile.topConcepts)[index], "concept");
+    if (action === "meta-build-tension") prompt = buildMetaTensionPrompt(asArray(latestMetaProfile.topTensions)[index]);
+    if (action === "meta-build-subject") prompt = buildMetaSubjectPrompt(asArray(latestMetaProfile.topSubjectLinks)[index]);
+    if (!prompt) return;
+    if (!savePendingChatPrompt(prompt)) return;
+    window.location.href = "chat.html";
+  }
+
   function render() {
     const status = collectProfileStatus();
     const recent = collectRecentActivity();
@@ -318,18 +387,20 @@
     const metaProfileEl = document.getElementById("aha-meta-profile-home");
     if (metaProfileEl) {
       const meta = collectAhaMetaProfile();
+      latestMetaProfile = meta;
+      metaProfileEl.onclick = handleMetaProfileAction;
       const noData = !meta.topThemes.length && !meta.topConcepts.length && !meta.topTensions.length && !meta.topSubjectLinks.length && !meta.recentAfterwork.length;
       if (noData) {
         metaProfileEl.innerHTML = `<p class="aha-afterwork-empty">AHA har ikke nok materiale ennå. Start en samtale eller lagre et etterarbeid.</p>`;
       } else {
-        const chips = (items) => items.length ? `<div class="aha-meta-chip-list">${items.map((item) => `<span class="aha-meta-chip">${escapeHtml(item.label)} ×${escapeHtml(String(item.count || 0))}</span>`).join("")}</div>` : `<p class="aha-afterwork-empty">Ingen data ennå.</p>`;
-        const tensions = meta.topTensions.length ? `<ul class="aha-meta-line-list">${meta.topTensions.map((item) => `<li>${escapeHtml(item.source)} ↔ ${escapeHtml(item.target)} · styrke ${escapeHtml(String(item.strength || 0))}</li>`).join("")}</ul>` : `<p class="aha-afterwork-empty">Ingen tydelige spenninger ennå.</p>`;
-        const subjects = meta.topSubjectLinks.length ? `<ul class="aha-meta-mini-list">${meta.topSubjectLinks.map((item) => `<li>${escapeHtml(item.label)} <small>×${escapeHtml(String(item.count || 0))}</small></li>`).join("")}</ul>` : `<p class="aha-afterwork-empty">Ingen fagkoblinger ennå.</p>`;
+        const chips = (items, action, kind) => items.length ? `<div class="aha-meta-chip-list">${items.map((item, index) => `<div class="aha-meta-chip-row"><span class="aha-meta-chip">${escapeHtml(item.label)} ×${escapeHtml(String(item.count || 0))}</span><button type="button" class="aha-meta-action aha-tile-btn aha-tile-btn-secondary" data-action="${escapeHtml(action)}" data-index="${index}"${kind ? ` data-kind="${escapeHtml(kind)}"` : ""}>Bygg videre</button></div>`).join("")}</div>` : `<p class="aha-afterwork-empty">Ingen data ennå.</p>`;
+        const tensions = meta.topTensions.length ? `<ul class="aha-meta-line-list">${meta.topTensions.map((item, index) => `<li><div>${escapeHtml(item.source)} ↔ ${escapeHtml(item.target)} · styrke ${escapeHtml(String(item.strength || 0))}</div><button type="button" class="aha-meta-action aha-tile-btn aha-tile-btn-secondary aha-meta-line-action" data-action="meta-build-tension" data-index="${index}">Bygg videre</button></li>`).join("")}</ul>` : `<p class="aha-afterwork-empty">Ingen tydelige spenninger ennå.</p>`;
+        const subjects = meta.topSubjectLinks.length ? `<ul class="aha-meta-mini-list">${meta.topSubjectLinks.map((item, index) => `<li><div>${escapeHtml(item.label)} <small>×${escapeHtml(String(item.count || 0))}</small></div><button type="button" class="aha-meta-action aha-tile-btn aha-tile-btn-secondary aha-meta-line-action" data-action="meta-build-subject" data-index="${index}">Bygg videre</button></li>`).join("")}</ul>` : `<p class="aha-afterwork-empty">Ingen fagkoblinger ennå.</p>`;
         const recent = meta.recentAfterwork.length ? `<ul class="aha-meta-mini-list">${meta.recentAfterwork.map((item) => `<li><strong>${escapeHtml(item.createdAt || "Ukjent dato")}</strong> · ${escapeHtml(item.title || item.preview || "AHA etterarbeid")}</li>`).join("")}</ul>` : `<p class="aha-afterwork-empty">Ingen lagrede etterarbeid ennå.</p>`;
 
         metaProfileEl.innerHTML = `<div class="aha-meta-profile-grid">
-          <section class="aha-meta-profile-section"><h4>Hovedtemaer</h4>${chips(meta.topThemes)}</section>
-          <section class="aha-meta-profile-section"><h4>Begreper</h4>${chips(meta.topConcepts)}</section>
+          <section class="aha-meta-profile-section"><h4>Hovedtemaer</h4>${chips(meta.topThemes, "meta-build-theme", "theme")}</section>
+          <section class="aha-meta-profile-section"><h4>Begreper</h4>${chips(meta.topConcepts, "meta-build-concept", "concept")}</section>
           <section class="aha-meta-profile-section"><h4>Spenninger</h4>${tensions}</section>
           <section class="aha-meta-profile-section"><h4>Fagkoblinger</h4>${subjects}</section>
           <section class="aha-meta-profile-section"><h4>Siste etterarbeid</h4>${recent}</section>
