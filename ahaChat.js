@@ -11,6 +11,7 @@
 
   const AUTO_OUTPUT_STORAGE_KEY = "aha_chat_auto_outputs_v1";
   const AFTERWORK_STORAGE_KEY = "aha_afterwork_v1";
+  const PENDING_CHAT_PROMPT_KEY = "aha_pending_chat_prompt_v1";
 
   const AHA_INSIGHT_CONTRACT = Object.freeze({
     FUNCTIONAL_TYPES: new Set([
@@ -2544,6 +2545,27 @@
     renderAutoOutputPayload(payload);
   }
 
+  function consumePendingChatPrompt() {
+    const raw = localStorage.getItem(PENDING_CHAT_PROMPT_KEY);
+    if (!raw) return;
+    let payload = null;
+    try {
+      payload = JSON.parse(raw);
+    } catch {
+      return;
+    }
+    const prompt = String(payload?.prompt || "").trim();
+    if (!prompt) return;
+    const msg = document.getElementById("msg");
+    if (!msg) return;
+    if (String(msg.value || "").trim()) return;
+    msg.value = prompt;
+    msg.dispatchEvent(new Event("input", { bubbles: true }));
+    msg.focus();
+    localStorage.removeItem(PENDING_CHAT_PROMPT_KEY);
+    setStatusNote("Klar til å bygge videre fra AHA Home.");
+  }
+
   function bind() {
     const button = document.getElementById("btn-send");
     const textarea = document.getElementById("msg");
@@ -2612,6 +2634,7 @@
 
     bindPanelActionHandler();
     restoreAutoOutputFromStorage();
+    consumePendingChatPrompt();
 
     // Når et nytt merge-forslag persisteres på chamberet, re-rendr
     // panelet hvis det vises. UI-en henter forslagene rett fra
