@@ -1825,6 +1825,39 @@
     return `<section class="saved-afterwork-section"><h4>Sortering</h4><ul>${rendered}</ul></section>`;
   }
 
+
+  function renderAfterworkThoughtSorting(thoughtSorting) {
+    if (typeof thoughtSorting === "string") {
+      const text = thoughtSorting.trim();
+      if (!text) return "";
+      return `<section class="saved-afterwork-section"><h4>Tankesortering</h4><p>${escHtml(text)}</p></section>`;
+    }
+
+    if (!thoughtSorting || typeof thoughtSorting !== "object") return "";
+
+    const getFirstText = (keys) => {
+      for (let i = 0; i < keys.length; i += 1) {
+        const value = thoughtSorting[keys[i]];
+        if (value == null) continue;
+        const text = String(value).trim();
+        if (text) return text;
+      }
+      return "";
+    };
+
+    const mainTrack = getFirstText(["hovedspor", "mainTrack"]);
+    const looseThoughts = getFirstText(["lose_tanker", "løse_tanker", "looseThoughts", "loseTanker", "loseTankerText"]);
+    const nextStep = getFirstText(["neste_steg", "nesteSteg", "nextStep"]);
+
+    const lines = [];
+    if (mainTrack) lines.push(`<p><strong>Hovedspor:</strong> ${escHtml(mainTrack)}</p>`);
+    if (looseThoughts) lines.push(`<p><strong>Løse tanker:</strong> ${escHtml(looseThoughts)}</p>`);
+    if (nextStep) lines.push(`<p><strong>Neste steg:</strong> ${escHtml(nextStep)}</p>`);
+
+    if (!lines.length) return "";
+    return `<section class="saved-afterwork-section"><h4>Tankesortering</h4>${lines.join("")}</section>`;
+  }
+
   function renderAfterworkSubjectLinks(subjectLinks) {
     const list = Array.isArray(subjectLinks) ? subjectLinks.filter(Boolean) : [];
     if (!list.length) return "";
@@ -1847,7 +1880,6 @@
     const insightsCount = Array.isArray(safeEntry.insights) ? safeEntry.insights.length : 0;
     const pathCount = Array.isArray(safeEntry.learningPath) ? safeEntry.learningPath.length : 0;
     const daySummarySection = safeEntry.daySummary ? `<section class="saved-afterwork-section"><h4>Dagsoppsummering</h4><p>${escHtml(safeEntry.daySummary)}</p></section>` : "";
-    const thoughtSorting = safeEntry.thoughtSorting && typeof safeEntry.thoughtSorting === "object" ? safeEntry.thoughtSorting : {};
 
     return `<article class="saved-afterwork-card" data-afterwork-id="${id}">
       <div class="saved-afterwork-meta"><strong>${escHtml(createdAt)}</strong><span>${escHtml(textType)}</span></div>
@@ -1861,7 +1893,7 @@
         <section class="saved-afterwork-section"><h4>Refleksjon</h4><p>${escHtml(safeEntry.reflection || "")}</p></section>
         ${renderAfterworkSortItems(safeEntry.sortItems)}
         ${daySummarySection}
-        <section class="saved-afterwork-section"><h4>Tankesortering</h4><p><strong>Hovedspor:</strong> ${escHtml(thoughtSorting.hovedspor || "")}</p><p><strong>Løse tanker:</strong> ${escHtml(thoughtSorting.lose_tanker || "")}</p><p><strong>Neste steg:</strong> ${escHtml(thoughtSorting.neste_steg || "")}</p></section>
+        ${renderAfterworkThoughtSorting(safeEntry.thoughtSorting)}
         ${renderAfterworkArray("Liste", safeEntry.list)}
         ${renderAfterworkArray("Innsikt", safeEntry.insights)}
         ${renderAfterworkArray("Læringssti", safeEntry.learningPath)}
