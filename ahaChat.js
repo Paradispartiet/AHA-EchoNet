@@ -881,6 +881,12 @@
         emneId: button.getAttribute("data-emne-id") || ""
       };
     }
+    if (action === "delete-afterwork") {
+      return {
+        action,
+        afterworkId: button.getAttribute("data-afterwork-id") || ""
+      };
+    }
     if (action === "confirm-merge" || action === "dismiss-merge") {
       return {
         action,
@@ -978,8 +984,11 @@
         ok = applyEmneSuggestionAction(resolved.action, resolved.insightId, resolved.emneId);
       } else if (resolved.action === "confirm-merge" || resolved.action === "dismiss-merge") {
         ok = applyMergeAction(resolved.action, resolved.sourceId, resolved.targetId);
+      } else if (resolved.action === "delete-afterwork") {
+        deleteAfterworkEntry(resolved.afterworkId);
+        ok = true;
       }
-      if (ok) showInsights();
+      if (ok && resolved.action !== "delete-afterwork") showInsights();
     });
   }
 
@@ -1794,6 +1803,115 @@
     localStorage.setItem(AFTERWORK_STORAGE_KEY, JSON.stringify(Array.isArray(entries) ? entries : []));
   }
 
+
+
+  function formatAfterworkDate(createdAt) {
+    const stamp = new Date(createdAt);
+    if (!createdAt || Number.isNaN(stamp.getTime())) return "Ukjent tidspunkt";
+    return stamp.toLocaleString("no-NO");
+  }
+
+  function renderAfterworkArray(title, items) {
+    const list = Array.isArray(items) ? items.filter(Boolean) : [];
+    if (!list.length) return "";
+    const rendered = list.map((item) => `<li>${escHtml(item)}</li>`).join("");
+    return `<section class="saved-afterwork-section"><h4>${escHtml(title)}</h4><ul>${rendered}</ul></section>`;
+  }
+
+  function renderAfterworkSortItems(sortItems) {
+    const list = Array.isArray(sortItems) ? sortItems : [];
+    if (!list.length) return "";
+    const rendered = list.map((item) => `<li><strong>${escHtml(item?.label || "Punkt")}:</strong> ${escHtml(item?.text || "")}</li>`).join("");
+    return `<section class="saved-afterwork-section"><h4>Sortering</h4><ul>${rendered}</ul></section>`;
+  }
+
+  function renderAfterworkSubjectLinks(subjectLinks) {
+    const list = Array.isArray(subjectLinks) ? subjectLinks.filter(Boolean) : [];
+    if (!list.length) return "";
+    const rendered = list.map((link) => {
+      const title = String(link?.title || link?.subject_id || "Fagkobling");
+      const subject = link?.subject_id ? ` <small>(${escHtml(link.subject_id)})</small>` : "";
+      return `<li>${escHtml(title)}${subject}</li>`;
+    }).join("");
+    return `<section class="saved-afterwork-section saved-afterwork-subjects"><h4>Fagkoblinger</h4><ul>${rendered}</ul></section>`;
+  }
+
+  function renderAfterworkThoughtSorting(thoughtSorting) {
+    if (typeof thoughtSorting === "string") {
+      const value = String(thoughtSorting || "").trim();
+      if (!value) return "";
+      return `<section class="saved-afterwork-section"><h4>Tankesortering</h4><p>${escHtml(value)}</p></section>`;
+    }
+    if (!thoughtSorting || typeof thoughtSorting !== "object") return "";
+
+    const hovedspor = String(thoughtSorting.hovedspor || thoughtSorting.mainTrack || "").trim();
+    const loseTanker = String(
+      thoughtSorting.lose_tanker
+      || thoughtSorting["løse_tanker"]
+      || thoughtSorting.looseThoughts
+      || thoughtSorting.loseTanker
+      || ""
+    ).trim();
+    const nesteSteg = String(thoughtSorting.neste_steg || thoughtSorting.nextStep || thoughtSorting.nesteSteg || "").trim();
+
+    if (!hovedspor && !loseTanker && !nesteSteg) return "";
+
+    return `<section class="saved-afterwork-section"><h4>Tankesortering</h4><p><strong>Hovedspor:</strong> ${escHtml(hovedspor)}</p><p><strong>Løse tanker:</strong> ${escHtml(loseTanker)}</p><p><strong>Neste steg:</strong> ${escHtml(nesteSteg)}</p></section>`;
+  }
+
+  function renderAfterworkEntry(entry) {
+    const safeEntry = entry && typeof entry === "object" ? entry : {};
+    const id = escHtml(safeEntry.id || "");
+    const createdAt = formatAfterworkDate(safeEntry.createdAt);
+    const textType = String(safeEntry.textType || "ukjent");
+    const preview = String(safeEntry.sourceTextPreview || "Ingen kildepreview lagret.");
+    const conceptPool = (Array.isArray(safeEntry.concepts) && safeEntry.concepts.length ? safeEntry.concepts : (Array.isArray(safeEntry.keywords) ? safeEntry.keywords : [])).slice(0, 3);
+    const conceptLine = conceptPool.length ? conceptPool.map((item) => `<span class="insight-chip">${escHtml(item)}</span>`).join("") : '<span class="insight-chip">Ingen begreper</span>';
+    const insightsCount = Array.isArray(safeEntry.insights) ? safeEntry.insights.length : 0;
+    const pathCount = Array.isArray(safeEntry.learningPath) ? safeEntry.learningPath.length : 0;
+    const daySummarySection = safeEntry.daySummary ? `<section class="saved-afterwork-section"><h4>Dagsoppsummering</h4><p>${escHtml(safeEntry.daySummary)}</p></section>` : "";
+    const thoughtSortingSection = renderAfterworkThoughtSorting(safeEntry.thoughtSorting);
+
+    return `<article class="saved-afterwork-card" data-afterwork-id="${id}">
+      <div class="saved-afterwork-meta"><strong>${escHtml(createdAt)}</strong><span>${escHtml(textType)}</span></div>
+      <p class="saved-afterwork-preview">${escHtml(preview)}</p>
+      <div class="saved-afterwork-concepts">${conceptLine}</div>
+      <p class="saved-afterwork-meta">Innsikter: ${escHtml(String(insightsCount))} · Læringssti-steg: ${escHtml(String(pathCount))}</p>
+      ${renderAfterworkSubjectLinks(safeEntry.subjectLinks)}
+      <div class="saved-afterwork-actions"><button type="button" data-action="delete-afterwork" data-afterwork-id="${id}">Slett</button></div>
+      <details>
+        <summary>Vis detaljer</summary>
+        <section class="saved-afterwork-section"><h4>Refleksjon</h4><p>${escHtml(safeEntry.reflection || "")}</p></section>
+        ${renderAfterworkSortItems(safeEntry.sortItems)}
+        ${daySummarySection}
+        ${thoughtSortingSection}
+        ${renderAfterworkArray("Liste", safeEntry.list)}
+        ${renderAfterworkArray("Innsikt", safeEntry.insights)}
+        ${renderAfterworkArray("Læringssti", safeEntry.learningPath)}
+        ${renderAfterworkSubjectLinks(safeEntry.subjectLinks)}
+        <section class="saved-afterwork-section"><h4>Kildepreview</h4><p>${escHtml(preview)}</p></section>
+      </details>
+    </article>`;
+  }
+
+  function showSavedAfterwork() {
+    const entries = loadAfterworkEntries().slice().sort((a, b) => new Date(b?.createdAt || 0).getTime() - new Date(a?.createdAt || 0).getTime());
+    if (!entries.length) {
+      renderPanel('<div class="saved-afterwork-panel"><p>Ingen lagrede etterarbeid ennå. Trykk Lagre etterarbeid etter en analyse.</p></div>');
+      return;
+    }
+    renderPanel(`<div class="saved-afterwork-panel"><h2>Lagrede etterarbeid</h2><div class="saved-afterwork-list">${entries.map(renderAfterworkEntry).join("")}</div></div>`);
+  }
+
+  function deleteAfterworkEntry(entryId) {
+    const id = String(entryId || "").trim();
+    if (!id) return;
+    const entries = loadAfterworkEntries();
+    const next = entries.filter((entry) => String(entry?.id || "") !== id);
+    saveAfterworkEntries(next);
+    showSavedAfterwork();
+    setStatusNote("Etterarbeid slettet.");
+  }
   function normalizeSubjectLinks(subjectMatches) {
     const seen = new Set();
     const list = Array.isArray(subjectMatches) ? subjectMatches : [];
@@ -2362,6 +2480,7 @@
     document.getElementById("btn-concepts")?.addEventListener("click", showConcepts);
     document.getElementById("btn-meta")?.addEventListener("click", showMeta);
     document.getElementById("btn-knowledge-map")?.addEventListener("click", showKnowledgeMap);
+    document.getElementById("btn-saved-afterwork")?.addEventListener("click", showSavedAfterwork);
     document.getElementById("btn-export")?.addEventListener("click", () => {
       out(JSON.stringify({
         chamber: loadChamberFromStorage(),
