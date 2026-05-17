@@ -1818,41 +1818,72 @@
     }).slice(0, 12);
   }
 
-  function deriveConceptsFromAfterwork(payload, fallbackKeywords, subjectLinks) {
-    const AFTERWORK_NOISE_CONCEPTS = new Set([
-      "annonsørinnhold",
-      "annonse",
-      "logo",
-      "illustrasjon",
-      "les også",
-      "kjolevalg",
-      "kjole",
-      "kjoler",
-      "bryllupsgjesten",
-      "terrasse",
-      "plank",
-      "garanti",
-      "årets",
-      "populære",
-      "sikre",
-      "nydelige"
+  function normalizeAfterworkConcept(term) {
+    return String(term || "").toLowerCase().replace(/[“”"'`´]/g, "").replace(/\s+/g, " ").trim();
+  }
+
+  function isGoodAfterworkConcept(term, options) {
+    const normalized = normalizeAfterworkConcept(term);
+    if (!normalized || normalized.length < 3) return false;
+    const hasMultiWords = normalized.includes(" ");
+    const source = String(options?.source || "generic");
+    const blocked = new Set([
+      "annonsørinnhold","annonse","logo","illustrasjon","les også","kjolevalg","kjole","kjoler","bryllupsgjesten","terrasse","plank","garanti","årets","populære","sikre","nydelige",
+      "markussen","norge","omstilles","fortsetter","bygge","naturens","retning","bekostning","dette","tekst","sier","skal","gjøre","være","blir","kommer","spør","svarer"
     ]);
+    if (blocked.has(normalized)) return false;
+    const genericWords = new Set(["med","som","for","mot","inn","ut","opp","ned","der","her","alle","flere","kan","vil","må","når","hvor","hvorfor","hva"]);
+    if (!hasMultiWords && genericWords.has(normalized)) return false;
+    const weakSingleWords = new Set(["politikk","samfunn","klima","debatt","endring"]);
+    if (!hasMultiWords && source !== "matched_terms" && weakSingleWords.has(normalized)) return false;
+    if (!hasMultiWords && /^(\p{Lu}[\p{L}-]+)$/u.test(String(term || ""))) return false;
+    return true;
+  }
+
+  function deriveConceptsFromAfterwork(payload, fallbackKeywords, subjectLinks, sourceText) {
     const concepts = [];
+    const seen = new Set();
     const safePayloadKeywords = Array.isArray(payload?.keywords) ? payload.keywords : [];
     const safeFallbackKeywords = Array.isArray(fallbackKeywords) ? fallbackKeywords : [];
     const safeSubjectLinks = Array.isArray(subjectLinks) ? subjectLinks : [];
-    safePayloadKeywords.forEach((word) => concepts.push(String(word).trim().toLowerCase()));
-    safeFallbackKeywords.forEach((word) => concepts.push(String(word).trim().toLowerCase()));
+    const cleanedSource = cleanArticleText(sourceText || "").toLowerCase();
+
+    function addConcept(term, source) {
+      const normalized = normalizeAfterworkConcept(term);
+      if (!isGoodAfterworkConcept(normalized, { source })) return;
+      if (seen.has(normalized)) return;
+      seen.add(normalized);
+      concepts.push(normalized);
+    }
+
     safeSubjectLinks.forEach((link) => {
-      (Array.isArray(link?.matched_terms) ? link.matched_terms : []).forEach((term) => {
-        const value = String(term || "").trim().toLowerCase();
-        if (value) concepts.push(value);
-      });
+      (Array.isArray(link?.matched_terms) ? link.matched_terms : []).forEach((term) => addConcept(term, "matched_terms"));
     });
+
+    safePayloadKeywords.forEach((word) => addConcept(word, "payload_keywords"));
+    safeFallbackKeywords.forEach((word) => addConcept(word, "fallback_keywords"));
+
     const textType = String(payload?.textType || "").trim().toLowerCase();
-    if (textType) concepts.push(textType);
-    const uniqueConcepts = Array.from(new Set(concepts.filter(Boolean)));
-    return uniqueConcepts.filter((concept) => !AFTERWORK_NOISE_CONCEPTS.has(concept)).slice(0, 16);
+    const hasClimateTransition = safeSubjectLinks.some((link) => {
+      const id = String(link?.id || "").toLowerCase();
+      const subjectId = String(link?.subject_id || "").toLowerCase();
+      const title = String(link?.title || "").toLowerCase();
+      return id.includes("climate_transition") || subjectId.includes("climate_transition") || title.includes("klima") || title.includes("omstilling");
+    }) || /klima|omstilling|olje|fornybar|bærekraft/.test(cleanedSource);
+
+    if (textType === "opinion_article" && hasClimateTransition) {
+      const domainConcepts = [
+        "omstilling","oljeavhengighet","bærekraft","naturhensyn","arealnøytralitet","fornybar energi","lokalsamfunn","sirkulærøkonomi","samiske rettigheter","naturens tålegrenser","grønn verdiskaping","grønne jobber"
+      ];
+      domainConcepts.forEach((concept) => {
+        const normalized = normalizeAfterworkConcept(concept);
+        const foundInMatchedTerms = safeSubjectLinks.some((link) => (Array.isArray(link?.matched_terms) ? link.matched_terms : []).some((term) => normalizeAfterworkConcept(term) === normalized));
+        if (foundInMatchedTerms || cleanedSource.includes(normalized)) addConcept(concept, "domain_fallback");
+      });
+    }
+
+    if (textType) addConcept(textType, "text_type");
+    return concepts.slice(0, 16);
   }
 
   function makeAfterworkObject(payload, sourceText, options) {
@@ -1868,7 +1899,7 @@
     const subjectLinks = normalizeSubjectLinks(safeSubjectMatches);
     const analysisSource = cleanArticleText(source);
     const keywords = takeKeywords(analysisSource, 8);
-    const concepts = deriveConceptsFromAfterwork(normalizedPayload, keywords, subjectLinks);
+    const concepts = deriveConceptsFromAfterwork(normalizedPayload, keywords, subjectLinks, source);
     const structuralLabels = safeSortItems
       .map((item) => String(item?.label || "").trim())
       .filter(Boolean)
