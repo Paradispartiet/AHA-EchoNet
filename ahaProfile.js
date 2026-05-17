@@ -43,6 +43,108 @@
   }
   function loadArray(key) { return asArray(safeParse(localStorage.getItem(key) || "[]", [])); }
 
+
+  const NOISE_LABELS = new Set(["logo", "annonse", "annonsørinnhold", "annonsorinnhold"]);
+
+  function normalizeLabel(label) {
+    const cleaned = String(label ?? "").trim().replace(/\s+/g, " ");
+    if (!cleaned) return "";
+    const lower = cleaned.toLowerCase();
+    if (cleaned.length < 3 || NOISE_LABELS.has(lower)) return "";
+    return cleaned;
+  }
+
+  function addCount(map, label, amount = 1) {
+    const normalized = normalizeLabel(label);
+    if (!normalized) return;
+    map.set(normalized, (map.get(normalized) || 0) + (Number(amount) || 1));
+  }
+
+  function topCounted(map, limit = 5) {
+    return Array.from(map.entries())
+      .sort((a, b) => (b[1] - a[1]) || a[0].localeCompare(b[0], "no"))
+      .slice(0, limit)
+      .map(([label, count]) => ({ label, count }));
+  }
+
+  function collectAhaMetaProfile() {
+    const chamber = asObject(safeParse(localStorage.getItem(KEYS.insights) || "{}", {}));
+    const afterwork = loadArray(KEYS.afterwork).filter((x) => !isDeleted(x));
+    const insights = asArray(chamber.insights).filter((x) => !isDeleted(x));
+
+    const themesMap = new Map();
+    const conceptsMap = new Map();
+    const subjectMap = new Map();
+
+    insights.forEach((insight) => {
+      addCount(themesMap, insight?.theme || insight?.topic || insight?.title || insight?.summary);
+      asArray(insight?.concepts).forEach((concept) => addCount(conceptsMap, concept?.label || concept?.name || concept, concept?.count || 1));
+      asArray(insight?.keywords).forEach((keyword) => addCount(conceptsMap, keyword?.label || keyword?.name || keyword));
+    });
+
+    afterwork.forEach((entry) => {
+      asArray(entry?.concepts).forEach((concept) => {
+        addCount(conceptsMap, concept?.label || concept?.name || concept, concept?.count || 1);
+        addCount(themesMap, concept?.label || concept?.name || concept, concept?.count || 1);
+      });
+      asArray(entry?.keywords).forEach((keyword) => {
+        addCount(conceptsMap, keyword?.label || keyword?.name || keyword);
+        addCount(themesMap, keyword?.label || keyword?.name || keyword);
+      });
+      asArray(entry?.subjectLinks).forEach((link) => {
+        const label = link?.title || link?.name || link?.label || link;
+        const normalized = normalizeLabel(label);
+        if (!normalized) return;
+        const current = subjectMap.get(normalized) || { label: normalized, count: 0, categoryId: link?.categoryId || link?.category_id || "" };
+        current.count += 1;
+        if (!current.categoryId) current.categoryId = link?.categoryId || link?.category_id || "";
+        subjectMap.set(normalized, current);
+      });
+    });
+
+    const topThemes = topCounted(themesMap, 5);
+    const topConcepts = topCounted(conceptsMap, 5);
+
+    const tensionCandidates = [];
+    const metaGlobal = global.AHAMetaInsights || global.MetaInsightsEngine;
+    if (global.AHAMetaInsights?.tensions) tensionCandidates.push(global.AHAMetaInsights.tensions);
+    if (chamber?.metaProfile?.tensions) tensionCandidates.push(chamber.metaProfile.tensions);
+    if (chamber?.meta_profile?.tensions) tensionCandidates.push(chamber.meta_profile.tensions);
+    if (metaGlobal && chamber?.subject_id && typeof metaGlobal.buildUserMetaProfile === "function") {
+      try {
+        const computed = metaGlobal.buildUserMetaProfile(chamber, chamber.subject_id);
+        if (computed?.tensions) tensionCandidates.push(computed.tensions);
+      } catch {}
+    }
+
+    const rawTensions = tensionCandidates.flatMap((t) => [
+      ...asArray(t?.concept_pair_tensions),
+      ...asArray(t?.tensions),
+      ...asArray(t?.paradox_pairs),
+      ...asArray(t?.concept_tensions)
+    ]);
+    const topTensions = rawTensions.map((item) => ({
+      source: normalizeLabel(item?.source || item?.a || item?.left || item?.concept_a || item?.from || item?.theme_a || item?.themeA),
+      target: normalizeLabel(item?.target || item?.b || item?.right || item?.concept_b || item?.to || item?.theme_b || item?.themeB),
+      strength: Number(item?.strength || item?.weight || item?.score || item?.shared_concepts?.length || item?.count || 0) || 0
+    })).filter((item) => item.source && item.target).sort((a, b) => b.strength - a.strength).slice(0, 5);
+
+    const topSubjectLinks = Array.from(subjectMap.values())
+      .sort((a, b) => (b.count - a.count) || a.label.localeCompare(b.label, "no"))
+      .slice(0, 5);
+
+    const recentAfterwork = typeof collectAfterworkArchive === "function"
+      ? collectAfterworkArchive(3)
+      : afterwork.sort((a, b) => ts(b) - ts(a)).slice(0, 3).map((item, index) => ({
+        id: asText(item?.id, `aha_afterwork_${index}`),
+        title: asText(item?.reflection || item?.sourceTextPreview || "AHA etterarbeid", "AHA etterarbeid"),
+        preview: asText(item?.sourceTextPreview, ""),
+        createdAt: item?.createdAt || ""
+      }));
+
+    return { topThemes, topConcepts, topTensions, topSubjectLinks, recentAfterwork, sourceCounts: { insights: insights.length, afterwork: afterwork.length } };
+  }
+
   function collectProfileStatus() {
     const chamber = asObject(safeParse(localStorage.getItem(KEYS.insights) || "{}", {}));
     const sourceEvents = loadArray(KEYS.sourceEvents).filter((x) => !isDeleted(x));
@@ -213,6 +315,28 @@
     const lastEl = document.getElementById("aha-home-last-activity");
     if (lastEl) lastEl.textContent = status.lastActivityAt || "Ingen aktivitet registrert";
 
+    const metaProfileEl = document.getElementById("aha-meta-profile-home");
+    if (metaProfileEl) {
+      const meta = collectAhaMetaProfile();
+      const noData = !meta.topThemes.length && !meta.topConcepts.length && !meta.topTensions.length && !meta.topSubjectLinks.length && !meta.recentAfterwork.length;
+      if (noData) {
+        metaProfileEl.innerHTML = `<p class="aha-afterwork-empty">AHA har ikke nok materiale ennå. Start en samtale eller lagre et etterarbeid.</p>`;
+      } else {
+        const chips = (items) => items.length ? `<div class="aha-meta-chip-list">${items.map((item) => `<span class="aha-meta-chip">${escapeHtml(item.label)} ×${escapeHtml(String(item.count || 0))}</span>`).join("")}</div>` : `<p class="aha-afterwork-empty">Ingen data ennå.</p>`;
+        const tensions = meta.topTensions.length ? `<ul class="aha-meta-line-list">${meta.topTensions.map((item) => `<li>${escapeHtml(item.source)} ↔ ${escapeHtml(item.target)} · styrke ${escapeHtml(String(item.strength || 0))}</li>`).join("")}</ul>` : `<p class="aha-afterwork-empty">Ingen tydelige spenninger ennå.</p>`;
+        const subjects = meta.topSubjectLinks.length ? `<ul class="aha-meta-mini-list">${meta.topSubjectLinks.map((item) => `<li>${escapeHtml(item.label)} <small>×${escapeHtml(String(item.count || 0))}</small></li>`).join("")}</ul>` : `<p class="aha-afterwork-empty">Ingen fagkoblinger ennå.</p>`;
+        const recent = meta.recentAfterwork.length ? `<ul class="aha-meta-mini-list">${meta.recentAfterwork.map((item) => `<li><strong>${escapeHtml(item.createdAt || "Ukjent dato")}</strong> · ${escapeHtml(item.title || item.preview || "AHA etterarbeid")}</li>`).join("")}</ul>` : `<p class="aha-afterwork-empty">Ingen lagrede etterarbeid ennå.</p>`;
+
+        metaProfileEl.innerHTML = `<div class="aha-meta-profile-grid">
+          <section class="aha-meta-profile-section"><h4>Hovedtemaer</h4>${chips(meta.topThemes)}</section>
+          <section class="aha-meta-profile-section"><h4>Begreper</h4>${chips(meta.topConcepts)}</section>
+          <section class="aha-meta-profile-section"><h4>Spenninger</h4>${tensions}</section>
+          <section class="aha-meta-profile-section"><h4>Fagkoblinger</h4>${subjects}</section>
+          <section class="aha-meta-profile-section"><h4>Siste etterarbeid</h4>${recent}</section>
+        </div>`;
+      }
+    }
+
     const afterworkArchiveEl = document.getElementById("aha-afterwork-archive");
     if (afterworkArchiveEl) {
       const archiveItems = collectAfterworkArchive(5);
@@ -238,7 +362,7 @@
 
   function refresh() { render(); }
 
-  global.AHAProfile = { collectProfileStatus, collectRecentActivity, collectHistoryGoStatus, collectPrivacyStatus, collectAfterworkArchive, render, refresh };
+  global.AHAProfile = { collectProfileStatus, collectRecentActivity, collectHistoryGoStatus, collectPrivacyStatus, collectAfterworkArchive, collectAhaMetaProfile, render, refresh };
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", render);
   else render();
