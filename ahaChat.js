@@ -1318,15 +1318,27 @@
     return titleHasTruncatedSignal || endsMidWord(summary) || fragmentSignals.test(title) || fragmentSignals.test(summary) || (overlap && weakTitle) || repeatedEllipsis || (weakTitle && missingClaim);
   }
 
+  function hasAcademicSignals(payload, sourceText) {
+    const sortItems = Array.isArray(payload?.sortItems) ? payload.sortItems : [];
+    const labels = sortItems.map((item) => normalizeConceptKey(item?.label || ""));
+    const reflection = normalizeConceptKey(payload?.reflection || "");
+    const signalText = `${String(sourceText || "")} ${String(payload?.reflection || "")} ${sortItems.map((item) => `${item?.label || ""} ${item?.text || ""}`).join(" ")}`.toLowerCase();
+    const hasSortLabelSignal = labels.some((label) => ["hovedargument", "motargument", "spenning i teksten", "teorikoblinger"].some((needle) => label.includes(needle)));
+    const hasTopicSignal = /(sahel|mali|ressursknapphet|politisk økologi|knapphetsskolen)/i.test(signalText) || /(sahel|mali|ressursknapphet|politisk økologi|knapphetsskolen)/i.test(reflection);
+    return hasSortLabelSignal || hasTopicSignal;
+  }
+
   function readLatestAcademicContext() {
-    const empty = { textType: "", sourceText: "", phraseConcepts: [] };
+    const empty = { textType: "", sourceText: "", phraseConcepts: [], payload: null };
     try {
       const cache = loadAutoOutputs();
       const payload = cache?.payload && typeof cache.payload === "object" ? cache.payload : null;
       const sourceText = String(cache?.sourceText || payload?.sourceText || "").trim();
-      const textType = String(payload?.textType || "").trim();
-      if (sourceText && textType === "academic_article") {
-        return { textType, sourceText, phraseConcepts: extractAcademicPhraseConcepts(sourceText).slice(0, 8) };
+      const payloadTextType = String(payload?.textType || "").trim();
+      const detectedTextType = sourceText ? detectTextType(sourceText) : "";
+      const inferredAcademic = payloadTextType === "academic_article" || detectedTextType === "academic_article" || hasAcademicSignals(payload, sourceText);
+      if (sourceText && inferredAcademic) {
+        return { textType: "academic_article", sourceText, phraseConcepts: extractAcademicPhraseConcepts(sourceText).slice(0, 8), payload };
       }
     } catch (err) {
       console.warn("Kunne ikke lese auto-output for akademisk kontekst", err);
@@ -1339,7 +1351,7 @@
         .find((entry) => String(entry?.textType || "").trim() === "academic_article");
       const sourceText = String(latestAcademic?.sourceText || latestAcademic?.sourceTextPreview || "").trim();
       if (sourceText) {
-        return { textType: "academic_article", sourceText, phraseConcepts: extractAcademicPhraseConcepts(sourceText).slice(0, 8) };
+        return { textType: "academic_article", sourceText, phraseConcepts: extractAcademicPhraseConcepts(sourceText).slice(0, 8), payload: null };
       }
     } catch (err) {
       console.warn("Kunne ikke lese lagret etterarbeid for akademisk kontekst", err);
@@ -1350,22 +1362,46 @@
   function buildAcademicSyntheticInsightCards() {
     const context = readLatestAcademicContext();
     const text = String(context?.sourceText || "").trim();
-    if (!text) return [];
-    let synthesis = null;
-    try {
-      synthesis = buildAutoOutputs(text, "");
-    } catch (err) {
-      console.warn("Kunne ikke bygge syntetiske akademiske innsikter", err);
-      return [];
+    const payload = context?.payload && typeof context.payload === "object" ? context.payload : null;
+    const payloadSortItems = Array.isArray(payload?.sortItems) ? payload.sortItems : [];
+    const payloadInsightCards = Array.isArray(payload?.insightCards) ? payload.insightCards : [];
+    const payloadReflection = String(payload?.reflection || "").trim();
+    const sourceSortItems = payloadSortItems.length ? payloadSortItems : [];
+
+    let fallbackSynthesis = null;
+    if (!sourceSortItems.length && !payloadReflection && !payloadInsightCards.length && text) {
+      try {
+        fallbackSynthesis = buildAutoOutputs(text, "");
+      } catch (err) {
+        console.warn("Kunne ikke bygge syntetiske akademiske innsikter", err);
+      }
     }
-    const sortItems = Array.isArray(synthesis?.sortItems) ? synthesis.sortItems : [];
-    const pick = (needle, fallback) => (sortItems.find((item) => normalizeConceptKey(item?.label || "").includes(needle)) || {}).text || fallback;
+
+    const sortItems = sourceSortItems.length ? sourceSortItems : (Array.isArray(fallbackSynthesis?.sortItems) ? fallbackSynthesis.sortItems : []);
+    const normalizedCards = payloadInsightCards
+      .map((card) => ({ ...card, title: String(card?.title || card?.candidate_title || "").trim(), summary: String(card?.summary || card?.candidate_summary || card?.text || "").trim() }))
+      .filter((card) => card.title && card.summary && !isFragmentaryInsightCard(card));
+    const byTitle = (needle) => normalizedCards.find((card) => normalizeConceptKey(card.title).includes(needle));
+    const pickSort = (matcher) => {
+      const hit = sortItems.find((item) => matcher(normalizeConceptKey(item?.label || "")));
+      return String(hit?.text || "").trim();
+    };
+    const pick = (kind, fallback) => {
+      const fromCards = byTitle(kind);
+      if (fromCards?.summary) return fromCards.summary;
+      if (kind === "hovedinnsikt") return pickSort((label) => label.includes("kort hovedinnsikt")) || payloadReflection || fallbackSynthesis?.reflection || fallback;
+      if (kind === "hovedargument") return pickSort((label) => label.includes("hovedargument")) || fallback;
+      if (kind === "motargument") return pickSort((label) => label.includes("motargument")) || fallback;
+      if (kind === "spenning") return pickSort((label) => label.includes("spenning")) || fallback;
+      return fallback;
+    };
+
     return [
-      { title: "Hovedinnsikt", summary: pick("hovedinnsikt", synthesis?.reflection || "Teksten argumenterer for en sammensatt forklaring av konflikt."), concepts: context.phraseConcepts || [], candidate_type: "synthetic" },
+      { title: "Hovedinnsikt", summary: pick("hovedinnsikt", "Teksten argumenterer for en sammensatt forklaring av konflikt."), concepts: context.phraseConcepts || [], candidate_type: "synthetic" },
       { title: "Hovedargument", summary: pick("hovedargument", "Konfliktutvikling forklares best gjennom politikk, historie og maktforhold."), concepts: context.phraseConcepts || [], candidate_type: "synthetic" },
       { title: "Motargument/kritikk", summary: pick("motargument", "Lineære knapphetsforklaringer kritiseres for svak empirisk forklaringskraft."), concepts: context.phraseConcepts || [], candidate_type: "synthetic" },
       { title: "Spenning i teksten", summary: pick("spenning", "Spenningen står mellom miljø-knapphetsforklaring og politisk-økologisk analyse."), concepts: context.phraseConcepts || [], candidate_type: "synthetic" }
-    ].filter((card) => !isFragmentaryInsightCard(card));
+    ].filter((card) => String(card?.summary || "").trim()).filter((card) => !isFragmentaryInsightCard(card));
   }
 
   function getDisplayInsights() {
@@ -1376,11 +1412,19 @@
       if (context?.textType !== "academic_article") return filtered;
       const strong = filtered.filter((ins) => /hoved|argument|kritikk|spenning|teori|synt/i.test(`${ins?.title || ""} ${ins?.summary || ""}`));
       if (strong.length >= 2) return strong.slice(0, 4);
-      const synthetic = buildAcademicSyntheticInsightCards();
-      return synthetic.length ? synthetic : filtered;
+      if (!filtered.length || hasAcademicSignals(context?.payload, context?.sourceText)) {
+        const synthetic = buildAcademicSyntheticInsightCards();
+        if (synthetic.length) return synthetic;
+      }
+      return filtered;
     } catch (err) {
       console.warn("Kunne ikke bygge innsiktsvisning", err);
-      return currentInsights().filter((ins) => !isFragmentaryInsightCard(ins));
+      try {
+        return currentInsights().filter((ins) => !isFragmentaryInsightCard(ins));
+      } catch (nestedErr) {
+        console.warn("Kunne ikke bygge fallback for innsikter", nestedErr);
+        return [];
+      }
     }
   }
 
@@ -1766,15 +1810,25 @@
       adjacency.get(to).push({ target: from, weight: edge.weight });
     });
 
+    const shouldHideWeakVariant = (concept, links) => {
+      const normalized = normalizeConceptKey(concept);
+      if (normalized === "knapphet" && topSet.has("ressursknapphet")) return true;
+      if (normalized === "knapphet" && topSet.has("knapphetsskolen")) return true;
+      if (normalized === "økologi" && topSet.has("politisk økologi")) return true;
+      return !links.length && ((normalized === "knapphet" && (topSet.has("ressursknapphet") || topSet.has("knapphetsskolen"))) || (normalized === "økologi" && topSet.has("politisk økologi")));
+    };
+
     const rows = topConcepts.map((concept) => {
-      const links = (adjacency.get(concept) || [])
+      const dedupedLinks = Array.from(new Map((adjacency.get(concept) || []).map((entry) => [normalizeConceptKey(entry.target), entry])).values());
+      const links = dedupedLinks
         .sort((a, b) => (b.weight - a.weight) || a.target.localeCompare(b.target))
         .slice(0, 3);
+      if (shouldHideWeakVariant(concept, links)) return "";
       const children = links.length
         ? `<ul class="concept-network-links">${links.map((entry) => `<li><span class="concept-link-line"></span><span class="concept-node-badge">${escHtml(displayConceptLabel(entry.target))}</span></li>`).join("")}</ul>`
         : `<p class="knowledge-sub concept-network-empty">Ingen sterke koblinger registrert for dette begrepet ennå.</p>`;
       return `<li class="concept-network-item"><span class="concept-node-badge">${escHtml(displayConceptLabel(concept))}</span>${children}</li>`;
-    }).join("");
+    }).filter(Boolean).join("");
 
     return `<div class="concept-network" aria-label="Begrepsnettverk">
       <ul class="concept-network-list">${rows}</ul>
