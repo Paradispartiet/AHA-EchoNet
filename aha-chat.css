@@ -222,6 +222,10 @@ pre#out { max-height: 22vh; overflow:auto; white-space: pre-wrap; }
 .auto-card li { line-height: 1.35; }
 .auto-card.is-focused { border-color: rgba(255,211,71,0.65); box-shadow: 0 0 0 1px rgba(255,211,71,0.25) inset; }
 
+.auto-output-actions { position: sticky; bottom: 0; margin-top: 10px; padding-top: 8px; display: flex; align-items: center; gap: 10px; border-top: 1px solid var(--aha-border); background: linear-gradient(180deg, rgba(10,16,34,0.2), rgba(10,16,34,0.9)); }
+.auto-output-actions button { font-size: 12px; }
+.auto-output-save-status { margin: 0; font-size: 11px; color: var(--aha-muted); }
+
 @media (max-width: 720px) {
   .auto-output-grid { grid-template-columns: 1fr; }
 }

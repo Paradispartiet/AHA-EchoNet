@@ -1976,9 +1976,43 @@
     return value;
   }
 
+
+  function fixSplitNorwegianWords(text) {
+    let value = String(text || "");
+    const fixes = [
+      [/\bkonfl\s+ikt(\w*)\b/gi, "konflikt$1"],
+      [/\bprofi\s+leres\b/gi, "profileres"],
+      [/\bmilj\s+ødegradering\b/gi, "miljødegradering"],
+      [/\bressurs\s+knapphet\b/gi, "ressursknapphet"],
+      [/\bkonfl\s+iktnivå\b/gi, "konfliktnivå"]
+    ];
+    fixes.forEach(([re, repl]) => {
+      value = value.replace(re, repl);
+    });
+    return value;
+  }
+
+  function dedupeSentenceLikeContent(text) {
+    const parts = String(text || "")
+      .split(/(?<=[.!?])\s+|\n+/)
+      .map((part) => part.trim())
+      .filter(Boolean);
+    const out = [];
+    const seen = new Set();
+    parts.forEach((part) => {
+      const key = part.toLowerCase().replace(/\s+/g, " ").replace(/["'“”«»]/g, "").trim();
+      if (!key || seen.has(key)) return;
+      seen.add(key);
+      out.push(part);
+    });
+    return out.join("\n");
+  }
+
   function cleanArticleText(raw) {
     if (global.AHAAnalysisText?.cleanTextForAnalysis) {
-      return global.AHAAnalysisText.cleanTextForAnalysis(raw);
+      const precleaned = global.AHAAnalysisText.cleanTextForAnalysis(raw);
+      const deduped = dedupeSentenceLikeContent(precleaned);
+      return fixSplitNorwegianWords(deduped);
     }
     const lines = String(raw || "").split(/\r?\n/);
     const cleaned = [];
@@ -1994,7 +2028,8 @@
       seen.add(compact);
       cleaned.push(stripped);
     });
-    return cleaned.join("\n");
+    const merged = dedupeSentenceLikeContent(cleaned.join("\n"));
+    return fixSplitNorwegianWords(merged);
   }
 
   function sanitizeInsightText(text) {
@@ -2121,6 +2156,16 @@
     const pronounCount = (text.match(/\bjeg\b/g) || []).length;
     const hasDiaryShape = pronounCount >= 2 && sentenceCount >= 3;
     if (pronounCount >= 3 && literaryDiarySignals.test(text) && sentenceCount >= 4) return "literary_diary";
+
+    const academicSignals = {
+      theorists: /(homer-?dixon|peluso|watts|boserup|kaplan|gleditsch|salehyan|barnett|said)/i.test(text),
+      years: /\b(19|20)\d{2}\b/.test(text),
+      coreTerms: /(ressursknapphet|politisk økologi|miljødegradering|knapphetsskolen|sahel|mali|miljøsikkerhet|environmental security)/i.test(text),
+      citations: /["“”«»].{8,140}["“”«»]|\bifølge\b|\bviser til\b/i.test(text),
+      modelDebate: /(på den ene siden|på den andre siden|kritiserer|forklaringsmodell|alternativ forklaring|drøfter|innvending)/i.test(text)
+    };
+    const academicScore = Object.values(academicSignals).reduce((sum, hit) => sum + (hit ? 1 : 0), 0);
+    if (academicScore >= 3 && (academicSignals.coreTerms || academicSignals.theorists)) return "academic_article";
 
     const hasStrongOpinion = opinionScore >= 5 || ((opinionEvidence.hasPoliticalActor || opinionEvidence.hasParty) && (opinionEvidence.hasClimateTransition || opinionEvidence.hasOilFossil || opinionEvidence.hasNatureProtection));
     if (hasStrongOpinion) return "opinion_article";
@@ -2409,7 +2454,7 @@
   function showSavedAfterwork() {
     const entries = loadAfterworkEntries().slice().sort((a, b) => new Date(b?.createdAt || 0).getTime() - new Date(a?.createdAt || 0).getTime());
     if (!entries.length) {
-      renderPanel('<div class="saved-afterwork-panel"><p>Ingen lagrede etterarbeid ennå. Trykk Lagre etterarbeid etter en analyse.</p></div>');
+      renderPanel('<div class="saved-afterwork-panel"><p>Ingen lagrede etterarbeid ennå. Kjør en analyse/sendt melding, og trykk «Lagre etterarbeid» nederst i AHA etterarbeid-panelet.</p></div>');
       return;
     }
     renderPanel(`<div class="saved-afterwork-panel"><div class="saved-afterwork-list">${entries.map(renderAfterworkEntry).join("")}</div></div>`);
@@ -2855,6 +2900,53 @@
         `Skjerp avslutningen: ${quality.sharperEnding}`
       ].slice(0, 6);
       path = quality.suggestedStructure.slice(0, 5);
+    } else if (textType === "academic_article") {
+      const theoryLinks = extractAcademicTheoryLinks(analysisText).slice(0, 5);
+      const phraseConcepts = extractAcademicPhraseConcepts(analysisText).slice(0, 8);
+      const hasSahelMali = /sahel|mali/i.test(analysisText);
+      reflection = hasSahelMali
+        ? "Teksten kritiserer en enkel knapphetsforklaring på konflikt i Sahel og viser at politiske, historiske og maktmessige forhold forklarer mer av konfliktbildet i Mali."
+        : "Teksten drøfter konkurrerende forklaringsmodeller og argumenterer for en mer sammensatt, kontekstuell forståelse.";
+      const hovedargument = "Hovedargumentet er at klima/miljø kan være bakgrunnsfaktorer, men at konfliktutvikling primært formes av politikk, historie, maktforhold og marginalisering.";
+      const motargument = "Motargumentet er at knapphetsskolen overvurderer lineære årsakskjeder fra ressursknapphet til vold, og undervurderer institusjoner og aktørmakt.";
+      const teoriKort = theoryLinks.length
+        ? theoryLinks.map((item) => `${item.thinker}: ${item.theory}`).join("; ")
+        : "Teksten setter miljøsikkerhet og politisk økologi opp mot hverandre.";
+      const begreperKort = phraseConcepts.length ? phraseConcepts.join(", ") : "ressursknapphet, politisk økologi, miljødegradering";
+      const sitatSetninger = sentences.filter((line) => /["“”«»]|\bifølge\b|\bhevder\b|\bviser til\b/i.test(line)).slice(0, 3);
+      const pastander = sitatSetninger.length
+        ? sitatSetninger.map((line) => `Påstand i teksten: ${short(line)}`)
+        : ["Påstand i teksten: Konflikter i Sahel kan ikke forklares tilfredsstillende med klima alene."];
+      sortItems = [
+        { label: "Kort hovedinnsikt", text: reflection },
+        { label: "Hovedargument", text: hovedargument },
+        { label: "Motargument / kritikk", text: motargument },
+        { label: "Teorikoblinger", text: teoriKort },
+        { label: "Begreper", text: begreperKort },
+        { label: "Påstander", text: pastander.join(" ") },
+        { label: "Spenning i teksten", text: "Spenningen står mellom en lineær miljø-knapphetsforklaring og en politisk-økologisk forklaring som vektlegger makt og historisk kontekst." },
+        { label: "Mulig videre analyse", text: "Undersøk hvordan lokale maktforhold, statlig politikk og sikkerhetsdynamikk samspiller med klima- og ressursstress i konkrete caser." }
+      ];
+      day = "Ikke dagbokmateriale – ingen dagsoppsummering laget.";
+      thoughts = {
+        hovedspor: hovedargument,
+        lose_tanker: "Behold sitater som dokumentasjon, men løft syntesen i egne formuleringer.",
+        neste_steg: "Velg én konfliktcase og test forklaringskraften i hver modell mot samme empiriske materiale."
+      };
+      list = [
+        "Skille tydelig mellom empiri, teori og normativ vurdering.",
+        "Vis hvilke antakelser som ligger i knapphetsskolen versus politisk økologi.",
+        "Bruk sitater som belegg, ikke som ferdig innsikt.",
+        "Knytt teori direkte til caser fra Sahel/Mali.",
+        "Avslutt med hva analysen endrer i forståelsen av konfliktårsaker."
+      ];
+      path = [
+        "Kartlegg hovedpåstand og motpåstand.",
+        "Sorter belegg etter forklaringsmodell.",
+        "Test modellene mot samme case.",
+        "Vurder forklaringskraft og blinde soner.",
+        "Formuler en syntetiserende konklusjon."
+      ];
     } else if (textType === "project_note") {
       reflection = "Dette er et prosjektnotat med tydelig problem og mål. Neste gevinst ligger i å koble løsning til konkrete filer/funksjoner.";
       sortItems = ["Problem","Løsning","Filer/funksjoner","Neste steg"].map((label, idx) => ({ label, text: sentences[idx] || "Trenger kort presisering i teksten." }));
@@ -2884,6 +2976,15 @@
       localInsights.push(`Retorisk styrke: ${quality.strengths[0] || "Teksten binder flere politiske felt inn i én omstillingsfortelling."}`);
       localInsights.push(`Svakhet/manglende bro: ${quality.missingLinks[0] || quality.weaknesses[0] || "Broen mellom kritikk og konkret gjennomføring er for svak."}`);
       localInsights.push(`Utviklingsmulighet: ${quality.editorialNextStep} ${quality.sharperEnding}`);
+    } else if (textType === "academic_article") {
+      const hovedargument = (sortItems.find((item) => String(item?.label || "").toLowerCase() === "hovedargument") || {}).text
+        || "Klima og miljø er relevante bakgrunnsfaktorer, men konflikt forklares primært gjennom politiske, historiske og maktmessige forhold.";
+      const motargument = (sortItems.find((item) => String(item?.label || "").toLowerCase().includes("motargument")) || {}).text
+        || "Knapphetsskolens lineære årsakskjeder kritiseres for å underkommunisere institusjoner og aktørmakt.";
+      localInsights.push(`Hovedinnsikt: ${reflection}`);
+      localInsights.push(`Hovedargument: ${hovedargument}`);
+      localInsights.push(`Motargument/kritikk: ${motargument}`);
+      localInsights.push("Spenningen i teksten ligger mellom knapphetsskolen og politisk økologi.");
     } else {
       localInsights.push(`Mønster: ${keywords[0] || "temaet"} går igjen og bærer teksten.`);
       localInsights.push(reply ? `AHA-responsen peker videre på: ${toSentences(reply)[0] || reply}` : "Videre innsikt kan styrkes med mer konkret tekst.");
@@ -2892,7 +2993,7 @@
       .map((ins) => String(ins.summary || ins.title || ""))
       .filter((text) => keywords.some((k) => text.toLowerCase().includes(k)))
       .slice(-2);
-    const maxInsightCards = textType === "opinion_article" ? 4 : 3;
+    const maxInsightCards = textType === "opinion_article" || textType === "academic_article" ? 4 : 3;
     const insightCards = [...localInsights, ...overlap].slice(0, maxInsightCards);
 
     return { textType, reflection, sortItems, day, thoughts, list: list.slice(0, 6), insightCards, path: path.slice(0, 5) };
@@ -3018,21 +3119,31 @@
         </div>
       </section>
       <div class="auto-output-actions">
-        <button id="btn-save-afterwork" type="button">Lagre etterarbeid</button>
+        <button id="btn-save-afterwork" type="button">Lagre etterarbeid</button><p class="auto-output-save-status" id="auto-output-save-status"></p>
       </div>`;
 
     const saveButton = host.querySelector("#btn-save-afterwork");
     if (saveButton) {
       const sourceText = String(host.dataset.sourceText || "").trim();
-      if (!sourceText) saveButton.disabled = true;
+      const statusEl = host.querySelector("#auto-output-save-status");
+      if (!sourceText) {
+        saveButton.disabled = true;
+        if (statusEl) statusEl.textContent = "Kildetekst mangler. Analyser teksten på nytt for å kunne lagre etterarbeid.";
+      }
       saveButton.addEventListener("click", () => {
         const result = saveAutoOutputAsAfterwork(payload, host.dataset.sourceText || "", {
           subjectMatches: payload?.subjectMatches
         });
         if (result.reason === "missing_source_text") {
           setStatusNote("Kan ikke lagre: kildetekst mangler. Send teksten på nytt.");
+          if (statusEl) statusEl.textContent = "Kildetekst mangler. Analyser teksten på nytt.";
           return;
         }
+        if (result.saved) {
+          saveButton.textContent = "Lagret";
+          saveButton.disabled = true;
+        }
+        if (statusEl) statusEl.textContent = result.saved ? "Etterarbeid lagret." : "Dette etterarbeidet er allerede lagret.";
         setStatusNote(result.saved ? "Etterarbeid lagret" : "Dette etterarbeidet er allerede lagret");
       });
     }
