@@ -58,12 +58,12 @@
     },
     {
       key: "politisk_okologi",
-      triggers: [/\bpolitisk\s+økologi\b/i, /\bpolitical\s+ecology\b/i, /\bmaktperspektiv\b/i, /\bmakt-?\s*og\s*produksjonsforhold\b/i, /\bpeluso\b/i, /\bwatts\b/i],
+      triggers: [/\bpolitisk\s+økologi\b/i, /\bpolitical\s+ecology\b/i, /\bmaktperspektiv\b/i, /\bmakt-?\s*og\s*produksjonsforhold\b/i, /\bmaktforhold\b/i, /\bproduksjonsforhold\b/i],
       link: {
         thinker: "Politisk økologi",
         theory: "Politisk økologi",
         connection: "Teksten bruker politisk økologi som kritikk av enkle knapphetsforklaringer og vektlegger makt, kontekst og produksjonsforhold.",
-        score: 0.80
+        score: 0.82
       }
     },
     {
@@ -73,7 +73,7 @@
         thinker: "Peluso & Watts",
         theory: "Politisk økologi / makt og vold",
         connection: "Kobles til kritikken av enkel årsakskjede fra ressursknapphet til vold.",
-        score: 0.72
+        score: 0.76
       }
     },
     {
@@ -779,6 +779,16 @@
         connection: rule.link.connection
       });
     });
+    const paragraphs = source.split(/\n{2,}|\r\n{2,}/).map((part) => part.trim()).filter(Boolean);
+    const hasPelusoAndWattsTogether = paragraphs.some((part) => /\bpeluso\b/i.test(part) && /\bwatts\b/i.test(part));
+    if (hasPelusoAndWattsTogether) {
+      out.push({
+        thinker: "Peluso & Watts",
+        theory: "Politisk økologi / makt og vold",
+        score: 0.76,
+        connection: "Kobles til kritikken av enkel årsakskjede fra ressursknapphet via økonomisk nedgang og migrasjon til vold."
+      });
+    }
     return out;
   }
 
@@ -800,6 +810,82 @@
     return Array.from(bestByKey.values())
       .sort((a, b) => (b.score - a.score) || a.thinker.localeCompare(b.thinker))
       .slice(0, Math.max(1, Number(maxItems || 5)));
+  }
+
+  function collectTheoryNodeLabels(chamber) {
+    const labels = new Map();
+    const add = (value) => {
+      const label = String(value || "").trim();
+      if (!label) return;
+      const key = label.toLowerCase();
+      if (!labels.has(key)) labels.set(key, label);
+    };
+    (Array.isArray(chamber?.insights) ? chamber.insights : []).forEach((insight) => {
+      (Array.isArray(insight?.thinkers) ? insight.thinkers : []).forEach(add);
+      (Array.isArray(insight?.theories) ? insight.theories : []).forEach(add);
+      (Array.isArray(insight?.theoretical_links) ? insight.theoretical_links : []).forEach((link) => {
+        add(link?.thinker);
+        add(link?.theory);
+        add(link?.name);
+      });
+      (Array.isArray(insight?.theoryLinks) ? insight.theoryLinks : []).forEach((link) => {
+        add(link?.thinker);
+        add(link?.theory);
+        add(link?.name);
+      });
+      const insightText = [insight?.title, insight?.summary, insight?.text, insight?.source_text].filter(Boolean).join(" ");
+      extractAcademicTheoryLinks(insightText).forEach((link) => {
+        add(link?.thinker);
+        add(link?.theory);
+      });
+    });
+    return Array.from(labels.values());
+  }
+
+  function prioritizeVisibleConceptEdges(edges, theoryLinks) {
+    const list = (Array.isArray(edges) ? edges : []).map((edge) => ({ ...edge }));
+    const theoryTokens = new Set((Array.isArray(theoryLinks) ? theoryLinks : []).flatMap((link) => [link?.name, link?.relation]).map((v) => normalizeConceptKey(v)).filter(Boolean));
+    const edgePhrasePairs = [
+      ["ressursknapphet", "knapphetsskolen"],
+      ["politisk økologi", "makt- og produksjonsforhold"],
+      ["politisk økologi", "ressursknapphet"],
+      ["marginalisering", "pastoralister"],
+      ["marginalisering av pastoralister", "statens politikk"],
+      ["klimaforklaring", "politisk-historisk forklaring"],
+      ["dominerende narrativ", "empirisk forskning"]
+    ];
+    const conceptPool = new Set();
+    list.forEach((edge) => {
+      conceptPool.add(normalizeConceptKey(edge?.from));
+      conceptPool.add(normalizeConceptKey(edge?.to));
+    });
+    theoryTokens.forEach((token) => conceptPool.add(token));
+    edgePhrasePairs.forEach(([from, to]) => {
+      if (!conceptPool.has(from) || !conceptPool.has(to)) return;
+      const key = [from, to].sort((a, b) => a.localeCompare(b)).join("::");
+      const exists = list.some((edge) => [normalizeConceptKey(edge?.from), normalizeConceptKey(edge?.to)].sort((a, b) => a.localeCompare(b)).join("::") === key);
+      if (!exists) list.push({ from, to, weight: 1.25, type: "co_occurs", derived_visible: true });
+    });
+
+    const conceptKeys = new Set(list.flatMap((edge) => [normalizeConceptKey(edge?.from), normalizeConceptKey(edge?.to)]));
+    const weakSingles = new Set();
+    if (conceptKeys.has("politisk økologi")) weakSingles.add("økologi");
+    if (conceptKeys.has("ressursknapphet") || conceptKeys.has("knapphetsskolen")) weakSingles.add("knapphet");
+    if (conceptKeys.has("marginalisering av pastoralister")) {
+      weakSingles.add("marginalisering");
+      weakSingles.add("pastoralister");
+    }
+    return list
+      .map((edge) => {
+        const from = normalizeConceptKey(edge?.from);
+        const to = normalizeConceptKey(edge?.to);
+        const fromWords = from.split(/\s+/).length;
+        const toWords = to.split(/\s+/).length;
+        const phraseBoost = (fromWords > 1 ? 0.2 : 0) + (toWords > 1 ? 0.2 : 0) + (edge?.derived_visible ? 0.35 : 0);
+        const weakPenalty = (weakSingles.has(from) || weakSingles.has(to)) ? 0.35 : 0;
+        return { ...edge, _displayScore: Number(edge?.weight || 0) + phraseBoost - weakPenalty };
+      })
+      .sort((a, b) => (b._displayScore - a._displayScore) || ((b?.weight || 0) - (a?.weight || 0)));
   }
 
   function applyPhraseConceptDisplayPreference(items, keyGetter) {
@@ -1396,7 +1482,7 @@
       .slice(0, Math.max(1, Number(maxItems || 4)));
   }
 
-  function renderConceptNetwork(graphData) {
+  function renderConceptNetwork(graphData, theoryLinks) {
     const graph = graphData && typeof graphData === "object" ? graphData : {};
     const strongestPairs = Array.isArray(graph?.strongest_pairs) ? graph.strongest_pairs : [];
     const strongestEdges = strongestPairs.map((pair) => ({
@@ -1416,9 +1502,8 @@
       if (!prev || edge.weight > prev.weight) mergedByKey.set(pairKey, edge);
     });
 
-    const sortedConnections = Array.from(mergedByKey.values())
+    const sortedConnections = prioritizeVisibleConceptEdges(Array.from(mergedByKey.values()), theoryLinks)
       .filter((edge) => !isGenericDisplayConcept(edge.from) && !isGenericDisplayConcept(edge.to))
-      .sort((a, b) => b.weight - a.weight)
       .slice(0, 8);
 
     if (sortedConnections.length < 2) {
@@ -1532,7 +1617,9 @@
       return !isGenericDisplayConcept(node?.key || node?.id || node?.label);
     });
     const conceptNodeCount = visibleGraphNodes.filter((node) => node?.type === "concept").length;
-    const theoryNodeCount = graphNodes.filter((node) => node?.type === "theory" || node?.type === "thinker").length;
+    const graphTheoryNodes = graphNodes.filter((node) => node?.type === "theory" || node?.type === "thinker").length;
+    const extractedTheoryNodes = collectTheoryNodeLabels(safeChamber).length;
+    const theoryNodeCount = Math.max(graphTheoryNodes, extractedTheoryNodes);
     const focusConcepts = buildCurrentFocusConceptSet(recurringThemes, conceptGraph, profile);
     const prioritizedEdges = (conceptGraph?.edges || [])
       .filter((edge) => edge?.type === "co_occurs")
@@ -1547,8 +1634,7 @@
       : (conceptGraph?.edges || [])
         .filter((edge) => edge?.type === "co_occurs")
         .filter((edge) => !isGenericDisplayConcept(edge?.from) && !isGenericDisplayConcept(edge?.to));
-    const topEdges = edgePool
-      .sort((a, b) => (b?.weight || 0) - (a?.weight || 0))
+    const topEdges = prioritizeVisibleConceptEdges(edgePool, theoryLinks)
       .slice(0, 3);
 
     const themes14d = filterGenericConceptItems(recurringThemes?.["14d"]?.top_concepts || [], (item) => item?.key).slice(0, 3);
@@ -1599,7 +1685,7 @@
           <p class="knowledge-sub">Teori-/tenkernoder: <strong>${theoryNodeCount}</strong></p>
           <p class="knowledge-sub">Sterkeste co-occurs: ${topEdges.length ? topEdges.map((edge) => `${escHtml(displayConceptLabel(edge.from))} ↔ ${escHtml(displayConceptLabel(edge.to))} (${edge.weight})`).join(", ") : "Ingen samforekomst-koblinger ennå."}</p>
           <h5 class="knowledge-mini-title">Begrepsnettverk</h5>
-          ${renderConceptNetwork(conceptGraph)}
+          ${renderConceptNetwork(conceptGraph, theoryLinks)}
         </article>
         <article class="knowledge-card">
           <h4>Teorikoblinger</h4>
