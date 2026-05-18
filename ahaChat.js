@@ -2777,7 +2777,8 @@
       (ins.concepts || []).forEach((concept) => labels.push(concept?.label || concept?.key));
       (ins.patterns || []).forEach((pattern) => labels.push(pattern?.label || pattern?.key));
     });
-    return [...new Set(labels.filter(Boolean))].slice(0, 8);
+    const filteredLabels = filterConceptLabels(labels);
+    return [...new Set(filteredLabels)].slice(0, 8);
   }
 
   function bindActionChips() {
