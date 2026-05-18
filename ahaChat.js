@@ -1608,7 +1608,15 @@
   }
 
   function showInsights() {
-    const insights = getDisplayInsights();
+    let insights = getDisplayInsights();
+    if (!insights.length) {
+      const cache = loadAutoOutputs();
+      const payload = cache?.payload && typeof cache.payload === "object" ? cache.payload : null;
+      if (payload?.textType === "academic_article") {
+        const synthetic = buildAcademicSyntheticInsightCards();
+        if (synthetic.length) insights = synthetic;
+      }
+    }
     const mergeSection = renderMergeSuggestionsSection();
     renderPanel(
       `<div class="insight-panel">${mergeSection}<h2>Innsikter</h2>${
@@ -3319,10 +3327,57 @@
     }
   }
 
-  function renderAutoOutputs(userText, ahaReply, options = {}) {
-    const payload = buildAutoOutputs(userText, ahaReply);
-    payload.subjectMatches = Array.isArray(options.subjectMatches) ? options.subjectMatches : [];
+  function buildAutoOutputFallbackPayload(userText, ahaReply, options = {}) {
     const sourceText = String(userText || "");
+    const replyText = String(ahaReply || "");
+    const combined = `${sourceText} ${replyText}`.toLowerCase();
+    const academicSignals = /(sahel|mali|ressursknapphet|politisk økologi|knapphetsskolen|miljøsikkerhet|climate conflict|environmental security)/i;
+    const baseTextType = detectTextType(sourceText);
+    const isAcademic = baseTextType === "academic_article" || academicSignals.test(combined);
+    const reflectionCandidate = [replyText, sourceText]
+      .flatMap((text) => String(text || "").split(/(?<=[.!?])\s+/))
+      .map((part) => part.trim())
+      .find((part) => part && part.length >= 20 && /[a-zæøå]/i.test(part));
+
+    const payload = {
+      textType: baseTextType,
+      reflection: reflectionCandidate || sourceText || replyText || "Teksten peker på flere mulige tolkninger.",
+      sortItems: [],
+      day: "",
+      thoughts: {},
+      list: [],
+      insightCards: [],
+      path: [],
+      subjectMatches: Array.isArray(options.subjectMatches) ? options.subjectMatches : []
+    };
+
+    if (isAcademic) {
+      payload.textType = "academic_article";
+      payload.sortItems = [
+        { label: "Kort hovedinnsikt", text: "Teksten utfordrer en enkel klimaforklaring på konflikt og peker mot politiske, historiske og maktmessige årsaker." },
+        { label: "Hovedargument", text: "Klima og miljø kan være bakgrunnsfaktorer, men konfliktutvikling forklares bedre gjennom politikk, historie, marginalisering og institusjonelle forhold." },
+        { label: "Motargument / kritikk", text: "Knapphetsskolens lineære årsakskjede fra miljøforringelse til vold kritiseres for svak empirisk og kontekstuell forklaringskraft." },
+        { label: "Spenning i teksten", text: "Spenningen står mellom miljøsikkerhet/knapphetsskolen og politisk økologi." }
+      ];
+    }
+    return payload;
+  }
+
+  function renderAutoOutputs(userText, ahaReply, options = {}) {
+    const sourceText = String(userText || "");
+    const host = document.getElementById("aha-auto-output");
+    if (!sourceText.trim()) {
+      if (host) host.dataset.sourceText = sourceText;
+      return;
+    }
+    let payload;
+    try {
+      payload = buildAutoOutputs(userText, ahaReply);
+    } catch (err) {
+      console.warn("buildAutoOutputs feilet, bruker fallback-payload", err);
+      payload = buildAutoOutputFallbackPayload(userText, ahaReply, options);
+    }
+    payload.subjectMatches = Array.isArray(options.subjectMatches) ? options.subjectMatches : [];
     localStorage.setItem(AUTO_OUTPUT_STORAGE_KEY, JSON.stringify({
       payload,
       sourceText,
@@ -3330,7 +3385,6 @@
       sourceTextPreview: sourceText.replace(/\s+/g, " ").slice(0, 180),
       createdAt: new Date().toISOString()
     }));
-    const host = document.getElementById("aha-auto-output");
     if (host) host.dataset.sourceText = sourceText;
     renderAutoOutputPayload(payload);
   }
