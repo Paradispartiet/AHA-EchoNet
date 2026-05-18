@@ -2010,7 +2010,9 @@
 
   function cleanArticleText(raw) {
     if (global.AHAAnalysisText?.cleanTextForAnalysis) {
-      return global.AHAAnalysisText.cleanTextForAnalysis(raw);
+      const precleaned = global.AHAAnalysisText.cleanTextForAnalysis(raw);
+      const deduped = dedupeSentenceLikeContent(precleaned);
+      return fixSplitNorwegianWords(deduped);
     }
     const lines = String(raw || "").split(/\r?\n/);
     const cleaned = [];
@@ -2899,8 +2901,8 @@
       ].slice(0, 6);
       path = quality.suggestedStructure.slice(0, 5);
     } else if (textType === "academic_article") {
-      const theoryLinks = extractAcademicTheoryLinks(raw).slice(0, 5);
-      const phraseConcepts = extractAcademicPhraseConcepts(raw).slice(0, 8);
+      const theoryLinks = extractAcademicTheoryLinks(analysisText).slice(0, 5);
+      const phraseConcepts = extractAcademicPhraseConcepts(analysisText).slice(0, 8);
       const hasSahelMali = /sahel|mali/i.test(analysisText);
       reflection = hasSahelMali
         ? "Teksten kritiserer en enkel knapphetsforklaring på konflikt i Sahel og viser at politiske, historiske og maktmessige forhold forklarer mer av konfliktbildet i Mali."
@@ -2974,6 +2976,15 @@
       localInsights.push(`Retorisk styrke: ${quality.strengths[0] || "Teksten binder flere politiske felt inn i én omstillingsfortelling."}`);
       localInsights.push(`Svakhet/manglende bro: ${quality.missingLinks[0] || quality.weaknesses[0] || "Broen mellom kritikk og konkret gjennomføring er for svak."}`);
       localInsights.push(`Utviklingsmulighet: ${quality.editorialNextStep} ${quality.sharperEnding}`);
+    } else if (textType === "academic_article") {
+      const hovedargument = (sortItems.find((item) => String(item?.label || "").toLowerCase() === "hovedargument") || {}).text
+        || "Klima og miljø er relevante bakgrunnsfaktorer, men konflikt forklares primært gjennom politiske, historiske og maktmessige forhold.";
+      const motargument = (sortItems.find((item) => String(item?.label || "").toLowerCase().includes("motargument")) || {}).text
+        || "Knapphetsskolens lineære årsakskjeder kritiseres for å underkommunisere institusjoner og aktørmakt.";
+      localInsights.push(`Hovedinnsikt: ${reflection}`);
+      localInsights.push(`Hovedargument: ${hovedargument}`);
+      localInsights.push(`Motargument/kritikk: ${motargument}`);
+      localInsights.push("Spenningen i teksten ligger mellom knapphetsskolen og politisk økologi.");
     } else {
       localInsights.push(`Mønster: ${keywords[0] || "temaet"} går igjen og bærer teksten.`);
       localInsights.push(reply ? `AHA-responsen peker videre på: ${toSentences(reply)[0] || reply}` : "Videre innsikt kan styrkes med mer konkret tekst.");
@@ -2982,7 +2993,7 @@
       .map((ins) => String(ins.summary || ins.title || ""))
       .filter((text) => keywords.some((k) => text.toLowerCase().includes(k)))
       .slice(-2);
-    const maxInsightCards = textType === "opinion_article" ? 4 : 3;
+    const maxInsightCards = textType === "opinion_article" || textType === "academic_article" ? 4 : 3;
     const insightCards = [...localInsights, ...overlap].slice(0, maxInsightCards);
 
     return { textType, reflection, sortItems, day, thoughts, list: list.slice(0, 6), insightCards, path: path.slice(0, 5) };
