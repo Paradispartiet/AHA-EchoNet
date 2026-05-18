@@ -771,6 +771,7 @@
     if (!source.trim()) return [];
     const out = [];
     ACADEMIC_THEORY_RULES.forEach((rule) => {
+      if (rule?.key === "peluso_watts") return;
       if (!Array.isArray(rule?.triggers) || !rule.triggers.some((re) => re.test(source))) return;
       out.push({
         thinker: rule.link.thinker,
@@ -1525,45 +1526,48 @@
   function buildDedupedTheoryLinks(chamber, maxItems) {
     const safeChamber = chamber && typeof chamber === "object" ? chamber : {};
     const bestByKey = new Map();
+    const normalizeTheoryKey = (value) => String(value || "").toLowerCase().trim().replace(/\s+/g, " ");
+    const addTheoryLink = (raw) => {
+      if (!raw || typeof raw !== "object") return;
+      const thinker = String(raw?.thinker || "").trim();
+      const theory = String(raw?.theory || "").trim();
+      const name = String(raw?.name || thinker || theory || "Ukjent").trim();
+      const relation = String(raw?.relation || raw?.connection || "").trim();
+      if (!name || !relation) return;
+      const score = Number(raw?.relevance_score ?? raw?.score ?? 0);
+      if (!Number.isFinite(score)) return;
+      const key = `${normalizeTheoryKey(name)}::${normalizeTheoryKey(relation)}`;
+      const current = bestByKey.get(key);
+      if (!current || score > current.score) {
+        bestByKey.set(key, {
+          name,
+          relation: relation.length > 160 ? `${relation.slice(0, 157)}…` : relation,
+          score
+        });
+      }
+    };
     (Array.isArray(safeChamber?.insights) ? safeChamber.insights : []).forEach((insight) => {
       if (!global.InsightsEngine?.scoreTheoryRelevance) return;
       const scored = global.InsightsEngine.scoreTheoryRelevance(insight, safeChamber) || [];
-      scored.forEach((link) => {
-        const name = String(link?.name || link?.theory || "Ukjent").trim();
-        const relation = String(link?.relation || "").trim();
-        if (!name || !relation) return;
-        const score = Number(link?.relevance_score || link?.score || 0);
-        if (!Number.isFinite(score)) return;
-        const key = `${name.toLowerCase()}|${relation.toLowerCase()}`;
-        const current = bestByKey.get(key);
-        if (!current || score > current.score) {
-          bestByKey.set(key, {
-            name,
-            relation: relation.length > 160 ? `${relation.slice(0, 157)}…` : relation,
-            score
-          });
-        }
-      });
+      scored.forEach(addTheoryLink);
     });
     const chamberText = (Array.isArray(safeChamber?.insights) ? safeChamber.insights : [])
       .map((insight) => [insight?.title, insight?.summary, insight?.text, insight?.source_text].filter(Boolean).join(" "))
       .join("\n");
     const activeContext = resolveActiveAnalysisContext();
     const activeSourceText = String(activeContext?.sourceText || "").trim();
-    [chamberText, activeSourceText].forEach((sourceText) => extractAcademicTheoryLinks(sourceText).forEach((link) => {
-      const name = String(link?.thinker || link?.theory || "").trim();
-      const relation = String(link?.connection || "").trim();
-      if (!name || !relation) return;
-      const score = Number(link?.score || 0);
-      const key = `${name.toLowerCase()}|${relation.toLowerCase()}`;
-      const current = bestByKey.get(key);
-      if (!current || score > current.score) {
-        bestByKey.set(key, { name, relation, score });
-      }
-    }));
+    const activeContextText = [
+      activeSourceText,
+      ...extractAcademicPhraseConcepts(activeSourceText),
+      ...(Array.isArray(activeContext?.subjectLinks) ? activeContext.subjectLinks.map((item) => item?.title || item?.name || item?.label || item?.key || "") : []),
+      ...(Array.isArray(activeContext?.keywords) ? activeContext.keywords.map((item) => item?.label || item?.name || item?.key || item || "") : [])
+    ].filter(Boolean).join("\n");
+    [chamberText, activeSourceText, activeContextText].forEach((sourceText) => {
+      extractAcademicTheoryLinks(sourceText).forEach(addTheoryLink);
+    });
     return Array.from(bestByKey.values())
-      .sort((a, b) => b.score - a.score)
-      .slice(0, Math.max(1, Number(maxItems || 4)));
+      .sort((a, b) => (b.score - a.score) || a.name.localeCompare(b.name))
+      .slice(0, Math.max(1, Number(maxItems || 5)));
   }
 
   function collectTheoryPeople(chamber, recurringTopTheories, maxItems) {
