@@ -20,6 +20,10 @@
     ])
   });
   const WEAK_CONCEPT_WORDS = new Set(["illustrasjon","logo","annonsørinnhold","annonsorinnhold","annonse","sponset","les","også","ogsa","les også","les ogsa","årets","arets","populære","populaere","kjole","kjoler","bryllupsgjesten","sesongens","favoritter","finnes","egen","form","lærer","mennesker","blir","ikke","bare","over","ligger","lavt","noen","helt","ennå","norske","norsk","moderne","viktig","viktigste","store","små","nye","gamle","tydelig","særlig","mildt","sagt","refleksjon","innsikt","samtale","analyse","nødvendighet","nodvendighet"]);
+  const GENERIC_DISPLAY_CONCEPTS = new Set(["kunnskap","forståelse","budskap","bekreftelse","sier","viser","dette","grunnlag","tillegg","verden","noen","videre","eksempel"]);
+  const ACADEMIC_PHRASE_CONCEPTS = [
+    "politisk økologi","empirisk forskning","internasjonal forskning","dominerende narrativ","politisk narrativ","knapphetsskolen","miljøsikkerhet","environmental security","scarcity school","statens politikk","marginalisering av pastoralister","marginalisering","pastoralister","politisk-historisk forklaring","politisk og historisk","klimadrevet konflikt","klimaendringer og konflikter","malthusiansk forklaring","ressursknapphet","miljødegradering","miljøforringelse","nedbørsdata","klimadata","casestudier fra Mali","Sahel","Mali","Sahel-greening","ørkenspredning","tørke","global klimaendring","lokale forhold","forskningsgrunnlag","policy-momentum"
+  ];
   const INSIGHT_NOISE_PATTERN = /\b(les også|les ogsa|annonsørinnhold|annonsorinnhold|logo|illustrasjon|annonse|sponset|kjolefavoritter|bryllupsgjesten)\b/ig;
   const LEADING_PUNCTUATION_PATTERN = /^[\s"'“”«».,:;|\-–—]+/;
   const LES_OGSA_TEASER_PATTERN = /(«|»|"|')?\s*les\s+også\s*:?\s*[^.!?\n]*(?:[.!?]|$)/ig;
@@ -588,7 +592,35 @@
       if (typeof c === "string") add(c);
       else if (c && typeof c === "object") add(c.label || c.key || c.term);
     });
-    return out;
+    const phraseConcepts = extractAcademicPhraseConcepts(text);
+    const phraseKeys = new Set(phraseConcepts.map((item) => normalizeAfterworkConcept(item)));
+    const prioritized = [...phraseConcepts];
+    out.forEach((label) => {
+      const key = normalizeAfterworkConcept(label);
+      if (!phraseKeys.has(key)) prioritized.push(label);
+    });
+    return prioritized;
+  }
+
+  function isGenericDisplayConcept(value) {
+    return GENERIC_DISPLAY_CONCEPTS.has(normalizeAfterworkConcept(value));
+  }
+
+  function extractAcademicPhraseConcepts(text) {
+    const source = String(text || "");
+    if (!source.trim()) return [];
+    const out = [];
+    const seen = new Set();
+    ACADEMIC_PHRASE_CONCEPTS.forEach((phrase) => {
+      const escaped = phrase.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "\\s+");
+      const re = new RegExp(`(^|[^\\p{L}\\p{N}])(${escaped})(?=$|[^\\p{L}\\p{N}])`, "iu");
+      if (!re.test(source)) return;
+      const key = normalizeAfterworkConcept(phrase);
+      if (!key || seen.has(key)) return;
+      seen.add(key);
+      out.push(phrase);
+    });
+    return out.slice(0, 12);
   }
   function normalizeSimpleStringList(list, max) {
     const out = [];
@@ -625,6 +657,7 @@
       .map((c) => typeof c === "string" ? c : (c?.label || c?.key || c?.term || ""))
       .map((c) => String(c || "").trim())
       .filter((c) => c && !WEAK_CONCEPT_WORDS.has(c.toLowerCase()))
+      .filter((c) => !isGenericDisplayConcept(c))
       .filter((c) => {
         const key = c.toLowerCase();
         if (seen.has(key)) return false;
@@ -1088,8 +1121,9 @@
       });
     });
 
+    const visibleConcepts = [...concepts].filter(Boolean).filter((label) => !isGenericDisplayConcept(label));
     out(JSON.stringify({
-      concepts: [...concepts].filter(Boolean),
+      concepts: visibleConcepts,
       patterns: [...patterns].filter(Boolean),
       claims: [...claims].filter(Boolean),
       markers: [...markers].filter(Boolean),
@@ -1190,6 +1224,7 @@
     });
 
     const sortedConnections = Array.from(mergedByKey.values())
+      .filter((edge) => !isGenericDisplayConcept(edge.from) && !isGenericDisplayConcept(edge.to))
       .sort((a, b) => b.weight - a.weight)
       .slice(0, 8);
 
@@ -2071,6 +2106,8 @@
     const hasSahelMali = hasAny(["sahel", "mali"]);
     const hasClimate = hasAny(["klimaendringer", "global klimaendring", "menneskeskapte klimaendringer", "klimadrevet"]);
     const hasConflict = hasAny(["konflikt", "konflikter", "klimakrig", "ressurskonflikt"]);
+    const hasStrongContext = hasAny(["ressursknapphet","politisk økologi","knapphetsskolen","pastoralister","marginalisering","klimadata","nedbørsdata","empirisk forskning","narrativ"]);
+    const strongClimateConflictSignal = hasSahelMali && hasClimate && hasConflict && hasStrongContext;
     if (hasSahelMali && hasClimate && hasConflict) {
       addLink("Klima og konflikt", ["Sahel", "Mali", "klimaendringer", "konflikt"]);
       addLink("Sahel og Mali", ["Sahel", "Mali"]);
@@ -2091,6 +2128,28 @@
       addLink("Stat, marginalisering og pastoralister", ["pastoralister", "marginalisering", "statens politikk"]);
     }
 
+    if (strongClimateConflictSignal) {
+      const preferred = new Set(["Klima og konflikt","Sahel og Mali","Afrikastudier","Utviklingsstudier","Politisk økologi","Miljøsikkerhet","Ressurskonflikter","Vitenskap og politikk","Narrativer i internasjonal politikk","Stat, marginalisering og pastoralister"]);
+      const weakForContext = new Set(["lek, læring og kreativitet", "energi og industri"]);
+      const filtered = list.filter((item) => {
+        const title = String(item?.title || item?.subject_label || "").trim();
+        const lowerTitle = title.toLowerCase();
+        if (!weakForContext.has(lowerTitle)) return true;
+        return preferred.has(title) || Number(item?.score || 0) >= 1.15;
+      });
+      filtered.sort((a, b) => {
+        const aTitle = String(a?.title || a?.subject_label || "").trim();
+        const bTitle = String(b?.title || b?.subject_label || "").trim();
+        const aPreferred = preferred.has(aTitle) ? 1 : 0;
+        const bPreferred = preferred.has(bTitle) ? 1 : 0;
+        if (aPreferred !== bPreferred) return bPreferred - aPreferred;
+        const aDerived = String(a?.type || "").toLowerCase() === "derived" ? 1 : 0;
+        const bDerived = String(b?.type || "").toLowerCase() === "derived" ? 1 : 0;
+        if (aDerived !== bDerived) return bDerived - aDerived;
+        return Number(b?.score || 0) - Number(a?.score || 0);
+      });
+      return filtered.slice(0, 12);
+    }
     return list.slice(0, 12);
   }
 
@@ -2123,6 +2182,7 @@
     const safeFallbackKeywords = Array.isArray(fallbackKeywords) ? fallbackKeywords : [];
     const safeSubjectLinks = Array.isArray(subjectLinks) ? subjectLinks : [];
     const cleanedSource = cleanArticleText(sourceText || "").toLowerCase();
+    const phraseConcepts = extractAcademicPhraseConcepts(sourceText || "");
 
     function addConcept(term, source) {
       const normalized = normalizeAfterworkConcept(term);
@@ -2132,6 +2192,7 @@
       concepts.push(normalized);
     }
 
+    phraseConcepts.forEach((phrase) => addConcept(phrase, "phrase_concept"));
     safeSubjectLinks.forEach((link) => {
       (Array.isArray(link?.matched_terms) ? link.matched_terms : []).forEach((term) => addConcept(term, "matched_terms"));
     });
