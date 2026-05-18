@@ -24,6 +24,120 @@
   const ACADEMIC_PHRASE_CONCEPTS = [
     "politisk økologi","empirisk forskning","internasjonal forskning","dominerende narrativ","politisk narrativ","knapphetsskolen","miljøsikkerhet","environmental security","scarcity school","statens politikk","marginalisering av pastoralister","marginalisering","pastoralister","politisk-historisk forklaring","politisk og historisk","klimadrevet konflikt","klimaendringer og konflikter","malthusiansk forklaring","ressursknapphet","miljødegradering","miljøforringelse","nedbørsdata","klimadata","casestudier fra Mali","Sahel","Mali","Sahel-greening","ørkenspredning","tørke","global klimaendring","lokale forhold","forskningsgrunnlag","policy-momentum"
   ];
+  
+  const ACADEMIC_THEORY_RULES = [
+    {
+      key: "thomas_homer_dixon",
+      triggers: [/\bthomas\s+homer-?dixon\b/i, /\bhomer-?dixon\b/i],
+      link: {
+        thinker: "Thomas Homer-Dixon",
+        theory: "Knapphetsskolen / miljøsikkerhet",
+        connection: "Brukes i teksten som representant for teorien om ressursknapphet, miljødegradering og konflikt.",
+        score: 0.75
+      }
+    },
+    {
+      key: "knapphetsskolen",
+      triggers: [/\bknapphetsskolen\b/i, /\bscarcity\s+school\b/i, /\bressursknapphet\b/i, /\bmalthusiansk\b/i],
+      link: {
+        thinker: "Knapphetsskolen",
+        theory: "Ressursknapphet og konflikt",
+        connection: "Teksten diskuterer knapphetsskolens forklaring om at ressursknapphet kan føre til voldelig konflikt.",
+        score: 0.70
+      }
+    },
+    {
+      key: "miljosikkerhet",
+      triggers: [/\bmiljøsikkerhet\b/i, /\benvironmental\s+security\b/i, /\bthe\s+environmental\s+security\s+school\b/i],
+      link: {
+        thinker: "Miljøsikkerhet",
+        theory: "Miljøsikkerhet",
+        connection: "Teksten behandler miljøsikkerhet som en teori om koblingen mellom miljødegradering, ressursknapphet og konflikt.",
+        score: 0.70
+      }
+    },
+    {
+      key: "politisk_okologi",
+      triggers: [/\bpolitisk\s+økologi\b/i, /\bpolitical\s+ecology\b/i, /\bmaktperspektiv\b/i, /\bmakt-?\s*og\s*produksjonsforhold\b/i, /\bpeluso\b/i, /\bwatts\b/i],
+      link: {
+        thinker: "Politisk økologi",
+        theory: "Politisk økologi",
+        connection: "Teksten bruker politisk økologi som kritikk av enkle knapphetsforklaringer og vektlegger makt, kontekst og produksjonsforhold.",
+        score: 0.80
+      }
+    },
+    {
+      key: "peluso_watts",
+      triggers: [/\bpeluso\b/i, /\bwatts\b/i, /\bpeluso\s*&\s*watts\b/i],
+      link: {
+        thinker: "Peluso & Watts",
+        theory: "Politisk økologi / makt og vold",
+        connection: "Kobles til kritikken av enkel årsakskjede fra ressursknapphet til vold.",
+        score: 0.72
+      }
+    },
+    {
+      key: "ester_boserup",
+      triggers: [/\bester\s+boserup\b/i, /\bboserup\b/i, /\bbærekraftig\s+intensivering\b/i],
+      link: {
+        thinker: "Ester Boserup",
+        theory: "Boserupsk intensivering",
+        connection: "Teksten viser til Boserups teori om at befolkningsvekst kan bidra til intensivering og forbedret ressursgrunnlag.",
+        score: 0.72
+      }
+    },
+    {
+      key: "edward_said",
+      triggers: [/\bedward\s+said\b/i, /\bsaid\b/i, /\borientalisme?n?\b/i],
+      link: {
+        thinker: "Edward Said",
+        theory: "Orientalisme",
+        connection: "Teksten bruker orientalisme som kritikk av vestlige forestillinger om fattige land og afrikanske småbønder/husdyrgjetere.",
+        score: 0.75
+      }
+    },
+    {
+      key: "prio_gleditsch",
+      triggers: [/\bgleditsch\b/i, /\bprio\b/i, /\bfredsforskningsinstituttet\b/i, /\bnordås\s*&\s*gleditsch\b/i, /\bbinningsbø\b/i, /\bde\s+soysa\b/i, /\btheisen\b/i, /\braleigh\s*&\s*urdal\b/i],
+      link: {
+        thinker: "PRIO / Gleditsch",
+        theory: "Kvantitativ kritikk av klima-konflikt-koblingen",
+        connection: "Teksten viser til kvantitative studier som kritiserer den påståtte sammenhengen mellom klimaendringer, ressursknapphet og voldelige konflikter.",
+        score: 0.70
+      }
+    },
+    {
+      key: "robert_kaplan",
+      triggers: [/\brobert\s+kaplan\b/i, /\bkaplan\b/i],
+      link: {
+        thinker: "Robert Kaplan",
+        theory: "Populærmalthusiansk konfliktfortelling",
+        connection: "Teksten bruker Kaplan som eksempel på en innflytelsesrik journalistisk formidling av knapphet, overbefolkning og miljøkrise som konfliktforklaring.",
+        score: 0.62
+      }
+    },
+    {
+      key: "bachler_swiss_peace",
+      triggers: [/\bbächler\b/i, /\bbachler\b/i, /\bswiss\s+peace\b/i, /\bbächler\s*&\s*spillmann\b/i],
+      link: {
+        thinker: "Bächler / Swiss Peace",
+        theory: "Miljødegradering som konfliktforklaring",
+        connection: "Teksten viser til Bächler og Swiss Peace som eksempler på forskning som kobler afrikanske tørrlandsområder, miljødegradering og vold.",
+        score: 0.62
+      }
+    },
+    {
+      key: "barnett_salehyan",
+      triggers: [/\bbarnett\b/i, /\bsalehyan\b/i],
+      link: {
+        thinker: "Barnett / Salehyan",
+        theory: "Kritikk av klima-konflikt-koblingen",
+        connection: "Teksten viser til forskning som kritiserer ideen om at klimaendringer direkte fører til voldelige konflikter.",
+        score: 0.60
+      }
+    }
+  ];
+
   const INSIGHT_NOISE_PATTERN = /\b(les også|les ogsa|annonsørinnhold|annonsorinnhold|logo|illustrasjon|annonse|sponset|kjolefavoritter|bryllupsgjesten)\b/ig;
   const LEADING_PUNCTUATION_PATTERN = /^[\s"'“”«».,:;|\-–—]+/;
   const LES_OGSA_TEASER_PATTERN = /(«|»|"|')?\s*les\s+også\s*:?\s*[^.!?\n]*(?:[.!?]|$)/ig;
@@ -651,6 +765,57 @@
     return out.slice(0, Math.max(1, Number(max || 5)));
   }
 
+
+  function extractAcademicTheoryLinks(text) {
+    const source = String(text || "");
+    if (!source.trim()) return [];
+    const out = [];
+    ACADEMIC_THEORY_RULES.forEach((rule) => {
+      if (!Array.isArray(rule?.triggers) || !rule.triggers.some((re) => re.test(source))) return;
+      out.push({
+        thinker: rule.link.thinker,
+        theory: rule.link.theory,
+        score: Number(rule.link.score || 0),
+        connection: rule.link.connection
+      });
+    });
+    return out;
+  }
+
+  function mergeTheoryLinks(existingLinks, extractedLinks, maxItems) {
+    const bestByKey = new Map();
+    const add = (item) => {
+      if (!item || typeof item !== "object") return;
+      const thinker = String(item.thinker || item.name || "").trim();
+      const theory = String(item.theory || "").trim();
+      const connection = String(item.connection || item.relation || "").trim();
+      const score = Number(item.score || item.relevance_score || 0);
+      if (!thinker && !theory) return;
+      const key = `${thinker.toLowerCase()}|${theory.toLowerCase()}`;
+      const prev = bestByKey.get(key);
+      if (!prev || score > prev.score) bestByKey.set(key, { thinker, theory, connection, score });
+    };
+    (Array.isArray(existingLinks) ? existingLinks : []).forEach(add);
+    (Array.isArray(extractedLinks) ? extractedLinks : []).forEach(add);
+    return Array.from(bestByKey.values())
+      .sort((a, b) => (b.score - a.score) || a.thinker.localeCompare(b.thinker))
+      .slice(0, Math.max(1, Number(maxItems || 5)));
+  }
+
+  function applyPhraseConceptDisplayPreference(items, keyGetter) {
+    const list = Array.isArray(items) ? items.slice() : [];
+    const keys = new Set(list.map((item) => normalizeAfterworkConcept(keyGetter(item))));
+    const shouldHide = new Set();
+    if (keys.has("politisk økologi")) shouldHide.add("økologi");
+    if (keys.has("ressursknapphet") || keys.has("knapphetsskolen")) shouldHide.add("knapphet");
+    if (keys.has("politisk-historisk forklaring") || keys.has("politisk og historisk")) {
+      shouldHide.add("politisk");
+      shouldHide.add("historisk");
+    }
+    if (keys.has("malthusiansk forklaring")) shouldHide.add("malthusiansk");
+    return list.filter((item) => !shouldHide.has(normalizeAfterworkConcept(keyGetter(item))));
+  }
+
   function filterConceptLabels(concepts) {
     const seen = new Set();
     return (Array.isArray(concepts) ? concepts : [])
@@ -658,6 +823,15 @@
       .map((c) => String(c || "").trim())
       .filter((c) => c && !WEAK_CONCEPT_WORDS.has(c.toLowerCase()))
       .filter((c) => !isGenericDisplayConcept(c))
+      .filter((c, _, arr) => {
+        const keys = new Set(arr.map((term) => normalizeAfterworkConcept(term)));
+        const normalized = normalizeAfterworkConcept(c);
+        if (keys.has("politisk økologi") && normalized === "økologi") return false;
+        if ((keys.has("ressursknapphet") || keys.has("knapphetsskolen")) && normalized === "knapphet") return false;
+        if ((keys.has("politisk-historisk forklaring") || keys.has("politisk og historisk")) && (normalized === "politisk" || normalized === "historisk")) return false;
+        if (keys.has("malthusiansk forklaring") && normalized === "malthusiansk") return false;
+        return true;
+      })
       .filter((c) => {
         const key = c.toLowerCase();
         if (seen.has(key)) return false;
@@ -1164,6 +1338,20 @@
         }
       });
     });
+    const chamberText = (Array.isArray(safeChamber?.insights) ? safeChamber.insights : [])
+      .map((insight) => [insight?.title, insight?.summary, insight?.text, insight?.source_text].filter(Boolean).join(" "))
+      .join("\n");
+    extractAcademicTheoryLinks(chamberText).forEach((link) => {
+      const name = String(link?.thinker || link?.theory || "").trim();
+      const relation = String(link?.connection || "").trim();
+      if (!name || !relation) return;
+      const score = Number(link?.score || 0);
+      const key = `${name.toLowerCase()}|${relation.toLowerCase()}`;
+      const current = bestByKey.get(key);
+      if (!current || score > current.score) {
+        bestByKey.set(key, { name, relation, score });
+      }
+    });
     return Array.from(bestByKey.values())
       .sort((a, b) => b.score - a.score)
       .slice(0, Math.max(1, Number(maxItems || 4)));
@@ -1189,10 +1377,15 @@
     });
 
     (Array.isArray(chamber?.insights) ? chamber.insights : []).forEach((insight) => {
+      const insightText = [insight?.title, insight?.summary, insight?.text, insight?.source_text].filter(Boolean).join(" ");
       (Array.isArray(insight?.thinkers) ? insight.thinkers : []).forEach(add);
       (Array.isArray(insight?.theories) ? insight.theories : []).forEach(add);
       (Array.isArray(insight?.theoretical_links) ? insight.theoretical_links : []).forEach((link) => {
         add(link?.name);
+        add(link?.theory);
+      });
+      extractAcademicTheoryLinks(insightText).forEach((link) => {
+        add(link?.thinker);
         add(link?.theory);
       });
     });
@@ -1288,7 +1481,7 @@
   }
 
   function filterGenericConceptItems(items, keyGetter) {
-    return (Array.isArray(items) ? items : []).filter((item) => !isGenericDisplayConcept(keyGetter(item)));
+    return applyPhraseConceptDisplayPreference((Array.isArray(items) ? items : []).filter((item) => !isGenericDisplayConcept(keyGetter(item))), keyGetter);
   }
 
   function buildCurrentFocusConceptSet(recurringThemes, conceptGraph, profile) {
@@ -2254,6 +2447,10 @@
     const analysisSource = cleanArticleText(source);
     const keywords = takeKeywords(analysisSource, 8);
     const concepts = deriveConceptsFromAfterwork(normalizedPayload, keywords, subjectLinks, source);
+    const extractedTheoryLinks = extractAcademicTheoryLinks(source);
+    const theoryLinks = mergeTheoryLinks(normalizedPayload?.theoryLinks || normalizedPayload?.theoretical_links, extractedTheoryLinks, 5);
+    const thinkers = normalizeSimpleStringList((normalizedPayload?.thinkers || []).concat(theoryLinks.map((item) => item.thinker).filter(Boolean)), 8);
+    const theories = normalizeSimpleStringList((normalizedPayload?.theories || []).concat(theoryLinks.map((item) => item.theory).filter(Boolean)), 8);
     const structuralLabels = safeSortItems
       .map((item) => String(item?.label || "").trim())
       .filter(Boolean)
@@ -2280,7 +2477,10 @@
       subjectLinks,
       keywords,
       concepts,
-      structuralLabels
+      structuralLabels,
+      theoryLinks,
+      thinkers,
+      theories
     };
   }
 
