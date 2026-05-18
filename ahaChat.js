@@ -1254,8 +1254,12 @@
     const cleanTitleRaw = sanitizeInsightText(ins.candidate_title || ins.title || "Innsikt");
     const cleanSummaryRaw = sanitizeInsightText(ins.candidate_summary || ins.summary || "");
     if (isFragmentaryInsightCard(ins, cleanTitleRaw, cleanSummaryRaw) || shouldHideInsightCard(cleanTitleRaw, cleanSummaryRaw)) return "";
+    const titleKey = normalizeConceptKey(cleanTitleRaw || ins?.title || "");
+    const isSyntheticAcademicCard = ins?.candidate_type === "synthetic"
+      && ["hovedinnsikt", "hovedargument", "motargument/kritikk", "spenning i teksten"].includes(titleKey);
     const title = escHtml(normalizeDisplayText(cleanTitleRaw || "Innsikt"));
-    const summary = escHtml(normalizeDisplayText(cleanSummaryRaw || ""));
+    const summaryText = normalizeDisplayText(cleanSummaryRaw || "");
+    const summary = escHtml(summaryText);
 
     const conceptsHtml = renderLayerChips(filterConceptLabels(ins.concepts).map((label) => ({ label })), (c) => c?.label);
     const patternsHtml = renderLayerChips(ins.patterns, (p) => p?.label || p?.key);
@@ -1264,9 +1268,17 @@
     const theorySection = buildTheorySection(ins);
     const suggestionsHtml = renderEmneSuggestions(ins);
 
-    const claims = (ins.claims || [])
-      .map((c) => (c && c.text) || "")
-      .filter(Boolean);
+    const claims = isSyntheticAcademicCard
+      ? []
+      : (ins.claims || [])
+        .map((c) => (c && c.text) || "")
+        .filter((text) => {
+          const normalizedClaim = normalizeConceptKey(text || "");
+          const normalizedSummary = normalizeConceptKey(summaryText || "");
+          if (!normalizedClaim) return false;
+          if (normalizedSummary && (normalizedClaim === normalizedSummary || normalizedSummary.includes(normalizedClaim) || normalizedClaim.includes(normalizedSummary))) return false;
+          return true;
+        });
     const claimsHtml = claims.length
       ? `<ul class="insight-claims">${claims
           .map((q) => `<li>“${escHtml(q)}”</li>`)
@@ -1410,12 +1422,15 @@
       const filtered = insights.filter((ins) => !isFragmentaryInsightCard(ins));
       const context = readLatestAcademicContext();
       if (context?.textType !== "academic_article") return filtered;
+
+      const synthetic = buildAcademicSyntheticInsightCards();
+      if (synthetic.length >= 4) return synthetic.slice(0, 4);
+      if (synthetic.length > 0 && filtered.length < 4) return synthetic;
+      if (synthetic.length > 0 && !filtered.length) return synthetic;
+
       const strong = filtered.filter((ins) => /hoved|argument|kritikk|spenning|teori|synt/i.test(`${ins?.title || ""} ${ins?.summary || ""}`));
       if (strong.length >= 2) return strong.slice(0, 4);
-      if (!filtered.length || hasAcademicSignals(context?.payload, context?.sourceText)) {
-        const synthetic = buildAcademicSyntheticInsightCards();
-        if (synthetic.length) return synthetic;
-      }
+      if (strong.length) return strong;
       return filtered;
     } catch (err) {
       console.warn("Kunne ikke bygge innsiktsvisning", err);
