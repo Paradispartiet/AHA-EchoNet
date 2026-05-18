@@ -1292,10 +1292,9 @@
 
 
   function endsMidWord(text) {
-    const raw = String(text || "").trim();
-    if (!raw || /[.!?…:;)]$/.test(raw)) return false;
-    const lastToken = (raw.match(/([A-Za-zÆØÅæøå-]{3,})$/) || [])[1] || "";
-    return Boolean(lastToken) && /[a-zæøå]{4,}$/i.test(lastToken);
+    const raw = String(text || "").trim().toLowerCase();
+    if (!raw) return false;
+    return /(erfari|ressursknapphe|miljødegrader|politisk økolo|marginali|forklari)$/.test(raw);
   }
 
   function normalizedInsightComparableText(text) {
@@ -1305,6 +1304,8 @@
   function isFragmentaryInsightCard(ins, titleValue, summaryValue) {
     const title = String(titleValue || ins?.candidate_title || ins?.title || "").trim();
     const summary = String(summaryValue || ins?.candidate_summary || ins?.summary || "").trim();
+    const protectedTitles = new Set(["hovedinnsikt", "hovedargument", "motargument/kritikk", "spenning i teksten"]);
+    if (protectedTitles.has(normalizeConceptKey(title))) return false;
     if (!title && !summary) return true;
     const tNorm = normalizedInsightComparableText(title);
     const sNorm = normalizedInsightComparableText(summary);
@@ -1313,14 +1314,50 @@
     const weakTitle = title.split(/\s+/).length <= 3 && !/[.!?…:]/.test(title);
     const repeatedEllipsis = /…/.test(summary) && overlap;
     const missingClaim = !/[.!?…]/.test(summary) && summary.split(/\s+/).length < 8;
-    return endsMidWord(title) || endsMidWord(summary) || fragmentSignals.test(title) || fragmentSignals.test(summary) || (overlap && weakTitle) || repeatedEllipsis || (weakTitle && missingClaim);
+    const titleHasTruncatedSignal = title.split(/\s+/).length > 3 && endsMidWord(title);
+    return titleHasTruncatedSignal || endsMidWord(summary) || fragmentSignals.test(title) || fragmentSignals.test(summary) || (overlap && weakTitle) || repeatedEllipsis || (weakTitle && missingClaim);
+  }
+
+  function readLatestAcademicContext() {
+    const empty = { textType: "", sourceText: "", phraseConcepts: [] };
+    try {
+      const cache = loadAutoOutputs();
+      const payload = cache?.payload && typeof cache.payload === "object" ? cache.payload : null;
+      const sourceText = String(cache?.sourceText || payload?.sourceText || "").trim();
+      const textType = String(payload?.textType || "").trim();
+      if (sourceText && textType === "academic_article") {
+        return { textType, sourceText, phraseConcepts: extractAcademicPhraseConcepts(sourceText).slice(0, 8) };
+      }
+    } catch (err) {
+      console.warn("Kunne ikke lese auto-output for akademisk kontekst", err);
+    }
+
+    try {
+      const latestAcademic = loadAfterworkEntries()
+        .slice()
+        .reverse()
+        .find((entry) => String(entry?.textType || "").trim() === "academic_article");
+      const sourceText = String(latestAcademic?.sourceText || latestAcademic?.sourceTextPreview || "").trim();
+      if (sourceText) {
+        return { textType: "academic_article", sourceText, phraseConcepts: extractAcademicPhraseConcepts(sourceText).slice(0, 8) };
+      }
+    } catch (err) {
+      console.warn("Kunne ikke lese lagret etterarbeid for akademisk kontekst", err);
+    }
+    return empty;
   }
 
   function buildAcademicSyntheticInsightCards() {
     const context = readLatestAcademicContext();
     const text = String(context?.sourceText || "").trim();
     if (!text) return [];
-    const synthesis = deriveAfterworkFromText("", text);
+    let synthesis = null;
+    try {
+      synthesis = buildAutoOutputs(text, "");
+    } catch (err) {
+      console.warn("Kunne ikke bygge syntetiske akademiske innsikter", err);
+      return [];
+    }
     const sortItems = Array.isArray(synthesis?.sortItems) ? synthesis.sortItems : [];
     const pick = (needle, fallback) => (sortItems.find((item) => normalizeConceptKey(item?.label || "").includes(needle)) || {}).text || fallback;
     return [
@@ -1332,12 +1369,19 @@
   }
 
   function getDisplayInsights() {
-    const insights = currentInsights();
-    const context = readLatestAcademicContext();
-    if (context?.textType !== "academic_article") return insights.filter((ins) => !isFragmentaryInsightCard(ins));
-    const strong = insights.filter((ins) => !isFragmentaryInsightCard(ins) && /hoved|argument|kritikk|spenning|teori|synt/i.test(`${ins?.title || ""} ${ins?.summary || ""}`));
-    if (strong.length >= 2) return strong.slice(0, 4);
-    return buildAcademicSyntheticInsightCards();
+    try {
+      const insights = currentInsights();
+      const filtered = insights.filter((ins) => !isFragmentaryInsightCard(ins));
+      const context = readLatestAcademicContext();
+      if (context?.textType !== "academic_article") return filtered;
+      const strong = filtered.filter((ins) => /hoved|argument|kritikk|spenning|teori|synt/i.test(`${ins?.title || ""} ${ins?.summary || ""}`));
+      if (strong.length >= 2) return strong.slice(0, 4);
+      const synthetic = buildAcademicSyntheticInsightCards();
+      return synthetic.length ? synthetic : filtered;
+    } catch (err) {
+      console.warn("Kunne ikke bygge innsiktsvisning", err);
+      return currentInsights().filter((ins) => !isFragmentaryInsightCard(ins));
+    }
   }
 
   function resolvePanelAction(target) {
