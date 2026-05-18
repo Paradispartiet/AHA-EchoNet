@@ -1253,7 +1253,7 @@
   function renderInsightCard(ins) {
     const cleanTitleRaw = sanitizeInsightText(ins.candidate_title || ins.title || "Innsikt");
     const cleanSummaryRaw = sanitizeInsightText(ins.candidate_summary || ins.summary || "");
-    if (shouldHideInsightCard(cleanTitleRaw, cleanSummaryRaw)) return "";
+    if (isFragmentaryInsightCard(ins, cleanTitleRaw, cleanSummaryRaw) || shouldHideInsightCard(cleanTitleRaw, cleanSummaryRaw)) return "";
     const title = escHtml(normalizeDisplayText(cleanTitleRaw || "Innsikt"));
     const summary = escHtml(normalizeDisplayText(cleanSummaryRaw || ""));
 
@@ -1288,6 +1288,56 @@
       ${summary ? `<p class="insight-card-summary">${summary}</p>` : ""}
       ${sections}
     </li>`;
+  }
+
+
+  function endsMidWord(text) {
+    const raw = String(text || "").trim();
+    if (!raw || /[.!?…:;)]$/.test(raw)) return false;
+    const lastToken = (raw.match(/([A-Za-zÆØÅæøå-]{3,})$/) || [])[1] || "";
+    return Boolean(lastToken) && /[a-zæøå]{4,}$/i.test(lastToken);
+  }
+
+  function normalizedInsightComparableText(text) {
+    return String(text || "").toLowerCase().replace(/[….,;:!?]/g, " ").replace(/\s+/g, " ").trim();
+  }
+
+  function isFragmentaryInsightCard(ins, titleValue, summaryValue) {
+    const title = String(titleValue || ins?.candidate_title || ins?.title || "").trim();
+    const summary = String(summaryValue || ins?.candidate_summary || ins?.summary || "").trim();
+    if (!title && !summary) return true;
+    const tNorm = normalizedInsightComparableText(title);
+    const sNorm = normalizedInsightComparableText(summary);
+    const overlap = tNorm && sNorm && (tNorm === sNorm || tNorm.includes(sNorm) || sNorm.includes(tNorm));
+    const fragmentSignals = /(erfari|marginali|forklari|ressursknapphe|miljødegrader|politisk økolo)$/i;
+    const weakTitle = title.split(/\s+/).length <= 3 && !/[.!?…:]/.test(title);
+    const repeatedEllipsis = /…/.test(summary) && overlap;
+    const missingClaim = !/[.!?…]/.test(summary) && summary.split(/\s+/).length < 8;
+    return endsMidWord(title) || endsMidWord(summary) || fragmentSignals.test(title) || fragmentSignals.test(summary) || (overlap && weakTitle) || repeatedEllipsis || (weakTitle && missingClaim);
+  }
+
+  function buildAcademicSyntheticInsightCards() {
+    const context = readLatestAcademicContext();
+    const text = String(context?.sourceText || "").trim();
+    if (!text) return [];
+    const synthesis = deriveAfterworkFromText("", text);
+    const sortItems = Array.isArray(synthesis?.sortItems) ? synthesis.sortItems : [];
+    const pick = (needle, fallback) => (sortItems.find((item) => normalizeConceptKey(item?.label || "").includes(needle)) || {}).text || fallback;
+    return [
+      { title: "Hovedinnsikt", summary: pick("hovedinnsikt", synthesis?.reflection || "Teksten argumenterer for en sammensatt forklaring av konflikt."), concepts: context.phraseConcepts || [], candidate_type: "synthetic" },
+      { title: "Hovedargument", summary: pick("hovedargument", "Konfliktutvikling forklares best gjennom politikk, historie og maktforhold."), concepts: context.phraseConcepts || [], candidate_type: "synthetic" },
+      { title: "Motargument/kritikk", summary: pick("motargument", "Lineære knapphetsforklaringer kritiseres for svak empirisk forklaringskraft."), concepts: context.phraseConcepts || [], candidate_type: "synthetic" },
+      { title: "Spenning i teksten", summary: pick("spenning", "Spenningen står mellom miljø-knapphetsforklaring og politisk-økologisk analyse."), concepts: context.phraseConcepts || [], candidate_type: "synthetic" }
+    ].filter((card) => !isFragmentaryInsightCard(card));
+  }
+
+  function getDisplayInsights() {
+    const insights = currentInsights();
+    const context = readLatestAcademicContext();
+    if (context?.textType !== "academic_article") return insights.filter((ins) => !isFragmentaryInsightCard(ins));
+    const strong = insights.filter((ins) => !isFragmentaryInsightCard(ins) && /hoved|argument|kritikk|spenning|teori|synt/i.test(`${ins?.title || ""} ${ins?.summary || ""}`));
+    if (strong.length >= 2) return strong.slice(0, 4);
+    return buildAcademicSyntheticInsightCards();
   }
 
   function resolvePanelAction(target) {
@@ -1455,7 +1505,7 @@
   }
 
   function showInsights() {
-    const insights = currentInsights();
+    const insights = getDisplayInsights();
     const mergeSection = renderMergeSuggestionsSection();
     renderPanel(
       `<div class="insight-panel">${mergeSection}<h2>Innsikter</h2>${
@@ -1640,31 +1690,36 @@
     const nodeStrength = new Map();
     sortedConnections.forEach((edge) => {
       const baseWeight = Math.max(1, Number(edge.weight || 0));
-      nodeStrength.set(edge.from, (nodeStrength.get(edge.from) || 0) + baseWeight);
-      nodeStrength.set(edge.to, (nodeStrength.get(edge.to) || 0) + baseWeight);
+      const from = normalizeConceptKey(edge.from);
+      const to = normalizeConceptKey(edge.to);
+      nodeStrength.set(from, (nodeStrength.get(from) || 0) + baseWeight);
+      nodeStrength.set(to, (nodeStrength.get(to) || 0) + baseWeight);
     });
 
     const topConcepts = Array.from(nodeStrength.entries())
       .sort((a, b) => (b[1] - a[1]) || a[0].localeCompare(b[0]))
-      .slice(0, 5)
-      .map(([concept]) => concept);
+      .map(([concept]) => concept)
+      .filter((concept, idx, arr) => concept && arr.indexOf(concept) === idx)
+      .slice(0, 5);
 
     if (topConcepts.length < 2) {
       return "<p class='knowledge-sub'>For få koblinger til å bygge nettverk ennå.</p>";
     }
 
     const topSet = new Set(topConcepts);
-    const networkEdges = sortedConnections.filter((edge) => topSet.has(edge.from) && topSet.has(edge.to));
+    const networkEdges = sortedConnections.filter((edge) => topSet.has(normalizeConceptKey(edge.from)) && topSet.has(normalizeConceptKey(edge.to)));
     if (!networkEdges.length) {
       return "<p class='knowledge-sub'>For få koblinger til å bygge nettverk ennå.</p>";
     }
 
     const adjacency = new Map();
     networkEdges.forEach((edge) => {
-      if (!adjacency.has(edge.from)) adjacency.set(edge.from, []);
-      if (!adjacency.has(edge.to)) adjacency.set(edge.to, []);
-      adjacency.get(edge.from).push({ target: edge.to, weight: edge.weight });
-      adjacency.get(edge.to).push({ target: edge.from, weight: edge.weight });
+      const from = normalizeConceptKey(edge.from);
+      const to = normalizeConceptKey(edge.to);
+      if (!adjacency.has(from)) adjacency.set(from, []);
+      if (!adjacency.has(to)) adjacency.set(to, []);
+      adjacency.get(from).push({ target: to, weight: edge.weight });
+      adjacency.get(to).push({ target: from, weight: edge.weight });
     });
 
     const rows = topConcepts.map((concept) => {
@@ -1874,9 +1929,11 @@
     );
     const bridging = (recs.bridging_pairs || [])
       .filter((b) => !isGenericDisplayConcept(b?.source) && !isGenericDisplayConcept(b?.target))
-      .slice(0, 4).map((b) =>
-      `${escHtml(displayConceptLabel(b.source))} ↔ ${escHtml(displayConceptLabel(b.target))} <span class="meta-count">npmi ${Number(b.npmi).toFixed(2)}</span>`
-    );
+      .slice(0, 4).map((b) => {
+      const source = normalizeConceptKey(b?.source) === "knapphet" && (recentConcepts.join(" ").toLowerCase().includes("ressursknapphet") || recentConcepts.join(" ").toLowerCase().includes("knapphetsskolen")) ? "ressursknapphet" : b?.source;
+      const pair = `${escHtml(displayConceptLabel(source))} ↔ ${escHtml(displayConceptLabel(b.target))}`;
+      return `${pair} <span class="meta-count">npmi ${Number(b.npmi).toFixed(2)}</span>`;
+    });
     const underexplored = filterGenericConceptItems(recs.underexplored_concepts || [], (item) => item?.key).slice(0, 5).map((u) =>
       `${escHtml(displayConceptLabel(u.key))} <span class="meta-count">×${u.count} · ${escHtml(u.reason || "")}</span>`
     );
