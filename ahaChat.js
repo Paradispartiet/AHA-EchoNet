@@ -1287,6 +1287,10 @@
     return String(value || "").trim().toLowerCase();
   }
 
+  function filterGenericConceptItems(items, keyGetter) {
+    return (Array.isArray(items) ? items : []).filter((item) => !isGenericDisplayConcept(keyGetter(item)));
+  }
+
   function buildCurrentFocusConceptSet(recurringThemes, conceptGraph, profile) {
     const fromRecent = (profile?.temporal?.recent_focus?.concepts || [])
       .slice(0, 12)
@@ -1330,23 +1334,32 @@
       : [];
 
     const graphNodes = Object.values(conceptGraph?.nodes || {});
-    const conceptNodeCount = graphNodes.filter((node) => node?.type === "concept").length;
+    const visibleGraphNodes = graphNodes.filter((node) => {
+      if (node?.type !== "concept") return true;
+      return !isGenericDisplayConcept(node?.key || node?.id || node?.label);
+    });
+    const conceptNodeCount = visibleGraphNodes.filter((node) => node?.type === "concept").length;
     const theoryNodeCount = graphNodes.filter((node) => node?.type === "theory" || node?.type === "thinker").length;
     const focusConcepts = buildCurrentFocusConceptSet(recurringThemes, conceptGraph, profile);
     const prioritizedEdges = (conceptGraph?.edges || [])
       .filter((edge) => edge?.type === "co_occurs")
+      .filter((edge) => !isGenericDisplayConcept(edge?.from) && !isGenericDisplayConcept(edge?.to))
       .filter((edge) => {
         const from = normalizeConceptKey(edge?.from);
         const to = normalizeConceptKey(edge?.to);
         return focusConcepts.has(from) || focusConcepts.has(to);
       });
-    const edgePool = prioritizedEdges.length ? prioritizedEdges : (conceptGraph?.edges || []).filter((edge) => edge?.type === "co_occurs");
+    const edgePool = prioritizedEdges.length
+      ? prioritizedEdges
+      : (conceptGraph?.edges || [])
+        .filter((edge) => edge?.type === "co_occurs")
+        .filter((edge) => !isGenericDisplayConcept(edge?.from) && !isGenericDisplayConcept(edge?.to));
     const topEdges = edgePool
       .sort((a, b) => (b?.weight || 0) - (a?.weight || 0))
       .slice(0, 3);
 
-    const themes14d = (recurringThemes?.["14d"]?.top_concepts || []).slice(0, 3);
-    const themes30d = (recurringThemes?.["30d"]?.top_concepts || []).slice(0, 3);
+    const themes14d = filterGenericConceptItems(recurringThemes?.["14d"]?.top_concepts || [], (item) => item?.key).slice(0, 3);
+    const themes30d = filterGenericConceptItems(recurringThemes?.["30d"]?.top_concepts || [], (item) => item?.key).slice(0, 3);
     const topTheoryPeople = collectTheoryPeople(safeChamber, recurringThemes?.["30d"]?.top_theories, 4);
     const profileTensions = profile?.tensions || {};
     const conceptPairTensions = (profileTensions.concept_pair_tensions || [])
@@ -1420,16 +1433,18 @@
     const totalInsights = Array.isArray(profile.insights) ? profile.insights.length : 0;
     const window = recent.window_days ? ` (siste ${recent.window_days} dager)` : "";
 
-    const recentConcepts = (recent.concepts || []).slice(0, 6).map((c) =>
+    const recentConcepts = filterGenericConceptItems(recent.concepts || [], (item) => item?.key).slice(0, 6).map((c) =>
       `${escHtml(displayConceptLabel(c.key))} <span class="meta-count">×${c.count}</span>`
     );
-    const emerging = (recent.emerging || []).slice(0, 5).map((c) =>
+    const emerging = filterGenericConceptItems(recent.emerging || [], (item) => item?.key).slice(0, 5).map((c) =>
       `${escHtml(displayConceptLabel(c.key))} <span class="meta-count">×${c.count}</span>`
     );
-    const fading = (recent.fading || []).slice(0, 5).map((c) =>
+    const fading = filterGenericConceptItems(recent.fading || [], (item) => item?.key).slice(0, 5).map((c) =>
       `${escHtml(displayConceptLabel(c.key))} <span class="meta-count">tidligere ×${c.prev_count}</span>`
     );
-    const conceptPairTensions = (tensions.concept_pair_tensions || []).slice(0, 5).map((t) => (
+    const conceptPairTensions = (tensions.concept_pair_tensions || [])
+      .filter((t) => !isGenericDisplayConcept(t?.source) && !isGenericDisplayConcept(t?.target))
+      .slice(0, 5).map((t) => (
       `${escHtml(displayConceptLabel(t?.source))} ↔ ${escHtml(displayConceptLabel(t?.target))} <span class="meta-count">styrke ${escHtml(String(t?.strength || 0))}</span>`
     ));
     const conceptTensions = (tensions.concept_tensions || []).slice(0, 5).map((t) => {
@@ -1450,10 +1465,12 @@
     const resurface = (recs.resurface_insights || []).slice(0, 4).map((r) =>
       `${escHtml((r.summary || "").slice(0, 160))} <span class="meta-count">${escHtml((r.shared_concepts || []).map((concept) => displayConceptLabel(concept)).join(", "))}</span>`
     );
-    const bridging = (recs.bridging_pairs || []).slice(0, 4).map((b) =>
+    const bridging = (recs.bridging_pairs || [])
+      .filter((b) => !isGenericDisplayConcept(b?.source) && !isGenericDisplayConcept(b?.target))
+      .slice(0, 4).map((b) =>
       `${escHtml(displayConceptLabel(b.source))} ↔ ${escHtml(displayConceptLabel(b.target))} <span class="meta-count">npmi ${Number(b.npmi).toFixed(2)}</span>`
     );
-    const underexplored = (recs.underexplored_concepts || []).slice(0, 5).map((u) =>
+    const underexplored = filterGenericConceptItems(recs.underexplored_concepts || [], (item) => item?.key).slice(0, 5).map((u) =>
       `${escHtml(displayConceptLabel(u.key))} <span class="meta-count">×${u.count} · ${escHtml(u.reason || "")}</span>`
     );
 
@@ -1954,7 +1971,7 @@
     const createdAt = formatAfterworkDate(safeEntry.createdAt);
     const textType = String(safeEntry.textType || "ukjent");
     const preview = String(safeEntry.sourceTextPreview || "Ingen kildepreview lagret.");
-    const conceptPool = (Array.isArray(safeEntry.concepts) && safeEntry.concepts.length ? safeEntry.concepts : (Array.isArray(safeEntry.keywords) ? safeEntry.keywords : [])).slice(0, 3);
+    const conceptPool = filterConceptLabels(Array.isArray(safeEntry.concepts) && safeEntry.concepts.length ? safeEntry.concepts : (Array.isArray(safeEntry.keywords) ? safeEntry.keywords : [])).slice(0, 3);
     const conceptLine = conceptPool.length ? conceptPool.map((item) => `<span class="insight-chip">${escHtml(item)}</span>`).join("") : '<span class="insight-chip">Ingen begreper</span>';
     const insightsCount = Array.isArray(safeEntry.insights) ? safeEntry.insights.length : 0;
     const pathCount = Array.isArray(safeEntry.learningPath) ? safeEntry.learningPath.length : 0;
