@@ -871,7 +871,68 @@
       (Array.isArray(insight?.subjectLinks) ? insight.subjectLinks : []).forEach((item) => subjectLinks.push(item));
     });
     autoOutputs.forEach((entry) => addText(entry?.content || entry?.text || entry?.summary));
+    const activeSource = resolveActiveAnalysisContext();
+    addText(activeSource?.sourceText);
+    (Array.isArray(activeSource?.concepts) ? activeSource.concepts : []).forEach((item) => concepts.push(item));
+    (Array.isArray(activeSource?.keywords) ? activeSource.keywords : []).forEach((item) => keywords.push(item));
+    (Array.isArray(activeSource?.phraseConcepts) ? activeSource.phraseConcepts : []).forEach((item) => phraseConcepts.push(item));
+    (Array.isArray(activeSource?.subjectLinks) ? activeSource.subjectLinks : []).forEach((item) => subjectLinks.push(item));
     return { text: textParts.join("\n"), concepts, keywords, phraseConcepts, subjectLinks, theoryLinks };
+  }
+
+  function resolveActiveAnalysisContext() {
+    const context = { sourceText: "", concepts: [], keywords: [], phraseConcepts: [], subjectLinks: [] };
+    const addUnique = (target, items) => {
+      (Array.isArray(items) ? items : []).forEach((item) => {
+        const value = typeof item === "string" ? item : (item?.label || item?.name || item?.title || item?.key || item?.term || item?.value || item);
+        if (value == null) return;
+        if (target.some((existing) => JSON.stringify(existing) === JSON.stringify(item))) return;
+        target.push(item);
+      });
+    };
+    const usePayload = (payload) => {
+      if (!payload || typeof payload !== "object") return;
+      addUnique(context.concepts, payload?.concepts);
+      addUnique(context.keywords, payload?.keywords);
+      addUnique(context.phraseConcepts, payload?.phraseConcepts);
+      addUnique(context.subjectLinks, payload?.subjectLinks || payload?.subject_matches || payload?.subjectMatches);
+    };
+
+    try {
+      const cache = loadAutoOutputs();
+      if (cache && typeof cache === "object") {
+        const activeText = String(cache?.sourceText || cache?.payload?.sourceText || "").trim();
+        if (activeText) context.sourceText = activeText;
+        usePayload(cache?.payload);
+      }
+    } catch (err) {
+      console.warn("Kunne ikke lese aktiv auto-output fra cache", err);
+    }
+
+    try {
+      const host = typeof document !== "undefined" ? document.getElementById("aha-auto-output") : null;
+      const domText = String(host?.dataset?.sourceText || "").trim();
+      if (domText) context.sourceText = domText;
+    } catch (err) {
+      console.warn("Kunne ikke lese aktiv auto-output fra DOM", err);
+    }
+
+    try {
+      if (!context.sourceText) {
+        const entries = loadAfterworkEntries();
+        const latest = Array.isArray(entries) ? entries[entries.length - 1] : null;
+        const previewText = String(latest?.sourceTextPreview || "").trim();
+        if (previewText) context.sourceText = previewText;
+        usePayload(latest);
+      }
+    } catch (err) {
+      console.warn("Kunne ikke lese afterwork fallback", err);
+    }
+
+    if (!Array.isArray(context.phraseConcepts) || !context.phraseConcepts.length) {
+      context.phraseConcepts = extractAcademicPhraseConcepts(context.sourceText || "");
+    }
+    return context;
   }
 
   function prioritizeVisibleConceptEdges(edges, theoryLinks, context) {
@@ -1487,7 +1548,9 @@
     const chamberText = (Array.isArray(safeChamber?.insights) ? safeChamber.insights : [])
       .map((insight) => [insight?.title, insight?.summary, insight?.text, insight?.source_text].filter(Boolean).join(" "))
       .join("\n");
-    extractAcademicTheoryLinks(chamberText).forEach((link) => {
+    const activeContext = resolveActiveAnalysisContext();
+    const activeSourceText = String(activeContext?.sourceText || "").trim();
+    [chamberText, activeSourceText].forEach((sourceText) => extractAcademicTheoryLinks(sourceText).forEach((link) => {
       const name = String(link?.thinker || link?.theory || "").trim();
       const relation = String(link?.connection || "").trim();
       if (!name || !relation) return;
@@ -1497,7 +1560,7 @@
       if (!current || score > current.score) {
         bestByKey.set(key, { name, relation, score });
       }
-    });
+    }));
     return Array.from(bestByKey.values())
       .sort((a, b) => b.score - a.score)
       .slice(0, Math.max(1, Number(maxItems || 4)));
