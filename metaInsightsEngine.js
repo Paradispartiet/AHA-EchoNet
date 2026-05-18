@@ -1026,6 +1026,66 @@
       target: "desentralisering",
       sourceTerms: ["sentralisering", "sentralmakt", "sentralstyring"],
       targetTerms: ["desentralisering", "lokalsamfunn", "kommuneøkonomi", "lokal makt"]
+    },
+    {
+      source: "politikk",
+      target: "vitenskap",
+      sourceTerms: ["politikk", "politisk", "politikere", "byråkrater", "policy", "internasjonal politikk"],
+      targetTerms: ["vitenskap", "forskning", "empirisk forskning", "klimadata", "nedbørsdata", "casestudier"]
+    },
+    {
+      source: "dominerende narrativ",
+      target: "empirisk forskning",
+      sourceTerms: ["dominerende narrativ", "narrativ", "fortelling", "politisk narrativ"],
+      targetTerms: ["empirisk forskning", "empiri", "klimadata", "nedbørsdata", "casestudier", "internasjonal forskning"]
+    },
+    {
+      source: "klimaforklaring",
+      target: "politisk-historisk forklaring",
+      sourceTerms: ["klimaforklaring", "klimadrevet", "klimaendringer", "tørke", "ørkenspredning"],
+      targetTerms: ["politisk og historisk", "politisk-historisk", "historisk", "politisk", "statens politikk", "marginalisering"]
+    },
+    {
+      source: "ressursknapphet",
+      target: "statlig marginalisering",
+      sourceTerms: ["ressursknapphet", "knapphet", "kamp om ressurser", "ressursmangel"],
+      targetTerms: ["statlig marginalisering", "marginalisering", "statens politikk", "pastoralister", "ekskludering"]
+    },
+    {
+      source: "miljøsikkerhet",
+      target: "politisk økologi",
+      sourceTerms: ["miljøsikkerhet", "environmental security", "knapphetsskolen", "scarcity school"],
+      targetTerms: ["politisk økologi", "political ecology", "maktperspektiv", "makt- og produksjonsforhold"]
+    },
+    {
+      source: "global klimaendring",
+      target: "lokal historisk kontekst",
+      sourceTerms: ["global klimaendring", "globale klimaendringer", "menneskeskapte klimaendringer"],
+      targetTerms: ["lokal kontekst", "historisk kontekst", "Mali", "Sahel", "lokale forhold", "casestudier"]
+    },
+    {
+      source: "policy-momentum",
+      target: "forskningsgrunnlag",
+      sourceTerms: ["policy", "politikk", "byråkrater", "politisk gjennomslag", "egen dynamikk", "momentum"],
+      targetTerms: ["forskningsgrunnlag", "forskning", "empiri", "data", "kritisk vurdering"]
+    },
+    {
+      source: "tørke/ørkenspredning",
+      target: "Sahel-greening",
+      sourceTerms: ["tørke", "ørkenspredning", "uttørking", "stadig tørrere"],
+      targetTerms: ["Sahel har blitt grønnere", "grønnere", "greening", "økt vegetasjon", "grønnere utmark"]
+    },
+    {
+      source: "klimadrevet konflikt",
+      target: "politisk marginalisering",
+      sourceTerms: ["klimadrevet konflikt", "klimakrig", "klimaendringer og konflikter", "klimaendringene skaper konflikter"],
+      targetTerms: ["politisk marginalisering", "marginalisering", "statens politikk", "pastoralister"]
+    },
+    {
+      source: "malthusiansk forklaring",
+      target: "empirisk casestudie",
+      sourceTerms: ["malthusiansk", "malthusianske", "overbefolkning", "befolkningsvekst", "knapphet"],
+      targetTerms: ["empirisk casestudie", "casestudier", "feltarbeid", "Mali", "Sahel"]
     }
   ];
 

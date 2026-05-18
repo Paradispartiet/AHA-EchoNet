@@ -47,6 +47,7 @@
 
 
   const NOISE_LABELS = new Set(["logo", "annonse", "annonsørinnhold", "annonsorinnhold"]);
+  const GENERIC_META_CONCEPTS = new Set(["kunnskap", "forståelse", "budskap", "bekreftelse", "sier", "viser", "dette", "grunnlag"]);
 
   function normalizeLabel(label) {
     const cleaned = String(label ?? "").trim().replace(/\s+/g, " ");
@@ -62,8 +63,10 @@
     map.set(normalized, (map.get(normalized) || 0) + (Number(amount) || 1));
   }
 
-  function topCounted(map, limit = 5) {
+  function topCounted(map, limit = 5, options = {}) {
+    const excludeLabels = options?.excludeLabels instanceof Set ? options.excludeLabels : null;
     return Array.from(map.entries())
+      .filter(([label]) => !excludeLabels || !excludeLabels.has(String(label || "").trim().toLowerCase()))
       .sort((a, b) => (b[1] - a[1]) || a[0].localeCompare(b[0], "no"))
       .slice(0, limit)
       .map(([label, count]) => ({ label, count }));
@@ -105,7 +108,7 @@
     });
 
     const topThemes = topCounted(themesMap, 5);
-    const topConcepts = topCounted(conceptsMap, 5);
+    const topConcepts = topCounted(conceptsMap, 5, { excludeLabels: GENERIC_META_CONCEPTS });
 
     const tensionCandidates = [];
     const metaGlobal = global.AHAMetaInsights || global.MetaInsightsEngine;

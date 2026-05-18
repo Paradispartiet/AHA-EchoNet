@@ -2056,6 +2056,43 @@
       return true;
     }).slice(0, 12);
   }
+  function enrichSubjectMatchesForClimateConflict(text, subjectMatches) {
+    const normalizedText = cleanArticleText(text || "").toLowerCase();
+    const list = Array.isArray(subjectMatches) ? subjectMatches.slice() : [];
+    const seen = new Set(list.map((item) => `${String(item?.subject_id || "")}|${String(item?.title || "").toLowerCase()}`));
+    const hasAny = (terms) => (terms || []).some((term) => normalizedText.includes(String(term || "").toLowerCase()));
+    const addLink = (title, terms) => {
+      const key = `|${String(title || "").toLowerCase()}`;
+      if (!title || seen.has(key)) return;
+      seen.add(key);
+      list.push({ title, subject_label: title, type: "derived", score: 1.6, matched_terms: terms.filter(Boolean) });
+    };
+
+    const hasSahelMali = hasAny(["sahel", "mali"]);
+    const hasClimate = hasAny(["klimaendringer", "global klimaendring", "menneskeskapte klimaendringer", "klimadrevet"]);
+    const hasConflict = hasAny(["konflikt", "konflikter", "klimakrig", "ressurskonflikt"]);
+    if (hasSahelMali && hasClimate && hasConflict) {
+      addLink("Klima og konflikt", ["Sahel", "Mali", "klimaendringer", "konflikt"]);
+      addLink("Sahel og Mali", ["Sahel", "Mali"]);
+      addLink("Afrikastudier", ["Sahel", "Mali"]);
+      addLink("Utviklingsstudier", ["konflikt", "marginalisering"]);
+    }
+
+    if (hasAny(["politisk økologi", "political ecology", "knapphetsskolen", "environmental security", "miljøsikkerhet"])) {
+      addLink("Politisk økologi", ["politisk økologi", "knapphetsskolen"]);
+      addLink("Miljøsikkerhet", ["miljøsikkerhet", "environmental security"]);
+      addLink("Ressurskonflikter", ["ressursknapphet", "konflikt"]);
+    }
+    if (hasAny(["forskning", "empiri", "empirisk forskning", "narrativ", "politikk", "klimadata", "nedbørsdata"])) {
+      addLink("Vitenskap og politikk", ["forskning", "empiri", "politikk"]);
+      addLink("Narrativer i internasjonal politikk", ["narrativ", "internasjonal politikk"]);
+    }
+    if (hasAny(["pastoralister", "marginalisering", "statens politikk", "ekskludering"])) {
+      addLink("Stat, marginalisering og pastoralister", ["pastoralister", "marginalisering", "statens politikk"]);
+    }
+
+    return list.slice(0, 12);
+  }
 
   function normalizeAfterworkConcept(term) {
     return String(term || "").toLowerCase().replace(/[“”"'`´]/g, "").replace(/\s+/g, " ").trim();
@@ -2588,9 +2625,10 @@
           const agent = await askAhaAgent(text);
           const reply = String(agent?.reply || "").trim() || "AHA-agenten returnerte tomt svar.";
           const analysisText = cleanArticleText(text);
-          const subjectMatches = global.AHASubjectEngine?.matchText
+          const rawSubjectMatches = global.AHASubjectEngine?.matchText
             ? await global.AHASubjectEngine.matchText(analysisText, { source: "chat", textType: detectTextType(text) })
             : [];
+          const subjectMatches = enrichSubjectMatchesForClimateConflict(analysisText, rawSubjectMatches);
           appendChat("aha", reply, { categoryChips: suggestCategoryChips(), subjectMatches });
           try { renderAutoOutputs(text, reply, { subjectMatches }); } catch (autoErr) { console.warn("Auto-output feilet", autoErr); }
           // AHA-agentens egne svar skal vises i chatten og logges som
