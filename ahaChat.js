@@ -2361,24 +2361,26 @@
     if (opinionEvidence.hasRhetoricalQuestions) opinionScore += 1;
 
     const daySignals = /(i dag|idag|dagen min|jeg våknet|jeg hentet|jeg leverte|på jobb|etterpå|i kveld|i morges|vi dro|jeg gjorde|formiddag|ettermiddag)/i;
-    const literaryDiarySignals = /(jeg trodde|jeg burde|jeg er lei|jeg skjønner|jeg tenkte|her om dagen|i forrigårs|fortsatt|neste uke|ringe|savn|sinne|kjærlighet|skyld|skam|fremmedhet|forfatter|poetisk|skrive|tekst|leve vilt|reise|nomad|kurbad|hageanlegg|leilighet|telefon|park|møte)/i;
+    const literaryDiarySignals = /(jeg trodde|jeg burde|jeg er lei|jeg skjønner|jeg tenkte|her om dagen|i forrigårs|fortsatt|neste uke|ringe|savn|sinne|kjærlighet|skyld|skam|fremmedhet|forfatter|poetisk|skrive|leve vilt|reise|nomad|kurbad|hageanlegg|leilighet|telefon|park|møte)/i;
+    const diaryLifeSignals = /(mamma|pappa|søster|bror|venn|kjæreste|samboer|barn|familie|forhold|kropp|hjerte|gråt|trist|glad|redd|angst|ensom|savner|kranglet|drømte|spiste|sov|dusjet|trente)/i;
     const literaryFragmentSignals = /(scene|stemning|rytme|lys|mørke|rommet|gaten|kropp|språk|vind|lukt|hud|sans)/i;
     const theoryStrongSignals = /(teori|modell|bevissthet|hypotese|begrep|premiss|epistem)/i;
     const theoryWeakSignals = /(kunnskap|system|metode)/i;
     const sentenceCount = toSentences(text).length;
     const pronounCount = (text.match(/\bjeg\b/g) || []).length;
     const hasDiaryShape = pronounCount >= 2 && sentenceCount >= 3;
-    if (pronounCount >= 3 && literaryDiarySignals.test(text) && sentenceCount >= 4) return "literary_diary";
 
     const academicSignals = {
       theorists: /(homer-?dixon|peluso|watts|boserup|kaplan|gleditsch|salehyan|barnett|said)/i.test(text),
       years: /\b(19|20)\d{2}\b/.test(text),
       coreTerms: /(ressursknapphet|politisk økologi|miljødegradering|knapphetsskolen|sahel|mali|miljøsikkerhet|environmental security)/i.test(text),
-      citations: /["“”«»].{8,140}["“”«»]|\bifølge\b|\bviser til\b/i.test(text),
+      citations: /\bifølge\b|\bviser til\b|\(([A-ZÆØÅ][A-Za-zÆØÅæøå-]+(?:\s*&\s*[A-ZÆØÅ][A-Za-zÆØÅæøå-]+)?\s+(?:19|20)\d{2}[a-z]?)\)/.test(raw || ""),
+      articleMarkers: /(i denne artikkelen|casestudier|internasjonal forskning|klimadata|kritikk av|presenterer jeg)/i.test(text),
       modelDebate: /(på den ene siden|på den andre siden|kritiserer|forklaringsmodell|alternativ forklaring|drøfter|innvending)/i.test(text)
     };
     const academicScore = Object.values(academicSignals).reduce((sum, hit) => sum + (hit ? 1 : 0), 0);
-    if (academicScore >= 3 && (academicSignals.coreTerms || academicSignals.theorists)) return "academic_article";
+    const hasAcademicHardOverride = academicScore >= 3 && (academicSignals.coreTerms || academicSignals.theorists);
+    if (hasAcademicHardOverride) return "academic_article";
 
     const hasStrongOpinion = opinionScore >= 5 || ((opinionEvidence.hasPoliticalActor || opinionEvidence.hasParty) && (opinionEvidence.hasClimateTransition || opinionEvidence.hasOilFossil || opinionEvidence.hasNatureProtection));
     if (hasStrongOpinion) return "opinion_article";
@@ -2390,7 +2392,9 @@
     if (theoryWeakSignals.test(text) && !hasDiaryShape && !literaryDiarySignals.test(text)) return "theory_idea";
     if (daySignals.test(text)) return "day_log";
     if (literaryFragmentSignals.test(text) && sentenceCount >= 2) return "literary_fragment";
-    if (pronounCount >= 4 && sentenceCount >= 5 && literaryDiarySignals.test(text)) return "literary_diary";
+    const hasPersonalDiarySignals = daySignals.test(text) || diaryLifeSignals.test(text);
+    const hasConcreteSelfExperience = pronounCount >= 4 && sentenceCount >= 5 && literaryDiarySignals.test(text);
+    if (hasConcreteSelfExperience && hasPersonalDiarySignals && !hasAcademicHardOverride) return "literary_diary";
     return "general";
   }
 
