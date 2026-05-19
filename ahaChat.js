@@ -1853,13 +1853,26 @@
       return !links.length && ((normalized === "knapphet" && (topSet.has("ressursknapphet") || topSet.has("knapphetsskolen"))) || (normalized === "økologi" && topSet.has("politisk økologi")));
     };
 
+    const displayedPairs = new Set();
+    const connectedNodes = new Set();
+
     const rows = topConcepts.map((concept) => {
       const dedupedLinks = Array.from(new Map((adjacency.get(concept) || []).map((entry) => [normalizeConceptKey(entry.target), entry])).values())
         .filter((entry) => !weakVariants.has(normalizeConceptKey(entry.target)));
       const links = dedupedLinks
         .sort((a, b) => (b.weight - a.weight) || a.target.localeCompare(b.target))
+        .filter((entry) => {
+          const target = normalizeConceptKey(entry.target);
+          const pairKey = [concept, target].sort((a, b) => a.localeCompare(b)).join("::");
+          if (displayedPairs.has(pairKey)) return false;
+          displayedPairs.add(pairKey);
+          connectedNodes.add(concept);
+          connectedNodes.add(target);
+          return true;
+        })
         .slice(0, 3);
       if (shouldHideWeakVariant(concept, links)) return "";
+      if (!links.length && connectedNodes.has(concept)) return "";
       const children = links.length
         ? `<ul class="concept-network-links">${links.map((entry) => `<li><span class="concept-link-line"></span><span class="concept-node-badge">${escHtml(displayConceptLabel(entry.target))}</span></li>`).join("")}</ul>`
         : `<p class="knowledge-sub concept-network-empty">Ingen sterke koblinger registrert for dette begrepet ennå.</p>`;
