@@ -25,7 +25,8 @@
     [/\bfl\s+ere\b/gi, "flere"],
     [/\bkunn\s+skap\b/gi, "kunnskap"],
     [/\bmiljø\s+degradering\b/gi, "miljødegradering"],
-    [/\bressurs\s+knapphet\b/gi, "ressursknapphet"]
+    [/\bressurs\s+knapphet\b/gi, "ressursknapphet"],
+    [/mangel på støttetørke-\s*og\s*ørkenspredningseffekter/gi, "manglende støtte for økt tørke og ørkenspredning"]
   ];
 
   let processing = false;
@@ -157,13 +158,19 @@
   }
 
   function removeWeakConceptRows(root) {
-    const text = String(root.textContent || "").toLowerCase();
-    const hasPoliticalEcology = text.includes("politisk økologi");
-    const hasResourceScarcity = text.includes("ressursknapphet") || text.includes("knapphetsskolen");
-    root.querySelectorAll?.("li, .concept-node-badge").forEach((item) => {
-      const raw = String(item.textContent || "").replace(/\s+/g, " ").trim().toLowerCase();
-      if (hasPoliticalEcology && /^økologi\b/.test(raw)) item.closest("li")?.remove();
-      if (hasResourceScarcity && /^knapphet\b/.test(raw)) item.closest("li")?.remove();
+    const scopedSections = Array.from(root.querySelectorAll?.(".meta-section") || []);
+    if (!scopedSections.length) scopedSections.push(root);
+    scopedSections.forEach((section) => {
+      const sectionLabel = getSectionLabel(section).toLowerCase();
+      if (!/foreløpige hovedbegreper|det du tenker mest på|nye signaler|nye temaer/.test(sectionLabel)) return;
+      const text = String(section.textContent || "").toLowerCase();
+      const hasPoliticalEcology = text.includes("politisk økologi");
+      const hasResourceScarcity = text.includes("ressursknapphet") || text.includes("knapphetsskolen");
+      section.querySelectorAll?.("li").forEach((item) => {
+        const raw = String(item.textContent || "").replace(/\s+/g, " ").trim().toLowerCase();
+        if (hasPoliticalEcology && /^økologi\b/.test(raw)) item.remove();
+        if (hasResourceScarcity && /^knapphet\b/.test(raw)) item.remove();
+      });
     });
   }
 
@@ -224,6 +231,7 @@
       .map((part) => part.trim())
       .filter(Boolean)
       .map((part) => part.replace(/^Sitater fra teksten\s*/i, "").trim())
+      .map((part) => part.replace(/^Sitat fra teksten\s*:\s*/i, "").trim())
       .map((part) => part.replace(/\s+(Spenning i teksten|Mulig videre analyse|Dagsoppsummering|Tankesortering)\b.*$/i, "").trim())
       .filter((part) => part.length > 20)
       .slice(0, 8);

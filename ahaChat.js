@@ -1835,49 +1835,25 @@
       return "<p class='knowledge-sub'>For få koblinger til å bygge nettverk ennå.</p>";
     }
 
-    const adjacency = new Map();
-    networkEdges.forEach((edge) => {
-      const from = normalizeConceptKey(edge.from);
-      const to = normalizeConceptKey(edge.to);
-      if (!adjacency.has(from)) adjacency.set(from, []);
-      if (!adjacency.has(to)) adjacency.set(to, []);
-      adjacency.get(from).push({ target: to, weight: edge.weight });
-      adjacency.get(to).push({ target: from, weight: edge.weight });
-    });
-
-    const shouldHideWeakVariant = (concept, links) => {
-      const normalized = normalizeConceptKey(concept);
-      if (normalized === "knapphet" && topSet.has("ressursknapphet")) return true;
-      if (normalized === "knapphet" && topSet.has("knapphetsskolen")) return true;
-      if (normalized === "økologi" && topSet.has("politisk økologi")) return true;
-      return !links.length && ((normalized === "knapphet" && (topSet.has("ressursknapphet") || topSet.has("knapphetsskolen"))) || (normalized === "økologi" && topSet.has("politisk økologi")));
-    };
-
     const displayedPairs = new Set();
-    const connectedNodes = new Set();
+    const rows = networkEdges
+      .map((edge) => {
+        const from = normalizeConceptKey(edge.from);
+        const to = normalizeConceptKey(edge.to);
+        if (!from || !to || from === to) return "";
+        if (weakVariants.has(from) || weakVariants.has(to)) return "";
+        const pairKey = [from, to].sort((a, b) => a.localeCompare(b)).join("::");
+        if (displayedPairs.has(pairKey)) return "";
+        displayedPairs.add(pairKey);
+        return `<li class="concept-network-item"><span class="concept-node-badge">${escHtml(displayConceptLabel(from))}</span><span class="concept-link-line">↔</span><span class="concept-node-badge">${escHtml(displayConceptLabel(to))}</span></li>`;
+      })
+      .filter(Boolean)
+      .slice(0, 8)
+      .join("");
 
-    const rows = topConcepts.map((concept) => {
-      const dedupedLinks = Array.from(new Map((adjacency.get(concept) || []).map((entry) => [normalizeConceptKey(entry.target), entry])).values())
-        .filter((entry) => !weakVariants.has(normalizeConceptKey(entry.target)));
-      const links = dedupedLinks
-        .sort((a, b) => (b.weight - a.weight) || a.target.localeCompare(b.target))
-        .filter((entry) => {
-          const target = normalizeConceptKey(entry.target);
-          const pairKey = [concept, target].sort((a, b) => a.localeCompare(b)).join("::");
-          if (displayedPairs.has(pairKey)) return false;
-          displayedPairs.add(pairKey);
-          connectedNodes.add(concept);
-          connectedNodes.add(target);
-          return true;
-        })
-        .slice(0, 3);
-      if (shouldHideWeakVariant(concept, links)) return "";
-      if (!links.length && connectedNodes.has(concept)) return "";
-      const children = links.length
-        ? `<ul class="concept-network-links">${links.map((entry) => `<li><span class="concept-link-line"></span><span class="concept-node-badge">${escHtml(displayConceptLabel(entry.target))}</span></li>`).join("")}</ul>`
-        : `<p class="knowledge-sub concept-network-empty">Ingen sterke koblinger registrert for dette begrepet ennå.</p>`;
-      return `<li class="concept-network-item"><span class="concept-node-badge">${escHtml(displayConceptLabel(concept))}</span>${children}</li>`;
-    }).filter(Boolean).join("");
+    if (!rows) {
+      return "<p class='knowledge-sub'>For få koblinger til å bygge nettverk ennå.</p>";
+    }
 
     return `<div class="concept-network" aria-label="Begrepsnettverk">
       <ul class="concept-network-list">${rows}</ul>
@@ -3313,6 +3289,7 @@
     const safeList = Array.isArray(payload.list) ? payload.list : [];
     const safeInsightCards = Array.isArray(payload.insightCards) ? payload.insightCards : [];
     const safePath = Array.isArray(payload.path) ? payload.path : [];
+    const cleanPreviewText = (value) => cleanArticleText(String(value || "")).replace(/\s+/g, " ").trim();
     host.innerHTML = `
       <div class="auto-output-head">
         <h2>AHA etterarbeid</h2>
@@ -3321,18 +3298,18 @@
       <section class="auto-output-group" data-group="samtale">
         <h3>Samtale</h3>
         <div class="auto-output-grid">
-          <article class="auto-card" data-auto-card="reflekter"><h4>Refleksjon</h4><p>${escHtml(payload.reflection)}</p></article>
-          <article class="auto-card" data-auto-card="sorter"><h4>Sortering</h4><ul>${safeSortItems.map((item)=>`<li><strong>${escHtml(item?.label)}:</strong> ${escHtml(item?.text)}</li>`).join("")}</ul></article>
-          <article class="auto-card" data-auto-card="oppsummer"><h4>Dagsoppsummering</h4><p>${escHtml(payload.day)}</p></article>
-          <article class="auto-card" data-auto-card="sorter_tanker"><h4>Tankesortering</h4><p><strong>Hovedspor:</strong> ${escHtml(payload?.thoughts?.hovedspor)}</p><p><strong>Løse tanker:</strong> ${escHtml(payload?.thoughts?.lose_tanker)}</p><p><strong>Mulig neste steg:</strong> ${escHtml(payload?.thoughts?.neste_steg)}</p></article>
+          <article class="auto-card" data-auto-card="reflekter"><h4>Refleksjon</h4><p>${escHtml(cleanPreviewText(payload.reflection))}</p></article>
+          <article class="auto-card" data-auto-card="sorter"><h4>Sortering</h4><ul>${safeSortItems.map((item)=>`<li><strong>${escHtml(cleanPreviewText(item?.label))}:</strong> ${escHtml(cleanPreviewText(item?.text))}</li>`).join("")}</ul></article>
+          <article class="auto-card" data-auto-card="oppsummer"><h4>Dagsoppsummering</h4><p>${escHtml(cleanPreviewText(payload.day))}</p></article>
+          <article class="auto-card" data-auto-card="sorter_tanker"><h4>Tankesortering</h4><p><strong>Hovedspor:</strong> ${escHtml(cleanPreviewText(payload?.thoughts?.hovedspor))}</p><p><strong>Løse tanker:</strong> ${escHtml(cleanPreviewText(payload?.thoughts?.lose_tanker))}</p><p><strong>Mulig neste steg:</strong> ${escHtml(cleanPreviewText(payload?.thoughts?.neste_steg))}</p></article>
         </div>
       </section>
       <section class="auto-output-group" data-group="struktur">
         <h3>Struktur</h3>
         <div class="auto-output-grid">
-          <article class="auto-card" data-auto-card="lag_liste"><h4>Liste</h4><ul>${safeList.map((point)=>`<li>${escHtml(point)}</li>`).join("")}</ul></article>
-          <article class="auto-card" data-auto-card="lag_innsikt"><h4>Innsikt</h4><ul>${safeInsightCards.map((point)=>`<li>${escHtml(point)}</li>`).join("")}</ul></article>
-          <article class="auto-card" data-auto-card="lag_laringssti"><h4>Læringssti</h4><ol>${safePath.map((step)=>`<li>${escHtml(step)}</li>`).join("")}</ol></article>
+          <article class="auto-card" data-auto-card="lag_liste"><h4>Liste</h4><ul>${safeList.map((point)=>`<li>${escHtml(cleanPreviewText(point))}</li>`).join("")}</ul></article>
+          <article class="auto-card" data-auto-card="lag_innsikt"><h4>Innsikt</h4><ul>${safeInsightCards.map((point)=>`<li>${escHtml(cleanPreviewText(point))}</li>`).join("")}</ul></article>
+          <article class="auto-card" data-auto-card="lag_laringssti"><h4>Læringssti</h4><ol>${safePath.map((step)=>`<li>${escHtml(cleanPreviewText(step))}</li>`).join("")}</ol></article>
         </div>
       </section>
       <div class="auto-output-actions">
