@@ -1406,13 +1406,17 @@
   function normalizeAcademicAfterworkPayload(payload, sourceText, textType) {
     const safePayload = payload && typeof payload === "object" ? payload : {};
     const src = String(sourceText || "");
-    const combined = `${src} ${safePayload.reflection || ""} ${(Array.isArray(safePayload.sortItems) ? safePayload.sortItems : []).map((item) => `${item?.label || ""} ${item?.text || ""}`).join(" ")}`;
-    const publicAdminSignal = detectPublicAdministrationReformSignal(combined);
-    const hasPublicAdminSignal = Boolean(publicAdminSignal?.strong);
+    const payloadSignalText = `${safePayload.reflection || ""} ${(Array.isArray(safePayload.sortItems) ? safePayload.sortItems : []).map((item) => `${item?.label || ""} ${item?.text || ""}`).join(" ")}`;
+    const publicAdminSignal = detectPublicAdministrationReformSignal(src);
+    const payloadPublicAdminSignal = detectPublicAdministrationReformSignal(payloadSignalText);
+    const hasStrongSourceSahelMali = /(sahel|mali|politisk økologi|knapphetsskolen|ressursknapphet|miljødegradering)/i.test(src);
+    const hasStrongPayloadSahelMali = /(sahel|mali|politisk økologi|knapphetsskolen|ressursknapphet|miljødegradering)/i.test(payloadSignalText);
+    const sourceWeakOrEmpty = src.trim().length < 25;
+    const hasSahelMali = hasStrongSourceSahelMali || (sourceWeakOrEmpty && hasStrongPayloadSahelMali);
+    const hasPublicAdminSignal = Boolean(publicAdminSignal?.strong) || (sourceWeakOrEmpty && Boolean(payloadPublicAdminSignal?.strong));
     const isAcademic = textType === "academic_article" || hasAcademicSignals(safePayload, src) || hasPublicAdminSignal;
     if (!isAcademic) return safePayload;
 
-    const hasSahelMali = /(sahel|mali|politisk økologi|knapphetsskolen|ressursknapphet|miljødegradering)/i.test(combined);
     const isPublicAdmin = hasPublicAdminSignal && !hasSahelMali;
     const reflection = isPublicAdmin
       ? "Teksten undersøker om NAVs måloppnåelse best forklares av midlertidige omstillingskostnader eller mer varige strukturelle utfordringer i styring, organisering og stat–kommune-samspill. Den sentrale bevegelsen går fra en implementeringsforklaring til en strukturell analyse av forenklingsarbeid, statlig styring og motstridende mål mellom stat og kommune. Analysen bygger på data og argumentasjon i artikkelen og peker på at utfordringene ikke kan forstås som midlertidig reformstøy alene. Den faglige spenningen ligger mellom omstillingskostnad og strukturell forklaring."
@@ -1537,12 +1541,42 @@
       return fallback;
     };
 
+    const sourceHasPublicAdmin = Boolean(detectPublicAdministrationReformSignal(text)?.strong);
+    const sourceHasSahelMali = /(sahel|mali|politisk økologi|knapphetsskolen|ressursknapphet|miljødegradering)/i.test(text);
+    const domainBlockedTerms = sourceHasPublicAdmin
+      ? /(knapphetsskolen|politisk økologi|sahel|mali|ressursknapphet|miljødegradering)/i
+      : (sourceHasSahelMali ? /(nav|offentlig forvaltning|velferdsstat|arbeidslinja|bakkebyråkrati|stat–kommune|stat-kommune)/i : null);
+
     return [
       { title: "Hovedinnsikt", summary: pick("hovedinnsikt", "Teksten argumenterer for en sammensatt forklaring av konflikt."), concepts: ["dominerende narrativ", "empirisk forskning"], candidate_type: "synthetic" },
       { title: "Hovedargument", summary: pick("hovedargument", "Konfliktutvikling forklares best gjennom politikk, historie og maktforhold."), concepts: ["politisk marginalisering", "historisk kontekst", "statens politikk"], candidate_type: "synthetic" },
       { title: "Motargument/kritikk", summary: pick("motargument", "Lineære knapphetsforklaringer kritiseres for svak empirisk forklaringskraft."), concepts: ["knapphetsskolen", "miljøsikkerhet", "ressursknapphet"], candidate_type: "synthetic" },
       { title: "Spenning i teksten", summary: pick("spenning", "Spenningen står mellom miljø-knapphetsforklaring og politisk-økologisk analyse."), concepts: ["politisk økologi", "environmental security", "makt- og produksjonsforhold"], candidate_type: "synthetic" }
-    ].filter((card) => String(card?.summary || "").trim()).filter((card) => !isFragmentaryInsightCard(card));
+    ]
+      .filter((card) => String(card?.summary || "").trim())
+      .filter((card) => !isFragmentaryInsightCard(card))
+      .filter((card) => {
+        if (!domainBlockedTerms) return true;
+        const body = `${card?.title || ""} ${card?.summary || ""} ${(Array.isArray(card?.concepts) ? card.concepts : []).join(" ")}`;
+        return !domainBlockedTerms.test(body);
+      });
+  }
+
+
+
+  function filterDomainInsightCards(cards, sourceText) {
+    const list = Array.isArray(cards) ? cards : [];
+    const src = String(sourceText || "");
+    const sourceHasPublicAdmin = Boolean(detectPublicAdministrationReformSignal(src)?.strong);
+    const sourceHasSahelMali = /(sahel|mali|politisk økologi|knapphetsskolen|ressursknapphet|miljødegradering)/i.test(src);
+    const blocked = sourceHasPublicAdmin
+      ? /(knapphetsskolen|politisk økologi|sahel|mali|ressursknapphet|miljødegradering)/i
+      : (sourceHasSahelMali ? /(nav|offentlig forvaltning|velferdsstat|arbeidslinja|bakkebyråkrati|stat–kommune|stat-kommune)/i : null);
+    if (!blocked) return list;
+    return list.filter((card) => {
+      const body = `${card?.title || ""} ${card?.summary || ""} ${(Array.isArray(card?.concepts) ? card.concepts : []).join(" ")}`;
+      return !blocked.test(body);
+    });
   }
 
   function getDisplayInsights() {
@@ -1550,17 +1584,18 @@
       const insights = currentInsights();
       const filtered = insights.filter((ins) => !isFragmentaryInsightCard(ins));
       const context = readLatestAcademicContext();
-      if (context?.textType !== "academic_article") return filtered;
+      const domainFiltered = filterDomainInsightCards(filtered, context?.sourceText || "");
+      if (context?.textType !== "academic_article") return domainFiltered;
 
-      const synthetic = buildAcademicSyntheticInsightCards();
+      const synthetic = filterDomainInsightCards(buildAcademicSyntheticInsightCards(), context?.sourceText || "");
       if (synthetic.length >= 4) return synthetic.slice(0, 4);
-      if (synthetic.length > 0 && filtered.length < 4) return synthetic;
-      if (synthetic.length > 0 && !filtered.length) return synthetic;
+      if (synthetic.length > 0 && domainFiltered.length < 4) return synthetic;
+      if (synthetic.length > 0 && !domainFiltered.length) return synthetic;
 
-      const strong = filtered.filter((ins) => /hoved|argument|kritikk|spenning|teori|synt/i.test(`${ins?.title || ""} ${ins?.summary || ""}`));
+      const strong = domainFiltered.filter((ins) => /hoved|argument|kritikk|spenning|teori|synt/i.test(`${ins?.title || ""} ${ins?.summary || ""}`));
       if (strong.length >= 2) return strong.slice(0, 4);
       if (strong.length) return strong;
-      return filtered;
+      return domainFiltered;
     } catch (err) {
       console.warn("Kunne ikke bygge innsiktsvisning", err);
       try {
