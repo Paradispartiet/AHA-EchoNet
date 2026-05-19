@@ -1207,8 +1207,11 @@
     return text
       .replace(/\bnavkontore\b/gi, "NAV-kontorene")
       .replace(/\bnavkontorene\b/gi, "NAV-kontorene")
+      .replace(/\bnavkontorer\b/gi, "NAV-kontorene")
       .replace(/\bnav-kontorene\b/gi, "NAV-kontorene")
+      .replace(/\bnav-kontorer\b/gi, "NAV-kontorene")
       .replace(/\bnav reformen\b/gi, "NAV-reformen")
+      .replace(/\bnavreformen\b/gi, "NAV-reformen")
       .replace(/\bnav-reformen\b/gi, "NAV-reformen");
   }
 
@@ -1381,12 +1384,13 @@
     const tNorm = normalizedInsightComparableText(title);
     const sNorm = normalizedInsightComparableText(summary);
     const overlap = tNorm && sNorm && (tNorm === sNorm || tNorm.includes(sNorm) || sNorm.includes(tNorm));
-    const fragmentSignals = /(erfari|marginali|forklari|ressursknapphe|miljødegrader|politisk økolo)$/i;
+    const fragmentSignals = /(erfari|marginali|forklari|ressursknapphe|miljødegrader|politisk økolo|manglende må|forståelsen av|implikasjonene av vår analyse)$/i;
     const weakTitle = title.split(/\s+/).length <= 3 && !/[.!?…:]/.test(title);
     const repeatedEllipsis = /…/.test(summary) && overlap;
-    const missingClaim = !/[.!?…]/.test(summary) && summary.split(/\s+/).length < 8;
+    const missingClaim = !/[.!?…]/.test(summary) && summary.split(/\s+/).length < 10;
+    const trailingFragment = /(manglende må|forståelsen av|implikasjonene av vår analyse|^vi diskuterer implikasjonene)/i.test(summary);
     const titleHasTruncatedSignal = title.split(/\s+/).length > 3 && endsMidWord(title);
-    return titleHasTruncatedSignal || endsMidWord(summary) || fragmentSignals.test(title) || fragmentSignals.test(summary) || (overlap && weakTitle) || repeatedEllipsis || (weakTitle && missingClaim);
+    return titleHasTruncatedSignal || endsMidWord(summary) || fragmentSignals.test(title) || fragmentSignals.test(summary) || trailingFragment || (overlap && weakTitle) || repeatedEllipsis || (weakTitle && missingClaim);
   }
 
   function hasAcademicSignals(payload, sourceText) {
@@ -1417,13 +1421,11 @@
     const academicSortItems = isPublicAdmin
       ? [
           { label: "Problemstilling", text: "Hvorfor har NAV-kontorene ikke nådd målene om flere i arbeid og aktivitet i samme grad som forventet?" },
-          { label: "Hovedpåstand", text: "Måloppnåelsen forklares ikke bare av oppstart og omstilling, men av mer varige strukturelle utfordringer." },
-          { label: "Alternativ forklaring", text: "Artikkelen tester om negative effekter primært skyldes turbulent reformimplementering." },
-          { label: "Metode/data", text: "Analysen bygger på kvalitative og kvantitative data, inkludert funn fra NAV-kontorer og reformforskning." },
-          { label: "Funn", text: "Forenklingsarbeid, styringspraksis og målkonflikter mellom stat og kommune trekkes frem som sentrale forklaringer." },
-          { label: "Faglig spenning", text: "omstillingskostnad ↔ strukturell utfordring; statlig styring ↔ kommunalt partnerskap." },
-          { label: "Implikasjon", text: "NAV-reformen krever organisatoriske og styringsmessige grep, ikke bare mer tid i implementeringsfasen." },
-          { label: "Neste analysegrep", text: "Skille tydeligere mellom midlertidige implementeringsproblemer og varige strukturelle mekanismer i NAV-kontorene." }
+          { label: "Hovedforklaring", text: "Tidligere forklaringer vektlegger omstillingsprosessen ved etableringen av NAV-kontorene." },
+          { label: "Alternativ forklaring", text: "Artikkelen peker på mer langsiktige strukturelle utfordringer i lokalkontorene." },
+          { label: "Empirisk grunnlag", text: "Analysen bygger på kvalitative og kvantitative data fra NAV-kontorer, inkludert prosess- og effektdata." },
+          { label: "Strukturelle utfordringer", text: "Forenklingsarbeid, styringspraksis og målkonflikter mellom stat og kommune trekkes frem som sentrale forklaringer." },
+          { label: "Implikasjon / videre analyse", text: "NAV-reformen krever organisatoriske og styringsmessige grep, ikke bare mer tid i implementeringsfasen." }
         ]
       : [
           { label: "Problemstilling", text: String((safePayload.sortItems || []).find((item) => /problem|hovedinnsikt/i.test(String(item?.label || "")))?.text || "Hva er den sentrale faglige problemstillingen i teksten?").trim() },
@@ -2487,17 +2489,32 @@
     const pronounCount = (text.match(/\bjeg\b/g) || []).length;
     const hasDiaryShape = pronounCount >= 2 && sentenceCount >= 3;
 
+    const hasAbstractHeader = /(^|\n)\s*sammendrag\b/i.test(raw || "");
+    const hasKeywordsHeader = /(^|\n)\s*nøkkelord\s*:/i.test(raw || "");
     const academicSignals = {
       theorists: /(homer-?dixon|peluso|watts|boserup|kaplan|gleditsch|salehyan|barnett|said)/i.test(text),
       years: /\b(19|20)\d{2}\b/.test(text),
       coreTerms: /(ressursknapphet|politisk økologi|miljødegradering|knapphetsskolen|sahel|mali|miljøsikkerhet|environmental security)/i.test(text),
       citations: /\bifølge\b|\bviser til\b|\(([A-ZÆØÅ][A-Za-zÆØÅæøå-]+(?:\s*&\s*[A-ZÆØÅ][A-Za-zÆØÅæøå-]+)?\s+(?:19|20)\d{2}[a-z]?)\)/.test(raw || ""),
-      articleMarkers: /(i denne artikkelen|casestudier|internasjonal forskning|klimadata|kritikk av|presenterer jeg)/i.test(text),
-      modelDebate: /(på den ene siden|på den andre siden|kritiserer|forklaringsmodell|alternativ forklaring|drøfter|innvending)/i.test(text)
+      articleMarkers: /(i denne artikkelen|casestudier|internasjonal forskning|klimadata|kritikk av|presenterer jeg|denne artikkelen drøfter|vi drøfter|vi diskuterer|analyse|implikasjoner)/i.test(text),
+      modelDebate: /(på den ene siden|på den andre siden|kritiserer|forklaringsmodell|alternativ forklaring|drøfter|innvending)/i.test(text),
+      abstractAndKeywords: hasAbstractHeader && hasKeywordsHeader,
+      abstractAndArticle: hasAbstractHeader && /i denne artikkelen|denne artikkelen drøfter|vi drøfter|vi diskuterer/i.test(text),
+      mixedMethods: /kvalitative og kvantitative data|kvalitative data|kvantitative data|empiriske data/i.test(text),
+      publicAdminTerms: /nav-reformen|navreformen|nav-kontor|navkontor|lokalkontor|måloppnåelse|organisering|implementering|statlig styring|kommunale målsetninger|virkemidler|prosessevaluering|effektevaluering|organisasjonsreform|velferdsdirektorat|stat og kommune|partnerskap mellom stat og kommune|omstilling|reform/i.test(text)
     };
-    const academicScore = Object.values(academicSignals).reduce((sum, hit) => sum + (hit ? 1 : 0), 0);
-    const hasAcademicHardOverride = academicScore >= 3 && (academicSignals.coreTerms || academicSignals.theorists);
-    if (hasAcademicHardOverride) return "academic_article";
+    const academicScore = Object.entries(academicSignals).reduce((sum, [key, hit]) => {
+      if (!hit) return sum;
+      if (key === "abstractAndKeywords" || key === "abstractAndArticle" || key === "mixedMethods") return sum + 2;
+      if (key === "publicAdminTerms") return sum + 1.5;
+      return sum + 1;
+    }, 0);
+    const hasAcademicHardOverride = academicScore >= 5 && (academicSignals.coreTerms || academicSignals.theorists || academicSignals.publicAdminTerms || academicSignals.abstractAndKeywords || academicSignals.mixedMethods);
+    const hasAcademicComboOverride = (academicSignals.abstractAndKeywords && academicSignals.articleMarkers)
+      || (academicSignals.abstractAndArticle)
+      || (academicSignals.mixedMethods && (academicSignals.articleMarkers || academicSignals.publicAdminTerms))
+      || (/nav-reformen|navreformen/i.test(text) && hasKeywordsHeader && /i denne artikkelen/i.test(text));
+    if (hasAcademicHardOverride || hasAcademicComboOverride) return "academic_article";
 
     const hasStrongOpinion = opinionScore >= 5 || ((opinionEvidence.hasPoliticalActor || opinionEvidence.hasParty) && (opinionEvidence.hasClimateTransition || opinionEvidence.hasOilFossil || opinionEvidence.hasNatureProtection));
     if (hasStrongOpinion) return "opinion_article";
