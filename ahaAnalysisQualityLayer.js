@@ -124,6 +124,125 @@
     });
   }
 
+  function normalizeSectionHeading(value) {
+    return String(value || "")
+      .toLowerCase()
+      .replace(/[–—]/g, "-")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function isStructuredHeading(line) {
+    const heading = normalizeSectionHeading(line).replace(/:$/, "");
+    return /^(kort svar|hva aha ser|begreper ?\/ ?mønstre|neste beste spørsmål(?: eller læringssteg)?|neste læringssteg)$/.test(heading);
+  }
+
+  function canonicalStructuredHeading(value) {
+    const heading = normalizeSectionHeading(value).replace(/^\d+\.\s*/, "").replace(/:$/, "");
+    if (heading === "kort svar") return "Kort svar";
+    if (heading === "hva aha ser") return "Hva AHA ser";
+    if (heading === "begreper / mønstre" || heading === "begreper/mønstre") return "Begreper / mønstre";
+    if (/^neste beste spørsmål(?: eller læringssteg)?$/.test(heading) || heading === "neste læringssteg") return "Neste læringssteg";
+    return "";
+  }
+
+  function normalizeStructuredAhaMarkers(text) {
+    const markerRegex = /(?:^|[\s,;])((?:[1-4]\.\s*)?(?:Kort svar|Hva AHA ser|Begreper\s*\/\s*mønstre|Neste beste spørsmål(?:\s*eller\s*læringssteg)?|Neste læringssteg))\s*:?\s*/gi;
+    return String(text || "")
+      .replace(/\r/g, "")
+      .replace(markerRegex, (full, marker, offset) => `${offset === 0 ? "" : "\n"}${marker} `)
+      .replace(/\n{2,}/g, "\n")
+      .trim();
+  }
+
+  function splitStructuredSectionItems(text, title) {
+    const cleaned = String(text || "").replace(/^[-•*]\s*/, "").trim();
+    if (!cleaned) return [];
+    if (title === "Kort svar") return [cleaned];
+    return cleaned
+      .split(/\s(?:-|•|;)\s/g)
+      .map((item) => item.replace(/^[-•*]\s*/, "").trim())
+      .filter(Boolean);
+  }
+
+  function parseStructuredAhaText(text) {
+    const normalized = normalizeStructuredAhaMarkers(text);
+    const lines = normalized.split("\n").map((line) => line.trim()).filter(Boolean);
+    const firstHeadingIndex = lines.findIndex((line) => {
+      const headingOnly = line.match(/^\d*\.*\s*(Kort svar|Hva AHA ser|Begreper\s*\/\s*mønstre|Neste beste spørsmål(?:\s*eller\s*læringssteg)?|Neste læringssteg)\b/i);
+      return Boolean(headingOnly);
+    });
+    if (firstHeadingIndex < 0) return null;
+    const workingLines = lines.slice(firstHeadingIndex);
+    const sections = [];
+    let current = null;
+    workingLines.forEach((line) => {
+      const match = line.match(/^\s*(\d+\.\s*)?(Kort svar|Hva AHA ser|Begreper\s*\/\s*mønstre|Neste beste spørsmål(?:\s*eller\s*læringssteg)?|Neste læringssteg)\s*:?\s*(.*)$/i);
+      if (match) {
+        current = { title: canonicalStructuredHeading(`${match[1] || ""}${match[2]}`), items: [] };
+        if (current.title) sections.push(current);
+        const inlineContent = String(match[3] || "").trim();
+        if (inlineContent && current?.title) {
+          current.items.push(...splitStructuredSectionItems(inlineContent, current.title));
+        }
+        return;
+      }
+      if (!current) return;
+      if (/^[1-4]\.$/.test(line)) return;
+      current.items.push(...splitStructuredSectionItems(line, current.title));
+    });
+    if (!sections.length) return null;
+    const hasCore = sections.some((section) => section.title === "Kort svar")
+      && sections.some((section) => section.title === "Hva AHA ser")
+      && sections.some((section) => section.title === "Begreper / mønstre");
+    if (!hasCore) return null;
+    return sections.filter((section) => section.items.length);
+  }
+
+  function buildStructuredAhaAnswer(sections) {
+    const wrapper = document.createElement("div");
+    wrapper.className = "aha-structured-answer";
+    wrapper.dataset.ahaStructured = "true";
+    sections.forEach((section) => {
+      const block = document.createElement("section");
+      block.className = "aha-structured-section";
+      const heading = document.createElement("h4");
+      heading.textContent = section.title;
+      block.appendChild(heading);
+      if (section.title === "Kort svar") {
+        const paragraph = document.createElement("p");
+        paragraph.textContent = section.items.join(" ");
+        block.appendChild(paragraph);
+      } else {
+        const list = document.createElement("ul");
+        section.items.forEach((item) => {
+          const li = document.createElement("li");
+          li.textContent = item;
+          list.appendChild(li);
+        });
+        block.appendChild(list);
+      }
+      wrapper.appendChild(block);
+    });
+    return wrapper;
+  }
+
+  function formatStructuredAhaAnswer(root) {
+    const candidates = Array.from(root.querySelectorAll?.(".aha-source-followup, .chat-line, .afterwork-entry, .aha-afterwork-entry, .saved-afterwork-entry, .auto-output-body, .chat-bubble") || []);
+    candidates.forEach((el) => {
+      if (!el || el.dataset?.ahaStructured === "true") return;
+      if (el.closest(".aha-source-full, .aha-citation-section, .aha-structured-answer")) return;
+      if (el.querySelector(".aha-structured-answer")) return;
+      if (el.children.length && !el.classList.contains("aha-source-followup") && !el.classList.contains("auto-output-body") && !el.classList.contains("chat-bubble")) return;
+      const text = String(el.textContent || "").trim();
+      if (text.length < 60 || text.length > 4000) return;
+      const sections = parseStructuredAhaText(text);
+      if (!sections) return;
+      el.dataset.ahaStructured = "true";
+      el.replaceChildren(buildStructuredAhaAnswer(sections));
+    });
+  }
+
   function findMetaSection(root, labelPart) {
     const needle = String(labelPart || "").toLowerCase();
     return Array.from(root.querySelectorAll?.(".meta-section") || []).find((section) =>
@@ -156,7 +275,13 @@
     const focus = findMetaSection(profile, "foreløpige hovedbegreper") || findMetaSection(profile, "det du tenker mest på");
     const emerging = findMetaSection(profile, "nye signaler") || findMetaSection(profile, "nye temaer");
     if (!focus || !emerging) return;
-    if (sectionItemKeys(focus) === sectionItemKeys(emerging)) emerging.remove();
+    const focusItems = sectionItemKeys(focus).split("|").filter(Boolean);
+    const emergingItems = sectionItemKeys(emerging).split("|").filter(Boolean);
+    if (!focusItems.length || !emergingItems.length) return;
+    const focusSet = new Set(focusItems);
+    const overlap = emergingItems.filter((item) => focusSet.has(item)).length;
+    const overlapRatio = overlap / emergingItems.length;
+    if (sectionItemKeys(focus) === sectionItemKeys(emerging) || overlapRatio >= 0.75) emerging.remove();
   }
 
   function removeWeakConceptRows(root) {
@@ -164,14 +289,16 @@
     if (!scopedSections.length) scopedSections.push(root);
     scopedSections.forEach((section) => {
       const sectionLabel = getSectionLabel(section).toLowerCase();
-      if (!/foreløpige hovedbegreper|det du tenker mest på|nye signaler|nye temaer/.test(sectionLabel)) return;
+      if (!/foreløpige hovedbegreper|det du tenker mest på|nye signaler|nye temaer|kunnskapskart/.test(sectionLabel)) return;
       const text = String(section.textContent || "").toLowerCase();
       const hasPoliticalEcology = text.includes("politisk økologi");
       const hasResourceScarcity = text.includes("ressursknapphet") || text.includes("knapphetsskolen");
+      const hasPoliticalHistoric = /politisk[-\s]historisk/.test(text) || /politisk[-\s]historisk forklaring/.test(text);
       section.querySelectorAll?.("li").forEach((item) => {
         const raw = String(item.textContent || "").replace(/\s+/g, " ").trim().toLowerCase();
-        if (hasPoliticalEcology && /^økologi\b/.test(raw)) item.remove();
+        if (hasPoliticalEcology && /^økologi\b/.test(raw) && !/^politisk økologi\b/.test(raw)) item.remove();
         if (hasResourceScarcity && /^knapphet\b/.test(raw)) item.remove();
+        if (hasPoliticalHistoric && (/^politisk\b/.test(raw) || /^historisk\b/.test(raw))) item.remove();
       });
     });
   }
@@ -218,10 +345,13 @@
 
     root.querySelectorAll?.(".concept-network").forEach((network) => {
       if (network.querySelector(".concept-network-item")) return;
-      const replacement = document.createElement("p");
-      replacement.className = "knowledge-sub";
-      replacement.textContent = "Sterkeste koblinger vises over. For få sikre koblingslinjer til eget begrepsnettverk ennå.";
-      network.replaceWith(replacement);
+      const fallbackText = String(network.textContent || "").replace(/\s+/g, " ").trim().toLowerCase();
+      const isFallbackOnly = !fallbackText
+        || fallbackText.includes("for få sikre koblingslinjer")
+        || fallbackText.includes("sterkeste koblinger vises over");
+      if (isFallbackOnly) {
+        network.closest(".meta-section, .knowledge-card, .panel-card")?.remove() || network.remove();
+      }
     });
   }
 
@@ -355,6 +485,7 @@
     if (!root) return;
     collapseLongSourceBlocks(root);
     fixTextNodes(root);
+    formatStructuredAhaAnswer(root);
     relabelClaimSections(root);
     relabelAcademicAutoOutput(root);
     formatCitationRuns(root);
@@ -406,6 +537,11 @@
       .aha-citation-section h4 { margin: 0 0 6px; font-size: 12px; color: var(--aha-accent, #ffd347); }
       .aha-citation-section ul { margin: 0; padding-left: 18px; display: grid; gap: 5px; }
       .aha-citation-section li { font-size: 12px; line-height: 1.42; color: var(--aha-text, #f5f5f5); }
+      .aha-structured-answer { display: grid; gap: 10px; margin: 6px 0; }
+      .aha-structured-section { padding: 8px 10px; border: 1px solid var(--aha-border, rgba(255,255,255,.12)); border-radius: 10px; background: rgba(255,255,255,.02); }
+      .aha-structured-section h4 { margin: 0 0 6px; font-size: 12px; color: var(--aha-accent, #ffd347); letter-spacing: .01em; }
+      .aha-structured-section p { margin: 0; font-size: 12px; line-height: 1.45; color: var(--aha-text, #f5f5f5); }
+      .aha-structured-section ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
     `;
     document.head.appendChild(style);
   }
