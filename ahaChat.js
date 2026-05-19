@@ -1403,7 +1403,8 @@
     const safePayload = payload && typeof payload === "object" ? payload : {};
     const src = String(sourceText || "");
     const combined = `${src} ${safePayload.reflection || ""} ${(Array.isArray(safePayload.sortItems) ? safePayload.sortItems : []).map((item) => `${item?.label || ""} ${item?.text || ""}`).join(" ")}`;
-    const hasPublicAdminSignal = /(nav|offentlig forvaltning|forvaltnings|organisasjonsreform|innholdsreform|statlig styring|kommunale mål|måloppnåelse)/i.test(combined);
+    const publicAdminSignal = detectPublicAdministrationReformSignal(combined);
+    const hasPublicAdminSignal = Boolean(publicAdminSignal?.strong);
     const isAcademic = textType === "academic_article" || hasAcademicSignals(safePayload, src) || hasPublicAdminSignal;
     if (!isAcademic) return safePayload;
 
