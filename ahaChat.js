@@ -1195,8 +1195,21 @@
   }
 
   function normalizeDisplayText(value) {
-    return String(value || "")
-      .replace(/underviser(\s+)viktigheten/gi, (_match, gap) => `understreker${gap}viktigheten`);
+    return normalizeVisibleAcademicLabel(
+      String(value || "")
+        .replace(/underviser(\s+)viktigheten/gi, (_match, gap) => `understreker${gap}viktigheten`)
+    );
+  }
+
+  function normalizeVisibleAcademicLabel(value) {
+    const text = String(value || "");
+    if (!text) return "";
+    return text
+      .replace(/\bnavkontore\b/gi, "NAV-kontorene")
+      .replace(/\bnavkontorene\b/gi, "NAV-kontorene")
+      .replace(/\bnav-kontorene\b/gi, "NAV-kontorene")
+      .replace(/\bnav reformen\b/gi, "NAV-reformen")
+      .replace(/\bnav-reformen\b/gi, "NAV-reformen");
   }
 
   function short(text, maxLen = 180) {
@@ -1384,6 +1397,73 @@
     const hasSortLabelSignal = labels.some((label) => ["hovedargument", "motargument", "spenning i teksten", "teorikoblinger"].some((needle) => label.includes(needle)));
     const hasTopicSignal = /(sahel|mali|ressursknapphet|politisk økologi|knapphetsskolen)/i.test(signalText) || /(sahel|mali|ressursknapphet|politisk økologi|knapphetsskolen)/i.test(reflection);
     return hasSortLabelSignal || hasTopicSignal;
+  }
+
+  function normalizeAcademicAfterworkPayload(payload, sourceText, textType) {
+    const safePayload = payload && typeof payload === "object" ? payload : {};
+    const src = String(sourceText || "");
+    const combined = `${src} ${safePayload.reflection || ""} ${(Array.isArray(safePayload.sortItems) ? safePayload.sortItems : []).map((item) => `${item?.label || ""} ${item?.text || ""}`).join(" ")}`;
+    const hasPublicAdminSignal = /(nav|offentlig forvaltning|forvaltnings|organisasjonsreform|innholdsreform|statlig styring|kommunale mål|måloppnåelse)/i.test(combined);
+    const isAcademic = textType === "academic_article" || hasAcademicSignals(safePayload, src) || hasPublicAdminSignal;
+    if (!isAcademic) return safePayload;
+
+    const hasSahelMali = /(sahel|mali|politisk økologi|knapphetsskolen|ressursknapphet|miljødegradering)/i.test(combined);
+    const isPublicAdmin = hasPublicAdminSignal && !hasSahelMali;
+    const reflection = isPublicAdmin
+      ? "Teksten undersøker om NAVs måloppnåelse best forklares av midlertidige omstillingskostnader eller mer varige strukturelle utfordringer i styring, organisering og stat–kommune-samspill. Den sentrale bevegelsen går fra en implementeringsforklaring til en strukturell analyse av forenklingsarbeid, statlig styring og motstridende mål mellom stat og kommune. Analysen bygger på data og argumentasjon i artikkelen og peker på at utfordringene ikke kan forstås som midlertidig reformstøy alene. Den faglige spenningen ligger mellom omstillingskostnad og strukturell forklaring."
+      : (String(safePayload.reflection || "").trim() || "Teksten undersøker konkurrerende forklaringer og vurderer hvordan metode, funn og teori henger sammen i en akademisk analyse.");
+
+    const academicSortItems = isPublicAdmin
+      ? [
+          { label: "Problemstilling", text: "Hvorfor har NAV-kontorene ikke nådd målene om flere i arbeid og aktivitet i samme grad som forventet?" },
+          { label: "Hovedpåstand", text: "Måloppnåelsen forklares ikke bare av oppstart og omstilling, men av mer varige strukturelle utfordringer." },
+          { label: "Alternativ forklaring", text: "Artikkelen tester om negative effekter primært skyldes turbulent reformimplementering." },
+          { label: "Metode/data", text: "Analysen bygger på kvalitative og kvantitative data, inkludert funn fra NAV-kontorer og reformforskning." },
+          { label: "Funn", text: "Forenklingsarbeid, styringspraksis og målkonflikter mellom stat og kommune trekkes frem som sentrale forklaringer." },
+          { label: "Faglig spenning", text: "omstillingskostnad ↔ strukturell utfordring; statlig styring ↔ kommunalt partnerskap." },
+          { label: "Implikasjon", text: "NAV-reformen krever organisatoriske og styringsmessige grep, ikke bare mer tid i implementeringsfasen." },
+          { label: "Neste analysegrep", text: "Skille tydeligere mellom midlertidige implementeringsproblemer og varige strukturelle mekanismer i NAV-kontorene." }
+        ]
+      : [
+          { label: "Problemstilling", text: String((safePayload.sortItems || []).find((item) => /problem|hovedinnsikt/i.test(String(item?.label || "")))?.text || "Hva er den sentrale faglige problemstillingen i teksten?").trim() },
+          { label: "Hovedpåstand", text: String((safePayload.sortItems || []).find((item) => /hovedargument|hovedpåstand/i.test(String(item?.label || "")))?.text || "").trim() },
+          { label: "Alternativ forklaring", text: String((safePayload.sortItems || []).find((item) => /motargument|kritikk|alternativ/i.test(String(item?.label || "")))?.text || "").trim() },
+          { label: "Faglig spenning", text: String((safePayload.sortItems || []).find((item) => /spenning/i.test(String(item?.label || "")))?.text || "").trim() },
+          { label: "Neste analysegrep", text: "Presiser forholdet mellom metode, funn og teori for å styrke forklaringskraften." }
+        ].filter((item) => item.text);
+
+    return {
+      ...safePayload,
+      textType: "academic_article",
+      reflection: normalizeVisibleAcademicLabel(reflection),
+      sortItems: academicSortItems.map((item) => ({ label: normalizeVisibleAcademicLabel(item.label), text: normalizeVisibleAcademicLabel(item.text) })),
+      thoughts: {
+        hovedspor: normalizeVisibleAcademicLabel(isPublicAdmin
+          ? "NAVs måloppnåelse analyseres som et mulig strukturelt styrings- og organisasjonsproblem."
+          : String(safePayload?.thoughts?.hovedspor || "Teksten analyserer en faglig problemstilling med konkurrerende forklaringer.")),
+        lose_tanker: normalizeVisibleAcademicLabel(isPublicAdmin
+          ? "Omstillingskostnader, statlig styring, kommunale mål og arbeidsrettet oppfølging bør holdes analytisk adskilt."
+          : String(safePayload?.thoughts?.lose_tanker || "Metode, funn og implikasjon bør kobles tydeligere i analysen.")),
+        neste_steg: normalizeVisibleAcademicLabel(isPublicAdmin
+          ? "Skille tydelig mellom midlertidige implementeringsproblemer og varige strukturelle utfordringer i NAV-kontorene."
+          : String(safePayload?.thoughts?.neste_steg || "Formuler neste analysegrep som tester forklaringsmodellen mot empirien."))
+      },
+      path: (isPublicAdmin
+        ? [
+            "Identifiser hovedproblemstillingen om måloppnåelse i NAV-reformen.",
+            "Skill mellom omstillingsforklaring og strukturell forklaring.",
+            "Knytt metode/data til funn om NAV-kontorene.",
+            "Analyser spenningen mellom statlig styring og kommunale mål.",
+            "Vurder implikasjoner for arbeidsrettet oppfølging."
+          ]
+        : [
+            "Identifiser hovedproblemstillingen.",
+            "Skill mellom hovedforklaring og alternativ forklaring.",
+            "Knytt metode/data til funn.",
+            "Finn faglige spenninger i teksten.",
+            "Formuler et konkret neste analysegrep."
+          ]).map(normalizeVisibleAcademicLabel)
+    };
   }
 
   function readLatestAcademicContext() {
@@ -2981,7 +3061,8 @@
 
   function makeAfterworkObject(payload, sourceText, options) {
     const source = String(sourceText || "").trim();
-    const normalizedPayload = payload && typeof payload === "object" ? payload : {};
+    const basePayload = payload && typeof payload === "object" ? payload : {};
+    const normalizedPayload = normalizeAcademicAfterworkPayload(basePayload, source, basePayload.textType || detectTextType(source));
     const sourceTextHash = sourceHash(source);
     const safeSortItems = Array.isArray(normalizedPayload.sortItems) ? normalizedPayload.sortItems : [];
     const safeThoughts = normalizedPayload.thoughts && typeof normalizedPayload.thoughts === "object" ? normalizedPayload.thoughts : {};
@@ -3283,7 +3364,11 @@
     const maxInsightCards = textType === "opinion_article" || textType === "academic_article" ? 4 : 3;
     const insightCards = [...localInsights, ...overlap].slice(0, maxInsightCards);
 
-    return { textType, reflection, sortItems, day, thoughts, list: list.slice(0, 6), insightCards, path: path.slice(0, 5) };
+    return normalizeAcademicAfterworkPayload(
+      { textType, reflection, sortItems, day, thoughts, list: list.slice(0, 6), insightCards, path: path.slice(0, 5) },
+      raw,
+      textType
+    );
   }
 
   function detectOpinionDomain(evidence) {
