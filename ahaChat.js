@@ -22,8 +22,10 @@
   const WEAK_CONCEPT_WORDS = new Set(["illustrasjon","logo","annonsørinnhold","annonsorinnhold","annonse","sponset","les","også","ogsa","les også","les ogsa","årets","arets","populære","populaere","kjole","kjoler","bryllupsgjesten","sesongens","favoritter","finnes","egen","form","lærer","mennesker","blir","ikke","bare","over","ligger","lavt","noen","helt","ennå","norske","norsk","moderne","viktig","viktigste","store","små","nye","gamle","tydelig","særlig","mildt","sagt","refleksjon","innsikt","samtale","analyse","nødvendighet","nodvendighet"]);
   const GENERIC_DISPLAY_CONCEPTS = new Set(["kunnskap","forståelse","budskap","bekreftelse","sier","viser","dette","grunnlag","tillegg","verden","noen","videre","eksempel"]);
   const ACADEMIC_PHRASE_CONCEPTS = [
-    "politisk økologi","empirisk forskning","internasjonal forskning","dominerende narrativ","politisk narrativ","knapphetsskolen","miljøsikkerhet","environmental security","scarcity school","statens politikk","marginalisering av pastoralister","marginalisering","pastoralister","politisk-historisk forklaring","politisk og historisk","klimadrevet konflikt","klimaendringer og konflikter","malthusiansk forklaring","ressursknapphet","miljødegradering","miljøforringelse","nedbørsdata","klimadata","casestudier fra Mali","Sahel","Mali","Sahel-greening","ørkenspredning","tørke","global klimaendring","lokale forhold","forskningsgrunnlag","policy-momentum"
+    "politisk økologi","empirisk forskning","internasjonal forskning","dominerende narrativ","politisk narrativ","knapphetsskolen","miljøsikkerhet","environmental security","scarcity school","statens politikk","marginalisering av pastoralister","marginalisering","pastoralister","politisk-historisk forklaring","politisk og historisk","klimadrevet konflikt","klimaendringer og konflikter","malthusiansk forklaring","ressursknapphet","miljødegradering","miljøforringelse","nedbørsdata","klimadata","casestudier fra Mali","Sahel","Mali","Sahel-greening","ørkenspredning","tørke","global klimaendring","lokale forhold","forskningsgrunnlag","policy-momentum",
+    "nav-reformen","nav-kontorene","strukturelle utfordringer","manglende måloppnåelse","statlig styring","kommunale målsetninger","kommunale virkemidler","stat–kommune-partnerskap","partnerskap mellom stat og kommune","lokal organisering","arbeidsrettet oppfølging","omstillingskostnader","omstillingsprosess","organisasjonsreform","innholdsreform","kontorstørrelse","ytelsessaksbehandling","arbeidsavklaringspenger","arbeidsevnevurdering","forenklingsarbeid","standardisering og byråkrati","virksomhetsutvikling","reformeffekter","effektforskning","prosessevaluering","arbeidslinja","individuell oppfølging","brukerrettet bistand","lokal implementering"
   ];
+  const PUBLIC_ADMIN_GENERIC_SUBJECTS = new Set(["klima og omstilling","klima og konflikt","sahel og mali","afrikastudier","miljøsikkerhet","narrativer i internasjonal politikk"]);
   
   const ACADEMIC_THEORY_RULES = [
     {
@@ -770,6 +772,7 @@
     const source = String(text || "");
     if (!source.trim()) return [];
     const out = [];
+    const publicAdminSignal = detectPublicAdministrationReformSignal(source);
     ACADEMIC_THEORY_RULES.forEach((rule) => {
       if (rule?.key === "peluso_watts") return;
       if (!Array.isArray(rule?.triggers) || !rule.triggers.some((re) => re.test(source))) return;
@@ -794,6 +797,22 @@
         score: 0.76,
         connection: "Kobles til kritikken av enkel årsakskjede fra ressursknapphet via økonomisk nedgang og migrasjon til vold."
       });
+    }
+    if (publicAdminSignal.strong) {
+      const txt = source.toLowerCase();
+      const has = (arr) => arr.some((term) => txt.includes(term));
+      const hits = (arr) => arr.filter((term) => txt.includes(term)).length;
+      const addTheory = (thinker, theory, score, connection) => out.push({ thinker, theory, score, connection });
+      if (has(["bakkebyråkrati", "street-level bureaucracy"]) || (has(["nav-kontor", "lokalkontor", "arbeidsrettet oppfølging"]) && has(["individuell oppfølging", "brukerrettet bistand", "arbeidsrettet oppfølging"]))) addTheory("Michael Lipsky", "Bakkebyråkrati / street-level bureaucracy", 0.74, "Teksten handler om hvordan lokale frontlinjekontorer skal omsette sentrale mål og regler til individuell oppfølging av brukere.");
+      if (has(["implementering", "iverksetting", "reformgjennomføring", "etablering av nav-kontor", "prosessevaluering", "omstillingsprosess"])) addTheory("Implementeringsteori", "Implementeringsteori", 0.76, "Teksten analyserer hvordan reformmål omsettes i lokal praksis gjennom etablering, organisering og iverksetting.");
+      if (hits(["implementering", "iverksetting", "reform", "nav-kontor", "måloppnåelse", "flere i arbeid"]) >= 3) addTheory("Pressman & Wildavsky", "Implementeringsteori", 0.68, "Teksten kan forstås som en analyse av implementeringsgapet mellom reformintensjon og lokal måloppnåelse.");
+      if (has(["organisasjonsreform", "organisering", "organisatorisk design", "fusjonert", "samlokalisert", "kontorstørrelse", "virksomhetsutvikling"])) addTheory("Organisasjonsteori", "Organisasjonsteori", 0.76, "Teksten analyserer hvordan organisering, kontorstørrelse og arbeidsdeling påvirker NAV-kontorenes resultater.");
+      if (has(["partnerskap mellom stat og kommune", "stat og kommune", "stat–kommune", "statlige mål", "kommunale mål"]) && has(["strukturelle utfordringer", "styring", "kommunale virkemidler"])) addTheory("Institusjonell teori", "Institusjonell teori", 0.72, "Teksten viser hvordan ulike institusjonelle logikker og målstrukturer kan skape varige spenninger i NAV-kontorene.");
+      if (has(["institusjonell teori", "institusjonelle logikker", "offentlig organisering", "statlige mål", "kommunale mål"]) && has(["organisasjonsreform", "styring"])) addTheory("March & Olsen", "Institusjonell organisasjonsteori", 0.64, "Teksten kan kobles til institusjonell organisasjonsteori gjennom analysen av mål, regler og organisasjonslogikker.");
+      if (hits(["standardisering", "målstyring", "effektivisering", "forenkling", "direktorat", "statlig styring", "resultat", "måloppnåelse"]) >= 2) addTheory("New Public Management", "New Public Management", 0.68, "Teksten berører styrings- og standardiseringslogikker i offentlig reform, særlig forholdet mellom mål, resultater og lokal oppgaveløsning.");
+      if (hits(["new public management", "standardisering", "målstyring", "offentlig reform", "resultatstyring"]) >= 2) addTheory("Christopher Hood", "New Public Management", 0.62, "Teksten kan kobles til New Public Management gjennom vekt på styring, standardisering og resultatorientering i offentlig sektor.");
+      if (has(["partnerskap", "stat og kommune", "stat–kommune", "kommunale mål", "statlige mål"])) addTheory("Samstyring / governance", "Samstyring / governance", 0.74, "Teksten analyserer hvordan partnerskapet mellom stat og kommune skaper koordinerings- og styringsutfordringer.");
+      if (has(["nav-evalueringen", "prosessevaluering", "effektevaluering", "effektforskning", "negative effekter", "måloppnåelse"])) addTheory("Reformevaluering", "Reformevaluering", 0.73, "Teksten bygger på prosess- og effektdata for å vurdere om NAV-reformen har nådd sine mål.");
     }
     return out;
   }
@@ -951,7 +970,12 @@
       { from: "marginalisering", to: "pastoralister", left: ["marginalisering"], right: ["pastoralister"] },
       { from: "marginalisering av pastoralister", to: "statens politikk", left: ["marginalisering av pastoralister", "marginalisering"], right: ["statens politikk"], requires: ["pastoralister"] },
       { from: "miljøsikkerhet", to: "politisk økologi", left: ["miljøsikkerhet", "environmental security"], right: ["politisk økologi", "political ecology"] },
-      { from: "malthusiansk forklaring", to: "empirisk casestudie", left: ["malthusiansk", "knapphetsskolen", "ressursknapphet"], right: ["casestudier", "mali", "empirisk forskning"] }
+      { from: "malthusiansk forklaring", to: "empirisk casestudie", left: ["malthusiansk", "knapphetsskolen", "ressursknapphet"], right: ["casestudier", "mali", "empirisk forskning"] },
+      { from: "omstillingskostnader", to: "strukturelle utfordringer", left: ["omstillingskostnader", "omstillingsprosess"], right: ["strukturelle utfordringer"] },
+      { from: "statlig styring", to: "kommunale målsetninger", left: ["statlig styring", "statlige mål"], right: ["kommunale målsetninger", "kommunale virkemidler"] },
+      { from: "organisasjonsreform", to: "innholdsreform", left: ["organisasjonsreform"], right: ["innholdsreform"] },
+      { from: "arbeidsrettet oppfølging", to: "ytelsessaksbehandling", left: ["arbeidsrettet oppfølging"], right: ["ytelsessaksbehandling", "arbeidsavklaringspenger"] },
+      { from: "standardisering", to: "byråkrati", left: ["standardisering"], right: ["byråkrati"] }
     ];
     const conceptPool = new Set();
     const addConcept = (value) => {
@@ -976,7 +1000,10 @@
     extractAcademicPhraseConcepts(sourceText).forEach((phrase) => conceptPool.add(normalizeConceptKey(phrase)));
     const derivedEdges = [];
     const hasAny = (variants) => variants.some((variant) => conceptPool.has(normalizeConceptKey(variant)) || normalizedText.includes(normalizeConceptKey(variant)));
+    const isPublicAdmin = detectPublicAdministrationReformSignal(sourceText).strong;
     edgePhrasePairs.forEach((rule) => {
+      const isPublicRule = ["omstillingskostnader", "statlig styring", "organisasjonsreform", "arbeidsrettet oppfølging", "standardisering"].includes(rule.from);
+      if (isPublicRule && !isPublicAdmin) return;
       if (!hasAny(rule.left) || !hasAny(rule.right)) return;
       if (Array.isArray(rule.requires) && !hasAny(rule.requires)) return;
       const from = rule.from;
@@ -997,6 +1024,12 @@
       weakSingles.add("marginalisering");
       weakSingles.add("pastoralister");
     }
+    if (conceptKeys.has("strukturelle utfordringer") || conceptKeys.has("manglende måloppnåelse")) weakSingles.add("måloppnåelse");
+    if (conceptKeys.has("statlig styring")) weakSingles.add("styring");
+    if (conceptKeys.has("kommunale målsetninger")) weakSingles.add("retning");
+    if (conceptKeys.has("kontorstørrelse")) weakSingles.add("størrelse");
+    if (conceptKeys.has("arbeidsrettet oppfølging")) weakSingles.add("oppfølging");
+    if (conceptKeys.has("standardisering og byråkrati")) weakSingles.add("standardisering");
     return list
       .map((edge) => {
         const from = normalizeConceptKey(edge?.from);
@@ -1021,6 +1054,12 @@
       shouldHide.add("historisk");
     }
     if (keys.has("malthusiansk forklaring")) shouldHide.add("malthusiansk");
+    if (keys.has("strukturelle utfordringer") || keys.has("manglende måloppnåelse")) shouldHide.add("måloppnåelse");
+    if (keys.has("statlig styring")) shouldHide.add("styring");
+    if (keys.has("kommunale målsetninger")) shouldHide.add("retning");
+    if (keys.has("kontorstørrelse")) shouldHide.add("størrelse");
+    if (keys.has("arbeidsrettet oppfølging")) shouldHide.add("oppfølging");
+    if (keys.has("standardisering og byråkrati")) shouldHide.add("standardisering");
     return list.filter((item) => !shouldHide.has(normalizeAfterworkConcept(keyGetter(item))));
   }
 
@@ -1900,6 +1939,23 @@
     if (!pair.length) return false;
     return pair.some((concept) => focusSet.has(concept));
   }
+  function derivePublicAdministrationTensions(context) {
+    const sourceText = String(context?.text || "");
+    const signal = detectPublicAdministrationReformSignal(sourceText);
+    if (!signal.strong) return [];
+    const txt = sourceText.toLowerCase();
+    const has = (arr) => arr.some((term) => txt.includes(term));
+    const out = [];
+    const add = (title, strength) => out.push({ title, strength });
+    if (has(["omstillingskostnader", "omstillingsprosess"]) && has(["strukturelle utfordringer", "grunnleggende strukturelle"])) add("omstillingskostnad ↔ strukturell utfordring", 2.1);
+    if (has(["statlig styring", "statlige mål"]) && has(["kommune", "kommunale mål", "partnerskap"])) add("statlig styring ↔ kommunalt partnerskap", 2.0);
+    if (has(["standardisering", "byråkrati", "statlig styring"]) && has(["lokal organisering", "lokalkontor", "individuell oppfølging"])) add("standardisering ↔ lokal tilpasning", 1.9);
+    if (has(["organisasjonsreform"]) && has(["innholdsreform"])) add("organisasjonsreform ↔ innholdsreform", 2.2);
+    if (has(["flere i arbeid", "måloppnåelse"]) && has(["negative effekter", "mindre sannsynlighet for arbeid", "ugunstig retning"])) add("mål om flere i arbeid ↔ negative reformeffekter", 1.8);
+    if (has(["statlig styring", "direktorat", "reformdesign"]) && has(["lokal organisering", "nav-kontor", "iverksetting"])) add("sentralt reformdesign ↔ lokal implementering", 1.8);
+    if (has(["arbeidsrettet oppfølging", "oppfølgingsarbeid"]) && has(["ytelsessaksbehandling", "arbeidsavklaringspenger", "inntektssikring"])) add("arbeidsrettet oppfølging ↔ ytelsessaksbehandling", 2.0);
+    return out.slice(0, 5);
+  }
 
   function renderKnowledgeMapSection(chamber, profile) {
     const safeChamber = chamber && typeof chamber === "object" ? chamber : {};
@@ -1975,6 +2031,10 @@
         : conceptScoreTensions.length
           ? conceptScoreTensions
           : fallbackTensions;
+    const derivedPublicAdminTensions = derivePublicAdministrationTensions(conceptEdgeContext);
+    const mergedTensions = [...derivedPublicAdminTensions, ...visibleTensions]
+      .filter((item, index, arr) => arr.findIndex((other) => String(other?.title || "").toLowerCase() === String(item?.title || "").toLowerCase()) === index)
+      .slice(0, 5);
 
     return `<section class="knowledge-map-block">
       <h3>Kunnskapskart for hele chamberet</h3>
@@ -1999,7 +2059,7 @@
         </article>
         <article class="knowledge-card">
           <h4>Spenninger</h4>
-          ${visibleTensions.length ? `<ul>${visibleTensions.map((item) => `<li><strong>${escHtml(String(item?.title || "Ukjent"))}</strong> · styrke ${escHtml(String(item?.strength || 0))}</li>`).join("")}</ul>` : "<p class='knowledge-sub'>Ingen spenninger koblet til de nyeste temaene ennå.</p>"}
+          ${mergedTensions.length ? `<ul>${mergedTensions.map((item) => `<li><strong>${escHtml(String(item?.title || "Ukjent"))}</strong> · styrke ${escHtml(String(item?.strength || 0))}</li>`).join("")}</ul>` : "<p class='knowledge-sub'>Ingen spenninger koblet til de nyeste temaene ennå.</p>"}
         </article>
       </div>
     </section>`;
@@ -2814,6 +2874,40 @@
     }
     return list.slice(0, 12);
   }
+  function detectPublicAdministrationReformSignal(text) {
+    const normalizedText = cleanArticleText(text || "").toLowerCase();
+    const terms = [
+      ["nav", 2.2],["nav-reformen", 2.2],["nav-kontor", 2.0],["nav-kontorene", 2.0],["aetat", 1.6],["trygdeetaten", 1.6],["sosialtjenesten", 1.4],["stat og kommune", 2.0],["partnerskap", 1.2],["lokalkontor", 1.6],["arbeids- og velferdsdirektoratet", 1.8],["arbeidsrettet oppfølging", 2.0],["flere i arbeid", 1.6],["færre på trygd", 1.6],["måloppnåelse", 1.3],["omstillingsprosess", 1.4],["organisasjonsreform", 1.8],["innholdsreform", 1.8],["statlig styring", 1.8],["kommunale mål", 1.5],["kommunale virkemidler", 1.5],["ytelsessaksbehandling", 1.8],["arbeidsavklaringspenger", 1.5],["arbeidsevnevurdering", 1.4],["forenklingsarbeid", 1.4],["standardisering", 1.0],["byråkrati", 1.0],["reformevaluering", 1.5],["effektforskning", 1.3],["prosessevaluering", 1.3],["kontorstørrelse", 1.2],["lokal organisering", 1.4],["virksomhetsutvikling", 1.3]
+    ];
+    const matchedTerms = terms.filter(([term]) => normalizedText.includes(term));
+    const score = matchedTerms.reduce((sum, [, weight]) => sum + weight, 0);
+    const hasNAVCore = matchedTerms.some(([term]) => ["nav", "nav-reformen", "nav-kontor", "nav-kontorene"].includes(term));
+    const hasGovernanceCore = matchedTerms.some(([term]) => ["stat og kommune","statlig styring","kommunale mål","kommunale virkemidler","partnerskap"].includes(term));
+    const strong = score >= 5.2 && matchedTerms.length >= 3 && (hasNAVCore || hasGovernanceCore);
+    return { strong, score, matchedTerms: matchedTerms.map(([term]) => term) };
+  }
+  function enrichSubjectMatchesForPublicAdministration(text, subjectMatches) {
+    const list = Array.isArray(subjectMatches) ? subjectMatches.slice() : [];
+    const signal = detectPublicAdministrationReformSignal(text);
+    if (!signal.strong) return list.slice(0, 12);
+    const preferred = ["Offentlig forvaltning","Organisasjonsteori","Velferdsstat","NAV og arbeidslinja","Reform og implementering","Statlig styring","Kommunal forvaltning","Arbeids- og sosialpolitikk","Partnerskap stat–kommune","Bakkebyråkrati","Reformevaluering","Offentlig organisering"];
+    const seen = new Set(list.map((item) => String(item?.title || item?.subject_label || "").trim().toLowerCase()));
+    preferred.forEach((title, index) => {
+      if (seen.has(title.toLowerCase())) return;
+      list.push({ title, subject_label: title, type: "derived", score: 1.95 - (index * 0.03), matched_terms: signal.matchedTerms.slice(0, 5) });
+    });
+    return list
+      .filter((item) => !PUBLIC_ADMIN_GENERIC_SUBJECTS.has(String(item?.title || item?.subject_label || "").trim().toLowerCase()) || Number(item?.score || 0) >= 1.8)
+      .sort((a, b) => {
+        const aTitle = String(a?.title || a?.subject_label || "").trim();
+        const bTitle = String(b?.title || b?.subject_label || "").trim();
+        const aPref = preferred.includes(aTitle) ? 1 : 0;
+        const bPref = preferred.includes(bTitle) ? 1 : 0;
+        if (aPref !== bPref) return bPref - aPref;
+        return Number(b?.score || 0) - Number(a?.score || 0);
+      })
+      .slice(0, 12);
+  }
 
   function normalizeAfterworkConcept(term) {
     return String(term || "").toLowerCase().replace(/[“”"'`´]/g, "").replace(/\s+/g, " ").trim();
@@ -3501,7 +3595,8 @@
           const rawSubjectMatches = global.AHASubjectEngine?.matchText
             ? await global.AHASubjectEngine.matchText(analysisText, { source: "chat", textType: detectTextType(text) })
             : [];
-          const subjectMatches = enrichSubjectMatchesForClimateConflict(analysisText, rawSubjectMatches);
+          const climateEnriched = enrichSubjectMatchesForClimateConflict(analysisText, rawSubjectMatches);
+          const subjectMatches = enrichSubjectMatchesForPublicAdministration(analysisText, climateEnriched);
           appendChat("aha", reply, { categoryChips: suggestCategoryChips(), subjectMatches });
           try { renderAutoOutputs(text, reply, { subjectMatches }); } catch (autoErr) { console.warn("Auto-output feilet", autoErr); }
           // AHA-agentens egne svar skal vises i chatten og logges som
