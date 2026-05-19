@@ -266,7 +266,17 @@
     return hasAcademicSource && hasRawArticleShape;
   }
 
-  function makeCollapsedSource(text) {
+  function splitSourceAndFollowup(text) {
+    const value = String(text || "");
+    const marker = value.indexOf("✦");
+    if (marker < 0) return { source: value, followup: "" };
+    const source = value.slice(0, marker).trim();
+    const followup = value.slice(marker).replace(/^✦\s*/, "").trim();
+    if (!shouldCollapseAsSourceText(source) || followup.length < 80) return { source: value, followup: "" };
+    return { source, followup };
+  }
+
+  function makeCollapsedSource(text, followupText) {
     const cleaned = fixDisplayText(text).replace(/\s+/g, " ").trim();
     const wrapper = document.createElement("div");
     wrapper.className = "aha-source-compact";
@@ -292,6 +302,18 @@
     details.appendChild(pre);
     wrapper.appendChild(details);
 
+    const followup = String(followupText || "").trim();
+    if (followup) {
+      const separator = document.createElement("div");
+      separator.className = "aha-source-followup-separator";
+      separator.textContent = "AHA-svar";
+      wrapper.appendChild(separator);
+      const followupBlock = document.createElement("div");
+      followupBlock.className = "aha-source-followup";
+      followupBlock.textContent = fixDisplayText(followup);
+      wrapper.appendChild(followupBlock);
+    }
+
     return wrapper;
   }
 
@@ -300,9 +322,10 @@
       if (el.dataset?.ahaSourceCollapsed === "true") return;
       if (el.closest(".aha-source-details")) return;
       const text = String(el.textContent || "");
-      if (!shouldCollapseAsSourceText(text)) return;
+      const parts = splitSourceAndFollowup(text);
+      if (!shouldCollapseAsSourceText(parts.source)) return;
       el.dataset.ahaSourceCollapsed = "true";
-      el.replaceChildren(makeCollapsedSource(text));
+      el.replaceChildren(makeCollapsedSource(parts.source, parts.followup));
     });
   }
 
@@ -364,6 +387,8 @@
       .aha-source-details { border: 1px solid var(--aha-border, rgba(255,255,255,.12)); border-radius: 10px; padding: 8px 10px; background: rgba(5, 8, 20, 0.55); }
       .aha-source-details > summary { cursor: pointer; color: var(--aha-accent, #ffd347); font-size: 12px; }
       .aha-source-full { margin: 8px 0 0; max-height: 34vh; overflow: auto; white-space: pre-wrap; color: var(--aha-muted, rgba(245,245,245,.68)); font-size: 11px; line-height: 1.45; }
+      .aha-source-followup-separator { margin-top: 4px; padding-top: 8px; border-top: 1px solid var(--aha-border, rgba(255,255,255,.12)); color: var(--aha-accent, #ffd347); font-size: 11px; text-transform: uppercase; letter-spacing: .05em; }
+      .aha-source-followup { white-space: pre-wrap; color: var(--aha-text, #f5f5f5); font-size: 12px; line-height: 1.45; }
       .aha-citation-section { margin: 8px 0; padding: 8px 10px; border: 1px solid rgba(255,211,71,0.24); border-radius: 10px; background: rgba(255,211,71,0.06); }
       .aha-citation-section h4 { margin: 0 0 6px; font-size: 12px; color: var(--aha-accent, #ffd347); }
       .aha-citation-section ul { margin: 0; padding-left: 18px; display: grid; gap: 5px; }
