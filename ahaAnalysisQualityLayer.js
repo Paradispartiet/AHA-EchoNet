@@ -138,7 +138,7 @@
   }
 
   function canonicalStructuredHeading(value) {
-    const heading = normalizeSectionHeading(value).replace(/:$/, "");
+    const heading = normalizeSectionHeading(value).replace(/^\d+\.\s*/, "").replace(/:$/, "");
     if (heading === "kort svar") return "Kort svar";
     if (heading === "hva aha ser") return "Hva AHA ser";
     if (heading === "begreper / mønstre" || heading === "begreper/mønstre") return "Begreper / mønstre";
@@ -146,18 +146,43 @@
     return "";
   }
 
+  function normalizeStructuredAhaMarkers(text) {
+    const markers = [
+      "1\\.\\s*Kort svar",
+      "Kort svar",
+      "2\\.\\s*Hva AHA ser",
+      "Hva AHA ser",
+      "3\\.\\s*Begreper\\s*\\/\\s*mønstre",
+      "Begreper\\s*\\/\\s*mønstre",
+      "4\\.\\s*Neste beste spørsmål(?:\\s*eller\\s*læringssteg)?",
+      "Neste beste spørsmål(?:\\s*eller\\s*læringssteg)?",
+      "Neste læringssteg"
+    ];
+    let normalized = String(text || "").replace(/\r/g, "");
+    markers.forEach((marker) => {
+      normalized = normalized.replace(new RegExp(`\\s*(${marker})\\s*:?[\\t ]*`, "gi"), "\n$1 ");
+    });
+    return normalized.replace(/\n{2,}/g, "\n").trim();
+  }
+
   function parseStructuredAhaText(text) {
-    const normalized = String(text || "").replace(/\r/g, "");
+    const normalized = normalizeStructuredAhaMarkers(text);
     const lines = normalized.split("\n").map((line) => line.trim()).filter(Boolean);
-    const firstHeadingIndex = lines.findIndex(isStructuredHeading);
+    const firstHeadingIndex = lines.findIndex((line) => {
+      const headingOnly = line.match(/^\d*\.*\s*(Kort svar|Hva AHA ser|Begreper\s*\/\s*mønstre|Neste beste spørsmål(?:\s*eller\s*læringssteg)?|Neste læringssteg)\b/i);
+      return Boolean(headingOnly);
+    });
     if (firstHeadingIndex < 0) return null;
     const workingLines = lines.slice(firstHeadingIndex);
     const sections = [];
     let current = null;
     workingLines.forEach((line) => {
-      if (isStructuredHeading(line)) {
-        current = { title: canonicalStructuredHeading(line), items: [] };
+      const match = line.match(/^\s*(\d+\.\s*)?(Kort svar|Hva AHA ser|Begreper\s*\/\s*mønstre|Neste beste spørsmål(?:\s*eller\s*læringssteg)?|Neste læringssteg)\s*:?\s*(.*)$/i);
+      if (match) {
+        current = { title: canonicalStructuredHeading(`${match[1] || ""}${match[2]}`), items: [] };
         if (current.title) sections.push(current);
+        const inlineContent = String(match[3] || "").replace(/^[-•*]\s*/, "").trim();
+        if (inlineContent && current?.title) current.items.push(inlineContent);
         return;
       }
       if (!current) return;
@@ -201,11 +226,12 @@
   }
 
   function formatStructuredAhaAnswer(root) {
-    const candidates = Array.from(root.querySelectorAll?.(".aha-source-followup, .chat-line, .afterwork-entry, .aha-afterwork-entry, .saved-afterwork-entry, .auto-output-card, .auto-output-body, .chat-bubble, p, div") || []);
+    const candidates = Array.from(root.querySelectorAll?.(".aha-source-followup, .chat-line, .afterwork-entry, .aha-afterwork-entry, .saved-afterwork-entry, .auto-output-body, .chat-bubble") || []);
     candidates.forEach((el) => {
       if (!el || el.dataset?.ahaStructured === "true") return;
       if (el.closest(".aha-source-full, .aha-citation-section, .aha-structured-answer")) return;
       if (el.querySelector(".aha-structured-answer")) return;
+      if (el.children.length && !el.classList.contains("aha-source-followup") && !el.classList.contains("auto-output-body") && !el.classList.contains("chat-bubble")) return;
       const text = String(el.textContent || "").trim();
       if (text.length < 60 || text.length > 4000) return;
       const sections = parseStructuredAhaText(text);
