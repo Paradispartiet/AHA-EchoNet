@@ -15,6 +15,8 @@
   const TEXT_FIXES = [
     [/malthusianske\s+temperaturer/gi, "malthusianske forklaringer"],
     [/malthusianske\s+temperaturforklaringer/gi, "malthusianske forklaringer"],
+    [/Hovedargumentet\s+er\s+at\s+klima\/miljø\s+kan\s+være\s+bakgrunnsfaktorer,\s+men\s+at\s+konfliktutvikling\s+primært\s+formes\s+av/gi, "Klima og miljø kan være bakgrunnsfaktorer, men konfliktutviklingen formes primært av"],
+    [/Motargumentet\s+er\s+at\s+knapphetsskolen\s+overvurderer/gi, "Knapphetsskolen overvurderer"],
     [/Påstand i teksten\s*:/g, "Sitat fra teksten:"],
     [/PÅSTANDER/g, "SITATER FRA TEKSTEN"],
     [/\bkonfl\s+ikter\b/gi, "konflikter"],
