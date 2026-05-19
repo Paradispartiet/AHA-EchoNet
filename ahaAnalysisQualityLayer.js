@@ -257,7 +257,10 @@
     const candidates = Array.from(root.querySelectorAll?.("p, div, li") || [])
       .filter((el) => !el.closest(".aha-citation-section") && !el.closest(".aha-source-details"));
     candidates.forEach((el) => {
-      if (el.children.length) return;
+      const hasOnlyLabelStrong = el.tagName === "LI"
+        && el.querySelector(":scope > strong")
+        && /Sitat fra teksten\s*:/i.test(String(el.textContent || ""));
+      if (el.children.length && !hasOnlyLabelStrong) return;
       const text = String(el.textContent || "");
       if (text.length > 1600) return;
       const items = extractCitationItems(text);
