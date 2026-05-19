@@ -29,10 +29,6 @@
     [/\bmiljø\s+degradering\b/gi, "miljødegradering"],
     [/\bressurs\s+knapphet\b/gi, "ressursknapphet"],
     [/mangel på støttetørke-\s*og\s*ørkenspredningseffekter/gi, "manglende støtte for økt tørke og ørkenspredning"],
-    [/\bnavkontore\b/gi, "NAV-kontorene"],
-    [/\bnavkontorene\b/gi, "NAV-kontorene"],
-    [/\bnavkontorer\b/gi, "NAV-kontorene"],
-    [/\bnav-kontorer\b/gi, "NAV-kontorene"],
     [/\bnav[-\s]?reformen\b/gi, "NAV-reformen"]
   ];
 
@@ -161,7 +157,11 @@
   }
 
   function splitStructuredSectionItems(text, title) {
-    const cleaned = String(text || "").replace(/^[-•*]\s*/, "").trim();
+    const cleaned = String(text || "")
+      .replace(/^[-•*]\s*/, "")
+      .replace(/\*{1,2}\s*([^*]+?)\s*\*{1,2}/g, "$1")
+      .replace(/\*/g, "")
+      .trim();
     if (!cleaned) return [];
     if (title === "Kort svar") return [cleaned];
     return cleaned
