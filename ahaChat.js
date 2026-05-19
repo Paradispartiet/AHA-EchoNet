@@ -2156,9 +2156,11 @@
     const topEdges = prioritizeVisibleConceptEdges(edgePool, theoryLinks, conceptEdgeContext)
       .slice(0, 3);
 
-    const themes14d = filterGenericConceptItems(recurringThemes?.["14d"]?.top_concepts || [], (item) => item?.key).slice(0, 3);
-    const themes30d = filterGenericConceptItems(recurringThemes?.["30d"]?.top_concepts || [], (item) => item?.key).slice(0, 3);
-    const topTheoryPeople = collectTheoryPeople(safeChamber, recurringThemes?.["30d"]?.top_theories, 4);
+    const visibleThemes14d = aggregateVisibleConceptCounts(recurringThemes?.["14d"]?.top_concepts || [], "key", "count");
+    const visibleThemes30d = aggregateVisibleConceptCounts(recurringThemes?.["30d"]?.top_concepts || [], "key", "count");
+    const themes14d = filterGenericConceptItems(visibleThemes14d, (item) => item?.key).slice(0, 3);
+    const themes30d = filterGenericConceptItems(visibleThemes30d, (item) => item?.key).slice(0, 3);
+    const topTheoryPeople = aggregateVisibleConceptCounts(collectTheoryPeople(safeChamber, recurringThemes?.["30d"]?.top_theories, 8), "key", "count").slice(0, 4);
     const profileTensions = profile?.tensions || {};
     const conceptPairTensions = (profileTensions.concept_pair_tensions || [])
       .slice()
