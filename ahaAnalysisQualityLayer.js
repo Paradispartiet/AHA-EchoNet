@@ -353,7 +353,27 @@
     });
   }
 
+  function injectQualityLayerStyles() {
+    if (document.getElementById("aha-analysis-quality-layer-styles")) return;
+    const style = document.createElement("style");
+    style.id = "aha-analysis-quality-layer-styles";
+    style.textContent = `
+      .aha-source-compact { display: grid; gap: 8px; }
+      .aha-source-note { margin: 0; color: var(--aha-accent, #ffd347); font-size: 12px; }
+      .aha-source-preview { margin: 0; color: var(--aha-muted, rgba(245,245,245,.68)); font-size: 12px; line-height: 1.45; }
+      .aha-source-details { border: 1px solid var(--aha-border, rgba(255,255,255,.12)); border-radius: 10px; padding: 8px 10px; background: rgba(5, 8, 20, 0.55); }
+      .aha-source-details > summary { cursor: pointer; color: var(--aha-accent, #ffd347); font-size: 12px; }
+      .aha-source-full { margin: 8px 0 0; max-height: 34vh; overflow: auto; white-space: pre-wrap; color: var(--aha-muted, rgba(245,245,245,.68)); font-size: 11px; line-height: 1.45; }
+      .aha-citation-section { margin: 8px 0; padding: 8px 10px; border: 1px solid rgba(255,211,71,0.24); border-radius: 10px; background: rgba(255,211,71,0.06); }
+      .aha-citation-section h4 { margin: 0 0 6px; font-size: 12px; color: var(--aha-accent, #ffd347); }
+      .aha-citation-section ul { margin: 0; padding-left: 18px; display: grid; gap: 5px; }
+      .aha-citation-section li { font-size: 12px; line-height: 1.42; color: var(--aha-text, #f5f5f5); }
+    `;
+    document.head.appendChild(style);
+  }
+
   function init() {
+    injectQualityLayerStyles();
     processAll();
     const observer = new MutationObserver(scheduleProcess);
     observer.observe(document.body, { childList: true, subtree: true, characterData: true });
