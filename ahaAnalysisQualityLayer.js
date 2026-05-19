@@ -6,6 +6,7 @@
 
   const ROOT_SELECTORS = [
     "#aha-auto-output",
+    "#chat-log",
     "#panel",
     "#aha-meta-profile-home",
     "#aha-afterwork-archive"
@@ -15,7 +16,16 @@
     [/malthusianske\s+temperaturer/gi, "malthusianske forklaringer"],
     [/malthusianske\s+temperaturforklaringer/gi, "malthusianske forklaringer"],
     [/Påstand i teksten\s*:/g, "Sitat fra teksten:"],
-    [/PÅSTANDER/g, "SITATER FRA TEKSTEN"]
+    [/PÅSTANDER/g, "SITATER FRA TEKSTEN"],
+    [/\bkonfl\s+ikter\b/gi, "konflikter"],
+    [/\bkonfl\s+iktnivå\b/gi, "konfliktnivå"],
+    [/\bprofi\s+leres\b/gi, "profileres"],
+    [/\bfi\s+nnes\b/gi, "finnes"],
+    [/\binnfl\s+ytelse\b/gi, "innflytelse"],
+    [/\bfl\s+ere\b/gi, "flere"],
+    [/\bkunn\s+skap\b/gi, "kunnskap"],
+    [/\bmiljø\s+degradering\b/gi, "miljødegradering"],
+    [/\bressurs\s+knapphet\b/gi, "ressursknapphet"]
   ];
 
   let processing = false;
@@ -74,6 +84,7 @@
 
   function fixTextNodes(root) {
     walkTextNodes(root, (node) => {
+      if (node.parentElement?.closest?.(".aha-source-full")) return;
       const next = fixDisplayText(node.nodeValue);
       if (next !== node.nodeValue) node.nodeValue = next;
     });
@@ -131,6 +142,31 @@
     return counts;
   }
 
+  function sectionItemKeys(section) {
+    return Array.from(section?.querySelectorAll?.("li") || [])
+      .map((item) => normalizeComparableText(item.textContent))
+      .filter(Boolean)
+      .join("|");
+  }
+
+  function removeDuplicateMetaSignalSections(profile) {
+    const focus = findMetaSection(profile, "foreløpige hovedbegreper") || findMetaSection(profile, "det du tenker mest på");
+    const emerging = findMetaSection(profile, "nye signaler") || findMetaSection(profile, "nye temaer");
+    if (!focus || !emerging) return;
+    if (sectionItemKeys(focus) === sectionItemKeys(emerging)) emerging.remove();
+  }
+
+  function removeWeakConceptRows(root) {
+    const text = String(root.textContent || "").toLowerCase();
+    const hasPoliticalEcology = text.includes("politisk økologi");
+    const hasResourceScarcity = text.includes("ressursknapphet") || text.includes("knapphetsskolen");
+    root.querySelectorAll?.("li, .concept-node-badge").forEach((item) => {
+      const raw = String(item.textContent || "").replace(/\s+/g, " ").trim().toLowerCase();
+      if (hasPoliticalEcology && /^økologi\b/.test(raw)) item.closest("li")?.remove();
+      if (hasResourceScarcity && /^knapphet\b/.test(raw)) item.closest("li")?.remove();
+    });
+  }
+
   function adjustSmallDatasetMetaProfile(root) {
     const profile = root.matches?.(".meta-profile") ? root : root.querySelector?.(".meta-profile");
     if (!profile) return;
@@ -162,21 +198,111 @@
       });
       if (!underexplored.querySelector("li")) underexplored.remove();
     }
+    removeDuplicateMetaSignalSections(profile);
   }
 
   function cleanConceptNetwork(root) {
     root.querySelectorAll?.(".concept-network-item").forEach((item) => {
       const hasLinks = Boolean(item.querySelector(".concept-network-links li"));
-      const hasEmpty = Boolean(item.querySelector(".concept-network-empty"));
-      if (!hasLinks && hasEmpty) item.remove();
+      if (!hasLinks) item.remove();
     });
 
     root.querySelectorAll?.(".concept-network").forEach((network) => {
       if (network.querySelector(".concept-network-item")) return;
       const replacement = document.createElement("p");
       replacement.className = "knowledge-sub";
-      replacement.textContent = "For få sikre koblinger til å bygge begrepsnettverk ennå.";
+      replacement.textContent = "Sterkeste koblinger vises over. For få sikre koblingslinjer til eget begrepsnettverk ennå.";
       network.replaceWith(replacement);
+    });
+  }
+
+  function extractCitationItems(text) {
+    const value = fixDisplayText(text).replace(/\s+/g, " ").trim();
+    if (!/Sitat fra teksten\s*:/i.test(value)) return [];
+    return value
+      .split(/Sitat fra teksten\s*:/i)
+      .map((part) => part.trim())
+      .filter(Boolean)
+      .map((part) => part.replace(/^Sitater fra teksten\s*/i, "").trim())
+      .map((part) => part.replace(/\s+(Spenning i teksten|Mulig videre analyse|Dagsoppsummering|Tankesortering)\b.*$/i, "").trim())
+      .filter((part) => part.length > 20)
+      .slice(0, 8);
+  }
+
+  function makeCitationSection(items) {
+    const section = document.createElement("section");
+    section.className = "aha-citation-section";
+    const heading = document.createElement("h4");
+    heading.textContent = "Sitater fra teksten";
+    section.appendChild(heading);
+    const list = document.createElement("ul");
+    items.forEach((item) => {
+      const li = document.createElement("li");
+      li.textContent = item;
+      list.appendChild(li);
+    });
+    section.appendChild(list);
+    return section;
+  }
+
+  function formatCitationRuns(root) {
+    const candidates = Array.from(root.querySelectorAll?.("p, div, li") || [])
+      .filter((el) => !el.closest(".aha-citation-section") && !el.closest(".aha-source-details"));
+    candidates.forEach((el) => {
+      if (el.children.length) return;
+      const text = String(el.textContent || "");
+      if (text.length > 1600) return;
+      const items = extractCitationItems(text);
+      if (items.length < 2) return;
+      el.replaceWith(makeCitationSection(items));
+    });
+  }
+
+  function shouldCollapseAsSourceText(text) {
+    const value = String(text || "").replace(/\s+/g, " ").trim();
+    if (value.length < 1800) return false;
+    const hasAcademicSource = /(Sammendrag|Nøkkelord|I denne artikkelen|Kritikken av knapphetsskolen|Homer-Dixon|Sahel|Mali)/i.test(value);
+    const hasRawArticleShape = /(Nøkkelord|\(Johansen 2008\)|\(Homer-Dixon 1994|\(Peluso & Watts 2001|\(Said 1978\))/i.test(value);
+    return hasAcademicSource && hasRawArticleShape;
+  }
+
+  function makeCollapsedSource(text) {
+    const cleaned = fixDisplayText(text).replace(/\s+/g, " ").trim();
+    const wrapper = document.createElement("div");
+    wrapper.className = "aha-source-compact";
+
+    const note = document.createElement("p");
+    note.className = "aha-source-note";
+    note.textContent = "Lang kildetekst er skjult i visningen. Analysen og innsiktene vises separat.";
+    wrapper.appendChild(note);
+
+    const preview = document.createElement("p");
+    preview.className = "aha-source-preview";
+    preview.textContent = `${cleaned.slice(0, 520).trim()}…`;
+    wrapper.appendChild(preview);
+
+    const details = document.createElement("details");
+    details.className = "aha-source-details";
+    const summary = document.createElement("summary");
+    summary.textContent = "Kildetekst / råtekst";
+    details.appendChild(summary);
+    const pre = document.createElement("pre");
+    pre.className = "aha-source-full";
+    pre.textContent = cleaned;
+    details.appendChild(pre);
+    wrapper.appendChild(details);
+
+    return wrapper;
+  }
+
+  function collapseLongSourceBlocks(root) {
+    root.querySelectorAll?.(".chat-line, .afterwork-entry, .aha-afterwork-entry, .saved-afterwork-entry").forEach((el) => {
+      if (el.dataset?.ahaSourceCollapsed === "true") return;
+      if (el.closest(".aha-source-details")) return;
+      const text = String(el.textContent || "");
+      if (!shouldCollapseAsSourceText(text)) return;
+      el.dataset.ahaSourceCollapsed = "true";
+      el.replaceChildren(makeCollapsedSource(text));
     });
   }
 
@@ -191,11 +317,14 @@
 
   function cleanRoot(root) {
     if (!root) return;
+    collapseLongSourceBlocks(root);
     fixTextNodes(root);
     relabelClaimSections(root);
     relabelAcademicAutoOutput(root);
+    formatCitationRuns(root);
     dedupeListItems(root);
     dedupeInsightCards(root);
+    removeWeakConceptRows(root);
     adjustSmallDatasetMetaProfile(root);
     cleanConceptNetwork(root);
   }
