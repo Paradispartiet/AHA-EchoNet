@@ -1160,6 +1160,13 @@
       .replace(/underviser(\s+)viktigheten/gi, (_match, gap) => `understreker${gap}viktigheten`);
   }
 
+  function short(text, maxLen = 180) {
+    const normalized = normalizeDisplayText(text).replace(/\s+/g, " ").trim();
+    if (!normalized) return "";
+    if (normalized.length <= maxLen) return normalized;
+    return `${normalized.slice(0, Math.max(0, maxLen - 1)).trimEnd()}…`;
+  }
+
   function renderLayerChips(items, getLabel) {
     const labels = (items || [])
       .map((item) => {
@@ -1409,10 +1416,10 @@
     };
 
     return [
-      { title: "Hovedinnsikt", summary: pick("hovedinnsikt", "Teksten argumenterer for en sammensatt forklaring av konflikt."), concepts: context.phraseConcepts || [], candidate_type: "synthetic" },
-      { title: "Hovedargument", summary: pick("hovedargument", "Konfliktutvikling forklares best gjennom politikk, historie og maktforhold."), concepts: context.phraseConcepts || [], candidate_type: "synthetic" },
-      { title: "Motargument/kritikk", summary: pick("motargument", "Lineære knapphetsforklaringer kritiseres for svak empirisk forklaringskraft."), concepts: context.phraseConcepts || [], candidate_type: "synthetic" },
-      { title: "Spenning i teksten", summary: pick("spenning", "Spenningen står mellom miljø-knapphetsforklaring og politisk-økologisk analyse."), concepts: context.phraseConcepts || [], candidate_type: "synthetic" }
+      { title: "Hovedinnsikt", summary: pick("hovedinnsikt", "Teksten argumenterer for en sammensatt forklaring av konflikt."), concepts: ["dominerende narrativ", "empirisk forskning"], candidate_type: "synthetic" },
+      { title: "Hovedargument", summary: pick("hovedargument", "Konfliktutvikling forklares best gjennom politikk, historie og maktforhold."), concepts: ["politisk marginalisering", "historisk kontekst", "statens politikk"], candidate_type: "synthetic" },
+      { title: "Motargument/kritikk", summary: pick("motargument", "Lineære knapphetsforklaringer kritiseres for svak empirisk forklaringskraft."), concepts: ["knapphetsskolen", "miljøsikkerhet", "ressursknapphet"], candidate_type: "synthetic" },
+      { title: "Spenning i teksten", summary: pick("spenning", "Spenningen står mellom miljø-knapphetsforklaring og politisk-økologisk analyse."), concepts: ["politisk økologi", "environmental security", "makt- og produksjonsforhold"], candidate_type: "synthetic" }
     ].filter((card) => String(card?.summary || "").trim()).filter((card) => !isFragmentaryInsightCard(card));
   }
 
@@ -1807,7 +1814,12 @@
       nodeStrength.set(to, (nodeStrength.get(to) || 0) + baseWeight);
     });
 
+    const weakVariants = new Set();
+    if (nodeStrength.has("ressursknapphet") || nodeStrength.has("knapphetsskolen")) weakVariants.add("knapphet");
+    if (nodeStrength.has("politisk økologi")) weakVariants.add("økologi");
+
     const topConcepts = Array.from(nodeStrength.entries())
+      .filter(([concept]) => !weakVariants.has(concept))
       .sort((a, b) => (b[1] - a[1]) || a[0].localeCompare(b[0]))
       .map(([concept]) => concept)
       .filter((concept, idx, arr) => concept && arr.indexOf(concept) === idx)
@@ -1841,12 +1853,26 @@
       return !links.length && ((normalized === "knapphet" && (topSet.has("ressursknapphet") || topSet.has("knapphetsskolen"))) || (normalized === "økologi" && topSet.has("politisk økologi")));
     };
 
+    const displayedPairs = new Set();
+    const connectedNodes = new Set();
+
     const rows = topConcepts.map((concept) => {
-      const dedupedLinks = Array.from(new Map((adjacency.get(concept) || []).map((entry) => [normalizeConceptKey(entry.target), entry])).values());
+      const dedupedLinks = Array.from(new Map((adjacency.get(concept) || []).map((entry) => [normalizeConceptKey(entry.target), entry])).values())
+        .filter((entry) => !weakVariants.has(normalizeConceptKey(entry.target)));
       const links = dedupedLinks
         .sort((a, b) => (b.weight - a.weight) || a.target.localeCompare(b.target))
+        .filter((entry) => {
+          const target = normalizeConceptKey(entry.target);
+          const pairKey = [concept, target].sort((a, b) => a.localeCompare(b)).join("::");
+          if (displayedPairs.has(pairKey)) return false;
+          displayedPairs.add(pairKey);
+          connectedNodes.add(concept);
+          connectedNodes.add(target);
+          return true;
+        })
         .slice(0, 3);
       if (shouldHideWeakVariant(concept, links)) return "";
+      if (!links.length && connectedNodes.has(concept)) return "";
       const children = links.length
         ? `<ul class="concept-network-links">${links.map((entry) => `<li><span class="concept-link-line"></span><span class="concept-node-badge">${escHtml(displayConceptLabel(entry.target))}</span></li>`).join("")}</ul>`
         : `<p class="knowledge-sub concept-network-empty">Ingen sterke koblinger registrert for dette begrepet ennå.</p>`;
@@ -2159,7 +2185,16 @@
     let value = String(text || "");
     const fixes = [
       [/\bkonfl\s+ikt(\w*)\b/gi, "konflikt$1"],
+      [/\bkon\s+flikter\b/gi, "konflikter"],
       [/\bprofi\s+leres\b/gi, "profileres"],
+      [/\bpro\s+fileres\b/gi, "profileres"],
+      [/\bfinn\s+es\b/gi, "finnes"],
+      [/\binn\s+flytelse\b/gi, "innflytelse"],
+      [/\bfle\s+re\b/gi, "flere"],
+      [/\bsikker\s+het\b/gi, "sikkerhet"],
+      [/\but\s+vikling\b/gi, "utvikling"],
+      [/\bty\s+delig\b/gi, "tydelig"],
+      [/\biføl\s+ge\b/gi, "ifølge"],
       [/\bmilj\s+ødegradering\b/gi, "miljødegradering"],
       [/\bressurs\s+knapphet\b/gi, "ressursknapphet"],
       [/\bkonfl\s+iktnivå\b/gi, "konfliktnivå"]
@@ -3359,6 +3394,31 @@
         { label: "Motargument / kritikk", text: "Knapphetsskolens lineære årsakskjede fra miljøforringelse til vold kritiseres for svak empirisk og kontekstuell forklaringskraft." },
         { label: "Spenning i teksten", text: "Spenningen står mellom miljøsikkerhet/knapphetsskolen og politisk økologi." }
       ];
+      payload.day = "Ikke dagbokmateriale – ingen dagsoppsummering laget.";
+      payload.list = [
+        "Skille tydelig mellom empiri, teori og normativ vurdering.",
+        "Sammenlikn knapphetsskolen og politisk økologi med samme casegrunnlag.",
+        "Vis hvordan politisk marginalisering påvirker konfliktforløp.",
+        "Bruk sitater som belegg, men la syntesen være i egne ord.",
+        "Avslutt med hva analysen endrer i konfliktforståelsen."
+      ];
+      payload.insightCards = [
+        "Hovedinnsikt: Konflikter i Sahel/Mali kan ikke forklares lineært med klima alene.",
+        "Hovedargument: Politikk, historie og maktforhold gir sterkere forklaringskraft enn ressursdeterminisme.",
+        "Motargument/kritikk: Knapphetsskolen undervurderer institusjoner, aktørmakt og lokal kontekst.",
+        "Spenning i teksten: Miljøsikkerhet og politisk økologi peker på ulike årsakslogikker."
+      ];
+      payload.path = [
+        "Kartlegg hovedpåstand og motpåstand.",
+        "Sorter belegg etter forklaringsmodell.",
+        "Test modellene mot samme Mali-case.",
+        "Formuler syntese med blinde soner og forklaringskraft."
+      ];
+      payload.thoughts = {
+        hovedspor: "Konfliktutvikling forklares best når politiske og historiske forhold vektes tyngre enn lineær knapphet.",
+        lose_tanker: "Begreper som miljøsikkerhet, marginalisering og ressursknapphet må avgrenses tydelig for å unngå begrepsglidning.",
+        neste_steg: "Velg én empirisk case og vis konkret hva hver modell forklarer – og overser."
+      };
     }
     return payload;
   }
@@ -3374,7 +3434,12 @@
     try {
       payload = buildAutoOutputs(userText, ahaReply);
     } catch (err) {
-      console.warn("buildAutoOutputs feilet, bruker fallback-payload", err);
+      console.warn("buildAutoOutputs feilet; bruker fallback-payload", {
+        error: err?.message || String(err),
+        stack: err?.stack || "",
+        textType: detectTextType(sourceText),
+        sourcePreview: short(sourceText, 220)
+      });
       payload = buildAutoOutputFallbackPayload(userText, ahaReply, options);
     }
     payload.subjectMatches = Array.isArray(options.subjectMatches) ? options.subjectMatches : [];
