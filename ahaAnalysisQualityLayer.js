@@ -147,22 +147,22 @@
   }
 
   function normalizeStructuredAhaMarkers(text) {
-    const markers = [
-      "1\\.\\s*Kort svar",
-      "Kort svar",
-      "2\\.\\s*Hva AHA ser",
-      "Hva AHA ser",
-      "3\\.\\s*Begreper\\s*\\/\\s*mønstre",
-      "Begreper\\s*\\/\\s*mønstre",
-      "4\\.\\s*Neste beste spørsmål(?:\\s*eller\\s*læringssteg)?",
-      "Neste beste spørsmål(?:\\s*eller\\s*læringssteg)?",
-      "Neste læringssteg"
-    ];
-    let normalized = String(text || "").replace(/\r/g, "");
-    markers.forEach((marker) => {
-      normalized = normalized.replace(new RegExp(`\\s*(${marker})\\s*:?[\\t ]*`, "gi"), "\n$1 ");
-    });
-    return normalized.replace(/\n{2,}/g, "\n").trim();
+    const markerRegex = /(?:^|[\s,;])((?:[1-4]\.\s*)?(?:Kort svar|Hva AHA ser|Begreper\s*\/\s*mønstre|Neste beste spørsmål(?:\s*eller\s*læringssteg)?|Neste læringssteg))\s*:?\s*/gi;
+    return String(text || "")
+      .replace(/\r/g, "")
+      .replace(markerRegex, (full, marker, offset) => `${offset === 0 ? "" : "\n"}${marker} `)
+      .replace(/\n{2,}/g, "\n")
+      .trim();
+  }
+
+  function splitStructuredSectionItems(text, title) {
+    const cleaned = String(text || "").replace(/^[-•*]\s*/, "").trim();
+    if (!cleaned) return [];
+    if (title === "Kort svar") return [cleaned];
+    return cleaned
+      .split(/\s(?:-|•|;)\s/g)
+      .map((item) => item.replace(/^[-•*]\s*/, "").trim())
+      .filter(Boolean);
   }
 
   function parseStructuredAhaText(text) {
@@ -181,13 +181,15 @@
       if (match) {
         current = { title: canonicalStructuredHeading(`${match[1] || ""}${match[2]}`), items: [] };
         if (current.title) sections.push(current);
-        const inlineContent = String(match[3] || "").replace(/^[-•*]\s*/, "").trim();
-        if (inlineContent && current?.title) current.items.push(inlineContent);
+        const inlineContent = String(match[3] || "").trim();
+        if (inlineContent && current?.title) {
+          current.items.push(...splitStructuredSectionItems(inlineContent, current.title));
+        }
         return;
       }
       if (!current) return;
-      const cleanLine = line.replace(/^[-•*]\s*/, "").trim();
-      if (cleanLine) current.items.push(cleanLine);
+      if (/^[1-4]\.$/.test(line)) return;
+      current.items.push(...splitStructuredSectionItems(line, current.title));
     });
     if (!sections.length) return null;
     const hasCore = sections.some((section) => section.title === "Kort svar")
