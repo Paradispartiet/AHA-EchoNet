@@ -1088,7 +1088,7 @@
       });
   }
   function canonicalizeDisplayConcept(term) {
-    const raw = String(term || "").trim();
+    const raw = resolveConceptTerm(term).trim();
     const key = normalizeAfterworkConcept(raw);
     if (/^nav[-\s]?kontor(ene|er|e)?$/.test(key) || ["navkontor","navkontorer","navkontore","lokalkontor","lokalkontorene"].includes(key)) return "NAV-kontor";
     if (["nav-reformen", "nav reformen", "navreformen"].includes(key) || (key === "reformen" && /nav/.test(normalizeAfterworkConcept(raw)))) return "NAV-reformen";
@@ -1353,7 +1353,10 @@
       ...(Array.isArray(ins.concepts) ? ins.concepts : []),
       ...(Array.isArray(ins.subjectLinks) ? ins.subjectLinks.map((item) => item?.title || item?.label || item?.key || item?.name || "") : []),
       ...(Array.isArray(ins.keywords) ? ins.keywords : [])
-    ].map(canonicalizeDisplayConcept));
+    ]
+      .map(resolveConceptTerm)
+      .map(canonicalizeDisplayConcept)
+      .filter(Boolean));
     const conceptsHtml = renderLayerChips(prioritizedConcepts.map((label) => ({ label })), (c) => c?.label);
     const patternsHtml = renderLayerChips(ins.patterns, (p) => p?.label || p?.key);
     const markersHtml = renderLayerChips(ins.markers, (m) => m?.value);
@@ -3190,7 +3193,7 @@
     if (typeof term === "string") return term;
     if (typeof term === "number") return String(term);
     if (typeof term === "object") {
-      return String(term?.label || term?.key || term?.name || term?.title || term?.term || term?.value || "");
+      return String(term?.label || term?.title || term?.key || term?.term || term?.name || term?.subject_label || term?.subject_id || term?.id || term?.value || "");
     }
     return String(term || "");
   }
