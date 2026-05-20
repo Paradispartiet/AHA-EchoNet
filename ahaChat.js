@@ -1067,9 +1067,9 @@
     const seen = new Set();
     return (Array.isArray(concepts) ? concepts : [])
       .map((c) => typeof c === "string" ? c : (c?.label || c?.key || c?.term || ""))
-      .map((c) => String(c || "").trim())
+      .map((c) => getCanonicalConceptLabel(String(c || "").trim()))
       .filter((c) => c && !WEAK_CONCEPT_WORDS.has(c.toLowerCase()))
-      .filter((c) => !/^(mulighet|retning|oppmerksomhet|virksomhet|størrelse|påtilknytning|navkontore)$/i.test(String(c || "").trim()))
+      .filter((c) => !isBlockedStandaloneConcept(c))
       .filter((c) => !isGenericDisplayConcept(c))
       .filter((c, _, arr) => {
         const keys = new Set(arr.map((term) => normalizeAfterworkConcept(term)));
@@ -2110,15 +2110,52 @@
 
 
   function displayConceptLabel(value) {
-    return canonicalizeDisplayConcept(resolveConceptTerm(value).replace(/_/g, " ").trim());
+    return getCanonicalConceptLabel(value);
   }
 
   function normalizeConceptKey(value) {
-    return normalizeAfterworkConcept(canonicalizeDisplayConcept(value));
+    return getCanonicalConceptKey(value);
+  }
+
+  function getCanonicalConceptLabel(value) {
+    return canonicalizeDisplayConcept(normalizeVisibleAcademicLabel(resolveConceptTerm(value))).trim();
+  }
+
+  function getCanonicalConceptKey(value) {
+    return normalizeAfterworkConcept(getCanonicalConceptLabel(value));
+  }
+
+  function isBlockedStandaloneConcept(value) {
+    const key = getCanonicalConceptKey(value);
+    return [
+      "retning",
+      "retninger",
+      "størrelse",
+      "oppmerksomhet",
+      "mulighet",
+      "virksomhet",
+      "påtilknytning",
+      "navkontore"
+    ].includes(key);
+  }
+
+  function buildCanonicalConceptPair(source, target) {
+    const sourceLabel = getCanonicalConceptLabel(source);
+    const targetLabel = getCanonicalConceptLabel(target);
+    const sourceKey = getCanonicalConceptKey(sourceLabel);
+    const targetKey = getCanonicalConceptKey(targetLabel);
+    if (!sourceKey || !targetKey) return null;
+    if (sourceKey === targetKey) return null;
+    if (isGenericDisplayConcept(sourceLabel) || isGenericDisplayConcept(targetLabel)) return null;
+    if (isBlockedStandaloneConcept(sourceLabel) || isBlockedStandaloneConcept(targetLabel)) return null;
+    return { sourceLabel, targetLabel, sourceKey, targetKey };
   }
 
   function filterGenericConceptItems(items, keyGetter) {
-    return applyPhraseConceptDisplayPreference((Array.isArray(items) ? items : []).filter((item) => !isGenericDisplayConcept(keyGetter(item))), keyGetter);
+    return applyPhraseConceptDisplayPreference((Array.isArray(items) ? items : []).filter((item) => {
+      const label = getCanonicalConceptLabel(keyGetter(item));
+      return label && !isGenericDisplayConcept(label) && !isBlockedStandaloneConcept(label);
+    }), keyGetter);
   }
 
   function buildCurrentFocusConceptSet(recurringThemes, conceptGraph, profile) {
@@ -2207,16 +2244,12 @@
     const topEdges = (() => {
       const deduped = new Map();
       prioritizeVisibleConceptEdges(edgePool, theoryLinks, conceptEdgeContext).forEach((edge) => {
-        const from = canonicalizeDisplayConcept(edge?.from);
-        const to = canonicalizeDisplayConcept(edge?.to);
-        const fromKey = normalizeConceptKey(from);
-        const toKey = normalizeConceptKey(to);
-        if (!fromKey || !toKey || fromKey === toKey) return;
-        if (isGenericDisplayConcept(from) || isGenericDisplayConcept(to)) return;
-        const pairKey = [fromKey, toKey].sort((a, b) => a.localeCompare(b)).join("::");
+        const pair = buildCanonicalConceptPair(edge?.from, edge?.to);
+        if (!pair) return;
+        const pairKey = [pair.sourceKey, pair.targetKey].sort((a, b) => a.localeCompare(b)).join("::");
         const prev = deduped.get(pairKey);
         const weight = Number(edge?.weight || 0);
-        if (!prev || weight > Number(prev?.weight || 0)) deduped.set(pairKey, { ...edge, from, to, weight });
+        if (!prev || weight > Number(prev?.weight || 0)) deduped.set(pairKey, { ...edge, from: pair.sourceLabel, to: pair.targetLabel, weight });
       });
       return Array.from(deduped.values())
         .sort((a, b) => Number(b?.weight || 0) - Number(a?.weight || 0))
@@ -2234,11 +2267,9 @@
       .sort((a, b) => (Number(b?.strength) || 0) - (Number(a?.strength) || 0))
       .slice(0, 5)
       .map((item) => {
-        const source = displayConceptLabel(item?.source || "Ukjent");
-        const target = displayConceptLabel(item?.target || "Ukjent");
-        if (!source || !target || normalizeConceptKey(source) === normalizeConceptKey(target)) return null;
-        if (isGenericDisplayConcept(source) || isGenericDisplayConcept(target)) return null;
-        return { title: `${source} ↔ ${target}`, strength: item?.strength || 0 };
+        const pair = buildCanonicalConceptPair(item?.source, item?.target);
+        if (!pair) return null;
+        return { title: `${pair.sourceLabel} ↔ ${pair.targetLabel}`, strength: item?.strength || 0 };
       })
       .filter(Boolean);
     const paradoxTensions = (profileTensions.paradox_pairs || [])
@@ -2310,8 +2341,9 @@
     (Array.isArray(items) ? items : []).forEach((item) => {
       const raw = String(item?.[keyField] || "").trim();
       if (!raw) return;
-      const label = canonicalizeDisplayConcept(normalizeVisibleAcademicLabel(raw));
-      const key = normalizeConceptKey(label);
+      const label = getCanonicalConceptLabel(raw);
+      const key = getCanonicalConceptKey(label);
+      if (!label || !key || isGenericDisplayConcept(label) || isBlockedStandaloneConcept(label)) return;
       const prev = totals.get(key) || { ...item, [keyField]: label, [countField]: 0 };
       prev[countField] += Number(item?.[countField] || 0);
       totals.set(key, prev);
@@ -2334,20 +2366,24 @@
     const emerging = filterGenericConceptItems(aggregateVisibleConceptCounts(recent.emerging || [], "key", "count"), (item) => item?.key).slice(0, 5).map((c) =>
       `${escHtml(displayConceptLabel(c.key))} <span class="meta-count">×${c.count}</span>`
     );
-    const fading = filterGenericConceptItems(recent.fading || [], (item) => item?.key).slice(0, 5).map((c) =>
+    const fading = filterGenericConceptItems(aggregateVisibleConceptCounts(recent.fading || [], "key", "prev_count"), (item) => item?.key).slice(0, 5).map((c) =>
       `${escHtml(displayConceptLabel(c.key))} <span class="meta-count">tidligere ×${c.prev_count}</span>`
     );
-    const conceptPairTensions = (tensions.concept_pair_tensions || [])
-      .map((t) => {
-        const source = displayConceptLabel(t?.source || "");
-        const target = displayConceptLabel(t?.target || "");
-        if (!source || !target) return null;
-        if (isGenericDisplayConcept(source) || isGenericDisplayConcept(target)) return null;
-        if (normalizeConceptKey(source) === normalizeConceptKey(target)) return null;
-        return `${escHtml(displayConceptLabel(source))} ↔ ${escHtml(displayConceptLabel(target))} <span class="meta-count">styrke ${escHtml(String(t?.strength || 0))}</span>`;
-      })
-      .filter(Boolean)
-      .slice(0, 5);
+    const conceptPairTensions = (() => {
+      const deduped = new Map();
+      (tensions.concept_pair_tensions || []).forEach((t) => {
+        const pair = buildCanonicalConceptPair(t?.source, t?.target);
+        if (!pair) return;
+        const pairKey = [pair.sourceKey, pair.targetKey].sort((a, b) => a.localeCompare(b)).join("::");
+        const strength = Number(t?.strength || 0);
+        const prev = deduped.get(pairKey);
+        if (!prev || strength > Number(prev?.strength || 0)) deduped.set(pairKey, { pair, strength });
+      });
+      return Array.from(deduped.values())
+        .sort((a, b) => Number(b.strength) - Number(a.strength))
+        .slice(0, 5)
+        .map(({ pair, strength }) => `${escHtml(pair.sourceLabel)} ↔ ${escHtml(pair.targetLabel)} <span class="meta-count">styrke ${escHtml(String(strength))}</span>`);
+    })();
     const conceptTensions = (tensions.concept_tensions || []).slice(0, 5).map((t) => {
       const key = displayConceptLabel(t?.key || "");
       if (!key || isGenericDisplayConcept(key)) return "";
@@ -2364,19 +2400,55 @@
     const resurface = (recs.resurface_insights || []).slice(0, 4).map((r) =>
       `${escHtml((r.summary || "").slice(0, 160))} <span class="meta-count">${escHtml((r.shared_concepts || []).map((concept) => displayConceptLabel(concept)).join(", "))}</span>`
     );
-    const bridging = (recs.bridging_pairs || [])
-      .map((b) => ({ ...b, source: canonicalizeDisplayConcept(b?.source), target: canonicalizeDisplayConcept(b?.target) }))
-      .filter((b) => !isGenericDisplayConcept(b?.source) && !isGenericDisplayConcept(b?.target))
-      .filter((b) => normalizeConceptKey(b?.source) && normalizeConceptKey(b?.source) !== normalizeConceptKey(b?.target))
-      .slice(0, 4).map((b) => `${escHtml(displayConceptLabel(b.source))} ↔ ${escHtml(displayConceptLabel(b.target))} <span class="meta-count">npmi ${Number(b.npmi).toFixed(2)}</span>`);
-    const topKnownConcepts = new Set((recent.concepts || []).map((c) => normalizeConceptKey(c?.key)).filter(Boolean));
-    const underexplored = filterGenericConceptItems(recs.underexplored_concepts || [], (item) => item?.key)
-      .map((u) => ({ ...u, key: canonicalizeDisplayConcept(u?.key) }))
-      .filter((u) => !topKnownConcepts.has(normalizeConceptKey(u?.key)))
+    const bridging = (() => {
+      const deduped = new Map();
+      (recs.bridging_pairs || []).forEach((b) => {
+        const pair = buildCanonicalConceptPair(b?.source, b?.target);
+        if (!pair) return;
+        const pairKey = [pair.sourceKey, pair.targetKey].sort((a, b) => a.localeCompare(b)).join("::");
+        const npmi = Number(b?.npmi || 0);
+        const prev = deduped.get(pairKey);
+        if (!prev || npmi > Number(prev?.npmi || 0)) deduped.set(pairKey, { pair, npmi });
+      });
+      return Array.from(deduped.values())
+        .sort((a, b) => b.npmi - a.npmi)
+        .slice(0, 4)
+        .map(({ pair, npmi }) => `${escHtml(pair.sourceLabel)} ↔ ${escHtml(pair.targetLabel)} <span class="meta-count">npmi ${npmi.toFixed(2)}</span>`);
+    })();
+    const topKnownConcepts = new Set((recent.concepts || []).map((c) => getCanonicalConceptKey(c?.key)).filter(Boolean));
+    const underexplored = filterGenericConceptItems(aggregateVisibleConceptCounts(recs.underexplored_concepts || [], "key", "count"), (item) => item?.key)
+      .map((u) => ({ ...u, key: getCanonicalConceptLabel(u?.key) }))
+      .filter((u) => !topKnownConcepts.has(getCanonicalConceptKey(u?.key)))
       .slice(0, 5).map((u) =>
       `${escHtml(displayConceptLabel(u.key))} <span class="meta-count">×${u.count} · ${escHtml(u.reason || "")}</span>`
     );
-    const tensionSectionItems = conceptPairTensions.length ? conceptPairTensions.slice(0, 3) : (paradoxes.length ? paradoxes.slice(0, 3) : (conceptTensions.length ? conceptTensions.slice(0, 3) : ["Ingen tydelig todelt spenning ennå."]));
+    const knowledgeMapTensions = (() => {
+      const kmTensions = global.InsightsEngine?.detectTensions ? (global.InsightsEngine.detectTensions(chamber) || []) : [];
+      return (kmTensions || []).map((item) => {
+        const title = String(item?.title || item?.key || "");
+        const parts = title.split(/↔|<->|—| vs\.? /i).map((part) => part.trim()).filter(Boolean);
+        if (parts.length < 2) return null;
+        const pair = buildCanonicalConceptPair(parts[0], parts[1]);
+        if (!pair) return null;
+        return `${escHtml(pair.sourceLabel)} ↔ ${escHtml(pair.targetLabel)} <span class="meta-count">styrke ${escHtml(String(item?.strength || item?.combined || 0))}</span>`;
+      }).filter(Boolean);
+    })();
+    const derivedPublicAdminTensions = derivePublicAdministrationTensions(buildConceptEdgeContext(chamber || {}, buildDedupedTheoryLinks(chamber || {}, 5)))
+      .map((item) => {
+        const parts = String(item?.title || "").split(/↔|<->|—| vs\.? /i).map((part) => part.trim()).filter(Boolean);
+        if (parts.length < 2) return null;
+        const pair = buildCanonicalConceptPair(parts[0], parts[1]);
+        if (!pair) return null;
+        return `${escHtml(pair.sourceLabel)} ↔ ${escHtml(pair.targetLabel)} <span class="meta-count">styrke ${escHtml(String(item?.strength || 0))}</span>`;
+      })
+      .filter(Boolean);
+    const tensionSectionItems = conceptPairTensions.length
+      ? conceptPairTensions.slice(0, 3)
+      : (derivedPublicAdminTensions.length
+        ? derivedPublicAdminTensions.slice(0, 3)
+        : (knowledgeMapTensions.length
+          ? knowledgeMapTensions.slice(0, 3)
+          : (conceptTensions.length ? conceptTensions.slice(0, 3) : ["Ingen tydelig todelt spenning ennå."])));
 
     const sections = [
       renderMetaSection(`Det du tenker mest på${window}`, recentConcepts),
