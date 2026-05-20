@@ -2,7 +2,7 @@
 // AHA Chat – enkel service worker med NETWORK-FIRST strategi
 // Prøver alltid nett først, bruker cache som fallback (slik at nye deploys synes med en gang)
 
-const CACHE_NAME = "aha-chat-v4.0.208";
+const CACHE_NAME = "aha-chat-v4.0.209";
 
 // Filer vi gjerne vil ha tilgjengelig offline (app-shell)
 const ASSETS = [
