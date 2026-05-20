@@ -2307,8 +2307,8 @@
     (Array.isArray(items) ? items : []).forEach((item) => {
       const raw = String(item?.[keyField] || "").trim();
       if (!raw) return;
-      const label = normalizeVisibleAcademicLabel(raw);
-      const key = label.toLowerCase();
+      const label = canonicalizeDisplayConcept(normalizeVisibleAcademicLabel(raw));
+      const key = normalizeConceptKey(label);
       const prev = totals.get(key) || { ...item, [keyField]: label, [countField]: 0 };
       prev[countField] += Number(item?.[countField] || 0);
       totals.set(key, prev);
@@ -2335,10 +2335,16 @@
       `${escHtml(displayConceptLabel(c.key))} <span class="meta-count">tidligere ×${c.prev_count}</span>`
     );
     const conceptPairTensions = (tensions.concept_pair_tensions || [])
-      .filter((t) => !isGenericDisplayConcept(t?.source) && !isGenericDisplayConcept(t?.target))
-      .slice(0, 5).map((t) => (
-      `${escHtml(displayConceptLabel(t?.source))} ↔ ${escHtml(displayConceptLabel(t?.target))} <span class="meta-count">styrke ${escHtml(String(t?.strength || 0))}</span>`
-    ));
+      .map((t) => {
+        const source = canonicalizeDisplayConcept(t?.source || "");
+        const target = canonicalizeDisplayConcept(t?.target || "");
+        if (!source || !target) return null;
+        if (isGenericDisplayConcept(source) || isGenericDisplayConcept(target)) return null;
+        if (normalizeConceptKey(source) === normalizeConceptKey(target)) return null;
+        return `${escHtml(displayConceptLabel(source))} ↔ ${escHtml(displayConceptLabel(target))} <span class="meta-count">styrke ${escHtml(String(t?.strength || 0))}</span>`;
+      })
+      .filter(Boolean)
+      .slice(0, 5);
     const conceptTensions = (tensions.concept_tensions || []).slice(0, 5).map((t) => {
       const key = String(t?.key || "");
       const hasPair = /↔|<->|vs\.?|\s-\s|—/.test(key);
@@ -2385,9 +2391,15 @@
 
     const knowledgeMap = renderKnowledgeMapSection(chamber, profile);
 
+    const lowData = totalInsights > 0 && totalInsights < 12;
+    const lowDataBanner = lowData
+      ? `<p class="meta-sub"><strong>Tidlig mønsterindikasjon</strong><br>Datagrunnlag: lite (${totalInsights} innsikter)<br>Sikkerhet: lav/middels</p>`
+      : "";
+
     if (!sections) {
       return `<div class="meta-profile">
         <h3>Hva AHA ser i hele materialet ditt</h3>
+        ${lowDataBanner}
         <p class="meta-empty">AHA har ennå ikke nok å gå på. Skriv mer i chat eller importer fra History Go.</p>
         ${knowledgeMap}
       </div>`;
@@ -2395,6 +2407,7 @@
 
     return `<div class="meta-profile">
       <h3>Hva AHA ser i hele materialet ditt</h3>
+      ${lowDataBanner}
       <p class="meta-meta">${totalInsights} innsikter analysert på tvers av hele chamberet.</p>
       ${sections}
       ${knowledgeMap}
