@@ -1069,6 +1069,7 @@
       .map((c) => typeof c === "string" ? c : (c?.label || c?.key || c?.term || ""))
       .map((c) => String(c || "").trim())
       .filter((c) => c && !WEAK_CONCEPT_WORDS.has(c.toLowerCase()))
+      .filter((c) => !/^(mulighet|retning|oppmerksomhet|virksomhet|størrelse)$/i.test(String(c || "").trim()))
       .filter((c) => !isGenericDisplayConcept(c))
       .filter((c, _, arr) => {
         const keys = new Set(arr.map((term) => normalizeAfterworkConcept(term)));
@@ -1085,6 +1086,16 @@
         seen.add(key);
         return true;
       });
+  }
+  function canonicalizeDisplayConcept(term) {
+    const raw = String(term || "").trim();
+    const key = normalizeAfterworkConcept(raw);
+    if (/^nav[-\s]?kontor(ene|er|e)?$/.test(key) || key === "navkontorer" || key === "navkontore") return "NAV-kontor";
+    if (key === "nav-reformen" || key === "nav reformen" || key === "navreformen") return "NAV-reformen";
+    if (["stat og kommune","stat-kommune","stat–kommune","statlig og kommunal","partnerskap mellom stat og kommune"].includes(key)) return "Stat–kommune-samspill";
+    if (["arbeidsrettet virksomhet","arbeidsrettede oppfølgingen","oppfølging mot arbeid"].includes(key)) return "Arbeidsrettet oppfølging";
+    if (["måloppnåelse","manglende måloppnåelse","mål om flere i arbeid","flere i arbeid og aktivitet"].includes(key)) return "Måloppnåelse";
+    return raw;
   }
 
   function buildPlayCityFallbackCandidates(raw) {
@@ -1780,17 +1791,28 @@
         buildFromAfterworkEntry(resolved.afterworkId);
         ok = true;
       } else if (resolved.action === "open-afterwork") {
-        buildFromAfterworkEntry(resolved.afterworkId);
+        const selector = `.saved-afterwork-card[data-afterwork-id="${resolved.afterworkId}"]`;
+        const detailsEl = panel.querySelector(`${selector} details`);
+        if (detailsEl) detailsEl.open = true;
+        panel.querySelector(selector)?.scrollIntoView?.({ behavior: "smooth", block: "center" });
+        setStatusNote("Etterarbeid åpnet.");
         ok = true;
       } else if (resolved.action === "export-afterwork-json") {
         const entry = loadAfterworkEntries().find((item) => item?.id === resolved.afterworkId);
         if (entry) {
-          navigator.clipboard?.writeText?.(JSON.stringify(entry, null, 2)).catch(() => {});
-          setStatusNote("Etterarbeid kopiert som JSON.");
+          if (navigator.clipboard?.writeText) {
+            navigator.clipboard.writeText(JSON.stringify(entry, null, 2))
+              .then(() => setStatusNote("Etterarbeid kopiert som JSON."))
+              .catch(() => setStatusNote("Kunne ikke kopiere JSON (clipboard utilgjengelig)."));
+          } else {
+            setStatusNote("Clipboard er ikke tilgjengelig i denne klienten.");
+          }
           ok = true;
         }
       } else if (resolved.action === "link-afterwork-historygo") {
-        setStatusNote("History Go-kobling foreslått: politikk — Politikk & samfunn.");
+        const entry = loadAfterworkEntries().find((item) => item?.id === resolved.afterworkId) || {};
+        const signalText = `${entry?.sourceTextPreview || ""} ${(Array.isArray(entry?.concepts) ? entry.concepts : []).join(" ")}`;
+        setStatusNote(/nav|forvaltning|kommune|statlig|velferd/i.test(signalText) ? "History Go-kobling: politikk — Politikk & samfunn." : "History Go-kobling foreslått basert på tema.");
         ok = true;
       }
       if (ok && resolved.action !== "delete-afterwork" && resolved.action !== "build-from-afterwork") showInsights();
@@ -1886,7 +1908,7 @@
       });
     });
 
-    const visibleConcepts = [...concepts].filter(Boolean).filter((label) => !isGenericDisplayConcept(label));
+    const visibleConcepts = filterConceptLabels([...concepts].map(canonicalizeDisplayConcept));
     out(JSON.stringify({
       concepts: visibleConcepts,
       patterns: [...patterns].filter(Boolean),
@@ -2214,8 +2236,13 @@
       .filter((item, index, arr) => arr.findIndex((other) => String(other?.title || "").toLowerCase() === String(item?.title || "").toLowerCase()) === index)
       .slice(0, 5);
 
+    const totalInsights = Array.isArray(safeChamber?.insights) ? safeChamber.insights.length : 0;
+    const lowData = totalInsights > 0 && totalInsights < 6;
+    const lowDataBanner = lowData ? `<p class="knowledge-sub"><strong>Tidlig mønsterindikasjon</strong><br>Datagrunnlag: lite (${totalInsights} innsikter)<br>Sikkerhet: lav/middels</p>` : "";
+    const edgeWarning = lowData && topEdges.length ? `<p class="knowledge-sub">Sterk kobling, men lite datagrunnlag. Forekomst: ${totalInsights} tekster/innsikter. Sikkerhet: lav/middels.</p>` : "";
     return `<section class="knowledge-map-block">
       <h3>Kunnskapskart for hele chamberet</h3>
+      ${lowDataBanner}
       <div class="knowledge-map-grid">
         <article class="knowledge-card">
           <h4>Tilbakevendende tema</h4>
@@ -2228,6 +2255,7 @@
           <p class="knowledge-sub">Begrepsnoder: <strong>${conceptNodeCount}</strong></p>
           <p class="knowledge-sub">Teori-/tenkernoder: <strong>${theoryNodeCount}</strong></p>
           <p class="knowledge-sub">Sterkeste co-occurs: ${topEdges.length ? topEdges.map((edge) => `${escHtml(displayConceptLabel(edge.from))} ↔ ${escHtml(displayConceptLabel(edge.to))} (${edge.weight})`).join(", ") : "Ingen samforekomst-koblinger ennå."}</p>
+          ${edgeWarning}
           <h5 class="knowledge-mini-title">Begrepsnettverk</h5>
           ${renderConceptNetwork(conceptGraph, theoryLinks, conceptEdgeContext)}
         </article>
@@ -2883,7 +2911,7 @@
     const createdAt = formatAfterworkDate(safeEntry.createdAt);
     const textType = String(safeEntry.textType || "ukjent");
     const preview = String(safeEntry.sourceTextPreview || "Ingen kildepreview lagret.");
-    const conceptPool = filterConceptLabels(Array.isArray(safeEntry.concepts) && safeEntry.concepts.length ? safeEntry.concepts : (Array.isArray(safeEntry.keywords) ? safeEntry.keywords : [])).slice(0, 3);
+    const conceptPool = filterConceptLabels((Array.isArray(safeEntry.concepts) && safeEntry.concepts.length ? safeEntry.concepts : (Array.isArray(safeEntry.keywords) ? safeEntry.keywords : [])).map(canonicalizeDisplayConcept)).slice(0, 3);
     const conceptLine = conceptPool.length ? conceptPool.map((item) => `<span class="insight-chip">${escHtml(item)}</span>`).join("") : '<span class="insight-chip">Ingen begreper</span>';
     const insightsCount = Array.isArray(safeEntry.insights) ? safeEntry.insights.length : 0;
     const pathCount = Array.isArray(safeEntry.learningPath) ? safeEntry.learningPath.length : 0;
@@ -3396,6 +3424,38 @@
       ].slice(0, 6);
       path = quality.suggestedStructure.slice(0, 5);
     } else if (textType === "academic_article") {
+      const publicAdminSignal = detectPublicAdministrationReformSignal(analysisText);
+      if (publicAdminSignal?.strong) {
+        reflection = "Teksten analyserer NAV-reformen og spør hvorfor måloppnåelsen uteblir: skyldes dette hovedsakelig omstillingskostnader, eller mer varige strukturelle utfordringer i styring og organisering?";
+        sortItems = [
+          { label: "Kort hovedinnsikt", text: "NAVs manglende måloppnåelse kan ikke forklares som midlertidig reformstøy alene." },
+          { label: "Tema", text: "NAV-reformen og måloppnåelse." },
+          { label: "Hovedspenning", text: "Omstillingskostnad vs. strukturell utfordring." },
+          { label: "Hovedargument", text: "Varige problemer i styring, organisering og stat–kommune-samspill svekker måloppnåelsen i NAV-kontorene." },
+          { label: "Begreper", text: "NAV-reformen, NAV-kontor, måloppnåelse, statlig styring, kommunale mål, arbeidsrettet oppfølging." },
+          { label: "Mulig videre analyse", text: "Undersøk hvordan kontorstørrelse, governance/samstyring og bakkebyråkrati påvirker arbeidsrettet oppfølging." }
+        ];
+        day = "Ikke dagbokmateriale – ingen dagsoppsummering laget.";
+        thoughts = {
+          hovedspor: "NAVs resultater må leses som et strukturelt styrings- og organisasjonsproblem, ikke bare implementeringsstøy.",
+          lose_tanker: "Skille mellom omstillingsprosess, reformevaluering, kontorstørrelse og stat–kommune-samspill.",
+          neste_steg: "Undersøk hvordan statlig styring, kommunale mål og lokal organisering påvirker arbeidsrettet oppfølging."
+        };
+        list = [
+          "Skill mellom midlertidig omstillingsprosess og varige strukturelle utfordringer.",
+          "Koble reformevaluering til måloppnåelse i NAV-kontor.",
+          "Analyser statlig styring opp mot kommunale mål.",
+          "Vurder betydningen av kontorstørrelse for arbeidsrettet oppfølging.",
+          "Bruk organisasjonsteori, bakkebyråkrati og governance/samstyring som tolkningsramme."
+        ];
+        path = [
+          "Definer hva måloppnåelse betyr i denne analysen.",
+          "Sorter funn etter omstillingskostnad vs. strukturell forklaring.",
+          "Analyser stat–kommune-samspill i lokale NAV-kontor.",
+          "Sammenlign med teori om bakkebyråkrati og governance.",
+          "Formuler konkrete styrings- og organisasjonsimplikasjoner."
+        ];
+      } else {
       const theoryLinks = extractAcademicTheoryLinks(analysisText).slice(0, 5);
       const phraseConcepts = extractAcademicPhraseConcepts(analysisText).slice(0, 8);
       const hasSahelMali = /sahel|mali/i.test(analysisText);
@@ -3442,6 +3502,7 @@
         "Vurder forklaringskraft og blinde soner.",
         "Formuler en syntetiserende konklusjon."
       ];
+      }
     } else if (textType === "project_note") {
       reflection = "Dette er et prosjektnotat med tydelig problem og mål. Neste gevinst ligger i å koble løsning til konkrete filer/funksjoner.";
       sortItems = ["Problem","Løsning","Filer/funksjoner","Neste steg"].map((label, idx) => ({ label, text: sentences[idx] || "Trenger kort presisering i teksten." }));
@@ -3597,7 +3658,7 @@
     const safePath = Array.isArray(payload.path) ? payload.path : [];
     const cleanPreviewText = (value) => cleanArticleText(String(value || "")).replace(/\s+/g, " ").trim();
     const textTypeLabel = humanizeTextType(payload.textType || detectTextType(host.dataset.sourceText || ""));
-    const ahaSer = buildAhaSerCard(payload);
+    const ahaSer = buildAhaSerCard(payload, host.dataset.sourceText || "");
     const historyGoSuggestion = buildHistoryGoSuggestion(payload, host.dataset.sourceText || "");
     host.innerHTML = `
       <div class="auto-output-head">
@@ -3672,28 +3733,37 @@
     const key = String(type || "").trim().toLowerCase();
     const labels = {
       academic_article: "Faglig analyse",
-      diary: "Dagbokmateriale",
-      diary_literary: "Personlig refleksjon",
+      day_log: "Dagbokmateriale",
+      literary_diary: "Personlig refleksjon / dagbokprosa",
+      literary_fragment: "Kreativ tekst",
+      opinion_article: "Politisk / argumenterende tekst",
+      theory_idea: "Teoritekst",
       project_note: "Prosjektarbeid",
       legal_text: "Juridisk tekst",
-      creative_text: "Kreativ tekst",
       technical_work: "Teknisk arbeid",
-      learning_note: "Læringsnotat"
+      learning_note: "Læringsnotat",
+      general: "Ukjent / blandet materiale"
     };
     return labels[key] || "Ukjent / blandet materiale";
   }
 
-  function buildAhaSerCard(payload) {
+  function buildAhaSerCard(payload, sourceText = "") {
     const insights = Array.isArray(payload?.insightCards) ? payload.insightCards : [];
     const sort = Array.isArray(payload?.sortItems) ? payload.sortItems : [];
     const lookup = (needle) => sort.find((item) => normalizeConceptKey(item?.label || "").includes(needle))?.text || "";
-    const themes = filterConceptLabels(Array.isArray(payload?.keywords) ? payload.keywords : []).slice(0, 4);
+    const subjectLinks = (Array.isArray(payload?.subjectMatches) ? payload.subjectMatches : Array.isArray(payload?.subjectLinks) ? payload.subjectLinks : [])
+      .map((item) => item?.title || item?.subject_label || item?.subject_id || item?.id).filter(Boolean);
+    const theoryLinks = (Array.isArray(payload?.theoryLinks) ? payload.theoryLinks : Array.isArray(payload?.theories) ? payload.theories : [])
+      .map((item) => item?.thinker || item?.theory || item?.name || item).filter(Boolean);
+    const navSignal = detectPublicAdministrationReformSignal(sourceText || payload?.reflection || "");
+    const themes = filterConceptLabels(Array.isArray(payload?.keywords) ? payload.keywords : []).map(canonicalizeDisplayConcept).slice(0, 4);
+    const prioritizedLinks = subjectLinks.length ? subjectLinks : theoryLinks.length ? theoryLinks : (navSignal?.strong ? ["Offentlig forvaltning", "Organisasjonsteori", "Velferdsstat", "Implementeringsteori"] : themes);
     return {
-      tema: lookup("hovedargument") || insights[1] || insights[0] || "Tema identifiseres fortløpende.",
-      hovedspenning: lookup("spenning") || insights.find((item) => /spenning|vs|mot/i.test(String(item || ""))) || "Spenning bygges fra flere meldinger.",
-      viktigsteInnsikt: lookup("hovedinnsikt") || insights[0] || payload?.reflection || "Ingen tydelig hovedinnsikt ennå.",
-      fagkoblinger: themes.length ? themes.join(" · ") : "Fagkoblinger blir tydeligere når flere tekster analyseres.",
-      nesteSteg: payload?.thoughts?.neste_steg || (Array.isArray(payload?.path) ? payload.path[0] : "") || "Velg ett konkret neste steg i teksten.",
+      tema: navSignal?.strong ? "NAV-reformen og måloppnåelse" : (lookup("hovedargument") || insights[1] || insights[0] || "Tema identifiseres fortløpende."),
+      hovedspenning: navSignal?.strong ? "Omstillingskostnad vs. strukturell utfordring" : (lookup("spenning") || insights.find((item) => /spenning|vs|mot/i.test(String(item || ""))) || "Spenning bygges fra flere meldinger."),
+      viktigsteInnsikt: navSignal?.strong ? "NAVs manglende måloppnåelse skyldes ikke bare midlertidig omstilling, men også varige strukturelle utfordringer i styring, organisering og stat–kommune-samspill." : (lookup("hovedinnsikt") || insights[0] || payload?.reflection || "Ingen tydelig hovedinnsikt ennå."),
+      fagkoblinger: prioritizedLinks.length ? prioritizedLinks.slice(0, 4).join(" · ") : "Fagkoblinger blir tydeligere når flere tekster analyseres.",
+      nesteSteg: navSignal?.strong ? "Undersøk hvordan statlig styring, kommunale mål og lokal organisering påvirker arbeidsrettet oppfølging." : (payload?.thoughts?.neste_steg || (Array.isArray(payload?.path) ? payload.path[0] : "") || "Velg ett konkret neste steg i teksten."),
       kortSvar: lookup("kort hovedinnsikt") || payload?.reflection || insights[0] || "AHA analyserer teksten fortløpende."
     };
   }
