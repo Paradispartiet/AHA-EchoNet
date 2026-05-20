@@ -1069,7 +1069,7 @@
       .map((c) => typeof c === "string" ? c : (c?.label || c?.key || c?.term || ""))
       .map((c) => String(c || "").trim())
       .filter((c) => c && !WEAK_CONCEPT_WORDS.has(c.toLowerCase()))
-      .filter((c) => !/^(mulighet|retning|oppmerksomhet|virksomhet|størrelse)$/i.test(String(c || "").trim()))
+      .filter((c) => !/^(mulighet|retning|oppmerksomhet|virksomhet|størrelse|påtilknytning|navkontore)$/i.test(String(c || "").trim()))
       .filter((c) => !isGenericDisplayConcept(c))
       .filter((c, _, arr) => {
         const keys = new Set(arr.map((term) => normalizeAfterworkConcept(term)));
@@ -1090,11 +1090,13 @@
   function canonicalizeDisplayConcept(term) {
     const raw = String(term || "").trim();
     const key = normalizeAfterworkConcept(raw);
-    if (/^nav[-\s]?kontor(ene|er|e)?$/.test(key) || key === "navkontorer" || key === "navkontore") return "NAV-kontor";
-    if (key === "nav-reformen" || key === "nav reformen" || key === "navreformen") return "NAV-reformen";
-    if (["stat og kommune","stat-kommune","stat–kommune","statlig og kommunal","partnerskap mellom stat og kommune"].includes(key)) return "Stat–kommune-samspill";
-    if (["arbeidsrettet virksomhet","arbeidsrettede oppfølgingen","oppfølging mot arbeid"].includes(key)) return "Arbeidsrettet oppfølging";
-    if (["måloppnåelse","manglende måloppnåelse","mål om flere i arbeid","flere i arbeid og aktivitet"].includes(key)) return "Måloppnåelse";
+    if (/^nav[-\s]?kontor(ene|er|e)?$/.test(key) || ["navkontor","navkontorer","navkontore","lokalkontor","lokalkontorene"].includes(key)) return "NAV-kontor";
+    if (["nav-reformen", "nav reformen", "navreformen"].includes(key) || (key === "reformen" && /nav/.test(normalizeAfterworkConcept(raw)))) return "NAV-reformen";
+    if (["stat og kommune","stat-kommune","stat–kommune","statlig og kommunal","statlige og kommunale mål","kommunale målsetninger","kommunale mål","partnerskap mellom stat og kommune","kommunalt partnerskap"].includes(key)) return "Stat–kommune-samspill";
+    if (["arbeidsrettet oppfølging","arbeidsrettet virksomhet","arbeidsrettede oppfølgingen","oppfølging mot arbeid","arbeidsmarkedstilknytning"].includes(key)) return "Arbeidsrettet oppfølging";
+    if (["måloppnåelse","manglende måloppnåelse","reformens mål","mål om flere i arbeid","flere i arbeid og aktivitet","færre på trygd"].includes(key)) return "Måloppnåelse";
+    if (["strukturelle utfordringer","strukturelle vansker","organisatoriske utfordringer","varige strukturelle utfordringer"].includes(key)) return "Strukturelle utfordringer";
+    if (["omstillingsprosess","omstillingskostnad","omstillingskostnader","implementeringsstøy","midlertidig omstilling"].includes(key)) return "Omstillingsprosess";
     return raw;
   }
 
@@ -1347,7 +1349,12 @@
     const summaryText = normalizeDisplayText(cleanSummaryRaw || "");
     const summary = escHtml(summaryText);
 
-    const conceptsHtml = renderLayerChips(filterConceptLabels(ins.concepts).map((label) => ({ label })), (c) => c?.label);
+    const prioritizedConcepts = filterConceptLabels([
+      ...(Array.isArray(ins.concepts) ? ins.concepts : []),
+      ...(Array.isArray(ins.subjectLinks) ? ins.subjectLinks.map((item) => item?.title || item?.label || item?.key || item?.name || "") : []),
+      ...(Array.isArray(ins.keywords) ? ins.keywords : [])
+    ].map(canonicalizeDisplayConcept));
+    const conceptsHtml = renderLayerChips(prioritizedConcepts.map((label) => ({ label })), (c) => c?.label);
     const patternsHtml = renderLayerChips(ins.patterns, (p) => p?.label || p?.key);
     const markersHtml = renderLayerChips(ins.markers, (m) => m?.value);
     const emnerHtml = renderLayerChips((ins.emner || []).map((e) => ({ key: e })), (e) => e?.key);
@@ -2100,11 +2107,11 @@
 
 
   function displayConceptLabel(value) {
-    return String(value || "").replace(/_/g, " ").trim();
+    return canonicalizeDisplayConcept(String(value || "").replace(/_/g, " ").trim());
   }
 
   function normalizeConceptKey(value) {
-    return String(value || "").trim().toLowerCase();
+    return normalizeAfterworkConcept(canonicalizeDisplayConcept(value));
   }
 
   function filterGenericConceptItems(items, keyGetter) {
@@ -2194,8 +2201,24 @@
       : (conceptGraph?.edges || [])
         .filter((edge) => edge?.type === "co_occurs")
         .filter((edge) => !isGenericDisplayConcept(edge?.from) && !isGenericDisplayConcept(edge?.to));
-    const topEdges = prioritizeVisibleConceptEdges(edgePool, theoryLinks, conceptEdgeContext)
-      .slice(0, 3);
+    const topEdges = (() => {
+      const deduped = new Map();
+      prioritizeVisibleConceptEdges(edgePool, theoryLinks, conceptEdgeContext).forEach((edge) => {
+        const from = canonicalizeDisplayConcept(edge?.from);
+        const to = canonicalizeDisplayConcept(edge?.to);
+        const fromKey = normalizeConceptKey(from);
+        const toKey = normalizeConceptKey(to);
+        if (!fromKey || !toKey || fromKey === toKey) return;
+        if (isGenericDisplayConcept(from) || isGenericDisplayConcept(to)) return;
+        const pairKey = [fromKey, toKey].sort((a, b) => a.localeCompare(b)).join("::");
+        const prev = deduped.get(pairKey);
+        const weight = Number(edge?.weight || 0);
+        if (!prev || weight > Number(prev?.weight || 0)) deduped.set(pairKey, { ...edge, from, to, weight });
+      });
+      return Array.from(deduped.values())
+        .sort((a, b) => Number(b?.weight || 0) - Number(a?.weight || 0))
+        .slice(0, 3);
+    })();
 
     const visibleThemes14d = aggregateVisibleConceptCounts(recurringThemes?.["14d"]?.top_concepts || [], "key", "count");
     const visibleThemes30d = aggregateVisibleConceptCounts(recurringThemes?.["30d"]?.top_concepts || [], "key", "count");
@@ -2207,10 +2230,14 @@
       .slice()
       .sort((a, b) => (Number(b?.strength) || 0) - (Number(a?.strength) || 0))
       .slice(0, 5)
-      .map((item) => ({
-        title: `${item?.source || "Ukjent"} ↔ ${item?.target || "Ukjent"}`,
-        strength: item?.strength || 0
-      }));
+      .map((item) => {
+        const source = canonicalizeDisplayConcept(item?.source || "Ukjent");
+        const target = canonicalizeDisplayConcept(item?.target || "Ukjent");
+        if (!source || !target || normalizeConceptKey(source) === normalizeConceptKey(target)) return null;
+        if (isGenericDisplayConcept(source) || isGenericDisplayConcept(target)) return null;
+        return { title: `${source} ↔ ${target}`, strength: item?.strength || 0 };
+      })
+      .filter(Boolean);
     const paradoxTensions = (profileTensions.paradox_pairs || [])
       .slice(0, 5)
       .map((item) => ({
@@ -2237,7 +2264,7 @@
       .slice(0, 5);
 
     const totalInsights = Array.isArray(safeChamber?.insights) ? safeChamber.insights.length : 0;
-    const lowData = totalInsights > 0 && totalInsights < 6;
+    const lowData = totalInsights > 0 && totalInsights < 12;
     const lowDataBanner = lowData ? `<p class="knowledge-sub"><strong>Tidlig mønsterindikasjon</strong><br>Datagrunnlag: lite (${totalInsights} innsikter)<br>Sikkerhet: lav/middels</p>` : "";
     const edgeWarning = lowData && topEdges.length ? `<p class="knowledge-sub">Sterk kobling, men lite datagrunnlag. Forekomst: ${totalInsights} tekster/innsikter. Sikkerhet: lav/middels.</p>` : "";
     return `<section class="knowledge-map-block">
@@ -2280,8 +2307,8 @@
     (Array.isArray(items) ? items : []).forEach((item) => {
       const raw = String(item?.[keyField] || "").trim();
       if (!raw) return;
-      const label = normalizeVisibleAcademicLabel(raw);
-      const key = label.toLowerCase();
+      const label = canonicalizeDisplayConcept(normalizeVisibleAcademicLabel(raw));
+      const key = normalizeConceptKey(label);
       const prev = totals.get(key) || { ...item, [keyField]: label, [countField]: 0 };
       prev[countField] += Number(item?.[countField] || 0);
       totals.set(key, prev);
@@ -2308,17 +2335,23 @@
       `${escHtml(displayConceptLabel(c.key))} <span class="meta-count">tidligere ×${c.prev_count}</span>`
     );
     const conceptPairTensions = (tensions.concept_pair_tensions || [])
-      .filter((t) => !isGenericDisplayConcept(t?.source) && !isGenericDisplayConcept(t?.target))
-      .slice(0, 5).map((t) => (
-      `${escHtml(displayConceptLabel(t?.source))} ↔ ${escHtml(displayConceptLabel(t?.target))} <span class="meta-count">styrke ${escHtml(String(t?.strength || 0))}</span>`
-    ));
+      .map((t) => {
+        const source = canonicalizeDisplayConcept(t?.source || "");
+        const target = canonicalizeDisplayConcept(t?.target || "");
+        if (!source || !target) return null;
+        if (isGenericDisplayConcept(source) || isGenericDisplayConcept(target)) return null;
+        if (normalizeConceptKey(source) === normalizeConceptKey(target)) return null;
+        return `${escHtml(displayConceptLabel(source))} ↔ ${escHtml(displayConceptLabel(target))} <span class="meta-count">styrke ${escHtml(String(t?.strength || 0))}</span>`;
+      })
+      .filter(Boolean)
+      .slice(0, 5);
     const conceptTensions = (tensions.concept_tensions || []).slice(0, 5).map((t) => {
       const key = String(t?.key || "");
       const hasPair = /↔|<->|vs\.?|\s-\s|—/.test(key);
       return hasPair
         ? `${escHtml(key)} <span class="meta-count">spenning ${Number(t.combined).toFixed(2)}</span>`
-        : "Ingen tydelig todelt spenning ennå.";
-    });
+        : "";
+    }).filter(Boolean);
     const paradoxes = (tensions.paradox_pairs || []).slice(0, 5).map((p) => {
       const shared = (p.shared_concepts || []).slice(0, 3).map(escHtml).join(", ");
       const themeText = p.theme_id ? ` i <em>${escHtml(p.theme_id)}</em>` : "";
@@ -2331,21 +2364,24 @@
       `${escHtml((r.summary || "").slice(0, 160))} <span class="meta-count">${escHtml((r.shared_concepts || []).map((concept) => displayConceptLabel(concept)).join(", "))}</span>`
     );
     const bridging = (recs.bridging_pairs || [])
+      .map((b) => ({ ...b, source: canonicalizeDisplayConcept(b?.source), target: canonicalizeDisplayConcept(b?.target) }))
       .filter((b) => !isGenericDisplayConcept(b?.source) && !isGenericDisplayConcept(b?.target))
-      .slice(0, 4).map((b) => {
-      const source = normalizeConceptKey(b?.source) === "knapphet" && (recentConcepts.join(" ").toLowerCase().includes("ressursknapphet") || recentConcepts.join(" ").toLowerCase().includes("knapphetsskolen")) ? "ressursknapphet" : b?.source;
-      const pair = `${escHtml(displayConceptLabel(source))} ↔ ${escHtml(displayConceptLabel(b.target))}`;
-      return `${pair} <span class="meta-count">npmi ${Number(b.npmi).toFixed(2)}</span>`;
-    });
-    const underexplored = filterGenericConceptItems(recs.underexplored_concepts || [], (item) => item?.key).slice(0, 5).map((u) =>
+      .filter((b) => normalizeConceptKey(b?.source) && normalizeConceptKey(b?.source) !== normalizeConceptKey(b?.target))
+      .slice(0, 4).map((b) => `${escHtml(displayConceptLabel(b.source))} ↔ ${escHtml(displayConceptLabel(b.target))} <span class="meta-count">npmi ${Number(b.npmi).toFixed(2)}</span>`);
+    const topKnownConcepts = new Set((recent.concepts || []).map((c) => normalizeConceptKey(c?.key)).filter(Boolean));
+    const underexplored = filterGenericConceptItems(recs.underexplored_concepts || [], (item) => item?.key)
+      .map((u) => ({ ...u, key: canonicalizeDisplayConcept(u?.key) }))
+      .filter((u) => !topKnownConcepts.has(normalizeConceptKey(u?.key)))
+      .slice(0, 5).map((u) =>
       `${escHtml(displayConceptLabel(u.key))} <span class="meta-count">×${u.count} · ${escHtml(u.reason || "")}</span>`
     );
+    const tensionSectionItems = conceptPairTensions.length ? conceptPairTensions.slice(0, 3) : (paradoxes.length ? paradoxes.slice(0, 3) : (conceptTensions.length ? conceptTensions.slice(0, 3) : ["Ingen tydelig todelt spenning ennå."]));
 
     const sections = [
       renderMetaSection(`Det du tenker mest på${window}`, recentConcepts),
       renderMetaSection("Nye temaer som dukker opp", emerging),
       renderMetaSection("Tankegods som har stilnet", fading),
-      renderMetaSection("Spenninger jeg ser", conceptPairTensions.length ? conceptPairTensions : (paradoxes.length ? paradoxes : conceptTensions)),
+      renderMetaSection("Spenninger jeg ser", tensionSectionItems),
       renderMetaSection("Paradokser i materialet", paradoxes),
       renderMetaSection("Spørsmål som kan løsne fastlåsthet", unstick),
       renderMetaSection("Refleksjoner verdt å hente frem", resurface),
@@ -2355,9 +2391,15 @@
 
     const knowledgeMap = renderKnowledgeMapSection(chamber, profile);
 
+    const lowData = totalInsights > 0 && totalInsights < 12;
+    const lowDataBanner = lowData
+      ? `<p class="meta-sub"><strong>Tidlig mønsterindikasjon</strong><br>Datagrunnlag: lite (${totalInsights} innsikter)<br>Sikkerhet: lav/middels</p>`
+      : "";
+
     if (!sections) {
       return `<div class="meta-profile">
         <h3>Hva AHA ser i hele materialet ditt</h3>
+        ${lowDataBanner}
         <p class="meta-empty">AHA har ennå ikke nok å gå på. Skriv mer i chat eller importer fra History Go.</p>
         ${knowledgeMap}
       </div>`;
@@ -2365,6 +2407,7 @@
 
     return `<div class="meta-profile">
       <h3>Hva AHA ser i hele materialet ditt</h3>
+      ${lowDataBanner}
       <p class="meta-meta">${totalInsights} innsikter analysert på tvers av hele chamberet.</p>
       ${sections}
       ${knowledgeMap}
