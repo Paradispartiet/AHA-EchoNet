@@ -3784,8 +3784,10 @@
     const replyText = String(ahaReply || "");
     const combined = `${sourceText} ${replyText}`.toLowerCase();
     const academicSignals = /(sahel|mali|ressursknapphet|politisk økologi|knapphetsskolen|miljøsikkerhet|climate conflict|environmental security)/i;
+    const publicAdminSignal = detectPublicAdministrationReformSignal(sourceText);
     const baseTextType = detectTextType(sourceText);
-    const isAcademic = baseTextType === "academic_article" || academicSignals.test(combined);
+    const isAcademic = baseTextType === "academic_article" || academicSignals.test(combined) || Boolean(publicAdminSignal?.strong);
+    const isNavAcademic = Boolean(publicAdminSignal?.strong);
     const reflectionCandidate = [replyText, sourceText]
       .flatMap((text) => String(text || "").split(/(?<=[.!?])\s+/))
       .map((part) => part.trim())
@@ -3805,37 +3807,69 @@
 
     if (isAcademic) {
       payload.textType = "academic_article";
-      payload.sortItems = [
-        { label: "Kort hovedinnsikt", text: "Teksten utfordrer en enkel klimaforklaring på konflikt og peker mot politiske, historiske og maktmessige årsaker." },
-        { label: "Hovedargument", text: "Klima og miljø kan være bakgrunnsfaktorer, men konfliktutvikling forklares bedre gjennom politikk, historie, marginalisering og institusjonelle forhold." },
-        { label: "Motargument / kritikk", text: "Knapphetsskolens lineære årsakskjede fra miljøforringelse til vold kritiseres for svak empirisk og kontekstuell forklaringskraft." },
-        { label: "Spenning i teksten", text: "Spenningen står mellom miljøsikkerhet/knapphetsskolen og politisk økologi." }
-      ];
       payload.day = "Ikke dagbokmateriale – ingen dagsoppsummering laget.";
-      payload.list = [
-        "Skille tydelig mellom empiri, teori og normativ vurdering.",
-        "Sammenlikn knapphetsskolen og politisk økologi med samme casegrunnlag.",
-        "Vis hvordan politisk marginalisering påvirker konfliktforløp.",
-        "Bruk sitater som belegg, men la syntesen være i egne ord.",
-        "Avslutt med hva analysen endrer i konfliktforståelsen."
-      ];
-      payload.insightCards = [
-        "Hovedinnsikt: Konflikter i Sahel/Mali kan ikke forklares lineært med klima alene.",
-        "Hovedargument: Politikk, historie og maktforhold gir sterkere forklaringskraft enn ressursdeterminisme.",
-        "Motargument/kritikk: Knapphetsskolen undervurderer institusjoner, aktørmakt og lokal kontekst.",
-        "Spenning i teksten: Miljøsikkerhet og politisk økologi peker på ulike årsakslogikker."
-      ];
-      payload.path = [
-        "Kartlegg hovedpåstand og motpåstand.",
-        "Sorter belegg etter forklaringsmodell.",
-        "Test modellene mot samme Mali-case.",
-        "Formuler syntese med blinde soner og forklaringskraft."
-      ];
-      payload.thoughts = {
-        hovedspor: "Konfliktutvikling forklares best når politiske og historiske forhold vektes tyngre enn lineær knapphet.",
-        lose_tanker: "Begreper som miljøsikkerhet, marginalisering og ressursknapphet må avgrenses tydelig for å unngå begrepsglidning.",
-        neste_steg: "Velg én empirisk case og vis konkret hva hver modell forklarer – og overser."
-      };
+      if (isNavAcademic) {
+        payload.sortItems = [
+          { label: "Kort hovedinnsikt", text: "NAVs manglende måloppnåelse skyldes ikke bare midlertidig omstilling, men også varige strukturelle utfordringer." },
+          { label: "Tema", text: "NAV-reformen og måloppnåelse." },
+          { label: "Hovedspenning", text: "Omstillingskostnad vs. strukturell utfordring." },
+          { label: "Hovedargument", text: "Styring, organisering og stat–kommune-samspill påvirker måloppnåelsen i NAV-kontorene." }
+        ];
+        payload.list = [
+          "Skill mellom omstillingsprosess og varige strukturelle utfordringer.",
+          "Analyser hvordan statlig styring og kommunale mål påvirker måloppnåelse.",
+          "Vurder kontorstørrelse og lokal organisering i arbeidsrettet oppfølging.",
+          "Koble reformevaluering til organisasjonsteori, bakkebyråkrati og governance/samstyring."
+        ];
+        payload.insightCards = [
+          "Hovedinnsikt: NAVs manglende måloppnåelse kan ikke forklares som midlertidig reformstøy alene.",
+          "Hovedargument: Statlig styring, kommunale mål og lokal organisering skaper varige strukturelle utfordringer.",
+          "Spenning i teksten: Omstillingskostnad versus strukturell forklaring.",
+          "Neste analyse: Undersøk hvordan stat–kommune-samspill former arbeidsrettet oppfølging."
+        ];
+        payload.path = [
+          "Definer måloppnåelse i NAV-reformen.",
+          "Sorter funn etter omstillingskostnad vs. strukturell forklaring.",
+          "Analyser stat–kommune-samspill og kontorstørrelse.",
+          "Test tolkningene mot organisasjonsteori og bakkebyråkrati."
+        ];
+        payload.thoughts = {
+          hovedspor: "NAV-reformen bør forstås gjennom strukturelle styrings- og organisasjonsforhold.",
+          lose_tanker: "Skille tydelig mellom implementeringsstøy, kommunale mål og varige organisasjonsutfordringer.",
+          neste_steg: "Undersøk hvordan statlig styring, kommunale mål og lokal organisering påvirker arbeidsrettet oppfølging."
+        };
+      } else {
+        payload.sortItems = [
+          { label: "Kort hovedinnsikt", text: "Teksten utfordrer en enkel klimaforklaring på konflikt og peker mot politiske, historiske og maktmessige årsaker." },
+          { label: "Hovedargument", text: "Klima og miljø kan være bakgrunnsfaktorer, men konfliktutvikling forklares bedre gjennom politikk, historie, marginalisering og institusjonelle forhold." },
+          { label: "Motargument / kritikk", text: "Knapphetsskolens lineære årsakskjede fra miljøforringelse til vold kritiseres for svak empirisk og kontekstuell forklaringskraft." },
+          { label: "Spenning i teksten", text: "Spenningen står mellom miljøsikkerhet/knapphetsskolen og politisk økologi." }
+        ];
+        payload.list = [
+          "Skille tydelig mellom empiri, teori og normativ vurdering.",
+          "Sammenlikn knapphetsskolen og politisk økologi med samme casegrunnlag.",
+          "Vis hvordan politisk marginalisering påvirker konfliktforløp.",
+          "Bruk sitater som belegg, men la syntesen være i egne ord.",
+          "Avslutt med hva analysen endrer i konfliktforståelsen."
+        ];
+        payload.insightCards = [
+          "Hovedinnsikt: Konflikter i Sahel/Mali kan ikke forklares lineært med klima alene.",
+          "Hovedargument: Politikk, historie og maktforhold gir sterkere forklaringskraft enn ressursdeterminisme.",
+          "Motargument/kritikk: Knapphetsskolen undervurderer institusjoner, aktørmakt og lokal kontekst.",
+          "Spenning i teksten: Miljøsikkerhet og politisk økologi peker på ulike årsakslogikker."
+        ];
+        payload.path = [
+          "Kartlegg hovedpåstand og motpåstand.",
+          "Sorter belegg etter forklaringsmodell.",
+          "Test modellene mot samme Mali-case.",
+          "Formuler syntese med blinde soner og forklaringskraft."
+        ];
+        payload.thoughts = {
+          hovedspor: "Konfliktutvikling forklares best når politiske og historiske forhold vektes tyngre enn lineær knapphet.",
+          lose_tanker: "Begreper som miljøsikkerhet, marginalisering og ressursknapphet må avgrenses tydelig for å unngå begrepsglidning.",
+          neste_steg: "Velg én empirisk case og vis konkret hva hver modell forklarer – og overser."
+        };
+      }
     }
     return payload;
   }
