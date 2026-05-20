@@ -1195,10 +1195,8 @@
   }
 
   function normalizeDisplayText(value) {
-    return normalizeVisibleAcademicLabel(
-      String(value || "")
-        .replace(/underviser(\s+)viktigheten/gi, (_match, gap) => `understreker${gap}viktigheten`)
-    );
+    return String(value || "")
+      .replace(/underviser(\s+)viktigheten/gi, (_match, gap) => `understreker${gap}viktigheten`);
   }
 
   function normalizeVisibleAcademicLabel(value) {
@@ -1213,6 +1211,21 @@
       .replace(/\bnav reformen\b/gi, "NAV-reformen")
       .replace(/\bnavreformen\b/gi, "NAV-reformen")
       .replace(/\bnav-reformen\b/gi, "NAV-reformen");
+  }
+  function normalizeAcademicConceptLabel(value) {
+    return normalizeVisibleAcademicLabel(value);
+  }
+
+  function filterCrossDomainTextItems(items, sourceText) {
+    const src = String(sourceText || "");
+    const list = Array.isArray(items) ? items : [];
+    const sourceHasPublicAdmin = Boolean(detectPublicAdministrationReformSignal(src)?.strong);
+    const sourceHasSahelMali = /(sahel|mali|politisk økologi|knapphetsskolen|ressursknapphet|miljødegradering|miljøsikkerhet)/i.test(src);
+    const blocked = sourceHasPublicAdmin
+      ? /(sahel|mali|knapphetsskolen|politisk økologi|ressursknapphet|miljødegradering|miljøsikkerhet|klima og miljø kan være bakgrunnsfaktorer|konfliktutvikling|marginalisering av pastoralister|environmental security|makt- og produksjonsforhold)/i
+      : (sourceHasSahelMali ? /(nav|nav-reformen|nav-kontorene|offentlig forvaltning|velferdsstat|arbeidslinja|bakkebyråkrati|stat–kommune|stat-kommune|arbeidsrettet oppfølging|kommunale målsetninger)/i : null);
+    if (!blocked) return list;
+    return list.filter((item) => !blocked.test(String(item || "")));
   }
 
   function short(text, maxLen = 180) {
@@ -1439,6 +1452,22 @@
           { label: "Neste analysegrep", text: "Presiser forholdet mellom metode, funn og teori for å styrke forklaringskraften." }
         ].filter((item) => item.text);
 
+    const normalizedList = filterCrossDomainTextItems((isPublicAdmin
+      ? [
+          "Skille tydelig mellom omstillingsforklaring og strukturell forklaring.",
+          "Koble effektforskning og prosessdata til NAV-kontorenes lokale organisering.",
+          "Analysere hvordan statlig styring og kommunale mål trekker i ulik retning.",
+          "Vurdere hvordan kontorstørrelse påvirker arbeidsrettet oppfølging.",
+          "Presisere hvilke organisatoriske og styringsmessige grep som kan styrke måloppnåelsen."
+        ]
+      : (Array.isArray(safePayload.list) ? safePayload.list : [])), src).slice(0, 6);
+    const navInsights = [
+      "Hovedinnsikt: Artikkelen viser at NAVs manglende måloppnåelse ikke bare kan forklares med midlertidig omstilling, men også med varige strukturelle utfordringer.",
+      "Hovedargument: NAV-kontorenes resultater påvirkes av forenklingsarbeid, statlig styring, kommunale mål og lokal organisering.",
+      "Motargument/kritikk: En ren omstillingsforklaring undervurderer mer grunnleggende organisatoriske og styringsmessige problemer.",
+      "Spenning: Spenningen ligger mellom omstillingskostnad og strukturell forklaring."
+    ];
+    const normalizedInsights = filterDomainInsightCards((isPublicAdmin ? navInsights : (Array.isArray(safePayload.insightCards) ? safePayload.insightCards : [])), src).slice(0, 4);
     return {
       ...safePayload,
       textType: "academic_article",
@@ -1469,7 +1498,17 @@
             "Knytt metode/data til funn.",
             "Finn faglige spenninger i teksten.",
             "Formuler et konkret neste analysegrep."
-          ]).map(normalizeVisibleAcademicLabel)
+          ]).map(normalizeVisibleAcademicLabel),
+      list: normalizedList.map(normalizeDisplayText),
+      insightCards: normalizedInsights.map((entry) => {
+        if (typeof entry === "string") return normalizeDisplayText(entry);
+        return {
+          ...entry,
+          title: normalizeDisplayText(entry?.title || ""),
+          summary: normalizeDisplayText(entry?.summary || entry?.text || ""),
+          concepts: (Array.isArray(entry?.concepts) ? entry.concepts : []).map(normalizeAcademicConceptLabel)
+        };
+      })
     };
   }
 
@@ -1570,8 +1609,8 @@
     const sourceHasPublicAdmin = Boolean(detectPublicAdministrationReformSignal(src)?.strong);
     const sourceHasSahelMali = /(sahel|mali|politisk økologi|knapphetsskolen|ressursknapphet|miljødegradering)/i.test(src);
     const blocked = sourceHasPublicAdmin
-      ? /(knapphetsskolen|politisk økologi|sahel|mali|ressursknapphet|miljødegradering)/i
-      : (sourceHasSahelMali ? /(nav|offentlig forvaltning|velferdsstat|arbeidslinja|bakkebyråkrati|stat–kommune|stat-kommune)/i : null);
+      ? /(sahel|mali|knapphetsskolen|politisk økologi|ressursknapphet|miljødegradering|miljøsikkerhet|klima og miljø kan være bakgrunnsfaktorer|konfliktutvikling|marginalisering av pastoralister|environmental security|makt- og produksjonsforhold)/i
+      : (sourceHasSahelMali ? /(nav|nav-reformen|nav-kontorene|offentlig forvaltning|velferdsstat|arbeidslinja|bakkebyråkrati|stat–kommune|stat-kommune|arbeidsrettet oppfølging|kommunale målsetninger)/i : null);
     if (!blocked) return list;
     return list.filter((card) => {
       const body = `${card?.title || ""} ${card?.summary || ""} ${(Array.isArray(card?.concepts) ? card.concepts : []).join(" ")}`;
@@ -2117,9 +2156,11 @@
     const topEdges = prioritizeVisibleConceptEdges(edgePool, theoryLinks, conceptEdgeContext)
       .slice(0, 3);
 
-    const themes14d = filterGenericConceptItems(recurringThemes?.["14d"]?.top_concepts || [], (item) => item?.key).slice(0, 3);
-    const themes30d = filterGenericConceptItems(recurringThemes?.["30d"]?.top_concepts || [], (item) => item?.key).slice(0, 3);
-    const topTheoryPeople = collectTheoryPeople(safeChamber, recurringThemes?.["30d"]?.top_theories, 4);
+    const visibleThemes14d = aggregateVisibleConceptCounts(recurringThemes?.["14d"]?.top_concepts || [], "key", "count");
+    const visibleThemes30d = aggregateVisibleConceptCounts(recurringThemes?.["30d"]?.top_concepts || [], "key", "count");
+    const themes14d = filterGenericConceptItems(visibleThemes14d, (item) => item?.key).slice(0, 3);
+    const themes30d = filterGenericConceptItems(visibleThemes30d, (item) => item?.key).slice(0, 3);
+    const topTheoryPeople = aggregateVisibleConceptCounts(collectTheoryPeople(safeChamber, recurringThemes?.["30d"]?.top_theories, 8), "key", "count").slice(0, 4);
     const profileTensions = profile?.tensions || {};
     const conceptPairTensions = (profileTensions.concept_pair_tensions || [])
       .slice()
@@ -2187,6 +2228,20 @@
     return Boolean(chamber && Array.isArray(chamber.insights) && chamber.insights.length);
   }
 
+  function aggregateVisibleConceptCounts(items, keyField = "key", countField = "count") {
+    const totals = new Map();
+    (Array.isArray(items) ? items : []).forEach((item) => {
+      const raw = String(item?.[keyField] || "").trim();
+      if (!raw) return;
+      const label = normalizeVisibleAcademicLabel(raw);
+      const key = label.toLowerCase();
+      const prev = totals.get(key) || { ...item, [keyField]: label, [countField]: 0 };
+      prev[countField] += Number(item?.[countField] || 0);
+      totals.set(key, prev);
+    });
+    return Array.from(totals.values());
+  }
+
   function renderMetaProfile(profile, chamber) {
     if (!profile || typeof profile !== "object") return "";
 
@@ -2196,10 +2251,10 @@
     const totalInsights = Array.isArray(profile.insights) ? profile.insights.length : 0;
     const window = recent.window_days ? ` (siste ${recent.window_days} dager)` : "";
 
-    const recentConcepts = filterGenericConceptItems(recent.concepts || [], (item) => item?.key).slice(0, 6).map((c) =>
+    const recentConcepts = filterGenericConceptItems(aggregateVisibleConceptCounts(recent.concepts || [], "key", "count"), (item) => item?.key).slice(0, 6).map((c) =>
       `${escHtml(displayConceptLabel(c.key))} <span class="meta-count">×${c.count}</span>`
     );
-    const emerging = filterGenericConceptItems(recent.emerging || [], (item) => item?.key).slice(0, 5).map((c) =>
+    const emerging = filterGenericConceptItems(aggregateVisibleConceptCounts(recent.emerging || [], "key", "count"), (item) => item?.key).slice(0, 5).map((c) =>
       `${escHtml(displayConceptLabel(c.key))} <span class="meta-count">×${c.count}</span>`
     );
     const fading = filterGenericConceptItems(recent.fading || [], (item) => item?.key).slice(0, 5).map((c) =>
@@ -2222,9 +2277,9 @@
       const themeText = p.theme_id ? ` i <em>${escHtml(p.theme_id)}</em>` : "";
       return `${shared || "(begreper)"}${themeText}`;
     });
-    const unstick = (recs.unstick_prompts || []).slice(0, 4).map((u) =>
-      escHtml(u.prompt || "")
-    );
+    const unstick = (recs.unstick_prompts || [])
+      .filter((u) => !/\b(th_default|default|unknown|null|undefined)\b/i.test(String(u?.concept || u?.prompt || "")))
+      .slice(0, 4).map((u) => escHtml(u.prompt || ""));
     const resurface = (recs.resurface_insights || []).slice(0, 4).map((r) =>
       `${escHtml((r.summary || "").slice(0, 160))} <span class="meta-count">${escHtml((r.shared_concepts || []).map((concept) => displayConceptLabel(concept)).join(", "))}</span>`
     );
