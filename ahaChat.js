@@ -1069,6 +1069,7 @@
       .map((c) => typeof c === "string" ? c : (c?.label || c?.key || c?.term || ""))
       .map((c) => String(c || "").trim())
       .filter((c) => c && !WEAK_CONCEPT_WORDS.has(c.toLowerCase()))
+      .filter((c) => !/^(mulighet|retning|oppmerksomhet|virksomhet|størrelse)$/i.test(String(c || "").trim()))
       .filter((c) => !isGenericDisplayConcept(c))
       .filter((c, _, arr) => {
         const keys = new Set(arr.map((term) => normalizeAfterworkConcept(term)));
@@ -1085,6 +1086,16 @@
         seen.add(key);
         return true;
       });
+  }
+  function canonicalizeDisplayConcept(term) {
+    const raw = String(term || "").trim();
+    const key = normalizeAfterworkConcept(raw);
+    if (/^nav[-\s]?kontor(ene|er|e)?$/.test(key) || key === "navkontorer" || key === "navkontore") return "NAV-kontor";
+    if (key === "nav-reformen" || key === "nav reformen" || key === "navreformen") return "NAV-reformen";
+    if (["stat og kommune","stat-kommune","stat–kommune","statlig og kommunal","partnerskap mellom stat og kommune"].includes(key)) return "Stat–kommune-samspill";
+    if (["arbeidsrettet virksomhet","arbeidsrettede oppfølgingen","oppfølging mot arbeid"].includes(key)) return "Arbeidsrettet oppfølging";
+    if (["måloppnåelse","manglende måloppnåelse","mål om flere i arbeid","flere i arbeid og aktivitet"].includes(key)) return "Måloppnåelse";
+    return raw;
   }
 
   function buildPlayCityFallbackCandidates(raw) {
@@ -1670,6 +1681,12 @@
         afterworkId: button.getAttribute("data-afterwork-id") || ""
       };
     }
+    if (action === "open-afterwork" || action === "export-afterwork-json" || action === "link-afterwork-historygo") {
+      return {
+        action,
+        afterworkId: button.getAttribute("data-afterwork-id") || ""
+      };
+    }
     if (action === "confirm-merge" || action === "dismiss-merge") {
       return {
         action,
@@ -1773,6 +1790,30 @@
       } else if (resolved.action === "build-from-afterwork") {
         buildFromAfterworkEntry(resolved.afterworkId);
         ok = true;
+      } else if (resolved.action === "open-afterwork") {
+        const selector = `.saved-afterwork-card[data-afterwork-id="${resolved.afterworkId}"]`;
+        const detailsEl = panel.querySelector(`${selector} details`);
+        if (detailsEl) detailsEl.open = true;
+        panel.querySelector(selector)?.scrollIntoView?.({ behavior: "smooth", block: "center" });
+        setStatusNote("Etterarbeid åpnet.");
+        ok = true;
+      } else if (resolved.action === "export-afterwork-json") {
+        const entry = loadAfterworkEntries().find((item) => item?.id === resolved.afterworkId);
+        if (entry) {
+          if (navigator.clipboard?.writeText) {
+            navigator.clipboard.writeText(JSON.stringify(entry, null, 2))
+              .then(() => setStatusNote("Etterarbeid kopiert som JSON."))
+              .catch(() => setStatusNote("Kunne ikke kopiere JSON (clipboard utilgjengelig)."));
+          } else {
+            setStatusNote("Clipboard er ikke tilgjengelig i denne klienten.");
+          }
+          ok = true;
+        }
+      } else if (resolved.action === "link-afterwork-historygo") {
+        const entry = loadAfterworkEntries().find((item) => item?.id === resolved.afterworkId) || {};
+        const signalText = `${entry?.sourceTextPreview || ""} ${(Array.isArray(entry?.concepts) ? entry.concepts : []).join(" ")}`;
+        setStatusNote(/nav|forvaltning|kommune|statlig|velferd/i.test(signalText) ? "History Go-kobling: politikk — Politikk & samfunn." : "History Go-kobling foreslått basert på tema.");
+        ok = true;
       }
       if (ok && resolved.action !== "delete-afterwork" && resolved.action !== "build-from-afterwork") showInsights();
     });
@@ -1867,7 +1908,7 @@
       });
     });
 
-    const visibleConcepts = [...concepts].filter(Boolean).filter((label) => !isGenericDisplayConcept(label));
+    const visibleConcepts = filterConceptLabels([...concepts].map(canonicalizeDisplayConcept));
     out(JSON.stringify({
       concepts: visibleConcepts,
       patterns: [...patterns].filter(Boolean),
@@ -2195,8 +2236,13 @@
       .filter((item, index, arr) => arr.findIndex((other) => String(other?.title || "").toLowerCase() === String(item?.title || "").toLowerCase()) === index)
       .slice(0, 5);
 
+    const totalInsights = Array.isArray(safeChamber?.insights) ? safeChamber.insights.length : 0;
+    const lowData = totalInsights > 0 && totalInsights < 6;
+    const lowDataBanner = lowData ? `<p class="knowledge-sub"><strong>Tidlig mønsterindikasjon</strong><br>Datagrunnlag: lite (${totalInsights} innsikter)<br>Sikkerhet: lav/middels</p>` : "";
+    const edgeWarning = lowData && topEdges.length ? `<p class="knowledge-sub">Sterk kobling, men lite datagrunnlag. Forekomst: ${totalInsights} tekster/innsikter. Sikkerhet: lav/middels.</p>` : "";
     return `<section class="knowledge-map-block">
       <h3>Kunnskapskart for hele chamberet</h3>
+      ${lowDataBanner}
       <div class="knowledge-map-grid">
         <article class="knowledge-card">
           <h4>Tilbakevendende tema</h4>
@@ -2209,6 +2255,7 @@
           <p class="knowledge-sub">Begrepsnoder: <strong>${conceptNodeCount}</strong></p>
           <p class="knowledge-sub">Teori-/tenkernoder: <strong>${theoryNodeCount}</strong></p>
           <p class="knowledge-sub">Sterkeste co-occurs: ${topEdges.length ? topEdges.map((edge) => `${escHtml(displayConceptLabel(edge.from))} ↔ ${escHtml(displayConceptLabel(edge.to))} (${edge.weight})`).join(", ") : "Ingen samforekomst-koblinger ennå."}</p>
+          ${edgeWarning}
           <h5 class="knowledge-mini-title">Begrepsnettverk</h5>
           ${renderConceptNetwork(conceptGraph, theoryLinks, conceptEdgeContext)}
         </article>
@@ -2864,7 +2911,7 @@
     const createdAt = formatAfterworkDate(safeEntry.createdAt);
     const textType = String(safeEntry.textType || "ukjent");
     const preview = String(safeEntry.sourceTextPreview || "Ingen kildepreview lagret.");
-    const conceptPool = filterConceptLabels(Array.isArray(safeEntry.concepts) && safeEntry.concepts.length ? safeEntry.concepts : (Array.isArray(safeEntry.keywords) ? safeEntry.keywords : [])).slice(0, 3);
+    const conceptPool = filterConceptLabels((Array.isArray(safeEntry.concepts) && safeEntry.concepts.length ? safeEntry.concepts : (Array.isArray(safeEntry.keywords) ? safeEntry.keywords : [])).map(canonicalizeDisplayConcept)).slice(0, 3);
     const conceptLine = conceptPool.length ? conceptPool.map((item) => `<span class="insight-chip">${escHtml(item)}</span>`).join("") : '<span class="insight-chip">Ingen begreper</span>';
     const insightsCount = Array.isArray(safeEntry.insights) ? safeEntry.insights.length : 0;
     const pathCount = Array.isArray(safeEntry.learningPath) ? safeEntry.learningPath.length : 0;
@@ -2876,7 +2923,7 @@
       <div class="saved-afterwork-concepts">${conceptLine}</div>
       <p class="saved-afterwork-meta">Innsikter: ${escHtml(String(insightsCount))} · Læringssti-steg: ${escHtml(String(pathCount))}</p>
       ${renderAfterworkSubjectLinks(safeEntry.subjectLinks)}
-      <div class="saved-afterwork-actions"><button type="button" data-action="build-from-afterwork" data-afterwork-id="${id}">Bygg videre</button><button type="button" data-action="delete-afterwork" data-afterwork-id="${id}">Slett</button></div>
+      <div class="saved-afterwork-actions"><button type="button" data-action="open-afterwork" data-afterwork-id="${id}">Åpne</button><button type="button" data-action="build-from-afterwork" data-afterwork-id="${id}">Bygg videre</button><button type="button" data-action="link-afterwork-historygo" data-afterwork-id="${id}">Koble til History Go</button><button type="button" data-action="export-afterwork-json" data-afterwork-id="${id}">Eksport JSON</button><button type="button" data-action="delete-afterwork" data-afterwork-id="${id}">Slett</button></div>
       <details>
         <summary>Vis detaljer</summary>
         <section class="saved-afterwork-section"><h4>Refleksjon</h4><p>${escHtml(normalizeDisplayText(safeEntry.reflection || ""))}</p></section>
@@ -3377,6 +3424,38 @@
       ].slice(0, 6);
       path = quality.suggestedStructure.slice(0, 5);
     } else if (textType === "academic_article") {
+      const publicAdminSignal = detectPublicAdministrationReformSignal(analysisText);
+      if (publicAdminSignal?.strong) {
+        reflection = "Teksten analyserer NAV-reformen og spør hvorfor måloppnåelsen uteblir: skyldes dette hovedsakelig omstillingskostnader, eller mer varige strukturelle utfordringer i styring og organisering?";
+        sortItems = [
+          { label: "Kort hovedinnsikt", text: "NAVs manglende måloppnåelse kan ikke forklares som midlertidig reformstøy alene." },
+          { label: "Tema", text: "NAV-reformen og måloppnåelse." },
+          { label: "Hovedspenning", text: "Omstillingskostnad vs. strukturell utfordring." },
+          { label: "Hovedargument", text: "Varige problemer i styring, organisering og stat–kommune-samspill svekker måloppnåelsen i NAV-kontorene." },
+          { label: "Begreper", text: "NAV-reformen, NAV-kontor, måloppnåelse, statlig styring, kommunale mål, arbeidsrettet oppfølging." },
+          { label: "Mulig videre analyse", text: "Undersøk hvordan kontorstørrelse, governance/samstyring og bakkebyråkrati påvirker arbeidsrettet oppfølging." }
+        ];
+        day = "Ikke dagbokmateriale – ingen dagsoppsummering laget.";
+        thoughts = {
+          hovedspor: "NAVs resultater må leses som et strukturelt styrings- og organisasjonsproblem, ikke bare implementeringsstøy.",
+          lose_tanker: "Skille mellom omstillingsprosess, reformevaluering, kontorstørrelse og stat–kommune-samspill.",
+          neste_steg: "Undersøk hvordan statlig styring, kommunale mål og lokal organisering påvirker arbeidsrettet oppfølging."
+        };
+        list = [
+          "Skill mellom midlertidig omstillingsprosess og varige strukturelle utfordringer.",
+          "Koble reformevaluering til måloppnåelse i NAV-kontor.",
+          "Analyser statlig styring opp mot kommunale mål.",
+          "Vurder betydningen av kontorstørrelse for arbeidsrettet oppfølging.",
+          "Bruk organisasjonsteori, bakkebyråkrati og governance/samstyring som tolkningsramme."
+        ];
+        path = [
+          "Definer hva måloppnåelse betyr i denne analysen.",
+          "Sorter funn etter omstillingskostnad vs. strukturell forklaring.",
+          "Analyser stat–kommune-samspill i lokale NAV-kontor.",
+          "Sammenlign med teori om bakkebyråkrati og governance.",
+          "Formuler konkrete styrings- og organisasjonsimplikasjoner."
+        ];
+      } else {
       const theoryLinks = extractAcademicTheoryLinks(analysisText).slice(0, 5);
       const phraseConcepts = extractAcademicPhraseConcepts(analysisText).slice(0, 8);
       const hasSahelMali = /sahel|mali/i.test(analysisText);
@@ -3423,6 +3502,7 @@
         "Vurder forklaringskraft og blinde soner.",
         "Formuler en syntetiserende konklusjon."
       ];
+      }
     } else if (textType === "project_note") {
       reflection = "Dette er et prosjektnotat med tydelig problem og mål. Neste gevinst ligger i å koble løsning til konkrete filer/funksjoner.";
       sortItems = ["Problem","Løsning","Filer/funksjoner","Neste steg"].map((label, idx) => ({ label, text: sentences[idx] || "Trenger kort presisering i teksten." }));
@@ -3577,26 +3657,45 @@
     const safeInsightCards = Array.isArray(payload.insightCards) ? payload.insightCards : [];
     const safePath = Array.isArray(payload.path) ? payload.path : [];
     const cleanPreviewText = (value) => cleanArticleText(String(value || "")).replace(/\s+/g, " ").trim();
+    const textTypeLabel = humanizeTextType(payload.textType || detectTextType(host.dataset.sourceText || ""));
+    const ahaSer = buildAhaSerCard(payload, host.dataset.sourceText || "");
+    const historyGoSuggestion = buildHistoryGoSuggestion(payload, host.dataset.sourceText || "");
     host.innerHTML = `
       <div class="auto-output-head">
         <h2>AHA etterarbeid</h2>
         <p>Automatisk analyse av siste melding og svar.</p>
       </div>
+      <section class="auto-output-group auto-output-primary" data-group="aha-ser">
+        <h3>AHA ser</h3>
+        <article class="auto-card auto-card-primary" data-auto-card="aha_ser">
+          <dl class="aha-ser-list">
+            <div><dt>Innholdstype</dt><dd>${escHtml(textTypeLabel)}</dd></div>
+            <div><dt>Tema</dt><dd>${escHtml(cleanPreviewText(ahaSer.tema))}</dd></div>
+            <div><dt>Hovedspenning</dt><dd>${escHtml(cleanPreviewText(ahaSer.hovedspenning))}</dd></div>
+            <div><dt>Viktigste innsikt</dt><dd>${escHtml(cleanPreviewText(ahaSer.viktigsteInnsikt))}</dd></div>
+            <div><dt>Fagkoblinger</dt><dd>${escHtml(cleanPreviewText(ahaSer.fagkoblinger))}</dd></div>
+            <div><dt>Neste steg</dt><dd>${escHtml(cleanPreviewText(ahaSer.nesteSteg))}</dd></div>
+          </dl>
+        </article>
+      </section>
       <section class="auto-output-group" data-group="samtale">
         <h3>Samtale</h3>
         <div class="auto-output-grid">
-          <article class="auto-card" data-auto-card="reflekter"><h4>Refleksjon</h4><p>${escHtml(cleanPreviewText(payload.reflection))}</p></article>
-          <article class="auto-card" data-auto-card="sorter"><h4>Sortering</h4><ul>${safeSortItems.map((item)=>`<li><strong>${escHtml(cleanPreviewText(item?.label))}:</strong> ${escHtml(cleanPreviewText(item?.text))}</li>`).join("")}</ul></article>
-          <article class="auto-card" data-auto-card="oppsummer"><h4>Dagsoppsummering</h4><p>${escHtml(cleanPreviewText(payload.day))}</p></article>
-          <article class="auto-card" data-auto-card="sorter_tanker"><h4>Tankesortering</h4><p><strong>Hovedspor:</strong> ${escHtml(cleanPreviewText(payload?.thoughts?.hovedspor))}</p><p><strong>Løse tanker:</strong> ${escHtml(cleanPreviewText(payload?.thoughts?.lose_tanker))}</p><p><strong>Mulig neste steg:</strong> ${escHtml(cleanPreviewText(payload?.thoughts?.neste_steg))}</p></article>
+          <article class="auto-card" data-auto-card="oppsummer"><h4>Oppsummer · Hva sier teksten?</h4><p>${escHtml(cleanPreviewText(ahaSer.kortSvar))}</p></article>
+          <article class="auto-card" data-auto-card="lag_innsikt"><h4>Lag innsikt · Hovedpoeng som kan lagres</h4><p>${escHtml(cleanPreviewText(ahaSer.viktigsteInnsikt))}</p></article>
+          <article class="auto-card" data-auto-card="reflekter"><h4>Reflekter · Betydning, spenning, kritikk</h4><p>${escHtml(cleanPreviewText(payload.reflection))}</p></article>
+          <article class="auto-card" data-auto-card="sorter"><h4>Sorter · Struktur videre</h4><ul>${safeSortItems.map((item)=>`<li><strong>${escHtml(cleanPreviewText(item?.label))}:</strong> ${escHtml(cleanPreviewText(item?.text))}</li>`).join("")}</ul></article>
+          <article class="auto-card" data-auto-card="lag_laringssti"><h4>Lag læringssti · Neste progresjon</h4><ol>${safePath.map((step)=>`<li>${escHtml(cleanPreviewText(step))}</li>`).join("")}</ol></article>
+          <article class="auto-card" data-auto-card="oppsummer_dagen"><h4>Oppsummer dagen min</h4><p>${escHtml(cleanPreviewText(payload.day))}</p></article>
+          <article class="auto-card" data-auto-card="sorter_tanker"><h4>Sorter tankene mine</h4><p><strong>Hovedspor:</strong> ${escHtml(cleanPreviewText(payload?.thoughts?.hovedspor))}</p><p><strong>Løse tanker:</strong> ${escHtml(cleanPreviewText(payload?.thoughts?.lose_tanker))}</p><p><strong>Mulig neste steg:</strong> ${escHtml(cleanPreviewText(payload?.thoughts?.neste_steg))}</p></article>
+          ${historyGoSuggestion}
         </div>
       </section>
       <section class="auto-output-group" data-group="struktur">
-        <h3>Struktur</h3>
+        <h3>Mer / full analyse</h3>
         <div class="auto-output-grid">
           <article class="auto-card" data-auto-card="lag_liste"><h4>Liste</h4><ul>${safeList.map((point)=>`<li>${escHtml(cleanPreviewText(point))}</li>`).join("")}</ul></article>
-          <article class="auto-card" data-auto-card="lag_innsikt"><h4>Innsikt</h4><ul>${safeInsightCards.map((point)=>`<li>${escHtml(cleanPreviewText(point))}</li>`).join("")}</ul></article>
-          <article class="auto-card" data-auto-card="lag_laringssti"><h4>Læringssti</h4><ol>${safePath.map((step)=>`<li>${escHtml(cleanPreviewText(step))}</li>`).join("")}</ol></article>
+          <article class="auto-card" data-auto-card="innsikt_liste"><h4>Viktigste innsikter</h4><ul>${safeInsightCards.map((point)=>`<li>${escHtml(cleanPreviewText(point))}</li>`).join("")}</ul></article>
         </div>
       </section>
       <div class="auto-output-actions">
@@ -3630,13 +3729,65 @@
     }
   }
 
+  function humanizeTextType(type) {
+    const key = String(type || "").trim().toLowerCase();
+    const labels = {
+      academic_article: "Faglig analyse",
+      day_log: "Dagbokmateriale",
+      literary_diary: "Personlig refleksjon / dagbokprosa",
+      literary_fragment: "Kreativ tekst",
+      opinion_article: "Politisk / argumenterende tekst",
+      theory_idea: "Teoritekst",
+      project_note: "Prosjektarbeid",
+      legal_text: "Juridisk tekst",
+      technical_work: "Teknisk arbeid",
+      learning_note: "Læringsnotat",
+      general: "Ukjent / blandet materiale"
+    };
+    return labels[key] || "Ukjent / blandet materiale";
+  }
+
+  function buildAhaSerCard(payload, sourceText = "") {
+    const insights = Array.isArray(payload?.insightCards) ? payload.insightCards : [];
+    const sort = Array.isArray(payload?.sortItems) ? payload.sortItems : [];
+    const lookup = (needle) => sort.find((item) => normalizeConceptKey(item?.label || "").includes(needle))?.text || "";
+    const subjectLinks = (Array.isArray(payload?.subjectMatches) ? payload.subjectMatches : Array.isArray(payload?.subjectLinks) ? payload.subjectLinks : [])
+      .map((item) => item?.title || item?.subject_label || item?.subject_id || item?.id).filter(Boolean);
+    const theoryLinks = (Array.isArray(payload?.theoryLinks) ? payload.theoryLinks : Array.isArray(payload?.theories) ? payload.theories : [])
+      .map((item) => item?.thinker || item?.theory || item?.name || item).filter(Boolean);
+    const navSignal = detectPublicAdministrationReformSignal(sourceText || payload?.reflection || "");
+    const themes = filterConceptLabels(Array.isArray(payload?.keywords) ? payload.keywords : []).map(canonicalizeDisplayConcept).slice(0, 4);
+    const prioritizedLinks = subjectLinks.length ? subjectLinks : theoryLinks.length ? theoryLinks : (navSignal?.strong ? ["Offentlig forvaltning", "Organisasjonsteori", "Velferdsstat", "Implementeringsteori"] : themes);
+    return {
+      tema: navSignal?.strong ? "NAV-reformen og måloppnåelse" : (lookup("hovedargument") || insights[1] || insights[0] || "Tema identifiseres fortløpende."),
+      hovedspenning: navSignal?.strong ? "Omstillingskostnad vs. strukturell utfordring" : (lookup("spenning") || insights.find((item) => /spenning|vs|mot/i.test(String(item || ""))) || "Spenning bygges fra flere meldinger."),
+      viktigsteInnsikt: navSignal?.strong ? "NAVs manglende måloppnåelse skyldes ikke bare midlertidig omstilling, men også varige strukturelle utfordringer i styring, organisering og stat–kommune-samspill." : (lookup("hovedinnsikt") || insights[0] || payload?.reflection || "Ingen tydelig hovedinnsikt ennå."),
+      fagkoblinger: prioritizedLinks.length ? prioritizedLinks.slice(0, 4).join(" · ") : "Fagkoblinger blir tydeligere når flere tekster analyseres.",
+      nesteSteg: navSignal?.strong ? "Undersøk hvordan statlig styring, kommunale mål og lokal organisering påvirker arbeidsrettet oppfølging." : (payload?.thoughts?.neste_steg || (Array.isArray(payload?.path) ? payload.path[0] : "") || "Velg ett konkret neste steg i teksten."),
+      kortSvar: lookup("kort hovedinnsikt") || payload?.reflection || insights[0] || "AHA analyserer teksten fortløpende."
+    };
+  }
+
+  function buildHistoryGoSuggestion(payload, sourceText) {
+    const text = `${sourceText || ""} ${(Array.isArray(payload?.insightCards) ? payload.insightCards.join(" ") : "")}`.toLowerCase();
+    if (!/(forvaltning|nav|velferd|kommune|statlig|politikk)/i.test(text)) return "";
+    return `<article class="auto-card" data-auto-card="historygo">
+      <h4>History Go-kobling funnet</h4>
+      <p><strong>Tema:</strong> Offentlig forvaltning</p>
+      <p><strong>Mulig History Go-kategori:</strong> politikk — Politikk & samfunn</p>
+      <p><strong>Kan brukes til:</strong> quizspørsmål · leksikonoppføring · læringssti · begrepskort · fagkobling</p>
+    </article>`;
+  }
+
   function buildAutoOutputFallbackPayload(userText, ahaReply, options = {}) {
     const sourceText = String(userText || "");
     const replyText = String(ahaReply || "");
     const combined = `${sourceText} ${replyText}`.toLowerCase();
     const academicSignals = /(sahel|mali|ressursknapphet|politisk økologi|knapphetsskolen|miljøsikkerhet|climate conflict|environmental security)/i;
+    const publicAdminSignal = detectPublicAdministrationReformSignal(sourceText);
     const baseTextType = detectTextType(sourceText);
-    const isAcademic = baseTextType === "academic_article" || academicSignals.test(combined);
+    const isAcademic = baseTextType === "academic_article" || academicSignals.test(combined) || Boolean(publicAdminSignal?.strong);
+    const isNavAcademic = Boolean(publicAdminSignal?.strong);
     const reflectionCandidate = [replyText, sourceText]
       .flatMap((text) => String(text || "").split(/(?<=[.!?])\s+/))
       .map((part) => part.trim())
@@ -3656,37 +3807,69 @@
 
     if (isAcademic) {
       payload.textType = "academic_article";
-      payload.sortItems = [
-        { label: "Kort hovedinnsikt", text: "Teksten utfordrer en enkel klimaforklaring på konflikt og peker mot politiske, historiske og maktmessige årsaker." },
-        { label: "Hovedargument", text: "Klima og miljø kan være bakgrunnsfaktorer, men konfliktutvikling forklares bedre gjennom politikk, historie, marginalisering og institusjonelle forhold." },
-        { label: "Motargument / kritikk", text: "Knapphetsskolens lineære årsakskjede fra miljøforringelse til vold kritiseres for svak empirisk og kontekstuell forklaringskraft." },
-        { label: "Spenning i teksten", text: "Spenningen står mellom miljøsikkerhet/knapphetsskolen og politisk økologi." }
-      ];
       payload.day = "Ikke dagbokmateriale – ingen dagsoppsummering laget.";
-      payload.list = [
-        "Skille tydelig mellom empiri, teori og normativ vurdering.",
-        "Sammenlikn knapphetsskolen og politisk økologi med samme casegrunnlag.",
-        "Vis hvordan politisk marginalisering påvirker konfliktforløp.",
-        "Bruk sitater som belegg, men la syntesen være i egne ord.",
-        "Avslutt med hva analysen endrer i konfliktforståelsen."
-      ];
-      payload.insightCards = [
-        "Hovedinnsikt: Konflikter i Sahel/Mali kan ikke forklares lineært med klima alene.",
-        "Hovedargument: Politikk, historie og maktforhold gir sterkere forklaringskraft enn ressursdeterminisme.",
-        "Motargument/kritikk: Knapphetsskolen undervurderer institusjoner, aktørmakt og lokal kontekst.",
-        "Spenning i teksten: Miljøsikkerhet og politisk økologi peker på ulike årsakslogikker."
-      ];
-      payload.path = [
-        "Kartlegg hovedpåstand og motpåstand.",
-        "Sorter belegg etter forklaringsmodell.",
-        "Test modellene mot samme Mali-case.",
-        "Formuler syntese med blinde soner og forklaringskraft."
-      ];
-      payload.thoughts = {
-        hovedspor: "Konfliktutvikling forklares best når politiske og historiske forhold vektes tyngre enn lineær knapphet.",
-        lose_tanker: "Begreper som miljøsikkerhet, marginalisering og ressursknapphet må avgrenses tydelig for å unngå begrepsglidning.",
-        neste_steg: "Velg én empirisk case og vis konkret hva hver modell forklarer – og overser."
-      };
+      if (isNavAcademic) {
+        payload.sortItems = [
+          { label: "Kort hovedinnsikt", text: "NAVs manglende måloppnåelse skyldes ikke bare midlertidig omstilling, men også varige strukturelle utfordringer." },
+          { label: "Tema", text: "NAV-reformen og måloppnåelse." },
+          { label: "Hovedspenning", text: "Omstillingskostnad vs. strukturell utfordring." },
+          { label: "Hovedargument", text: "Styring, organisering og stat–kommune-samspill påvirker måloppnåelsen i NAV-kontorene." }
+        ];
+        payload.list = [
+          "Skill mellom omstillingsprosess og varige strukturelle utfordringer.",
+          "Analyser hvordan statlig styring og kommunale mål påvirker måloppnåelse.",
+          "Vurder kontorstørrelse og lokal organisering i arbeidsrettet oppfølging.",
+          "Koble reformevaluering til organisasjonsteori, bakkebyråkrati og governance/samstyring."
+        ];
+        payload.insightCards = [
+          "Hovedinnsikt: NAVs manglende måloppnåelse kan ikke forklares som midlertidig reformstøy alene.",
+          "Hovedargument: Statlig styring, kommunale mål og lokal organisering skaper varige strukturelle utfordringer.",
+          "Spenning i teksten: Omstillingskostnad versus strukturell forklaring.",
+          "Neste analyse: Undersøk hvordan stat–kommune-samspill former arbeidsrettet oppfølging."
+        ];
+        payload.path = [
+          "Definer måloppnåelse i NAV-reformen.",
+          "Sorter funn etter omstillingskostnad vs. strukturell forklaring.",
+          "Analyser stat–kommune-samspill og kontorstørrelse.",
+          "Test tolkningene mot organisasjonsteori og bakkebyråkrati."
+        ];
+        payload.thoughts = {
+          hovedspor: "NAV-reformen bør forstås gjennom strukturelle styrings- og organisasjonsforhold.",
+          lose_tanker: "Skille tydelig mellom implementeringsstøy, kommunale mål og varige organisasjonsutfordringer.",
+          neste_steg: "Undersøk hvordan statlig styring, kommunale mål og lokal organisering påvirker arbeidsrettet oppfølging."
+        };
+      } else {
+        payload.sortItems = [
+          { label: "Kort hovedinnsikt", text: "Teksten utfordrer en enkel klimaforklaring på konflikt og peker mot politiske, historiske og maktmessige årsaker." },
+          { label: "Hovedargument", text: "Klima og miljø kan være bakgrunnsfaktorer, men konfliktutvikling forklares bedre gjennom politikk, historie, marginalisering og institusjonelle forhold." },
+          { label: "Motargument / kritikk", text: "Knapphetsskolens lineære årsakskjede fra miljøforringelse til vold kritiseres for svak empirisk og kontekstuell forklaringskraft." },
+          { label: "Spenning i teksten", text: "Spenningen står mellom miljøsikkerhet/knapphetsskolen og politisk økologi." }
+        ];
+        payload.list = [
+          "Skille tydelig mellom empiri, teori og normativ vurdering.",
+          "Sammenlikn knapphetsskolen og politisk økologi med samme casegrunnlag.",
+          "Vis hvordan politisk marginalisering påvirker konfliktforløp.",
+          "Bruk sitater som belegg, men la syntesen være i egne ord.",
+          "Avslutt med hva analysen endrer i konfliktforståelsen."
+        ];
+        payload.insightCards = [
+          "Hovedinnsikt: Konflikter i Sahel/Mali kan ikke forklares lineært med klima alene.",
+          "Hovedargument: Politikk, historie og maktforhold gir sterkere forklaringskraft enn ressursdeterminisme.",
+          "Motargument/kritikk: Knapphetsskolen undervurderer institusjoner, aktørmakt og lokal kontekst.",
+          "Spenning i teksten: Miljøsikkerhet og politisk økologi peker på ulike årsakslogikker."
+        ];
+        payload.path = [
+          "Kartlegg hovedpåstand og motpåstand.",
+          "Sorter belegg etter forklaringsmodell.",
+          "Test modellene mot samme Mali-case.",
+          "Formuler syntese med blinde soner og forklaringskraft."
+        ];
+        payload.thoughts = {
+          hovedspor: "Konfliktutvikling forklares best når politiske og historiske forhold vektes tyngre enn lineær knapphet.",
+          lose_tanker: "Begreper som miljøsikkerhet, marginalisering og ressursknapphet må avgrenses tydelig for å unngå begrepsglidning.",
+          neste_steg: "Velg én empirisk case og vis konkret hva hver modell forklarer – og overser."
+        };
+      }
     }
     return payload;
   }
