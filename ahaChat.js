@@ -1670,6 +1670,12 @@
         afterworkId: button.getAttribute("data-afterwork-id") || ""
       };
     }
+    if (action === "open-afterwork" || action === "export-afterwork-json" || action === "link-afterwork-historygo") {
+      return {
+        action,
+        afterworkId: button.getAttribute("data-afterwork-id") || ""
+      };
+    }
     if (action === "confirm-merge" || action === "dismiss-merge") {
       return {
         action,
@@ -1772,6 +1778,19 @@
         ok = true;
       } else if (resolved.action === "build-from-afterwork") {
         buildFromAfterworkEntry(resolved.afterworkId);
+        ok = true;
+      } else if (resolved.action === "open-afterwork") {
+        buildFromAfterworkEntry(resolved.afterworkId);
+        ok = true;
+      } else if (resolved.action === "export-afterwork-json") {
+        const entry = loadAfterworkEntries().find((item) => item?.id === resolved.afterworkId);
+        if (entry) {
+          navigator.clipboard?.writeText?.(JSON.stringify(entry, null, 2)).catch(() => {});
+          setStatusNote("Etterarbeid kopiert som JSON.");
+          ok = true;
+        }
+      } else if (resolved.action === "link-afterwork-historygo") {
+        setStatusNote("History Go-kobling foreslått: politikk — Politikk & samfunn.");
         ok = true;
       }
       if (ok && resolved.action !== "delete-afterwork" && resolved.action !== "build-from-afterwork") showInsights();
@@ -2876,7 +2895,7 @@
       <div class="saved-afterwork-concepts">${conceptLine}</div>
       <p class="saved-afterwork-meta">Innsikter: ${escHtml(String(insightsCount))} · Læringssti-steg: ${escHtml(String(pathCount))}</p>
       ${renderAfterworkSubjectLinks(safeEntry.subjectLinks)}
-      <div class="saved-afterwork-actions"><button type="button" data-action="build-from-afterwork" data-afterwork-id="${id}">Bygg videre</button><button type="button" data-action="delete-afterwork" data-afterwork-id="${id}">Slett</button></div>
+      <div class="saved-afterwork-actions"><button type="button" data-action="open-afterwork" data-afterwork-id="${id}">Åpne</button><button type="button" data-action="build-from-afterwork" data-afterwork-id="${id}">Bygg videre</button><button type="button" data-action="link-afterwork-historygo" data-afterwork-id="${id}">Koble til History Go</button><button type="button" data-action="export-afterwork-json" data-afterwork-id="${id}">Eksport JSON</button><button type="button" data-action="delete-afterwork" data-afterwork-id="${id}">Slett</button></div>
       <details>
         <summary>Vis detaljer</summary>
         <section class="saved-afterwork-section"><h4>Refleksjon</h4><p>${escHtml(normalizeDisplayText(safeEntry.reflection || ""))}</p></section>
@@ -3577,26 +3596,45 @@
     const safeInsightCards = Array.isArray(payload.insightCards) ? payload.insightCards : [];
     const safePath = Array.isArray(payload.path) ? payload.path : [];
     const cleanPreviewText = (value) => cleanArticleText(String(value || "")).replace(/\s+/g, " ").trim();
+    const textTypeLabel = humanizeTextType(payload.textType || detectTextType(host.dataset.sourceText || ""));
+    const ahaSer = buildAhaSerCard(payload);
+    const historyGoSuggestion = buildHistoryGoSuggestion(payload, host.dataset.sourceText || "");
     host.innerHTML = `
       <div class="auto-output-head">
         <h2>AHA etterarbeid</h2>
         <p>Automatisk analyse av siste melding og svar.</p>
       </div>
+      <section class="auto-output-group auto-output-primary" data-group="aha-ser">
+        <h3>AHA ser</h3>
+        <article class="auto-card auto-card-primary" data-auto-card="aha_ser">
+          <dl class="aha-ser-list">
+            <div><dt>Innholdstype</dt><dd>${escHtml(textTypeLabel)}</dd></div>
+            <div><dt>Tema</dt><dd>${escHtml(cleanPreviewText(ahaSer.tema))}</dd></div>
+            <div><dt>Hovedspenning</dt><dd>${escHtml(cleanPreviewText(ahaSer.hovedspenning))}</dd></div>
+            <div><dt>Viktigste innsikt</dt><dd>${escHtml(cleanPreviewText(ahaSer.viktigsteInnsikt))}</dd></div>
+            <div><dt>Fagkoblinger</dt><dd>${escHtml(cleanPreviewText(ahaSer.fagkoblinger))}</dd></div>
+            <div><dt>Neste steg</dt><dd>${escHtml(cleanPreviewText(ahaSer.nesteSteg))}</dd></div>
+          </dl>
+        </article>
+      </section>
       <section class="auto-output-group" data-group="samtale">
         <h3>Samtale</h3>
         <div class="auto-output-grid">
-          <article class="auto-card" data-auto-card="reflekter"><h4>Refleksjon</h4><p>${escHtml(cleanPreviewText(payload.reflection))}</p></article>
-          <article class="auto-card" data-auto-card="sorter"><h4>Sortering</h4><ul>${safeSortItems.map((item)=>`<li><strong>${escHtml(cleanPreviewText(item?.label))}:</strong> ${escHtml(cleanPreviewText(item?.text))}</li>`).join("")}</ul></article>
-          <article class="auto-card" data-auto-card="oppsummer"><h4>Dagsoppsummering</h4><p>${escHtml(cleanPreviewText(payload.day))}</p></article>
-          <article class="auto-card" data-auto-card="sorter_tanker"><h4>Tankesortering</h4><p><strong>Hovedspor:</strong> ${escHtml(cleanPreviewText(payload?.thoughts?.hovedspor))}</p><p><strong>Løse tanker:</strong> ${escHtml(cleanPreviewText(payload?.thoughts?.lose_tanker))}</p><p><strong>Mulig neste steg:</strong> ${escHtml(cleanPreviewText(payload?.thoughts?.neste_steg))}</p></article>
+          <article class="auto-card" data-auto-card="oppsummer"><h4>Oppsummer · Hva sier teksten?</h4><p>${escHtml(cleanPreviewText(ahaSer.kortSvar))}</p></article>
+          <article class="auto-card" data-auto-card="lag_innsikt"><h4>Lag innsikt · Hovedpoeng som kan lagres</h4><p>${escHtml(cleanPreviewText(ahaSer.viktigsteInnsikt))}</p></article>
+          <article class="auto-card" data-auto-card="reflekter"><h4>Reflekter · Betydning, spenning, kritikk</h4><p>${escHtml(cleanPreviewText(payload.reflection))}</p></article>
+          <article class="auto-card" data-auto-card="sorter"><h4>Sorter · Struktur videre</h4><ul>${safeSortItems.map((item)=>`<li><strong>${escHtml(cleanPreviewText(item?.label))}:</strong> ${escHtml(cleanPreviewText(item?.text))}</li>`).join("")}</ul></article>
+          <article class="auto-card" data-auto-card="lag_laringssti"><h4>Lag læringssti · Neste progresjon</h4><ol>${safePath.map((step)=>`<li>${escHtml(cleanPreviewText(step))}</li>`).join("")}</ol></article>
+          <article class="auto-card" data-auto-card="oppsummer_dagen"><h4>Oppsummer dagen min</h4><p>${escHtml(cleanPreviewText(payload.day))}</p></article>
+          <article class="auto-card" data-auto-card="sorter_tanker"><h4>Sorter tankene mine</h4><p><strong>Hovedspor:</strong> ${escHtml(cleanPreviewText(payload?.thoughts?.hovedspor))}</p><p><strong>Løse tanker:</strong> ${escHtml(cleanPreviewText(payload?.thoughts?.lose_tanker))}</p><p><strong>Mulig neste steg:</strong> ${escHtml(cleanPreviewText(payload?.thoughts?.neste_steg))}</p></article>
+          ${historyGoSuggestion}
         </div>
       </section>
       <section class="auto-output-group" data-group="struktur">
-        <h3>Struktur</h3>
+        <h3>Mer / full analyse</h3>
         <div class="auto-output-grid">
           <article class="auto-card" data-auto-card="lag_liste"><h4>Liste</h4><ul>${safeList.map((point)=>`<li>${escHtml(cleanPreviewText(point))}</li>`).join("")}</ul></article>
-          <article class="auto-card" data-auto-card="lag_innsikt"><h4>Innsikt</h4><ul>${safeInsightCards.map((point)=>`<li>${escHtml(cleanPreviewText(point))}</li>`).join("")}</ul></article>
-          <article class="auto-card" data-auto-card="lag_laringssti"><h4>Læringssti</h4><ol>${safePath.map((step)=>`<li>${escHtml(cleanPreviewText(step))}</li>`).join("")}</ol></article>
+          <article class="auto-card" data-auto-card="innsikt_liste"><h4>Viktigste innsikter</h4><ul>${safeInsightCards.map((point)=>`<li>${escHtml(cleanPreviewText(point))}</li>`).join("")}</ul></article>
         </div>
       </section>
       <div class="auto-output-actions">
@@ -3628,6 +3666,47 @@
         setStatusNote(result.saved ? "Etterarbeid lagret" : "Dette etterarbeidet er allerede lagret");
       });
     }
+  }
+
+  function humanizeTextType(type) {
+    const key = String(type || "").trim().toLowerCase();
+    const labels = {
+      academic_article: "Faglig analyse",
+      diary: "Dagbokmateriale",
+      diary_literary: "Personlig refleksjon",
+      project_note: "Prosjektarbeid",
+      legal_text: "Juridisk tekst",
+      creative_text: "Kreativ tekst",
+      technical_work: "Teknisk arbeid",
+      learning_note: "Læringsnotat"
+    };
+    return labels[key] || "Ukjent / blandet materiale";
+  }
+
+  function buildAhaSerCard(payload) {
+    const insights = Array.isArray(payload?.insightCards) ? payload.insightCards : [];
+    const sort = Array.isArray(payload?.sortItems) ? payload.sortItems : [];
+    const lookup = (needle) => sort.find((item) => normalizeConceptKey(item?.label || "").includes(needle))?.text || "";
+    const themes = filterConceptLabels(Array.isArray(payload?.keywords) ? payload.keywords : []).slice(0, 4);
+    return {
+      tema: lookup("hovedargument") || insights[1] || insights[0] || "Tema identifiseres fortløpende.",
+      hovedspenning: lookup("spenning") || insights.find((item) => /spenning|vs|mot/i.test(String(item || ""))) || "Spenning bygges fra flere meldinger.",
+      viktigsteInnsikt: lookup("hovedinnsikt") || insights[0] || payload?.reflection || "Ingen tydelig hovedinnsikt ennå.",
+      fagkoblinger: themes.length ? themes.join(" · ") : "Fagkoblinger blir tydeligere når flere tekster analyseres.",
+      nesteSteg: payload?.thoughts?.neste_steg || (Array.isArray(payload?.path) ? payload.path[0] : "") || "Velg ett konkret neste steg i teksten.",
+      kortSvar: lookup("kort hovedinnsikt") || payload?.reflection || insights[0] || "AHA analyserer teksten fortløpende."
+    };
+  }
+
+  function buildHistoryGoSuggestion(payload, sourceText) {
+    const text = `${sourceText || ""} ${(Array.isArray(payload?.insightCards) ? payload.insightCards.join(" ") : "")}`.toLowerCase();
+    if (!/(forvaltning|nav|velferd|kommune|statlig|politikk)/i.test(text)) return "";
+    return `<article class="auto-card" data-auto-card="historygo">
+      <h4>History Go-kobling funnet</h4>
+      <p><strong>Tema:</strong> Offentlig forvaltning</p>
+      <p><strong>Mulig History Go-kategori:</strong> politikk — Politikk & samfunn</p>
+      <p><strong>Kan brukes til:</strong> quizspørsmål · leksikonoppføring · læringssti · begrepskort · fagkobling</p>
+    </article>`;
   }
 
   function buildAutoOutputFallbackPayload(userText, ahaReply, options = {}) {
