@@ -2201,8 +2201,24 @@
       : (conceptGraph?.edges || [])
         .filter((edge) => edge?.type === "co_occurs")
         .filter((edge) => !isGenericDisplayConcept(edge?.from) && !isGenericDisplayConcept(edge?.to));
-    const topEdges = prioritizeVisibleConceptEdges(edgePool, theoryLinks, conceptEdgeContext)
-      .slice(0, 3);
+    const topEdges = (() => {
+      const deduped = new Map();
+      prioritizeVisibleConceptEdges(edgePool, theoryLinks, conceptEdgeContext).forEach((edge) => {
+        const from = canonicalizeDisplayConcept(edge?.from);
+        const to = canonicalizeDisplayConcept(edge?.to);
+        const fromKey = normalizeConceptKey(from);
+        const toKey = normalizeConceptKey(to);
+        if (!fromKey || !toKey || fromKey === toKey) return;
+        if (isGenericDisplayConcept(from) || isGenericDisplayConcept(to)) return;
+        const pairKey = [fromKey, toKey].sort((a, b) => a.localeCompare(b)).join("::");
+        const prev = deduped.get(pairKey);
+        const weight = Number(edge?.weight || 0);
+        if (!prev || weight > Number(prev?.weight || 0)) deduped.set(pairKey, { ...edge, from, to, weight });
+      });
+      return Array.from(deduped.values())
+        .sort((a, b) => Number(b?.weight || 0) - Number(a?.weight || 0))
+        .slice(0, 3);
+    })();
 
     const visibleThemes14d = aggregateVisibleConceptCounts(recurringThemes?.["14d"]?.top_concepts || [], "key", "count");
     const visibleThemes30d = aggregateVisibleConceptCounts(recurringThemes?.["30d"]?.top_concepts || [], "key", "count");
@@ -2214,10 +2230,14 @@
       .slice()
       .sort((a, b) => (Number(b?.strength) || 0) - (Number(a?.strength) || 0))
       .slice(0, 5)
-      .map((item) => ({
-        title: `${item?.source || "Ukjent"} ↔ ${item?.target || "Ukjent"}`,
-        strength: item?.strength || 0
-      }));
+      .map((item) => {
+        const source = canonicalizeDisplayConcept(item?.source || "Ukjent");
+        const target = canonicalizeDisplayConcept(item?.target || "Ukjent");
+        if (!source || !target || normalizeConceptKey(source) === normalizeConceptKey(target)) return null;
+        if (isGenericDisplayConcept(source) || isGenericDisplayConcept(target)) return null;
+        return { title: `${source} ↔ ${target}`, strength: item?.strength || 0 };
+      })
+      .filter(Boolean);
     const paradoxTensions = (profileTensions.paradox_pairs || [])
       .slice(0, 5)
       .map((item) => ({
