@@ -2107,7 +2107,7 @@
 
 
   function displayConceptLabel(value) {
-    return canonicalizeDisplayConcept(String(value || "").replace(/_/g, " ").trim());
+    return canonicalizeDisplayConcept(resolveConceptTerm(value).replace(/_/g, " ").trim());
   }
 
   function normalizeConceptKey(value) {
@@ -2231,8 +2231,8 @@
       .sort((a, b) => (Number(b?.strength) || 0) - (Number(a?.strength) || 0))
       .slice(0, 5)
       .map((item) => {
-        const source = canonicalizeDisplayConcept(item?.source || "Ukjent");
-        const target = canonicalizeDisplayConcept(item?.target || "Ukjent");
+        const source = displayConceptLabel(item?.source || "Ukjent");
+        const target = displayConceptLabel(item?.target || "Ukjent");
         if (!source || !target || normalizeConceptKey(source) === normalizeConceptKey(target)) return null;
         if (isGenericDisplayConcept(source) || isGenericDisplayConcept(target)) return null;
         return { title: `${source} ↔ ${target}`, strength: item?.strength || 0 };
@@ -2336,8 +2336,8 @@
     );
     const conceptPairTensions = (tensions.concept_pair_tensions || [])
       .map((t) => {
-        const source = canonicalizeDisplayConcept(t?.source || "");
-        const target = canonicalizeDisplayConcept(t?.target || "");
+        const source = displayConceptLabel(t?.source || "");
+        const target = displayConceptLabel(t?.target || "");
         if (!source || !target) return null;
         if (isGenericDisplayConcept(source) || isGenericDisplayConcept(target)) return null;
         if (normalizeConceptKey(source) === normalizeConceptKey(target)) return null;
@@ -2346,11 +2346,9 @@
       .filter(Boolean)
       .slice(0, 5);
     const conceptTensions = (tensions.concept_tensions || []).slice(0, 5).map((t) => {
-      const key = String(t?.key || "");
-      const hasPair = /↔|<->|vs\.?|\s-\s|—/.test(key);
-      return hasPair
-        ? `${escHtml(key)} <span class="meta-count">spenning ${Number(t.combined).toFixed(2)}</span>`
-        : "";
+      const key = displayConceptLabel(t?.key || "");
+      if (!key || isGenericDisplayConcept(key)) return "";
+      return `${escHtml(key)} <span class="meta-count">spenning ${Number(t.combined).toFixed(2)}</span>`;
     }).filter(Boolean);
     const paradoxes = (tensions.paradox_pairs || []).slice(0, 5).map((p) => {
       const shared = (p.shared_concepts || []).slice(0, 3).map(escHtml).join(", ");
@@ -3187,8 +3185,18 @@
       .slice(0, 12);
   }
 
+  function resolveConceptTerm(term) {
+    if (term == null) return "";
+    if (typeof term === "string") return term;
+    if (typeof term === "number") return String(term);
+    if (typeof term === "object") {
+      return String(term?.label || term?.key || term?.name || term?.title || term?.term || term?.value || "");
+    }
+    return String(term || "");
+  }
+
   function normalizeAfterworkConcept(term) {
-    return String(term || "").toLowerCase().replace(/[“”"'`´]/g, "").replace(/\s+/g, " ").trim();
+    return resolveConceptTerm(term).toLowerCase().replace(/[“”"'`´]/g, "").replace(/\s+/g, " ").trim();
   }
 
   function isGoodAfterworkConcept(term, options) {
@@ -3198,7 +3206,7 @@
     const source = String(options?.source || "generic");
     const blocked = new Set([
       "annonsørinnhold","annonse","logo","illustrasjon","les også","kjolevalg","kjole","kjoler","bryllupsgjesten","terrasse","plank","garanti","årets","populære","sikre","nydelige",
-      "markussen","norge","omstilles","fortsetter","bygge","naturens","retning","bekostning","dette","tekst","sier","skal","gjøre","være","blir","kommer","spør","svarer"
+      "markussen","norge","omstilles","fortsetter","bygge","naturens","retning","retninger","bekostning","dette","tekst","sier","skal","gjøre","være","blir","kommer","spør","svarer"
     ]);
     if (blocked.has(normalized)) return false;
     const genericWords = new Set(["med","som","for","mot","inn","ut","opp","ned","der","her","alle","flere","kan","vil","må","når","hvor","hvorfor","hva"]);
