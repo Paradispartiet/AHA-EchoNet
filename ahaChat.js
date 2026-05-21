@@ -1088,15 +1088,17 @@
       });
   }
   function canonicalizeDisplayConcept(term) {
-    const raw = resolveConceptTerm(term).trim();
+    const raw = normalizeConceptSurface(term);
     const key = normalizeAfterworkConcept(raw);
     if (/^nav[-\s]?kontor(ene|er|e)?$/.test(key) || ["navkontor","navkontorer","navkontore","lokalkontor","lokalkontorene"].includes(key)) return "NAV-kontor";
     if (["nav-reformen", "nav reformen", "navreformen"].includes(key) || (key === "reformen" && /nav/.test(normalizeAfterworkConcept(raw)))) return "NAV-reformen";
     if (["stat og kommune","stat-kommune","stat–kommune","statlig og kommunal","statlige og kommunale mål","kommunale målsetninger","kommunale mål","partnerskap mellom stat og kommune","kommunalt partnerskap"].includes(key)) return "Stat–kommune-samspill";
     if (["arbeidsrettet oppfølging","arbeidsrettet virksomhet","arbeidsrettede oppfølgingen","oppfølging mot arbeid","arbeidsmarkedstilknytning"].includes(key)) return "Arbeidsrettet oppfølging";
     if (["måloppnåelse","manglende måloppnåelse","reformens mål","mål om flere i arbeid","flere i arbeid og aktivitet","færre på trygd"].includes(key)) return "Måloppnåelse";
-    if (["strukturelle utfordringer","strukturelle vansker","organisatoriske utfordringer","varige strukturelle utfordringer"].includes(key)) return "Strukturelle utfordringer";
-    if (["omstillingsprosess","omstillingskostnad","omstillingskostnader","implementeringsstøy","midlertidig omstilling"].includes(key)) return "Omstillingsprosess";
+    if (["strukturell utfordring","strukturelle utfordringer","strukturelle vansker","strukturelle problemer","strukturelle årsaker","organisatoriske utfordringer","varige strukturelle utfordringer"].includes(key)) return "Strukturelle utfordringer";
+    if (["standardisering og byråkrati","byråkrati og standardisering"].includes(key)) return "Standardisering og byråkrati";
+    if (["omstillingsprosess","omstillingskostnad","omstillingskostnader","implementeringsstøy","midlertidig omstilling","omstillingsproblemer"].includes(key)) return "Omstillingsprosess";
+    if (["kommunale målsetninger","kommunale mål","statlige og kommunale mål","statlig styring vs kommunale mål","statlig og kommunal","stat og kommune","stat-kommune","stat–kommune","kommunalt partnerskap","partnerskap mellom stat og kommune"].includes(key)) return "Stat–kommune-samspill";
     return raw;
   }
 
@@ -1210,6 +1212,13 @@
   function normalizeDisplayText(value) {
     return String(value || "")
       .replace(/underviser(\s+)viktigheten/gi, (_match, gap) => `understreker${gap}viktigheten`);
+  }
+
+  function normalizeConceptSurface(value) {
+    return resolveConceptTerm(value)
+      .replace(/_/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
   }
 
   function normalizeVisibleAcademicLabel(value) {
@@ -2118,7 +2127,7 @@
   }
 
   function getCanonicalConceptLabel(value) {
-    return canonicalizeDisplayConcept(normalizeVisibleAcademicLabel(resolveConceptTerm(value))).trim();
+    return canonicalizeDisplayConcept(normalizeVisibleAcademicLabel(normalizeConceptSurface(value))).trim();
   }
 
   function getCanonicalConceptKey(value) {
@@ -2146,9 +2155,24 @@
     const targetKey = getCanonicalConceptKey(targetLabel);
     if (!sourceKey || !targetKey) return null;
     if (sourceKey === targetKey) return null;
+    if (isNearPhraseOverlap(sourceKey, targetKey)) return null;
     if (isGenericDisplayConcept(sourceLabel) || isGenericDisplayConcept(targetLabel)) return null;
     if (isBlockedStandaloneConcept(sourceLabel) || isBlockedStandaloneConcept(targetLabel)) return null;
     return { sourceLabel, targetLabel, sourceKey, targetKey };
+  }
+
+  function isNearPhraseOverlap(sourceKey, targetKey) {
+    const a = normalizeAfterworkConcept(sourceKey);
+    const b = normalizeAfterworkConcept(targetKey);
+    if (!a || !b || a === b) return false;
+    const [shorter, longer] = a.length <= b.length ? [a, b] : [b, a];
+    if (!longer.includes(shorter)) return false;
+    const shorterTokens = shorter.split(" ").filter(Boolean);
+    const longerTokens = longer.split(" ").filter(Boolean);
+    if (!shorterTokens.length || longerTokens.length <= shorterTokens.length) return false;
+    const shorterSet = new Set(shorterTokens);
+    const overlapCount = longerTokens.filter((token) => shorterSet.has(token)).length;
+    return overlapCount >= shorterTokens.length;
   }
 
   function filterGenericConceptItems(items, keyGetter) {
@@ -2183,6 +2207,13 @@
       .filter(Boolean);
     if (!pair.length) return false;
     return pair.some((concept) => focusSet.has(concept));
+  }
+
+  function canonicalizeConceptPairTitle(value) {
+    const raw = String(value || "");
+    const parts = raw.split(/\s*(?:↔|<->|—|-|vs\.?)\s*/i).map((part) => getCanonicalConceptLabel(part)).filter(Boolean);
+    if (parts.length >= 2) return `${parts[0]} ↔ ${parts[1]}`;
+    return getCanonicalConceptLabel(raw) || raw;
   }
   function derivePublicAdministrationTensions(context) {
     const sourceText = String(context?.text || "");
@@ -2281,10 +2312,11 @@
     const conceptScoreTensions = (profileTensions.concept_tensions || [])
       .filter((item) => tensionOverlapsFocus(item, focusConcepts))
       .slice(0, 5)
-      .map((item) => ({ title: item?.key || "Ukjent", strength: item?.combined || 0 }));
+      .map((item) => ({ title: canonicalizeConceptPairTitle(item?.key || "Ukjent"), strength: item?.combined || 0 }));
     const fallbackTensions = tensions
       .filter((item) => tensionOverlapsFocus(item, focusConcepts))
-      .slice(0, 5);
+      .slice(0, 5)
+      .map((item) => ({ ...item, title: canonicalizeConceptPairTitle(item?.title || item?.key || "") }));
     const visibleTensions = conceptPairTensions.length
       ? conceptPairTensions
       : paradoxTensions.length
@@ -2294,6 +2326,7 @@
           : fallbackTensions;
     const derivedPublicAdminTensions = derivePublicAdministrationTensions(conceptEdgeContext);
     const mergedTensions = [...derivedPublicAdminTensions, ...visibleTensions]
+      .map((item) => ({ ...item, title: canonicalizeConceptPairTitle(item?.title || item?.key || "") }))
       .filter((item, index, arr) => arr.findIndex((other) => String(other?.title || "").toLowerCase() === String(item?.title || "").toLowerCase()) === index)
       .slice(0, 5);
 
@@ -2348,7 +2381,7 @@
       prev[countField] += Number(item?.[countField] || 0);
       totals.set(key, prev);
     });
-    return Array.from(totals.values());
+    return Array.from(totals.values()).sort((a, b) => Number(b?.[countField] || 0) - Number(a?.[countField] || 0));
   }
 
   function renderMetaProfile(profile, chamber) {
