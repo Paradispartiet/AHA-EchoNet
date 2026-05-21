@@ -1250,6 +1250,17 @@
     return list.filter((item) => !blocked.test(String(item || "")));
   }
 
+
+  function detectLiteraryAttachmentSignal(text) {
+    const lower = String(text || "").toLowerCase();
+    let score = 0;
+    const terms = [
+      "knausgård","om våren","om året","min kamp","linda boström","oktoberbarn","tilknytningsteori","tilknytning","bowlby","attachment theory","arbeidsmodell","internal working models","autofiksjon","deiksis","deiktisk","litteraturvitenskap","roman","performativ","nymaterialisme","posthumanisme","løsrivelse","sårbarhet","valborg","mellommenneskelige relasjoner"
+    ];
+    terms.forEach((term) => { if (lower.includes(term)) score += 1; });
+    return { score, strong: score >= 4 };
+  }
+
   function short(text, maxLen = 180) {
     const normalized = normalizeDisplayText(text).replace(/\s+/g, " ").trim();
     if (!normalized) return "";
@@ -3583,6 +3594,7 @@
       ].slice(0, 6);
       path = quality.suggestedStructure.slice(0, 5);
     } else if (textType === "academic_article") {
+      const literaryAttachmentSignal = detectLiteraryAttachmentSignal(analysisText);
       const publicAdminSignal = detectPublicAdministrationReformSignal(analysisText);
       if (publicAdminSignal?.strong) {
         reflection = "Teksten analyserer NAV-reformen og spør hvorfor måloppnåelsen uteblir: skyldes dette hovedsakelig omstillingskostnader, eller mer varige strukturelle utfordringer i styring og organisering?";
@@ -3613,6 +3625,36 @@
           "Analyser stat–kommune-samspill i lokale NAV-kontor.",
           "Sammenlign med teori om bakkebyråkrati og governance.",
           "Formuler konkrete styrings- og organisasjonsimplikasjoner."
+        ];
+      } else if (literaryAttachmentSignal?.strong) {
+        reflection = "Teksten undersøker hvordan Karl Ove Knausgårds Om våren kan leses i dialog med tilknytningsteori. Den viser hvordan romanen både bruker psykologiske begreper om tilknytning, trygghet, arbeidsmodeller og relasjonell sårbarhet, og samtidig overskrider teorien gjennom autofiksjon, deiksis, performativ skriving, mytologiske bilder og nymaterialistiske perspektiver. Den faglige spenningen ligger mellom psykologisk teori og litterær erkjennelse.";
+        sortItems = [
+          { label: "Problemstilling", text: "Hvordan kan Knausgårds Om våren leses i dialog med tilknytningsteori?" },
+          { label: "Hovedpåstand", text: "Romanen bekrefter deler av tilknytningsteorien, men overskrider den gjennom litterære, mytologiske og nymaterialistiske perspektiver." },
+          { label: "Teoretisk ramme", text: "Bowlbys tilknytningsteori, utviklingspsykologi, parterapi og litteraturvitenskapelig analyse." },
+          { label: "Litterær metode", text: "Analyse av autofiksjon, deiksis, tiltaleform, performativitet og relasjonen mellom liv og tekst." },
+          { label: "Hovedspenning", text: "Psykologisk tilknytningsteori vs. litterær/mytologisk utforskning av tilknytning, forknytning og løsrivelse." },
+          { label: "Implikasjon", text: "Litteraturen kan belyse psykologiske problemstillinger på måter fagpsykologien ikke fullt ut fanger." }
+        ];
+        day = "Ikke dagbokmateriale – ingen dagsoppsummering laget.";
+        thoughts = {
+          hovedspor: "Knausgårds Om våren leses som en litterær utforskning av tilknytning, løsrivelse og sårbarhet i dialog med psykologisk tilknytningsteori.",
+          lose_tanker: "Autofiksjon, deiksis, Bowlby, Linda Boström Knausgård, nymaterialisme og Valborg-motivet bør holdes analytisk adskilt før de kobles.",
+          neste_steg: "Skill tydelig mellom hva tilknytningsteorien forklarer, og hva romanens litterære form, materialitet og mytologi tilfører."
+        };
+        list = [
+          "Skill mellom tilknytning som psykologisk teori og tilknytning som litterært motiv.",
+          "Analyser hvordan deiksis og tiltaleformen skaper et performativt tilknytningsrom.",
+          "Vis hvordan romanen skildrer både tilknytning til barnet og løsrivelse fra ektefellen.",
+          "Koble Bowlbys teori til autofiksjonens problem om liv, tekst og ansvar.",
+          "Drøft hvordan nymaterialisme og mytologiske bilder utvider analysen utover psykologi."
+        ];
+        path = [
+          "Identifiser romanens bruk av tilknytningsteori.",
+          "Analyser deiktisk poetikk og tiltaleform.",
+          "Undersøk forholdet mellom far–barn-tilknytning og ekteskapelig løsrivelse.",
+          "Sammenlign Knausgårds og Linda Boström Knausgårds perspektiver.",
+          "Drøft hvordan nymaterialisme, sårbarhet og mytologi utfordrer en ren psykologisk forklaring."
         ];
       } else {
       const theoryLinks = extractAcademicTheoryLinks(analysisText).slice(0, 5);
@@ -3692,6 +3734,13 @@
       localInsights.push(`Svakhet/manglende bro: ${quality.missingLinks[0] || quality.weaknesses[0] || "Broen mellom kritikk og konkret gjennomføring er for svak."}`);
       localInsights.push(`Utviklingsmulighet: ${quality.editorialNextStep} ${quality.sharperEnding}`);
     } else if (textType === "academic_article") {
+      const literaryAttachmentSignal = detectLiteraryAttachmentSignal(raw);
+      if (literaryAttachmentSignal?.strong) {
+        localInsights.push("Hovedinnsikt: Om våren gjør tilknytning til et eksistensielt og litterært nøkkelbegrep, ikke bare et psykologisk fagbegrep.");
+        localInsights.push("Hovedargument: Romanen bekrefter deler av tilknytningsteorien, men viser også dens begrensninger gjennom skildringer av sårbarhet, sykdom, kropp, materialitet og uforklarlige vekstkrefter.");
+        localInsights.push("Motargument/kritikk: En ren tilknytningsteoretisk lesning blir for smal fordi romanen åpner for mytologiske, autofiksjonelle og nymaterialistiske forklaringsnivåer.");
+        localInsights.push("Spenning: Psykologisk tilknytningsteori står mot romanens bredere litterære utforskning av tilknytning, forknytning og løsrivelse.");
+      } else {
       const hovedargument = (sortItems.find((item) => String(item?.label || "").toLowerCase() === "hovedargument") || {}).text
         || "Klima og miljø er relevante bakgrunnsfaktorer, men konflikt forklares primært gjennom politiske, historiske og maktmessige forhold.";
       const motargument = (sortItems.find((item) => String(item?.label || "").toLowerCase().includes("motargument")) || {}).text
@@ -3700,6 +3749,7 @@
       localInsights.push(`Hovedargument: ${hovedargument}`);
       localInsights.push(`Motargument/kritikk: ${motargument}`);
       localInsights.push("Spenningen i teksten ligger mellom knapphetsskolen og politisk økologi.");
+      }
     } else {
       localInsights.push(`Mønster: ${keywords[0] || "temaet"} går igjen og bærer teksten.`);
       localInsights.push(reply ? `AHA-responsen peker videre på: ${toSentences(reply)[0] || reply}` : "Videre innsikt kan styrkes med mer konkret tekst.");
@@ -3870,7 +3920,8 @@
         if (statusEl) statusEl.textContent = "Kildetekst mangler. Analyser teksten på nytt for å kunne lagre etterarbeid.";
       }
       saveButton.addEventListener("click", () => {
-        const result = saveAutoOutputAsAfterwork(payload, host.dataset.sourceText || "", {
+        const filteredPayload = filterCrossDomainAutoPayload(payload, host.dataset.sourceText || "");
+        const result = saveAutoOutputAsAfterwork(filteredPayload, host.dataset.sourceText || "", {
           subjectMatches: payload?.subjectMatches
         });
         if (result.reason === "missing_source_text") {
@@ -3915,38 +3966,57 @@
     const theoryLinks = (Array.isArray(payload?.theoryLinks) ? payload.theoryLinks : Array.isArray(payload?.theories) ? payload.theories : [])
       .map((item) => item?.thinker || item?.theory || item?.name || item).filter(Boolean);
     const navSignal = detectPublicAdministrationReformSignal(sourceText || payload?.reflection || "");
+    const literarySignal = detectLiteraryAttachmentSignal(sourceText || payload?.reflection || "");
     const themes = filterConceptLabels(Array.isArray(payload?.keywords) ? payload.keywords : []).map(canonicalizeDisplayConcept).slice(0, 4);
-    const prioritizedLinks = subjectLinks.length ? subjectLinks : theoryLinks.length ? theoryLinks : (navSignal?.strong ? ["Offentlig forvaltning", "Organisasjonsteori", "Velferdsstat", "Implementeringsteori"] : themes);
+    const prioritizedLinks = literarySignal?.strong
+      ? ["Litteraturvitenskap", "Psykologi", "Tilknytningsteori", "Autofiksjon"]
+      : (subjectLinks.length ? subjectLinks : theoryLinks.length ? theoryLinks : (navSignal?.strong ? ["Offentlig forvaltning", "Organisasjonsteori", "Velferdsstat", "Implementeringsteori"] : themes));
     return {
-      tema: navSignal?.strong ? "NAV-reformen og måloppnåelse" : (lookup("hovedargument") || insights[1] || insights[0] || "Tema identifiseres fortløpende."),
-      hovedspenning: navSignal?.strong ? "Omstillingskostnad vs. strukturell utfordring" : (lookup("spenning") || insights.find((item) => /spenning|vs|mot/i.test(String(item || ""))) || "Spenning bygges fra flere meldinger."),
-      viktigsteInnsikt: navSignal?.strong ? "NAVs manglende måloppnåelse skyldes ikke bare midlertidig omstilling, men også varige strukturelle utfordringer i styring, organisering og stat–kommune-samspill." : (lookup("hovedinnsikt") || insights[0] || payload?.reflection || "Ingen tydelig hovedinnsikt ennå."),
+      tema: navSignal?.strong ? "NAV-reformen og måloppnåelse" : (literarySignal?.strong ? "Knausgårds Om våren, tilknytningsteori og litterær erkjennelse" : (lookup("hovedargument") || insights[1] || insights[0] || "Tema identifiseres fortløpende.")),
+      hovedspenning: navSignal?.strong ? "Omstillingskostnad vs. strukturell utfordring" : (literarySignal?.strong ? "Tilknytningsteori vs. litterær/mytologisk utforskning av tilknytning, forknytning og løsrivelse" : (lookup("spenning") || insights.find((item) => /spenning|vs|mot/i.test(String(item || ""))) || "Spenning bygges fra flere meldinger.")),
+      viktigsteInnsikt: navSignal?.strong ? "NAVs manglende måloppnåelse skyldes ikke bare midlertidig omstilling, men også varige strukturelle utfordringer i styring, organisering og stat–kommune-samspill." : (literarySignal?.strong ? "Om våren bruker tilknytningsteori som ramme, men overskrider den gjennom autofiksjon, deiksis, performativ skriving, sårbarhet, nymaterialisme og mytologiske bilder." : (lookup("hovedinnsikt") || insights[0] || payload?.reflection || "Ingen tydelig hovedinnsikt ennå.")),
       fagkoblinger: prioritizedLinks.length ? prioritizedLinks.slice(0, 4).join(" · ") : "Fagkoblinger blir tydeligere når flere tekster analyseres.",
-      nesteSteg: navSignal?.strong ? "Undersøk hvordan statlig styring, kommunale mål og lokal organisering påvirker arbeidsrettet oppfølging." : (payload?.thoughts?.neste_steg || (Array.isArray(payload?.path) ? payload.path[0] : "") || "Velg ett konkret neste steg i teksten."),
+      nesteSteg: navSignal?.strong ? "Undersøk hvordan statlig styring, kommunale mål og lokal organisering påvirker arbeidsrettet oppfølging." : (literarySignal?.strong ? "Skill mellom hva Bowlbys tilknytningsteori forklarer, og hva romanens litterære form og materialistiske/mytologiske perspektiver tilfører." : (payload?.thoughts?.neste_steg || (Array.isArray(payload?.path) ? payload.path[0] : "") || "Velg ett konkret neste steg i teksten.")),
       kortSvar: lookup("kort hovedinnsikt") || payload?.reflection || insights[0] || "AHA analyserer teksten fortløpende."
     };
   }
 
   function buildHistoryGoSuggestion(payload, sourceText) {
-    const text = `${sourceText || ""} ${(Array.isArray(payload?.insightCards) ? payload.insightCards.join(" ") : "")}`.toLowerCase();
-    if (!/(forvaltning|nav|velferd|kommune|statlig|politikk)/i.test(text)) return "";
-    return `<article class="auto-card" data-auto-card="historygo">
-      <h4>History Go-kobling funnet</h4>
-      <p><strong>Tema:</strong> Offentlig forvaltning</p>
-      <p><strong>Mulig History Go-kategori:</strong> politikk — Politikk & samfunn</p>
-      <p><strong>Kan brukes til:</strong> quizspørsmål · leksikonoppføring · læringssti · begrepskort · fagkobling</p>
-    </article>`;
+    const source = String(sourceText || "");
+    const text = `${source} ${(Array.isArray(payload?.insightCards) ? payload.insightCards.join(" ") : "")}`.toLowerCase();
+    const navSignal = detectPublicAdministrationReformSignal(source || text);
+    const literarySignal = detectLiteraryAttachmentSignal(source || text);
+    if (navSignal?.strong) {
+      return `<article class="auto-card" data-auto-card="historygo">
+        <h4>History Go-kobling funnet</h4>
+        <p><strong>Tema:</strong> Offentlig forvaltning</p>
+        <p><strong>Mulig History Go-kategori:</strong> politikk — Politikk & samfunn</p>
+        <p><strong>Kan brukes til:</strong> quizspørsmål · leksikonoppføring · læringssti · begrepskort · fagkobling</p>
+      </article>`;
+    }
+    if (literarySignal?.strong) {
+      return `<article class="auto-card" data-auto-card="historygo">
+        <h4>History Go-kobling funnet</h4>
+        <p><strong>Tema:</strong> Litteratur og psykologi</p>
+        <p><strong>Mulig History Go-kategori:</strong> litteratur — Litteratur</p>
+        <p><strong>Kan brukes til:</strong> forfatterkort · verk-leksikon · begrepskort · litteraturquiz · fagkobling mellom psykologi og litteratur</p>
+      </article>`;
+    }
+    return "";
   }
 
   function buildAutoOutputFallbackPayload(userText, ahaReply, options = {}) {
     const sourceText = String(userText || "");
     const replyText = String(ahaReply || "");
     const combined = `${sourceText} ${replyText}`.toLowerCase();
-    const academicSignals = /(sahel|mali|ressursknapphet|politisk økologi|knapphetsskolen|miljøsikkerhet|climate conflict|environmental security)/i;
+    const academicSignals = /(sahel|mali|ressursknapphet|politisk økologi|knapphetsskolen|miljøsikkerhet|climate conflict|environmental security|tilknytningsteori|autofiksjon|deiksis|knausgård)/i;
     const publicAdminSignal = detectPublicAdministrationReformSignal(sourceText);
     const baseTextType = detectTextType(sourceText);
     const isAcademic = baseTextType === "academic_article" || academicSignals.test(combined) || Boolean(publicAdminSignal?.strong);
+    const literaryAttachmentSignal = detectLiteraryAttachmentSignal(combined);
     const isNavAcademic = Boolean(publicAdminSignal?.strong);
+    const isSahelClimateAcademic = academicSignals.test(combined) && /(sahel|mali|knapphetsskolen|ressursknapphet|miljøsikkerhet|politisk økologi|climate conflict|environmental security)/i.test(combined);
+    const isLiteraryAttachmentAcademic = literaryAttachmentSignal?.strong;
     const reflectionCandidate = [replyText, sourceText]
       .flatMap((text) => String(text || "").split(/(?<=[.!?])\s+/))
       .map((part) => part.trim())
@@ -3997,7 +4067,7 @@
           lose_tanker: "Skille tydelig mellom implementeringsstøy, kommunale mål og varige organisasjonsutfordringer.",
           neste_steg: "Undersøk hvordan statlig styring, kommunale mål og lokal organisering påvirker arbeidsrettet oppfølging."
         };
-      } else {
+      } else if (isSahelClimateAcademic) {
         payload.sortItems = [
           { label: "Kort hovedinnsikt", text: "Teksten utfordrer en enkel klimaforklaring på konflikt og peker mot politiske, historiske og maktmessige årsaker." },
           { label: "Hovedargument", text: "Klima og miljø kan være bakgrunnsfaktorer, men konfliktutvikling forklares bedre gjennom politikk, historie, marginalisering og institusjonelle forhold." },
@@ -4028,9 +4098,60 @@
           lose_tanker: "Begreper som miljøsikkerhet, marginalisering og ressursknapphet må avgrenses tydelig for å unngå begrepsglidning.",
           neste_steg: "Velg én empirisk case og vis konkret hva hver modell forklarer – og overser."
         };
+      } else if (isLiteraryAttachmentAcademic) {
+        payload.reflection = "Teksten undersøker hvordan Karl Ove Knausgårds Om våren kan leses i dialog med tilknytningsteori. Den viser hvordan romanen både bruker psykologiske begreper om tilknytning, trygghet, arbeidsmodeller og relasjonell sårbarhet, og samtidig overskrider teorien gjennom autofiksjon, deiksis, performativ skriving, mytologiske bilder og nymaterialistiske perspektiver. Den faglige spenningen ligger mellom psykologisk teori og litterær erkjennelse.";
+        payload.sortItems = [
+          { label: "Problemstilling", text: "Hvordan kan Knausgårds Om våren leses i dialog med tilknytningsteori?" },
+          { label: "Hovedpåstand", text: "Romanen bekrefter deler av tilknytningsteorien, men overskrider den gjennom litterære, mytologiske og nymaterialistiske perspektiver." },
+          { label: "Teoretisk ramme", text: "Bowlbys tilknytningsteori, utviklingspsykologi, parterapi og litteraturvitenskapelig analyse." },
+          { label: "Litterær metode", text: "Analyse av autofiksjon, deiksis, tiltaleform, performativitet og relasjonen mellom liv og tekst." },
+          { label: "Hovedspenning", text: "Psykologisk tilknytningsteori vs. litterær/mytologisk utforskning av tilknytning, forknytning og løsrivelse." },
+          { label: "Implikasjon", text: "Litteraturen kan belyse psykologiske problemstillinger på måter fagpsykologien ikke fullt ut fanger." }
+        ];
+        payload.insightCards = [
+          "Hovedinnsikt: Om våren gjør tilknytning til et eksistensielt og litterært nøkkelbegrep, ikke bare et psykologisk fagbegrep.",
+          "Hovedargument: Romanen bekrefter deler av tilknytningsteorien, men viser også dens begrensninger gjennom skildringer av sårbarhet, sykdom, kropp, materialitet og uforklarlige vekstkrefter.",
+          "Motargument/kritikk: En ren tilknytningsteoretisk lesning blir for smal fordi romanen åpner for mytologiske, autofiksjonelle og nymaterialistiske forklaringsnivåer.",
+          "Spenning: Psykologisk tilknytningsteori står mot romanens bredere litterære utforskning av tilknytning, forknytning og løsrivelse."
+        ];
+        payload.list = ["Skill mellom tilknytning som psykologisk teori og tilknytning som litterært motiv.","Analyser hvordan deiksis og tiltaleformen skaper et performativt tilknytningsrom.","Vis hvordan romanen skildrer både tilknytning til barnet og løsrivelse fra ektefellen.","Koble Bowlbys teori til autofiksjonens problem om liv, tekst og ansvar.","Drøft hvordan nymaterialisme og mytologiske bilder utvider analysen utover psykologi."];
+        payload.path = ["Identifiser romanens bruk av tilknytningsteori.","Analyser deiktisk poetikk og tiltaleform.","Undersøk forholdet mellom far–barn-tilknytning og ekteskapelig løsrivelse.","Sammenlign Knausgårds og Linda Boström Knausgårds perspektiver.","Drøft hvordan nymaterialisme, sårbarhet og mytologi utfordrer en ren psykologisk forklaring."];
+        payload.thoughts = { hovedspor: "Knausgårds Om våren leses som en litterær utforskning av tilknytning, løsrivelse og sårbarhet i dialog med psykologisk tilknytningsteori.", lose_tanker: "Autofiksjon, deiksis, Bowlby, Linda Boström Knausgård, nymaterialisme og Valborg-motivet bør holdes analytisk adskilt før de kobles.", neste_steg: "Skill tydelig mellom hva tilknytningsteorien forklarer, og hva romanens litterære form, materialitet og mytologi tilfører." };
+        payload.subjectMatches = ["Litteraturvitenskap","Psykologi","Tilknytningsteori","Autofiksjon","Narratologi","Deiksis","Nymaterialisme","Virkelighetslitteratur"];
+      } else {
+        payload.sortItems = [
+          { label: "Problemstilling", text: "Hva er tekstens sentrale faglige spørsmål?" },
+          { label: "Hovedpåstand", text: "Teksten argumenterer for en tydelig faglig tolkning som bør testes mot alternative forklaringer." },
+          { label: "Faglig spenning", text: "Spenningen ligger mellom hovedforklaring og alternative forståelser i materialet." },
+          { label: "Implikasjon", text: "Presiser metode, teori og empiri for å styrke analysens forklaringskraft." }
+        ];
       }
     }
     return payload;
+  }
+
+
+  function filterCrossDomainAutoPayload(payload, sourceText) {
+    const safe = payload && typeof payload === "object" ? payload : {};
+    const src = String(sourceText || "").toLowerCase();
+    const hasSahel = /(sahel|mali|knapphetsskolen|ressursknapphet|miljøsikkerhet|politisk økologi|climate conflict|environmental security)/i.test(src);
+    const hasLiteraryAttachment = detectLiteraryAttachmentSignal(src).strong;
+    if (!hasLiteraryAttachment || hasSahel) return safe;
+    const blocked = /(sahel|mali|klima|miljøsikkerhet|knapphetsskolen|ressursknapphet|politisk økologi|environmental security)/i;
+    const filterArray = (arr) => (Array.isArray(arr) ? arr.filter((item) => !blocked.test(typeof item === "string" ? item : `${item?.label || ""} ${item?.text || ""} ${item?.title || ""} ${item?.summary || ""}`)) : []);
+    return {
+      ...safe,
+      sortItems: filterArray(safe.sortItems),
+      list: filterArray(safe.list),
+      insightCards: filterArray(safe.insightCards),
+      path: filterArray(safe.path),
+      subjectMatches: filterArray(safe.subjectMatches),
+      thoughts: {
+        hovedspor: blocked.test(String(safe?.thoughts?.hovedspor || "")) ? "" : String(safe?.thoughts?.hovedspor || ""),
+        lose_tanker: blocked.test(String(safe?.thoughts?.lose_tanker || "")) ? "" : String(safe?.thoughts?.lose_tanker || ""),
+        neste_steg: blocked.test(String(safe?.thoughts?.neste_steg || "")) ? "" : String(safe?.thoughts?.neste_steg || "")
+      }
+    };
   }
 
   function renderAutoOutputs(userText, ahaReply, options = {}) {
@@ -4053,6 +4174,10 @@
       payload = buildAutoOutputFallbackPayload(userText, ahaReply, options);
     }
     payload.subjectMatches = Array.isArray(options.subjectMatches) ? options.subjectMatches : [];
+    if (detectLiteraryAttachmentSignal(sourceText).strong) {
+      payload.subjectMatches = ["Litteraturvitenskap", "Psykologi", "Tilknytningsteori", "Autofiksjon", "Narratologi", "Deiksis", "Nymaterialisme", "Virkelighetslitteratur"];
+    }
+    payload = filterCrossDomainAutoPayload(payload, sourceText);
     localStorage.setItem(AUTO_OUTPUT_STORAGE_KEY, JSON.stringify({
       payload,
       sourceText,
