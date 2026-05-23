@@ -3699,12 +3699,18 @@
       const motargument = hasSahelMali ? "Motargumentet er at knapphetsskolen overvurderer lineære årsakskjeder fra ressursknapphet til vold, og undervurderer institusjoner og aktørmakt." : "Motargumentet viser hvilke alternative forklaringer som utfordrer hovedpåstanden.";
       const teoriKort = theoryLinks.length
         ? theoryLinks.map((item) => `${item.thinker}: ${item.theory}`).join("; ")
-        : "Teksten setter miljøsikkerhet og politisk økologi opp mot hverandre.";
-      const begreperKort = phraseConcepts.length ? phraseConcepts.join(", ") : "ressursknapphet, politisk økologi, miljødegradering";
+        : (hasSahelMali
+          ? "Teksten setter miljøsikkerhet og politisk økologi opp mot hverandre."
+          : "Teksten kobler teori, metode og analyse for å belyse hovedproblemstillingen.");
+      const begreperKort = phraseConcepts.length
+        ? phraseConcepts.join(", ")
+        : (hasSahelMali ? "ressursknapphet, politisk økologi, miljødegradering" : "problemstilling, teori, metode, funn, tolkning");
       const sitatSetninger = sentences.filter((line) => /["“”«»]|\bifølge\b|\bhevder\b|\bviser til\b/i.test(line)).slice(0, 3);
       const pastander = sitatSetninger.length
         ? sitatSetninger.map((line) => `Påstand i teksten: ${short(line)}`)
-        : ["Påstand i teksten: Konflikter i Sahel kan ikke forklares tilfredsstillende med klima alene."];
+        : [hasSahelMali
+          ? "Påstand i teksten: Konflikter i Sahel kan ikke forklares tilfredsstillende med klima alene."
+          : "Påstand i teksten: Tekstens hovedforklaring må vurderes opp mot alternative tolkninger."];
       sortItems = [
         { label: "Kort hovedinnsikt", text: reflection },
         { label: "Hovedargument", text: hovedargument },
@@ -3712,26 +3718,34 @@
         { label: "Teorikoblinger", text: teoriKort },
         { label: "Begreper", text: begreperKort },
         { label: "Påstander", text: pastander.join(" ") },
-        { label: "Spenning i teksten", text: "Spenningen står mellom en lineær miljø-knapphetsforklaring og en politisk-økologisk forklaring som vektlegger makt og historisk kontekst." },
-        { label: "Mulig videre analyse", text: "Undersøk hvordan lokale maktforhold, statlig politikk og sikkerhetsdynamikk samspiller med klima- og ressursstress i konkrete caser." }
+        { label: "Spenning i teksten", text: hasSahelMali ? "Spenningen står mellom en lineær miljø-knapphetsforklaring og en politisk-økologisk forklaring som vektlegger makt og historisk kontekst." : "Spenningen står mellom tekstens hovedforklaring og alternative tolkningsmuligheter." },
+        { label: "Mulig videre analyse", text: hasSahelMali ? "Undersøk hvordan lokale maktforhold, statlig politikk og sikkerhetsdynamikk samspiller med klima- og ressursstress i konkrete caser." : "Presiser hvordan metode, teori og empiri støtter hovedpåstanden." }
       ];
       day = "Ikke dagbokmateriale – ingen dagsoppsummering laget.";
       thoughts = {
         hovedspor: hovedargument,
         lose_tanker: "Behold sitater som dokumentasjon, men løft syntesen i egne formuleringer.",
-        neste_steg: "Velg én konfliktcase og test forklaringskraften i hver modell mot samme empiriske materiale."
+        neste_steg: hasSahelMali ? "Velg én konfliktcase og test forklaringskraften i hver modell mot samme empiriske materiale." : "Velg ett analysegrep som tydelig tester hovedforklaring mot alternativ tolkning."
       };
-      list = [
-        "Skille tydelig mellom empiri, teori og normativ vurdering.",
-        "Vis hvilke antakelser som ligger i knapphetsskolen versus politisk økologi.",
-        "Bruk sitater som belegg, ikke som ferdig innsikt.",
-        "Knytt teori direkte til caser fra Sahel/Mali.",
-        "Avslutt med hva analysen endrer i forståelsen av konfliktårsaker."
-      ];
+      list = hasSahelMali
+        ? [
+            "Skille tydelig mellom empiri, teori og normativ vurdering.",
+            "Vis hvilke antakelser som ligger i knapphetsskolen versus politisk økologi.",
+            "Bruk sitater som belegg, ikke som ferdig innsikt.",
+            "Knytt teori direkte til caser fra Sahel/Mali.",
+            "Avslutt med hva analysen endrer i forståelsen av konfliktårsaker."
+          ]
+        : [
+            "Skille tydelig mellom problemstilling, teori, metode og funn.",
+            "Vis hvilke antakelser som ligger i hovedforklaringen.",
+            "Bruk sitater og eksempler som belegg, ikke som ferdig innsikt.",
+            "Knytt teori direkte til tekstens eget materiale.",
+            "Avslutt med hva analysen endrer i forståelsen av emnet."
+          ];
       path = [
         "Kartlegg hovedpåstand og motpåstand.",
-        "Sorter belegg etter forklaringsmodell.",
-        "Test modellene mot samme case.",
+        hasSahelMali ? "Sorter belegg etter forklaringsmodell." : "Sorter belegg etter teori, metode og empiri.",
+        hasSahelMali ? "Test modellene mot samme case." : "Test forklaringene mot samme tekstmateriale.",
         "Vurder forklaringskraft og blinde soner.",
         "Formuler en syntetiserende konklusjon."
       ];
