@@ -14,7 +14,7 @@
   const STOPWORDS = new Set(["og","i","på","for","med","til","av","en","et","det","som","er","om","fra","den","de","at","å","the","and","of"]);
   const DEF_SPLIT_RE = /[.;:!?]\s+|\n+/g;
 
-  let state = { loaded: false, loading: false, cached: false, last_error: null, source_count: 0, fag_file_count: 0, place_file_count: 0 };
+  let state = { loaded: false, loading: false, cached: false, last_error: null, source_count: 0, fag_file_count: 0, loaded_fag_file_count: 0, place_file_count: 0, file_errors: [], file_error_count: 0 };
   let index = emptyIndex();
   let loadingPromise = null;
 
@@ -32,7 +32,10 @@
 
   function applyCachedStats() {
     state.fag_file_count = Number(index?._meta?.fag_file_count || state.fag_file_count || 0);
+    state.loaded_fag_file_count = Number(index?._meta?.loaded_fag_file_count || state.loaded_fag_file_count || 0);
     state.place_file_count = Number(index?._meta?.place_file_count || state.place_file_count || 0);
+    state.file_errors = Array.isArray(index?._meta?.file_errors) ? index._meta.file_errors : (state.file_errors || []);
+    state.file_error_count = Number(index?._meta?.file_error_count || state.file_errors.length || 0);
     state.source_count = Number(index?._meta?.source_count || (1 + state.fag_file_count + state.place_file_count));
   }
 
@@ -178,10 +181,17 @@
     const loader = await fetchText(EMNER_LOADER_URL);
     const fagFiles = parseEmnerIndex(loader);
     state.fag_file_count = fagFiles.length;
+    const fileErrors = [];
+    let loadedFagFileCount = 0;
     for (const rel of fagFiles) {
-      const data = await fetchJson(`${RAW_BASE}${rel}`);
-      const emner = Array.isArray(data) ? data : (Array.isArray(data?.emner) ? data.emner : []);
-      emner.forEach((emne) => buildFromEmne(emne || {}, out));
+      try {
+        const data = await fetchJson(`${RAW_BASE}${rel}`);
+        const emner = Array.isArray(data) ? data : (Array.isArray(data?.emner) ? data.emner : []);
+        emner.forEach((emne) => buildFromEmne(emne || {}, out));
+        loadedFagFileCount += 1;
+      } catch (err) {
+        fileErrors.push({ file: rel, error: String(err?.message || err) });
+      }
     }
 
     try {
@@ -202,7 +212,7 @@
     out.subjects = Array.from(new Map(out.subjects.map((s) => [s.id, s])).values());
     out.categories = Array.from(new Map(out.categories.map((c) => [c.id, c])).values());
     out.generated_at = new Date().toISOString();
-    out._meta = { fag_file_count: state.fag_file_count, place_file_count: state.place_file_count, source_count: 1 + state.fag_file_count + state.place_file_count };
+    out._meta = { fag_file_count: state.fag_file_count, loaded_fag_file_count: loadedFagFileCount, place_file_count: state.place_file_count, file_errors: fileErrors, file_error_count: fileErrors.length, source_count: 1 + state.fag_file_count + state.place_file_count };
     return out;
   }
 
@@ -214,9 +224,16 @@
     loadingPromise = (async () => {
       try {
         index = await buildIndex();
-        localStorage.setItem(CACHE_KEY, JSON.stringify(index));
-        localStorage.setItem(CACHE_META_KEY, JSON.stringify({ saved_at: Date.now() }));
-        state.loaded = true; state.cached = false; applyCachedStats();
+        applyCachedStats();
+        const conceptCount = Array.isArray(index?.concepts) ? index.concepts.length : 0;
+        state.loaded = state.loaded_fag_file_count > 0 && conceptCount > 0;
+        state.cached = false;
+        try {
+          localStorage.setItem(CACHE_KEY, JSON.stringify(index));
+          localStorage.setItem(CACHE_META_KEY, JSON.stringify({ saved_at: Date.now() }));
+        } catch (err) {
+          state.last_error = `cache_write_failed: ${String(err?.message || err)}`;
+        }
         return index;
       } catch (err) {
         state.last_error = String(err?.message || err);
@@ -230,7 +247,7 @@
 
   function getStatus() {
     applyCachedStats();
-    return { loaded: !!state.loaded, loading: !!state.loading, source_count: state.source_count || 0, fag_file_count: state.fag_file_count || 0, place_file_count: state.place_file_count || 0, concept_count: index.concepts.length, category_count: index.categories.length, relation_count: index.relations.length, theory_hook_count: index.theoryHooks.length, method_count: index.methodProfiles.length, last_error: state.last_error, cached: !!state.cached };
+    return { loaded: !!state.loaded, loading: !!state.loading, source_count: state.source_count || 0, fag_file_count: state.fag_file_count || 0, loaded_fag_file_count: state.loaded_fag_file_count || 0, place_file_count: state.place_file_count || 0, file_errors: Array.isArray(state.file_errors) ? state.file_errors : [], file_error_count: state.file_error_count || 0, concept_count: index.concepts.length, category_count: index.categories.length, relation_count: index.relations.length, theory_hook_count: index.theoryHooks.length, method_count: index.methodProfiles.length, last_error: state.last_error, cached: !!state.cached };
   }
 
   function getIndex() { return index; }
