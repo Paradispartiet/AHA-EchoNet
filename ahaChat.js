@@ -1260,6 +1260,39 @@
     terms.forEach((term) => { if (lower.includes(term)) score += 1; });
     return { score, strong: score >= 4 };
   }
+  function detectSahelClimateConflictSignal(text) {
+    const src = String(text || "");
+    const hasSahel = /\bsahel\b|\bmali\b/i.test(src);
+    const hasConflict = /\bkonflikt\b|\bconflict\b/i.test(src);
+    const hasClimate = /\bklima\b|\bclimate\b|\bmiljø\b/i.test(src);
+    const hasTheory = /\bknapphetsskolen\b|\bressursknapphet\b|\bmiljøsikkerhet\b|\bpolitisk økologi\b|\benvironmental security\b/i.test(src);
+    return { strong: (hasSahel && (hasConflict || hasClimate)) || (hasSahel && hasTheory), hasSahel, hasConflict, hasClimate, hasTheory };
+  }
+
+  function detectAutoAnalysisDomain(sourceText, payload = {}) {
+    const src = String(sourceText || "");
+    const payloadText = `${payload?.reflection || ""} ${(Array.isArray(payload?.sortItems) ? payload.sortItems : []).map((item) => `${item?.label || ""} ${item?.text || ""}`).join(" ")}`;
+    const combined = `${src} ${payloadText}`;
+    if (detectPublicAdministrationReformSignal(combined).strong) return "public_admin_nav";
+    if (detectLiteraryAttachmentSignal(combined).strong) return "literary_attachment";
+    if (detectSahelClimateConflictSignal(combined).strong) return "sahel_climate_conflict";
+    return "generic_academic";
+  }
+
+  function normalizeSubjectMatches(subjectMatches) {
+    const list = Array.isArray(subjectMatches) ? subjectMatches : [];
+    return list.map((item) => {
+      if (typeof item === "string") return { title: item, subject_label: item, subject_id: normalizeConceptKey(item) || item.toLowerCase() };
+      const title = String(item?.title || item?.subject_label || item?.subject_id || item?.id || "").trim();
+      const subject_label = String(item?.subject_label || title).trim();
+      const subject_id = String(item?.subject_id || normalizeConceptKey(title) || title.toLowerCase()).trim();
+      return { ...item, title, subject_label, subject_id };
+    }).filter((item) => item.title);
+  }
+
+  function getLiterarySubjectMatches() {
+    return normalizeSubjectMatches(["Litteraturvitenskap", "Psykologi", "Tilknytningsteori", "Autofiksjon", "Narratologi", "Deiksis", "Nymaterialisme", "Virkelighetslitteratur"]);
+  }
 
   function short(text, maxLen = 180) {
     const normalized = normalizeDisplayText(text).replace(/\s+/g, " ").trim();
@@ -1621,17 +1654,18 @@
       return fallback;
     };
 
-    const sourceHasPublicAdmin = Boolean(detectPublicAdministrationReformSignal(text)?.strong);
-    const sourceHasSahelMali = /(sahel|mali|politisk økologi|knapphetsskolen|ressursknapphet|miljødegradering)/i.test(text);
+    const domain = detectAutoAnalysisDomain(text, payload || {});
+    const sourceHasPublicAdmin = domain === "public_admin_nav";
+    const sourceHasSahelMali = domain === "sahel_climate_conflict";
     const domainBlockedTerms = sourceHasPublicAdmin
       ? /(knapphetsskolen|politisk økologi|sahel|mali|ressursknapphet|miljødegradering)/i
       : (sourceHasSahelMali ? /(nav|offentlig forvaltning|velferdsstat|arbeidslinja|bakkebyråkrati|stat–kommune|stat-kommune)/i : null);
 
     return [
-      { title: "Hovedinnsikt", summary: pick("hovedinnsikt", "Teksten argumenterer for en sammensatt forklaring av konflikt."), concepts: ["dominerende narrativ", "empirisk forskning"], candidate_type: "synthetic" },
-      { title: "Hovedargument", summary: pick("hovedargument", "Konfliktutvikling forklares best gjennom politikk, historie og maktforhold."), concepts: ["politisk marginalisering", "historisk kontekst", "statens politikk"], candidate_type: "synthetic" },
-      { title: "Motargument/kritikk", summary: pick("motargument", "Lineære knapphetsforklaringer kritiseres for svak empirisk forklaringskraft."), concepts: ["knapphetsskolen", "miljøsikkerhet", "ressursknapphet"], candidate_type: "synthetic" },
-      { title: "Spenning i teksten", summary: pick("spenning", "Spenningen står mellom miljø-knapphetsforklaring og politisk-økologisk analyse."), concepts: ["politisk økologi", "environmental security", "makt- og produksjonsforhold"], candidate_type: "synthetic" }
+      { title: "Hovedinnsikt", summary: pick("hovedinnsikt", domain === "literary_attachment" ? "Om våren gjør tilknytning til et eksistensielt og litterært nøkkelbegrep, ikke bare et psykologisk fagbegrep." : "Teksten argumenterer for en sammensatt faglig forklaring."), concepts: domain === "literary_attachment" ? ["Knausgård", "Om våren", "tilknytningsteori"] : ["problemstilling", "teori", "funn"], candidate_type: "synthetic" },
+      { title: "Hovedargument", summary: pick("hovedargument", domain === "literary_attachment" ? "Romanen bekrefter deler av tilknytningsteorien, men viser også dens begrensninger gjennom skildringer av sårbarhet, sykdom, kropp, materialitet og uforklarlige vekstkrefter." : "Hovedargumentet underbygges gjennom tekstnær analyse og teoretisk sammenstilling."), concepts: domain === "literary_attachment" ? ["Bowlby", "autofiksjon", "sårbarhet"] : ["hovedargument", "metode", "analyse"], candidate_type: "synthetic" },
+      { title: "Motargument/kritikk", summary: pick("motargument", domain === "literary_attachment" ? "En ren tilknytningsteoretisk lesning blir for smal fordi romanen åpner for mytologiske, autofiksjonelle og nymaterialistiske forklaringsnivåer." : "Alternative forklaringer tester hovedpåstanden og synliggjør begrensninger."), concepts: domain === "literary_attachment" ? ["nymaterialisme", "performativitet", "litteraturvitenskap"] : ["motargument", "kritikk", "alternativ forklaring"], candidate_type: "synthetic" },
+      { title: "Spenning i teksten", summary: pick("spenning", domain === "literary_attachment" ? "Psykologisk tilknytningsteori står mot romanens bredere litterære utforskning av tilknytning, forknytning og løsrivelse." : "Spenningen står mellom konkurrerende faglige tolkningsnivåer."), concepts: domain === "literary_attachment" ? ["deiksis", "løsrivelse", "virkelighetslitteratur"] : ["spenning", "teori", "tolkning"], candidate_type: "synthetic" }
     ]
       .filter((card) => String(card?.summary || "").trim())
       .filter((card) => !isFragmentaryInsightCard(card))
@@ -3659,12 +3693,10 @@
       } else {
       const theoryLinks = extractAcademicTheoryLinks(analysisText).slice(0, 5);
       const phraseConcepts = extractAcademicPhraseConcepts(analysisText).slice(0, 8);
-      const hasSahelMali = /sahel|mali/i.test(analysisText);
-      reflection = hasSahelMali
-        ? "Teksten kritiserer en enkel knapphetsforklaring på konflikt i Sahel og viser at politiske, historiske og maktmessige forhold forklarer mer av konfliktbildet i Mali."
-        : "Teksten drøfter konkurrerende forklaringsmodeller og argumenterer for en mer sammensatt, kontekstuell forståelse.";
-      const hovedargument = "Hovedargumentet er at klima/miljø kan være bakgrunnsfaktorer, men at konfliktutvikling primært formes av politikk, historie, maktforhold og marginalisering.";
-      const motargument = "Motargumentet er at knapphetsskolen overvurderer lineære årsakskjeder fra ressursknapphet til vold, og undervurderer institusjoner og aktørmakt.";
+      const hasSahelMali = detectAutoAnalysisDomain(analysisText) === "sahel_climate_conflict";
+      reflection = hasSahelMali ? "Teksten drøfter klimakonflikt i Sahel/Mali gjennom konkurrerende forklaringsmodeller." : "Teksten drøfter konkurrerende forklaringsmodeller og argumenterer for en mer sammensatt, kontekstuell forståelse.";
+      const hovedargument = hasSahelMali ? "Hovedargumentet er at klima/miljø kan være bakgrunnsfaktorer, men at konfliktutvikling primært formes av politikk, historie, maktforhold og marginalisering." : "Hovedargumentet bygger en faglig tolkning som veier teori, metode og funn mot alternative forklaringer.";
+      const motargument = hasSahelMali ? "Motargumentet er at knapphetsskolen overvurderer lineære årsakskjeder fra ressursknapphet til vold, og undervurderer institusjoner og aktørmakt." : "Motargumentet viser hvilke alternative forklaringer som utfordrer hovedpåstanden.";
       const teoriKort = theoryLinks.length
         ? theoryLinks.map((item) => `${item.thinker}: ${item.theory}`).join("; ")
         : "Teksten setter miljøsikkerhet og politisk økologi opp mot hverandre.";
@@ -4134,18 +4166,21 @@
   function filterCrossDomainAutoPayload(payload, sourceText) {
     const safe = payload && typeof payload === "object" ? payload : {};
     const src = String(sourceText || "").toLowerCase();
-    const hasSahel = /(sahel|mali|knapphetsskolen|ressursknapphet|miljøsikkerhet|politisk økologi|climate conflict|environmental security)/i.test(src);
-    const hasLiteraryAttachment = detectLiteraryAttachmentSignal(src).strong;
-    if (!hasLiteraryAttachment || hasSahel) return safe;
-    const blocked = /(sahel|mali|klima|miljøsikkerhet|knapphetsskolen|ressursknapphet|politisk økologi|environmental security)/i;
+    const domain = detectAutoAnalysisDomain(src, safe);
+    if (domain !== "literary_attachment") return safe;
+    const blocked = /(sahel|mali|klima som konfliktforklaring|klimaforklaring|knapphetsskolen|ressursknapphet|miljøsikkerhet|politisk økologi|environmental security|climate conflict|makt- og produksjonsforhold)/i;
     const filterArray = (arr) => (Array.isArray(arr) ? arr.filter((item) => !blocked.test(typeof item === "string" ? item : `${item?.label || ""} ${item?.text || ""} ${item?.title || ""} ${item?.summary || ""}`)) : []);
     return {
       ...safe,
+      reflection: blocked.test(String(safe.reflection || "")) ? "" : String(safe.reflection || ""),
       sortItems: filterArray(safe.sortItems),
       list: filterArray(safe.list),
       insightCards: filterArray(safe.insightCards),
       path: filterArray(safe.path),
-      subjectMatches: filterArray(safe.subjectMatches),
+      keywords: filterArray(safe.keywords),
+      subjectMatches: getLiterarySubjectMatches(),
+      subjectLinks: getLiterarySubjectMatches(),
+      theoryLinks: filterArray(safe.theoryLinks),
       thoughts: {
         hovedspor: blocked.test(String(safe?.thoughts?.hovedspor || "")) ? "" : String(safe?.thoughts?.hovedspor || ""),
         lose_tanker: blocked.test(String(safe?.thoughts?.lose_tanker || "")) ? "" : String(safe?.thoughts?.lose_tanker || ""),
@@ -4173,10 +4208,8 @@
       });
       payload = buildAutoOutputFallbackPayload(userText, ahaReply, options);
     }
-    payload.subjectMatches = Array.isArray(options.subjectMatches) ? options.subjectMatches : [];
-    if (detectLiteraryAttachmentSignal(sourceText).strong) {
-      payload.subjectMatches = ["Litteraturvitenskap", "Psykologi", "Tilknytningsteori", "Autofiksjon", "Narratologi", "Deiksis", "Nymaterialisme", "Virkelighetslitteratur"];
-    }
+    payload.subjectMatches = normalizeSubjectMatches(Array.isArray(options.subjectMatches) ? options.subjectMatches : []);
+    if (detectAutoAnalysisDomain(sourceText, payload) === "literary_attachment") payload.subjectMatches = getLiterarySubjectMatches();
     payload = filterCrossDomainAutoPayload(payload, sourceText);
     localStorage.setItem(AUTO_OUTPUT_STORAGE_KEY, JSON.stringify({
       payload,
