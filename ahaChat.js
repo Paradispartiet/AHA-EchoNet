@@ -1293,6 +1293,15 @@
   function getLiterarySubjectMatches() {
     return normalizeSubjectMatches(["Litteraturvitenskap", "Psykologi", "Tilknytningsteori", "Autofiksjon", "Narratologi", "Deiksis", "Nymaterialisme", "Virkelighetslitteratur"]);
   }
+  function getLiteraryAttachmentLearningPath() {
+    return [
+      "Identifiser romanens bruk av tilknytningsteori.",
+      "Analyser deiktisk poetikk og tiltaleform.",
+      "Undersøk forholdet mellom far–barn-tilknytning og ekteskapelig løsrivelse.",
+      "Sammenlign Knausgårds og Linda Boström Knausgårds perspektiver.",
+      "Drøft hvordan nymaterialisme, sårbarhet og mytologi utfordrer en ren psykologisk forklaring."
+    ];
+  }
 
   function short(text, maxLen = 180) {
     const normalized = normalizeDisplayText(text).replace(/\s+/g, " ").trim();
@@ -1501,6 +1510,16 @@
     const sourceWeakOrEmpty = src.trim().length < 25;
     const hasSahelMali = hasStrongSourceSahelMali || (sourceWeakOrEmpty && hasStrongPayloadSahelMali);
     const hasPublicAdminSignal = Boolean(publicAdminSignal?.strong) || (sourceWeakOrEmpty && Boolean(payloadPublicAdminSignal?.strong));
+    const domain = detectAutoAnalysisDomain(src, safePayload);
+    if (domain === "literary_attachment") {
+      return {
+        ...safePayload,
+        textType: "academic_article",
+        path: getLiteraryAttachmentLearningPath().map(normalizeVisibleAcademicLabel),
+        subjectMatches: getLiterarySubjectMatches(),
+        subjectLinks: getLiterarySubjectMatches()
+      };
+    }
     const isAcademic = textType === "academic_article" || hasAcademicSignals(safePayload, src) || hasPublicAdminSignal;
     if (!isAcademic) return safePayload;
 
@@ -4012,16 +4031,17 @@
     const theoryLinks = (Array.isArray(payload?.theoryLinks) ? payload.theoryLinks : Array.isArray(payload?.theories) ? payload.theories : [])
       .map((item) => item?.thinker || item?.theory || item?.name || item).filter(Boolean);
     const navSignal = detectPublicAdministrationReformSignal(sourceText || payload?.reflection || "");
-    const literarySignal = detectLiteraryAttachmentSignal(sourceText || payload?.reflection || "");
+    const domain = detectAutoAnalysisDomain(sourceText || "", payload || {});
+    const literarySignal = domain === "literary_attachment" ? { strong: true } : detectLiteraryAttachmentSignal(sourceText || payload?.reflection || "");
     const themes = filterConceptLabels(Array.isArray(payload?.keywords) ? payload.keywords : []).map(canonicalizeDisplayConcept).slice(0, 4);
     const prioritizedLinks = literarySignal?.strong
-      ? ["Litteraturvitenskap", "Psykologi", "Tilknytningsteori", "Autofiksjon"]
+      ? getLiterarySubjectMatches().map((item) => item?.title || item?.subject_label || "").filter(Boolean)
       : (subjectLinks.length ? subjectLinks : theoryLinks.length ? theoryLinks : (navSignal?.strong ? ["Offentlig forvaltning", "Organisasjonsteori", "Velferdsstat", "Implementeringsteori"] : themes));
     return {
       tema: navSignal?.strong ? "NAV-reformen og måloppnåelse" : (literarySignal?.strong ? "Knausgårds Om våren, tilknytningsteori og litterær erkjennelse" : (lookup("hovedargument") || insights[1] || insights[0] || "Tema identifiseres fortløpende.")),
       hovedspenning: navSignal?.strong ? "Omstillingskostnad vs. strukturell utfordring" : (literarySignal?.strong ? "Tilknytningsteori vs. litterær/mytologisk utforskning av tilknytning, forknytning og løsrivelse" : (lookup("spenning") || insights.find((item) => /spenning|vs|mot/i.test(String(item || ""))) || "Spenning bygges fra flere meldinger.")),
       viktigsteInnsikt: navSignal?.strong ? "NAVs manglende måloppnåelse skyldes ikke bare midlertidig omstilling, men også varige strukturelle utfordringer i styring, organisering og stat–kommune-samspill." : (literarySignal?.strong ? "Om våren bruker tilknytningsteori som ramme, men overskrider den gjennom autofiksjon, deiksis, performativ skriving, sårbarhet, nymaterialisme og mytologiske bilder." : (lookup("hovedinnsikt") || insights[0] || payload?.reflection || "Ingen tydelig hovedinnsikt ennå.")),
-      fagkoblinger: prioritizedLinks.length ? prioritizedLinks.slice(0, 4).join(" · ") : "Fagkoblinger blir tydeligere når flere tekster analyseres.",
+      fagkoblinger: prioritizedLinks.length ? prioritizedLinks.slice(0, 8).join(" · ") : "Fagkoblinger blir tydeligere når flere tekster analyseres.",
       nesteSteg: navSignal?.strong ? "Undersøk hvordan statlig styring, kommunale mål og lokal organisering påvirker arbeidsrettet oppfølging." : (literarySignal?.strong ? "Skill mellom hva Bowlbys tilknytningsteori forklarer, og hva romanens litterære form og materialistiske/mytologiske perspektiver tilfører." : (payload?.thoughts?.neste_steg || (Array.isArray(payload?.path) ? payload.path[0] : "") || "Velg ett konkret neste steg i teksten.")),
       kortSvar: lookup("kort hovedinnsikt") || payload?.reflection || insights[0] || "AHA analyserer teksten fortløpende."
     };
@@ -4190,7 +4210,7 @@
       sortItems: filterArray(safe.sortItems),
       list: filterArray(safe.list),
       insightCards: filterArray(safe.insightCards),
-      path: filterArray(safe.path),
+      path: getLiteraryAttachmentLearningPath(),
       keywords: filterArray(safe.keywords),
       subjectMatches: getLiterarySubjectMatches(),
       subjectLinks: getLiterarySubjectMatches(),
@@ -4222,8 +4242,13 @@
       });
       payload = buildAutoOutputFallbackPayload(userText, ahaReply, options);
     }
+    const domain = detectAutoAnalysisDomain(sourceText, payload);
     payload.subjectMatches = normalizeSubjectMatches(Array.isArray(options.subjectMatches) ? options.subjectMatches : []);
-    if (detectAutoAnalysisDomain(sourceText, payload) === "literary_attachment") payload.subjectMatches = getLiterarySubjectMatches();
+    if (domain === "literary_attachment") {
+      payload.subjectMatches = getLiterarySubjectMatches();
+      payload.subjectLinks = getLiterarySubjectMatches();
+      payload.path = getLiteraryAttachmentLearningPath();
+    }
     payload = filterCrossDomainAutoPayload(payload, sourceText);
     localStorage.setItem(AUTO_OUTPUT_STORAGE_KEY, JSON.stringify({
       payload,
@@ -4234,6 +4259,16 @@
     }));
     if (host) host.dataset.sourceText = sourceText;
     renderAutoOutputPayload(payload);
+  }
+
+  function forceLiteraryFagkoblingerInReply(replyText, sourceText, payload = {}) {
+    if (detectAutoAnalysisDomain(sourceText, payload) !== "literary_attachment") return String(replyText || "");
+    const text = String(replyText || "");
+    const section = ["FAGKOBLINGER", ...getLiterarySubjectMatches().map((item) => item?.title || item?.subject_label || "").filter(Boolean)].join("\n");
+    if (/FAGKOBLINGER/i.test(text)) {
+      return text.replace(/FAGKOBLINGER[\s\S]*?(?=\n[A-ZÆØÅ][A-ZÆØÅ0-9 _-]{2,}\n|$)/i, section);
+    }
+    return `${text}\n\n${section}`.trim();
   }
 
   function focusAutoCard(action) {
@@ -4303,9 +4338,12 @@
             ? await global.AHASubjectEngine.matchText(analysisText, { source: "chat", textType: detectTextType(text) })
             : [];
           const climateEnriched = enrichSubjectMatchesForClimateConflict(analysisText, rawSubjectMatches);
-          const subjectMatches = enrichSubjectMatchesForPublicAdministration(analysisText, climateEnriched);
-          appendChat("aha", reply, { categoryChips: suggestCategoryChips(), subjectMatches });
-          try { renderAutoOutputs(text, reply, { subjectMatches }); } catch (autoErr) { console.warn("Auto-output feilet", autoErr); }
+          const publicAdminEnriched = enrichSubjectMatchesForPublicAdministration(analysisText, climateEnriched);
+          const domain = detectAutoAnalysisDomain(analysisText, { reflection: reply, subjectMatches: publicAdminEnriched });
+          const subjectMatches = domain === "literary_attachment" ? getLiterarySubjectMatches() : publicAdminEnriched;
+          const safeReply = forceLiteraryFagkoblingerInReply(reply, analysisText, { subjectMatches });
+          appendChat("aha", safeReply, { categoryChips: suggestCategoryChips(), subjectMatches });
+          try { renderAutoOutputs(text, safeReply, { subjectMatches }); } catch (autoErr) { console.warn("Auto-output feilet", autoErr); }
           // AHA-agentens egne svar skal vises i chatten og logges som
           // source event, men IKKE bli en ordinær brukerinnsikt. AI-
           // oppsummeringer hører ikke hjemme i innsiktskammeret. skip_insight
@@ -4315,7 +4353,7 @@
             source_app: "aha_chat",
             content_type: "text",
             title: "AHA-agent svar",
-            text: reply,
+            text: safeReply,
             user_created: false,
             imported: false,
             skip_insight: true,
