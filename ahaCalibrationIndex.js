@@ -79,8 +79,19 @@
   }
 
   function buildFromEmne(emne, out) {
-    const copy = Object.assign({}, emne, { corpusText: [emne.definition || "", emne.why_it_matters || ""].join("\n").trim() });
-    out.emner.push(copy);
+    const compactEmne = {
+      emne_id: emne.emne_id || null,
+      subject_id: emne.subject_id || null,
+      title: emne.title || null,
+      short_label: emne.short_label || null,
+      area_id: emne.area_id || null,
+      area_label: emne.area_label || null,
+      level: emne.level || null,
+      progression_stage: emne.progression_stage || null,
+      pedagogical_track: emne.pedagogical_track || null,
+      corpusText: [emne.definition || "", emne.why_it_matters || ""].join("\n").trim()
+    };
+    out.emner.push(compactEmne);
     if (emne.subject_id) out.subjects.push({ id: emne.subject_id, label: emne.subject_id });
     if (emne.area_id || emne.area_label) out.categories.push({ id: emne.area_id || emne.area_label, label: emne.area_label || emne.area_id });
 
@@ -177,9 +188,14 @@
       const manifest = await fetchJson(PLACE_MANIFEST_URL);
       const paths = asArray(manifest?.files || manifest?.place_files || manifest);
       state.place_file_count = paths.length;
-      for (const p of paths.slice(0, MAX_PLACE_CONTEXT)) {
-        const place = await fetchJson(`${RAW_BASE}${String(p).replace(/^\/+/, "")}`);
-        out.placeContext.push(compactPlace(place));
+      for (const p of paths) {
+        if (out.placeContext.length >= MAX_PLACE_CONTEXT) break;
+        const data = await fetchJson(`${RAW_BASE}${String(p).replace(/^\/+/, "")}`);
+        const places = Array.isArray(data) ? data : [data];
+        for (const place of places) {
+          if (out.placeContext.length >= MAX_PLACE_CONTEXT) break;
+          out.placeContext.push(compactPlace(place));
+        }
       }
     } catch {}
 
