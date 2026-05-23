@@ -71,21 +71,48 @@
     saveChamberFallback(chamber);
   }
 
+  function normalizeConceptKey(value) {
+    return String(value || "").toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^\p{L}\p{N}\s-]/gu, " ").replace(/\s+/g, " ").trim();
+  }
+
   function normalizeCandidateConcepts(concepts) {
     const list = Array.isArray(concepts) ? concepts : [];
     const out = [];
     const seen = new Set();
     list.forEach((item) => {
-      let value = "";
-      if (typeof item === "string") value = item;
-      else if (item && typeof item === "object") value = item.label || item.key || item.term || item.name || "";
-      const label = String(value || "").trim();
+      const isObject = item && typeof item === "object";
+      const label = String(isObject ? (item.label || item.key || item.term || item.name || "") : item || "").trim();
       if (!label) return;
-      const normalized = label.toLowerCase();
-      if (seen.has(normalized)) return;
+      const normalized = normalizeConceptKey(isObject ? (item.key || label) : label);
+      if (!normalized || seen.has(normalized)) return;
       seen.add(normalized);
-      out.push(label);
+      if (isObject) out.push(Object.assign({}, item, { label, key: item.key || normalized }));
+      else out.push(label);
     });
+    return out;
+  }
+
+  function mergeCandidateConcepts(baseConcepts, calibrationConcepts, maxItems) {
+    const out = [];
+    const seen = new Set();
+    const limit = Number.isFinite(maxItems) ? maxItems : 20;
+    const add = (item, fromCalibration) => {
+      if (out.length >= limit) return;
+      const isObject = item && typeof item === "object";
+      const label = String(isObject ? (item.label || item.key || item.term || item.name || "") : item || "").trim();
+      if (!label) return;
+      const key = normalizeConceptKey(isObject ? (item.key || label) : label);
+      if (!key || seen.has(key)) return;
+      seen.add(key);
+      if (isObject) {
+        const next = Object.assign({}, item, { label, key: item.key || key });
+        if (fromCalibration) next.source = "historygo_fag_calibration";
+        out.push(next);
+      } else if (fromCalibration) out.push({ key, label, source: "historygo_fag_calibration" });
+      else out.push(label);
+    };
+    (Array.isArray(baseConcepts) ? baseConcepts : []).forEach((c) => add(c, false));
+    (Array.isArray(calibrationConcepts) ? calibrationConcepts : []).forEach((c) => add(c, true));
     return out;
   }
 
@@ -155,6 +182,18 @@
       src.subject_id || inp.subject_id || src.meta?.subject_id || "sub_laring"
     ).trim() || "sub_laring";
 
+    let calibrationResult = null;
+    if (global.AHACalibration && typeof global.AHACalibration.matchText === "function") {
+      try { calibrationResult = global.AHACalibration.matchText(text, { topN: 12 }); }
+      catch (err) { console.warn("AHAIngest: calibration-match feilet", err); }
+    }
+
+    const inputCandidateConcepts = normalizeCandidateConcepts(src.meta?.candidate_concepts || inp.candidate_concepts || []);
+    const calibrationCandidateConcepts = Array.isArray(calibrationResult?.matched_concepts) ? calibrationResult.matched_concepts : [];
+    const combinedCandidateConcepts = mergeCandidateConcepts(inputCandidateConcepts, calibrationCandidateConcepts, 20);
+    const fallbackEmner = Array.isArray(src.meta?.related_emner) ? src.meta.related_emner : [];
+    const calibrationEmner = (fallbackEmner.length || !Array.isArray(calibrationResult?.matched_emner)) ? [] : calibrationResult.matched_emner.map((m) => m.emne_id).filter(Boolean);
+
     const signal = global.InsightsEngine.createSignalFromMessage(
       text,
       subjectId,
@@ -167,7 +206,8 @@
         place_id: src.meta?.place_id || src.place_id || null,
         person_id: src.meta?.person_id || src.person_id || null,
         field_id: src.field_id || inp.field_id || src.meta?.field_id || src.theme_id || null,
-        emner: Array.isArray(src.meta?.related_emner) ? src.meta.related_emner : []
+        emner: fallbackEmner.length ? fallbackEmner : calibrationEmner,
+        candidate_concepts: combinedCandidateConcepts
       }
     );
 
@@ -176,6 +216,14 @@
     signal.source_app = src.source_app || null;
     signal.imported = src.imported === true;
     signal.meta = src.meta || {};
+    if (calibrationResult) {
+      signal.meta.calibration = {
+        source: calibrationResult.source,
+        calibration_score: calibrationResult.calibration_score,
+        matched_emner: (calibrationResult.matched_emner || []).slice(0, 3).map((m) => m.emne_id).filter(Boolean)
+      };
+    }
+
 
     const chamber = loadChamber();
     let meta = null;
