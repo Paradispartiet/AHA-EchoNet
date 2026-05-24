@@ -36,7 +36,7 @@
   const STOPWORDS = new Set(["og","i","på","for","med","til","av","en","et","det","som","er","om","fra","den","de","at","å","the","and","of"]);
   const DEF_SPLIT_RE = /[.;:!?]\s+|\n+/g;
 
-  let state = { loaded: false, loading: false, cached: false, last_error: null, source_count: 0, fag_file_count: 0, loaded_fag_file_count: 0, place_file_count: 0, file_errors: [], file_error_count: 0, fag_manifest_loaded: false };
+  let state = { loaded: false, loading: false, cached: false, last_error: null, source_count: 0, fag_file_count: 0, loaded_fag_file_count: 0, place_file_count: 0, file_errors: [], file_error_count: 0, fag_manifest_loaded: false, planned_core_file_count: 0, loaded_core_file_count: 0, core_file_errors: [], core_file_error_count: 0, planned_support_file_count: 0, loaded_support_file_count: 0, support_file_errors: [], support_file_error_count: 0 };
   let index = emptyIndex();
   let loadingPromise = null;
 
@@ -49,8 +49,23 @@
 
   function normalizeText(v) { return String(v || "").toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^\p{L}\p{N}\s-]/gu, " ").replace(/\s+/g, " ").trim(); }
   function asArray(v) { return Array.isArray(v) ? v : (v == null ? [] : [v]); }
+  function sleep(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
   async function fetchJson(path) { const r = await fetch(path); if (!r.ok) throw new Error(`Fetch failed ${path}: ${r.status}`); return r.json(); }
   async function fetchText(path) { const r = await fetch(path); if (!r.ok) throw new Error(`Fetch failed ${path}: ${r.status}`); return r.text(); }
+  async function fetchJsonWithRetry(url, options = {}) {
+    const attempts = options.attempts || 3;
+    const delays = options.delays || [250, 750, 1500];
+    let lastErr = null;
+    for (let i = 0; i < attempts; i += 1) {
+      try {
+        return await fetchJson(url);
+      } catch (err) {
+        lastErr = err;
+        if (i < attempts - 1) await sleep(delays[i] || 1000);
+      }
+    }
+    throw lastErr;
+  }
 
   function applyCachedStats() {
     state.fag_file_count = Number(index?._meta?.fag_file_count || state.fag_file_count || 0);
@@ -59,6 +74,14 @@
     state.fag_manifest_loaded = !!index?._meta?.fag_manifest_loaded;
     state.file_errors = Array.isArray(index?._meta?.file_errors) ? index._meta.file_errors : (state.file_errors || []);
     state.file_error_count = Number(index?._meta?.file_error_count || state.file_errors.length || 0);
+    state.planned_core_file_count = Number(index?._meta?.planned_core_file_count || 0);
+    state.loaded_core_file_count = Number(index?._meta?.loaded_core_file_count || 0);
+    state.core_file_errors = Array.isArray(index?._meta?.core_file_errors) ? index._meta.core_file_errors : [];
+    state.core_file_error_count = Number(index?._meta?.core_file_error_count || state.core_file_errors.length || 0);
+    state.planned_support_file_count = Number(index?._meta?.planned_support_file_count || 0);
+    state.loaded_support_file_count = Number(index?._meta?.loaded_support_file_count || 0);
+    state.support_file_errors = Array.isArray(index?._meta?.support_file_errors) ? index._meta.support_file_errors : [];
+    state.support_file_error_count = Number(index?._meta?.support_file_error_count || state.support_file_errors.length || 0);
     state.source_count = Number(index?._meta?.source_count || (1 + state.fag_file_count + state.place_file_count));
   }
 
@@ -67,6 +90,8 @@
       const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || "null");
       if (!cached) return null;
       if (cached?._meta?.fag_manifest_loaded !== true) return null;
+      if (Number(cached?._meta?.loaded_core_file_count || 0) < Number(cached?._meta?.planned_core_file_count || 0)) return null;
+      if (Number(cached?._meta?.core_file_error_count || 0) > 0) return null;
       if (!ignoreTtl) {
         const meta = JSON.parse(localStorage.getItem(CACHE_META_KEY) || "null");
         if (!meta?.saved_at || Date.now() - meta.saved_at >= CACHE_TTL_MS) return null;
@@ -254,31 +279,73 @@
   async function loadFagManifestFiles(out) {
     const manifest = await fetchJson(FAG_MANIFEST_URL);
     const fileErrors = [];
+    const coreFileErrors = [];
+    const supportFileErrors = [];
     let plannedFagFileCount = 0;
     let loadedFagFileCount = 0;
+    let plannedCoreFileCount = 0;
+    let loadedCoreFileCount = 0;
+    let plannedSupportFileCount = 0;
+    let loadedSupportFileCount = 0;
+    let processedFiles = 0;
 
-    for (const [subjectId, entry] of Object.entries(manifest || {})) {
+    const subjects = Object.entries(manifest || {}).map(([subjectId, entry]) => {
       const e = entry && typeof entry === "object" ? entry : {};
-      const files = [
-        { role: "emner", path: e.emner },
-        { role: "pensum", path: e.pensum },
-        { role: "fagkart", path: e.fagkart },
-        { role: "methods", path: e.methods },
-        { role: "supersetQuizMal", path: e.supersetQuizMal }
-      ].filter((item) => item.path);
+      return {
+        subjectId,
+        coreFiles: [{ role: "emner", path: e.emner }].filter((item) => item.path),
+        supportFiles: [
+          { role: "pensum", path: e.pensum },
+          { role: "fagkart", path: e.fagkart },
+          { role: "methods", path: e.methods },
+          { role: "supersetQuizMal", path: e.supersetQuizMal }
+        ].filter((item) => item.path)
+      };
+    });
 
-      for (const file of files) {
+    for (const subject of subjects) {
+      plannedCoreFileCount += subject.coreFiles.length;
+      plannedSupportFileCount += subject.supportFiles.length;
+    }
+
+    for (const subject of subjects) {
+      for (const file of subject.coreFiles) {
         plannedFagFileCount += 1;
         try {
-          const data = await fetchJson(`${RAW_BASE}data/fag/${file.path}`);
+          const data = await fetchJsonWithRetry(`${RAW_BASE}data/fag/${file.path}`);
           loadedFagFileCount += 1;
-          ingestFagFile(subjectId, file.role, file.path, data, out);
+          loadedCoreFileCount += 1;
+          ingestFagFile(subject.subjectId, file.role, file.path, data, out);
         } catch (err) {
-          fileErrors.push({ subject_id: subjectId, role: file.role, file: `data/fag/${file.path}`, error: String(err?.message || err) });
+          const errObj = { subject_id: subject.subjectId, role: file.role, file: `data/fag/${file.path}`, error: String(err?.message || err) };
+          fileErrors.push(errObj);
+          coreFileErrors.push(errObj);
+        } finally {
+          processedFiles += 1;
+          if (processedFiles % 8 === 0) await sleep(150);
         }
       }
     }
-    return { plannedFagFileCount, loadedFagFileCount, fileErrors };
+
+    for (const subject of subjects) {
+      for (const file of subject.supportFiles) {
+        plannedFagFileCount += 1;
+        try {
+          const data = await fetchJsonWithRetry(`${RAW_BASE}data/fag/${file.path}`);
+          loadedFagFileCount += 1;
+          loadedSupportFileCount += 1;
+          ingestFagFile(subject.subjectId, file.role, file.path, data, out);
+        } catch (err) {
+          const errObj = { subject_id: subject.subjectId, role: file.role, file: `data/fag/${file.path}`, error: String(err?.message || err) };
+          fileErrors.push(errObj);
+          supportFileErrors.push(errObj);
+        } finally {
+          processedFiles += 1;
+          if (processedFiles % 8 === 0) await sleep(150);
+        }
+      }
+    }
+    return { plannedFagFileCount, loadedFagFileCount, fileErrors, plannedCoreFileCount, loadedCoreFileCount, coreFileErrors, plannedSupportFileCount, loadedSupportFileCount, supportFileErrors };
   }
 
   function scoreMatch(textNorm, term, weight) { if (!textNorm.includes(term)) return 0; return weight * (term.includes(" ") ? 1.35 : 1); }
@@ -526,7 +593,23 @@
     out.categories = Array.from(new Map(out.categories.map((c) => [c.id, c])).values());
     out.generated_at = new Date().toISOString();
     const combinedErrors = fileErrors.concat(asArray(fagStats?.fileErrors || []));
-    out._meta = { fag_manifest_loaded: fagManifestLoaded, fag_file_count: state.fag_file_count, loaded_fag_file_count: state.loaded_fag_file_count, place_file_count: state.place_file_count, file_errors: combinedErrors, file_error_count: combinedErrors.length, source_count: 1 + state.fag_file_count + state.place_file_count };
+    out._meta = {
+      fag_manifest_loaded: fagManifestLoaded,
+      fag_file_count: state.fag_file_count,
+      loaded_fag_file_count: state.loaded_fag_file_count,
+      planned_core_file_count: Number(fagStats?.plannedCoreFileCount || 0),
+      loaded_core_file_count: Number(fagStats?.loadedCoreFileCount || 0),
+      core_file_errors: asArray(fagStats?.coreFileErrors || []),
+      core_file_error_count: asArray(fagStats?.coreFileErrors || []).length,
+      planned_support_file_count: Number(fagStats?.plannedSupportFileCount || 0),
+      loaded_support_file_count: Number(fagStats?.loadedSupportFileCount || 0),
+      support_file_errors: asArray(fagStats?.supportFileErrors || []),
+      support_file_error_count: asArray(fagStats?.supportFileErrors || []).length,
+      place_file_count: state.place_file_count,
+      file_errors: combinedErrors,
+      file_error_count: combinedErrors.length,
+      source_count: 1 + state.fag_file_count + state.place_file_count
+    };
     return out;
   }
 
@@ -542,17 +625,22 @@
         const conceptCount = Array.isArray(index?.concepts) ? index.concepts.length : 0;
         state.loaded = state.loaded_fag_file_count > 0 && conceptCount > 0;
         state.cached = false;
-        try {
-          const cacheIndex = makeCacheSafeIndex(index);
-          localStorage.setItem(CACHE_KEY, JSON.stringify(cacheIndex));
-          localStorage.setItem(CACHE_META_KEY, JSON.stringify({ saved_at: Date.now() }));
-        } catch (err) {
+        const canPersistCache = Number(index?._meta?.planned_core_file_count || 0) > 0
+          && Number(index?._meta?.loaded_core_file_count || 0) === Number(index?._meta?.planned_core_file_count || 0)
+          && Number(index?._meta?.core_file_error_count || 0) === 0;
+        if (canPersistCache) {
           try {
-            const minimalCacheIndex = makeMinimalCacheIndex(index);
-            localStorage.setItem(CACHE_KEY, JSON.stringify(minimalCacheIndex));
+            const cacheIndex = makeCacheSafeIndex(index);
+            localStorage.setItem(CACHE_KEY, JSON.stringify(cacheIndex));
             localStorage.setItem(CACHE_META_KEY, JSON.stringify({ saved_at: Date.now() }));
-          } catch (minimalErr) {
-            state.last_error = `cache_write_failed: ${String(minimalErr?.message || minimalErr)}`;
+          } catch (err) {
+            try {
+              const minimalCacheIndex = makeMinimalCacheIndex(index);
+              localStorage.setItem(CACHE_KEY, JSON.stringify(minimalCacheIndex));
+              localStorage.setItem(CACHE_META_KEY, JSON.stringify({ saved_at: Date.now() }));
+            } catch (minimalErr) {
+              state.last_error = `cache_write_failed: ${String(minimalErr?.message || minimalErr)}`;
+            }
           }
         }
         return index;
@@ -579,6 +667,14 @@
       place_file_count: state.place_file_count || 0,
       file_errors: Array.isArray(state.file_errors) ? state.file_errors : [],
       file_error_count: state.file_error_count || 0,
+      planned_core_file_count: state.planned_core_file_count || 0,
+      loaded_core_file_count: state.loaded_core_file_count || 0,
+      core_file_errors: Array.isArray(state.core_file_errors) ? state.core_file_errors : [],
+      core_file_error_count: state.core_file_error_count || 0,
+      planned_support_file_count: state.planned_support_file_count || 0,
+      loaded_support_file_count: state.loaded_support_file_count || 0,
+      support_file_errors: Array.isArray(state.support_file_errors) ? state.support_file_errors : [],
+      support_file_error_count: state.support_file_error_count || 0,
       concept_count: index.concepts.length,
       category_count: index.categories.length,
       relation_count: index.relations.length,
