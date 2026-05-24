@@ -2,7 +2,7 @@
 (function (global) {
   "use strict";
 
-  const VERSION = "aha_calibration_index_v2";
+  const VERSION = "aha_calibration_index_v3";
   const CACHE_KEY = VERSION;
   const CACHE_META_KEY = `${VERSION}:meta`;
   const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
@@ -11,11 +11,12 @@
   const FAG_MANIFEST_URL = `${RAW_BASE}data/fag/fag_manifest.json`;
   const PLACE_MANIFEST_URL = `${RAW_BASE}data/places/manifest.json`;
   const MAX_PLACE_CONTEXT = 300;
-  const MAX_CACHE_CONCEPTS = 15000;
-  const MAX_CACHE_EMNER = 2000;
-  const MAX_CACHE_THEORY_HOOKS = 3000;
-  const MAX_CACHE_METHOD_PROFILES = 3000;
-  const MAX_CACHE_LABEL_LENGTH = 120;
+  const MAX_CACHE_CONCEPTS = 5000;
+  const MAX_CACHE_EMNER = 800;
+  const MAX_CACHE_THEORY_HOOKS = 500;
+  const MAX_CACHE_METHOD_PROFILES = 500;
+  const MAX_CACHE_LABEL_LENGTH = 80;
+  const MAX_CACHE_CORPUS_TEXT_LENGTH = 300;
   const SOURCE_FIELD_PRIORITY = {
     core_concepts: 14,
     key_concepts: 13,
@@ -344,21 +345,21 @@
       level: e?.level || null,
       progression_stage: e?.progression_stage || null,
       pedagogical_track: e?.pedagogical_track || null,
-      corpusText: e?.corpusText || ""
+      corpusText: String(e?.corpusText || "").slice(0, MAX_CACHE_CORPUS_TEXT_LENGTH)
     })).slice(0, MAX_CACHE_EMNER);
     const compactTheoryHooks = asArray(src.theoryHooks).map((t) => ({
       emne_id: t?.emne_id || null,
-      canonical_thinkers: asArray(t?.canonical_thinkers),
-      norwegian_thinkers: asArray(t?.norwegian_thinkers),
-      primary_theory_hooks: asArray(t?.primary_theory_hooks),
-      secondary_theory_hooks: asArray(t?.secondary_theory_hooks),
-      reserve_theory_hooks: asArray(t?.reserve_theory_hooks)
+      canonical_thinkers: asArray(t?.canonical_thinkers).slice(0, 8),
+      norwegian_thinkers: asArray(t?.norwegian_thinkers).slice(0, 8),
+      primary_theory_hooks: asArray(t?.primary_theory_hooks).slice(0, 8),
+      secondary_theory_hooks: asArray(t?.secondary_theory_hooks).slice(0, 8),
+      reserve_theory_hooks: asArray(t?.reserve_theory_hooks).slice(0, 8)
     })).slice(0, MAX_CACHE_THEORY_HOOKS);
     const compactMethodProfiles = asArray(src.methodProfiles).map((m) => ({
       emne_id: m?.emne_id || null,
       subject_id: m?.subject_id || null,
-      methods: asArray(m?.methods),
-      recommended_methods: asArray(m?.recommended_methods)
+      methods: asArray(m?.methods).slice(0, 12),
+      recommended_methods: asArray(m?.recommended_methods).slice(0, 12)
     })).slice(0, MAX_CACHE_METHOD_PROFILES);
 
     return {
@@ -383,10 +384,58 @@
       _meta: {
         ...(src._meta || {}),
         cache_compacted: true,
+        cache_level: "standard",
         full_concept_count: asArray(src.concepts).length,
         cached_concept_count: compactConcepts.length,
         full_emne_count: asArray(src.emner).length,
         cached_emne_count: compactEmner.length
+      }
+    };
+  }
+
+  function makeMinimalCacheIndex(fullIndex) {
+    const src = fullIndex && typeof fullIndex === "object" ? fullIndex : emptyIndex();
+    const minimalConcepts = compactConceptsForCache(src.concepts).slice(0, 2500);
+    const minimalEmner = asArray(src.emner).map((e) => ({
+      emne_id: e?.emne_id || null,
+      subject_id: e?.subject_id || null,
+      title: e?.title || null,
+      short_label: e?.short_label || null,
+      area_id: e?.area_id || null,
+      area_label: e?.area_label || null,
+      level: e?.level || null,
+      progression_stage: e?.progression_stage || null,
+      pedagogical_track: e?.pedagogical_track || null,
+      corpusText: String(e?.corpusText || "").slice(0, MAX_CACHE_CORPUS_TEXT_LENGTH)
+    })).slice(0, 400);
+
+    return {
+      version: src.version || VERSION,
+      generated_at: src.generated_at || new Date().toISOString(),
+      source: src.source || "historygo_fag",
+      subjects: asArray(src.subjects),
+      categories: asArray(src.categories),
+      concepts: minimalConcepts,
+      emner: minimalEmner,
+      theoryHooks: [],
+      methodProfiles: [],
+      relations: [],
+      subjectProfiles: [],
+      categoryProfiles: [],
+      progressionLevels: [],
+      questionPatterns: [],
+      conflictPatterns: [],
+      blindspotPatterns: [],
+      nextStepRules: [],
+      placeContext: [],
+      _meta: {
+        ...(src._meta || {}),
+        cache_compacted: true,
+        cache_level: "minimal",
+        full_concept_count: asArray(src.concepts).length,
+        cached_concept_count: minimalConcepts.length,
+        full_emne_count: asArray(src.emner).length,
+        cached_emne_count: minimalEmner.length
       }
     };
   }
@@ -498,7 +547,13 @@
           localStorage.setItem(CACHE_KEY, JSON.stringify(cacheIndex));
           localStorage.setItem(CACHE_META_KEY, JSON.stringify({ saved_at: Date.now() }));
         } catch (err) {
-          state.last_error = `cache_write_failed: ${String(err?.message || err)}`;
+          try {
+            const minimalCacheIndex = makeMinimalCacheIndex(index);
+            localStorage.setItem(CACHE_KEY, JSON.stringify(minimalCacheIndex));
+            localStorage.setItem(CACHE_META_KEY, JSON.stringify({ saved_at: Date.now() }));
+          } catch (minimalErr) {
+            state.last_error = `cache_write_failed: ${String(minimalErr?.message || minimalErr)}`;
+          }
         }
         return index;
       } catch (err) {
@@ -513,7 +568,31 @@
 
   function getStatus() {
     applyCachedStats();
-    return { loaded: !!state.loaded, loading: !!state.loading, source_count: state.source_count || 0, fag_manifest_loaded: !!state.fag_manifest_loaded, fag_file_count: state.fag_file_count || 0, loaded_fag_file_count: state.loaded_fag_file_count || 0, place_file_count: state.place_file_count || 0, file_errors: Array.isArray(state.file_errors) ? state.file_errors : [], file_error_count: state.file_error_count || 0, concept_count: index.concepts.length, category_count: index.categories.length, relation_count: index.relations.length, theory_hook_count: index.theoryHooks.length, method_count: index.methodProfiles.length, last_error: state.last_error, cached: !!state.cached };
+    const meta = index?._meta || {};
+    return {
+      loaded: !!state.loaded,
+      loading: !!state.loading,
+      source_count: state.source_count || 0,
+      fag_manifest_loaded: !!state.fag_manifest_loaded,
+      fag_file_count: state.fag_file_count || 0,
+      loaded_fag_file_count: state.loaded_fag_file_count || 0,
+      place_file_count: state.place_file_count || 0,
+      file_errors: Array.isArray(state.file_errors) ? state.file_errors : [],
+      file_error_count: state.file_error_count || 0,
+      concept_count: index.concepts.length,
+      category_count: index.categories.length,
+      relation_count: index.relations.length,
+      theory_hook_count: index.theoryHooks.length,
+      method_count: index.methodProfiles.length,
+      cache_compacted: !!meta.cache_compacted,
+      cache_level: meta.cache_level || null,
+      full_concept_count: Number(meta.full_concept_count || index.concepts.length || 0),
+      cached_concept_count: Number(meta.cached_concept_count || index.concepts.length || 0),
+      full_emne_count: Number(meta.full_emne_count || index.emner.length || 0),
+      cached_emne_count: Number(meta.cached_emne_count || index.emner.length || 0),
+      last_error: state.last_error,
+      cached: !!state.cached
+    };
   }
 
   function getIndex() { return index; }
