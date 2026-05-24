@@ -2,19 +2,20 @@
 (function (global) {
   "use strict";
 
-  const VERSION = "aha_calibration_index_v1";
+  const VERSION = "aha_calibration_index_v2";
   const CACHE_KEY = VERSION;
   const CACHE_META_KEY = `${VERSION}:meta`;
   const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
   const RAW_BASE = "https://raw.githubusercontent.com/Paradispartiet/History-Go/main/";
   const EMNER_LOADER_URL = `${RAW_BASE}js/emnerLoader.js`;
+  const FAG_MANIFEST_URL = `${RAW_BASE}data/fag/fag_manifest.json`;
   const PLACE_MANIFEST_URL = `${RAW_BASE}data/places/manifest.json`;
   const MAX_PLACE_CONTEXT = 300;
 
   const STOPWORDS = new Set(["og","i","på","for","med","til","av","en","et","det","som","er","om","fra","den","de","at","å","the","and","of"]);
   const DEF_SPLIT_RE = /[.;:!?]\s+|\n+/g;
 
-  let state = { loaded: false, loading: false, cached: false, last_error: null, source_count: 0, fag_file_count: 0, loaded_fag_file_count: 0, place_file_count: 0, file_errors: [], file_error_count: 0 };
+  let state = { loaded: false, loading: false, cached: false, last_error: null, source_count: 0, fag_file_count: 0, loaded_fag_file_count: 0, place_file_count: 0, file_errors: [], file_error_count: 0, fag_manifest_loaded: false };
   let index = emptyIndex();
   let loadingPromise = null;
 
@@ -34,6 +35,7 @@
     state.fag_file_count = Number(index?._meta?.fag_file_count || state.fag_file_count || 0);
     state.loaded_fag_file_count = Number(index?._meta?.loaded_fag_file_count || state.loaded_fag_file_count || 0);
     state.place_file_count = Number(index?._meta?.place_file_count || state.place_file_count || 0);
+    state.fag_manifest_loaded = !!index?._meta?.fag_manifest_loaded;
     state.file_errors = Array.isArray(index?._meta?.file_errors) ? index._meta.file_errors : (state.file_errors || []);
     state.file_error_count = Number(index?._meta?.file_error_count || state.file_errors.length || 0);
     state.source_count = Number(index?._meta?.source_count || (1 + state.fag_file_count + state.place_file_count));
@@ -43,6 +45,7 @@
     try {
       const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || "null");
       if (!cached) return null;
+      if (cached?._meta?.fag_manifest_loaded !== true) return null;
       if (!ignoreTtl) {
         const meta = JSON.parse(localStorage.getItem(CACHE_META_KEY) || "null");
         if (!meta?.saved_at || Date.now() - meta.saved_at >= CACHE_TTL_MS) return null;
@@ -122,6 +125,141 @@
     out.nextStepRules.push({ emne_id: emne.emne_id || null, progression_stage: emne.progression_stage || null, pedagogical_track: emne.pedagogical_track || null, recommended_set_phases: asArray(emne.recommended_set_phases), generator_constraints: asArray(emne.generator_constraints), requires_history_anchor: !!emne.requires_history_anchor, requires_visible_trace: !!emne.requires_visible_trace });
   }
 
+  function pickArrayFromKnownKeys(obj, keys) {
+    for (const k of keys) {
+      if (Array.isArray(obj?.[k])) return obj[k];
+    }
+    return [];
+  }
+
+  function ingestCompactObjectTerms(obj, out, ctx) {
+    if (!obj || typeof obj !== "object") return;
+    const emne = { subject_id: ctx.subjectId || null, emne_id: null, area_id: null, area_label: null };
+    const titleFields = ["title", "name", "label", "tema", "begrep", "concept", "akse", "kategori", "område", "omrade"];
+    titleFields.forEach((field) => addConcept(out.concepts, emne, obj[field], `${ctx.role}.${field}`, ctx.weight || 0.95));
+    ["description", "desc", "forklaring", "teori", "method", "metode", "content", "tekst"].forEach((field) => {
+      extractDefinitionPhrases(obj[field]).forEach((p) => addConcept(out.concepts, emne, p, `${ctx.role}.${field}_phrase`, (ctx.weight || 0.95) + 0.05));
+    });
+  }
+
+  function walkLimited(node, fn, depth, maxDepth, maxNodes, tracker) {
+    if (tracker.count >= maxNodes || depth > maxDepth || node == null) return;
+    tracker.count += 1;
+    fn(node, depth);
+    if (Array.isArray(node)) {
+      for (const item of node) {
+        if (tracker.count >= maxNodes) break;
+        walkLimited(item, fn, depth + 1, maxDepth, maxNodes, tracker);
+      }
+      return;
+    }
+    if (typeof node === "object") {
+      for (const value of Object.values(node)) {
+        if (tracker.count >= maxNodes) break;
+        walkLimited(value, fn, depth + 1, maxDepth, maxNodes, tracker);
+      }
+    }
+  }
+
+  function ingestFagFile(subjectId, role, path, data, out) {
+    const ctx = { subjectId, role };
+    if (role === "emner") {
+      const emner = Array.isArray(data) ? data : pickArrayFromKnownKeys(data || {}, ["emner", "items", "topics"]);
+      emner.forEach((emne) => buildFromEmne({ ...(emne || {}), subject_id: emne?.subject_id || subjectId || null }, out));
+      return;
+    }
+
+    const tracker = { count: 0 };
+    walkLimited(data, (node) => {
+      if (!node) return;
+      if (role === "pensum") {
+        if (typeof node === "string") {
+          addConcept(out.concepts, { subject_id: subjectId }, node, "pensum_text", 0.9);
+          return;
+        }
+        if (Array.isArray(node)) return;
+        ingestCompactObjectTerms(node, out, { ...ctx, weight: 0.95 });
+        out.subjectProfiles.push({
+          subject_id: subjectId || null,
+          source_file: `data/fag/${path}`,
+          title: node.title || node.name || node.tema || null,
+          concepts: pickArrayFromKnownKeys(node, ["concepts", "begreper", "temaer", "topics"]).slice(0, 24),
+          theories: pickArrayFromKnownKeys(node, ["theories", "teori", "theory", "metoder", "methods"]).slice(0, 16),
+          description: node.description || node.forklaring || null
+        });
+        return;
+      }
+      if (role === "fagkart") {
+        if (typeof node !== "object" || Array.isArray(node)) return;
+        ingestCompactObjectTerms(node, out, { ...ctx, weight: 0.92 });
+        out.relations.push({
+          subject_id: subjectId || null,
+          source_file: `data/fag/${path}`,
+          relation_type: node.relation || node.type || node.koblingstype || null,
+          source: node.from || node.source || node.a || node.begrep || null,
+          target: node.to || node.target || node.b || node.kobling || null,
+          area: node.area || node.område || node.axis || node.akse || node.category || node.kategori || null
+        });
+        if (node.category || node.kategori || node.area || node.område || node.omrade) {
+          out.categories.push({ id: node.category || node.kategori || node.area || node.område || node.omrade, label: node.label || node.category || node.kategori || node.area || node.område || node.omrade });
+        }
+        return;
+      }
+      if (role === "methods") {
+        if (typeof node !== "object" || Array.isArray(node)) return;
+        ingestCompactObjectTerms(node, out, { ...ctx, weight: 1.0 });
+        const methods = pickArrayFromKnownKeys(node, ["methods", "metoder", "techniques", "verktøy"]).slice(0, 24);
+        if (methods.length || node.method || node.metode || node.name || node.title) {
+          out.methodProfiles.push({
+            subject_id: subjectId || null,
+            emne_id: node.emne_id || null,
+            methods: methods.length ? methods : asArray(node.method || node.metode || node.name || node.title).slice(0, 12),
+            recommended_methods: pickArrayFromKnownKeys(node, ["recommended_methods", "anbefalte_metoder"]).slice(0, 12),
+            source_file: `data/fag/${path}`
+          });
+        }
+        return;
+      }
+      if (role === "supersetQuizMal") {
+        if (typeof node !== "object" || Array.isArray(node)) return;
+        const patterns = pickArrayFromKnownKeys(node, ["questionPatterns", "quizPatterns", "patterns", "questions"]).slice(0, 20);
+        if (patterns.length) {
+          out.questionPatterns.push({ subject_id: subjectId || null, emne_id: null, key_questions: patterns, quiz_angles: [], question_surface_mode: node.mode || null, generator_use_note: node.note || null });
+        }
+      }
+    }, 0, 5, 2400, tracker);
+  }
+
+  async function loadFagManifestFiles(out) {
+    const manifest = await fetchJson(FAG_MANIFEST_URL);
+    const fileErrors = [];
+    let plannedFagFileCount = 0;
+    let loadedFagFileCount = 0;
+
+    for (const [subjectId, entry] of Object.entries(manifest || {})) {
+      const e = entry && typeof entry === "object" ? entry : {};
+      const files = [
+        { role: "emner", path: e.emner },
+        { role: "pensum", path: e.pensum },
+        { role: "fagkart", path: e.fagkart },
+        { role: "methods", path: e.methods },
+        { role: "supersetQuizMal", path: e.supersetQuizMal }
+      ].filter((item) => item.path);
+
+      for (const file of files) {
+        plannedFagFileCount += 1;
+        try {
+          const data = await fetchJson(`${RAW_BASE}data/fag/${file.path}`);
+          loadedFagFileCount += 1;
+          ingestFagFile(subjectId, file.role, file.path, data, out);
+        } catch (err) {
+          fileErrors.push({ subject_id: subjectId, role: file.role, file: `data/fag/${file.path}`, error: String(err?.message || err) });
+        }
+      }
+    }
+    return { plannedFagFileCount, loadedFagFileCount, fileErrors };
+  }
+
   function scoreMatch(textNorm, term, weight) { if (!textNorm.includes(term)) return 0; return weight * (term.includes(" ") ? 1.35 : 1); }
 
   function compactPlace(place) {
@@ -178,21 +316,32 @@
 
   async function buildIndex() {
     const out = emptyIndex();
-    const loader = await fetchText(EMNER_LOADER_URL);
-    const fagFiles = parseEmnerIndex(loader);
-    state.fag_file_count = fagFiles.length;
+    let fagStats = null;
+    let fagManifestLoaded = false;
     const fileErrors = [];
-    let loadedFagFileCount = 0;
-    for (const rel of fagFiles) {
-      try {
-        const data = await fetchJson(`${RAW_BASE}${rel}`);
-        const emner = Array.isArray(data) ? data : (Array.isArray(data?.emner) ? data.emner : []);
-        emner.forEach((emne) => buildFromEmne(emne || {}, out));
-        loadedFagFileCount += 1;
-      } catch (err) {
-        fileErrors.push({ file: rel, error: String(err?.message || err) });
+    try {
+      fagStats = await loadFagManifestFiles(out);
+      fagManifestLoaded = true;
+    } catch (err) {
+      fileErrors.push({ source: "fag_manifest", file: "data/fag/fag_manifest.json", error: String(err?.message || err) });
+      const loader = await fetchText(EMNER_LOADER_URL);
+      const fagFiles = parseEmnerIndex(loader);
+      let loadedFagFileCount = 0;
+      for (const rel of fagFiles) {
+        try {
+          const data = await fetchJson(`${RAW_BASE}${rel}`);
+          const emner = Array.isArray(data) ? data : (Array.isArray(data?.emner) ? data.emner : []);
+          emner.forEach((emne) => buildFromEmne(emne || {}, out));
+          loadedFagFileCount += 1;
+        } catch (e) {
+          fileErrors.push({ file: rel, error: String(e?.message || e) });
+        }
       }
+      fagStats = { plannedFagFileCount: fagFiles.length, loadedFagFileCount, fileErrors: [] };
     }
+    state.fag_file_count = fagStats.plannedFagFileCount;
+    state.loaded_fag_file_count = fagStats.loadedFagFileCount;
+    state.fag_manifest_loaded = fagManifestLoaded;
 
     try {
       const manifest = await fetchJson(PLACE_MANIFEST_URL);
@@ -212,7 +361,8 @@
     out.subjects = Array.from(new Map(out.subjects.map((s) => [s.id, s])).values());
     out.categories = Array.from(new Map(out.categories.map((c) => [c.id, c])).values());
     out.generated_at = new Date().toISOString();
-    out._meta = { fag_file_count: state.fag_file_count, loaded_fag_file_count: loadedFagFileCount, place_file_count: state.place_file_count, file_errors: fileErrors, file_error_count: fileErrors.length, source_count: 1 + state.fag_file_count + state.place_file_count };
+    const combinedErrors = fileErrors.concat(asArray(fagStats?.fileErrors || []));
+    out._meta = { fag_manifest_loaded: fagManifestLoaded, fag_file_count: state.fag_file_count, loaded_fag_file_count: state.loaded_fag_file_count, place_file_count: state.place_file_count, file_errors: combinedErrors, file_error_count: combinedErrors.length, source_count: 1 + state.fag_file_count + state.place_file_count };
     return out;
   }
 
@@ -247,7 +397,7 @@
 
   function getStatus() {
     applyCachedStats();
-    return { loaded: !!state.loaded, loading: !!state.loading, source_count: state.source_count || 0, fag_file_count: state.fag_file_count || 0, loaded_fag_file_count: state.loaded_fag_file_count || 0, place_file_count: state.place_file_count || 0, file_errors: Array.isArray(state.file_errors) ? state.file_errors : [], file_error_count: state.file_error_count || 0, concept_count: index.concepts.length, category_count: index.categories.length, relation_count: index.relations.length, theory_hook_count: index.theoryHooks.length, method_count: index.methodProfiles.length, last_error: state.last_error, cached: !!state.cached };
+    return { loaded: !!state.loaded, loading: !!state.loading, source_count: state.source_count || 0, fag_manifest_loaded: !!state.fag_manifest_loaded, fag_file_count: state.fag_file_count || 0, loaded_fag_file_count: state.loaded_fag_file_count || 0, place_file_count: state.place_file_count || 0, file_errors: Array.isArray(state.file_errors) ? state.file_errors : [], file_error_count: state.file_error_count || 0, concept_count: index.concepts.length, category_count: index.categories.length, relation_count: index.relations.length, theory_hook_count: index.theoryHooks.length, method_count: index.methodProfiles.length, last_error: state.last_error, cached: !!state.cached };
   }
 
   function getIndex() { return index; }
