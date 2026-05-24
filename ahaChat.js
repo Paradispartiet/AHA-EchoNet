@@ -4535,6 +4535,16 @@
     renderAutoOutputPayload(payload);
   }
 
+
+  function stripFagkoblingerSections(replyText) {
+    const text = String(replyText || "");
+    if (!text.trim()) return "";
+    return text
+      .replace(/(?:^|\n)\s*FAGKOBLINGER\s*\n(?:.+\n?)*(?=(?:\n[A-ZÆØÅ][A-ZÆØÅ0-9 _-]{2,}\n)|$)/gi, "\n")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
+  }
+
   function forceLiteraryFagkoblingerInReply(replyText, sourceText, payload = {}) {
     if (detectAutoAnalysisDomain(sourceText, payload) !== "literary_attachment") return String(replyText || "");
     const text = String(replyText || "");
@@ -4630,8 +4640,9 @@
               ? getInstitutionalMediaHistorySubjectMatches(analysisText)
               : publicAdminEnriched;
           let safeReply = reply;
-          safeReply = forceLiteraryFagkoblingerInReply(safeReply, analysisText, { subjectMatches });
-          safeReply = forceInstitutionalMediaHistoryFagkoblingerInReply(safeReply, analysisText, { subjectMatches });
+          if (domain === "literary_attachment" || domain === "institutional_media_history") {
+            safeReply = stripFagkoblingerSections(safeReply);
+          }
           appendChat("aha", safeReply, { categoryChips: suggestCategoryChips(), subjectMatches });
           try { renderAutoOutputs(text, safeReply, { subjectMatches }); } catch (autoErr) { console.warn("Auto-output feilet", autoErr); }
           // AHA-agentens egne svar skal vises i chatten og logges som
