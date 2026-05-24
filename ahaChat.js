@@ -1355,6 +1355,7 @@
     if (detectPublicAdministrationReformSignal(combined).strong) return "public_admin_nav";
     if (detectLiteraryAttachmentSignal(combined).strong) return "literary_attachment";
     if (detectSahelClimateConflictSignal(combined).strong) return "sahel_climate_conflict";
+    if (detectInstitutionalMediaHistorySignal(combined).strong) return "institutional_media_history";
     return "generic_academic";
   }
 
@@ -1781,10 +1782,28 @@
       ? /(knapphetsskolen|politisk økologi|sahel|mali|ressursknapphet|miljødegradering)/i
       : (sourceHasSahelMali ? /(nav|offentlig forvaltning|velferdsstat|arbeidslinja|bakkebyråkrati|stat–kommune|stat-kommune)/i : null);
     if (domain === "institutional_media_history") {
+      const explicitAhaSer = payload?.ahaSer && typeof payload.ahaSer === "object" ? payload.ahaSer : {};
+      const sourceEntityName = extractMainInstitutionName(text);
+      const isMorgenbladet = /\bmorgenbladet\b/i.test(text);
+      const hasNicheTerms = /\bnisjeavis|kulturavis|kommentaravis\b/i.test(text);
+      const entityName = sourceEntityName && sourceEntityName !== "institusjonen" ? sourceEntityName : (isMorgenbladet ? "Morgenbladet" : "Institusjonen");
+      const hovedspenning = String(explicitAhaSer?.hovedspenning || "").trim();
+      const kortSvar = String(explicitAhaSer?.kortSvar || payloadReflection || "").trim();
+      const tema = String(explicitAhaSer?.tema || "").trim();
+      const mediaConcepts = hasNicheTerms
+        ? ["mediehistorie", "eierskap", "politisk profil", "kulturavis"]
+        : ["mediehistorie", "eierskap", "politisk profil", "redaksjonell linje"];
+      const spenningTitle = hovedspenning || "Autonomi og økonomiske rammer";
+      const spenningSummary = hovedspenning
+        ? `Teksten synliggjør spenningen ${hovedspenning.toLowerCase()}, og hvordan denne former institusjonens utvikling over tid.`
+        : `Teksten synliggjør en varig spenning mellom redaksjonell autonomi og økonomiske rammer i ${entityName}.`;
+      const rolleSummary = tema
+        ? `${entityName} forstås gjennom ${tema.toLowerCase()}, med vekt på offentlig rolle og faglig profil over tid.`
+        : (kortSvar || `${entityName} framstår som en medieinstitusjon der offentlig rolle, faglig profil og historisk utvikling må leses samlet.`);
       return [
-        { title: "Morgenbladets institusjonelle omforming", summary: pick("hovedinnsikt", "Morgenbladet overlever ved institusjonell omforming fra konservativ dagsavis til kultur- og kommentaravis."), concepts: ["mediehistorie", "eierskap", "politisk profil", "kulturavis"], candidate_type: "synthetic" },
-        { title: "Redaksjonell uavhengighet og økonomisk avhengighet", summary: pick("spenning", "Avisens historie viser en varig spenning mellom redaksjonell profil, økonomiske rammer, statsstøtte og eierskap."), concepts: ["redaksjonell uavhengighet", "økonomisk avhengighet", "eierskap", "statsstøtte"], candidate_type: "synthetic" },
-        { title: "Akademisk nisje og offentlig rolle", summary: "Morgenbladet skiller seg ut gjennom lange, faglig funderte artikler og en tydelig posisjon i akademisk og kulturell offentlighet.", concepts: ["nisjeavis", "akademisk offentlighet", "kulturjournalistikk", "kvalitetsjournalistikk"], candidate_type: "synthetic" }
+        { title: isMorgenbladet ? "Morgenbladets institusjonelle omforming" : `${entityName}s institusjonelle omforming`, summary: pick("hovedinnsikt", String(explicitAhaSer?.viktigsteInnsikt || `${entityName} overlever gjennom institusjonell omforming i samspill mellom redaksjonell profil, eierskap og økonomi.`).trim()), concepts: mediaConcepts, candidate_type: "synthetic" },
+        { title: spenningTitle, summary: spenningSummary, concepts: ["redaksjonell uavhengighet", "økonomisk avhengighet", "eierskap", "statsstøtte"], candidate_type: "synthetic" },
+        { title: "Offentlig rolle og faglig profil", summary: rolleSummary, concepts: hasNicheTerms ? ["nisjeavis", "akademisk offentlighet", "kulturjournalistikk", "kvalitetsjournalistikk"] : ["offentlighet", "faglig profil", "medierolle", "institusjonell utvikling"], candidate_type: "synthetic" }
       ];
     }
 
