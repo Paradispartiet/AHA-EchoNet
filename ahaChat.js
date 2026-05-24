@@ -2506,9 +2506,15 @@
     const visibleThemes30d = aggregateVisibleConceptCounts(recurringThemes?.["30d"]?.top_concepts || [], "key", "count");
     const themes14d = filterGenericConceptItems(visibleThemes14d, (item) => item?.key).slice(0, 3);
     const themes30d = filterGenericConceptItems(visibleThemes30d, (item) => item?.key).slice(0, 3);
-    const topTheoryPeople = aggregateVisibleConceptCounts(collectTheoryPeople(safeChamber, recurringThemes?.["30d"]?.top_theories, 8), "key", "count").slice(0, 4);
+    const latestAcademicContext = readLatestAcademicContext();
+    const latestContextSource = String(latestAcademicContext?.sourceText || "").toLowerCase();
+    const institutionalMediaSource = isInstitutionalMediaHistorySource(latestContextSource, latestAcademicContext?.payload || {});
+    const theoryAllowedForInstitutionalMedia = !institutionalMediaSource || sourceMentionsTheoryForInstitutionalHistory(latestContextSource);
+    const visibleTheoryLinks = theoryAllowedForInstitutionalMedia ? theoryLinks : [];
+    const topTheoryPeople = theoryAllowedForInstitutionalMedia
+      ? aggregateVisibleConceptCounts(collectTheoryPeople(safeChamber, recurringThemes?.["30d"]?.top_theories, 8), "key", "count").slice(0, 4)
+      : [];
     const profileTensions = profile?.tensions || {};
-    const latestContextSource = String(readLatestAcademicContext()?.sourceText || "").toLowerCase();
     const sourceHasGreenTransition = /(fossil|fornybar|omstilling|grønn|gronn|klima|bærekraft|baerekraft)/i.test(latestContextSource);
     const sourceHasCenterPeriphery = /(sentralmakt|lokalsamfunn|kommune|distrikt|sentrum|periferi)/i.test(latestContextSource);
     const shouldSuppressTransitionPairs = latestContextSource && !sourceHasGreenTransition;
@@ -2554,6 +2560,7 @@
     const derivedPublicAdminTensions = derivePublicAdministrationTensions(conceptEdgeContext);
     const mergedTensions = [...derivedPublicAdminTensions, ...visibleTensions]
       .map((item) => ({ ...item, title: canonicalizeConceptPairTitle(item?.title || item?.key || "") }))
+      .filter((item) => !(institutionalMediaSource && shouldSuppressInstitutionalPair(item?.title || "", latestContextSource)))
       .filter((item, index, arr) => arr.findIndex((other) => String(other?.title || "").toLowerCase() === String(item?.title || "").toLowerCase()) === index)
       .slice(0, 5);
 
@@ -2563,6 +2570,7 @@
     const edgeWarning = lowData && topEdges.length ? `<p class="knowledge-sub">Sterk kobling, men lite datagrunnlag. Forekomst: ${totalInsights} tekster/innsikter. Sikkerhet: lav/middels.</p>` : "";
     return `<section class="knowledge-map-block">
       <h3>Kunnskapskart for hele chamberet</h3>
+      <p class="knowledge-sub"><strong>Historiske chamber-mønstre</strong> (kan avvike fra siste tekst).</p>
       ${lowDataBanner}
       <div class="knowledge-map-grid">
         <article class="knowledge-card">
@@ -2582,7 +2590,7 @@
         </article>
         <article class="knowledge-card">
           <h4>Teorikoblinger</h4>
-          ${theoryLinks.length ? `<ul>${theoryLinks.map((link) => `<li><strong>${escHtml(link.name)}</strong> · ${escHtml(link.score.toFixed(2))}${link.relation ? ` · ${escHtml(link.relation)}` : ""}</li>`).join("")}</ul>` : "<p class='knowledge-sub'>Ingen teoretiske koblinger å score ennå.</p>"}
+          ${visibleTheoryLinks.length ? `<ul>${visibleTheoryLinks.map((link) => `<li><strong>${escHtml(link.name)}</strong> · ${escHtml(link.score.toFixed(2))}${link.relation ? ` · ${escHtml(link.relation)}` : ""}</li>`).join("")}</ul>` : "<p class='knowledge-sub'>Ingen teoretiske koblinger å score ennå.</p>"}
         </article>
         <article class="knowledge-card">
           <h4>Spenninger</h4>
@@ -2611,6 +2619,29 @@
     return Array.from(totals.values()).sort((a, b) => Number(b?.[countField] || 0) - Number(a?.[countField] || 0));
   }
 
+  function isInstitutionalMediaHistorySource(text, payload = null) {
+    const sourceText = String(text || "");
+    const inferredPayload = payload && typeof payload === "object" ? payload : (readLatestAcademicContext()?.payload || {});
+    return detectAutoAnalysisDomain(sourceText, inferredPayload) === "institutional_media_history";
+  }
+
+  function sourceMentionsTheoryForInstitutionalHistory(sourceText) {
+    const txt = String(sourceText || "");
+    return /\bsennett\b|offentlighetsteori|public sphere/i.test(txt);
+  }
+
+  function shouldSuppressInstitutionalPair(title, sourceText) {
+    const normalizedTitle = normalizeConceptKey(String(title || ""));
+    const src = String(sourceText || "").toLowerCase();
+    const genericPairs = [
+      ["politikk", "vitenskap"],
+      ["policy-momentum", "forskningsgrunnlag"],
+      ["fossil økonomi", "fornybar økonomi"],
+      ["sentralmakt", "lokalsamfunn"]
+    ];
+    return genericPairs.some(([left, right]) => normalizedTitle.includes(normalizeConceptKey(left)) && normalizedTitle.includes(normalizeConceptKey(right)) && !(src.includes(left) && src.includes(right)));
+  }
+
   function renderMetaProfile(profile, chamber) {
     if (!profile || typeof profile !== "object") return "";
 
@@ -2629,7 +2660,9 @@
     const fading = filterGenericConceptItems(aggregateVisibleConceptCounts(recent.fading || [], "key", "prev_count"), (item) => item?.key).slice(0, 5).map((c) =>
       `${escHtml(displayConceptLabel(c.key))} <span class="meta-count">tidligere ×${c.prev_count}</span>`
     );
-    const latestContextSource = String(readLatestAcademicContext()?.sourceText || "").toLowerCase();
+    const latestAcademicContext = readLatestAcademicContext();
+    const latestContextSource = String(latestAcademicContext?.sourceText || "").toLowerCase();
+    const institutionalMediaSource = isInstitutionalMediaHistorySource(latestContextSource, latestAcademicContext?.payload || {});
     const sourceHasGreenTransition = /(fossil|fornybar|omstilling|grønn|gronn|klima|bærekraft|baerekraft)/i.test(latestContextSource);
     const sourceHasCenterPeriphery = /(sentralmakt|lokalsamfunn|kommune|distrikt|sentrum|periferi)/i.test(latestContextSource);
     const shouldSuppressTransitionPairs = latestContextSource && !sourceHasGreenTransition;
@@ -2655,6 +2688,7 @@
         .sort((a, b) => Number(b.strength) - Number(a.strength))
         .slice(0, 5)
         .filter(({ pair }) => !isSuppressedHistoricalPair(pair.sourceLabel, pair.targetLabel))
+        .filter(({ pair }) => !(institutionalMediaSource && shouldSuppressInstitutionalPair(`${pair.sourceLabel} ↔ ${pair.targetLabel}`, latestContextSource)))
         .map(({ pair, strength }) => `${escHtml(pair.sourceLabel)} ↔ ${escHtml(pair.targetLabel)} <span class="meta-count">styrke ${escHtml(String(strength))}</span>`);
     })();
     const conceptTensions = (tensions.concept_tensions || []).slice(0, 5).map((t) => {
@@ -4537,22 +4571,29 @@
 
   function forceLiteraryFagkoblingerInReply(replyText, sourceText, payload = {}) {
     if (detectAutoAnalysisDomain(sourceText, payload) !== "literary_attachment") return String(replyText || "");
-    const text = String(replyText || "");
     const section = ["FAGKOBLINGER", ...getLiterarySubjectMatches().map((item) => item?.title || item?.subject_label || "").filter(Boolean)].join("\n");
-    if (/FAGKOBLINGER/i.test(text)) {
-      return text.replace(/FAGKOBLINGER[\s\S]*?(?=\n[A-ZÆØÅ][A-ZÆØÅ0-9 _-]{2,}\n|$)/i, section);
-    }
-    return `${text}\n\n${section}`.trim();
+    return replaceAllFagkoblingerSections(replyText, section);
   }
 
   function forceInstitutionalMediaHistoryFagkoblingerInReply(replyText, sourceText, payload = {}) {
     if (detectAutoAnalysisDomain(sourceText, payload) !== "institutional_media_history") return String(replyText || "");
-    const text = String(replyText || "");
     const section = ["FAGKOBLINGER", ...getInstitutionalMediaHistorySubjectMatches(sourceText, payload).map((item) => item?.title || item?.subject_label || "").filter(Boolean)].join("\n");
-    if (/FAGKOBLINGER/i.test(text)) {
-      return text.replace(/FAGKOBLINGER[\s\S]*?(?=\n[A-ZÆØÅ][A-ZÆØÅ0-9 _-]{2,}\n|$)/i, section);
-    }
-    return `${text}\n\n${section}`.trim();
+    return replaceAllFagkoblingerSections(replyText, section);
+  }
+
+  function replaceAllFagkoblingerSections(replyText, section) {
+    const text = String(replyText || "");
+    const normalizedSection = String(section || "").trim();
+    if (!normalizedSection) return text;
+    const sectionRegex = /(?:^|\n)FAGKOBLINGER[\s\S]*?(?=\n[A-ZÆØÅ][A-ZÆØÅ0-9 _-]{2,}\n|$)/gi;
+    const matches = text.match(sectionRegex) || [];
+    const normalizedMatches = matches.map((item) => String(item || "").trim()).filter(Boolean);
+    if (normalizedMatches.length === 1 && normalizedMatches[0] === normalizedSection) return text;
+    const stripped = text
+      .replace(sectionRegex, "\n")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
+    return `${stripped}\n\n${normalizedSection}`.trim();
   }
 
   function focusAutoCard(action) {
