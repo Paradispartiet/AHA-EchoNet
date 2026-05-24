@@ -1270,19 +1270,22 @@
   }
   function detectInstitutionalMediaHistorySignal(text) {
     const src = String(text || "").toLowerCase();
-    const institutionTerms = /\b(avis|avisa|avisen|morgenbladet|redaksjon|redaksjonell|mediehus|presse|journalistikk|tidsskrift|institusjon|organisasjon|eierskap|redaktør|redaktor)\b/i.test(src);
+    const isNewspaperText = /\b(avis|avisa|avisen|dagsavis|ukeavis|vekeavis|nisjeavis|kulturavis|kommentaravis|redaktør|redaktor|redaksjon)\b/i.test(src);
+    const isMediaText = /\b(presse|journalistikk|mediehus|medium|medier|kringkaster|allmennkringkaster|redaksjonell)\b/i.test(src);
+    const isInstitutionText = /\b(institusjon|organisasjon|stiftelse|universitet|museum|bibliotek|forlag|konsern|selskap)\b/i.test(src);
+    const institutionTerms = isNewspaperText || isMediaText || isInstitutionText || /\b(morgenbladet|tidsskrift|eierskap)\b/i.test(src);
     const historicalTerms = /\b(ble grunnlagt|grunnlagt|opprettet|etablert|historie|historisk|gjennom|fra .* til|tidligere|senere|på 18\d{2}|på 19\d{2}|på 20\d{2}|i 18\d{2}|i 19\d{2}|i 20\d{2}|over tid)\b/i.test(src);
     const profileTerms = /\b(konservativ|liberal|uavhengig|politisk profil|nisjeavis|kulturavis|kommentaravis|offentlighet)\b/i.test(src);
     const personDiaryNoise = /\b(jeg|meg|min|mitt|mamma|pappa|kjæreste)\b/i.test(src);
     const score = (institutionTerms ? 2 : 0) + (historicalTerms ? 2 : 0) + (profileTerms ? 1 : 0) - (personDiaryNoise ? 1 : 0);
-    return { strong: score >= 3, institutionTerms, historicalTerms, profileTerms };
+    return { strong: score >= 3, institutionTerms, historicalTerms, profileTerms, isMediaText, isNewspaperText, isInstitutionText };
   }
   function extractMainInstitutionName(text) {
     const source = String(text || "");
     const sentences = toSentences(source).slice(0, 2);
     const head = sentences.join(" ");
     const scan = `${head} ${source}`;
-    const tokens = scan.match(/\b[A-ZÆØÅ][A-Za-zÆØÅæøå-]{1,}\b/g) || [];
+    const tokens = scan.match(/\b[A-ZÆØÅ][A-Za-zÆØÅæøå-]{1,}(?:\s+[A-ZÆØÅ][A-Za-zÆØÅæøå-]{1,}){0,3}\b/g) || [];
     const blocked = new Set(["Det", "Den", "Dette", "I", "På", "For", "Og", "En", "Et", "Som", "Av", "Til"]);
     const counts = new Map();
     tokens.forEach((token) => {
@@ -1291,11 +1294,11 @@
       counts.set(clean, (counts.get(clean) || 0) + 1);
     });
     const priorityPatterns = [
-      /\b([A-ZÆØÅ][A-Za-zÆØÅæøå-]+)\s+er\s+en?\b/g,
-      /\b([A-ZÆØÅ][A-Za-zÆØÅæøå-]+)\s+ble\s+grunnlagt\b/g,
-      /\b([A-ZÆØÅ][A-Za-zÆØÅæøå-]+)\s+vart\s+grunnlagd\b/g,
-      /\b([A-ZÆØÅ][A-Za-zÆØÅæøå-]+)\s+grunnlagt\b/g,
-      /\b([A-ZÆØÅ][A-Za-zÆØÅæøå-]+)\s+(avis|institusjon|organisasjon)\b/g
+      /\b([A-ZÆØÅ][A-Za-zÆØÅæøå-]+(?:\s+[A-ZÆØÅ][A-Za-zÆØÅæøå-]+){0,3})\s+er\s+en?\b/g,
+      /\b([A-ZÆØÅ][A-Za-zÆØÅæøå-]+(?:\s+[A-ZÆØÅ][A-Za-zÆØÅæøå-]+){0,3})\s+ble\s+grunnlagt\b/g,
+      /\b([A-ZÆØÅ][A-Za-zÆØÅæøå-]+(?:\s+[A-ZÆØÅ][A-Za-zÆØÅæøå-]+){0,3})\s+vart\s+grunnlagd\b/g,
+      /\b([A-ZÆØÅ][A-Za-zÆØÅæøå-]+(?:\s+[A-ZÆØÅ][A-Za-zÆØÅæøå-]+){0,3})\s+grunnlagt\b/g,
+      /\b([A-ZÆØÅ][A-Za-zÆØÅæøå-]+(?:\s+[A-ZÆØÅ][A-Za-zÆØÅæøå-]+){0,3})\s+(avis|institusjon|organisasjon|universitet|museum|bibliotek|stiftelse)\b/g
     ];
     const priority = new Map();
     priorityPatterns.forEach((pattern) => {
@@ -3731,6 +3734,8 @@
       if (institutionalHistorySignal?.strong) {
         const entityName = extractMainInstitutionName(analysisText);
         const hasMorgenbladet = /\bmorgenbladet\b/i.test(analysisText);
+        const usesMediaTemplate = Boolean(institutionalHistorySignal?.isNewspaperText || institutionalHistorySignal?.isMediaText);
+        const hasNicheTerms = /\b(nisjeavis|kulturavis)\b/i.test(analysisText);
         const themeText = hasMorgenbladet
           ? "Morgenbladets historiske utvikling, eierskap, politiske profil og rolle som norsk nisjeavis."
           : `${entityName}s historiske utvikling, eierskap, profil og rolle i offentligheten.`;
@@ -3739,7 +3744,7 @@
           : `${entityName}s historie viser hvordan en institusjon kan endre rolle gjennom skiftende eierskap, profil, økonomiske rammer og offentlig funksjon over tid.`;
         const objectText = hasMorgenbladet
           ? "Morgenbladet som medieinstitusjon."
-          : `${entityName} som medie-/samfunnsinstitusjon.`;
+          : `${entityName} som ${usesMediaTemplate ? "medie-" : ""}samfunnsinstitusjon.`;
         const developmentText = hasMorgenbladet
           ? "Fra eldre politisk dagsavis til moderne nisjeavis med kultur- og kommentarprofil."
           : "Fra tidligere profil og organisering til nyere rolle, eierskap og offentlig posisjon.";
@@ -3747,26 +3752,26 @@
         sortItems = [
           { label: "Kort hovedinnsikt", text: insightText },
           { label: "Tema", text: themeText },
-          { label: "Hovedspenning", text: "Redaksjonell uavhengighet ↔ økonomisk avhengighet." },
+          { label: "Hovedspenning", text: usesMediaTemplate ? "Redaksjonell uavhengighet ↔ økonomisk avhengighet." : "Institusjonell kontinuitet ↔ institusjonell omforming." },
           { label: "Hovedobjekt", text: objectText },
           { label: "Historisk utvikling", text: developmentText },
-          { label: "Eierskap/profil", text: "Skiftende eierskap og redaksjonelle prioriteringer former politisk og kulturell profil." },
-          { label: "Konfliktlinjer", text: "Politisk profil ↔ uavhengig kulturavis; akademisk kvalitet ↔ smal offentlighet; kontinuitet ↔ institusjonell omforming." },
-          { label: "Nåværende posisjon", text: "Nisjeavis med tydelig offentlig rolle i kultur- og idédebatt." }
+          { label: "Eierskap/profil", text: usesMediaTemplate ? "Skiftende eierskap og redaksjonelle prioriteringer former politisk og kulturell profil." : "Skiftende styringsformer og eierskap påvirker institusjonens profil, mandat og handlingsrom." },
+          { label: "Konfliktlinjer", text: usesMediaTemplate ? `Politisk profil ↔ ${hasNicheTerms ? "uavhengig kulturavis" : "uavhengig offentlig rolle"}; akademisk kvalitet ↔ smal offentlighet; kontinuitet ↔ institusjonell omforming.` : "Formål/samfunnsrolle ↔ økonomiske/organisatoriske rammer; styring/eierskap ↔ faglig/offentlig autonomi; kontinuitet ↔ institusjonell omforming." },
+          { label: "Nåværende posisjon", text: usesMediaTemplate ? (hasNicheTerms ? "Nisjeavis med tydelig offentlig rolle i kultur- og idédebatt." : "Medieaktør med tydelig offentlig rolle i samfunns- og idédebatt.") : "Institusjon med definert samfunnsrolle under løpende organisatorisk og økonomisk tilpasning." }
         ];
         day = "Ikke dagbokmateriale – ingen dagsoppsummering laget.";
         thoughts = {
           hovedspor: "Teksten viser institusjonell overlevelse gjennom historisk omforming.",
-          lose_tanker: "Skille mellom perioder, eierskapsskifter og redaksjonelle vendepunkt.",
-          neste_steg: "Lag en tidslinje med nøkkelvendepunkt og drøft hvordan økonomi og redaksjonell linje påvirker offentlig rolle."
+          lose_tanker: usesMediaTemplate ? "Skille mellom perioder, eierskapsskifter og redaksjonelle vendepunkt." : "Skille mellom perioder, styringsendringer, eierskap og mandatutvikling.",
+          neste_steg: usesMediaTemplate ? "Lag en tidslinje med nøkkelvendepunkt og drøft hvordan økonomi og redaksjonell linje påvirker offentlig rolle." : "Lag en tidslinje med nøkkelvendepunkt og drøft hvordan styring, økonomi og mandat påvirker samfunnsrollen."
         };
         list = [
           `Identifiser hovedobjektet: ${entityName}.`,
           "Beskriv historisk utvikling i tydelige perioder.",
-          "Koble eierskapsskifter til endret politisk/redaksjonell profil.",
-          "Analyser konfliktlinjene mellom uavhengighet, økonomi og offentlig rolle.",
-          "Vurder nåværende posisjon som nisje- og kulturavis.",
-          "Formuler læringsspørsmål om pressehistorie og offentlighet."
+          usesMediaTemplate ? "Koble eierskapsskifter til endret politisk/redaksjonell profil." : "Koble styrings- og eierskapsendringer til institusjonell profil og mandat.",
+          "Analyser konfliktlinjene mellom autonomi, økonomi og offentlig rolle.",
+          usesMediaTemplate ? (hasNicheTerms ? "Vurder nåværende posisjon som nisje- og kulturavis." : "Vurder nåværende posisjon i medieoffentligheten.") : "Vurder nåværende institusjonell posisjon i offentligheten.",
+          usesMediaTemplate ? "Formuler læringsspørsmål om mediehistorie, presse og offentlighet." : "Formuler læringsspørsmål om institusjonell utvikling, styring og samfunnsrolle."
         ];
         path = [
           "Definer hovedobjekt og tidsavgrensning.",
