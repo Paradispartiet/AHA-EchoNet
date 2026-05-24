@@ -2,7 +2,7 @@
 (function (global) {
   "use strict";
 
-  const VERSION = "aha_calibration_index_v3";
+  const VERSION = "aha_calibration_index_v4";
   const CACHE_KEY = VERSION;
   const CACHE_META_KEY = `${VERSION}:meta`;
   const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
@@ -90,8 +90,12 @@
       const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || "null");
       if (!cached) return null;
       if (cached?._meta?.fag_manifest_loaded !== true) return null;
-      if (Number(cached?._meta?.loaded_core_file_count || 0) < Number(cached?._meta?.planned_core_file_count || 0)) return null;
-      if (Number(cached?._meta?.core_file_error_count || 0) > 0) return null;
+      const plannedCore = Number(cached?._meta?.planned_core_file_count || 0);
+      const loadedCore = Number(cached?._meta?.loaded_core_file_count || 0);
+      const coreErrors = Number(cached?._meta?.core_file_error_count || 0);
+      if (plannedCore <= 0) return null;
+      if (loadedCore < plannedCore) return null;
+      if (coreErrors > 0) return null;
       if (!ignoreTtl) {
         const meta = JSON.parse(localStorage.getItem(CACHE_META_KEY) || "null");
         if (!meta?.saved_at || Date.now() - meta.saved_at >= CACHE_TTL_MS) return null;
@@ -628,7 +632,11 @@
         const canPersistCache = Number(index?._meta?.planned_core_file_count || 0) > 0
           && Number(index?._meta?.loaded_core_file_count || 0) === Number(index?._meta?.planned_core_file_count || 0)
           && Number(index?._meta?.core_file_error_count || 0) === 0;
-        if (canPersistCache) {
+        if (!canPersistCache) {
+          localStorage.removeItem(CACHE_KEY);
+          localStorage.removeItem(CACHE_META_KEY);
+          state.last_error = "cache_skipped_partial_index";
+        } else {
           try {
             const cacheIndex = makeCacheSafeIndex(index);
             localStorage.setItem(CACHE_KEY, JSON.stringify(cacheIndex));
