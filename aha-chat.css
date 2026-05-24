@@ -35,21 +35,24 @@ body {
 .module-card-toggle { width: 100%; display:flex; align-items:center; justify-content:space-between; border-radius: 10px; background: rgba(15,24,49,0.65); }
 .module-card-toggle-hint { color: var(--aha-accent); font-size: 11px; }
 .module-card-body { margin-top: 10px; }
+.module-card-preview { margin: 8px 0 0; font-size: 12px; color: var(--aha-muted); }
+.module-card:not(.is-expanded) .module-card-body { display: none; }
 .module-card.is-expanded { border-color: rgba(255,211,71,0.65); box-shadow: 0 0 0 1px rgba(255,211,71,0.26) inset; }
 .module-card.is-expanded .module-card-toggle-hint::before { content: "Lukk"; }
 .module-card.is-expanded .module-card-toggle-hint { font-size: 0; }
 .module-card.is-expanded .module-card-toggle-hint::before { font-size: 11px; }
-#aha-auto-output.module-card { min-height: 120px; }
+.aha-ser-card #aha-auto-output { min-height: 120px; max-height: 38dvh; overflow: auto; }
 
 label { display:block; font-size: 12px; color: var(--aha-muted); margin-bottom: 6px; }
 textarea, select { width:100%; border-radius: 10px; border:1px solid var(--aha-border); background: #080c1f; color: var(--aha-text); padding: 10px; }
 
-.action-section { background: rgba(15,24,49,0.72); border:1px solid var(--aha-border); border-radius: 12px; padding: 8px 10px; margin-bottom: 10px; position: sticky; top: 10px; }
+.action-section { background: rgba(15,24,49,0.72); border:1px solid var(--aha-border); border-radius: 12px; padding: 8px 10px; margin-bottom: 10px; }
 .action-section h2 { margin: 0 0 8px; font-size: 14px; }
 .action-groups { display:flex; gap:10px; overflow:auto; padding-bottom: 2px; }
 .action-group-label { display: block; font-size: 11px; color: var(--aha-muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: .04em; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .action-chip { border-radius: 999px; padding: 6px 10px; font-size: 12px; background: #141c3a; }
+.action-chips-row .action-chip { padding: 5px 10px; font-size: 11px; }
 
 .empty-state { background: linear-gradient(145deg, rgba(16,26,54,0.86), rgba(12,19,41,0.8)); border:1px dashed rgba(255,211,71,0.34); border-radius: 16px; padding: 20px 18px; margin: 10px 0 12px; }
 .empty-state h2 { margin:0 0 6px; font-size: 20px; }
@@ -173,6 +176,7 @@ pre#out { max-height: 22vh; overflow:auto; white-space: pre-wrap; }
   .chat-layout { grid-template-columns: minmax(0, 1fr); }
   .insight-rail { position: static; max-height: none; }
   .chat-log { min-height: 48dvh; max-height: 54dvh; }
+  #msg { min-height: 34dvh; max-height: 52dvh; }
 }
 
 @media (max-width: 720px) {
@@ -186,6 +190,8 @@ pre#out { max-height: 22vh; overflow:auto; white-space: pre-wrap; }
   .chat-title-wrap h1 { font-size: 21px; }
   .composer-actions { justify-content: stretch; }
   .composer-actions button { flex: 1 1 0; }
+  #msg { min-height: 36dvh; max-height: 54dvh; }
+  .module-card-body { margin-top: 8px; }
 }
 
 .subject-links { margin-top: 6px; max-width: 85%; }
@@ -258,11 +264,3 @@ pre#out { max-height: 22vh; overflow:auto; white-space: pre-wrap; }
 .saved-afterwork-actions { display: flex; justify-content: flex-end; }
 .saved-afterwork-actions button { font-size: 11px; padding: 4px 8px; }
 .saved-afterwork-subjects ul { padding-left: 14px; }
-
-@media (max-width: 1024px) {
-  #msg { min-height: 34dvh; max-height: 52dvh; }
-}
-@media (max-width: 720px) {
-  #msg { min-height: 36dvh; max-height: 54dvh; }
-  .module-card-body { margin-top: 8px; }
-}

@@ -54,51 +54,36 @@
             <div id="chat-status-note" class="chat-status-note" aria-live="polite"></div>
           </div>
         </section>
-        <section class="module-card action-section" aria-label="Output-filtre" data-module-card>
-          <button type="button" class="module-card-toggle" data-module-toggle aria-expanded="false">
-            <span>Vis analyser</span><span class="module-card-toggle-hint">Åpne</span>
-          </button>
-          <div class="module-card-body">
-          <h2>Vis analyser</h2>
-          <p class="action-section-hint">AHA analyserer automatisk etter hver melding. Bruk disse for å fokusere visningen.</p>
-          <div class="action-groups">
-            <div class="action-group">
-              <span class="action-group-label">Samtale</span>
-              <div class="chips">
-                <button type="button" class="action-chip" data-chat-action="reflekter">Reflekter</button>
-                <button type="button" class="action-chip" data-chat-action="sorter">Sorter</button>
-                <button type="button" class="action-chip" data-chat-action="oppsummer">Oppsummer dagen min</button>
-                <button type="button" class="action-chip" data-chat-action="sorter_tanker">Sorter tankene mine</button>
-              </div>
-            </div>
-            <div class="action-group">
-              <span class="action-group-label">Struktur</span>
-              <div class="chips">
-                <button type="button" class="action-chip" data-chat-action="lag_liste">Lag liste</button>
-                <button type="button" class="action-chip" data-chat-action="lag_innsikt">Lag innsikt</button>
-                <button type="button" class="action-chip" data-chat-action="lag_laringssti">Lag læringssti</button>
-              </div>
-            </div>
-            <div class="action-group">
-              <span class="action-group-label">Koblinger</span>
-              <div class="chips">
-                <button type="button" class="action-chip" data-chat-action="koble_hg">Koble til History Go</button>
-                <button type="button" class="action-chip" data-chat-action="import_hg">Importer fra History Go</button>
-              </div>
-            </div>
+        <section class="action-section" aria-label="Snarveier">
+          <h2>Hurtighandlinger</h2>
+          <p class="action-section-hint">Kompakte snarveier for å styre samtalen og etterarbeidet.</p>
+          <div class="chips action-chips-row">
+            <button type="button" class="action-chip" data-chat-action="reflekter">Reflekter</button>
+            <button type="button" class="action-chip" data-chat-action="sorter">Sorter</button>
+            <button type="button" class="action-chip" data-chat-action="oppsummer">Oppsummer</button>
+            <button type="button" class="action-chip" data-chat-action="lag_innsikt">Lag innsikt</button>
+            <button type="button" class="action-chip" data-chat-action="lag_liste">Lag liste</button>
+            <button type="button" class="action-chip" data-chat-action="lag_laringssti">Lag læringssti</button>
+            <button type="button" class="action-chip" data-chat-action="koble_hg">Koble til History Go</button>
+            <button type="button" class="action-chip" data-chat-action="import_hg">Importer fra History Go</button>
+            <button id="btn-saved-afterwork" type="button" class="action-chip">AHA etterarbeid</button>
           </div>
-        </div>
         </section>
 
-        <section id="aha-auto-output" class="aha-auto-output module-card" aria-live="polite" data-module-card></section>
+        <section class="module-card aha-ser-card is-expanded">
+          <h2 class="module-card-title">AHA SER</h2>
+          <p class="module-card-preview">Innholdstype, tema, hovedspenning, innsikt, fagkoblinger og neste steg.</p>
+          <div id="aha-auto-output" class="aha-auto-output module-card-body" aria-live="polite"></div>
+        </section>
 
         <section id="empty-state" class="empty-state module-card" aria-live="polite" data-module-card>
           <h2>Hva vil du forstå i dag?</h2>
           <p>AHA hjelper deg å samle tanker, finne mønstre og gjøre samtaler til innsikt.</p>
         </section>
 
-        <div class="chat-log-wrap module-card" data-module-card>
-          <button type="button" class="module-card-toggle" data-module-toggle aria-expanded="false"><span>Samtale</span><span class="module-card-toggle-hint">Åpne</span></button>
+        <div class="chat-log-wrap module-card is-expanded">
+          <h2 class="module-card-title">Samtale / kildetekst</h2>
+          <p class="module-card-preview">Siste svar vises alltid her for kontinuitet i dialogen.</p>
           <div class="module-card-body">
           <label for="chat-log">Samtale</label>
           <div class="chat-log-shell">
@@ -110,7 +95,8 @@
       </section>
 
       <aside class="insight-rail module-card" data-module-card>
-        <button type="button" class="module-card-toggle" data-module-toggle aria-expanded="false"><span>Innsiktspanel</span><span class="module-card-toggle-hint">Åpne</span></button>
+        <button type="button" class="module-card-toggle" data-module-toggle aria-expanded="false"><span>Innsikter</span><span class="module-card-toggle-hint">Åpne</span></button>
+        <p class="module-card-preview">Kompakt innsiktsflate for begreper, koblinger og videreføring.</p>
         <div class="module-card-body">
         <section class="insight-placeholder-card">
           <h2>Innsikter fra samtalen</h2>
@@ -135,12 +121,17 @@
             <button id="btn-export">Eksport JSON</button>
             <button id="btn-import-hg">Importer History Go</button>
             <button id="btn-reset">Nullstill</button>
-            <button id="btn-saved-afterwork">Lagrede etterarbeid</button>
           </div>
         </details>
+        </div>
+      </aside>
 
-        <div id="panel"></div>
-        <pre id="out"></pre>
+      <aside class="module-card" data-module-card>
+        <button type="button" class="module-card-toggle" data-module-toggle aria-expanded="false"><span>Full analyse</span><span class="module-card-toggle-hint">Åpne</span></button>
+        <p class="module-card-preview">Detaljer, kildetekst og dypanalyse vises her ved behov.</p>
+        <div class="module-card-body">
+          <div id="panel"></div>
+          <pre id="out"></pre>
         </div>
       </aside>
     </main>
