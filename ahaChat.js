@@ -1268,6 +1268,85 @@
     const hasTheory = /\bknapphetsskolen\b|\bressursknapphet\b|\bmiljøsikkerhet\b|\bpolitisk økologi\b|\benvironmental security\b/i.test(src);
     return { strong: (hasSahel && (hasConflict || hasClimate)) || (hasSahel && hasTheory), hasSahel, hasConflict, hasClimate, hasTheory };
   }
+  function detectInstitutionalMediaHistorySignal(text) {
+    const src = String(text || "").toLowerCase();
+    const isNewspaperText = /\b(avis|avisa|avisen|dagsavis|ukeavis|vekeavis|nisjeavis|kulturavis|kommentaravis|redaktør|redaktor|redaksjon)\b/i.test(src);
+    const isMediaText = /\b(presse|journalistikk|mediehus|medium|medier|kringkaster|allmennkringkaster|redaksjonell)\b/i.test(src);
+    const isInstitutionText = /\b(institusjon|organisasjon|stiftelse|universitet|museum|bibliotek|forlag|konsern|selskap)\b/i.test(src);
+    const institutionTerms = isNewspaperText || isMediaText || isInstitutionText || /\b(morgenbladet|tidsskrift|eierskap)\b/i.test(src);
+    const historicalTerms = /\b(ble grunnlagt|grunnlagt|opprettet|etablert|historie|historisk|gjennom|fra .* til|tidligere|senere|på 18\d{2}|på 19\d{2}|på 20\d{2}|i 18\d{2}|i 19\d{2}|i 20\d{2}|over tid)\b/i.test(src);
+    const profileTerms = /\b(konservativ|liberal|uavhengig|politisk profil|nisjeavis|kulturavis|kommentaravis|offentlighet)\b/i.test(src);
+    const personDiaryNoise = /\b(jeg|meg|min|mitt|mamma|pappa|kjæreste)\b/i.test(src);
+    const score = (institutionTerms ? 2 : 0) + (historicalTerms ? 2 : 0) + (profileTerms ? 1 : 0) - (personDiaryNoise ? 1 : 0);
+    return { strong: score >= 3, institutionTerms, historicalTerms, profileTerms, isMediaText, isNewspaperText, isInstitutionText };
+  }
+  function extractMainInstitutionName(text) {
+    const source = String(text || "");
+    const sentences = toSentences(source).slice(0, 2);
+    const head = sentences.join(" ");
+    const scan = `${head} ${source}`;
+    const tokens = scan.match(/\b[A-ZÆØÅ][A-Za-zÆØÅæøå-]{1,}(?:\s+[A-ZÆØÅ][A-Za-zÆØÅæøå-]{1,}){0,3}\b/g) || [];
+    const blocked = new Set(["Det", "Den", "Dette", "I", "På", "For", "Og", "En", "Et", "Som", "Av", "Til"]);
+    const counts = new Map();
+    tokens.forEach((token) => {
+      const clean = String(token || "").trim();
+      if (!clean || blocked.has(clean)) return;
+      counts.set(clean, (counts.get(clean) || 0) + 1);
+    });
+    const priorityPatterns = [
+      /\b([A-ZÆØÅ][A-Za-zÆØÅæøå-]+(?:\s+[A-ZÆØÅ][A-Za-zÆØÅæøå-]+){0,3})\s+er\s+en?\b/g,
+      /\b([A-ZÆØÅ][A-Za-zÆØÅæøå-]+(?:\s+[A-ZÆØÅ][A-Za-zÆØÅæøå-]+){0,3})\s+ble\s+grunnlagt\b/g,
+      /\b([A-ZÆØÅ][A-Za-zÆØÅæøå-]+(?:\s+[A-ZÆØÅ][A-Za-zÆØÅæøå-]+){0,3})\s+vart\s+grunnlagd\b/g,
+      /\b([A-ZÆØÅ][A-Za-zÆØÅæøå-]+(?:\s+[A-ZÆØÅ][A-Za-zÆØÅæøå-]+){0,3})\s+grunnlagt\b/g,
+      /\b([A-ZÆØÅ][A-Za-zÆØÅæøå-]+(?:\s+[A-ZÆØÅ][A-Za-zÆØÅæøå-]+){0,3})\s+(avis|institusjon|organisasjon|universitet|museum|bibliotek|stiftelse)\b/g
+    ];
+    const priority = new Map();
+    priorityPatterns.forEach((pattern) => {
+      let m;
+      while ((m = pattern.exec(head)) !== null) {
+        const key = String(m[1] || "").trim();
+        if (key && !blocked.has(key)) priority.set(key, (priority.get(key) || 0) + 2);
+      }
+    });
+    const candidates = [...new Set([...counts.keys(), ...priority.keys()])];
+    if (!candidates.length) return "institusjonen";
+    const ranked = candidates
+      .map((name) => ({
+        name,
+        score: (counts.get(name) || 0) + (priority.get(name) || 0) + (head.includes(name) ? 1 : 0)
+      }))
+      .sort((a, b) => b.score - a.score);
+    return ranked[0]?.name || "hovedobjektet";
+  }
+  function subjectMatchesFromCalibration(calibrated) {
+    const safe = calibrated && typeof calibrated === "object" ? calibrated : {};
+    const out = [];
+    const push = (title, subject_id, extra = {}) => {
+      const t = String(title || "").trim();
+      if (!t) return;
+      out.push({
+        title: t,
+        subject_label: t,
+        subject_id: String(subject_id || normalizeConceptKey(t) || t.toLowerCase()),
+        id: String(extra.id || subject_id || normalizeConceptKey(t) || t.toLowerCase()),
+        ...extra
+      });
+    };
+    (Array.isArray(safe.matched_emner) ? safe.matched_emner : []).forEach((item) => {
+      const title = item?.title || item?.label || item?.name || item?.emne || item?.emne_id;
+      const subjectId = item?.subject_id || item?.emne_id || item?.id;
+      push(title, subjectId, { id: item?.id || subjectId });
+    });
+    (Array.isArray(safe.matched_categories) ? safe.matched_categories : []).forEach((item) => {
+      const title = item?.title || item?.label || item?.name || item?.category || item?.id;
+      push(title, item?.id || item?.category_id, { id: item?.id || item?.category_id });
+    });
+    (Array.isArray(safe.matched_concepts) ? safe.matched_concepts : []).forEach((item) => {
+      const title = item?.title || item?.label || item?.concept || item?.name || item?.id;
+      push(title, item?.id || item?.concept_id, { id: item?.id || item?.concept_id });
+    });
+    return normalizeSubjectMatches(out);
+  }
 
   function detectAutoAnalysisDomain(sourceText, payload = {}) {
     const src = String(sourceText || "");
@@ -2866,6 +2945,8 @@
       || (/nav-reformen|navreformen/i.test(text) && hasKeywordsHeader && /i denne artikkelen/i.test(text));
     if (hasAcademicHardOverride || hasAcademicComboOverride) return "academic_article";
 
+    const institutionalHistorySignal = detectInstitutionalMediaHistorySignal(raw);
+    if (institutionalHistorySignal.strong) return "academic_article";
     const hasStrongOpinion = opinionScore >= 5 || ((opinionEvidence.hasPoliticalActor || opinionEvidence.hasParty) && (opinionEvidence.hasClimateTransition || opinionEvidence.hasOilFossil || opinionEvidence.hasNatureProtection));
     if (hasStrongOpinion) return "opinion_article";
 
@@ -3649,7 +3730,57 @@
     } else if (textType === "academic_article") {
       const literaryAttachmentSignal = detectLiteraryAttachmentSignal(analysisText);
       const publicAdminSignal = detectPublicAdministrationReformSignal(analysisText);
-      if (publicAdminSignal?.strong) {
+      const institutionalHistorySignal = detectInstitutionalMediaHistorySignal(analysisText);
+      if (institutionalHistorySignal?.strong) {
+        const entityName = extractMainInstitutionName(analysisText);
+        const hasMorgenbladet = /\bmorgenbladet\b/i.test(analysisText);
+        const usesMediaTemplate = Boolean(institutionalHistorySignal?.isNewspaperText || institutionalHistorySignal?.isMediaText);
+        const hasNicheTerms = /\b(nisjeavis|kulturavis)\b/i.test(analysisText);
+        const themeText = hasMorgenbladet
+          ? "Morgenbladets historiske utvikling, eierskap, politiske profil og rolle som norsk nisjeavis."
+          : `${entityName}s historiske utvikling, eierskap, profil og rolle i offentligheten.`;
+        const insightText = hasMorgenbladet
+          ? "Morgenbladets historie viser hvordan en avis kan overleve gjennom skiftende eierskap, politiske profiler og økonomiske kriser ved å redefinere seg fra konservativ dagsavis til intellektuell kultur- og kommentaravis."
+          : `${entityName}s historie viser hvordan en institusjon kan endre rolle gjennom skiftende eierskap, profil, økonomiske rammer og offentlig funksjon over tid.`;
+        const objectText = hasMorgenbladet
+          ? "Morgenbladet som medieinstitusjon."
+          : `${entityName} som ${usesMediaTemplate ? "medie-" : ""}samfunnsinstitusjon.`;
+        const developmentText = hasMorgenbladet
+          ? "Fra eldre politisk dagsavis til moderne nisjeavis med kultur- og kommentarprofil."
+          : "Fra tidligere profil og organisering til nyere rolle, eierskap og offentlig posisjon.";
+        reflection = "Teksten er en faktabasert mediehistorisk framstilling av en institusjon over tid, med vekt på utvikling, eierskap, politisk profil og samfunnsrolle.";
+        sortItems = [
+          { label: "Kort hovedinnsikt", text: insightText },
+          { label: "Tema", text: themeText },
+          { label: "Hovedspenning", text: usesMediaTemplate ? "Redaksjonell uavhengighet ↔ økonomisk avhengighet." : "Institusjonell kontinuitet ↔ institusjonell omforming." },
+          { label: "Hovedobjekt", text: objectText },
+          { label: "Historisk utvikling", text: developmentText },
+          { label: "Eierskap/profil", text: usesMediaTemplate ? "Skiftende eierskap og redaksjonelle prioriteringer former politisk og kulturell profil." : "Skiftende styringsformer og eierskap påvirker institusjonens profil, mandat og handlingsrom." },
+          { label: "Konfliktlinjer", text: usesMediaTemplate ? `Politisk profil ↔ ${hasNicheTerms ? "uavhengig kulturavis" : "uavhengig offentlig rolle"}; akademisk kvalitet ↔ smal offentlighet; kontinuitet ↔ institusjonell omforming.` : "Formål/samfunnsrolle ↔ økonomiske/organisatoriske rammer; styring/eierskap ↔ faglig/offentlig autonomi; kontinuitet ↔ institusjonell omforming." },
+          { label: "Nåværende posisjon", text: usesMediaTemplate ? (hasNicheTerms ? "Nisjeavis med tydelig offentlig rolle i kultur- og idédebatt." : "Medieaktør med tydelig offentlig rolle i samfunns- og idédebatt.") : "Institusjon med definert samfunnsrolle under løpende organisatorisk og økonomisk tilpasning." }
+        ];
+        day = "Ikke dagbokmateriale – ingen dagsoppsummering laget.";
+        thoughts = {
+          hovedspor: "Teksten viser institusjonell overlevelse gjennom historisk omforming.",
+          lose_tanker: usesMediaTemplate ? "Skille mellom perioder, eierskapsskifter og redaksjonelle vendepunkt." : "Skille mellom perioder, styringsendringer, eierskap og mandatutvikling.",
+          neste_steg: usesMediaTemplate ? "Lag en tidslinje med nøkkelvendepunkt og drøft hvordan økonomi og redaksjonell linje påvirker offentlig rolle." : "Lag en tidslinje med nøkkelvendepunkt og drøft hvordan styring, økonomi og mandat påvirker samfunnsrollen."
+        };
+        list = [
+          `Identifiser hovedobjektet: ${entityName}.`,
+          "Beskriv historisk utvikling i tydelige perioder.",
+          usesMediaTemplate ? "Koble eierskapsskifter til endret politisk/redaksjonell profil." : "Koble styrings- og eierskapsendringer til institusjonell profil og mandat.",
+          "Analyser konfliktlinjene mellom autonomi, økonomi og offentlig rolle.",
+          usesMediaTemplate ? (hasNicheTerms ? "Vurder nåværende posisjon som nisje- og kulturavis." : "Vurder nåværende posisjon i medieoffentligheten.") : "Vurder nåværende institusjonell posisjon i offentligheten.",
+          usesMediaTemplate ? "Formuler læringsspørsmål om mediehistorie, presse og offentlighet." : "Formuler læringsspørsmål om institusjonell utvikling, styring og samfunnsrolle."
+        ];
+        path = [
+          "Definer hovedobjekt og tidsavgrensning.",
+          "Sorter funn etter historisk utvikling.",
+          "Analyser eierskap/profil og konfliktlinjer.",
+          "Vurder nåværende posisjon i offentligheten.",
+          "Lag mulige læringsspørsmål for videre arbeid."
+        ];
+      } else if (publicAdminSignal?.strong) {
         reflection = "Teksten analyserer NAV-reformen og spør hvorfor måloppnåelsen uteblir: skyldes dette hovedsakelig omstillingskostnader, eller mer varige strukturelle utfordringer i styring og organisering?";
         sortItems = [
           { label: "Kort hovedinnsikt", text: "NAVs manglende måloppnåelse kan ikke forklares som midlertidig reformstøy alene." },
@@ -3810,6 +3941,15 @@
         || "Klima og miljø er relevante bakgrunnsfaktorer, men konflikt forklares primært gjennom politiske, historiske og maktmessige forhold.";
       const motargument = (sortItems.find((item) => String(item?.label || "").toLowerCase().includes("motargument")) || {}).text
         || "Knapphetsskolens lineære årsakskjeder kritiseres for å underkommunisere institusjoner og aktørmakt.";
+      const institutionalHistorySignal = detectInstitutionalMediaHistorySignal(raw);
+      if (institutionalHistorySignal?.strong) {
+        const entityName = extractMainInstitutionName(raw);
+        const hasMorgenbladet = /\bmorgenbladet\b/i.test(raw);
+        const usesMediaTemplate = Boolean(institutionalHistorySignal?.isNewspaperText || institutionalHistorySignal?.isMediaText);
+        localInsights.push(`Tema: ${hasMorgenbladet ? "Morgenbladets historiske utvikling, eierskap, politiske profil og rolle som norsk nisjeavis." : `${entityName}s historiske utvikling, eierskap, profil og rolle i offentligheten.`}`);
+        localInsights.push(`Hovedspenning: ${usesMediaTemplate ? "Redaksjonell uavhengighet ↔ økonomisk avhengighet." : "Institusjonell kontinuitet ↔ institusjonell omforming."}`);
+        localInsights.push(`Viktigste innsikt: ${hasMorgenbladet ? "Morgenbladet overlever ved institusjonell omforming fra konservativ dagsavis til kultur- og kommentaravis." : `${entityName} viser institusjonell omforming gjennom skiftende eierskap, profil og offentlig rolle.`}`);
+      }
       localInsights.push(`Hovedinnsikt: ${reflection}`);
       localInsights.push(`Hovedargument: ${hovedargument}`);
       localInsights.push(`Motargument/kritikk: ${motargument}`);
@@ -4007,7 +4147,7 @@
   function humanizeTextType(type) {
     const key = String(type || "").trim().toLowerCase();
     const labels = {
-      academic_article: "Faglig analyse",
+      academic_article: "Fagtekst / leksikontekst / mediehistorisk tekst",
       day_log: "Dagbokmateriale",
       literary_diary: "Personlig refleksjon / dagbokprosa",
       literary_fragment: "Kreativ tekst",
@@ -4038,7 +4178,7 @@
       ? getLiterarySubjectMatches().map((item) => item?.title || item?.subject_label || "").filter(Boolean)
       : (subjectLinks.length ? subjectLinks : theoryLinks.length ? theoryLinks : (navSignal?.strong ? ["Offentlig forvaltning", "Organisasjonsteori", "Velferdsstat", "Implementeringsteori"] : themes));
     return {
-      tema: navSignal?.strong ? "NAV-reformen og måloppnåelse" : (literarySignal?.strong ? "Knausgårds Om våren, tilknytningsteori og litterær erkjennelse" : (lookup("hovedargument") || insights[1] || insights[0] || "Tema identifiseres fortløpende.")),
+      tema: navSignal?.strong ? "NAV-reformen og måloppnåelse" : (literarySignal?.strong ? "Knausgårds Om våren, tilknytningsteori og litterær erkjennelse" : (lookup("tema") || lookup("hovedargument") || insights[1] || insights[0] || "Tema identifiseres fortløpende.")),
       hovedspenning: navSignal?.strong ? "Omstillingskostnad vs. strukturell utfordring" : (literarySignal?.strong ? "Tilknytningsteori vs. litterær/mytologisk utforskning av tilknytning, forknytning og løsrivelse" : (lookup("spenning") || insights.find((item) => /spenning|vs|mot/i.test(String(item || ""))) || "Spenning bygges fra flere meldinger.")),
       viktigsteInnsikt: navSignal?.strong ? "NAVs manglende måloppnåelse skyldes ikke bare midlertidig omstilling, men også varige strukturelle utfordringer i styring, organisering og stat–kommune-samspill." : (literarySignal?.strong ? "Om våren bruker tilknytningsteori som ramme, men overskrider den gjennom autofiksjon, deiksis, performativ skriving, sårbarhet, nymaterialisme og mytologiske bilder." : (lookup("hovedinnsikt") || insights[0] || payload?.reflection || "Ingen tydelig hovedinnsikt ennå.")),
       fagkoblinger: prioritizedLinks.length ? prioritizedLinks.slice(0, 8).join(" · ") : "Fagkoblinger blir tydeligere når flere tekster analyseres.",
@@ -4244,6 +4384,15 @@
     }
     const domain = detectAutoAnalysisDomain(sourceText, payload);
     payload.subjectMatches = normalizeSubjectMatches(Array.isArray(options.subjectMatches) ? options.subjectMatches : []);
+    if (global.AHACalibration?.matchText) {
+      try {
+        const calibrated = global.AHACalibration.matchText(sourceText, { topN: 10 });
+        const calibratedMatches = subjectMatchesFromCalibration(calibrated);
+        if (calibratedMatches.length) payload.subjectMatches = calibratedMatches;
+      } catch (err) {
+        console.warn("AHACalibration.matchText feilet", err);
+      }
+    }
     if (domain === "literary_attachment") {
       payload.subjectMatches = getLiterarySubjectMatches();
       payload.subjectLinks = getLiterarySubjectMatches();
