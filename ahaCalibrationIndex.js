@@ -2,7 +2,7 @@
 (function (global) {
   "use strict";
 
-  const VERSION = "aha_calibration_index_v1";
+  const VERSION = "aha_calibration_index_v2";
   const CACHE_KEY = VERSION;
   const CACHE_META_KEY = `${VERSION}:meta`;
   const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
@@ -45,6 +45,7 @@
     try {
       const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || "null");
       if (!cached) return null;
+      if (cached?._meta?.fag_manifest_loaded !== true) return null;
       if (!ignoreTtl) {
         const meta = JSON.parse(localStorage.getItem(CACHE_META_KEY) || "null");
         if (!meta?.saved_at || Date.now() - meta.saved_at >= CACHE_TTL_MS) return null;
