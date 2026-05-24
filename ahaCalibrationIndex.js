@@ -11,6 +11,26 @@
   const FAG_MANIFEST_URL = `${RAW_BASE}data/fag/fag_manifest.json`;
   const PLACE_MANIFEST_URL = `${RAW_BASE}data/places/manifest.json`;
   const MAX_PLACE_CONTEXT = 300;
+  const MAX_CACHE_CONCEPTS = 15000;
+  const MAX_CACHE_EMNER = 2000;
+  const MAX_CACHE_THEORY_HOOKS = 3000;
+  const MAX_CACHE_METHOD_PROFILES = 3000;
+  const MAX_CACHE_LABEL_LENGTH = 120;
+  const SOURCE_FIELD_PRIORITY = {
+    core_concepts: 14,
+    key_concepts: 13,
+    keywords: 12,
+    sub_concepts: 11,
+    dimensions: 10,
+    title: 9,
+    short_label: 8,
+    methods: 7,
+    analysis_axes: 6,
+    conflicts: 5,
+    ideological_dimensions: 4,
+    definition_phrase: 3,
+    why_phrase: 2
+  };
 
   const STOPWORDS = new Set(["og","i","på","for","med","til","av","en","et","det","som","er","om","fra","den","de","at","å","the","and","of"]);
   const DEF_SPLIT_RE = /[.;:!?]\s+|\n+/g;
@@ -276,6 +296,101 @@
     };
   }
 
+  function compactConceptsForCache(concepts) {
+    const rows = Array.isArray(concepts) ? concepts : [];
+    const dedup = new Map();
+    rows.forEach((row) => {
+      if (!row || typeof row !== "object") return;
+      const key = normalizeText(row.key || row.label);
+      const label = String(row.label || "").trim();
+      if (!key || !label || label.length > MAX_CACHE_LABEL_LENGTH) return;
+      const compact = {
+        key,
+        label,
+        weight: Number.isFinite(Number(row.weight)) ? Number(row.weight) : 1,
+        emne_id: row.emne_id || null,
+        subject_id: row.subject_id || null,
+        area_id: row.area_id || null,
+        area_label: row.area_label || null,
+        sourceField: row.sourceField || null,
+        source: row.source || "historygo_fag_calibration"
+      };
+      const dedupKey = `${compact.key}::${compact.subject_id || ""}::${compact.emne_id || ""}::${compact.sourceField || ""}`;
+      const existing = dedup.get(dedupKey);
+      if (!existing || compact.weight > existing.weight) dedup.set(dedupKey, compact);
+    });
+    return Array.from(dedup.values())
+      .sort((a, b) => {
+        const byWeight = (b.weight || 0) - (a.weight || 0);
+        if (byWeight !== 0) return byWeight;
+        const ap = SOURCE_FIELD_PRIORITY[a.sourceField] || 0;
+        const bp = SOURCE_FIELD_PRIORITY[b.sourceField] || 0;
+        if (bp !== ap) return bp - ap;
+        return String(a.key).localeCompare(String(b.key));
+      })
+      .slice(0, MAX_CACHE_CONCEPTS);
+  }
+
+  function makeCacheSafeIndex(fullIndex) {
+    const src = fullIndex && typeof fullIndex === "object" ? fullIndex : emptyIndex();
+    const compactConcepts = compactConceptsForCache(src.concepts);
+    const compactEmner = asArray(src.emner).map((e) => ({
+      emne_id: e?.emne_id || null,
+      subject_id: e?.subject_id || null,
+      title: e?.title || null,
+      short_label: e?.short_label || null,
+      area_id: e?.area_id || null,
+      area_label: e?.area_label || null,
+      level: e?.level || null,
+      progression_stage: e?.progression_stage || null,
+      pedagogical_track: e?.pedagogical_track || null,
+      corpusText: e?.corpusText || ""
+    })).slice(0, MAX_CACHE_EMNER);
+    const compactTheoryHooks = asArray(src.theoryHooks).map((t) => ({
+      emne_id: t?.emne_id || null,
+      canonical_thinkers: asArray(t?.canonical_thinkers),
+      norwegian_thinkers: asArray(t?.norwegian_thinkers),
+      primary_theory_hooks: asArray(t?.primary_theory_hooks),
+      secondary_theory_hooks: asArray(t?.secondary_theory_hooks),
+      reserve_theory_hooks: asArray(t?.reserve_theory_hooks)
+    })).slice(0, MAX_CACHE_THEORY_HOOKS);
+    const compactMethodProfiles = asArray(src.methodProfiles).map((m) => ({
+      emne_id: m?.emne_id || null,
+      subject_id: m?.subject_id || null,
+      methods: asArray(m?.methods),
+      recommended_methods: asArray(m?.recommended_methods)
+    })).slice(0, MAX_CACHE_METHOD_PROFILES);
+
+    return {
+      version: src.version || VERSION,
+      generated_at: src.generated_at || new Date().toISOString(),
+      source: src.source || "historygo_fag",
+      subjects: asArray(src.subjects),
+      categories: asArray(src.categories),
+      concepts: compactConcepts,
+      emner: compactEmner,
+      theoryHooks: compactTheoryHooks,
+      methodProfiles: compactMethodProfiles,
+      relations: [],
+      subjectProfiles: [],
+      categoryProfiles: [],
+      progressionLevels: [],
+      questionPatterns: [],
+      conflictPatterns: [],
+      blindspotPatterns: [],
+      nextStepRules: [],
+      placeContext: [],
+      _meta: {
+        ...(src._meta || {}),
+        cache_compacted: true,
+        full_concept_count: asArray(src.concepts).length,
+        cached_concept_count: compactConcepts.length,
+        full_emne_count: asArray(src.emner).length,
+        cached_emne_count: compactEmner.length
+      }
+    };
+  }
+
   function matchText(text, options) {
     if (!state.loaded) readCachedIndexSync(false);
     const topN = Math.max(1, Math.min(50, Number(options?.topN) || 12));
@@ -379,7 +494,8 @@
         state.loaded = state.loaded_fag_file_count > 0 && conceptCount > 0;
         state.cached = false;
         try {
-          localStorage.setItem(CACHE_KEY, JSON.stringify(index));
+          const cacheIndex = makeCacheSafeIndex(index);
+          localStorage.setItem(CACHE_KEY, JSON.stringify(cacheIndex));
           localStorage.setItem(CACHE_META_KEY, JSON.stringify({ saved_at: Date.now() }));
         } catch (err) {
           state.last_error = `cache_write_failed: ${String(err?.message || err)}`;
