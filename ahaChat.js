@@ -3945,8 +3945,9 @@
       if (institutionalHistorySignal?.strong) {
         const entityName = extractMainInstitutionName(raw);
         const hasMorgenbladet = /\bmorgenbladet\b/i.test(raw);
+        const usesMediaTemplate = Boolean(institutionalHistorySignal?.isNewspaperText || institutionalHistorySignal?.isMediaText);
         localInsights.push(`Tema: ${hasMorgenbladet ? "Morgenbladets historiske utvikling, eierskap, politiske profil og rolle som norsk nisjeavis." : `${entityName}s historiske utvikling, eierskap, profil og rolle i offentligheten.`}`);
-        localInsights.push("Hovedspenning: Redaksjonell uavhengighet ↔ økonomisk avhengighet.");
+        localInsights.push(`Hovedspenning: ${usesMediaTemplate ? "Redaksjonell uavhengighet ↔ økonomisk avhengighet." : "Institusjonell kontinuitet ↔ institusjonell omforming."}`);
         localInsights.push(`Viktigste innsikt: ${hasMorgenbladet ? "Morgenbladet overlever ved institusjonell omforming fra konservativ dagsavis til kultur- og kommentaravis." : `${entityName} viser institusjonell omforming gjennom skiftende eierskap, profil og offentlig rolle.`}`);
       }
       localInsights.push(`Hovedinnsikt: ${reflection}`);
