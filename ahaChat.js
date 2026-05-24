@@ -1277,6 +1277,73 @@
     const score = (institutionTerms ? 2 : 0) + (historicalTerms ? 2 : 0) + (profileTerms ? 1 : 0) - (personDiaryNoise ? 1 : 0);
     return { strong: score >= 3, institutionTerms, historicalTerms, profileTerms };
   }
+  function extractMainInstitutionName(text) {
+    const source = String(text || "");
+    const sentences = toSentences(source).slice(0, 2);
+    const head = sentences.join(" ");
+    const scan = `${head} ${source}`;
+    const tokens = scan.match(/\b[A-ZÆØÅ][A-Za-zÆØÅæøå-]{1,}\b/g) || [];
+    const blocked = new Set(["Det", "Den", "Dette", "I", "På", "For", "Og", "En", "Et", "Som", "Av", "Til"]);
+    const counts = new Map();
+    tokens.forEach((token) => {
+      const clean = String(token || "").trim();
+      if (!clean || blocked.has(clean)) return;
+      counts.set(clean, (counts.get(clean) || 0) + 1);
+    });
+    const priorityPatterns = [
+      /\b([A-ZÆØÅ][A-Za-zÆØÅæøå-]+)\s+er\s+en?\b/g,
+      /\b([A-ZÆØÅ][A-Za-zÆØÅæøå-]+)\s+ble\s+grunnlagt\b/g,
+      /\b([A-ZÆØÅ][A-Za-zÆØÅæøå-]+)\s+vart\s+grunnlagd\b/g,
+      /\b([A-ZÆØÅ][A-Za-zÆØÅæøå-]+)\s+grunnlagt\b/g,
+      /\b([A-ZÆØÅ][A-Za-zÆØÅæøå-]+)\s+(avis|institusjon|organisasjon)\b/g
+    ];
+    const priority = new Map();
+    priorityPatterns.forEach((pattern) => {
+      let m;
+      while ((m = pattern.exec(head)) !== null) {
+        const key = String(m[1] || "").trim();
+        if (key && !blocked.has(key)) priority.set(key, (priority.get(key) || 0) + 2);
+      }
+    });
+    const candidates = [...new Set([...counts.keys(), ...priority.keys()])];
+    if (!candidates.length) return "institusjonen";
+    const ranked = candidates
+      .map((name) => ({
+        name,
+        score: (counts.get(name) || 0) + (priority.get(name) || 0) + (head.includes(name) ? 1 : 0)
+      }))
+      .sort((a, b) => b.score - a.score);
+    return ranked[0]?.name || "hovedobjektet";
+  }
+  function subjectMatchesFromCalibration(calibrated) {
+    const safe = calibrated && typeof calibrated === "object" ? calibrated : {};
+    const out = [];
+    const push = (title, subject_id, extra = {}) => {
+      const t = String(title || "").trim();
+      if (!t) return;
+      out.push({
+        title: t,
+        subject_label: t,
+        subject_id: String(subject_id || normalizeConceptKey(t) || t.toLowerCase()),
+        id: String(extra.id || subject_id || normalizeConceptKey(t) || t.toLowerCase()),
+        ...extra
+      });
+    };
+    (Array.isArray(safe.matched_emner) ? safe.matched_emner : []).forEach((item) => {
+      const title = item?.title || item?.label || item?.name || item?.emne || item?.emne_id;
+      const subjectId = item?.subject_id || item?.emne_id || item?.id;
+      push(title, subjectId, { id: item?.id || subjectId });
+    });
+    (Array.isArray(safe.matched_categories) ? safe.matched_categories : []).forEach((item) => {
+      const title = item?.title || item?.label || item?.name || item?.category || item?.id;
+      push(title, item?.id || item?.category_id, { id: item?.id || item?.category_id });
+    });
+    (Array.isArray(safe.matched_concepts) ? safe.matched_concepts : []).forEach((item) => {
+      const title = item?.title || item?.label || item?.concept || item?.name || item?.id;
+      push(title, item?.id || item?.concept_id, { id: item?.id || item?.concept_id });
+    });
+    return normalizeSubjectMatches(out);
+  }
 
   function detectAutoAnalysisDomain(sourceText, payload = {}) {
     const src = String(sourceText || "");
@@ -3662,13 +3729,27 @@
       const publicAdminSignal = detectPublicAdministrationReformSignal(analysisText);
       const institutionalHistorySignal = detectInstitutionalMediaHistorySignal(analysisText);
       if (institutionalHistorySignal?.strong) {
+        const entityName = extractMainInstitutionName(analysisText);
+        const hasMorgenbladet = /\bmorgenbladet\b/i.test(analysisText);
+        const themeText = hasMorgenbladet
+          ? "Morgenbladets historiske utvikling, eierskap, politiske profil og rolle som norsk nisjeavis."
+          : `${entityName}s historiske utvikling, eierskap, profil og rolle i offentligheten.`;
+        const insightText = hasMorgenbladet
+          ? "Morgenbladets historie viser hvordan en avis kan overleve gjennom skiftende eierskap, politiske profiler og økonomiske kriser ved å redefinere seg fra konservativ dagsavis til intellektuell kultur- og kommentaravis."
+          : `${entityName}s historie viser hvordan en institusjon kan endre rolle gjennom skiftende eierskap, profil, økonomiske rammer og offentlig funksjon over tid.`;
+        const objectText = hasMorgenbladet
+          ? "Morgenbladet som medieinstitusjon."
+          : `${entityName} som medie-/samfunnsinstitusjon.`;
+        const developmentText = hasMorgenbladet
+          ? "Fra eldre politisk dagsavis til moderne nisjeavis med kultur- og kommentarprofil."
+          : "Fra tidligere profil og organisering til nyere rolle, eierskap og offentlig posisjon.";
         reflection = "Teksten er en faktabasert mediehistorisk framstilling av en institusjon over tid, med vekt på utvikling, eierskap, politisk profil og samfunnsrolle.";
         sortItems = [
-          { label: "Kort hovedinnsikt", text: "Morgenbladets historie viser hvordan en avis kan overleve gjennom skiftende eierskap, politiske profiler og økonomiske kriser ved å redefinere seg fra konservativ dagsavis til intellektuell kultur- og kommentaravis." },
-          { label: "Tema", text: "Morgenbladets historiske utvikling, eierskap, politiske profil og rolle som norsk nisjeavis." },
+          { label: "Kort hovedinnsikt", text: insightText },
+          { label: "Tema", text: themeText },
           { label: "Hovedspenning", text: "Redaksjonell uavhengighet ↔ økonomisk avhengighet." },
-          { label: "Hovedobjekt", text: "Morgenbladet som medieinstitusjon." },
-          { label: "Historisk utvikling", text: "Fra eldre politisk dagsavis til moderne nisjeavis med kultur- og kommentarprofil." },
+          { label: "Hovedobjekt", text: objectText },
+          { label: "Historisk utvikling", text: developmentText },
           { label: "Eierskap/profil", text: "Skiftende eierskap og redaksjonelle prioriteringer former politisk og kulturell profil." },
           { label: "Konfliktlinjer", text: "Politisk profil ↔ uavhengig kulturavis; akademisk kvalitet ↔ smal offentlighet; kontinuitet ↔ institusjonell omforming." },
           { label: "Nåværende posisjon", text: "Nisjeavis med tydelig offentlig rolle i kultur- og idédebatt." }
@@ -3680,7 +3761,7 @@
           neste_steg: "Lag en tidslinje med nøkkelvendepunkt og drøft hvordan økonomi og redaksjonell linje påvirker offentlig rolle."
         };
         list = [
-          "Identifiser hovedobjektet: Morgenbladet.",
+          `Identifiser hovedobjektet: ${entityName}.`,
           "Beskriv historisk utvikling i tydelige perioder.",
           "Koble eierskapsskifter til endret politisk/redaksjonell profil.",
           "Analyser konfliktlinjene mellom uavhengighet, økonomi og offentlig rolle.",
@@ -3857,9 +3938,11 @@
         || "Knapphetsskolens lineære årsakskjeder kritiseres for å underkommunisere institusjoner og aktørmakt.";
       const institutionalHistorySignal = detectInstitutionalMediaHistorySignal(raw);
       if (institutionalHistorySignal?.strong) {
-        localInsights.push("Tema: Morgenbladets historiske utvikling, eierskap, politiske profil og rolle som norsk nisjeavis.");
+        const entityName = extractMainInstitutionName(raw);
+        const hasMorgenbladet = /\bmorgenbladet\b/i.test(raw);
+        localInsights.push(`Tema: ${hasMorgenbladet ? "Morgenbladets historiske utvikling, eierskap, politiske profil og rolle som norsk nisjeavis." : `${entityName}s historiske utvikling, eierskap, profil og rolle i offentligheten.`}`);
         localInsights.push("Hovedspenning: Redaksjonell uavhengighet ↔ økonomisk avhengighet.");
-        localInsights.push("Viktigste innsikt: Morgenbladet overlever ved institusjonell omforming fra konservativ dagsavis til kultur- og kommentaravis.");
+        localInsights.push(`Viktigste innsikt: ${hasMorgenbladet ? "Morgenbladet overlever ved institusjonell omforming fra konservativ dagsavis til kultur- og kommentaravis." : `${entityName} viser institusjonell omforming gjennom skiftende eierskap, profil og offentlig rolle.`}`);
       }
       localInsights.push(`Hovedinnsikt: ${reflection}`);
       localInsights.push(`Hovedargument: ${hovedargument}`);
@@ -4298,7 +4381,7 @@
     if (global.AHACalibration?.matchText) {
       try {
         const calibrated = global.AHACalibration.matchText(sourceText, { topN: 10 });
-        const calibratedMatches = normalizeSubjectMatches(calibrated);
+        const calibratedMatches = subjectMatchesFromCalibration(calibrated);
         if (calibratedMatches.length) payload.subjectMatches = calibratedMatches;
       } catch (err) {
         console.warn("AHACalibration.matchText feilet", err);
