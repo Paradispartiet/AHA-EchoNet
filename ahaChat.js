@@ -1268,6 +1268,15 @@
     const hasTheory = /\bknapphetsskolen\b|\bressursknapphet\b|\bmiljøsikkerhet\b|\bpolitisk økologi\b|\benvironmental security\b/i.test(src);
     return { strong: (hasSahel && (hasConflict || hasClimate)) || (hasSahel && hasTheory), hasSahel, hasConflict, hasClimate, hasTheory };
   }
+  function detectInstitutionalMediaHistorySignal(text) {
+    const src = String(text || "").toLowerCase();
+    const institutionTerms = /\b(avis|avisa|avisen|morgenbladet|redaksjon|redaksjonell|mediehus|presse|journalistikk|tidsskrift|institusjon|organisasjon|eierskap|redaktør|redaktor)\b/i.test(src);
+    const historicalTerms = /\b(ble grunnlagt|grunnlagt|opprettet|etablert|historie|historisk|gjennom|fra .* til|tidligere|senere|på 18\d{2}|på 19\d{2}|på 20\d{2}|i 18\d{2}|i 19\d{2}|i 20\d{2}|over tid)\b/i.test(src);
+    const profileTerms = /\b(konservativ|liberal|uavhengig|politisk profil|nisjeavis|kulturavis|kommentaravis|offentlighet)\b/i.test(src);
+    const personDiaryNoise = /\b(jeg|meg|min|mitt|mamma|pappa|kjæreste)\b/i.test(src);
+    const score = (institutionTerms ? 2 : 0) + (historicalTerms ? 2 : 0) + (profileTerms ? 1 : 0) - (personDiaryNoise ? 1 : 0);
+    return { strong: score >= 3, institutionTerms, historicalTerms, profileTerms };
+  }
 
   function detectAutoAnalysisDomain(sourceText, payload = {}) {
     const src = String(sourceText || "");
@@ -2866,6 +2875,8 @@
       || (/nav-reformen|navreformen/i.test(text) && hasKeywordsHeader && /i denne artikkelen/i.test(text));
     if (hasAcademicHardOverride || hasAcademicComboOverride) return "academic_article";
 
+    const institutionalHistorySignal = detectInstitutionalMediaHistorySignal(raw);
+    if (institutionalHistorySignal.strong) return "academic_article";
     const hasStrongOpinion = opinionScore >= 5 || ((opinionEvidence.hasPoliticalActor || opinionEvidence.hasParty) && (opinionEvidence.hasClimateTransition || opinionEvidence.hasOilFossil || opinionEvidence.hasNatureProtection));
     if (hasStrongOpinion) return "opinion_article";
 
@@ -3649,7 +3660,41 @@
     } else if (textType === "academic_article") {
       const literaryAttachmentSignal = detectLiteraryAttachmentSignal(analysisText);
       const publicAdminSignal = detectPublicAdministrationReformSignal(analysisText);
-      if (publicAdminSignal?.strong) {
+      const institutionalHistorySignal = detectInstitutionalMediaHistorySignal(analysisText);
+      if (institutionalHistorySignal?.strong) {
+        reflection = "Teksten er en faktabasert mediehistorisk framstilling av en institusjon over tid, med vekt på utvikling, eierskap, politisk profil og samfunnsrolle.";
+        sortItems = [
+          { label: "Kort hovedinnsikt", text: "Morgenbladets historie viser hvordan en avis kan overleve gjennom skiftende eierskap, politiske profiler og økonomiske kriser ved å redefinere seg fra konservativ dagsavis til intellektuell kultur- og kommentaravis." },
+          { label: "Tema", text: "Morgenbladets historiske utvikling, eierskap, politiske profil og rolle som norsk nisjeavis." },
+          { label: "Hovedspenning", text: "Redaksjonell uavhengighet ↔ økonomisk avhengighet." },
+          { label: "Hovedobjekt", text: "Morgenbladet som medieinstitusjon." },
+          { label: "Historisk utvikling", text: "Fra eldre politisk dagsavis til moderne nisjeavis med kultur- og kommentarprofil." },
+          { label: "Eierskap/profil", text: "Skiftende eierskap og redaksjonelle prioriteringer former politisk og kulturell profil." },
+          { label: "Konfliktlinjer", text: "Politisk profil ↔ uavhengig kulturavis; akademisk kvalitet ↔ smal offentlighet; kontinuitet ↔ institusjonell omforming." },
+          { label: "Nåværende posisjon", text: "Nisjeavis med tydelig offentlig rolle i kultur- og idédebatt." }
+        ];
+        day = "Ikke dagbokmateriale – ingen dagsoppsummering laget.";
+        thoughts = {
+          hovedspor: "Teksten viser institusjonell overlevelse gjennom historisk omforming.",
+          lose_tanker: "Skille mellom perioder, eierskapsskifter og redaksjonelle vendepunkt.",
+          neste_steg: "Lag en tidslinje med nøkkelvendepunkt og drøft hvordan økonomi og redaksjonell linje påvirker offentlig rolle."
+        };
+        list = [
+          "Identifiser hovedobjektet: Morgenbladet.",
+          "Beskriv historisk utvikling i tydelige perioder.",
+          "Koble eierskapsskifter til endret politisk/redaksjonell profil.",
+          "Analyser konfliktlinjene mellom uavhengighet, økonomi og offentlig rolle.",
+          "Vurder nåværende posisjon som nisje- og kulturavis.",
+          "Formuler læringsspørsmål om pressehistorie og offentlighet."
+        ];
+        path = [
+          "Definer hovedobjekt og tidsavgrensning.",
+          "Sorter funn etter historisk utvikling.",
+          "Analyser eierskap/profil og konfliktlinjer.",
+          "Vurder nåværende posisjon i offentligheten.",
+          "Lag mulige læringsspørsmål for videre arbeid."
+        ];
+      } else if (publicAdminSignal?.strong) {
         reflection = "Teksten analyserer NAV-reformen og spør hvorfor måloppnåelsen uteblir: skyldes dette hovedsakelig omstillingskostnader, eller mer varige strukturelle utfordringer i styring og organisering?";
         sortItems = [
           { label: "Kort hovedinnsikt", text: "NAVs manglende måloppnåelse kan ikke forklares som midlertidig reformstøy alene." },
@@ -3810,6 +3855,12 @@
         || "Klima og miljø er relevante bakgrunnsfaktorer, men konflikt forklares primært gjennom politiske, historiske og maktmessige forhold.";
       const motargument = (sortItems.find((item) => String(item?.label || "").toLowerCase().includes("motargument")) || {}).text
         || "Knapphetsskolens lineære årsakskjeder kritiseres for å underkommunisere institusjoner og aktørmakt.";
+      const institutionalHistorySignal = detectInstitutionalMediaHistorySignal(raw);
+      if (institutionalHistorySignal?.strong) {
+        localInsights.push("Tema: Morgenbladets historiske utvikling, eierskap, politiske profil og rolle som norsk nisjeavis.");
+        localInsights.push("Hovedspenning: Redaksjonell uavhengighet ↔ økonomisk avhengighet.");
+        localInsights.push("Viktigste innsikt: Morgenbladet overlever ved institusjonell omforming fra konservativ dagsavis til kultur- og kommentaravis.");
+      }
       localInsights.push(`Hovedinnsikt: ${reflection}`);
       localInsights.push(`Hovedargument: ${hovedargument}`);
       localInsights.push(`Motargument/kritikk: ${motargument}`);
@@ -4007,7 +4058,7 @@
   function humanizeTextType(type) {
     const key = String(type || "").trim().toLowerCase();
     const labels = {
-      academic_article: "Faglig analyse",
+      academic_article: "Fagtekst / leksikontekst / mediehistorisk tekst",
       day_log: "Dagbokmateriale",
       literary_diary: "Personlig refleksjon / dagbokprosa",
       literary_fragment: "Kreativ tekst",
@@ -4038,7 +4089,7 @@
       ? getLiterarySubjectMatches().map((item) => item?.title || item?.subject_label || "").filter(Boolean)
       : (subjectLinks.length ? subjectLinks : theoryLinks.length ? theoryLinks : (navSignal?.strong ? ["Offentlig forvaltning", "Organisasjonsteori", "Velferdsstat", "Implementeringsteori"] : themes));
     return {
-      tema: navSignal?.strong ? "NAV-reformen og måloppnåelse" : (literarySignal?.strong ? "Knausgårds Om våren, tilknytningsteori og litterær erkjennelse" : (lookup("hovedargument") || insights[1] || insights[0] || "Tema identifiseres fortløpende.")),
+      tema: navSignal?.strong ? "NAV-reformen og måloppnåelse" : (literarySignal?.strong ? "Knausgårds Om våren, tilknytningsteori og litterær erkjennelse" : (lookup("tema") || lookup("hovedargument") || insights[1] || insights[0] || "Tema identifiseres fortløpende.")),
       hovedspenning: navSignal?.strong ? "Omstillingskostnad vs. strukturell utfordring" : (literarySignal?.strong ? "Tilknytningsteori vs. litterær/mytologisk utforskning av tilknytning, forknytning og løsrivelse" : (lookup("spenning") || insights.find((item) => /spenning|vs|mot/i.test(String(item || ""))) || "Spenning bygges fra flere meldinger.")),
       viktigsteInnsikt: navSignal?.strong ? "NAVs manglende måloppnåelse skyldes ikke bare midlertidig omstilling, men også varige strukturelle utfordringer i styring, organisering og stat–kommune-samspill." : (literarySignal?.strong ? "Om våren bruker tilknytningsteori som ramme, men overskrider den gjennom autofiksjon, deiksis, performativ skriving, sårbarhet, nymaterialisme og mytologiske bilder." : (lookup("hovedinnsikt") || insights[0] || payload?.reflection || "Ingen tydelig hovedinnsikt ennå.")),
       fagkoblinger: prioritizedLinks.length ? prioritizedLinks.slice(0, 8).join(" · ") : "Fagkoblinger blir tydeligere når flere tekster analyseres.",
@@ -4244,6 +4295,15 @@
     }
     const domain = detectAutoAnalysisDomain(sourceText, payload);
     payload.subjectMatches = normalizeSubjectMatches(Array.isArray(options.subjectMatches) ? options.subjectMatches : []);
+    if (global.AHACalibration?.matchText) {
+      try {
+        const calibrated = global.AHACalibration.matchText(sourceText, { topN: 10 });
+        const calibratedMatches = normalizeSubjectMatches(calibrated);
+        if (calibratedMatches.length) payload.subjectMatches = calibratedMatches;
+      } catch (err) {
+        console.warn("AHACalibration.matchText feilet", err);
+      }
+    }
     if (domain === "literary_attachment") {
       payload.subjectMatches = getLiterarySubjectMatches();
       payload.subjectLinks = getLiterarySubjectMatches();
