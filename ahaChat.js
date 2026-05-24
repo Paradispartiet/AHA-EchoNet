@@ -1373,6 +1373,30 @@
   function getLiterarySubjectMatches() {
     return normalizeSubjectMatches(["Litteraturvitenskap", "Psykologi", "Tilknytningsteori", "Autofiksjon", "Narratologi", "Deiksis", "Nymaterialisme", "Virkelighetslitteratur"]);
   }
+  function getInstitutionalMediaHistorySubjectMatches(sourceText, payload = {}) {
+    const src = String(sourceText || "");
+    const payloadText = `${payload?.reflection || ""} ${(Array.isArray(payload?.sortItems) ? payload.sortItems : []).map((item) => `${item?.label || ""} ${item?.text || ""}`).join(" ")}`;
+    const combined = `${src} ${payloadText}`;
+    const signal = detectInstitutionalMediaHistorySignal(combined);
+    const isNewspaperText = /\b(morgenbladet|avis|redaksjon|journalistikk|kommentaravis|nisjeavis)\b/i.test(combined);
+    const isMediaText = /\b(media|medie|presse|offentlighet|kulturjournalistikk|redaksjonell)\b/i.test(combined);
+    if (signal?.strong && (isNewspaperText || isMediaText)) {
+      return normalizeSubjectMatches([
+        "Mediehistorie",
+        "Presse og offentlighet",
+        "Eierskap og redaksjonell uavhengighet",
+        "Kulturjournalistikk",
+        "Akademisk offentlighet",
+        "Norsk politisk pressehistorie"
+      ]);
+    }
+    return normalizeSubjectMatches([
+      "Institusjonshistorie",
+      "Offentlighet",
+      "Eierskap og autonomi",
+      "Styring og samfunnsrolle"
+    ]);
+  }
   function getLiteraryAttachmentLearningPath() {
     return [
       "Identifiser romanens bruk av tilknytningsteori.",
@@ -2484,6 +2508,17 @@
     const themes30d = filterGenericConceptItems(visibleThemes30d, (item) => item?.key).slice(0, 3);
     const topTheoryPeople = aggregateVisibleConceptCounts(collectTheoryPeople(safeChamber, recurringThemes?.["30d"]?.top_theories, 8), "key", "count").slice(0, 4);
     const profileTensions = profile?.tensions || {};
+    const latestContextSource = String(readLatestAcademicContext()?.sourceText || "").toLowerCase();
+    const sourceHasGreenTransition = /(fossil|fornybar|omstilling|grønn|gronn|klima|bærekraft|baerekraft)/i.test(latestContextSource);
+    const sourceHasCenterPeriphery = /(sentralmakt|lokalsamfunn|kommune|distrikt|sentrum|periferi)/i.test(latestContextSource);
+    const shouldSuppressTransitionPairs = latestContextSource && !sourceHasGreenTransition;
+    const shouldSuppressCenterPeripheryPairs = latestContextSource && !sourceHasCenterPeriphery;
+    const isSuppressedHistoricalPair = (sourceLabel, targetLabel) => {
+      const pairText = `${sourceLabel} ${targetLabel}`.toLowerCase();
+      if (shouldSuppressTransitionPairs && /(fossil|fornybar|omstilling|grønn|gronn)/i.test(pairText)) return true;
+      if (shouldSuppressCenterPeripheryPairs && /(sentralmakt|lokalsamfunn)/i.test(pairText)) return true;
+      return false;
+    };
     const conceptPairTensions = (profileTensions.concept_pair_tensions || [])
       .slice()
       .sort((a, b) => (Number(b?.strength) || 0) - (Number(a?.strength) || 0))
@@ -2491,6 +2526,7 @@
       .map((item) => {
         const pair = buildCanonicalConceptPair(item?.source, item?.target);
         if (!pair) return null;
+        if (isSuppressedHistoricalPair(pair.sourceLabel, pair.targetLabel)) return null;
         return { title: `${pair.sourceLabel} ↔ ${pair.targetLabel}`, strength: item?.strength || 0 };
       })
       .filter(Boolean);
@@ -4509,6 +4545,16 @@
     return `${text}\n\n${section}`.trim();
   }
 
+  function forceInstitutionalMediaHistoryFagkoblingerInReply(replyText, sourceText, payload = {}) {
+    if (detectAutoAnalysisDomain(sourceText, payload) !== "institutional_media_history") return String(replyText || "");
+    const text = String(replyText || "");
+    const section = ["FAGKOBLINGER", ...getInstitutionalMediaHistorySubjectMatches(sourceText, payload).map((item) => item?.title || item?.subject_label || "").filter(Boolean)].join("\n");
+    if (/FAGKOBLINGER/i.test(text)) {
+      return text.replace(/FAGKOBLINGER[\s\S]*?(?=\n[A-ZÆØÅ][A-ZÆØÅ0-9 _-]{2,}\n|$)/i, section);
+    }
+    return `${text}\n\n${section}`.trim();
+  }
+
   function focusAutoCard(action) {
     const host = document.getElementById("aha-auto-output");
     if (!host) return;
@@ -4578,8 +4624,14 @@
           const climateEnriched = enrichSubjectMatchesForClimateConflict(analysisText, rawSubjectMatches);
           const publicAdminEnriched = enrichSubjectMatchesForPublicAdministration(analysisText, climateEnriched);
           const domain = detectAutoAnalysisDomain(analysisText, { reflection: reply, subjectMatches: publicAdminEnriched });
-          const subjectMatches = domain === "literary_attachment" ? getLiterarySubjectMatches() : publicAdminEnriched;
-          const safeReply = forceLiteraryFagkoblingerInReply(reply, analysisText, { subjectMatches });
+          const subjectMatches = domain === "literary_attachment"
+            ? getLiterarySubjectMatches()
+            : domain === "institutional_media_history"
+              ? getInstitutionalMediaHistorySubjectMatches(analysisText)
+              : publicAdminEnriched;
+          let safeReply = reply;
+          safeReply = forceLiteraryFagkoblingerInReply(safeReply, analysisText, { subjectMatches });
+          safeReply = forceInstitutionalMediaHistoryFagkoblingerInReply(safeReply, analysisText, { subjectMatches });
           appendChat("aha", safeReply, { categoryChips: suggestCategoryChips(), subjectMatches });
           try { renderAutoOutputs(text, safeReply, { subjectMatches }); } catch (autoErr) { console.warn("Auto-output feilet", autoErr); }
           // AHA-agentens egne svar skal vises i chatten og logges som
