@@ -1780,6 +1780,13 @@
     const domainBlockedTerms = sourceHasPublicAdmin
       ? /(knapphetsskolen|politisk økologi|sahel|mali|ressursknapphet|miljødegradering)/i
       : (sourceHasSahelMali ? /(nav|offentlig forvaltning|velferdsstat|arbeidslinja|bakkebyråkrati|stat–kommune|stat-kommune)/i : null);
+    if (domain === "institutional_media_history") {
+      return [
+        { title: "Morgenbladets institusjonelle omforming", summary: pick("hovedinnsikt", "Morgenbladet overlever ved institusjonell omforming fra konservativ dagsavis til kultur- og kommentaravis."), concepts: ["mediehistorie", "eierskap", "politisk profil", "kulturavis"], candidate_type: "synthetic" },
+        { title: "Redaksjonell uavhengighet og økonomisk avhengighet", summary: pick("spenning", "Avisens historie viser en varig spenning mellom redaksjonell profil, økonomiske rammer, statsstøtte og eierskap."), concepts: ["redaksjonell uavhengighet", "økonomisk avhengighet", "eierskap", "statsstøtte"], candidate_type: "synthetic" },
+        { title: "Akademisk nisje og offentlig rolle", summary: "Morgenbladet skiller seg ut gjennom lange, faglig funderte artikler og en tydelig posisjon i akademisk og kulturell offentlighet.", concepts: ["nisjeavis", "akademisk offentlighet", "kulturjournalistikk", "kvalitetsjournalistikk"], candidate_type: "synthetic" }
+      ];
+    }
 
     return [
       { title: "Hovedinnsikt", summary: pick("hovedinnsikt", domain === "literary_attachment" ? "Om våren gjør tilknytning til et eksistensielt og litterært nøkkelbegrep, ikke bare et psykologisk fagbegrep." : "Teksten argumenterer for en sammensatt faglig forklaring."), concepts: domain === "literary_attachment" ? ["Knausgård", "Om våren", "tilknytningsteori"] : ["problemstilling", "teori", "funn"], candidate_type: "synthetic" },
@@ -2567,6 +2574,18 @@
     const fading = filterGenericConceptItems(aggregateVisibleConceptCounts(recent.fading || [], "key", "prev_count"), (item) => item?.key).slice(0, 5).map((c) =>
       `${escHtml(displayConceptLabel(c.key))} <span class="meta-count">tidligere ×${c.prev_count}</span>`
     );
+    const latestContextSource = String(readLatestAcademicContext()?.sourceText || "").toLowerCase();
+    const sourceHasGreenTransition = /(fossil|fornybar|omstilling|grønn|gronn|klima|bærekraft|baerekraft)/i.test(latestContextSource);
+    const sourceHasCenterPeriphery = /(sentralmakt|lokalsamfunn|kommune|distrikt|sentrum|periferi)/i.test(latestContextSource);
+    const shouldSuppressTransitionPairs = latestContextSource && !sourceHasGreenTransition;
+    const shouldSuppressCenterPeripheryPairs = latestContextSource && !sourceHasCenterPeriphery;
+    const isSuppressedHistoricalPair = (sourceLabel, targetLabel) => {
+      const pairText = `${sourceLabel} ${targetLabel}`.toLowerCase();
+      if (shouldSuppressTransitionPairs && /(fossil|fornybar|omstilling|grønn|gronn)/i.test(pairText)) return true;
+      if (shouldSuppressCenterPeripheryPairs && /(sentralmakt|lokalsamfunn)/i.test(pairText)) return true;
+      return false;
+    };
+
     const conceptPairTensions = (() => {
       const deduped = new Map();
       (tensions.concept_pair_tensions || []).forEach((t) => {
@@ -2580,6 +2599,7 @@
       return Array.from(deduped.values())
         .sort((a, b) => Number(b.strength) - Number(a.strength))
         .slice(0, 5)
+        .filter(({ pair }) => !isSuppressedHistoricalPair(pair.sourceLabel, pair.targetLabel))
         .map(({ pair, strength }) => `${escHtml(pair.sourceLabel)} ↔ ${escHtml(pair.targetLabel)} <span class="meta-count">styrke ${escHtml(String(strength))}</span>`);
     })();
     const conceptTensions = (tensions.concept_tensions || []).slice(0, 5).map((t) => {
@@ -4215,7 +4235,14 @@
     const institutionalHistorySignal = detectInstitutionalMediaHistorySignal(sourceText || payload?.reflection || "");
     const parsedInsights = parseLabeledInsightCards(insights);
     const explicitAhaSer = payload?.ahaSer && typeof payload.ahaSer === "object" ? payload.ahaSer : null;
-    const prioritizedLinks = institutionalHistorySignal?.strong
+    const explicitFagkoblinger = Array.isArray(explicitAhaSer?.fagkoblinger)
+      ? explicitAhaSer.fagkoblinger.map((item) => String(item || "").trim()).filter(Boolean)
+      : (typeof explicitAhaSer?.fagkoblinger === "string"
+        ? String(explicitAhaSer.fagkoblinger).split("·").map((item) => item.trim()).filter(Boolean)
+        : []);
+    const prioritizedLinks = explicitFagkoblinger.length
+      ? explicitFagkoblinger
+      : institutionalHistorySignal?.strong
       ? ["Mediehistorie", "Presse og offentlighet", "Eierskap og redaksjonell uavhengighet", "Kulturjournalistikk", "Akademisk offentlighet", "Norsk politisk pressehistorie"]
       : literarySignal?.strong
       ? getLiterarySubjectMatches().map((item) => item?.title || item?.subject_label || "").filter(Boolean)
@@ -4224,7 +4251,7 @@
       tema: explicitAhaSer?.tema || (navSignal?.strong ? "NAV-reformen og måloppnåelse" : (literarySignal?.strong ? "Knausgårds Om våren, tilknytningsteori og litterær erkjennelse" : (parsedInsights.tema || lookup("tema") || lookup("hovedargument") || insights[1] || insights[0] || "Tema identifiseres fortløpende."))),
       hovedspenning: explicitAhaSer?.hovedspenning || (navSignal?.strong ? "Omstillingskostnad vs. strukturell utfordring" : (literarySignal?.strong ? "Tilknytningsteori vs. litterær/mytologisk utforskning av tilknytning, forknytning og løsrivelse" : (parsedInsights.hovedspenning || lookup("spenning") || insights.find((item) => /spenning|vs|mot/i.test(String(item || ""))) || "Spenning bygges fra flere meldinger."))),
       viktigsteInnsikt: explicitAhaSer?.viktigsteInnsikt || (navSignal?.strong ? "NAVs manglende måloppnåelse skyldes ikke bare midlertidig omstilling, men også varige strukturelle utfordringer i styring, organisering og stat–kommune-samspill." : (literarySignal?.strong ? "Om våren bruker tilknytningsteori som ramme, men overskrider den gjennom autofiksjon, deiksis, performativ skriving, sårbarhet, nymaterialisme og mytologiske bilder." : (parsedInsights.viktigsteInnsikt || lookup("hovedinnsikt") || insights[0] || payload?.reflection || "Ingen tydelig hovedinnsikt ennå."))),
-      fagkoblinger: Array.isArray(explicitAhaSer?.fagkoblinger) ? explicitAhaSer.fagkoblinger.join(" · ") : (explicitAhaSer?.fagkoblinger || (prioritizedLinks.length ? prioritizedLinks.slice(0, 8).join(" · ") : "Fagkoblinger blir tydeligere når flere tekster analyseres.")),
+      fagkoblinger: prioritizedLinks.length ? prioritizedLinks.slice(0, 8).join(" · ") : "Fagkoblinger blir tydeligere når flere tekster analyseres.",
       nesteSteg: explicitAhaSer?.nesteSteg || (navSignal?.strong ? "Undersøk hvordan statlig styring, kommunale mål og lokal organisering påvirker arbeidsrettet oppfølging." : (literarySignal?.strong ? "Skill mellom hva Bowlbys tilknytningsteori forklarer, og hva romanens litterære form og materialistiske/mytologiske perspektiver tilfører." : (payload?.thoughts?.neste_steg || (Array.isArray(payload?.path) ? payload.path[0] : "") || "Velg ett konkret neste steg i teksten."))),
       kortSvar: explicitAhaSer?.kortSvar || lookup("kort hovedinnsikt") || payload?.reflection || insights[0] || "AHA analyserer teksten fortløpende."
     };
