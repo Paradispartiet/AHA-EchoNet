@@ -2869,11 +2869,7 @@
     const hasStrongOpinion = opinionScore >= 5 || ((opinionEvidence.hasPoliticalActor || opinionEvidence.hasParty) && (opinionEvidence.hasClimateTransition || opinionEvidence.hasOilFossil || opinionEvidence.hasNatureProtection));
     if (hasStrongOpinion) return "opinion_article";
 
-    const strongProjectSignals = /(repo|repository|kode|koding|prompt|merge|pull request|\bpr\b|branch|commit|backend|frontend|\bui\b|\bux\b|\bapi\b|database|javascript|css|html|supabase|vercel|github|\bfil\b(?!\s*(avis|historie|historisk|medie|journalistikk)))/i;
-    const factualInstitutionSignals = /(grunnlagt|etablert|redaktør|opplag|utgiver|eierskap|avis|institusjon|historisk|utvikling|norsk|offentlighet|journalistikk|kulturavis|kommentaravis|nisjeavis)/i;
-    const factualChronologySignals = /\b(18|19|20)\d{2}\b|først|senere|deretter|i dag|gjennom/i;
-    const isLikelyFactualInstitutionText = factualInstitutionSignals.test(text) && factualChronologySignals.test(text) && !daySignals.test(text) && !hasStrongOpinion;
-    if (isLikelyFactualInstitutionText) return "academic_article";
+    const strongProjectSignals = /(repo|repository|kode|koding|prompt|merge|pull request|\bpr\b|branch|commit|backend|frontend|\bui\b|\bux\b|\bapi\b|database|javascript|css|html|supabase|vercel|github|fil\b)/i;
     if (strongProjectSignals.test(text)) return "project_note";
 
     if (theoryStrongSignals.test(text)) return "theory_idea";
@@ -3653,37 +3649,6 @@
     } else if (textType === "academic_article") {
       const literaryAttachmentSignal = detectLiteraryAttachmentSignal(analysisText);
       const publicAdminSignal = detectPublicAdministrationReformSignal(analysisText);
-      const mediaHistorySignal = /(morgenbladet|avis|redaksjon|eierskap|kulturavis|kommentaravis|offentlighet|journalistikk|nisjeavis)/i.test(analysisText);
-      if (mediaHistorySignal && !publicAdminSignal?.strong && !literaryAttachmentSignal?.strong) {
-        reflection = "Teksten fremstår som en fagtekst med mediehistorisk profil, der én institusjon følges over tid gjennom eierskap, politisk profil, økonomiske kriser og redaksjonell omforming.";
-        sortItems = [
-          { label: "Hovedobjekt", text: "Morgenbladet som norsk nisjeavis og offentlig institusjon." },
-          { label: "Historisk utvikling", text: "Fra konservativ dagsavis til intellektuell kultur- og kommentaravis gjennom flere historiske skifter." },
-          { label: "Eierskap/profil", text: "Skiftende eierskap og politiske profiler har formet avisens redaksjonelle identitet." },
-          { label: "Konfliktlinjer", text: "Redaksjonell uavhengighet ↔ økonomisk avhengighet." },
-          { label: "Nåværende posisjon", text: "En smalere, men tydeligere rolle i norsk akademisk og kulturell offentlighet." },
-          { label: "Mulige læringsspørsmål", text: "Hvordan balanseres kvalitet, uavhengighet og bærekraft i nisjepressen?" }
-        ];
-        list = [
-          "Avgrens hovedobjektet: Morgenbladet som institusjon over tid.",
-          "Knytt historiske brudd til endringer i eierskap og profil.",
-          "Skill mellom politisk linje, redaksjonell praksis og økonomiske rammer.",
-          "Drøft forholdet mellom akademisk kvalitet og smal offentlighet.",
-          "Formuler hva caset sier om norsk pressehistorie mer generelt."
-        ];
-        path = [
-          "Kartlegg hovedobjekt og historisk periode.",
-          "Sorter utviklingen i tydelige faser.",
-          "Analyser eierskap/profil opp mot redaksjonell uavhengighet.",
-          "Vurder avisens nåværende rolle i offentligheten.",
-          "Lag 2–3 presise læringsspørsmål for videre analyse."
-        ];
-        thoughts = {
-          hovedspor: "Morgenbladets utvikling viser institusjonell omforming under skiftende økonomiske og politiske vilkår.",
-          lose_tanker: "Eierskap, politisk profil, digitalisering, offentlighetsrolle.",
-          neste_steg: "Spiss analysen rundt én hovedspenning: uavhengighet versus økonomisk bærekraft."
-        };
-      } else
       if (publicAdminSignal?.strong) {
         reflection = "Teksten analyserer NAV-reformen og spør hvorfor måloppnåelsen uteblir: skyldes dette hovedsakelig omstillingskostnader, eller mer varige strukturelle utfordringer i styring og organisering?";
         sortItems = [
@@ -3851,9 +3816,8 @@
       localInsights.push("Spenningen i teksten ligger mellom knapphetsskolen og politisk økologi.");
       }
     } else {
-      const entityHint = toSentences(analysisText)[0] || "";
-      localInsights.push(`Hovedinnsikt: Teksten samler seg om ${keywords[0] || "et tydelig hovedtema"}, men trenger en mer presis faglig formulering av utvikling, konflikt og betydning.`);
-      localInsights.push(reply ? `Videre analyse: ${toSentences(reply)[0] || reply}` : `Videre analyse: Spiss temaet med hovedobjekt, utvikling over tid og én tydelig konfliktlinje. ${entityHint}`);
+      localInsights.push(`Mønster: ${keywords[0] || "temaet"} går igjen og bærer teksten.`);
+      localInsights.push(reply ? `AHA-responsen peker videre på: ${toSentences(reply)[0] || reply}` : "Videre innsikt kan styrkes med mer konkret tekst.");
     }
     const overlap = currentInsights()
       .map((ins) => String(ins.summary || ins.title || ""))
@@ -4070,40 +4034,14 @@
     const domain = detectAutoAnalysisDomain(sourceText || "", payload || {});
     const literarySignal = domain === "literary_attachment" ? { strong: true } : detectLiteraryAttachmentSignal(sourceText || payload?.reflection || "");
     const themes = filterConceptLabels(Array.isArray(payload?.keywords) ? payload.keywords : []).map(canonicalizeDisplayConcept).slice(0, 4);
-    const calibrationMatch = global.AHACalibration?.matchText && sourceText
-      ? global.AHACalibration.matchText(sourceText, { topN: 10 })
-      : null;
-    const matchedConcepts = Array.isArray(calibrationMatch?.matched_concepts) ? calibrationMatch.matched_concepts : [];
-    const matchedEmner = Array.isArray(calibrationMatch?.matched_emner) ? calibrationMatch.matched_emner : [];
-    const topicSource = `${sourceText} ${lookup("tema")} ${lookup("hovedargument")} ${payload?.reflection || ""}`;
-    const recurringNouns = takeKeywords(cleanArticleText(topicSource), 8);
-    const mainEntity = recurringNouns[0] || "tekstens hovedobjekt";
-    const hasMediaHistorySignals = /(morgenbladet|avis|redaksjon|eierskap|kulturavis|kommentaravis|offentlighet|journalistikk|politisk profil)/i.test(topicSource);
     const prioritizedLinks = literarySignal?.strong
       ? getLiterarySubjectMatches().map((item) => item?.title || item?.subject_label || "").filter(Boolean)
       : (subjectLinks.length ? subjectLinks : theoryLinks.length ? theoryLinks : (navSignal?.strong ? ["Offentlig forvaltning", "Organisasjonsteori", "Velferdsstat", "Implementeringsteori"] : themes));
-    const filteredFagkoblinger = Array.from(new Set([
-      ...prioritizedLinks,
-      ...matchedConcepts.map((item) => item?.label || item?.concept || ""),
-      ...matchedEmner.map((item) => item?.title || item?.name || "")
-    ].filter(Boolean))).filter((item) => {
-      if (/internasjonal politikk/i.test(item) && !/internasjonal|utenriks|global/i.test(topicSource)) return false;
-      return true;
-    });
-    const derivedTema = hasMediaHistorySignals
-      ? `${mainEntity.charAt(0).toUpperCase() + mainEntity.slice(1)}s historiske utvikling, eierskap, politiske profil og rolle som norsk nisjeavis.`
-      : (lookup("tema") || lookup("hovedargument") || insights[1] || insights[0] || "Tema identifiseres fortløpende.");
-    const derivedSpenning = hasMediaHistorySignals
-      ? "Redaksjonell uavhengighet ↔ økonomisk avhengighet"
-      : (lookup("spenning") || insights.find((item) => /spenning|vs|mot/i.test(String(item || ""))) || "Spenning bygges fra flere meldinger.");
-    const derivedInnsikt = hasMediaHistorySignals
-      ? `${mainEntity.charAt(0).toUpperCase() + mainEntity.slice(1)}s historie viser hvordan en avis kan overleve gjennom skiftende eierskap, politiske profiler og økonomiske kriser ved å redefinere seg som en uavhengig kultur- og kommentaravis.`
-      : (lookup("hovedinnsikt") || insights[0] || payload?.reflection || "Ingen tydelig hovedinnsikt ennå.");
     return {
-      tema: navSignal?.strong ? "NAV-reformen og måloppnåelse" : (literarySignal?.strong ? "Knausgårds Om våren, tilknytningsteori og litterær erkjennelse" : derivedTema),
-      hovedspenning: navSignal?.strong ? "Omstillingskostnad vs. strukturell utfordring" : (literarySignal?.strong ? "Tilknytningsteori vs. litterær/mytologisk utforskning av tilknytning, forknytning og løsrivelse" : derivedSpenning),
-      viktigsteInnsikt: navSignal?.strong ? "NAVs manglende måloppnåelse skyldes ikke bare midlertidig omstilling, men også varige strukturelle utfordringer i styring, organisering og stat–kommune-samspill." : (literarySignal?.strong ? "Om våren bruker tilknytningsteori som ramme, men overskrider den gjennom autofiksjon, deiksis, performativ skriving, sårbarhet, nymaterialisme og mytologiske bilder." : derivedInnsikt),
-      fagkoblinger: filteredFagkoblinger.length ? filteredFagkoblinger.slice(0, 8).join(" · ") : "Fagkoblinger blir tydeligere når flere tekster analyseres.",
+      tema: navSignal?.strong ? "NAV-reformen og måloppnåelse" : (literarySignal?.strong ? "Knausgårds Om våren, tilknytningsteori og litterær erkjennelse" : (lookup("hovedargument") || insights[1] || insights[0] || "Tema identifiseres fortløpende.")),
+      hovedspenning: navSignal?.strong ? "Omstillingskostnad vs. strukturell utfordring" : (literarySignal?.strong ? "Tilknytningsteori vs. litterær/mytologisk utforskning av tilknytning, forknytning og løsrivelse" : (lookup("spenning") || insights.find((item) => /spenning|vs|mot/i.test(String(item || ""))) || "Spenning bygges fra flere meldinger.")),
+      viktigsteInnsikt: navSignal?.strong ? "NAVs manglende måloppnåelse skyldes ikke bare midlertidig omstilling, men også varige strukturelle utfordringer i styring, organisering og stat–kommune-samspill." : (literarySignal?.strong ? "Om våren bruker tilknytningsteori som ramme, men overskrider den gjennom autofiksjon, deiksis, performativ skriving, sårbarhet, nymaterialisme og mytologiske bilder." : (lookup("hovedinnsikt") || insights[0] || payload?.reflection || "Ingen tydelig hovedinnsikt ennå.")),
+      fagkoblinger: prioritizedLinks.length ? prioritizedLinks.slice(0, 8).join(" · ") : "Fagkoblinger blir tydeligere når flere tekster analyseres.",
       nesteSteg: navSignal?.strong ? "Undersøk hvordan statlig styring, kommunale mål og lokal organisering påvirker arbeidsrettet oppfølging." : (literarySignal?.strong ? "Skill mellom hva Bowlbys tilknytningsteori forklarer, og hva romanens litterære form og materialistiske/mytologiske perspektiver tilfører." : (payload?.thoughts?.neste_steg || (Array.isArray(payload?.path) ? payload.path[0] : "") || "Velg ett konkret neste steg i teksten.")),
       kortSvar: lookup("kort hovedinnsikt") || payload?.reflection || insights[0] || "AHA analyserer teksten fortløpende."
     };
