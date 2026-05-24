@@ -2637,9 +2637,15 @@
       ["politikk", "vitenskap"],
       ["policy-momentum", "forskningsgrunnlag"],
       ["fossil økonomi", "fornybar økonomi"],
-      ["sentralmakt", "lokalsamfunn"]
+      ["sentralmakt", "lokalsamfunn"],
+      ["frihet", "kontroll"],
+      ["trygghet", "risiko"],
+      ["fellesskap", "eierskap"]
     ];
-    return genericPairs.some(([left, right]) => normalizedTitle.includes(normalizeConceptKey(left)) && normalizedTitle.includes(normalizeConceptKey(right)) && !(src.includes(left) && src.includes(right)));
+    return genericPairs.some(([left, right]) => {
+      if (!(normalizedTitle.includes(normalizeConceptKey(left)) && normalizedTitle.includes(normalizeConceptKey(right)))) return false;
+      return !(src.includes(left) && src.includes(right));
+    });
   }
 
   function renderMetaProfile(profile, chamber) {
@@ -2922,6 +2928,17 @@
     });
     const merged = dedupeSentenceLikeContent(cleaned.join("\n"));
     return fixSplitNorwegianWords(merged);
+  }
+
+  function cleanTextForConceptExtraction(raw) {
+    const base = cleanArticleText(raw);
+    return String(base || "")
+      .replace(/\bkonservativprofil\b/gi, "konservativ profil")
+      .replace(/\babonnentaneer\b/gi, "abonnentane er")
+      .replace(/\bgranskreiv\b/gi, "Gran skreiv")
+      .replace(/\bdagsavisenog\b/gi, "Dagsavisen og")
+      .replace(/\s+/g, " ")
+      .trim();
   }
 
   function sanitizeInsightText(text) {
@@ -3607,7 +3624,7 @@
     const safePayloadKeywords = Array.isArray(payload?.keywords) ? payload.keywords : [];
     const safeFallbackKeywords = Array.isArray(fallbackKeywords) ? fallbackKeywords : [];
     const safeSubjectLinks = Array.isArray(subjectLinks) ? subjectLinks : [];
-    const cleanedSource = cleanArticleText(sourceText || "").toLowerCase();
+    const cleanedSource = cleanTextForConceptExtraction(sourceText || "").toLowerCase();
     const phraseConcepts = extractAcademicPhraseConcepts(sourceText || "");
 
     function addConcept(term, source) {
@@ -3661,7 +3678,7 @@
     const safePath = Array.isArray(normalizedPayload.path) ? normalizedPayload.path : [];
     const safeSubjectMatches = Array.isArray(options?.subjectMatches) ? options.subjectMatches : (Array.isArray(normalizedPayload.subjectMatches) ? normalizedPayload.subjectMatches : []);
     const subjectLinks = normalizeSubjectLinks(safeSubjectMatches);
-    const analysisSource = cleanArticleText(source);
+    const analysisSource = cleanTextForConceptExtraction(source);
     const keywords = takeKeywords(analysisSource, 8);
     const concepts = deriveConceptsFromAfterwork(normalizedPayload, keywords, subjectLinks, source);
     const extractedTheoryLinks = extractAcademicTheoryLinks(source);
