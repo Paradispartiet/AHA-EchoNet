@@ -1214,6 +1214,18 @@
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&#39;");
   }
+  function safeMarkupText(value) {
+    return escHtml(cleanArticleText(String(value || "")).replace(/\s+/g, " ").trim());
+  }
+  function safeMarkupList(values) {
+    return (Array.isArray(values) ? values : []).map((item) => safeMarkupText(item));
+  }
+  function safeMarkupSortItems(items) {
+    return (Array.isArray(items) ? items : []).map((item) => ({
+      label: safeMarkupText(item?.label),
+      text: safeMarkupText(item?.text)
+    }));
+  }
 
   function normalizeDisplayText(value) {
     return String(value || "")
@@ -4261,11 +4273,10 @@
   function renderAutoOutputPayload(payload) {
     const host = document.getElementById("aha-auto-output");
     if (!host || !payload) return;
-    const safeSortItems = Array.isArray(payload.sortItems) ? payload.sortItems : [];
-    const safeList = Array.isArray(payload.list) ? payload.list : [];
-    const safeInsightCards = Array.isArray(payload.insightCards) ? payload.insightCards : [];
-    const safePath = Array.isArray(payload.path) ? payload.path : [];
-    const cleanPreviewText = (value) => cleanArticleText(String(value || "")).replace(/\s+/g, " ").trim();
+    const safeSortItems = safeMarkupSortItems(payload.sortItems);
+    const safeList = safeMarkupList(payload.list);
+    const safeInsightCards = safeMarkupList(payload.insightCards);
+    const safePath = safeMarkupList(payload.path);
     const textTypeLabel = humanizeTextType(payload.textType || detectTextType(host.dataset.sourceText || ""));
     const ahaSer = buildAhaSerCard(payload, host.dataset.sourceText || "");
     const historyGoSuggestion = buildHistoryGoSuggestion(payload, host.dataset.sourceText || "");
@@ -4278,33 +4289,33 @@
         <h3>AHA ser</h3>
         <article class="auto-card auto-card-primary" data-auto-card="aha_ser">
           <dl class="aha-ser-list">
-            <div><dt>Innholdstype</dt><dd>${escHtml(textTypeLabel)}</dd></div>
-            <div><dt>Tema</dt><dd>${escHtml(cleanPreviewText(ahaSer.tema))}</dd></div>
-            <div><dt>Hovedspenning</dt><dd>${escHtml(cleanPreviewText(ahaSer.hovedspenning))}</dd></div>
-            <div><dt>Viktigste innsikt</dt><dd>${escHtml(cleanPreviewText(ahaSer.viktigsteInnsikt))}</dd></div>
-            <div><dt>Fagkoblinger</dt><dd>${escHtml(cleanPreviewText(ahaSer.fagkoblinger))}</dd></div>
-            <div><dt>Neste steg</dt><dd>${escHtml(cleanPreviewText(ahaSer.nesteSteg))}</dd></div>
+            <div><dt>Innholdstype</dt><dd>${safeMarkupText(textTypeLabel)}</dd></div>
+            <div><dt>Tema</dt><dd>${safeMarkupText(ahaSer.tema)}</dd></div>
+            <div><dt>Hovedspenning</dt><dd>${safeMarkupText(ahaSer.hovedspenning)}</dd></div>
+            <div><dt>Viktigste innsikt</dt><dd>${safeMarkupText(ahaSer.viktigsteInnsikt)}</dd></div>
+            <div><dt>Fagkoblinger</dt><dd>${safeMarkupText(ahaSer.fagkoblinger)}</dd></div>
+            <div><dt>Neste steg</dt><dd>${safeMarkupText(ahaSer.nesteSteg)}</dd></div>
           </dl>
         </article>
       </section>
       <section class="auto-output-group" data-group="samtale">
         <h3>Samtale</h3>
         <div class="auto-output-grid">
-          <article class="auto-card" data-auto-card="oppsummer"><h4>Oppsummer · Hva sier teksten?</h4><p>${escHtml(cleanPreviewText(ahaSer.kortSvar))}</p></article>
-          <article class="auto-card" data-auto-card="lag_innsikt"><h4>Lag innsikt · Hovedpoeng som kan lagres</h4><p>${escHtml(cleanPreviewText(ahaSer.viktigsteInnsikt))}</p></article>
-          <article class="auto-card" data-auto-card="reflekter"><h4>Reflekter · Betydning, spenning, kritikk</h4><p>${escHtml(cleanPreviewText(payload.reflection))}</p></article>
-          <article class="auto-card" data-auto-card="sorter"><h4>Sorter · Struktur videre</h4><ul>${safeSortItems.map((item)=>`<li><strong>${escHtml(cleanPreviewText(item?.label))}:</strong> ${escHtml(cleanPreviewText(item?.text))}</li>`).join("")}</ul></article>
-          <article class="auto-card" data-auto-card="lag_laringssti"><h4>Lag læringssti · Neste progresjon</h4><ol>${safePath.map((step)=>`<li>${escHtml(cleanPreviewText(step))}</li>`).join("")}</ol></article>
-          <article class="auto-card" data-auto-card="oppsummer_dagen"><h4>Oppsummer dagen min</h4><p>${escHtml(cleanPreviewText(payload.day))}</p></article>
-          <article class="auto-card" data-auto-card="sorter_tanker"><h4>Sorter tankene mine</h4><p><strong>Hovedspor:</strong> ${escHtml(cleanPreviewText(payload?.thoughts?.hovedspor))}</p><p><strong>Løse tanker:</strong> ${escHtml(cleanPreviewText(payload?.thoughts?.lose_tanker))}</p><p><strong>Mulig neste steg:</strong> ${escHtml(cleanPreviewText(payload?.thoughts?.neste_steg))}</p></article>
+          <article class="auto-card" data-auto-card="oppsummer"><h4>Oppsummer · Hva sier teksten?</h4><p>${safeMarkupText(ahaSer.kortSvar)}</p></article>
+          <article class="auto-card" data-auto-card="lag_innsikt"><h4>Lag innsikt · Hovedpoeng som kan lagres</h4><p>${safeMarkupText(ahaSer.viktigsteInnsikt)}</p></article>
+          <article class="auto-card" data-auto-card="reflekter"><h4>Reflekter · Betydning, spenning, kritikk</h4><p>${safeMarkupText(payload.reflection)}</p></article>
+          <article class="auto-card" data-auto-card="sorter"><h4>Sorter · Struktur videre</h4><ul>${safeSortItems.map((item)=>`<li><strong>${item.label}:</strong> ${item.text}</li>`).join("")}</ul></article>
+          <article class="auto-card" data-auto-card="lag_laringssti"><h4>Lag læringssti · Neste progresjon</h4><ol>${safePath.map((step)=>`<li>${step}</li>`).join("")}</ol></article>
+          <article class="auto-card" data-auto-card="oppsummer_dagen"><h4>Oppsummer dagen min</h4><p>${safeMarkupText(payload.day)}</p></article>
+          <article class="auto-card" data-auto-card="sorter_tanker"><h4>Sorter tankene mine</h4><p><strong>Hovedspor:</strong> ${safeMarkupText(payload?.thoughts?.hovedspor)}</p><p><strong>Løse tanker:</strong> ${safeMarkupText(payload?.thoughts?.lose_tanker)}</p><p><strong>Mulig neste steg:</strong> ${safeMarkupText(payload?.thoughts?.neste_steg)}</p></article>
           ${historyGoSuggestion}
         </div>
       </section>
       <section class="auto-output-group" data-group="struktur">
         <h3>Mer / full analyse</h3>
         <div class="auto-output-grid">
-          <article class="auto-card" data-auto-card="lag_liste"><h4>Liste</h4><ul>${safeList.map((point)=>`<li>${escHtml(cleanPreviewText(point))}</li>`).join("")}</ul></article>
-          <article class="auto-card" data-auto-card="innsikt_liste"><h4>Viktigste innsikter</h4><ul>${safeInsightCards.map((point)=>`<li>${escHtml(cleanPreviewText(point))}</li>`).join("")}</ul></article>
+          <article class="auto-card" data-auto-card="lag_liste"><h4>Liste</h4><ul>${safeList.map((point)=>`<li>${point}</li>`).join("")}</ul></article>
+          <article class="auto-card" data-auto-card="innsikt_liste"><h4>Viktigste innsikter</h4><ul>${safeInsightCards.map((point)=>`<li>${point}</li>`).join("")}</ul></article>
         </div>
       </section>
       <div class="auto-output-actions">
