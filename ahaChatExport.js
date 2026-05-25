@@ -146,6 +146,11 @@
     const src = rawAnalysis && typeof rawAnalysis === "object" ? rawAnalysis : {};
     const confidence = src?.confidence && typeof src.confidence === "object" ? src.confidence : {};
     const asList = (value) => Array.isArray(value) ? value : [];
+    const clamp01 = (value) => {
+      const n = Number(value);
+      if (!Number.isFinite(n)) return 0;
+      return Math.max(0, Math.min(1, n));
+    };
     const historyGoLinks = asList(src.historyGoLinks).map((item) => {
       if (item && typeof item === "object" && !Array.isArray(item)) {
         return {
@@ -168,11 +173,11 @@
       historyGoLinks,
       suggestedActions: asList(src.suggestedActions).map((v) => String(v || "").trim()).filter(Boolean),
       confidence: {
-        contentType: Number(confidence.contentType) || 0,
-        domain: Number(confidence.domain) || 0,
-        theme: Number(confidence.theme) || 0,
-        mainTension: Number(confidence.mainTension) || 0,
-        historyGoLinks: Number(confidence.historyGoLinks) || 0
+        contentType: clamp01(confidence.contentType),
+        domain: clamp01(confidence.domain),
+        theme: clamp01(confidence.theme),
+        mainTension: clamp01(confidence.mainTension),
+        historyGoLinks: clamp01(confidence.historyGoLinks)
       },
       warnings: asList(src.warnings).map((v) => String(v || "").trim()).filter(Boolean)
     };

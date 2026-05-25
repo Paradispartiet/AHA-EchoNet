@@ -4457,7 +4457,7 @@
   function buildHistoryGoLinksFromDomain(domain, sourceText, canonicalSer) {
     if (domain === "institutional_media_history") {
       return [{
-        type: "place",
+        type: "topic",
         id: "morgenbladet",
         title: "Morgenbladet",
         reason: "Teksten handler om pressehistorie, offentlighet og institusjonell utvikling."
@@ -4479,9 +4479,7 @@
         reason: "Teksten kobler litterær analyse og psykologiske begreper."
       }];
     }
-    const theme = String(canonicalSer?.tema || "").trim() || String(sourceText || "").trim().slice(0, 60);
-    if (!theme) return [];
-    return [{ type: "topic", id: normalizeConceptKey(theme).replace(/\s+/g, "_"), title: theme, reason: "Mulig tematisk kobling for videre History Go-arbeid." }];
+    return [];
   }
   function buildHistoryGoSuggestion(payload, sourceText) {
     const source = String(sourceText || "");
