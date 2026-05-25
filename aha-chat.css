@@ -268,3 +268,34 @@ pre#out { max-height: 22vh; overflow:auto; white-space: pre-wrap; }
 .saved-afterwork-actions { display: flex; justify-content: flex-end; }
 .saved-afterwork-actions button { font-size: 11px; padding: 4px 8px; }
 .saved-afterwork-subjects ul { padding-left: 14px; }
+
+.aha-processing-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-top: 0.6rem;
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.aha-processing-indicator[hidden] {
+  display: none;
+}
+
+.aha-processing-spinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 999px;
+  animation: aha-spin 0.8s linear infinite;
+}
+
+@keyframes aha-spin {
+  to { transform: rotate(360deg); }
+}
+
+#btn-send:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}

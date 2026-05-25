@@ -49,7 +49,13 @@
             <textarea id="msg" placeholder="Skriv til AHA…"></textarea>
             <div class="composer-actions">
               <button id="btn-insights" class="secondary-action" type="button">Lag innsikt</button>
+              <button id="btn-export-analysis-main" class="secondary-action" type="button">Kopier analyse</button>
+              <button id="btn-export-analysis-json-main" class="secondary-action" type="button">Eksporter JSON</button>
               <button id="btn-send" class="send-btn" type="button">Send</button>
+            </div>
+            <div id="aha-processing-indicator" class="aha-processing-indicator" hidden>
+              <span class="aha-processing-spinner" aria-hidden="true"></span>
+              <span id="aha-processing-text">AHA analyserer teksten …</span>
             </div>
             <div id="chat-status-note" class="chat-status-note" aria-live="polite"></div>
           </div>
@@ -89,7 +95,7 @@
             <p class="module-card-preview">Kompakt innsiktsflate for begreper, koblinger og videreføring.</p>
             <div class="module-card-body">
               <section class="insight-placeholder-card"><h2>Innsikter fra samtalen</h2><p>Når AHA finner viktige poenger, vises de her.</p><p class="insight-inline-hint">AHA lager innsikter automatisk etter Send. Bruk «Kopier analyse» for samlet eksport.</p></section>
-              <details class="utility-menu"><summary>Mer</summary><div class="buttons utility-buttons"><button id="btn-status">Tema-status</button><button id="btn-concepts">Begreper</button><button id="btn-knowledge-map">Kunnskapskart</button><button id="btn-meta">Meta-profil</button><button id="btn-export-analysis">Kopier analyse</button><button id="btn-export-analysis-json">Eksporter analyse JSON</button><button id="btn-export">Eksport JSON</button><button id="btn-import-hg">Importer History Go</button><button id="btn-reset">Nullstill</button></div></details>
+              <details class="utility-menu"><summary>Mer</summary><div class="buttons utility-buttons"><button id="btn-status">Tema-status</button><button id="btn-concepts">Begreper</button><button id="btn-knowledge-map">Kunnskapskart</button><button id="btn-meta">Meta-profil</button><button id="btn-export-analysis">Kopier analyse</button><button id="btn-export-analysis-json">Eksporter JSON</button><button id="btn-export">Eksport JSON</button><button id="btn-import-hg">Importer History Go</button><button id="btn-reset">Nullstill</button></div></details>
             </div>
           </aside>
           <section class="module-card" data-module-card data-module-action="concepts"><button type="button" class="module-card-toggle" data-module-toggle aria-expanded="false"><span>Begreper</span><span class="module-card-toggle-hint">Åpne</span></button><p class="module-card-preview">Begrepskart og nøkkelord fra innsiktsmotoren.</p><div class="module-card-body"><p>Begrepsvisning lastes automatisk når kortet åpnes.</p><button type="button" class="module-inline-action" data-module-action-trigger="concepts">Oppdater begreper</button></div></section>
