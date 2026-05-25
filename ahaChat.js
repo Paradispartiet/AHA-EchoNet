@@ -3125,7 +3125,7 @@
     const academicSignals = {
       theorists: /(homer-?dixon|peluso|watts|boserup|kaplan|gleditsch|salehyan|barnett|said)/i.test(text),
       years: /\b(19|20)\d{2}\b/.test(text),
-      coreTerms: /(ressursknapphet|politisk økologi|miljødegradering|knapphetsskolen|sahel|mali|miljøsikkerhet|environmental security)/i.test(text),
+      coreTerms: /(ressursknapphet|politisk økologi|miljødegradering|knapphetsskolen|sahel|mali|miljøsikkerhet|environmental security|pinse|pentekost[eé]|den hellige ånd|tungetale|babels tårn|treenighetssøndag|gregoriansk kalender|juliansk kalender)/i.test(text),
       citations: /\bifølge\b|\bviser til\b|\(([A-ZÆØÅ][A-Za-zÆØÅæøå-]+(?:\s*&\s*[A-ZÆØÅ][A-Za-zÆØÅæøå-]+)?\s+(?:19|20)\d{2}[a-z]?)\)/.test(raw || ""),
       articleMarkers: /(i denne artikkelen|casestudier|internasjonal forskning|klimadata|kritikk av|presenterer jeg|denne artikkelen drøfter|vi drøfter|vi diskuterer|analyse|implikasjoner)/i.test(text),
       modelDebate: /(på den ene siden|på den andre siden|kritiserer|forklaringsmodell|alternativ forklaring|drøfter|innvending)/i.test(text),
@@ -3140,12 +3140,13 @@
       if (key === "publicAdminTerms") return sum + 1.5;
       return sum + 1;
     }, 0);
+    const lexiconSignal = inferReligiousLexiconEvidence(raw || text);
     const hasAcademicHardOverride = academicScore >= 5 && (academicSignals.coreTerms || academicSignals.theorists || academicSignals.publicAdminTerms || academicSignals.abstractAndKeywords || academicSignals.mixedMethods);
     const hasAcademicComboOverride = (academicSignals.abstractAndKeywords && academicSignals.articleMarkers)
       || (academicSignals.abstractAndArticle)
       || (academicSignals.mixedMethods && (academicSignals.articleMarkers || academicSignals.publicAdminTerms))
       || (/nav-reformen|navreformen/i.test(text) && hasKeywordsHeader && /i denne artikkelen/i.test(text));
-    if (hasAcademicHardOverride || hasAcademicComboOverride) return "academic_article";
+    if (hasAcademicHardOverride || hasAcademicComboOverride || lexiconSignal.strong) return "academic_article";
 
     const institutionalHistorySignal = detectInstitutionalMediaHistorySignal(raw);
     if (institutionalHistorySignal.strong) return "academic_article";
@@ -3864,6 +3865,52 @@
     return String(last?.textContent || "").trim();
   }
 
+
+  function normalizeFagkoblinger(value) {
+    if (Array.isArray(value)) return value.map((item) => String(item || "").trim()).filter(Boolean);
+    const text = String(value || "").trim();
+    if (!text) return [];
+    return text.split(/[·,]/).map((item) => item.trim()).filter(Boolean);
+  }
+
+  function inferReligiousLexiconEvidence(rawText = "") {
+    const text = cleanArticleText(rawText).toLowerCase();
+    if (!text) return { score: 0, strong: false, markers: [] };
+    const markerDefs = [
+      { key: "definisjon", weight: 1, test: /\ber\b.{0,35}\b(en|et)\b|\bdefineres\b|\bbetyr\b|\bkalles\b|\bkommer av\b|\betymologi\b/i },
+      { key: "bibel", weight: 2, test: /det nye testamentet|det gamle testamentet|apostlene|apostelgjerningene/i },
+      { key: "pinsenarrativ", weight: 2, test: /den hellige ånd|tungetale|nådegave|tydning|babels tårn|kirkens fødselsdag/i },
+      { key: "kalender", weight: 1.5, test: /gregoriansk kalender|juliansk kalender|treenighetssøndag/i },
+      { key: "historie_tradisjon", weight: 1.5, test: /historisk|tradisjon|feiring|kirkesamfunn|høytid|høytidens/i },
+      { key: "pinse", weight: 2, test: /\bpinse\b|\bpentekost[eé]\b/i }
+    ];
+    const hits = markerDefs.filter((m) => m.test.test(text));
+    const score = hits.reduce((sum, hit) => sum + hit.weight, 0);
+    return { score, strong: score >= 4 && hits.length >= 3, markers: hits.map((h) => h.key) };
+  }
+
+  function isAcademicLikeType(type) {
+    const key = String(type || "").trim().toLowerCase();
+    return key === "academic_article" || key === "theory_idea";
+  }
+
+  function isDayLogType(type) {
+    return String(type || "").trim().toLowerCase() === "day_log";
+  }
+
+  function ensureAcademicAfterworkShape(afterwork = {}, canonical = {}) {
+    if (!isAcademicLikeType(canonical?.contentType)) return afterwork;
+    const out = Object.assign({}, afterwork);
+    const summary = String(out.summary || "").trim();
+    if (!summary || /kort dagsoppsummering/i.test(summary) || /ikke dagbokmateriale/i.test(summary)) out.summary = "Kort fagoppsummering: Teksten forklarer et faglig tema gjennom definisjoner, nøkkelbegreper, historisk kontekst og tolkning.";
+    const reflection = String(out.reflection || "").trim();
+    if (!reflection || /dagslogg/i.test(reflection)) out.reflection = String(canonical?.reflection || "");
+    const path = Array.isArray(out.path) ? out.path : [];
+    const dayLogPathSignals = /(oppsummer hendelsene kort|finn ett mønster eller én følelse|velg én ting du tar med videre i morgen)/i;
+    if (!path.length || path.some((step) => dayLogPathSignals.test(String(step || "")))) out.path = Array.isArray(canonical?.path) ? canonical.path : [];
+    return out;
+  }
+
   function buildAhaAnalysisExportBundle() {
     const nowIso = new Date().toISOString();
     const auto = loadAutoOutputs() || {};
@@ -3883,11 +3930,25 @@
     const subjectMatches = normalizeSubjectLinks(selectedAfterwork?.subjectLinks || payload?.subjectMatches || []);
     const insights = Array.isArray(selectedAfterwork?.insights) ? selectedAfterwork.insights : [];
     const concepts = Array.isArray(selectedAfterwork?.concepts) ? selectedAfterwork.concepts : [];
+    const canonical = buildCanonicalAnalysis(payload, sourceText);
+    const selectedAfterworkType = String(selectedAfterwork?.textType || selectedAfterwork?.innholdstype || "").trim();
+    const canonicalType = String(canonical?.contentType || "").trim();
+    const allowAfterwork = !selectedAfterworkType || selectedAfterworkType === canonicalType || (isAcademicLikeType(selectedAfterworkType) && isAcademicLikeType(canonicalType));
+    const forceCanonicalOverDayLog = isDayLogType(selectedAfterworkType) && isAcademicLikeType(canonicalType);
     const calibrationStatus = typeof global.AHACalibration?.getStatus === "function" ? global.AHACalibration.getStatus() : {};
     const metaProfile = (typeof global.InsightsEngine?.buildMetaProfile === "function")
       ? (global.InsightsEngine.buildMetaProfile(chamber) || {})
       : (chamber?.meta || {});
     const knowledgeMap = chamber?.knowledgeMap || chamber?.map || {};
+    const mergedAfterwork = ensureAcademicAfterworkShape({
+      summary: String((allowAfterwork && !forceCanonicalOverDayLog && selectedAfterwork?.summary) || payload?.summary || canonical?.summary || payload?.day || ""),
+      insight: String(payload?.insight || (insights[0] || "")),
+      reflection: String((allowAfterwork && !forceCanonicalOverDayLog && selectedAfterwork?.reflection) || canonical?.reflection || payload?.reflection || ""),
+      sortItems: (allowAfterwork && !forceCanonicalOverDayLog && Array.isArray(selectedAfterwork?.sortItems) && selectedAfterwork.sortItems.length) ? selectedAfterwork.sortItems : (canonical?.sortItems?.length ? canonical.sortItems : (Array.isArray(payload?.sortItems) ? payload.sortItems : [])),
+      list: (allowAfterwork && !forceCanonicalOverDayLog && Array.isArray(selectedAfterwork?.list) && selectedAfterwork.list.length) ? selectedAfterwork.list : (canonical?.list?.length ? canonical.list : (Array.isArray(payload?.list) ? payload.list : [])),
+      path: (allowAfterwork && !forceCanonicalOverDayLog && Array.isArray(selectedAfterwork?.learningPath) && selectedAfterwork.learningPath.length) ? selectedAfterwork.learningPath : (canonical?.path?.length ? canonical.path : (Array.isArray(payload?.path) ? payload.path : [])),
+      thoughts: selectedAfterwork?.thoughtSorting || payload?.thoughts || {}
+    }, canonical);
     return {
       version: "aha_analysis_export_v1",
       exportedAt: nowIso,
@@ -3897,27 +3958,17 @@
       sourceTextPreview: String(auto?.sourceTextPreview || selectedAfterwork?.sourceTextPreview || sourceText.replace(/\s+/g, " ").slice(0, 180)),
       ahaReply: latestAhaReplyText || String(explicitAhaSer?.kortSvar || payload?.kortSvar || ""),
       ahaSer: {
-        innholdstype: String(payload?.innholdstype || payload?.textType || ""),
-        tema: String(explicitAhaSer?.tema || payload?.tema || ""),
-        hovedspenning: String(explicitAhaSer?.hovedspenning || payload?.hovedspenning || ""),
-        viktigsteInnsikt: String(explicitAhaSer?.viktigsteInnsikt || payload?.viktigsteInnsikt || ""),
-        fagkoblinger: Array.isArray(explicitAhaSer?.fagkoblinger)
-          ? explicitAhaSer.fagkoblinger
-          : (Array.isArray(payload?.fagkoblinger) ? payload.fagkoblinger : []),
-        nesteSteg: String(explicitAhaSer?.nesteSteg || payload?.nesteSteg || ""),
-        kortSvar: String(explicitAhaSer?.kortSvar || payload?.kortSvar || "")
+        innholdstype: String(canonical?.contentType || payload?.innholdstype || payload?.textType || ""),
+        tema: String(canonical?.ahaSer?.tema || explicitAhaSer?.tema || payload?.tema || ""),
+        hovedspenning: String(canonical?.ahaSer?.hovedspenning || explicitAhaSer?.hovedspenning || payload?.hovedspenning || ""),
+        viktigsteInnsikt: String(canonical?.ahaSer?.viktigsteInnsikt || explicitAhaSer?.viktigsteInnsikt || payload?.viktigsteInnsikt || ""),
+        fagkoblinger: normalizeFagkoblinger(canonical?.ahaSer?.fagkoblinger || explicitAhaSer?.fagkoblinger || payload?.fagkoblinger),
+        nesteSteg: String(canonical?.ahaSer?.nesteSteg || explicitAhaSer?.nesteSteg || payload?.nesteSteg || ""),
+        kortSvar: String(canonical?.ahaSer?.kortSvar || explicitAhaSer?.kortSvar || payload?.kortSvar || "")
       },
-      afterwork: {
-        summary: String(payload?.summary || payload?.day || ""),
-        insight: String(payload?.insight || (insights[0] || "")),
-        reflection: String(selectedAfterwork?.reflection || payload?.reflection || ""),
-        sortItems: Array.isArray(selectedAfterwork?.sortItems) ? selectedAfterwork.sortItems : (Array.isArray(payload?.sortItems) ? payload.sortItems : []),
-        list: Array.isArray(selectedAfterwork?.list) ? selectedAfterwork.list : (Array.isArray(payload?.list) ? payload.list : []),
-        path: Array.isArray(selectedAfterwork?.learningPath) ? selectedAfterwork.learningPath : (Array.isArray(payload?.path) ? payload.path : []),
-        thoughts: selectedAfterwork?.thoughtSorting || payload?.thoughts || {}
-      },
+      afterwork: mergedAfterwork,
       insights,
-      concepts,
+      concepts: (allowAfterwork && !forceCanonicalOverDayLog && concepts.length) ? concepts : (canonical?.concepts || []),
       subjectMatches,
       metaProfile,
       knowledgeMap,
@@ -4147,6 +4198,23 @@ ${asBullet(b.concepts)}
       ].slice(0, 6);
       path = quality.suggestedStructure.slice(0, 5);
     } else if (textType === "academic_article") {
+      day = "Kort fagoppsummering: Teksten forklarer et faglig tema gjennom definisjoner, nøkkelbegreper, historisk kontekst og tolkning.";
+      path = [
+        "Forstå grunnfortellingen i teksten.",
+        "Lær nøkkelbegreper og bruk dem presist.",
+        "Sammenlign forklaringen med andre tekster/tradisjoner.",
+        "Undersøk variasjoner mellom kirkesamfunn eller tolkningstradisjoner.",
+        "Formuler en egen faglig forklaring med begrepsbruk."
+      ];
+      sortItems = [
+        { label: "Definisjon", text: "Avklar hva fenomenet betyr og hvordan det avgrenses." },
+        { label: "Fortelling / hendelse", text: "Beskriv hovedhendelsen eller grunnfortellingen teksten bygger på." },
+        { label: "Teologisk betydning", text: "Vis hvilken tros- eller idémessig betydning fenomenet får." },
+        { label: "Historisk bakgrunn", text: "Sett temaet inn i en historisk kontekst og utviklingslinje." },
+        { label: "Symbolsk kontrast", text: "Forklar sentrale kontraster/symboler som bærer tolkningen." },
+        { label: "Feiring / praksis", text: "Beskriv hvordan temaet praktiseres eller markeres." },
+        { label: "Sentrale begreper", text: "Trekk ut fagbegreper, ikke bare hyppige ord." }
+      ];
       const literaryAttachmentSignal = detectLiteraryAttachmentSignal(analysisText);
       const publicAdminSignal = detectPublicAdministrationReformSignal(analysisText);
       const institutionalHistorySignal = detectInstitutionalMediaHistorySignal(analysisText);
@@ -4633,6 +4701,33 @@ ${asBullet(b.concepts)}
     };
   }
 
+
+
+  function buildAcademicConceptCandidates(sourceText = "", payload = {}) {
+    const fromPayload = Array.isArray(payload?.concepts) ? payload.concepts : [];
+    const normalizedPayload = fromPayload.map((item) => String(item || "").trim()).filter(Boolean);
+    const text = ` ${cleanArticleText(sourceText).toLowerCase()} `;
+    const candidates = [
+      "Pinse", "pentekosté", "Den hellige ånd", "tungetale", "nådegave", "tydning", "apostlene", "Babels tårn", "kirkens fødselsdag", "gregoriansk kalender", "juliansk kalender", "treenighetssøndag"
+    ];
+    const lexiconHits = candidates.filter((term) => text.includes(term.toLowerCase()));
+    return Array.from(new Set(normalizedPayload.concat(lexiconHits))).slice(0, 20);
+  }
+
+  function buildCanonicalAnalysis(payload, sourceText = "") {
+    const safePayload = payload && typeof payload === "object" ? payload : {};
+    const canonicalSer = buildAhaSerCard(safePayload, sourceText);
+    return {
+      contentType: String(safePayload?.textType || detectTextType(sourceText || "")),
+      ahaSer: canonicalSer,
+      reflection: String(safePayload?.reflection || canonicalSer?.viktigsteInnsikt || "").trim(),
+      summary: String(safePayload?.day || "").trim(),
+      sortItems: Array.isArray(safePayload?.sortItems) ? safePayload.sortItems : [],
+      list: Array.isArray(safePayload?.list) ? safePayload.list : [],
+      path: Array.isArray(safePayload?.path) ? safePayload.path : [],
+      concepts: buildAcademicConceptCandidates(sourceText, safePayload)
+    };
+  }
   function buildHistoryGoSuggestion(payload, sourceText) {
     const source = String(sourceText || "");
     const text = `${source} ${(Array.isArray(payload?.insightCards) ? payload.insightCards.join(" ") : "")}`.toLowerCase();
@@ -5075,6 +5170,8 @@ ${asBullet(b.concepts)}
 
   global.loadChamberFromStorage = global.loadChamberFromStorage || loadChamberFromStorage;
   global.saveChamberToStorage = global.saveChamberToStorage || saveChamberToStorage;
+  global.AHATestHooks = Object.assign({}, global.AHATestHooks || {}, { detectTextType, buildCanonicalAnalysis, buildAhaAnalysisExportBundle, formatAhaAnalysisExportMarkdown, buildAutoOutputs, normalizeFagkoblinger });
+
   global.AHAChat = {
     loadChamberFromStorage,
     saveChamberToStorage,
