@@ -31,7 +31,9 @@ cd backend/aha_engine
 pytest
 ```
 
-Testene verifiserer blant annet health-endepunkt, canonical feltstruktur, confidence-intervall, og warnings for kort/tom melding.
+Testene verifiserer blant annet health-endepunkt, canonical feltstruktur, confidence-intervall, warnings for kort/tom melding, og fixture-basert kontraktstest mot golden fixtures i `docs/fixtures/aha-analysis/`.
+
+Fixture-testen sjekker foreløpig canonical shape/struktur (inkludert confidence og `historyGoLinks`-struktur), ikke full semantisk match med `expectedCanonicalAnalysis` ennå.
 
 ## Teststandard
 
