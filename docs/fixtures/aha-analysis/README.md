@@ -31,3 +31,5 @@ Alle fixtures følger samme canonical object med standardfeltene:
 
 Under Python-migreringen kan samme `inputText` kjøres gjennom begge motorer, og output sammenlignes mot `expectedCanonicalAnalysis`.
 Målet er ikke byte-for-byte identitet i språkføring, men konsistent struktur, tydelig tema/tension/insight og rimelig confidence-nivå per case.
+
+Kjør validering lokalt med `npm run validate:aha-fixtures`.
