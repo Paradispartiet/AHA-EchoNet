@@ -79,6 +79,7 @@
     const insights = Array.isArray(selectedAfterwork?.insights) ? selectedAfterwork.insights : [];
     const concepts = Array.isArray(selectedAfterwork?.concepts) ? selectedAfterwork.concepts : [];
     const canonical = deps.buildCanonicalAnalysis(payload, sourceText);
+    const canonicalAnalysis = normalizeAhaAnalysis(canonical);
     const selectedAfterworkType = String(selectedAfterwork?.textType || selectedAfterwork?.innholdstype || "").trim();
     const canonicalType = String(canonical?.contentType || "").trim();
     const isAcademicType = (type) => {
@@ -117,6 +118,7 @@
         nesteSteg: String(canonical?.ahaSer?.nesteSteg || explicitAhaSer?.nesteSteg || payload?.nesteSteg || ""),
         kortSvar: String(canonical?.ahaSer?.kortSvar || explicitAhaSer?.kortSvar || payload?.kortSvar || "")
       },
+      canonicalAnalysis,
       afterwork: mergedAfterwork,
       insights,
       concepts: (allowAfterwork && !forceCanonicalOverDayLog && concepts.length) ? concepts : (canonical?.concepts || []),
@@ -137,6 +139,47 @@
         chatTurns: chatLog.length
       },
       calibrationStatus
+    };
+  }
+
+  function normalizeAhaAnalysis(rawAnalysis) {
+    const src = rawAnalysis && typeof rawAnalysis === "object" ? rawAnalysis : {};
+    const confidence = src?.confidence && typeof src.confidence === "object" ? src.confidence : {};
+    const asList = (value) => Array.isArray(value) ? value : [];
+    const clamp01 = (value) => {
+      const n = Number(value);
+      if (!Number.isFinite(n)) return 0;
+      return Math.max(0, Math.min(1, n));
+    };
+    const historyGoLinks = asList(src.historyGoLinks).map((item) => {
+      if (item && typeof item === "object" && !Array.isArray(item)) {
+        return {
+          type: String(item.type || item.kind || "topic").trim() || "topic",
+          id: String(item.id || item.slug || item.key || item.title || "").trim(),
+          title: String(item.title || item.label || item.name || item.id || "").trim(),
+          reason: String(item.reason || item.why || "").trim()
+        };
+      }
+      const text = String(item || "").trim();
+      return text ? { type: "topic", id: text.toLowerCase().replace(/\s+/g, "_"), title: text, reason: "" } : null;
+    }).filter(Boolean);
+    return {
+      contentType: String(src.contentType || "").trim(),
+      domain: String(src.domain || "").trim(),
+      theme: String(src.theme || "").trim(),
+      mainTension: String(src.mainTension || "").trim(),
+      keyInsight: String(src.keyInsight || "").trim(),
+      fieldConnections: asList(src.fieldConnections).map((v) => String(v || "").trim()).filter(Boolean),
+      historyGoLinks,
+      suggestedActions: asList(src.suggestedActions).map((v) => String(v || "").trim()).filter(Boolean),
+      confidence: {
+        contentType: clamp01(confidence.contentType),
+        domain: clamp01(confidence.domain),
+        theme: clamp01(confidence.theme),
+        mainTension: clamp01(confidence.mainTension),
+        historyGoLinks: clamp01(confidence.historyGoLinks)
+      },
+      warnings: asList(src.warnings).map((v) => String(v || "").trim()).filter(Boolean)
     };
   }
 
