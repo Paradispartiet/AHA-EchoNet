@@ -12,14 +12,35 @@
     const isNewspaperText = /\b(avis|avisa|avisen|dagsavis|ukeavis|vekeavis|nisjeavis|kulturavis|kommentaravis|redaktør|redaktor|redaksjon)\b/i.test(src);
     const isMediaText = /\b(presse|journalistikk|mediehus|medium|medier|kringkaster|allmennkringkaster|redaksjonell)\b/i.test(src);
     const isInstitutionText = /\b(institusjon|organisasjon|stiftelse|universitet|museum|bibliotek|forlag|konsern|selskap)\b/i.test(src);
-    const institutionTerms = isNewspaperText || isMediaText || isInstitutionText || /\b(morgenbladet|tidsskrift|eierskap)\b/i.test(src);
+    const institutionTerms = isNewspaperText || isMediaText || isInstitutionText || /\b(morgenbladet|tidsskrift|eierskap|mandat|profil|offentlig rolle)\b/i.test(src);
     const historicalTerms = /\b(ble grunnlagt|grunnlagt|opprettet|etablert|historie|historisk|gjennom|fra .* til|tidligere|senere|på 18\d{2}|på 19\d{2}|på 20\d{2}|i 18\d{2}|i 19\d{2}|i 20\d{2}|over tid)\b/i.test(src);
     const profileTerms = /\b(konservativ|liberal|uavhengig|politisk profil|nisjeavis|kulturavis|kommentaravis|offentlighet)\b/i.test(src);
     const personDiaryNoise = /\b(jeg|meg|min|mitt|mamma|pappa|kjæreste)\b/i.test(src);
-    const score = (institutionTerms ? 2 : 0) + (historicalTerms ? 2 : 0) + (profileTerms ? 1 : 0) - (personDiaryNoise ? 1 : 0);
+    const geopoliticalSignal = detectGeopoliticalPowerSignal(src);
+    const score = (institutionTerms ? 2 : 0) + (historicalTerms ? 2 : 0) + (profileTerms ? 1 : 0) - (personDiaryNoise ? 1 : 0) - (geopoliticalSignal.strong ? 3 : 0);
     return { strong: score >= 3, institutionTerms, historicalTerms, profileTerms, isMediaText, isNewspaperText, isInstitutionText };
   }
 
+
+  function detectGeopoliticalPowerSignal(text) {
+    const src = cleanArticleText(text || "").toLowerCase();
+    const hasStandaloneKI = /(^|[^a-zæøå0-9])ki([^a-zæøå0-9]|$)/i.test(src);
+    const isNegatedAiMention = /\b(ikke|utan|uten)\b[^.!?\n]{0,80}\b(ki|kunstig intelligens|artificial intelligence)\b/i.test(src);
+    const terms = [
+      ["usa",1.6], ["kina",1.6], ["gdp",1.2], ["bnp",1.2], ["ppp",1.2], ["kjøpekraftsparitet",1.2], ["militær",1.2], ["forsvarsbudsjett",1.2],
+      ["demografi",1.0], ["taiwan",1.4], ["xi",0.8], ["trump",0.8], ["allierte",1.0], ["atomarsenal",1.2], ["kunstig intelligens",1.0], ["artificial intelligence",1.0], ["stormaktsrivalisering",1.4]
+    ];
+    const matchedTerms = terms
+      .filter(([term]) => src.includes(term))
+      .filter(([term]) => !isNegatedAiMention || (term !== "kunstig intelligens" && term !== "artificial intelligence"))
+      .map(([term, weight]) => [term, weight]);
+    if (hasStandaloneKI && !isNegatedAiMention) matchedTerms.push(["ki", 0.8]);
+    const score = matchedTerms.reduce((sum, [, w]) => sum + w, 0);
+    const matchedLabels = matchedTerms.map(([t]) => t);
+    const hasUSChinaCore = matchedLabels.includes("usa") && matchedLabels.includes("kina");
+    const hasPowerDimension = matchedLabels.some((t) => ["bnp", "gdp", "ppp", "kjøpekraftsparitet", "militær", "forsvarsbudsjett", "demografi", "taiwan", "allierte", "atomarsenal", "ki", "kunstig intelligens", "artificial intelligence"].includes(t));
+    return { strong: score >= 5.0 && hasUSChinaCore && hasPowerDimension, score, matchedTerms: matchedLabels };
+  }
   function detectPublicAdministrationReformSignal(text) {
     const normalizedText = cleanArticleText(text || "").toLowerCase();
     const terms = [["nav",2.2],["nav-reformen",2.2],["nav-kontor",2.0],["nav-kontorene",2.0],["aetat",1.6],["trygdeetaten",1.6],["sosialtjenesten",1.4],["stat og kommune",2.0],["partnerskap",1.2],["lokalkontor",1.6],["arbeids- og velferdsdirektoratet",1.8],["arbeidsrettet oppfølging",2.0],["flere i arbeid",1.6],["færre på trygd",1.6],["måloppnåelse",1.3],["omstillingsprosess",1.4],["organisasjonsreform",1.8],["innholdsreform",1.8],["statlig styring",1.8],["kommunale mål",1.5],["kommunale virkemidler",1.5],["ytelsessaksbehandling",1.8],["arbeidsavklaringspenger",1.5],["arbeidsevnevurdering",1.4],["forenklingsarbeid",1.4],["standardisering",1.0],["byråkrati",1.0],["reformevaluering",1.5],["effektforskning",1.3],["prosessevaluering",1.3],["kontorstørrelse",1.2],["lokal organisering",1.4],["virksomhetsutvikling",1.3]];
@@ -98,6 +119,7 @@
   }
 
   global.AHAChatSignals = {
+    detectGeopoliticalPowerSignal,
     detectTextType,
     inferReligiousLexiconEvidence,
     detectLiteraryAttachmentSignal,
