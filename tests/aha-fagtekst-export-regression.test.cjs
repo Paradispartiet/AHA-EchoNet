@@ -69,14 +69,22 @@ context.localStorage.setItem('aha_chat_auto_outputs_v1', JSON.stringify({
 }));
 context.localStorage.setItem('aha_afterwork_v1', JSON.stringify([
   {
+    createdAt: '2026-05-25T10:00:00.000Z',
     sourceTextHash: 'pinse_hash',
     textType: 'day_log',
     reflection: 'Dette leses som en dagslogg',
     summary: 'Kort dagsoppsummering: ...',
     learningPath: ['Oppsummer hendelsene kort', 'Finn ett mønster eller én følelse', 'Velg én ting du tar med videre i morgen'],
-    concepts: []
+    concepts: [],
+    details: { note: 'AFTERWORK_NOTE' }
   }
 ]));
+context.localStorage.setItem('aha_insight_chamber_v1', JSON.stringify({
+  insights: [{ id: 'ins-1', text: 'CHAMBER_INSIGHT_TEXT' }],
+  chatLog: [{ role: 'user', text: 'CHAMBER_CHAT_TEXT' }],
+  meta: { profile: 'CHAMBER_META_PROFILE' },
+  knowledgeMap: { nodes: [{ id: 'km1', title: 'KNOWLEDGE_NODE_TITLE' }] }
+}));
 
 const bundle = hooks.buildAhaAnalysisExportBundle();
 const md = hooks.formatAhaAnalysisExportMarkdown(bundle);
@@ -117,5 +125,13 @@ assert.ok(md.includes('### Meta-profil'));
 assert.ok(md.includes('### Chamber meta'));
 assert.ok(md.includes('### KnowledgeMap / kunnskapstre'));
 assert.ok(md.includes('### Calibration status'));
+assert.ok(md.includes('### Full chamber snapshot'));
+assert.ok(md.includes('"sourceTextHash": "pinse_hash"'));
+assert.ok(md.includes('"createdAt"'));
+assert.ok(md.includes('"AFTERWORK_NOTE"'));
+assert.ok(md.includes('CHAMBER_INSIGHT_TEXT'));
+assert.ok(md.includes('CHAMBER_CHAT_TEXT'));
+assert.ok(md.includes('CHAMBER_META_PROFILE'));
+assert.ok(md.includes('KNOWLEDGE_NODE_TITLE'));
 
 console.log('aha-fagtekst-export-regression passed');

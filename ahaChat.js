@@ -4034,6 +4034,16 @@
     const afterwork = b.afterwork || {};
     const sortItems = Array.isArray(afterwork.sortItems) ? afterwork.sortItems : [];
     const asBullet = (items) => (Array.isArray(items) && items.length ? items.map((item) => `- ${typeof item === "string" ? item : (item?.label ? `${item.label}: ${item.text || ""}` : JSON.stringify(item))}`).join("\n") : "- (ingen)");
+    const formatJsonForMarkdown = (value, fallback) => {
+      try {
+        const base = value == null ? fallback : value;
+        const safe = safeSerializeForExport(base);
+        const normalized = safe === undefined ? fallback : safe;
+        const json = JSON.stringify(normalized, null, 2);
+        if (typeof json === "string") return json;
+      } catch (_) {}
+      return Array.isArray(fallback) ? "[]" : "{}";
+    };
     return `# AHA analyse
 
 ## Kildetekst
@@ -4073,65 +4083,70 @@ ${asBullet(b.concepts)}
 
 ## Meta / Kunnskapskart
 - Fagkoblinger/subjectMatches: ${(Array.isArray(b.subjectMatches) ? b.subjectMatches.map((m) => m?.title || m?.subject_id).filter(Boolean).join(", ") : "")}
-- Meta-profil: ${JSON.stringify(b.metaProfile || {})}
-- Kunnskapskart/chamber-status: ${JSON.stringify(b.chamberSummary || {})}
+- Meta-profil: ${formatJsonForMarkdown(b.metaProfile, {})}
+- Kunnskapskart/chamber-status: ${formatJsonForMarkdown(b.chamberSummary, {})}
 
 ## Teknisk
 - sourceTextHash: ${b.sourceTextHash || ""}
 - createdAt: ${b.createdAt || ""}
 - exportedAt: ${b.exportedAt || ""}
-- calibrationStatus: ${JSON.stringify(b.calibrationStatus || {})}
+- calibrationStatus: ${formatJsonForMarkdown(b.calibrationStatus, {})}
 
 ## Full eksportdata
 
 ### Full bundle
 \`\`\`json
-${JSON.stringify(b || {}, null, 2)}
+${formatJsonForMarkdown(b, {})}
 \`\`\`
 
 ### Rå auto-output payload
 \`\`\`json
-${JSON.stringify(b.rawAutoPayload || {}, null, 2)}
+${formatJsonForMarkdown(b.rawAutoPayload, {})}
 \`\`\`
 
 ### Valgt afterwork
 \`\`\`json
-${JSON.stringify(b.selectedAfterwork || {}, null, 2)}
+${formatJsonForMarkdown(b.selectedAfterwork, {})}
 \`\`\`
 
 ### Relevante afterworks
 \`\`\`json
-${JSON.stringify(b.relevantAfterworks || [], null, 2)}
+${formatJsonForMarkdown(b.relevantAfterworks, [])}
 \`\`\`
 
 ### Chamber insights
 \`\`\`json
-${JSON.stringify(b.chamberInsights || [], null, 2)}
+${formatJsonForMarkdown(b.chamberInsights, [])}
 \`\`\`
 
 ### Chamber chatLog
 \`\`\`json
-${JSON.stringify(b.chamberChatLog || [], null, 2)}
+${formatJsonForMarkdown(b.chamberChatLog, [])}
 \`\`\`
 
 ### Meta-profil
 \`\`\`json
-${JSON.stringify(b.metaProfile || {}, null, 2)}
+${formatJsonForMarkdown(b.metaProfile, {})}
 \`\`\`
 
 ### Chamber meta
 \`\`\`json
-${JSON.stringify(b.chamberMeta || {}, null, 2)}
+${formatJsonForMarkdown(b.chamberMeta, {})}
 \`\`\`
 
 ### KnowledgeMap / kunnskapstre
 \`\`\`json
-${JSON.stringify(b.knowledgeMap || {}, null, 2)}
+${formatJsonForMarkdown(b.knowledgeMap, {})}
 \`\`\`
 
 ### Calibration status
 \`\`\`json
-${JSON.stringify(b.calibrationStatus || {}, null, 2)}
+${formatJsonForMarkdown(b.calibrationStatus, {})}
+\`\`\`
+
+### Full chamber snapshot
+\`\`\`json
+${formatJsonForMarkdown(b.fullChamberSnapshot, {})}
 \`\`\`
 `;
   }
