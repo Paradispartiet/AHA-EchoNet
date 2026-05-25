@@ -252,6 +252,12 @@
     el.textContent = String(message || "");
   }
 
+  function renderAuxPanel(targetId, markup) {
+    const el = document.getElementById(targetId);
+    if (!el) return;
+    el.innerHTML = String(markup || "");
+  }
+
 
   function dedupeSubjectMatches(matches) {
     const list = Array.isArray(matches) ? matches : [];
@@ -2005,51 +2011,59 @@
     return true;
   }
 
-  function bindPanelActionHandler() {
-    const panel = document.getElementById("panel");
-    if (!panel || panel.dataset.ahaPanelBound === "true") return;
-    panel.dataset.ahaPanelBound = "true";
-    panel.addEventListener("click", (event) => {
-      const resolved = resolvePanelAction(event.target);
-      if (!resolved) return;
-      event.preventDefault();
-      let ok = false;
-      if (resolved.action === "confirm-emne" || resolved.action === "dismiss-emne") {
-        ok = applyEmneSuggestionAction(resolved.action, resolved.insightId, resolved.emneId);
-      } else if (resolved.action === "confirm-merge" || resolved.action === "dismiss-merge") {
-        ok = applyMergeAction(resolved.action, resolved.sourceId, resolved.targetId);
-      } else if (resolved.action === "delete-afterwork") {
-        deleteAfterworkEntry(resolved.afterworkId);
-        ok = true;
-      } else if (resolved.action === "build-from-afterwork") {
-        buildFromAfterworkEntry(resolved.afterworkId);
-        ok = true;
-      } else if (resolved.action === "open-afterwork") {
-        const selector = `.saved-afterwork-card[data-afterwork-id="${resolved.afterworkId}"]`;
-        const detailsEl = panel.querySelector(`${selector} details`);
-        if (detailsEl) detailsEl.open = true;
-        panel.querySelector(selector)?.scrollIntoView?.({ behavior: "smooth", block: "center" });
-        setStatusNote("Etterarbeid åpnet.");
-        ok = true;
-      } else if (resolved.action === "export-afterwork-json") {
-        const entry = loadAfterworkEntries().find((item) => item?.id === resolved.afterworkId);
-        if (entry) {
-          if (navigator.clipboard?.writeText) {
-            navigator.clipboard.writeText(JSON.stringify(entry, null, 2))
-              .then(() => setStatusNote("Etterarbeid kopiert som JSON."))
-              .catch(() => setStatusNote("Kunne ikke kopiere JSON (clipboard utilgjengelig)."));
-          } else {
-            setStatusNote("Clipboard er ikke tilgjengelig i denne klienten.");
-          }
-          ok = true;
+  function handleResolvedPanelAction(resolved, panelEl) {
+    if (!resolved || !panelEl) return false;
+    let ok = false;
+    if (resolved.action === "confirm-emne" || resolved.action === "dismiss-emne") {
+      ok = applyEmneSuggestionAction(resolved.action, resolved.insightId, resolved.emneId);
+    } else if (resolved.action === "confirm-merge" || resolved.action === "dismiss-merge") {
+      ok = applyMergeAction(resolved.action, resolved.sourceId, resolved.targetId);
+    } else if (resolved.action === "delete-afterwork") {
+      deleteAfterworkEntry(resolved.afterworkId);
+      ok = true;
+    } else if (resolved.action === "build-from-afterwork") {
+      buildFromAfterworkEntry(resolved.afterworkId);
+      ok = true;
+    } else if (resolved.action === "open-afterwork") {
+      const selector = `.saved-afterwork-card[data-afterwork-id="${resolved.afterworkId}"]`;
+      const detailsEl = panelEl.querySelector(`${selector} details`);
+      if (detailsEl) detailsEl.open = true;
+      panelEl.querySelector(selector)?.scrollIntoView?.({ behavior: "smooth", block: "center" });
+      setStatusNote("Etterarbeid åpnet.");
+      ok = true;
+    } else if (resolved.action === "export-afterwork-json") {
+      const entry = loadAfterworkEntries().find((item) => item?.id === resolved.afterworkId);
+      if (entry) {
+        if (navigator.clipboard?.writeText) {
+          navigator.clipboard.writeText(JSON.stringify(entry, null, 2))
+            .then(() => setStatusNote("Etterarbeid kopiert som JSON."))
+            .catch(() => setStatusNote("Kunne ikke kopiere JSON (clipboard utilgjengelig)."));
+        } else {
+          setStatusNote("Clipboard er ikke tilgjengelig i denne klienten.");
         }
-      } else if (resolved.action === "link-afterwork-historygo") {
-        const entry = loadAfterworkEntries().find((item) => item?.id === resolved.afterworkId) || {};
-        const signalText = `${entry?.sourceTextPreview || ""} ${(Array.isArray(entry?.concepts) ? entry.concepts : []).join(" ")}`;
-        setStatusNote(/nav|forvaltning|kommune|statlig|velferd/i.test(signalText) ? "History Go-kobling: politikk — Politikk & samfunn." : "History Go-kobling foreslått basert på tema.");
         ok = true;
       }
-      if (ok && resolved.action !== "delete-afterwork" && resolved.action !== "build-from-afterwork") showInsights();
+    } else if (resolved.action === "link-afterwork-historygo") {
+      const entry = loadAfterworkEntries().find((item) => item?.id === resolved.afterworkId) || {};
+      const signalText = `${entry?.sourceTextPreview || ""} ${(Array.isArray(entry?.concepts) ? entry.concepts : []).join(" ")}`;
+      setStatusNote(/nav|forvaltning|kommune|statlig|velferd/i.test(signalText) ? "History Go-kobling: politikk — Politikk & samfunn." : "History Go-kobling foreslått basert på tema.");
+      ok = true;
+    }
+    if (ok && resolved.action !== "delete-afterwork" && resolved.action !== "build-from-afterwork") showInsights();
+    return ok;
+  }
+
+  function bindPanelActionHandler() {
+    ["panel", "afterwork-panel"].forEach((panelId) => {
+      const panel = document.getElementById(panelId);
+      if (!panel || panel.dataset.ahaPanelBound === "true") return;
+      panel.dataset.ahaPanelBound = "true";
+      panel.addEventListener("click", (event) => {
+        const resolved = resolvePanelAction(event.target);
+        if (!resolved) return;
+        event.preventDefault();
+        handleResolvedPanelAction(resolved, panel);
+      });
     });
   }
 
@@ -2807,7 +2821,9 @@
       return;
     }
     const profile = global.MetaInsightsEngine.buildUserMetaProfile(chamber, SUBJECT_ID);
-    renderPanel(renderMetaProfile(profile, chamber));
+    const html = renderMetaProfile(profile, chamber);
+    renderAuxPanel("meta-profile-panel", html);
+    renderPanel(html);
     out("");
   }
 
@@ -2841,6 +2857,10 @@
     if (log) log.innerHTML = "";
     const autoOutput = document.getElementById("aha-auto-output");
     if (autoOutput) autoOutput.innerHTML = "";
+    const metaProfilePanel = document.getElementById("meta-profile-panel");
+    if (metaProfilePanel) metaProfilePanel.innerHTML = "";
+    const afterworkPanel = document.getElementById("afterwork-panel");
+    if (afterworkPanel) afterworkPanel.innerHTML = "";
     renderHighlightsRail();
     updateEmptyState();
   }
@@ -3384,11 +3404,17 @@
   function showSavedAfterwork() {
     const entries = loadAfterworkEntries().slice().sort((a, b) => new Date(b?.createdAt || 0).getTime() - new Date(a?.createdAt || 0).getTime());
     if (!entries.length) {
-      renderPanel('<div class="saved-afterwork-panel"><p>Ingen lagrede etterarbeid ennå. Kjør en analyse/sendt melding, og trykk «Lagre etterarbeid» nederst i AHA etterarbeid-panelet.</p></div>');
+      const html = '<div class="saved-afterwork-panel"><p>Ingen lagrede etterarbeid ennå. Kjør en analyse/sendt melding, og trykk «Lagre etterarbeid» nederst i AHA etterarbeid-panelet.</p></div>';
+      renderAuxPanel("afterwork-panel", html);
+      renderPanel(html);
       return;
     }
-    renderPanel(`<div class="saved-afterwork-panel"><div class="saved-afterwork-list">${entries.map(renderAfterworkEntry).join("")}</div></div>`);
+    const html = `<div class="saved-afterwork-panel"><div class="saved-afterwork-list">${entries.map(renderAfterworkEntry).join("")}</div></div>`;
+    renderAuxPanel("afterwork-panel", html);
+    renderPanel(html);
   }
+  global.showMeta = showMeta;
+  global.showSavedAfterwork = showSavedAfterwork;
 
   function buildAfterworkPrompt(entry) {
     const safeEntry = entry && typeof entry === "object" ? entry : {};
