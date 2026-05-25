@@ -3931,164 +3931,44 @@
     return out;
   }
 
-  function buildAhaAnalysisExportBundle() {
-    const nowIso = new Date().toISOString();
-    const auto = loadAutoOutputs() || {};
-    const payload = auto?.payload && typeof auto.payload === "object" ? auto.payload : {};
-    const explicitAhaSer = payload?.ahaSer && typeof payload.ahaSer === "object" ? payload.ahaSer : {};
-    const chamber = loadChamberFromStorage() || {};
-    const afterworks = loadAfterworkEntries();
-    const latestAfterwork = afterworks.length ? afterworks[afterworks.length - 1] : {};
-    const sourceText = String(auto?.sourceText || "");
-    const sourceTextHash = String(auto?.sourceTextHash || latestAfterwork?.sourceTextHash || sourceHash(sourceText));
-    const relevantAfterworks = afterworks.filter((entry) => String(entry?.sourceTextHash || "") === sourceTextHash);
-    const selectedAfterwork = relevantAfterworks.length
-      ? relevantAfterworks[relevantAfterworks.length - 1]
-      : (!sourceTextHash && latestAfterwork ? latestAfterwork : {});
-    const chatLog = Array.isArray(chamber?.chatLog) ? chamber.chatLog : [];
-    const latestAhaReplyText = getLatestAhaReplyFromDom();
-    const subjectMatches = normalizeSubjectLinks(selectedAfterwork?.subjectLinks || payload?.subjectMatches || []);
-    const insights = Array.isArray(selectedAfterwork?.insights) ? selectedAfterwork.insights : [];
-    const concepts = Array.isArray(selectedAfterwork?.concepts) ? selectedAfterwork.concepts : [];
-    const canonical = buildCanonicalAnalysis(payload, sourceText);
-    const selectedAfterworkType = String(selectedAfterwork?.textType || selectedAfterwork?.innholdstype || "").trim();
-    const canonicalType = String(canonical?.contentType || "").trim();
-    const allowAfterwork = !selectedAfterworkType || selectedAfterworkType === canonicalType || (isAcademicLikeType(selectedAfterworkType) && isAcademicLikeType(canonicalType));
-    const forceCanonicalOverDayLog = isDayLogType(selectedAfterworkType) && isAcademicLikeType(canonicalType);
-    const calibrationStatus = typeof global.AHACalibration?.getStatus === "function" ? global.AHACalibration.getStatus() : {};
-    const metaProfile = (typeof global.InsightsEngine?.buildMetaProfile === "function")
-      ? (global.InsightsEngine.buildMetaProfile(chamber) || {})
-      : (chamber?.meta || {});
-    const knowledgeMap = chamber?.knowledgeMap || chamber?.map || {};
-    const mergedAfterwork = ensureAcademicAfterworkShape({
-      summary: String((allowAfterwork && !forceCanonicalOverDayLog && selectedAfterwork?.summary) || payload?.summary || canonical?.summary || payload?.day || ""),
-      insight: String(payload?.insight || (insights[0] || "")),
-      reflection: String((allowAfterwork && !forceCanonicalOverDayLog && selectedAfterwork?.reflection) || canonical?.reflection || payload?.reflection || ""),
-      sortItems: (allowAfterwork && !forceCanonicalOverDayLog && Array.isArray(selectedAfterwork?.sortItems) && selectedAfterwork.sortItems.length) ? selectedAfterwork.sortItems : (canonical?.sortItems?.length ? canonical.sortItems : (Array.isArray(payload?.sortItems) ? payload.sortItems : [])),
-      list: (allowAfterwork && !forceCanonicalOverDayLog && Array.isArray(selectedAfterwork?.list) && selectedAfterwork.list.length) ? selectedAfterwork.list : (canonical?.list?.length ? canonical.list : (Array.isArray(payload?.list) ? payload.list : [])),
-      path: (allowAfterwork && !forceCanonicalOverDayLog && Array.isArray(selectedAfterwork?.learningPath) && selectedAfterwork.learningPath.length) ? selectedAfterwork.learningPath : (canonical?.path?.length ? canonical.path : (Array.isArray(payload?.path) ? payload.path : [])),
-      thoughts: selectedAfterwork?.thoughtSorting || payload?.thoughts || {}
-    }, canonical);
+  function getAhaExportDeps() {
     return {
-      version: "aha_analysis_export_v1",
-      exportedAt: nowIso,
-      createdAt: String(auto?.createdAt || selectedAfterwork?.createdAt || nowIso),
-      sourceTextHash,
-      sourceText,
-      sourceTextPreview: String(auto?.sourceTextPreview || selectedAfterwork?.sourceTextPreview || sourceText.replace(/\s+/g, " ").slice(0, 180)),
-      ahaReply: latestAhaReplyText || String(explicitAhaSer?.kortSvar || payload?.kortSvar || ""),
-      ahaSer: {
-        innholdstype: String(canonical?.contentType || payload?.innholdstype || payload?.textType || ""),
-        tema: String(canonical?.ahaSer?.tema || explicitAhaSer?.tema || payload?.tema || ""),
-        hovedspenning: String(canonical?.ahaSer?.hovedspenning || explicitAhaSer?.hovedspenning || payload?.hovedspenning || ""),
-        viktigsteInnsikt: String(canonical?.ahaSer?.viktigsteInnsikt || explicitAhaSer?.viktigsteInnsikt || payload?.viktigsteInnsikt || ""),
-        fagkoblinger: normalizeFagkoblinger(canonical?.ahaSer?.fagkoblinger || explicitAhaSer?.fagkoblinger || payload?.fagkoblinger),
-        nesteSteg: String(canonical?.ahaSer?.nesteSteg || explicitAhaSer?.nesteSteg || payload?.nesteSteg || ""),
-        kortSvar: String(canonical?.ahaSer?.kortSvar || explicitAhaSer?.kortSvar || payload?.kortSvar || "")
-      },
-      afterwork: mergedAfterwork,
-      insights,
-      concepts: (allowAfterwork && !forceCanonicalOverDayLog && concepts.length) ? concepts : (canonical?.concepts || []),
-      subjectMatches,
-      metaProfile,
-      knowledgeMap,
-      chamberSummary: {
-        insightCount: Array.isArray(chamber?.insights) ? chamber.insights.length : 0,
-        recentAfterworkCount: relevantAfterworks.length,
-        chatTurns: chatLog.length
-      },
-      calibrationStatus
+      loadAutoOutputs,
+      loadAfterworkEntries,
+      sourceHash,
+      buildCanonicalAnalysis,
+      ensureAcademicAfterworkShape,
+      normalizeSubjectLinks,
+      normalizeFagkoblinger,
+      getLatestAhaReplyFromDom,
+      loadChamberFromStorage,
+      getCalibrationStatus: () =>
+        (typeof global.AHACalibration?.getStatus === "function"
+          ? global.AHACalibration.getStatus()
+          : {}),
+      buildMetaProfile: (chamber) =>
+        (typeof global.InsightsEngine?.buildMetaProfile === "function"
+          ? (global.InsightsEngine.buildMetaProfile(chamber) || {})
+          : (chamber?.meta || {})),
+      setStatusNote,
+      out
     };
   }
 
+  function buildAhaAnalysisExportBundle() {
+    return global.AHAChatExport.buildAhaAnalysisExportBundle(getAhaExportDeps());
+  }
+
   function formatAhaAnalysisExportMarkdown(bundle) {
-    const b = bundle && typeof bundle === "object" ? bundle : {};
-    const ser = b.ahaSer || {};
-    const afterwork = b.afterwork || {};
-    const sortItems = Array.isArray(afterwork.sortItems) ? afterwork.sortItems : [];
-    const asBullet = (items) => (Array.isArray(items) && items.length ? items.map((item) => `- ${typeof item === "string" ? item : (item?.label ? `${item.label}: ${item.text || ""}` : JSON.stringify(item))}`).join("\n") : "- (ingen)");
-    return `# AHA analyse
-
-## Kildetekst
-${b.sourceText || "(mangler)"}
-
-## Kort svar
-${ser.kortSvar || b.ahaReply || "(mangler)"}
-
-## AHA SER
-- Innholdstype: ${ser.innholdstype || ""}
-- Tema: ${ser.tema || ""}
-- Hovedspenning: ${ser.hovedspenning || ""}
-- Viktigste innsikt: ${ser.viktigsteInnsikt || ""}
-- Fagkoblinger: ${(Array.isArray(ser.fagkoblinger) ? ser.fagkoblinger.join(", ") : "")}
-- Neste steg: ${ser.nesteSteg || ""}
-
-## Oppsummer
-${afterwork.summary || ""}
-
-## Reflekter
-${afterwork.reflection || ""}
-
-## Sortert struktur
-${sortItems.length ? sortItems.map((item) => `- ${item?.label || "Punkt"}: ${item?.text || ""}`).join("\n") : "- (ingen)"}
-
-## Liste
-${asBullet(afterwork.list)}
-
-## Læringssti
-${asBullet(afterwork.path)}
-
-## Innsikter
-${asBullet(b.insights)}
-
-## Begreper
-${asBullet(b.concepts)}
-
-## Meta / Kunnskapskart
-- Fagkoblinger/subjectMatches: ${(Array.isArray(b.subjectMatches) ? b.subjectMatches.map((m) => m?.title || m?.subject_id).filter(Boolean).join(", ") : "")}
-- Meta-profil: ${JSON.stringify(b.metaProfile || {})}
-- Kunnskapskart/chamber-status: ${JSON.stringify(b.chamberSummary || {})}
-
-## Teknisk
-- sourceTextHash: ${b.sourceTextHash || ""}
-- createdAt: ${b.createdAt || ""}
-- exportedAt: ${b.exportedAt || ""}
-- calibrationStatus: ${JSON.stringify(b.calibrationStatus || {})}
-`;
+    return global.AHAChatExport.formatAhaAnalysisExportMarkdown(bundle);
   }
 
   async function copyAhaAnalysisExportMarkdown() {
-    const bundle = buildAhaAnalysisExportBundle();
-    const markdown = formatAhaAnalysisExportMarkdown(bundle);
-    try {
-      await navigator.clipboard.writeText(markdown);
-      setStatusNote("AHA-analyse kopiert.");
-    } catch (err) {
-      out(markdown);
-      setStatusNote("Kunne ikke kopiere automatisk. Viste analysen i Full analyse-panelet.");
-    }
+    return global.AHAChatExport.copyAhaAnalysisExportMarkdown(getAhaExportDeps());
   }
 
   function exportAhaAnalysisJson() {
-    const bundle = buildAhaAnalysisExportBundle();
-    const json = JSON.stringify(bundle, null, 2);
-    const now = new Date();
-    const filename = `aha-analysis-${now.getUTCFullYear()}-${String(now.getUTCMonth()+1).padStart(2,"0")}-${String(now.getUTCDate()).padStart(2,"0")}-${String(now.getUTCHours()).padStart(2,"0")}${String(now.getUTCMinutes()).padStart(2,"0")}.json`;
-    try {
-      const blob = new Blob([json], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-      setStatusNote("AHA-analyse eksportert som JSON.");
-    } catch (err) {
-      out(json);
-      setStatusNote("Kunne ikke laste ned JSON. Viste data i Full analyse-panelet.");
-    }
+    return global.AHAChatExport.exportAhaAnalysisJson(getAhaExportDeps());
   }
 
   function buildAutoOutputs(userText, ahaReply) {
