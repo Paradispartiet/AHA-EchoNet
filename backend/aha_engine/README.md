@@ -8,6 +8,7 @@ Dette er et minimalt Python/FastAPI-skjelett for fremtidig AHA Engine.
 - Dette **erstatter ikke** eksisterende JavaScript-motor per nå.
 - Eksisterende JavaScript-analyseflyt og UI forblir urørt i denne PR-en.
 - Endepunktet returnerer et canonical AHA analysis object i tråd med kontrakten brukt i PR 1–3.
+- Python Engine har nå en første **deterministisk fixture-baseline** for enkel klassifisering.
 
 ## Lokal oppstart
 
@@ -33,7 +34,9 @@ pytest
 
 Testene verifiserer blant annet health-endepunkt, canonical feltstruktur, confidence-intervall, warnings for kort/tom melding, og fixture-basert kontraktstest mot golden fixtures i `docs/fixtures/aha-analysis/`.
 
-Fixture-testen sjekker foreløpig canonical shape/struktur (inkludert confidence og `historyGoLinks`-struktur), ikke full semantisk match med `expectedCanonicalAnalysis` ennå.
+Fixture-testen sjekker nå første semantiske baseline: `contentType`, `domain`, og sterke `historyGoLinks`-ID-er der fixtures forventer lenker.
+
+Full semantisk kalibrering (eksakt likhet på alle felt) kommer i senere PR-er.
 
 ## Teststandard
 

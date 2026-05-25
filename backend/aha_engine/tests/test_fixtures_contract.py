@@ -10,27 +10,6 @@ from app.main import app
 
 client = TestClient(app)
 
-CANONICAL_TOP_LEVEL_KEYS = {
-    "contentType",
-    "domain",
-    "theme",
-    "mainTension",
-    "keyInsight",
-    "fieldConnections",
-    "historyGoLinks",
-    "suggestedActions",
-    "confidence",
-    "warnings",
-}
-
-CANONICAL_CONFIDENCE_KEYS = {
-    "contentType",
-    "domain",
-    "theme",
-    "mainTension",
-    "historyGoLinks",
-}
-
 
 def _repo_root() -> Path:
     current = Path(__file__).resolve()
@@ -45,10 +24,8 @@ def _fixture_files() -> list[Path]:
     return sorted(path for path in fixture_dir.iterdir() if path.suffix == ".json")
 
 
-def test_fixture_contract_compatibility() -> None:
-    # Python AHA Engine is currently a placeholder. These fixture tests verify
-    # contract compatibility only. Semantic parity with expectedCanonicalAnalysis
-    # will be introduced in a later PR.
+def test_fixture_semantic_baseline() -> None:
+    # PR 7 verifies first semantic baseline only: contentType, domain, and strong History Go link ids. Full semantic parity comes later.
     fixture_files = _fixture_files()
     assert len(fixture_files) == 8
 
@@ -67,29 +44,14 @@ def test_fixture_contract_compatibility() -> None:
         assert response.status_code == 200, fixture_path.name
 
         body = response.json()
+        assert body["contentType"] == expected_analysis["contentType"], fixture_path.name
+        assert body["domain"] == expected_analysis["domain"], fixture_path.name
 
-        assert set(expected_analysis.keys()) == CANONICAL_TOP_LEVEL_KEYS, fixture_path.name
-        assert set(body.keys()) == CANONICAL_TOP_LEVEL_KEYS, fixture_path.name
+        expected_links = expected_analysis.get("historyGoLinks", [])
+        returned_links = body.get("historyGoLinks", [])
 
-        assert isinstance(body["contentType"], str) and body["contentType"].strip(), fixture_path.name
-        assert isinstance(body["domain"], str) and body["domain"].strip(), fixture_path.name
-        assert isinstance(body["theme"], str) and body["theme"].strip(), fixture_path.name
-        assert isinstance(body["mainTension"], str) and body["mainTension"].strip(), fixture_path.name
-        assert isinstance(body["keyInsight"], str) and body["keyInsight"].strip(), fixture_path.name
-
-        assert isinstance(body["fieldConnections"], list), fixture_path.name
-        assert isinstance(body["historyGoLinks"], list), fixture_path.name
-        assert isinstance(body["suggestedActions"], list), fixture_path.name
-        assert isinstance(body["confidence"], dict), fixture_path.name
-        assert isinstance(body["warnings"], list), fixture_path.name
-
-        confidence = body["confidence"]
-        assert set(expected_analysis["confidence"].keys()) == CANONICAL_CONFIDENCE_KEYS, fixture_path.name
-        assert set(confidence.keys()) == CANONICAL_CONFIDENCE_KEYS, fixture_path.name
-        for value in confidence.values():
-            assert isinstance(value, (int, float)), fixture_path.name
-            assert 0 <= value <= 1, fixture_path.name
-
-        for link in body["historyGoLinks"]:
-            assert isinstance(link, dict), fixture_path.name
-            assert {"type", "id", "title", "reason"}.issubset(link.keys()), fixture_path.name
+        if expected_links:
+            assert returned_links, fixture_path.name
+            expected_ids = {link["id"] for link in expected_links}
+            returned_ids = {link.get("id") for link in returned_links}
+            assert expected_ids.intersection(returned_ids), fixture_path.name
