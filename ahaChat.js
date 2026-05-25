@@ -252,6 +252,12 @@
     el.textContent = String(message || "");
   }
 
+  function renderAuxPanel(targetId, markup) {
+    const el = document.getElementById(targetId);
+    if (!el) return;
+    el.innerHTML = String(markup || "");
+  }
+
 
   function dedupeSubjectMatches(matches) {
     const list = Array.isArray(matches) ? matches : [];
@@ -2807,7 +2813,9 @@
       return;
     }
     const profile = global.MetaInsightsEngine.buildUserMetaProfile(chamber, SUBJECT_ID);
-    renderPanel(renderMetaProfile(profile, chamber));
+    const html = renderMetaProfile(profile, chamber);
+    renderAuxPanel("meta-profile-panel", html);
+    renderPanel(html);
     out("");
   }
 
@@ -3384,10 +3392,14 @@
   function showSavedAfterwork() {
     const entries = loadAfterworkEntries().slice().sort((a, b) => new Date(b?.createdAt || 0).getTime() - new Date(a?.createdAt || 0).getTime());
     if (!entries.length) {
-      renderPanel('<div class="saved-afterwork-panel"><p>Ingen lagrede etterarbeid ennå. Kjør en analyse/sendt melding, og trykk «Lagre etterarbeid» nederst i AHA etterarbeid-panelet.</p></div>');
+      const html = '<div class="saved-afterwork-panel"><p>Ingen lagrede etterarbeid ennå. Kjør en analyse/sendt melding, og trykk «Lagre etterarbeid» nederst i AHA etterarbeid-panelet.</p></div>';
+      renderAuxPanel("afterwork-panel", html);
+      renderPanel(html);
       return;
     }
-    renderPanel(`<div class="saved-afterwork-panel"><div class="saved-afterwork-list">${entries.map(renderAfterworkEntry).join("")}</div></div>`);
+    const html = `<div class="saved-afterwork-panel"><div class="saved-afterwork-list">${entries.map(renderAfterworkEntry).join("")}</div></div>`;
+    renderAuxPanel("afterwork-panel", html);
+    renderPanel(html);
   }
 
   function buildAfterworkPrompt(entry) {

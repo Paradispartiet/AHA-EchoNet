@@ -70,71 +70,40 @@
           </div>
         </section>
 
-        <section class="module-card aha-ser-card is-expanded" aria-label="AHA automatisk analyse">
-          <h2 class="module-card-title">AHA SER</h2>
-          <p class="module-card-preview">Innholdstype, tema, hovedspenning, innsikt, fagkoblinger og neste steg.</p>
-          <div id="aha-auto-output" class="aha-auto-output module-card-body" aria-live="polite"></div>
+        <section class="aha-module-grid" aria-label="AHA moduloversikt">
+          <section class="module-card aha-ser-card" data-module-card data-module-name="aha-ser">
+            <button type="button" class="module-card-toggle" data-module-toggle aria-expanded="false"><span>AHA SER</span><span class="module-card-toggle-hint">Åpne</span></button>
+            <p class="module-card-preview">Tema, hovedspenning og viktigste innsikt.</p>
+            <div class="module-card-body"><div id="aha-auto-output" class="aha-auto-output" aria-live="polite"></div></div>
+          </section>
+          <section class="module-card chat-module-card" data-module-card data-module-name="chat">
+            <button type="button" class="module-card-toggle" data-module-toggle aria-expanded="false"><span>Samtale</span><span class="module-card-toggle-hint">Åpne</span></button>
+            <p class="module-card-preview" id="chat-preview">Siste svar vises her for kontinuitet i dialogen.</p>
+            <div class="module-card-body">
+              <label for="chat-log">Samtale</label>
+              <div class="chat-log-shell"><div id="chat-log" class="chat-log" aria-live="polite"></div><aside id="chat-highlights-rail" class="chat-highlights-rail" aria-label="Highlights i samtalen"></aside></div>
+            </div>
+          </section>
+          <aside class="module-card insight-rail" data-module-card data-module-name="insights">
+            <button type="button" class="module-card-toggle" data-module-toggle aria-expanded="false"><span>Innsikter</span><span class="module-card-toggle-hint">Åpne</span></button>
+            <p class="module-card-preview">Kompakt innsiktsflate for begreper, koblinger og videreføring.</p>
+            <div class="module-card-body">
+              <section class="insight-placeholder-card"><h2>Innsikter fra samtalen</h2><p>Når AHA finner viktige poenger, vises de her.</p><p class="insight-inline-hint">Trykk «Lag innsikt» ved siden av Send når du vil hente ut innsikter.</p></section>
+              <details class="utility-menu"><summary>Mer</summary><div class="buttons utility-buttons"><button id="btn-status">Tema-status</button><button id="btn-concepts">Begreper</button><button id="btn-knowledge-map">Kunnskapskart</button><button id="btn-meta">Meta-profil</button><button id="btn-export">Eksport JSON</button><button id="btn-import-hg">Importer History Go</button><button id="btn-reset">Nullstill</button></div></details>
+            </div>
+          </aside>
+          <section class="module-card" data-module-card><button type="button" class="module-card-toggle" data-module-toggle aria-expanded="false"><span>Begreper</span><span class="module-card-toggle-hint">Åpne</span></button><p class="module-card-preview">Begrepskart og nøkkelord fra innsiktsmotoren.</p><div class="module-card-body"><p>Bruk «Begreper» i Innsikter-kortet for å vise detaljer.</p></div></section>
+          <section class="module-card" data-module-card><button type="button" class="module-card-toggle" data-module-toggle aria-expanded="false"><span>Læringssti</span><span class="module-card-toggle-hint">Åpne</span></button><p class="module-card-preview">Forslag til neste læringssteg.</p><div class="module-card-body"><p>Bruk hurtighandlingen «Lag læringssti» for oppdatert innhold.</p></div></section>
+          <section class="module-card" data-module-card><button type="button" class="module-card-toggle" data-module-toggle aria-expanded="false"><span>Fagkoblinger</span><span class="module-card-toggle-hint">Åpne</span></button><p class="module-card-preview">Tverrfaglige koblinger og relevante felt.</p><div class="module-card-body"><p>Fagkoblinger vises i AHA SER og innsiktsanalysen.</p></div></section>
+          <section class="module-card" data-module-card><button type="button" class="module-card-toggle" data-module-toggle aria-expanded="false"><span>Meta-profil</span><span class="module-card-toggle-hint">Åpne</span></button><p class="module-card-preview">Tema, mønstre og profildata.</p><div class="module-card-body"><div id="meta-profile-panel"></div></div></section>
+          <section class="module-card" data-module-card><button type="button" class="module-card-toggle" data-module-toggle aria-expanded="false"><span>Etterarbeid</span><span class="module-card-toggle-hint">Åpne</span></button><p class="module-card-preview">Lagrede etterarbeid og chamber-mønstre.</p><div class="module-card-body"><div id="afterwork-panel"></div></div></section>
+          <section class="module-card" data-module-card><button type="button" class="module-card-toggle" data-module-toggle aria-expanded="false"><span>History Go</span><span class="module-card-toggle-hint">Åpne</span></button><p class="module-card-preview">Koble til og importer historikk.</p><div class="module-card-body"><p>Bruk chips for «Koble til History Go» og «Importer fra History Go».</p></div></section>
+          <aside class="module-card" data-module-card><button type="button" class="module-card-toggle" data-module-toggle aria-expanded="false"><span>Full analyse</span><span class="module-card-toggle-hint">Åpne</span></button><p class="module-card-preview">Detaljer og rå analyse.</p><div class="module-card-body"><div id="panel"></div><pre id="out"></pre></div></aside>
+          <section id="empty-state" class="empty-state module-card" aria-live="polite"><h2>Hva vil du forstå i dag?</h2><p>AHA hjelper deg å samle tanker, finne mønstre og gjøre samtaler til innsikt.</p></section>
         </section>
-
-        <section id="empty-state" class="empty-state module-card" aria-live="polite">
-          <h2>Hva vil du forstå i dag?</h2>
-          <p>AHA hjelper deg å samle tanker, finne mønstre og gjøre samtaler til innsikt.</p>
-        </section>
-
-        <div class="chat-log-wrap module-card is-expanded">
-          <h2 class="module-card-title">Samtale / kildetekst</h2>
-          <p class="module-card-preview">Siste svar vises alltid her for kontinuitet i dialogen.</p>
-          <div class="module-card-body">
-          <label for="chat-log">Samtale</label>
-          <div class="chat-log-shell">
-            <div id="chat-log" class="chat-log" aria-live="polite"></div>
-            <aside id="chat-highlights-rail" class="chat-highlights-rail" aria-label="Highlights i samtalen"></aside>
-          </div>
-        </div>
-        </div>
       </section>
 
-      <aside class="insight-rail module-card" data-module-card>
-        <button type="button" class="module-card-toggle" data-module-toggle aria-expanded="false"><span>Innsikter</span><span class="module-card-toggle-hint">Åpne</span></button>
-        <p class="module-card-preview">Kompakt innsiktsflate for begreper, koblinger og videreføring.</p>
-        <div class="module-card-body">
-        <section class="insight-placeholder-card">
-          <h2>Innsikter fra samtalen</h2>
-          <p>Når AHA finner viktige poenger, vises de her. Panelet brukes til innsikt, kategorisering, begrepskoblinger og videre arbeid.</p>
-          <p class="insight-inline-hint">Trykk «Lag innsikt» ved siden av Send når du vil hente ut innsikter.</p>
-          <ul class="insight-placeholder-list">
-            <li><strong>Innsikt:</strong> trekk ut hovedpoenger når du vil.</li>
-            <li><strong>Kategorier:</strong> foreslåtte retninger dukker opp etter svar.</li>
-            <li><strong>Begrepskoblinger:</strong> se hva som henger sammen på tvers av samtaler.</li>
-            <li><strong>Bygg videre:</strong> bruk handlinger og chips for neste steg.</li>
-          </ul>
-          <!-- Frontend-placeholder: viser struktur for innsiktslag før dedikert datamodell/ruting er koblet på. -->
-        </section>
-
-        <details class="utility-menu">
-          <summary>Mer</summary>
-          <div class="buttons utility-buttons">
-            <button id="btn-status">Tema-status</button>
-            <button id="btn-concepts">Begreper</button>
-            <button id="btn-knowledge-map">Kunnskapskart</button>
-            <button id="btn-meta">Meta-profil</button>
-            <button id="btn-export">Eksport JSON</button>
-            <button id="btn-import-hg">Importer History Go</button>
-            <button id="btn-reset">Nullstill</button>
-          </div>
-        </details>
-        </div>
-      </aside>
-
-      <aside class="module-card" data-module-card>
-        <button type="button" class="module-card-toggle" data-module-toggle aria-expanded="false"><span>Full analyse</span><span class="module-card-toggle-hint">Åpne</span></button>
-        <p class="module-card-preview">Detaljer, kildetekst og dypanalyse vises her ved behov.</p>
-        <div class="module-card-body">
-          <div id="panel"></div>
-          <pre id="out"></pre>
-        </div>
-      </aside>
-    </main>
+      </main>
 
 
   </div>
