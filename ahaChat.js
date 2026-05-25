@@ -2635,6 +2635,7 @@
     const src = String(sourceText || "").toLowerCase();
     const genericPairs = [
       ["politikk", "vitenskap"],
+      ["policy", "momentum"],
       ["policy-momentum", "forskningsgrunnlag"],
       ["fossil økonomi", "fornybar økonomi"],
       ["sentralmakt", "lokalsamfunn"],
@@ -2646,6 +2647,34 @@
       if (!(normalizedTitle.includes(normalizeConceptKey(left)) && normalizedTitle.includes(normalizeConceptKey(right)))) return false;
       return !(src.includes(left) && src.includes(right));
     });
+  }
+
+  function collectInstitutionalTextNearTensions(latestAcademicContext) {
+    const payload = latestAcademicContext?.payload && typeof latestAcademicContext.payload === "object"
+      ? latestAcademicContext.payload
+      : {};
+    const ahaSer = payload?.ahaSer && typeof payload.ahaSer === "object" ? payload.ahaSer : {};
+    const sortItems = Array.isArray(payload?.sortItems) ? payload.sortItems : [];
+    const sourceText = String(latestAcademicContext?.sourceText || "").toLowerCase();
+    const matchesSource = (title) => {
+      const pair = String(title || "").split(/↔|<->|—| vs\.? /i).map((part) => part.trim()).filter(Boolean);
+      if (pair.length < 2) return false;
+      return sourceText.includes(pair[0].toLowerCase()) && sourceText.includes(pair[1].toLowerCase());
+    };
+    const items = [];
+    const hovedspenning = String(ahaSer?.hovedspenning || "").trim().replace(/[.。]\s*$/, "");
+    if (hovedspenning) items.push(hovedspenning);
+    const konfliktlinjerRaw = String(
+      sortItems.find((item) => normalizeConceptKey(item?.label || "").includes("konfliktlinjer"))?.text || ""
+    ).trim();
+    if (konfliktlinjerRaw) {
+      konfliktlinjerRaw.split(/[;\n]+/).map((part) => part.trim()).filter(Boolean).forEach((part) => items.push(part.replace(/[.。]\s*$/, "")));
+    }
+    return items
+      .map((item) => canonicalizeConceptPairTitle(item))
+      .filter((item) => item.includes("↔"))
+      .filter((item) => !shouldSuppressInstitutionalPair(item, sourceText) || matchesSource(item))
+      .filter((item, idx, arr) => arr.findIndex((other) => other.toLowerCase() === item.toLowerCase()) === idx);
   }
 
   function renderMetaProfile(profile, chamber) {
@@ -2755,7 +2784,12 @@
         return `${escHtml(pair.sourceLabel)} ↔ ${escHtml(pair.targetLabel)} <span class="meta-count">styrke ${escHtml(String(item?.strength || 0))}</span>`;
       })
       .filter(Boolean);
-    const tensionSectionItems = conceptPairTensions.length
+    const institutionalTextNearTensions = institutionalMediaSource ? collectInstitutionalTextNearTensions(latestAcademicContext) : [];
+    const tensionSectionItems = institutionalMediaSource
+      ? (institutionalTextNearTensions.length
+        ? institutionalTextNearTensions.slice(0, 3).map((title) => escHtml(title))
+        : ["Ingen spenninger koblet til de nyeste temaene ennå."])
+      : conceptPairTensions.length
       ? conceptPairTensions.slice(0, 3)
       : (derivedPublicAdminTensions.length
         ? derivedPublicAdminTensions.slice(0, 3)
