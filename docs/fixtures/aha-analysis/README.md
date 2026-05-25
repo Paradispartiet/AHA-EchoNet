@@ -22,6 +22,7 @@ Alle fixtures følger samme canonical object med standardfeltene:
 
 - `contentType`, `domain`, `theme`, `mainTension`, `keyInsight`
 - `fieldConnections`, `historyGoLinks`, `suggestedActions`
+- Ikke-tomme `historyGoLinks` skal bruke strukturerte objekter med `type`, `id`, `title`, `reason`.
 - `confidence` (med delscore-felter)
 - `warnings`
 

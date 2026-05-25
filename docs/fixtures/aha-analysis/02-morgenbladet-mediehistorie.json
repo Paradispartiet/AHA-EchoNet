@@ -14,7 +14,12 @@
       "kulturjournalistikk"
     ],
     "historyGoLinks": [
-      "Avisen beskrives eksplisitt som del av norsk offentlighet over tid, som støtter en historisk kobling til medieinstitusjoners utvikling."
+      {
+        "type": "topic",
+        "id": "morgenbladet",
+        "title": "Morgenbladet",
+        "reason": "Avisen beskrives eksplisitt som del av norsk offentlighet over tid, som støtter en historisk kobling til medieinstitusjoners utvikling."
+      }
     ],
     "suggestedActions": [
       "Konkretiser med tidsperioder for å styrke historisk etterprøvbarhet.",

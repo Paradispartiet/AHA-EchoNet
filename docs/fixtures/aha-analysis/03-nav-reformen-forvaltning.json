@@ -14,7 +14,12 @@
       "velferdsstyring"
     ],
     "historyGoLinks": [
-      "Teksten omtaler en konkret historisk reformprosess i norsk velferdsforvaltning med tydelig tidslig og institusjonell forankring."
+      {
+        "type": "topic",
+        "id": "nav_reformen",
+        "title": "NAV-reformen",
+        "reason": "Teksten omtaler en konkret historisk reformprosess i norsk velferdsforvaltning med tydelig tidslig og institusjonell forankring."
+      }
     ],
     "suggestedActions": [
       "Legg til eksempel på hvordan reformen slo ut lokalt i NAV-kontor.",
