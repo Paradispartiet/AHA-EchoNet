@@ -3321,6 +3321,32 @@
     } catch { return null; }
   }
 
+
+  function setAhaProcessing(isProcessing, message = "AHA analyserer teksten …") {
+    const indicator = document.getElementById("aha-processing-indicator");
+    const text = document.getElementById("aha-processing-text");
+    const sendBtn = document.getElementById("btn-send");
+
+    if (text) text.textContent = message;
+    if (indicator) indicator.hidden = !isProcessing;
+    if (sendBtn) sendBtn.disabled = Boolean(isProcessing);
+    document.body.classList.toggle("aha-is-processing", Boolean(isProcessing));
+  }
+
+  function setExportButtonsEnabled(enabled) {
+    const isEnabled = Boolean(enabled);
+    [
+      "btn-export-analysis",
+      "btn-export-analysis-json",
+      "btn-export-analysis-main",
+      "btn-export-analysis-json-main",
+      "btn-export"
+    ].forEach((id) => {
+      const btn = document.getElementById(id);
+      if (btn) btn.disabled = !isEnabled;
+    });
+  }
+
   function loadAfterworkEntries() {
     try {
       const raw = localStorage.getItem(AFTERWORK_STORAGE_KEY);
@@ -4828,6 +4854,7 @@ ${asBullet(b.concepts)}
     }));
     if (host) host.dataset.sourceText = sourceText;
     renderAutoOutputPayload(payload);
+    setExportButtonsEnabled(true);
   }
 
   function forceLiteraryFagkoblingerInReply(replyText, sourceText, payload = {}) {
@@ -4876,12 +4903,14 @@ ${asBullet(b.concepts)}
 
   function restoreAutoOutputFromStorage() {
     const cache = loadAutoOutputs();
+    setExportButtonsEnabled(Boolean(cache?.payload));
     if (!cache) return;
     const payload = cache?.payload && typeof cache.payload === "object" ? cache.payload : cache;
     const sourceText = String(cache?.sourceText || "");
     const host = document.getElementById("aha-auto-output");
     if (host) host.dataset.sourceText = sourceText;
     renderAutoOutputPayload(payload);
+    setExportButtonsEnabled(true);
   }
 
   function consumePendingChatPrompt() {
@@ -4923,7 +4952,9 @@ ${asBullet(b.concepts)}
           });
         textarea.value = "";
         if (count > 0) setStatusNote(`Lagret ${count} signal${count === 1 ? "" : "er"} i bakgrunnen.`);
+        setAhaProcessing(true, "AHA analyserer teksten …");
         try {
+          setAhaProcessing(true, "AHA lager svar og etterarbeid …");
           const agent = await askAhaAgent(text);
           const reply = String(agent?.reply || "").trim() || "AHA-agenten returnerte tomt svar.";
           const analysisText = cleanArticleText(text);
@@ -4969,6 +5000,8 @@ ${asBullet(b.concepts)}
           appendChat("aha", "AHA-agenten er ikke tilgjengelig akkurat nå.");
           try { renderAutoOutputs(text, "", { subjectMatches: [] }); } catch (autoErr) { console.warn("Auto-output feilet", autoErr); }
           try { ensureAfterworkForLatestAnalysis(text, { subjectMatches: [] }); } catch (afterErr) { console.warn("Auto-etterarbeid feilet", afterErr); }
+        } finally {
+          setAhaProcessing(false);
         }
       });
     }
@@ -4982,10 +5015,13 @@ ${asBullet(b.concepts)}
     document.getElementById("btn-export")?.addEventListener("click", exportAhaAnalysisJson);
     document.getElementById("btn-export-analysis")?.addEventListener("click", () => { void copyAhaAnalysisExportMarkdown(); });
     document.getElementById("btn-export-analysis-json")?.addEventListener("click", exportAhaAnalysisJson);
+    document.getElementById("btn-export-analysis-main")?.addEventListener("click", () => { void copyAhaAnalysisExportMarkdown(); });
+    document.getElementById("btn-export-analysis-json-main")?.addEventListener("click", exportAhaAnalysisJson);
     document.getElementById("btn-reset")?.addEventListener("click", reset);
     bindActionChips();
 
     bindPanelActionHandler();
+    setAhaProcessing(false);
     restoreAutoOutputFromStorage();
     consumePendingChatPrompt();
 
