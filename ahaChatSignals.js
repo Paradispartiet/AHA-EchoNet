@@ -1,82 +1,9 @@
 (function(global){
   "use strict";
 
-  function cleanArticleText(text) {
-    return String(text || "")
-      .replace(/\r/g, "\n")
-      .replace(/[ \t]+/g, " ")
-      .replace(/\n{3,}/g, "\n\n")
-      .trim();
-  }
-
-  function toSentences(text) {
-    return String(text || "")
-      .split(/(?<=[.!?])\s+|\n+/)
-      .map((line) => line.trim())
-      .filter(Boolean);
-  }
-
-  function collectOpinionArticleEvidence(text, sentences) {
-    const normalizedText = String(text || "").toLowerCase();
-    const normalize = (value) => String(value || "").toLowerCase();
-    const hasAny = (terms) => (terms || []).some((term) => normalizedText.includes(normalize(term)));
-    const findLine = (terms) => (Array.isArray(sentences) ? sentences : []).find((line) => hasAny(terms.map((term) => normalize(term))) && String(line || "").toLowerCase().includes(terms.find((term) => String(line || "").toLowerCase().includes(normalize(term))) || "")) || "";
-
-    const signals = {
-      government: ["regjering", "statsråd", "storting", "departement", "finansdepartementet", "kulturministeren"],
-      party: ["mdg", "arbeiderpartiet", "høyre", "hoyre", "sv", "venstre", "sp", "frp", "rødt", "rodt"],
-      policyProposal: ["plan", "mandat", "kommisjon", "omstilling", "arealnøytralitet", "arealnoytralitet", "sirkulærøkonomi", "sirkulaerokonomi", "grønn vekst", "gronn vekst", "grønne jobber", "gronne jobber", "naturens premisser"],
-      climateTransition: ["omstilling", "grønn omstilling", "gronn omstilling", "bærekraft", "baerekraft", "bærekraftig samfunn", "grønt skifte", "fremtidsrettet", "naturens tålegrenser", "naturens talegrenser"],
-      oilFossil: ["olje", "oljeavhengig", "fossilt", "fossil", "oljesokkelen", "oljeindustri", "forurense", "utslippsregnskap"],
-      natureProtection: ["natur", "naturhensyn", "villrein", "villaks", "urørt natur", "urort natur", "arealnøytralitet", "arealnoytralitet", "nedbygging", "bygge ned", "naturens premisser"],
-      indigenousRights: ["samiske rettigheter", "samisk kultur", "samer", "urfolk"],
-      energyPolicy: ["fornybar", "solceller", "vindkraft", "kraft", "elektrifisere", "fastlandsindustrien"],
-      circularEconomy: ["sirkulærøkonomi", "sirkulaerokonomi", "gjenbruk", "reparasjon", "arbeidsplasser", "verdiskaping"],
-      localCommunities: ["lokalsamfunn", "kommuneøkonomi", "folk i nord", "nord", "finmarking", "oslo", "sentralmakt"],
-      economicConsequence: ["økonomi", "okonomi", "arbeidsplasser", "verdiskaping", "kostnad", "kostnader", "konsekvens"],
-      politicalCritique: ["kritikk", "undergraver", "svekker", "feiler", "ikke godt nok", "dobbelt signal", "naiv", "uansvarlig"],
-      rhetoricalQuestions: ["hva er det egentlig", "hva skal vi bli", "hvorfor", "?"],
-      articleBoilerplate: ["les også", "annonsørinnhold", "illustrasjon", "logo"]
-    };
-    const actorDefs = ["MDG","Arbeiderpartiet","Høyre","SV","Venstre","Sp","Frp","Rødt","regjeringen","Støre-regjeringen","omstillingskommisjonen","John Arne Markussen","kulturministeren","Finansdepartementet","stortinget","statsråd","kommisjon","kommune","lokalsamfunn"];
-    const actors = actorDefs.filter((name) => normalizedText.includes(normalize(name)));
-    const evidence = {
-      hasGovernment: hasAny(signals.government),
-      hasPoliticalActor: hasAny(signals.government) || actors.length > 0,
-      hasParty: hasAny(signals.party),
-      hasPolicyProposal: hasAny(signals.policyProposal),
-      hasClimateTransition: hasAny(signals.climateTransition),
-      hasOilFossil: hasAny(signals.oilFossil),
-      hasNatureProtection: hasAny(signals.natureProtection),
-      hasIndigenousRights: hasAny(signals.indigenousRights),
-      hasEnergyPolicy: hasAny(signals.energyPolicy),
-      hasCircularEconomy: hasAny(signals.circularEconomy),
-      hasLocalCommunities: hasAny(signals.localCommunities),
-      hasEconomicConsequence: hasAny(signals.economicConsequence),
-      hasPoliticalCritique: hasAny(signals.politicalCritique),
-      hasRhetoricalQuestions: hasAny(signals.rhetoricalQuestions),
-      hasArticleBoilerplate: hasAny(signals.articleBoilerplate),
-      actors,
-      matchedThemes: [],
-      textSnippets: {
-        claim: findLine([].concat(signals.policyProposal, signals.climateTransition, signals.oilFossil)) || (sentences[0] || ""),
-        conflict: findLine(signals.politicalCritique),
-        nature: findLine(signals.natureProtection),
-        energy: findLine(signals.energyPolicy),
-        local: findLine(signals.localCommunities)
-      }
-    };
-    const themes = [];
-    if (evidence.hasClimateTransition) themes.push("klima-omstilling");
-    if (evidence.hasOilFossil) themes.push("olje-fossil");
-    if (evidence.hasNatureProtection) themes.push("natur-areal");
-    if (evidence.hasIndigenousRights) themes.push("samiske-rettigheter");
-    if (evidence.hasEnergyPolicy) themes.push("energi-industri");
-    if (evidence.hasCircularEconomy) themes.push("sirkulaerokonomi");
-    if (evidence.hasLocalCommunities) themes.push("lokalsamfunn-makt");
-    evidence.matchedThemes = themes;
-    return evidence;
-  }
+  const cleanArticleText = global.AHAChatTextUtils.cleanArticleText;
+  const toSentences = global.AHAChatTextUtils.toSentences;
+  const collectOpinionArticleEvidence = global.AHAChatTextUtils.collectOpinionArticleEvidence;
 
   function detectLiteraryAttachmentSignal(text) { const lower = String(text || "").toLowerCase(); let score = 0; const terms = ["knausgård","om våren","om året","min kamp","linda boström","oktoberbarn","tilknytningsteori","tilknytning","bowlby","attachment theory","arbeidsmodell","internal working models","autofiksjon","deiksis","deiktisk","litteraturvitenskap","roman","performativ","nymaterialisme","posthumanisme","løsrivelse","sårbarhet","valborg","mellommenneskelige relasjoner"]; terms.forEach((term)=>{ if(lower.includes(term)) score+=1; }); return { score, strong: score >= 4 }; }
 
