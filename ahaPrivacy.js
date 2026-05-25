@@ -17,6 +17,14 @@
     updatedAt: "",
     meta: {}
   };
+  const PRIVACY_CHECKBOX_KEYS = Object.freeze([
+    "localOnly",
+    "allowCollectiveLearning",
+    "allowPublicPublishing",
+    "allowSocialSharing",
+    "allowHistoryGoImport",
+    "allowAnalytics"
+  ]);
 
   const STORAGE_DEFINITIONS = [
     { key: "aha_insight_chamber_v1", label: "AHA innsiktskammer", kind: "object", isAHA: true, isHistoryGo: false, canClear: true },
@@ -180,14 +188,7 @@
     const form = document.getElementById("privacy-settings-form");
     if (!form) return;
 
-    [
-      "localOnly",
-      "allowCollectiveLearning",
-      "allowPublicPublishing",
-      "allowSocialSharing",
-      "allowHistoryGoImport",
-      "allowAnalytics"
-    ].forEach((key) => {
+    PRIVACY_CHECKBOX_KEYS.forEach((key) => {
       const input = form.querySelector(`[name="${key}"]`);
       if (input instanceof HTMLInputElement) input.checked = Boolean(settings[key]);
     });
@@ -242,10 +243,11 @@
       event.preventDefault();
       const form = event.currentTarget;
       if (!(form instanceof HTMLFormElement)) return;
-      const next = {};
+      const next = Object.fromEntries(PRIVACY_CHECKBOX_KEYS.map((key) => [key, false]));
       form.querySelectorAll('input[type="checkbox"][name]').forEach((input) => {
         if (!(input instanceof HTMLInputElement)) return;
-        next[input.name] = input.checked;
+        if (!Object.prototype.hasOwnProperty.call(next, input.name)) return;
+        next[input.name] = Boolean(input.checked);
       });
       saveSettings(next);
       refresh();
