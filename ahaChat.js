@@ -3810,6 +3810,179 @@
     return { saved: true, reason: "saved", entry };
   }
 
+
+  function ensureAfterworkForLatestAnalysis(sourceText, options = {}) {
+    const source = String(sourceText || "").trim();
+    if (!source) return { saved: false, reason: "missing_source_text", entry: null };
+    const auto = loadAutoOutputs();
+    const payload = auto?.payload && typeof auto.payload === "object" ? auto.payload : null;
+    if (!payload) return { saved: false, reason: "missing_payload", entry: null };
+    const autoSourceHash = String(auto?.sourceTextHash || sourceHash(auto?.sourceText || source));
+    const currentHash = sourceHash(source);
+    if (!autoSourceHash || autoSourceHash !== currentHash) return { saved: false, reason: "hash_mismatch", entry: null };
+    const result = saveAutoOutputAsAfterwork(payload, source, options);
+    if (result.reason === "duplicate") {
+      const entries = loadAfterworkEntries();
+      const match = entries.find((entry) => String(entry?.sourceTextHash || "") === currentHash);
+      if (match) {
+        match.lastReferencedAt = new Date().toISOString();
+        saveAfterworkEntries(entries);
+      }
+    }
+    return result;
+  }
+
+  function buildAhaAnalysisExportBundle() {
+    const nowIso = new Date().toISOString();
+    const auto = loadAutoOutputs() || {};
+    const payload = auto?.payload && typeof auto.payload === "object" ? auto.payload : {};
+    const chamber = loadChamberFromStorage() || {};
+    const afterworks = loadAfterworkEntries();
+    const latestAfterwork = afterworks.length ? afterworks[afterworks.length - 1] : {};
+    const sourceText = String(auto?.sourceText || "");
+    const sourceTextHash = String(auto?.sourceTextHash || latestAfterwork?.sourceTextHash || sourceHash(sourceText));
+    const relevantAfterworks = afterworks.filter((entry) => String(entry?.sourceTextHash || "") === sourceTextHash);
+    const selectedAfterwork = relevantAfterworks[relevantAfterworks.length - 1] || latestAfterwork || {};
+    const chatLog = Array.isArray(chamber?.chatLog) ? chamber.chatLog : [];
+    const lastAhaReply = [...chatLog].reverse().find((item) => String(item?.role || "") === "aha");
+    const subjectMatches = normalizeSubjectLinks(selectedAfterwork?.subjectLinks || payload?.subjectMatches || []);
+    const insights = Array.isArray(selectedAfterwork?.insights) ? selectedAfterwork.insights : [];
+    const concepts = Array.isArray(selectedAfterwork?.concepts) ? selectedAfterwork.concepts : [];
+    const calibrationStatus = typeof global.AHACalibration?.getStatus === "function" ? global.AHACalibration.getStatus() : {};
+    const metaProfile = (typeof global.InsightsEngine?.buildMetaProfile === "function")
+      ? (global.InsightsEngine.buildMetaProfile(chamber) || {})
+      : (chamber?.meta || {});
+    const knowledgeMap = chamber?.knowledgeMap || chamber?.map || {};
+    return {
+      version: "aha_analysis_export_v1",
+      exportedAt: nowIso,
+      createdAt: String(auto?.createdAt || selectedAfterwork?.createdAt || nowIso),
+      sourceTextHash,
+      sourceText,
+      sourceTextPreview: String(auto?.sourceTextPreview || selectedAfterwork?.sourceTextPreview || sourceText.replace(/\s+/g, " ").slice(0, 180)),
+      ahaReply: String(lastAhaReply?.text || payload?.kortSvar || ""),
+      ahaSer: {
+        innholdstype: String(payload?.innholdstype || payload?.textType || ""),
+        tema: String(payload?.tema || ""),
+        hovedspenning: String(payload?.hovedspenning || ""),
+        viktigsteInnsikt: String(payload?.viktigsteInnsikt || ""),
+        fagkoblinger: Array.isArray(payload?.fagkoblinger) ? payload.fagkoblinger : [],
+        nesteSteg: String(payload?.nesteSteg || ""),
+        kortSvar: String(payload?.kortSvar || "")
+      },
+      afterwork: {
+        summary: String(payload?.summary || payload?.day || ""),
+        insight: String(payload?.insight || (insights[0] || "")),
+        reflection: String(selectedAfterwork?.reflection || payload?.reflection || ""),
+        sortItems: Array.isArray(selectedAfterwork?.sortItems) ? selectedAfterwork.sortItems : (Array.isArray(payload?.sortItems) ? payload.sortItems : []),
+        list: Array.isArray(selectedAfterwork?.list) ? selectedAfterwork.list : (Array.isArray(payload?.list) ? payload.list : []),
+        path: Array.isArray(selectedAfterwork?.learningPath) ? selectedAfterwork.learningPath : (Array.isArray(payload?.path) ? payload.path : []),
+        thoughts: selectedAfterwork?.thoughtSorting || payload?.thoughts || {}
+      },
+      insights,
+      concepts,
+      subjectMatches,
+      metaProfile,
+      knowledgeMap,
+      chamberSummary: {
+        insightCount: Array.isArray(chamber?.insights) ? chamber.insights.length : 0,
+        recentAfterworkCount: relevantAfterworks.length,
+        chatTurns: chatLog.length
+      },
+      calibrationStatus
+    };
+  }
+
+  function formatAhaAnalysisExportMarkdown(bundle) {
+    const b = bundle && typeof bundle === "object" ? bundle : {};
+    const ser = b.ahaSer || {};
+    const afterwork = b.afterwork || {};
+    const sortItems = Array.isArray(afterwork.sortItems) ? afterwork.sortItems : [];
+    const asBullet = (items) => (Array.isArray(items) && items.length ? items.map((item) => `- ${typeof item === "string" ? item : (item?.label ? `${item.label}: ${item.text || ""}` : JSON.stringify(item))}`).join("\n") : "- (ingen)");
+    return `# AHA analyse
+
+## Kildetekst
+${b.sourceText || "(mangler)"}
+
+## Kort svar
+${ser.kortSvar || b.ahaReply || "(mangler)"}
+
+## AHA SER
+- Innholdstype: ${ser.innholdstype || ""}
+- Tema: ${ser.tema || ""}
+- Hovedspenning: ${ser.hovedspenning || ""}
+- Viktigste innsikt: ${ser.viktigsteInnsikt || ""}
+- Fagkoblinger: ${(Array.isArray(ser.fagkoblinger) ? ser.fagkoblinger.join(", ") : "")}
+- Neste steg: ${ser.nesteSteg || ""}
+
+## Oppsummer
+${afterwork.summary || ""}
+
+## Reflekter
+${afterwork.reflection || ""}
+
+## Sortert struktur
+${sortItems.length ? sortItems.map((item) => `- ${item?.label || "Punkt"}: ${item?.text || ""}`).join("\n") : "- (ingen)"}
+
+## Liste
+${asBullet(afterwork.list)}
+
+## Læringssti
+${asBullet(afterwork.path)}
+
+## Innsikter
+${asBullet(b.insights)}
+
+## Begreper
+${asBullet(b.concepts)}
+
+## Meta / Kunnskapskart
+- Fagkoblinger/subjectMatches: ${(Array.isArray(b.subjectMatches) ? b.subjectMatches.map((m) => m?.title || m?.subject_id).filter(Boolean).join(", ") : "")}
+- Meta-profil: ${JSON.stringify(b.metaProfile || {})}
+- Kunnskapskart/chamber-status: ${JSON.stringify(b.chamberSummary || {})}
+
+## Teknisk
+- sourceTextHash: ${b.sourceTextHash || ""}
+- createdAt: ${b.createdAt || ""}
+- exportedAt: ${b.exportedAt || ""}
+- calibrationStatus: ${JSON.stringify(b.calibrationStatus || {})}
+`;
+  }
+
+  async function copyAhaAnalysisExportMarkdown() {
+    const bundle = buildAhaAnalysisExportBundle();
+    const markdown = formatAhaAnalysisExportMarkdown(bundle);
+    try {
+      await navigator.clipboard.writeText(markdown);
+      setStatusNote("AHA-analyse kopiert.");
+    } catch (err) {
+      out(markdown);
+      setStatusNote("Kunne ikke kopiere automatisk. Viste analysen i Full analyse-panelet.");
+    }
+  }
+
+  function exportAhaAnalysisJson() {
+    const bundle = buildAhaAnalysisExportBundle();
+    const json = JSON.stringify(bundle, null, 2);
+    const now = new Date();
+    const filename = `aha-analysis-${now.getUTCFullYear()}-${String(now.getUTCMonth()+1).padStart(2,"0")}-${String(now.getUTCDate()).padStart(2,"0")}-${String(now.getUTCHours()).padStart(2,"0")}${String(now.getUTCMinutes()).padStart(2,"0")}.json`;
+    try {
+      const blob = new Blob([json], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      setStatusNote("AHA-analyse eksportert som JSON.");
+    } catch (err) {
+      out(json);
+      setStatusNote("Kunne ikke laste ned JSON. Viste data i Full analyse-panelet.");
+    }
+  }
+
   function buildAutoOutputs(userText, ahaReply) {
     const raw = String(userText || "").trim();
     const reply = String(ahaReply || "").trim();
@@ -4763,6 +4936,7 @@
           }
           appendChat("aha", safeReply, { categoryChips: suggestCategoryChips(), subjectMatches });
           try { renderAutoOutputs(text, safeReply, { subjectMatches }); } catch (autoErr) { console.warn("Auto-output feilet", autoErr); }
+          try { ensureAfterworkForLatestAnalysis(text, { subjectMatches }); } catch (afterErr) { console.warn("Auto-etterarbeid feilet", afterErr); }
           // AHA-agentens egne svar skal vises i chatten og logges som
           // source event, men IKKE bli en ordinær brukerinnsikt. AI-
           // oppsummeringer hører ikke hjemme i innsiktskammeret. skip_insight
@@ -4783,6 +4957,7 @@
           console.warn("AHA-agent utilgjengelig", err);
           appendChat("aha", "AHA-agenten er ikke tilgjengelig akkurat nå.");
           try { renderAutoOutputs(text, "", { subjectMatches: [] }); } catch (autoErr) { console.warn("Auto-output feilet", autoErr); }
+          try { ensureAfterworkForLatestAnalysis(text, { subjectMatches: [] }); } catch (afterErr) { console.warn("Auto-etterarbeid feilet", afterErr); }
         }
       });
     }
@@ -4793,12 +4968,9 @@
     document.getElementById("btn-meta")?.addEventListener("click", showMeta);
     document.getElementById("btn-knowledge-map")?.addEventListener("click", showKnowledgeMap);
     document.getElementById("btn-saved-afterwork")?.addEventListener("click", showSavedAfterwork);
-    document.getElementById("btn-export")?.addEventListener("click", () => {
-      out(JSON.stringify({
-        chamber: loadChamberFromStorage(),
-        aha_afterwork_v1: loadAfterworkEntries()
-      }, null, 2));
-    });
+    document.getElementById("btn-export")?.addEventListener("click", exportAhaAnalysisJson);
+    document.getElementById("btn-export-analysis")?.addEventListener("click", () => { void copyAhaAnalysisExportMarkdown(); });
+    document.getElementById("btn-export-analysis-json")?.addEventListener("click", exportAhaAnalysisJson);
     document.getElementById("btn-reset")?.addEventListener("click", reset);
     bindActionChips();
 
