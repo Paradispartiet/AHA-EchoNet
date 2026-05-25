@@ -3125,7 +3125,7 @@
     const academicSignals = {
       theorists: /(homer-?dixon|peluso|watts|boserup|kaplan|gleditsch|salehyan|barnett|said)/i.test(text),
       years: /\b(19|20)\d{2}\b/.test(text),
-      coreTerms: /(ressursknapphet|politisk økologi|miljødegradering|knapphetsskolen|sahel|mali|miljøsikkerhet|environmental security)/i.test(text),
+      coreTerms: /(ressursknapphet|politisk økologi|miljødegradering|knapphetsskolen|sahel|mali|miljøsikkerhet|environmental security|pinse|pentekost[eé]|den hellige ånd|tungetale|babels tårn|treenighetssøndag|gregoriansk kalender|juliansk kalender)/i.test(text),
       citations: /\bifølge\b|\bviser til\b|\(([A-ZÆØÅ][A-Za-zÆØÅæøå-]+(?:\s*&\s*[A-ZÆØÅ][A-Za-zÆØÅæøå-]+)?\s+(?:19|20)\d{2}[a-z]?)\)/.test(raw || ""),
       articleMarkers: /(i denne artikkelen|casestudier|internasjonal forskning|klimadata|kritikk av|presenterer jeg|denne artikkelen drøfter|vi drøfter|vi diskuterer|analyse|implikasjoner)/i.test(text),
       modelDebate: /(på den ene siden|på den andre siden|kritiserer|forklaringsmodell|alternativ forklaring|drøfter|innvending)/i.test(text),
@@ -3884,6 +3884,7 @@
     const insights = Array.isArray(selectedAfterwork?.insights) ? selectedAfterwork.insights : [];
     const concepts = Array.isArray(selectedAfterwork?.concepts) ? selectedAfterwork.concepts : [];
     const calibrationStatus = typeof global.AHACalibration?.getStatus === "function" ? global.AHACalibration.getStatus() : {};
+    const canonical = buildCanonicalAnalysis(payload, sourceText);
     const metaProfile = (typeof global.InsightsEngine?.buildMetaProfile === "function")
       ? (global.InsightsEngine.buildMetaProfile(chamber) || {})
       : (chamber?.meta || {});
@@ -3897,20 +3898,20 @@
       sourceTextPreview: String(auto?.sourceTextPreview || selectedAfterwork?.sourceTextPreview || sourceText.replace(/\s+/g, " ").slice(0, 180)),
       ahaReply: latestAhaReplyText || String(explicitAhaSer?.kortSvar || payload?.kortSvar || ""),
       ahaSer: {
-        innholdstype: String(payload?.innholdstype || payload?.textType || ""),
-        tema: String(explicitAhaSer?.tema || payload?.tema || ""),
-        hovedspenning: String(explicitAhaSer?.hovedspenning || payload?.hovedspenning || ""),
-        viktigsteInnsikt: String(explicitAhaSer?.viktigsteInnsikt || payload?.viktigsteInnsikt || ""),
+        innholdstype: String(canonical?.contentType || payload?.innholdstype || payload?.textType || ""),
+        tema: String(canonical?.ahaSer?.tema || explicitAhaSer?.tema || payload?.tema || ""),
+        hovedspenning: String(canonical?.ahaSer?.hovedspenning || explicitAhaSer?.hovedspenning || payload?.hovedspenning || ""),
+        viktigsteInnsikt: String(canonical?.ahaSer?.viktigsteInnsikt || explicitAhaSer?.viktigsteInnsikt || payload?.viktigsteInnsikt || ""),
         fagkoblinger: Array.isArray(explicitAhaSer?.fagkoblinger)
           ? explicitAhaSer.fagkoblinger
           : (Array.isArray(payload?.fagkoblinger) ? payload.fagkoblinger : []),
-        nesteSteg: String(explicitAhaSer?.nesteSteg || payload?.nesteSteg || ""),
-        kortSvar: String(explicitAhaSer?.kortSvar || payload?.kortSvar || "")
+        nesteSteg: String(canonical?.ahaSer?.nesteSteg || explicitAhaSer?.nesteSteg || payload?.nesteSteg || ""),
+        kortSvar: String(canonical?.ahaSer?.kortSvar || explicitAhaSer?.kortSvar || payload?.kortSvar || "")
       },
       afterwork: {
-        summary: String(payload?.summary || payload?.day || ""),
+        summary: String(payload?.summary || canonical?.summary || payload?.day || ""),
         insight: String(payload?.insight || (insights[0] || "")),
-        reflection: String(selectedAfterwork?.reflection || payload?.reflection || ""),
+        reflection: String(selectedAfterwork?.reflection || canonical?.reflection || payload?.reflection || ""),
         sortItems: Array.isArray(selectedAfterwork?.sortItems) ? selectedAfterwork.sortItems : (Array.isArray(payload?.sortItems) ? payload.sortItems : []),
         list: Array.isArray(selectedAfterwork?.list) ? selectedAfterwork.list : (Array.isArray(payload?.list) ? payload.list : []),
         path: Array.isArray(selectedAfterwork?.learningPath) ? selectedAfterwork.learningPath : (Array.isArray(payload?.path) ? payload.path : []),
@@ -4147,6 +4148,23 @@ ${asBullet(b.concepts)}
       ].slice(0, 6);
       path = quality.suggestedStructure.slice(0, 5);
     } else if (textType === "academic_article") {
+      day = "Kort fagoppsummering: Teksten forklarer et faglig tema gjennom definisjoner, nøkkelbegreper, historisk kontekst og tolkning.";
+      path = [
+        "Forstå grunnfortellingen i teksten.",
+        "Lær nøkkelbegreper og bruk dem presist.",
+        "Sammenlign forklaringen med andre tekster/tradisjoner.",
+        "Undersøk variasjoner mellom kirkesamfunn eller tolkningstradisjoner.",
+        "Formuler en egen faglig forklaring med begrepsbruk."
+      ];
+      sortItems = [
+        { label: "Definisjon", text: "Avklar hva fenomenet betyr og hvordan det avgrenses." },
+        { label: "Fortelling / hendelse", text: "Beskriv hovedhendelsen eller grunnfortellingen teksten bygger på." },
+        { label: "Teologisk betydning", text: "Vis hvilken tros- eller idémessig betydning fenomenet får." },
+        { label: "Historisk bakgrunn", text: "Sett temaet inn i en historisk kontekst og utviklingslinje." },
+        { label: "Symbolsk kontrast", text: "Forklar sentrale kontraster/symboler som bærer tolkningen." },
+        { label: "Feiring / praksis", text: "Beskriv hvordan temaet praktiseres eller markeres." },
+        { label: "Sentrale begreper", text: "Trekk ut fagbegreper, ikke bare hyppige ord." }
+      ];
       const literaryAttachmentSignal = detectLiteraryAttachmentSignal(analysisText);
       const publicAdminSignal = detectPublicAdministrationReformSignal(analysisText);
       const institutionalHistorySignal = detectInstitutionalMediaHistorySignal(analysisText);
@@ -4633,6 +4651,21 @@ ${asBullet(b.concepts)}
     };
   }
 
+
+  function buildCanonicalAnalysis(payload, sourceText = "") {
+    const safePayload = payload && typeof payload === "object" ? payload : {};
+    const canonicalSer = buildAhaSerCard(safePayload, sourceText);
+    return {
+      contentType: String(safePayload?.textType || detectTextType(sourceText || "")),
+      ahaSer: canonicalSer,
+      reflection: String(safePayload?.reflection || canonicalSer?.viktigsteInnsikt || "").trim(),
+      summary: String(safePayload?.day || "").trim(),
+      sortItems: Array.isArray(safePayload?.sortItems) ? safePayload.sortItems : [],
+      list: Array.isArray(safePayload?.list) ? safePayload.list : [],
+      path: Array.isArray(safePayload?.path) ? safePayload.path : [],
+      concepts: Array.isArray(safePayload?.concepts) ? safePayload.concepts : []
+    };
+  }
   function buildHistoryGoSuggestion(payload, sourceText) {
     const source = String(sourceText || "");
     const text = `${source} ${(Array.isArray(payload?.insightCards) ? payload.insightCards.join(" ") : "")}`.toLowerCase();
