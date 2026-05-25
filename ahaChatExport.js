@@ -64,13 +64,15 @@
     const explicitAhaSer = payload?.ahaSer && typeof payload.ahaSer === "object" ? payload.ahaSer : {};
     const chamber = deps.loadChamberFromStorage() || {};
     const afterworks = deps.loadAfterworkEntries();
-    const latestAfterwork = afterworks.length ? afterworks[afterworks.length - 1] : {};
     const sourceText = String(auto?.sourceText || "");
-    const sourceTextHash = String(auto?.sourceTextHash || latestAfterwork?.sourceTextHash || deps.sourceHash(sourceText));
+    const sourceTextHash = String(auto?.sourceTextHash || deps.sourceHash(sourceText));
     const relevantAfterworks = afterworks.filter((entry) => String(entry?.sourceTextHash || "") === sourceTextHash);
-    const selectedAfterwork = relevantAfterworks.length
+    const selectedAfterworkCandidate = relevantAfterworks.length
       ? relevantAfterworks[relevantAfterworks.length - 1]
-      : (!sourceTextHash && latestAfterwork ? latestAfterwork : {});
+      : {};
+    const selectedAfterwork = String(selectedAfterworkCandidate?.sourceTextHash || "") === sourceTextHash
+      ? selectedAfterworkCandidate
+      : {};
     const chatLog = Array.isArray(chamber?.chatLog) ? chamber.chatLog : [];
     const latestAhaReplyText = deps.getLatestAhaReplyFromDom();
     const subjectMatches = deps.normalizeSubjectLinks(selectedAfterwork?.subjectLinks || payload?.subjectMatches || []);
