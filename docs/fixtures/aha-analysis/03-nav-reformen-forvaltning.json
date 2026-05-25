@@ -1,0 +1,32 @@
+{
+  "id": "nav-reform-forvaltning-001",
+  "title": "Offentlig forvaltning: NAV-reformen",
+  "inputText": "NAV-reformen hadde som mål å samle tjenester og gi brukerne ett kontaktpunkt i velferdsforvaltningen. Samtidig skapte sammenslåingen av ulike etatskulturer styringsutfordringer og uklare ansvarsforhold. Reformen viser spenningen mellom politisk samordning og operativ gjennomføring.",
+  "expectedCanonicalAnalysis": {
+    "contentType": "fagtekst",
+    "domain": "offentlig forvaltning",
+    "theme": "samordning og styring i NAV-reformen",
+    "mainTension": "politisk mål om helhet versus organisatorisk kompleksitet",
+    "keyInsight": "Reformen illustrerer at strukturendring alene ikke løser koordinasjonsproblemer uten tydelig ansvarslinje.",
+    "fieldConnections": [
+      "forvaltningspolitikk",
+      "organisasjonsteori",
+      "velferdsstyring"
+    ],
+    "historyGoLinks": [
+      "Teksten omtaler en konkret historisk reformprosess i norsk velferdsforvaltning med tydelig tidslig og institusjonell forankring."
+    ],
+    "suggestedActions": [
+      "Legg til eksempel på hvordan reformen slo ut lokalt i NAV-kontor.",
+      "Skille tydeligere mellom målformulering og evalueringsfunn."
+    ],
+    "confidence": {
+      "contentType": 0.94,
+      "domain": 0.95,
+      "theme": 0.91,
+      "mainTension": 0.89,
+      "historyGoLinks": 0.88
+    },
+    "warnings": []
+  }
+}
