@@ -3401,6 +3401,8 @@
     renderAuxPanel("afterwork-panel", html);
     renderPanel(html);
   }
+  global.showMeta = showMeta;
+  global.showSavedAfterwork = showSavedAfterwork;
 
   function buildAfterworkPrompt(entry) {
     const safeEntry = entry && typeof entry === "object" ? entry : {};
