@@ -1640,6 +1640,26 @@
       };
     }
 
+    const religiousLexiconSignal = inferReligiousLexiconEvidence(src || payloadSignalText);
+    if (religiousLexiconSignal?.strong) {
+      return {
+        ...safePayload,
+        textType: "academic_article",
+        reflection: normalizeVisibleAcademicLabel(String(safePayload.reflection || "Teksten er en religionsfaglig leksikontekst med vekt på pinsefortelling, teologi, symbolikk og kirkelig praksis.")),
+        sortItems: (Array.isArray(safePayload.sortItems) ? safePayload.sortItems : []).map((item) => ({
+          label: normalizeVisibleAcademicLabel(item?.label || ""),
+          text: normalizeVisibleAcademicLabel(item?.text || "")
+        })),
+        list: filterCrossDomainTextItems(Array.isArray(safePayload.list) ? safePayload.list : [], src).slice(0, 6).map(normalizeDisplayText),
+        path: (Array.isArray(safePayload.path) ? safePayload.path : []).slice(0, 5).map(normalizeVisibleAcademicLabel),
+        insightCards: filterDomainInsightCards(Array.isArray(safePayload.insightCards) ? safePayload.insightCards : [], src).slice(0, 4).map((entry) => typeof entry === "string" ? normalizeDisplayText(entry) : ({
+          ...entry,
+          title: normalizeDisplayText(entry?.title || ""),
+          summary: normalizeDisplayText(entry?.summary || entry?.text || "")
+        }))
+      };
+    }
+
     const isPublicAdmin = hasPublicAdminSignal && !hasSahelMali;
     const reflection = isPublicAdmin
       ? "Teksten undersøker om NAVs måloppnåelse best forklares av midlertidige omstillingskostnader eller mer varige strukturelle utfordringer i styring, organisering og stat–kommune-samspill. Den sentrale bevegelsen går fra en implementeringsforklaring til en strukturell analyse av forenklingsarbeid, statlig styring og motstridende mål mellom stat og kommune. Analysen bygger på data og argumentasjon i artikkelen og peker på at utfordringene ikke kan forstås som midlertidig reformstøy alene. Den faglige spenningen ligger mellom omstillingskostnad og strukturell forklaring."
@@ -4198,6 +4218,7 @@ ${asBullet(b.concepts)}
       ].slice(0, 6);
       path = quality.suggestedStructure.slice(0, 5);
     } else if (textType === "academic_article") {
+      const religiousLexiconSignal = inferReligiousLexiconEvidence(raw);
       day = "Kort fagoppsummering: Teksten forklarer et faglig tema gjennom definisjoner, nøkkelbegreper, historisk kontekst og tolkning.";
       path = [
         "Forstå grunnfortellingen i teksten.",
@@ -4218,7 +4239,48 @@ ${asBullet(b.concepts)}
       const literaryAttachmentSignal = detectLiteraryAttachmentSignal(analysisText);
       const publicAdminSignal = detectPublicAdministrationReformSignal(analysisText);
       const institutionalHistorySignal = detectInstitutionalMediaHistorySignal(analysisText);
-      if (institutionalHistorySignal?.strong) {
+      if (religiousLexiconSignal?.strong) {
+        reflection = "Teksten er en religionsfaglig leksikontekst om pinse med vekt på bibelsk fortelling, teologisk betydning, symbolsk kontrast og kirkelig praksis.";
+        sortItems = [
+          { label: "Definisjon", text: "Pinse er en kristen høytid som feires femti dager etter påske (den sjuende søndagen etter påske)." },
+          { label: "Bibelsk fortelling", text: "I Apostlenes gjerninger mottar apostlene Den hellige ånd; ildtunger og språkforståelse knyttes til tungetale og tydning." },
+          { label: "Teologisk betydning", text: "Pinse forstås som kirkens fødselsdag og som Åndens gave til alle døpte i kristent fellesskap." },
+          { label: "Symbolsk kontrast", text: "Pinse tolkes ofte som et motbilde til Babels tårn: fra språkforvirring til språkforståelse." },
+          { label: "Kirkelig praksis", text: "Tungetale, nådegave og tydning tolkes ulikt i protestantisk, karismatisk og østlig tradisjon." },
+          { label: "Kalender og feiring", text: "Feiringen følger vestlig/gregoriansk og østlig/juliansk tradisjon, med markering frem mot treenighetssøndag." },
+          { label: "Historiske røtter", text: "Høytiden knyttes til jødisk høsttakkefest og minnet om Moseloven i eldre tradisjoner." },
+          { label: "Begreper", text: "Pinse, pentekosté, Den hellige ånd, tungetale, nådegave, tydning, apostlene, Babels tårn, kirkens fødselsdag, gregoriansk kalender, juliansk kalender, treenighetssøndag." }
+        ];
+        day = "Kort fagoppsummering: Pinse er en kristen høytid femti dager etter påske der apostlene mottar Den hellige ånd; tungetale, Babel-kontrast, kirkens fødsel og variasjoner i kalender og kirkelig praksis står sentralt.";
+        thoughts = {
+          hovedspor: "Pinse forklarer hvordan Den hellige ånd, tungetale og språkforståelse markerer kirkens begynnelse på tvers av språk.",
+          lose_tanker: "Hold bibelsk fortelling, teologisk tolkning, symbolikk og kirkelig praksis tydelig adskilt før de kobles.",
+          neste_steg: "Sammenlign pinsefortellingen med Babels tårn og drøft hvordan tungetale tolkes i ulike kirketradisjoner."
+        };
+        list = [
+          "Pinse feires den sjuende søndagen etter påske.",
+          "Navnet kommer fra gresk pentekosté, den femtiende dag.",
+          "Apostlene mottar Den hellige ånd i Apostlenes gjerninger.",
+          "Tungetale forstås som nådegave.",
+          "Babels tårn fungerer som symbolsk kontrast.",
+          "Feiringen varierer mellom vestlig og østlig kirketradisjon."
+        ];
+        path = [
+          "Forstå pinsefortellingen i Apostlenes gjerninger.",
+          "Lær nøkkelbegrepene: Den hellige ånd, tungetale, nådegave og tydning.",
+          "Sammenlign pinse med Babels tårn.",
+          "Undersøk forskjeller mellom protestantisk, karismatisk og østlig tradisjon.",
+          "Forklar hvorfor pinse kalles kirkens fødselsdag."
+        ];
+        ahaSer = {
+          tema: "Pinse som kristen høytid, Den hellige ånd, tungetale og kirkens fødsel.",
+          hovedspenning: "Språkforvirring ↔ språkforståelse / utvalgte mottakere ↔ gave til alle døpte.",
+          viktigsteInnsikt: "Pinse markerer Den hellige ånds komme til apostlene og forstås som begynnelsen på kirkens utbredelse og kristent fellesskap på tvers av språk.",
+          fagkoblinger: ["Kristendom", "Kirkehistorie", "Det nye testamentet", "Det gamle testamentet", "Liturgi", "Religionshistorie", "Språk og symbolikk", "Pinsebevegelsen"],
+          nesteSteg: "Sammenlign pinsefortellingen med Babels tårn og undersøk hvordan tungetale tolkes ulikt i kristne tradisjoner.",
+          kortSvar: "Pinse er den kristne høytiden femti dager etter påske der apostlene mottar Den hellige ånd. Fortellingen om tungetale og språkforståelse i Apostlenes gjerninger tolkes som kirkens fødsel, settes i kontrast til Babels tårn og feires ulikt i vestlig og østlig kalendertradisjon."
+        };
+      } else if (institutionalHistorySignal?.strong) {
         const entityName = extractMainInstitutionName(analysisText);
         const hasMorgenbladet = /\bmorgenbladet\b/i.test(analysisText);
         const usesMediaTemplate = Boolean(institutionalHistorySignal?.isNewspaperText || institutionalHistorySignal?.isMediaText);
@@ -4432,7 +4494,13 @@ ${asBullet(b.concepts)}
       localInsights.push(`Utviklingsmulighet: ${quality.editorialNextStep} ${quality.sharperEnding}`);
     } else if (textType === "academic_article") {
       const literaryAttachmentSignal = detectLiteraryAttachmentSignal(raw);
-      if (literaryAttachmentSignal?.strong) {
+      const religiousLexiconSignal = inferReligiousLexiconEvidence(raw);
+      if (religiousLexiconSignal?.strong) {
+        localInsights.push("Hovedinnsikt: Pinse markerer Den hellige ånds komme til apostlene og forstås som kirkens fødselsdag.");
+        localInsights.push("Hovedspenning: Språkforvirring ↔ språkforståelse, og utvalgte mottakere ↔ gave til alle døpte.");
+        localInsights.push("Symbolsk kontrast: Babels tårn fungerer som motbilde til pinsefortellingens språkfellesskap.");
+        localInsights.push("Videre analyse: Sammenlign tungetale og tydning på tvers av protestantisk, karismatisk og østlig tradisjon.");
+      } else if (literaryAttachmentSignal?.strong) {
         localInsights.push("Hovedinnsikt: Om våren gjør tilknytning til et eksistensielt og litterært nøkkelbegrep, ikke bare et psykologisk fagbegrep.");
         localInsights.push("Hovedargument: Romanen bekrefter deler av tilknytningsteorien, men viser også dens begrensninger gjennom skildringer av sårbarhet, sykdom, kropp, materialitet og uforklarlige vekstkrefter.");
         localInsights.push("Motargument/kritikk: En ren tilknytningsteoretisk lesning blir for smal fordi romanen åpner for mytologiske, autofiksjonelle og nymaterialistiske forklaringsnivåer.");

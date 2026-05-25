@@ -89,6 +89,36 @@ assert.ok(md.includes('Fagkoblinger:'));
 assert.ok(md.includes('Den hellige ånd'));
 assert.ok(md.includes('tungetale'));
 assert.ok(md.includes('Babels tårn'));
+
+const forbiddenPhrases = [
+  'knapphetsskolen',
+  'politisk økologi',
+  'konkurrerende forklaringsmodeller',
+  'metode, funn og teori',
+  'hovedforklaring og alternativ forklaring',
+  'Samtidshistoriske brudd',
+  'Historiske lag i byrom',
+  'Digital litteratur',
+  'Nærlesning'
+];
+for (const phrase of forbiddenPhrases) {
+  assert.ok(!md.includes(phrase), `Markdown should not include: ${phrase}`);
+}
+
+const requiredPhrases = [
+  'Den hellige ånd',
+  'tungetale',
+  'Babels tårn',
+  'kirkens fødselsdag',
+  'pentekosté',
+  'Kristendom',
+  'Kirkehistorie',
+  'Det nye testamentet',
+  'Det gamle testamentet'
+];
+for (const phrase of requiredPhrases) {
+  assert.ok(md.includes(phrase), `Markdown should include: ${phrase}`);
+}
 assert.ok(!md.includes('Oppsummer hendelsene kort'));
 assert.ok(!md.includes('Finn ett mønster eller én følelse'));
 assert.ok(!md.includes('Velg én ting du tar med videre i morgen'));
