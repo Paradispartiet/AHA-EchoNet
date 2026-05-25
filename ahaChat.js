@@ -2654,7 +2654,7 @@
       ? latestAcademicContext.payload
       : {};
     const ahaSer = payload?.ahaSer && typeof payload.ahaSer === "object" ? payload.ahaSer : {};
-    const sortItems = payload?.sortItems && typeof payload.sortItems === "object" ? payload.sortItems : {};
+    const sortItems = Array.isArray(payload?.sortItems) ? payload.sortItems : [];
     const sourceText = String(latestAcademicContext?.sourceText || "").toLowerCase();
     const matchesSource = (title) => {
       const pair = String(title || "").split(/↔|<->|—| vs\.? /i).map((part) => part.trim()).filter(Boolean);
@@ -2664,7 +2664,9 @@
     const items = [];
     const hovedspenning = String(ahaSer?.hovedspenning || "").trim().replace(/[.。]\s*$/, "");
     if (hovedspenning) items.push(hovedspenning);
-    const konfliktlinjerRaw = String(sortItems?.Konfliktlinjer || sortItems?.konfliktlinjer || "").trim();
+    const konfliktlinjerRaw = String(
+      sortItems.find((item) => normalizeConceptKey(item?.label || "").includes("konfliktlinjer"))?.text || ""
+    ).trim();
     if (konfliktlinjerRaw) {
       konfliktlinjerRaw.split(/[;\n]+/).map((part) => part.trim()).filter(Boolean).forEach((part) => items.push(part.replace(/[.。]\s*$/, "")));
     }
