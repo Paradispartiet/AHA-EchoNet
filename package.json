@@ -8,7 +8,8 @@
     "node": ">=20.0.0"
   },
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "validate:aha-fixtures": "node scripts/validate-aha-analysis-fixtures.mjs"
   },
   "dependencies": {
     "cors": "^2.8.5",
