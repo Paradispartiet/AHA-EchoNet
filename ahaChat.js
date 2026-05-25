@@ -3618,6 +3618,38 @@
     return text.split(/[·,]/).map((item) => item.trim()).filter(Boolean);
   }
 
+  function normalizeHistoryGoLinks(value) {
+    const items = Array.isArray(value) ? value : [];
+    const out = [];
+    const seen = new Set();
+    items.forEach((item) => {
+      if (item && typeof item === "object" && !Array.isArray(item)) {
+        const normalized = {
+          type: String(item.type || item.kind || "topic").trim() || "topic",
+          id: String(item.id || item.slug || item.key || item.title || "").trim(),
+          title: String(item.title || item.label || item.name || item.id || "").trim(),
+          reason: String(item.reason || item.why || item.explanation || "").trim()
+        };
+        if (!normalized.id && normalized.title) normalized.id = normalizeConceptKey(normalized.title).replace(/\s+/g, "_");
+        if (!normalized.title) normalized.title = normalized.id;
+        if (!normalized.id && !normalized.title) return;
+        const sig = `${normalized.type}::${normalized.id}::${normalized.title}`.toLowerCase();
+        if (seen.has(sig)) return;
+        seen.add(sig);
+        out.push(normalized);
+        return;
+      }
+      const text = String(item || "").trim();
+      if (!text) return;
+      const id = normalizeConceptKey(text).replace(/\s+/g, "_");
+      const sig = `topic::${id}::${text}`.toLowerCase();
+      if (seen.has(sig)) return;
+      seen.add(sig);
+      out.push({ type: "topic", id, title: text, reason: "" });
+    });
+    return out;
+  }
+
   function inferReligiousLexiconEvidence(rawText = "") {
     return global.AHAChatSignals.inferReligiousLexiconEvidence(rawText);
   }
@@ -4378,8 +4410,20 @@
   function buildCanonicalAnalysis(payload, sourceText = "") {
     const safePayload = payload && typeof payload === "object" ? payload : {};
     const canonicalSer = buildAhaSerCard(safePayload, sourceText);
+    const domain = detectAutoAnalysisDomain(sourceText || "", safePayload || {});
+    const existingHistoryLinks = safePayload?.historyGoLinks || safePayload?.history_go_links || [];
+    const derivedHistoryLinks = buildHistoryGoLinksFromDomain(domain, sourceText || "", canonicalSer);
     return {
       contentType: String(safePayload?.textType || detectTextType(sourceText || "")),
+      domain,
+      theme: String(canonicalSer?.tema || "").trim(),
+      mainTension: String(canonicalSer?.hovedspenning || "").trim(),
+      keyInsight: String(canonicalSer?.viktigsteInnsikt || "").trim(),
+      fieldConnections: normalizeFagkoblinger(canonicalSer?.fagkoblinger),
+      historyGoLinks: normalizeHistoryGoLinks(existingHistoryLinks.length ? existingHistoryLinks : derivedHistoryLinks),
+      suggestedActions: Array.isArray(safePayload?.path) ? safePayload.path.map((item) => String(item || "").trim()).filter(Boolean).slice(0, 6) : [],
+      confidence: normalizeAnalysisConfidence(safePayload?.confidence),
+      warnings: normalizeAnalysisWarnings(safePayload?.warnings),
       ahaSer: canonicalSer,
       reflection: String(safePayload?.reflection || canonicalSer?.viktigsteInnsikt || "").trim(),
       summary: String(safePayload?.day || "").trim(),
@@ -4388,6 +4432,56 @@
       path: Array.isArray(safePayload?.path) ? safePayload.path : [],
       concepts: buildAcademicConceptCandidates(sourceText, safePayload)
     };
+  }
+  function normalizeAnalysisConfidence(value) {
+    const src = value && typeof value === "object" ? value : {};
+    const pick = (key, fallback) => {
+      const n = Number(src[key]);
+      const v = Number.isFinite(n) ? n : fallback;
+      return Math.max(0, Math.min(1, v));
+    };
+    return {
+      contentType: pick("contentType", 0.7),
+      domain: pick("domain", 0.6),
+      theme: pick("theme", 0.6),
+      mainTension: pick("mainTension", 0.55),
+      historyGoLinks: pick("historyGoLinks", 0.5)
+    };
+  }
+
+  function normalizeAnalysisWarnings(value) {
+    const items = Array.isArray(value) ? value : [];
+    return items.map((item) => String(item || "").trim()).filter(Boolean).slice(0, 8);
+  }
+
+  function buildHistoryGoLinksFromDomain(domain, sourceText, canonicalSer) {
+    if (domain === "institutional_media_history") {
+      return [{
+        type: "place",
+        id: "morgenbladet",
+        title: "Morgenbladet",
+        reason: "Teksten handler om pressehistorie, offentlighet og institusjonell utvikling."
+      }];
+    }
+    if (domain === "public_administration_reform") {
+      return [{
+        type: "topic",
+        id: "nav_reformen",
+        title: "NAV-reformen",
+        reason: "Teksten drøfter måloppnåelse, styring og organisering i offentlig forvaltning."
+      }];
+    }
+    if (domain === "literary_attachment") {
+      return [{
+        type: "topic",
+        id: "tilknytningsteori_litteratur",
+        title: "Tilknytningsteori i litteratur",
+        reason: "Teksten kobler litterær analyse og psykologiske begreper."
+      }];
+    }
+    const theme = String(canonicalSer?.tema || "").trim() || String(sourceText || "").trim().slice(0, 60);
+    if (!theme) return [];
+    return [{ type: "topic", id: normalizeConceptKey(theme).replace(/\s+/g, "_"), title: theme, reason: "Mulig tematisk kobling for videre History Go-arbeid." }];
   }
   function buildHistoryGoSuggestion(payload, sourceText) {
     const source = String(sourceText || "");
