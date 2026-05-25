@@ -3911,6 +3911,35 @@
     return out;
   }
 
+  function safeSerializeForExport(value) {
+    const seen = new WeakSet();
+    function clone(input) {
+      if (input == null) return input;
+      const type = typeof input;
+      if (type === "string" || type === "number" || type === "boolean") return input;
+      if (type === "bigint") return input.toString();
+      if (type === "function" || type === "symbol" || type === "undefined") return undefined;
+      if (typeof Node !== "undefined" && input instanceof Node) return undefined;
+      if (input instanceof Date) return input.toISOString();
+      if (Array.isArray(input)) {
+        return input.map((item) => clone(item)).filter((item) => item !== undefined);
+      }
+      if (type === "object") {
+        if (seen.has(input)) return "[Circular]";
+        seen.add(input);
+        const out = {};
+        Object.keys(input).forEach((key) => {
+          const next = clone(input[key]);
+          if (next !== undefined) out[key] = next;
+        });
+        seen.delete(input);
+        return out;
+      }
+      return undefined;
+    }
+    return clone(value);
+  }
+
   function buildAhaAnalysisExportBundle() {
     const nowIso = new Date().toISOString();
     const auto = loadAutoOutputs() || {};
@@ -3940,6 +3969,16 @@
       ? (global.InsightsEngine.buildMetaProfile(chamber) || {})
       : (chamber?.meta || {});
     const knowledgeMap = chamber?.knowledgeMap || chamber?.map || {};
+    const chamberInsights = Array.isArray(chamber?.insights) ? chamber.insights : [];
+    const chamberChatLog = Array.isArray(chamber?.chatLog) ? chamber.chatLog : [];
+    const chamberMeta = chamber?.meta && typeof chamber.meta === "object" ? chamber.meta : {};
+    const fullChamberSnapshot = safeSerializeForExport(Object.assign({}, chamber, {
+      insights: chamberInsights,
+      chatLog: chamberChatLog,
+      meta: chamberMeta,
+      knowledgeMap: chamber?.knowledgeMap || chamber?.map || {},
+      map: chamber?.map || chamber?.knowledgeMap || {}
+    }));
     const mergedAfterwork = ensureAcademicAfterworkShape({
       summary: String((allowAfterwork && !forceCanonicalOverDayLog && selectedAfterwork?.summary) || payload?.summary || canonical?.summary || payload?.day || ""),
       insight: String(payload?.insight || (insights[0] || "")),
@@ -3972,6 +4011,14 @@
       subjectMatches,
       metaProfile,
       knowledgeMap,
+      rawAutoPayload: safeSerializeForExport(payload),
+      selectedAfterwork: safeSerializeForExport(selectedAfterwork || {}),
+      relevantAfterworks: safeSerializeForExport(relevantAfterworks),
+      allAfterworkCount: afterworks.length,
+      chamberInsights: safeSerializeForExport(chamberInsights),
+      chamberChatLog: safeSerializeForExport(chamberChatLog),
+      chamberMeta: safeSerializeForExport(chamberMeta),
+      fullChamberSnapshot,
       chamberSummary: {
         insightCount: Array.isArray(chamber?.insights) ? chamber.insights.length : 0,
         recentAfterworkCount: relevantAfterworks.length,
@@ -4034,6 +4081,58 @@ ${asBullet(b.concepts)}
 - createdAt: ${b.createdAt || ""}
 - exportedAt: ${b.exportedAt || ""}
 - calibrationStatus: ${JSON.stringify(b.calibrationStatus || {})}
+
+## Full eksportdata
+
+### Full bundle
+\`\`\`json
+${JSON.stringify(b || {}, null, 2)}
+\`\`\`
+
+### Rå auto-output payload
+\`\`\`json
+${JSON.stringify(b.rawAutoPayload || {}, null, 2)}
+\`\`\`
+
+### Valgt afterwork
+\`\`\`json
+${JSON.stringify(b.selectedAfterwork || {}, null, 2)}
+\`\`\`
+
+### Relevante afterworks
+\`\`\`json
+${JSON.stringify(b.relevantAfterworks || [], null, 2)}
+\`\`\`
+
+### Chamber insights
+\`\`\`json
+${JSON.stringify(b.chamberInsights || [], null, 2)}
+\`\`\`
+
+### Chamber chatLog
+\`\`\`json
+${JSON.stringify(b.chamberChatLog || [], null, 2)}
+\`\`\`
+
+### Meta-profil
+\`\`\`json
+${JSON.stringify(b.metaProfile || {}, null, 2)}
+\`\`\`
+
+### Chamber meta
+\`\`\`json
+${JSON.stringify(b.chamberMeta || {}, null, 2)}
+\`\`\`
+
+### KnowledgeMap / kunnskapstre
+\`\`\`json
+${JSON.stringify(b.knowledgeMap || {}, null, 2)}
+\`\`\`
+
+### Calibration status
+\`\`\`json
+${JSON.stringify(b.calibrationStatus || {}, null, 2)}
+\`\`\`
 `;
   }
 

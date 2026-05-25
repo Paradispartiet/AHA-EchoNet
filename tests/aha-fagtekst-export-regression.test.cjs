@@ -80,22 +80,42 @@ context.localStorage.setItem('aha_afterwork_v1', JSON.stringify([
 
 const bundle = hooks.buildAhaAnalysisExportBundle();
 const md = hooks.formatAhaAnalysisExportMarkdown(bundle);
+const readableMd = md.split('## Full eksportdata')[0] || md;
 
 assert.ok(md.includes('Kort fagoppsummering'));
-assert.ok(!md.includes('Kort dagsoppsummering'));
-assert.ok(!md.includes('Dette leses som en dagslogg'));
-assert.ok(!md.includes('Innholdstype: day_log'));
+assert.ok(!readableMd.includes('Kort dagsoppsummering'));
+assert.ok(!readableMd.includes('Dette leses som en dagslogg'));
+assert.ok(!readableMd.includes('Innholdstype: day_log'));
 assert.ok(md.includes('Fagkoblinger:'));
 assert.ok(md.includes('Den hellige ånd'));
 assert.ok(md.includes('tungetale'));
 assert.ok(md.includes('Babels tårn'));
-assert.ok(!md.includes('Oppsummer hendelsene kort'));
-assert.ok(!md.includes('Finn ett mønster eller én følelse'));
-assert.ok(!md.includes('Velg én ting du tar med videre i morgen'));
+assert.ok(!readableMd.includes('Oppsummer hendelsene kort'));
+assert.ok(!readableMd.includes('Finn ett mønster eller én følelse'));
+assert.ok(!readableMd.includes('Velg én ting du tar med videre i morgen'));
 assert.ok(!md.includes('Tema: \n'));
 assert.ok(!md.includes('Hovedspenning: \n'));
 assert.ok(!md.includes('Viktigste innsikt: \n'));
 assert.ok(!md.includes('Fagkoblinger: \n'));
 assert.ok(!md.includes('Neste steg: \n'));
+assert.ok(bundle.rawAutoPayload && typeof bundle.rawAutoPayload === 'object');
+assert.ok(bundle.selectedAfterwork && typeof bundle.selectedAfterwork === 'object');
+assert.ok(Array.isArray(bundle.relevantAfterworks));
+assert.ok(typeof bundle.allAfterworkCount === 'number');
+assert.ok(Array.isArray(bundle.chamberInsights));
+assert.ok(Array.isArray(bundle.chamberChatLog));
+assert.ok(bundle.chamberMeta && typeof bundle.chamberMeta === 'object');
+assert.ok(bundle.fullChamberSnapshot && typeof bundle.fullChamberSnapshot === 'object');
+assert.ok(md.includes('## Full eksportdata'));
+assert.ok(md.includes('### Full bundle'));
+assert.ok(md.includes('### Rå auto-output payload'));
+assert.ok(md.includes('### Valgt afterwork'));
+assert.ok(md.includes('### Relevante afterworks'));
+assert.ok(md.includes('### Chamber insights'));
+assert.ok(md.includes('### Chamber chatLog'));
+assert.ok(md.includes('### Meta-profil'));
+assert.ok(md.includes('### Chamber meta'));
+assert.ok(md.includes('### KnowledgeMap / kunnskapstre'));
+assert.ok(md.includes('### Calibration status'));
 
 console.log('aha-fagtekst-export-regression passed');
