@@ -2,6 +2,7 @@ const assert = require('assert');
 const fs = require('fs');
 const vm = require('vm');
 
+const signalsCode = fs.readFileSync('ahaChatSignals.js', 'utf8');
 const exportCode = fs.readFileSync('ahaChatExport.js', 'utf8');
 const chatCode = fs.readFileSync('ahaChat.js', 'utf8');
 
@@ -42,11 +43,16 @@ context.window = context;
 context.addEventListener = () => {};
 
 vm.createContext(context);
+vm.runInContext(signalsCode, context, { filename: 'ahaChatSignals.js' });
 vm.runInContext(exportCode, context, { filename: 'ahaChatExport.js' });
 vm.runInContext(chatCode, context, { filename: 'ahaChat.js' });
 
 const hooks = context.AHATestHooks;
 assert.ok(hooks, 'AHATestHooks should exist');
+
+assert.ok(context.AHAChatSignals, 'AHAChatSignals should exist');
+assert.equal(context.AHAChatSignals.detectTextType(pinseText), 'academic_article');
+assert.ok(context.AHAChatSignals.inferReligiousLexiconEvidence(pinseText).strong);
 
 const detected = hooks.detectTextType(pinseText);
 assert.equal(detected, 'academic_article');
