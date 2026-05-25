@@ -32,3 +32,18 @@ pytest
 ```
 
 Testene verifiserer blant annet health-endepunkt, canonical feltstruktur, confidence-intervall, og warnings for kort/tom melding.
+
+## Teststandard
+
+Lokalt:
+
+```bash
+cd backend/aha_engine
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python -m pytest
+```
+
+CI:
+GitHub Actions kjører samme testkommando i `backend/aha_engine`.

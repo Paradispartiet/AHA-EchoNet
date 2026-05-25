@@ -1,0 +1,33 @@
+name: AHA Engine tests
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  test-aha-engine:
+    name: Python AHA Engine tests
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: backend/aha_engine
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Run tests
+        run: python -m pytest
