@@ -46,9 +46,6 @@ def _fixture_files() -> list[Path]:
 
 
 def test_fixture_contract_compatibility() -> None:
-    # Python AHA Engine is currently a placeholder. These fixture tests verify
-    # contract compatibility only. Semantic parity with expectedCanonicalAnalysis
-    # will be introduced in a later PR.
     fixture_files = _fixture_files()
     assert len(fixture_files) == 8
 
@@ -93,3 +90,36 @@ def test_fixture_contract_compatibility() -> None:
         for link in body["historyGoLinks"]:
             assert isinstance(link, dict), fixture_path.name
             assert {"type", "id", "title", "reason"}.issubset(link.keys()), fixture_path.name
+
+
+def test_fixture_semantic_baseline() -> None:
+    # PR 7 verifies first semantic baseline only: contentType, domain, and strong History Go link ids. Full semantic parity comes later.
+    fixture_files = _fixture_files()
+    assert len(fixture_files) == 8
+
+    for fixture_path in fixture_files:
+        fixture = json.loads(fixture_path.read_text(encoding="utf-8"))
+        input_text = fixture["inputText"]
+        expected_analysis = fixture["expectedCanonicalAnalysis"]
+
+        payload = {
+            "message": input_text,
+            "assistantReply": None,
+            "historyGoContext": {},
+        }
+
+        response = client.post("/api/aha/analyze", json=payload)
+        assert response.status_code == 200, fixture_path.name
+
+        body = response.json()
+        assert body["contentType"] == expected_analysis["contentType"], fixture_path.name
+        assert body["domain"] == expected_analysis["domain"], fixture_path.name
+
+        expected_links = expected_analysis.get("historyGoLinks", [])
+        returned_links = body.get("historyGoLinks", [])
+
+        if expected_links:
+            assert returned_links, fixture_path.name
+            expected_ids = {link["id"] for link in expected_links}
+            returned_ids = {link.get("id") for link in returned_links}
+            assert expected_ids.intersection(returned_ids), fixture_path.name
