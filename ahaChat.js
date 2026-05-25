@@ -3832,19 +3832,28 @@
     return result;
   }
 
+  function getLatestAhaReplyFromDom() {
+    const rows = Array.from(document.querySelectorAll(".chat-line-aha"));
+    const last = rows[rows.length - 1];
+    return String(last?.textContent || "").trim();
+  }
+
   function buildAhaAnalysisExportBundle() {
     const nowIso = new Date().toISOString();
     const auto = loadAutoOutputs() || {};
     const payload = auto?.payload && typeof auto.payload === "object" ? auto.payload : {};
+    const explicitAhaSer = payload?.ahaSer && typeof payload.ahaSer === "object" ? payload.ahaSer : {};
     const chamber = loadChamberFromStorage() || {};
     const afterworks = loadAfterworkEntries();
     const latestAfterwork = afterworks.length ? afterworks[afterworks.length - 1] : {};
     const sourceText = String(auto?.sourceText || "");
     const sourceTextHash = String(auto?.sourceTextHash || latestAfterwork?.sourceTextHash || sourceHash(sourceText));
     const relevantAfterworks = afterworks.filter((entry) => String(entry?.sourceTextHash || "") === sourceTextHash);
-    const selectedAfterwork = relevantAfterworks[relevantAfterworks.length - 1] || latestAfterwork || {};
+    const selectedAfterwork = relevantAfterworks.length
+      ? relevantAfterworks[relevantAfterworks.length - 1]
+      : (!sourceTextHash && latestAfterwork ? latestAfterwork : {});
     const chatLog = Array.isArray(chamber?.chatLog) ? chamber.chatLog : [];
-    const lastAhaReply = [...chatLog].reverse().find((item) => String(item?.role || "") === "aha");
+    const latestAhaReplyText = getLatestAhaReplyFromDom();
     const subjectMatches = normalizeSubjectLinks(selectedAfterwork?.subjectLinks || payload?.subjectMatches || []);
     const insights = Array.isArray(selectedAfterwork?.insights) ? selectedAfterwork.insights : [];
     const concepts = Array.isArray(selectedAfterwork?.concepts) ? selectedAfterwork.concepts : [];
@@ -3860,15 +3869,17 @@
       sourceTextHash,
       sourceText,
       sourceTextPreview: String(auto?.sourceTextPreview || selectedAfterwork?.sourceTextPreview || sourceText.replace(/\s+/g, " ").slice(0, 180)),
-      ahaReply: String(lastAhaReply?.text || payload?.kortSvar || ""),
+      ahaReply: latestAhaReplyText || String(explicitAhaSer?.kortSvar || payload?.kortSvar || ""),
       ahaSer: {
         innholdstype: String(payload?.innholdstype || payload?.textType || ""),
-        tema: String(payload?.tema || ""),
-        hovedspenning: String(payload?.hovedspenning || ""),
-        viktigsteInnsikt: String(payload?.viktigsteInnsikt || ""),
-        fagkoblinger: Array.isArray(payload?.fagkoblinger) ? payload.fagkoblinger : [],
-        nesteSteg: String(payload?.nesteSteg || ""),
-        kortSvar: String(payload?.kortSvar || "")
+        tema: String(explicitAhaSer?.tema || payload?.tema || ""),
+        hovedspenning: String(explicitAhaSer?.hovedspenning || payload?.hovedspenning || ""),
+        viktigsteInnsikt: String(explicitAhaSer?.viktigsteInnsikt || payload?.viktigsteInnsikt || ""),
+        fagkoblinger: Array.isArray(explicitAhaSer?.fagkoblinger)
+          ? explicitAhaSer.fagkoblinger
+          : (Array.isArray(payload?.fagkoblinger) ? payload.fagkoblinger : []),
+        nesteSteg: String(explicitAhaSer?.nesteSteg || payload?.nesteSteg || ""),
+        kortSvar: String(explicitAhaSer?.kortSvar || payload?.kortSvar || "")
       },
       afterwork: {
         summary: String(payload?.summary || payload?.day || ""),
