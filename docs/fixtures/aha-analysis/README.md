@@ -21,6 +21,7 @@ Mappen inneholder åtte JSON-fixtures med feltene:
 Alle fixtures følger samme canonical object med standardfeltene:
 
 - `contentType`, `domain`, `theme`, `mainTension`, `keyInsight`
+- `contentType` og `domain` må bruke canonical engine keys (ikke display labels).
 - `fieldConnections`, `historyGoLinks`, `suggestedActions`
 - Ikke-tomme `historyGoLinks` skal bruke strukturerte objekter med `type`, `id`, `title`, `reason`.
 - `confidence` (med delscore-felter)

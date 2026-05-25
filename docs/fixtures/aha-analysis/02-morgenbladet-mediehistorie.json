@@ -3,8 +3,8 @@
   "title": "Mediehistorisk tekst: Morgenbladets rolle",
   "inputText": "Morgenbladet har i perioder vært en tydelig arena for idédebatt og kulturkritikk i norsk offentlighet. Avisens format og redaksjonelle profil har variert over tid, men den har ofte posisjonert seg som et sted for lange resonnementer framfor raske nyhetsoppdateringer. Dette gir avisen en særstilling i medielandskapet.",
   "expectedCanonicalAnalysis": {
-    "contentType": "fagtekst",
-    "domain": "mediehistorie",
+    "contentType": "academic_article",
+    "domain": "institutional_media_history",
     "theme": "Morgenbladet som idéoffentlig institusjon",
     "mainTension": "dyptpløyende offentlighet kontra tempoorientert nyhetslogikk",
     "keyInsight": "Teksten tolker Morgenbladets verdi som knyttet til refleksjon og langsom journalistikk.",

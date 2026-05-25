@@ -3,8 +3,8 @@
   "title": "Uklar tekst: lav presisjon",
   "inputText": "Det skjer mye nå, og flere ting henger kanskje sammen, men det er vanskelig å si hva som egentlig er viktigst. Kanskje handler det om systemet, eller om personene, eller bare timing. Uansett virker det som om noe burde vært gjort annerledes.",
   "expectedCanonicalAnalysis": {
-    "contentType": "uklar",
-    "domain": "ukjent",
+    "contentType": "general",
+    "domain": "generic_academic",
     "theme": "usikker årsaksforståelse",
     "mainTension": "behov for forklaring kontra manglende spesifisitet",
     "keyInsight": "Teksten uttrykker frustrasjon, men gir for få konkrete holdepunkter til sikker klassifisering.",

@@ -3,8 +3,8 @@
   "title": "Fagtekst: Pinse i kristen tradisjon",
   "inputText": "Pinse markeres femti dager etter påske og regnes som kirkens fødselsdag i kristen tradisjon. Fortellingen om at disiplene mottok Den hellige ånd på pinsedag brukes ofte til å forklare hvorfor kirken gikk fra å være en liten gruppe til en offentlig bevegelse. I norsk kontekst blir pinse både en teologisk høytid og en kulturell markør i kalenderen.",
   "expectedCanonicalAnalysis": {
-    "contentType": "fagtekst",
-    "domain": "religion",
+    "contentType": "academic_article",
+    "domain": "generic_academic",
     "theme": "pinse som teologisk og kulturell markør",
     "mainTension": "balansen mellom religiøs betydning og samfunnsmessig tradisjon",
     "keyInsight": "Teksten viser hvordan pinse fungerer både som trosfortelling og som sosialt tidsanker.",
