@@ -1,0 +1,29 @@
+{
+  "id": "uklar-tekst-001",
+  "title": "Uklar tekst: lav presisjon",
+  "inputText": "Det skjer mye nå, og flere ting henger kanskje sammen, men det er vanskelig å si hva som egentlig er viktigst. Kanskje handler det om systemet, eller om personene, eller bare timing. Uansett virker det som om noe burde vært gjort annerledes.",
+  "expectedCanonicalAnalysis": {
+    "contentType": "general",
+    "domain": "generic_academic",
+    "theme": "usikker årsaksforståelse",
+    "mainTension": "behov for forklaring kontra manglende spesifisitet",
+    "keyInsight": "Teksten uttrykker frustrasjon, men gir for få konkrete holdepunkter til sikker klassifisering.",
+    "fieldConnections": [],
+    "historyGoLinks": [],
+    "suggestedActions": [
+      "Etterspør kontekst: hvem, hva, når og hvilke konsekvenser.",
+      "Be om ett konkret eksempel som kan avgrense problemstillingen."
+    ],
+    "confidence": {
+      "contentType": 0.38,
+      "domain": 0.22,
+      "theme": 0.41,
+      "mainTension": 0.35,
+      "historyGoLinks": 0.03
+    },
+    "warnings": [
+      "Lav informasjonsdensitet: teksten mangler konkrete referanser.",
+      "Flere tolkninger er plausible; analyse bør behandles som foreløpig."
+    ]
+  }
+}

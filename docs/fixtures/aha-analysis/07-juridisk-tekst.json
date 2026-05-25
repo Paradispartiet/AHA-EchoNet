@@ -1,0 +1,30 @@
+{
+  "id": "juridisk-tekst-001",
+  "title": "Juridisk tekst: forholdsmessighetsvurdering",
+  "inputText": "Etter en samlet vurdering må inngrepet ha hjemmel i lov, forfølge et legitimt formål og være forholdsmessig. Dersom mindre inngripende tiltak kan oppnå samme resultat, taler dette mot å opprettholde vedtaket. Rettsanvendelsen krever derfor en konkret avveining mellom samfunnshensyn og individets rettigheter.",
+  "expectedCanonicalAnalysis": {
+    "contentType": "academic_article",
+    "domain": "generic_academic",
+    "theme": "forholdsmessighet som rettslig avveiningsnorm",
+    "mainTension": "offentlig myndighetsutøvelse kontra individvern",
+    "keyInsight": "Teksten framhever at forholdsmessighet avhenger av om mindre inngripende alternativer er reelt tilgjengelige.",
+    "fieldConnections": [
+      "forvaltningsrett",
+      "rettssikkerhet",
+      "menneskerettigheter"
+    ],
+    "historyGoLinks": [],
+    "suggestedActions": [
+      "Angi rettskilder som støtter treleddstesten.",
+      "Skille tydelig mellom gyldighetskontroll og hensiktsmessighetsvurdering."
+    ],
+    "confidence": {
+      "contentType": 0.93,
+      "domain": 0.94,
+      "theme": 0.89,
+      "mainTension": 0.9,
+      "historyGoLinks": 0.18
+    },
+    "warnings": []
+  }
+}

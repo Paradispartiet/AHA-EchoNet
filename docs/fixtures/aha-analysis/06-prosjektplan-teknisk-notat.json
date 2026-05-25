@@ -1,0 +1,30 @@
+{
+  "id": "prosjektplan-teknisk-001",
+  "title": "Prosjektplan: teknisk utviklingsnotat",
+  "inputText": "Vi skal fase inn en modul for analyseklassifisering i tre steg: kartlegging av eksisterende funksjoner, etablering av stabile grensesnitt og deretter måling av avvik mellom gammel og ny motor. Målet er å redusere regressjoner, men tidsplanen er stram og avhenger av at testdata er representative.",
+  "expectedCanonicalAnalysis": {
+    "contentType": "project_note",
+    "domain": "generic_academic",
+    "theme": "kontrollert innfasing av analysemodul",
+    "mainTension": "leveransehastighet kontra kvalitetssikring",
+    "keyInsight": "Notatet identifiserer testdata-kvalitet som kritisk avhengighet for trygg migrering.",
+    "fieldConnections": [
+      "programvareutvikling",
+      "teststrategi",
+      "endringsledelse"
+    ],
+    "historyGoLinks": [],
+    "suggestedActions": [
+      "Definer måleindikator for avvik før implementering starter.",
+      "Knyt milepæler til eksplisitte exit-kriterier per fase."
+    ],
+    "confidence": {
+      "contentType": 0.94,
+      "domain": 0.92,
+      "theme": 0.9,
+      "mainTension": 0.87,
+      "historyGoLinks": 0.1
+    },
+    "warnings": []
+  }
+}

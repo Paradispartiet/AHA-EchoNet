@@ -1,0 +1,30 @@
+{
+  "id": "litteraer-tilknytning-001",
+  "title": "Litterær analyse: tilknytningsteori",
+  "inputText": "Romanens hovedperson reagerer med både nærhetssøking og avstand når relasjoner blir truende. Leses teksten gjennom tilknytningsteori, kan denne pendlingen forstås som et mønster av ambivalent tilknytning. Fortellergrepet gjør psykologisk konflikt synlig uten å bruke klinisk språk direkte.",
+  "expectedCanonicalAnalysis": {
+    "contentType": "academic_article",
+    "domain": "literary_attachment",
+    "theme": "tilknytningsteori som tolkningsramme i romananalyse",
+    "mainTension": "estetisk fortelling kontra psykologisk begrepsbruk",
+    "keyInsight": "Tolkningen viser hvordan narrativ form kan bære psykologisk innsikt uten fagterminologisk overforklaring.",
+    "fieldConnections": [
+      "litteraturvitenskap",
+      "psykologi",
+      "fortellerteori"
+    ],
+    "historyGoLinks": [],
+    "suggestedActions": [
+      "Underbygg tolkningen med konkrete tekststeder.",
+      "Avklar forskjellen mellom karakteranalyse og diagnose."
+    ],
+    "confidence": {
+      "contentType": 0.9,
+      "domain": 0.87,
+      "theme": 0.9,
+      "mainTension": 0.83,
+      "historyGoLinks": 0.12
+    },
+    "warnings": []
+  }
+}

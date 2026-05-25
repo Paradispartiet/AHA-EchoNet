@@ -1,0 +1,37 @@
+{
+  "id": "morgenbladet-mediehistorie-001",
+  "title": "Mediehistorisk tekst: Morgenbladets rolle",
+  "inputText": "Morgenbladet har i perioder vært en tydelig arena for idédebatt og kulturkritikk i norsk offentlighet. Avisens format og redaksjonelle profil har variert over tid, men den har ofte posisjonert seg som et sted for lange resonnementer framfor raske nyhetsoppdateringer. Dette gir avisen en særstilling i medielandskapet.",
+  "expectedCanonicalAnalysis": {
+    "contentType": "academic_article",
+    "domain": "institutional_media_history",
+    "theme": "Morgenbladet som idéoffentlig institusjon",
+    "mainTension": "dyptpløyende offentlighet kontra tempoorientert nyhetslogikk",
+    "keyInsight": "Teksten tolker Morgenbladets verdi som knyttet til refleksjon og langsom journalistikk.",
+    "fieldConnections": [
+      "pressehistorie",
+      "offentlighetsteori",
+      "kulturjournalistikk"
+    ],
+    "historyGoLinks": [
+      {
+        "type": "topic",
+        "id": "morgenbladet",
+        "title": "Morgenbladet",
+        "reason": "Avisen beskrives eksplisitt som del av norsk offentlighet over tid, som støtter en historisk kobling til medieinstitusjoners utvikling."
+      }
+    ],
+    "suggestedActions": [
+      "Konkretiser med tidsperioder for å styrke historisk etterprøvbarhet.",
+      "Sammenlign med andre norske nisjeaviser for kontrast."
+    ],
+    "confidence": {
+      "contentType": 0.92,
+      "domain": 0.93,
+      "theme": 0.9,
+      "mainTension": 0.86,
+      "historyGoLinks": 0.84
+    },
+    "warnings": []
+  }
+}

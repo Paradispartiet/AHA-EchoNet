@@ -1,0 +1,29 @@
+{
+  "id": "dagbok-refleksjon-001",
+  "title": "Personlig refleksjon: dagboknotat",
+  "inputText": "I dag kjente jeg meg både motivert og urolig. Jeg fikk gjort mye arbeid, men satt igjen med en følelse av at jeg ikke var til stede i samtaler med andre. Kanskje handler det ikke om tidspress alene, men om at jeg unngår vanskelige valg.",
+  "expectedCanonicalAnalysis": {
+    "contentType": "day_log",
+    "domain": "generic_academic",
+    "theme": "indre konflikt mellom produktivitet og nærvær",
+    "mainTension": "mestringsfølelse kontra emosjonell distanse",
+    "keyInsight": "Teksten peker mot at unngåelse av vanskelige valg kan forklare opplevelsen av uro mer enn ytre tidsmangel.",
+    "fieldConnections": [
+      "psykologisk selvforståelse",
+      "hverdagsmestring"
+    ],
+    "historyGoLinks": [],
+    "suggestedActions": [
+      "Formuler ett konkret valg som kan tas i løpet av uken.",
+      "Før ny refleksjon etter en samtale der nærvær forsøkes aktivt."
+    ],
+    "confidence": {
+      "contentType": 0.93,
+      "domain": 0.82,
+      "theme": 0.88,
+      "mainTension": 0.86,
+      "historyGoLinks": 0.05
+    },
+    "warnings": []
+  }
+}
