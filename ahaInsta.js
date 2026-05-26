@@ -824,23 +824,24 @@
       posts.splice(0, posts.length, ...mergedImport);
       const mergedPost = findMergedPost(posts, post) || post;
       const afterFingerprint = postFingerprint(mergedPost);
-      if (!beforeMerged || beforeFingerprint !== afterFingerprint) {
+      const shouldPersistOrIngest = !beforeMerged || beforeFingerprint !== afterFingerprint;
+      if (shouldPersistOrIngest) {
         persistPost(mergedPost);
       }
 
-      if (connectIngest && (post.caption || post.title)) {
+      if (shouldPersistOrIngest && connectIngest && (mergedPost.caption || mergedPost.title)) {
         await window.AHAIngest?.ingest?.({
           source_type: "insta_post",
           source_app: "aha_insta",
-          content_type: post.content_type,
-          title: post.title,
-          text: [post.title, post.caption].filter(Boolean).join("\n"),
+          content_type: mergedPost.content_type,
+          title: mergedPost.title,
+          text: [mergedPost.title, mergedPost.caption].filter(Boolean).join("\n"),
           user_created: true,
           imported: true,
-          created_at: post.created_at,
+          created_at: mergedPost.created_at,
           meta: {
-            insta_post_id: post.id,
-            src: post.src,
+            insta_post_id: mergedPost.id,
+            src: mergedPost.src,
             import_session_id: options.sessionId || null
           }
         });
