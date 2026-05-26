@@ -121,6 +121,19 @@ function buildContext(seed = {}) {
   assert.equal(typeof ctx.AHAPythonEngineSmokeTest, 'object', 'smoke helper should exist');
   const smokeStatus = ctx.AHAPythonEngineSmokeTest.printStatus();
   assert.equal(smokeStatus.featureFlagEnabled, true, 'smoke helper should read feature flag from localStorage');
+  assert.equal(
+    smokeStatus.configuredEngineUrl,
+    'https://aha-engine-staging-7a3y.onrender.com',
+    'smoke helper should use staging default URL when override is missing'
+  );
+
+  ctx.localStorage.setItem('aha_python_engine_url', 'http://127.0.0.1:8000');
+  const smokeStatusWithCustomUrl = ctx.AHAPythonEngineSmokeTest.printStatus();
+  assert.equal(
+    smokeStatusWithCustomUrl.configuredEngineUrl,
+    'http://127.0.0.1:8000',
+    'smoke helper should use custom URL override when configured'
+  );
 
   const emptyCtx = buildContext();
   assert.equal(emptyCtx.AHAPythonEngineSmokeTest.getLatestAutoOutput(), null, 'missing auto-output should be handled safely');

@@ -29,6 +29,10 @@
     return raw || DEFAULT_URL;
   }
 
+  function getConfiguredBaseUrl() {
+    return getBaseUrl();
+  }
+
   function buildAnalyzePayload(message, assistantReply, historyGoContext) {
     return {
       message: String(message || ""),
@@ -111,6 +115,7 @@
 
   const api = {
     isEnabled,
+    getConfiguredBaseUrl,
     buildAnalyzePayload,
     analyzeWithPythonEngine,
     isCanonicalAhaAnalysis

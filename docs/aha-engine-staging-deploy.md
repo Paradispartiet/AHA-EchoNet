@@ -74,6 +74,7 @@ window.AHAPythonEngineSmokeTest.printStatus()
 Forventet status inkluderer:
 
 - `latestSource: "python"`
+- `configuredEngineUrl` viser samme URL som `AHAEngineClient` bruker (staging-default eller `aha_python_engine_url` override).
 
 ## Staging URL som default i klienten
 

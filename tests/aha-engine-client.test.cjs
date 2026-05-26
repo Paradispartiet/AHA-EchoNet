@@ -93,6 +93,25 @@ function createContext(storage, fetchImpl) {
   }
 
   {
+    const storage = createLocalStorage();
+    const context = createContext(storage, async () => ({ ok: true, json: async () => canonical }));
+    const client = loadClient(context);
+    assert.equal(
+      client.getConfiguredBaseUrl(),
+      'https://aha-engine-staging-7a3y.onrender.com'
+    );
+  }
+
+  {
+    const storage = createLocalStorage({
+      aha_python_engine_url: 'http://127.0.0.1:8000'
+    });
+    const context = createContext(storage, async () => ({ ok: true, json: async () => canonical }));
+    const client = loadClient(context);
+    assert.equal(client.getConfiguredBaseUrl(), 'http://127.0.0.1:8000');
+  }
+
+  {
     const storage = createLocalStorage({
       aha_python_engine_enabled: 'true',
       aha_python_engine_url: 'http://127.0.0.1:8000'
