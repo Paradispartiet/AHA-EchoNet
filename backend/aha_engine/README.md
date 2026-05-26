@@ -62,3 +62,11 @@ python -m pytest
 
 CI:
 GitHub Actions kjører samme testkommando i `backend/aha_engine`.
+
+## Staging/deploy
+
+- Backend kan bygges med Docker.
+- Se `docs/aha-engine-staging-deploy.md`.
+- Frontend bruker staging bare via feature flag.
+- JavaScript fallback er fortsatt standard.
+
