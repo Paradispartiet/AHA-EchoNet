@@ -42,3 +42,7 @@ uvicorn app.main:app --reload
 ```
 
 Dette er fortsatt **ikke** et produksjonsbytte; det er kun lokal, eksplisitt opt-in wiring.
+
+
+## Lokal smoke-test
+- Se `docs/aha-analysis-local-smoke-test.md` for stegvis verifisering av Python-source og JavaScript fallback.

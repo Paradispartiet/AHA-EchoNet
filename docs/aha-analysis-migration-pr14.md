@@ -34,3 +34,7 @@ payload.canonicalAnalysisMeta = {
 - `javascript_fallback` + `python_null`: Python returnerer `null`.
 - `javascript_fallback` + `invalid_python_shape`: Python returnerer ugyldig canonical shape.
 - `javascript_fallback` + `python_error`: Python-kall kaster exception.
+
+
+## Lokal smoke-test
+- Se `docs/aha-analysis-local-smoke-test.md` for stegvis verifisering av Python-source og JavaScript fallback.

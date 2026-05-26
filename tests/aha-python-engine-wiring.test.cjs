@@ -117,6 +117,24 @@ function buildContext(seed = {}) {
   assert.equal(result.meta.source, 'javascript_fallback', 'exceptions should report javascript_fallback source');
   assert.equal(result.meta.reason, 'python_error', 'exceptions should report python_error reason');
 
+
+  assert.equal(typeof ctx.AHAPythonEngineSmokeTest, 'object', 'smoke helper should exist');
+  const smokeStatus = ctx.AHAPythonEngineSmokeTest.printStatus();
+  assert.equal(smokeStatus.featureFlagEnabled, true, 'smoke helper should read feature flag from localStorage');
+
+  const emptyCtx = buildContext();
+  assert.equal(emptyCtx.AHAPythonEngineSmokeTest.getLatestAutoOutput(), null, 'missing auto-output should be handled safely');
+
+  const storedPayload = {
+    payload: {
+      canonicalAnalysisMeta: { source: 'python', reason: '' },
+      canonicalAnalysis: pythonCanonical
+    }
+  };
+  ctx.localStorage.setItem('aha_chat_auto_outputs_v1', JSON.stringify(storedPayload));
+  const latestMeta = ctx.AHAPythonEngineSmokeTest.getLatestEngineMeta();
+  assert.equal(latestMeta.source, 'python', 'smoke helper should return latest canonicalAnalysisMeta source');
+  assert.equal(ctx.AHAPythonEngineSmokeTest.isPythonActive(), true, 'smoke helper should detect active python source');
   const payloadWithMeta = {
     canonicalAnalysis: pythonCanonical,
     canonicalAnalysisMeta: { source: 'python', reason: '' }

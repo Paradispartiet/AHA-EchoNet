@@ -4902,6 +4902,67 @@
     setExportButtonsEnabled(true);
   }
 
+
+  function getAhaSmokeTestLocalStorage() {
+    try {
+      return global.localStorage || null;
+    } catch {
+      return null;
+    }
+  }
+
+  function getAhaSmokeTestFeatureFlags() {
+    const storage = getAhaSmokeTestLocalStorage();
+    const enabled = storage ? String(storage.getItem("aha_python_engine_enabled") || "").trim().toLowerCase() === "true" : false;
+    const configuredUrl = storage ? String(storage.getItem("aha_python_engine_url") || "").trim() : "";
+    return {
+      enabled,
+      configuredUrl: configuredUrl || "http://127.0.0.1:8000"
+    };
+  }
+
+  function getLatestAutoOutput() {
+    const storage = getAhaSmokeTestLocalStorage();
+    if (!storage) return null;
+    const raw = storage.getItem(AUTO_OUTPUT_STORAGE_KEY);
+    if (!raw) return null;
+    try {
+      const parsed = JSON.parse(raw);
+      return parsed && typeof parsed === "object" ? parsed : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function getLatestEngineMeta() {
+    const latest = getLatestAutoOutput();
+    const meta = latest?.payload?.canonicalAnalysisMeta;
+    return meta && typeof meta === "object" ? meta : null;
+  }
+
+  function isPythonActive() {
+    return getLatestEngineMeta()?.source === "python";
+  }
+
+  function printAhaPythonEngineSmokeStatus() {
+    const flags = getAhaSmokeTestFeatureFlags();
+    const meta = getLatestEngineMeta();
+    const status = {
+      featureFlagEnabled: flags.enabled,
+      configuredEngineUrl: flags.configuredUrl,
+      latestSource: meta?.source || "n/a",
+      latestReason: meta?.reason || ""
+    };
+    console.info("[AHAPythonEngineSmokeTest]", status);
+    return status;
+  }
+
+  global.AHAPythonEngineSmokeTest = Object.assign({}, global.AHAPythonEngineSmokeTest || {}, {
+    getLatestAutoOutput,
+    getLatestEngineMeta,
+    isPythonActive,
+    printStatus: printAhaPythonEngineSmokeStatus
+  });
   function forceLiteraryFagkoblingerInReply(replyText, sourceText, payload = {}) {
     if (detectAutoAnalysisDomain(sourceText, payload) !== "literary_attachment") return String(replyText || "");
     const section = ["FAGKOBLINGER", ...getLiterarySubjectMatches().map((item) => item?.title || item?.subject_label || "").filter(Boolean)].join("\n");
