@@ -11,6 +11,7 @@ Dette er et minimalt Python/FastAPI-skjelett for fremtidig AHA Engine.
 - Python Engine har nå en første **deterministisk fixture-baseline** for enkel klassifisering.
 - Python Engine har nå en første **deterministisk semantic summary-baseline**.
 - Denne matcher foreløpig `theme`, `mainTension` og `keyInsight` for golden fixtures.
+- Python Engine har nå også en **deterministisk recommendation-baseline** for `fieldConnections` og `suggestedActions`.
 
 ## Lokal oppstart
 
@@ -38,8 +39,9 @@ Testene verifiserer blant annet health-endepunkt, canonical feltstruktur, confid
 
 Fixture-testen sjekker nå første semantiske baseline: `contentType`, `domain`, og sterke `historyGoLinks`-ID-er der fixtures forventer lenker.
 I tillegg sjekkes nå en første semantic summary-baseline for `theme`, `mainTension` og `keyInsight`.
+Testene matcher nå også `fieldConnections` og `suggestedActions` mot golden fixtures.
 
-Full semantisk paritet på alle canonical-felt kommer i senere PR-er.
+Full canonical paritet på alle felt kommer i senere PR-er.
 
 ## Teststandard
 
