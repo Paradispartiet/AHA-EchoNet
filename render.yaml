@@ -1,4 +1,41 @@
+# Render Blueprint for AHA-EchoNet AI-agent backend.
+# https://render.com/docs/blueprint-spec
+#
+# For å deploye:
+# 1. Logg inn på render.com og koble til denne GitHub-repoen.
+# 2. Velg "New +" → "Blueprint" og pek på denne filen.
+# 3. Render leser denne yaml-en, oppretter tjenesten, og spør deg om
+#    VOYAGE_API_KEY og OPENAI_API_KEY (markert sync: false). Lim inn nøklene — de
+#    lagres som secret hos Render og blir aldri commitet.
+# 4. Etter deploy får du en URL som https://aha-agent-xyz.onrender.com.
+#    Sett window.AHA_AGENT_API = "<URL>/api/aha-agent" i ahaConfig.js
+#    (eller ahaConfig.local.js for testing) og pushed klienten.
+
 services:
+  - type: web
+    name: aha-agent
+    runtime: node
+    plan: free
+    region: frankfurt
+    branch: main
+    buildCommand: npm ci --omit=dev
+    startCommand: node server.js
+    healthCheckPath: /api/aha-agent/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: VOYAGE_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: VOYAGE_MODEL
+        value: voyage-multilingual-2
+      - key: OPENAI_MODEL
+        value: gpt-4.1-mini
+      - key: ALLOWED_ORIGINS
+        value: https://paradispartiet.github.io
+
   - type: web
     name: aha-engine-staging
     runtime: docker

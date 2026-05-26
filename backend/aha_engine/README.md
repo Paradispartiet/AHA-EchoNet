@@ -66,7 +66,7 @@ GitHub Actions kjører samme testkommando i `backend/aha_engine`.
 ## Staging/deploy
 
 - Backend kan bygges med Docker.
-- Render Blueprint finnes i repo-root: `render.yaml`.
+- Render Blueprint finnes i repo-root: `render.yaml` (bevarer eksisterende Render-tjenester og legger til Python staging).
 - Se `docs/aha-engine-staging-deploy.md`.
 - Frontend bruker staging bare via feature flag.
 - JavaScript fallback er fortsatt standard.
