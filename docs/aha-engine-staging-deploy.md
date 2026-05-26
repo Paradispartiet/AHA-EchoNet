@@ -59,11 +59,13 @@ curl -X POST http://127.0.0.1:8000/api/aha/analyze \
   -d '{"message":"Dette er en fagtekst om Morgenbladet, offentlighet, kulturkritikk og idédebatt.","assistantReply":null,"historyGoContext":{}}'
 ```
 
-E. Aktiver frontend mot staging (URL trenger ikke settes manuelt):
+E. Aktiver frontend mot staging:
 
 ```js
 localStorage.setItem("aha_python_engine_enabled", "true");
 ```
+
+Merk: På production-origin må `aha_python_engine_url` settes eksplisitt. Uten eksplisitt URL feiler klienten lukket og bruker JavaScript fallback.
 
 F. Sjekk i nettleserkonsoll:
 
@@ -74,11 +76,12 @@ window.AHAPythonEngineSmokeTest.printStatus()
 Forventet status inkluderer:
 
 - `latestSource: "python"`
-- `configuredEngineUrl` viser samme URL som `AHAEngineClient` bruker (staging-default eller `aha_python_engine_url` override).
+- `configuredEngineUrl` viser eksplisitt URL hvis satt (ellers `null`).
+- `resolvedEngineUrl` viser faktisk URL som runtime bruker (eller `null` i production uten eksplisitt URL).
 
-## Staging URL som default i klienten
+## Staging URL som miljøsensitiv default i klienten
 
-`AHAEngineClient` bruker nå verifisert Render staging-URL som default når Python feature flag er aktivert og `aha_python_engine_url` ikke er satt:
+`AHAEngineClient` bruker verifisert Render staging-URL som default kun i tydelige ikke-production-miljøer (f.eks. localhost/dev/staging/preview) når Python feature flag er aktivert og `aha_python_engine_url` ikke er satt:
 
 - `https://aha-engine-staging-7a3y.onrender.com`
 
@@ -86,6 +89,7 @@ Viktig:
 
 - Python Engine er fortsatt **disabled som default**.
 - Python Engine brukes fortsatt bare når `localStorage.getItem("aha_python_engine_enabled") === "true"`.
+- Production-origin uten eksplisitt `aha_python_engine_url` sender **ikke** payload til staging (fail-closed).
 - URL kan fortsatt overstyres via `aha_python_engine_url`.
 - Lokal backend kan fortsatt brukes med:
 
@@ -115,7 +119,7 @@ Render er valgt som første staging-provider for AHA Engine i denne migreringsfa
 
 ### Etter at Render har gitt staging-URL
 
-Aktiver Python Engine i nettleseren (staging-URL brukes automatisk som default):
+Aktiver Python Engine i nettleseren:
 
 ```js
 localStorage.setItem("aha_python_engine_enabled", "true");

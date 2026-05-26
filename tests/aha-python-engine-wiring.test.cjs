@@ -5,6 +5,7 @@ const vm = require('vm');
 const textUtilsCode = fs.readFileSync('ahaChatTextUtils.js', 'utf8');
 const signalsCode = fs.readFileSync('ahaChatSignals.js', 'utf8');
 const exportCode = fs.readFileSync('ahaChatExport.js', 'utf8');
+const engineClientCode = fs.readFileSync('ahaEngineClient.js', 'utf8');
 const chatCode = fs.readFileSync('ahaChat.js', 'utf8');
 
 function buildContext(seed = {}) {
@@ -12,6 +13,8 @@ function buildContext(seed = {}) {
   const context = {
     window: null,
     console,
+    fetch: async () => ({ ok: false, json: async () => ({}) }),
+    AbortController,
     navigator: { clipboard: { writeText: async () => {} } },
     document: {
       readyState: 'loading',
@@ -37,11 +40,13 @@ function buildContext(seed = {}) {
     InsightsEngine: { createEmptyChamber: () => ({ insights: [], chatLog: [] }), buildMetaProfile: () => ({}) }
   };
   context.window = context;
+  context.location = { hostname: 'paradispartiet.github.io' };
   context.addEventListener = () => {};
   vm.createContext(context);
   vm.runInContext(textUtilsCode, context, { filename: 'ahaChatTextUtils.js' });
   vm.runInContext(signalsCode, context, { filename: 'ahaChatSignals.js' });
   vm.runInContext(exportCode, context, { filename: 'ahaChatExport.js' });
+  vm.runInContext(engineClientCode, context, { filename: 'ahaEngineClient.js' });
   vm.runInContext(chatCode, context, { filename: 'ahaChat.js' });
   return context;
 }
@@ -56,15 +61,21 @@ function buildContext(seed = {}) {
   assert.equal(result.meta.source, 'javascript_default', 'flag disabled should report javascript_default source');
 
   ctx.localStorage.setItem('aha_python_engine_enabled', 'true');
+  const preservedClient = ctx.AHAEngineClient;
+  ctx.AHAEngineClient = null;
   result = await hooks.resolveCanonicalAnalysisWithOptionalPythonEngine({ message: 'm', assistantReply: 'a', historyGoContext: {}, fallbackAnalysis: fallback });
   assert.deepEqual(result.analysis, fallback, 'missing client should use fallback');
   assert.equal(result.meta.source, 'javascript_fallback', 'missing client should report javascript_fallback source');
   assert.equal(result.meta.reason, 'client_missing', 'missing client should report client_missing reason');
+  ctx.AHAEngineClient = preservedClient;
 
   const pythonCanonical = { ...fallback, theme: 'python-theme', confidence: { contentType: 0.9, domain: 0.8, theme: 0.7, mainTension: 0.6, historyGoLinks: 0.5 } };
+  const realEngineClient = ctx.AHAEngineClient;
   ctx.AHAEngineClient = {
     buildAnalyzePayload: () => ({ ok: true }),
-    analyzeWithPythonEngine: async () => pythonCanonical
+    analyzeWithPythonEngine: async () => pythonCanonical,
+    getExplicitEngineUrl: () => realEngineClient.getExplicitEngineUrl(),
+    resolvePythonEngineUrl: () => realEngineClient.resolvePythonEngineUrl()
   };
   result = await hooks.resolveCanonicalAnalysisWithOptionalPythonEngine({ message: 'm', assistantReply: 'a', historyGoContext: {}, fallbackAnalysis: fallback });
   assert.equal(result.analysis.theme, 'python-theme', 'valid python canonical should be used');
@@ -123,9 +134,12 @@ function buildContext(seed = {}) {
   assert.equal(smokeStatus.featureFlagEnabled, true, 'smoke helper should read feature flag from localStorage');
   assert.equal(
     smokeStatus.configuredEngineUrl,
-    'https://aha-engine-staging-7a3y.onrender.com',
-    'smoke helper should use staging default URL when override is missing'
+    null,
+    'smoke helper should show null configured URL when override is missing'
   );
+  assert.equal(smokeStatus.resolvedEngineUrl, null, 'smoke helper should fail closed on production-like host');
+  assert.equal(smokeStatus.urlAvailable, false, 'smoke helper should report unavailable URL on production-like host');
+  assert.equal(smokeStatus.requiresExplicitUrl, true, 'enabled feature flag should require explicit URL on production-like host');
 
   ctx.localStorage.setItem('aha_python_engine_url', 'http://127.0.0.1:8000');
   const smokeStatusWithCustomUrl = ctx.AHAPythonEngineSmokeTest.printStatus();
@@ -133,6 +147,20 @@ function buildContext(seed = {}) {
     smokeStatusWithCustomUrl.configuredEngineUrl,
     'http://127.0.0.1:8000',
     'smoke helper should use custom URL override when configured'
+  );
+  assert.equal(
+    smokeStatusWithCustomUrl.resolvedEngineUrl,
+    'http://127.0.0.1:8000',
+    'smoke helper resolved URL should match explicit URL override'
+  );
+
+  ctx.localStorage.removeItem('aha_python_engine_url');
+  ctx.location.hostname = 'localhost';
+  const smokeStatusDev = ctx.AHAPythonEngineSmokeTest.printStatus();
+  assert.equal(
+    smokeStatusDev.resolvedEngineUrl,
+    'https://aha-engine-staging-7a3y.onrender.com',
+    'smoke helper should use staging URL as default on localhost'
   );
 
   const emptyCtx = buildContext();

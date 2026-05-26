@@ -20,10 +20,11 @@ function loadClient(context) {
   return context.window.AHAEngineClient;
 }
 
-function createContext(storage, fetchImpl) {
+function createContext(storage, fetchImpl, location = null) {
   return vm.createContext({
-    window: { localStorage: storage },
+    window: { localStorage: storage, location },
     localStorage: storage,
+    location,
     module: { exports: {} },
     exports: {},
     setTimeout,
@@ -78,35 +79,33 @@ function createContext(storage, fetchImpl) {
     assert.equal(disabledResult, null);
   }
 
-  {
+  { // production-like host + enabled flag + no explicit URL => fail closed
     const storage = createLocalStorage({ aha_python_engine_enabled: 'true' });
     let calledUrl = null;
     const context = createContext(storage, async (url) => {
       calledUrl = url;
       return { ok: true, json: async () => canonical };
-    });
+    }, { hostname: 'paradispartiet.github.io' });
     const client = loadClient(context);
 
     const result = await client.analyzeWithPythonEngine(client.buildAnalyzePayload('a', 'b', {}));
-    assert.equal(calledUrl, 'https://aha-engine-staging-7a3y.onrender.com/api/aha/analyze');
-    assert.deepEqual(result, canonical);
+    assert.equal(client.resolvePythonEngineUrl(), null);
+    assert.equal(calledUrl, null);
+    assert.equal(result, null);
   }
 
-  {
+  { // production-like host + no explicit URL should resolve to null
     const storage = createLocalStorage();
     const context = createContext(storage, async () => ({ ok: true, json: async () => canonical }));
     const client = loadClient(context);
-    assert.equal(
-      client.getConfiguredBaseUrl(),
-      'https://aha-engine-staging-7a3y.onrender.com'
-    );
+    assert.equal(client.getConfiguredBaseUrl(), null);
   }
 
   {
     const storage = createLocalStorage({
       aha_python_engine_url: 'http://127.0.0.1:8000'
     });
-    const context = createContext(storage, async () => ({ ok: true, json: async () => canonical }));
+    const context = createContext(storage, async () => ({ ok: true, json: async () => canonical }), { hostname: 'paradispartiet.github.io' });
     const client = loadClient(context);
     assert.equal(client.getConfiguredBaseUrl(), 'http://127.0.0.1:8000');
   }
@@ -120,7 +119,7 @@ function createContext(storage, fetchImpl) {
     const context = createContext(storage, async (url) => {
       calledUrl = url;
       return { ok: true, json: async () => canonical };
-    });
+    }, { hostname: 'paradispartiet.github.io' });
     const client = loadClient(context);
 
     const result = await client.analyzeWithPythonEngine(client.buildAnalyzePayload('a', 'b', {}));
@@ -130,10 +129,39 @@ function createContext(storage, fetchImpl) {
 
   {
     const storage = createLocalStorage({ aha_python_engine_enabled: 'true' });
+    const context = createContext(storage, async () => ({ ok: true, json: async () => canonical }), { hostname: 'localhost' });
+    const client = loadClient(context);
+    assert.equal(client.resolvePythonEngineUrl(), 'https://aha-engine-staging-7a3y.onrender.com');
+  }
+
+  {
+    const storage = createLocalStorage({ aha_python_engine_enabled: 'true' });
     const invalid = { ...canonical, confidence: { ...canonical.confidence, domain: '0.8' } };
     const context = createContext(storage, async () => ({ ok: true, json: async () => invalid }));
     const client = loadClient(context);
 
+    const result = await client.analyzeWithPythonEngine(client.buildAnalyzePayload('a', 'b', {}));
+    assert.equal(result, null);
+  }
+
+  {
+    const storage = createLocalStorage({ aha_python_engine_enabled: 'TRUE' });
+    const context = createContext(storage, async () => {
+      throw new Error('fetch should not run for uppercase TRUE');
+    }, { hostname: 'localhost' });
+    const client = loadClient(context);
+    assert.equal(client.isEnabled(), false);
+    const result = await client.analyzeWithPythonEngine(client.buildAnalyzePayload('a', 'b', {}));
+    assert.equal(result, null);
+  }
+
+  {
+    const storage = createLocalStorage({ aha_python_engine_enabled: ' true ' });
+    const context = createContext(storage, async () => {
+      throw new Error('fetch should not run for whitespace true');
+    }, { hostname: 'localhost' });
+    const client = loadClient(context);
+    assert.equal(client.isEnabled(), false);
     const result = await client.analyzeWithPythonEngine(client.buildAnalyzePayload('a', 'b', {}));
     assert.equal(result, null);
   }
