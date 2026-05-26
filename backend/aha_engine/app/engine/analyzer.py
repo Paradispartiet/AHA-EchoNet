@@ -92,7 +92,7 @@ def build_history_go_links(domain: str, message: str) -> list[HistoryGoLink]:
                 type="topic",
                 id="morgenbladet",
                 title="Morgenbladet",
-                reason="Teksten handler om pressehistorie, offentlighet og institusjonell utvikling.",
+                reason="Avisen beskrives eksplisitt som del av norsk offentlighet over tid, som støtter en historisk kobling til medieinstitusjoners utvikling.",
             )
         ]
 
@@ -105,7 +105,7 @@ def build_history_go_links(domain: str, message: str) -> list[HistoryGoLink]:
                 type="topic",
                 id="nav_reformen",
                 title="NAV-reformen",
-                reason="Teksten handler om styring, organisering og måloppnåelse i offentlig forvaltning.",
+                reason="Teksten omtaler en konkret historisk reformprosess i norsk velferdsforvaltning med tydelig tidslig og institusjonell forankring.",
             )
         ]
 
