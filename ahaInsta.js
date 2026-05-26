@@ -164,12 +164,52 @@
     return "media";
   }
 
+
+  function normalizeDedupField(value) {
+    return String(value || "").trim().toLowerCase().replace(/\s+/g, " ");
+  }
+
+  function createPostSignature(input = {}) {
+    const platform = normalizeDedupField(input.source_app || input.source || "aha_insta");
+    const timestamp = normalizeDedupField(input.originalInstagramDate || input.created_at || "");
+    const media = normalizeDedupField(input.src || input.media_uri || input.uri || input.path || "");
+    const caption = normalizeDedupField(input.caption || input.text || input.title || "");
+    const permalink = normalizeDedupField(input.permalink || input.meta?.permalink || "");
+    return [platform, timestamp, media, caption, permalink].join("||");
+  }
+
+  function normalizePostShape(input = {}, fallback = {}) {
+    const profile = ensureProfile();
+    const src = String(input.src || fallback.src || "").trim();
+    const createdAt = input.created_at || fallback.created_at || nowIso();
+    const contentType = String(input.content_type || fallback.content_type || (detectMediaType(src) === "video" ? "video" : "image")).trim() || "image";
+    const mergedMeta = { ...(fallback.meta || {}), ...(input.meta || {}) };
+    const signature = createPostSignature({ ...fallback, ...input, src, created_at: createdAt, content_type: contentType, meta: mergedMeta });
+    return {
+      ...fallback,
+      ...input,
+      id: String(input.id || fallback.id || createId("insta")),
+      title: String(input.title || fallback.title || "").trim(),
+      src,
+      caption: String(input.caption || fallback.caption || "").trim(),
+      content_type: contentType,
+      tags: Array.isArray(input.tags) ? input.tags : (Array.isArray(fallback.tags) ? fallback.tags : []),
+      ownerId: String(input.ownerId || fallback.ownerId || profile.id),
+      ownerUsername: normalizeUsername(input.ownerUsername || fallback.ownerUsername || profile.username),
+      visibility: input.visibility || fallback.visibility || "public",
+      like_count: Number(input.like_count ?? fallback.like_count ?? 0),
+      comment_count: Number(input.comment_count ?? fallback.comment_count ?? 0),
+      created_at: createdAt,
+      source_signature: signature,
+      meta: mergedMeta
+    };
+  }
   function dedupeImportItems(items) {
     const seen = new Set();
     const deduped = [];
 
     for (const item of items) {
-      const key = [item.src || "", item.caption || "", item.originalInstagramDate || "", item.type || "media"].join("||");
+      const key = createPostSignature(item) + "||" + normalizeDedupField(item.type || "media");
       if (seen.has(key)) continue;
       seen.add(key);
       deduped.push(item);
@@ -639,28 +679,42 @@
   }
 
   function mergePosts(localPosts, remotePosts) {
-    const byId = new Map();
+    const merged = new Map();
+    const index = new Map();
 
-    for (const post of Array.isArray(localPosts) ? localPosts : []) {
-      if (!post?.id) continue;
-      byId.set(post.id, post);
-    }
+    const upsert = (raw, preferRemote = false) => {
+      if (!raw || typeof raw !== "object") return;
+      const candidate = normalizePostShape(raw);
+      const signature = candidate.source_signature || createPostSignature(candidate);
+      const keyById = candidate.id ? `id:${candidate.id}` : "";
+      const keyBySig = signature ? `sig:${signature}` : "";
+      const matchKey = (keyById && index.get(keyById)) || (keyBySig && index.get(keyBySig));
 
-    for (const remote of Array.isArray(remotePosts) ? remotePosts : []) {
-      if (!remote?.id) continue;
-      const existing = byId.get(remote.id);
-
-      if (!existing) {
-        byId.set(remote.id, remote);
-        continue;
+      if (!matchKey) {
+        const storageKey = keyById || keyBySig;
+        if (!storageKey) return;
+        merged.set(storageKey, candidate);
+        if (keyById) index.set(keyById, storageKey);
+        if (keyBySig) index.set(keyBySig, storageKey);
+        return;
       }
 
+      const existing = merged.get(matchKey) || {};
       const existingDate = new Date(resolvePostDate(existing)).getTime() || 0;
-      const remoteDate = new Date(resolvePostDate(remote)).getTime() || 0;
-      byId.set(remote.id, remoteDate > existingDate ? remote : existing);
-    }
+      const incomingDate = new Date(resolvePostDate(candidate)).getTime() || 0;
+      const remotePreferred = preferRemote || incomingDate >= existingDate;
+      const next = remotePreferred
+        ? normalizePostShape({ ...existing, ...candidate, id: existing.id || candidate.id }, existing)
+        : normalizePostShape({ ...candidate, ...existing, id: existing.id || candidate.id }, existing);
+      merged.set(matchKey, next);
+      if (next.id) index.set(`id:${next.id}`, matchKey);
+      if (next.source_signature) index.set(`sig:${next.source_signature}`, matchKey);
+    };
 
-    return Array.from(byId.values()).sort((a, b) => {
+    (Array.isArray(localPosts) ? localPosts : []).forEach((post) => upsert(post, false));
+    (Array.isArray(remotePosts) ? remotePosts : []).forEach((post) => upsert(post, true));
+
+    return Array.from(merged.values()).sort((a, b) => {
       const aTime = new Date(a?.created_at || 0).getTime() || 0;
       const bTime = new Date(b?.created_at || 0).getTime() || 0;
       return bTime - aTime;
@@ -718,7 +772,7 @@
         continue;
       }
 
-      const post = {
+      const post = normalizePostShape({
         id: createId("insta"),
         title: item.title || "Importert",
         src: item.src || "",
@@ -736,9 +790,10 @@
         like_count: 0,
         comment_count: 0,
         meta: { import_session_id: options.sessionId || null }
-      };
+      });
 
-      posts.unshift(post);
+      const mergedImport = mergePosts(posts, [post]);
+      posts.splice(0, posts.length, ...mergedImport);
       persistPost(post);
 
       if (connectIngest && (post.caption || post.title)) {
@@ -895,7 +950,7 @@
     const src = String(input.src || "").trim();
     const contentType = detectMediaType(src) === "video" ? "video" : "image";
 
-    const post = {
+    let post = normalizePostShape({
       id: createId("insta"),
       title: String(input.title || "").trim(),
       src,
@@ -909,7 +964,7 @@
       like_count: 0,
       comment_count: 0,
       created_at: nowIso()
-    };
+    });
 
     const baseContract = window.AHAContracts?.createBaseItem?.({
       id: post.id,
@@ -944,8 +999,8 @@
       post.last_source_event_id = ingestResult.sourceEvent.id;
     }
 
-    const posts = load();
-    posts.unshift(post);
+    const posts = mergePosts(load(), [post]);
+    post = posts.find((item) => item.id === post.id) || post;
     save(posts);
     persistPost(post);
     render(posts);
