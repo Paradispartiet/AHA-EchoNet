@@ -4473,8 +4473,35 @@
   function isValidCanonicalAnalysisShape(value) {
     const candidate = value && typeof value === "object" ? value : null;
     if (!candidate) return false;
-    const required = ["contentType", "domain", "theme", "mainTension", "keyInsight", "fieldConnections", "historyGoLinks", "suggestedActions", "confidence", "warnings"];
-    return required.every((key) => Object.prototype.hasOwnProperty.call(candidate, key));
+    if (typeof candidate.contentType !== "string") return false;
+    if (typeof candidate.domain !== "string") return false;
+    if (typeof candidate.theme !== "string") return false;
+    if (typeof candidate.mainTension !== "string") return false;
+    if (typeof candidate.keyInsight !== "string") return false;
+    if (!Array.isArray(candidate.fieldConnections)) return false;
+    if (!Array.isArray(candidate.historyGoLinks)) return false;
+    if (!Array.isArray(candidate.suggestedActions)) return false;
+    if (!Array.isArray(candidate.warnings)) return false;
+
+    const confidence = candidate.confidence && typeof candidate.confidence === "object" ? candidate.confidence : null;
+    if (!confidence) return false;
+    const confidenceKeys = ["contentType", "domain", "theme", "mainTension", "historyGoLinks"];
+    for (const key of confidenceKeys) {
+      const n = Number(confidence[key]);
+      if (!Number.isFinite(n) || n < 0 || n > 1) return false;
+    }
+
+    if (candidate.historyGoLinks.length > 0) {
+      for (const link of candidate.historyGoLinks) {
+        if (!link || typeof link !== "object") return false;
+        if (typeof link.type !== "string") return false;
+        if (typeof link.id !== "string") return false;
+        if (typeof link.title !== "string") return false;
+        if (typeof link.reason !== "string") return false;
+      }
+    }
+
+    return true;
   }
 
   async function resolveCanonicalAnalysisWithOptionalPythonEngine({ message, assistantReply, historyGoContext, fallbackAnalysis }) {

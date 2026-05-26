@@ -58,13 +58,22 @@ function buildContext(seed = {}) {
   result = await hooks.resolveCanonicalAnalysisWithOptionalPythonEngine({ message: 'm', assistantReply: 'a', historyGoContext: {}, fallbackAnalysis: fallback });
   assert.deepEqual(result, fallback, 'missing client should use fallback');
 
-  const pythonCanonical = { ...fallback, theme: 'python-theme' };
+  const pythonCanonical = { ...fallback, theme: 'python-theme', confidence: { contentType: 0.9, domain: 0.8, theme: 0.7, mainTension: 0.6, historyGoLinks: 0.5 } };
   ctx.AHAEngineClient = {
     buildAnalyzePayload: () => ({ ok: true }),
     analyzeWithPythonEngine: async () => pythonCanonical
   };
   result = await hooks.resolveCanonicalAnalysisWithOptionalPythonEngine({ message: 'm', assistantReply: 'a', historyGoContext: {}, fallbackAnalysis: fallback });
   assert.equal(result.theme, 'python-theme', 'valid python canonical should be used');
+
+
+  ctx.AHAEngineClient.analyzeWithPythonEngine = async () => ({
+    ...pythonCanonical,
+    theme: 'invalid-confidence',
+    confidence: {}
+  });
+  result = await hooks.resolveCanonicalAnalysisWithOptionalPythonEngine({ message: 'm', assistantReply: 'a', historyGoContext: {}, fallbackAnalysis: fallback });
+  assert.deepEqual(result, fallback, 'invalid confidence should fallback');
 
   ctx.AHAEngineClient.analyzeWithPythonEngine = async () => null;
   result = await hooks.resolveCanonicalAnalysisWithOptionalPythonEngine({ message: 'm', assistantReply: 'a', historyGoContext: {}, fallbackAnalysis: fallback });
