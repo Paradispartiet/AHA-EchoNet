@@ -162,6 +162,70 @@ Forventet:
 
 Merk: Vercel preview-origins legges ikke inn som wildcard (f.eks. `https://*.vercel.app`) i denne fasen. Eventuelle preview-origins må legges til eksplisitt når konkret preview/staging-origin er kjent.
 
+
+## Verifisert staging URL
+
+Faktisk Render staging-URL for Python AHA Engine:
+
+- Staging URL: `https://aha-engine-staging-7a3y.onrender.com`
+- Health endpoint: `https://aha-engine-staging-7a3y.onrender.com/health`
+- Analyze endpoint: `https://aha-engine-staging-7a3y.onrender.com/api/aha/analyze`
+
+## Verifisert smoke-test
+
+Følgende er manuelt verifisert mot staging:
+
+- `GET /health` returnerer `{"status":"ok","service":"aha-engine"}`.
+- `POST /api/aha/analyze` returnerer et gyldig canonical AHA analysis object.
+- AHA Chat med feature flag mot staging gir `latestSource: "python"` i smoke-test-status.
+- JavaScript fallback/default er fortsatt bevart fordi Python Engine fortsatt kun aktiveres via localStorage-flag.
+
+Konsollkommandoer brukt i staging-test:
+
+```js
+localStorage.setItem("aha_python_engine_enabled", "true");
+localStorage.setItem("aha_python_engine_url", "https://aha-engine-staging-7a3y.onrender.com");
+
+window.AHAPythonEngineSmokeTest.printStatus();
+```
+
+Verifisert statusutdrag etter ny AHA Chat-melding:
+
+```js
+{
+  featureFlagEnabled: true,
+  configuredEngineUrl: "https://aha-engine-staging-7a3y.onrender.com",
+  latestSource: "python",
+  latestReason: ""
+}
+```
+
+Direkte klienttest mot staging:
+
+```js
+window.AHAEngineClient.analyzeWithPythonEngine(
+  window.AHAEngineClient.buildAnalyzePayload(
+    "Dette er en fagtekst om Morgenbladet, offentlighet, kulturkritikk og idédebatt.",
+    null,
+    {}
+  )
+).then(console.log);
+```
+
+Verifisert canonical-felter i responsen:
+
+- `contentType: "academic_article"`
+- `domain: "institutional_media_history"`
+- `theme: "Morgenbladet som idéoffentlig institusjon"`
+- `mainTension: "dyptpløyende offentlighet kontra tempoorientert nyhetslogikk"`
+
+Fallback reset (tilbake til default/JS-flyt):
+
+```js
+localStorage.removeItem("aha_python_engine_enabled");
+localStorage.removeItem("aha_python_engine_url");
+```
+
 ## Provider-nøytral hosting
 
 Denne backend-en kan fortsatt deployes på valgfri container-basert plattform (for eksempel Railway, Fly.io eller tilsvarende) så lenge plattformen støtter:
