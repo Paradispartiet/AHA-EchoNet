@@ -4914,10 +4914,15 @@
   function getAhaSmokeTestFeatureFlags() {
     const storage = getAhaSmokeTestLocalStorage();
     const enabled = storage ? isPythonEngineFeatureEnabled() : false;
-    const configuredUrl = storage ? String(storage.getItem("aha_python_engine_url") || "").trim() : "";
+    const configuredUrl =
+      global.AHAEngineClient && typeof global.AHAEngineClient.getConfiguredBaseUrl === "function"
+        ? global.AHAEngineClient.getConfiguredBaseUrl()
+        : storage
+          ? String(storage.getItem("aha_python_engine_url") || "").trim() || "https://aha-engine-staging-7a3y.onrender.com"
+          : "https://aha-engine-staging-7a3y.onrender.com";
     return {
       enabled,
-      configuredUrl: configuredUrl || "http://127.0.0.1:8000"
+      configuredUrl
     };
   }
 
