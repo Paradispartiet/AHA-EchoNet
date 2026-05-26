@@ -171,6 +171,81 @@ def build_semantic_summary(content_type: str, domain: str, message: str) -> dict
     }
 
 
+def build_recommendation_fields(content_type: str, domain: str, message: str) -> dict[str, list[str]]:
+    normalized = _normalize(message)
+
+    if _contains_any(normalized, ["pinse", "den hellige ånd", "kirkens fødselsdag", "apostlene"]):
+        return {
+            "fieldConnections": ["teologi", "religionshistorie", "kulturhistorie"],
+            "suggestedActions": [
+                "Sammenlign med framstillinger av pinse i andre kirkesamfunn.",
+                "Legg til kildehenvisning til Apostlenes gjerninger 2 for presisjon.",
+            ],
+        }
+
+    if domain == "institutional_media_history":
+        return {
+            "fieldConnections": ["pressehistorie", "offentlighetsteori", "kulturjournalistikk"],
+            "suggestedActions": [
+                "Konkretiser med tidsperioder for å styrke historisk etterprøvbarhet.",
+                "Sammenlign med andre norske nisjeaviser for kontrast.",
+            ],
+        }
+
+    if domain == "public_administration_reform":
+        return {
+            "fieldConnections": ["forvaltningspolitikk", "organisasjonsteori", "velferdsstyring"],
+            "suggestedActions": [
+                "Legg til eksempel på hvordan reformen slo ut lokalt i NAV-kontor.",
+                "Skille tydeligere mellom målformulering og evalueringsfunn.",
+            ],
+        }
+
+    if domain == "literary_attachment":
+        return {
+            "fieldConnections": ["litteraturvitenskap", "psykologi", "fortellerteori"],
+            "suggestedActions": [
+                "Underbygg tolkningen med konkrete tekststeder.",
+                "Avklar forskjellen mellom karakteranalyse og diagnose.",
+            ],
+        }
+
+    if content_type == "day_log":
+        return {
+            "fieldConnections": ["psykologisk selvforståelse", "hverdagsmestring"],
+            "suggestedActions": [
+                "Formuler ett konkret valg som kan tas i løpet av uken.",
+                "Før ny refleksjon etter en samtale der nærvær forsøkes aktivt.",
+            ],
+        }
+
+    if content_type == "project_note":
+        return {
+            "fieldConnections": ["programvareutvikling", "teststrategi", "endringsledelse"],
+            "suggestedActions": [
+                "Definer måleindikator for avvik før implementering starter.",
+                "Knyt milepæler til eksplisitte exit-kriterier per fase.",
+            ],
+        }
+
+    if _contains_any(normalized, ["hjemmel i lov", "legitimt formål", "forholdsmessig", "vedtaket", "rettigheter"]):
+        return {
+            "fieldConnections": ["forvaltningsrett", "rettssikkerhet", "menneskerettigheter"],
+            "suggestedActions": [
+                "Angi rettskilder som støtter treleddstesten.",
+                "Skille tydelig mellom gyldighetskontroll og hensiktsmessighetsvurdering.",
+            ],
+        }
+
+    return {
+        "fieldConnections": [],
+        "suggestedActions": [
+            "Etterspør kontekst: hvem, hva, når og hvilke konsekvenser.",
+            "Be om ett konkret eksempel som kan avgrense problemstillingen.",
+        ],
+    }
+
+
 def analyze_message(request: AnalyzeRequest) -> CanonicalAhaAnalysis:
     message = request.message.strip()
 
@@ -178,6 +253,7 @@ def analyze_message(request: AnalyzeRequest) -> CanonicalAhaAnalysis:
     domain = detect_domain(message)
     history_go_links = build_history_go_links(domain, message)
     semantic_summary = build_semantic_summary(content_type, domain, message)
+    recommendation_fields = build_recommendation_fields(content_type, domain, message)
 
     warnings: list[str] = []
     if not message:
@@ -194,12 +270,9 @@ def analyze_message(request: AnalyzeRequest) -> CanonicalAhaAnalysis:
         theme=semantic_summary["theme"],
         mainTension=semantic_summary["mainTension"],
         keyInsight=semantic_summary["keyInsight"],
-        fieldConnections=[],
+        fieldConnections=recommendation_fields["fieldConnections"],
         historyGoLinks=history_go_links,
-        suggestedActions=[
-            "Sammenlign med eksisterende JavaScript-analyse.",
-            "Bruk fixture-settet for videre kalibrering.",
-        ],
+        suggestedActions=recommendation_fields["suggestedActions"],
         confidence=Confidence(
             contentType=0.7 if content_type != "general" else 0.35,
             domain=0.7 if domain != "generic_academic" else 0.4,
