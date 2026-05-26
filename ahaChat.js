@@ -4505,22 +4505,51 @@
   }
 
   async function resolveCanonicalAnalysisWithOptionalPythonEngine({ message, assistantReply, historyGoContext, fallbackAnalysis }) {
-    if (!isPythonEngineFeatureEnabled()) return fallbackAnalysis;
+    const featureFlagEnabled = isPythonEngineFeatureEnabled();
+    const baseMeta = {
+      featureFlagEnabled,
+      resolvedAt: new Date().toISOString(),
+      reason: ""
+    };
+    if (!featureFlagEnabled) {
+      return {
+        analysis: fallbackAnalysis,
+        meta: Object.assign({}, baseMeta, { source: "javascript_default" })
+      };
+    }
     const client = global.AHAEngineClient;
     if (!client || typeof client.buildAnalyzePayload !== "function" || typeof client.analyzeWithPythonEngine !== "function") {
-      return fallbackAnalysis;
+      return {
+        analysis: fallbackAnalysis,
+        meta: Object.assign({}, baseMeta, { source: "javascript_fallback", reason: "client_missing" })
+      };
     }
     try {
       const payload = client.buildAnalyzePayload(message, assistantReply, historyGoContext || {});
       const pythonAnalysis = await client.analyzeWithPythonEngine(payload);
       if (isValidCanonicalAnalysisShape(pythonAnalysis)) {
-        return pythonAnalysis;
+        return {
+          analysis: pythonAnalysis,
+          meta: Object.assign({}, baseMeta, { source: "python" })
+        };
+      }
+      if (pythonAnalysis == null) {
+        return {
+          analysis: fallbackAnalysis,
+          meta: Object.assign({}, baseMeta, { source: "javascript_fallback", reason: "python_null" })
+        };
       }
       console.warn("Python AHA Engine returnerte ugyldig canonical analysis; bruker JavaScript-fallback.");
-      return fallbackAnalysis;
+      return {
+        analysis: fallbackAnalysis,
+        meta: Object.assign({}, baseMeta, { source: "javascript_fallback", reason: "invalid_python_shape" })
+      };
     } catch (err) {
       console.warn("Python AHA Engine feilet; bruker JavaScript-fallback.", err);
-      return fallbackAnalysis;
+      return {
+        analysis: fallbackAnalysis,
+        meta: Object.assign({}, baseMeta, { source: "javascript_fallback", reason: "python_error" })
+      };
     }
   }
 
@@ -4849,13 +4878,14 @@
     }
     payload = filterCrossDomainAutoPayload(payload, sourceText);
     const jsCanonicalAnalysis = buildCanonicalAnalysis(payload, sourceText);
-    const canonicalAnalysis = await resolveCanonicalAnalysisWithOptionalPythonEngine({
+    const resolvedCanonical = await resolveCanonicalAnalysisWithOptionalPythonEngine({
       message: userText,
       assistantReply: ahaReply,
       historyGoContext: { subjectMatches: payload.subjectMatches || [] },
       fallbackAnalysis: jsCanonicalAnalysis
     });
-    payload.canonicalAnalysis = canonicalAnalysis;
+    payload.canonicalAnalysis = resolvedCanonical.analysis;
+    payload.canonicalAnalysisMeta = resolvedCanonical.meta;
     localStorage.setItem(AUTO_OUTPUT_STORAGE_KEY, JSON.stringify({
       payload,
       sourceText,
