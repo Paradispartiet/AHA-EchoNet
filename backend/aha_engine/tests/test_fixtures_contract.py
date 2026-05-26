@@ -193,3 +193,24 @@ def test_fixture_confidence_and_warnings_baseline() -> None:
         body = response.json()
         assert body["confidence"] == expected_analysis["confidence"], fixture_path.name
         assert body["warnings"] == expected_analysis["warnings"], fixture_path.name
+
+
+def test_fixture_full_canonical_parity() -> None:
+    fixture_files = _fixture_files()
+    assert len(fixture_files) == 8
+
+    for fixture_path in fixture_files:
+        fixture = json.loads(fixture_path.read_text(encoding="utf-8"))
+        input_text = fixture["inputText"]
+        expected_analysis = fixture["expectedCanonicalAnalysis"]
+
+        payload = {
+            "message": input_text,
+            "assistantReply": None,
+            "historyGoContext": {},
+        }
+
+        response = client.post("/api/aha/analyze", json=payload)
+        assert response.status_code == 200, fixture_path.name
+
+        assert response.json() == expected_analysis, fixture_path.name

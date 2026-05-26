@@ -15,6 +15,8 @@ Dette er et minimalt Python/FastAPI-skjelett for fremtidig AHA Engine.
 - Python Engine har nå en **deterministisk baseline** for `confidence` og `warnings`.
 - Python Engine matcher nå alle canonical fixture-felter.
 - Full fixture-paritet er etablert for de 8 golden fixtures.
+- Dette verifiseres av `test_fixture_full_canonical_parity()`.
+- Dette betyr ikke at motoren er "ferdig intelligent"; kun at canonical kontrakt + golden fixture-paritet er etablert.
 
 ## Lokal oppstart
 
@@ -43,8 +45,8 @@ Testene verifiserer blant annet health-endepunkt, canonical feltstruktur, confid
 Fixture-testen sjekker nå første semantiske baseline: `contentType`, `domain`, og sterke `historyGoLinks`-ID-er der fixtures forventer lenker.
 I tillegg sjekkes nå en første semantic summary-baseline for `theme`, `mainTension` og `keyInsight`.
 Testene matcher nå også `fieldConnections` og `suggestedActions` mot golden fixtures.
-
-Full canonical paritet på alle felt er nå etablert i Python Engine (fortsatt uten frontend-kobling).
+`test_fixture_full_canonical_parity()` verifiserer full canonical paritet ved å sammenligne hele responsobjektet mot `expectedCanonicalAnalysis` for alle 8 fixtures.
+Dette betyr fortsatt ikke frontend-kobling, og det betyr heller ikke at motoren er ferdig intelligent.
 
 ## Teststandard
 
