@@ -9,7 +9,8 @@
   },
   "scripts": {
     "start": "node server.js",
-    "validate:aha-fixtures": "node scripts/validate-aha-analysis-fixtures.mjs"
+    "validate:aha-fixtures": "node scripts/validate-aha-analysis-fixtures.mjs",
+    "test:aha-python-smoke": "node tests/aha-python-engine-smoke.test.cjs"
   },
   "dependencies": {
     "cors": "^2.8.5",
