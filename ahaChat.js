@@ -4526,6 +4526,9 @@
 
   function buildCanonicalAnalysis(payload, sourceText = "") {
     const safePayload = payload && typeof payload === "object" ? payload : {};
+    if (isValidCanonicalAnalysisShape(safePayload.canonicalAnalysis)) {
+      return safePayload.canonicalAnalysis;
+    }
     const canonicalSer = buildAhaSerCard(safePayload, sourceText);
     const domain = detectAutoAnalysisDomain(sourceText || "", safePayload || {});
     const existingHistoryLinks = safePayload?.historyGoLinks || safePayload?.history_go_links || [];
