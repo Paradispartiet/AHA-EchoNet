@@ -2955,6 +2955,7 @@
   function buildLiteraryDiarySortItems(raw, sentences) {
     const text = String(raw || "");
     const normalizedText = ` ${text.toLowerCase()} `;
+    const hasSName = sourceHasAny(text, [/\bS\b/, /\b\sS\s*[:\-]/]);
     const categoryDefs = [
       {
         label: "Åpningsscene / sted",
@@ -3004,6 +3005,7 @@
 
     const sortItems = categoryDefs
       .map((def) => {
+        if (def.label === "Relasjonen til S" && !hasSName) return null;
         const hit = matchesForCategory(def);
         if (!hit) return null;
         if (def.label === "Relasjonen til S") {
@@ -3019,7 +3021,7 @@
     if (sortItems.length) return sortItems;
     return [
       { label: "Scener og observasjoner", text: "Teksten bygger mening gjennom konkrete scener og observerende blikk." },
-      { label: "Relasjonelt spor", text: "Relasjoner og kontaktforsøk driver den indre bevegelsen fremover." },
+      { label: "Relasjonelt spor", text: "Relasjonelle spenninger driver den indre bevegelsen fremover." },
       { label: "Indre uro", text: "Understrømmen er uro, selvforklaring og søken etter frihet." }
     ];
   }
@@ -4153,22 +4155,24 @@
       localInsights.push(`Utviklingsmulighet: ${quality.editorialNextStep} ${quality.sharperEnding}`);
     } else if (textType === "academic_article") {
       const literaryAttachmentSignal = detectLiteraryAttachmentSignal(raw);
+      const literaryAttachmentEvidence = sourceHasAny(raw, [/\bknausgård\b/i, /\bkarl ove\b/i, /\bom våren\b/i]);
+      const hasSahelMaliEvidence = sourceHasAny(raw, [/\bsahel\b/i, /\bmali\b/i, /\bknapphetsskolen\b/i, /\bressursknapphet\b/i, /\bmiljøsikkerhet\b/i, /\bpolitisk økologi\b/i]);
       const religiousLexiconSignal = inferReligiousLexiconEvidence(raw);
       if (religiousLexiconSignal?.strong) {
         localInsights.push("Hovedinnsikt: Pinse markerer Den hellige ånds komme til apostlene og forstås som kirkens fødselsdag.");
         localInsights.push("Hovedspenning: Språkforvirring ↔ språkforståelse, og utvalgte mottakere ↔ gave til alle døpte.");
         localInsights.push("Symbolsk kontrast: Babels tårn fungerer som motbilde til pinsefortellingens språkfellesskap.");
         localInsights.push("Videre analyse: Sammenlign tungetale og tydning på tvers av protestantisk, karismatisk og østlig tradisjon.");
-      } else if (literaryAttachmentSignal?.strong) {
+      } else if (literaryAttachmentSignal?.strong && literaryAttachmentEvidence) {
         localInsights.push("Hovedinnsikt: Om våren gjør tilknytning til et eksistensielt og litterært nøkkelbegrep, ikke bare et psykologisk fagbegrep.");
         localInsights.push("Hovedargument: Romanen bekrefter deler av tilknytningsteorien, men viser også dens begrensninger gjennom skildringer av sårbarhet, sykdom, kropp, materialitet og uforklarlige vekstkrefter.");
         localInsights.push("Motargument/kritikk: En ren tilknytningsteoretisk lesning blir for smal fordi romanen åpner for mytologiske, autofiksjonelle og nymaterialistiske forklaringsnivåer.");
         localInsights.push("Spenning: Psykologisk tilknytningsteori står mot romanens bredere litterære utforskning av tilknytning, forknytning og løsrivelse.");
       } else {
       const hovedargument = (sortItems.find((item) => String(item?.label || "").toLowerCase() === "hovedargument") || {}).text
-        || "Klima og miljø er relevante bakgrunnsfaktorer, men konflikt forklares primært gjennom politiske, historiske og maktmessige forhold.";
+        || "Hovedargumentet bygger en faglig tolkning som veier problemstilling, teori, metode og empiri.";
       const motargument = (sortItems.find((item) => String(item?.label || "").toLowerCase().includes("motargument")) || {}).text
-        || "Knapphetsskolens lineære årsakskjeder kritiseres for å underkommunisere institusjoner og aktørmakt.";
+        || "Motargumentet viser hvilke alternative forklaringer som utfordrer hovedpåstanden.";
       const institutionalHistorySignal = detectInstitutionalMediaHistorySignal(raw);
       if (institutionalHistorySignal?.strong) {
         const entityName = extractMainInstitutionName(raw);
@@ -4181,7 +4185,9 @@
         localInsights.push(`Hovedinnsikt: ${reflection}`);
         localInsights.push(`Hovedargument: ${hovedargument}`);
         localInsights.push(`Motargument/kritikk: ${motargument}`);
-        localInsights.push("Spenningen i teksten ligger mellom knapphetsskolen og politisk økologi.");
+        localInsights.push(hasSahelMaliEvidence
+          ? "Spenningen i teksten ligger mellom knapphetsskolen og politisk økologi."
+          : "Spenningen i teksten ligger mellom hovedforklaring og alternative tolkninger.");
       }
       }
     } else {
@@ -4543,15 +4549,19 @@
     const replyText = String(ahaReply || "");
     const combined = `${sourceText} ${replyText}`.toLowerCase();
     const hasSahelAcademicEvidence = sourceHasAny(sourceText, [/\bsahel\b/i, /\bmali\b/i, /\bressursknapphet\b/i, /\bpolitisk økologi\b/i, /\bknapphetsskolen\b/i, /\bmiljøsikkerhet\b/i, /\benvironmental security\b/i, /\bclimate conflict\b/i]);
-    const hasLiteraryAttachmentEvidence = sourceHasAny(sourceText, [/\bknausgård\b/i, /\bkarl ove\b/i, /\bom våren\b/i, /\blinda boström knausgård\b/i, /\btilknytningsteori\b/i, /\bbowlby\b/i]);
+    const hasKnausgardEvidence = sourceHasAny(sourceText, [/\bknausgård\b/i, /\bkarl ove\b/i]);
+    const hasOmVaarenEvidence = sourceHasAny(sourceText, [/\bom våren\b/i]);
+    const hasLindaEvidence = sourceHasAny(sourceText, [/\blinda boström knausgård\b/i]);
+    const hasAttachmentTheoryEvidence = sourceHasAny(sourceText, [/\btilknytningsteori\b/i, /\bbowlby\b/i, /\battachment\b/i]);
+    const hasLiteraryWorkEvidence = hasKnausgardEvidence || hasOmVaarenEvidence || hasLindaEvidence;
     const academicSignals = /(ressursknapphet|politisk økologi|knapphetsskolen|miljøsikkerhet|climate conflict|environmental security|tilknytningsteori|autofiksjon|deiksis|knausgård)/i;
     const publicAdminSignal = detectPublicAdministrationReformSignal(sourceText);
     const baseTextType = detectTextType(sourceText);
-    const isAcademic = baseTextType === "academic_article" || academicSignals.test(combined) || Boolean(publicAdminSignal?.strong) || hasSahelAcademicEvidence || hasLiteraryAttachmentEvidence;
-    const literaryAttachmentSignal = hasLiteraryAttachmentEvidence ? detectLiteraryAttachmentSignal(combined) : { strong: false };
+    const isAcademic = baseTextType === "academic_article" || academicSignals.test(combined) || Boolean(publicAdminSignal?.strong) || hasSahelAcademicEvidence || hasAttachmentTheoryEvidence || hasLiteraryWorkEvidence;
+    const literaryAttachmentSignal = hasLiteraryWorkEvidence ? detectLiteraryAttachmentSignal(combined) : { strong: false };
     const isNavAcademic = Boolean(publicAdminSignal?.strong);
     const isSahelClimateAcademic = hasSahelAcademicEvidence;
-    const isLiteraryAttachmentAcademic = hasLiteraryAttachmentEvidence && literaryAttachmentSignal?.strong;
+    const isLiteraryAttachmentAcademic = hasLiteraryWorkEvidence && literaryAttachmentSignal?.strong;
     const reflectionCandidate = [replyText, sourceText]
       .flatMap((text) => String(text || "").split(/(?<=[.!?])\s+/))
       .map((part) => part.trim())
@@ -4653,6 +4663,31 @@
         payload.path = ["Identifiser romanens bruk av tilknytningsteori.","Analyser deiktisk poetikk og tiltaleform.","Undersøk forholdet mellom far–barn-tilknytning og ekteskapelig løsrivelse.","Sammenlign Knausgårds og Linda Boström Knausgårds perspektiver.","Drøft hvordan nymaterialisme, sårbarhet og mytologi utfordrer en ren psykologisk forklaring."];
         payload.thoughts = { hovedspor: "Knausgårds Om våren leses som en litterær utforskning av tilknytning, løsrivelse og sårbarhet i dialog med psykologisk tilknytningsteori.", lose_tanker: "Autofiksjon, deiksis, Bowlby, Linda Boström Knausgård, nymaterialisme og Valborg-motivet bør holdes analytisk adskilt før de kobles.", neste_steg: "Skill tydelig mellom hva tilknytningsteorien forklarer, og hva romanens litterære form, materialitet og mytologi tilfører." };
         payload.subjectMatches = ["Litteraturvitenskap","Psykologi","Tilknytningsteori","Autofiksjon","Narratologi","Deiksis","Nymaterialisme","Virkelighetslitteratur"];
+      } else if (hasAttachmentTheoryEvidence) {
+        payload.sortItems = [
+          { label: "Problemstilling", text: "Hvordan brukes tilknytningsteori i tekstens analyse?" },
+          { label: "Hovedpåstand", text: "Teksten bruker tilknytning som tolkningsramme for relasjon, trygghet og sårbarhet." },
+          { label: "Teori", text: "Tydeliggjør hvilke begreper fra tilknytningsteori som faktisk brukes i materialet." },
+          { label: "Implikasjon", text: "Skill mellom hva teorien forklarer, og hva teksten selv tilfører gjennom form og tolkning." }
+        ];
+        payload.list = [
+          "Definer sentrale tilknytningsbegreper presist.",
+          "Koble teori direkte til konkrete tekstbelegg.",
+          "Skill mellom observasjon, tolkning og teoretisk påstand.",
+          "Vurder alternative forklaringer på samme materiale."
+        ];
+        payload.insightCards = [
+          "Hovedinnsikt: Tilknytningsteori brukes som analytisk ramme for relasjonelle mønstre.",
+          "Hovedargument: Teorien må forankres i konkrete tekstbelegg for å gi forklaringskraft.",
+          "Motargument/kritikk: En for bred teorianvendelse kan skjule tekstens egne nyanser.",
+          "Neste analyse: Skill tydelig mellom teori, metode, empiri og tolkning."
+        ];
+        payload.path = [
+          "Avklar problemstilling og begrepsbruk.",
+          "Sorter belegg etter teori, metode og empiri.",
+          "Test hovedtolkning mot et alternativ.",
+          "Formuler en nøktern faglig syntese."
+        ];
       } else {
         payload.sortItems = [
           { label: "Problemstilling", text: "Hva er tekstens sentrale faglige spørsmål?" },
