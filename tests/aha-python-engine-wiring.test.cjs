@@ -52,11 +52,14 @@ function buildContext(seed = {}) {
   const fallback = { contentType: 'academic_article', domain: 'general', theme: 'fallback', mainTension: 'tension', keyInsight: 'insight', fieldConnections: [], historyGoLinks: [], suggestedActions: [], confidence: {}, warnings: [] };
 
   let result = await hooks.resolveCanonicalAnalysisWithOptionalPythonEngine({ message: 'm', assistantReply: 'a', historyGoContext: {}, fallbackAnalysis: fallback });
-  assert.deepEqual(result, fallback, 'flag disabled should use fallback');
+  assert.deepEqual(result.analysis, fallback, 'flag disabled should use fallback');
+  assert.equal(result.meta.source, 'javascript_default', 'flag disabled should report javascript_default source');
 
   ctx.localStorage.setItem('aha_python_engine_enabled', 'true');
   result = await hooks.resolveCanonicalAnalysisWithOptionalPythonEngine({ message: 'm', assistantReply: 'a', historyGoContext: {}, fallbackAnalysis: fallback });
-  assert.deepEqual(result, fallback, 'missing client should use fallback');
+  assert.deepEqual(result.analysis, fallback, 'missing client should use fallback');
+  assert.equal(result.meta.source, 'javascript_fallback', 'missing client should report javascript_fallback source');
+  assert.equal(result.meta.reason, 'client_missing', 'missing client should report client_missing reason');
 
   const pythonCanonical = { ...fallback, theme: 'python-theme', confidence: { contentType: 0.9, domain: 0.8, theme: 0.7, mainTension: 0.6, historyGoLinks: 0.5 } };
   ctx.AHAEngineClient = {
@@ -64,7 +67,8 @@ function buildContext(seed = {}) {
     analyzeWithPythonEngine: async () => pythonCanonical
   };
   result = await hooks.resolveCanonicalAnalysisWithOptionalPythonEngine({ message: 'm', assistantReply: 'a', historyGoContext: {}, fallbackAnalysis: fallback });
-  assert.equal(result.theme, 'python-theme', 'valid python canonical should be used');
+  assert.equal(result.analysis.theme, 'python-theme', 'valid python canonical should be used');
+  assert.equal(result.meta.source, 'python', 'valid python canonical should report python source');
 
 
 
@@ -97,15 +101,29 @@ function buildContext(seed = {}) {
     confidence: {}
   });
   result = await hooks.resolveCanonicalAnalysisWithOptionalPythonEngine({ message: 'm', assistantReply: 'a', historyGoContext: {}, fallbackAnalysis: fallback });
-  assert.deepEqual(result, fallback, 'invalid confidence should fallback');
+  assert.deepEqual(result.analysis, fallback, 'invalid confidence should fallback');
+  assert.equal(result.meta.source, 'javascript_fallback', 'invalid confidence should report javascript_fallback source');
+  assert.equal(result.meta.reason, 'invalid_python_shape', 'invalid confidence should report invalid_python_shape reason');
 
   ctx.AHAEngineClient.analyzeWithPythonEngine = async () => null;
   result = await hooks.resolveCanonicalAnalysisWithOptionalPythonEngine({ message: 'm', assistantReply: 'a', historyGoContext: {}, fallbackAnalysis: fallback });
-  assert.deepEqual(result, fallback, 'null python response should fallback');
+  assert.deepEqual(result.analysis, fallback, 'null python response should fallback');
+  assert.equal(result.meta.source, 'javascript_fallback', 'null python response should report javascript_fallback source');
+  assert.equal(result.meta.reason, 'python_null', 'null python response should report python_null reason');
 
   ctx.AHAEngineClient.analyzeWithPythonEngine = async () => { throw new Error('boom'); };
   result = await hooks.resolveCanonicalAnalysisWithOptionalPythonEngine({ message: 'm', assistantReply: 'a', historyGoContext: {}, fallbackAnalysis: fallback });
-  assert.deepEqual(result, fallback, 'exceptions should fallback');
+  assert.deepEqual(result.analysis, fallback, 'exceptions should fallback');
+  assert.equal(result.meta.source, 'javascript_fallback', 'exceptions should report javascript_fallback source');
+  assert.equal(result.meta.reason, 'python_error', 'exceptions should report python_error reason');
+
+  const payloadWithMeta = {
+    canonicalAnalysis: pythonCanonical,
+    canonicalAnalysisMeta: { source: 'python', reason: '' }
+  };
+  const canonicalWithoutMeta = hooks.buildCanonicalAnalysis(payloadWithMeta, 'kildetekst');
+  assert.deepEqual(canonicalWithoutMeta, pythonCanonical, 'buildCanonicalAnalysis should only return canonical analysis object');
+  assert.equal(canonicalWithoutMeta.canonicalAnalysisMeta, undefined, 'buildCanonicalAnalysis should not include canonicalAnalysisMeta');
 
   console.log('aha-python-engine-wiring.test passed');
 })();
