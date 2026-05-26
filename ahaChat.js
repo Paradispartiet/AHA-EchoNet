@@ -4642,6 +4642,61 @@
   }
 
 
+
+  function sanitizeEvidenceBoundAutoPayload(payload, sourceText = "") {
+    const safe = payload && typeof payload === "object" ? { ...payload } : {};
+    const src = ` ${String(sourceText || "").toLowerCase()} `;
+    const hasAny = (patterns) => patterns.some((re) => re.test(src));
+
+    const mediaEvidence = hasAny([/\bgard\s+steiro\b/i,/\btv\s*2\b/i,/\bvg\b/i,/\baftenposten\b/i,/\bschibsted\b/i]);
+    const sRelationEvidence = hasAny([/\brelasjonen til s\b/i,/\bs\b\s+(?:sa|skrev|ringte|svarte)\b/i,/\b(?:til|fra)\s+s\b/i]);
+    const sahelEvidence = hasAny([/\bsahel\b/i,/\bmali\b/i,/\bknapphetsskolen\b/i,/\bpolitisk økologi\b/i]);
+    const knausgaardEvidence = hasAny([/\bknausg[aå]rd\b/i,/\bom\s+v[åa]ren\b/i,/\blinda\s+bostr[öo]m\s+knausg[aå]rd\b/i]);
+
+    const blocked = [];
+    if (!mediaEvidence) blocked.push(/\bgard\s+steiro\b|\btv\s*2\b|\bvg\b|\baftenposten\b|\bschibsted\b/ig);
+    if (!sRelationEvidence) blocked.push(/relasjonen\s+til\s+s/ig);
+    if (!sahelEvidence) blocked.push(/\bsahel\b|\bmali\b|\bknapphetsskolen\b|\bpolitisk\s+økologi\b/ig);
+    if (!knausgaardEvidence) blocked.push(/\bkarl\s+ove\s+knausg[aå]rd\b|\bknausg[aå]rd\b|\bom\s+v[åa]ren\b|\blinda\s+bostr[öo]m\s+knausg[aå]rd\b/ig);
+
+    const scrubText = (value) => {
+      let out = String(value || "");
+      blocked.forEach((re) => { out = out.replace(re, "").replace(/\s{2,}/g, " ").trim(); });
+      return out;
+    };
+    const cleanArray = (arr) => (Array.isArray(arr) ? arr.map((item) => {
+      if (typeof item === "string") return scrubText(item);
+      if (item && typeof item === "object") {
+        const copy = { ...item };
+        if ("label" in copy) copy.label = scrubText(copy.label);
+        if ("text" in copy) copy.text = scrubText(copy.text);
+        if ("title" in copy) copy.title = scrubText(copy.title);
+        if ("summary" in copy) copy.summary = scrubText(copy.summary);
+        return copy;
+      }
+      return item;
+    }).filter((item) => {
+      if (typeof item === "string") return Boolean(item.trim());
+      if (item && typeof item === "object") return Boolean(String(item.text || item.summary || item.title || item.label || "").trim());
+      return false;
+    }) : []);
+
+    safe.reflection = scrubText(safe.reflection || "");
+    safe.sortItems = cleanArray(safe.sortItems);
+    safe.list = cleanArray(safe.list);
+    safe.insightCards = cleanArray(safe.insightCards);
+    safe.path = cleanArray(safe.path);
+    if (safe.thoughts && typeof safe.thoughts === "object") {
+      safe.thoughts = {
+        ...safe.thoughts,
+        hovedspor: scrubText(safe.thoughts.hovedspor || ""),
+        lose_tanker: scrubText(safe.thoughts.lose_tanker || ""),
+        neste_steg: scrubText(safe.thoughts.neste_steg || "")
+      };
+    }
+    return safe;
+  }
+
   function filterCrossDomainAutoPayload(payload, sourceText) {
     const safe = payload && typeof payload === "object" ? payload : {};
     const src = String(sourceText || "").toLowerCase();
@@ -4687,6 +4742,7 @@
       });
       payload = buildAutoOutputFallbackPayload(userText, ahaReply, options);
     }
+    payload = sanitizeEvidenceBoundAutoPayload(payload, sourceText);
     const domain = detectAutoAnalysisDomain(sourceText, payload);
     payload.subjectMatches = normalizeSubjectMatches(Array.isArray(options.subjectMatches) ? options.subjectMatches : []);
     if (global.AHACalibration?.matchText) {
