@@ -4913,7 +4913,7 @@
 
   function getAhaSmokeTestFeatureFlags() {
     const storage = getAhaSmokeTestLocalStorage();
-    const enabled = storage ? String(storage.getItem("aha_python_engine_enabled") || "").trim().toLowerCase() === "true" : false;
+    const enabled = storage ? isPythonEngineFeatureEnabled() : false;
     const configuredUrl = storage ? String(storage.getItem("aha_python_engine_url") || "").trim() : "";
     return {
       enabled,
