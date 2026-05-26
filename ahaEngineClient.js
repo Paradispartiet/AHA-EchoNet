@@ -6,7 +6,7 @@
 
   const FLAG_KEY = "aha_python_engine_enabled";
   const URL_KEY = "aha_python_engine_url";
-  const DEFAULT_URL = "https://aha-engine-staging-7a3y.onrender.com";
+  const STAGING_DEFAULT_URL = "https://aha-engine-staging-7a3y.onrender.com";
   const DEFAULT_TIMEOUT_MS = 4000;
 
   function getStorage() {
@@ -20,17 +20,47 @@
   function isEnabled() {
     const storage = getStorage();
     if (!storage) return false;
-    return String(storage.getItem(FLAG_KEY) || "").trim().toLowerCase() === "true";
+    return storage.getItem(FLAG_KEY) === "true";
   }
 
-  function getBaseUrl() {
+  function getExplicitEngineUrl() {
     const storage = getStorage();
     const raw = storage ? String(storage.getItem(URL_KEY) || "").trim() : "";
-    return raw || DEFAULT_URL;
+    return raw || null;
+  }
+
+  function getHostname() {
+    try {
+      return String(global.location?.hostname || "").trim().toLowerCase();
+    } catch (_) {
+      return "";
+    }
+  }
+
+  function isNonProductionHost() {
+    const hostname = getHostname();
+    if (!hostname) return false;
+
+    if (hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1") {
+      return true;
+    }
+
+    return (
+      hostname.endsWith(".vercel.app") ||
+      hostname.includes("staging") ||
+      hostname.includes("preview")
+    );
+  }
+
+  function resolvePythonEngineUrl() {
+    const explicit = getExplicitEngineUrl();
+    if (explicit) return explicit;
+    if (isNonProductionHost()) return STAGING_DEFAULT_URL;
+    return null;
   }
 
   function getConfiguredBaseUrl() {
-    return getBaseUrl();
+    return resolvePythonEngineUrl();
   }
 
   function buildAnalyzePayload(message, assistantReply, historyGoContext) {
@@ -95,7 +125,10 @@
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
-      const response = await fetch(`${getBaseUrl()}/api/aha/analyze`, {
+      const resolvedUrl = resolvePythonEngineUrl();
+      if (!resolvedUrl) return null;
+
+      const response = await fetch(`${resolvedUrl}/api/aha/analyze`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -115,6 +148,9 @@
 
   const api = {
     isEnabled,
+    getExplicitEngineUrl,
+    isNonProductionHost,
+    resolvePythonEngineUrl,
     getConfiguredBaseUrl,
     buildAnalyzePayload,
     analyzeWithPythonEngine,

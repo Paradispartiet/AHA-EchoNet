@@ -4913,16 +4913,24 @@
 
   function getAhaSmokeTestFeatureFlags() {
     const storage = getAhaSmokeTestLocalStorage();
-    const enabled = storage ? isPythonEngineFeatureEnabled() : false;
+    const featureFlagEnabled = storage ? isPythonEngineFeatureEnabled() : false;
     const configuredUrl =
-      global.AHAEngineClient && typeof global.AHAEngineClient.getConfiguredBaseUrl === "function"
-        ? global.AHAEngineClient.getConfiguredBaseUrl()
+      global.AHAEngineClient && typeof global.AHAEngineClient.getExplicitEngineUrl === "function"
+        ? global.AHAEngineClient.getExplicitEngineUrl()
         : storage
-          ? String(storage.getItem("aha_python_engine_url") || "").trim() || "https://aha-engine-staging-7a3y.onrender.com"
-          : "https://aha-engine-staging-7a3y.onrender.com";
+          ? String(storage.getItem("aha_python_engine_url") || "").trim() || null
+          : null;
+    const resolvedUrl =
+      global.AHAEngineClient && typeof global.AHAEngineClient.resolvePythonEngineUrl === "function"
+        ? global.AHAEngineClient.resolvePythonEngineUrl()
+        : configuredUrl;
+    const urlAvailable = Boolean(resolvedUrl);
     return {
-      enabled,
-      configuredUrl
+      featureFlagEnabled,
+      configuredUrl,
+      resolvedUrl,
+      urlAvailable,
+      requiresExplicitUrl: featureFlagEnabled && !urlAvailable
     };
   }
 
@@ -4953,8 +4961,11 @@
     const flags = getAhaSmokeTestFeatureFlags();
     const meta = getLatestEngineMeta();
     const status = {
-      featureFlagEnabled: flags.enabled,
+      featureFlagEnabled: flags.featureFlagEnabled,
       configuredEngineUrl: flags.configuredUrl,
+      resolvedEngineUrl: flags.resolvedUrl,
+      urlAvailable: flags.urlAvailable,
+      requiresExplicitUrl: flags.requiresExplicitUrl,
       latestSource: meta?.source || "n/a",
       latestReason: meta?.reason || ""
     };
