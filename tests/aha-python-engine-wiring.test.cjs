@@ -67,6 +67,30 @@ function buildContext(seed = {}) {
   assert.equal(result.theme, 'python-theme', 'valid python canonical should be used');
 
 
+
+  const payloadWithCanonicalAnalysis = {
+    textType: 'day_log',
+    reflection: 'irrelevant',
+    canonicalAnalysis: pythonCanonical
+  };
+  const canonicalFromPayload = hooks.buildCanonicalAnalysis(payloadWithCanonicalAnalysis, 'kildetekst');
+  assert.deepEqual(canonicalFromPayload, pythonCanonical, 'buildCanonicalAnalysis should reuse valid payload.canonicalAnalysis');
+
+  const invalidPayloadCanonical = {
+    ...pythonCanonical,
+    confidence: {}
+  };
+  const rebuiltCanonical = hooks.buildCanonicalAnalysis({
+    textType: 'academic_article',
+    reflection: 'Refleksjon fra JS',
+    canonicalAnalysis: invalidPayloadCanonical,
+    path: ['A', 'B'],
+    sortItems: [],
+    list: []
+  }, 'Dette er en tekst om NAV-reformen og måloppnåelse.');
+  assert.notDeepEqual(rebuiltCanonical, invalidPayloadCanonical, 'invalid payload.canonicalAnalysis should not be reused');
+  assert.equal(rebuiltCanonical.contentType, 'academic_article', 'invalid payload.canonicalAnalysis should trigger JS canonical rebuild');
+
   ctx.AHAEngineClient.analyzeWithPythonEngine = async () => ({
     ...pythonCanonical,
     theme: 'invalid-confidence',
