@@ -98,6 +98,20 @@ window.AHAPythonEngineSmokeTest.printStatus()
 
 Forventet at `latestReason` typisk viser fallback-årsak (f.eks. `python_null` eller `python_error`).
 
+
+## Automatisert smoke-test
+
+Kjør denne testen for å verifisere ende-til-ende-koblingen mellom frontend-klienten og lokal Python FastAPI-backend:
+
+```bash
+cd backend/aha_engine
+pip install -r requirements.txt
+cd ../..
+npm run test:aha-python-smoke
+```
+
+Testen starter `uvicorn` lokalt på port `8011`, venter på `GET /health`, kjører klientkall + resolver og verifiserer både Python-path og JavaScript fallback-path.
+
 ## H) Deaktiver feature flag etter test
 
 ```js
