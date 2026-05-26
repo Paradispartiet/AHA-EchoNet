@@ -175,6 +175,26 @@
     return `${cleaned}.`;
   }
 
+  function sourceHasTerm(sourceText, terms) {
+    const src = String(sourceText || "").toLowerCase();
+    const list = Array.isArray(terms) ? terms : [terms];
+    return list.some((term) => {
+      const t = String(term || "").toLowerCase().trim();
+      if (!t) return false;
+      return src.includes(t);
+    });
+  }
+
+  function sourceHasAny(sourceText, patterns) {
+    const src = String(sourceText || "");
+    const list = Array.isArray(patterns) ? patterns : [patterns];
+    return list.some((pattern) => {
+      if (!pattern) return false;
+      if (pattern instanceof RegExp) return pattern.test(src);
+      return sourceHasTerm(src, String(pattern));
+    });
+  }
+
   function shortHash(input) {
     let hash = 5381;
     const value = String(input || "");
@@ -3014,12 +3034,13 @@
       return signals.some((signal) => norm.includes(normalize(signal)));
     }) || "";
 
+    const hasSName = sourceHasAny(text, [/\bS\b/, /\b\sS\s*[:\-]/]);
     const evidence = {
       hasPlaceScene: hasAny(["kurbad", "hageanlegg", "park", "leilighet", "badet", "middelhavet", "utkikkspunkt", "sted", "by"]),
-      hasSRelation: hasAny([" s ", " henne", "tilbake", "såret", "sint", "prinsesse", "kjærlighet", "slutt å ring"]),
+      hasSRelation: hasSName && hasAny([" s ", " henne", "tilbake", "såret", "sint", "prinsesse", "kjærlighet", "slutt å ring"]),
       hasPhone: hasAny(["ring", "ringer", "telefon", "svarte", "hørte", "slutt å ring"]),
       hasStrangers: hasAny(["kongo", "mann", "fyr", "longboard", "sykepleier", "vingård", "kompisen", "venn", "hule", "knivdrap"]),
-      hasTravel: hasAny(["england", "biarriz", "campe", "middelhavet", "reise", "fotballkamper"]),
+      hasTravel: hasAny(["reise", "reiste", "flytte", "flyttet", "hotell", "tog", "fly", "vei", "veien", "bytte by", "byskifte", "england", "biarriz", "campe", "middelhavet", "fotballkamper"]),
       hasNomadism: hasAny(["nomade", "nomader", "nomadisme"]),
       hasWriterLife: hasAny(["forfatter", "poetisk", "skrive", "tekst", "leve vilt"]),
       hasShameGuilt: hasAny(["skyld", "skam", "dårlig samvittighet", "såret", "sint", "dårlig behandlet", "ingen rett"]),
@@ -3874,6 +3895,7 @@
         { label: "Sentrale begreper", text: "Trekk ut fagbegreper, ikke bare hyppige ord." }
       ];
       const literaryAttachmentSignal = detectLiteraryAttachmentSignal(analysisText);
+      const literaryAttachmentEvidence = sourceHasAny(raw, [/\bknausgård\b/i, /\bkarl ove\b/i, /\bom våren\b/i, /\blinda boström knausgård\b/i, /\btilknytningsteori\b/i, /\bbowlby\b/i]);
       const publicAdminSignal = detectPublicAdministrationReformSignal(analysisText);
       const institutionalHistorySignal = detectInstitutionalMediaHistorySignal(analysisText);
       if (religiousLexiconSignal?.strong) {
@@ -4010,7 +4032,7 @@
           "Sammenlign med teori om bakkebyråkrati og governance.",
           "Formuler konkrete styrings- og organisasjonsimplikasjoner."
         ];
-      } else if (literaryAttachmentSignal?.strong) {
+      } else if (literaryAttachmentSignal?.strong && literaryAttachmentEvidence) {
         reflection = "Teksten undersøker hvordan Karl Ove Knausgårds Om våren kan leses i dialog med tilknytningsteori. Den viser hvordan romanen både bruker psykologiske begreper om tilknytning, trygghet, arbeidsmodeller og relasjonell sårbarhet, og samtidig overskrider teorien gjennom autofiksjon, deiksis, performativ skriving, mytologiske bilder og nymaterialistiske perspektiver. Den faglige spenningen ligger mellom psykologisk teori og litterær erkjennelse.";
         sortItems = [
           { label: "Problemstilling", text: "Hvordan kan Knausgårds Om våren leses i dialog med tilknytningsteori?" },
@@ -4520,14 +4542,16 @@
     const sourceText = String(userText || "");
     const replyText = String(ahaReply || "");
     const combined = `${sourceText} ${replyText}`.toLowerCase();
-    const academicSignals = /(sahel|mali|ressursknapphet|politisk økologi|knapphetsskolen|miljøsikkerhet|climate conflict|environmental security|tilknytningsteori|autofiksjon|deiksis|knausgård)/i;
+    const hasSahelAcademicEvidence = sourceHasAny(sourceText, [/\bsahel\b/i, /\bmali\b/i, /\bressursknapphet\b/i, /\bpolitisk økologi\b/i, /\bknapphetsskolen\b/i, /\bmiljøsikkerhet\b/i, /\benvironmental security\b/i, /\bclimate conflict\b/i]);
+    const hasLiteraryAttachmentEvidence = sourceHasAny(sourceText, [/\bknausgård\b/i, /\bkarl ove\b/i, /\bom våren\b/i, /\blinda boström knausgård\b/i, /\btilknytningsteori\b/i, /\bbowlby\b/i]);
+    const academicSignals = /(ressursknapphet|politisk økologi|knapphetsskolen|miljøsikkerhet|climate conflict|environmental security|tilknytningsteori|autofiksjon|deiksis|knausgård)/i;
     const publicAdminSignal = detectPublicAdministrationReformSignal(sourceText);
     const baseTextType = detectTextType(sourceText);
-    const isAcademic = baseTextType === "academic_article" || academicSignals.test(combined) || Boolean(publicAdminSignal?.strong);
-    const literaryAttachmentSignal = detectLiteraryAttachmentSignal(combined);
+    const isAcademic = baseTextType === "academic_article" || academicSignals.test(combined) || Boolean(publicAdminSignal?.strong) || hasSahelAcademicEvidence || hasLiteraryAttachmentEvidence;
+    const literaryAttachmentSignal = hasLiteraryAttachmentEvidence ? detectLiteraryAttachmentSignal(combined) : { strong: false };
     const isNavAcademic = Boolean(publicAdminSignal?.strong);
-    const isSahelClimateAcademic = academicSignals.test(combined) && /(sahel|mali|knapphetsskolen|ressursknapphet|miljøsikkerhet|politisk økologi|climate conflict|environmental security)/i.test(combined);
-    const isLiteraryAttachmentAcademic = literaryAttachmentSignal?.strong;
+    const isSahelClimateAcademic = hasSahelAcademicEvidence;
+    const isLiteraryAttachmentAcademic = hasLiteraryAttachmentEvidence && literaryAttachmentSignal?.strong;
     const reflectionCandidate = [replyText, sourceText]
       .flatMap((text) => String(text || "").split(/(?<=[.!?])\s+/))
       .map((part) => part.trim())
