@@ -4461,6 +4461,42 @@
     return Array.from(new Set(normalizedPayload.concat(lexiconHits))).slice(0, 20);
   }
 
+
+  function isPythonEngineFeatureEnabled() {
+    try {
+      return global.localStorage?.getItem("aha_python_engine_enabled") === "true";
+    } catch {
+      return false;
+    }
+  }
+
+  function isValidCanonicalAnalysisShape(value) {
+    const candidate = value && typeof value === "object" ? value : null;
+    if (!candidate) return false;
+    const required = ["contentType", "domain", "theme", "mainTension", "keyInsight", "fieldConnections", "historyGoLinks", "suggestedActions", "confidence", "warnings"];
+    return required.every((key) => Object.prototype.hasOwnProperty.call(candidate, key));
+  }
+
+  async function resolveCanonicalAnalysisWithOptionalPythonEngine({ message, assistantReply, historyGoContext, fallbackAnalysis }) {
+    if (!isPythonEngineFeatureEnabled()) return fallbackAnalysis;
+    const client = global.AHAEngineClient;
+    if (!client || typeof client.buildAnalyzePayload !== "function" || typeof client.analyzeWithPythonEngine !== "function") {
+      return fallbackAnalysis;
+    }
+    try {
+      const payload = client.buildAnalyzePayload(message, assistantReply, historyGoContext || {});
+      const pythonAnalysis = await client.analyzeWithPythonEngine(payload);
+      if (isValidCanonicalAnalysisShape(pythonAnalysis)) {
+        return pythonAnalysis;
+      }
+      console.warn("Python AHA Engine returnerte ugyldig canonical analysis; bruker JavaScript-fallback.");
+      return fallbackAnalysis;
+    } catch (err) {
+      console.warn("Python AHA Engine feilet; bruker JavaScript-fallback.", err);
+      return fallbackAnalysis;
+    }
+  }
+
   function buildCanonicalAnalysis(payload, sourceText = "") {
     const safePayload = payload && typeof payload === "object" ? payload : {};
     const canonicalSer = buildAhaSerCard(safePayload, sourceText);
@@ -4742,7 +4778,7 @@
     };
   }
 
-  function renderAutoOutputs(userText, ahaReply, options = {}) {
+  async function renderAutoOutputs(userText, ahaReply, options = {}) {
     const sourceText = String(userText || "");
     const host = document.getElementById("aha-auto-output");
     if (!sourceText.trim()) {
@@ -4782,6 +4818,14 @@
       payload.path = getLiteraryAttachmentLearningPath();
     }
     payload = filterCrossDomainAutoPayload(payload, sourceText);
+    const jsCanonicalAnalysis = buildCanonicalAnalysis(payload, sourceText);
+    const canonicalAnalysis = await resolveCanonicalAnalysisWithOptionalPythonEngine({
+      message: userText,
+      assistantReply: ahaReply,
+      historyGoContext: { subjectMatches: payload.subjectMatches || [] },
+      fallbackAnalysis: jsCanonicalAnalysis
+    });
+    payload.canonicalAnalysis = canonicalAnalysis;
     localStorage.setItem(AUTO_OUTPUT_STORAGE_KEY, JSON.stringify({
       payload,
       sourceText,
@@ -4922,7 +4966,7 @@
             safeReply = forceInstitutionalMediaHistoryFagkoblingerInReply(safeReply, analysisText, { subjectMatches });
           }
           appendChat("aha", safeReply, { categoryChips: suggestCategoryChips(), subjectMatches });
-          try { renderAutoOutputs(text, safeReply, { subjectMatches }); } catch (autoErr) { console.warn("Auto-output feilet", autoErr); }
+          try { await renderAutoOutputs(text, safeReply, { subjectMatches }); } catch (autoErr) { console.warn("Auto-output feilet", autoErr); }
           try { ensureAfterworkForLatestAnalysis(text, { subjectMatches }); } catch (afterErr) { console.warn("Auto-etterarbeid feilet", afterErr); }
           // AHA-agentens egne svar skal vises i chatten og logges som
           // source event, men IKKE bli en ordinær brukerinnsikt. AI-
@@ -4943,7 +4987,7 @@
         } catch (err) {
           console.warn("AHA-agent utilgjengelig", err);
           appendChat("aha", "AHA-agenten er ikke tilgjengelig akkurat nå.");
-          try { renderAutoOutputs(text, "", { subjectMatches: [] }); } catch (autoErr) { console.warn("Auto-output feilet", autoErr); }
+          try { await renderAutoOutputs(text, "", { subjectMatches: [] }); } catch (autoErr) { console.warn("Auto-output feilet", autoErr); }
           try { ensureAfterworkForLatestAnalysis(text, { subjectMatches: [] }); } catch (afterErr) { console.warn("Auto-etterarbeid feilet", afterErr); }
         } finally {
           setAhaProcessing(false);
@@ -5020,7 +5064,7 @@
 
   global.loadChamberFromStorage = global.loadChamberFromStorage || loadChamberFromStorage;
   global.saveChamberToStorage = global.saveChamberToStorage || saveChamberToStorage;
-  global.AHATestHooks = Object.assign({}, global.AHATestHooks || {}, { detectTextType, buildCanonicalAnalysis, buildAhaAnalysisExportBundle, formatAhaAnalysisExportMarkdown, buildAutoOutputs, normalizeFagkoblinger });
+  global.AHATestHooks = Object.assign({}, global.AHATestHooks || {}, { detectTextType, buildCanonicalAnalysis, buildAhaAnalysisExportBundle, formatAhaAnalysisExportMarkdown, buildAutoOutputs, normalizeFagkoblinger, resolveCanonicalAnalysisWithOptionalPythonEngine });
 
   global.AHAChat = {
     loadChamberFromStorage,
