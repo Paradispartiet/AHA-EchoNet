@@ -721,6 +721,32 @@
     });
   }
 
+
+
+  function findMergedPost(posts, candidate) {
+    const list = Array.isArray(posts) ? posts : [];
+    const signature = String(candidate?.source_signature || createPostSignature(candidate) || "");
+    const id = String(candidate?.id || "");
+    if (signature) {
+      const bySignature = list.find((item) => String(item?.source_signature || createPostSignature(item) || "") === signature);
+      if (bySignature) return bySignature;
+    }
+    if (id) {
+      const byId = list.find((item) => String(item?.id || "") === id);
+      if (byId) return byId;
+    }
+    return null;
+  }
+
+  function postFingerprint(post) {
+    if (!post || typeof post !== "object") return "";
+    try {
+      return JSON.stringify(post);
+    } catch {
+      return "";
+    }
+  }
+
   async function syncFromDatabase() {
     if (!window.AHARepository?.loadInstaPosts) return { ok: false, fallback: "localStorage" };
 
@@ -792,9 +818,15 @@
         meta: { import_session_id: options.sessionId || null }
       });
 
+      const beforeMerged = findMergedPost(posts, post);
+      const beforeFingerprint = postFingerprint(beforeMerged);
       const mergedImport = mergePosts(posts, [post]);
       posts.splice(0, posts.length, ...mergedImport);
-      persistPost(post);
+      const mergedPost = findMergedPost(posts, post) || post;
+      const afterFingerprint = postFingerprint(mergedPost);
+      if (!beforeMerged || beforeFingerprint !== afterFingerprint) {
+        persistPost(mergedPost);
+      }
 
       if (connectIngest && (post.caption || post.title)) {
         await window.AHAIngest?.ingest?.({
@@ -999,10 +1031,16 @@
       post.last_source_event_id = ingestResult.sourceEvent.id;
     }
 
-    const posts = mergePosts(load(), [post]);
-    post = posts.find((item) => item.id === post.id) || post;
+    const existingPosts = load();
+    const beforeMerged = findMergedPost(existingPosts, post);
+    const beforeFingerprint = postFingerprint(beforeMerged);
+    const posts = mergePosts(existingPosts, [post]);
+    post = findMergedPost(posts, post) || post;
     save(posts);
-    persistPost(post);
+    const afterFingerprint = postFingerprint(post);
+    if (!beforeMerged || beforeFingerprint !== afterFingerprint) {
+      persistPost(post);
+    }
     render(posts);
     return post;
   }
@@ -1117,6 +1155,7 @@
     renderStories,
     pushLocalToDatabase,
     mergePosts,
+    findMergedPost,
     syncFromDatabase,
     addPost,
     deletePost,
