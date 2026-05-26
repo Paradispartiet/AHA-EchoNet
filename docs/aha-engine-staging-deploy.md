@@ -76,6 +76,70 @@ Forventet status inkluderer:
 
 - `latestSource: "python"`
 
+## Render staging
+
+Render er valgt som første staging-provider for AHA Engine i denne migreringsfasen.
+
+- `render.yaml` i repo-root definerer tjenesten `aha-engine-staging`.
+- Tjenesten bruker Docker runtime og bygger fra `backend/aha_engine` (Dockerfile i den mappen).
+- Health check går mot `GET /health`.
+- CORS styres av `AHA_ENGINE_ALLOWED_ORIGINS`.
+- Ingen secrets trengs i nåværende fase.
+- Ingen database, embeddings eller ekstern AI/API-integrasjon er lagt til.
+- Dette er ikke et produksjonsbytte; frontend beholder JavaScript-motoren som default/fallback.
+
+### Opprette staging-tjenesten i Render
+
+1. Gå til Render Dashboard og velg opprettelse via Blueprint fra repoet.
+2. Velg dette repoet og branchen som inneholder `render.yaml`.
+3. Bekreft at Blueprint oppretter web-servicen `aha-engine-staging`.
+4. Verifiser etter opprettelse at health check på `/health` er grønn.
+
+### Etter at Render har gitt staging-URL
+
+Aktiver Python Engine i nettleseren:
+
+```js
+localStorage.setItem("aha_python_engine_enabled", "true");
+localStorage.setItem("aha_python_engine_url", "https://<render-staging-url>");
+```
+
+Send testmelding i AHA Chat:
+
+```text
+Dette er en fagtekst om Morgenbladet, offentlighet, kulturkritikk og idédebatt.
+```
+
+Sjekk status i konsollen:
+
+```js
+window.AHAPythonEngineSmokeTest.printStatus()
+```
+
+Forventet:
+
+- `latestSource: "python"`
+
+### Fallback-test med ugyldig staging-URL
+
+Sett en ugyldig URL:
+
+```js
+localStorage.setItem("aha_python_engine_url", "https://invalid-aha-engine-staging-url.example");
+```
+
+Send en ny melding i AHA Chat og sjekk:
+
+```js
+window.AHAPythonEngineSmokeTest.printStatus()
+```
+
+Forventet:
+
+- `latestSource: "javascript_fallback"`
+
+Merk: Vercel preview-origins legges ikke inn som wildcard (f.eks. `https://*.vercel.app`) i denne fasen. Eventuelle preview-origins må legges til eksplisitt når konkret preview/staging-origin er kjent.
+
 ## Provider-nøytral hosting
 
 Denne backend-en kan deployes på valgfri container-basert plattform (for eksempel Render, Railway, Fly.io eller tilsvarende) så lenge plattformen støtter:
