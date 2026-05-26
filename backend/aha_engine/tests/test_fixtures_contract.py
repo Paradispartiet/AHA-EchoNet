@@ -123,3 +123,27 @@ def test_fixture_semantic_baseline() -> None:
             expected_ids = {link["id"] for link in expected_links}
             returned_ids = {link.get("id") for link in returned_links}
             assert expected_ids.intersection(returned_ids), fixture_path.name
+
+
+def test_fixture_semantic_summary_baseline() -> None:
+    fixture_files = _fixture_files()
+    assert len(fixture_files) == 8
+
+    for fixture_path in fixture_files:
+        fixture = json.loads(fixture_path.read_text(encoding="utf-8"))
+        input_text = fixture["inputText"]
+        expected_analysis = fixture["expectedCanonicalAnalysis"]
+
+        payload = {
+            "message": input_text,
+            "assistantReply": None,
+            "historyGoContext": {},
+        }
+
+        response = client.post("/api/aha/analyze", json=payload)
+        assert response.status_code == 200, fixture_path.name
+
+        body = response.json()
+        assert body["theme"] == expected_analysis["theme"], fixture_path.name
+        assert body["mainTension"] == expected_analysis["mainTension"], fixture_path.name
+        assert body["keyInsight"] == expected_analysis["keyInsight"], fixture_path.name
