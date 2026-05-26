@@ -2932,6 +2932,13 @@
     if (metaProfilePanel) metaProfilePanel.innerHTML = "";
     const afterworkPanel = document.getElementById("afterwork-panel");
     if (afterworkPanel) afterworkPanel.innerHTML = "";
+    ["aha-auto-output", "afterwork-panel"].forEach((id) => {
+      const el = document.getElementById(id);
+      if (!el?.dataset) return;
+      delete el.dataset.sourceText;
+      delete el.dataset.sourceTextHash;
+      delete el.dataset.sourceTextPreview;
+    });
     renderHighlightsRail();
     updateEmptyState();
   }
@@ -3141,7 +3148,14 @@
     try {
       const raw = localStorage.getItem(AFTERWORK_STORAGE_KEY);
       const parsed = raw ? JSON.parse(raw) : [];
-      return Array.isArray(parsed) ? parsed : [];
+      const list = Array.isArray(parsed) ? parsed : [];
+      return list.map((item) => {
+        const safe = item && typeof item === "object" ? item : {};
+        const sourceText = String(safe.sourceText || "");
+        const learningPath = Array.isArray(safe.learningPath) ? safe.learningPath : (Array.isArray(safe.learningPaths) ? safe.learningPaths : []);
+        const sourceTextHash = String(safe.sourceTextHash || sourceHash(sourceText));
+        return { ...safe, sourceText, sourceTextHash, sourceTextPreview: String(safe.sourceTextPreview || sourceText.replace(/\s+/g, " ").slice(0, 180)), learningPath, createdAt: safe.createdAt || new Date().toISOString() };
+      });
     } catch {
       return [];
     }
@@ -3562,6 +3576,7 @@
       source: "chat",
       textType: normalizedPayload.textType || detectTextType(source),
       createdAt: new Date().toISOString(),
+      sourceText,
       sourceTextHash,
       sourceTextPreview: source.replace(/\s+/g, " ").slice(0, 180),
       reflection: String(normalizedPayload.reflection || ""),
@@ -4731,7 +4746,11 @@
     const sourceText = String(userText || "");
     const host = document.getElementById("aha-auto-output");
     if (!sourceText.trim()) {
-      if (host) host.dataset.sourceText = sourceText;
+      if (host) {
+      host.dataset.sourceText = sourceText;
+      host.dataset.sourceTextHash = sourceHash(sourceText);
+      host.dataset.sourceTextPreview = sourceText.replace(/\s+/g, " ").slice(0, 180);
+    }
       return;
     }
     let payload;
@@ -4770,7 +4789,11 @@
       sourceTextPreview: sourceText.replace(/\s+/g, " ").slice(0, 180),
       createdAt: new Date().toISOString()
     }));
-    if (host) host.dataset.sourceText = sourceText;
+    if (host) {
+      host.dataset.sourceText = sourceText;
+      host.dataset.sourceTextHash = sourceHash(sourceText);
+      host.dataset.sourceTextPreview = sourceText.replace(/\s+/g, " ").slice(0, 180);
+    }
     renderAutoOutputPayload(payload);
     setExportButtonsEnabled(true);
   }
@@ -4826,7 +4849,11 @@
     const payload = cache?.payload && typeof cache.payload === "object" ? cache.payload : cache;
     const sourceText = String(cache?.sourceText || "");
     const host = document.getElementById("aha-auto-output");
-    if (host) host.dataset.sourceText = sourceText;
+    if (host) {
+      host.dataset.sourceText = sourceText;
+      host.dataset.sourceTextHash = sourceHash(sourceText);
+      host.dataset.sourceTextPreview = sourceText.replace(/\s+/g, " ").slice(0, 180);
+    }
     renderAutoOutputPayload(payload);
     setExportButtonsEnabled(true);
   }

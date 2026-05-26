@@ -251,7 +251,7 @@
           createdAt: item?.createdAt || "",
           concepts,
           insightsCount: asArray(item?.insights).length,
-          learningPathCount: asArray(item?.learningPath || item?.learningPaths).length
+          learningPathCount: asArray(item?.learningPath).length || asArray(item?.learningPaths).length
         };
       });
   }
