@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from fastapi.testclient import TestClient
 
-from app.main import app
+from app.main import DEFAULT_ALLOWED_ORIGINS, app, parse_allowed_origins
 
 
 client = TestClient(app)
@@ -56,3 +56,18 @@ def test_analyze_short_message_adds_warning() -> None:
 
     warnings = response.json()["warnings"]
     assert any("kort" in warning.lower() for warning in warnings)
+
+
+def test_parse_allowed_origins_uses_default_for_none_or_empty() -> None:
+    assert parse_allowed_origins(None) == DEFAULT_ALLOWED_ORIGINS
+    assert parse_allowed_origins("") == DEFAULT_ALLOWED_ORIGINS
+    assert parse_allowed_origins("   ,  ") == DEFAULT_ALLOWED_ORIGINS
+
+
+def test_parse_allowed_origins_splits_and_trims_values() -> None:
+    value = "http://localhost:3000, https://paradispartiet.github.io ,http://127.0.0.1:5500"
+    assert parse_allowed_origins(value) == [
+        "http://localhost:3000",
+        "https://paradispartiet.github.io",
+        "http://127.0.0.1:5500",
+    ]
