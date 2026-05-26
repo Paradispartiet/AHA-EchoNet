@@ -6,7 +6,7 @@
 
   const FLAG_KEY = "aha_python_engine_enabled";
   const URL_KEY = "aha_python_engine_url";
-  const DEFAULT_URL = "http://127.0.0.1:8000";
+  const DEFAULT_URL = "https://aha-engine-staging-7a3y.onrender.com";
   const DEFAULT_TIMEOUT_MS = 4000;
 
   function getStorage() {
