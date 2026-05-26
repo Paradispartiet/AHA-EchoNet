@@ -80,7 +80,8 @@ Forventet status inkluderer:
 
 Render er valgt som første staging-provider for AHA Engine i denne migreringsfasen.
 
-- `render.yaml` i repo-root definerer tjenesten `aha-engine-staging`.
+- `render.yaml` i repo-root definerer nå to Render-tjenester: eksisterende `aha-agent` (Node/OpenAI/Voyage) og nye `aha-engine-staging` (Python staging).
+- PR 18 legger til `aha-engine-staging` uten å fjerne eksisterende `aha-agent`.
 - Tjenesten bruker Docker runtime og bygger fra `backend/aha_engine` (Dockerfile i den mappen).
 - Health check går mot `GET /health`.
 - CORS styres av `AHA_ENGINE_ALLOWED_ORIGINS`.
@@ -142,10 +143,10 @@ Merk: Vercel preview-origins legges ikke inn som wildcard (f.eks. `https://*.ver
 
 ## Provider-nøytral hosting
 
-Denne backend-en kan deployes på valgfri container-basert plattform (for eksempel Render, Railway, Fly.io eller tilsvarende) så lenge plattformen støtter:
+Denne backend-en kan fortsatt deployes på valgfri container-basert plattform (for eksempel Railway, Fly.io eller tilsvarende) så lenge plattformen støtter:
 
 - Docker build fra `backend/aha_engine`
 - eksponering av HTTP-port `8000`
 - konfigurasjon av `AHA_ENGINE_ALLOWED_ORIGINS`
 
-Ingen provider-spesifikke filer kreves i dette steget.
+Repoet inneholder nå i tillegg en konkret Render Blueprint i `render.yaml` som bevarer eksisterende `aha-agent` og legger til `aha-engine-staging`.
