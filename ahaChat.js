@@ -4504,6 +4504,13 @@
     return true;
   }
 
+  function buildPythonFallbackMeta(baseMeta, reason, details = {}) {
+    const meta = Object.assign({}, baseMeta, { source: "javascript_fallback", reason: reason || "python_error" });
+    if (typeof details.status === "number") meta.status = details.status;
+    if (typeof details.url === "string" && details.url) meta.url = details.url;
+    return meta;
+  }
+
   async function resolveCanonicalAnalysisWithOptionalPythonEngine({ message, assistantReply, historyGoContext, fallbackAnalysis }) {
     const featureFlagEnabled = isPythonEngineFeatureEnabled();
     const baseMeta = {
@@ -4518,37 +4525,62 @@
       };
     }
     const client = global.AHAEngineClient;
-    if (!client || typeof client.buildAnalyzePayload !== "function" || typeof client.analyzeWithPythonEngine !== "function") {
+    if (!client || typeof client.buildAnalyzePayload !== "function") {
       return {
         analysis: fallbackAnalysis,
-        meta: Object.assign({}, baseMeta, { source: "javascript_fallback", reason: "client_missing" })
+        meta: buildPythonFallbackMeta(baseMeta, "client_missing")
+      };
+    }
+    const hasDetailedClient = typeof client.analyzeWithPythonEngineDetailed === "function";
+    if (!hasDetailedClient && typeof client.analyzeWithPythonEngine !== "function") {
+      return {
+        analysis: fallbackAnalysis,
+        meta: buildPythonFallbackMeta(baseMeta, "client_missing")
       };
     }
     try {
       const payload = client.buildAnalyzePayload(message, assistantReply, historyGoContext || {});
+      if (hasDetailedClient) {
+        const detailed = await client.analyzeWithPythonEngineDetailed(payload);
+        const pythonAnalysis = detailed?.analysis || null;
+        if (detailed?.ok && isValidCanonicalAnalysisShape(pythonAnalysis)) {
+          return {
+            analysis: pythonAnalysis,
+            meta: Object.assign({}, baseMeta, { source: "python", reason: "" })
+          };
+        }
+        if (detailed?.ok && !isValidCanonicalAnalysisShape(pythonAnalysis)) {
+          console.warn("Python AHA Engine returnerte ugyldig canonical analysis; bruker JavaScript-fallback.");
+        }
+        return {
+          analysis: fallbackAnalysis,
+          meta: buildPythonFallbackMeta(baseMeta, detailed?.reason || "python_error", detailed || {})
+        };
+      }
+
       const pythonAnalysis = await client.analyzeWithPythonEngine(payload);
       if (isValidCanonicalAnalysisShape(pythonAnalysis)) {
         return {
           analysis: pythonAnalysis,
-          meta: Object.assign({}, baseMeta, { source: "python" })
+          meta: Object.assign({}, baseMeta, { source: "python", reason: "" })
         };
       }
       if (pythonAnalysis == null) {
         return {
           analysis: fallbackAnalysis,
-          meta: Object.assign({}, baseMeta, { source: "javascript_fallback", reason: "python_null" })
+          meta: buildPythonFallbackMeta(baseMeta, "python_null")
         };
       }
       console.warn("Python AHA Engine returnerte ugyldig canonical analysis; bruker JavaScript-fallback.");
       return {
         analysis: fallbackAnalysis,
-        meta: Object.assign({}, baseMeta, { source: "javascript_fallback", reason: "invalid_python_shape" })
+        meta: buildPythonFallbackMeta(baseMeta, "invalid_python_shape")
       };
     } catch (err) {
       console.warn("Python AHA Engine feilet; bruker JavaScript-fallback.", err);
       return {
         analysis: fallbackAnalysis,
-        meta: Object.assign({}, baseMeta, { source: "javascript_fallback", reason: "python_error" })
+        meta: buildPythonFallbackMeta(baseMeta, "python_error")
       };
     }
   }
@@ -4967,7 +4999,9 @@
       urlAvailable: flags.urlAvailable,
       requiresExplicitUrl: flags.requiresExplicitUrl,
       latestSource: meta?.source || "n/a",
-      latestReason: meta?.reason || ""
+      latestReason: meta?.reason || "",
+      latestStatus: typeof meta?.status === "number" ? meta.status : null,
+      latestUrl: meta?.url || null
     };
     console.info("[AHAPythonEngineSmokeTest]", status);
     return status;

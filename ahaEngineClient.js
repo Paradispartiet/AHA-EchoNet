@@ -113,8 +113,27 @@
     return true;
   }
 
-  async function analyzeWithPythonEngine(payload, options) {
-    if (!isEnabled()) return null;
+  function buildDetailedResult({ analysis = null, ok = false, reason = "", status = null, url = null } = {}) {
+    return { analysis, ok, reason, status, url };
+  }
+
+  function isAbortError(error) {
+    return error && (error.name === "AbortError" || error.code === 20);
+  }
+
+  function isLikelyNetworkError(error) {
+    return error instanceof TypeError || /fetch|network|failed to fetch/i.test(String(error?.message || error || ""));
+  }
+
+  async function analyzeWithPythonEngineDetailed(payload, options) {
+    if (!isEnabled()) {
+      return buildDetailedResult({ reason: "feature_flag_disabled" });
+    }
+
+    const resolvedUrl = resolvePythonEngineUrl();
+    if (!resolvedUrl) {
+      return buildDetailedResult({ reason: "requires_explicit_url" });
+    }
 
     const timeoutMs =
       options && typeof options.timeoutMs === "number" && options.timeoutMs > 0
@@ -123,11 +142,9 @@
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    let status = null;
 
     try {
-      const resolvedUrl = resolvePythonEngineUrl();
-      if (!resolvedUrl) return null;
-
       const response = await fetch(`${resolvedUrl}/api/aha/analyze`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -135,15 +152,42 @@
         signal: controller.signal
       });
 
-      if (!response.ok) return null;
+      status = typeof response.status === "number" ? response.status : null;
+      if (!response.ok) {
+        return buildDetailedResult({ reason: "http_error", status, url: resolvedUrl });
+      }
 
-      const data = await response.json();
-      return isCanonicalAhaAnalysis(data) ? data : null;
-    } catch (_) {
-      return null;
+      let data;
+      try {
+        data = await response.json();
+      } catch (_) {
+        return buildDetailedResult({ reason: "invalid_json", status, url: resolvedUrl });
+      }
+
+      if (data == null) {
+        return buildDetailedResult({ reason: "python_null", status, url: resolvedUrl });
+      }
+
+      if (!isCanonicalAhaAnalysis(data)) {
+        return buildDetailedResult({ reason: "invalid_python_shape", status, url: resolvedUrl });
+      }
+
+      return buildDetailedResult({ analysis: data, ok: true, status, url: resolvedUrl });
+    } catch (err) {
+      const reason = isAbortError(err)
+        ? "timeout"
+        : isLikelyNetworkError(err)
+          ? "network_error"
+          : "python_error";
+      return buildDetailedResult({ reason, status, url: resolvedUrl });
     } finally {
       clearTimeout(timeoutId);
     }
+  }
+
+  async function analyzeWithPythonEngine(payload, options) {
+    const detailed = await analyzeWithPythonEngineDetailed(payload, options);
+    return detailed.analysis;
   }
 
   const api = {
@@ -153,6 +197,7 @@
     resolvePythonEngineUrl,
     getConfiguredBaseUrl,
     buildAnalyzePayload,
+    analyzeWithPythonEngineDetailed,
     analyzeWithPythonEngine,
     isCanonicalAhaAnalysis
   };
