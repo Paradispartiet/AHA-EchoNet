@@ -187,3 +187,7 @@ Forbedre suggestedActions og warnings i Python Engine.
 ### PR 29
 
 Vurder intern staging-toggle/konfigurasjon for tryggere testing, fortsatt uten å gjøre Python Engine til default.
+
+## Representative fixtures for next-phase quality work
+
+PR 25 utvider fixture-grunnlaget for AHA Engine-kvalitetsarbeid med representative caser for fagtekst, refleksjon, History Go-koblinger, tverrfaglige tekster og uklare input. Hensikten er å gi et bedre sammenligningsgrunnlag for senere vurdering av JavaScript Engine og Python Engine uten å endre analyse-runtime, fallback-regler eller canonical AHA analysis contract i denne fasen.

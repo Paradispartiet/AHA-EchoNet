@@ -10,6 +10,9 @@ from app.main import app
 
 client = TestClient(app)
 
+EXPECTED_FIXTURE_COUNT = 16
+BASELINE_PARITY_FIXTURE_COUNT = 8
+
 CANONICAL_TOP_LEVEL_KEYS = {
     "contentType",
     "domain",
@@ -45,9 +48,15 @@ def _fixture_files() -> list[Path]:
     return sorted(path for path in fixture_dir.iterdir() if path.suffix == ".json")
 
 
+def _baseline_parity_fixture_files() -> list[Path]:
+    # The PR 7 baseline fixtures are the first eight golden examples that the current Python engine mirrors exactly.
+    # PR 25 next-phase fixtures are qualitative targets for later engine work and are schema-validated here without changing runtime behavior.
+    return _fixture_files()[:BASELINE_PARITY_FIXTURE_COUNT]
+
+
 def test_fixture_contract_compatibility() -> None:
     fixture_files = _fixture_files()
-    assert len(fixture_files) == 8
+    assert len(fixture_files) == EXPECTED_FIXTURE_COUNT
 
     for fixture_path in fixture_files:
         fixture = json.loads(fixture_path.read_text(encoding="utf-8"))
@@ -87,15 +96,17 @@ def test_fixture_contract_compatibility() -> None:
             assert isinstance(value, (int, float)), fixture_path.name
             assert 0 <= value <= 1, fixture_path.name
 
-        for link in body["historyGoLinks"]:
-            assert isinstance(link, dict), fixture_path.name
-            assert {"type", "id", "title", "reason"}.issubset(link.keys()), fixture_path.name
+        for link_source in (expected_analysis["historyGoLinks"], body["historyGoLinks"]):
+            for link in link_source:
+                assert isinstance(link, dict), fixture_path.name
+                assert {"type", "id", "title", "reason"}.issubset(link.keys()), fixture_path.name
 
 
 def test_fixture_semantic_baseline() -> None:
     # PR 7 verifies first semantic baseline only: contentType, domain, and strong History Go link ids. Full semantic parity comes later.
-    fixture_files = _fixture_files()
-    assert len(fixture_files) == 8
+    fixture_files = _baseline_parity_fixture_files()
+    assert len(_fixture_files()) == EXPECTED_FIXTURE_COUNT
+    assert len(fixture_files) == BASELINE_PARITY_FIXTURE_COUNT
 
     for fixture_path in fixture_files:
         fixture = json.loads(fixture_path.read_text(encoding="utf-8"))
@@ -126,8 +137,9 @@ def test_fixture_semantic_baseline() -> None:
 
 
 def test_fixture_semantic_summary_baseline() -> None:
-    fixture_files = _fixture_files()
-    assert len(fixture_files) == 8
+    fixture_files = _baseline_parity_fixture_files()
+    assert len(_fixture_files()) == EXPECTED_FIXTURE_COUNT
+    assert len(fixture_files) == BASELINE_PARITY_FIXTURE_COUNT
 
     for fixture_path in fixture_files:
         fixture = json.loads(fixture_path.read_text(encoding="utf-8"))
@@ -150,8 +162,9 @@ def test_fixture_semantic_summary_baseline() -> None:
 
 
 def test_fixture_recommendation_fields_baseline() -> None:
-    fixture_files = _fixture_files()
-    assert len(fixture_files) == 8
+    fixture_files = _baseline_parity_fixture_files()
+    assert len(_fixture_files()) == EXPECTED_FIXTURE_COUNT
+    assert len(fixture_files) == BASELINE_PARITY_FIXTURE_COUNT
 
     for fixture_path in fixture_files:
         fixture = json.loads(fixture_path.read_text(encoding="utf-8"))
@@ -173,8 +186,9 @@ def test_fixture_recommendation_fields_baseline() -> None:
 
 
 def test_fixture_confidence_and_warnings_baseline() -> None:
-    fixture_files = _fixture_files()
-    assert len(fixture_files) == 8
+    fixture_files = _baseline_parity_fixture_files()
+    assert len(_fixture_files()) == EXPECTED_FIXTURE_COUNT
+    assert len(fixture_files) == BASELINE_PARITY_FIXTURE_COUNT
 
     for fixture_path in fixture_files:
         fixture = json.loads(fixture_path.read_text(encoding="utf-8"))
@@ -196,8 +210,9 @@ def test_fixture_confidence_and_warnings_baseline() -> None:
 
 
 def test_fixture_full_canonical_parity() -> None:
-    fixture_files = _fixture_files()
-    assert len(fixture_files) == 8
+    fixture_files = _baseline_parity_fixture_files()
+    assert len(_fixture_files()) == EXPECTED_FIXTURE_COUNT
+    assert len(fixture_files) == BASELINE_PARITY_FIXTURE_COUNT
 
     for fixture_path in fixture_files:
         fixture = json.loads(fixture_path.read_text(encoding="utf-8"))

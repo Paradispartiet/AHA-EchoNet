@@ -1,0 +1,32 @@
+{
+  "id": "refleksjon-byrom-uro-001",
+  "title": "Personlig refleksjon: uro, konsentrasjon og byrom",
+  "inputText": "I dag kjente jeg uro da jeg prøvde å arbeide på den travle plassen ved trikken. Det var ikke bare lyden, men rytmen i folkestrømmen som dro tankene mine bort fra teksten. Samtidig ble jeg mer våken av å sitte i byen enn alene hjemme. Kanskje handler konsentrasjon for meg om å finne steder der bevegelse gir energi uten å ta hele oppmerksomheten.",
+  "expectedCanonicalAnalysis": {
+    "contentType": "day_log",
+    "domain": "urban_attention_reflection",
+    "theme": "konsentrasjon i møte med byrommets rytme",
+    "mainTension": "stimulerende byliv kontra oppmerksomhetsbrudd",
+    "keyInsight": "Teksten kobler personlig uro til hvordan fysiske omgivelser kan støtte eller forstyrre tenkning uten å gjøre erfaringen klinisk.",
+    "fieldConnections": [
+      "psykologi",
+      "urban studies",
+      "sosiologi"
+    ],
+    "historyGoLinks": [],
+    "suggestedActions": [
+      "Beskriv to konkrete steder som gir ulik balanse mellom energi og ro.",
+      "Test en kort arbeidsøkt i hvert miljø og noter hva som skjer med oppmerksomheten."
+    ],
+    "confidence": {
+      "contentType": 0.9,
+      "domain": 0.8,
+      "theme": 0.86,
+      "mainTension": 0.83,
+      "historyGoLinks": 0.04
+    },
+    "warnings": [
+      "Personlig uro bør forstås som situert erfaring i teksten, ikke som grunnlag for klinisk diagnose."
+    ]
+  }
+}
