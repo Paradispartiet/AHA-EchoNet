@@ -4989,6 +4989,11 @@
     return getLatestEngineMeta()?.source === "python";
   }
 
+  const AHA_PYTHON_ENGINE_ENABLED_KEY = "aha_python_engine_enabled";
+  const AHA_PYTHON_ENGINE_URL_KEY = "aha_python_engine_url";
+  const AHA_PYTHON_ENGINE_STAGING_URL = "https://aha-engine-staging-7a3y.onrender.com";
+  const AHA_PYTHON_ENGINE_INVALID_URL = "https://invalid-aha-engine-staging-url.example";
+
   function printAhaPythonEngineSmokeStatus() {
     const flags = getAhaSmokeTestFeatureFlags();
     const meta = getLatestEngineMeta();
@@ -5007,10 +5012,78 @@
     return status;
   }
 
+  function clearAhaSmokeTestAutoOutput(storage) {
+    storage?.removeItem(AUTO_OUTPUT_STORAGE_KEY);
+  }
+
+  function printAhaSmokeTestStorageStatus(action) {
+    if (action) console.info(`[AHAPythonEngineSmokeTest] ${action}`);
+    return printAhaPythonEngineSmokeStatus();
+  }
+
+  function resetAhaPythonEngineSmokeTest() {
+    const storage = getAhaSmokeTestLocalStorage();
+    storage?.removeItem(AHA_PYTHON_ENGINE_ENABLED_KEY);
+    storage?.removeItem(AHA_PYTHON_ENGINE_URL_KEY);
+    clearAhaSmokeTestAutoOutput(storage);
+    return printAhaSmokeTestStorageStatus("Reset to JavaScript/default flow. Send a new AHA Chat message manually before checking latest output.");
+  }
+
+  function enableAhaPythonEngineWithStagingUrl() {
+    const storage = getAhaSmokeTestLocalStorage();
+    storage?.setItem(AHA_PYTHON_ENGINE_ENABLED_KEY, "true");
+    storage?.setItem(AHA_PYTHON_ENGINE_URL_KEY, AHA_PYTHON_ENGINE_STAGING_URL);
+    clearAhaSmokeTestAutoOutput(storage);
+    return printAhaSmokeTestStorageStatus("Enabled Python Engine with explicit Render staging URL. Send a new AHA Chat message manually.");
+  }
+
+  function enableAhaPythonEngineWithoutUrl() {
+    const storage = getAhaSmokeTestLocalStorage();
+    storage?.setItem(AHA_PYTHON_ENGINE_ENABLED_KEY, "true");
+    storage?.removeItem(AHA_PYTHON_ENGINE_URL_KEY);
+    clearAhaSmokeTestAutoOutput(storage);
+    return printAhaSmokeTestStorageStatus("Enabled Python Engine without explicit URL. On production-origin this should fail closed after a new manual AHA Chat message.");
+  }
+
+  function enableAhaPythonEngineWithInvalidUrl() {
+    const storage = getAhaSmokeTestLocalStorage();
+    storage?.setItem(AHA_PYTHON_ENGINE_ENABLED_KEY, "true");
+    storage?.setItem(AHA_PYTHON_ENGINE_URL_KEY, AHA_PYTHON_ENGINE_INVALID_URL);
+    clearAhaSmokeTestAutoOutput(storage);
+    return printAhaSmokeTestStorageStatus("Enabled Python Engine with invalid URL. After a new manual AHA Chat message, fallback reason can vary by browser/network.");
+  }
+
+  function printAhaPythonEngineScenarioGuide() {
+    const guide = [
+      "1. AHAPythonEngineSmokeTest.reset()",
+      "2. AHAPythonEngineSmokeTest.enableWithStagingUrl()",
+      "3. Send ny AHA Chat-melding",
+      "4. AHAPythonEngineSmokeTest.printStatus()",
+      "5. AHAPythonEngineSmokeTest.enableWithoutUrl()",
+      "6. Send ny AHA Chat-melding",
+      "7. AHAPythonEngineSmokeTest.printStatus()",
+      "8. AHAPythonEngineSmokeTest.enableWithInvalidUrl()",
+      "9. Send ny AHA Chat-melding",
+      "10. AHAPythonEngineSmokeTest.printStatus()"
+    ];
+    console.info([
+      "[AHAPythonEngineSmokeTest] Scenario guide:",
+      ...guide,
+      "Helperen setter bare localStorage/teststatus; den sender ikke AHA Chat-meldinger automatisk.",
+      "Invalid URL kan gi network_error, http_error eller python_error avhengig av browser/network."
+    ].join("\n"));
+    return guide;
+  }
+
   global.AHAPythonEngineSmokeTest = Object.assign({}, global.AHAPythonEngineSmokeTest || {}, {
     getLatestAutoOutput,
     getLatestEngineMeta,
     isPythonActive,
+    reset: resetAhaPythonEngineSmokeTest,
+    enableWithStagingUrl: enableAhaPythonEngineWithStagingUrl,
+    enableWithoutUrl: enableAhaPythonEngineWithoutUrl,
+    enableWithInvalidUrl: enableAhaPythonEngineWithInvalidUrl,
+    printScenarioGuide: printAhaPythonEngineScenarioGuide,
     printStatus: printAhaPythonEngineSmokeStatus
   });
   function forceLiteraryFagkoblingerInReply(replyText, sourceText, payload = {}) {

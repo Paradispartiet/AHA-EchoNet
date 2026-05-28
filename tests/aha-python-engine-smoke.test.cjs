@@ -108,7 +108,61 @@ function buildContext(seed = {}) {
   return context;
 }
 
+function assertSmokeTestScenarioHelpers() {
+  const context = buildContext({
+    aha_python_engine_enabled: 'old',
+    aha_python_engine_url: 'https://old.example',
+    aha_chat_auto_outputs_v1: '{"old":true}'
+  });
+  const helper = context.AHAPythonEngineSmokeTest;
+
+  for (const method of [
+    'reset',
+    'enableWithStagingUrl',
+    'enableWithoutUrl',
+    'enableWithInvalidUrl',
+    'printScenarioGuide',
+    'printStatus'
+  ]) {
+    assert.equal(typeof helper[method], 'function', `${method} should exist on AHAPythonEngineSmokeTest`);
+  }
+
+  helper.reset();
+  assert.equal(context.localStorage.getItem('aha_python_engine_enabled'), null, 'reset should remove feature flag');
+  assert.equal(context.localStorage.getItem('aha_python_engine_url'), null, 'reset should remove engine URL');
+  assert.equal(context.localStorage.getItem('aha_chat_auto_outputs_v1'), null, 'reset should remove auto-output');
+
+  context.localStorage.setItem('aha_chat_auto_outputs_v1', '{"old":true}');
+  helper.enableWithStagingUrl();
+  assert.equal(context.localStorage.getItem('aha_python_engine_enabled'), 'true', 'staging helper should enable feature flag');
+  assert.equal(
+    context.localStorage.getItem('aha_python_engine_url'),
+    'https://aha-engine-staging-7a3y.onrender.com',
+    'staging helper should set Render staging URL'
+  );
+  assert.equal(context.localStorage.getItem('aha_chat_auto_outputs_v1'), null, 'staging helper should remove stale auto-output');
+
+  context.localStorage.setItem('aha_python_engine_url', 'https://old.example');
+  context.localStorage.setItem('aha_chat_auto_outputs_v1', '{"old":true}');
+  helper.enableWithoutUrl();
+  assert.equal(context.localStorage.getItem('aha_python_engine_enabled'), 'true', 'missing URL helper should enable feature flag');
+  assert.equal(context.localStorage.getItem('aha_python_engine_url'), null, 'missing URL helper should remove engine URL');
+  assert.equal(context.localStorage.getItem('aha_chat_auto_outputs_v1'), null, 'missing URL helper should remove stale auto-output');
+
+  context.localStorage.setItem('aha_chat_auto_outputs_v1', '{"old":true}');
+  helper.enableWithInvalidUrl();
+  assert.equal(context.localStorage.getItem('aha_python_engine_enabled'), 'true', 'invalid URL helper should enable feature flag');
+  assert.equal(
+    context.localStorage.getItem('aha_python_engine_url'),
+    'https://invalid-aha-engine-staging-url.example',
+    'invalid URL helper should set invalid engine URL'
+  );
+  assert.equal(context.localStorage.getItem('aha_chat_auto_outputs_v1'), null, 'invalid URL helper should remove stale auto-output');
+}
+
 (async function run() {
+  assertSmokeTestScenarioHelpers();
+
   const proc = spawn('python', ['-m', 'uvicorn', 'app.main:app', '--host', ENGINE_HOST, '--port', String(ENGINE_PORT)], {
     cwd: BACKEND_DIR,
     stdio: ['ignore', 'pipe', 'pipe']
