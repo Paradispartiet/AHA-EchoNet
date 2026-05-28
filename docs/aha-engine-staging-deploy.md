@@ -240,3 +240,20 @@ Denne backend-en kan fortsatt deployes på valgfri container-basert plattform (f
 - konfigurasjon av `AHA_ENGINE_ALLOWED_ORIGINS`
 
 Repoet inneholder nå i tillegg en konkret Render Blueprint i `render.yaml` som bevarer eksisterende `aha-agent` og legger til `aha-engine-staging`.
+
+## Debug reasons for Python fallback
+
+Python Engine-fallback i AHA Chat skiller nå mellom stabile reason-koder i `payload.canonicalAnalysisMeta.reason`:
+
+- `feature_flag_disabled` – Python Engine-feature flag er ikke aktivert.
+- `requires_explicit_url` – feature flag er aktivert på production-origin, men `aha_python_engine_url` er ikke eksplisitt satt.
+- `client_missing` – AHA Chat mangler Python Engine-klienten eller nødvendig klientmetode.
+- `timeout` – requesten ble avbrutt av klient-timeout.
+- `network_error` – fetch/network feilet før gyldig HTTP-respons.
+- `http_error` – Python Engine svarte med ikke-2xx HTTP-status.
+- `invalid_json` – HTTP-responsen kunne ikke parses som JSON.
+- `invalid_python_shape` – JSON-responsen fulgte ikke canonical AHA analysis-kontrakten.
+- `python_null` – Python Engine-responsen var `null`.
+- `python_error` – uventet klientfeil under Python Engine-kall.
+
+Debug-metadata ligger fortsatt kun ved siden av analysen i `canonicalAnalysisMeta`; `canonicalAnalysis` er fortsatt et rent canonical object uten debug-felter. På production-origin kreves eksplisitt `localStorage.setItem("aha_python_engine_url", "https://aha-engine-staging-7a3y.onrender.com")` før payloads sendes til staging-backend. JavaScript fallback er fortsatt sikkerhetsnettet når Python Engine er deaktivert eller feiler.

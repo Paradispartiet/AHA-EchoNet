@@ -69,6 +69,11 @@ function buildContext(seed = {}) {
   assert.equal(result.meta.reason, 'client_missing', 'missing client should report client_missing reason');
   ctx.AHAEngineClient = preservedClient;
 
+  result = await hooks.resolveCanonicalAnalysisWithOptionalPythonEngine({ message: 'm', assistantReply: 'a', historyGoContext: {}, fallbackAnalysis: fallback });
+  assert.deepEqual(result.analysis, fallback, 'production host without explicit URL should use fallback');
+  assert.equal(result.meta.source, 'javascript_fallback', 'missing explicit URL should report javascript_fallback source');
+  assert.equal(result.meta.reason, 'requires_explicit_url', 'missing explicit URL should report requires_explicit_url reason');
+
   const pythonCanonical = { ...fallback, theme: 'python-theme', confidence: { contentType: 0.9, domain: 0.8, theme: 0.7, mainTension: 0.6, historyGoLinks: 0.5 } };
   const realEngineClient = ctx.AHAEngineClient;
   ctx.AHAEngineClient = {
@@ -80,8 +85,51 @@ function buildContext(seed = {}) {
   result = await hooks.resolveCanonicalAnalysisWithOptionalPythonEngine({ message: 'm', assistantReply: 'a', historyGoContext: {}, fallbackAnalysis: fallback });
   assert.equal(result.analysis.theme, 'python-theme', 'valid python canonical should be used');
   assert.equal(result.meta.source, 'python', 'valid python canonical should report python source');
+  assert.equal(result.meta.reason, '', 'valid python canonical should have empty reason');
 
+  const detailedScenarios = [
+    ['timeout', { analysis: null, ok: false, reason: 'timeout', status: null, url: 'https://aha-engine-staging-7a3y.onrender.com' }],
+    ['network error', { analysis: null, ok: false, reason: 'network_error', status: null, url: 'https://aha-engine-staging-7a3y.onrender.com' }],
+    ['HTTP error', { analysis: null, ok: false, reason: 'http_error', status: 500, url: 'https://aha-engine-staging-7a3y.onrender.com' }],
+    ['invalid JSON', { analysis: null, ok: false, reason: 'invalid_json', status: 200, url: 'https://aha-engine-staging-7a3y.onrender.com' }],
+    ['invalid shape', { analysis: { nope: true }, ok: false, reason: 'invalid_python_shape', status: 200, url: 'https://aha-engine-staging-7a3y.onrender.com' }],
+    ['null response', { analysis: null, ok: false, reason: 'python_null', status: 200, url: 'https://aha-engine-staging-7a3y.onrender.com' }]
+  ];
 
+  for (const [label, detailed] of detailedScenarios) {
+    ctx.AHAEngineClient = {
+      buildAnalyzePayload: () => ({ ok: true }),
+      analyzeWithPythonEngineDetailed: async () => detailed,
+      getExplicitEngineUrl: () => realEngineClient.getExplicitEngineUrl(),
+      resolvePythonEngineUrl: () => realEngineClient.resolvePythonEngineUrl()
+    };
+    result = await hooks.resolveCanonicalAnalysisWithOptionalPythonEngine({ message: 'm', assistantReply: 'a', historyGoContext: {}, fallbackAnalysis: fallback });
+    assert.deepEqual(result.analysis, fallback, `${label} should fallback`);
+    assert.equal(result.meta.source, 'javascript_fallback', `${label} should report javascript_fallback source`);
+    assert.equal(result.meta.reason, detailed.reason, `${label} should preserve detailed reason`);
+    if (typeof detailed.status === 'number') assert.equal(result.meta.status, detailed.status, `${label} should preserve status`);
+    if (typeof detailed.url === 'string') assert.equal(result.meta.url, detailed.url, `${label} should preserve URL`);
+  }
+
+  ctx.AHAEngineClient = {
+    buildAnalyzePayload: () => ({ ok: true }),
+    analyzeWithPythonEngineDetailed: async () => ({ analysis: pythonCanonical, ok: true, reason: '', status: 200, url: 'https://aha-engine-staging-7a3y.onrender.com' }),
+    getExplicitEngineUrl: () => realEngineClient.getExplicitEngineUrl(),
+    resolvePythonEngineUrl: () => realEngineClient.resolvePythonEngineUrl()
+  };
+  result = await hooks.resolveCanonicalAnalysisWithOptionalPythonEngine({ message: 'm', assistantReply: 'a', historyGoContext: {}, fallbackAnalysis: fallback });
+  assert.equal(result.analysis.theme, 'python-theme', 'valid detailed python canonical should be used');
+  assert.equal(result.meta.source, 'python', 'valid detailed python canonical should report python source');
+  assert.equal(result.meta.reason, '', 'valid detailed python canonical should have empty reason');
+  assert.equal(result.meta.status, undefined, 'successful python meta should not expose debug status');
+  assert.equal(result.meta.url, undefined, 'successful python meta should not expose debug URL');
+
+  ctx.AHAEngineClient = {
+    buildAnalyzePayload: () => ({ ok: true }),
+    analyzeWithPythonEngine: async () => pythonCanonical,
+    getExplicitEngineUrl: () => realEngineClient.getExplicitEngineUrl(),
+    resolvePythonEngineUrl: () => realEngineClient.resolvePythonEngineUrl()
+  };
 
   const payloadWithCanonicalAnalysis = {
     textType: 'day_log',
@@ -168,14 +216,18 @@ function buildContext(seed = {}) {
 
   const storedPayload = {
     payload: {
-      canonicalAnalysisMeta: { source: 'python', reason: '' },
+      canonicalAnalysisMeta: { source: 'javascript_fallback', reason: 'http_error', status: 500, url: 'https://aha-engine-staging-7a3y.onrender.com' },
       canonicalAnalysis: pythonCanonical
     }
   };
   ctx.localStorage.setItem('aha_chat_auto_outputs_v1', JSON.stringify(storedPayload));
   const latestMeta = ctx.AHAPythonEngineSmokeTest.getLatestEngineMeta();
-  assert.equal(latestMeta.source, 'python', 'smoke helper should return latest canonicalAnalysisMeta source');
-  assert.equal(ctx.AHAPythonEngineSmokeTest.isPythonActive(), true, 'smoke helper should detect active python source');
+  assert.equal(latestMeta.source, 'javascript_fallback', 'smoke helper should return latest canonicalAnalysisMeta source');
+  assert.equal(latestMeta.status, 500, 'smoke helper should return latest canonicalAnalysisMeta status');
+  const storedSmokeStatus = ctx.AHAPythonEngineSmokeTest.printStatus();
+  assert.equal(storedSmokeStatus.latestStatus, 500, 'smoke helper should print latest status');
+  assert.equal(storedSmokeStatus.latestUrl, 'https://aha-engine-staging-7a3y.onrender.com', 'smoke helper should print latest URL');
+  assert.equal(ctx.AHAPythonEngineSmokeTest.isPythonActive(), false, 'smoke helper should detect inactive fallback source');
   const payloadWithMeta = {
     canonicalAnalysis: pythonCanonical,
     canonicalAnalysisMeta: { source: 'python', reason: '' }

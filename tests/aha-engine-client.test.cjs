@@ -31,6 +31,8 @@ function createContext(storage, fetchImpl, location = null) {
     clearTimeout,
     JSON,
     AbortController,
+    DOMException,
+    TypeError,
     fetch: fetchImpl
   });
 }
@@ -59,7 +61,9 @@ function createContext(storage, fetchImpl, location = null) {
 
   {
     const storage = createLocalStorage();
+    let fetchCalled = false;
     const context = createContext(storage, async () => {
+      fetchCalled = true;
       throw new Error('fetch should not run when disabled');
     });
 
@@ -75,6 +79,10 @@ function createContext(storage, fetchImpl, location = null) {
       historyGoContext: { imported: true }
     });
 
+    const detailed = await client.analyzeWithPythonEngineDetailed(payload);
+    assert.deepEqual(detailed, { analysis: null, ok: false, reason: 'feature_flag_disabled', status: null, url: null });
+    assert.equal(fetchCalled, false);
+
     const disabledResult = await client.analyzeWithPythonEngine(payload);
     assert.equal(disabledResult, null);
   }
@@ -84,19 +92,22 @@ function createContext(storage, fetchImpl, location = null) {
     let calledUrl = null;
     const context = createContext(storage, async (url) => {
       calledUrl = url;
-      return { ok: true, json: async () => canonical };
+      return { ok: true, status: 200, json: async () => canonical };
     }, { hostname: 'paradispartiet.github.io' });
     const client = loadClient(context);
 
-    const result = await client.analyzeWithPythonEngine(client.buildAnalyzePayload('a', 'b', {}));
+    const detailed = await client.analyzeWithPythonEngineDetailed(client.buildAnalyzePayload('a', 'b', {}));
     assert.equal(client.resolvePythonEngineUrl(), null);
     assert.equal(calledUrl, null);
+    assert.deepEqual(detailed, { analysis: null, ok: false, reason: 'requires_explicit_url', status: null, url: null });
+
+    const result = await client.analyzeWithPythonEngine(client.buildAnalyzePayload('a', 'b', {}));
     assert.equal(result, null);
   }
 
   { // production-like host + no explicit URL should resolve to null
     const storage = createLocalStorage();
-    const context = createContext(storage, async () => ({ ok: true, json: async () => canonical }));
+    const context = createContext(storage, async () => ({ ok: true, status: 200, json: async () => canonical }));
     const client = loadClient(context);
     assert.equal(client.getConfiguredBaseUrl(), null);
   }
@@ -105,7 +116,7 @@ function createContext(storage, fetchImpl, location = null) {
     const storage = createLocalStorage({
       aha_python_engine_url: 'http://127.0.0.1:8000'
     });
-    const context = createContext(storage, async () => ({ ok: true, json: async () => canonical }), { hostname: 'paradispartiet.github.io' });
+    const context = createContext(storage, async () => ({ ok: true, status: 200, json: async () => canonical }), { hostname: 'paradispartiet.github.io' });
     const client = loadClient(context);
     assert.equal(client.getConfiguredBaseUrl(), 'http://127.0.0.1:8000');
   }
@@ -118,30 +129,105 @@ function createContext(storage, fetchImpl, location = null) {
     let calledUrl = null;
     const context = createContext(storage, async (url) => {
       calledUrl = url;
-      return { ok: true, json: async () => canonical };
+      return { ok: true, status: 200, json: async () => canonical };
     }, { hostname: 'paradispartiet.github.io' });
     const client = loadClient(context);
 
-    const result = await client.analyzeWithPythonEngine(client.buildAnalyzePayload('a', 'b', {}));
+    const detailed = await client.analyzeWithPythonEngineDetailed(client.buildAnalyzePayload('a', 'b', {}));
     assert.equal(calledUrl, 'http://127.0.0.1:8000/api/aha/analyze');
+    assert.equal(detailed.ok, true);
+    assert.equal(detailed.reason, '');
+    assert.equal(detailed.status, 200);
+    assert.equal(detailed.url, 'http://127.0.0.1:8000');
+    assert.deepEqual(detailed.analysis, canonical);
+
+    const result = await client.analyzeWithPythonEngine(client.buildAnalyzePayload('a', 'b', {}));
     assert.deepEqual(result, canonical);
   }
 
   {
     const storage = createLocalStorage({ aha_python_engine_enabled: 'true' });
-    const context = createContext(storage, async () => ({ ok: true, json: async () => canonical }), { hostname: 'localhost' });
+    let calledUrl = null;
+    const context = createContext(storage, async (url) => {
+      calledUrl = url;
+      return { ok: true, status: 200, json: async () => canonical };
+    }, { hostname: 'localhost' });
     const client = loadClient(context);
+    const detailed = await client.analyzeWithPythonEngineDetailed(client.buildAnalyzePayload('a', 'b', {}));
     assert.equal(client.resolvePythonEngineUrl(), 'https://aha-engine-staging-7a3y.onrender.com');
+    assert.equal(calledUrl, 'https://aha-engine-staging-7a3y.onrender.com/api/aha/analyze');
+    assert.equal(detailed.ok, true);
+    assert.equal(detailed.url, 'https://aha-engine-staging-7a3y.onrender.com');
   }
 
   {
     const storage = createLocalStorage({ aha_python_engine_enabled: 'true' });
     const invalid = { ...canonical, confidence: { ...canonical.confidence, domain: '0.8' } };
-    const context = createContext(storage, async () => ({ ok: true, json: async () => invalid }));
+    const context = createContext(storage, async () => ({ ok: true, status: 200, json: async () => invalid }), { hostname: 'localhost' });
     const client = loadClient(context);
+
+    const detailed = await client.analyzeWithPythonEngineDetailed(client.buildAnalyzePayload('a', 'b', {}));
+    assert.equal(detailed.ok, false);
+    assert.equal(detailed.reason, 'invalid_python_shape');
+    assert.equal(detailed.status, 200);
+    assert.equal(detailed.analysis, null);
 
     const result = await client.analyzeWithPythonEngine(client.buildAnalyzePayload('a', 'b', {}));
     assert.equal(result, null);
+  }
+
+  {
+    const storage = createLocalStorage({ aha_python_engine_enabled: 'true' });
+    const context = createContext(storage, async () => ({ ok: false, status: 500, json: async () => ({}) }), { hostname: 'localhost' });
+    const client = loadClient(context);
+    const detailed = await client.analyzeWithPythonEngineDetailed(client.buildAnalyzePayload('a', 'b', {}));
+    assert.equal(detailed.ok, false);
+    assert.equal(detailed.reason, 'http_error');
+    assert.equal(detailed.status, 500);
+    assert.equal(detailed.analysis, null);
+  }
+
+  {
+    const storage = createLocalStorage({ aha_python_engine_enabled: 'true' });
+    const context = createContext(storage, async () => ({ ok: true, status: 200, json: async () => { throw new SyntaxError('bad json'); } }), { hostname: 'localhost' });
+    const client = loadClient(context);
+    const detailed = await client.analyzeWithPythonEngineDetailed(client.buildAnalyzePayload('a', 'b', {}));
+    assert.equal(detailed.ok, false);
+    assert.equal(detailed.reason, 'invalid_json');
+    assert.equal(detailed.status, 200);
+  }
+
+  {
+    const storage = createLocalStorage({ aha_python_engine_enabled: 'true' });
+    const context = createContext(storage, async () => { throw new TypeError('Failed to fetch'); }, { hostname: 'localhost' });
+    const client = loadClient(context);
+    const detailed = await client.analyzeWithPythonEngineDetailed(client.buildAnalyzePayload('a', 'b', {}));
+    assert.equal(detailed.ok, false);
+    assert.equal(detailed.reason, 'network_error');
+    assert.equal(detailed.status, null);
+  }
+
+  {
+    const storage = createLocalStorage({ aha_python_engine_enabled: 'true' });
+    const abortError = new Error('aborted');
+    abortError.name = 'AbortError';
+    const context = createContext(storage, async () => { throw abortError; }, { hostname: 'localhost' });
+    const client = loadClient(context);
+    const detailed = await client.analyzeWithPythonEngineDetailed(client.buildAnalyzePayload('a', 'b', {}));
+    assert.equal(detailed.ok, false);
+    assert.equal(detailed.reason, 'timeout');
+    assert.equal(detailed.status, null);
+  }
+
+  {
+    const storage = createLocalStorage({ aha_python_engine_enabled: 'true' });
+    const context = createContext(storage, async () => ({ ok: true, status: 200, json: async () => null }), { hostname: 'localhost' });
+    const client = loadClient(context);
+    const detailed = await client.analyzeWithPythonEngineDetailed(client.buildAnalyzePayload('a', 'b', {}));
+    assert.equal(detailed.ok, false);
+    assert.equal(detailed.reason, 'python_null');
+    assert.equal(detailed.status, 200);
+    assert.equal(detailed.analysis, null);
   }
 
   {
