@@ -1,0 +1,31 @@
+{
+  "id": "tverrfaglig-ai-laering-001",
+  "title": "Tverrfaglig tekst: AI, læring og kollektiv kunnskap",
+  "inputText": "Når studenter bruker AI-verktøy til å oppsummere, stille spørsmål og sammenligne kilder, endres forholdet mellom individuell læring og kollektiv kunnskap. Teknologien kan gjøre flere perspektiver tilgjengelige raskere, men den kan også skjule usikkerhet dersom svarene tas som fasit. Det viktigste pedagogiske spørsmålet er derfor hvordan automatisering kan støtte menneskelig forståelse uten å erstatte egen vurdering.",
+  "expectedCanonicalAnalysis": {
+    "contentType": "academic_article",
+    "domain": "digital_pedagogy_knowledge_systems",
+    "theme": "AI som støtte for læring og kollektiv kunnskapsbygging",
+    "mainTension": "automatisert tilgang til kunnskap kontra menneskelig vurdering og forståelse",
+    "keyInsight": "Teksten viser at læringsteknologi bør vurderes etter hvordan den styrker kritisk egenarbeid, ikke bare hvor raskt den leverer svar.",
+    "fieldConnections": [
+      "pedagogikk",
+      "teknologi",
+      "sosiologi",
+      "kunnskapsteori"
+    ],
+    "historyGoLinks": [],
+    "suggestedActions": [
+      "Presiser hvilke læringssituasjoner som støttes av AI og hvilke som krever egen vurdering.",
+      "Legg til kriterier for å skille mellom nyttig oppsummering og ukritisk fasitbruk."
+    ],
+    "confidence": {
+      "contentType": 0.9,
+      "domain": 0.86,
+      "theme": 0.88,
+      "mainTension": 0.87,
+      "historyGoLinks": 0.05
+    },
+    "warnings": []
+  }
+}

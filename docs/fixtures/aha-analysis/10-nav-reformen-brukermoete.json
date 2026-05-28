@@ -1,0 +1,37 @@
+{
+  "id": "nav-reform-brukermoete-002",
+  "title": "Fagtekst: NAV-reformen, samordning og brukermøte",
+  "inputText": "NAV-reformen lovet ett kontaktpunkt for brukere som tidligere måtte forholde seg til flere etater. I praksis møtte reformen ulike etatskulturer, digitale systemer og styringslinjer som gjorde samordning vanskelig. Brukermøtet ble dermed et sted der idealet om helhetlig velferdsforvaltning støtte mot byråkratisk kompleksitet og uklart ansvar.",
+  "expectedCanonicalAnalysis": {
+    "contentType": "academic_article",
+    "domain": "public_administration_reform",
+    "theme": "NAV-reformen mellom samordningsideal og brukernær kompleksitet",
+    "mainTension": "helhetlig velferdsforvaltning kontra praktisk byråkratisk kompleksitet",
+    "keyInsight": "Teksten viser at reformens mål om ett kontaktpunkt avhenger av hvordan styring, systemer og etatskulturer faktisk møter brukeren.",
+    "fieldConnections": [
+      "offentlig forvaltning",
+      "velferdsstat",
+      "organisasjonsteori"
+    ],
+    "historyGoLinks": [
+      {
+        "type": "topic",
+        "id": "nav_reformen",
+        "title": "NAV-reformen",
+        "reason": "Eksisterende History Go-kobling for NAV-reformen passer fordi teksten omtaler reformens institusjonelle mål, styringsutfordringer og brukermøte."
+      }
+    ],
+    "suggestedActions": [
+      "Skille tydelig mellom reformens politiske mål, organisatoriske virkemidler og brukeropplevd effekt.",
+      "Legg til ett konkret eksempel fra et NAV-kontor for å gjøre spenningen empirisk tydeligere."
+    ],
+    "confidence": {
+      "contentType": 0.94,
+      "domain": 0.95,
+      "theme": 0.91,
+      "mainTension": 0.9,
+      "historyGoLinks": 0.89
+    },
+    "warnings": []
+  }
+}

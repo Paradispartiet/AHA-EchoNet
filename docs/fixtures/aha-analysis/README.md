@@ -11,7 +11,7 @@ Dette fixture-settet gir et lite, stabilt grunnlag for å sammenligne analyseout
 
 ## Innhold
 
-Mappen inneholder åtte JSON-fixtures med feltene:
+Mappen inneholder seksten JSON-fixtures med feltene:
 
 - `id`
 - `title`
@@ -26,6 +26,12 @@ Alle fixtures følger samme canonical object med standardfeltene:
 - Ikke-tomme `historyGoLinks` skal bruke strukturerte objekter med `type`, `id`, `title`, `reason`.
 - `confidence` (med delscore-felter)
 - `warnings`
+
+## Representative fixtures for next-phase quality work
+
+PR 25 utvider fixture-grunnlaget med åtte representative next-phase fixtures. De nye casene dekker fagtekst, personlig refleksjon, History Go-koblinger, tverrfaglighet, uklare input og nærliggende domener som bør skilles tydelig i senere analysearbeid. Målet er å forberede senere sammenligning mellom JavaScript Engine og Python Engine, ikke å endre analyse-runtime ennå.
+
+History Go-koblinger bruker eksisterende IDs der repoet allerede har dem (`morgenbladet`, `nav_reformen`). For Eidsvoll/Grunnloven og Bislett/stadion er koblingene markert som konseptuelle fordi det ikke finnes verifiserte IDs i repoet.
 
 ## Bruk i migrering
 

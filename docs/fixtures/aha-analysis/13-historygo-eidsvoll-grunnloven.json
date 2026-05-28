@@ -1,0 +1,40 @@
+{
+  "id": "historygo-eidsvoll-grunnloven-001",
+  "title": "History Go-kobling: Eidsvoll, Grunnloven og nasjonsbygging",
+  "inputText": "Eidsvoll i 1814 blir ofte brukt som et symbol på demokratisk begynnelse i Norge. Grunnloven samlet forestillinger om folkestyre, rettigheter og nasjonsbygging, men den viste også grensene for hvem som ble regnet som politiske deltakere. Derfor kan Eidsvoll leses både som et grunnleggelsesøyeblikk og som en påminnelse om at demokratiet senere måtte utvides.",
+  "expectedCanonicalAnalysis": {
+    "contentType": "academic_article",
+    "domain": "constitutional_democratic_history",
+    "theme": "Eidsvoll og Grunnloven som demokratisk grunnfortelling",
+    "mainTension": "nasjonal grunnleggelse kontra demokratiets historiske avgrensninger",
+    "keyInsight": "Teksten viser at 1814 kan forstås både som demokratisk startpunkt og som et ufullstendig prosjekt som senere ble utvidet.",
+    "fieldConnections": [
+      "historie",
+      "politikk",
+      "rett",
+      "nasjonsbygging"
+    ],
+    "historyGoLinks": [
+      {
+        "type": "conceptual_topic",
+        "id": "eidsvoll-grunnloven",
+        "title": "Eidsvoll og Grunnloven",
+        "reason": "Konseptuell History Go-kobling: repoet har ingen verifisert Eidsvoll- eller Grunnloven-ID, men teksten peker tydelig mot sted, hendelse og demokratihistorisk tema."
+      }
+    ],
+    "suggestedActions": [
+      "Avklar hvilke grupper som var inkludert og ekskludert fra politisk deltakelse i 1814.",
+      "Knytt analysen til senere demokratiske utvidelser for å vise historisk utvikling."
+    ],
+    "confidence": {
+      "contentType": 0.92,
+      "domain": 0.89,
+      "theme": 0.9,
+      "mainTension": 0.87,
+      "historyGoLinks": 0.62
+    },
+    "warnings": [
+      "History Go-koblingen er konseptuell fordi ingen eksisterende Eidsvoll- eller Grunnloven-ID er verifisert i repoet."
+    ]
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "id": "historygo-bislett-stadion-001",
+  "title": "History Go-kobling: Bislett, stadion og byrom",
+  "inputText": "Bislett stadion kan forstås som mer enn en idrettsarena. Stadionet ligger i et tett byrom der løp, mesterskap og hverdagsbruk har skapt minner om fellesskap, prestasjon og lokal identitet. Samtidig viser ombygging og publikumsbruk hvordan sportshistorie, arkitektur og byutvikling veves sammen i ett sosialt rom.",
+  "expectedCanonicalAnalysis": {
+    "contentType": "academic_article",
+    "domain": "urban_sports_history",
+    "theme": "Bislett stadion som idrettshistorisk og urbant sosialt rom",
+    "mainTension": "sportslig arena kontra levende byrom",
+    "keyInsight": "Teksten skiller mellom stadion som sportshistorisk institusjon og som arkitektonisk byrom der fellesskap formes.",
+    "fieldConnections": [
+      "idrettshistorie",
+      "byhistorie",
+      "arkitektur",
+      "sosiologi"
+    ],
+    "historyGoLinks": [
+      {
+        "type": "conceptual_topic",
+        "id": "bislett-stadion",
+        "title": "Bislett stadion",
+        "reason": "Konseptuell History Go-kobling: repoet har ingen verifisert Bislett- eller stadion-ID, men teksten omtaler et konkret sted og dets idretts- og byhistoriske betydning."
+      }
+    ],
+    "suggestedActions": [
+      "Skille eksplisitt mellom konkurransehistorie, publikumsbruk og arkitektonisk endring.",
+      "Legg til én konkret ombygging eller idrettshendelse for sterkere historisk forankring."
+    ],
+    "confidence": {
+      "contentType": 0.91,
+      "domain": 0.87,
+      "theme": 0.88,
+      "mainTension": 0.84,
+      "historyGoLinks": 0.6
+    },
+    "warnings": [
+      "History Go-koblingen er konseptuell fordi ingen eksisterende Bislett- eller stadion-ID er verifisert i repoet."
+    ]
+  }
+}

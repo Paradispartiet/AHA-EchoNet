@@ -1,0 +1,29 @@
+{
+  "id": "uklar-fragmentert-002",
+  "title": "Uklar tekst: fragmentert og lav kvalitet",
+  "inputText": "Alt henger litt sammen. Systemet, folkene, tiden. Vet ikke. Kanskje feil sted. Burde vært annerledes, men jeg klarer ikke forklare hvorfor.",
+  "expectedCanonicalAnalysis": {
+    "contentType": "general",
+    "domain": "generic_academic",
+    "theme": "uklar problemforståelse uten tydelig kontekst",
+    "mainTension": "opplevd sammenheng kontra manglende konkretisering",
+    "keyInsight": "Teksten uttrykker en mulig frustrasjon, men gir for få holdepunkter til sikker tematisk eller faglig analyse.",
+    "fieldConnections": [],
+    "historyGoLinks": [],
+    "suggestedActions": [
+      "Be avsenderen angi hvem eller hva teksten handler om.",
+      "Etterspør ett konkret eksempel, tidspunkt og ønsket endring."
+    ],
+    "confidence": {
+      "contentType": 0.34,
+      "domain": 0.2,
+      "theme": 0.36,
+      "mainTension": 0.32,
+      "historyGoLinks": 0.02
+    },
+    "warnings": [
+      "Teksten er kort og fragmentert, så analysen bør ha lav sikkerhet.",
+      "Mangler konkrete aktører, hendelser og faglige begreper."
+    ]
+  }
+}

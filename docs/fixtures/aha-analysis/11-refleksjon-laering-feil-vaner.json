@@ -1,0 +1,30 @@
+{
+  "id": "refleksjon-laering-feil-001",
+  "title": "Personlig refleksjon: læring gjennom feil, vaner og gjentakelse",
+  "inputText": "Jeg merker at jeg lærer mest når jeg tør å se på feilene mine uten å gjøre dem til et nederlag. Når jeg skriver ned hva som faktisk skjedde, husker jeg mønstrene bedre neste gang. Små vaner, korte repetisjoner og justering etter hver mislykkede runde gjør at kunnskapen fester seg mer i praksis enn når jeg bare leser teorien én gang.",
+  "expectedCanonicalAnalysis": {
+    "contentType": "day_log",
+    "domain": "learning_reflection",
+    "theme": "læring gjennom mønstergjenkjenning og justering",
+    "mainTension": "feil som nederlag kontra feil som praktisk læringsdata",
+    "keyInsight": "Refleksjonen peker på at læring styrkes når feil omgjøres til konkrete mønstre, vaner og små justeringer.",
+    "fieldConnections": [
+      "læringspsykologi",
+      "metakognisjon",
+      "vanedannelse"
+    ],
+    "historyGoLinks": [],
+    "suggestedActions": [
+      "Lag en enkel logg med feil, årsak og neste justering etter hver økt.",
+      "Velg én vane som kan repeteres kort daglig før større evaluering."
+    ],
+    "confidence": {
+      "contentType": 0.91,
+      "domain": 0.84,
+      "theme": 0.88,
+      "mainTension": 0.84,
+      "historyGoLinks": 0.04
+    },
+    "warnings": []
+  }
+}

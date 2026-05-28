@@ -1,0 +1,37 @@
+{
+  "id": "morgenbladet-offentlighet-002",
+  "title": "Fagtekst: Morgenbladet, offentlighet og langsom journalistikk",
+  "inputText": "Morgenbladet kan leses som en institusjon i norsk offentlighet fordi avisen over tid har kombinert kulturkritikk, idédebatt og lange essayistiske formater. Når redaksjonen prioriterer langsom journalistikk framfor kontinuerlig nyhetsstrøm, blir avisen også et eksempel på hvordan medieinstitusjoner former tempoet i offentlig samtale. Spørsmålet er om en slik nisje skaper bredere demokratisk samtale eller først og fremst en smalere dannelsesoffentlighet.",
+  "expectedCanonicalAnalysis": {
+    "contentType": "academic_article",
+    "domain": "institutional_media_history",
+    "theme": "Morgenbladet som arena for langsom idéoffentlighet",
+    "mainTension": "demokratisk offentlig samtale kontra smal dannelsesoffentlighet",
+    "keyInsight": "Teksten bruker Morgenbladet til å undersøke hvordan redaksjonell form og tempo påvirker kulturkritikkens offentlige rolle.",
+    "fieldConnections": [
+      "pressehistorie",
+      "offentlighetsteori",
+      "kulturjournalistikk"
+    ],
+    "historyGoLinks": [
+      {
+        "type": "topic",
+        "id": "morgenbladet",
+        "title": "Morgenbladet",
+        "reason": "Eksisterende History Go-kobling for Morgenbladet er relevant fordi teksten analyserer avisen som historisk medieinstitusjon og offentlighetsarena."
+      }
+    ],
+    "suggestedActions": [
+      "Legg til en avgrenset periode for å gjøre den mediehistoriske analysen mer etterprøvbar.",
+      "Sammenlign Morgenbladets langsomme format med en raskere nyhetsaktør for å tydeliggjøre kontrasten."
+    ],
+    "confidence": {
+      "contentType": 0.93,
+      "domain": 0.94,
+      "theme": 0.91,
+      "mainTension": 0.87,
+      "historyGoLinks": 0.86
+    },
+    "warnings": []
+  }
+}
