@@ -168,6 +168,41 @@ Forventet:
 Merk: Vercel preview-origins legges ikke inn som wildcard (f.eks. `https://*.vercel.app`) i denne fasen. Eventuelle preview-origins må legges til eksplisitt når konkret preview/staging-origin er kjent.
 
 
+## Intern console-helper for Python Engine testing
+
+AHA Chat eksponerer en intern console-helper for rask testing av Python Engine-scenarier:
+
+```js
+AHAPythonEngineSmokeTest.reset()
+AHAPythonEngineSmokeTest.enableWithStagingUrl()
+AHAPythonEngineSmokeTest.enableWithoutUrl()
+AHAPythonEngineSmokeTest.enableWithInvalidUrl()
+AHAPythonEngineSmokeTest.printScenarioGuide()
+AHAPythonEngineSmokeTest.printStatus()
+```
+
+Helperen endrer bare `localStorage` og intern teststatus. Den sender ikke AHA Chat-meldinger automatisk, slik at selve appflyten fortsatt testes ved at man sender en ny melding manuelt i UI etter hver enable-kommando.
+
+Anbefalt rekkefølge:
+
+1. Kjør `AHAPythonEngineSmokeTest.reset()`.
+2. Kjør `AHAPythonEngineSmokeTest.enableWithStagingUrl()`.
+3. Send en ny AHA Chat-melding manuelt.
+4. Kjør `AHAPythonEngineSmokeTest.printStatus()`.
+5. Kjør `AHAPythonEngineSmokeTest.enableWithoutUrl()`.
+6. Send en ny AHA Chat-melding manuelt.
+7. Kjør `AHAPythonEngineSmokeTest.printStatus()`.
+8. Kjør `AHAPythonEngineSmokeTest.enableWithInvalidUrl()`.
+9. Send en ny AHA Chat-melding manuelt.
+10. Kjør `AHAPythonEngineSmokeTest.printStatus()`.
+
+Forventede scenarioer:
+
+- `reset()` fjerner Python Engine-flagget og URL-overstyring og går tilbake til JavaScript/default.
+- Eksplisitt staging-URL skal gi `latestSource: "python"` når staging er oppe.
+- Production-origin uten eksplisitt URL skal feile lukket med `latestReason: "requires_explicit_url"`.
+- Ugyldig URL skal falle tilbake til JavaScript med en presis reason, for eksempel `network_error`, `http_error` eller `python_error`; nøyaktig reason kan avhenge av browser/network.
+
 ## Verifisert staging URL
 
 Faktisk Render staging-URL for Python AHA Engine:
