@@ -472,10 +472,13 @@ AHA-EchoNet/
 ├─ aha-feed.css                  # ny feed/insta-stil
 └─ docs/
    ├─ AHA_ARCHITECTURE.md
-   └─ AHA_HISTORYGO_IMPORT.md
+   ├─ AHA_HISTORYGO_IMPORT.md
+   └─ aha-python-engine-migration-status.md
 ```
 
 Dette kan gjøres gradvis. Det viktigste er at alle komponentene sender data inn i samme eksisterende motor.
+
+- AHA Python Engine migration status: `docs/aha-python-engine-migration-status.md`
 
 ## Foreslått localStorage-kontrakt
 

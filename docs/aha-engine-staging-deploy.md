@@ -292,3 +292,5 @@ Python Engine-fallback i AHA Chat skiller nå mellom stabile reason-koder i `pay
 - `python_error` – uventet klientfeil under Python Engine-kall.
 
 Debug-metadata ligger fortsatt kun ved siden av analysen i `canonicalAnalysisMeta`; `canonicalAnalysis` er fortsatt et rent canonical object uten debug-felter. På production-origin kreves eksplisitt `localStorage.setItem("aha_python_engine_url", "https://aha-engine-staging-7a3y.onrender.com")` før payloads sendes til staging-backend. JavaScript fallback er fortsatt sikkerhetsnettet når Python Engine er deaktivert eller feiler.
+
+Se også samlet migreringsstatus og neste fase i `docs/aha-python-engine-migration-status.md`.
