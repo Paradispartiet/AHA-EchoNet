@@ -174,7 +174,7 @@ Legg til flere representative AHA Engine test-fixtures for fagtekst, refleksjon 
 
 ### PR 26
 
-Legg til sammenligningsrapport mellom JavaScript Engine og Python Engine output for samme fixtures.
+Legg til lokal sammenligningsrapport mellom JavaScript Engine og Python Engine output for samme fixtures. Rapporten genereres med `npm run compare:aha-engines`, dekker alle 16 fixtures, skiller baseline-fixtures fra next-phase kvalitetsfixtures og dokumenterer feltvise avvik som grunnlag for PR 27–29 uten å endre runtime, fallback, backend API eller analyse-logikk.
 
 ### PR 27
 
