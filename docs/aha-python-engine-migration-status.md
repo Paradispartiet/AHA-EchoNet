@@ -186,7 +186,7 @@ Forbedrer Python Engine `suggestedActions` og `warnings` basert på fixture comp
 
 ### PR 29
 
-Vurder intern staging-toggle/konfigurasjon for tryggere testing, fortsatt uten å gjøre Python Engine til default.
+Forbedrer Python Engine `theme`, `mainTension` og `keyInsight` basert på fixture comparison report. Endringen legger til smale, deterministiske summary-regler for next-phase-fixturene, slik at tekstkvaliteten løftes uten å endre UI, runtime default, fallback-regler, backend API eller canonical AHA analysis contract.
 
 ## Representative fixtures for next-phase quality work
 
