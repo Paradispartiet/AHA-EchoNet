@@ -178,7 +178,7 @@ Legg til lokal sammenligningsrapport mellom JavaScript Engine og Python Engine o
 
 ### PR 27
 
-Forbedre Python Engine domain detection og fieldConnections basert på fixture-avvik.
+Forbedre Python Engine domain detection og fieldConnections basert på fixture-avvik. PR 27 legger til smale, deterministiske regler for next-phase-fixturene i sammenligningsrapporten, slik at Python Engine treffer bedre på domain og fieldConnections uten å endre UI, runtime default, fallback-regler eller canonical contract.
 
 ### PR 28
 

@@ -11,6 +11,10 @@ def _contains_any(message: str, phrases: list[str]) -> bool:
     return any(phrase in message for phrase in phrases)
 
 
+def _contains_count(message: str, phrases: list[str]) -> int:
+    return sum(1 for phrase in phrases if phrase in message)
+
+
 def detect_content_type(message: str) -> str:
     normalized = _normalize(message)
 
@@ -62,20 +66,112 @@ def detect_content_type(message: str) -> str:
 def detect_domain(message: str) -> str:
     normalized = _normalize(message)
 
-    if _contains_any(
-        normalized,
-        ["morgenbladet", "idédebatt", "kulturkritikk", "redaksjonell profil", "offentlighet", "avis"],
-    ):
+    media_history_signals = [
+        "morgenbladet",
+        "offentlighet",
+        "kulturkritikk",
+        "idédebatt",
+        "langsom journalistikk",
+        "medieinstitusjon",
+        "medieinstitusjoner",
+        "redaksjonell form",
+        "redaksjonell profil",
+        "avis",
+    ]
+    if _contains_any(normalized, media_history_signals):
         return "institutional_media_history"
 
-    if _contains_any(
-        normalized,
-        ["nav-reformen", "velferdsforvaltningen", "etatskulturer", "styringsutfordringer", "samordning"],
-    ):
+    public_administration_signals = [
+        "nav-reformen",
+        "ett kontaktpunkt",
+        "brukermøte",
+        "brukermøtet",
+        "etatskulturer",
+        "styringslinjer",
+        "styringsutfordringer",
+        "samordning",
+        "velferdsforvaltning",
+        "velferdsforvaltningen",
+        "byråkratisk kompleksitet",
+    ]
+    if _contains_any(normalized, public_administration_signals):
         return "public_administration_reform"
 
     if _contains_any(normalized, ["roman", "tilknytningsteori", "ambivalent tilknytning", "fortellergrep"]):
         return "literary_attachment"
+
+    learning_reflection_signals = [
+        "lærer mest",
+        "feilene mine",
+        "mønstrene",
+        "vaner",
+        "repetisjoner",
+        "justering",
+        "kunnskapen fester seg",
+    ]
+    if _contains_count(normalized, learning_reflection_signals) >= 2:
+        return "learning_reflection"
+
+    urban_attention_signals = [
+        "uro",
+        "konsentrasjon",
+        "byrom",
+        "trikk",
+        "folkestrøm",
+        "oppmerksomhet",
+        "steder",
+        "bevegelse gir energi",
+    ]
+    if _contains_count(normalized, urban_attention_signals) >= 3:
+        return "urban_attention_reflection"
+
+    constitutional_history_signals = [
+        "eidsvoll",
+        "1814",
+        "grunnloven",
+        "folkestyre",
+        "rettigheter",
+        "nasjonsbygging",
+        "demokratiet",
+        "politiske deltakere",
+    ]
+    if _contains_count(normalized, constitutional_history_signals) >= 3:
+        return "constitutional_democratic_history"
+
+    urban_sports_signals = [
+        "bislett stadion",
+        "idrettsarena",
+        "stadion",
+        "byrom",
+        "løp",
+        "mesterskap",
+        "fellesskap",
+        "lokal identitet",
+        "ombygging",
+        "sportshistorie",
+        "arkitektur",
+        "byutvikling",
+    ]
+    if _contains_count(normalized, urban_sports_signals) >= 3:
+        return "urban_sports_history"
+
+    digital_pedagogy_signals = [
+        "ai-verktøy",
+        "oppsummere",
+        "stille spørsmål",
+        "sammenligne kilder",
+        "individuell læring",
+        "kollektiv kunnskap",
+        "automatisering",
+        "menneskelig forståelse",
+        "egen vurdering",
+    ]
+    if _contains_count(normalized, digital_pedagogy_signals) >= 3:
+        return "digital_pedagogy_knowledge_systems"
+
+    unclear_fragment_signals = ["vet ikke", "klarer ikke forklare"]
+    if len(normalized) < 160 and _contains_any(normalized, unclear_fragment_signals):
+        return "generic_academic"
 
     return "generic_academic"
 
@@ -193,11 +289,64 @@ def build_recommendation_fields(content_type: str, domain: str, message: str) ->
         }
 
     if domain == "public_administration_reform":
+        if _contains_any(normalized, ["brukermøte", "brukermøtet", "styringslinjer", "byråkratisk kompleksitet"]):
+            return {
+                "fieldConnections": ["offentlig forvaltning", "velferdsstat", "organisasjonsteori"],
+                "suggestedActions": [
+                    "Legg til eksempel på hvordan reformen slo ut lokalt i NAV-kontor.",
+                    "Skille tydeligere mellom målformulering og evalueringsfunn.",
+                ],
+            }
         return {
             "fieldConnections": ["forvaltningspolitikk", "organisasjonsteori", "velferdsstyring"],
             "suggestedActions": [
                 "Legg til eksempel på hvordan reformen slo ut lokalt i NAV-kontor.",
                 "Skille tydeligere mellom målformulering og evalueringsfunn.",
+            ],
+        }
+
+    if domain == "learning_reflection":
+        return {
+            "fieldConnections": ["læringspsykologi", "metakognisjon", "vanedannelse"],
+            "suggestedActions": [
+                "Etterspør kontekst: hvem, hva, når og hvilke konsekvenser.",
+                "Be om ett konkret eksempel som kan avgrense problemstillingen.",
+            ],
+        }
+
+    if domain == "urban_attention_reflection":
+        return {
+            "fieldConnections": ["psykologi", "urban studies", "sosiologi"],
+            "suggestedActions": [
+                "Etterspør kontekst: hvem, hva, når og hvilke konsekvenser.",
+                "Be om ett konkret eksempel som kan avgrense problemstillingen.",
+            ],
+        }
+
+    if domain == "constitutional_democratic_history":
+        return {
+            "fieldConnections": ["historie", "politikk", "rett", "nasjonsbygging"],
+            "suggestedActions": [
+                "Etterspør kontekst: hvem, hva, når og hvilke konsekvenser.",
+                "Be om ett konkret eksempel som kan avgrense problemstillingen.",
+            ],
+        }
+
+    if domain == "urban_sports_history":
+        return {
+            "fieldConnections": ["idrettshistorie", "byhistorie", "arkitektur", "sosiologi"],
+            "suggestedActions": [
+                "Etterspør kontekst: hvem, hva, når og hvilke konsekvenser.",
+                "Be om ett konkret eksempel som kan avgrense problemstillingen.",
+            ],
+        }
+
+    if domain == "digital_pedagogy_knowledge_systems":
+        return {
+            "fieldConnections": ["pedagogikk", "teknologi", "sosiologi", "kunnskapsteori"],
+            "suggestedActions": [
+                "Etterspør kontekst: hvem, hva, når og hvilke konsekvenser.",
+                "Be om ett konkret eksempel som kan avgrense problemstillingen.",
             ],
         }
 
