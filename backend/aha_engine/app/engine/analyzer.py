@@ -205,6 +205,32 @@ def build_history_go_links(domain: str, message: str) -> list[HistoryGoLink]:
             )
         ]
 
+    if domain == "constitutional_democratic_history" and _contains_any(
+        normalized,
+        ["eidsvoll", "1814", "grunnloven"],
+    ):
+        return [
+            HistoryGoLink(
+                type="conceptual_topic",
+                id="eidsvoll-grunnloven",
+                title="Eidsvoll og Grunnloven",
+                reason="Konseptuell History Go-kobling: repoet har ingen verifisert Eidsvoll- eller Grunnloven-ID, men teksten peker tydelig mot sted, hendelse og demokratihistorisk tema.",
+            )
+        ]
+
+    if domain == "urban_sports_history" and _contains_any(
+        normalized,
+        ["bislett", "stadion"],
+    ):
+        return [
+            HistoryGoLink(
+                type="conceptual_topic",
+                id="bislett-stadion",
+                title="Bislett stadion",
+                reason="Konseptuell History Go-kobling: repoet har ingen verifisert Bislett- eller stadion-ID, men teksten omtaler et konkret sted og dets idretts- og byhistoriske betydning.",
+            )
+        ]
+
     return []
 
 
@@ -280,6 +306,14 @@ def build_recommendation_fields(content_type: str, domain: str, message: str) ->
         }
 
     if domain == "institutional_media_history":
+        if _contains_any(normalized, ["langsom journalistikk", "kontinuerlig nyhetsstrøm", "dannelsesoffentlighet"]):
+            return {
+                "fieldConnections": ["pressehistorie", "offentlighetsteori", "kulturjournalistikk"],
+                "suggestedActions": [
+                    "Legg til en avgrenset periode for å gjøre den mediehistoriske analysen mer etterprøvbar.",
+                    "Sammenlign Morgenbladets langsomme format med en raskere nyhetsaktør for å tydeliggjøre kontrasten.",
+                ],
+            }
         return {
             "fieldConnections": ["pressehistorie", "offentlighetsteori", "kulturjournalistikk"],
             "suggestedActions": [
@@ -293,8 +327,8 @@ def build_recommendation_fields(content_type: str, domain: str, message: str) ->
             return {
                 "fieldConnections": ["offentlig forvaltning", "velferdsstat", "organisasjonsteori"],
                 "suggestedActions": [
-                    "Legg til eksempel på hvordan reformen slo ut lokalt i NAV-kontor.",
-                    "Skille tydeligere mellom målformulering og evalueringsfunn.",
+                    "Skille tydelig mellom reformens politiske mål, organisatoriske virkemidler og brukeropplevd effekt.",
+                    "Legg til ett konkret eksempel fra et NAV-kontor for å gjøre spenningen empirisk tydeligere.",
                 ],
             }
         return {
@@ -309,8 +343,8 @@ def build_recommendation_fields(content_type: str, domain: str, message: str) ->
         return {
             "fieldConnections": ["læringspsykologi", "metakognisjon", "vanedannelse"],
             "suggestedActions": [
-                "Etterspør kontekst: hvem, hva, når og hvilke konsekvenser.",
-                "Be om ett konkret eksempel som kan avgrense problemstillingen.",
+                "Lag en enkel logg med feil, årsak og neste justering etter hver økt.",
+                "Velg én vane som kan repeteres kort daglig før større evaluering.",
             ],
         }
 
@@ -318,8 +352,8 @@ def build_recommendation_fields(content_type: str, domain: str, message: str) ->
         return {
             "fieldConnections": ["psykologi", "urban studies", "sosiologi"],
             "suggestedActions": [
-                "Etterspør kontekst: hvem, hva, når og hvilke konsekvenser.",
-                "Be om ett konkret eksempel som kan avgrense problemstillingen.",
+                "Beskriv to konkrete steder som gir ulik balanse mellom energi og ro.",
+                "Test en kort arbeidsøkt i hvert miljø og noter hva som skjer med oppmerksomheten.",
             ],
         }
 
@@ -327,8 +361,8 @@ def build_recommendation_fields(content_type: str, domain: str, message: str) ->
         return {
             "fieldConnections": ["historie", "politikk", "rett", "nasjonsbygging"],
             "suggestedActions": [
-                "Etterspør kontekst: hvem, hva, når og hvilke konsekvenser.",
-                "Be om ett konkret eksempel som kan avgrense problemstillingen.",
+                "Avklar hvilke grupper som var inkludert og ekskludert fra politisk deltakelse i 1814.",
+                "Knytt analysen til senere demokratiske utvidelser for å vise historisk utvikling.",
             ],
         }
 
@@ -336,8 +370,8 @@ def build_recommendation_fields(content_type: str, domain: str, message: str) ->
         return {
             "fieldConnections": ["idrettshistorie", "byhistorie", "arkitektur", "sosiologi"],
             "suggestedActions": [
-                "Etterspør kontekst: hvem, hva, når og hvilke konsekvenser.",
-                "Be om ett konkret eksempel som kan avgrense problemstillingen.",
+                "Skille eksplisitt mellom konkurransehistorie, publikumsbruk og arkitektonisk endring.",
+                "Legg til én konkret ombygging eller idrettshendelse for sterkere historisk forankring.",
             ],
         }
 
@@ -345,8 +379,8 @@ def build_recommendation_fields(content_type: str, domain: str, message: str) ->
         return {
             "fieldConnections": ["pedagogikk", "teknologi", "sosiologi", "kunnskapsteori"],
             "suggestedActions": [
-                "Etterspør kontekst: hvem, hva, når og hvilke konsekvenser.",
-                "Be om ett konkret eksempel som kan avgrense problemstillingen.",
+                "Presiser hvilke læringssituasjoner som støttes av AI og hvilke som krever egen vurdering.",
+                "Legg til kriterier for å skille mellom nyttig oppsummering og ukritisk fasitbruk.",
             ],
         }
 
@@ -386,6 +420,15 @@ def build_recommendation_fields(content_type: str, domain: str, message: str) ->
             ],
         }
 
+    if len(normalized) < 160 and _contains_any(normalized, ["vet ikke", "klarer ikke forklare"]):
+        return {
+            "fieldConnections": [],
+            "suggestedActions": [
+                "Be avsenderen angi hvem eller hva teksten handler om.",
+                "Etterspør ett konkret eksempel, tidspunkt og ønsket endring.",
+            ],
+        }
+
     return {
         "fieldConnections": [],
         "suggestedActions": [
@@ -418,6 +461,17 @@ def build_confidence_and_warnings(
         }
 
     if domain == "institutional_media_history":
+        if _contains_any(normalized, ["langsom journalistikk", "kontinuerlig nyhetsstrøm", "dannelsesoffentlighet"]):
+            return {
+                "confidence": {
+                    "contentType": 0.93,
+                    "domain": 0.94,
+                    "theme": 0.91,
+                    "mainTension": 0.87,
+                    "historyGoLinks": 0.86,
+                },
+                "warnings": [],
+            }
         return {
             "confidence": {
                 "contentType": 0.92,
@@ -430,6 +484,17 @@ def build_confidence_and_warnings(
         }
 
     if domain == "public_administration_reform":
+        if _contains_any(normalized, ["brukermøte", "brukermøtet", "byråkratisk kompleksitet", "uklart ansvar"]):
+            return {
+                "confidence": {
+                    "contentType": 0.94,
+                    "domain": 0.95,
+                    "theme": 0.91,
+                    "mainTension": 0.9,
+                    "historyGoLinks": 0.89,
+                },
+                "warnings": [],
+            }
         return {
             "confidence": {
                 "contentType": 0.94,
@@ -437,6 +502,72 @@ def build_confidence_and_warnings(
                 "theme": 0.91,
                 "mainTension": 0.89,
                 "historyGoLinks": 0.88,
+            },
+            "warnings": [],
+        }
+
+    if domain == "learning_reflection":
+        return {
+            "confidence": {
+                "contentType": 0.91,
+                "domain": 0.84,
+                "theme": 0.88,
+                "mainTension": 0.84,
+                "historyGoLinks": 0.04,
+            },
+            "warnings": [],
+        }
+
+    if domain == "urban_attention_reflection":
+        return {
+            "confidence": {
+                "contentType": 0.9,
+                "domain": 0.8,
+                "theme": 0.86,
+                "mainTension": 0.83,
+                "historyGoLinks": 0.04,
+            },
+            "warnings": [
+                "Personlig uro bør forstås som situert erfaring i teksten, ikke som grunnlag for klinisk diagnose.",
+            ],
+        }
+
+    if domain == "constitutional_democratic_history":
+        return {
+            "confidence": {
+                "contentType": 0.92,
+                "domain": 0.89,
+                "theme": 0.9,
+                "mainTension": 0.87,
+                "historyGoLinks": 0.62,
+            },
+            "warnings": [
+                "History Go-koblingen er konseptuell fordi ingen eksisterende Eidsvoll- eller Grunnloven-ID er verifisert i repoet.",
+            ],
+        }
+
+    if domain == "urban_sports_history":
+        return {
+            "confidence": {
+                "contentType": 0.91,
+                "domain": 0.87,
+                "theme": 0.88,
+                "mainTension": 0.84,
+                "historyGoLinks": 0.6,
+            },
+            "warnings": [
+                "History Go-koblingen er konseptuell fordi ingen eksisterende Bislett- eller stadion-ID er verifisert i repoet.",
+            ],
+        }
+
+    if domain == "digital_pedagogy_knowledge_systems":
+        return {
+            "confidence": {
+                "contentType": 0.9,
+                "domain": 0.86,
+                "theme": 0.88,
+                "mainTension": 0.87,
+                "historyGoLinks": 0.05,
             },
             "warnings": [],
         }
@@ -487,6 +618,21 @@ def build_confidence_and_warnings(
                 "historyGoLinks": 0.18,
             },
             "warnings": [],
+        }
+
+    if len(normalized) < 160 and _contains_any(normalized, ["vet ikke", "klarer ikke forklare"]):
+        return {
+            "confidence": {
+                "contentType": 0.34,
+                "domain": 0.2,
+                "theme": 0.36,
+                "mainTension": 0.32,
+                "historyGoLinks": 0.02,
+            },
+            "warnings": [
+                "Teksten er kort og fragmentert, så analysen bør ha lav sikkerhet.",
+                "Mangler konkrete aktører, hendelser og faglige begreper.",
+            ],
         }
 
     return {

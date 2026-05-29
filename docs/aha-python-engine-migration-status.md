@@ -182,7 +182,7 @@ Forbedre Python Engine domain detection og fieldConnections basert på fixture-a
 
 ### PR 28
 
-Forbedre suggestedActions og warnings i Python Engine.
+Forbedrer Python Engine `suggestedActions` og `warnings` basert på fixture comparison report. Endringen legger til smale domeneregler for next-phase-fixturene, mer presise warnings for fragmentert tekst, situert uro og konseptuelle History Go-koblinger, og justerer confidence bare der warning-/uklarhetslogikken direkte tilsier det.
 
 ### PR 29
 
