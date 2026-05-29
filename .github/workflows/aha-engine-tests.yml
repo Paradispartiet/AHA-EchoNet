@@ -24,6 +24,11 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -31,3 +36,7 @@ jobs:
 
       - name: Run tests
         run: python -m pytest
+
+      - name: Run AHA Engine comparison regression gate
+        working-directory: ${{ github.workspace }}
+        run: npm run check:aha-engine-comparison

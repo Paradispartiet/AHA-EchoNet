@@ -298,7 +298,7 @@ These follow-up areas are intentionally documented only. This report does not im
 `;
 }
 
-function main() {
+function buildComparison() {
   const fixtures = readFixtures();
   if (fixtures.length !== 16) {
     throw new Error(`Expected 16 AHA analysis fixtures, found ${fixtures.length}`);
@@ -312,6 +312,12 @@ function main() {
   const jsOutputs = runJavaScriptEngine(fixtures);
   const pythonOutputs = runPythonEngine(fixtures);
   const rows = compareFixtures(fixtures, jsOutputs, pythonOutputs);
+
+  return { fixtures, rows };
+}
+
+function main() {
+  const { fixtures, rows } = buildComparison();
   const report = renderReport(fixtures, rows);
 
   mkdirSync(path.dirname(reportPath), { recursive: true });
@@ -325,9 +331,22 @@ function main() {
   console.log(`✅ Wrote ${path.relative(repoRoot, reportPath)}.`);
 }
 
-try {
-  main();
-} catch (error) {
-  console.error(`❌ AHA Engine fixture comparison failed: ${error.message}`);
-  process.exitCode = 1;
+module.exports = {
+  buildComparison,
+  canonicalFields,
+  compareFixtures,
+  fieldStatus,
+  readFixtures,
+  renderReport,
+  runJavaScriptEngine,
+  runPythonEngine,
+};
+
+if (require.main === module) {
+  try {
+    main();
+  } catch (error) {
+    console.error(`❌ AHA Engine fixture comparison failed: ${error.message}`);
+    process.exitCode = 1;
+  }
 }

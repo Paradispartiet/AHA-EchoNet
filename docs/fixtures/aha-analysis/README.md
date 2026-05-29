@@ -49,3 +49,13 @@ npm run compare:aha-engines
 ```
 
 Kommandoen oppdaterer `docs/reports/aha-engine-fixture-comparison.md` med feltvis status for `contentType`, `domain`, `theme`, `mainTension`, `keyInsight`, `fieldConnections`, `historyGoLinks`, `suggestedActions`, `confidence` og `warnings`. Rapporten skiller baseline parity-fixtures fra next-phase kvalitetsfixtures og er ment som grunnlag for senere forbedrings-PR-er, ikke som runtime- eller contract-endring.
+
+## Regression gate
+
+Kjør regression gate lokalt med:
+
+```bash
+npm run check:aha-engine-comparison
+```
+
+Kommandoen genererer aktuell comparison-data med samme lokale JS/Python-logikk som `npm run compare:aha-engines` og sammenligner feltstatus mot `docs/reports/aha-engine-fixture-comparison-baseline.json`. Full JS/Python parity er ikke påkrevd: forbedringer fra `mismatch` til `partial` eller fra `partial` til `match` er tillatt. Gate-en feiler først når et overvåket felt får lavere rangert status enn baseline, for eksempel `match` → `partial`, `partial` → `not_checked` eller `partial` → `mismatch`.
