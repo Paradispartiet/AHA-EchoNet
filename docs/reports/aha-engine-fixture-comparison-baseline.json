@@ -1,0 +1,281 @@
+{
+  "version": 1,
+  "description": "Minimum acceptable AHA Engine comparison statuses for PR 30 regression gate. Improvements are allowed; lower-ranked statuses fail the gate.",
+  "generatedFrom": "docs/reports/aha-engine-fixture-comparison.md",
+  "statusRank": {
+    "match": 3,
+    "partial": 2,
+    "not_checked": 1,
+    "mismatch": 0
+  },
+  "monitoredFields": [
+    "contentType",
+    "domain",
+    "theme",
+    "mainTension",
+    "keyInsight",
+    "fieldConnections",
+    "historyGoLinks",
+    "suggestedActions",
+    "confidence",
+    "warnings"
+  ],
+  "fixtures": [
+    {
+      "id": "pinse-religion-001",
+      "group": "baseline",
+      "minimumStatuses": {
+        "contentType": "match",
+        "domain": "match",
+        "theme": "partial",
+        "mainTension": "partial",
+        "keyInsight": "partial",
+        "fieldConnections": "partial",
+        "historyGoLinks": "match",
+        "suggestedActions": "partial",
+        "confidence": "partial",
+        "warnings": "match"
+      }
+    },
+    {
+      "id": "morgenbladet-mediehistorie-001",
+      "group": "baseline",
+      "minimumStatuses": {
+        "contentType": "match",
+        "domain": "match",
+        "theme": "partial",
+        "mainTension": "partial",
+        "keyInsight": "partial",
+        "fieldConnections": "partial",
+        "historyGoLinks": "partial",
+        "suggestedActions": "partial",
+        "confidence": "partial",
+        "warnings": "match"
+      }
+    },
+    {
+      "id": "nav-reform-forvaltning-001",
+      "group": "baseline",
+      "minimumStatuses": {
+        "contentType": "partial",
+        "domain": "partial",
+        "theme": "partial",
+        "mainTension": "partial",
+        "keyInsight": "partial",
+        "fieldConnections": "partial",
+        "historyGoLinks": "partial",
+        "suggestedActions": "partial",
+        "confidence": "partial",
+        "warnings": "match"
+      }
+    },
+    {
+      "id": "litteraer-tilknytning-001",
+      "group": "baseline",
+      "minimumStatuses": {
+        "contentType": "partial",
+        "domain": "partial",
+        "theme": "partial",
+        "mainTension": "partial",
+        "keyInsight": "partial",
+        "fieldConnections": "partial",
+        "historyGoLinks": "match",
+        "suggestedActions": "partial",
+        "confidence": "partial",
+        "warnings": "match"
+      }
+    },
+    {
+      "id": "dagbok-refleksjon-001",
+      "group": "baseline",
+      "minimumStatuses": {
+        "contentType": "match",
+        "domain": "match",
+        "theme": "partial",
+        "mainTension": "partial",
+        "keyInsight": "partial",
+        "fieldConnections": "partial",
+        "historyGoLinks": "match",
+        "suggestedActions": "partial",
+        "confidence": "partial",
+        "warnings": "match"
+      }
+    },
+    {
+      "id": "prosjektplan-teknisk-001",
+      "group": "baseline",
+      "minimumStatuses": {
+        "contentType": "partial",
+        "domain": "match",
+        "theme": "partial",
+        "mainTension": "partial",
+        "keyInsight": "partial",
+        "fieldConnections": "partial",
+        "historyGoLinks": "match",
+        "suggestedActions": "partial",
+        "confidence": "partial",
+        "warnings": "match"
+      }
+    },
+    {
+      "id": "juridisk-tekst-001",
+      "group": "baseline",
+      "minimumStatuses": {
+        "contentType": "partial",
+        "domain": "match",
+        "theme": "partial",
+        "mainTension": "partial",
+        "keyInsight": "partial",
+        "fieldConnections": "partial",
+        "historyGoLinks": "match",
+        "suggestedActions": "partial",
+        "confidence": "partial",
+        "warnings": "match"
+      }
+    },
+    {
+      "id": "uklar-tekst-001",
+      "group": "baseline",
+      "minimumStatuses": {
+        "contentType": "partial",
+        "domain": "match",
+        "theme": "partial",
+        "mainTension": "partial",
+        "keyInsight": "partial",
+        "fieldConnections": "partial",
+        "historyGoLinks": "match",
+        "suggestedActions": "partial",
+        "confidence": "partial",
+        "warnings": "partial"
+      }
+    },
+    {
+      "id": "morgenbladet-offentlighet-002",
+      "group": "next-phase",
+      "minimumStatuses": {
+        "contentType": "match",
+        "domain": "match",
+        "theme": "partial",
+        "mainTension": "partial",
+        "keyInsight": "partial",
+        "fieldConnections": "partial",
+        "historyGoLinks": "mismatch",
+        "suggestedActions": "partial",
+        "confidence": "partial",
+        "warnings": "match"
+      }
+    },
+    {
+      "id": "nav-reform-brukermoete-002",
+      "group": "next-phase",
+      "minimumStatuses": {
+        "contentType": "match",
+        "domain": "partial",
+        "theme": "partial",
+        "mainTension": "partial",
+        "keyInsight": "partial",
+        "fieldConnections": "partial",
+        "historyGoLinks": "mismatch",
+        "suggestedActions": "partial",
+        "confidence": "partial",
+        "warnings": "match"
+      }
+    },
+    {
+      "id": "refleksjon-laering-feil-001",
+      "group": "next-phase",
+      "minimumStatuses": {
+        "contentType": "mismatch",
+        "domain": "partial",
+        "theme": "partial",
+        "mainTension": "partial",
+        "keyInsight": "partial",
+        "fieldConnections": "partial",
+        "historyGoLinks": "match",
+        "suggestedActions": "partial",
+        "confidence": "partial",
+        "warnings": "match"
+      }
+    },
+    {
+      "id": "refleksjon-byrom-uro-001",
+      "group": "next-phase",
+      "minimumStatuses": {
+        "contentType": "partial",
+        "domain": "partial",
+        "theme": "partial",
+        "mainTension": "partial",
+        "keyInsight": "partial",
+        "fieldConnections": "partial",
+        "historyGoLinks": "match",
+        "suggestedActions": "partial",
+        "confidence": "partial",
+        "warnings": "partial"
+      }
+    },
+    {
+      "id": "historygo-eidsvoll-grunnloven-001",
+      "group": "next-phase",
+      "minimumStatuses": {
+        "contentType": "partial",
+        "domain": "partial",
+        "theme": "partial",
+        "mainTension": "partial",
+        "keyInsight": "partial",
+        "fieldConnections": "partial",
+        "historyGoLinks": "partial",
+        "suggestedActions": "partial",
+        "confidence": "partial",
+        "warnings": "partial"
+      }
+    },
+    {
+      "id": "historygo-bislett-stadion-001",
+      "group": "next-phase",
+      "minimumStatuses": {
+        "contentType": "match",
+        "domain": "partial",
+        "theme": "partial",
+        "mainTension": "partial",
+        "keyInsight": "partial",
+        "fieldConnections": "partial",
+        "historyGoLinks": "partial",
+        "suggestedActions": "partial",
+        "confidence": "partial",
+        "warnings": "partial"
+      }
+    },
+    {
+      "id": "uklar-fragmentert-002",
+      "group": "next-phase",
+      "minimumStatuses": {
+        "contentType": "partial",
+        "domain": "match",
+        "theme": "partial",
+        "mainTension": "partial",
+        "keyInsight": "partial",
+        "fieldConnections": "partial",
+        "historyGoLinks": "match",
+        "suggestedActions": "partial",
+        "confidence": "partial",
+        "warnings": "partial"
+      }
+    },
+    {
+      "id": "tverrfaglig-ai-laering-001",
+      "group": "next-phase",
+      "minimumStatuses": {
+        "contentType": "mismatch",
+        "domain": "partial",
+        "theme": "partial",
+        "mainTension": "partial",
+        "keyInsight": "partial",
+        "fieldConnections": "partial",
+        "historyGoLinks": "match",
+        "suggestedActions": "partial",
+        "confidence": "partial",
+        "warnings": "match"
+      }
+    }
+  ]
+}

@@ -188,6 +188,10 @@ Forbedrer Python Engine `suggestedActions` og `warnings` basert på fixture comp
 
 Forbedrer Python Engine `theme`, `mainTension` og `keyInsight` basert på fixture comparison report. Endringen legger til smale, deterministiske summary-regler for next-phase-fixturene, slik at tekstkvaliteten løftes uten å endre UI, runtime default, fallback-regler, backend API eller canonical AHA analysis contract.
 
+### PR 30
+
+Legger til en lokal regression gate for AHA Engine comparison report. Gate-en låser nåværende forbedringsnivå for prioriterte canonical fields mot en eksplisitt baseline, men krever ikke full JS/Python parity og gjør ikke Python Engine til default. UI, runtime default, fallback-regler, backend API og canonical AHA analysis contract forblir uendret.
+
 ## Representative fixtures for next-phase quality work
 
 PR 25 utvider fixture-grunnlaget for AHA Engine-kvalitetsarbeid med representative caser for fagtekst, refleksjon, History Go-koblinger, tverrfaglige tekster og uklare input. Hensikten er å gi et bedre sammenligningsgrunnlag for senere vurdering av JavaScript Engine og Python Engine uten å endre analyse-runtime, fallback-regler eller canonical AHA analysis contract i denne fasen.
