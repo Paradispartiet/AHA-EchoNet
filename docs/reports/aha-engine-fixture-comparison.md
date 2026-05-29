@@ -56,14 +56,14 @@ Status values:
 | prosjektplan-teknisk-001 | baseline | partial | match | partial | partial | partial | partial | match | partial | partial | match | Python=expected |
 | juridisk-tekst-001 | baseline | partial | match | partial | partial | partial | partial | match | partial | partial | match | Python=expected |
 | uklar-tekst-001 | baseline | partial | match | partial | partial | partial | partial | match | partial | partial | partial | Python=expected |
-| morgenbladet-offentlighet-002 | next-phase | match | match | mismatch | mismatch | mismatch | partial | mismatch | partial | partial | match | theme: JS/Python/expected differ; mainTension: JS/Python/expected differ; keyInsight: JS/Python/expected differ; Python=expected |
-| nav-reform-brukermoete-002 | next-phase | match | partial | mismatch | mismatch | mismatch | partial | mismatch | partial | partial | match | Python=expected; theme: JS/Python/expected differ; mainTension: JS/Python/expected differ; keyInsight: JS/Python/expected differ |
-| refleksjon-laering-feil-001 | next-phase | mismatch | partial | mismatch | mismatch | mismatch | partial | match | partial | partial | match | contentType: JS/Python/expected differ; Python=expected; theme: JS/Python/expected differ; mainTension: JS/Python/expected differ |
-| refleksjon-byrom-uro-001 | next-phase | partial | partial | mismatch | mismatch | mismatch | partial | match | partial | partial | partial | Python=expected; theme: JS/Python/expected differ; mainTension: JS/Python/expected differ; keyInsight: JS/Python/expected differ |
-| historygo-eidsvoll-grunnloven-001 | next-phase | partial | partial | mismatch | mismatch | mismatch | partial | partial | partial | partial | partial | Python=expected; theme: JS/Python/expected differ; mainTension: JS/Python/expected differ; keyInsight: JS/Python/expected differ |
-| historygo-bislett-stadion-001 | next-phase | match | partial | mismatch | mismatch | mismatch | partial | partial | partial | partial | partial | Python=expected; theme: JS/Python/expected differ; mainTension: JS/Python/expected differ; keyInsight: JS/Python/expected differ |
-| uklar-fragmentert-002 | next-phase | partial | match | mismatch | mismatch | mismatch | partial | match | partial | partial | partial | Python=expected; theme: JS/Python/expected differ; mainTension: JS/Python/expected differ; keyInsight: JS/Python/expected differ |
-| tverrfaglig-ai-laering-001 | next-phase | mismatch | partial | mismatch | mismatch | mismatch | partial | match | partial | partial | match | contentType: JS/Python/expected differ; Python=expected; theme: JS/Python/expected differ; mainTension: JS/Python/expected differ |
+| morgenbladet-offentlighet-002 | next-phase | match | match | partial | partial | partial | partial | mismatch | partial | partial | match | Python=expected; historyGoLinks: JS/Python/expected differ |
+| nav-reform-brukermoete-002 | next-phase | match | partial | partial | partial | partial | partial | mismatch | partial | partial | match | Python=expected; historyGoLinks: JS/Python/expected differ |
+| refleksjon-laering-feil-001 | next-phase | mismatch | partial | partial | partial | partial | partial | match | partial | partial | match | contentType: JS/Python/expected differ; Python=expected |
+| refleksjon-byrom-uro-001 | next-phase | partial | partial | partial | partial | partial | partial | match | partial | partial | partial | Python=expected |
+| historygo-eidsvoll-grunnloven-001 | next-phase | partial | partial | partial | partial | partial | partial | partial | partial | partial | partial | Python=expected |
+| historygo-bislett-stadion-001 | next-phase | match | partial | partial | partial | partial | partial | partial | partial | partial | partial | Python=expected |
+| uklar-fragmentert-002 | next-phase | partial | match | partial | partial | partial | partial | match | partial | partial | partial | Python=expected |
+| tverrfaglig-ai-laering-001 | next-phase | mismatch | partial | partial | partial | partial | partial | match | partial | partial | match | contentType: JS/Python/expected differ; Python=expected |
 
 ## Prioritized follow-up areas
 

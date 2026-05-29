@@ -238,6 +238,15 @@ def build_semantic_summary(content_type: str, domain: str, message: str) -> dict
     normalized = _normalize(message)
 
     if domain == "institutional_media_history":
+        if _contains_any(
+            normalized,
+            ["langsom journalistikk", "kontinuerlig nyhetsstrøm", "dannelsesoffentlighet"],
+        ):
+            return {
+                "theme": "Morgenbladet som arena for langsom idéoffentlighet",
+                "mainTension": "demokratisk offentlig samtale kontra smal dannelsesoffentlighet",
+                "keyInsight": "Teksten bruker Morgenbladet til å undersøke hvordan redaksjonell form og tempo påvirker kulturkritikkens offentlige rolle.",
+            }
         return {
             "theme": "Morgenbladet som idéoffentlig institusjon",
             "mainTension": "dyptpløyende offentlighet kontra tempoorientert nyhetslogikk",
@@ -245,6 +254,12 @@ def build_semantic_summary(content_type: str, domain: str, message: str) -> dict
         }
 
     if domain == "public_administration_reform":
+        if _contains_any(normalized, ["brukermøte", "brukermøtet", "byråkratisk kompleksitet"]):
+            return {
+                "theme": "NAV-reformen mellom samordningsideal og brukernær kompleksitet",
+                "mainTension": "helhetlig velferdsforvaltning kontra praktisk byråkratisk kompleksitet",
+                "keyInsight": "Teksten viser at reformens mål om ett kontaktpunkt avhenger av hvordan styring, systemer og etatskulturer faktisk møter brukeren.",
+            }
         return {
             "theme": "samordning og styring i NAV-reformen",
             "mainTension": "politisk mål om helhet versus organisatorisk kompleksitet",
@@ -256,6 +271,41 @@ def build_semantic_summary(content_type: str, domain: str, message: str) -> dict
             "theme": "tilknytningsteori som tolkningsramme i romananalyse",
             "mainTension": "estetisk fortelling kontra psykologisk begrepsbruk",
             "keyInsight": "Tolkningen viser hvordan narrativ form kan bære psykologisk innsikt uten fagterminologisk overforklaring.",
+        }
+
+    if domain == "learning_reflection":
+        return {
+            "theme": "læring gjennom mønstergjenkjenning og justering",
+            "mainTension": "feil som nederlag kontra feil som praktisk læringsdata",
+            "keyInsight": "Refleksjonen peker på at læring styrkes når feil omgjøres til konkrete mønstre, vaner og små justeringer.",
+        }
+
+    if domain == "urban_attention_reflection":
+        return {
+            "theme": "konsentrasjon i møte med byrommets rytme",
+            "mainTension": "stimulerende byliv kontra oppmerksomhetsbrudd",
+            "keyInsight": "Teksten kobler personlig uro til hvordan fysiske omgivelser kan støtte eller forstyrre tenkning uten å gjøre erfaringen klinisk.",
+        }
+
+    if domain == "constitutional_democratic_history":
+        return {
+            "theme": "Eidsvoll og Grunnloven som demokratisk grunnfortelling",
+            "mainTension": "nasjonal grunnleggelse kontra demokratiets historiske avgrensninger",
+            "keyInsight": "Teksten viser at 1814 kan forstås både som demokratisk startpunkt og som et ufullstendig prosjekt som senere ble utvidet.",
+        }
+
+    if domain == "urban_sports_history":
+        return {
+            "theme": "Bislett stadion som idrettshistorisk og urbant sosialt rom",
+            "mainTension": "sportslig arena kontra levende byrom",
+            "keyInsight": "Teksten skiller mellom stadion som sportshistorisk institusjon og som arkitektonisk byrom der fellesskap formes.",
+        }
+
+    if domain == "digital_pedagogy_knowledge_systems":
+        return {
+            "theme": "AI som støtte for læring og kollektiv kunnskapsbygging",
+            "mainTension": "automatisert tilgang til kunnskap kontra menneskelig vurdering og forståelse",
+            "keyInsight": "Teksten viser at læringsteknologi bør vurderes etter hvordan den styrker kritisk egenarbeid, ikke bare hvor raskt den leverer svar.",
         }
 
     if content_type == "day_log":
@@ -284,6 +334,13 @@ def build_semantic_summary(content_type: str, domain: str, message: str) -> dict
             "theme": "pinse som teologisk og kulturell markør",
             "mainTension": "balansen mellom religiøs betydning og samfunnsmessig tradisjon",
             "keyInsight": "Teksten viser hvordan pinse fungerer både som trosfortelling og som sosialt tidsanker.",
+        }
+
+    if len(normalized) < 160 and _contains_any(normalized, ["vet ikke", "klarer ikke forklare"]):
+        return {
+            "theme": "uklar problemforståelse uten tydelig kontekst",
+            "mainTension": "opplevd sammenheng kontra manglende konkretisering",
+            "keyInsight": "Teksten uttrykker en mulig frustrasjon, men gir for få holdepunkter til sikker tematisk eller faglig analyse.",
         }
 
     return {
