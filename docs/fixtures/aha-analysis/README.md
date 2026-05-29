@@ -39,3 +39,13 @@ Under Python-migreringen kan samme `inputText` kjøres gjennom begge motorer, og
 Målet er ikke byte-for-byte identitet i språkføring, men konsistent struktur, tydelig tema/tension/insight og rimelig confidence-nivå per case.
 
 Kjør validering lokalt med `npm run validate:aha-fixtures`.
+
+## Sammenligningsrapport
+
+Fixture-settet kan også brukes til lokal, deterministisk sammenligning av JavaScript Engine og Python Engine uten nettverkskall til Render staging:
+
+```bash
+npm run compare:aha-engines
+```
+
+Kommandoen oppdaterer `docs/reports/aha-engine-fixture-comparison.md` med feltvis status for `contentType`, `domain`, `theme`, `mainTension`, `keyInsight`, `fieldConnections`, `historyGoLinks`, `suggestedActions`, `confidence` og `warnings`. Rapporten skiller baseline parity-fixtures fra next-phase kvalitetsfixtures og er ment som grunnlag for senere forbedrings-PR-er, ikke som runtime- eller contract-endring.
