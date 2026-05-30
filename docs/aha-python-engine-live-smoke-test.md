@@ -214,6 +214,267 @@ Send minst én testmelding i AHA Chat, og kjør:
 AHAPythonEngineSmokeTest.printStatus()
 ```
 
+
+## Live smoke-testresultat – 2026-05-29
+
+Testen ble kjørt manuelt etter at PR 31 var merget, fra AHA Chat på production-origin / GitHub Pages mot Render staging:
+
+```text
+https://aha-engine-staging-7a3y.onrender.com
+```
+
+Live smoke-testen bekreftet at eksplisitt Render staging-URL bruker Python Engine, at production-origin uten eksplisitt URL feiler lukket, at ugyldig URL går til JavaScript fallback, og at reset går tilbake til JavaScript/default-flow. Python Engine er fortsatt ikke default.
+
+### Health check
+
+Health endpoint:
+
+```text
+https://aha-engine-staging-7a3y.onrender.com/health
+```
+
+Resultat:
+
+```json
+{"status":"ok","service":"aha-engine"}
+```
+
+Status: Bestått.
+
+### Direkte analyse-endepunkt
+
+Direkte test mot analyse-endepunktet ble kjørt med:
+
+```http
+POST https://aha-engine-staging-7a3y.onrender.com/api/aha/analyze
+```
+
+Melding:
+
+```text
+Dette er en fagtekst om Morgenbladet, offentlighet, kulturkritikk og idédebatt.
+```
+
+Resultat: HTTP 200 og gyldig canonical analysis.
+
+Viktigste felt fra responsen:
+
+- `contentType`: `academic_article`
+- `domain`: `institutional_media_history`
+- `theme`: `Morgenbladet som idéoffentlig institusjon`
+- `mainTension`: `dyptpløyende offentlighet kontra tempoorientert nyhetslogikk`
+- `fieldConnections`:
+  - `pressehistorie`
+  - `offentlighetsteori`
+  - `kulturjournalistikk`
+- `warnings`: `[]`
+
+Hele JSON-responsen er ikke limt inn her, fordi kortfelt-oppsummeringen er nok for å dokumentere at canonical analysis ble returnert.
+
+### Scenario A – eksplisitt staging URL
+
+Kommando kjørt i browser console:
+
+```js
+AHAPythonEngineSmokeTest.enableWithStagingUrl()
+```
+
+Deretter ble tre AHA Chat-meldinger sendt manuelt.
+
+#### A. Morgenbladet/offentlighet
+
+Melding:
+
+```text
+Dette er en fagtekst om Morgenbladet, offentlighet, kulturkritikk og idédebatt. Den undersøker hvordan kulturkritikk kan skape læring, men også spenning mellom ekspertkunnskap og bred demokratisk deltakelse.
+```
+
+Resultat:
+
+```json
+{
+  "featureFlagEnabled": true,
+  "configuredEngineUrl": "https://aha-engine-staging-7a3y.onrender.com",
+  "resolvedEngineUrl": "https://aha-engine-staging-7a3y.onrender.com",
+  "urlAvailable": true,
+  "requiresExplicitUrl": false,
+  "latestSource": "python",
+  "latestReason": "",
+  "latestStatus": null,
+  "latestUrl": null
+}
+```
+
+#### B. NAV-reformen/brukermøte
+
+Melding:
+
+```text
+Teksten analyserer NAV-reformen sett fra et konkret brukermøte. Den peker på spenningen mellom effektiv saksbehandling, rettssikkerhet, digitalisering og behovet for menneskelig skjønn i møte med innbyggere som trenger hjelp.
+```
+
+Resultat:
+
+- `latestSource`: `python`
+- `latestReason`: `""`
+
+#### C. AI/læring/kunnskapssystemer
+
+Melding:
+
+```text
+Dette notatet drøfter hvordan kunstig intelligens endrer læring og kunnskapssystemer. Det løfter fram muligheter for personlig veiledning, men også risiko for automatisert autoritet, svak kildekritikk og nye avhengigheter i utdanning og arbeidsliv.
+```
+
+Resultat:
+
+- `latestSource`: `python`
+- `latestReason`: `""`
+
+Konklusjon: Scenario A bestått. AHA Chat brukte Python Engine for alle tre representative meldinger når eksplisitt staging-URL var satt.
+
+### Første timeout-observasjon
+
+Første forsøk etter `AHAPythonEngineSmokeTest.enableWithStagingUrl()` ga:
+
+```json
+{
+  "latestSource": "javascript_fallback",
+  "latestReason": "timeout",
+  "latestUrl": "https://aha-engine-staging-7a3y.onrender.com"
+}
+```
+
+Observasjonen tolkes slik:
+
+- URL var riktig satt.
+- Dette tydet på Render cold start / staging latency, ikke feil URL eller fail-closed-regel.
+- Etter health check og direkte analyse-kall svarte staging med HTTP 200.
+- Ny AHA Chat-test etterpå ga `latestSource: "python"`.
+
+Dette er bare dokumentert som en relevant live-observasjon for senere vurdering. Denne PR-en gjør ingen runtime-endring for timeout, fallback eller staging-latency.
+
+### Scenario B – fail-closed uten eksplisitt URL
+
+Kommando kjørt i browser console:
+
+```js
+AHAPythonEngineSmokeTest.enableWithoutUrl()
+```
+
+Status rett etter enable:
+
+```json
+{
+  "featureFlagEnabled": true,
+  "configuredEngineUrl": null,
+  "resolvedEngineUrl": null,
+  "urlAvailable": false,
+  "requiresExplicitUrl": true,
+  "latestSource": "n/a",
+  "latestReason": "",
+  "latestStatus": null,
+  "latestUrl": null
+}
+```
+
+Dette er riktig status før ny AHA Chat-melding, fordi helperen sletter gammel output for å unngå at forrige scenario gir falsk status.
+
+Etter ny AHA Chat-melding:
+
+```json
+{
+  "featureFlagEnabled": true,
+  "configuredEngineUrl": null,
+  "resolvedEngineUrl": null,
+  "urlAvailable": false,
+  "requiresExplicitUrl": true,
+  "latestSource": "javascript_fallback",
+  "latestReason": "requires_explicit_url",
+  "latestStatus": null,
+  "latestUrl": null
+}
+```
+
+Konklusjon: Scenario B bestått. Production-origin uten eksplisitt URL sender ikke payload til staging og bruker JavaScript fallback.
+
+### Scenario C – ugyldig URL
+
+Kommando kjørt i browser console:
+
+```js
+AHAPythonEngineSmokeTest.enableWithInvalidUrl()
+```
+
+Status etter ny AHA Chat-melding:
+
+```json
+{
+  "featureFlagEnabled": true,
+  "configuredEngineUrl": "https://invalid-aha-engine-staging-url.example",
+  "resolvedEngineUrl": "https://invalid-aha-engine-staging-url.example",
+  "urlAvailable": true,
+  "requiresExplicitUrl": false,
+  "latestSource": "javascript_fallback",
+  "latestReason": "network_error",
+  "latestStatus": null,
+  "latestUrl": "https://invalid-aha-engine-staging-url.example"
+}
+```
+
+Konklusjon: Scenario C bestått. Ugyldig Python Engine URL gir JavaScript fallback med `network_error`.
+
+### Reset
+
+Kommando kjørt i browser console:
+
+```js
+AHAPythonEngineSmokeTest.reset()
+```
+
+Endelig status:
+
+```json
+{
+  "featureFlagEnabled": false,
+  "configuredEngineUrl": null,
+  "resolvedEngineUrl": null,
+  "urlAvailable": false,
+  "requiresExplicitUrl": false,
+  "latestSource": "n/a",
+  "latestReason": "",
+  "latestStatus": null,
+  "latestUrl": null
+}
+```
+
+Konklusjon: Reset bestått. AHA Chat er tilbake i JavaScript/default-flow.
+
+### Samlet resultat
+
+- Scenario A:
+  - Morgenbladet/offentlighet → `python`
+  - NAV-reformen/brukermøte → `python`
+  - AI/læring/kunnskapssystemer → `python`
+- Scenario B:
+  - uten eksplisitt URL → `javascript_fallback` / `requires_explicit_url`
+- Scenario C:
+  - ugyldig URL → `javascript_fallback` / `network_error`
+- Reset:
+  - tilbake til JavaScript/default-flow
+
+Konklusjon: Live smoke-testen etter PR 31 er bestått.
+
+### Separat observasjon: AHAEmbeddings
+
+Under invalid-URL-testen dukket følgende console-melding opp:
+
+```text
+AHAEmbeddings.embedAndStore feilet Error { }
+```
+
+Denne observasjonen påvirket ikke Python Engine smoke-testresultatet. `AHAPythonEngineSmokeTest` viste korrekt fallback-status for invalid-URL-scenarioet. Observasjonen gjelder AHAEmbeddings og bør eventuelt følges opp separat. Denne PR-en endrer ikke embedding-logikk.
+
 ## Akseptansekriterier
 
 Smoke-testen er bestått når alle disse punktene er observert:

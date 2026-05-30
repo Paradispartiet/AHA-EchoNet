@@ -192,6 +192,10 @@ Forbedrer Python Engine `theme`, `mainTension` og `keyInsight` basert på fixtur
 
 Legger til en lokal regression gate for AHA Engine comparison report. Gate-en låser nåværende forbedringsnivå for prioriterte canonical fields mot en eksplisitt baseline, men krever ikke full JS/Python parity og gjør ikke Python Engine til default. UI, runtime default, fallback-regler, backend API og canonical AHA analysis contract forblir uendret.
 
+### PR 32
+
+Dokumenterer faktiske live smoke-testresultater etter Python Engine-kvalitetsrunden. Testen bekreftet eksplisitt staging-URL med `latestSource: "python"` for tre representative AHA Chat-meldinger, fail-closed uten URL med `requires_explicit_url`, invalid URL med `network_error` fallback, og reset tilbake til JavaScript/default-flow. Dokumentasjonen noterer også en separat AHAEmbeddings-feilobservasjon uten å endre embedding-logikk.
+
 ## Representative fixtures for next-phase quality work
 
 PR 25 utvider fixture-grunnlaget for AHA Engine-kvalitetsarbeid med representative caser for fagtekst, refleksjon, History Go-koblinger, tverrfaglige tekster og uklare input. Hensikten er å gi et bedre sammenligningsgrunnlag for senere vurdering av JavaScript Engine og Python Engine uten å endre analyse-runtime, fallback-regler eller canonical AHA analysis contract i denne fasen.
