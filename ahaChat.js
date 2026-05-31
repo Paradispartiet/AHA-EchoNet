@@ -272,6 +272,189 @@
     el.textContent = String(message || "");
   }
 
+  function normalizeAhaMemoryText(text) {
+    return String(text || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/æ/g, "ae")
+      .replace(/ø/g, "o")
+      .replace(/å/g, "a")
+      .replace(/[^a-z0-9\s?]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function isAhaMemoryQuestion(text) {
+    const normalized = normalizeAhaMemoryText(text);
+    if (!normalized) return false;
+    return [
+      /\blaerer\s+du\s+av\s+(det\s+)?(jeg|eg|vi)\s+skriver\b/,
+      /\blaerer\s+aha\s+av\s+(det\s+)?(jeg|eg|vi)\s+skriver\b/,
+      /\bhusker\s+du\s+(dette|det|tidligere|forrige|innsikt|innsikter)\b/,
+      /\blagrer\s+du\s+(samtalen|chatten|dette|det)\b/,
+      /\bbruker\s+aha\s+innsiktene\s+mine\b/,
+      /\bhar\s+du\s+(et\s+)?minne\b/,
+      /\bhva\s+laerer\s+innsiktsmotoren\b/,
+      /\bblir\s+dette\s+lagret\b/,
+      /\ber\s+dette\s+lagret\b/,
+      /\bdo\s+you\s+learn\s+from\s+(this|what\s+i\s+write)\b/,
+      /\bdo\s+you\s+remember\s+(this|that|previous|earlier)\b/,
+      /\bis\s+this\s+stored\b/,
+      /\bdo\s+you\s+store\s+(this|the\s+conversation|my\s+chat)\b/,
+      /\bdo\s+you\s+have\s+(a\s+)?memory\b/
+    ].some((pattern) => pattern.test(normalized));
+  }
+
+  function countAhaActiveInsights(chamber) {
+    try {
+      if (typeof global.InsightsEngine?.getActiveInsights === "function") {
+        return global.InsightsEngine.getActiveInsights(chamber).length;
+      }
+      return Array.isArray(chamber?.insights) ? chamber.insights.filter((ins) => !ins?.archived && !ins?.deleted && !ins?.merged_into).length : 0;
+    } catch {
+      return Array.isArray(chamber?.insights) ? chamber.insights.length : 0;
+    }
+  }
+
+  function formatAhaMemoryTimestamp(value) {
+    if (!value) return "ikke funnet";
+    const stamp = new Date(value);
+    if (Number.isNaN(stamp.getTime())) return String(value);
+    return stamp.toLocaleString("no-NO");
+  }
+
+  function describeAhaEmbeddingStatus(status) {
+    const code = String(status?.status || status?.reason || "unknown");
+    const labels = {
+      configured: "aktivt",
+      not_configured: "ikke konfigurert",
+      not_signed_in: "ikke innlogget",
+      storage_unavailable: "storage mangler",
+      missing_provider_key: "provider-nøkkel mangler",
+      backend_unreachable: "backend utilgjengelig",
+      unknown: "ukjent"
+    };
+    return labels[code] || code.replace(/_/g, " ");
+  }
+
+  function explainAhaEmbeddingStatus(status) {
+    const code = String(status?.status || status?.reason || "unknown");
+    if (code === "configured") return "Semantisk/skybasert minne er aktivt: backend, innlogging, storage og embeddings ser ut til å være klare.";
+    if (code === "not_signed_in") return "Semantisk minne er ikke aktivt nå fordi du ikke ser ut til å være innlogget.";
+    if (code === "not_configured") return "Semantisk minne er ikke konfigurert for denne installasjonen.";
+    if (code === "storage_unavailable") return "Semantisk minne mangler tilgjengelig storage/databasekobling.";
+    if (code === "missing_provider_key") return "Semantisk minne mangler provider-nøkkel for embedding-backend.";
+    if (code === "backend_unreachable") return "Semantisk minne kan ikke bekreftes fordi backend ikke nås akkurat nå.";
+    return "Semantisk minne kunne ikke bekreftes akkurat nå.";
+  }
+
+  async function getAhaEmbeddingHealthWithTimeout(timeoutMs = 2200) {
+    if (!global.AHAEmbeddings || typeof global.AHAEmbeddings.health !== "function") {
+      return { ok: false, status: "not_configured", reason: "not_configured" };
+    }
+    let timeoutId = null;
+    try {
+      const timeout = new Promise((resolve) => {
+        timeoutId = setTimeout(() => resolve({ ok: false, status: "backend_unreachable", reason: "backend_unreachable", timedOut: true }), timeoutMs);
+      });
+      return await Promise.race([global.AHAEmbeddings.health(), timeout]);
+    } catch (err) {
+      console.warn("AHA minnestatus: embedding health feilet", err);
+      return { ok: false, status: "backend_unreachable", reason: "backend_unreachable", error: String(err?.message || err) };
+    } finally {
+      if (timeoutId) clearTimeout(timeoutId);
+    }
+  }
+
+  async function buildAhaMemoryStatus() {
+    const status = {
+      ok: true,
+      local: { state: "unavailable", activeInsights: 0, lastLocalSave: null },
+      afterwork: { available: false, count: null },
+      embedding: { status: "not_configured", reason: "not_configured" }
+    };
+
+    try {
+      const chamber = loadChamberFromStorage();
+      const activeInsights = countAhaActiveInsights(chamber);
+      status.local = {
+        state: activeInsights > 0 ? "active" : "empty",
+        activeInsights,
+        lastLocalSave: chamber?._local_updated_at || null
+      };
+    } catch (err) {
+      status.ok = false;
+      status.local = { state: "unavailable", activeInsights: 0, lastLocalSave: null, error: String(err?.message || err) };
+    }
+
+    try {
+      if (typeof loadAfterworkEntries === "function") {
+        status.afterwork = { available: true, count: loadAfterworkEntries().length };
+      }
+    } catch (err) {
+      status.afterwork = { available: false, count: null, error: String(err?.message || err) };
+    }
+
+    status.embedding = await getAhaEmbeddingHealthWithTimeout();
+    return status;
+  }
+
+  function buildAhaLearningContractReply(status) {
+    if (!status || typeof status !== "object") return "Minnestatus kunne ikke leses akkurat nå.";
+    const local = status.local || {};
+    const afterwork = status.afterwork || {};
+    const localLine = local.state === "active"
+      ? `Lokalt innsiktskammer er aktivt med ${local.activeInsights || 0} aktiv${local.activeInsights === 1 ? "" : "e"} innsikt${local.activeInsights === 1 ? "" : "er"}.`
+      : local.state === "empty"
+        ? "Lokalt innsiktskammer finnes, men er tomt akkurat nå."
+        : "Lokalt innsiktskammer er utilgjengelig akkurat nå.";
+    const afterworkLine = afterwork.available ? `Lagrede etterarbeid: ${afterwork.count || 0}.` : "Lagrede etterarbeid kunne ikke telles her.";
+    const embeddingLine = explainAhaEmbeddingStatus(status.embedding);
+
+    return [
+      "Kort sagt: Ja, AHA lærer operasjonelt når lagring er aktiv – ikke ved at jeg nødvendigvis trener selve grunnmodellen direkte på teksten din, men ved å gjøre samtaler om til source events, signaler, innsikter, begreper, etterarbeid, stier og semantiske koblinger.",
+      `${localLine} ${afterworkLine}`,
+      embeddingLine,
+      "AHA skal holde rå samtaler, private innsikter, delte innsikter og anonymisert kollektiv læring adskilt. Derfor sier jeg ikke at jeg «ikke lagrer personlig informasjon over tid» når innsiktskammeret eller aktiv storage faktisk lagrer innsiktene dine."
+    ].join("\n\n");
+  }
+
+  function renderAhaMemoryStatus(status) {
+    const el = document.getElementById("aha-memory-status");
+    if (!el) return;
+    if (!status || typeof status !== "object") {
+      el.textContent = "Minnestatus kunne ikke leses akkurat nå.";
+      return;
+    }
+    const local = status.local || {};
+    const localLabel = local.state === "active" ? "aktivt" : local.state === "empty" ? "tomt" : "utilgjengelig";
+    const afterworkText = status.afterwork?.available ? String(status.afterwork.count || 0) : "ukjent";
+    const embeddingText = describeAhaEmbeddingStatus(status.embedding);
+    const savedAt = formatAhaMemoryTimestamp(local.lastLocalSave);
+    el.innerHTML = `
+      <span><strong>Lokalt innsiktskammer:</strong> ${escHtml(localLabel)}</span>
+      <span><strong>Aktive innsikter:</strong> ${escHtml(String(local.activeInsights || 0))}</span>
+      <span><strong>Etterarbeid:</strong> ${escHtml(afterworkText)}</span>
+      <span><strong>Embedding-minne:</strong> ${escHtml(embeddingText)}</span>
+      <span><strong>Sist lokal lagring:</strong> ${escHtml(savedAt)}</span>
+    `;
+  }
+
+  async function updateAhaMemoryStatus() {
+    const el = document.getElementById("aha-memory-status");
+    if (el) el.textContent = "Leser minnestatus …";
+    try {
+      const status = await buildAhaMemoryStatus();
+      renderAhaMemoryStatus(status);
+      return status;
+    } catch (err) {
+      console.warn("Minnestatus kunne ikke leses", err);
+      if (el) el.textContent = "Minnestatus kunne ikke leses akkurat nå.";
+      return null;
+    }
+  }
+
   function renderAuxPanel(targetId, markup) {
     const el = document.getElementById(targetId);
     if (!el) return;
@@ -5287,6 +5470,22 @@
           });
         textarea.value = "";
         if (count > 0) setStatusNote(`Lagret ${count} signal${count === 1 ? "" : "er"} i bakgrunnen.`);
+        void updateAhaMemoryStatus();
+        if (isAhaMemoryQuestion(text)) {
+          setAhaProcessing(true, "AHA leser minnestatus …");
+          try {
+            const memoryStatus = await buildAhaMemoryStatus();
+            renderAhaMemoryStatus(memoryStatus);
+            appendChat("aha", buildAhaLearningContractReply(memoryStatus), { categoryChips: ["minne", "læring", "innsiktskammer"] });
+          } catch (err) {
+            console.warn("AHA Learning Contract kunne ikke lese status", err);
+            appendChat("aha", "Minnestatus kunne ikke leses akkurat nå.");
+          } finally {
+            setAhaProcessing(false);
+            void updateAhaMemoryStatus();
+          }
+          return;
+        }
         setAhaProcessing(true, "AHA analyserer teksten …");
         try {
           setAhaProcessing(true, "AHA lager svar og etterarbeid …");
@@ -5342,6 +5541,7 @@
           try { ensureAfterworkForLatestAnalysis(text, { subjectMatches: [] }); } catch (afterErr) { console.warn("Auto-etterarbeid feilet", afterErr); }
         } finally {
           setAhaProcessing(false);
+          void updateAhaMemoryStatus();
         }
       });
     }
@@ -5372,6 +5572,11 @@
       const panel = document.getElementById("panel");
       if (panel && panel.querySelector(".insight-panel")) showInsights();
     });
+
+    ["aha:chamber-saved", "aha:embedding-stored", "aha:embeddings-bulk-complete"].forEach((eventName) => {
+      global.addEventListener(eventName, () => { void updateAhaMemoryStatus(); });
+    });
+    void updateAhaMemoryStatus();
 
     updateEmptyState();
     renderHighlightsRail();
@@ -5415,14 +5620,18 @@
 
   global.loadChamberFromStorage = global.loadChamberFromStorage || loadChamberFromStorage;
   global.saveChamberToStorage = global.saveChamberToStorage || saveChamberToStorage;
-  global.AHATestHooks = Object.assign({}, global.AHATestHooks || {}, { detectTextType, buildCanonicalAnalysis, buildAhaAnalysisExportBundle, formatAhaAnalysisExportMarkdown, buildAutoOutputs, normalizeFagkoblinger, resolveCanonicalAnalysisWithOptionalPythonEngine });
+  global.AHATestHooks = Object.assign({}, global.AHATestHooks || {}, { detectTextType, buildCanonicalAnalysis, buildAhaAnalysisExportBundle, formatAhaAnalysisExportMarkdown, buildAutoOutputs, normalizeFagkoblinger, resolveCanonicalAnalysisWithOptionalPythonEngine, isAhaMemoryQuestion, buildAhaLearningContractReply, buildAhaMemoryStatus });
 
   global.AHAChat = {
     loadChamberFromStorage,
     saveChamberToStorage,
     handleUserMessage,
     askAhaAgent,
-    buildAIState
+    buildAIState,
+    isAhaMemoryQuestion,
+    buildAhaLearningContractReply,
+    buildAhaMemoryStatus,
+    updateAhaMemoryStatus
   };
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bind);
