@@ -2,7 +2,7 @@
 <html lang="no">
 <head>
   <meta charset="UTF-8" />
-  <title>AHA Dashboard</title>
+  <title>AHA Chat</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="aha-chat.css" />
   <link rel="stylesheet" href="aha-dashboard.css" />
@@ -69,6 +69,34 @@
       </aside>
     </div>
 
+    <section class="aha-chat-hero" aria-label="AHA Chat inngang">
+      <p class="eyebrow">AHA Chat</p>
+      <h1>Hva vil du forstå, lage eller organisere i dag?</h1>
+      <p class="aha-chat-hero-sub">Skriv til AHA – du får ett tydelig svar, og innsikter lagres automatisk i bakgrunnen.</p>
+      <form id="aha-home-composer" class="aha-home-composer" aria-label="Start en samtale med AHA">
+        <label class="aha-visually-hidden" for="aha-home-composer-input">Skriv til AHA</label>
+        <textarea id="aha-home-composer-input" rows="2" placeholder="Skriv til AHA…"></textarea>
+        <div class="aha-home-composer-actions">
+          <button type="submit" class="aha-cta-primary">Snakk med AHA</button>
+          <a class="aha-cta-secondary" href="chat.html">Åpne chatten</a>
+        </div>
+      </form>
+      <nav class="aha-chat-shortcuts" aria-label="Utforsk det AHA fant">
+        <a href="insights.html">Se alle innsikter</a>
+        <a href="mindmap.html">Kunnskapskart</a>
+        <a href="paths.html">Stier</a>
+        <a href="chat.html">Begreper</a>
+        <a href="profile.html">Profil</a>
+      </nav>
+      <section class="aha-insights-panel" id="aha-insights-activity" aria-label="Mine innsikter">
+        <p class="eyebrow">Siste innsikt</p>
+        <p id="aha-latest-insight">Ingen importerte innsikter ennå</p>
+        <small id="aha-insight-empty-hint">Importer fra History Go eller start en samtale med AHA.</small>
+      </section>
+    </section>
+
+    <details class="aha-home-secondary">
+      <summary>Dashboard, status og arkiv</summary>
     <section class="aha-app-shell" aria-label="AHA appflate">
       <aside class="aha-panel aha-modules-panel" aria-label="Modulmeny">
         <p class="eyebrow">Moduler</p>
@@ -97,12 +125,6 @@
 
         <div id="aha-profile-status-grid" class="aha-profile-status-grid" aria-label="Nøkkeltall"></div>
         <div id="aha-profile-stats" class="aha-profile-stats" aria-label="AHA nøkkeltall"></div>
-
-        <section class="aha-insights-panel" id="aha-insights-activity" aria-label="Mine innsikter">
-          <p class="eyebrow">Siste innsikt</p>
-          <p id="aha-latest-insight">Ingen importerte innsikter ennå</p>
-          <small id="aha-insight-empty-hint">Importer fra History Go eller start en samtale med AHA.</small>
-        </section>
 
         <section class="aha-insights-panel aha-afterwork-archive" aria-label="Innsiktsarkiv">
           <div class="aha-panel-head">
@@ -162,12 +184,14 @@
         </details>
       </aside>
     </section>
+    </details>
 
 <nav class="aha-mobile-nav" aria-label="Mobilnavigasjon">
-      <a href="index.html" aria-current="page">Home</a>
       <a href="chat.html">Chat</a>
-      <a href="#aha-insights-activity">Innsikter</a>
-      <a href="auth-callback.html">Profil</a>
+      <a href="insights.html">Innsikter</a>
+      <a href="mindmap.html">Kart</a>
+      <a href="paths.html">Stier</a>
+      <a href="profile.html">Profil</a>
     </nav>
   </main>
 
@@ -198,5 +222,32 @@
   <script src="ahaModules.js"></script>
   <script src="ahaProfile.js"></script>
   <script src="ahaDashboard.js"></script>
+  <script>
+    // Kompakt komponist: lagrer teksten via eksisterende pending-prompt-nøkkel
+    // (aha_pending_chat_prompt_v1) og sender brukeren til chat.html, hvor
+    // ahaChat.consumePendingChatPrompt() fyller inn #msg. Ingen chat-logikk dupliseres.
+    (function () {
+      const form = document.getElementById("aha-home-composer");
+      if (!form) return;
+      const input = document.getElementById("aha-home-composer-input");
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const prompt = input ? String(input.value || "").trim() : "";
+        if (prompt) {
+          try {
+            localStorage.setItem("aha_pending_chat_prompt_v1", JSON.stringify({
+              type: "home_composer_prompt",
+              source: "aha_home",
+              createdAt: new Date().toISOString(),
+              prompt
+            }));
+          } catch (err) {
+            /* localStorage utilgjengelig – chatten åpnes uansett */
+          }
+        }
+        window.location.href = "chat.html";
+      });
+    })();
+  </script>
 </body>
 </html>
