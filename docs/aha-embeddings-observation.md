@@ -145,3 +145,12 @@ Mulig innhold for en senere PR:
 - beholde fire-and-forget og fail-soft-egenskapene slik at chat/analysis fortsatt ikke blokkeres av embeddings.
 
 Denne PR-en implementerer ikke PR 34, fikser ikke embedding-feilen og endrer ikke runtime-adferd.
+
+## PR 34 – tydeligere embeddings-status
+
+PR 34 gjør embeddings-status eksplisitt i debug/diagnostikk uten å endre AHA Chat-hovedflyt eller gjøre embeddings blokkende.
+
+- `AHAEmbeddings.health()` returnerer nå en strukturert status som skiller mellom `not_configured`, `configured`, `backend_unreachable`, `missing_provider_key`, storage-tilstand og innloggingsstatus.
+- `AHAEmbeddings.embedAndStore()` returnerer mer presise `reason`-verdier for skip og feil, blant annet `not_configured`, `backend_unreachable`, `missing_provider_key`, `provider_error`, `storage_unavailable`, `not_signed_in`, `storage_error` og `unknown_error`.
+- Console-meldingen skiller mellom `skipped` for forventede non-fatal tilstander og `failed` for backend/provider/storage-feil, og logger bare kort status/reason uten embedding-vektor, payload eller API-nøkler.
+- Endringen fikser ikke provider-, backend- eller databasekonfigurasjon. Den gjør observasjonen diagnostiserbar og bevarer embeddings som en best-effort sidekanal.

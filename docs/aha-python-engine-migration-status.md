@@ -200,6 +200,10 @@ Dokumenterer faktiske live smoke-testresultater etter Python Engine-kvalitetsrun
 
 Undersøker og dokumenterer `AHAEmbeddings.embedAndStore feilet Error { }` som ble observert under live smoke-testen. PR-en kartlegger kilder, kallflyt, mulig påvirkning og anbefalt senere oppfølging, uten å endre runtime, UI, Python Engine, canonical analysis, fallback, embeddings-logikk eller regression baseline.
 
+### PR 34
+
+Gjør AHAEmbeddings-status eksplisitt og mindre støyende i debug/diagnostikk. PR-en skiller mellom `not_configured`, backend/provider/storage-feil og ikke-innlogget tilstand, uten å endre AHA Chat-hovedflyt, Python Engine, canonical analysis, fallback-regler, fixtures eller regression baseline.
+
 ## Representative fixtures for next-phase quality work
 
 PR 25 utvider fixture-grunnlaget for AHA Engine-kvalitetsarbeid med representative caser for fagtekst, refleksjon, History Go-koblinger, tverrfaglige tekster og uklare input. Hensikten er å gi et bedre sammenligningsgrunnlag for senere vurdering av JavaScript Engine og Python Engine uten å endre analyse-runtime, fallback-regler eller canonical AHA analysis contract i denne fasen.

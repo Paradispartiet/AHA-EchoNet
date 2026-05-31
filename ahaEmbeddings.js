@@ -28,6 +28,71 @@
     return Boolean(endpoint());
   }
 
+  const SKIP_REASONS = new Set([
+    "not_configured",
+    "missing_id",
+    "empty_text",
+    "not_signed_in"
+  ]);
+
+  function createEmbeddingError(reason, message, details) {
+    const err = new Error(message || reason || "unknown_error");
+    err.reason = reason || "unknown_error";
+    if (details && typeof details === "object") Object.assign(err, details);
+    return err;
+  }
+
+  function safeError(err) {
+    if (!err) return undefined;
+    return String(err.message || err).slice(0, 200);
+  }
+
+  function safeBackendError(value) {
+    if (!value) return "";
+    if (typeof value === "string") return value.slice(0, 120);
+    if (typeof value.error === "string") return value.error.slice(0, 120);
+    return "";
+  }
+
+  function readStatusBody(text) {
+    if (!text) return null;
+    try { return JSON.parse(text); } catch { return { raw: text.slice(0, 200) }; }
+  }
+
+  function classifyEmbedHttp(status, body) {
+    const backendError = safeBackendError(body);
+    if (status === 503 && backendError === "missing_api_key") return "missing_provider_key";
+    if (status === 502 || backendError === "upstream_error") return "provider_error";
+    if (status >= 500) return "backend_unreachable";
+    return "provider_error";
+  }
+
+  function normalizeStoreResult(result) {
+    if (!result || result.ok) return result;
+    if (result.reason === "no_supabase") {
+      return { ...result, reason: "storage_unavailable", legacyReason: "no_supabase" };
+    }
+    if (result.error && !result.reason) {
+      return { ...result, reason: "storage_error" };
+    }
+    return result;
+  }
+
+  function logEmbedAndStoreResult(result) {
+    if (!result || result.ok) return;
+    const reason = result.reason || result.status || "unknown_error";
+    const label = SKIP_REASONS.has(reason) ? "skipped" : "failed";
+    const details = {};
+    if (result.status) details.status = result.status;
+    if (result.error) details.error = safeError(result.error);
+    if (result.backendError) details.backendError = safeBackendError(result.backendError);
+    if (Object.keys(details).length) {
+      console.warn(`AHAEmbeddings.embedAndStore ${label}: ${reason}`, details);
+    } else {
+      console.warn(`AHAEmbeddings.embedAndStore ${label}: ${reason}`);
+    }
+  }
+
   function db() {
     return global.AHADb?.getClient?.() || null;
   }
@@ -39,17 +104,42 @@
 
   async function callEmbed(texts, inputType) {
     const ep = endpoint();
-    if (!ep) throw new Error("no_backend: AHA_AGENT_API er ikke konfigurert");
-    const res = await fetch(`${ep}/embed`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ texts, input_type: inputType || "document" })
-    });
-    if (!res.ok) {
-      const body = await res.text().catch(() => "");
-      throw new Error(`embed_http_${res.status}: ${body.slice(0, 200)}`);
+    if (!ep) {
+      throw createEmbeddingError("not_configured", "AHA_AGENT_API is not configured", {
+        legacyReason: "no_backend"
+      });
     }
-    return res.json();
+
+    let res;
+    try {
+      res = await fetch(`${ep}/embed`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ texts, input_type: inputType || "document" })
+      });
+    } catch (err) {
+      throw createEmbeddingError("backend_unreachable", "Embedding backend fetch failed", {
+        error: err
+      });
+    }
+
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      const body = readStatusBody(text);
+      const reason = classifyEmbedHttp(res.status, body);
+      throw createEmbeddingError(reason, `embed_http_${res.status}`, {
+        status: res.status,
+        backendError: body
+      });
+    }
+
+    try {
+      return await res.json();
+    } catch (err) {
+      throw createEmbeddingError("unknown_error", "Embedding backend returned invalid JSON", {
+        error: err
+      });
+    }
   }
 
   // Sjekker at backend faktisk er nådbar og at Voyage-nøkkelen er
@@ -57,13 +147,64 @@
   // klar, og av verifiserings-snippet i docs.
   async function health() {
     const ep = endpoint();
-    if (!ep) return { ok: false, reason: "no_backend" };
+    const client = db();
+    const base = {
+      ok: false,
+      status: "not_configured",
+      configured: Boolean(ep),
+      backendConfigured: Boolean(ep),
+      backendReachable: null,
+      storageAvailable: Boolean(client),
+      signedIn: null,
+      reason: "not_configured"
+    };
+
+    try {
+      base.signedIn = Boolean(await profileId());
+    } catch (err) {
+      base.signedIn = null;
+      base.details = { authError: safeError(err) };
+    }
+
+    if (!ep) return base;
+
     try {
       const res = await fetch(`${ep}/health`);
-      if (!res.ok) return { ok: false, reason: `http_${res.status}` };
-      return { ok: true, ...(await res.json()) };
+      base.backendReachable = true;
+      if (!res.ok) {
+        return {
+          ...base,
+          status: "backend_unreachable",
+          reason: "backend_unreachable",
+          details: { ...(base.details || {}), httpStatus: res.status }
+        };
+      }
+      const info = await res.json().catch(() => ({}));
+      const hasProviderKey = info.has_key !== false && info.has_voyage_key !== false;
+      let status = "configured";
+      if (!hasProviderKey) status = "missing_provider_key";
+      else if (!client) status = "storage_unavailable";
+      else if (base.signedIn === false) status = "not_signed_in";
+      return {
+        ...base,
+        ...info,
+        ok: status === "configured",
+        status,
+        reason: status,
+        configured: status === "configured",
+        backendConfigured: true,
+        backendReachable: true,
+        storageAvailable: Boolean(client),
+        providerConfigured: hasProviderKey
+      };
     } catch (err) {
-      return { ok: false, reason: "fetch_failed", error: String(err) };
+      return {
+        ...base,
+        status: "backend_unreachable",
+        reason: "backend_unreachable",
+        backendReachable: false,
+        error: safeError(err)
+      };
     }
   }
 
@@ -125,7 +266,9 @@
 
   async function storeEmbedding(insight, embedding, model) {
     const client = db();
-    if (!client) return { ok: false, reason: "no_supabase" };
+    if (!client) {
+      return { ok: false, reason: "storage_unavailable", legacyReason: "no_supabase" };
+    }
     const pid = await profileId();
     if (!pid) return { ok: false, reason: "not_signed_in" };
 
@@ -145,24 +288,52 @@
       .select()
       .single();
 
-    if (error) return { ok: false, error };
+    if (error) return { ok: false, reason: "storage_error", error };
     return { ok: true, data };
   }
 
   async function embedAndStore(insight) {
-    if (!insight?.id) return { ok: false, reason: "missing_id" };
+    let result;
+    if (!insight?.id) {
+      result = { ok: false, reason: "missing_id" };
+      logEmbedAndStoreResult(result);
+      return result;
+    }
+    if (!isConfigured()) {
+      result = { ok: false, reason: "not_configured", legacyReason: "no_backend" };
+      logEmbedAndStoreResult(result);
+      return result;
+    }
     // Embedding-tekst er det rikere semantiske representasjonen,
     // men summary-kolonnen skal forbli human-readable.
     const text = buildEmbeddingText(insight);
-    if (!text) return { ok: false, reason: "empty_text" };
+    if (!text) {
+      result = { ok: false, reason: "empty_text" };
+      logEmbedAndStoreResult(result);
+      return result;
+    }
     try {
-      const result = await callEmbed([text], "document");
-      const emb = result?.embeddings?.[0];
-      if (!Array.isArray(emb)) return { ok: false, reason: "no_embedding" };
-      return await storeEmbedding(insight, emb, result.model);
+      const embedResult = await callEmbed([text], "document");
+      const emb = embedResult?.embeddings?.[0];
+      if (!Array.isArray(emb)) {
+        result = { ok: false, reason: "provider_error", status: "no_embedding" };
+        logEmbedAndStoreResult(result);
+        return result;
+      }
+      result = normalizeStoreResult(await storeEmbedding(insight, emb, embedResult.model));
+      logEmbedAndStoreResult(result);
+      return result;
     } catch (err) {
-      console.warn("AHAEmbeddings.embedAndStore feilet", err);
-      return { ok: false, error: err };
+      result = {
+        ok: false,
+        reason: err?.reason || "unknown_error",
+        status: err?.status,
+        error: err?.error || err,
+        backendError: err?.backendError,
+        legacyReason: err?.legacyReason
+      };
+      logEmbedAndStoreResult(result);
+      return result;
     }
   }
 

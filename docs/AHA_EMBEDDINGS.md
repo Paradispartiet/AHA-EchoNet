@@ -273,12 +273,18 @@ const similar = await AHAEmbeddings.findSimilarToInsight(first.id, { limit: 5 })
 console.table(similar.matches);
 ```
 
-Hvis steg 1 feiler med `no_backend`: sjekk at `window.AHA_AGENT_API`
+`AHAEmbeddings.health()` returnerer nå strukturert diagnostikk med `status`,
+`configured`, `backendConfigured`, `backendReachable`, `storageAvailable` og
+`signedIn`, slik at debug kan skille manglende konfigurasjon fra backend-,
+provider- og storage-feil uten å kjøre en faktisk embedding.
+
+Hvis steg 1 feiler med `not_configured`: sjekk at `window.AHA_AGENT_API`
 faktisk er satt til en URL (ikke tom streng).
-Hvis steg 1 svarer men `has_key: false`: `VOYAGE_API_KEY` mangler i
-Render-miljøet.
-Hvis steg 3 feiler med RLS-error: migrasjonen er ikke kjørt mot
-samme Supabase-prosjekt som auth.
+Hvis steg 1 svarer med `missing_provider_key` eller `has_key: false`:
+`VOYAGE_API_KEY` mangler i Render-miljøet.
+Hvis steg 3 feiler med `storage_unavailable`, `not_signed_in` eller
+`storage_error`: sjekk Supabase-klient, auth/RLS og at migrasjonen er kjørt
+mot samme Supabase-prosjekt som auth.
 
 ## Senere steg (ikke gjort ennå)
 
