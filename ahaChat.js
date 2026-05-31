@@ -5460,18 +5460,8 @@
         const text = textarea.value.trim();
         if (!text) return;
         appendChat("user", text);
-        const count = handleUserMessage(text);
-        void handleUserMessageInsightCandidatesInBackground(text)
-          .then((aiCount) => {
-            if (aiCount > 0) setStatusNote(`Beriket med ${aiCount} AI-signal${aiCount === 1 ? "" : "er"} i bakgrunnen.`);
-          })
-          .catch((err) => {
-            console.warn("AI insight-candidates bakgrunnsjobb feilet", err);
-          });
-        textarea.value = "";
-        if (count > 0) setStatusNote(`Lagret ${count} signal${count === 1 ? "" : "er"} i bakgrunnen.`);
-        void updateAhaMemoryStatus();
         if (isAhaMemoryQuestion(text)) {
+          textarea.value = "";
           setAhaProcessing(true, "AHA leser minnestatus …");
           try {
             const memoryStatus = await buildAhaMemoryStatus();
@@ -5486,6 +5476,17 @@
           }
           return;
         }
+        const count = handleUserMessage(text);
+        void handleUserMessageInsightCandidatesInBackground(text)
+          .then((aiCount) => {
+            if (aiCount > 0) setStatusNote(`Beriket med ${aiCount} AI-signal${aiCount === 1 ? "" : "er"} i bakgrunnen.`);
+          })
+          .catch((err) => {
+            console.warn("AI insight-candidates bakgrunnsjobb feilet", err);
+          });
+        textarea.value = "";
+        if (count > 0) setStatusNote(`Lagret ${count} signal${count === 1 ? "" : "er"} i bakgrunnen.`);
+        void updateAhaMemoryStatus();
         setAhaProcessing(true, "AHA analyserer teksten …");
         try {
           setAhaProcessing(true, "AHA lager svar og etterarbeid …");
