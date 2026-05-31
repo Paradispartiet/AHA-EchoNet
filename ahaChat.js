@@ -420,6 +420,15 @@
     ].join("\n\n");
   }
 
+  function escHtml(value) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
   function renderAhaMemoryStatus(status) {
     const el = document.getElementById("aha-memory-status");
     if (!el) return;
@@ -1409,14 +1418,6 @@
     return res.json();
   }
 
-  function escHtml(value) {
-    return String(value || "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#39;");
-  }
   function safeMarkupText(value) {
     return escHtml(cleanArticleText(String(value || "")).replace(/\s+/g, " ").trim());
   }
