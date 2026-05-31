@@ -131,6 +131,10 @@ Dette er foreløpige observasjoner/hypoteser basert på kildekoden, ikke bekreft
 - Funksjonen kalles når embeddings er konfigurert med endpoint, men endpoint/provider/storage ikke faktisk er klar. Kallstedene sjekker `isConfigured()`, men den sjekken verifiserer bare at `AHA_AGENT_API` finnes, ikke at `/embed`, Voyage-nøkkel, Supabase-tabell eller RLS er operative.
 - Feil håndteres som ikke-blokkende sideeffekt. Dette er både dokumentert og implementert, og forklarer hvorfor Python Engine-smoke-testen kunne bestå samtidig som console warning dukket opp.
 
+## PR 35 – profileId og innlogging
+
+PR 35 følger opp PR 34-diagnostikken i `docs/aha-embeddings-profile-auth.md`. Live-statusen ble isolert til `status: "not_signed_in"` og `AHAAuth.getProfileId()` → `null`, samtidig som backend, provider og storage var tilgjengelige. Det betyr at embeddings-lagring manglet aktiv brukerprofil, ikke at Python Engine, canonical analysis, AHA Chat-hovedflyt, provider, backend eller Supabase-klient feilet. `not_signed_in` skal behandles som non-fatal skip for embeddings.
+
 ## Anbefalt neste PR
 
 Foreslått oppfølging, uten å implementere det i denne PR-en:

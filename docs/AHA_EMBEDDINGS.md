@@ -282,6 +282,24 @@ Hvis steg 1 feiler med `not_configured`: sjekk at `window.AHA_AGENT_API`
 faktisk er satt til en URL (ikke tom streng).
 Hvis steg 1 svarer med `missing_provider_key` eller `has_key: false`:
 `VOYAGE_API_KEY` mangler i Render-miljøet.
+
+Debug-notis etter PR 35: Hvis `AHAEmbeddings.health()` returnerer omtrent:
+
+```json
+{
+  "status": "not_signed_in",
+  "backendReachable": true,
+  "providerConfigured": true,
+  "storageAvailable": true
+}
+```
+
+så er backend, provider og Supabase/storage klare, men
+`AHAAuth.getProfileId()` returnerer ikke aktiv profil. Embeddings skal da
+behandles som non-fatal skip, ikke som en chat-blokkerende feil. Se
+`docs/aha-embeddings-profile-auth.md` for kildekartlegging av
+AHAAuth/profileId-flyten.
+
 Hvis steg 3 feiler med `storage_unavailable`, `not_signed_in` eller
 `storage_error`: sjekk Supabase-klient, auth/RLS og at migrasjonen er kjørt
 mot samme Supabase-prosjekt som auth.
