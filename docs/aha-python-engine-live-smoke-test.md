@@ -473,7 +473,7 @@ Under invalid-URL-testen dukket følgende console-melding opp:
 AHAEmbeddings.embedAndStore feilet Error { }
 ```
 
-Denne observasjonen påvirket ikke Python Engine smoke-testresultatet. `AHAPythonEngineSmokeTest` viste korrekt fallback-status for invalid-URL-scenarioet. Observasjonen gjelder AHAEmbeddings og bør eventuelt følges opp separat. Denne PR-en endrer ikke embedding-logikk.
+Denne observasjonen påvirket ikke Python Engine smoke-testresultatet. `AHAPythonEngineSmokeTest` viste korrekt fallback-status for invalid-URL-scenarioet. Observasjonen gjelder AHAEmbeddings og bør eventuelt følges opp separat. Se `docs/aha-embeddings-observation.md` for teknisk kartlegging. Denne PR-en endrer ikke embedding-logikk.
 
 ## Akseptansekriterier
 
