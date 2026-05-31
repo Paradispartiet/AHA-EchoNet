@@ -299,3 +299,78 @@ pre#out { max-height: 22vh; overflow:auto; white-space: pre-wrap; }
   opacity: 0.6;
   cursor: wait;
 }
+
+/* Chat-first: samtalen er hovedflaten */
+.chat-conversation {
+  background: linear-gradient(170deg, rgba(10,16,34,0.95), rgba(8,13,29,0.92));
+  border: 1px solid var(--aha-border);
+  border-radius: 18px;
+  padding: 12px;
+}
+.chat-conversation .chat-log { min-height: 38dvh; max-height: 56dvh; }
+.chat-conversation .empty-state { margin-top: 10px; min-height: 0; }
+
+.answer-actions {
+  background: rgba(15,24,49,0.55);
+  border: 1px solid var(--aha-border);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+.answer-actions-hint { margin: 0 0 8px; font-size: 12px; color: var(--aha-muted); }
+.answer-actions-row { gap: 8px; }
+.answer-actions-row .action-chip {
+  background: transparent;
+  border: 1px solid rgba(255,211,71,0.45);
+  color: var(--aha-accent);
+  padding: 7px 12px;
+  font-size: 12px;
+}
+.answer-actions-row .action-chip:hover { background: rgba(255,211,71,0.12); }
+
+.aha-explore {
+  border: 1px solid var(--aha-border);
+  border-radius: 14px;
+  background: rgba(10,16,34,0.6);
+  padding: 6px 12px;
+}
+.aha-explore > summary {
+  cursor: pointer;
+  color: var(--aha-muted);
+  font-weight: 600;
+  font-size: 13px;
+  padding: 8px 4px;
+  list-style: none;
+}
+.aha-explore > summary::-webkit-details-marker { display: none; }
+.aha-explore > summary::before { content: "▸ "; color: var(--aha-accent); }
+.aha-explore[open] > summary::before { content: "▾ "; }
+.aha-explore .aha-module-grid { margin-top: 10px; }
+
+.aha-mobile-nav { display: none; }
+@media (max-width: 720px) {
+  .app-shell { padding-bottom: 78px; }
+  .aha-mobile-nav {
+    position: fixed;
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    z-index: 30;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    padding: 8px;
+    border: 1px solid var(--aha-border);
+    border-radius: 16px;
+    background: rgba(5,8,20,0.94);
+    backdrop-filter: blur(8px);
+  }
+  .aha-mobile-nav a {
+    text-decoration: none;
+    color: var(--aha-text);
+    font-size: .76rem;
+    text-align: center;
+    padding: 7px 3px;
+    border-radius: 10px;
+  }
+  .aha-mobile-nav a[aria-current="page"] { background: rgba(255,211,71,0.16); color: var(--aha-accent); }
+}
