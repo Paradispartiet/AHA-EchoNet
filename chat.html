@@ -42,6 +42,15 @@
     </header>
 
     <main class="chat-layout">
+      <!--
+        AHA Chat-prinsipp (kondensering):
+        AHA Chat skal vise ett samlet, tydelig hovedsvar til brukeren. Analyse,
+        innsikter, begreper, kart, stier og eksport er etterarbeid og skal ikke
+        konkurrere med hovedsvaret. Derfor er samtalen (chat-conversation) +
+        tekstfeltet hovedflaten, mens moduler ligger som sekundær utforskning
+        under «Utforsk det AHA fant». Dette gjelder kun chat.html – ikke index.html
+        (AHA Dashboard / AHA Home).
+      -->
       <section class="chat-main">
         <section class="chat-conversation" aria-label="Samtale med AHA">
           <div class="chat-log-shell"><div id="chat-log" class="chat-log" aria-live="polite"></div><aside id="chat-highlights-rail" class="chat-highlights-rail" aria-label="Highlights i samtalen"></aside></div>
