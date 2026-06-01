@@ -796,19 +796,22 @@
     return result;
   }
 
-  function mergeById(localItems, remoteRows, mapRemote, { keepDeleted = false } = {}) {
+  function socialActionTime(row) {
+    return new Date(row?.deleted_at || row?.updated_at || row?.created_at || 0).getTime() || 0;
+  }
+
+  // Last-write-wins reconciliation by action time, matching how posts merge.
+  // deleted_at is a tombstone: a newer remote unlike/unfollow beats a stale
+  // local like/follow, and a newer local action beats a stale remote tombstone.
+  function reconcileSocial(localItems, remoteRows, mapRemote) {
     const byId = new Map();
-    (Array.isArray(localItems) ? localItems : []).forEach((item) => {
-      if (item?.id) byId.set(item.id, item);
-    });
-    (Array.isArray(remoteRows) ? remoteRows : []).forEach((row) => {
+    const consider = (row) => {
       if (!row?.id) return;
-      if (row.deleted_at && !keepDeleted) {
-        byId.delete(row.id);
-        return;
-      }
-      byId.set(row.id, mapRemote(row));
-    });
+      const prev = byId.get(row.id);
+      if (!prev || socialActionTime(row) >= socialActionTime(prev)) byId.set(row.id, row);
+    };
+    (Array.isArray(localItems) ? localItems : []).forEach(consider);
+    (Array.isArray(remoteRows) ? remoteRows : []).forEach((row) => consider(mapRemote(row)));
     return Array.from(byId.values());
   }
 
@@ -823,6 +826,35 @@
         return;
       }
     }
+  }
+
+  // Pull remote, reconcile by action time, persist locally, then push the
+  // reconciled state back. Pulling before pushing is what lets a remote
+  // tombstone win instead of being clobbered by stale local state.
+  async function reconcileSocialCollection({ loadLocal, saveLocal, loadRemote, pushMethod, mapRemote, keepDeleted }) {
+    const repo = window.AHARepository;
+    if (!repo || typeof repo[loadRemote] !== "function") {
+      await pushSocialCollection(loadLocal(), pushMethod);
+      return;
+    }
+
+    let remoteRows = null;
+    try {
+      const res = await repo[loadRemote]();
+      if (res?.ok && Array.isArray(res.data)) remoteRows = res.data;
+    } catch (error) {
+      console.warn(`AHAInsta: ${loadRemote} feilet`, error);
+    }
+
+    if (!remoteRows) {
+      // Could not read remote; keep local canonical and push best-effort.
+      await pushSocialCollection(loadLocal(), pushMethod);
+      return;
+    }
+
+    const reconciled = reconcileSocial(loadLocal(), remoteRows, mapRemote);
+    saveLocal(keepDeleted ? reconciled : reconciled.filter((row) => !row.deleted_at));
+    await pushSocialCollection(reconciled, pushMethod);
   }
 
   async function syncSocialFromDatabase() {
@@ -854,62 +886,53 @@
       }
     }
 
-    await pushSocialCollection(loadLikes(), "saveInstaLike");
-    if (typeof repo.loadInstaLikes === "function") {
-      try {
-        const res = await repo.loadInstaLikes();
-        if (res?.ok && Array.isArray(res.data)) {
-          saveLikes(mergeById(loadLikes(), res.data, (row) => ({
-            id: row.id,
-            post_id: row.post_id,
-            user_id: row.user_id,
-            created_at: row.created_at,
-            deleted_at: null
-          })));
-        }
-      } catch (error) {
-        console.warn("AHAInsta: likes-sync feilet", error);
-      }
-    }
+    await reconcileSocialCollection({
+      loadLocal: loadLikes,
+      saveLocal: saveLikes,
+      loadRemote: "loadInstaLikes",
+      pushMethod: "saveInstaLike",
+      mapRemote: (row) => ({
+        id: row.id,
+        post_id: row.post_id,
+        user_id: row.user_id,
+        created_at: row.created_at,
+        deleted_at: row.deleted_at || null
+      }),
+      keepDeleted: false
+    });
 
-    await pushSocialCollection(loadComments(), "saveInstaComment");
-    if (typeof repo.loadInstaComments === "function") {
-      try {
-        const res = await repo.loadInstaComments();
-        if (res?.ok && Array.isArray(res.data)) {
-          saveComments(mergeById(loadComments(), res.data, (row) => ({
-            id: row.id,
-            post_id: row.post_id,
-            user_id: row.user_id,
-            username: row.username,
-            text: row.text,
-            created_at: row.created_at,
-            deleted_at: row.deleted_at || null
-          }), { keepDeleted: true }));
-        }
-      } catch (error) {
-        console.warn("AHAInsta: kommentar-sync feilet", error);
-      }
-    }
+    await reconcileSocialCollection({
+      loadLocal: loadComments,
+      saveLocal: saveComments,
+      loadRemote: "loadInstaComments",
+      pushMethod: "saveInstaComment",
+      mapRemote: (row) => ({
+        id: row.id,
+        post_id: row.post_id,
+        user_id: row.user_id,
+        username: row.username,
+        text: row.text,
+        created_at: row.created_at,
+        deleted_at: row.deleted_at || null
+      }),
+      keepDeleted: true
+    });
 
-    await pushSocialCollection(loadFollows(), "saveInstaFollow");
-    if (typeof repo.loadInstaFollows === "function") {
-      try {
-        const res = await repo.loadInstaFollows();
-        if (res?.ok && Array.isArray(res.data)) {
-          saveFollows(mergeById(loadFollows(), res.data, (row) => ({
-            id: row.id,
-            follower_id: row.follower_id,
-            following_id: row.following_id,
-            following_username: row.following_username,
-            created_at: row.created_at,
-            deleted_at: null
-          })));
-        }
-      } catch (error) {
-        console.warn("AHAInsta: følge-sync feilet", error);
-      }
-    }
+    await reconcileSocialCollection({
+      loadLocal: loadFollows,
+      saveLocal: saveFollows,
+      loadRemote: "loadInstaFollows",
+      pushMethod: "saveInstaFollow",
+      mapRemote: (row) => ({
+        id: row.id,
+        follower_id: row.follower_id,
+        following_id: row.following_id,
+        following_username: row.following_username,
+        created_at: row.created_at,
+        deleted_at: row.deleted_at || null
+      }),
+      keepDeleted: false
+    });
 
     renderProfile();
     render();

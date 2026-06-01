@@ -357,6 +357,9 @@ Status:
   `aha_insta_follows`) og synkes tilbake med `syncSocialFromDatabase`
 - localStorage er fortsatt canonical; likes/følginger bruker stabile id-er og
   soft-delete (`deleted_at`) ved toggle av
+- `syncSocialFromDatabase` henter remote først og reconciler med last-write-wins
+  på handlingstid (samme idiom som post-merge), slik at en nyere unlike/unfollow
+  fra en annen enhet vinner over utdatert lokal state og motsatt
 
 Mangler før ferdig:
 - egen `aha-insta.css`

@@ -139,19 +139,32 @@ assert.ok(Insta, 'AHAInsta should be exported');
   assert.equal(followRow.following_username, 'bob');
   assert.equal(followRow.deleted_at, null);
 
-  // 5) Sync from database merges remote rows into localStorage.
-  //    localStorage stays canonical for this device; a remote-only like is
-  //    pulled in, while a remote row marked deleted (not held locally) stays out.
-  sandbox.localStorage.setItem('aha_insta_likes_v1', '[]');
+  // 5) Sync reconciles by action time (last-write-wins), like the post merge.
+  //    - a remote-only active like is pulled in
+  //    - a newer remote tombstone removes a stale local like (cross-device unlike)
+  //    - a newer local like survives an older remote tombstone (re-like wins)
+  sandbox.localStorage.setItem('aha_insta_likes_v1', JSON.stringify([
+    // Stale local like that another device unliked more recently.
+    { id: 'like_stale', post_id: 'p7', user_id: 'user_x', created_at: '2026-02-01T00:00:00.000Z', deleted_at: null },
+    // Local re-like that is newer than an older remote tombstone.
+    { id: 'like_relike', post_id: 'p6', user_id: 'user_x', created_at: '2026-03-01T00:00:00.000Z', deleted_at: null }
+  ]));
   store['aha_insta_likes'] = [
     { id: 'like_remote', profile_id: 'profile-1', post_id: 'p9', user_id: 'user_x', deleted_at: null, created_at: '2026-02-01T00:00:00.000Z' },
-    { id: 'like_gone', profile_id: 'profile-1', post_id: 'p8', user_id: 'user_x', deleted_at: '2026-02-02T00:00:00.000Z', created_at: '2026-02-01T00:00:00.000Z' }
+    { id: 'like_stale', profile_id: 'profile-1', post_id: 'p7', user_id: 'user_x', deleted_at: '2026-02-15T00:00:00.000Z', created_at: '2026-02-01T00:00:00.000Z' },
+    { id: 'like_relike', profile_id: 'profile-1', post_id: 'p6', user_id: 'user_x', deleted_at: '2026-02-10T00:00:00.000Z', created_at: '2026-01-01T00:00:00.000Z' }
   ];
 
   await Insta.syncSocialFromDatabase();
   const localLikes = Insta.loadLikes();
   assert.ok(localLikes.some((like) => like.id === 'like_remote'), 'remote like should merge into local store');
-  assert.ok(!localLikes.some((like) => like.id === 'like_gone'), 'remote-deleted like should not be added locally');
+  assert.ok(!localLikes.some((like) => like.id === 'like_stale'), 'newer remote tombstone should remove stale local like');
+  assert.ok(localLikes.some((like) => like.id === 'like_relike'), 'newer local re-like should survive older remote tombstone');
+
+  // The reconciled state (including the tombstone) should be pushed back so
+  // other devices converge.
+  const pushedStale = (store['aha_insta_likes'] || []).find((row) => row.id === 'like_stale');
+  assert.ok(pushedStale && pushedStale.deleted_at, 'tombstone should remain in the backend after reconcile');
 
   console.log('aha-insta-social-persistence test passed');
 })().catch((error) => {
