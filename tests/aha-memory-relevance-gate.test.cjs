@@ -69,7 +69,9 @@ function buildContext(seed = {}) {
         id: 'echonet-plan',
         title: 'EchoNet neste steg',
         summary: 'EchoNet bør bygges videre med en tydelig Memory Relevance Gate for AHA Chat.',
-        concepts: ['EchoNet', 'AHA Chat', 'minne', 'neste steg']
+        concepts: ['EchoNet', { label: 'AHA Chat' }, { key: 'minne' }, { term: 'neste steg' }],
+        theme_id: 'th_default',
+        subject_id: 'sub_laring'
       },
       {
         id: 'demokrati-general',
@@ -77,6 +79,14 @@ function buildContext(seed = {}) {
         summary: 'Demokrati betyr at folket deltar i politiske beslutninger.',
         concepts: ['demokrati', 'folkestyre'],
         archived: true
+      },
+      {
+        id: 'dagen-project',
+        title: 'Dagen som bokprosjekt',
+        summary: 'Dagen-prosjektet handler om en bestemt tekst og skal ikke trigges av ordet dagen alene.',
+        concepts: [{ name: 'Dagen-prosjektet' }, { title: 'bokprosjekt' }],
+        theme_id: 'th_default',
+        subject_id: 'sub_laring'
       }
     ],
     chatLog: []
@@ -91,12 +101,17 @@ function buildContext(seed = {}) {
   assert.equal(ahaNext.used, true, 'known AHA project + continuity should use relevant memory');
   assert.equal(ahaNext.mode, 'continuity', 'continuity should be the strongest gate mode for hva gjør vi nå');
   assert.match(ahaNext.summaryForAgent, /EchoNet neste steg/, 'memory package should include compact relevant insight');
+  assert.doesNotMatch(ahaNext.summaryForAgent, /\[object Object\]/, 'object concepts should not leak into summaryForAgent');
+  assert.match(ahaNext.summaryForAgent, /AHA Chat/, 'object concept labels should be normalized into readable labels');
 
   const continueContext = await hooks.buildAhaMemoryContext('Fortsett der vi slapp.');
   assert.equal(continueContext.used, true, 'explicit continuity should use compact recent memory when stored insights exist');
 
   const newTopic = await hooks.buildAhaMemoryContext('Hvordan lager jeg surdeig?');
   assert.equal(newTopic.used, false, 'unrelated new topic should not use memory');
+
+  const ordinaryDagen = await hooks.buildAhaMemoryContext('Hvordan var dagen din?');
+  assert.equal(ordinaryDagen.used, false, 'ordinary use of dagen should not activate the Dagen book/project memory');
 
   const echoNet = await hooks.buildAhaMemoryContext('Hva var neste steg for EchoNet?');
   assert.equal(echoNet.used, true, 'EchoNet question should use matching EchoNet memory');
@@ -120,6 +135,9 @@ function buildContext(seed = {}) {
   await ctx.AHAChat.askAhaAgent('Hva betyr demokrati?', { memoryContext: general });
   assert.equal(ctx.__fetchCalls[1].body.memory_context, null, 'request should send null memory_context when gate is off');
   assert.deepEqual(ctx.__fetchCalls[1].body.similar_insights, [], 'similar_insights should not be populated when memory is off');
+  assert.deepEqual(ctx.__fetchCalls[1].body.ai_state.top_insights, [], 'top_insights should be empty when memory gate is off');
+  assert.deepEqual(ctx.__fetchCalls[1].body.ai_state.concepts, [], 'concepts should be empty when memory gate is off');
+  assert.deepEqual(ctx.__fetchCalls[1].body.ai_state.meta_profile, {}, 'meta_profile should be empty when memory gate is off');
 
   console.log('aha-memory-relevance-gate ok');
 })();

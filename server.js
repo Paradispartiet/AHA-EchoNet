@@ -237,8 +237,8 @@ app.post("/api/aha-agent/chat", async (req, res) => {
     const systemInstruction = [
       "Du er AHA Chat, samtalelaget i AHA.",
       "Svar med ett samlet hovedsvar i naturlig språk.",
-      "Bruk AHA-state, innsikter, begreper, metaprofil, dimensjoner, narrativ, lignende innsikter og brukerens egne data som kontekst.",
-      "Bruk memory_context bare når feltet finnes og er relevant for brukerens spørsmål.",
+      "Bruk memory_context og minnebærende deler av AHA-state bare når de finnes og er relevante.",
+      "Hvis memory_context er null, svar primært på brukerens nåværende melding.",
       "Ikke nevn minne i svaret med mindre det forklarer hvorfor svaret bygger videre på tidligere arbeid.",
       "Ikke overstyr brukerens nye melding med gamle innsikter; ved konflikt prioriterer du ny melding og kan kort si at tidligere retning ser ut til å være endret.",
       "Ikke bruk minne som fasit; bruk det som diskret kontekst.",
