@@ -12,6 +12,74 @@
   const AUTO_OUTPUT_STORAGE_KEY = "aha_chat_auto_outputs_v1";
   const AFTERWORK_STORAGE_KEY = "aha_afterwork_v1";
   const PENDING_CHAT_PROMPT_KEY = "aha_pending_chat_prompt_v1";
+  const AHA_MEMORY_CONTROLS_KEY = "aha_memory_controls_v1";
+  const AHA_MEMORY_USE_OFF_REASON = "Bruk av eksisterende minne er slått av av brukeren.";
+
+
+  function defaultAhaMemoryControls() {
+    return {
+      saveNewInsights: true,
+      useExistingMemory: true,
+      lastUpdated: new Date().toISOString()
+    };
+  }
+
+  function normalizeAhaMemoryControls(value) {
+    const defaults = defaultAhaMemoryControls();
+    const controls = value && typeof value === "object" ? value : {};
+    return {
+      saveNewInsights: typeof controls.saveNewInsights === "boolean" ? controls.saveNewInsights : defaults.saveNewInsights,
+      useExistingMemory: typeof controls.useExistingMemory === "boolean" ? controls.useExistingMemory : defaults.useExistingMemory,
+      lastUpdated: String(controls.lastUpdated || defaults.lastUpdated)
+    };
+  }
+
+  function loadAhaMemoryControls() {
+    try {
+      const raw = global.localStorage?.getItem(AHA_MEMORY_CONTROLS_KEY);
+      if (!raw) return defaultAhaMemoryControls();
+      return normalizeAhaMemoryControls(JSON.parse(raw));
+    } catch {
+      return defaultAhaMemoryControls();
+    }
+  }
+
+  function saveAhaMemoryControls(controls) {
+    const next = normalizeAhaMemoryControls(controls);
+    next.lastUpdated = new Date().toISOString();
+    try { global.localStorage?.setItem(AHA_MEMORY_CONTROLS_KEY, JSON.stringify(next)); } catch {}
+    renderAhaMemoryControls(next);
+    void updateAhaMemoryStatus();
+    return next;
+  }
+
+  function setAhaMemoryControl(key, value) {
+    if (!["saveNewInsights", "useExistingMemory"].includes(String(key))) return loadAhaMemoryControls();
+    const current = loadAhaMemoryControls();
+    current[key] = Boolean(value);
+    return saveAhaMemoryControls(current);
+  }
+
+  function isAhaSavingEnabled() {
+    return loadAhaMemoryControls().saveNewInsights !== false;
+  }
+
+  function isAhaMemoryUseEnabled() {
+    return loadAhaMemoryControls().useExistingMemory !== false;
+  }
+
+  function buildAhaMemoryOffContext(reason = AHA_MEMORY_USE_OFF_REASON) {
+    return {
+      used: false,
+      reason,
+      confidence: 0,
+      mode: "off",
+      localMatches: [],
+      semanticMatches: [],
+      selectedInsights: [],
+      summaryForAgent: ""
+    };
+  }
 
   const AHA_INSIGHT_CONTRACT = Object.freeze({
     FUNCTIONAL_TYPES: new Set([
@@ -836,7 +904,8 @@
       ok: true,
       local: { state: "unavailable", activeInsights: 0, lastLocalSave: null },
       afterwork: { available: false, count: null },
-      embedding: { status: "not_configured", reason: "not_configured" }
+      embedding: { status: "not_configured", reason: "not_configured" },
+      controls: loadAhaMemoryControls()
     };
 
     try {
@@ -875,9 +944,13 @@
         : "Lokalt innsiktskammer er utilgjengelig akkurat nå.";
     const afterworkLine = afterwork.available ? `Lagrede etterarbeid: ${afterwork.count || 0}.` : "Lagrede etterarbeid kunne ikke telles her.";
     const embeddingLine = explainAhaEmbeddingStatus(status.embedding);
+    const controls = normalizeAhaMemoryControls(status.controls || loadAhaMemoryControls());
+    const savingLine = controls.saveNewInsights ? "Lagring av nye innsikter er aktiv." : "Lagring av nye innsikter er slått av.";
+    const memoryUseLine = controls.useExistingMemory ? "AHA kan bruke relevant tidligere minne i svar." : "Bruk av tidligere minne i svar er slått av.";
 
     return [
       "Kort sagt: Ja, AHA lærer operasjonelt når lagring er aktiv – ikke ved at jeg nødvendigvis trener selve grunnmodellen direkte på teksten din, men ved å gjøre samtaler om til source events, signaler, innsikter, begreper, etterarbeid, stier og semantiske koblinger.",
+      `${savingLine} ${memoryUseLine}`,
       `${localLine} ${afterworkLine}`,
       embeddingLine,
       "AHA skal holde rå samtaler, private innsikter, delte innsikter og anonymisert kollektiv læring adskilt. Derfor sier jeg ikke at jeg «ikke lagrer personlig informasjon over tid» når innsiktskammeret eller aktiv storage faktisk lagrer innsiktene dine."
@@ -904,14 +977,51 @@
     const localLabel = local.state === "active" ? "aktivt" : local.state === "empty" ? "tomt" : "utilgjengelig";
     const afterworkText = status.afterwork?.available ? String(status.afterwork.count || 0) : "ukjent";
     const embeddingText = describeAhaEmbeddingStatus(status.embedding);
+    const controls = normalizeAhaMemoryControls(status.controls || loadAhaMemoryControls());
     const savedAt = formatAhaMemoryTimestamp(local.lastLocalSave);
     el.innerHTML = `
       <span><strong>Lokalt innsiktskammer:</strong> ${escHtml(localLabel)}</span>
       <span><strong>Aktive innsikter:</strong> ${escHtml(String(local.activeInsights || 0))}</span>
       <span><strong>Etterarbeid:</strong> ${escHtml(afterworkText)}</span>
       <span><strong>Embedding-minne:</strong> ${escHtml(embeddingText)}</span>
+      <span><strong>Lagring av nye innsikter:</strong> ${controls.saveNewInsights ? "på" : "av"}</span>
+      <span><strong>Bruk av eksisterende minne:</strong> ${controls.useExistingMemory ? "på" : "av"}</span>
       <span><strong>Sist lokal lagring:</strong> ${escHtml(savedAt)}</span>
     `;
+  }
+
+  function renderAhaMemoryControls(controls = loadAhaMemoryControls()) {
+    const host = document.getElementById("aha-memory-controls");
+    if (!host) return null;
+    const current = normalizeAhaMemoryControls(controls);
+    host.innerHTML = `
+      <details class="aha-memory-controls-panel">
+        <summary>Minnestyring</summary>
+        <div class="aha-memory-controls-body">
+          <label><input type="checkbox" data-aha-memory-control="saveNewInsights" ${current.saveNewInsights ? "checked" : ""}> Lagre nye innsikter fra chat</label>
+          <label><input type="checkbox" data-aha-memory-control="useExistingMemory" ${current.useExistingMemory ? "checked" : ""}> Bruk relevant AHA-minne i svar</label>
+          <div class="aha-memory-controls-status" aria-live="polite">
+            <span><strong>Lagring:</strong> ${current.saveNewInsights ? "på" : "av"}</span>
+            <span><strong>Minnebruk:</strong> ${current.useExistingMemory ? "på" : "av"}</span>
+          </div>
+        </div>
+      </details>
+    `;
+    return current;
+  }
+
+  function bindAhaMemoryControls() {
+    const host = document.getElementById("aha-memory-controls");
+    if (!host) return;
+    renderAhaMemoryControls();
+    host.addEventListener("change", (event) => {
+      const input = event?.target;
+      const key = input?.getAttribute?.("data-aha-memory-control");
+      if (!key) return;
+      const next = setAhaMemoryControl(key, Boolean(input.checked));
+      renderAhaMemoryControls(next);
+      setStatusNote(`Minnestyring oppdatert: lagring ${next.saveNewInsights ? "på" : "av"}, minnebruk ${next.useExistingMemory ? "på" : "av"}.`);
+    });
   }
 
   async function updateAhaMemoryStatus() {
@@ -5565,13 +5675,15 @@
     });
     payload.canonicalAnalysis = resolvedCanonical.analysis;
     payload.canonicalAnalysisMeta = resolvedCanonical.meta;
-    localStorage.setItem(AUTO_OUTPUT_STORAGE_KEY, JSON.stringify({
-      payload,
-      sourceText,
-      sourceTextHash: sourceHash(sourceText),
-      sourceTextPreview: sourceText.replace(/\s+/g, " ").slice(0, 180),
-      createdAt: new Date().toISOString()
-    }));
+    if (options.persist !== false) {
+      localStorage.setItem(AUTO_OUTPUT_STORAGE_KEY, JSON.stringify({
+        payload,
+        sourceText,
+        sourceTextHash: sourceHash(sourceText),
+        sourceTextPreview: sourceText.replace(/\s+/g, " ").slice(0, 180),
+        createdAt: new Date().toISOString()
+      }));
+    }
     if (host) {
       host.dataset.sourceText = sourceText;
       host.dataset.sourceTextHash = sourceHash(sourceText);
@@ -5916,6 +6028,115 @@
     setStatusNote("Klar til å bygge videre fra AHA Home.");
   }
 
+  async function submitAhaChatMessage(text, textarea = null) {
+    const cleanText = String(text || "").trim();
+    if (!cleanText) return null;
+    appendChat("user", cleanText);
+    if (isAhaMemoryQuestion(cleanText)) {
+      if (textarea) textarea.value = "";
+      setAhaProcessing(true, "AHA leser minnestatus …");
+      try {
+        const memoryStatus = await buildAhaMemoryStatus();
+        renderAhaMemoryStatus(memoryStatus);
+        appendChat("aha", buildAhaLearningContractReply(memoryStatus), { categoryChips: ["minne", "læring", "innsiktskammer"] });
+        return { type: "learning_contract", memoryStatus };
+      } catch (err) {
+        console.warn("AHA Learning Contract kunne ikke lese status", err);
+        appendChat("aha", "Minnestatus kunne ikke leses akkurat nå.");
+        return { type: "learning_contract", error: err };
+      } finally {
+        setAhaProcessing(false);
+        void updateAhaMemoryStatus();
+      }
+    }
+
+    const savingEnabled = isAhaSavingEnabled();
+    const memoryUseEnabled = isAhaMemoryUseEnabled();
+    setAhaProcessing(true, memoryUseEnabled ? "AHA vurderer relevant minne …" : "AHA svarer uten tidligere minne …");
+    const memoryContext = memoryUseEnabled ? await buildAhaMemoryContext(cleanText) : buildAhaMemoryOffContext();
+    let count = 0;
+    if (savingEnabled) {
+      count = handleUserMessage(cleanText);
+      void handleUserMessageInsightCandidatesInBackground(cleanText)
+        .then((aiCount) => {
+          if (aiCount > 0) setStatusNote(`Beriket med ${aiCount} AI-signal${aiCount === 1 ? "" : "er"} i bakgrunnen.`);
+        })
+        .catch((err) => {
+          console.warn("AI insight-candidates bakgrunnsjobb feilet", err);
+        });
+    }
+    if (textarea) textarea.value = "";
+    if (savingEnabled && count > 0) setStatusNote(`Lagret ${count} signal${count === 1 ? "" : "er"} i bakgrunnen.`);
+    if (!savingEnabled) setStatusNote("Lagring av nye innsikter er slått av.");
+    if (memoryContext.used) setStatusNote("Bruker relevant AHA-minne.");
+    void updateAhaMemoryStatus();
+    setAhaProcessing(true, "AHA analyserer teksten …");
+    try {
+      setAhaProcessing(true, savingEnabled ? "AHA lager svar og etterarbeid …" : "AHA lager svar uten å lagre nye innsikter …");
+      const agent = await askAhaAgent(cleanText, { memoryContext });
+      const reply = String(agent?.reply || "").trim() || "AHA-agenten returnerte tomt svar.";
+      const analysisText = cleanArticleText(cleanText);
+      const rawSubjectMatches = global.AHASubjectEngine?.matchText
+        ? await global.AHASubjectEngine.matchText(analysisText, { source: "chat", textType: detectTextType(cleanText) })
+        : [];
+      const climateEnriched = enrichSubjectMatchesForClimateConflict(analysisText, rawSubjectMatches);
+      const publicAdminEnriched = enrichSubjectMatchesForPublicAdministration(analysisText, climateEnriched);
+      const domain = detectAutoAnalysisDomain(analysisText, { reflection: reply, subjectMatches: publicAdminEnriched });
+      const subjectMatches = domain === "literary_attachment"
+        ? getLiterarySubjectMatches()
+        : domain === "institutional_media_history"
+          ? getInstitutionalMediaHistorySubjectMatches(analysisText)
+          : publicAdminEnriched;
+      let safeReply = reply;
+      if (domain === "literary_attachment" || domain === "institutional_media_history") {
+        safeReply = stripFagkoblingerSections(safeReply);
+      } else {
+        safeReply = forceLiteraryFagkoblingerInReply(safeReply, analysisText, { subjectMatches });
+        safeReply = forceInstitutionalMediaHistoryFagkoblingerInReply(safeReply, analysisText, { subjectMatches });
+      }
+      const visibleReply = normalizeAhaVisibleReply(safeReply, cleanText) || safeReply;
+      appendChat("aha", visibleReply, { categoryChips: suggestCategoryChips(), subjectMatches, memoryContext });
+      try { await renderAutoOutputs(cleanText, safeReply, { subjectMatches, persist: savingEnabled }); } catch (autoErr) { console.warn("Auto-output feilet", autoErr); }
+      if (savingEnabled) {
+        try { ensureAfterworkForLatestAnalysis(cleanText, { subjectMatches }); } catch (afterErr) { console.warn("Auto-etterarbeid feilet", afterErr); }
+        // AHA-agentens egne svar skal vises i chatten og logges som
+        // source event, men IKKE bli en ordinær brukerinnsikt. AI-
+        // oppsummeringer hører ikke hjemme i innsiktskammeret. skip_insight
+        // får AHAIngest til å stoppe etter source-event-loggen.
+        global.AHAIngest?.ingest?.({
+          source_type: "aha_agent",
+          source_app: "aha_chat",
+          content_type: "text",
+          title: "AHA-agent svar",
+          text: visibleReply,
+          user_created: false,
+          imported: false,
+          skip_insight: true,
+          created_at: new Date().toISOString(),
+          meta: {
+            response_id: agent?.response_id || null,
+            model: agent?.model || null,
+            raw_reply: visibleReply === safeReply ? null : safeReply,
+            memory_context_used: Boolean(memoryContext.used),
+            memory_context_reason: memoryContext.used ? memoryContext.reason : null
+          }
+        });
+      }
+      return { type: "agent_reply", agent, memoryContext, savingEnabled, memoryUseEnabled };
+    } catch (err) {
+      console.warn("AHA-agent utilgjengelig", err);
+      appendChat("aha", "AHA-agenten er ikke tilgjengelig akkurat nå.");
+      try { await renderAutoOutputs(cleanText, "", { subjectMatches: [], persist: savingEnabled }); } catch (autoErr) { console.warn("Auto-output feilet", autoErr); }
+      if (savingEnabled) {
+        try { ensureAfterworkForLatestAnalysis(cleanText, { subjectMatches: [] }); } catch (afterErr) { console.warn("Auto-etterarbeid feilet", afterErr); }
+      }
+      return { type: "agent_error", error: err, memoryContext, savingEnabled, memoryUseEnabled };
+    } finally {
+      setAhaProcessing(false);
+      void updateAhaMemoryStatus();
+    }
+  }
+
   function bind() {
     const button = document.getElementById("btn-send");
     const textarea = document.getElementById("msg");
@@ -5923,96 +6144,7 @@
       button.addEventListener("click", async () => {
         const text = textarea.value.trim();
         if (!text) return;
-        appendChat("user", text);
-        if (isAhaMemoryQuestion(text)) {
-          textarea.value = "";
-          setAhaProcessing(true, "AHA leser minnestatus …");
-          try {
-            const memoryStatus = await buildAhaMemoryStatus();
-            renderAhaMemoryStatus(memoryStatus);
-            appendChat("aha", buildAhaLearningContractReply(memoryStatus), { categoryChips: ["minne", "læring", "innsiktskammer"] });
-          } catch (err) {
-            console.warn("AHA Learning Contract kunne ikke lese status", err);
-            appendChat("aha", "Minnestatus kunne ikke leses akkurat nå.");
-          } finally {
-            setAhaProcessing(false);
-            void updateAhaMemoryStatus();
-          }
-          return;
-        }
-        setAhaProcessing(true, "AHA vurderer relevant minne …");
-        const memoryContext = await buildAhaMemoryContext(text);
-        const count = handleUserMessage(text);
-        void handleUserMessageInsightCandidatesInBackground(text)
-          .then((aiCount) => {
-            if (aiCount > 0) setStatusNote(`Beriket med ${aiCount} AI-signal${aiCount === 1 ? "" : "er"} i bakgrunnen.`);
-          })
-          .catch((err) => {
-            console.warn("AI insight-candidates bakgrunnsjobb feilet", err);
-          });
-        textarea.value = "";
-        if (count > 0) setStatusNote(`Lagret ${count} signal${count === 1 ? "" : "er"} i bakgrunnen.`);
-        if (memoryContext.used) setStatusNote("Bruker relevant AHA-minne.");
-        void updateAhaMemoryStatus();
-        setAhaProcessing(true, "AHA analyserer teksten …");
-        try {
-          setAhaProcessing(true, "AHA lager svar og etterarbeid …");
-          const agent = await askAhaAgent(text, { memoryContext });
-          const reply = String(agent?.reply || "").trim() || "AHA-agenten returnerte tomt svar.";
-          const analysisText = cleanArticleText(text);
-          const rawSubjectMatches = global.AHASubjectEngine?.matchText
-            ? await global.AHASubjectEngine.matchText(analysisText, { source: "chat", textType: detectTextType(text) })
-            : [];
-          const climateEnriched = enrichSubjectMatchesForClimateConflict(analysisText, rawSubjectMatches);
-          const publicAdminEnriched = enrichSubjectMatchesForPublicAdministration(analysisText, climateEnriched);
-          const domain = detectAutoAnalysisDomain(analysisText, { reflection: reply, subjectMatches: publicAdminEnriched });
-          const subjectMatches = domain === "literary_attachment"
-            ? getLiterarySubjectMatches()
-            : domain === "institutional_media_history"
-              ? getInstitutionalMediaHistorySubjectMatches(analysisText)
-              : publicAdminEnriched;
-          let safeReply = reply;
-          if (domain === "literary_attachment" || domain === "institutional_media_history") {
-            safeReply = stripFagkoblingerSections(safeReply);
-          } else {
-            safeReply = forceLiteraryFagkoblingerInReply(safeReply, analysisText, { subjectMatches });
-            safeReply = forceInstitutionalMediaHistoryFagkoblingerInReply(safeReply, analysisText, { subjectMatches });
-          }
-          const visibleReply = normalizeAhaVisibleReply(safeReply, text) || safeReply;
-          appendChat("aha", visibleReply, { categoryChips: suggestCategoryChips(), subjectMatches, memoryContext });
-          try { await renderAutoOutputs(text, safeReply, { subjectMatches }); } catch (autoErr) { console.warn("Auto-output feilet", autoErr); }
-          try { ensureAfterworkForLatestAnalysis(text, { subjectMatches }); } catch (afterErr) { console.warn("Auto-etterarbeid feilet", afterErr); }
-          // AHA-agentens egne svar skal vises i chatten og logges som
-          // source event, men IKKE bli en ordinær brukerinnsikt. AI-
-          // oppsummeringer hører ikke hjemme i innsiktskammeret. skip_insight
-          // får AHAIngest til å stoppe etter source-event-loggen.
-          global.AHAIngest?.ingest?.({
-            source_type: "aha_agent",
-            source_app: "aha_chat",
-            content_type: "text",
-            title: "AHA-agent svar",
-            text: visibleReply,
-            user_created: false,
-            imported: false,
-            skip_insight: true,
-            created_at: new Date().toISOString(),
-            meta: {
-              response_id: agent?.response_id || null,
-              model: agent?.model || null,
-              raw_reply: visibleReply === safeReply ? null : safeReply,
-              memory_context_used: Boolean(memoryContext.used),
-              memory_context_reason: memoryContext.used ? memoryContext.reason : null
-            }
-          });
-        } catch (err) {
-          console.warn("AHA-agent utilgjengelig", err);
-          appendChat("aha", "AHA-agenten er ikke tilgjengelig akkurat nå.");
-          try { await renderAutoOutputs(text, "", { subjectMatches: [] }); } catch (autoErr) { console.warn("Auto-output feilet", autoErr); }
-          try { ensureAfterworkForLatestAnalysis(text, { subjectMatches: [] }); } catch (afterErr) { console.warn("Auto-etterarbeid feilet", afterErr); }
-        } finally {
-          setAhaProcessing(false);
-          void updateAhaMemoryStatus();
-        }
+        await submitAhaChatMessage(text, textarea);
       });
     }
 
@@ -6029,6 +6161,7 @@
     document.getElementById("btn-export-analysis-json-main")?.addEventListener("click", exportAhaAnalysisJson);
     document.getElementById("btn-reset")?.addEventListener("click", reset);
     bindActionChips();
+    bindAhaMemoryControls();
 
     bindPanelActionHandler();
     setAhaProcessing(false);
@@ -6088,6 +6221,19 @@
     });
   }
 
+  global.AHAMemoryControls = {
+    get() { return loadAhaMemoryControls(); },
+    set(key, value) { return setAhaMemoryControl(key, value); },
+    enableSaving() { return setAhaMemoryControl("saveNewInsights", true); },
+    disableSaving() { return setAhaMemoryControl("saveNewInsights", false); },
+    enableMemoryUse() { return setAhaMemoryControl("useExistingMemory", true); },
+    disableMemoryUse() { return setAhaMemoryControl("useExistingMemory", false); },
+    reset() {
+      try { global.localStorage?.removeItem(AHA_MEMORY_CONTROLS_KEY); } catch {}
+      return saveAhaMemoryControls(defaultAhaMemoryControls());
+    }
+  };
+
   global.AHAMemoryDebug = {
     enable() { global.localStorage?.setItem("aha_memory_debug", "true"); },
     disable() { global.localStorage?.removeItem("aha_memory_debug"); },
@@ -6096,7 +6242,7 @@
 
   global.loadChamberFromStorage = global.loadChamberFromStorage || loadChamberFromStorage;
   global.saveChamberToStorage = global.saveChamberToStorage || saveChamberToStorage;
-  global.AHATestHooks = Object.assign({}, global.AHATestHooks || {}, { detectTextType, buildCanonicalAnalysis, buildAhaAnalysisExportBundle, formatAhaAnalysisExportMarkdown, buildAutoOutputs, normalizeFagkoblinger, resolveCanonicalAnalysisWithOptionalPythonEngine, isAhaMemoryQuestion, buildAhaLearningContractReply, buildAhaMemoryStatus, shouldUseAhaMemory, buildAhaMemoryContext, findRelevantLocalMemory, formatAhaMemoryContextForAgent, isAhaMemoryDebugEnabled, buildAhaMemoryTransparency, formatAhaMemoryTransparencyDetails, renderAhaMemoryTransparency, appendChat });
+  global.AHATestHooks = Object.assign({}, global.AHATestHooks || {}, { detectTextType, buildCanonicalAnalysis, buildAhaAnalysisExportBundle, formatAhaAnalysisExportMarkdown, buildAutoOutputs, normalizeFagkoblinger, resolveCanonicalAnalysisWithOptionalPythonEngine, isAhaMemoryQuestion, buildAhaLearningContractReply, buildAhaMemoryStatus, shouldUseAhaMemory, buildAhaMemoryContext, buildAhaMemoryOffContext, loadAhaMemoryControls, saveAhaMemoryControls, setAhaMemoryControl, isAhaSavingEnabled, isAhaMemoryUseEnabled, renderAhaMemoryControls, bindAhaMemoryControls, submitAhaChatMessage, findRelevantLocalMemory, formatAhaMemoryContextForAgent, isAhaMemoryDebugEnabled, buildAhaMemoryTransparency, formatAhaMemoryTransparencyDetails, renderAhaMemoryTransparency, appendChat });
 
   global.AHAChat = {
     loadChamberFromStorage,
@@ -6109,6 +6255,15 @@
     buildAhaMemoryStatus,
     shouldUseAhaMemory,
     buildAhaMemoryContext,
+    buildAhaMemoryOffContext,
+    loadAhaMemoryControls,
+    saveAhaMemoryControls,
+    setAhaMemoryControl,
+    isAhaSavingEnabled,
+    isAhaMemoryUseEnabled,
+    renderAhaMemoryControls,
+    bindAhaMemoryControls,
+    submitAhaChatMessage,
     findRelevantLocalMemory,
     formatAhaMemoryContextForAgent,
     isAhaMemoryDebugEnabled,

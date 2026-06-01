@@ -226,6 +226,15 @@ pre#out { max-height: 22vh; overflow:auto; white-space: pre-wrap; }
 .aha-memory-status span { white-space: nowrap; }
 .aha-memory-status strong { color: var(--aha-text); font-weight: 650; }
 
+.aha-memory-controls { margin-top: 6px; font-size: 11px; color: var(--aha-muted); }
+.aha-memory-controls-panel { border: 1px solid rgba(255, 211, 71, 0.18); border-radius: 10px; background: rgba(255, 255, 255, 0.025); padding: 6px 8px; }
+.aha-memory-controls-panel summary { cursor: pointer; color: var(--aha-text); font-weight: 650; }
+.aha-memory-controls-body { display: grid; gap: 5px; margin-top: 6px; }
+.aha-memory-controls-body label { display: flex; align-items: center; gap: 6px; }
+.aha-memory-controls-body input { accent-color: var(--aha-accent); }
+.aha-memory-controls-status { display: flex; flex-wrap: wrap; gap: 6px 10px; }
+.aha-memory-controls-status strong { color: var(--aha-text); }
+
 @media (max-width: 1024px) {
   .chat-header-main { grid-template-columns: minmax(0,1fr); }
   .chat-header-meta { justify-content: space-between; }
