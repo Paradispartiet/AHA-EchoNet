@@ -5,6 +5,7 @@ const vm = require('vm');
 const textUtilsCode = fs.readFileSync('ahaChatTextUtils.js', 'utf8');
 const signalsCode = fs.readFileSync('ahaChatSignals.js', 'utf8');
 const exportCode = fs.readFileSync('ahaChatExport.js', 'utf8');
+const subjectsCode = fs.readFileSync('ahaChatSubjects.js', 'utf8');
 const replyFormatCode = fs.readFileSync('ahaChatReplyFormat.js', 'utf8');
 const chatCode = fs.readFileSync('ahaChat.js', 'utf8');
 
@@ -139,6 +140,7 @@ function buildContext() {
   vm.runInContext(textUtilsCode, context, { filename: 'ahaChatTextUtils.js' });
   vm.runInContext(signalsCode, context, { filename: 'ahaChatSignals.js' });
   vm.runInContext(exportCode, context, { filename: 'ahaChatExport.js' });
+  vm.runInContext(subjectsCode, context, { filename: 'ahaChatSubjects.js' });
   vm.runInContext(replyFormatCode, context, { filename: 'ahaChatReplyFormat.js' });
   vm.runInContext(chatCode, context, { filename: 'ahaChat.js' });
   return context;
