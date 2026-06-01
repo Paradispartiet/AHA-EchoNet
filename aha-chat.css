@@ -67,7 +67,7 @@ textarea, select { width:100%; border-radius: 10px; border:1px solid var(--aha-b
 .chat-log { min-height: 24dvh; max-height: 42dvh; overflow:auto; padding: 8px 24px 8px 8px; display:flex; flex-direction:column; gap:10px; }
 .chat-line-row { position: relative; display: flex; align-items: flex-start; gap: 8px; }
 .chat-line-row-user { justify-content: flex-end; }
-.chat-line-row-aha { justify-content: flex-start; }
+.chat-line-row-aha { justify-content: flex-start; flex-wrap: wrap; }
 .chat-line { max-width: 85%; padding: 10px 12px; border-radius: 14px; line-height: 1.4; word-break: break-word; }
 .message-category-chips { display:flex; flex-wrap:wrap; gap:6px; margin-top: 6px; max-width: 85%; }
 .message-category-chip { border-radius: 999px; padding: 4px 8px; font-size: 11px; background: #111936; border-color: rgba(255,211,71,0.45); color: var(--aha-accent); }
@@ -75,7 +75,7 @@ textarea, select { width:100%; border-radius: 10px; border:1px solid var(--aha-b
 .chat-line-aha { margin-right: auto; background: #0c1329; border: 1px solid var(--aha-border); }
 
 .memory-transparency {
-  flex: 1 1 85%;
+  flex: 0 0 100%;
   max-width: 85%;
   margin-top: 2px;
   margin-right: auto;
@@ -243,7 +243,7 @@ pre#out { max-height: 22vh; overflow:auto; white-space: pre-wrap; }
   .action-groups { flex-wrap: nowrap; }
   .chips { flex-wrap: nowrap; }
   .chat-line { max-width: 94%; }
-  .memory-transparency { flex-basis: 94%; max-width: 94%; }
+  .memory-transparency { flex-basis: 100%; max-width: 94%; }
   .chat-title-wrap h1 { font-size: 21px; }
   .composer-actions { justify-content: stretch; }
   .composer-actions button { flex: 1 1 0; }

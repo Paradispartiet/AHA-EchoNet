@@ -167,8 +167,13 @@ ctx.AHAMemoryDebug.disable();
 
 hooks.appendChat('aha', 'AHA-svar', { memoryContext: sampleMemoryContext(true) });
 let log = ctx.__elementsById.get('chat-log');
+const ahaRow = log.children[0];
+const transparencyNode = log.querySelector('.memory-transparency');
 assert.equal(log.querySelectorAll('.memory-transparency').length, 1, 'appendChat should render memory transparency under AHA replies when memory was used');
-assert.match(log.querySelector('.memory-transparency').textContent, /Brukte relevant AHA-minne/, 'rendered transparency should include the used label');
+assert.match(transparencyNode.textContent, /Brukte relevant AHA-minne/, 'rendered transparency should include the used label');
+assert.match(ahaRow.className, /chat-line-row-aha/, 'memory transparency should be attached to the AHA row');
+assert.equal(transparencyNode.parentNode, ahaRow, 'memory transparency should stay inside the AHA row below the reply');
+assert.ok(ahaRow.children.indexOf(transparencyNode) > ahaRow.children.findIndex((child) => child.matches('.chat-line-aha')), 'memory transparency should be inserted after the AHA message bubble');
 
 hooks.appendChat('user', 'Brukermelding', { memoryContext: sampleMemoryContext(true) });
 assert.equal(log.querySelectorAll('.memory-transparency').length, 1, 'appendChat should not render memory transparency under user messages');
