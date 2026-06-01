@@ -7,6 +7,7 @@ const signalsCode = fs.readFileSync('ahaChatSignals.js', 'utf8');
 const exportCode = fs.readFileSync('ahaChatExport.js', 'utf8');
 const engineClientCode = fs.readFileSync('ahaEngineClient.js', 'utf8');
 const chatCode = fs.readFileSync('ahaChat.js', 'utf8');
+const pythonSmokeCode = fs.readFileSync('ahaChatPythonSmoke.js', 'utf8');
 
 function buildContext(seed = {}) {
   const store = new Map(Object.entries(seed));
@@ -48,6 +49,7 @@ function buildContext(seed = {}) {
   vm.runInContext(exportCode, context, { filename: 'ahaChatExport.js' });
   vm.runInContext(engineClientCode, context, { filename: 'ahaEngineClient.js' });
   vm.runInContext(chatCode, context, { filename: 'ahaChat.js' });
+  vm.runInContext(pythonSmokeCode, context, { filename: 'ahaChatPythonSmoke.js' });
   return context;
 }
 
