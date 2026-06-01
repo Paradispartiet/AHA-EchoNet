@@ -462,6 +462,17 @@
     form.addEventListener("submit", saveProfileName);
   }
 
+  function shouldOpenLoginFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const hash = String(window.location.hash || "").replace(/^#/, "").toLowerCase();
+    return (
+      params.get("auth") === "login" ||
+      params.get("login") === "1" ||
+      hash === "login" ||
+      hash === "aha-login"
+    );
+  }
+
   function bindLoginModal() {
     const modal = $("aha-login-modal");
     const openButton = $("aha-open-login-modal");
@@ -485,6 +496,10 @@
     document.addEventListener("keydown", (event) => {
       if (event.key === "Escape") closeModal();
     });
+
+    if (shouldOpenLoginFromUrl()) {
+      openModal();
+    }
   }
 
   function bindProfileNameModal() {
