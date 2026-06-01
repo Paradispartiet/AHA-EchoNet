@@ -304,6 +304,14 @@ Hvis steg 3 feiler med `storage_unavailable`, `not_signed_in` eller
 `storage_error`: sjekk Supabase-klient, auth/RLS og at migrasjonen er kjørt
 mot samme Supabase-prosjekt som auth.
 
+
+Debug-notis etter PR 36: Live auth/profileId-test 2026-05-31 bekreftet at
+`AHAEmbeddings.health()` går fra `not_signed_in` til `configured` når brukeren
+logger inn og `AHAAuth.getProfileId()` returnerer Supabase user id. Hvis status
+er `configured`, er auth/profileId, backend, provider og storage klare. Faktisk
+embedding-lagring må fortsatt testes separat med `embedAndStore` eller
+`aha:embedding-stored`.
+
 ## Senere steg (ikke gjort ennå)
 
 - Bruke embedding-similarity i `addSignalToChamber` for å avgjøre om

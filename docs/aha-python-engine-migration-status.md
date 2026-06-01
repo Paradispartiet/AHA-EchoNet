@@ -208,6 +208,16 @@ Gjør AHAEmbeddings-status eksplisitt og mindre støyende i debug/diagnostikk. P
 
 Avklarer profileId/innlogging for AHAEmbeddings-lagring etter at PR 34 live-diagnostikk viste `status: "not_signed_in"` og `AHAAuth.getProfileId()` returnerte `null`, mens backend, provider og storage var tilgjengelige. PR-en kartlegger AHAAuth/profileId-flyt og dokumenterer at `not_signed_in` skal være en ikke-blokkerende skip-tilstand for embeddings, uten å endre Python Engine, canonical analysis, fallback-regler, database eller provider.
 
+### PR 36
+
+Dokumenterer faktisk live auth/profileId-test for AHAEmbeddings etter PR 35.
+Testen bekreftet at AHA Chat uten Supabase-session gir
+`AHAEmbeddings.health()` status `not_signed_in` og `AHAAuth.getProfileId()` →
+`null`, mens innlogget bruker gir aktiv session, profileId lik Supabase user id
+og `AHAEmbeddings.health()` status `configured`. PR-en endrer ikke runtime,
+auth-flow, embeddings-logikk, database, provider, Python Engine, canonical
+analysis, fallback-regler, fixtures eller regression baseline.
+
 ## Representative fixtures for next-phase quality work
 
 PR 25 utvider fixture-grunnlaget for AHA Engine-kvalitetsarbeid med representative caser for fagtekst, refleksjon, History Go-koblinger, tverrfaglige tekster og uklare input. Hensikten er å gi et bedre sammenligningsgrunnlag for senere vurdering av JavaScript Engine og Python Engine uten å endre analyse-runtime, fallback-regler eller canonical AHA analysis contract i denne fasen.

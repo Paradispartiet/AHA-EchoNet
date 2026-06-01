@@ -138,6 +138,139 @@ Den observerte `health()`-responsen viser at:
 
 Denne statusen betyr ikke at Python Engine feiler. Den betyr heller ikke at canonical AHA analysis feiler, at AHA Chat-svar skal stoppes, at JavaScript fallback skal endres, at provider/backend mangler, eller at databasen nødvendigvis er feil. Den betyr bare at embeddings-lagring ikke har en aktiv brukerprofil å knytte vektoren til.
 
+
+## Live auth/profileId-test – 2026-05-31
+
+Etter PR 35 ble auth/profileId-status testet direkte på AHA Chat-siden
+`https://paradispartiet.github.io/AHA-EchoNet/chat.html`. Testen ble kjørt i
+to tilstander: før innlogging og etter innlogging. Den endret ikke runtime,
+auth-flow, embeddings-logikk, backend/provider, database, Python Engine eller
+AHA Chat-hovedflyt.
+
+### Før innlogging
+
+`AHAAuth.debugAuthState?.()` viste ingen aktiv Supabase-session:
+
+```json
+{
+  "href": "https://paradispartiet.github.io/AHA-EchoNet/chat.html",
+  "hasAuthParams": false,
+  "callback": {
+    "ok": true,
+    "skipped": true
+  },
+  "hasSession": false,
+  "user": null,
+  "profile": null
+}
+```
+
+Deretter returnerte profileId-sjekken:
+
+```js
+AHAAuth.getProfileId().then(profileId => console.log("profileId:", profileId))
+// profileId: null
+```
+
+Og embeddings-health viste `not_signed_in`:
+
+```json
+{
+  "ok": false,
+  "status": "not_signed_in",
+  "configured": false,
+  "backendConfigured": true,
+  "backendReachable": true,
+  "storageAvailable": true,
+  "signedIn": false,
+  "reason": "not_signed_in",
+  "providerConfigured": true
+}
+```
+
+Tolkningen er at det ikke finnes aktiv Supabase-session, ingen `user.id` og
+ingen `profileId`. Embeddings-lagring skal derfor være en non-fatal skip-tilstand
+for AHA Chat. Samtidig kan backend, provider og storage fortsatt være klare, slik
+`backendConfigured: true`, `backendReachable: true`, `providerConfigured: true`
+og `storageAvailable: true` viser.
+
+### Etter innlogging
+
+Etter innlogging viste `AHAAuth.debugAuthState?.()` aktiv Supabase-session og en
+AHA-profil for samme UUID:
+
+```json
+{
+  "href": "https://paradispartiet.github.io/AHA-EchoNet/chat.html",
+  "hasAuthParams": false,
+  "callback": {
+    "ok": true,
+    "skipped": true
+  },
+  "hasSession": true,
+  "user": {
+    "id": "e59cf60f-74e4-4db4-98c7-5c35bddfed48",
+    "email": "matsgran@gmail.com",
+    "metadata_name": "Mats Gran"
+  },
+  "profile": {
+    "ok": true,
+    "data": {
+      "id": "e59cf60f-74e4-4db4-98c7-5c35bddfed48",
+      "display_name": "Mats Gran",
+      "created_at": "2026-05-07T16:20:38.889343+00:00",
+      "updated_at": "2026-05-31T22:11:47.296+00:00"
+    }
+  }
+}
+```
+
+ProfileId-sjekken returnerte samme Supabase user id:
+
+```js
+AHAAuth.getProfileId().then(profileId => console.log("profileId:", profileId))
+// profileId: e59cf60f-74e4-4db4-98c7-5c35bddfed48
+```
+
+`AHAEmbeddings.health()` returnerte deretter `configured`:
+
+```json
+{
+  "ok": true,
+  "status": "configured",
+  "configured": true,
+  "backendConfigured": true,
+  "backendReachable": true,
+  "storageAvailable": true,
+  "signedIn": true,
+  "reason": "configured",
+  "service": "aha-agent",
+  "embed_model": "voyage-multilingual-2",
+  "has_key": true,
+  "has_openai_key": true,
+  "openai_model": "gpt-4.1-mini",
+  "has_voyage_key": true,
+  "time": "2026-05-31T22:12:21.849Z",
+  "providerConfigured": true
+}
+```
+
+Tolkningen er at Supabase-session finnes, `user.id` finnes, `profileId` finnes,
+AHA-profilen finnes, backend er nåbar, provider-nøkler finnes, storage finnes og
+`AHAEmbeddings.health()` er `configured`.
+
+### Konklusjon
+
+Live-testen bekrefter at AHAEmbeddings-status styres riktig av auth/profileId.
+Uten Supabase-session blir status `not_signed_in`. Etter innlogging, når
+`AHAAuth.getProfileId()` returnerer Supabase user id, blir status `configured`.
+
+Dette dokumenterer ikke at en embedding-rad faktisk er skrevet til
+`aha_insight_embeddings`. Det dokumenterer at alle forutsetninger for
+embedding-lagring er på plass: auth/profileId, backend, provider og storage. En
+separat live smoke-test bør brukes for faktisk `embedAndStore` /
+`aha:embedding-stored`.
+
 ## Anbefalt videre arbeid
 
 Ikke implementer dette i PR 35. Mulige smale neste PR-er basert på funnene:
