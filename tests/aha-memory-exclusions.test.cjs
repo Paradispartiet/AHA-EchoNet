@@ -141,11 +141,19 @@ function buildContext() {
   assert.deepEqual(defaults.excludedInsightIds, [], 'default excludedInsightIds should be empty');
   assert.deepEqual(defaults.excludedKeys, [], 'default excludedKeys should be empty');
 
-  hooks.excludeAhaMemoryInsight({ id: 'i1', title: 'Test', summary: '...' });
-  assert.equal(hooks.isAhaMemoryInsightExcluded({ id: 'i1', title: 'Test', summary: '...' }), true, 'excluded id should be detected');
+  const insightWithId = { id: 'i1', title: 'Test', summary: '...' };
+  const sameInsightWithoutId = { title: 'Test', summary: '...' };
+  hooks.excludeAhaMemoryInsight(insightWithId);
+  assert.equal(hooks.isAhaMemoryInsightExcluded(insightWithId), true, 'excluded id should be detected');
+  assert.equal(hooks.isAhaMemoryInsightExcluded(sameInsightWithoutId), true, 'excluded stable title+summary key should be detected without id');
+  assert.deepEqual(hooks.loadAhaMemoryExclusions().excludedInsightIds, ['i1'], 'exclusion should store insight id');
+  assert.deepEqual(hooks.loadAhaMemoryExclusions().excludedKeys, [hooks.getAhaMemoryInsightStableKey(insightWithId)], 'exclusion should also store stable title+summary key');
 
-  hooks.includeAhaMemoryInsight('i1');
-  assert.equal(hooks.isAhaMemoryInsightExcluded({ id: 'i1', title: 'Test', summary: '...' }), false, 'included id should not remain excluded');
+  hooks.includeAhaMemoryInsight(insightWithId);
+  assert.equal(hooks.isAhaMemoryInsightExcluded(insightWithId), false, 'included id should not remain excluded');
+  assert.equal(hooks.isAhaMemoryInsightExcluded(sameInsightWithoutId), false, 'include with original insight should remove stable key');
+  assert.deepEqual(hooks.loadAhaMemoryExclusions().excludedInsightIds, [], 'include should clear stored id');
+  assert.deepEqual(hooks.loadAhaMemoryExclusions().excludedKeys, [], 'include should clear stored stable key');
 
   const chamber = {
     insights: [
@@ -178,10 +186,12 @@ function buildContext() {
   excludeButton.click();
   assert.equal(hooks.isAhaMemoryInsightExcluded({ id: 'transparent-1', title: 'Transparent innsikt', summary: 'Brukt i svaret.' }), true, 'clicking transparency action should store exclusion');
 
-  ctx.AHAMemoryExclusions.exclude({ id: 'console-1', title: 'Console', summary: 'Helper' });
+  const consoleInsight = { id: 'console-1', title: 'Console', summary: 'Helper' };
+  ctx.AHAMemoryExclusions.exclude(consoleInsight);
   assert.equal(ctx.AHAMemoryExclusions.isExcluded({ id: 'console-1' }), true, 'console helper should exclude insights');
-  ctx.AHAMemoryExclusions.include('console-1');
+  ctx.AHAMemoryExclusions.include(consoleInsight);
   assert.equal(ctx.AHAMemoryExclusions.isExcluded({ id: 'console-1' }), false, 'console helper should include insights again');
+  hooks.resetAhaMemoryExclusions();
   ctx.AHAMemoryExclusions.exclude({ title: 'Nøkkel', summary: 'Uten id' });
   assert.equal(ctx.AHAMemoryExclusions.get().excludedKeys.length, 1, 'console helper should store stable keys for insights without id');
   const reset = ctx.AHAMemoryExclusions.reset();
