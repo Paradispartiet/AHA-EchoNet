@@ -185,6 +185,7 @@
         if (fieldsWithHits > 1) score += (fieldsWithHits - 1) * 0.8;
 
         const strongFieldHit = fieldHits.title.length + fieldHits.core.length;
+        const hasStrongFieldHit = strongFieldHit > 0;
         if (strongFieldHit > 0) score += 1.5 + strongFieldHit * 0.5;
 
         const highSignalTerms = new Set([
@@ -219,6 +220,7 @@
           type,
           score,
           matched_terms: uniqueFound,
+          strong: hasStrongFieldHit,
           source
         });
       });
@@ -258,7 +260,11 @@
         if (score >= dominantFamilyFloor && relevantTermCount >= 1) dominantHits.push(m);
         return;
       }
-      if (score >= globalFloor && relevantTermCount >= 2) outsideHits.push(m);
+      if (score < globalFloor) return;
+      // Et utvetydig sterkt felt-treff (title/core) skal overleve med én relevant
+      // term. Svakere treff krever fortsatt minst to relevante termer for å unngå
+      // at enkeltord fra summary/keywords blåser opp resultatlisten.
+      if (relevantTermCount >= 2 || (m?.strong && relevantTermCount >= 1)) outsideHits.push(m);
     });
 
     const filtered = dominantHits.concat(outsideHits).sort((a, b) => b.score - a.score);
