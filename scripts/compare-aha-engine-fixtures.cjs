@@ -80,7 +80,7 @@ function createChatContext() {
   context.addEventListener = () => {};
 
   vm.createContext(context);
-  for (const fileName of ['ahaChatTextUtils.js', 'ahaChatSignals.js', 'ahaChatExport.js', 'ahaChat.js']) {
+  for (const fileName of ['ahaChatTextUtils.js', 'ahaChatSignals.js', 'ahaChatSubjects.js', 'ahaChatExport.js', 'ahaChatReplyFormat.js', 'ahaChat.js']) {
     const code = readFileSync(path.join(repoRoot, fileName), 'utf8');
     vm.runInContext(code, context, { filename: fileName });
   }
