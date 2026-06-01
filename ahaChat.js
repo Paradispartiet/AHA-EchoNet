@@ -337,7 +337,7 @@
     "Teorien om lyset", "Dagen", "AHA Chat", "innsiktsmotor"
   ];
   const AHA_MEMORY_GENERIC_TERMS = new Set([
-    "aha", "læring", "laering", "tekst", "idé", "ide", "system", "ting", "noe", "dette", "den", "det", "jeg", "du", "vi", "oss", "min", "din", "vår", "var", "skal", "kan", "med", "for", "til", "som", "hva", "hvor", "når", "nar", "gjør", "gjor", "videre", "neste"
+    "aha", "dagen", "læring", "laering", "tekst", "idé", "ide", "system", "ting", "noe", "dette", "den", "det", "jeg", "du", "vi", "oss", "min", "din", "vår", "var", "skal", "kan", "med", "for", "til", "som", "hva", "hvor", "når", "nar", "gjør", "gjor", "videre", "neste"
   ]);
   const AHA_MEMORY_MIN_LOCAL_SCORE = 4;
   const AHA_MEMORY_SEMANTIC_THRESHOLD = 0.62;
@@ -361,6 +361,10 @@
       const projectText = normalizeAhaMemoryText(project);
       if (!projectText) return false;
       if (projectText === "aha") return /(^|\s)aha\b/.test(normalized);
+      if (projectText === "dagen") {
+        return /\b(prosjektet|teksten|boken|boka|romanen|arbeidet)\s+dagen\b/.test(normalized)
+          || /\bdagen\s+(prosjektet|prosjekt|teksten|boken|boka|romanen|arbeidet)\b/.test(normalized);
+      }
       return normalized.includes(projectText);
     });
   }
@@ -386,6 +390,17 @@
     return parts.join(" ");
   }
 
+  function memoryConceptLabel(item) {
+    if (item == null) return "";
+    if (typeof item === "string" || typeof item === "number") return String(item).trim();
+    if (typeof item === "object") {
+      const value = item.label || item.key || item.term || item.name || item.title;
+      if (value == null) return "";
+      return String(value).trim();
+    }
+    return String(item).trim();
+  }
+
   function isSensitiveAhaMemoryInsight(insight) {
     const privacy = String(insight?.privacy || insight?.visibility || insight?.sensitivity || "").toLowerCase();
     return Boolean(insight?.private || insight?.sensitive || privacy === "private" || privacy === "sensitive");
@@ -397,7 +412,7 @@
       id: insight?.id || null,
       title: String(insight?.title || "Innsikt").slice(0, 120),
       summary: String(insight?.summary || insight?.text || "").replace(/\s+/g, " ").trim().slice(0, 320),
-      concepts: concepts.map((c) => String(c).trim()).filter(Boolean).slice(0, 8),
+      concepts: concepts.map(memoryConceptLabel).filter(Boolean).slice(0, 8),
       score: matchMeta?.score || 0,
       source: matchMeta?.source || "local"
     };
@@ -428,7 +443,7 @@
         const haystack = normalizeAhaMemoryText(collectInsightMemoryText(insight));
         const title = normalizeAhaMemoryText(insight.title || "");
         const summary = normalizeAhaMemoryText(insight.summary || "");
-        const conceptText = normalizeAhaMemoryText([...(insight.concepts || []), ...(insight.emner || [])].join(" "));
+        const conceptText = normalizeAhaMemoryText([...(insight.concepts || []), ...(insight.emner || [])].map(memoryConceptLabel).filter(Boolean).join(" "));
         let score = 0;
         const reasons = [];
 
@@ -483,7 +498,7 @@
       id: insight?.id || match?.id || null,
       title: String(insight?.title || match?.title || "Semantisk treff").slice(0, 120),
       summary: String(insight?.summary || insight?.text || match?.summary || "").replace(/\s+/g, " ").trim().slice(0, 320),
-      concepts: (Array.isArray(insight?.concepts) ? insight.concepts : Array.isArray(match?.concepts) ? match.concepts : []).map((c) => String(c).trim()).filter(Boolean).slice(0, 8),
+      concepts: (Array.isArray(insight?.concepts) ? insight.concepts : Array.isArray(match?.concepts) ? match.concepts : []).map(memoryConceptLabel).filter(Boolean).slice(0, 8),
       similarity: getSemanticSimilarity(match),
       source: "semantic"
     };
@@ -1668,14 +1683,23 @@
     return chunks;
   }
 
-  function buildAIState() {
+  function buildAIState(options = {}) {
+    const includeMemory = options?.includeMemory !== false;
+    if (!includeMemory) {
+      return {
+        top_insights: [],
+        concepts: [],
+        meta_profile: {}
+      };
+    }
+
     const chamber = loadChamberFromStorage();
     const insights = currentInsights();
     const topInsights = insights.slice(0, 8).map((ins) => ({
       id: ins.id,
       title: ins.title || "Innsikt",
       summary: ins.summary || "",
-      concepts: ins.concepts || [],
+      concepts: (ins.concepts || []).map(memoryConceptLabel).filter(Boolean),
       theme_id: ins.theme_id || null,
       subject_id: ins.subject_id || null
     }));
@@ -1696,7 +1720,7 @@
     const memoryContext = options?.memoryContext && options.memoryContext.used ? options.memoryContext : null;
     const body = {
       message,
-      ai_state: buildAIState(),
+      ai_state: buildAIState({ includeMemory: Boolean(memoryContext) }),
       memory_context: memoryContext,
       // Bakoverkompatibelt felt for eldre agentkode, men fylles bare når
       // Memory Relevance Gate faktisk har valgt relevante minnetreff.
