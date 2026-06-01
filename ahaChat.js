@@ -626,6 +626,150 @@
     return memoryContext;
   }
 
+
+  function isAhaMemoryDebugEnabled() {
+    try {
+      return global.localStorage?.getItem("aha_memory_debug") === "true";
+    } catch {
+      return false;
+    }
+  }
+
+  function normalizeAhaMemoryTransparencyInsight(insight) {
+    if (!insight || typeof insight !== "object") return null;
+    const concepts = (Array.isArray(insight.concepts) ? insight.concepts : [])
+      .map(memoryConceptLabel)
+      .filter(Boolean)
+      .slice(0, 8);
+    const confidenceNumber = (value) => {
+      const num = Number(value);
+      return Number.isFinite(num) ? Math.round(num * 100) / 100 : null;
+    };
+    return {
+      id: insight.id || null,
+      title: String(insight.title || "Innsikt").replace(/\s+/g, " ").trim().slice(0, 120) || "Innsikt",
+      summary: String(insight.summary || insight.text || "").replace(/\s+/g, " ").trim().slice(0, 260),
+      concepts,
+      source: insight.source || null,
+      score: confidenceNumber(insight.score),
+      similarity: confidenceNumber(insight.similarity)
+    };
+  }
+
+  function buildAhaMemoryTransparency(memoryContext) {
+    const used = Boolean(memoryContext?.used);
+    const debug = isAhaMemoryDebugEnabled();
+    const confidence = used ? Math.round(Number(memoryContext?.confidence || 0) * 100) / 100 : 0;
+    const selectedInsights = used
+      ? (Array.isArray(memoryContext?.selectedInsights) ? memoryContext.selectedInsights : [])
+        .map(normalizeAhaMemoryTransparencyInsight)
+        .filter(Boolean)
+        .slice(0, 5)
+      : [];
+    const visible = used || debug;
+    return {
+      visible,
+      used,
+      label: used ? "Brukte relevant AHA-minne" : "Minne ikke brukt",
+      reason: String(memoryContext?.reason || (used ? "Relevant minne ble valgt av Memory Relevance Gate." : "Memory Relevance Gate slo av minne.")).trim(),
+      mode: used ? String(memoryContext?.mode || "unknown") : "off",
+      confidence: Number.isFinite(confidence) ? confidence : 0,
+      selectedInsights
+    };
+  }
+
+  function formatAhaMemoryTransparencyDetails(memoryContext) {
+    const transparency = memoryContext?.visible !== undefined ? memoryContext : buildAhaMemoryTransparency(memoryContext);
+    if (!transparency.visible) return "";
+    const lines = [];
+    if (!transparency.used) lines.push("Minne ikke brukt");
+    lines.push(`Grunn: ${transparency.reason || "Ukjent"}`);
+    lines.push(`Modus: ${transparency.mode || "off"}`);
+    lines.push(`Sikkerhet: ${Number(transparency.confidence || 0).toFixed(2)}`);
+    if (transparency.used && transparency.selectedInsights.length) {
+      lines.push("Innsikter brukt:");
+      transparency.selectedInsights.forEach((insight, index) => {
+        lines.push(`${index + 1}. ${insight.title}`);
+        if (insight.summary) lines.push(`   ${insight.summary}`);
+        if (insight.concepts?.length) lines.push(`   Begreper: ${insight.concepts.join(", ")}`);
+      });
+    }
+    return lines.join("\n");
+  }
+
+  function renderAhaMemoryTransparency(row, memoryContext) {
+    if (!row || !memoryContext) return null;
+    const transparency = buildAhaMemoryTransparency(memoryContext);
+    if (!transparency.visible) return null;
+
+    const details = document.createElement("details");
+    details.className = `memory-transparency${transparency.used ? "" : " memory-transparency-debug"}`;
+
+    const summary = document.createElement("summary");
+    summary.textContent = `${transparency.label} · ${transparency.used ? "Vis" : "Vis grunn"}`;
+    details.appendChild(summary);
+
+    const body = document.createElement("div");
+    body.className = "memory-transparency-details";
+
+    if (!transparency.used) {
+      const title = document.createElement("p");
+      title.className = "memory-transparency-meta";
+      title.textContent = "Minne ikke brukt";
+      body.appendChild(title);
+    }
+
+    const meta = document.createElement("dl");
+    meta.className = "memory-transparency-meta";
+    [
+      ["Grunn", transparency.reason || "Ukjent"],
+      ["Modus", transparency.mode || "off"],
+      ["Sikkerhet", Number(transparency.confidence || 0).toFixed(2)]
+    ].forEach(([term, value]) => {
+      const dt = document.createElement("dt");
+      dt.textContent = term;
+      const dd = document.createElement("dd");
+      dd.textContent = value;
+      meta.appendChild(dt);
+      meta.appendChild(dd);
+    });
+    body.appendChild(meta);
+
+    if (transparency.used && transparency.selectedInsights.length) {
+      const listLabel = document.createElement("p");
+      listLabel.className = "memory-transparency-list-label";
+      listLabel.textContent = "Innsikter brukt:";
+      body.appendChild(listLabel);
+
+      const list = document.createElement("ol");
+      list.className = "memory-transparency-list";
+      transparency.selectedInsights.forEach((insight) => {
+        const item = document.createElement("li");
+        item.className = "memory-transparency-insight";
+        const title = document.createElement("strong");
+        title.textContent = insight.title;
+        item.appendChild(title);
+        if (insight.summary) {
+          const summaryText = document.createElement("p");
+          summaryText.textContent = insight.summary;
+          item.appendChild(summaryText);
+        }
+        if (insight.concepts?.length) {
+          const concepts = document.createElement("span");
+          concepts.className = "memory-transparency-concepts";
+          concepts.textContent = `Begreper: ${insight.concepts.join(", ")}`;
+          item.appendChild(concepts);
+        }
+        list.appendChild(item);
+      });
+      body.appendChild(list);
+    }
+
+    details.appendChild(body);
+    row.appendChild(details);
+    return details;
+  }
+
   function countAhaActiveInsights(chamber) {
     try {
       if (typeof global.InsightsEngine?.getActiveInsights === "function") {
@@ -876,6 +1020,7 @@
       row.appendChild(chips);
     }
     if (subjectMatches.length) renderSubjectChips(row, subjectMatches);
+    if (role === "aha" && options?.memoryContext) renderAhaMemoryTransparency(row, options.memoryContext);
     row.appendChild(highlightBtn);
     log.appendChild(row);
     log.scrollTop = log.scrollHeight;
@@ -5834,7 +5979,7 @@
             safeReply = forceInstitutionalMediaHistoryFagkoblingerInReply(safeReply, analysisText, { subjectMatches });
           }
           const visibleReply = normalizeAhaVisibleReply(safeReply, text) || safeReply;
-          appendChat("aha", visibleReply, { categoryChips: suggestCategoryChips(), subjectMatches });
+          appendChat("aha", visibleReply, { categoryChips: suggestCategoryChips(), subjectMatches, memoryContext });
           try { await renderAutoOutputs(text, safeReply, { subjectMatches }); } catch (autoErr) { console.warn("Auto-output feilet", autoErr); }
           try { ensureAfterworkForLatestAnalysis(text, { subjectMatches }); } catch (afterErr) { console.warn("Auto-etterarbeid feilet", afterErr); }
           // AHA-agentens egne svar skal vises i chatten og logges som
@@ -5943,9 +6088,15 @@
     });
   }
 
+  global.AHAMemoryDebug = {
+    enable() { global.localStorage?.setItem("aha_memory_debug", "true"); },
+    disable() { global.localStorage?.removeItem("aha_memory_debug"); },
+    isEnabled() { return isAhaMemoryDebugEnabled(); }
+  };
+
   global.loadChamberFromStorage = global.loadChamberFromStorage || loadChamberFromStorage;
   global.saveChamberToStorage = global.saveChamberToStorage || saveChamberToStorage;
-  global.AHATestHooks = Object.assign({}, global.AHATestHooks || {}, { detectTextType, buildCanonicalAnalysis, buildAhaAnalysisExportBundle, formatAhaAnalysisExportMarkdown, buildAutoOutputs, normalizeFagkoblinger, resolveCanonicalAnalysisWithOptionalPythonEngine, isAhaMemoryQuestion, buildAhaLearningContractReply, buildAhaMemoryStatus, shouldUseAhaMemory, buildAhaMemoryContext, findRelevantLocalMemory, formatAhaMemoryContextForAgent });
+  global.AHATestHooks = Object.assign({}, global.AHATestHooks || {}, { detectTextType, buildCanonicalAnalysis, buildAhaAnalysisExportBundle, formatAhaAnalysisExportMarkdown, buildAutoOutputs, normalizeFagkoblinger, resolveCanonicalAnalysisWithOptionalPythonEngine, isAhaMemoryQuestion, buildAhaLearningContractReply, buildAhaMemoryStatus, shouldUseAhaMemory, buildAhaMemoryContext, findRelevantLocalMemory, formatAhaMemoryContextForAgent, isAhaMemoryDebugEnabled, buildAhaMemoryTransparency, formatAhaMemoryTransparencyDetails, renderAhaMemoryTransparency, appendChat });
 
   global.AHAChat = {
     loadChamberFromStorage,
@@ -5960,6 +6111,11 @@
     buildAhaMemoryContext,
     findRelevantLocalMemory,
     formatAhaMemoryContextForAgent,
+    isAhaMemoryDebugEnabled,
+    buildAhaMemoryTransparency,
+    formatAhaMemoryTransparencyDetails,
+    renderAhaMemoryTransparency,
+    appendChat,
     updateAhaMemoryStatus
   };
 
