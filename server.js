@@ -224,6 +224,7 @@ app.post("/api/aha-agent/chat", async (req, res) => {
     const message = body.message;
     const aiState = body.ai_state && typeof body.ai_state === "object" ? body.ai_state : {};
     const similarInsights = Array.isArray(body.similar_insights) ? body.similar_insights : [];
+    const memoryContext = body.memory_context && typeof body.memory_context === "object" && !Array.isArray(body.memory_context) ? body.memory_context : null;
     const profile = body.profile && typeof body.profile === "object" ? body.profile : {};
 
     if (typeof message !== "string" || !message.trim()) {
@@ -237,6 +238,10 @@ app.post("/api/aha-agent/chat", async (req, res) => {
       "Du er AHA Chat, samtalelaget i AHA.",
       "Svar med ett samlet hovedsvar i naturlig språk.",
       "Bruk AHA-state, innsikter, begreper, metaprofil, dimensjoner, narrativ, lignende innsikter og brukerens egne data som kontekst.",
+      "Bruk memory_context bare når feltet finnes og er relevant for brukerens spørsmål.",
+      "Ikke nevn minne i svaret med mindre det forklarer hvorfor svaret bygger videre på tidligere arbeid.",
+      "Ikke overstyr brukerens nye melding med gamle innsikter; ved konflikt prioriterer du ny melding og kan kort si at tidligere retning ser ut til å være endret.",
+      "Ikke bruk minne som fasit; bruk det som diskret kontekst.",
       "Ikke vis hele innsiktsmotoren som hovedsvar.",
       "Ikke svar automatisk med faste seksjoner som ‘Kort svar’, ‘Hva AHA ser’, ‘Begreper / mønstre’ og ‘Neste beste spørsmål’.",
       "Ikke vis JSON.",
@@ -250,6 +255,7 @@ app.post("/api/aha-agent/chat", async (req, res) => {
       message: message.trim(),
       ai_state: aiState,
       similar_insights: similarInsights,
+      memory_context: memoryContext,
       profile
     });
 
