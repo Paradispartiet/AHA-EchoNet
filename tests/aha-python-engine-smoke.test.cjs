@@ -97,7 +97,8 @@ function buildContext(seed = {}) {
     'ahaChatSignals.js',
     'ahaChatExport.js',
     'ahaEngineClient.js',
-    'ahaChat.js'
+    'ahaChat.js',
+    'ahaChatPythonSmoke.js'
   ];
 
   for (const file of files) {
