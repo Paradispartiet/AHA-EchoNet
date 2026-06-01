@@ -107,6 +107,12 @@ dl.memory-transparency-meta { display: grid; grid-template-columns: auto minmax(
 .memory-transparency-insight strong { display: block; color: var(--aha-text); font-size: 11px; }
 .memory-transparency-insight p { margin: 2px 0; color: var(--aha-muted); }
 .memory-transparency-concepts { display: block; color: rgba(176,206,255,0.78); }
+.memory-transparency-actions { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px; }
+.memory-transparency-action { border-radius: 999px; padding: 2px 7px; font-size: 10px; color: rgba(176,206,255,0.9); background: rgba(176,206,255,0.08); border: 1px solid rgba(176,206,255,0.24); }
+.memory-transparency-action:hover:not(:disabled) { color: var(--aha-accent); border-color: rgba(255,211,71,0.48); }
+.memory-transparency-exclude { color: rgba(255,211,71,0.88); border-color: rgba(255,211,71,0.28); }
+.memory-transparency-action:disabled { cursor: default; opacity: 0.72; }
+.memory-transparency-insight-excluded { opacity: 0.72; }
 .memory-transparency-debug summary { color: rgba(255,211,71,0.72); }
 
 .highlight-toggle-btn { flex: 0 0 auto; margin-top: 4px; width: 20px; height: 20px; border-radius: 999px; padding: 0; font-size: 12px; line-height: 1; color: rgba(255,211,71,0.72); background: transparent; border: 1px solid rgba(255,211,71,0.24); opacity: 0.65; }

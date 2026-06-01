@@ -13,8 +13,123 @@
   const AFTERWORK_STORAGE_KEY = "aha_afterwork_v1";
   const PENDING_CHAT_PROMPT_KEY = "aha_pending_chat_prompt_v1";
   const AHA_MEMORY_CONTROLS_KEY = "aha_memory_controls_v1";
+  const AHA_MEMORY_EXCLUSIONS_KEY = "aha_memory_exclusions_v1";
   const AHA_MEMORY_USE_OFF_REASON = "Bruk av eksisterende minne er slått av av brukeren.";
 
+
+
+  function normalizeAhaMemoryExclusionList(items) {
+    const seen = new Set();
+    return (Array.isArray(items) ? items : [])
+      .map((item) => String(item || "").trim())
+      .filter((item) => {
+        if (!item || seen.has(item)) return false;
+        seen.add(item);
+        return true;
+      });
+  }
+
+  function defaultAhaMemoryExclusions() {
+    return {
+      excludedInsightIds: [],
+      excludedKeys: [],
+      lastUpdated: new Date().toISOString()
+    };
+  }
+
+  function normalizeAhaMemoryExclusions(value) {
+    const defaults = defaultAhaMemoryExclusions();
+    const exclusions = value && typeof value === "object" ? value : {};
+    return {
+      excludedInsightIds: normalizeAhaMemoryExclusionList(exclusions.excludedInsightIds),
+      excludedKeys: normalizeAhaMemoryExclusionList(exclusions.excludedKeys),
+      lastUpdated: String(exclusions.lastUpdated || defaults.lastUpdated)
+    };
+  }
+
+  function loadAhaMemoryExclusions() {
+    try {
+      const raw = global.localStorage?.getItem(AHA_MEMORY_EXCLUSIONS_KEY);
+      if (!raw) return defaultAhaMemoryExclusions();
+      return normalizeAhaMemoryExclusions(JSON.parse(raw));
+    } catch {
+      return defaultAhaMemoryExclusions();
+    }
+  }
+
+  function saveAhaMemoryExclusions(exclusions) {
+    const next = normalizeAhaMemoryExclusions(exclusions);
+    next.lastUpdated = new Date().toISOString();
+    try { global.localStorage?.setItem(AHA_MEMORY_EXCLUSIONS_KEY, JSON.stringify(next)); } catch {}
+    renderAhaMemoryControls();
+    void updateAhaMemoryStatus();
+    return next;
+  }
+
+  function normalizeAhaMemoryInsightKeyPart(value) {
+    return normalizeAhaMemoryText(value).replace(/\s+/g, " ").trim().slice(0, 180);
+  }
+
+  function getAhaMemoryInsightId(insight) {
+    if (typeof insight === "string" || typeof insight === "number") return String(insight).trim();
+    return String(insight?.id || "").trim();
+  }
+
+  function getAhaMemoryInsightKey(insight) {
+    const id = getAhaMemoryInsightId(insight);
+    if (id) return id;
+    if (!insight || typeof insight !== "object") return "";
+    const title = normalizeAhaMemoryInsightKeyPart(insight.title || insight.candidate_title || "");
+    const summary = normalizeAhaMemoryInsightKeyPart(insight.summary || insight.candidate_summary || "");
+    if (!title && !summary) return "";
+    return `title:${title}|summary:${summary}`;
+  }
+
+  function getAhaMemoryExclusionCount(exclusions = loadAhaMemoryExclusions()) {
+    const normalized = normalizeAhaMemoryExclusions(exclusions);
+    return normalized.excludedInsightIds.length + normalized.excludedKeys.length;
+  }
+
+  function isAhaMemoryInsightExcluded(insight) {
+    const exclusions = loadAhaMemoryExclusions();
+    const id = getAhaMemoryInsightId(insight);
+    if (id && exclusions.excludedInsightIds.includes(id)) return true;
+    const key = getAhaMemoryInsightKey(insight);
+    return Boolean(key && exclusions.excludedKeys.includes(key));
+  }
+
+  function excludeAhaMemoryInsight(insightOrId, reason) {
+    const current = loadAhaMemoryExclusions();
+    const id = getAhaMemoryInsightId(insightOrId);
+    const key = getAhaMemoryInsightKey(insightOrId);
+    if (id && !current.excludedInsightIds.includes(id)) current.excludedInsightIds.push(id);
+    if (!id && key && !current.excludedKeys.includes(key)) current.excludedKeys.push(key);
+    const next = saveAhaMemoryExclusions(current);
+    try {
+      global.dispatchEvent?.(new CustomEvent("aha:memory-exclusion-updated", { detail: { action: "exclude", id: id || null, key: key || null, reason: reason || null } }));
+    } catch {}
+    return next;
+  }
+
+  function includeAhaMemoryInsight(insightOrId) {
+    const current = loadAhaMemoryExclusions();
+    const id = getAhaMemoryInsightId(insightOrId);
+    const key = getAhaMemoryInsightKey(insightOrId);
+    current.excludedInsightIds = current.excludedInsightIds.filter((item) => item !== id && item !== key);
+    current.excludedKeys = current.excludedKeys.filter((item) => item !== key && item !== id);
+    const next = saveAhaMemoryExclusions(current);
+    try {
+      global.dispatchEvent?.(new CustomEvent("aha:memory-exclusion-updated", { detail: { action: "include", id: id || null, key: key || null } }));
+    } catch {}
+    return next;
+  }
+
+  function resetAhaMemoryExclusions() {
+    try { global.localStorage?.removeItem(AHA_MEMORY_EXCLUSIONS_KEY); } catch {}
+    const next = saveAhaMemoryExclusions(defaultAhaMemoryExclusions());
+    try { global.dispatchEvent?.(new CustomEvent("aha:memory-exclusion-updated", { detail: { action: "reset" } })); } catch {}
+    return next;
+  }
 
   function defaultAhaMemoryControls() {
     return {
@@ -505,7 +620,7 @@
       return [];
     }
 
-    const safeActive = active.filter((insight) => insight && !isSensitiveAhaMemoryInsight(insight));
+    const safeActive = active.filter((insight) => insight && !isSensitiveAhaMemoryInsight(insight) && !isAhaMemoryInsightExcluded(insight));
     const scoredMatches = safeActive
       .map((insight) => {
         const haystack = normalizeAhaMemoryText(collectInsightMemoryText(insight));
@@ -589,6 +704,7 @@
       return matches
         .map(normalizeSemanticMemoryMatch)
         .filter((match) => {
+          if (isAhaMemoryInsightExcluded(match)) return false;
           if (match.similarity < threshold) return false;
           const matchTokens = getAhaMemoryTokens(`${match.title} ${match.summary} ${(match.concepts || []).join(" ")}`);
           const overlap = matchTokens.some((token) => queryTokens.has(token));
@@ -670,12 +786,12 @@
     const seen = new Set();
     localMatches.forEach((match) => {
       const compact = compactAhaMemoryInsight(match.insight, match);
-      const key = compact.id || `${compact.title}|${compact.summary}`;
-      if (!seen.has(key)) { seen.add(key); selected.push(compact); }
+      const key = getAhaMemoryInsightKey(compact) || `${compact.title}|${compact.summary}`;
+      if (!isAhaMemoryInsightExcluded(compact) && !seen.has(key)) { seen.add(key); selected.push(compact); }
     });
     semanticMatches.forEach((match) => {
-      const key = match.id || `${match.title}|${match.summary}`;
-      if (!seen.has(key)) { seen.add(key); selected.push(match); }
+      const key = getAhaMemoryInsightKey(match) || `${match.title}|${match.summary}`;
+      if (!isAhaMemoryInsightExcluded(match) && !seen.has(key)) { seen.add(key); selected.push(match); }
     });
 
     const memoryContext = {
@@ -720,7 +836,8 @@
       concepts,
       source: insight.source || null,
       score: confidenceNumber(insight.score),
-      similarity: confidenceNumber(insight.similarity)
+      similarity: confidenceNumber(insight.similarity),
+      excluded: isAhaMemoryInsightExcluded(insight)
     };
   }
 
@@ -828,6 +945,35 @@
           concepts.textContent = `Begreper: ${insight.concepts.join(", ")}`;
           item.appendChild(concepts);
         }
+        const actions = document.createElement("div");
+        actions.className = "memory-transparency-actions";
+        if (insight.id) {
+          const openBtn = document.createElement("button");
+          openBtn.type = "button";
+          openBtn.className = "memory-transparency-action";
+          openBtn.textContent = "Åpne";
+          openBtn.addEventListener("click", () => {
+            showInsights();
+            setStatusNote(`Viser innsiktspanel for ${insight.title}.`);
+          });
+          actions.appendChild(openBtn);
+        }
+        const excludeBtn = document.createElement("button");
+        excludeBtn.type = "button";
+        excludeBtn.className = "memory-transparency-action memory-transparency-exclude";
+        excludeBtn.textContent = insight.excluded ? "Ekskludert fra fremtidig minnebruk" : "Ikke bruk igjen";
+        excludeBtn.disabled = Boolean(insight.excluded);
+        excludeBtn.addEventListener("click", () => {
+          excludeAhaMemoryInsight(insight, "memory_transparency");
+          insight.excluded = true;
+          excludeBtn.textContent = "Ekskludert fra fremtidig minnebruk";
+          excludeBtn.disabled = true;
+          item.classList?.add?.("memory-transparency-insight-excluded");
+          setStatusNote("Innsikten er fjernet fra fremtidig minnebruk.");
+        });
+        actions.appendChild(excludeBtn);
+        item.appendChild(actions);
+        if (insight.excluded) item.classList?.add?.("memory-transparency-insight-excluded");
         list.appendChild(item);
       });
       body.appendChild(list);
@@ -905,7 +1051,8 @@
       local: { state: "unavailable", activeInsights: 0, lastLocalSave: null },
       afterwork: { available: false, count: null },
       embedding: { status: "not_configured", reason: "not_configured" },
-      controls: loadAhaMemoryControls()
+      controls: loadAhaMemoryControls(),
+      exclusions: loadAhaMemoryExclusions()
     };
 
     try {
@@ -978,6 +1125,7 @@
     const afterworkText = status.afterwork?.available ? String(status.afterwork.count || 0) : "ukjent";
     const embeddingText = describeAhaEmbeddingStatus(status.embedding);
     const controls = normalizeAhaMemoryControls(status.controls || loadAhaMemoryControls());
+    const exclusionCount = getAhaMemoryExclusionCount(status.exclusions || loadAhaMemoryExclusions());
     const savedAt = formatAhaMemoryTimestamp(local.lastLocalSave);
     el.innerHTML = `
       <span><strong>Lokalt innsiktskammer:</strong> ${escHtml(localLabel)}</span>
@@ -986,6 +1134,7 @@
       <span><strong>Embedding-minne:</strong> ${escHtml(embeddingText)}</span>
       <span><strong>Lagring av nye innsikter:</strong> ${controls.saveNewInsights ? "på" : "av"}</span>
       <span><strong>Bruk av eksisterende minne:</strong> ${controls.useExistingMemory ? "på" : "av"}</span>
+      <span><strong>Ekskluderte innsikter:</strong> ${escHtml(String(exclusionCount))}</span>
       <span><strong>Sist lokal lagring:</strong> ${escHtml(savedAt)}</span>
     `;
   }
@@ -994,6 +1143,7 @@
     const host = document.getElementById("aha-memory-controls");
     if (!host) return null;
     const current = normalizeAhaMemoryControls(controls);
+    const exclusionCount = getAhaMemoryExclusionCount();
     host.innerHTML = `
       <details class="aha-memory-controls-panel">
         <summary>Minnestyring</summary>
@@ -1003,6 +1153,7 @@
           <div class="aha-memory-controls-status" aria-live="polite">
             <span><strong>Lagring:</strong> ${current.saveNewInsights ? "på" : "av"}</span>
             <span><strong>Minnebruk:</strong> ${current.useExistingMemory ? "på" : "av"}</span>
+            <span><strong>Ekskluderte innsikter:</strong> ${exclusionCount}</span>
           </div>
         </div>
       </details>
@@ -6241,9 +6392,17 @@
     isEnabled() { return isAhaMemoryDebugEnabled(); }
   };
 
+  global.AHAMemoryExclusions = {
+    get() { return loadAhaMemoryExclusions(); },
+    exclude(insightOrId, reason) { return excludeAhaMemoryInsight(insightOrId, reason); },
+    include(insightOrId) { return includeAhaMemoryInsight(insightOrId); },
+    reset() { return resetAhaMemoryExclusions(); },
+    isExcluded(insightOrId) { return isAhaMemoryInsightExcluded(insightOrId); }
+  };
+
   global.loadChamberFromStorage = global.loadChamberFromStorage || loadChamberFromStorage;
   global.saveChamberToStorage = global.saveChamberToStorage || saveChamberToStorage;
-  global.AHATestHooks = Object.assign({}, global.AHATestHooks || {}, { detectTextType, buildCanonicalAnalysis, buildAhaAnalysisExportBundle, formatAhaAnalysisExportMarkdown, buildAutoOutputs, normalizeFagkoblinger, resolveCanonicalAnalysisWithOptionalPythonEngine, isAhaMemoryQuestion, buildAhaLearningContractReply, buildAhaMemoryStatus, shouldUseAhaMemory, buildAhaMemoryContext, buildAhaMemoryOffContext, loadAhaMemoryControls, saveAhaMemoryControls, setAhaMemoryControl, isAhaSavingEnabled, isAhaMemoryUseEnabled, renderAhaMemoryControls, bindAhaMemoryControls, submitAhaChatMessage, findRelevantLocalMemory, formatAhaMemoryContextForAgent, isAhaMemoryDebugEnabled, buildAhaMemoryTransparency, formatAhaMemoryTransparencyDetails, renderAhaMemoryTransparency, appendChat });
+  global.AHATestHooks = Object.assign({}, global.AHATestHooks || {}, { detectTextType, buildCanonicalAnalysis, buildAhaAnalysisExportBundle, formatAhaAnalysisExportMarkdown, buildAutoOutputs, normalizeFagkoblinger, resolveCanonicalAnalysisWithOptionalPythonEngine, isAhaMemoryQuestion, buildAhaLearningContractReply, buildAhaMemoryStatus, shouldUseAhaMemory, buildAhaMemoryContext, buildAhaMemoryOffContext, loadAhaMemoryControls, saveAhaMemoryControls, setAhaMemoryControl, isAhaSavingEnabled, isAhaMemoryUseEnabled, loadAhaMemoryExclusions, saveAhaMemoryExclusions, getAhaMemoryInsightKey, isAhaMemoryInsightExcluded, excludeAhaMemoryInsight, includeAhaMemoryInsight, resetAhaMemoryExclusions, renderAhaMemoryControls, bindAhaMemoryControls, submitAhaChatMessage, findRelevantLocalMemory, formatAhaMemoryContextForAgent, isAhaMemoryDebugEnabled, buildAhaMemoryTransparency, formatAhaMemoryTransparencyDetails, renderAhaMemoryTransparency, appendChat });
 
   global.AHAChat = {
     loadChamberFromStorage,
@@ -6262,6 +6421,13 @@
     setAhaMemoryControl,
     isAhaSavingEnabled,
     isAhaMemoryUseEnabled,
+    loadAhaMemoryExclusions,
+    saveAhaMemoryExclusions,
+    getAhaMemoryInsightKey,
+    isAhaMemoryInsightExcluded,
+    excludeAhaMemoryInsight,
+    includeAhaMemoryInsight,
+    resetAhaMemoryExclusions,
     renderAhaMemoryControls,
     bindAhaMemoryControls,
     submitAhaChatMessage,
