@@ -306,6 +306,311 @@
     ].some((pattern) => pattern.test(normalized));
   }
 
+
+  const AHA_MEMORY_EXPLICIT_PATTERNS = [
+    /\bsom\s+vi\s+snakket\s+om\b/i,
+    /\bfortsett\b/i,
+    /\bbygg\s+videre\b/i,
+    /\bhusker\s+du\b/i,
+    /\btidligere\b/i,
+    /\bforrige\b/i,
+    /\bhva\s+var\s+planen\b/i,
+    /\bhvor\s+er\s+vi\b/i,
+    /\bneste\s+steg\b/i,
+    /\bbruk\s+innsiktene\b/i,
+    /\bbruk\s+minnet\b/i,
+    /\bcontinue\b/i,
+    /\bremember\s+(this|that|what)\b/i
+  ];
+  const AHA_MEMORY_CONTINUITY_PATTERNS = [
+    /\bhva\s+gjør\s+vi\s+nå\b/i,
+    /\bhva\s+gjor\s+vi\s+na\b/i,
+    /\bhva\s+mangler\b/i,
+    /\bhvor\s+langt\s+er\s+vi\s+kommet\b/i,
+    /\bneste\s+naturlige\s+steg\b/i,
+    /\bplanlegg\s+videre\b/i,
+    /\bhva\s+nå\b/i,
+    /\bhva\s+na\b/i
+  ];
+  const AHA_MEMORY_KNOWN_PROJECTS = [
+    "AHA", "EchoNet", "History Go", "Civication", "Paradisavisa", "Paradispartiet",
+    "Teorien om lyset", "Dagen", "AHA Chat", "innsiktsmotor"
+  ];
+  const AHA_MEMORY_GENERIC_TERMS = new Set([
+    "aha", "læring", "laering", "tekst", "idé", "ide", "system", "ting", "noe", "dette", "den", "det", "jeg", "du", "vi", "oss", "min", "din", "vår", "var", "skal", "kan", "med", "for", "til", "som", "hva", "hvor", "når", "nar", "gjør", "gjor", "videre", "neste"
+  ]);
+  const AHA_MEMORY_MIN_LOCAL_SCORE = 4;
+  const AHA_MEMORY_SEMANTIC_THRESHOLD = 0.62;
+  const AHA_MEMORY_SEMANTIC_EXPLICIT_THRESHOLD = 0.56;
+
+  function getAhaMemoryTokens(text) {
+    return normalizeAhaMemoryText(text)
+      .split(/\s+/)
+      .map((token) => token.trim())
+      .filter((token) => token.length >= 3 && !AHA_MEMORY_GENERIC_TERMS.has(token));
+  }
+
+  function hasAhaMemoryPattern(text, patterns) {
+    const normalized = normalizeAhaMemoryText(text);
+    return patterns.some((pattern) => pattern.test(normalized));
+  }
+
+  function findKnownAhaProjects(text) {
+    const normalized = normalizeAhaMemoryText(text);
+    return AHA_MEMORY_KNOWN_PROJECTS.filter((project) => {
+      const projectText = normalizeAhaMemoryText(project);
+      if (!projectText) return false;
+      if (projectText === "aha") return /(^|\s)aha\b/.test(normalized);
+      return normalized.includes(projectText);
+    });
+  }
+
+  function isAhaMemoryStatusUsable(options) {
+    const status = options?.memoryStatus;
+    if (!status) return true;
+    if (status.ok === false && status.local?.state === "unavailable") return false;
+    return status.local?.state !== "unavailable" || status.embedding?.status === "configured";
+  }
+
+  function collectInsightMemoryText(insight) {
+    const parts = [];
+    ["title", "summary", "text", "functional_type"].forEach((key) => {
+      if (insight?.[key]) parts.push(String(insight[key]));
+    });
+    ["concepts", "emner", "patterns", "claims", "tags"].forEach((key) => {
+      const value = insight?.[key];
+      if (Array.isArray(value)) parts.push(value.map((item) => typeof item === "string" ? item : JSON.stringify(item || {})).join(" "));
+      else if (value && typeof value === "object") parts.push(JSON.stringify(value));
+      else if (value) parts.push(String(value));
+    });
+    return parts.join(" ");
+  }
+
+  function isSensitiveAhaMemoryInsight(insight) {
+    const privacy = String(insight?.privacy || insight?.visibility || insight?.sensitivity || "").toLowerCase();
+    return Boolean(insight?.private || insight?.sensitive || privacy === "private" || privacy === "sensitive");
+  }
+
+  function compactAhaMemoryInsight(insight, matchMeta) {
+    const concepts = Array.isArray(insight?.concepts) ? insight.concepts : Array.isArray(insight?.emner) ? insight.emner : [];
+    return {
+      id: insight?.id || null,
+      title: String(insight?.title || "Innsikt").slice(0, 120),
+      summary: String(insight?.summary || insight?.text || "").replace(/\s+/g, " ").trim().slice(0, 320),
+      concepts: concepts.map((c) => String(c).trim()).filter(Boolean).slice(0, 8),
+      score: matchMeta?.score || 0,
+      source: matchMeta?.source || "local"
+    };
+  }
+
+  function findRelevantLocalMemory(userText, chamber, options) {
+    const explicit = Boolean(options?.explicitReference);
+    const continuity = Boolean(options?.continuity);
+    const projectMatches = options?.projectMatches || findKnownAhaProjects(userText);
+    const tokens = getAhaMemoryTokens(userText);
+    const projectTokens = projectMatches.flatMap((project) => getAhaMemoryTokens(project));
+    const searchTokens = [...new Set([...tokens, ...projectTokens])].filter((token) => !AHA_MEMORY_GENERIC_TERMS.has(token));
+    if (!searchTokens.length && !projectMatches.length && !explicit && !continuity) return [];
+
+    let active = [];
+    try {
+      active = typeof global.InsightsEngine?.getActiveInsights === "function"
+        ? global.InsightsEngine.getActiveInsights(chamber)
+        : (Array.isArray(chamber?.insights) ? chamber.insights.filter((ins) => !ins?.archived && !ins?.deleted && !ins?.rejected && !ins?.merged_into) : []);
+    } catch (err) {
+      console.warn("AHA Memory Gate: lokal innsiktshenting feilet", err);
+      return [];
+    }
+
+    const safeActive = active.filter((insight) => insight && !isSensitiveAhaMemoryInsight(insight));
+    const scoredMatches = safeActive
+      .map((insight) => {
+        const haystack = normalizeAhaMemoryText(collectInsightMemoryText(insight));
+        const title = normalizeAhaMemoryText(insight.title || "");
+        const summary = normalizeAhaMemoryText(insight.summary || "");
+        const conceptText = normalizeAhaMemoryText([...(insight.concepts || []), ...(insight.emner || [])].join(" "));
+        let score = 0;
+        const reasons = [];
+
+        projectMatches.forEach((project) => {
+          const p = normalizeAhaMemoryText(project);
+          if (p && haystack.includes(p)) {
+            score += 5;
+            reasons.push(`prosjekt:${project}`);
+          }
+        });
+
+        searchTokens.forEach((token) => {
+          if (!token || AHA_MEMORY_GENERIC_TERMS.has(token)) return;
+          if (conceptText.includes(token)) { score += 3; reasons.push(`begrep:${token}`); }
+          else if (title.includes(token)) { score += 2.5; reasons.push(`tittel:${token}`); }
+          else if (summary.includes(token)) { score += 1.5; reasons.push(`sammendrag:${token}`); }
+          else if (haystack.includes(token)) { score += 1; reasons.push(`felt:${token}`); }
+        });
+
+        if ((explicit || continuity) && score > 0) score += 1;
+        if (!projectMatches.length && score < AHA_MEMORY_MIN_LOCAL_SCORE) score -= 1;
+
+        return { insight, score, reasons: [...new Set(reasons)].slice(0, 8), source: "local" };
+      })
+      .filter((match) => match.score >= AHA_MEMORY_MIN_LOCAL_SCORE)
+      .sort((a, b) => b.score - a.score);
+
+    if (!scoredMatches.length && (explicit || continuity) && safeActive.length) {
+      return safeActive
+        .slice(-3)
+        .reverse()
+        .map((insight, index) => ({
+          insight,
+          score: AHA_MEMORY_MIN_LOCAL_SCORE + (3 - index) * 0.25,
+          reasons: [explicit ? "eksplisitt-kontinuitet" : "kontinuitet"],
+          source: "local"
+        }));
+    }
+
+    return scoredMatches.slice(0, options?.limit || 5);
+  }
+
+  function getSemanticSimilarity(match) {
+    const raw = match?.similarity ?? match?.score ?? match?.distance_score ?? match?.metadata?.similarity;
+    const num = Number(raw);
+    return Number.isFinite(num) ? num : 0;
+  }
+
+  function normalizeSemanticMemoryMatch(match) {
+    const insight = match?.insight || match?.metadata?.insight || match;
+    return {
+      id: insight?.id || match?.id || null,
+      title: String(insight?.title || match?.title || "Semantisk treff").slice(0, 120),
+      summary: String(insight?.summary || insight?.text || match?.summary || "").replace(/\s+/g, " ").trim().slice(0, 320),
+      concepts: (Array.isArray(insight?.concepts) ? insight.concepts : Array.isArray(match?.concepts) ? match.concepts : []).map((c) => String(c).trim()).filter(Boolean).slice(0, 8),
+      similarity: getSemanticSimilarity(match),
+      source: "semantic"
+    };
+  }
+
+  async function findRelevantSemanticMemory(userText, options) {
+    if (!global.AHAEmbeddings || typeof global.AHAEmbeddings.findSimilarToText !== "function" || typeof global.AHAEmbeddings.health !== "function") return [];
+    const explicit = Boolean(options?.explicitReference || options?.continuity);
+    const threshold = explicit ? AHA_MEMORY_SEMANTIC_EXPLICIT_THRESHOLD : AHA_MEMORY_SEMANTIC_THRESHOLD;
+    try {
+      const health = options?.embeddingHealth || await getAhaEmbeddingHealthWithTimeout(1600);
+      const status = String(health?.status || health?.reason || "");
+      if (status !== "configured" && health?.ok !== true) return [];
+      const simRes = await global.AHAEmbeddings.findSimilarToText(userText, {
+        limit: 5,
+        chamber: options?.chamber || loadChamberFromStorage()
+      });
+      const matches = Array.isArray(simRes?.matches) ? simRes.matches : [];
+      const queryTokens = new Set(getAhaMemoryTokens(userText));
+      return matches
+        .map(normalizeSemanticMemoryMatch)
+        .filter((match) => {
+          if (match.similarity < threshold) return false;
+          const matchTokens = getAhaMemoryTokens(`${match.title} ${match.summary} ${(match.concepts || []).join(" ")}`);
+          const overlap = matchTokens.some((token) => queryTokens.has(token));
+          return explicit || overlap || findKnownAhaProjects(`${match.title} ${match.summary}`).length > 0;
+        })
+        .slice(0, 5);
+    } catch (err) {
+      console.warn("AHA Memory Gate: semantisk søk feilet", err);
+      return [];
+    }
+  }
+
+  async function shouldUseAhaMemory(userText, options = {}) {
+    const text = String(userText || "").trim();
+    const off = (reason) => ({ useMemory: false, reason, confidence: 0, mode: "off" });
+    if (!text) return off("Tom melding.");
+    if (!isAhaMemoryStatusUsable(options)) return off("Minnestatus er utilgjengelig.");
+
+    const explicitReference = hasAhaMemoryPattern(text, AHA_MEMORY_EXPLICIT_PATTERNS);
+    const continuity = hasAhaMemoryPattern(text, AHA_MEMORY_CONTINUITY_PATTERNS);
+    const projectMatches = findKnownAhaProjects(text);
+    const tokens = getAhaMemoryTokens(text);
+    const shortStandalone = tokens.length <= 3 && /^(hva|what)\s+(betyr|er|means|is)\b/i.test(normalizeAhaMemoryText(text)) && !explicitReference && !continuity && !projectMatches.length;
+    if (shortStandalone) return off("Kort, selvstendig kunnskapsspørsmål uten prosjektkobling.");
+
+    let chamber = options.chamber;
+    try { if (!chamber) chamber = loadChamberFromStorage(); } catch { chamber = null; }
+    const localMatches = findRelevantLocalMemory(text, chamber, { explicitReference, continuity, projectMatches, limit: 5 });
+    const semanticMatches = options.skipSemantic ? [] : await findRelevantSemanticMemory(text, { explicitReference, continuity, chamber, embeddingHealth: options.embeddingHealth });
+
+    if (explicitReference) return { useMemory: true, reason: "Eksplisitt referanse til tidligere arbeid.", confidence: 0.9, mode: "explicit_reference" };
+    if (continuity) return { useMemory: true, reason: "Meldingen ber om kontinuitet eller neste steg.", confidence: 0.82, mode: "continuity" };
+    if (projectMatches.length) return { useMemory: true, reason: `Kjent AHA-prosjekt/arbeidsområde: ${projectMatches.slice(0, 2).join(", ")}.`, confidence: 0.78, mode: "known_project" };
+    if (semanticMatches.length) return { useMemory: true, reason: "Semantisk søk fant sterke relevante minnetreff.", confidence: Math.min(0.86, 0.58 + semanticMatches[0].similarity / 3), mode: "semantic_match" };
+    if (localMatches.length) return { useMemory: true, reason: "Lokale innsikter matcher tydelig på prosjekt, tema eller begreper.", confidence: Math.min(0.82, 0.52 + localMatches[0].score / 20), mode: "semantic_match" };
+    return off("Ingen tydelige, relevante minnetreff.");
+  }
+
+  function formatAhaMemoryContextForAgent(memoryContext) {
+    if (!memoryContext?.used) return "";
+    const insights = (memoryContext.selectedInsights || []).slice(0, 5);
+    if (!insights.length) return "";
+    return insights.map((insight, index) => {
+      const concepts = (insight.concepts || []).slice(0, 6).join(", ");
+      const conceptText = concepts ? ` Begreper: ${concepts}.` : "";
+      return `${index + 1}. ${insight.title}: ${insight.summary}${conceptText}`.trim();
+    }).join("\n");
+  }
+
+  async function buildAhaMemoryContext(userText, options = {}) {
+    const empty = (gate) => ({
+      used: false,
+      reason: gate?.reason || "Minne ikke relevant.",
+      confidence: gate?.confidence || 0,
+      mode: gate?.mode || "off",
+      localMatches: [],
+      semanticMatches: [],
+      selectedInsights: [],
+      summaryForAgent: ""
+    });
+
+    let chamber = options.chamber;
+    try { if (!chamber) chamber = loadChamberFromStorage(); } catch { chamber = null; }
+    const explicitReference = hasAhaMemoryPattern(userText, AHA_MEMORY_EXPLICIT_PATTERNS);
+    const continuity = hasAhaMemoryPattern(userText, AHA_MEMORY_CONTINUITY_PATTERNS);
+    const projectMatches = findKnownAhaProjects(userText);
+    const localMatches = findRelevantLocalMemory(userText, chamber, { explicitReference, continuity, projectMatches, limit: 5 });
+    const semanticMatches = await findRelevantSemanticMemory(userText, { explicitReference, continuity, chamber, embeddingHealth: options.embeddingHealth });
+    const baseGate = await shouldUseAhaMemory(userText, Object.assign({}, options, { chamber, skipSemantic: true }));
+    const gate = (!baseGate.useMemory && semanticMatches.length)
+      ? { useMemory: true, reason: "Semantisk søk fant sterke relevante minnetreff.", confidence: Math.min(0.86, 0.58 + semanticMatches[0].similarity / 3), mode: "semantic_match" }
+      : baseGate;
+
+    const hasAnyMatches = localMatches.length || semanticMatches.length;
+    if (!gate.useMemory) return empty(gate);
+    if (!hasAnyMatches && gate.mode !== "explicit_reference" && gate.mode !== "continuity" && gate.mode !== "known_project") return empty(gate);
+
+    const selected = [];
+    const seen = new Set();
+    localMatches.forEach((match) => {
+      const compact = compactAhaMemoryInsight(match.insight, match);
+      const key = compact.id || `${compact.title}|${compact.summary}`;
+      if (!seen.has(key)) { seen.add(key); selected.push(compact); }
+    });
+    semanticMatches.forEach((match) => {
+      const key = match.id || `${match.title}|${match.summary}`;
+      if (!seen.has(key)) { seen.add(key); selected.push(match); }
+    });
+
+    const memoryContext = {
+      used: gate.useMemory && selected.length > 0,
+      reason: gate.reason,
+      confidence: gate.confidence,
+      mode: gate.mode,
+      localMatches: localMatches.map((match) => ({ id: match.insight?.id || null, title: match.insight?.title || "Innsikt", score: match.score, reasons: match.reasons })),
+      semanticMatches,
+      selectedInsights: selected.slice(0, 5),
+      summaryForAgent: ""
+    };
+    memoryContext.summaryForAgent = formatAhaMemoryContextForAgent(memoryContext);
+    memoryContext.used = Boolean(memoryContext.summaryForAgent);
+    if (!memoryContext.used) return empty(gate);
+    return memoryContext;
+  }
+
   function countAhaActiveInsights(chamber) {
     try {
       if (typeof global.InsightsEngine?.getActiveInsights === "function") {
@@ -1384,29 +1689,18 @@
     };
   }
 
-  async function askAhaAgent(message) {
+  async function askAhaAgent(message, options = {}) {
     const apiBase = String(global.AHA_AGENT_API || "").trim().replace(/\/$/, "");
     if (!apiBase) throw new Error("missing_api_base");
 
-    let similar = [];
-    if (global.AHAEmbeddings?.findSimilarToText) {
-      try {
-        const simRes = await global.AHAEmbeddings.findSimilarToText(message, {
-          limit: 5,
-          // Filtrer ut insights som er sammenslått inn i andre, slik at
-          // merged sources ikke konkurrerer som aktive kandidater.
-          chamber: loadChamberFromStorage()
-        });
-        if (simRes?.ok) similar = simRes.matches || [];
-      } catch (err) {
-        console.warn("Klarte ikke hente similar insights", err);
-      }
-    }
-
+    const memoryContext = options?.memoryContext && options.memoryContext.used ? options.memoryContext : null;
     const body = {
       message,
       ai_state: buildAIState(),
-      similar_insights: similar,
+      memory_context: memoryContext,
+      // Bakoverkompatibelt felt for eldre agentkode, men fylles bare når
+      // Memory Relevance Gate faktisk har valgt relevante minnetreff.
+      similar_insights: memoryContext?.semanticMatches || [],
       profile: {}
     };
     const res = await fetch(`${apiBase}/chat`, {
@@ -5477,6 +5771,8 @@
           }
           return;
         }
+        setAhaProcessing(true, "AHA vurderer relevant minne …");
+        const memoryContext = await buildAhaMemoryContext(text);
         const count = handleUserMessage(text);
         void handleUserMessageInsightCandidatesInBackground(text)
           .then((aiCount) => {
@@ -5487,11 +5783,12 @@
           });
         textarea.value = "";
         if (count > 0) setStatusNote(`Lagret ${count} signal${count === 1 ? "" : "er"} i bakgrunnen.`);
+        if (memoryContext.used) setStatusNote("Bruker relevant AHA-minne.");
         void updateAhaMemoryStatus();
         setAhaProcessing(true, "AHA analyserer teksten …");
         try {
           setAhaProcessing(true, "AHA lager svar og etterarbeid …");
-          const agent = await askAhaAgent(text);
+          const agent = await askAhaAgent(text, { memoryContext });
           const reply = String(agent?.reply || "").trim() || "AHA-agenten returnerte tomt svar.";
           const analysisText = cleanArticleText(text);
           const rawSubjectMatches = global.AHASubjectEngine?.matchText
@@ -5533,7 +5830,9 @@
             meta: {
               response_id: agent?.response_id || null,
               model: agent?.model || null,
-              raw_reply: visibleReply === safeReply ? null : safeReply
+              raw_reply: visibleReply === safeReply ? null : safeReply,
+              memory_context_used: Boolean(memoryContext.used),
+              memory_context_reason: memoryContext.used ? memoryContext.reason : null
             }
           });
         } catch (err) {
@@ -5622,7 +5921,7 @@
 
   global.loadChamberFromStorage = global.loadChamberFromStorage || loadChamberFromStorage;
   global.saveChamberToStorage = global.saveChamberToStorage || saveChamberToStorage;
-  global.AHATestHooks = Object.assign({}, global.AHATestHooks || {}, { detectTextType, buildCanonicalAnalysis, buildAhaAnalysisExportBundle, formatAhaAnalysisExportMarkdown, buildAutoOutputs, normalizeFagkoblinger, resolveCanonicalAnalysisWithOptionalPythonEngine, isAhaMemoryQuestion, buildAhaLearningContractReply, buildAhaMemoryStatus });
+  global.AHATestHooks = Object.assign({}, global.AHATestHooks || {}, { detectTextType, buildCanonicalAnalysis, buildAhaAnalysisExportBundle, formatAhaAnalysisExportMarkdown, buildAutoOutputs, normalizeFagkoblinger, resolveCanonicalAnalysisWithOptionalPythonEngine, isAhaMemoryQuestion, buildAhaLearningContractReply, buildAhaMemoryStatus, shouldUseAhaMemory, buildAhaMemoryContext, findRelevantLocalMemory, formatAhaMemoryContextForAgent });
 
   global.AHAChat = {
     loadChamberFromStorage,
@@ -5633,6 +5932,10 @@
     isAhaMemoryQuestion,
     buildAhaLearningContractReply,
     buildAhaMemoryStatus,
+    shouldUseAhaMemory,
+    buildAhaMemoryContext,
+    findRelevantLocalMemory,
+    formatAhaMemoryContextForAgent,
     updateAhaMemoryStatus
   };
 
