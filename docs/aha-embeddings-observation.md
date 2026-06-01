@@ -135,6 +135,14 @@ Dette er foreløpige observasjoner/hypoteser basert på kildekoden, ikke bekreft
 
 PR 35 følger opp PR 34-diagnostikken i `docs/aha-embeddings-profile-auth.md`. Live-statusen ble isolert til `status: "not_signed_in"` og `AHAAuth.getProfileId()` → `null`, samtidig som backend, provider og storage var tilgjengelige. Det betyr at embeddings-lagring manglet aktiv brukerprofil, ikke at Python Engine, canonical analysis, AHA Chat-hovedflyt, provider, backend eller Supabase-klient feilet. `not_signed_in` skal behandles som non-fatal skip for embeddings.
 
+## PR 36 – live auth/profileId-test
+
+PR 36 dokumenterer live auth/profileId-testen som bekreftet at
+`not_signed_in` gikk over til `configured` etter innlogging. Se
+`docs/aha-embeddings-profile-auth.md`. Dette er fortsatt dokumentasjon av
+forutsetninger for embedding-lagring, ikke dokumentasjon av at en faktisk
+embedding-rad er skrevet til `aha_insight_embeddings`.
+
 ## Anbefalt neste PR
 
 Foreslått oppfølging, uten å implementere det i denne PR-en:
