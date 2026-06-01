@@ -32,31 +32,17 @@ jobs:
         run: |
           set -euo pipefail
 
-          files=(
-            "ahaChat.js"
-            "insightsChamber.js"
-            "metaInsightsEngine.js"
-            "ahaSources.js"
-            "ahaIngest.js"
-            "ahaHistoryGoImport.js"
-            "ahaNotes.js"
-            "ahaGallery.js"
-            "ahaFeed.js"
-            "ahaInsta.js"
-            "ahaDashboard.js"
-            "ahaDb.js"
-            "ahaAuth.js"
-            "ahaAuthCallback.js"
-            "ahaRepository.js"
-            "ahaConfig.js"
-          )
+          # Check every tracked JS file so new modules are covered automatically
+          # and the list never drifts out of date.
+          mapfile -t files < <(git ls-files '*.js' '*.mjs' '*.cjs')
 
+          if [[ ${#files[@]} -eq 0 ]]; then
+            echo "No JavaScript files found to check."
+            exit 1
+          fi
+
+          echo "Checking ${#files[@]} JavaScript files"
           for file in "${files[@]}"; do
-            if [[ -f "$file" ]]; then
-              echo "Checking $file"
-              node --check "$file"
-            else
-              echo "Missing expected file: $file"
-              exit 1
-            fi
+            echo "Checking $file"
+            node --check "$file"
           done
