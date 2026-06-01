@@ -116,6 +116,82 @@ create policy "aha_insta_posts_update_own"
   using (profile_id = auth.uid())
   with check (profile_id = auth.uid());
 
+create policy "aha_insta_profiles_select_own"
+  on public.aha_insta_profiles
+  for select
+  to authenticated
+  using (profile_id = auth.uid());
+
+create policy "aha_insta_profiles_insert_own"
+  on public.aha_insta_profiles
+  for insert
+  to authenticated
+  with check (profile_id = auth.uid());
+
+create policy "aha_insta_profiles_update_own"
+  on public.aha_insta_profiles
+  for update
+  to authenticated
+  using (profile_id = auth.uid())
+  with check (profile_id = auth.uid());
+
+create policy "aha_insta_likes_select_own"
+  on public.aha_insta_likes
+  for select
+  to authenticated
+  using (profile_id = auth.uid());
+
+create policy "aha_insta_likes_insert_own"
+  on public.aha_insta_likes
+  for insert
+  to authenticated
+  with check (profile_id = auth.uid());
+
+create policy "aha_insta_likes_update_own"
+  on public.aha_insta_likes
+  for update
+  to authenticated
+  using (profile_id = auth.uid())
+  with check (profile_id = auth.uid());
+
+create policy "aha_insta_comments_select_own"
+  on public.aha_insta_comments
+  for select
+  to authenticated
+  using (profile_id = auth.uid());
+
+create policy "aha_insta_comments_insert_own"
+  on public.aha_insta_comments
+  for insert
+  to authenticated
+  with check (profile_id = auth.uid());
+
+create policy "aha_insta_comments_update_own"
+  on public.aha_insta_comments
+  for update
+  to authenticated
+  using (profile_id = auth.uid())
+  with check (profile_id = auth.uid());
+
+create policy "aha_insta_follows_select_own"
+  on public.aha_insta_follows
+  for select
+  to authenticated
+  using (profile_id = auth.uid());
+
+create policy "aha_insta_follows_insert_own"
+  on public.aha_insta_follows
+  for insert
+  to authenticated
+  with check (profile_id = auth.uid());
+
+create policy "aha_insta_follows_update_own"
+  on public.aha_insta_follows
+  for update
+  to authenticated
+  using (profile_id = auth.uid())
+  with check (profile_id = auth.uid());
+
 create policy "aha_imports_select_own"
   on public.aha_imports
   for select

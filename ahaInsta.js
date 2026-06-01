@@ -376,9 +376,24 @@
     }
   }
 
+  function persistSocial(method, record) {
+    const repo = window.AHARepository;
+    if (!repo || typeof repo[method] !== "function") return;
+
+    repo[method](record)
+      .then((result) => {
+        if (result?.ok === false && result.error) {
+          console.warn(`AHAInsta: ${method} feilet`, result.error);
+        }
+      })
+      .catch((error) => {
+        console.warn(`AHAInsta: ${method} feilet`, error);
+      });
+  }
+
   function saveProfile(profile) {
     localStorage.setItem(PROFILE_KEY, JSON.stringify(profile || null));
-    // TODO: persist profile/likes/comments/follows via AHARepository/backend
+    if (profile) persistSocial("saveInstaProfile", profile);
     return profile;
   }
 
@@ -422,10 +437,17 @@
     const likes = loadLikes();
     const index = likes.findIndex((like) => like.post_id === postId && like.user_id === profile.id);
 
-    if (index >= 0) likes.splice(index, 1);
-    else likes.push({ id: createId("like"), post_id: postId, user_id: profile.id, created_at: nowIso() });
+    let record;
+    if (index >= 0) {
+      record = { ...likes[index], deleted_at: nowIso() };
+      likes.splice(index, 1);
+    } else {
+      record = { id: `like_${postId}_${profile.id}`, post_id: postId, user_id: profile.id, created_at: nowIso(), deleted_at: null };
+      likes.push(record);
+    }
 
     saveLikes(likes);
+    persistSocial("saveInstaLike", record);
     renderProfile();
     render();
   }
@@ -448,6 +470,7 @@
 
     comments.push(comment);
     saveComments(comments);
+    persistSocial("saveInstaComment", comment);
     render();
     return comment;
   }
@@ -460,6 +483,7 @@
 
     comments[index] = { ...comments[index], deleted_at: nowIso() };
     saveComments(comments);
+    persistSocial("saveInstaComment", comments[index]);
     render();
     return comments[index];
   }
@@ -478,10 +502,17 @@
     const follows = loadFollows();
     const index = follows.findIndex((follow) => follow.follower_id === profile.id && follow.following_username === username);
 
-    if (index >= 0) follows.splice(index, 1);
-    else follows.push({ id: createId("follow"), follower_id: profile.id, following_id: `user_${username}`, following_username: username, created_at: nowIso() });
+    let record;
+    if (index >= 0) {
+      record = { ...follows[index], deleted_at: nowIso() };
+      follows.splice(index, 1);
+    } else {
+      record = { id: `follow_${profile.id}_${username}`, follower_id: profile.id, following_id: `user_${username}`, following_username: username, created_at: nowIso(), deleted_at: null };
+      follows.push(record);
+    }
 
     saveFollows(follows);
+    persistSocial("saveInstaFollow", record);
     renderProfile();
     render();
   }
@@ -763,6 +794,126 @@
     save(merged);
     render(merged);
     return result;
+  }
+
+  function mergeById(localItems, remoteRows, mapRemote, { keepDeleted = false } = {}) {
+    const byId = new Map();
+    (Array.isArray(localItems) ? localItems : []).forEach((item) => {
+      if (item?.id) byId.set(item.id, item);
+    });
+    (Array.isArray(remoteRows) ? remoteRows : []).forEach((row) => {
+      if (!row?.id) return;
+      if (row.deleted_at && !keepDeleted) {
+        byId.delete(row.id);
+        return;
+      }
+      byId.set(row.id, mapRemote(row));
+    });
+    return Array.from(byId.values());
+  }
+
+  async function pushSocialCollection(items, method) {
+    const repo = window.AHARepository;
+    if (!repo || typeof repo[method] !== "function") return;
+    for (const item of Array.isArray(items) ? items : []) {
+      try {
+        await repo[method](item);
+      } catch (error) {
+        console.warn(`AHAInsta: ${method} sync feilet`, error);
+        return;
+      }
+    }
+  }
+
+  async function syncSocialFromDatabase() {
+    const repo = window.AHARepository;
+    if (!repo) return { ok: false, fallback: "localStorage" };
+
+    if (typeof repo.loadInstaProfile === "function") {
+      try {
+        const res = await repo.loadInstaProfile();
+        if (res?.ok && res.data) {
+          const remote = res.data;
+          const local = loadProfile();
+          const remoteUpdated = new Date(remote.updated_at || 0).getTime() || 0;
+          const localUpdated = new Date(local?.updated_at || 0).getTime() || 0;
+          if (!local || remoteUpdated > localUpdated) {
+            localStorage.setItem(PROFILE_KEY, JSON.stringify({
+              id: remote.local_id || local?.id || createId("user"),
+              username: remote.username || local?.username || "meg",
+              displayName: remote.display_name || local?.displayName || "Meg",
+              bio: remote.bio ?? local?.bio ?? "",
+              avatar: remote.avatar ?? local?.avatar ?? "",
+              created_at: remote.created_at || local?.created_at || nowIso(),
+              updated_at: remote.updated_at || nowIso()
+            }));
+          }
+        }
+      } catch (error) {
+        console.warn("AHAInsta: profil-sync feilet", error);
+      }
+    }
+
+    await pushSocialCollection(loadLikes(), "saveInstaLike");
+    if (typeof repo.loadInstaLikes === "function") {
+      try {
+        const res = await repo.loadInstaLikes();
+        if (res?.ok && Array.isArray(res.data)) {
+          saveLikes(mergeById(loadLikes(), res.data, (row) => ({
+            id: row.id,
+            post_id: row.post_id,
+            user_id: row.user_id,
+            created_at: row.created_at,
+            deleted_at: null
+          })));
+        }
+      } catch (error) {
+        console.warn("AHAInsta: likes-sync feilet", error);
+      }
+    }
+
+    await pushSocialCollection(loadComments(), "saveInstaComment");
+    if (typeof repo.loadInstaComments === "function") {
+      try {
+        const res = await repo.loadInstaComments();
+        if (res?.ok && Array.isArray(res.data)) {
+          saveComments(mergeById(loadComments(), res.data, (row) => ({
+            id: row.id,
+            post_id: row.post_id,
+            user_id: row.user_id,
+            username: row.username,
+            text: row.text,
+            created_at: row.created_at,
+            deleted_at: row.deleted_at || null
+          }), { keepDeleted: true }));
+        }
+      } catch (error) {
+        console.warn("AHAInsta: kommentar-sync feilet", error);
+      }
+    }
+
+    await pushSocialCollection(loadFollows(), "saveInstaFollow");
+    if (typeof repo.loadInstaFollows === "function") {
+      try {
+        const res = await repo.loadInstaFollows();
+        if (res?.ok && Array.isArray(res.data)) {
+          saveFollows(mergeById(loadFollows(), res.data, (row) => ({
+            id: row.id,
+            follower_id: row.follower_id,
+            following_id: row.following_id,
+            following_username: row.following_username,
+            created_at: row.created_at,
+            deleted_at: null
+          })));
+        }
+      } catch (error) {
+        console.warn("AHAInsta: følge-sync feilet", error);
+      }
+    }
+
+    renderProfile();
+    render();
+    return { ok: true };
   }
 
   async function completeInstagramImport(options = {}) {
@@ -1111,7 +1262,11 @@
     renderImportStatus();
     renderImportPreview();
     syncFromDatabase();
-    window.addEventListener("aha:auth-ready", syncFromDatabase);
+    syncSocialFromDatabase();
+    window.addEventListener("aha:auth-ready", () => {
+      syncFromDatabase();
+      syncSocialFromDatabase();
+    });
   }
 
   window.AHAInsta = {
@@ -1158,6 +1313,7 @@
     mergePosts,
     findMergedPost,
     syncFromDatabase,
+    syncSocialFromDatabase,
     addPost,
     deletePost,
     render

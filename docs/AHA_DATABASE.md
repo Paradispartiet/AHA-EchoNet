@@ -67,6 +67,10 @@ aha_notes
 aha_gallery_items
 aha_feed_posts
 aha_insta_posts
+aha_insta_profiles (Insta-profil, valgfri)
+aha_insta_likes (Insta-likes, valgfri)
+aha_insta_comments (Insta-kommentarer, valgfri)
+aha_insta_follows (Insta-følginger, valgfri)
 aha_imports
 aha_insight_embeddings (semantic search, valgfri)
 aha_insight_chambers (chamber-sync, valgfri)
