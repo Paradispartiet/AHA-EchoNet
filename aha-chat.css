@@ -240,6 +240,21 @@ pre#out { max-height: 22vh; overflow:auto; white-space: pre-wrap; }
 .aha-memory-controls-body input { accent-color: var(--aha-accent); }
 .aha-memory-controls-status { display: flex; flex-wrap: wrap; gap: 6px 10px; }
 .aha-memory-controls-status strong { color: var(--aha-text); }
+.aha-memory-exclusions { margin-top: 3px; padding-top: 5px; border-top: 1px solid rgba(255, 255, 255, 0.08); }
+.aha-memory-exclusions summary { cursor: pointer; color: var(--aha-muted); font-weight: 600; }
+.aha-memory-exclusions-body { display: grid; gap: 6px; margin-top: 6px; }
+.aha-memory-exclusions-list { display: grid; gap: 6px; }
+.aha-memory-exclusion-item { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; padding: 6px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.06); }
+.aha-memory-exclusion-copy { min-width: 0; }
+.aha-memory-exclusion-title { color: var(--aha-text); font-weight: 650; line-height: 1.25; }
+.aha-memory-exclusion-summary { margin-top: 2px; color: var(--aha-muted); line-height: 1.35; overflow-wrap: anywhere; }
+.aha-memory-exclusion-meta { margin-top: 2px; color: rgba(245, 245, 245, 0.52); font-size: 10px; }
+.aha-memory-exclusion-actions { flex: 0 0 auto; display: flex; justify-content: flex-end; }
+.aha-memory-exclusion-btn { border-radius: 999px; padding: 4px 8px; font-size: 10px; border: 1px solid rgba(255,211,71,0.42); background: rgba(255,211,71,0.08); color: var(--aha-accent); cursor: pointer; white-space: nowrap; }
+.aha-memory-exclusion-btn:hover:not(:disabled) { background: rgba(255,211,71,0.16); }
+.aha-memory-exclusion-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.aha-memory-exclusion-reset { justify-self: start; }
+.aha-memory-exclusions-empty { margin: 0; color: var(--aha-muted); line-height: 1.35; }
 
 @media (max-width: 1024px) {
   .chat-header-main { grid-template-columns: minmax(0,1fr); }
