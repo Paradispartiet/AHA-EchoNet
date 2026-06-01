@@ -6095,7 +6095,8 @@
         safeReply = forceInstitutionalMediaHistoryFagkoblingerInReply(safeReply, analysisText, { subjectMatches });
       }
       const visibleReply = normalizeAhaVisibleReply(safeReply, cleanText) || safeReply;
-      appendChat("aha", visibleReply, { categoryChips: suggestCategoryChips(), subjectMatches, memoryContext });
+      const categoryChips = memoryUseEnabled ? suggestCategoryChips() : [];
+      appendChat("aha", visibleReply, { categoryChips, subjectMatches, memoryContext });
       try { await renderAutoOutputs(cleanText, safeReply, { subjectMatches, persist: savingEnabled }); } catch (autoErr) { console.warn("Auto-output feilet", autoErr); }
       if (savingEnabled) {
         try { ensureAfterworkForLatestAnalysis(cleanText, { subjectMatches }); } catch (afterErr) { console.warn("Auto-etterarbeid feilet", afterErr); }

@@ -150,6 +150,19 @@ function buildContext() {
   assert.equal(defaults.saveNewInsights, true, 'default should save new insights');
   assert.equal(defaults.useExistingMemory, true, 'default should use existing memory');
 
+  ctx.AHAChat.saveChamberToStorage({
+    insights: [{
+      id: 'old-memory-1',
+      title: 'Gammelt AHA-minne',
+      summary: 'Dette skal ikke bli UI-chip når minnebruk er av.',
+      subject_id: 'sub_laring',
+      theme_id: 'th_default',
+      concepts: [{ label: 'Gammel innsikt' }],
+      patterns: [{ label: 'Minnemønster' }],
+      emner: ['Eksisterende minne']
+    }],
+    chatLog: []
+  });
   ctx.AHAMemoryControls.disableMemoryUse();
   const offResult = await hooks.submitAhaChatMessage('Hva gjør vi nå med AHA?');
   assert.equal(offResult.memoryContext.used, false, 'chat flow should pass an unused memory context when memory use is off');
@@ -162,6 +175,7 @@ function buildContext() {
   assert.deepEqual(offBody.ai_state.concepts, [], 'concepts should be empty when memory use is off');
   assert.deepEqual(offBody.ai_state.meta_profile, {}, 'meta profile should be empty when memory use is off');
   assert.deepEqual(offBody.similar_insights, [], 'similar insights should be empty when memory use is off');
+  assert.equal(ctx.__elementsById.get('chat-log').querySelectorAll('.message-category-chip').length, 0, 'AHA reply should not render category chips from existing insights when memory use is off');
   const offContext = hooks.buildAhaMemoryOffContext();
   assert.equal(offContext.used, false, 'off context should mark memory as unused');
   assert.match(offContext.reason, /slått av av brukeren/, 'off context should explain user control');
