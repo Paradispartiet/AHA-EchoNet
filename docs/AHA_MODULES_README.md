@@ -352,12 +352,16 @@ Status:
 - kan legge til tittel, media-path og caption
 - lagrer til Supabase via AHARepository hvis mulig
 - sender caption/tekst inn via AHAIngest
+- profil, likes, kommentarer og følginger persisteres nå best-effort via
+  AHARepository (`aha_insta_profiles`, `aha_insta_likes`, `aha_insta_comments`,
+  `aha_insta_follows`) og synkes tilbake med `syncSocialFromDatabase`
+- localStorage er fortsatt canonical; likes/følginger bruker stabile id-er og
+  soft-delete (`deleted_at`) ved toggle av
 
 Mangler før ferdig:
 - egen `aha-insta.css`
 - ordentlig bildegrid/feed-design
 - kobling til Gallery
-- reaksjoner/kommentarer senere
 - ekte media-upload
 
 ### 11. AHA Feed / Twitter

@@ -195,6 +195,83 @@
     });
   }
 
+  async function saveInstaProfile(profile) {
+    const p = cleanObject(profile);
+    const profileId = await getProfileId(p.profile_id);
+    if (!profileId) return fallback("not_signed_in");
+    const db = client();
+    if (!db) return fallback();
+
+    try {
+      const { data, error } = await db
+        .from("aha_insta_profiles")
+        .upsert({
+          profile_id: profileId,
+          local_id: p.id || null,
+          username: p.username || null,
+          display_name: p.displayName || null,
+          bio: p.bio || null,
+          avatar: p.avatar || null,
+          created_at: p.created_at || new Date().toISOString(),
+          updated_at: p.updated_at || new Date().toISOString()
+        }, { onConflict: "profile_id" })
+        .select()
+        .single();
+      if (error) return { ok: false, error };
+      return { ok: true, data };
+    } catch (error) {
+      return { ok: false, error };
+    }
+  }
+
+  async function saveInstaLike(like) {
+    const l = cleanObject(like);
+    if (!l.id) return fallback("missing_id");
+    const profileId = await getProfileId(l.profile_id);
+    if (!profileId) return fallback("not_signed_in");
+    return insert("aha_insta_likes", {
+      id: l.id,
+      profile_id: profileId,
+      post_id: l.post_id || null,
+      user_id: l.user_id || null,
+      deleted_at: l.deleted_at || null,
+      created_at: l.created_at || new Date().toISOString()
+    });
+  }
+
+  async function saveInstaComment(comment) {
+    const c = cleanObject(comment);
+    if (!c.id) return fallback("missing_id");
+    const profileId = await getProfileId(c.profile_id);
+    if (!profileId) return fallback("not_signed_in");
+    return insert("aha_insta_comments", {
+      id: c.id,
+      profile_id: profileId,
+      post_id: c.post_id || null,
+      user_id: c.user_id || null,
+      username: c.username || null,
+      text: c.text || null,
+      deleted_at: c.deleted_at || null,
+      created_at: c.created_at || new Date().toISOString()
+    });
+  }
+
+  async function saveInstaFollow(follow) {
+    const f = cleanObject(follow);
+    if (!f.id) return fallback("missing_id");
+    const profileId = await getProfileId(f.profile_id);
+    if (!profileId) return fallback("not_signed_in");
+    return insert("aha_insta_follows", {
+      id: f.id,
+      profile_id: profileId,
+      follower_id: f.follower_id || null,
+      following_id: f.following_id || null,
+      following_username: f.following_username || null,
+      deleted_at: f.deleted_at || null,
+      created_at: f.created_at || new Date().toISOString()
+    });
+  }
+
   async function saveImport(importRecord) {
     const r = cleanObject(importRecord);
     const id = r.id || `import_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
@@ -232,6 +309,37 @@
 
   function loadImports(options = {}) {
     return list("aha_imports", { orderBy: "created_at", limit: options.limit || 50 });
+  }
+
+  async function loadInstaProfile() {
+    const db = client();
+    if (!db) return fallback();
+    const profileId = await getProfileId();
+    if (!profileId) return fallback("not_signed_in");
+
+    try {
+      const { data, error } = await db
+        .from("aha_insta_profiles")
+        .select("local_id, username, display_name, bio, avatar, created_at, updated_at")
+        .eq("profile_id", profileId)
+        .maybeSingle();
+      if (error) return { ok: false, error };
+      return { ok: true, data: data || null };
+    } catch (error) {
+      return { ok: false, error };
+    }
+  }
+
+  function loadInstaLikes(options = {}) {
+    return list("aha_insta_likes", { orderBy: "created_at", limit: options.limit || 500 });
+  }
+
+  function loadInstaComments(options = {}) {
+    return list("aha_insta_comments", { orderBy: "created_at", limit: options.limit || 500 });
+  }
+
+  function loadInstaFollows(options = {}) {
+    return list("aha_insta_follows", { orderBy: "created_at", limit: options.limit || 500 });
   }
 
   async function saveChamber(chamber) {
@@ -331,6 +439,10 @@
     saveGalleryItem,
     saveFeedPost,
     saveInstaPost,
+    saveInstaProfile,
+    saveInstaLike,
+    saveInstaComment,
+    saveInstaFollow,
     saveImport,
     saveChamber,
     loadSourceEvents,
@@ -338,6 +450,10 @@
     loadGalleryItems,
     loadFeedPosts,
     loadInstaPosts,
+    loadInstaProfile,
+    loadInstaLikes,
+    loadInstaComments,
+    loadInstaFollows,
     loadImports,
     loadChamber,
     loadDashboardCounts

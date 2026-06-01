@@ -82,6 +82,47 @@ create table if not exists public.aha_insta_posts (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.aha_insta_profiles (
+  profile_id uuid primary key references public.aha_profiles(id) on delete cascade,
+  local_id text,
+  username text,
+  display_name text,
+  bio text,
+  avatar text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.aha_insta_likes (
+  id text primary key,
+  profile_id uuid null references public.aha_profiles(id) on delete set null,
+  post_id text,
+  user_id text,
+  deleted_at timestamptz null,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.aha_insta_comments (
+  id text primary key,
+  profile_id uuid null references public.aha_profiles(id) on delete set null,
+  post_id text,
+  user_id text,
+  username text,
+  text text,
+  deleted_at timestamptz null,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.aha_insta_follows (
+  id text primary key,
+  profile_id uuid null references public.aha_profiles(id) on delete set null,
+  follower_id text,
+  following_id text,
+  following_username text,
+  deleted_at timestamptz null,
+  created_at timestamptz not null default now()
+);
+
 create table if not exists public.aha_imports (
   id text primary key,
   profile_id uuid null references public.aha_profiles(id) on delete set null,
@@ -97,6 +138,10 @@ alter table public.aha_notes enable row level security;
 alter table public.aha_gallery_items enable row level security;
 alter table public.aha_feed_posts enable row level security;
 alter table public.aha_insta_posts enable row level security;
+alter table public.aha_insta_profiles enable row level security;
+alter table public.aha_insta_likes enable row level security;
+alter table public.aha_insta_comments enable row level security;
+alter table public.aha_insta_follows enable row level security;
 alter table public.aha_imports enable row level security;
 
 create index if not exists idx_aha_source_events_created_at on public.aha_source_events(created_at desc);
@@ -104,6 +149,9 @@ create index if not exists idx_aha_notes_created_at on public.aha_notes(created_
 create index if not exists idx_aha_gallery_items_created_at on public.aha_gallery_items(created_at desc);
 create index if not exists idx_aha_feed_posts_created_at on public.aha_feed_posts(created_at desc);
 create index if not exists idx_aha_insta_posts_created_at on public.aha_insta_posts(created_at desc);
+create index if not exists idx_aha_insta_likes_post_id on public.aha_insta_likes(post_id);
+create index if not exists idx_aha_insta_comments_post_id on public.aha_insta_comments(post_id);
+create index if not exists idx_aha_insta_follows_following on public.aha_insta_follows(following_username);
 create index if not exists idx_aha_imports_created_at on public.aha_imports(created_at desc);
 
 -- Soft-delete + source-event trace columns for existing installations.
