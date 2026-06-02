@@ -5,6 +5,9 @@
 
   let lastState = null;
 
+  const AHA_AUTH_RETURN_TO_KEY = "aha_auth_return_to_v1";
+  const HISTORY_GO_PROFILE_URL = "https://paradispartiet.github.io/History-Go/profile.html";
+
   const MODULE_ICONS = {
     profile: "◌",
     chat: "✦",
@@ -36,6 +39,15 @@
 
   function hasHistoryGoPayload() {
     return Boolean(String(localStorage.getItem("aha_import_payload_v1") || "").trim());
+  }
+
+  function persistAuthReturnTargetFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("source") !== "historygo") return;
+
+    try {
+      localStorage.setItem(AHA_AUTH_RETURN_TO_KEY, HISTORY_GO_PROFILE_URL);
+    } catch {}
   }
 
   function countActive(items) {
@@ -522,6 +534,7 @@
   }
 
   function bind() {
+    persistAuthReturnTargetFromUrl();
     bindProfileNameForm();
     bindLoginModal();
     bindProfileNameModal();
