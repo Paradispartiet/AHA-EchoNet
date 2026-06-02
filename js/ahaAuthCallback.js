@@ -5,6 +5,8 @@
   "use strict";
 
   const CALLBACK_TIMEOUT_MS = 8000;
+  const AHA_AUTH_RETURN_TO_KEY = "aha_auth_return_to_v1";
+  const HISTORY_GO_PROFILE_URL = "https://paradispartiet.github.io/History-Go/profile.html";
 
   function status(message) {
     const el = document.getElementById("auth-callback-status");
@@ -57,8 +59,32 @@
     ]);
   }
 
+  function getStoredReturnTarget() {
+    try {
+      const value = String(localStorage.getItem(AHA_AUTH_RETURN_TO_KEY) || "").trim();
+      if (value === HISTORY_GO_PROFILE_URL) return value;
+    } catch {}
+    return "";
+  }
+
+  function clearStoredReturnTarget() {
+    try {
+      localStorage.removeItem(AHA_AUTH_RETURN_TO_KEY);
+    } catch {}
+  }
+
   function goDashboard(delay = 900) {
     setTimeout(() => global.location.replace(dashboardUrl()), delay);
+  }
+
+  function goAfterAuth(delay = 900) {
+    const returnTarget = getStoredReturnTarget();
+    if (returnTarget) {
+      clearStoredReturnTarget();
+      setTimeout(() => global.location.replace(returnTarget), delay);
+      return;
+    }
+    goDashboard(delay);
   }
 
   async function finish() {
@@ -80,8 +106,12 @@
     if (!hasAuthParams()) {
       const existing = await withTimeout(client.auth.getSession(), CALLBACK_TIMEOUT_MS, "existing session").catch(() => null);
       if (existing?.data?.session) {
-        status("Du er allerede innlogget. Sender deg til AHA Dashboard …");
-        goDashboard(700);
+        const returnTarget = getStoredReturnTarget();
+        status(returnTarget
+          ? "Du er allerede innlogget. Sender deg tilbake til History Go …"
+          : "Du er allerede innlogget. Sender deg til AHA Dashboard …"
+        );
+        goAfterAuth(700);
         return;
       }
       status("Ingen innloggingsdata funnet. Sender deg tilbake …");
@@ -103,9 +133,13 @@
       }
 
       if (data?.session) {
+        const returnTarget = getStoredReturnTarget();
         cleanCallbackUrl();
-        status("Innlogging fullført. Sender deg til AHA Dashboard …");
-        goDashboard(700);
+        status(returnTarget
+          ? "Innlogging fullført. Sender deg tilbake til History Go …"
+          : "Innlogging fullført. Sender deg til AHA Dashboard …"
+        );
+        goAfterAuth(700);
         return;
       }
 
