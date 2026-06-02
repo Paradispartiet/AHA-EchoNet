@@ -145,30 +145,38 @@
   }
 
   async function loadAuthState() {
+    let user = null;
     try {
-      const user = await window.AHAAuth?.getUser?.();
-      let profileResult = null;
-      if (user?.id && window.AHAAuth?.loadProfile) {
-        profileResult = await window.AHAAuth.loadProfile(user);
-        if (profileResult?.reason === "missing_profile" && window.AHAAuth?.ensureProfile) {
-          await window.AHAAuth.ensureProfile();
-          profileResult = await window.AHAAuth.loadProfile(user);
-        }
-      }
-
-      return {
-        user: user || null,
-        profile: profileResult?.ok ? profileResult.data : null,
-        profileResult
-      };
+      user = await window.AHAAuth?.getUser?.();
     } catch (error) {
-      console.warn("AHADashboard: loadAuthState feilet", error);
+      console.warn("AHADashboard: kunne ikke hente innlogget bruker", error);
       return {
         user: null,
         profile: null,
         profileResult: { ok: false, reason: "auth_error", error }
       };
     }
+
+    let profileResult = null;
+    if (user?.id && window.AHAAuth?.loadProfile) {
+      try {
+        profileResult = await window.AHAAuth.loadProfile(user);
+        if (profileResult?.reason === "missing_profile" && window.AHAAuth?.ensureProfile) {
+          const ensured = await window.AHAAuth.ensureProfile();
+          if (!ensured?.ok) console.warn("AHADashboard: kunne ikke opprette AHA-profil automatisk", ensured?.error || ensured?.reason || ensured);
+          profileResult = await window.AHAAuth.loadProfile(user);
+        }
+      } catch (error) {
+        console.warn("AHADashboard: kunne ikke laste AHA-profil", error);
+        profileResult = { ok: false, reason: "profile_error", error };
+      }
+    }
+
+    return {
+      user: user || null,
+      profile: profileResult?.ok ? profileResult.data : null,
+      profileResult
+    };
   }
 
 
