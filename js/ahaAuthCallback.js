@@ -59,6 +59,56 @@
     ]);
   }
 
+  function isRecoverableCodeExchangeError(error) {
+    const message = String(error?.message || error?.error_description || error?.name || error || "").toLowerCase();
+    const status = Number(error?.status || error?.statusCode || 0);
+    return Boolean(
+      status === 400 ||
+      status === 422 ||
+      message.includes("already") ||
+      message.includes("invalid") ||
+      message.includes("expired") ||
+      message.includes("used") ||
+      message.includes("flow state") ||
+      message.includes("code verifier") ||
+      message.includes("auth code") ||
+      message.includes("invalid_grant")
+    );
+  }
+
+  async function getSessionFromCallback(client) {
+    const { query } = params();
+    const code = query.get("code");
+
+    if (code && typeof client.auth.exchangeCodeForSession === "function") {
+      let exchanged = null;
+      try {
+        exchanged = await withTimeout(
+          client.auth.exchangeCodeForSession(code),
+          CALLBACK_TIMEOUT_MS,
+          "exchange code for session"
+        );
+      } catch (error) {
+        if (!isRecoverableCodeExchangeError(error)) throw error;
+        console.warn("AHA auth callback code exchange threw a recoverable error; trying getSession fallback", error);
+      }
+
+      if (exchanged?.data?.session) return { data: exchanged.data, error: null };
+      if (exchanged?.error) {
+        if (!isRecoverableCodeExchangeError(exchanged.error)) {
+          return { data: null, error: exchanged.error };
+        }
+        console.warn("AHA auth callback code exchange did not create a session; trying getSession fallback", exchanged.error);
+      }
+    }
+
+    return await withTimeout(
+      client.auth.getSession(),
+      CALLBACK_TIMEOUT_MS,
+      "auth session"
+    );
+  }
+
   function getStoredReturnTarget() {
     try {
       const value = String(localStorage.getItem(AHA_AUTH_RETURN_TO_KEY) || "").trim();
@@ -169,9 +219,7 @@
     try {
       status("Fullfører innlogging …");
 
-      // For PKCE, Supabase's browser client handles ?code=... when created with:
-      // detectSessionInUrl: true + flowType: "pkce".
-      const { data, error } = await withTimeout(client.auth.getSession(), CALLBACK_TIMEOUT_MS, "auth session");
+      const { data, error } = await getSessionFromCallback(client);
       if (error) {
         status(`Innlogging feilet: ${error.message}`);
         cleanCallbackUrl();
@@ -194,6 +242,10 @@
         return;
       }
 
+      console.warn("AHA auth callback completed without a session after code exchange/getSession", {
+        hasAuthParams: hasAuthParams(),
+        hasReturnTarget: Boolean(getStoredReturnTarget())
+      });
       status("Innlogging behandlet, men session ble ikke funnet. Sender deg tilbake …");
       cleanCallbackUrl();
       goDashboard(1600);
@@ -204,6 +256,12 @@
       goDashboard(1800);
     }
   }
+
+  global.AHAAuthCallbackDebug = {
+    hasAuthParams,
+    getAuthError,
+    getStoredReturnTarget
+  };
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", finish);

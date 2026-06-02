@@ -297,6 +297,11 @@
     const googleButton = document.getElementById("aha-auth-google");
     const signOutButton = document.getElementById("aha-auth-signout");
     const output = document.getElementById("aha-auth-output");
+    const statusMount = document.getElementById("aha-auth-status");
+
+    if (!form && !emailInput && !googleButton && !signOutButton && !output && !statusMount) {
+      return;
+    }
 
     if (googleButton) {
       googleButton.addEventListener("click", async () => {
