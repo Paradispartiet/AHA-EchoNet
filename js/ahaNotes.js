@@ -58,7 +58,10 @@
     const local = load();
     if (local.length) await pushLocalToDatabase(local);
     const result = await window.AHARepository.loadNotes();
-    if (!result?.ok || !Array.isArray(result.data)) return result || { ok: false };
+    if (!result?.ok) return result || { ok: false };
+    if (!Array.isArray(result.data)) {
+      return { ...result, ok: false, fallback: "localStorage", data: local };
+    }
     const merged = mergeNotes(local, result.data);
     save(merged);
     render(merged);
