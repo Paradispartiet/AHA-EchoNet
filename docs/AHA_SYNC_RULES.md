@@ -92,7 +92,7 @@ Etter pull er modulreglene ulike:
 ```text
 Notes: merge local+remote etter id, velg nyeste handling fra deleted_at/updated_at/created_at, skriv merged liste lokalt og render merged liste.
 Feed: merge local+remote etter id, velg nyeste handling fra deleted_at/updated_at/created_at, skriv merged liste lokalt og render merged liste.
-Galleri: skriv remote-listen tilbake til localStorage og render remote-listen.
+Galleri: merge local+remote etter id, velg nyeste handling fra deleted_at/updated_at/created_at, skriv merged liste lokalt og render merged liste.
 ```
 
 Formålet er å unngå at lokale endringer som ennå ikke er pushet forsvinner når brukeren logger inn eller når `aha:auth-ready` fyrer. For Notes betyr dette også at en nyere lokal tombstone ikke blindt fjernes av en eldre remote aktiv note etter pull.
@@ -101,7 +101,7 @@ Midlertidig konsekvens:
 
 ```text
 Notes bruker en enkel per-note last-write-wins merge etter pull, med remote som vinner ved lik action time.
-For Galleri finnes det i dag ingen full merge per felt etter pull; remote-listen erstatter lokal liste etter at lokale items er forsøkt pushet. For Feed brukes enkel per-post last-write-wins merge etter pull, med remote som vinner ved lik action time.
+Galleri bruker en enkel per-item last-write-wins merge etter pull, med remote som vinner ved lik action time. For Feed brukes enkel per-post last-write-wins merge etter pull, med remote som vinner ved lik action time.
 ```
 
 ## 5. Last-write-wins som midlertidig regel
@@ -114,7 +114,7 @@ Regler:
 1. Nyeste kjente handling vinner.
 2. `deleted_at` regnes som en handlingstid, ikke bare som fravær.
 3. `updated_at` vinner over eldre `created_at` når det finnes.
-4. Hvis modulen ikke har full merge-logikk, brukes push-before-pull og remote-resultatet som ny lokal cache.
+4. Notes, Galleri og Feed bruker per-record merge etter pull; moduler uten full merge-logikk kan fortsatt bruke push-before-pull og remote-resultatet som ny lokal cache.
 5. Dette er midlertidig; det er ikke en endelig multi-device konfliktmodell.
 ```
 
@@ -145,7 +145,7 @@ Dette gjelder i dag særlig:
 
 ```text
 Notes: deleted_at + updated_at ved delete.
-Galleri: deleted_at ved delete.
+Galleri: deleted_at + updated_at ved delete.
 Feed: deleted_at + updated_at ved delete.
 Insta posts: deleted_at ved delete.
 Insta likes/comments/follows: deleted_at/null som action-status.
@@ -261,7 +261,7 @@ create gallery item
 
 ```text
 delete gallery item
-→ set deleted_at
+→ set deleted_at and updated_at
 → localStorage aha_gallery_v1
 → best-effort saveGalleryItem
 → render hides deleted item
@@ -270,13 +270,23 @@ delete gallery item
 Sync:
 
 ```text
-syncFromDatabase pushes local gallery items first, then pulls remote gallery items, saves remote list locally and renders.
+syncFromDatabase pushes local gallery items first, then pulls remote gallery items, merges local and remote gallery items by id, saves the merged list locally and renders.
+```
+
+Galleri conflictregel:
+
+```text
+1. Sammenlign nyeste handlingstid fra deleted_at, updated_at og created_at.
+2. deleted_at teller som handlingstid.
+3. Nyeste handling vinner.
+4. Ved lik handlingstid vinner remote gallery item.
+5. Hvis remote pull feiler, skal lokal cache ikke slettes.
 ```
 
 Merk:
 
 ```text
-Galleri er URL/path/dataURL MVP. Ekte storage skal ikke bygges før storage/sync-kontrakt er låst.
+Galleri er fortsatt URL/path/dataURL MVP. Ekte storage/opplasting skal ikke bygges før storage/sync-kontrakt er låst.
 ```
 
 ### 8.3 Feed
@@ -416,7 +426,7 @@ Ikke bygg Supabase-sync for disse modulene før egen contract/sync-regel er lås
 | Modul | Dagens konfliktregel | Tombstone-regel | Risiko | Midlertidig beslutning |
 |---|---|---|---|---|
 | Notes | Push local før pull remote; merge local+remote by id; newest wins by deleted_at/updated_at/created_at; remote wins on equal action time. | `deleted_at` + `updated_at` ved delete; render filtrerer slettede. | Ingen full felt-merge; stale remote kan fortsatt påvirke cache hvis remote har nyere action time. | Behold enkel Notes-merge; ikke bygg full versjonering ennå. |
-| Galleri | Push local før pull remote; remote-listen blir lokal cache etter pull. | `deleted_at` ved delete; render filtrerer slettede. | Ingen full felt-merge; media-storage ikke løst. | Behold URL/path MVP. Ikke bygg storage ennå. |
+| Galleri | Push local før pull remote; merge local+remote by id; newest wins by deleted_at/updated_at/created_at; remote wins on equal action time. | `deleted_at` + `updated_at` ved delete; render filtrerer slettede. | Ingen full felt-merge; media-storage ikke løst. | Behold URL/path MVP. Ikke bygg storage/opplasting ennå. |
 | Feed | Push local før pull remote; merge local+remote by id; newest wins by deleted_at/updated_at/created_at; remote wins on equal action time. | `deleted_at` + `updated_at` ved delete; render filtrerer slettede. | Ingen full felt-merge; stale remote kan fortsatt påvirke cache hvis remote har nyere action time. | Behold enkel postmodell. |
 | Insta posts | Push aktive lokale poster før pull; merge local+remote by id/source_signature; newest wins by updated_at/deleted_at/created_at. | `deleted_at` ved delete; render filtrerer slettede. | Active-only pre-push kan gjøre lokale tombstones avhengige av tidligere persistPost. | Ikke utvid før Insta har eget kontraktdokument. |
 | Insta profile | Remote profile kan oppdatere lokal profile hvis remote `updated_at` er nyere. | Ingen post-tombstone-regel. | Profil er modulspesifikk og ikke full kontoprofilmodell. | Behold enkel profile-sync. |

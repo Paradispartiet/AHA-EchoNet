@@ -18,6 +18,29 @@
     localStorage.setItem(KEY, JSON.stringify(Array.isArray(items) ? items : []));
   }
 
+  function galleryActionTime(item) {
+    const times = [item?.deleted_at, item?.updated_at, item?.created_at]
+      .map((value) => Date.parse(value || ""))
+      .filter((value) => Number.isFinite(value));
+    return times.length ? Math.max(...times) : 0;
+  }
+
+  function mergeGalleryItems(localItems, remoteItems) {
+    const merged = new Map();
+    for (const item of Array.isArray(localItems) ? localItems : []) {
+      if (item?.id) merged.set(String(item.id), item);
+    }
+    for (const item of Array.isArray(remoteItems) ? remoteItems : []) {
+      if (!item?.id) continue;
+      const key = String(item.id);
+      const existing = merged.get(key);
+      if (!existing || galleryActionTime(item) >= galleryActionTime(existing)) {
+        merged.set(key, item);
+      }
+    }
+    return Array.from(merged.values()).sort((a, b) => galleryActionTime(b) - galleryActionTime(a));
+  }
+
   async function pushLocalToDatabase(items) {
     if (!window.AHARepository?.saveGalleryItem) return { ok: false, fallback: "localStorage" };
     const results = [];
@@ -32,10 +55,14 @@
     const local = load();
     if (local.length) await pushLocalToDatabase(local);
     const result = await window.AHARepository.loadGalleryItems();
-    if (!result?.ok || !Array.isArray(result.data)) return result || { ok: false };
-    save(result.data);
-    render(result.data);
-    return result;
+    if (!result?.ok) return result || { ok: false };
+    if (!Array.isArray(result.data)) {
+      return { ...result, ok: false, fallback: "localStorage", data: local };
+    }
+    const merged = mergeGalleryItems(local, result.data);
+    save(merged);
+    render(merged);
+    return { ...result, data: merged, merged: true };
   }
 
   function persistItem(item) {
@@ -137,7 +164,8 @@
     const entries = load();
     const index = entries.findIndex((entry) => entry.id === id);
     if (index < 0) return null;
-    entries[index] = { ...entries[index], deleted_at: new Date().toISOString() };
+    const deletedAt = new Date().toISOString();
+    entries[index] = { ...entries[index], deleted_at: deletedAt, updated_at: deletedAt };
     save(entries);
     persistItem(entries[index]);
     render(entries);
