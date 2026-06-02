@@ -1,5 +1,5 @@
 // ahaAuthCallback.js
-// Handles Supabase auth redirects and returns the user to AHA Dashboard.
+// Handles Supabase auth redirects and returns the user to the stored return target or AHA Dashboard.
 
 (function (global) {
   "use strict";
@@ -87,6 +87,49 @@
     goDashboard(delay);
   }
 
+  async function ensureAhaProfileForSession(session) {
+    if (!session?.user?.id) return { ok: false, reason: "missing_user" };
+
+    if (typeof global.AHAAuth?.ensureProfile === "function") {
+      return await global.AHAAuth.ensureProfile();
+    }
+
+    const client = global.AHADb?.getClient?.();
+    if (!client) return { ok: false, reason: "not_configured" };
+
+    const user = session.user;
+    const metadata = user.user_metadata || {};
+    const displayName = String(
+      metadata.full_name ||
+      metadata.name ||
+      metadata.display_name ||
+      metadata.user_name ||
+      metadata.preferred_username ||
+      user.email ||
+      ""
+    ).trim();
+
+    const profile = {
+      id: user.id,
+      display_name: displayName || null,
+      updated_at: new Date().toISOString()
+    };
+
+    const { data, error } = await client
+      .from("aha_profiles")
+      .upsert(profile, { onConflict: "id" })
+      .select()
+      .single();
+
+    if (error) return { ok: false, error };
+    return { ok: true, data };
+  }
+
+  function warnProfileFailure(context, result) {
+    if (result?.ok) return;
+    console.warn(`AHA auth callback could not ensure profile during ${context}`, result?.error || result?.reason || result);
+  }
+
   async function finish() {
     const client = global.AHADb?.getClient?.();
     if (!client) {
@@ -107,6 +150,10 @@
       const existing = await withTimeout(client.auth.getSession(), CALLBACK_TIMEOUT_MS, "existing session").catch(() => null);
       if (existing?.data?.session) {
         const returnTarget = getStoredReturnTarget();
+        const profileResult = await ensureAhaProfileForSession(existing.data.session)
+          .catch((error) => ({ ok: false, error }));
+        warnProfileFailure("existing session", profileResult);
+
         status(returnTarget
           ? "Du er allerede innlogget. Sender deg tilbake til History Go …"
           : "Du er allerede innlogget. Sender deg til AHA Dashboard …"
@@ -134,6 +181,10 @@
 
       if (data?.session) {
         const returnTarget = getStoredReturnTarget();
+        const profileResult = await ensureAhaProfileForSession(data.session)
+          .catch((error) => ({ ok: false, error }));
+        warnProfileFailure("auth callback", profileResult);
+
         cleanCallbackUrl();
         status(returnTarget
           ? "Innlogging fullført. Sender deg tilbake til History Go …"
