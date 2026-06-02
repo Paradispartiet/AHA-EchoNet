@@ -50,6 +50,22 @@
     } catch {}
   }
 
+  function isHistoryGoLoginReturnRequest() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("source") === "historygo";
+  }
+
+  function clearAuthReturnTarget() {
+    try {
+      localStorage.removeItem(AHA_AUTH_RETURN_TO_KEY);
+    } catch {}
+  }
+
+  function redirectBackToHistoryGoProfile() {
+    clearAuthReturnTarget();
+    window.location.replace(HISTORY_GO_PROFILE_URL);
+  }
+
   function countActive(items) {
     return items.filter((item) => !item?.deleted_at).length;
   }
@@ -400,6 +416,11 @@
   async function renderDashboard() {
     try {
       const authState = await loadAuthState();
+      if (authState.user?.id && isHistoryGoLoginReturnRequest()) {
+        redirectBackToHistoryGoProfile();
+        return;
+      }
+
       const local = localStats();
       let dbResult = { ok: false, fallback: "not_loaded" };
       let stats = local;
