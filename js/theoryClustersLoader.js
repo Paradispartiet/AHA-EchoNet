@@ -7,7 +7,7 @@
 (function (global) {
   "use strict";
 
-  const URL = new URL("theoryClusters.json", global.document?.baseURI || global.location?.href || "/").toString();
+  const URL = new URL("data/theoryClusters.json", global.document?.baseURI || global.location?.href || "/").toString();
   let _cache = null;
   let _pending = null;
 
