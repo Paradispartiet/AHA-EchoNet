@@ -18,6 +18,28 @@
     localStorage.setItem(KEY, JSON.stringify(Array.isArray(items) ? items : []));
   }
 
+  function postActionTime(post) {
+    const times = [post?.deleted_at, post?.updated_at, post?.created_at]
+      .map((value) => Date.parse(value || ""))
+      .filter((value) => Number.isFinite(value));
+    return times.length ? Math.max(...times) : 0;
+  }
+
+  function mergePosts(localPosts, remotePosts) {
+    const merged = new Map();
+    for (const post of Array.isArray(localPosts) ? localPosts : []) {
+      if (post?.id) merged.set(post.id, post);
+    }
+    for (const post of Array.isArray(remotePosts) ? remotePosts : []) {
+      if (!post?.id) continue;
+      const existing = merged.get(post.id);
+      if (!existing || postActionTime(post) >= postActionTime(existing)) {
+        merged.set(post.id, post);
+      }
+    }
+    return Array.from(merged.values()).sort((a, b) => postActionTime(b) - postActionTime(a));
+  }
+
   async function pushLocalToDatabase(items) {
     if (!window.AHARepository?.saveFeedPost) return { ok: false, fallback: "localStorage" };
     const results = [];
@@ -32,10 +54,14 @@
     const local = load();
     if (local.length) await pushLocalToDatabase(local);
     const result = await window.AHARepository.loadFeedPosts();
-    if (!result?.ok || !Array.isArray(result.data)) return result || { ok: false };
-    save(result.data);
-    render(result.data);
-    return result;
+    if (!result?.ok) return result || { ok: false };
+    if (!Array.isArray(result.data)) {
+      return { ...result, ok: false, fallback: "localStorage", data: local };
+    }
+    const merged = mergePosts(local, result.data);
+    save(merged);
+    render(merged);
+    return { ...result, data: merged, merged: true };
   }
 
   function persistPost(post) {
@@ -117,7 +143,8 @@
     const entries = load();
     const index = entries.findIndex((entry) => entry.id === id);
     if (index < 0) return null;
-    entries[index] = { ...entries[index], deleted_at: new Date().toISOString() };
+    const deletedAt = new Date().toISOString();
+    entries[index] = { ...entries[index], deleted_at: deletedAt, updated_at: deletedAt };
     save(entries);
     persistPost(entries[index]);
     render(entries);

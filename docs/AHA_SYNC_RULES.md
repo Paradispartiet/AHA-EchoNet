@@ -91,7 +91,8 @@ Etter pull er modulreglene ulike:
 
 ```text
 Notes: merge local+remote etter id, velg nyeste handling fra deleted_at/updated_at/created_at, skriv merged liste lokalt og render merged liste.
-Galleri/Feed: skriv remote-listen tilbake til localStorage og render remote-listen.
+Feed: merge local+remote etter id, velg nyeste handling fra deleted_at/updated_at/created_at, skriv merged liste lokalt og render merged liste.
+Galleri: skriv remote-listen tilbake til localStorage og render remote-listen.
 ```
 
 Formålet er å unngå at lokale endringer som ennå ikke er pushet forsvinner når brukeren logger inn eller når `aha:auth-ready` fyrer. For Notes betyr dette også at en nyere lokal tombstone ikke blindt fjernes av en eldre remote aktiv note etter pull.
@@ -100,7 +101,7 @@ Midlertidig konsekvens:
 
 ```text
 Notes bruker en enkel per-note last-write-wins merge etter pull, med remote som vinner ved lik action time.
-For Galleri/Feed finnes det i dag ingen full merge per felt etter pull; remote-listen erstatter lokal liste etter at lokale items er forsøkt pushet.
+For Galleri finnes det i dag ingen full merge per felt etter pull; remote-listen erstatter lokal liste etter at lokale items er forsøkt pushet. For Feed brukes enkel per-post last-write-wins merge etter pull, med remote som vinner ved lik action time.
 ```
 
 ## 5. Last-write-wins som midlertidig regel
@@ -145,7 +146,7 @@ Dette gjelder i dag særlig:
 ```text
 Notes: deleted_at + updated_at ved delete.
 Galleri: deleted_at ved delete.
-Feed: deleted_at ved delete.
+Feed: deleted_at + updated_at ved delete.
 Insta posts: deleted_at ved delete.
 Insta likes/comments/follows: deleted_at/null som action-status.
 ```
@@ -300,7 +301,7 @@ create feed post
 
 ```text
 delete feed post
-→ set deleted_at
+→ set deleted_at and updated_at
 → localStorage aha_feed_posts_v1
 → best-effort saveFeedPost
 → render hides deleted post
@@ -309,7 +310,7 @@ delete feed post
 Sync:
 
 ```text
-syncFromDatabase pushes local feed posts first, then pulls remote feed posts, saves remote list locally and renders.
+syncFromDatabase pushes local feed posts first, then pulls remote feed posts, merges local and remote posts by id, saves the merged list locally and renders.
 ```
 
 ### 8.4 Insta
@@ -416,7 +417,7 @@ Ikke bygg Supabase-sync for disse modulene før egen contract/sync-regel er lås
 |---|---|---|---|---|
 | Notes | Push local før pull remote; merge local+remote by id; newest wins by deleted_at/updated_at/created_at; remote wins on equal action time. | `deleted_at` + `updated_at` ved delete; render filtrerer slettede. | Ingen full felt-merge; stale remote kan fortsatt påvirke cache hvis remote har nyere action time. | Behold enkel Notes-merge; ikke bygg full versjonering ennå. |
 | Galleri | Push local før pull remote; remote-listen blir lokal cache etter pull. | `deleted_at` ved delete; render filtrerer slettede. | Ingen full felt-merge; media-storage ikke løst. | Behold URL/path MVP. Ikke bygg storage ennå. |
-| Feed | Push local før pull remote; remote-listen blir lokal cache etter pull. | `deleted_at` ved delete; render filtrerer slettede. | Ingen full felt-merge; ingen tråder/replies. | Behold enkel postmodell. |
+| Feed | Push local før pull remote; merge local+remote by id; newest wins by deleted_at/updated_at/created_at; remote wins on equal action time. | `deleted_at` + `updated_at` ved delete; render filtrerer slettede. | Ingen full felt-merge; stale remote kan fortsatt påvirke cache hvis remote har nyere action time. | Behold enkel postmodell. |
 | Insta posts | Push aktive lokale poster før pull; merge local+remote by id/source_signature; newest wins by updated_at/deleted_at/created_at. | `deleted_at` ved delete; render filtrerer slettede. | Active-only pre-push kan gjøre lokale tombstones avhengige av tidligere persistPost. | Ikke utvid før Insta har eget kontraktdokument. |
 | Insta profile | Remote profile kan oppdatere lokal profile hvis remote `updated_at` er nyere. | Ingen post-tombstone-regel. | Profil er modulspesifikk og ikke full kontoprofilmodell. | Behold enkel profile-sync. |
 | Insta likes/comments/follows | Reconcile by id; newest action time wins. | `deleted_at` tombstone vinner når nyere; null betyr aktiv handling. | Lokal sosial graf er simulert. | Ikke gjør dette til ekte sosial graf ennå. |
