@@ -137,38 +137,17 @@ AHARepository.saveSourceEvent(...)
 ### Feltbetydning
 
 ```text
-id
-= stabil source event-id, vanligvis src_<timestamp>_<random>.
-
-source_type
-= hva slags hendelse det er, f.eks. chat_message, note, note_edit, gallery, feed_post, insta_post, historygo_nextup.
-
-source_app
-= hvilken modul/app som skapte hendelsen, f.eks. aha_chat, aha_notes, aha_gallery, aha_feed, aha_insta, historygo.
-
-content_type
-= text, image, video, mixed eller modulspesifikk variant.
-
-title
-= kort tittel eller fallback-label.
-
-text
-= analyse-/visningstekst.
-
-user_created
-= true når brukeren selv skapte materialet.
-
-imported
-= true når materialet er importert fra History Go, Instagram eller annen importkilde.
-
-created_at
-= ISO-tidspunkt for source event.
-
-tags
-= trimmede strenger.
-
-meta
-= modulspesifikk metadata.
+id = stabil source event-id, vanligvis src_<timestamp>_<random>.
+source_type = hva slags hendelse det er, f.eks. chat_message, note, note_edit, gallery, feed_post, insta_post, historygo_nextup.
+source_app = hvilken modul/app som skapte hendelsen, f.eks. aha_chat, aha_notes, aha_gallery, aha_feed, aha_insta, historygo.
+content_type = text, image, video, mixed eller modulspesifikk variant.
+title = kort tittel eller fallback-label.
+text = analyse-/visningstekst.
+user_created = true når brukeren selv skapte materialet.
+imported = true når materialet er importert fra History Go, Instagram eller annen importkilde.
+created_at = ISO-tidspunkt for source event.
+tags = trimmede strenger.
+meta = modulspesifikk metadata.
 ```
 
 ### Regler
@@ -225,7 +204,7 @@ js/ahaIngest.js
 AHAIngest.ingest(input) skal først lage source event via AHASources.
 Deretter renser den tekst og lager signal via InsightsEngine.createSignalFromMessage(...).
 Hvis skip_insight === true, skal source event lagres, men insight/signalet skal hoppes over.
-skip_insight brukes særlig for AHA-agentens egne svar.
+skip_insight brukes særlig for AHA-agentens egne svar og for note_edit.
 History Go-signaler skal ikke emnematches på nytt.
 Emnematcher skriver bare emne_suggestions, ikke fasit.
 Embedding-berikelse er fire-and-forget og skal ikke blokkere hovedflyten.
@@ -508,16 +487,26 @@ AHARepository.loadNotes(...)
   user_created: true,
   imported: false,
   created_at: updated_at,
-  meta: { note_id }
+  meta: { note_id },
+  skip_insight: true
 }
 ```
 
-### Åpent spørsmål
+### Beslutning: note_edit er source-only
 
 ```text
-Skal note_edit alltid lage ny insight, eller bare source event?
-Nåværende kode ingestes edit som ordinær insight-kandidat.
-Dette bør avklares før Notes modnes videre.
+note_create = source event + ordinær AHAIngest, slik at ny insight kan oppstå.
+note_edit = source event only med skip_insight: true, slik at små rettinger ikke lager nye nesten-like insights.
+reanalyze_note = senere eksplisitt handling som kan lage ny insight når brukeren faktisk ber om revurdering.
+```
+
+### Regler
+
+```text
+Et notat er et levende dokument.
+Små rettinger, omskrivinger og stavefeil skal ikke automatisk forurense chamber.
+Edit-historikk skal fortsatt finnes i source-loggen.
+Ny analyse av et redigert notat skal være en bevisst handling, ikke default.
 ```
 
 ## 10. Gallery item contract
@@ -1411,11 +1400,8 @@ Ved konflikt må hver modul ha eksplisitt merge-regel før videre modning.
 Nåværende system bruker blanding av snake_case og camelCase.
 
 ```text
-deleted_at
-= mest brukt i notes, gallery, feed, insta og enkelte imported/module records.
-
-deletedAt
-= mest brukt i lists, paths, articles og groups.
+deleted_at = mest brukt i notes, gallery, feed, insta og enkelte imported/module records.
+deletedAt = mest brukt i lists, paths, articles og groups.
 ```
 
 Regel fremover:
@@ -1429,23 +1415,12 @@ Sletting bør være soft delete når data kan være synket.
 ## 23. Naming-regler
 
 ```text
-localStorage keys
-= snake_case med versjonssuffix, f.eks. aha_notes_v1.
-
-Modulrecords
-= kan være snake_case eller camelCase avhengig av eksisterende modul.
-
-BaseItem
-= camelCase.
-
-SourceEvent
-= snake_case.
-
-References
-= bruker source + refId.
-
-Supabase fields
-= bør primært være snake_case, men repository-laget kan mappe.
+localStorage keys = snake_case med versjonssuffix, f.eks. aha_notes_v1.
+Modulrecords = kan være snake_case eller camelCase avhengig av eksisterende modul.
+BaseItem = camelCase.
+SourceEvent = snake_case.
+References = bruker source + refId.
+Supabase fields = bør primært være snake_case, men repository-laget kan mappe.
 ```
 
 ## 24. Modulkontrakt-matrise
@@ -1456,7 +1431,7 @@ Supabase fields
 | SourceEvent | `ahaSources.js` | `aha_source_events_v1` | `aha_source_events` | ja | nei | rålogg |
 | Chamber | `insightsChamber.js` / `ahaIngest.js` | `aha_insight_chamber_v1` | `aha_insight_chambers` | nei | ja, via ingest | canonical insight-container |
 | Insight | `insightsChamber.js` | inni chamber | inni chamber / embeddings | nei | ja | motor-output |
-| Note | `ahaNotes.js` | `aha_notes_v1` | `aha_notes` | ja | ja via ingest | brukerens tekst |
+| Note | `ahaNotes.js` | `aha_notes_v1` | `aha_notes` | ja | create: ja / edit: nei | brukerens tekst |
 | GalleryItem | `ahaGallery.js` | `aha_gallery_v1` | `aha_gallery_items` | ja | ja via ingest | visuelt minne |
 | FeedPost | `ahaFeed.js` | `aha_feed_posts_v1` | `aha_feed_posts` | ja | ja via ingest | kort post |
 | InstaPost | `ahaInsta.js` | `aha_insta_posts_v1` | `aha_insta_posts` | ja | ja via ingest | bilde/video-post |
@@ -1480,15 +1455,16 @@ Supabase fields
 1. Ikke endre source event-shape uten migrering.
 2. Ikke skriv insights uten source event når data kommer fra bruker/import.
 3. Ikke la AHA-agentens egne svar bli ordinære insights.
-4. Ikke emnematch History Go-import på nytt.
-5. Ikke bruk emne_suggestions som bekreftede emner.
-6. Ikke gjør Supabase til eneste sannhet uten sync-dokument.
-7. Ikke fjern localStorage fallback.
-8. Ikke endre deletion style modulvis uten migrering.
-9. Ikke bruk search/mindmap som canonical lagring.
-10. Ikke gjør AHAavisa published_local til ekte publisering.
-11. Ikke gjør Grupper til ekte deling uten privacy/sync-kontrakt.
-12. Ikke bygg Meet/Music på egne datakontrakter før core-kontraktene er stabile.
+4. Ikke la note_edit bli ordinær insight automatisk.
+5. Ikke emnematch History Go-import på nytt.
+6. Ikke bruk emne_suggestions som bekreftede emner.
+7. Ikke gjør Supabase til eneste sannhet uten sync-dokument.
+8. Ikke fjern localStorage fallback.
+9. Ikke endre deletion style modulvis uten migrering.
+10. Ikke bruk search/mindmap som canonical lagring.
+11. Ikke gjør AHAavisa published_local til ekte publisering.
+12. Ikke gjør Grupper til ekte deling uten privacy/sync-kontrakt.
+13. Ikke bygg Meet/Music på egne datakontrakter før core-kontraktene er stabile.
 ```
 
 ## 26. Neste trygge dokument
@@ -1517,8 +1493,14 @@ Første kodekandidat etter dette er fortsatt:
 Notes
 ```
 
-Men før Notes endres, bør vi avklare:
+Første konkrete Notes-endring bør være:
 
 ```text
-Skal note_edit lage ny insight, eller bare source event?
+Endre note_edit-flyten i js/ahaNotes.js slik at den sender skip_insight: true til AHAIngest.
+```
+
+Senere funksjon, ikke nå:
+
+```text
+Legg til eksplisitt "Analyser notat på nytt" / reanalyze_note-handling for bevisst ny insight.
 ```
