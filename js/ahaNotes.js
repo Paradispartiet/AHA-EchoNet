@@ -18,6 +18,32 @@
     localStorage.setItem(KEY, JSON.stringify(Array.isArray(items) ? items : []));
   }
 
+  function noteActionTime(note) {
+    return Math.max(
+      ...[note?.deleted_at, note?.updated_at, note?.created_at]
+        .map((value) => Date.parse(value || ""))
+        .filter((value) => Number.isFinite(value)),
+      0
+    );
+  }
+
+  function mergeNotes(localNotes, remoteNotes) {
+    const merged = new Map();
+    const mergeIncoming = (note) => {
+      if (!note?.id) return;
+      const key = String(note.id);
+      const existing = merged.get(key);
+      if (!existing || noteActionTime(note) >= noteActionTime(existing)) {
+        merged.set(key, note);
+      }
+    };
+
+    (Array.isArray(localNotes) ? localNotes : []).forEach(mergeIncoming);
+    (Array.isArray(remoteNotes) ? remoteNotes : []).forEach(mergeIncoming);
+
+    return Array.from(merged.values()).sort((a, b) => noteActionTime(b) - noteActionTime(a));
+  }
+
   async function pushLocalToDatabase(items) {
     if (!window.AHARepository?.saveNote) return { ok: false, fallback: "localStorage" };
     const results = [];
@@ -33,9 +59,10 @@
     if (local.length) await pushLocalToDatabase(local);
     const result = await window.AHARepository.loadNotes();
     if (!result?.ok || !Array.isArray(result.data)) return result || { ok: false };
-    save(result.data);
-    render(result.data);
-    return result;
+    const merged = mergeNotes(local, result.data);
+    save(merged);
+    render(merged);
+    return { ...result, data: merged, merged: true };
   }
 
   function persistNote(note) {

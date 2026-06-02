@@ -79,23 +79,28 @@ Supabase skal ikke brukes til å overstyre AHA-motoren uten at source/ingest-kon
 
 ## 4. Push local before pull remote
 
-For modulene Notes, Galleri og Feed er dagens sync-regel:
+For modulene Notes, Galleri og Feed starter dagens sync-regel slik:
 
 ```text
 1. Les lokal liste fra localStorage.
 2. Hvis lokal liste har items, push lokale items til Supabase via AHARepository.
 3. Pull remote liste fra Supabase.
-4. Skriv remote-listen tilbake til localStorage.
-5. Render remote-listen.
 ```
 
-Formålet er å unngå at lokale endringer som ennå ikke er pushet forsvinner når brukeren logger inn eller når `aha:auth-ready` fyrer.
+Etter pull er modulreglene ulike:
+
+```text
+Notes: merge local+remote etter id, velg nyeste handling fra deleted_at/updated_at/created_at, skriv merged liste lokalt og render merged liste.
+Galleri/Feed: skriv remote-listen tilbake til localStorage og render remote-listen.
+```
+
+Formålet er å unngå at lokale endringer som ennå ikke er pushet forsvinner når brukeren logger inn eller når `aha:auth-ready` fyrer. For Notes betyr dette også at en nyere lokal tombstone ikke blindt fjernes av en eldre remote aktiv note etter pull.
 
 Midlertidig konsekvens:
 
 ```text
-Remote-listen blir skrevet tilbake som lokal cache etter pull.
-For Notes/Galleri/Feed finnes det i dag ingen full merge per felt etter pull; remote-listen erstatter lokal liste etter at lokale items er forsøkt pushet.
+Notes bruker en enkel per-note last-write-wins merge etter pull, med remote som vinner ved lik action time.
+For Galleri/Feed finnes det i dag ingen full merge per felt etter pull; remote-listen erstatter lokal liste etter at lokale items er forsøkt pushet.
 ```
 
 ## 5. Last-write-wins som midlertidig regel
@@ -220,7 +225,17 @@ delete note
 Sync:
 
 ```text
-syncFromDatabase pushes all local notes first, then pulls remote notes, saves remote list locally and renders.
+syncFromDatabase pushes all local notes first, then pulls remote notes, merges local and remote notes by id, saves the merged list locally and renders.
+```
+
+Notes conflictregel:
+
+```text
+1. Sammenlign nyeste handlingstid fra deleted_at, updated_at og created_at.
+2. deleted_at teller som handlingstid.
+3. Nyeste handling vinner.
+4. Ved lik handlingstid vinner remote note.
+5. Hvis remote pull feiler, skal lokal cache ikke slettes.
 ```
 
 ### 8.2 Galleri
@@ -399,7 +414,7 @@ Ikke bygg Supabase-sync for disse modulene før egen contract/sync-regel er lås
 
 | Modul | Dagens konfliktregel | Tombstone-regel | Risiko | Midlertidig beslutning |
 |---|---|---|---|---|
-| Notes | Push local før pull remote; remote-listen blir lokal cache etter pull. | `deleted_at` + `updated_at` ved delete; render filtrerer slettede. | Ingen full felt-merge; stale remote kan fortsatt påvirke cache hvis push feiler. | Behold, og modne Notes først. |
+| Notes | Push local før pull remote; merge local+remote by id; newest wins by deleted_at/updated_at/created_at; remote wins on equal action time. | `deleted_at` + `updated_at` ved delete; render filtrerer slettede. | Ingen full felt-merge; stale remote kan fortsatt påvirke cache hvis remote har nyere action time. | Behold enkel Notes-merge; ikke bygg full versjonering ennå. |
 | Galleri | Push local før pull remote; remote-listen blir lokal cache etter pull. | `deleted_at` ved delete; render filtrerer slettede. | Ingen full felt-merge; media-storage ikke løst. | Behold URL/path MVP. Ikke bygg storage ennå. |
 | Feed | Push local før pull remote; remote-listen blir lokal cache etter pull. | `deleted_at` ved delete; render filtrerer slettede. | Ingen full felt-merge; ingen tråder/replies. | Behold enkel postmodell. |
 | Insta posts | Push aktive lokale poster før pull; merge local+remote by id/source_signature; newest wins by updated_at/deleted_at/created_at. | `deleted_at` ved delete; render filtrerer slettede. | Active-only pre-push kan gjøre lokale tombstones avhengige av tidligere persistPost. | Ikke utvid før Insta har eget kontraktdokument. |
