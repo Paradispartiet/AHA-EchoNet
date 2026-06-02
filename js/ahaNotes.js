@@ -144,7 +144,8 @@
       user_created: true,
       imported: false,
       created_at: updated.updated_at,
-      meta: { note_id: updated.id }
+      meta: { note_id: updated.id },
+      skip_insight: true
     });
 
     if (ingestResult?.sourceEvent?.id) {
