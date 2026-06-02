@@ -2,21 +2,21 @@
 // AHA Chat – enkel service worker med NETWORK-FIRST strategi
 // Prøver alltid nett først, bruker cache som fallback (slik at nye deploys synes med en gang)
 
-const CACHE_NAME = "aha-chat-v4.0.316";
+const CACHE_NAME = "aha-chat-v4.0.317";
 
 // Filer vi gjerne vil ha tilgjengelig offline (app-shell)
 const ASSETS = [
   "/",
   "/index.html",
   "/css/aha-chat.css",
-  "/insightsChamber.js",
-  "/metaInsightsEngine.js",
-  "/ahaFieldProfiles.js",
-  "/ahaChat.js",
-  "/emnerLoader.js",
-  "/ahaEmneMatcher.js",
-  "/ahaEmbeddings.js",
-  "/theoryClustersLoader.js",
+  "/js/insightsChamber.js",
+  "/js/metaInsightsEngine.js",
+  "/js/ahaFieldProfiles.js",
+  "/js/ahaChat.js",
+  "/js/emnerLoader.js",
+  "/js/ahaEmneMatcher.js",
+  "/js/ahaEmbeddings.js",
+  "/js/theoryClustersLoader.js",
   "/theoryClusters.json"
 ];
 

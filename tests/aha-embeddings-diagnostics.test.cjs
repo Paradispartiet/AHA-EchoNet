@@ -16,8 +16,8 @@ function loadAHAEmbeddings(overrides = {}) {
   window.window = window;
   window.globalThis = window;
   const context = vm.createContext(window);
-  const source = fs.readFileSync('ahaEmbeddings.js', 'utf8');
-  vm.runInContext(source, context, { filename: 'ahaEmbeddings.js' });
+  const source = fs.readFileSync('js/ahaEmbeddings.js', 'utf8');
+  vm.runInContext(source, context, { filename: 'js/ahaEmbeddings.js' });
   return { AHAEmbeddings: context.AHAEmbeddings, warnings };
 }
 

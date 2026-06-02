@@ -80,8 +80,8 @@ const sandbox = {
 sandbox.window = sandbox;
 
 vm.createContext(sandbox);
-vm.runInContext(fs.readFileSync('ahaRepository.js', 'utf8'), sandbox, { filename: 'ahaRepository.js' });
-vm.runInContext(fs.readFileSync('ahaInsta.js', 'utf8'), sandbox, { filename: 'ahaInsta.js' });
+vm.runInContext(fs.readFileSync('js/ahaRepository.js', 'utf8'), sandbox, { filename: 'js/ahaRepository.js' });
+vm.runInContext(fs.readFileSync('js/ahaInsta.js', 'utf8'), sandbox, { filename: 'js/ahaInsta.js' });
 
 const Insta = sandbox.AHAInsta;
 assert.ok(Insta, 'AHAInsta should be exported');

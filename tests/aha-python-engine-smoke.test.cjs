@@ -93,14 +93,14 @@ function buildContext(seed = {}) {
   vm.createContext(context);
 
   const files = [
-    'ahaChatTextUtils.js',
-    'ahaChatSignals.js',
-    'ahaChatExport.js',
-    'ahaChatSubjects.js',
-    'ahaChatAnalysis.js',
-    'ahaEngineClient.js',
-    'ahaChat.js',
-    'ahaChatPythonSmoke.js'
+    'js/ahaChatTextUtils.js',
+    'js/ahaChatSignals.js',
+    'js/ahaChatExport.js',
+    'js/ahaChatSubjects.js',
+    'js/ahaChatAnalysis.js',
+    'js/ahaEngineClient.js',
+    'js/ahaChat.js',
+    'js/ahaChatPythonSmoke.js'
   ];
 
   for (const file of files) {
