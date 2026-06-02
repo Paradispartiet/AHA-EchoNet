@@ -8,7 +8,7 @@ const CACHE_NAME = "aha-chat-v4.0.316";
 const ASSETS = [
   "/",
   "/index.html",
-  "/aha-chat.css",
+  "/css/aha-chat.css",
   "/insightsChamber.js",
   "/metaInsightsEngine.js",
   "/ahaFieldProfiles.js",
