@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import vm from 'node:vm';
 
-const engineCode = await fs.readFile(new URL('../ahaSubjectEngine.js', import.meta.url), 'utf8');
+const engineCode = await fs.readFile(new URL('../js/ahaSubjectEngine.js', import.meta.url), 'utf8');
 
 const dataset = {
   subjects: [

@@ -15,8 +15,8 @@ function createLocalStorage(seed = {}) {
 }
 
 function loadClient(context) {
-  const code = fs.readFileSync('ahaEngineClient.js', 'utf8');
-  vm.runInContext(code, context, { filename: 'ahaEngineClient.js' });
+  const code = fs.readFileSync('js/ahaEngineClient.js', 'utf8');
+  vm.runInContext(code, context, { filename: 'js/ahaEngineClient.js' });
   return context.window.AHAEngineClient;
 }
 

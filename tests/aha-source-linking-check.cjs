@@ -18,7 +18,7 @@ const context = vm.createContext({
   JSON
 });
 
-loadScriptIntoContext('insightsChamber.js', context);
+loadScriptIntoContext('js/insightsChamber.js', context);
 const InsightsEngine = context.module.exports;
 
 const signal = InsightsEngine.createSignalFromMessage(
