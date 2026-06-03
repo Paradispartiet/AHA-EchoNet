@@ -968,8 +968,28 @@ List item:
 
 ```text
 Lister er organisering, ikke insight-produksjon.
-Listeopprettelse lager ikke source event i nåværende modell.
+Listeopprettelse, listeendring og listepunkt-endringer lager ikke source event i nåværende modell.
 Listepunkter skal referere til eksisterende AHA-objekter med source + refId.
+Lists er en write-module som bruker localStorage-key aha_lists_v1.
+Lists bruker camelCase base-felt lokalt: createdAt, updatedAt og deletedAt.
+List items er embedded i list.items i dagens localStorage-modell.
+```
+
+### Fremtidig sync-kontrakt
+
+```text
+Hvis Supabase-sync bygges senere, må mapping mellom lokal camelCase og remote snake_case bestemmes eksplisitt:
+- local createdAt -> remote created_at
+- local updatedAt -> remote updated_at
+- local deletedAt -> remote deleted_at
+
+Fremtidig Supabase-modell må velge én av disse schema-retningene før kode:
+A. én tabell med embedded items JSON
+B. to tabeller: lists + list_items
+
+Denne PR-en velger ikke runtime-implementasjon hvis det krever schema.
+Anbefalt minimal fremtidig sync-modell kan dokumenteres som embedded JSON først, men må verifiseres mot Supabase før kode.
+Lists sync skal ikke gjøre Lists til insight-produsent eller source event-produsent.
 ```
 
 ## 14. Path contract
