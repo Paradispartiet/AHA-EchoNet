@@ -272,10 +272,13 @@ async function testInstaSyncRegressions() {
       saveInstaProfile: async (profile) => ({ ok: true, data: profile }),
       saveInstaPost: async (post) => { saveCalls.push(post); return { ok: true, data: post }; },
       loadInstaPosts: async () => {
-        loadedAfterPush = saveCalls.length === 2;
+        loadedAfterPush = saveCalls.length === 3;
         return {
           ok: true,
-          data: [{ id: 'insta_remote', title: 'Remote post', src: 'remote.jpg', caption: 'remote', created_at: '2026-01-03T00:00:00.000Z' }]
+          data: [
+            { id: 'insta_remote', title: 'Remote post', src: 'remote.jpg', caption: 'remote', created_at: '2026-01-03T00:00:00.000Z' },
+            { id: 'insta_remote_deleted_wins', title: 'Remote deleted post', src: 'deleted-remote.jpg', caption: 'deleted remote', created_at: '2026-01-01T00:00:00.000Z', updated_at: '2026-01-04T00:00:00.000Z', deleted_at: '2026-01-04T00:00:00.000Z' }
+          ]
         };
       }
     },
@@ -286,7 +289,8 @@ async function testInstaSyncRegressions() {
   assert.ok(Insta, 'AHAInsta should be exported');
   Insta.save([
     { id: 'insta_active_local', title: 'Active local', src: 'active.jpg', caption: 'active', created_at: '2026-01-01T00:00:00.000Z' },
-    { id: 'insta_deleted_local', title: 'Deleted local', src: 'deleted.jpg', caption: 'deleted', created_at: '2026-01-01T00:00:00.000Z', updated_at: '2026-01-02T00:00:00.000Z', deleted_at: '2026-01-02T00:00:00.000Z' }
+    { id: 'insta_deleted_local', title: 'Deleted local', src: 'deleted.jpg', caption: 'deleted', created_at: '2026-01-01T00:00:00.000Z', updated_at: '2026-01-02T00:00:00.000Z', deleted_at: '2026-01-02T00:00:00.000Z' },
+    { id: 'insta_remote_deleted_wins', title: 'Local stale active', src: 'stale-active.jpg', caption: 'local should lose', created_at: '2026-01-01T00:00:00.000Z', updated_at: '2026-01-02T00:00:00.000Z' }
   ]);
 
   const result = await Insta.syncFromDatabase();
@@ -296,6 +300,7 @@ async function testInstaSyncRegressions() {
   assert.equal(result.merged, true, 'successful insta sync should report merged true');
   assert.ok(Array.isArray(result.data), 'successful insta sync should return merged data array');
   assert.ok(result.data.some((post) => post.id === 'insta_remote'), 'successful insta sync should include pulled remote data');
+  assert.ok(byId(result.data, 'insta_remote_deleted_wins').deleted_at, 'newer remote insta tombstone should beat older local active post');
 
   const deleted = Insta.deletePost('insta_active_local');
   assert.ok(deleted.deleted_at, 'insta deletePost should set deleted_at');
