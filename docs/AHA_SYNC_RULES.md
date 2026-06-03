@@ -360,7 +360,7 @@ create AHA Insta post
 
 ```text
 delete Insta post
-→ set deleted_at
+→ set deleted_at and updated_at to the same tombstone timestamp
 → localStorage aha_insta_posts_v1
 → best-effort saveInstaPost
 → render hides deleted post
@@ -370,7 +370,7 @@ Dagens post-sync:
 
 ```text
 1. Load local posts.
-2. Push active local posts before pull.
+2. Push both active local posts and `deleted_at` tombstones before pull.
 3. Load remote posts.
 4. Merge local and remote by id/source_signature.
 5. Prefer newest by updated_at/deleted_at/created_at, with remote preferred on equal/incoming cases.
@@ -428,7 +428,7 @@ Ikke bygg Supabase-sync for disse modulene før egen contract/sync-regel er lås
 | Notes | Push local før pull remote; merge local+remote by id; newest wins by deleted_at/updated_at/created_at; remote wins on equal action time. | `deleted_at` + `updated_at` ved delete; render filtrerer slettede. | Ingen full felt-merge; stale remote kan fortsatt påvirke cache hvis remote har nyere action time. | Behold enkel Notes-merge; ikke bygg full versjonering ennå. |
 | Galleri | Push local før pull remote; merge local+remote by id; newest wins by deleted_at/updated_at/created_at; remote wins on equal action time. | `deleted_at` + `updated_at` ved delete; render filtrerer slettede. | Ingen full felt-merge; media-storage ikke løst. | Behold URL/path MVP. Ikke bygg storage/opplasting ennå. |
 | Feed | Push local før pull remote; merge local+remote by id; newest wins by deleted_at/updated_at/created_at; remote wins on equal action time. | `deleted_at` + `updated_at` ved delete; render filtrerer slettede. | Ingen full felt-merge; stale remote kan fortsatt påvirke cache hvis remote har nyere action time. | Behold enkel postmodell. |
-| Insta posts | Push aktive lokale poster før pull; merge local+remote by id/source_signature; newest wins by updated_at/deleted_at/created_at. | `deleted_at` ved delete; render filtrerer slettede. | Active-only pre-push kan gjøre lokale tombstones avhengige av tidligere persistPost. | Ikke utvid før Insta har eget kontraktdokument. |
+| Insta posts | Push aktive lokale poster og `deleted_at` tombstones før pull; merge local+remote by id/source_signature; newest wins by updated_at/deleted_at/created_at. | `deleted_at` + `updated_at` ved delete; render filtrerer slettede. | Ingen full felt-merge; stale remote kan fortsatt påvirke cache hvis remote har nyere action time. | Behold enkel post-sync; ikke bygg storage/opplasting eller sosial graf. |
 | Insta profile | Remote profile kan oppdatere lokal profile hvis remote `updated_at` er nyere. | Ingen post-tombstone-regel. | Profil er modulspesifikk og ikke full kontoprofilmodell. | Behold enkel profile-sync. |
 | Insta likes/comments/follows | Reconcile by id; newest action time wins. | `deleted_at` tombstone vinner når nyere; null betyr aktiv handling. | Lokal sosial graf er simulert. | Ikke gjør dette til ekte sosial graf ennå. |
 | History Go-import | Lokal/manual import; repository-save kan skje hvis lag finnes. | Ikke modulvis tombstone i denne låsen. | Import kan ikke bli AHA-grunnlag uten samtykke/flyt. | Behold manuell import. |
