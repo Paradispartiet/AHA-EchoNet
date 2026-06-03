@@ -95,6 +95,15 @@
     return asArray(paths);
   }
 
+  async function persistPath(path) {
+    if (!global.AHARepository?.savePath) return null;
+    try {
+      return await global.AHARepository.savePath(path);
+    } catch (error) {
+      return { ok: false, error };
+    }
+  }
+
   function createPath(input) {
     const title = asText(input?.title, "");
     if (!title) return null;
@@ -116,6 +125,7 @@
 
     paths.unshift(created);
     savePaths(paths);
+    persistPath(created);
     return created;
   }
 
@@ -136,6 +146,7 @@
 
     paths[index] = updated;
     savePaths(paths);
+    persistPath(updated);
     return updated;
   }
 
@@ -172,6 +183,7 @@
     path.updatedAt = new Date().toISOString();
     paths[index] = normalizePath(path);
     savePaths(paths);
+    persistPath(paths[index]);
     return step;
   }
 
@@ -188,6 +200,7 @@
     path.updatedAt = new Date().toISOString();
     paths[index] = normalizePath(path);
     savePaths(paths);
+    persistPath(paths[index]);
     return path;
   }
 
