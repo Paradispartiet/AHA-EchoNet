@@ -63,7 +63,7 @@ const context = {
   addEventListener() {},
   AHAIngest: forbiddenApi('AHAIngest', forbiddenCalls),
   AHASources: forbiddenApi('AHASources', forbiddenCalls),
-  AHARepository: forbiddenApi('AHARepository', forbiddenCalls),
+  AHARepository: undefined,
   AHAGroups: {
     getActiveGroups() { return []; },
     addReferenceToGroupByObject() { throw new Error('group add should not be invoked by this test'); }
@@ -178,6 +178,109 @@ assert.equal(storedLists.find((list) => list.id === 'active-list').items.length,
 assert.equal(storedLists.find((list) => list.id === 'deleted-at-list').items.length, 1, 'deletedAt list should not change on remove');
 assert.equal(storedLists.find((list) => list.id === 'deleted-snake-list').items.length, 1, 'deleted_at list should not change on remove');
 
-assert.equal(forbiddenCalls.length, 0, 'AHALists should not call AHAIngest, AHASources or AHARepository');
+assert.equal(forbiddenCalls.length, 0, 'AHALists should not call AHAIngest or AHASources');
+
+function makeListsContext(repository) {
+  const calls = [];
+  const storage = makeLocalStorage();
+  const testContext = {
+    console,
+    Date,
+    Math,
+    JSON,
+    localStorage: storage,
+    document: {
+      readyState: 'loading',
+      addEventListener() {},
+      getElementById() { return null; },
+      querySelector() { return null; },
+      querySelectorAll() { return []; }
+    },
+    addEventListener() {},
+    AHAIngest: forbiddenApi('AHAIngest', calls),
+    AHASources: forbiddenApi('AHASources', calls),
+    AHARepository: repository,
+    AHAGroups: {
+      getActiveGroups() { return []; },
+      addReferenceToGroupByObject() { throw new Error('group add should not be invoked by this test'); }
+    }
+  };
+  testContext.window = testContext;
+  vm.createContext(testContext);
+  vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'js', 'ahaContracts.js'), 'utf8'), testContext, { filename: 'js/ahaContracts.js' });
+  vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'js', 'ahaLists.js'), 'utf8'), testContext, { filename: 'js/ahaLists.js' });
+  return { calls, storage, Lists: testContext.AHALists };
+}
+
+const persistedLists = [];
+const repository = {
+  saveList(list) {
+    const stored = persistStorage.readJson('aha_lists_v1', []);
+    assert.ok(stored.some((storedList) => storedList.id === list.id), 'localStorage should be written before repository saveList');
+    persistedLists.push(JSON.parse(JSON.stringify(list)));
+    return { ok: true, id: list.id };
+  },
+  loadLists() {
+    throw new Error('AHARepository.loadLists must not be used by AHALists');
+  }
+};
+const { calls: persistForbiddenCalls, storage: persistStorage, Lists: PersistLists } = makeListsContext(repository);
+
+const persistedCreate = PersistLists.createList({ title: 'Repository-backed list', type: 'todo' });
+assert.equal(persistStorage.readJson('aha_lists_v1', []).length, 1, 'createList should still write to localStorage when repository exists');
+assert.equal(persistedLists.length, 1, 'createList should call AHARepository.saveList when available');
+assert.equal(persistedLists[0].id, persistedCreate.id, 'createList should persist the created list');
+
+const persistedUpdate = PersistLists.updateList(persistedCreate.id, { title: 'Oppdatert liste' });
+assert.equal(persistedLists.length, 2, 'updateList should call AHARepository.saveList');
+assert.equal(persistedLists[1].title, 'Oppdatert liste', 'updateList should persist the updated list');
+assert.equal(persistedLists[1].id, persistedUpdate.id, 'updateList should persist the same list id');
+
+const persistedDelete = PersistLists.deleteList(persistedCreate.id);
+assert.equal(persistedLists.length, 3, 'deleteList should persist through updateList only once');
+assert.ok(persistedDelete.deletedAt, 'deleteList should return a tombstone with deletedAt set');
+assert.equal(persistedLists[2].deletedAt, persistedDelete.deletedAt, 'deleteList should persist the tombstone deletedAt');
+
+const itemList = PersistLists.createList({ title: 'Items list', type: 'favorites' });
+const addedItem = PersistLists.addItemToList(itemList.id, { title: 'Note ref', source: 'aha_notes', refId: 'note-1', type: 'note' });
+assert.equal(persistedLists.length, 5, 'addItemToList should call AHARepository.saveList after the createList save');
+assert.equal(persistedLists[4].items.length, 1, 'addItemToList should persist the updated items array');
+assert.equal(persistedLists[4].items[0].id, addedItem.id, 'addItemToList should persist the added item');
+
+const removedList = PersistLists.removeItemFromList(itemList.id, addedItem.id);
+assert.equal(persistedLists.length, 6, 'removeItemFromList should call AHARepository.saveList');
+assert.equal(persistedLists[5].id, removedList.id, 'removeItemFromList should persist the updated list');
+assert.equal(persistedLists[5].items.length, 0, 'removeItemFromList should persist the updated items array');
+assert.equal(persistForbiddenCalls.length, 0, 'AHALists should not call AHAIngest or AHASources while persisting lists');
+
+const { storage: noRepoStorage, Lists: NoRepoLists } = makeListsContext(undefined);
+const noRepoCreated = NoRepoLists.createList({ title: 'Local only list', type: 'todo' });
+assert.ok(noRepoCreated?.id, 'createList should work without AHARepository');
+assert.equal(noRepoStorage.readJson('aha_lists_v1', []).length, 1, 'createList should persist locally without AHARepository');
+assert.ok(NoRepoLists.updateList(noRepoCreated.id, { title: 'Still local' }), 'updateList should work without AHARepository');
+assert.ok(NoRepoLists.deleteList(noRepoCreated.id), 'deleteList should work without AHARepository');
+
+const throwingRepository = {
+  saveList() {
+    throw new Error('repository unavailable');
+  },
+  loadLists() {
+    throw new Error('AHARepository.loadLists must not be used by AHALists');
+  }
+};
+const { storage: throwingStorage, Lists: ThrowingLists } = makeListsContext(throwingRepository);
+const throwingCreated = ThrowingLists.createList({ title: 'Throwing repository list', type: 'todo' });
+assert.ok(throwingCreated?.id, 'createList should not break when AHARepository.saveList throws');
+assert.ok(ThrowingLists.updateList(throwingCreated.id, { title: 'Throwing update' }), 'updateList should not break when AHARepository.saveList throws');
+assert.ok(ThrowingLists.deleteList(throwingCreated.id), 'deleteList should not break when AHARepository.saveList throws');
+const throwingItemList = ThrowingLists.createList({ title: 'Throwing item list', type: 'favorites' });
+const throwingAddedItem = ThrowingLists.addItemToList(throwingItemList.id, { title: 'Note ref', source: 'aha_notes', refId: 'throw-note-1', type: 'note' });
+assert.ok(throwingAddedItem, 'addItemToList should not break when AHARepository.saveList throws');
+assert.ok(ThrowingLists.removeItemFromList(throwingItemList.id, throwingAddedItem.id), 'removeItemFromList should not break when AHARepository.saveList throws');
+assert.equal(throwingStorage.readJson('aha_lists_v1', []).length, 2, 'repository errors should not break localStorage flow');
+
+const ahaListsSource = fs.readFileSync(path.join(__dirname, '..', 'js', 'ahaLists.js'), 'utf8');
+assert.equal(ahaListsSource.includes('syncFromDatabase'), false, 'AHALists should not define syncFromDatabase');
+assert.equal(ahaListsSource.includes('AHARepository.loadLists'), false, 'AHALists should not call AHARepository.loadLists');
 
 console.log('aha-lists-tombstones.test.cjs passed');

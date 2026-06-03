@@ -105,6 +105,15 @@
     return asArray(lists);
   }
 
+  async function persistList(list) {
+    if (!global.AHARepository?.saveList) return null;
+    try {
+      return await global.AHARepository.saveList(list);
+    } catch (error) {
+      return { ok: false, error };
+    }
+  }
+
   function createList(input) {
     const now = new Date().toISOString();
     const current = loadLists();
@@ -123,6 +132,7 @@
     if (!created.title) return null;
     current.unshift(created);
     saveLists(current);
+    persistList(created);
     return created;
   }
 
@@ -141,6 +151,7 @@
     });
     lists[index] = next;
     saveLists(lists);
+    persistList(next);
     return next;
   }
 
@@ -174,6 +185,7 @@
     list.updatedAt = new Date().toISOString();
     lists[index] = list;
     saveLists(lists);
+    persistList(list);
     return item;
   }
 
@@ -190,6 +202,7 @@
     list.updatedAt = new Date().toISOString();
     lists[index] = list;
     saveLists(lists);
+    persistList(list);
     return list;
   }
 
