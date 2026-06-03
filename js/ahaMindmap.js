@@ -72,6 +72,10 @@
     return `${type}::${source}::${refId}`;
   }
 
+  function isDeletedRecord(record) {
+    return Boolean(record?.deletedAt || record?.deleted_at);
+  }
+
   function buildNodes(raw) {
     const nodes = [];
     const nodeIndex = new Map();
@@ -82,7 +86,7 @@
       refIndex.set(key, node.id);
     }
 
-    asArray(raw.sourceEvents).forEach((event, index) => {
+    asArray(raw.sourceEvents).filter((event) => !isDeletedRecord(event)).forEach((event, index) => {
       const refId = asText(event?.id || event?.event_id || event?.source_event_id, `source_event_idx_${index}`);
       const node = {
         id: nodeId("source_event", "aha_source_events", refId),
@@ -97,7 +101,7 @@
       registerRef(node);
     });
 
-    asArray(raw.insights?.insights).forEach((insight, index) => {
+    asArray(raw.insights?.insights).filter((insight) => !isDeletedRecord(insight)).forEach((insight, index) => {
       const refId = asText(insight?.id, `insight_idx_${index}`);
       const node = {
         id: nodeId("insight", "aha_insights", refId),
@@ -112,7 +116,7 @@
       registerRef(node);
     });
 
-    asArray(raw.lists).filter((list) => !list?.deletedAt).forEach((list) => {
+    asArray(raw.lists).filter((list) => !isDeletedRecord(list)).forEach((list) => {
       const refId = asText(list?.id, "");
       if (!refId) return;
       const node = { id: nodeId("list", "aha_lists", refId), title: asText(list?.title, "Liste"), type: "list", source: "aha_lists", refId, href: "lists.html", meta: {} };
@@ -120,7 +124,7 @@
       registerRef(node);
     });
 
-    asArray(raw.paths).filter((path) => !path?.deletedAt).forEach((path) => {
+    asArray(raw.paths).filter((path) => !isDeletedRecord(path)).forEach((path) => {
       const refId = asText(path?.id, "");
       if (!refId) return;
       const node = { id: nodeId("path", "aha_paths", refId), title: asText(path?.title, "Sti"), type: "path", source: "aha_paths", refId, href: "paths.html", meta: {} };
@@ -128,7 +132,7 @@
       registerRef(node);
     });
 
-    asArray(raw.articles).filter((article) => !article?.deletedAt).forEach((article) => {
+    asArray(raw.articles).filter((article) => !isDeletedRecord(article)).forEach((article) => {
       const refId = asText(article?.id, "");
       if (!refId) return;
       const publicationLayer = asText(article?.publicationLayer, "").toLowerCase()
@@ -138,7 +142,7 @@
       registerRef(node);
     });
 
-    asArray(raw.notes).filter((note) => !note?.deleted_at).forEach((note) => {
+    asArray(raw.notes).filter((note) => !isDeletedRecord(note)).forEach((note) => {
       const refId = asText(note?.id, "");
       if (!refId) return;
       const node = { id: nodeId("note", "aha_notes", refId), title: asText(note?.title, "Notat"), type: "note", source: "aha_notes", refId, href: "notes.html", meta: {} };
@@ -146,7 +150,7 @@
       registerRef(node);
     });
 
-    asArray(raw.feed).filter((post) => !post?.deleted_at).forEach((post) => {
+    asArray(raw.feed).filter((post) => !isDeletedRecord(post)).forEach((post) => {
       const refId = asText(post?.id, "");
       if (!refId) return;
       const text = asText(post?.text, "");
@@ -156,7 +160,7 @@
       registerRef(node);
     });
 
-    asArray(raw.gallery).filter((item) => !item?.deleted_at).forEach((item) => {
+    asArray(raw.gallery).filter((item) => !isDeletedRecord(item)).forEach((item) => {
       const refId = asText(item?.id, "");
       if (!refId) return;
       const node = { id: nodeId("gallery_item", "aha_gallery", refId), title: asText(item?.title, "Galleriobjekt"), type: "gallery_item", source: "aha_gallery", refId, href: "gallery.html", meta: {} };
@@ -164,7 +168,7 @@
       registerRef(node);
     });
 
-    asArray(raw.insta).filter((post) => !post?.deleted_at).forEach((post) => {
+    asArray(raw.insta).filter((post) => !isDeletedRecord(post)).forEach((post) => {
       const refId = asText(post?.id, "");
       if (!refId) return;
       const node = { id: nodeId("insta_post", "aha_insta", refId), title: asText(post?.title || post?.caption, "Insta-post"), type: "insta_post", source: "aha_insta", refId, href: "insta.html", meta: {} };
@@ -172,7 +176,7 @@
       registerRef(node);
     });
 
-    asArray(raw.groups).filter((group) => !group?.deletedAt && !group?.deleted_at).forEach((group) => {
+    asArray(raw.groups).filter((group) => !isDeletedRecord(group)).forEach((group) => {
       const refId = asText(group?.id, "");
       if (!refId) return;
       const node = { id: nodeId("group", "aha_groups", refId), title: asText(group?.title, "Gruppe"), type: "group", source: "aha_groups", refId, href: "groups.html", meta: {} };
@@ -211,14 +215,14 @@
       if (node.type === "source_event") sourceByRef.set(node.refId, node.id);
     });
 
-    asArray(raw.insights?.insights).forEach((insight, index) => {
+    asArray(raw.insights?.insights).filter((insight) => !isDeletedRecord(insight)).forEach((insight, index) => {
       const insightRefId = asText(insight?.id, `insight_idx_${index}`);
       const insightNodeId = nodeId("insight", "aha_insights", insightRefId);
       const sourceRefId = asText(insight?.source_event_id || insight?.sourceEventId || insight?.source_id || insight?.sourceId || insight?.event_id || insight?.eventId, "");
       addEdge(sourceByRef.get(sourceRefId), insightNodeId, "source_to_insight", "kilde til innsikt", {});
     });
 
-    asArray(raw.lists).filter((list) => !list?.deletedAt).forEach((list) => {
+    asArray(raw.lists).filter((list) => !isDeletedRecord(list)).forEach((list) => {
       const fromId = nodeId("list", "aha_lists", asText(list?.id, ""));
       asArray(list?.items).forEach((item) => {
         const toId = resolveRef(nodeBundle.refIndex, item);
@@ -227,7 +231,7 @@
       });
     });
 
-    asArray(raw.paths).filter((path) => !path?.deletedAt).forEach((path) => {
+    asArray(raw.paths).filter((path) => !isDeletedRecord(path)).forEach((path) => {
       const fromId = nodeId("path", "aha_paths", asText(path?.id, ""));
       asArray(path?.steps).forEach((step) => {
         const toId = resolveRef(nodeBundle.refIndex, step);
@@ -235,7 +239,7 @@
       });
     });
 
-    asArray(raw.articles).filter((article) => !article?.deletedAt).forEach((article) => {
+    asArray(raw.articles).filter((article) => !isDeletedRecord(article)).forEach((article) => {
       const fromId = nodeId("article", "aha_avisa", asText(article?.id, ""));
       asArray(article?.references).forEach((ref) => {
         const toId = resolveRef(nodeBundle.refIndex, ref);
@@ -243,7 +247,7 @@
       });
     });
 
-    asArray(raw.groups).filter((group) => !group?.deletedAt && !group?.deleted_at).forEach((group) => {
+    asArray(raw.groups).filter((group) => !isDeletedRecord(group)).forEach((group) => {
       const fromId = nodeId("group", "aha_groups", asText(group?.id, ""));
       asArray(group?.references).forEach((ref) => {
         const toId = resolveRef(nodeBundle.refIndex, ref);
