@@ -788,12 +788,15 @@
     }
 
     const result = await window.AHARepository.loadInstaPosts();
-    if (!result?.ok || !Array.isArray(result.data)) return result || { ok: false };
+    if (!result?.ok) return result || { ok: false };
+    if (!Array.isArray(result.data)) {
+      return { ...result, ok: false, fallback: "localStorage", data: localPosts };
+    }
 
     const merged = mergePosts(localPosts, result.data);
     save(merged);
     render(merged);
-    return result;
+    return { ...result, data: merged, merged: true };
   }
 
   function socialActionTime(row) {
