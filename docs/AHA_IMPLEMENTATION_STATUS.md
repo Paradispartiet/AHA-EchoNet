@@ -2,7 +2,7 @@
 
 Statusdato: 2026-06-03
 
-Dette dokumentet oppsummerer nåværende implementasjonsstatus for AHA etter dokumentlåser, sync-hardening og regresjonstester.
+Dette dokumentet oppsummerer nåværende implementasjonsstatus for AHA etter dokumentlåser, sync-hardening, Search note_reanalysis-visning og regresjonstester.
 
 Dokumentet er en statuslås. Det er ikke en runtime-endring, ikke en ny motor, ikke en Supabase-migrasjon og ikke en beslutning om å bygge nye flater.
 
@@ -28,6 +28,9 @@ Ferdig nå:
 ✅ AHA Insta post-sync returnerer merged data og local fallback
 ✅ Regresjonstester låser tombstone/sync-reglene
 ✅ Reanalyze note / Analyser notat på nytt
+✅ Search viser Notes reanalysis
+✅ Search-test for note_reanalysis finnes
+✅ AHA Insta nyere remote tombstone over eldre lokal aktiv post er testet
 ```
 
 Ikke bygget ennå:
@@ -266,6 +269,38 @@ La til tests/aha-sync-tombstone-regressions.test.cjs.
 Regresjonstester låser tombstone/sync-reglene for Notes, Feed, Galleri og AHA Insta posts.
 ```
 
+### PR #312 — Search viser Notes reanalysis
+
+```text
+Title: feat: surface note reanalysis in search
+Status: merged
+```
+
+Effekt:
+
+```text
+js/ahaSearch.js indekserer nå last_reanalyzed_at.
+Search viser “Analysert på nytt: ...” for reanalyserte notes.
+Reanalyserte notes kan søkes med reanalyze/reanalysis/analysert.
+La til tests/aha-search-note-reanalysis.test.cjs.
+Search forblir read-only og kaller ikke AHAIngest, AHASources eller AHARepository.
+```
+
+### PR #313 — ekstra sync tombstone regression test
+
+```text
+Title: test: lock AHA sync tombstone regressions
+Status: merged
+```
+
+Effekt:
+
+```text
+tests/aha-sync-tombstone-regressions.test.cjs dekker nå at nyere remote AHA Insta tombstone vinner over eldre lokal aktiv Insta-post.
+Ingen runtime-kode ble endret.
+npm test rapporterte Node test suite: 15/15 passed.
+```
+
 ## 4. Nåværende modulstatus
 
 ## 4.1 Notes
@@ -414,12 +449,39 @@ Global feed
 Offentlig relasjonsmodell
 ```
 
+## 4.6 Search
+
+Status:
+
+```text
+Read-only indeksflate for eksisterende AHA-data.
+```
+
+Fungerer nå:
+
+```text
+Search indekserer Notes reanalysis.
+Search viser last_reanalyzed_at som “Analysert på nytt: ...”.
+Reanalyserte notes kan finnes med reanalyze/reanalysis/analysert.
+Search read-only-status er låst med proxy-test mot AHAIngest, AHASources og AHARepository.
+```
+
+Ikke bygg / ikke gjør:
+
+```text
+Search skal fortsatt ikke skape source events.
+Search skal fortsatt ikke skape insights.
+Search skal fortsatt ikke kalle AHAIngest, AHASources eller AHARepository.
+Semantic/embedding search er ikke bygget.
+```
+
 ## 5. Teststatus
 
-Ny testfil:
+Nye / relevante testfiler:
 
 ```text
 tests/aha-sync-tombstone-regressions.test.cjs
+tests/aha-search-note-reanalysis.test.cjs
 ```
 
 Dekker:
@@ -441,12 +503,15 @@ Galleri source_type gallery
 AHA Insta tombstone/sync-regler
 AHA Insta invalid remote fallback
 AHA Insta merged sync return
+AHA Insta newer remote tombstone beats older local active post
+AHA Search note reanalysis indexing
+Search read-only proxy-test mot AHAIngest/AHASources/AHARepository
 ```
 
 Siste rapporterte teststatus:
 
 ```text
-npm test → Node test suite: 14/14 passed
+npm test → Node test suite: 15/15 passed
 git diff --check → OK
 ```
 
@@ -471,45 +536,32 @@ git diff --check → OK
 
 ## 7. Anbefalt neste steg
 
-Ferdig nå:
+Neste trygge steg:
 
 ```text
-✅ Notes: Reanalyze note / "Analyser notat på nytt"
+Mindmap read-only vurdering / kartlegging.
+Ikke kode ennå.
 ```
 
 Hvorfor:
 
 ```text
-- Notes er enkleste modne modul.
-- note_edit er nå riktig source-only.
-- Brukeren trenger en bevisst måte å analysere et redigert notat på nytt.
-- Dette kan bygges uten å endre motoren.
+- Search er nå tydelig read-only og bør ikke utvides med nye write-paths.
+- Før Mindmap endres må faktisk runtime-kode forstås, ikke antas.
+- Neste prompt bør bygges på konkret lesing av js/ahaMindmap.js og mindmap.html.
 ```
 
-Avgrensning for denne PR-en:
+Avgrensning for neste steg:
 
 ```text
-Kun Notes.
-Ikke endre note_edit.
-Ikke endre AHAIngest.
-Ikke endre AHASources.
-Ikke endre Supabase schema.
-Ikke rør Feed/Galleri/Insta.
-Ikke bygg stor UI.
-```
-
-Låst kontrakt:
-
-```text
-note_reanalysis
-→ bruker initierer eksplisitt ny analyse
-→ source_type: note_reanalysis
-→ source_app: aha_notes
-→ content_type: text
-→ user_created: true
-→ imported: false
-→ skip_insight: ikke satt
-→ meta: { note_id, reanalyze: true }
+Les js/ahaMindmap.js.
+Les mindmap.html.
+Kartlegg om Mindmap er read-only, hvilke dataflater den leser, og om den kan skape source events eller insights.
+Lag deretter prompt basert på faktisk kode.
+Ikke endre JS.
+Ikke endre HTML.
+Ikke endre storage/import/Insta/social graph.
+Ikke bygg ny runtime før kartleggingen finnes.
 ```
 
 ## 8. Anbefalt PR-rekkefølge videre
@@ -517,7 +569,9 @@ note_reanalysis
 ```text
 1. ✅ docs/code: Notes note_reanalysis kontrakt + minimal kode
 2. ✅ test: note_reanalysis regresjonstest
-3. deretter pause og vurder UI/UX før flere moduler
+3. ✅ feat/test: Search viser Notes reanalysis uten write-paths
+4. ✅ test: ekstra AHA Insta tombstone regression
+5. Neste: Mindmap read-only vurdering / kartlegging før eventuell kode
 ```
 
-Ikke gå videre til storage, import eller EchoNet før dette er stabilt.
+Ikke gå videre til storage, import, Insta/social graph eller EchoNet før Mindmap er kartlagt på faktisk kode.
