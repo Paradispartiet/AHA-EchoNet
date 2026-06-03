@@ -1043,9 +1043,47 @@ Path step:
 ### Regler
 
 ```text
-Stier er organisering/prosess, ikke automatisk insight-produksjon.
+Paths/Stier er organisering/prosess, ikke insight-produksjon.
+Path-opprettelse, path-endring og step-endringer lager ikke source event i nåværende modell.
+Paths er en write-module som bruker localStorage-key aha_paths_v1.
+Paths bruker camelCase base-felt lokalt: createdAt, updatedAt og deletedAt.
+Path steps er embedded i path.steps i dagens localStorage-modell.
 Steg skal referere til eksisterende AHA-objekter med source + refId.
+Steps kan peke til andre AHA-objekter via source + refId, men sync må ikke mutere de objektene.
 Rekkefølge styres av order.
+Step-delete er hard remove i dagens lokale modell; dette må vurderes eksplisitt før sync fordi step-konflikter kan bli vanskelige.
+```
+
+### Step shape
+
+```text
+Step shape bruker disse feltene:
+- id
+- title
+- type
+- source
+- refId
+- order
+- status
+- addedAt
+- meta
+```
+
+### Fremtidig sync-kontrakt
+
+```text
+Hvis Supabase-sync bygges senere, må mapping mellom lokal camelCase og remote snake_case bestemmes eksplisitt:
+- local createdAt -> remote created_at
+- local updatedAt -> remote updated_at
+- local deletedAt -> remote deleted_at
+
+Fremtidig Supabase-modell må velge én av disse schema-retningene før kode:
+A. én tabell med embedded steps JSON
+B. to tabeller: paths + path_steps
+
+Denne PR-en velger ikke runtime-implementasjon hvis det krever schema.
+Anbefalt minimal fremtidig sync-modell kan dokumenteres som embedded JSON først, men må verifiseres mot Supabase før kode.
+Paths sync skal ikke gjøre Paths til insight-produsent eller source event-produsent.
 ```
 
 ## 15. Article / AHAavisa contract
