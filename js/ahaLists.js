@@ -48,6 +48,10 @@
     return safeParse(localStorage.getItem(key) || JSON.stringify(fallback), fallback);
   }
 
+  function isDeletedRecord(record) {
+    return Boolean(record?.deletedAt || record?.deleted_at);
+  }
+
   function normalizeListItem(item, listId) {
     const now = new Date().toISOString();
     return {
@@ -146,7 +150,7 @@
 
   function addItemToList(listId, itemInput) {
     const lists = loadLists();
-    const index = lists.findIndex((list) => list.id === listId && !list.deletedAt);
+    const index = lists.findIndex((list) => list.id === listId && !isDeletedRecord(list));
     if (index < 0) return null;
 
     const list = lists[index];
@@ -175,7 +179,7 @@
 
   function removeItemFromList(listId, itemId) {
     const lists = loadLists();
-    const index = lists.findIndex((list) => list.id === listId && !list.deletedAt);
+    const index = lists.findIndex((list) => list.id === listId && !isDeletedRecord(list));
     if (index < 0) return null;
 
     const list = lists[index];
@@ -194,6 +198,7 @@
 
     const chamber = loadRawByKey(INSIGHTS_KEY, { insights: [] });
     asArray(chamber?.insights).forEach((insight, index) => {
+      if (isDeletedRecord(insight)) return;
       const refId = asText(insight?.id, `insight_idx_${index}`);
       out.push({
         id: `insight_${refId}`,
@@ -205,21 +210,21 @@
       });
     });
 
-    asArray(loadRawByKey(NOTES_KEY, [])).filter((note) => !note?.deleted_at).forEach((note) => {
+    asArray(loadRawByKey(NOTES_KEY, [])).filter((note) => !isDeletedRecord(note)).forEach((note) => {
       out.push({ id: `note_${note.id}`, title: asText(note?.title, "Notat"), type: "note", source: "aha_notes", refId: asText(note?.id, ""), meta: {} });
     });
 
-    asArray(loadRawByKey(FEED_KEY, [])).filter((post) => !post?.deleted_at).forEach((post) => {
+    asArray(loadRawByKey(FEED_KEY, [])).filter((post) => !isDeletedRecord(post)).forEach((post) => {
       const raw = asText(post?.text, "");
       const title = raw ? `${raw.slice(0, 60)}${raw.length > 60 ? "…" : ""}` : "Feed-post";
       out.push({ id: `feed_${post.id}`, title, type: "feed_post", source: "aha_feed", refId: asText(post?.id, ""), meta: {} });
     });
 
-    asArray(loadRawByKey(GALLERY_KEY, [])).filter((item) => !item?.deleted_at).forEach((item) => {
+    asArray(loadRawByKey(GALLERY_KEY, [])).filter((item) => !isDeletedRecord(item)).forEach((item) => {
       out.push({ id: `gallery_${item.id}`, title: asText(item?.title, "Galleriobjekt"), type: "gallery_item", source: "aha_gallery", refId: asText(item?.id, ""), meta: {} });
     });
 
-    asArray(loadRawByKey(INSTA_KEY, [])).filter((post) => !post?.deleted_at).forEach((post) => {
+    asArray(loadRawByKey(INSTA_KEY, [])).filter((post) => !isDeletedRecord(post)).forEach((post) => {
       out.push({ id: `insta_${post.id}`, title: asText(post?.title || post?.caption, "Insta-post"), type: "insta_post", source: "aha_insta", refId: asText(post?.id, ""), meta: {} });
     });
 
@@ -227,7 +232,7 @@
   }
 
   function render() {
-    const lists = loadLists().filter((list) => !list.deletedAt);
+    const lists = loadLists().filter((list) => !isDeletedRecord(list));
     const groups = global.AHAGroups?.getActiveGroups ? asArray(global.AHAGroups.getActiveGroups()) : [];
     const allItems = collectAvailableItems();
     const statsLists = document.getElementById("lists-count");
@@ -355,7 +360,7 @@
         const status = document.querySelector(`[data-list-group-status="${addGroupPayload}"]`);
         if (!(select instanceof HTMLSelectElement) || !(status instanceof HTMLElement)) return;
         if (!select.value) { status.textContent = "Velg en gruppe først"; return; }
-        const currentList = loadLists().find((list) => list.id === addGroupPayload && !list.deletedAt);
+        const currentList = loadLists().find((list) => list.id === addGroupPayload && !isDeletedRecord(list));
         if (!currentList || !global.AHAGroups?.addReferenceToGroupByObject) return;
         const result = global.AHAGroups.addReferenceToGroupByObject(select.value, {
           title: currentList.title,
