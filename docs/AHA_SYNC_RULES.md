@@ -421,6 +421,70 @@ History Go-import kan lagre import via repository hvis repository-laget er laste
 
 Ikke bygg Supabase-sync for disse modulene før egen contract/sync-regel er låst.
 
+### Lists / Lister: fremtidig sync-kontrakt
+
+Dagens status:
+
+```text
+- localStorage-only via aha_lists_v1
+- ingen AHARepository.saveList/loadLists
+- ingen dokumentert Supabase-tabell
+- write-module, ikke read-only
+- tombstone filtering er fikset i PR #318
+```
+
+Før Lists sync kan bygges må disse beslutningene låses:
+
+```text
+- remote table name, for eksempel aha_lists
+- field mapping camelCase <-> snake_case
+- om list.items lagres som JSON eller egen list_items-tabell
+- conflict rule
+- tombstone rule
+- push-before-pull behavior
+- invalid remote fallback behavior
+```
+
+Midlertidig konfliktregel for senere kode:
+
+```text
+- push local lists before pull remote
+- merge by id
+- action time = newest of deletedAt/deleted_at, updatedAt/updated_at, createdAt/created_at
+- deletedAt/deleted_at teller som handlingstid
+- remote wins on equal action time
+- invalid remote payload must not clear localStorage
+- localStorage remains fallback/cache
+```
+
+Tombstone-regel:
+
+```text
+- local canonical Lists field is deletedAt today
+- Supabase-facing future field should be deleted_at if repository is added
+- mapping must be explicit
+- do not hard-delete list tombstones during sync
+```
+
+Ikke-bryt-regler for Lists sync:
+
+```text
+- Lists sync must not create insights
+- Lists sync must not create source events
+- Lists sync must not change referenced objects
+- Lists sync must not mutate Notes/Feed/Gallery/Insta
+- Lists sync must not make Supabase mandatory
+- Lists sync must not remove localStorage fallback
+```
+
+Neste trygge kodekandidat etter denne kontrakten:
+
+```text
+- add AHARepository.saveList/loadLists with no UI changes
+- no syncFromDatabase yet
+- no Supabase schema unless table already exists / migration is explicitly included in separate PR
+```
+
 ## 10. Konfliktregler per modul
 
 | Modul | Dagens konfliktregel | Tombstone-regel | Risiko | Midlertidig beslutning |
