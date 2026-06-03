@@ -76,7 +76,7 @@ async function testNotesSyncRegressions() {
         ]
       })
     },
-    ingest: { ingest: async (payload) => { ingestCalls.push(payload); return { ok: true }; } }
+    ingest: { ingest: async (payload) => { ingestCalls.push(payload); return { ok: true, sourceEvent: { id: 'source-event-1' } }; } }
   });
 
   const Notes = sandbox.AHANotes;
@@ -116,6 +116,37 @@ async function testNotesSyncRegressions() {
   await Notes.updateNote('note_to_edit', { title: 'New title', text: 'New text' });
   assert.equal(ingestCalls.at(-1).source_type, 'note_edit', 'updateNote should ingest note_edit');
   assert.equal(ingestCalls.at(-1).skip_insight, true, 'note_edit ingest should keep skip_insight true');
+
+  const editedNote = byId(Notes.load(), 'note_to_edit');
+  const editedUpdatedAt = editedNote.updated_at;
+  const reanalyzed = await Notes.reanalyzeNote('note_to_edit');
+  const reanalyzePayload = ingestCalls.at(-1);
+  assert.equal(typeof Notes.reanalyzeNote, 'function', 'AHANotes.reanalyzeNote should be exported');
+  assert.equal(reanalyzePayload.source_type, 'note_reanalysis', 'reanalyzeNote should ingest note_reanalysis');
+  assert.equal(reanalyzePayload.source_app, 'aha_notes', 'reanalyzeNote should ingest from aha_notes');
+  assert.equal(reanalyzePayload.meta.reanalyze, true, 'reanalyzeNote payload should mark explicit reanalysis');
+  assert.notEqual(reanalyzePayload.skip_insight, true, 'reanalyzeNote should not set skip_insight true');
+  assert.equal(reanalyzed.last_source_event_id, 'source-event-1', 'reanalyzeNote should store returned source event id');
+  assert.ok(reanalyzed.last_reanalyzed_at, 'reanalyzeNote should set last_reanalyzed_at');
+  assert.equal(reanalyzed.updated_at, editedUpdatedAt, 'reanalyzeNote should not change updated_at');
+  assert.equal(reanalyzed.title, editedNote.title, 'reanalyzeNote should not change title');
+  assert.equal(reanalyzed.text, editedNote.text, 'reanalyzeNote should not change text');
+
+  Notes.save([
+    ...Notes.load(),
+    {
+      id: 'note_deleted_for_reanalysis',
+      title: 'Deleted note',
+      text: 'Should not reanalyze',
+      created_at: '2026-01-01T00:00:00.000Z',
+      updated_at: '2026-01-02T00:00:00.000Z',
+      deleted_at: '2026-01-02T00:00:00.000Z'
+    }
+  ]);
+  const ingestCallCountBeforeDeleted = ingestCalls.length;
+  const deletedReanalysis = await Notes.reanalyzeNote('note_deleted_for_reanalysis');
+  assert.equal(deletedReanalysis, null, 'reanalyzeNote should return null for deleted notes');
+  assert.equal(ingestCalls.length, ingestCallCountBeforeDeleted, 'reanalyzeNote should not ingest deleted notes');
 
   const invalidSandbox = loadModule('js/ahaNotes.js', {
     repository: {

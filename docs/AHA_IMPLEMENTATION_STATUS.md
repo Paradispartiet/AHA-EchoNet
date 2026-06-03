@@ -27,6 +27,7 @@ Ferdig nå:
 ✅ AHA Insta post-sync pusher tombstones før pull
 ✅ AHA Insta post-sync returnerer merged data og local fallback
 ✅ Regresjonstester låser tombstone/sync-reglene
+✅ Reanalyze note / Analyser notat på nytt
 ```
 
 Ikke bygget ennå:
@@ -38,7 +39,6 @@ Ikke bygget ennå:
 ❌ Offentlig publisering / EchoNet-deling
 ❌ Full felt-merge / versjonering
 ❌ Full multi-device konfliktmodell
-❌ Reanalyze note / Analyser notat på nytt
 ❌ Stories sync
 ❌ Import preview/session sync
 ```
@@ -100,7 +100,7 @@ Viktigste beslutning:
 ```text
 note_create = kan lage insight
 note_edit = source-only med skip_insight: true
-reanalyze_note = senere eksplisitt handling
+note_reanalysis = eksplisitt brukerhandling uten skip_insight
 ```
 
 ### 2.4 AHA_SYNC_RULES.md
@@ -281,15 +281,16 @@ Fungerer nå:
 ```text
 create note → source event + mulig insight
 edit note → source event only / skip_insight: true
+reanalyze note / Analyser notat på nytt → eksplisitt AHAIngest uten skip_insight
 sync → merge local+remote by latest action
 invalid remote → localStorage fallback
 delete → deleted_at + updated_at
 ```
 
-Neste mulige kodekandidat:
+Ferdig nå:
 
 ```text
-Eksplisitt reanalyze_note / Analyser notat på nytt.
+✅ Reanalyze note / Analyser notat på nytt
 ```
 
 Ikke gjør automatisk:
@@ -318,7 +319,7 @@ delete → deleted_at + updated_at
 Neste mulige kodekandidat:
 
 ```text
-Ingen akutt. Vent til Notes reanalyze eller modulstatus tilsier behov.
+Ingen akutt. Notes reanalysis er ferdig; vent til modulstatus tilsier neste behov.
 ```
 
 ## 4.3 Galleri
@@ -470,10 +471,10 @@ git diff --check → OK
 
 ## 7. Anbefalt neste steg
 
-Neste trygge kodekandidat:
+Ferdig nå:
 
 ```text
-Notes: eksplisitt reanalyze_note / "Analyser notat på nytt"
+✅ Notes: Reanalyze note / "Analyser notat på nytt"
 ```
 
 Hvorfor:
@@ -485,7 +486,7 @@ Hvorfor:
 - Dette kan bygges uten å endre motoren.
 ```
 
-Avgrensning for neste PR:
+Avgrensning for denne PR-en:
 
 ```text
 Kun Notes.
@@ -497,27 +498,25 @@ Ikke rør Feed/Galleri/Insta.
 Ikke bygg stor UI.
 ```
 
-Mulig kontrakt:
+Låst kontrakt:
 
 ```text
-reanalyze_note
+note_reanalysis
 → bruker initierer eksplisitt ny analyse
-→ source_type: note_reanalysis eller note_reanalyze
+→ source_type: note_reanalysis
 → source_app: aha_notes
 → content_type: text
 → user_created: true
 → imported: false
-→ skip_insight: false / ikke satt
+→ skip_insight: ikke satt
 → meta: { note_id, reanalyze: true }
 ```
-
-Dette må låses i `docs/AHA_DATA_CONTRACT_MATRIX.md` før eller samtidig med kodeendringen.
 
 ## 8. Anbefalt PR-rekkefølge videre
 
 ```text
-1. docs/code: Notes reanalyze_note kontrakt + minimal kode
-2. test: reanalyze_note regresjonstest
+1. ✅ docs/code: Notes note_reanalysis kontrakt + minimal kode
+2. ✅ test: note_reanalysis regresjonstest
 3. deretter pause og vurder UI/UX før flere moduler
 ```
 
