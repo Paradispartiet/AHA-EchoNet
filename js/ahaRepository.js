@@ -197,6 +197,28 @@
     });
   }
 
+  async function savePath(pathRecord) {
+    const p = cleanObject(pathRecord);
+    if (!p.id) return fallback("missing_id");
+    const profileId = await getProfileId(p.profile_id);
+    if (!profileId) return fallback("not_signed_in");
+    const now = new Date().toISOString();
+    return insert("aha_paths", {
+      id: p.id,
+      profile_id: profileId,
+      title: p.title || null,
+      type: p.type || null,
+      description: p.description || null,
+      tags: cleanArray(p.tags),
+      steps: cleanArray(p.steps),
+      source: p.source || "aha_paths",
+      meta: cleanObject(p.meta),
+      created_at: p.createdAt || p.created_at || now,
+      updated_at: p.updatedAt || p.updated_at || p.createdAt || p.created_at || now,
+      deleted_at: p.deletedAt || p.deleted_at || null
+    });
+  }
+
   async function saveInstaPost(post) {
     const p = cleanObject(post);
     if (!p.id) return fallback("missing_id");
@@ -327,6 +349,10 @@
 
   function loadLists(options = {}) {
     return list("aha_lists", { orderBy: "created_at", limit: options.limit || 200 });
+  }
+
+  function loadPaths(options = {}) {
+    return list("aha_paths", { orderBy: "created_at", limit: options.limit || 200 });
   }
 
   function loadInstaPosts(options = {}) {
@@ -465,6 +491,7 @@
     saveGalleryItem,
     saveFeedPost,
     saveList,
+    savePath,
     saveInstaPost,
     saveInstaProfile,
     saveInstaLike,
@@ -477,6 +504,7 @@
     loadGalleryItems,
     loadFeedPosts,
     loadLists,
+    loadPaths,
     loadInstaPosts,
     loadInstaProfile,
     loadInstaLikes,
