@@ -42,6 +42,10 @@
     return asArray(tags).map((tag) => asText(tag, "")).filter(Boolean);
   }
 
+  function isDeletedRecord(record) {
+    return Boolean(record?.deletedAt || record?.deleted_at);
+  }
+
   function truncate(text, max) {
     const value = asText(text, "");
     if (!value) return "";
@@ -254,7 +258,7 @@
       }));
     });
 
-    asArray(loadByKey(STORAGE_KEYS.paths, [])).filter((path) => !path?.deletedAt).forEach((path) => {
+    asArray(loadByKey(STORAGE_KEYS.paths, [])).filter((path) => !isDeletedRecord(path)).forEach((path) => {
       const base = withBase(path, { type: "path", source: "aha_paths" });
       const refId = asText(path?.id || base?.id, "");
       if (!refId) return;

@@ -98,6 +98,24 @@ ctx.localStorage.setItem('aha_source_events_v1', JSON.stringify([
     created_at: '2024-02-01T00:00:00.000Z'
   }
 ]));
+ctx.localStorage.setItem('aha_paths_v1', JSON.stringify([
+  {
+    id: 'active-path',
+    title: 'Aktiv teststi',
+    description: 'Synlig aktiv sti.',
+    createdAt: '2024-03-01T00:00:00.000Z'
+  },
+  {
+    id: 'deleted-at-path',
+    title: 'Skjult deletedAt-sti',
+    deletedAt: '2024-03-02T00:00:00.000Z'
+  },
+  {
+    id: 'deleted-underscore-path',
+    title: 'Skjult deleted_at-sti',
+    deleted_at: '2024-03-03T00:00:00.000Z'
+  }
+]));
 
 const collected = ctx.AHASearch.collectSearchItems();
 const reanalyzedNote = collected.find((item) => item.id === 'note_old-reanalyzed-note');
@@ -109,6 +127,10 @@ const noteReanalysisEvent = collected.find((item) => item.id === 'source_event_s
 assert.ok(noteReanalysisEvent, 'note_reanalysis source event should still be indexed from aha_source_events_v1');
 assert.equal(noteReanalysisEvent.type, 'note_reanalysis', 'source event type should stay source_type');
 assert.equal(noteReanalysisEvent.source, 'aha_source_events', 'source event should stay in source-events index');
+
+assert.ok(collected.some((item) => item.id === 'path_active-path'), 'active path should be indexed');
+assert.ok(!collected.some((item) => item.id === 'path_deleted-at-path'), 'path with deletedAt should not be indexed');
+assert.ok(!collected.some((item) => item.id === 'path_deleted-underscore-path'), 'path with deleted_at should not be indexed');
 
 ctx.AHASearch.refresh();
 const sorted = ctx.AHASearch.searchItems('', {});
