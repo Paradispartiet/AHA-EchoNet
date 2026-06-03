@@ -455,6 +455,7 @@ AHARepository.loadNotes(...)
   updated_at: string,
   deleted_at?: string,
   last_source_event_id?: string,
+  last_reanalyzed_at?: string,
   base?: BaseItem
 }
 ```
@@ -492,12 +493,31 @@ AHARepository.loadNotes(...)
 }
 ```
 
+### Source event ved explicit reanalysis
+
+```js
+{
+  source_type: "note_reanalysis",
+  source_app: "aha_notes",
+  content_type: "text",
+  title,
+  text,
+  user_created: true,
+  imported: false,
+  created_at: reanalyzed_at,
+  meta: {
+    note_id,
+    reanalyze: true
+  }
+}
+```
+
 ### Beslutning: note_edit er source-only
 
 ```text
 note_create = source event + ordinær AHAIngest, slik at ny insight kan oppstå.
-note_edit = source event only med skip_insight: true, slik at små rettinger ikke lager nye nesten-like insights.
-reanalyze_note = senere eksplisitt handling som kan lage ny insight når brukeren faktisk ber om revurdering.
+note_edit = source event only med skip_insight: true.
+note_reanalysis = eksplisitt brukerhandling som kjører AHAIngest uten skip_insight, slik at ny insight kan oppstå.
 ```
 
 ### Regler
@@ -1487,20 +1507,20 @@ offline-first regler
 per-modul sync-status
 ```
 
-Første kodekandidat etter dette er fortsatt:
+Ferdig Notes-kode etter dette:
 
 ```text
 Notes
 ```
 
-Første konkrete Notes-endring bør være:
+Ferdig konkret Notes-endring:
 
 ```text
-Endre note_edit-flyten i js/ahaNotes.js slik at den sender skip_insight: true til AHAIngest.
+note_edit-flyten i js/ahaNotes.js sender skip_insight: true til AHAIngest.
 ```
 
-Senere funksjon, ikke nå:
+Ferdig eksplisitt funksjon:
 
 ```text
-Legg til eksplisitt "Analyser notat på nytt" / reanalyze_note-handling for bevisst ny insight.
+Eksplisitt "Analyser notat på nytt" / note_reanalysis-handling er lagt til for bevisst ny insight.
 ```

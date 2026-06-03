@@ -99,6 +99,7 @@
           </div>
           <div class="module-actions">
             <button type="button" data-note-edit="${escapeHtml(note.id)}">Rediger</button>
+            <button type="button" data-note-reanalyze="${escapeHtml(note.id)}">Analyser på nytt</button>
             <button type="button" data-note-delete="${escapeHtml(note.id)}">Slett</button>
           </div>
         </article>
@@ -189,6 +190,44 @@
     return updated;
   }
 
+  async function reanalyzeNote(id) {
+    const notes = load();
+    const index = notes.findIndex((note) => note.id === id);
+    if (index < 0 || notes[index]?.deleted_at) return null;
+
+    const note = notes[index];
+    const reanalyzedAt = new Date().toISOString();
+    const ingestResult = await window.AHAIngest?.ingest?.({
+      source_type: "note_reanalysis",
+      source_app: "aha_notes",
+      content_type: "text",
+      title: note.title,
+      text: note.text,
+      user_created: true,
+      imported: false,
+      created_at: reanalyzedAt,
+      meta: {
+        note_id: note.id,
+        reanalyze: true
+      }
+    });
+
+    let updatedNote = note;
+    if (ingestResult?.sourceEvent?.id) {
+      updatedNote = {
+        ...note,
+        last_source_event_id: ingestResult.sourceEvent.id,
+        last_reanalyzed_at: reanalyzedAt
+      };
+      notes[index] = updatedNote;
+    }
+
+    save(notes);
+    if (updatedNote !== note) persistNote(updatedNote);
+    render(notes);
+    return updatedNote;
+  }
+
   function deleteNote(id) {
     const notes = load();
     const index = notes.findIndex((note) => note.id === id);
@@ -222,7 +261,12 @@
       const target = event.target;
       if (!(target instanceof HTMLElement)) return;
       const editId = target.dataset.noteEdit;
+      const reanalyzeId = target.dataset.noteReanalyze;
       const deleteId = target.dataset.noteDelete;
+      if (reanalyzeId) {
+        reanalyzeNote(reanalyzeId);
+        return;
+      }
       if (editId) {
         const notes = load();
         const note = notes.find((n) => n.id === editId && !n.deleted_at);
@@ -241,7 +285,7 @@
     window.addEventListener("aha:auth-ready", syncFromDatabase);
   }
 
-  window.AHANotes = { load, save, syncFromDatabase, addNote, updateNote, deleteNote, render };
+  window.AHANotes = { load, save, syncFromDatabase, addNote, updateNote, reanalyzeNote, deleteNote, render };
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bind);
   else bind();
