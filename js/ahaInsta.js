@@ -782,9 +782,9 @@
     if (!window.AHARepository?.loadInstaPosts) return { ok: false, fallback: "localStorage" };
 
     const localPosts = load();
-    const localActivePosts = localPosts.filter((post) => !post?.deleted_at);
-    if (localActivePosts.length) {
-      await pushLocalToDatabase(localActivePosts);
+    // Push both active posts and tombstones before pull so local deletes are not dependent on prior persistPost timing.
+    if (localPosts.length) {
+      await pushLocalToDatabase(localPosts);
     }
 
     const result = await window.AHARepository.loadInstaPosts();
@@ -1145,7 +1145,8 @@
     const index = entries.findIndex((entry) => entry.id === postId);
     if (index < 0) return null;
 
-    entries[index] = { ...entries[index], deleted_at: nowIso() };
+    const deletedAt = nowIso();
+    entries[index] = { ...entries[index], deleted_at: deletedAt, updated_at: deletedAt };
     save(entries);
     persistPost(entries[index]);
     render(entries);

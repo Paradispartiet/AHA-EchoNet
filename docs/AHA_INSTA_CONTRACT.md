@@ -355,16 +355,15 @@ AHARepository.loadInstaPosts(...)
 Dagens post-sync:
 
 1. Last lokale posts fra `aha_insta_posts_v1`.
-2. Filtrer lokale posts til active-only (`!deleted_at`).
-3. Push aktive lokale posts til repository før pull.
-4. Last remote posts.
-5. Merge local + remote med `mergePosts`.
-6. Dedupe/merge matcher først på `id`, deretter på `source_signature`.
-7. Ved match sammenlignes `updated_at`, `deleted_at`, `created_at` via `resolvePostDate`.
-8. Remote/incoming foretrekkes ved lik eller nyere action time.
-9. Merged liste lagres lokalt og render filtrerer bort `deleted_at`.
+2. Push både aktive lokale posts og `deleted_at` tombstones til repository før pull.
+3. Last remote posts.
+4. Merge local + remote med `mergePosts`.
+5. Dedupe/merge matcher først på `id`, deretter på `source_signature`.
+6. Ved match sammenlignes `updated_at`, `deleted_at`, `created_at` via `resolvePostDate`.
+7. Remote/incoming foretrekkes ved lik eller nyere action time.
+8. Merged liste lagres lokalt og render filtrerer bort `deleted_at`.
 
-Kjent sync-risiko: active-only pre-push kan gjøre lokale post-tombstones avhengige av at `persistPost` allerede fikk lagret tombstone til repository. Dette skal ikke løses i denne PR-en; det er dokumentert som senere kodekandidat.
+Post-sync er derfor ikke lenger active-only i pre-push-steget: lokale post-tombstones får ny mulighet til å nå repository før remote pull, selv om tidligere best-effort `persistPost` ikke rakk å lagre tombstone.
 
 ### 10.2 Profile
 
@@ -435,7 +434,7 @@ Dagens profile-sync:
 - `deleted_at: null` eller manglende `deleted_at` betyr aktiv record.
 - UI/render skal filtrere bort tombstoned posts/comments der dagens kode gjør det.
 - For social actions er `deleted_at` canonical action status: newer tombstone vinner over stale active record, newer active record vinner over stale tombstone.
-- Kjent hull: eksisterende kode setter `deleted_at` ved Insta post delete, men setter ikke `updated_at` samtidig. Siden post-sync bruker `updated_at || deleted_at || created_at`, teller tombstone-tiden likevel i merge når tombstone-record er til stede. Active-only pre-push gjør likevel remote trygghet avhengig av at tombstone tidligere ble persistert via `persistPost`.
+- Insta post delete setter `deleted_at` og `updated_at` til samme tombstone-tidspunkt, og post-sync pusher både aktive posts og tombstones før pull.
 - Ikke hard-delete tombstones som fortsatt trengs for sync.
 
 ## 12. Storage/media-regler
@@ -463,8 +462,7 @@ Dagens profile-sync:
 - Ekte sosial graf er ikke bygget.
 - Likes/comments/follows er lokal/simulert sosial modell, ikke offentlig graf.
 - Public/private er ikke ekte publiseringssystem ennå.
-- Tombstone/sync for posts bør vurderes i egen senere PR.
-- Active-only pre-push for posts kan gjøre lokale tombstones avhengige av tidligere `persistPost`.
+- Tombstone/sync for posts pusher nå lokale `deleted_at`-records før pull, men full felt-merge/versjonering er fortsatt ikke bygget.
 - Stories kan trenge egen syncregel senere.
 - Import preview og import sessions kan trenge egen syncregel senere.
 - Importerte stories har ikke ingest-flow i dagens kode.
@@ -472,9 +470,9 @@ Dagens profile-sync:
 
 ## 15. Neste trygge kodekandidat etter dokumentet
 
-Neste lille kodekandidat bør være: sikre AHA Insta post tombstones/sync slik at lokale `deleted_at`-records ikke er avhengige av tidligere `persistPost` når sync kjører active-only pre-push.
+Tombstone/sync-kandidaten for posts er utført på lavt nivå: post-sync pusher nå både aktive posts og `deleted_at` tombstones før pull. Neste trygge kodekandidat bør fortsatt holde seg innen eksisterende avgrensninger og ikke bygge større Insta-flater uten egen kontrakt.
 
-Avgrensning for den senere PR-en:
+Avgrensning for senere PR-er:
 
 - Ikke bygg storage.
 - Ikke bygg sosial graf.
