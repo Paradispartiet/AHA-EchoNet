@@ -145,7 +145,15 @@
     asArray(raw.notes).filter((note) => !isDeletedRecord(note)).forEach((note) => {
       const refId = asText(note?.id, "");
       if (!refId) return;
-      const node = { id: nodeId("note", "aha_notes", refId), title: asText(note?.title, "Notat"), type: "note", source: "aha_notes", refId, href: "notes.html", meta: {} };
+      const node = {
+        id: nodeId("note", "aha_notes", refId),
+        title: asText(note?.title, "Notat"),
+        type: "note",
+        source: "aha_notes",
+        refId,
+        href: "notes.html",
+        meta: { lastReanalyzedAt: note?.last_reanalyzed_at || "" }
+      };
       addNode(nodes, nodeIndex, node);
       registerRef(node);
     });
@@ -220,6 +228,22 @@
       const insightNodeId = nodeId("insight", "aha_insights", insightRefId);
       const sourceRefId = asText(insight?.source_event_id || insight?.sourceEventId || insight?.source_id || insight?.sourceId || insight?.event_id || insight?.eventId, "");
       addEdge(sourceByRef.get(sourceRefId), insightNodeId, "source_to_insight", "kilde til innsikt", {});
+    });
+
+    const reanalysisEdgeKeys = new Set();
+    asArray(raw.sourceEvents).filter((event) => !isDeletedRecord(event)).forEach((event, index) => {
+      if (event?.source_type !== "note_reanalysis") return;
+      if (event?.source_app && event.source_app !== "aha_notes") return;
+      const noteId = asText(event?.meta?.note_id, "");
+      if (!noteId) return;
+      const sourceRefId = asText(event?.id || event?.event_id || event?.source_event_id, `source_event_idx_${index}`);
+      const fromId = sourceByRef.get(sourceRefId);
+      const toId = nodeId("note", "aha_notes", noteId);
+      if (!nodeBundle.nodeIndex.has(fromId) || !nodeBundle.nodeIndex.has(toId)) return;
+      const edgeKey = `${fromId}::${toId}::note_reanalysis`;
+      if (reanalysisEdgeKeys.has(edgeKey)) return;
+      reanalysisEdgeKeys.add(edgeKey);
+      addEdge(fromId, toId, "note_reanalysis", "analysert på nytt", { noteId, reanalyze: true });
     });
 
     asArray(raw.lists).filter((list) => !isDeletedRecord(list)).forEach((list) => {
