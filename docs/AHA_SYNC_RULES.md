@@ -485,6 +485,87 @@ Neste trygge kodekandidat etter denne kontrakten:
 - no Supabase schema unless table already exists / migration is explicitly included in separate PR
 ```
 
+### Paths / Stier: fremtidig sync-kontrakt
+
+Dagens status:
+
+```text
+- localStorage-only via aha_paths_v1
+- write-module, not read-only
+- no AHARepository.savePath/loadPaths
+- no Supabase table documented
+- no syncFromDatabase
+- no push-on-write
+- no source events
+- no insights
+- tombstone read-filtering in Search was fixed in PR #323
+```
+
+Før Paths sync kan bygges må disse beslutningene låses:
+
+```text
+- remote table name, for eksempel aha_paths
+- field mapping camelCase <-> snake_case
+- om path.steps lagres som JSON eller egen path_steps-tabell
+- conflict rule for paths
+- conflict rule for steps
+- tombstone rule for paths
+- whether steps get tombstones or remain hard-remove
+- push-before-pull behavior
+- invalid remote fallback behavior
+```
+
+Midlertidig konfliktregel for senere path-kode:
+
+```text
+- push local paths before pull remote
+- merge by id
+- action time = newest of deletedAt/deleted_at, updatedAt/updated_at, createdAt/created_at
+- deletedAt/deleted_at teller som handlingstid
+- remote wins on equal action time
+- invalid remote payload must not clear localStorage
+- localStorage remains fallback/cache
+```
+
+Tombstone-regel:
+
+```text
+- local canonical Paths field is deletedAt today
+- Supabase-facing future field should be deleted_at if repository is added
+- mapping must be explicit
+- do not hard-delete path tombstones during sync
+```
+
+Step-regel:
+
+```text
+- path.steps are embedded today
+- step removal is hard remove today
+- do not add step-level sync until conflict behavior is explicitly decided
+- initial repository method may preserve embedded steps as JSON
+- sync must not mutate referenced Notes/Lists/Insights/etc.
+```
+
+Ikke-bryt-regler for Paths sync:
+
+```text
+- Paths sync must not create insights
+- Paths sync must not create source events
+- Paths sync must not mutate referenced objects
+- Paths sync must not mutate Notes/Lists/Feed/Gallery/Insta
+- Paths sync must not make Supabase mandatory
+- Paths sync must not remove localStorage fallback
+- Paths sync must not change Groups behavior
+```
+
+Neste trygge kodekandidat etter denne kontrakten:
+
+```text
+- add AHARepository.savePath/loadPaths with no UI changes
+- no syncFromDatabase yet
+- no Supabase schema unless table already exists / migration is explicitly included in separate PR
+```
+
 ## 10. Konfliktregler per modul
 
 | Modul | Dagens konfliktregel | Tombstone-regel | Risiko | Midlertidig beslutning |
