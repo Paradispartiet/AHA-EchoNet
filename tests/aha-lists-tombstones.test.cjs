@@ -77,6 +77,7 @@ vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'js', 'ahaLists.js'),
 
 const Lists = context.AHALists;
 assert.ok(Lists, 'AHALists should be exported');
+assert.equal(typeof Lists.syncFromDatabase, 'function', 'AHALists.syncFromDatabase should be exported');
 
 const created = Lists.createList({ title: 'Ny trygg liste', type: 'todo', description: 'write module' });
 assert.ok(created?.id, 'createList should return a created list');
@@ -279,8 +280,105 @@ assert.ok(throwingAddedItem, 'addItemToList should not break when AHARepository.
 assert.ok(ThrowingLists.removeItemFromList(throwingItemList.id, throwingAddedItem.id), 'removeItemFromList should not break when AHARepository.saveList throws');
 assert.equal(throwingStorage.readJson('aha_lists_v1', []).length, 2, 'repository errors should not break localStorage flow');
 
-const ahaListsSource = fs.readFileSync(path.join(__dirname, '..', 'js', 'ahaLists.js'), 'utf8');
-assert.equal(ahaListsSource.includes('syncFromDatabase'), false, 'AHALists should not define syncFromDatabase');
-assert.equal(ahaListsSource.includes('AHARepository.loadLists'), false, 'AHALists should not call AHARepository.loadLists');
+async function runSyncTests() {
+  const callOrder = [];
+  const pushed = [];
+  const syncRepository = {
+    saveList(list) {
+      callOrder.push(`save:${list.id}`);
+      pushed.push(JSON.parse(JSON.stringify(list)));
+      return { ok: true, id: list.id };
+    },
+    async loadLists() {
+      callOrder.push('load');
+      return {
+        ok: true,
+        data: [
+          {
+            id: 'remote-snake',
+            title: 'Remote snake',
+            type: 'todo',
+            description: 'from database',
+            tags: ['remote'],
+            items: [{ id: 'remote-item', title: 'Remote item', ref_id: 'note-remote', source: 'aha_notes' }],
+            source: 'aha_lists',
+            meta: { remote: true },
+            created_at: '2026-01-01T00:00:00.000Z',
+            updated_at: '2026-01-06T00:00:00.000Z',
+            deleted_at: null
+          },
+          { id: 'local-deleted', title: 'Older remote active', created_at: '2026-01-01T00:00:00.000Z', updated_at: '2026-01-02T00:00:00.000Z', items: [] },
+          { id: 'remote-newer', title: 'Newer remote', created_at: '2026-01-01T00:00:00.000Z', updated_at: '2026-01-08T00:00:00.000Z', items: [] },
+          { id: 'equal-time', title: 'Remote equal wins', created_at: '2026-01-01T00:00:00.000Z', updated_at: '2026-01-07T00:00:00.000Z', items: [] }
+        ]
+      };
+    }
+  };
+  const { calls: syncForbiddenCalls, storage: syncStorage, Lists: SyncLists } = makeListsContext(syncRepository);
+  syncStorage.writeJson('aha_lists_v1', [
+    { id: 'local-deleted', title: 'Newer local tombstone', createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-03T00:00:00.000Z', deletedAt: '2026-01-09T00:00:00.000Z', items: [] },
+    { id: 'remote-newer', title: 'Older local', createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-04T00:00:00.000Z', items: [] },
+    { id: 'equal-time', title: 'Local equal loses', createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-07T00:00:00.000Z', items: [] }
+  ]);
 
-console.log('aha-lists-tombstones.test.cjs passed');
+  const syncResult = await SyncLists.syncFromDatabase();
+  assert.equal(syncResult.ok, true, 'syncFromDatabase should return repository ok result');
+  assert.equal(syncResult.merged, true, 'syncFromDatabase should mark merged results');
+  assert.deepEqual(callOrder, ['save:local-deleted', 'save:remote-newer', 'save:equal-time', 'load'], 'syncFromDatabase should push local lists before pulling remote lists');
+  assert.ok(pushed.some((list) => list.id === 'local-deleted' && list.deletedAt), 'syncFromDatabase should push local tombstones');
+
+  const merged = syncStorage.readJson('aha_lists_v1', []);
+  const remoteSnake = merged.find((list) => list.id === 'remote-snake');
+  assert.ok(remoteSnake, 'remote snake_case row should be saved locally');
+  assert.equal(remoteSnake.createdAt, '2026-01-01T00:00:00.000Z', 'remote created_at should normalize to createdAt');
+  assert.equal(remoteSnake.updatedAt, '2026-01-06T00:00:00.000Z', 'remote updated_at should normalize to updatedAt');
+  assert.equal(remoteSnake.deletedAt, '', 'remote deleted_at should normalize to deletedAt');
+  assert.equal(remoteSnake.items[0].refId, 'note-remote', 'remote item ref_id should normalize to refId');
+  assert.equal(merged.find((list) => list.id === 'local-deleted').title, 'Newer local tombstone', 'newer local tombstone should win over older remote active list');
+  assert.ok(merged.find((list) => list.id === 'local-deleted').deletedAt, 'winning local tombstone should remain a tombstone');
+  assert.equal(merged.find((list) => list.id === 'remote-newer').title, 'Newer remote', 'newer remote list should win over older local list');
+  assert.equal(merged.find((list) => list.id === 'equal-time').title, 'Remote equal wins', 'remote list should win on equal action time');
+  assert.equal(syncForbiddenCalls.length, 0, 'syncFromDatabase should not call AHAIngest or AHASources');
+
+  const invalidRepository = {
+    saveList() { return { ok: true }; },
+    loadLists() { return { ok: true, data: { not: 'an array' } }; }
+  };
+  const { storage: invalidStorage, Lists: InvalidLists } = makeListsContext(invalidRepository);
+  const invalidLocal = [{ id: 'keep-local', title: 'Keep local', updatedAt: '2026-01-01T00:00:00.000Z', items: [] }];
+  invalidStorage.writeJson('aha_lists_v1', invalidLocal);
+  const invalidResult = await InvalidLists.syncFromDatabase();
+  assert.equal(invalidResult.ok, false, 'invalid remote payload should return an ok:false fallback result');
+  assert.equal(invalidResult.fallback, 'localStorage', 'invalid remote payload should fall back to localStorage');
+  assert.equal(invalidStorage.readJson('aha_lists_v1', [])[0].id, 'keep-local', 'invalid remote payload should not delete local data');
+
+  const { storage: missingStorage, Lists: MissingRepoLists } = makeListsContext({ saveList() { return { ok: true }; } });
+  missingStorage.writeJson('aha_lists_v1', [{ id: 'missing-repo-local', title: 'Missing repo local', items: [] }]);
+  const missingResult = await MissingRepoLists.syncFromDatabase();
+  assert.equal(missingResult.ok, false, 'missing loadLists should return ok:false');
+  assert.equal(missingResult.fallback, 'localStorage', 'missing loadLists should fall back to localStorage');
+  assert.equal(missingResult.data[0].id, 'missing-repo-local', 'missing loadLists should return local lists');
+
+  const failingRepository = {
+    saveList() { throw new Error('save failed'); },
+    loadLists() { throw new Error('load failed'); }
+  };
+  const { storage: failingStorage, Lists: FailingLists } = makeListsContext(failingRepository);
+  failingStorage.writeJson('aha_lists_v1', [{ id: 'safe-local', title: 'Safe local', items: [] }]);
+  const failingResult = await FailingLists.syncFromDatabase();
+  assert.equal(failingResult.ok, false, 'repository errors should return ok:false');
+  assert.equal(failingResult.fallback, 'localStorage', 'repository errors should fall back to localStorage');
+  assert.equal(failingStorage.readJson('aha_lists_v1', [])[0].id, 'safe-local', 'repository errors should not break localStorage data');
+}
+
+runSyncTests().then(() => {
+  const ahaListsSource = fs.readFileSync(path.join(__dirname, '..', 'js', 'ahaLists.js'), 'utf8');
+  assert.equal(ahaListsSource.includes('AHAIngest'), false, 'AHALists should not call AHAIngest');
+  assert.equal(ahaListsSource.includes('AHASources'), false, 'AHALists should not call AHASources');
+  assert.equal(ahaListsSource.includes('createInsight'), false, 'AHALists should not create insights');
+  assert.equal(ahaListsSource.includes('AHARepository.loadLists'), true, 'AHALists should call AHARepository.loadLists only from syncFromDatabase');
+  console.log('aha-lists-tombstones.test.cjs passed');
+}).catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});
