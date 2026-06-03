@@ -114,6 +114,76 @@
     }
   }
 
+  function listActionTime(list) {
+    return [
+      list?.deletedAt,
+      list?.deleted_at,
+      list?.updatedAt,
+      list?.updated_at,
+      list?.createdAt,
+      list?.created_at
+    ].reduce((latest, value) => {
+      const time = Date.parse(value);
+      return Number.isFinite(time) && time > latest ? time : latest;
+    }, 0);
+  }
+
+  function normalizeRemoteList(remote) {
+    const { created_at, updated_at, deleted_at, ...rest } = remote || {};
+    const normalized = normalizeList({
+      ...rest,
+      createdAt: rest.createdAt || created_at,
+      updatedAt: rest.updatedAt || updated_at,
+      deletedAt: rest.deletedAt || deleted_at
+    });
+    return { ...rest, ...normalized };
+  }
+
+  function mergeLists(localLists, remoteLists) {
+    const merged = new Map();
+    [...asArray(localLists), ...asArray(remoteLists)].forEach((incoming) => {
+      const list = normalizeList(incoming);
+      const existing = merged.get(list.id);
+      if (!existing || listActionTime(list) >= listActionTime(existing)) {
+        merged.set(list.id, list);
+      }
+    });
+    return [...merged.values()].sort((a, b) => listActionTime(b) - listActionTime(a));
+  }
+
+  async function pushLocalToDatabase(lists) {
+    if (!global.AHARepository?.saveList) return null;
+    return Promise.allSettled(asArray(lists).map((list) => {
+      return Promise.resolve().then(() => global.AHARepository.saveList(list));
+    }));
+  }
+
+  async function syncFromDatabase() {
+    const localLists = loadLists();
+    if (localLists.length) await pushLocalToDatabase(localLists);
+    if (!global.AHARepository?.loadLists) {
+      return { ok: false, fallback: "localStorage", data: localLists };
+    }
+
+    let result;
+    try {
+      result = await global.AHARepository.loadLists();
+    } catch (error) {
+      return { ok: false, error, fallback: "localStorage", data: localLists };
+    }
+
+    if (!result?.ok) return result || { ok: false };
+    if (!Array.isArray(result.data)) {
+      return { ...result, ok: false, fallback: "localStorage", data: localLists };
+    }
+
+    const remoteLists = result.data.map((remote) => normalizeRemoteList(remote));
+    const merged = mergeLists(localLists, remoteLists);
+    saveLists(merged);
+    render();
+    return { ...result, data: merged, merged: true };
+  }
+
   function createList(input) {
     const now = new Date().toISOString();
     const current = loadLists();
@@ -397,6 +467,7 @@
     addItemToList,
     removeItemFromList,
     collectAvailableItems,
+    syncFromDatabase,
     render,
     refresh
   };
