@@ -62,6 +62,7 @@
       || item?.updated_at
       || item?.lastUpdated
       || item?.last_updated
+      || item?.last_reanalyzed_at
       || item?.createdAt
       || item?.created_at
       || item?.firstSeen
@@ -100,7 +101,8 @@
       text: asText(input?.text, ""),
       tags: normalizeTags(input?.tags),
       createdAt: input?.createdAt || "",
-      updatedAt: input?.updatedAt || input?.createdAt || "",
+      updatedAt: input?.updatedAt || "",
+      last_reanalyzed_at: input?.last_reanalyzed_at || "",
       href: asText(input?.href, "index.html"),
       meta: input?.meta && typeof input.meta === "object" && !Array.isArray(input.meta) ? input.meta : {}
     };
@@ -153,6 +155,8 @@
     asArray(loadByKey(STORAGE_KEYS.notes, [])).filter((note) => !note?.deleted_at).forEach((note) => {
       const base = withBase(note, { type: "note", source: "aha_notes" });
       const refId = asText(note?.id || base?.id, "");
+      const lastReanalyzedAt = note?.last_reanalyzed_at || "";
+      const reanalysisLabel = lastReanalyzedAt ? " reanalyze reanalysis analysert på nytt" : "";
       if (!refId) return;
       out.push(createSearchItem({
         id: `note_${refId}`,
@@ -160,12 +164,15 @@
         type: "note",
         source: "aha_notes",
         refId,
-        text: asText(note?.text || note?.body || note?.content, ""),
+        text: `${asText(note?.text || note?.body || note?.content, "")}${reanalysisLabel}`.trim(),
         tags: note?.tags || base?.tags,
         createdAt: base?.createdAt,
-        updatedAt: base?.updatedAt,
+        updatedAt: note?.updatedAt || note?.updated_at || note?.lastUpdated || note?.last_updated || "",
+        last_reanalyzed_at: lastReanalyzedAt,
         href: "notes.html",
-        meta: {}
+        meta: {
+          lastReanalyzedAt
+        }
       }));
     });
 
@@ -393,6 +400,9 @@
     resultsEl.innerHTML = results.map((item) => {
       const tags = asArray(item.tags).map((tag) => `<span class="aha-search-badge">${escapeHtml(tag)}</span>`).join("");
       const snippet = truncate(item.text, 180);
+      const reanalysisMeta = item.meta?.lastReanalyzedAt
+        ? `<div class="aha-search-meta">Analysert på nytt: ${escapeHtml(item.meta.lastReanalyzedAt)}</div>`
+        : "";
       return `
         <article class="aha-search-card">
           <header class="aha-search-card-head">
@@ -403,6 +413,7 @@
           ${tags ? `<div class="aha-search-tags">${tags}</div>` : ""}
           <div class="aha-search-meta">Opprettet: ${escapeHtml(asText(item.createdAt, "ukjent"))}</div>
           <div class="aha-search-meta">Oppdatert: ${escapeHtml(asText(item.updatedAt, "ukjent"))}</div>
+          ${reanalysisMeta}
           <div class="aha-search-actions">
             <a class="aha-search-link" href="${escapeHtml(item.href)}">Åpne modul</a>
           </div>
