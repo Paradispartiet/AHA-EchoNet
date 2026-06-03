@@ -2,7 +2,7 @@
 
 Statusdato: 2026-06-03
 
-Dette dokumentet oppsummerer nåværende implementasjonsstatus for AHA etter dokumentlåser, sync-hardening, Search note_reanalysis-visning og regresjonstester.
+Dette dokumentet oppsummerer nåværende implementasjonsstatus for AHA etter dokumentlåser, sync-hardening, Search note_reanalysis-visning, Mindmap tombstone-filtrering, Mindmap note_reanalysis-visning og regresjonstester.
 
 Dokumentet er en statuslås. Det er ikke en runtime-endring, ikke en ny motor, ikke en Supabase-migrasjon og ikke en beslutning om å bygge nye flater.
 
@@ -31,6 +31,9 @@ Ferdig nå:
 ✅ Search viser Notes reanalysis
 ✅ Search-test for note_reanalysis finnes
 ✅ AHA Insta nyere remote tombstone over eldre lokal aktiv post er testet
+✅ Mindmap filtrerer tombstones konsekvent
+✅ Mindmap viser note_reanalysis read-only edge
+✅ Mindmap-test for tombstones og note_reanalysis finnes
 ```
 
 Ikke bygget ennå:
@@ -301,6 +304,40 @@ Ingen runtime-kode ble endret.
 npm test rapporterte Node test suite: 15/15 passed.
 ```
 
+### PR #315 — Mindmap tombstone filtering
+
+```text
+Title: fix: filter mindmap tombstones consistently
+Status: merged
+```
+
+Effekt:
+
+```text
+js/ahaMindmap.js fikk isDeletedRecord(record).
+Mindmap filtrerer nå både deletedAt og deleted_at konsekvent for sourceEvents, insights, lists, paths, articles, notes, feed, gallery, insta og groups.
+Edges til/fra filtrerte tombstones opprettes ikke.
+La til tests/aha-mindmap-tombstones.test.cjs.
+Mindmap forblir read-only.
+```
+
+### PR #316 — Mindmap note reanalysis links
+
+```text
+Title: feat: show note reanalysis links in mindmap
+Status: merged
+```
+
+Effekt:
+
+```text
+Note-noder får meta.lastReanalyzedAt.
+note_reanalysis source_event kobles read-only til note-node.
+Edge type er note_reanalysis, label er “analysert på nytt”, og retningen er source_event → note.
+Ingen HTML/CSS-endring, ingen localStorage-skriving, og ingen AHAIngest/AHASources/AHARepository-kall.
+npm test rapporterte Node test suite: 16/16 passed.
+```
+
 ## 4. Nåværende modulstatus
 
 ## 4.1 Notes
@@ -475,6 +512,33 @@ Search skal fortsatt ikke kalle AHAIngest, AHASources eller AHARepository.
 Semantic/embedding search er ikke bygget.
 ```
 
+## 4.7 Mindmap
+
+Status:
+
+```text
+Read-only grafvisning for eksisterende AHA-data.
+```
+
+Fungerer nå:
+
+```text
+Mindmap er read-only grafvisning.
+Mindmap skriver ikke til localStorage.
+Mindmap kaller ikke AHAIngest, AHASources eller AHARepository.
+Mindmap filtrerer deletedAt/deleted_at konsekvent for noder og edges.
+Mindmap viser note_reanalysis som edge fra source_event til note.
+Mindmap viser lastReanalyzedAt i note-node meta.
+```
+
+Ikke bygg / ikke gjør:
+
+```text
+Mindmap skal fortsatt ikke skape source events.
+Mindmap skal fortsatt ikke skape insights.
+Mindmap skal fortsatt ikke bli write module uten egen kontrakt.
+```
+
 ## 5. Teststatus
 
 Nye / relevante testfiler:
@@ -482,6 +546,7 @@ Nye / relevante testfiler:
 ```text
 tests/aha-sync-tombstone-regressions.test.cjs
 tests/aha-search-note-reanalysis.test.cjs
+tests/aha-mindmap-tombstones.test.cjs
 ```
 
 Dekker:
@@ -506,12 +571,17 @@ AHA Insta merged sync return
 AHA Insta newer remote tombstone beats older local active post
 AHA Search note reanalysis indexing
 Search read-only proxy-test mot AHAIngest/AHASources/AHARepository
+AHA Mindmap tombstone filtering
+AHA Mindmap read-only guard mot localStorage-skriving
+AHA Mindmap guard mot AHAIngest/AHASources/AHARepository
+AHA Mindmap note_reanalysis edge
+AHA Mindmap note meta.lastReanalyzedAt
 ```
 
 Siste rapporterte teststatus:
 
 ```text
-npm test → Node test suite: 15/15 passed
+npm test → Node test suite: 16/16 passed
 git diff --check → OK
 ```
 
@@ -539,24 +609,28 @@ git diff --check → OK
 Neste trygge steg:
 
 ```text
-Mindmap read-only vurdering / kartlegging.
+AHA Lists kartlegging / vurdering.
 Ikke kode ennå.
 ```
 
 Hvorfor:
 
 ```text
-- Search er nå tydelig read-only og bør ikke utvides med nye write-paths.
-- Før Mindmap endres må faktisk runtime-kode forstås, ikke antas.
-- Neste prompt bør bygges på konkret lesing av js/ahaMindmap.js og mindmap.html.
+- Lists er allerede synlig i Search/Mindmap.
+- Lists kan bli nyttig organiseringsflate.
+- Lists krever ikke storage/import/social graph.
+- Før kode må js/ahaLists.js og lists.html leses og kartlegges.
 ```
 
 Avgrensning for neste steg:
 
 ```text
-Les js/ahaMindmap.js.
-Les mindmap.html.
-Kartlegg om Mindmap er read-only, hvilke dataflater den leser, og om den kan skape source events eller insights.
+Les js/ahaLists.js.
+Les lists.html.
+Kartlegg om Lists er read-only eller write module.
+Kartlegg localStorage keys.
+Kartlegg om Lists bruker AHAIngest/AHASources/AHARepository.
+Kartlegg delete/tombstone/sync-status.
 Lag deretter prompt basert på faktisk kode.
 Ikke endre JS.
 Ikke endre HTML.
@@ -571,7 +645,8 @@ Ikke bygg ny runtime før kartleggingen finnes.
 2. ✅ test: note_reanalysis regresjonstest
 3. ✅ feat/test: Search viser Notes reanalysis uten write-paths
 4. ✅ test: ekstra AHA Insta tombstone regression
-5. Neste: Mindmap read-only vurdering / kartlegging før eventuell kode
+5. ✅ feat/test: Mindmap tombstone-filtrering og note_reanalysis read-only edge
+6. Neste: AHA Lists kartlegging / vurdering før eventuell kode
 ```
 
-Ikke gå videre til storage, import, Insta/social graph eller EchoNet før Mindmap er kartlagt på faktisk kode.
+Ikke gå videre til storage, import, Insta/social graph eller EchoNet før Lists er kartlagt på faktisk kode.
