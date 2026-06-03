@@ -15,6 +15,11 @@ function forbiddenApi(name, calls) {
 const storageSeed = new Map(Object.entries({
   aha_source_events_v1: JSON.stringify([
     { id: 'source-live', source_type: 'Live source' },
+    { id: 'reanalysis-live', source_type: 'note_reanalysis', source_app: 'aha_notes', meta: { note_id: 'note-live', reanalyze: true } },
+    { id: 'reanalysis-deleted-note-at', source_type: 'note_reanalysis', source_app: 'aha_notes', meta: { note_id: 'note-deleted-at', reanalyze: true } },
+    { id: 'reanalysis-deleted-note_snake', source_type: 'note_reanalysis', source_app: 'aha_notes', meta: { note_id: 'note-deleted_snake', reanalyze: true } },
+    { id: 'reanalysis-deleted-source-at', source_type: 'note_reanalysis', source_app: 'aha_notes', meta: { note_id: 'note-live', reanalyze: true }, deletedAt: '2026-01-01T00:00:00.000Z' },
+    { id: 'reanalysis-deleted-source_snake', source_type: 'note_reanalysis', source_app: 'aha_notes', meta: { note_id: 'note-live', reanalyze: true }, deleted_at: '2026-01-02T00:00:00.000Z' },
     { id: 'source-deleted-at', source_type: 'Deleted source', deletedAt: '2026-01-01T00:00:00.000Z' },
     { id: 'source-deleted_snake', source_type: 'Deleted source snake', deleted_at: '2026-01-02T00:00:00.000Z' }
   ]),
@@ -44,7 +49,7 @@ const storageSeed = new Map(Object.entries({
     { id: 'article-deleted_snake', title: 'Deleted article snake', deleted_at: '2026-01-02T00:00:00.000Z' }
   ]),
   aha_notes_v1: JSON.stringify([
-    { id: 'note-live', title: 'Live note' },
+    { id: 'note-live', title: 'Live note', last_reanalyzed_at: '2026-05-31T10:20:30.000Z' },
     { id: 'note-deleted-at', title: 'Deleted note', deletedAt: '2026-01-01T00:00:00.000Z' },
     { id: 'note-deleted_snake', title: 'Deleted note snake', deleted_at: '2026-01-02T00:00:00.000Z' }
   ]),
@@ -84,7 +89,8 @@ const context = {
   localStorage: {
     getItem(key) { return storageSeed.has(key) ? storageSeed.get(key) : null; },
     setItem(key, value) { writes.push(['setItem', key, value]); throw new Error('AHAMindmap must not write to localStorage'); },
-    removeItem(key) { writes.push(['removeItem', key]); throw new Error('AHAMindmap must not write to localStorage'); }
+    removeItem(key) { writes.push(['removeItem', key]); throw new Error('AHAMindmap must not write to localStorage'); },
+    clear() { writes.push(['clear']); throw new Error('AHAMindmap must not write to localStorage'); }
   },
   AHAIngest: forbiddenApi('AHAIngest', forbiddenCalls),
   AHASources: forbiddenApi('AHASources', forbiddenCalls),
@@ -98,9 +104,13 @@ vm.runInContext(source, context, { filename: 'js/ahaMindmap.js' });
 
 const graph = context.AHAMindmap.collectGraphData();
 const ids = new Set(graph.nodes.map((node) => node.id));
+const nodesById = new Map(graph.nodes.map((node) => [node.id, node]));
 
 for (const expected of [
   'source_event::aha_source_events::source-live',
+  'source_event::aha_source_events::reanalysis-live',
+  'source_event::aha_source_events::reanalysis-deleted-note-at',
+  'source_event::aha_source_events::reanalysis-deleted-note_snake',
   'insight::aha_insights::insight-live',
   'list::aha_lists::list-live',
   'path::aha_paths::path-live',
@@ -115,6 +125,8 @@ for (const expected of [
 }
 
 for (const deletedId of [
+  'source_event::aha_source_events::reanalysis-deleted-source-at',
+  'source_event::aha_source_events::reanalysis-deleted-source_snake',
   'source_event::aha_source_events::source-deleted-at',
   'source_event::aha_source_events::source-deleted_snake',
   'insight::aha_insights::insight-deleted-at',
@@ -138,6 +150,39 @@ for (const deletedId of [
 ]) {
   assert.equal(ids.has(deletedId), false, `${deletedId} should be filtered`);
 }
+
+
+const noteNode = nodesById.get('note::aha_notes::note-live');
+assert.equal(noteNode?.meta?.lastReanalyzedAt, '2026-05-31T10:20:30.000Z', 'note node should expose last_reanalyzed_at in meta');
+
+const reanalysisEdges = graph.edges.filter((edge) => edge.type === 'note_reanalysis');
+assert.equal(reanalysisEdges.length, 1, 'only visible note reanalysis records should create edges');
+assert.equal(reanalysisEdges[0].from, 'source_event::aha_source_events::reanalysis-live', 'note_reanalysis source event should start at the source event node');
+assert.equal(reanalysisEdges[0].to, 'note::aha_notes::note-live', 'note_reanalysis source event should point to its note node');
+assert.equal(reanalysisEdges[0].type, 'note_reanalysis', 'note_reanalysis edge should use the expected type');
+assert.equal(reanalysisEdges[0].label, 'analysert på nytt', 'note_reanalysis edge should use the Norwegian label');
+assert.equal(reanalysisEdges[0].meta?.noteId, 'note-live', 'note_reanalysis edge meta should expose the note id');
+assert.equal(reanalysisEdges[0].meta?.reanalyze, true, 'note_reanalysis edge meta should mark reanalysis');
+assert.equal(
+  reanalysisEdges.some((edge) => edge.from === 'source_event::aha_source_events::reanalysis-deleted-note-at'),
+  false,
+  'note_reanalysis edge should not be created for deletedAt note targets'
+);
+assert.equal(
+  reanalysisEdges.some((edge) => edge.from === 'source_event::aha_source_events::reanalysis-deleted-note_snake'),
+  false,
+  'note_reanalysis edge should not be created for deleted_at note targets'
+);
+assert.equal(
+  reanalysisEdges.some((edge) => edge.from === 'source_event::aha_source_events::reanalysis-deleted-source-at'),
+  false,
+  'deletedAt note_reanalysis source event should not create an edge'
+);
+assert.equal(
+  reanalysisEdges.some((edge) => edge.from === 'source_event::aha_source_events::reanalysis-deleted-source_snake'),
+  false,
+  'deleted_at note_reanalysis source event should not create an edge'
+);
 
 for (const edge of graph.edges) {
   assert.ok(ids.has(edge.from), `edge ${edge.id} should start from a visible node`);
