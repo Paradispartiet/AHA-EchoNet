@@ -1129,3 +1129,63 @@ html, body { max-width: 100%; overflow-x: hidden; }
   letter-spacing: .04em;
   font-weight: 900;
 }
+
+.aha-sync-validation-summary {
+  margin: 0;
+  color: #ffe27a;
+  font-size: .86rem;
+  font-weight: 900;
+}
+
+.aha-sync-validation-block {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 6px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255,255,255,.09);
+}
+
+.aha-sync-validation-block h5,
+.aha-sync-validation-block p {
+  margin: 0;
+}
+
+.aha-sync-validation-block h5 {
+  font-size: .84rem;
+}
+
+.aha-sync-validation-status {
+  font-size: .82rem;
+  font-weight: 900;
+}
+
+.aha-sync-validation-status-valid { color: var(--aha-green); }
+.aha-sync-validation-status-warnings,
+.aha-sync-validation-status-skipped { color: #ffe27a; }
+.aha-sync-validation-status-errors { color: #ff9b9b; }
+
+.aha-sync-validation-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.aha-sync-validation-columns strong {
+  display: block;
+  margin-bottom: 3px;
+  font-size: .78rem;
+}
+
+.aha-sync-validation-empty {
+  color: var(--aha-muted);
+  font-size: .8rem;
+}
+
+.aha-sync-validation-list-errors li { color: #ffb3b3; }
+.aha-sync-validation-list-warnings li { color: #ffe27a; }
+
+@media (max-width: 620px) {
+  .aha-sync-validation-columns {
+    grid-template-columns: 1fr;
+  }
+}

@@ -325,7 +325,98 @@
     { id: "ahaavisa", name: "AHAavisa", key: "aha_articles_v1", itemLabel: "AHAavisa articles" }
   ];
 
-  function createSyncHubDryRunResult(source, count, status, actionPreview, warnings = []) {
+  const SYNC_HUB_ID_FIELDS = ["id", "key", "slug"];
+  const SYNC_HUB_TITLE_FIELDS = ["title", "name", "label", "headline"];
+
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function firstPresentField(item, fields) {
+    if (!item || typeof item !== "object") return { field: null, value: undefined };
+    const field = fields.find((candidate) => Object.prototype.hasOwnProperty.call(item, candidate));
+    return { field: field || null, value: field ? item[field] : undefined };
+  }
+
+  function normalizeSyncHubDataset(parsed) {
+    if (Array.isArray(parsed)) return { ok: true, items: parsed, structure: "array" };
+    if (!parsed || typeof parsed !== "object") {
+      return { ok: false, items: [], structure: typeof parsed, error: "Dataset must be an array or object collection." };
+    }
+
+    if (Array.isArray(parsed.items)) return { ok: true, items: parsed.items, structure: "object.items" };
+    if (Array.isArray(parsed.data)) return { ok: true, items: parsed.data, structure: "object.data" };
+
+    const values = Object.values(parsed);
+    const objectValues = values.filter((item) => item && typeof item === "object");
+    if (values.length === 0 || objectValues.length === values.length) {
+      return { ok: true, items: values, structure: "object.map" };
+    }
+
+    return { ok: false, items: [], structure: "object", error: "Dataset object must contain items/data arrays or object values." };
+  }
+
+  function validateAhaLocalSyncDataset({ datasetExists, items, structure, readError, invalidStructure }) {
+    const errors = [];
+    const warnings = [];
+
+    if (readError) errors.push("Could not read or parse this localStorage dataset.");
+    if (!datasetExists) warnings.push("No localStorage dataset found.");
+    if (invalidStructure) errors.push(invalidStructure);
+    if (datasetExists && !invalidStructure && items.length === 0) warnings.push("Dataset exists but contains no items.");
+
+    const seenIds = new Map();
+    items.forEach((item, index) => {
+      const itemLabel = `Item ${index + 1}`;
+      if (!item || typeof item !== "object" || Array.isArray(item)) {
+        errors.push(`${itemLabel} has an invalid item structure.`);
+        return;
+      }
+
+      const idField = firstPresentField(item, SYNC_HUB_ID_FIELDS);
+      const rawId = idField.value;
+      const id = String(rawId ?? "").trim();
+      if (!idField.field) {
+        errors.push(`${itemLabel} is missing id/key/slug.`);
+      } else if (!id) {
+        errors.push(`${itemLabel} has an empty ${idField.field}.`);
+      } else if (seenIds.has(id)) {
+        errors.push(`Duplicate id "${id}" found in ${itemLabel} and item ${seenIds.get(id) + 1}.`);
+      } else {
+        seenIds.set(id, index);
+      }
+
+      const titleField = firstPresentField(item, SYNC_HUB_TITLE_FIELDS);
+      const title = String(titleField.value ?? "").trim();
+      if (!titleField.field) {
+        warnings.push(`${itemLabel} is missing title/name/label/headline.`);
+      } else if (!title) {
+        warnings.push(`${itemLabel} has an empty ${titleField.field}.`);
+      }
+    });
+
+    let validationStatus = "valid";
+    if (errors.length) validationStatus = "errors";
+    else if (!datasetExists) validationStatus = "skipped";
+    else if (warnings.length) validationStatus = "warnings";
+
+    return { errors, warnings, validationStatus, structure: structure || "unknown" };
+  }
+
+  function createSyncHubDryRunResult(source, count, status, actionPreview, warnings = [], validation = null) {
+    const normalizedValidation = validation || validateAhaLocalSyncDataset({
+      datasetExists: status !== "missing",
+      items: [],
+      readError: status === "error",
+      invalidStructure: status === "error" ? "Dataset could not be inspected." : null
+    });
+
+    const mergedWarnings = [...new Set([...(warnings || []), ...normalizedValidation.warnings])];
     return {
       id: source.id,
       name: source.name,
@@ -333,35 +424,42 @@
       count,
       status,
       state: status,
-      ok: status !== "error",
+      ok: status !== "error" && normalizedValidation.validationStatus !== "errors",
       actionPreview,
-      warnings
+      warnings: mergedWarnings,
+      errors: normalizedValidation.errors,
+      validationStatus: normalizedValidation.validationStatus,
+      validationStructure: normalizedValidation.structure
     };
   }
 
   function inspectSyncHubLocalStorageItem(source) {
     const raw = window.localStorage.getItem(source.key);
     if (raw === null) {
-      return createSyncHubDryRunResult(source, 0, "missing", "No local data found", ["No localStorage dataset found."]);
+      const validation = validateAhaLocalSyncDataset({ datasetExists: false, items: [], structure: "missing" });
+      return createSyncHubDryRunResult(source, 0, "missing", "No local data found", [], validation);
     }
     if (!String(raw).trim()) {
-      return createSyncHubDryRunResult(source, 0, "empty", "Dataset exists but is empty", ["Dataset exists but contains no items."]);
+      const validation = validateAhaLocalSyncDataset({ datasetExists: true, items: [], structure: "empty-string" });
+      return createSyncHubDryRunResult(source, 0, "empty", "Dataset exists but is empty", [], validation);
     }
 
     const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed)) {
-      const count = countActive(parsed);
-      if (count > 0) return createSyncHubDryRunResult(source, count, "ready", `Would prepare ${count} ${source.itemLabel}`);
-      return createSyncHubDryRunResult(source, 0, "empty", "Dataset exists but is empty", ["Dataset exists but contains no items."]);
+    const normalized = normalizeSyncHubDataset(parsed);
+    const validation = validateAhaLocalSyncDataset({
+      datasetExists: true,
+      items: normalized.items,
+      structure: normalized.structure,
+      invalidStructure: normalized.ok ? null : normalized.error
+    });
+
+    if (!normalized.ok) {
+      return createSyncHubDryRunResult(source, "–", "error", "Invalid local dataset structure", [], validation);
     }
 
-    if (parsed && typeof parsed === "object") {
-      const count = Object.keys(parsed).length;
-      if (count > 0) return createSyncHubDryRunResult(source, count, "ready", `Would prepare ${count} ${source.itemLabel}`);
-      return createSyncHubDryRunResult(source, 0, "empty", "Dataset exists but is empty", ["Dataset exists but contains no items."]);
-    }
-
-    return createSyncHubDryRunResult(source, 1, "ready", `Would prepare 1 ${source.itemLabel}`);
+    const count = countActive(normalized.items);
+    if (count > 0) return createSyncHubDryRunResult(source, count, "ready", `Would prepare ${count} ${source.itemLabel}`, [], validation);
+    return createSyncHubDryRunResult(source, 0, "empty", "Dataset exists but is empty", [], validation);
   }
 
   function buildAhaSyncDryRunPlan() {
@@ -375,6 +473,27 @@
     });
   }
 
+  function summarizeSyncHubValidation(plan) {
+    const totalModules = plan.length;
+    const modulesReady = plan.filter((row) => row.validationStatus === "valid").length;
+    const modulesWithWarnings = plan.filter((row) => ["warnings", "skipped"].includes(row.validationStatus)).length;
+    const modulesWithErrors = plan.filter((row) => row.validationStatus === "errors").length;
+    return { totalModules, modulesReady, modulesWithWarnings, modulesWithErrors };
+  }
+
+  function formatSyncHubValidationSummary(plan) {
+    const summary = summarizeSyncHubValidation(plan);
+    const warningLabel = summary.modulesWithWarnings === 1 ? "warning" : "warnings";
+    const errorLabel = summary.modulesWithErrors === 1 ? "error" : "errors";
+    return `${summary.totalModules} modules inspected · ${summary.modulesReady} ready · ${summary.modulesWithWarnings} ${warningLabel} · ${summary.modulesWithErrors} ${errorLabel}`;
+  }
+
+  function renderSyncHubValidationMessages(row, type) {
+    const messages = type === "errors" ? row.errors : row.warnings;
+    if (!messages.length) return `<p class="aha-sync-validation-empty">No ${type}.</p>`;
+    return `<ul class="aha-sync-validation-list aha-sync-validation-list-${type}">${messages.map((message) => `<li>${escapeHtml(message)}</li>`).join("")}</ul>`;
+  }
+
   function renderSyncHubPrepPanel(plan) {
     if (!isSyncHubPrepOpen) return "";
 
@@ -383,15 +502,30 @@
         <div class="aha-sync-prep-heading">
           <h4>Dry-run sync plan</h4>
           <p class="aha-sync-prep-notice">Preview only. No data is written and no sync is performed.</p>
+          <p class="aha-sync-validation-summary">${escapeHtml(formatSyncHubValidationSummary(plan))}</p>
         </div>
         <div class="aha-sync-prep-list" aria-label="localStorage dry-run sync plan">
           ${plan.map((row) => `
-            <div class="aha-sync-prep-row aha-sync-prep-row-${row.status}">
-              <strong>${row.name}</strong>
-              <span>${row.count} items</span>
-              <small>${row.status}</small>
-              <p>${row.actionPreview}</p>
-              ${row.warnings.length ? `<ul>${row.warnings.map((warning) => `<li>${warning}</li>`).join("")}</ul>` : ""}
+            <div class="aha-sync-prep-row aha-sync-prep-row-${escapeHtml(row.status)} aha-sync-validation-${escapeHtml(row.validationStatus)}">
+              <strong>${escapeHtml(row.name)}</strong>
+              <span>${escapeHtml(row.count)} items</span>
+              <small>${escapeHtml(row.status)}</small>
+              <p>${escapeHtml(row.actionPreview)}</p>
+              <div class="aha-sync-validation-block" aria-label="${escapeHtml(row.name)} validation">
+                <h5>Validation</h5>
+                <p class="aha-sync-prep-notice">Read-only validation. No data is changed.</p>
+                <p class="aha-sync-validation-status aha-sync-validation-status-${escapeHtml(row.validationStatus)}">validationStatus: ${escapeHtml(row.validationStatus)}</p>
+                <div class="aha-sync-validation-columns">
+                  <div>
+                    <strong>Warnings</strong>
+                    ${renderSyncHubValidationMessages(row, "warnings")}
+                  </div>
+                  <div>
+                    <strong>Errors</strong>
+                    ${renderSyncHubValidationMessages(row, "errors")}
+                  </div>
+                </div>
+              </div>
             </div>
           `).join("")}
         </div>
