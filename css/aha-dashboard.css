@@ -663,6 +663,11 @@ input:focus { border-color: var(--aha-yellow); box-shadow: 0 0 0 3px rgba(246,20
 .aha-historygo-status,
 .aha-privacy-status { margin-top: 10px; }
 
+.aha-sync-hub-status { margin-top: 10px; }
+.aha-sync-hub-status .aha-status-card { display: grid; gap: 10px; }
+.aha-sync-hub-status h3,
+.aha-sync-hub-status p { margin: 0; }
+
 .aha-status-stack {
   display: grid;
   gap: 6px;
