@@ -34,6 +34,9 @@ Ferdig nå:
 ✅ Mindmap filtrerer tombstones konsekvent
 ✅ Mindmap viser note_reanalysis read-only edge
 ✅ Mindmap-test for tombstones og note_reanalysis finnes
+✅ Meta Insights er AHA sin algoritmiske meta-/selvinnsiktsmotor (read-only V1)
+✅ "Hva AHA ser nå" vises på AHA Home
+✅ Tester for buildMetaInsightSummary / buildMetaInsightPrompt finnes
 ```
 
 Ikke bygget ennå:
@@ -47,6 +50,27 @@ Ikke bygget ennå:
 ❌ Full multi-device konfliktmodell
 ❌ Stories sync
 ❌ Import preview/session sync
+```
+
+## 1b. Meta Insights – algoritmisk meta-/selvinnsiktsmotor
+
+Meta Insights er nå AHA sin algoritmiske meta-/selvinnsiktsmotor og svarer
+forklarbart på spørsmålet «Hva ser AHA om brukeren akkurat nå?».
+
+```text
+• Løsningen bygger på eksisterende MetaInsightsEngine (js/metaInsightsEngine.js).
+  Ingen ny, separat motorfil ble opprettet.
+• buildUserMetaProfile bygger nå et meta_insight-lag via
+  buildMetaInsightSummary(profile) (readiness, dominant_themes,
+  dominant_concepts, learning_mode, recurring_patterns, tension_summary,
+  project_signals, next_actions, summary, evidence).
+• buildMetaInsightPrompt(profile) lager en norsk bekreftelses-prompt til chat.
+• Første versjon er read-only: AHA leser eksisterende data, beregner profilen
+  og viser en tydelig meta-innsikt. Ingen ny datainnsamling.
+• AHA Home viser seksjonen "Hva AHA ser nå" øverst i AHA Meta-profil.
+• Chat-knappen "Bekreft med AHA" lagrer kun en pending prompt
+  (aha_pending_chat_prompt_v1) etter en eksplisitt brukerhandling.
+• Ingest, sync, repository og Supabase-flyt er urørt. Ingen nye dependencies.
 ```
 
 ## 2. Dokumentlåser på plass

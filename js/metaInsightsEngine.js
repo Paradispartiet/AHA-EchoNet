@@ -1603,6 +1603,461 @@
     };
   }
 
+  // ── Meta-innsiktslag ────────────────────────────────────
+  // Tar et ferdig meta-bilde fra buildUserMetaProfile og koker det ned
+  // til ett forklarbart, read-only svar på spørsmålet «Hva ser AHA om
+  // brukeren akkurat nå?». Alt her er deterministisk og avledet av
+  // eksisterende felt – ingen ny datainnsamling.
+
+  // Generiske begreper som sier lite om hva brukeren faktisk jobber med.
+  const GENERIC_META_CONCEPTS = new Set([
+    "kunnskap", "forståelse", "innsikt", "refleksjon", "dette",
+    "viser", "sier", "grunnlag", "samtale", "analyse"
+  ]);
+
+  function sumSemCounts(semCounts) {
+    let sum = 0;
+    for (const group of Object.values(semCounts || {})) {
+      if (group && typeof group === "object") {
+        for (const value of Object.values(group)) {
+          if (typeof value === "number") sum += value;
+        }
+      }
+    }
+    return sum;
+  }
+
+  function countAllTensions(tensions) {
+    if (!tensions) return 0;
+    return (
+      (tensions.concept_tensions || []).length +
+      (tensions.theme_tensions || []).length +
+      (tensions.cross_theme || []).length +
+      (tensions.paradox_pairs || []).length +
+      (tensions.concept_pair_tensions || []).length
+    );
+  }
+
+  function computeReadiness(profile) {
+    const insightCount = (profile.insights || []).length;
+    const conceptCount = (profile.concepts || []).length;
+    const topicCount = (profile.topics || []).length;
+    const graphNodes = ((profile.cooccurrence && profile.cooccurrence.nodes) || []).length;
+    const spanDays = (profile.temporal && profile.temporal.span_days) || 0;
+    const tensionCount = countAllTensions(profile.tensions);
+    const rec = profile.recommendations || {};
+    const recCount =
+      (rec.next_topics || []).length +
+      (rec.bridging_pairs || []).length +
+      (rec.underexplored_concepts || []).length +
+      (rec.unstick_prompts || []).length;
+
+    let level;
+    if (insightCount === 0) level = "tom";
+    else if (insightCount <= 4) level = "lav";
+    else if (insightCount <= 14) level = "middels";
+    else level = "høy";
+
+    let score = 0;
+    if (insightCount > 0) {
+      // Innsikter er hovedkilden til materiale.
+      score += Math.min(insightCount * 4, 55);
+      // Tillegg for flere temaer.
+      if (topicCount >= 2) score += Math.min((topicCount - 1) * 4, 16);
+      // Tillegg for en konseptgraf å resonnere over.
+      if (graphNodes >= 5) score += Math.min(Math.round(graphNodes / 4), 12);
+      // Tillegg for tidsutvikling.
+      if (spanDays >= 2) score += Math.min(Math.round(spanDays / 3), 10);
+      // Tillegg for spenninger.
+      if (tensionCount >= 1) score += Math.min(tensionCount * 2, 10);
+      // Tillegg for at anbefalingslaget har noe å si.
+      if (recCount >= 1) score += Math.min(recCount, 7);
+    }
+    score = Math.max(0, Math.min(100, Math.round(score)));
+
+    let reason;
+    if (insightCount === 0) {
+      reason = "AHA har ingen innsikter å bygge meta-bilde fra ennå.";
+    } else {
+      const parts = [`${insightCount} innsikt${insightCount === 1 ? "" : "er"}`];
+      if (topicCount) parts.push(`${topicCount} tema`);
+      if (conceptCount) parts.push(`${conceptCount} begreper`);
+      if (graphNodes) parts.push(`konseptgraf med ${graphNodes} noder`);
+      if (spanDays >= 1) parts.push(`utvikling over ${Math.round(spanDays)} dager`);
+      if (tensionCount) parts.push(`${tensionCount} spenninger`);
+      reason = `AHA bygger på ${parts.join(", ")}.`;
+    }
+
+    return { level, score, reason };
+  }
+
+  function buildDominantThemes(profile) {
+    return (profile.topics || [])
+      .map((t) => {
+        const stats = t.stats || {};
+        return {
+          theme_id: t.theme_id,
+          insight_count: stats.insight_count || 0,
+          phase: stats.user_phase || "utforskning",
+          saturation: round3(stats.insight_saturation || 0),
+          _sem: sumSemCounts(t.semCounts)
+        };
+      })
+      .sort((a, b) => (b.insight_count - a.insight_count) || (b._sem - a._sem))
+      .slice(0, 5)
+      .map(({ _sem, ...rest }) => rest);
+  }
+
+  function buildDominantConcepts(profile) {
+    return (profile.concepts || [])
+      .filter((c) => {
+        const key = String(c?.key || "").trim().toLowerCase();
+        return key && !GENERIC_META_CONCEPTS.has(key);
+      })
+      .map((c) => ({
+        key: c.key,
+        total_count: c.total_count || c.count || 0,
+        theme_count: c.theme_count || (Array.isArray(c.themes) ? c.themes.length : 0),
+        examples: (c.examples || []).slice(0, 3)
+      }))
+      .sort((a, b) => (b.total_count - a.total_count) || (b.theme_count - a.theme_count))
+      .slice(0, 8);
+  }
+
+  function classifyLearningMode(profile) {
+    const insightCount = (profile.insights || []).length;
+    if (insightCount === 0) return "ukjent";
+    if (insightCount < 3) return "samler materiale";
+
+    const recentFocus = (profile.temporal && profile.temporal.recent_focus) || {};
+    const rec = profile.recommendations || {};
+    const tensions = profile.tensions || {};
+    const globalProfile = profile.global || {};
+
+    const emerging = (recentFocus.emerging || []).length;
+    const bridging = (rec.bridging_pairs || []).length;
+    const underexplored = (rec.underexplored_concepts || []).length;
+    const tensionSignal =
+      (tensions.concept_tensions || []).length +
+      (tensions.paradox_pairs || []).length +
+      (tensions.concept_pair_tensions || []).length;
+    const avgSaturation = globalProfile.avg_saturation || 0;
+    const matureTopics = (profile.topics || []).filter((t) => {
+      const phase = t.stats && t.stats.user_phase;
+      return phase === "integrasjon" || ((t.stats && t.stats.insight_saturation) || 0) >= 0.6;
+    }).length;
+
+    // Vekt kandidatene; spec-rekkefølgen avgjør ved likhet.
+    const candidates = [
+      { mode: "utvider begreper", score: emerging >= 2 ? emerging * 2 : 0 },
+      { mode: "bygger forståelse", score: (bridging + underexplored) >= 2 ? bridging + underexplored : 0 },
+      { mode: "arbeider med spenninger", score: tensionSignal >= 2 ? tensionSignal : 0 },
+      { mode: "modner prosjekt", score: (avgSaturation >= 0.6 ? 3 : 0) + matureTopics * 2 }
+    ];
+    candidates.sort((a, b) => b.score - a.score);
+    if (candidates[0].score > 0) return candidates[0].mode;
+    return "organiserer innsikt";
+  }
+
+  function buildRecurringPatterns(profile) {
+    const out = [];
+    const patterns = profile.patterns || [];
+    const velocity = (profile.temporal && profile.temporal.velocity) || {};
+    const recentFocus = (profile.temporal && profile.temporal.recent_focus) || {};
+
+    patterns.forEach((p) => {
+      const themes = p.themes || [];
+      if (p.id === "cross_pressure") {
+        out.push({ id: "cross_pressure", label: "Press på tvers", explanation: "Press/hindring går igjen i flere temaer.", strength: themes.length, evidence: { themes } });
+      } else if (p.id === "cross_exploration") {
+        out.push({ id: "cross_exploration", label: "Utforskning på tvers", explanation: "Utforskende mønster på tvers av temaer.", strength: themes.length, evidence: { themes } });
+      } else if (p.id === "stuck_cluster") {
+        out.push({ id: "stuck_cluster", label: "Fastlåste temaer", explanation: "Flere temaer virker fastlåst.", strength: themes.length, evidence: { themes } });
+      }
+    });
+
+    if (velocity.trend === "økende" || (velocity.delta || 0) > 0) {
+      out.push({
+        id: "rising_velocity",
+        label: "Økende tempo",
+        explanation: "Materialet utvikler seg raskere nå.",
+        strength: velocity.delta || 1,
+        evidence: { recent_count: velocity.recent_count || 0, previous_count: velocity.previous_count || 0 }
+      });
+    }
+
+    const emerging = recentFocus.emerging || [];
+    if (emerging.length >= 2) {
+      out.push({
+        id: "concept_expansion",
+        label: "Nye begreper",
+        explanation: "Nye begreper dukker opp i siste periode.",
+        strength: emerging.length,
+        evidence: { concepts: emerging.slice(0, 5).map((c) => c.key) }
+      });
+    }
+
+    return out.sort((a, b) => (b.strength || 0) - (a.strength || 0));
+  }
+
+  function buildTensionSummary(profile) {
+    const tensions = profile.tensions || {};
+    const candidates = [];
+
+    (tensions.concept_pair_tensions || []).forEach((t) => candidates.push({
+      type: "concept_pair",
+      source: t.source,
+      target: t.target,
+      strength: t.strength || 0,
+      explanation: t.reason || "To begreper trekker i hver sin retning i materialet."
+    }));
+    (tensions.concept_tensions || []).forEach((t) => candidates.push({
+      type: "concept",
+      source: t.key,
+      target: null,
+      strength: t.combined || t.tension_score || 0,
+      explanation: `Begrepet «${t.key}» bæres av motstridende verdier i materialet.`
+    }));
+    (tensions.paradox_pairs || []).forEach((t) => candidates.push({
+      type: "paradox",
+      source: (t.shared_concepts || [])[0] || t.theme_id,
+      target: t.theme_id,
+      strength: (t.shared_concepts || []).length,
+      explanation: `To refleksjoner om «${t.theme_id}» peker i motsatt retning.`
+    }));
+    (tensions.cross_theme || []).forEach((t) => candidates.push({
+      type: "cross_theme",
+      source: t.key,
+      target: null,
+      strength: (t.themes || []).reduce((s, x) => s + (x.count || 0), 0),
+      explanation: `«${t.key}» har motsatt ladning i ulike temaer.`
+    }));
+    (tensions.theme_tensions || []).forEach((t) => candidates.push({
+      type: "theme",
+      source: t.theme_id,
+      target: null,
+      strength: t.tension_score || 0,
+      explanation: `Temaet «${t.theme_id}» rommer motstridende vurderinger.`
+    }));
+
+    const count = candidates.length;
+    if (!count) {
+      return { strongest: null, count: 0, explanation: "AHA ser ingen tydelige spenninger ennå." };
+    }
+    candidates.sort((a, b) => (b.strength || 0) - (a.strength || 0));
+    const top = candidates[0];
+    const strongest = {
+      type: top.type,
+      source: top.source,
+      target: top.target || null,
+      strength: round3(top.strength || 0),
+      explanation: top.explanation
+    };
+    const explanation = strongest.target
+      ? `Den sterkeste spenningen står mellom «${strongest.source}» og «${strongest.target}».`
+      : `Den sterkeste spenningen ligger i «${strongest.source}».`;
+    return { strongest, count, explanation };
+  }
+
+  function buildProjectSignals(profile, ctx) {
+    const signals = [];
+    const concepts = ctx.dominant_concepts || [];
+    const academic = profile.academic || {};
+    const disciplines = academic.disciplines || [];
+    const rec = profile.recommendations || {};
+    const phrases = profile.phrases || [];
+
+    if (concepts.length >= 2) {
+      const top = concepts.slice(0, 2).map((c) => c.key);
+      signals.push({
+        label: `materialet peker mot et arbeid rundt «${top.join("» og «")}»`,
+        confidence: concepts[0].total_count >= 4 ? "middels" : "lav",
+        evidence: { concepts: top }
+      });
+    }
+
+    const topDiscipline = disciplines[0];
+    if (topDiscipline && (topDiscipline.relative || 0) >= 0.5) {
+      signals.push({
+        label: `materialet peker mot en faglig forankring i ${topDiscipline.id}`,
+        confidence: (topDiscipline.relative || 0) >= 0.8 ? "middels" : "lav",
+        evidence: { discipline: topDiscipline.id, relative: topDiscipline.relative || 0 }
+      });
+    }
+
+    (rec.next_topics || []).slice(0, 1).forEach((t) => {
+      signals.push({
+        label: `materialet peker mot å utvide temaet «${t.theme_id}»`,
+        confidence: "lav",
+        evidence: { theme_id: t.theme_id }
+      });
+    });
+
+    if (phrases.length) {
+      signals.push({
+        label: `materialet peker mot uttrykket «${phrases[0].phrase}»`,
+        confidence: "lav",
+        evidence: { phrase: phrases[0].phrase }
+      });
+    }
+
+    return signals.slice(0, 4);
+  }
+
+  function buildNextActions(profile, ctx) {
+    const actions = [];
+    const concepts = ctx.dominant_concepts || [];
+    const rec = profile.recommendations || {};
+    const recentFocus = (profile.temporal && profile.temporal.recent_focus) || {};
+
+    if ((ctx.dominant_themes || []).length) {
+      actions.push("Bekreft om hovedtemaene stemmer.");
+    }
+    if (concepts.length) {
+      actions.push(`Velg ett dominerende begrep – for eksempel «${concepts[0].key}» – og gjør det til en sti.`);
+    }
+    if (ctx.tension_summary && ctx.tension_summary.strongest) {
+      actions.push("Bygg videre på den sterkeste spenningen.");
+    }
+    const emerging = recentFocus.emerging || [];
+    if (emerging.length) {
+      actions.push(`Skriv en kort tekst om det nye begrepet «${emerging[0].key}» som nylig dukket opp.`);
+    }
+    if ((rec.underexplored_concepts || []).length) {
+      actions.push(`Koble det underutforskede begrepet «${rec.underexplored_concepts[0].key}» til en eksisterende liste.`);
+    }
+    if (actions.length < 5 && (rec.bridging_pairs || []).length) {
+      const b = rec.bridging_pairs[0];
+      actions.push(`Utforsk koblingen mellom «${b.source}» og «${b.target}».`);
+    }
+    if (!actions.length) {
+      actions.push("Start en samtale eller lag et notat så AHA får mer å lese mønstre fra.");
+    }
+    return actions.slice(0, 5);
+  }
+
+  function buildMetaSummaryText(ctx) {
+    if (ctx.readiness.level === "tom") {
+      return "AHA har foreløpig lite materiale å lese mønstre fra. Start en samtale, lag et notat eller importer fra History Go.";
+    }
+    const sentences = [];
+    let focus = "";
+    if ((ctx.dominant_concepts || []).length) {
+      focus = ctx.dominant_concepts.slice(0, 2).map((c) => `«${c.key}»`).join(" og ");
+    } else if ((ctx.dominant_themes || []).length) {
+      focus = ctx.dominant_themes.slice(0, 2).map((t) => `«${t.theme_id}»`).join(" og ");
+    }
+    if (focus) {
+      sentences.push(`AHA ser foreløpig at materialet ditt samler seg rundt ${focus}.`);
+    } else {
+      sentences.push("AHA ser foreløpig konturene av et materiale som er i ferd med å ta form.");
+    }
+    if ((ctx.recurring_patterns || []).length) {
+      sentences.push(`Det tydeligste mønsteret er «${ctx.recurring_patterns[0].label}», og du ${ctx.learning_mode}.`);
+    } else {
+      sentences.push(`Akkurat nå ser det ut til at du ${ctx.learning_mode}.`);
+    }
+    if ((ctx.next_actions || []).length) {
+      sentences.push(`Neste gode steg er: ${ctx.next_actions[0].replace(/\.$/, "")}.`);
+    }
+    return sentences.slice(0, 3).join(" ");
+  }
+
+  function buildMetaEvidence(profile, ctx) {
+    return {
+      insight_count: (profile.insights || []).length,
+      topic_count: (profile.topics || []).length,
+      concept_count: (profile.concepts || []).length,
+      strongest_concepts: (ctx.dominant_concepts || []).slice(0, 3).map((c) => c.key),
+      strongest_themes: (ctx.dominant_themes || []).slice(0, 3).map((t) => t.theme_id),
+      tension_count: ctx.tension_summary ? ctx.tension_summary.count : 0,
+      temporal_span_days: (profile.temporal && profile.temporal.span_days) || 0
+    };
+  }
+
+  // Hovedinngang: koker meta-profilen ned til ett forklarbart svar.
+  function buildMetaInsightSummary(profile, options = {}) {
+    const safe = profile || {};
+    const readiness = computeReadiness(safe);
+    const dominant_themes = buildDominantThemes(safe);
+    const dominant_concepts = buildDominantConcepts(safe);
+    const learning_mode = classifyLearningMode(safe);
+    const recurring_patterns = buildRecurringPatterns(safe);
+    const tension_summary = buildTensionSummary(safe);
+
+    const ctx = {
+      readiness,
+      dominant_themes,
+      dominant_concepts,
+      learning_mode,
+      recurring_patterns,
+      tension_summary
+    };
+    const project_signals = buildProjectSignals(safe, ctx);
+    const next_actions = buildNextActions(safe, ctx);
+    ctx.next_actions = next_actions;
+    const summary = buildMetaSummaryText(ctx);
+    const evidence = buildMetaEvidence(safe, ctx);
+
+    const now = options.now ? new Date(options.now) : new Date();
+
+    return {
+      generated_at: now.toISOString(),
+      readiness,
+      dominant_themes,
+      dominant_concepts,
+      learning_mode,
+      recurring_patterns,
+      tension_summary,
+      project_signals,
+      next_actions,
+      summary,
+      evidence
+    };
+  }
+
+  // Bygger en norsk prompt som ber brukeren bekrefte/avkrefte/presisere
+  // meta-innsikten i AHA Chat.
+  function buildMetaInsightPrompt(profile) {
+    const safe = profile || {};
+    const meta = safe.meta_insight || buildMetaInsightSummary(safe);
+    const lines = [];
+
+    lines.push("Dette er hva AHA foreløpig ser i materialet mitt:");
+    lines.push("");
+    if (meta.summary) {
+      lines.push(meta.summary);
+      lines.push("");
+    }
+    lines.push(`Beredskap: ${meta.readiness.level} (${meta.readiness.score}/100).`);
+    lines.push(`Læringsmodus: ${meta.learning_mode}.`);
+
+    if (meta.dominant_themes.length) {
+      lines.push("Topp temaer: " + meta.dominant_themes.slice(0, 3).map((t) => t.theme_id).join(", ") + ".");
+    }
+    if (meta.dominant_concepts.length) {
+      lines.push("Topp begreper: " + meta.dominant_concepts.slice(0, 3).map((c) => c.key).join(", ") + ".");
+    }
+    if (meta.recurring_patterns.length) {
+      const p = meta.recurring_patterns[0];
+      lines.push(`Sterkeste mønster: ${p.label} – ${p.explanation}`);
+    }
+    if (meta.tension_summary && meta.tension_summary.strongest) {
+      const s = meta.tension_summary.strongest;
+      lines.push(`Sterkeste spenning: ${s.source}${s.target ? " ↔ " + s.target : ""}.`);
+    }
+    if (meta.next_actions.length) {
+      lines.push("");
+      lines.push("Tre neste handlinger AHA foreslår:");
+      meta.next_actions.slice(0, 3).forEach((action, i) => lines.push(`${i + 1}. ${action}`));
+    }
+
+    lines.push("");
+    lines.push("Still meg 3 korte spørsmål som hjelper meg å bekrefte, avkrefte eller presisere dette bildet.");
+
+    return lines.join("\n");
+  }
+
   function buildUserMetaProfile(chamber, subjectId) {
     if (!IE) return null;
 
@@ -1643,7 +2098,9 @@
       temporal,
       tensions
     };
-    return { ...partial, recommendations: buildRecommendations(partial) };
+    const recommendations = buildRecommendations(partial);
+    const fullProfile = { ...partial, recommendations };
+    return { ...fullProfile, meta_insight: buildMetaInsightSummary(fullProfile) };
   }
 
   const MetaInsightsEngine = {
@@ -1663,6 +2120,8 @@
     buildTemporalProfile,
     buildTensionProfile,
     buildRecommendations,
+    buildMetaInsightSummary,
+    buildMetaInsightPrompt,
     canonicalizeConcepts,
     buildPhraseIndex,
     setTheoryClusters,
