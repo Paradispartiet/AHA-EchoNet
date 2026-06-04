@@ -317,6 +317,79 @@
     `).join("");
   }
 
+  function inspectSyncHubLocalStorageItem(key) {
+    const raw = window.localStorage.getItem(key);
+    if (!raw) return { count: 0, state: "Tom", ok: true };
+
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      return { count: countActive(parsed), state: "Lest", ok: true };
+    }
+
+    if (parsed && typeof parsed === "object") {
+      return { count: Object.keys(parsed).length, state: "Lest", ok: true };
+    }
+
+    return { count: 1, state: "Lest", ok: true };
+  }
+
+  function renderSyncHubStatus() {
+    const mount = $("aha-sync-hub-status");
+    if (!mount) {
+      console.warn("AHADashboard: aha-sync-hub-status mount mangler");
+      return;
+    }
+
+    const sources = [
+      { label: "Lists", key: "aha_lists_v1" },
+      { label: "Paths", key: "aha_paths_v1" },
+      { label: "Groups", key: "aha_groups_v1" },
+      { label: "AHAavisa", key: "aha_articles_v1" }
+    ];
+
+    try {
+      if (!window.localStorage) throw new Error("localStorage er ikke tilgjengelig");
+
+      const rows = sources.map((source) => {
+        try {
+          return { ...source, ...inspectSyncHubLocalStorageItem(source.key) };
+        } catch (error) {
+          console.warn(`AHADashboard: kunne ikke lese ${source.key}`, error);
+          return { ...source, count: "–", state: "Uleselig", ok: false };
+        }
+      });
+      const allReadable = rows.every((row) => row.ok);
+      const statusLabel = allReadable ? "sync-ready" : "status-feil";
+
+      mount.innerHTML = `
+        <section class="aha-status-card" aria-label="AHA Sync Hub status">
+          <p class="eyebrow">AHA Sync Hub</p>
+          <h3>Status only</h3>
+          <p>Read-only localStorage-inspeksjon. Ingen sync, knapper eller databasekall.</p>
+          <div class="aha-stats">
+            ${rows.map((row) => `
+              <div class="aha-stat">
+                <strong>${row.count}</strong>
+                <span>${row.label} · ${row.state}</span>
+              </div>
+            `).join("")}
+          </div>
+          <small class="aha-status-updated">${statusLabel} · Oppdatert ${formatTime()}</small>
+        </section>
+      `;
+    } catch (error) {
+      console.warn("AHADashboard: AHA Sync Hub status kunne ikke leses", error);
+      mount.innerHTML = `
+        <section class="aha-status-card" aria-label="AHA Sync Hub status">
+          <p class="eyebrow">AHA Sync Hub</p>
+          <h3>Status only</h3>
+          <p>Read-only status er utilgjengelig fordi localStorage ikke kan leses.</p>
+          <small class="aha-status-updated">status-feil · Dashboardet fortsetter uten sync.</small>
+        </section>
+      `;
+    }
+  }
+
   function renderIdentity(authState) {
     const user = authState.user;
     const profile = authState.profile;
@@ -449,6 +522,7 @@
       renderProfileStats(stats, sourceLabel);
       renderModuleStatus(stats);
       renderStatCards(stats, sourceLabel, authState);
+      renderSyncHubStatus();
       renderInsightsActivity(stats);
     } catch (error) {
       console.warn("AHADashboard: renderDashboard feilet", error);
@@ -463,6 +537,7 @@
       renderProfileStats(stats, "localStorage");
       renderModuleStatus(stats);
       renderStatCards(stats, "localStorage", authState);
+      renderSyncHubStatus();
       renderInsightsActivity(stats);
       setText("aha-auth-output", "Dashboardet bruker localStorage fordi en innlastingsfeil oppstod.");
     }
@@ -567,6 +642,7 @@
     bindProfileNameForm();
     bindLoginModal();
     bindProfileNameModal();
+    renderSyncHubStatus();
     renderDashboard();
     window.addEventListener("aha:source-event-added", renderDashboard);
     window.addEventListener("aha:historygo-imported", renderDashboard);
