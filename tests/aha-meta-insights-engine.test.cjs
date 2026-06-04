@@ -18,7 +18,63 @@ assert.ok(MetaInsightsEngine, "MetaInsightsEngine skal være eksportert");
 assert.equal(typeof MetaInsightsEngine.buildMetaInsightSummary, "function", "buildMetaInsightSummary skal eksporteres");
 assert.equal(typeof MetaInsightsEngine.buildMetaInsightPrompt, "function", "buildMetaInsightPrompt skal eksporteres");
 
-const { buildMetaInsightSummary, buildMetaInsightPrompt } = MetaInsightsEngine;
+const { buildUserMetaProfile, buildMetaInsightSummary, buildMetaInsightPrompt } = MetaInsightsEngine;
+
+
+function deepClone(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
+function deepFreeze(value) {
+  if (!value || typeof value !== "object") return value;
+  Object.freeze(value);
+  for (const key of Object.keys(value)) deepFreeze(value[key]);
+  return value;
+}
+
+function makeForbiddenApi(name) {
+  return new Proxy(function forbiddenApi() {}, {
+    get() { throw new Error(`${name} skal ikke brukes av MetaInsightsEngine`); },
+    apply() { throw new Error(`${name} skal ikke kalles av MetaInsightsEngine`); },
+    construct() { throw new Error(`${name} skal ikke konstrueres av MetaInsightsEngine`); }
+  });
+}
+
+function makeChamber() {
+  return {
+    subject_id: "sub_laring",
+    insights: [
+      {
+        id: "i1",
+        subject_id: "sub_laring",
+        theme_id: "klimapolitikk",
+        title: "Klima og makt",
+        summary: "Kapitalisme møter grønn omstilling.",
+        created_at: "2026-05-01T00:00:00.000Z",
+        first_seen: "2026-05-01T00:00:00.000Z",
+        last_updated: "2026-05-20T00:00:00.000Z",
+        strength: { evidence_count: 3 },
+        semantics: { modality: "krav", valence: "blandet" },
+        concepts: [{ key: "kapitalisme", count: 3 }, { key: "grønn omstilling", count: 2 }],
+        keywords: ["makt", "omstilling"]
+      },
+      {
+        id: "i2",
+        subject_id: "sub_laring",
+        theme_id: "klimapolitikk",
+        title: "Vekstkritikk",
+        summary: "Vekst skaper press mot naturgrenser.",
+        created_at: "2026-05-03T00:00:00.000Z",
+        first_seen: "2026-05-03T00:00:00.000Z",
+        last_updated: "2026-05-21T00:00:00.000Z",
+        strength: { evidence_count: 2 },
+        semantics: { modality: "hindring", valence: "negativ" },
+        concepts: [{ key: "vekst", count: 2 }, { key: "naturgrenser", count: 2 }],
+        keywords: ["vekst", "natur"]
+      }
+    ]
+  };
+}
 
 function makeProfile(overrides) {
   return Object.assign(
@@ -154,5 +210,58 @@ function makeProfile(overrides) {
   const prompt2 = buildMetaInsightPrompt(withMeta);
   assert.ok(prompt2.includes("3 korte spørsmål"));
 }
+
+
+// 7. MetaInsightsEngine er read-only mot storage, ingest/repository/db og Supabase.
+{
+  const forbiddenNames = ["AHAIngest", "AHASources", "AHARepository", "AHADb", "Supabase", "supabase"];
+  const guardContext = { console, Date, Math, JSON, setTimeout, clearTimeout };
+  guardContext.window = guardContext;
+  for (const name of forbiddenNames) guardContext[name] = makeForbiddenApi(name);
+  guardContext.localStorage = {
+    getItem: () => null,
+    setItem: () => { throw new Error("localStorage.setItem skal ikke brukes av MetaInsightsEngine"); },
+    removeItem: () => { throw new Error("localStorage.removeItem skal ikke brukes av MetaInsightsEngine"); }
+  };
+  guardContext.sessionStorage = {
+    getItem: () => null,
+    setItem: () => { throw new Error("sessionStorage.setItem skal ikke brukes av MetaInsightsEngine"); },
+    removeItem: () => { throw new Error("sessionStorage.removeItem skal ikke brukes av MetaInsightsEngine"); }
+  };
+  vm.createContext(guardContext);
+  vm.runInContext(fs.readFileSync("js/insightsChamber.js", "utf8"), guardContext, { filename: "js/insightsChamber.js" });
+  vm.runInContext(fs.readFileSync("js/metaInsightsEngine.js", "utf8"), guardContext, { filename: "js/metaInsightsEngine.js" });
+
+  const guardedEngine = guardContext.MetaInsightsEngine;
+  const chamber = makeChamber();
+  const profile = guardedEngine.buildUserMetaProfile(chamber, "sub_laring");
+  assert.ok(profile && profile.meta_insight, "guarded buildUserMetaProfile skal bygge meta-profil");
+  const summary = guardedEngine.buildMetaInsightSummary(profile);
+  assert.ok(summary && summary.readiness, "guarded buildMetaInsightSummary skal bygge summary");
+  const prompt = guardedEngine.buildMetaInsightPrompt(profile);
+  assert.ok(prompt.includes("Dette er hva AHA foreløpig ser"), "guarded buildMetaInsightPrompt skal bygge prompt");
+}
+
+// 8. buildMetaInsightSummary og buildUserMetaProfile muterer ikke input.
+{
+  const profile = makeProfile({
+    insights: new Array(8).fill(null).map((_, index) => ({ id: `i${index}`, nested: { value: index } })),
+    topics: [{ theme_id: "klimapolitikk", stats: { insight_count: 6, user_phase: "mønster", insight_saturation: 0.5 }, semCounts: { modality: { krav: 1 }, valence: { blandet: 1 } } }],
+    concepts: [{ key: "kapitalisme", total_count: 9, theme_count: 2, examples: ["klasse", "makt"] }],
+    temporal: { span_days: 5, recent_focus: { emerging: [{ key: "habitus" }] }, velocity: { kapitalisme: 0.4 } },
+    tensions: { concept_pair_tensions: [{ source: "olje", target: "fornybar", strength: 5, reason: "test" }] }
+  });
+  const profileClone = deepClone(profile);
+  deepFreeze(profile);
+  buildMetaInsightSummary(profile);
+  assert.deepStrictEqual(profile, profileClone, "buildMetaInsightSummary skal ikke mutere profil-input");
+
+  const chamber = makeChamber();
+  const chamberClone = deepClone(chamber);
+  deepFreeze(chamber);
+  buildUserMetaProfile(chamber, "sub_laring");
+  assert.deepStrictEqual(chamber, chamberClone, "buildUserMetaProfile skal ikke mutere chamber-input");
+}
+
 
 console.log("aha-meta-insights-engine passed");

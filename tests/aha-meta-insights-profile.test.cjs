@@ -18,6 +18,9 @@ const chamber = {
 store.set("aha_insight_chamber_v1", JSON.stringify(chamber));
 
 let capturedSubjectId = null;
+let capturedPromptProfile = null;
+let locationHref = "home.html";
+const forbiddenCalls = [];
 const fakeMetaInsight = {
   generated_at: "2026-06-04T00:00:00.000Z",
   readiness: { level: "middels", score: 42, reason: "stub" },
@@ -46,7 +49,7 @@ const context = {
   clearTimeout,
   localStorage: {
     getItem: (k) => (store.has(k) ? store.get(k) : null),
-    setItem: (k, v) => store.set(k, String(v)),
+    setItem: (k, v) => { store.set(k, String(v)); },
     removeItem: (k) => store.delete(k)
   },
   document: {
@@ -56,13 +59,30 @@ const context = {
     querySelector: () => null,
     querySelectorAll: () => []
   },
+  location: {
+    get href() { return locationHref; },
+    set href(value) { locationHref = String(value); }
+  },
+  AHAIngest: { ingest: () => forbiddenCalls.push("AHAIngest.ingest") },
+  AHASources: { createSourceEvent: () => forbiddenCalls.push("AHASources.createSourceEvent") },
+  AHARepository: {
+    createSourceEvent: () => forbiddenCalls.push("AHARepository.createSourceEvent"),
+    createInsight: () => forbiddenCalls.push("AHARepository.createInsight"),
+    saveInsight: () => forbiddenCalls.push("AHARepository.saveInsight")
+  },
+  AHADb: { createSourceEvent: () => forbiddenCalls.push("AHADb.createSourceEvent"), createInsight: () => forbiddenCalls.push("AHADb.createInsight") },
+  Supabase: { from: () => forbiddenCalls.push("Supabase.from") },
+  supabase: { from: () => forbiddenCalls.push("supabase.from") },
   MetaInsightsEngine: {
     buildUserMetaProfile: (chamberArg, subjectId) => {
       capturedSubjectId = subjectId;
       assert.ok(chamberArg, "chamber skal sendes inn");
       return fakeFullMeta;
     },
-    buildMetaInsightPrompt: () => "stub-prompt"
+    buildMetaInsightPrompt: (profile) => {
+      capturedPromptProfile = profile;
+      return "stub-prompt";
+    }
   }
 };
 context.window = context;
@@ -108,5 +128,41 @@ assert.ok(Array.isArray(meta.topTensions), "topTensions skal være en liste");
   assert.strictEqual(meta2.metaInsight, null, "uten motor skal metaInsight være null");
   assert.ok(Array.isArray(meta2.topThemes), "eksisterende retur skal fortsatt fungere uten motor");
 }
+
+
+// "Bekreft med AHA" skal kun lagre en pending prompt og navigere til chat.
+{
+  let metaClickHandler = null;
+  const metaProfileEl = {
+    set innerHTML(value) { this.html = String(value || ""); },
+    get innerHTML() { return this.html || ""; },
+    set onclick(handler) { metaClickHandler = handler; },
+    get onclick() { return metaClickHandler; }
+  };
+  context.document.getElementById = (id) => (id === "aha-meta-profile-home" ? metaProfileEl : null);
+
+  AHAProfile.render();
+  assert.equal(typeof metaClickHandler, "function", "render skal binde meta profile action handler");
+  assert.ok(metaProfileEl.innerHTML.includes("meta-confirm-insight"), "meta insight-knappen skal rendres");
+
+  metaClickHandler({
+    target: {
+      closest: (selector) => selector === "button[data-action]"
+        ? { getAttribute: (name) => (name === "data-action" ? "meta-confirm-insight" : null) }
+        : null
+    }
+  });
+
+  assert.strictEqual(capturedPromptProfile, fakeFullMeta, "buildMetaInsightPrompt skal kalles med fullMeta");
+  assert.equal(locationHref, "chat.html", "Bekreft med AHA skal åpne chat");
+  const rawPending = store.get("aha_pending_chat_prompt_v1");
+  assert.ok(rawPending, "pending prompt skal lagres på aha_pending_chat_prompt_v1");
+  const pending = JSON.parse(rawPending);
+  assert.equal(pending.type, "meta_insight_prompt", "pending payload skal ha meta insight-type");
+  assert.equal(pending.source, "meta_insights_engine", "pending payload skal ha MetaInsightsEngine som source");
+  assert.equal(pending.prompt, "stub-prompt", "pending payload skal inneholde bygget prompt");
+  assert.deepStrictEqual(forbiddenCalls, [], "Bekreft med AHA skal ikke kalle ingest/source/repository/db/supabase eller opprette insights");
+}
+
 
 console.log("aha-meta-insights-profile passed");
