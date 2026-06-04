@@ -4,6 +4,7 @@
   "use strict";
 
   let lastState = null;
+  let isSyncHubPrepOpen = false;
 
   const AHA_AUTH_RETURN_TO_KEY = "aha_auth_return_to_v1";
   const HISTORY_GO_PROFILE_URL = "https://paradispartiet.github.io/History-Go/profile.html";
@@ -319,18 +320,49 @@
 
   function inspectSyncHubLocalStorageItem(key) {
     const raw = window.localStorage.getItem(key);
-    if (!raw) return { count: 0, state: "Tom", ok: true };
+    if (raw === null) return { count: "–", state: "missing", ok: true };
+    if (!String(raw).trim()) return { count: 0, state: "empty", ok: true };
 
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed)) {
-      return { count: countActive(parsed), state: "Lest", ok: true };
+      const count = countActive(parsed);
+      return { count, state: count > 0 ? "ready" : "empty", ok: true };
     }
 
     if (parsed && typeof parsed === "object") {
-      return { count: Object.keys(parsed).length, state: "Lest", ok: true };
+      const count = Object.keys(parsed).length;
+      return { count, state: count > 0 ? "ready" : "empty", ok: true };
     }
 
-    return { count: 1, state: "Lest", ok: true };
+    return { count: 1, state: "ready", ok: true };
+  }
+
+  function renderSyncHubPrepPanel(rows) {
+    if (!isSyncHubPrepOpen) return "";
+
+    return `
+      <div class="aha-sync-prep-panel" id="aha-sync-prep-panel" role="region" aria-label="AHA Sync Hub forberedelse">
+        <p class="aha-sync-prep-notice">Read-only preview. No sync is performed.</p>
+        <div class="aha-sync-prep-list" aria-label="localStorage sync-forberedelse">
+          ${rows.map((row) => `
+            <div class="aha-sync-prep-row aha-sync-prep-row-${row.state}">
+              <strong>${row.label}</strong>
+              <span>${row.count} localStorage</span>
+              <small>${row.state}</small>
+            </div>
+          `).join("")}
+        </div>
+      </div>
+    `;
+  }
+
+  function bindSyncHubPrepToggle() {
+    const button = $("aha-sync-hub-prep-toggle");
+    if (!button) return;
+    button.addEventListener("click", () => {
+      isSyncHubPrepOpen = !isSyncHubPrepOpen;
+      renderSyncHubStatus();
+    });
   }
 
   function renderSyncHubStatus() {
@@ -355,17 +387,18 @@
           return { ...source, ...inspectSyncHubLocalStorageItem(source.key) };
         } catch (error) {
           console.warn(`AHADashboard: kunne ikke lese ${source.key}`, error);
-          return { ...source, count: "–", state: "Uleselig", ok: false };
+          return { ...source, count: "–", state: "error", ok: false };
         }
       });
       const allReadable = rows.every((row) => row.ok);
       const statusLabel = allReadable ? "sync-ready" : "status-feil";
+      const buttonLabel = isSyncHubPrepOpen ? "Skjul sync-forberedelse" : "Forbered sync";
 
       mount.innerHTML = `
         <section class="aha-status-card" aria-label="AHA Sync Hub status">
           <p class="eyebrow">AHA Sync Hub</p>
           <h3>Status only</h3>
-          <p>Read-only localStorage-inspeksjon. Ingen sync, knapper eller databasekall.</p>
+          <p>Read-only localStorage-inspeksjon. Ingen sync eller databasekall.</p>
           <div class="aha-stats">
             ${rows.map((row) => `
               <div class="aha-stat">
@@ -374,19 +407,27 @@
               </div>
             `).join("")}
           </div>
+          <button id="aha-sync-hub-prep-toggle" type="button" class="aha-sync-prep-toggle" aria-expanded="${isSyncHubPrepOpen}" aria-controls="aha-sync-prep-panel">${buttonLabel}</button>
+          ${renderSyncHubPrepPanel(rows)}
           <small class="aha-status-updated">${statusLabel} · Oppdatert ${formatTime()}</small>
         </section>
       `;
+      bindSyncHubPrepToggle();
     } catch (error) {
       console.warn("AHADashboard: AHA Sync Hub status kunne ikke leses", error);
+      const rows = sources.map((source) => ({ ...source, count: "–", state: "error", ok: false }));
+      const buttonLabel = isSyncHubPrepOpen ? "Skjul sync-forberedelse" : "Forbered sync";
       mount.innerHTML = `
         <section class="aha-status-card" aria-label="AHA Sync Hub status">
           <p class="eyebrow">AHA Sync Hub</p>
           <h3>Status only</h3>
           <p>Read-only status er utilgjengelig fordi localStorage ikke kan leses.</p>
+          <button id="aha-sync-hub-prep-toggle" type="button" class="aha-sync-prep-toggle" aria-expanded="${isSyncHubPrepOpen}" aria-controls="aha-sync-prep-panel">${buttonLabel}</button>
+          ${renderSyncHubPrepPanel(rows)}
           <small class="aha-status-updated">status-feil · Dashboardet fortsetter uten sync.</small>
         </section>
       `;
+      bindSyncHubPrepToggle();
     }
   }
 
