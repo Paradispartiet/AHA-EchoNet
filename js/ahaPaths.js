@@ -104,6 +104,96 @@
     }
   }
 
+  function pathActionTime(path) {
+    return [
+      path?.deletedAt,
+      path?.deleted_at,
+      path?.updatedAt,
+      path?.updated_at,
+      path?.createdAt,
+      path?.created_at
+    ].reduce((newest, value) => {
+      const time = Date.parse(value || "");
+      return Number.isFinite(time) && time > newest ? time : newest;
+    }, 0);
+  }
+
+  function normalizeRemotePath(remote) {
+    return normalizePath({
+      id: remote?.id,
+      title: remote?.title,
+      type: remote?.type,
+      description: remote?.description,
+      tags: remote?.tags,
+      steps: asArray(remote?.steps).map((step, index) => normalizeStep(step, index)),
+      source: remote?.source,
+      meta: remote?.meta,
+      createdAt: remote?.createdAt || remote?.created_at,
+      updatedAt: remote?.updatedAt || remote?.updated_at,
+      deletedAt: remote?.deletedAt || remote?.deleted_at
+    });
+  }
+
+  function mergePaths(localPaths, remotePaths) {
+    const merged = new Map();
+
+    asArray(localPaths).map((path) => normalizePath(path)).forEach((path) => {
+      merged.set(path.id, path);
+    });
+
+    asArray(remotePaths).map((path) => normalizePath(path)).forEach((incoming) => {
+      const existing = merged.get(incoming.id);
+      if (!existing || pathActionTime(incoming) >= pathActionTime(existing)) {
+        merged.set(incoming.id, incoming);
+      }
+    });
+
+    return Array.from(merged.values()).sort((a, b) => pathActionTime(b) - pathActionTime(a));
+  }
+
+  async function pushLocalToDatabase(paths) {
+    try {
+      const savePath = global.AHARepository?.savePath;
+      if (!savePath) return null;
+      return await Promise.allSettled(asArray(paths).map((path) => savePath.call(global.AHARepository, path)));
+    } catch (error) {
+      return { ok: false, error };
+    }
+  }
+
+  async function syncFromDatabase() {
+    const localPaths = loadPaths();
+    if (localPaths.length) await pushLocalToDatabase(localPaths);
+
+    let loadPathsFromRepository;
+    try {
+      loadPathsFromRepository = global.AHARepository?.loadPaths;
+    } catch (error) {
+      return { ok: false, error, fallback: "localStorage", data: localPaths };
+    }
+    if (!loadPathsFromRepository) {
+      return { ok: false, fallback: "localStorage", data: localPaths };
+    }
+
+    let result;
+    try {
+      result = await loadPathsFromRepository.call(global.AHARepository);
+    } catch (error) {
+      return { ok: false, error, fallback: "localStorage", data: localPaths };
+    }
+
+    if (!result?.ok) return result || { ok: false };
+    if (!Array.isArray(result.data)) {
+      return { ...result, ok: false, fallback: "localStorage", data: localPaths };
+    }
+
+    const remotePaths = result.data.map((path) => normalizeRemotePath(path));
+    const merged = mergePaths(localPaths, remotePaths);
+    savePaths(merged);
+    render();
+    return { ...result, data: merged, merged: true };
+  }
+
   function createPath(input) {
     const title = asText(input?.title, "");
     if (!title) return null;
@@ -402,6 +492,7 @@
     deletePath,
     addStepToPath,
     removeStepFromPath,
+    syncFromDatabase,
     collectAvailablePathItems,
     render,
     refresh
