@@ -31,6 +31,7 @@
   function asText(value, fallback) { const text = String(value ?? "").trim(); return text || fallback; }
   function uid(prefix) { return `${prefix}_${Date.now()}_${Math.floor(Math.random() * 100000)}`; }
   function safeObject(value) { return value && typeof value === "object" && !Array.isArray(value) ? value : {}; }
+  function isDeletedRecord(record) { return Boolean(record?.deletedAt || record?.deleted_at); }
 
   function escapeHtml(value) {
     return String(value ?? "")
@@ -239,7 +240,7 @@
   function collectAvailableArticleSources() {
     const out = [];
     const chamber = safeParse(localStorage.getItem(INSIGHTS_KEY) || "{}", { insights: [] });
-    asArray(chamber?.insights).forEach((insight, index) => {
+    asArray(chamber?.insights).filter((insight) => !isDeletedRecord(insight)).forEach((insight, index) => {
       out.push({
         id: `insight_${asText(insight?.id, `insight_idx_${index}`)}`,
         title: asText(insight?.title || insight?.heading || insight?.label || insight?.summary || insight?.text, "Innsikt"),
@@ -251,7 +252,7 @@
     });
 
     asArray(safeParse(localStorage.getItem(LISTS_KEY) || "[]", []))
-      .filter((list) => !list?.deletedAt)
+      .filter((list) => !isDeletedRecord(list))
       .forEach((list) => {
         const refId = asText(list?.id, "");
         if (!refId) return;
@@ -259,7 +260,7 @@
       });
 
     asArray(safeParse(localStorage.getItem(PATHS_KEY) || "[]", []))
-      .filter((path) => !path?.deletedAt)
+      .filter((path) => !isDeletedRecord(path))
       .forEach((path) => {
         const refId = asText(path?.id, "");
         if (!refId) return;
@@ -267,7 +268,7 @@
       });
 
     asArray(safeParse(localStorage.getItem(NOTES_KEY) || "[]", []))
-      .filter((note) => !note?.deleted_at)
+      .filter((note) => !isDeletedRecord(note))
       .forEach((note) => {
         const refId = asText(note?.id, "");
         if (!refId) return;
