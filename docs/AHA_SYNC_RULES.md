@@ -666,6 +666,116 @@ Neste trygge kodekandidat etter denne kontrakten:
 - no Supabase schema unless table already exists / migration is explicitly included in separate PR
 ```
 
+### AHAavisa / Articles: fremtidig sync-kontrakt
+
+Dagens status:
+
+```text
+- localStorage-only via aha_articles_v1
+- write-module, not read-only
+- no AHARepository.saveArticle/loadArticles
+- no Supabase table documented
+- no syncFromDatabase
+- no push-on-write
+- no source events
+- no insights
+- Search indexes articles read-only from aha_articles_v1
+- Mindmap shows article nodes and article_references edges
+- AHAavisa/Groups can reference each other only through explicit user actions
+- tombstone filtering in AHAavisa sources and Search was fixed in PR #335
+```
+
+Før AHAavisa sync kan bygges må disse beslutningene låses:
+
+```text
+- remote table name, for eksempel aha_articles
+- field mapping camelCase <-> snake_case
+- om article.references lagres som JSON eller egen article_references-tabell
+- conflict rule for articles
+- conflict rule for references
+- tombstone rule for articles
+- whether references get tombstones or remain hard-remove
+- push-before-pull behavior
+- invalid remote fallback behavior
+- status conflict behavior
+- publicationLayer conflict behavior
+- boundary to Groups
+- boundary to real/public publishing
+```
+
+Midlertidig konfliktregel for senere article-kode:
+
+```text
+- push local articles before pull remote
+- merge by id
+- action time = newest of deletedAt/deleted_at, updatedAt/updated_at, createdAt/created_at
+- deletedAt/deleted_at teller som handlingstid
+- remote wins on equal action time
+- invalid remote payload must not clear localStorage
+- localStorage remains fallback/cache
+```
+
+Tombstone-regel:
+
+```text
+- local canonical AHAavisa field is deletedAt today
+- Supabase-facing future field should be deleted_at if repository is added
+- mapping must be explicit
+- do not hard-delete article tombstones during sync
+```
+
+References-regel:
+
+```text
+- article.references are embedded today
+- reference removal is hard remove today
+- do not add reference-level sync until conflict behavior is explicitly decided
+- initial repository method may preserve embedded references as JSON
+- sync must not mutate referenced Notes/Lists/Paths/Groups/Insights/etc.
+```
+
+Status/publication-regel:
+
+```text
+- status is local workflow state
+- published_local is only local marking
+- publicationLayer is local classification
+- public_candidate is not public publishing
+- sync must not publish externally
+- sync must not imply consent to public publishing
+```
+
+Groups-regel:
+
+```text
+- Groups can create AHAavisa drafts only through explicit user action
+- AHAavisa can add article references to Groups only through explicit user action
+- AHAavisa sync must not automatically create group references
+- AHAavisa sync must not mutate Groups
+- Group references to articles are references, not ownership transfer
+```
+
+Ikke-bryt-regler for AHAavisa sync:
+
+```text
+- AHAavisa sync must not create insights
+- AHAavisa sync must not create source events
+- AHAavisa sync must not mutate referenced objects
+- AHAavisa sync must not mutate Notes/Lists/Paths/Groups/Feed/Gallery/Insta
+- AHAavisa sync must not make Supabase mandatory
+- AHAavisa sync must not remove localStorage fallback
+- AHAavisa sync must not publish externally
+- AHAavisa sync must not change privacy/publication consent
+```
+
+Neste trygge kodekandidat etter denne kontrakten:
+
+```text
+- add AHARepository.saveArticle/loadArticles with no UI changes
+- no syncFromDatabase yet
+- no Supabase schema unless table already exists / migration is explicitly included in separate PR
+```
+
 ## 10. Konfliktregler per modul
 
 | Modul | Dagens konfliktregel | Tombstone-regel | Risiko | Midlertidig beslutning |
