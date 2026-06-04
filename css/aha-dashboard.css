@@ -1058,3 +1058,51 @@ html, body { max-width: 100%; overflow-x: hidden; }
     grid-template-columns: 1fr;
   }
 }
+
+.aha-sync-prep-toggle {
+  width: fit-content;
+  padding: 10px 14px;
+  font-size: .88rem;
+}
+
+.aha-sync-prep-panel {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--aha-line);
+  border-radius: 18px;
+  background: rgba(255,255,255,.055);
+}
+
+.aha-sync-prep-notice {
+  color: var(--aha-muted);
+  font-size: .88rem;
+  font-weight: 800;
+}
+
+.aha-sync-prep-list {
+  display: grid;
+  gap: 8px;
+}
+
+.aha-sync-prep-row {
+  display: grid;
+  grid-template-columns: minmax(82px, 1fr) auto auto;
+  gap: 8px;
+  align-items: center;
+  padding: 9px 10px;
+  border: 1px solid rgba(255,255,255,.11);
+  border-radius: 14px;
+  background: rgba(7,8,13,.34);
+}
+
+.aha-sync-prep-row span,
+.aha-sync-prep-row small {
+  color: var(--aha-muted);
+}
+
+.aha-sync-prep-row small {
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  font-weight: 900;
+}
