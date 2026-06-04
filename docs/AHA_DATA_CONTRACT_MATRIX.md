@@ -1138,11 +1138,69 @@ Article reference:
 ### Regler
 
 ```text
-published_local betyr bare lokal markering, ikke ekstern publisering.
+AHAavisa er lokal artikkel-/utkastorganisering, ikke ekstern publisering.
+createArticle, updateArticle, deleteArticle, setArticleStatus, setArticlePublicationLayer, addReferenceToArticle og removeReferenceFromArticle lager ikke source events i dagens modell.
+AHAavisa lager ikke canonical insights.
+published_local betyr bare lokal workflow-markering, ikke ekstern publisering.
 publicationLayer styrer personlig / gruppe / offentlig kandidatlag.
 Offentlig kandidat er ikke offentlig publisering.
-AHAavisa lager ikke source event/insight i nåværende modell.
 ```
+
+Status-regel:
+
+```text
+- draft, review, ready og published_local er lokale workflow-statuser.
+- published_local betyr ikke ekstern publisering.
+```
+
+Publication layer-regel:
+
+```text
+- personal = personlig lokalt utkast
+- group = gruppeavis/gruppeutkast
+- public_candidate = lokal kandidat for mulig senere offentlig publisering
+- public_candidate publiserer ingenting eksternt
+```
+
+References-regel:
+
+```text
+Article references er embedded i article.references i dagens localStorage-modell.
+Reference shape bruker id, title, type, source, refId, addedAt og meta.
+Reference-delete er hard remove i dagens lokale modell; dette må vurderes eksplisitt før sync.
+References kan peke til andre AHA-objekter via source + refId, men sync må ikke mutere de objektene.
+```
+
+Groups-kobling:
+
+```text
+- Groups kan eksplisitt lage AHAavisa-utkast.
+- AHAavisa kan eksplisitt legge article-reference i gruppe.
+- Dette er brukerhandlinger, ikke AHAavisa-sync.
+- AHAavisa-sync må ikke automatisk opprette eller mutere Groups.
+```
+
+### Fremtidig sync-kontrakt
+
+AHARepository har ikke saveArticle/loadArticles ennå, og AHAavisa har ingen egen Supabase-sync i dagens modell. Hvis Article-sync bygges senere, må mapping mellom lokal camelCase og remote snake_case bestemmes eksplisitt:
+
+```text
+local createdAt -> remote created_at
+local updatedAt -> remote updated_at
+local deletedAt -> remote deleted_at
+local publicationLayer -> remote publication_layer
+```
+
+Fremtidig Supabase-modell må velge mellom:
+
+```text
+A. én tabell med embedded references JSON
+B. to tabeller: articles + article_references
+```
+
+Ikke velg runtime-implementasjon i denne PR-en hvis det krever schema.
+Anbefalt minimal fremtidig sync-modell kan dokumenteres som embedded JSON først, men må verifiseres mot Supabase før kode.
+AHAavisa sync skal ikke gjøre AHAavisa til insight-produsent, source event-produsent eller ekstern publiseringsflate.
 
 ## 16. Group contract
 
