@@ -112,6 +112,15 @@
     return asArray(groups);
   }
 
+  async function persistGroup(group) {
+    if (!global.AHARepository?.saveGroup) return null;
+    try {
+      return await global.AHARepository.saveGroup(group);
+    } catch (error) {
+      return { ok: false, error };
+    }
+  }
+
   function createGroup(input) {
     const title = asText(input?.title, "");
     if (!title) return null;
@@ -132,6 +141,7 @@
     });
     groups.unshift(group);
     saveGroups(groups);
+    persistGroup(group);
     return group;
   }
 
@@ -151,6 +161,7 @@
     });
     groups[idx] = next;
     saveGroups(groups);
+    persistGroup(next);
     return next;
   }
 
@@ -173,6 +184,7 @@
     group.updatedAt = new Date().toISOString();
     groups[idx] = normalizeGroup(group);
     saveGroups(groups);
+    persistGroup(groups[idx]);
     return group.members[group.members.length - 1];
   }
 
@@ -187,6 +199,7 @@
     group.updatedAt = new Date().toISOString();
     groups[idx] = normalizeGroup(group);
     saveGroups(groups);
+    persistGroup(groups[idx]);
     return group;
   }
 
@@ -207,6 +220,7 @@
     group.updatedAt = new Date().toISOString();
     groups[idx] = normalizeGroup(group);
     saveGroups(groups);
+    persistGroup(groups[idx]);
     return candidate;
   }
 
@@ -233,6 +247,7 @@
     group.updatedAt = new Date().toISOString();
     groups[idx] = normalizeGroup(group);
     saveGroups(groups);
+    persistGroup(groups[idx]);
     return group;
   }
 
