@@ -121,6 +121,95 @@
     }
   }
 
+  function groupActionTime(group) {
+    const src = asObject(group);
+    const candidates = [
+      src.deletedAt,
+      src.deleted_at,
+      src.updatedAt,
+      src.updated_at,
+      src.createdAt,
+      src.created_at
+    ];
+    for (const value of candidates) {
+      const time = Date.parse(value || "");
+      if (Number.isFinite(time)) return time;
+    }
+    return 0;
+  }
+
+  function normalizeRemoteGroup(remote) {
+    const src = asObject(remote);
+    return normalizeGroup({
+      id: src.id,
+      title: src.title,
+      type: src.type,
+      description: src.description,
+      tags: src.tags,
+      members: asArray(src.members).map((member) => normalizeMember(member)),
+      references: asArray(src.references).map((reference) => normalizeReference(reference)),
+      source: src.source,
+      meta: src.meta,
+      createdAt: src.createdAt || src.created_at,
+      updatedAt: src.updatedAt || src.updated_at,
+      deletedAt: src.deletedAt || src.deleted_at || ""
+    });
+  }
+
+  function mergeGroups(localGroups, remoteGroups) {
+    const mergedById = new Map();
+    asArray(localGroups).forEach((group) => {
+      const normalized = normalizeGroup(group);
+      mergedById.set(normalized.id, normalized);
+    });
+    asArray(remoteGroups).forEach((group) => {
+      const incoming = normalizeGroup(group);
+      const existing = mergedById.get(incoming.id);
+      if (!existing || groupActionTime(incoming) >= groupActionTime(existing)) {
+        mergedById.set(incoming.id, incoming);
+      }
+    });
+    return Array.from(mergedById.values()).sort((a, b) => groupActionTime(b) - groupActionTime(a));
+  }
+
+  async function pushLocalToDatabase(groups) {
+    if (!global.AHARepository?.saveGroup) return null;
+    const saves = asArray(groups).map(async (group) => {
+      try {
+        return await global.AHARepository.saveGroup(group);
+      } catch (error) {
+        return { ok: false, error };
+      }
+    });
+    return Promise.allSettled(saves);
+  }
+
+  async function syncFromDatabase() {
+    const localGroups = loadGroups();
+    if (localGroups.length) await pushLocalToDatabase(localGroups);
+    if (!global.AHARepository?.loadGroups) {
+      return { ok: false, fallback: "localStorage", data: localGroups };
+    }
+
+    let result;
+    try {
+      result = await global.AHARepository.loadGroups();
+    } catch (error) {
+      return { ok: false, fallback: "localStorage", data: localGroups, error };
+    }
+
+    if (!result?.ok) return result || { ok: false };
+    if (!Array.isArray(result.data)) {
+      return { ...result, ok: false, fallback: "localStorage", data: localGroups };
+    }
+
+    const remoteGroups = result.data.map((group) => normalizeRemoteGroup(group));
+    const merged = mergeGroups(localGroups, remoteGroups);
+    saveGroups(merged);
+    render();
+    return { ...result, data: merged, merged: true };
+  }
+
   function createGroup(input) {
     const title = asText(input?.title, "");
     if (!title) return null;
@@ -862,6 +951,7 @@
     loadGroups,
     getActiveGroups,
     saveGroups,
+    syncFromDatabase,
     createGroup,
     updateGroup,
     deleteGroup,
