@@ -88,6 +88,7 @@ docs/AHA_SYSTEM_OVERVIEW.md
 docs/AHA_MODULE_MATURITY_MATRIX.md
 docs/AHA_DATA_CONTRACT_MATRIX.md
 docs/AHA_SYNC_RULES.md
+docs/AHA_SYNC_HUB_PLAN.md
 docs/AHA_INSTA_CONTRACT.md
 docs/AHA_IMPLEMENTATION_STATUS.md
 ```
@@ -155,7 +156,21 @@ Supabase = konto-/persistenslag når tilgjengelig
 Moduler med sync skal ikke blindt overskrive nyere lokale tombstones med eldre remote state.
 ```
 
-### 2.5 AHA_INSTA_CONTRACT.md
+### 2.5 AHA_SYNC_HUB_PLAN.md
+
+Formål:
+
+```text
+Låser plan og avgrensning for fremtidig AHA Sync Hub / Control Center før runtime-kode.
+```
+
+Viktigste regel:
+
+```text
+Første Sync Hub-versjon skal være manuell, ikke auto-sync; Supabase er valgfritt, og localStorage er fortsatt fallback/cache.
+```
+
+### 2.6 AHA_INSTA_CONTRACT.md
 
 Formål:
 
@@ -919,11 +934,13 @@ git diff --check → OK
 
 ## 7. Anbefalt neste steg
 
+Planen for AHA Sync Hub / Control Center er nå dokumentert i `docs/AHA_SYNC_HUB_PLAN.md`.
+
 Neste trygge steg:
 
 ```text
-AHA Sync Hub / Control Center kartlegging.
-Ikke start Sync Hub-kode i denne PR-en.
+AHA Home / dashboard entry point-kartlegging for Sync Hub.
+Ikke start Sync Hub-kode før plassering og read-only statusflate er kartlagt.
 ```
 
 Hvorfor:
@@ -938,13 +955,13 @@ Hvorfor:
 Avgrensning for neste steg:
 
 ```text
-Kartlegg hvilke moduler som har syncFromDatabase.
-Kartlegg hvilke moduler som har repository save/load.
-Kartlegg hvilke moduler som fortsatt er localStorage-only.
-Kartlegg hvilke Supabase-tabeller repository forventer.
-Kartlegg hvordan AHA Home kan vise sync-status.
-Kartlegg hvordan manuell sync-knapp bør fungere.
+Bruk `docs/AHA_SYNC_HUB_PLAN.md` som planlås.
+Kartlegg AHA Home / dashboard entry points.
+Kartlegg hvor en read-only Sync Hub-status kan vises uten å trigge sync.
+Kartlegg hvordan manuell sync-knapp senere bør fungere.
 Kartlegg hvordan feil/fallback vises uten å gjøre Supabase obligatorisk.
+Behold Lists, Paths, Groups og AHAavisa / Articles som første Sync Hub V1-kandidater.
+Skill repository save/load, push-on-write, syncFromDatabase og full module-level sync pattern.
 Ikke endre JS.
 Ikke endre HTML.
 Ikke endre CSS.
@@ -966,7 +983,8 @@ Ikke start Sync Hub-kode direkte.
 8. ✅ feat/test: Meta Insights read-only V1 og no-autosend guards
 9. ✅ docs/test/code: Groups contract, repository og sync hardening
 10. ✅ docs/test/code: AHAavisa/Articles tombstones, contract, repository og sync hardening
-11. Neste: AHA Sync Hub / Control Center kartlegging før eventuell kode
+11. ✅ docs: AHA Sync Hub / Control Center plan
+12. Neste: map AHA Home sync hub entry points før eventuell kode
 ```
 
-Ikke gå videre til storage, import, Insta/social graph, EchoNet eller Sync Hub-runtime før AHA Sync Hub / Control Center er kartlagt på faktisk kode.
+Ikke gå videre til storage, import, Insta/social graph, EchoNet eller Sync Hub-runtime før AHA Home / dashboard entry points er kartlagt på faktisk kode.

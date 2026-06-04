@@ -776,6 +776,25 @@ Neste trygge kodekandidat etter denne kontrakten:
 - no Supabase schema unless table already exists / migration is explicitly included in separate PR
 ```
 
+## 9b. AHA Sync Hub / Control Center plan
+
+Planen for en fremtidig Sync Hub / Control Center er låst i `docs/AHA_SYNC_HUB_PLAN.md`.
+
+Kort regel:
+
+```text
+- Første versjon skal være manuell, ikke auto-sync.
+- Ingen sync ved page load eller background sync.
+- Supabase skal ikke bli obligatorisk.
+- localStorage skal fortsatt være fallback/cache.
+- Huben skal ikke lage source events eller insights.
+- Huben skal ikke endre modulenes data-shape eller conflict rules.
+```
+
+Første Sync Hub V1-kandidater er Lists, Paths, Groups og AHAavisa / Articles fordi statusfilen dokumenterer contract, repository save/load, push-on-write, `syncFromDatabase`, latest-action merge, localStorage fallback/cache og tester for disse modulene.
+
+Sync Hub må likevel skille repository save/load fra full module-level sync-readiness. En modul er ikke full hub-kandidat bare fordi repository-metoder finnes; runtime må også ha dokumentert `syncFromDatabase` og modulvis sync-/merge-kontrakt.
+
 ## 10. Konfliktregler per modul
 
 | Modul | Dagens konfliktregel | Tombstone-regel | Risiko | Midlertidig beslutning |
