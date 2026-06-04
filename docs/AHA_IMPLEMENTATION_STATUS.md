@@ -42,6 +42,7 @@ Ferdig nå:
 ✅ Groups er write-module med sync-kontrakt, repository-persistens og latest-action merge
 ✅ AHAavisa / Articles er write-module med sync-kontrakt, repository-persistens og latest-action merge
 ✅ Meta Insights read-only/no-autosend guards er låst med tester
+✅ AHA Home entry points for Sync Hub er kartlagt i dokumentasjon
 ```
 
 Ikke bygget ennå:
@@ -934,40 +935,44 @@ git diff --check → OK
 
 ## 7. Anbefalt neste steg
 
-Planen for AHA Sync Hub / Control Center er nå dokumentert i `docs/AHA_SYNC_HUB_PLAN.md`.
+Planen for AHA Sync Hub / Control Center og AHA Home entry point-kartleggingen er nå dokumentert i `docs/AHA_SYNC_HUB_PLAN.md`.
 
-Neste trygge steg:
+Neste anbefalte PR:
 
 ```text
-AHA Home / dashboard entry point-kartlegging for Sync Hub.
-Ikke start Sync Hub-kode før plassering og read-only statusflate er kartlagt.
+feat: add read-only AHA sync status hub
 ```
 
 Hvorfor:
 
 ```text
-- Lists, Paths, Groups og AHAavisa/Articles er nå ferdige nok på modulnivå for sync.
-- Neste trygge steg er å kartlegge felles sync-status og kontrollflate før runtime-kode.
+- Lists, Paths, Groups og AHAavisa/Articles er ferdige nok på modulnivå for Sync Hub V1-status.
+- AHA Home entry points er kartlagt før runtime-kode.
+- Første tryggeste kode er et lite read-only statuskort, ikke manuell sync.
 - Supabase må fortsatt være valgfritt, og localStorage må fortsatt være fallback/cache.
-- AHA Home bør kunne vise sync-status uten å gjøre backend obligatorisk.
 ```
 
-Avgrensning for neste steg:
+Avgrensning for neste kode-PR:
 
 ```text
 Bruk `docs/AHA_SYNC_HUB_PLAN.md` som planlås.
-Kartlegg AHA Home / dashboard entry points.
-Kartlegg hvor en read-only Sync Hub-status kan vises uten å trigge sync.
-Kartlegg hvordan manuell sync-knapp senere bør fungere.
-Kartlegg hvordan feil/fallback vises uten å gjøre Supabase obligatorisk.
-Behold Lists, Paths, Groups og AHAavisa / Articles som første Sync Hub V1-kandidater.
-Skill repository save/load, push-on-write, syncFromDatabase og full module-level sync pattern.
-Ikke endre JS.
-Ikke endre HTML.
-Ikke endre CSS.
-Ikke endre tests.
-Ikke endre Supabase.
-Ikke start Sync Hub-kode direkte.
+Plasser første statuskort i høyre aside.aha-status-panel.
+Bruk foreslått mount-id aha-sync-hub-status.
+Tell localStorage records for aha_lists_v1, aha_paths_v1, aha_groups_v1 og aha_articles_v1.
+Ikke legg til sync-knapp ennå.
+Ikke kall syncFromDatabase.
+Ikke kall AHARepository save/load.
+Ikke gjør databasekall.
+Ikke auto-sync.
+Ikke endre data.
+Ikke lag source events eller insights.
+```
+
+Viktig script-loading-konsekvens:
+
+```text
+index.html laster ikke js/ahaLists.js, js/ahaPaths.js, js/ahaGroups.js eller js/ahaAvisa.js på Home ennå.
+syncFromDatabase kan derfor ikke kalles trygt fra Home før modulruntime-filene er lastet eller en egen sync-flate/runtime er bygget.
 ```
 
 ## 8. Anbefalt PR-rekkefølge videre
@@ -984,7 +989,8 @@ Ikke start Sync Hub-kode direkte.
 9. ✅ docs/test/code: Groups contract, repository og sync hardening
 10. ✅ docs/test/code: AHAavisa/Articles tombstones, contract, repository og sync hardening
 11. ✅ docs: AHA Sync Hub / Control Center plan
-12. Neste: map AHA Home sync hub entry points før eventuell kode
+12. ✅ docs: map AHA Home sync hub entry points
+13. Neste: feat: add read-only AHA sync status hub
 ```
 
-Ikke gå videre til storage, import, Insta/social graph, EchoNet eller Sync Hub-runtime før AHA Home / dashboard entry points er kartlagt på faktisk kode.
+Ikke gå videre til storage, import, Insta/social graph, EchoNet eller manuell Sync Hub før read-only Sync Hub-status er bygget uten auto-sync og uten databasekall.
