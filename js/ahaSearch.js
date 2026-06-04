@@ -278,7 +278,7 @@
       }));
     });
 
-    asArray(loadByKey(STORAGE_KEYS.articles, [])).filter((article) => !article?.deletedAt).forEach((article) => {
+    asArray(loadByKey(STORAGE_KEYS.articles, [])).filter((article) => !isDeletedRecord(article)).forEach((article) => {
       const base = withBase(article, { type: "article", source: "aha_avisa" });
       const refId = asText(article?.id || base?.id, "");
       if (!refId) return;
