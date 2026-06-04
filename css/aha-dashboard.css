@@ -1023,6 +1023,31 @@ html, body { max-width: 100%; overflow-x: hidden; }
   margin-left: 0;
 }
 
+.aha-meta-insight-section {
+  grid-column: 1 / -1;
+  border-color: rgba(246,200,0,.4);
+  background: rgba(246,200,0,.06);
+}
+
+.aha-meta-insight-summary {
+  margin: 0 0 8px;
+  color: var(--aha-text, #f3f4f8);
+  font-size: .9rem;
+  line-height: 1.45;
+}
+
+.aha-meta-insight-row {
+  margin: 6px 0 0;
+  color: var(--aha-muted);
+  font-size: .82rem;
+  display: grid;
+  gap: 4px;
+}
+
+.aha-meta-insight-row strong {
+  color: #ffe27a;
+}
+
 @media (max-width: 620px) {
   .aha-meta-profile-grid {
     grid-template-columns: 1fr;
