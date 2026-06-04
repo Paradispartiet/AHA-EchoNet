@@ -2,7 +2,7 @@
 
 Statusdato: 2026-06-04
 
-Dette dokumentet oppsummerer nåværende implementasjonsstatus for AHA etter dokumentlåser, sync-hardening, Search note_reanalysis-visning, Mindmap tombstone-filtrering, Mindmap note_reanalysis-visning, Lists-, Paths- og Meta Insights-bolkene, og regresjonstester.
+Dette dokumentet oppsummerer nåværende implementasjonsstatus for AHA etter dokumentlåser, sync-hardening, Search note_reanalysis-visning, Mindmap tombstone-filtrering, Mindmap note_reanalysis-visning, Lists-, Paths-, Meta Insights-, Groups- og AHAavisa/Articles-bolkene, og regresjonstester.
 
 Dokumentet er en statuslås. Det er ikke en runtime-endring, ikke en ny motor, ikke en Supabase-migrasjon og ikke en beslutning om å bygge nye flater.
 
@@ -39,6 +39,8 @@ Ferdig nå:
 ✅ Tester for buildMetaInsightSummary / buildMetaInsightPrompt finnes
 ✅ Lists er write-module med sync-kontrakt, repository-persistens og tombstone-sikker merge
 ✅ Paths er write-module med sync-kontrakt, repository-persistens og tombstone-sikker merge
+✅ Groups er write-module med sync-kontrakt, repository-persistens og latest-action merge
+✅ AHAavisa / Articles er write-module med sync-kontrakt, repository-persistens og latest-action merge
 ✅ Meta Insights read-only/no-autosend guards er låst med tester
 ```
 
@@ -383,6 +385,42 @@ Meta Insights-bolken låser read-only V1, pending chat prompt og no-autosend gua
 Dette er samlet status for PR #318–#329, ikke en detaljert PR-for-PR-logg.
 ```
 
+### PR #331–#334 — Groups sync samlet
+
+```text
+Status: merged
+```
+
+Effekt:
+
+```text
+Groups-bolken låser Groups som write-module for lokal organisering/sirkler, ikke ekte
+EchoNet/social graph. Groups har sync-kontrakt, repository-metoder,
+repository-persistens, best-effort push-on-write og latest-action merge med
+remote wins ved lik action time. Embedded members/references bevares, remote
+members/references normaliseres, og invalid remote payload sletter ikke localStorage.
+Dette er samlet status for PR #331–#334, ikke en detaljert PR-for-PR-logg.
+```
+
+### PR #335–#339 — AHAavisa / Articles sync samlet
+
+```text
+Status: merged
+```
+
+Effekt:
+
+```text
+AHAavisa/Articles-bolken låser AHAavisa som write-module med konsekvent tombstone-
+filtrering i available sources og Search, sync-kontrakt, repository-metoder,
+repository-persistens, best-effort push-on-write og latest-action merge med remote
+wins ved lik action time. publication_layer normaliseres til publicationLayer,
+embedded references bevares, remote references normaliseres, og invalid remote
+payload sletter ikke localStorage. published_local og public_candidate er kun lokale
+tilstander; AHAavisa publiserer ikke eksternt.
+Dette er samlet status for PR #335–#339, ikke en detaljert PR-for-PR-logg.
+```
+
 ## 4. Nåværende modulstatus
 
 ## 4.1 Notes
@@ -652,7 +690,90 @@ Paths skal ikke lage insights.
 Paths sync skal ikke mutere refererte objekter.
 ```
 
-## 4.10 Meta Insights
+## 4.10 Groups
+
+Status:
+
+```text
+Groups er write-module med localStorage fallback/cache, repository-persistens og
+best-effort Supabase push-on-write når repository/database er tilgjengelig.
+Groups er lokal organisering/sirkler, ikke ekte EchoNet/social graph.
+```
+
+Fungerer nå:
+
+```text
+Groups har sync-kontrakt.
+AHARepository.saveGroup finnes.
+AHARepository.loadGroups finnes.
+Groups gjør best-effort push-on-write.
+AHAGroups.syncFromDatabase finnes.
+Groups sync bruker push local before pull remote.
+Groups merger by id og latest action time.
+deletedAt/deleted_at teller som handlingstid.
+Remote wins ved lik action time.
+Invalid remote payload sletter ikke localStorage.
+Embedded members bevares.
+Remote members normaliseres added_at → addedAt.
+Embedded references bevares.
+Remote references normaliseres ref_id → refId og added_at → addedAt.
+```
+
+Ikke bygg / ikke gjør:
+
+```text
+Groups skal ikke lage source events.
+Groups skal ikke lage insights.
+Groups sync skal ikke skrive AHAavisa.
+Groups sync skal ikke mutere refererte objekter.
+Groups sync skal ikke gjøre ekte sosial deling.
+Groups er ikke ekte EchoNet/social sharing ennå.
+```
+
+## 4.11 AHAavisa / Articles
+
+Status:
+
+```text
+AHAavisa er write-module med localStorage fallback/cache, repository-persistens og
+best-effort Supabase push-on-write når repository/database er tilgjengelig.
+AHAavisa publiserer ikke eksternt.
+published_local og public_candidate er lokale tilstander.
+```
+
+Fungerer nå:
+
+```text
+AHAavisa filtrerer tombstones konsekvent i available sources.
+Search filtrerer articles med både deletedAt og deleted_at.
+AHAavisa har sync-kontrakt.
+AHARepository.saveArticle finnes.
+AHARepository.loadArticles finnes.
+AHAavisa gjør best-effort push-on-write.
+AHAAvisa.syncFromDatabase finnes.
+AHAavisa sync bruker push local before pull remote.
+AHAavisa merger by id og latest action time.
+deletedAt/deleted_at teller som handlingstid.
+Remote wins ved lik action time.
+Invalid remote payload sletter ikke localStorage.
+publication_layer normaliseres til publicationLayer.
+Embedded references bevares.
+Remote references normaliseres ref_id → refId og added_at → addedAt.
+```
+
+Ikke bygg / ikke gjør:
+
+```text
+AHAavisa skal ikke lage source events.
+AHAavisa skal ikke lage insights.
+AHAavisa sync skal ikke skrive Groups.
+AHAavisa sync skal ikke mutere refererte objekter.
+AHAavisa sync publiserer ikke eksternt.
+published_local er kun lokal status.
+public_candidate er kun lokal kandidatmerking.
+```
+
+## 4.12 Meta Insights
 
 Status:
 
@@ -680,6 +801,17 @@ Meta Insights skal ikke bli canonical insight uten egen kontrakt.
 Meta Insights skal ikke sende chat-prompt automatisk.
 ```
 
+## 4.13 Ferdige sync-moduler på modulnivå
+
+Ferdige nok på modulnivå:
+
+```text
+Lists → contract, repository save/load, push-on-write, syncFromDatabase, merge by latest action, tests
+Paths → contract, repository save/load, push-on-write, syncFromDatabase, merge by latest action, tests
+Groups → contract, repository save/load, push-on-write, syncFromDatabase, merge by latest action, tests
+AHAavisa / Articles → contract, repository save/load, push-on-write, syncFromDatabase, merge by latest action, tests
+```
+
 ## 5. Teststatus
 
 Nye / relevante testfiler:
@@ -697,6 +829,13 @@ tests/aha-paths-sync-merge.test.cjs
 tests/aha-search-path-tombstones.test.cjs
 tests/aha-meta-insights-read-only.test.cjs
 tests/aha-meta-insights-pending-prompt.test.cjs
+tests/aha-groups-repository.test.cjs
+tests/aha-groups-persistence.test.cjs
+tests/aha-groups-sync-merge.test.cjs
+tests/aha-avisa-tombstones.test.cjs
+tests/aha-avisa-repository.test.cjs
+tests/aha-avisa-persistence.test.cjs
+tests/aha-avisa-sync-merge.test.cjs
 ```
 
 Dekker:
@@ -729,10 +868,17 @@ AHA Mindmap note meta.lastReanalyzedAt
 AHA Lists tombstone filtering
 AHA Lists repository persistence
 AHA Lists sync merge
+AHA Groups repository methods
+AHA Groups repository persistence
+AHA Groups sync merge
 AHA Paths repository methods
 AHA Paths repository persistence
 AHA Paths sync merge
 AHA Search path tombstone filtering
+AHAavisa tombstone filtering
+AHAavisa repository methods
+AHAavisa repository persistence
+AHAavisa sync merge
 Meta Insights read-only guards
 Meta Insights pending prompt no-autosend
 ```
@@ -740,7 +886,7 @@ Meta Insights pending prompt no-autosend
 Siste rapporterte teststatus:
 
 ```text
-npm test → Node test suite: 23/23 passed
+npm test → Node test suite: 28/28 passed
 git diff --check → OK
 ```
 
@@ -761,9 +907,14 @@ git diff --check → OK
 12. Ikke bygg videre på Meet/Music før core-modulene er stabile.
 13. Ikke endre History Go-import til å bli AHA-grunnlaget.
 14. Ikke emnematch History Go-import på nytt.
-15. Lists/Paths sync skal ikke skape source events eller insights.
-16. Lists/Paths sync skal ikke mutere refererte objekter.
+15. Lists/Paths/Groups/AHAavisa sync skal ikke skape source events eller insights.
+16. Sync skal ikke mutere refererte objekter.
 17. Meta Insights er avledet/read-only og ikke canonical insight.
+18. localStorage er fortsatt fallback/cache.
+19. Supabase skal ikke være obligatorisk.
+20. Groups er ikke ekte EchoNet/social sharing ennå.
+21. AHAavisa publiserer ikke eksternt.
+22. published_local og public_candidate er lokale tilstander.
 ```
 
 ## 7. Anbefalt neste steg
@@ -771,36 +922,35 @@ git diff --check → OK
 Neste trygge steg:
 
 ```text
-Kartlegg neste localStorage-modul før kode.
-AHA Groups / Grupper kartlegging.
-Ikke start Groups sync direkte.
+AHA Sync Hub / Control Center kartlegging.
+Ikke start Sync Hub-kode i denne PR-en.
 ```
 
 Hvorfor:
 
 ```text
-- Groups er allerede lastet av lists.html og paths.html.
-- Groups er allerede synlig i Search/Mindmap og AHA Profile.
-- Groups kan påvirke Lists/Paths/AHA Avisa-koblinger.
-- Neste steg bør derfor være kartlegging, ikke runtime-endring.
+- Lists, Paths, Groups og AHAavisa/Articles er nå ferdige nok på modulnivå for sync.
+- Neste trygge steg er å kartlegge felles sync-status og kontrollflate før runtime-kode.
+- Supabase må fortsatt være valgfritt, og localStorage må fortsatt være fallback/cache.
+- AHA Home bør kunne vise sync-status uten å gjøre backend obligatorisk.
 ```
 
 Avgrensning for neste steg:
 
 ```text
-Les groups.html.
-Les js/ahaGroups.js.
-Kartlegg om Groups er write-module eller read-only.
-Kartlegg localStorage keys.
-Kartlegg tombstone-status.
-Kartlegg repository/sync-status.
-Kartlegg Search/Mindmap-kobling.
+Kartlegg hvilke moduler som har syncFromDatabase.
+Kartlegg hvilke moduler som har repository save/load.
+Kartlegg hvilke moduler som fortsatt er localStorage-only.
+Kartlegg hvilke Supabase-tabeller repository forventer.
+Kartlegg hvordan AHA Home kan vise sync-status.
+Kartlegg hvordan manuell sync-knapp bør fungere.
+Kartlegg hvordan feil/fallback vises uten å gjøre Supabase obligatorisk.
 Ikke endre JS.
 Ikke endre HTML.
 Ikke endre CSS.
 Ikke endre tests.
 Ikke endre Supabase.
-Ikke start Groups sync direkte.
+Ikke start Sync Hub-kode direkte.
 ```
 
 ## 8. Anbefalt PR-rekkefølge videre
@@ -814,7 +964,9 @@ Ikke start Groups sync direkte.
 6. ✅ docs/test/code: Lists tombstone, repository og sync hardening
 7. ✅ docs/test/code: Paths tombstone, repository og sync hardening
 8. ✅ feat/test: Meta Insights read-only V1 og no-autosend guards
-9. Neste: AHA Groups / Grupper kartlegging før eventuell kode
+9. ✅ docs/test/code: Groups contract, repository og sync hardening
+10. ✅ docs/test/code: AHAavisa/Articles tombstones, contract, repository og sync hardening
+11. Neste: AHA Sync Hub / Control Center kartlegging før eventuell kode
 ```
 
-Ikke gå videre til storage, import, Insta/social graph eller EchoNet før neste localStorage-modul er kartlagt på faktisk kode.
+Ikke gå videre til storage, import, Insta/social graph, EchoNet eller Sync Hub-runtime før AHA Sync Hub / Control Center er kartlagt på faktisk kode.
