@@ -45,6 +45,25 @@ function makeRepository(calls, sequence, mode = 'ok') {
   };
 }
 
+
+function makeSyncRepository({ remote = [], saveMode = 'ok', loadMode = 'ok' } = {}) {
+  return (calls, sequence) => ({
+    saveGroup(groupRecord) {
+      calls.push({ method: 'saveGroup', groupRecord });
+      sequence.push({ type: 'AHARepository.saveGroup', groupRecord });
+      if (saveMode === 'throw') throw new Error('repository save unavailable');
+      return Promise.resolve({ ok: true, data: groupRecord });
+    },
+    loadGroups() {
+      calls.push({ method: 'loadGroups' });
+      sequence.push({ type: 'AHARepository.loadGroups' });
+      if (loadMode === 'throw') throw new Error('repository load unavailable');
+      if (loadMode === 'not-ok') return Promise.resolve({ ok: false, error: 'load failed' });
+      return Promise.resolve({ ok: true, data: remote });
+    }
+  });
+}
+
 function makeAvisa(calls) {
   return {
     createArticle(input) {
@@ -103,8 +122,7 @@ function makeSandbox({ repository, seed = {}, avisa } = {}) {
 }
 
 const source = fs.readFileSync(path.join(__dirname, '..', 'js', 'ahaGroups.js'), 'utf8');
-assert.doesNotMatch(source, /syncFromDatabase/, 'AHAGroups should not define syncFromDatabase');
-assert.doesNotMatch(source, /AHARepository\?\.loadGroups|AHARepository\.loadGroups/, 'AHAGroups should not use AHARepository.loadGroups');
+assert.match(source, /syncFromDatabase/, 'AHAGroups should define syncFromDatabase');
 
 {
   const sandbox = makeSandbox({ repository: makeRepository });
@@ -260,4 +278,162 @@ assert.doesNotMatch(source, /AHARepository\?\.loadGroups|AHARepository\.loadGrou
   );
 }
 
-console.log('aha-groups-repository-persistence.test.cjs passed');
+
+async function runSyncTests() {
+  {
+    const localGroups = [
+      {
+        id: 'same-local-deleted',
+        title: 'Lokal slettet',
+        type: 'project',
+        description: 'nyere tombstone',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-04T00:00:00.000Z',
+        deletedAt: '2026-01-05T00:00:00.000Z',
+        tags: ['lokal'],
+        members: [],
+        references: [],
+        source: 'aha_groups',
+        meta: {}
+      },
+      {
+        id: 'remote-newer',
+        title: 'Eldre lokal',
+        type: 'circle',
+        description: '',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-02T00:00:00.000Z',
+        tags: [],
+        members: [],
+        references: [],
+        source: 'aha_groups',
+        meta: {},
+        deletedAt: ''
+      },
+      {
+        id: 'equal-time',
+        title: 'Lokal lik tid',
+        type: 'circle',
+        description: '',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-03T00:00:00.000Z',
+        tags: [],
+        members: [],
+        references: [],
+        source: 'aha_groups',
+        meta: {},
+        deletedAt: ''
+      }
+    ];
+    const remoteRows = [
+      {
+        id: 'same-local-deleted',
+        title: 'Eldre remote aktiv',
+        type: 'project',
+        description: 'skal tape',
+        created_at: '2026-01-01T00:00:00.000Z',
+        updated_at: '2026-01-03T00:00:00.000Z',
+        tags: ['remote'],
+        members: [],
+        references: [],
+        source: 'aha_groups',
+        meta: {}
+      },
+      {
+        id: 'remote-newer',
+        title: 'Nyere remote',
+        type: 'learning',
+        description: 'snake case',
+        created_at: '2026-01-01T00:00:00.000Z',
+        updated_at: '2026-01-06T00:00:00.000Z',
+        deleted_at: '',
+        tags: ['remote'],
+        members: [{ id: 'm1', name: 'Remote medlem', role: 'editor', status: 'local', added_at: '2026-01-06T01:00:00.000Z' }],
+        references: [{ id: 'r1', title: 'Remote ref', type: 'note', source: 'aha_notes', ref_id: 'note-remote', added_at: '2026-01-06T02:00:00.000Z' }],
+        meta: { remote: true }
+      },
+      {
+        id: 'equal-time',
+        title: 'Remote lik tid',
+        type: 'circle',
+        description: 'remote wins equal',
+        created_at: '2026-01-01T00:00:00.000Z',
+        updated_at: '2026-01-03T00:00:00.000Z',
+        tags: [],
+        members: [],
+        references: [],
+        source: 'aha_groups',
+        meta: {}
+      }
+    ];
+    const sandbox = makeSandbox({
+      repository: makeSyncRepository({ remote: remoteRows }),
+      seed: { [GROUPS_KEY]: JSON.stringify(localGroups) },
+      avisa: true
+    });
+    const Groups = sandbox.AHAGroups;
+    assert.equal(typeof Groups.syncFromDatabase, 'function', 'syncFromDatabase should be exported');
+    assert.equal(sandbox.repositoryCalls.filter((call) => call.method === 'loadGroups').length, 0, 'syncFromDatabase should not auto-run during init/bind');
+
+    const result = await Groups.syncFromDatabase();
+    assert.equal(result.ok, true, 'syncFromDatabase should return repository result ok');
+    assert.equal(result.merged, true, 'syncFromDatabase should mark merged results');
+    assert.deepEqual(
+      sandbox.sequence.slice(0, 4).map((entry) => entry.type),
+      ['AHARepository.saveGroup', 'AHARepository.saveGroup', 'AHARepository.saveGroup', 'AHARepository.loadGroups'],
+      'syncFromDatabase should push every local group before remote pull'
+    );
+    assert.equal(sandbox.repositoryCalls.filter((call) => call.method === 'saveGroup').length, 3, 'syncFromDatabase should push all local groups');
+    assert.ok(sandbox.repositoryCalls.find((call) => call.method === 'saveGroup' && call.groupRecord.id === 'same-local-deleted' && call.groupRecord.deletedAt), 'syncFromDatabase should push local tombstones');
+
+    const stored = sandbox.localStorage.readJson(GROUPS_KEY, []);
+    const remoteNewer = stored.find((group) => group.id === 'remote-newer');
+    assert.equal(remoteNewer.title, 'Nyere remote', 'newer remote group should win over older local group');
+    assert.equal(remoteNewer.createdAt, '2026-01-01T00:00:00.000Z', 'remote created_at should normalize to createdAt');
+    assert.equal(remoteNewer.updatedAt, '2026-01-06T00:00:00.000Z', 'remote updated_at should normalize to updatedAt');
+    assert.equal(remoteNewer.deletedAt, '', 'remote deleted_at should normalize to deletedAt');
+    assert.equal(remoteNewer.members[0].addedAt, '2026-01-06T01:00:00.000Z', 'remote member added_at should normalize to addedAt');
+    assert.equal(remoteNewer.references[0].refId, 'note-remote', 'remote reference ref_id should normalize to refId');
+    assert.equal(remoteNewer.references[0].addedAt, '2026-01-06T02:00:00.000Z', 'remote reference added_at should normalize to addedAt');
+    assert.equal(stored.find((group) => group.id === 'same-local-deleted').title, 'Lokal slettet', 'newer local tombstone should win over older active remote group');
+    assert.ok(stored.find((group) => group.id === 'same-local-deleted').deletedAt, 'local tombstone should remain after merge');
+    assert.equal(stored.find((group) => group.id === 'equal-time').title, 'Remote lik tid', 'remote should win on equal action time');
+    assert.equal(stored[0].id, 'remote-newer', 'merged groups should sort newest action first');
+    assert.deepEqual(sandbox.forbiddenCalls, [], 'syncFromDatabase should not call AHAIngest or AHASources');
+    assert.deepEqual(sandbox.avisaCalls, [], 'syncFromDatabase should not call AHAAvisa');
+  }
+
+  {
+    const localGroups = [{ id: 'local-only', title: 'Lokal beholdes', createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-02T00:00:00.000Z' }];
+    const sandbox = makeSandbox({ repository: makeSyncRepository({ remote: { not: 'array' } }), seed: { [GROUPS_KEY]: JSON.stringify(localGroups) } });
+    const result = await sandbox.AHAGroups.syncFromDatabase();
+    assert.equal(result.ok, false, 'invalid remote payload should return a failed fallback result');
+    assert.equal(result.fallback, 'localStorage', 'invalid remote payload should report localStorage fallback');
+    assert.equal(sandbox.localStorage.readJson(GROUPS_KEY, [])[0].title, 'Lokal beholdes', 'invalid remote payload should not delete local data');
+  }
+
+  {
+    const localGroups = [{ id: 'local-no-repo', title: 'Ingen repo', createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-02T00:00:00.000Z' }];
+    const sandbox = makeSandbox({ seed: { [GROUPS_KEY]: JSON.stringify(localGroups) } });
+    const result = await sandbox.AHAGroups.syncFromDatabase();
+    assert.equal(result.ok, false, 'missing AHARepository/loadGroups should fall back');
+    assert.equal(result.fallback, 'localStorage', 'missing AHARepository/loadGroups should report localStorage fallback');
+    assert.equal(sandbox.localStorage.readJson(GROUPS_KEY, [])[0].title, 'Ingen repo', 'missing AHARepository/loadGroups should keep local data');
+  }
+
+  {
+    const localGroups = [{ id: 'local-error', title: 'Repo feil', createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-02T00:00:00.000Z' }];
+    const sandbox = makeSandbox({ repository: makeSyncRepository({ saveMode: 'throw', loadMode: 'throw' }), seed: { [GROUPS_KEY]: JSON.stringify(localGroups) } });
+    const result = await sandbox.AHAGroups.syncFromDatabase();
+    assert.equal(result.ok, false, 'repository errors should return a failed fallback result');
+    assert.equal(result.fallback, 'localStorage', 'repository errors should report localStorage fallback');
+    assert.equal(sandbox.localStorage.readJson(GROUPS_KEY, [])[0].title, 'Repo feil', 'repository errors should not break local data');
+  }
+}
+
+runSyncTests().then(() => {
+  console.log('aha-groups-repository-persistence.test.cjs passed');
+}).catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});
