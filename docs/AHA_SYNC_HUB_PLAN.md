@@ -193,43 +193,186 @@ I alle slike tilfeller skal huben:
 
 Supabase-feil er ikke en global AHA-feil. De betyr at modulen må kunne fortsette lokalt.
 
-## 10. Anbefalt plassering
+## 10. AHA Home entry point mapping
 
-Første kodekandidat bør være en egen Sync Hub / Control Center-seksjon på AHA Home eller en egen side.
+Denne kartleggingen er dokumentasjon før runtime-kode. Den bygger ikke Sync Hub, endrer ikke JS/HTML/CSS og starter ikke sync.
 
-Før kode må AHA Home / dashboard entry points kartlegges:
+### 10.1 Eierskap og hovedområder
 
-```text
-- Finn hvilken index/home-fil som eier AHA Home-flaten.
-- Finn eksisterende dashboard-seksjoner og lasting av AHA-moduler.
-- Finn hvor status kan vises uten å trigge sync.
-- Ikke velg endelig UI før AHA Home-strukturen er kartlagt.
-```
+AHA Home eies av `index.html`. Runtime-rendering for dashboardet eies av `js/ahaDashboard.js`, og modulmenyen eies av `js/ahaModules.js`.
 
-Denne dokumentasjons-PR-en velger derfor ikke endelig plassering.
-
-## 11. Neste trygge kodekandidat
-
-Etter denne dokumentasjonsplanen bør neste PR være kartlegging før kode:
+`index.html` har tre relevante hovedområder:
 
 ```text
-1. Kartlegg AHA Home / dashboard entry points.
-2. Finn hvor Sync Hub bør vises.
-3. Bygg eventuelt minimal read-only Sync Hub status først.
-4. Legg deretter til manuell sync-knapp.
-5. Ikke auto-sync.
+1. Venstre panel: aside.aha-modules-panel / modulmeny.
+2. Midtpanel: section.aha-home-panel / AHA Home.
+3. Høyre panel: aside.aha-status-panel / System/Status.
 ```
 
-Anbefalt neste PR-tittel:
+Sync Hub skal ikke bygges som auto-sync i `renderDashboard()` eller annen dashboard-rendering. Dashboard-rendering kan senere vise read-only status, men må ikke starte sync, databasekall eller bakgrunnsarbeid.
+
+### 10.2 Første anbefalte plassering
+
+Første plassering bør være høyre statuspanel:
 
 ```text
-docs: map AHA Home sync hub entry points
+aside.aha-status-panel
 ```
 
-Hvis AHA Home-strukturen allerede er kartlagt i en senere PR, kan neste kodekandidat være:
+Anbefalt plassering i panelet:
+
+```text
+- etter aha-dashboard-stats / historygo/privacy-status
+- før eller etter Siste aktivitet, avhengig av layout
+```
+
+Foreslått fremtidig mount-id:
+
+```text
+aha-sync-hub-status
+```
+
+Dette bør først være et lite read-only statuskort. Første kode bør ikke velge full side hvis et lite statuskort i høyre statuspanel holder.
+
+### 10.3 Alternative plasseringer senere
+
+Senere alternativer, etter read-only statuskortet, kan være:
+
+```text
+- egen full side: sync.html
+- egen seksjon i midt AHA Home-panel
+```
+
+Disse alternativene bør vente hvis de krever mer runtime, egen script-loading eller større UI-beslutning enn et lite statuskort.
+
+### 10.4 Eksisterende DOM-punkter på AHA Home
+
+Relevante eksisterende DOM-punkter:
+
+| DOM-id | Rolle for Sync Hub-kartlegging |
+|---|---|
+| `aha-dashboard-stats` | Eksisterende statuskort/tall i høyre statuspanel. |
+| `aha-historygo-status` | Eksisterende History Go-status i høyre statuspanel. |
+| `aha-privacy-status` | Eksisterende privacy-status i høyre statuspanel. |
+| `aha-recent-activity` | Eksisterende liste for Siste aktivitet i høyre statuspanel. |
+| `out` | Eksisterende teknisk dashboard-output i høyre statuspanel. |
+| `aha-status-updated` | Eksisterende oppdatert-tid/status i høyre statuspanel. |
+| `aha-modules-grid` | Eksisterende mount for modulmenyen i venstre panel. |
+| `aha-sync-hub-status` | Foreslått fremtidig mount-id for read-only Sync Hub-statuskort. |
+
+`aha-sync-hub-status` finnes ikke ennå; en senere kode-PR kan legge den til i `aside.aha-status-panel`.
+
+### 10.5 Eksisterende dashboard-runtime som kan gjenbrukes senere
+
+`js/ahaDashboard.js` har allerede runtime-hjelpere som en senere read-only statusflate kan gjenbruke eller følge mønsteret til:
+
+```text
+- readArray(key)
+- localStats()
+- databaseStats()
+- renderStatCards()
+- renderDashboard()
+- AHADashboard.getLastState()
+```
+
+Denne dokumentasjons-PR-en endrer ikke disse funksjonene. En senere kode-PR må fortsatt passe på at `renderDashboard()` ikke starter auto-sync.
+
+### 10.6 Script-loading-konsekvens på Home
+
+`index.html` laster allerede disse fellesfilene på AHA Home:
+
+```text
+js/ahaRepository.js
+js/ahaModules.js
+js/ahaProfile.js
+js/ahaDashboard.js
+```
+
+`index.html` laster per nå ikke modulruntime-filene for de fire nye Sync Hub V1-kandidatene:
+
+```text
+js/ahaLists.js
+js/ahaPaths.js
+js/ahaGroups.js
+js/ahaAvisa.js
+```
+
+Konsekvens:
+
+```text
+- Read-only Sync Hub kan telle localStorage direkte uten modulruntime.
+- Manuell sync-knapp kan ikke trygt kalle AHALists/AHAPaths/AHAGroups/AHAAvisa.syncFromDatabase fra Home før disse modulene er lastet.
+- Hvis manuell sync bygges på Home, må en senere PR enten:
+  A. laste de fire modulfilene på index.html
+  B. lage egen sync.html som laster dem
+  C. lage separat hub-runtime som registrerer modulene eksplisitt
+```
+
+Denne PR-en bestemmer ikke endelig script-loading for manuell sync, fordi det krever runtime-arbeid.
+
+## 11. Første kodekandidat etter kartleggingen
+
+Anbefalt neste kode-PR:
 
 ```text
 feat: add read-only AHA sync status hub
 ```
 
-Anbefalingen nå er likevel kartlegging først, ikke runtime-kode.
+Scope for den kommende kode-PR-en:
+
+```text
+- legg til et lite statuskort i index.html høyre statuspanel
+- legg til read-only renderer i js/ahaDashboard.js
+- tell localStorage records for aha_lists_v1, aha_paths_v1, aha_groups_v1 og aha_articles_v1
+- vis om modulene er sync-klare basert på dokumentert V1-kandidatliste
+- ikke kall syncFromDatabase
+- ikke kall AHARepository save/load
+- ikke gjør databasekall
+- ikke legg til sync-knapp ennå
+- ikke auto-sync
+- ikke endre data
+- ikke lage source events/insights
+```
+
+Første kodekandidat er altså read-only status, ikke manuell sync.
+
+## 12. Senere kodekandidat etter read-only status
+
+Etter read-only statuskortet kan en senere PR vurdere manuell sync i denne rekkefølgen:
+
+```text
+1. Last sync module scripts på Home eller bygg egen sync.html.
+2. Legg til manuell hovedhandling: Synk AHA-data.
+3. Legg eventuelt til individuelle modulknapper.
+4. Behold ingen auto-sync.
+```
+
+Manuell sync skal fortsatt bare bruke moduler der `syncFromDatabase` finnes, er lastet og er kartlagt.
+
+## 13. Ikke-bryt-regler for videre Sync Hub-arbeid
+
+Reglene fra denne planen gjelder fortsatt:
+
+```text
+- ingen auto-sync
+- ingen sync ved page load
+- ingen background sync
+- ingen skjult sync når huben rendres
+- Supabase er ikke obligatorisk
+- localStorage er fallback/cache
+- Sync Hub skal ikke lage source events
+- Sync Hub skal ikke lage insights
+- Sync Hub skal ikke mutere refererte objekter
+- Sync Hub skal ikke publisere AHAavisa eksternt
+- Sync Hub skal ikke gjøre Groups til ekte social sharing
+```
+
+## 14. Neste anbefalte PR
+
+Neste anbefalte PR etter denne dokumentasjons-/kartleggings-PR-en er:
+
+```text
+feat: add read-only AHA sync status hub
+```
+
+Akseptanse for den PR-en bør være at statuskortet er read-only, bruker `aha-sync-hub-status`, teller localStorage for V1-kandidatene og ikke kaller `syncFromDatabase`, AHARepository eller Supabase.
