@@ -242,6 +242,31 @@
     });
   }
 
+  async function saveArticle(articleRecord) {
+    const a = cleanObject(articleRecord);
+    if (!a.id) return fallback("missing_id");
+    const profileId = await getProfileId(a.profile_id);
+    if (!profileId) return fallback("not_signed_in");
+    const now = new Date().toISOString();
+    return insert("aha_articles", {
+      id: a.id,
+      profile_id: profileId,
+      title: a.title || null,
+      section: a.section || null,
+      status: a.status || null,
+      summary: a.summary || null,
+      body: a.body || null,
+      tags: cleanArray(a.tags),
+      references: cleanArray(a.references),
+      source: a.source || "aha_avisa",
+      publication_layer: a.publicationLayer || a.publication_layer || "personal",
+      meta: cleanObject(a.meta),
+      created_at: a.createdAt || a.created_at || now,
+      updated_at: a.updatedAt || a.updated_at || a.createdAt || a.created_at || now,
+      deleted_at: a.deletedAt || a.deleted_at || null
+    });
+  }
+
   async function saveInstaPost(post) {
     const p = cleanObject(post);
     if (!p.id) return fallback("missing_id");
@@ -382,6 +407,10 @@
     return list("aha_groups", { orderBy: "created_at", limit: options.limit || 200 });
   }
 
+  function loadArticles(options = {}) {
+    return list("aha_articles", { orderBy: "created_at", limit: options.limit || 200 });
+  }
+
   function loadInstaPosts(options = {}) {
     return list("aha_insta_posts", { orderBy: "created_at", limit: options.limit || 200 });
   }
@@ -520,6 +549,7 @@
     saveList,
     savePath,
     saveGroup,
+    saveArticle,
     saveInstaPost,
     saveInstaProfile,
     saveInstaLike,
@@ -534,6 +564,7 @@
     loadLists,
     loadPaths,
     loadGroups,
+    loadArticles,
     loadInstaPosts,
     loadInstaProfile,
     loadInstaLikes,
