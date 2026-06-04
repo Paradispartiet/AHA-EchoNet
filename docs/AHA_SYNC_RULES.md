@@ -566,6 +566,106 @@ Neste trygge kodekandidat etter denne kontrakten:
 - no Supabase schema unless table already exists / migration is explicitly included in separate PR
 ```
 
+### Groups / Grupper: fremtidig sync-kontrakt
+
+Dagens status:
+
+```text
+- localStorage-only via aha_groups_v1
+- write-module, not read-only
+- no AHARepository.saveGroup/loadGroups
+- no Supabase table documented
+- no syncFromDatabase
+- no push-on-write
+- no source events
+- no insights
+- Search indexes groups read-only from aha_groups_v1
+- Mindmap shows group nodes and group_references edges
+- Groups can create AHAavisa drafts only through explicit user action
+- Groups are local organization/circles, not real EchoNet/social sharing
+```
+
+Før Groups sync kan bygges må disse beslutningene låses:
+
+```text
+- remote table name, for eksempel aha_groups
+- field mapping camelCase <-> snake_case
+- om group.members lagres som JSON eller egen group_members-tabell
+- om group.references lagres som JSON eller egen group_references-tabell
+- conflict rule for groups
+- conflict rule for members
+- conflict rule for references
+- tombstone rule for groups
+- whether members/references get tombstones or remain hard-remove
+- push-before-pull behavior
+- invalid remote fallback behavior
+- privacy/sharing boundary
+- relationship to AHAavisa draft creation
+```
+
+Midlertidig konfliktregel for senere group-kode:
+
+```text
+- push local groups before pull remote
+- merge by id
+- action time = newest of deletedAt/deleted_at, updatedAt/updated_at, createdAt/created_at
+- deletedAt/deleted_at teller som handlingstid
+- remote wins on equal action time
+- invalid remote payload must not clear localStorage
+- localStorage remains fallback/cache
+```
+
+Tombstone-regel:
+
+```text
+- local canonical Groups field is deletedAt today
+- Supabase-facing future field should be deleted_at if repository is added
+- mapping must be explicit
+- do not hard-delete group tombstones during sync
+```
+
+Members/references-regel:
+
+```text
+- group.members are embedded today
+- group.references are embedded today
+- member removal is hard remove today
+- reference removal is hard remove today
+- do not add member/reference-level sync until conflict behavior is explicitly decided
+- initial repository method may preserve embedded members/references as JSON
+- sync must not mutate referenced Notes/Lists/Paths/Articles/Insights/etc.
+```
+
+AHAavisa-regel:
+
+```text
+- createArticleDraftFromGroup is an explicit user action
+- Groups sync must not automatically create AHAavisa articles
+- Groups sync must not mutate article records
+- Group references to articles are references, not ownership transfer
+```
+
+Ikke-bryt-regler for Groups sync:
+
+```text
+- Groups sync must not create insights
+- Groups sync must not create source events
+- Groups sync must not mutate referenced objects
+- Groups sync must not mutate Notes/Lists/Paths/Feed/Gallery/Insta/AHAavisa
+- Groups sync must not make Supabase mandatory
+- Groups sync must not remove localStorage fallback
+- Groups sync must not become real EchoNet/social sharing
+- Groups sync must respect privacy settings and not imply external sharing
+```
+
+Neste trygge kodekandidat etter denne kontrakten:
+
+```text
+- add AHARepository.saveGroup/loadGroups with no UI changes
+- no syncFromDatabase yet
+- no Supabase schema unless table already exists / migration is explicitly included in separate PR
+```
+
 ## 10. Konfliktregler per modul
 
 | Modul | Dagens konfliktregel | Tombstone-regel | Risiko | Midlertidig beslutning |

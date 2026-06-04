@@ -1207,11 +1207,73 @@ Group reference:
 ### Regler
 
 ```text
-Grupper er lokale/sirkler i nåværende versjon.
+Groups/Grupper er lokal organisering/sirkler i nåværende versjon, ikke en ekte sosial graf.
 Medlemmer er lokale records, ikke ekte brukerkontoer.
 Referanser peker til eksisterende AHA-objekter.
 Ekte EchoNet-deling er ikke kontraktfestet ennå.
+Gruppeopprettelse, gruppeendring, medlem-endring og referanse-endring lager ikke source event i nåværende modell.
+Groups lager ikke insights i nåværende modell.
+Groups kaller ikke AHARepository i nåværende modell, og AHARepository har ikke saveGroup/loadGroups ennå.
+Groups leser privacy/local sharing setting fra localStorage-key aha_privacy_settings_v1.
+createArticleDraftFromGroup kan lage AHAavisa-utkast, men det er eksplisitt brukerhandling og ikke Groups-sync.
+Groups sync skal ikke automatisk lage AHAavisa-artikler eller mutere AHAavisa-records.
 ```
+
+### Lokal storage og feltkontrakt
+
+```text
+Groups bruker localStorage-key aha_groups_v1.
+Groups bruker camelCase base-felt lokalt: createdAt, updatedAt, deletedAt.
+Group members er embedded i group.members i dagens localStorage-modell.
+Group references er embedded i group.references i dagens localStorage-modell.
+Member-delete og reference-delete er hard remove fra array i dagens lokale modell; dette må vurderes eksplisitt før sync.
+References kan peke til andre AHA-objekter via source + refId, men sync må ikke mutere de objektene.
+```
+
+Member shape bruker:
+
+```text
+id
+name
+role
+status
+addedAt
+meta
+```
+
+Reference shape bruker:
+
+```text
+id
+title
+type
+source
+refId
+addedAt
+meta
+```
+
+### Fremtidig sync-kontrakt
+
+Hvis Supabase-sync bygges senere, må mapping mellom lokal camelCase og remote snake_case bestemmes eksplisitt:
+
+```text
+local createdAt -> remote created_at
+local updatedAt -> remote updated_at
+local deletedAt -> remote deleted_at
+```
+
+Fremtidig Supabase-modell må velge mellom:
+
+```text
+A. én tabell med embedded members/references JSON
+B. flere tabeller: groups + group_members + group_references
+```
+
+Ikke velg runtime-implementasjon i denne PR-en hvis det krever schema.
+
+Anbefalt minimal fremtidig sync-modell kan dokumenteres som embedded JSON først, men må verifiseres mot Supabase før kode.
+Groups sync skal ikke gjøre Groups til insight-produsent, source event-produsent eller ekte EchoNet/social sharing.
 
 ## 17. Search item contract
 
