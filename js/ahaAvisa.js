@@ -119,6 +119,15 @@
     return asArray(articles);
   }
 
+  async function persistArticle(article) {
+    if (!global.AHARepository?.saveArticle) return null;
+    try {
+      return await global.AHARepository.saveArticle(article);
+    } catch (error) {
+      return { ok: false, error };
+    }
+  }
+
   function createArticle(input) {
     const title = asText(input?.title, "");
     if (!title) return null;
@@ -143,6 +152,7 @@
 
     articles.unshift(article);
     saveArticles(articles);
+    persistArticle(article);
     return article;
   }
 
@@ -165,6 +175,7 @@
     if (!ALLOWED_STATUS.includes(next.status)) next.status = "draft";
     articles[index] = next;
     saveArticles(articles);
+    persistArticle(next);
     return next;
   }
 
@@ -193,6 +204,7 @@
     });
     articles[index] = updated;
     saveArticles(articles);
+    persistArticle(updated);
     return updated;
   }
 
@@ -218,6 +230,7 @@
     article.updatedAt = new Date().toISOString();
     articles[index] = normalizeArticle(article);
     saveArticles(articles);
+    persistArticle(articles[index]);
     return ref;
   }
 
@@ -234,6 +247,7 @@
     article.updatedAt = new Date().toISOString();
     articles[index] = normalizeArticle(article);
     saveArticles(articles);
+    persistArticle(articles[index]);
     return article;
   }
 
