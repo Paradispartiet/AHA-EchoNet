@@ -128,6 +128,107 @@
     }
   }
 
+  function articleActionTime(article) {
+    return [
+      article?.deletedAt,
+      article?.deleted_at,
+      article?.updatedAt,
+      article?.updated_at,
+      article?.createdAt,
+      article?.created_at
+    ].reduce((latest, value) => {
+      const time = Date.parse(value || "");
+      return Number.isFinite(time) && time > latest ? time : latest;
+    }, 0);
+  }
+
+  function normalizeRemoteArticle(remote) {
+    const src = safeObject(remote);
+    return normalizeArticle({
+      id: src.id,
+      title: src.title,
+      section: src.section,
+      status: src.status,
+      summary: src.summary,
+      body: src.body,
+      tags: src.tags,
+      references: asArray(src.references).map((ref) => normalizeReference(ref)),
+      source: src.source,
+      publicationLayer: src.publicationLayer || src.publication_layer,
+      meta: src.meta,
+      createdAt: src.createdAt || src.created_at,
+      updatedAt: src.updatedAt || src.updated_at,
+      deletedAt: src.deletedAt || src.deleted_at
+    });
+  }
+
+  function mergeArticles(localArticles, remoteArticles) {
+    const merged = new Map();
+    asArray(localArticles).map((article) => normalizeArticle(article)).forEach((article) => {
+      merged.set(article.id, article);
+    });
+
+    asArray(remoteArticles).map((article) => normalizeArticle(article)).forEach((incoming) => {
+      const existing = merged.get(incoming.id);
+      if (!existing || articleActionTime(incoming) >= articleActionTime(existing)) {
+        merged.set(incoming.id, incoming);
+      }
+    });
+
+    return Array.from(merged.values()).sort((a, b) => articleActionTime(b) - articleActionTime(a));
+  }
+
+  async function pushLocalToDatabase(articles) {
+    let saveArticle = null;
+    try {
+      saveArticle = global.AHARepository?.saveArticle;
+    } catch {
+      return null;
+    }
+    if (typeof saveArticle !== "function") return null;
+
+    return Promise.allSettled(asArray(articles).map((article) => {
+      try {
+        return saveArticle.call(global.AHARepository, article);
+      } catch (error) {
+        return Promise.reject(error);
+      }
+    }));
+  }
+
+  async function syncFromDatabase() {
+    const localArticles = loadArticles();
+    if (localArticles.length) await pushLocalToDatabase(localArticles);
+
+    let loadArticlesFromRepository = null;
+    try {
+      loadArticlesFromRepository = global.AHARepository?.loadArticles;
+    } catch (error) {
+      return { ok: false, fallback: "localStorage", data: localArticles, error };
+    }
+    if (typeof loadArticlesFromRepository !== "function") {
+      return { ok: false, fallback: "localStorage", data: localArticles };
+    }
+
+    let result;
+    try {
+      result = await loadArticlesFromRepository.call(global.AHARepository);
+    } catch (error) {
+      return { ok: false, fallback: "localStorage", data: localArticles, error };
+    }
+
+    if (!result?.ok) return result || { ok: false, fallback: "localStorage", data: localArticles };
+    if (!Array.isArray(result.data)) {
+      return { ...result, ok: false, fallback: "localStorage", data: localArticles };
+    }
+
+    const remoteArticles = result.data.map((article) => normalizeRemoteArticle(article));
+    const merged = mergeArticles(localArticles, remoteArticles);
+    saveArticles(merged);
+    render();
+    return { ...result, data: merged, merged: true };
+  }
+
   function createArticle(input) {
     const title = asText(input?.title, "");
     if (!title) return null;
@@ -536,6 +637,7 @@
     setArticleStatus,
     setArticlePublicationLayer,
     collectAvailableArticleSources,
+    syncFromDatabase,
     render,
     refresh
   };
