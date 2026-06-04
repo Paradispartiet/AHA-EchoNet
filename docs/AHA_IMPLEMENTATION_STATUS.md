@@ -1,8 +1,8 @@
 # AHA Implementation Status
 
-Statusdato: 2026-06-03
+Statusdato: 2026-06-04
 
-Dette dokumentet oppsummerer nåværende implementasjonsstatus for AHA etter dokumentlåser, sync-hardening, Search note_reanalysis-visning, Mindmap tombstone-filtrering, Mindmap note_reanalysis-visning og regresjonstester.
+Dette dokumentet oppsummerer nåværende implementasjonsstatus for AHA etter dokumentlåser, sync-hardening, Search note_reanalysis-visning, Mindmap tombstone-filtrering, Mindmap note_reanalysis-visning, Lists-, Paths- og Meta Insights-bolkene, og regresjonstester.
 
 Dokumentet er en statuslås. Det er ikke en runtime-endring, ikke en ny motor, ikke en Supabase-migrasjon og ikke en beslutning om å bygge nye flater.
 
@@ -37,6 +37,9 @@ Ferdig nå:
 ✅ Meta Insights er AHA sin algoritmiske meta-/selvinnsiktsmotor (read-only V1)
 ✅ "Hva AHA ser nå" vises på AHA Home
 ✅ Tester for buildMetaInsightSummary / buildMetaInsightPrompt finnes
+✅ Lists er write-module med sync-kontrakt, repository-persistens og tombstone-sikker merge
+✅ Paths er write-module med sync-kontrakt, repository-persistens og tombstone-sikker merge
+✅ Meta Insights read-only/no-autosend guards er låst med tester
 ```
 
 Ikke bygget ennå:
@@ -60,17 +63,18 @@ forklarbart på spørsmålet «Hva ser AHA om brukeren akkurat nå?».
 ```text
 • Løsningen bygger på eksisterende MetaInsightsEngine (js/metaInsightsEngine.js).
   Ingen ny, separat motorfil ble opprettet.
-• buildUserMetaProfile bygger nå et meta_insight-lag via
-  buildMetaInsightSummary(profile) (readiness, dominant_themes,
-  dominant_concepts, learning_mode, recurring_patterns, tension_summary,
-  project_signals, next_actions, summary, evidence).
+• buildUserMetaProfile bygger nå et avledet meta_insight-lag via
+  buildMetaInsightSummary(profile). Dette er ikke en canonical chamber insight.
 • buildMetaInsightPrompt(profile) lager en norsk bekreftelses-prompt til chat.
 • Første versjon er read-only: AHA leser eksisterende data, beregner profilen
-  og viser en tydelig meta-innsikt. Ingen ny datainnsamling.
+  og viser en tydelig meta-innsikt. Input muteres ikke.
+• Meta Insights kaller ikke AHAIngest, AHASources, AHARepository, AHADb eller
+  Supabase. Ingest, sync, repository og Supabase-flyt er urørt.
 • AHA Home viser seksjonen "Hva AHA ser nå" øverst i AHA Meta-profil.
 • Chat-knappen "Bekreft med AHA" lagrer kun en pending prompt
-  (aha_pending_chat_prompt_v1) etter en eksplisitt brukerhandling.
-• Ingest, sync, repository og Supabase-flyt er urørt. Ingen nye dependencies.
+  (aha_pending_chat_prompt_v1) etter en eksplisitt brukerhandling og åpner chat.
+• Chat prefiller pending prompt, men sender ikke automatisk.
+• Test guards låser read-only-status og no-autosend. Ingen nye dependencies.
 ```
 
 ## 2. Dokumentlåser på plass
@@ -362,6 +366,23 @@ Ingen HTML/CSS-endring, ingen localStorage-skriving, og ingen AHAIngest/AHASourc
 npm test rapporterte Node test suite: 16/16 passed.
 ```
 
+### PR #318–#329 — Lists, Paths og Meta Insights samlet
+
+```text
+Status: merged
+```
+
+Effekt:
+
+```text
+Lists-bolken låser Lists som write-module med tombstone-filtrering, sync-kontrakt,
+repository-metoder, repository-persistens og latest-action merge.
+Paths-bolken låser Paths som write-module med tombstone-filtrering i Search,
+sync-kontrakt, repository-metoder, repository-persistens og latest-action merge.
+Meta Insights-bolken låser read-only V1, pending chat prompt og no-autosend guards.
+Dette er samlet status for PR #318–#329, ikke en detaljert PR-for-PR-logg.
+```
+
 ## 4. Nåværende modulstatus
 
 ## 4.1 Notes
@@ -563,6 +584,102 @@ Mindmap skal fortsatt ikke skape insights.
 Mindmap skal fortsatt ikke bli write module uten egen kontrakt.
 ```
 
+## 4.8 Lists
+
+Status:
+
+```text
+Lists er write-module med localStorage fallback/cache, repository-persistens og
+best-effort Supabase push-on-write når repository/database er tilgjengelig.
+```
+
+Fungerer nå:
+
+```text
+Lists filtrerer tombstones konsekvent.
+Lists har sync-kontrakt.
+AHARepository.saveList finnes.
+AHARepository.loadLists finnes.
+Lists gjør best-effort push-on-write.
+AHALists.syncFromDatabase finnes.
+Lists sync bruker push local before pull remote.
+Lists merger by id og latest action time.
+deletedAt/deleted_at teller som handlingstid.
+Remote wins ved lik action time.
+Invalid remote payload sletter ikke localStorage.
+```
+
+Ikke bygg / ikke gjør:
+
+```text
+Lists skal ikke lage source events.
+Lists skal ikke lage insights.
+Lists sync skal ikke mutere refererte objekter.
+```
+
+## 4.9 Paths
+
+Status:
+
+```text
+Paths er write-module med localStorage fallback/cache, repository-persistens og
+best-effort Supabase push-on-write når repository/database er tilgjengelig.
+```
+
+Fungerer nå:
+
+```text
+Paths filtreres riktig i Search for deletedAt/deleted_at.
+Paths har sync-kontrakt.
+AHARepository.savePath finnes.
+AHARepository.loadPaths finnes.
+Paths gjør best-effort push-on-write.
+AHAPaths.syncFromDatabase finnes.
+Paths sync bruker push local before pull remote.
+Paths merger by id og latest action time.
+deletedAt/deleted_at teller som handlingstid.
+Remote wins ved lik action time.
+Invalid remote payload sletter ikke localStorage.
+Embedded steps bevares.
+Remote steps normaliseres ref_id → refId og added_at → addedAt.
+```
+
+Ikke bygg / ikke gjør:
+
+```text
+Paths skal ikke lage source events.
+Paths skal ikke lage insights.
+Paths sync skal ikke mutere refererte objekter.
+```
+
+## 4.10 Meta Insights
+
+Status:
+
+```text
+Meta Insights read-only V1 finnes som avledet meta_insight-lag.
+Det er ikke en canonical chamber insight.
+```
+
+Fungerer nå:
+
+```text
+Meta Insights bruker eksisterende data.
+Meta Insights muterer ikke input.
+Meta Insights kaller ikke AHAIngest, AHASources, AHARepository, AHADb eller Supabase.
+“Bekreft med AHA” lagrer pending prompt og åpner chat.
+Chat prefiller prompt, men sender ikke automatisk.
+Test guards låser read-only/no-autosend.
+```
+
+Ikke bygg / ikke gjør:
+
+```text
+Meta Insights skal fortsatt være avledet/read-only.
+Meta Insights skal ikke bli canonical insight uten egen kontrakt.
+Meta Insights skal ikke sende chat-prompt automatisk.
+```
+
 ## 5. Teststatus
 
 Nye / relevante testfiler:
@@ -571,6 +688,15 @@ Nye / relevante testfiler:
 tests/aha-sync-tombstone-regressions.test.cjs
 tests/aha-search-note-reanalysis.test.cjs
 tests/aha-mindmap-tombstones.test.cjs
+tests/aha-lists-tombstones.test.cjs
+tests/aha-lists-repository.test.cjs
+tests/aha-lists-sync-merge.test.cjs
+tests/aha-paths-repository.test.cjs
+tests/aha-paths-persistence.test.cjs
+tests/aha-paths-sync-merge.test.cjs
+tests/aha-search-path-tombstones.test.cjs
+tests/aha-meta-insights-read-only.test.cjs
+tests/aha-meta-insights-pending-prompt.test.cjs
 ```
 
 Dekker:
@@ -600,12 +726,21 @@ AHA Mindmap read-only guard mot localStorage-skriving
 AHA Mindmap guard mot AHAIngest/AHASources/AHARepository
 AHA Mindmap note_reanalysis edge
 AHA Mindmap note meta.lastReanalyzedAt
+AHA Lists tombstone filtering
+AHA Lists repository persistence
+AHA Lists sync merge
+AHA Paths repository methods
+AHA Paths repository persistence
+AHA Paths sync merge
+AHA Search path tombstone filtering
+Meta Insights read-only guards
+Meta Insights pending prompt no-autosend
 ```
 
 Siste rapporterte teststatus:
 
 ```text
-npm test → Node test suite: 16/16 passed
+npm test → Node test suite: 23/23 passed
 git diff --check → OK
 ```
 
@@ -614,10 +749,10 @@ git diff --check → OK
 ```text
 1. Ikke lag ny AHA-motor.
 2. Ikke endre AHAIngest uten egen kontrakt/PR.
-3. Ikke endre AHARepository som del av modulpolish.
+3. Ikke endre AHARepository som del av modulpolish uten eksplisitt kontrakt.
 4. Ikke la note_edit lage ordinær insight automatisk.
-5. Ikke fjern localStorage fallback.
-6. Ikke gjør Supabase til eneste sannhet.
+5. Ikke fjern localStorage fallback/cache.
+6. Ikke gjør Supabase obligatorisk eller til eneste sannhet.
 7. Ikke bygg storage/opplasting uten egen storage-kontrakt.
 8. Ikke bygg ZIP-import uten egen import-kontrakt.
 9. Ikke gjør AHA Insta til ekte sosial graf.
@@ -626,6 +761,9 @@ git diff --check → OK
 12. Ikke bygg videre på Meet/Music før core-modulene er stabile.
 13. Ikke endre History Go-import til å bli AHA-grunnlaget.
 14. Ikke emnematch History Go-import på nytt.
+15. Lists/Paths sync skal ikke skape source events eller insights.
+16. Lists/Paths sync skal ikke mutere refererte objekter.
+17. Meta Insights er avledet/read-only og ikke canonical insight.
 ```
 
 ## 7. Anbefalt neste steg
@@ -633,33 +771,36 @@ git diff --check → OK
 Neste trygge steg:
 
 ```text
-AHA Lists kartlegging / vurdering.
-Ikke kode ennå.
+Kartlegg neste localStorage-modul før kode.
+AHA Groups / Grupper kartlegging.
+Ikke start Groups sync direkte.
 ```
 
 Hvorfor:
 
 ```text
-- Lists er allerede synlig i Search/Mindmap.
-- Lists kan bli nyttig organiseringsflate.
-- Lists krever ikke storage/import/social graph.
-- Før kode må js/ahaLists.js og lists.html leses og kartlegges.
+- Groups er allerede lastet av lists.html og paths.html.
+- Groups er allerede synlig i Search/Mindmap og AHA Profile.
+- Groups kan påvirke Lists/Paths/AHA Avisa-koblinger.
+- Neste steg bør derfor være kartlegging, ikke runtime-endring.
 ```
 
 Avgrensning for neste steg:
 
 ```text
-Les js/ahaLists.js.
-Les lists.html.
-Kartlegg om Lists er read-only eller write module.
+Les groups.html.
+Les js/ahaGroups.js.
+Kartlegg om Groups er write-module eller read-only.
 Kartlegg localStorage keys.
-Kartlegg om Lists bruker AHAIngest/AHASources/AHARepository.
-Kartlegg delete/tombstone/sync-status.
-Lag deretter prompt basert på faktisk kode.
+Kartlegg tombstone-status.
+Kartlegg repository/sync-status.
+Kartlegg Search/Mindmap-kobling.
 Ikke endre JS.
 Ikke endre HTML.
-Ikke endre storage/import/Insta/social graph.
-Ikke bygg ny runtime før kartleggingen finnes.
+Ikke endre CSS.
+Ikke endre tests.
+Ikke endre Supabase.
+Ikke start Groups sync direkte.
 ```
 
 ## 8. Anbefalt PR-rekkefølge videre
@@ -670,7 +811,10 @@ Ikke bygg ny runtime før kartleggingen finnes.
 3. ✅ feat/test: Search viser Notes reanalysis uten write-paths
 4. ✅ test: ekstra AHA Insta tombstone regression
 5. ✅ feat/test: Mindmap tombstone-filtrering og note_reanalysis read-only edge
-6. Neste: AHA Lists kartlegging / vurdering før eventuell kode
+6. ✅ docs/test/code: Lists tombstone, repository og sync hardening
+7. ✅ docs/test/code: Paths tombstone, repository og sync hardening
+8. ✅ feat/test: Meta Insights read-only V1 og no-autosend guards
+9. Neste: AHA Groups / Grupper kartlegging før eventuell kode
 ```
 
-Ikke gå videre til storage, import, Insta/social graph eller EchoNet før Lists er kartlagt på faktisk kode.
+Ikke gå videre til storage, import, Insta/social graph eller EchoNet før neste localStorage-modul er kartlagt på faktisk kode.
