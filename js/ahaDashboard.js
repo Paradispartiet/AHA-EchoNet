@@ -318,37 +318,80 @@
     `).join("");
   }
 
-  function inspectSyncHubLocalStorageItem(key) {
-    const raw = window.localStorage.getItem(key);
-    if (raw === null) return { count: "–", state: "missing", ok: true };
-    if (!String(raw).trim()) return { count: 0, state: "empty", ok: true };
+  const SYNC_HUB_DRY_RUN_SOURCES = [
+    { id: "lists", name: "Lists", key: "aha_lists_v1", itemLabel: "list items" },
+    { id: "paths", name: "Paths", key: "aha_paths_v1", itemLabel: "path items" },
+    { id: "groups", name: "Groups", key: "aha_groups_v1", itemLabel: "group items" },
+    { id: "ahaavisa", name: "AHAavisa", key: "aha_articles_v1", itemLabel: "AHAavisa articles" }
+  ];
+
+  function createSyncHubDryRunResult(source, count, status, actionPreview, warnings = []) {
+    return {
+      id: source.id,
+      name: source.name,
+      key: source.key,
+      count,
+      status,
+      state: status,
+      ok: status !== "error",
+      actionPreview,
+      warnings
+    };
+  }
+
+  function inspectSyncHubLocalStorageItem(source) {
+    const raw = window.localStorage.getItem(source.key);
+    if (raw === null) {
+      return createSyncHubDryRunResult(source, 0, "missing", "No local data found", ["No localStorage dataset found."]);
+    }
+    if (!String(raw).trim()) {
+      return createSyncHubDryRunResult(source, 0, "empty", "Dataset exists but is empty", ["Dataset exists but contains no items."]);
+    }
 
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed)) {
       const count = countActive(parsed);
-      return { count, state: count > 0 ? "ready" : "empty", ok: true };
+      if (count > 0) return createSyncHubDryRunResult(source, count, "ready", `Would prepare ${count} ${source.itemLabel}`);
+      return createSyncHubDryRunResult(source, 0, "empty", "Dataset exists but is empty", ["Dataset exists but contains no items."]);
     }
 
     if (parsed && typeof parsed === "object") {
       const count = Object.keys(parsed).length;
-      return { count, state: count > 0 ? "ready" : "empty", ok: true };
+      if (count > 0) return createSyncHubDryRunResult(source, count, "ready", `Would prepare ${count} ${source.itemLabel}`);
+      return createSyncHubDryRunResult(source, 0, "empty", "Dataset exists but is empty", ["Dataset exists but contains no items."]);
     }
 
-    return { count: 1, state: "ready", ok: true };
+    return createSyncHubDryRunResult(source, 1, "ready", `Would prepare 1 ${source.itemLabel}`);
   }
 
-  function renderSyncHubPrepPanel(rows) {
+  function buildAhaSyncDryRunPlan() {
+    return SYNC_HUB_DRY_RUN_SOURCES.map((source) => {
+      try {
+        return inspectSyncHubLocalStorageItem(source);
+      } catch (error) {
+        console.warn(`AHADashboard: kunne ikke lese ${source.key}`, error);
+        return createSyncHubDryRunResult(source, "–", "error", "Could not read localStorage", ["Could not inspect this dataset."]);
+      }
+    });
+  }
+
+  function renderSyncHubPrepPanel(plan) {
     if (!isSyncHubPrepOpen) return "";
 
     return `
       <div class="aha-sync-prep-panel" id="aha-sync-prep-panel" role="region" aria-label="AHA Sync Hub forberedelse">
-        <p class="aha-sync-prep-notice">Read-only preview. No sync is performed.</p>
-        <div class="aha-sync-prep-list" aria-label="localStorage sync-forberedelse">
-          ${rows.map((row) => `
-            <div class="aha-sync-prep-row aha-sync-prep-row-${row.state}">
-              <strong>${row.label}</strong>
-              <span>${row.count} localStorage</span>
-              <small>${row.state}</small>
+        <div class="aha-sync-prep-heading">
+          <h4>Dry-run sync plan</h4>
+          <p class="aha-sync-prep-notice">Preview only. No data is written and no sync is performed.</p>
+        </div>
+        <div class="aha-sync-prep-list" aria-label="localStorage dry-run sync plan">
+          ${plan.map((row) => `
+            <div class="aha-sync-prep-row aha-sync-prep-row-${row.status}">
+              <strong>${row.name}</strong>
+              <span>${row.count} items</span>
+              <small>${row.status}</small>
+              <p>${row.actionPreview}</p>
+              ${row.warnings.length ? `<ul>${row.warnings.map((warning) => `<li>${warning}</li>`).join("")}</ul>` : ""}
             </div>
           `).join("")}
         </div>
@@ -372,25 +415,11 @@
       return;
     }
 
-    const sources = [
-      { label: "Lists", key: "aha_lists_v1" },
-      { label: "Paths", key: "aha_paths_v1" },
-      { label: "Groups", key: "aha_groups_v1" },
-      { label: "AHAavisa", key: "aha_articles_v1" }
-    ];
-
     try {
       if (!window.localStorage) throw new Error("localStorage er ikke tilgjengelig");
 
-      const rows = sources.map((source) => {
-        try {
-          return { ...source, ...inspectSyncHubLocalStorageItem(source.key) };
-        } catch (error) {
-          console.warn(`AHADashboard: kunne ikke lese ${source.key}`, error);
-          return { ...source, count: "–", state: "error", ok: false };
-        }
-      });
-      const allReadable = rows.every((row) => row.ok);
+      const plan = buildAhaSyncDryRunPlan();
+      const allReadable = plan.every((row) => row.ok);
       const statusLabel = allReadable ? "sync-ready" : "status-feil";
       const buttonLabel = isSyncHubPrepOpen ? "Skjul sync-forberedelse" : "Forbered sync";
 
@@ -400,22 +429,22 @@
           <h3>Status only</h3>
           <p>Read-only localStorage-inspeksjon. Ingen sync eller databasekall.</p>
           <div class="aha-stats">
-            ${rows.map((row) => `
+            ${plan.map((row) => `
               <div class="aha-stat">
                 <strong>${row.count}</strong>
-                <span>${row.label} · ${row.state}</span>
+                <span>${row.name} · ${row.status}</span>
               </div>
             `).join("")}
           </div>
           <button id="aha-sync-hub-prep-toggle" type="button" class="aha-sync-prep-toggle" aria-expanded="${isSyncHubPrepOpen}" aria-controls="aha-sync-prep-panel">${buttonLabel}</button>
-          ${renderSyncHubPrepPanel(rows)}
+          ${renderSyncHubPrepPanel(plan)}
           <small class="aha-status-updated">${statusLabel} · Oppdatert ${formatTime()}</small>
         </section>
       `;
       bindSyncHubPrepToggle();
     } catch (error) {
       console.warn("AHADashboard: AHA Sync Hub status kunne ikke leses", error);
-      const rows = sources.map((source) => ({ ...source, count: "–", state: "error", ok: false }));
+      const plan = SYNC_HUB_DRY_RUN_SOURCES.map((source) => createSyncHubDryRunResult(source, "–", "error", "Could not read localStorage", ["Could not inspect this dataset."]));
       const buttonLabel = isSyncHubPrepOpen ? "Skjul sync-forberedelse" : "Forbered sync";
       mount.innerHTML = `
         <section class="aha-status-card" aria-label="AHA Sync Hub status">
@@ -423,7 +452,7 @@
           <h3>Status only</h3>
           <p>Read-only status er utilgjengelig fordi localStorage ikke kan leses.</p>
           <button id="aha-sync-hub-prep-toggle" type="button" class="aha-sync-prep-toggle" aria-expanded="${isSyncHubPrepOpen}" aria-controls="aha-sync-prep-panel">${buttonLabel}</button>
-          ${renderSyncHubPrepPanel(rows)}
+          ${renderSyncHubPrepPanel(plan)}
           <small class="aha-status-updated">status-feil · Dashboardet fortsetter uten sync.</small>
         </section>
       `;

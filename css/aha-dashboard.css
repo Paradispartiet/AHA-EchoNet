@@ -1074,6 +1074,16 @@ html, body { max-width: 100%; overflow-x: hidden; }
   background: rgba(255,255,255,.055);
 }
 
+.aha-sync-prep-heading {
+  display: grid;
+  gap: 4px;
+}
+
+.aha-sync-prep-heading h4 {
+  margin: 0;
+  font-size: .95rem;
+}
+
 .aha-sync-prep-notice {
   color: var(--aha-muted);
   font-size: .88rem;
@@ -1097,8 +1107,21 @@ html, body { max-width: 100%; overflow-x: hidden; }
 }
 
 .aha-sync-prep-row span,
-.aha-sync-prep-row small {
+.aha-sync-prep-row small,
+.aha-sync-prep-row p,
+.aha-sync-prep-row ul {
   color: var(--aha-muted);
+}
+
+.aha-sync-prep-row p,
+.aha-sync-prep-row ul {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: .82rem;
+}
+
+.aha-sync-prep-row ul {
+  padding-left: 18px;
 }
 
 .aha-sync-prep-row small {
