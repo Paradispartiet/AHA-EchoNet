@@ -161,6 +161,118 @@ function extractDashboardSyncHubCode(dashboardCode) {
     assert.equal(validation.canWrite, false, `target ${JSON.stringify(target)} must not enable writes`);
   }
 
+  assert.equal(typeof adapter.runAhaManualSyncTargetDryRun, 'function', 'dry-run harness should be exposed');
+  assert.equal(typeof adapter.dryRunAhaManualSyncTarget, 'function', 'adapter should expose dry-run alias');
+
+  function assertDryRunAlwaysDisabled(result, label) {
+    assert.equal(result.ok, false, `${label} ok must stay false`);
+    assert.equal(result.mode, 'dry_run', `${label} must be dry-run mode`);
+    assert.equal(result.canExecute, false, `${label} canExecute must always be false`);
+    assert.equal(result.canWrite, false, `${label} canWrite must always be false`);
+    assert.equal(result.wouldExecute, false, `${label} wouldExecute must always be false`);
+    assert.equal(result.wouldWrite, false, `${label} wouldWrite must always be false`);
+    assert.equal(result.writeStatus, 'disabled_dry_run_only', `${label} writeStatus must be dry-run disabled`);
+    assert.equal(result.rollbackStatus, 'not_available_dry_run_only', `${label} rollbackStatus must be dry-run only`);
+  }
+
+  const readyDryRunInput = {
+    target: { id: 'configured_preview_target', status: 'configured_preview' },
+    payloadPreview: {
+      modules: [
+        { id: 'lists', included: true, itemCount: 2 },
+        { id: 'paths', included: false, itemCount: 0 }
+      ],
+      modulesIncluded: 1,
+      includedModules: ['lists'],
+      excludedModules: ['paths'],
+      totalPreviewItems: 2
+    },
+    validation: { status: 'valid', errorCount: 0, warningCount: 0 },
+    readiness: { status: 'ready' },
+    checklist: { summary: { passed: 3, warning: 0, blocked: 0 }, items: [] },
+    auditPreview: { status: 'preview_only', warnings: [] },
+    adapterStatus: { canExecute: true, canWrite: false },
+    stateMachineStatus: { currentState: 'blocked', canExecute: true, canWrite: false }
+  };
+
+  const previewOnlyDryRun = adapter.runAhaManualSyncTargetDryRun(readyDryRunInput);
+  assertDryRunAlwaysDisabled(previewOnlyDryRun, 'preview-only dry run');
+  assert.equal(previewOnlyDryRun.status, 'preview_only');
+  assert.equal(previewOnlyDryRun.target, 'configured_preview_target');
+  assert.equal(previewOnlyDryRun.targetStatus, 'configured_preview');
+  assert.deepEqual(previewOnlyDryRun.includedModules, ['lists']);
+  assert.deepEqual(previewOnlyDryRun.excludedModules, ['paths']);
+  assert.equal(previewOnlyDryRun.totalItems, 2);
+  assert.equal(previewOnlyDryRun.blockers.length, 0);
+
+  const dryRunBlockedCases = [
+    {
+      label: 'missing target',
+      patch: { target: undefined },
+      expectedBlocker: /target/i
+    },
+    {
+      label: 'not_configured target',
+      patch: { target: { id: 'not_configured' } },
+      expectedBlocker: /not_configured|target/i
+    },
+    {
+      label: 'future_only target',
+      patch: { target: { id: 'database_api_future', status: 'future_only' } },
+      expectedBlocker: /preview-only|future-only/i
+    },
+    {
+      label: 'preview_only target',
+      patch: { target: { id: 'custom_target', status: 'preview_only' } },
+      expectedBlocker: /preview-only|future-only/i
+    },
+    {
+      label: 'validation errors',
+      patch: { validation: { status: 'invalid', errorCount: 1, warningCount: 0 } },
+      expectedBlocker: /validation/i,
+      expectedStatus: 'invalid'
+    },
+    {
+      label: 'readiness blocked',
+      patch: { readiness: { status: 'blocked' } },
+      expectedBlocker: /readiness/i
+    },
+    {
+      label: 'checklist blocked',
+      patch: { checklist: { summary: { passed: 1, warning: 0, blocked: 1 }, items: [{ status: 'blocked' }] } },
+      expectedBlocker: /checklist/i
+    },
+    {
+      label: 'zero included modules',
+      patch: { payloadPreview: { modules: [{ id: 'lists', included: false, itemCount: 0 }], modulesIncluded: 0, includedModules: [], excludedModules: ['lists'], totalPreviewItems: 0 } },
+      expectedBlocker: /0 included modules/i
+    },
+    {
+      label: 'adapter canExecute false',
+      patch: { adapterStatus: { canExecute: false, canWrite: false } },
+      expectedBlocker: /adapter canExecute/i
+    },
+    {
+      label: 'state machine canExecute false',
+      patch: { stateMachineStatus: { currentState: 'blocked', canExecute: false, canWrite: false } },
+      expectedBlocker: /state machine canExecute/i
+    }
+  ];
+
+  for (const { label, patch, expectedBlocker, expectedStatus = 'blocked' } of dryRunBlockedCases) {
+    const result = adapter.runAhaManualSyncTargetDryRun({ ...readyDryRunInput, ...patch });
+    assertDryRunAlwaysDisabled(result, label);
+    assert.equal(result.status, expectedStatus, `${label} should return ${expectedStatus}`);
+    assert.ok(result.blockers.some((blocker) => expectedBlocker.test(blocker)), `${label} should include matching blocker`);
+  }
+
+  const defaultDryRun = adapter.runAhaManualSyncTargetDryRun();
+  assertDryRunAlwaysDisabled(defaultDryRun, 'default dry run');
+  assert.equal(defaultDryRun.status, 'blocked');
+  assert.equal(defaultDryRun.target, 'not_configured');
+  assert.equal(defaultDryRun.targetStatus, 'not_configured');
+  assert.ok(defaultDryRun.blockers.length >= 1, 'default dry run should explain why it is blocked');
+
   const input = {
     target: { id: 'database_api_future' },
     readinessStatus: 'ready',

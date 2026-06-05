@@ -451,11 +451,21 @@ Activation blocker tests er nå lagt til som test-/safety-lås etter execution a
 
 Denne fasen aktiverer ikke Manual sync eller Confirm sync, kobler ikke target, sender ikke payload, skriver ikke audit log, gjør ikke repository/database/API/fetch/Supabase/Firebase-kall, skriver ikke til localStorage og starter ikke auto-sync. Faktisk write/sync kommer fortsatt senere.
 
-Neste fase er target adapter dry-run harness. Den skal fortsatt være dry-run/no-write og bare legge grunnlag for å validere target-spesifikk form før en senere separat activation/write-PR.
+Target adapter dry-run harness-fasen er nå implementert. Harnessen simulerer fremtidig adapterflyt som dry-run/no-write, returnerer structured preview-status, blokkerer missing/not_configured/future_only/preview_only targets og holder `canExecute=false`, `canWrite=false`, `wouldExecute=false` og `wouldWrite=false`.
+
+## 13.9 Target adapter dry-run harness-fasen er implementert
+
+Target adapter dry-run harness er nå implementert som et trygt no-write/no-op preview-lag for fremtidig target adapter execution. Harnessen tar target, payload preview, validation, readiness, checklist, audit preview og state machine status som input, tåler manglende input og returnerer et strukturert dry-run-resultat med `mode=dry_run`, `writeStatus=disabled_dry_run_only` og `rollbackStatus=not_available_dry_run_only`.
+
+Harnessen blokkerer missing target, `not_configured`, `future_only`/`preview_only` target, validation errors, blocked readiness, blocked checklist items, payload preview med 0 inkluderte moduler, adapter `canExecute=false` og state machine `canExecute=false`. Selv når input ellers er klar, er result-flaggene fortsatt `canExecute=false`, `canWrite=false`, `wouldExecute=false` og `wouldWrite=false`, fordi fasen er dry-run only.
+
+Denne fasen skriver ikke data, sender ikke payload, skriver ikke audit log, kaller ikke repository/database/API/fetch/Supabase/Firebase, skriver ikke til localStorage, kobler ikke target og starter ikke auto-sync. Manual sync-knappen og Confirm sync forblir disabled/gated. Faktisk write/sync kommer fortsatt senere etter adapter implementation contract, eksplisitt target-adapter, audit log-skriving og rollback-/partial failure-regler.
+
+Neste fase er adapter implementation contract. Den skal dokumentere nøyaktig hvordan en senere faktisk adapter kan implementeres, hvilke metodegrenser som gjelder, hvilke write-/rollback-/audit-regler som må testes, og fortsatt ikke aktivere faktisk write i kontraktsfasen.
 
 ## 14. Faktisk write/sync kommer senere
 
-Faktisk write/sync skal ikke innføres som del av contract-, confirmation modal-, audit log preview-, adapter stub-, state machine stub-, run summary preview- eller activation checklist-fasen. Activation checklist er dokumentasjon, ikke runtime activation. Activation blocker tests finnes nå uten write. En senere target-adapter dry-run harness må fortsatt holde seg no-write, og en enda senere target-adapter/write-PR må eksplisitt velge target før write:
+Faktisk write/sync skal ikke innføres som del av contract-, confirmation modal-, audit log preview-, adapter stub-, state machine stub-, run summary preview- eller activation checklist-fasen. Activation checklist er dokumentasjon, ikke runtime activation. Activation blocker tests og target adapter dry-run harness finnes nå uten write. En senere adapter implementation contract må fortsatt holde seg no-write, og en enda senere target-adapter/write-PR må eksplisitt velge target før write:
 
 ```text
 - AHARepository via dokumentert target-adapter
@@ -487,10 +497,10 @@ Reglene fra denne planen gjelder fortsatt:
 
 ## 16. Neste anbefalte PR
 
-Neste anbefalte PR etter activation blocker tests-fasen er:
+Neste anbefalte PR etter target adapter dry-run harness-fasen er:
 
 ```text
-feat: add AHA manual sync target adapter dry-run harness
+docs: define AHA manual sync adapter implementation contract
 ```
 
-Akseptanse for den PR-en bør være en fortsatt no-write target adapter dry-run harness: ingen faktisk target-tilkobling for write, ingen payload-send, ingen audit log-skriving, ingen repository/database/API/fetch/Supabase/Firebase/localStorage write paths og ingen activation av Manual sync eller Confirm sync. Faktisk write/sync kommer fortsatt senere etter eksplisitt target-adapter, audit log-skriving og rollback-/partial failure-implementasjon.
+Akseptanse for den PR-en bør være en fortsatt no-write adapter implementation contract: ingen faktisk target-tilkobling for write, ingen payload-send, ingen audit log-skriving, ingen repository/database/API/fetch/Supabase/Firebase/localStorage write paths og ingen activation av Manual sync eller Confirm sync. Faktisk write/sync kommer fortsatt senere etter eksplisitt target-adapter, audit log-skriving og rollback-/partial failure-implementasjon.
