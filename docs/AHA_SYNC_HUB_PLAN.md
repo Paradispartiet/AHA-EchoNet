@@ -331,8 +331,9 @@ AHA Sync Hub skal utvikles i små, låste faser. Hver fase må bevare reglene om
 14. ✅ Adapter interface stub
 15. ✅ Execution state machine stub
 16. ✅ Run summary preview
-17. Neste: Execution activation checklist
-18. Senere: faktisk write/sync etter eksplisitt target-, audit- og rollback-PR
+17. ✅ Execution activation checklist (dokumentasjon, ikke runtime activation)
+18. Neste: Activation blocker tests
+19. Senere: faktisk write/sync etter eksplisitt target-, audit- og rollback-PR
 ```
 
 Manual sync execution contract er dokumentert i `docs/AHA_MANUAL_SYNC_CONTRACT.md`. Den er en kontrakt før faktisk implementasjon og definerer moduler i scope, preconditions/gates, blocking rules, payload-shape, write target-status, manuell bekreftelse, audit log, failure behavior og rollback/partial failure-regler.
@@ -432,11 +433,19 @@ Summaryen viser preview-run-id, timestamp, valgt preview-target, target-/adapter
 
 Run summary skriver ikke data, sender ikke payload, skriver ikke audit log, kaller ikke repository/database/API, kobler ikke til target, skriver ikke til localStorage og starter ikke sync. Manual sync-knappen og Confirm sync forblir disabled/gated. Faktisk write/sync kommer senere etter execution activation checklist, target-adapter, audit log-skriving og rollback-/partial failure-regler.
 
-Neste fase er execution activation checklist. Den bør dokumentere hvilke gates, eierbeslutninger og testkrav som må være oppfylt før faktisk execution/write kan vurderes i en senere PR.
+## 13.7 Execution activation checklist-fasen er implementert
+
+Execution activation checklist er nå dokumentert i `docs/AHA_MANUAL_SYNC_ACTIVATION_CHECKLIST.md` etter run summary preview-fasen. Dette er dokumentasjon, ikke runtime activation. Den definerer siste go/no-go-sperre før faktisk manual sync execution kan vurderes i en senere PR.
+
+Checklist-fasen lister required implemented layers, required docs/contracts, data readiness, target readiness, adapter readiness, state machine readiness, audit readiness, UI readiness, safety/no-auto rules, activation blockers, required tests før activation og regler for en fremtidig activation-PR.
+
+Denne fasen aktiverer ikke Manual sync eller Confirm sync, kobler ikke target, skriver ikke audit log, sender ikke payload, gjør ikke repository/database/API/fetch/Supabase/Firebase-kall, skriver ikke til localStorage og endrer ikke runtime-atferd. Faktisk write/sync kommer fortsatt senere etter egne target-, audit-, rollback-/partial failure- og activation-PR-er.
+
+Neste fase er activation blocker tests. Den bør bevise at Manual sync / Confirm sync fortsatt er blokkert før activation, at dashboard ikke har skjulte write paths, at target/validation/audit/state machine blokkerer riktig, og at `partial_success` er unreachable uten partial failure-kontrakt.
 
 ## 14. Faktisk write/sync kommer senere
 
-Faktisk write/sync skal ikke innføres som del av contract-, confirmation modal-, audit log preview-, adapter stub-, state machine stub- eller run summary preview-fasen. En senere PR må først legge til execution activation checklist uten write, og en enda senere target-adapter-PR må eksplisitt velge target før write:
+Faktisk write/sync skal ikke innføres som del av contract-, confirmation modal-, audit log preview-, adapter stub-, state machine stub-, run summary preview- eller activation checklist-fasen. Activation checklist er dokumentasjon, ikke runtime activation. En senere PR må først legge til activation blocker tests uten write, og en enda senere target-adapter-PR må eksplisitt velge target før write:
 
 ```text
 - AHARepository via dokumentert target-adapter
@@ -468,10 +477,10 @@ Reglene fra denne planen gjelder fortsatt:
 
 ## 16. Neste anbefalte PR
 
-Neste anbefalte PR etter run summary preview-fasen er:
+Neste anbefalte PR etter execution activation checklist-fasen er:
 
 ```text
-docs: define AHA manual sync execution activation checklist
+feat: add AHA manual sync activation blocker tests
 ```
 
-Akseptanse for den PR-en bør være å dokumentere nøyaktige activation gates for en senere write-enabled manual sync, fortsatt uten å koble til target, uten repository save/load, uten database/API/fetch/Supabase/Firebase, uten localStorage-skriving og uten auto-sync. Faktisk write/sync kommer fortsatt senere etter eksplisitt target-adapter, audit log-skriving og rollback-/partial failure-implementasjon.
+Akseptanse for den PR-en bør være å bevise at activation fortsatt er blokkert før alle gates er oppfylt: Manual sync og Confirm sync må forbli disabled/gated, dashboard må fortsatt være uten skjulte repository/database/API/fetch/Supabase/Firebase/localStorage write paths, target/validation/audit/state machine må blokkere riktig, og `partial_success` må være unreachable uten partial failure-kontrakt. Faktisk write/sync kommer fortsatt senere etter eksplisitt target-adapter, audit log-skriving og rollback-/partial failure-implementasjon.
