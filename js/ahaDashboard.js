@@ -6,6 +6,7 @@
   let lastState = null;
   let isSyncHubPrepOpen = false;
   let isAhaManualSyncConfirmationModalOpen = false;
+  let selectedPreviewTarget = "not_configured";
 
   const AHA_AUTH_RETURN_TO_KEY = "aha_auth_return_to_v1";
   const HISTORY_GO_PROFILE_URL = "https://paradispartiet.github.io/History-Go/profile.html";
@@ -329,6 +330,32 @@
   const SYNC_HUB_ID_FIELDS = ["id", "key", "slug"];
   const SYNC_HUB_TITLE_FIELDS = ["title", "name", "label", "headline"];
   const SYNC_HUB_SAMPLE_FIELDS = ["id", "key", "slug", "title", "name", "label", "headline", "type", "category", "updatedAt", "createdAt"];
+  const AHA_MANUAL_SYNC_PREVIEW_TARGETS = [
+    {
+      id: "not_configured",
+      label: "Not configured",
+      status: "not_configured",
+      reason: "No write target configured. This is the safe default."
+    },
+    {
+      id: "aha_repository_future",
+      label: "AHA repository (future)",
+      status: "future_only",
+      reason: "Future repository target preview only; no AHARepository save/load path is connected."
+    },
+    {
+      id: "database_api_future",
+      label: "Database/API (future)",
+      status: "unavailable",
+      reason: "Future database/API target preview only; no client, fetch, Supabase, or Firebase path is connected."
+    },
+    {
+      id: "custom_sync_backend_future",
+      label: "Custom sync backend (future)",
+      status: "future_only",
+      reason: "Future backend target preview only; no sync backend is configured."
+    }
+  ];
 
 
   function escapeHtml(value) {
@@ -748,6 +775,58 @@
     return `<ul class="aha-sync-manual-reasons">${items.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`;
   }
 
+
+  function getAhaManualSyncPreviewTarget(id = selectedPreviewTarget) {
+    const target = AHA_MANUAL_SYNC_PREVIEW_TARGETS.find((candidate) => candidate.id === id);
+    return target || AHA_MANUAL_SYNC_PREVIEW_TARGETS[0];
+  }
+
+  function getAhaManualSyncPreviewTargetAuditStatus(target = getAhaManualSyncPreviewTarget()) {
+    if (target.id === "not_configured") return "not_configured";
+    return "future_only";
+  }
+
+  function getAhaManualSyncPreviewTargetGateReason(target = getAhaManualSyncPreviewTarget()) {
+    if (target.id === "not_configured") return "No write target configured.";
+    return "Selected target is preview-only and not connected.";
+  }
+
+  function renderAhaManualSyncTargetSelectorPreview() {
+    const activeTarget = getAhaManualSyncPreviewTarget();
+
+    return `
+      <div class="aha-sync-target-preview" aria-label="AHA manual sync target selector preview">
+        <div class="aha-sync-prep-heading">
+          <h4>Target selector preview</h4>
+          <p class="aha-sync-prep-notice">Preview only. No target is connected and no data is written.</p>
+          <p class="aha-sync-validation-summary">selectedPreviewTarget: ${escapeHtml(activeTarget.id)} · targetStatus: ${escapeHtml(getAhaManualSyncPreviewTargetAuditStatus(activeTarget))} · writeStatus: disabled_preview_only</p>
+        </div>
+        <label class="aha-sync-target-select-label" for="aha-sync-target-preview-select">Future write target preview</label>
+        <select id="aha-sync-target-preview-select" class="aha-sync-target-select" aria-describedby="aha-sync-target-preview-note">
+          ${AHA_MANUAL_SYNC_PREVIEW_TARGETS.map((target) => `<option value="${escapeHtml(target.id)}"${target.id === activeTarget.id ? " selected" : ""}>${escapeHtml(target.label)}</option>`).join("")}
+        </select>
+        <p id="aha-sync-target-preview-note" class="aha-sync-prep-notice">Changing this selector only updates in-memory preview text. It does not enable Manual sync, Confirm sync, payload send, audit writes, repository calls, database/API calls, fetch, Supabase, Firebase, or localStorage writes.</p>
+        <div class="aha-sync-prep-list">
+          ${AHA_MANUAL_SYNC_PREVIEW_TARGETS.map((target) => {
+            const isSelected = target.id === activeTarget.id;
+            const rowStatus = isSelected && target.id !== "not_configured" ? "selected_preview" : target.status;
+            const reason = isSelected && target.id !== "not_configured"
+              ? `${target.reason} Selected for preview text only; still unavailable for write.`
+              : target.reason;
+            return `
+              <div class="aha-sync-prep-row aha-sync-target-row aha-sync-target-${escapeHtml(rowStatus)}">
+                <strong>${escapeHtml(target.label)}</strong>
+                <span>${isSelected ? "selected" : "available as preview label"}</span>
+                <small>${escapeHtml(rowStatus)}</small>
+                <p>${escapeHtml(reason)}</p>
+              </div>
+            `;
+          }).join("")}
+        </div>
+      </div>
+    `;
+  }
+
   function renderAhaSyncOperatorChecklist(checklist) {
     return `
       <div class="aha-sync-operator-checklist" aria-label="AHA Sync Hub operator checklist">
@@ -796,7 +875,7 @@
     return [...new Set([...planMessages, ...payloadMessages, ...checklistMessages, ...readinessMessages])];
   }
 
-  function buildAhaManualSyncAuditLogPreview(plan, payloadPreview, checklist) {
+  function buildAhaManualSyncAuditLogPreview(plan, payloadPreview, checklist, previewTarget = getAhaManualSyncPreviewTarget()) {
     try {
       const generatedAt = new Date();
       const safePlan = Array.isArray(plan) ? plan : buildAhaSyncDryRunPlan();
@@ -812,6 +891,8 @@
       const readinessStatus = safeChecklist.readiness === "passed" ? "ready" : safeChecklist.readiness;
       const warnings = collectAhaManualSyncAuditMessages(safePlan, safePayloadPreview, safeChecklist, "warnings");
       const errors = collectAhaManualSyncAuditMessages(safePlan, safePayloadPreview, safeChecklist, "errors");
+      const safePreviewTarget = getAhaManualSyncPreviewTarget(previewTarget?.id);
+      const targetStatus = getAhaManualSyncPreviewTargetAuditStatus(safePreviewTarget);
 
       return {
         ok: true,
@@ -820,7 +901,8 @@
         timestampLabel: `${generatedAt.toLocaleString("no-NO")} (preview-generated, not written to audit log)`,
         trigger: "manual_preview",
         status: "preview_only",
-        target: "not_configured",
+        target: safePreviewTarget.id,
+        targetStatus,
         includedModules,
         excludedModules,
         itemCounts,
@@ -848,7 +930,8 @@
         timestampLabel: `${generatedAt.toLocaleString("no-NO")} (preview-generated, not written to audit log)`,
         trigger: "manual_preview",
         status: "preview_only",
-        target: "not_configured",
+        target: getAhaManualSyncPreviewTarget().id,
+        targetStatus: getAhaManualSyncPreviewTargetAuditStatus(),
         includedModules: [],
         excludedModules: [],
         itemCounts: {},
@@ -885,8 +968,8 @@
       <div class="aha-sync-audit-preview" aria-label="AHA manual sync audit log preview">
         <div class="aha-sync-prep-heading">
           <h4>Audit log preview</h4>
-          <p class="aha-sync-prep-notice">Preview only. No audit log is written and no sync is performed.</p>
-          <p class="aha-sync-validation-summary">${escapeHtml(auditPreview.status)} · target: ${escapeHtml(auditPreview.target)} · writeStatus: ${escapeHtml(auditPreview.writeStatus)}</p>
+          <p class="aha-sync-prep-notice">Preview only. No audit log is written, no sync is performed, and no target is connected.</p>
+          <p class="aha-sync-validation-summary">${escapeHtml(auditPreview.status)} · target: ${escapeHtml(auditPreview.target)} · targetStatus: ${escapeHtml(auditPreview.targetStatus)} · writeStatus: ${escapeHtml(auditPreview.writeStatus)}</p>
         </div>
         <div class="aha-sync-validation-block">
           <h5>Preview record</h5>
@@ -895,6 +978,7 @@
           <p><strong>trigger:</strong> ${escapeHtml(auditPreview.trigger)}</p>
           <p><strong>status:</strong> ${escapeHtml(auditPreview.status)}</p>
           <p><strong>target:</strong> ${escapeHtml(auditPreview.target)}</p>
+          <p><strong>targetStatus:</strong> ${escapeHtml(auditPreview.targetStatus)}</p>
           <p><strong>readiness:</strong> ${escapeHtml(auditPreview.readinessStatus)}</p>
           <p><strong>rollbackStatus:</strong> ${escapeHtml(auditPreview.rollbackStatus)}</p>
           <p><strong>writeStatus:</strong> ${escapeHtml(auditPreview.writeStatus)}</p>
@@ -938,10 +1022,10 @@
     return `
       <div class="aha-sync-confirmation-section aha-sync-audit-preview-summary">
         <h5>E. Audit log preview</h5>
-        <p class="aha-sync-prep-notice">Preview only. No audit log is written.</p>
+        <p class="aha-sync-prep-notice">Preview only. No audit log is written, no sync is performed, and no target is connected.</p>
         <p><strong>runId:</strong> <code>${escapeHtml(auditPreview.runId)}</code></p>
         <p><strong>timestamp:</strong> ${escapeHtml(auditPreview.timestampLabel)}</p>
-        <p><strong>target:</strong> ${escapeHtml(auditPreview.target)} · <strong>status:</strong> ${escapeHtml(auditPreview.status)}</p>
+        <p><strong>target:</strong> ${escapeHtml(auditPreview.target)} · <strong>targetStatus:</strong> ${escapeHtml(auditPreview.targetStatus)} · <strong>status:</strong> ${escapeHtml(auditPreview.status)}</p>
         <p><strong>included/excluded:</strong> ${escapeHtml(auditPreview.includedModules.length)} / ${escapeHtml(auditPreview.excludedModules.length)} modules · <strong>totalPreviewItems:</strong> ${escapeHtml(auditPreview.totalPreviewItems)}</p>
         <div class="aha-sync-validation-columns">
           <div>
@@ -958,12 +1042,12 @@
     `;
   }
 
-  function buildAhaManualSyncGate(plan, payloadPreview, checklist) {
+  function buildAhaManualSyncGate(plan, payloadPreview, checklist, previewTarget = getAhaManualSyncPreviewTarget()) {
     const summary = summarizeSyncHubValidation(plan);
     const modulesIncluded = Number(payloadPreview?.modulesIncluded || 0);
     const blockedChecklistItems = (checklist.items || []).filter((item) => item.status === "blocked");
     const warningChecklistItems = (checklist.items || []).filter((item) => item.status === "warning");
-    const gateReasons = [];
+    const gateReasons = [getAhaManualSyncPreviewTargetGateReason(previewTarget)];
 
     if (checklist.readiness === "blocked") gateReasons.push("Readiness gate is blocked.");
     if (checklist.readiness === "warning") gateReasons.push("Readiness gate has warnings that must be reviewed.");
@@ -978,7 +1062,7 @@
   }
 
   function renderAhaManualSyncGate(plan, payloadPreview, checklist) {
-    const gateReasons = buildAhaManualSyncGate(plan, payloadPreview, checklist);
+    const gateReasons = buildAhaManualSyncGate(plan, payloadPreview, checklist, getAhaManualSyncPreviewTarget());
     const primaryReason = gateReasons[0] || "Manual sync is not enabled in code yet.";
 
     return `
@@ -1020,7 +1104,8 @@
       const safePayloadPreview = payloadPreview || buildAhaSyncPayloadPreview(safePlan);
       const safeChecklist = checklist || buildAhaSyncOperatorChecklist(safePlan, safePayloadPreview);
       const validationSummary = summarizeSyncHubValidation(safePlan);
-      const gateReasons = buildAhaManualSyncGate(safePlan, safePayloadPreview, safeChecklist);
+      const previewTarget = getAhaManualSyncPreviewTarget();
+      const gateReasons = buildAhaManualSyncGate(safePlan, safePayloadPreview, safeChecklist, previewTarget);
       const blockedChecklistItems = (safeChecklist.items || []).filter((item) => item.status === "blocked");
       const warningChecklistItems = (safeChecklist.items || []).filter((item) => item.status === "warning");
       const includedModules = (safePayloadPreview.modules || []).filter((modulePreview) => modulePreview.included);
@@ -1032,6 +1117,9 @@
         ok: true,
         readinessStatus,
         gateReasons,
+        previewTarget,
+        targetStatus: getAhaManualSyncPreviewTargetAuditStatus(previewTarget),
+        writeStatus: "disabled_preview_only",
         validationSummary,
         validationErrorMessages,
         payloadPreview: safePayloadPreview,
@@ -1047,6 +1135,9 @@
         ok: false,
         readinessStatus: "blocked",
         gateReasons: ["Confirmation preview could not be built. Sync remains blocked and disabled."],
+        previewTarget: getAhaManualSyncPreviewTarget(),
+        targetStatus: getAhaManualSyncPreviewTargetAuditStatus(),
+        writeStatus: "disabled_preview_only",
         validationSummary: { totalModules: 0, modulesReady: 0, modulesWithWarnings: 0, modulesWithErrors: 1, warningCount: 0, errorCount: 1 },
         validationErrorMessages: ["Could not build validation summary for confirmation preview."],
         payloadPreview: { modules: [], modulesIncluded: 0, modulesExcluded: 0, totalPreviewItems: 0 },
@@ -1145,7 +1236,13 @@
           ${renderAhaManualSyncAuditLogPreviewSummary(safeAuditPreview)}
 
           <div class="aha-sync-confirmation-section">
-            <h5>F. Manual confirmation requirements</h5>
+            <h5>F. Target preview</h5>
+            <p class="aha-sync-prep-notice">Preview only. No target is connected and no data is written.</p>
+            <p><strong>target:</strong> ${escapeHtml(model.previewTarget.id)} · <strong>targetStatus:</strong> ${escapeHtml(model.targetStatus)} · <strong>writeStatus:</strong> ${escapeHtml(model.writeStatus)}</p>
+          </div>
+
+          <div class="aha-sync-confirmation-section">
+            <h5>G. Manual confirmation requirements</h5>
             <ul class="aha-sync-manual-requirements">
               ${manualRequirements.map((requirement) => `<li>${escapeHtml(requirement)}</li>`).join("")}
             </ul>
@@ -1167,7 +1264,8 @@
 
     const payloadPreview = buildAhaSyncPayloadPreview(plan);
     const operatorChecklist = buildAhaSyncOperatorChecklist(plan, payloadPreview);
-    const auditPreview = buildAhaManualSyncAuditLogPreview(plan, payloadPreview, operatorChecklist);
+    const previewTarget = getAhaManualSyncPreviewTarget();
+    const auditPreview = buildAhaManualSyncAuditLogPreview(plan, payloadPreview, operatorChecklist, previewTarget);
 
     return `
       <div class="aha-sync-prep-panel" id="aha-sync-prep-panel" role="region" aria-label="AHA Sync Hub forberedelse">
@@ -1202,6 +1300,7 @@
           `).join("")}
         </div>
         ${renderAhaSyncPayloadPreview(payloadPreview)}
+        ${renderAhaManualSyncTargetSelectorPreview()}
         ${renderAhaSyncOperatorChecklist(operatorChecklist)}
         ${renderAhaManualSyncAuditLogPreview(auditPreview)}
         ${renderAhaManualSyncGate(plan, payloadPreview, operatorChecklist)}
@@ -1228,6 +1327,15 @@
     });
   }
 
+  function bindAhaManualSyncTargetSelectorPreview() {
+    const selector = $("aha-sync-target-preview-select");
+    if (!selector) return;
+    selector.addEventListener("change", (event) => {
+      selectedPreviewTarget = getAhaManualSyncPreviewTarget(event.target.value).id;
+      renderSyncHubStatus();
+    });
+  }
+
   function bindSyncHubPrepToggle() {
     const button = $("aha-sync-hub-prep-toggle");
     if (button) {
@@ -1238,6 +1346,7 @@
       });
     }
     bindAhaManualSyncConfirmationModal();
+    bindAhaManualSyncTargetSelectorPreview();
   }
 
   function renderSyncHubStatus() {
