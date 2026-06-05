@@ -1241,6 +1241,117 @@
     }
   }
 
+
+  function buildAhaManualSyncDryRunHarnessPreview(plan, payloadPreview, checklist, auditPreview, runSummaryPreview, previewTarget = getAhaManualSyncPreviewTarget()) {
+    const adapterApi = window.AHAManualSyncAdapter;
+    const validationSummary = summarizeSyncHubValidation(Array.isArray(plan) ? plan : []);
+    const stateMachineStatus = getAhaManualSyncStateMachinePreviewStatus();
+    const targetStatus = getAhaManualSyncPreviewTargetAuditStatus(previewTarget);
+    const input = {
+      target: { id: previewTarget.id, status: targetStatus },
+      payloadPreview,
+      validation: {
+        status: validationSummary.errorCount > 0 ? "invalid" : "valid_preview",
+        validCount: validationSummary.modulesReady,
+        warningCount: validationSummary.warningCount,
+        errorCount: validationSummary.errorCount
+      },
+      readiness: { status: runSummaryPreview?.readinessStatus || checklist?.readiness || "blocked" },
+      checklist,
+      auditPreview,
+      adapterStatus: getAhaManualSyncAdapterPreviewStatus(),
+      stateMachineStatus
+    };
+
+    if (adapterApi?.runAhaManualSyncTargetDryRun) {
+      try {
+        return adapterApi.runAhaManualSyncTargetDryRun(input);
+      } catch (error) {
+        console.warn("AHADashboard: kunne ikke bygge target adapter dry-run", error);
+      }
+    }
+
+    return {
+      ok: false,
+      mode: "dry_run",
+      status: "blocked",
+      target: previewTarget.id,
+      targetStatus,
+      canExecute: false,
+      canWrite: false,
+      wouldExecute: false,
+      wouldWrite: false,
+      includedModules: runSummaryPreview?.includedModules || [],
+      excludedModules: runSummaryPreview?.excludedModules || [],
+      itemCounts: {},
+      totalItems: Number(runSummaryPreview?.totalPreviewItems || 0),
+      validationSummary: input.validation,
+      readinessStatus: input.readiness.status,
+      checklistSummary: runSummaryPreview?.checklist || { passedCount: 0, warningCount: 0, blockedCount: 1 },
+      auditPreviewSummary: runSummaryPreview?.audit || { auditStatus: "preview_only", writeStatus: "disabled_preview_only", rollbackStatus: "not_available_preview_only" },
+      stateMachineState: stateMachineStatus.currentState || "blocked",
+      blockers: uniqueAhaSyncMessages([getAhaManualSyncPreviewTargetGateReason(previewTarget), "Adapter dry-run harness is unavailable in dashboard runtime; execution remains disabled.", ...(runSummaryPreview?.blockers || [])]),
+      warnings: runSummaryPreview?.warnings || [],
+      errors: [],
+      message: "Target adapter dry-run is blocked. No execution or write is available.",
+      writeStatus: "disabled_dry_run_only",
+      rollbackStatus: "not_available_dry_run_only"
+    };
+  }
+
+  function renderAhaManualSyncTargetDryRunHarness(dryRun) {
+    return `
+      <div class="aha-sync-target-dry-run" aria-label="AHA manual sync target adapter dry-run">
+        <div class="aha-sync-prep-heading">
+          <h4>Target adapter dry-run</h4>
+          <p class="aha-sync-prep-notice">Dry-run only. No target is connected and no data is written.</p>
+          <p class="aha-sync-validation-summary">status: ${escapeHtml(dryRun.status)} · target: ${escapeHtml(dryRun.target)} · writeStatus: ${escapeHtml(dryRun.writeStatus)}</p>
+        </div>
+        <div class="aha-sync-run-summary-grid">
+          <p><strong>targetStatus:</strong> ${escapeHtml(dryRun.targetStatus)}</p>
+          <p><strong>canExecute:</strong> ${escapeHtml(dryRun.canExecute)}</p>
+          <p><strong>canWrite:</strong> ${escapeHtml(dryRun.canWrite)}</p>
+          <p><strong>wouldExecute:</strong> ${escapeHtml(dryRun.wouldExecute)}</p>
+          <p><strong>wouldWrite:</strong> ${escapeHtml(dryRun.wouldWrite)}</p>
+          <p><strong>totalItems:</strong> ${escapeHtml(dryRun.totalItems)}</p>
+          <p><strong>stateMachineState:</strong> ${escapeHtml(dryRun.stateMachineState)}</p>
+          <p><strong>rollbackStatus:</strong> ${escapeHtml(dryRun.rollbackStatus)}</p>
+        </div>
+        <div class="aha-sync-validation-columns">
+          <div>
+            <h5>Included modules</h5>
+            <div class="aha-sync-run-summary-chip-list">${renderAhaManualSyncRunSummaryModules(dryRun.includedModules || [], "None included.")}</div>
+          </div>
+          <div>
+            <h5>Excluded modules</h5>
+            <div class="aha-sync-run-summary-chip-list">${renderAhaManualSyncRunSummaryModules(dryRun.excludedModules || [], "None excluded.")}</div>
+          </div>
+        </div>
+        <div class="aha-sync-validation-columns">
+          <div>
+            <h5>Blockers</h5>
+            ${renderAhaSyncStatusList(dryRun.blockers || [], "No blockers in this dry-run preview.")}
+          </div>
+          <div>
+            <h5>Warnings</h5>
+            ${renderAhaSyncStatusList(dryRun.warnings || [], "No warnings in this dry-run preview.")}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderAhaManualSyncConfirmationDryRunStatus(dryRun) {
+    return `
+      <div class="aha-sync-confirmation-section aha-sync-target-dry-run-confirmation">
+        <h5>Target adapter dry-run</h5>
+        <p class="aha-sync-prep-notice">Dry-run only. Confirm sync remains disabled and no data is written.</p>
+        <p><strong>status:</strong> ${escapeHtml(dryRun.status)} · <strong>target:</strong> ${escapeHtml(dryRun.target)} · <strong>writeStatus:</strong> ${escapeHtml(dryRun.writeStatus)}</p>
+        <p><strong>canExecute:</strong> ${escapeHtml(dryRun.canExecute)} · <strong>canWrite:</strong> ${escapeHtml(dryRun.canWrite)}</p>
+      </div>
+    `;
+  }
+
   function renderAhaManualSyncRunSummaryModules(modules, emptyLabel) {
     if (!modules.length) return `<span>${escapeHtml(emptyLabel)}</span>`;
     return modules.map((moduleId) => `<span>${escapeHtml(moduleId)}</span>`).join("");
@@ -1445,12 +1556,13 @@
     `;
   }
 
-  function renderAhaManualSyncConfirmationModal(plan, payloadPreview, checklist, auditPreview = null, runSummaryPreview = null) {
+  function renderAhaManualSyncConfirmationModal(plan, payloadPreview, checklist, auditPreview = null, runSummaryPreview = null, dryRunPreview = null) {
     if (!isAhaManualSyncConfirmationModalOpen) return "";
 
     const model = buildAhaManualSyncConfirmationModel(plan, payloadPreview, checklist);
     const safeAuditPreview = auditPreview || buildAhaManualSyncAuditLogPreview(plan, payloadPreview, checklist);
     const safeRunSummaryPreview = runSummaryPreview || buildAhaManualSyncRunSummaryPreview(plan, payloadPreview, checklist, safeAuditPreview);
+    const safeDryRunPreview = dryRunPreview || buildAhaManualSyncDryRunHarnessPreview(plan, payloadPreview, checklist, safeAuditPreview, safeRunSummaryPreview, model.previewTarget);
     const stateMachineStatus = getAhaManualSyncStateMachinePreviewStatus();
     const validationSummary = model.validationSummary;
     const checklistSummary = model.checklist.summary || { passed: 0, warning: 0, blocked: 0 };
@@ -1522,6 +1634,7 @@
           </div>
 
           ${renderAhaManualSyncConfirmationRunSummary(safeRunSummaryPreview)}
+          ${renderAhaManualSyncConfirmationDryRunStatus(safeDryRunPreview)}
 
           <div class="aha-sync-confirmation-section">
             <h5>H. Manual confirmation requirements</h5>
@@ -1549,6 +1662,7 @@
     const previewTarget = getAhaManualSyncPreviewTarget();
     const auditPreview = buildAhaManualSyncAuditLogPreview(plan, payloadPreview, operatorChecklist, previewTarget);
     const runSummaryPreview = buildAhaManualSyncRunSummaryPreview(plan, payloadPreview, operatorChecklist, auditPreview, previewTarget);
+    const dryRunPreview = buildAhaManualSyncDryRunHarnessPreview(plan, payloadPreview, operatorChecklist, auditPreview, runSummaryPreview, previewTarget);
 
     return `
       <div class="aha-sync-prep-panel" id="aha-sync-prep-panel" role="region" aria-label="AHA Sync Hub forberedelse">
@@ -1585,11 +1699,12 @@
         ${renderAhaSyncPayloadPreview(payloadPreview)}
         ${renderAhaManualSyncTargetSelectorPreview()}
         ${renderAhaManualSyncStateMachinePreview()}
+        ${renderAhaManualSyncTargetDryRunHarness(dryRunPreview)}
         ${renderAhaSyncOperatorChecklist(operatorChecklist)}
         ${renderAhaManualSyncAuditLogPreview(auditPreview)}
         ${renderAhaManualSyncRunSummaryPreview(runSummaryPreview)}
         ${renderAhaManualSyncGate(plan, payloadPreview, operatorChecklist)}
-        ${renderAhaManualSyncConfirmationModal(plan, payloadPreview, operatorChecklist, auditPreview, runSummaryPreview)}
+        ${renderAhaManualSyncConfirmationModal(plan, payloadPreview, operatorChecklist, auditPreview, runSummaryPreview, dryRunPreview)}
       </div>
     `;
   }

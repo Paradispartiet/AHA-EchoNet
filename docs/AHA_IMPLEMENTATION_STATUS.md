@@ -2,14 +2,14 @@
 
 Statusdato: 2026-06-05
 
-Dette dokumentet oppsummerer nåværende implementasjonsstatus for AHA etter dokumentlåser, sync-hardening, Search note_reanalysis-visning, Mindmap tombstone-filtrering, Mindmap note_reanalysis-visning, Lists-, Paths-, Meta Insights-, Groups- og AHAavisa/Articles-bolkene, Sync Hub pre-sync UI, manual sync execution contract, manual sync confirmation modal, audit log preview, target selector preview, manual sync target contract, manual sync adapter interface stub, execution state machine stub, manual sync run summary preview og activation blocker tests.
+Dette dokumentet oppsummerer nåværende implementasjonsstatus for AHA etter dokumentlåser, sync-hardening, Search note_reanalysis-visning, Mindmap tombstone-filtrering, Mindmap note_reanalysis-visning, Lists-, Paths-, Meta Insights-, Groups- og AHAavisa/Articles-bolkene, Sync Hub pre-sync UI, manual sync execution contract, manual sync confirmation modal, audit log preview, target selector preview, manual sync target contract, manual sync adapter interface stub, execution state machine stub, manual sync run summary preview, activation blocker tests og target adapter dry-run harness.
 
 Dokumentet er en statuslås. Det er ikke en runtime-endring, ikke en ny motor, ikke en Supabase-migrasjon og ikke en beslutning om å bygge nye flater.
 
 ## 1. Kort status
 
 ```text
-AHA core er nå dokumentert, sync-reglene for de viktigste personal-data-modulene er hardenet, og AHA Sync Hub har dokumentert pre-sync UI, manual sync execution contract, UI-only confirmation modal, audit log preview, target selector preview og manual sync target contract, adapter interface stub, execution state machine stub, manual sync run summary preview og activation blocker tests uten faktisk write.
+AHA core er nå dokumentert, sync-reglene for de viktigste personal-data-modulene er hardenet, og AHA Sync Hub har dokumentert pre-sync UI, manual sync execution contract, UI-only confirmation modal, audit log preview, target selector preview og manual sync target contract, adapter interface stub, execution state machine stub, manual sync run summary preview, activation blocker tests og target adapter dry-run harness uten faktisk write.
 ```
 
 Ferdig nå:
@@ -53,6 +53,7 @@ Ferdig nå:
 ✅ Manual sync run summary preview er lagt til som samlet preview-only oversikt
 ✅ Manual sync execution activation checklist er dokumentert
 ✅ Activation blocker tests er lagt til for adapter, state machine, static forbidden-call guards og disabled UI-markup
+✅ Target adapter dry-run harness er lagt til som dry-run only/no-write preview
 ✅ Run summary samler target, adapter, state machine, payload, validation, readiness, checklist og audit uten write
 ✅ Activation checklist er dokumentasjon og aktiverer fortsatt ikke sync
 ✅ running/success/partial_success er disabled/unreachable fra UI
@@ -85,7 +86,7 @@ Ikke bygget ennå:
 Neste anbefalte PR:
 
 ```text
-feat: add AHA manual sync target adapter dry-run harness
+docs: define AHA manual sync adapter implementation contract
 ```
 
 ## 1b. Meta Insights – algoritmisk meta-/selvinnsiktsmotor
@@ -1064,21 +1065,23 @@ AHA Sync Hub har nå komplett pre-sync UI, confirmation preview og activation ch
 ✅ manual sync run summary preview
 ✅ manual sync execution activation checklist
 ✅ manual sync activation blocker tests
+✅ manual sync target adapter dry-run harness
 ```
 
-Status etter manual sync activation blocker tests-PR-en:
+Status etter target adapter dry-run harness-PR-en:
 
 ```text
-- Adapter interface stub finnes, men executeRun / executeAhaManualSyncRun returnerer fortsatt blocked/disabled og sender ikke payload eller skriver data.
+- Adapter interface stub finnes, og executeRun / executeAhaManualSyncRun returnerer fortsatt blocked/disabled og sender ikke payload eller skriver data.
+- Target adapter dry-run harness finnes, men er dry-run only: canExecute=false, canWrite=false, wouldExecute=false og wouldWrite=false.
 - Execution state machine stub finnes med default blocked/not_started, canExecute=false, canWrite=false og writeStatus=disabled_stub_only.
-- Run summary preview finnes i expanded kontrollpanel og confirmation modal, men er preview-only/in-memory.
+- Run summary preview og target adapter dry-run-status finnes i expanded kontrollpanel og confirmation modal, men er preview-only/in-memory.
 - Manual sync execution activation checklist er dokumentert som siste go/no-go-sperre før faktisk execution kan vurderes.
 - Activation blocker tests finnes og bekrefter at adapter, state machine, missing target/future targets, forbidden runtime calls og disabled UI-markup fortsatt blokkerer activation.
 - Activation checklist er dokumentasjon, ikke runtime activation, og aktiverer fortsatt ikke sync.
 - Summary samler target, adapter, state machine, payload, validation, readiness, checklist og audit med canExecute=false og canWrite=false.
 - confirmed, running, success og partial_success er disabled/unreachable fra UI.
 - Target selector er fortsatt preview-only og aktiverer ikke sync.
-- Ingen target er faktisk konfigurert; not_configured er default/safe.
+- Ingen target er faktisk konfigurert; not_configured er default/safe, og future/preview targets blokkerer fortsatt harness-resultatet.
 - Faktisk audit log-skriving er fortsatt ikke implementert.
 - Faktisk AHA manual sync/write er fortsatt ikke implementert.
 - Manual sync-knappen er fortsatt disabled/gated.
@@ -1090,14 +1093,14 @@ Status etter manual sync activation blocker tests-PR-en:
 Neste anbefalte PR:
 
 ```text
-feat: add AHA manual sync target adapter dry-run harness
+docs: define AHA manual sync adapter implementation contract
 ```
 
 Hvorfor:
 
 ```text
 - Activation checklist låser siste dokumenterte no-write sperre før faktisk execution kan vurderes.
-- Neste trygge steg er en target adapter dry-run harness som fortsatt ikke skriver data, men kan teste target-spesifikk dry-run-form uten activation.
+- Neste trygge steg er en adapter implementation contract som dokumenterer hvordan en senere faktisk adapter kan bygges uten å aktivere write i denne fasen.
 - Summary preview og activation checklist er fortsatt no-write/no-op og kobler ikke til target.
 - Faktisk write/sync skal fortsatt vente til target, audit log og rollback/partial failure behavior er eksplisitt implementert og testet.
 ```
@@ -1106,7 +1109,8 @@ Avgrensning for neste PR:
 
 ```text
 Bruk `docs/AHA_MANUAL_SYNC_ACTIVATION_CHECKLIST.md`, `docs/AHA_MANUAL_SYNC_CONTRACT.md` og run summary preview-statusen som kontraktslås.
-Legg til target adapter dry-run harness uten write.
+Bruk target adapter dry-run harness som no-write grunnlag.
+Definer adapter implementation contract før faktisk target/write.
 Ikke koble til faktisk target for write.
 Ikke skriv audit log.
 Ikke aktiver faktisk write/sync.
@@ -1152,7 +1156,8 @@ Ikke lag source events eller insights.
 28. ✅ feat: add AHA manual sync run summary preview
 29. ✅ docs: define AHA manual sync execution activation checklist
 30. ✅ feat: add AHA manual sync activation blocker tests
-31. Neste: feat: add AHA manual sync target adapter dry-run harness
+31. ✅ feat: add AHA manual sync target adapter dry-run harness
+32. Neste: docs: define AHA manual sync adapter implementation contract
 ```
 
-Ikke gå videre til storage, import, Insta/social graph, EchoNet eller faktisk AHA manual sync/write før activation blocker tests er på plass, target adapter dry-run harness / konkret target-adapter, audit log-skriving og rollback/partial failure behavior er dokumentert, implementert og testet uten auto-sync og uten skjulte databasekall.
+Ikke gå videre til storage, import, Insta/social graph, EchoNet eller faktisk AHA manual sync/write før activation blocker tests er på plass, adapter implementation contract, konkret target-adapter, audit log-skriving og rollback/partial failure behavior er dokumentert, implementert og testet uten auto-sync og uten skjulte databasekall.
