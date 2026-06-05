@@ -328,8 +328,11 @@ AHA Sync Hub skal utvikles i små, låste faser. Hver fase må bevare reglene om
 11. ✅ Audit log preview
 12. ✅ Target selector preview
 13. ✅ Manual sync target contract
-14. Neste: Adapter interface stub
-15. Senere: faktisk write/sync etter eksplisitt target-, audit- og rollback-PR
+14. ✅ Adapter interface stub
+15. ✅ Execution state machine stub
+16. ✅ Run summary preview
+17. Neste: Execution activation checklist
+18. Senere: faktisk write/sync etter eksplisitt target-, audit- og rollback-PR
 ```
 
 Manual sync execution contract er dokumentert i `docs/AHA_MANUAL_SYNC_CONTRACT.md`. Den er en kontrakt før faktisk implementasjon og definerer moduler i scope, preconditions/gates, blocking rules, payload-shape, write target-status, manuell bekreftelse, audit log, failure behavior og rollback/partial failure-regler.
@@ -419,11 +422,21 @@ Execution state machine stub er nå implementert for fremtidige manual sync-runs
 
 State machine er preview/status only og skriver ikke data. Den definerer state-navnene `not_started`, `blocked`, `confirmed`, `running`, `partial_success`, `success`, `failed` og `rolled_back`, men `confirmed`, `running`, `success` og `partial_success` er blokkert i denne fasen og kan ikke nås fra UI. Running/success-states kan dermed ikke brukes til faktisk execution ennå.
 
-Neste fase er manual sync run summary preview. Den skal bare oppsummere fremtidige run-resultater uten write, uten faktisk target, uten audit log-skriving, uten payload-send og uten auto-sync. Faktisk write/sync kommer fortsatt senere.
+Run summary preview-fasen er nå implementert. Den oppsummerer fremtidige run-signaler uten write, uten faktisk target, uten audit log-skriving, uten payload-send og uten auto-sync. Faktisk write/sync kommer fortsatt senere.
+
+## 13.6 Run summary preview-fasen er implementert
+
+Run summary preview er nå implementert som kompakt, read-only og in-memory oversikt i expanded Sync Hub-kontrollpanel og confirmation modal. Den samler readiness gate, validation summary, payload preview, operator checklist, audit log preview, target selector preview, adapter status og execution state machine status i én preview før en fremtidig manual sync-run.
+
+Summaryen viser preview-run-id, timestamp, valgt preview-target, target-/adapter-/state machine-status, inkluderte/ekskluderte moduler, totalPreviewItems, validation counts, readiness, checklist counts, audit/write/rollback status, blockers, warnings og next required steps. Den viser eksplisitt `canExecute=false` og `canWrite=false`.
+
+Run summary skriver ikke data, sender ikke payload, skriver ikke audit log, kaller ikke repository/database/API, kobler ikke til target, skriver ikke til localStorage og starter ikke sync. Manual sync-knappen og Confirm sync forblir disabled/gated. Faktisk write/sync kommer senere etter execution activation checklist, target-adapter, audit log-skriving og rollback-/partial failure-regler.
+
+Neste fase er execution activation checklist. Den bør dokumentere hvilke gates, eierbeslutninger og testkrav som må være oppfylt før faktisk execution/write kan vurderes i en senere PR.
 
 ## 14. Faktisk write/sync kommer senere
 
-Faktisk write/sync skal ikke innføres som del av contract-, confirmation modal-, audit log preview-, adapter stub- eller state machine stub-fasen. En senere PR må først legge til run summary preview uten write, og en enda senere target-adapter-PR må eksplisitt velge target før write:
+Faktisk write/sync skal ikke innføres som del av contract-, confirmation modal-, audit log preview-, adapter stub-, state machine stub- eller run summary preview-fasen. En senere PR må først legge til execution activation checklist uten write, og en enda senere target-adapter-PR må eksplisitt velge target før write:
 
 ```text
 - AHARepository via dokumentert target-adapter
@@ -455,10 +468,10 @@ Reglene fra denne planen gjelder fortsatt:
 
 ## 16. Neste anbefalte PR
 
-Neste anbefalte PR etter execution state machine stub-fasen er:
+Neste anbefalte PR etter run summary preview-fasen er:
 
 ```text
-feat: add AHA manual sync run summary preview
+docs: define AHA manual sync execution activation checklist
 ```
 
-Akseptanse for den PR-en bør være å vise en kompakt run summary preview basert på eksisterende dry-run/payload/checklist/state machine-status uten å koble til target, uten repository save/load, uten database/API/fetch/Supabase/Firebase, uten localStorage-skriving og uten auto-sync. Faktisk write/sync kommer fortsatt senere etter eksplisitt target-adapter, audit log-skriving og rollback-/partial failure-implementasjon.
+Akseptanse for den PR-en bør være å dokumentere nøyaktige activation gates for en senere write-enabled manual sync, fortsatt uten å koble til target, uten repository save/load, uten database/API/fetch/Supabase/Firebase, uten localStorage-skriving og uten auto-sync. Faktisk write/sync kommer fortsatt senere etter eksplisitt target-adapter, audit log-skriving og rollback-/partial failure-implementasjon.

@@ -2,14 +2,14 @@
 
 Statusdato: 2026-06-05
 
-Dette dokumentet oppsummerer nåværende implementasjonsstatus for AHA etter dokumentlåser, sync-hardening, Search note_reanalysis-visning, Mindmap tombstone-filtrering, Mindmap note_reanalysis-visning, Lists-, Paths-, Meta Insights-, Groups- og AHAavisa/Articles-bolkene, Sync Hub pre-sync UI, manual sync execution contract, manual sync confirmation modal, audit log preview, target selector preview, manual sync target contract, manual sync adapter interface stub og execution state machine stub.
+Dette dokumentet oppsummerer nåværende implementasjonsstatus for AHA etter dokumentlåser, sync-hardening, Search note_reanalysis-visning, Mindmap tombstone-filtrering, Mindmap note_reanalysis-visning, Lists-, Paths-, Meta Insights-, Groups- og AHAavisa/Articles-bolkene, Sync Hub pre-sync UI, manual sync execution contract, manual sync confirmation modal, audit log preview, target selector preview, manual sync target contract, manual sync adapter interface stub, execution state machine stub og manual sync run summary preview.
 
 Dokumentet er en statuslås. Det er ikke en runtime-endring, ikke en ny motor, ikke en Supabase-migrasjon og ikke en beslutning om å bygge nye flater.
 
 ## 1. Kort status
 
 ```text
-AHA core er nå dokumentert, sync-reglene for de viktigste personal-data-modulene er hardenet, og AHA Sync Hub har dokumentert pre-sync UI, manual sync execution contract, UI-only confirmation modal, audit log preview, target selector preview og manual sync target contract, adapter interface stub og execution state machine stub uten faktisk write.
+AHA core er nå dokumentert, sync-reglene for de viktigste personal-data-modulene er hardenet, og AHA Sync Hub har dokumentert pre-sync UI, manual sync execution contract, UI-only confirmation modal, audit log preview, target selector preview og manual sync target contract, adapter interface stub, execution state machine stub og manual sync run summary preview uten faktisk write.
 ```
 
 Ferdig nå:
@@ -50,6 +50,8 @@ Ferdig nå:
 ✅ Manual sync target contract er dokumentert
 ✅ Manual sync adapter interface stub er lagt til uten write
 ✅ Manual sync execution state machine stub er lagt til
+✅ Manual sync run summary preview er lagt til som samlet preview-only oversikt
+✅ Run summary samler target, adapter, state machine, payload, validation, readiness, checklist og audit uten write
 ✅ running/success/partial_success er disabled/unreachable fra UI
 ✅ Ingen write-target er faktisk konfigurert
 ✅ Target selector er fortsatt preview-only
@@ -75,7 +77,7 @@ Ikke bygget ennå:
 Neste anbefalte PR:
 
 ```text
-feat: add AHA manual sync run summary preview
+docs: define AHA manual sync execution activation checklist
 ```
 
 ## 1b. Meta Insights – algoritmisk meta-/selvinnsiktsmotor
@@ -1020,13 +1022,16 @@ AHA Sync Hub har nå komplett pre-sync UI og confirmation preview på kontraktsn
 ✅ manual sync target contract
 ✅ manual sync adapter interface stub
 ✅ manual sync execution state machine stub
+✅ manual sync run summary preview
 ```
 
-Status etter manual sync state machine stub-PR-en:
+Status etter manual sync run summary preview-PR-en:
 
 ```text
 - Adapter interface stub finnes, men executeRun returnerer fortsatt blocked/disabled.
 - Execution state machine stub finnes med default blocked/not_started, canExecute=false, canWrite=false og writeStatus=disabled_stub_only.
+- Run summary preview finnes i expanded kontrollpanel og confirmation modal, men er preview-only/in-memory.
+- Summary samler target, adapter, state machine, payload, validation, readiness, checklist og audit med canExecute=false og canWrite=false.
 - confirmed, running, success og partial_success er disabled/unreachable fra UI.
 - Target selector er fortsatt preview-only og aktiverer ikke sync.
 - Ingen target er faktisk konfigurert; not_configured er default/safe.
@@ -1041,23 +1046,23 @@ Status etter manual sync state machine stub-PR-en:
 Neste anbefalte PR:
 
 ```text
-feat: add AHA manual sync run summary preview
+docs: define AHA manual sync execution activation checklist
 ```
 
 Hvorfor:
 
 ```text
-- Execution state machine stub låser trygge blocked/disabled run states før faktisk execution.
-- En run summary preview er tryggeste neste fase fordi den kan oppsummere fremtidige run-resultater uten write.
-- Summary preview skal fortsatt være no-write/no-op og ikke koble til target.
+- Run summary preview låser en samlet no-write oversikt før faktisk execution kan vurderes.
+- Neste trygge steg er å dokumentere activation gates, eierbeslutninger og testkrav før write-enabled manual sync.
+- Summary preview er fortsatt no-write/no-op og kobler ikke til target.
 - Faktisk write/sync skal fortsatt vente til target, audit log og rollback/partial failure behavior er eksplisitt implementert og testet.
 ```
 
 Avgrensning for neste PR:
 
 ```text
-Bruk `docs/AHA_MANUAL_SYNC_CONTRACT.md` som kontraktslås.
-Definer run summary preview uten write.
+Bruk `docs/AHA_MANUAL_SYNC_CONTRACT.md` og run summary preview-statusen som kontraktslås.
+Definer execution activation checklist uten write.
 Ikke koble til faktisk target.
 Ikke skriv audit log.
 Ikke aktiver faktisk write/sync.
@@ -1100,7 +1105,8 @@ Ikke lag source events eller insights.
 25. ✅ docs: define AHA manual sync target contract
 26. ✅ feat: add AHA manual sync adapter interface stub
 27. ✅ feat: add AHA manual sync execution state machine stub
-28. Neste: feat: add AHA manual sync run summary preview
+28. ✅ feat: add AHA manual sync run summary preview
+29. Neste: docs: define AHA manual sync execution activation checklist
 ```
 
-Ikke gå videre til storage, import, Insta/social graph, EchoNet eller faktisk AHA manual sync/write før run summary preview, konkret target-adapter, audit log-skriving og rollback/partial failure behavior er dokumentert, implementert og testet uten auto-sync og uten skjulte databasekall.
+Ikke gå videre til storage, import, Insta/social graph, EchoNet eller faktisk AHA manual sync/write før execution activation checklist, konkret target-adapter, audit log-skriving og rollback/partial failure behavior er dokumentert, implementert og testet uten auto-sync og uten skjulte databasekall.

@@ -1385,3 +1385,47 @@ html, body { max-width: 100%; overflow-x: hidden; }
   border-radius: 999px;
   background: rgba(255,255,255,.055);
 }
+
+.aha-sync-run-summary-preview {
+  display: grid;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255,255,255,.12);
+}
+
+.aha-sync-run-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.aha-sync-run-summary-grid p {
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 12px;
+  background: rgba(255,255,255,.045);
+  color: var(--aha-muted);
+  font-size: .82rem;
+}
+
+.aha-sync-run-summary-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  color: var(--aha-muted);
+  font-size: .82rem;
+}
+
+.aha-sync-run-summary-chip-list span {
+  padding: 4px 8px;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 999px;
+  background: rgba(255,255,255,.055);
+}
+
+@media (max-width: 620px) {
+  .aha-sync-run-summary-grid {
+    grid-template-columns: 1fr;
+  }
+}
