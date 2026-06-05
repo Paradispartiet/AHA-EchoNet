@@ -7,6 +7,7 @@
   let isSyncHubPrepOpen = false;
   let isAhaManualSyncConfirmationModalOpen = false;
   let selectedPreviewTarget = "not_configured";
+  let lastAhaManualSyncResult = null;
 
   const AHA_AUTH_RETURN_TO_KEY = "aha_auth_return_to_v1";
   const HISTORY_GO_PROFILE_URL = "https://paradispartiet.github.io/History-Go/profile.html";
@@ -338,16 +339,22 @@
       reason: "No write target configured. This is the safe default."
     },
     {
+      id: "database_existing",
+      label: "Existing database target",
+      status: "configured",
+      reason: "Uses the existing AHARepository write layer when all manual gates pass."
+    },
+    {
       id: "aha_repository_future",
       label: "AHA repository (future)",
       status: "future_only",
-      reason: "Future repository target preview only; no AHARepository save/load path is connected."
+      reason: "Future repository target preview only."
     },
     {
       id: "database_api_future",
       label: "Database/API (future)",
       status: "unavailable",
-      reason: "Future database/API target preview only; no client, fetch, Supabase, or Firebase path is connected."
+      reason: "Future database/API target preview only; no new client is introduced."
     },
     {
       id: "custom_sync_backend_future",
@@ -568,6 +575,7 @@
       reason: decision.reason,
       itemCount,
       sampleItems: decision.included ? activeItems.slice(0, 3).map(simplifySyncHubPreviewItem) : [],
+      items: decision.included ? activeItems.slice() : [],
       payloadShape: formatAhaSyncPayloadShape(source),
       warnings: row.warnings || [],
       errors: row.errors || [],
@@ -599,7 +607,7 @@
   function summarizeSyncHubValidation(plan) {
     const totalModules = plan.length;
     const modulesReady = plan.filter((row) => row.validationStatus === "valid").length;
-    const modulesWithWarnings = plan.filter((row) => ["warnings", "skipped"].includes(row.validationStatus)).length;
+    const modulesWithWarnings = plan.filter((row) => row.validationStatus === "warnings").length;
     const modulesWithErrors = plan.filter((row) => row.validationStatus === "errors").length;
     const warningCount = plan.reduce((count, row) => count + (row.warnings?.length || 0), 0);
     const errorCount = plan.reduce((count, row) => count + (row.errors?.length || 0), 0);
@@ -681,19 +689,19 @@
           : "Payload preview excludes missing, empty, and validation-error modules."
       ),
       createAhaSyncChecklistItem(
-        "No database connection used",
+        "Dashboard write boundary preserved",
         "passed",
-        "Checklist uses existing in-memory dry-run, validation, readiness, and payload preview results only."
+        "Dashboard prepares gated payload data only; writes are delegated to the manual sync adapter."
       ),
       createAhaSyncChecklistItem(
-        "No repository write enabled",
+        "Manual sync remains gated",
         "passed",
-        "No repository save path is exposed from this Sync Hub panel."
+        "No sync runs during page load, panel open, target selection, or modal open."
       ),
       createAhaSyncChecklistItem(
-        "Manual sync not enabled yet",
+        "Explicit confirmation required",
         "passed",
-        "Sync is not available yet; this panel exposes no manual sync action."
+        "Only the Confirm sync action in the modal can call the adapter execution path."
       )
     ];
 
@@ -783,29 +791,35 @@
 
   function getAhaManualSyncPreviewTargetAuditStatus(target = getAhaManualSyncPreviewTarget()) {
     if (target.id === "not_configured") return "not_configured";
-    return "future_only";
+    if (target.id !== "database_existing") return "future_only";
+    const validation = window.AHAManualSyncAdapter?.validateAhaManualSyncTarget
+      ? window.AHAManualSyncAdapter.validateAhaManualSyncTarget({ id: "database_existing", status: "configured" })
+      : { ok: false };
+    return validation.ok ? "configured" : "not_configured";
   }
 
   function getAhaManualSyncPreviewTargetGateReason(target = getAhaManualSyncPreviewTarget()) {
+    const status = getAhaManualSyncPreviewTargetAuditStatus(target);
     if (target.id === "not_configured") return "No write target configured.";
+    if (target.id === "database_existing" && status === "configured") return "Existing database target is configured.";
+    if (target.id === "database_existing") return "Existing database target is unavailable or missing approved write methods.";
     return "Selected target is preview-only and not connected.";
   }
 
   const AHA_MANUAL_SYNC_NEXT_REQUIRED_STEPS = Object.freeze([
-    "configure a real target adapter in a future PR",
-    "implement audit log writing in a future PR",
-    "implement manual sync execution in a future PR",
-    "keep Manual sync and Confirm sync disabled until execution is implemented"
+    "keep sync manual and explicitly confirmed for each run",
+    "add an AHA manual sync audit log writer if durable audit history is required",
+    "add a manual sync result history panel after audit/result persistence exists"
   ]);
 
   const AHA_MANUAL_SYNC_STATE_MACHINE_FALLBACK_STATUS = Object.freeze({
     currentState: "blocked",
     previousState: "not_started",
-    reason: "Manual sync execution is not implemented.",
+    reason: "Manual sync is gated and requires explicit confirmation.",
     canExecute: false,
     canWrite: false,
     isStub: true,
-    writeStatus: "disabled_stub_only",
+    writeStatus: "manual_gated_existing_database_target",
     states: ["not_started", "blocked", "confirmed", "running", "partial_success", "success", "failed", "rolled_back"],
     allowedPreviewTransitions: {
       not_started: ["blocked"],
@@ -841,13 +855,13 @@
     }
 
     return {
-      adapterStatus: "disabled_stub_only",
+      adapterStatus: "manual_gated_existing_database_target",
       canPrepare: true,
       canExecute: false,
       canWrite: false,
       isStub: true,
-      reason: "Manual sync execution is not implemented.",
-      writeStatus: "disabled_stub_only",
+      reason: "Manual sync is gated and requires explicit confirmation.",
+      writeStatus: "manual_gated_existing_database_target",
       stateMachineStatus: getAhaManualSyncStateMachinePreviewStatus()
     };
   }
@@ -860,7 +874,7 @@
       <div class="aha-sync-state-machine-preview" aria-label="AHA manual sync execution state machine preview">
         <div class="aha-sync-prep-heading">
           <h4>Execution state machine</h4>
-          <p class="aha-sync-prep-notice">State machine stub only. Write/execution states are disabled.</p>
+          <p class="aha-sync-prep-notice">State machine supports the gated manual flow only; no transition runs without explicit confirmation.</p>
           <p class="aha-sync-validation-summary">currentState: ${escapeHtml(status.currentState)} · previousState: ${escapeHtml(status.previousState)} · writeStatus: ${escapeHtml(status.writeStatus)}</p>
         </div>
         <div class="aha-sync-validation-block">
@@ -887,26 +901,26 @@
     return `
       <div class="aha-sync-target-preview" aria-label="AHA manual sync target selector preview">
         <div class="aha-sync-prep-heading">
-          <h4>Target selector preview</h4>
-          <p class="aha-sync-prep-notice">Preview only. No target is connected and no data is written.</p>
-          <p class="aha-sync-validation-summary">selectedPreviewTarget: ${escapeHtml(activeTarget.id)} · targetStatus: ${escapeHtml(getAhaManualSyncPreviewTargetAuditStatus(activeTarget))} · writeStatus: disabled_preview_only</p>
+          <h4>Target selector</h4>
+          <p class="aha-sync-prep-notice">Manual target selection only. No data is written until Confirm sync is clicked.</p>
+          <p class="aha-sync-validation-summary">selectedPreviewTarget: ${escapeHtml(activeTarget.id)} · targetStatus: ${escapeHtml(getAhaManualSyncPreviewTargetAuditStatus(activeTarget))} · writeStatus: manual_gated_existing_database_target</p>
         </div>
-        <label class="aha-sync-target-select-label" for="aha-sync-target-preview-select">Future write target preview</label>
+        <label class="aha-sync-target-select-label" for="aha-sync-target-preview-select">Manual write target</label>
         <select id="aha-sync-target-preview-select" class="aha-sync-target-select" aria-describedby="aha-sync-target-preview-note">
           ${AHA_MANUAL_SYNC_PREVIEW_TARGETS.map((target) => `<option value="${escapeHtml(target.id)}"${target.id === activeTarget.id ? " selected" : ""}>${escapeHtml(target.label)}</option>`).join("")}
         </select>
-        <p id="aha-sync-target-preview-note" class="aha-sync-prep-notice">Changing this selector only updates in-memory preview text. It does not enable Manual sync, Confirm sync, payload send, audit writes, repository calls, database/API calls, fetch, Supabase, Firebase, or localStorage writes.</p>
+        <p id="aha-sync-target-preview-note" class="aha-sync-prep-notice">Changing this selector only updates the gated target state. It does not run sync, write payloads, or bypass the adapter.</p>
         <div class="aha-sync-prep-list">
           ${AHA_MANUAL_SYNC_PREVIEW_TARGETS.map((target) => {
             const isSelected = target.id === activeTarget.id;
             const rowStatus = isSelected && target.id !== "not_configured" ? "selected_preview" : target.status;
             const reason = isSelected && target.id !== "not_configured"
-              ? `${target.reason} Selected for preview text only; still unavailable for write.`
+              ? `${target.reason} Selected, but writes still require all gates and explicit confirmation.`
               : target.reason;
             return `
               <div class="aha-sync-prep-row aha-sync-target-row aha-sync-target-${escapeHtml(rowStatus)}">
                 <strong>${escapeHtml(target.label)}</strong>
-                <span>${isSelected ? "selected" : "available as preview label"}</span>
+                <span>${isSelected ? "selected" : "available"}</span>
                 <small>${escapeHtml(rowStatus)}</small>
                 <p>${escapeHtml(reason)}</p>
               </div>
@@ -1156,23 +1170,24 @@
       const warnings = [];
 
       if (readinessStatus === "blocked") blockers.push("Readiness gate is blocked.");
+      if (readinessStatus === "warning") blockers.push("Readiness gate has warnings that must be reviewed.");
       if (validationSummary.errorCount > 0) blockers.push(`${validationSummary.errorCount} validation error${validationSummary.errorCount === 1 ? "" : "s"} found.`);
       if (checklistSummary.blocked > 0) blockers.push(`${checklistSummary.blocked} blocked checklist item${checklistSummary.blocked === 1 ? "" : "s"}.`);
       if (targetStatus === "not_configured") blockers.push("No target is connected.");
-      if (adapterStatus.canExecute !== true) blockers.push("Adapter cannot execute; it is a disabled preview stub.");
-      if (stateMachineStatus.canExecute !== true) blockers.push("State machine cannot execute; execution states remain disabled.");
+      if (adapterStatus.canExecute !== true) blockers.push("Adapter cannot execute with the current target/write layer.");
+      if (stateMachineStatus.canExecute !== true) blockers.push("State machine cannot execute with the current gates.");
       if (Number(safePayloadPreview.modulesIncluded || 0) === 0) blockers.push("Payload preview has 0 included modules.");
 
       if (readinessStatus === "warning") warnings.push("Readiness gate has warnings.");
       if (validationSummary.warningCount > 0) warnings.push(`${validationSummary.warningCount} validation warning${validationSummary.warningCount === 1 ? "" : "s"} found.`);
       if (checklistSummary.warning > 0) warnings.push(`${checklistSummary.warning} checklist warning${checklistSummary.warning === 1 ? "" : "s"}.`);
-      if (targetStatus !== "not_configured") warnings.push("Selected target is preview-only and still not connected.");
+      if (targetStatus === "future_only") warnings.push("Selected target is preview-only and still not connected.");
       (safeAuditPreview.warnings || []).forEach((message) => warnings.push(message));
       (safePayloadPreview.modules || []).forEach((modulePreview) => {
         (modulePreview.warnings || []).forEach((message) => warnings.push(`${modulePreview.name}: ${message}`));
       });
 
-      const summaryStatus = blockers.length ? "blocked" : warnings.length ? "warning" : "ready_preview_only";
+      const summaryStatus = blockers.length ? "blocked" : "ready";
 
       return {
         ok: true,
@@ -1182,12 +1197,12 @@
         timestampLabel: safeAuditPreview.timestampLabel || "preview-generated, not written",
         selectedPreviewTarget: safePreviewTarget.id,
         targetStatus,
-        adapterStatus: adapterStatus.adapterStatus || "disabled_stub_only",
-        adapterWriteStatus: adapterStatus.writeStatus || "disabled_stub_only",
+        adapterStatus: adapterStatus.adapterStatus || "manual_gated_existing_database_target",
+        adapterWriteStatus: adapterStatus.writeStatus || "manual_gated_existing_database_target",
         stateMachineState: stateMachineStatus.currentState || "blocked",
-        stateMachineWriteStatus: stateMachineStatus.writeStatus || "disabled_stub_only",
-        canExecute: false,
-        canWrite: false,
+        stateMachineWriteStatus: stateMachineStatus.writeStatus || "manual_gated_existing_database_target",
+        canExecute: blockers.length === 0,
+        canWrite: blockers.length === 0,
         includedModules,
         excludedModules,
         totalPreviewItems: Number(safePayloadPreview.totalPreviewItems || 0),
@@ -1221,10 +1236,10 @@
         timestampLabel: "preview-generated, not written",
         selectedPreviewTarget: getAhaManualSyncPreviewTarget().id,
         targetStatus: getAhaManualSyncPreviewTargetAuditStatus(),
-        adapterStatus: "disabled_stub_only",
-        adapterWriteStatus: "disabled_stub_only",
+        adapterStatus: "manual_gated_existing_database_target",
+        adapterWriteStatus: "manual_gated_existing_database_target",
         stateMachineState: "blocked",
-        stateMachineWriteStatus: "disabled_stub_only",
+        stateMachineWriteStatus: "manual_gated_existing_database_target",
         canExecute: false,
         canWrite: false,
         includedModules: [],
@@ -1304,7 +1319,7 @@
       <div class="aha-sync-target-dry-run" aria-label="AHA manual sync target adapter dry-run">
         <div class="aha-sync-prep-heading">
           <h4>Target adapter dry-run</h4>
-          <p class="aha-sync-prep-notice">Dry-run only. No target is connected and no data is written.</p>
+          <p class="aha-sync-prep-notice">Dry-run only. No data is written until explicit confirmation.</p>
           <p class="aha-sync-validation-summary">status: ${escapeHtml(dryRun.status)} · target: ${escapeHtml(dryRun.target)} · writeStatus: ${escapeHtml(dryRun.writeStatus)}</p>
         </div>
         <div class="aha-sync-run-summary-grid">
@@ -1345,7 +1360,7 @@
     return `
       <div class="aha-sync-confirmation-section aha-sync-target-dry-run-confirmation">
         <h5>Target adapter dry-run</h5>
-        <p class="aha-sync-prep-notice">Dry-run only. Confirm sync remains disabled and no data is written.</p>
+        <p class="aha-sync-prep-notice">Dry-run only. No data is written unless Confirm sync is enabled and clicked.</p>
         <p><strong>status:</strong> ${escapeHtml(dryRun.status)} · <strong>target:</strong> ${escapeHtml(dryRun.target)} · <strong>writeStatus:</strong> ${escapeHtml(dryRun.writeStatus)}</p>
         <p><strong>canExecute:</strong> ${escapeHtml(dryRun.canExecute)} · <strong>canWrite:</strong> ${escapeHtml(dryRun.canWrite)}</p>
       </div>
@@ -1362,8 +1377,8 @@
       <div class="aha-sync-run-summary-preview" aria-label="AHA manual sync run summary preview">
         <div class="aha-sync-prep-heading">
           <h4>Run summary preview</h4>
-          <p class="aha-sync-prep-notice">Preview only. No run is executed and no data is written.</p>
-          <p class="aha-sync-unavailable-notice">Manual sync remains disabled. Confirm sync remains disabled. No target is connected. No write path exists.</p>
+          <p class="aha-sync-prep-notice">Preview only. No run is executed until explicit confirmation.</p>
+          <p class="aha-sync-unavailable-notice">Manual sync remains gated. Confirm sync is enabled only when readiness, validation, checklist, target, adapter, and state machine gates pass.</p>
           <p class="aha-sync-validation-summary">summaryStatus: ${escapeHtml(summary.summaryStatus)} · previewRunId: ${escapeHtml(summary.previewRunId)}</p>
         </div>
         <div class="aha-sync-run-summary-grid">
@@ -1414,7 +1429,7 @@
     return `
       <div class="aha-sync-confirmation-section aha-sync-run-summary-confirmation">
         <h5>Run summary preview</h5>
-        <p class="aha-sync-prep-notice">Preview only. Confirm sync remains disabled and no data is written.</p>
+        <p class="aha-sync-prep-notice">Preview only. No data is written unless Confirm sync is enabled and clicked.</p>
         <p><strong>summaryStatus:</strong> ${escapeHtml(summary.summaryStatus)} · <strong>target:</strong> ${escapeHtml(summary.selectedPreviewTarget)} · <strong>totalPreviewItems:</strong> ${escapeHtml(summary.totalPreviewItems)}</p>
         <p><strong>canExecute:</strong> ${escapeHtml(summary.canExecute)} · <strong>canWrite:</strong> ${escapeHtml(summary.canWrite)}</p>
         <strong>Key blockers</strong>
@@ -1430,52 +1445,65 @@
     const modulesIncluded = Number(payloadPreview?.modulesIncluded || 0);
     const blockedChecklistItems = (checklist.items || []).filter((item) => item.status === "blocked");
     const warningChecklistItems = (checklist.items || []).filter((item) => item.status === "warning");
-    const gateReasons = [getAhaManualSyncPreviewTargetGateReason(previewTarget)];
+    const adapterStatus = getAhaManualSyncAdapterPreviewStatus();
+    const stateMachineStatus = getAhaManualSyncStateMachinePreviewStatus();
+    const targetStatus = getAhaManualSyncPreviewTargetAuditStatus(previewTarget);
+    const gateReasons = [];
 
-    if (checklist.readiness === "blocked") gateReasons.push("Readiness gate is blocked.");
-    if (checklist.readiness === "warning") gateReasons.push("Readiness gate has warnings that must be reviewed.");
-    if (summary.modulesWithErrors > 0) gateReasons.push(`${summary.modulesWithErrors} validation error module${summary.modulesWithErrors === 1 ? "" : "s"} found.`);
-    if (summary.modulesWithWarnings > 0) gateReasons.push(`${summary.modulesWithWarnings} warning or skipped module${summary.modulesWithWarnings === 1 ? "" : "s"} must be reviewed.`);
+    if (targetStatus !== "configured") gateReasons.push(getAhaManualSyncPreviewTargetGateReason(previewTarget));
+    if (checklist.readiness !== "passed") gateReasons.push(checklist.readiness === "blocked" ? "Readiness gate is blocked." : "Readiness gate has warnings that must be reviewed.");
+    if (summary.errorCount > 0) gateReasons.push(`${summary.errorCount} validation error${summary.errorCount === 1 ? "" : "s"} found.`);
     if (modulesIncluded === 0) gateReasons.push("Payload preview includes no modules.");
-    blockedChecklistItems.forEach((item) => gateReasons.push(`${item.label}: ${item.reason}`));
+    if (blockedChecklistItems.length > 0) blockedChecklistItems.forEach((item) => gateReasons.push(`${item.label}: ${item.reason}`));
+    if (adapterStatus.canExecute !== true) gateReasons.push("Adapter canExecute is false for the current target.");
+    if (stateMachineStatus.canExecute !== true) gateReasons.push("State machine canExecute is false for the current gates.");
     warningChecklistItems.forEach((item) => gateReasons.push(`${item.label}: ${item.reason}`));
-    gateReasons.push("Manual sync is not enabled in code yet.");
 
     return [...new Set(gateReasons)];
   }
 
+  function canConfirmAhaManualSync(plan, payloadPreview, checklist, previewTarget = getAhaManualSyncPreviewTarget()) {
+    return buildAhaManualSyncGate(plan, payloadPreview, checklist, previewTarget).length === 0;
+  }
+
+  function renderAhaManualSyncResult(result = lastAhaManualSyncResult) {
+    if (!result) return "";
+    const status = result.status || "blocked";
+    const reason = result.reason || result.error || "No result details.";
+    return `
+      <div class="aha-sync-validation-block aha-sync-result aha-sync-result-${escapeHtml(status)}" aria-live="polite">
+        <h5>Last manual sync result</h5>
+        <p><strong>status:</strong> ${escapeHtml(status)}</p>
+        <p>${escapeHtml(reason)}</p>
+      </div>
+    `;
+  }
+
   function renderAhaManualSyncGate(plan, payloadPreview, checklist) {
-    const gateReasons = buildAhaManualSyncGate(plan, payloadPreview, checklist, getAhaManualSyncPreviewTarget());
-    const primaryReason = gateReasons[0] || "Manual sync is not enabled in code yet.";
+    const activeTarget = getAhaManualSyncPreviewTarget();
+    const gateReasons = buildAhaManualSyncGate(plan, payloadPreview, checklist, activeTarget);
+    const canConfirm = gateReasons.length === 0;
+    const primaryReason = gateReasons[0] || "All gates passed. Open the modal and explicitly confirm one manual sync run.";
 
     return `
       <div class="aha-sync-manual-gate" aria-label="AHA Sync Hub manual sync gate">
         <div class="aha-sync-prep-heading">
           <p class="eyebrow">Manual sync</p>
           <h4>Manual sync control</h4>
-          <p class="aha-sync-unavailable-notice">Manual sync is gated and not enabled yet.</p>
+          <p class="aha-sync-unavailable-notice">Manual sync is gated; no auto-sync exists.</p>
         </div>
         <div class="aha-sync-manual-actions">
           <button type="button" class="aha-sync-manual-button" disabled aria-disabled="true" aria-describedby="aha-sync-manual-disabled-reason">Manual sync</button>
           <button id="aha-sync-confirmation-preview" type="button" class="aha-sync-confirmation-preview-button" aria-haspopup="dialog">Preview confirmation</button>
         </div>
         <div id="aha-sync-manual-disabled-reason" class="aha-sync-validation-block">
-          <h5>Disabled reason</h5>
-          <p class="aha-sync-validation-status aha-sync-validation-status-blocked">${escapeHtml(primaryReason)}</p>
+          <h5>Gate status</h5>
+          <p class="aha-sync-validation-status aha-sync-validation-status-${canConfirm ? "passed" : "blocked"}">${escapeHtml(primaryReason)}</p>
           <ul class="aha-sync-manual-reasons">
             ${gateReasons.map((reason) => `<li>${escapeHtml(reason)}</li>`).join("")}
           </ul>
         </div>
-        <div class="aha-sync-validation-block">
-          <h5>Before manual sync can be enabled</h5>
-          <ul class="aha-sync-manual-requirements">
-            <li>readiness must be ready</li>
-            <li>validation errors must be zero</li>
-            <li>payload preview must include at least one module</li>
-            <li>operator checklist must have no blocked items</li>
-            <li>explicit manual sync implementation must be added in a future PR</li>
-          </ul>
-        </div>
+        ${renderAhaManualSyncResult()}
       </div>
     `;
   }
@@ -1502,7 +1530,8 @@
         gateReasons,
         previewTarget,
         targetStatus: getAhaManualSyncPreviewTargetAuditStatus(previewTarget),
-        writeStatus: "disabled_preview_only",
+        writeStatus: getAhaManualSyncPreviewTargetAuditStatus(previewTarget) === "configured" ? "manual_gated_existing_database_target" : "blocked",
+        canConfirm: gateReasons.length === 0,
         validationSummary,
         validationErrorMessages,
         payloadPreview: safePayloadPreview,
@@ -1520,7 +1549,8 @@
         gateReasons: ["Confirmation preview could not be built. Sync remains blocked and disabled."],
         previewTarget: getAhaManualSyncPreviewTarget(),
         targetStatus: getAhaManualSyncPreviewTargetAuditStatus(),
-        writeStatus: "disabled_preview_only",
+        writeStatus: "blocked",
+        canConfirm: false,
         validationSummary: { totalModules: 0, modulesReady: 0, modulesWithWarnings: 0, modulesWithErrors: 1, warningCount: 0, errorCount: 1 },
         validationErrorMessages: ["Could not build validation summary for confirmation preview."],
         payloadPreview: { modules: [], modulesIncluded: 0, modulesExcluded: 0, totalPreviewItems: 0 },
@@ -1572,9 +1602,9 @@
       "operator must review validation warnings/errors",
       "operator must review payload summary",
       "operator must confirm this one sync run",
-      "write target must be explicitly configured in a future PR",
-      "audit log must be enabled in a future PR",
-      "actual sync execution must be implemented in a future PR"
+      "write target must be configured",
+      "adapter and state machine gates must allow execution",
+      "audit status is surfaced in the result"
     ];
 
     return `
@@ -1584,7 +1614,7 @@
             <div>
               <p class="eyebrow">AHA manual sync confirmation</p>
               <h4 id="aha-sync-confirmation-title">Confirm manual sync</h4>
-              <p id="aha-sync-confirmation-description" class="aha-sync-prep-notice">Preview only. Manual sync is not enabled yet.</p>
+              <p id="aha-sync-confirmation-description" class="aha-sync-prep-notice">Manual sync is gated and runs only if you click Confirm sync for this one run.</p>
             </div>
             <button type="button" class="aha-sync-confirmation-close" data-aha-sync-confirmation-close="true" aria-label="Close confirmation preview">Close</button>
           </div>
@@ -1623,13 +1653,13 @@
 
           <div class="aha-sync-confirmation-section">
             <h5>F. Target preview</h5>
-            <p class="aha-sync-prep-notice">Preview only. No target is connected and no data is written.</p>
+            <p class="aha-sync-prep-notice">Target status is evaluated by the adapter. No data is written until explicit confirmation.</p>
             <p><strong>target:</strong> ${escapeHtml(model.previewTarget.id)} · <strong>targetStatus:</strong> ${escapeHtml(model.targetStatus)} · <strong>writeStatus:</strong> ${escapeHtml(model.writeStatus)}</p>
           </div>
 
           <div class="aha-sync-confirmation-section">
             <h5>G. Execution state machine</h5>
-            <p class="aha-sync-prep-notice">Stub only. Confirm sync stays disabled.</p>
+            <p class="aha-sync-prep-notice">Gated flow: blocked → confirmed → running → success/failed. Running requires explicit confirmation.</p>
             <p><strong>currentState:</strong> ${escapeHtml(stateMachineStatus.currentState)} · <strong>canExecute:</strong> ${escapeHtml(stateMachineStatus.canExecute)} · <strong>writeStatus:</strong> ${escapeHtml(stateMachineStatus.writeStatus)}</p>
           </div>
 
@@ -1646,8 +1676,8 @@
           <div class="aha-sync-confirmation-actions">
             <button type="button" class="aha-sync-confirmation-preview-button" data-aha-sync-confirmation-close="true">Cancel</button>
             <button type="button" class="aha-sync-confirmation-preview-button" data-aha-sync-confirmation-close="true">Close</button>
-            <button type="button" class="aha-sync-manual-button" disabled aria-disabled="true" title="Disabled until manual sync execution is implemented.">Confirm sync</button>
-            <p class="aha-sync-prep-notice">Disabled until manual sync execution is implemented.</p>
+            <button id="aha-sync-confirm-run" type="button" class="aha-sync-manual-button"${model.canConfirm ? "" : " disabled aria-disabled=\"true\""} title="Confirm one gated manual sync run">Confirm sync</button>
+            <p class="aha-sync-prep-notice">${model.canConfirm ? "Enabled because all gates passed. No sync has run yet." : "Disabled until all gates pass."}</p>
           </div>
         </div>
       </div>
@@ -1725,6 +1755,35 @@
         renderSyncHubStatus();
       });
     });
+
+    const confirmButton = $("aha-sync-confirm-run");
+    if (confirmButton) {
+      confirmButton.addEventListener("click", async () => {
+        const plan = buildAhaSyncDryRunPlan();
+        const payloadPreview = buildAhaSyncPayloadPreview(plan);
+        const operatorChecklist = buildAhaSyncOperatorChecklist(plan, payloadPreview);
+        const previewTarget = getAhaManualSyncPreviewTarget();
+        if (!canConfirmAhaManualSync(plan, payloadPreview, operatorChecklist, previewTarget)) return;
+        try {
+          const adapter = window.AHAManualSyncAdapter;
+          if (!adapter?.executeAhaManualSyncRun) throw new Error("AHA manual sync adapter is unavailable.");
+          lastAhaManualSyncResult = await adapter.executeAhaManualSyncRun({
+            target: { id: previewTarget.id, status: getAhaManualSyncPreviewTargetAuditStatus(previewTarget) },
+            payloadPreview,
+            validation: summarizeSyncHubValidation(plan),
+            readiness: { status: operatorChecklist.readiness === "passed" ? "ready" : operatorChecklist.readiness },
+            checklist: operatorChecklist,
+            auditPreview: buildAhaManualSyncAuditLogPreview(plan, payloadPreview, operatorChecklist, previewTarget),
+            confirmationToken: `manual-confirm-${Date.now()}`,
+            explicitConfirmation: true
+          });
+        } catch (error) {
+          lastAhaManualSyncResult = { ok: false, status: "failed", reason: error?.message || String(error) };
+        }
+        isAhaManualSyncConfirmationModalOpen = false;
+        renderSyncHubStatus();
+      });
+    }
   }
 
   function bindAhaManualSyncTargetSelectorPreview() {

@@ -463,17 +463,41 @@ Denne fasen skriver ikke data, sender ikke payload, skriver ikke audit log, kall
 
 Neste fase er adapter implementation contract. Den skal dokumentere nøyaktig hvordan en senere faktisk adapter kan implementeres, hvilke metodegrenser som gjelder, hvilke write-/rollback-/audit-regler som må testes, og fortsatt ikke aktivere faktisk write i kontraktsfasen.
 
-## 14. Faktisk write/sync kommer senere
 
-Faktisk write/sync skal ikke innføres som del av contract-, confirmation modal-, audit log preview-, adapter stub-, state machine stub-, run summary preview- eller activation checklist-fasen. Activation checklist er dokumentasjon, ikke runtime activation. Activation blocker tests og target adapter dry-run harness finnes nå uten write. En senere adapter implementation contract må fortsatt holde seg no-write, og en enda senere target-adapter/write-PR må eksplisitt velge target før write:
+## 13.10 Database target wiring er implementert
+
+AHA manual sync-adapteren er nå koblet til eksisterende database target via eksisterende `AHARepository` write-lag. Det er ikke lagt inn ny databaseklient, nye credentials, hardkodede URL-er/secrets eller ny backend. `database_existing` er eneste faktiske target-navn i denne fasen, og target regnes som `configured` bare når de eksisterende write-metodene for Lists, Paths, Groups og AHAavisa finnes.
+
+Flowen er fortsatt eksplisitt manuell og gated:
 
 ```text
-- AHARepository via dokumentert target-adapter
-- database/API via dokumentert target-adapter
-- annen sync-backend via dokumentert target-adapter
+AHA Sync Hub UI
+→ adapter
+→ eksisterende AHARepository/AHADb-lag
 ```
 
-Ingen target kan brukes før den er valgt i egen PR. Ingen save/load, databasekall, repository-kall eller localStorage-skriving skal innføres skjult. Ingen fremtidig PR skal innføre uklar partial write; første ekte sync bør være atomic eller modul-atomic, eller så må sync blokkeres til rollback/partial failure behavior er dokumentert.
+Dashboard/UI skriver ikke direkte til database/repository. Target-valg, render, panel-open og modal-open starter ikke sync. Write kan bare skje fra Confirm sync i modal, og adapteren blokkerer manglende confirmation, validation errors, readiness som ikke er `ready`, checklist blocked > 0, target som ikke er `configured`, og payload preview med 0 inkluderte moduler.
+
+Payload-reglene er låst: Bare inkluderte, valide payload-preview-moduler kan skrives (`lists`, `paths`, `groups`, `ahaavisa`). Excluded modules og moduler med validation errors skrives ikke. `partial_success` brukes ikke, og rollback påstås ikke; write-feil returnerer `failed` med `rollbackStatus=not_available`.
+
+Audit log writer er fortsatt ikke implementert i denne fasen. Resultater markerer derfor `auditStatus=not_configured`, og neste anbefalte PR er å legge til en godkjent audit log writer før result history/panel bygges.
+
+## 14. Faktisk write/sync er manuelt/gated
+
+Faktisk write/sync er nå avgrenset til `database_existing` og går kun via eksisterende `AHARepository` write-metoder. Denne planen skal derfor ikke lenger behandles som en no-write-only fase, men som en manuell/gated write-boundary:
+
+```text
+- ingen ny databaseklient
+- ingen nye credentials
+- ingen hardkodede URL-er/secrets
+- ingen ny backend
+- ingen direkte dashboard-write
+- ingen auto-sync
+- ingen partial_success uten egen partial failure-contract
+- rollbackStatus=not_available når rollback ikke finnes
+```
+
+Write kan bare utføres etter eksplisitt Confirm sync i modal og bare når readiness er `ready`, validation errors er 0, checklist blocked er 0, target er `configured`, adapter/state machine tillater execution og payload preview inkluderer minst én valid modul.
 
 ## 15. Ikke-bryt-regler for videre Sync Hub-arbeid
 
@@ -491,16 +515,17 @@ Reglene fra denne planen gjelder fortsatt:
 - Sync Hub skal ikke mutere refererte objekter
 - Sync Hub skal ikke publisere AHAavisa eksternt
 - Sync Hub skal ikke gjøre Groups til ekte social sharing
-- Sync Hub skal ikke aktivere Manual sync-knappen uten egen PR
-- Sync Hub skal ikke skrive før target, audit log og rollback/partial failure-regler er valgt
+- Sync Hub skal ikke kjøre auto-sync
+- Sync Hub skal ikke skrive uten eksplisitt Confirm sync og alle adapter/state-machine gates
+- Sync Hub skal ikke påstå rollback eller partial_success før slike kontrakter finnes
 ```
 
 ## 16. Neste anbefalte PR
 
-Neste anbefalte PR etter target adapter dry-run harness-fasen er:
+Neste anbefalte PR etter database target wiring er:
 
 ```text
-docs: define AHA manual sync adapter implementation contract
+feat: add AHA manual sync audit log writer
 ```
 
-Akseptanse for den PR-en bør være en fortsatt no-write adapter implementation contract: ingen faktisk target-tilkobling for write, ingen payload-send, ingen audit log-skriving, ingen repository/database/API/fetch/Supabase/Firebase/localStorage write paths og ingen activation av Manual sync eller Confirm sync. Faktisk write/sync kommer fortsatt senere etter eksplisitt target-adapter, audit log-skriving og rollback-/partial failure-implementasjon.
+Akseptanse for den PR-en bør være en liten audit-writer som bruker eksisterende database/repository-mønster, ikke innfører ny databaseklient eller credentials, og fortsatt bevarer manuell/gated sync uten auto-sync. Når audit finnes og sync-resultater kan spores trygt, kan neste PR være `feat: add AHA manual sync result history panel`.

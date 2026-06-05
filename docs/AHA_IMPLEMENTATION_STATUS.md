@@ -2,14 +2,14 @@
 
 Statusdato: 2026-06-05
 
-Dette dokumentet oppsummerer nåværende implementasjonsstatus for AHA etter dokumentlåser, sync-hardening, Search note_reanalysis-visning, Mindmap tombstone-filtrering, Mindmap note_reanalysis-visning, Lists-, Paths-, Meta Insights-, Groups- og AHAavisa/Articles-bolkene, Sync Hub pre-sync UI, manual sync execution contract, manual sync confirmation modal, audit log preview, target selector preview, manual sync target contract, manual sync adapter interface stub, execution state machine stub, manual sync run summary preview, activation blocker tests og target adapter dry-run harness.
+Dette dokumentet oppsummerer nåværende implementasjonsstatus for AHA etter dokumentlåser, sync-hardening, Search note_reanalysis-visning, Mindmap tombstone-filtrering, Mindmap note_reanalysis-visning, Lists-, Paths-, Meta Insights-, Groups- og AHAavisa/Articles-bolkene, Sync Hub pre-sync UI, manual sync execution contract, manual sync confirmation modal, audit log preview, target selector preview, manual sync target contract, manual sync adapter interface stub, execution state machine stub, manual sync run summary preview, activation blocker tests og target adapter dry-run harness og database_existing wiring til eksisterende AHARepository target.
 
-Dokumentet er en statuslås. Det er ikke en runtime-endring, ikke en ny motor, ikke en Supabase-migrasjon og ikke en beslutning om å bygge nye flater.
+Dokumentet er en statuslås for denne runtime-endringen. Den innfører ikke ny motor, ny Supabase-migrasjon, ny databaseklient, nye credentials eller ny backend.
 
 ## 1. Kort status
 
 ```text
-AHA core er nå dokumentert, sync-reglene for de viktigste personal-data-modulene er hardenet, og AHA Sync Hub har dokumentert pre-sync UI, manual sync execution contract, UI-only confirmation modal, audit log preview, target selector preview og manual sync target contract, adapter interface stub, execution state machine stub, manual sync run summary preview, activation blocker tests og target adapter dry-run harness uten faktisk write.
+AHA core er nå dokumentert, sync-reglene for de viktigste personal-data-modulene er hardenet, og AHA Sync Hub har dokumentert pre-sync UI, manual sync execution contract, UI-only confirmation modal, audit log preview, target selector preview og manual sync target contract, adapter interface stub, execution state machine stub, manual sync run summary preview, activation blocker tests og target adapter dry-run harness og database_existing wiring gjennom eksisterende AHARepository-lag. Sync er fortsatt manuell/gated og kjører aldri automatisk.
 ```
 
 Ferdig nå:
@@ -46,26 +46,25 @@ Ferdig nå:
 ✅ Manual sync execution contract er dokumentert
 ✅ Manual sync confirmation modal er lagt til som preview/requirements
 ✅ Audit log preview er lagt til uten faktisk audit log-skriving
-✅ Target selector preview er lagt til for fremtidige write-targets
+✅ Target selector kan velge database_existing når eksisterende AHARepository write-lag finnes
 ✅ Manual sync target contract er dokumentert
-✅ Manual sync adapter interface stub er lagt til uten write
-✅ Manual sync execution state machine stub er lagt til
+✅ Manual sync adapter er koblet til eksisterende database target via AHARepository write-metoder
+✅ Manual sync state machine støtter gated flow: blocked → confirmed → running → success/failed
 ✅ Manual sync run summary preview er lagt til som samlet preview-only oversikt
 ✅ Manual sync execution activation checklist er dokumentert
 ✅ Activation blocker tests er lagt til for adapter, state machine, static forbidden-call guards og disabled UI-markup
-✅ Target adapter dry-run harness er lagt til som dry-run only/no-write preview
-✅ Run summary samler target, adapter, state machine, payload, validation, readiness, checklist og audit uten write
+✅ Target adapter dry-run harness validerer database_existing/configured uten write
+✅ Run summary samler target, adapter, state machine, payload, validation, readiness, checklist og audit før manuell confirm
 ✅ Activation checklist er dokumentasjon og aktiverer fortsatt ikke sync
-✅ running/success/partial_success er disabled/unreachable fra UI
-✅ Testene bekrefter at manual sync fortsatt er disabled/blokkert og ikke kan aktiveres ved et uhell
-✅ Ingen write-target er faktisk konfigurert
-✅ Ingen target er faktisk konfigurert
+✅ partial_success brukes fortsatt ikke uten partial failure-contract
+✅ Testene bekrefter at manual sync fortsatt er manuell/gated og ikke kan aktiveres ved page load, target select eller modal open
+✅ database_existing target blir configured bare når eksisterende AHARepository write-metoder finnes
 ✅ not_configured/future-only targets gir fortsatt ikke canExecute=true
-✅ Target selector er fortsatt preview-only
-✅ Faktisk audit log-skriving er fortsatt ikke implementert
-✅ Faktisk AHA manual sync/write er fortsatt ikke implementert
-✅ Confirm sync er fortsatt disabled/gated
-✅ Manual sync-knappen er fortsatt disabled/gated uten write-kraft
+✅ Target selector aktiverer fortsatt ikke sync alene
+✅ Faktisk audit log-skriving er fortsatt ikke implementert og rapporteres som auditStatus=not_configured
+✅ Faktisk AHA manual sync/write kan kun kjøres etter eksplisitt Confirm sync og alle gates
+✅ Confirm sync er gated på readiness ready, validation errors 0, checklist blocked 0, target configured, adapter/state machine canExecute og minst én inkludert modul
+✅ Manual sync-knappen starter fortsatt ikke write direkte
 ```
 
 Ikke bygget ennå:
@@ -79,14 +78,40 @@ Ikke bygget ennå:
 ❌ Full multi-device konfliktmodell
 ❌ Stories sync
 ❌ Import preview/session sync
-❌ Faktisk AHA manual sync/write er fortsatt ikke implementert
-❌ Faktisk audit log-skriving er fortsatt ikke implementert
+❌ Egen audit log writer for manual sync er fortsatt ikke implementert
+❌ Rollback/partial failure-contract er fortsatt ikke implementert
 ```
 
 Neste anbefalte PR:
 
 ```text
-docs: define AHA manual sync adapter implementation contract
+feat: add AHA manual sync audit log writer
+```
+
+
+## 2.7f AHA manual sync database target wiring
+
+Denne PR-en kobler AHA manual sync-adapteren til eksisterende database target uten å opprette ny databaseklient, nye credentials eller ny backend. Target-navnet er `database_existing`, og target blir bare `configured` når eksisterende `AHARepository` finnes med godkjente write-metoder for Lists, Paths, Groups og AHAavisa.
+
+Viktig status:
+
+```text
+✅ Eksisterende AHARepository/AHADb-lag brukes; ingen ny databaseklient ble innført.
+✅ Dashboard skriver ikke direkte til database/repository; UI går via adapter.
+✅ Sync kjører ikke ved page load, Sync Hub render/open, target select eller modal open.
+✅ executeAhaManualSyncRun krever eksplisitt confirmation-token/flag for én run.
+✅ Adapteren blokkerer validation errors, readiness != ready, checklist blocked > 0, target != configured og 0 inkluderte moduler.
+✅ Adapteren skriver bare inkluderte, valide moduler fra payload preview: Lists, Paths, Groups og AHAavisa.
+✅ Excluded modules og moduler med validation errors skrives ikke.
+✅ State machine bruker blocked → confirmed → running → success/failed og påstår ikke rollback.
+✅ Audit log writer mangler fortsatt; resultater rapporterer auditStatus=not_configured.
+✅ Auto-sync finnes fortsatt ikke.
+```
+
+Neste anbefalte PR er derfor:
+
+```text
+feat: add AHA manual sync audit log writer
 ```
 
 ## 1b. Meta Insights – algoritmisk meta-/selvinnsiktsmotor
