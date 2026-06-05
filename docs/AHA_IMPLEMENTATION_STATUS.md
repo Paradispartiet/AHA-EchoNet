@@ -2,14 +2,14 @@
 
 Statusdato: 2026-06-05
 
-Dette dokumentet oppsummerer nåværende implementasjonsstatus for AHA etter dokumentlåser, sync-hardening, Search note_reanalysis-visning, Mindmap tombstone-filtrering, Mindmap note_reanalysis-visning, Lists-, Paths-, Meta Insights-, Groups- og AHAavisa/Articles-bolkene, Sync Hub pre-sync UI, manual sync execution contract og manual sync confirmation modal.
+Dette dokumentet oppsummerer nåværende implementasjonsstatus for AHA etter dokumentlåser, sync-hardening, Search note_reanalysis-visning, Mindmap tombstone-filtrering, Mindmap note_reanalysis-visning, Lists-, Paths-, Meta Insights-, Groups- og AHAavisa/Articles-bolkene, Sync Hub pre-sync UI, manual sync execution contract, manual sync confirmation modal, audit log preview og target selector preview.
 
 Dokumentet er en statuslås. Det er ikke en runtime-endring, ikke en ny motor, ikke en Supabase-migrasjon og ikke en beslutning om å bygge nye flater.
 
 ## 1. Kort status
 
 ```text
-AHA core er nå dokumentert, sync-reglene for de viktigste personal-data-modulene er hardenet, og AHA Sync Hub har dokumentert pre-sync UI, manual sync execution contract og en UI-only confirmation modal uten faktisk write.
+AHA core er nå dokumentert, sync-reglene for de viktigste personal-data-modulene er hardenet, og AHA Sync Hub har dokumentert pre-sync UI, manual sync execution contract, UI-only confirmation modal, audit log preview og target selector preview uten faktisk write.
 ```
 
 Ferdig nå:
@@ -45,6 +45,9 @@ Ferdig nå:
 ✅ AHA Home entry points for Sync Hub er kartlagt i dokumentasjon
 ✅ Manual sync execution contract er dokumentert
 ✅ Manual sync confirmation modal er lagt til som preview/requirements
+✅ Audit log preview er lagt til uten faktisk audit log-skriving
+✅ Target selector preview er lagt til for fremtidige write-targets
+✅ Ingen write-target er faktisk konfigurert
 ✅ Confirm sync er fortsatt disabled
 ✅ Manual sync-knappen er fortsatt disabled/gated uten write-kraft
 ```
@@ -61,6 +64,13 @@ Ikke bygget ennå:
 ❌ Stories sync
 ❌ Import preview/session sync
 ❌ Faktisk AHA manual sync/write er fortsatt ikke implementert
+❌ Faktisk audit log-skriving er fortsatt ikke implementert
+```
+
+Neste anbefalte PR:
+
+```text
+docs: define AHA manual sync target contract
 ```
 
 ## 1b. Meta Insights – algoritmisk meta-/selvinnsiktsmotor
@@ -188,7 +198,7 @@ Låser execution contract for første fremtidige manuelle AHA Sync Hub-sync før
 Viktigste avgrensning:
 
 ```text
-Første manuelle sync kan bare gjelde Lists, Paths, Groups og AHAavisa; faktisk write er ikke implementert, target er uavklart, audit log må defineres, og Manual sync-knappen er fortsatt disabled/gated.
+Første manuelle sync kan bare gjelde Lists, Paths, Groups og AHAavisa; faktisk write er ikke implementert, target selector er kun preview, ingen write-target er konfigurert, audit log-skriving må fortsatt defineres, og Manual sync-/Confirm sync-knappene er fortsatt disabled/gated.
 ```
 
 ### 2.7 AHA_INSTA_CONTRACT.md

@@ -1213,6 +1213,34 @@ html, body { max-width: 100%; overflow-x: hidden; }
   padding-left: 18px;
 }
 
+
+.aha-sync-target-preview {
+  display: grid;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255,255,255,.12);
+}
+
+.aha-sync-target-select-label {
+  color: #fff;
+  font-size: .82rem;
+  font-weight: 900;
+}
+
+.aha-sync-target-select {
+  width: min(100%, 360px);
+  padding: 9px 10px;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 12px;
+  background: rgba(7,8,13,.58);
+  color: #fff;
+  font-weight: 800;
+}
+
+.aha-sync-target-selected_preview small,
+.aha-sync-target-future_only small { color: #ffe27a; }
+.aha-sync-target-not_configured small { color: var(--aha-green); }
+.aha-sync-target-unavailable small { color: #ff9b9b; }
 .aha-sync-operator-checklist {
   display: grid;
   gap: 10px;
