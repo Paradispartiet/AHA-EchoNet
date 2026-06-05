@@ -37,13 +37,15 @@ function extractFunction(name) {
   }
 
   assert.ok(builder.includes('summaryStatus'), 'summary builder includes summaryStatus');
-  assert.ok(builder.includes('ready_preview_only'), 'summary builder includes ready_preview_only');
-  assert.ok(builder.includes('canExecute: false'), 'summary builder hard-disables execution');
-  assert.ok(builder.includes('canWrite: false'), 'summary builder hard-disables writes');
+  assert.ok(builder.includes('ready'), 'summary builder includes ready status');
+  assert.ok(builder.includes('canExecute: blockers.length === 0'), 'summary builder gates execution');
+  assert.ok(builder.includes('canWrite: blockers.length === 0'), 'summary builder gates writes');
   assert.ok(builder.includes('adapterStatus'), 'summary builder includes adapter status');
   assert.ok(builder.includes('stateMachineState'), 'summary builder includes state machine state');
   assert.ok(builder.includes('nextRequiredSteps'), 'summary builder includes next required steps');
-  assert.ok(renderer.includes('Manual sync remains disabled'), 'expanded panel states Manual sync remains disabled');
-  assert.ok(renderer.includes('Confirm sync remains disabled'), 'expanded panel states Confirm sync remains disabled');
-  assert.ok(modalRenderer.includes('Confirm sync remains disabled'), 'modal summary keeps confirmation disabled');
+  assert.ok(renderer.includes('Manual sync remains gated'), 'expanded panel states Manual sync remains gated');
+  assert.ok(renderer.includes('Confirm sync is enabled only when'), 'expanded panel states Confirm sync is gated');
+  assert.ok(modalRenderer.includes('No data is written unless Confirm sync is enabled and clicked'), 'modal summary keeps confirmation gated');
+
+  console.log('aha-manual-sync-run-summary-preview.test.cjs passed');
 })();
