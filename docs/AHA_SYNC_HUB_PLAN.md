@@ -325,8 +325,9 @@ AHA Sync Hub skal utvikles i små, låste faser. Hver fase må bevare reglene om
 8. ✅ Gated disabled Manual sync button
 9. ✅ Manual sync execution contract
 10. ✅ Confirmation modal
-11. Neste: Audit log preview
-12. Senere: faktisk write/sync etter eksplisitt target-, audit- og rollback-PR
+11. ✅ Audit log preview
+12. Neste: Target selector preview
+13. Senere: faktisk write/sync etter eksplisitt target-, audit- og rollback-PR
 ```
 
 Manual sync execution contract er dokumentert i `docs/AHA_MANUAL_SYNC_CONTRACT.md`. Den er en kontrakt før faktisk implementasjon og definerer moduler i scope, preconditions/gates, blocking rules, payload-shape, write target-status, manuell bekreftelse, audit log, failure behavior og rollback/partial failure-regler.
@@ -377,19 +378,25 @@ Confirmation modal er nå implementert som UI-only preview/requirements-flate. D
 
 Bekreftelsen skal gjelde én sync-run og ikke lagres permanent. Confirm sync er fortsatt disabled til faktisk manual sync execution er implementert i en senere PR. Det skal fortsatt ikke finnes sync ved page load, sync ved åpning av kontrollpanel, skjult save/load, databasekall eller auto-sync.
 
-## 13.1 Neste fase: audit log preview
+## 13.1 Audit log preview-fasen er implementert
+
+Audit log preview er nå implementert som read-only/UI-only preview. Den viser hva en fremtidig audit record ville inneholde, inkludert preview-run-id, preview-generert timestamp, trigger/status/target, included/excluded modules, item counts, readiness, validation summary, checklist summary, payload preview summary, warnings/errors og rollback/write-status.
+
+Denne fasen skriver ikke audit log, velger ikke write target og starter ikke sync. Previewen er in-memory/UI-only og skal ikke brukes som faktisk audit-id.
+
+## 13.2 Neste fase: target selector preview
 
 Neste anbefalte PR er:
 
 ```text
-feat: add AHA manual sync audit log preview
+feat: add AHA manual sync target selector preview
 ```
 
-Audit log preview skal fortsatt være read-only/UI-only. Den bør vise hva en fremtidig audit record må inneholde, men den skal ikke skrive audit log, ikke velge write target og ikke starte sync.
+Target selector preview skal fortsatt være read-only/UI-only. Den bør vise fremtidige target-valg og konsekvenser før faktisk write, men den skal ikke konfigurere target, ikke skrive audit log og ikke starte sync.
 
 ## 14. Faktisk write/sync kommer senere
 
-Faktisk write/sync skal ikke innføres som del av contract- eller confirmation modal-fasen. En senere PR må eksplisitt velge target før write:
+Faktisk write/sync skal ikke innføres som del av contract-, confirmation modal- eller audit log preview-fasen. En senere PR må eksplisitt velge target før write:
 
 ```text
 - AHARepository
@@ -421,10 +428,10 @@ Reglene fra denne planen gjelder fortsatt:
 
 ## 16. Neste anbefalte PR
 
-Neste anbefalte PR etter confirmation modal-fasen er:
+Neste anbefalte PR etter audit log preview-fasen er:
 
 ```text
-feat: add AHA manual sync audit log preview
+feat: add AHA manual sync target selector preview
 ```
 
-Akseptanse for den PR-en bør være at audit log preview viser fremtidig audit-form, run-scope, readiness/validation/payload/checklist-oppsummering og disabled/no-write-status uten å utføre faktisk write/sync. Faktisk write/sync kommer fortsatt senere etter eksplisitt target-, audit- og rollback-/partial failure-PR.
+Akseptanse for den PR-en bør være at target selector preview viser fremtidige target-valg, target-status og fortsatt disabled/no-write-status uten å konfigurere target eller utføre faktisk write/sync. Faktisk write/sync kommer fortsatt senere etter eksplisitt target-, audit- og rollback-/partial failure-PR.

@@ -771,6 +771,193 @@
     `;
   }
 
+
+  function padAhaSyncPreviewDatePart(value) {
+    return String(value).padStart(2, "0");
+  }
+
+  function createAhaManualSyncPreviewRunId(now = new Date()) {
+    const datePart = `${now.getFullYear()}${padAhaSyncPreviewDatePart(now.getMonth() + 1)}${padAhaSyncPreviewDatePart(now.getDate())}`;
+    const timePart = `${padAhaSyncPreviewDatePart(now.getHours())}${padAhaSyncPreviewDatePart(now.getMinutes())}${padAhaSyncPreviewDatePart(now.getSeconds())}`;
+    return `aha-sync-preview-${datePart}-${timePart}`;
+  }
+
+  function collectAhaManualSyncAuditMessages(plan, payloadPreview, checklist, type) {
+    const planMessages = (Array.isArray(plan) ? plan : []).flatMap((row) => (row?.[type] || []).map((message) => `${row.name}: ${message}`));
+    const payloadMessages = (payloadPreview?.modules || []).flatMap((modulePreview) => (modulePreview?.[type] || []).map((message) => `${modulePreview.name}: ${message}`));
+    const checklistMessages = (checklist?.items || [])
+      .filter((item) => type === "errors" ? item.status === "blocked" : item.status === "warning")
+      .map((item) => `${item.label}: ${item.reason}`);
+    const readinessMessages = [];
+    if (checklist?.readiness === "blocked" && type === "errors") readinessMessages.push("Readiness gate is blocked.");
+    if (checklist?.readiness === "warning" && type === "warnings") readinessMessages.push("Readiness gate has warnings.");
+    if ((payloadPreview?.modulesIncluded || 0) === 0 && type === "warnings") readinessMessages.push("Payload preview includes no modules.");
+
+    return [...new Set([...planMessages, ...payloadMessages, ...checklistMessages, ...readinessMessages])];
+  }
+
+  function buildAhaManualSyncAuditLogPreview(plan, payloadPreview, checklist) {
+    try {
+      const generatedAt = new Date();
+      const safePlan = Array.isArray(plan) ? plan : buildAhaSyncDryRunPlan();
+      const safePayloadPreview = payloadPreview || buildAhaSyncPayloadPreview(safePlan);
+      const safeChecklist = checklist || buildAhaSyncOperatorChecklist(safePlan, safePayloadPreview);
+      const validationSummary = summarizeSyncHubValidation(safePlan);
+      const includedModules = (safePayloadPreview.modules || []).filter((modulePreview) => modulePreview.included).map((modulePreview) => modulePreview.id);
+      const excludedModules = (safePayloadPreview.modules || []).filter((modulePreview) => !modulePreview.included).map((modulePreview) => modulePreview.id);
+      const itemCounts = (safePayloadPreview.modules || []).reduce((counts, modulePreview) => {
+        counts[modulePreview.id] = modulePreview.itemCount;
+        return counts;
+      }, {});
+      const readinessStatus = safeChecklist.readiness === "passed" ? "ready" : safeChecklist.readiness;
+      const warnings = collectAhaManualSyncAuditMessages(safePlan, safePayloadPreview, safeChecklist, "warnings");
+      const errors = collectAhaManualSyncAuditMessages(safePlan, safePayloadPreview, safeChecklist, "errors");
+
+      return {
+        ok: true,
+        runId: createAhaManualSyncPreviewRunId(generatedAt),
+        timestamp: generatedAt.toISOString(),
+        timestampLabel: `${generatedAt.toLocaleString("no-NO")} (preview-generated, not written to audit log)`,
+        trigger: "manual_preview",
+        status: "preview_only",
+        target: "not_configured",
+        includedModules,
+        excludedModules,
+        itemCounts,
+        totalPreviewItems: Number(safePayloadPreview.totalPreviewItems || 0),
+        readinessStatus,
+        validationSummary,
+        checklistSummary: safeChecklist.summary || { passed: 0, warning: 0, blocked: 0 },
+        payloadPreviewSummary: {
+          modulesIncluded: Number(safePayloadPreview.modulesIncluded || 0),
+          modulesExcluded: Number(safePayloadPreview.modulesExcluded || 0),
+          totalPreviewItems: Number(safePayloadPreview.totalPreviewItems || 0)
+        },
+        warnings,
+        errors,
+        rollbackStatus: "not_available_preview_only",
+        writeStatus: "disabled_preview_only"
+      };
+    } catch (error) {
+      console.warn("AHADashboard: kunne ikke bygge audit log preview", error);
+      const generatedAt = new Date();
+      return {
+        ok: false,
+        runId: createAhaManualSyncPreviewRunId(generatedAt),
+        timestamp: generatedAt.toISOString(),
+        timestampLabel: `${generatedAt.toLocaleString("no-NO")} (preview-generated, not written to audit log)`,
+        trigger: "manual_preview",
+        status: "preview_only",
+        target: "not_configured",
+        includedModules: [],
+        excludedModules: [],
+        itemCounts: {},
+        totalPreviewItems: 0,
+        readinessStatus: "blocked",
+        validationSummary: { totalModules: 0, modulesReady: 0, modulesWithWarnings: 0, modulesWithErrors: 1, warningCount: 0, errorCount: 1 },
+        checklistSummary: { passed: 0, warning: 0, blocked: 1 },
+        payloadPreviewSummary: { modulesIncluded: 0, modulesExcluded: 0, totalPreviewItems: 0 },
+        warnings: [],
+        errors: ["Audit log preview could not be built. No sync or audit write was attempted."],
+        rollbackStatus: "not_available_preview_only",
+        writeStatus: "disabled_preview_only"
+      };
+    }
+  }
+
+  function renderAhaManualSyncAuditModuleList(modules, emptyLabel) {
+    if (!modules.length) return `<span>${escapeHtml(emptyLabel)}</span>`;
+    return modules.map((moduleId) => `<span>${escapeHtml(moduleId)}</span>`).join("");
+  }
+
+  function renderAhaManualSyncAuditItemCounts(itemCounts) {
+    const entries = Object.entries(itemCounts || {});
+    if (!entries.length) return `<p class="aha-sync-validation-empty">No module item counts.</p>`;
+    return `
+      <div class="aha-sync-audit-counts">
+        ${entries.map(([moduleId, count]) => `<span><strong>${escapeHtml(moduleId)}</strong>: ${escapeHtml(count)}</span>`).join("")}
+      </div>
+    `;
+  }
+
+  function renderAhaManualSyncAuditLogPreview(auditPreview) {
+    return `
+      <div class="aha-sync-audit-preview" aria-label="AHA manual sync audit log preview">
+        <div class="aha-sync-prep-heading">
+          <h4>Audit log preview</h4>
+          <p class="aha-sync-prep-notice">Preview only. No audit log is written and no sync is performed.</p>
+          <p class="aha-sync-validation-summary">${escapeHtml(auditPreview.status)} · target: ${escapeHtml(auditPreview.target)} · writeStatus: ${escapeHtml(auditPreview.writeStatus)}</p>
+        </div>
+        <div class="aha-sync-validation-block">
+          <h5>Preview record</h5>
+          <p><strong>runId:</strong> <code>${escapeHtml(auditPreview.runId)}</code></p>
+          <p><strong>timestamp:</strong> ${escapeHtml(auditPreview.timestampLabel)}</p>
+          <p><strong>trigger:</strong> ${escapeHtml(auditPreview.trigger)}</p>
+          <p><strong>status:</strong> ${escapeHtml(auditPreview.status)}</p>
+          <p><strong>target:</strong> ${escapeHtml(auditPreview.target)}</p>
+          <p><strong>readiness:</strong> ${escapeHtml(auditPreview.readinessStatus)}</p>
+          <p><strong>rollbackStatus:</strong> ${escapeHtml(auditPreview.rollbackStatus)}</p>
+          <p><strong>writeStatus:</strong> ${escapeHtml(auditPreview.writeStatus)}</p>
+        </div>
+        <div class="aha-sync-validation-columns">
+          <div>
+            <h5>Included modules</h5>
+            <div class="aha-sync-audit-chip-list">${renderAhaManualSyncAuditModuleList(auditPreview.includedModules, "None included.")}</div>
+          </div>
+          <div>
+            <h5>Excluded modules</h5>
+            <div class="aha-sync-audit-chip-list">${renderAhaManualSyncAuditModuleList(auditPreview.excludedModules, "None excluded.")}</div>
+          </div>
+        </div>
+        <div class="aha-sync-validation-block">
+          <h5>Item counts</h5>
+          ${renderAhaManualSyncAuditItemCounts(auditPreview.itemCounts)}
+          <p><strong>totalPreviewItems:</strong> ${escapeHtml(auditPreview.totalPreviewItems)}</p>
+        </div>
+        <div class="aha-sync-validation-block">
+          <h5>Summaries</h5>
+          <p><strong>validationSummary:</strong> ${escapeHtml(auditPreview.validationSummary.modulesReady)} ready · ${escapeHtml(auditPreview.validationSummary.warningCount)} warnings · ${escapeHtml(auditPreview.validationSummary.errorCount)} errors</p>
+          <p><strong>checklistSummary:</strong> ${escapeHtml(auditPreview.checklistSummary.passed)} passed · ${escapeHtml(auditPreview.checklistSummary.warning)} warning · ${escapeHtml(auditPreview.checklistSummary.blocked)} blocked</p>
+          <p><strong>payloadPreviewSummary:</strong> ${escapeHtml(auditPreview.payloadPreviewSummary.modulesIncluded)} included · ${escapeHtml(auditPreview.payloadPreviewSummary.modulesExcluded)} excluded · ${escapeHtml(auditPreview.payloadPreviewSummary.totalPreviewItems)} preview items</p>
+        </div>
+        <div class="aha-sync-validation-columns">
+          <div>
+            <h5>Warnings</h5>
+            ${renderAhaSyncStatusList(auditPreview.warnings, "No audit preview warnings.")}
+          </div>
+          <div>
+            <h5>Errors</h5>
+            ${renderAhaSyncStatusList(auditPreview.errors, "No audit preview errors.")}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderAhaManualSyncAuditLogPreviewSummary(auditPreview) {
+    return `
+      <div class="aha-sync-confirmation-section aha-sync-audit-preview-summary">
+        <h5>E. Audit log preview</h5>
+        <p class="aha-sync-prep-notice">Preview only. No audit log is written.</p>
+        <p><strong>runId:</strong> <code>${escapeHtml(auditPreview.runId)}</code></p>
+        <p><strong>timestamp:</strong> ${escapeHtml(auditPreview.timestampLabel)}</p>
+        <p><strong>target:</strong> ${escapeHtml(auditPreview.target)} · <strong>status:</strong> ${escapeHtml(auditPreview.status)}</p>
+        <p><strong>included/excluded:</strong> ${escapeHtml(auditPreview.includedModules.length)} / ${escapeHtml(auditPreview.excludedModules.length)} modules · <strong>totalPreviewItems:</strong> ${escapeHtml(auditPreview.totalPreviewItems)}</p>
+        <div class="aha-sync-validation-columns">
+          <div>
+            <strong>Included</strong>
+            <div class="aha-sync-audit-chip-list">${renderAhaManualSyncAuditModuleList(auditPreview.includedModules, "None included.")}</div>
+          </div>
+          <div>
+            <strong>Excluded</strong>
+            <div class="aha-sync-audit-chip-list">${renderAhaManualSyncAuditModuleList(auditPreview.excludedModules, "None excluded.")}</div>
+          </div>
+        </div>
+        <p><strong>writeStatus:</strong> ${escapeHtml(auditPreview.writeStatus)}</p>
+      </div>
+    `;
+  }
+
   function buildAhaManualSyncGate(plan, payloadPreview, checklist) {
     const summary = summarizeSyncHubValidation(plan);
     const modulesIncluded = Number(payloadPreview?.modulesIncluded || 0);
@@ -895,10 +1082,11 @@
     `;
   }
 
-  function renderAhaManualSyncConfirmationModal(plan, payloadPreview, checklist) {
+  function renderAhaManualSyncConfirmationModal(plan, payloadPreview, checklist, auditPreview = null) {
     if (!isAhaManualSyncConfirmationModalOpen) return "";
 
     const model = buildAhaManualSyncConfirmationModel(plan, payloadPreview, checklist);
+    const safeAuditPreview = auditPreview || buildAhaManualSyncAuditLogPreview(plan, payloadPreview, checklist);
     const validationSummary = model.validationSummary;
     const checklistSummary = model.checklist.summary || { passed: 0, warning: 0, blocked: 0 };
     const blockedChecklistLabels = model.blockedChecklistItems.map((item) => `${item.label}: ${item.reason}`);
@@ -954,8 +1142,10 @@
             ${renderAhaSyncStatusList(blockedChecklistLabels, "No blocked checklist items.")}
           </div>
 
+          ${renderAhaManualSyncAuditLogPreviewSummary(safeAuditPreview)}
+
           <div class="aha-sync-confirmation-section">
-            <h5>E. Manual confirmation requirements</h5>
+            <h5>F. Manual confirmation requirements</h5>
             <ul class="aha-sync-manual-requirements">
               ${manualRequirements.map((requirement) => `<li>${escapeHtml(requirement)}</li>`).join("")}
             </ul>
@@ -977,6 +1167,7 @@
 
     const payloadPreview = buildAhaSyncPayloadPreview(plan);
     const operatorChecklist = buildAhaSyncOperatorChecklist(plan, payloadPreview);
+    const auditPreview = buildAhaManualSyncAuditLogPreview(plan, payloadPreview, operatorChecklist);
 
     return `
       <div class="aha-sync-prep-panel" id="aha-sync-prep-panel" role="region" aria-label="AHA Sync Hub forberedelse">
@@ -1012,8 +1203,9 @@
         </div>
         ${renderAhaSyncPayloadPreview(payloadPreview)}
         ${renderAhaSyncOperatorChecklist(operatorChecklist)}
+        ${renderAhaManualSyncAuditLogPreview(auditPreview)}
         ${renderAhaManualSyncGate(plan, payloadPreview, operatorChecklist)}
-        ${renderAhaManualSyncConfirmationModal(plan, payloadPreview, operatorChecklist)}
+        ${renderAhaManualSyncConfirmationModal(plan, payloadPreview, operatorChecklist, auditPreview)}
       </div>
     `;
   }
