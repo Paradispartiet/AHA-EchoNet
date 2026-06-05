@@ -1209,3 +1209,61 @@ html, body { max-width: 100%; overflow-x: hidden; }
   margin: 0;
   padding-left: 18px;
 }
+
+.aha-sync-operator-checklist,
+.aha-sync-readiness-gate,
+.aha-sync-manual-gate {
+  display: grid;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255,255,255,.12);
+}
+
+.aha-sync-checklist-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.aha-sync-checklist-ready small { color: var(--aha-green); }
+.aha-sync-checklist-review small { color: #ffe27a; }
+.aha-sync-checklist-blocked small { color: #ff9b9b; }
+
+.aha-sync-manual-button {
+  justify-self: start;
+  min-height: 40px;
+  padding: 9px 14px;
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: 999px;
+  background: rgba(255,255,255,.08);
+  color: var(--aha-muted);
+  font-weight: 900;
+  cursor: not-allowed;
+  opacity: .68;
+}
+
+.aha-sync-manual-reason {
+  color: #ffe27a;
+  font-size: .86rem;
+  font-weight: 800;
+}
+
+.aha-sync-gate-reasons,
+.aha-sync-future-requirements ul {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--aha-muted);
+  font-size: .82rem;
+}
+
+.aha-sync-future-requirements {
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid rgba(246,200,0,.22);
+  border-radius: 14px;
+  background: rgba(246,200,0,.08);
+}
+
+.aha-sync-future-requirements h5 {
+  margin: 0;
+  font-size: .86rem;
+}

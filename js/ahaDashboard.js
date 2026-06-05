@@ -583,6 +583,133 @@
     return `${summary.totalModules} modules inspected · ${summary.modulesReady} ready · ${summary.modulesWithWarnings} ${warningLabel} · ${summary.modulesWithErrors} ${errorLabel}`;
   }
 
+  function buildAhaSyncOperatorChecklist(plan, payloadPreview) {
+    const summary = summarizeSyncHubValidation(plan);
+    const hasWarnings = summary.modulesWithWarnings > 0;
+    const hasIncludedPayloadModules = payloadPreview.modulesIncluded > 0;
+
+    return [
+      {
+        label: "Readiness gate reviewed",
+        status: summary.modulesWithErrors === 0 && hasIncludedPayloadModules ? "ready" : "blocked",
+        note: summary.modulesWithErrors === 0 && hasIncludedPayloadModules
+          ? "Dry-run readiness can be reviewed, but sync remains unavailable."
+          : "Readiness is blocked by validation errors or missing payload modules."
+      },
+      {
+        label: "Validation errors are zero",
+        status: summary.modulesWithErrors === 0 ? "ready" : "blocked",
+        note: summary.modulesWithErrors === 0
+          ? "No validation errors found in the read-only plan."
+          : `${summary.modulesWithErrors} module(s) have validation errors.`
+      },
+      {
+        label: "Validation warnings reviewed",
+        status: hasWarnings ? "review" : "ready",
+        note: hasWarnings
+          ? `${summary.modulesWithWarnings} module(s) have warnings or skipped datasets that must be reviewed.`
+          : "No validation warnings found."
+      },
+      {
+        label: "Payload preview includes modules",
+        status: hasIncludedPayloadModules ? "ready" : "blocked",
+        note: hasIncludedPayloadModules
+          ? `${payloadPreview.modulesIncluded} module(s) included in the preview payload.`
+          : "Payload preview has no included modules."
+      },
+      {
+        label: "Manual sync implementation",
+        status: "blocked",
+        note: "Manual sync is not enabled in code yet."
+      }
+    ];
+  }
+
+  function buildAhaSyncReadinessGate(plan, payloadPreview, checklist) {
+    const summary = summarizeSyncHubValidation(plan);
+    const reasons = [];
+
+    if (summary.modulesWithErrors > 0) reasons.push(`${summary.modulesWithErrors} module(s) have validation errors.`);
+    if (summary.modulesWithWarnings > 0) reasons.push(`${summary.modulesWithWarnings} module(s) have warnings or skipped datasets that must be reviewed.`);
+    if (payloadPreview.modulesIncluded === 0) reasons.push("Payload preview has no included modules.");
+
+    const manualSyncNotEnabledReason = "Manual sync is not enabled in code yet.";
+    if (!reasons.length) reasons.push(manualSyncNotEnabledReason);
+
+    const blockedChecklistItems = checklist.filter((item) => item.status === "blocked");
+    if (blockedChecklistItems.length) {
+      reasons.push(`${blockedChecklistItems.length} operator checklist item(s) are blocked.`);
+    }
+
+    reasons.push(manualSyncNotEnabledReason);
+
+    return {
+      status: "blocked",
+      primaryReason: reasons[0],
+      reasons: [...new Set(reasons)]
+    };
+  }
+
+  function renderAhaSyncOperatorChecklist(checklist) {
+    return `
+      <div class="aha-sync-operator-checklist" aria-label="AHA Sync Hub operator checklist">
+        <div class="aha-sync-prep-heading">
+          <h4>Operator checklist</h4>
+          <p class="aha-sync-prep-notice">Read-only checklist. It does not enable or perform sync.</p>
+        </div>
+        <div class="aha-sync-prep-list">
+          ${checklist.map((item) => `
+            <div class="aha-sync-prep-row aha-sync-checklist-row aha-sync-checklist-${escapeHtml(item.status)}">
+              <strong>${escapeHtml(item.label)}</strong>
+              <small>${escapeHtml(item.status)}</small>
+              <p>${escapeHtml(item.note)}</p>
+            </div>
+          `).join("")}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderAhaSyncReadinessGate(readinessGate) {
+    return `
+      <div class="aha-sync-readiness-gate" aria-label="AHA Sync Hub readiness gate">
+        <div class="aha-sync-prep-heading">
+          <h4>Readiness gate</h4>
+          <p class="aha-sync-prep-notice">Current gate status: ${escapeHtml(readinessGate.status)}. This is informational only.</p>
+        </div>
+        <p class="aha-sync-manual-reason"><strong>Main gate reason:</strong> ${escapeHtml(readinessGate.primaryReason)}</p>
+      </div>
+    `;
+  }
+
+  function renderAhaSyncManualGate(readinessGate) {
+    return `
+      <div class="aha-sync-manual-gate" aria-label="AHA Sync Hub manual sync gate">
+        <div class="aha-sync-prep-heading">
+          <h4>Manual sync</h4>
+          <p class="aha-sync-prep-notice">Manual sync is gated and not enabled yet.</p>
+        </div>
+        <button type="button" class="aha-sync-manual-button" disabled aria-disabled="true" aria-describedby="aha-sync-manual-disabled-reason">Manual sync</button>
+        <div id="aha-sync-manual-disabled-reason" class="aha-sync-manual-reason">
+          <strong>Disabled reason:</strong> ${escapeHtml(readinessGate.primaryReason)}
+        </div>
+        <ul class="aha-sync-gate-reasons" aria-label="Manual sync gate reasons">
+          ${readinessGate.reasons.map((reason) => `<li>${escapeHtml(reason)}</li>`).join("")}
+        </ul>
+        <div class="aha-sync-future-requirements" aria-label="Requirements before manual sync can be enabled">
+          <h5>Before manual sync can be enabled</h5>
+          <ul>
+            <li>readiness must be ready</li>
+            <li>validation errors must be zero</li>
+            <li>payload preview must include at least one module</li>
+            <li>operator checklist must have no blocked items</li>
+            <li>explicit manual sync implementation must be added in a future PR</li>
+          </ul>
+        </div>
+      </div>
+    `;
+  }
+
   function renderSyncHubValidationMessages(row, type) {
     const messages = type === "errors" ? row.errors : row.warnings;
     if (!messages.length) return `<p class="aha-sync-validation-empty">No ${type}.</p>`;
@@ -653,6 +780,8 @@
     if (!isSyncHubPrepOpen) return "";
 
     const payloadPreview = buildAhaSyncPayloadPreview(plan);
+    const operatorChecklist = buildAhaSyncOperatorChecklist(plan, payloadPreview);
+    const readinessGate = buildAhaSyncReadinessGate(plan, payloadPreview, operatorChecklist);
 
     return `
       <div class="aha-sync-prep-panel" id="aha-sync-prep-panel" role="region" aria-label="AHA Sync Hub forberedelse">
@@ -687,6 +816,9 @@
           `).join("")}
         </div>
         ${renderAhaSyncPayloadPreview(payloadPreview)}
+        ${renderAhaSyncReadinessGate(readinessGate)}
+        ${renderAhaSyncOperatorChecklist(operatorChecklist)}
+        ${renderAhaSyncManualGate(readinessGate)}
       </div>
     `;
   }
