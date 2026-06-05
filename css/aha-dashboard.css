@@ -1326,3 +1326,34 @@ html, body { max-width: 100%; overflow-x: hidden; }
   display: grid;
   gap: 8px;
 }
+
+.aha-sync-audit-preview {
+  display: grid;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255,255,255,.12);
+}
+
+.aha-sync-audit-preview code,
+.aha-sync-audit-preview-summary code {
+  color: #f7f0c6;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.aha-sync-audit-chip-list,
+.aha-sync-audit-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  color: var(--aha-muted);
+  font-size: .82rem;
+}
+
+.aha-sync-audit-chip-list span,
+.aha-sync-audit-counts span {
+  padding: 4px 8px;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 999px;
+  background: rgba(255,255,255,.055);
+}

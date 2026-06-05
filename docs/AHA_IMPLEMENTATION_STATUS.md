@@ -971,16 +971,18 @@ AHA Sync Hub har nå komplett pre-sync UI og confirmation preview på kontraktsn
 ✅ manual sync execution contract
 ✅ manual sync confirmation modal
 ✅ disabled Confirm sync preview
+✅ manual sync audit log preview
 ```
 
-Status etter confirmation modal-PR-en:
+Status etter audit log preview-PR-en:
 
 ```text
+- Audit log preview er lagt til som read-only/UI-only in-memory preview.
+- Faktisk audit log-skriving er fortsatt ikke implementert.
 - Faktisk AHA manual sync/write er fortsatt ikke implementert.
 - Manual sync-knappen er fortsatt disabled/gated.
 - Confirm sync er fortsatt disabled i modal.
 - Write target er uavklart og må velges i senere PR.
-- Audit log-strategi må defineres før write og bør først previews i neste PR.
 - Home skal fortsatt ikke laste js/ahaLists.js, js/ahaPaths.js, js/ahaGroups.js eller js/ahaAvisa.js direkte for sync.
 - Ingen database/repository/localStorage-skriving er innført.
 ```
@@ -988,15 +990,15 @@ Status etter confirmation modal-PR-en:
 Neste anbefalte PR:
 
 ```text
-feat: add AHA manual sync audit log preview
+feat: add AHA manual sync target selector preview
 ```
 
 Hvorfor:
 
 ```text
-- Confirmation modal gjør manuell bekreftelse synlig uten write.
-- Audit log preview er tryggeste neste fase før target-valg og faktisk write.
-- Preview kan vise fremtidig audit record, readiness, validation, payload og checklist summary uten å skrive audit log.
+- Audit log preview gjør fremtidig audit record synlig uten write.
+- Target selector preview er tryggeste neste fase før faktisk write/sync.
+- Preview kan vise eksplisitt target-status uten å konfigurere eller bruke et write target.
 - Faktisk write/sync skal vente til target, audit log og rollback/partial failure behavior er eksplisitt valgt.
 ```
 
@@ -1004,7 +1006,7 @@ Avgrensning for neste PR:
 
 ```text
 Bruk `docs/AHA_MANUAL_SYNC_CONTRACT.md` som kontraktslås.
-Vis fremtidig audit-log payload/summary som read-only preview.
+Vis fremtidig target-valg som read-only preview.
 Ikke skriv audit log.
 Ikke aktiver faktisk write/sync.
 Ikke kall syncFromDatabase.
@@ -1041,7 +1043,8 @@ Ikke lag source events eller insights.
 20. ✅ feat: add gated disabled Manual sync button
 21. ✅ docs: define AHA manual sync execution contract
 22. ✅ feat: add AHA manual sync confirmation modal
-23. Neste: feat: add AHA manual sync audit log preview
+23. ✅ feat: add AHA manual sync audit log preview
+24. Neste: feat: add AHA manual sync target selector preview
 ```
 
 Ikke gå videre til storage, import, Insta/social graph, EchoNet eller faktisk AHA manual sync/write før audit log preview, target-valg, audit log og rollback/partial failure behavior er dokumentert uten auto-sync og uten skjulte databasekall.
