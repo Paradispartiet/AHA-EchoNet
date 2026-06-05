@@ -1,6 +1,6 @@
 # AHA Sync Hub / Control Center plan
 
-Statusdato: 2026-06-04
+Statusdato: 2026-06-05
 
 Dette dokumentet er en planleggingslås for en fremtidig AHA Sync Hub / Control Center. Det er ikke runtime-kode, ikke en UI-beslutning, ikke en Supabase-migrasjon og ikke en beslutning om å starte automatisk sync.
 
@@ -310,46 +310,91 @@ Konsekvens:
 
 Denne PR-en bestemmer ikke endelig script-loading for manuell sync, fordi det krever runtime-arbeid.
 
-## 11. Første kodekandidat etter kartleggingen
+## 11. Faseplan etter kartleggingen
 
-Anbefalt neste kode-PR:
-
-```text
-feat: add read-only AHA sync status hub
-```
-
-Scope for den kommende kode-PR-en:
+AHA Sync Hub skal utvikles i små, låste faser. Hver fase må bevare reglene om ingen auto-sync, ingen skjulte databasekall og ingen runtime-write uten egen kontrakt.
 
 ```text
-- legg til et lite statuskort i index.html høyre statuspanel
-- legg til read-only renderer i js/ahaDashboard.js
-- tell localStorage records for aha_lists_v1, aha_paths_v1, aha_groups_v1 og aha_articles_v1
-- vis om modulene er sync-klare basert på dokumentert V1-kandidatliste
-- ikke kall syncFromDatabase
-- ikke kall AHARepository save/load
-- ikke gjør databasekall
-- ikke legg til sync-knapp ennå
-- ikke auto-sync
-- ikke endre data
-- ikke lage source events/insights
+1. ✅ Read-only AHA sync status hub
+2. ✅ Manual action shell
+3. ✅ Dry-run planner
+4. ✅ Validation layer
+5. ✅ Readiness gate
+6. ✅ Payload preview
+7. ✅ Operator checklist
+8. ✅ Gated disabled Manual sync button
+9. ✅ Manual sync execution contract
+10. Neste: Confirmation modal
+11. Senere: faktisk write/sync etter eksplisitt target-, audit- og rollback-PR
 ```
 
-Første kodekandidat er altså read-only status, ikke manuell sync.
+Manual sync execution contract er dokumentert i `docs/AHA_MANUAL_SYNC_CONTRACT.md`. Den er en kontrakt før faktisk implementasjon og definerer moduler i scope, preconditions/gates, blocking rules, payload-shape, write target-status, manuell bekreftelse, audit log, failure behavior og rollback/partial failure-regler.
 
-## 12. Senere kodekandidat etter read-only status
+## 12. Manual sync execution contract-fasen
 
-Etter read-only statuskortet kan en senere PR vurdere manuell sync i denne rekkefølgen:
+Denne fasen ligger etter den gated disabled Manual sync-knappen og før confirmation modal. Formålet er å låse hva en fremtidig manuell sync må gjøre før knappen får faktisk skrivekraft.
+
+Kontrakten presiserer at første manuelle sync bare kan gjelde:
 
 ```text
-1. Last sync module scripts på Home eller bygg egen sync.html.
-2. Legg til manuell hovedhandling: Synk AHA-data.
-3. Legg eventuelt til individuelle modulknapper.
-4. Behold ingen auto-sync.
+- Lists
+- Paths
+- Groups
+- AHAavisa
 ```
 
-Manuell sync skal fortsatt bare bruke moduler der `syncFromDatabase` finnes, er lastet og er kartlagt.
+Home skal fortsatt ikke laste disse modulruntime-filene direkte bare for sync:
 
-## 13. Ikke-bryt-regler for videre Sync Hub-arbeid
+```text
+js/ahaLists.js
+js/ahaPaths.js
+js/ahaGroups.js
+js/ahaAvisa.js
+```
+
+Sync Hub skal bruke kontrollert payload-preview / sync-kontrakt, ikke direkte modul-runtime som ukontrollert write path.
+
+Kontrakten krever at faktisk sync senere bare kan vurderes når readiness er `ready`, validation errors er 0, payload preview har minst én inkludert modul, operator checklist har 0 blocked items, brukeren har bekreftet manuelt, Manual sync-knappen er aktivert i egen fremtidig PR, audit log-strategi er definert og write target er eksplisitt valgt.
+
+Warnings blokkerer ikke nødvendigvis sync, men må vises, inngå i summary/audit og bekreftes manuelt før write.
+
+## 13. Confirmation modal som neste fase
+
+Neste anbefalte PR etter execution contract er:
+
+```text
+feat: add AHA manual sync confirmation modal
+```
+
+Confirmation modal skal være neste UI-/runtime-fase, men den skal fortsatt ikke trenge å skrive data. Den bør gjøre bekreftelsesflyten eksplisitt:
+
+```text
+- payload summary
+- included/excluded modules
+- item counts
+- warnings/errors-status
+- readiness status
+- target-status
+- audit log-forventning
+- rollback/partial failure-status
+- én ekstra run-scoped manuell bekreftelse
+```
+
+Bekreftelsen skal gjelde én sync-run og ikke lagres permanent. Det skal fortsatt ikke finnes sync ved page load, sync ved åpning av kontrollpanel, skjult save/load, databasekall eller auto-sync.
+
+## 14. Faktisk write/sync kommer senere
+
+Faktisk write/sync skal ikke innføres som del av contract- eller confirmation modal-fasen. En senere PR må eksplisitt velge target før write:
+
+```text
+- AHARepository
+- database/API
+- annen sync-backend
+```
+
+Ingen target kan brukes før den er valgt i egen PR. Ingen save/load, databasekall, repository-kall eller localStorage-skriving skal innføres skjult. Ingen fremtidig PR skal innføre uklar partial write; første ekte sync bør være atomic eller modul-atomic, eller så må sync blokkeres til rollback/partial failure behavior er dokumentert.
+
+## 15. Ikke-bryt-regler for videre Sync Hub-arbeid
 
 Reglene fra denne planen gjelder fortsatt:
 
@@ -365,14 +410,16 @@ Reglene fra denne planen gjelder fortsatt:
 - Sync Hub skal ikke mutere refererte objekter
 - Sync Hub skal ikke publisere AHAavisa eksternt
 - Sync Hub skal ikke gjøre Groups til ekte social sharing
+- Sync Hub skal ikke aktivere Manual sync-knappen uten egen PR
+- Sync Hub skal ikke skrive før target, audit log og rollback/partial failure-regler er valgt
 ```
 
-## 14. Neste anbefalte PR
+## 16. Neste anbefalte PR
 
-Neste anbefalte PR etter denne dokumentasjons-/kartleggings-PR-en er:
+Neste anbefalte PR etter denne dokumentasjonskontrakten er:
 
 ```text
-feat: add read-only AHA sync status hub
+feat: add AHA manual sync confirmation modal
 ```
 
-Akseptanse for den PR-en bør være at statuskortet er read-only, bruker `aha-sync-hub-status`, teller localStorage for V1-kandidatene og ikke kaller `syncFromDatabase`, AHARepository eller Supabase.
+Akseptanse for den PR-en bør være at modal viser payload summary, warnings/errors-status, readiness, target-status, audit-log-forventning og én ekstra run-scoped bekreftelse uten å utføre faktisk write/sync.

@@ -1,15 +1,15 @@
 # AHA Implementation Status
 
-Statusdato: 2026-06-04
+Statusdato: 2026-06-05
 
-Dette dokumentet oppsummerer nåværende implementasjonsstatus for AHA etter dokumentlåser, sync-hardening, Search note_reanalysis-visning, Mindmap tombstone-filtrering, Mindmap note_reanalysis-visning, Lists-, Paths-, Meta Insights-, Groups- og AHAavisa/Articles-bolkene, og regresjonstester.
+Dette dokumentet oppsummerer nåværende implementasjonsstatus for AHA etter dokumentlåser, sync-hardening, Search note_reanalysis-visning, Mindmap tombstone-filtrering, Mindmap note_reanalysis-visning, Lists-, Paths-, Meta Insights-, Groups- og AHAavisa/Articles-bolkene, Sync Hub pre-sync UI og manual sync execution contract.
 
 Dokumentet er en statuslås. Det er ikke en runtime-endring, ikke en ny motor, ikke en Supabase-migrasjon og ikke en beslutning om å bygge nye flater.
 
 ## 1. Kort status
 
 ```text
-AHA core er nå dokumentert, sync-reglene for de viktigste personal-data-modulene er hardenet, og reglene er låst med regresjonstester.
+AHA core er nå dokumentert, sync-reglene for de viktigste personal-data-modulene er hardenet, og AHA Sync Hub har dokumentert pre-sync UI og manual sync execution contract uten faktisk write.
 ```
 
 Ferdig nå:
@@ -43,6 +43,8 @@ Ferdig nå:
 ✅ AHAavisa / Articles er write-module med sync-kontrakt, repository-persistens og latest-action merge
 ✅ Meta Insights read-only/no-autosend guards er låst med tester
 ✅ AHA Home entry points for Sync Hub er kartlagt i dokumentasjon
+✅ Manual sync execution contract er dokumentert
+✅ Manual sync-knappen er fortsatt disabled/gated uten write-kraft
 ```
 
 Ikke bygget ennå:
@@ -56,6 +58,7 @@ Ikke bygget ennå:
 ❌ Full multi-device konfliktmodell
 ❌ Stories sync
 ❌ Import preview/session sync
+❌ Faktisk AHA manual sync/write er fortsatt ikke implementert
 ```
 
 ## 1b. Meta Insights – algoritmisk meta-/selvinnsiktsmotor
@@ -90,6 +93,7 @@ docs/AHA_MODULE_MATURITY_MATRIX.md
 docs/AHA_DATA_CONTRACT_MATRIX.md
 docs/AHA_SYNC_RULES.md
 docs/AHA_SYNC_HUB_PLAN.md
+docs/AHA_MANUAL_SYNC_CONTRACT.md
 docs/AHA_INSTA_CONTRACT.md
 docs/AHA_IMPLEMENTATION_STATUS.md
 ```
@@ -171,7 +175,21 @@ Viktigste regel:
 Første Sync Hub-versjon skal være manuell, ikke auto-sync; Supabase er valgfritt, og localStorage er fortsatt fallback/cache.
 ```
 
-### 2.6 AHA_INSTA_CONTRACT.md
+### 2.6 AHA_MANUAL_SYNC_CONTRACT.md
+
+Formål:
+
+```text
+Låser execution contract for første fremtidige manuelle AHA Sync Hub-sync før Manual sync-knappen får skrivekraft.
+```
+
+Viktigste avgrensning:
+
+```text
+Første manuelle sync kan bare gjelde Lists, Paths, Groups og AHAavisa; faktisk write er ikke implementert, target er uavklart, audit log må defineres, og Manual sync-knappen er fortsatt disabled/gated.
+```
+
+### 2.7 AHA_INSTA_CONTRACT.md
 
 Formål:
 
@@ -935,44 +953,63 @@ git diff --check → OK
 
 ## 7. Anbefalt neste steg
 
-Planen for AHA Sync Hub / Control Center og AHA Home entry point-kartleggingen er nå dokumentert i `docs/AHA_SYNC_HUB_PLAN.md`.
+Planen for AHA Sync Hub / Control Center er dokumentert i `docs/AHA_SYNC_HUB_PLAN.md`, og manual sync execution contract er dokumentert i `docs/AHA_MANUAL_SYNC_CONTRACT.md`.
+
+AHA Sync Hub har nå komplett pre-sync UI på kontraktsnivå:
+
+```text
+✅ read-only status hub
+✅ manual action shell
+✅ dry-run planner
+✅ validation layer
+✅ readiness gate
+✅ payload preview
+✅ operator checklist
+✅ gated disabled Manual sync button
+✅ manual sync execution contract
+```
+
+Status etter denne dokumentasjons-PR-en:
+
+```text
+- Faktisk AHA manual sync/write er fortsatt ikke implementert.
+- Manual sync-knappen er fortsatt disabled/gated.
+- Write target er uavklart og må velges i senere PR.
+- Audit log-strategi må defineres før write.
+- Home skal fortsatt ikke laste js/ahaLists.js, js/ahaPaths.js, js/ahaGroups.js eller js/ahaAvisa.js direkte for sync.
+- Ingen database/repository/localStorage-skriving er innført.
+```
 
 Neste anbefalte PR:
 
 ```text
-feat: add read-only AHA sync status hub
+feat: add AHA manual sync confirmation modal
 ```
 
 Hvorfor:
 
 ```text
-- Lists, Paths, Groups og AHAavisa/Articles er ferdige nok på modulnivå for Sync Hub V1-status.
-- AHA Home entry points er kartlagt før runtime-kode.
-- Første tryggeste kode er et lite read-only statuskort, ikke manuell sync.
-- Supabase må fortsatt være valgfritt, og localStorage må fortsatt være fallback/cache.
+- Execution contract er nå dokumentert før faktisk implementasjon.
+- Confirmation modal er tryggeste neste fase før write.
+- Modal kan vise payload summary, warnings/errors-status, readiness, target-status og audit-log-forventning uten å skrive data.
+- Faktisk write/sync skal vente til target, audit log og rollback/partial failure behavior er eksplisitt valgt.
 ```
 
-Avgrensning for neste kode-PR:
+Avgrensning for neste PR:
 
 ```text
-Bruk `docs/AHA_SYNC_HUB_PLAN.md` som planlås.
-Plasser første statuskort i høyre aside.aha-status-panel.
-Bruk foreslått mount-id aha-sync-hub-status.
-Tell localStorage records for aha_lists_v1, aha_paths_v1, aha_groups_v1 og aha_articles_v1.
-Ikke legg til sync-knapp ennå.
+Bruk `docs/AHA_MANUAL_SYNC_CONTRACT.md` som kontraktslås.
+Legg til én ekstra run-scoped manuell bekreftelse.
+Vis included/excluded modules, item counts, warnings/errors-status og readiness.
+Vis at target fortsatt er uavklart hvis target ikke er valgt.
+Ikke aktiver faktisk write/sync.
 Ikke kall syncFromDatabase.
 Ikke kall AHARepository save/load.
 Ikke gjør databasekall.
+Ikke skriv til localStorage.
 Ikke auto-sync.
 Ikke endre data.
 Ikke lag source events eller insights.
-```
-
-Viktig script-loading-konsekvens:
-
-```text
-index.html laster ikke js/ahaLists.js, js/ahaPaths.js, js/ahaGroups.js eller js/ahaAvisa.js på Home ennå.
-syncFromDatabase kan derfor ikke kalles trygt fra Home før modulruntime-filene er lastet eller en egen sync-flate/runtime er bygget.
 ```
 
 ## 8. Anbefalt PR-rekkefølge videre
@@ -990,7 +1027,16 @@ syncFromDatabase kan derfor ikke kalles trygt fra Home før modulruntime-filene 
 10. ✅ docs/test/code: AHAavisa/Articles tombstones, contract, repository og sync hardening
 11. ✅ docs: AHA Sync Hub / Control Center plan
 12. ✅ docs: map AHA Home sync hub entry points
-13. Neste: feat: add read-only AHA sync status hub
+13. ✅ feat: add read-only AHA sync status hub
+14. ✅ feat: add AHA Sync Hub manual action shell
+15. ✅ feat: add AHA Sync Hub dry-run planner
+16. ✅ feat: add AHA Sync Hub validation layer
+17. ✅ feat: add AHA Sync Hub readiness gate
+18. ✅ feat: add AHA Sync Hub payload preview
+19. ✅ feat: add AHA Sync Hub operator checklist
+20. ✅ feat: add gated disabled Manual sync button
+21. ✅ docs: define AHA manual sync execution contract
+22. Neste: feat: add AHA manual sync confirmation modal
 ```
 
-Ikke gå videre til storage, import, Insta/social graph, EchoNet eller manuell Sync Hub før read-only Sync Hub-status er bygget uten auto-sync og uten databasekall.
+Ikke gå videre til storage, import, Insta/social graph, EchoNet eller faktisk AHA manual sync/write før confirmation modal, target-valg, audit log og rollback/partial failure behavior er dokumentert uten auto-sync og uten skjulte databasekall.
