@@ -763,6 +763,58 @@
     `;
   }
 
+  function buildAhaManualSyncGate(plan, payloadPreview, checklist) {
+    const summary = summarizeSyncHubValidation(plan);
+    const modulesIncluded = Number(payloadPreview?.modulesIncluded || 0);
+    const blockedChecklistItems = (checklist.items || []).filter((item) => item.status === "blocked");
+    const warningChecklistItems = (checklist.items || []).filter((item) => item.status === "warning");
+    const gateReasons = [];
+
+    if (checklist.readiness === "blocked") gateReasons.push("Readiness gate is blocked.");
+    if (checklist.readiness === "warning") gateReasons.push("Readiness gate has warnings that must be reviewed.");
+    if (summary.modulesWithErrors > 0) gateReasons.push(`${summary.modulesWithErrors} validation error module${summary.modulesWithErrors === 1 ? "" : "s"} found.`);
+    if (summary.modulesWithWarnings > 0) gateReasons.push(`${summary.modulesWithWarnings} warning or skipped module${summary.modulesWithWarnings === 1 ? "" : "s"} must be reviewed.`);
+    if (modulesIncluded === 0) gateReasons.push("Payload preview includes no modules.");
+    blockedChecklistItems.forEach((item) => gateReasons.push(`${item.label}: ${item.reason}`));
+    warningChecklistItems.forEach((item) => gateReasons.push(`${item.label}: ${item.reason}`));
+    gateReasons.push("Manual sync is not enabled in code yet.");
+
+    return [...new Set(gateReasons)];
+  }
+
+  function renderAhaManualSyncGate(plan, payloadPreview, checklist) {
+    const gateReasons = buildAhaManualSyncGate(plan, payloadPreview, checklist);
+    const primaryReason = gateReasons[0] || "Manual sync is not enabled in code yet.";
+
+    return `
+      <div class="aha-sync-manual-gate" aria-label="AHA Sync Hub manual sync gate">
+        <div class="aha-sync-prep-heading">
+          <p class="eyebrow">Manual sync</p>
+          <h4>Manual sync control</h4>
+          <p class="aha-sync-unavailable-notice">Manual sync is gated and not enabled yet.</p>
+        </div>
+        <button type="button" class="aha-sync-manual-button" disabled aria-disabled="true" aria-describedby="aha-sync-manual-disabled-reason">Manual sync</button>
+        <div id="aha-sync-manual-disabled-reason" class="aha-sync-validation-block">
+          <h5>Disabled reason</h5>
+          <p class="aha-sync-validation-status aha-sync-validation-status-blocked">${escapeHtml(primaryReason)}</p>
+          <ul class="aha-sync-manual-reasons">
+            ${gateReasons.map((reason) => `<li>${escapeHtml(reason)}</li>`).join("")}
+          </ul>
+        </div>
+        <div class="aha-sync-validation-block">
+          <h5>Before manual sync can be enabled</h5>
+          <ul class="aha-sync-manual-requirements">
+            <li>readiness must be ready</li>
+            <li>validation errors must be zero</li>
+            <li>payload preview must include at least one module</li>
+            <li>operator checklist must have no blocked items</li>
+            <li>explicit manual sync implementation must be added in a future PR</li>
+          </ul>
+        </div>
+      </div>
+    `;
+  }
+
   function renderSyncHubPrepPanel(plan) {
     if (!isSyncHubPrepOpen) return "";
 
@@ -803,6 +855,7 @@
         </div>
         ${renderAhaSyncPayloadPreview(payloadPreview)}
         ${renderAhaSyncOperatorChecklist(operatorChecklist)}
+        ${renderAhaManualSyncGate(plan, payloadPreview, operatorChecklist)}
       </div>
     `;
   }
