@@ -2,14 +2,14 @@
 
 Statusdato: 2026-06-05
 
-Dette dokumentet oppsummerer nåværende implementasjonsstatus for AHA etter dokumentlåser, sync-hardening, Search note_reanalysis-visning, Mindmap tombstone-filtrering, Mindmap note_reanalysis-visning, Lists-, Paths-, Meta Insights-, Groups- og AHAavisa/Articles-bolkene, Sync Hub pre-sync UI, manual sync execution contract, manual sync confirmation modal, audit log preview og target selector preview.
+Dette dokumentet oppsummerer nåværende implementasjonsstatus for AHA etter dokumentlåser, sync-hardening, Search note_reanalysis-visning, Mindmap tombstone-filtrering, Mindmap note_reanalysis-visning, Lists-, Paths-, Meta Insights-, Groups- og AHAavisa/Articles-bolkene, Sync Hub pre-sync UI, manual sync execution contract, manual sync confirmation modal, audit log preview, target selector preview og manual sync target contract.
 
 Dokumentet er en statuslås. Det er ikke en runtime-endring, ikke en ny motor, ikke en Supabase-migrasjon og ikke en beslutning om å bygge nye flater.
 
 ## 1. Kort status
 
 ```text
-AHA core er nå dokumentert, sync-reglene for de viktigste personal-data-modulene er hardenet, og AHA Sync Hub har dokumentert pre-sync UI, manual sync execution contract, UI-only confirmation modal, audit log preview og target selector preview uten faktisk write.
+AHA core er nå dokumentert, sync-reglene for de viktigste personal-data-modulene er hardenet, og AHA Sync Hub har dokumentert pre-sync UI, manual sync execution contract, UI-only confirmation modal, audit log preview, target selector preview og manual sync target contract uten faktisk write.
 ```
 
 Ferdig nå:
@@ -47,7 +47,9 @@ Ferdig nå:
 ✅ Manual sync confirmation modal er lagt til som preview/requirements
 ✅ Audit log preview er lagt til uten faktisk audit log-skriving
 ✅ Target selector preview er lagt til for fremtidige write-targets
+✅ Manual sync target contract er dokumentert
 ✅ Ingen write-target er faktisk konfigurert
+✅ Target selector er fortsatt preview-only
 ✅ Confirm sync er fortsatt disabled
 ✅ Manual sync-knappen er fortsatt disabled/gated uten write-kraft
 ```
@@ -70,7 +72,7 @@ Ikke bygget ennå:
 Neste anbefalte PR:
 
 ```text
-docs: define AHA manual sync target contract
+feat: add AHA manual sync adapter interface stub
 ```
 
 ## 1b. Meta Insights – algoritmisk meta-/selvinnsiktsmotor
@@ -106,6 +108,7 @@ docs/AHA_DATA_CONTRACT_MATRIX.md
 docs/AHA_SYNC_RULES.md
 docs/AHA_SYNC_HUB_PLAN.md
 docs/AHA_MANUAL_SYNC_CONTRACT.md
+docs/AHA_MANUAL_SYNC_TARGET_CONTRACT.md
 docs/AHA_INSTA_CONTRACT.md
 docs/AHA_IMPLEMENTATION_STATUS.md
 ```
@@ -198,10 +201,24 @@ Låser execution contract for første fremtidige manuelle AHA Sync Hub-sync før
 Viktigste avgrensning:
 
 ```text
-Første manuelle sync kan bare gjelde Lists, Paths, Groups og AHAavisa; faktisk write er ikke implementert, target selector er kun preview, ingen write-target er konfigurert, audit log-skriving må fortsatt defineres, og Manual sync-/Confirm sync-knappene er fortsatt disabled/gated.
+Første manuelle sync kan bare gjelde Lists, Paths, Groups og AHAavisa; faktisk write er ikke implementert, target selector er kun preview, ingen write-target er konfigurert, audit log-skriving er fortsatt ikke implementert, og Manual sync-/Confirm sync-knappene er fortsatt disabled/gated.
 ```
 
-### 2.7 AHA_INSTA_CONTRACT.md
+### 2.7 AHA_MANUAL_SYNC_TARGET_CONTRACT.md
+
+Formål:
+
+```text
+Låser target-kontrakten for fremtidig manual sync før noen target får skrive-makt.
+```
+
+Viktigste avgrensning:
+
+```text
+not_configured er default og safe, aha_repository_future, database_api_future og custom_sync_backend_future er future-only/preview-only, target selector aktiverer ikke sync, ingen target er konfigurert, faktisk audit log-skriving er ikke implementert, faktisk sync er ikke implementert, og Manual sync / Confirm sync er fortsatt disabled/gated.
+```
+
+### 2.8 AHA_INSTA_CONTRACT.md
 
 Formål:
 
@@ -965,7 +982,7 @@ git diff --check → OK
 
 ## 7. Anbefalt neste steg
 
-Planen for AHA Sync Hub / Control Center er dokumentert i `docs/AHA_SYNC_HUB_PLAN.md`, og manual sync execution contract er dokumentert i `docs/AHA_MANUAL_SYNC_CONTRACT.md`.
+Planen for AHA Sync Hub / Control Center er dokumentert i `docs/AHA_SYNC_HUB_PLAN.md`, manual sync execution contract er dokumentert i `docs/AHA_MANUAL_SYNC_CONTRACT.md`, og manual sync target contract er dokumentert i `docs/AHA_MANUAL_SYNC_TARGET_CONTRACT.md`.
 
 AHA Sync Hub har nå komplett pre-sync UI og confirmation preview på kontraktsnivå:
 
@@ -982,17 +999,20 @@ AHA Sync Hub har nå komplett pre-sync UI og confirmation preview på kontraktsn
 ✅ manual sync confirmation modal
 ✅ disabled Confirm sync preview
 ✅ manual sync audit log preview
+✅ target selector preview
+✅ manual sync target contract
 ```
 
-Status etter audit log preview-PR-en:
+Status etter manual sync target contract-PR-en:
 
 ```text
-- Audit log preview er lagt til som read-only/UI-only in-memory preview.
+- Target selector er fortsatt preview-only og aktiverer ikke sync.
+- Ingen target er faktisk konfigurert; not_configured er default/safe.
 - Faktisk audit log-skriving er fortsatt ikke implementert.
 - Faktisk AHA manual sync/write er fortsatt ikke implementert.
 - Manual sync-knappen er fortsatt disabled/gated.
 - Confirm sync er fortsatt disabled i modal.
-- Write target er uavklart og må velges i senere PR.
+- Target adapter må defineres som no-write interface stub før faktisk target-adapter/write.
 - Home skal fortsatt ikke laste js/ahaLists.js, js/ahaPaths.js, js/ahaGroups.js eller js/ahaAvisa.js direkte for sync.
 - Ingen database/repository/localStorage-skriving er innført.
 ```
@@ -1000,23 +1020,24 @@ Status etter audit log preview-PR-en:
 Neste anbefalte PR:
 
 ```text
-feat: add AHA manual sync target selector preview
+feat: add AHA manual sync adapter interface stub
 ```
 
 Hvorfor:
 
 ```text
-- Audit log preview gjør fremtidig audit record synlig uten write.
-- Target selector preview er tryggeste neste fase før faktisk write/sync.
-- Preview kan vise eksplisitt target-status uten å konfigurere eller bruke et write target.
-- Faktisk write/sync skal vente til target, audit log og rollback/partial failure behavior er eksplisitt valgt.
+- Manual sync target contract definerer lovlige future-only targets og write boundary.
+- Adapter interface stub er tryggeste neste fase før faktisk target-adapter/write.
+- Stubben skal definere grensesnitt, result-statuser og no-write/no-op behavior uten å koble til target.
+- Faktisk write/sync skal fortsatt vente til target, audit log og rollback/partial failure behavior er eksplisitt implementert og testet.
 ```
 
 Avgrensning for neste PR:
 
 ```text
 Bruk `docs/AHA_MANUAL_SYNC_CONTRACT.md` som kontraktslås.
-Vis fremtidig target-valg som read-only preview.
+Definer adapter interface stub uten write.
+Ikke koble til faktisk target.
 Ikke skriv audit log.
 Ikke aktiver faktisk write/sync.
 Ikke kall syncFromDatabase.
@@ -1054,7 +1075,9 @@ Ikke lag source events eller insights.
 21. ✅ docs: define AHA manual sync execution contract
 22. ✅ feat: add AHA manual sync confirmation modal
 23. ✅ feat: add AHA manual sync audit log preview
-24. Neste: feat: add AHA manual sync target selector preview
+24. ✅ feat: add AHA manual sync target selector preview
+25. ✅ docs: define AHA manual sync target contract
+26. Neste: feat: add AHA manual sync adapter interface stub
 ```
 
-Ikke gå videre til storage, import, Insta/social graph, EchoNet eller faktisk AHA manual sync/write før audit log preview, target-valg, audit log og rollback/partial failure behavior er dokumentert uten auto-sync og uten skjulte databasekall.
+Ikke gå videre til storage, import, Insta/social graph, EchoNet eller faktisk AHA manual sync/write før adapter interface stub, konkret target-adapter, audit log-skriving og rollback/partial failure behavior er dokumentert, implementert og testet uten auto-sync og uten skjulte databasekall.
