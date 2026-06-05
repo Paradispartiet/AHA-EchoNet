@@ -327,8 +327,9 @@ AHA Sync Hub skal utvikles i små, låste faser. Hver fase må bevare reglene om
 10. ✅ Confirmation modal
 11. ✅ Audit log preview
 12. ✅ Target selector preview
-13. Neste: Manual sync target contract
-14. Senere: faktisk write/sync etter eksplisitt target-, audit- og rollback-PR
+13. ✅ Manual sync target contract
+14. Neste: Adapter interface stub
+15. Senere: faktisk write/sync etter eksplisitt target-, audit- og rollback-PR
 ```
 
 Manual sync execution contract er dokumentert i `docs/AHA_MANUAL_SYNC_CONTRACT.md`. Den er en kontrakt før faktisk implementasjon og definerer moduler i scope, preconditions/gates, blocking rules, payload-shape, write target-status, manuell bekreftelse, audit log, failure behavior og rollback/partial failure-regler.
@@ -391,14 +392,32 @@ Target selector preview er nå implementert som read-only/UI-only og in-memory U
 
 Denne fasen konfigurerer ikke target, skriver ikke audit log, starter ikke sync, sender ikke payload, kaller ikke repository/database/API/fetch/Supabase/Firebase og skriver ikke til localStorage. Manual sync og Confirm sync er fortsatt disabled/gated uansett valgt preview-target.
 
-## 14. Faktisk write/sync kommer senere
 
-Faktisk write/sync skal ikke innføres som del av contract-, confirmation modal- eller audit log preview-fasen. En senere PR må eksplisitt velge target før write:
+## 13.3 Manual sync target contract-fasen er implementert
+
+Manual sync target contract er nå dokumentert i `docs/AHA_MANUAL_SYNC_TARGET_CONTRACT.md` etter target selector preview-fasen. Kontrakten definerer hva et fremtidig manual sync target er, hvilke target-id-er som kan vurderes senere, target activation rules, blocking rules, write boundary, target-spesifikke kontrakter, payload compatibility, audit log per target, failure/rollback-regler og security/secrets-regler.
+
+Kontrakten låser disse target-statusene som future-only eller safe default:
 
 ```text
-- AHARepository
-- database/API
-- annen sync-backend
+- not_configured = default/safe, ingen write mulig
+- aha_repository_future = preview-only til egen AHARepository adapter-PR
+- database_api_future = preview-only til egen API/database adapter-PR
+- custom_sync_backend_future = preview-only til egen backend adapter-PR
+```
+
+Denne fasen kobler ikke til target, legger ikke til adapter, aktiverer ikke Manual sync eller Confirm sync, skriver ikke audit log, skriver ikke til localStorage og endrer ikke runtime-atferd. Target selector preview er fortsatt preview-only. Faktisk write/sync kommer fortsatt senere etter eksplisitt target-adapter, audit log-skriving og rollback-/partial failure-implementasjon.
+
+Neste fase er adapter interface stub. Stubben skal ikke skrive data ennå; den skal bare definere et trygt no-write/no-op grensesnitt, statuser og blokkeringer før en konkret target-adapter får skrivekraft i en senere PR.
+
+## 14. Faktisk write/sync kommer senere
+
+Faktisk write/sync skal ikke innføres som del av contract-, confirmation modal- eller audit log preview-fasen. En senere PR må først legge til adapter interface stub uten write, og en enda senere target-adapter-PR må eksplisitt velge target før write:
+
+```text
+- AHARepository via dokumentert target-adapter
+- database/API via dokumentert target-adapter
+- annen sync-backend via dokumentert target-adapter
 ```
 
 Ingen target kan brukes før den er valgt i egen PR. Ingen save/load, databasekall, repository-kall eller localStorage-skriving skal innføres skjult. Ingen fremtidig PR skal innføre uklar partial write; første ekte sync bør være atomic eller modul-atomic, eller så må sync blokkeres til rollback/partial failure behavior er dokumentert.
@@ -425,10 +444,10 @@ Reglene fra denne planen gjelder fortsatt:
 
 ## 16. Neste anbefalte PR
 
-Neste anbefalte PR etter target selector preview-fasen er:
+Neste anbefalte PR etter manual sync target contract-fasen er:
 
 ```text
-docs: define AHA manual sync target contract
+feat: add AHA manual sync adapter interface stub
 ```
 
-Akseptanse for den PR-en bør være å definere en eksplisitt target-kontrakt for fremtidig manual sync, inkludert lovlige target-typer, preconditions, no-write-gates, audit/rollback-forventninger og hvordan et target senere kan kobles til uten skjult save/load, databasekall, payload-send, localStorage-skriving eller auto-sync. Faktisk write/sync kommer fortsatt senere etter eksplisitt target-, audit- og rollback-/partial failure-PR.
+Akseptanse for den PR-en bør være å definere et eksplisitt adapter-grensesnitt, no-write/no-op default behavior, result-statuser og blocking behavior uten å koble til target, uten repository save/load, uten database/API/fetch/Supabase/Firebase, uten localStorage-skriving og uten auto-sync. Faktisk write/sync kommer fortsatt senere etter eksplisitt target-adapter, audit log-skriving og rollback-/partial failure-implementasjon.
