@@ -1159,10 +1159,13 @@ html, body { max-width: 100%; overflow-x: hidden; }
   font-weight: 900;
 }
 
-.aha-sync-validation-status-valid { color: var(--aha-green); }
+.aha-sync-validation-status-valid,
+.aha-sync-validation-status-passed { color: var(--aha-green); }
 .aha-sync-validation-status-warnings,
-.aha-sync-validation-status-skipped { color: #ffe27a; }
-.aha-sync-validation-status-errors { color: #ff9b9b; }
+.aha-sync-validation-status-skipped,
+.aha-sync-validation-status-warning { color: #ffe27a; }
+.aha-sync-validation-status-errors,
+.aha-sync-validation-status-blocked { color: #ff9b9b; }
 
 .aha-sync-validation-columns {
   display: grid;
@@ -1209,3 +1212,19 @@ html, body { max-width: 100%; overflow-x: hidden; }
   margin: 0;
   padding-left: 18px;
 }
+
+.aha-sync-operator-checklist {
+  display: grid;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255,255,255,.12);
+}
+
+.aha-sync-unavailable-notice {
+  color: #ffef9c;
+  font-weight: 900;
+}
+
+.aha-sync-checklist-passed small { color: var(--aha-green); }
+.aha-sync-checklist-warning small { color: #ffe27a; }
+.aha-sync-checklist-blocked small { color: #ff9b9b; }

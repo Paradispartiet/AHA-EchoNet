@@ -583,6 +583,97 @@
     return `${summary.totalModules} modules inspected · ${summary.modulesReady} ready · ${summary.modulesWithWarnings} ${warningLabel} · ${summary.modulesWithErrors} ${errorLabel}`;
   }
 
+  function createAhaSyncChecklistItem(label, status, reason) {
+    return { label, status, reason };
+  }
+
+  function summarizeAhaSyncOperatorChecklist(items) {
+    return items.reduce((summary, item) => {
+      if (Object.prototype.hasOwnProperty.call(summary, item.status)) summary[item.status] += 1;
+      return summary;
+    }, { passed: 0, warning: 0, blocked: 0 });
+  }
+
+  function formatAhaSyncOperatorChecklistSummary(summary) {
+    return `${summary.passed} passed · ${summary.warning} warning · ${summary.blocked} blocked`;
+  }
+
+  function buildAhaSyncOperatorChecklist(plan, payloadPreview) {
+    const safePlan = Array.isArray(plan) ? plan : [];
+    const safeModules = Array.isArray(payloadPreview?.modules) ? payloadPreview.modules : [];
+    const validationErrors = safePlan.reduce((count, row) => count + (row.errors?.length || 0), 0);
+    const inspectionErrors = safePlan.filter((row) => row.status === "error" || row.validationStatus === "errors" || row.ok === false).length;
+    const modulesWithWarnings = safePlan.filter((row) => ["warnings", "skipped"].includes(row.validationStatus) || (row.warnings?.length || 0) > 0).length;
+    const readinessBlocked = inspectionErrors > 0 || validationErrors > 0;
+    const previewGenerated = Boolean(payloadPreview && safeModules.length === SYNC_HUB_DRY_RUN_SOURCES.length);
+    const modulesIncluded = Number(payloadPreview?.modulesIncluded || 0);
+    const invalidIncludedModules = safeModules.filter((modulePreview) => {
+      if (!modulePreview.included) return false;
+      return modulePreview.errors?.length || modulePreview.validationStatus === "errors" || modulePreview.itemCount === 0;
+    });
+
+    const items = [
+      createAhaSyncChecklistItem(
+        "Local datasets inspected",
+        safePlan.length === SYNC_HUB_DRY_RUN_SOURCES.length && inspectionErrors === 0 ? "passed" : "blocked",
+        inspectionErrors
+          ? `${inspectionErrors} module inspection blocked; Sync Hub stayed read-only.`
+          : `${safePlan.length} local datasets inspected from the existing dry-run plan.`
+      ),
+      createAhaSyncChecklistItem(
+        "No validation errors",
+        validationErrors || readinessBlocked ? "blocked" : "passed",
+        validationErrors
+          ? `${validationErrors} validation error${validationErrors === 1 ? "" : "s"} found; readiness remains blocked.`
+          : "Validation has no errors in the current dry-run plan."
+      ),
+      createAhaSyncChecklistItem(
+        "Warnings reviewed",
+        modulesWithWarnings ? "warning" : "passed",
+        modulesWithWarnings
+          ? `${modulesWithWarnings} module${modulesWithWarnings === 1 ? " has" : "s have"} warnings or skipped local data to review before any future sync.`
+          : "No validation warnings are present in the current dry-run plan."
+      ),
+      createAhaSyncChecklistItem(
+        "Payload preview generated",
+        !previewGenerated || (modulesIncluded === 0 && readinessBlocked) ? "blocked" : modulesIncluded === 0 ? "warning" : "passed",
+        !previewGenerated
+          ? "Payload preview could not be generated for all configured modules."
+          : modulesIncluded === 0
+            ? "Payload preview exists, but no modules are currently included."
+            : `${modulesIncluded} module${modulesIncluded === 1 ? " is" : "s are"} included in the read-only payload preview.`
+      ),
+      createAhaSyncChecklistItem(
+        "Only eligible modules included",
+        invalidIncludedModules.length ? "blocked" : "passed",
+        invalidIncludedModules.length
+          ? `${invalidIncludedModules.length} included module${invalidIncludedModules.length === 1 ? " has" : "s have"} blocking validation or empty payload state.`
+          : "Payload preview excludes missing, empty, and validation-error modules."
+      ),
+      createAhaSyncChecklistItem(
+        "No database connection used",
+        "passed",
+        "Checklist uses existing in-memory dry-run, validation, readiness, and payload preview results only."
+      ),
+      createAhaSyncChecklistItem(
+        "No repository write enabled",
+        "passed",
+        "No repository save path is exposed from this Sync Hub panel."
+      ),
+      createAhaSyncChecklistItem(
+        "Manual sync not enabled yet",
+        "passed",
+        "Sync is not available yet; this panel exposes no manual sync action."
+      )
+    ];
+
+    return {
+      items,
+      summary: summarizeAhaSyncOperatorChecklist(items),
+      readiness: readinessBlocked ? "blocked" : modulesWithWarnings || modulesIncluded === 0 ? "warning" : "passed"
+    };
+  }
+
   function renderSyncHubValidationMessages(row, type) {
     const messages = type === "errors" ? row.errors : row.warnings;
     if (!messages.length) return `<p class="aha-sync-validation-empty">No ${type}.</p>`;
@@ -649,10 +740,34 @@
     `;
   }
 
+  function renderAhaSyncOperatorChecklist(checklist) {
+    return `
+      <div class="aha-sync-operator-checklist" aria-label="AHA Sync Hub operator checklist">
+        <div class="aha-sync-prep-heading">
+          <h4>Operator checklist</h4>
+          <p class="aha-sync-prep-notice">Pre-flight checklist only. Sync is not available yet.</p>
+          <p class="aha-sync-unavailable-notice">Sync is not available yet.</p>
+          <p class="aha-sync-validation-summary">${escapeHtml(formatAhaSyncOperatorChecklistSummary(checklist.summary))}</p>
+          <p class="aha-sync-validation-status aha-sync-validation-status-${escapeHtml(checklist.readiness)}">readiness gate: ${escapeHtml(checklist.readiness)}</p>
+        </div>
+        <div class="aha-sync-prep-list">
+          ${checklist.items.map((item) => `
+            <div class="aha-sync-prep-row aha-sync-checklist-row aha-sync-checklist-${escapeHtml(item.status)}">
+              <strong>${escapeHtml(item.label)}</strong>
+              <small>${escapeHtml(item.status)}</small>
+              <p>${escapeHtml(item.reason)}</p>
+            </div>
+          `).join("")}
+        </div>
+      </div>
+    `;
+  }
+
   function renderSyncHubPrepPanel(plan) {
     if (!isSyncHubPrepOpen) return "";
 
     const payloadPreview = buildAhaSyncPayloadPreview(plan);
+    const operatorChecklist = buildAhaSyncOperatorChecklist(plan, payloadPreview);
 
     return `
       <div class="aha-sync-prep-panel" id="aha-sync-prep-panel" role="region" aria-label="AHA Sync Hub forberedelse">
@@ -687,6 +802,7 @@
           `).join("")}
         </div>
         ${renderAhaSyncPayloadPreview(payloadPreview)}
+        ${renderAhaSyncOperatorChecklist(operatorChecklist)}
       </div>
     `;
   }
