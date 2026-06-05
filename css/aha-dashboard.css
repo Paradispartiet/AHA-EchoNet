@@ -1189,3 +1189,23 @@ html, body { max-width: 100%; overflow-x: hidden; }
     grid-template-columns: 1fr;
   }
 }
+
+.aha-sync-payload-preview {
+  display: grid;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255,255,255,.12);
+}
+
+.aha-sync-payload-row code {
+  color: #f7f0c6;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.aha-sync-payload-samples {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+  padding-left: 18px;
+}
