@@ -51,11 +51,16 @@ Ferdig nå:
 ✅ Manual sync adapter interface stub er lagt til uten write
 ✅ Manual sync execution state machine stub er lagt til
 ✅ Manual sync run summary preview er lagt til som samlet preview-only oversikt
+✅ Manual sync execution activation checklist er dokumentert
 ✅ Run summary samler target, adapter, state machine, payload, validation, readiness, checklist og audit uten write
+✅ Activation checklist er dokumentasjon og aktiverer fortsatt ikke sync
 ✅ running/success/partial_success er disabled/unreachable fra UI
 ✅ Ingen write-target er faktisk konfigurert
+✅ Ingen target er faktisk konfigurert
 ✅ Target selector er fortsatt preview-only
-✅ Confirm sync er fortsatt disabled
+✅ Faktisk audit log-skriving er fortsatt ikke implementert
+✅ Faktisk AHA manual sync/write er fortsatt ikke implementert
+✅ Confirm sync er fortsatt disabled/gated
 ✅ Manual sync-knappen er fortsatt disabled/gated uten write-kraft
 ```
 
@@ -77,7 +82,7 @@ Ikke bygget ennå:
 Neste anbefalte PR:
 
 ```text
-docs: define AHA manual sync execution activation checklist
+feat: add AHA manual sync activation blocker tests
 ```
 
 ## 1b. Meta Insights – algoritmisk meta-/selvinnsiktsmotor
@@ -114,6 +119,7 @@ docs/AHA_SYNC_RULES.md
 docs/AHA_SYNC_HUB_PLAN.md
 docs/AHA_MANUAL_SYNC_CONTRACT.md
 docs/AHA_MANUAL_SYNC_TARGET_CONTRACT.md
+docs/AHA_MANUAL_SYNC_ACTIVATION_CHECKLIST.md
 docs/AHA_INSTA_CONTRACT.md
 docs/AHA_IMPLEMENTATION_STATUS.md
 ```
@@ -235,6 +241,21 @@ Viktigste avgrensning:
 
 ```text
 Default run state er blocked/not_started med canExecute=false, canWrite=false og writeStatus=disabled_stub_only. confirmed, running, success og partial_success er blokkert/unreachable fra UI. State machine og adapter skriver ikke audit log, sender ikke payload, kaller ikke repository/database/API og lagrer ikke til localStorage. Ingen target er faktisk konfigurert, faktisk sync er fortsatt ikke implementert, og Manual sync / Confirm sync er fortsatt disabled/gated.
+```
+
+
+### 2.7c AHA_MANUAL_SYNC_ACTIVATION_CHECKLIST.md
+
+Formål:
+
+```text
+Låser siste dokumenterte activation checklist før Manual sync / Confirm sync kan aktiveres eller faktisk write kan vurderes.
+```
+
+Viktigste avgrensning:
+
+```text
+Checklist-fasen er dokumentasjon, ikke runtime activation. Den krever green/ready preflight-lag, oppfylte contracts, target/adapter/state machine/audit/UI/safety readiness, activation blocker tests og en liten egen activation-PR. Faktisk sync, faktisk audit log-skriving og faktisk target-konfigurasjon er fortsatt ikke implementert, og Manual sync / Confirm sync er fortsatt disabled/gated.
 ```
 
 ### 2.8 AHA_INSTA_CONTRACT.md
@@ -1003,7 +1024,7 @@ git diff --check → OK
 
 Planen for AHA Sync Hub / Control Center er dokumentert i `docs/AHA_SYNC_HUB_PLAN.md`, manual sync execution contract er dokumentert i `docs/AHA_MANUAL_SYNC_CONTRACT.md`, og manual sync target contract er dokumentert i `docs/AHA_MANUAL_SYNC_TARGET_CONTRACT.md`.
 
-AHA Sync Hub har nå komplett pre-sync UI og confirmation preview på kontraktsnivå:
+AHA Sync Hub har nå komplett pre-sync UI, confirmation preview og activation checklist på kontraktsnivå:
 
 ```text
 ✅ read-only status hub
@@ -1023,14 +1044,17 @@ AHA Sync Hub har nå komplett pre-sync UI og confirmation preview på kontraktsn
 ✅ manual sync adapter interface stub
 ✅ manual sync execution state machine stub
 ✅ manual sync run summary preview
+✅ manual sync execution activation checklist
 ```
 
-Status etter manual sync run summary preview-PR-en:
+Status etter manual sync execution activation checklist-PR-en:
 
 ```text
 - Adapter interface stub finnes, men executeRun returnerer fortsatt blocked/disabled.
 - Execution state machine stub finnes med default blocked/not_started, canExecute=false, canWrite=false og writeStatus=disabled_stub_only.
 - Run summary preview finnes i expanded kontrollpanel og confirmation modal, men er preview-only/in-memory.
+- Manual sync execution activation checklist er dokumentert som siste go/no-go-sperre før faktisk execution kan vurderes.
+- Activation checklist er dokumentasjon, ikke runtime activation, og aktiverer fortsatt ikke sync.
 - Summary samler target, adapter, state machine, payload, validation, readiness, checklist og audit med canExecute=false og canWrite=false.
 - confirmed, running, success og partial_success er disabled/unreachable fra UI.
 - Target selector er fortsatt preview-only og aktiverer ikke sync.
@@ -1046,23 +1070,23 @@ Status etter manual sync run summary preview-PR-en:
 Neste anbefalte PR:
 
 ```text
-docs: define AHA manual sync execution activation checklist
+feat: add AHA manual sync activation blocker tests
 ```
 
 Hvorfor:
 
 ```text
-- Run summary preview låser en samlet no-write oversikt før faktisk execution kan vurderes.
-- Neste trygge steg er å dokumentere activation gates, eierbeslutninger og testkrav før write-enabled manual sync.
-- Summary preview er fortsatt no-write/no-op og kobler ikke til target.
+- Activation checklist låser siste dokumenterte no-write sperre før faktisk execution kan vurderes.
+- Neste trygge steg er å legge til blocker tests som beviser at Manual sync / Confirm sync fortsatt ikke kan aktiveres før alle gates er oppfylt.
+- Summary preview og activation checklist er fortsatt no-write/no-op og kobler ikke til target.
 - Faktisk write/sync skal fortsatt vente til target, audit log og rollback/partial failure behavior er eksplisitt implementert og testet.
 ```
 
 Avgrensning for neste PR:
 
 ```text
-Bruk `docs/AHA_MANUAL_SYNC_CONTRACT.md` og run summary preview-statusen som kontraktslås.
-Definer execution activation checklist uten write.
+Bruk `docs/AHA_MANUAL_SYNC_ACTIVATION_CHECKLIST.md`, `docs/AHA_MANUAL_SYNC_CONTRACT.md` og run summary preview-statusen som kontraktslås.
+Legg til activation blocker tests uten write.
 Ikke koble til faktisk target.
 Ikke skriv audit log.
 Ikke aktiver faktisk write/sync.
@@ -1106,7 +1130,8 @@ Ikke lag source events eller insights.
 26. ✅ feat: add AHA manual sync adapter interface stub
 27. ✅ feat: add AHA manual sync execution state machine stub
 28. ✅ feat: add AHA manual sync run summary preview
-29. Neste: docs: define AHA manual sync execution activation checklist
+29. ✅ docs: define AHA manual sync execution activation checklist
+30. Neste: feat: add AHA manual sync activation blocker tests
 ```
 
-Ikke gå videre til storage, import, Insta/social graph, EchoNet eller faktisk AHA manual sync/write før execution activation checklist, konkret target-adapter, audit log-skriving og rollback/partial failure behavior er dokumentert, implementert og testet uten auto-sync og uten skjulte databasekall.
+Ikke gå videre til storage, import, Insta/social graph, EchoNet eller faktisk AHA manual sync/write før activation blocker tests, konkret target-adapter, audit log-skriving og rollback/partial failure behavior er dokumentert, implementert og testet uten auto-sync og uten skjulte databasekall.
