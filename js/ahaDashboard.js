@@ -791,6 +791,67 @@
     return "Selected target is preview-only and not connected.";
   }
 
+  const AHA_MANUAL_SYNC_STATE_MACHINE_FALLBACK_STATUS = Object.freeze({
+    currentState: "blocked",
+    previousState: "not_started",
+    reason: "Manual sync execution is not implemented.",
+    canExecute: false,
+    canWrite: false,
+    isStub: true,
+    writeStatus: "disabled_stub_only",
+    states: ["not_started", "blocked", "confirmed", "running", "partial_success", "success", "failed", "rolled_back"],
+    allowedPreviewTransitions: {
+      not_started: ["blocked"],
+      blocked: ["not_started"],
+      confirmed: ["blocked"],
+      running: ["failed"],
+      failed: ["rolled_back"]
+    },
+    disabledExecutionStates: ["confirmed", "running", "partial_success", "success"]
+  });
+
+  function getAhaManualSyncStateMachinePreviewStatus() {
+    const api = window.AHAManualSyncStateMachine;
+    if (api?.getAhaManualSyncStateMachineStatus) {
+      try {
+        return api.getAhaManualSyncStateMachineStatus();
+      } catch (error) {
+        console.warn("AHADashboard: kunne ikke lese manual sync state machine status", error);
+      }
+    }
+
+    return AHA_MANUAL_SYNC_STATE_MACHINE_FALLBACK_STATUS;
+  }
+
+  function renderAhaManualSyncStateMachinePreview(status = getAhaManualSyncStateMachinePreviewStatus()) {
+    const transitions = Object.entries(status.allowedPreviewTransitions || {})
+      .map(([from, to]) => `${from} -> ${Array.isArray(to) ? to.join(", ") : to}`);
+
+    return `
+      <div class="aha-sync-state-machine-preview" aria-label="AHA manual sync execution state machine preview">
+        <div class="aha-sync-prep-heading">
+          <h4>Execution state machine</h4>
+          <p class="aha-sync-prep-notice">State machine stub only. Write/execution states are disabled.</p>
+          <p class="aha-sync-validation-summary">currentState: ${escapeHtml(status.currentState)} · previousState: ${escapeHtml(status.previousState)} · writeStatus: ${escapeHtml(status.writeStatus)}</p>
+        </div>
+        <div class="aha-sync-validation-block">
+          <p><strong>currentState:</strong> ${escapeHtml(status.currentState)}</p>
+          <p><strong>previousState:</strong> ${escapeHtml(status.previousState)}</p>
+          <p><strong>canExecute:</strong> ${escapeHtml(status.canExecute)}</p>
+          <p><strong>canWrite:</strong> ${escapeHtml(status.canWrite)}</p>
+          <p><strong>writeStatus:</strong> ${escapeHtml(status.writeStatus)}</p>
+          <p><strong>reason:</strong> ${escapeHtml(status.reason)}</p>
+          <p><strong>allowed preview states:</strong> ${escapeHtml((status.states || []).join(", "))}</p>
+          <p><strong>disabled execution states:</strong> ${escapeHtml((status.disabledExecutionStates || []).join(", "))}</p>
+        </div>
+        <div class="aha-sync-validation-block">
+          <h5>Allowed transition preview</h5>
+          ${renderAhaSyncStatusList(transitions, "No preview transitions are available.")}
+        </div>
+      </div>
+    `;
+  }
+
   function renderAhaManualSyncTargetSelectorPreview() {
     const activeTarget = getAhaManualSyncPreviewTarget();
 
@@ -1178,6 +1239,7 @@
 
     const model = buildAhaManualSyncConfirmationModel(plan, payloadPreview, checklist);
     const safeAuditPreview = auditPreview || buildAhaManualSyncAuditLogPreview(plan, payloadPreview, checklist);
+    const stateMachineStatus = getAhaManualSyncStateMachinePreviewStatus();
     const validationSummary = model.validationSummary;
     const checklistSummary = model.checklist.summary || { passed: 0, warning: 0, blocked: 0 };
     const blockedChecklistLabels = model.blockedChecklistItems.map((item) => `${item.label}: ${item.reason}`);
@@ -1242,7 +1304,13 @@
           </div>
 
           <div class="aha-sync-confirmation-section">
-            <h5>G. Manual confirmation requirements</h5>
+            <h5>G. Execution state machine</h5>
+            <p class="aha-sync-prep-notice">Stub only. Confirm sync stays disabled.</p>
+            <p><strong>currentState:</strong> ${escapeHtml(stateMachineStatus.currentState)} · <strong>canExecute:</strong> ${escapeHtml(stateMachineStatus.canExecute)} · <strong>writeStatus:</strong> ${escapeHtml(stateMachineStatus.writeStatus)}</p>
+          </div>
+
+          <div class="aha-sync-confirmation-section">
+            <h5>H. Manual confirmation requirements</h5>
             <ul class="aha-sync-manual-requirements">
               ${manualRequirements.map((requirement) => `<li>${escapeHtml(requirement)}</li>`).join("")}
             </ul>
@@ -1301,6 +1369,7 @@
         </div>
         ${renderAhaSyncPayloadPreview(payloadPreview)}
         ${renderAhaManualSyncTargetSelectorPreview()}
+        ${renderAhaManualSyncStateMachinePreview()}
         ${renderAhaSyncOperatorChecklist(operatorChecklist)}
         ${renderAhaManualSyncAuditLogPreview(auditPreview)}
         ${renderAhaManualSyncGate(plan, payloadPreview, operatorChecklist)}

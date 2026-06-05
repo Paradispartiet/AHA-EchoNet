@@ -408,11 +408,22 @@ Kontrakten låser disse target-statusene som future-only eller safe default:
 
 Denne fasen kobler ikke til target, legger ikke til adapter, aktiverer ikke Manual sync eller Confirm sync, skriver ikke audit log, skriver ikke til localStorage og endrer ikke runtime-atferd. Target selector preview er fortsatt preview-only. Faktisk write/sync kommer fortsatt senere etter eksplisitt target-adapter, audit log-skriving og rollback-/partial failure-implementasjon.
 
-Neste fase er adapter interface stub. Stubben skal ikke skrive data ennå; den skal bare definere et trygt no-write/no-op grensesnitt, statuser og blokkeringer før en konkret target-adapter får skrivekraft i en senere PR.
+
+## 13.4 Manual sync adapter interface stub-fasen er implementert
+
+Adapter interface stub er nå implementert som et trygt no-write/no-op grensesnitt. Den kan forberede en stub-run for preview/status, men `executeRun` returnerer fortsatt blocked/disabled og kan ikke starte faktisk sync. Adapteren kobler ikke til target, skriver ikke audit log, sender ikke payload, kaller ikke repository/database/API og skriver ikke til localStorage.
+
+## 13.5 Execution state machine stub-fasen er implementert
+
+Execution state machine stub er nå implementert for fremtidige manual sync-runs. Default state er `blocked` med `previousState=not_started`, `canExecute=false`, `canWrite=false`, `isStub=true` og `writeStatus=disabled_stub_only`.
+
+State machine er preview/status only og skriver ikke data. Den definerer state-navnene `not_started`, `blocked`, `confirmed`, `running`, `partial_success`, `success`, `failed` og `rolled_back`, men `confirmed`, `running`, `success` og `partial_success` er blokkert i denne fasen og kan ikke nås fra UI. Running/success-states kan dermed ikke brukes til faktisk execution ennå.
+
+Neste fase er manual sync run summary preview. Den skal bare oppsummere fremtidige run-resultater uten write, uten faktisk target, uten audit log-skriving, uten payload-send og uten auto-sync. Faktisk write/sync kommer fortsatt senere.
 
 ## 14. Faktisk write/sync kommer senere
 
-Faktisk write/sync skal ikke innføres som del av contract-, confirmation modal- eller audit log preview-fasen. En senere PR må først legge til adapter interface stub uten write, og en enda senere target-adapter-PR må eksplisitt velge target før write:
+Faktisk write/sync skal ikke innføres som del av contract-, confirmation modal-, audit log preview-, adapter stub- eller state machine stub-fasen. En senere PR må først legge til run summary preview uten write, og en enda senere target-adapter-PR må eksplisitt velge target før write:
 
 ```text
 - AHARepository via dokumentert target-adapter
@@ -444,10 +455,10 @@ Reglene fra denne planen gjelder fortsatt:
 
 ## 16. Neste anbefalte PR
 
-Neste anbefalte PR etter manual sync target contract-fasen er:
+Neste anbefalte PR etter execution state machine stub-fasen er:
 
 ```text
-feat: add AHA manual sync adapter interface stub
+feat: add AHA manual sync run summary preview
 ```
 
-Akseptanse for den PR-en bør være å definere et eksplisitt adapter-grensesnitt, no-write/no-op default behavior, result-statuser og blocking behavior uten å koble til target, uten repository save/load, uten database/API/fetch/Supabase/Firebase, uten localStorage-skriving og uten auto-sync. Faktisk write/sync kommer fortsatt senere etter eksplisitt target-adapter, audit log-skriving og rollback-/partial failure-implementasjon.
+Akseptanse for den PR-en bør være å vise en kompakt run summary preview basert på eksisterende dry-run/payload/checklist/state machine-status uten å koble til target, uten repository save/load, uten database/API/fetch/Supabase/Firebase, uten localStorage-skriving og uten auto-sync. Faktisk write/sync kommer fortsatt senere etter eksplisitt target-adapter, audit log-skriving og rollback-/partial failure-implementasjon.
