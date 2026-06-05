@@ -324,8 +324,9 @@ AHA Sync Hub skal utvikles i små, låste faser. Hver fase må bevare reglene om
 7. ✅ Operator checklist
 8. ✅ Gated disabled Manual sync button
 9. ✅ Manual sync execution contract
-10. Neste: Confirmation modal
-11. Senere: faktisk write/sync etter eksplisitt target-, audit- og rollback-PR
+10. ✅ Confirmation modal
+11. Neste: Audit log preview
+12. Senere: faktisk write/sync etter eksplisitt target-, audit- og rollback-PR
 ```
 
 Manual sync execution contract er dokumentert i `docs/AHA_MANUAL_SYNC_CONTRACT.md`. Den er en kontrakt før faktisk implementasjon og definerer moduler i scope, preconditions/gates, blocking rules, payload-shape, write target-status, manuell bekreftelse, audit log, failure behavior og rollback/partial failure-regler.
@@ -358,15 +359,9 @@ Kontrakten krever at faktisk sync senere bare kan vurderes når readiness er `re
 
 Warnings blokkerer ikke nødvendigvis sync, men må vises, inngå i summary/audit og bekreftes manuelt før write.
 
-## 13. Confirmation modal som neste fase
+## 13. Confirmation modal-fasen er implementert
 
-Neste anbefalte PR etter execution contract er:
-
-```text
-feat: add AHA manual sync confirmation modal
-```
-
-Confirmation modal skal være neste UI-/runtime-fase, men den skal fortsatt ikke trenge å skrive data. Den bør gjøre bekreftelsesflyten eksplisitt:
+Confirmation modal er nå implementert som UI-only preview/requirements-flate. Den skriver ikke data, starter ikke sync, sender ikke payload, kaller ikke repository/database/API og aktiverer ikke Manual sync eller Confirm sync. Den gjør bekreftelsesflyten eksplisitt:
 
 ```text
 - payload summary
@@ -380,7 +375,17 @@ Confirmation modal skal være neste UI-/runtime-fase, men den skal fortsatt ikke
 - én ekstra run-scoped manuell bekreftelse
 ```
 
-Bekreftelsen skal gjelde én sync-run og ikke lagres permanent. Det skal fortsatt ikke finnes sync ved page load, sync ved åpning av kontrollpanel, skjult save/load, databasekall eller auto-sync.
+Bekreftelsen skal gjelde én sync-run og ikke lagres permanent. Confirm sync er fortsatt disabled til faktisk manual sync execution er implementert i en senere PR. Det skal fortsatt ikke finnes sync ved page load, sync ved åpning av kontrollpanel, skjult save/load, databasekall eller auto-sync.
+
+## 13.1 Neste fase: audit log preview
+
+Neste anbefalte PR er:
+
+```text
+feat: add AHA manual sync audit log preview
+```
+
+Audit log preview skal fortsatt være read-only/UI-only. Den bør vise hva en fremtidig audit record må inneholde, men den skal ikke skrive audit log, ikke velge write target og ikke starte sync.
 
 ## 14. Faktisk write/sync kommer senere
 
@@ -416,10 +421,10 @@ Reglene fra denne planen gjelder fortsatt:
 
 ## 16. Neste anbefalte PR
 
-Neste anbefalte PR etter denne dokumentasjonskontrakten er:
+Neste anbefalte PR etter confirmation modal-fasen er:
 
 ```text
-feat: add AHA manual sync confirmation modal
+feat: add AHA manual sync audit log preview
 ```
 
-Akseptanse for den PR-en bør være at modal viser payload summary, warnings/errors-status, readiness, target-status, audit-log-forventning og én ekstra run-scoped bekreftelse uten å utføre faktisk write/sync.
+Akseptanse for den PR-en bør være at audit log preview viser fremtidig audit-form, run-scope, readiness/validation/payload/checklist-oppsummering og disabled/no-write-status uten å utføre faktisk write/sync. Faktisk write/sync kommer fortsatt senere etter eksplisitt target-, audit- og rollback-/partial failure-PR.

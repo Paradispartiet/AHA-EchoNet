@@ -1255,3 +1255,74 @@ html, body { max-width: 100%; overflow-x: hidden; }
   color: var(--aha-muted);
   font-size: .82rem;
 }
+
+.aha-sync-manual-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.aha-sync-confirmation-preview-button,
+.aha-sync-confirmation-close {
+  justify-self: start;
+  padding: 9px 14px;
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: 999px;
+  background: rgba(255,255,255,.1);
+  color: #fff;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.aha-sync-confirmation-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(4,5,9,.72);
+}
+
+.aha-sync-confirmation-modal {
+  width: min(760px, 100%);
+  max-height: min(88vh, 840px);
+  overflow: auto;
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: 20px;
+  background: #11131d;
+  box-shadow: 0 20px 70px rgba(0,0,0,.45);
+}
+
+.aha-sync-confirmation-header,
+.aha-sync-confirmation-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.aha-sync-confirmation-header h4,
+.aha-sync-confirmation-section h5,
+.aha-sync-confirmation-section p {
+  margin: 0;
+}
+
+.aha-sync-confirmation-section {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 16px;
+  background: rgba(255,255,255,.045);
+}
+
+.aha-sync-confirmation-module-list {
+  display: grid;
+  gap: 8px;
+}
