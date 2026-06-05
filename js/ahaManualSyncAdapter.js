@@ -50,6 +50,8 @@
 
     return {
       adapterStatus: "disabled_stub_only",
+      target: "not_configured",
+      targetStatus: "not_configured",
       canPrepare: true,
       canExecute: false,
       canWrite: false,
@@ -60,6 +62,24 @@
     };
   }
 
+  function validateAhaManualSyncTarget(target) {
+    const normalizedTarget = typeof target === "string"
+      ? target
+      : target?.id || target?.target || target?.status || "not_configured";
+
+    return {
+      ok: false,
+      status: "blocked",
+      target: normalizedTarget || "not_configured",
+      targetStatus: normalizedTarget || "not_configured",
+      canExecute: false,
+      canWrite: false,
+      isStub: true,
+      reason: DISABLED_REASON,
+      writeStatus: DISABLED_WRITE_STATUS
+    };
+  }
+
   function prepareRun(input) {
     const stateMachine = getStateMachine();
     const runState = stateMachine?.createAhaManualSyncRunState
@@ -67,13 +87,14 @@
       : fallbackRunState(input);
 
     return {
-      ok: true,
-      status: "prepared_stub_only",
+      ok: false,
+      status: "blocked_preview_disabled",
       canExecute: false,
       canWrite: false,
       isStub: true,
       reason: DISABLED_REASON,
       writeStatus: DISABLED_WRITE_STATUS,
+      targetValidation: validateAhaManualSyncTarget(input?.target),
       runState,
       stateMachineStatus: getAhaManualSyncAdapterStatus().stateMachineStatus
     };
@@ -106,8 +127,11 @@
 
   const api = {
     getAhaManualSyncAdapterStatus,
+    validateAhaManualSyncTarget,
     prepareRun,
-    executeRun
+    prepareAhaManualSyncRun: prepareRun,
+    executeRun,
+    executeAhaManualSyncRun: executeRun
   };
 
   if (typeof window !== "undefined") {

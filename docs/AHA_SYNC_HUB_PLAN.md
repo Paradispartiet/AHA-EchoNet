@@ -332,8 +332,9 @@ AHA Sync Hub skal utvikles i små, låste faser. Hver fase må bevare reglene om
 15. ✅ Execution state machine stub
 16. ✅ Run summary preview
 17. ✅ Execution activation checklist (dokumentasjon, ikke runtime activation)
-18. Neste: Activation blocker tests
-19. Senere: faktisk write/sync etter eksplisitt target-, audit- og rollback-PR
+18. ✅ Activation blocker tests (test/safety only, ikke runtime activation)
+19. Neste: Target adapter dry-run harness
+20. Senere: faktisk write/sync etter eksplisitt target-, audit- og rollback-PR
 ```
 
 Manual sync execution contract er dokumentert i `docs/AHA_MANUAL_SYNC_CONTRACT.md`. Den er en kontrakt før faktisk implementasjon og definerer moduler i scope, preconditions/gates, blocking rules, payload-shape, write target-status, manuell bekreftelse, audit log, failure behavior og rollback/partial failure-regler.
@@ -441,11 +442,20 @@ Checklist-fasen lister required implemented layers, required docs/contracts, dat
 
 Denne fasen aktiverer ikke Manual sync eller Confirm sync, kobler ikke target, skriver ikke audit log, sender ikke payload, gjør ikke repository/database/API/fetch/Supabase/Firebase-kall, skriver ikke til localStorage og endrer ikke runtime-atferd. Faktisk write/sync kommer fortsatt senere etter egne target-, audit-, rollback-/partial failure- og activation-PR-er.
 
-Neste fase er activation blocker tests. Den bør bevise at Manual sync / Confirm sync fortsatt er blokkert før activation, at dashboard ikke har skjulte write paths, at target/validation/audit/state machine blokkerer riktig, og at `partial_success` er unreachable uten partial failure-kontrakt.
+Activation blocker tests-fasen er nå implementert. Den beviser at Manual sync / Confirm sync fortsatt er blokkert før activation, at dashboard/sync-runtime ikke har skjulte write paths, at target/adapter/state machine blokkerer riktig, og at `partial_success` er unreachable uten partial failure-kontrakt. Testene aktiverer ikke sync, kobler ikke target, sender ikke payload, skriver ikke audit log og gjør ikke faktisk write.
+
+
+## 13.8 Activation blocker tests-fasen er implementert
+
+Activation blocker tests er nå lagt til som test-/safety-lås etter execution activation checklist-fasen. De tester adapterstatus, target validation, prepare/execute-resultater, missing/not_configured/future-only targets, state machine states, blokkerte transitions og statiske forbidden-call guards for relevante sync-runtime-filer.
+
+Denne fasen aktiverer ikke Manual sync eller Confirm sync, kobler ikke target, sender ikke payload, skriver ikke audit log, gjør ikke repository/database/API/fetch/Supabase/Firebase-kall, skriver ikke til localStorage og starter ikke auto-sync. Faktisk write/sync kommer fortsatt senere.
+
+Neste fase er target adapter dry-run harness. Den skal fortsatt være dry-run/no-write og bare legge grunnlag for å validere target-spesifikk form før en senere separat activation/write-PR.
 
 ## 14. Faktisk write/sync kommer senere
 
-Faktisk write/sync skal ikke innføres som del av contract-, confirmation modal-, audit log preview-, adapter stub-, state machine stub-, run summary preview- eller activation checklist-fasen. Activation checklist er dokumentasjon, ikke runtime activation. En senere PR må først legge til activation blocker tests uten write, og en enda senere target-adapter-PR må eksplisitt velge target før write:
+Faktisk write/sync skal ikke innføres som del av contract-, confirmation modal-, audit log preview-, adapter stub-, state machine stub-, run summary preview- eller activation checklist-fasen. Activation checklist er dokumentasjon, ikke runtime activation. Activation blocker tests finnes nå uten write. En senere target-adapter dry-run harness må fortsatt holde seg no-write, og en enda senere target-adapter/write-PR må eksplisitt velge target før write:
 
 ```text
 - AHARepository via dokumentert target-adapter
@@ -477,10 +487,10 @@ Reglene fra denne planen gjelder fortsatt:
 
 ## 16. Neste anbefalte PR
 
-Neste anbefalte PR etter execution activation checklist-fasen er:
+Neste anbefalte PR etter activation blocker tests-fasen er:
 
 ```text
-feat: add AHA manual sync activation blocker tests
+feat: add AHA manual sync target adapter dry-run harness
 ```
 
-Akseptanse for den PR-en bør være å bevise at activation fortsatt er blokkert før alle gates er oppfylt: Manual sync og Confirm sync må forbli disabled/gated, dashboard må fortsatt være uten skjulte repository/database/API/fetch/Supabase/Firebase/localStorage write paths, target/validation/audit/state machine må blokkere riktig, og `partial_success` må være unreachable uten partial failure-kontrakt. Faktisk write/sync kommer fortsatt senere etter eksplisitt target-adapter, audit log-skriving og rollback-/partial failure-implementasjon.
+Akseptanse for den PR-en bør være en fortsatt no-write target adapter dry-run harness: ingen faktisk target-tilkobling for write, ingen payload-send, ingen audit log-skriving, ingen repository/database/API/fetch/Supabase/Firebase/localStorage write paths og ingen activation av Manual sync eller Confirm sync. Faktisk write/sync kommer fortsatt senere etter eksplisitt target-adapter, audit log-skriving og rollback-/partial failure-implementasjon.
