@@ -2,14 +2,14 @@
 
 Statusdato: 2026-06-05
 
-Dette dokumentet oppsummerer nåværende implementasjonsstatus for AHA etter dokumentlåser, sync-hardening, Search note_reanalysis-visning, Mindmap tombstone-filtrering, Mindmap note_reanalysis-visning, Lists-, Paths-, Meta Insights-, Groups- og AHAavisa/Articles-bolkene, Sync Hub pre-sync UI og manual sync execution contract.
+Dette dokumentet oppsummerer nåværende implementasjonsstatus for AHA etter dokumentlåser, sync-hardening, Search note_reanalysis-visning, Mindmap tombstone-filtrering, Mindmap note_reanalysis-visning, Lists-, Paths-, Meta Insights-, Groups- og AHAavisa/Articles-bolkene, Sync Hub pre-sync UI, manual sync execution contract og manual sync confirmation modal.
 
 Dokumentet er en statuslås. Det er ikke en runtime-endring, ikke en ny motor, ikke en Supabase-migrasjon og ikke en beslutning om å bygge nye flater.
 
 ## 1. Kort status
 
 ```text
-AHA core er nå dokumentert, sync-reglene for de viktigste personal-data-modulene er hardenet, og AHA Sync Hub har dokumentert pre-sync UI og manual sync execution contract uten faktisk write.
+AHA core er nå dokumentert, sync-reglene for de viktigste personal-data-modulene er hardenet, og AHA Sync Hub har dokumentert pre-sync UI, manual sync execution contract og en UI-only confirmation modal uten faktisk write.
 ```
 
 Ferdig nå:
@@ -44,6 +44,8 @@ Ferdig nå:
 ✅ Meta Insights read-only/no-autosend guards er låst med tester
 ✅ AHA Home entry points for Sync Hub er kartlagt i dokumentasjon
 ✅ Manual sync execution contract er dokumentert
+✅ Manual sync confirmation modal er lagt til som preview/requirements
+✅ Confirm sync er fortsatt disabled
 ✅ Manual sync-knappen er fortsatt disabled/gated uten write-kraft
 ```
 
@@ -955,7 +957,7 @@ git diff --check → OK
 
 Planen for AHA Sync Hub / Control Center er dokumentert i `docs/AHA_SYNC_HUB_PLAN.md`, og manual sync execution contract er dokumentert i `docs/AHA_MANUAL_SYNC_CONTRACT.md`.
 
-AHA Sync Hub har nå komplett pre-sync UI på kontraktsnivå:
+AHA Sync Hub har nå komplett pre-sync UI og confirmation preview på kontraktsnivå:
 
 ```text
 ✅ read-only status hub
@@ -967,15 +969,18 @@ AHA Sync Hub har nå komplett pre-sync UI på kontraktsnivå:
 ✅ operator checklist
 ✅ gated disabled Manual sync button
 ✅ manual sync execution contract
+✅ manual sync confirmation modal
+✅ disabled Confirm sync preview
 ```
 
-Status etter denne dokumentasjons-PR-en:
+Status etter confirmation modal-PR-en:
 
 ```text
 - Faktisk AHA manual sync/write er fortsatt ikke implementert.
 - Manual sync-knappen er fortsatt disabled/gated.
+- Confirm sync er fortsatt disabled i modal.
 - Write target er uavklart og må velges i senere PR.
-- Audit log-strategi må defineres før write.
+- Audit log-strategi må defineres før write og bør først previews i neste PR.
 - Home skal fortsatt ikke laste js/ahaLists.js, js/ahaPaths.js, js/ahaGroups.js eller js/ahaAvisa.js direkte for sync.
 - Ingen database/repository/localStorage-skriving er innført.
 ```
@@ -983,15 +988,15 @@ Status etter denne dokumentasjons-PR-en:
 Neste anbefalte PR:
 
 ```text
-feat: add AHA manual sync confirmation modal
+feat: add AHA manual sync audit log preview
 ```
 
 Hvorfor:
 
 ```text
-- Execution contract er nå dokumentert før faktisk implementasjon.
-- Confirmation modal er tryggeste neste fase før write.
-- Modal kan vise payload summary, warnings/errors-status, readiness, target-status og audit-log-forventning uten å skrive data.
+- Confirmation modal gjør manuell bekreftelse synlig uten write.
+- Audit log preview er tryggeste neste fase før target-valg og faktisk write.
+- Preview kan vise fremtidig audit record, readiness, validation, payload og checklist summary uten å skrive audit log.
 - Faktisk write/sync skal vente til target, audit log og rollback/partial failure behavior er eksplisitt valgt.
 ```
 
@@ -999,9 +1004,8 @@ Avgrensning for neste PR:
 
 ```text
 Bruk `docs/AHA_MANUAL_SYNC_CONTRACT.md` som kontraktslås.
-Legg til én ekstra run-scoped manuell bekreftelse.
-Vis included/excluded modules, item counts, warnings/errors-status og readiness.
-Vis at target fortsatt er uavklart hvis target ikke er valgt.
+Vis fremtidig audit-log payload/summary som read-only preview.
+Ikke skriv audit log.
 Ikke aktiver faktisk write/sync.
 Ikke kall syncFromDatabase.
 Ikke kall AHARepository save/load.
@@ -1036,7 +1040,8 @@ Ikke lag source events eller insights.
 19. ✅ feat: add AHA Sync Hub operator checklist
 20. ✅ feat: add gated disabled Manual sync button
 21. ✅ docs: define AHA manual sync execution contract
-22. Neste: feat: add AHA manual sync confirmation modal
+22. ✅ feat: add AHA manual sync confirmation modal
+23. Neste: feat: add AHA manual sync audit log preview
 ```
 
-Ikke gå videre til storage, import, Insta/social graph, EchoNet eller faktisk AHA manual sync/write før confirmation modal, target-valg, audit log og rollback/partial failure behavior er dokumentert uten auto-sync og uten skjulte databasekall.
+Ikke gå videre til storage, import, Insta/social graph, EchoNet eller faktisk AHA manual sync/write før audit log preview, target-valg, audit log og rollback/partial failure behavior er dokumentert uten auto-sync og uten skjulte databasekall.

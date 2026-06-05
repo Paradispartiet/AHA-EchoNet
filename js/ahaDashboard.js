@@ -5,6 +5,7 @@
 
   let lastState = null;
   let isSyncHubPrepOpen = false;
+  let isAhaManualSyncConfirmationModalOpen = false;
 
   const AHA_AUTH_RETURN_TO_KEY = "aha_auth_return_to_v1";
   const HISTORY_GO_PROFILE_URL = "https://paradispartiet.github.io/History-Go/profile.html";
@@ -573,7 +574,9 @@
     const modulesReady = plan.filter((row) => row.validationStatus === "valid").length;
     const modulesWithWarnings = plan.filter((row) => ["warnings", "skipped"].includes(row.validationStatus)).length;
     const modulesWithErrors = plan.filter((row) => row.validationStatus === "errors").length;
-    return { totalModules, modulesReady, modulesWithWarnings, modulesWithErrors };
+    const warningCount = plan.reduce((count, row) => count + (row.warnings?.length || 0), 0);
+    const errorCount = plan.reduce((count, row) => count + (row.errors?.length || 0), 0);
+    return { totalModules, modulesReady, modulesWithWarnings, modulesWithErrors, warningCount, errorCount };
   }
 
   function formatSyncHubValidationSummary(plan) {
@@ -740,6 +743,11 @@
     `;
   }
 
+  function renderAhaSyncStatusList(items, emptyLabel) {
+    if (!items.length) return `<p class="aha-sync-validation-empty">${escapeHtml(emptyLabel)}</p>`;
+    return `<ul class="aha-sync-manual-reasons">${items.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`;
+  }
+
   function renderAhaSyncOperatorChecklist(checklist) {
     return `
       <div class="aha-sync-operator-checklist" aria-label="AHA Sync Hub operator checklist">
@@ -793,7 +801,10 @@
           <h4>Manual sync control</h4>
           <p class="aha-sync-unavailable-notice">Manual sync is gated and not enabled yet.</p>
         </div>
-        <button type="button" class="aha-sync-manual-button" disabled aria-disabled="true" aria-describedby="aha-sync-manual-disabled-reason">Manual sync</button>
+        <div class="aha-sync-manual-actions">
+          <button type="button" class="aha-sync-manual-button" disabled aria-disabled="true" aria-describedby="aha-sync-manual-disabled-reason">Manual sync</button>
+          <button id="aha-sync-confirmation-preview" type="button" class="aha-sync-confirmation-preview-button" aria-haspopup="dialog">Preview confirmation</button>
+        </div>
         <div id="aha-sync-manual-disabled-reason" class="aha-sync-validation-block">
           <h5>Disabled reason</h5>
           <p class="aha-sync-validation-status aha-sync-validation-status-blocked">${escapeHtml(primaryReason)}</p>
@@ -810,6 +821,152 @@
             <li>operator checklist must have no blocked items</li>
             <li>explicit manual sync implementation must be added in a future PR</li>
           </ul>
+        </div>
+      </div>
+    `;
+  }
+
+
+  function buildAhaManualSyncConfirmationModel(plan, payloadPreview, checklist) {
+    try {
+      const safePlan = Array.isArray(plan) ? plan : buildAhaSyncDryRunPlan();
+      const safePayloadPreview = payloadPreview || buildAhaSyncPayloadPreview(safePlan);
+      const safeChecklist = checklist || buildAhaSyncOperatorChecklist(safePlan, safePayloadPreview);
+      const validationSummary = summarizeSyncHubValidation(safePlan);
+      const gateReasons = buildAhaManualSyncGate(safePlan, safePayloadPreview, safeChecklist);
+      const blockedChecklistItems = (safeChecklist.items || []).filter((item) => item.status === "blocked");
+      const warningChecklistItems = (safeChecklist.items || []).filter((item) => item.status === "warning");
+      const includedModules = (safePayloadPreview.modules || []).filter((modulePreview) => modulePreview.included);
+      const excludedModules = (safePayloadPreview.modules || []).filter((modulePreview) => !modulePreview.included);
+      const validationErrorMessages = safePlan.flatMap((row) => (row.errors || []).map((message) => `${row.name}: ${message}`));
+      const readinessStatus = safeChecklist.readiness === "passed" ? "ready" : safeChecklist.readiness;
+
+      return {
+        ok: true,
+        readinessStatus,
+        gateReasons,
+        validationSummary,
+        validationErrorMessages,
+        payloadPreview: safePayloadPreview,
+        includedModules,
+        excludedModules,
+        checklist: safeChecklist,
+        blockedChecklistItems,
+        warningChecklistItems
+      };
+    } catch (error) {
+      console.warn("AHADashboard: kunne ikke bygge confirmation modal preview", error);
+      return {
+        ok: false,
+        readinessStatus: "blocked",
+        gateReasons: ["Confirmation preview could not be built. Sync remains blocked and disabled."],
+        validationSummary: { totalModules: 0, modulesReady: 0, modulesWithWarnings: 0, modulesWithErrors: 1, warningCount: 0, errorCount: 1 },
+        validationErrorMessages: ["Could not build validation summary for confirmation preview."],
+        payloadPreview: { modules: [], modulesIncluded: 0, modulesExcluded: 0, totalPreviewItems: 0 },
+        includedModules: [],
+        excludedModules: [],
+        checklist: { items: [], summary: { passed: 0, warning: 0, blocked: 1 }, readiness: "blocked" },
+        blockedChecklistItems: [{ label: "Confirmation preview", reason: "Could not build modal data safely." }],
+        warningChecklistItems: []
+      };
+    }
+  }
+
+  function renderAhaManualSyncConfirmationPayloadModules(modules, emptyLabel) {
+    if (!modules.length) return `<p class="aha-sync-validation-empty">${escapeHtml(emptyLabel)}</p>`;
+
+    return `
+      <div class="aha-sync-confirmation-module-list">
+        ${modules.map((modulePreview) => `
+          <div class="aha-sync-prep-row aha-sync-payload-${modulePreview.included ? "included" : "excluded"}">
+            <strong>${escapeHtml(modulePreview.name)}</strong>
+            <span>${escapeHtml(modulePreview.itemCount)} items</span>
+            <small>${modulePreview.included ? "included" : "excluded"}</small>
+            <p>${escapeHtml(modulePreview.reason)}</p>
+            ${modulePreview.included ? `
+              <div class="aha-sync-validation-block">
+                <h5>Sample items</h5>
+                ${renderAhaSyncPayloadSampleItems(modulePreview)}
+              </div>
+            ` : ""}
+          </div>
+        `).join("")}
+      </div>
+    `;
+  }
+
+  function renderAhaManualSyncConfirmationModal(plan, payloadPreview, checklist) {
+    if (!isAhaManualSyncConfirmationModalOpen) return "";
+
+    const model = buildAhaManualSyncConfirmationModel(plan, payloadPreview, checklist);
+    const validationSummary = model.validationSummary;
+    const checklistSummary = model.checklist.summary || { passed: 0, warning: 0, blocked: 0 };
+    const blockedChecklistLabels = model.blockedChecklistItems.map((item) => `${item.label}: ${item.reason}`);
+    const manualRequirements = [
+      "operator must review readiness",
+      "operator must review validation warnings/errors",
+      "operator must review payload summary",
+      "operator must confirm this one sync run",
+      "write target must be explicitly configured in a future PR",
+      "audit log must be enabled in a future PR",
+      "actual sync execution must be implemented in a future PR"
+    ];
+
+    return `
+      <div class="aha-sync-confirmation-backdrop" role="presentation">
+        <div class="aha-sync-confirmation-modal" role="dialog" aria-modal="true" aria-labelledby="aha-sync-confirmation-title" aria-describedby="aha-sync-confirmation-description">
+          <div class="aha-sync-confirmation-header">
+            <div>
+              <p class="eyebrow">AHA manual sync confirmation</p>
+              <h4 id="aha-sync-confirmation-title">Confirm manual sync</h4>
+              <p id="aha-sync-confirmation-description" class="aha-sync-prep-notice">Preview only. Manual sync is not enabled yet.</p>
+            </div>
+            <button type="button" class="aha-sync-confirmation-close" data-aha-sync-confirmation-close="true" aria-label="Close confirmation preview">Close</button>
+          </div>
+
+          <div class="aha-sync-confirmation-section">
+            <h5>A. Sync readiness</h5>
+            <p class="aha-sync-validation-status aha-sync-validation-status-${escapeHtml(model.readinessStatus === "ready" ? "passed" : model.readinessStatus)}">readiness status: ${escapeHtml(model.readinessStatus)}</p>
+            <p class="aha-sync-validation-summary">blocked/warning/ready-status: ${escapeHtml(model.readinessStatus)}</p>
+            ${renderAhaSyncStatusList(model.gateReasons, "No gate reasons.")}
+          </div>
+
+          <div class="aha-sync-confirmation-section">
+            <h5>B. Validation summary</h5>
+            <p>${escapeHtml(validationSummary.modulesReady)} modules valid · ${escapeHtml(validationSummary.warningCount)} warnings · ${escapeHtml(validationSummary.errorCount)} errors</p>
+            ${validationSummary.errorCount > 0 ? `<p class="aha-sync-validation-status aha-sync-validation-status-blocked">Validation errors found. Confirm sync stays disabled.</p>` : `<p class="aha-sync-validation-status aha-sync-validation-status-passed">No validation errors in the current preview.</p>`}
+            ${renderAhaSyncStatusList(model.validationErrorMessages, "No validation error details.")}
+          </div>
+
+          <div class="aha-sync-confirmation-section">
+            <h5>C. Payload summary</h5>
+            <p class="aha-sync-validation-summary">${escapeHtml(model.payloadPreview.modulesIncluded)} included modules · ${escapeHtml(model.payloadPreview.modulesExcluded)} excluded modules · ${escapeHtml(model.payloadPreview.totalPreviewItems)} total preview items</p>
+            <strong>Included modules</strong>
+            ${renderAhaManualSyncConfirmationPayloadModules(model.includedModules, "No included modules.")}
+            <strong>Excluded modules</strong>
+            ${renderAhaManualSyncConfirmationPayloadModules(model.excludedModules, "No excluded modules.")}
+          </div>
+
+          <div class="aha-sync-confirmation-section">
+            <h5>D. Operator checklist</h5>
+            <p>${escapeHtml(checklistSummary.passed)} passed · ${escapeHtml(checklistSummary.warning)} warning · ${escapeHtml(checklistSummary.blocked)} blocked</p>
+            <strong>Blocked items</strong>
+            ${renderAhaSyncStatusList(blockedChecklistLabels, "No blocked checklist items.")}
+          </div>
+
+          <div class="aha-sync-confirmation-section">
+            <h5>E. Manual confirmation requirements</h5>
+            <ul class="aha-sync-manual-requirements">
+              ${manualRequirements.map((requirement) => `<li>${escapeHtml(requirement)}</li>`).join("")}
+            </ul>
+          </div>
+
+          <div class="aha-sync-confirmation-actions">
+            <button type="button" class="aha-sync-confirmation-preview-button" data-aha-sync-confirmation-close="true">Cancel</button>
+            <button type="button" class="aha-sync-confirmation-preview-button" data-aha-sync-confirmation-close="true">Close</button>
+            <button type="button" class="aha-sync-manual-button" disabled aria-disabled="true" title="Disabled until manual sync execution is implemented.">Confirm sync</button>
+            <p class="aha-sync-prep-notice">Disabled until manual sync execution is implemented.</p>
+          </div>
         </div>
       </div>
     `;
@@ -856,17 +1013,39 @@
         ${renderAhaSyncPayloadPreview(payloadPreview)}
         ${renderAhaSyncOperatorChecklist(operatorChecklist)}
         ${renderAhaManualSyncGate(plan, payloadPreview, operatorChecklist)}
+        ${renderAhaManualSyncConfirmationModal(plan, payloadPreview, operatorChecklist)}
       </div>
     `;
   }
 
+  function bindAhaManualSyncConfirmationModal() {
+    const previewButton = $("aha-sync-confirmation-preview");
+    if (previewButton) {
+      previewButton.addEventListener("click", () => {
+        isAhaManualSyncConfirmationModalOpen = true;
+        isSyncHubPrepOpen = true;
+        renderSyncHubStatus();
+      });
+    }
+
+    document.querySelectorAll("[data-aha-sync-confirmation-close='true']").forEach((button) => {
+      button.addEventListener("click", () => {
+        isAhaManualSyncConfirmationModalOpen = false;
+        renderSyncHubStatus();
+      });
+    });
+  }
+
   function bindSyncHubPrepToggle() {
     const button = $("aha-sync-hub-prep-toggle");
-    if (!button) return;
-    button.addEventListener("click", () => {
-      isSyncHubPrepOpen = !isSyncHubPrepOpen;
-      renderSyncHubStatus();
-    });
+    if (button) {
+      button.addEventListener("click", () => {
+        isSyncHubPrepOpen = !isSyncHubPrepOpen;
+        if (!isSyncHubPrepOpen) isAhaManualSyncConfirmationModalOpen = false;
+        renderSyncHubStatus();
+      });
+    }
+    bindAhaManualSyncConfirmationModal();
   }
 
   function renderSyncHubStatus() {
