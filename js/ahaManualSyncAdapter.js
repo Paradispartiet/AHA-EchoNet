@@ -30,6 +30,16 @@
     return global.AHARepository || null;
   }
 
+  function getAuditWriter(repository = getRepository()) {
+    if (repository && typeof repository.writeAhaManualSyncAuditLog === "function") {
+      return repository.writeAhaManualSyncAuditLog.bind(repository);
+    }
+    if (repository && typeof repository.createAhaManualSyncAuditEntry === "function") {
+      return repository.createAhaManualSyncAuditEntry.bind(repository);
+    }
+    return null;
+  }
+
   function cloneList(value) {
     return Array.isArray(value) ? value.filter(Boolean).slice() : [];
   }
@@ -198,9 +208,11 @@
 
   function summarizeAuditPreview(auditPreview) {
     const source = auditPreview && typeof auditPreview === "object" ? auditPreview : {};
+    const writer = getAuditWriter();
+    const configuredStatus = writer ? "configured" : "not_configured";
     return {
-      status: source.status || source.auditStatus || "not_configured",
-      writeStatus: source.writeStatus || "not_configured",
+      status: writer ? (source.status === "failed" ? "failed" : (source.status || source.auditStatus || configuredStatus)) : "not_configured",
+      writeStatus: writer ? (source.writeStatus || configuredStatus) : "not_configured",
       rollbackStatus: source.rollbackStatus || ROLLBACK_STATUS,
       warningCount: cloneList(source.warnings).length
     };
@@ -243,13 +255,13 @@
     if (readinessStatus !== "ready") blockers.push("Readiness is not ready.");
     if (checklistSummary.blockedCount > 0) blockers.push("Operator checklist has blocked items.");
     if (payloadSummary.modulesIncluded === 0 || payloadSummary.includedModules.length === 0) blockers.push("Payload preview has 0 included modules.");
-    if (!adapterCanExecute) blockers.push("Adapter canExecute is false.");
+    if (auditPreviewSummary.status === "not_configured") blockers.push("Audit log writer is not configured.");
+    if (!adapterCanExecute && auditPreviewSummary.status !== "not_configured") blockers.push("Adapter canExecute is false.");
     if (!stateMachineState.canExecute) blockers.push("State machine canExecute is false.");
 
     if (readinessStatus === "warning") warnings.push("Readiness has warnings.");
     if (validationSummary.warningCount > 0) warnings.push("Validation has warnings.");
     if (checklistSummary.warningCount > 0) warnings.push("Operator checklist has warnings.");
-    if (auditPreviewSummary.status === "not_configured") warnings.push("Audit log writer is not configured.");
     if (auditPreviewSummary.warningCount > 0) warnings.push("Audit preview has warnings.");
 
     return {
@@ -305,22 +317,25 @@
 
   function getAhaManualSyncAdapterStatus() {
     const targetValidation = validateAhaManualSyncTarget({ id: DATABASE_TARGET_ID, status: "configured" });
+    const auditWriterConfigured = Boolean(getAuditWriter());
+    const ready = targetValidation.ok && auditWriterConfigured;
     const stateMachine = getStateMachine();
     const stateMachineStatus = stateMachine?.getAhaManualSyncStateMachineStatus
       ? stateMachine.getAhaManualSyncStateMachineStatus()
       : { currentState: "blocked", previousState: "not_started", canExecute: true, canWrite: true, isStub: false, writeStatus: WRITE_STATUS_READY };
 
     return {
-      adapterStatus: targetValidation.ok ? "ready" : "blocked",
+      adapterStatus: ready ? "ready" : "blocked",
       target: DATABASE_TARGET_ID,
       targetStatus: targetValidation.ok ? "configured" : "not_configured",
       canPrepare: true,
-      canExecute: targetValidation.ok,
-      canWrite: targetValidation.ok,
+      canExecute: ready,
+      canWrite: ready,
       isStub: false,
-      reason: targetValidation.reason,
+      reason: targetValidation.ok && !auditWriterConfigured ? "Audit log writer is not configured." : targetValidation.reason,
       missingWriteMethods: targetValidation.missingWriteMethods,
-      writeStatus: targetValidation.ok ? WRITE_STATUS_READY : WRITE_STATUS_BLOCKED,
+      auditStatus: auditWriterConfigured ? "configured" : "not_configured",
+      writeStatus: ready ? WRITE_STATUS_READY : WRITE_STATUS_BLOCKED,
       stateMachineStatus
     };
   }
@@ -410,6 +425,112 @@
     return false;
   }
 
+  function stableStringify(value) {
+    if (Array.isArray(value)) return `[${value.map(stableStringify).join(",")}]`;
+    if (value && typeof value === "object") {
+      return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${stableStringify(value[key])}`).join(",")}}`;
+    }
+    return JSON.stringify(value);
+  }
+
+  function checksum(value) {
+    const text = stableStringify(value);
+    let hash = 0;
+    for (let index = 0; index < text.length; index += 1) {
+      hash = ((hash << 5) - hash + text.charCodeAt(index)) >>> 0;
+    }
+    return `sha256-not-cryptographic-${hash.toString(16).padStart(8, "0")}`;
+  }
+
+  function auditErrorMessage(error) {
+    if (!error) return null;
+    if (typeof error === "string") return error;
+    return error.message || error.reason || error.fallback || String(error);
+  }
+
+  function buildAuditEntry(prepared, resultPatch = {}) {
+    const writtenAt = new Date().toISOString();
+    const baseSummary = {
+      includedModules: prepared.includedModules || [],
+      excludedModules: prepared.excludedModules || [],
+      itemCounts: prepared.dryRunResult?.itemCounts || {},
+      totalItems: prepared.dryRunResult?.totalItems || 0
+    };
+    return {
+      runId: prepared.runState?.runId || resultPatch.runId || `aha-manual-sync-${writtenAt.replace(/[-:.TZ]/g, "").slice(0, 14)}`,
+      timestamp: writtenAt,
+      trigger: "manual",
+      target: prepared.target,
+      targetStatus: prepared.targetStatus,
+      includedModules: baseSummary.includedModules,
+      excludedModules: baseSummary.excludedModules,
+      itemCounts: baseSummary.itemCounts,
+      totalItems: baseSummary.totalItems,
+      readinessStatus: prepared.readinessStatus,
+      validationSummary: prepared.validationSummary,
+      checklistSummary: prepared.checklistSummary,
+      payloadSummary: {
+        includedModules: baseSummary.includedModules,
+        excludedModules: baseSummary.excludedModules,
+        itemCounts: baseSummary.itemCounts,
+        totalItems: baseSummary.totalItems,
+        checksum: checksum(baseSummary)
+      },
+      confirmation: {
+        confirmed: resultPatch.confirmed === true,
+        confirmedAt: resultPatch.confirmed === true ? (resultPatch.confirmedAt || writtenAt) : null
+      },
+      resultStatus: resultPatch.resultStatus || prepared.status || "blocked",
+      writeStatus: resultPatch.writeStatus || prepared.writeStatus || WRITE_STATUS_BLOCKED,
+      rollbackStatus: resultPatch.rollbackStatus || prepared.rollbackStatus || ROLLBACK_STATUS,
+      writeResult: resultPatch.writeResult || null,
+      warnings: cloneList(prepared.warnings).concat(cloneList(resultPatch.warnings)),
+      errors: cloneList(prepared.blockers).concat(cloneList(prepared.errors)).concat(cloneList(resultPatch.errors)).filter(Boolean)
+    };
+  }
+
+  async function writeAuditEntry(repository, prepared, resultPatch = {}) {
+    const writer = getAuditWriter(repository);
+    if (!writer) {
+      return {
+        ok: false,
+        status: "not_configured",
+        runId: prepared.runState?.runId || null,
+        target: prepared.target,
+        writtenAt: null,
+        errors: ["Audit log writer is not configured."],
+        warnings: []
+      };
+    }
+    const entry = buildAuditEntry(prepared, resultPatch);
+    try {
+      const result = await writer(entry);
+      const ok = result?.ok === true;
+      return {
+        ok,
+        status: ok ? (result.status || "success") : (result?.status || "failed"),
+        auditId: result?.auditId || result?.id || result?.data?.id || entry.runId,
+        runId: entry.runId,
+        target: entry.target,
+        writtenAt: result?.writtenAt || result?.data?.created_at || entry.timestamp,
+        errors: cloneList(result?.errors).concat(ok ? [] : [auditErrorMessage(result?.error || result?.reason || result?.fallback || "audit_write_failed")]).filter(Boolean),
+        warnings: cloneList(result?.warnings),
+        entry
+      };
+    } catch (error) {
+      return {
+        ok: false,
+        status: "failed",
+        runId: entry.runId,
+        target: entry.target,
+        writtenAt: null,
+        errors: [auditErrorMessage(error) || "audit_write_failed"],
+        warnings: [],
+        entry
+      };
+    }
+  }
+
   async function writeRunPayload(repository, runPayload) {
     const writes = [];
     for (const moduleRun of runPayload) {
@@ -432,6 +553,12 @@
     const repository = getRepository();
 
     if (!hasExplicitConfirmation(input)) {
+      const auditResult = await writeAuditEntry(repository, prepared, {
+        confirmed: false,
+        resultStatus: "blocked",
+        writeStatus: WRITE_STATUS_BLOCKED,
+        errors: ["Explicit manual confirmation is required."]
+      });
       return {
         ok: false,
         status: "blocked",
@@ -441,13 +568,20 @@
         isStub: false,
         writeStatus: WRITE_STATUS_BLOCKED,
         rollbackStatus: ROLLBACK_STATUS,
-        auditStatus: prepared.auditStatus || "not_configured",
+        auditStatus: auditResult.status,
+        auditResult,
         runState: { ...prepared.runState, currentState: "blocked", errors: cloneList(prepared.runState?.errors).concat("Explicit manual confirmation is required.") },
         prepared
       };
     }
 
     if (!prepared.ok) {
+      const auditResult = await writeAuditEntry(repository, prepared, {
+        confirmed: true,
+        resultStatus: "blocked",
+        writeStatus: WRITE_STATUS_BLOCKED,
+        errors: prepared.blockers
+      });
       return {
         ok: false,
         status: "blocked",
@@ -457,7 +591,8 @@
         isStub: false,
         writeStatus: WRITE_STATUS_BLOCKED,
         rollbackStatus: ROLLBACK_STATUS,
-        auditStatus: prepared.auditStatus || "not_configured",
+        auditStatus: auditResult.status,
+        auditResult,
         blockers: prepared.blockers,
         runState: { ...prepared.runState, currentState: "blocked" },
         prepared
@@ -465,6 +600,12 @@
     }
 
     if (!repository) {
+      const auditResult = await writeAuditEntry(repository, prepared, {
+        confirmed: true,
+        resultStatus: "blocked",
+        writeStatus: WRITE_STATUS_BLOCKED,
+        errors: ["Existing database target found, but no approved write method exists."]
+      });
       return {
         ok: false,
         status: "blocked",
@@ -474,8 +615,26 @@
         isStub: false,
         writeStatus: WRITE_STATUS_BLOCKED,
         rollbackStatus: ROLLBACK_STATUS,
-        auditStatus: prepared.auditStatus || "not_configured",
+        auditStatus: auditResult.status,
+        auditResult,
         runState: { ...prepared.runState, currentState: "blocked" },
+        prepared
+      };
+    }
+
+    if (!getAuditWriter(repository)) {
+      return {
+        ok: false,
+        status: "blocked",
+        reason: "Audit log writer is not configured.",
+        canExecute: false,
+        canWrite: false,
+        isStub: false,
+        writeStatus: WRITE_STATUS_BLOCKED,
+        rollbackStatus: ROLLBACK_STATUS,
+        auditStatus: "not_configured",
+        auditResult: { ok: false, status: "not_configured", runId: prepared.runState?.runId || null, target: prepared.target, writtenAt: null, errors: ["Audit log writer is not configured."], warnings: [] },
+        runState: { ...prepared.runState, currentState: "blocked", errors: cloneList(prepared.runState?.errors).concat("Audit log writer is not configured.") },
         prepared
       };
     }
@@ -484,6 +643,7 @@
       ? stateMachine.transitionAhaManualSyncState(prepared.runState, "confirmed")
       : { ...prepared.runState, previousState: "blocked", currentState: "confirmed" };
     if (confirmedState.currentState !== "confirmed") {
+      const auditResult = await writeAuditEntry(repository, prepared, { confirmed: true, resultStatus: "blocked", writeStatus: WRITE_STATUS_BLOCKED, errors: [confirmedState.reason || "State machine blocked confirmation."] });
       return {
         ok: false,
         status: "blocked",
@@ -493,7 +653,8 @@
         isStub: false,
         writeStatus: WRITE_STATUS_BLOCKED,
         rollbackStatus: ROLLBACK_STATUS,
-        auditStatus: prepared.auditStatus || "not_configured",
+        auditStatus: auditResult.status,
+        auditResult,
         runState: confirmedState,
         prepared
       };
@@ -503,6 +664,7 @@
       ? stateMachine.transitionAhaManualSyncState(confirmedState, "running", { explicitConfirmation: true })
       : { ...confirmedState, previousState: "confirmed", currentState: "running" };
     if (runningState.currentState !== "running") {
+      const auditResult = await writeAuditEntry(repository, prepared, { confirmed: true, resultStatus: "blocked", writeStatus: WRITE_STATUS_BLOCKED, errors: [runningState.reason || "State machine blocked running state."] });
       return {
         ok: false,
         status: "blocked",
@@ -512,7 +674,8 @@
         isStub: false,
         writeStatus: WRITE_STATUS_BLOCKED,
         rollbackStatus: ROLLBACK_STATUS,
-        auditStatus: prepared.auditStatus || "not_configured",
+        auditStatus: auditResult.status,
+        auditResult,
         runState: runningState,
         prepared
       };
@@ -523,22 +686,35 @@
       const successState = stateMachine?.transitionAhaManualSyncState
         ? stateMachine.transitionAhaManualSyncState(runningState, "success")
         : { ...runningState, previousState: "running", currentState: "success" };
+      const auditResult = await writeAuditEntry(repository, prepared, {
+        confirmed: true,
+        resultStatus: "success",
+        writeStatus: "written",
+        writeResult: { ok: true, writeCount: writes.length },
+        rollbackStatus: ROLLBACK_STATUS
+      });
+      const auditOk = auditResult.ok === true;
       return {
-        ok: true,
-        status: "success",
-        reason: "Manual sync completed through existing database repository write methods.",
+        ok: auditOk,
+        status: auditOk ? "success" : "partial_success",
+        reason: auditOk
+          ? "Manual sync completed through existing database repository write methods. Audit log written."
+          : "Manual sync database write completed, but audit log write failed.",
         canExecute: false,
         canWrite: false,
         isStub: false,
         writeStatus: "written",
         rollbackStatus: ROLLBACK_STATUS,
-        auditStatus: prepared.auditStatus || "not_configured",
+        auditStatus: auditResult.status,
+        auditId: auditResult.auditId,
+        auditResult,
         target: prepared.target,
         targetStatus: prepared.targetStatus,
         includedModules: prepared.includedModules,
         excludedModules: prepared.excludedModules,
         writeCount: writes.length,
         writes,
+        errors: auditOk ? [] : auditResult.errors,
         runState: successState,
         prepared
       };
@@ -546,21 +722,33 @@
       const failedState = stateMachine?.transitionAhaManualSyncState
         ? stateMachine.transitionAhaManualSyncState(runningState, "failed")
         : { ...runningState, previousState: "running", currentState: "failed" };
+      const writeError = error?.message || "Manual sync write failed.";
+      const auditResult = await writeAuditEntry(repository, prepared, {
+        confirmed: true,
+        resultStatus: "failed",
+        writeStatus: "failed",
+        writeResult: { ok: false, error: writeError },
+        rollbackStatus: ROLLBACK_STATUS,
+        errors: [writeError]
+      });
       return {
         ok: false,
         status: "failed",
-        reason: error?.message || "Manual sync write failed.",
-        error: error?.message || String(error),
+        reason: writeError,
+        error: writeError,
         canExecute: false,
         canWrite: false,
         isStub: false,
         writeStatus: "failed",
         rollbackStatus: ROLLBACK_STATUS,
-        auditStatus: prepared.auditStatus || "not_configured",
+        auditStatus: auditResult.status,
+        auditId: auditResult.auditId,
+        auditResult,
         target: prepared.target,
         targetStatus: prepared.targetStatus,
         includedModules: prepared.includedModules,
         excludedModules: prepared.excludedModules,
+        errors: auditResult.ok ? [writeError] : [writeError].concat(auditResult.errors),
         runState: failedState,
         prepared
       };

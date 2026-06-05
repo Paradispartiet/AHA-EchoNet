@@ -478,9 +478,24 @@ AHA Sync Hub UI
 
 Dashboard/UI skriver ikke direkte til database/repository. Target-valg, render, panel-open og modal-open starter ikke sync. Write kan bare skje fra Confirm sync i modal, og adapteren blokkerer manglende confirmation, validation errors, readiness som ikke er `ready`, checklist blocked > 0, target som ikke er `configured`, og payload preview med 0 inkluderte moduler.
 
-Payload-reglene er låst: Bare inkluderte, valide payload-preview-moduler kan skrives (`lists`, `paths`, `groups`, `ahaavisa`). Excluded modules og moduler med validation errors skrives ikke. `partial_success` brukes ikke, og rollback påstås ikke; write-feil returnerer `failed` med `rollbackStatus=not_available`.
+Payload-reglene er låst: Bare inkluderte, valide payload-preview-moduler kan skrives (`lists`, `paths`, `groups`, `ahaavisa`). Excluded modules og moduler med validation errors skrives ikke. `partial_success` brukes bare når database-write lykkes men audit-write feiler tydelig, og rollback påstås ikke; write-feil returnerer `failed` med `rollbackStatus=not_available`.
 
-Audit log writer er fortsatt ikke implementert i denne fasen. Resultater markerer derfor `auditStatus=not_configured`, og neste anbefalte PR er å legge til en godkjent audit log writer før result history/panel bygges.
+Audit log writer er nå implementert i neste fase via eksisterende `AHARepository`/database-write-lag. Dashboard skriver ikke audit direkte, og result history/panel bygges først i en senere fase.
+
+
+## 13.11 Manual sync audit log writer er implementert
+
+AHA manual sync audit log writer er implementert som en egen repository-funksjon i eksisterende `AHARepository`-lag. Den bruker eksisterende databasekobling/write-mønster og innfører ikke ny databaseklient, nye credentials, hardkodede secrets eller dashboard-direkte databasekall.
+
+Adapteren bygger en strukturert audit entry for manuelle execution-attempts og skriver audit for `success`, `failed` og `blocked` når audit writer finnes. Entryen inneholder runId, timestamp, `trigger=manual`, target/status, included/excluded modules, item counts, total items, readiness, validation summary, checklist summary, payload summary/checksum, confirmation summary, result/write/rollback status, warnings og errors. Full payload og secrets lagres ikke som default.
+
+Dashboard viser bare audit-resultat/status fra adapter-resultatet (`auditStatus`, `auditId` og audit error ved feil). Dashboard skriver ikke direkte til audit/database/repository. Page load, Sync Hub-open, target select og confirmation modal-open skriver ikke audit og starter ikke sync.
+
+Neste fase er result history panel:
+
+```text
+feat: add AHA manual sync result history panel
+```
 
 ## 14. Faktisk write/sync er manuelt/gated
 
@@ -493,7 +508,7 @@ Faktisk write/sync er nå avgrenset til `database_existing` og går kun via eksi
 - ingen ny backend
 - ingen direkte dashboard-write
 - ingen auto-sync
-- ingen partial_success uten egen partial failure-contract
+- ingen partial_success unntatt tydelig database-write-success + audit-write-failure
 - rollbackStatus=not_available når rollback ikke finnes
 ```
 
@@ -517,15 +532,15 @@ Reglene fra denne planen gjelder fortsatt:
 - Sync Hub skal ikke gjøre Groups til ekte social sharing
 - Sync Hub skal ikke kjøre auto-sync
 - Sync Hub skal ikke skrive uten eksplisitt Confirm sync og alle adapter/state-machine gates
-- Sync Hub skal ikke påstå rollback eller partial_success før slike kontrakter finnes
+- Sync Hub skal ikke påstå rollback; partial_success er kun tillatt for tydelig database-write-success + audit-write-failure
 ```
 
 ## 16. Neste anbefalte PR
 
-Neste anbefalte PR etter database target wiring er:
+Neste anbefalte PR etter manual sync audit log writer er:
 
 ```text
-feat: add AHA manual sync audit log writer
+feat: add AHA manual sync result history panel
 ```
 
-Akseptanse for den PR-en bør være en liten audit-writer som bruker eksisterende database/repository-mønster, ikke innfører ny databaseklient eller credentials, og fortsatt bevarer manuell/gated sync uten auto-sync. Når audit finnes og sync-resultater kan spores trygt, kan neste PR være `feat: add AHA manual sync result history panel`.
+Akseptanse for den PR-en bør være et lite read-only result history panel som leser eksisterende audit/resultathistorikk via godkjent service/repository-lag, uten auto-sync, uten nye credentials og uten dashboard-direkte audit/database-write.

@@ -1470,11 +1470,21 @@
     if (!result) return "";
     const status = result.status || "blocked";
     const reason = result.reason || result.error || "No result details.";
+    const auditStatus = result.auditStatus || result.auditResult?.status || "not_configured";
+    const auditId = result.auditId || result.auditResult?.auditId || "";
+    const auditErrors = Array.isArray(result.auditResult?.errors) ? result.auditResult.errors : [];
+    const auditLabel = auditStatus === "success"
+      ? "Audit log written"
+      : auditStatus === "not_configured"
+        ? "Audit log not configured"
+        : `Audit log ${auditStatus}`;
     return `
       <div class="aha-sync-validation-block aha-sync-result aha-sync-result-${escapeHtml(status)}" aria-live="polite">
         <h5>Last manual sync result</h5>
         <p><strong>status:</strong> ${escapeHtml(status)}</p>
         <p>${escapeHtml(reason)}</p>
+        <p><strong>auditStatus:</strong> ${escapeHtml(auditStatus)} · ${escapeHtml(auditLabel)}${auditId ? ` · <strong>auditId:</strong> ${escapeHtml(auditId)}` : ""}</p>
+        ${auditErrors.length ? `<p><strong>audit error:</strong> ${escapeHtml(auditErrors.join("; "))}</p>` : ""}
       </div>
     `;
   }
