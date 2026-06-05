@@ -27,7 +27,8 @@ function repository() {
     saveList(record) { calls.push(['saveList', record]); return { ok: true }; },
     savePath(record) { calls.push(['savePath', record]); return { ok: true }; },
     saveGroup(record) { calls.push(['saveGroup', record]); return { ok: true }; },
-    saveArticle(record) { calls.push(['saveArticle', record]); return { ok: true }; }
+    saveArticle(record) { calls.push(['saveArticle', record]); return { ok: true }; },
+    writeAhaManualSyncAuditLog(entry) { calls.push(['writeAhaManualSyncAuditLog', entry]); return { ok: true, status: 'success', auditId: entry.runId, runId: entry.runId, target: entry.target, writtenAt: entry.timestamp }; }
   };
 }
 
@@ -96,7 +97,8 @@ function readyInput(patch = {}) {
 
   const blocked = await adapter.executeAhaManualSyncRun(readyInput());
   assert.equal(blocked.status, 'blocked', 'execution without confirmation remains blocked');
-  assert.equal(repo.calls.length, 0, 'blocked execution must not call repository writes');
+  assert.equal(repo.calls.length, 1, 'blocked execution should call only audit writer');
+  assert.equal(repo.calls[0][0], 'writeAhaManualSyncAuditLog', 'blocked execution without confirmation should audit but not write modules');
 
   console.log('aha-manual-sync-activation-blockers.test.cjs passed');
 })();

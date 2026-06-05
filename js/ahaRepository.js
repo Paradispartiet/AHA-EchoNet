@@ -115,6 +115,62 @@
     });
   }
 
+  function compactAuditEntry(entry) {
+    const source = cleanObject(entry);
+    return {
+      runId: source.runId || null,
+      timestamp: source.timestamp || new Date().toISOString(),
+      trigger: source.trigger === "manual" ? "manual" : "manual",
+      target: source.target || null,
+      targetStatus: source.targetStatus || null,
+      includedModules: cleanArray(source.includedModules),
+      excludedModules: cleanArray(source.excludedModules),
+      itemCounts: cleanObject(source.itemCounts),
+      totalItems: Number(source.totalItems || 0),
+      readinessStatus: source.readinessStatus || null,
+      validationSummary: cleanObject(source.validationSummary),
+      checklistSummary: cleanObject(source.checklistSummary),
+      payloadSummary: cleanObject(source.payloadSummary),
+      confirmation: cleanObject(source.confirmation),
+      resultStatus: source.resultStatus || null,
+      writeStatus: source.writeStatus || null,
+      rollbackStatus: source.rollbackStatus || null,
+      writeResult: cleanObject(source.writeResult),
+      warnings: cleanArray(source.warnings),
+      errors: cleanArray(source.errors)
+    };
+  }
+
+  async function writeAhaManualSyncAuditLog(entry) {
+    const audit = compactAuditEntry(entry);
+    if (!audit.runId) return { ok: false, status: "failed", runId: null, target: audit.target, writtenAt: null, errors: ["missing_run_id"], warnings: [] };
+    const writtenAt = audit.timestamp || new Date().toISOString();
+    const result = await saveSourceEvent({
+      id: `aha-manual-sync-audit-${audit.runId}`,
+      source_type: "aha_manual_sync",
+      source_app: "aha_sync_hub",
+      content_type: "manual_sync_audit",
+      title: `AHA manual sync ${audit.resultStatus || "attempt"}`,
+      text: `Manual sync ${audit.resultStatus || "attempt"} for ${audit.target || "unknown target"}.`,
+      user_created: false,
+      imported: false,
+      tags: ["aha_sync_hub", "manual_sync", "audit"],
+      meta: audit,
+      created_at: writtenAt
+    });
+    const ok = result?.ok === true;
+    return {
+      ok,
+      status: ok ? "success" : "failed",
+      auditId: result?.data?.id || `aha-manual-sync-audit-${audit.runId}`,
+      runId: audit.runId,
+      target: audit.target,
+      writtenAt,
+      errors: ok ? [] : [result?.error?.message || result?.fallback || result?.reason || "audit_write_failed"],
+      warnings: []
+    };
+  }
+
   async function saveNote(note) {
     const n = cleanObject(note);
     if (!n.id) return fallback("missing_id");
@@ -543,6 +599,8 @@
 
   global.AHARepository = {
     saveSourceEvent,
+    writeAhaManualSyncAuditLog,
+    createAhaManualSyncAuditEntry: writeAhaManualSyncAuditLog,
     saveNote,
     saveGalleryItem,
     saveFeedPost,
