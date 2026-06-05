@@ -327,6 +327,8 @@
 
   const SYNC_HUB_ID_FIELDS = ["id", "key", "slug"];
   const SYNC_HUB_TITLE_FIELDS = ["title", "name", "label", "headline"];
+  const SYNC_HUB_SAMPLE_FIELDS = ["id", "key", "slug", "title", "name", "label", "headline", "type", "category", "updatedAt", "createdAt"];
+
 
   function escapeHtml(value) {
     return String(value ?? "")
@@ -473,6 +475,99 @@
     });
   }
 
+  function readSyncHubPreviewDataset(source) {
+    const raw = window.localStorage.getItem(source.key);
+    if (raw === null) return { datasetExists: false, items: [], structure: "missing" };
+    if (!String(raw).trim()) return { datasetExists: true, items: [], structure: "empty-string" };
+
+    const normalized = normalizeSyncHubDataset(JSON.parse(raw));
+    return {
+      datasetExists: true,
+      items: normalized.ok ? normalized.items : [],
+      structure: normalized.structure,
+      invalidStructure: normalized.ok ? null : normalized.error
+    };
+  }
+
+  function truncateSyncHubPreviewValue(value) {
+    const text = String(value ?? "").trim();
+    if (text.length <= 120) return text;
+    return `${text.slice(0, 117)}…`;
+  }
+
+  function simplifySyncHubPreviewItem(item) {
+    if (!item || typeof item !== "object" || Array.isArray(item)) return {};
+
+    return SYNC_HUB_SAMPLE_FIELDS.reduce((sample, field) => {
+      if (!Object.prototype.hasOwnProperty.call(item, field)) return sample;
+      const value = item[field];
+      if (value === undefined || value === null || typeof value === "object" || typeof value === "function") return sample;
+      const text = truncateSyncHubPreviewValue(value);
+      if (text) sample[field] = text;
+      return sample;
+    }, {});
+  }
+
+  function formatAhaSyncPayloadShape(source) {
+    return `{ module: '${source.id}', items: [...] }`;
+  }
+
+  function resolveAhaSyncPayloadPreviewDecision(row, itemCount) {
+    if (row.errors?.length || row.validationStatus === "errors" || row.status === "error") {
+      return { included: false, reason: "Excluded because validation has errors." };
+    }
+    if (row.status === "missing" || row.validationStatus === "skipped") {
+      return { included: false, reason: "Excluded because no local dataset was found." };
+    }
+    if (row.status === "empty" || itemCount === 0) {
+      return { included: false, reason: "Excluded because the dataset is empty." };
+    }
+    if (row.warnings?.length || row.validationStatus === "warnings") {
+      return { included: true, reason: "Included with validation warnings." };
+    }
+    return { included: true, reason: "Included because validation is ready." };
+  }
+
+  function createAhaSyncPayloadPreviewModule(source, row, dataset) {
+    const activeItems = dataset.items.filter((item) => !item?.deleted_at);
+    const itemCount = activeItems.length;
+    const decision = resolveAhaSyncPayloadPreviewDecision(row, itemCount);
+
+    return {
+      id: source.id,
+      name: source.name,
+      included: decision.included,
+      reason: decision.reason,
+      itemCount,
+      sampleItems: decision.included ? activeItems.slice(0, 3).map(simplifySyncHubPreviewItem) : [],
+      payloadShape: formatAhaSyncPayloadShape(source),
+      warnings: row.warnings || [],
+      errors: row.errors || [],
+      validationStatus: row.validationStatus || "unknown"
+    };
+  }
+
+  function buildAhaSyncPayloadPreview(plan = buildAhaSyncDryRunPlan()) {
+    const planById = new Map(plan.map((row) => [row.id, row]));
+    const modules = SYNC_HUB_DRY_RUN_SOURCES.map((source) => {
+      try {
+        const dataset = readSyncHubPreviewDataset(source);
+        const row = planById.get(source.id) || inspectSyncHubLocalStorageItem(source);
+        return createAhaSyncPayloadPreviewModule(source, row, dataset);
+      } catch (error) {
+        console.warn(`AHADashboard: kunne ikke bygge payload preview for ${source.key}`, error);
+        const row = planById.get(source.id) || createSyncHubDryRunResult(source, "–", "error", "Could not read localStorage", ["Could not inspect this dataset."]);
+        return createAhaSyncPayloadPreviewModule(source, row, { items: [] });
+      }
+    });
+
+    const modulesIncluded = modules.filter((module) => module.included).length;
+    const modulesExcluded = modules.length - modulesIncluded;
+    const totalPreviewItems = modules.reduce((sum, module) => sum + (module.included ? module.itemCount : 0), 0);
+
+    return { modules, modulesIncluded, modulesExcluded, totalPreviewItems };
+  }
+
   function summarizeSyncHubValidation(plan) {
     const totalModules = plan.length;
     const modulesReady = plan.filter((row) => row.validationStatus === "valid").length;
@@ -494,8 +589,70 @@
     return `<ul class="aha-sync-validation-list aha-sync-validation-list-${type}">${messages.map((message) => `<li>${escapeHtml(message)}</li>`).join("")}</ul>`;
   }
 
+  function renderAhaSyncPayloadSampleItems(modulePreview) {
+    if (!modulePreview.included) return "";
+    if (!modulePreview.sampleItems.length) return `<p class="aha-sync-validation-empty">No sample items.</p>`;
+
+    return `
+      <ul class="aha-sync-payload-samples" aria-label="${escapeHtml(modulePreview.name)} sample items">
+        ${modulePreview.sampleItems.map((item) => `<li><code>${escapeHtml(JSON.stringify(item))}</code></li>`).join("")}
+      </ul>
+    `;
+  }
+
+  function renderAhaSyncPayloadPreviewMessages(modulePreview) {
+    if (!modulePreview.warnings.length && !modulePreview.errors.length) {
+      return `<p class="aha-sync-validation-empty">No validation warnings or errors.</p>`;
+    }
+
+    return `
+      <div class="aha-sync-validation-columns">
+        <div>
+          <strong>Warnings</strong>
+          ${renderSyncHubValidationMessages(modulePreview, "warnings")}
+        </div>
+        <div>
+          <strong>Errors</strong>
+          ${renderSyncHubValidationMessages(modulePreview, "errors")}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderAhaSyncPayloadPreview(preview) {
+    return `
+      <div class="aha-sync-payload-preview" aria-label="AHA Sync Hub payload preview">
+        <div class="aha-sync-prep-heading">
+          <h4>Payload preview</h4>
+          <p class="aha-sync-prep-notice">Preview only. No payload is sent and no data is written.</p>
+          <p class="aha-sync-validation-summary">${escapeHtml(preview.modulesIncluded)} modules included · ${escapeHtml(preview.modulesExcluded)} excluded · ${escapeHtml(preview.totalPreviewItems)} preview items</p>
+        </div>
+        <div class="aha-sync-prep-list">
+          ${preview.modules.map((modulePreview) => `
+            <div class="aha-sync-prep-row aha-sync-payload-row aha-sync-payload-${modulePreview.included ? "included" : "excluded"}">
+              <strong>${escapeHtml(modulePreview.name)} <small>${escapeHtml(modulePreview.id)}</small></strong>
+              <span>${modulePreview.included ? "included" : "excluded"}</span>
+              <small>${escapeHtml(modulePreview.validationStatus)}</small>
+              <p>${escapeHtml(modulePreview.reason)}</p>
+              <p><strong>itemCount:</strong> ${escapeHtml(modulePreview.itemCount)}</p>
+              <p><strong>payloadShape:</strong> <code>${escapeHtml(modulePreview.payloadShape)}</code></p>
+              <div class="aha-sync-validation-block" aria-label="${escapeHtml(modulePreview.name)} payload preview details">
+                <h5>Sample items</h5>
+                ${renderAhaSyncPayloadSampleItems(modulePreview)}
+                <h5>Validation notes</h5>
+                ${renderAhaSyncPayloadPreviewMessages(modulePreview)}
+              </div>
+            </div>
+          `).join("")}
+        </div>
+      </div>
+    `;
+  }
+
   function renderSyncHubPrepPanel(plan) {
     if (!isSyncHubPrepOpen) return "";
+
+    const payloadPreview = buildAhaSyncPayloadPreview(plan);
 
     return `
       <div class="aha-sync-prep-panel" id="aha-sync-prep-panel" role="region" aria-label="AHA Sync Hub forberedelse">
@@ -529,6 +686,7 @@
             </div>
           `).join("")}
         </div>
+        ${renderAhaSyncPayloadPreview(payloadPreview)}
       </div>
     `;
   }
