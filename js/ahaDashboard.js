@@ -8,6 +8,8 @@
   let isAhaManualSyncConfirmationModalOpen = false;
   let selectedPreviewTarget = "not_configured";
   let lastAhaManualSyncResult = null;
+  let ahaManualSyncHistoryState = { status: "idle", entries: [], reason: null };
+  let selectedAhaManualSyncHistoryRunId = null;
 
   const AHA_AUTH_RETURN_TO_KEY = "aha_auth_return_to_v1";
   const HISTORY_GO_PROFILE_URL = "https://paradispartiet.github.io/History-Go/profile.html";
@@ -1694,6 +1696,149 @@
     `;
   }
 
+  function getAhaManualSyncHistoryHelpers() {
+    return window.AHAManualSyncHistory || null;
+  }
+
+  async function loadAhaManualSyncHistoryPreview() {
+    const loader = window.AHAManualSyncAdapter?.loadAhaManualSyncHistory;
+    const sanitizer = getAhaManualSyncHistoryHelpers()?.sanitizeAhaManualSyncHistoryDetails;
+    if (typeof loader !== "function" || typeof sanitizer !== "function") {
+      ahaManualSyncHistoryState = { status: "not_configured", entries: [], reason: "History reader is not configured." };
+      return ahaManualSyncHistoryState;
+    }
+
+    ahaManualSyncHistoryState = { ...ahaManualSyncHistoryState, status: "loading", reason: null };
+    const result = await loader({ limit: 20 });
+    if (!result?.ok) {
+      ahaManualSyncHistoryState = { status: result?.status || "unavailable", entries: [], reason: result?.reason || "History is unavailable." };
+      return ahaManualSyncHistoryState;
+    }
+
+    ahaManualSyncHistoryState = {
+      status: "loaded",
+      entries: (result.entries || []).map((entry) => sanitizer(entry)),
+      reason: null
+    };
+    return ahaManualSyncHistoryState;
+  }
+
+  function getAhaManualSyncRetryPreview(run) {
+    const builder = getAhaManualSyncHistoryHelpers()?.buildAhaManualSyncRetryEligibilityPreview;
+    return typeof builder === "function" ? builder(run) : null;
+  }
+
+  function renderAhaManualSyncHistoryList() {
+    const state = ahaManualSyncHistoryState;
+    if (state.status === "loading" || state.status === "idle") return '<p class="aha-sync-history-empty">Loading manual sync history …</p>';
+    if (state.status !== "loaded") return `<p class="aha-sync-history-empty">Manual sync history unavailable: ${escapeHtml(state.reason || state.status)}.</p>`;
+    if (!state.entries.length) return '<p class="aha-sync-history-empty">No persisted manual sync runs found.</p>';
+
+    return `
+      <ol class="aha-sync-history-list">
+        ${state.entries.map((run) => {
+          const preview = getAhaManualSyncRetryPreview(run);
+          const badge = preview?.status === "eligible_preview"
+            ? "Retry eligible preview"
+            : preview?.status === "not_eligible"
+              ? "Retry not applicable"
+              : "Retry blocked";
+          const badgeStatus = preview?.status || "unknown";
+          return `
+            <li class="aha-sync-history-row">
+              <div>
+                <strong>${escapeHtml(run.resultStatus)}</strong>
+                <span>${escapeHtml(run.target || "Missing target")} · ${escapeHtml(run.totalItems)} items</span>
+                <small>${escapeHtml(run.timestamp || "Unknown time")} · <code>${escapeHtml(run.runId || "missing runId")}</code></small>
+              </div>
+              <div class="aha-sync-history-actions">
+                <span class="aha-sync-retry-badge aha-sync-retry-${escapeHtml(badgeStatus)}">${escapeHtml(badge)}</span>
+                <button type="button" class="aha-sync-history-details-button" data-aha-sync-history-run-id="${escapeHtml(run.runId)}">View details</button>
+              </div>
+            </li>
+          `;
+        }).join("")}
+      </ol>
+    `;
+  }
+
+  function renderAhaManualSyncHistoryDetailsDrawer() {
+    const run = ahaManualSyncHistoryState.entries.find((entry) => entry.runId === selectedAhaManualSyncHistoryRunId);
+    if (!run) return "";
+    const preview = getAhaManualSyncRetryPreview(run);
+    if (!preview) return "";
+    const renderList = (items, emptyLabel) => items?.length
+      ? `<ul>${items.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`
+      : `<p class="aha-sync-validation-empty">${escapeHtml(emptyLabel)}</p>`;
+    const itemCounts = Object.entries(preview.itemCounts || {});
+
+    return `
+      <aside class="aha-sync-history-drawer" aria-label="Manual sync history details">
+        <div class="aha-sync-history-drawer-header">
+          <div>
+            <p class="eyebrow">Manual sync history</p>
+            <h5>Run details</h5>
+          </div>
+          <button id="aha-sync-history-details-close" type="button" class="aha-sync-history-details-button">Close</button>
+        </div>
+        <dl class="aha-sync-history-details-grid">
+          <div><dt>runId</dt><dd><code>${escapeHtml(run.runId || "missing")}</code></dd></div>
+          <div><dt>Result</dt><dd>${escapeHtml(run.resultStatus)}</dd></div>
+          <div><dt>Target</dt><dd>${escapeHtml(run.target || "missing")} · ${escapeHtml(run.targetStatus)}</dd></div>
+          <div><dt>Items</dt><dd>${escapeHtml(run.totalItems)}</dd></div>
+        </dl>
+        <section class="aha-sync-retry-preview" aria-label="Retry eligibility">
+          <h5>Retry eligibility</h5>
+          <p class="aha-sync-prep-notice">Preview only. Retry is not implemented yet.</p>
+          <p>Retry is not implemented yet. This is an eligibility preview only.</p>
+          <dl class="aha-sync-history-details-grid">
+            <div><dt>retryEligible</dt><dd>${escapeHtml(preview.retryEligible)}</dd></div>
+            <div><dt>status</dt><dd>${escapeHtml(preview.status)}</dd></div>
+            <div><dt>retryMode</dt><dd>${escapeHtml(preview.retryMode)}</dd></div>
+            <div><dt>Original target</dt><dd>${escapeHtml(preview.target || "missing")} · ${escapeHtml(preview.targetStatus)}</dd></div>
+          </dl>
+          <p><strong>Reason:</strong> ${escapeHtml(preview.reason)}</p>
+          <div class="aha-sync-validation-columns">
+            <div><strong>Blockers</strong>${renderList(preview.blockers, "No blockers recorded.")}</div>
+            <div><strong>Warnings</strong>${renderList(preview.warnings, "No warnings recorded.")}</div>
+          </div>
+          <div><strong>Modules</strong>${renderList(preview.modules, "No included modules.")}</div>
+          <div>
+            <strong>Item counts</strong>
+            ${itemCounts.length ? `<div class="aha-sync-audit-counts">${itemCounts.map(([moduleId, count]) => `<span><strong>${escapeHtml(moduleId)}</strong>: ${escapeHtml(count)}</span>`).join("")}</div>` : '<p class="aha-sync-validation-empty">No item counts.</p>'}
+          </div>
+          <div><strong>Required before retry</strong>${renderList(preview.requiredBeforeRetry, "No retry preparation applies.")}</div>
+        </section>
+      </aside>
+    `;
+  }
+
+  function renderAhaManualSyncHistoryPanel() {
+    return `
+      <section class="aha-sync-history-panel" aria-label="Manual sync history">
+        <div class="aha-sync-prep-heading">
+          <h4>Manual sync history</h4>
+          <p class="aha-sync-prep-notice">Read-only audit history. Opening details or retry eligibility never starts sync or writes data.</p>
+        </div>
+        ${renderAhaManualSyncHistoryList()}
+        ${renderAhaManualSyncHistoryDetailsDrawer()}
+      </section>
+    `;
+  }
+
+  function bindAhaManualSyncHistoryPreview() {
+    document.querySelectorAll("[data-aha-sync-history-run-id]").forEach((button) => {
+      button.addEventListener("click", () => {
+        selectedAhaManualSyncHistoryRunId = button.dataset.ahaSyncHistoryRunId || null;
+        renderSyncHubStatus();
+      });
+    });
+    $("aha-sync-history-details-close")?.addEventListener("click", () => {
+      selectedAhaManualSyncHistoryRunId = null;
+      renderSyncHubStatus();
+    });
+  }
+
   function renderSyncHubPrepPanel(plan) {
     if (!isSyncHubPrepOpen) return "";
 
@@ -1848,10 +1993,12 @@
           </div>
           <button id="aha-sync-hub-prep-toggle" type="button" class="aha-sync-prep-toggle" aria-expanded="${isSyncHubPrepOpen}" aria-controls="aha-sync-prep-panel">${buttonLabel}</button>
           ${renderSyncHubPrepPanel(plan)}
+          ${renderAhaManualSyncHistoryPanel()}
           <small class="aha-status-updated">${statusLabel} · Oppdatert ${formatTime()}</small>
         </section>
       `;
       bindSyncHubPrepToggle();
+      bindAhaManualSyncHistoryPreview();
     } catch (error) {
       console.warn("AHADashboard: AHA Sync Hub status kunne ikke leses", error);
       const plan = SYNC_HUB_DRY_RUN_SOURCES.map((source) => createSyncHubDryRunResult(source, "–", "error", "Could not read localStorage", ["Could not inspect this dataset."]));
@@ -1863,10 +2010,12 @@
           <p>Read-only status er utilgjengelig fordi localStorage ikke kan leses.</p>
           <button id="aha-sync-hub-prep-toggle" type="button" class="aha-sync-prep-toggle" aria-expanded="${isSyncHubPrepOpen}" aria-controls="aha-sync-prep-panel">${buttonLabel}</button>
           ${renderSyncHubPrepPanel(plan)}
+          ${renderAhaManualSyncHistoryPanel()}
           <small class="aha-status-updated">status-feil · Dashboardet fortsetter uten sync.</small>
         </section>
       `;
       bindSyncHubPrepToggle();
+      bindAhaManualSyncHistoryPreview();
     }
   }
 
@@ -1992,6 +2141,7 @@
       }
 
       const sourceLabel = localDataSourceLabel(dbResult);
+      await loadAhaManualSyncHistoryPreview();
       lastState = { authState, stats, sourceLabel };
 
       renderModules(stats);
@@ -2138,7 +2288,9 @@
     renderStats: renderDashboard,
     renderDashboard,
     getLastState: () => lastState,
-    saveProfileName
+    saveProfileName,
+    loadAhaManualSyncHistoryPreview,
+    getAhaManualSyncHistoryState: () => ahaManualSyncHistoryState
   };
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bind);

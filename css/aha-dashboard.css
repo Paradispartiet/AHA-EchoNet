@@ -1429,3 +1429,111 @@ html, body { max-width: 100%; overflow-x: hidden; }
     grid-template-columns: 1fr;
   }
 }
+
+.aha-sync-history-panel {
+  display: grid;
+  gap: 12px;
+  margin-top: 4px;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  background: rgba(8, 15, 25, 0.46);
+}
+
+.aha-sync-history-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.aha-sync-history-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 10px;
+}
+
+.aha-sync-history-row > div,
+.aha-sync-history-actions {
+  display: grid;
+  gap: 5px;
+}
+
+.aha-sync-history-row span,
+.aha-sync-history-row small,
+.aha-sync-history-empty { color: var(--aha-muted); }
+
+.aha-sync-history-actions { justify-items: end; }
+
+.aha-sync-retry-badge {
+  display: inline-flex;
+  width: fit-content;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #dce8f5;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.aha-sync-retry-eligible_preview { color: var(--aha-green); background: rgba(53, 211, 153, 0.12); }
+.aha-sync-retry-blocked,
+.aha-sync-retry-unknown { color: #ffb3b3; background: rgba(255, 96, 96, 0.12); }
+.aha-sync-retry-not_eligible { color: #ffe27a; background: rgba(255, 226, 122, 0.1); }
+
+.aha-sync-history-details-button {
+  padding: 6px 9px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: inherit;
+  background: rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+}
+
+.aha-sync-history-drawer,
+.aha-sync-retry-preview {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid rgba(112, 180, 255, 0.22);
+  border-radius: 12px;
+  background: rgba(13, 25, 40, 0.9);
+}
+
+.aha-sync-history-drawer-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.aha-sync-history-drawer h5,
+.aha-sync-history-drawer p,
+.aha-sync-retry-preview h5,
+.aha-sync-retry-preview p { margin: 0; }
+
+.aha-sync-history-details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.aha-sync-history-details-grid > div {
+  padding: 8px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.aha-sync-history-details-grid dt { color: var(--aha-muted); font-size: 0.78rem; }
+.aha-sync-history-details-grid dd { margin: 3px 0 0; overflow-wrap: anywhere; }
+
+@media (max-width: 720px) {
+  .aha-sync-history-row { align-items: stretch; flex-direction: column; }
+  .aha-sync-history-actions { justify-items: start; }
+  .aha-sync-history-details-grid { grid-template-columns: 1fr; }
+}
