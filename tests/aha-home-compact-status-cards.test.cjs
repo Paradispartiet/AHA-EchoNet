@@ -29,6 +29,7 @@ for (const label of ['Target', 'Included', 'Last run', 'Open Sync Hub']) {
 }
 
 assert.ok(dashboardCode.includes('renderAhaSyncCompactBlockers(blockers, lastRun)'), 'critical Sync Hub blockers should remain visible in the compact card');
+assert.ok(dashboardCode.includes('health?.status === "blocked"'), 'blocked modules should remain visible in the Active blockers summary');
 assert.ok(dashboardCode.includes('Last manual sync audit failed.'), 'audit failures should remain visible without opening advanced diagnostics');
 assert.ok(dashboardCode.includes('No manual sync runs yet.'), 'manual sync history should have a short empty state');
 assert.ok(dashboardCode.includes('No active blockers.'), 'blockers should have a short empty state');

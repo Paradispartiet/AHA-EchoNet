@@ -159,5 +159,103 @@
     }
   ];
 
+  const MODULE_ICONS = {
+    profile: "◌",
+    chat: "✦",
+    insights: "◎",
+    lists: "☰",
+    paths: "↠",
+    mindmap: "⎔",
+    historygo: "⌁",
+    gallery: "▧",
+    notes: "✎",
+    insta: "◉",
+    feed: "#",
+    meet: "⟡",
+    music: "♫",
+    avisa: "📰",
+    groups: "◍",
+    search: "⌕",
+    privacy: "⚑"
+  };
+
+  const MODULE_HEALTH_STATUSES = new Set(["ready", "warning", "blocked", "empty", "missing", "unknown"]);
+  const PREFERRED_ORDER = ["chat", "insights", "historygo", "gallery", "notes", "feed", "avisa", "profile", "search", "privacy"];
+
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function normalizeModuleHealth(health = {}) {
+    const status = MODULE_HEALTH_STATUSES.has(health.status) ? health.status : "unknown";
+    const numericCount = Number(health.count);
+    const hasCount = health.count !== null && health.count !== undefined && health.count !== "" && Number.isFinite(numericCount);
+    const count = hasCount ? Math.max(0, Math.trunc(numericCount)) : null;
+    const reason = String(health.reason || `Module health is ${status}.`).trim();
+    return { status, count, reason };
+  }
+
+  function orderedModules() {
+    return [...AHA_MODULES].sort((a, b) => {
+      const ai = PREFERRED_ORDER.indexOf(a?.id);
+      const bi = PREFERRED_ORDER.indexOf(b?.id);
+      const aRank = ai === -1 ? 999 : ai;
+      const bRank = bi === -1 ? 999 : bi;
+      if (aRank !== bRank) return aRank - bRank;
+      return String(a?.title || "").localeCompare(String(b?.title || ""), "no");
+    });
+  }
+
+  function renderHealthBadge(module, rawHealth) {
+    const health = normalizeModuleHealth(rawHealth);
+    const count = health.count === null ? "" : `<span class="aha-module-health-count" aria-hidden="true">${health.count}</span>`;
+    const accessibleLabel = `${module.title}: ${health.status}${health.count === null ? "" : `, ${health.count}`}. ${health.reason}`;
+    return `<span class="aha-module-health-badge aha-module-health-${health.status}" title="${escapeHtml(health.reason)}" aria-label="${escapeHtml(accessibleLabel)}">
+      <span>${health.status}</span>${count}
+    </span>`;
+  }
+
+  function renderMenu({ healthByModule = {}, mountId = "aha-modules-grid" } = {}) {
+    const grid = document.getElementById(mountId);
+    if (!grid) return;
+
+    grid.innerHTML = orderedModules().map((module) => {
+      const isPriority = ["chat", "historygo"].includes(module.id);
+      const tileClass = `aha-tile${isPriority ? " aha-tile-priority" : ""}`;
+      const icon = MODULE_ICONS[module.id] || "◌";
+      const badge = renderHealthBadge(module, healthByModule[module.id]);
+      const cardInner = `
+        <span class="aha-module-menu-heading">
+          <span class="aha-tile-icon" aria-hidden="true">${icon}</span>
+          <strong>${escapeHtml(module.title)}</strong>
+        </span>
+        <span class="aha-module-description">${escapeHtml(module.description)}</span>
+        ${badge}
+      `;
+
+      if (module.id === "historygo") {
+        return `<article class="${tileClass} aha-home-tile" id="aha-historygo-home" data-module="imports" role="link" tabindex="0" aria-label="Åpne History Go">${cardInner}
+          <div class="aha-tile-actions">
+            <a class="aha-tile-btn aha-tile-btn-primary" href="/History-Go/">Åpne History Go</a>
+            <button class="aha-tile-btn aha-tile-btn-secondary" id="btn-import-hg" type="button">Importer data</button>
+          </div>
+        </article>`;
+      }
+
+      return `<a class="${tileClass}" href="${escapeHtml(module.href)}" data-module="${escapeHtml(module.id)}">${cardInner}</a>`;
+    }).join("");
+  }
+
   window.AHA_MODULES = AHA_MODULES;
+  window.AHAModules = {
+    modules: AHA_MODULES,
+    healthStatuses: [...MODULE_HEALTH_STATUSES],
+    normalizeModuleHealth,
+    renderMenu
+  };
 })();
