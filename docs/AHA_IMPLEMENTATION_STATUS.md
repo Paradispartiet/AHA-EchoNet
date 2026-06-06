@@ -1,15 +1,15 @@
 # AHA Implementation Status
 
-Statusdato: 2026-06-05
+Statusdato: 2026-06-06
 
-Dette dokumentet oppsummerer nåværende implementasjonsstatus for AHA etter dokumentlåser, sync-hardening, Search note_reanalysis-visning, Mindmap tombstone-filtrering, Mindmap note_reanalysis-visning, Lists-, Paths-, Meta Insights-, Groups- og AHAavisa/Articles-bolkene, Sync Hub pre-sync UI, manual sync execution contract, manual sync confirmation modal, audit log preview, target selector preview, manual sync target contract, manual sync adapter interface stub, execution state machine stub, manual sync run summary preview, activation blocker tests og target adapter dry-run harness og database_existing wiring til eksisterende AHARepository target og manual sync audit log writer.
+Dette dokumentet oppsummerer nåværende implementasjonsstatus for AHA etter dokumentlåser, sync-hardening, Search note_reanalysis-visning, Mindmap tombstone-filtrering, Mindmap note_reanalysis-visning, Lists-, Paths-, Meta Insights-, Groups- og AHAavisa/Articles-bolkene, Sync Hub pre-sync UI, manual sync execution contract, manual sync confirmation modal, audit log preview, target selector preview, manual sync target contract, manual sync adapter interface stub, execution state machine stub, manual sync run summary preview, activation blocker tests og target adapter dry-run harness og database_existing wiring til eksisterende AHARepository target, manual sync audit log writer, read-only result history/details og retry eligibility preview.
 
 Dokumentet er en statuslås for denne runtime-endringen. Den innfører ikke ny motor, ny Supabase-migrasjon, ny databaseklient, nye credentials eller ny backend.
 
 ## 1. Kort status
 
 ```text
-AHA core er nå dokumentert, sync-reglene for de viktigste personal-data-modulene er hardenet, og AHA Sync Hub har dokumentert pre-sync UI, manual sync execution contract, UI-only confirmation modal, audit log preview, target selector preview og manual sync target contract, adapter interface stub, execution state machine stub, manual sync run summary preview, activation blocker tests og target adapter dry-run harness og database_existing wiring gjennom eksisterende AHARepository-lag og faktisk manual sync audit log-skriving via samme repository-lag. Sync er fortsatt manuell/gated og kjører aldri automatisk.
+AHA core er nå dokumentert, sync-reglene for de viktigste personal-data-modulene er hardenet, og AHA Sync Hub har dokumentert pre-sync UI, manual sync execution contract, UI-only confirmation modal, audit log preview, target selector preview og manual sync target contract, adapter interface stub, execution state machine stub, manual sync run summary preview, activation blocker tests og target adapter dry-run harness og database_existing wiring gjennom eksisterende AHARepository-lag og faktisk manual sync audit log-skriving via samme repository-lag, samt read-only manual sync history/details og retry eligibility preview. Previewen kjører ikke retry, sync eller write. Sync er fortsatt manuell/gated og kjører aldri automatisk.
 ```
 
 Ferdig nå:
@@ -66,6 +66,10 @@ Ferdig nå:
 ✅ Confirm sync er gated på readiness ready, validation errors 0, checklist blocked 0, target configured, adapter/state machine canExecute og minst én inkludert modul
 ✅ Manual sync-knappen starter fortsatt ikke write direkte
 ✅ Audit log lagrer structured summary/checksum, ikke secrets eller full payload som default
+✅ Manual sync result history og sanitized details vises read-only
+✅ Retry eligibility preview vurderer failed/partial/blocked runs og viser blockers uten retry-handling
+✅ Retry er ikke implementert; previewen starter ikke sync og skriver verken audit, database eller localStorage-state
+✅ Sync/write-flow og Confirm sync-flow er uendret
 ✅ Auto-sync finnes fortsatt ikke
 ```
 
@@ -81,12 +85,28 @@ Ikke bygget ennå:
 ❌ Stories sync
 ❌ Import preview/session sync
 ❌ Rollback/partial failure-contract er fortsatt ikke implementert
+❌ Faktisk retry execution er ikke implementert
 ```
 
 Neste anbefalte PR:
 
 ```text
-feat: add AHA manual sync result history panel
+docs: define AHA manual sync retry contract
+```
+
+
+## 2.7h AHA manual sync retry eligibility preview
+
+Manual sync history bygger videre på eksisterende audit-resultater med en sanitized, read-only details-modell. For `failed`, `partial_success` og `blocked` runs vises nå en strukturert retry eligibility preview med status, reason, blockers, warnings, target/status, original runId, modules, item counts og krav som må løses før en eventuell senere retry.
+
+Eligibility kan bare bli `eligible_preview` når audit-runnen har failed/partial result, gyldig target, configured target-status, minst én inkludert modul, `totalItems > 0`, ingen validation errors, ingen security/redaction-warning og nok sanitized metadata. Successful runs viser at retry ikke er relevant. Manglende runId, payload summary, target, modules/items, validation-feil, security/redaction-varsel og uavklart rollback/partial failure gir `blocked` eller `unknown` med eksplisitte blockers.
+
+Fasen er uttrykkelig preview-only og read-only. Det finnes ingen `Retry now`-handling, ingen retry execution, ingen adapter execute fra previewen, ingen audit-write, ingen database-write, ingen localStorage retry-state og ingen ny confirmation-flow. Eksisterende Confirm sync- og write-flow er uendret, og auto-sync finnes fortsatt ikke.
+
+Neste anbefalte PR er:
+
+```text
+docs: define AHA manual sync retry contract
 ```
 
 
@@ -99,7 +119,7 @@ Manual sync er fortsatt eksplisitt manuell/gated. Page load, Sync Hub-open, targ
 Neste anbefalte PR:
 
 ```text
-feat: add AHA manual sync result history panel
+docs: define AHA manual sync retry contract
 ```
 
 ## 2.7f AHA manual sync database target wiring
@@ -124,7 +144,7 @@ Viktig status:
 Neste anbefalte PR er derfor:
 
 ```text
-feat: add AHA manual sync result history panel
+docs: define AHA manual sync retry contract
 ```
 
 ## 1b. Meta Insights – algoritmisk meta-/selvinnsiktsmotor
@@ -1195,7 +1215,12 @@ Ikke lag source events eller insights.
 29. ✅ docs: define AHA manual sync execution activation checklist
 30. ✅ feat: add AHA manual sync activation blocker tests
 31. ✅ feat: add AHA manual sync target adapter dry-run harness
-32. Neste: docs: define AHA manual sync adapter implementation contract
+32. ✅ feat: wire AHA manual sync adapter to existing database target
+33. ✅ feat: add AHA manual sync audit log writer
+34. ✅ feat: add AHA manual sync result history panel
+35. ✅ feat: add AHA manual sync history details drawer
+36. ✅ feat: add AHA manual sync retry eligibility preview
+37. Neste: docs: define AHA manual sync retry contract
 ```
 
 Ikke gå videre til storage, import, Insta/social graph, EchoNet eller faktisk AHA manual sync/write før activation blocker tests er på plass, adapter implementation contract, konkret target-adapter, audit log-skriving og rollback/partial failure behavior er dokumentert, implementert og testet uten auto-sync og uten skjulte databasekall.

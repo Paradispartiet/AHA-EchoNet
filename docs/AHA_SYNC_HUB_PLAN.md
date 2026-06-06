@@ -480,7 +480,7 @@ Dashboard/UI skriver ikke direkte til database/repository. Target-valg, render, 
 
 Payload-reglene er låst: Bare inkluderte, valide payload-preview-moduler kan skrives (`lists`, `paths`, `groups`, `ahaavisa`). Excluded modules og moduler med validation errors skrives ikke. `partial_success` brukes bare når database-write lykkes men audit-write feiler tydelig, og rollback påstås ikke; write-feil returnerer `failed` med `rollbackStatus=not_available`.
 
-Audit log writer er nå implementert i neste fase via eksisterende `AHARepository`/database-write-lag. Dashboard skriver ikke audit direkte, og result history/panel bygges først i en senere fase.
+Audit log writer er implementert via eksisterende `AHARepository`/database-write-lag. Dashboard skriver ikke audit direkte. Read-only result history, sanitized details og retry eligibility preview er nå implementert uten å endre write-flowen.
 
 
 ## 13.11 Manual sync audit log writer er implementert
@@ -489,13 +489,34 @@ AHA manual sync audit log writer er implementert som en egen repository-funksjon
 
 Adapteren bygger en strukturert audit entry for manuelle execution-attempts og skriver audit for `success`, `failed` og `blocked` når audit writer finnes. Entryen inneholder runId, timestamp, `trigger=manual`, target/status, included/excluded modules, item counts, total items, readiness, validation summary, checklist summary, payload summary/checksum, confirmation summary, result/write/rollback status, warnings og errors. Full payload og secrets lagres ikke som default.
 
-Dashboard viser bare audit-resultat/status fra adapter-resultatet (`auditStatus`, `auditId` og audit error ved feil). Dashboard skriver ikke direkte til audit/database/repository. Page load, Sync Hub-open, target select og confirmation modal-open skriver ikke audit og starter ikke sync.
+Dashboard viser audit-resultat/status og leser eksisterende audit history via adapterens read-only history-boundary. Dashboard skriver ikke direkte til audit/database/repository. Page load, Sync Hub-open, target select, history/details-open og confirmation modal-open skriver ikke audit og starter ikke sync.
 
-Neste fase er result history panel:
+Read-only result history, sanitized details drawer og retry eligibility preview er implementert i påfølgende faser.
+
+## 13.12 Retry eligibility preview er implementert
+
+Manual sync history/details viser nå en strukturert retry eligibility preview for relevante tidligere runs. Previewen klassifiserer runs som `eligible_preview`, `blocked`, `not_eligible` eller `unknown`, og viser reason, blockers, warnings, target/status, original runId, modules, item counts og `requiredBeforeRetry`.
+
+Dette er en implementert read-only fase, ikke retry execution:
 
 ```text
-feat: add AHA manual sync result history panel
+- retryMode=preview_only
+- ingen Retry now-knapp
+- ingen executeAhaManualSyncRun fra previewen
+- ingen adapter execute
+- ingen sync
+- ingen database-write
+- ingen audit-write
+- ingen localStorage retry-state
+- ingen ny databaseklient eller credentials
+- ingen endring i Confirm sync-flow eller eksisterende write behavior
+- ingen auto-sync
 ```
+
+Successful runs viser «Retry not applicable for successful run». Failed/partial runs kan bare bli eligible i preview når target, modules, item counts, validation og sanitized audit metadata oppfyller reglene. Blocked/invalid/ufullstendige runs viser blockers. Full payload, secrets, tokens, passwords og connection strings vises ikke.
+
+Neste fase er å definere retry contract. Faktisk retry kommer eventuelt i en senere, separat implementation etter at kontrakten er dokumentert og godkjent; previewen kjører fortsatt aldri sync.
+
 
 ## 14. Faktisk write/sync er manuelt/gated
 
@@ -537,10 +558,10 @@ Reglene fra denne planen gjelder fortsatt:
 
 ## 16. Neste anbefalte PR
 
-Neste anbefalte PR etter manual sync audit log writer er:
+Neste anbefalte PR etter retry eligibility preview er:
 
 ```text
-feat: add AHA manual sync result history panel
+docs: define AHA manual sync retry contract
 ```
 
-Akseptanse for den PR-en bør være et lite read-only result history panel som leser eksisterende audit/resultathistorikk via godkjent service/repository-lag, uten auto-sync, uten nye credentials og uten dashboard-direkte audit/database-write.
+Kontraktsfasen skal dokumentere en fremtidig retry-boundary, revalidation, confirmation, idempotency, audit, rollback/partial failure og security-regler. Den skal ikke aktivere faktisk retry eller endre dagens manual sync/write-flow.

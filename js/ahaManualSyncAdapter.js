@@ -547,6 +547,24 @@
     return writes;
   }
 
+  async function loadAhaManualSyncHistory(options = {}) {
+    const repository = getRepository();
+    if (!repository || typeof repository.loadSourceEvents !== "function") {
+      return { ok: false, status: "not_configured", entries: [], reason: "history_reader_not_configured" };
+    }
+    const limit = Math.min(100, Math.max(1, Number(options.limit || 20)));
+    try {
+      const result = await repository.loadSourceEvents({ limit: Math.max(limit, 50) });
+      if (!result?.ok) return { ok: false, status: "unavailable", entries: [], reason: result?.fallback || result?.reason || "history_read_failed" };
+      const entries = cloneList(result.data)
+        .filter((entry) => entry?.source_type === "aha_manual_sync" && entry?.content_type === "manual_sync_audit")
+        .slice(0, limit);
+      return { ok: true, status: "loaded", entries };
+    } catch (error) {
+      return { ok: false, status: "unavailable", entries: [], reason: error?.message || "history_read_failed" };
+    }
+  }
+
   async function executeRun(input) {
     const prepared = prepareRun(input);
     const stateMachine = getStateMachine();
@@ -763,7 +781,8 @@
     prepareRun,
     prepareAhaManualSyncRun: prepareRun,
     executeRun,
-    executeAhaManualSyncRun: executeRun
+    executeAhaManualSyncRun: executeRun,
+    loadAhaManualSyncHistory
   };
 
   if (typeof window !== "undefined") {
