@@ -515,8 +515,28 @@ Dette er en implementert read-only fase, ikke retry execution:
 
 Successful runs viser «Retry not applicable for successful run». Failed/partial runs kan bare bli eligible i preview når target, modules, item counts, validation og sanitized audit metadata oppfyller reglene. Blocked/invalid/ufullstendige runs viser blockers. Full payload, secrets, tokens, passwords og connection strings vises ikke.
 
-Neste fase er å definere retry contract. Faktisk retry kommer eventuelt i en senere, separat implementation etter at kontrakten er dokumentert og godkjent; previewen kjører fortsatt aldri sync.
+Retry-kontrakten er dokumentert som en sikkerhetsgrense for mulig senere arbeid. Faktisk retry execution er fortsatt ikke implementert; previewen kjører aldri sync.
 
+
+
+## 13.13 Manual sync end-to-end verification er implementert
+
+End-to-end-verifikasjonen er implementert som en test-/verifikasjonsfase, ikke som en ny feature-fase. Den kjører den eksplisitte `executeAhaManualSyncRun()`-løypa gjennom eksisterende adapter/service-boundary med mock/stub av `database_existing` og verifiserer:
+
+```text
+- success med eksplisitt confirmation, forventet domain write og success-audit
+- blocked for confirmation, target, readiness, validation, checklist, tom/ugyldig payload og excluded modules
+- failed database write uten falsk success
+- audit failure som eksplisitt partial_success
+- history for success, failed og blocked, newest-first og uten full payload/secrets
+- details med runId, target, status, modules, counts, readiness, validation, checklist, warnings og errors
+- no-auto-sync ved page load, Hub-open, target select, confirmation modal-open og render/init
+- database-boundary: dashboard skriver ikke database eller audit direkte
+```
+
+Automatiske tester bruker ikke produksjonsdatabase. De bruker små fixtures og mock/stub ved det eksisterende `AHARepository`-grensesnittet. Ingen ny databaseklient, credentials, retry execution eller sync-feature er introdusert. Det eneste runtime-avviket testen avdekket var at sanitized details manglet `checklistSummary`; dette ble rettet minimalt i read-only history-helperen.
+
+Denne fasen avslutter videre sync-scaffolding. Neste fase er operator UI simplification. Videre arbeid skal rydde og forenkle eksisterende operatorflate, ikke legge til mer sync-scaffolding.
 
 ## 14. Faktisk write/sync er manuelt/gated
 
@@ -558,10 +578,10 @@ Reglene fra denne planen gjelder fortsatt:
 
 ## 16. Neste anbefalte PR
 
-Neste anbefalte PR etter retry eligibility preview er:
+End-to-end-verifikasjonen er ferdig. Neste anbefalte PR er:
 
 ```text
-docs: define AHA manual sync retry contract
+chore: simplify AHA Sync Hub operator UI
 ```
 
-Kontraktsfasen skal dokumentere en fremtidig retry-boundary, revalidation, confirmation, idempotency, audit, rollback/partial failure og security-regler. Den skal ikke aktivere faktisk retry eller endre dagens manual sync/write-flow.
+Neste fase skal redusere operatørstøy, tydeliggjøre den eksisterende manuelle/gated løypa og forenkle UI-et. Den skal ikke legge til ny sync-feature, retry execution, auto-sync, databaseklient, credentials eller mer sync-scaffolding.

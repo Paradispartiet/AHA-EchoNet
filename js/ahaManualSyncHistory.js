@@ -58,6 +58,7 @@
       && audit.payloadSummary && typeof audit.payloadSummary === "object" && !Array.isArray(audit.payloadSummary));
     const payloadSummary = objectValue(audit.payloadSummary);
     const validationSummary = objectValue(audit.validationSummary);
+    const checklistSummary = objectValue(audit.checklistSummary);
     const includedModules = safeModuleList(audit.includedModules?.length ? audit.includedModules : payloadSummary.includedModules);
     const itemCounts = safeItemCounts(Object.keys(objectValue(audit.itemCounts)).length ? audit.itemCounts : payloadSummary.itemCounts);
     const totalItemsValue = audit.totalItems ?? payloadSummary.totalItems;
@@ -83,6 +84,11 @@
         status: safeString(validationSummary.status || "unknown").toLowerCase(),
         errorCount: Math.max(0, Number(validationSummary.errorCount || 0)),
         warningCount: Math.max(0, Number(validationSummary.warningCount || 0))
+      },
+      checklistSummary: {
+        passedCount: Math.max(0, Number(checklistSummary.passedCount || checklistSummary.passed || 0)),
+        warningCount: Math.max(0, Number(checklistSummary.warningCount || checklistSummary.warning || 0)),
+        blockedCount: Math.max(0, Number(checklistSummary.blockedCount || checklistSummary.blocked || 0))
       },
       payloadSummaryPresent: Boolean(payloadSummaryPresent),
       warnings: securityWarning ? ["Security or redaction warning recorded; sensitive details are hidden."] : safeStringList(audit.warnings),
