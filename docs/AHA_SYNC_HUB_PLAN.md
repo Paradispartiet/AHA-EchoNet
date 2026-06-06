@@ -1,6 +1,6 @@
 # AHA Sync Hub / Control Center plan
 
-Statusdato: 2026-06-05
+Statusdato: 2026-06-06
 
 Dette dokumentet er en planleggingslås for en fremtidig AHA Sync Hub / Control Center. Det er ikke runtime-kode, ikke en UI-beslutning, ikke en Supabase-migrasjon og ikke en beslutning om å starte automatisk sync.
 
@@ -581,7 +581,20 @@ Reglene fra denne planen gjelder fortsatt:
 End-to-end-verifikasjonen er ferdig. Neste anbefalte PR er:
 
 ```text
-chore: simplify AHA Sync Hub operator UI
+chore: group AHA Home advanced diagnostics
 ```
 
 Neste fase skal redusere operatørstøy, tydeliggjøre den eksisterende manuelle/gated løypa og forenkle UI-et. Den skal ikke legge til ny sync-feature, retry execution, auto-sync, databaseklient, credentials eller mer sync-scaffolding.
+
+
+## 17. Compact card-integrasjon på AHA Home
+
+Sync Hub er nå bedre integrert i AHA Home som et kompakt statuskort. Kortet prioriterer readiness, valgt target, inkluderte moduler/items, siste manuelle run og aktive blockers. Full dry-run-, payload sample-, adapter/state machine- og history/details-diagnostikk er fortsatt tilgjengelig via `Open Sync Hub`, men dominerer ikke lenger høyre statuspanel.
+
+Dette er kun UI/organisering. Core sync, database target, adapter write-flow, audit writer, execution gates, payload contract, history/details-dataflyt og retry logic er ikke endret. Kritiske feil forblir synlige uten å åpne advanced diagnostics, og auto-sync finnes fortsatt ikke.
+
+Neste anbefalte PR er:
+
+```text
+chore: group AHA Home advanced diagnostics
+```

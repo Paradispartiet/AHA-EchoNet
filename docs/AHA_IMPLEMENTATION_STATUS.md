@@ -2,7 +2,7 @@
 
 Statusdato: 2026-06-06
 
-Dette dokumentet oppsummerer nåværende implementasjonsstatus for AHA etter dokumentlåser, sync-hardening, Search note_reanalysis-visning, Mindmap tombstone-filtrering, Mindmap note_reanalysis-visning, Lists-, Paths-, Meta Insights-, Groups- og AHAavisa/Articles-bolkene, Sync Hub pre-sync UI, manual sync execution contract, manual sync confirmation modal, audit log preview, target selector preview, manual sync target contract, manual sync adapter interface stub, execution state machine stub, manual sync run summary preview, activation blocker tests og target adapter dry-run harness og database_existing wiring til eksisterende AHARepository target, manual sync audit log writer, read-only result history/details, retry eligibility preview og end-to-end-verifikasjon av den manuelle sync-løypa mot mock/stub av eksisterende database target.
+Dette dokumentet oppsummerer nåværende implementasjonsstatus for AHA etter dokumentlåser, sync-hardening, Search note_reanalysis-visning, Mindmap tombstone-filtrering, Mindmap note_reanalysis-visning, Lists-, Paths-, Meta Insights-, Groups- og AHAavisa/Articles-bolkene, Sync Hub pre-sync UI, manual sync execution contract, manual sync confirmation modal, audit log preview, target selector preview, manual sync target contract, manual sync adapter interface stub, execution state machine stub, manual sync run summary preview, activation blocker tests og target adapter dry-run harness og database_existing wiring til eksisterende AHARepository target, manual sync audit log writer, read-only result history/details, retry eligibility preview, end-to-end-verifikasjon av den manuelle sync-løypa mot mock/stub av eksisterende database target og kompakte statuskort på AHA Home.
 
 Dokumentet er en statuslås for denne runtime-endringen. Den innfører ikke ny motor, ny Supabase-migrasjon, ny databaseklient, nye credentials eller ny backend.
 
@@ -96,9 +96,24 @@ Ikke bygget ennå:
 Neste anbefalte PR:
 
 ```text
-chore: simplify AHA Sync Hub operator UI
+chore: group AHA Home advanced diagnostics
 ```
 
+
+
+## 2.7j AHA Home compact status cards
+
+AHA Home-statuskortene er komprimert og organisert etter dokumentert dashboard-hierarki. Høyre statuspanel viser nå korte kort for system health, AHA data readiness og active blockers, mens Sync Hub vises som et compact card med readiness, valgt target, inkluderte moduler/items og siste manuelle run. Kritiske validation-, readiness-, target-, audit- og write-feil forblir synlige i hovedkortet.
+
+Hele eksisterende Sync Hub-flaten er fortsatt tilgjengelig via `Open Sync Hub` som advanced diagnostics. Dry-run, payload sample, adapter/state machine-detaljer, checklist, audit preview, manual confirmation og read-only history/details er ikke fjernet; de er bare mindre dominerende på Home. Full payload, secrets, tokens, passwords og connection strings vises fortsatt ikke.
+
+Dette er kun UI/organisering. Database target, adapter write-flow, audit writer, sync execution, state machine-regler, payload contract, history/details-dataflyt og retry logic er uendret. Ingen auto-sync er lagt til.
+
+Neste anbefalte PR er:
+
+```text
+chore: group AHA Home advanced diagnostics
+```
 
 ## 2.7h AHA manual sync retry eligibility preview
 
@@ -111,7 +126,7 @@ Fasen er uttrykkelig preview-only og read-only. Det finnes ingen `Retry now`-han
 Neste anbefalte PR er:
 
 ```text
-chore: simplify AHA Sync Hub operator UI
+chore: group AHA Home advanced diagnostics
 ```
 
 
@@ -146,7 +161,7 @@ Testene bruker ikke produksjonsdatabase. Existing database target verifiseres vi
 Neste anbefalte arbeid:
 
 ```text
-chore: simplify AHA Sync Hub operator UI
+chore: group AHA Home advanced diagnostics
 ```
 
 ## 2.7g AHA manual sync audit log writer
@@ -158,7 +173,7 @@ Manual sync er fortsatt eksplisitt manuell/gated. Page load, Sync Hub-open, targ
 Neste anbefalte PR:
 
 ```text
-chore: simplify AHA Sync Hub operator UI
+chore: group AHA Home advanced diagnostics
 ```
 
 ## 2.7f AHA manual sync database target wiring
@@ -183,7 +198,7 @@ Viktig status:
 Neste anbefalte PR er derfor:
 
 ```text
-chore: simplify AHA Sync Hub operator UI
+chore: group AHA Home advanced diagnostics
 ```
 
 ## 1b. Meta Insights – algoritmisk meta-/selvinnsiktsmotor
@@ -1159,7 +1174,7 @@ Verifisert status:
 Videre sync-scaffolding skal stoppes. Neste anbefalte PR er:
 
 ```text
-chore: simplify AHA Sync Hub operator UI
+chore: group AHA Home advanced diagnostics
 ```
 
 Denne fasen skal være rydding og forenkling av eksisterende operatorflate, ikke mer sync-funksjonalitet.
@@ -1205,7 +1220,7 @@ Denne fasen skal være rydding og forenkling av eksisterende operatorflate, ikke
 36. ✅ feat: add AHA manual sync retry eligibility preview
 37. ✅ docs: define AHA manual sync retry contract
 38. ✅ test: verify AHA manual sync end-to-end with existing database target
-39. Neste: chore: simplify AHA Sync Hub operator UI
+39. Neste: chore: group AHA Home advanced diagnostics
 ```
 
 Ikke gå videre til storage, import, Insta/social graph, EchoNet eller faktisk AHA manual sync/write før activation blocker tests er på plass, adapter implementation contract, konkret target-adapter, audit log-skriving og rollback/partial failure behavior er dokumentert, implementert og testet uten auto-sync og uten skjulte databasekall.

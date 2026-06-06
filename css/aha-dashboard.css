@@ -1537,3 +1537,123 @@ html, body { max-width: 100%; overflow-x: hidden; }
   .aha-sync-history-actions { justify-items: start; }
   .aha-sync-history-details-grid { grid-template-columns: 1fr; }
 }
+
+/* Compact AHA Home status hierarchy */
+.aha-status-panel {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+}
+
+.aha-status-panel > .aha-panel-head { margin-bottom: 0; }
+.aha-status-panel > .aha-stats {
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.aha-compact-status-card,
+.aha-sync-hub-compact-card {
+  display: grid;
+  gap: 8px;
+  padding: 11px 12px;
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 14px;
+  background: rgba(255,255,255,.045);
+}
+
+.aha-compact-status-card-primary { border-color: rgba(246,200,0,.2); }
+
+.aha-compact-status-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.aha-compact-status-header h3,
+.aha-compact-status-header p,
+.aha-compact-status-note { margin: 0; }
+.aha-compact-status-header h3 { font-size: .96rem; }
+.aha-compact-status-primary { font-size: .86rem; line-height: 1.3; }
+.aha-compact-status-note,
+.aha-compact-empty { margin: 0; color: var(--aha-muted); font-size: .76rem; }
+
+.aha-status-badge {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  min-height: 22px;
+  padding: 3px 8px;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 999px;
+  font-size: .7rem;
+  font-weight: 850;
+  line-height: 1;
+  white-space: nowrap;
+}
+.aha-status-badge-ready { color: var(--aha-green); background: rgba(53,211,153,.11); border-color: rgba(53,211,153,.24); }
+.aha-status-badge-warning { color: #ffe27a; background: rgba(255,226,122,.09); border-color: rgba(255,226,122,.22); }
+.aha-status-badge-blocked { color: #ffb3b3; background: rgba(255,96,96,.11); border-color: rgba(255,96,96,.24); }
+.aha-status-badge-neutral { color: var(--aha-muted); background: rgba(255,255,255,.05); }
+
+.aha-compact-meta {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+}
+.aha-compact-meta > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+  color: var(--aha-muted);
+  font-size: .75rem;
+  line-height: 1.25;
+}
+.aha-compact-meta dt { flex: 0 0 auto; }
+.aha-compact-meta dd {
+  margin: 0;
+  color: var(--aha-text);
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.aha-sync-hub-status,
+.aha-historygo-status,
+.aha-privacy-status { margin-top: 0; }
+.aha-sync-hub-status .aha-status-card { gap: 8px; margin: 0; }
+.aha-sync-hub-compact-card { padding: 12px; }
+.aha-sync-hub-open-button { width: 100%; min-height: 34px; margin-top: 1px; padding: 7px 10px; }
+
+.aha-compact-alert {
+  display: grid;
+  gap: 5px;
+  padding: 8px 9px;
+  border: 1px solid rgba(255,96,96,.25);
+  border-radius: 10px;
+  background: rgba(255,96,96,.08);
+  color: #ffd2d2;
+  font-size: .75rem;
+}
+.aha-compact-alert ul { display: grid; gap: 3px; margin: 0; padding-left: 17px; }
+
+.aha-sync-hub-advanced {
+  display: grid;
+  gap: 12px;
+  margin-top: 2px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255,255,255,.1);
+}
+.aha-sync-hub-advanced-heading { display: grid; gap: 3px; }
+.aha-sync-hub-advanced-heading span { color: var(--aha-muted); font-size: .76rem; line-height: 1.35; }
+.aha-sync-hub-advanced .aha-sync-prep-panel { margin-top: 0; }
+.aha-sync-hub-advanced .aha-sync-history-panel { margin-top: 0; }
+
+.aha-status-panel > .aha-activity-panel { margin-top: 0; padding: 12px; }
+.aha-status-panel > .aha-tech-status { margin-top: 0; }
+
+@media (max-width: 620px) {
+  .aha-compact-status-header { align-items: center; }
+  .aha-compact-meta > div { flex-wrap: wrap; }
+  .aha-compact-meta dd { text-align: left; }
+}
