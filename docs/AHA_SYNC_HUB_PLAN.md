@@ -598,3 +598,15 @@ Neste anbefalte PR er:
 ```text
 chore: group AHA Home advanced diagnostics
 ```
+
+## 18. Module health i modulmenyen
+
+AHA Home gjenbruker nå Sync Hubs eksisterende read-only dry-run/validation-resultater for å vise kompakt health for Lists, Paths, Groups og AHAavisa i den eksisterende modulmenyen. Statusene normaliseres kun for presentasjon, og trygge lokale counts vises når de allerede er tilgjengelige.
+
+Dette er en UI-/organiseringsendring. Core sync, database/write-flow, adapter, audit writer, state machine-regler, payload contract, history/details-dataflyt og retry logic er ikke endret. Badge-rendering gjør ingen nye databasekall, laster ikke modul-runtimefilene og starter aldri sync. Active blockers forblir synlige i hoveddashboardet, og auto-sync finnes fortsatt ikke.
+
+Neste anbefalte PR er:
+
+```text
+chore: normalize AHA Home card titles and empty states
+```

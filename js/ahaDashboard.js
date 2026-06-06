@@ -14,26 +14,6 @@
   const AHA_AUTH_RETURN_TO_KEY = "aha_auth_return_to_v1";
   const HISTORY_GO_PROFILE_URL = "https://paradispartiet.github.io/History-Go/profile.html";
 
-  const MODULE_ICONS = {
-    profile: "◌",
-    chat: "✦",
-    insights: "◎",
-    lists: "☰",
-    paths: "↠",
-    mindmap: "⎔",
-    historygo: "⌁",
-    gallery: "▧",
-    notes: "✎",
-    insta: "◉",
-    feed: "#",
-    meet: "⟡",
-    music: "♫",
-    avisa: "📰",
-    groups: "◍",
-    search: "⌕",
-    privacy: "⚑"
-  };
-
   function readArray(key) {
     try {
       const parsed = JSON.parse(localStorage.getItem(key) || "[]");
@@ -186,60 +166,10 @@
   }
 
 
-  function moduleStatusLine(module, stats) {
-    const map = {
-      chat: resolveModuleLabel(stats, "source_events", "innsikt", "innsikter"),
-      notes: resolveModuleLabel(stats, "notes", "notat", "notater"),
-      gallery: resolveModuleLabel(stats, "gallery", "minne", "minner"),
-      feed: resolveModuleLabel(stats, "feed", "post", "poster"),
-      insta: resolveModuleLabel(stats, "insta", "innlegg", "innlegg")
-    };
-    if (module.id === "historygo") {
-      const importCount = statValue(stats, "imports");
-      if (importCount > 0) return `${importCount} ${importCount === 1 ? "import" : "importer"}`;
-      return hasHistoryGoPayload() ? "1 import" : "Ingen import";
-    }
-    if (map[module.id]) return map[module.id];
-    return module.status === "active" ? "Klar" : "Kommer";
+  function renderModules(moduleHealth) {
+    window.AHAModules?.renderMenu?.({ healthByModule: moduleHealth });
   }
 
-  function renderModules(stats) {
-    const grid = $("aha-modules-grid");
-    if (!grid) return;
-    const modules = Array.isArray(window.AHA_MODULES) ? window.AHA_MODULES : [];
-    const preferredOrder = ["chat","insights","historygo","gallery","notes","feed","avisa","profile","search","privacy"];
-    const orderedModules = [...modules].sort((a, b) => {
-      const ai = preferredOrder.indexOf(a?.id);
-      const bi = preferredOrder.indexOf(b?.id);
-      const aRank = ai === -1 ? 999 : ai;
-      const bRank = bi === -1 ? 999 : bi;
-      if (aRank !== bRank) return aRank - bRank;
-      return String(a?.title || "").localeCompare(String(b?.title || ""), "no");
-    });
-    grid.innerHTML = orderedModules.map((module) => {
-      const isPriority = ["chat", "historygo"].includes(module.id);
-      const tileClass = `aha-tile${isPriority ? " aha-tile-priority" : ""}`;
-      const icon = MODULE_ICONS[module.id] || "◌";
-      const status = moduleStatusLine(module, stats);
-      const cardInner = `
-        <span class="aha-tile-icon">${icon}</span>
-        <strong>${module.title}</strong>
-        <span>${module.description}</span>
-        <small id="aha-module-${module.id}-status">${status}</small>
-      `;
-
-      if (module.id === "historygo") {
-        return `<article class="${tileClass} aha-home-tile" id="aha-historygo-home" data-module="imports" role="link" tabindex="0" aria-label="Åpne History Go">${cardInner}
-          <div class="aha-tile-actions">
-            <a class="aha-tile-btn aha-tile-btn-primary" href="/History-Go/">Åpne History Go</a>
-            <button class="aha-tile-btn aha-tile-btn-secondary" id="btn-import-hg" type="button">Importer data</button>
-          </div>
-        </article>`;
-      }
-
-      return `<a class="${tileClass}" href="${module.href}" data-module="${module.id}">${cardInner}</a>`;
-    }).join("");
-  }
   function renderProfileStats(stats, sourceLabel) {
     const historyGo = hasHistoryGoPayload() || statValue(stats, "imports") > 0;
     const mount = $("aha-profile-stats");
@@ -264,18 +194,6 @@
     setText("aha-status-updated", `Oppdatert ${formatTime()} · ${sourceLabel}`);
   }
 
-  function renderModuleStatus(stats) {
-    setText("aha-module-chat-status", resolveModuleLabel(stats, "source_events", "innsikt", "innsikter"));
-    setText("aha-module-notes-status", resolveModuleLabel(stats, "notes", "notat", "notater"));
-    setText("aha-module-gallery-status", resolveModuleLabel(stats, "gallery", "minne", "minner"));
-    setText("aha-module-feed-status", resolveModuleLabel(stats, "feed", "post", "poster"));
-    setText("aha-module-insta-status", resolveModuleLabel(stats, "insta", "innlegg", "innlegg"));
-
-    const importCount = statValue(stats, "imports");
-    if (importCount > 0) setText("aha-module-historygo-status", `${importCount} ${importCount === 1 ? "import" : "importer"}`);
-    else setText("aha-module-historygo-status", hasHistoryGoPayload() ? "1 import" : "Ingen import");
-  }
-
   function bindHistoryGoHomeTile() {
     const tile = $("aha-historygo-home");
     if (!tile || tile.dataset.ahaDashboardBound === "true") return;
@@ -292,7 +210,7 @@
     });
   }
 
-  function renderStatCards(stats, sourceLabel, authState) {
+  function renderStatCards(stats, sourceLabel, authState, moduleHealth = {}) {
     const mount = $("aha-dashboard-stats");
     if (!mount) return;
 
@@ -301,7 +219,17 @@
     const historyGoReady = hasHistoryGoPayload() || statValue(stats, "imports") > 0;
     const totalItems = ["source_events", "notes", "gallery", "feed", "insta"]
       .reduce((total, key) => total + statValue(stats, key), 0);
-    const dashboardBlocked = Boolean(authState.user && !profileReady);
+    const profileBlocked = Boolean(authState.user && !profileReady);
+    const blockedModules = Object.entries(moduleHealth)
+      .filter(([, health]) => health?.status === "blocked")
+      .map(([moduleId]) => window.AHA_MODULES?.find((module) => module.id === moduleId)?.title || moduleId);
+    const blockerCount = blockedModules.length + (profileBlocked ? 1 : 0);
+    const dashboardBlocked = blockerCount > 0;
+    const blockerSummary = blockedModules.length
+      ? `${blockedModules.join(", ")} ${blockedModules.length === 1 ? "is" : "are"} blocked.`
+      : profileBlocked
+        ? "Profile setup needs attention."
+        : "No active blockers.";
 
     mount.innerHTML = `
       <article class="aha-compact-status-card aha-compact-status-card-primary" aria-label="System health">
@@ -320,19 +248,15 @@
           <h3>AHA data readiness</h3>
           <span class="aha-status-badge aha-status-badge-${totalItems > 0 ? "ready" : "neutral"}">${totalItems > 0 ? "Data available" : "Empty"}</span>
         </div>
-        <strong class="aha-compact-status-primary">${totalItems} dashboard items</strong>
-        <dl class="aha-compact-meta">
-          <div><dt>Insights</dt><dd>${statValue(stats, "source_events")}</dd></div>
-          <div><dt>Notes + media</dt><dd>${statValue(stats, "notes") + statValue(stats, "gallery") + statValue(stats, "feed") + statValue(stats, "insta")}</dd></div>
-          <div><dt>History Go</dt><dd>${historyGoReady ? "Ready" : "No import"}</dd></div>
-        </dl>
+        <strong class="aha-compact-status-primary">${totalItems} dashboard items · History Go ${historyGoReady ? "ready" : "not imported"}</strong>
+        <p class="aha-compact-status-note">Module-level health and counts are shown in the app menu.</p>
       </article>
       <article class="aha-compact-status-card" aria-label="Dashboard blockers">
         <div class="aha-compact-status-header">
           <h3>Active blockers</h3>
-          <span class="aha-status-badge aha-status-badge-${dashboardBlocked ? "blocked" : "ready"}">${dashboardBlocked ? "1 blocker" : "Clear"}</span>
+          <span class="aha-status-badge aha-status-badge-${dashboardBlocked ? "blocked" : "ready"}">${dashboardBlocked ? `${blockerCount} blocker${blockerCount === 1 ? "" : "s"}` : "Clear"}</span>
         </div>
-        <strong class="aha-compact-status-primary">${dashboardBlocked ? "Profile setup needs attention." : "No active blockers."}</strong>
+        <strong class="aha-compact-status-primary">${escapeHtml(blockerSummary)}</strong>
         <p class="aha-compact-status-note">Updated ${formatTime()}</p>
       </article>
     `;
@@ -525,6 +449,71 @@
         return createSyncHubDryRunResult(source, "–", "error", "Could not read localStorage", ["Could not inspect this dataset."]);
       }
     });
+  }
+
+  function moduleHealthFromCount(moduleName, count) {
+    const normalizedCount = statValue({ count }, "count");
+    return {
+      status: normalizedCount > 0 ? "ready" : "empty",
+      count: normalizedCount,
+      reason: normalizedCount > 0
+        ? `${moduleName} has ${normalizedCount} available local item${normalizedCount === 1 ? "" : "s"}.`
+        : `${moduleName} has no available local items.`
+    };
+  }
+
+  function syncHubRowToModuleHealth(row) {
+    if (!row) return { status: "unknown", reason: "No module health data is available." };
+    if (row.status === "error" || row.validationStatus === "errors" || row.ok === false) {
+      return { status: "blocked", count: null, reason: row.errors?.[0] || row.actionPreview || "Module validation is blocked." };
+    }
+    if (row.status === "missing") return { status: "missing", count: null, reason: row.actionPreview || "No local dataset was found." };
+    if (row.status === "empty") return { status: "empty", count: 0, reason: row.actionPreview || "The local dataset is empty." };
+    if (row.validationStatus === "warnings" || row.warnings?.length) {
+      return { status: "warning", count: row.count, reason: row.warnings?.[0] || "Module data has validation warnings." };
+    }
+    if (row.status === "ready") return { status: "ready", count: row.count, reason: row.actionPreview || "Module data is ready." };
+    return { status: "unknown", count: row.count, reason: row.actionPreview || "Module health could not be determined." };
+  }
+
+  function buildModuleHealth(stats, authState) {
+    const health = {};
+    const countedModules = {
+      chat: ["Chat", "source_events"],
+      notes: ["Notes", "notes"],
+      gallery: ["Gallery", "gallery"],
+      feed: ["Feed", "feed"],
+      insta: ["AHA Insta", "insta"],
+      historygo: ["History Go", "imports"]
+    };
+
+    Object.entries(countedModules).forEach(([moduleId, [moduleName, statKey]]) => {
+      health[moduleId] = moduleHealthFromCount(moduleName, statValue(stats, statKey));
+    });
+
+    health.profile = authState?.user
+      ? authState.profile?.display_name
+        ? { status: "ready", reason: "Profile is signed in and has a display name." }
+        : { status: "warning", reason: "Profile is signed in but needs a display name." }
+      : { status: "missing", reason: "No signed-in profile is available." };
+
+    const moduleIdBySyncSource = { lists: "lists", paths: "paths", groups: "groups", ahaavisa: "avisa" };
+    buildAhaSyncDryRunPlan().forEach((row) => {
+      health[moduleIdBySyncSource[row.id]] = syncHubRowToModuleHealth(row);
+    });
+
+    (window.AHA_MODULES || []).forEach((module) => {
+      if (!health[module.id]) {
+        health[module.id] = {
+          status: "unknown",
+          reason: module.status === "shell"
+            ? "This module is listed as a shell and has no Home health source."
+            : "No read-only Home health source is available for this module."
+        };
+      }
+    });
+
+    return health;
   }
 
   function readSyncHubPreviewDataset(source) {
@@ -2224,31 +2213,31 @@
 
       const sourceLabel = localDataSourceLabel(dbResult);
       await loadAhaManualSyncHistoryPreview();
-      lastState = { authState, stats, sourceLabel };
+      const moduleHealth = buildModuleHealth(stats, authState);
+      lastState = { authState, stats, sourceLabel, moduleHealth };
 
-      renderModules(stats);
+      renderModules(moduleHealth);
       bindHistoryGoHomeTile();
       bindHistoryGoImportTrigger();
       bindImportButtons();
       renderIdentity(authState);
       renderProfileStats(stats, sourceLabel);
-      renderModuleStatus(stats);
-      renderStatCards(stats, sourceLabel, authState);
+      renderStatCards(stats, sourceLabel, authState, moduleHealth);
       renderSyncHubStatus();
       renderInsightsActivity(stats);
     } catch (error) {
       console.warn("AHADashboard: renderDashboard feilet", error);
       const authState = { user: null, profile: null, profileResult: { ok: false, reason: "render_error", error } };
       const stats = localStats();
-      lastState = { authState, stats, sourceLabel: "localStorage", error };
-      renderModules(stats);
+      const moduleHealth = buildModuleHealth(stats, authState);
+      lastState = { authState, stats, sourceLabel: "localStorage", moduleHealth, error };
+      renderModules(moduleHealth);
       bindHistoryGoHomeTile();
       bindHistoryGoImportTrigger();
       bindImportButtons();
       renderIdentity(authState);
       renderProfileStats(stats, "localStorage");
-      renderModuleStatus(stats);
-      renderStatCards(stats, "localStorage", authState);
+      renderStatCards(stats, "localStorage", authState, moduleHealth);
       renderSyncHubStatus();
       renderInsightsActivity(stats);
       setText("aha-auth-output", "Dashboardet bruker localStorage fordi en innlastingsfeil oppstod.");

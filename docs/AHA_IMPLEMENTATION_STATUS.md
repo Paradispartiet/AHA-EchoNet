@@ -1224,3 +1224,28 @@ Denne fasen skal være rydding og forenkling av eksisterende operatorflate, ikke
 ```
 
 Ikke gå videre til storage, import, Insta/social graph, EchoNet eller faktisk AHA manual sync/write før activation blocker tests er på plass, adapter implementation contract, konkret target-adapter, audit log-skriving og rollback/partial failure behavior er dokumentert, implementert og testet uten auto-sync og uten skjulte databasekall.
+
+## 9. Module health badges i modulmenyen
+
+AHA Home viser nå kompakt module health direkte i eksisterende modulmeny. `js/ahaModules.js` eier meny-renderingen, mens dashboardet gjenbruker eksisterende read-only counts og Sync Hub dry-run/validation-data for å bygge statusene `ready`, `warning`, `blocked`, `empty`, `missing` og `unknown`.
+
+Lists, Paths, Groups og AHAavisa får status og trygt tilgjengelig count uten at Home laster modul-runtimefilene deres. Andre eksisterende menymoduler får count-basert status når Home allerede har data, eller en eksplisitt `unknown`/`missing`-status når det ikke finnes en read-only health-kilde.
+
+Dette er kun UI/organisering:
+
+```text
+- module health-detaljer er flyttet/lagt inn i modulmenyen
+- hoveddashboardets data-readiness er komprimert
+- active blockers viser fortsatt blocked moduler
+- Advanced diagnostics og Sync Hub history/details er beholdt
+- sync/write-flow er ikke endret
+- adapter, audit writer, state machine, payload contract og retry logic er ikke endret
+- ingen nye databasekall eller runtime-importer for badges
+- auto-sync finnes fortsatt ikke
+```
+
+Neste anbefalte PR er:
+
+```text
+chore: normalize AHA Home card titles and empty states
+```
