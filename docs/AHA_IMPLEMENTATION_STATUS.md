@@ -2,7 +2,7 @@
 
 Statusdato: 2026-06-07
 
-Dette dokumentet oppsummerer nåværende implementasjonsstatus for AHA etter dokumentlåser, sync-hardening, Search note_reanalysis-visning, Mindmap tombstone-filtrering, Mindmap note_reanalysis-visning, Lists-, Paths-, Meta Insights-, Groups- og AHAavisa/Articles-bolkene, Sync Hub pre-sync UI, manual sync execution contract, manual sync confirmation modal, audit log preview, target selector preview, manual sync target contract, manual sync adapter interface stub, execution state machine stub, manual sync run summary preview, activation blocker tests og target adapter dry-run harness og database_existing wiring til eksisterende AHARepository target, manual sync audit log writer, read-only result history/details, retry eligibility preview, end-to-end-verifikasjon av den manuelle sync-løypa mot mock/stub av eksisterende database target, kompakte statuskort på AHA Home, module health i modulmenyen, normaliserte Home-korttitler/empty states, forbedret mobile/tablet-layout, final polish/accessibility og en samlet completion summary for AHA Home og Sync Hub.
+Dette dokumentet oppsummerer nåværende implementasjonsstatus for AHA etter dokumentlåser, sync-hardening, Search note_reanalysis-visning, Mindmap tombstone-filtrering, Mindmap note_reanalysis-visning, Lists-, Paths-, Meta Insights-, Groups- og AHAavisa/Articles-bolkene, Sync Hub pre-sync UI, manual sync execution contract, manual sync confirmation modal, audit log preview, target selector preview, manual sync target contract, manual sync adapter interface stub, execution state machine stub, manual sync run summary preview, activation blocker tests og target adapter dry-run harness og database_existing wiring til eksisterende AHARepository target, manual sync audit log writer, read-only result history/details, retry eligibility preview, end-to-end-verifikasjon av den manuelle sync-løypa mot mock/stub av eksisterende database target, kompakte statuskort på AHA Home, module health i modulmenyen, normaliserte Home-korttitler/empty states, forbedret mobile/tablet-layout, final polish/accessibility og en samlet completion summary for AHA Home og Sync Hub, samt dokumentert review av module pages og Home entry points for Lists, Paths, Groups og AHAavisa.
 
 Dokumentet er en statuslås for denne runtime-endringen. Den innfører ikke ny motor, ny Supabase-migrasjon, ny databaseklient, nye credentials eller ny backend.
 
@@ -1312,8 +1312,31 @@ Completion state for AHA Home og AHA Sync Hub er dokumentert i `AHA_HOME_SYNC_HU
 ❌ Retry execution finnes ikke
 ```
 
-Videre arbeid skal ikke starte en ny Sync Hub-scaffolding-loop. Anbefalt neste PR er:
+Videre arbeid skal ikke starte en ny Sync Hub-scaffolding-loop. AHA module pages review fra Home entry points er nå dokumentert uten runtime-endringer. Anbefalt neste PR er:
 
 ```text
-chore: review AHA module pages from Home entry points
+chore: normalize AHA module page shells
+```
+
+## 13. AHA module pages review fra Home entry points
+
+Kartleggingen av Lists, Paths, Groups og AHAavisa er dokumentert i `AHA_MODULE_PAGES_REVIEW.md`. Reviewen dekker Home entry points, JS-eierskap, mount-punkter, datakilder, actions, primary/secondary actions, empty/error states, Home health badges, persistens/syncforståelse, mobile/tablet-risikoer, accessibility/focus og vurderingsstatus per modul.
+
+Status for denne dokumentasjonsrunden:
+
+```text
+✅ AHA module pages review er dokumentert
+✅ Lists / Paths / Groups / AHAavisa er kartlagt fra Home entry points
+✅ Cross-module issues og videre PR-rekkefølge er dokumentert
+✅ Home/Sync Hub-runden er lukket
+✅ Denne reviewen endrer ikke runtime
+❌ Auto-sync finnes ikke og er ikke aktivert
+```
+
+Ingen runtime-filer, sync behavior, database-/write-flow eller module behavior er endret. Videre arbeid skal være små module UX-PR-er, ikke mer Sync Hub-scaffolding.
+
+Neste anbefalte PR er:
+
+```text
+chore: normalize AHA module page shells
 ```
