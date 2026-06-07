@@ -195,19 +195,7 @@
   }
 
   function bindHistoryGoHomeTile() {
-    const tile = $("aha-historygo-home");
-    if (!tile || tile.dataset.ahaDashboardBound === "true") return;
-    tile.dataset.ahaDashboardBound = "true";
-    tile.addEventListener("click", () => {
-      window.location.href = "/History-Go/";
-    });
-    tile.addEventListener("keydown", (event) => {
-      if (event.target !== tile) return;
-      if (event.key === "Enter" || event.key === " ") {
-        event.preventDefault();
-        window.location.href = "/History-Go/";
-      }
-    });
+    // History Go uses the real link and button rendered in the module card.
   }
 
   function renderStatCards(stats, sourceLabel, authState, moduleHealth = {}) {
@@ -1625,7 +1613,7 @@
 
     return `
       <div class="aha-sync-confirmation-backdrop" role="presentation">
-        <div class="aha-sync-confirmation-modal" role="dialog" aria-modal="true" aria-labelledby="aha-sync-confirmation-title" aria-describedby="aha-sync-confirmation-description">
+        <div class="aha-sync-confirmation-modal" role="dialog" aria-modal="true" tabindex="-1" aria-labelledby="aha-sync-confirmation-title" aria-describedby="aha-sync-confirmation-description">
           <div class="aha-sync-confirmation-header">
             <div>
               <p class="eyebrow">AHA manual sync confirmation</p>
@@ -1777,13 +1765,14 @@
     const itemCounts = Object.entries(preview.itemCounts || {});
 
     return `
-      <aside class="aha-sync-history-drawer" aria-label="Manual sync history details">
+      <aside id="aha-sync-history-drawer" class="aha-sync-history-drawer" role="region" aria-labelledby="aha-sync-history-details-title" aria-describedby="aha-sync-history-details-description" tabindex="-1">
         <div class="aha-sync-history-drawer-header">
           <div>
             <p class="eyebrow">Manual sync history</p>
-            <h5>Details</h5>
+            <h5 id="aha-sync-history-details-title">Sync run details</h5>
+            <p id="aha-sync-history-details-description" class="aha-sync-prep-notice">Read-only summary. Payload and credentials are not shown.</p>
           </div>
-          <button id="aha-sync-history-details-close" type="button" class="aha-sync-history-details-button">Close</button>
+          <button id="aha-sync-history-details-close" type="button" class="aha-sync-history-details-button" aria-label="Close sync run details">Close</button>
         </div>
         <dl class="aha-sync-history-details-grid">
           <div><dt>runId</dt><dd><code>${escapeHtml(run.runId || "missing")}</code></dd></div>
@@ -1829,16 +1818,24 @@
     `;
   }
 
+  function focusAhaManualSyncHistoryButton(runId) {
+    [...document.querySelectorAll("[data-aha-sync-history-run-id]")]
+      .find((button) => button.dataset.ahaSyncHistoryRunId === runId)?.focus();
+  }
+
   function bindAhaManualSyncHistoryPreview() {
     document.querySelectorAll("[data-aha-sync-history-run-id]").forEach((button) => {
       button.addEventListener("click", () => {
         selectedAhaManualSyncHistoryRunId = button.dataset.ahaSyncHistoryRunId || null;
         renderSyncHubStatus();
+        $("aha-sync-history-drawer")?.focus();
       });
     });
     $("aha-sync-history-details-close")?.addEventListener("click", () => {
+      const runId = selectedAhaManualSyncHistoryRunId;
       selectedAhaManualSyncHistoryRunId = null;
       renderSyncHubStatus();
+      focusAhaManualSyncHistoryButton(runId);
     });
   }
 
@@ -1904,6 +1901,7 @@
         isAhaManualSyncConfirmationModalOpen = true;
         isSyncHubPrepOpen = true;
         renderSyncHubStatus();
+        $("aha-sync-confirmation-title")?.closest("[role=dialog]")?.focus();
       });
     }
 
@@ -1911,6 +1909,7 @@
       button.addEventListener("click", () => {
         isAhaManualSyncConfirmationModalOpen = false;
         renderSyncHubStatus();
+        $("aha-sync-confirmation-preview")?.focus();
       });
     });
 
@@ -1960,6 +1959,7 @@
         isSyncHubPrepOpen = !isSyncHubPrepOpen;
         if (!isSyncHubPrepOpen) isAhaManualSyncConfirmationModalOpen = false;
         renderSyncHubStatus();
+        $("aha-sync-hub-prep-toggle")?.focus();
       });
     }
     bindAhaManualSyncConfirmationModal();
@@ -2072,11 +2072,11 @@
             <div><dt>Last run</dt><dd>${escapeHtml(lastRunLabel)}</dd></div>
           </dl>
           ${renderAhaSyncCompactBlockers(blockers, lastRun)}
-          <button id="aha-sync-hub-prep-toggle" type="button" class="aha-sync-prep-toggle aha-sync-hub-open-button" aria-expanded="${isSyncHubPrepOpen}" aria-controls="aha-sync-hub-advanced">${buttonLabel}</button>
+          <button id="aha-sync-hub-prep-toggle" type="button" class="aha-sync-prep-toggle aha-sync-hub-open-button" aria-expanded="${isSyncHubPrepOpen}" aria-controls="aha-sync-hub-advanced" aria-label="${isSyncHubPrepOpen ? "Close" : "Open"} Sync Hub advanced diagnostics">${buttonLabel}</button>
           ${isSyncHubPrepOpen ? `
-            <div id="aha-sync-hub-advanced" class="aha-sync-hub-advanced" role="region" aria-label="AHA Sync Hub advanced diagnostics">
+            <div id="aha-sync-hub-advanced" class="aha-sync-hub-advanced" role="region" aria-labelledby="aha-sync-hub-advanced-title">
               <div class="aha-sync-hub-advanced-heading">
-                <strong>Advanced diagnostics</strong>
+                <strong id="aha-sync-hub-advanced-title">Advanced diagnostics</strong>
                 <span>Read-only diagnostics.</span>
               </div>
               ${renderSyncHubPrepPanel(plan)}
@@ -2101,8 +2101,8 @@
           <strong class="aha-compact-status-primary">Could not inspect local data.</strong>
           <dl class="aha-compact-meta"><div><dt>Target</dt><dd>Target not configured.</dd></div><div><dt>Last run</dt><dd>No manual sync runs yet.</dd></div></dl>
           <div class="aha-compact-alert" role="alert"><strong>Blocked</strong><ul><li>Sync status could not be read.</li></ul></div>
-          <button id="aha-sync-hub-prep-toggle" type="button" class="aha-sync-prep-toggle aha-sync-hub-open-button" aria-expanded="${isSyncHubPrepOpen}" aria-controls="aha-sync-hub-advanced">${buttonLabel}</button>
-          ${isSyncHubPrepOpen ? `<div id="aha-sync-hub-advanced" class="aha-sync-hub-advanced" role="region" aria-label="AHA Sync Hub advanced diagnostics">${renderSyncHubPrepPanel(plan)}${renderAhaManualSyncHistoryPanel()}</div>` : ""}
+          <button id="aha-sync-hub-prep-toggle" type="button" class="aha-sync-prep-toggle aha-sync-hub-open-button" aria-expanded="${isSyncHubPrepOpen}" aria-controls="aha-sync-hub-advanced" aria-label="${isSyncHubPrepOpen ? "Close" : "Open"} Sync Hub advanced diagnostics">${buttonLabel}</button>
+          ${isSyncHubPrepOpen ? `<div id="aha-sync-hub-advanced" class="aha-sync-hub-advanced" role="region" aria-label="Advanced diagnostics">${renderSyncHubPrepPanel(plan)}${renderAhaManualSyncHistoryPanel()}</div>` : ""}
           <small class="aha-status-updated">Manual only. No auto-sync. View diagnostics.</small>
         </section>
       `;
@@ -2359,11 +2359,32 @@
     });
   }
 
+  function bindDashboardKeyboardShortcuts() {
+    if (document.documentElement.dataset.ahaDashboardKeyboardBound === "true") return;
+    document.documentElement.dataset.ahaDashboardKeyboardBound = "true";
+    document.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape") return;
+      if (isAhaManualSyncConfirmationModalOpen) {
+        isAhaManualSyncConfirmationModalOpen = false;
+        renderSyncHubStatus();
+        $("aha-sync-confirmation-preview")?.focus();
+        return;
+      }
+      if (selectedAhaManualSyncHistoryRunId) {
+        const runId = selectedAhaManualSyncHistoryRunId;
+        selectedAhaManualSyncHistoryRunId = null;
+        renderSyncHubStatus();
+        focusAhaManualSyncHistoryButton(runId);
+      }
+    });
+  }
+
   function bind() {
     persistAuthReturnTargetFromUrl();
     bindProfileNameForm();
     bindLoginModal();
     bindProfileNameModal();
+    bindDashboardKeyboardShortcuts();
     renderSyncHubStatus();
     renderDashboard();
     window.addEventListener("aha:source-event-added", renderDashboard);

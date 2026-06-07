@@ -620,5 +620,18 @@ Dette er kun UI/tekst/organisering. Core sync, database/write-flow, adapter, aud
 Neste anbefalte PR er:
 
 ```text
-chore: improve AHA Home mobile/tablet layout
+docs: summarize AHA Home and Sync Hub completion state
+```
+
+
+## 20. Sync Hub/Home final UI polish og accessibility
+
+Sync Hub/Home-flaten har gjennomgått siste UI-polish og accessibility-review. Advanced diagnostics, confirmation modal, manual sync history/details, retry eligibility preview, statusbadges, focus states, touch targets og småskjerm-overflow er forbedret semantisk og visuelt. Critical blockers og sanitiserte error states er fortsatt synlige.
+
+Dette endrer ikke core sync, database/write-flow, adapter, audit writer, state machine-regler, payload contract, history/details-dataflyt, retry logic eller module health-beregning. Ingen auto-sync, ny databaseklient, credentials, full payload eller raw audit JSON er introdusert.
+
+Neste anbefalte arbeid er:
+
+```text
+docs: summarize AHA Home and Sync Hub completion state
 ```

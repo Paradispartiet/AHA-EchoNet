@@ -245,7 +245,7 @@
       `;
 
       if (module.id === "historygo") {
-        return `<article class="${tileClass} aha-home-tile" id="aha-historygo-home" data-module="imports" role="link" tabindex="0" aria-label="Åpne History Go">${cardInner}
+        return `<article class="${tileClass} aha-home-tile" id="aha-historygo-home" data-module="imports" aria-labelledby="aha-historygo-title">${cardInner.replace(`<strong>${escapeHtml(module.title)}</strong>`, `<strong id="aha-historygo-title">${escapeHtml(module.title)}</strong>`)}
           <div class="aha-tile-actions">
             <a class="aha-tile-btn aha-tile-btn-primary" href="/History-Go/">Åpne History Go</a>
             <button class="aha-tile-btn aha-tile-btn-secondary" id="btn-import-hg" type="button">Importer data</button>

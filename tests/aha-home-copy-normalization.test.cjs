@@ -9,7 +9,7 @@ const dashboardCss = fs.readFileSync('css/aha-dashboard.css', 'utf8');
 for (const title of ['System health', 'Data readiness', 'Blockers', 'Sync Hub', 'Manual sync history', 'Advanced diagnostics']) {
   assert.ok(dashboardCode.includes(title), `AHA Home should include the normalized title: ${title}`);
 }
-assert.ok(indexCode.includes('<h2>Modules</h2>'), 'the module menu should use the normalized Modules title');
+assert.ok(indexCode.includes('<h2 id="aha-modules-title">Modules</h2>'), 'the module menu should use the normalized, labelled Modules title');
 assert.ok(indexCode.includes('<h3>Activity</h3>'), 'the activity card should use the normalized Activity title');
 
 for (const copy of [

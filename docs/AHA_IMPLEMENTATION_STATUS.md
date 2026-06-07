@@ -1174,7 +1174,7 @@ Verifisert status:
 Videre sync-scaffolding skal stoppes. Etter gjennomført gruppering av Advanced diagnostics, module health i modulmenyen og copy-normalisering er neste anbefalte PR:
 
 ```text
-chore: improve AHA Home mobile/tablet layout
+docs: summarize AHA Home and Sync Hub completion state
 ```
 
 Denne fasen skal være rydding og forenkling av eksisterende operatorflate, ikke mer sync-funksjonalitet.
@@ -1223,7 +1223,9 @@ Denne fasen skal være rydding og forenkling av eksisterende operatorflate, ikke
 39. ✅ chore: group AHA Home advanced diagnostics
 40. ✅ chore: move module health badges into module menu
 41. ✅ chore: normalize AHA Home card titles and empty states
-42. Neste: chore: improve AHA Home mobile/tablet layout
+42. ✅ chore: improve AHA Home mobile/tablet layout
+43. ✅ chore: review AHA Home final polish and accessibility
+44. Neste: docs: summarize AHA Home and Sync Hub completion state
 ```
 
 Ikke gå videre til storage, import, Insta/social graph, EchoNet eller faktisk AHA manual sync/write før activation blocker tests er på plass, adapter implementation contract, konkret target-adapter, audit log-skriving og rollback/partial failure behavior er dokumentert, implementert og testet uten auto-sync og uten skjulte databasekall.
@@ -1271,5 +1273,18 @@ Dette er kun UI/tekst/organisering:
 Neste anbefalte PR er:
 
 ```text
-chore: improve AHA Home mobile/tablet layout
+docs: summarize AHA Home and Sync Hub completion state
+```
+
+
+## 11. AHA Home final polish og accessibility review
+
+AHA Home har gjennomgått en siste, avgrenset UI- og accessibility-review. Landmarks og synlige titler er tydeligere koblet sammen, modulmenyen bruker navigasjonssemantikk, Advanced diagnostics eksponerer `aria-expanded`, og confirmation modal/history details har tydelige labels, Close-handlinger, Escape-støtte og enkel fokusretur. Dark-theme focus states, kontrast, touch targets, badge-lesbarhet og modal-overflow på små skjermer er også forbedret uten redesign.
+
+Dette var kun UI/accessibility. Critical blockers, validation/readiness-feil, target-status, audit/write failure, failed last sync og confirmation gates er fortsatt synlige. Full payload, raw audit JSON, secrets, tokens, passwords, connection strings og credentials vises fortsatt ikke. Sync/write-flow, database-boundary, adapter, audit writer, state machine-regler, payload contract, history/details-dataflyt, retry logic og module health-beregning er ikke endret. Auto-sync finnes fortsatt ikke.
+
+Neste anbefalte arbeid er:
+
+```text
+docs: summarize AHA Home and Sync Hub completion state
 ```

@@ -8,7 +8,8 @@
   <link rel="stylesheet" href="css/aha-dashboard.css" />
 </head>
 <body>
-  <main class="aha-dashboard">
+  <a class="aha-skip-link" href="#aha-home-main">Hopp til hovedinnhold</a>
+  <main id="aha-home-main" class="aha-dashboard" tabindex="-1">
     <header class="aha-app-header" aria-label="AHA toppfelt">
       <a class="aha-brand" href="index.html" aria-label="AHA forsiden">
         <span class="aha-brand-mark">A</span>
@@ -70,16 +71,16 @@
     </div>
 
     <section class="aha-app-shell" aria-label="AHA appflate">
-      <aside class="aha-panel aha-modules-panel" aria-label="Modulmeny">
+      <aside class="aha-panel aha-modules-panel" aria-labelledby="aha-modules-title">
         <p class="eyebrow">AHA Home</p>
-        <h2>Modules</h2>
+        <h2 id="aha-modules-title">Modules</h2>
         <p class="aha-panel-subtitle">Module status at a glance.</p>
-        <section id="aha-modules-grid" class="aha-grid" aria-label="AHA moduler"></section>
+        <nav id="aha-modules-grid" class="aha-grid" aria-label="AHA modules"></nav>
       </aside>
 
-      <section class="aha-panel aha-home-panel" aria-label="AHA Home hovedpanel">
+      <section class="aha-panel aha-home-panel" aria-labelledby="aha-home-title">
         <p class="eyebrow">AHA Home</p>
-        <h2>AHA Home</h2>
+        <h1 id="aha-home-title">AHA Home</h1>
         <div class="aha-status-stack">
           <strong id="aha-home-profile-name">Lokal AHA-bruker</strong>
           <span id="aha-home-profile-mode">Lokal modus</span>
@@ -138,13 +139,13 @@
         </section>
       </section>
 
-      <aside class="aha-panel aha-status-panel" aria-label="AHA statuspanel">
+      <aside class="aha-panel aha-status-panel" aria-labelledby="aha-status-title">
         <div class="aha-panel-head">
           <div>
             <p class="eyebrow">System</p>
-            <h2>Status</h2>
+            <h2 id="aha-status-title">Status</h2>
           </div>
-          <span id="aha-status-updated" class="aha-status-updated">Oppdaterer …</span>
+          <span id="aha-status-updated" class="aha-status-updated" role="status" aria-live="polite">Oppdaterer …</span>
         </div>
 
         <div id="aha-dashboard-stats" class="aha-stats">Laster status …</div>
