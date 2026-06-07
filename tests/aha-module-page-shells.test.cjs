@@ -55,7 +55,7 @@ assert.deepEqual(
 );
 
 const expectedNoData = {
-  lists: ['No lists yet.', 'Create or sync lists to start organizing saved AHA items.'],
+  lists: ['No lists yet.', 'Lists will appear here when available.'],
   paths: ['No paths yet.', 'Create or sync paths to build ordered learning routes.'],
   groups: ['No groups yet.', 'Create or sync groups to organize related AHA material.'],
   avisa: ['No AHAavisa notes yet.', 'Create or sync notes to collect drafts and published AHA material.']

@@ -1382,3 +1382,25 @@ Next recommended PR:
 ```text
 chore: clarify primary actions for AHA modules
 ```
+
+## 16. Lists module experience improved
+
+Lists har nå en tydeligere, avgrenset produktvisning bygget videre på den eksisterende `localStorage`-først-implementasjonen:
+
+- oversikten viser aktive lister med navn, kort beskrivelse, type, status, item count og lesbar oppdatertdato;
+- lister med `updatedAt`/`createdAt` vises med nyeste aktivitet først;
+- eksisterende `Create list` er fortsatt primary action og bruker samme create-/persistenshandling som før;
+- module health og samlet list/item count vises i kontekst uten nye databasekall;
+- valgt liste kan åpnes i en read-only details/preview med metadata og de første fem item-titlene;
+- add/remove/group/delete-handlingene som allerede fantes er beholdt under et avgrenset `Manage list`-område;
+- empty state viser `No lists yet.` og `Lists will appear here when available.`;
+- lesefeil viser `Could not read list data.` uten raw payload, stack trace eller tekniske hemmeligheter;
+- mobile/tablet-layout går over til én kolonne, wrapper innhold og bruker trykkvennlige handlinger.
+
+Ingen sync core, manual sync adapter, database target, database-/write-flow, audit writer, state machine eller payload contract er endret. Det er ikke lagt til databaseklient, nye databasekall eller persistent selected-list UI-state. Auto-sync finnes fortsatt ikke.
+
+Neste anbefalte PR er:
+
+```text
+feat: improve Paths module experience
+```

@@ -184,7 +184,7 @@
   const MODULE_EMPTY_STATE_COPY = {
     no_data: {
       default: { title: "Nothing here yet.", message: "Items will appear here when available." },
-      lists: { title: "No lists yet.", message: "Create or sync lists to start organizing saved AHA items." },
+      lists: { title: "No lists yet.", message: "Lists will appear here when available." },
       paths: { title: "No paths yet.", message: "Create or sync paths to build ordered learning routes." },
       groups: { title: "No groups yet.", message: "Create or sync groups to organize related AHA material." },
       avisa: { title: "No AHAavisa notes yet.", message: "Create or sync notes to collect drafts and published AHA material." }
