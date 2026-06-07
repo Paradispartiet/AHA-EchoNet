@@ -87,7 +87,7 @@ Statusskalaen i denne reviewen betyr:
 | Modul | Reviewstatus | Kort begrunnelse |
 |---|---|---|
 | Lists | **usable** | Lokal oppretting, visning, referanser, sletting og gruppekobling fungerer, men sync-/feilstatus mangler og sidehierarkiet prioriterer «Tilbake» over modulens create-action. |
-| Paths | **usable** | Lokale stier med ordnede steg kan opprettes og vedlikeholdes, men struktur/progresjon er enkel, syncstatus er usynlig og empty/error UX er svak. |
+| Paths | **improved usable** | Lokale stier kan opprettes, vises som oversikt, sorteres nyeste først, og åpnes i trygg preview med metadata og første steps/sequence. Syncstatus er fortsatt lokal health, og avansert progresjon/reorder gjenstår. |
 | Groups | **partial** | Lokale grupper, medlemmer, referanser, arbeidsrom og AHAavisa-utkast finnes, men ekte medlemskap/deling finnes ikke, siden er tett og teknisk, og betydningen «gruppe» er større enn den implementerte lokale planleggingsflaten. |
 | AHAavisa | **partial** | Utkast, body, referanser, status og lokale publiseringslag finnes, men publisering er kun en lokal statusmarkering, arbeidsflaten er action-tung, og data-/syncstatus er ikke synlig. |
 
@@ -225,15 +225,15 @@ Paths leser stier fra `aha_paths_v1`. Tilgjengelige steg bygges fra lokale:
 - lists i `aha_lists_v1`;
 - notes i `aha_notes_v1`.
 
-En sti har tittel, type, beskrivelse, tags, timestamps og en ordnet `steps`-array. Hvert steg har tittel, type, source, refId, order og addedAt. Renderingen viser stegene som en nummerert/ordnet liste med kilde og type.
+En sti har tittel, type, beskrivelse, tags, timestamps og en ordnet `steps`-array. Hvert steg har tittel, type, source, refId, order og addedAt. Renderingen viser stegene trygt i en read-only preview med tittel/fallback, type, status og rekkefølge. Full payload, metadata og refIds dumpes ikke i UI.
 
-Strukturen er forståelig på grunnnivå: en sti er en navngitt sekvens av referanser. Den viser derimot ikke progresjon, fullført/aktivt steg, varighet, avhengigheter eller drag-and-drop/reordering. «Sti», «rute» og «sekvens» forklares ikke utover purpose-teksten.
+Strukturen er tydeligere på grunnnivå: en sti er en navngitt sekvens av referanser med count, status, type/category, description/summary og oppdatert dato. Den viser fortsatt ikke avansert progresjon, varighet, avhengigheter eller drag-and-drop/reordering.
 
 ### 7.3 Actions og action hierarchy
 
-**Faktisk kjernehandling:** opprette en sti med `Lag sti`.
+**Faktisk kjernehandling:** opprette en sti med `Create path`.
 
-`Lag sti` er stylet primary i skjemaet, men topppanelet bruker også primary-styling på `Tilbake til AHA Home`. Modulen har dermed to visuelt primære handlinger, hvor navigasjon vises før kjernehandlingen.
+Topppanelet har én tydelig primary action til eksisterende create-flow: `Create path`. `Refresh paths` og `Back to AHA Home` er sekundære handlinger.
 
 Sekundære actions:
 
@@ -247,23 +247,23 @@ Det finnes ingen UI for å omorganisere steg eller redigere path metadata etter 
 
 ### 7.4 Empty states og error states
 
-Tom hovedtilstand er `Ingen stier ennå. Opprett en sti over.` Hvert tomt path-kort viser at stien ikke har steg. Manglende grupper gir lenke til Groups.
+Tom hovedtilstand er normalisert til `No paths yet.` og `Paths will appear here when available.` Valgt path uten steps viser `No steps available.` i preview uten å behandle det som feil. Manglende grupper gir fortsatt lenke til Groups.
 
 Som i Lists er error handling hovedsakelig stille fallback:
 
-- ugyldig localStorage blir tomt datasett;
-- repository-feil vises ikke;
-- ugyldige/dupliserte steg gir ingen tydelig brukerfeil;
+- ugyldig localStorage gir en kort `Could not read path data.`-tilstand;
+- repository-feil vises ikke utover eksisterende fallback;
+- ugyldige/dupliserte steg gir fortsatt ingen tydelig operasjonsfeedback;
 - delete/remove mangler confirm/undo;
 - «Oppdater» gir ingen suksess-/feilstatus.
 
-Empty state er brukbar, men ikke sterk nok til å forklare hva en god første sti er eller foreslå et eksempel.
+Empty/error state er kort og trygg, men foreslår fortsatt ikke eksempelsti eller pedagogisk progresjon.
 
 ### 7.5 Persistens og syncstatus
 
 Modulen er **editable og localStorage-first**. Writes går til `aha_paths_v1`; repository-hooks og `syncFromDatabase()` finnes med merge/tombstone-håndtering.
 
-`paths.html` laster ikke repository/auth/db-laget, og `Oppdater` kaller bare lokal render. Databasekapabilitet i scriptet er derfor ikke det samme som aktiv databasesynk på siden. Siden viser ingen data source, pending write, siste sync eller fallback-status.
+`paths.html` laster ikke repository/auth/db-laget, og `Refresh paths` kaller bare lokal render. Databasekapabilitet i scriptet er derfor ikke det samme som aktiv databasesynk på siden. Siden viser lokal module health/status badge og count, men fortsatt ikke data source, pending write, siste sync eller fallback-status.
 
 ### 7.6 UX, mobile/tablet og accessibility
 
@@ -564,7 +564,7 @@ Create forms, refresh, stats, cards, badges, add-reference-selects, group-linkin
 |---|---|---|---|
 | Home entry points | Alle fire kan åpnes fra modulmenyen | Prioritering/synlighet på små skjermer varierer | Egen quick action/deep link per modul |
 | Lists | Lokal CRUD-ish flyt, referanser og gruppekobling | Edit metadata, feedback, syncforståelse | Aktiv database-/syncstatus på siden |
-| Paths | Lokal create, ordered steps, remove og gruppekobling | Progresjon, reorder, path semantics, feedback | Aktiv database-/syncstatus på siden |
+| Paths | Lokal create, newest-first overview, count/status, selected preview, safe first steps/sequence, remove og gruppekobling | Progresjon, reorder, path semantics, operasjonsfeedback | Aktiv database-/syncstatus på siden |
 | Groups | Lokale grupper, medlemmer, referanser, workspace, report og draft-kobling | «Gruppe» som sosialt konsept, rollebetydning, sidehierarki | Ekte invitasjon, samarbeid og deling |
 | AHAavisa | Lokale utkast, body, references, workflow og layers | Tydelig neste action, publish semantics, feedback | Ekte ekstern publisering |
 | Cross-module status | Home viser lokal health | Sammenheng mellom Home badge og modulside | Felles module status shell |
@@ -579,8 +579,8 @@ Arbeidet bør deles i små PR-er og ikke starte mer Sync Hub-scaffolding:
 3. **`chore: clarify primary actions for AHA modules`** — én primary action per side og tydelig sekundær/destructive hierarchy.
 4. **`chore: improve AHA module mobile layout`** — felles breakpoints, stable wrapping, full-width controls ved behov og mindre action-overload.
 5. **`feat: improve Lists module experience`** — tydeligere items, metadataredigering, feedback og forståelig lokal/syncstatus.
-6. **`feat: improve Paths module experience`** — tydelig sekvens/progresjon, bedre stegstyring og forståelig lokal/syncstatus.
-7. **`feat: improve Groups module experience`** — avgrens local-only-betydning, forenkle overview/workspace og tydeliggjør membership/content.
+6. **`feat: improve Paths module experience`** — gjennomført: overview, count/status, safe steps/sequence, empty/error state og selected preview.
+7. **`feat: improve Groups module experience`** — anbefalt neste PR: avgrens local-only-betydning, forenkle overview/workspace og tydeliggjør membership/content.
 8. **`feat: improve AHAavisa module experience`** — recent drafts, tydelig workflow, mindre action-støy og klar lokal publish-/syncstatus.
 
 ## 13. Ikke del av denne review-PR-en
@@ -652,5 +652,5 @@ Det som fortsatt gjenstår for Lists er eventuell senere metadataredigering, tyd
 Neste anbefalte PR er:
 
 ```text
-feat: improve Paths module experience
+feat: improve Groups module experience
 ```

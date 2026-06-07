@@ -11,6 +11,7 @@
 
   const ALLOWED_PATH_TYPES = ["learning", "process", "project", "habit", "reading", "historygo", "publishing"];
   const ALLOWED_STEP_STATUS = ["planned", "active", "done", "skipped"];
+  let selectedPathId = "";
 
   function safeParse(raw, fallback) {
     try {
@@ -50,11 +51,12 @@
   function normalizeStep(step, index) {
     const now = new Date().toISOString();
     const status = ALLOWED_STEP_STATUS.includes(step?.status) ? step.status : "planned";
+    const fallbackId = asText(step?.id || step?.key || step?.slug, uid("path_step"));
 
     return {
-      id: asText(step?.id, uid("path_step")),
-      title: asText(step?.title, "Steg"),
-      type: asText(step?.type, "reference"),
+      id: fallbackId,
+      title: asText(step?.title || step?.name || step?.label || step?.key || step?.slug || step?.id, `Step ${index + 1}`),
+      type: asText(step?.type || step?.category, "reference"),
       source: asText(step?.source, "aha"),
       refId: asText(step?.refId || step?.ref_id, ""),
       order: Number.isFinite(Number(step?.order)) ? Number(step.order) : index,
@@ -68,14 +70,17 @@
     const now = new Date().toISOString();
     const type = ALLOWED_PATH_TYPES.includes(path?.type) ? path.type : "learning";
     const tags = global.AHAContracts?.normalizeTags ? global.AHAContracts.normalizeTags(path?.tags) : asArray(path?.tags);
-    const rawSteps = asArray(path?.steps).map((step, index) => normalizeStep(step, index));
+    const stepSource = asArray(path?.steps).length ? path?.steps : (asArray(path?.sequence).length ? path?.sequence : (asArray(path?.items).length ? path?.items : path?.nodes));
+    const rawSteps = asArray(stepSource).map((step, index) => normalizeStep(step, index));
     const sortedSteps = rawSteps.slice().sort((a, b) => a.order - b.order).map((step, index) => ({ ...step, order: index }));
 
     return {
       id: asText(path?.id, uid("path")),
       title: asText(path?.title, "Uten navn"),
       type,
-      description: asText(path?.description, ""),
+      category: asText(path?.category, ""),
+      status: asText(path?.status, "Local"),
+      description: asText(path?.description || path?.summary, ""),
       createdAt: path?.createdAt || path?.created_at || now,
       updatedAt: path?.updatedAt || path?.updated_at || now,
       tags,
@@ -123,9 +128,11 @@
       id: remote?.id,
       title: remote?.title,
       type: remote?.type,
-      description: remote?.description,
+      description: remote?.description || remote?.summary,
+      category: remote?.category,
+      status: remote?.status,
       tags: remote?.tags,
-      steps: asArray(remote?.steps).map((step, index) => normalizeStep(step, index)),
+      steps: asArray(remote?.steps || remote?.sequence || remote?.items || remote?.nodes).map((step, index) => normalizeStep(step, index)),
       source: remote?.source,
       meta: remote?.meta,
       createdAt: remote?.createdAt || remote?.created_at,
@@ -294,6 +301,118 @@
     return path;
   }
 
+  function formatDate(value) {
+    const time = Date.parse(value);
+    if (!Number.isFinite(time)) return "Date unavailable";
+    return new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(new Date(time));
+  }
+
+  function pathStatusLabel(path) {
+    return asText(path?.status, "Local");
+  }
+
+  function isDeletedRecord(record) {
+    return Boolean(record?.deletedAt || record?.deleted_at);
+  }
+
+  function renderStepCount(count) {
+    return `${count} ${count === 1 ? "step" : "steps"}`;
+  }
+
+  function renderOverviewCard(path, isSelected) {
+    const category = path.category || path.type;
+    return `
+      <article class="aha-panel aha-path-overview-card${isSelected ? " is-selected" : ""}" data-path-card="${escapeHtml(path.id)}">
+        <div class="aha-path-header">
+          <div>
+            <p class="aha-path-card-kicker">${escapeHtml(pathStatusLabel(path))} path</p>
+            <h3>${escapeHtml(path.title)}</h3>
+          </div>
+          <span class="aha-path-badge">${renderStepCount(path.steps.length)}</span>
+        </div>
+        <p class="aha-path-summary">${escapeHtml(path.description || "No description yet.")}</p>
+        <div class="aha-path-meta" aria-label="Path metadata">
+          <span>${escapeHtml(category)}</span>
+          <span>Updated ${escapeHtml(formatDate(path.updatedAt || path.createdAt))}</span>
+        </div>
+        <button type="button" class="aha-tile-btn${isSelected ? " aha-tile-btn-primary" : ""}" data-path-select-preview="${escapeHtml(path.id)}" aria-pressed="${isSelected ? "true" : "false"}">
+          ${isSelected ? "Selected" : "View details"}
+        </button>
+      </article>`;
+  }
+
+  function renderSelectedPreview(path, availableItems, groups) {
+    if (!path) {
+      return `<aside class="aha-panel aha-path-preview aha-path-preview-empty" aria-label="Path preview">
+        <p class="eyebrow">Path preview</p>
+        <h2>Select a path</h2>
+        <p>Choose a path from the overview to see sequence and metadata.</p>
+      </aside>`;
+    }
+
+    const options = availableItems.map((item) => (
+      `<option value="${escapeHtml(item.source)}::${escapeHtml(item.refId)}::${escapeHtml(item.type)}::${escapeHtml(item.title)}">${escapeHtml(item.title)} (${escapeHtml(item.type)})</option>`
+    )).join("");
+    const visibleSteps = path.steps.slice().sort((a, b) => a.order - b.order).slice(0, 5);
+    const stepsHtml = visibleSteps.length
+      ? visibleSteps.map((step) => `
+        <li class="aha-path-step-row">
+          <div>
+            <strong>${escapeHtml(step.title)}</strong>
+            <div class="module-meta">#${step.order + 1} · ${escapeHtml(step.type)} · ${escapeHtml(step.status)}</div>
+          </div>
+          <button type="button" class="aha-tile-btn" data-step-remove="${escapeHtml(path.id)}::${escapeHtml(step.id)}" aria-label="Remove ${escapeHtml(step.title)} from ${escapeHtml(path.title)}">Remove</button>
+        </li>`).join("")
+      : `<li class="aha-path-preview-empty-step">No steps available.</li>`;
+    const remainingCount = Math.max(0, path.steps.length - visibleSteps.length);
+
+    return `<aside class="aha-panel aha-path-preview" aria-labelledby="path-preview-title">
+      <div class="aha-path-header">
+        <div>
+          <p class="eyebrow">Path preview</p>
+          <h2 id="path-preview-title" tabindex="-1">${escapeHtml(path.title)}</h2>
+        </div>
+        <button type="button" class="aha-tile-btn" data-path-preview-close aria-label="Close path preview">Close</button>
+      </div>
+      <p>${escapeHtml(path.description || "No description yet.")}</p>
+      <div class="aha-path-meta" aria-label="Selected path metadata">
+        <span class="aha-path-badge">${escapeHtml(pathStatusLabel(path))}</span>
+        <span class="aha-path-badge">${renderStepCount(path.steps.length)}</span>
+        <span>${escapeHtml(path.category || path.type)}</span>
+        <span>Created ${escapeHtml(formatDate(path.createdAt))}</span>
+        <span>Updated ${escapeHtml(formatDate(path.updatedAt || path.createdAt))}</span>
+      </div>
+      <section aria-labelledby="path-preview-steps-title">
+        <h3 id="path-preview-steps-title">Sequence</h3>
+        <ol class="aha-path-steps">${stepsHtml}</ol>
+        ${remainingCount ? `<p class="module-meta">${remainingCount} more ${remainingCount === 1 ? "step" : "steps"} not shown in this preview.</p>` : ""}
+      </section>
+      <details class="aha-path-manage">
+        <summary>Manage path</summary>
+        <div class="aha-path-manage-content">
+          <div class="aha-path-add-row">
+            <select data-path-select="${escapeHtml(path.id)}" aria-label="Choose an AHA item to add to ${escapeHtml(path.title)}">
+              <option value="">Choose an insight, list, or note</option>
+              ${options}
+            </select>
+            <button type="button" data-step-add="${escapeHtml(path.id)}">Add step</button>
+          </div>
+          <div class="aha-path-add-row">
+            ${groups.length ? `
+            <select class="gruppe-select" data-path-group-select="${escapeHtml(path.id)}" aria-label="Choose a group for ${escapeHtml(path.title)}">
+              <option value="">Choose a group</option>
+              ${groups.map((group) => `<option value="${escapeHtml(group.id)}">${escapeHtml(group.title)}</option>`).join("")}
+            </select>
+            <button type="button" class="gruppe-knapp" data-path-add-group="${escapeHtml(path.id)}">Add path to group</button>
+            <div class="statuslinje" data-path-group-status="${escapeHtml(path.id)}" aria-live="polite"></div>
+            ` : `<p class="statuslinje">No groups yet. <a href="groups.html">Create a group first.</a></p>`}
+          </div>
+          <button type="button" class="aha-path-delete" data-path-delete="${escapeHtml(path.id)}">Delete path</button>
+        </div>
+      </details>
+    </aside>`;
+  }
+
   function collectAvailablePathItems() {
     const out = [];
 
@@ -347,7 +466,9 @@
     const rawDataset = localStorage.getItem(PATHS_KEY);
     const datasetExists = rawDataset !== null;
     if (datasetExists) JSON.parse(rawDataset);
-    const paths = loadPaths().filter((path) => !path.deletedAt);
+    const paths = loadPaths()
+      .filter((path) => !isDeletedRecord(path))
+      .sort((a, b) => pathActionTime(b) - pathActionTime(a));
     const groups = global.AHAGroups?.getActiveGroups ? asArray(global.AHAGroups.getActiveGroups()) : [];
     const availableItems = collectAvailablePathItems();
 
@@ -365,75 +486,41 @@
     }));
 
     if (!paths.length) {
+      selectedPathId = "";
       mount.innerHTML = global.AHAModules.buildModuleEmptyState({
-        type: datasetExists ? "no_data" : "missing_source",
+        type: "no_data",
         moduleId: "paths",
-        hint: datasetExists ? "Use Create path above when you are ready." : "Paths will appear here when available."
+        message: "Paths will appear here when available.",
+        hint: "Use Create path above when you are ready."
       });
       return;
     }
 
-    mount.innerHTML = paths.map((path) => {
-      const tagsHtml = path.tags.map((tag) => `<span class="aha-path-badge">${escapeHtml(tag)}</span>`).join("");
-      const options = availableItems.map((item) => (
-        `<option value="${escapeHtml(item.source)}::${escapeHtml(item.refId)}::${escapeHtml(item.type)}::${escapeHtml(item.title)}">${escapeHtml(item.title)} (${escapeHtml(item.type)})</option>`
-      )).join("");
-
-      const stepsHtml = path.steps.length
-        ? path.steps.slice().sort((a, b) => a.order - b.order).map((step) => `
-          <li class="aha-path-step-row">
-            <div>
-              <strong>${escapeHtml(step.title)}</strong>
-              <div class="module-meta">#${step.order + 1} · ${escapeHtml(step.type)} · ${escapeHtml(step.source)} · ref: ${escapeHtml(step.refId)} · ${escapeHtml(step.status)}</div>
-            </div>
-            <button type="button" data-step-remove="${escapeHtml(path.id)}::${escapeHtml(step.id)}">Fjern</button>
-          </li>
-        `).join("")
-        : "<li>Ingen steg i stien ennå.</li>";
-
-      return `
-        <article class="aha-panel aha-path-card">
-          <div class="aha-path-header">
-            <h3>${escapeHtml(path.title)}</h3>
-            <button type="button" data-path-delete="${escapeHtml(path.id)}">Slett sti</button>
+    const selected = paths.find((path) => path.id === selectedPathId) || null;
+    mount.innerHTML = `<div class="aha-paths-workspace">
+      <section class="aha-path-overview" aria-labelledby="paths-overview-title">
+        <div class="aha-path-section-heading">
+          <div>
+            <p class="eyebrow">Overview</p>
+            <h2 id="paths-overview-title">Your paths</h2>
           </div>
-          <p>${escapeHtml(path.description || "Ingen beskrivelse")}</p>
-          <div class="aha-path-meta">
-            <span class="aha-path-badge">Type: ${escapeHtml(path.type)}</span>
-            <span class="aha-path-badge">Steg: ${path.steps.length}</span>
-            <span class="aha-path-badge">Opprettet: ${escapeHtml(path.createdAt)}</span>
-            <span class="aha-path-badge">Oppdatert: ${escapeHtml(path.updatedAt)}</span>
-            ${tagsHtml}
-          </div>
-          <div class="aha-path-add-row">
-            <select data-path-select="${escapeHtml(path.id)}">
-              <option value="">Velg innsikt, liste eller notat</option>
-              ${options}
-            </select>
-            <button type="button" data-step-add="${escapeHtml(path.id)}">Legg til steg</button>
-          </div>
-          <div class="aha-path-add-row">
-            ${groups.length ? `
-            <select class="gruppe-select" data-path-group-select="${escapeHtml(path.id)}">
-              <option value="">Velg gruppe</option>
-              ${groups.map((group) => `<option value="${escapeHtml(group.id)}">${escapeHtml(group.title)}</option>`).join("")}
-            </select>
-            <button type="button" class="gruppe-knapp" data-path-add-group="${escapeHtml(path.id)}">Legg sti i gruppe</button>
-            <div class="statuslinje" data-path-group-status="${escapeHtml(path.id)}"></div>
-            ` : `<p class="statuslinje">Ingen grupper ennå. <a href="groups.html">Lag en gruppe først.</a></p>`}
-          </div>
-          <ul class="aha-path-steps">${stepsHtml}</ul>
-        </article>
-      `;
-    }).join("");
+          <span>${paths.length} ${paths.length === 1 ? "path" : "paths"}</span>
+        </div>
+        <div class="aha-path-overview-grid">
+          ${paths.map((path) => renderOverviewCard(path, path.id === selectedPathId)).join("")}
+        </div>
+      </section>
+      ${renderSelectedPreview(selected, availableItems, groups)}
+    </div>`;
   }
 
   function render() {
     try {
       renderContent();
     } catch {
+      selectedPathId = "";
       const mount = document.getElementById("paths-list");
-      if (mount) mount.innerHTML = global.AHAModules.buildModuleEmptyState({ type: "read_error", moduleId: "paths" });
+      if (mount) mount.innerHTML = global.AHAModules.buildModuleEmptyState({ type: "read_error", moduleId: "paths", title: "Could not read path data.", message: "Try refreshing the page." });
       global.AHAModules?.updatePageHealth?.("paths", global.AHAModules.localPageHealth({ error: true }));
     }
   }
@@ -461,16 +548,32 @@
       const target = event.target;
       if (!(target instanceof HTMLElement)) return;
 
+      const previewPayload = target.dataset.pathSelectPreview;
+      if (previewPayload) {
+        selectedPathId = previewPayload;
+        render();
+        document.getElementById("path-preview-title")?.focus?.();
+        return;
+      }
+
+      if (target.hasAttribute("data-path-preview-close")) {
+        selectedPathId = "";
+        render();
+        return;
+      }
+
       const pathDelete = target.dataset.pathDelete;
       if (pathDelete) {
         deletePath(pathDelete);
+        if (selectedPathId === pathDelete) selectedPathId = "";
         refresh();
         return;
       }
 
       const stepAdd = target.dataset.stepAdd;
       if (stepAdd) {
-        const select = document.querySelector(`[data-path-select="${CSS.escape(stepAdd)}"]`);
+        const escapedStepId = global.CSS?.escape ? global.CSS.escape(stepAdd) : stepAdd.replace(/"/g, '\"');
+        const select = document.querySelector(`[data-path-select="${escapedStepId}"]`);
         if (!(select instanceof HTMLSelectElement) || !select.value) return;
         const [source, refId, type, title] = select.value.split("::");
         if (!source || !refId) return;
@@ -482,7 +585,7 @@
       const stepRemove = target.dataset.stepRemove;
       const addGroupPath = target.dataset.pathAddGroup;
       if (addGroupPath) {
-        const card = target.closest(".aha-path-card") || target.closest("article");
+        const card = target.closest(".aha-path-preview") || target.closest("article");
         const groupSelect = card?.querySelector("[data-path-group-select]");
         const groupStatus = card?.querySelector("[data-path-group-status]");
         if (!(groupSelect instanceof HTMLSelectElement) || !(groupStatus instanceof HTMLElement)) return;
@@ -516,6 +619,10 @@
     removeStepFromPath,
     syncFromDatabase,
     collectAvailablePathItems,
+    selectPath(id) {
+      selectedPathId = asText(id, "");
+      render();
+    },
     render,
     refresh
   };
