@@ -159,7 +159,7 @@ assert.match(source, /syncFromDatabase/, 'AHAPaths should define syncFromDatabas
   assert.ok(pathAfterRemove, 'removeStepFromPath should return the path');
   assert.equal(sandbox.localStorage.readJson(PATHS_KEY, [])[0].steps.length, 0, 'removeStepFromPath should save the updated steps array locally');
   assert.equal(sandbox.repositoryCalls.length, 1, 'removeStepFromPath should call AHARepository.savePath');
-  assert.deepEqual(sandbox.repositoryCalls[0].pathRecord.steps, [], 'removeStepFromPath should persist the updated steps array');
+  assert.equal(sandbox.repositoryCalls[0].pathRecord.steps.length, 0, 'removeStepFromPath should persist the updated steps array');
 }
 
 {

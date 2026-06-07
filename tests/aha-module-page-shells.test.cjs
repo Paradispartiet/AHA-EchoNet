@@ -8,7 +8,7 @@ const modulesCode = read('js/ahaModules.js');
 const dashboardCss = read('css/aha-dashboard.css');
 const pages = {
   lists: { html: read('lists.html'), js: read('js/ahaLists.js'), title: 'Lists', purpose: 'Organize saved AHA items.', action: 'Create list', empty: 'No lists yet.' },
-  paths: { html: read('paths.html'), js: read('js/ahaPaths.js'), title: 'Paths', purpose: 'Build ordered learning routes.', action: 'Create path', empty: 'No paths yet.' },
+  paths: { html: read('paths.html'), js: read('js/ahaPaths.js'), title: 'Paths', purpose: 'Build ordered learning routes and review their sequence.', action: 'Create path', empty: 'No paths yet.' },
   groups: { html: read('groups.html'), js: read('js/ahaGroups.js'), title: 'Groups', purpose: 'Group related AHA material.', action: 'Create group', empty: 'No groups yet.' },
   avisa: { html: read('avisa.html'), js: read('js/ahaAvisa.js'), title: 'AHAavisa', purpose: 'Collect drafts and published AHA notes.', action: 'New note', empty: 'No AHAavisa notes yet.' }
 };
@@ -56,7 +56,7 @@ assert.deepEqual(
 
 const expectedNoData = {
   lists: ['No lists yet.', 'Lists will appear here when available.'],
-  paths: ['No paths yet.', 'Create or sync paths to build ordered learning routes.'],
+  paths: ['No paths yet.', 'Paths will appear here when available.'],
   groups: ['No groups yet.', 'Create or sync groups to organize related AHA material.'],
   avisa: ['No AHAavisa notes yet.', 'Create or sync notes to collect drafts and published AHA material.']
 };

@@ -2,7 +2,7 @@
 
 Statusdato: 2026-06-07
 
-Dette dokumentet oppsummerer nåværende implementasjonsstatus for AHA etter dokumentlåser, sync-hardening, Search note_reanalysis-visning, Mindmap tombstone-filtrering, Mindmap note_reanalysis-visning, Lists-, Paths-, Meta Insights-, Groups- og AHAavisa/Articles-bolkene, Sync Hub pre-sync UI, manual sync execution contract, manual sync confirmation modal, audit log preview, target selector preview, manual sync target contract, manual sync adapter interface stub, execution state machine stub, manual sync run summary preview, activation blocker tests og target adapter dry-run harness og database_existing wiring til eksisterende AHARepository target, manual sync audit log writer, read-only result history/details, retry eligibility preview, end-to-end-verifikasjon av den manuelle sync-løypa mot mock/stub av eksisterende database target, kompakte statuskort på AHA Home, module health i modulmenyen, normaliserte Home-korttitler/empty states, forbedret mobile/tablet-layout, final polish/accessibility og en samlet completion summary for AHA Home og Sync Hub, samt dokumentert review av module pages og Home entry points for Lists, Paths, Groups og AHAavisa.
+Dette dokumentet oppsummerer nåværende implementasjonsstatus for AHA etter dokumentlåser, sync-hardening, Search note_reanalysis-visning, Mindmap tombstone-filtrering, Mindmap note_reanalysis-visning, Lists-, Paths-, Meta Insights-, Groups- og AHAavisa/Articles-bolkene, Sync Hub pre-sync UI, manual sync execution contract, manual sync confirmation modal, audit log preview, target selector preview, manual sync target contract, manual sync adapter interface stub, execution state machine stub, manual sync run summary preview, activation blocker tests og target adapter dry-run harness og database_existing wiring til eksisterende AHARepository target, manual sync audit log writer, read-only result history/details, retry eligibility preview, end-to-end-verifikasjon av den manuelle sync-løypa mot mock/stub av eksisterende database target, kompakte statuskort på AHA Home, module health i modulmenyen, normaliserte Home-korttitler/empty states, forbedret mobile/tablet-layout, final polish/accessibility og en samlet completion summary for AHA Home og Sync Hub, samt dokumentert review av module pages og Home entry points for Lists, Paths, Groups og AHAavisa, og forbedret Paths module experience.
 
 Dokumentet er en statuslås for denne runtime-endringen. Den innfører ikke ny motor, ny Supabase-migrasjon, ny databaseklient, nye credentials eller ny backend.
 
@@ -39,6 +39,7 @@ Ferdig nå:
 ✅ Tester for buildMetaInsightSummary / buildMetaInsightPrompt finnes
 ✅ Lists er write-module med sync-kontrakt, repository-persistens og tombstone-sikker merge
 ✅ Paths er write-module med sync-kontrakt, repository-persistens og tombstone-sikker merge
+✅ Paths module experience er forbedret med overview, count/status, trygg steps/sequence-rendering, empty/error state og read-only preview/details
 ✅ Groups er write-module med sync-kontrakt, repository-persistens og latest-action merge
 ✅ AHAavisa / Articles er write-module med sync-kontrakt, repository-persistens og latest-action merge
 ✅ Meta Insights read-only/no-autosend guards er låst med tester
@@ -102,10 +103,35 @@ Ikke bygget ennå:
 Neste anbefalte PR:
 
 ```text
-chore: group AHA Home advanced diagnostics
+feat: improve Groups module experience
 ```
 
 
+
+
+## 2.7o Paths module experience
+
+Paths-modulen er forbedret som en kontrollert produkt-/UX-PR. Siden viser fortsatt `Paths` som module title med kort purpose, tydelig health/status badge, path count og total step count. Eksisterende create-flow er beholdt og merket som `Create path`; det er ikke lagt til ny database-write/create-flow utover den eksisterende Paths-flyten.
+
+Forbedringer:
+
+```text
+✅ Overview viser path title/name, status, type/category, description/summary, step count og oppdatert dato
+✅ Paths sorteres nyeste først når updatedAt/createdAt finnes
+✅ Steps/sequence støtter steps, sequence, items og nodes som sikre step-kilder
+✅ Preview/details viser valgt path read-only med metadata og de første inntil fem stegene
+✅ Empty state bruker “No paths yet.” og “Paths will appear here when available.”
+✅ Error state bruker “Could not read path data.” uten raw error/stack
+✅ Raw payload, metadata, refIds, tokens, passwords og connection strings dumpes ikke i UI
+```
+
+Sync/write-flow er ikke endret. Sync Hub core, manual sync adapter, database target/write-flow, audit writer, state machine og payload contract er uendret. Auto-sync finnes fortsatt ikke.
+
+Neste anbefalte PR er:
+
+```text
+feat: improve Groups module experience
+```
 
 ## 2.7j AHA Home compact status cards
 
@@ -1402,5 +1428,5 @@ Ingen sync core, manual sync adapter, database target, database-/write-flow, aud
 Neste anbefalte PR er:
 
 ```text
-feat: improve Paths module experience
+feat: improve Groups module experience
 ```
