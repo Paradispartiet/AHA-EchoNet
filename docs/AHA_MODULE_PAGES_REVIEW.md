@@ -602,3 +602,23 @@ Neste anbefalte PR er:
 ```text
 chore: normalize AHA module page shells
 ```
+
+## 14. Oppfølging: module shell normalization gjennomført
+
+`chore: normalize AHA module page shells` er gjennomført som en avgrenset UI-/strukturendring:
+
+- Lists, Paths, Groups og AHAavisa har konsistente title-, purpose-, health-, action- og content-områder;
+- empty/error-copy er kort og sanitert;
+- eksisterende tekniske/local-only forklaringer i Groups og AHAavisa ligger under collapsed `Advanced details`;
+- health bruker samme statusvokabular som modulmenyen, uten nye databasekall;
+- mobile/tablet-layout har felles wrapping/stacking;
+- sync-, write-, persistence-, adapter-, audit-, state machine- og retry-flow er uendret;
+- auto-sync er fortsatt ikke innført.
+
+Modulene trenger fortsatt egne feature-forbedringer senere: Lists trenger bedre metadataredigering/feedback, Paths trenger tydeligere progresjon og stegstyring, Groups trenger tydeligere avgrensning av local-only medlemskap/deling, og AHAavisa trenger en enklere workflow og tydeligere publish semantics. Disse forbedringene er ikke del av shell-normaliseringen.
+
+Neste anbefalte PR er:
+
+```text
+chore: standardize AHA module empty states
+```

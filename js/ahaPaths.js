@@ -343,7 +343,10 @@
     return out;
   }
 
-  function render() {
+  function renderContent() {
+    const rawDataset = localStorage.getItem(PATHS_KEY);
+    const datasetExists = rawDataset !== null;
+    if (datasetExists) JSON.parse(rawDataset);
     const paths = loadPaths().filter((path) => !path.deletedAt);
     const groups = global.AHAGroups?.getActiveGroups ? asArray(global.AHAGroups.getActiveGroups()) : [];
     const availableItems = collectAvailablePathItems();
@@ -356,8 +359,13 @@
     if (stepsCount) stepsCount.textContent = String(paths.reduce((sum, path) => sum + path.steps.length, 0));
     if (!mount) return;
 
+    global.AHAModules?.updatePageHealth?.("paths", global.AHAModules.localPageHealth({
+      count: paths.length,
+      datasetExists
+    }));
+
     if (!paths.length) {
-      mount.innerHTML = '<article class="aha-panel"><p>Ingen stier ennå. Lag din første sti over.</p></article>';
+      mount.innerHTML = `<article class="aha-panel aha-module-state aha-module-empty"><p>${datasetExists ? "No paths yet." : "No module data found."}</p></article>`;
       return;
     }
 
@@ -414,6 +422,16 @@
         </article>
       `;
     }).join("");
+  }
+
+  function render() {
+    try {
+      renderContent();
+    } catch {
+      const mount = document.getElementById("paths-list");
+      if (mount) mount.innerHTML = '<article class="aha-panel aha-module-state aha-module-error" role="alert"><p>Could not read module data.</p></article>';
+      global.AHAModules?.updatePageHealth?.("paths", global.AHAModules.localPageHealth({ error: true }));
+    }
   }
 
   function refresh() {

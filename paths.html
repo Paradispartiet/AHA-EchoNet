@@ -3,25 +3,33 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Stier</title>
+  <title>Paths</title>
   <link rel="stylesheet" href="css/aha-chat.css" />
   <link rel="stylesheet" href="css/aha-dashboard.css" />
   <link rel="stylesheet" href="css/aha-paths.css" />
 </head>
 <body>
   <main class="aha-dashboard" style="max-width: 900px;">
-    <section class="aha-panel">
-      <p class="eyebrow">AHA Stier</p>
-      <h1>Stier</h1>
-      <p>Bygg lærings- og prosess-stier med referanser fra innsikter, lister og notater.</p>
-      <div class="aha-tile-actions">
-        <a class="aha-tile-btn aha-tile-btn-primary" href="index.html">Tilbake til AHA Home</a>
-        <button id="paths-refresh" class="aha-tile-btn" type="button">Oppdater</button>
+    <section class="aha-panel aha-module-shell" aria-labelledby="paths-module-title">
+      <header class="aha-module-shell-header">
+        <div>
+          <p class="eyebrow">AHA module</p>
+          <h1 id="paths-module-title">Paths</h1>
+          <p class="aha-module-purpose">Build ordered learning routes.</p>
+        </div>
+        <span id="aha-module-health" class="aha-module-health-badge aha-module-health-unknown" role="status" aria-label="Paths: Unknown">
+          <span>Unknown</span>
+        </span>
+      </header>
+      <div class="aha-module-actions" aria-label="Paths actions">
+        <a class="aha-tile-btn aha-tile-btn-primary" href="#paths-create">Create path</a>
+        <button id="paths-refresh" class="aha-tile-btn" type="button">Refresh paths</button>
+        <a class="aha-tile-btn" href="index.html">Back to AHA Home</a>
       </div>
     </section>
 
-    <section class="aha-panel">
-      <h2>Opprett sti</h2>
+    <section id="paths-create" class="aha-panel">
+      <h2>Create path</h2>
       <form id="path-create-form" class="aha-path-form">
         <label for="path-title">Tittel</label>
         <input id="path-title" required type="text" placeholder="F.eks. Læringsløp vår 2026" />
@@ -55,9 +63,10 @@
       </div>
     </section>
 
-    <section id="paths-list" class="aha-path-list"></section>
+    <section id="paths-list" class="aha-path-list aha-module-content" aria-live="polite"></section>
   </main>
 
+  <script src="js/ahaModules.js"></script>
   <script src="js/ahaContracts.js"></script>
   <script src="js/ahaGroups.js"></script>
   <script src="js/ahaPaths.js"></script>

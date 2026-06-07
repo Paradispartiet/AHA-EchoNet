@@ -10,17 +10,25 @@
 </head>
 <body>
   <main class="aha-dashboard" style="max-width: 960px;">
-    <section class="aha-panel">
-      <p class="eyebrow">AHA Modul</p>
-      <h1>AHAavisa</h1>
-      <p>Bygg lokale artikkelutkast basert på referanser fra innsikter, lister, stier og notater.</p>
-      <div class="aha-tile-actions">
-        <a class="aha-tile-btn aha-tile-btn-primary" href="index.html">Tilbake til AHA Home</a>
-        <button id="avisa-refresh-btn" type="button">Oppdater</button>
+    <section class="aha-panel aha-module-shell" aria-labelledby="avisa-module-title">
+      <header class="aha-module-shell-header">
+        <div>
+          <p class="eyebrow">AHA module</p>
+          <h1 id="avisa-module-title">AHAavisa</h1>
+          <p class="aha-module-purpose">Collect drafts and published AHA notes.</p>
+        </div>
+        <span id="aha-module-health" class="aha-module-health-badge aha-module-health-unknown" role="status" aria-label="AHAavisa: Unknown">
+          <span>Unknown</span>
+        </span>
+      </header>
+      <div class="aha-module-actions" aria-label="AHAavisa actions">
+        <a class="aha-tile-btn aha-tile-btn-primary" href="#avisa-create">New note</a>
+        <button id="avisa-refresh-btn" class="aha-tile-btn" type="button">Refresh AHAavisa</button>
+        <a class="aha-tile-btn" href="index.html">Back to AHA Home</a>
       </div>
     </section>
 
-    <section class="aha-panel">
+    <section id="avisa-create" class="aha-panel">
       <h2>Opprett artikkelutkast</h2>
       <label>Tittel
         <input id="avisa-title" type="text" placeholder="Tittel" />
@@ -54,8 +62,11 @@
         <span class="avisa-badge">Offentlig kandidat: <strong id="avisa-public-candidate-count">0</strong></span>
         <span class="avisa-badge">Siste oppdatering: <strong id="avisa-last-updated">-</strong></span>
       </div>
-      <div id="avisa-privacy-warning" class="local-publish-note" hidden></div>
-      <p class="local-publish-note">“Publiser lokalt” betyr bare at artikkelen markeres som lokal publisert i denne nettleseren. Ingen data sendes ut. Ekte publisering kommer senere.</p>
+      <details class="aha-module-details">
+        <summary>Advanced details</summary>
+        <div id="avisa-privacy-warning" class="local-publish-note" hidden></div>
+        <p class="local-publish-note">“Publiser lokalt” betyr bare at artikkelen markeres som lokal publisert i denne nettleseren. Ingen data sendes ut. Ekte publisering kommer senere.</p>
+      </details>
       <div class="section-filter" id="avisa-layer-filter" role="group" aria-label="Filtrer publiseringslag">
         <button type="button" data-layer-filter="all" class="is-active">Alle</button>
         <button type="button" data-layer-filter="personal">Personlig avis</button>
@@ -72,9 +83,10 @@
       </div>
     </section>
 
-    <section id="avisa-articles"></section>
+    <section id="avisa-articles" class="aha-module-content" aria-live="polite"></section>
   </main>
 
+  <script src="js/ahaModules.js"></script>
   <script src="js/ahaContracts.js"></script>
   <script src="js/ahaGroups.js"></script>
   <script src="js/ahaPrivacy.js"></script>

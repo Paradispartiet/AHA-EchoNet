@@ -314,7 +314,10 @@
     return out.filter((item) => item.refId);
   }
 
-  function render() {
+  function renderContent() {
+    const rawDataset = localStorage.getItem(LISTS_KEY);
+    const datasetExists = rawDataset !== null;
+    if (datasetExists) JSON.parse(rawDataset);
     const lists = loadLists().filter((list) => !isDeletedRecord(list));
     const groups = global.AHAGroups?.getActiveGroups ? asArray(global.AHAGroups.getActiveGroups()) : [];
     const allItems = collectAvailableItems();
@@ -326,8 +329,13 @@
     if (statsItems) statsItems.textContent = String(lists.reduce((sum, list) => sum + list.items.length, 0));
     if (!mount) return;
 
+    global.AHAModules?.updatePageHealth?.("lists", global.AHAModules.localPageHealth({
+      count: lists.length,
+      datasetExists
+    }));
+
     if (!lists.length) {
-      mount.innerHTML = '<article class="aha-panel"><p>Ingen lister ennå. Lag din første liste over.</p></article>';
+      mount.innerHTML = `<article class="aha-panel aha-module-state aha-module-empty"><p>${datasetExists ? "No lists yet." : "No module data found."}</p></article>`;
       return;
     }
 
@@ -384,6 +392,16 @@
         </article>
       `;
     }).join("");
+  }
+
+  function render() {
+    try {
+      renderContent();
+    } catch {
+      const mount = document.getElementById("lists-list");
+      if (mount) mount.innerHTML = '<article class="aha-panel aha-module-state aha-module-error" role="alert"><p>Could not read module data.</p></article>';
+      global.AHAModules?.updatePageHealth?.("lists", global.AHAModules.localPageHealth({ error: true }));
+    }
   }
 
   function refresh() {

@@ -624,10 +624,13 @@
     return asObject(safeParse(localStorage.getItem(PRIVACY_KEY) || "{}", {}));
   }
 
-  function render() {
+  function renderContent() {
     const root = document.getElementById("groups-root");
     if (!root) return;
 
+    const rawDataset = localStorage.getItem(GROUPS_KEY);
+    const datasetExists = rawDataset !== null;
+    if (datasetExists) JSON.parse(rawDataset);
     const groups = loadGroups().filter((group) => !group.deletedAt);
     const references = collectAvailableGroupReferences();
     const activeGroupId = hashGroupId();
@@ -644,18 +647,27 @@
       : "Sosial deling er av. Dette er kun lokal gruppeplanlegging.";
 
     root.innerHTML = `
-      <section class="aha-panel">
-        <p class="eyebrow">Fase 4A</p>
-        <h1>Grupper / Sirkler</h1>
-        <p>Lokale grupperom for delte innsikter, lister, stier og utkast. Ekte deling kommer senere.</p>
-        <p class="groups-privacy-note">${escapeHtml(privacyText)}</p>
-        <div class="aha-tile-actions">
-          <a class="aha-tile-btn aha-tile-btn-primary" href="index.html">Tilbake til AHA Home</a>
-          <button type="button" class="aha-tile-btn" id="groups-refresh-btn">Oppdater</button>
+      <section class="aha-panel aha-module-shell" aria-labelledby="groups-module-title">
+        <header class="aha-module-shell-header">
+          <div>
+            <p class="eyebrow">AHA module</p>
+            <h1 id="groups-module-title">Groups</h1>
+            <p class="aha-module-purpose">Group related AHA material.</p>
+          </div>
+          <span id="aha-module-health" class="aha-module-health-badge aha-module-health-unknown" role="status" aria-label="Groups: Unknown"><span>Unknown</span></span>
+        </header>
+        <div class="aha-module-actions" aria-label="Groups actions">
+          <a class="aha-tile-btn aha-tile-btn-primary" href="#groups-create">Create group</a>
+          <button type="button" class="aha-tile-btn" id="groups-refresh-btn">Refresh groups</button>
+          <a class="aha-tile-btn" href="index.html">Back to AHA Home</a>
         </div>
+        <details class="aha-module-details">
+          <summary>Advanced details</summary>
+          <p class="groups-privacy-note">${escapeHtml(privacyText)}</p>
+        </details>
       </section>
 
-      <section class="aha-panel groups-create-panel">
+      <section id="groups-create" class="aha-panel groups-create-panel">
         <h2>Opprett gruppe</h2>
         <form id="groups-create-form" class="groups-form-grid">
           <label>Tittel<input type="text" name="title" required /></label>
@@ -692,8 +704,8 @@
         ` : "<p>Ingen grupper finnes ennå.</p>"}
       </section>
 
-      <section class="groups-card-list">
-        ${groups.map((group) => `
+      <section class="groups-card-list aha-module-content" aria-live="polite">
+        ${groups.length ? groups.map((group) => `
           <article class="aha-panel groups-card" data-group-id="${escapeHtml(group.id)}">
             <header>
               <h3>${escapeHtml(group.title)}</h3>
@@ -744,7 +756,7 @@
               </form>
             </section>
           </article>
-        `).join("")}
+        `).join("") : '<article class="aha-panel aha-module-state aha-module-empty"><p>No groups yet.</p></article>'}
       </section>
 
       ${activeGroup ? `
@@ -838,7 +850,28 @@
       ` : ""}
     `;
 
+    global.AHAModules?.updatePageHealth?.("groups", global.AHAModules.localPageHealth({
+      count: groups.length,
+      datasetExists
+    }));
     bindEvents(references);
+  }
+
+  function render() {
+    try {
+      renderContent();
+    } catch {
+      const root = document.getElementById("groups-root");
+      if (root) root.innerHTML = `
+        <section class="aha-panel aha-module-shell" aria-labelledby="groups-module-title">
+          <header class="aha-module-shell-header">
+            <div><p class="eyebrow">AHA module</p><h1 id="groups-module-title">Groups</h1><p class="aha-module-purpose">Group related AHA material.</p></div>
+            <span class="aha-module-health-badge aha-module-health-blocked" role="status" aria-label="Groups: Blocked"><span>Blocked</span></span>
+          </header>
+          <div class="aha-module-actions"><a class="aha-tile-btn" href="index.html">Back to AHA Home</a></div>
+        </section>
+        <section class="aha-panel aha-module-state aha-module-error" role="alert"><p>Could not render module.</p></section>`;
+    }
   }
 
   function bindEvents(availableReferences) {

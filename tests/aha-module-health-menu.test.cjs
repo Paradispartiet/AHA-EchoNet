@@ -45,7 +45,7 @@ for (const status of ['ready', 'warning', 'blocked', 'empty', 'missing', 'unknow
 assert.ok(mount.innerHTML.includes('aha-module-health-count'), 'safe module counts should render in badges');
 assert.ok(mount.innerHTML.includes('>12</span>'), 'Lists count should render');
 assert.ok(mount.innerHTML.includes('title="Lists passed local validation."'), 'badge reason should render as a title');
-assert.ok(mount.innerHTML.includes('aria-label="Lister: Ready, 12. Lists passed local validation."'), 'badge should expose status, count and reason accessibly');
+assert.ok(mount.innerHTML.includes('aria-label="Lists: Ready, 12. Lists passed local validation."'), 'badge should expose status, count and reason accessibly');
 
 assert.ok(dashboardCode.includes('buildAhaSyncDryRunPlan().forEach'), 'Home badges should reuse the existing read-only Sync Hub plan');
 assert.ok(dashboardCode.includes('status: "blocked"'), 'Sync Hub validation errors should map to blocked module health');

@@ -1340,3 +1340,24 @@ Neste anbefalte PR er:
 ```text
 chore: normalize AHA module page shells
 ```
+
+## 14. AHA module page shell normalization
+
+Lists, Paths, Groups og AHAavisa bruker nå et konsistent module page shell med:
+
+- normaliserte modultitler og korte purpose-tekster;
+- tekstlige health badges med statusene `ready`, `warning`, `blocked`, `empty`, `missing` og `unknown`;
+- tydelig primary action basert på handlinger som allerede fantes;
+- separate content-, empty- og saniterte error-områder;
+- collapsed `Advanced details` for eksisterende teknisk/local-only informasjon der det er relevant;
+- felles wrapping og stacking for mobile/tablet.
+
+Dette er kun en UI-/strukturendring. Eksisterende module rendering og data modeller er beholdt. Sync behavior, database-/write-flow, adapter, audit writer, state machine, payload contract, persistence, retry logic og AHA Sync Hub core er ikke endret. Det er ikke lagt til nye databasekall, create/edit/delete-features eller ny databaseklient.
+
+Auto-sync finnes fortsatt ikke. Modulenes refresh-handlinger gjør fortsatt bare det de gjorde før, og Home initial load laster fortsatt ikke `js/ahaLists.js`, `js/ahaPaths.js`, `js/ahaGroups.js` eller `js/ahaAvisa.js`.
+
+Neste anbefalte PR er:
+
+```text
+chore: standardize AHA module empty states
+```

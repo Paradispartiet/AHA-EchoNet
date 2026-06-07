@@ -33,7 +33,7 @@
     },
     {
       id: "lists",
-      title: "Lister",
+      title: "Lists",
       type: "knowledge",
       status: "active",
       href: "lists.html",
@@ -42,7 +42,7 @@
     },
     {
       id: "paths",
-      title: "Stier",
+      title: "Paths",
       type: "knowledge",
       status: "active",
       href: "paths.html",
@@ -132,7 +132,7 @@
     },
     {
       id: "groups",
-      title: "Grupper",
+      title: "Groups",
       type: "social",
       status: "active",
       href: "groups.html",
@@ -221,9 +221,35 @@
     const statusLabel = moduleHealthLabel(health.status);
     const count = health.count === null ? "" : `<span class="aha-module-health-count" aria-hidden="true">${health.count}</span>`;
     const accessibleLabel = `${module.title}: ${statusLabel}${health.count === null ? "" : `, ${health.count}`}. ${health.reason}`;
-    return `<span class="aha-module-health-badge aha-module-health-${health.status}" title="${escapeHtml(health.reason)}" aria-label="${escapeHtml(accessibleLabel)}">
+    return `<span class="aha-module-health-badge aha-module-health-${health.status}" role="status" title="${escapeHtml(health.reason)}" aria-label="${escapeHtml(accessibleLabel)}">
       <span>${statusLabel}</span>${count}
     </span>`;
+  }
+
+  function updatePageHealth(moduleId, rawHealth, mountId = "aha-module-health") {
+    const mount = document.getElementById(mountId);
+    if (!mount) return normalizeModuleHealth(rawHealth);
+
+    const module = AHA_MODULES.find((item) => item.id === moduleId) || { id: moduleId, title: "Module" };
+    const health = normalizeModuleHealth(rawHealth);
+    mount.outerHTML = renderHealthBadge(module, health).replace(
+      'class="aha-module-health-badge',
+      `id="${escapeHtml(mountId)}" class="aha-module-health-badge`
+    );
+    return health;
+  }
+
+  function localPageHealth({ count = null, datasetExists = true, error = false } = {}) {
+    if (error) return { status: "blocked", count: null, reason: "Could not read module data." };
+    if (!datasetExists) return { status: "missing", count: null, reason: "No module data found." };
+    const numericCount = Number(count);
+    if (Number.isFinite(numericCount) && numericCount <= 0) {
+      return { status: "empty", count: 0, reason: "The module has no saved items yet." };
+    }
+    if (Number.isFinite(numericCount)) {
+      return { status: "ready", count: numericCount, reason: "Module data is ready." };
+    }
+    return { status: "unknown", count: null, reason: "Module status unavailable." };
   }
 
   function renderMenu({ healthByModule = {}, mountId = "aha-modules-grid" } = {}) {
@@ -262,6 +288,8 @@
     modules: AHA_MODULES,
     healthStatuses: [...MODULE_HEALTH_STATUSES],
     normalizeModuleHealth,
+    localPageHealth,
+    updatePageHealth,
     renderMenu
   };
 })();
