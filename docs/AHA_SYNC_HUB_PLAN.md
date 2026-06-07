@@ -1,8 +1,8 @@
 # AHA Sync Hub / Control Center plan
 
-Statusdato: 2026-06-06
+Statusdato: 2026-06-07
 
-Dette dokumentet er en planleggingslås for en fremtidig AHA Sync Hub / Control Center. Det er ikke runtime-kode, ikke en UI-beslutning, ikke en Supabase-migrasjon og ikke en beslutning om å starte automatisk sync.
+Dette dokumentet startet som planleggingslås for AHA Sync Hub / Control Center og er nå også historikk for den fullførte manuelle/gated implementeringsrunden. Completion state er dokumentert i `AHA_HOME_SYNC_HUB_COMPLETION_SUMMARY.md`. Dokumentet er ikke runtime-kode, ikke en Supabase-migrasjon og ikke en beslutning om å starte automatisk sync.
 
 ## 1. Formål
 
@@ -578,13 +578,15 @@ Reglene fra denne planen gjelder fortsatt:
 
 ## 16. Neste anbefalte PR
 
-End-to-end-verifikasjonen er ferdig. Neste anbefalte PR er:
+End-to-end-verifikasjonen, Home-integrasjonen og UI-/accessibility-ryddingen er ferdig for denne runden. Completion state er dokumentert, og Sync Hub-scaffolding-fasen er lukket.
+
+Neste anbefalte PR er:
 
 ```text
-chore: group AHA Home advanced diagnostics
+chore: review AHA module pages from Home entry points
 ```
 
-Neste fase skal redusere operatørstøy, tydeliggjøre den eksisterende manuelle/gated løypa og forenkle UI-et. Den skal ikke legge til ny sync-feature, retry execution, auto-sync, databaseklient, credentials eller mer sync-scaffolding.
+Videre arbeid bør gå til modulopplevelse, data quality og real-world verification. Det skal ikke legges til retry execution, auto-sync, databaseklient, credentials eller mer Sync Hub-scaffolding som del av dette stoppunktet.
 
 
 ## 17. Compact card-integrasjon på AHA Home
@@ -617,10 +619,10 @@ Sync Hub-kortet og den tilhørende Home-presentasjonen bruker nå kortere titler
 
 Dette er kun UI/tekst/organisering. Core sync, database/write-flow, adapter, audit writer, state machine-regler, payload contract, history/details-dataflyt og retry logic er ikke endret. Ingen auto-sync eller ny databaseklient er introdusert.
 
-Neste anbefalte PR er:
+Completion summary er nå dokumentert. Neste anbefalte PR er:
 
 ```text
-docs: summarize AHA Home and Sync Hub completion state
+chore: review AHA module pages from Home entry points
 ```
 
 
@@ -630,8 +632,34 @@ Sync Hub/Home-flaten har gjennomgått siste UI-polish og accessibility-review. A
 
 Dette endrer ikke core sync, database/write-flow, adapter, audit writer, state machine-regler, payload contract, history/details-dataflyt, retry logic eller module health-beregning. Ingen auto-sync, ny databaseklient, credentials, full payload eller raw audit JSON er introdusert.
 
-Neste anbefalte arbeid er:
+Completion summary er nå dokumentert. Neste anbefalte arbeid er:
 
 ```text
-docs: summarize AHA Home and Sync Hub completion state
+chore: review AHA module pages from Home entry points
+```
+
+
+## 21. Completion state og lukking av denne runden
+
+Completion state for AHA Home og AHA Sync Hub er dokumentert i `AHA_HOME_SYNC_HUB_COMPLETION_SUMMARY.md`. Denne runden er lukket med følgende status:
+
+```text
+✅ Home-information hierarchy, kompakte statuskort og høyre statuspanel er ryddet
+✅ Advanced diagnostics er samlet
+✅ Module health badges, korttitler, empty states og mobile/tablet-layout er gjennomgått
+✅ Final polish/accessibility er gjennomgått
+✅ Sync Hub er operational/gated med validation, readiness, checklist og payload preview
+✅ Manual sync er database-wired via eksisterende adapter/service/repository-boundary
+✅ Audit writer, result history, sanitized details og retry eligibility preview finnes
+✅ End-to-end-verifikasjon finnes
+❌ Auto-sync finnes ikke
+❌ Retry execution finnes ikke
+```
+
+Videre arbeid skal ikke være mer Sync Hub-scaffolding. De anbefalte sporene er modulopplevelse, faktisk data quality og real-world verification med staging data og reell browser session.
+
+Neste anbefalte PR er:
+
+```text
+chore: review AHA module pages from Home entry points
 ```
