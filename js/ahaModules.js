@@ -180,6 +180,21 @@
   };
 
   const MODULE_HEALTH_STATUSES = new Set(["ready", "warning", "blocked", "empty", "missing", "unknown"]);
+  const MODULE_EMPTY_STATE_TYPES = new Set(["no_data", "missing_source", "not_configured", "filtered_empty", "read_error", "unknown"]);
+  const MODULE_EMPTY_STATE_COPY = {
+    no_data: {
+      default: { title: "Nothing here yet.", message: "Items will appear here when available." },
+      lists: { title: "No lists yet.", message: "Create or sync lists to start organizing saved AHA items." },
+      paths: { title: "No paths yet.", message: "Create or sync paths to build ordered learning routes." },
+      groups: { title: "No groups yet.", message: "Create or sync groups to organize related AHA material." },
+      avisa: { title: "No AHAavisa notes yet.", message: "Create or sync notes to collect drafts and published AHA material." }
+    },
+    missing_source: { title: "Module data not found.", message: "This module has no available local data source." },
+    not_configured: { title: "Module not configured.", message: "This module needs a configured data source before items can appear." },
+    filtered_empty: { title: "No matching items.", message: "Try changing the filter or search." },
+    read_error: { title: "Could not read module data.", message: "Try again later or view diagnostics." },
+    unknown: { title: "Nothing to show.", message: "No module data is available." }
+  };
   const PREFERRED_ORDER = ["chat", "insights", "historygo", "gallery", "notes", "feed", "avisa", "profile", "search", "privacy"];
 
   function escapeHtml(value) {
@@ -189,6 +204,30 @@
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&#39;");
+  }
+
+  function sanitizeEmptyStateReason(reason) {
+    const firstLine = String(reason || "").split(/\r?\n/, 1)[0].trim();
+    if (!firstLine) return "";
+    return firstLine.replace(/^Error:\s*/i, "").slice(0, 160);
+  }
+
+  function buildModuleEmptyState({ type = "unknown", moduleId = "", title = "", message = "", hint = "", reason = "" } = {}) {
+    const normalizedType = MODULE_EMPTY_STATE_TYPES.has(type) ? type : "unknown";
+    const typeCopy = MODULE_EMPTY_STATE_COPY[normalizedType] || MODULE_EMPTY_STATE_COPY.unknown;
+    const copy = normalizedType === "no_data"
+      ? (typeCopy[moduleId] || typeCopy.default)
+      : typeCopy;
+    const safeReason = sanitizeEmptyStateReason(reason);
+    const stateClass = normalizedType === "read_error" ? "aha-module-error" : "aha-module-empty";
+    const role = normalizedType === "read_error" ? "alert" : "status";
+
+    return `<article class="aha-panel aha-module-state ${stateClass}" data-empty-state="${escapeHtml(normalizedType)}" role="${role}">
+      <h2 class="aha-module-state-title">${escapeHtml(title || copy.title)}</h2>
+      <p class="aha-module-state-message">${escapeHtml(message || copy.message)}</p>
+      ${hint ? `<p class="aha-module-state-hint">${escapeHtml(hint)}</p>` : ""}
+      ${safeReason ? `<p class="aha-module-state-reason"><strong>Reason:</strong> ${escapeHtml(safeReason)}</p>` : ""}
+    </article>`;
   }
 
   function normalizeModuleHealth(health = {}) {
@@ -288,6 +327,8 @@
     modules: AHA_MODULES,
     healthStatuses: [...MODULE_HEALTH_STATUSES],
     normalizeModuleHealth,
+    emptyStateTypes: [...MODULE_EMPTY_STATE_TYPES],
+    buildModuleEmptyState,
     localPageHealth,
     updatePageHealth,
     renderMenu

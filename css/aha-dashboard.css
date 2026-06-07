@@ -1887,8 +1887,20 @@ html, body { max-width: 100%; overflow-x: hidden; }
   overflow-wrap: anywhere;
 }
 
+.aha-module-state {
+  display: grid;
+  gap: 6px;
+}
+
+.aha-module-state h2,
 .aha-module-state p { margin: 0; }
-.aha-module-empty { color: var(--aha-muted); }
+.aha-module-state-title { font-size: 1rem; }
+.aha-module-state-title,
+.aha-module-state-message,
+.aha-module-state-hint,
+.aha-module-state-reason { color: var(--aha-muted); }
+.aha-module-state-hint,
+.aha-module-state-reason { font-size: .88rem; }
 .aha-module-error { border-color: rgba(255,96,96,.35); }
 
 .aha-module-details { margin-top: 10px; }

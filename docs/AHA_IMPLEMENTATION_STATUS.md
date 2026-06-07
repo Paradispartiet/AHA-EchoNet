@@ -1361,3 +1361,24 @@ Neste anbefalte PR er:
 ```text
 chore: standardize AHA module empty states
 ```
+
+## 15. AHA module empty-state standardization
+
+Empty states for Lists, Paths, Groups and AHAavisa now use one small shared rendering pattern in the existing module helper. The pattern distinguishes these UI reasons:
+
+- `no_data`: the local data source exists, but contains no active items;
+- `missing_source`: the expected local data source is absent;
+- `not_configured`: a module or source still needs configuration;
+- `filtered_empty`: an existing filter has no matches;
+- `read_error`: module data could not be read, without exposing raw errors or stack traces;
+- `unknown`: safe fallback when no more specific reason is available.
+
+The four modules have short module-specific `no_data` copy, while missing source, configuration, filtered, read-error and unknown states use shared copy. Existing create actions are referenced only as text hints; this work does not add create, edit or delete behavior. AHAavisa's existing section/publication-layer filters use `filtered_empty`; no new filter or search feature was introduced.
+
+This is only a UI/text/organization change. Sync behavior, database/write flow, adapters, audit writer, state machine, payload contract, module data models, persistence, retry logic and AHA Sync Hub core are unchanged. No database client, database call, credentials or dashboard write path was added. Auto-sync still does not exist.
+
+Next recommended PR:
+
+```text
+chore: clarify primary actions for AHA modules
+```
