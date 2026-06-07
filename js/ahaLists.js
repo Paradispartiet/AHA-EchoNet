@@ -12,6 +12,7 @@
   const INSTA_KEY = "aha_insta_posts_v1";
 
   const ALLOWED_TYPES = ["favorites", "todo", "concepts", "process", "quality", "ai", "shared_later"];
+  let selectedListId = "";
 
   function safeParse(raw, fallback) {
     try {
@@ -85,6 +86,7 @@
       title: asText(list?.title || base?.title, "Uten navn"),
       type: normalizedType,
       description: asText(list?.description, ""),
+      status: asText(list?.status, ""),
       createdAt: list?.createdAt || list?.created_at || base?.createdAt || now,
       updatedAt: list?.updatedAt || list?.updated_at || base?.updatedAt || now,
       tags: global.AHAContracts?.normalizeTags ? global.AHAContracts.normalizeTags(list?.tags) : asArray(list?.tags),
@@ -314,11 +316,115 @@
     return out.filter((item) => item.refId);
   }
 
+  function formatDate(value) {
+    const time = Date.parse(value);
+    if (!Number.isFinite(time)) return "Date unavailable";
+    return new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(new Date(time));
+  }
+
+  function listStatusLabel(list) {
+    return asText(list?.status, "Local");
+  }
+
+  function renderOverviewCard(list, isSelected) {
+    return `
+      <article class="aha-panel aha-list-overview-card${isSelected ? " is-selected" : ""}" data-list-card="${escapeHtml(list.id)}">
+        <div class="aha-list-header">
+          <div>
+            <p class="aha-list-card-kicker">${escapeHtml(listStatusLabel(list))} list</p>
+            <h3>${escapeHtml(list.title)}</h3>
+          </div>
+          <span class="aha-list-badge">${list.items.length} ${list.items.length === 1 ? "item" : "items"}</span>
+        </div>
+        <p class="aha-list-summary">${escapeHtml(list.description || "No description yet.")}</p>
+        <div class="aha-list-meta" aria-label="List metadata">
+          <span>${escapeHtml(list.type)}</span>
+          <span>Updated ${escapeHtml(formatDate(list.updatedAt || list.createdAt))}</span>
+        </div>
+        <button type="button" class="aha-tile-btn${isSelected ? " aha-tile-btn-primary" : ""}" data-list-select-preview="${escapeHtml(list.id)}" aria-pressed="${isSelected ? "true" : "false"}">
+          ${isSelected ? "Selected" : "View details"}
+        </button>
+      </article>`;
+  }
+
+  function renderSelectedPreview(list, allItems, groups) {
+    if (!list) {
+      return `<aside class="aha-panel aha-list-preview aha-list-preview-empty" aria-label="List preview">
+        <p class="eyebrow">List preview</p>
+        <h2>Select a list</h2>
+        <p>Choose a list from the overview to see its items and details.</p>
+      </aside>`;
+    }
+
+    const options = allItems.map((item) => {
+      return `<option value="${escapeHtml(item.source)}::${escapeHtml(item.refId)}">${escapeHtml(item.title)} (${escapeHtml(item.type)})</option>`;
+    }).join("");
+    const visibleItems = list.items.slice(0, 5);
+    const itemsHtml = visibleItems.length
+      ? visibleItems.map((item) => `
+        <li class="aha-list-item-row">
+          <div>
+            <strong>${escapeHtml(item.title)}</strong>
+            <div class="module-meta">${escapeHtml(item.type)}</div>
+          </div>
+          <button type="button" class="aha-tile-btn" data-list-remove="${escapeHtml(list.id)}::${escapeHtml(item.id)}" aria-label="Remove ${escapeHtml(item.title)} from ${escapeHtml(list.title)}">Remove</button>
+        </li>`).join("")
+      : `<li class="aha-list-preview-empty-item">No items in this list yet.</li>`;
+    const remainingCount = Math.max(0, list.items.length - visibleItems.length);
+
+    return `<aside class="aha-panel aha-list-preview" aria-labelledby="list-preview-title">
+      <div class="aha-list-header">
+        <div>
+          <p class="eyebrow">List preview</p>
+          <h2 id="list-preview-title" tabindex="-1">${escapeHtml(list.title)}</h2>
+        </div>
+        <button type="button" class="aha-tile-btn" data-list-preview-close aria-label="Close list preview">Close</button>
+      </div>
+      <p>${escapeHtml(list.description || "No description yet.")}</p>
+      <div class="aha-list-meta" aria-label="Selected list metadata">
+        <span class="aha-list-badge">${escapeHtml(listStatusLabel(list))}</span>
+        <span class="aha-list-badge">${list.items.length} ${list.items.length === 1 ? "item" : "items"}</span>
+        <span>Created ${escapeHtml(formatDate(list.createdAt))}</span>
+        <span>Updated ${escapeHtml(formatDate(list.updatedAt || list.createdAt))}</span>
+      </div>
+      <section aria-labelledby="list-preview-items-title">
+        <h3 id="list-preview-items-title">Items</h3>
+        <ul class="aha-list-items">${itemsHtml}</ul>
+        ${remainingCount ? `<p class="module-meta">${remainingCount} more ${remainingCount === 1 ? "item" : "items"} not shown in this preview.</p>` : ""}
+      </section>
+      <details class="aha-list-manage">
+        <summary>Manage list</summary>
+        <div class="aha-list-manage-content">
+          <div class="aha-list-add-row">
+            <select data-list-select="${escapeHtml(list.id)}" aria-label="Choose an AHA item to add to ${escapeHtml(list.title)}">
+              <option value="">Choose an item from AHA modules</option>
+              ${options}
+            </select>
+            <button type="button" data-list-add="${escapeHtml(list.id)}">Add item</button>
+          </div>
+          <div class="aha-list-add-row">
+            ${groups.length ? `
+            <select class="gruppe-select" data-list-group-select="${escapeHtml(list.id)}" aria-label="Choose a group for ${escapeHtml(list.title)}">
+              <option value="">Choose a group</option>
+              ${groups.map((group) => `<option value="${escapeHtml(group.id)}">${escapeHtml(group.title)}</option>`).join("")}
+            </select>
+            <button type="button" class="gruppe-knapp" data-list-add-group="${escapeHtml(list.id)}">Add list to group</button>
+            <div class="statuslinje" data-list-group-status="${escapeHtml(list.id)}" aria-live="polite"></div>
+            ` : `<p class="statuslinje">No groups yet. <a href="groups.html">Create a group first.</a></p>`}
+          </div>
+          <button type="button" class="aha-list-delete" data-list-delete="${escapeHtml(list.id)}">Delete list</button>
+        </div>
+      </details>
+    </aside>`;
+  }
+
   function renderContent() {
     const rawDataset = localStorage.getItem(LISTS_KEY);
     const datasetExists = rawDataset !== null;
     if (datasetExists) JSON.parse(rawDataset);
-    const lists = loadLists().filter((list) => !isDeletedRecord(list));
+    const lists = loadLists()
+      .filter((list) => !isDeletedRecord(list))
+      .sort((a, b) => listActionTime(b) - listActionTime(a));
     const groups = global.AHAGroups?.getActiveGroups ? asArray(global.AHAGroups.getActiveGroups()) : [];
     const allItems = collectAvailableItems();
     const statsLists = document.getElementById("lists-count");
@@ -335,67 +441,32 @@
     }));
 
     if (!lists.length) {
+      selectedListId = "";
       mount.innerHTML = global.AHAModules.buildModuleEmptyState({
-        type: datasetExists ? "no_data" : "missing_source",
+        type: "no_data",
         moduleId: "lists",
-        hint: datasetExists ? "Use Create list above when you are ready." : "Lists will appear here when available."
+        message: "Lists will appear here when available.",
+        hint: "Use Create list above when you are ready."
       });
       return;
     }
 
-    mount.innerHTML = lists.map((list) => {
-      const tagsHtml = list.tags.map((tag) => `<span class="aha-list-badge">${escapeHtml(tag)}</span>`).join("");
-      const options = allItems.map((item) => {
-        return `<option value="${escapeHtml(item.source)}::${escapeHtml(item.refId)}">${escapeHtml(item.title)} (${escapeHtml(item.type)})</option>`;
-      }).join("");
-
-      const itemsHtml = list.items.length
-        ? list.items.map((item) => `
-          <li class="aha-list-item-row">
-            <div>
-              <strong>${escapeHtml(item.title)}</strong>
-              <div class="module-meta">${escapeHtml(item.type)} · ${escapeHtml(item.source)} · ref: ${escapeHtml(item.refId)}</div>
-            </div>
-            <button type="button" data-list-remove="${escapeHtml(list.id)}::${escapeHtml(item.id)}">Fjern</button>
-          </li>
-        `).join("")
-        : "<li>Ingen punkter i listen ennå.</li>";
-
-      return `
-        <article class="aha-panel aha-list-card">
-          <div class="aha-list-header">
-            <h3>${escapeHtml(list.title)}</h3>
-            <button type="button" data-list-delete="${escapeHtml(list.id)}">Slett liste</button>
+    const selected = lists.find((list) => list.id === selectedListId) || null;
+    mount.innerHTML = `<div class="aha-lists-workspace">
+      <section class="aha-list-overview" aria-labelledby="lists-overview-title">
+        <div class="aha-list-section-heading">
+          <div>
+            <p class="eyebrow">Overview</p>
+            <h2 id="lists-overview-title">Your lists</h2>
           </div>
-          <p>${escapeHtml(list.description || "Ingen beskrivelse")}</p>
-          <div class="aha-list-meta">
-            <span class="aha-list-badge">Type: ${escapeHtml(list.type)}</span>
-            <span class="aha-list-badge">Punkter: ${list.items.length}</span>
-            <span class="aha-list-badge">Opprettet: ${escapeHtml(list.createdAt)}</span>
-            <span class="aha-list-badge">Oppdatert: ${escapeHtml(list.updatedAt)}</span>
-            ${tagsHtml}
-          </div>
-          <div class="aha-list-add-row">
-            <select data-list-select="${escapeHtml(list.id)}">
-              <option value="">Velg objekt fra AHA-moduler</option>
-              ${options}
-            </select>
-            <button type="button" data-list-add="${escapeHtml(list.id)}">Legg til</button>
-          </div>
-          <div class="aha-list-add-row">
-            ${groups.length ? `
-            <select class="gruppe-select" data-list-group-select="${escapeHtml(list.id)}">
-              <option value="">Velg gruppe</option>
-              ${groups.map((group) => `<option value="${escapeHtml(group.id)}">${escapeHtml(group.title)}</option>`).join("")}
-            </select>
-            <button type="button" class="gruppe-knapp" data-list-add-group="${escapeHtml(list.id)}">Legg liste i gruppe</button>
-            <div class="statuslinje" data-list-group-status="${escapeHtml(list.id)}"></div>
-            ` : `<p class="statuslinje">Ingen grupper ennå. <a href="groups.html">Lag en gruppe først.</a></p>`}
-          </div>
-          <ul class="aha-list-items">${itemsHtml}</ul>
-        </article>
-      `;
-    }).join("");
+          <span>${lists.length} ${lists.length === 1 ? "list" : "lists"}</span>
+        </div>
+        <div class="aha-list-overview-grid">
+          ${lists.map((list) => renderOverviewCard(list, list.id === selectedListId)).join("")}
+        </div>
+      </section>
+      ${renderSelectedPreview(selected, allItems, groups)}
+    </div>`;
   }
 
   function render() {
@@ -403,7 +474,7 @@
       renderContent();
     } catch {
       const mount = document.getElementById("lists-list");
-      if (mount) mount.innerHTML = global.AHAModules.buildModuleEmptyState({ type: "read_error", moduleId: "lists" });
+      if (mount) mount.innerHTML = global.AHAModules.buildModuleEmptyState({ type: "read_error", moduleId: "lists", title: "Could not read list data.", message: "Try refreshing the page." });
       global.AHAModules?.updatePageHealth?.("lists", global.AHAModules.localPageHealth({ error: true }));
     }
   }
@@ -430,9 +501,24 @@
       const target = event.target;
       if (!(target instanceof HTMLElement)) return;
 
+      const previewPayload = target.dataset.listSelectPreview;
+      if (previewPayload) {
+        selectedListId = previewPayload;
+        render();
+        document.getElementById("list-preview-title")?.focus?.();
+        return;
+      }
+
+      if (target.hasAttribute("data-list-preview-close")) {
+        selectedListId = "";
+        render();
+        return;
+      }
+
       const deletePayload = target.dataset.listDelete;
       if (deletePayload) {
         deleteList(deletePayload);
+        if (selectedListId === deletePayload) selectedListId = "";
         render();
         return;
       }
@@ -490,6 +576,10 @@
     removeItemFromList,
     collectAvailableItems,
     syncFromDatabase,
+    selectList(id) {
+      selectedListId = asText(id, "");
+      render();
+    },
     render,
     refresh
   };

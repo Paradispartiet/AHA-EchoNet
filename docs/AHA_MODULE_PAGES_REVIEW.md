@@ -634,3 +634,23 @@ Neste anbefalte PR er:
 ```text
 chore: clarify primary actions for AHA modules
 ```
+
+## 16. Oppfølging: Lists module experience forbedret
+
+`feat: improve Lists module experience` er gjennomført som en kontrollert produkt-/UX-endring på den eksisterende Lists-modulen:
+
+- Lists har nå en kompakt, nyeste-først overview med title, description, type, status, item count og oppdatertdato;
+- eksisterende `Create list` er beholdt som tydelig primary action;
+- standard empty/error states er konkretisert for Lists og viser ikke raw errors eller payload;
+- valgt liste har en read-only preview med de første fem item-titlene og en tydelig Close-handling;
+- eksisterende manage-handlinger er beholdt, men flyttet ut av hovedoversikten for å redusere action-støy;
+- status/count bruker eksisterende lokale data og module health-logikk uten nye databasekall;
+- layouten stacker til én kolonne på små skjermer og preview gir ikke horisontal overflow.
+
+Det som fortsatt gjenstår for Lists er eventuell senere metadataredigering, tydeligere operasjonsfeedback og større create/edit/delete-workflows. Dette er bevisst ikke bygget i denne PR-en. Sync core, manual sync adapter, database target/write-flow, audit writer, state machine, payload contract og Sync Hub er uendret. Auto-sync finnes fortsatt ikke.
+
+Neste anbefalte PR er:
+
+```text
+feat: improve Paths module experience
+```

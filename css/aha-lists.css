@@ -80,3 +80,147 @@
   gap: 10px;
   align-items: center;
 }
+
+.aha-lists-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(280px, .8fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.aha-list-overview,
+.aha-list-overview-grid,
+.aha-list-preview,
+.aha-list-manage-content {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.aha-list-section-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.aha-list-section-heading h2,
+.aha-list-overview-card h3,
+.aha-list-preview h2,
+.aha-list-preview h3,
+.aha-list-card-kicker {
+  margin: 0;
+}
+
+.aha-list-overview-card {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  transition: border-color 160ms ease, background 160ms ease;
+}
+
+.aha-list-overview-card.is-selected {
+  border-color: rgba(122, 198, 255, .72);
+  background: rgba(122, 198, 255, .07);
+}
+
+.aha-list-card-kicker,
+.aha-list-meta,
+.aha-list-summary,
+.aha-list-preview p {
+  overflow-wrap: anywhere;
+}
+
+.aha-list-card-kicker {
+  color: var(--muted, #aab4c3);
+  font-size: .78rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.aha-list-summary {
+  margin: 0;
+}
+
+.aha-list-meta {
+  color: var(--muted, #aab4c3);
+  font-size: .86rem;
+}
+
+.aha-list-meta > span:not(:last-child)::after {
+  content: "·";
+  margin-left: 6px;
+  color: rgba(255,255,255,.38);
+}
+
+.aha-list-preview {
+  position: sticky;
+  top: 16px;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.aha-list-preview-empty {
+  color: var(--muted, #aab4c3);
+}
+
+.aha-list-preview-empty h2 {
+  color: inherit;
+}
+
+.aha-list-preview-empty-item {
+  color: var(--muted, #aab4c3);
+}
+
+.aha-list-manage {
+  border-top: 1px solid rgba(255,255,255,.12);
+  padding-top: 10px;
+}
+
+.aha-list-manage summary {
+  cursor: pointer;
+  font-weight: 700;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+.aha-list-manage-content {
+  padding-top: 10px;
+}
+
+.aha-list-delete {
+  justify-self: start;
+  border-color: rgba(255, 112, 112, .48);
+  color: #ffb0b0;
+}
+
+.aha-list-overview-card button,
+.aha-list-preview button,
+.aha-list-manage summary {
+  min-height: 44px;
+}
+
+@media (max-width: 760px) {
+  .aha-lists-workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .aha-list-preview {
+    position: static;
+  }
+
+  .aha-list-header,
+  .aha-list-section-heading,
+  .aha-list-item-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .aha-list-overview-card button,
+  .aha-list-preview button,
+  .aha-list-add-row button,
+  .aha-list-delete {
+    width: 100%;
+  }
+}
