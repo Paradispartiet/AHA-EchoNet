@@ -34,7 +34,7 @@ assert.ok(dashboardCode.includes('Last manual sync audit failed.'), 'audit failu
 assert.ok(dashboardCode.includes('No manual sync runs yet.'), 'manual sync history should have a short empty state');
 assert.ok(dashboardCode.includes('No active blockers.'), 'blockers should have a short empty state');
 
-assert.ok(dashboardCode.includes('aria-label="AHA Sync Hub advanced diagnostics"'), 'advanced diagnostics should remain available');
+assert.ok(dashboardCode.includes('aria-labelledby="aha-sync-hub-advanced-title"'), 'advanced diagnostics should remain available with a visible label');
 assert.ok(dashboardCode.includes('${renderSyncHubPrepPanel(plan)}'), 'advanced diagnostics should retain the existing prep panel');
 assert.ok(dashboardCode.includes('${renderAhaManualSyncHistoryPanel()}'), 'advanced diagnostics should retain history and details');
 assert.ok(dashboardCode.includes('data-aha-sync-history-run-id'), 'history details action should remain available');
