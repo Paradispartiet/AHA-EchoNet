@@ -45,12 +45,12 @@ for (const status of ['ready', 'warning', 'blocked', 'empty', 'missing', 'unknow
 assert.ok(mount.innerHTML.includes('aha-module-health-count'), 'safe module counts should render in badges');
 assert.ok(mount.innerHTML.includes('>12</span>'), 'Lists count should render');
 assert.ok(mount.innerHTML.includes('title="Lists passed local validation."'), 'badge reason should render as a title');
-assert.ok(mount.innerHTML.includes('aria-label="Lister: ready, 12. Lists passed local validation."'), 'badge should expose status, count and reason accessibly');
+assert.ok(mount.innerHTML.includes('aria-label="Lister: Ready, 12. Lists passed local validation."'), 'badge should expose status, count and reason accessibly');
 
 assert.ok(dashboardCode.includes('buildAhaSyncDryRunPlan().forEach'), 'Home badges should reuse the existing read-only Sync Hub plan');
 assert.ok(dashboardCode.includes('status: "blocked"'), 'Sync Hub validation errors should map to blocked module health');
 assert.ok(dashboardCode.includes('health?.status === "blocked"'), 'active blockers summary should include blocked modules');
-assert.ok(dashboardCode.includes('Module-level health and counts are shown in the app menu.'), 'dashboard readiness details should point to the compact module menu');
+assert.ok(dashboardCode.includes('Module status at a glance in the app menu.'), 'dashboard readiness details should point to the compact module menu');
 assert.ok(dashboardCss.includes('.aha-module-health-badge'), 'compact module badge styling should exist');
 assert.equal(modulesCode.includes('localStorage'), false, 'module menu rendering must not read or write localStorage directly');
 assert.equal(/AHARepository|supabase|createClient|syncFromDatabase|autoSync/.test(modulesCode), false, 'module menu renderer must not introduce sync or database behavior');

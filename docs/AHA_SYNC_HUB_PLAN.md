@@ -610,3 +610,15 @@ Neste anbefalte PR er:
 ```text
 chore: normalize AHA Home card titles and empty states
 ```
+
+## 19. Sync Hub/Home copy er normalisert
+
+Sync Hub-kortet og den tilhørende Home-presentasjonen bruker nå kortere titler, help text, empty states, error states, action labels og statuslabels. History-feil i UI vises som en kort, sanitert melding, mens teknisk diagnostikk forblir avgrenset til Advanced diagnostics. Critical blockers og failed/audit states er fortsatt synlige i kompaktvisningen.
+
+Dette er kun UI/tekst/organisering. Core sync, database/write-flow, adapter, audit writer, state machine-regler, payload contract, history/details-dataflyt og retry logic er ikke endret. Ingen auto-sync eller ny databaseklient er introdusert.
+
+Neste anbefalte PR er:
+
+```text
+chore: improve AHA Home mobile/tablet layout
+```

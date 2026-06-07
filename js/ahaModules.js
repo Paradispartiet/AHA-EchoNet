@@ -211,12 +211,18 @@
     });
   }
 
+  function moduleHealthLabel(status) {
+    const labels = { ready: "Ready", warning: "Warning", blocked: "Blocked", empty: "Empty", missing: "Missing", unknown: "Unknown" };
+    return labels[status] || "Unknown";
+  }
+
   function renderHealthBadge(module, rawHealth) {
     const health = normalizeModuleHealth(rawHealth);
+    const statusLabel = moduleHealthLabel(health.status);
     const count = health.count === null ? "" : `<span class="aha-module-health-count" aria-hidden="true">${health.count}</span>`;
-    const accessibleLabel = `${module.title}: ${health.status}${health.count === null ? "" : `, ${health.count}`}. ${health.reason}`;
+    const accessibleLabel = `${module.title}: ${statusLabel}${health.count === null ? "" : `, ${health.count}`}. ${health.reason}`;
     return `<span class="aha-module-health-badge aha-module-health-${health.status}" title="${escapeHtml(health.reason)}" aria-label="${escapeHtml(accessibleLabel)}">
-      <span>${health.status}</span>${count}
+      <span>${statusLabel}</span>${count}
     </span>`;
   }
 
