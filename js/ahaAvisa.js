@@ -393,7 +393,10 @@
     return out;
   }
 
-  function render() {
+  function renderContent() {
+    const rawDataset = localStorage.getItem(ARTICLES_KEY);
+    const datasetExists = rawDataset !== null;
+    if (datasetExists) JSON.parse(rawDataset);
     const mount = document.getElementById("avisa-articles");
     const draftCountEl = document.getElementById("avisa-draft-count");
     const reviewCountEl = document.getElementById("avisa-review-count");
@@ -428,6 +431,10 @@
     if (groupCountEl) groupCountEl.textContent = String(groupCount);
     if (publicCandidateCountEl) publicCandidateCountEl.textContent = String(publicCandidateCount);
     if (lastUpdatedEl) lastUpdatedEl.textContent = latestUpdatedAt ? formatDateLabel(new Date(latestUpdatedAt).toISOString()) : "-";
+    global.AHAModules?.updatePageHealth?.("avisa", global.AHAModules.localPageHealth({
+      count: articles.length,
+      datasetExists
+    }));
 
     const publicPublishingAllowed = global.AHAPrivacy?.loadSettings?.().allowPublicPublishing === true;
     if (privacyWarningEl) {
@@ -439,7 +446,7 @@
 
     if (!mount) return;
     if (!articles.length) {
-      mount.innerHTML = '<article class="aha-panel"><p>Ingen artikkelutkast ennå. Opprett et utkast over.</p></article>';
+      mount.innerHTML = `<article class="aha-panel aha-module-state aha-module-empty"><p>${datasetExists ? "No AHAavisa notes yet." : "No module data found."}</p></article>`;
       return;
     }
 
@@ -519,7 +526,17 @@
           </section>
         </article>
       `;
-    }).join("") || '<article class="aha-panel"><p>Ingen artikler i valgt seksjonsfilter.</p></article>';
+    }).join("") || '<article class="aha-panel aha-module-state aha-module-empty"><p>No notes match the selected filters.</p></article>';
+  }
+
+  function render() {
+    try {
+      renderContent();
+    } catch {
+      const mount = document.getElementById("avisa-articles");
+      if (mount) mount.innerHTML = '<article class="aha-panel aha-module-state aha-module-error" role="alert"><p>Could not read module data.</p></article>';
+      global.AHAModules?.updatePageHealth?.("avisa", global.AHAModules.localPageHealth({ error: true }));
+    }
   }
 
   function refresh() { render(); }
