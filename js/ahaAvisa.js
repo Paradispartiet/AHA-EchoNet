@@ -446,7 +446,11 @@
 
     if (!mount) return;
     if (!articles.length) {
-      mount.innerHTML = `<article class="aha-panel aha-module-state aha-module-empty"><p>${datasetExists ? "No AHAavisa notes yet." : "No module data found."}</p></article>`;
+      mount.innerHTML = global.AHAModules.buildModuleEmptyState({
+        type: datasetExists ? "no_data" : "missing_source",
+        moduleId: "avisa",
+        hint: datasetExists ? "Use New note above when you are ready." : "AHAavisa notes will appear here when available."
+      });
       return;
     }
 
@@ -526,7 +530,7 @@
           </section>
         </article>
       `;
-    }).join("") || '<article class="aha-panel aha-module-state aha-module-empty"><p>No notes match the selected filters.</p></article>';
+    }).join("") || global.AHAModules.buildModuleEmptyState({ type: "filtered_empty", moduleId: "avisa" });
   }
 
   function render() {
@@ -534,7 +538,7 @@
       renderContent();
     } catch {
       const mount = document.getElementById("avisa-articles");
-      if (mount) mount.innerHTML = '<article class="aha-panel aha-module-state aha-module-error" role="alert"><p>Could not read module data.</p></article>';
+      if (mount) mount.innerHTML = global.AHAModules.buildModuleEmptyState({ type: "read_error", moduleId: "avisa" });
       global.AHAModules?.updatePageHealth?.("avisa", global.AHAModules.localPageHealth({ error: true }));
     }
   }

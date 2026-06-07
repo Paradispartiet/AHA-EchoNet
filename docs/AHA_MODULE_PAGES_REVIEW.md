@@ -622,3 +622,15 @@ Neste anbefalte PR er:
 ```text
 chore: standardize AHA module empty states
 ```
+
+## 15. Oppfølging: empty-state standardization gjennomført
+
+`chore: standardize AHA module empty states` er gjennomført for Lists, Paths, Groups og AHAavisa. Modulene bruker nå et felles, tekstlig empty-state-mønster som skiller mellom tomt datasett, manglende lokal datakilde, ikke-konfigurert modul, eksisterende filter uten treff, lesefeil og ukjent fallback. `read_error` viser ikke raw error-objekter eller stack traces, og AHAavisa bruker `filtered_empty` bare for filtrene som allerede fantes.
+
+Endringen standardiserer UI, tekst og organisering. Ingen create/edit/delete-funksjonalitet ble implementert eller utvidet. Sync-/write-flow, databasegrense, adapter, audit writer, state machine, payload contract, module persistence, retry logic og AHA Sync Hub core er uendret. Auto-sync er fortsatt ikke innført.
+
+Neste anbefalte PR er:
+
+```text
+chore: clarify primary actions for AHA modules
+```

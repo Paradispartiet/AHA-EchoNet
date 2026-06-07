@@ -335,7 +335,11 @@
     }));
 
     if (!lists.length) {
-      mount.innerHTML = `<article class="aha-panel aha-module-state aha-module-empty"><p>${datasetExists ? "No lists yet." : "No module data found."}</p></article>`;
+      mount.innerHTML = global.AHAModules.buildModuleEmptyState({
+        type: datasetExists ? "no_data" : "missing_source",
+        moduleId: "lists",
+        hint: datasetExists ? "Use Create list above when you are ready." : "Lists will appear here when available."
+      });
       return;
     }
 
@@ -399,7 +403,7 @@
       renderContent();
     } catch {
       const mount = document.getElementById("lists-list");
-      if (mount) mount.innerHTML = '<article class="aha-panel aha-module-state aha-module-error" role="alert"><p>Could not read module data.</p></article>';
+      if (mount) mount.innerHTML = global.AHAModules.buildModuleEmptyState({ type: "read_error", moduleId: "lists" });
       global.AHAModules?.updatePageHealth?.("lists", global.AHAModules.localPageHealth({ error: true }));
     }
   }

@@ -365,7 +365,11 @@
     }));
 
     if (!paths.length) {
-      mount.innerHTML = `<article class="aha-panel aha-module-state aha-module-empty"><p>${datasetExists ? "No paths yet." : "No module data found."}</p></article>`;
+      mount.innerHTML = global.AHAModules.buildModuleEmptyState({
+        type: datasetExists ? "no_data" : "missing_source",
+        moduleId: "paths",
+        hint: datasetExists ? "Use Create path above when you are ready." : "Paths will appear here when available."
+      });
       return;
     }
 
@@ -429,7 +433,7 @@
       renderContent();
     } catch {
       const mount = document.getElementById("paths-list");
-      if (mount) mount.innerHTML = '<article class="aha-panel aha-module-state aha-module-error" role="alert"><p>Could not read module data.</p></article>';
+      if (mount) mount.innerHTML = global.AHAModules.buildModuleEmptyState({ type: "read_error", moduleId: "paths" });
       global.AHAModules?.updatePageHealth?.("paths", global.AHAModules.localPageHealth({ error: true }));
     }
   }

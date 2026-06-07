@@ -756,7 +756,11 @@
               </form>
             </section>
           </article>
-        `).join("") : '<article class="aha-panel aha-module-state aha-module-empty"><p>No groups yet.</p></article>'}
+        `).join("") : global.AHAModules.buildModuleEmptyState({
+          type: datasetExists ? "no_data" : "missing_source",
+          moduleId: "groups",
+          hint: datasetExists ? "Use Create group above when you are ready." : "Groups will appear here when available."
+        })}
       </section>
 
       ${activeGroup ? `
@@ -870,7 +874,7 @@
           </header>
           <div class="aha-module-actions"><a class="aha-tile-btn" href="index.html">Back to AHA Home</a></div>
         </section>
-        <section class="aha-panel aha-module-state aha-module-error" role="alert"><p>Could not render module.</p></section>`;
+        ${global.AHAModules.buildModuleEmptyState({ type: "read_error", moduleId: "groups" })}`;
     }
   }
 
