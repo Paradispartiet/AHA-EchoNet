@@ -13,7 +13,7 @@ const forbiddenHomeModules = ['js/ahaLists.js', 'js/ahaPaths.js', 'js/ahaGroups.
 (function run() {
   assert.notEqual(previewStart, -1, 'history/retry preview UI block should exist');
   assert.ok(previewCode.includes('Retry eligibility'));
-  assert.ok(previewCode.includes('Preview only. Retry is not implemented yet.'));
+  assert.ok(previewCode.includes('Read-only eligibility preview. Retry is not available.'));
   assert.equal(previewCode.includes('Retry now'), false, 'preview must not show a Retry now action');
 
   for (const code of [previewCode, helper]) {

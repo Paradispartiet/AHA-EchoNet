@@ -1469,6 +1469,22 @@ html, body { max-width: 100%; overflow-x: hidden; }
 
 .aha-sync-history-actions { justify-items: end; }
 
+.aha-compact-state {
+  display: grid;
+  gap: 3px;
+  margin: 0;
+  padding: 8px 9px;
+  border-radius: 9px;
+  color: var(--aha-muted);
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 0.76rem;
+}
+.aha-compact-state strong { color: var(--aha-text); }
+.aha-compact-state-error {
+  border: 1px solid rgba(255, 96, 96, 0.2);
+  background: rgba(255, 96, 96, 0.06);
+}
+
 .aha-sync-retry-badge {
   display: inline-flex;
   width: fit-content;
@@ -1684,7 +1700,6 @@ html, body { max-width: 100%; overflow-x: hidden; }
   font-size: .69rem;
   font-weight: 900;
   line-height: 1;
-  text-transform: lowercase;
   white-space: nowrap;
 }
 

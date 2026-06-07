@@ -235,7 +235,7 @@
       <article class="aha-compact-status-card aha-compact-status-card-primary" aria-label="System health">
         <div class="aha-compact-status-header">
           <h3>System health</h3>
-          <span class="aha-status-badge aha-status-badge-${dashboardBlocked ? "warning" : "ready"}">${dashboardBlocked ? "Needs attention" : "Operational"}</span>
+          <span class="aha-status-badge aha-status-badge-${dashboardBlocked ? "warning" : "ready"}">${dashboardBlocked ? "Needs review" : "Ready"}</span>
         </div>
         <strong class="aha-compact-status-primary">Dashboard is available</strong>
         <dl class="aha-compact-meta">
@@ -243,18 +243,18 @@
           <div><dt>Profile</dt><dd>${escapeHtml(profileStatus)}</dd></div>
         </dl>
       </article>
-      <article class="aha-compact-status-card" aria-label="AHA data readiness">
+      <article class="aha-compact-status-card" aria-label="Data readiness">
         <div class="aha-compact-status-header">
-          <h3>AHA data readiness</h3>
-          <span class="aha-status-badge aha-status-badge-${totalItems > 0 ? "ready" : "neutral"}">${totalItems > 0 ? "Data available" : "Empty"}</span>
+          <h3>Data readiness</h3>
+          <span class="aha-status-badge aha-status-badge-${totalItems > 0 ? "ready" : "neutral"}">${totalItems > 0 ? "Ready" : "Empty"}</span>
         </div>
         <strong class="aha-compact-status-primary">${totalItems} dashboard items · History Go ${historyGoReady ? "ready" : "not imported"}</strong>
-        <p class="aha-compact-status-note">Module-level health and counts are shown in the app menu.</p>
+        <p class="aha-compact-status-note">Module status at a glance in the app menu.</p>
       </article>
       <article class="aha-compact-status-card" aria-label="Dashboard blockers">
         <div class="aha-compact-status-header">
-          <h3>Active blockers</h3>
-          <span class="aha-status-badge aha-status-badge-${dashboardBlocked ? "blocked" : "ready"}">${dashboardBlocked ? `${blockerCount} blocker${blockerCount === 1 ? "" : "s"}` : "Clear"}</span>
+          <h3>Blockers</h3>
+          <span class="aha-status-badge aha-status-badge-${dashboardBlocked ? "blocked" : "ready"}">${dashboardBlocked ? "Blocked" : "Ready"}</span>
         </div>
         <strong class="aha-compact-status-primary">${escapeHtml(blockerSummary)}</strong>
         <p class="aha-compact-status-note">Updated ${formatTime()}</p>
@@ -1486,7 +1486,7 @@
         : `Audit log ${auditStatus}`;
     return `
       <div class="aha-sync-validation-block aha-sync-result aha-sync-result-${escapeHtml(status)}" aria-live="polite">
-        <h5>Last manual sync result</h5>
+        <h5>Last run</h5>
         <p><strong>status:</strong> ${escapeHtml(status)}</p>
         <p>${escapeHtml(reason)}</p>
         <p><strong>auditStatus:</strong> ${escapeHtml(auditStatus)} · ${escapeHtml(auditLabel)}${auditId ? ` · <strong>auditId:</strong> ${escapeHtml(auditId)}` : ""}</p>
@@ -1505,12 +1505,12 @@
       <div class="aha-sync-manual-gate" aria-label="AHA Sync Hub manual sync gate">
         <div class="aha-sync-prep-heading">
           <p class="eyebrow">Manual sync</p>
-          <h4>Manual sync control</h4>
+          <h4>Manual sync</h4>
           <p class="aha-sync-unavailable-notice">Manual sync is gated; no auto-sync exists.</p>
         </div>
         <div class="aha-sync-manual-actions">
           <button type="button" class="aha-sync-manual-button" disabled aria-disabled="true" aria-describedby="aha-sync-manual-disabled-reason">Manual sync</button>
-          <button id="aha-sync-confirmation-preview" type="button" class="aha-sync-confirmation-preview-button" aria-haspopup="dialog">Preview confirmation</button>
+          <button id="aha-sync-confirmation-preview" type="button" class="aha-sync-confirmation-preview-button" aria-haspopup="dialog">Prepare sync</button>
         </div>
         <div id="aha-sync-manual-disabled-reason" class="aha-sync-validation-block">
           <h5>Gate status</h5>
@@ -1734,8 +1734,8 @@
 
   function renderAhaManualSyncHistoryList() {
     const state = ahaManualSyncHistoryState;
-    if (state.status === "loading" || state.status === "idle") return '<p class="aha-sync-history-empty">Loading manual sync history …</p>';
-    if (state.status !== "loaded") return `<p class="aha-sync-history-empty">Manual sync history unavailable: ${escapeHtml(state.reason || state.status)}.</p>`;
+    if (state.status === "loading" || state.status === "idle") return '<p class="aha-sync-history-empty">Loading sync history …</p>';
+    if (state.status !== "loaded") return '<div class="aha-compact-state aha-compact-state-error" role="status"><strong>Could not read sync history.</strong><span>View diagnostics for technical details.</span></div>';
     if (!state.entries.length) return '<p class="aha-sync-history-empty">No manual sync runs yet.</p>';
 
     return `
@@ -1751,7 +1751,7 @@
           return `
             <li class="aha-sync-history-row">
               <div>
-                <strong>${escapeHtml(run.resultStatus)}</strong>
+                <strong>${escapeHtml(formatAhaStatusLabel(run.resultStatus))}</strong>
                 <span>${escapeHtml(run.target || "Missing target")} · ${escapeHtml(run.totalItems)} items</span>
                 <small>${escapeHtml(run.timestamp || "Unknown time")} · <code>${escapeHtml(run.runId || "missing runId")}</code></small>
               </div>
@@ -1781,7 +1781,7 @@
         <div class="aha-sync-history-drawer-header">
           <div>
             <p class="eyebrow">Manual sync history</p>
-            <h5>Run details</h5>
+            <h5>Details</h5>
           </div>
           <button id="aha-sync-history-details-close" type="button" class="aha-sync-history-details-button">Close</button>
         </div>
@@ -1793,8 +1793,7 @@
         </dl>
         <section class="aha-sync-retry-preview" aria-label="Retry eligibility">
           <h5>Retry eligibility</h5>
-          <p class="aha-sync-prep-notice">Preview only. Retry is not implemented yet.</p>
-          <p>Retry is not implemented yet. This is an eligibility preview only.</p>
+          <p class="aha-sync-prep-notice">Read-only eligibility preview. Retry is not available.</p>
           <dl class="aha-sync-history-details-grid">
             <div><dt>retryEligible</dt><dd>${escapeHtml(preview.retryEligible)}</dd></div>
             <div><dt>status</dt><dd>${escapeHtml(preview.status)}</dd></div>
@@ -1803,15 +1802,15 @@
           </dl>
           <p><strong>Reason:</strong> ${escapeHtml(preview.reason)}</p>
           <div class="aha-sync-validation-columns">
-            <div><strong>Blockers</strong>${renderList(preview.blockers, "No blockers recorded.")}</div>
-            <div><strong>Warnings</strong>${renderList(preview.warnings, "No warnings recorded.")}</div>
+            <div><strong>Blockers</strong>${renderList(preview.blockers, "No active blockers.")}</div>
+            <div><strong>Warnings</strong>${renderList(preview.warnings, "No warnings.")}</div>
           </div>
-          <div><strong>Modules</strong>${renderList(preview.modules, "No included modules.")}</div>
+          <div><strong>Modules</strong>${renderList(preview.modules, "No module data found.")}</div>
           <div>
             <strong>Item counts</strong>
-            ${itemCounts.length ? `<div class="aha-sync-audit-counts">${itemCounts.map(([moduleId, count]) => `<span><strong>${escapeHtml(moduleId)}</strong>: ${escapeHtml(count)}</span>`).join("")}</div>` : '<p class="aha-sync-validation-empty">No item counts.</p>'}
+            ${itemCounts.length ? `<div class="aha-sync-audit-counts">${itemCounts.map(([moduleId, count]) => `<span><strong>${escapeHtml(moduleId)}</strong>: ${escapeHtml(count)}</span>`).join("")}</div>` : '<p class="aha-sync-validation-empty">No module data found.</p>'}
           </div>
-          <div><strong>Required before retry</strong>${renderList(preview.requiredBeforeRetry, "No retry preparation applies.")}</div>
+          <div><strong>Required before retry</strong>${renderList(preview.requiredBeforeRetry, "No action required.")}</div>
         </section>
       </aside>
     `;
@@ -1822,7 +1821,7 @@
       <section class="aha-sync-history-panel" aria-label="Manual sync history">
         <div class="aha-sync-prep-heading">
           <h4>Manual sync history</h4>
-          <p class="aha-sync-prep-notice">Read-only audit history. Opening details or retry eligibility never starts sync or writes data.</p>
+          <p class="aha-sync-prep-notice">Latest manual sync runs. Read-only.</p>
         </div>
         ${renderAhaManualSyncHistoryList()}
         ${renderAhaManualSyncHistoryDetailsDrawer()}
@@ -1987,6 +1986,28 @@
     };
   }
 
+  function formatAhaStatusLabel(status) {
+    const normalized = String(status || "unknown").trim().toLowerCase();
+    const labels = {
+      ready: "Ready",
+      passed: "Ready",
+      needs_review: "Needs review",
+      blocked: "Blocked",
+      warning: "Warning",
+      warnings: "Warning",
+      missing: "Missing",
+      not_configured: "Missing",
+      empty: "Empty",
+      success: "Success",
+      partial_success: "Warning",
+      failed: "Failed",
+      write_failed: "Failed",
+      audit_failed: "Failed",
+      unknown: "Unknown"
+    };
+    return labels[normalized] || "Unknown";
+  }
+
   function isCriticalAhaManualSyncStatus(status) {
     return ["failed", "partial_success", "blocked", "write_failed", "audit_failed"].includes(String(status || "").toLowerCase());
   }
@@ -1995,7 +2016,7 @@
     const critical = uniqueAhaSyncMessages([
       ...(blockers || []),
       ...(isCriticalAhaManualSyncStatus(lastRun?.status)
-        ? [`Last manual sync ${lastRun.status}${lastRun.reason ? `: ${lastRun.reason}` : "."}`]
+        ? [`${formatAhaStatusLabel(lastRun.status)} last run.`]
         : []),
       ...(String(lastRun?.auditStatus || "").toLowerCase() === "failed" ? ["Last manual sync audit failed."] : [])
     ]);
@@ -2031,20 +2052,20 @@
       const includedModules = (payloadPreview.modules || []).filter((modulePreview) => modulePreview.included);
       const lastRun = getAhaManualSyncLastRun();
       const lastRunLabel = lastRun
-        ? `${lastRun.status || lastRun.resultStatus || "unknown"}${lastRun.timestamp ? ` · ${lastRun.timestamp}` : ""}`
+        ? `${formatAhaStatusLabel(lastRun.status || lastRun.resultStatus)}${lastRun.timestamp ? ` · ${lastRun.timestamp}` : ""}`
         : "No manual sync runs yet.";
-      const buttonLabel = isSyncHubPrepOpen ? "Close Sync Hub" : "Open Sync Hub";
+      const buttonLabel = isSyncHubPrepOpen ? "Close" : "Open Sync Hub";
 
       mount.innerHTML = `
         <section class="aha-status-card aha-sync-hub-compact-card" aria-label="AHA Sync Hub status">
           <div class="aha-compact-status-header">
             <div>
               <p class="eyebrow">AHA Sync Hub</p>
-              <h3>Manual sync status</h3>
+              <h3>Sync Hub</h3>
             </div>
             <span class="aha-status-badge aha-status-badge-${badgeStatus}">${readiness}</span>
           </div>
-          <strong class="aha-compact-status-primary">${blockers.length ? "Manual sync needs attention." : "Manual sync is ready for explicit confirmation."}</strong>
+          <strong class="aha-compact-status-primary">${blockers.length ? "Manual sync needs review." : "Manual sync is ready."}</strong>
           <dl class="aha-compact-meta aha-sync-hub-compact-meta">
             <div><dt>Target</dt><dd>${escapeHtml(targetLabel)}</dd></div>
             <div><dt>Included</dt><dd>${includedModules.length} modules · ${escapeHtml(payloadPreview.totalPreviewItems)} items</dd></div>
@@ -2056,13 +2077,13 @@
             <div id="aha-sync-hub-advanced" class="aha-sync-hub-advanced" role="region" aria-label="AHA Sync Hub advanced diagnostics">
               <div class="aha-sync-hub-advanced-heading">
                 <strong>Advanced diagnostics</strong>
-                <span>Dry-run, payload sample, adapter/state details and read-only history.</span>
+                <span>Read-only diagnostics.</span>
               </div>
               ${renderSyncHubPrepPanel(plan)}
               ${renderAhaManualSyncHistoryPanel()}
             </div>
           ` : ""}
-          <small class="aha-status-updated">Read-only summary · Updated ${formatTime()}</small>
+          <small class="aha-status-updated">Manual only. No auto-sync. · Updated ${formatTime()}</small>
         </section>
       `;
       bindSyncHubPrepToggle();
@@ -2070,19 +2091,19 @@
     } catch (error) {
       console.warn("AHADashboard: AHA Sync Hub status kunne ikke leses", error);
       const plan = SYNC_HUB_DRY_RUN_SOURCES.map((source) => createSyncHubDryRunResult(source, "–", "error", "Could not read localStorage", ["Could not inspect this dataset."]));
-      const buttonLabel = isSyncHubPrepOpen ? "Close Sync Hub" : "Open Sync Hub";
+      const buttonLabel = isSyncHubPrepOpen ? "Close" : "Open Sync Hub";
       mount.innerHTML = `
         <section class="aha-status-card aha-sync-hub-compact-card" aria-label="AHA Sync Hub status">
           <div class="aha-compact-status-header">
-            <div><p class="eyebrow">AHA Sync Hub</p><h3>Manual sync status</h3></div>
-            <span class="aha-status-badge aha-status-badge-blocked">Unavailable</span>
+            <div><p class="eyebrow">AHA Sync Hub</p><h3>Sync Hub</h3></div>
+            <span class="aha-status-badge aha-status-badge-blocked">Blocked</span>
           </div>
-          <strong class="aha-compact-status-primary">Readiness is blocked.</strong>
+          <strong class="aha-compact-status-primary">Could not inspect local data.</strong>
           <dl class="aha-compact-meta"><div><dt>Target</dt><dd>Target not configured.</dd></div><div><dt>Last run</dt><dd>No manual sync runs yet.</dd></div></dl>
-          <div class="aha-compact-alert" role="alert"><strong>1 active blocker</strong><ul><li>Sync status could not be read.</li></ul></div>
+          <div class="aha-compact-alert" role="alert"><strong>Blocked</strong><ul><li>Sync status could not be read.</li></ul></div>
           <button id="aha-sync-hub-prep-toggle" type="button" class="aha-sync-prep-toggle aha-sync-hub-open-button" aria-expanded="${isSyncHubPrepOpen}" aria-controls="aha-sync-hub-advanced">${buttonLabel}</button>
           ${isSyncHubPrepOpen ? `<div id="aha-sync-hub-advanced" class="aha-sync-hub-advanced" role="region" aria-label="AHA Sync Hub advanced diagnostics">${renderSyncHubPrepPanel(plan)}${renderAhaManualSyncHistoryPanel()}</div>` : ""}
-          <small class="aha-status-updated">Status error · Dashboard continues without sync.</small>
+          <small class="aha-status-updated">Manual only. No auto-sync. View diagnostics.</small>
         </section>
       `;
       bindSyncHubPrepToggle();

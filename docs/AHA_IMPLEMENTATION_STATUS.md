@@ -1,8 +1,8 @@
 # AHA Implementation Status
 
-Statusdato: 2026-06-06
+Statusdato: 2026-06-07
 
-Dette dokumentet oppsummerer nåværende implementasjonsstatus for AHA etter dokumentlåser, sync-hardening, Search note_reanalysis-visning, Mindmap tombstone-filtrering, Mindmap note_reanalysis-visning, Lists-, Paths-, Meta Insights-, Groups- og AHAavisa/Articles-bolkene, Sync Hub pre-sync UI, manual sync execution contract, manual sync confirmation modal, audit log preview, target selector preview, manual sync target contract, manual sync adapter interface stub, execution state machine stub, manual sync run summary preview, activation blocker tests og target adapter dry-run harness og database_existing wiring til eksisterende AHARepository target, manual sync audit log writer, read-only result history/details, retry eligibility preview, end-to-end-verifikasjon av den manuelle sync-løypa mot mock/stub av eksisterende database target og kompakte statuskort på AHA Home.
+Dette dokumentet oppsummerer nåværende implementasjonsstatus for AHA etter dokumentlåser, sync-hardening, Search note_reanalysis-visning, Mindmap tombstone-filtrering, Mindmap note_reanalysis-visning, Lists-, Paths-, Meta Insights-, Groups- og AHAavisa/Articles-bolkene, Sync Hub pre-sync UI, manual sync execution contract, manual sync confirmation modal, audit log preview, target selector preview, manual sync target contract, manual sync adapter interface stub, execution state machine stub, manual sync run summary preview, activation blocker tests og target adapter dry-run harness og database_existing wiring til eksisterende AHARepository target, manual sync audit log writer, read-only result history/details, retry eligibility preview, end-to-end-verifikasjon av den manuelle sync-løypa mot mock/stub av eksisterende database target, kompakte statuskort på AHA Home, module health i modulmenyen og normaliserte Home-korttitler/empty states.
 
 Dokumentet er en statuslås for denne runtime-endringen. Den innfører ikke ny motor, ny Supabase-migrasjon, ny databaseklient, nye credentials eller ny backend.
 
@@ -1171,10 +1171,10 @@ Verifisert status:
 ✅ ingen retry execution eller auto-sync
 ```
 
-Videre sync-scaffolding skal stoppes. Neste anbefalte PR er:
+Videre sync-scaffolding skal stoppes. Etter gjennomført gruppering av Advanced diagnostics, module health i modulmenyen og copy-normalisering er neste anbefalte PR:
 
 ```text
-chore: group AHA Home advanced diagnostics
+chore: improve AHA Home mobile/tablet layout
 ```
 
 Denne fasen skal være rydding og forenkling av eksisterende operatorflate, ikke mer sync-funksjonalitet.
@@ -1220,7 +1220,10 @@ Denne fasen skal være rydding og forenkling av eksisterende operatorflate, ikke
 36. ✅ feat: add AHA manual sync retry eligibility preview
 37. ✅ docs: define AHA manual sync retry contract
 38. ✅ test: verify AHA manual sync end-to-end with existing database target
-39. Neste: chore: group AHA Home advanced diagnostics
+39. ✅ chore: group AHA Home advanced diagnostics
+40. ✅ chore: move module health badges into module menu
+41. ✅ chore: normalize AHA Home card titles and empty states
+42. Neste: chore: improve AHA Home mobile/tablet layout
 ```
 
 Ikke gå videre til storage, import, Insta/social graph, EchoNet eller faktisk AHA manual sync/write før activation blocker tests er på plass, adapter implementation contract, konkret target-adapter, audit log-skriving og rollback/partial failure behavior er dokumentert, implementert og testet uten auto-sync og uten skjulte databasekall.
@@ -1248,4 +1251,25 @@ Neste anbefalte PR er:
 
 ```text
 chore: normalize AHA Home card titles and empty states
+```
+
+## 10. AHA Home card titles og empty states
+
+AHA Home bruker nå korte, konsistente engelske titler og presentasjonslabels i de berørte Home-kortene: `System health`, `Data readiness`, `Blockers`, `Sync Hub`, `Manual sync history`, `Advanced diagnostics`, `Modules` og `Activity`. Empty states, kompakte error states, action labels og synlige statuslabels er normalisert uten å lage et nytt kortsystem.
+
+Dette er kun UI/tekst/organisering:
+
+```text
+- critical blockers, validation errors, blocked readiness, audit failure og failed last run er fortsatt synlige
+- history/details og retry eligibility preview er beholdt
+- raw history reasons, full payload, secrets og raw audit JSON vises ikke i hovedvisningen
+- sync/write-flow, database-boundary, adapter, audit writer, state machine, payload contract og retry logic er ikke endret
+- ingen nye databasekall eller databaseklient er lagt til
+- auto-sync finnes fortsatt ikke
+```
+
+Neste anbefalte PR er:
+
+```text
+chore: improve AHA Home mobile/tablet layout
 ```

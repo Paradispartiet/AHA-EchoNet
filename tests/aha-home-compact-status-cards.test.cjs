@@ -20,11 +20,11 @@ for (const file of forbiddenHomeLoads) {
   assert.equal(dashboardCode.includes(file), false, `dashboard must not load ${file}`);
 }
 
-for (const label of ['System health', 'AHA data readiness', 'Active blockers']) {
+for (const label of ['System health', 'Data readiness', 'Blockers']) {
   assert.ok(dashboardCode.includes(label), `compact Home status should include ${label}`);
 }
 
-for (const label of ['Target', 'Included', 'Last run', 'Open Sync Hub']) {
+for (const label of ['Sync Hub', 'Target', 'Included', 'Last run', 'Open Sync Hub']) {
   assert.ok(dashboardCode.includes(label), `compact Sync Hub card should include ${label}`);
 }
 
