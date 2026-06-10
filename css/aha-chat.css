@@ -458,3 +458,30 @@ pre#out { max-height: 22vh; overflow:auto; white-space: pre-wrap; }
   .aha-mobile-nav a[aria-current="page"] { background: rgba(255,211,71,0.16); color: var(--aha-accent); }
 }
 
+
+/* Meta Insights AI-session (agent-flyt fra AHA Home) */
+.meta-ai-session-box, .meta-ai-claims {
+  border: 1px solid var(--aha-border);
+  border-radius: 14px;
+  background: rgba(255, 211, 71, 0.07);
+  padding: 12px 14px;
+  margin: 10px 0;
+  font-size: .85rem;
+}
+.meta-ai-session-title, .meta-ai-claims-title { color: var(--aha-accent); font-weight: 700; margin-bottom: 6px; }
+.meta-ai-session-row { color: var(--aha-text); opacity: .9; margin: 2px 0; }
+.meta-ai-claim-card { border-top: 1px solid var(--aha-border); padding: 8px 0; }
+.meta-ai-claim-text { font-weight: 600; margin-bottom: 4px; }
+.meta-ai-claim-basis, .meta-ai-claim-confidence, .meta-ai-question, .meta-ai-next-step { opacity: .8; margin: 2px 0; }
+.meta-ai-claim-status { color: var(--aha-accent); min-height: 1em; margin: 2px 0; }
+.meta-ai-claim-feedback { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.meta-ai-feedback-btn {
+  border: 1px solid var(--aha-border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--aha-text);
+  font-size: .76rem;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+.meta-ai-feedback-btn:hover { border-color: var(--aha-accent); color: var(--aha-accent); }

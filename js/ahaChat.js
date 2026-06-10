@@ -5777,6 +5777,149 @@
     setExportButtonsEnabled(true);
   }
 
+  // ── Meta Insights AI-session ─────────────────────────────
+  // Når AHA Home starter en agentsesjon ("Tenk med Meta AI"), kommer
+  // payloaden inn via aha_pending_chat_prompt_v1 med type
+  // meta_insights_ai_session. Chatten prefyller agentprompten, viser en
+  // session-boks og parser AI-svaret til claims som brukeren kan gi
+  // feedback på. Feedback lagres lokalt i AHAMetaInsightsMemory.
+  let activeMetaAiSession = null;
+
+  function getActiveMetaAiSession() {
+    return activeMetaAiSession;
+  }
+
+  function appendMetaAiLine(parent, className, text) {
+    const el = document.createElement("div");
+    el.className = className;
+    el.textContent = text;
+    parent.appendChild(el);
+    return el;
+  }
+
+  function renderMetaAiSessionBox(session) {
+    const log = document.getElementById("chat-log");
+    if (!log || !session) return null;
+    const summary = session.agentContext?.algorithmicSummary || {};
+    const readiness = summary.readiness || {};
+    const themes = (Array.isArray(summary.strongest_themes) ? summary.strongest_themes : []).slice(0, 3);
+    const concepts = (Array.isArray(summary.strongest_concepts) ? summary.strongest_concepts : []).slice(0, 3);
+    const box = document.createElement("section");
+    box.className = "meta-ai-session-box";
+    box.setAttribute("aria-label", "Meta Insights AI-session");
+    box.dataset.sessionId = String(session.sessionId || "");
+    appendMetaAiLine(box, "meta-ai-session-title", "Meta Insights AI");
+    appendMetaAiLine(box, "meta-ai-session-row", `Session: ${session.sessionId || "ukjent"}`);
+    appendMetaAiLine(box, "meta-ai-session-row", `Beredskap: ${readiness.level || "ukjent"} (${Number(readiness.score) || 0}/100)`);
+    appendMetaAiLine(box, "meta-ai-session-row", `Læringsmodus: ${summary.learning_mode || "ukjent"}`);
+    appendMetaAiLine(box, "meta-ai-session-row", `Topp temaer: ${themes.join(", ") || "ingen ennå"}`);
+    appendMetaAiLine(box, "meta-ai-session-row", `Topp begreper: ${concepts.join(", ") || "ingen ennå"}`);
+    log.appendChild(box);
+    log.scrollTop = log.scrollHeight;
+    updateEmptyState();
+    return box;
+  }
+
+  function startMetaAiSession(payload) {
+    activeMetaAiSession = {
+      sessionId: String(payload?.sessionId || ""),
+      createdAt: String(payload?.createdAt || ""),
+      agentContext: payload?.agentContext && typeof payload.agentContext === "object" ? payload.agentContext : null
+    };
+    renderMetaAiSessionBox(activeMetaAiSession);
+    setStatusNote("Meta Insights AI-session er klar. Send prompten for å la AHA tenke høyt.");
+    return activeMetaAiSession;
+  }
+
+  function saveMetaAiClaimFeedback(claim, response, statusEl) {
+    const memoryApi = global.AHAMetaInsightsMemory;
+    const report = (text) => {
+      if (statusEl) statusEl.textContent = text;
+      setStatusNote(text);
+    };
+    if (!memoryApi || typeof memoryApi.addFeedback !== "function") {
+      report("Meta-minnet er ikke tilgjengelig.");
+      return null;
+    }
+    const result = memoryApi.addFeedback({
+      sessionId: activeMetaAiSession?.sessionId || "",
+      claimId: claim?.id || "",
+      claimText: claim?.text || "",
+      response,
+      basis: Array.isArray(claim?.basis) ? claim.basis : [],
+      confidence: Number(claim?.confidence) || 0
+    });
+    report(result?.ok ? `Feedback lagret: «${response}».` : "Kunne ikke lagre feedback.");
+    return result;
+  }
+
+  function renderMetaAiClaimCard(parent, claim) {
+    const card = document.createElement("article");
+    card.className = "meta-ai-claim-card";
+    card.dataset.claimId = String(claim.id || "");
+    appendMetaAiLine(card, "meta-ai-claim-text", claim.text);
+    if (Array.isArray(claim.basis) && claim.basis.length) {
+      appendMetaAiLine(card, "meta-ai-claim-basis", `Grunnlag: ${claim.basis.join("; ")}`);
+    }
+    appendMetaAiLine(card, "meta-ai-claim-confidence", `Confidence: ${Number(claim.confidence) || 0}`);
+    const statusEl = appendMetaAiLine(card, "meta-ai-claim-status", "");
+    const buttonRow = document.createElement("div");
+    buttonRow.className = "meta-ai-claim-feedback";
+    const labels = { stemmer: "Stemmer", delvis: "Delvis", feil: "Feil", viktig: "Viktig", utdatert: "Utdatert" };
+    ["stemmer", "delvis", "feil", "viktig", "utdatert"].forEach((response) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "meta-ai-feedback-btn";
+      btn.dataset.feedbackResponse = response;
+      btn.textContent = labels[response];
+      btn.addEventListener("click", () => saveMetaAiClaimFeedback(claim, response, statusEl));
+      buttonRow.appendChild(btn);
+    });
+    card.appendChild(buttonRow);
+    parent.appendChild(card);
+    return card;
+  }
+
+  function renderMetaAiClaims(parsed) {
+    const log = document.getElementById("chat-log");
+    if (!log) return null;
+    const section = document.createElement("section");
+    section.className = "meta-ai-claims";
+    section.setAttribute("aria-label", "Meta Insights AI-hypoteser");
+    if (parsed?.ok && Array.isArray(parsed.claims) && parsed.claims.length) {
+      appendMetaAiLine(section, "meta-ai-claims-title", "AHA sine meta-hypoteser – gi feedback:");
+      parsed.claims.forEach((claim) => renderMetaAiClaimCard(section, claim));
+      (parsed.questions || []).slice(0, 3).forEach((question) => {
+        appendMetaAiLine(section, "meta-ai-question", `Spørsmål: ${question}`);
+      });
+      if (parsed.suggested_next_step) {
+        appendMetaAiLine(section, "meta-ai-next-step", `Foreslått neste steg: ${parsed.suggested_next_step}`);
+      }
+    } else {
+      // Fritekstsvar håndteres rolig: feedback-modulen står klar til
+      // neste strukturerte svar.
+      appendMetaAiLine(section, "meta-ai-claims-title", "AHA svarte i fritekst. Feedback-knappene aktiveres når svaret kommer strukturert.");
+    }
+    log.appendChild(section);
+    log.scrollTop = log.scrollHeight;
+    updateEmptyState();
+    return section;
+  }
+
+  function maybeHandleMetaAiAgentReply(rawReply) {
+    if (!activeMetaAiSession) return null;
+    const agentApi = global.AHAMetaInsightsAgent;
+    if (!agentApi || typeof agentApi.parseAgentResponse !== "function") return null;
+    let parsed = null;
+    try {
+      parsed = agentApi.parseAgentResponse(rawReply);
+    } catch {
+      return null;
+    }
+    renderMetaAiClaims(parsed);
+    return parsed;
+  }
+
   function consumePendingChatPrompt() {
     const raw = localStorage.getItem(PENDING_CHAT_PROMPT_KEY);
     if (!raw) return;
@@ -5795,6 +5938,10 @@
     msg.dispatchEvent(new Event("input", { bubbles: true }));
     msg.focus();
     localStorage.removeItem(PENDING_CHAT_PROMPT_KEY);
+    if (String(payload?.type || "") === "meta_insights_ai_session") {
+      startMetaAiSession(payload);
+      return;
+    }
     setStatusNote("Klar til å bygge videre fra AHA Home.");
   }
 
@@ -5867,6 +6014,9 @@
       const visibleReply = normalizeAhaVisibleReply(safeReply, cleanText) || safeReply;
       const categoryChips = memoryUseEnabled ? suggestCategoryChips() : [];
       appendChat("aha", visibleReply, { categoryChips, subjectMatches, memoryContext });
+      // Meta Insights AI-session: parse rå-svaret (før visningsnormalisering)
+      // til claims med feedback-knapper.
+      try { maybeHandleMetaAiAgentReply(reply); } catch (metaErr) { console.warn("Meta Insights AI-claims feilet", metaErr); }
       try { await renderAutoOutputs(cleanText, safeReply, { subjectMatches, persist: savingEnabled }); } catch (autoErr) { console.warn("Auto-output feilet", autoErr); }
       if (savingEnabled) {
         try { ensureAfterworkForLatestAnalysis(cleanText, { subjectMatches }); } catch (afterErr) { console.warn("Auto-etterarbeid feilet", afterErr); }
@@ -6022,7 +6172,7 @@
 
   global.loadChamberFromStorage = global.loadChamberFromStorage || loadChamberFromStorage;
   global.saveChamberToStorage = global.saveChamberToStorage || saveChamberToStorage;
-  global.AHATestHooks = Object.assign({}, global.AHATestHooks || {}, { detectTextType, buildCanonicalAnalysis, buildAhaAnalysisExportBundle, formatAhaAnalysisExportMarkdown, buildAutoOutputs, normalizeFagkoblinger, resolveCanonicalAnalysisWithOptionalPythonEngine, isAhaMemoryQuestion, buildAhaLearningContractReply, buildAhaMemoryStatus, shouldUseAhaMemory, buildAhaMemoryContext, buildAhaMemoryOffContext, loadAhaMemoryControls, saveAhaMemoryControls, setAhaMemoryControl, isAhaSavingEnabled, isAhaMemoryUseEnabled, loadAhaMemoryExclusions, saveAhaMemoryExclusions, getAhaMemoryInsightStableKey, getAhaMemoryInsightKey, isAhaMemoryInsightExcluded, excludeAhaMemoryInsight, includeAhaMemoryInsight, resetAhaMemoryExclusions, getAhaExcludedMemoryItems, renderAhaMemoryControls, bindAhaMemoryControls, submitAhaChatMessage, findRelevantLocalMemory, formatAhaMemoryContextForAgent, isAhaMemoryDebugEnabled, buildAhaMemoryTransparency, formatAhaMemoryTransparencyDetails, renderAhaMemoryTransparency, appendChat });
+  global.AHATestHooks = Object.assign({}, global.AHATestHooks || {}, { detectTextType, buildCanonicalAnalysis, buildAhaAnalysisExportBundle, formatAhaAnalysisExportMarkdown, buildAutoOutputs, normalizeFagkoblinger, resolveCanonicalAnalysisWithOptionalPythonEngine, isAhaMemoryQuestion, buildAhaLearningContractReply, buildAhaMemoryStatus, shouldUseAhaMemory, buildAhaMemoryContext, buildAhaMemoryOffContext, loadAhaMemoryControls, saveAhaMemoryControls, setAhaMemoryControl, isAhaSavingEnabled, isAhaMemoryUseEnabled, loadAhaMemoryExclusions, saveAhaMemoryExclusions, getAhaMemoryInsightStableKey, getAhaMemoryInsightKey, isAhaMemoryInsightExcluded, excludeAhaMemoryInsight, includeAhaMemoryInsight, resetAhaMemoryExclusions, getAhaExcludedMemoryItems, renderAhaMemoryControls, bindAhaMemoryControls, submitAhaChatMessage, findRelevantLocalMemory, formatAhaMemoryContextForAgent, isAhaMemoryDebugEnabled, buildAhaMemoryTransparency, formatAhaMemoryTransparencyDetails, renderAhaMemoryTransparency, appendChat, getActiveMetaAiSession, startMetaAiSession, renderMetaAiSessionBox, renderMetaAiClaims, maybeHandleMetaAiAgentReply, saveMetaAiClaimFeedback });
 
   global.AHAChat = {
     loadChamberFromStorage,
