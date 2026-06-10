@@ -1975,6 +1975,86 @@
     };
   }
 
+  // ── Meta-minne (brukerbekreftet selvinnsikt) ─────────────
+  // buildMetaInsightSummary kan motta options.memorySummary fra
+  // AHAMetaInsightsMemory.summarizeMemory(). Bekreftede claims øker
+  // confidence i samsvarende project_signals/patterns, viktige claims
+  // prioriteres i next_actions, og avviste/utdaterte claims legges i
+  // evidence som modellgrenser.
+
+  function memoryClaimText(claim) {
+    if (typeof claim === "string") return claim.trim();
+    return String(claim?.claimText || claim?.text || "").trim();
+  }
+
+  function memoryClaimTexts(claims) {
+    return (Array.isArray(claims) ? claims : []).map(memoryClaimText).filter(Boolean);
+  }
+
+  function claimMatchesLabel(claimText, label) {
+    const labelText = String(label || "").toLowerCase();
+    if (!labelText) return false;
+    const words = String(claimText || "").toLowerCase().match(/[a-zæøåäöü-]{4,}/g) || [];
+    return words.some((word) => labelText.includes(word));
+  }
+
+  function bumpConfidence(level) {
+    if (level === "lav") return "middels";
+    if (level === "middels") return "høy";
+    return level;
+  }
+
+  function applyMemorySummary(result, memorySummary) {
+    const mem = memorySummary && typeof memorySummary === "object" ? memorySummary : null;
+    if (!mem) return result;
+
+    const confirmedTexts = memoryClaimTexts(mem.confirmedClaims);
+    const importantTexts = memoryClaimTexts(mem.importantClaims);
+    const rejectedTexts = memoryClaimTexts(mem.rejectedClaims);
+    const outdatedTexts = memoryClaimTexts(mem.outdatedClaims);
+
+    result.memory_summary = {
+      totalFeedback: Number(mem.totalFeedback) || 0,
+      confirmed: Number(mem.confirmed) || confirmedTexts.length,
+      partial: Number(mem.partial) || 0,
+      rejected: Number(mem.rejected) || rejectedTexts.length,
+      important: Number(mem.important) || importantTexts.length,
+      outdated: Number(mem.outdated) || outdatedTexts.length
+    };
+    result.active_self_model = mem.activeSelfModel || null;
+
+    result.evidence.confirmed_meta_claims = confirmedTexts.slice(0, 8);
+    // Avviste/utdaterte claims er grenser modellen ikke skal gjenta.
+    result.evidence.model_limits = [...rejectedTexts, ...outdatedTexts].slice(0, 8);
+
+    // Bekreftede claims gir økt confidence i samsvarende signaler/mønstre.
+    if (confirmedTexts.length) {
+      result.project_signals = result.project_signals.map((signal) => {
+        const matches = confirmedTexts.some((text) => claimMatchesLabel(text, signal.label));
+        if (!matches) return signal;
+        return { ...signal, confidence: bumpConfidence(signal.confidence), confirmed_by_user: true };
+      });
+      result.recurring_patterns = result.recurring_patterns.map((pattern) => {
+        const matches = confirmedTexts.some((text) => claimMatchesLabel(text, pattern.label));
+        return matches ? { ...pattern, confirmed_by_user: true } : pattern;
+      });
+    }
+
+    // Viktige claims prioriteres høyest i next_actions.
+    if (importantTexts.length) {
+      const followUps = importantTexts.slice(0, 2).map((text) => `Følg opp det du har markert som viktig: «${text}».`);
+      result.next_actions = [...followUps, ...result.next_actions.filter((action) => !followUps.includes(action))].slice(0, 5);
+    }
+
+    // Bekreftet selvinnsikt løfter summaryen; avviste/utdaterte claims
+    // holdes bevisst utenfor formuleringen (lavere prioritet).
+    if (confirmedTexts.length && result.readiness.level !== "tom") {
+      result.summary = `${result.summary} Du har bekreftet: «${confirmedTexts[0]}».`;
+    }
+
+    return result;
+  }
+
   // Hovedinngang: koker meta-profilen ned til ett forklarbart svar.
   function buildMetaInsightSummary(profile, options = {}) {
     const safe = profile || {};
@@ -2001,7 +2081,7 @@
 
     const now = options.now ? new Date(options.now) : new Date();
 
-    return {
+    const result = {
       generated_at: now.toISOString(),
       readiness,
       dominant_themes,
@@ -2014,6 +2094,7 @@
       summary,
       evidence
     };
+    return applyMemorySummary(result, options.memorySummary);
   }
 
   // Bygger en norsk prompt som ber brukeren bekrefte/avkrefte/presisere

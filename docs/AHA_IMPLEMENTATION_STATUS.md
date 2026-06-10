@@ -255,6 +255,48 @@ forklarbart på spørsmålet «Hva ser AHA om brukeren akkurat nå?».
 • Test guards låser read-only-status og no-autosend. Ingen nye dependencies.
 ```
 
+## 1c. Meta Insights AI
+
+Meta Insights er AHA sin selvforståelses-AI. Den algoritmiske
+MetaInsightsEngine fungerer som sanseapparat, mens MetaInsightsAgent er den
+tenkende agenten som resonerer over meta-profilen og bygger personlig
+selvinnsikt over tid.
+
+```text
+• Arkitektur: InsightsEngine lager rå innsikter, MetaInsightsEngine lager det
+  algoritmiske analysegrunnlaget, og MetaInsightsAgent
+  (js/metaInsightsAgent.js, window.AHAMetaInsightsAgent) resonerer over
+  meta-profilen, danner hypoteser og bygger selvmodellen.
+• Dataflyt: brukerdata → innsikter → algoritmisk meta-profil →
+  MetaInsightsAgent → hypoteser → brukerbekreftelse → meta-minne → bedre
+  fremtidig innsikt.
+• MetaInsightsAgent bygger agentkontekst (profileSnapshot, algorithmicSummary,
+  evidencePack, memoryPack, reasoningFrame), en norsk agentprompt («AHA Meta
+  Insights AI — selvforståelsesagent») og parser strukturert AI-respons til
+  claims med basis, confidence og feedback-valg. Fritekst håndteres rolig.
+• MetaInsightsMemory (js/metaInsightsMemory.js, window.AHAMetaInsightsMemory)
+  lagrer brukerbekreftet selvinnsikt lokalt i aha_meta_insights_memory_v1:
+  feedback (stemmer/delvis/feil/viktig/utdatert) bygger en aktiv selvmodell
+  med bekreftede, delvise, avviste, viktige og utdaterte claims.
+• AHA lærer gjennom feedback på claims: buildMetaInsightSummary(profile,
+  { memorySummary }) gjør meta-innsikten minnebevisst – bekreftede claims gir
+  økt confidence i samsvarende project_signals/mønstre, viktige claims
+  prioriteres i next_actions, og avviste/utdaterte claims legges i evidence
+  som modellgrenser.
+• AHA Home: knappen «Tenk med Meta AI» i «Hva AHA ser nå» starter agent-flyten
+  (pending payload med type meta_insights_ai_session på
+  aha_pending_chat_prompt_v1). «Bekreft med AHA» beholder den enkle
+  bekreftelsesflyten.
+• AHA Chat: pending agent-session prefyller agentprompten, viser en
+  session-boks (sessionId, readiness, læringsmodus, topp temaer/begreper) og
+  viser claims med feedback-knapper etter AI-svar. Feedback lagres lokalt med
+  kort bekreftelse.
+• Dette er første versjon av personlig lærende AHA. Alt er lokalt og
+  read-only mot repository/sync – ingen nye nettverkskall.
+• Fremtidige steg kan la AHA Chat hente aktiv selvmodell som personlig
+  kontekst i vanlige samtaler.
+```
+
 ## 2. Dokumentlåser på plass
 
 Disse dokumentene er nå styrende før videre kodearbeid:

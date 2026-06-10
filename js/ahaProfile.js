@@ -137,6 +137,20 @@
       }
     }
 
+    // Når brukeren har gitt feedback på Meta Insights AI-claims, gjør
+    // meta-innsikten minnebevisst: bekreftet selvinnsikt løfter signaler
+    // og viktige claims prioriteres i neste steg. Read-only og stille
+    // fallback hvis minnemodulen ikke er lastet.
+    if (fullMeta && typeof buildEngine?.buildMetaInsightSummary === "function" && typeof global.AHAMetaInsightsMemory?.summarizeMemory === "function") {
+      try {
+        const memorySummary = global.AHAMetaInsightsMemory.summarizeMemory();
+        if (memorySummary && (Number(memorySummary.totalFeedback) || 0) > 0) {
+          metaInsight = buildEngine.buildMetaInsightSummary(fullMeta, { memorySummary });
+          fullMeta = { ...fullMeta, meta_insight: metaInsight };
+        }
+      } catch {}
+    }
+
     const rawTensions = tensionCandidates.flatMap((t) => [
       ...asArray(t?.concept_pair_tensions),
       ...asArray(t?.tensions),
@@ -366,6 +380,17 @@ Forklar hvordan materialet mitt kan kobles til dette fagområdet, og foreslå en
       return;
     }
 
+    // "Tenk med Meta AI" – start Meta Insights AI-agentsesjon og åpne chat.
+    if (action === "meta-think-ai") {
+      const fullMeta = latestMetaProfile.fullMeta;
+      const agent = global.AHAMetaInsightsAgent;
+      if (!fullMeta || !agent || typeof agent.savePendingAgentSession !== "function") return;
+      const result = agent.savePendingAgentSession(fullMeta);
+      if (!result || !result.ok) return;
+      window.location.href = "chat.html";
+      return;
+    }
+
     const index = Number.parseInt(button.getAttribute("data-index") || "", 10);
     if (!Number.isInteger(index) || index < 0) return;
 
@@ -422,6 +447,7 @@ Forklar hvordan materialet mitt kan kobles til dette fagområdet, og foreslå en
       ${patternsMarkup ? `<div class="aha-meta-insight-row"><strong>Mønstre</strong>${patternsMarkup}</div>` : ""}
       ${tensionMarkup}
       <button type="button" class="aha-meta-action aha-tile-btn aha-tile-btn-secondary" data-action="meta-confirm-insight">Bekreft med AHA</button>
+      <button type="button" class="aha-meta-action aha-tile-btn aha-tile-btn-secondary" data-action="meta-think-ai">Tenk med Meta AI</button>
     </section>`;
   }
 
