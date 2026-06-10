@@ -2030,77 +2030,84 @@
     `;
   }
 
-  function inspectSyncHubLocalStorageSource(source) {
-    const raw = localStorage.getItem(source.key);
-    if (raw === null || raw === "") {
-      return { ...source, count: 0, state: "empty", label: "0 items", detail: "No localStorage payload found." };
-    }
-
-    const parsed = JSON.parse(raw);
-    const count = Array.isArray(parsed)
-      ? parsed.filter((item) => !item?.deleted_at).length
-      : (parsed && typeof parsed === "object" ? Object.keys(parsed).length : 1);
-
-    return {
-      ...source,
-      count,
-      state: "sync-ready",
-      label: `${count} ${count === 1 ? "item" : "items"}`,
-      detail: "localStorage can be read safely."
-    };
-  }
-
-  function renderSyncHubStatusRows(rows) {
-    return rows.map((row) => `
-      <div>
-        <dt>${escapeHtml(row.name)}</dt>
-        <dd>${escapeHtml(row.label)}</dd>
-      </div>
-    `).join("");
-  }
-
   function renderSyncHubStatus() {
     const mount = $("aha-sync-hub-status");
     if (!mount) {
-      console.warn("AHADashboard: aha-sync-hub-status mount mangler; Sync Hub status skipped.");
+      console.warn("AHADashboard: aha-sync-hub-status mount mangler");
       return;
     }
 
     try {
-      const rows = SYNC_HUB_DRY_RUN_SOURCES.map(inspectSyncHubLocalStorageSource);
+      if (!window.localStorage) throw new Error("localStorage er ikke tilgjengelig");
+
+      const plan = buildAhaSyncDryRunPlan();
+      const payloadPreview = buildAhaSyncPayloadPreview(plan);
+      const checklist = buildAhaSyncOperatorChecklist(plan, payloadPreview);
+      const target = getAhaManualSyncPreviewTarget();
+      const targetStatus = getAhaManualSyncPreviewTargetAuditStatus(target);
+      const targetLabel = targetStatus === "not_configured" ? "Target not configured." : `${target.label} · ${targetStatus}`;
+      const blockers = buildAhaManualSyncGate(plan, payloadPreview, checklist, target);
+      const readiness = blockers.length ? "Blocked" : "Ready";
+      const badgeStatus = blockers.length ? "blocked" : "ready";
+      const includedModules = (payloadPreview.modules || []).filter((modulePreview) => modulePreview.included);
+      const lastRun = getAhaManualSyncLastRun();
+      const lastRunLabel = lastRun
+        ? `${formatAhaStatusLabel(lastRun.status || lastRun.resultStatus)}${lastRun.timestamp ? ` · ${lastRun.timestamp}` : ""}`
+        : "No manual sync runs yet.";
+      const buttonLabel = isSyncHubPrepOpen ? "Close" : "Open Sync Hub";
+
       mount.innerHTML = `
-        <section class="aha-status-card aha-sync-hub-compact-card" aria-label="AHA Sync Hub read-only status">
+        <section class="aha-status-card aha-sync-hub-compact-card" aria-label="AHA Sync Hub status">
           <div class="aha-compact-status-header">
             <div>
               <p class="eyebrow">AHA Sync Hub</p>
-              <h3>Read-only status</h3>
+              <h3>Sync Hub</h3>
             </div>
-            <span class="aha-status-badge aha-status-badge-ready">sync-ready</span>
+            <span class="aha-status-badge aha-status-badge-${badgeStatus}">${readiness}</span>
           </div>
-          <strong class="aha-compact-status-primary">Status only. No sync is started from AHA Home.</strong>
-          <p class="aha-compact-status-note">Read-only localStorage inspection for Lists, Paths, Groups and AHAavisa.</p>
+          <strong class="aha-compact-status-primary">${blockers.length ? "Manual sync needs review." : "Manual sync is ready."}</strong>
           <dl class="aha-compact-meta aha-sync-hub-compact-meta">
-            ${renderSyncHubStatusRows(rows)}
+            <div><dt>Target</dt><dd>${escapeHtml(targetLabel)}</dd></div>
+            <div><dt>Included</dt><dd>${includedModules.length} modules · ${escapeHtml(payloadPreview.totalPreviewItems)} items</dd></div>
+            <div><dt>Last run</dt><dd>${escapeHtml(lastRunLabel)}</dd></div>
           </dl>
-          <small class="aha-status-updated">Read-only / status only. Sync Hub makes no database or repository calls. No auto-sync. · Updated ${formatTime()}</small>
-        </section>
-      `;
-    } catch (error) {
-      console.warn("AHADashboard: AHA Sync Hub localStorage-status kunne ikke leses", error);
-      mount.innerHTML = `
-        <section class="aha-status-card aha-sync-hub-compact-card" aria-label="AHA Sync Hub read-only status">
-          <div class="aha-compact-status-header">
-            <div>
-              <p class="eyebrow">AHA Sync Hub</p>
-              <h3>Read-only status</h3>
+          ${renderAhaSyncCompactBlockers(blockers, lastRun)}
+          <button id="aha-sync-hub-prep-toggle" type="button" class="aha-sync-prep-toggle aha-sync-hub-open-button" aria-expanded="${isSyncHubPrepOpen}" aria-controls="aha-sync-hub-advanced" aria-label="${isSyncHubPrepOpen ? "Close" : "Open"} Sync Hub advanced diagnostics">${buttonLabel}</button>
+          ${isSyncHubPrepOpen ? `
+            <div id="aha-sync-hub-advanced" class="aha-sync-hub-advanced" role="region" aria-labelledby="aha-sync-hub-advanced-title">
+              <div class="aha-sync-hub-advanced-heading">
+                <strong id="aha-sync-hub-advanced-title">Advanced diagnostics</strong>
+                <span>Read-only diagnostics.</span>
+              </div>
+              ${renderSyncHubPrepPanel(plan)}
+              ${renderAhaManualSyncHistoryPanel()}
             </div>
-            <span class="aha-status-badge aha-status-badge-blocked">status unavailable</span>
-          </div>
-          <strong class="aha-compact-status-primary">Could not inspect localStorage.</strong>
-          <p class="aha-compact-status-note" role="status">Status only. Dashboard rendering continues without Sync Hub data.</p>
-          <small class="aha-status-updated">Read-only / status only. No sync was attempted.</small>
+          ` : ""}
+          <small class="aha-status-updated">Manual only. No auto-sync. · Updated ${formatTime()}</small>
         </section>
       `;
+      bindSyncHubPrepToggle();
+      bindAhaManualSyncHistoryPreview();
+    } catch (error) {
+      console.warn("AHADashboard: AHA Sync Hub status kunne ikke leses", error);
+      const plan = SYNC_HUB_DRY_RUN_SOURCES.map((source) => createSyncHubDryRunResult(source, "–", "error", "Could not read localStorage", ["Could not inspect this dataset."]));
+      const buttonLabel = isSyncHubPrepOpen ? "Close" : "Open Sync Hub";
+      mount.innerHTML = `
+        <section class="aha-status-card aha-sync-hub-compact-card" aria-label="AHA Sync Hub status">
+          <div class="aha-compact-status-header">
+            <div><p class="eyebrow">AHA Sync Hub</p><h3>Sync Hub</h3></div>
+            <span class="aha-status-badge aha-status-badge-blocked">Blocked</span>
+          </div>
+          <strong class="aha-compact-status-primary">Could not inspect local data.</strong>
+          <dl class="aha-compact-meta"><div><dt>Target</dt><dd>Target not configured.</dd></div><div><dt>Last run</dt><dd>No manual sync runs yet.</dd></div></dl>
+          <div class="aha-compact-alert" role="alert"><strong>Blocked</strong><ul><li>Sync status could not be read.</li></ul></div>
+          <button id="aha-sync-hub-prep-toggle" type="button" class="aha-sync-prep-toggle aha-sync-hub-open-button" aria-expanded="${isSyncHubPrepOpen}" aria-controls="aha-sync-hub-advanced" aria-label="${isSyncHubPrepOpen ? "Close" : "Open"} Sync Hub advanced diagnostics">${buttonLabel}</button>
+          ${isSyncHubPrepOpen ? `<div id="aha-sync-hub-advanced" class="aha-sync-hub-advanced" role="region" aria-label="Advanced diagnostics">${renderSyncHubPrepPanel(plan)}${renderAhaManualSyncHistoryPanel()}</div>` : ""}
+          <small class="aha-status-updated">Manual only. No auto-sync. View diagnostics.</small>
+        </section>
+      `;
+      bindSyncHubPrepToggle();
+      bindAhaManualSyncHistoryPreview();
     }
   }
 
