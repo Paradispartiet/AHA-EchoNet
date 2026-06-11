@@ -1528,3 +1528,17 @@ tekst → corpus item → bruker-godkjenning → training example → example-go
 Alt er local-first (`localStorage`). Ingen sync, ingen nettverkskall, ingen databaseklient. UI gjør samtykke tydelig: «Tekster brukes som treningsgrunnlag først når du har godkjent dem og slått på relevant bruk.»
 
 Dette legger grunnlaget for senere personlig modelltilpasning (AHA Personal Model).
+
+## 19. Sync Hub go/no-go blocker test lock
+
+Go/no-go-matrisen for AHA Sync Hub er nå låst med en samlet blocker-test. Testen dekker beslutningsmarkører og gates A–J, read-only-runtime, Home module-loading, aktive dashboard-triggere, avgrensede forbidden-call-mønstre og blocked/dry-run-atferd i adapter og state machine.
+
+Ekte manuell sync er fortsatt **NO-GO**. Auto-sync er fortsatt **permanent forbudt**. Denne testlåsen aktiverer ingen sync-knapp, ingen execution-path og ingen database-/repository-kall fra den aktive Home Sync Hub-rendereren.
+
+Neste anbefalte PR er:
+
+```text
+docs: review Sync Hub activation evidence
+```
+
+En slik review skal vurdere gjenværende PARTIAL/NO-GO-gates uten å aktivere manual sync. En eventuell senere activation må fortsatt skje separat som `feat: activate manual AHA Sync Hub execution`.
