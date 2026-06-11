@@ -5,6 +5,8 @@ Audit-baseline: `d6e73b2` (`feat: add AHA Sync Hub runtime adapter`)
 
 Dette dokumentet kartlegger hva som faktisk finnes i gjeldende repository etter read-only-adapteren, compact diagnostics-arbeidet og de nyere manual-sync-lagene. Det er en dokumentasjonsaudit. Det aktiverer ikke runtime, sync, auto-sync, nye writes eller modul-lasting.
 
+Den normative aktiveringsbeslutningen og gate-statusen ligger i [`AHA_SYNC_HUB_GO_NO_GO_MATRIX.md`](./AHA_SYNC_HUB_GO_NO_GO_MATRIX.md). Gjeldende beslutning er NO-GO for ekte manuell sync; auto-sync er permanent NO-GO.
+
 ## 1. Kort konklusjon
 
 Gjeldende kode har tre forskjellige nivåer som må holdes adskilt:
