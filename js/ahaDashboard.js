@@ -13,79 +13,6 @@
 
   const AHA_AUTH_RETURN_TO_KEY = "aha_auth_return_to_v1";
   const HISTORY_GO_PROFILE_URL = "https://paradispartiet.github.io/History-Go/profile.html";
-  const SYNC_HUB_MODULES = [
-    {
-      id: "lists",
-      label: "Lister",
-      key: "aha_lists_v1",
-      table: "aha_lists",
-      moduleName: "AHALists",
-      syncFunction: "syncFromDatabase"
-    },
-    {
-      id: "paths",
-      label: "Stier",
-      key: "aha_paths_v1",
-      table: "aha_paths",
-      moduleName: "AHAPaths",
-      syncFunction: "syncFromDatabase"
-    },
-    {
-      id: "groups",
-      label: "Grupper",
-      key: "aha_groups_v1",
-      table: "aha_groups",
-      moduleName: "AHAGroups",
-      syncFunction: "syncFromDatabase"
-    },
-    {
-      id: "avisa",
-      label: "AHAavisa",
-      key: "aha_articles_v1",
-      table: "aha_articles",
-      moduleName: "AHAAvisa",
-      syncFunction: "syncFromDatabase"
-    }
-  ];
-
-  function readArray(key) {
-    try {
-      const parsed = JSON.parse(localStorage.getItem(key) || "[]");
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
-  }
-
-  function isDeletedRecord(record) {
-    return Boolean(record?.deletedAt || record?.deleted_at);
-  }
-
-  function countLocalActiveRecords(key) {
-    return readArray(key).filter((item) => !isDeletedRecord(item)).length;
-  }
-
-  function resolveRuntimeStatus(module) {
-    const runtime = window[module.moduleName];
-    if (!runtime) return {
-      label: "Klarlagt",
-      detail: "Modul ikke lastet på Home",
-      canSyncHere: false
-    };
-
-    if (typeof runtime[module.syncFunction] !== "function") return {
-      label: "Mangler sync",
-      detail: "syncFromDatabase ikke tilgjengelig",
-      canSyncHere: false
-    };
-
-    return {
-      label: "Sync-klar",
-      detail: "Kan synkes manuelt senere",
-      canSyncHere: true
-    };
-  }
-
   function hasHistoryGoPayload() {
     return Boolean(String(localStorage.getItem("aha_import_payload_v1") || "").trim());
   }
@@ -2097,20 +2024,42 @@
     const mount = $("aha-sync-hub-status");
     if (!mount) return;
 
-    const rows = SYNC_HUB_MODULES.map((module) => {
-      const runtimeStatus = resolveRuntimeStatus(module);
-      const badgeClass = runtimeStatus.label === "Sync-klar" ? "is-ready" : "is-planned";
+    if (typeof window.AHASyncHub?.inspectAll !== "function") {
+      mount.innerHTML = `
+        <p class="eyebrow">Sync Hub</p>
+        <h3>AHA Sync-status</h3>
+        <p class="aha-panel-subtitle">Read-only oversikt. Ingen sync kjøres automatisk.</p>
+        <p class="aha-sync-hub-notice"><strong>Sync Hub-adapter ikke lastet</strong></p>
+      `;
+      return;
+    }
+
+    const inspection = window.AHASyncHub.inspectAll();
+    const statusLabels = {
+      klarlagt: "Klarlagt",
+      mangler_sync: "Mangler sync",
+      sync_klar: "Sync-klar"
+    };
+    const statusDetails = {
+      klarlagt: "Modul ikke lastet på Home",
+      mangler_sync: "syncFromDatabase ikke tilgjengelig",
+      sync_klar: "Kan synkes manuelt senere"
+    };
+    const rows = inspection.modules.map((module) => {
+      const statusLabel = statusLabels[module.status] || module.status;
+      const statusDetail = statusDetails[module.status] || module.fallback || "Ukjent status";
+      const badgeClass = module.status === "sync_klar" ? "is-ready" : "is-planned";
       return `
         <li class="aha-sync-hub-row">
           <div class="aha-sync-hub-row-heading">
             <strong>${escapeHtml(module.label)}</strong>
-            <span class="aha-sync-hub-badge ${badgeClass}">${escapeHtml(runtimeStatus.label)}</span>
+            <span class="aha-sync-hub-badge ${badgeClass}">${escapeHtml(statusLabel)}</span>
           </div>
-          <p>${countLocalActiveRecords(module.key)} aktive lokale records</p>
+          <p>${module.localCount} aktive lokale records</p>
           <dl class="aha-sync-hub-meta">
             <div><dt>localStorage</dt><dd><code>${escapeHtml(module.key)}</code></dd></div>
             <div><dt>Forventet tabell</dt><dd><code>${escapeHtml(module.table)}</code></dd></div>
-            <div><dt>Status</dt><dd>${escapeHtml(runtimeStatus.detail)}</dd></div>
+            <div><dt>Status</dt><dd>${escapeHtml(statusDetail)}</dd></div>
           </dl>
         </li>
       `;
