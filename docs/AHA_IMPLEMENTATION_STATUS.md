@@ -1494,3 +1494,33 @@ Scope for neste PR:
 ```
 
 Manuell `Synk AHA-data` skal først vurderes i en senere PR etter at adapteren finnes og runtime-risikoen ved enten å laste Lists-, Paths-, Groups- og AHAavisa-modulene på Home eller å lage en egen `sync.html` er kartlagt.
+
+## 18. AHA Training Corpus
+
+AHA Training Corpus er første steg mot **AHA Personal Model**. Modulen samler brukerens egne tekster i et strukturert, lokalt treningsgrunnlag som senere kan brukes til personlig modelltilpasning, RAG, stilminne, prosjektminne og eksport av godkjente treningseksempler.
+
+Kjerneflyt:
+
+```text
+tekst → corpus item → bruker-godkjenning → training example → example-godkjenning → JSONL-eksport
+```
+
+### Hva som er bygget
+
+- `js/ahaTrainingCorpus.js` (`window.AHATrainingCorpus`, key `aha_training_corpus_v1`): samler tekst fra eksisterende AHA-lagre (notater, feed, avisa-artikler, source events, etterarbeid og innsikter) som **corpus items**. Hvert item har stabilt schema, status (`raw`, `reviewed`, `approved`, `rejected`, `exported`), samtykke (`useForMemory`, `useForTrainingExamples`, `useForFineTuning`, `useForStyle`, `useForKnowledge`) og tombstone-felt (`deletedAt`). Import deduper på `source` + `sourceId` + normalisert teksthash.
+- `js/ahaTrainingExamples.js` (`window.AHATrainingExamples`, key `aha_training_examples_v1`): genererer enkle algoritmiske **training examples** (summary, concept_explanation, project_explanation, style_example og memory_fact) fra godkjente corpus items med `useForTrainingExamples`-samtykke. Hvert example godkjennes separat.
+- `training.html` + `js/ahaTrainingDashboard.js`: Training Dashboard med statuskort, handlinger (Importer fra AHA, Lag treningseksempler, Eksporter godkjente eksempler, Til AHA Home), corpus-liste med samtykke-kontroller og training examples-liste. Tomtilstand: «Training Corpus er tomt. Importer tekster fra AHA for å starte.»
+- Training er registrert som systemmodul i `js/ahaModules.js` (`id: "training"`, `href: "training.html"`, fase 2) og vises i AHA Home nær Søk/Personvern.
+
+### Prinsipper
+
+- **Tekster samles som corpus items**, atskilt fra resten av AHA.
+- **Training examples genereres separat** fra godkjente corpus items.
+- **Brukeren godkjenner corpus og examples hver for seg.**
+- **Fine-tuning krever eksplisitt samtykke**: eksport tar kun med godkjente examples der tilhørende corpus item har `useForFineTuning: true`.
+- **Eksportformatet er JSONL** med chat messages: `{"messages":[{"role":"user",...},{"role":"assistant",...}],"metadata":{"taskType":...,"source":"aha_training_examples","language":...}}`. Nedlasting skjer lokalt som `aha-training-examples.jsonl`.
+- **Meta Insights AI kan lese `trainingPack`**: `js/metaInsightsAgent.js` legger `trainingPack` (corpusTotal, approvedCorpus, approvedExamples, fineTuningAllowed, styleAllowed, trainingExamplesAllowed) i `agentContext` når både `AHATrainingCorpus` og `AHATrainingExamples` finnes, slik at agenten kan se om brukeren bygger treningsgrunnlag for AHA Personal Model.
+
+Alt er local-first (`localStorage`). Ingen sync, ingen nettverkskall, ingen databaseklient. UI gjør samtykke tydelig: «Tekster brukes som treningsgrunnlag først når du har godkjent dem og slått på relevant bruk.»
+
+Dette legger grunnlaget for senere personlig modelltilpasning (AHA Personal Model).

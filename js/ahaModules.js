@@ -149,6 +149,15 @@
       phase: 2
     },
     {
+      id: "training",
+      title: "Training",
+      type: "system",
+      status: "active",
+      href: "training.html",
+      description: "Korpus og treningseksempler for senere personlig modelltilpasning.",
+      phase: 2
+    },
+    {
       id: "privacy",
       title: "Personvern",
       type: "system",
@@ -176,6 +185,7 @@
     avisa: "📰",
     groups: "◍",
     search: "⌕",
+    training: "⚙",
     privacy: "⚑"
   };
 
@@ -195,7 +205,7 @@
     read_error: { title: "Could not read module data.", message: "Try again later or view diagnostics." },
     unknown: { title: "Nothing to show.", message: "No module data is available." }
   };
-  const PREFERRED_ORDER = ["chat", "insights", "historygo", "gallery", "notes", "feed", "avisa", "profile", "search", "privacy"];
+  const PREFERRED_ORDER = ["chat", "insights", "historygo", "gallery", "notes", "feed", "avisa", "profile", "search", "training", "privacy"];
 
   function escapeHtml(value) {
     return String(value ?? "")

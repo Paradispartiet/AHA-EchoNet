@@ -135,6 +135,30 @@
     return emptyMemoryPack();
   }
 
+  // Treningsgrunnlaget for AHA Personal Model. Bygges bare når både
+  // AHATrainingCorpus og AHATrainingExamples finnes – slik at agenten kan
+  // se om brukeren samler corpus og treningseksempler.
+  function buildTrainingPackSafe() {
+    const corpusApi = global.AHATrainingCorpus;
+    const examplesApi = global.AHATrainingExamples;
+    if (!corpusApi || typeof corpusApi.collectCorpusStats !== "function") return null;
+    if (!examplesApi || typeof examplesApi.collectExampleStats !== "function") return null;
+    try {
+      const corpusStats = asObject(corpusApi.collectCorpusStats());
+      const exampleStats = asObject(examplesApi.collectExampleStats());
+      return {
+        corpusTotal: Number(corpusStats.total) || 0,
+        approvedCorpus: Number(corpusStats.approved) || 0,
+        approvedExamples: Number(exampleStats.approved) || 0,
+        fineTuningAllowed: Number(corpusStats.fineTuningAllowed) || 0,
+        styleAllowed: Number(corpusStats.styleAllowed) || 0,
+        trainingExamplesAllowed: Number(corpusStats.trainingExamplesAllowed) || 0
+      };
+    } catch {
+      return null;
+    }
+  }
+
   function buildReasoningFrame() {
     return {
       language: "nb-NO",
@@ -153,7 +177,7 @@
   // 1. Agentkontekst: alt agenten trenger for å resonnere over profilen.
   function buildAgentContext(profile, options = {}) {
     const safe = asObject(profile);
-    return {
+    const context = {
       id: asText(options.id) || makeId("meta_ai_ctx"),
       createdAt: nowIso(options),
       agent: AGENT_ID,
@@ -164,6 +188,11 @@
       memoryPack: options.memoryPack && typeof options.memoryPack === "object" ? options.memoryPack : buildMemoryPackSafe(),
       reasoningFrame: buildReasoningFrame()
     };
+    const trainingPack = options.trainingPack && typeof options.trainingPack === "object"
+      ? options.trainingPack
+      : buildTrainingPackSafe();
+    if (trainingPack) context.trainingPack = trainingPack;
+    return context;
   }
 
   function formatList(items, fallback) {
