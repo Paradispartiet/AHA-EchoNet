@@ -13,6 +13,40 @@
 
   const AHA_AUTH_RETURN_TO_KEY = "aha_auth_return_to_v1";
   const HISTORY_GO_PROFILE_URL = "https://paradispartiet.github.io/History-Go/profile.html";
+  const SYNC_HUB_MODULES = [
+    {
+      id: "lists",
+      label: "Lister",
+      key: "aha_lists_v1",
+      table: "aha_lists",
+      moduleName: "AHALists",
+      syncFunction: "syncFromDatabase"
+    },
+    {
+      id: "paths",
+      label: "Stier",
+      key: "aha_paths_v1",
+      table: "aha_paths",
+      moduleName: "AHAPaths",
+      syncFunction: "syncFromDatabase"
+    },
+    {
+      id: "groups",
+      label: "Grupper",
+      key: "aha_groups_v1",
+      table: "aha_groups",
+      moduleName: "AHAGroups",
+      syncFunction: "syncFromDatabase"
+    },
+    {
+      id: "avisa",
+      label: "AHAavisa",
+      key: "aha_articles_v1",
+      table: "aha_articles",
+      moduleName: "AHAAvisa",
+      syncFunction: "syncFromDatabase"
+    }
+  ];
 
   function readArray(key) {
     try {
@@ -21,6 +55,35 @@
     } catch {
       return [];
     }
+  }
+
+  function isDeletedRecord(record) {
+    return Boolean(record?.deletedAt || record?.deleted_at);
+  }
+
+  function countLocalActiveRecords(key) {
+    return readArray(key).filter((item) => !isDeletedRecord(item)).length;
+  }
+
+  function resolveRuntimeStatus(module) {
+    const runtime = window[module.moduleName];
+    if (!runtime) return {
+      label: "Klarlagt",
+      detail: "Modul ikke lastet på Home",
+      canSyncHere: false
+    };
+
+    if (typeof runtime[module.syncFunction] !== "function") return {
+      label: "Mangler sync",
+      detail: "syncFromDatabase ikke tilgjengelig",
+      canSyncHere: false
+    };
+
+    return {
+      label: "Sync-klar",
+      detail: "Kan synkes manuelt senere",
+      canSyncHere: true
+    };
   }
 
   function hasHistoryGoPayload() {
@@ -2032,83 +2095,35 @@
 
   function renderSyncHubStatus() {
     const mount = $("aha-sync-hub-status");
-    if (!mount) {
-      console.warn("AHADashboard: aha-sync-hub-status mount mangler");
-      return;
-    }
+    if (!mount) return;
 
-    try {
-      if (!window.localStorage) throw new Error("localStorage er ikke tilgjengelig");
-
-      const plan = buildAhaSyncDryRunPlan();
-      const payloadPreview = buildAhaSyncPayloadPreview(plan);
-      const checklist = buildAhaSyncOperatorChecklist(plan, payloadPreview);
-      const target = getAhaManualSyncPreviewTarget();
-      const targetStatus = getAhaManualSyncPreviewTargetAuditStatus(target);
-      const targetLabel = targetStatus === "not_configured" ? "Target not configured." : `${target.label} · ${targetStatus}`;
-      const blockers = buildAhaManualSyncGate(plan, payloadPreview, checklist, target);
-      const readiness = blockers.length ? "Blocked" : "Ready";
-      const badgeStatus = blockers.length ? "blocked" : "ready";
-      const includedModules = (payloadPreview.modules || []).filter((modulePreview) => modulePreview.included);
-      const lastRun = getAhaManualSyncLastRun();
-      const lastRunLabel = lastRun
-        ? `${formatAhaStatusLabel(lastRun.status || lastRun.resultStatus)}${lastRun.timestamp ? ` · ${lastRun.timestamp}` : ""}`
-        : "No manual sync runs yet.";
-      const buttonLabel = isSyncHubPrepOpen ? "Close" : "Open Sync Hub";
-
-      mount.innerHTML = `
-        <section class="aha-status-card aha-sync-hub-compact-card" aria-label="AHA Sync Hub status">
-          <div class="aha-compact-status-header">
-            <div>
-              <p class="eyebrow">AHA Sync Hub</p>
-              <h3>Sync Hub</h3>
-            </div>
-            <span class="aha-status-badge aha-status-badge-${badgeStatus}">${readiness}</span>
+    const rows = SYNC_HUB_MODULES.map((module) => {
+      const runtimeStatus = resolveRuntimeStatus(module);
+      const badgeClass = runtimeStatus.label === "Sync-klar" ? "is-ready" : "is-planned";
+      return `
+        <li class="aha-sync-hub-row">
+          <div class="aha-sync-hub-row-heading">
+            <strong>${escapeHtml(module.label)}</strong>
+            <span class="aha-sync-hub-badge ${badgeClass}">${escapeHtml(runtimeStatus.label)}</span>
           </div>
-          <strong class="aha-compact-status-primary">${blockers.length ? "Manual sync needs review." : "Manual sync is ready."}</strong>
-          <dl class="aha-compact-meta aha-sync-hub-compact-meta">
-            <div><dt>Target</dt><dd>${escapeHtml(targetLabel)}</dd></div>
-            <div><dt>Included</dt><dd>${includedModules.length} modules · ${escapeHtml(payloadPreview.totalPreviewItems)} items</dd></div>
-            <div><dt>Last run</dt><dd>${escapeHtml(lastRunLabel)}</dd></div>
+          <p>${countLocalActiveRecords(module.key)} aktive lokale records</p>
+          <dl class="aha-sync-hub-meta">
+            <div><dt>localStorage</dt><dd><code>${escapeHtml(module.key)}</code></dd></div>
+            <div><dt>Forventet tabell</dt><dd><code>${escapeHtml(module.table)}</code></dd></div>
+            <div><dt>Status</dt><dd>${escapeHtml(runtimeStatus.detail)}</dd></div>
           </dl>
-          ${renderAhaSyncCompactBlockers(blockers, lastRun)}
-          <button id="aha-sync-hub-prep-toggle" type="button" class="aha-sync-prep-toggle aha-sync-hub-open-button" aria-expanded="${isSyncHubPrepOpen}" aria-controls="aha-sync-hub-advanced" aria-label="${isSyncHubPrepOpen ? "Close" : "Open"} Sync Hub advanced diagnostics">${buttonLabel}</button>
-          ${isSyncHubPrepOpen ? `
-            <div id="aha-sync-hub-advanced" class="aha-sync-hub-advanced" role="region" aria-labelledby="aha-sync-hub-advanced-title">
-              <div class="aha-sync-hub-advanced-heading">
-                <strong id="aha-sync-hub-advanced-title">Advanced diagnostics</strong>
-                <span>Read-only diagnostics.</span>
-              </div>
-              ${renderSyncHubPrepPanel(plan)}
-              ${renderAhaManualSyncHistoryPanel()}
-            </div>
-          ` : ""}
-          <small class="aha-status-updated">Manual only. No auto-sync. · Updated ${formatTime()}</small>
-        </section>
+        </li>
       `;
-      bindSyncHubPrepToggle();
-      bindAhaManualSyncHistoryPreview();
-    } catch (error) {
-      console.warn("AHADashboard: AHA Sync Hub status kunne ikke leses", error);
-      const plan = SYNC_HUB_DRY_RUN_SOURCES.map((source) => createSyncHubDryRunResult(source, "–", "error", "Could not read localStorage", ["Could not inspect this dataset."]));
-      const buttonLabel = isSyncHubPrepOpen ? "Close" : "Open Sync Hub";
-      mount.innerHTML = `
-        <section class="aha-status-card aha-sync-hub-compact-card" aria-label="AHA Sync Hub status">
-          <div class="aha-compact-status-header">
-            <div><p class="eyebrow">AHA Sync Hub</p><h3>Sync Hub</h3></div>
-            <span class="aha-status-badge aha-status-badge-blocked">Blocked</span>
-          </div>
-          <strong class="aha-compact-status-primary">Could not inspect local data.</strong>
-          <dl class="aha-compact-meta"><div><dt>Target</dt><dd>Target not configured.</dd></div><div><dt>Last run</dt><dd>No manual sync runs yet.</dd></div></dl>
-          <div class="aha-compact-alert" role="alert"><strong>Blocked</strong><ul><li>Sync status could not be read.</li></ul></div>
-          <button id="aha-sync-hub-prep-toggle" type="button" class="aha-sync-prep-toggle aha-sync-hub-open-button" aria-expanded="${isSyncHubPrepOpen}" aria-controls="aha-sync-hub-advanced" aria-label="${isSyncHubPrepOpen ? "Close" : "Open"} Sync Hub advanced diagnostics">${buttonLabel}</button>
-          ${isSyncHubPrepOpen ? `<div id="aha-sync-hub-advanced" class="aha-sync-hub-advanced" role="region" aria-label="Advanced diagnostics">${renderSyncHubPrepPanel(plan)}${renderAhaManualSyncHistoryPanel()}</div>` : ""}
-          <small class="aha-status-updated">Manual only. No auto-sync. View diagnostics.</small>
-        </section>
-      `;
-      bindSyncHubPrepToggle();
-      bindAhaManualSyncHistoryPreview();
-    }
+    }).join("");
+
+    mount.innerHTML = `
+      <p class="eyebrow">Sync Hub</p>
+      <h3>AHA Sync-status</h3>
+      <p class="aha-panel-subtitle">Read-only oversikt. Ingen sync kjøres automatisk.</p>
+      <ul class="aha-sync-hub-list">${rows}</ul>
+      <p class="aha-sync-hub-notice"><strong>Ingen sync kjøres her ennå.</strong></p>
+      <p class="aha-sync-hub-footer">Manuell sync kommer senere.</p>
+    `;
   }
 
   function renderIdentity(authState) {

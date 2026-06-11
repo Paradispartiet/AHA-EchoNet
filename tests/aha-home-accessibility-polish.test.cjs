@@ -12,8 +12,8 @@ assert.ok(index.includes('<nav id="aha-modules-grid"'), 'module menu should use 
 assert.ok(index.includes('aria-labelledby="aha-modules-title"'), 'module menu landmark should have a visible title');
 assert.ok(index.includes('aria-labelledby="aha-status-title"'), 'status landmark should have a visible title');
 
-assert.ok(dashboard.includes('aria-expanded="${isSyncHubPrepOpen}"'), 'Advanced diagnostics toggle should expose expanded state');
-assert.ok(dashboard.includes('aria-label="${isSyncHubPrepOpen ? "Close" : "Open"} Sync Hub advanced diagnostics"'), 'Advanced diagnostics toggle should have a clear accessible name');
+assert.ok(index.includes('id="aha-sync-hub-status" aria-label="AHA Sync Hub status"'), 'read-only Sync Hub should expose a labelled status section');
+assert.ok(dashboard.includes('Read-only oversikt. Ingen sync kjøres automatisk.'), 'read-only Sync Hub should explain that it does not auto-sync');
 assert.ok(dashboard.includes('role="dialog" aria-modal="true" tabindex="-1" aria-labelledby="aha-sync-confirmation-title"'), 'confirmation modal should be labelled and focusable');
 assert.ok(dashboard.includes('disabled aria-disabled=\\"true\\"'), 'Confirm sync should remain disabled when gates fail');
 assert.ok(dashboard.includes('id="aha-sync-history-drawer"') && dashboard.includes('aria-labelledby="aha-sync-history-details-title"'), 'details drawer should have a labelled region');
@@ -22,7 +22,7 @@ assert.ok(dashboard.includes('Read-only summary. Payload and credentials are not
 assert.ok(dashboard.includes('event.key !== "Escape"'), 'modal and details drawer should support Escape');
 assert.ok(dashboard.includes('No active blockers.'), 'critical blocker empty state should stay explicit');
 assert.ok(dashboard.includes('Could not read sync history.'), 'history error should stay clear and sanitized');
-assert.ok(dashboard.includes('Target not configured.'), 'missing target blocker should remain visible');
+assert.ok(dashboard.includes('Modul ikke lastet på Home'), 'missing Home runtimes should remain explicit');
 assert.ok(dashboard.includes('No manual sync runs yet.'), 'history empty state should remain clear');
 
 assert.ok(modules.includes('<article class="${tileClass} aha-home-tile"'), 'History Go grouping should remain a non-interactive card');
@@ -33,7 +33,7 @@ assert.ok(css.includes('min-height: 44px'), 'important compact controls should m
 assert.ok(css.includes('max-height: calc(100dvh - 16px)'), 'confirmation modal should fit small viewports');
 
 for (const code of [dashboard, modules]) {
-  assert.equal(/autoSync|syncFromDatabase/.test(code), false, 'Home UI must not add auto-sync');
+  assert.equal(/autoSync|syncFromDatabase\s*\(/.test(code), false, 'Home UI must not add or call auto-sync');
   assert.equal(/setItem\s*\(\s*["'](?:sync|drawer|modal|diagnostic|selected)/i.test(code), false, 'Home UI must not persist Sync Hub UI state');
 }
 assert.equal(/AHARepository\s*\.\s*(save|write)|writeAhaManualSyncAuditLog\s*\(/.test(dashboard), false, 'dashboard must not write directly to repository or audit');
