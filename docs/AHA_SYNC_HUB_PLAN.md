@@ -4,6 +4,8 @@ Statusdato: 2026-06-07
 
 Dette dokumentet startet som planleggingslås for AHA Sync Hub / Control Center og er nå også historikk for den fullførte manuelle/gated implementeringsrunden. Completion state er dokumentert i `AHA_HOME_SYNC_HUB_COMPLETION_SUMMARY.md`. Dokumentet er ikke runtime-kode, ikke en Supabase-migrasjon og ikke en beslutning om å starte automatisk sync.
 
+Gjeldende kodebaserte audit etter runtime-adapteren er dokumentert i `AHA_SYNC_HUB_CURRENT_STATUS.md`. Ved avvik mellom eldre plan/completion-tekst og nåværende runtime er current-status-auditen styrende for hva som faktisk finnes på `HEAD`.
+
 ## 1. Formål
 
 AHA Sync Hub / Control Center skal gi brukeren ett tydelig sted for å se og senere kjøre manuell sync-status på tvers av AHA-moduler.

@@ -1,5 +1,7 @@
 # AHA Implementation Status
 
+> **Sync Hub current-status audit (2026-06-11):** Se `AHA_SYNC_HUB_CURRENT_STATUS.md` for kodebasert status etter `window.AHASyncHub`-adapteren. Auditen skiller mellom aktivt read-only Home-kort, frakoblede compact/advanced diagnostics og den eksisterende write-capable, men ikke Home-eksponerte manual-sync-adapteren.
+
 Statusdato: 2026-06-07
 
 Dette dokumentet oppsummerer nåværende implementasjonsstatus for AHA etter dokumentlåser, sync-hardening, Search note_reanalysis-visning, Mindmap tombstone-filtrering, Mindmap note_reanalysis-visning, Lists-, Paths-, Meta Insights-, Groups- og AHAavisa/Articles-bolkene, Sync Hub pre-sync UI, manual sync execution contract, manual sync confirmation modal, audit log preview, target selector preview, manual sync target contract, manual sync adapter interface stub, execution state machine stub, manual sync run summary preview, activation blocker tests og target adapter dry-run harness og database_existing wiring til eksisterende AHARepository target, manual sync audit log writer, read-only result history/details, retry eligibility preview, end-to-end-verifikasjon av den manuelle sync-løypa mot mock/stub av eksisterende database target, kompakte statuskort på AHA Home, module health i modulmenyen, normaliserte Home-korttitler/empty states, forbedret mobile/tablet-layout, final polish/accessibility og en samlet completion summary for AHA Home og Sync Hub, samt dokumentert review av module pages og Home entry points for Lists, Paths, Groups og AHAavisa, og forbedret Paths module experience.
