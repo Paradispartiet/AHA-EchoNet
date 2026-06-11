@@ -6,29 +6,29 @@ const dashboardCode = fs.readFileSync('js/ahaDashboard.js', 'utf8');
 const modulesCode = fs.readFileSync('js/ahaModules.js', 'utf8');
 const dashboardCss = fs.readFileSync('css/aha-dashboard.css', 'utf8');
 
-for (const title of ['System health', 'Data readiness', 'Blockers', 'Sync Hub', 'Manual sync history', 'Advanced diagnostics']) {
+for (const title of ['System health', 'Data readiness', 'Blockers', 'Sync Hub', 'AHA Sync-status', 'Manual sync history']) {
   assert.ok(dashboardCode.includes(title), `AHA Home should include the normalized title: ${title}`);
 }
 assert.ok(indexCode.includes('<h2 id="aha-modules-title">Modules</h2>'), 'the module menu should use the normalized, labelled Modules title');
 assert.ok(indexCode.includes('<h3>Activity</h3>'), 'the activity card should use the normalized Activity title');
 
 for (const copy of [
-  'Manual only. No auto-sync.',
-  'Read-only diagnostics.',
+  'Read-only oversikt. Ingen sync kjøres automatisk.',
+  'Ingen sync kjøres her ennå.',
   'Latest manual sync runs. Read-only.',
   'Module status at a glance.',
   'No manual sync runs yet.',
   'No active blockers.',
-  'Target not configured.',
+  'Modul ikke lastet på Home',
   'No warnings.',
   'No module data found.',
   'Could not read sync history.',
-  'Could not inspect local data.'
+  'Manuell sync kommer senere.'
 ]) {
   assert.ok(dashboardCode.includes(copy) || indexCode.includes(copy), `AHA Home should include normalized copy: ${copy}`);
 }
 
-for (const action of ['Open Sync Hub', 'View details', 'Close', 'Cancel', 'Prepare sync', 'Manual sync', 'Confirm sync']) {
+for (const action of ['View details', 'Close', 'Cancel', 'Prepare sync', 'Manual sync', 'Confirm sync']) {
   assert.ok(dashboardCode.includes(action), `AHA Home should include the normalized action: ${action}`);
 }
 
@@ -53,7 +53,7 @@ for (const file of ['js/ahaLists.js', 'js/ahaPaths.js', 'js/ahaGroups.js', 'js/a
   assert.equal(indexCode.includes(file), false, `Home must not load ${file}`);
 }
 assert.equal(/localStorage\.setItem\([^)]*(sync|hub|prep|target|modal)/i.test(dashboardCode), false, 'Home must not persist Sync Hub UI state');
-assert.equal(/autoSync|syncFromDatabase/.test(dashboardCode), false, 'Home must not introduce auto-sync entry points');
+assert.equal(/autoSync|syncFromDatabase\s*\(/.test(dashboardCode), false, 'Home must not introduce or call auto-sync entry points');
 assert.equal(/createClient\s*\(/.test(dashboardCode), false, 'Home must not create a database client');
 assert.equal(/JSON\.stringify\s*\([^)]*(payload|audit)/i.test(dashboardCode), false, 'Home must not dump full payload or audit JSON');
 

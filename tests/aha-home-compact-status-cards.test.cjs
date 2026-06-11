@@ -24,28 +24,35 @@ for (const label of ['System health', 'Data readiness', 'Blockers']) {
   assert.ok(dashboardCode.includes(label), `compact Home status should include ${label}`);
 }
 
-for (const label of ['Sync Hub', 'Target', 'Included', 'Last run', 'Open Sync Hub']) {
-  assert.ok(dashboardCode.includes(label), `compact Sync Hub card should include ${label}`);
+for (const label of ['AHA Sync-status', 'Read-only oversikt. Ingen sync kjøres automatisk.', 'Ingen sync kjøres her ennå.', 'Manuell sync kommer senere.']) {
+  assert.ok(dashboardCode.includes(label) || indexCode.includes(label), `read-only Sync Hub should include ${label}`);
 }
 
-assert.ok(dashboardCode.includes('renderAhaSyncCompactBlockers(blockers, lastRun)'), 'critical Sync Hub blockers should remain visible in the compact card');
-assert.ok(dashboardCode.includes('health?.status === "blocked"'), 'blocked modules should remain visible in the Active blockers summary');
-assert.ok(dashboardCode.includes('Last manual sync audit failed.'), 'audit failures should remain visible without opening advanced diagnostics');
-assert.ok(dashboardCode.includes('No manual sync runs yet.'), 'manual sync history should have a short empty state');
-assert.ok(dashboardCode.includes('No active blockers.'), 'blockers should have a short empty state');
+for (const key of ['aha_lists_v1', 'aha_paths_v1', 'aha_groups_v1', 'aha_articles_v1']) {
+  assert.ok(dashboardCode.includes(key), `read-only Sync Hub should inspect ${key}`);
+}
 
-assert.ok(dashboardCode.includes('aria-labelledby="aha-sync-hub-advanced-title"'), 'advanced diagnostics should remain available with a visible label');
-assert.ok(dashboardCode.includes('${renderSyncHubPrepPanel(plan)}'), 'advanced diagnostics should retain the existing prep panel');
-assert.ok(dashboardCode.includes('${renderAhaManualSyncHistoryPanel()}'), 'advanced diagnostics should retain history and details');
-assert.ok(dashboardCode.includes('data-aha-sync-history-run-id'), 'history details action should remain available');
+for (const table of ['aha_lists', 'aha_paths', 'aha_groups', 'aha_articles']) {
+  assert.ok(dashboardCode.includes(`table: "${table}"`), `read-only Sync Hub should document ${table}`);
+}
+
+assert.ok(dashboardCode.includes('function isDeletedRecord(record)'), 'Sync Hub should define a tombstone helper');
+assert.ok(dashboardCode.includes('record?.deletedAt || record?.deleted_at'), 'Sync Hub should filter both tombstone field variants');
+assert.ok(dashboardCode.includes('function countLocalActiveRecords(key)'), 'Sync Hub should count active local records');
+assert.ok(dashboardCode.includes('detail: "Modul ikke lastet på Home"'), 'missing runtimes should be explained');
+assert.ok(dashboardCode.includes('label: "Sync-klar"'), 'loaded runtimes with sync capability should be marked sync-ready');
 
 const compactRenderStart = dashboardCode.indexOf('function renderSyncHubStatus()');
 const compactRenderEnd = dashboardCode.indexOf('function renderIdentity(', compactRenderStart);
 const compactRender = dashboardCode.slice(compactRenderStart, compactRenderEnd);
-assert.equal(compactRender.includes('JSON.stringify'), false, 'compact Sync Hub rendering must not stringify full payloads');
-assert.equal(/secret|token|password|connection string/i.test(compactRender), false, 'compact Sync Hub rendering must not expose secret fields');
+assert.equal(compactRender.includes('<button'), false, 'read-only Sync Hub must not render a sync button');
+assert.equal(compactRender.includes('syncFromDatabase('), false, 'read-only Sync Hub must not call syncFromDatabase');
+assert.equal(compactRender.includes('AHARepository'), false, 'read-only Sync Hub must not call AHARepository');
+assert.equal(compactRender.includes('localStorage.setItem'), false, 'read-only Sync Hub must not write localStorage');
+assert.equal(compactRender.includes('JSON.stringify'), false, 'read-only Sync Hub rendering must not stringify full payloads');
+assert.equal(/secret|token|password|connection string/i.test(compactRender), false, 'read-only Sync Hub rendering must not expose secret fields');
 assert.ok(dashboardCss.includes('.aha-compact-status-card'), 'compact card styling should exist');
 assert.ok(dashboardCss.includes('.aha-status-badge-blocked'), 'blocked badge styling should exist');
-assert.ok(dashboardCss.includes('.aha-sync-hub-advanced'), 'advanced diagnostics styling should exist');
+assert.ok(dashboardCss.includes('.aha-sync-hub-list'), 'read-only Sync Hub list styling should exist');
 
 console.log('aha-home-compact-status-cards.test.cjs passed');
