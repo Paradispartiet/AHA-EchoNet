@@ -310,6 +310,125 @@ Konsekvens:
 
 Denne PR-en bestemmer ikke endelig script-loading for manuell sync, fordi det krever runtime-arbeid.
 
+### 10.7 Manual sync activation path
+
+Denne aktiveringsveien kartlegger hva som må være på plass før en manuell `Synk AHA-data`-knapp kan bygges. Dette er dokumentasjon, ikke runtime-aktivering: sync-knappen skal ikke bygges ennå, og auto-sync skal fortsatt ikke bygges.
+
+#### Nåværende status
+
+```text
+- AHA Home har et Sync Hub-statuskort.
+- Statuskortet er read-only.
+- Statuskortet skal fortsatt ikke kjøre sync automatisk.
+- Render av kortet skal fortsatt ikke gjøre databasekall.
+- Home har ikke sync-modulruntime lastet for Lists, Paths, Groups eller AHAavisa.
+```
+
+Det betyr at Home kan lese localStorage-only status, men ikke skal forsøke å kalle `syncFromDatabase` fra statuskortet eller dashboard-renderingen.
+
+#### Tre runtime-strategier som må vurderes før kode
+
+Før en manuell sync-knapp kan bygges, må én av disse runtime-strategiene velges etter egen kartlegging:
+
+##### A. Load module scripts on AHA Home
+
+`index.html` kan senere laste:
+
+```text
+js/ahaLists.js
+js/ahaPaths.js
+js/ahaGroups.js
+js/ahaAvisa.js
+```
+
+Fordelen er at en eksplisitt brukerhandling senere kan kalle `window.AHALists.syncFromDatabase`, `window.AHAPaths.syncFromDatabase`, `window.AHAGroups.syncFromDatabase` og `window.AHAAvisa.syncFromDatabase` når funksjonene finnes.
+
+Risikoen er at modulfilene kan ha init-, bind- eller andre sideeffekter når de lastes på AHA Home. Det kan påvirke DOM, event listeners, auth-ready-flyt eller modulspesifikk initialisering selv uten at brukeren klikker på sync. Disse sideeffektene må kartlegges før script-loading eller annen runtime-kode endres.
+
+##### B. Dedicated sync.html
+
+En egen `sync.html` kan senere laste de nødvendige sync-modulene, mens AHA Home bare lenker til `Åpne Sync Hub`.
+
+Fordelen er isolasjon: modulruntime og fremtidige manuelle sync-handlinger holdes borte fra vanlig Home-rendering. Risikoen er en ny side, mer navigasjon og mer UI som må eies, testes og vedlikeholdes. Denne løsningen må kartlegges før kode bygges.
+
+##### C. New syncHub runtime adapter
+
+En ny `js/ahaSyncHub.js` kan først være en read-only adapter som ikke importerer modulene, men registrerer eller inspiserer sync-kandidater når de allerede finnes som globale moduler.
+
+Fordelen er en tryggere og mer modulær grense mellom dashboardet og modulruntime. Risikoen er at adapteren ikke kan synke moduler som ikke er lastet. En senere manuell sync må derfor kombinere adapteren med eksplisitt script-loading eller en egen sync-side.
+
+#### Anbefalt rekkefølge
+
+```text
+1. Behold det read-only Home-kortet.
+2. Bygg en liten runtime-adapter som kan lese status uten sideeffekter.
+3. Kartlegg og velg eksplisitt modul-loading på Home eller en egen sync.html.
+4. Bygg deretter den manuelle hovedhandlingen «Synk AHA-data».
+5. Vurder individuelle modulknapper etter at hovedflyten er trygg.
+6. Ikke bygg auto-sync.
+```
+
+Rekkefølgen holder statuslesing, runtime-loading og faktisk sync som separate beslutninger og PR-er. Ingen av de første kartleggings- eller adapterstegene skal kalle `syncFromDatabase`.
+
+#### Manual sync guardrails
+
+Når manuell sync senere bygges, må implementasjonen følge disse grensene:
+
+```text
+- Sync kan bare trigges av et eksplisitt brukerklikk.
+- Sync skal ikke kjøre ved page load.
+- Sync skal ikke kjøre ved renderDashboard().
+- Sync skal ikke kjøre på storage-event.
+- Sync skal ikke kjøre ved auth-ready.
+- Knappen skal deaktivere seg mens sync pågår.
+- Resultat skal vises per modul.
+- Huben skal fortsette med øvrige moduler hvis én modul feiler.
+- Remote-feil skal aldri slette localStorage-data.
+- Sync Hub skal aldri lage source events.
+- Sync Hub skal aldri lage insights.
+- Sync Hub skal aldri publisere AHAavisa eksternt.
+- Sync Hub skal aldri gjøre Groups til ekte social sharing.
+```
+
+#### Første fremtidige kode-PR
+
+Anbefalt første kode-PR etter denne kartleggingen er:
+
+```text
+feat: add AHA Sync Hub runtime adapter
+```
+
+Scope skal være strengt read-only:
+
+```text
+- ingen sync-knapp
+- ingen syncFromDatabase-kall
+- ingen databasekall
+- ingen script-loading-endring
+- eksporter window.AHASyncHub med inspect/status helpers
+- dashboardet kan bruke adapteren til å rendre statuskortet
+- status er fortsatt localStorage-only
+- ingen auto-sync
+```
+
+PR-en skal etablere en sideeffektfri statusgrense, ikke aktivere sync.
+
+#### Mulig påfølgende PR
+
+Etter adapteren kan neste PR være én av disse:
+
+```text
+feat: load sync modules for manual Sync Hub
+```
+
+eller:
+
+```text
+feat: add dedicated AHA sync page
+```
+
+Endelig valg skal ikke tas i denne dokumentasjons-PR-en dersom det krever mer runtime-kartlegging.
+
 ## 11. Faseplan etter kartleggingen
 
 AHA Sync Hub skal utvikles i små, låste faser. Hver fase må bevare reglene om ingen auto-sync, ingen skjulte databasekall og ingen runtime-write uten egen kontrakt.

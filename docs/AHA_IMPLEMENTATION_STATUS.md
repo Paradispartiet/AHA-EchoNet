@@ -1472,3 +1472,25 @@ Neste anbefalte PR er:
 ```text
 feat: improve Groups module experience
 ```
+
+## 17. Neste anbefalte Sync Hub-steg
+
+Neste anbefalte Sync Hub-PR er:
+
+```text
+feat: add AHA Sync Hub runtime adapter
+```
+
+Adapteren skal bygges read-only først. Den kan eksportere `window.AHASyncHub` med `inspect`-/status-hjelpere og la dashboardet lese localStorage-only status gjennom en tydelig runtime-grense, men den skal ikke aktivere sync.
+
+Scope for neste PR:
+
+```text
+- fortsatt ingen sync-knapp
+- ingen syncFromDatabase-kall
+- ingen databasekall
+- ingen endring i script-loading
+- ingen auto-sync
+```
+
+Manuell `Synk AHA-data` skal først vurderes i en senere PR etter at adapteren finnes og runtime-risikoen ved enten å laste Lists-, Paths-, Groups- og AHAavisa-modulene på Home eller å lage en egen `sync.html` er kartlagt.
