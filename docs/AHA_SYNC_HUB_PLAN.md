@@ -2,6 +2,8 @@
 
 > Activation krever at alle gates i [`AHA_SYNC_HUB_GO_NO_GO_MATRIX.md`](./AHA_SYNC_HUB_GO_NO_GO_MATRIX.md) er grønne og dokumentert i en egen, eksplisitt activation-PR. Ekte manuell sync er ikke aktivert nå, og auto-sync er permanent NO-GO.
 
+> Activation evidence for gates A–J er samlet i [`AHA_SYNC_HUB_ACTIVATION_EVIDENCE.md`](./AHA_SYNC_HUB_ACTIVATION_EVIDENCE.md). Reviewen aktiverer ingenting og opprettholder read-only Home.
+
 Statusdato: 2026-06-07
 
 Dette dokumentet startet som planleggingslås for AHA Sync Hub / Control Center og er nå også historikk for den fullførte manuelle/gated implementeringsrunden. Completion state er dokumentert i `AHA_HOME_SYNC_HUB_COMPLETION_SUMMARY.md`. Dokumentet er ikke runtime-kode, ikke en Supabase-migrasjon og ikke en beslutning om å starte automatisk sync.
