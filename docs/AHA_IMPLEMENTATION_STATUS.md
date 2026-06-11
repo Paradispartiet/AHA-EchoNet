@@ -1,5 +1,7 @@
 # AHA Implementation Status
 
+> **Sync Hub go/no-go:** Activation styres av [`AHA_SYNC_HUB_GO_NO_GO_MATRIX.md`](./AHA_SYNC_HUB_GO_NO_GO_MATRIX.md). Nåværende status er GO for read-only/preview-scope, NO-GO for ekte manuell execution og permanent NO-GO for auto-sync.
+
 > **Sync Hub current-status audit (2026-06-11):** Se `AHA_SYNC_HUB_CURRENT_STATUS.md` for kodebasert status etter `window.AHASyncHub`-adapteren. Auditen skiller mellom aktivt read-only Home-kort, frakoblede compact/advanced diagnostics og den eksisterende write-capable, men ikke Home-eksponerte manual-sync-adapteren.
 
 Statusdato: 2026-06-07
