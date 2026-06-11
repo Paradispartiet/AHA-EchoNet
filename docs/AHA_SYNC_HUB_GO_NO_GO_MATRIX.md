@@ -5,6 +5,8 @@ Beslutningsstatus: **NO-GO for aktivering av ekte manuell sync**
 
 Dette dokumentet er beslutningsgrunnlaget for om AHA Sync Hub kan få en brukeraktivert write-path. Det beskriver gjeldende repository-status; det aktiverer ikke sync, endrer ikke runtime og gir ikke eksisterende preview-/adapterkode ny tillatelse til å skrive.
 
+Activation evidence for gates A–J er samlet i `AHA_SYNC_HUB_ACTIVATION_EVIDENCE.md`. Reviewen opprettholder NO-GO for manual execution og permanent forbud mot auto-sync.
+
 ## 1. Beslutning nå
 
 | Kapabilitet | Status nå | Beslutning |

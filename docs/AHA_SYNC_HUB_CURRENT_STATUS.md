@@ -7,6 +7,8 @@ Dette dokumentet kartlegger hva som faktisk finnes i gjeldende repository etter 
 
 Den normative aktiveringsbeslutningen og gate-statusen ligger i [`AHA_SYNC_HUB_GO_NO_GO_MATRIX.md`](./AHA_SYNC_HUB_GO_NO_GO_MATRIX.md). Gjeldende beslutning er NO-GO for ekte manuell sync; auto-sync er permanent NO-GO.
 
+Activation evidence for gates A–J er samlet i [`AHA_SYNC_HUB_ACTIVATION_EVIDENCE.md`](./AHA_SYNC_HUB_ACTIVATION_EVIDENCE.md). Reviewen opprettholder NO-GO for manual execution og permanent forbud mot auto-sync.
+
 ## 1. Kort konklusjon
 
 Gjeldende kode har tre forskjellige nivåer som må holdes adskilt:
