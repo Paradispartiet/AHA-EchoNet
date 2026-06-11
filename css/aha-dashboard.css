@@ -1919,3 +1919,39 @@ html, body { max-width: 100%; overflow-x: hidden; }
     text-align: center;
   }
 }
+
+/* AHA Training Corpus */
+.aha-training-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.aha-training-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.aha-training-item,
+.aha-training-example {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.aha-training-item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.aha-training-consent {
+  font-size: .85rem;
+  color: var(--aha-muted);
+}
+.aha-training-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.aha-training-empty {
+  color: var(--aha-muted);
+}

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AHA Training Corpus</title>
+  <link rel="stylesheet" href="css/aha-chat.css" />
+  <link rel="stylesheet" href="css/aha-dashboard.css" />
+</head>
+<body>
+  <main class="aha-dashboard training-page" style="max-width: 1100px;">
+    <section class="aha-panel">
+      <p class="eyebrow">AHA Training</p>
+      <h1>AHA Training Corpus</h1>
+      <p>Her samles tekstene som senere kan bli grunnlag for personlig modelltilpasning.</p>
+      <p class="module-meta">Tekster brukes som treningsgrunnlag først når du har godkjent dem og slått på relevant bruk.</p>
+      <div class="aha-tile-actions">
+        <button id="training-import-btn" type="button">Importer fra AHA</button>
+        <button id="training-generate-btn" type="button">Lag treningseksempler</button>
+        <button id="training-export-btn" type="button">Eksporter godkjente eksempler</button>
+        <a class="aha-tile-btn aha-tile-btn-primary" href="index.html">Til AHA Home</a>
+      </div>
+      <p id="training-message" class="module-meta" role="status" aria-live="polite"></p>
+    </section>
+
+    <section class="aha-panel">
+      <h2>Status</h2>
+      <div class="aha-training-stats">
+        <div class="aha-mini-stat"><strong id="training-stat-total">0</strong><span>Corpus items</span></div>
+        <div class="aha-mini-stat"><strong id="training-stat-raw">0</strong><span>Raw</span></div>
+        <div class="aha-mini-stat"><strong id="training-stat-approved">0</strong><span>Godkjente</span></div>
+        <div class="aha-mini-stat"><strong id="training-stat-training-allowed">0</strong><span>Treningseksempler tillatt</span></div>
+        <div class="aha-mini-stat"><strong id="training-stat-finetuning-allowed">0</strong><span>Finjustering tillatt</span></div>
+        <div class="aha-mini-stat"><strong id="training-stat-examples-total">0</strong><span>Treningseksempler</span></div>
+        <div class="aha-mini-stat"><strong id="training-stat-examples-approved">0</strong><span>Godkjente eksempler</span></div>
+      </div>
+    </section>
+
+    <section class="aha-panel">
+      <h2>Corpus</h2>
+      <p class="module-meta">Godkjenn tekster og slå på relevant bruk per item. Hvert valg er ditt eget samtykke.</p>
+      <div id="training-corpus-list" class="aha-training-list"></div>
+    </section>
+
+    <section class="aha-panel">
+      <h2>Treningseksempler</h2>
+      <p class="module-meta">Godkjenn hvert eksempel separat. Eksport krever godkjent eksempel og finjusterings-samtykke på corpus-laget.</p>
+      <div id="training-examples-list" class="aha-training-list"></div>
+    </section>
+  </main>
+
+  <script src="js/ahaTrainingCorpus.js"></script>
+  <script src="js/ahaTrainingExamples.js"></script>
+  <script src="js/ahaTrainingDashboard.js"></script>
+</body>
+</html>
