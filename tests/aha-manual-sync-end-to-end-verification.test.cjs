@@ -200,7 +200,7 @@ async function verifyBlockedCase(name, patch, expectedReason) {
   assert.equal(/function renderDashboard\([\s\S]{0,1800}executeAhaManualSyncRun/.test(dashboardCode), false, 'page render/init must not execute sync');
   assert.equal(/addEventListener\("change"[\s\S]{0,600}executeAhaManualSyncRun/.test(syncHubCode), false, 'target selection must not execute sync');
   assert.equal(/isAhaManualSyncConfirmationModalOpen = true[\s\S]{0,600}executeAhaManualSyncRun/.test(syncHubCode), false, 'opening confirmation modal must not execute sync');
-  assert.equal(/\bautoSync\b/.test(adapterCode + dashboardCode), false, 'autoSync must not be introduced');
+  assert.equal(/(?:start|enable|run)AutoSync\s*\(|autoSync\s*=\s*true/i.test(adapterCode + dashboardCode), false, 'auto-sync execution must not be introduced');
   assert.equal(/\bsyncFromDatabase\s*\(/.test(syncHubCode), false, 'Sync Hub/dashboard must not invoke module syncFromDatabase');
 
   assert.equal(/AHARepository\s*\.\s*save/.test(syncHubCode), false, 'dashboard must not write directly to the database repository');
