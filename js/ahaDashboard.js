@@ -2029,15 +2029,17 @@
     const adapter = window.AHAManualSyncDryRunTargetAdapter;
     if (typeof adapter?.createManualSyncDryRunPlan !== "function") {
       return `
-        <section class="aha-sync-target-preview" aria-label="Dry-run target preview">
+        <section class="aha-sync-target-preview" aria-label="Per-module result preview">
           <div class="aha-sync-target-preview-heading">
             <div>
               <p class="eyebrow">Dry-run target preview</p>
-              <h4>Preview only</h4>
+              <h4>Per-module result preview</h4>
             </div>
             <span class="aha-sync-hub-badge is-blocked">Execution blocked</span>
           </div>
-          <p class="aha-sync-hub-notice"><strong>Dry-run target adapter not loaded</strong></p>
+          <p class="aha-sync-target-preview-decision"><strong>Preview only</strong> · No write</p>
+          <p class="aha-sync-hub-notice"><strong>Per-module preview unavailable: dry-run adapter not loaded</strong></p>
+          <p class="aha-sync-hub-footer">Dry-run target adapter not loaded</p>
         </section>
       `;
     }
@@ -2047,61 +2049,97 @@
       plan = adapter.createManualSyncDryRunPlan();
     } catch {
       return `
-        <section class="aha-sync-target-preview" aria-label="Dry-run target preview">
+        <section class="aha-sync-target-preview" aria-label="Per-module result preview">
           <div class="aha-sync-target-preview-heading">
             <div>
               <p class="eyebrow">Dry-run target preview</p>
-              <h4>Preview only</h4>
+              <h4>Per-module result preview</h4>
             </div>
             <span class="aha-sync-hub-badge is-blocked">Execution blocked</span>
           </div>
-          <p class="aha-sync-hub-notice"><strong>Dry-run preview unavailable</strong></p>
+          <p class="aha-sync-target-preview-decision"><strong>Preview only</strong> · No write</p>
+          <p class="aha-sync-hub-notice"><strong>Per-module preview unavailable</strong></p>
+          <p class="aha-sync-hub-footer">Dry-run preview unavailable</p>
         </section>
       `;
     }
 
     const targets = Array.isArray(plan?.targets) ? plan.targets : [];
     const blockers = Array.isArray(plan?.blockers) ? plan.blockers : [];
-    const targetRows = targets.map((target) => `
-      <li class="aha-sync-hub-row">
-        <div class="aha-sync-hub-row-heading">
-          <strong>${escapeHtml(target.label || target.targetId || "Unknown target")}</strong>
-          <span class="aha-sync-hub-badge is-blocked">${target.blocked ? "Blocked" : "Preview"}</span>
-        </div>
-        <dl class="aha-sync-hub-meta">
-          <div><dt>targetId</dt><dd><code>${escapeHtml(target.targetId || "")}</code></dd></div>
-          <div><dt>localTotal</dt><dd>${escapeHtml(formatAhaSyncPreviewValue(target.localTotal))}</dd></div>
-          <div><dt>localActive</dt><dd>${escapeHtml(formatAhaSyncPreviewValue(target.localActive))}</dd></div>
-          <div><dt>localTombstones</dt><dd>${escapeHtml(formatAhaSyncPreviewValue(target.localTombstones))}</dd></div>
-          <div><dt>runtimeLoaded</dt><dd>${escapeHtml(formatAhaSyncPreviewValue(target.runtimeLoaded))}</dd></div>
-          <div><dt>syncFunctionAvailable</dt><dd>${escapeHtml(formatAhaSyncPreviewValue(target.syncFunctionAvailable))}</dd></div>
-          <div><dt>executionAllowed</dt><dd>${escapeHtml(formatAhaSyncPreviewValue(target.executionAllowed))}</dd></div>
-          <div><dt>dryRunOnly</dt><dd>${escapeHtml(formatAhaSyncPreviewValue(target.dryRunOnly))}</dd></div>
-          <div><dt>blocked</dt><dd>${escapeHtml(formatAhaSyncPreviewValue(target.blocked))}</dd></div>
-        </dl>
-      </li>
-    `).join("");
+    const plannedTargetIds = Array.isArray(plan?.wouldRun) ? plan.wouldRun : [];
+    const resultRows = targets.map((target) => {
+      const wouldRun = plannedTargetIds.includes(target.targetId) && plan?.executionAllowed === true;
+      const wouldWrite = wouldRun && plan?.wouldWrite === true;
+      let previewStatus = "preview_only";
+      let resultPreview = "Preview only; no execution or write is available.";
+
+      if (target.runtimeLoaded !== true) {
+        previewStatus = "runtime_missing";
+        resultPreview = "Runtime not loaded; execution remains blocked.";
+      } else if (target.syncFunctionAvailable !== true) {
+        previewStatus = "sync_function_missing";
+        resultPreview = "Sync function unavailable; execution remains blocked.";
+      } else if (target.blocked === true || target.executionAllowed !== true) {
+        previewStatus = "blocked_no_execution";
+        resultPreview = "Runtime inspected; manual execution remains NO-GO.";
+      } else {
+        previewStatus = "ready_for_future_activation";
+        resultPreview = "Preview evidence only; a separate activation decision is still required.";
+      }
+
+      return `
+        <li class="aha-sync-hub-row">
+          <div class="aha-sync-hub-row-heading">
+            <strong>${escapeHtml(target.label || target.targetId || "Unknown target")}</strong>
+            <span class="aha-sync-hub-badge is-blocked">${escapeHtml(previewStatus)}</span>
+          </div>
+          <dl class="aha-sync-hub-meta">
+            <div><dt>module/label</dt><dd>${escapeHtml(target.label || "Unknown target")}</dd></div>
+            <div><dt>targetId</dt><dd><code>${escapeHtml(target.targetId || "")}</code></dd></div>
+            <div><dt>previewStatus</dt><dd><code>${escapeHtml(previewStatus)}</code></dd></div>
+            <div><dt>localActive</dt><dd>${escapeHtml(formatAhaSyncPreviewValue(target.localActive))}</dd></div>
+            <div><dt>localTombstones</dt><dd>${escapeHtml(formatAhaSyncPreviewValue(target.localTombstones))}</dd></div>
+            <div><dt>localTotal</dt><dd>${escapeHtml(formatAhaSyncPreviewValue(target.localTotal))}</dd></div>
+            <div><dt>runtimeLoaded</dt><dd>${escapeHtml(formatAhaSyncPreviewValue(target.runtimeLoaded))}</dd></div>
+            <div><dt>syncFunctionAvailable</dt><dd>${escapeHtml(formatAhaSyncPreviewValue(target.syncFunctionAvailable))}</dd></div>
+            <div><dt>executionAllowed</dt><dd>${escapeHtml(formatAhaSyncPreviewValue(target.executionAllowed))}</dd></div>
+            <div><dt>dryRunOnly</dt><dd>${escapeHtml(formatAhaSyncPreviewValue(target.dryRunOnly))}</dd></div>
+            <div><dt>blocked</dt><dd>${escapeHtml(formatAhaSyncPreviewValue(target.blocked))}</dd></div>
+            <div><dt>wouldRun</dt><dd>${escapeHtml(formatAhaSyncPreviewValue(wouldRun))}</dd></div>
+            <div><dt>wouldWrite</dt><dd>${escapeHtml(formatAhaSyncPreviewValue(wouldWrite))}</dd></div>
+            <div><dt>resultPreview</dt><dd>${escapeHtml(resultPreview)}</dd></div>
+          </dl>
+        </li>
+      `;
+    }).join("");
+    const blockedTargetCount = targets.filter((target) => target.blocked === true || target.executionAllowed !== true).length;
 
     return `
-      <section class="aha-sync-target-preview" aria-label="Dry-run target preview">
+      <section class="aha-sync-target-preview" aria-label="Per-module result preview">
         <div class="aha-sync-target-preview-heading">
           <div>
             <p class="eyebrow">Dry-run target preview</p>
-            <h4>Preview only</h4>
+            <h4>Per-module result preview</h4>
           </div>
           <span class="aha-sync-hub-badge is-blocked">Execution blocked</span>
         </div>
-        <p class="aha-sync-target-preview-decision"><strong>Manual sync is NO-GO</strong> · Auto-sync permanently forbidden</p>
+        <p class="aha-sync-target-preview-decision"><strong>Preview only</strong> · No write · <strong>Manual sync is NO-GO</strong> · Auto-sync permanently forbidden</p>
         <dl class="aha-sync-target-preview-plan">
           <div><dt>mode</dt><dd><code>${escapeHtml(formatAhaSyncPreviewValue(plan?.mode))}</code></dd></div>
           <div><dt>executionAllowed</dt><dd>${escapeHtml(formatAhaSyncPreviewValue(plan?.executionAllowed))}</dd></div>
           <div><dt>autoSync</dt><dd>${escapeHtml(formatAhaSyncPreviewValue(plan?.autoSync))}</dd></div>
           <div><dt>blocked</dt><dd>${escapeHtml(formatAhaSyncPreviewValue(plan?.blocked))}</dd></div>
+          <div><dt>wouldWrite</dt><dd>${escapeHtml(formatAhaSyncPreviewValue(plan?.wouldWrite))}</dd></div>
+          <div><dt>wouldRun</dt><dd>${plannedTargetIds.length}</dd></div>
+          <div><dt>target count</dt><dd>${targets.length}</dd></div>
+          <div><dt>blocked target count</dt><dd>${blockedTargetCount}</dd></div>
           <div><dt>reason</dt><dd><code>${escapeHtml(formatAhaSyncPreviewValue(plan?.reason))}</code></dd></div>
           <div><dt>blockers</dt><dd>${escapeHtml(blockers.join(", ") || "none")}</dd></div>
           <div><dt>targets</dt><dd>${targets.length}</dd></div>
         </dl>
-        <ul class="aha-sync-hub-list" aria-label="Dry-run targets">${targetRows}</ul>
+        ${resultRows
+          ? `<ul class="aha-sync-hub-list" aria-label="Per-module dry-run results">${resultRows}</ul>`
+          : '<p class="aha-sync-hub-notice"><strong>No dry-run targets available</strong></p>'}
       </section>
     `;
   }
