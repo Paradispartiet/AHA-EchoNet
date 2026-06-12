@@ -3,7 +3,7 @@
 Statusdato: 2026-06-12
 Review-scope: dokumentasjon og evidence review; ingen activation eller runtime-endring
 
-Dette dokumentet samler repository-bevisene for gates A–J i `AHA_SYNC_HUB_GO_NO_GO_MATRIX.md`. Det er en review av hva som finnes og hva som mangler. Det gir ingen ny tillatelse til å kjøre sync, gjøre databasekall eller skrive data.
+Dette dokumentet samler repository-bevisene for gates A–J i `AHA_SYNC_HUB_GO_NO_GO_MATRIX.md`. Den konsoliderte activation checklist reviewen finnes i `AHA_SYNC_HUB_ACTIVATION_CHECKLIST_REVIEW.md`. Dokumentene er reviewer av hva som finnes og hva som mangler; de gir ingen ny tillatelse til å kjøre sync, gjøre databasekall eller skrive data.
 
 ## 1. Current decision
 
@@ -11,6 +11,8 @@ Dette dokumentet samler repository-bevisene for gates A–J i `AHA_SYNC_HUB_GO_N
 - **Auto-sync: permanently forbidden**
 - **Home Sync Hub: read-only**
 - **Preview/dry-run/checklist/blockers: allowed**
+- **Per-module result preview: implemented as read-only preview evidence**
+- **Activation checklist review: documented in `AHA_SYNC_HUB_ACTIVATION_CHECKLIST_REVIEW.md`**
 - **Activation PR: not allowed yet**
 
 Read-only inspection og eksisterende preview-/guard-logikk kan fortsatt brukes og testes uten execution-sideeffekter. Ingen eksisterende adapter, modal, knappemarkup, state machine eller repository-binding skal tolkes som activation approval.
