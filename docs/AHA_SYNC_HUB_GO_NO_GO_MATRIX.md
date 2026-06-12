@@ -5,7 +5,7 @@ Beslutningsstatus: **NO-GO for aktivering av ekte manuell sync**
 
 Dette dokumentet er beslutningsgrunnlaget for om AHA Sync Hub kan få en brukeraktivert write-path. Det beskriver gjeldende repository-status; det aktiverer ikke sync, endrer ikke runtime og gir ikke eksisterende preview-/adapterkode ny tillatelse til å skrive.
 
-Activation evidence for gates A–J er samlet i `AHA_SYNC_HUB_ACTIVATION_EVIDENCE.md`. Reviewen opprettholder NO-GO for manual execution og permanent forbud mot auto-sync.
+Activation evidence for gates A–J er samlet i `AHA_SYNC_HUB_ACTIVATION_EVIDENCE.md`, og den konsoliderte checklist reviewen finnes i `AHA_SYNC_HUB_ACTIVATION_CHECKLIST_REVIEW.md`. Preview evidence er ikke det samme som execution GO. Begge reviewene opprettholder NO-GO for manual execution og permanent forbud mot auto-sync.
 
 ## 1. Beslutning nå
 
@@ -13,7 +13,7 @@ Activation evidence for gates A–J er samlet i `AHA_SYNC_HUB_ACTIVATION_EVIDENC
 |---|---|---|
 | Read-only Home-status via `AHASyncHub.inspectAll()` | Aktiv og testet | **GO** |
 | Compact diagnostics | Implementert som hjelpefunksjoner og testet, men ikke koblet til aktiv Home-renderer | **GO som read-only kode; ikke en aktiv UI-flate** |
-| Preview, payload-oppsummering, checklist og target dry-run | Eget no-write target-adapterlag er implementert og testet, men ikke koblet til aktiv Home-renderer | **GO som preview-only** |
+| Preview, payload-oppsummering, checklist, target dry-run og per-module result preview | Eget no-write target-adapterlag og read-only previewflater er implementert og testet i aktiv Home-renderer | **GO som preview-only; ikke execution GO** |
 | Blocker-evaluering og state machine | Implementert og testet for sentrale blockers | **GO som guard/preview; ikke aktiveringsgodkjenning** |
 | Manual-sync-adapter | Gated, men programmatisk write-capable via `AHARepository.save*` og audit writer | **NO-GO som brukeraktivert execution** |
 | Ekte manual sync fra aktiv Home UI | Ikke eksponert av aktiv renderer | **NO-GO** |
@@ -106,10 +106,10 @@ Dette navnet er en fremtidig review-grense, ikke en planlagt aktivering nå. PR-
 
 ## 7. Neste anbefalte PR
 
-Dry-run target-adapteren og no-write-testdekningen er nå på plass, men den aktive Home-rendereren har ingen previewflate. Neste anbefalte PR er derfor:
+Dry-run target-adapteren, target-previewen, per-module result previewen og no-write-testdekningen gir en sterk preview/dry-run foundation. Dette er fortsatt ikke execution GO. Module loading strategy for en eventuell execution-path er ikke dokumentert eller finalisert, så neste anbefalte PR er:
 
 ```text
-feat: show manual sync dry-run target preview
+docs: define Sync Hub module loading strategy before execution
 ```
 
-Den PR-en skal bare vise den eksisterende blokkerte target-planen i en tydelig read-only previewflate. Den skal ikke bygge en kjørbar sync-knapp, laste Lists-/Paths-/Groups-/AHAavisa-runtime på Home, aktivere execution eller skrive data. Ekte manual sync forblir NO-GO, og auto-sync forblir permanent forbudt.
+Den PR-en skal være dokumentasjons-only og avklare arkitektur og sideeffektgrenser før execution vurderes. Den skal ikke laste Lists-/Paths-/Groups-/AHAavisa-runtime på Home, bygge en kjørbar sync-knapp, aktivere execution eller skrive data. Ekte manual sync forblir NO-GO, og auto-sync forblir permanent forbudt.
