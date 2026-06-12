@@ -136,11 +136,18 @@ function readyInput(patch = {}) {
     assert.equal(homeCode.includes(moduleFile), false, `Home must not load ${moduleFile}`);
   }
 
+  const dryRunAdapterLoad = homeCode.indexOf('js/ahaManualSyncDryRunTargetAdapter.js');
+  assert.ok(dryRunAdapterLoad > homeCode.indexOf('js/ahaSyncHub.js'), 'Home may load the preview-only adapter after Sync Hub');
+  assert.ok(dryRunAdapterLoad < homeCode.indexOf('js/ahaDashboard.js'), 'Home must load the preview-only adapter before the dashboard');
+
   // Only the active Home Sync Hub renderer is scanned; dormant preview helpers are a separate gated layer.
   const activeSyncHubRenderer = extractFunction(dashboardCode, 'renderSyncHubStatus');
   assert.match(activeSyncHubRenderer, /Read-only oversikt/, 'active Home Sync Hub renderer must identify itself as read-only');
   assert.match(activeSyncHubRenderer, /Ingen sync kjøres her ennå/, 'active renderer must say that no sync runs here');
   assert.equal(/<button\b/i.test(activeSyncHubRenderer), false, 'active Home Sync Hub renderer must not add a sync button');
+  assert.match(activeSyncHubRenderer, /createManualSyncDryRunPlan\s*\(\s*\)/, 'active renderer may show the blocked dry-run target preview');
+  assert.match(activeSyncHubRenderer, /Manual sync is NO-GO/, 'active renderer must keep manual sync execution NO-GO');
+  assert.match(activeSyncHubRenderer, /Auto-sync permanently forbidden/, 'active renderer must keep auto-sync permanently forbidden');
   for (const [pattern, label] of readOnlyRuntimeForbidden) {
     assert.equal(pattern.test(activeSyncHubRenderer), false, `active Home Sync Hub renderer must not contain ${label}`);
   }

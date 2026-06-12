@@ -2008,3 +2008,20 @@ html, body { max-width: 100%; overflow-x: hidden; }
 .aha-training-empty {
   color: var(--aha-muted);
 }
+
+.aha-sync-dry-run-preview summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  cursor: pointer;
+  color: var(--aha-text);
+  font-size: .8rem;
+}
+.aha-sync-dry-run-preview[open] summary { margin-bottom: 10px; }
+.aha-sync-dry-run-plan-meta {
+  padding: 9px;
+  border: 1px solid rgba(255,96,96,.2);
+  border-radius: 10px;
+  background: rgba(255,96,96,.06);
+}

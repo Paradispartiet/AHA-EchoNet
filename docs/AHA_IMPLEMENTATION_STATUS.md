@@ -1560,3 +1560,18 @@ feat: show manual sync dry-run target preview
 ```
 
 Den PR-en skal bare koble den eksisterende no-write-planen til en tydelig read-only previewflate. Den skal fortsatt ikke aktivere execution, gjøre database-/repository-kall, skrive localStorage eller laste modulruntime på Home.
+
+
+## 21. Manual sync dry-run target preview i Sync Hub
+
+Home laster nå `js/ahaManualSyncDryRunTargetAdapter.js` etter `js/ahaSyncHub.js` og før `js/ahaDashboard.js`. Den aktive Sync Hub-rendereren viser adapterens `createManualSyncDryRunPlan()` i det eksisterende advanced/expanded-området som en read-only **Dry-run target preview**. Previewen viser planstatus, blockers og targets for Lists, Paths, Groups og AHAavisa, inkludert lokale totaler, aktive records, tombstones og runtime-/funksjonsstatus. Manglende adapter eller feil ved planbygging gir en trygg fallback uten dashboard-krasj.
+
+Status er fortsatt **preview-only / no-write / no-sync**. UI-et har ingen kjørbar sync-knapp og aktiverer ingen execution-path. Home laster fortsatt ikke `ahaLists.js`, `ahaPaths.js`, `ahaGroups.js` eller `ahaAvisa.js`. Manual sync execution er fortsatt **NO-GO**, og auto-sync er fortsatt **permanent forbudt**.
+
+Neste anbefalte PR er:
+
+```text
+test: lock AHA manual sync dry-run target evidence
+```
+
+Denne oppfølgingen bør forsterke samlet evidence rundt den viste previewen og no-write/no-network-kontrakten uten å aktivere execution.
