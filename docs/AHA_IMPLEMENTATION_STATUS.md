@@ -1558,7 +1558,25 @@ Statusen er fortsatt **preview-only / no-write / no-sync**. UI-en har ingen sync
 Neste anbefalte PR er:
 
 ```text
-docs: prepare manual sync activation checklist review
+feat: add manual sync per-module result preview
 ```
 
-Den reviewen skal oppdatere activation-sjekklisten mot den faktiske preview-evidencen uten å aktivere execution. En activation-PR er fortsatt ikke tillatt før alle gates A–J er GO.
+Gate F mangler fortsatt strukturert, read-only resultatpreview per modul. Arbeidet skal ikke aktivere execution, og en activation-PR er fortsatt ikke tillatt før alle gates A–J er GO.
+
+## 21. AHA manual sync dry-run target evidence test lock
+
+Dry-run target-adapteren er nå låst med den selvstendige evidence-testen `tests/aha-manual-sync-dry-run-target-evidence.test.cjs`. Testen beskytter namespace/API-et, det fryste target-registryet for Lists, Paths, Groups og AHAavisa, obligatorisk target-metadata, lokale total-/active-/tombstone-counts og trygg håndtering av invalid JSON og manglende localStorage-key.
+
+Evidence-testen bekrefter også at en tilgjengelig `syncFromDatabase` bare inspiseres og aldri kalles. `createManualSyncDryRunPlan()` er fortsatt `mode: "dry_run"`, `executionAllowed: false`, `autoSync: false`, `blocked: true`, `wouldWrite: false`, `wouldCallSyncFromDatabase: false`, `wouldCallRepository: false` og har tom `wouldRun`. Statiske guards avviser utførende sync-/repository-/Supabase-/fetch-kall, localStorage-writes, source events, insights og publisering i preview-adapteren.
+
+Home-previewen er fortsatt **preview-only / no-write / no-sync**. Den viser targetene, lokale counts, runtime-/funksjonsstatus, blockers, **Execution blocked**, **Manual sync is NO-GO** og **Auto-sync permanently forbidden**, uten kjørbar sync-knapp. Home laster fortsatt adapteren etter `ahaSyncHub.js` og før `ahaDashboard.js`, og laster fortsatt ikke modulruntimefilene for Lists, Paths, Groups eller AHAavisa.
+
+Ekte manual sync execution er fortsatt **NO-GO** og krever fortsatt en separat activation-PR etter at alle gates er GO. Auto-sync er fortsatt **permanent forbudt**. Ingen databasekall, repository save/load, localStorage-write, source events, insights, publisering eller ekte Groups/social sharing er aktivert av denne test-/sikkerhetsendringen.
+
+Neste anbefalte PR er:
+
+```text
+feat: add manual sync per-module result preview
+```
+
+Gate F mangler fortsatt strukturert, read-only resultatpreview per modul. Den anbefalte PR-en skal ikke aktivere execution eller writes.
