@@ -46,7 +46,7 @@ body {
 .chat-main { display:grid; gap:12px; }
 .aha-module-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; align-items: start; }
 
-.composer-wrap, .module-card { background: linear-gradient(170deg, rgba(10,16,34,0.95), rgba(8,13,29,0.92)); border:1px solid var(--aha-border); border-radius: 18px; padding: 12px; }
+.composer-wrap, .module-card { background: linear-gradient(170deg, rgba(10,16,34,0.95), rgba(8,13,29,0.92)); border:1px solid var(--aha-border); border-radius: 18px; padding: 10px; }
 .module-card { transition: all .2s ease; }
 .module-card-toggle { width: 100%; display:flex; align-items:center; justify-content:space-between; border-radius: 10px; background: rgba(15,24,49,0.65); }
 .module-card-toggle-hint { color: var(--aha-accent); font-size: 11px; }
@@ -74,16 +74,16 @@ textarea, select { width:100%; border-radius: 10px; border:1px solid var(--aha-b
 .action-chip { border-radius: 999px; padding: 6px 10px; font-size: 12px; background: #141c3a; }
 .action-chips-row .action-chip { padding: 5px 10px; font-size: 11px; }
 
-.empty-state { background: linear-gradient(145deg, rgba(16,26,54,0.86), rgba(12,19,41,0.8)); border:1px dashed rgba(255,211,71,0.34); border-radius: 16px; padding: 14px; margin: 0; min-height: 128px; }
-.empty-state h2 { margin:0 0 6px; font-size: 20px; }
-.empty-state p { margin:0; color: var(--aha-muted); }
+.empty-state { background: rgba(16,26,54,0.54); border:1px dashed rgba(255,211,71,0.3); border-radius: 14px; padding: 10px 12px; margin: 0; min-height: 0; }
+.empty-state h2 { margin:0 0 4px; font-size: 16px; }
+.empty-state p { margin:0; color: var(--aha-muted); font-size: 13px; line-height: 1.45; }
 
 .chat-log-shell { position: relative; }
-.chat-log { min-height: 24dvh; max-height: 42dvh; overflow:auto; padding: 8px 24px 8px 8px; display:flex; flex-direction:column; gap:16px; }
-.chat-line-row { position: relative; display: flex; align-items: flex-start; gap: 8px; flex-wrap: wrap; }
+.chat-log { min-height: 0; max-height: none; overflow: visible; padding: 2px 0; display:flex; flex-direction:column; gap:18px; }
+.chat-line-row { position: relative; display: flex; align-items: flex-start; gap: 8px; flex-wrap: wrap; width: 100%; }
 .chat-line-row-user { justify-content: flex-end; }
 .chat-line-row-aha { justify-content: flex-start; }
-.chat-line { max-width: 85%; padding: 12px 16px; border-radius: 16px; font-size: 18px; line-height: 1.6; word-break: break-word; }
+.chat-line { max-width: min(78ch, 88%); padding: 11px 15px; border-radius: 16px; font-size: 17px; line-height: 1.6; word-break: break-word; white-space: pre-wrap; }
 .chat-line-sender { flex: 0 0 100%; font-size: 12px; font-weight: 650; letter-spacing: .05em; text-transform: uppercase; color: var(--aha-muted); }
 .chat-line-row-user .chat-line-sender { text-align: right; color: rgba(255,211,71,0.85); }
 .chat-line-paste { background: rgba(99,132,255,0.1); border: 1px dashed rgba(136,164,255,0.55); }
@@ -138,8 +138,8 @@ dl.memory-transparency-meta { display: grid; grid-template-columns: auto minmax(
 .highlight-toggle-btn { flex: 0 0 auto; margin-top: 4px; width: 20px; height: 20px; border-radius: 999px; padding: 0; font-size: 12px; line-height: 1; color: rgba(255,211,71,0.72); background: transparent; border: 1px solid rgba(255,211,71,0.24); opacity: 0.65; }
 .chat-line-row.is-highlighted .highlight-toggle-btn { background: rgba(255,211,71,0.24); opacity: 1; border-color: rgba(255,211,71,0.65); color: var(--aha-accent); }
 .chat-line-row.is-highlighted .chat-line { box-shadow: 0 0 0 1px rgba(255,211,71,0.3) inset; }
-.chat-highlights-rail { position: absolute; top: 6px; right: 0; bottom: 6px; width: 18px; border-left: 2px solid rgba(255,211,71,0.7); background: linear-gradient(180deg, rgba(255,211,71,0.08), rgba(255,211,71,0.02)); border-radius: 999px; pointer-events: none; }
-.chat-highlights-rail.is-empty::after { content: "Ingen highlights"; position: absolute; top: 8px; left: -92px; font-size: 10px; color: rgba(255,211,71,0.6); letter-spacing: 0.02em; }
+.chat-highlights-rail { position: absolute; top: 6px; right: -10px; bottom: 6px; width: 10px; border-left: 2px solid rgba(255,211,71,0.7); background: linear-gradient(180deg, rgba(255,211,71,0.08), rgba(255,211,71,0.02)); border-radius: 999px; pointer-events: none; }
+.chat-highlights-rail.is-empty { display: none; }
 .highlight-rail-marker { position: absolute; left: 8px; transform: translate(-50%, -50%); width: 10px; height: 10px; border-radius: 999px; border: 1px solid #6e4d00; background: #ffd347; padding: 0; box-shadow: 0 0 0 2px rgba(255,211,71,0.22); pointer-events: auto; }
 
 .insight-placeholder-card { background: linear-gradient(150deg, rgba(16,26,54,0.92), rgba(10,16,34,0.9)); border:1px solid var(--aha-border); border-radius: 14px; padding: 14px; }
@@ -229,8 +229,8 @@ pre#out { max-height: 22vh; overflow:auto; white-space: pre-wrap; }
 .concept-link-line { width: 10px; height: 1px; background: rgba(255, 255, 255, 0.28); flex: 0 0 auto; }
 .concept-network-empty { margin-left: 8px; }
 
-.composer-row { background: var(--aha-surface); border: 1px solid var(--aha-border); border-radius: 14px; padding: 14px; }
-#msg { min-height: clamp(170px, 26dvh, 320px); max-height: 44dvh; resize: vertical; font-size: 16px; line-height: 1.5; background: #050a19; border-color: rgba(255,211,71,0.35); }
+.composer-row { background: var(--aha-surface); border: 1px solid var(--aha-border); border-radius: 14px; padding: 10px; }
+#msg { min-height: 96px; max-height: 32dvh; resize: vertical; font-size: 16px; line-height: 1.5; background: #050a19; border-color: rgba(255,211,71,0.35); }
 .composer-actions { display:flex; justify-content:flex-end; gap:8px; margin-top: 10px; }
 .send-btn { background: var(--aha-accent); color: #1d1400; border-color: transparent; font-weight: 600; }
 .secondary-action { background: transparent; border-color: rgba(255,211,71,0.5); color: var(--aha-accent); }
@@ -282,8 +282,8 @@ pre#out { max-height: 22vh; overflow:auto; white-space: pre-wrap; }
   .chat-profile-card { flex-basis:190px; min-width:164px; }
   .chat-layout { grid-template-columns: minmax(0, 1fr); }
   .insight-rail { position: static; max-height: none; }
-  .chat-log { min-height: 48dvh; max-height: 54dvh; }
-  #msg { min-height: 34dvh; max-height: 52dvh; }
+  .chat-log { min-height: 0; max-height: none; }
+  #msg { min-height: 96px; max-height: 34dvh; }
 }
 
 @media (max-width: 720px) {
@@ -301,11 +301,11 @@ pre#out { max-height: 22vh; overflow:auto; white-space: pre-wrap; }
   .profile-indicator { padding:4px 7px; }
   .action-groups { flex-wrap: nowrap; }
   .chips { flex-wrap: nowrap; }
-  .chat-line { max-width: 94%; }
+  .chat-line { max-width: 94%; font-size: 16px; }
   .memory-transparency { flex-basis: 100%; max-width: 94%; }
   .composer-actions { justify-content: stretch; }
   .composer-actions button { flex: 1 1 0; }
-  #msg { min-height: 36dvh; max-height: 54dvh; }
+  #msg { min-height: 92px; max-height: 38dvh; }
   .module-card-body { margin-top: 8px; }
 }
 
@@ -393,20 +393,22 @@ pre#out { max-height: 22vh; overflow:auto; white-space: pre-wrap; }
 
 /* Chat-first: samtalen er hovedflaten */
 .chat-conversation {
-  background: linear-gradient(170deg, rgba(10,16,34,0.95), rgba(8,13,29,0.92));
+  background: linear-gradient(170deg, rgba(10,16,34,0.88), rgba(8,13,29,0.84));
   border: 1px solid var(--aha-border);
   border-radius: 18px;
-  padding: 12px;
+  padding: 10px;
 }
-.chat-conversation .chat-log { min-height: 56dvh; max-height: 68dvh; }
-.chat-conversation .empty-state { margin-top: 10px; min-height: 0; }
+.chat-conversation .chat-log { min-height: 0; max-height: none; }
+.chat-conversation .empty-state { margin-top: 8px; min-height: 0; }
 
 .answer-actions {
-  background: rgba(15,24,49,0.55);
+  display: none;
+  background: rgba(15,24,49,0.45);
   border: 1px solid var(--aha-border);
   border-radius: 12px;
-  padding: 10px 12px;
+  padding: 8px 10px;
 }
+.answer-actions.has-aha-answer { display: block; }
 .answer-actions-hint { margin: 0 0 8px; font-size: 12px; color: var(--aha-muted); }
 .answer-actions-row { gap: 8px; }
 .answer-actions-row .action-chip {
