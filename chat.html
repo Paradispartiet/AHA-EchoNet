@@ -77,41 +77,98 @@
         <section class="answer-actions" aria-label="Handlinger for AHA-svar">
           <p class="answer-actions-hint">Når AHA har svart, kan du bygge videre:</p>
           <div class="chips answer-actions-row">
-            <button id="btn-insights" type="button" class="action-chip" data-open-card="full">Lagre som innsikt</button>
-            <button type="button" class="action-chip" data-chat-action="lag_liste" data-open-card="aha-ser">Lag liste</button>
-            <button type="button" class="action-chip" data-chat-action="lag_laringssti" data-open-card="aha-ser">Lag sti</button>
-            <button id="btn-concepts" type="button" class="action-chip" data-open-card="full">Vis begreper</button>
-            <button id="btn-knowledge-map" type="button" class="action-chip" data-open-card="full">Vis kart</button>
-            <button type="button" class="action-chip" data-chat-action="oppsummer" data-open-card="aha-ser">Forkort</button>
-            <button type="button" class="action-chip" data-chat-action="reflekter" data-open-card="aha-ser">Utvid</button>
+            <button id="btn-insights" type="button" class="action-chip" data-open-tab="innsikter">Lagre som innsikt</button>
+            <button type="button" class="action-chip" data-chat-action="lag_liste" data-open-tab="struktur">Lag liste</button>
+            <button type="button" class="action-chip" data-chat-action="lag_laringssti" data-open-tab="struktur">Lag sti</button>
+            <button id="btn-concepts" type="button" class="action-chip" data-open-tab="begreper">Vis begreper</button>
+            <button id="btn-knowledge-map" type="button" class="action-chip" data-open-tab="kart">Vis kart</button>
+            <button type="button" class="action-chip" data-chat-action="oppsummer" data-open-tab="oversikt">Forkort</button>
+            <button type="button" class="action-chip" data-chat-action="reflekter" data-open-tab="oversikt">Utvid</button>
           </div>
         </section>
 
-        <details class="aha-explore" id="aha-explore">
-          <summary>Utforsk det AHA fant</summary>
-          <section class="aha-module-grid" aria-label="AHA moduloversikt">
-            <section class="module-card aha-ser-card" data-module-card data-module-name="aha-ser">
-              <button type="button" class="module-card-toggle" data-module-toggle aria-expanded="false"><span>AHA SER</span><span class="module-card-toggle-hint">Åpne</span></button>
-              <p class="module-card-preview">Tema, hovedspenning og viktigste innsikt.</p>
-              <div class="module-card-body"><div id="aha-auto-output" class="aha-auto-output" aria-live="polite"></div></div>
-            </section>
-            <aside class="module-card insight-rail" data-module-card data-module-name="insights">
-              <button type="button" class="module-card-toggle" data-module-toggle aria-expanded="false"><span>Innsikter</span><span class="module-card-toggle-hint">Åpne</span></button>
-              <p class="module-card-preview">Innsikter, begreper og videreføring fra samtalen.</p>
-              <div class="module-card-body">
-                <section class="insight-placeholder-card"><h2>Innsikter fra samtalen</h2><p>Når AHA finner viktige poenger, vises de her.</p><p class="insight-inline-hint">AHA lager innsikter automatisk etter Send. Bruk «Lagre som innsikt» over chatten for å se dem.</p></section>
-                <details class="utility-menu"><summary>Mer</summary><div class="buttons utility-buttons"><button id="btn-status">Tema-status</button><button id="btn-meta">Meta-profil</button><button id="btn-export-analysis">Kopier analyse</button><button id="btn-export-analysis-json">Eksporter JSON</button><button id="btn-export">Eksport JSON</button><button id="btn-import-hg">Importer History Go</button><button id="btn-saved-afterwork">AHA etterarbeid</button><button id="btn-reset">Nullstill</button></div></details>
-              </div>
-            </aside>
-            <section class="module-card" data-module-card data-module-action="concepts"><button type="button" class="module-card-toggle" data-module-toggle aria-expanded="false"><span>Begreper</span><span class="module-card-toggle-hint">Åpne</span></button><p class="module-card-preview">Begrepskart og nøkkelord fra innsiktsmotoren.</p><div class="module-card-body"><p>Begrepsvisning lastes automatisk når kortet åpnes.</p><button type="button" class="module-inline-action" data-module-action-trigger="concepts">Oppdater begreper</button></div></section>
-            <section class="module-card" data-module-card><button type="button" class="module-card-toggle" data-module-toggle aria-expanded="false"><span>Læringssti</span><span class="module-card-toggle-hint">Åpne</span></button><p class="module-card-preview">Forslag til neste læringssteg.</p><div class="module-card-body"><p>Bruk handlingen «Lag sti» over chatten for oppdatert innhold.</p></div></section>
-            <section class="module-card" data-module-card><button type="button" class="module-card-toggle" data-module-toggle aria-expanded="false"><span>Fagkoblinger</span><span class="module-card-toggle-hint">Åpne</span></button><p class="module-card-preview">Tverrfaglige koblinger og relevante felt.</p><div class="module-card-body"><p>Fagkoblinger vises i AHA SER og innsiktsanalysen.</p></div></section>
-            <section class="module-card" data-module-card data-module-action="meta"><button type="button" class="module-card-toggle" data-module-toggle aria-expanded="false"><span>Meta-profil</span><span class="module-card-toggle-hint">Åpne</span></button><p class="module-card-preview">Tema, mønstre og profildata.</p><div class="module-card-body"><div id="meta-profile-panel"></div></div></section>
-            <section class="module-card" data-module-card data-module-action="afterwork"><button type="button" class="module-card-toggle" data-module-toggle aria-expanded="false"><span>Etterarbeid</span><span class="module-card-toggle-hint">Åpne</span></button><p class="module-card-preview">Lagrede etterarbeid og chamber-mønstre.</p><div class="module-card-body"><div id="afterwork-panel"></div></div></section>
-            <section class="module-card" data-module-card><button type="button" class="module-card-toggle" data-module-toggle aria-expanded="false"><span>History Go</span><span class="module-card-toggle-hint">Åpne</span></button><p class="module-card-preview">Koble til og importer historikk.</p><div class="module-card-body"><div class="module-inline-actions"><button type="button" class="module-inline-action" data-chat-action="koble_hg">Koble til History Go</button><button type="button" class="module-inline-action" data-chat-action="import_hg">Importer fra History Go</button></div></div></section>
-            <aside class="module-card" data-module-card data-module-name="full"><button type="button" class="module-card-toggle" data-module-toggle aria-expanded="false"><span>Full analyse</span><span class="module-card-toggle-hint">Åpne</span></button><p class="module-card-preview">Detaljer og rå analyse.</p><div class="module-card-body"><div id="panel"></div><pre id="out"></pre></div></aside>
+        <!--
+          AHA Analyse Explorer v1:
+          Alt AHA finner vises fortsatt, men organiseres i faner under
+          «Utforsk det AHA fant». Innholdet i fanene rendres av
+          js/ahaExplorer.js fra eksportbundlen. Legacy-containerne
+          (#aha-auto-output, #panel, #out, #meta-profile-panel,
+          #afterwork-panel) beholdes fordi ahaChat.js rendrer inn i dem.
+        -->
+        <section class="aha-explorer" id="aha-explorer" aria-label="Utforsk det AHA fant">
+          <header class="explorer-head">
+            <h2>Utforsk det AHA fant</h2>
+            <p>Alt AHA har hentet ut av samtalen – organisert i faner.</p>
+          </header>
+          <div class="explorer-tabs" role="tablist" aria-label="Analysefaner">
+            <button type="button" role="tab" data-tab="oversikt" aria-selected="true" class="is-active">Oversikt</button>
+            <button type="button" role="tab" data-tab="innsikter" aria-selected="false">Innsikter <span class="exp-tab-count"></span></button>
+            <button type="button" role="tab" data-tab="begreper" aria-selected="false">Begreper <span class="exp-tab-count"></span></button>
+            <button type="button" role="tab" data-tab="fag" aria-selected="false">Fag <span class="exp-tab-count"></span></button>
+            <button type="button" role="tab" data-tab="struktur" aria-selected="false">Struktur</button>
+            <button type="button" role="tab" data-tab="kart" aria-selected="false">Kart</button>
+            <button type="button" role="tab" data-tab="data" aria-selected="false">Data</button>
+          </div>
+
+          <section class="explorer-panel" data-tab-panel="oversikt" role="tabpanel" aria-label="Oversikt">
+            <div id="exp-oversikt"><p class="exp-empty">AHA har ikke analysert noe ennå. Send en tekst i chatten over.</p></div>
           </section>
-        </details>
+
+          <section class="explorer-panel" data-tab-panel="innsikter" role="tabpanel" aria-label="Innsikter" hidden>
+            <div id="exp-innsikter"><p class="exp-empty">Innsikter fra samtalen vises her.</p></div>
+          </section>
+
+          <section class="explorer-panel" data-tab-panel="begreper" role="tabpanel" aria-label="Begreper" hidden>
+            <div id="exp-begreper"><p class="exp-empty">Begreper fra analysen vises her.</p></div>
+          </section>
+
+          <section class="explorer-panel" data-tab-panel="fag" role="tabpanel" aria-label="Fag" hidden>
+            <div id="exp-fag"><p class="exp-empty">Fagkoblinger vises her.</p></div>
+          </section>
+
+          <section class="explorer-panel" data-tab-panel="struktur" role="tabpanel" aria-label="Struktur" hidden>
+            <div id="exp-struktur"><p class="exp-empty">Sortert struktur, lister og læringsstier vises her.</p></div>
+            <details class="exp-acc">
+              <summary>AHA etterarbeid – detaljert visning og lagring</summary>
+              <div id="aha-auto-output" class="aha-auto-output" aria-live="polite"></div>
+            </details>
+            <details class="exp-acc">
+              <summary>Lagrede etterarbeid</summary>
+              <div id="afterwork-panel"></div>
+            </details>
+          </section>
+
+          <section class="explorer-panel" data-tab-panel="kart" role="tabpanel" aria-label="Kart" hidden>
+            <div id="exp-kart"><p class="exp-empty">Kunnskapskart og chamber-status vises her.</p></div>
+            <details class="exp-acc">
+              <summary>Meta-profil</summary>
+              <div id="meta-profile-panel"></div>
+            </details>
+          </section>
+
+          <section class="explorer-panel" data-tab-panel="data" role="tabpanel" aria-label="Data" hidden>
+            <div class="exp-tools" aria-label="Verktøy og eksport">
+              <p class="exp-kicker">Verktøy</p>
+              <div class="buttons utility-buttons">
+                <button id="btn-status">Tema-status</button>
+                <button id="btn-meta">Meta-profil</button>
+                <button id="btn-export-analysis">Kopier analyse</button>
+                <button id="btn-export-analysis-json">Eksporter JSON</button>
+                <button id="btn-export">Eksport JSON</button>
+                <button id="btn-import-hg">Importer History Go</button>
+                <button type="button" data-chat-action="koble_hg">Koble til History Go</button>
+                <button id="btn-saved-afterwork">AHA etterarbeid</button>
+                <button id="btn-reset">Nullstill</button>
+              </div>
+            </div>
+            <div id="exp-data"></div>
+            <details class="exp-acc">
+              <summary>Analysepanel (utdata fra verktøyene over)</summary>
+              <div id="panel"></div>
+              <pre id="out"></pre>
+            </details>
+          </section>
+        </section>
       </section>
     </main>
 
@@ -152,6 +209,7 @@
   <script src="js/ahaChatSubjects.js"></script>
   <script src="js/ahaChatAnalysis.js"></script>
   <script src="js/ahaChatExport.js"></script>
+  <script src="js/ahaExplorer.js"></script>
   <script src="js/ahaChatReplyFormat.js"></script>
   <script src="js/ahaEngineClient.js"></script>
   <script src="js/ahaChat.js"></script>
@@ -190,50 +248,19 @@
 
   <script>
     (function () {
-      const cards = Array.from(document.querySelectorAll('[data-module-card]'));
-      const explore = document.getElementById('aha-explore');
-      const triggerModuleAction = (action) => {
-        if (action === 'meta') return window.showMeta?.();
-        if (action === 'afterwork') return window.showSavedAfterwork?.();
-        if (action === 'concepts') return document.getElementById('btn-concepts')?.click();
-      };
-      const closeAll = (except) => {
-        cards.forEach((card) => {
-          if (card === except) return;
-          card.classList.remove('is-expanded');
-          const btn = card.querySelector('[data-module-toggle]');
-          if (btn) btn.setAttribute('aria-expanded', 'false');
-        });
-      };
-      cards.forEach((card) => {
-        const btn = card.querySelector('[data-module-toggle]');
-        if (!btn) return;
+      // Svar-handlinger over chatten: åpne riktig fane i «Utforsk det AHA fant»
+      // og friske opp Explorer-visningen etter at ahaChat.js har rendret
+      // resultatet (data-chat-action / knapp-id håndteres der, ikke her).
+      const explorer = document.getElementById('aha-explorer');
+      document.querySelectorAll('[data-open-tab]').forEach((btn) => {
         btn.addEventListener('click', () => {
-          const next = !card.classList.contains('is-expanded');
-          closeAll(card);
-          card.classList.toggle('is-expanded', next);
-          btn.setAttribute('aria-expanded', next ? 'true' : 'false');
-          if (next) triggerModuleAction(card.dataset.moduleAction);
+          const tab = btn.dataset.openTab;
+          setTimeout(() => {
+            window.refreshAhaExplorer?.();
+            window.AHAExplorer?.open(tab);
+            explorer?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }, 150);
         });
-      });
-      document.querySelectorAll('[data-module-action-trigger]').forEach((btn) => {
-        btn.addEventListener('click', () => triggerModuleAction(btn.dataset.moduleActionTrigger));
-      });
-      // Svar-handlinger over chatten: åpne «Utforsk det AHA fant» og det relevante
-      // kortet slik at resultatet fra de eksisterende motorene blir synlig. Selve
-      // innholdet rendres av ahaChat.js (data-chat-action / knapp-id), ikke her.
-      const openModuleCard = (name) => {
-        const card = cards.find((c) => c.dataset.moduleName === name);
-        if (!card) return;
-        if (explore) explore.open = true;
-        closeAll(card);
-        card.classList.add('is-expanded');
-        const btn = card.querySelector('[data-module-toggle]');
-        if (btn) btn.setAttribute('aria-expanded', 'true');
-        card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      };
-      document.querySelectorAll('[data-open-card]').forEach((btn) => {
-        btn.addEventListener('click', () => openModuleCard(btn.dataset.openCard));
       });
     })();
   </script>

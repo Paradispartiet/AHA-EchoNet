@@ -1366,10 +1366,30 @@
     row.dataset.messageId = messageId;
     row.dataset.createdAt = createdAt;
 
+    const sender = document.createElement("span");
+    sender.className = "chat-line-sender";
+    sender.textContent = role === "user" ? "Du" : "AHA";
+    row.appendChild(sender);
+
     const div = document.createElement("div");
     div.className = `chat-line chat-line-${role}`;
     div.id = `chat-message-${messageId}`;
-    div.textContent = text;
+    // Lange brukermeldinger er som regel innlimt kildetekst: vis dem som en
+    // egen sammenleggbar «innlimt tekst»-boble så samtalen forblir lesbar.
+    if (role === "user" && text.length > 480) {
+      div.classList.add("chat-line-paste");
+      const details = document.createElement("details");
+      const summary = document.createElement("summary");
+      summary.textContent = `Innlimt tekst (${text.length} tegn) – «${previewText(text)} …»`;
+      const body = document.createElement("p");
+      body.className = "chat-line-paste-body";
+      body.textContent = text;
+      details.appendChild(summary);
+      details.appendChild(body);
+      div.appendChild(details);
+    } else {
+      div.textContent = text;
+    }
 
     const highlightBtn = document.createElement("button");
     highlightBtn.type = "button";
@@ -1407,6 +1427,7 @@
     syncMessageHighlightState(row);
     renderHighlightsRail();
     updateEmptyState();
+    if (role === "aha") refreshAhaExplorer();
   }
 
   function previewText(text) {
@@ -4693,6 +4714,24 @@
     return global.AHAChatExport.exportAhaAnalysisJson(getAhaExportDeps());
   }
 
+  // AHA Analyse Explorer: fanene under chatten rendres fra samme
+  // eksportbundle som Kopier analyse / Eksporter JSON bruker. Debounce
+  // fordi bundlen bygges på nytt ved hver oppdatering.
+  let explorerRefreshTimer = null;
+  function refreshAhaExplorer() {
+    if (!global.AHAExplorer?.render) return;
+    if (explorerRefreshTimer) clearTimeout(explorerRefreshTimer);
+    explorerRefreshTimer = setTimeout(() => {
+      explorerRefreshTimer = null;
+      try {
+        global.AHAExplorer.render(buildAhaAnalysisExportBundle());
+      } catch (err) {
+        console.warn("AHA Explorer-oppdatering feilet", err);
+      }
+    }, 150);
+  }
+  global.refreshAhaExplorer = refreshAhaExplorer;
+
   function buildAutoOutputs(userText, ahaReply) {
     const raw = String(userText || "").trim();
     const reply = String(ahaReply || "").trim();
@@ -5232,8 +5271,10 @@
         }
         if (statusEl) statusEl.textContent = result.saved ? "Etterarbeid lagret." : "Dette etterarbeidet er allerede lagret.";
         setStatusNote(result.saved ? "Etterarbeid lagret" : "Dette etterarbeidet er allerede lagret");
+        refreshAhaExplorer();
       });
     }
+    refreshAhaExplorer();
   }
 
   function humanizeTextType(type) {
@@ -5764,7 +5805,12 @@
   function restoreAutoOutputFromStorage() {
     const cache = loadAutoOutputs();
     setExportButtonsEnabled(Boolean(cache?.payload));
-    if (!cache) return;
+    if (!cache) {
+      // Ingen lagret analyse, men kammeret kan ha innsikter og kart som
+      // Explorer-fanene skal vise ved sidelast.
+      refreshAhaExplorer();
+      return;
+    }
     const payload = cache?.payload && typeof cache.payload === "object" ? cache.payload : cache;
     const sourceText = String(cache?.sourceText || "");
     const host = document.getElementById("aha-auto-output");
