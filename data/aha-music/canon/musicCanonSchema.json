@@ -1,0 +1,222 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aha-echonet.local/schemas/aha-music-canon.schema.json",
+  "title": "AHA Music Canon v1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "nodes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/canonNode"
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/canonEdge"
+      }
+    },
+    "trackCanonLinks": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/canonEntityLink"
+      },
+      "description": "Reserved for later track -> canon node links; automatic matching is out of scope for v1."
+    },
+    "artistCanonLinks": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/canonEntityLink"
+      },
+      "description": "Reserved for later artist -> canon node links; automatic matching is out of scope for v1."
+    },
+    "playlistCanonLinks": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/canonEntityLink"
+      },
+      "description": "Reserved for later playlist -> canon node links; automatic matching is out of scope for v1."
+    }
+  },
+  "required": [
+    "nodes",
+    "edges"
+  ],
+  "$defs": {
+    "canonNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9_]+$"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "era",
+            "genre",
+            "subgenre",
+            "tradition",
+            "rhythm",
+            "harmony",
+            "production",
+            "technology",
+            "instrument",
+            "cultural_context",
+            "science_concept",
+            "music_theory",
+            "movement"
+          ]
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "shortDescription": {
+          "type": "string",
+          "minLength": 1
+        },
+        "parentId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[a-z0-9_]+$"
+        },
+        "eraRange": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "region": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "sortOrder": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "name",
+        "shortDescription",
+        "parentId",
+        "eraRange",
+        "region",
+        "tags",
+        "sortOrder"
+      ]
+    },
+    "canonEdge": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9_]+$"
+        },
+        "fromNodeId": {
+          "type": "string",
+          "pattern": "^[a-z0-9_]+$"
+        },
+        "toNodeId": {
+          "type": "string",
+          "pattern": "^[a-z0-9_]+$"
+        },
+        "relationType": {
+          "type": "string",
+          "enum": [
+            "developed_from",
+            "influenced",
+            "belongs_to",
+            "parallel_to",
+            "reaction_against",
+            "uses_technique",
+            "emerged_in",
+            "transformed_into"
+          ]
+        },
+        "shortDescription": {
+          "type": "string",
+          "minLength": 1
+        },
+        "confidence": {
+          "type": "string",
+          "enum": [
+            "curated_seed",
+            "high",
+            "medium",
+            "low"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "fromNodeId",
+        "toNodeId",
+        "relationType",
+        "shortDescription",
+        "confidence"
+      ]
+    },
+    "canonEntityLink": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "entityType": {
+          "type": "string",
+          "enum": [
+            "track",
+            "artist",
+            "playlist"
+          ]
+        },
+        "entityId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "canonNodeId": {
+          "type": "string",
+          "pattern": "^[a-z0-9_]+$"
+        },
+        "source": {
+          "type": "string",
+          "enum": [
+            "manual",
+            "curated",
+            "automatic_suggestion"
+          ]
+        },
+        "confidence": {
+          "type": "string",
+          "enum": [
+            "high",
+            "medium",
+            "low",
+            "unreviewed"
+          ]
+        },
+        "createdAt": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "entityType",
+        "entityId",
+        "canonNodeId",
+        "source",
+        "confidence"
+      ]
+    }
+  }
+}

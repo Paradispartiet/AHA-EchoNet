@@ -1,0 +1,242 @@
+[
+  {
+    "id": "edge_001_folk_music_to_blues",
+    "fromNodeId": "folk_music",
+    "toNodeId": "blues",
+    "relationType": "developed_from",
+    "shortDescription": "Curated seed edge: Folk music → Blues (developed_from).",
+    "confidence": "curated_seed"
+  },
+  {
+    "id": "edge_002_gospel_to_soul",
+    "fromNodeId": "gospel",
+    "toNodeId": "soul",
+    "relationType": "influenced",
+    "shortDescription": "Curated seed edge: Gospel → Soul (influenced).",
+    "confidence": "curated_seed"
+  },
+  {
+    "id": "edge_003_blues_to_jazz",
+    "fromNodeId": "blues",
+    "toNodeId": "jazz",
+    "relationType": "influenced",
+    "shortDescription": "Curated seed edge: Blues → Jazz (influenced).",
+    "confidence": "curated_seed"
+  },
+  {
+    "id": "edge_004_blues_to_rock_and_roll",
+    "fromNodeId": "blues",
+    "toNodeId": "rock_and_roll",
+    "relationType": "influenced",
+    "shortDescription": "Curated seed edge: Blues → Rock and roll (influenced).",
+    "confidence": "curated_seed"
+  },
+  {
+    "id": "edge_005_rhythm_and_blues_to_soul",
+    "fromNodeId": "rhythm_and_blues",
+    "toNodeId": "soul",
+    "relationType": "transformed_into",
+    "shortDescription": "Curated seed edge: Rhythm and blues → Soul (transformed_into).",
+    "confidence": "curated_seed"
+  },
+  {
+    "id": "edge_006_rhythm_and_blues_to_rock_and_roll",
+    "fromNodeId": "rhythm_and_blues",
+    "toNodeId": "rock_and_roll",
+    "relationType": "influenced",
+    "shortDescription": "Curated seed edge: Rhythm and blues → Rock and roll (influenced).",
+    "confidence": "curated_seed"
+  },
+  {
+    "id": "edge_007_soul_to_funk",
+    "fromNodeId": "soul",
+    "toNodeId": "funk",
+    "relationType": "transformed_into",
+    "shortDescription": "Curated seed edge: Soul → Funk (transformed_into).",
+    "confidence": "curated_seed"
+  },
+  {
+    "id": "edge_008_funk_to_disco",
+    "fromNodeId": "funk",
+    "toNodeId": "disco",
+    "relationType": "influenced",
+    "shortDescription": "Curated seed edge: Funk → Disco (influenced).",
+    "confidence": "curated_seed"
+  },
+  {
+    "id": "edge_009_disco_to_house",
+    "fromNodeId": "disco",
+    "toNodeId": "house",
+    "relationType": "influenced",
+    "shortDescription": "Curated seed edge: Disco → House (influenced).",
+    "confidence": "curated_seed"
+  },
+  {
+    "id": "edge_010_house_to_techno",
+    "fromNodeId": "house",
+    "toNodeId": "techno",
+    "relationType": "parallel_to",
+    "shortDescription": "Curated seed edge: House → Techno (parallel_to).",
+    "confidence": "curated_seed"
+  },
+  {
+    "id": "edge_011_reggae_to_dub",
+    "fromNodeId": "reggae",
+    "toNodeId": "dub",
+    "relationType": "transformed_into",
+    "shortDescription": "Curated seed edge: Reggae → Dub (transformed_into).",
+    "confidence": "curated_seed"
+  },
+  {
+    "id": "edge_012_dub_to_electronic_music",
+    "fromNodeId": "dub",
+    "toNodeId": "electronic_music",
+    "relationType": "influenced",
+    "shortDescription": "Curated seed edge: Dub → Electronic music (influenced).",
+    "confidence": "curated_seed"
+  },
+  {
+    "id": "edge_013_sound_system_to_hip_hop",
+    "fromNodeId": "sound_system",
+    "toNodeId": "hip_hop",
+    "relationType": "influenced",
+    "shortDescription": "Curated seed edge: Sound system → Hip hop (influenced).",
+    "confidence": "curated_seed"
+  },
+  {
+    "id": "edge_014_funk_to_hip_hop",
+    "fromNodeId": "funk",
+    "toNodeId": "hip_hop",
+    "relationType": "influenced",
+    "shortDescription": "Curated seed edge: Funk → Hip hop (influenced).",
+    "confidence": "curated_seed"
+  },
+  {
+    "id": "edge_015_punk_to_post_punk",
+    "fromNodeId": "punk",
+    "toNodeId": "post_punk",
+    "relationType": "transformed_into",
+    "shortDescription": "Curated seed edge: Punk → Post-punk (transformed_into).",
+    "confidence": "curated_seed"
+  },
+  {
+    "id": "edge_016_post_punk_to_synthpop",
+    "fromNodeId": "post_punk",
+    "toNodeId": "synthpop",
+    "relationType": "influenced",
+    "shortDescription": "Curated seed edge: Post-punk → Synthpop (influenced).",
+    "confidence": "curated_seed"
+  },
+  {
+    "id": "edge_017_synthesizer_to_synthpop",
+    "fromNodeId": "synthesizer",
+    "toNodeId": "synthpop",
+    "relationType": "uses_technique",
+    "shortDescription": "Curated seed edge: Synthesizer → Synthpop (uses_technique).",
+    "confidence": "curated_seed"
+  },
+  {
+    "id": "edge_018_drum_machine_to_house",
+    "fromNodeId": "drum_machine",
+    "toNodeId": "house",
+    "relationType": "uses_technique",
+    "shortDescription": "Curated seed edge: Drum machine → House (uses_technique).",
+    "confidence": "curated_seed"
+  },
+  {
+    "id": "edge_019_drum_machine_to_techno",
+    "fromNodeId": "drum_machine",
+    "toNodeId": "techno",
+    "relationType": "uses_technique",
+    "shortDescription": "Curated seed edge: Drum machine → Techno (uses_technique).",
+    "confidence": "curated_seed"
+  },
+  {
+    "id": "edge_020_sampling_to_hip_hop",
+    "fromNodeId": "sampling",
+    "toNodeId": "hip_hop",
+    "relationType": "uses_technique",
+    "shortDescription": "Curated seed edge: Sampling → Hip hop (uses_technique).",
+    "confidence": "curated_seed"
+  },
+  {
+    "id": "edge_021_minimalism_to_ambient",
+    "fromNodeId": "minimalism",
+    "toNodeId": "ambient",
+    "relationType": "influenced",
+    "shortDescription": "Curated seed edge: Minimalism → Ambient (influenced).",
+    "confidence": "curated_seed"
+  },
+  {
+    "id": "edge_022_studio_as_instrument_to_dub",
+    "fromNodeId": "studio_as_instrument",
+    "toNodeId": "dub",
+    "relationType": "uses_technique",
+    "shortDescription": "Curated seed edge: Studio as instrument → Dub (uses_technique).",
+    "confidence": "curated_seed"
+  },
+  {
+    "id": "edge_023_black_atlantic_music_to_blues",
+    "fromNodeId": "black_atlantic_music",
+    "toNodeId": "blues",
+    "relationType": "belongs_to",
+    "shortDescription": "Curated seed edge: Black Atlantic music → Blues (belongs_to).",
+    "confidence": "curated_seed"
+  },
+  {
+    "id": "edge_024_black_atlantic_music_to_jazz",
+    "fromNodeId": "black_atlantic_music",
+    "toNodeId": "jazz",
+    "relationType": "belongs_to",
+    "shortDescription": "Curated seed edge: Black Atlantic music → Jazz (belongs_to).",
+    "confidence": "curated_seed"
+  },
+  {
+    "id": "edge_025_black_atlantic_music_to_reggae",
+    "fromNodeId": "black_atlantic_music",
+    "toNodeId": "reggae",
+    "relationType": "belongs_to",
+    "shortDescription": "Curated seed edge: Black Atlantic music → Reggae (belongs_to).",
+    "confidence": "curated_seed"
+  },
+  {
+    "id": "edge_026_black_atlantic_music_to_hip_hop",
+    "fromNodeId": "black_atlantic_music",
+    "toNodeId": "hip_hop",
+    "relationType": "belongs_to",
+    "shortDescription": "Curated seed edge: Black Atlantic music → Hip hop (belongs_to).",
+    "confidence": "curated_seed"
+  },
+  {
+    "id": "edge_027_dance_culture_to_disco",
+    "fromNodeId": "dance_culture",
+    "toNodeId": "disco",
+    "relationType": "belongs_to",
+    "shortDescription": "Curated seed edge: Dance culture → Disco (belongs_to).",
+    "confidence": "curated_seed"
+  },
+  {
+    "id": "edge_028_club_culture_to_house",
+    "fromNodeId": "club_culture",
+    "toNodeId": "house",
+    "relationType": "belongs_to",
+    "shortDescription": "Curated seed edge: Club culture → House (belongs_to).",
+    "confidence": "curated_seed"
+  },
+  {
+    "id": "edge_029_club_culture_to_techno",
+    "fromNodeId": "club_culture",
+    "toNodeId": "techno",
+    "relationType": "belongs_to",
+    "shortDescription": "Curated seed edge: Club culture → Techno (belongs_to).",
+    "confidence": "curated_seed"
+  },
+  {
+    "id": "edge_030_music_video_culture_to_pop",
+    "fromNodeId": "music_video_culture",
+    "toNodeId": "pop",
+    "relationType": "influenced",
+    "shortDescription": "Curated seed edge: Music video culture → Pop (influenced).",
+    "confidence": "curated_seed"
+  }
+]
