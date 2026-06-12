@@ -108,10 +108,14 @@ function readyInput(patch = {}) {
   const dryRunTargetPlan = dryRunTargetAdapter.createManualSyncDryRunPlan();
   assert.equal(dryRunTargetPlan.mode, 'dry_run', 'target adapter must remain preview-only');
   assert.equal(dryRunTargetPlan.executionAllowed, false, 'target adapter must block execution');
-  assert.equal(dryRunTargetPlan.autoSync, false, 'target adapter must keep auto-sync disabled');
+  assert.equal(dryRunTargetPlan.autoSync, false, 'target adapter must keep auto-sync permanently forbidden');
+  assert.equal(dryRunTargetPlan.blocked, true, 'target adapter plan must remain blocked');
+  assert.deepEqual(Array.from(dryRunTargetPlan.wouldRun), [], 'target adapter must not schedule any execution');
   assert.equal(dryRunTargetPlan.wouldWrite, false, 'target adapter must not plan writes');
   assert.equal(dryRunTargetPlan.wouldCallSyncFromDatabase, false, 'target adapter must not plan module sync calls');
   assert.equal(dryRunTargetPlan.wouldCallRepository, false, 'target adapter must not plan repository calls');
+  assert.ok(dryRunTargetPlan.blockers.includes('activation_pr_missing'), 'real execution must still require a dedicated activation PR');
+  assert.equal('execute' in dryRunTargetAdapter, false, 'preview-only target adapter must not expose execution');
   assert.equal(syncCalls, 0, 'target adapter inspection must not call a loaded syncFromDatabase function');
   assert.equal(storageCalls.some(([method]) => method !== 'getItem'), false, 'target adapter must only read localStorage');
 
