@@ -2,24 +2,82 @@
 <html lang="no">
 <head>
   <meta charset="UTF-8" />
+  <title>AHA Music</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Music</title>
   <link rel="stylesheet" href="css/aha-chat.css" />
   <link rel="stylesheet" href="css/aha-dashboard.css" />
+  <link rel="stylesheet" href="css/ahaModule.css" />
+  <link rel="stylesheet" href="css/aha-music.css" />
 </head>
 <body>
-  <main class="aha-dashboard" style="max-width: 900px;">
-    <section class="aha-panel">
-      <p class="eyebrow">AHA Modulskall</p>
-      <h1>Music</h1>
-      <p>
-        Music-modulen skal håndtere spillelister, stemning, låt-notater og
-        koblinger til både minner og innsikter.
-      </p>
-      <div class="aha-tile-actions">
-        <a class="aha-tile-btn aha-tile-btn-primary" href="index.html">Tilbake til AHA Home</a>
+  <main class="aha-dashboard aha-music-shell" id="aha-music-main">
+    <p><a href="index.html">← AHA Dashboard</a></p>
+    <header class="aha-module-shell-header">
+      <div>
+        <p class="eyebrow">AHA Music</p>
+        <h1>AHA Music</h1>
+        <p>Importer Spotify-spillelister som strukturerte metadata i AHA Music.</p>
       </div>
+      <span id="aha-module-health" class="aha-module-health-badge aha-module-health-unknown" role="status">Unknown</span>
+    </header>
+
+    <section class="aha-panel aha-music-notice" aria-label="Spotify-begrensninger">
+      <strong>Trygg import:</strong>
+      <span>AHA lagrer kun metadata og Spotify-referanser. Ingen lydfiler lastes ned, ingen AI-klassifisering kjøres og modulen kobles ikke mot History Go.</span>
+    </section>
+
+    <section class="aha-panel aha-music-connect" aria-labelledby="spotify-connect-title">
+      <div>
+        <p class="eyebrow">Spotify OAuth PKCE</p>
+        <h2 id="spotify-connect-title">Koble til Spotify</h2>
+        <p>Bruk en offentlig Spotify Client ID. Redirect URI må være registrert i Spotify Developer Dashboard og matche denne siden.</p>
+      </div>
+      <form id="spotify-config-form" class="aha-music-config">
+        <label>
+          Spotify Client ID
+          <input id="spotify-client-id" name="clientId" autocomplete="off" placeholder="Legg inn client ID" />
+        </label>
+        <button id="spotify-connect-button" type="submit">Koble til Spotify</button>
+      </form>
+      <p id="spotify-auth-status" class="aha-music-status" role="status">Ikke koblet til Spotify.</p>
+    </section>
+
+    <section class="aha-panel aha-music-import" aria-labelledby="spotify-import-title">
+      <div class="aha-module-actions">
+        <div>
+          <p class="eyebrow">Importer spillelister</p>
+          <h2 id="spotify-import-title">Spotify-bibliotek</h2>
+          <p>Hent egne spillelister fra <code>GET /me/playlists</code>, velg én eller flere, og importer spor fra <code>GET /playlists/{playlist_id}/items</code>. Lagrede sanger kan hentes fra <code>GET /me/tracks</code>.</p>
+        </div>
+        <div class="aha-music-action-row">
+          <button id="load-playlists-button" type="button">Hent spillelister</button>
+          <button id="import-playlists-button" type="button">Importer valgte</button>
+        </div>
+      </div>
+      <label class="aha-music-saved-tracks">
+        <input id="include-saved-tracks" type="checkbox" checked />
+        Importer lagrede sanger fra Spotify-biblioteket mitt
+      </label>
+      <p id="spotify-import-status" class="aha-music-status" role="status">Klar for import.</p>
+      <div id="spotify-playlists" class="aha-music-playlists aha-module-content" aria-live="polite"></div>
+    </section>
+
+    <section class="aha-panel" aria-labelledby="imported-music-title">
+      <div class="aha-module-actions">
+        <div>
+          <p class="eyebrow">Importerte sanger</p>
+          <h2 id="imported-music-title">AHA Music-bibliotek</h2>
+          <p>Normaliserte album, artister, spor og spillelistekoblinger dedupes på <code>spotify_track_id</code>.</p>
+        </div>
+        <button id="clear-local-music-button" class="aha-ghost-button" type="button">Tøm lokal musikkcache</button>
+      </div>
+      <div id="music-stats" class="aha-music-stats" aria-label="Musikkstatistikk"></div>
+      <div id="imported-tracks" class="aha-music-tracks aha-module-content" aria-live="polite"></div>
     </section>
   </main>
+
+  <script src="js/ahaConfig.js"></script>
+  <script src="js/ahaModules.js"></script>
+  <script src="js/ahaMusic.js"></script>
 </body>
 </html>

@@ -173,3 +173,111 @@ alter table public.aha_feed_posts
 alter table public.aha_insta_posts
   add column if not exists deleted_at timestamptz null,
   add column if not exists last_source_event_id text null;
+
+-- AHA Music Spotify import MVP (metadata only; no audio files).
+create table if not exists public.music_sources (
+  id text primary key,
+  profile_id uuid null references public.aha_profiles(id) on delete set null,
+  source_type text not null default 'spotify',
+  name text,
+  scopes jsonb not null default '[]'::jsonb,
+  metadata_only boolean not null default true,
+  meta jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.music_playlists (
+  id text primary key,
+  profile_id uuid null references public.aha_profiles(id) on delete set null,
+  source_id text references public.music_sources(id) on delete set null,
+  spotify_playlist_id text,
+  name text,
+  description text,
+  owner_name text,
+  track_count integer not null default 0,
+  image_url text,
+  spotify_url text,
+  source text not null default 'spotify',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.music_albums (
+  id text primary key,
+  profile_id uuid null references public.aha_profiles(id) on delete set null,
+  spotify_album_id text,
+  name text,
+  album_type text,
+  release_date text,
+  total_tracks integer not null default 0,
+  image_url text,
+  spotify_url text,
+  source text not null default 'spotify',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.music_artists (
+  id text primary key,
+  profile_id uuid null references public.aha_profiles(id) on delete set null,
+  spotify_artist_id text,
+  name text,
+  spotify_url text,
+  source text not null default 'spotify',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.music_tracks (
+  id text primary key,
+  profile_id uuid null references public.aha_profiles(id) on delete set null,
+  spotify_track_id text,
+  spotify_album_id text,
+  name text,
+  duration_ms integer not null default 0,
+  explicit boolean not null default false,
+  popularity integer not null default 0,
+  preview_url text,
+  spotify_url text,
+  album_name text,
+  artist_names jsonb not null default '[]'::jsonb,
+  source text not null default 'spotify',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.music_track_artists (
+  id text primary key,
+  profile_id uuid null references public.aha_profiles(id) on delete set null,
+  spotify_track_id text,
+  spotify_artist_id text,
+  artist_order integer not null default 0,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.music_playlist_tracks (
+  id text primary key,
+  profile_id uuid null references public.aha_profiles(id) on delete set null,
+  spotify_playlist_id text,
+  spotify_track_id text,
+  position integer not null default 0,
+  added_at timestamptz not null default now()
+);
+
+alter table public.music_sources enable row level security;
+alter table public.music_playlists enable row level security;
+alter table public.music_tracks enable row level security;
+alter table public.music_albums enable row level security;
+alter table public.music_artists enable row level security;
+alter table public.music_track_artists enable row level security;
+alter table public.music_playlist_tracks enable row level security;
+
+create unique index if not exists idx_music_sources_profile_source on public.music_sources(profile_id, source_type);
+create unique index if not exists idx_music_playlists_profile_spotify on public.music_playlists(profile_id, spotify_playlist_id) where spotify_playlist_id is not null;
+create unique index if not exists idx_music_tracks_profile_spotify on public.music_tracks(profile_id, spotify_track_id) where spotify_track_id is not null;
+create unique index if not exists idx_music_albums_profile_spotify on public.music_albums(profile_id, spotify_album_id) where spotify_album_id is not null;
+create unique index if not exists idx_music_artists_profile_spotify on public.music_artists(profile_id, spotify_artist_id) where spotify_artist_id is not null;
+create unique index if not exists idx_music_track_artists_profile_track_artist on public.music_track_artists(profile_id, spotify_track_id, spotify_artist_id);
+create unique index if not exists idx_music_playlist_tracks_profile_playlist_track on public.music_playlist_tracks(profile_id, spotify_playlist_id, spotify_track_id);
+create index if not exists idx_music_tracks_updated_at on public.music_tracks(updated_at desc);

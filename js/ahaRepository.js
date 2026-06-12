@@ -435,6 +435,114 @@
     });
   }
 
+
+  async function upsertMany(table, records, conflict = "id") {
+    const db = client();
+    if (!db) return fallback();
+    const rows = cleanArray(records);
+    if (!rows.length) return { ok: true, data: [] };
+    try {
+      const { data, error } = await db
+        .from(table)
+        .upsert(rows, { onConflict: conflict })
+        .select();
+      if (error) return { ok: false, error };
+      return { ok: true, data: cleanArray(data) };
+    } catch (error) {
+      return { ok: false, error };
+    }
+  }
+
+  async function saveMusicLibrarySnapshot(library) {
+    const source = cleanObject(library);
+    const profileId = await getProfileId(source.profile_id);
+    if (!profileId) return fallback("not_signed_in");
+    const stamp = new Date().toISOString();
+    const musicSourceId = `${profileId}_spotify`;
+    const withProfile = (record) => ({ ...cleanObject(record), profile_id: profileId });
+    const results = [];
+
+    results.push(await upsertMany("music_sources", cleanArray(source.sources).map((item) => withProfile({
+      id: item.id === "spotify" ? musicSourceId : (item.id || musicSourceId),
+      source_type: item.type || "spotify",
+      name: item.name || "Spotify",
+      scopes: cleanArray(item.scopes),
+      metadata_only: item.metadata_only !== false,
+      meta: cleanObject(item.meta),
+      updated_at: item.updated_at || stamp
+    }))));
+
+    results.push(await upsertMany("music_albums", cleanArray(source.albums).map((item) => withProfile({
+      id: item.id,
+      spotify_album_id: item.spotify_album_id || null,
+      name: item.name || null,
+      album_type: item.album_type || null,
+      release_date: item.release_date || null,
+      total_tracks: Number(item.total_tracks || 0),
+      image_url: item.image_url || null,
+      spotify_url: item.spotify_url || null,
+      source: item.source || "spotify",
+      updated_at: item.updated_at || stamp
+    }))));
+
+    results.push(await upsertMany("music_artists", cleanArray(source.artists).map((item) => withProfile({
+      id: item.id,
+      spotify_artist_id: item.spotify_artist_id || null,
+      name: item.name || null,
+      spotify_url: item.spotify_url || null,
+      source: item.source || "spotify",
+      updated_at: item.updated_at || stamp
+    }))));
+
+    results.push(await upsertMany("music_playlists", cleanArray(source.playlists).map((item) => withProfile({
+      id: item.id,
+      source_id: musicSourceId,
+      spotify_playlist_id: item.spotify_playlist_id || null,
+      name: item.name || null,
+      description: item.description || null,
+      owner_name: item.owner_name || null,
+      track_count: Number(item.track_count || 0),
+      image_url: item.image_url || null,
+      spotify_url: item.spotify_url || null,
+      source: item.source || "spotify",
+      updated_at: item.updated_at || stamp
+    }))));
+
+    results.push(await upsertMany("music_tracks", cleanArray(source.tracks).map((item) => withProfile({
+      id: item.id,
+      spotify_track_id: item.spotify_track_id || null,
+      spotify_album_id: item.spotify_album_id || null,
+      name: item.name || null,
+      duration_ms: Number(item.duration_ms || 0),
+      explicit: item.explicit === true,
+      popularity: Number(item.popularity || 0),
+      preview_url: item.preview_url || null,
+      spotify_url: item.spotify_url || null,
+      album_name: item.album_name || null,
+      artist_names: cleanArray(item.artist_names),
+      source: item.source || "spotify",
+      updated_at: item.updated_at || stamp
+    }))));
+
+    results.push(await upsertMany("music_track_artists", cleanArray(source.trackArtists).map((item) => withProfile({
+      id: item.id,
+      spotify_track_id: item.spotify_track_id || null,
+      spotify_artist_id: item.spotify_artist_id || null,
+      artist_order: Number(item.artist_order || 0)
+    }))));
+
+    results.push(await upsertMany("music_playlist_tracks", cleanArray(source.playlistTracks).map((item) => withProfile({
+      id: item.id,
+      spotify_playlist_id: item.spotify_playlist_id || null,
+      spotify_track_id: item.spotify_track_id || null,
+      position: Number(item.position || 0),
+      added_at: item.added_at || stamp
+    }))));
+
+    const failed = results.filter((result) => result?.ok !== true);
+    return failed.length ? { ok: false, results, errors: failed } : { ok: true, results };
+  }
+
   function loadSourceEvents(options = {}) {
     return list("aha_source_events", { orderBy: "created_at", limit: options.limit || 200 });
   }
@@ -614,6 +722,7 @@
     saveInstaComment,
     saveInstaFollow,
     saveImport,
+    saveMusicLibrarySnapshot,
     saveChamber,
     loadSourceEvents,
     loadNotes,

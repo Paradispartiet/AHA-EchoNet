@@ -1,0 +1,124 @@
+.aha-music-shell {
+  max-width: 1180px;
+}
+
+.aha-music-notice,
+.aha-music-connect,
+.aha-music-import {
+  margin-bottom: 18px;
+}
+
+.aha-music-notice {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  border-color: rgba(135, 247, 174, .28);
+}
+
+.aha-music-config,
+.aha-music-action-row,
+.aha-music-saved-tracks {
+  display: flex;
+  gap: 12px;
+  align-items: end;
+  flex-wrap: wrap;
+}
+
+.aha-music-config label {
+  display: grid;
+  gap: 6px;
+  min-width: min(420px, 100%);
+  color: var(--aha-muted);
+  font-weight: 800;
+}
+
+.aha-music-config input {
+  min-height: 44px;
+  border: 1px solid var(--aha-line);
+  border-radius: 14px;
+  background: rgba(255,255,255,.07);
+  color: var(--aha-text);
+  padding: 10px 12px;
+}
+
+.aha-music-status {
+  margin: 12px 0 0;
+  color: var(--aha-muted);
+  font-weight: 750;
+}
+
+.aha-music-saved-tracks {
+  margin: 14px 0;
+  align-items: center;
+  color: var(--aha-muted);
+  font-weight: 800;
+}
+
+.aha-music-playlists,
+.aha-music-tracks,
+.aha-music-stats {
+  display: grid;
+  gap: 12px;
+}
+
+.aha-music-playlist,
+.aha-music-track,
+.aha-music-stat {
+  border: 1px solid var(--aha-line);
+  border-radius: 18px;
+  padding: 14px;
+  background: rgba(255,255,255,.055);
+}
+
+.aha-music-playlist {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.aha-music-track {
+  display: grid;
+  gap: 8px;
+}
+
+.aha-music-track h3,
+.aha-music-playlist h3 {
+  margin: 0;
+}
+
+.aha-music-meta,
+.aha-music-links {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  color: var(--aha-muted);
+  font-size: .92rem;
+}
+
+.aha-music-links a {
+  color: #ffe27a;
+  font-weight: 850;
+}
+
+.aha-music-stats {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 12px 0 18px;
+}
+
+.aha-music-stat strong,
+.aha-music-stat span {
+  display: block;
+}
+
+.aha-music-stat span {
+  color: var(--aha-muted);
+  font-size: .88rem;
+}
+
+@media (max-width: 720px) {
+  .aha-music-playlist,
+  .aha-music-stats {
+    grid-template-columns: 1fr;
+  }
+}
