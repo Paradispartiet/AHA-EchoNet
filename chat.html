@@ -11,34 +11,28 @@
 
   <div class="app-shell">
     <header class="chat-header" aria-label="AHA chat toppfelt">
-      <div class="chat-header-top">
-        <a class="back-link" href="index.html" aria-label="Tilbake til AHA Home">← AHA Home</a>
-        <span class="profile-indicator">Min AHA</span>
+      <a class="back-link" href="index.html" aria-label="Tilbake til AHA Home"><span aria-hidden="true">←</span> <span class="back-link-label">AHA Home</span></a>
+      <a class="chat-brand" href="index.html" aria-label="AHA Home">
+        <span class="chat-brand-mark">A</span>
+        <span class="chat-brand-copy">
+          <strong>AHA</strong>
+          <small>personlig innsiktsmotor</small>
+        </span>
+      </a>
+      <div class="chat-title-wrap">
+        <h1>AHA Chat</h1>
+        <p>Refleksjon, struktur og innsikt – i ditt personlige rom.</p>
       </div>
-      <div class="chat-header-main">
-        <a class="chat-brand" href="index.html" aria-label="AHA Home">
-          <span class="chat-brand-mark">A</span>
-          <span class="chat-brand-copy">
-            <strong>AHA</strong>
-            <small>personlig innsiktsmotor</small>
-          </span>
-        </a>
-        <div class="chat-title-wrap">
-          <h1>AHA Chat</h1>
-          <p>Refleksjon, struktur og innsikt – i ditt personlige rom.</p>
-        </div>
-        <div class="chat-header-meta">
-          <span class="status-pill">Klar</span>
-          <div class="chat-profile-card" aria-live="polite">
-            <div id="aha-chat-profile-avatar" class="chat-profile-avatar">A</div>
-            <div class="chat-profile-copy">
-              <strong id="aha-chat-profile-name">Min AHA-profil</strong>
-              <span id="aha-chat-auth-status">Sjekker innlogging …</span>
-              <span class="chat-profile-id-row"><em>AHA-ID</em><strong id="aha-chat-profile-id">Ikke innlogget</strong></span>
-            </div>
-          </div>
+      <span class="status-pill">Klar</span>
+      <div class="chat-profile-card" aria-live="polite">
+        <div id="aha-chat-profile-avatar" class="chat-profile-avatar">A</div>
+        <div class="chat-profile-copy">
+          <strong id="aha-chat-profile-name">Min AHA-profil</strong>
+          <span id="aha-chat-auth-status">Sjekker innlogging …</span>
+          <span class="chat-profile-id-row"><em>AHA-ID</em><strong id="aha-chat-profile-id">Ikke innlogget</strong></span>
         </div>
       </div>
+      <a class="profile-indicator" href="profile.html">Min AHA</a>
     </header>
 
     <main class="chat-layout">
