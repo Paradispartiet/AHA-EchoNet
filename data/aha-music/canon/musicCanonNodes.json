@@ -1,0 +1,1029 @@
+[
+  {
+    "id": "ancient_music",
+    "type": "era",
+    "name": "Ancient music",
+    "shortDescription": "Historical music era used as a high-level timeline anchor for ancient music.",
+    "parentId": null,
+    "eraRange": "c. 3000 BCE–500 CE",
+    "region": "global",
+    "tags": [
+      "era",
+      "timeline"
+    ],
+    "sortOrder": 10
+  },
+  {
+    "id": "medieval_music",
+    "type": "era",
+    "name": "Medieval music",
+    "shortDescription": "Historical music era used as a high-level timeline anchor for medieval music.",
+    "parentId": null,
+    "eraRange": "c. 500–1400",
+    "region": "global",
+    "tags": [
+      "era",
+      "timeline"
+    ],
+    "sortOrder": 20
+  },
+  {
+    "id": "renaissance_music",
+    "type": "era",
+    "name": "Renaissance music",
+    "shortDescription": "Historical music era used as a high-level timeline anchor for renaissance music.",
+    "parentId": null,
+    "eraRange": "c. 1400–1600",
+    "region": "global",
+    "tags": [
+      "era",
+      "timeline"
+    ],
+    "sortOrder": 30
+  },
+  {
+    "id": "baroque",
+    "type": "era",
+    "name": "Baroque",
+    "shortDescription": "Historical music era used as a high-level timeline anchor for baroque.",
+    "parentId": null,
+    "eraRange": "c. 1600–1750",
+    "region": "global",
+    "tags": [
+      "era",
+      "timeline"
+    ],
+    "sortOrder": 40
+  },
+  {
+    "id": "classical_period",
+    "type": "era",
+    "name": "Classical period",
+    "shortDescription": "Historical music era used as a high-level timeline anchor for classical period.",
+    "parentId": null,
+    "eraRange": "c. 1750–1820",
+    "region": "global",
+    "tags": [
+      "era",
+      "timeline"
+    ],
+    "sortOrder": 50
+  },
+  {
+    "id": "romanticism",
+    "type": "era",
+    "name": "Romanticism",
+    "shortDescription": "Historical music era used as a high-level timeline anchor for romanticism.",
+    "parentId": null,
+    "eraRange": "c. 1820–1900",
+    "region": "global",
+    "tags": [
+      "era",
+      "timeline"
+    ],
+    "sortOrder": 60
+  },
+  {
+    "id": "modernism",
+    "type": "era",
+    "name": "Modernism",
+    "shortDescription": "Historical music era used as a high-level timeline anchor for modernism.",
+    "parentId": null,
+    "eraRange": "c. 1890–1945",
+    "region": "global",
+    "tags": [
+      "era",
+      "timeline"
+    ],
+    "sortOrder": 70
+  },
+  {
+    "id": "postwar_music",
+    "type": "era",
+    "name": "Post-war music",
+    "shortDescription": "Historical music era used as a high-level timeline anchor for post-war music.",
+    "parentId": null,
+    "eraRange": "c. 1945–1980",
+    "region": "global",
+    "tags": [
+      "era",
+      "timeline"
+    ],
+    "sortOrder": 80
+  },
+  {
+    "id": "digital_music_age",
+    "type": "era",
+    "name": "Digital music age",
+    "shortDescription": "Historical music era used as a high-level timeline anchor for digital music age.",
+    "parentId": null,
+    "eraRange": "c. 1980–present",
+    "region": "global",
+    "tags": [
+      "era",
+      "timeline"
+    ],
+    "sortOrder": 90
+  },
+  {
+    "id": "folk_music",
+    "type": "tradition",
+    "name": "Folk music",
+    "shortDescription": "Community-based music traditions transmitted through local practice and memory.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "global",
+    "tags": [
+      "tradition",
+      "oral_history"
+    ],
+    "sortOrder": 1010
+  },
+  {
+    "id": "western_classical",
+    "type": "tradition",
+    "name": "Western classical music",
+    "shortDescription": "Art-music tradition associated with notation, institutions and long-form composition.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "Europe / global",
+    "tags": [
+      "classical",
+      "notation"
+    ],
+    "sortOrder": 1020
+  },
+  {
+    "id": "blues",
+    "type": "genre",
+    "name": "Blues",
+    "shortDescription": "African American musical form centered on expressive vocal style, blue notes and repeated harmonic patterns.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "United States",
+    "tags": [
+      "black_atlantic",
+      "roots"
+    ],
+    "sortOrder": 1030
+  },
+  {
+    "id": "gospel",
+    "type": "genre",
+    "name": "Gospel",
+    "shortDescription": "Sacred vocal tradition rooted in Christian worship, communal singing and expressive call-and-response.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "United States",
+    "tags": [
+      "sacred",
+      "vocal"
+    ],
+    "sortOrder": 1040
+  },
+  {
+    "id": "jazz",
+    "type": "genre",
+    "name": "Jazz",
+    "shortDescription": "Improvisatory music tradition shaped by swing, blues, ensemble interaction and harmonic exploration.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "United States / global",
+    "tags": [
+      "improvisation",
+      "black_atlantic"
+    ],
+    "sortOrder": 1050
+  },
+  {
+    "id": "country",
+    "type": "genre",
+    "name": "Country",
+    "shortDescription": "Popular music tradition drawing on folk ballads, rural storytelling and string-band practices.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "United States",
+    "tags": [
+      "folk",
+      "storytelling"
+    ],
+    "sortOrder": 1060
+  },
+  {
+    "id": "rhythm_and_blues",
+    "type": "genre",
+    "name": "Rhythm and blues",
+    "shortDescription": "Post-war Black popular music emphasizing groove, vocals and dance-oriented rhythm sections.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "United States",
+    "tags": [
+      "r_and_b",
+      "groove"
+    ],
+    "sortOrder": 1070
+  },
+  {
+    "id": "soul",
+    "type": "genre",
+    "name": "Soul",
+    "shortDescription": "Vocal-centered popular music combining rhythm and blues, gospel intensity and secular expression.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "United States",
+    "tags": [
+      "vocal",
+      "black_atlantic"
+    ],
+    "sortOrder": 1080
+  },
+  {
+    "id": "funk",
+    "type": "genre",
+    "name": "Funk",
+    "shortDescription": "Groove-driven music emphasizing syncopated bass, drums, riffs and collective rhythmic interlock.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "United States",
+    "tags": [
+      "groove",
+      "dance"
+    ],
+    "sortOrder": 1090
+  },
+  {
+    "id": "rock_and_roll",
+    "type": "genre",
+    "name": "Rock and roll",
+    "shortDescription": "1950s popular music formed from rhythm and blues, blues, country and youth culture.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "United States",
+    "tags": [
+      "youth_culture",
+      "electric"
+    ],
+    "sortOrder": 1100
+  },
+  {
+    "id": "rock",
+    "type": "genre",
+    "name": "Rock",
+    "shortDescription": "Amplified popular music tradition built around drums, bass, guitar, vocals and album/song forms.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "United States / United Kingdom / global",
+    "tags": [
+      "electric",
+      "popular_music"
+    ],
+    "sortOrder": 1110
+  },
+  {
+    "id": "punk",
+    "type": "genre",
+    "name": "Punk",
+    "shortDescription": "Raw, fast and often anti-establishment rock movement emphasizing directness and DIY practice.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "United States / United Kingdom",
+    "tags": [
+      "diy",
+      "youth_culture"
+    ],
+    "sortOrder": 1120
+  },
+  {
+    "id": "post_punk",
+    "type": "genre",
+    "name": "Post-punk",
+    "shortDescription": "Experimental aftermath of punk that expanded rock with electronics, dub, art-school ideas and new textures.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "United Kingdom / global",
+    "tags": [
+      "experimental",
+      "movement"
+    ],
+    "sortOrder": 1130
+  },
+  {
+    "id": "disco",
+    "type": "genre",
+    "name": "Disco",
+    "shortDescription": "Dance music culture and production style built around steady pulse, orchestration and club playback.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "United States / global",
+    "tags": [
+      "dance",
+      "club"
+    ],
+    "sortOrder": 1140
+  },
+  {
+    "id": "house",
+    "type": "genre",
+    "name": "House",
+    "shortDescription": "Electronic dance music developed around four-on-the-floor rhythms, DJs, drum machines and clubs.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "United States / global",
+    "tags": [
+      "dance",
+      "club",
+      "electronic"
+    ],
+    "sortOrder": 1150
+  },
+  {
+    "id": "techno",
+    "type": "genre",
+    "name": "Techno",
+    "shortDescription": "Electronic dance music associated with machine rhythm, futurism and synthesized sound design.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "United States / global",
+    "tags": [
+      "dance",
+      "technology",
+      "electronic"
+    ],
+    "sortOrder": 1160
+  },
+  {
+    "id": "hip_hop",
+    "type": "genre",
+    "name": "Hip hop",
+    "shortDescription": "Cultural and musical form built around MCing, DJing, beats, sampling and urban expression.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "United States / global",
+    "tags": [
+      "urban",
+      "sampling",
+      "black_atlantic"
+    ],
+    "sortOrder": 1170
+  },
+  {
+    "id": "reggae",
+    "type": "genre",
+    "name": "Reggae",
+    "shortDescription": "Jamaican popular music marked by offbeat rhythm, bass weight, songcraft and sound-system culture.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "Jamaica / global",
+    "tags": [
+      "jamaica",
+      "black_atlantic"
+    ],
+    "sortOrder": 1180
+  },
+  {
+    "id": "dub",
+    "type": "genre",
+    "name": "Dub",
+    "shortDescription": "Studio-centered Jamaican practice using remixing, echo, reverb, bass and instrumental versions.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "Jamaica / global",
+    "tags": [
+      "studio",
+      "remix"
+    ],
+    "sortOrder": 1190
+  },
+  {
+    "id": "dancehall",
+    "type": "genre",
+    "name": "Dancehall",
+    "shortDescription": "Jamaican music culture emphasizing deejay vocals, digital riddims and sound-system performance.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "Jamaica / global",
+    "tags": [
+      "sound_system",
+      "dance"
+    ],
+    "sortOrder": 1200
+  },
+  {
+    "id": "pop",
+    "type": "genre",
+    "name": "Pop",
+    "shortDescription": "Broad popular song tradition organized around hooks, mass media circulation and changing production styles.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "global",
+    "tags": [
+      "popular_music",
+      "song"
+    ],
+    "sortOrder": 1210
+  },
+  {
+    "id": "synthpop",
+    "type": "genre",
+    "name": "Synthpop",
+    "shortDescription": "Pop music centered on synthesizers, drum machines, sequencers and electronic textures.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "United Kingdom / global",
+    "tags": [
+      "synthesizer",
+      "pop",
+      "electronic"
+    ],
+    "sortOrder": 1220
+  },
+  {
+    "id": "electronic_music",
+    "type": "genre",
+    "name": "Electronic music",
+    "shortDescription": "Music made with electronic sound generation, processing, sequencing or computer-based production.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "global",
+    "tags": [
+      "technology",
+      "production"
+    ],
+    "sortOrder": 1230
+  },
+  {
+    "id": "ambient",
+    "type": "genre",
+    "name": "Ambient",
+    "shortDescription": "Music focused on atmosphere, texture, space and sustained listening environments.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "global",
+    "tags": [
+      "texture",
+      "space"
+    ],
+    "sortOrder": 1240
+  },
+  {
+    "id": "minimalism",
+    "type": "movement",
+    "name": "Minimalism",
+    "shortDescription": "Compositional movement using repetition, gradual process and reduced musical materials.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "United States / global",
+    "tags": [
+      "repetition",
+      "process"
+    ],
+    "sortOrder": 1250
+  },
+  {
+    "id": "afrobeat",
+    "type": "genre",
+    "name": "Afrobeat",
+    "shortDescription": "West African popular music combining groove, horns, extended forms and political expression.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "West Africa / global",
+    "tags": [
+      "groove",
+      "politics"
+    ],
+    "sortOrder": 1260
+  },
+  {
+    "id": "latin_music",
+    "type": "tradition",
+    "name": "Latin music",
+    "shortDescription": "Broad set of Latin American and diasporic musical traditions, rhythms and popular forms.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "Latin America / global",
+    "tags": [
+      "diaspora",
+      "rhythm"
+    ],
+    "sortOrder": 1270
+  },
+  {
+    "id": "nordic_folk",
+    "type": "tradition",
+    "name": "Nordic folk music",
+    "shortDescription": "Folk traditions from Nordic regions, including dance forms, fiddle practices and local song heritage.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "Nordic region",
+    "tags": [
+      "folk",
+      "regional"
+    ],
+    "sortOrder": 1280
+  },
+  {
+    "id": "norwegian_pop",
+    "type": "genre",
+    "name": "Norwegian pop",
+    "shortDescription": "Norwegian popular music tradition shaped by local language, international pop and Nordic production contexts.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "Norway",
+    "tags": [
+      "pop",
+      "regional"
+    ],
+    "sortOrder": 1290
+  },
+  {
+    "id": "film_music",
+    "type": "genre",
+    "name": "Film music",
+    "shortDescription": "Music composed, selected or produced to support cinematic narrative, mood and audiovisual timing.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "global",
+    "tags": [
+      "screen",
+      "composition"
+    ],
+    "sortOrder": 1300
+  },
+  {
+    "id": "game_music",
+    "type": "genre",
+    "name": "Game music",
+    "shortDescription": "Interactive and linear music created for video games, gameplay states and digital worlds.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "global",
+    "tags": [
+      "screen",
+      "interactive",
+      "digital"
+    ],
+    "sortOrder": 1310
+  },
+  {
+    "id": "rhythm",
+    "type": "rhythm",
+    "name": "Rhythm",
+    "shortDescription": "Organization of musical time through duration, pulse, accent and pattern.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "global",
+    "tags": [
+      "time",
+      "foundation"
+    ],
+    "sortOrder": 2010
+  },
+  {
+    "id": "syncopation",
+    "type": "rhythm",
+    "name": "Syncopation",
+    "shortDescription": "Rhythmic displacement that stresses off-beats or unexpected parts of the meter.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "global",
+    "tags": [
+      "rhythm",
+      "accent"
+    ],
+    "sortOrder": 2020
+  },
+  {
+    "id": "groove",
+    "type": "rhythm",
+    "name": "Groove",
+    "shortDescription": "Felt rhythmic momentum created by repeated patterns, timing and ensemble interaction.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "global",
+    "tags": [
+      "rhythm",
+      "feel"
+    ],
+    "sortOrder": 2030
+  },
+  {
+    "id": "polyrhythm",
+    "type": "rhythm",
+    "name": "Polyrhythm",
+    "shortDescription": "Simultaneous use of contrasting rhythmic patterns or meters.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "global",
+    "tags": [
+      "rhythm",
+      "layering"
+    ],
+    "sortOrder": 2040
+  },
+  {
+    "id": "call_and_response",
+    "type": "music_theory",
+    "name": "Call and response",
+    "shortDescription": "Responsive musical structure where one phrase is answered by another.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "global",
+    "tags": [
+      "form",
+      "interaction"
+    ],
+    "sortOrder": 2050
+  },
+  {
+    "id": "melody",
+    "type": "music_theory",
+    "name": "Melody",
+    "shortDescription": "Ordered sequence of pitches perceived as a musical line.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "global",
+    "tags": [
+      "pitch",
+      "line"
+    ],
+    "sortOrder": 2060
+  },
+  {
+    "id": "harmony",
+    "type": "harmony",
+    "name": "Harmony",
+    "shortDescription": "Combination and progression of pitches or chords sounding together.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "global",
+    "tags": [
+      "pitch",
+      "chords"
+    ],
+    "sortOrder": 2070
+  },
+  {
+    "id": "tonality",
+    "type": "harmony",
+    "name": "Tonality",
+    "shortDescription": "Pitch organization around a central key or tonic.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "global",
+    "tags": [
+      "pitch",
+      "key"
+    ],
+    "sortOrder": 2080
+  },
+  {
+    "id": "modality",
+    "type": "harmony",
+    "name": "Modality",
+    "shortDescription": "Pitch organization using modes or scalar frameworks beyond major/minor tonality.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "global",
+    "tags": [
+      "pitch",
+      "mode"
+    ],
+    "sortOrder": 2090
+  },
+  {
+    "id": "drone",
+    "type": "music_theory",
+    "name": "Drone",
+    "shortDescription": "Sustained or repeated pitch foundation used as a tonal reference.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "global",
+    "tags": [
+      "texture",
+      "pitch"
+    ],
+    "sortOrder": 2100
+  },
+  {
+    "id": "improvisation",
+    "type": "music_theory",
+    "name": "Improvisation",
+    "shortDescription": "Real-time musical creation within stylistic, social or formal constraints.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "global",
+    "tags": [
+      "performance",
+      "creation"
+    ],
+    "sortOrder": 2110
+  },
+  {
+    "id": "sampling",
+    "type": "production",
+    "name": "Sampling",
+    "shortDescription": "Use of recorded sound fragments as material in a new production.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "global",
+    "tags": [
+      "recording",
+      "reuse"
+    ],
+    "sortOrder": 2120
+  },
+  {
+    "id": "loop",
+    "type": "production",
+    "name": "Loop",
+    "shortDescription": "Repeated audio or musical pattern used as a structural building block.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "global",
+    "tags": [
+      "repetition",
+      "production"
+    ],
+    "sortOrder": 2130
+  },
+  {
+    "id": "timbre",
+    "type": "science_concept",
+    "name": "Timbre",
+    "shortDescription": "Perceived sound color that distinguishes instruments, voices and textures.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "global",
+    "tags": [
+      "acoustics",
+      "sound"
+    ],
+    "sortOrder": 2140
+  },
+  {
+    "id": "overtones",
+    "type": "science_concept",
+    "name": "Overtones",
+    "shortDescription": "Frequencies above a fundamental that shape tone color and resonance.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "global",
+    "tags": [
+      "acoustics",
+      "frequency"
+    ],
+    "sortOrder": 2150
+  },
+  {
+    "id": "resonance",
+    "type": "science_concept",
+    "name": "Resonance",
+    "shortDescription": "Amplification or reinforcement of vibration in bodies, rooms or instruments.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "global",
+    "tags": [
+      "acoustics",
+      "vibration"
+    ],
+    "sortOrder": 2160
+  },
+  {
+    "id": "distortion",
+    "type": "production",
+    "name": "Distortion",
+    "shortDescription": "Sound alteration caused by saturation, clipping or nonlinear amplification.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "global",
+    "tags": [
+      "production",
+      "electric"
+    ],
+    "sortOrder": 2170
+  },
+  {
+    "id": "reverb",
+    "type": "production",
+    "name": "Reverb",
+    "shortDescription": "Persistence of sound reflections that creates a sense of space.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "global",
+    "tags": [
+      "production",
+      "space"
+    ],
+    "sortOrder": 2180
+  },
+  {
+    "id": "multitrack_recording",
+    "type": "technology",
+    "name": "Multitrack recording",
+    "shortDescription": "Recording method that captures and mixes separate sound layers independently.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "global",
+    "tags": [
+      "recording",
+      "studio"
+    ],
+    "sortOrder": 2190
+  },
+  {
+    "id": "synthesizer",
+    "type": "instrument",
+    "name": "Synthesizer",
+    "shortDescription": "Electronic instrument or system for generating and shaping sound.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "global",
+    "tags": [
+      "electronic",
+      "instrument"
+    ],
+    "sortOrder": 2200
+  },
+  {
+    "id": "drum_machine",
+    "type": "instrument",
+    "name": "Drum machine",
+    "shortDescription": "Electronic instrument for sequencing and playing percussion sounds.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "global",
+    "tags": [
+      "electronic",
+      "rhythm"
+    ],
+    "sortOrder": 2210
+  },
+  {
+    "id": "sound_system",
+    "type": "technology",
+    "name": "Sound system",
+    "shortDescription": "Playback and amplification culture centered on DJs, selectors and powerful speakers.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "global",
+    "tags": [
+      "playback",
+      "culture"
+    ],
+    "sortOrder": 2220
+  },
+  {
+    "id": "studio_as_instrument",
+    "type": "production",
+    "name": "Studio as instrument",
+    "shortDescription": "Production approach where recording, mixing and effects become compositional tools.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "global",
+    "tags": [
+      "studio",
+      "production"
+    ],
+    "sortOrder": 2230
+  },
+  {
+    "id": "ritual_music",
+    "type": "cultural_context",
+    "name": "Ritual music",
+    "shortDescription": "Music used in ceremonial, sacred or repeated social practices.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "global",
+    "tags": [
+      "ritual",
+      "social"
+    ],
+    "sortOrder": 3010
+  },
+  {
+    "id": "dance_culture",
+    "type": "cultural_context",
+    "name": "Dance culture",
+    "shortDescription": "Social contexts where music is organized around dancing, bodies and shared movement.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "global",
+    "tags": [
+      "dance",
+      "social"
+    ],
+    "sortOrder": 3020
+  },
+  {
+    "id": "urban_music_culture",
+    "type": "cultural_context",
+    "name": "Urban music culture",
+    "shortDescription": "City-based musical practices shaped by density, scenes, migration and media.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "global",
+    "tags": [
+      "urban",
+      "scene"
+    ],
+    "sortOrder": 3030
+  },
+  {
+    "id": "youth_culture",
+    "type": "cultural_context",
+    "name": "Youth culture",
+    "shortDescription": "Generational music practices tied to identity, style, rebellion and peer communities.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "global",
+    "tags": [
+      "youth",
+      "identity"
+    ],
+    "sortOrder": 3040
+  },
+  {
+    "id": "protest_music",
+    "type": "cultural_context",
+    "name": "Protest music",
+    "shortDescription": "Music used to voice dissent, solidarity, critique or political mobilization.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "global",
+    "tags": [
+      "politics",
+      "movement"
+    ],
+    "sortOrder": 3050
+  },
+  {
+    "id": "migration_and_music",
+    "type": "cultural_context",
+    "name": "Migration and music",
+    "shortDescription": "Musical exchange, memory and hybrid forms shaped by movement of people.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "global",
+    "tags": [
+      "migration",
+      "diaspora"
+    ],
+    "sortOrder": 3060
+  },
+  {
+    "id": "black_atlantic_music",
+    "type": "cultural_context",
+    "name": "Black Atlantic music",
+    "shortDescription": "Transatlantic Black musical continuum linking African diasporic histories and modern popular forms.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "global",
+    "tags": [
+      "diaspora",
+      "black_atlantic"
+    ],
+    "sortOrder": 3070
+  },
+  {
+    "id": "club_culture",
+    "type": "cultural_context",
+    "name": "Club culture",
+    "shortDescription": "Nightlife and DJ-centered spaces where dance music scenes, taste and technology develop.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "global",
+    "tags": [
+      "club",
+      "dance"
+    ],
+    "sortOrder": 3080
+  },
+  {
+    "id": "music_video_culture",
+    "type": "cultural_context",
+    "name": "Music video culture",
+    "shortDescription": "Audiovisual pop culture shaped by television, video clips, image and performance.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "global",
+    "tags": [
+      "video",
+      "media"
+    ],
+    "sortOrder": 3090
+  },
+  {
+    "id": "internet_music_culture",
+    "type": "cultural_context",
+    "name": "Internet music culture",
+    "shortDescription": "Networked music circulation shaped by platforms, memes, communities and digital release practices.",
+    "parentId": null,
+    "eraRange": null,
+    "region": "global",
+    "tags": [
+      "internet",
+      "digital"
+    ],
+    "sortOrder": 3100
+  }
+]

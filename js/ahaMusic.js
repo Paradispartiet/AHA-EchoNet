@@ -21,6 +21,9 @@
     artists: [],
     trackArtists: [],
     playlistTracks: [],
+    trackCanonNodes: [],
+    artistCanonNodes: [],
+    playlistCanonNodes: [],
     imports: []
   });
 
@@ -77,6 +80,9 @@
       artists: asArray(stored.artists),
       trackArtists: asArray(stored.trackArtists),
       playlistTracks: asArray(stored.playlistTracks),
+      trackCanonNodes: asArray(stored.trackCanonNodes),
+      artistCanonNodes: asArray(stored.artistCanonNodes),
+      playlistCanonNodes: asArray(stored.playlistCanonNodes),
       imports: asArray(stored.imports)
     };
   }

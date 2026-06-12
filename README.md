@@ -832,7 +832,7 @@ AHA Music har nå en første datadrevet Spotify-import for brukerens eget biblio
 - AHA Music lagrer kun metadata og Spotify-referanser, aldri lydfiler.
 - Spotify-token lagres lokalt i nettleseren for MVP-flyten. Ikke legg klienthemmeligheter i frontend; PKCE-flyten bruker kun offentlig Client ID.
 - Spotify API-et gir tilgang i tråd med brukerens samtykke og de valgte scopene. Hvis token utløper, må brukeren koble til Spotify på nytt.
-- Denne MVP-en bygger ikke AI-klassifisering, musikk-kanon eller History Go-kobling.
+- Denne MVP-en bygger ikke AI-klassifisering eller History Go-kobling. Musikk-kanonen er et separat, kuratert datasett uten automatisk matching mot Spotify-importen.
 - `localStorage` er lokal fallback/cache via `aha_music_library_v1`. Når AHA Supabase er konfigurert, kan samme normaliserte metadata speiles til tabellene `music_sources`, `music_playlists`, `music_tracks`, `music_albums`, `music_artists`, `music_track_artists` og `music_playlist_tracks`.
 
 ### AHA Music Library v1
@@ -850,3 +850,37 @@ Strukturen i visningen er:
 - **Album:** viser cover, albumtittel, artistnavn fra importerte spor, utgivelsesdato hvis tilgjengelig, antall importerte sanger og Spotify-lenke.
 
 Tomtilstander håndteres eksplisitt for ingen Spotify-konto/importdata, ingen importerte spillelister og ingen treff i søk/filtre. Biblioteket utvider ikke importlogikken og laster ikke ned lydfiler; det gjør kun importerte Spotify-metadata søkbare og lesbare i AHA Music.
+
+### AHA Music Canon v1
+
+AHA Music har nå et eget datadrevet kanon-lag som er avgrenset fra Spotify-importen og AHA Music Library. Kanonen er første kuraterte datasett for å kunne sortere importert musikk historisk, kulturelt, teoretisk og vitenskapelig uten å kjøre automatisk klassifisering.
+
+Kanonfilene ligger i `data/aha-music/canon/`:
+
+- `musicCanonNodes.json` inneholder startnodene for epoker, sjangre/tradisjoner, vitenskap/musikkteori og kulturell kontekst.
+- `musicCanonEdges.json` inneholder startkantene for påvirkningslinjer mellom kanon-noder.
+- `musicCanonSchema.json` beskriver validerbar struktur for noder, kanter og reserverte fremtidige koblingsobjekter.
+
+Hver node har `id`, `type`, `name`, `shortDescription`, `parentId`, `eraRange`, `region`, `tags` og `sortOrder`. Tillatte nodetyper er låst i schemaet, blant annet `era`, `genre`, `tradition`, `rhythm`, `harmony`, `production`, `technology`, `instrument`, `cultural_context`, `science_concept`, `music_theory` og `movement`.
+
+Hver kant har `id`, `fromNodeId`, `toNodeId`, `relationType`, `shortDescription` og `confidence`. Tillatte relasjonstyper er `developed_from`, `influenced`, `belongs_to`, `parallel_to`, `reaction_against`, `uses_technique`, `emerged_in` og `transformed_into`.
+
+`music.html` laster kanonen via `js/ahaMusicCanon.js` og viser:
+
+- **Epoker**
+- **Sjangre og tradisjoner**
+- **Vitenskap og musikkteori**
+- **Kulturell kontekst**
+- **Påvirkningslinjer**
+
+Brukeren kan klikke på en node for å se navn, type, kort beskrivelse, tags, relaterte noder og innkommende/utgående påvirkningslinjer. Det finnes også en eksplisitt tomtilstand for **ingen sanger koblet ennå**.
+
+Datamodellen er klargjort for senere `track → canon nodes`, `artist → canon nodes` og `playlist → canon nodes`-koblinger gjennom reserverte link-felt i schemaet og lokale bibliotekfelter (`trackCanonNodes`, `artistCanonNodes`, `playlistCanonNodes`). Denne PR-en gjør ingen automatisk matching av importerte Spotify-sanger, artister eller spillelister; det kommer i en senere PR.
+
+For å utvide kanonen senere:
+
+1. Legg til en ny node i `musicCanonNodes.json` med unik `id` og en tillatt `type`.
+2. Legg til eventuelle nye relasjoner i `musicCanonEdges.json`, men bare med `fromNodeId`/`toNodeId` som finnes i nodefilen.
+3. Bruk kun tillatte `relationType`-verdier fra `musicCanonSchema.json`.
+4. Kjør `npm test` for å validere seed-datasettet og UI-kontrakten.
+
