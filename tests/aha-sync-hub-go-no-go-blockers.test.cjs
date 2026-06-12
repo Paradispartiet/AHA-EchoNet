@@ -152,8 +152,15 @@ function readyInput(patch = {}) {
   assert.match(activeSyncHubRenderer, /renderAhaManualSyncDryRunTargetPreview\s*\(\s*\)/, 'active renderer should show the dry-run target preview');
   const dryRunPreviewRenderer = extractFunction(dashboardCode, 'renderAhaManualSyncDryRunTargetPreview');
   assert.match(dryRunPreviewRenderer, /createManualSyncDryRunPlan\s*\(\s*\)/, 'preview should use the blocked dry-run plan');
+  assert.match(dryRunPreviewRenderer, /Per-module result preview/, 'preview should expose per-module result evidence');
+  assert.match(dryRunPreviewRenderer, /Preview only/, 'per-module result evidence must remain preview-only');
+  assert.match(dryRunPreviewRenderer, /No write/, 'per-module result evidence must remain no-write');
+  assert.match(dryRunPreviewRenderer, /Execution blocked/, 'per-module result evidence must keep execution blocked');
   assert.match(dryRunPreviewRenderer, /Manual sync is NO-GO/, 'preview should keep manual execution NO-GO');
   assert.match(dryRunPreviewRenderer, /Auto-sync permanently forbidden/, 'preview should keep auto-sync permanently forbidden');
+  assert.match(dryRunPreviewRenderer, /wouldRun/, 'per-module result evidence should report wouldRun without executing');
+  assert.match(dryRunPreviewRenderer, /wouldWrite/, 'per-module result evidence should report wouldWrite without writing');
+  assert.equal(/(?:execute|run)(?:Handler|ManualSync|Sync)\s*[:=(]/i.test(dryRunPreviewRenderer), false, 'per-module preview must not expose execution handlers');
   assert.equal(/<button\b/i.test(dryRunPreviewRenderer), false, 'dry-run preview must not add a sync button');
   for (const [pattern, label] of readOnlyRuntimeForbidden) {
     assert.equal(pattern.test(dryRunPreviewRenderer), false, `dry-run preview renderer must not contain ${label}`);

@@ -1580,3 +1580,20 @@ feat: add manual sync per-module result preview
 ```
 
 Gate F mangler fortsatt strukturert, read-only resultatpreview per modul. Den anbefalte PR-en skal ikke aktivere execution eller writes.
+
+
+## 22. AHA manual sync per-module result preview
+
+Den eksisterende advanced/expanded Sync Hub-regionen viser nå en read-only **Per-module result preview** bygget direkte fra `window.AHAManualSyncDryRunTargetAdapter.createManualSyncDryRunPlan()`. Previewen bruker targetene `lists`, `paths`, `groups` og `avisa` og viser per modul label/targetId, `previewStatus`, lokale active/tombstone/total-tall, runtime-/sync-funksjonsstatus, `executionAllowed`, `blocked`, `wouldRun`, `wouldWrite` og en kort `resultPreview`.
+
+Global summary er fortsatt eksplisitt `mode: dry_run`, `executionAllowed: false`, `autoSync: false`, `blocked: true`, `wouldWrite: false` og `wouldRun: 0`, med target count og blocked target count. UI-en sier **Preview only**, **No write**, **Execution blocked**, **Manual sync is NO-GO** og **Auto-sync permanently forbidden**. Trygge fallbacks dekker manglende adapter, feil under planbygging og tom targetliste uten å krasje dashboardet.
+
+Dette er fortsatt **preview-only / no-write / no-sync**. Det finnes ingen kjørbar sync-knapp eller execute/run-handler, Home laster fortsatt ikke `ahaLists.js`, `ahaPaths.js`, `ahaGroups.js` eller `ahaAvisa.js`, og preview-pathen gjør ingen `syncFromDatabase`-, AHARepository-, Supabase-, fetch-, localStorage-write-, source-event-, insight- eller publish-kall. Ekte manual sync execution og ekte per-module execution/error handling er fortsatt **NO-GO**. Auto-sync er fortsatt **permanent forbudt**.
+
+Neste anbefalte PR er:
+
+```text
+docs: define Sync Hub module loading strategy before execution
+```
+
+Module loading strategy er fortsatt uavklart og må dokumenteres separat før execution kan vurderes. Den anbefalte PR-en skal ikke aktivere sync, laste modulruntime på Home eller skrive data.
