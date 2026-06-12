@@ -3,6 +3,7 @@ const fs = require('fs');
 const vm = require('vm');
 
 const MATRIX_FILE = 'docs/AHA_SYNC_HUB_GO_NO_GO_MATRIX.md';
+const MODULE_LOADING_STRATEGY_FILE = 'docs/AHA_SYNC_HUB_MODULE_LOADING_STRATEGY.md';
 const SYNC_HUB_FILE = 'js/ahaSyncHub.js';
 const DRY_RUN_TARGET_ADAPTER_FILE = 'js/ahaManualSyncDryRunTargetAdapter.js';
 const ADAPTER_FILE = 'js/ahaManualSyncAdapter.js';
@@ -60,6 +61,7 @@ function readyInput(patch = {}) {
 
 (async function run() {
   const matrixCode = read(MATRIX_FILE);
+  const moduleLoadingStrategyCode = read(MODULE_LOADING_STRATEGY_FILE);
   const syncHubCode = read(SYNC_HUB_FILE);
   const dryRunTargetAdapterCode = read(DRY_RUN_TARGET_ADAPTER_FILE);
   const adapterCode = read(ADAPTER_FILE);
@@ -143,6 +145,11 @@ function readyInput(patch = {}) {
   for (const moduleFile of HOME_SYNC_MODULES) {
     assert.equal(homeCode.includes(moduleFile), false, `Home must not load ${moduleFile}`);
   }
+
+  // Regression lock: Home runtime loading stays forbidden and execution still needs separate activation.
+  assert.match(moduleLoadingStrategyCode, /Option A: dedicated sync execution page/, 'module loading strategy must remain documented');
+  assert.ok(moduleLoadingStrategyCode.includes(ACTIVATION_PR), 'execution must still require the dedicated activation PR');
+  assert.match(moduleLoadingStrategyCode, /Auto-sync is permanently forbidden/, 'auto-sync must remain permanently forbidden');
 
   // Only the active Home Sync Hub renderer is scanned; dormant preview helpers are a separate gated layer.
   const activeSyncHubRenderer = extractFunction(dashboardCode, 'renderSyncHubStatus');

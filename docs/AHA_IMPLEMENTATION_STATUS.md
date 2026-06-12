@@ -1640,3 +1640,24 @@ test: lock Sync Hub module loading boundary
 ```
 
 Den anbefalte PR-en skal bare låse den dokumenterte boundaryen i tester. Den skal ikke laste modulruntime på Home, aktivere execution, bygge en kjørbar sync-knapp, gjøre databasekall eller skrive data.
+
+## 25. AHA Sync Hub module loading boundary test lock
+
+`tests/aha-sync-hub-module-loading-boundary.test.cjs` locks the documented Home loading boundary. The test requires `js/ahaSyncHub.js`, `js/ahaManualSyncDryRunTargetAdapter.js`, and `js/ahaDashboard.js` in that order; rejects `js/ahaLists.js`, `js/ahaPaths.js`, `js/ahaGroups.js`, and `js/ahaAvisa.js`; and protects dashboard preview/render/trigger paths and the dry-run target adapter from runtime loading, sync execution, writes, database calls, source events, insights, and publishing.
+
+Gjeldende status er:
+
+- **Home module runtime loading: forbidden and test-locked**
+- **Execution loading: NO-GO**
+- **Dedicated execution page: planned, not implemented**
+- **Auto-sync: permanently forbidden**
+
+Ingen runtimefiler er endret, ingen sync-knapp er aktivert, og ingen manuell eller automatisk sync er innført. En senere execution-aktivering krever fortsatt alle gates A–J som GO for execution og den separate activation-PR-en `feat: activate manual AHA Sync Hub execution`.
+
+Neste anbefalte PR er:
+
+```text
+docs: plan dedicated Sync Hub execution page
+```
+
+Den anbefalte PR-en skal være dokumentasjons-only. Den skal ikke laste modulruntime på Home, aktivere execution, gjøre databasekall, skrive data eller svekke det permanente auto-sync-forbudet.

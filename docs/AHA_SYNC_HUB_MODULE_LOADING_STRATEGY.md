@@ -135,10 +135,16 @@ These paths remain forbidden before and after any future manual-execution activa
 
 ## Recommended next PR
 
-The single recommended next PR is:
+The Home boundary is now test-locked. The single recommended next PR is:
 
 ```text
-test: lock Sync Hub module loading boundary
+docs: plan dedicated Sync Hub execution page
 ```
 
-That PR must prove the documented boundary without loading module runtime on Home, enabling execution, writing data, or weakening the permanent auto-sync prohibition.
+That PR must remain documentation-only and must not load module runtime on Home, enable execution, write data, or weaken the permanent auto-sync prohibition.
+
+## Boundary test coverage
+
+The Home module loading boundary is test-locked by `tests/aha-sync-hub-module-loading-boundary.test.cjs`. The test requires the three read-only Home scripts, rejects the four sync module runtime files, locks script order, and scans dashboard preview/render/trigger paths plus the dry-run target adapter for runtime loading, sync execution, writes, database calls, source events, insights, and publishing.
+
+This coverage does not approve execution. **Option A: dedicated sync execution page** remains the recommended strategy, Home remains read-only, manual sync execution remains **NO-GO**, and auto-sync remains permanently forbidden.
