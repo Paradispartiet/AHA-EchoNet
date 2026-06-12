@@ -4,6 +4,7 @@ const vm = require('vm');
 
 const MATRIX_FILE = 'docs/AHA_SYNC_HUB_GO_NO_GO_MATRIX.md';
 const SYNC_HUB_FILE = 'js/ahaSyncHub.js';
+const DRY_RUN_TARGET_ADAPTER_FILE = 'js/ahaManualSyncDryRunTargetAdapter.js';
 const ADAPTER_FILE = 'js/ahaManualSyncAdapter.js';
 const STATE_MACHINE_FILE = 'js/ahaManualSyncStateMachine.js';
 const DASHBOARD_FILE = 'js/ahaDashboard.js';
@@ -60,6 +61,7 @@ function readyInput(patch = {}) {
 (async function run() {
   const matrixCode = read(MATRIX_FILE);
   const syncHubCode = read(SYNC_HUB_FILE);
+  const dryRunTargetAdapterCode = read(DRY_RUN_TARGET_ADAPTER_FILE);
   const adapterCode = read(ADAPTER_FILE);
   const stateMachineCode = read(STATE_MACHINE_FILE);
   const dashboardCode = read(DASHBOARD_FILE);
@@ -101,6 +103,18 @@ function readyInput(patch = {}) {
   assert.equal(syncCalls, 0, 'inspectAll must not call a loaded syncFromDatabase function');
   assert.equal(storageCalls.some(([method]) => method !== 'getItem'), false, 'inspectAll must only read localStorage');
 
+  loadScript(DRY_RUN_TARGET_ADAPTER_FILE, syncContext);
+  const dryRunTargetAdapter = syncContext.window.AHAManualSyncDryRunTargetAdapter;
+  const dryRunTargetPlan = dryRunTargetAdapter.createManualSyncDryRunPlan();
+  assert.equal(dryRunTargetPlan.mode, 'dry_run', 'target adapter must remain preview-only');
+  assert.equal(dryRunTargetPlan.executionAllowed, false, 'target adapter must block execution');
+  assert.equal(dryRunTargetPlan.autoSync, false, 'target adapter must keep auto-sync disabled');
+  assert.equal(dryRunTargetPlan.wouldWrite, false, 'target adapter must not plan writes');
+  assert.equal(dryRunTargetPlan.wouldCallSyncFromDatabase, false, 'target adapter must not plan module sync calls');
+  assert.equal(dryRunTargetPlan.wouldCallRepository, false, 'target adapter must not plan repository calls');
+  assert.equal(syncCalls, 0, 'target adapter inspection must not call a loaded syncFromDatabase function');
+  assert.equal(storageCalls.some(([method]) => method !== 'getItem'), false, 'target adapter must only read localStorage');
+
   const readOnlyRuntimeForbidden = [
     [/syncFromDatabase\s*\(/, 'syncFromDatabase call'],
     [/AHARepository\s*\.\s*(?:save|load)/, 'AHARepository save/load'],
@@ -114,6 +128,7 @@ function readyInput(patch = {}) {
   ];
   for (const [pattern, label] of readOnlyRuntimeForbidden) {
     assert.equal(pattern.test(syncHubCode), false, `read-only Sync Hub runtime must not contain ${label}`);
+    assert.equal(pattern.test(dryRunTargetAdapterCode), false, `dry-run target adapter must not contain ${label}`);
   }
 
   // Home must not load module runtimes whose init/bind side effects have not been approved.
