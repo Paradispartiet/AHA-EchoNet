@@ -463,3 +463,117 @@
     position: static;
   }
 }
+
+.aha-music-historygo,
+.aha-music-historygo-places,
+.aha-music-historygo-inline {
+  display: grid;
+  gap: 12px;
+}
+
+.aha-music-historygo-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.aha-music-historygo-summary article,
+.aha-music-historygo-place,
+.aha-music-historygo-empty,
+.aha-music-historygo-inline {
+  border: 1px solid var(--aha-line);
+  border-radius: 18px;
+  padding: 14px;
+  background: rgba(255,255,255,.048);
+}
+
+.aha-music-historygo-summary strong,
+.aha-music-historygo-summary span,
+.aha-music-historygo-inline h5,
+.aha-music-historygo-inline p {
+  display: block;
+}
+
+.aha-music-historygo-summary strong {
+  font-size: 1.6rem;
+}
+
+.aha-music-historygo-summary span,
+.aha-music-historygo-place p,
+.aha-music-historygo-empty p,
+.aha-music-historygo-inline p {
+  color: var(--aha-muted);
+}
+
+.aha-music-historygo-place-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.aha-music-historygo-place h3,
+.aha-music-historygo-empty h3,
+.aha-music-historygo-inline h5 {
+  margin: 0 0 6px;
+}
+
+.aha-music-historygo-place ul {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0 0;
+  padding-left: 20px;
+}
+
+.aha-music-historygo-status {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(255,226,122,.44);
+  border-radius: 999px;
+  padding: 4px 8px;
+  background: rgba(255,226,122,.12);
+  color: #ffe27a;
+  font-size: .78rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.aha-music-historygo-status-needs_place_review {
+  border-color: rgba(255, 183, 77, .52);
+  color: #ffd08a;
+  background: rgba(255, 183, 77, .1);
+}
+
+.aha-music-historygo-status-auto_matched,
+.aha-music-historygo-status-verified {
+  border-color: rgba(135,247,174,.48);
+  color: #87f7ae;
+  background: rgba(135,247,174,.1);
+}
+
+.aha-music-historygo-inline {
+  margin-top: 10px;
+}
+
+.aha-music-historygo-inline h5 {
+  color: var(--aha-text);
+}
+
+.aha-music-historygo-inline p {
+  margin: 0;
+}
+
+.aha-music-historygo-inline span {
+  color: #ffe27a;
+  font-weight: 900;
+}
+
+@media (max-width: 720px) {
+  .aha-music-historygo-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .aha-music-historygo-place-head {
+    display: grid;
+  }
+}

@@ -1,0 +1,167 @@
+[
+  {
+    "id": "seed_01_a_ha_oslo_formed_in",
+    "spotifyArtistName": "a-ha",
+    "historyGoPlaceId": null,
+    "candidatePlaceName": "Oslo",
+    "candidateCountry": "Norway",
+    "relationType": "formed_in",
+    "confidence": 0.95,
+    "sourceType": "manual_seed",
+    "sourceNote": "Norwegian synthpop band formed in Oslo."
+  },
+  {
+    "id": "seed_02_karpe_oslo_associated_city",
+    "spotifyArtistName": "Karpe",
+    "historyGoPlaceId": null,
+    "candidatePlaceName": "Oslo",
+    "candidateCountry": "Norway",
+    "relationType": "associated_city",
+    "confidence": 0.9,
+    "sourceType": "manual_seed",
+    "sourceNote": "Norwegian rap/pop group strongly associated with Oslo."
+  },
+  {
+    "id": "seed_03_delillos_oslo_formed_in",
+    "spotifyArtistName": "deLillos",
+    "historyGoPlaceId": null,
+    "candidatePlaceName": "Oslo",
+    "candidateCountry": "Norway",
+    "relationType": "formed_in",
+    "confidence": 0.95,
+    "sourceType": "manual_seed",
+    "sourceNote": "Norwegian rock band formed in Oslo."
+  },
+  {
+    "id": "seed_04_jokke_valentinerne_oslo_associated_city",
+    "spotifyArtistName": "Jokke & Valentinerne",
+    "historyGoPlaceId": null,
+    "candidatePlaceName": "Oslo",
+    "candidateCountry": "Norway",
+    "relationType": "associated_city",
+    "confidence": 0.9,
+    "sourceType": "manual_seed",
+    "sourceNote": "Norwegian rock band associated with Oslo."
+  },
+  {
+    "id": "seed_05_lillebjorn_nilsen_oslo_associated_city",
+    "spotifyArtistName": "Lillebjørn Nilsen",
+    "historyGoPlaceId": null,
+    "candidatePlaceName": "Oslo",
+    "candidateCountry": "Norway",
+    "relationType": "associated_city",
+    "confidence": 0.95,
+    "sourceType": "manual_seed",
+    "sourceNote": "Norwegian singer-songwriter closely associated with Oslo."
+  },
+  {
+    "id": "seed_06_turboneger_oslo_formed_in",
+    "spotifyArtistName": "Turboneger",
+    "historyGoPlaceId": null,
+    "candidatePlaceName": "Oslo",
+    "candidateCountry": "Norway",
+    "relationType": "formed_in",
+    "confidence": 0.9,
+    "sourceType": "manual_seed",
+    "sourceNote": "Norwegian rock band formed in Oslo."
+  },
+  {
+    "id": "seed_07_bob_marley_the_wailers_kingston_associated_city",
+    "spotifyArtistName": "Bob Marley & The Wailers",
+    "historyGoPlaceId": null,
+    "candidatePlaceName": "Kingston",
+    "candidateCountry": "Jamaica",
+    "relationType": "associated_city",
+    "confidence": 0.9,
+    "sourceType": "manual_seed",
+    "sourceNote": "Reggae group strongly associated with Kingston and Jamaican music history."
+  },
+  {
+    "id": "seed_08_david_bowie_brixton_birthplace",
+    "spotifyArtistName": "David Bowie",
+    "historyGoPlaceId": null,
+    "candidatePlaceName": "Brixton",
+    "candidateCountry": "United Kingdom",
+    "relationType": "birthplace",
+    "confidence": 0.95,
+    "sourceType": "manual_seed",
+    "sourceNote": "David Bowie was born in Brixton."
+  },
+  {
+    "id": "seed_09_david_bowie_berlin_associated_city",
+    "spotifyArtistName": "David Bowie",
+    "historyGoPlaceId": null,
+    "candidatePlaceName": "Berlin",
+    "candidateCountry": "Germany",
+    "relationType": "associated_city",
+    "confidence": 0.85,
+    "sourceType": "manual_seed",
+    "sourceNote": "Bowie is strongly associated with Berlin through his Berlin period."
+  },
+  {
+    "id": "seed_10_kraftwerk_dusseldorf_formed_in",
+    "spotifyArtistName": "Kraftwerk",
+    "historyGoPlaceId": null,
+    "candidatePlaceName": "Düsseldorf",
+    "candidateCountry": "Germany",
+    "relationType": "formed_in",
+    "confidence": 0.95,
+    "sourceType": "manual_seed",
+    "sourceNote": "Electronic music group formed in Düsseldorf."
+  },
+  {
+    "id": "seed_11_the_beatles_liverpool_formed_in",
+    "spotifyArtistName": "The Beatles",
+    "historyGoPlaceId": null,
+    "candidatePlaceName": "Liverpool",
+    "candidateCountry": "United Kingdom",
+    "relationType": "formed_in",
+    "confidence": 0.95,
+    "sourceType": "manual_seed",
+    "sourceNote": "Band formed in Liverpool."
+  },
+  {
+    "id": "seed_12_nirvana_seattle_scene",
+    "spotifyArtistName": "Nirvana",
+    "historyGoPlaceId": null,
+    "candidatePlaceName": "Seattle",
+    "candidateCountry": "United States",
+    "relationType": "scene",
+    "confidence": 0.85,
+    "sourceType": "manual_seed",
+    "sourceNote": "Nirvana is central to the Seattle grunge scene."
+  },
+  {
+    "id": "seed_13_miles_davis_new_york_associated_city",
+    "spotifyArtistName": "Miles Davis",
+    "historyGoPlaceId": null,
+    "candidatePlaceName": "New York",
+    "candidateCountry": "United States",
+    "relationType": "associated_city",
+    "confidence": 0.8,
+    "sourceType": "manual_seed",
+    "sourceNote": "Miles Davis is strongly associated with New York jazz history."
+  },
+  {
+    "id": "seed_14_fela_kuti_lagos_associated_city",
+    "spotifyArtistName": "Fela Kuti",
+    "historyGoPlaceId": null,
+    "candidatePlaceName": "Lagos",
+    "candidateCountry": "Nigeria",
+    "relationType": "associated_city",
+    "confidence": 0.9,
+    "sourceType": "manual_seed",
+    "sourceNote": "Fela Kuti is central to Afrobeat and Lagos music history."
+  },
+  {
+    "id": "seed_15_daft_punk_paris_formed_in",
+    "spotifyArtistName": "Daft Punk",
+    "historyGoPlaceId": null,
+    "candidatePlaceName": "Paris",
+    "candidateCountry": "France",
+    "relationType": "formed_in",
+    "confidence": 0.9,
+    "sourceType": "manual_seed",
+    "sourceNote": "French electronic duo formed in Paris."
+  }
+]

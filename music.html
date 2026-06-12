@@ -101,6 +101,7 @@
         <button type="button" data-music-tab="playlists">Spillelister</button>
         <button type="button" data-music-tab="artists">Artister</button>
         <button type="button" data-music-tab="albums">Album</button>
+        <button type="button" data-music-tab="historygo">Musikken din på kartet</button>
       </nav>
 
       <div id="music-empty-state" class="aha-module-content" aria-live="polite"></div>
@@ -119,6 +120,11 @@
       <section id="music-albums-view" class="aha-music-section" aria-labelledby="music-albums-title">
         <h3 id="music-albums-title">Alle album</h3>
         <div id="music-albums-library" class="aha-music-library-grid" aria-live="polite"></div>
+      </section>
+      <section id="music-historygo-view" class="aha-music-section" aria-labelledby="music-historygo-title">
+        <h3 id="music-historygo-title">Musikken din på kartet</h3>
+        <p>Stedskoblinger vises som kandidater via artist før de eventuelt kan brukes i History Go.</p>
+        <div id="music-historygo-map" class="aha-music-historygo" aria-live="polite"></div>
       </section>
     </section>
 
@@ -140,6 +146,7 @@
   <script src="js/ahaRepository.js"></script>
   <script src="js/ahaModules.js"></script>
   <script src="js/ahaMusicCanon.js"></script>
+  <script src="js/ahaMusicHistoryGoBridge.js"></script>
   <script src="js/ahaMusic.js"></script>
 </body>
 </html>

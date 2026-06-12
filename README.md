@@ -832,7 +832,7 @@ AHA Music har nå en første datadrevet Spotify-import for brukerens eget biblio
 - AHA Music lagrer kun metadata og Spotify-referanser, aldri lydfiler.
 - Spotify-token lagres lokalt i nettleseren for MVP-flyten. Ikke legg klienthemmeligheter i frontend; PKCE-flyten bruker kun offentlig Client ID.
 - Spotify API-et gir tilgang i tråd med brukerens samtykke og de valgte scopene. Hvis token utløper, må brukeren koble til Spotify på nytt.
-- Denne MVP-en bygger ikke AI-klassifisering eller History Go-kobling. Musikk-kanonen er et separat, kuratert datasett uten automatisk matching mot Spotify-importen.
+- Denne MVP-en bygger ikke AI-klassifisering. History Go-broen under bruker kun en kuratert seed-liste og nøktern lokal matching; den oppretter ikke nye History Go-steder.
 - `localStorage` er lokal fallback/cache via `aha_music_library_v1`. Når AHA Supabase er konfigurert, kan samme normaliserte metadata speiles til tabellene `music_sources`, `music_playlists`, `music_tracks`, `music_albums`, `music_artists`, `music_track_artists` og `music_playlist_tracks`.
 
 ### AHA Music Library v1
@@ -850,6 +850,34 @@ Strukturen i visningen er:
 - **Album:** viser cover, albumtittel, artistnavn fra importerte spor, utgivelsesdato hvis tilgjengelig, antall importerte sanger og Spotify-lenke.
 
 Tomtilstander håndteres eksplisitt for ingen Spotify-konto/importdata, ingen importerte spillelister og ingen treff i søk/filtre. Biblioteket utvider ikke importlogikken og laster ikke ned lydfiler; det gjør kun importerte Spotify-metadata søkbare og lesbare i AHA Music.
+
+
+### AHA Music → History Go Bridge v1
+
+AHA Music har nå et første bro-lag som gjør importerte Spotify-metadata koblingsklare mot History Go uten å bygge kartvisning, unlocks eller nye History Go-steder. Kjernelogikken er `track → artist → place`: en importert sang kan bli et senere History Go-oppdagelsesobjekt gjennom artisten, for eksempel `Take On Me → a-ha → Oslo → History Go-sted` når stedet er verifisert.
+
+Bridge-filene ligger i `data/aha-music/history-go/`:
+
+- `musicHistoryGoBridgeSchema.json` beskriver schema for `musicArtistPlaceRelation`, `musicTrackPlaceRelation`, seed-kandidater og rapport.
+- `musicHistoryGoSeedCandidates.json` inneholder første seed-sett for de 15 oppgitte artist/sted-kandidatene.
+- `musicArtistPlaceRelations.json` og `musicTrackPlaceRelations.json` er genererte relasjonsfiler. I repo-baseline er de tomme fordi brukerens Spotify-import ikke ligger i repoet.
+- `musicHistoryGoBridgeReport.json` er baseline-rapporten og kan regenereres fra en lokal AHA Music library-snapshot.
+
+Bridge-jobben kjøres slik:
+
+```bash
+node scripts/build-music-history-go-bridge.cjs path/to/aha_music_library_v1.json
+```
+
+Uten input skriver jobben en tom baseline. Med input leser den normaliserte AHA Music-felter (`artists`, `tracks`, `trackArtists`, `playlistTracks`) og matcher artistnavn mot seed-kandidatene i denne rekkefølgen:
+
+1. eksakt match
+2. case-insensitive match
+3. normalisert match uten spesialtegn
+
+Det gjøres ingen usikker fuzzy-match. Hvis et entydig History Go-`placeId` finnes i tilgjengelige lokale data, fylles `historyGoPlaceId` og relasjonen markeres `auto_matched`. Hvis stedet ikke finnes lokalt eller treffet ikke er entydig, beholdes `candidatePlaceName`, `historyGoPlaceId` settes til `null`, og status blir `needs_place_review`. `verified` er reservert for senere manuell kvalitetssikring.
+
+`music.html` laster `js/ahaMusicHistoryGoBridge.js` og viser en enkel **Musikken din på kartet**-seksjon i biblioteket. Den teller sanger og artister med stedskobling, viser stedskandidater, og lister hvilke sanger som peker til hvert sted. Artistkort kan vise **Knyttet til steder** med `relationType`, `confidence` og `status`. Sangkort kan vise **Kan oppdages i History Go** med forklaring om at koblingen er arvet via artisten, for eksempel: “Denne sangen kan kobles til Oslo gjennom artisten a-ha.”
 
 ### AHA Music Canon v1
 
