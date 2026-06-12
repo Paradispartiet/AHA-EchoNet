@@ -1,0 +1,184 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aha.local/schemas/aha-music/music-history-go-bridge.schema.json",
+  "title": "AHA Music History Go Bridge v1",
+  "description": "Schema for cautious AHA Music relations that make imported Spotify tracks linkable to History Go places through artists without creating new History Go places.",
+  "type": "object",
+  "properties": {
+    "artistPlaceRelations": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/musicArtistPlaceRelation" }
+    },
+    "trackPlaceRelations": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/musicTrackPlaceRelation" }
+    },
+    "seedCandidates": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/musicHistoryGoSeedCandidate" }
+    },
+    "report": { "$ref": "#/$defs/musicHistoryGoBridgeReport" }
+  },
+  "$defs": {
+    "relationType": {
+      "type": "string",
+      "enum": [
+        "birthplace",
+        "hometown",
+        "formed_in",
+        "scene",
+        "studio",
+        "venue",
+        "festival",
+        "label_city",
+        "music_video_location",
+        "memorial",
+        "important_event",
+        "associated_city",
+        "associated_country"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": ["verified", "auto_matched", "suggested", "needs_place_review", "rejected"]
+    },
+    "sourceType": {
+      "type": "string",
+      "enum": ["manual_seed", "imported_metadata", "history_go_existing_place", "later_external_source"]
+    },
+    "musicHistoryGoSeedCandidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "spotifyArtistName",
+        "historyGoPlaceId",
+        "candidatePlaceName",
+        "candidateCountry",
+        "relationType",
+        "confidence",
+        "sourceType",
+        "sourceNote"
+      ],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "spotifyArtistName": { "type": "string", "minLength": 1 },
+        "historyGoPlaceId": { "type": ["string", "null"] },
+        "candidatePlaceName": { "type": "string", "minLength": 1 },
+        "candidateCountry": { "type": "string", "minLength": 1 },
+        "relationType": { "$ref": "#/$defs/relationType" },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "sourceType": { "$ref": "#/$defs/sourceType" },
+        "sourceNote": { "type": "string", "minLength": 1 }
+      }
+    },
+    "musicArtistPlaceRelation": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "id",
+        "artistId",
+        "artistName",
+        "spotifyArtistId",
+        "historyGoPlaceId",
+        "candidatePlaceName",
+        "candidateCountry",
+        "relationType",
+        "confidence",
+        "status",
+        "sourceType",
+        "sourceNote",
+        "createdAt",
+        "reviewedAt"
+      ],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "artistId": { "type": "string", "minLength": 1 },
+        "artistName": { "type": "string", "minLength": 1 },
+        "spotifyArtistId": { "type": "string", "minLength": 1 },
+        "historyGoPlaceId": { "type": ["string", "null"] },
+        "candidatePlaceName": { "type": "string", "minLength": 1 },
+        "candidateCountry": { "type": "string", "minLength": 1 },
+        "relationType": { "$ref": "#/$defs/relationType" },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "status": { "$ref": "#/$defs/status" },
+        "sourceType": { "$ref": "#/$defs/sourceType" },
+        "sourceNote": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "reviewedAt": { "type": ["string", "null"] },
+        "matchStrategy": { "type": "string", "enum": ["exact", "case_insensitive", "normalized"] },
+        "seedCandidateId": { "type": "string" }
+      }
+    },
+    "musicTrackPlaceRelation": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "id",
+        "trackId",
+        "trackTitle",
+        "artistId",
+        "artistName",
+        "historyGoPlaceId",
+        "candidatePlaceName",
+        "relationType",
+        "inheritedFromArtistRelationId",
+        "confidence",
+        "status"
+      ],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "trackId": { "type": "string", "minLength": 1 },
+        "trackTitle": { "type": "string", "minLength": 1 },
+        "artistId": { "type": "string", "minLength": 1 },
+        "artistName": { "type": "string", "minLength": 1 },
+        "historyGoPlaceId": { "type": ["string", "null"] },
+        "candidatePlaceName": { "type": "string", "minLength": 1 },
+        "relationType": { "$ref": "#/$defs/relationType" },
+        "inheritedFromArtistRelationId": { "type": "string", "minLength": 1 },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "status": { "$ref": "#/$defs/status" }
+      }
+    },
+    "musicHistoryGoBridgeReport": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "generatedAt",
+        "importedArtistsAnalyzed",
+        "artistsWithPlaceCandidate",
+        "verified",
+        "autoMatched",
+        "needsPlaceReview",
+        "trackPlaceRelationsCreated",
+        "topPlacesByTrackCount",
+        "topArtistsByPlaceLinks",
+        "playlistPlaceCoverage"
+      ],
+      "properties": {
+        "generatedAt": { "type": "string" },
+        "importedArtistsAnalyzed": { "type": "integer", "minimum": 0 },
+        "artistsWithPlaceCandidate": { "type": "integer", "minimum": 0 },
+        "verified": { "type": "integer", "minimum": 0 },
+        "autoMatched": { "type": "integer", "minimum": 0 },
+        "needsPlaceReview": { "type": "integer", "minimum": 0 },
+        "trackPlaceRelationsCreated": { "type": "integer", "minimum": 0 },
+        "topPlacesByTrackCount": { "type": "array" },
+        "topArtistsByPlaceLinks": { "type": "array" },
+        "playlistPlaceCoverage": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["playlistId", "playlistName", "linkedTrackPlaceRelations", "candidatePlaces"],
+            "properties": {
+              "playlistId": { "type": "string" },
+              "playlistName": { "type": "string" },
+              "linkedTrackPlaceRelations": { "type": "integer", "minimum": 0 },
+              "candidatePlaces": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        }
+      }
+    }
+  }
+}

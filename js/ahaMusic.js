@@ -24,6 +24,9 @@
     trackCanonNodes: [],
     artistCanonNodes: [],
     playlistCanonNodes: [],
+    musicArtistPlaceRelations: [],
+    musicTrackPlaceRelations: [],
+    musicHistoryGoBridgeReport: null,
     imports: []
   });
 
@@ -83,6 +86,9 @@
       trackCanonNodes: asArray(stored.trackCanonNodes),
       artistCanonNodes: asArray(stored.artistCanonNodes),
       playlistCanonNodes: asArray(stored.playlistCanonNodes),
+      musicArtistPlaceRelations: asArray(stored.musicArtistPlaceRelations),
+      musicTrackPlaceRelations: asArray(stored.musicTrackPlaceRelations),
+      musicHistoryGoBridgeReport: stored.musicHistoryGoBridgeReport || null,
       imports: asArray(stored.imports)
     };
   }
@@ -517,7 +523,7 @@
     if (yearSelect) yearSelect.innerHTML = `<option value="">Alle år</option>` + years.map((year) => `<option value="${escapeHtml(year)}"${year === state.year ? " selected" : ""}>${escapeHtml(year)}</option>`).join("");
   }
 
-  function renderTrackCard(track, index) {
+  function renderTrackCard(track, index, bridge) {
     const album = index.albumsById.get(track.spotify_album_id) || { name: track.album_name };
     const artists = getTrackArtists(track, index);
     const playlists = getTrackPlaylists(track, index);
@@ -531,12 +537,13 @@
           <span>${escapeHtml(formatDuration(track.duration_ms))}</span>
         </div>
         <div class="aha-music-chips">${playlists.length ? playlists.map((playlist) => `<span>${escapeHtml(playlist.name)}</span>`).join("") : "<span>Ingen spillelistekobling</span>"}</div>
+        ${global.AHAMusicHistoryGoBridge?.renderTrackPlaceRelations?.(track, bridge?.trackRelations) || ""}
       </div>
       <div class="aha-music-links">${spotifyLink(track.spotify_url)}</div>
     </article>`;
   }
 
-  function renderTracks(library, filteredTracks, index) {
+  function renderTracks(library, filteredTracks, index, bridge) {
     const mount = document.getElementById("imported-tracks");
     if (!mount) return;
     if (!filteredTracks.length) {
@@ -547,7 +554,7 @@
     }
     mount.innerHTML = filteredTracks
       .sort((a, b) => text(a.name).localeCompare(text(b.name), "no"))
-      .map((track) => renderTrackCard(track, index))
+      .map((track) => renderTrackCard(track, index, bridge))
       .join("");
   }
 
@@ -585,7 +592,7 @@
     }).join("");
   }
 
-  function renderArtists(library, filteredTracks, index) {
+  function renderArtists(library, filteredTracks, index, bridge) {
     const mount = document.getElementById("music-artists-library");
     if (!mount) return;
     const state = currentLibraryState();
@@ -612,6 +619,7 @@
       </div>
       <p><strong>Album:</strong> ${escapeHtml(albums.map((album) => album.name).join(", ") || "Ingen albumkobling")}</p>
       <p><strong>Spillelister:</strong> ${escapeHtml(playlists.map((playlist) => playlist.name).join(", ") || "Ingen spillelistekobling")}</p>
+      ${global.AHAMusicHistoryGoBridge?.renderArtistPlaceRelations?.(artist, bridge?.artistRelations) || ""}
     </article>`).join("");
   }
 
@@ -674,6 +682,10 @@
     const library = loadLibrary();
     const state = currentLibraryState();
     const index = buildLibraryIndex(library);
+    const bridge = global.AHAMusicHistoryGoBridge?.buildBridge
+      ? global.AHAMusicHistoryGoBridge.buildBridge(library)
+      : { artistRelations: library.musicArtistPlaceRelations, trackRelations: library.musicTrackPlaceRelations, report: library.musicHistoryGoBridgeReport };
+    if (global.AHAMusicHistoryGoBridge?.saveBridgeSnapshot) global.AHAMusicHistoryGoBridge.saveBridgeSnapshot(bridge);
     global.AHAModules?.updatePageHealth?.("music", global.AHAModules.localPageHealth({ count: library.tracks.length, datasetExists: true }));
     renderStats(library);
     fillFilters(library, state);
@@ -690,10 +702,11 @@
     }
 
     const filteredTracks = asArray(library.tracks).filter((track) => trackMatchesFilters(track, state, index));
-    renderTracks(library, filteredTracks, index);
+    renderTracks(library, filteredTracks, index, bridge);
     renderPlaylistView(library, filteredTracks, index);
-    renderArtists(library, filteredTracks, index);
+    renderArtists(library, filteredTracks, index, bridge);
     renderAlbums(library, filteredTracks, index);
+    global.AHAMusicHistoryGoBridge?.renderMusicMap?.(library, bridge);
   }
 
   function renderStats(library) {
@@ -721,6 +734,7 @@
     });
     document.getElementById("music-library-controls")?.addEventListener("input", renderLibrary);
     document.getElementById("music-library-controls")?.addEventListener("change", renderLibrary);
+    global.addEventListener?.("aha:music-historygo-bridge-ready", renderLibrary);
     document.querySelectorAll("[data-music-tab]").forEach((button) => {
       button.addEventListener("click", () => {
         document.querySelectorAll("[data-music-tab]").forEach((item) => item.classList.toggle("is-active", item === button));

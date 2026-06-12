@@ -1,0 +1,12 @@
+{
+  "generatedAt": "2026-06-12T00:00:00.000Z",
+  "importedArtistsAnalyzed": 0,
+  "artistsWithPlaceCandidate": 0,
+  "verified": 0,
+  "autoMatched": 0,
+  "needsPlaceReview": 0,
+  "trackPlaceRelationsCreated": 0,
+  "topPlacesByTrackCount": [],
+  "topArtistsByPlaceLinks": [],
+  "playlistPlaceCoverage": []
+}
