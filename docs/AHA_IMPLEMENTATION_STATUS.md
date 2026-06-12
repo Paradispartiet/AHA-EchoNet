@@ -1617,3 +1617,26 @@ docs: define Sync Hub module loading strategy before execution
 ```
 
 Den anbefalte PR-en skal være dokumentasjons-only. Den skal ikke laste modulruntime på Home, aktivere sync, bygge en kjørbar sync-knapp, gjøre databasekall eller skrive data.
+
+## 24. AHA Sync Hub module loading strategy
+
+`docs/AHA_SYNC_HUB_MODULE_LOADING_STRATEGY.md` dokumenterer loading-boundaryen som må bevares før en eventuell fremtidig manual sync execution kan vurderes. Home kan fortsatt laste `js/ahaSyncHub.js`, `js/ahaManualSyncDryRunTargetAdapter.js` og `js/ahaDashboard.js` for read-only status og preview, men skal ikke laste `js/ahaLists.js`, `js/ahaPaths.js`, `js/ahaGroups.js` eller `js/ahaAvisa.js`. Preview/dry-run kan bare inspisere metadata.
+
+Tre execution-loading-alternativer er vurdert: en dedikert execution-side, dynamic import etter eksplisitt klikk, eller permanent preview-only Home med et annet kontrollert entry point. Anbefalingen for første activation-fase er **Option A: dedicated sync execution page**, fordi den gir en klar boundary, enklere tester, ingen modulruntime på Home og bedre isolasjon av explicit-click-, Supabase/session-, audit- og rollback-krav. Strategien er dokumentert, men ikke implementert.
+
+Gjeldende status er:
+
+- **Home loading boundary: documented**
+- **Execution loading: NO-GO**
+- **Module runtime on Home: forbidden**
+- **Auto-sync: permanently forbidden**
+
+Manual sync execution er fortsatt **NO-GO**. Før activation må alle gates A–J være GO for execution, Home-boundaryen må låses i tester, en dedikert execution-side må planlegges og auditeres, execution må kreve eksplisitt brukerhandling, og den separate activation-PR-en må hete nøyaktig `feat: activate manual AHA Sync Hub execution`. Dokumentasjonen aktiverer ingen sync, writes eller module loading.
+
+Neste anbefalte PR er:
+
+```text
+test: lock Sync Hub module loading boundary
+```
+
+Den anbefalte PR-en skal bare låse den dokumenterte boundaryen i tester. Den skal ikke laste modulruntime på Home, aktivere execution, bygge en kjørbar sync-knapp, gjøre databasekall eller skrive data.

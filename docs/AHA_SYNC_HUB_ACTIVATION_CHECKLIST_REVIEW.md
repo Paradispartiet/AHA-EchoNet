@@ -23,19 +23,20 @@ The current implementation may inspect and present read-only or dry-run informat
 | AHASyncHub runtime adapter | `js/ahaSyncHub.js`; `tests/aha-sync-hub-runtime-adapter.test.cjs` | **GO for preview** | Runtime availability is inspected read-only; this is not a write-path approval. |
 | Go/no-go matrix | `docs/AHA_SYNC_HUB_GO_NO_GO_MATRIX.md` | **GO for preview** | Defines gates A–J and preserves execution NO-GO. |
 | Activation evidence review | `docs/AHA_SYNC_HUB_ACTIVATION_EVIDENCE.md` | **GO for preview** | Collects current evidence and missing execution proof. |
+| Module loading strategy | `docs/AHA_SYNC_HUB_MODULE_LOADING_STRATEGY.md` | **Documented; NO-GO for execution** | Selects a dedicated execution page as the future loading boundary while keeping Home preview-only and module runtime unloaded. Documentation is not execution approval. |
 | Dry-run target adapter | `js/ahaManualSyncDryRunTargetAdapter.js`; `tests/aha-manual-sync-dry-run-target-adapter.test.cjs` | **GO for preview** | Produces blocked, no-write plans and does not execute targets. |
 | Dry-run target preview | `js/ahaDashboard.js`; `tests/aha-home-manual-sync-dry-run-preview.test.cjs` | **GO for preview** | Displays target and blocker information without a runnable sync action. |
 | Dry-run target evidence tests | `tests/aha-manual-sync-dry-run-target-evidence.test.cjs` | **GO for preview** | Locks preview-only, no-write, and no-sync behavior. |
 | Per-module result preview | `js/ahaDashboard.js`; `tests/aha-manual-sync-per-module-result-preview.test.cjs` | **GO for preview** | Shows read-only blocked/no-run/no-write results per module; real execution result handling is not proven. |
 | No-write/no-sync blocker tests | `tests/aha-manual-sync-activation-blockers.test.cjs`; `tests/aha-sync-hub-go-no-go-blockers.test.cjs` | **GO for preview** | Protect current blocked behavior; they do not approve the execution path. |
-| Home does not load module runtime files | `index.html`; `tests/aha-manual-sync-activation-blockers.test.cjs` | **GO for current read-only scope** | Home does not load `ahaLists.js`, `ahaPaths.js`, `ahaGroups.js`, or `ahaAvisa.js`; an execution loading strategy remains unresolved. |
+| Home does not load module runtime files | `index.html`; `tests/aha-manual-sync-activation-blockers.test.cjs`; `docs/AHA_SYNC_HUB_MODULE_LOADING_STRATEGY.md` | **GO for current read-only scope** | Home does not load `ahaLists.js`, `ahaPaths.js`, `ahaGroups.js`, or `ahaAvisa.js`; the future strategy is documented but not implemented. |
 
 ## Gate review A–J
 
 | Gate | Name | Current status | Evidence | Missing before activation | Decision |
 |---|---|---|---|---|---|
 | **A** | Runtime target gate | **PARTIAL** | Read-only and dry-run registries identify Lists, Paths, Groups, and AHAavisa, including local keys, tables, runtime globals, and sync function names. | Establish one canonical execution contract, resolve `avisa`/`ahaavisa`, and prove the approved write method for every module. | **NO-GO for execution** |
-| **B** | Module loading gate | **NO-GO for execution** | Home intentionally does not load the four module runtime files and can report that they are unavailable. | Document and review a safe execution architecture, including initialization/binding side effects and whether execution uses Home, a dedicated runtime, or a registry-based adapter. | **NO-GO for execution** |
+| **B** | Module loading gate | **NO-GO for execution** | `docs/AHA_SYNC_HUB_MODULE_LOADING_STRATEGY.md` documents the Home boundary and recommends a dedicated execution page. Home intentionally does not load the four module runtime files. | Lock the loading boundary in tests, plan and review the dedicated execution page, audit initialization/binding side effects, and implement loading only in later dedicated work after every gate is GO. | **NO-GO for execution** |
 | **C** | Manual trigger gate | **PARTIAL** | State-machine and blocker evidence model explicit confirmation and reject non-click preview triggers; no executable Home button exists. | Prove one explicit click per run, one-time confirmation, in-flight disablement, double-click/re-entry protection, and absence of all automatic triggers. | **NO-GO for execution** |
 | **D** | Dry-run/preview gate | **GO for preview** | Dry-run target preview and per-module result preview are implemented and test-locked as blocked, no-write, and no-sync. | Preserve the preview boundary and keep it separate from execution; all other gates must become execution-GO in a later review. | **NO-GO for execution** |
 | **E** | Blocker gate | **GO for preview** | Readiness, checklist, target, validation, and confirmation blockers exist, and current Home behavior remains blocked. | Activation tests must prove every blocker and transition, with blocked meaning no module write and no hidden write. | **NO-GO for execution** |
@@ -74,8 +75,9 @@ These requirements are cumulative. Preview success, adapter availability, or par
 ## Current blockers
 
 - execution path not activated
-- activation PR not created
-- module loading strategy for execution not finalized
+- dedicated activation PR still required
+- module loading strategy documented, but not executed
+- module runtime still not loaded on Home
 - per-module execution/error result handling not proven for real writes
 - rollback/no-write behavior not proven
 - Supabase/session execution fallback not reviewed for write path
@@ -88,7 +90,8 @@ These requirements are cumulative. Preview success, adapter availability, or par
 
 - docs review
 - checklist review
-- module loading strategy docs
+- tests that lock the module loading boundary
+- docs for a dedicated execution page
 - per-module preview test lock
 - no-write/no-sync tests
 - disabled UI review
@@ -107,10 +110,10 @@ These requirements are cumulative. Preview success, adapter availability, or par
 
 ## Recommended next PR
 
-The module loading strategy is still not documented or finalized for execution. The single recommended next PR is:
+The module loading strategy is documented, and the next step is to lock the Home boundary without activating execution. The single recommended next PR is:
 
 ```text
-docs: define Sync Hub module loading strategy before execution
+test: lock Sync Hub module loading boundary
 ```
 
-That PR must remain documentation-only. It must not load module runtime files on Home, activate execution, create an executable sync button, or write data.
+That PR must remain test-only. It must not load module runtime files on Home, activate execution, create an executable sync button, call sync or repository persistence, or write data.
