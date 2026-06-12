@@ -1544,3 +1544,19 @@ docs: review Sync Hub activation evidence
 ```
 
 En slik review skal vurdere gjenværende PARTIAL/NO-GO-gates uten å aktivere manual sync. En eventuell senere activation må fortsatt skje separat som `feat: activate manual AHA Sync Hub execution`.
+
+## 20. AHA manual sync dry-run target adapter
+
+`js/ahaManualSyncDryRunTargetAdapter.js` eksporterer `window.AHAManualSyncDryRunTargetAdapter` som et separat preview-only/no-write lag for Lists, Paths, Groups og AHAavisa. Adapteren beskriver localStorage-key, tabell, runtime-global og sync-funksjonsnavn, teller aktive records og tombstones (`deletedAt` og `deleted_at`) og inspiserer om runtime/sync-funksjon finnes uten å kalle den.
+
+`createManualSyncDryRunPlan()` returnerer alltid `mode: "dry_run"`, `executionAllowed: false`, `autoSync: false`, `blocked: true`, tom `wouldRun`, `wouldWrite: false`, `wouldCallSyncFromDatabase: false` og `wouldCallRepository: false`. Planen inkluderer execution-blockers for NO-GO-beslutningen, manglende activation-PR, permanent auto-sync-forbud og eventuelle manglende runtime-/sync-funksjoner.
+
+Adapteren er bevisst ikke lastet i `index.html`, fordi den aktive Sync Hub-rendereren ikke har en eksisterende preview-/dry-run-flate. Det er ikke lagt til UI eller kjørbar sync-knapp. Home laster fortsatt ikke `ahaLists.js`, `ahaPaths.js`, `ahaGroups.js` eller `ahaAvisa.js`. Ekte manuell sync er fortsatt **NO-GO**, og auto-sync er fortsatt **permanent forbudt**.
+
+Neste anbefalte PR er:
+
+```text
+feat: show manual sync dry-run target preview
+```
+
+Den PR-en skal bare koble den eksisterende no-write-planen til en tydelig read-only previewflate. Den skal fortsatt ikke aktivere execution, gjøre database-/repository-kall, skrive localStorage eller laste modulruntime på Home.
