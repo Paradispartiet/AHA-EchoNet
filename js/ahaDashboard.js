@@ -2345,6 +2345,10 @@
 
   function bind() {
     persistAuthReturnTargetFromUrl();
+    // Mount the static module registry before auth/database diagnostics can delay
+    // the richer dashboard refresh. renderDashboard replaces these badges with
+    // live health data when its asynchronous work completes.
+    renderModules({});
     bindProfileNameForm();
     bindLoginModal();
     bindProfileNameModal();
