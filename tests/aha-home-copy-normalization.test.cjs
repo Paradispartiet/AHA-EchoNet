@@ -53,7 +53,7 @@ for (const file of ['js/ahaLists.js', 'js/ahaPaths.js', 'js/ahaGroups.js', 'js/a
   assert.equal(indexCode.includes(file), false, `Home must not load ${file}`);
 }
 assert.equal(/localStorage\.setItem\([^)]*(sync|hub|prep|target|modal)/i.test(dashboardCode), false, 'Home must not persist Sync Hub UI state');
-assert.equal(/autoSync|syncFromDatabase\s*\(/.test(dashboardCode), false, 'Home must not introduce or call auto-sync entry points');
+assert.equal(/(?:start|enable|run)AutoSync\s*\(|autoSync\s*=\s*true|syncFromDatabase\s*\(/i.test(dashboardCode), false, 'Home must not introduce or call auto-sync entry points');
 assert.equal(/createClient\s*\(/.test(dashboardCode), false, 'Home must not create a database client');
 assert.equal(/JSON\.stringify\s*\([^)]*(payload|audit)/i.test(dashboardCode), false, 'Home must not dump full payload or audit JSON');
 

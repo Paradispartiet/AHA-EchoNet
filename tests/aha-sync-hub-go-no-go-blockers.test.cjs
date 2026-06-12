@@ -131,7 +131,11 @@ function readyInput(patch = {}) {
     assert.equal(pattern.test(dryRunTargetAdapterCode), false, `dry-run target adapter must not contain ${label}`);
   }
 
-  // Home must not load module runtimes whose init/bind side effects have not been approved.
+  // Home may load the preview-only target adapter, but not module runtimes with unapproved side effects.
+  const dryRunTargetAdapterIndex = homeCode.indexOf('js/ahaManualSyncDryRunTargetAdapter.js');
+  assert.notEqual(dryRunTargetAdapterIndex, -1, 'Home should load the dry-run target preview adapter');
+  assert.ok(homeCode.indexOf('js/ahaSyncHub.js') < dryRunTargetAdapterIndex, 'preview adapter should load after Sync Hub');
+  assert.ok(dryRunTargetAdapterIndex < homeCode.indexOf('js/ahaDashboard.js'), 'preview adapter should load before dashboard');
   for (const moduleFile of HOME_SYNC_MODULES) {
     assert.equal(homeCode.includes(moduleFile), false, `Home must not load ${moduleFile}`);
   }
@@ -141,7 +145,14 @@ function readyInput(patch = {}) {
   assert.match(activeSyncHubRenderer, /Read-only oversikt/, 'active Home Sync Hub renderer must identify itself as read-only');
   assert.match(activeSyncHubRenderer, /Ingen sync kjøres her ennå/, 'active renderer must say that no sync runs here');
   assert.equal(/<button\b/i.test(activeSyncHubRenderer), false, 'active Home Sync Hub renderer must not add a sync button');
+  assert.match(activeSyncHubRenderer, /renderAhaManualSyncDryRunTargetPreview\s*\(\s*\)/, 'active renderer should show the dry-run target preview');
+  const dryRunPreviewRenderer = extractFunction(dashboardCode, 'renderAhaManualSyncDryRunTargetPreview');
+  assert.match(dryRunPreviewRenderer, /createManualSyncDryRunPlan\s*\(\s*\)/, 'preview should use the blocked dry-run plan');
+  assert.match(dryRunPreviewRenderer, /Manual sync is NO-GO/, 'preview should keep manual execution NO-GO');
+  assert.match(dryRunPreviewRenderer, /Auto-sync permanently forbidden/, 'preview should keep auto-sync permanently forbidden');
+  assert.equal(/<button\b/i.test(dryRunPreviewRenderer), false, 'dry-run preview must not add a sync button');
   for (const [pattern, label] of readOnlyRuntimeForbidden) {
+    assert.equal(pattern.test(dryRunPreviewRenderer), false, `dry-run preview renderer must not contain ${label}`);
     assert.equal(pattern.test(activeSyncHubRenderer), false, `active Home Sync Hub renderer must not contain ${label}`);
   }
 

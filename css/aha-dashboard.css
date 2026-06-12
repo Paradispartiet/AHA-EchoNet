@@ -1690,6 +1690,40 @@ html, body { max-width: 100%; overflow-x: hidden; }
   font-weight: 800;
 }
 .aha-sync-hub-badge.is-ready { color: var(--aha-green); border-color: rgba(53,211,153,.24); background: rgba(53,211,153,.1); }
+.aha-sync-hub-badge.is-blocked { color: #ffd2d2; border-color: rgba(255,96,96,.28); background: rgba(255,96,96,.1); }
+.aha-sync-target-preview {
+  display: grid;
+  gap: 9px;
+  padding: 10px;
+  border: 1px solid rgba(246,200,0,.2);
+  border-radius: 11px;
+  background: rgba(246,200,0,.05);
+}
+.aha-sync-target-preview h4,
+.aha-sync-target-preview .eyebrow { margin: 0; }
+.aha-sync-target-preview-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.aha-sync-target-preview-decision { color: #ffd2d2; font-size: .78rem; }
+.aha-sync-target-preview-plan {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 8px;
+  border-radius: 9px;
+  background: rgba(0,0,0,.12);
+}
+.aha-sync-target-preview-plan > div {
+  display: grid;
+  grid-template-columns: minmax(100px, .45fr) minmax(0, 1fr);
+  gap: 8px;
+  color: var(--aha-muted);
+  font-size: .7rem;
+}
+.aha-sync-target-preview-plan dd { margin: 0; color: var(--aha-text); overflow-wrap: anywhere; }
 .aha-sync-hub-notice { font-size: .78rem; }
 .aha-sync-hub-compact-card { padding: 12px; }
 .aha-sync-hub-open-button { width: 100%; min-height: 34px; margin-top: 1px; padding: 7px 10px; }

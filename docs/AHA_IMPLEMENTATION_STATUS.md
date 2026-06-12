@@ -1551,12 +1551,14 @@ En slik review skal vurdere gjenværende PARTIAL/NO-GO-gates uten å aktivere ma
 
 `createManualSyncDryRunPlan()` returnerer alltid `mode: "dry_run"`, `executionAllowed: false`, `autoSync: false`, `blocked: true`, tom `wouldRun`, `wouldWrite: false`, `wouldCallSyncFromDatabase: false` og `wouldCallRepository: false`. Planen inkluderer execution-blockers for NO-GO-beslutningen, manglende activation-PR, permanent auto-sync-forbud og eventuelle manglende runtime-/sync-funksjoner.
 
-Adapteren er bevisst ikke lastet i `index.html`, fordi den aktive Sync Hub-rendereren ikke har en eksisterende preview-/dry-run-flate. Det er ikke lagt til UI eller kjørbar sync-knapp. Home laster fortsatt ikke `ahaLists.js`, `ahaPaths.js`, `ahaGroups.js` eller `ahaAvisa.js`. Ekte manuell sync er fortsatt **NO-GO**, og auto-sync er fortsatt **permanent forbudt**.
+Home laster nå preview-adapteren etter `ahaSyncHub.js` og før `ahaDashboard.js`. Den eksisterende Sync Hub-statusflaten viser en read-only **Dry-run target preview** med planfeltene `mode`, `executionAllowed`, `autoSync`, `blocked`, `reason`, `blockers` og `targets`. For Lists, Paths, Groups og AHAavisa vises label, target-ID, lokale total-/active-/tombstone-tall, runtime-/sync-funksjonsstatus og de eksplisitte dry-run-/execution-blockene.
+
+Statusen er fortsatt **preview-only / no-write / no-sync**. UI-en har ingen sync-knapp eller execution-handler, og fallbackene `Dry-run target adapter not loaded` og `Dry-run preview unavailable` gjør at dashboardet forblir trygt hvis adapteren mangler eller planbyggingen feiler. Home laster fortsatt ikke `ahaLists.js`, `ahaPaths.js`, `ahaGroups.js` eller `ahaAvisa.js`. Ekte manuell sync execution er fortsatt **NO-GO**, og auto-sync er fortsatt **permanent forbudt**.
 
 Neste anbefalte PR er:
 
 ```text
-feat: show manual sync dry-run target preview
+docs: prepare manual sync activation checklist review
 ```
 
-Den PR-en skal bare koble den eksisterende no-write-planen til en tydelig read-only previewflate. Den skal fortsatt ikke aktivere execution, gjøre database-/repository-kall, skrive localStorage eller laste modulruntime på Home.
+Den reviewen skal oppdatere activation-sjekklisten mot den faktiske preview-evidencen uten å aktivere execution. En activation-PR er fortsatt ikke tillatt før alle gates A–J er GO.

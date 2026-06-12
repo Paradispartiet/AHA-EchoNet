@@ -33,7 +33,7 @@ assert.ok(css.includes('min-height: 44px'), 'important compact controls should m
 assert.ok(css.includes('max-height: calc(100dvh - 16px)'), 'confirmation modal should fit small viewports');
 
 for (const code of [dashboard, modules]) {
-  assert.equal(/autoSync|syncFromDatabase\s*\(/.test(code), false, 'Home UI must not add or call auto-sync');
+  assert.equal(/(?:start|enable|run)AutoSync\s*\(|autoSync\s*=\s*true|syncFromDatabase\s*\(/i.test(code), false, 'Home UI must not add or call auto-sync');
   assert.equal(/setItem\s*\(\s*["'](?:sync|drawer|modal|diagnostic|selected)/i.test(code), false, 'Home UI must not persist Sync Hub UI state');
 }
 assert.equal(/AHARepository\s*\.\s*(save|write)|writeAhaManualSyncAuditLog\s*\(/.test(dashboard), false, 'dashboard must not write directly to repository or audit');
