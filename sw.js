@@ -2,25 +2,29 @@
 // AHA Chat – enkel service worker med NETWORK-FIRST strategi
 // Prøver alltid nett først, bruker cache som fallback (slik at nye deploys synes med en gang)
 
-const CACHE_NAME = "aha-chat-v4.0.370";
+const CACHE_NAME = "aha-chat-v4.0.371";
 
 // Filer vi gjerne vil ha tilgjengelig offline (app-shell)
-const ASSETS = [
-  "/",
-  "/index.html",
-  "/css/aha-chat.css",
-  "/js/insightsChamber.js",
-  "/js/metaInsightsEngine.js",
-  "/js/metaInsightsMemory.js",
-  "/js/metaInsightsAgent.js",
-  "/js/ahaFieldProfiles.js",
-  "/js/ahaChat.js",
-  "/js/emnerLoader.js",
-  "/js/ahaEmneMatcher.js",
-  "/js/ahaEmbeddings.js",
-  "/js/theoryClustersLoader.js",
-  "/data/theoryClusters.json"
+// Bygg URL-er relativt til service worker scope, slik at GitHub Pages
+// project sites under /AHA-EchoNet/ ikke precacher fra domain root.
+const SCOPE_URL = self.registration.scope;
+const ASSET_PATHS = [
+  "./",
+  "index.html",
+  "css/aha-chat.css",
+  "js/insightsChamber.js",
+  "js/metaInsightsEngine.js",
+  "js/metaInsightsMemory.js",
+  "js/metaInsightsAgent.js",
+  "js/ahaFieldProfiles.js",
+  "js/ahaChat.js",
+  "js/emnerLoader.js",
+  "js/ahaEmneMatcher.js",
+  "js/ahaEmbeddings.js",
+  "js/theoryClustersLoader.js",
+  "data/theoryClusters.json"
 ];
+const ASSETS = ASSET_PATHS.map((path) => new URL(path, SCOPE_URL).toString());
 
 // Install – legg basisfilene i cache
 self.addEventListener("install", (event) => {
