@@ -543,6 +543,30 @@
     return failed.length ? { ok: false, results, errors: failed } : { ok: true, results };
   }
 
+
+  async function loadMusicLibrarySnapshot(options = {}) {
+    const tables = [
+      ["music_sources", "sources"],
+      ["music_playlists", "playlists"],
+      ["music_tracks", "tracks"],
+      ["music_albums", "albums"],
+      ["music_artists", "artists"],
+      ["music_track_artists", "trackArtists"],
+      ["music_playlist_tracks", "playlistTracks"]
+    ];
+    const limit = options.limit || 5000;
+    const pairs = await Promise.all(tables.map(async ([table, key]) => [key, await list(table, { ...options, limit })]));
+    const failed = pairs.filter(([, result]) => result?.ok !== true);
+    if (failed.length) return { ok: false, results: Object.fromEntries(pairs), errors: failed };
+    return {
+      ok: true,
+      library: pairs.reduce((acc, [key, result]) => {
+        acc[key] = cleanArray(result.data);
+        return acc;
+      }, { sources: [], playlists: [], tracks: [], albums: [], artists: [], trackArtists: [], playlistTracks: [], imports: [] })
+    };
+  }
+
   function loadSourceEvents(options = {}) {
     return list("aha_source_events", { orderBy: "created_at", limit: options.limit || 200 });
   }
@@ -723,6 +747,7 @@
     saveInstaFollow,
     saveImport,
     saveMusicLibrarySnapshot,
+    loadMusicLibrarySnapshot,
     saveChamber,
     loadSourceEvents,
     loadNotes,

@@ -834,3 +834,19 @@ AHA Music har nå en første datadrevet Spotify-import for brukerens eget biblio
 - Spotify API-et gir tilgang i tråd med brukerens samtykke og de valgte scopene. Hvis token utløper, må brukeren koble til Spotify på nytt.
 - Denne MVP-en bygger ikke AI-klassifisering, musikk-kanon eller History Go-kobling.
 - `localStorage` er lokal fallback/cache via `aha_music_library_v1`. Når AHA Supabase er konfigurert, kan samme normaliserte metadata speiles til tabellene `music_sources`, `music_playlists`, `music_tracks`, `music_albums`, `music_artists`, `music_track_artists` og `music_playlist_tracks`.
+
+### AHA Music Library v1
+
+Biblioteklaget på `music.html` bruker den samme normaliserte Spotify-importen som MVP-en allerede skriver til `aha_music_library_v1` og, når Supabase er konfigurert, til tabellene `music_sources`, `music_playlists`, `music_tracks`, `music_albums`, `music_artists`, `music_track_artists` og `music_playlist_tracks`.
+
+Strukturen i visningen er:
+
+- **Bibliotekheader og statistikk:** teller importerte sanger, spillelister, album og artister fra det normaliserte datasettet.
+- **Søk:** ett søkefelt matcher sangtittel, artistnavn, albumnavn og spillelistenavn.
+- **Filtre:** spilleliste, artist, album og utgivelsesår dersom albumets `release_date` inneholder år.
+- **Sanger:** viser cover fra album, tittel, artist, album, varighet, hvilke spillelister sangen finnes i og lenke til **Åpne i Spotify**.
+- **Spillelister:** viser spillelistenavn, cover, antall spor, sist importert/synkronisert (`updated_at`), alle importerte spor i `position`-rekkefølge og Spotify-lenke.
+- **Artister:** viser artistnavn, bilde hvis feltet finnes i dataene, antall importerte sanger, tilknyttede album, tilknyttede spillelister og Spotify-lenke.
+- **Album:** viser cover, albumtittel, artistnavn fra importerte spor, utgivelsesdato hvis tilgjengelig, antall importerte sanger og Spotify-lenke.
+
+Tomtilstander håndteres eksplisitt for ingen Spotify-konto/importdata, ingen importerte spillelister og ingen treff i søk/filtre. Biblioteket utvider ikke importlogikken og laster ikke ned lydfiler; det gjør kun importerte Spotify-metadata søkbare og lesbare i AHA Music.

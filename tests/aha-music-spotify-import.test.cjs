@@ -7,6 +7,7 @@ const html = read('music.html');
 const js = read('js/ahaMusic.js');
 const modules = read('js/ahaModules.js');
 const schema = read('supabase/schema.sql');
+const repository = read('js/ahaRepository.js');
 const readme = read('README.md');
 
 for (const text of [
@@ -15,7 +16,15 @@ for (const text of [
   'spotify-playlists',
   'spotify-import-status',
   'imported-tracks',
-  'include-saved-tracks'
+  'include-saved-tracks',
+  'music-library-controls',
+  'music-filter-playlist',
+  'music-filter-artist',
+  'music-filter-album',
+  'music-filter-year',
+  'music-playlists-library',
+  'music-artists-library',
+  'music-albums-library'
 ]) {
   assert.ok(html.includes(text), `music.html should expose ${text}`);
 }
@@ -30,6 +39,10 @@ for (const endpoint of ['/me/playlists', '/playlists/${encodeURIComponent(playli
 
 assert.ok(js.includes('code_challenge_method'), 'OAuth flow should use PKCE challenge method');
 assert.ok(js.includes('spotify_track_id'), 'tracks should keep Spotify track references');
+assert.ok(js.includes('function buildLibraryIndex'), 'music library should build relational indexes for playlists, albums and artists');
+assert.ok(js.includes('trackMatchesFilters'), 'music library should filter tracks by search and facets');
+assert.ok(js.includes('formatDuration'), 'music library should format track duration');
+assert.ok(repository.includes('loadMusicLibrarySnapshot'), 'repository should expose music table loading for the library');
 assert.ok(js.includes('upsertByKey(library.tracks, normalizedTrack, "spotify_track_id")'), 'tracks should dedupe on spotify_track_id');
 assert.equal(/audio|download/i.test(js.replace('no audio files', '')), false, 'music importer should not download audio files');
 assert.ok(modules.includes('id: "music"'), 'AHA Music module should be registered');
@@ -50,6 +63,8 @@ for (const table of [
 assert.ok(schema.includes('idx_music_tracks_profile_spotify'), 'schema should enforce profile-level track dedupe');
 assert.ok(readme.includes('AHA Music: Spotify-import MVP v1'), 'README should document AHA Music import flow');
 assert.ok(readme.includes('lagrer kun metadata og Spotify-referanser, aldri lydfiler'), 'README should document no-audio limitation');
+assert.ok(readme.includes('AHA Music Library v1'), 'README should document the library layer');
+assert.ok(readme.includes('Søk'), 'README should document music search');
 
 const localStore = new Map();
 const sandbox = {
@@ -82,5 +97,8 @@ assert.equal(library.albums.length, 1, 'mergeTrack should normalize albums');
 assert.equal(library.artists.length, 1, 'mergeTrack should normalize artists');
 assert.equal(library.trackArtists.length, 1, 'mergeTrack should normalize track artists');
 assert.equal(library.playlistTracks.length, 1, 'mergeTrack should dedupe playlist-track links');
+assert.equal(sandbox.AHAMusic.formatDuration(123000), '2:03', 'formatDuration should render m:ss');
+const index = sandbox.AHAMusic.buildLibraryIndex(library);
+assert.equal(index.trackPlaylists.get('track-1').length, 1, 'library index should map tracks to playlists');
 
 console.log('aha-music-spotify-import.test.cjs passed');

@@ -379,6 +379,262 @@
     setImportStatus(`Import fullført: ${library.tracks.length} unike spor lagret som metadata.`);
   }
 
+
+  function normalizeSearch(value) {
+    return text(value).toLocaleLowerCase("no");
+  }
+
+  function formatDuration(ms) {
+    const totalSeconds = Math.max(0, Math.round(Number(ms || 0) / 1000));
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = String(totalSeconds % 60).padStart(2, "0");
+    return `${minutes}:${seconds}`;
+  }
+
+  function releaseYear(value) {
+    const match = text(value).match(/^\d{4}/);
+    return match ? match[0] : "";
+  }
+
+  function formatDate(value) {
+    return text(value, "Ukjent dato");
+  }
+
+  function formatSyncedAt(value) {
+    const stamp = text(value);
+    if (!stamp) return "Ukjent synk";
+    const date = new Date(stamp);
+    if (Number.isNaN(date.getTime())) return stamp;
+    return new Intl.DateTimeFormat("no", { dateStyle: "medium", timeStyle: "short" }).format(date);
+  }
+
+  function spotifyLink(url, label = "Åpne i Spotify") {
+    return url ? `<a href="${escapeHtml(url)}" target="_blank" rel="noopener">${escapeHtml(label)}</a>` : "";
+  }
+
+  function imageMarkup(url, alt, fallback = "♫") {
+    return url
+      ? `<img src="${escapeHtml(url)}" alt="${escapeHtml(alt)}" loading="lazy" />`
+      : `<span aria-hidden="true">${escapeHtml(fallback)}</span>`;
+  }
+
+  function emptyState(type, title, message) {
+    return global.AHAModules?.buildModuleEmptyState?.({ type, moduleId: "music", title, message })
+      || `<article class="aha-module-empty"><h3>${escapeHtml(title)}</h3><p>${escapeHtml(message)}</p></article>`;
+  }
+
+  function buildLibraryIndex(library) {
+    const playlistsById = new Map(asArray(library.playlists).map((playlist) => [playlist.spotify_playlist_id, playlist]));
+    const albumsById = new Map(asArray(library.albums).map((album) => [album.spotify_album_id, album]));
+    const artistsById = new Map(asArray(library.artists).map((artist) => [artist.spotify_artist_id, artist]));
+    const trackArtists = new Map();
+    asArray(library.trackArtists).forEach((link) => {
+      const current = trackArtists.get(link.spotify_track_id) || [];
+      current.push(link);
+      trackArtists.set(link.spotify_track_id, current);
+    });
+    const playlistTracks = new Map();
+    const trackPlaylists = new Map();
+    asArray(library.playlistTracks).forEach((link) => {
+      const playlistList = playlistTracks.get(link.spotify_playlist_id) || [];
+      playlistList.push(link);
+      playlistTracks.set(link.spotify_playlist_id, playlistList);
+      const trackList = trackPlaylists.get(link.spotify_track_id) || [];
+      trackList.push(link);
+      trackPlaylists.set(link.spotify_track_id, trackList);
+    });
+    return { playlistsById, albumsById, artistsById, trackArtists, playlistTracks, trackPlaylists };
+  }
+
+  function getTrackArtists(track, index) {
+    const links = asArray(index.trackArtists.get(track.spotify_track_id)).sort((a, b) => Number(a.artist_order || 0) - Number(b.artist_order || 0));
+    const artists = links.map((link) => index.artistsById.get(link.spotify_artist_id)).filter(Boolean);
+    if (artists.length) return artists;
+    return asArray(track.artist_names).map((name) => ({ name, spotify_artist_id: name }));
+  }
+
+  function getTrackPlaylists(track, index) {
+    return asArray(index.trackPlaylists.get(track.spotify_track_id))
+      .sort((a, b) => Number(a.position || 0) - Number(b.position || 0))
+      .map((link) => index.playlistsById.get(link.spotify_playlist_id))
+      .filter(Boolean);
+  }
+
+  function trackMatchesFilters(track, state, index) {
+    const album = index.albumsById.get(track.spotify_album_id) || {};
+    const artists = getTrackArtists(track, index);
+    const playlists = getTrackPlaylists(track, index);
+    const haystack = normalizeSearch([
+      track.name,
+      track.album_name,
+      album.name,
+      asArray(track.artist_names).join(" "),
+      artists.map((artist) => artist.name).join(" "),
+      playlists.map((playlist) => playlist.name).join(" ")
+    ].join(" "));
+    if (state.query && !haystack.includes(state.query)) return false;
+    if (state.playlist && !playlists.some((playlist) => playlist.spotify_playlist_id === state.playlist)) return false;
+    if (state.artist && !artists.some((artist) => artist.spotify_artist_id === state.artist || artist.name === state.artist)) return false;
+    if (state.album && track.spotify_album_id !== state.album) return false;
+    if (state.year && releaseYear(album.release_date) !== state.year) return false;
+    return true;
+  }
+
+  function currentLibraryState() {
+    return {
+      query: normalizeSearch(document.getElementById("music-search")?.value),
+      playlist: text(document.getElementById("music-filter-playlist")?.value),
+      artist: text(document.getElementById("music-filter-artist")?.value),
+      album: text(document.getElementById("music-filter-album")?.value),
+      year: text(document.getElementById("music-filter-year")?.value)
+    };
+  }
+
+  function selectOptions(items, valueKey, labelKey, placeholder, selected = "") {
+    const sorted = [...asArray(items)].sort((a, b) => text(a[labelKey]).localeCompare(text(b[labelKey]), "no"));
+    return `<option value="">${escapeHtml(placeholder)}</option>` + sorted.map((item) => {
+      const value = text(item[valueKey]);
+      return `<option value="${escapeHtml(value)}"${value === selected ? " selected" : ""}>${escapeHtml(item[labelKey])}</option>`;
+    }).join("");
+  }
+
+  function fillFilters(library, state) {
+    const years = [...new Set(asArray(library.albums).map((album) => releaseYear(album.release_date)).filter(Boolean))]
+      .sort((a, b) => b.localeCompare(a));
+    const playlistSelect = document.getElementById("music-filter-playlist");
+    const artistSelect = document.getElementById("music-filter-artist");
+    const albumSelect = document.getElementById("music-filter-album");
+    const yearSelect = document.getElementById("music-filter-year");
+    if (playlistSelect) playlistSelect.innerHTML = selectOptions(library.playlists, "spotify_playlist_id", "name", "Alle spillelister", state.playlist);
+    if (artistSelect) artistSelect.innerHTML = selectOptions(library.artists, "spotify_artist_id", "name", "Alle artister", state.artist);
+    if (albumSelect) albumSelect.innerHTML = selectOptions(library.albums, "spotify_album_id", "name", "Alle album", state.album);
+    if (yearSelect) yearSelect.innerHTML = `<option value="">Alle år</option>` + years.map((year) => `<option value="${escapeHtml(year)}"${year === state.year ? " selected" : ""}>${escapeHtml(year)}</option>`).join("");
+  }
+
+  function renderTrackCard(track, index) {
+    const album = index.albumsById.get(track.spotify_album_id) || { name: track.album_name };
+    const artists = getTrackArtists(track, index);
+    const playlists = getTrackPlaylists(track, index);
+    return `<article class="aha-music-track">
+      <div class="aha-music-cover aha-music-cover-small">${imageMarkup(album.image_url, album.name || track.name)}</div>
+      <div>
+        <h4>${escapeHtml(track.name)}</h4>
+        <div class="aha-music-meta">
+          <span>${escapeHtml(artists.map((artist) => artist.name).join(", ") || "Ukjent artist")}</span>
+          <span>${escapeHtml(album.name || track.album_name || "Ukjent album")}</span>
+          <span>${escapeHtml(formatDuration(track.duration_ms))}</span>
+        </div>
+        <div class="aha-music-chips">${playlists.length ? playlists.map((playlist) => `<span>${escapeHtml(playlist.name)}</span>`).join("") : "<span>Ingen spillelistekobling</span>"}</div>
+      </div>
+      <div class="aha-music-links">${spotifyLink(track.spotify_url)}</div>
+    </article>`;
+  }
+
+  function renderTracks(library, filteredTracks, index) {
+    const mount = document.getElementById("imported-tracks");
+    if (!mount) return;
+    if (!filteredTracks.length) {
+      mount.innerHTML = library.tracks.length
+        ? emptyState("no_match", "Ingen treff i søk", "Prøv et annet søk eller fjern ett av filtrene.")
+        : emptyState("no_data", "Ingen importerte sanger ennå", "Importer Spotify-spillelister for å bygge AHA Music-biblioteket.");
+      return;
+    }
+    mount.innerHTML = filteredTracks
+      .sort((a, b) => text(a.name).localeCompare(text(b.name), "no"))
+      .map((track) => renderTrackCard(track, index))
+      .join("");
+  }
+
+  function renderPlaylistView(library, filteredTracks, index) {
+    const mount = document.getElementById("music-playlists-library");
+    if (!mount) return;
+    const filteredIds = new Set(filteredTracks.map((track) => track.spotify_track_id));
+    const state = currentLibraryState();
+    const playlists = asArray(library.playlists).filter((playlist) => {
+      const links = asArray(index.playlistTracks.get(playlist.spotify_playlist_id));
+      const haystack = normalizeSearch(playlist.name);
+      return (!state.query || haystack.includes(state.query) || links.some((link) => filteredIds.has(link.spotify_track_id)))
+        && (!state.playlist || playlist.spotify_playlist_id === state.playlist);
+    });
+    if (!playlists.length) {
+      mount.innerHTML = library.playlists.length
+        ? emptyState("no_match", "Ingen treff i søk", "Ingen importerte spillelister matcher søket eller filtrene.")
+        : emptyState("no_data", "Ingen spillelister importert", "Importer en Spotify-spilleliste for å se den her.");
+      return;
+    }
+    mount.innerHTML = playlists.sort((a, b) => text(a.name).localeCompare(text(b.name), "no")).map((playlist) => {
+      const links = asArray(index.playlistTracks.get(playlist.spotify_playlist_id)).sort((a, b) => Number(a.position || 0) - Number(b.position || 0));
+      const rows = links.map((link) => asArray(library.tracks).find((track) => track.spotify_track_id === link.spotify_track_id)).filter(Boolean);
+      return `<article class="aha-music-card aha-music-playlist-card">
+        <div class="aha-music-card-head">
+          <div class="aha-music-cover">${imageMarkup(playlist.image_url, playlist.name, "♪")}</div>
+          <div>
+            <h4>${escapeHtml(playlist.name)}</h4>
+            <p>${escapeHtml(Number(playlist.track_count || rows.length))} spor · sist synkronisert ${escapeHtml(formatSyncedAt(playlist.updated_at))}</p>
+            <div class="aha-music-links">${spotifyLink(playlist.spotify_url)}</div>
+          </div>
+        </div>
+        <ol class="aha-music-ordered-tracks">${rows.map((track) => `<li><span>${escapeHtml(track.name)}</span><small>${escapeHtml(asArray(track.artist_names).join(", ") || "Ukjent artist")}</small></li>`).join("")}</ol>
+      </article>`;
+    }).join("");
+  }
+
+  function renderArtists(library, filteredTracks, index) {
+    const mount = document.getElementById("music-artists-library");
+    if (!mount) return;
+    const state = currentLibraryState();
+    const filteredTrackIds = new Set(filteredTracks.map((track) => track.spotify_track_id));
+    const artists = asArray(library.artists).map((artist) => {
+      const links = asArray(library.trackArtists).filter((link) => link.spotify_artist_id === artist.spotify_artist_id && filteredTrackIds.has(link.spotify_track_id));
+      const tracks = links.map((link) => asArray(library.tracks).find((track) => track.spotify_track_id === link.spotify_track_id)).filter(Boolean);
+      const albums = [...new Map(tracks.map((track) => [track.spotify_album_id, index.albumsById.get(track.spotify_album_id)]).filter((entry) => entry[1])).values()];
+      const playlists = [...new Map(tracks.flatMap((track) => getTrackPlaylists(track, index)).map((playlist) => [playlist.spotify_playlist_id, playlist])).values()];
+      return { artist, tracks, albums, playlists };
+    }).filter((item) => item.tracks.length || (!state.query && !state.playlist && !state.album && !state.year && (!state.artist || item.artist.spotify_artist_id === state.artist)));
+    if (!artists.length) {
+      mount.innerHTML = emptyState("no_match", "Ingen treff i søk", "Ingen artister matcher søket eller filtrene.");
+      return;
+    }
+    mount.innerHTML = artists.sort((a, b) => text(a.artist.name).localeCompare(text(b.artist.name), "no")).map(({ artist, tracks, albums, playlists }) => `<article class="aha-music-card">
+      <div class="aha-music-card-head">
+        <div class="aha-music-cover aha-music-artist-cover">${imageMarkup(artist.image_url, artist.name, "♬")}</div>
+        <div>
+          <h4>${escapeHtml(artist.name)}</h4>
+          <p>${tracks.length} importerte sanger</p>
+          <div class="aha-music-links">${spotifyLink(artist.spotify_url)}</div>
+        </div>
+      </div>
+      <p><strong>Album:</strong> ${escapeHtml(albums.map((album) => album.name).join(", ") || "Ingen albumkobling")}</p>
+      <p><strong>Spillelister:</strong> ${escapeHtml(playlists.map((playlist) => playlist.name).join(", ") || "Ingen spillelistekobling")}</p>
+    </article>`).join("");
+  }
+
+  function renderAlbums(library, filteredTracks, index) {
+    const mount = document.getElementById("music-albums-library");
+    if (!mount) return;
+    const filteredTrackIds = new Set(filteredTracks.map((track) => track.spotify_track_id));
+    const albums = asArray(library.albums).map((album) => {
+      const tracks = asArray(library.tracks).filter((track) => track.spotify_album_id === album.spotify_album_id && filteredTrackIds.has(track.spotify_track_id));
+      const artistNames = [...new Set(tracks.flatMap((track) => asArray(track.artist_names)))];
+      return { album, tracks, artistNames };
+    }).filter((item) => item.tracks.length);
+    if (!albums.length) {
+      mount.innerHTML = emptyState("no_match", "Ingen treff i søk", "Ingen album matcher søket eller filtrene.");
+      return;
+    }
+    mount.innerHTML = albums.sort((a, b) => text(a.album.name).localeCompare(text(b.album.name), "no")).map(({ album, tracks, artistNames }) => `<article class="aha-music-card">
+      <div class="aha-music-card-head">
+        <div class="aha-music-cover">${imageMarkup(album.image_url, album.name, "▣")}</div>
+        <div>
+          <h4>${escapeHtml(album.name)}</h4>
+          <p>${escapeHtml(artistNames.join(", ") || "Ukjent artist")}</p>
+          <p>${escapeHtml(formatDate(album.release_date))} · ${tracks.length} importerte sanger</p>
+          <div class="aha-music-links">${spotifyLink(album.spotify_url)}</div>
+        </div>
+      </div>
+    </article>`).join("");
+  }
+
   function setAuthStatus(message) {
     const el = document.getElementById("spotify-auth-status");
     if (el) el.textContent = message;
@@ -410,33 +666,28 @@
 
   function renderLibrary() {
     const library = loadLibrary();
+    const state = currentLibraryState();
+    const index = buildLibraryIndex(library);
     global.AHAModules?.updatePageHealth?.("music", global.AHAModules.localPageHealth({ count: library.tracks.length, datasetExists: true }));
     renderStats(library);
-    const mount = document.getElementById("imported-tracks");
-    if (!mount) return;
-    if (!library.tracks.length) {
-      mount.innerHTML = global.AHAModules?.buildModuleEmptyState?.({ type: "no_data", moduleId: "music", title: "Ingen importerte sanger ennå", message: "Importer Spotify-spillelister for å bygge AHA Music-biblioteket." }) || "";
-      return;
+    fillFilters(library, state);
+
+    const emptyMount = document.getElementById("music-empty-state");
+    if (emptyMount) {
+      if (!library.sources.length && !library.tracks.length && !library.playlists.length) {
+        emptyMount.innerHTML = emptyState("not_connected", "Ingen Spotify-konto koblet til", "Koble til Spotify og importer spillelister for å bygge AHA Music-biblioteket.");
+      } else if (!library.playlists.length && !library.tracks.length) {
+        emptyMount.innerHTML = emptyState("no_data", "Ingen spillelister importert", "Importer Spotify-spillelister for å fylle biblioteket.");
+      } else {
+        emptyMount.innerHTML = "";
+      }
     }
-    mount.innerHTML = [...library.tracks]
-      .sort((a, b) => text(a.name).localeCompare(text(b.name), "no"))
-      .map((track) => {
-        const album = library.albums.find((item) => item.spotify_album_id === track.spotify_album_id) || {};
-        const artistLinks = library.trackArtists
-          .filter((link) => link.spotify_track_id === track.spotify_track_id)
-          .sort((a, b) => Number(a.artist_order || 0) - Number(b.artist_order || 0))
-          .map((link) => library.artists.find((artist) => artist.spotify_artist_id === link.spotify_artist_id))
-          .filter(Boolean);
-        return `<article class="aha-music-track">
-          <h3>${escapeHtml(track.name)}</h3>
-          <div class="aha-music-meta"><span>${escapeHtml(track.artist_names.join(", ") || "Ukjent artist")}</span><span>${escapeHtml(track.album_name || "Ukjent album")}</span></div>
-          <div class="aha-music-links">
-            ${track.spotify_url ? `<a href="${escapeHtml(track.spotify_url)}" target="_blank" rel="noopener">Åpne spor i Spotify</a>` : ""}
-            ${album.spotify_url ? `<a href="${escapeHtml(album.spotify_url)}" target="_blank" rel="noopener">Album</a>` : ""}
-            ${artistLinks.map((artist) => artist.spotify_url ? `<a href="${escapeHtml(artist.spotify_url)}" target="_blank" rel="noopener">Artist: ${escapeHtml(artist.name)}</a>` : "").join("")}
-          </div>
-        </article>`;
-      }).join("");
+
+    const filteredTracks = asArray(library.tracks).filter((track) => trackMatchesFilters(track, state, index));
+    renderTracks(library, filteredTracks, index);
+    renderPlaylistView(library, filteredTracks, index);
+    renderArtists(library, filteredTracks, index);
+    renderAlbums(library, filteredTracks, index);
   }
 
   function renderStats(library) {
@@ -462,11 +713,28 @@
       renderLibrary();
       setImportStatus("Lokal musikkcache er tømt.");
     });
+    document.getElementById("music-library-controls")?.addEventListener("input", renderLibrary);
+    document.getElementById("music-library-controls")?.addEventListener("change", renderLibrary);
+    document.querySelectorAll("[data-music-tab]").forEach((button) => {
+      button.addEventListener("click", () => {
+        document.querySelectorAll("[data-music-tab]").forEach((item) => item.classList.toggle("is-active", item === button));
+        document.querySelectorAll(".aha-music-section").forEach((section) => section.classList.toggle("is-active", section.id === `music-${button.dataset.musicTab}-view`));
+      });
+    });
+  }
+
+  async function hydrateRemoteLibrary() {
+    if (!global.AHARepository?.loadMusicLibrarySnapshot) return;
+    const local = loadLibrary();
+    if (local.tracks.length || local.playlists.length) return;
+    const result = await global.AHARepository.loadMusicLibrarySnapshot();
+    if (result?.ok && (result.library?.tracks?.length || result.library?.playlists?.length)) saveLibrary(result.library);
   }
 
   async function init() {
     bind();
     renderPlaylists();
+    await hydrateRemoteLibrary();
     renderLibrary();
     const token = getToken();
     setAuthStatus(token ? "Spotify er koblet til." : "Ikke koblet til Spotify.");
@@ -486,7 +754,9 @@
     normalizeTrack,
     normalizeAlbum,
     normalizeArtist,
-    mergeTrack
+    mergeTrack,
+    buildLibraryIndex,
+    formatDuration
   };
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);

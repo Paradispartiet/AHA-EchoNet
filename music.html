@@ -62,21 +62,71 @@
       <div id="spotify-playlists" class="aha-music-playlists aha-module-content" aria-live="polite"></div>
     </section>
 
-    <section class="aha-panel" aria-labelledby="imported-music-title">
+    <section class="aha-panel aha-music-library" aria-labelledby="imported-music-title">
       <div class="aha-module-actions">
         <div>
-          <p class="eyebrow">Importerte sanger</p>
-          <h2 id="imported-music-title">AHA Music-bibliotek</h2>
-          <p>Normaliserte album, artister, spor og spillelistekoblinger dedupes på <code>spotify_track_id</code>.</p>
+          <p class="eyebrow">AHA Music Library v1</p>
+          <h2 id="imported-music-title">Bibliotek</h2>
+          <p>Normaliserte spillelister, sanger, artister og album bygger på Spotify-importen og tabellene <code>music_*</code>.</p>
         </div>
         <button id="clear-local-music-button" class="aha-ghost-button" type="button">Tøm lokal musikkcache</button>
       </div>
       <div id="music-stats" class="aha-music-stats" aria-label="Musikkstatistikk"></div>
-      <div id="imported-tracks" class="aha-music-tracks aha-module-content" aria-live="polite"></div>
+
+      <form id="music-library-controls" class="aha-music-controls" aria-label="Søk og filtrer AHA Music-biblioteket">
+        <label>
+          Søk i tittel, artist, album og spilleliste
+          <input id="music-search" type="search" placeholder="Søk etter sang, artist, album eller spilleliste" autocomplete="off" />
+        </label>
+        <label>
+          Spilleliste
+          <select id="music-filter-playlist"><option value="">Alle spillelister</option></select>
+        </label>
+        <label>
+          Artist
+          <select id="music-filter-artist"><option value="">Alle artister</option></select>
+        </label>
+        <label>
+          Album
+          <select id="music-filter-album"><option value="">Alle album</option></select>
+        </label>
+        <label>
+          Utgivelsesår
+          <select id="music-filter-year"><option value="">Alle år</option></select>
+        </label>
+      </form>
+
+      <nav class="aha-music-tabs" aria-label="Bibliotekvisninger">
+        <button type="button" class="is-active" data-music-tab="tracks">Sanger</button>
+        <button type="button" data-music-tab="playlists">Spillelister</button>
+        <button type="button" data-music-tab="artists">Artister</button>
+        <button type="button" data-music-tab="albums">Album</button>
+      </nav>
+
+      <div id="music-empty-state" class="aha-module-content" aria-live="polite"></div>
+      <section id="music-playlists-view" class="aha-music-section" aria-labelledby="music-playlists-title">
+        <h3 id="music-playlists-title">Importerte spillelister</h3>
+        <div id="music-playlists-library" class="aha-music-library-grid" aria-live="polite"></div>
+      </section>
+      <section id="music-tracks-view" class="aha-music-section is-active" aria-labelledby="music-tracks-title">
+        <h3 id="music-tracks-title">Alle importerte sanger</h3>
+        <div id="imported-tracks" class="aha-music-tracks aha-module-content" aria-live="polite"></div>
+      </section>
+      <section id="music-artists-view" class="aha-music-section" aria-labelledby="music-artists-title">
+        <h3 id="music-artists-title">Alle artister</h3>
+        <div id="music-artists-library" class="aha-music-library-grid" aria-live="polite"></div>
+      </section>
+      <section id="music-albums-view" class="aha-music-section" aria-labelledby="music-albums-title">
+        <h3 id="music-albums-title">Alle album</h3>
+        <div id="music-albums-library" class="aha-music-library-grid" aria-live="polite"></div>
+      </section>
     </section>
   </main>
 
   <script src="js/ahaConfig.js"></script>
+  <script src="js/ahaDb.js"></script>
+  <script src="js/ahaAuth.js"></script>
+  <script src="js/ahaRepository.js"></script>
   <script src="js/ahaModules.js"></script>
   <script src="js/ahaMusic.js"></script>
 </body>
