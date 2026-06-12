@@ -809,3 +809,28 @@ Søk / Bibliotek kan nå finne lokale AHA-objekter på tvers av chat-derived ins
 History Go-modulen i AHA viser nå importstatus, payload-oppsummering og importerte AHA source events uten automatisk import.
 
 Gruppe-arbeidsrom viser nå en lokal grupperapport med referansestatus, utkaststatus og publiseringsmodenhet.
+
+## AHA Music: Spotify-import MVP v1
+
+AHA Music har nå en første datadrevet Spotify-import for brukerens eget bibliotek. Flyten er bevisst avgrenset til trygg import, normalisering og visning av Spotify-metadata.
+
+### Importflyt
+
+1. Åpne `music.html` fra AHA Dashboard og legg inn en offentlig Spotify Client ID.
+2. Registrer samme redirect URI i Spotify Developer Dashboard som siden viser i nettleseren, for eksempel `https://paradispartiet.github.io/AHA-EchoNet/music.html` ved GitHub Pages-deploy.
+3. Trykk **Koble til Spotify**. Modulen bruker Spotify Authorization Code with PKCE og ber bare om disse scopene:
+   - `playlist-read-private`
+   - `playlist-read-collaborative`
+   - `user-library-read`
+4. Etter redirect tilbake til `music.html` kan brukeren trykke **Hent spillelister**. Modulen leser spillelister fra `GET /me/playlists`.
+5. Brukeren velger én eller flere spillelister og trykker **Importer valgte**. Modulen henter spor fra `GET /playlists/{playlist_id}/items` og kan samtidig hente lagrede sanger fra `GET /me/tracks`.
+6. Importen normaliserer data til AHA Music-strukturer for kilder, spillelister, spor, album, artister, spor-artister og spilleliste-spor. Spor dedupliseres på `spotify_track_id`.
+7. Bibliotekssiden viser importstatus, importerte sanger og **Åpne i Spotify**-lenker for spor, album, artister og spillelister.
+
+### Spotify-begrensninger og sikkerhet
+
+- AHA Music lagrer kun metadata og Spotify-referanser, aldri lydfiler.
+- Spotify-token lagres lokalt i nettleseren for MVP-flyten. Ikke legg klienthemmeligheter i frontend; PKCE-flyten bruker kun offentlig Client ID.
+- Spotify API-et gir tilgang i tråd med brukerens samtykke og de valgte scopene. Hvis token utløper, må brukeren koble til Spotify på nytt.
+- Denne MVP-en bygger ikke AI-klassifisering, musikk-kanon eller History Go-kobling.
+- `localStorage` er lokal fallback/cache via `aha_music_library_v1`. Når AHA Supabase er konfigurert, kan samme normaliserte metadata speiles til tabellene `music_sources`, `music_playlists`, `music_tracks`, `music_albums`, `music_artists`, `music_track_artists` og `music_playlist_tracks`.

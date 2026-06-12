@@ -210,3 +210,137 @@ create policy "aha_imports_update_own"
   to authenticated
   using (profile_id = auth.uid())
   with check (profile_id = auth.uid());
+
+-- AHA Music Spotify import MVP policies.
+create policy "music_sources_select_own"
+  on public.music_sources
+  for select
+  to authenticated
+  using (profile_id = auth.uid());
+
+create policy "music_sources_insert_own"
+  on public.music_sources
+  for insert
+  to authenticated
+  with check (profile_id = auth.uid());
+
+create policy "music_sources_update_own"
+  on public.music_sources
+  for update
+  to authenticated
+  using (profile_id = auth.uid())
+  with check (profile_id = auth.uid());
+
+create policy "music_playlists_select_own"
+  on public.music_playlists
+  for select
+  to authenticated
+  using (profile_id = auth.uid());
+
+create policy "music_playlists_insert_own"
+  on public.music_playlists
+  for insert
+  to authenticated
+  with check (profile_id = auth.uid());
+
+create policy "music_playlists_update_own"
+  on public.music_playlists
+  for update
+  to authenticated
+  using (profile_id = auth.uid())
+  with check (profile_id = auth.uid());
+
+create policy "music_tracks_select_own"
+  on public.music_tracks
+  for select
+  to authenticated
+  using (profile_id = auth.uid());
+
+create policy "music_tracks_insert_own"
+  on public.music_tracks
+  for insert
+  to authenticated
+  with check (profile_id = auth.uid());
+
+create policy "music_tracks_update_own"
+  on public.music_tracks
+  for update
+  to authenticated
+  using (profile_id = auth.uid())
+  with check (profile_id = auth.uid());
+
+create policy "music_albums_select_own"
+  on public.music_albums
+  for select
+  to authenticated
+  using (profile_id = auth.uid());
+
+create policy "music_albums_insert_own"
+  on public.music_albums
+  for insert
+  to authenticated
+  with check (profile_id = auth.uid());
+
+create policy "music_albums_update_own"
+  on public.music_albums
+  for update
+  to authenticated
+  using (profile_id = auth.uid())
+  with check (profile_id = auth.uid());
+
+create policy "music_artists_select_own"
+  on public.music_artists
+  for select
+  to authenticated
+  using (profile_id = auth.uid());
+
+create policy "music_artists_insert_own"
+  on public.music_artists
+  for insert
+  to authenticated
+  with check (profile_id = auth.uid());
+
+create policy "music_artists_update_own"
+  on public.music_artists
+  for update
+  to authenticated
+  using (profile_id = auth.uid())
+  with check (profile_id = auth.uid());
+
+create policy "music_track_artists_select_own"
+  on public.music_track_artists
+  for select
+  to authenticated
+  using (profile_id = auth.uid());
+
+create policy "music_track_artists_insert_own"
+  on public.music_track_artists
+  for insert
+  to authenticated
+  with check (profile_id = auth.uid());
+
+create policy "music_track_artists_update_own"
+  on public.music_track_artists
+  for update
+  to authenticated
+  using (profile_id = auth.uid())
+  with check (profile_id = auth.uid());
+
+create policy "music_playlist_tracks_select_own"
+  on public.music_playlist_tracks
+  for select
+  to authenticated
+  using (profile_id = auth.uid());
+
+create policy "music_playlist_tracks_insert_own"
+  on public.music_playlist_tracks
+  for insert
+  to authenticated
+  with check (profile_id = auth.uid());
+
+create policy "music_playlist_tracks_update_own"
+  on public.music_playlist_tracks
+  for update
+  to authenticated
+  using (profile_id = auth.uid())
+  with check (profile_id = auth.uid());

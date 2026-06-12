@@ -116,9 +116,9 @@
       id: "music",
       title: "Music",
       type: "personal",
-      status: "shell",
+      status: "active",
       href: "music.html",
-      description: "Musikkflater, lydspor og personlig lydarkiv.",
+      description: "Spotify-import, normalisert musikkmetadata og personlig AHA Music-bibliotek.",
       phase: 2
     },
     {
@@ -197,7 +197,8 @@
       lists: { title: "No lists yet.", message: "Lists will appear here when available." },
       paths: { title: "No paths yet.", message: "Paths will appear here when available." },
       groups: { title: "No groups yet.", message: "Create or sync groups to organize related AHA material." },
-      avisa: { title: "No AHAavisa notes yet.", message: "Create or sync notes to collect drafts and published AHA material." }
+      avisa: { title: "No AHAavisa notes yet.", message: "Create or sync notes to collect drafts and published AHA material." },
+      music: { title: "No imported music yet.", message: "Connect Spotify and import playlists to build your AHA Music library." }
     },
     missing_source: { title: "Module data not found.", message: "This module has no available local data source." },
     not_configured: { title: "Module not configured.", message: "This module needs a configured data source before items can appear." },
@@ -205,7 +206,7 @@
     read_error: { title: "Could not read module data.", message: "Try again later or view diagnostics." },
     unknown: { title: "Nothing to show.", message: "No module data is available." }
   };
-  const PREFERRED_ORDER = ["chat", "insights", "historygo", "gallery", "notes", "feed", "avisa", "profile", "search", "training", "privacy"];
+  const PREFERRED_ORDER = ["chat", "insights", "music", "historygo", "gallery", "notes", "feed", "avisa", "profile", "search", "training", "privacy"];
 
   function escapeHtml(value) {
     return String(value ?? "")

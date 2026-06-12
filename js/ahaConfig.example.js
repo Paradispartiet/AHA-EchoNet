@@ -8,3 +8,6 @@ window.AHA_SUPABASE_PUBLISHABLE_KEY = "";
 // URL til AI-agent-backenden. Tom = embedding deaktivert.
 // Eksempel: "https://aha-agent-xyz.onrender.com/api/aha-agent"
 window.AHA_AGENT_API = "";
+
+// Public Spotify OAuth PKCE client id. Never add a client secret to the browser app.
+window.AHA_SPOTIFY_CLIENT_ID = "";
