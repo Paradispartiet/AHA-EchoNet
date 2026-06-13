@@ -1877,3 +1877,32 @@ test: lock disabled Sync Hub execution page skeleton boundary
 ```
 
 Den anbefalte PR-en skal bare testlåse skeleton-boundaryen og at `sync.html` fortsatt er fraværende. Den skal ikke implementere siden, aktivere execution eller writes, eller svekke det permanente auto-sync-forbudet.
+
+## 32. AHA Sync Hub disabled execution page skeleton boundary test lock
+
+`tests/aha-sync-hub-disabled-execution-page-skeleton-boundary.test.cjs` test-locks the documented future page, proposed sections, disabled controls, blocked reasons, loading rules, Home boundary, activation boundary, Gate E–J impact, runtime/HTML safety boundary, unloaded Home module runtimes, and continued absence of `sync.html`.
+
+Gjeldende status er:
+
+- **Disabled execution page skeleton: test-locked**
+- **`sync.html`: not created**
+- **Dedicated execution page: planned, not implemented**
+- **Disabled execution UI implementation: not activated**
+- **Supabase/session fallback implementation: not activated**
+- **Rollback implementation: not activated**
+- **Audit write path: not activated**
+- **Execution: NO-GO**
+- **Home: preview-only**
+- **Auto-sync: permanently forbidden**
+
+Testlåsen påvirker Gate E for dedicated execution surface readiness, Gate F for per-module errors/results, Gate G for no-write safety, Gate H for audit/history, Gate I for Supabase/session fallback og Gate J for test evidence. Gates E, F, G, H, I og J er fortsatt ikke full **GO for execution**, og alle gates A–J må være GO før den separate activation-PR-en `feat: activate manual AHA Sync Hub execution`.
+
+Ingen runtime-, JavaScript-, HTML- eller CSS-filer er endret. Ingen execution-side, execution UI, sync-knapp, Supabase-/databasekall, audit write path, rollback-kode, repository save/load, `localStorage`-endring eller ekte sync er implementert eller aktivert. Home laster fortsatt ikke `js/ahaLists.js`, `js/ahaPaths.js`, `js/ahaGroups.js` eller `js/ahaAvisa.js`.
+
+Neste anbefalte PR er:
+
+```text
+docs: define Sync Hub execution page implementation boundary
+```
+
+Den anbefalte PR-en skal være dokumentasjons-only og definere den tekniske grensen for en senere disabled skeleton implementation. Den skal ikke opprette `sync.html`, implementere execution UI, aktivere runtime eller writes, eller svekke det permanente auto-sync-forbudet.
