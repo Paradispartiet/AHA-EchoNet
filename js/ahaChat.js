@@ -560,8 +560,26 @@
       return null;
     }
     const active = status.available ? "AHA personlig kontekst aktiv" : "AHA personlig kontekst klar, men trenger mer godkjent materiale";
-    host.textContent = `${active}. Readiness: ${status.readinessLevel || "ukjent"} (${Number(status.readinessScore) || 0}/100). Bekreftet selvinnsikt: ${Number(status.confirmedClaims) || 0}. Godkjent corpus: ${Number(status.approvedCorpus) || 0}. Godkjente examples: ${Number(status.approvedExamples) || 0}.`;
+    const retrieval = status.retrievalAvailable ? ` Personlig søk aktiv (${Number(status.indexedItems) || 0} indeksert).` : "";
+    host.textContent = `${active}. Readiness: ${status.readinessLevel || "ukjent"} (${Number(status.readinessScore) || 0}/100). Bekreftet selvinnsikt: ${Number(status.confirmedClaims) || 0}. Godkjent corpus: ${Number(status.approvedCorpus) || 0}. Godkjente examples: ${Number(status.approvedExamples) || 0}.${retrieval}`;
     return status;
+  }
+
+  function renderAhaPersonalRetrieval(retrieval) {
+    const status = document.getElementById("aha-personal-retrieval-status");
+    const results = document.getElementById("aha-personal-retrieval-results");
+    if (!status || !results) return;
+    const hits = Array.isArray(retrieval?.results) ? retrieval.results : [];
+    status.textContent = retrieval
+      ? `Personlig søk aktiv. Query: «${retrieval.query || ""}». ${hits.length} relevante treff.`
+      : "Personlig søk er ikke tilgjengelig for denne meldingen.";
+    results.innerHTML = hits.slice(0, 3).map((item) => `
+      <article class="aha-personal-retrieval-result">
+        <strong>${escHtml(item.title || item.source)}</strong>
+        <span>${escHtml(item.source)} · score ${Number(item.score) || 0}</span>
+        <small>${escHtml((item.reasons || []).slice(0, 2).join(" · "))}</small>
+      </article>
+    `).join("");
   }
 
   function normalizeAhaMemoryText(text) {
@@ -2319,6 +2337,7 @@
       personal_context: personalContext ? {
         prompt: personalContext.prompt || "",
         relevant: personalContext.relevant || {},
+        retrieval: personalContext.retrieval || null,
         evidence: personalContext.context?.evidence || {},
         status: personalContext.context ? {
           readinessLevel: personalContext.context.readiness?.level || "ukjent",
@@ -6078,7 +6097,10 @@
     setAhaProcessing(true, memoryUseEnabled ? "AHA vurderer relevant minne …" : "AHA svarer uten tidligere minne …");
     const memoryContext = memoryUseEnabled ? await buildAhaMemoryContext(cleanText) : buildAhaMemoryOffContext();
     const personalContext = buildAhaPersonalMessageContext(cleanText);
-    if (personalContext?.prompt) setStatusNote("AHA personlig kontekst aktiv.");
+    renderAhaPersonalRetrieval(personalContext?.retrieval);
+    if (personalContext?.retrieval?.results?.length) {
+      setStatusNote(`Personlig kontekst aktiv · Personlig søk aktiv · ${personalContext.retrieval.results.length} relevante treff.`);
+    } else if (personalContext?.prompt) setStatusNote("Personlig kontekst aktiv.");
     renderAhaPersonalContextStatus();
     let count = 0;
     if (savingEnabled) {

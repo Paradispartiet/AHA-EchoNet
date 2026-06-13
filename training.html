@@ -18,6 +18,7 @@
         <button id="training-import-btn" type="button">Importer fra AHA</button>
         <button id="training-generate-btn" type="button">Lag treningseksempler</button>
         <button id="training-export-btn" type="button">Eksporter godkjente eksempler</button>
+        <button id="training-retrieval-btn" type="button">Bygg personlig søkeindeks</button>
         <a class="aha-tile-btn aha-tile-btn-primary" href="index.html">Til AHA Home</a>
       </div>
       <p id="training-message" class="module-meta" role="status" aria-live="polite"></p>
@@ -41,6 +42,11 @@
       <div id="training-readiness-report" class="aha-training-readiness"></div>
     </section>
 
+    <section class="aha-panel" id="training-retrieval-panel">
+      <h2>Personal Retrieval Index</h2>
+      <div id="training-retrieval-report" class="aha-training-readiness"></div>
+    </section>
+
     <section class="aha-panel">
       <h2>Corpus</h2>
       <p class="module-meta">Godkjenn tekster og slå på relevant bruk per item. Hvert valg er ditt eget samtykke.</p>
@@ -57,6 +63,8 @@
   <script src="js/ahaTrainingCorpus.js"></script>
   <script src="js/ahaTrainingExamples.js"></script>
   <script src="js/ahaPersonalModelReadiness.js"></script>
+  <script src="js/metaInsightsMemory.js"></script>
+  <script src="js/ahaPersonalRetrieval.js"></script>
   <script src="js/ahaTrainingDashboard.js"></script>
 </body>
 </html>

@@ -283,12 +283,23 @@
   function buildMessageContext(userMessage, options = {}) {
     const context = buildPersonalContext(options);
     const relevant = selectRelevantContext(userMessage, context, options);
-    const prompt = buildRelevantPrompt(userMessage, context, relevant, options);
-    return { context, relevant, prompt };
+    const personalPrompt = buildRelevantPrompt(userMessage, context, relevant, options);
+    let retrieval = null;
+    let retrievalPrompt = "";
+    const retrievalApi = global.AHAPersonalRetrieval;
+    if (retrievalApi && typeof retrievalApi.buildRagContext === "function") {
+      retrieval = safeCall(() => retrievalApi.buildRagContext(userMessage, { limit: 5 }), null);
+      if (retrieval && typeof retrievalApi.buildRagPromptBlock === "function") {
+        retrievalPrompt = safeCall(() => retrievalApi.buildRagPromptBlock(retrieval), "");
+      }
+    }
+    const prompt = [personalPrompt, retrievalPrompt].filter(Boolean).join("\n\n");
+    return { context, relevant, retrieval, prompt };
   }
 
   function getPersonalContextStatus() {
     const context = buildPersonalContext({ corpusLimit: 10, exampleLimit: 10 });
+    const retrievalStatus = asObject(safeCall(() => global.AHAPersonalRetrieval?.getRetrievalStatus?.(), {}));
     return {
       available: Boolean(context.evidence.confirmedClaims || context.evidence.approvedCorpus || context.evidence.approvedExamples),
       approvedCorpus: context.evidence.approvedCorpus,
@@ -297,7 +308,10 @@
       readinessLevel: asText(context.readiness?.level) || "ukjent",
       readinessScore: Number(context.readiness?.score) || 0,
       hasStyleProfile: Boolean(context.style.hasStyleExamples),
-      hasProjectContext: asArray(context.projects).length > 0
+      hasProjectContext: asArray(context.projects).length > 0,
+      retrievalAvailable: Boolean(retrievalStatus.available),
+      indexedItems: Number(retrievalStatus.indexedItems) || 0,
+      lastRetrievalIndexBuiltAt: asText(retrievalStatus.lastBuiltAt)
     };
   }
 

@@ -27,6 +27,7 @@
   function corpusApi() { return global.AHATrainingCorpus; }
   function examplesApi() { return global.AHATrainingExamples; }
   function readinessApi() { return global.AHAPersonalModelReadiness; }
+  function retrievalApi() { return global.AHAPersonalRetrieval; }
 
   function setStat(id, value) {
     const el = $(id);
@@ -155,6 +156,29 @@
     `).join("");
   }
 
+  function renderRetrieval() {
+    const mount = $("training-retrieval-report");
+    if (!mount) return;
+    const api = retrievalApi();
+    if (!api?.getRetrievalStatus) {
+      mount.innerHTML = `<p class="aha-training-empty">Personal Retrieval-modulen er ikke lastet.</p>`;
+      return;
+    }
+    const status = api.getRetrievalStatus();
+    const index = api.loadRetrievalIndex?.();
+    const bySource = index?.stats?.bySource || {};
+    mount.innerHTML = `
+      <div class="aha-training-stats">
+        <div class="aha-mini-stat"><strong>${Number(status.indexedItems) || 0}</strong><span>Indexed items</span></div>
+        <div class="aha-mini-stat"><strong>${Number(status.corpusItems) || 0}</strong><span>Corpus items</span></div>
+        <div class="aha-mini-stat"><strong>${Number(status.examples) || 0}</strong><span>Examples</span></div>
+        <div class="aha-mini-stat"><strong>${Number(status.memoryClaims) || 0}</strong><span>Memory claims</span></div>
+      </div>
+      <p class="module-meta">Status: ${status.available ? "Klar" : "Ikke bygget"} · Sist bygget: ${escapeHtml(status.lastBuiltAt || "aldri")}</p>
+      <p class="module-meta">Per kilde: ${escapeHtml(Object.entries(bySource).map(([key, value]) => `${key}: ${value}`).join(" · ") || "ingen items")}</p>
+    `;
+  }
+
   function setMessage(text) {
     const el = $("training-message");
     if (el) el.textContent = text || "";
@@ -163,6 +187,7 @@
   function renderAll() {
     renderStats();
     renderReadiness();
+    renderRetrieval();
     renderCorpusList();
     renderExamplesList();
   }
@@ -199,11 +224,20 @@
     setMessage(`Eksporterte ${exportable.length} godkjente eksempler som JSONL.`);
   }
 
+  function handleRetrievalRefresh() {
+    const api = retrievalApi();
+    if (!api?.refreshRetrievalIndex) return;
+    const index = api.refreshRetrievalIndex();
+    setMessage(`Personlig søkeindeks bygget med ${index.stats.total} items: ${index.stats.corpusItems} corpus, ${index.stats.examples} examples og ${index.stats.memoryClaims} memory claims.`);
+    renderRetrieval();
+  }
+
   function bindActions() {
     if (!doc) return;
     $("training-import-btn")?.addEventListener("click", handleImport);
     $("training-generate-btn")?.addEventListener("click", handleGenerate);
     $("training-export-btn")?.addEventListener("click", handleExport);
+    $("training-retrieval-btn")?.addEventListener("click", handleRetrievalRefresh);
 
     $("training-corpus-list")?.addEventListener("click", (event) => {
       const target = event.target;
@@ -251,7 +285,7 @@
     renderAll();
   }
 
-  const AHATrainingDashboard = { init, renderAll, renderStats, renderReadiness, renderCorpusList, renderExamplesList };
+  const AHATrainingDashboard = { init, renderAll, renderStats, renderReadiness, renderRetrieval, renderCorpusList, renderExamplesList, handleRetrievalRefresh };
 
   if (typeof module !== "undefined" && module.exports) {
     module.exports = AHATrainingDashboard;

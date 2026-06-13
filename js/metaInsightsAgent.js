@@ -191,6 +191,22 @@
     }
   }
 
+  function buildPersonalRetrievalPackSafe() {
+    const api = global.AHAPersonalRetrieval;
+    if (!api || typeof api.getRetrievalStatus !== "function") return null;
+    try {
+      const status = api.getRetrievalStatus();
+      return {
+        available: Boolean(status?.available),
+        indexedItems: Number(status?.indexedItems) || 0,
+        corpusItems: Number(status?.corpusItems) || 0,
+        examples: Number(status?.examples) || 0,
+        memoryClaims: Number(status?.memoryClaims) || 0,
+        lastBuiltAt: asText(status?.lastBuiltAt)
+      };
+    } catch { return null; }
+  }
+
   function buildReasoningFrame() {
     return {
       language: "nb-NO",
@@ -232,6 +248,10 @@
       ? options.chatPersonalContextPack
       : buildChatPersonalContextPackSafe();
     if (chatPersonalContextPack) context.chatPersonalContextPack = chatPersonalContextPack;
+    const personalRetrievalPack = options.personalRetrievalPack && typeof options.personalRetrievalPack === "object"
+      ? options.personalRetrievalPack
+      : buildPersonalRetrievalPackSafe();
+    if (personalRetrievalPack) context.personalRetrievalPack = personalRetrievalPack;
     return context;
   }
 
