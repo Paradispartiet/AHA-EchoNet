@@ -46,6 +46,17 @@
       <p>Antall innsikter med History Go-importsignal: <strong id="hg-imported-insights-count">0</strong></p>
     </section>
 
+    <section class="aha-panel" aria-labelledby="hg-music-title">
+      <p class="eyebrow">AHA Music Discovery</p>
+      <h2 id="hg-music-title">Musikk på History Go-steder</h2>
+      <p>Knyttet til dette stedet vises bare når AHA Music-relasjonen har et sikkert <code>historyGoPlaceId</code>.</p>
+      <div id="hg-music-audit" class="aha-historygo-music-audit" aria-live="polite"></div>
+      <h3>Musikk i nærheten</h3>
+      <div id="hg-nearby-music" class="aha-historygo-nearby-music-wrap"></div>
+      <h3>PlaceCard-forhåndsvisning</h3>
+      <div id="hg-place-music-preview" class="aha-historygo-place-music-preview"></div>
+    </section>
+
     <section class="aha-panel">
       <h2>Forklaring</h2>
       <ul class="aha-historygo-payload-list">
@@ -61,6 +72,7 @@
   <script src="js/ahaSources.js"></script>
   <script src="js/ahaIngest.js"></script>
   <script src="js/ahaHistoryGoImport.js"></script>
+  <script src="js/ahaMusicHistoryGoDiscovery.js"></script>
   <script src="js/ahaHistoryGoStatus.js"></script>
   <script>
     (function () {

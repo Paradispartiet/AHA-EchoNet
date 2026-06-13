@@ -913,3 +913,25 @@ For å utvide kanonen senere:
 3. Bruk kun tillatte `relationType`-verdier fra `musicCanonSchema.json`.
 4. Kjør `npm test` for å validere seed-datasettet og UI-kontrakten.
 
+
+### History Go Music Discovery v1
+
+History Go kan nå lese AHA Music-brodata fra en lokal integrasjonsmappe og gjøre musikk oppdagbar på steder uten å lage unlock-logikk, quizgenerering eller kartbelønninger ennå. Loaderen ligger i `js/ahaMusicHistoryGoDiscovery.js` og leser som standard:
+
+```text
+data/integrations/aha-music/musicArtistPlaceRelations.json
+data/integrations/aha-music/musicTrackPlaceRelations.json
+data/integrations/aha-music/musicHistoryGoBridgeReport.json
+```
+
+Runtime-indeksen normaliserer data til `musicByPlace[historyGoPlaceId]` med `artists`, `tracks`, `relationTypes`, `statuses` og `confidenceSummary`. Bare relasjoner som har `historyGoPlaceId` vises i brukerflaten. Relasjoner uten `historyGoPlaceId` holdes som kandidater og er kun synlige via audit/utviklerstatus.
+
+`historygo.html` viser en nøktern History Go-flate for musikk:
+
+```text
+placeId → musikkseksjon → artister → sanger
+```
+
+PlaceCard-forhåndsvisningen bruker labelen **Musikk**, viser “Knyttet til dette stedet”, “Artister knyttet til stedet”, “Sanger fra AHA Music”, relasjonstype, forklaring, confidence/status og eventuell tekst/lenke “Åpne i AHA Music” dersom relasjonen har URL/rute. Den samme indeksen brukes også til en enkel “Musikk i nærheten”-liste som teller artister og sanger per sted.
+
+Audit er read-only og teller antall leste artist-/track-relasjoner, unike `placeId`-er med musikk, relasjoner med manglende `placeId`, `placeId` som ikke finnes i lokale History Go-data når slike data er tilgjengelige, og topp steder etter sanger/artister. Audit skriver aldri over AHA Music-kildedataene.
