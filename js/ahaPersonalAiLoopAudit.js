@@ -26,6 +26,22 @@
       return Number.isFinite(time) ? Math.max(latest, time) : latest;
     }, 0);
   }
+  function approvedCorpusItems() {
+    return asArray(safeCall(() => global.AHATrainingCorpus?.loadCorpus?.(), []))
+      .filter((item) => item?.status === "approved"
+        && (item?.consent?.useForKnowledge === true || item?.consent?.useForMemory === true));
+  }
+  function approvedExampleItems() {
+    return asArray(safeCall(() => global.AHATrainingExamples?.loadExamples?.(), []))
+      .filter((item) => item?.status === "approved");
+  }
+  function getReadOnlyIndex(options = {}) {
+    const api = global.AHAPersonalRetrieval;
+    const saved = safeCall(() => api?.loadRetrievalIndex?.(), null);
+    if (saved) return { index: saved, persisted: true };
+    const built = safeCall(() => api?.buildRetrievalIndex?.(options), null);
+    return { index: built, persisted: false };
+  }
 
   function checkDataSources() {
     const modules = {};
@@ -38,21 +54,21 @@
     const memory = asObject(safeCall(() => global.AHAMetaInsightsMemory?.summarizeMemory?.(), {}));
     const corpus = asArray(safeCall(() => global.AHATrainingCorpus?.loadCorpus?.(), []));
     const examples = asArray(safeCall(() => global.AHATrainingExamples?.loadExamples?.(), []));
-    const approvedCorpusItems = corpus.filter((item) => item?.status === "approved");
-    const approvedExampleItems = examples.filter((item) => item?.status === "approved");
+    const approvedCorpus = corpus.filter((item) => item?.status === "approved");
+    const approvedExamples = examples.filter((item) => item?.status === "approved");
     const examplesByTaskType = {};
-    approvedExampleItems.forEach((item) => {
+    approvedExamples.forEach((item) => {
       const taskType = asText(item?.taskType) || "unknown";
       examplesByTaskType[taskType] = (examplesByTaskType[taskType] || 0) + 1;
     });
     const result = {
-      ok: Boolean(asArray(memory.confirmedClaims).length || asArray(memory.importantClaims).length || approvedCorpusItems.length || approvedExampleItems.length),
+      ok: Boolean(asArray(memory.confirmedClaims).length || asArray(memory.importantClaims).length || approvedCorpus.length || approvedExamples.length),
       confirmedClaims: asArray(memory.confirmedClaims).length,
       importantClaims: asArray(memory.importantClaims).length,
-      approvedCorpus: approvedCorpusItems.length,
-      approvedExamples: approvedExampleItems.length,
-      knowledgeAllowedCorpus: approvedCorpusItems.filter((item) => item?.consent?.useForKnowledge === true).length,
-      memoryAllowedCorpus: approvedCorpusItems.filter((item) => item?.consent?.useForMemory === true).length,
+      approvedCorpus: approvedCorpus.length,
+      approvedExamples: approvedExamples.length,
+      knowledgeAllowedCorpus: approvedCorpus.filter((item) => item?.consent?.useForKnowledge === true).length,
+      memoryAllowedCorpus: approvedCorpus.filter((item) => item?.consent?.useForMemory === true).length,
       examplesByTaskType
     };
     return result;
@@ -62,8 +78,8 @@
     const api = global.AHAPersonalRetrieval;
     const status = asObject(safeCall(() => api?.getRetrievalStatus?.(), {}));
     const index = safeCall(() => api?.loadRetrievalIndex?.(), null);
-    const corpus = asArray(safeCall(() => global.AHATrainingCorpus?.loadCorpus?.(), []));
-    const examples = asArray(safeCall(() => global.AHATrainingExamples?.loadExamples?.(), []));
+    const corpus = approvedCorpusItems();
+    const examples = approvedExampleItems();
     const memory = asObject(safeCall(() => global.AHAMetaInsightsMemory?.loadMemory?.(), {}));
     const approvedExists = checkApprovedMaterial().ok;
     const builtAt = Date.parse(status.lastBuiltAt || "");
@@ -87,9 +103,12 @@
     const value = asText(query) || DEFAULT_QUERY;
     const chatApi = global.AHAChatPersonalContext;
     const retrievalApi = global.AHAPersonalRetrieval;
-    const messageContext = safeCall(() => chatApi?.buildMessageContext?.(value, options), null);
+    const readOnlyIndex = getReadOnlyIndex(options);
+    const queryOptions = { ...options, retrievalIndex: readOnlyIndex.index };
+    const messageContext = safeCall(() => chatApi?.buildMessageContext?.(value, queryOptions), null);
     const personalContext = messageContext?.context || safeCall(() => chatApi?.buildPersonalContext?.(options), null);
-    const retrieval = messageContext?.retrieval || safeCall(() => retrievalApi?.buildRagContext?.(value, options), null);
+    const retrieval = messageContext?.retrieval
+      || safeCall(() => retrievalApi?.buildRagContext?.(value, { ...options, index: readOnlyIndex.index }), null);
     const prompt = asText(messageContext?.prompt)
       || asText(safeCall(() => retrievalApi?.buildRagPromptBlock?.(retrieval, { includeEmpty: true }), ""));
     const topResults = asArray(retrieval?.results).slice(0, Number(options.limit) || 5);
@@ -97,6 +116,7 @@
       query: value,
       personalContextAvailable: Boolean(personalContext),
       retrievalAvailable: Boolean(retrieval),
+      usedPersistedIndex: readOnlyIndex.persisted,
       resultCount: topResults.length,
       topResults,
       promptPreview: prompt.slice(0, 1200),
@@ -130,7 +150,8 @@
   }
 
   function checkPrivacyAndConsent() {
-    const index = safeCall(() => global.AHAPersonalRetrieval?.loadRetrievalIndex?.(), null);
+    const readOnlyIndex = getReadOnlyIndex();
+    const index = readOnlyIndex.index;
     const items = asArray(index?.items);
     const findings = [];
     const disallowed = items.filter((item) => {
@@ -143,10 +164,11 @@
       return false;
     });
     if (disallowed.length) findings.push(`${disallowed.length} indekserte items bryter godkjennings- eller samtykkekrav.`);
-    else findings.push("Indeksen inneholder bare godkjent corpus/examples og bekreftede eller viktige memory claims.");
+    else if (readOnlyIndex.persisted) findings.push("Den lagrede indeksen inneholder bare godkjent corpus/examples og bekreftede eller viktige memory claims.");
+    else findings.push("En read-only indeks-simulering inneholder bare godkjent corpus/examples og bekreftede eller viktige memory claims.");
     const consentAware = !items.some((item) => item?.source === "training_corpus"
       && !(item?.consent?.useForKnowledge === true || item?.consent?.useForMemory === true));
-    return { ok: disallowed.length === 0, approvedOnly: disallowed.length === 0, consentAware, findings };
+    return { ok: Boolean(index) && disallowed.length === 0, approvedOnly: disallowed.length === 0, consentAware, findings };
   }
 
   function buildRecommendations(audit) {

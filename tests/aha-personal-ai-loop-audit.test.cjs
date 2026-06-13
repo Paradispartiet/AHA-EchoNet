@@ -36,7 +36,7 @@ function loadLoop(context) {
 
 // 1–2. Tomme lagre håndteres, og alle lastede datakilder oppdages.
 {
-  const { context } = makeContext();
+  const { context, store } = makeContext();
   loadLoop(context);
   const api = context.AHAPersonalAiLoopAudit;
   const sources = api.checkDataSources();
@@ -47,6 +47,7 @@ function loadLoop(context) {
   assert.equal(audit.status, "empty");
   assert.equal(audit.readiness.approvedCorpus, 0);
   assert.equal(audit.readiness.approvedExamples, 0);
+  assert.equal(store.has(context.AHAPersonalRetrieval.STORAGE_KEY), false, "read-only audit skal ikke bygge eller lagre retrieval-indeks");
 }
 
 // 3–6 og 12. Full flyt: memory + corpus + example → index → retrieval → chat/RAG.
@@ -95,6 +96,10 @@ function loadLoop(context) {
   const before = context.AHAPersonalAiLoopAudit.checkRetrievalIndex();
   assert.equal(before.available, false);
   assert.equal(before.needsRefresh, true);
+  const readOnlySimulation = context.AHAPersonalAiLoopAudit.simulateQuery("AHA Personal AI Loop retrieval");
+  assert.equal(readOnlySimulation.usedPersistedIndex, false);
+  assert.equal(context.AHAPersonalRetrieval.loadRetrievalIndex(), null, "query-simulering skal ikke persistere indeks");
+  assert.ok(readOnlySimulation.resultCount >= 3);
   const index = context.AHAPersonalRetrieval.refreshRetrievalIndex({ now: "2026-06-13T12:00:00.000Z" });
   assert.equal(JSON.stringify(index).includes("Dette skal aldri nå retrieval"), false);
 
@@ -121,12 +126,14 @@ function loadLoop(context) {
   const training = fs.readFileSync("training.html", "utf8");
   const dashboard = fs.readFileSync("js/ahaTrainingDashboard.js", "utf8");
   const chat = fs.readFileSync("chat.html", "utf8");
+  const chatScript = fs.readFileSync("js/ahaChat.js", "utf8");
   assert.ok(training.includes("js/ahaPersonalAiLoopAudit.js"));
   assert.ok(training.includes("Personal AI Loop Audit"));
   assert.ok(training.includes("Kjør AI-loop audit"));
   assert.ok(dashboard.includes("aha_personal_ai_loop_audit_v1"));
-  assert.ok(chat.includes("Personal AI Loop: aktiv"));
+  assert.ok(chat.includes('id="aha-personal-ai-loop-summary"'));
   assert.ok(chat.includes("aha-personal-ai-loop-status"));
+  assert.ok(chatScript.includes("Personal AI Loop: aktiv"));
 }
 
 // 11. Meta Insights Agent mottar kompakt personalAiLoopPack.

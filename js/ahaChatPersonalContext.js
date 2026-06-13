@@ -288,7 +288,9 @@
     let retrievalPrompt = "";
     const retrievalApi = global.AHAPersonalRetrieval;
     if (retrievalApi && typeof retrievalApi.buildRagContext === "function") {
-      retrieval = safeCall(() => retrievalApi.buildRagContext(userMessage, { limit: 5 }), null);
+      const retrievalOptions = { limit: 5 };
+      if (options.retrievalIndex) retrievalOptions.index = options.retrievalIndex;
+      retrieval = safeCall(() => retrievalApi.buildRagContext(userMessage, retrievalOptions), null);
       if (retrieval && typeof retrievalApi.buildRagPromptBlock === "function") {
         retrievalPrompt = safeCall(() => retrievalApi.buildRagPromptBlock(retrieval), "");
       }

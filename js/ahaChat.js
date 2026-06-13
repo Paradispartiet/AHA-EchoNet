@@ -584,19 +584,27 @@
 
   function renderAhaPersonalAiLoopStatus() {
     const host = document.getElementById("aha-personal-ai-loop-status");
+    const summary = document.getElementById("aha-personal-ai-loop-summary");
     if (!host) return null;
     const api = global.AHAPersonalAiLoopAudit;
     if (!api?.runAudit) {
       host.textContent = "Personal AI Loop-status er ikke tilgjengelig.";
+      if (summary) summary.textContent = "Personal AI Loop: utilgjengelig";
       return null;
     }
     let audit = null;
     try { audit = api.loadLastAudit?.() || api.runAudit(); } catch {}
     if (!audit) {
       host.textContent = "Personal AI Loop kunne ikke kontrolleres.";
+      if (summary) summary.textContent = "Personal AI Loop: ukjent";
       return null;
     }
     const sample = audit.chat?.sampleQuery;
+    if (summary) {
+      summary.textContent = audit.status === "empty"
+        ? "Personal AI Loop: klar, mangler materiale"
+        : `Personal AI Loop: aktiv · ${audit.status}`;
+    }
     host.textContent = `Personal AI Loop: ${audit.status}. ${Number(audit.retrieval?.indexedItems) || 0} indeksert · ${Number(audit.readiness?.approvedCorpus) || 0} corpus · ${Number(audit.readiness?.approvedExamples) || 0} examples · readiness ${audit.readiness?.level || "ukjent"} · testquery ${sample?.ok ? "treff" : "uten treff"}.`;
     return audit;
   }
