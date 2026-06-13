@@ -11,7 +11,7 @@ Statusdato: 2026-06-13
 ## Sync Hub rollback/no-write review
 
 ```text
-✅ Rollback/no-write requirements are reviewed.
+✅ Rollback/no-write requirements are test-locked.
 ❌ Rollback implementation is not activated.
 ❌ Audit/history write path is not activated for the reviewed execution boundary.
 ❌ Manual sync execution remains NO-GO.
@@ -24,7 +24,7 @@ Denne dokumentasjons-/reviewfasen endrer ikke runtime, JavaScript, HTML, CSS ell
 Neste anbefalte PR:
 
 ```text
-test: lock manual sync rollback and no-write failure modes
+docs: review Sync Hub Supabase session fallback before execution
 ```
 
 Dette dokumentet oppsummerer nåværende implementasjonsstatus for AHA etter dokumentlåser, sync-hardening, Search note_reanalysis-visning, Mindmap tombstone-filtrering, Mindmap note_reanalysis-visning, Lists-, Paths-, Meta Insights-, Groups- og AHAavisa/Articles-bolkene, Sync Hub pre-sync UI, manual sync execution contract, manual sync confirmation modal, audit log preview, target selector preview, manual sync target contract, manual sync adapter interface stub, execution state machine stub, manual sync run summary preview, activation blocker tests og target adapter dry-run harness og database_existing wiring til eksisterende AHARepository target, manual sync audit log writer, read-only result history/details, retry eligibility preview, end-to-end-verifikasjon av den manuelle sync-løypa mot mock/stub av eksisterende database target, kompakte statuskort på AHA Home, module health i modulmenyen, normaliserte Home-korttitler/empty states, forbedret mobile/tablet-layout, final polish/accessibility og en samlet completion summary for AHA Home og Sync Hub, samt dokumentert review av module pages og Home entry points for Lists, Paths, Groups og AHAavisa, og forbedret Paths module experience.
@@ -1760,7 +1760,7 @@ Den anbefalte PR-en skal bare testlåse de dokumenterte disabled-/preview-/no-wr
 
 Gjeldende status er:
 
-- **Rollback/no-write requirements: reviewed**
+- **Rollback/no-write requirements: test-locked**
 - **Rollback implementation: not activated**
 - **Audit write path: not activated**
 - **Dedicated execution page: planned, not implemented**
@@ -1775,7 +1775,7 @@ Ingen rollback-kode, audit writer, execution-side, runtime-sync, databasekall, r
 Neste anbefalte PR er:
 
 ```text
-test: lock manual sync rollback and no-write failure modes
+docs: review Sync Hub Supabase session fallback before execution
 ```
 
-Den anbefalte PR-en skal bare testlåse de dokumenterte rollback/no-write-kravene. Den skal ikke aktivere rollback, audit writing, manual sync execution, auto-sync eller andre runtime-side effects.
+Den anbefalte PR-en skal bare reviewe fail-closed Supabase/session fallback før execution. Den skal ikke aktivere rollback, audit writing, manual sync execution, auto-sync eller andre runtime-side effects.
