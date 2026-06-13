@@ -150,6 +150,26 @@
     }
   }
 
+  function buildChatPersonalContextPackSafe() {
+    const api = global.AHAChatPersonalContext;
+    if (!api || typeof api.getPersonalContextStatus !== "function") return null;
+    try {
+      const status = api.getPersonalContextStatus();
+      return {
+        available: Boolean(status?.available),
+        approvedCorpus: Number(status?.approvedCorpus) || 0,
+        approvedExamples: Number(status?.approvedExamples) || 0,
+        confirmedClaims: Number(status?.confirmedClaims) || 0,
+        readinessLevel: asText(status?.readinessLevel) || "ukjent",
+        readinessScore: Number(status?.readinessScore) || 0,
+        hasStyleProfile: Boolean(status?.hasStyleProfile),
+        hasProjectContext: Boolean(status?.hasProjectContext)
+      };
+    } catch {
+      return null;
+    }
+  }
+
   function buildTrainingPackSafe() {
     const corpusApi = global.AHATrainingCorpus;
     const examplesApi = global.AHATrainingExamples;
@@ -208,6 +228,10 @@
       ? options.personalModelReadinessPack
       : buildPersonalModelReadinessPackSafe();
     if (personalModelReadinessPack) context.personalModelReadinessPack = personalModelReadinessPack;
+    const chatPersonalContextPack = options.chatPersonalContextPack && typeof options.chatPersonalContextPack === "object"
+      ? options.chatPersonalContextPack
+      : buildChatPersonalContextPackSafe();
+    if (chatPersonalContextPack) context.chatPersonalContextPack = chatPersonalContextPack;
     return context;
   }
 

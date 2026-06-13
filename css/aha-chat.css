@@ -625,3 +625,46 @@ pre#out { max-height: 22vh; overflow:auto; white-space: pre-wrap; }
   .exp-grid { grid-template-columns: 1fr; }
   .exp-json { max-height: 240px; }
 }
+
+.aha-personal-context-panel {
+  margin-top: 0.75rem;
+  border: 1px solid rgba(37, 99, 235, 0.18);
+  border-radius: 14px;
+  background: rgba(37, 99, 235, 0.06);
+  padding: 0.65rem 0.8rem;
+}
+
+.aha-personal-context-panel summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: #1d4ed8;
+}
+
+.aha-personal-context-status {
+  margin-top: 0.55rem;
+  font-size: 0.9rem;
+  color: #334155;
+  line-height: 1.45;
+}
+
+.aha-personal-context-status strong {
+  color: #1e3a8a;
+}
+
+.aha-personal-context-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.65rem;
+}
+
+.aha-personal-context-actions a {
+  border: 1px solid rgba(37, 99, 235, 0.22);
+  border-radius: 999px;
+  padding: 0.35rem 0.65rem;
+  background: rgba(255, 255, 255, 0.72);
+  color: #1d4ed8;
+  font-size: 0.86rem;
+  font-weight: 700;
+  text-decoration: none;
+}
