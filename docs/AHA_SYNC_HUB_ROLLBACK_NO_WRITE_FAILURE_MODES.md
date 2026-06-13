@@ -6,6 +6,7 @@
 - Manual sync execution remains **NO-GO**.
 - Dedicated execution page remains planned, not implemented.
 - Home remains preview-only.
+- Disabled execution UI requirements are reviewed, not implemented, in `docs/AHA_SYNC_HUB_DISABLED_EXECUTION_UI_BEFORE_ACTIVATION.md`.
 - Audit write path remains not activated.
 - Supabase/session fallback requirements are reviewed, not implemented, in `docs/AHA_SYNC_HUB_SUPABASE_SESSION_FALLBACK_BEFORE_EXECUTION.md`.
 - Rollback implementation remains not activated.
@@ -170,7 +171,7 @@ This coverage is requirements-only. Rollback implementation remains not activate
 The single recommended next PR is:
 
 ```text
-test: lock Sync Hub Supabase session fallback before execution
+test: lock disabled Sync Hub execution UI before activation
 ```
 
-That PR should test-lock the reviewed fail-closed Supabase/session fallback requirements only. It must not activate rollback, audit writing, manual sync execution, module writes, repository persistence, database calls, `localStorage` writes or deletion, source events, insights, publishing, social sharing, or auto-sync.
+Rollback/no-write requirements are test-locked, but rollback implementation and the disabled UI remain inactive. That PR must test-lock the reviewed disabled states, blocked reasons, operator visibility, Home preview-only boundary, and absence of hidden execution without activating runtime, writes, rollback, audit/history, Supabase, manual sync, or auto-sync.
