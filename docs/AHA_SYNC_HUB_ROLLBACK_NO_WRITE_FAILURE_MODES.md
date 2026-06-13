@@ -7,6 +7,8 @@
 - Dedicated execution page remains planned, not implemented.
 - Home remains preview-only.
 - Audit write path remains not activated.
+- Supabase/session fallback requirements are reviewed, not implemented, in `docs/AHA_SYNC_HUB_SUPABASE_SESSION_FALLBACK_BEFORE_EXECUTION.md`.
+- Rollback implementation remains not activated.
 - Auto-sync is permanently forbidden.
 - No rollback/write path may activate before all gates are **GO**.
 
@@ -137,7 +139,7 @@ The UI must distinguish zero writes from unknown writes, and confirmed local pre
 | **Gate F: per-module errors/results** | Defines visible partial-failure, record-count, error, local-preservation, and rollback outcomes for every module. | Real execution semantics, stop/continue rules, compensation behavior, and tests remain unimplemented. |
 | **Gate G: no-write safety** | Defines the no-write policy and forbids rollback or writes from preview, dry-run, Home, inspection, and readiness paths. | The future boundary must be implemented safely and test-locked; this review does not activate it. |
 | **Gate H: audit/history** | Requires audit status to remain independent and prevents audit failure from being reported as sync success. | Audit write timing, storage, failure handling, and execution-only implementation remain not activated. |
-| **Gate I: Supabase/session fallback** | Defines fail-closed behavior for missing session, unavailable Supabase, permissions, network, timeout, and uncertain remote outcomes. | Exact fallback behavior and tests still require separate approval. |
+| **Gate I: Supabase/session fallback** | Defines fail-closed behavior for missing session, unavailable Supabase, permissions, network, timeout, and uncertain remote outcomes; the dedicated review is in `docs/AHA_SYNC_HUB_SUPABASE_SESSION_FALLBACK_BEFORE_EXECUTION.md`. | Requirements are reviewed, but implementation and tests remain outstanding. |
 | **Gate J: tests** | Identifies rollback/no-write scenarios that need automated evidence. | Requirements must be test-locked before activation, and the complete activation suite remains outstanding. |
 
 Gates F, G, H, I, and J remain not full **GO for execution**. All gates A–J must be **GO for execution** before activation may be considered.
@@ -152,7 +154,7 @@ Gates F, G, H, I, and J remain not full **GO for execution**. All gates A–J mu
 - audit failure behavior documented
 - per-module rollback status documented
 - operator visibility documented
-- session/Supabase fallback documented
+- session/Supabase fallback reviewed in `docs/AHA_SYNC_HUB_SUPABASE_SESSION_FALLBACK_BEFORE_EXECUTION.md`; implementation remains not activated
 - activation PR still required: `feat: activate manual AHA Sync Hub execution`
 
 Completing this review does not implement rollback or satisfy the remaining execution, fallback, audit-write, or test gates.
@@ -168,7 +170,7 @@ This coverage is requirements-only. Rollback implementation remains not activate
 The single recommended next PR is:
 
 ```text
-docs: review Sync Hub Supabase session fallback before execution
+test: lock Sync Hub Supabase session fallback before execution
 ```
 
-That PR should review fail-closed Supabase/session fallback requirements only. It must not activate rollback, audit writing, manual sync execution, module writes, repository persistence, database calls, `localStorage` writes or deletion, source events, insights, publishing, social sharing, or auto-sync.
+That PR should test-lock the reviewed fail-closed Supabase/session fallback requirements only. It must not activate rollback, audit writing, manual sync execution, module writes, repository persistence, database calls, `localStorage` writes or deletion, source events, insights, publishing, social sharing, or auto-sync.
