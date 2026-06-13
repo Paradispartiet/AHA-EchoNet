@@ -6,8 +6,11 @@
 - Manual sync execution remains **NO-GO**.
 - Dedicated execution page remains planned, not implemented.
 - Home remains preview-only.
+- Audit write path remains not activated.
+- Rollback/no-write failure modes are reviewed, not implemented, in `docs/AHA_SYNC_HUB_ROLLBACK_NO_WRITE_FAILURE_MODES.md`.
 - Auto-sync is permanently forbidden.
 - No audit/history write path may activate before all gates are **GO**.
+- No rollback/write path may activate before all gates are **GO**.
 
 This document defines review requirements only. It does not create an audit writer, history store, execution page, runtime path, sync action, or database write.
 
@@ -173,12 +176,12 @@ This review advances documentation evidence only. Gates F, G, H, I, and J are no
 - audit preview allowed without write
 - audit failure handling documented
 - per-module history model documented
-- rollback/no-write failure mode documented
+- rollback/no-write failure modes reviewed in `docs/AHA_SYNC_HUB_ROLLBACK_NO_WRITE_FAILURE_MODES.md`; implementation remains not activated
 - session/operator fallback documented
 - no secrets/full payload rule documented
 - activation PR still required: `feat: activate manual AHA Sync Hub execution`
 
-All gates A–J must be **GO for execution** before that activation PR may be considered. Completing this review does not satisfy the remaining implementation, fallback, rollback, or test gates.
+All gates A–J must be **GO for execution** before that activation PR may be considered. Rollback/no-write failure modes are now reviewed, but neither rollback nor the audit write path is implemented or activated. Completing these reviews does not satisfy the remaining implementation, fallback, or test gates.
 
 ## Test coverage
 
@@ -191,7 +194,7 @@ This test coverage does not implement or activate audit/history storage. The req
 The single recommended next PR is:
 
 ```text
-docs: review manual sync rollback and no-write failure modes
+test: lock manual sync rollback and no-write failure modes
 ```
 
-That PR should remain documentation-only and must not activate an audit writer, execution path, runtime sync, database call, repository persistence, `localStorage` write, source event, insight, publishing action, or social operation.
+That PR should test-lock the reviewed rollback/no-write contract without activating rollback, an audit writer, execution, runtime sync, database calls, repository persistence, `localStorage` writes or deletion, source events, insights, publishing, or social operations.
