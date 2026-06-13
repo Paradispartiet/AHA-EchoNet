@@ -33,9 +33,9 @@ The disabled experience is a fail-closed operator-information boundary. It may e
 
 - Home may show read-only preview and blocked status.
 - Home must not show enabled execution controls.
-- The dedicated execution page is planned, not implemented.
+- Dedicated execution page is planned, not implemented.
 - Future execution UI must default disabled.
-- Future execution UI may only become enabled after the activation PR and all gates are **GO**.
+- Future execution UI may only become enabled after activation PR and all gates GO.
 - Future execution UI must require explicit operator action.
 - Future execution UI must require confirmation before execution.
 
@@ -121,16 +121,16 @@ Disabled controls must be inert. They must not execute through direct handlers, 
 A later activation PR must satisfy all of the following:
 
 - the exact activation PR name is required: `feat: activate manual AHA Sync Hub execution`
-- all gates A–J must be **GO**
-- the dedicated execution page must exist
-- disabled UI must become enabled only through the activation PR
-- explicit operator click is required
-- explicit confirmation is required
-- dry-run summary must be visible before execution
-- per-module result preview must be visible before execution
-- audit/history readiness must be visible before execution
-- rollback/no-write status must be visible before execution
-- Supabase/session readiness must be visible before execution
+- all gates A–J must be GO
+- dedicated execution page must exist
+- disabled UI must become enabled only through activation PR
+- explicit operator click required
+- explicit confirmation required
+- dry-run summary visible before execution
+- per-module result preview visible before execution
+- audit/history readiness visible before execution
+- rollback/no-write status visible before execution
+- Supabase/session readiness visible before execution
 
 Meeting these UI requirements is necessary but not sufficient: execution remains disabled until the activation PR explicitly changes the reviewed boundary after all evidence is complete.
 
@@ -159,12 +159,18 @@ Gates E, F, G, H, I, and J remain not full **GO for execution**. This review doe
 
 All gates A–J must be **GO for execution** before activation. Completing this review does not implement the UI or activate sync.
 
+## Test coverage
+
+`tests/aha-sync-hub-disabled-execution-ui-before-activation.test.cjs` test-locks the reviewed current decision, UI surface boundary, disabled states, blocked reasons, operator visibility, forbidden UI behavior, future activation requirements, Gate E–J impact, Home preview-only boundary, unloaded execution modules, and absence of `sync.html`.
+
+This coverage remains safety-only. Disabled execution UI requirements are test-locked, but the implementation is not activated; Manual sync execution remains **NO-GO**, Home remains preview-only, and Auto-sync is permanently forbidden.
+
 ## Recommended next PR
 
 The single recommended next PR is:
 
 ```text
-test: lock disabled Sync Hub execution UI before activation
+docs: summarize Sync Hub activation blockers before UI skeleton
 ```
 
-That PR should test-lock these documentation requirements only. It must not create `sync.html`, implement execution UI, enable a sync button, change runtime behavior, call sync, repository, Supabase, or database APIs, write or delete `localStorage`, activate audit/history or rollback, or weaken the permanent auto-sync prohibition.
+That PR should consolidate the remaining activation blockers before any disabled page skeleton is considered. It must not create `sync.html`, implement execution UI, enable a sync button, change runtime behavior, call sync, repository, Supabase, or database APIs, write or delete `localStorage`, activate audit/history or rollback, or weaken the permanent auto-sync prohibition.
