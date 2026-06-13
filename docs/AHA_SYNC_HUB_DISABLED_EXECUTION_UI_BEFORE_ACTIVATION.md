@@ -4,7 +4,8 @@
 
 - Disabled execution UI requirements are reviewed, not implemented.
 - Disabled execution UI requirements are test-locked; implementation remains not activated.
-- The disabled execution page skeleton is defined in `docs/AHA_SYNC_HUB_DISABLED_EXECUTION_PAGE_SKELETON.md`, not implemented.
+- The disabled execution page skeleton is test-locked in `docs/AHA_SYNC_HUB_DISABLED_EXECUTION_PAGE_SKELETON.md`, not implemented.
+- The execution page implementation boundary is defined, not implemented, in `docs/AHA_SYNC_HUB_EXECUTION_PAGE_IMPLEMENTATION_BOUNDARY.md`.
 - Manual sync execution remains **NO-GO**.
 - Dedicated execution page remains planned, not implemented.
 - Home remains preview-only.
@@ -171,12 +172,16 @@ This coverage remains safety-only. Disabled execution UI requirements are test-l
 
 `docs/AHA_SYNC_HUB_DISABLED_EXECUTION_PAGE_SKELETON.md` now defines the future page sections, inert controls, blocked reasons, loading rules, Home boundary, activation boundary, and Gate E–J impact. The skeleton is **defined, not implemented**; execution UI implementation remains not activated, `sync.html` remains absent, execution remains **NO-GO**, Home remains preview-only, and auto-sync remains permanently forbidden.
 
+## Execution page implementation boundary
+
+`docs/AHA_SYNC_HUB_EXECUTION_PAGE_IMPLEMENTATION_BOUNDARY.md` defines the future implementation phases, allowed files and preview-only dependencies, forbidden dependencies, page-load boundary, disabled-controls boundary, Home boundary, activation boundary, and Gate E–J impact. The boundary is defined, not implemented. Disabled UI requirements remain test-locked, disabled UI implementation remains not activated, Home remains preview-only, execution remains **NO-GO**, and auto-sync remains permanently forbidden.
+
 ## Recommended next PR
 
 The single recommended next PR is:
 
 ```text
-test: lock disabled Sync Hub execution page skeleton boundary
+test: lock Sync Hub execution page implementation boundary
 ```
 
-That PR should test-lock the skeleton boundary and continued absence of `sync.html`. It must not implement execution UI, enable a sync button, change runtime behavior, call sync, repository, Supabase, or database APIs, write or delete `localStorage`, activate audit/history or rollback, or weaken the permanent auto-sync prohibition.
+That PR must test-lock the implementation boundary without implementing execution UI, enabling a sync button, changing runtime behavior, calling sync, repository, Supabase, or database APIs, writing or deleting `localStorage`, activating audit/history or rollback, or weakening the permanent auto-sync prohibition.

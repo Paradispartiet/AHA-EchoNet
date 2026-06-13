@@ -12,7 +12,8 @@
 - Rollback/no-write failure modes are reviewed in `docs/AHA_SYNC_HUB_ROLLBACK_NO_WRITE_FAILURE_MODES.md`, but rollback and execution remain not implemented.
 - Supabase/session fallback requirements are reviewed in `docs/AHA_SYNC_HUB_SUPABASE_SESSION_FALLBACK_BEFORE_EXECUTION.md`, but session-dependent execution remains not implemented.
 - Disabled execution UI requirements are reviewed in `docs/AHA_SYNC_HUB_DISABLED_EXECUTION_UI_BEFORE_ACTIVATION.md`, but the UI and dedicated surface remain not implemented.
-- The next bounded planning layer, the disabled page skeleton, is defined in `docs/AHA_SYNC_HUB_DISABLED_EXECUTION_PAGE_SKELETON.md`; it is not implemented and `sync.html` remains not created.
+- The disabled page skeleton is defined and test-locked in `docs/AHA_SYNC_HUB_DISABLED_EXECUTION_PAGE_SKELETON.md`; it is not implemented and `sync.html` remains not created.
+- The next planning layer, the execution page implementation boundary, is defined but not implemented in `docs/AHA_SYNC_HUB_EXECUTION_PAGE_IMPLEMENTATION_BOUNDARY.md`.
 
 This plan defines a future isolation boundary only. It does not create an execution page, activate manual sync, authorize writes, or change runtime behavior.
 
@@ -171,12 +172,18 @@ feat: activate manual AHA Sync Hub execution
 
 It may be considered only after all gates A–J are **GO for execution**. Auto-sync remains permanently forbidden.
 
+### Phase 2a: execution page implementation boundary
+
+**Status: defined, not implemented.**
+
+`docs/AHA_SYNC_HUB_EXECUTION_PAGE_IMPLEMENTATION_BOUNDARY.md` is the next planning layer after the test-locked skeleton. It defines allowed future files, preview-only dependencies, forbidden runtime dependencies, inert page-load and control behavior, the Home boundary, and the separate activation boundary. The dedicated execution page remains planned, `sync.html` remains not created, the disabled-by-default policy remains mandatory, execution remains **NO-GO**, and auto-sync remains permanently forbidden.
+
 ## Recommended next PR
 
 The single recommended next PR is:
 
 ```text
-test: lock disabled Sync Hub execution page skeleton boundary
+test: lock Sync Hub execution page implementation boundary
 ```
 
-The skeleton is defined but not implemented. The next PR should test-lock its boundary and the absence of `sync.html` without implementing the dedicated page, activating execution, loading module runtime, writing data, or weakening the permanent auto-sync prohibition.
+The next PR must test-lock the implementation boundary and continued absence of `sync.html` without implementing the dedicated page, activating execution, loading module runtime, writing data, or weakening the permanent auto-sync prohibition.
