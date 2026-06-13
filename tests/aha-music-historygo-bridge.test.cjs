@@ -16,7 +16,9 @@ const css = read('css/aha-music.css');
 const musicJs = read('js/ahaMusic.js');
 const bridgeJs = read('js/ahaMusicHistoryGoBridge.js');
 const readme = read('README.md');
+const packageJson = readJson('package.json');
 
+assert.equal(packageJson.scripts['build:music-historygo-bridge'], 'node scripts/build-music-history-go-bridge.cjs', 'package script should expose the music History Go bridge job');
 assert.equal(seeds.length, 15, 'bridge seed file should include the 15 requested candidates');
 assert.ok(seeds.some((seed) => seed.spotifyArtistName === 'a-ha' && seed.candidatePlaceName === 'Oslo' && seed.relationType === 'formed_in'), 'a-ha Oslo seed should exist');
 assert.ok(seeds.some((seed) => seed.spotifyArtistName === 'David Bowie' && seed.candidatePlaceName === 'Berlin'), 'David Bowie Berlin seed should exist');
@@ -54,6 +56,7 @@ assert.ok(musicJs.includes('musicArtistPlaceRelations'), 'music library model sh
 assert.ok(musicJs.includes('renderTrackPlaceRelations'), 'track cards should render inherited History Go place relations');
 assert.ok(readme.includes('AHA Music → History Go Bridge v1'), 'README should document the bridge');
 assert.ok(readme.includes('track → artist → place'), 'README should explain track to place inheritance');
+assert.ok(readme.includes('npm run build:music-historygo-bridge'), 'README should document the bridge npm script');
 
 const sandbox = {
   window: {},

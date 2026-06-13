@@ -863,10 +863,11 @@ Bridge-filene ligger i `data/aha-music/history-go/`:
 - `musicArtistPlaceRelations.json` og `musicTrackPlaceRelations.json` er genererte relasjonsfiler. I repo-baseline er de tomme fordi brukerens Spotify-import ikke ligger i repoet.
 - `musicHistoryGoBridgeReport.json` er baseline-rapporten og kan regenereres fra en lokal AHA Music library-snapshot.
 
-Bridge-jobben kjøres slik:
+Bridge-jobben kan kjøres direkte eller via npm-scriptet:
 
 ```bash
 node scripts/build-music-history-go-bridge.cjs path/to/aha_music_library_v1.json
+npm run build:music-historygo-bridge -- path/to/aha_music_library_v1.json
 ```
 
 Uten input skriver jobben en tom baseline. Med input leser den normaliserte AHA Music-felter (`artists`, `tracks`, `trackArtists`, `playlistTracks`) og matcher artistnavn mot seed-kandidatene i denne rekkefølgen:
