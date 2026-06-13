@@ -1685,3 +1685,28 @@ docs: review manual sync audit/history activation requirements
 ```
 
 Den anbefalte PR-en skal være dokumentasjons-only. Den skal avklare audit/history-kontrakten uten å opprette `sync.html`, laste modulruntime på Home, aktivere execution, gjøre databasekall, skrive data eller svekke det permanente auto-sync-forbudet.
+
+## 27. AHA Sync Hub audit/history activation requirements review
+
+`docs/AHA_SYNC_HUB_AUDIT_HISTORY_ACTIVATION_REQUIREMENTS.md` reviews the audit/history contract required before future manual sync activation can be considered. The review defines required run-level fields, the per-module history model for Lists, Paths, Groups, and AHAavisa, write-safety boundaries, the audit status vocabulary, required history visibility, forbidden side effects, gate impact, and concrete requirements before activation.
+
+Gjeldende status er:
+
+- **Audit/history requirements: reviewed**
+- **Audit/history write path: not activated**
+- **Dedicated execution page: planned, not implemented**
+- **Execution: NO-GO**
+- **Home: preview-only**
+- **Auto-sync: permanently forbidden**
+
+Reviewen påvirker Gate F for per-module errors/results, Gate G for no-write safety, Gate H for audit/history, Gate I for Supabase/session fallback og Gate J for nødvendig test evidence. Disse gatene er fortsatt ikke full **GO for execution**. Alle gates A–J må være GO før den separate activation-PR-en `feat: activate manual AHA Sync Hub execution` kan vurderes.
+
+Ingen audit/history writer, databasekall, repository save/load, `localStorage`-write, source events, insights, publisering, social sharing, runtime sync eller execution-side er opprettet eller aktivert av reviewen.
+
+Neste anbefalte PR er:
+
+```text
+test: lock manual sync audit/history activation requirements
+```
+
+Den anbefalte PR-en skal bare testlåse de dokumenterte disabled-/preview-/no-write-kravene. Den skal ikke aktivere audit writing, manual sync execution, auto-sync eller andre runtime-side effects.
