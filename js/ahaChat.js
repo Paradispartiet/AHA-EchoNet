@@ -528,6 +528,42 @@
     el.textContent = String(message || "");
   }
 
+  function getAhaPersonalContextApi() {
+    return global.AHAChatPersonalContext && typeof global.AHAChatPersonalContext === "object"
+      ? global.AHAChatPersonalContext
+      : null;
+  }
+
+  function buildAhaPersonalMessageContext(userText) {
+    const api = getAhaPersonalContextApi();
+    if (!api || typeof api.buildMessageContext !== "function") return null;
+    try {
+      return api.buildMessageContext(userText, { maxLength: 900 });
+    } catch (err) {
+      console.warn("AHA personlig kontekst kunne ikke bygges", err);
+      return null;
+    }
+  }
+
+  function renderAhaPersonalContextStatus(statusArg = null) {
+    const host = document.getElementById("aha-personal-context-status");
+    if (!host) return null;
+    const api = getAhaPersonalContextApi();
+    if (!api || typeof api.getPersonalContextStatus !== "function") {
+      host.textContent = "Personlig kontekst er ikke tilgjengelig ennå.";
+      return null;
+    }
+    let status = statusArg;
+    try { status = status || api.getPersonalContextStatus(); } catch { status = null; }
+    if (!status) {
+      host.textContent = "Personlig kontekst kunne ikke leses akkurat nå.";
+      return null;
+    }
+    const active = status.available ? "AHA personlig kontekst aktiv" : "AHA personlig kontekst klar, men trenger mer godkjent materiale";
+    host.textContent = `${active}. Readiness: ${status.readinessLevel || "ukjent"} (${Number(status.readinessScore) || 0}/100). Bekreftet selvinnsikt: ${Number(status.confirmedClaims) || 0}. Godkjent corpus: ${Number(status.approvedCorpus) || 0}. Godkjente examples: ${Number(status.approvedExamples) || 0}.`;
+    return status;
+  }
+
   function normalizeAhaMemoryText(text) {
     return String(text || "")
       .toLowerCase()
@@ -2275,10 +2311,23 @@
     if (!apiBase) throw new Error("missing_api_base");
 
     const memoryContext = options?.memoryContext && options.memoryContext.used ? options.memoryContext : null;
+    const personalContext = options?.personalContext && typeof options.personalContext === "object" ? options.personalContext : null;
     const body = {
       message,
-      ai_state: buildAIState({ includeMemory: Boolean(memoryContext) }),
+      ai_state: buildAIState({ includeMemory: Boolean(memoryContext), includePersonalContext: Boolean(personalContext?.prompt) }),
       memory_context: memoryContext,
+      personal_context: personalContext ? {
+        prompt: personalContext.prompt || "",
+        relevant: personalContext.relevant || {},
+        evidence: personalContext.context?.evidence || {},
+        status: personalContext.context ? {
+          readinessLevel: personalContext.context.readiness?.level || "ukjent",
+          readinessScore: Number(personalContext.context.readiness?.score) || 0,
+          approvedCorpus: Number(personalContext.context.evidence?.approvedCorpus) || 0,
+          approvedExamples: Number(personalContext.context.evidence?.approvedExamples) || 0,
+          confirmedClaims: Number(personalContext.context.evidence?.confirmedClaims) || 0
+        } : {}
+      } : null,
       // Bakoverkompatibelt felt for eldre agentkode, men fylles bare når
       // Memory Relevance Gate faktisk har valgt relevante minnetreff.
       similar_insights: memoryContext?.semanticMatches || [],
@@ -6028,6 +6077,9 @@
     const memoryUseEnabled = isAhaMemoryUseEnabled();
     setAhaProcessing(true, memoryUseEnabled ? "AHA vurderer relevant minne …" : "AHA svarer uten tidligere minne …");
     const memoryContext = memoryUseEnabled ? await buildAhaMemoryContext(cleanText) : buildAhaMemoryOffContext();
+    const personalContext = buildAhaPersonalMessageContext(cleanText);
+    if (personalContext?.prompt) setStatusNote("AHA personlig kontekst aktiv.");
+    renderAhaPersonalContextStatus();
     let count = 0;
     if (savingEnabled) {
       count = handleUserMessage(cleanText);
@@ -6047,7 +6099,7 @@
     setAhaProcessing(true, "AHA analyserer teksten …");
     try {
       setAhaProcessing(true, savingEnabled ? "AHA lager svar og etterarbeid …" : "AHA lager svar uten å lagre nye innsikter …");
-      const agent = await askAhaAgent(cleanText, { memoryContext });
+      const agent = await askAhaAgent(cleanText, { memoryContext, personalContext });
       const reply = String(agent?.reply || "").trim() || "AHA-agenten returnerte tomt svar.";
       const analysisText = cleanArticleText(cleanText);
       const rawSubjectMatches = global.AHASubjectEngine?.matchText
@@ -6096,11 +6148,13 @@
             model: agent?.model || null,
             raw_reply: visibleReply === safeReply ? null : safeReply,
             memory_context_used: Boolean(memoryContext.used),
-            memory_context_reason: memoryContext.used ? memoryContext.reason : null
+            memory_context_reason: memoryContext.used ? memoryContext.reason : null,
+            personal_context_used: Boolean(personalContext?.prompt),
+            personal_context_evidence: personalContext?.context?.evidence || null
           }
         });
       }
-      return { type: "agent_reply", agent, memoryContext, savingEnabled, memoryUseEnabled };
+      return { type: "agent_reply", agent, memoryContext, personalContext, savingEnabled, memoryUseEnabled };
     } catch (err) {
       console.warn("AHA-agent utilgjengelig", err);
       appendChat("aha", "AHA-agenten er ikke tilgjengelig akkurat nå.");
@@ -6108,7 +6162,7 @@
       if (savingEnabled) {
         try { ensureAfterworkForLatestAnalysis(cleanText, { subjectMatches: [] }); } catch (afterErr) { console.warn("Auto-etterarbeid feilet", afterErr); }
       }
-      return { type: "agent_error", error: err, memoryContext, savingEnabled, memoryUseEnabled };
+      return { type: "agent_error", error: err, memoryContext, personalContext, savingEnabled, memoryUseEnabled };
     } finally {
       setAhaProcessing(false);
       void updateAhaMemoryStatus();
@@ -6158,6 +6212,7 @@
       global.addEventListener(eventName, () => { void updateAhaMemoryStatus(); });
     });
     void updateAhaMemoryStatus();
+    renderAhaPersonalContextStatus();
 
     updateEmptyState();
     renderHighlightsRail();

@@ -65,6 +65,14 @@
             <div id="chat-status-note" class="chat-status-note" aria-live="polite"></div>
             <div id="aha-memory-status" class="aha-memory-status" aria-live="polite">Leser minnestatus …</div>
             <div id="aha-memory-controls" class="aha-memory-controls" aria-label="Minnestyring"></div>
+            <details id="aha-personal-context-panel" class="aha-personal-context-panel">
+              <summary>Personlig kontekst</summary>
+              <div id="aha-personal-context-status" class="aha-personal-context-status" aria-live="polite">Leser personlig kontekst …</div>
+              <div class="aha-personal-context-actions">
+                <a href="training.html">Se Training Corpus</a>
+                <a href="index.html">Se AHA Home</a>
+              </div>
+            </details>
           </div>
         </section>
 
@@ -182,6 +190,8 @@
   <script src="js/metaInsightsAgent.js"></script>
   <script src="js/ahaTrainingCorpus.js"></script>
   <script src="js/ahaTrainingExamples.js"></script>
+  <script src="js/ahaPersonalModelReadiness.js"></script>
+  <script src="js/ahaChatPersonalContext.js"></script>
   <script src="js/theoryClustersLoader.js"></script>
   <script src="js/ahaFieldProfiles.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

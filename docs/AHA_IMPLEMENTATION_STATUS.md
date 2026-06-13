@@ -1543,6 +1543,18 @@ Personal Model Readiness er V1-broen mellom Training Corpus og **AHA Personal Mo
 
 Dette er neste trinn mellom Training Corpus og AHA Personal Model: materialet kan auditeres før det brukes til eksport, RAG eller finjustering.
 
+### AHA Chat Personal Context
+
+AHA Chat kan nå bruke godkjent selvinnsikt, godkjent corpus og godkjente training examples som personlig kontekst når brukeren skriver i chatten. `js/ahaChatPersonalContext.js` eksponerer `window.AHAChatPersonalContext` og bygger en kompakt, forklarbar kontekstpakke local-first før chatmeldingen sendes.
+
+- Konteksten bygges lokalt fra **Meta Insights Memory**, **Training Corpus**, **Training Examples** og **Personal Model Readiness**.
+- V1 bruker bare bekreftede/viktige memory-claims, approved corpus med `useForKnowledge` eller `useForMemory`, og approved training examples.
+- Chatten laster personal context-scriptet, viser panelet «Personlig kontekst» og sender en kort `personal_context`-prompt i agentpayloaden når relevant materiale finnes.
+- `js/metaInsightsAgent.js` legger `chatPersonalContextPack` i `agentContext`, slik at Meta Insights AI forstår at AHA Chat kan bruke personlig kontekst.
+- Dette er broen mellom Training Corpus og senere **AHA Personal Model**: første versjon bruker godkjente data som prompt-kontekst, mens senere versjoner kan bruke RAG, embeddings eller modelltilpasning.
+
+Chatflyten styres i V1 av `chat.html` (scriptrekkefølge og panel), `js/ahaChat.js` (pending prompt, melding, agentpayload, chatlogg/localStorage og status), `js/ahaChatPersonalContext.js` (kontekstbygging/relevans) og `js/metaInsightsAgent.js` (Meta Insights AI-agentContext). Personal context passer inn rett etter eksisterende AHA Memory Gate og før `askAhaAgent()`, slik at brukerens nye melding holdes adskilt fra den godkjente konteksten. Datakildene i første versjon er Meta Insights Memory, Training Corpus, Training Examples og Personal Model Readiness.
+
 ## 19. Sync Hub go/no-go blocker test lock
 
 Go/no-go-matrisen for AHA Sync Hub er nå låst med en samlet blocker-test. Testen dekker beslutningsmarkører og gates A–J, read-only-runtime, Home module-loading, aktive dashboard-triggere, avgrensede forbidden-call-mønstre og blocked/dry-run-atferd i adapter og state machine.
