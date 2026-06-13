@@ -6,6 +6,7 @@ const MATRIX_FILE = 'docs/AHA_SYNC_HUB_GO_NO_GO_MATRIX.md';
 const MODULE_LOADING_STRATEGY_FILE = 'docs/AHA_SYNC_HUB_MODULE_LOADING_STRATEGY.md';
 const AUDIT_HISTORY_REQUIREMENTS_FILE = 'docs/AHA_SYNC_HUB_AUDIT_HISTORY_ACTIVATION_REQUIREMENTS.md';
 const ROLLBACK_NO_WRITE_REQUIREMENTS_FILE = 'docs/AHA_SYNC_HUB_ROLLBACK_NO_WRITE_FAILURE_MODES.md';
+const SUPABASE_SESSION_FALLBACK_FILE = 'docs/AHA_SYNC_HUB_SUPABASE_SESSION_FALLBACK_BEFORE_EXECUTION.md';
 const SYNC_HUB_FILE = 'js/ahaSyncHub.js';
 const DRY_RUN_TARGET_ADAPTER_FILE = 'js/ahaManualSyncDryRunTargetAdapter.js';
 const ADAPTER_FILE = 'js/ahaManualSyncAdapter.js';
@@ -66,6 +67,7 @@ function readyInput(patch = {}) {
   const moduleLoadingStrategyCode = read(MODULE_LOADING_STRATEGY_FILE);
   const auditHistoryRequirementsCode = read(AUDIT_HISTORY_REQUIREMENTS_FILE);
   const rollbackNoWriteRequirementsCode = read(ROLLBACK_NO_WRITE_REQUIREMENTS_FILE);
+  const supabaseSessionFallbackCode = read(SUPABASE_SESSION_FALLBACK_FILE);
   const syncHubCode = read(SYNC_HUB_FILE);
   const dryRunTargetAdapterCode = read(DRY_RUN_TARGET_ADAPTER_FILE);
   const adapterCode = read(ADAPTER_FILE);
@@ -169,6 +171,14 @@ function readyInput(patch = {}) {
   assert.ok(rollbackNoWriteRequirementsCode.includes(ACTIVATION_PR), 'rollback/no-write execution must still require the activation PR');
   assert.match(rollbackNoWriteRequirementsCode, /Manual sync execution remains \*\*NO-GO\*\*/, 'rollback/no-write requirements must retain manual sync NO-GO');
   assert.match(rollbackNoWriteRequirementsCode, /Auto-sync is permanently forbidden/, 'rollback/no-write requirements must retain the permanent auto-sync prohibition');
+
+  // Regression lock: Supabase/session fallback is test-locked without activating execution.
+  assert.match(supabaseSessionFallbackCode, /Test coverage[\s\S]*test-locks/i, 'Supabase/session fallback requirements must remain test-locked');
+  assert.match(supabaseSessionFallbackCode, /implementation is not activated/i, 'Supabase/session fallback implementation must remain inactive');
+  assert.match(supabaseSessionFallbackCode, /No Supabase\/session-dependent execution may activate before all gates are \*\*GO\*\*/, 'session-dependent execution must remain inactive');
+  assert.ok(supabaseSessionFallbackCode.includes(ACTIVATION_PR), 'Supabase/session execution must still require the activation PR');
+  assert.match(supabaseSessionFallbackCode, /Manual sync execution remains \*\*NO-GO\*\*/, 'Supabase/session requirements must retain manual sync NO-GO');
+  assert.match(supabaseSessionFallbackCode, /Auto-sync is permanently forbidden/, 'Supabase/session requirements must retain the permanent auto-sync prohibition');
 
   // Only the active Home Sync Hub renderer is scanned; dormant preview helpers are a separate gated layer.
   const activeSyncHubRenderer = extractFunction(dashboardCode, 'renderSyncHubStatus');

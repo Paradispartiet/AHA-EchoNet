@@ -29,7 +29,7 @@ The dedicated execution page is planned, not implemented. The activation PR `fea
 | Dedicated execution page plan | `docs/AHA_SYNC_HUB_DEDICATED_EXECUTION_PAGE_PLAN.md` | **Planned, not implemented; NO-GO for execution** | Defines the proposed `sync.html` isolation boundary, disabled-by-default policy, page states, activation gates, and phased work without creating the page or loading execution runtime. |
 | Audit/history activation requirements | `docs/AHA_SYNC_HUB_AUDIT_HISTORY_ACTIVATION_REQUIREMENTS.md` | **Test-locked, not implemented; NO-GO for execution** | Defines required run fields, per-module history, write safety, status vocabulary, visibility, sanitization, gate impact, and required pre-activation evidence without activating an audit write path. |
 | Rollback/no-write failure modes | `docs/AHA_SYNC_HUB_ROLLBACK_NO_WRITE_FAILURE_MODES.md`; `tests/aha-manual-sync-rollback-no-write-failure-modes.test.cjs` | **Test-locked, not implemented; NO-GO for execution** | Test-locks the no-write policy, failure modes, per-module rollback evidence, rollback status model, operator visibility, forbidden behavior, and gate impact without implementing rollback or writes. |
-| Supabase/session fallback review | `docs/AHA_SYNC_HUB_SUPABASE_SESSION_FALLBACK_BEFORE_EXECUTION.md` | **Reviewed, not implemented; NO-GO for execution** | Defines session and Supabase availability states, fail-closed fallback behavior, preview-without-Supabase requirements, execution blockers, operator visibility, forbidden triggers, and Gate E–J impact without making remote calls or activating writes. |
+| Supabase/session fallback review | `docs/AHA_SYNC_HUB_SUPABASE_SESSION_FALLBACK_BEFORE_EXECUTION.md`; `tests/aha-sync-hub-supabase-session-fallback-before-execution.test.cjs` | **Test-locked, not implemented; NO-GO for execution** | Test-locks session and Supabase availability states, fail-closed fallback behavior, preview-without-Supabase requirements, execution blockers, operator visibility, forbidden triggers, and Gate E–J impact without making remote calls or activating writes. |
 | Dry-run target adapter | `js/ahaManualSyncDryRunTargetAdapter.js`; `tests/aha-manual-sync-dry-run-target-adapter.test.cjs` | **GO for preview** | Produces blocked, no-write plans and does not execute targets. |
 | Dry-run target preview | `js/ahaDashboard.js`; `tests/aha-home-manual-sync-dry-run-preview.test.cjs` | **GO for preview** | Displays target and blocker information without a runnable sync action. |
 | Dry-run target evidence tests | `tests/aha-manual-sync-dry-run-target-evidence.test.cjs` | **GO for preview** | Locks preview-only, no-write, and no-sync behavior. |
@@ -49,10 +49,10 @@ The dedicated execution page is planned, not implemented. The activation PR `fea
 | **F** | Per-module result/error gate | **PARTIAL** | A structured read-only result preview exists, and `docs/AHA_SYNC_HUB_ROLLBACK_NO_WRITE_FAILURE_MODES.md` defines required partial-failure, count, error, local-preservation, and rollback evidence per module. | Implement and prove real per-module execution results, error continuation/stop policy, retry behavior, and rollback/compensation without deleting local data. | **NO-GO for execution** |
 | **G** | No-write safety gate | **TEST-LOCKED, NOT IMPLEMENTED** | Current preview paths have no-write evidence, and the rollback/no-write test locks dry-run, preview, Home, inspection, readiness, failure, and rollback no-write requirements. | Implement and prove the future execution boundary has no hidden writes, deletion, rollback triggers, source events, insights, publishing, or social sharing. | **NO-GO for execution** |
 | **H** | Audit/history gate | **TEST-LOCKED, NOT IMPLEMENTED** | `docs/AHA_SYNC_HUB_AUDIT_HISTORY_ACTIVATION_REQUIREMENTS.md` reviews required fields, per-module history, write safety, status vocabulary, visibility, sanitization, and failure rules. Dry-run and Home must not write audit history. | Keep the requirements tests passing, approve the storage channel and exact execution-only write timing, implement the disabled-by-default path in later approved work, and prove failure/partial-success behavior. | **NO-GO for execution** |
-| **I** | Supabase/session gate | **REVIEWED, NOT IMPLEMENTED** | `docs/AHA_SYNC_HUB_SUPABASE_SESSION_FALLBACK_BEFORE_EXECUTION.md` reviews status models, fail-closed fallback behavior, preview-without-Supabase, no-write/local-preservation rules, operator visibility, and forbidden triggers. | Add dedicated fallback tests, then implement only through a later approved execution boundary while preserving local-first data. | **NO-GO for execution** |
+| **I** | Supabase/session gate | **TEST-LOCKED, NOT IMPLEMENTED** | `docs/AHA_SYNC_HUB_SUPABASE_SESSION_FALLBACK_BEFORE_EXECUTION.md` reviews, and `tests/aha-sync-hub-supabase-session-fallback-before-execution.test.cjs` test-locks, status models, fail-closed fallback behavior, preview-without-Supabase, no-write/local-preservation rules, operator visibility, and forbidden triggers. | Implement only through a later approved execution boundary while preserving local-first data; this test lock is not execution approval. | **NO-GO for execution** |
 | **J** | Test gate | **NO-GO for execution** | Runtime, preview, blocker, state-machine, target, and no-write tests provide a strong preview foundation. | Complete and pass an activation suite covering the chosen loading architecture, real per-module errors, rollback, audit, session fallback, forbidden triggers, and forbidden side effects. | **NO-GO for execution** |
 
-**Gate summary:** D and E are **GO for preview** only. Gates G and H are **test-locked, not implemented**. Gate I is **reviewed, not implemented**. A, C, and F remain **PARTIAL**; B and J remain **NO-GO for execution**. Gate E is still not full **GO for execution**. Gates F, G, H, I, and J are still not full **GO for execution**, and all gates A–J remain **NO-GO for execution** until every gate has separate, complete execution evidence.
+**Gate summary:** D and E are **GO for preview** only. Gates G, H, and I are **test-locked, not implemented**. A, C, and F remain **PARTIAL**; B and J remain **NO-GO for execution**. Gate E is still not full **GO for execution**. Gates F, G, H, I, and J are still not full **GO for execution**. Therefore Gates E, F, G, H, I, and J are not full GO for execution, and all gates A–J remain **NO-GO for execution** until every gate has separate, complete execution evidence.
 
 ## Required before activation PR
 
@@ -72,7 +72,7 @@ A later activation PR cannot be created until all of the following are true:
 - per-module error handling must exist
 - rollback/no-write behavior is reviewed and must be test-locked and implemented only through a later approved execution contract
 - audit/history requirements must be reviewed, test-locked, and implemented only through a later approved execution contract
-- Supabase/session fallback is reviewed and must be test-locked and implemented only through a later approved execution boundary
+- Supabase/session fallback is reviewed and test-locked, and must be implemented only through a later approved execution boundary
 - module loading strategy must be documented
 - execution must remain disabled until all checks are green
 
@@ -86,7 +86,7 @@ These requirements are cumulative. Preview success, adapter availability, or par
 - module runtime still forbidden and not loaded on Home
 - per-module execution/error result handling not proven for real writes
 - rollback/no-write failure modes reviewed and test-locked, but not implemented
-- Supabase/session fallback requirements reviewed, but tests and implementation remain outstanding
+- Supabase/session fallback requirements reviewed and test-locked, but implementation remains outstanding
 - audit/history requirements reviewed and test-locked, but the execution-only write path is not implemented or activated
 - auto-sync remains permanently forbidden
 
@@ -116,10 +116,10 @@ These requirements are cumulative. Preview success, adapter availability, or par
 
 ## Recommended next PR
 
-Rollback/no-write failure modes are reviewed and test-locked but not implemented, while audit writing and manual execution remain disabled. The single recommended next PR is:
+Supabase/session fallback requirements are reviewed and test-locked but not implemented, while rollback, audit writing, and manual execution remain disabled. The single recommended next PR is:
 
 ```text
-test: lock Sync Hub Supabase session fallback before execution
+docs: review disabled Sync Hub execution UI before activation
 ```
 
-That PR must only test-lock the reviewed fail-closed Supabase/session fallback requirements. It must not create `sync.html`, load module runtime files on Home, activate rollback, execution, or audit writing, create an executable sync button, call sync or repository persistence, or write data. The dedicated activation PR `feat: activate manual AHA Sync Hub execution` remains separately required and is not allowed until all gates A–J are **GO for execution**. Auto-sync is permanently forbidden.
+That PR must only clarify disabled execution UI requirements. It must not create `sync.html`, load module runtime files on Home, activate rollback, execution, or audit writing, create an executable sync button, call sync or repository persistence, or write data. The dedicated activation PR `feat: activate manual AHA Sync Hub execution` remains separately required and is not allowed until all gates A–J are **GO for execution**. Auto-sync is permanently forbidden.
