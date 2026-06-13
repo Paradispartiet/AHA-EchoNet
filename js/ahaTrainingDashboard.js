@@ -28,6 +28,7 @@
   function examplesApi() { return global.AHATrainingExamples; }
   function readinessApi() { return global.AHAPersonalModelReadiness; }
   function retrievalApi() { return global.AHAPersonalRetrieval; }
+  function semanticApi() { return global.AHASemanticRetrieval; }
 
   function setStat(id, value) {
     const el = $(id);
@@ -156,6 +157,27 @@
     `).join("");
   }
 
+  function renderSemanticRetrieval() {
+    const mount = $("training-semantic-retrieval-report");
+    if (!mount) return;
+    const api = semanticApi();
+    if (!api?.getSemanticStatus) {
+      mount.innerHTML = `<p class="aha-training-empty">Semantic Retrieval-modulen er ikke lastet.</p>`;
+      return;
+    }
+    const status = api.getSemanticStatus();
+    mount.innerHTML = `
+      <div class="aha-training-stats">
+        <div class="aha-mini-stat"><strong>${Number(status.indexedItems) || 0}</strong><span>Indexed items</span></div>
+        <div class="aha-mini-stat"><strong>${escapeHtml(status.vectorModel || "local_semantic_v1")}</strong><span>Vector model</span></div>
+        <div class="aha-mini-stat"><strong>${Number(status.corpusItems) || 0}</strong><span>Corpus items</span></div>
+        <div class="aha-mini-stat"><strong>${Number(status.examples) || 0}</strong><span>Examples</span></div>
+        <div class="aha-mini-stat"><strong>${Number(status.memoryClaims) || 0}</strong><span>Memory claims</span></div>
+      </div>
+      <p class="module-meta">Status: ${status.available ? "Klar" : "Ikke bygget"} · Sist bygget: ${escapeHtml(status.lastBuiltAt || "aldri")}</p>
+    `;
+  }
+
   function renderRetrieval() {
     const mount = $("training-retrieval-report");
     if (!mount) return;
@@ -188,6 +210,7 @@
     renderStats();
     renderReadiness();
     renderRetrieval();
+    renderSemanticRetrieval();
     renderCorpusList();
     renderExamplesList();
   }
@@ -224,6 +247,15 @@
     setMessage(`Eksporterte ${exportable.length} godkjente eksempler som JSONL.`);
   }
 
+  function handleSemanticRetrievalRefresh() {
+    const api = semanticApi();
+    if (!api?.refreshSemanticIndex) return;
+    const index = api.refreshSemanticIndex();
+    setMessage(`Semantisk søkeindeks bygget med ${index.stats.total} items (${index.vectorModel}).`);
+    renderSemanticRetrieval();
+    renderRetrieval();
+  }
+
   function handleRetrievalRefresh() {
     const api = retrievalApi();
     if (!api?.refreshRetrievalIndex) return;
@@ -238,6 +270,7 @@
     $("training-generate-btn")?.addEventListener("click", handleGenerate);
     $("training-export-btn")?.addEventListener("click", handleExport);
     $("training-retrieval-btn")?.addEventListener("click", handleRetrievalRefresh);
+    $("training-semantic-retrieval-btn")?.addEventListener("click", handleSemanticRetrievalRefresh);
 
     $("training-corpus-list")?.addEventListener("click", (event) => {
       const target = event.target;
@@ -285,7 +318,7 @@
     renderAll();
   }
 
-  const AHATrainingDashboard = { init, renderAll, renderStats, renderReadiness, renderRetrieval, renderCorpusList, renderExamplesList, handleRetrievalRefresh };
+  const AHATrainingDashboard = { init, renderAll, renderStats, renderReadiness, renderRetrieval, renderSemanticRetrieval, renderCorpusList, renderExamplesList, handleRetrievalRefresh, handleSemanticRetrievalRefresh };
 
   if (typeof module !== "undefined" && module.exports) {
     module.exports = AHATrainingDashboard;

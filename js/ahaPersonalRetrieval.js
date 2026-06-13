@@ -215,6 +215,13 @@
   }
 
   function buildRagContext(query, options = {}) {
+    const semanticApi = global.AHASemanticRetrieval;
+    if (options.forceLexical !== true && semanticApi && typeof semanticApi.buildSemanticRagContext === "function") {
+      const semantic = safeCall(() => semanticApi.buildSemanticRagContext(query, options), null);
+      if (semantic && asArray(semantic.results).length) {
+        return { ...semantic, mode: "hybrid", semanticAvailable: true };
+      }
+    }
     const maxLength = Math.min(1200, Math.max(700, Number(options.maxLength) || 1000));
     const search = searchPersonalKnowledge(query, { ...options, limit: Math.min(5, Number(options.limit) || 5) });
     const lines = ["Relevant personlig kunnskap fra AHA:"];
@@ -223,6 +230,7 @@
     lines.push("Bruk dette når det er relevant for brukerens spørsmål.");
     return {
       query: search.query, generatedAt: search.generatedAt, results: search.results,
+      mode: "lexical", semanticAvailable: Boolean(global.AHASemanticRetrieval),
       contextText: truncate(lines.join("\n"), maxLength),
       sourceSummary: search.results.reduce((out, item) => {
         out[item.source] = (out[item.source] || 0) + 1;

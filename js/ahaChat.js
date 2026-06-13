@@ -561,7 +561,8 @@
     }
     const active = status.available ? "AHA personlig kontekst aktiv" : "AHA personlig kontekst klar, men trenger mer godkjent materiale";
     const retrieval = status.retrievalAvailable ? ` Personlig søk aktiv (${Number(status.indexedItems) || 0} indeksert).` : "";
-    host.textContent = `${active}. Readiness: ${status.readinessLevel || "ukjent"} (${Number(status.readinessScore) || 0}/100). Bekreftet selvinnsikt: ${Number(status.confirmedClaims) || 0}. Godkjent corpus: ${Number(status.approvedCorpus) || 0}. Godkjente examples: ${Number(status.approvedExamples) || 0}.${retrieval}`;
+    const semantic = status.semanticRetrievalAvailable ? ` Semantisk søk aktiv (${Number(status.semanticIndexedItems) || 0} indeksert, ${status.semanticVectorModel || "local_semantic_v1"}). Retrieval mode: ${status.retrievalMode || "hybrid"}.` : "";
+    host.textContent = `${active}. Readiness: ${status.readinessLevel || "ukjent"} (${Number(status.readinessScore) || 0}/100). Bekreftet selvinnsikt: ${Number(status.confirmedClaims) || 0}. Godkjent corpus: ${Number(status.approvedCorpus) || 0}. Godkjente examples: ${Number(status.approvedExamples) || 0}.${retrieval}${semantic}`;
     return status;
   }
 
@@ -571,13 +572,13 @@
     if (!status || !results) return;
     const hits = Array.isArray(retrieval?.results) ? retrieval.results : [];
     status.textContent = retrieval
-      ? `Personlig søk aktiv. Query: «${retrieval.query || ""}». ${hits.length} relevante treff.`
+      ? `Personlig søk aktiv. Semantisk søk ${retrieval.semanticAvailable ? "aktiv" : "ikke aktiv"}. Mode: ${retrieval.mode || "lexical"}. Query: «${retrieval.query || ""}». ${hits.length} relevante treff.`
       : "Personlig søk er ikke tilgjengelig for denne meldingen.";
     results.innerHTML = hits.slice(0, 3).map((item) => `
       <article class="aha-personal-retrieval-result">
         <strong>${escHtml(item.title || item.source)}</strong>
-        <span>${escHtml(item.source)} · score ${Number(item.score) || 0}</span>
-        <small>${escHtml((item.reasons || []).slice(0, 2).join(" · "))}</small>
+        <span>${escHtml(item.source)} · lexicalScore ${Number(item.lexicalScore ?? item.score) || 0} · semanticScore ${Number(item.semanticScore) || 0} · hybridScore ${Number(item.hybridScore) || 0}</span>
+        <small>${escHtml((item.reasons || []).slice(0, 4).join(" · "))}</small>
       </article>
     `).join("");
   }
