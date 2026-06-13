@@ -1574,6 +1574,19 @@ AHA Chat kan nå bruke godkjent selvinnsikt, godkjent corpus og godkjente traini
 
 Chatflyten styres i V1 av `chat.html` (scriptrekkefølge og panel), `js/ahaChat.js` (pending prompt, melding, agentpayload, chatlogg/localStorage og status), `js/ahaChatPersonalContext.js` (kontekstbygging/relevans) og `js/metaInsightsAgent.js` (Meta Insights AI-agentContext). Personal context passer inn rett etter eksisterende AHA Memory Gate og før `askAhaAgent()`, slik at brukerens nye melding holdes adskilt fra den godkjente konteksten. Datakildene i første versjon er Meta Insights Memory, Training Corpus, Training Examples og Personal Model Readiness.
 
+### AHA Personal Retrieval / RAG V1
+
+AHA kan nå bygge en lokal retrieval-indeks fra godkjent personlig materiale. `js/ahaPersonalRetrieval.js` eksponerer `window.AHAPersonalRetrieval` og lagrer den normaliserte indeksen i `aha_personal_retrieval_index_v1`.
+
+- Indeksen bygger på bekreftede og viktige claims fra **Meta Insights Memory**, approved **Training Corpus** med `useForKnowledge` eller `useForMemory`, approved **Training Examples** og en kompakt **Personal Model Readiness**-status.
+- Retrieval V1 er lexical/heuristic og forklarbar: tittel, prosjekt, begreper, tags, tekst og task type vektes, og hvert treff har `source`, `sourceId`, `sourceType`, `score` og `reasons`.
+- AHA Chat bygger opptil fem relevante treff per brukermelding og legger en kort norsk RAG-kontekst etter eksisterende Personal Context i prompten. Chatpanelet «Personlig søk» viser query, treffantall, toppkilder, score og korte matchgrunner.
+- Training Dashboard har handlingen «Bygg personlig søkeindeks» og viser indekserte items, sist bygget, kildefordeling og status.
+- `js/metaInsightsAgent.js` legger `personalRetrievalPack` i `agentContext`, slik at Meta Insights AI vet om retrieval er tilgjengelig og hvor mye godkjent materiale som er indeksert.
+- V2 kan legge til embeddings og semantisk søk uten å fjerne consent-, approval- eller kildegrensene i V1.
+
+Dette er broen mellom **Personal Context** og full **AHA Personal Model**.
+
 ## 19. Sync Hub go/no-go blocker test lock
 
 Go/no-go-matrisen for AHA Sync Hub er nå låst med en samlet blocker-test. Testen dekker beslutningsmarkører og gates A–J, read-only-runtime, Home module-loading, aktive dashboard-triggere, avgrensede forbidden-call-mønstre og blocked/dry-run-atferd i adapter og state machine.

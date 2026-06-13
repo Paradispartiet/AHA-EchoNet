@@ -668,3 +668,7 @@ pre#out { max-height: 22vh; overflow:auto; white-space: pre-wrap; }
   font-weight: 700;
   text-decoration: none;
 }
+
+.aha-personal-retrieval-results { display: grid; gap: 8px; margin-top: 10px; }
+.aha-personal-retrieval-result { display: grid; gap: 3px; padding: 9px 10px; border: 1px solid rgba(255,255,255,.1); border-radius: 9px; }
+.aha-personal-retrieval-result span, .aha-personal-retrieval-result small { color: var(--aha-muted); }
