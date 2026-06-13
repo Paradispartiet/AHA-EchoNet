@@ -87,26 +87,26 @@ This is a requirements/status model, not a Supabase client implementation or per
 
 - Preview must work without Supabase.
 - Dry-run target inspection must work without Supabase.
-- A dry-run plan may show remote unavailable or blocked readiness.
+- Dry-run plan may show remote unavailable or blocked readiness.
 - Dry-run must not write.
 - Dry-run must not call Supabase write APIs.
 - Missing Supabase/session must not delete `localStorage`.
 - Missing Supabase/session must not hide local counts.
-- Missing Supabase/session must show a blocked remote execution state.
+- Missing Supabase/session must show blocked remote execution state.
 - Preview and dry-run may describe requirements, configuration gaps, and next operator actions without authenticating, writing, or executing.
 
 ## Execution blocking rules
 
-- No execution without an authenticated and authorized session.
-- No remote write without Supabase `ready` state.
+- No execution without authenticated/authorized session.
+- No remote write without Supabase ready state.
 - No audit write without audit readiness.
 - No rollback attempt without rollback readiness.
 - No fallback may convert **NO-GO** into **GO**.
 - No Home action may trigger session-based execution.
-- No page-load or session-ready event may trigger execution.
+- No page-load/session-ready event may trigger execution.
 - No auth-ready event may trigger execution.
 - No storage event may trigger execution.
-- No timer or interval may trigger execution.
+- No timer/interval may trigger execution.
 - A `ready` session or Supabase status is necessary but never sufficient; every gate A–J must independently be **GO for execution**.
 
 ## Required operator visibility
@@ -134,10 +134,10 @@ Unknown, unavailable, blocked, and ready states must remain distinct. A local-on
 - no execution on page load
 - no execution on render
 - no execution on storage event
-- no execution on `visibilitychange`
-- no execution by timer or interval
-- no deleting `localStorage` when Supabase is unavailable
-- no deleting `localStorage` when session is missing
+- no execution on visibilitychange
+- no execution by timer/interval
+- no deleting localStorage when Supabase unavailable
+- no deleting localStorage when session missing
 - no writing audit/history during preview
 - no writing remote data during dry-run
 - no source events
@@ -172,12 +172,18 @@ Gates E, F, G, H, I, and J remain not full **GO for execution**. This review doe
 
 Completing these requirements does not activate Supabase, session handling, audit writing, rollback, or manual sync execution.
 
+## Test coverage
+
+`tests/aha-sync-hub-supabase-session-fallback-before-execution.test.cjs` test-locks the reviewed session states, Supabase availability states, fail-closed fallback behavior, preview/dry-run behavior, execution blockers, operator visibility, forbidden behavior, Gate E–J impact, activation boundary, runtime/HTML safety boundary, and absence of `sync.html`.
+
+This coverage remains review-only and safety-only. Supabase/session fallback implementation is not activated, manual sync execution remains **NO-GO**, Home remains preview-only, and auto-sync is permanently forbidden.
+
 ## Recommended next PR
 
 The single recommended next PR is:
 
 ```text
-test: lock Sync Hub Supabase session fallback before execution
+docs: review disabled Sync Hub execution UI before activation
 ```
 
-That PR should test-lock the reviewed fail-closed fallback, no-write, local-preservation, blocked-state, preview-without-Supabase, and forbidden-trigger requirements only. It must not create `sync.html`, change runtime behavior, call Supabase or a database, call sync or repository persistence, write or delete `localStorage`, activate audit/history writing, implement rollback, publish, share, or enable auto-sync.
+That PR should clarify disabled execution UI requirements only. It must not create `sync.html`, change runtime behavior, call Supabase or a database, call sync or repository persistence, write or delete `localStorage`, activate audit/history writing, implement rollback, publish, share, or enable auto-sync.
