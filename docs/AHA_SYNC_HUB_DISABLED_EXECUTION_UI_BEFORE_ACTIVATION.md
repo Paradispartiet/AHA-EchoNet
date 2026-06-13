@@ -3,6 +3,8 @@
 ## Current decision
 
 - Disabled execution UI requirements are reviewed, not implemented.
+- Disabled execution UI requirements are test-locked; implementation remains not activated.
+- The disabled execution page skeleton is defined in `docs/AHA_SYNC_HUB_DISABLED_EXECUTION_PAGE_SKELETON.md`, not implemented.
 - Manual sync execution remains **NO-GO**.
 - Dedicated execution page remains planned, not implemented.
 - Home remains preview-only.
@@ -165,12 +167,16 @@ All gates A–J must be **GO for execution** before activation. Completing this 
 
 This coverage remains safety-only. Disabled execution UI requirements are test-locked, but the implementation is not activated; Manual sync execution remains **NO-GO**, Home remains preview-only, and Auto-sync is permanently forbidden.
 
+## Disabled execution page skeleton
+
+`docs/AHA_SYNC_HUB_DISABLED_EXECUTION_PAGE_SKELETON.md` now defines the future page sections, inert controls, blocked reasons, loading rules, Home boundary, activation boundary, and Gate E–J impact. The skeleton is **defined, not implemented**; execution UI implementation remains not activated, `sync.html` remains absent, execution remains **NO-GO**, Home remains preview-only, and auto-sync remains permanently forbidden.
+
 ## Recommended next PR
 
 The single recommended next PR is:
 
 ```text
-docs: summarize Sync Hub activation blockers before UI skeleton
+test: lock disabled Sync Hub execution page skeleton boundary
 ```
 
-That PR should consolidate the remaining activation blockers before any disabled page skeleton is considered. It must not create `sync.html`, implement execution UI, enable a sync button, change runtime behavior, call sync, repository, Supabase, or database APIs, write or delete `localStorage`, activate audit/history or rollback, or weaken the permanent auto-sync prohibition.
+That PR should test-lock the skeleton boundary and continued absence of `sync.html`. It must not implement execution UI, enable a sync button, change runtime behavior, call sync, repository, Supabase, or database APIs, write or delete `localStorage`, activate audit/history or rollback, or weaken the permanent auto-sync prohibition.
