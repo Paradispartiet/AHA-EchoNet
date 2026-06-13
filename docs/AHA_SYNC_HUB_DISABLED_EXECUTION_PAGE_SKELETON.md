@@ -41,12 +41,12 @@ It is:
 
 - not created yet
 - not linked from Home yet as an executable execution surface
-- required to be disabled by default when later created
-- forbidden from executing anything on load
-- forbidden from executing anything on render
-- forbidden from executing anything on auth-ready
-- forbidden from executing anything on storage events
-- forbidden from executing anything by timer or interval
+- must be disabled by default when later created
+- must not execute anything on load
+- must not execute anything on render
+- must not execute anything on auth-ready
+- must not execute anything on storage events
+- must not execute anything by timer/interval
 
 ## Proposed page sections
 
@@ -75,13 +75,13 @@ The future controls are:
 
 | Control | Required disabled behavior |
 |---|---|
-| Run manual sync | Disabled until the activation PR and all gates are GO. It must have no hidden click handler and must not write, sync, roll back, publish, or dispatch source events. |
-| Confirm execution | Disabled until the activation PR and all gates are GO. It must have no hidden click handler and must not write, sync, roll back, publish, or dispatch source events. |
-| Retry failed module | Disabled until the activation PR and all gates are GO. It must have no hidden click handler and must not write, sync, roll back, publish, or dispatch source events. |
-| Rollback module | Disabled until the activation PR and all gates are GO. It must have no hidden click handler and must not write, sync, roll back, publish, or dispatch source events. |
-| Write audit/history | Disabled until the activation PR and all gates are GO. It must have no hidden click handler and must not write, sync, roll back, publish, or dispatch source events. |
-| Publish AHAavisa | Disabled until the activation PR and all gates are GO. It must have no hidden click handler and must not write, sync, roll back, publish, or dispatch source events. |
-| Share Groups result | Disabled until the activation PR and all gates are GO. It must have no hidden click handler and must not write, sync, roll back, publish, or dispatch source events. |
+| Run manual sync | Must remain disabled until activation PR and disabled until all gates GO. It must not have hidden click handlers, must not write, must not sync, must not rollback, must not publish, and must not dispatch source events. |
+| Confirm execution | Must remain disabled until activation PR and disabled until all gates GO. It must not have hidden click handlers, must not write, must not sync, must not rollback, must not publish, and must not dispatch source events. |
+| Retry failed module | Must remain disabled until activation PR and disabled until all gates GO. It must not have hidden click handlers, must not write, must not sync, must not rollback, must not publish, and must not dispatch source events. |
+| Rollback module | Must remain disabled until activation PR and disabled until all gates GO. It must not have hidden click handlers, must not write, must not sync, must not rollback, must not publish, and must not dispatch source events. |
+| Write audit/history | Must remain disabled until activation PR and disabled until all gates GO. It must not have hidden click handlers, must not write, must not sync, must not rollback, must not publish, and must not dispatch source events. |
+| Publish AHAavisa | Must remain disabled until activation PR and disabled until all gates GO. It must not have hidden click handlers, must not write, must not sync, must not rollback, must not publish, and must not dispatch source events. |
+| Share Groups result | Must remain disabled until activation PR and disabled until all gates GO. It must not have hidden click handlers, must not write, must not sync, must not rollback, must not publish, and must not dispatch source events. |
 
 Visual disablement alone is insufficient. The controls must be behaviorally inert, including keyboard, delegated, lifecycle, readiness-transition, and delayed activation paths.
 
@@ -105,12 +105,12 @@ A future disabled page must expose these stable blocked reasons:
 
 ## Future page loading rules
 
-- Future `sync.html` may load preview-safe shared scripts.
-- Future `sync.html` must not load module runtime scripts before activation.
-- Future `sync.html` must not import or execute module sync functions before activation.
-- Future `sync.html` must not write audit/history before activation.
-- Future `sync.html` must not write remote data before activation.
-- Future `sync.html` must not write or delete `localStorage` before activation.
+- future sync.html may load preview-safe shared scripts
+- future sync.html must not load module runtime scripts before activation
+- future sync.html must not import or execute module sync functions before activation
+- future sync.html must not write audit/history before activation
+- future sync.html must not write remote data before activation
+- future sync.html must not write or delete localStorage before activation
 
 Permitted preview-safe loading must remain side-effect-free and must not create an indirect execution or write path.
 
@@ -169,12 +169,18 @@ Gates E, F, G, H, I, and J remain not full **GO for execution**. This skeleton d
 
 Implementation of a disabled page remains separate from execution activation and must preserve every no-write, no-sync, and no-auto-sync boundary.
 
+## Test coverage
+
+`tests/aha-sync-hub-disabled-execution-page-skeleton-boundary.test.cjs` test-locks the documented skeleton, future loading rules, disabled controls, blocked reasons, Home boundary, activation boundary, Gate E–J impact, runtime/HTML safety boundary, module-loading boundary, and continued absence of `sync.html`.
+
+The disabled execution page skeleton remains defined, not implemented. Manual sync execution remains **NO-GO**, and this test coverage does not activate UI, runtime, writes, sync, rollback, audit/history, Supabase/session fallback, or auto-sync.
+
 ## Recommended next PR
 
 The single recommended next PR is:
 
 ```text
-test: lock disabled Sync Hub execution page skeleton boundary
+docs: define Sync Hub execution page implementation boundary
 ```
 
-That PR should test-lock this documentation boundary and the continued absence of `sync.html`. It must not implement the page, change runtime, add execution handlers, activate writes, call sync or persistence APIs, or weaken the permanent auto-sync prohibition.
+That PR should define the technical boundary for a later disabled-only skeleton implementation. It must not create `sync.html`, implement the page, change runtime, add execution handlers, activate writes, call sync or persistence APIs, or weaken the permanent auto-sync prohibition.

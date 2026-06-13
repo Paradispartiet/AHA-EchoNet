@@ -8,6 +8,7 @@ const AUDIT_HISTORY_REQUIREMENTS_FILE = 'docs/AHA_SYNC_HUB_AUDIT_HISTORY_ACTIVAT
 const ROLLBACK_NO_WRITE_REQUIREMENTS_FILE = 'docs/AHA_SYNC_HUB_ROLLBACK_NO_WRITE_FAILURE_MODES.md';
 const SUPABASE_SESSION_FALLBACK_FILE = 'docs/AHA_SYNC_HUB_SUPABASE_SESSION_FALLBACK_BEFORE_EXECUTION.md';
 const DISABLED_EXECUTION_UI_FILE = 'docs/AHA_SYNC_HUB_DISABLED_EXECUTION_UI_BEFORE_ACTIVATION.md';
+const DISABLED_EXECUTION_PAGE_SKELETON_FILE = 'docs/AHA_SYNC_HUB_DISABLED_EXECUTION_PAGE_SKELETON.md';
 const SYNC_HUB_FILE = 'js/ahaSyncHub.js';
 const DRY_RUN_TARGET_ADAPTER_FILE = 'js/ahaManualSyncDryRunTargetAdapter.js';
 const ADAPTER_FILE = 'js/ahaManualSyncAdapter.js';
@@ -70,6 +71,7 @@ function readyInput(patch = {}) {
   const rollbackNoWriteRequirementsCode = read(ROLLBACK_NO_WRITE_REQUIREMENTS_FILE);
   const supabaseSessionFallbackCode = read(SUPABASE_SESSION_FALLBACK_FILE);
   const disabledExecutionUiCode = read(DISABLED_EXECUTION_UI_FILE);
+  const disabledExecutionPageSkeletonCode = read(DISABLED_EXECUTION_PAGE_SKELETON_FILE);
   const syncHubCode = read(SYNC_HUB_FILE);
   const dryRunTargetAdapterCode = read(DRY_RUN_TARGET_ADAPTER_FILE);
   const adapterCode = read(ADAPTER_FILE);
@@ -189,6 +191,15 @@ function readyInput(patch = {}) {
   assert.ok(disabledExecutionUiCode.includes(ACTIVATION_PR), 'disabled execution UI must still require the activation PR');
   assert.match(disabledExecutionUiCode, /Manual sync execution remains \*\*NO-GO\*\*/, 'disabled execution UI must retain manual sync NO-GO');
   assert.match(disabledExecutionUiCode, /Auto-sync is permanently forbidden/, 'disabled execution UI must retain the permanent auto-sync prohibition');
+
+  // Regression lock: the dedicated page remains a test-locked skeleton, not an execution path.
+  assert.match(disabledExecutionPageSkeletonCode, /Test coverage[\s\S]*test-locks/i, 'disabled execution page skeleton must be test-locked');
+  assert.equal(fs.existsSync('sync.html'), false, 'sync.html must remain absent');
+  assert.match(disabledExecutionPageSkeletonCode, /defined, not implemented/i, 'dedicated execution page must remain unimplemented');
+  assert.equal(/href=["']sync\.html["']/i.test(homeCode), false, 'Home must not link to an executable execution page');
+  assert.ok(disabledExecutionPageSkeletonCode.includes(ACTIVATION_PR), 'skeleton execution must still require the activation PR');
+  assert.match(disabledExecutionPageSkeletonCode, /Manual sync execution remains \*\*NO-GO\*\*/, 'manual sync execution must remain NO-GO');
+  assert.match(disabledExecutionPageSkeletonCode, /Auto-sync is permanently forbidden/, 'auto-sync must remain permanently forbidden');
 
   // Only the active Home Sync Hub renderer is scanned; dormant preview helpers are a separate gated layer.
   const activeSyncHubRenderer = extractFunction(dashboardCode, 'renderSyncHubStatus');
