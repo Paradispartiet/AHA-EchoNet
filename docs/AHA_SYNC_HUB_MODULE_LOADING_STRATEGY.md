@@ -9,7 +9,7 @@
 - Module loading for execution requires a later dedicated PR.
 - Preview/dry-run may inspect metadata only.
 
-This strategy documents a future execution boundary; it does not activate execution, authorize writes, or make module runtime available on Home.
+This strategy documents a future execution boundary; it does not activate execution, authorize writes, or make module runtime available on Home. The dedicated-page proposal is detailed in `docs/AHA_SYNC_HUB_DEDICATED_EXECUTION_PAGE_PLAN.md`; the page is planned, not implemented.
 
 ## Current Home loading boundary
 
@@ -32,7 +32,7 @@ Home status and preview must remain read-only. The module runtime files can cont
 
 ### Option A: dedicated sync execution page
 
-- Use a separate page, for example `sync.html`.
+- Use the separately planned `sync.html` described in `docs/AHA_SYNC_HUB_DEDICATED_EXECUTION_PAGE_PLAN.md`; it is planned, not implemented.
 - Load sync module runtime only on that page.
 - Require explicit user action before any execution.
 - Keep the execution surface isolated and easiest to audit.
@@ -66,7 +66,7 @@ Reasons:
 - makes an explicit user click easier to require and prove
 - makes Supabase/session, audit, and rollback behavior easier to isolate
 
-This recommendation is an architecture decision only. Creating the page, loading module runtime, or enabling execution requires later, separately reviewed work.
+This recommendation is an architecture decision only. The dedicated page is planned, not implemented. Creating the page, loading module runtime, or enabling execution requires later, separately reviewed work. The Home boundary remains test-locked, and execution remains **NO-GO**.
 
 ## Required gates before module runtime loading
 
@@ -135,13 +135,13 @@ These paths remain forbidden before and after any future manual-execution activa
 
 ## Recommended next PR
 
-The Home boundary is now test-locked. The single recommended next PR is:
+The Home boundary is test-locked, and the dedicated execution page is now planned but not implemented. The single recommended next PR is:
 
 ```text
-docs: plan dedicated Sync Hub execution page
+docs: review manual sync audit/history activation requirements
 ```
 
-That PR must remain documentation-only and must not load module runtime on Home, enable execution, write data, or weaken the permanent auto-sync prohibition.
+That PR must remain documentation-only and must not create `sync.html`, load module runtime on Home, enable execution, write data, or weaken the permanent auto-sync prohibition.
 
 ## Boundary test coverage
 

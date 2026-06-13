@@ -1661,3 +1661,27 @@ docs: plan dedicated Sync Hub execution page
 ```
 
 Den anbefalte PR-en skal være dokumentasjons-only. Den skal ikke laste modulruntime på Home, aktivere execution, gjøre databasekall, skrive data eller svekke det permanente auto-sync-forbudet.
+
+## 26. AHA Sync Hub dedicated execution page plan
+
+`docs/AHA_SYNC_HUB_DEDICATED_EXECUTION_PAGE_PLAN.md` plans Option A as the future isolated manual-sync execution surface. The proposed file is `sync.html`, but it is **planned, not implemented**. The plan defines the future loading boundary, required activation gates, explicit manual trigger and confirmation requirements, proposed page states, disabled-by-default policy, forbidden automatic triggers, and phased follow-up work.
+
+Gjeldende status er:
+
+- **Dedicated execution page: planned, not implemented**
+- **Home: preview-only**
+- **Home module runtime loading: forbidden and test-locked**
+- **Execution: NO-GO**
+- **Auto-sync: permanently forbidden**
+
+Home kan fortsatt bare bruke `js/ahaSyncHub.js`, `js/ahaManualSyncDryRunTargetAdapter.js` og `js/ahaDashboard.js` for read-only status og preview. Home skal fortsatt ikke laste `js/ahaLists.js`, `js/ahaPaths.js`, `js/ahaGroups.js` eller `js/ahaAvisa.js`. Planen oppretter ikke `sync.html`, laster ikke execution runtime, aktiverer ingen sync og autoriserer ingen writes.
+
+Før execution kan vurderes må alle gates A–J være **GO for execution**, og den separate activation-PR-en må hete nøyaktig `feat: activate manual AHA Sync Hub execution`. Auto-sync forblir permanent forbudt.
+
+Neste anbefalte PR er:
+
+```text
+docs: review manual sync audit/history activation requirements
+```
+
+Den anbefalte PR-en skal være dokumentasjons-only. Den skal avklare audit/history-kontrakten uten å opprette `sync.html`, laste modulruntime på Home, aktivere execution, gjøre databasekall, skrive data eller svekke det permanente auto-sync-forbudet.

@@ -15,6 +15,8 @@ This review consolidates the current Sync Hub preview evidence, the remaining ex
 
 The current implementation may inspect and present read-only or dry-run information. It must not execute sync, call repository persistence, write data, or introduce an automatic trigger.
 
+The dedicated execution page is planned, not implemented. The activation PR `feat: activate manual AHA Sync Hub execution` remains required, all gates A–J must be **GO for execution**, and auto-sync remains permanently forbidden.
+
 ## Current implemented evidence
 
 | Area | Evidence | Status | Notes |
@@ -24,6 +26,7 @@ The current implementation may inspect and present read-only or dry-run informat
 | Go/no-go matrix | `docs/AHA_SYNC_HUB_GO_NO_GO_MATRIX.md` | **GO for preview** | Defines gates A–J and preserves execution NO-GO. |
 | Activation evidence review | `docs/AHA_SYNC_HUB_ACTIVATION_EVIDENCE.md` | **GO for preview** | Collects current evidence and missing execution proof. |
 | Module loading strategy and boundary | `docs/AHA_SYNC_HUB_MODULE_LOADING_STRATEGY.md`; `tests/aha-sync-hub-module-loading-boundary.test.cjs` | **Test-locked for Home; NO-GO for execution** | Selects a dedicated execution page as the future loading boundary and test-locks Home as preview-only with module runtime unloaded. This is not execution approval. |
+| Dedicated execution page plan | `docs/AHA_SYNC_HUB_DEDICATED_EXECUTION_PAGE_PLAN.md` | **Planned, not implemented; NO-GO for execution** | Defines the proposed `sync.html` isolation boundary, disabled-by-default policy, page states, activation gates, and phased work without creating the page or loading execution runtime. |
 | Dry-run target adapter | `js/ahaManualSyncDryRunTargetAdapter.js`; `tests/aha-manual-sync-dry-run-target-adapter.test.cjs` | **GO for preview** | Produces blocked, no-write plans and does not execute targets. |
 | Dry-run target preview | `js/ahaDashboard.js`; `tests/aha-home-manual-sync-dry-run-preview.test.cjs` | **GO for preview** | Displays target and blocker information without a runnable sync action. |
 | Dry-run target evidence tests | `tests/aha-manual-sync-dry-run-target-evidence.test.cjs` | **GO for preview** | Locks preview-only, no-write, and no-sync behavior. |
@@ -36,7 +39,7 @@ The current implementation may inspect and present read-only or dry-run informat
 | Gate | Name | Current status | Evidence | Missing before activation | Decision |
 |---|---|---|---|---|---|
 | **A** | Runtime target gate | **PARTIAL** | Read-only and dry-run registries identify Lists, Paths, Groups, and AHAavisa, including local keys, tables, runtime globals, and sync function names. | Establish one canonical execution contract, resolve `avisa`/`ahaavisa`, and prove the approved write method for every module. | **NO-GO for execution** |
-| **B** | Module loading gate | **NO-GO for execution** | `docs/AHA_SYNC_HUB_MODULE_LOADING_STRATEGY.md` documents the Home boundary, `tests/aha-sync-hub-module-loading-boundary.test.cjs` test-locks it, and Option A recommends a dedicated execution page. Home intentionally does not load the four module runtime files. | Plan and review the dedicated execution page, audit initialization/binding side effects, and implement loading only in later dedicated work after every gate is GO. | **NO-GO for execution** |
+| **B** | Module loading gate | **NO-GO for execution** | `docs/AHA_SYNC_HUB_MODULE_LOADING_STRATEGY.md` documents the Home boundary, `tests/aha-sync-hub-module-loading-boundary.test.cjs` test-locks it, and `docs/AHA_SYNC_HUB_DEDICATED_EXECUTION_PAGE_PLAN.md` plans Option A without implementing it. Home intentionally does not load the four module runtime files. | Review initialization/binding side effects, then implement the dedicated execution page only in later separate work after every gate A–J is GO for execution. | **NO-GO for execution** |
 | **C** | Manual trigger gate | **PARTIAL** | State-machine and blocker evidence model explicit confirmation and reject non-click preview triggers; no executable Home button exists. | Prove one explicit click per run, one-time confirmation, in-flight disablement, double-click/re-entry protection, and absence of all automatic triggers. | **NO-GO for execution** |
 | **D** | Dry-run/preview gate | **GO for preview** | Dry-run target preview and per-module result preview are implemented and test-locked as blocked, no-write, and no-sync. | Preserve the preview boundary and keep it separate from execution; all other gates must become execution-GO in a later review. | **NO-GO for execution** |
 | **E** | Blocker gate | **GO for preview** | Readiness, checklist, target, validation, and confirmation blockers exist, and current Home behavior remains blocked. | Activation tests must prove every blocker and transition, with blocked meaning no module write and no hidden write. | **NO-GO for execution** |
@@ -110,10 +113,10 @@ These requirements are cumulative. Preview success, adapter availability, or par
 
 ## Recommended next PR
 
-The module loading strategy and Home boundary are now test-locked. The single recommended next PR is:
+The module loading strategy and Home boundary are test-locked, and the dedicated execution page is planned but not implemented. The single recommended next PR is:
 
 ```text
-docs: plan dedicated Sync Hub execution page
+docs: review manual sync audit/history activation requirements
 ```
 
-That PR must remain documentation-only. It must not load module runtime files on Home, activate execution, create an executable sync button, call sync or repository persistence, or write data. The dedicated activation PR `feat: activate manual AHA Sync Hub execution` remains separately required and is not allowed yet.
+That PR must remain documentation-only. It must not create `sync.html`, load module runtime files on Home, activate execution, create an executable sync button, call sync or repository persistence, or write data. The dedicated activation PR `feat: activate manual AHA Sync Hub execution` remains separately required and is not allowed until all gates A–J are **GO for execution**. Auto-sync remains permanently forbidden.
