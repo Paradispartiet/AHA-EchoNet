@@ -226,6 +226,25 @@
     } catch { return null; }
   }
 
+  function buildPersonalAiLoopPackSafe() {
+    const api = global.AHAPersonalAiLoopAudit;
+    if (!api) return null;
+    try {
+      const audit = api.loadLastAudit?.() || api.runAudit?.();
+      if (!audit) return null;
+      const approved = asObject(audit.checks?.approvedMaterial);
+      return {
+        status: asText(audit.status) || "empty",
+        score: Number(audit.score) || 0,
+        approvedCorpus: Number(approved.approvedCorpus) || 0,
+        approvedExamples: Number(approved.approvedExamples) || 0,
+        indexedItems: Number(audit.retrieval?.indexedItems) || 0,
+        retrievalAvailable: Boolean(audit.retrieval?.available),
+        recommendations: asArray(audit.recommendations).slice(0, 6)
+      };
+    } catch { return null; }
+  }
+
   function buildReasoningFrame() {
     return {
       language: "nb-NO",
@@ -275,6 +294,10 @@
       ? options.semanticRetrievalPack
       : buildSemanticRetrievalPackSafe();
     if (semanticRetrievalPack) context.semanticRetrievalPack = semanticRetrievalPack;
+    const personalAiLoopPack = options.personalAiLoopPack && typeof options.personalAiLoopPack === "object"
+      ? options.personalAiLoopPack
+      : buildPersonalAiLoopPackSafe();
+    if (personalAiLoopPack) context.personalAiLoopPack = personalAiLoopPack;
     return context;
   }
 

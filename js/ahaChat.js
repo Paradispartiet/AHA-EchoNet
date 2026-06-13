@@ -583,6 +583,27 @@
     `).join("");
   }
 
+  function renderAhaPersonalAiLoopStatus() {
+    const host = document.getElementById("aha-personal-ai-loop-status");
+    if (!host) return null;
+    const api = global.AHAPersonalAiLoopAudit;
+    if (!api?.runAudit) {
+      host.textContent = "Personal AI Loop-audit er ikke tilgjengelig.";
+      return null;
+    }
+    let audit = null;
+    try { audit = api.loadLastAudit?.() || api.runAudit(); } catch {}
+    if (!audit) {
+      host.textContent = "Personal AI Loop-status kunne ikke leses.";
+      return null;
+    }
+    const approved = audit.checks?.approvedMaterial || {};
+    const readiness = audit.readiness || {};
+    const sample = audit.checks?.sampleQuery || {};
+    host.textContent = `Status: ${audit.status} (${Number(audit.score) || 0}/100). Retrieval: ${Number(audit.retrieval?.indexedItems) || 0} indeksert. Godkjent corpus: ${Number(approved.approvedCorpus) || 0}. Godkjente examples: ${Number(approved.approvedExamples) || 0}. Readiness: ${readiness.level || "ukjent"}. Sample query: ${sample.ok ? `${Number(sample.resultCount) || 0} treff` : "trenger kontroll"}.`;
+    return audit;
+  }
+
   function normalizeAhaMemoryText(text) {
     return String(text || "")
       .toLowerCase()
@@ -6103,6 +6124,7 @@
       setStatusNote(`Personlig kontekst aktiv · Personlig søk aktiv · ${personalContext.retrieval.results.length} relevante treff.`);
     } else if (personalContext?.prompt) setStatusNote("Personlig kontekst aktiv.");
     renderAhaPersonalContextStatus();
+    renderAhaPersonalAiLoopStatus();
     let count = 0;
     if (savingEnabled) {
       count = handleUserMessage(cleanText);

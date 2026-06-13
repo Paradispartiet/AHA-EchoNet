@@ -1947,3 +1947,15 @@ Første versjon bruker en lokal, forklarbar semantisk representasjon (`local_sem
 Hybrid search beregnes som `lexicalScore * 0.45 + semanticScore * 0.45 + sourceWeight * 0.10`, der bekreftede/viktige memory claims vektes høyest, godkjent corpus og training examples middels/høyt, og readiness summary lavere. Resultatene bærer `semanticScore`, `hybridScore` og forklarende `reasons` som begrepsmatch, prosjektmatch, semantisk nærhet, bekreftet selvinnsikt og godkjent corpus.
 
 Chat kan bruke semantisk RAG-kontekst via AHA Chat Personal Context, Training Dashboard kan bygge semantisk indeks, Personal AI Loop Audit måler semantic readiness, og Meta Insights Agent får en `semanticRetrievalPack` som forteller om semantisk personlig søk er tilgjengelig. Fremtidig V3 kan kobles til eksterne embeddings eller vektordatabase via `external_embedding` uten å endre consent-grunnlaget.
+
+## Personal AI Loop Audit
+
+AHA har nå en sammenhengende personlig AI-sløyfe fra godkjent materiale til retrieval og chat-kontekst. `AHAPersonalAiLoopAudit` kjører en lokal, read-only validering av datasources, approved material, retrieval index, chat integration, privacy/consent og en sample query gjennom personal context, retrieval og RAG prompt block.
+
+Training Dashboard viser samlet status og score, tellinger for godkjent corpus, godkjente training examples, memory claims og indekserte retrieval-items, samt sample-resultater og konkrete anbefalinger. Brukeren kan kjøre auditen manuelt, og siste resultat lagres lokalt i `aha_personal_ai_loop_audit_v1`.
+
+AHA Chat viser en kompakt Personal AI Loop-status med retrieval-størrelse, approved corpus/examples, readiness level og sample query-status. Meta Insights AI får samtidig en kompakt `personalAiLoopPack` med status, score, materialtellinger, retrieval availability og anbefalinger.
+
+Auditen verifiserer at Personal Retrieval bare bruker godkjent corpus med `consent.useForKnowledge` eller `consent.useForMemory`, godkjente training examples og confirmed/important memory claims. Simulerte treff beholder source, score og forklarende reasons frem til RAG-konteksten.
+
+Dette markerer overgangen fra bygging av enkeltmoduler til validering av samlet personlig AI-system.

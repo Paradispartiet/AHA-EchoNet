@@ -29,6 +29,7 @@
   function readinessApi() { return global.AHAPersonalModelReadiness; }
   function retrievalApi() { return global.AHAPersonalRetrieval; }
   function semanticApi() { return global.AHASemanticRetrieval; }
+  function auditApi() { return global.AHAPersonalAiLoopAudit; }
 
   function setStat(id, value) {
     const el = $(id);
@@ -201,6 +202,39 @@
     `;
   }
 
+  function renderAiLoopAudit(auditArg = null) {
+    const mount = $("training-ai-loop-audit-report");
+    if (!mount) return;
+    const api = auditApi();
+    if (!api?.runAudit) {
+      mount.innerHTML = `<p class="aha-training-empty">Personal AI Loop Audit-modulen er ikke lastet.</p>`;
+      return;
+    }
+    let audit = auditArg;
+    if (!audit) {
+      try { audit = api.loadLastAudit?.() || api.runAudit(); } catch { audit = null; }
+    }
+    if (!audit) {
+      mount.innerHTML = `<p class="aha-training-empty">Auditen kunne ikke kjøres.</p>`;
+      return;
+    }
+    const approved = audit.checks?.approvedMaterial || {};
+    const recommendations = asArray(audit.recommendations).map((item) => `<li>${escapeHtml(item)}</li>`).join("");
+    mount.innerHTML = `
+      <div class="aha-training-stats">
+        <div class="aha-mini-stat"><strong>${escapeHtml(audit.status || "empty")}</strong><span>Status</span></div>
+        <div class="aha-mini-stat"><strong>${Number(audit.score) || 0}/100</strong><span>Score</span></div>
+        <div class="aha-mini-stat"><strong>${Number(approved.approvedCorpus) || 0}</strong><span>Approved corpus</span></div>
+        <div class="aha-mini-stat"><strong>${Number(approved.approvedExamples) || 0}</strong><span>Approved examples</span></div>
+        <div class="aha-mini-stat"><strong>${(Number(approved.confirmedClaims) || 0) + (Number(approved.importantClaims) || 0)}</strong><span>Memory claims</span></div>
+        <div class="aha-mini-stat"><strong>${Number(audit.retrieval?.indexedItems) || 0}</strong><span>Indexed retrieval items</span></div>
+        <div class="aha-mini-stat"><strong>${Number(audit.checks?.sampleQuery?.resultCount) || 0}</strong><span>Sample query results</span></div>
+      </div>
+      <p class="module-meta">${escapeHtml(audit.summary || "")}</p>
+      <ul class="aha-training-recommendations">${recommendations}</ul>
+    `;
+  }
+
   function setMessage(text) {
     const el = $("training-message");
     if (el) el.textContent = text || "";
@@ -211,6 +245,7 @@
     renderReadiness();
     renderRetrieval();
     renderSemanticRetrieval();
+    renderAiLoopAudit();
     renderCorpusList();
     renderExamplesList();
   }
@@ -264,6 +299,15 @@
     renderRetrieval();
   }
 
+  function handleAiLoopAudit() {
+    const api = auditApi();
+    if (!api?.runAudit) return;
+    const audit = api.runAudit();
+    try { global.localStorage?.setItem("aha_personal_ai_loop_audit_v1", JSON.stringify(audit)); } catch {}
+    setMessage(`Personal AI Loop Audit: ${audit.status}, ${audit.score}/100.`);
+    renderAiLoopAudit(audit);
+  }
+
   function bindActions() {
     if (!doc) return;
     $("training-import-btn")?.addEventListener("click", handleImport);
@@ -271,6 +315,7 @@
     $("training-export-btn")?.addEventListener("click", handleExport);
     $("training-retrieval-btn")?.addEventListener("click", handleRetrievalRefresh);
     $("training-semantic-retrieval-btn")?.addEventListener("click", handleSemanticRetrievalRefresh);
+    $("training-ai-loop-audit-btn")?.addEventListener("click", handleAiLoopAudit);
 
     $("training-corpus-list")?.addEventListener("click", (event) => {
       const target = event.target;
@@ -318,7 +363,7 @@
     renderAll();
   }
 
-  const AHATrainingDashboard = { init, renderAll, renderStats, renderReadiness, renderRetrieval, renderSemanticRetrieval, renderCorpusList, renderExamplesList, handleRetrievalRefresh, handleSemanticRetrievalRefresh };
+  const AHATrainingDashboard = { init, renderAll, renderStats, renderReadiness, renderRetrieval, renderSemanticRetrieval, renderAiLoopAudit, renderCorpusList, renderExamplesList, handleRetrievalRefresh, handleSemanticRetrievalRefresh, handleAiLoopAudit };
 
   if (typeof module !== "undefined" && module.exports) {
     module.exports = AHATrainingDashboard;
