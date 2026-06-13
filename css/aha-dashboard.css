@@ -2042,3 +2042,45 @@ html, body { max-width: 100%; overflow-x: hidden; }
 .aha-training-empty {
   color: var(--aha-muted);
 }
+
+/* AHA Music Discovery on History Go */
+.aha-historygo-music-audit,
+.aha-historygo-nearby-music-wrap,
+.aha-historygo-place-music-preview { display: grid; gap: 12px; margin-top: 12px; }
+.aha-historygo-music-card {
+  border: 1px solid rgba(255, 211, 71, .28);
+  border-radius: 18px;
+  padding: 16px;
+  background: rgba(255, 211, 71, .07);
+  display: grid;
+  gap: 10px;
+}
+.aha-historygo-music-chip {
+  width: max-content;
+  border: 1px solid rgba(255, 211, 71, .42);
+  border-radius: 999px;
+  padding: 4px 10px;
+  color: var(--aha-accent);
+  font-weight: 800;
+  font-size: .78rem;
+}
+.aha-historygo-content-summary,
+.aha-historygo-nearby-music li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.aha-historygo-content-summary span,
+.aha-historygo-nearby-music span {
+  border-radius: 999px;
+  background: rgba(255,255,255,.07);
+  padding: 4px 9px;
+  color: var(--aha-muted);
+  font-size: .85rem;
+}
+.aha-historygo-nearby-music { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.aha-historygo-nearby-music li { justify-content: space-between; border: 1px solid var(--aha-border); border-radius: 12px; padding: 10px 12px; }
+.aha-historygo-music-card ul { margin: 0; padding-left: 18px; display: grid; gap: 8px; }
+.aha-historygo-music-card p,
+.aha-historygo-music-audit p { color: var(--aha-muted); margin: 0; }

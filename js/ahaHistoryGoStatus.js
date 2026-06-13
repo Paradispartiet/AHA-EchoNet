@@ -136,6 +136,40 @@
     };
   }
 
+  function renderMusicDiscovery() {
+    const auditEl = document.getElementById("hg-music-audit");
+    const nearbyEl = document.getElementById("hg-nearby-music");
+    const previewEl = document.getElementById("hg-place-music-preview");
+    if (!auditEl && !nearbyEl && !previewEl) return;
+    if (!global.AHAMusicHistoryGoDiscovery) {
+      if (auditEl) auditEl.innerHTML = "<p>AHA Music Discovery-loader mangler.</p>";
+      return;
+    }
+    global.AHAMusicHistoryGoDiscovery.loadBridgeData().then((data) => {
+      const indexed = global.AHAMusicHistoryGoDiscovery.buildMusicByPlace(data);
+      const audit = global.AHAMusicHistoryGoDiscovery.auditBridgeData(data);
+      const places = Object.keys(indexed.musicByPlace);
+      if (auditEl) {
+        auditEl.innerHTML = `<div class="aha-profile-status-grid">
+          <article class="aha-status-card"><strong>${escapeHtml(String(audit.artistRelationsRead))}</strong><span>artist-place-relasjoner lest</span></article>
+          <article class="aha-status-card"><strong>${escapeHtml(String(audit.trackRelationsRead))}</strong><span>track-place-relasjoner lest</span></article>
+          <article class="aha-status-card"><strong>${escapeHtml(String(audit.uniquePlaceIdsWithMusic))}</strong><span>unike placeId-er med musikk</span></article>
+          <article class="aha-status-card"><strong>${escapeHtml(String(audit.relationsMissingPlaceId))}</strong><span>relasjoner med manglende placeId</span></article>
+          <article class="aha-status-card"><strong>${escapeHtml(String(audit.relationsWithUnknownPlaceId))}</strong><span>placeId ikke funnet i History Go-data</span></article>
+        </div>
+        <p><strong>Topp steder etter sanger:</strong> ${escapeHtml(audit.topPlacesByTracks.map((item) => `${item.placeId} (${item.count})`).join(", ") || "Ingen")}</p>
+        <p><strong>Topp steder etter artister:</strong> ${escapeHtml(audit.topPlacesByArtists.map((item) => `${item.placeId} (${item.count})`).join(", ") || "Ingen")}</p>`;
+      }
+      if (nearbyEl) nearbyEl.innerHTML = global.AHAMusicHistoryGoDiscovery.renderNearbyMusicPlaces(indexed.musicByPlace);
+      if (previewEl) {
+        const placeId = places[0];
+        previewEl.innerHTML = placeId ? global.AHAMusicHistoryGoDiscovery.renderPlaceMusic(placeId, indexed.musicByPlace[placeId]) : "<p>Ingen sikre musikkrelasjoner med History Go-placeId ennå.</p>";
+      }
+    }).catch((error) => {
+      if (auditEl) auditEl.innerHTML = `<p>Kunne ikke lese AHA Music-data: ${escapeHtml(error && error.message ? error.message : "ukjent feil")}</p>`;
+    });
+  }
+
   function render() {
     const status = collectHistoryGoStatus();
     const payload = collectImportPayloadSummary();
@@ -192,6 +226,8 @@
 
     const insightCountEl = document.getElementById("hg-imported-insights-count");
     if (insightCountEl) insightCountEl.textContent = String(imported.importedInsightsCount);
+
+    renderMusicDiscovery();
   }
 
   function refresh() {
@@ -202,6 +238,7 @@
     collectHistoryGoStatus,
     collectImportPayloadSummary,
     collectImportedAhaEvents,
+    renderMusicDiscovery,
     render,
     refresh
   };
