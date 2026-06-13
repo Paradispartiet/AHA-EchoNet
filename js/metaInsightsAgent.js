@@ -138,6 +138,18 @@
   // Treningsgrunnlaget for AHA Personal Model. Bygges bare når både
   // AHATrainingCorpus og AHATrainingExamples finnes – slik at agenten kan
   // se om brukeren samler corpus og treningseksempler.
+  function buildPersonalModelReadinessPackSafe() {
+    const readinessApi = global.AHAPersonalModelReadiness;
+    if (!readinessApi || typeof readinessApi.buildReadinessReport !== "function") return null;
+    if (typeof readinessApi.buildCompactPack !== "function") return null;
+    try {
+      const report = readinessApi.buildReadinessReport();
+      return readinessApi.buildCompactPack(report);
+    } catch {
+      return null;
+    }
+  }
+
   function buildTrainingPackSafe() {
     const corpusApi = global.AHATrainingCorpus;
     const examplesApi = global.AHATrainingExamples;
@@ -192,6 +204,10 @@
       ? options.trainingPack
       : buildTrainingPackSafe();
     if (trainingPack) context.trainingPack = trainingPack;
+    const personalModelReadinessPack = options.personalModelReadinessPack && typeof options.personalModelReadinessPack === "object"
+      ? options.personalModelReadinessPack
+      : buildPersonalModelReadinessPackSafe();
+    if (personalModelReadinessPack) context.personalModelReadinessPack = personalModelReadinessPack;
     return context;
   }
 

@@ -21,6 +21,7 @@ function makeContext(seed = {}) {
   vm.createContext(context);
   vm.runInContext(fs.readFileSync("js/ahaTrainingCorpus.js", "utf8"), context, { filename: "js/ahaTrainingCorpus.js" });
   vm.runInContext(fs.readFileSync("js/ahaTrainingExamples.js", "utf8"), context, { filename: "js/ahaTrainingExamples.js" });
+  vm.runInContext(fs.readFileSync("js/ahaPersonalModelReadiness.js", "utf8"), context, { filename: "js/ahaPersonalModelReadiness.js" });
   return { context, store };
 }
 
@@ -191,6 +192,7 @@ function makeContext(seed = {}) {
     assert.equal(parsed.messages[1].role, "assistant");
     assert.equal(parsed.metadata.source, "aha_training_examples", "metadata.source skal settes");
     assert.ok(parsed.metadata.taskType, "metadata.taskType skal settes");
+    assert.ok(parsed.metadata.language, "metadata.language skal settes");
   });
 
   // 11. Uten fine-tuning-samtykke skal eksport være tom selv om examples er godkjent.
@@ -210,13 +212,100 @@ function makeContext(seed = {}) {
   assert.equal(stats.byTaskType.summary, 1);
 }
 
+
+// ── Personal Model Readiness V1 håndterer tomt corpus.
+{
+  const { context } = makeContext();
+  const readiness = context.AHAPersonalModelReadiness;
+  assert.ok(readiness, "AHAPersonalModelReadiness skal eksporteres");
+  const report = readiness.buildReadinessReport({ now: "2026-01-01T00:00:00.000Z" });
+  assert.equal(report.level, "tom", "tomt corpus skal gi nivå tom");
+  assert.equal(report.score, 0, "tomt corpus skal gi score 0");
+  assert.equal(report.exportReadiness.jsonlReady, false, "tomt corpus skal ikke være JSONL-klart");
+}
+
+// ── Readiness-score øker med approved corpus, og mer med approved examples.
+{
+  const { context } = makeContext();
+  const corpus = context.AHATrainingCorpus;
+  const examples = context.AHATrainingExamples;
+  const readiness = context.AHAPersonalModelReadiness;
+  const baseScore = readiness.buildReadinessReport().score;
+  const item = corpus.addCorpusItem({ id: "r1", text: "Jeg ønsker bedre prosjektminne.", source: "manual" });
+  corpus.markCorpusItemStatus(item.id, "approved");
+  corpus.setCorpusConsent(item.id, { useForTrainingExamples: true, useForFineTuning: true, useForStyle: true });
+  const corpusScore = readiness.buildReadinessReport().score;
+  examples.addExample({ corpusItemId: item.id, taskType: "summary", input: "i", output: "o", status: "approved", language: "no" });
+  const exampleScore = readiness.buildReadinessReport().score;
+  assert.ok(corpusScore > baseScore, "approved corpus skal øke readiness-score");
+  assert.ok(exampleScore > corpusScore, "approved examples skal øke readiness-score mer");
+}
+
+// ── Fine-tuning consent påvirker exportReadiness.
+{
+  const { context } = makeContext();
+  const corpus = context.AHATrainingCorpus;
+  const examples = context.AHATrainingExamples;
+  const readiness = context.AHAPersonalModelReadiness;
+  const item = corpus.addCorpusItem({ id: "r2", text: "Eksporttest.", source: "manual" });
+  corpus.markCorpusItemStatus(item.id, "approved");
+  examples.addExample({ corpusItemId: item.id, taskType: "summary", input: "i", output: "o", status: "approved", language: "no" });
+  assert.equal(readiness.buildReadinessReport().exportReadiness.exportableExamples, 0, "uten fine-tuning consent er ingen examples eksportbare");
+  corpus.setCorpusConsent(item.id, { useForFineTuning: true });
+  assert.equal(readiness.buildReadinessReport().exportReadiness.exportableExamples, 1, "med fine-tuning consent er example eksportbart");
+}
+
+// ── analyzeCoverage(), analyzeConsent(), analyzeExportReadiness() og buildCompactPack().
+{
+  const { context } = makeContext();
+  const readiness = context.AHAPersonalModelReadiness;
+  const corpusItems = [
+    { id: "a", source: "aha_notes", language: "no", status: "approved", consent: { useForMemory: true, useForTrainingExamples: true, useForFineTuning: true, useForStyle: true, useForKnowledge: true } },
+    { id: "b", source: "aha_feed", language: "en", status: "approved", consent: { useForMemory: false, useForTrainingExamples: false, useForFineTuning: false, useForStyle: false, useForKnowledge: true } }
+  ];
+  const examples = [
+    { corpusItemId: "a", taskType: "summary", language: "no", status: "approved" },
+    { corpusItemId: "a", taskType: "style_example", language: "no", status: "approved" },
+    { corpusItemId: "b", taskType: "memory_fact", language: "en", status: "draft" }
+  ];
+  const coverage = readiness.analyzeCoverage(corpusItems, examples);
+  assert.equal(coverage.byTaskType.summary, 1, "taskType summary skal telles");
+  assert.equal(coverage.sourceDiversity, 2, "source diversity skal telles");
+  assert.equal(coverage.hasStyleExamples, true, "style examples skal oppdages");
+  assert.equal(coverage.hasMemoryFacts, true, "memory facts skal oppdages");
+  const consent = readiness.analyzeConsent(corpusItems);
+  assert.equal(consent.total, 2, "consent total skal telles");
+  assert.equal(consent.trainingExamplesAllowed, 1, "training consent skal telles");
+  assert.equal(consent.fineTuningAllowed, 1, "fine-tuning consent skal telles");
+  const exportReadiness = readiness.analyzeExportReadiness(corpusItems, examples);
+  assert.equal(exportReadiness.approvedExamples, 2, "approved examples skal telles");
+  assert.equal(exportReadiness.exportableExamples, 2, "exportable examples skal telles via corpus consent");
+  const pack = readiness.buildCompactPack({
+    level: "klar for eksport", score: 80, corpus: { approved: 2 }, examples: { approved: 2 },
+    exportReadiness, ragReadiness: { ready: true }, fineTuningReadiness: { ready: false }, styleReadiness: { ready: true },
+    recommendations: ["A", "B", "C", "D"]
+  });
+  assert.equal(pack.level, "klar for eksport", "compact pack skal ha level");
+  assert.equal(pack.topRecommendations.length, 3, "compact pack skal begrense anbefalinger");
+}
+
+// ── Training dashboard renderer Personal Model Readiness.
+{
+  const dashboard = fs.readFileSync("js/ahaTrainingDashboard.js", "utf8");
+  assert.ok(dashboard.includes("renderReadiness"), "dashboard skal ha renderReadiness");
+  assert.ok(dashboard.includes("training-readiness-report"), "dashboard skal rendere readiness mount");
+  assert.ok(dashboard.includes("Personal Model Readiness") || fs.readFileSync("training.html", "utf8").includes("Personal Model Readiness"), "dashboard/html skal vise Personal Model Readiness");
+}
+
 // ── 12. training.html laster nødvendige scripts.
 {
   const html = fs.readFileSync("training.html", "utf8");
   assert.ok(html.includes("js/ahaTrainingCorpus.js"), "training.html skal laste ahaTrainingCorpus.js");
   assert.ok(html.includes("js/ahaTrainingExamples.js"), "training.html skal laste ahaTrainingExamples.js");
+  assert.ok(html.includes("js/ahaPersonalModelReadiness.js"), "training.html skal laste ahaPersonalModelReadiness.js");
   assert.ok(html.includes("js/ahaTrainingDashboard.js"), "training.html skal laste ahaTrainingDashboard.js");
   assert.ok(html.includes("AHA Training Corpus"), "training.html skal ha header");
+  assert.ok(html.includes("Personal Model Readiness"), "training.html skal vise readiness-panel");
   assert.ok(html.includes("Importer fra AHA"), "training.html skal ha import-handling");
 }
 
@@ -247,6 +336,7 @@ function makeContext(seed = {}) {
   vm.createContext(ctx);
   vm.runInContext(fs.readFileSync("js/ahaTrainingCorpus.js", "utf8"), ctx, { filename: "js/ahaTrainingCorpus.js" });
   vm.runInContext(fs.readFileSync("js/ahaTrainingExamples.js", "utf8"), ctx, { filename: "js/ahaTrainingExamples.js" });
+  vm.runInContext(fs.readFileSync("js/ahaPersonalModelReadiness.js", "utf8"), ctx, { filename: "js/ahaPersonalModelReadiness.js" });
   vm.runInContext(fs.readFileSync("js/metaInsightsAgent.js", "utf8"), ctx, { filename: "js/metaInsightsAgent.js" });
 
   // Seed corpus + examples.
@@ -262,6 +352,9 @@ function makeContext(seed = {}) {
   assert.ok(Object.prototype.hasOwnProperty.call(agentContext.trainingPack, "approvedExamples"), "approvedExamples skal med");
   assert.ok(Object.prototype.hasOwnProperty.call(agentContext.trainingPack, "styleAllowed"), "styleAllowed skal med");
   assert.ok(Object.prototype.hasOwnProperty.call(agentContext.trainingPack, "trainingExamplesAllowed"), "trainingExamplesAllowed skal med");
+  assert.ok(agentContext.personalModelReadinessPack, "personalModelReadinessPack skal finnes når readiness-modulen er lastet");
+  assert.equal(agentContext.personalModelReadinessPack.approvedCorpus, 1, "approvedCorpus skal med i readiness-pack");
+  assert.ok(Object.prototype.hasOwnProperty.call(agentContext.personalModelReadinessPack, "ragReady"), "ragReady skal med");
 }
 
 // ── Uten Training-moduler skal trainingPack utelates.
