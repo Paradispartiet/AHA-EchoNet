@@ -8,6 +8,7 @@
 - Home must not load sync module runtime.
 - Auto-sync is permanently forbidden.
 - No execution page may run sync until all activation gates are **GO**.
+- Audit/history activation requirements are reviewed in `docs/AHA_SYNC_HUB_AUDIT_HISTORY_ACTIVATION_REQUIREMENTS.md`, but no audit/history write path is implemented or activated.
 
 This plan defines a future isolation boundary only. It does not create an execution page, activate manual sync, authorize writes, or change runtime behavior.
 
@@ -61,7 +62,7 @@ This loading boundary is a proposal, not an implementation authorization. None o
 - [ ] A dry-run preview must be required before execution.
 - [ ] A per-module result preview must be required before execution.
 - [ ] Per-module error handling must be defined and approved.
-- [ ] Audit/history behavior must be defined and approved.
+- [x] Audit/history requirements are reviewed in `docs/AHA_SYNC_HUB_AUDIT_HISTORY_ACTIVATION_REQUIREMENTS.md`; implementation, write-path approval, and activation evidence remain outstanding.
 - [ ] Supabase/session fallback must be defined and approved.
 - [ ] A rollback/no-write failure mode must be defined and approved.
 - [ ] A remote error must never delete localStorage data.
@@ -149,9 +150,9 @@ Tests must prove that controls remain disabled and that page load, render, stora
 
 ### Phase 4: execution contract review
 
-**Status: future PR.**
+**Status: in review; not implemented.**
 
-The audit/history, session fallback, per-module error, rollback, and no-write failure contracts must be reviewed and approved.
+The audit/history requirements are reviewed in `docs/AHA_SYNC_HUB_AUDIT_HISTORY_ACTIVATION_REQUIREMENTS.md`, but audit/history writing is not implemented or activated. Session fallback, real per-module error behavior, rollback, and no-write failure contracts still require review and approval.
 
 ### Phase 5: activation PR
 
@@ -170,7 +171,7 @@ It may be considered only after all gates A–J are **GO for execution**. Auto-s
 The single recommended next PR is:
 
 ```text
-docs: review manual sync audit/history activation requirements
+test: lock manual sync audit/history activation requirements
 ```
 
-Audit/history behavior is a required activation gate and should be defined before a disabled execution-page skeleton is proposed. That PR must remain documentation-only and must not create `sync.html`, load module runtime on Home, activate sync, write data, or weaken the permanent auto-sync prohibition.
+The audit/history contract is now reviewed but remains unimplemented. The next PR should test-lock its disabled, preview-only, no-write requirements without creating `sync.html`, loading module runtime on Home, activating sync or audit writes, writing data, or weakening the permanent auto-sync prohibition.
