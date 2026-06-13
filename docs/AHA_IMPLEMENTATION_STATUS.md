@@ -1531,6 +1531,18 @@ Alt er local-first (`localStorage`). Ingen sync, ingen nettverkskall, ingen data
 
 Dette legger grunnlaget for senere personlig modelltilpasning (AHA Personal Model).
 
+### Personal Model Readiness
+
+Personal Model Readiness er V1-broen mellom Training Corpus og **AHA Personal Model**. `js/ahaPersonalModelReadiness.js` eksponerer `window.AHAPersonalModelReadiness` og svarer på om brukerens materiale er klart for senere personlig modelltilpasning.
+
+- Readiness vurderer hvor klart brukerens materiale er for personlig modelltilpasning.
+- Scoren bygger på corpus, godkjente training examples, samtykke, coverage/source- og task-variasjon, kvalitet og eksportklarhet.
+- Modulen skiller mellom **RAG-klarhet**, **stilklarhet** og **fine-tuning-klarhet**, slik at AHA kan anbefale RAG før finjustering når materialet ennå er begrenset.
+- `training.html` laster readiness-scriptet og Training Dashboard viser panelet «Personal Model Readiness» med level, score, summary, approved corpus, approved examples, exportable examples og anbefalinger.
+- `js/metaInsightsAgent.js` legger en kompakt `personalModelReadinessPack` i agentContext når readiness-modulen finnes, slik at Meta Insights AI kan forstå om brukeren bygger grunnlag for personlig minne, RAG, stilmodell og senere modelltilpasning.
+
+Dette er neste trinn mellom Training Corpus og AHA Personal Model: materialet kan auditeres før det brukes til eksport, RAG eller finjustering.
+
 ## 19. Sync Hub go/no-go blocker test lock
 
 Go/no-go-matrisen for AHA Sync Hub er nå låst med en samlet blocker-test. Testen dekker beslutningsmarkører og gates A–J, read-only-runtime, Home module-loading, aktive dashboard-triggere, avgrensede forbidden-call-mønstre og blocked/dry-run-atferd i adapter og state machine.

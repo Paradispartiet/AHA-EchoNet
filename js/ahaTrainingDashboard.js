@@ -26,6 +26,7 @@
 
   function corpusApi() { return global.AHATrainingCorpus; }
   function examplesApi() { return global.AHATrainingExamples; }
+  function readinessApi() { return global.AHAPersonalModelReadiness; }
 
   function setStat(id, value) {
     const el = $(id);
@@ -96,6 +97,35 @@
     `).join("");
   }
 
+  function renderReadiness() {
+    const mount = $("training-readiness-report");
+    if (!mount) return;
+    const readiness = readinessApi();
+    if (!readiness?.buildReadinessReport) {
+      mount.innerHTML = `<p class="aha-training-empty">Readiness-modulen er ikke lastet ennå.</p>`;
+      return;
+    }
+
+    const report = readiness.buildReadinessReport();
+    const recommendations = asArray(report.recommendations).map((item) => `<li>${escapeHtml(item)}</li>`).join("");
+    const flag = (value) => value ? "Klar" : "Ikke klar";
+    mount.innerHTML = `
+      <div class="aha-training-stats">
+        <div class="aha-mini-stat"><strong>${escapeHtml(report.level)}</strong><span>Level</span></div>
+        <div class="aha-mini-stat"><strong>${Number(report.score) || 0}/100</strong><span>Score</span></div>
+        <div class="aha-mini-stat"><strong>${Number(report.corpus?.approved) || 0}</strong><span>Godkjent corpus</span></div>
+        <div class="aha-mini-stat"><strong>${Number(report.examples?.approved) || 0}</strong><span>Godkjente examples</span></div>
+        <div class="aha-mini-stat"><strong>${Number(report.exportReadiness?.exportableExamples) || 0}</strong><span>Eksporterbare</span></div>
+        <div class="aha-mini-stat"><strong>${escapeHtml(flag(report.ragReadiness?.ready))}</strong><span>RAG readiness</span></div>
+        <div class="aha-mini-stat"><strong>${escapeHtml(flag(report.fineTuningReadiness?.ready))}</strong><span>Fine-tuning readiness</span></div>
+        <div class="aha-mini-stat"><strong>${escapeHtml(flag(report.styleReadiness?.ready))}</strong><span>Style readiness</span></div>
+      </div>
+      <p class="module-meta">${escapeHtml(report.summary)}</p>
+      <p class="module-meta">Tekster brukes som treningsgrunnlag først når du har godkjent dem og slått på relevant bruk.</p>
+      <ul class="aha-training-recommendations">${recommendations}</ul>
+    `;
+  }
+
   function renderExamplesList() {
     const mount = $("training-examples-list");
     if (!mount) return;
@@ -132,6 +162,7 @@
 
   function renderAll() {
     renderStats();
+    renderReadiness();
     renderCorpusList();
     renderExamplesList();
   }
@@ -220,7 +251,7 @@
     renderAll();
   }
 
-  const AHATrainingDashboard = { init, renderAll, renderStats, renderCorpusList, renderExamplesList };
+  const AHATrainingDashboard = { init, renderAll, renderStats, renderReadiness, renderCorpusList, renderExamplesList };
 
   if (typeof module !== "undefined" && module.exports) {
     module.exports = AHATrainingDashboard;
