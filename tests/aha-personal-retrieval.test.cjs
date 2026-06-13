@@ -157,3 +157,83 @@ function richContext() {
 }
 
 console.log("aha-personal-retrieval tests passed");
+
+// 15–29. Semantic Retrieval V2: features, vectorer, hybrid RAG, UI/audit/agent integrasjon.
+{
+  const { context } = richContext();
+  run("js/ahaPersonalRetrieval.js", context);
+  run("js/ahaSemanticRetrieval.js", context);
+  const api = context.AHASemanticRetrieval;
+  const features = api.extractSemanticFeatures("Modellen lærer av personlig innsikt", { title: "AHA læringsmodell", project: "AHA Retrieval", concepts: ["personlig læring"], tags: ["modell"], sourceType: "confirmed_claim" });
+  assert.ok(features.tokens.includes("modell"));
+  assert.ok(features.concepts.includes("personlig læring"));
+  assert.ok(features.projectTerms.includes("aha retrieval"));
+  const vector = api.buildLocalVector(features);
+  assert.deepEqual(vector.dimensions, [...vector.dimensions].sort());
+  assert.ok(vector.weights.modell > 0);
+  const similar = api.buildLocalVector(api.extractSemanticFeatures("personlig læring modell", { concepts: ["personlig læring"] }));
+  const different = api.buildLocalVector(api.extractSemanticFeatures("hest mat vær"));
+  assert.ok(api.cosineSimilarity(vector, similar) > api.cosineSimilarity(vector, different));
+
+  const empty = makeContext();
+  run("js/ahaPersonalRetrieval.js", empty.context);
+  run("js/ahaSemanticRetrieval.js", empty.context);
+  assert.equal(empty.context.AHASemanticRetrieval.buildSemanticIndex().stats.total, 0);
+
+  const index = api.refreshSemanticIndex({ now: "2026-06-13T12:00:00.000Z" });
+  assert.equal(index.stats.corpusItems, 1);
+  assert.equal(index.stats.examples, 1);
+  assert.equal(index.stats.memoryClaims, 2);
+  assert.ok(index.items.every((item) => item.type === "semantic_retrieval_item" && item.vectorModel === "local_semantic_v1"));
+
+  const semantic = api.searchSemanticKnowledge("lokalt søk etter kunnskap i AHA", { limit: 5, minScore: 0.01 });
+  assert.ok(semantic.results.length);
+  assert.ok(semantic.results[0].semanticScore >= 0);
+  assert.ok(semantic.results[0].reasons.length);
+  const hybrid = api.hybridSearch("AHA Retrieval lexical RAG", { limit: 5 });
+  assert.ok(hybrid.results.length);
+  assert.ok(hybrid.results[0].hybridScore >= 0);
+  assert.ok("lexicalScore" in hybrid.results[0]);
+  assert.ok("semanticScore" in hybrid.results[0]);
+  const rag = api.buildSemanticRagContext("AHA Retrieval", { limit: 3 });
+  assert.ok(rag.contextText.includes("AHA Semantic Retrieval"));
+  assert.ok(rag.contextText.length <= 1200);
+  assert.ok(api.buildSemanticPromptBlock(rag).includes("semantisk relevante"));
+
+  const personalRag = context.AHAPersonalRetrieval.buildRagContext("AHA Retrieval", { limit: 3 });
+  assert.equal(personalRag.mode, "hybrid");
+  assert.equal(personalRag.semanticAvailable, true);
+  run("js/ahaChatPersonalContext.js", context);
+  const message = context.AHAChatPersonalContext.buildMessageContext("Hvordan virker AHA Retrieval?");
+  assert.equal(message.retrieval.mode, "hybrid");
+  assert.ok(message.prompt.includes("AHA Semantic Retrieval"));
+  const pcStatus = context.AHAChatPersonalContext.getPersonalContextStatus();
+  assert.equal(pcStatus.semanticRetrievalAvailable, true);
+  assert.equal(pcStatus.retrievalMode, "hybrid");
+
+  run("js/ahaPersonalAiLoopAudit.js", context);
+  const audit = context.AHAPersonalAiLoopAudit.runAudit();
+  assert.ok(audit.semanticRetrieval);
+  assert.ok(audit.score >= 5);
+
+  run("js/metaInsightsAgent.js", context);
+  const agentContext = context.AHAMetaInsightsAgent.buildAgentContext({ meta_insight: {}, temporal: {} });
+  assert.equal(agentContext.semanticRetrievalPack.available, true);
+  assert.equal(agentContext.semanticRetrievalPack.vectorModel, "local_semantic_v1");
+}
+
+{
+  const chatHtml = fs.readFileSync("chat.html", "utf8");
+  const trainingHtml = fs.readFileSync("training.html", "utf8");
+  const dashboard = fs.readFileSync("js/ahaTrainingDashboard.js", "utf8");
+  const audit = fs.readFileSync("js/ahaPersonalAiLoopAudit.js", "utf8");
+  const agent = fs.readFileSync("js/metaInsightsAgent.js", "utf8");
+  assert.ok(chatHtml.includes("js/ahaSemanticRetrieval.js"));
+  assert.ok(chatHtml.indexOf("ahaPersonalRetrieval.js") < chatHtml.indexOf("ahaSemanticRetrieval.js"));
+  assert.ok(trainingHtml.includes("Semantic Retrieval Index"));
+  assert.ok(trainingHtml.includes("Bygg semantisk søkeindeks"));
+  assert.ok(dashboard.includes("renderSemanticRetrieval"));
+  assert.ok(audit.includes("checkSemanticRetrieval"));
+  assert.ok(audit.includes("semanticRetrieval"));
+  assert.ok(agent.includes("semanticRetrievalPack"));
+}

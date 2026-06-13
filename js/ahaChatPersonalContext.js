@@ -289,9 +289,16 @@
     const retrievalApi = global.AHAPersonalRetrieval;
     if (retrievalApi && typeof retrievalApi.buildRagContext === "function") {
       retrieval = safeCall(() => retrievalApi.buildRagContext(userMessage, { limit: 5 }), null);
-      if (retrieval && typeof retrievalApi.buildRagPromptBlock === "function") {
+      if (retrieval && retrieval.semanticAvailable && global.AHASemanticRetrieval?.buildSemanticPromptBlock) {
+        retrievalPrompt = safeCall(() => global.AHASemanticRetrieval.buildSemanticPromptBlock(retrieval), "");
+      }
+      if (!retrievalPrompt && retrieval && typeof retrievalApi.buildRagPromptBlock === "function") {
         retrievalPrompt = safeCall(() => retrievalApi.buildRagPromptBlock(retrieval), "");
       }
+    }
+    if (retrieval) {
+      retrieval.mode = retrieval.mode || (retrieval.semanticAvailable ? "hybrid" : "lexical");
+      retrieval.semanticAvailable = Boolean(retrieval.semanticAvailable);
     }
     const prompt = [personalPrompt, retrievalPrompt].filter(Boolean).join("\n\n");
     return { context, relevant, retrieval, prompt };
@@ -300,6 +307,7 @@
   function getPersonalContextStatus() {
     const context = buildPersonalContext({ corpusLimit: 10, exampleLimit: 10 });
     const retrievalStatus = asObject(safeCall(() => global.AHAPersonalRetrieval?.getRetrievalStatus?.(), {}));
+    const semanticStatus = asObject(safeCall(() => global.AHASemanticRetrieval?.getSemanticStatus?.(), {}));
     return {
       available: Boolean(context.evidence.confirmedClaims || context.evidence.approvedCorpus || context.evidence.approvedExamples),
       approvedCorpus: context.evidence.approvedCorpus,
@@ -311,7 +319,11 @@
       hasProjectContext: asArray(context.projects).length > 0,
       retrievalAvailable: Boolean(retrievalStatus.available),
       indexedItems: Number(retrievalStatus.indexedItems) || 0,
-      lastRetrievalIndexBuiltAt: asText(retrievalStatus.lastBuiltAt)
+      lastRetrievalIndexBuiltAt: asText(retrievalStatus.lastBuiltAt),
+      semanticRetrievalAvailable: Boolean(semanticStatus.available),
+      semanticIndexedItems: Number(semanticStatus.indexedItems) || 0,
+      semanticVectorModel: asText(semanticStatus.vectorModel),
+      retrievalMode: semanticStatus.available ? "hybrid" : (retrievalStatus.available ? "lexical" : "none")
     };
   }
 

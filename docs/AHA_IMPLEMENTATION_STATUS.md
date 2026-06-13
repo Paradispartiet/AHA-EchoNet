@@ -1937,3 +1937,13 @@ test: lock Sync Hub execution page implementation boundary
 ```
 
 Den anbefalte PR-en skal bare testlåse implementation boundaryen og fortsatt fravær/inerthet. Den skal ikke implementere siden, aktivere execution eller writes, eller svekke det permanente auto-sync-forbudet.
+
+## AHA Semantic Retrieval V2
+
+AHA Semantic Retrieval V2 legger semantisk matching over Personal Retrieval V1. V1 bygger fortsatt det samtykkestyrte grunnlaget fra godkjent Meta Insights Memory, Training Corpus, Training Examples og Personal Model Readiness; V2 bruker denne retrieval-indeksen som primær kilde slik at approved-/consent-filtreringen forblir samlet.
+
+Første versjon bruker en lokal, forklarbar semantisk representasjon (`local_semantic_v1`) med tokens, enkle norske stammer, fraser, prosjekttermer, concepts/tags og deterministiske sparse vectors. Semantic retrieval kobles inn i `AHAPersonalRetrieval.buildRagContext()`: når `window.AHASemanticRetrieval` finnes og gir treff, brukes hybrid RAG-kontekst; ellers faller chat tilbake til lexical V1.
+
+Hybrid search beregnes som `lexicalScore * 0.45 + semanticScore * 0.45 + sourceWeight * 0.10`, der bekreftede/viktige memory claims vektes høyest, godkjent corpus og training examples middels/høyt, og readiness summary lavere. Resultatene bærer `semanticScore`, `hybridScore` og forklarende `reasons` som begrepsmatch, prosjektmatch, semantisk nærhet, bekreftet selvinnsikt og godkjent corpus.
+
+Chat kan bruke semantisk RAG-kontekst via AHA Chat Personal Context, Training Dashboard kan bygge semantisk indeks, Personal AI Loop Audit måler semantic readiness, og Meta Insights Agent får en `semanticRetrievalPack` som forteller om semantisk personlig søk er tilgjengelig. Fremtidig V3 kan kobles til eksterne embeddings eller vektordatabase via `external_embedding` uten å endre consent-grunnlaget.

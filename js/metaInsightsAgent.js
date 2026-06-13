@@ -191,6 +191,25 @@
     }
   }
 
+  function buildSemanticRetrievalPackSafe() {
+    const api = global.AHASemanticRetrieval;
+    if (!api || typeof api.getSemanticStatus !== "function") return null;
+    try {
+      const status = api.getSemanticStatus();
+      let hybridReady = false;
+      if (typeof api.hybridSearch === "function") {
+        const sample = api.hybridSearch("AHA personlig innsikt", { limit: 1, minScore: 0 });
+        hybridReady = Boolean(sample?.results?.length);
+      }
+      return {
+        available: Boolean(status?.available), indexedItems: Number(status?.indexedItems) || 0,
+        vectorModel: asText(status?.vectorModel), corpusItems: Number(status?.corpusItems) || 0,
+        examples: Number(status?.examples) || 0, memoryClaims: Number(status?.memoryClaims) || 0,
+        hybridReady
+      };
+    } catch { return null; }
+  }
+
   function buildPersonalRetrievalPackSafe() {
     const api = global.AHAPersonalRetrieval;
     if (!api || typeof api.getRetrievalStatus !== "function") return null;
@@ -252,6 +271,10 @@
       ? options.personalRetrievalPack
       : buildPersonalRetrievalPackSafe();
     if (personalRetrievalPack) context.personalRetrievalPack = personalRetrievalPack;
+    const semanticRetrievalPack = options.semanticRetrievalPack && typeof options.semanticRetrievalPack === "object"
+      ? options.semanticRetrievalPack
+      : buildSemanticRetrievalPackSafe();
+    if (semanticRetrievalPack) context.semanticRetrievalPack = semanticRetrievalPack;
     return context;
   }
 
