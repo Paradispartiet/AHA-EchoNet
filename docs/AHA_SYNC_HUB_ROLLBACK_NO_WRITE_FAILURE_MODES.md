@@ -157,12 +157,18 @@ Gates F, G, H, I, and J remain not full **GO for execution**. All gates A–J mu
 
 Completing this review does not implement rollback or satisfy the remaining execution, fallback, audit-write, or test gates.
 
+## Test coverage
+
+`tests/aha-manual-sync-rollback-no-write-failure-modes.test.cjs` test-locks the current decision, no-write policy, failure mode table, per-module expectations, rollback status model, operator visibility, forbidden behavior, Gate F–J impact, activation boundary, absent `sync.html`, and the no-execution boundary for the Home Sync Hub surfaces.
+
+This coverage is requirements-only. Rollback implementation remains not activated, the audit write path remains not activated, manual sync execution remains **NO-GO**, Home remains preview-only, and auto-sync is permanently forbidden.
+
 ## Recommended next PR
 
 The single recommended next PR is:
 
 ```text
-test: lock manual sync rollback and no-write failure modes
+docs: review Sync Hub Supabase session fallback before execution
 ```
 
-That PR should test-lock these review requirements only. It must not activate rollback, audit writing, manual sync execution, module writes, repository persistence, database calls, `localStorage` writes or deletion, source events, insights, publishing, social sharing, or auto-sync.
+That PR should review fail-closed Supabase/session fallback requirements only. It must not activate rollback, audit writing, manual sync execution, module writes, repository persistence, database calls, `localStorage` writes or deletion, source events, insights, publishing, social sharing, or auto-sync.
