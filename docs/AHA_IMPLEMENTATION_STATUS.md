@@ -6,7 +6,25 @@
 
 > **Sync Hub activation evidence (2026-06-11):** Se [`AHA_SYNC_HUB_ACTIVATION_EVIDENCE.md`](./AHA_SYNC_HUB_ACTIVATION_EVIDENCE.md) for review av gates A–J, current blockers og manglende bevis før activation. Manual execution er fortsatt NO-GO; auto-sync er permanent forbudt.
 
-Statusdato: 2026-06-07
+Statusdato: 2026-06-13
+
+## Sync Hub audit/history safety lock
+
+```text
+✅ Audit/history activation requirements are reviewed and test-locked.
+❌ Audit/history write path is not activated or implemented for the reviewed execution boundary.
+❌ Manual sync execution remains NO-GO.
+✅ Home remains preview-only.
+⛔ Auto-sync is permanently forbidden.
+```
+
+Denne sikkerhets-/testfasen endrer ikke runtime, HTML eller CSS, oppretter ikke `sync.html`, og aktiverer ingen sync-, repository-, database-, audit-, source-event-, insight-, publish- eller social-sharing-path. Gates F, G, H, I og J er fortsatt ikke full **GO for execution**, og activation PR `feat: activate manual AHA Sync Hub execution` er fortsatt påkrevd etter at alle gates A–J er GO.
+
+Neste anbefalte PR:
+
+```text
+docs: review manual sync rollback and no-write failure modes
+```
 
 Dette dokumentet oppsummerer nåværende implementasjonsstatus for AHA etter dokumentlåser, sync-hardening, Search note_reanalysis-visning, Mindmap tombstone-filtrering, Mindmap note_reanalysis-visning, Lists-, Paths-, Meta Insights-, Groups- og AHAavisa/Articles-bolkene, Sync Hub pre-sync UI, manual sync execution contract, manual sync confirmation modal, audit log preview, target selector preview, manual sync target contract, manual sync adapter interface stub, execution state machine stub, manual sync run summary preview, activation blocker tests og target adapter dry-run harness og database_existing wiring til eksisterende AHARepository target, manual sync audit log writer, read-only result history/details, retry eligibility preview, end-to-end-verifikasjon av den manuelle sync-løypa mot mock/stub av eksisterende database target, kompakte statuskort på AHA Home, module health i modulmenyen, normaliserte Home-korttitler/empty states, forbedret mobile/tablet-layout, final polish/accessibility og en samlet completion summary for AHA Home og Sync Hub, samt dokumentert review av module pages og Home entry points for Lists, Paths, Groups og AHAavisa, og forbedret Paths module experience.
 
