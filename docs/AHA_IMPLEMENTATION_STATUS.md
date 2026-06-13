@@ -8,22 +8,23 @@
 
 Statusdato: 2026-06-13
 
-## Sync Hub audit/history safety lock
+## Sync Hub rollback/no-write review
 
 ```text
-✅ Audit/history activation requirements are reviewed and test-locked.
-❌ Audit/history write path is not activated or implemented for the reviewed execution boundary.
+✅ Rollback/no-write requirements are reviewed.
+❌ Rollback implementation is not activated.
+❌ Audit/history write path is not activated for the reviewed execution boundary.
 ❌ Manual sync execution remains NO-GO.
 ✅ Home remains preview-only.
 ⛔ Auto-sync is permanently forbidden.
 ```
 
-Denne sikkerhets-/testfasen endrer ikke runtime, HTML eller CSS, oppretter ikke `sync.html`, og aktiverer ingen sync-, repository-, database-, audit-, source-event-, insight-, publish- eller social-sharing-path. Gates F, G, H, I og J er fortsatt ikke full **GO for execution**, og activation PR `feat: activate manual AHA Sync Hub execution` er fortsatt påkrevd etter at alle gates A–J er GO.
+Denne dokumentasjons-/reviewfasen endrer ikke runtime, JavaScript, HTML, CSS eller tester, oppretter ikke `sync.html`, og aktiverer ingen rollback-, sync-, repository-, database-, audit-, source-event-, insight-, publish- eller social-sharing-path. Gates F, G, H, I og J er fortsatt ikke full **GO for execution**, og activation PR `feat: activate manual AHA Sync Hub execution` er fortsatt påkrevd etter at alle gates A–J er GO.
 
 Neste anbefalte PR:
 
 ```text
-docs: review manual sync rollback and no-write failure modes
+test: lock manual sync rollback and no-write failure modes
 ```
 
 Dette dokumentet oppsummerer nåværende implementasjonsstatus for AHA etter dokumentlåser, sync-hardening, Search note_reanalysis-visning, Mindmap tombstone-filtrering, Mindmap note_reanalysis-visning, Lists-, Paths-, Meta Insights-, Groups- og AHAavisa/Articles-bolkene, Sync Hub pre-sync UI, manual sync execution contract, manual sync confirmation modal, audit log preview, target selector preview, manual sync target contract, manual sync adapter interface stub, execution state machine stub, manual sync run summary preview, activation blocker tests og target adapter dry-run harness og database_existing wiring til eksisterende AHARepository target, manual sync audit log writer, read-only result history/details, retry eligibility preview, end-to-end-verifikasjon av den manuelle sync-løypa mot mock/stub av eksisterende database target, kompakte statuskort på AHA Home, module health i modulmenyen, normaliserte Home-korttitler/empty states, forbedret mobile/tablet-layout, final polish/accessibility og en samlet completion summary for AHA Home og Sync Hub, samt dokumentert review av module pages og Home entry points for Lists, Paths, Groups og AHAavisa, og forbedret Paths module experience.
@@ -1752,3 +1753,29 @@ test: lock manual sync audit/history activation requirements
 ```
 
 Den anbefalte PR-en skal bare testlåse de dokumenterte disabled-/preview-/no-write-kravene. Den skal ikke aktivere audit writing, manual sync execution, auto-sync eller andre runtime-side effects.
+
+## 28. AHA Sync Hub rollback and no-write failure modes review
+
+`docs/AHA_SYNC_HUB_ROLLBACK_NO_WRITE_FAILURE_MODES.md` reviews the rollback and no-write contract required before future manual sync activation can be considered. The review defines the no-write policy, failure-mode behavior, per-module rollback evidence for Lists, Paths, Groups, and AHAavisa, the rollback status model, required operator visibility, forbidden side effects, gate impact, and concrete requirements before activation.
+
+Gjeldende status er:
+
+- **Rollback/no-write requirements: reviewed**
+- **Rollback implementation: not activated**
+- **Audit write path: not activated**
+- **Dedicated execution page: planned, not implemented**
+- **Execution: NO-GO**
+- **Home: preview-only**
+- **Auto-sync: permanently forbidden**
+
+Reviewen påvirker Gate F for per-module errors/results, Gate G for no-write safety, Gate H for audit/history, Gate I for Supabase/session fallback og Gate J for nødvendig test evidence. Gates F, G, H, I og J er fortsatt ikke full **GO for execution**, og alle gates A–J må være GO før activation-PR-en `feat: activate manual AHA Sync Hub execution` kan vurderes.
+
+Ingen rollback-kode, audit writer, execution-side, runtime-sync, databasekall, repository save/load, `localStorage`-write eller sletting, source events, insights, publisering eller social sharing er opprettet eller aktivert av reviewen. Home forblir preview-only, manual sync execution forblir **NO-GO**, og auto-sync forblir permanent forbudt.
+
+Neste anbefalte PR er:
+
+```text
+test: lock manual sync rollback and no-write failure modes
+```
+
+Den anbefalte PR-en skal bare testlåse de dokumenterte rollback/no-write-kravene. Den skal ikke aktivere rollback, audit writing, manual sync execution, auto-sync eller andre runtime-side effects.

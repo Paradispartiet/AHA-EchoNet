@@ -9,6 +9,7 @@
 - Auto-sync is permanently forbidden.
 - No execution page may run sync until all activation gates are **GO**.
 - Audit/history activation requirements are reviewed in `docs/AHA_SYNC_HUB_AUDIT_HISTORY_ACTIVATION_REQUIREMENTS.md`, but no audit/history write path is implemented or activated.
+- Rollback/no-write failure modes are reviewed in `docs/AHA_SYNC_HUB_ROLLBACK_NO_WRITE_FAILURE_MODES.md`, but rollback and execution remain not implemented.
 
 This plan defines a future isolation boundary only. It does not create an execution page, activate manual sync, authorize writes, or change runtime behavior.
 
@@ -64,7 +65,7 @@ This loading boundary is a proposal, not an implementation authorization. None o
 - [ ] Per-module error handling must be defined and approved.
 - [x] Audit/history requirements are reviewed in `docs/AHA_SYNC_HUB_AUDIT_HISTORY_ACTIVATION_REQUIREMENTS.md`; implementation, write-path approval, and activation evidence remain outstanding.
 - [ ] Supabase/session fallback must be defined and approved.
-- [ ] A rollback/no-write failure mode must be defined and approved.
+- [x] Rollback/no-write failure modes are reviewed in `docs/AHA_SYNC_HUB_ROLLBACK_NO_WRITE_FAILURE_MODES.md`; test-locking, implementation, and activation evidence remain outstanding.
 - [ ] A remote error must never delete localStorage data.
 - [ ] Hidden writes must be impossible and test-locked.
 - [ ] Auto-sync must remain impossible and permanently forbidden.
@@ -152,7 +153,7 @@ Tests must prove that controls remain disabled and that page load, render, stora
 
 **Status: in review; not implemented.**
 
-The audit/history requirements are reviewed in `docs/AHA_SYNC_HUB_AUDIT_HISTORY_ACTIVATION_REQUIREMENTS.md`, but audit/history writing is not implemented or activated. Session fallback, real per-module error behavior, rollback, and no-write failure contracts still require review and approval.
+The audit/history requirements and rollback/no-write failure modes are reviewed in their dedicated documents, but audit/history writing, rollback, and execution are not implemented or activated. Session fallback, real per-module error behavior, and test-locked rollback/no-write evidence still require review and approval.
 
 ### Phase 5: activation PR
 
@@ -171,7 +172,7 @@ It may be considered only after all gates A–J are **GO for execution**. Auto-s
 The single recommended next PR is:
 
 ```text
-test: lock manual sync audit/history activation requirements
+test: lock manual sync rollback and no-write failure modes
 ```
 
-The audit/history contract is now reviewed but remains unimplemented. The next PR should test-lock its disabled, preview-only, no-write requirements without creating `sync.html`, loading module runtime on Home, activating sync or audit writes, writing data, or weakening the permanent auto-sync prohibition.
+Rollback/no-write failure modes are now reviewed but remain unimplemented. The next PR should test-lock their disabled, preview-only, dry-run, local-preservation, partial-failure, and rollback-status requirements without creating `sync.html`, loading module runtime on Home, activating rollback, sync, or audit writes, writing data, or weakening the permanent auto-sync prohibition.
