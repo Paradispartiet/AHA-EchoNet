@@ -4,7 +4,7 @@
 
 - Audit/history activation requirements are reviewed, not implemented.
 - Manual sync execution remains **NO-GO**.
-- The dedicated execution page remains planned, not implemented.
+- Dedicated execution page remains planned, not implemented.
 - Home remains preview-only.
 - Auto-sync is permanently forbidden.
 - No audit/history write path may activate before all gates are **GO**.
@@ -93,9 +93,9 @@ Audit/history must not become a hidden write bypass. A future implementation mus
 - audit write must not happen during dry-run plan creation
 - audit write must not happen on page load
 - audit write must not happen on render
-- audit write must not happen on a storage event
+- audit write must not happen on storage event
 - audit write must not happen on auth-ready
-- audit write must not happen through a timer or interval
+- audit write must not happen through timer/interval
 - failed remote sync must not delete `localStorage`
 - audit failure must not hide module failure
 - audit failure must not mark sync as success
@@ -161,7 +161,7 @@ These prohibitions apply to Home, preview, dry-run planning, future execution-pa
 | **Gate G: no-write safety** | Defines where audit writes must never occur and prevents audit/history from becoming a hidden write path. | No-write behavior and forbidden side effects must be test-locked for the future execution boundary. |
 | **Gate H: audit/history** | Reviews the record contract, status model, visibility, sanitization, and failure rules. | The audit/history write path remains disabled and unimplemented for activation. |
 | **Gate I: Supabase/session fallback** | Requires an operator/session placeholder and explicit unavailable/signed-out fallback. | Storage/session fallback behavior still requires a separate review and tests. |
-| **Gate J: tests** | Identifies the audit/history behaviors that require test evidence. | Audit/history activation tests have not been added. |
+| **Gate J: tests** | Identifies the audit/history behaviors that require test evidence. | Audit/history requirements are test-locked; the full execution activation suite remains outstanding. |
 
 This review advances documentation evidence only. Gates F, G, H, I, and J are not full **GO for execution**.
 
@@ -180,12 +180,18 @@ This review advances documentation evidence only. Gates F, G, H, I, and J are no
 
 All gates A–J must be **GO for execution** before that activation PR may be considered. Completing this review does not satisfy the remaining implementation, fallback, rollback, or test gates.
 
+## Test coverage
+
+`tests/aha-manual-sync-audit-history-activation-requirements.test.cjs` test-locks this reviewed contract, its required run-level and per-module fields, write-safety rules, status model, forbidden behavior, gate impact, activation boundary, absent `sync.html`, and the current no-audit-write Home preview boundary.
+
+This test coverage does not implement or activate audit/history storage. The requirements remain review-only, the write path remains not implemented, and manual sync execution remains **NO-GO**.
+
 ## Recommended next PR
 
 The single recommended next PR is:
 
 ```text
-test: lock manual sync audit/history activation requirements
+docs: review manual sync rollback and no-write failure modes
 ```
 
-That PR should test-lock the documented no-write and disabled behavior without activating an audit writer, execution path, runtime sync, database call, repository persistence, `localStorage` write, source event, insight, publishing action, or social operation.
+That PR should remain documentation-only and must not activate an audit writer, execution path, runtime sync, database call, repository persistence, `localStorage` write, source event, insight, publishing action, or social operation.

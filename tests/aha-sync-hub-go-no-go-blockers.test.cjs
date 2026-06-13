@@ -4,6 +4,7 @@ const vm = require('vm');
 
 const MATRIX_FILE = 'docs/AHA_SYNC_HUB_GO_NO_GO_MATRIX.md';
 const MODULE_LOADING_STRATEGY_FILE = 'docs/AHA_SYNC_HUB_MODULE_LOADING_STRATEGY.md';
+const AUDIT_HISTORY_REQUIREMENTS_FILE = 'docs/AHA_SYNC_HUB_AUDIT_HISTORY_ACTIVATION_REQUIREMENTS.md';
 const SYNC_HUB_FILE = 'js/ahaSyncHub.js';
 const DRY_RUN_TARGET_ADAPTER_FILE = 'js/ahaManualSyncDryRunTargetAdapter.js';
 const ADAPTER_FILE = 'js/ahaManualSyncAdapter.js';
@@ -62,6 +63,7 @@ function readyInput(patch = {}) {
 (async function run() {
   const matrixCode = read(MATRIX_FILE);
   const moduleLoadingStrategyCode = read(MODULE_LOADING_STRATEGY_FILE);
+  const auditHistoryRequirementsCode = read(AUDIT_HISTORY_REQUIREMENTS_FILE);
   const syncHubCode = read(SYNC_HUB_FILE);
   const dryRunTargetAdapterCode = read(DRY_RUN_TARGET_ADAPTER_FILE);
   const adapterCode = read(ADAPTER_FILE);
@@ -150,6 +152,13 @@ function readyInput(patch = {}) {
   assert.match(moduleLoadingStrategyCode, /Option A: dedicated sync execution page/, 'module loading strategy must remain documented');
   assert.ok(moduleLoadingStrategyCode.includes(ACTIVATION_PR), 'execution must still require the dedicated activation PR');
   assert.match(moduleLoadingStrategyCode, /Auto-sync is permanently forbidden/, 'auto-sync must remain permanently forbidden');
+
+  // Regression lock: audit/history remains review-only and cannot bypass activation.
+  assert.match(auditHistoryRequirementsCode, /reviewed, not implemented/i, 'audit/history requirements must remain review-only');
+  assert.match(auditHistoryRequirementsCode, /write path remains not implemented/i, 'audit/history write path must remain inactive');
+  assert.ok(auditHistoryRequirementsCode.includes(ACTIVATION_PR), 'audit/history execution must still require the activation PR');
+  assert.match(auditHistoryRequirementsCode, /Manual sync execution remains \*\*NO-GO\*\*/, 'manual sync execution must remain NO-GO');
+  assert.match(auditHistoryRequirementsCode, /Auto-sync is permanently forbidden/, 'audit/history requirements must retain the permanent auto-sync prohibition');
 
   // Only the active Home Sync Hub renderer is scanned; dormant preview helpers are a separate gated layer.
   const activeSyncHubRenderer = extractFunction(dashboardCode, 'renderSyncHubStatus');
