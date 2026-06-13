@@ -12,6 +12,7 @@
 - Rollback/no-write failure modes are reviewed in `docs/AHA_SYNC_HUB_ROLLBACK_NO_WRITE_FAILURE_MODES.md`, but rollback and execution remain not implemented.
 - Supabase/session fallback requirements are reviewed in `docs/AHA_SYNC_HUB_SUPABASE_SESSION_FALLBACK_BEFORE_EXECUTION.md`, but session-dependent execution remains not implemented.
 - Disabled execution UI requirements are reviewed in `docs/AHA_SYNC_HUB_DISABLED_EXECUTION_UI_BEFORE_ACTIVATION.md`, but the UI and dedicated surface remain not implemented.
+- The next bounded planning layer, the disabled page skeleton, is defined in `docs/AHA_SYNC_HUB_DISABLED_EXECUTION_PAGE_SKELETON.md`; it is not implemented and `sync.html` remains not created.
 
 This plan defines a future isolation boundary only. It does not create an execution page, activate manual sync, authorize writes, or change runtime behavior.
 
@@ -142,9 +143,9 @@ This phase defines the proposed page, loading boundary, activation gates, states
 
 ### Phase 2: disabled execution page skeleton
 
-**Status: future PR.**
+**Status: defined, not implemented.**
 
-A future PR may create a disabled page skeleton with no runtime execution. It must not load module runtime unless that loading remains disabled, side-effect-free, explicitly approved, and test-locked.
+`docs/AHA_SYNC_HUB_DISABLED_EXECUTION_PAGE_SKELETON.md` is the next bounded planning layer. It defines future sections, disabled controls, blocked reasons, loading rules, and activation boundaries without creating `sync.html`. A later implementation PR may create only a disabled page skeleton with no runtime execution, must preserve the disabled-by-default policy, and must not load module runtime before activation.
 
 ### Phase 3: execution page loading boundary tests
 
@@ -175,7 +176,7 @@ It may be considered only after all gates A–J are **GO for execution**. Auto-s
 The single recommended next PR is:
 
 ```text
-test: lock disabled Sync Hub execution UI before activation
+test: lock disabled Sync Hub execution page skeleton boundary
 ```
 
-The disabled execution UI requirements are reviewed but not implemented. The next PR should test-lock the disabled-by-default policy, status vocabulary, blocked reasons, operator visibility, Home preview-only boundary, and absence of hidden triggers without creating `sync.html`, loading execution runtime on Home, activating rollback, sync, audit writes, Supabase/session execution, or weakening the permanent auto-sync prohibition.
+The skeleton is defined but not implemented. The next PR should test-lock its boundary and the absence of `sync.html` without implementing the dedicated page, activating execution, loading module runtime, writing data, or weakening the permanent auto-sync prohibition.

@@ -1848,3 +1848,32 @@ Neste anbefalte PR er:
 ```text
 test: lock disabled Sync Hub execution UI before activation
 ```
+
+## 31. AHA Sync Hub disabled execution page skeleton
+
+`docs/AHA_SYNC_HUB_DISABLED_EXECUTION_PAGE_SKELETON.md` defines the future disabled execution page boundary before implementation. It documents the proposed future `sync.html`, operator-visible page sections, inert disabled controls, required blocked reasons, preview-safe loading rules, the Home preview-only boundary, the exact activation boundary, Gate E–J impact, and concrete requirements before implementation. The skeleton is documentation only and does not create or link an executable page.
+
+Gjeldende status er:
+
+- **Disabled execution page skeleton: defined**
+- **`sync.html`: not created**
+- **Dedicated execution page: planned, not implemented**
+- **Disabled execution UI implementation: not activated**
+- **Supabase/session fallback implementation: not activated**
+- **Rollback implementation: not activated**
+- **Audit write path: not activated**
+- **Execution: NO-GO**
+- **Home: preview-only**
+- **Auto-sync: permanently forbidden**
+
+Skeletonet påvirker Gate E for dedicated execution surface readiness, Gate F for per-module errors/results, Gate G for no-write safety, Gate H for audit/history, Gate I for Supabase/session fallback og Gate J for test evidence. Gates E, F, G, H, I og J er fortsatt ikke full **GO for execution**, og alle gates A–J må være GO før den separate activation-PR-en `feat: activate manual AHA Sync Hub execution`.
+
+Ingen runtime-, JavaScript-, HTML-, CSS- eller testfiler er endret. Ingen execution-side, execution UI, sync-knapp, Supabase-/databasekall, audit write path, rollback-kode, repository save/load, `localStorage`-endring eller ekte sync er implementert eller aktivert.
+
+Neste anbefalte PR er:
+
+```text
+test: lock disabled Sync Hub execution page skeleton boundary
+```
+
+Den anbefalte PR-en skal bare testlåse skeleton-boundaryen og at `sync.html` fortsatt er fraværende. Den skal ikke implementere siden, aktivere execution eller writes, eller svekke det permanente auto-sync-forbudet.
