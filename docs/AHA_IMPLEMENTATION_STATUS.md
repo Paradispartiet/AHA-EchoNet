@@ -8,10 +8,11 @@
 
 Statusdato: 2026-06-13
 
-## Sync Hub rollback/no-write review
+## Sync Hub Supabase/session fallback review
 
 ```text
-✅ Rollback/no-write requirements are test-locked.
+✅ Supabase/session fallback requirements are reviewed.
+❌ Supabase/session fallback implementation is not activated.
 ❌ Rollback implementation is not activated.
 ❌ Audit/history write path is not activated for the reviewed execution boundary.
 ❌ Manual sync execution remains NO-GO.
@@ -19,12 +20,12 @@ Statusdato: 2026-06-13
 ⛔ Auto-sync is permanently forbidden.
 ```
 
-Denne dokumentasjons-/reviewfasen endrer ikke runtime, JavaScript, HTML, CSS eller tester, oppretter ikke `sync.html`, og aktiverer ingen rollback-, sync-, repository-, database-, audit-, source-event-, insight-, publish- eller social-sharing-path. Gates F, G, H, I og J er fortsatt ikke full **GO for execution**, og activation PR `feat: activate manual AHA Sync Hub execution` er fortsatt påkrevd etter at alle gates A–J er GO.
+Denne dokumentasjons-/reviewfasen endrer ikke runtime, JavaScript, HTML, CSS eller tester, oppretter ikke `sync.html`, og aktiverer ingen Supabase-, session-, rollback-, sync-, repository-, database-, audit-, source-event-, insight-, publish- eller social-sharing-path. Gates E, F, G, H, I og J er fortsatt ikke full **GO for execution**, og activation PR `feat: activate manual AHA Sync Hub execution` er fortsatt påkrevd etter at alle gates A–J er GO.
 
 Neste anbefalte PR:
 
 ```text
-docs: review Sync Hub Supabase session fallback before execution
+test: lock Sync Hub Supabase session fallback before execution
 ```
 
 Dette dokumentet oppsummerer nåværende implementasjonsstatus for AHA etter dokumentlåser, sync-hardening, Search note_reanalysis-visning, Mindmap tombstone-filtrering, Mindmap note_reanalysis-visning, Lists-, Paths-, Meta Insights-, Groups- og AHAavisa/Articles-bolkene, Sync Hub pre-sync UI, manual sync execution contract, manual sync confirmation modal, audit log preview, target selector preview, manual sync target contract, manual sync adapter interface stub, execution state machine stub, manual sync run summary preview, activation blocker tests og target adapter dry-run harness og database_existing wiring til eksisterende AHARepository target, manual sync audit log writer, read-only result history/details, retry eligibility preview, end-to-end-verifikasjon av den manuelle sync-løypa mot mock/stub av eksisterende database target, kompakte statuskort på AHA Home, module health i modulmenyen, normaliserte Home-korttitler/empty states, forbedret mobile/tablet-layout, final polish/accessibility og en samlet completion summary for AHA Home og Sync Hub, samt dokumentert review av module pages og Home entry points for Lists, Paths, Groups og AHAavisa, og forbedret Paths module experience.
@@ -1792,3 +1793,30 @@ docs: review Sync Hub Supabase session fallback before execution
 ```
 
 Den anbefalte PR-en skal bare reviewe fail-closed Supabase/session fallback før execution. Den skal ikke aktivere rollback, audit writing, manual sync execution, auto-sync eller andre runtime-side effects.
+
+## 29. AHA Sync Hub Supabase/session fallback before execution review
+
+`docs/AHA_SYNC_HUB_SUPABASE_SESSION_FALLBACK_BEFORE_EXECUTION.md` reviews the fail-closed Supabase/session contract required before future manual sync activation can be considered. The review defines session states, Supabase availability states, required fallback behavior, preview and dry-run behavior without Supabase, execution blocking rules, operator visibility, forbidden triggers and side effects, gate impact, and concrete requirements before activation.
+
+Gjeldende status er:
+
+- **Supabase/session fallback requirements: reviewed**
+- **Supabase/session fallback implementation: not activated**
+- **Rollback implementation: not activated**
+- **Audit write path: not activated**
+- **Dedicated execution page: planned, not implemented**
+- **Execution: NO-GO**
+- **Home: preview-only**
+- **Auto-sync: permanently forbidden**
+
+Reviewen påvirker Gate E for dedicated execution surface readiness, Gate F for per-module errors/results, Gate G for no-write safety, Gate H for audit/history, Gate I for Supabase/session fallback og Gate J for nødvendig test evidence. Gates E, F, G, H, I og J er fortsatt ikke full **GO for execution**, og alle gates A–J må være GO før activation-PR-en `feat: activate manual AHA Sync Hub execution` kan vurderes.
+
+Ingen Supabase- eller databasekall, session execution, rollback-kode, audit writer, execution-side, runtime-sync, repository save/load, `localStorage`-write eller sletting, source events, insights, publisering eller social sharing er opprettet eller aktivert av reviewen. Home forblir preview-only, manual sync execution forblir **NO-GO**, og auto-sync forblir permanent forbudt.
+
+Neste anbefalte PR er:
+
+```text
+test: lock Sync Hub Supabase session fallback before execution
+```
+
+Den anbefalte PR-en skal bare testlåse de dokumenterte fail-closed fallback-, preview-without-Supabase-, no-write-, local-preservation-, blocked-state- og forbidden-trigger-kravene. Den skal ikke aktivere Supabase/session execution, rollback, audit writing, manual sync execution, auto-sync eller andre runtime-side effects.
