@@ -11,6 +11,7 @@
 - Audit/history activation requirements are reviewed in `docs/AHA_SYNC_HUB_AUDIT_HISTORY_ACTIVATION_REQUIREMENTS.md`, but no audit/history write path is implemented or activated.
 - Rollback/no-write failure modes are reviewed in `docs/AHA_SYNC_HUB_ROLLBACK_NO_WRITE_FAILURE_MODES.md`, but rollback and execution remain not implemented.
 - Supabase/session fallback requirements are reviewed in `docs/AHA_SYNC_HUB_SUPABASE_SESSION_FALLBACK_BEFORE_EXECUTION.md`, but session-dependent execution remains not implemented.
+- Disabled execution UI requirements are reviewed in `docs/AHA_SYNC_HUB_DISABLED_EXECUTION_UI_BEFORE_ACTIVATION.md`, but the UI and dedicated surface remain not implemented.
 
 This plan defines a future isolation boundary only. It does not create an execution page, activate manual sync, authorize writes, or change runtime behavior.
 
@@ -67,6 +68,7 @@ This loading boundary is a proposal, not an implementation authorization. None o
 - [x] Audit/history requirements are reviewed in `docs/AHA_SYNC_HUB_AUDIT_HISTORY_ACTIVATION_REQUIREMENTS.md`; implementation, write-path approval, and activation evidence remain outstanding.
 - [x] Supabase/session fallback requirements are reviewed in `docs/AHA_SYNC_HUB_SUPABASE_SESSION_FALLBACK_BEFORE_EXECUTION.md`; tests, implementation, and activation evidence remain outstanding.
 - [x] Rollback/no-write failure modes are reviewed in `docs/AHA_SYNC_HUB_ROLLBACK_NO_WRITE_FAILURE_MODES.md`; test-locking, implementation, and activation evidence remain outstanding.
+- [x] Disabled execution UI requirements are reviewed in `docs/AHA_SYNC_HUB_DISABLED_EXECUTION_UI_BEFORE_ACTIVATION.md`; test-locking, implementation, and activation evidence remain outstanding.
 - [ ] A remote error must never delete localStorage data.
 - [ ] Hidden writes must be impossible and test-locked.
 - [ ] Auto-sync must remain impossible and permanently forbidden.
@@ -154,7 +156,7 @@ Tests must prove that controls remain disabled and that page load, render, stora
 
 **Status: in review; not implemented.**
 
-The audit/history, rollback/no-write, and Supabase/session fallback requirements are reviewed in their dedicated documents, but audit/history writing, rollback, session-dependent execution, and manual execution are not implemented or activated. Real per-module error behavior and test-locked Supabase/session fallback evidence still require approval.
+The audit/history, rollback/no-write, Supabase/session fallback, and disabled execution UI requirements are reviewed in their dedicated documents, but audit/history writing, rollback, session-dependent execution, and manual execution are not implemented or activated. Real per-module error behavior and test-locked Supabase/session fallback evidence still require approval.
 
 ### Phase 5: activation PR
 
@@ -173,7 +175,7 @@ It may be considered only after all gates A–J are **GO for execution**. Auto-s
 The single recommended next PR is:
 
 ```text
-test: lock Sync Hub Supabase session fallback before execution
+test: lock disabled Sync Hub execution UI before activation
 ```
 
-Supabase/session fallback requirements are now reviewed but remain unimplemented. The next PR should test-lock their fail-closed, preview-without-Supabase, no-write, local-preservation, blocked-state, and forbidden-trigger requirements without creating `sync.html`, loading module runtime on Home, activating rollback, sync, or audit writes, writing data, or weakening the permanent auto-sync prohibition.
+The disabled execution UI requirements are reviewed but not implemented. The next PR should test-lock the disabled-by-default policy, status vocabulary, blocked reasons, operator visibility, Home preview-only boundary, and absence of hidden triggers without creating `sync.html`, loading execution runtime on Home, activating rollback, sync, audit writes, Supabase/session execution, or weakening the permanent auto-sync prohibition.
