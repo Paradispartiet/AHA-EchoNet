@@ -28,6 +28,7 @@
   function examplesApi() { return global.AHATrainingExamples; }
   function readinessApi() { return global.AHAPersonalModelReadiness; }
   function retrievalApi() { return global.AHAPersonalRetrieval; }
+  function auditApi() { return global.AHAPersonalAiLoopAudit; }
 
   function setStat(id, value) {
     const el = $(id);
@@ -188,8 +189,45 @@
     renderStats();
     renderReadiness();
     renderRetrieval();
+    renderAiLoopAudit();
     renderCorpusList();
     renderExamplesList();
+  }
+
+  function renderAiLoopAudit(auditArg = null) {
+    const mount = $("training-ai-loop-audit-report");
+    if (!mount) return;
+    const api = auditApi();
+    if (!api?.runAudit) {
+      mount.innerHTML = `<p class="aha-training-empty">Personal AI Loop Audit-modulen er ikke lastet.</p>`;
+      return;
+    }
+    const audit = auditArg || api.loadLastAudit?.() || api.runAudit();
+    const readiness = audit?.readiness || {};
+    const retrieval = audit?.retrieval || {};
+    const sample = audit?.chat?.sampleQuery || {};
+    mount.innerHTML = `
+      <div class="aha-training-stats">
+        <div class="aha-mini-stat"><strong>${escapeHtml(audit.status || "empty")}</strong><span>Status</span></div>
+        <div class="aha-mini-stat"><strong>${Number(audit.score) || 0}/100</strong><span>Score</span></div>
+        <div class="aha-mini-stat"><strong>${Number(readiness.approvedCorpus) || 0}</strong><span>Approved corpus</span></div>
+        <div class="aha-mini-stat"><strong>${Number(readiness.approvedExamples) || 0}</strong><span>Approved examples</span></div>
+        <div class="aha-mini-stat"><strong>${(Number(readiness.confirmedClaims) || 0) + (Number(readiness.importantClaims) || 0)}</strong><span>Memory claims</span></div>
+        <div class="aha-mini-stat"><strong>${Number(retrieval.indexedItems) || 0}</strong><span>Indexed retrieval items</span></div>
+        <div class="aha-mini-stat"><strong>${Number(sample.resultCount) || 0}</strong><span>Sample query results</span></div>
+      </div>
+      <p class="module-meta">${escapeHtml(audit.summary || "")}</p>
+      <ul class="aha-training-recommendations">${asArray(audit.recommendations).map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
+    `;
+  }
+
+  function handleAiLoopAudit() {
+    const api = auditApi();
+    if (!api?.runAudit) return;
+    const audit = api.runAudit();
+    try { global.localStorage?.setItem(api.STORAGE_KEY || "aha_personal_ai_loop_audit_v1", JSON.stringify(audit)); } catch {}
+    setMessage(`AI-loop audit fullført: ${audit.status}, ${audit.score}/100.`);
+    renderAiLoopAudit(audit);
   }
 
   function handleImport() {
@@ -238,6 +276,7 @@
     $("training-generate-btn")?.addEventListener("click", handleGenerate);
     $("training-export-btn")?.addEventListener("click", handleExport);
     $("training-retrieval-btn")?.addEventListener("click", handleRetrievalRefresh);
+    $("training-ai-loop-audit-btn")?.addEventListener("click", handleAiLoopAudit);
 
     $("training-corpus-list")?.addEventListener("click", (event) => {
       const target = event.target;
@@ -285,7 +324,7 @@
     renderAll();
   }
 
-  const AHATrainingDashboard = { init, renderAll, renderStats, renderReadiness, renderRetrieval, renderCorpusList, renderExamplesList, handleRetrievalRefresh };
+  const AHATrainingDashboard = { init, renderAll, renderStats, renderReadiness, renderRetrieval, renderAiLoopAudit, renderCorpusList, renderExamplesList, handleRetrievalRefresh, handleAiLoopAudit };
 
   if (typeof module !== "undefined" && module.exports) {
     module.exports = AHATrainingDashboard;

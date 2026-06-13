@@ -1906,3 +1906,15 @@ docs: define Sync Hub execution page implementation boundary
 ```
 
 Den anbefalte PR-en skal være dokumentasjons-only og definere den tekniske grensen for en senere disabled skeleton implementation. Den skal ikke opprette `sync.html`, implementere execution UI, aktivere runtime eller writes, eller svekke det permanente auto-sync-forbudet.
+
+## 33. Personal AI Loop Audit
+
+AHA har nå en sammenhengende personlig AI-sløyfe fra godkjent materiale til retrieval og chat-kontekst:
+
+`Meta Insights Memory → Training Corpus → Training Examples → Personal Model Readiness → AHA Chat Personal Context → Personal Retrieval / RAG → AHA Chat`
+
+`AHAPersonalAiLoopAudit` verifiserer lokalt og read-only at datakildene svarer, at materialet er godkjent, at corpus-samtykke respekteres, at retrieval-indeksen er tilgjengelig og oppdatert, at chat-integrasjonen finnes, og at en sample query produserer relevante treff og RAG-kontekst.
+
+Training Dashboard viser samlet status, score, approved corpus, approved examples, memory claims, indekserte retrieval-items, sample-resultater og konkrete anbefalinger. Brukeren kan kjøre audit manuelt, og siste resultat lagres lokalt i `aha_personal_ai_loop_audit_v1`.
+
+Meta Insights AI får en kompakt `personalAiLoopPack` med status, score, approved-materiale, retrieval-status og anbefalinger. Dette markerer overgangen fra bygging av enkeltmoduler til validering av det samlede personlige AI-systemet.
