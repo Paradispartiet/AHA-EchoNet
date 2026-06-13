@@ -3,6 +3,8 @@
 ## Current decision
 
 - Disabled execution page skeleton is defined, not implemented.
+- Disabled execution page skeleton is test-locked.
+- Execution page implementation boundary is defined, not implemented, in `docs/AHA_SYNC_HUB_EXECUTION_PAGE_IMPLEMENTATION_BOUNDARY.md`.
 - `sync.html` must not be created in this PR.
 - Manual sync execution remains **NO-GO**.
 - Home remains preview-only.
@@ -177,10 +179,12 @@ The disabled execution page skeleton remains defined, not implemented. Manual sy
 
 ## Recommended next PR
 
+The execution page implementation boundary is now defined, not implemented, in `docs/AHA_SYNC_HUB_EXECUTION_PAGE_IMPLEMENTATION_BOUNDARY.md`. The skeleton remains test-locked, `sync.html` remains not created, execution remains **NO-GO**, and auto-sync remains permanently forbidden.
+
 The single recommended next PR is:
 
 ```text
-docs: define Sync Hub execution page implementation boundary
+test: lock Sync Hub execution page implementation boundary
 ```
 
-That PR should define the technical boundary for a later disabled-only skeleton implementation. It must not create `sync.html`, implement the page, change runtime, add execution handlers, activate writes, call sync or persistence APIs, or weaken the permanent auto-sync prohibition.
+That PR must test-lock the implementation boundary without creating `sync.html`, implementing the page, changing runtime, adding execution handlers, activating writes, calling sync or persistence APIs, or weakening the permanent auto-sync prohibition.
