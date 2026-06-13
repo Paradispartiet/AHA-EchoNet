@@ -11,7 +11,7 @@ Statusdato: 2026-06-13
 ## Sync Hub disabled execution UI review
 
 ```text
-✅ Disabled execution UI requirements are reviewed.
+✅ Disabled execution UI requirements are test-locked.
 ❌ Disabled execution UI implementation is not activated.
 ❌ Dedicated execution page is planned, not implemented.
 ❌ Supabase/session fallback implementation is not activated.
@@ -22,12 +22,12 @@ Statusdato: 2026-06-13
 ⛔ Auto-sync is permanently forbidden.
 ```
 
-Reviewen er dokumentert i [`AHA_SYNC_HUB_DISABLED_EXECUTION_UI_BEFORE_ACTIVATION.md`](./AHA_SYNC_HUB_DISABLED_EXECUTION_UI_BEFORE_ACTIVATION.md). Denne dokumentasjonsfasen endrer ikke runtime, JavaScript, HTML, CSS eller tester, oppretter ikke `sync.html`, og aktiverer ingen Supabase-, session-, rollback-, sync-, repository-, database-, audit-, source-event-, insight-, publish- eller social-sharing-path. Gates E, F, G, H, I og J er fortsatt ikke full **GO for execution**, og activation PR `feat: activate manual AHA Sync Hub execution` er fortsatt påkrevd etter at alle gates A–J er GO.
+Reviewen er dokumentert i [`AHA_SYNC_HUB_DISABLED_EXECUTION_UI_BEFORE_ACTIVATION.md`](./AHA_SYNC_HUB_DISABLED_EXECUTION_UI_BEFORE_ACTIVATION.md) og testlåst i `tests/aha-sync-hub-disabled-execution-ui-before-activation.test.cjs`. Denne sikkerhets-/testfasen endrer ikke runtime, JavaScript, HTML eller CSS, oppretter ikke `sync.html`, og aktiverer ingen Supabase-, session-, rollback-, sync-, repository-, database-, audit-, source-event-, insight-, publish- eller social-sharing-path. Gates E, F, G, H, I og J er fortsatt ikke full **GO for execution**, og activation PR `feat: activate manual AHA Sync Hub execution` er fortsatt påkrevd etter at alle gates A–J er GO.
 
 Neste anbefalte PR:
 
 ```text
-test: lock disabled Sync Hub execution UI before activation
+docs: summarize Sync Hub activation blockers before UI skeleton
 ```
 
 Dette dokumentet oppsummerer nåværende implementasjonsstatus for AHA etter dokumentlåser, sync-hardening, Search note_reanalysis-visning, Mindmap tombstone-filtrering, Mindmap note_reanalysis-visning, Lists-, Paths-, Meta Insights-, Groups- og AHAavisa/Articles-bolkene, Sync Hub pre-sync UI, manual sync execution contract, manual sync confirmation modal, audit log preview, target selector preview, manual sync target contract, manual sync adapter interface stub, execution state machine stub, manual sync run summary preview, activation blocker tests og target adapter dry-run harness og database_existing wiring til eksisterende AHARepository target, manual sync audit log writer, read-only result history/details, retry eligibility preview, end-to-end-verifikasjon av den manuelle sync-løypa mot mock/stub av eksisterende database target, kompakte statuskort på AHA Home, module health i modulmenyen, normaliserte Home-korttitler/empty states, forbedret mobile/tablet-layout, final polish/accessibility og en samlet completion summary for AHA Home og Sync Hub, samt dokumentert review av module pages og Home entry points for Lists, Paths, Groups og AHAavisa, og forbedret Paths module experience.
