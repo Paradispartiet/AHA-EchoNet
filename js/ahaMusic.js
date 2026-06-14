@@ -7,11 +7,11 @@
   const STORAGE_KEY = "aha_music_library_v1";
   const TOKEN_KEY = "aha_music_spotify_token_v1";
   const PKCE_KEY = "aha_music_spotify_pkce_v1";
-  const CLIENT_KEY = "aha_music_spotify_client_id_v1";
+  const CONNECTION_KEY = "aha_music_spotify_connection_v1";
   const SPOTIFY_AUTH_URL = "https://accounts.spotify.com/authorize";
   const SPOTIFY_TOKEN_URL = "https://accounts.spotify.com/api/token";
   const SPOTIFY_API_URL = "https://api.spotify.com/v1";
-  const SCOPES = ["playlist-read-private", "playlist-read-collaborative", "user-library-read"];
+  const DEFAULT_SCOPES = ["playlist-read-private", "playlist-read-collaborative", "user-library-read"];
 
   const emptyLibrary = () => ({
     sources: [],
@@ -211,12 +211,13 @@
     return library;
   }
 
-  function getRedirectUri() {
-    return `${location.origin}${location.pathname}`;
-  }
-
-  function getClientId() {
-    return text(document.getElementById("spotify-client-id")?.value || localStorage.getItem(CLIENT_KEY) || global.AHA_SPOTIFY_CLIENT_ID || "");
+  function getSpotifyConfig() {
+    const configured = global.AHA_CONFIG?.musicProviders?.spotify || {};
+    return {
+      clientId: text(configured.clientId),
+      redirectUri: text(configured.redirectUri),
+      scopes: asArray(configured.scopes).map((scope) => text(scope)).filter(Boolean)
+    };
   }
 
   function base64Url(buffer) {
@@ -239,10 +240,12 @@
 
   async function connectSpotify(event) {
     event?.preventDefault?.();
-    const clientId = getClientId();
-    if (!clientId) return setAuthStatus("Legg inn Spotify Client ID først.");
-    localStorage.setItem(CLIENT_KEY, clientId);
+    const config = getSpotifyConfig();
+    if (!config.clientId) return setAuthStatus("Spotify Client ID mangler i AHA Music-konfigurasjonen.", "error");
+    if (!config.redirectUri) return setAuthStatus("Spotify redirect URI mangler i AHA Music-konfigurasjonen.", "error");
+    if (!config.scopes.length) return setAuthStatus("Spotify scopes mangler i AHA Music-konfigurasjonen.", "error");
 
+    setAuthStatus("Kobler til Spotify …", "connecting");
     const verifier = randomVerifier();
     const challenge = base64Url(await sha256(verifier));
     const state = randomVerifier().slice(0, 32);
@@ -250,9 +253,9 @@
 
     const params = new URLSearchParams({
       response_type: "code",
-      client_id: clientId,
-      scope: SCOPES.join(" "),
-      redirect_uri: getRedirectUri(),
+      client_id: config.clientId,
+      scope: config.scopes.join(" "),
+      redirect_uri: config.redirectUri,
       code_challenge_method: "S256",
       code_challenge: challenge,
       state
@@ -261,7 +264,7 @@
   }
 
   function getToken() {
-    const token = safeParse(localStorage.getItem(TOKEN_KEY), null);
+    const token = safeParse(sessionStorage.getItem(TOKEN_KEY), null);
     if (!token?.access_token) return null;
     if (Number(token.expires_at || 0) <= Date.now() + 30000) return null;
     return token;
@@ -272,36 +275,66 @@
     const code = params.get("code");
     const state = params.get("state");
     const error = params.get("error");
-    if (error) setAuthStatus(`Spotify avbrøt innlogging: ${error}`);
+    if (error) {
+      sessionStorage.removeItem(PKCE_KEY);
+      history.replaceState({}, document.title, location.pathname);
+      setAuthStatus("Spotify avbrøt innloggingen.", "error");
+      return;
+    }
     if (!code) return;
 
     const pkce = safeParse(sessionStorage.getItem(PKCE_KEY), null);
-    if (!pkce?.verifier || pkce.state !== state) return setAuthStatus("Spotify state-validering feilet. Prøv å koble til på nytt.");
+    if (!pkce?.verifier || !state || pkce.state !== state) {
+      return setAuthStatus("Spotify state-validering feilet. Prøv å koble til på nytt.", "error");
+    }
+    const config = getSpotifyConfig();
+    if (!config.clientId) return setAuthStatus("Spotify Client ID mangler i AHA Music-konfigurasjonen.", "error");
+    if (!config.redirectUri) return setAuthStatus("Spotify redirect URI mangler i AHA Music-konfigurasjonen.", "error");
 
     const body = new URLSearchParams({
-      client_id: getClientId(),
+      client_id: config.clientId,
       grant_type: "authorization_code",
       code,
-      redirect_uri: getRedirectUri(),
+      redirect_uri: config.redirectUri,
       code_verifier: pkce.verifier
     });
 
-    setAuthStatus("Fullfører Spotify-tilkobling …");
-    const response = await fetch(SPOTIFY_TOKEN_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body
-    });
-    if (!response.ok) throw new Error(`Spotify token exchange failed: ${response.status}`);
+    setAuthStatus("Kobler til Spotify …", "connecting");
+    let response;
+    try {
+      response = await fetch(SPOTIFY_TOKEN_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body
+      });
+    } catch {
+      throw new Error("Spotify-token kunne ikke hentes.");
+    }
+    if (!response.ok) {
+      const details = await response.json().catch(() => ({}));
+      const redirectHint = details?.error === "invalid_grant"
+        ? " Redirect URI matcher trolig ikke Spotify Dashboard."
+        : "";
+      throw new Error(`Spotify-token kunne ikke hentes.${redirectHint}`);
+    }
     const token = await response.json();
-    localStorage.setItem(TOKEN_KEY, JSON.stringify({
+    sessionStorage.setItem(TOKEN_KEY, JSON.stringify({
       ...token,
       expires_at: Date.now() + Number(token.expires_in || 3600) * 1000,
-      scopes: SCOPES
+      scopes: config.scopes
     }));
     sessionStorage.removeItem(PKCE_KEY);
     history.replaceState({}, document.title, location.pathname);
-    setAuthStatus("Spotify er koblet til. Du kan hente spillelister.");
+    const profile = await spotifyFetch("/me");
+    const connection = {
+      provider: "spotify",
+      providerAccountId: text(profile?.id),
+      displayName: text(profile?.display_name),
+      connectedAt: nowIso()
+    };
+    sessionStorage.setItem(CONNECTION_KEY, JSON.stringify(connection));
+    await loadSpotifyPlaylists();
+    setAuthStatus("Spotify koblet", "connected");
   }
 
   async function spotifyFetch(path) {
@@ -343,7 +376,8 @@
       id: "spotify",
       name: "Spotify",
       type: "spotify",
-      scopes: SCOPES,
+      provider_account_id: safeParse(sessionStorage.getItem(CONNECTION_KEY), {})?.providerAccountId || "",
+      scopes: getSpotifyConfig().scopes,
       metadata_only: true,
       updated_at: startedAt
     }, "id");
@@ -649,9 +683,17 @@
     </article>`).join("");
   }
 
-  function setAuthStatus(message) {
+  function setAuthStatus(message, state = "disconnected") {
     const el = document.getElementById("spotify-auth-status");
-    if (el) el.textContent = message;
+    if (el) {
+      el.textContent = message;
+      el.dataset.state = state;
+    }
+    const button = document.getElementById("spotify-connect-button");
+    if (button) {
+      button.disabled = state === "connecting";
+      button.textContent = state === "connecting" ? "Kobler til Spotify …" : "Koble til Spotify";
+    }
   }
 
   function setImportStatus(message) {
@@ -722,9 +764,7 @@
   }
 
   function bind() {
-    const clientInput = document.getElementById("spotify-client-id");
-    if (clientInput) clientInput.value = getClientId();
-    document.getElementById("spotify-config-form")?.addEventListener("submit", connectSpotify);
+    document.getElementById("spotify-connect-button")?.addEventListener("click", connectSpotify);
     document.getElementById("load-playlists-button")?.addEventListener("click", () => loadSpotifyPlaylists().catch((error) => setImportStatus(error.message)));
     document.getElementById("import-playlists-button")?.addEventListener("click", () => importSelected().catch((error) => setImportStatus(error.message)));
     document.getElementById("clear-local-music-button")?.addEventListener("click", () => {
@@ -757,16 +797,18 @@
     await hydrateRemoteLibrary();
     renderLibrary();
     const token = getToken();
-    setAuthStatus(token ? "Spotify er koblet til." : "Ikke koblet til Spotify.");
+    setAuthStatus(token ? "Spotify koblet" : "Ikke koblet til Spotify.", token ? "connected" : "disconnected");
     try {
       await handleSpotifyCallback();
     } catch (error) {
-      setAuthStatus(error.message);
+      sessionStorage.removeItem(PKCE_KEY);
+      setAuthStatus(error.message || "Spotify-token kunne ikke hentes.", "error");
     }
   }
 
   global.AHAMusic = {
-    SCOPES,
+    SCOPES: DEFAULT_SCOPES,
+    getSpotifyConfig,
     STORAGE_KEY,
     loadLibrary,
     saveLibrary,

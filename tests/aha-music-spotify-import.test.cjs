@@ -28,6 +28,8 @@ for (const text of [
 ]) {
   assert.ok(html.includes(text), `music.html should expose ${text}`);
 }
+assert.equal(html.includes('spotify-client-id'), false, 'music.html must not ask users for a Spotify client id');
+assert.equal(html.includes('Spotify Client ID\\n          <input'), false, 'music.html must not expose Spotify configuration fields');
 
 for (const scope of ['playlist-read-private', 'playlist-read-collaborative', 'user-library-read']) {
   assert.ok(js.includes(scope), `Spotify scope ${scope} should be requested`);
@@ -38,6 +40,12 @@ for (const endpoint of ['/me/playlists', '/playlists/${encodeURIComponent(playli
 }
 
 assert.ok(js.includes('code_challenge_method'), 'OAuth flow should use PKCE challenge method');
+assert.ok(js.includes('AHA_CONFIG?.musicProviders?.spotify'), 'Spotify should use the centralized provider configuration');
+assert.ok(js.includes('sessionStorage.setItem(PKCE_KEY'), 'PKCE verifier and state should use sessionStorage');
+assert.ok(js.includes('sessionStorage.setItem(TOKEN_KEY'), 'Spotify tokens should be temporary');
+assert.ok(js.includes('providerAccountId: text(profile?.id)'), 'Spotify account id should be the stable provider key');
+assert.ok(js.includes('spotifyFetch("/me")'), 'callback should load the current Spotify profile');
+assert.equal(js.includes('client_secret'), false, 'frontend OAuth must not use a client secret');
 assert.ok(js.includes('spotify_track_id'), 'tracks should keep Spotify track references');
 assert.ok(js.includes('function buildLibraryIndex'), 'music library should build relational indexes for playlists, albums and artists');
 assert.ok(js.includes('trackMatchesFilters'), 'music library should filter tracks by search and facets');
@@ -70,6 +78,11 @@ const localStore = new Map();
 const sandbox = {
   window: {},
   document: { readyState: 'loading', addEventListener: () => {}, getElementById: () => null },
+  sessionStorage: {
+    getItem: (key) => localStore.has(`session:${key}`) ? localStore.get(`session:${key}`) : null,
+    setItem: (key, value) => localStore.set(`session:${key}`, String(value)),
+    removeItem: (key) => localStore.delete(`session:${key}`)
+  },
   localStorage: {
     getItem: (key) => localStore.has(key) ? localStore.get(key) : null,
     setItem: (key, value) => localStore.set(key, String(value)),

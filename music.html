@@ -30,16 +30,10 @@
       <div>
         <p class="eyebrow">Spotify OAuth PKCE</p>
         <h2 id="spotify-connect-title">Koble til Spotify</h2>
-        <p>Bruk en offentlig Spotify Client ID. Redirect URI må være registrert i Spotify Developer Dashboard og matche denne siden.</p>
+        <p>Trykk på knappen og fullfør innloggingen sikkert hos Spotify.</p>
       </div>
-      <form id="spotify-config-form" class="aha-music-config">
-        <label>
-          Spotify Client ID
-          <input id="spotify-client-id" name="clientId" autocomplete="off" placeholder="Legg inn client ID" />
-        </label>
-        <button id="spotify-connect-button" type="submit">Koble til Spotify</button>
-      </form>
-      <p id="spotify-auth-status" class="aha-music-status" role="status">Ikke koblet til Spotify.</p>
+      <button id="spotify-connect-button" type="button">Koble til Spotify</button>
+      <p id="spotify-auth-status" class="aha-music-status" role="status" data-state="disconnected">Ikke koblet til Spotify.</p>
     </section>
 
     <section class="aha-panel aha-music-import" aria-labelledby="spotify-import-title">
