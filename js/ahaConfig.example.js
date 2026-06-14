@@ -9,5 +9,17 @@ window.AHA_SUPABASE_PUBLISHABLE_KEY = "";
 // Eksempel: "https://aha-agent-xyz.onrender.com/api/aha-agent"
 window.AHA_AGENT_API = "";
 
-// Public Spotify OAuth PKCE client id. Never add a client secret to the browser app.
-window.AHA_SPOTIFY_CLIENT_ID = "";
+// Public music-provider configuration. Never add a Spotify client secret.
+window.AHA_CONFIG = {
+  musicProviders: {
+    spotify: {
+      clientId: "",
+      redirectUri: "https://paradispartiet.github.io/AHA-EchoNet/music.html",
+      scopes: [
+        "playlist-read-private",
+        "playlist-read-collaborative",
+        "user-library-read"
+      ]
+    }
+  }
+};

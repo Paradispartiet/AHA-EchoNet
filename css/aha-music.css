@@ -15,7 +15,6 @@
   border-color: rgba(135, 247, 174, .28);
 }
 
-.aha-music-config,
 .aha-music-action-row,
 .aha-music-saved-tracks {
   display: flex;
@@ -24,27 +23,22 @@
   flex-wrap: wrap;
 }
 
-.aha-music-config label {
-  display: grid;
-  gap: 6px;
-  min-width: min(420px, 100%);
-  color: var(--aha-muted);
-  font-weight: 800;
-}
-
-.aha-music-config input {
-  min-height: 44px;
-  border: 1px solid var(--aha-line);
-  border-radius: 14px;
-  background: rgba(255,255,255,.07);
-  color: var(--aha-text);
-  padding: 10px 12px;
-}
-
 .aha-music-status {
   margin: 12px 0 0;
   color: var(--aha-muted);
   font-weight: 750;
+}
+
+.aha-music-status[data-state="connected"] {
+  color: #87f7ae;
+}
+
+.aha-music-status[data-state="connecting"] {
+  color: #ffe27a;
+}
+
+.aha-music-status[data-state="error"] {
+  color: #ff9b9b;
 }
 
 .aha-music-saved-tracks {

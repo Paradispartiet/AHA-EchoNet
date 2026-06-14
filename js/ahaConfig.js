@@ -12,3 +12,17 @@ window.AHA_SUPABASE_PUBLISHABLE_KEY = window.AHA_SUPABASE_PUBLISHABLE_KEY || "sb
 // Sett til "https://<din-backend>/api/aha-agent" når server.js er deployet,
 // eller bruk relativ "/api/aha-agent" hvis backend kjøres på samme origin.
 window.AHA_AGENT_API = window.AHA_AGENT_API || "https://aha-agent-7a3y.onrender.com/api/aha-agent";
+
+// Public music-provider configuration. Spotify uses Authorization Code with PKCE,
+// so no client secret belongs in this browser configuration.
+window.AHA_CONFIG = window.AHA_CONFIG || {};
+window.AHA_CONFIG.musicProviders = window.AHA_CONFIG.musicProviders || {};
+window.AHA_CONFIG.musicProviders.spotify = window.AHA_CONFIG.musicProviders.spotify || {
+  clientId: "",
+  redirectUri: "https://paradispartiet.github.io/AHA-EchoNet/music.html",
+  scopes: [
+    "playlist-read-private",
+    "playlist-read-collaborative",
+    "user-library-read"
+  ]
+};
