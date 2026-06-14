@@ -43,7 +43,8 @@
     const examples = asArray(safeCall(() => global.AHATrainingExamples?.loadExamples?.(), []));
     const confirmed = asArray(memory.confirmedClaims);
     const important = asArray(memory.importantClaims);
-    const approvedCorpusItems = corpus.filter((item) => item?.status === "approved");
+    const approvedCorpusItems = corpus.filter((item) => item?.status === "approved"
+      && (item?.consent?.useForKnowledge === true || item?.consent?.useForMemory === true));
     const approvedExampleItems = examples.filter((item) => item?.status === "approved");
     return { memory, corpus, examples, confirmed, important, approvedCorpusItems, approvedExampleItems };
   }
@@ -105,13 +106,15 @@
     const personalApi = global.AHAChatPersonalContext;
     const retrievalApi = global.AHAPersonalRetrieval;
     const personal = safeCall(() => personalApi?.buildPersonalContext?.(options), null);
-    const message = safeCall(() => personalApi?.buildMessageContext?.(cleanQuery, options), null);
-    const retrieval = message?.retrieval || safeCall(() => retrievalApi?.buildRagContext?.(cleanQuery, options), null);
-    const promptBlock = message?.prompt || safeCall(() => retrievalApi?.buildRagPromptBlock?.(retrieval, options), "");
+    const index = safeCall(() => retrievalApi?.loadRetrievalIndex?.(), null);
+    const retrieval = index
+      ? safeCall(() => retrievalApi?.buildRagContext?.(cleanQuery, { ...options, index }), null)
+      : null;
+    const promptBlock = safeCall(() => retrievalApi?.buildRagPromptBlock?.(retrieval, options), "");
     const results = asArray(retrieval?.results);
     return {
       query: cleanQuery,
-      personalContextAvailable: Boolean(personal || message?.context),
+      personalContextAvailable: Boolean(personal),
       retrievalAvailable: Boolean(retrieval),
       resultCount: results.length,
       topResults: results.slice(0, 5).map((result) => ({
@@ -154,7 +157,7 @@
 
   function checkPrivacyAndConsent() {
     const api = global.AHAPersonalRetrieval;
-    const index = asObject(safeCall(() => api?.loadRetrievalIndex?.(), null) || safeCall(() => api?.buildRetrievalIndex?.(), {}));
+    const index = asObject(safeCall(() => api?.loadRetrievalIndex?.(), null));
     const items = asArray(index.items);
     const findings = [];
     const invalid = items.filter((item) => {

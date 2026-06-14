@@ -74,7 +74,7 @@ function loadLoop(context) {
     status: "approved",
     meta: { project: "AHA-EchoNet", concepts: ["personlig retrieval"] }
   });
-  context.AHAPersonalRetrieval.refreshRetrievalIndex({ now: "2026-06-13T23:59:59.999Z" });
+  context.AHAPersonalRetrieval.refreshRetrievalIndex({ now: "2026-06-14T23:59:59.999Z" });
 
   const api = context.AHAPersonalAiLoopAudit;
   const sources = api.checkDataSources();

@@ -212,10 +212,10 @@
     }
     let audit = auditArg;
     if (!audit) {
-      try { audit = api.loadLastAudit?.() || api.runAudit(); } catch { audit = null; }
+      try { audit = api.loadLastAudit?.(); } catch { audit = null; }
     }
     if (!audit) {
-      mount.innerHTML = `<p class="aha-training-empty">Auditen kunne ikke kjøres.</p>`;
+      mount.innerHTML = `<p class="aha-training-empty">Ingen audit er kjørt ennå. Bruk «Kjør AI-loop audit» for å starte eksplisitt.</p>`;
       return;
     }
     const approved = audit.checks?.approvedMaterial || {};
