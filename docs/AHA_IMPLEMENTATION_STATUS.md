@@ -1948,7 +1948,7 @@ Hybrid search beregnes som `lexicalScore * 0.45 + semanticScore * 0.45 + sourceW
 
 Chat kan bruke semantisk RAG-kontekst via AHA Chat Personal Context, Training Dashboard kan bygge semantisk indeks, Personal AI Loop Audit måler semantic readiness, og Meta Insights Agent får en `semanticRetrievalPack` som forteller om semantisk personlig søk er tilgjengelig. Fremtidig V3 kan kobles til eksterne embeddings eller vektordatabase via `external_embedding` uten å endre consent-grunnlaget.
 
-## Personal AI Loop Audit
+## 34. Personal AI Loop Audit
 
 AHA har nå en sammenhengende personlig AI-sløyfe fra godkjent materiale til retrieval og chat-kontekst. `AHAPersonalAiLoopAudit` kjører en lokal, read-only validering av datasources, approved material, retrieval index, chat integration, privacy/consent og en sample query gjennom personal context, retrieval og RAG prompt block.
 
@@ -1959,3 +1959,13 @@ AHA Chat viser en kompakt Personal AI Loop-status med retrieval-størrelse, appr
 Auditen verifiserer at Personal Retrieval bare bruker godkjent corpus med `consent.useForKnowledge` eller `consent.useForMemory`, godkjente training examples og confirmed/important memory claims. Simulerte treff beholder source, score og forklarende reasons frem til RAG-konteksten.
 
 Dette markerer overgangen fra bygging av enkeltmoduler til validering av samlet personlig AI-system.
+
+Personal AI Loop Audit er nå testlåst for en local-first, read-only boundary. Auditen bruker bare confirmed/important memory claims, approved corpus med `consent.useForKnowledge === true` eller `consent.useForMemory === true`, og approved training examples. Den kan bare cache siste audit-summary under `aha_personal_ai_loop_audit_v1`; den må ikke skrive domain data, bygge eller persistere retrieval-indeks automatisk, gjøre Supabase-/database-writes eller trigge Sync Hub, manual sync eller auto-sync.
+
+Training kjører auditen bare etter eksplisitt brukerhandling. Chat og Meta Insights leser bare en eksisterende audit-summary. Meta Insights får kun en kompakt `personalAiLoopPack` med summary/status, counts og anbefalinger, aldri full corpus-tekst, raw memory payload, full chat history, secrets eller komplette localStorage-dumper.
+
+Neste anbefalte PR:
+
+```text
+docs: review Personal AI Loop audit privacy and operator visibility
+```

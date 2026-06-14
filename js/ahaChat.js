@@ -587,14 +587,14 @@
     const host = document.getElementById("aha-personal-ai-loop-status");
     if (!host) return null;
     const api = global.AHAPersonalAiLoopAudit;
-    if (!api?.runAudit) {
+    if (!api?.loadLastAudit) {
       host.textContent = "Personal AI Loop-audit er ikke tilgjengelig.";
       return null;
     }
     let audit = null;
-    try { audit = api.loadLastAudit?.() || api.runAudit(); } catch {}
+    try { audit = api.loadLastAudit(); } catch {}
     if (!audit) {
-      host.textContent = "Personal AI Loop-status kunne ikke leses.";
+      host.textContent = "Ingen Personal AI Loop-audit er kjørt ennå.";
       return null;
     }
     const approved = audit.checks?.approvedMaterial || {};

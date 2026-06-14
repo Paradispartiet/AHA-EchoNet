@@ -230,7 +230,7 @@
     const api = global.AHAPersonalAiLoopAudit;
     if (!api) return null;
     try {
-      const audit = api.loadLastAudit?.() || api.runAudit?.();
+      const audit = api.loadLastAudit?.();
       if (!audit) return null;
       const approved = asObject(audit.checks?.approvedMaterial);
       return {
