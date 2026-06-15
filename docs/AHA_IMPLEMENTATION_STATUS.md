@@ -1967,5 +1967,29 @@ Training kjører auditen bare etter eksplisitt brukerhandling. Chat og Meta Insi
 Neste anbefalte PR:
 
 ```text
-docs: review Personal AI Loop audit privacy and operator visibility
+test: lock Personal AI Loop audit privacy and operator visibility
+```
+
+## 35. Personal AI Loop Audit privacy and operator visibility review
+
+Privacy- og operator visibility-grensen er nå reviewed i [`AHA_PERSONAL_AI_LOOP_AUDIT_PRIVACY_OPERATOR_VISIBILITY.md`](./AHA_PERSONAL_AI_LOOP_AUDIT_PRIVACY_OPERATOR_VISIBILITY.md). Reviewen dokumenterer godkjent/consented material boundary, synlige status- og warning-felt, skjermede raw payloads, Training/Chat/Meta Insights-grenser, cache-kontrakten for `aha_personal_ai_loop_audit_v1`, fail-closed failure modes og eksplisitte security/no-go-regler.
+
+Gjeldende status:
+
+- **Privacy/operator visibility: reviewed**
+- **Personal AI Loop Audit: local-first**
+- **Read-only boundary: test-locked**
+- **Approved/consented material only**
+- **Audit cache: last summary only**
+- **Domain writes: forbidden**
+- **Sync Hub trigger: forbidden**
+- **Sync Hub execution: NO-GO**
+- **Auto-sync: permanently forbidden**
+
+Reviewen endrer ikke runtime, JavaScript, HTML, CSS eller tester. Den oppretter ikke `sync.html`, aktiverer ikke manual sync, audit writing, Supabase-/database-writes, retrieval index persistence, source events, automatic insights, Groups social sharing eller AHAavisa-publisering. Sync Hub-seksjonene og deres eksisterende activation boundaries er uendret.
+
+Neste anbefalte PR:
+
+```text
+test: lock Personal AI Loop audit privacy and operator visibility
 ```
