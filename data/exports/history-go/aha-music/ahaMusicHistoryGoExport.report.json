@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "1.0.0",
+  "generatedAt": "1970-01-01T00:00:00.000Z",
+  "valid": true,
+  "validationErrors": [],
+  "exportedArtistCount": 0,
+  "exportedTrackCount": 0,
+  "placeCount": 0,
+  "safeHistoryGoPlaceRelationCount": 0,
+  "placeCandidateWithoutIdCount": 0,
+  "canonLinkCount": 0,
+  "ignoredUnknownCanonLinkCount": 0,
+  "top20PlacesByTrackCount": [],
+  "top20ArtistsByPlaceRelationCount": [],
+  "tracksWithoutArtist": [],
+  "tracksWithoutCanon": [],
+  "artistsWithoutPlace": []
+}

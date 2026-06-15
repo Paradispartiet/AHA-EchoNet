@@ -14,7 +14,9 @@
     "validate:aha-fixtures": "node scripts/validate-aha-analysis-fixtures.mjs",
     "test:aha-python-smoke": "node tests/aha-python-engine-smoke.test.cjs",
     "compare:aha-engines": "node scripts/compare-aha-engine-fixtures.cjs",
-    "check:aha-engine-comparison": "node scripts/check-aha-engine-comparison-regression.cjs"
+    "check:aha-engine-comparison": "node scripts/check-aha-engine-comparison-regression.cjs",
+    "music:export:history-go": "node scripts/export-aha-music-history-go.cjs",
+    "music:export:history-go:audit": "node scripts/export-aha-music-history-go.cjs --audit"
   },
   "dependencies": {
     "cors": "^2.8.5",

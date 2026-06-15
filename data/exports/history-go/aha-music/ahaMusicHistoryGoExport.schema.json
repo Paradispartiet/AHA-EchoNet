@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aha-echonet.local/schemas/aha-music-history-go-export-v1.schema.json",
+  "title": "AHA Music → History Go Export Bundle v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "generatedAt", "source", "artists", "tracks", "places", "relations", "canon", "summary"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "source": { "const": "aha_music" },
+    "artists": { "type": "array", "items": { "$ref": "#/$defs/artist" } },
+    "tracks": { "type": "array", "items": { "$ref": "#/$defs/track" } },
+    "places": { "type": "array", "items": { "$ref": "#/$defs/place" } },
+    "relations": { "type": "array", "items": { "$ref": "#/$defs/relation" } },
+    "canon": { "type": "array", "items": { "$ref": "#/$defs/canon" } },
+    "summary": { "$ref": "#/$defs/summary" }
+  },
+  "$defs": {
+    "nullableString": { "type": ["string", "null"] },
+    "stringArray": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+    "artist": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "spotifyArtistId", "name", "canonicalSlug", "imageUrl", "spotifyUrl", "canonNodeIds", "placeRelationIds", "trackIds"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 }, "spotifyArtistId": { "type": "string" }, "name": { "type": "string", "minLength": 1 },
+        "canonicalSlug": { "type": "string", "minLength": 1 }, "imageUrl": { "$ref": "#/$defs/nullableString" }, "spotifyUrl": { "$ref": "#/$defs/nullableString" },
+        "canonNodeIds": { "$ref": "#/$defs/stringArray" }, "placeRelationIds": { "$ref": "#/$defs/stringArray" }, "trackIds": { "$ref": "#/$defs/stringArray" }
+      }
+    },
+    "track": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "spotifyTrackId", "spotifyUri", "title", "artistIds", "artistNames", "albumTitle", "albumImageUrl", "durationMs", "spotifyUrl", "canonNodeIds", "placeRelationIds"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 }, "spotifyTrackId": { "type": "string" }, "spotifyUri": { "type": "string" }, "title": { "type": "string", "minLength": 1 },
+        "artistIds": { "$ref": "#/$defs/stringArray" }, "artistNames": { "$ref": "#/$defs/stringArray" }, "albumTitle": { "type": "string" },
+        "albumImageUrl": { "$ref": "#/$defs/nullableString" }, "durationMs": { "type": "number", "minimum": 0 }, "spotifyUrl": { "$ref": "#/$defs/nullableString" },
+        "canonNodeIds": { "$ref": "#/$defs/stringArray" }, "placeRelationIds": { "$ref": "#/$defs/stringArray" }
+      }
+    },
+    "place": {
+      "type": "object", "additionalProperties": false,
+      "required": ["historyGoPlaceId", "candidatePlaceName", "candidateCountry", "status", "artistIds", "trackIds", "unlockText"],
+      "properties": {
+        "historyGoPlaceId": { "$ref": "#/$defs/nullableString" }, "candidatePlaceName": { "type": "string", "minLength": 1 }, "candidateCountry": { "type": "string" },
+        "status": { "enum": ["linked", "needs_place_review"] }, "artistIds": { "$ref": "#/$defs/stringArray" }, "trackIds": { "$ref": "#/$defs/stringArray" },
+        "unlockText": { "$ref": "#/$defs/nullableString" }
+      }
+    },
+    "relation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "relationType", "fromType", "fromId", "toType", "toId", "historyGoPlaceId", "candidatePlaceName", "confidence", "status", "sourceType", "sourceNote", "explanation", "unlockText"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 }, "relationType": { "type": "string", "minLength": 1 }, "fromType": { "enum": ["artist", "track"] },
+        "fromId": { "type": "string", "minLength": 1 }, "toType": { "const": "place" }, "toId": { "type": "string", "minLength": 1 },
+        "historyGoPlaceId": { "$ref": "#/$defs/nullableString" }, "candidatePlaceName": { "type": "string", "minLength": 1 },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 }, "status": { "enum": ["verified", "auto_matched", "suggested", "needs_place_review"] },
+        "sourceType": { "type": "string", "minLength": 1 }, "sourceNote": { "type": "string" }, "explanation": { "type": "string", "minLength": 1 }, "unlockText": { "$ref": "#/$defs/nullableString" }
+      }
+    },
+    "canon": {
+      "type": "object", "additionalProperties": false,
+      "required": ["canonNodeId", "name", "type", "shortDescription", "linkedArtistIds", "linkedTrackIds", "linkedPlaylistIds"],
+      "properties": {
+        "canonNodeId": { "type": "string", "minLength": 1 }, "name": { "type": "string", "minLength": 1 }, "type": { "type": "string", "minLength": 1 },
+        "shortDescription": { "type": "string", "minLength": 1 }, "linkedArtistIds": { "$ref": "#/$defs/stringArray" }, "linkedTrackIds": { "$ref": "#/$defs/stringArray" }, "linkedPlaylistIds": { "$ref": "#/$defs/stringArray" }
+      }
+    },
+    "summary": {
+      "type": "object", "additionalProperties": false,
+      "required": ["artistCount", "trackCount", "placeCount", "relationCount", "canonNodeCount", "verifiedRelationCount", "autoMatchedRelationCount", "suggestedRelationCount", "needsPlaceReviewCount", "rejectedRelationCount", "tracksWithPlaceCount", "artistsWithPlaceCount", "tracksWithCanonCount", "artistsWithCanonCount", "generatedAt"],
+      "properties": {
+        "artistCount": { "type": "integer", "minimum": 0 }, "trackCount": { "type": "integer", "minimum": 0 }, "placeCount": { "type": "integer", "minimum": 0 },
+        "relationCount": { "type": "integer", "minimum": 0 }, "canonNodeCount": { "type": "integer", "minimum": 0 }, "verifiedRelationCount": { "type": "integer", "minimum": 0 },
+        "autoMatchedRelationCount": { "type": "integer", "minimum": 0 }, "suggestedRelationCount": { "type": "integer", "minimum": 0 }, "needsPlaceReviewCount": { "type": "integer", "minimum": 0 },
+        "rejectedRelationCount": { "const": 0 }, "tracksWithPlaceCount": { "type": "integer", "minimum": 0 }, "artistsWithPlaceCount": { "type": "integer", "minimum": 0 },
+        "tracksWithCanonCount": { "type": "integer", "minimum": 0 }, "artistsWithCanonCount": { "type": "integer", "minimum": 0 }, "generatedAt": { "type": "string", "format": "date-time" }
+      }
+    }
+  }
+}

@@ -1,0 +1,685 @@
+{
+  "schemaVersion": "1.0.0",
+  "generatedAt": "1970-01-01T00:00:00.000Z",
+  "source": "aha_music",
+  "artists": [],
+  "tracks": [],
+  "places": [],
+  "relations": [],
+  "canon": [
+    {
+      "canonNodeId": "afrobeat",
+      "name": "Afrobeat",
+      "type": "genre",
+      "shortDescription": "West African popular music combining groove, horns, extended forms and political expression.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "ambient",
+      "name": "Ambient",
+      "type": "genre",
+      "shortDescription": "Music focused on atmosphere, texture, space and sustained listening environments.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "ancient_music",
+      "name": "Ancient music",
+      "type": "era",
+      "shortDescription": "Historical music era used as a high-level timeline anchor for ancient music.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "baroque",
+      "name": "Baroque",
+      "type": "era",
+      "shortDescription": "Historical music era used as a high-level timeline anchor for baroque.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "black_atlantic_music",
+      "name": "Black Atlantic music",
+      "type": "cultural_context",
+      "shortDescription": "Transatlantic Black musical continuum linking African diasporic histories and modern popular forms.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "blues",
+      "name": "Blues",
+      "type": "genre",
+      "shortDescription": "African American musical form centered on expressive vocal style, blue notes and repeated harmonic patterns.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "call_and_response",
+      "name": "Call and response",
+      "type": "music_theory",
+      "shortDescription": "Responsive musical structure where one phrase is answered by another.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "classical_period",
+      "name": "Classical period",
+      "type": "era",
+      "shortDescription": "Historical music era used as a high-level timeline anchor for classical period.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "club_culture",
+      "name": "Club culture",
+      "type": "cultural_context",
+      "shortDescription": "Nightlife and DJ-centered spaces where dance music scenes, taste and technology develop.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "country",
+      "name": "Country",
+      "type": "genre",
+      "shortDescription": "Popular music tradition drawing on folk ballads, rural storytelling and string-band practices.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "dance_culture",
+      "name": "Dance culture",
+      "type": "cultural_context",
+      "shortDescription": "Social contexts where music is organized around dancing, bodies and shared movement.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "dancehall",
+      "name": "Dancehall",
+      "type": "genre",
+      "shortDescription": "Jamaican music culture emphasizing deejay vocals, digital riddims and sound-system performance.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "digital_music_age",
+      "name": "Digital music age",
+      "type": "era",
+      "shortDescription": "Historical music era used as a high-level timeline anchor for digital music age.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "disco",
+      "name": "Disco",
+      "type": "genre",
+      "shortDescription": "Dance music culture and production style built around steady pulse, orchestration and club playback.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "distortion",
+      "name": "Distortion",
+      "type": "production",
+      "shortDescription": "Sound alteration caused by saturation, clipping or nonlinear amplification.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "drone",
+      "name": "Drone",
+      "type": "music_theory",
+      "shortDescription": "Sustained or repeated pitch foundation used as a tonal reference.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "drum_machine",
+      "name": "Drum machine",
+      "type": "instrument",
+      "shortDescription": "Electronic instrument for sequencing and playing percussion sounds.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "dub",
+      "name": "Dub",
+      "type": "genre",
+      "shortDescription": "Studio-centered Jamaican practice using remixing, echo, reverb, bass and instrumental versions.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "electronic_music",
+      "name": "Electronic music",
+      "type": "genre",
+      "shortDescription": "Music made with electronic sound generation, processing, sequencing or computer-based production.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "film_music",
+      "name": "Film music",
+      "type": "genre",
+      "shortDescription": "Music composed, selected or produced to support cinematic narrative, mood and audiovisual timing.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "folk_music",
+      "name": "Folk music",
+      "type": "tradition",
+      "shortDescription": "Community-based music traditions transmitted through local practice and memory.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "funk",
+      "name": "Funk",
+      "type": "genre",
+      "shortDescription": "Groove-driven music emphasizing syncopated bass, drums, riffs and collective rhythmic interlock.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "game_music",
+      "name": "Game music",
+      "type": "genre",
+      "shortDescription": "Interactive and linear music created for video games, gameplay states and digital worlds.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "gospel",
+      "name": "Gospel",
+      "type": "genre",
+      "shortDescription": "Sacred vocal tradition rooted in Christian worship, communal singing and expressive call-and-response.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "groove",
+      "name": "Groove",
+      "type": "rhythm",
+      "shortDescription": "Felt rhythmic momentum created by repeated patterns, timing and ensemble interaction.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "harmony",
+      "name": "Harmony",
+      "type": "harmony",
+      "shortDescription": "Combination and progression of pitches or chords sounding together.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "hip_hop",
+      "name": "Hip hop",
+      "type": "genre",
+      "shortDescription": "Cultural and musical form built around MCing, DJing, beats, sampling and urban expression.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "house",
+      "name": "House",
+      "type": "genre",
+      "shortDescription": "Electronic dance music developed around four-on-the-floor rhythms, DJs, drum machines and clubs.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "improvisation",
+      "name": "Improvisation",
+      "type": "music_theory",
+      "shortDescription": "Real-time musical creation within stylistic, social or formal constraints.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "internet_music_culture",
+      "name": "Internet music culture",
+      "type": "cultural_context",
+      "shortDescription": "Networked music circulation shaped by platforms, memes, communities and digital release practices.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "jazz",
+      "name": "Jazz",
+      "type": "genre",
+      "shortDescription": "Improvisatory music tradition shaped by swing, blues, ensemble interaction and harmonic exploration.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "latin_music",
+      "name": "Latin music",
+      "type": "tradition",
+      "shortDescription": "Broad set of Latin American and diasporic musical traditions, rhythms and popular forms.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "loop",
+      "name": "Loop",
+      "type": "production",
+      "shortDescription": "Repeated audio or musical pattern used as a structural building block.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "medieval_music",
+      "name": "Medieval music",
+      "type": "era",
+      "shortDescription": "Historical music era used as a high-level timeline anchor for medieval music.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "melody",
+      "name": "Melody",
+      "type": "music_theory",
+      "shortDescription": "Ordered sequence of pitches perceived as a musical line.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "migration_and_music",
+      "name": "Migration and music",
+      "type": "cultural_context",
+      "shortDescription": "Musical exchange, memory and hybrid forms shaped by movement of people.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "minimalism",
+      "name": "Minimalism",
+      "type": "movement",
+      "shortDescription": "Compositional movement using repetition, gradual process and reduced musical materials.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "modality",
+      "name": "Modality",
+      "type": "harmony",
+      "shortDescription": "Pitch organization using modes or scalar frameworks beyond major/minor tonality.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "modernism",
+      "name": "Modernism",
+      "type": "era",
+      "shortDescription": "Historical music era used as a high-level timeline anchor for modernism.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "multitrack_recording",
+      "name": "Multitrack recording",
+      "type": "technology",
+      "shortDescription": "Recording method that captures and mixes separate sound layers independently.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "music_video_culture",
+      "name": "Music video culture",
+      "type": "cultural_context",
+      "shortDescription": "Audiovisual pop culture shaped by television, video clips, image and performance.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "nordic_folk",
+      "name": "Nordic folk music",
+      "type": "tradition",
+      "shortDescription": "Folk traditions from Nordic regions, including dance forms, fiddle practices and local song heritage.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "norwegian_pop",
+      "name": "Norwegian pop",
+      "type": "genre",
+      "shortDescription": "Norwegian popular music tradition shaped by local language, international pop and Nordic production contexts.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "overtones",
+      "name": "Overtones",
+      "type": "science_concept",
+      "shortDescription": "Frequencies above a fundamental that shape tone color and resonance.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "polyrhythm",
+      "name": "Polyrhythm",
+      "type": "rhythm",
+      "shortDescription": "Simultaneous use of contrasting rhythmic patterns or meters.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "pop",
+      "name": "Pop",
+      "type": "genre",
+      "shortDescription": "Broad popular song tradition organized around hooks, mass media circulation and changing production styles.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "post_punk",
+      "name": "Post-punk",
+      "type": "genre",
+      "shortDescription": "Experimental aftermath of punk that expanded rock with electronics, dub, art-school ideas and new textures.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "postwar_music",
+      "name": "Post-war music",
+      "type": "era",
+      "shortDescription": "Historical music era used as a high-level timeline anchor for post-war music.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "protest_music",
+      "name": "Protest music",
+      "type": "cultural_context",
+      "shortDescription": "Music used to voice dissent, solidarity, critique or political mobilization.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "punk",
+      "name": "Punk",
+      "type": "genre",
+      "shortDescription": "Raw, fast and often anti-establishment rock movement emphasizing directness and DIY practice.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "reggae",
+      "name": "Reggae",
+      "type": "genre",
+      "shortDescription": "Jamaican popular music marked by offbeat rhythm, bass weight, songcraft and sound-system culture.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "renaissance_music",
+      "name": "Renaissance music",
+      "type": "era",
+      "shortDescription": "Historical music era used as a high-level timeline anchor for renaissance music.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "resonance",
+      "name": "Resonance",
+      "type": "science_concept",
+      "shortDescription": "Amplification or reinforcement of vibration in bodies, rooms or instruments.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "reverb",
+      "name": "Reverb",
+      "type": "production",
+      "shortDescription": "Persistence of sound reflections that creates a sense of space.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "rhythm",
+      "name": "Rhythm",
+      "type": "rhythm",
+      "shortDescription": "Organization of musical time through duration, pulse, accent and pattern.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "rhythm_and_blues",
+      "name": "Rhythm and blues",
+      "type": "genre",
+      "shortDescription": "Post-war Black popular music emphasizing groove, vocals and dance-oriented rhythm sections.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "ritual_music",
+      "name": "Ritual music",
+      "type": "cultural_context",
+      "shortDescription": "Music used in ceremonial, sacred or repeated social practices.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "rock",
+      "name": "Rock",
+      "type": "genre",
+      "shortDescription": "Amplified popular music tradition built around drums, bass, guitar, vocals and album/song forms.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "rock_and_roll",
+      "name": "Rock and roll",
+      "type": "genre",
+      "shortDescription": "1950s popular music formed from rhythm and blues, blues, country and youth culture.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "romanticism",
+      "name": "Romanticism",
+      "type": "era",
+      "shortDescription": "Historical music era used as a high-level timeline anchor for romanticism.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "sampling",
+      "name": "Sampling",
+      "type": "production",
+      "shortDescription": "Use of recorded sound fragments as material in a new production.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "soul",
+      "name": "Soul",
+      "type": "genre",
+      "shortDescription": "Vocal-centered popular music combining rhythm and blues, gospel intensity and secular expression.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "sound_system",
+      "name": "Sound system",
+      "type": "technology",
+      "shortDescription": "Playback and amplification culture centered on DJs, selectors and powerful speakers.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "studio_as_instrument",
+      "name": "Studio as instrument",
+      "type": "production",
+      "shortDescription": "Production approach where recording, mixing and effects become compositional tools.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "syncopation",
+      "name": "Syncopation",
+      "type": "rhythm",
+      "shortDescription": "Rhythmic displacement that stresses off-beats or unexpected parts of the meter.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "synthesizer",
+      "name": "Synthesizer",
+      "type": "instrument",
+      "shortDescription": "Electronic instrument or system for generating and shaping sound.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "synthpop",
+      "name": "Synthpop",
+      "type": "genre",
+      "shortDescription": "Pop music centered on synthesizers, drum machines, sequencers and electronic textures.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "techno",
+      "name": "Techno",
+      "type": "genre",
+      "shortDescription": "Electronic dance music associated with machine rhythm, futurism and synthesized sound design.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "timbre",
+      "name": "Timbre",
+      "type": "science_concept",
+      "shortDescription": "Perceived sound color that distinguishes instruments, voices and textures.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "tonality",
+      "name": "Tonality",
+      "type": "harmony",
+      "shortDescription": "Pitch organization around a central key or tonic.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "urban_music_culture",
+      "name": "Urban music culture",
+      "type": "cultural_context",
+      "shortDescription": "City-based musical practices shaped by density, scenes, migration and media.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "western_classical",
+      "name": "Western classical music",
+      "type": "tradition",
+      "shortDescription": "Art-music tradition associated with notation, institutions and long-form composition.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    },
+    {
+      "canonNodeId": "youth_culture",
+      "name": "Youth culture",
+      "type": "cultural_context",
+      "shortDescription": "Generational music practices tied to identity, style, rebellion and peer communities.",
+      "linkedArtistIds": [],
+      "linkedTrackIds": [],
+      "linkedPlaylistIds": []
+    }
+  ],
+  "summary": {
+    "artistCount": 0,
+    "trackCount": 0,
+    "placeCount": 0,
+    "relationCount": 0,
+    "canonNodeCount": 73,
+    "verifiedRelationCount": 0,
+    "autoMatchedRelationCount": 0,
+    "suggestedRelationCount": 0,
+    "needsPlaceReviewCount": 0,
+    "rejectedRelationCount": 0,
+    "tracksWithPlaceCount": 0,
+    "artistsWithPlaceCount": 0,
+    "tracksWithCanonCount": 0,
+    "artistsWithCanonCount": 0,
+    "generatedAt": "1970-01-01T00:00:00.000Z"
+  }
+}
