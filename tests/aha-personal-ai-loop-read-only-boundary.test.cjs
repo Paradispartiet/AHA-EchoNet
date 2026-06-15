@@ -59,7 +59,18 @@ const metaCode = read(META_FILE);
 
 // A. Public audit API is explicit and stable.
 {
-  const { context } = makeAuditContext();
+  let auditCalls = 0;
+  const { context, writes, removals } = makeAuditContext({
+    globals: {
+      AHAChatPersonalContext: {
+        buildPersonalContext: () => { auditCalls += 1; return {}; }
+      },
+      AHAPersonalRetrieval: {
+        getRetrievalStatus: () => { auditCalls += 1; return {}; },
+        loadRetrievalIndex: () => { auditCalls += 1; return null; }
+      }
+    }
+  });
   assert.ok(context.AHAPersonalAiLoopAudit);
   for (const method of [
     "runAudit", "checkDataSources", "checkApprovedMaterial", "checkRetrievalIndex",
@@ -68,6 +79,9 @@ const metaCode = read(META_FILE);
   ]) {
     assert.equal(typeof context.AHAPersonalAiLoopAudit[method], "function", `${method} must be exposed`);
   }
+  assert.equal(auditCalls, 0, "loading the audit script must not read sources or run an audit");
+  assert.deepEqual(writes, [], "loading the audit script must not write localStorage");
+  assert.deepEqual(removals, [], "loading the audit script must not remove or clear localStorage");
 }
 
 // B–D. Only approved/consented source material is counted, and an audit is domain-read-only.
@@ -218,9 +232,19 @@ assert.equal(/DOMContentLoaded|addEventListener\s*\(\s*["']storage|runAudit\s*\(
   assert.equal(/runAudit\s*\(/.test(renderTraining), false, "Training render must not auto-run audit");
   assert.match(trainingHandler, /api\.runAudit\s*\(/);
   assert.equal(/refreshRetrievalIndex|buildRetrievalIndex|syncFromDatabase|fetch\s*\(/.test(trainingHandler), false);
+  assert.equal(
+    /supabase|AHARepository|executeSync|runSync|performSync|startSync|publish|share|dispatchEvent/.test(trainingHandler),
+    false,
+    "explicit Training audit handler must remain local and must not trigger sync, repository, publish, or sharing paths"
+  );
   assert.match(read("chat.html"), /aha-personal-ai-loop-status/);
   assert.match(chatStatus, /loadLastAudit\s*\(/);
   assert.equal(/runAudit|buildRetrievalIndex|refreshRetrievalIndex|fetch\s*\(|setItem\s*\(|removeItem\s*\(/.test(chatStatus), false);
+  assert.equal(
+    /supabase|AHARepository|executeSync|runSync|performSync|startSync|publish|share|dispatchEvent/.test(chatStatus),
+    false,
+    "compact Chat status must remain read-only and local"
+  );
 }
 
 // I–J. Meta Insights receives only a compact, redacted cache-derived pack.
@@ -228,6 +252,11 @@ assert.equal(/DOMContentLoaded|addEventListener\s*\(\s*["']storage|runAudit\s*\(
   const packBuilder = extractFunction(metaCode, "buildPersonalAiLoopPackSafe");
   assert.match(packBuilder, /loadLastAudit/);
   assert.equal(/runAudit|buildRetrievalIndex|refreshRetrievalIndex|setItem|removeItem|fetch\s*\(/.test(packBuilder), false);
+  assert.equal(
+    /supabase|AHARepository|executeSync|runSync|performSync|startSync|publish|share|dispatchEvent/.test(packBuilder),
+    false,
+    "Meta Insights pack construction must not trigger writes, sync, publishing, or sharing"
+  );
   const { context } = makeAuditContext();
   context.AHAPersonalAiLoopAudit = {
     loadLastAudit: () => ({

@@ -1960,7 +1960,7 @@ Auditen verifiserer at Personal Retrieval bare bruker godkjent corpus med `conse
 
 Dette markerer overgangen fra bygging av enkeltmoduler til validering av samlet personlig AI-system.
 
-Personal AI Loop Audit er nå testlåst for en local-first, read-only boundary. Auditen bruker bare confirmed/important memory claims, approved corpus med `consent.useForKnowledge === true` eller `consent.useForMemory === true`, og approved training examples. Den kan bare cache siste audit-summary under `aha_personal_ai_loop_audit_v1`; den må ikke skrive domain data, bygge eller persistere retrieval-indeks automatisk, gjøre Supabase-/database-writes eller trigge Sync Hub, manual sync eller auto-sync.
+Personal AI Loop Audit er nå testlåst av `tests/aha-personal-ai-loop-read-only-boundary.test.cjs` for en local-first, read-only boundary. Auditen bruker bare confirmed/important memory claims, approved corpus med `consent.useForKnowledge === true` eller `consent.useForMemory === true`, og approved training examples. Den kan bare cache siste audit-summary under `aha_personal_ai_loop_audit_v1`; den må ikke skrive domain data, bygge eller persistere retrieval-indeks automatisk, gjøre Supabase-/database-writes eller trigge Sync Hub, manual sync eller auto-sync.
 
 Training kjører auditen bare etter eksplisitt brukerhandling. Chat og Meta Insights leser bare en eksisterende audit-summary. Meta Insights får kun en kompakt `personalAiLoopPack` med summary/status, counts og anbefalinger, aldri full corpus-tekst, raw memory payload, full chat history, secrets eller komplette localStorage-dumper.
 
