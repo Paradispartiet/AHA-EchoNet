@@ -935,3 +935,16 @@ placeId → musikkseksjon → artister → sanger
 PlaceCard-forhåndsvisningen bruker labelen **Musikk**, viser “Knyttet til dette stedet”, “Artister knyttet til stedet”, “Sanger fra AHA Music”, relasjonstype, forklaring, confidence/status og eventuell tekst/lenke “Åpne i AHA Music” dersom relasjonen har URL/rute. Den samme indeksen brukes også til en enkel “Musikk i nærheten”-liste som teller artister og sanger per sted.
 
 Audit er read-only og teller antall leste artist-/track-relasjoner, unike `placeId`-er med musikk, relasjoner med manglende `placeId`, `placeId` som ikke finnes i lokale History Go-data når slike data er tilgjengelige, og topp steder etter sanger/artister. Audit skriver aldri over AHA Music-kildedataene.
+
+### AHA Music Export Bundle v1
+
+History Go har nå én samlet, validert lesegrense for AHA Music i `data/exports/history-go/aha-music/`. Konsumenten skal lese `ahaMusicHistoryGoExport.json` og bruke `ahaMusicHistoryGoExport.schema.json` som kontrakt; `ahaMusicHistoryGoExport.report.json` er auditrapporten. Pakken samler importerte artister og spor, eksisterende artist-/spor-sted-relasjoner og eksisterende canon-koblinger uten ekstern enrichment eller endring av rådata.
+
+Generer eller auditer pakken fra et lokalt `aha_music_library_v1`-snapshot:
+
+```bash
+npm run music:export:history-go -- path/to/aha_music_library_v1.json
+npm run music:export:history-go:audit -- path/to/aha_music_library_v1.json
+```
+
+Kun relasjoner med en eksisterende `historyGoPlaceId` er sikre History Go-koblinger og får unlock-tekst. Relasjoner uten place ID blir med som `needs_place_review`, men skal ikke brukes som sikre sted-unlocks før de er verifisert. `rejected` relasjoner eksporteres ikke. Se eksportmappens `README.md` for full kontrakt, input-fallbacks og determinismeregler.
