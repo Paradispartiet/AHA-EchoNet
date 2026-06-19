@@ -1976,20 +1976,24 @@ Privacy- og operator visibility-grensen er nå reviewed i [`AHA_PERSONAL_AI_LOOP
 
 Gjeldende status:
 
-- **Privacy/operator visibility: reviewed**
+- **Privacy/operator visibility: test-locked**
 - **Personal AI Loop Audit: local-first**
 - **Read-only boundary: test-locked**
 - **Approved/consented material only**
+- **Compact pack: redacted/test-locked**
+- **Audit cache key: narrowly test-locked**
 - **Audit cache: last summary only**
 - **Domain writes: forbidden**
 - **Sync Hub trigger: forbidden**
 - **Sync Hub execution: NO-GO**
 - **Auto-sync: permanently forbidden**
 
-Reviewen endrer ikke runtime, JavaScript, HTML, CSS eller tester. Den oppretter ikke `sync.html`, aktiverer ikke manual sync, audit writing, Supabase-/database-writes, retrieval index persistence, source events, automatic insights, Groups social sharing eller AHAavisa-publisering. Sync Hub-seksjonene og deres eksisterende activation boundaries er uendret.
+Reviewen er nå testlåst av `tests/aha-personal-ai-loop-privacy-operator-visibility.test.cjs` i tillegg til den eksisterende read-only boundary-testen. Privacy/operator visibility er testlåst, read-only boundary er testlåst, compact pack er redacted/testlåst, og audit cache-key er snevert låst til `aha_personal_ai_loop_audit_v1` som siste lokale summary.
+
+Reviewen endrer ikke runtime, JavaScript, HTML eller CSS. Den oppretter ikke `sync.html`, aktiverer ikke manual sync, audit writing, Supabase-/database-writes, retrieval index persistence, source events, automatic insights, Groups social sharing eller AHAavisa-publisering. Sync Hub execution er fortsatt **NO-GO**, Sync Hub-seksjonene og deres eksisterende activation boundaries er uendret, og auto-sync er fortsatt **permanently forbidden**.
 
 Neste anbefalte PR:
 
 ```text
-test: lock Personal AI Loop audit privacy and operator visibility
+docs: review Personal AI Loop audit next activation surface
 ```
