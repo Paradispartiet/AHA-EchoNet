@@ -1992,8 +1992,31 @@ Reviewen er nå testlåst av `tests/aha-personal-ai-loop-privacy-operator-visibi
 
 Reviewen endrer ikke runtime, JavaScript, HTML eller CSS. Den oppretter ikke `sync.html`, aktiverer ikke manual sync, audit writing, Supabase-/database-writes, retrieval index persistence, source events, automatic insights, Groups social sharing eller AHAavisa-publisering. Sync Hub execution er fortsatt **NO-GO**, Sync Hub-seksjonene og deres eksisterende activation boundaries er uendret, og auto-sync er fortsatt **permanently forbidden**.
 
+## 36. Personal AI Loop Audit next activation surface review
+
+Neste activation surface for Personal AI Loop Audit er nå reviewed i [`AHA_PERSONAL_AI_LOOP_AUDIT_NEXT_ACTIVATION_SURFACE.md`](./AHA_PERSONAL_AI_LOOP_AUDIT_NEXT_ACTIVATION_SURFACE.md). Reviewen dokumenterer at gjeldende audit fortsatt er end-to-end implemented, local-first, explicit-action only, read-only boundary test-locked, privacy/operator visibility test-locked, approved/consented material-only, compact/redacted for Meta Insights, ikke automatisk, ikke domain source-of-truth og ikke Sync Hub surface.
+
+Kort status:
+
+- **Next activation surface: reviewed**
+- **Allowed future surfaces: documented**
+- **Forbidden activation surfaces: documented**
+- **Gates before implementation: documented**
+- **Operator review, Training Dashboard, Chat context, Meta Insights og local/manual export/report er kun future surfaces**
+- **No runtime activation before docs + tests**
+- **Sync Hub execution: NO-GO**
+- **Auto-sync: permanently forbidden**
+
+Forrige anbefalte dokumentasjons-PR var `docs: review Personal AI Loop audit next activation surface`; den er nå gjennomført som denne reviewen.
+
+Reviewen tillater bare senere, testlåste forbedringer av operatorforklaring, warnings, “why not ready”, manual Training-status/refresh, compact Chat readiness, redacted Meta Insights summary og eksplisitt lokal/manual export/report. Den forbyr automatic audit på page load, render eller chat message, automatic retrieval-index refresh/persist, automatic Supabase/database write, background sync, Sync Hub execution, auto-sync, source events, publishing, social sharing, full raw payload exposure, full chat history exposure, full corpus/memory dump i Meta Insights og secret/token/API key exposure.
+
+Før implementation må read-only boundary-testene og privacy/operator visibility-testene fortsatt være grønne, ingen automatic audit run/domain write/remote write/Sync Hub trigger/auto-sync må innføres, compact pack må forbli redacted, `localStorage`-nøkkelen må fortsatt være begrenset til `aha_personal_ai_loop_audit_v1`, `npm test` må være grønn, og ny implementation må ha egen spesifikk test.
+
+Reviewen endrer ikke runtime, JavaScript, HTML, CSS eller tester. Den oppretter ikke `sync.html`, aktiverer ikke manual sync, audit writing, Supabase-/database-writes, Sync Hub execution, source events, automatic insights, Groups social sharing eller AHAavisa-publisering. Sync Hub execution er fortsatt **NO-GO**, og auto-sync er fortsatt **permanently forbidden**.
+
 Neste anbefalte PR:
 
 ```text
-docs: review Personal AI Loop audit next activation surface
+test: lock Personal AI Loop audit next activation surface
 ```
