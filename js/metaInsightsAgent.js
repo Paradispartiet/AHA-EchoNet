@@ -233,6 +233,9 @@
       const audit = api.loadLastAudit?.();
       if (!audit) return null;
       const approved = asObject(audit.checks?.approvedMaterial);
+      const recommendationSummary = typeof api.buildCompactOperatorRecommendationSummary === "function"
+        ? api.buildCompactOperatorRecommendationSummary(audit)
+        : null;
       return {
         status: asText(audit.status) || "empty",
         score: Number(audit.score) || 0,
@@ -240,7 +243,7 @@
         approvedExamples: Number(approved.approvedExamples) || 0,
         indexedItems: Number(audit.retrieval?.indexedItems) || 0,
         retrievalAvailable: Boolean(audit.retrieval?.available),
-        recommendations: asArray(audit.recommendations).slice(0, 6)
+        recommendations: recommendationSummary || asArray(audit.recommendations).slice(0, 6).map((item) => asText(item)).filter(Boolean)
       };
     } catch { return null; }
   }

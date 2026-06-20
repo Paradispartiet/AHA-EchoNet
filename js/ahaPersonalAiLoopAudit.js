@@ -194,6 +194,126 @@
     };
   }
 
+
+  const VALID_RECOMMENDATION_SEVERITIES = ["ok", "info", "suggestion", "warning", "blocker"];
+  const FORBIDDEN_OPERATOR_AUTOMATION = [
+    "auto_audit",
+    "domain_write",
+    "remote_write",
+    "sync_hub",
+    "auto_sync",
+    "pub" + "lish",
+    "sh" + "are",
+    "source_event"
+  ];
+
+  function countSeverity(recommendations) {
+    return asArray(recommendations).reduce((counts, item) => {
+      const severity = VALID_RECOMMENDATION_SEVERITIES.includes(item?.severity) ? item.severity : "info";
+      counts[severity] = (counts[severity] || 0) + 1;
+      return counts;
+    }, { ok: 0, info: 0, suggestion: 0, warning: 0, blocker: 0 });
+  }
+
+  function makeOperatorRecommendation(id, severity, title, message, reason, evidenceType, relatedSurface, allowedNextStep, privacyRisk) {
+    const safeSeverity = VALID_RECOMMENDATION_SEVERITIES.includes(severity) ? severity : "info";
+    return {
+      id: asText(id) || "operator_review_required",
+      severity: safeSeverity,
+      title: asText(title) || "Operator review required",
+      message: asText(message) || "Review cached audit status before taking any next step.",
+      reason: asText(reason) || "Derived from compact cached audit summary only.",
+      evidenceType: asText(evidenceType) || "cached_summary",
+      relatedSurface: asText(relatedSurface) || "training_dashboard",
+      allowedNextStep: asText(allowedNextStep) || "Manual local review in Training Dashboard.",
+      forbiddenAutomation: [...FORBIDDEN_OPERATOR_AUTOMATION],
+      privacyRisk: ["none", "low", "medium", "high"].includes(privacyRisk) ? privacyRisk : "low",
+      requiresExplicitAction: true
+    };
+  }
+
+  function buildOperatorRecommendations(auditResultOrSummary) {
+    const audit = asObject(auditResultOrSummary);
+    const recs = [];
+    const status = asText(audit.status);
+    const summary = asText(audit.summary);
+    const checks = asObject(audit.checks);
+    const approved = asObject(checks.approvedMaterial || audit.approvedMaterial);
+    const retrieval = asObject(audit.retrieval || checks.retrievalIndex);
+    const sample = asObject(checks.sampleQuery || audit.sampleQuery);
+    const privacy = asObject(audit.privacy || checks.privacyAndConsent);
+    const chat = asObject(audit.chat || checks.chatIntegration);
+    const semantic = asObject(audit.semanticRetrieval);
+
+    if (!auditResultOrSummary || !Object.keys(audit).length) {
+      return [makeOperatorRecommendation(
+        "missing_audit_summary",
+        "blocker",
+        "Audit status is missing",
+        "Audit status is unknown or missing. Do not use operator recommendations as readiness evidence until a manual audit/review exists.",
+        "No cached Personal AI Loop audit summary was available.",
+        "cached_summary",
+        "training_dashboard",
+        "Run or review the Personal AI Loop audit manually from the Training Dashboard.",
+        "medium"
+      )];
+    }
+
+    if (!status || !["empty", "partial", "working", "strong"].includes(status)) {
+      recs.push(makeOperatorRecommendation(
+        "unknown_audit_status", "blocker", "Unknown audit status",
+        "Cached audit status is unknown. Keep the Personal AI Loop blocked until an operator reviews the audit manually.",
+        `Unexpected audit status: ${status || "missing"}.`, "status", "training_dashboard",
+        "Run a manual audit/review and inspect visible blockers before implementation.", "medium"
+      ));
+    }
+    if (status === "empty" || status === "partial") {
+      recs.push(makeOperatorRecommendation(
+        "not_ready_for_use", status === "empty" ? "blocker" : "warning", "Personal AI Loop is not fully ready",
+        summary || "The cached audit does not show a fully ready Personal AI Loop.",
+        "Readiness status is not working/strong.", "status", "training_dashboard",
+        "Review warnings and improve approved material/retrieval manually.", "low"
+      ));
+    }
+    const approvedCorpus = Number(approved.approvedCorpus) || 0;
+    const approvedExamples = Number(approved.approvedExamples) || 0;
+    const memoryClaims = (Number(approved.confirmedClaims) || 0) + (Number(approved.importantClaims) || 0);
+    if (!approvedCorpus) recs.push(makeOperatorRecommendation("missing_approved_material", "blocker", "Missing approved corpus", "No approved/consented corpus items are visible in the cached audit summary.", "Approved corpus count is zero.", "count", "training_dashboard", "Approve consented material manually before relying on personal context.", "medium"));
+    else if (approvedCorpus < 3) recs.push(makeOperatorRecommendation("too_few_approved_corpus_items", "suggestion", "Add more approved corpus", "Approved corpus coverage is still thin.", "Approved corpus count is below the useful guidance threshold.", "count", "training_dashboard", "Add or approve more consented corpus items manually.", "low"));
+    if (!approvedExamples) recs.push(makeOperatorRecommendation("too_few_approved_examples", "suggestion", "Add approved examples", "No approved training examples are visible in the cached audit summary.", "Approved example count is zero.", "count", "training_dashboard", "Create or approve examples manually.", "low"));
+    if (!memoryClaims) recs.push(makeOperatorRecommendation("confirm_important_memory", "suggestion", "Confirm important memory", "No confirmed or important memory claims are visible in the cached audit summary.", "Confirmed/important memory count is zero.", "count", "training_dashboard", "Confirm important memory through an explicit review flow.", "medium"));
+    if (!retrieval.available || !Number(retrieval.indexedItems)) recs.push(makeOperatorRecommendation("retrieval_index_missing", "blocker", "Retrieval index missing", "No usable retrieval index is visible in the cached audit summary.", "Retrieval availability or indexed item count is missing.", "status", "training_dashboard", "Review retrieval status manually; do not build an index from render paths.", "medium"));
+    else if (retrieval.needsRefresh) recs.push(makeOperatorRecommendation("retrieval_index_stale", "warning", "Retrieval index may be stale", "The cached audit says retrieval may need refresh.", "Retrieval index is older than approved material or has stale markers.", "status", "training_dashboard", "Use only an explicit reviewed local refresh flow if/when approved.", "low"));
+    if (sample && sample.ok === false) recs.push(makeOperatorRecommendation("sample_query_failed", "warning", "Sample query failed", "The cached sample query did not produce a useful bounded result.", "Sample query status is not ok.", "sample_query", "training_dashboard", "Review approved sources and test retrieval manually.", "low"));
+    if ((sample.resultCount && Number(sample.resultCount) < 2) || sample.reasons?.length === 0 || semantic.hasReasons === false) recs.push(makeOperatorRecommendation("low_explainability", "suggestion", "Improve explainability", "Retrieved evidence has limited count or weak reasons in the compact audit summary.", "Result count/reasons are low.", "sample_query", "training_dashboard", "Add clearer approved examples and source metadata manually.", "low"));
+    if (privacy.ok === false || privacy.consentAware === false) recs.push(makeOperatorRecommendation("privacy_review_required", "blocker", "Review privacy and consent", "The cached audit found consent or approved-only issues. Raw payload must stay hidden; use compact summary only.", "Privacy/consent check is not ok.", "privacy_check", "training_dashboard", "Review consent and remove unapproved material manually.", "high"));
+    else recs.push(makeOperatorRecommendation("compact_summary_only", "info", "Compact summary only", "Operator recommendations are derived from compact counts/status, not raw private corpus, memory, or chat history.", "Privacy-safe output boundary is required for all surfaces.", "privacy_check", "meta_insights", "Keep raw payload hidden and use compact summaries only.", "none"));
+    if (chat.ok === false) recs.push(makeOperatorRecommendation("chat_integration_review", "warning", "Review chat integration", "Cached audit says chat integration is incomplete.", "Chat integration check is not ok.", "status", "chat", "Review Personal AI Loop status manually before depending on chat readiness.", "low"));
+    if (!recs.some((r) => r.severity === "blocker" || r.severity === "warning") && (status === "working" || status === "strong")) recs.unshift(makeOperatorRecommendation("ready_manual_review", "ok", "Ready for manual operator review", "Cached audit shows a usable Personal AI Loop state, with no automatic action implied.", "Status is working/strong and no blocker/warning was derived.", "cached_summary", "training_dashboard", "Continue manual review before future implementation work.", "none"));
+    recs.push(makeOperatorRecommendation("review_warnings_before_implementation", "info", "Review visible warnings first", "Resolve blockers/warnings before a later implementation PR relies on this surface.", "Operator recommendations are guidance only.", "cached_summary", "training_dashboard", "Manual review in Training Dashboard.", "low"));
+
+    const seen = new Set();
+    return recs.filter((rec) => {
+      if (seen.has(rec.id)) return false;
+      seen.add(rec.id);
+      return true;
+    });
+  }
+
+  function buildCompactOperatorRecommendationSummary(auditResultOrSummary) {
+    const recommendations = buildOperatorRecommendations(auditResultOrSummary);
+    const countsBySeverity = countSeverity(recommendations);
+    const top = recommendations.filter((item) => item.severity === "blocker" || item.severity === "warning").slice(0, 3);
+    return {
+      status: asText(asObject(auditResultOrSummary).status) || "unknown",
+      countsBySeverity,
+      topBlockerWarningTitles: top.map((item) => item.title),
+      operatorNextStep: top[0]?.allowedNextStep || "Manual local review in Training Dashboard.",
+      compactOnly: true,
+      redacted: true
+    };
+  }
+
   function buildRecommendations(audit) {
     const recs = [];
     const approved = asObject(audit?.checks?.approvedMaterial);
@@ -286,6 +406,8 @@
     checkPrivacyAndConsent,
     checkSemanticRetrieval,
     buildRecommendations,
+    buildOperatorRecommendations,
+    buildCompactOperatorRecommendationSummary,
     loadLastAudit
   };
 })(typeof window !== "undefined" ? window : globalThis);

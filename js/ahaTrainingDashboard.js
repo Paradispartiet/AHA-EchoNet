@@ -219,7 +219,20 @@
       return;
     }
     const approved = audit.checks?.approvedMaterial || {};
-    const recommendations = asArray(audit.recommendations).map((item) => `<li>${escapeHtml(item)}</li>`).join("");
+    const operatorRecommendations = typeof api.buildOperatorRecommendations === "function"
+      ? api.buildOperatorRecommendations(audit)
+      : [];
+    const recommendationRank = { blocker: 0, warning: 1, suggestion: 2, info: 3, ok: 4 };
+    const recommendations = operatorRecommendations
+      .slice()
+      .sort((a, b) => (recommendationRank[a.severity] ?? 9) - (recommendationRank[b.severity] ?? 9))
+      .map((item) => `
+        <li data-operator-recommendation-severity="${escapeHtml(item.severity)}">
+          <strong>${escapeHtml(item.severity)}: ${escapeHtml(item.title)}</strong><br>
+          <span>${escapeHtml(item.message)}</span><br>
+          <small>${escapeHtml(item.allowedNextStep)}</small>
+        </li>
+      `).join("");
     mount.innerHTML = `
       <div class="aha-training-stats">
         <div class="aha-mini-stat"><strong>${escapeHtml(audit.status || "empty")}</strong><span>Status</span></div>
