@@ -6,7 +6,33 @@
 
 > **Sync Hub activation evidence (2026-06-11):** Se [`AHA_SYNC_HUB_ACTIVATION_EVIDENCE.md`](./AHA_SYNC_HUB_ACTIVATION_EVIDENCE.md) for review av gates A–J, current blockers og manglende bevis før activation. Manual execution er fortsatt NO-GO; auto-sync er permanent forbudt.
 
-Statusdato: 2026-06-13
+Statusdato: 2026-06-20
+
+
+## Personal AI Loop Meta Insights recommendation surface
+
+```text
+✅ Personal AI Loop Meta Insights recommendation surface: reviewed
+✅ Allowed compact/redacted recommendation summary: documented
+✅ Forbidden raw payload/private context/prompt injection: documented
+✅ No-auto-run/no-write/no-sync/no-publish: documented
+✅ Relationship to operator recommendations / Chat readiness / Training / Sync Hub: documented
+✅ Required gates before implementation: documented
+⛔ Sync Hub execution: NO-GO
+⛔ Auto-sync: permanently forbidden
+```
+
+The Meta Insights recommendation surface review is documented in [`AHA_PERSONAL_AI_LOOP_META_INSIGHTS_RECOMMENDATION_SURFACE.md`](./AHA_PERSONAL_AI_LOOP_META_INSIGHTS_RECOMMENDATION_SURFACE.md). This documentation-only review defines how Meta Insights may later use Personal AI Loop operator recommendations and Chat readiness as compact/redacted insight input without raw private data, audit execution, writeback, Sync Hub, publish/share behavior, or prompt injection.
+
+The review documents allowed compact inputs such as severity counts, top blocker/warning titles, compact operator next step, compact Chat readiness state/message, last audit status from cached summary, manual review required flag, and redacted Personal AI Loop readiness. It also documents forbidden raw audit payload, private corpus, memory dump, chat history, raw source content, retrieval index, approved examples, consent metadata, unredacted evidence, hidden private prompt payload, secrets, and unsafe identifiers. Meta Insights must not auto-run audit, write `localStorage`, write domain/remote/Supabase data, refresh retrieval indexes, trigger manual sync, trigger Sync Hub, trigger auto-sync, publish AHAavisa, post/share in Groups, send source/publish/share events, perform background sync, or create automation without explicit action.
+
+The surface states are `ready`, `attention_needed`, `blocked`, and `unknown`, with fail-closed behavior for missing or invalid cached summaries. The review also locks the relationship to operator recommendations, Chat readiness, Training Dashboard, Sync Hub, AHAavisa, and Groups. Sync Hub execution remains **NO-GO**, `sync.html` remains outside this workstream, and auto-sync remains **permanently forbidden**.
+
+Neste anbefalte PR:
+
+```text
+test: lock Personal AI Loop Meta Insights recommendation surface
+```
 
 ## Personal AI Loop Chat readiness surface
 
@@ -36,7 +62,7 @@ Chat readiness reads the cached audit summary only through the existing local au
 Neste anbefalte PR:
 
 ```text
-docs: review Personal AI Loop Meta Insights recommendation surface
+test: lock Personal AI Loop Meta Insights recommendation surface
 ```
 
 
