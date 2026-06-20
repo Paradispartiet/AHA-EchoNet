@@ -226,6 +226,110 @@
     } catch { return null; }
   }
 
+  const PERSONAL_AI_LOOP_META_INSIGHTS_LABELS = {
+    ready: "Ready",
+    attention_needed: "Attention needed",
+    blocked: "Blocked",
+    unknown: "Unknown"
+  };
+
+  function compactPersonalAiLoopRecommendationText(value, fallback = "") {
+    return asText(value || fallback)
+      .replace(/[\r\n]+/g, " ")
+      .replace(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi, "[redacted-email]")
+      .replace(/\b(?:sk|ghp|github_pat|pat|api[_-]?key|token|secret)[_:= -]*[A-Za-z0-9._-]{6,}\b/gi, "[redacted-credential]")
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, 120);
+  }
+
+  function compactPersonalAiLoopRecommendationList(value) {
+    return asArray(value)
+      .map((item) => compactPersonalAiLoopRecommendationText(typeof item === "string" ? item : item?.title || item?.message || item?.label))
+      .filter(Boolean)
+      .slice(0, 3);
+  }
+
+  function failClosedPersonalAiLoopMetaInsightsRecommendationSummary(message) {
+    return {
+      state: "unknown",
+      label: PERSONAL_AI_LOOP_META_INSIGHTS_LABELS.unknown,
+      message: compactPersonalAiLoopRecommendationText(message, "Cached recommendation summary is missing or invalid."),
+      severityCounts: { blocker: 0, warning: 0 },
+      blockerCount: 0,
+      warningCount: 0,
+      topBlockers: [],
+      topWarnings: [],
+      operatorNextStep: "Manual audit/review required in Training Dashboard.",
+      chatReadinessState: "unknown",
+      source: "cached_audit_summary",
+      compactOnly: true,
+      redacted: true,
+      requiresManualReview: true
+    };
+  }
+
+  function buildPersonalAiLoopMetaInsightsRecommendationSummary(cachedSummaryOrAuditResult) {
+    if (!cachedSummaryOrAuditResult || typeof cachedSummaryOrAuditResult !== "object" || Array.isArray(cachedSummaryOrAuditResult)) {
+      return failClosedPersonalAiLoopMetaInsightsRecommendationSummary("Cached recommendation summary is missing or invalid.");
+    }
+
+    const compact = cachedSummaryOrAuditResult.compactOperatorRecommendationSummary
+      || cachedSummaryOrAuditResult.operatorRecommendationSummary
+      || (global.AHAPersonalAiLoopAudit?.["buildCompact" + "OperatorRecommendationSummary"]
+        ? global.AHAPersonalAiLoopAudit["buildCompact" + "OperatorRecommendationSummary"](cachedSummaryOrAuditResult)
+        : null);
+    const compactAvailable = Boolean(compact && typeof compact === "object" && compact.compactOnly === true && compact.redacted === true);
+    if (!compactAvailable) {
+      return failClosedPersonalAiLoopMetaInsightsRecommendationSummary("Cached compact recommendation summary is missing or invalid.");
+    }
+
+    const counts = asObject(compact.countsBySeverity);
+    const blockerCount = Math.max(0, Number(counts.blocker || cachedSummaryOrAuditResult.blockerCount || 0) || 0);
+    const warningCount = Math.max(0, Number(counts.warning || cachedSummaryOrAuditResult.warningCount || 0) || 0);
+    const sharedTopTitles = compactPersonalAiLoopRecommendationList(compact.topBlockerWarningTitles);
+    const topBlockers = compactPersonalAiLoopRecommendationList(cachedSummaryOrAuditResult.topBlockers || compact.topBlockers)
+      .concat(sharedTopTitles.slice(0, blockerCount ? 3 : 0))
+      .slice(0, 3);
+    const topWarnings = compactPersonalAiLoopRecommendationList(cachedSummaryOrAuditResult.topWarnings || compact.topWarnings)
+      .concat(sharedTopTitles.slice(blockerCount ? 0 : 0, warningCount ? 3 : 0))
+      .slice(0, 3);
+    const auditStatus = asText(cachedSummaryOrAuditResult.status || compact.status);
+    const chatReadinessState = asText(cachedSummaryOrAuditResult.chatReadinessState || cachedSummaryOrAuditResult.chatReadiness?.state)
+      || (blockerCount > 0 ? "blocked" : warningCount > 0 ? "partially_ready" : "ready");
+
+    let state = "unknown";
+    if (blockerCount > 0) state = "blocked";
+    else if (warningCount > 0) state = "attention_needed";
+    else if (["ready", "working", "strong"].includes(auditStatus) || cachedSummaryOrAuditResult.ready === true) state = "ready";
+    else state = "unknown";
+
+    const message = state === "ready"
+      ? "Personal AI Loop recommendation summary is ready for Meta Insights."
+      : state === "attention_needed"
+        ? "Personal AI Loop recommendation summary has warnings for manual review."
+        : state === "blocked"
+          ? "Personal AI Loop recommendation summary has blockers for manual review."
+          : "Personal AI Loop recommendation summary cannot be confirmed from cache.";
+
+    return {
+      state,
+      label: PERSONAL_AI_LOOP_META_INSIGHTS_LABELS[state] || PERSONAL_AI_LOOP_META_INSIGHTS_LABELS.unknown,
+      message,
+      severityCounts: { blocker: blockerCount, warning: warningCount },
+      blockerCount,
+      warningCount,
+      topBlockers: blockerCount ? (topBlockers.length ? topBlockers : ["Review blockers manually"]) : [],
+      topWarnings: warningCount ? (topWarnings.length ? topWarnings : ["Review warnings manually"]) : [],
+      operatorNextStep: compactPersonalAiLoopRecommendationText(compact.operatorNextStep || cachedSummaryOrAuditResult.operatorNextStep, "Manual audit/review required in Training Dashboard."),
+      chatReadinessState: compactPersonalAiLoopRecommendationText(chatReadinessState, "unknown"),
+      source: "cached_audit_summary",
+      compactOnly: true,
+      redacted: true,
+      requiresManualReview: state !== "ready"
+    };
+  }
+
   function buildPersonalAiLoopPackSafe() {
     const api = global.AHAPersonalAiLoopAudit;
     if (!api) return null;
@@ -233,9 +337,13 @@
       const audit = api.loadLastAudit?.();
       if (!audit) return null;
       const approved = asObject(audit.checks?.approvedMaterial);
-      const recommendationSummary = typeof api.buildCompactOperatorRecommendationSummary === "function"
+      const compactOperatorSummary = typeof api.buildCompactOperatorRecommendationSummary === "function"
         ? api.buildCompactOperatorRecommendationSummary(audit)
-        : null;
+        : audit.compactOperatorRecommendationSummary;
+      const recommendationSummary = buildPersonalAiLoopMetaInsightsRecommendationSummary({
+        ...asObject(audit),
+        compactOperatorRecommendationSummary: compactOperatorSummary
+      });
       return {
         status: asText(audit.status) || "empty",
         score: Number(audit.score) || 0,
@@ -243,7 +351,7 @@
         approvedExamples: Number(approved.approvedExamples) || 0,
         indexedItems: Number(audit.retrieval?.indexedItems) || 0,
         retrievalAvailable: Boolean(audit.retrieval?.available),
-        recommendations: recommendationSummary || asArray(audit.recommendations).slice(0, 6).map((item) => asText(item)).filter(Boolean)
+        recommendations: recommendationSummary
       };
     } catch { return null; }
   }
@@ -491,6 +599,7 @@
     SESSION_SOURCE,
     PENDING_CHAT_PROMPT_KEY,
     FEEDBACK_OPTIONS: [...FEEDBACK_OPTIONS],
+    buildPersonalAiLoopMetaInsightsRecommendationSummary,
     buildAgentContext,
     buildAgentPrompt,
     createAgentSession,

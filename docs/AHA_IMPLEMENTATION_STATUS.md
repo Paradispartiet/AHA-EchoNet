@@ -2160,3 +2160,29 @@ Neste anbefalte PR:
 ```text
 test: lock Personal AI Loop operator recommendations behavior
 ```
+
+## 38. Personal AI Loop Meta Insights recommendation behavior lock
+
+Personal AI Loop Meta Insights recommendation summary is minimally implemented and now behavior test-locked. Meta Insights uses `buildPersonalAiLoopMetaInsightsRecommendationSummary(...)` as a compact/redacted recommendation summary boundary over an existing cached audit/recommendation summary.
+
+The behavior lock covers:
+
+- **Meta Insights recommendation behavior: test-locked**
+- **Compact/redacted contract: test-locked**
+- **Ready / attention_needed / blocked / unknown states: test-locked**
+- **Missing/invalid cache fail-closed: test-locked**
+- **No raw audit/private payload: test-locked**
+- **No automatic audit run**
+- **No write/sync/publish/share**
+- **Sync Hub execution: NO-GO**
+- **Auto-sync: permanently forbidden**
+
+The compact Meta Insights recommendation summary exposes only state, label, message, severity counts, blocker/warning counts, compact top blocker/warning titles, compact operator next step, compact Chat readiness state, cached-summary source, compact/redacted flags and manual-review requirement. It must not expose raw audit payload, full private corpus, full memory dumps, full chat history, raw source content, raw retrieval index, raw approved examples, raw consent metadata, secrets, tokens, API keys or unredacted e-mail addresses.
+
+Missing, null or invalid cached summary data fails closed as `unknown` or `blocked`, requires manual review, points the operator to manual audit/review in Training Dashboard and does not run audit, repair state, write data, trigger Sync Hub, trigger manual/auto-sync, publish or share. Pack integration remains cached-summary only and redacted.
+
+Neste anbefalte PR:
+
+```text
+docs: review Personal AI Loop export/report surface
+```
