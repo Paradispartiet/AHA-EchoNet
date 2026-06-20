@@ -2067,3 +2067,34 @@ Neste anbefalte PR:
 ```text
 test: lock Personal AI Loop audit next activation surface
 ```
+
+## 37. Personal AI Loop operator recommendations minimal implementation
+
+Personal AI Loop operator recommendations UX: reviewed. Personal AI Loop operator recommendations UX: test-locked. Recommendation categories, severity model, allowed/forbidden UX behavior, surface-specific UX rules and required gates before implementation remain documented by the operator recommendations UX review and locked by the UX test.
+
+A minimal operator recommendations implementation is now added inside the Personal AI Loop Audit boundary. The recommendation builder is read-only/local-first and derives operator-visible guidance only from an existing audit result or cached summary. Recommendation builder: read-only/local-first. It emits stable recommendation objects with severity, title, message, reason, evidence type, related surface, allowed manual next step, forbidden automation, privacy risk and explicit-action requirement. Missing or unknown audit state fails closed with an operator-visible blocker and a manual audit/review next step.
+
+Training Dashboard: cached summary only. Training Dashboard can render grouped/sorted operator recommendations from the cached audit summary and must not auto-run audit, auto-build indexes, write domain data, write remote data, trigger Sync Hub, publish or share.
+
+Meta Insights: compact/redacted recommendation summary only. Meta Insights receives only compact counts by severity, top blocker/warning titles, compact readiness status and a compact operator next step. It does not receive raw corpus, raw memory, full chat history, raw audit payload, secrets, tokens or API keys, and it does not run audit or write audit results.
+
+The implementation keeps the existing boundaries unchanged:
+
+- **Operator recommendations UX: reviewed**
+- **Operator recommendations UX: test-locked**
+- **Minimal operator recommendations implementation: implemented**
+- **Recommendation builder: read-only/local-first**
+- **Training Dashboard: cached summary only**
+- **Meta Insights: compact/redacted recommendation summary only**
+- **No automatic audit run**
+- **No domain write**
+- **No remote write**
+- **No write/sync/publish**
+- **Sync Hub execution: NO-GO**
+- **Auto-sync: permanently forbidden**
+
+Neste anbefalte PR:
+
+```text
+test: lock Personal AI Loop operator recommendations behavior
+```
