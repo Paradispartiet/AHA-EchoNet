@@ -13,6 +13,10 @@ Statusdato: 2026-06-13
 ```text
 ✅ Personal AI Loop Chat readiness surface: reviewed
 ✅ Personal AI Loop Chat readiness surface: test-locked
+✅ Minimal Chat readiness status: implemented
+✅ Chat reads cached audit summary only
+✅ Chat shows compact/redacted readiness only
+✅ Chat fail-closed on missing/invalid cache
 ✅ Chat allowed compact readiness/status: documented
 ✅ Chat forbidden raw payload/prompt injection: documented
 ✅ Chat no-auto-run/no-write/no-sync/no-publish: documented
@@ -22,14 +26,14 @@ Statusdato: 2026-06-13
 ⛔ Auto-sync: permanently forbidden
 ```
 
-The Chat readiness surface review is documented in [`AHA_PERSONAL_AI_LOOP_CHAT_READINESS_SURFACE.md`](./AHA_PERSONAL_AI_LOOP_CHAT_READINESS_SURFACE.md) and test-locked in `tests/aha-personal-ai-loop-chat-readiness-surface.test.cjs`. This status update is documentation-only: it does not change runtime, JavaScript, HTML, CSS, tests, Sync Hub, manual sync, auto-sync, Supabase/database writes, publishing, social sharing, Groups sharing, AHAavisa publishing, fetch/XHR/sendBeacon calls, or external calls.
+The Chat readiness surface review is documented in [`AHA_PERSONAL_AI_LOOP_CHAT_READINESS_SURFACE.md`](./AHA_PERSONAL_AI_LOOP_CHAT_READINESS_SURFACE.md) and test-locked in `tests/aha-personal-ai-loop-chat-readiness-surface.test.cjs`. The `feat: add Personal AI Loop Chat readiness status` runtime status is now implemented in `js/ahaChat.js` and behavior-covered by `tests/aha-personal-ai-loop-chat-readiness-behavior.test.cjs` within the locked read-only boundary.
 
-The review documents the current locked state, purpose, allowed compact Chat display, forbidden raw payload/prompt injection, forbidden Chat behavior, readiness states, fail-closed UX, and relationships to operator recommendations, Meta Insights, Training Dashboard, Sync Hub, AHAavisa, and Groups. Chat readiness is a secondary status surface only. It may use compact/redacted cached readiness/status in a later separately test-locked implementation, but it must not run audit automatically, write audit/domain/remote data, trigger Sync Hub, trigger manual sync, trigger auto-sync, publish, share, send source events, or inject raw audit payload into prompts. Sync Hub execution remains **NO-GO**, `sync.html` remains outside this workstream, and auto-sync remains **permanently forbidden**.
+Chat readiness now reads the cached audit summary only through the existing local audit reader, renders compact/redacted readiness status only, and fail-closes to `unknown` when the cache is missing or invalid. The rendered status includes state, blocker/warning counts, compact blocker/warning titles, and one manual next step. It does not run audit automatically, does not write localStorage/domain/remote data, does not inject raw prompt payload, does not expose raw private corpus/memory/chat history, does not call fetch/XHR/sendBeacon, does not publish/share/source-event, and does not trigger Sync Hub or manual/auto-sync. Sync Hub execution remains **NO-GO**, `sync.html` remains outside this workstream, and auto-sync remains **permanently forbidden**.
 
 Neste anbefalte PR:
 
 ```text
-feat: add Personal AI Loop Chat readiness status
+test: lock Personal AI Loop Chat readiness behavior
 ```
 
 
