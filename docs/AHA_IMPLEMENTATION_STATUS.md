@@ -12,6 +12,7 @@ Statusdato: 2026-06-13
 
 ```text
 ✅ Personal AI Loop Chat readiness surface: reviewed
+✅ Personal AI Loop Chat readiness surface: test-locked
 ✅ Chat allowed compact readiness/status: documented
 ✅ Chat forbidden raw payload/prompt injection: documented
 ✅ Chat no-auto-run/no-write/no-sync/no-publish: documented
@@ -21,14 +22,14 @@ Statusdato: 2026-06-13
 ⛔ Auto-sync: permanently forbidden
 ```
 
-The Chat readiness surface review is documented in [`AHA_PERSONAL_AI_LOOP_CHAT_READINESS_SURFACE.md`](./AHA_PERSONAL_AI_LOOP_CHAT_READINESS_SURFACE.md). This status update is documentation-only: it does not change runtime, JavaScript, HTML, CSS, tests, Sync Hub, manual sync, auto-sync, Supabase/database writes, publishing, social sharing, Groups sharing, AHAavisa publishing, fetch/XHR/sendBeacon calls, or external calls.
+The Chat readiness surface review is documented in [`AHA_PERSONAL_AI_LOOP_CHAT_READINESS_SURFACE.md`](./AHA_PERSONAL_AI_LOOP_CHAT_READINESS_SURFACE.md) and test-locked in `tests/aha-personal-ai-loop-chat-readiness-surface.test.cjs`. This status update is documentation-only: it does not change runtime, JavaScript, HTML, CSS, tests, Sync Hub, manual sync, auto-sync, Supabase/database writes, publishing, social sharing, Groups sharing, AHAavisa publishing, fetch/XHR/sendBeacon calls, or external calls.
 
 The review documents the current locked state, purpose, allowed compact Chat display, forbidden raw payload/prompt injection, forbidden Chat behavior, readiness states, fail-closed UX, and relationships to operator recommendations, Meta Insights, Training Dashboard, Sync Hub, AHAavisa, and Groups. Chat readiness is a secondary status surface only. It may use compact/redacted cached readiness/status in a later separately test-locked implementation, but it must not run audit automatically, write audit/domain/remote data, trigger Sync Hub, trigger manual sync, trigger auto-sync, publish, share, send source events, or inject raw audit payload into prompts. Sync Hub execution remains **NO-GO**, `sync.html` remains outside this workstream, and auto-sync remains **permanently forbidden**.
 
 Neste anbefalte PR:
 
 ```text
-test: lock Personal AI Loop Chat readiness surface
+feat: add Personal AI Loop Chat readiness status
 ```
 
 
