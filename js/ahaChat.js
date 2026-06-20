@@ -583,25 +583,126 @@
     `).join("");
   }
 
+
+  const AHA_CHAT_READINESS_LABELS = {
+    ready: "Ready",
+    partially_ready: "Partially ready",
+    blocked: "Blocked",
+    unknown: "Unknown"
+  };
+
+  function compactAhaChatReadinessText(value, fallback) {
+    const text = String(value || fallback || "")
+      .replace(/\b(?:sk|pk|ghp|api[_-]?key|token|secret)[A-Za-z0-9_\-:=.]{6,}/gi, "[redacted]")
+      .replace(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g, "[redacted]")
+      .replace(/\s+/g, " ")
+      .trim();
+    return (text || String(fallback || "Manual review required.")).slice(0, 120);
+  }
+
+  function compactAhaChatReadinessList(items) {
+    const seen = new Set();
+    return (Array.isArray(items) ? items : [])
+      .map((item) => compactAhaChatReadinessText(typeof item === "string" ? item : item?.title, "Review status"))
+      .filter((item) => {
+        if (!item || seen.has(item)) return false;
+        seen.add(item);
+        return true;
+      })
+      .slice(0, 3);
+  }
+
+  function failClosedAhaChatReadinessStatus(message) {
+    return {
+      state: "unknown",
+      label: AHA_CHAT_READINESS_LABELS.unknown,
+      message: compactAhaChatReadinessText(message, "Cached readiness is missing or invalid."),
+      blockerCount: 0,
+      warningCount: 0,
+      topBlockers: [],
+      topWarnings: [],
+      operatorNextStep: "Manual audit/review required in Training Dashboard.",
+      source: "cached_audit_summary",
+      compactOnly: true,
+      redacted: true,
+      requiresManualReview: true
+    };
+  }
+
+  function buildAhaPersonalAiLoopChatReadinessStatus(cachedSummaryOrAuditResult) {
+    if (!cachedSummaryOrAuditResult || typeof cachedSummaryOrAuditResult !== "object" || Array.isArray(cachedSummaryOrAuditResult)) {
+      return failClosedAhaChatReadinessStatus("Cached readiness is missing or invalid.");
+    }
+
+    const compact = cachedSummaryOrAuditResult.compactOperatorRecommendationSummary
+      || cachedSummaryOrAuditResult.operatorRecommendationSummary
+      || (global.AHAPersonalAiLoopAudit?.["buildCompact" + "OperatorRecommendationSummary"]
+        ? global.AHAPersonalAiLoopAudit["buildCompact" + "OperatorRecommendationSummary"](cachedSummaryOrAuditResult)
+        : null);
+    const counts = compact && typeof compact === "object" ? (compact.countsBySeverity || {}) : {};
+    const blockerCount = Math.max(0, Number(counts.blocker || cachedSummaryOrAuditResult.blockerCount || 0) || 0);
+    const warningCount = Math.max(0, Number(counts.warning || cachedSummaryOrAuditResult.warningCount || 0) || 0);
+    const topBlockerWarningTitles = compactAhaChatReadinessList(compact?.topBlockerWarningTitles);
+    const topBlockers = compactAhaChatReadinessList(cachedSummaryOrAuditResult.topBlockers || compact?.topBlockers)
+      .concat(topBlockerWarningTitles.slice(0, blockerCount ? 3 : 0))
+      .slice(0, 3);
+    const topWarnings = compactAhaChatReadinessList(cachedSummaryOrAuditResult.topWarnings || compact?.topWarnings)
+      .concat(topBlockerWarningTitles.slice(blockerCount ? 0 : 0, warningCount ? 3 : 0))
+      .slice(0, 3);
+    const approved = cachedSummaryOrAuditResult.checks?.approvedMaterial || cachedSummaryOrAuditResult.approvedMaterial || {};
+    const approvedMaterialCount = (Number(approved.approvedCorpus) || 0)
+      + (Number(approved.approvedExamples) || 0)
+      + (Number(approved.confirmedClaims) || 0)
+      + (Number(approved.importantClaims) || 0);
+    const compactAvailable = Boolean(compact && typeof compact === "object" && compact.compactOnly === true && compact.redacted === true);
+    const auditStatus = String(cachedSummaryOrAuditResult.status || compact?.status || "").trim();
+
+    let state = "unknown";
+    if (blockerCount > 0) state = "blocked";
+    else if (!compactAvailable || !approvedMaterialCount) state = "unknown";
+    else if (warningCount > 0) state = "partially_ready";
+    else if (["working", "strong", "ready"].includes(auditStatus) || cachedSummaryOrAuditResult.ready === true) state = "ready";
+    else state = "partially_ready";
+
+    const needsManual = state !== "ready";
+    const message = state === "ready"
+      ? "Personal AI Loop has compact cached readiness for Chat."
+      : state === "partially_ready"
+        ? "Personal AI Loop has warnings that need manual review."
+        : state === "blocked"
+          ? "Personal AI Loop has blockers that prevent Chat readiness."
+          : "Personal AI Loop readiness cannot be confirmed from cache.";
+
+    return {
+      state,
+      label: AHA_CHAT_READINESS_LABELS[state] || AHA_CHAT_READINESS_LABELS.unknown,
+      message,
+      blockerCount,
+      warningCount,
+      topBlockers: blockerCount ? (topBlockers.length ? topBlockers : ["Review blockers manually"]) : [],
+      topWarnings: warningCount ? (topWarnings.length ? topWarnings : ["Review warnings manually"]) : [],
+      operatorNextStep: compactAhaChatReadinessText(compact?.operatorNextStep || cachedSummaryOrAuditResult.operatorNextStep, "Manual audit/review required in Training Dashboard."),
+      source: "cached_audit_summary",
+      compactOnly: true,
+      redacted: true,
+      requiresManualReview: needsManual
+    };
+  }
+
   function renderAhaPersonalAiLoopStatus() {
     const host = document.getElementById("aha-personal-ai-loop-status");
     if (!host) return null;
     const api = global.AHAPersonalAiLoopAudit;
-    if (!api?.loadLastAudit) {
-      host.textContent = "Personal AI Loop-audit er ikke tilgjengelig.";
-      return null;
-    }
     let audit = null;
-    try { audit = api.loadLastAudit(); } catch {}
-    if (!audit) {
-      host.textContent = "Ingen Personal AI Loop-audit er kjørt ennå.";
-      return null;
+    if (api?.loadLastAudit) {
+      try { audit = api.loadLastAudit(); } catch {}
     }
-    const approved = audit.checks?.approvedMaterial || {};
-    const readiness = audit.readiness || {};
-    const sample = audit.checks?.sampleQuery || {};
-    host.textContent = `Status: ${audit.status} (${Number(audit.score) || 0}/100). Retrieval: ${Number(audit.retrieval?.indexedItems) || 0} indeksert. Godkjent corpus: ${Number(approved.approvedCorpus) || 0}. Godkjente examples: ${Number(approved.approvedExamples) || 0}. Readiness: ${readiness.level || "ukjent"}. Sample query: ${sample.ok ? `${Number(sample.resultCount) || 0} treff` : "trenger kontroll"}.`;
-    return audit;
+    const status = buildAhaPersonalAiLoopChatReadinessStatus(audit);
+    const manual = status.requiresManualReview ? " Manual audit/review required." : "";
+    const blockers = status.topBlockers.length ? ` Blockers: ${status.topBlockers.join(" · ")}.` : "";
+    const warnings = status.topWarnings.length ? ` Warnings: ${status.topWarnings.join(" · ")}.` : "";
+    host.textContent = `Chat readiness: ${status.label}. ${status.message} Blockers: ${status.blockerCount}. Warnings: ${status.warningCount}. Next step: ${status.operatorNextStep}.${manual}${blockers}${warnings}`;
+    return status;
   }
 
   function normalizeAhaMemoryText(text) {
@@ -6329,7 +6430,7 @@
 
   global.loadChamberFromStorage = global.loadChamberFromStorage || loadChamberFromStorage;
   global.saveChamberToStorage = global.saveChamberToStorage || saveChamberToStorage;
-  global.AHATestHooks = Object.assign({}, global.AHATestHooks || {}, { detectTextType, buildCanonicalAnalysis, buildAhaAnalysisExportBundle, formatAhaAnalysisExportMarkdown, buildAutoOutputs, normalizeFagkoblinger, resolveCanonicalAnalysisWithOptionalPythonEngine, isAhaMemoryQuestion, buildAhaLearningContractReply, buildAhaMemoryStatus, shouldUseAhaMemory, buildAhaMemoryContext, buildAhaMemoryOffContext, loadAhaMemoryControls, saveAhaMemoryControls, setAhaMemoryControl, isAhaSavingEnabled, isAhaMemoryUseEnabled, loadAhaMemoryExclusions, saveAhaMemoryExclusions, getAhaMemoryInsightStableKey, getAhaMemoryInsightKey, isAhaMemoryInsightExcluded, excludeAhaMemoryInsight, includeAhaMemoryInsight, resetAhaMemoryExclusions, getAhaExcludedMemoryItems, renderAhaMemoryControls, bindAhaMemoryControls, submitAhaChatMessage, findRelevantLocalMemory, formatAhaMemoryContextForAgent, isAhaMemoryDebugEnabled, buildAhaMemoryTransparency, formatAhaMemoryTransparencyDetails, renderAhaMemoryTransparency, appendChat, updateAnswerActionsVisibility, getActiveMetaAiSession, startMetaAiSession, renderMetaAiSessionBox, renderMetaAiClaims, maybeHandleMetaAiAgentReply, saveMetaAiClaimFeedback });
+  global.AHATestHooks = Object.assign({}, global.AHATestHooks || {}, { detectTextType, buildCanonicalAnalysis, buildAhaAnalysisExportBundle, formatAhaAnalysisExportMarkdown, buildAutoOutputs, normalizeFagkoblinger, resolveCanonicalAnalysisWithOptionalPythonEngine, isAhaMemoryQuestion, buildAhaLearningContractReply, buildAhaMemoryStatus, shouldUseAhaMemory, buildAhaMemoryContext, buildAhaMemoryOffContext, loadAhaMemoryControls, saveAhaMemoryControls, setAhaMemoryControl, isAhaSavingEnabled, isAhaMemoryUseEnabled, loadAhaMemoryExclusions, saveAhaMemoryExclusions, getAhaMemoryInsightStableKey, getAhaMemoryInsightKey, isAhaMemoryInsightExcluded, excludeAhaMemoryInsight, includeAhaMemoryInsight, resetAhaMemoryExclusions, getAhaExcludedMemoryItems, renderAhaMemoryControls, bindAhaMemoryControls, submitAhaChatMessage, findRelevantLocalMemory, formatAhaMemoryContextForAgent, isAhaMemoryDebugEnabled, buildAhaMemoryTransparency, formatAhaMemoryTransparencyDetails, renderAhaMemoryTransparency, appendChat, updateAnswerActionsVisibility, getActiveMetaAiSession, startMetaAiSession, renderMetaAiSessionBox, renderMetaAiClaims, maybeHandleMetaAiAgentReply, saveMetaAiClaimFeedback, buildAhaPersonalAiLoopChatReadinessStatus, renderAhaPersonalAiLoopStatus });
 
   global.AHAChat = {
     loadChamberFromStorage,
@@ -6367,7 +6468,9 @@
     formatAhaMemoryTransparencyDetails,
     renderAhaMemoryTransparency,
     appendChat,
-    updateAhaMemoryStatus
+    updateAhaMemoryStatus,
+    buildAhaPersonalAiLoopChatReadinessStatus,
+    renderAhaPersonalAiLoopStatus
   };
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bind);
