@@ -13,6 +13,7 @@ Statusdato: 2026-06-20
 
 ```text
 ✅ Personal AI Loop Meta Insights recommendation surface: reviewed
+✅ Personal AI Loop Meta Insights recommendation surface: test-locked
 ✅ Allowed compact/redacted recommendation summary: documented
 ✅ Forbidden raw payload/private context/prompt injection: documented
 ✅ No-auto-run/no-write/no-sync/no-publish: documented
@@ -31,7 +32,7 @@ The surface states are `ready`, `attention_needed`, `blocked`, and `unknown`, wi
 Neste anbefalte PR:
 
 ```text
-test: lock Personal AI Loop Meta Insights recommendation surface
+feat: add Personal AI Loop Meta Insights recommendation summary
 ```
 
 ## Personal AI Loop Chat readiness surface
