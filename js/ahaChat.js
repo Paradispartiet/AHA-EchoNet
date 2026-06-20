@@ -593,8 +593,10 @@
 
   function compactAhaChatReadinessText(value, fallback) {
     const text = String(value || fallback || "")
-      .replace(/\b(?:sk|pk|ghp|api[_-]?key|token|secret)[A-Za-z0-9_\-:=.]{6,}/gi, "[redacted]")
       .replace(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g, "[redacted]")
+      .replace(/\b(?:sk|pk|ghp)_[A-Za-z0-9_\-]{6,}\b/gi, "[redacted]")
+      .replace(/\b(?:api[_-]?key|token|secret)\s*[:=]\s*[^\s,;]+/gi, "credential [redacted]")
+      .replace(/\b(?:api[_-]?key|token|secret)\b/gi, "credential")
       .replace(/\s+/g, " ")
       .trim();
     return (text || String(fallback || "Manual review required.")).slice(0, 120);
