@@ -13,50 +13,6 @@
 
   const AHA_AUTH_RETURN_TO_KEY = "aha_auth_return_to_v1";
   const HISTORY_GO_PROFILE_URL = "https://paradispartiet.github.io/History-Go/profile.html";
-  const AHA_SYNC_HUB_PROJECTS = [
-    {
-      id: "history-go",
-      name: "History Go",
-      status: "aktiv",
-      note: "Aktivt hovedprosjekt",
-      next: "Koble AHA-status mot History Go sitt kunnskapslag"
-    },
-    {
-      id: "civication",
-      name: "Civication",
-      status: "på vent",
-      note: "Struktur / videreutvikling",
-      next: "Lage ren strukturkartlegging før videre kode"
-    },
-    {
-      id: "hg-film-producer",
-      name: "HG Film Producer",
-      status: "prototype",
-      note: "Idé / prototype",
-      next: "Definere første scenariomodell for filmproduksjon"
-    },
-    {
-      id: "paradispartiet",
-      name: "Paradispartiet",
-      status: "grunnlag",
-      note: "Innholdsgrunnlag",
-      next: "Bruke som innholdsgrunnlag og kildebank"
-    },
-    {
-      id: "aha-home",
-      name: "AHA Home",
-      status: "aktiv",
-      note: "Kontrollrom",
-      next: "Utvikle prosjektoversikten som kontrollrom"
-    },
-    {
-      id: "echonet",
-      name: "EchoNet",
-      status: "senere",
-      note: "Kollektivt lag senere",
-      next: "Avvente til AHA og History Go er mer stabile"
-    }
-  ];
   function hasHistoryGoPayload() {
     return Boolean(String(localStorage.getItem("aha_import_payload_v1") || "").trim());
   }
@@ -2192,7 +2148,10 @@
     const mount = $("aha-sync-hub-status");
     if (!mount) return;
 
-    const rows = AHA_SYNC_HUB_PROJECTS.map((project) => `
+    const projects = Array.isArray(window.AHA_SYNC_HUB_PROJECTS)
+      ? window.AHA_SYNC_HUB_PROJECTS
+      : [];
+    const rows = projects.map((project) => `
       <li class="aha-sync-hub-row" data-project-id="${escapeHtml(project.id)}">
         <div class="aha-sync-hub-row-heading">
           <strong>${escapeHtml(project.name)}</strong>
@@ -2209,7 +2168,9 @@
       <p class="eyebrow">Sync Hub</p>
       <h3>AHA Sync Hub</h3>
       <p class="aha-panel-subtitle">Prosjektoversikt</p>
-      <ul class="aha-sync-hub-list">${rows}</ul>
+      ${rows
+        ? `<ul class="aha-sync-hub-list">${rows}</ul>`
+        : '<p class="aha-sync-hub-notice"><strong>Ingen Sync Hub-prosjekter registrert ennå.</strong></p>'}
       <p class="aha-sync-hub-footer">Read-only statuspanel. Ingen backend, sync eller lagring kjøres her. Modul ikke lastet på Home.</p>
     `;
   }

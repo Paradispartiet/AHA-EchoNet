@@ -4,7 +4,9 @@
 
 AHA Home har nå et lite read-only `AHA Sync Hub`-panel i høyre statuspanel via mount-punktet `#aha-sync-hub-status`. Panelet viser en statisk prosjektoversikt for History Go, Civication, HG Film Producer, Paradispartiet, AHA Home og EchoNet, inkludert “neste handling” per prosjekt.
 
-Denne statusflaten er kun visuell: den lager ingen backend, kjører ingen ekte sync, skriver ikke til `localStorage`, endrer ikke History Go og aktiverer ikke EchoNet. Manglende mount-punkt skal håndteres som no-op uten konsollfeil.
+Prosjektdataene ligger nå i en egen read-only browser-global registry: `js/ahaSyncHubRegistry.js`. `index.html` laster registry-filen før `js/ahaDashboard.js`, og dashboard-renderingen leser bare `window.AHA_SYNC_HUB_PROJECTS` med tom-array fallback hvis registry mangler eller er tom.
+
+Denne statusflaten er kun visuell: den lager ingen backend, kjører ingen ekte sync, skriver ikke til `localStorage`, endrer ikke History Go og aktiverer ikke EchoNet. Manglende mount-punkt eller manglende/tom registry skal håndteres uten konsollfeil.
 
 Prosjektkortene viser nå prosjektnavn, status, note og `Neste: ...` som read-only planstatus. Dette er bare HTML-rendering av statiske verdier i Home-panelet og innfører ingen nye sideeffekter.
 
