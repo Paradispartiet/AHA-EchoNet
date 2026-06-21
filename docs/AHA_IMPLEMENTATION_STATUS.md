@@ -1,4 +1,16 @@
 # AHA Implementation Status
+## Kurskorrigering: AHA Sync Hub
+
+AHA Sync Hub-prosjektoversikten finnes som read-only preview, men den er ikke AHA-produktets kjerne.
+
+AHA skal ikke utvikles videre som prosjektstyringsdashboard.
+
+Ingen videre PR-er skal legge til phase, priority, health, nextPr eller lignende prosjektstyringsfelter i AHA Sync Hub.
+
+Neste riktige retning er conversation insight sync, dokumentert i:
+
+[`docs/AHA_CONVERSATION_INSIGHT_SYNC_PLAN.md`](./AHA_CONVERSATION_INSIGHT_SYNC_PLAN.md)
+
 
 ## Read-only AHA Sync Hub status panel in AHA Home
 

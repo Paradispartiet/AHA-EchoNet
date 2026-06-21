@@ -1,4 +1,22 @@
 # AHA Sync Hub / Control Center plan
+## Kurskorrigering 2026-06-21
+
+Den eksisterende read-only prosjektoversikten i AHA Home er kun et midlertidig utviklingspreview.
+
+Den skal ikke utvides til prosjektstyring med phase, priority, health, next PR eller lignende.
+
+Videre AHA Sync Hub-arbeid skal handle om conversation insight sync:
+
+* samtaleinnsikter
+* åpne spørsmål
+* begrepskoblinger
+* perspektiver
+* uenigheter / spenninger
+* koblinger mellom samtaler og senere brukere
+
+Se:
+[`docs/AHA_CONVERSATION_INSIGHT_SYNC_PLAN.md`](./AHA_CONVERSATION_INSIGHT_SYNC_PLAN.md)
+
 
 ## Read-only AHA Sync Hub project overview on Home
 

@@ -26,6 +26,27 @@ AHA bestemmer hva som blir del av deg.
 
 History Go er én mulig kilde til AHA. Det er ikke grunnlaget for AHA.
 
+## Produktfokus: AHA er ikke prosjektstyring
+
+AHA skal ikke bygges som prosjektstyringsdashboard, repo-oversikt, prioriteringsliste eller intern notatblokk for utviklingen.
+
+AHA er en innsiktsmotor for:
+
+- samtaler
+- refleksjoner
+- selvdata
+- begreper
+- åpne spørsmål
+- perspektiver
+- uenighet og spenning
+- koblinger mellom mennesker og samtaler
+
+AHA Home kan vise teknisk status mens produktet bygges, men dette er ikke kjernen i AHA.
+
+```text
+Ikke bygg videre på prosjektstatusfelter som phase, priority, health, nextPr eller lignende som AHA-produktmodell.
+```
+
 ## To innsiktsmotorer
 
 Systemet har to innsiktsmotorer med ulike ansvar.
@@ -797,6 +818,38 @@ AHA-EchoNet skal være den personlige hovedmotoren.
 History Go skal være en selvstendig samlingsmotor.
 Importen skal være eksplisitt, merket og valgfri.
 AHA-komponentene skal alle mate samme eksisterende motor.
+
+## Riktig Sync-begrep
+
+I AHA betyr sync at innsikt kan bevege seg mellom kilder, samtaler og etter hvert brukere.
+
+Riktig sync-modell:
+
+```text
+source event
+→ samtale / notat / import / refleksjon
+→ AHAIngest
+→ innsiktssignal
+→ begreper / spørsmål / perspektiver
+→ koblinger på tvers
+→ senere EchoNet-lag
+```
+
+Feil sync-modell:
+
+```text
+prosjekt
+→ status
+→ phase
+→ priority
+→ intern roadmap
+```
+
+Presisering:
+
+- prosjektoversikten i AHA Home kan beholdes som read-only utviklingspreview
+- den skal ikke styre AHA-produktmodellen
+- videre Sync Hub-arbeid skal handle om samtaleinnsikt, ikke prosjektadministrasjon
 
 ## Modulskall i AHA Home
 
