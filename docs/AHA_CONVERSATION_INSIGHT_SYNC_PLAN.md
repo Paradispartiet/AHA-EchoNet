@@ -33,14 +33,18 @@ AHA Sync skal etter hvert håndtere:
 
 ## Første read-only modell
 
-Første riktige modell kan være statisk/read-only og bestå av:
+Første riktige modell finnes nå som `js/ahaSyncChannelsRegistry.js` og eksponerer `window.AHA_SYNC_CHANNELS` som plain browser global. Dette er en read-only modell for conversation insight sync; den lager ingen backend, kjører ingen ekte sync og skriver ikke til `localStorage`.
+
+Modellen består av:
 
 ```js
 window.AHA_SYNC_CHANNELS = [
   {
     id: "conversation-insights",
     name: "Samtaleinnsikter",
-    purpose: "Fanger opp innsikter som oppstår i samtaler."
+    purpose: "Fanger opp innsikter som oppstår i samtaler.",
+    inputTypes: ["chat", "notes", "reflection"],
+    syncMeaning: "Innsikt kan kobles videre til begreper, spørsmål og andre samtaler."
   },
   {
     id: "open-questions",
@@ -65,14 +69,11 @@ window.AHA_SYNC_CHANNELS = [
 ];
 ```
 
-## Neste riktige PR etter denne dokumentasjonslåsen
+## Videre arbeid etter første read-only registry
 
-Neste kode-PR skal ikke utvide `AHA_SYNC_HUB_PROJECTS`.
+Videre kode skal ikke utvide `AHA_SYNC_HUB_PROJECTS`.
 
-Neste kode-PR bør enten:
-
-1. lage en read-only `AHA_SYNC_CHANNELS` registry, eller
-2. endre Sync Hub-panelet slik at det viser innsiktskanaler i stedet for prosjektstyring.
+AHA Home skal bruke `AHA_SYNC_CHANNELS` som hovedmodell når registeret finnes. `AHA_SYNC_HUB_PROJECTS` er kun legacy utviklingspreview/fallback hvis kanalregisteret mangler eller er tomt.
 
 ## Stop-regel
 

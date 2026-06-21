@@ -1,4 +1,11 @@
 # AHA Implementation Status
+
+## AHA Sync Channels registry
+
+AHA Sync Hub har nå første read-only modell for conversation insight sync i `js/ahaSyncChannelsRegistry.js`. Filen eksponerer `window.AHA_SYNC_CHANNELS` med kanaler for samtaleinnsikter, åpne spørsmål, begrepskoblinger, perspektiver, uenigheter/spenninger og samtalekoblinger. `index.html` laster kanalregisteret før `js/ahaDashboard.js`, og AHA Home viser kanalene som hovedinnhold når registeret finnes.
+
+Den eldre `js/ahaSyncHubRegistry.js` / `AHA_SYNC_HUB_PROJECTS`-oversikten beholdes bare som read-only fallback merket “Legacy utviklingspreview”. Den skal ikke utvides med phase, priority, health, nextPr eller andre prosjektstyringsfelter, og videre arbeid skal bygge på `AHA_SYNC_CHANNELS`, ikke prosjektoversikten. Denne endringen lager ingen backend, kjører ingen ekte sync, skriver ikke til `localStorage`, endrer ikke History Go og aktiverer ikke EchoNet.
+
 ## Kurskorrigering: AHA Sync Hub
 
 AHA Sync Hub-prosjektoversikten finnes som read-only preview, men den er ikke AHA-produktets kjerne.

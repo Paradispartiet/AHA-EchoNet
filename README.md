@@ -851,6 +851,8 @@ Presisering:
 - den skal ikke styre AHA-produktmodellen
 - videre Sync Hub-arbeid skal handle om samtaleinnsikt, ikke prosjektadministrasjon
 
+Første read-only modell for riktig AHA-retning ligger nå i `js/ahaSyncChannelsRegistry.js` som browser-global `window.AHA_SYNC_CHANNELS`. Registeret beskriver samtale-/innsiktskanaler for samtaleinnsikter, åpne spørsmål, begrepskoblinger, perspektiver, uenigheter/spenninger og samtalekoblinger. AHA Home viser disse kanalene som hovedmodell når registeret finnes. Den gamle `AHA_SYNC_HUB_PROJECTS`-oversikten er kun fallback merket som legacy utviklingspreview, og videre arbeid skal bygge på `AHA_SYNC_CHANNELS`, ikke prosjektfelter.
+
 ## Modulskall i AHA Home
 
 AHA Home bruker en felles modulregistry i `ahaModules.js` for å vise alle hovedmoduler fra start.
