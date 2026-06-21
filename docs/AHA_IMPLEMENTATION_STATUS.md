@@ -2,9 +2,11 @@
 
 ## Read-only AHA Sync Hub status panel in AHA Home
 
-AHA Home har nå et lite read-only `AHA Sync Hub`-panel i høyre statuspanel via mount-punktet `#aha-sync-hub-status`. Panelet viser en statisk prosjektoversikt for History Go, Civication, HG Film Producer, Paradispartiet, AHA Home og EchoNet.
+AHA Home har nå et lite read-only `AHA Sync Hub`-panel i høyre statuspanel via mount-punktet `#aha-sync-hub-status`. Panelet viser en statisk prosjektoversikt for History Go, Civication, HG Film Producer, Paradispartiet, AHA Home og EchoNet, inkludert “neste handling” per prosjekt.
 
 Denne statusflaten er kun visuell: den lager ingen backend, kjører ingen ekte sync, skriver ikke til `localStorage`, endrer ikke History Go og aktiverer ikke EchoNet. Manglende mount-punkt skal håndteres som no-op uten konsollfeil.
+
+Prosjektkortene viser nå prosjektnavn, status, note og `Neste: ...` som read-only planstatus. Dette er bare HTML-rendering av statiske verdier i Home-panelet og innfører ingen nye sideeffekter.
 
 
 > **Sync Hub go/no-go:** Activation styres av [`AHA_SYNC_HUB_GO_NO_GO_MATRIX.md`](./AHA_SYNC_HUB_GO_NO_GO_MATRIX.md). Nåværende status er GO for read-only/preview-scope, NO-GO for ekte manuell execution og permanent NO-GO for auto-sync.
