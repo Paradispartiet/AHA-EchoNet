@@ -13,6 +13,7 @@ Statusdato: 2026-06-20
 
 ```text
 ✅ Personal AI Loop export/report surface: reviewed
+✅ Personal AI Loop export/report surface: test-locked
 ✅ Allowed compact/redacted local report content: documented
 ✅ Forbidden raw/private export payload: documented
 ✅ No-auto-run/no-write/no-sync/no-publish/share: documented
@@ -22,7 +23,7 @@ Statusdato: 2026-06-20
 ⛔ Auto-sync: permanently forbidden
 ```
 
-The export/report surface review is documented in [`AHA_PERSONAL_AI_LOOP_EXPORT_REPORT_SURFACE.md`](./AHA_PERSONAL_AI_LOOP_EXPORT_REPORT_SURFACE.md). This documentation-only review defines a future local, explicit-action Personal AI Loop readiness report without implementing export, PDF generation, download UI, report UI, sharing, publishing, sync, JavaScript, HTML, CSS, tests, or runtime behavior.
+The export/report surface review is documented in [`AHA_PERSONAL_AI_LOOP_EXPORT_REPORT_SURFACE.md`](./AHA_PERSONAL_AI_LOOP_EXPORT_REPORT_SURFACE.md). This documentation-only review is now test-locked by `tests/aha-personal-ai-loop-export-report-surface.test.cjs` and defines a future local, explicit-action Personal AI Loop readiness report without implementing export, PDF generation, download UI, report UI, sharing, publishing, sync, JavaScript, HTML, CSS, or runtime behavior.
 
 The review documents allowed compact/redacted local report content such as readiness state, compact audit status, blocker/warning counts, top blocker/warning titles, compact operator next step, compact Meta Insights recommendation summary, compact Chat readiness summary, last cached audit timestamp, manual review required flag, safe status labels, redacted summary text, and local-only report metadata. It also documents forbidden raw/private export payload such as raw audit payload, private corpus, memory dump, chat history, raw source content, retrieval index, approved examples, consent metadata, unredacted evidence, hidden private prompt payload, secrets, unsafe identifiers, unredacted source URLs, and unredacted email addresses.
 
@@ -31,7 +32,7 @@ Export/report must not auto-run audit, write `localStorage`, write domain/remote
 Neste anbefalte PR:
 
 ```text
-test: lock Personal AI Loop export/report surface
+feat: add Personal AI Loop local readiness report
 ```
 
 ## Personal AI Loop Meta Insights recommendation surface
