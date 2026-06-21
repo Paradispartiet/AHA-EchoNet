@@ -314,6 +314,127 @@
     };
   }
 
+
+  function redactCompactText(value, fallback = "Manual local review required.") {
+    let text = asText(value) || fallback;
+    text = text.replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, "[redacted-email]");
+    text = text.replace(/\b(?:sk|pk|ghp|github_pat|xox[abprs])-?[A-Za-z0-9_=-]{8,}\b/g, "[redacted-token]");
+    text = text.replace(/\b(?:api[_-]?key|secret|token|password)\s*[:=]\s*[^\s,;]+/gi, "[redacted-secret]");
+    text = text.replace(/[\r\n\t]+/g, " ").replace(/\s+/g, " ").trim();
+    if (text.length > 120) text = `${text.slice(0, 117).trim()}...`;
+    return text || fallback;
+  }
+
+  function compactTitles(items, limit = 3) {
+    return asArray(items)
+      .map((item) => redactCompactText(typeof item === "string" ? item : item?.title || item?.label || item?.message || item?.id, "Manual review required."))
+      .filter(Boolean)
+      .slice(0, limit);
+  }
+
+  function readCount(summary, key) {
+    const counts = asObject(summary?.countsBySeverity || summary?.severityCounts);
+    return Math.max(0, Number(summary?.[`${key}Count`] ?? counts[key]) || 0);
+  }
+
+  function normalizeCompactSummary(input) {
+    const source = asObject(input);
+    const existing = asObject(source.compactOperatorRecommendationSummary || source.operatorRecommendationSummary);
+    const compact = existing.compactOnly === true && existing.redacted === true
+      ? existing
+      : asObject(buildCompactOperatorRecommendationSummary(source));
+    if (compact.compactOnly !== true || compact.redacted !== true) return null;
+    return compact;
+  }
+
+  function hasMissingRequiredReadiness(input) {
+    const source = asObject(input);
+    const checks = asObject(source.checks);
+    const approved = asObject(checks.approvedMaterial);
+    const retrievalIndex = asObject(checks.retrievalIndex || source.retrieval);
+    const privacy = asObject(checks.privacyAndConsent || source.privacy);
+    const status = asText(source.status || source.auditStatus);
+    const hasMaterialCount = ["confirmedClaims", "importantClaims", "approvedCorpus", "approvedExamples"]
+      .some((key) => Number(approved[key]) > 0);
+    if (!status) return true;
+    if (status === "empty") return true;
+    if (checks.approvedMaterial && !hasMaterialCount) return true;
+    if (checks.retrievalIndex && retrievalIndex.ok === false) return true;
+    if (checks.privacyAndConsent && privacy.ok === false) return true;
+    return false;
+  }
+
+  function buildPersonalAiLoopLocalReadinessReport(cachedSummaryOrAuditResult) {
+    const input = cachedSummaryOrAuditResult;
+    const base = {
+      state: "unknown",
+      title: "Personal AI Loop local readiness report",
+      summary: "Readiness cannot be trusted until manual audit/review is completed.",
+      auditStatus: "unknown",
+      blockerCount: 0,
+      warningCount: 0,
+      topBlockers: [],
+      topWarnings: [],
+      operatorNextStep: "Manual audit/review required in Training Dashboard.",
+      chatReadinessState: "unknown",
+      metaInsightsRecommendationState: "unknown",
+      manualReviewRequired: true,
+      generatedAt: new Date(0).toISOString(),
+      localOnly: true,
+      explicitActionOnly: true,
+      compactOnly: true,
+      redacted: true,
+      sections: []
+    };
+    if (!input || typeof input !== "object" || Array.isArray(input)) return base;
+
+    const compact = normalizeCompactSummary(input);
+    if (!compact) return base;
+
+    const blockerCount = readCount(compact, "blocker");
+    const warningCount = readCount(compact, "warning");
+    const allTitles = compactTitles(compact.topBlockerWarningTitles || compact.topTitles || []);
+    const topBlockers = compactTitles(compact.topBlockers || (blockerCount ? allTitles : []));
+    const topWarnings = compactTitles(compact.topWarnings || (!blockerCount ? allTitles : allTitles.slice(topBlockers.length)));
+    const auditStatus = redactCompactText(input.status || input.auditStatus || compact.status || "unknown", "unknown");
+    const missingRequired = hasMissingRequiredReadiness(input);
+    const state = blockerCount > 0 || missingRequired
+      ? "blocked"
+      : warningCount > 0
+        ? "attention_needed"
+        : "ready";
+    const operatorNextStep = state === "ready"
+      ? "Generate and review this report locally after explicit user action."
+      : redactCompactText(compact.operatorNextStep, "Manual audit/review required in Training Dashboard.");
+    const chatState = redactCompactText(input.chatReadinessState || input.chatReadiness?.state || input.chat?.state || "unknown", "unknown");
+    const metaState = redactCompactText(input.metaInsightsRecommendationState || input.metaInsightsRecommendation?.state || "unknown", "unknown");
+    const safeBlockers = topBlockers.length ? topBlockers : (state === "blocked" ? ["Missing or incomplete local audit summary."] : []);
+    return {
+      ...base,
+      state,
+      summary: state === "ready"
+        ? "Cached compact summaries indicate local readiness."
+        : state === "attention_needed"
+          ? "Cached compact summaries show warnings requiring manual review."
+          : "Cached compact summaries show blockers or missing required readiness inputs.",
+      auditStatus,
+      blockerCount: state === "blocked" ? Math.max(1, blockerCount) : blockerCount,
+      warningCount,
+      topBlockers: safeBlockers,
+      topWarnings,
+      operatorNextStep,
+      chatReadinessState: chatState,
+      metaInsightsRecommendationState: metaState,
+      manualReviewRequired: state !== "ready",
+      generatedAt: new Date(0).toISOString(),
+      sections: [
+        { id: "audit", title: "Audit status", state: auditStatus, compactOnly: true, redacted: true },
+        { id: "chat_readiness", title: "Chat readiness", state: chatState, compactOnly: true, redacted: true },
+        { id: "meta_insights", title: "Meta Insights recommendation", state: metaState, compactOnly: true, redacted: true }
+      ]
+    };
+  }
+
   function buildRecommendations(audit) {
     const recs = [];
     const approved = asObject(audit?.checks?.approvedMaterial);
@@ -408,6 +529,7 @@
     buildRecommendations,
     buildOperatorRecommendations,
     buildCompactOperatorRecommendationSummary,
+    buildPersonalAiLoopLocalReadinessReport,
     loadLastAudit
   };
 })(typeof window !== "undefined" ? window : globalThis);
