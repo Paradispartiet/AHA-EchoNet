@@ -2144,17 +2144,55 @@
     `;
   }
 
+  function renderAhaSyncChannelsStatus() {
+    const mount = $("aha-sync-hub-status");
+    if (!mount) return false;
+
+    const channels = Array.isArray(window.AHA_SYNC_CHANNELS)
+      ? window.AHA_SYNC_CHANNELS
+      : [];
+    if (!channels.length) return false;
+
+    const rows = channels.map((channel) => {
+      const inputTypes = Array.isArray(channel?.inputTypes) ? channel.inputTypes : [];
+      const inputTypeLabels = inputTypes
+        .map((inputType) => String(inputType || "").trim())
+        .filter(Boolean);
+      return `
+        <li class="aha-sync-hub-row" data-channel-id="${escapeHtml(channel?.id)}">
+          <div class="aha-sync-hub-row-heading">
+            <strong>${escapeHtml(channel?.name)}</strong>
+          </div>
+          <p>${escapeHtml(channel?.purpose)}</p>
+          <p><strong>Input types:</strong> ${escapeHtml(inputTypeLabels.join(", ") || "Ingen registrert")}</p>
+          <p><strong>Sync-betydning:</strong> ${escapeHtml(channel?.syncMeaning)}</p>
+        </li>
+      `;
+    }).join("");
+
+    mount.className = "aha-sync-hub-status";
+    mount.setAttribute("aria-label", "AHA Sync Hub status");
+    mount.innerHTML = `
+      <p class="eyebrow">Sync Hub</p>
+      <h3>AHA Sync Hub</h3>
+      <p class="aha-panel-subtitle">Samtale- og innsiktskanaler</p>
+      <ul class="aha-sync-hub-list">${rows}</ul>
+      <p class="aha-sync-hub-footer">Read-only kanalregister. Ingen backend, ekte sync eller lagring kjøres her. Modul ikke lastet på Home.</p>
+    `;
+    return true;
+  }
+
   function renderAhaSyncHubStatus() {
     const mount = $("aha-sync-hub-status");
     if (!mount) return;
+
+    if (renderAhaSyncChannelsStatus()) return;
 
     const projects = Array.isArray(window.AHA_SYNC_HUB_PROJECTS)
       ? window.AHA_SYNC_HUB_PROJECTS
       : [];
     const rows = projects.map((project) => {
       const status = String(project?.status || "").trim();
-      const phase = String(project?.phase || "").trim();
-      const priority = String(project?.priority || "").trim();
       const role = String(project?.role || "").trim();
       const source = String(project?.source || "").trim();
       const note = String(project?.note || "").trim();
@@ -2165,8 +2203,6 @@
             <strong>${escapeHtml(project?.name)}</strong>
             ${status ? `<span class="aha-sync-hub-badge is-planned">${escapeHtml(status)}</span>` : ""}
           </div>
-          ${phase ? `<p><strong>Phase:</strong> ${escapeHtml(phase)}</p>` : ""}
-          ${priority ? `<p><strong>Priority:</strong> ${escapeHtml(priority)}</p>` : ""}
           ${role ? `<p><strong>Rolle:</strong> ${escapeHtml(role)}</p>` : ""}
           ${source ? `<p><strong>Kilde:</strong> ${escapeHtml(source)}</p>` : ""}
           ${note ? `<p>${escapeHtml(note)}</p>` : ""}
@@ -2180,17 +2216,19 @@
     mount.innerHTML = `
       <p class="eyebrow">Sync Hub</p>
       <h3>AHA Sync Hub</h3>
-      <p class="aha-panel-subtitle">Prosjektoversikt</p>
+      <p class="aha-panel-subtitle">Legacy utviklingspreview</p>
       ${rows
         ? `<ul class="aha-sync-hub-list">${rows}</ul>`
-        : '<p class="aha-sync-hub-notice"><strong>Ingen Sync Hub-prosjekter registrert ennå.</strong></p>'}
-      <p class="aha-sync-hub-footer">Read-only statuspanel. Ingen backend, sync eller lagring kjøres her. Modul ikke lastet på Home.</p>
+        : '<p class="aha-sync-hub-notice"><strong>Ingen Sync Hub-kanaler eller legacy-prosjekter registrert ennå.</strong></p>'}
+      <p class="aha-sync-hub-footer">Read-only legacy-preview. Videre arbeid skal bygge på AHA_SYNC_CHANNELS, ikke prosjektoversikten.</p>
     `;
   }
 
   function renderSyncHubStatus() {
     const mount = $("aha-sync-hub-status");
     if (!mount) return;
+
+    if (renderAhaSyncChannelsStatus()) return;
 
     if (typeof window.AHASyncHub?.inspectAll !== "function") {
       renderAhaSyncHubStatus();
