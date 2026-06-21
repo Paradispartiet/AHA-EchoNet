@@ -14,7 +14,9 @@ Statusdato: 2026-06-21
 ```text
 ✅ Personal AI Loop source approval surface: reviewed
 ✅ Personal AI Loop source approval surface: test-locked
-✅ Source approval states suggested/review_needed/approved/rejected/blocked/unknown: documented
+✅ Minimal Personal AI Loop source approval summary: implemented
+✅ Source approval summary: local-only / explicit-action compatible / compact/redacted only
+✅ Source approval states suggested/review_needed/approved/rejected/blocked/unknown: documented and implemented
 ✅ Allowed compact/redacted source approval content: documented
 ✅ Forbidden raw source/private payload: documented
 ✅ No-auto-approval/no-ingestion/no-auto-run/no-write/no-sync/no-publish/share: documented
@@ -24,14 +26,14 @@ Statusdato: 2026-06-21
 ⛔ Auto-sync: permanently forbidden
 ```
 
-The source approval surface review is documented in [`AHA_PERSONAL_AI_LOOP_SOURCE_APPROVAL_SURFACE.md`](./AHA_PERSONAL_AI_LOOP_SOURCE_APPROVAL_SURFACE.md). This documentation-only review is test-locked by `tests/aha-personal-ai-loop-source-approval-surface.test.cjs`. It defines a future manual, local-first, explicit-action-only source approval surface for suggested sources before any later use in training or audit. It documents `suggested`, `review_needed`, `approved`, `rejected`, `blocked`, and `unknown` states; allowed compact/redacted source approval content; forbidden raw source/private payload; fail-closed missing/invalid state behavior; no automatic source approval; no source ingestion; no audit auto-run; no write; no Sync Hub trigger; no auto-sync; and no publish/share/source events.
+The source approval surface review is documented in [`AHA_PERSONAL_AI_LOOP_SOURCE_APPROVAL_SURFACE.md`](./AHA_PERSONAL_AI_LOOP_SOURCE_APPROVAL_SURFACE.md). This documentation-only review is test-locked by `tests/aha-personal-ai-loop-source-approval-surface.test.cjs`. The minimal implementation adds `buildPersonalAiLoopSourceApprovalSummary(cachedSummaryOrSourceState)` in `js/ahaPersonalAiLoopAudit.js` as a pure helper for local-only, explicit-action-compatible, compact/redacted source approval summaries. Completed implementation PR: `feat: add Personal AI Loop source approval summary`. It handles `suggested`, `review_needed`, `approved`, `rejected`, `blocked`, and `unknown` states; returns compact counts, risk counts, safe labels, blockers, next step, and privacy flags only; fail-closes missing/invalid input to manual review; and does not approve sources automatically, ingest sources, auto-run audit, write data, trigger Sync Hub, trigger auto-sync, or publish/share/send source events.
 
 The review also documents relationships to Training Dashboard, audit, Meta Insights, Chat readiness, export/report, Sync Hub, AHAavisa, and Groups. Training Dashboard is the natural future operator surface, but only after test-lock; audit may point to missing/unapproved sources as blockers or warnings without approving/importing/writing source state; Meta Insights, Chat, and export/report may show compact counts/status only; Sync Hub execution remains **NO-GO**; `sync.html` remains outside this workstream; and auto-sync remains **permanently forbidden**.
 
 Neste anbefalte PR:
 
 ```text
-feat: add Personal AI Loop source approval summary
+test: lock Personal AI Loop source approval behavior
 ```
 
 ## Personal AI Loop export/report surface

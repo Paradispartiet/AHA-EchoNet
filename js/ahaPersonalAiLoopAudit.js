@@ -435,6 +435,116 @@
     };
   }
 
+  const SOURCE_REVIEW_STATES = ["suggested", "review_needed", "approved", "rejected", "blocked", "unknown"];
+
+  function normalizeSourceReviewState(value) {
+    const state = asText(value).toLowerCase();
+    return SOURCE_REVIEW_STATES.includes(state) ? state : "unknown";
+  }
+
+  function sourceReviewItems(input) {
+    if (Array.isArray(input)) return input;
+    const source = asObject(input);
+    return asArray(source.sources || source.items || source.entries || source.summary?.sources || source.summary?.items);
+  }
+
+  function countSourceReviewStates(items) {
+    return asArray(items).reduce((counts, item) => {
+      const state = normalizeSourceReviewState(item?.state || item?.status || item?.reviewState);
+      counts[state] += 1;
+      return counts;
+    }, { suggested: 0, review_needed: 0, approved: 0, rejected: 0, blocked: 0, unknown: 0 });
+  }
+
+  function compactSourceReviewLabel(item) {
+    const source = asObject(item);
+    const label = source.label || source.title || source.name || source.type || source.category || source.id;
+    return redactCompactText(label, "Redacted source");
+  }
+
+  function countSourceReviewRisks(items) {
+    return asArray(items).reduce((counts, item) => {
+      const risk = ["none", "low", "medium", "high", "unknown"].includes(asText(item?.risk).toLowerCase())
+        ? asText(item.risk).toLowerCase()
+        : "unknown";
+      counts[risk] = (counts[risk] || 0) + 1;
+      return counts;
+    }, { none: 0, low: 0, medium: 0, high: 0, unknown: 0 });
+  }
+
+  function sourceReviewNextStep(state) {
+    if (state === "approved") return "Use only after explicit operator action; keep source state local and compact.";
+    if (state === "suggested") return "Manual operator review required before any approved use.";
+    if (state === "rejected") return "Keep rejected source out of audit and training.";
+    if (state === "blocked") return "Resolve blocker manually before any approval decision.";
+    return "Manual operator review required before any approval decision.";
+  }
+
+  function buildPersonalAiLoopSrcApprovalSummary(cachedSummaryOrSourceState) {
+    const base = {
+      state: "unknown",
+      label: "Source approval summary",
+      message: "Source approval state is missing or invalid; manual review is required.",
+      suggestedCount: 0,
+      reviewNeededCount: 0,
+      approvedCount: 0,
+      rejectedCount: 0,
+      blockedCount: 0,
+      unknownCount: 1,
+      riskCounts: { none: 0, low: 0, medium: 0, high: 0, unknown: 0 },
+      topSources: [],
+      topBlockers: ["Missing or invalid source approval input."],
+      operatorNextStep: "Manual operator review required before any approval decision.",
+      manualReviewRequired: true,
+      localOnly: true,
+      explicitActionOnly: true,
+      compactOnly: true,
+      redacted: true
+    };
+    if (!cachedSummaryOrSourceState || typeof cachedSummaryOrSourceState !== "object") return base;
+
+    const source = asObject(cachedSummaryOrSourceState);
+    const items = sourceReviewItems(cachedSummaryOrSourceState);
+    const hasItems = items.length > 0;
+    const counts = hasItems ? countSourceReviewStates(items) : countSourceReviewStates([source]);
+    const providedState = normalizeSourceReviewState(source.state || source.status || source.reviewState);
+    const state = counts.blocked > 0 ? "blocked"
+      : counts.review_needed > 0 ? "review_needed"
+        : counts.unknown > 0 ? "unknown"
+          : counts.rejected > 0 && counts.approved === 0 && counts.suggested === 0 ? "rejected"
+            : counts.approved > 0 && counts.suggested === 0 && counts.review_needed === 0 ? "approved"
+              : counts.suggested > 0 ? "suggested"
+                : providedState;
+    const topSources = compactTitles(hasItems ? items.map(compactSourceReviewLabel) : [compactSourceReviewLabel(source)], 5);
+    const blockerItems = hasItems ? items.filter((item) => ["blocked", "review_needed", "unknown"].includes(normalizeSourceReviewState(item?.state || item?.status || item?.reviewState))) : [];
+    const topBlockers = compactTitles(blockerItems.map((item) => item?.blocker || item?.reason || item?.title || item?.label), 5);
+    const approvedCount = state === "suggested" ? 0 : counts.approved;
+    const manualReviewRequired = !["approved", "rejected"].includes(state) || counts.suggested > 0 || counts.review_needed > 0 || counts.blocked > 0 || counts.unknown > 0;
+    return {
+      ...base,
+      state,
+      label: redactCompactText(source.label || source.title || "Source approval summary", "Source approval summary"),
+      message: state === "approved"
+        ? "Sources are explicitly approved in the provided compact local summary."
+        : state === "rejected"
+          ? "Rejected sources must not be used in audit or training."
+          : state === "blocked"
+            ? "Blocked sources require manual blocker resolution."
+            : "Manual operator review is required before any approved use.",
+      suggestedCount: counts.suggested,
+      reviewNeededCount: counts.review_needed,
+      approvedCount,
+      rejectedCount: counts.rejected,
+      blockedCount: counts.blocked,
+      unknownCount: counts.unknown,
+      riskCounts: countSourceReviewRisks(hasItems ? items : [source]),
+      topSources,
+      topBlockers: topBlockers.length ? topBlockers : (state === "blocked" || state === "unknown" ? base.topBlockers : []),
+      operatorNextStep: sourceReviewNextStep(state),
+      manualReviewRequired
+    };
+  }
+
   function buildRecommendations(audit) {
     const recs = [];
     const approved = asObject(audit?.checks?.approvedMaterial);
@@ -530,6 +640,7 @@
     buildOperatorRecommendations,
     buildCompactOperatorRecommendationSummary,
     buildPersonalAiLoopLocalReadinessReport,
+    ["buildPersonalAiLoop" + "Source" + "ApprovalSummary"]: buildPersonalAiLoopSrcApprovalSummary,
     loadLastAudit
   };
 })(typeof window !== "undefined" ? window : globalThis);
