@@ -13,6 +13,14 @@
 
   const AHA_AUTH_RETURN_TO_KEY = "aha_auth_return_to_v1";
   const HISTORY_GO_PROFILE_URL = "https://paradispartiet.github.io/History-Go/profile.html";
+  const AHA_SYNC_HUB_PROJECTS = [
+    { id: "history-go", name: "History Go", status: "aktiv", note: "Aktivt hovedprosjekt" },
+    { id: "civication", name: "Civication", status: "på vent", note: "Struktur / videreutvikling" },
+    { id: "hg-film-producer", name: "HG Film Producer", status: "prototype", note: "Idé / prototype" },
+    { id: "paradispartiet", name: "Paradispartiet", status: "grunnlag", note: "Innholdsgrunnlag" },
+    { id: "aha-home", name: "AHA Home", status: "aktiv", note: "Kontrollrom" },
+    { id: "echonet", name: "EchoNet", status: "senere", note: "Kollektivt lag senere" }
+  ];
   function hasHistoryGoPayload() {
     return Boolean(String(localStorage.getItem("aha_import_payload_v1") || "").trim());
   }
@@ -2144,60 +2152,54 @@
     `;
   }
 
+  function renderAhaSyncHubStatus() {
+    const mount = $("aha-sync-hub-status");
+    if (!mount) return;
+
+    const rows = AHA_SYNC_HUB_PROJECTS.map((project) => `
+      <li class="aha-sync-hub-row" data-project-id="${escapeHtml(project.id)}">
+        <div class="aha-sync-hub-row-heading">
+          <strong>${escapeHtml(project.name)}</strong>
+          <span class="aha-sync-hub-badge is-planned">${escapeHtml(project.status)}</span>
+        </div>
+        <p>${escapeHtml(project.note)}</p>
+      </li>
+    `).join("");
+
+    mount.className = "aha-sync-hub-status";
+    mount.setAttribute("aria-label", "AHA Sync Hub status");
+    mount.innerHTML = `
+      <p class="eyebrow">Sync Hub</p>
+      <h3>AHA Sync Hub</h3>
+      <p class="aha-panel-subtitle">Prosjektoversikt</p>
+      <ul class="aha-sync-hub-list">${rows}</ul>
+      <p class="aha-sync-hub-footer">Read-only statuspanel. Ingen backend, sync eller lagring kjøres her. Modul ikke lastet på Home.</p>
+    `;
+  }
+
   function renderSyncHubStatus() {
     const mount = $("aha-sync-hub-status");
     if (!mount) return;
 
     if (typeof window.AHASyncHub?.inspectAll !== "function") {
-      mount.innerHTML = `
-        <p class="eyebrow">Sync Hub</p>
-        <h3>AHA Sync-status</h3>
+      renderAhaSyncHubStatus();
+      mount.insertAdjacentHTML("beforeend", `
         <p class="aha-panel-subtitle">Read-only oversikt. Ingen sync kjøres automatisk.</p>
         <p class="aha-sync-hub-notice"><strong>Sync Hub-adapter ikke lastet</strong></p>
-      `;
+        <p class="aha-sync-hub-notice"><strong>Ingen sync kjøres her ennå.</strong></p>
+        <p class="aha-sync-hub-footer">Manuell sync kommer senere.</p>
+      `);
       return;
     }
 
     const inspection = window.AHASyncHub.inspectAll();
-    const statusLabels = {
-      klarlagt: "Klarlagt",
-      mangler_sync: "Mangler sync",
-      sync_klar: "Sync-klar"
-    };
-    const statusDetails = {
-      klarlagt: "Modul ikke lastet på Home",
-      mangler_sync: "syncFromDatabase ikke tilgjengelig",
-      sync_klar: "Kan synkes manuelt senere"
-    };
-    const rows = inspection.modules.map((module) => {
-      const statusLabel = statusLabels[module.status] || module.status;
-      const statusDetail = statusDetails[module.status] || module.fallback || "Ukjent status";
-      const badgeClass = module.status === "sync_klar" ? "is-ready" : "is-planned";
-      return `
-        <li class="aha-sync-hub-row">
-          <div class="aha-sync-hub-row-heading">
-            <strong>${escapeHtml(module.label)}</strong>
-            <span class="aha-sync-hub-badge ${badgeClass}">${escapeHtml(statusLabel)}</span>
-          </div>
-          <p>${module.localCount} aktive lokale records</p>
-          <dl class="aha-sync-hub-meta">
-            <div><dt>localStorage</dt><dd><code>${escapeHtml(module.key)}</code></dd></div>
-            <div><dt>Forventet tabell</dt><dd><code>${escapeHtml(module.table)}</code></dd></div>
-            <div><dt>Status</dt><dd>${escapeHtml(statusDetail)}</dd></div>
-          </dl>
-        </li>
-      `;
-    }).join("");
-
-    mount.innerHTML = `
-      <p class="eyebrow">Sync Hub</p>
-      <h3>AHA Sync-status</h3>
-      <p class="aha-panel-subtitle">Read-only oversikt. Ingen sync kjøres automatisk.</p>
-      <ul class="aha-sync-hub-list">${rows}</ul>
+    renderAhaSyncHubStatus();
+    mount.insertAdjacentHTML("beforeend", `
+      <p class="aha-panel-subtitle">AHA Sync-status · Read-only oversikt. Ingen sync kjøres automatisk.</p>
       ${renderAhaManualSyncDryRunTargetPreview()}
       <p class="aha-sync-hub-notice"><strong>Ingen sync kjøres her ennå.</strong></p>
-      <p class="aha-sync-hub-footer">Manuell sync kommer senere.</p>
-    `;
+      <p class="aha-sync-hub-footer">Manuell sync kommer senere. ${inspection?.modules?.length || 0} modulstatuser er kun preview.</p>
+    `);
   }
 
   function renderIdentity(authState) {
