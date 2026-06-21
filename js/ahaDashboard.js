@@ -2152,18 +2152,25 @@
       ? window.AHA_SYNC_HUB_PROJECTS
       : [];
     const rows = projects.map((project) => {
+      const status = String(project?.status || "").trim();
+      const phase = String(project?.phase || "").trim();
+      const priority = String(project?.priority || "").trim();
       const role = String(project?.role || "").trim();
       const source = String(project?.source || "").trim();
+      const note = String(project?.note || "").trim();
+      const next = String(project?.next || "").trim();
       return `
         <li class="aha-sync-hub-row" data-project-id="${escapeHtml(project?.id)}">
           <div class="aha-sync-hub-row-heading">
             <strong>${escapeHtml(project?.name)}</strong>
-            <span class="aha-sync-hub-badge is-planned">${escapeHtml(project?.status)}</span>
+            ${status ? `<span class="aha-sync-hub-badge is-planned">${escapeHtml(status)}</span>` : ""}
           </div>
+          ${phase ? `<p><strong>Phase:</strong> ${escapeHtml(phase)}</p>` : ""}
+          ${priority ? `<p><strong>Priority:</strong> ${escapeHtml(priority)}</p>` : ""}
           ${role ? `<p><strong>Rolle:</strong> ${escapeHtml(role)}</p>` : ""}
           ${source ? `<p><strong>Kilde:</strong> ${escapeHtml(source)}</p>` : ""}
-          <p>${escapeHtml(project?.note)}</p>
-          <p><strong>Neste:</strong> ${escapeHtml(project?.next)}</p>
+          ${note ? `<p>${escapeHtml(note)}</p>` : ""}
+          ${next ? `<p><strong>Neste:</strong> ${escapeHtml(next)}</p>` : ""}
         </li>
       `;
     }).join("");
