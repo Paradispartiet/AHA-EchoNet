@@ -77,31 +77,6 @@
   }
 
   async function getSessionFromCallback(client) {
-    const { query } = params();
-    const code = query.get("code");
-
-    if (code && typeof client.auth.exchangeCodeForSession === "function") {
-      let exchanged = null;
-      try {
-        exchanged = await withTimeout(
-          client.auth.exchangeCodeForSession(code),
-          CALLBACK_TIMEOUT_MS,
-          "exchange code for session"
-        );
-      } catch (error) {
-        if (!isRecoverableCodeExchangeError(error)) throw error;
-        console.warn("AHA auth callback code exchange threw a recoverable error; trying getSession fallback", error);
-      }
-
-      if (exchanged?.data?.session) return { data: exchanged.data, error: null };
-      if (exchanged?.error) {
-        if (!isRecoverableCodeExchangeError(exchanged.error)) {
-          return { data: null, error: exchanged.error };
-        }
-        console.warn("AHA auth callback code exchange did not create a session; trying getSession fallback", exchanged.error);
-      }
-    }
-
     return await withTimeout(
       client.auth.getSession(),
       CALLBACK_TIMEOUT_MS,
