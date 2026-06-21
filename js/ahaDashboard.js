@@ -2172,10 +2172,15 @@
 
     mount.className = "aha-sync-hub-status";
     mount.setAttribute("aria-label", "AHA Sync Hub status");
+    const routerStatus = window.AHASyncChannelRouter
+      ? '<p class="aha-sync-hub-notice"><strong>Channel router: klar for read-only kandidatrouting</strong></p>'
+      : "";
+
     mount.innerHTML = `
       <p class="eyebrow">Sync Hub</p>
       <h3>AHA Sync Hub</h3>
       <p class="aha-panel-subtitle">Samtale- og innsiktskanaler</p>
+      ${routerStatus}
       <ul class="aha-sync-hub-list">${rows}</ul>
       <p class="aha-sync-hub-footer">Read-only kanalregister. Ingen backend, ekte sync eller lagring kjøres her. Modul ikke lastet på Home.</p>
     `;

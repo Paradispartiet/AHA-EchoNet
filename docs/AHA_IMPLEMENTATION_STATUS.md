@@ -1,5 +1,11 @@
 # AHA Implementation Status
 
+## Read-only AHA Sync Channel Router
+
+`js/ahaSyncChannelRouter.js` er første rene bro mellom AHA source events / samtaleinput og `AHA_SYNC_CHANNELS`. Routeren eksponerer `window.AHASyncChannelRouter`, leser kanalregisteret read-only og lager bare kandidatrouting for samtaleinnsikter, åpne spørsmål, begrepskoblinger, perspektiver, spenninger og samtalekoblinger.
+
+Routeren skriver ikke data, leser ikke eller skriver `localStorage`, gjør ingen `fetch`, endrer ikke DOM og kjører ingen ekte sync. Den aktiverer ikke EchoNet og bygger ikke backend; den gir bare trygg klassifiseringslogikk som senere conversation insight sync kan bygge videre på.
+
 ## AHA Sync Channels registry
 
 AHA Sync Hub har nå første read-only modell for conversation insight sync i `js/ahaSyncChannelsRegistry.js`. Filen eksponerer `window.AHA_SYNC_CHANNELS` med kanaler for samtaleinnsikter, åpne spørsmål, begrepskoblinger, perspektiver, uenigheter/spenninger og samtalekoblinger. `index.html` laster kanalregisteret før `js/ahaDashboard.js`, og AHA Home viser kanalene som hovedinnhold når registeret finnes.
