@@ -2,13 +2,13 @@
 
 ## Read-only AHA Sync Hub project overview on Home
 
-AHA Home har nå et lite read-only `AHA Sync Hub`-panel i høyre statuspanel via mount-punktet `#aha-sync-hub-status`. Panelet viser en statisk prosjektoversikt for History Go, Civication, HG Film Producer, Paradispartiet, AHA Home og EchoNet, inkludert “neste handling” per prosjekt.
+AHA Home har nå et lite read-only `AHA Sync Hub`-panel i høyre statuspanel via mount-punktet `#aha-sync-hub-status`. Panelet viser en statisk prosjektoversikt for History Go, Civication, HG Film Producer, Paradispartiet, AHA Home og EchoNet, inkludert rolle, kilde og “neste handling” per prosjekt.
 
-Prosjektdataene ligger nå i en egen read-only browser-global registry: `js/ahaSyncHubRegistry.js`. `index.html` laster registry-filen før `js/ahaDashboard.js`, og dashboard-renderingen leser bare `window.AHA_SYNC_HUB_PROJECTS` med tom-array fallback hvis registry mangler eller er tom.
+Prosjektdataene ligger nå i en egen read-only browser-global registry: `js/ahaSyncHubRegistry.js`. Hvert prosjektobjekt inneholder `status`, `note`, `next`, `role` og `source` sammen med eksisterende id/navn. `index.html` laster registry-filen før `js/ahaDashboard.js`, og dashboard-renderingen leser bare `window.AHA_SYNC_HUB_PROJECTS` med tom-array fallback hvis registry mangler eller er tom.
 
 Denne statusflaten er kun visuell: den lager ingen backend, kjører ingen ekte sync, skriver ikke til `localStorage`, endrer ikke History Go og aktiverer ikke EchoNet. Manglende mount-punkt eller manglende/tom registry skal håndteres uten konsollfeil.
 
-Prosjektkortene viser nå prosjektnavn, status, note og `Neste: ...` som read-only planstatus. Dette er bare HTML-rendering av statiske verdier i Home-panelet og innfører ingen nye sideeffekter.
+Prosjektkortene viser nå prosjektnavn, status, rolle, kilde, note og `Neste: ...` som read-only planstatus. Dette er bare HTML-rendering av statiske verdier i Home-panelet og innfører ingen nye sideeffekter.
 
 
 > Activation krever at alle gates i [`AHA_SYNC_HUB_GO_NO_GO_MATRIX.md`](./AHA_SYNC_HUB_GO_NO_GO_MATRIX.md) er grønne og dokumentert i en egen, eksplisitt activation-PR. Ekte manuell sync er ikke aktivert nå, og auto-sync er permanent NO-GO.

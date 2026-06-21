@@ -2151,16 +2151,22 @@
     const projects = Array.isArray(window.AHA_SYNC_HUB_PROJECTS)
       ? window.AHA_SYNC_HUB_PROJECTS
       : [];
-    const rows = projects.map((project) => `
-      <li class="aha-sync-hub-row" data-project-id="${escapeHtml(project.id)}">
-        <div class="aha-sync-hub-row-heading">
-          <strong>${escapeHtml(project.name)}</strong>
-          <span class="aha-sync-hub-badge is-planned">${escapeHtml(project.status)}</span>
-        </div>
-        <p>${escapeHtml(project.note)}</p>
-        <p><strong>Neste:</strong> ${escapeHtml(project.next)}</p>
-      </li>
-    `).join("");
+    const rows = projects.map((project) => {
+      const role = String(project?.role || "").trim();
+      const source = String(project?.source || "").trim();
+      return `
+        <li class="aha-sync-hub-row" data-project-id="${escapeHtml(project?.id)}">
+          <div class="aha-sync-hub-row-heading">
+            <strong>${escapeHtml(project?.name)}</strong>
+            <span class="aha-sync-hub-badge is-planned">${escapeHtml(project?.status)}</span>
+          </div>
+          ${role ? `<p><strong>Rolle:</strong> ${escapeHtml(role)}</p>` : ""}
+          ${source ? `<p><strong>Kilde:</strong> ${escapeHtml(source)}</p>` : ""}
+          <p>${escapeHtml(project?.note)}</p>
+          <p><strong>Neste:</strong> ${escapeHtml(project?.next)}</p>
+        </li>
+      `;
+    }).join("");
 
     mount.className = "aha-sync-hub-status";
     mount.setAttribute("aria-label", "AHA Sync Hub status");
