@@ -4,6 +4,7 @@ const vm = require("vm");
 
 const AUDIT_FILE = "js/ahaPersonalAiLoopAudit.js";
 const source = fs.readFileSync(AUDIT_FILE, "utf8");
+const RUNTIME_FILES = ["js/ahaPersonalAiLoopAudit.js", "js/ahaTrainingDashboard.js", "js/ahaChat.js", "js/metaInsightsAgent.js"];
 const REQUIRED_KEYS = [
   "state", "title", "summary", "auditStatus", "blockerCount", "warningCount", "topBlockers", "topWarnings",
   "operatorNextStep", "chatReadinessState", "metaInsightsRecommendationState", "manualReviewRequired", "generatedAt",
@@ -40,8 +41,13 @@ function assertCompactContract(report, label = "report") {
     assert.doesNotMatch(item, /[\r\n]/, `${label} blockers/warnings must not contain multiline raw evidence`);
   }
   for (const section of report.sections) {
+    assert.equal(section && typeof section, "object", `${label} section must be an object`);
     assert.equal(section.compactOnly, true, `${label} section must be compact`);
     assert.equal(section.redacted, true, `${label} section must be redacted`);
+    assert.match(String(section.id || section.title || ""), /audit|readiness|blocker|warning|next|chat|meta/i, `${label} section must have a clear safe label`);
+    for (const key of Object.keys(section)) {
+      assert.doesNotMatch(key, /raw|payload|corpus|memoryDump|chatHistory|retrievalIndex|approvedExamples|consentMetadata|prompt/i, `${label} section must not expose raw/private keys`);
+    }
   }
   const serialized = flatten(report);
   for (const forbidden of FORBIDDEN_OUTPUT_TERMS) {
@@ -60,6 +66,7 @@ const api = loadAuditApi({
   AHASyncHub: { runSync() { throw new Error("must not sync"); } }
 });
 assert.equal(typeof api.buildPersonalAiLoopLocalReadinessReport, "function", "local readiness report helper must be exported");
+assert.match(source, /buildPersonalAiLoopLocalReadinessReport\s*,/, "local readiness report helper must remain in the public API export object");
 api.runAudit = () => { auditRuns += 1; throw new Error("report must not run audit"); };
 
 for (const input of [null, undefined, "invalid", 123, [], NaN, { compactOperatorRecommendationSummary: null }, { compactOperatorRecommendationSummary: { compactOnly: false, redacted: false } }]) {
@@ -69,6 +76,12 @@ for (const input of [null, undefined, "invalid", 123, [], NaN, { compactOperator
   assert.match(report.operatorNextStep, /manual audit\/review|training dashboard/i);
   assertCompactContract(report, `fail-closed ${String(input)}`);
 }
+const unknown = api.buildPersonalAiLoopLocalReadinessReport(null);
+assert.ok(["unknown", "blocked"].includes(unknown.state), "unknown/fail-closed report must not become ready");
+assert.equal(unknown.manualReviewRequired, true, "unknown/fail-closed report must require manual review");
+assert.match(unknown.operatorNextStep, /manual audit\/review|Training Dashboard/i, "unknown/fail-closed next step must point to manual audit/review");
+assertCompactContract(unknown, "unknown");
+
 assert.equal(auditRuns, 0, "report helper must not run audit");
 assert.equal(writes, 0, "report helper must not write");
 
@@ -116,6 +129,8 @@ assert.equal(attention.state, "attention_needed");
 assert.equal(attention.blockerCount, 0);
 assert.ok(attention.warningCount > 0);
 assert.ok(attention.topWarnings.length > 0);
+assert.equal(attention.manualReviewRequired, true);
+assert.equal(/auto[- ]?fix/i.test(JSON.stringify(attention)), false, "attention_needed must not suggest auto-fix");
 assert.match(attention.operatorNextStep, /manual|Training Dashboard/i);
 assertCompactContract(attention, "attention_needed");
 
@@ -136,6 +151,7 @@ assert.ok(blocked.blockerCount > 0);
 assert.ok(blocked.topBlockers.length > 0);
 assert.equal(blocked.manualReviewRequired, true);
 assert.match(blocked.operatorNextStep, /manual/i);
+assert.equal(/auto[- ]?fix/i.test(JSON.stringify(blocked)), false, "blocked must not suggest auto-fix");
 assertCompactContract(blocked, "blocked");
 
 const privacy = api.buildPersonalAiLoopLocalReadinessReport({
@@ -162,6 +178,22 @@ const privacy = api.buildPersonalAiLoopLocalReadinessReport({
 });
 assertCompactContract(privacy, "privacy");
 
+const bounded = api.buildPersonalAiLoopLocalReadinessReport({
+  status: "working",
+  checks: { approvedMaterial: { approvedCorpus: 1 }, retrievalIndex: { ok: true }, privacyAndConsent: { ok: true } },
+  compactOperatorRecommendationSummary: {
+    status: "working",
+    countsBySeverity: { warning: 9, blocker: 9 },
+    topBlockerWarningTitles: ["one", "two", "three", "four", "five", "six"],
+    operatorNextStep: "Manual review in Training Dashboard.",
+    compactOnly: true,
+    redacted: true
+  }
+});
+assert.ok(bounded.topBlockers.length <= 3, "topBlockers must stay bounded");
+assert.ok(bounded.topWarnings.length <= 3, "topWarnings must stay bounded");
+assertCompactContract(bounded, "bounded");
+
 const helperStart = source.indexOf("function buildPersonalAiLoopLocalReadinessReport(");
 assert.notEqual(helperStart, -1, "helper source must exist");
 const helperBodyStart = source.indexOf("{", helperStart);
@@ -182,6 +214,13 @@ for (const forbidden of [
   /source[\s_-]*(?:publish|share)?[\s_-]*events?/i, /download/i
 ]) {
   assert.equal(forbidden.test(helperSource), false, `local report helper must not contain forbidden pattern ${forbidden}`);
+}
+for (const file of RUNTIME_FILES) {
+  const fileSource = fs.readFileSync(file, "utf8");
+  const localReportReferences = (fileSource.match(/buildPersonalAiLoopLocalReadinessReport|LocalReadinessReport|local readiness report/gi) || []).length;
+  if (file !== AUDIT_FILE) {
+    assert.equal(localReportReferences, 0, `${file} must not connect the local readiness report to UI/render/load paths in this test-lock PR`);
+  }
 }
 assert.equal(fs.existsSync("sync.html"), false, "sync.html must still not exist");
 

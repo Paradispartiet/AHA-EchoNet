@@ -6,7 +6,7 @@
 
 > **Sync Hub activation evidence (2026-06-11):** Se [`AHA_SYNC_HUB_ACTIVATION_EVIDENCE.md`](./AHA_SYNC_HUB_ACTIVATION_EVIDENCE.md) for review av gates A–J, current blockers og manglende bevis før activation. Manual execution er fortsatt NO-GO; auto-sync er permanent forbudt.
 
-Statusdato: 2026-06-20
+Statusdato: 2026-06-21
 
 
 ## Personal AI Loop export/report surface
@@ -15,10 +15,16 @@ Statusdato: 2026-06-20
 ✅ Personal AI Loop export/report surface: reviewed
 ✅ Personal AI Loop export/report surface: test-locked
 ✅ Minimal Personal AI Loop local readiness report helper: implemented
+✅ Local readiness report behavior: test-locked
+✅ Local readiness report API contract: test-locked
 ✅ Local readiness report: local-only / explicit-action only / compact/redacted only
-✅ Missing/invalid cached summary: fail-closed
-✅ No auto-run / no raw export payload
-✅ No write/sync/publish/share behavior
+✅ Local readiness report localOnly / explicitActionOnly / compactOnly / redacted contract: test-locked
+✅ Local readiness report states ready / attention_needed / blocked / unknown: test-locked
+✅ Missing/invalid cached summary: fail-closed and test-locked
+✅ No input mutation / bounded blockers and warnings: test-locked
+✅ Sections are compact/redacted only: test-locked
+✅ No auto-run / no raw export payload: test-locked
+✅ No write/sync/publish/share behavior: test-locked
 ✅ Allowed compact/redacted local report content: documented
 ✅ Forbidden raw/private export payload: documented
 ✅ No-auto-run/no-write/no-sync/no-publish/share: documented
@@ -28,16 +34,16 @@ Statusdato: 2026-06-20
 ⛔ Auto-sync: permanently forbidden
 ```
 
-The export/report surface review is documented in [`AHA_PERSONAL_AI_LOOP_EXPORT_REPORT_SURFACE.md`](./AHA_PERSONAL_AI_LOOP_EXPORT_REPORT_SURFACE.md). This review is test-locked by `tests/aha-personal-ai-loop-export-report-surface.test.cjs`. The first narrow implementation now adds `buildPersonalAiLoopLocalReadinessReport(cachedSummaryOrAuditResult)` in `js/ahaPersonalAiLoopAudit.js` as a pure helper for compact/redacted local readiness reports. Runtime UI is not connected in this PR; report creation remains available only to callers that invoke the helper after an explicit user action. Completed implementation PR: `feat: add Personal AI Loop local readiness report`.
+The export/report surface review is documented in [`AHA_PERSONAL_AI_LOOP_EXPORT_REPORT_SURFACE.md`](./AHA_PERSONAL_AI_LOOP_EXPORT_REPORT_SURFACE.md). This review is test-locked by `tests/aha-personal-ai-loop-export-report-surface.test.cjs`. The narrow implementation adds `buildPersonalAiLoopLocalReadinessReport(cachedSummaryOrAuditResult)` in `js/ahaPersonalAiLoopAudit.js` as a pure helper for compact/redacted local readiness reports. The behavior is now hard test-locked by `tests/aha-personal-ai-loop-local-readiness-report-behavior.test.cjs`: the public API export, required report keys, `localOnly` / `explicitActionOnly` / `compactOnly` / `redacted` flags, `ready` / `attention_needed` / `blocked` / `unknown` state handling, missing/invalid cache fail-closed behavior, no input mutation, bounded compact blocker/warning titles, compact/redacted sections, and privacy-safe/no-raw-output boundary are locked. Runtime UI is not connected in this PR; report creation remains available only to callers that invoke the helper after an explicit user action. Completed implementation PR: `feat: add Personal AI Loop local readiness report`. Completed behavior lock PR: `test: lock Personal AI Loop local readiness report behavior`.
 
 The review documents allowed compact/redacted local report content such as readiness state, compact audit status, blocker/warning counts, top blocker/warning titles, compact operator next step, compact Meta Insights recommendation summary, compact Chat readiness summary, last cached audit timestamp, manual review required flag, safe status labels, redacted summary text, and local-only report metadata. It also documents forbidden raw/private export payload such as raw audit payload, private corpus, memory dump, chat history, raw source content, retrieval index, approved examples, consent metadata, unredacted evidence, hidden private prompt payload, secrets, unsafe identifiers, unredacted source URLs, and unredacted email addresses.
 
-Export/report must not auto-run audit, write `localStorage`, write domain/remote/Supabase data, trigger manual sync, trigger Sync Hub, trigger auto-sync, publish AHAavisa, post/share in Groups, send source/publish/share events, perform background sync, create automation without explicit action, start download/export without explicit user action, or send reports to a network, email, or external service. The implemented helper preserves those boundaries: it does not run audit, does not write, does not sync, does not publish/share, does not download, and does not expose raw export payload. The report states are `ready`, `attention_needed`, `blocked`, and `unknown`, with fail-closed behavior for missing or invalid cached summaries. Sync Hub execution remains **NO-GO**, `sync.html` remains outside this workstream, and auto-sync remains **permanently forbidden**.
+Export/report must not auto-run audit, write `localStorage`, write domain/remote/Supabase data, trigger manual sync, trigger Sync Hub, trigger auto-sync, publish AHAavisa, post/share in Groups, send source/publish/share events, perform background sync, create automation without explicit action, start download/export without explicit user action, or send reports to a network, email, or external service. The implemented helper preserves those boundaries: it does not run audit, does not write, does not sync, does not publish/share, does not download, and does not expose raw export payload. The report states are `ready`, `attention_needed`, `blocked`, and `unknown`, with fail-closed behavior for missing or invalid cached summaries. The local readiness report behavior lock also verifies no audit auto-run, no `localStorage` report write, no network/beacon/XHR path, no Supabase/database write, no Sync Hub/manual-sync/auto-sync trigger, no publish/share/source-event behavior, no automatic download/export surface, and no raw audit/private payload exposure. Sync Hub execution remains **NO-GO**, `sync.html` remains outside this workstream, and auto-sync remains **permanently forbidden**.
 
 Neste anbefalte PR:
 
 ```text
-test: lock Personal AI Loop local readiness report behavior
+docs: review Personal AI Loop source approval surface
 ```
 
 ## Personal AI Loop Meta Insights recommendation surface
