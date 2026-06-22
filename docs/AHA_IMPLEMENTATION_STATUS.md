@@ -2345,3 +2345,15 @@ Chat kan nå vise «Svargrunnlag» med Answer Composer-status, valgt intensjon, 
 Personal AI Loop Audit måler Answer Composer-status med egen `answerComposer`-sjekk, og Training Dashboard kan teste Composer med standardmeldingen «Hva vet AHA om mine viktigste prosjekter og begreper?». Meta Insights Agent får et kompakt `answerComposerPack`, slik at Meta Insights AI vet at AHA Chat har et eget svar-komposisjonslag.
 
 Dette er broen mellom Semantic Retrieval V2 og en full personlig AHA-svarmotor. En fremtidig V2 kan legge til bedre response templates, tydeligere citations i selve svaret og evalueringsscore for svar.
+
+## AHA Personal Answer Evaluation V1
+
+AHA Personal Answer Evaluation V1 vurderer AHA-svar opp mot brukerens melding, personlig svargrunnlag, Answer Composer-pakke, retrieval-kilder og valgt personlig kontekst. Modulen scorer intent alignment, source grounding, personal relevance, transparency, next step og kort nytte/brevity, og returnerer status fra `weak` til `strong` etter V1-grensene.
+
+Chat kan nå vise en kompakt «AHA svar-evaluering» under AHA-svar, med score, dimensjoner, brukte kilder, forbedringsforslag og forslag til training example. Når evalueringen foreslår et godt eksempel, kan brukeren eksplisitt lagre svaret som `needs_review` training example fra chatten.
+
+Training Dashboard har et eget «Answer Evaluation»-panel som viser total evaluations, average score, statusfordeling, training suggestions og siste evaluering. Panelet kan også kjøre en lokal test som bygger answer package via Answer Composer, lager preview og evaluerer preview-svaret.
+
+Personal AI Loop Audit inkluderer nå `answerEvaluation`, med sjekk for modultilgjengelighet, sample-evaluering, lagrede evaluations, averageScore, recent evaluation og training suggestions. Meta Insights AI får `answerEvaluationPack`, slik at agenten kan vite om AHA-svarene faktisk treffer personlig grunnlag og intensjon uten å lese rå chat-historikk.
+
+Dette lukker første evaluerbare personlige AI-sløyfe: Meta Insights AI → Memory → Training Corpus → Training Examples → Readiness → Chat Personal Context → Retrieval/RAG → AI Loop Audit → Semantic Retrieval → Answer Composer → Answer Evaluation → brukerhandling/training example.

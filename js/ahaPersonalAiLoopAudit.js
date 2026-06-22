@@ -579,6 +579,15 @@
     return [...new Set(recs)].slice(0, 6);
   }
 
+
+  function checkAnswerEvaluation() {
+    const api = global.AHAPersonalAnswerEvaluation;
+    const available = Boolean(api?.evaluateAnswer);
+    const stats = available && api.collectEvaluationStats ? asObject(safeCall(() => api.collectEvaluationStats(), {})) : {};
+    const sample = available ? asObject(safeCall(() => api.evaluateAnswer(DEFAULT_QUERY, "Status: AHA bruker personlig grunnlag fra AHA-EchoNet. Neste steg: kontroller kilder og lag et training example.", { context: { answerIntent: "project_status", answerPlan: { suggestedFollowup: "Gi ett presist neste steg." }, selectedSources: [{ source: "meta_insights_memory", sourceId: "sample", sourceType: "confirmed_claim", title: "AHA-EchoNet", excerpt: "AHA-EchoNet personlig grunnlag", hybridScore: 0.9, reasons: ["bekreftet selvinnsikt"] }] }, status: { intent: "project_status", ready: true } }) ), {}) : {};
+    return { ok: available && Boolean(sample.score), available, evaluationCount: Number(stats.total) || 0, averageScore: Number(stats.averageScore) || 0, hasRecentEvaluation: Boolean(stats.latest), trainingSuggestions: Number(stats.trainingSuggestions) || Number(sample.trainingSuggestion?.shouldCreateExample ? 1 : 0), ready: available && Boolean(sample.trainingSuggestion) };
+  }
+
   function runAudit(options = {}) {
     const dataSources = checkDataSources();
     const approvedMaterial = checkApprovedMaterial();
@@ -588,6 +597,7 @@
     const privacy = checkPrivacyAndConsent();
     const semanticRetrieval = checkSemanticRetrieval();
     const answerComposer = checkAnswerComposer(options.query || DEFAULT_QUERY, options);
+    const answerEvaluation = checkAnswerEvaluation();
     const readiness = asObject(safeCall(() => global.AHAPersonalModelReadiness?.buildReadinessReport?.(), {}));
     let score = 0;
     score += Math.round((dataSources.availableCount / MODULES.length) * 15);
@@ -602,6 +612,10 @@
     if (answerComposer.ready && answerComposer.hasPrompt) score += 10;
     if (answerComposer.selectedSourceCount > 0) score += 5;
     if (answerComposer.hasPreview) score += 5;
+    if (answerEvaluation.available) score += 5;
+    if (answerEvaluation.ready) score += 10;
+    if (answerEvaluation.evaluationCount > 0) score += 5;
+    if (answerEvaluation.trainingSuggestions > 0) score += 5;
     score = Math.min(100, score);
     const materialCount = approvedMaterial.confirmedClaims + approvedMaterial.importantClaims
       + approvedMaterial.approvedCorpus + approvedMaterial.approvedExamples;
@@ -612,7 +626,7 @@
       generatedAt: new Date(options.now || Date.now()).toISOString(),
       status,
       score,
-      checks: { dataSources, approvedMaterial, retrievalIndex: retrieval, sampleQuery, chatIntegration: chat, privacyAndConsent: privacy, answerComposer },
+      checks: { dataSources, approvedMaterial, retrievalIndex: retrieval, sampleQuery, chatIntegration: chat, privacyAndConsent: privacy, answerComposer, answerEvaluation },
       dataFlow: {
         input: "chat message",
         personalContext: dataSources.modules.AHAChatPersonalContext,
@@ -629,6 +643,7 @@
       privacy,
       semanticRetrieval,
       answerComposer,
+      answerEvaluation,
       recommendations: [],
       summary: ""
     };
@@ -659,6 +674,7 @@
     checkPrivacyAndConsent,
     checkSemanticRetrieval,
     checkAnswerComposer,
+    checkAnswerEvaluation,
     buildRecommendations,
     buildOperatorRecommendations,
     buildCompactOperatorRecommendationSummary,
