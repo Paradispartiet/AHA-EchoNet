@@ -93,6 +93,8 @@
         <div class="aha-training-actions">
           <button type="button" data-corpus-approve="${escapeHtml(item.id)}">Godkjenn</button>
           <button type="button" data-corpus-reject="${escapeHtml(item.id)}">Avvis</button>
+          <button type="button" data-corpus-consent="useForMemory" data-corpus-id="${escapeHtml(item.id)}">${item.consent?.useForMemory ? "✓ " : ""}Tillat minne</button>
+          <button type="button" data-corpus-consent="useForKnowledge" data-corpus-id="${escapeHtml(item.id)}">${item.consent?.useForKnowledge ? "✓ " : ""}Tillat kunnskap/RAG</button>
           <button type="button" data-corpus-consent="useForTrainingExamples" data-corpus-id="${escapeHtml(item.id)}">${item.consent?.useForTrainingExamples ? "✓ " : ""}Tillat treningseksempler</button>
           <button type="button" data-corpus-consent="useForStyle" data-corpus-id="${escapeHtml(item.id)}">${item.consent?.useForStyle ? "✓ " : ""}Tillat stil</button>
           <button type="button" data-corpus-consent="useForFineTuning" data-corpus-id="${escapeHtml(item.id)}">${item.consent?.useForFineTuning ? "✓ " : ""}Tillat finjustering</button>
