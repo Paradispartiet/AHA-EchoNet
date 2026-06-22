@@ -2144,6 +2144,74 @@
     `;
   }
 
+
+  function getAhaSyncChannelName(channelId) {
+    const id = String(channelId || "").trim();
+    if (!id) return "Ukjent kanal";
+    const channels = Array.isArray(window.AHA_SYNC_CHANNELS) ? window.AHA_SYNC_CHANNELS : [];
+    const match = channels.find((channel) => String(channel?.id || "") === id);
+    return String(match?.name || id);
+  }
+
+  function renderAhaSyncChannelPreview() {
+    const router = window.AHASyncChannelRouter;
+    const sources = window.AHASources;
+    if (typeof router?.summarizeRoutes !== "function" || typeof sources?.loadSourceEvents !== "function") {
+      return '<section class="aha-sync-route-preview" aria-label="Read-only route preview"><h4>Read-only route preview</h4><p class="aha-sync-hub-notice">Lokale source events kan forhåndsvises mot innsiktskanaler. Ingen sync kjøres.</p><p class="aha-sync-hub-notice"><strong>Route preview ikke tilgjengelig ennå.</strong></p></section>';
+    }
+
+    let sourceEvents = [];
+    try {
+      const loadedEvents = sources.loadSourceEvents();
+      sourceEvents = Array.isArray(loadedEvents) ? loadedEvents : [];
+    } catch (error) {
+      console.warn("AHADashboard: route preview kunne ikke lese source events", error);
+      sourceEvents = [];
+    }
+
+    if (!sourceEvents.length) {
+      return '<section class="aha-sync-route-preview" aria-label="Read-only route preview"><h4>Read-only route preview</h4><p class="aha-sync-hub-notice">Lokale source events kan forhåndsvises mot innsiktskanaler. Ingen sync kjøres.</p><p class="aha-sync-hub-notice"><strong>Ingen lokale source events å forhåndsvise ennå.</strong></p></section>';
+    }
+
+    let summary = { total: sourceEvents.length, byChannel: {}, unrouted: 0 };
+    try {
+      const routed = router.summarizeRoutes(sourceEvents);
+      summary = routed && typeof routed === "object" ? routed : summary;
+    } catch (error) {
+      console.warn("AHADashboard: route preview kunne ikke oppsummere routes", error);
+    }
+
+    const byChannel = summary.byChannel && typeof summary.byChannel === "object" && !Array.isArray(summary.byChannel)
+      ? summary.byChannel
+      : {};
+    const channelIds = Array.isArray(window.AHA_SYNC_CHANNELS) && window.AHA_SYNC_CHANNELS.length
+      ? window.AHA_SYNC_CHANNELS.map((channel) => String(channel?.id || "").trim()).filter(Boolean)
+      : Object.keys(byChannel);
+    Object.keys(byChannel).forEach((id) => {
+      if (!channelIds.includes(id)) channelIds.push(id);
+    });
+    const rows = channelIds.map((id) => `
+      <li class="aha-sync-hub-row" data-route-channel-id="${escapeHtml(id)}">
+        <div class="aha-sync-hub-row-heading">
+          <strong>${escapeHtml(getAhaSyncChannelName(id))}</strong>
+          <span class="aha-sync-hub-badge is-planned">${escapeHtml(Number(byChannel[id] || 0))}</span>
+        </div>
+      </li>
+    `).join("");
+
+    return `
+      <section class="aha-sync-route-preview" aria-label="Read-only route preview">
+        <h4>Read-only route preview</h4>
+        <p class="aha-sync-hub-notice">Lokale source events kan forhåndsvises mot innsiktskanaler. Ingen sync kjøres.</p>
+        <dl class="aha-sync-hub-meta">
+          <div><dt>Source events lest</dt><dd>${escapeHtml(Number(summary.total || sourceEvents.length))}</dd></div>
+          <div><dt>Ikke routet</dt><dd>${escapeHtml(Number(summary.unrouted || 0))}</dd></div>
+        </dl>
+        ${rows ? `<ul class="aha-sync-hub-list" aria-label="Route counts per channel">${rows}</ul>` : ""}
+      </section>
+    `;
+  }
+
   function renderAhaSyncChannelsStatus() {
     const mount = $("aha-sync-hub-status");
     if (!mount) return false;
@@ -2182,6 +2250,7 @@
       <p class="aha-panel-subtitle">Samtale- og innsiktskanaler</p>
       ${routerStatus}
       <ul class="aha-sync-hub-list">${rows}</ul>
+      ${renderAhaSyncChannelPreview()}
       <p class="aha-sync-hub-footer">Read-only kanalregister. Ingen backend, ekte sync eller lagring kjøres her. Modul ikke lastet på Home.</p>
     `;
     return true;
@@ -2552,6 +2621,7 @@
     getLastState: () => lastState,
     saveProfileName,
     loadAhaManualSyncHistoryPreview,
+    renderAhaSyncChannelPreview,
     getAhaManualSyncHistoryState: () => ahaManualSyncHistoryState
   };
 
