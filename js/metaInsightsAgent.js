@@ -389,6 +389,16 @@
     }
   }
 
+
+  function buildAnswerEvaluationPackSafe() {
+    const api = global.AHAPersonalAnswerEvaluation;
+    if (!api?.collectEvaluationStats) return null;
+    try {
+      const stats = api.collectEvaluationStats();
+      return { available: true, total: Number(stats.total) || 0, averageScore: Number(stats.averageScore) || 0, strong: Number(stats.strong) || 0, good: Number(stats.good) || 0, usable: Number(stats.usable) || 0, weak: Number(stats.weak) || 0, trainingSuggestions: Number(stats.trainingSuggestions) || 0 };
+    } catch { return { available: true, total: 0, averageScore: 0, strong: 0, good: 0, usable: 0, weak: 0, trainingSuggestions: 0 }; }
+  }
+
   // 1. Agentkontekst: alt agenten trenger for å resonnere over profilen.
   function buildAgentContext(profile, options = {}) {
     const safe = asObject(profile);
@@ -427,6 +437,8 @@
       ? options.answerComposerPack
       : buildAnswerComposerPackSafe();
     if (answerComposerPack) context.answerComposerPack = answerComposerPack;
+    const answerEvaluationPack = options.answerEvaluationPack && typeof options.answerEvaluationPack === "object" ? options.answerEvaluationPack : buildAnswerEvaluationPackSafe();
+    if (answerEvaluationPack) context.answerEvaluationPack = answerEvaluationPack;
     const personalAiLoopPack = options.personalAiLoopPack && typeof options.personalAiLoopPack === "object"
       ? options.personalAiLoopPack
       : buildPersonalAiLoopPackSafe();

@@ -583,6 +583,50 @@
     `;
   }
 
+
+  function renderAhaAnswerEvaluation(row, evaluation) {
+    if (!row || !evaluation) return;
+    const wrap = document.createElement("section");
+    wrap.className = "aha-answer-evaluation";
+    const dims = evaluation.dimensions || {};
+    const used = Array.isArray(evaluation.sourceUse?.usedSources) ? evaluation.sourceUse.usedSources : [];
+    const suggestions = Array.isArray(evaluation.improvementSuggestions) ? evaluation.improvementSuggestions : [];
+    wrap.innerHTML = `
+      <strong>AHA svar-evaluering</strong>
+      <span>Score ${Number(evaluation.score) || 0}/100 · status ${escHtml(evaluation.status || "unknown")} · intent ${Number(dims.intentAlignment?.score) || 0} · source grounding ${Number(dims.sourceGrounding?.score) || 0} · personal relevance ${Number(dims.personalRelevance?.score) || 0} · next step ${Number(dims.nextStep?.score) || 0}</span>
+      <details><summary>Svar-evaluering</summary>
+        <div>Dimensjoner: intent ${Number(dims.intentAlignment?.score) || 0}, kilder ${Number(dims.sourceGrounding?.score) || 0}, personlig relevans ${Number(dims.personalRelevance?.score) || 0}, transparens ${Number(dims.transparency?.score) || 0}, neste steg ${Number(dims.nextStep?.score) || 0}.</div>
+        <div>Kilder brukt: ${used.length ? used.map((s) => escHtml(s.title || s.sourceId || s.source)).join(" · ") : "Ingen tydelig kildebruk funnet."}</div>
+        <ul>${suggestions.slice(0,5).map((x) => `<li>${escHtml(x)}</li>`).join("")}</ul>
+        ${evaluation.trainingSuggestion?.shouldCreateExample ? `<button type="button" data-save-training-example="1">Lagre som training example</button> <a href="training.html">Åpne training.html</a>` : `<small>${escHtml(evaluation.trainingSuggestion?.reason || "Ingen training suggestion.")}</small>`}
+      </details>`;
+    const btn = wrap.querySelector('[data-save-training-example="1"]');
+    btn?.addEventListener("click", () => {
+      const api = global.AHATrainingExamples;
+      const draft = evaluation.trainingSuggestion?.draftExample;
+      if (api?.addExample && draft) {
+        api.addExample({ ...draft, status: "needs_review" });
+        btn.textContent = "Lagret som training example";
+        btn.disabled = true;
+      }
+    });
+    row.appendChild(wrap);
+  }
+
+  function evaluateAhaAnswerForChat(userMessage, answerText, answerPackage, row) {
+    const api = global.AHAPersonalAnswerEvaluation;
+    if (!api?.evaluateAnswer) return null;
+    try {
+      const evaluation = api.evaluateAnswer(userMessage, answerText, answerPackage);
+      const saved = api.saveEvaluation ? api.saveEvaluation(evaluation) : evaluation;
+      renderAhaAnswerEvaluation(row, saved);
+      return saved;
+    } catch (err) {
+      console.warn("AHA svar-evaluering feilet", err);
+      return null;
+    }
+  }
+
   function renderAhaPersonalContextStatus(statusArg = null) {
     const host = document.getElementById("aha-personal-context-status");
     if (!host) return null;
@@ -1639,6 +1683,7 @@
     }
     if (subjectMatches.length) renderSubjectChips(row, subjectMatches);
     if (role === "aha" && options?.memoryContext) renderAhaMemoryTransparency(row, options.memoryContext);
+    if (role === "aha" && options?.answerEvaluation) renderAhaAnswerEvaluation(row, options.answerEvaluation);
     row.appendChild(highlightBtn);
     log.appendChild(row);
     log.scrollTop = log.scrollHeight;
@@ -1647,6 +1692,7 @@
     updateEmptyState();
     updateAnswerActionsVisibility();
     if (role === "aha") refreshAhaExplorer();
+    return row;
   }
 
   function previewText(text) {
@@ -6314,7 +6360,8 @@
       }
       const visibleReply = normalizeAhaVisibleReply(safeReply, cleanText) || safeReply;
       const categoryChips = memoryUseEnabled ? suggestCategoryChips() : [];
-      appendChat("aha", visibleReply, { categoryChips, subjectMatches, memoryContext });
+      const ahaRow = appendChat("aha", visibleReply, { categoryChips, subjectMatches, memoryContext });
+      const answerEvaluation = evaluateAhaAnswerForChat(cleanText, visibleReply, answerPackage, ahaRow);
       // Meta Insights AI-session: parse rå-svaret (før visningsnormalisering)
       // til claims med feedback-knapper.
       try { maybeHandleMetaAiAgentReply(reply); } catch (metaErr) { console.warn("Meta Insights AI-claims feilet", metaErr); }
@@ -6343,7 +6390,8 @@
             memory_context_reason: memoryContext.used ? memoryContext.reason : null,
             personal_context_used: Boolean(personalContext?.prompt),
             personal_context_evidence: personalContext?.context?.evidence || null,
-            answer_composer_status: answerPackage?.status || null
+            answer_composer_status: answerPackage?.status || null,
+            answer_evaluation: answerEvaluation ? { status: answerEvaluation.status, score: answerEvaluation.score } : null
           }
         });
       }

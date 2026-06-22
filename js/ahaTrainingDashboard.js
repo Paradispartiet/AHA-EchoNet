@@ -31,6 +31,7 @@
   function semanticApi() { return global.AHASemanticRetrieval; }
   function auditApi() { return global.AHAPersonalAiLoopAudit; }
   function answerComposerApi() { return global.AHAPersonalAnswerComposer; }
+  function answerEvaluationApi() { return global.AHAPersonalAnswerEvaluation; }
 
   function setStat(id, value) {
     const el = $(id);
@@ -275,6 +276,32 @@
     `;
   }
 
+
+  function renderAnswerEvaluation(evaluationArg = null) {
+    const mount = $("training-answer-evaluation-report");
+    if (!mount) return;
+    const api = answerEvaluationApi();
+    if (!api?.collectEvaluationStats) {
+      mount.innerHTML = `<p class="aha-training-empty">Answer Evaluation-modulen er ikke lastet.</p>`;
+      return;
+    }
+    const stats = api.collectEvaluationStats();
+    const latest = evaluationArg || stats.latest;
+    mount.innerHTML = `
+      <div class="aha-training-stats">
+        <div class="aha-mini-stat"><strong>${Number(stats.total) || 0}</strong><span>Total evaluations</span></div>
+        <div class="aha-mini-stat"><strong>${Number(stats.averageScore) || 0}/100</strong><span>Average score</span></div>
+        <div class="aha-mini-stat"><strong>${Number(stats.strong) || 0}</strong><span>Strong</span></div>
+        <div class="aha-mini-stat"><strong>${Number(stats.good) || 0}</strong><span>Good</span></div>
+        <div class="aha-mini-stat"><strong>${Number(stats.usable) || 0}</strong><span>Usable</span></div>
+        <div class="aha-mini-stat"><strong>${Number(stats.weak) || 0}</strong><span>Weak</span></div>
+        <div class="aha-mini-stat"><strong>${Number(stats.trainingSuggestions) || 0}</strong><span>Training suggestions</span></div>
+      </div>
+      ${latest ? `<p class="module-meta"><strong>Siste evaluering:</strong> ${Number(latest.score) || 0}/100 · ${escapeHtml(latest.status || "unknown")} · ${escapeHtml(latest.summary || "")}</p>
+      <details><summary>Dimensjoner</summary><pre>${escapeHtml(JSON.stringify(latest.dimensions || {}, null, 2))}</pre></details>` : `<p class="aha-training-empty">Ingen evalueringer lagret ennå.</p>`}
+    `;
+  }
+
   function setMessage(text) {
     const el = $("training-message");
     if (el) el.textContent = text || "";
@@ -287,6 +314,7 @@
     renderSemanticRetrieval();
     renderAiLoopAudit();
     renderAnswerComposer();
+    renderAnswerEvaluation();
     renderCorpusList();
     renderExamplesList();
   }
@@ -348,6 +376,21 @@
     renderAnswerComposer(pack);
   }
 
+
+  function handleAnswerEvaluationTest() {
+    const composer = answerComposerApi();
+    const evaluator = answerEvaluationApi();
+    if (!composer?.buildAnswerPackage || !evaluator?.evaluateAnswer) return;
+    const message = "Hva vet AHA om mine viktigste prosjekter og begreper?";
+    const pack = composer.buildAnswerPackage(message);
+    const preview = composer.composeLocalAnswerPreview ? composer.composeLocalAnswerPreview(pack.context || pack) : pack.localPreview;
+    const answerText = [preview?.summary, ...(Array.isArray(preview?.bullets) ? preview.bullets : []), preview?.nextStep ? `Neste steg: ${preview.nextStep}` : ""].filter(Boolean).join("\n");
+    const evaluation = evaluator.evaluateAnswer(message, answerText, pack);
+    evaluator.saveEvaluation?.(evaluation);
+    setMessage(`Answer Evaluation: ${evaluation.status}, ${evaluation.score}/100.`);
+    renderAnswerEvaluation(evaluation);
+  }
+
   function handleAiLoopAudit() {
     const api = auditApi();
     if (!api?.runAudit) return;
@@ -366,6 +409,7 @@
     $("training-semantic-retrieval-btn")?.addEventListener("click", handleSemanticRetrievalRefresh);
     $("training-ai-loop-audit-btn")?.addEventListener("click", handleAiLoopAudit);
     $("training-answer-composer-btn")?.addEventListener("click", handleAnswerComposerTest);
+    $("training-answer-evaluation-btn")?.addEventListener("click", handleAnswerEvaluationTest);
 
     $("training-corpus-list")?.addEventListener("click", (event) => {
       const target = event.target;
@@ -413,7 +457,7 @@
     renderAll();
   }
 
-  const AHATrainingDashboard = { init, renderAll, renderStats, renderReadiness, renderRetrieval, renderSemanticRetrieval, renderAiLoopAudit, renderCorpusList, renderExamplesList, handleRetrievalRefresh, handleSemanticRetrievalRefresh, handleAiLoopAudit, renderAnswerComposer, handleAnswerComposerTest };
+  const AHATrainingDashboard = { init, renderAll, renderStats, renderReadiness, renderRetrieval, renderSemanticRetrieval, renderAiLoopAudit, renderCorpusList, renderExamplesList, handleRetrievalRefresh, handleSemanticRetrievalRefresh, handleAiLoopAudit, renderAnswerComposer, handleAnswerComposerTest, renderAnswerEvaluation, handleAnswerEvaluationTest };
 
   if (typeof module !== "undefined" && module.exports) {
     module.exports = AHATrainingDashboard;
