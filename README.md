@@ -2,6 +2,13 @@
 
 Dette dokumentet låser den nåværende arkitekturen for AHA-EchoNet, AHA, History Go og importflyten mellom dem.
 
+
+## Read-only AHA Sync Channel Preview
+
+AHA Home viser nå en read-only route preview under `AHA_SYNC_CHANNELS`. Previewen leser eksisterende lokale AHA source events via den etablerte read-funksjonen, sender dem til `AHASyncChannelRouter.summarizeRoutes(sourceEvents)` og viser bare tellere per innsiktskanal samt antall ikke-routede source events.
+
+Previewen viser ikke rå brukerinnhold, private meldinger, notattekst, rå metadata eller brukeridentifikatorer. Den skriver ikke routing-resultater, skriver ikke til `localStorage`, trigget ikke import, kjører ikke ekte sync, lager ingen backend og aktiverer ikke EchoNet. Dette er fortsatt conversation insight sync-preview: `AHA_SYNC_CHANNELS` er hovedmodellen, mens `AHA_SYNC_HUB_PROJECTS` fortsatt bare er legacy fallback / utviklingspreview.
+
 ## Read-only AHA Sync Channel Router
 
 `js/ahaSyncChannelRouter.js` er første rene bro mellom AHA source events / samtaleinput og `AHA_SYNC_CHANNELS`. Routeren eksponerer `window.AHASyncChannelRouter`, leser kanalregisteret read-only og lager bare kandidatrouting for samtaleinnsikter, åpne spørsmål, begrepskoblinger, perspektiver, spenninger og samtalekoblinger.
