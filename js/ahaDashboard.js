@@ -160,6 +160,21 @@
     window.AHAModules?.renderMenu?.({ healthByModule: moduleHealth });
   }
 
+  function renderProductIntegration() {
+    if (!window.AHAProductIntegration) return;
+    const status = window.AHAProductIntegration.buildProductStatus();
+    setText("aha-product-overall", status.overall.label);
+    setText("aha-product-personal-ai", status.personalAI.ready ? "Klar" : (status.personalAI.available ? "Kontrollpanel klart" : "Mangler"));
+    setText("aha-product-training", status.training.approvedCount ? `${status.training.approvedCount} godkjent` : "Klar for godkjenning");
+    setText("aha-product-chat", status.chat.available ? "Tilgjengelig" : "Mangler");
+    setText("aha-product-summary", status.summary);
+    const mount = $("aha-product-primary-action");
+    if (mount && status.primaryNextAction) {
+      mount.innerHTML = `<strong>Neste riktige handling: ${status.primaryNextAction.label}</strong><span>${status.primaryNextAction.description}</span><a class="aha-tile-btn aha-tile-btn-primary" href="${status.primaryNextAction.href}">${status.primaryNextAction.label}</a>`;
+    }
+  }
+
+
   function renderProfileStats(stats, sourceLabel) {
     const historyGo = hasHistoryGoPayload() || statValue(stats, "imports") > 0;
     const mount = $("aha-profile-stats");
@@ -2716,11 +2731,13 @@
     // the richer dashboard refresh. renderDashboard replaces these badges with
     // live health data when its asynchronous work completes.
     renderModules({});
+    renderProductIntegration();
     bindProfileNameForm();
     bindLoginModal();
     bindProfileNameModal();
     bindDashboardKeyboardShortcuts();
     renderSyncHubStatus();
+    renderProductIntegration();
     renderDashboard();
     window.addEventListener("aha:source-event-added", renderDashboard);
     window.addEventListener("aha:historygo-imported", renderDashboard);
