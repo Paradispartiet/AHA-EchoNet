@@ -371,6 +371,24 @@
     };
   }
 
+  function buildAnswerComposerPackSafe() {
+    const api = global.AHAPersonalAnswerComposer;
+    if (!api || typeof api.buildAnswerPackage !== "function") return null;
+    try {
+      const pack = api.buildAnswerPackage("Hva vet AHA om mine viktigste prosjekter og begreper?", { limit: 3, maxLength: 1800 });
+      return {
+        available: true,
+        ready: Boolean(pack?.status?.ready),
+        lastIntent: asText(pack?.status?.intent),
+        selectedSourceCount: Number(pack?.status?.selectedSourceCount) || 0,
+        hasSemanticRetrieval: Boolean(pack?.status?.hasSemanticRetrieval),
+        hasPersonalContext: Boolean(pack?.status?.hasPersonalContext)
+      };
+    } catch {
+      return { available: true, ready: false, lastIntent: "unknown", selectedSourceCount: 0, hasSemanticRetrieval: false, hasPersonalContext: false };
+    }
+  }
+
   // 1. Agentkontekst: alt agenten trenger for å resonnere over profilen.
   function buildAgentContext(profile, options = {}) {
     const safe = asObject(profile);
@@ -405,6 +423,10 @@
       ? options.semanticRetrievalPack
       : buildSemanticRetrievalPackSafe();
     if (semanticRetrievalPack) context.semanticRetrievalPack = semanticRetrievalPack;
+    const answerComposerPack = options.answerComposerPack && typeof options.answerComposerPack === "object"
+      ? options.answerComposerPack
+      : buildAnswerComposerPackSafe();
+    if (answerComposerPack) context.answerComposerPack = answerComposerPack;
     const personalAiLoopPack = options.personalAiLoopPack && typeof options.personalAiLoopPack === "object"
       ? options.personalAiLoopPack
       : buildPersonalAiLoopPackSafe();

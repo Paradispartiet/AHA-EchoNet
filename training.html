@@ -21,6 +21,7 @@
         <button id="training-retrieval-btn" type="button">Bygg personlig søkeindeks</button>
         <button id="training-semantic-retrieval-btn" type="button">Bygg semantisk søkeindeks</button>
         <button id="training-ai-loop-audit-btn" type="button">Kjør AI-loop audit</button>
+        <button id="training-answer-composer-btn" type="button">Test Answer Composer</button>
         <a class="aha-tile-btn aha-tile-btn-primary" href="index.html">Til AHA Home</a>
       </div>
       <p id="training-message" class="module-meta" role="status" aria-live="polite"></p>
@@ -59,6 +60,11 @@
       <div id="training-ai-loop-audit-report" class="aha-training-readiness"></div>
     </section>
 
+    <section class="aha-panel" id="training-answer-composer-panel">
+      <h2>AHA Personal Answer Composer</h2>
+      <div id="training-answer-composer-report" class="aha-training-readiness">Bruk «Test Answer Composer» for å se svargrunnlag.</div>
+    </section>
+
     <section class="aha-panel">
       <h2>Corpus</h2>
       <p class="module-meta">Godkjenn tekster og slå på relevant bruk per item. Hvert valg er ditt eget samtykke.</p>
@@ -79,6 +85,8 @@
   <script src="js/ahaPersonalRetrieval.js"></script>
   <script src="js/ahaSemanticRetrieval.js"></script>
   <script src="js/ahaPersonalAiLoopAudit.js"></script>
+  <script src="js/ahaChatPersonalContext.js"></script>
+  <script src="js/ahaPersonalAnswerComposer.js"></script>
   <script src="js/ahaTrainingDashboard.js"></script>
 </body>
 </html>

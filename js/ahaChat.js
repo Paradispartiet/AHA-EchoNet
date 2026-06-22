@@ -545,6 +545,44 @@
     }
   }
 
+  function buildAhaAnswerPackage(userText) {
+    const api = global.AHAPersonalAnswerComposer;
+    if (!api || typeof api.buildAnswerPackage !== "function") return null;
+    try { return api.buildAnswerPackage(userText, { maxLength: 2200 }); }
+    catch (err) { console.warn("AHA Answer Composer kunne ikke bygge svargrunnlag", err); return null; }
+  }
+
+  function renderAhaAnswerComposer(answerPackage) {
+    const status = document.getElementById("aha-answer-composer-status");
+    const details = document.getElementById("aha-answer-composer-details");
+    if (!status || !details) return;
+    const pack = answerPackage && typeof answerPackage === "object" ? answerPackage : null;
+    if (!pack) {
+      status.textContent = "AHA Answer Composer er ikke tilgjengelig for denne meldingen.";
+      details.innerHTML = "";
+      return;
+    }
+    const st = pack.status || {};
+    const retrievalMode = pack.context?.retrieval?.mode || (st.hasSemanticRetrieval ? "hybrid" : (st.hasRetrieval ? "lexical" : "none"));
+    status.textContent = `AHA Answer Composer aktiv · intent: ${st.intent || "unknown"} · kilder: ${Number(st.selectedSourceCount) || 0} · retrieval mode: ${retrievalMode} · semantic available: ${st.hasSemanticRetrieval ? "ja" : "nei"} · ready: ${st.ready ? "ja" : "nei"}.`;
+    const sources = Array.isArray(pack.context?.selectedSources) ? pack.context.selectedSources : [];
+    const sections = Array.isArray(pack.context?.answerPlan?.sections) ? pack.context.answerPlan.sections.join(", ") : "kort svar, neste steg";
+    details.innerHTML = `
+      <article class="aha-personal-retrieval-result">
+        <strong>Answer plan</strong>
+        <span>${escHtml(pack.context?.answerPlan?.responseMode || "direct_answer")} · ${escHtml(sections)}</span>
+        <small>${escHtml(pack.localPreview?.summary || "Lokal preview ikke tilgjengelig.")}</small>
+      </article>
+      ${sources.slice(0, 5).map((item) => `
+        <article class="aha-personal-retrieval-result">
+          <strong>${escHtml(item.title || item.source)}</strong>
+          <span>${escHtml(item.sourceType || item.source)} · lexicalScore ${Number(item.lexicalScore) || 0} · semanticScore ${Number(item.semanticScore) || 0} · hybridScore ${Number(item.hybridScore) || 0}</span>
+          <small>${escHtml((item.reasons || []).slice(0, 4).join(" · "))}</small>
+        </article>
+      `).join("")}
+    `;
+  }
+
   function renderAhaPersonalContextStatus(statusArg = null) {
     const host = document.getElementById("aha-personal-context-status");
     if (!host) return null;
@@ -2460,7 +2498,9 @@
       ai_state: buildAIState({ includeMemory: Boolean(memoryContext), includePersonalContext: Boolean(personalContext?.prompt) }),
       memory_context: memoryContext,
       personal_context: personalContext ? {
-        prompt: personalContext.prompt || "",
+        prompt: personalContext.answerPackage?.prompt || personalContext.prompt || "",
+        answer_composer_prompt: personalContext.answerPackage?.prompt || "",
+        answer_composer: personalContext.answerPackage || null,
         relevant: personalContext.relevant || {},
         retrieval: personalContext.retrieval || null,
         evidence: personalContext.context?.evidence || {},
@@ -6222,10 +6262,14 @@
     setAhaProcessing(true, memoryUseEnabled ? "AHA vurderer relevant minne …" : "AHA svarer uten tidligere minne …");
     const memoryContext = memoryUseEnabled ? await buildAhaMemoryContext(cleanText) : buildAhaMemoryOffContext();
     const personalContext = buildAhaPersonalMessageContext(cleanText);
+    const answerPackage = buildAhaAnswerPackage(cleanText);
+    if (personalContext && answerPackage) personalContext.answerPackage = answerPackage;
     renderAhaPersonalRetrieval(personalContext?.retrieval);
+    renderAhaAnswerComposer(answerPackage);
     if (personalContext?.retrieval?.results?.length) {
       setStatusNote(`Personlig kontekst aktiv · Personlig søk aktiv · ${personalContext.retrieval.results.length} relevante treff.`);
     } else if (personalContext?.prompt) setStatusNote("Personlig kontekst aktiv.");
+    if (answerPackage?.status?.ready) setStatusNote(`AHA Answer Composer aktiv · ${answerPackage.status.intent} · ${answerPackage.status.selectedSourceCount} kilder.`);
     renderAhaPersonalContextStatus();
     renderAhaPersonalAiLoopStatus();
     let count = 0;
@@ -6298,11 +6342,12 @@
             memory_context_used: Boolean(memoryContext.used),
             memory_context_reason: memoryContext.used ? memoryContext.reason : null,
             personal_context_used: Boolean(personalContext?.prompt),
-            personal_context_evidence: personalContext?.context?.evidence || null
+            personal_context_evidence: personalContext?.context?.evidence || null,
+            answer_composer_status: answerPackage?.status || null
           }
         });
       }
-      return { type: "agent_reply", agent, memoryContext, personalContext, savingEnabled, memoryUseEnabled };
+      return { type: "agent_reply", agent, memoryContext, personalContext, answerPackage, savingEnabled, memoryUseEnabled };
     } catch (err) {
       console.warn("AHA-agent utilgjengelig", err);
       appendChat("aha", "AHA-agenten er ikke tilgjengelig akkurat nå.");
@@ -6310,7 +6355,7 @@
       if (savingEnabled) {
         try { ensureAfterworkForLatestAnalysis(cleanText, { subjectMatches: [] }); } catch (afterErr) { console.warn("Auto-etterarbeid feilet", afterErr); }
       }
-      return { type: "agent_error", error: err, memoryContext, personalContext, savingEnabled, memoryUseEnabled };
+      return { type: "agent_error", error: err, memoryContext, personalContext, answerPackage, savingEnabled, memoryUseEnabled };
     } finally {
       setAhaProcessing(false);
       void updateAhaMemoryStatus();
@@ -6432,7 +6477,7 @@
 
   global.loadChamberFromStorage = global.loadChamberFromStorage || loadChamberFromStorage;
   global.saveChamberToStorage = global.saveChamberToStorage || saveChamberToStorage;
-  global.AHATestHooks = Object.assign({}, global.AHATestHooks || {}, { detectTextType, buildCanonicalAnalysis, buildAhaAnalysisExportBundle, formatAhaAnalysisExportMarkdown, buildAutoOutputs, normalizeFagkoblinger, resolveCanonicalAnalysisWithOptionalPythonEngine, isAhaMemoryQuestion, buildAhaLearningContractReply, buildAhaMemoryStatus, shouldUseAhaMemory, buildAhaMemoryContext, buildAhaMemoryOffContext, loadAhaMemoryControls, saveAhaMemoryControls, setAhaMemoryControl, isAhaSavingEnabled, isAhaMemoryUseEnabled, loadAhaMemoryExclusions, saveAhaMemoryExclusions, getAhaMemoryInsightStableKey, getAhaMemoryInsightKey, isAhaMemoryInsightExcluded, excludeAhaMemoryInsight, includeAhaMemoryInsight, resetAhaMemoryExclusions, getAhaExcludedMemoryItems, renderAhaMemoryControls, bindAhaMemoryControls, submitAhaChatMessage, findRelevantLocalMemory, formatAhaMemoryContextForAgent, isAhaMemoryDebugEnabled, buildAhaMemoryTransparency, formatAhaMemoryTransparencyDetails, renderAhaMemoryTransparency, appendChat, updateAnswerActionsVisibility, getActiveMetaAiSession, startMetaAiSession, renderMetaAiSessionBox, renderMetaAiClaims, maybeHandleMetaAiAgentReply, saveMetaAiClaimFeedback, buildAhaPersonalAiLoopChatReadinessStatus, renderAhaPersonalAiLoopStatus });
+  global.AHATestHooks = Object.assign({}, global.AHATestHooks || {}, { detectTextType, buildCanonicalAnalysis, buildAhaAnalysisExportBundle, formatAhaAnalysisExportMarkdown, buildAutoOutputs, normalizeFagkoblinger, resolveCanonicalAnalysisWithOptionalPythonEngine, isAhaMemoryQuestion, buildAhaLearningContractReply, buildAhaMemoryStatus, shouldUseAhaMemory, buildAhaMemoryContext, buildAhaMemoryOffContext, loadAhaMemoryControls, saveAhaMemoryControls, setAhaMemoryControl, isAhaSavingEnabled, isAhaMemoryUseEnabled, loadAhaMemoryExclusions, saveAhaMemoryExclusions, getAhaMemoryInsightStableKey, getAhaMemoryInsightKey, isAhaMemoryInsightExcluded, excludeAhaMemoryInsight, includeAhaMemoryInsight, resetAhaMemoryExclusions, getAhaExcludedMemoryItems, renderAhaMemoryControls, bindAhaMemoryControls, submitAhaChatMessage, findRelevantLocalMemory, formatAhaMemoryContextForAgent, isAhaMemoryDebugEnabled, buildAhaMemoryTransparency, formatAhaMemoryTransparencyDetails, renderAhaMemoryTransparency, appendChat, updateAnswerActionsVisibility, getActiveMetaAiSession, startMetaAiSession, renderMetaAiSessionBox, renderMetaAiClaims, maybeHandleMetaAiAgentReply, saveMetaAiClaimFeedback, buildAhaPersonalAiLoopChatReadinessStatus, renderAhaPersonalAiLoopStatus, buildAhaAnswerPackage, renderAhaAnswerComposer });
 
   global.AHAChat = {
     loadChamberFromStorage,
@@ -6472,7 +6517,9 @@
     appendChat,
     updateAhaMemoryStatus,
     buildAhaPersonalAiLoopChatReadinessStatus,
-    renderAhaPersonalAiLoopStatus
+    renderAhaPersonalAiLoopStatus,
+    buildAhaAnswerPackage,
+    renderAhaAnswerComposer
   };
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bind);
