@@ -2198,6 +2198,44 @@
         </div>
       </li>
     `).join("");
+    let candidateSummaryHtml = "";
+    const candidateBuilder = window.AHASyncCandidateBuilder;
+    if (typeof candidateBuilder?.buildCandidates === "function" && typeof candidateBuilder?.summarizeCandidates === "function") {
+      try {
+        const candidates = candidateBuilder.buildCandidates(sourceEvents);
+        const candidateSummary = candidateBuilder.summarizeCandidates(candidates);
+        const candidateByChannel = candidateSummary.byChannel && typeof candidateSummary.byChannel === "object" && !Array.isArray(candidateSummary.byChannel)
+          ? candidateSummary.byChannel
+          : {};
+        const candidateChannelIds = Array.isArray(window.AHA_SYNC_CHANNELS) && window.AHA_SYNC_CHANNELS.length
+          ? window.AHA_SYNC_CHANNELS.map((channel) => String(channel?.id || "").trim()).filter(Boolean)
+          : Object.keys(candidateByChannel);
+        Object.keys(candidateByChannel).forEach((id) => {
+          if (!candidateChannelIds.includes(id)) candidateChannelIds.push(id);
+        });
+        const candidateRows = candidateChannelIds.map((id) => `
+          <li class="aha-sync-hub-row" data-candidate-channel-id="${escapeHtml(id)}">
+            <div class="aha-sync-hub-row-heading">
+              <strong>${escapeHtml(getAhaSyncChannelName(id))}</strong>
+              <span class="aha-sync-hub-badge is-planned">${escapeHtml(Number(candidateByChannel[id] || 0))}</span>
+            </div>
+          </li>
+        `).join("");
+        candidateSummaryHtml = `
+          <div class="aha-sync-route-candidate-summary" aria-label="Read-only sync candidate summary">
+            <p class="aha-sync-hub-notice"><strong>Sync candidates: read-only, local-only, krever brukerbekreftelse.</strong></p>
+            <dl class="aha-sync-hub-meta">
+              <div><dt>Kandidater</dt><dd>${escapeHtml(Number(candidateSummary.total || 0))}</dd></div>
+              <div><dt>Krever brukerbekreftelse</dt><dd>${escapeHtml(Number(candidateSummary.requiresConfirmation || 0))}</dd></div>
+              <div><dt>local_only</dt><dd>${escapeHtml(Number(candidateSummary.localOnly || 0))}</dd></div>
+            </dl>
+            ${candidateRows ? `<ul class="aha-sync-hub-list" aria-label="Candidate counts per channel">${candidateRows}</ul>` : ""}
+          </div>
+        `;
+      } catch (error) {
+        console.warn("AHADashboard: candidate preview kunne ikke oppsummere kandidater", error);
+      }
+    }
 
     return `
       <section class="aha-sync-route-preview" aria-label="Read-only route preview">
@@ -2208,6 +2246,7 @@
           <div><dt>Ikke routet</dt><dd>${escapeHtml(Number(summary.unrouted || 0))}</dd></div>
         </dl>
         ${rows ? `<ul class="aha-sync-hub-list" aria-label="Route counts per channel">${rows}</ul>` : ""}
+        ${candidateSummaryHtml}
       </section>
     `;
   }
