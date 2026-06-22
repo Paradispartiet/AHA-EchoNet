@@ -158,6 +158,15 @@
       phase: 2
     },
     {
+      id: "personal-ai",
+      title: "Personal AI",
+      type: "system",
+      status: "active",
+      href: "personal-ai.html",
+      description: "Kontrollpanel for AHA sin personlige AI-sløyfe.",
+      phase: 2
+    },
+    {
       id: "privacy",
       title: "Personvern",
       type: "system",
@@ -186,6 +195,7 @@
     groups: "◍",
     search: "⌕",
     training: "⚙",
+    "personal-ai": "✧",
     privacy: "⚑"
   };
 
@@ -206,7 +216,7 @@
     read_error: { title: "Could not read module data.", message: "Try again later or view diagnostics." },
     unknown: { title: "Nothing to show.", message: "No module data is available." }
   };
-  const PREFERRED_ORDER = ["chat", "insights", "music", "historygo", "gallery", "notes", "feed", "avisa", "profile", "search", "training", "privacy"];
+  const PREFERRED_ORDER = ["chat", "insights", "music", "historygo", "gallery", "notes", "feed", "avisa", "profile", "search", "training", "personal-ai", "privacy"];
 
   function escapeHtml(value) {
     return String(value ?? "")

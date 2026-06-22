@@ -599,6 +599,14 @@
     const answerComposer = checkAnswerComposer(options.query || DEFAULT_QUERY, options);
     const answerEvaluation = checkAnswerEvaluation();
     const readiness = asObject(safeCall(() => global.AHAPersonalModelReadiness?.buildReadinessReport?.(), {}));
+    const controlStatus = safeCall(() => global.AHAPersonalAiControl?.buildControlStatus?.({ save: false }), null);
+    const controlPanel = controlStatus ? {
+      available: true,
+      status: asText(controlStatus?.overall?.status) || "empty",
+      score: Number(controlStatus?.overall?.score) || 0,
+      level: asText(controlStatus?.overall?.level) || "0_data_needed",
+      nextAction: controlStatus?.nextAction || null
+    } : { available: Boolean(global.AHAPersonalAiControl), status: "unavailable", score: 0, level: "0_data_needed", nextAction: null };
     let score = 0;
     score += Math.round((dataSources.availableCount / MODULES.length) * 15);
     if (approvedMaterial.ok) score += 15;
@@ -644,6 +652,7 @@
       semanticRetrieval,
       answerComposer,
       answerEvaluation,
+      controlPanel,
       recommendations: [],
       summary: ""
     };
