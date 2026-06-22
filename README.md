@@ -3,6 +3,14 @@
 Dette dokumentet låser den nåværende arkitekturen for AHA-EchoNet, AHA, History Go og importflyten mellom dem.
 
 
+## Read-only AHA Sync Candidate Builder
+
+`js/ahaSyncCandidateBuilder.js` bygger nå midlertidige sync-kandidater fra lokale source events ved å bruke `AHASyncChannelRouter.routeSourceEvent(sourceEvent)` mot `AHA_SYNC_CHANNELS`. Kandidatene er bare en lokal conversation insight sync-modell: de har `visibility: "local_only"`, `requiresUserConfirmation: true`, `confidence: "candidate"` og `createdFrom: "read_only_route_candidate"`.
+
+Builderen lagrer ingen kandidater, skriver ikke til `localStorage`, leser ikke `localStorage` direkte, sender ingenting, gjør ingen `fetch`, endrer ikke DOM, kjører ingen ekte sync og aktiverer ikke EchoNet. Preview-labelen er trygg: den kan bruke kort `sourceEvent.title`, men bruker ikke rå `sourceEvent.text`. AHA Home viser bare en kompakt oppsummering av antall kandidater, antall som krever brukerbekreftelse, antall `local_only` og teller per kanal; full kandidatliste, rå brukerinnhold, metadata og brukeridentifikatorer vises ikke.
+
+Dette er fortsatt conversation insight sync for samtaler, refleksjoner, begreper, spørsmål og perspektiver. Det er ikke prosjektstyring, og det legger ikke til eller bygger videre på `phase`, `priority`, `health`, `nextPr`, `repoStatus` eller `AHA_SYNC_HUB_PROJECTS`.
+
 ## Read-only AHA Sync Channel Preview
 
 AHA Home viser nå en read-only route preview under `AHA_SYNC_CHANNELS`. Previewen leser eksisterende lokale AHA source events via den etablerte read-funksjonen, sender dem til `AHASyncChannelRouter.summarizeRoutes(sourceEvents)` og viser bare tellere per innsiktskanal samt antall ikke-routede source events.
