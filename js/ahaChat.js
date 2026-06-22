@@ -585,6 +585,10 @@
 
 
   function renderAhaAnswerEvaluation(row, evaluation) {
+    const panelStatus = document.getElementById("aha-answer-evaluation-status");
+    if (panelStatus && evaluation) {
+      panelStatus.textContent = `Svar-evaluering aktiv · score ${Number(evaluation.score) || 0}/100 · status ${evaluation.status || "unknown"} · training suggestion: ${evaluation.trainingSuggestion?.shouldCreateExample ? "ja" : "nei"}.`;
+    }
     if (!row || !evaluation) return;
     const wrap = document.createElement("section");
     wrap.className = "aha-answer-evaluation";

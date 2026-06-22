@@ -2367,3 +2367,13 @@ Panelet kan kjøre en lett health check og en full kontrolltest med standardspø
 Meta Insights AI får nå `personalAiControlPack` med samlet status, score, level, neste handling, modultelling og anbefalinger. Personal AI Loop Audit kan inkludere `controlPanel`-status slik at audit-resultatet viser om hele systemet er samlet og lesbart fra kontrollpanelet.
 
 Dette markerer en stabiliseringsfase for AHA Personal AI før videre arbeid med ekstern embedding, vektordatabase eller faktisk modelltilpasning.
+
+## AHA Personal AI V1 — stabilisert grunnversjon
+
+AHA Personal AI V1 er nå stabilisert som local-first grunnversjon. Kjeden består av Meta Insights Memory, Training Corpus, Training Examples, Personal Model Readiness, Personal Retrieval/RAG V1, Semantic Retrieval V2, Personal AI Loop Audit, Personal Answer Composer V1, Personal Answer Evaluation V1 og Personal AI Control Panel V1.
+
+Personal AI Control Panel samler hele kjeden i `personal-ai.html` med overall score, status, level, next action, modulstatus, anbefalinger og full kontrolltest. Training Dashboard styrer corpus, examples, readiness, lexical retrieval index, semantic retrieval index, loop audit, Answer Composer-test og Answer Evaluation-test. Chat bruker personlig kontekst, retrieval, composer og evaluation for å vise «Personlig kontekst aktiv», «Personlig søk aktiv», retrieval mode, «Svargrunnlag», valgte kilder, reasons, «Svar-evaluering», score og training suggestion i debug-/kontrollpaneler uten å gjøre hovedsamtalen tung.
+
+Hele systemet er local-first i denne versjonen. Godkjent materiale og samtykke styrer hva som brukes: retrieval bruker godkjent corpus med `useForKnowledge` eller `useForMemory`, godkjente examples og confirmed/important memory claims; JSONL-eksport bruker bare approved examples når tilhørende corpusgrunnlag har `useForFineTuning`; tombstones filtreres via `deletedAt` og `deleted_at`; source metadata bevares gjennom retrieval, semantic retrieval, composer og evaluation.
+
+Dette markerer AHA Personal AI V1 som en stabilisert grunnversjon før videre arbeid med eksterne embeddings, vektordatabase, server-side RAG eller faktisk modelltilpasning.
