@@ -12,8 +12,8 @@
     <section class="aha-panel">
       <p class="eyebrow">AHA Training</p>
       <h1>AHA Training Corpus</h1>
-      <p>Her samles tekstene som senere kan bli grunnlag for personlig modelltilpasning.</p>
-      <p class="module-meta">Tekster brukes som treningsgrunnlag først når du har godkjent dem og slått på relevant bruk.</p>
+      <p>Training Corpus er stedet der AHA får godkjent materiale å lære av.</p>
+      <p class="module-meta">Rått materiale blir først nyttig når det er godkjent. Godkjent materiale kan brukes i chat, retrieval, treningseksempler og senere eksport når samtykke er slått på.</p>
       <div class="aha-tile-actions">
         <button id="training-import-btn" type="button">Importer fra AHA</button>
         <button id="training-generate-btn" type="button">Lag treningseksempler</button>
@@ -24,6 +24,7 @@
         <button id="training-answer-composer-btn" type="button">Test Answer Composer</button>
         <button id="training-answer-evaluation-btn" type="button">Test Answer Evaluation</button>
         <a class="aha-tile-btn aha-tile-btn-primary" href="personal-ai.html">Åpne Personal AI Control Panel</a>
+        <a class="aha-tile-btn" href="chat.html">Åpne Chat</a>
         <a class="aha-tile-btn" href="index.html">Til AHA Home</a>
       </div>
       <p id="training-message" class="module-meta" role="status" aria-live="polite"></p>
@@ -31,6 +32,7 @@
 
     <section class="aha-panel">
       <h2>Status</h2>
+      <p class="module-meta">Statusen viser hva som er rått materiale, hva som er godkjent, hva som kan brukes i chat/retrieval, og hva som kan eksporteres senere.</p>
       <div class="aha-training-stats">
         <div class="aha-mini-stat"><strong id="training-stat-total">0</strong><span>Corpus items</span></div>
         <div class="aha-mini-stat"><strong id="training-stat-raw">0</strong><span>Raw</span></div>

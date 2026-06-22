@@ -23,13 +23,40 @@
       phase: 1
     },
     {
+      id: "personal-ai",
+      title: "Personal AI",
+      type: "system",
+      status: "active",
+      href: "personal-ai.html",
+      description: "Kontrollpanel for AHA sin personlige AI-motor: minne, corpus, retrieval, composer og evaluation.",
+      phase: 1
+    },
+    {
+      id: "training",
+      title: "Training",
+      type: "system",
+      status: "active",
+      href: "training.html",
+      description: "Training Corpus er stedet der AHA får godkjent materiale å lære av og bruke i chat.",
+      phase: 2
+    },
+    {
       id: "insights",
-      title: "Innsikter",
+      title: "Meta Insights",
       type: "knowledge",
       status: "active",
       href: "insights.html",
-      description: "Samlet innsiktsarkiv med sporbarhet fra source events og meta-mønstre.",
+      description: "Samlet innsiktsarkiv og metamotor med sporbarhet fra source events og meta-mønstre.",
       phase: 1
+    },
+    {
+      id: "sync-hub",
+      title: "Sync Hub",
+      type: "integration",
+      status: "planned",
+      href: "index.html#aha-sync-hub-status",
+      description: "Datatilførselsmodul som viser import- og sync-kandidater før materiale godkjennes i Training Corpus.",
+      phase: 2
     },
     {
       id: "lists",
@@ -114,11 +141,11 @@
     },
     {
       id: "music",
-      title: "Music",
+      title: "AHA Music",
       type: "personal",
       status: "active",
       href: "music.html",
-      description: "Spotify-import, normalisert musikkmetadata og personlig AHA Music-bibliotek.",
+      description: "Spotify-import, normalisert musikkmetadata og personlig AHA Music-bibliotek som kan bli innsikt, kanon, artistkoblinger og History Go-oppdagelser.",
       phase: 2
     },
     {
@@ -149,24 +176,6 @@
       phase: 2
     },
     {
-      id: "training",
-      title: "Training",
-      type: "system",
-      status: "active",
-      href: "training.html",
-      description: "Korpus og treningseksempler for senere personlig modelltilpasning.",
-      phase: 2
-    },
-    {
-      id: "personal-ai",
-      title: "Personal AI",
-      type: "system",
-      status: "active",
-      href: "personal-ai.html",
-      description: "Kontrollpanel for AHA sin personlige AI-sløyfe.",
-      phase: 2
-    },
-    {
       id: "privacy",
       title: "Personvern",
       type: "system",
@@ -190,6 +199,7 @@
     insta: "◉",
     feed: "#",
     meet: "⟡",
+    "sync-hub": "⇄",
     music: "♫",
     avisa: "📰",
     groups: "◍",
@@ -216,7 +226,7 @@
     read_error: { title: "Could not read module data.", message: "Try again later or view diagnostics." },
     unknown: { title: "Nothing to show.", message: "No module data is available." }
   };
-  const PREFERRED_ORDER = ["chat", "insights", "music", "historygo", "gallery", "notes", "feed", "avisa", "profile", "search", "training", "personal-ai", "privacy"];
+  const PREFERRED_ORDER = ["chat", "personal-ai", "training", "insights", "sync-hub", "music", "historygo", "gallery", "notes", "feed", "avisa", "profile", "search", "privacy"];
 
   function escapeHtml(value) {
     return String(value ?? "")
@@ -317,7 +327,7 @@
     if (!grid) return;
 
     grid.innerHTML = orderedModules().map((module) => {
-      const isPriority = ["chat", "historygo"].includes(module.id);
+      const isPriority = ["chat", "personal-ai", "training"].includes(module.id);
       const tileClass = `aha-tile${isPriority ? " aha-tile-priority" : ""}`;
       const icon = MODULE_ICONS[module.id] || "◌";
       const badge = renderHealthBadge(module, healthByModule[module.id]);

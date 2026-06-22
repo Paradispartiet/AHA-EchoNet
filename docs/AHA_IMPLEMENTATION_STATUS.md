@@ -2377,3 +2377,27 @@ Personal AI Control Panel samler hele kjeden i `personal-ai.html` med overall sc
 Hele systemet er local-first i denne versjonen. Godkjent materiale og samtykke styrer hva som brukes: retrieval bruker godkjent corpus med `useForKnowledge` eller `useForMemory`, godkjente examples og confirmed/important memory claims; JSONL-eksport bruker bare approved examples når tilhørende corpusgrunnlag har `useForFineTuning`; tombstones filtreres via `deletedAt` og `deleted_at`; source metadata bevares gjennom retrieval, semantic retrieval, composer og evaluation.
 
 Dette markerer AHA Personal AI V1 som en stabilisert grunnversjon før videre arbeid med eksterne embeddings, vektordatabase, server-side RAG eller faktisk modelltilpasning.
+
+## AHA Product Integration V1
+
+AHA Product Integration V1 samler AHA til ett tydelig produkt etter at Personal AI V1 ble stabilisert.
+
+- **AHA Home er hovedinngangen.** Home viser samlet produktstatus, primær neste handling og en enkel produktflyt som forklarer hvordan kilder, Training Corpus, Personal AI, AHA Chat, Sync Hub, AHA Music og History Go henger sammen.
+- **AHA Chat er hovedsamtalen.** Chat kommuniserer at den bruker godkjent personlig kontekst, Personal AI, retrieval, svargrunnlag og svar-evaluering når relevant grunnlag finnes.
+- **Training Corpus er datagodkjennings- og treningslaget.** Training forklarer forskjellen mellom rått materiale, godkjent materiale, materiale som kan brukes i chat/retrieval, og materiale som kan eksporteres senere.
+- **Personal AI er kontrollpanelet for den personlige AI-motoren.** Kontrollpanelet viser overall score, modulstatus, anbefalinger, full kontrolltest og lenker tilbake til Chat og Training.
+- **Sync Hub er datatilførsel.** Sync Hub vises som datatilførselsmodul som henter/importerer materiale som senere kan godkjennes og brukes i Training Corpus. Sync Hub execution-status og eksisterende NO-GO-grenser gjelder fortsatt der de er dokumentert.
+- **AHA Music og History Go er koblede lærings-/oppdagelsesflater.** AHA Music kan levere musikkdata, kanon, artistkoblinger og History Go-oppdagelser; History Go er samlings- og læringsuniverset som kan motta oppdagelser fra AHA.
+- **Programmatisk produktstatus.** `js/ahaProductIntegration.js` eksponerer `window.AHAProductIntegration` og bygger status for Home, Chat, Personal AI, Training, Sync Hub, Music, History Go, next actions og primær neste handling.
+
+Kartlagt produktflyt i denne fasen:
+
+1. Hovedsider: `index.html`, `chat.html`, `training.html`, `personal-ai.html`, `music.html`, `historygo.html` og Home-eksponert Sync Hub-status.
+2. Home-moduler: Chat, Personal AI, Training, Meta Insights, Sync Hub, AHA Music, History Go samt øvrige eksisterende AHA-flater.
+3. Chat starter fra Home-header, produktstatusseksjonen, moduloversikten og mobile navigasjonsinnganger.
+4. Godkjenning/trening skjer i Training Corpus.
+5. Personal AI-status vises i Personal AI Control Panel og oppsummeres på Home.
+6. Sync Hub er synlig i Home-status og moduloversikt som datatilførsel uten å endre eksisterende execution-grenser.
+7. AHA Music er synlig i moduloversikt og Home-produktflyt.
+8. History Go-koblingen er synlig i header, moduloversikt, produktflyt og History Go-side.
+9. Manglende sammenheng før denne fasen var en tydelig Home-status, primær neste handling, eksplisitt produktflyt-panel og krysslenker mellom Chat, Training og Personal AI.
