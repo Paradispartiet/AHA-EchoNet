@@ -1,5 +1,24 @@
 # AHA Implementation Status
 
+## Read-only AHA sync candidate approval summary
+
+AHA Home viser nå en kompakt, redigert og lokal-only approval summary for AHA sync candidates under Sync Hub-previewen. Summaryen gjenbruker den eksisterende Personal AI Loop source approval-boundaryen via `buildPersonalAiLoopSourceApprovalSummary(...)`; det finnes ingen separat sync confirmation gate, ingen ny approvalmodell og ingen dupliserte source approval states.
+
+Alle sync-kandidater starter fortsatt som `approvalState: "suggested"` innenfor `approvalBoundary: "personal_ai_loop_source_approval"`. Ingen kandidat blir automatisk `approved`, ingen kandidat lagres, ingen sync kjøres, og UI-et viser ikke rå brukerdata, raw payload, metadata eller full kandidatliste. AHA Home sender bare kompakte felter som id, state, safe label, type, category, risk, reason og blocker inn i den eksisterende Personal AI Loop-oppsummeringen.
+
+Riktig runtime-grense er fortsatt:
+
+```text
+source event
+→ AHASyncChannelRouter
+→ AHASyncCandidateBuilder
+→ existing Personal AI Loop source approval boundary
+→ compact/redacted local-only approval summary
+→ explicit user action required later
+→ først senere kan sync vurderes
+```
+
+
 
 ## Read-only AHA Sync Candidate Builder
 

@@ -2153,6 +2153,82 @@
     return String(match?.name || id);
   }
 
+  function renderAhaSyncCandidateApprovalSummary(sourceEvents) {
+    const candidateBuilder = window.AHASyncCandidateBuilder;
+    const sources = window.AHASources;
+    const approvalHelper = window.AHAPersonalAiLoopAudit?.buildPersonalAiLoopSourceApprovalSummary;
+
+    if (typeof candidateBuilder?.buildCandidates !== "function" || typeof sources?.loadSourceEvents !== "function") {
+      return '<section class="aha-sync-route-candidate-approval" aria-label="Approval summary"><h4>Approval summary</h4><p class="aha-sync-hub-notice">Approval summary ikke tilgjengelig ennå. Sync-kandidater forblir local-only og krever eksplisitt brukerhandling.</p></section>';
+    }
+
+    if (typeof approvalHelper !== "function") {
+      return '<section class="aha-sync-route-candidate-approval" aria-label="Approval summary"><h4>Approval summary</h4><p class="aha-sync-hub-notice">Approval summary ikke tilgjengelig ennå. Sync-kandidater forblir local-only og krever eksplisitt brukerhandling.</p></section>';
+    }
+
+    let candidates = [];
+    try {
+      candidates = candidateBuilder.buildCandidates(Array.isArray(sourceEvents) ? sourceEvents : sources.loadSourceEvents());
+    } catch (error) {
+      console.warn("AHADashboard: approval summary kunne ikke bygge kandidater", error);
+      candidates = [];
+    }
+
+    if (!candidates.length) {
+      return '<section class="aha-sync-route-candidate-approval" aria-label="Approval summary"><h4>Approval summary</h4><p class="aha-sync-hub-notice">Ingen sync-kandidater å oppsummere ennå.</p></section>';
+    }
+
+    const compactItems = candidates.map((candidate) => ({
+      id: candidate?.id,
+      state: candidate?.approvalState || "suggested",
+      label: candidate?.previewLabel || "Sync candidate",
+      type: "aha_sync_candidate",
+      category: candidate?.channelId,
+      risk: "unknown",
+      reason: candidate?.reason || "Read-only sync candidate",
+      blocker: "explicit user approval required"
+    }));
+
+    let summary = null;
+    try {
+      summary = approvalHelper({
+        label: "AHA sync candidate approval summary",
+        sources: compactItems
+      });
+    } catch (error) {
+      console.warn("AHADashboard: approval summary kunne ikke rendres", error);
+    }
+
+    if (!summary || typeof summary !== "object") {
+      return '<section class="aha-sync-route-candidate-approval" aria-label="Approval summary"><h4>Approval summary</h4><p class="aha-sync-hub-notice">Approval summary ikke tilgjengelig ennå. Sync-kandidater forblir local-only og krever eksplisitt brukerhandling.</p></section>';
+    }
+
+    const fields = [
+      ["state", summary.state],
+      ["suggestedCount", summary.suggestedCount],
+      ["reviewNeededCount", summary.reviewNeededCount],
+      ["approvedCount", summary.approvedCount],
+      ["rejectedCount", summary.rejectedCount],
+      ["blockedCount", summary.blockedCount],
+      ["unknownCount", summary.unknownCount],
+      ["manualReviewRequired", summary.manualReviewRequired],
+      ["localOnly", summary.localOnly],
+      ["explicitActionOnly", summary.explicitActionOnly],
+      ["compactOnly", summary.compactOnly],
+      ["redacted", summary.redacted]
+    ];
+
+    return `
+      <section class="aha-sync-route-candidate-approval" aria-label="Approval summary">
+        <h4>Approval summary</h4>
+        <p class="aha-sync-hub-notice">Sync-kandidater bruker eksisterende Personal AI Loop source approval. Ingen sync kjøres her.</p>
+        <dl class="aha-sync-hub-meta">
+          ${fields.map(([label, value]) => `<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(String(value))}</dd></div>`).join("")}
+        </dl>
+      </section>
+    `;
+  }
+
   function renderAhaSyncChannelPreview() {
     const router = window.AHASyncChannelRouter;
     const sources = window.AHASources;
@@ -2231,6 +2307,7 @@
               <div><dt>local_only</dt><dd>${escapeHtml(Number(candidateSummary.localOnly || 0))}</dd></div>
             </dl>
             ${candidateRows ? `<ul class="aha-sync-hub-list" aria-label="Candidate counts per channel">${candidateRows}</ul>` : ""}
+            ${renderAhaSyncCandidateApprovalSummary(sourceEvents)}
           </div>
         `;
       } catch (error) {
