@@ -16,6 +16,7 @@
       <p class="module-meta">Rått materiale blir først nyttig når det er godkjent. Godkjent materiale kan brukes i chat, retrieval, treningseksempler og senere eksport når samtykke er slått på.</p>
       <div class="aha-tile-actions">
         <button id="training-import-btn" type="button">Importer fra AHA</button>
+        <button id="training-intake-import-btn" type="button">Importer godkjent intake</button>
         <button id="training-generate-btn" type="button">Lag treningseksempler</button>
         <button id="training-export-btn" type="button">Eksporter godkjente eksempler</button>
         <button id="training-retrieval-btn" type="button">Bygg personlig søkeindeks</button>
@@ -23,7 +24,8 @@
         <button id="training-ai-loop-audit-btn" type="button">Kjør AI-loop audit</button>
         <button id="training-answer-composer-btn" type="button">Test Answer Composer</button>
         <button id="training-answer-evaluation-btn" type="button">Test Answer Evaluation</button>
-        <a class="aha-tile-btn aha-tile-btn-primary" href="personal-ai.html">Åpne Personal AI Control Panel</a>
+        <a class="aha-tile-btn aha-tile-btn-primary" href="intake.html">Åpne Data Intake</a>
+        <a class="aha-tile-btn" href="personal-ai.html">Åpne Personal AI Control Panel</a>
         <a class="aha-tile-btn" href="chat.html">Åpne Chat</a>
         <a class="aha-tile-btn" href="index.html">Til AHA Home</a>
       </div>
@@ -41,6 +43,17 @@
         <div class="aha-mini-stat"><strong id="training-stat-finetuning-allowed">0</strong><span>Finjustering tillatt</span></div>
         <div class="aha-mini-stat"><strong id="training-stat-examples-total">0</strong><span>Treningseksempler</span></div>
         <div class="aha-mini-stat"><strong id="training-stat-examples-approved">0</strong><span>Godkjente eksempler</span></div>
+      </div>
+    </section>
+
+    <section class="aha-panel" id="training-data-intake-panel">
+      <h2>Data Intake</h2>
+      <p class="module-meta">Nytt materiale inn går via Data Intake før godkjenning til Training Corpus.</p>
+      <div class="aha-training-stats">
+        <div class="aha-mini-stat"><strong id="training-intake-total">0</strong><span>Intake items</span></div>
+        <div class="aha-mini-stat"><strong id="training-intake-review">0</strong><span>Review</span></div>
+        <div class="aha-mini-stat"><strong id="training-intake-approved">0</strong><span>Approved</span></div>
+        <div class="aha-mini-stat"><strong id="training-intake-imported">0</strong><span>Imported</span></div>
       </div>
     </section>
 
@@ -87,6 +100,7 @@
     </section>
   </main>
 
+  <script src="js/ahaDataIntake.js"></script>
   <script src="js/ahaTrainingCorpus.js"></script>
   <script src="js/ahaTrainingExamples.js"></script>
   <script src="js/ahaPersonalModelReadiness.js"></script>
