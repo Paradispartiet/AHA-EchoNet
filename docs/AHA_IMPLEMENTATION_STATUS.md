@@ -2401,3 +2401,15 @@ Kartlagt produktflyt i denne fasen:
 7. AHA Music er synlig i moduloversikt og Home-produktflyt.
 8. History Go-koblingen er synlig i header, moduloversikt, produktflyt og History Go-side.
 9. Manglende sammenheng før denne fasen var en tydelig Home-status, primær neste handling, eksplisitt produktflyt-panel og krysslenker mellom Chat, Training og Personal AI.
+
+## AHA Data Intake V1
+
+AHA Data Intake er inngangen før Training Corpus. Modulen samler materiale fra Chat, manuell tekst, Sync Hub-kandidater, AHA Music, History Go discovery bridge, Notes, Feed, Articles, Meta Insights og Personal AI-evalueringer som lokale intake items i `aha_data_intake_queue_v1`.
+
+Brukeren vurderer og godkjenner materiale før det sendes videre til Training Corpus. Hvert intake item har stabilt schema med kilde, kildetype, tekst/sammendrag, tags, concepts, linked objects, suggested targets, status og eksplisitt consent.
+
+Consent styrer bruk til memory, Training Corpus, retrieval, style, fine-tuning, Music Canon og History Go. Standard er trygg lokal bruk for memory/retrieval, mens Training Corpus, style, fine-tuning, History Go og Music Canon må slås på eksplisitt.
+
+Data Intake kan skanne eksisterende lokale AHA-lagre og opprette kandidater uten å kjøre Sync Hub execution. Godkjente items med `useForTrainingCorpus` importeres via `AHATrainingCorpus.addCorpusItem` og markeres som `imported` etter vellykket import.
+
+Product Integration og Personal AI Control får intake-status med total, review, approved og imported counts. Meta Insights Agent får `dataIntakePack`, slik at AI-laget vet om nytt materiale venter på godkjenning. Dette gjør AHA klar for bredere datatilførsel etter Personal AI V1.

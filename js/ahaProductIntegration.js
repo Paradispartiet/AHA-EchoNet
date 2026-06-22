@@ -12,7 +12,8 @@
     personalAiHref: "personal-ai.html",
     syncHubHref: "index.html#aha-sync-hub-status",
     musicHref: "music.html",
-    historyGoHref: "historygo.html"
+    historyGoHref: "historygo.html",
+    dataIntakeHref: "intake.html"
   };
 
   function getModules() {
@@ -52,6 +53,7 @@
       modules,
       hasChat: hasModuleByTerms(modules, ["chat"]),
       hasTraining: hasModuleByTerms(modules, ["training"]),
+      hasDataIntake: hasModuleByTerms(modules, ["data-intake", "data intake", "intake"]),
       hasPersonalAI: hasModuleByTerms(modules, ["personal-ai", "personal ai"]),
       hasSyncHub: hasModuleByTerms(modules, ["sync", "sync hub"]),
       hasMusic: hasModuleByTerms(modules, ["music", "musikk"]),
@@ -64,6 +66,7 @@
     const moduleStatus = collectModuleStatus();
     const chat = findModule(modules, ["chat"]);
     const training = findModule(modules, ["training"]);
+    const dataIntake = findModule(modules, ["data-intake", "data intake", "intake"]);
     const personalAI = findModule(modules, ["personal-ai", "personal ai"]);
     const syncHub = findModule(modules, ["sync", "sync hub"]);
     const music = findModule(modules, ["music", "musikk"]);
@@ -72,6 +75,7 @@
       homeHref: DEFAULT_LINKS.homeHref,
       chatHref: normalizeHref(chat?.href, DEFAULT_LINKS.chatHref),
       trainingHref: normalizeHref(training?.href, DEFAULT_LINKS.trainingHref),
+      dataIntakeHref: normalizeHref(dataIntake?.href, DEFAULT_LINKS.dataIntakeHref),
       personalAiHref: normalizeHref(personalAI?.href, DEFAULT_LINKS.personalAiHref),
       syncHubHref: normalizeHref(syncHub?.href, DEFAULT_LINKS.syncHubHref),
       musicHref: normalizeHref(music?.href, DEFAULT_LINKS.musicHref),
@@ -79,7 +83,7 @@
       missingLinks: []
     };
     [
-      ["chatHref", moduleStatus.hasChat], ["trainingHref", moduleStatus.hasTraining], ["personalAiHref", moduleStatus.hasPersonalAI],
+      ["chatHref", moduleStatus.hasChat], ["dataIntakeHref", moduleStatus.hasDataIntake], ["trainingHref", moduleStatus.hasTraining], ["personalAiHref", moduleStatus.hasPersonalAI],
       ["syncHubHref", moduleStatus.hasSyncHub], ["musicHref", moduleStatus.hasMusic], ["historyGoHref", moduleStatus.hasHistoryGo]
     ].forEach(([key, available]) => { if (!available || !nav[key]) nav.missingLinks.push(key); });
     return nav;
@@ -94,6 +98,7 @@
     const nav = status.navigation || collectNavigationStatus();
     const actions = [];
     if (status.personalAI?.ready) actions.push({ id: "open-chat", label: "Åpne AHA Chat og still et spørsmål.", href: nav.chatHref });
+    if (status.dataIntake?.available) actions.push({ id: "open-data-intake", label: "Åpne Data Intake og vurder nytt materiale.", href: nav.dataIntakeHref });
     actions.push({ id: "approve-training", label: "Åpne Training Corpus og godkjenn materiale.", href: nav.trainingHref });
     actions.push({ id: "check-personal-ai", label: "Åpne Personal AI og kjør full kontrolltest.", href: nav.personalAiHref });
     if (status.syncHub?.available) actions.push({ id: "open-sync-hub", label: "Åpne Sync Hub og se importkandidater.", href: nav.syncHubHref });
@@ -105,6 +110,7 @@
   function getPrimaryNextAction(status) {
     const nav = status.navigation || collectNavigationStatus();
     if (status.personalAI?.ready) return { id: "chat", label: "Åpne AHA Chat", href: nav.chatHref, description: "Personal AI er klar nok til at chat er neste hovedhandling." };
+    if (status.dataIntake?.reviewCount) return { id: "data-intake", label: "Åpne Data Intake", href: nav.dataIntakeHref, description: "Nytt materiale venter på vurdering før Training Corpus." };
     if (!status.training?.approvedCount) return { id: "training", label: "Åpne Training", href: nav.trainingHref, description: "Godkjenn materiale slik at AHA får et tryggere grunnlag." };
     if (!status.personalAI?.controlAvailable) return { id: "personal-ai", label: "Åpne Personal AI", href: nav.personalAiHref, description: "Kjør kontrolltest og se status for minne, retrieval og evaluering." };
     if (status.syncHub?.available) return { id: "sync-hub", label: "Åpne Sync Hub", href: nav.syncHubHref, description: "Se hvilke kilder som kan mates inn i Training Corpus." };
@@ -122,6 +128,7 @@
   function buildProductStatus(options = {}) {
     const modules = collectModuleStatus();
     const navigation = collectNavigationStatus();
+    const dataIntakeSummary = window.AHADataIntake?.buildIntakeSummary?.() || { available: modules.hasDataIntake, total: 0, reviewCount: 0, approvedCount: 0, importedCount: 0, nextAction: "Skann AHA-kilder." };
     const trainingItems = window.AHATrainingCorpus?.listCorpus?.() || [];
     const approvedCount = trainingItems.filter((item) => item?.status === "approved").length;
     const personalReady = isPersonalAiReady(options);
@@ -132,6 +139,7 @@
       home: { available: true, href: navigation.homeHref, modulesVisible: modules.modules.length, summary: "AHA Home er hovedinngangen til samlet produktflyt." },
       chat: { available: modules.hasChat, href: navigation.chatHref, summary: "AHA Chat er hovedsamtalen med godkjent personlig kontekst når den finnes." },
       personalAI: { available: modules.hasPersonalAI, controlAvailable: Boolean(window.AHAPersonalAiControl) || modules.hasPersonalAI, ready: personalReady, href: navigation.personalAiHref, summary: "Personal AI viser status for minne, corpus, retrieval, composer og evaluation." },
+      dataIntake: { available: Boolean(window.AHADataIntake) || modules.hasDataIntake, href: navigation.dataIntakeHref, total: dataIntakeSummary.total || 0, reviewCount: dataIntakeSummary.reviewCount || 0, approvedCount: dataIntakeSummary.approvedCount || 0, importedCount: dataIntakeSummary.importedCount || 0, nextAction: dataIntakeSummary.nextAction || "Skann AHA-kilder.", summary: "Data Intake samler kilder før Training Corpus." },
       training: { available: modules.hasTraining, href: navigation.trainingHref, approvedCount, summary: "Training Corpus er datagodkjennings- og treningslaget." },
       syncHub: { available: modules.hasSyncHub, href: navigation.syncHubHref, summary: "Sync Hub henter/importerer materiale som senere kan godkjennes." },
       music: { available: modules.hasMusic, href: navigation.musicHref, summary: "AHA Music kobler musikkdata til innsikt, kanon og History Go." },
@@ -143,6 +151,9 @@
     if (modules.modules.length) score += 15;
     if (status.chat.available) score += 15;
     if (status.personalAI.controlAvailable) score += 20;
+    if (status.dataIntake.available) score += 10;
+    if ((status.dataIntake.reviewCount || 0) + (status.dataIntake.approvedCount || 0) > 0) score += 5;
+    if (status.dataIntake.importedCount) score += 5;
     if (status.training.available) score += 15;
     if (status.syncHub.available) score += 10;
     if (status.music.available) score += 10;
@@ -152,7 +163,7 @@
     if (status.primaryNextAction?.href) score += 5;
     score = Math.min(100, score);
     status.overall = { status: statusFromScore(score), score, label: `${score}/100 · ${statusFromScore(score)}` };
-    status.summary = `AHA er ${status.overall.status}: Home, Chat, Personal AI, Training, Sync Hub, AHA Music og History Go er samlet i én produktflyt.`;
+    status.summary = `AHA er ${status.overall.status}: Home, Chat, Data Intake, Training, Personal AI, Sync Hub, AHA Music og History Go er samlet i én produktflyt.`;
     if (options.save !== false) saveProductStatus(status);
     return status;
   }

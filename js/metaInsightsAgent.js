@@ -420,6 +420,8 @@
   }
 
   // 1. Agentkontekst: alt agenten trenger for å resonnere over profilen.
+  function buildDataIntakePackSafe(){ try { return global.AHADataIntake?.buildIntakeSummary?.() || null; } catch { return null; } }
+
   function buildAgentContext(profile, options = {}) {
     const safe = asObject(profile);
     const context = {
@@ -433,6 +435,8 @@
       memoryPack: options.memoryPack && typeof options.memoryPack === "object" ? options.memoryPack : buildMemoryPackSafe(),
       reasoningFrame: buildReasoningFrame()
     };
+    const dataIntakePack = options.dataIntakePack && typeof options.dataIntakePack === "object" ? options.dataIntakePack : buildDataIntakePackSafe();
+    if (dataIntakePack) context.dataIntakePack = dataIntakePack;
     const trainingPack = options.trainingPack && typeof options.trainingPack === "object"
       ? options.trainingPack
       : buildTrainingPackSafe();

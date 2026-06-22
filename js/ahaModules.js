@@ -22,6 +22,16 @@
       description: "Refleksjon, samtale og innsiktsmotor via eksisterende AHAIngest-flyt.",
       phase: 1
     },
+
+    {
+      id: "data-intake",
+      title: "Data Intake",
+      type: "system",
+      status: "active",
+      href: "intake.html",
+      description: "Samler nytt materiale før godkjenning til Training Corpus og Personal AI.",
+      phase: 2
+    },
     {
       id: "personal-ai",
       title: "Personal AI",
@@ -199,6 +209,7 @@
     insta: "◉",
     feed: "#",
     meet: "⟡",
+    "data-intake": "⇥",
     "sync-hub": "⇄",
     music: "♫",
     avisa: "📰",
@@ -226,7 +237,7 @@
     read_error: { title: "Could not read module data.", message: "Try again later or view diagnostics." },
     unknown: { title: "Nothing to show.", message: "No module data is available." }
   };
-  const PREFERRED_ORDER = ["chat", "personal-ai", "training", "insights", "sync-hub", "music", "historygo", "gallery", "notes", "feed", "avisa", "profile", "search", "privacy"];
+  const PREFERRED_ORDER = ["chat", "data-intake", "training", "personal-ai", "insights", "sync-hub", "music", "historygo", "gallery", "notes", "feed", "avisa", "profile", "search", "privacy"];
 
   function escapeHtml(value) {
     return String(value ?? "")

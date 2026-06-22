@@ -32,6 +32,7 @@
   function auditApi() { return global.AHAPersonalAiLoopAudit; }
   function answerComposerApi() { return global.AHAPersonalAnswerComposer; }
   function answerEvaluationApi() { return global.AHAPersonalAnswerEvaluation; }
+  function dataIntakeApi() { return global.AHADataIntake; }
 
   function setStat(id, value) {
     const el = $(id);
@@ -68,6 +69,11 @@
     setStat("training-stat-finetuning-allowed", corpusStats.fineTuningAllowed || 0);
     setStat("training-stat-examples-total", exampleStats.total || 0);
     setStat("training-stat-examples-approved", exampleStats.approved || 0);
+    const intake = dataIntakeApi()?.buildIntakeSummary?.() || {};
+    setStat("training-intake-total", intake.total || 0);
+    setStat("training-intake-review", intake.reviewCount || 0);
+    setStat("training-intake-approved", intake.approvedCount || 0);
+    setStat("training-intake-imported", intake.importedCount || 0);
   }
 
   function renderCorpusList() {
@@ -321,6 +327,12 @@
     renderExamplesList();
   }
 
+  function handleDataIntakeImport() {
+    const result = dataIntakeApi()?.importApprovedToTrainingCorpus?.() || { imported: 0, skipped: 0, failed: 0 };
+    setMessage(`Importerte ${result.imported || 0} godkjente intake items (${result.skipped || 0} hoppet over, ${result.failed || 0} feilet).`);
+    renderAll();
+  }
+
   function handleImport() {
     const corpus = corpusApi();
     if (!corpus?.importFromExistingAhaSources) return;
@@ -405,6 +417,7 @@
   function bindActions() {
     if (!doc) return;
     $("training-import-btn")?.addEventListener("click", handleImport);
+    $("training-intake-import-btn")?.addEventListener("click", handleDataIntakeImport);
     $("training-generate-btn")?.addEventListener("click", handleGenerate);
     $("training-export-btn")?.addEventListener("click", handleExport);
     $("training-retrieval-btn")?.addEventListener("click", handleRetrievalRefresh);
@@ -459,7 +472,7 @@
     renderAll();
   }
 
-  const AHATrainingDashboard = { init, renderAll, renderStats, renderReadiness, renderRetrieval, renderSemanticRetrieval, renderAiLoopAudit, renderCorpusList, renderExamplesList, handleRetrievalRefresh, handleSemanticRetrievalRefresh, handleAiLoopAudit, renderAnswerComposer, handleAnswerComposerTest, renderAnswerEvaluation, handleAnswerEvaluationTest };
+  const AHATrainingDashboard = { init, renderAll, renderStats, renderReadiness, renderRetrieval, renderSemanticRetrieval, renderAiLoopAudit, renderCorpusList, renderExamplesList, handleRetrievalRefresh, handleSemanticRetrievalRefresh, handleAiLoopAudit, renderAnswerComposer, handleAnswerComposerTest, renderAnswerEvaluation, handleAnswerEvaluationTest, handleDataIntakeImport };
 
   if (typeof module !== "undefined" && module.exports) {
     module.exports = AHATrainingDashboard;
