@@ -3,11 +3,22 @@
 
 ## Read-only AHA Sync Candidate Builder
 
-`js/ahaSyncCandidateBuilder.js` bygger nå midlertidige sync-kandidater fra lokale source events ved å bruke `AHASyncChannelRouter.routeSourceEvent(sourceEvent)` mot `AHA_SYNC_CHANNELS`. Kandidatene er bare en lokal conversation insight sync-modell: de har `visibility: "local_only"`, `requiresUserConfirmation: true`, `confidence: "candidate"` og `createdFrom: "read_only_route_candidate"`.
+`js/ahaSyncCandidateBuilder.js` bygger nå midlertidige sync-kandidater fra lokale source events ved å bruke `AHASyncChannelRouter.routeSourceEvent(sourceEvent)` mot `AHA_SYNC_CHANNELS`. Kandidatene er bare en lokal conversation insight sync-modell: de har `visibility: "local_only"`, `requiresUserConfirmation: true`, `confidence: "candidate"`, `createdFrom: "read_only_route_candidate"`, `approvalBoundary: "personal_ai_loop_source_approval"` og `approvalState: "suggested"`.
 
 Builderen lagrer ingen kandidater, skriver ikke til `localStorage`, leser ikke `localStorage` direkte, sender ingenting, gjør ingen `fetch`, endrer ikke DOM, kjører ingen ekte sync og aktiverer ikke EchoNet. Preview-labelen er trygg: den kan bruke kort `sourceEvent.title`, men bruker ikke rå `sourceEvent.text`. AHA Home viser bare en kompakt oppsummering av antall kandidater, antall som krever brukerbekreftelse, antall `local_only` og teller per kanal; full kandidatliste, rå brukerinnhold, metadata og brukeridentifikatorer vises ikke.
 
 Dette er fortsatt conversation insight sync for samtaler, refleksjoner, begreper, spørsmål og perspektiver. Det er ikke prosjektstyring, og det legger ikke til eller bygger videre på `phase`, `priority`, `health`, `nextPr`, `repoStatus` eller `AHA_SYNC_HUB_PROJECTS`.
+
+AHA sync candidates bruker den eksisterende Personal AI Loop source approval-boundaryen som sikkerhetsmodell. Det skal ikke lages en separat sync confirmation gate, parallell approvalmodell eller dupliserte approval states. Riktig flyt er:
+
+```text
+source event
+→ AHASyncChannelRouter
+→ AHASyncCandidateBuilder
+→ existing Personal AI Loop source approval boundary
+→ explicit user action required later
+→ først senere kan sync vurderes
+```
 
 ## Read-only AHA Sync Channel Preview
 

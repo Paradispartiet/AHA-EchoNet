@@ -53,6 +53,8 @@
         reason: getReasonForChannel(route, id, index),
         previewLabel,
         confidence: "candidate",
+        approvalBoundary: "personal_ai_loop_source_approval",
+        approvalState: "suggested",
         requiresUserConfirmation: true,
         visibility: "local_only",
         createdFrom: "read_only_route_candidate"
