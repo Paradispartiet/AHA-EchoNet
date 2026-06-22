@@ -356,6 +356,26 @@
     } catch { return null; }
   }
 
+
+  function buildPersonalAiControlPackSafe() {
+    const api = global.AHAPersonalAiControl;
+    if (!api || typeof api.buildControlStatus !== "function") return null;
+    try {
+      const status = api.buildControlStatus({ save: false });
+      return {
+        available: true,
+        status: asText(status?.overall?.status) || "empty",
+        score: Number(status?.overall?.score) || 0,
+        level: asText(status?.overall?.level) || "0_data_needed",
+        nextAction: status?.nextAction || null,
+        moduleCount: Object.keys(asObject(status?.modules)).length,
+        recommendations: asArray(status?.recommendations).slice(0, 5)
+      };
+    } catch {
+      return { available: true, status: "unknown", score: 0, level: "0_data_needed", nextAction: null, moduleCount: 0, recommendations: [] };
+    }
+  }
+
   function buildReasoningFrame() {
     return {
       language: "nb-NO",
@@ -443,6 +463,10 @@
       ? options.personalAiLoopPack
       : buildPersonalAiLoopPackSafe();
     if (personalAiLoopPack) context.personalAiLoopPack = personalAiLoopPack;
+    const personalAiControlPack = options.personalAiControlPack && typeof options.personalAiControlPack === "object"
+      ? options.personalAiControlPack
+      : buildPersonalAiControlPackSafe();
+    if (personalAiControlPack) context.personalAiControlPack = personalAiControlPack;
     return context;
   }
 

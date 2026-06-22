@@ -2357,3 +2357,13 @@ Training Dashboard har et eget «Answer Evaluation»-panel som viser total evalu
 Personal AI Loop Audit inkluderer nå `answerEvaluation`, med sjekk for modultilgjengelighet, sample-evaluering, lagrede evaluations, averageScore, recent evaluation og training suggestions. Meta Insights AI får `answerEvaluationPack`, slik at agenten kan vite om AHA-svarene faktisk treffer personlig grunnlag og intensjon uten å lese rå chat-historikk.
 
 Dette lukker første evaluerbare personlige AI-sløyfe: Meta Insights AI → Memory → Training Corpus → Training Examples → Readiness → Chat Personal Context → Retrieval/RAG → AI Loop Audit → Semantic Retrieval → Answer Composer → Answer Evaluation → brukerhandling/training example.
+
+## AHA Personal AI Control Panel V1
+
+AHA Personal AI Control Panel samler hele den personlige AI-sløyfen i én oversikt. Panelet viser status for minne, corpus, examples, readiness, retrieval, semantic retrieval, personal context, answer composer, answer evaluation og Personal AI Loop Audit.
+
+Panelet kan kjøre en lett health check og en full kontrolltest med standardspørsmålet «Hva vet AHA om mine viktigste prosjekter og begreper?». Fulltesten bygger personal context, kjører lexical og semantisk retrieval, bygger answer package, lager lokal preview, evaluerer svaret og kjører AI-loop audit når modulene finnes.
+
+Meta Insights AI får nå `personalAiControlPack` med samlet status, score, level, neste handling, modultelling og anbefalinger. Personal AI Loop Audit kan inkludere `controlPanel`-status slik at audit-resultatet viser om hele systemet er samlet og lesbart fra kontrollpanelet.
+
+Dette markerer en stabiliseringsfase for AHA Personal AI før videre arbeid med ekstern embedding, vektordatabase eller faktisk modelltilpasning.
