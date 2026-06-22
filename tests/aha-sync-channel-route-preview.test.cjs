@@ -4,7 +4,7 @@ const vm = require('node:vm');
 
 const dashboardCode = fs.readFileSync('js/ahaDashboard.js', 'utf8');
 
-function createDashboard({ router, sources, channels } = {}) {
+function createDashboard({ router, sources, channels, candidateBuilder } = {}) {
   const writes = [];
   const context = {
     console: { warn() {}, log() {} },
@@ -26,7 +26,8 @@ function createDashboard({ router, sources, channels } = {}) {
       addEventListener() {},
       AHA_SYNC_CHANNELS: channels,
       AHASyncChannelRouter: router,
-      AHASources: sources
+      AHASources: sources,
+      AHASyncCandidateBuilder: candidateBuilder
     }
   };
   context.window.window = context.window;
@@ -64,6 +65,17 @@ const channels = [
         assert.equal(events, sourceEvents, 'preview should pass existing events to the read-only router');
         return { total: 1, byChannel: { 'conversation-insights': 1, 'open-questions': 1, 'concept-links': 0 }, unrouted: 0 };
       }
+    },
+    candidateBuilder: {
+      buildCandidates(events) {
+        assert.equal(events, sourceEvents, 'candidate preview should use existing source events without exposing raw text');
+        return [{ channelId: 'open-questions', requiresUserConfirmation: true, visibility: 'local_only', approvalBoundary: 'personal_ai_loop_source_approval', approvalState: 'suggested' }];
+      },
+      summarizeCandidates(candidates) {
+        assert.equal(candidates[0].approvalBoundary, 'personal_ai_loop_source_approval');
+        assert.equal(candidates[0].approvalState, 'suggested');
+        return { total: 1, byChannel: { 'open-questions': 1 }, requiresConfirmation: 1, localOnly: 1 };
+      }
     }
   });
   const html = dashboard.renderAhaSyncChannelPreview();
@@ -73,7 +85,10 @@ const channels = [
   assert.match(html, /Åpne spørsmål[\s\S]*1/);
   assert.match(html, /Begrepskoblinger[\s\S]*0/);
   assert.doesNotMatch(html, /Privat melding/);
+  assert.match(html, /Godkjenningsgrense: eksisterende Personal AI Loop source approval\. Ingen sync før eksplisitt brukerhandling\./);
+  assert.doesNotMatch(html, /Privat melding/);
   assert.doesNotMatch(html, /Hemmelig tittel/);
+  assert.doesNotMatch(html, /sourceEvent\.text|approvalBoundary|approvalState|personal_ai_loop_source_approval/);
   assert.deepEqual(writes, [], 'route preview must not write localStorage');
 }
 

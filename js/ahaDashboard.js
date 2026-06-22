@@ -2224,6 +2224,7 @@
         candidateSummaryHtml = `
           <div class="aha-sync-route-candidate-summary" aria-label="Read-only sync candidate summary">
             <p class="aha-sync-hub-notice"><strong>Sync candidates: read-only, local-only, krever brukerbekreftelse.</strong></p>
+            <p class="aha-sync-hub-notice">Godkjenningsgrense: eksisterende Personal AI Loop source approval. Ingen sync før eksplisitt brukerhandling.</p>
             <dl class="aha-sync-hub-meta">
               <div><dt>Kandidater</dt><dd>${escapeHtml(Number(candidateSummary.total || 0))}</dd></div>
               <div><dt>Krever brukerbekreftelse</dt><dd>${escapeHtml(Number(candidateSummary.requiresConfirmation || 0))}</dd></div>

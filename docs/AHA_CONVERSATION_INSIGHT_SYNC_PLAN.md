@@ -3,7 +3,7 @@
 
 ## Read-only AHA Sync Candidate Builder
 
-`js/ahaSyncCandidateBuilder.js` bygger nå midlertidige sync-kandidater fra lokale source events ved å bruke `AHASyncChannelRouter.routeSourceEvent(sourceEvent)` mot `AHA_SYNC_CHANNELS`. Kandidatene er bare en lokal conversation insight sync-modell: de har `visibility: "local_only"`, `requiresUserConfirmation: true`, `confidence: "candidate"` og `createdFrom: "read_only_route_candidate"`.
+`js/ahaSyncCandidateBuilder.js` bygger nå midlertidige sync-kandidater fra lokale source events ved å bruke `AHASyncChannelRouter.routeSourceEvent(sourceEvent)` mot `AHA_SYNC_CHANNELS`. Kandidatene er bare en lokal conversation insight sync-modell: de har `visibility: "local_only"`, `requiresUserConfirmation: true`, `confidence: "candidate"`, `createdFrom: "read_only_route_candidate"`, `approvalBoundary: "personal_ai_loop_source_approval"` og `approvalState: "suggested"`.
 
 Builderen lagrer ingen kandidater, skriver ikke til `localStorage`, leser ikke `localStorage` direkte, sender ingenting, gjør ingen `fetch`, endrer ikke DOM, kjører ingen ekte sync og aktiverer ikke EchoNet. Preview-labelen er trygg: den kan bruke kort `sourceEvent.title`, men bruker ikke rå `sourceEvent.text`. AHA Home viser bare en kompakt oppsummering av antall kandidater, antall som krever brukerbekreftelse, antall `local_only` og teller per kanal; full kandidatliste, rå brukerinnhold, metadata og brukeridentifikatorer vises ikke.
 
@@ -20,6 +20,36 @@ Previewen viser ikke rå brukerinnhold, private meldinger, notattekst, rå metad
 `js/ahaSyncChannelRouter.js` er første rene bro mellom AHA source events / samtaleinput og `AHA_SYNC_CHANNELS`. Routeren eksponerer `window.AHASyncChannelRouter`, leser kanalregisteret read-only og lager bare kandidatrouting for samtaleinnsikter, åpne spørsmål, begrepskoblinger, perspektiver, spenninger og samtalekoblinger.
 
 Routeren skriver ikke data, leser ikke eller skriver `localStorage`, gjør ingen `fetch`, endrer ikke DOM og kjører ingen ekte sync. Den aktiverer ikke EchoNet og bygger ikke backend; den gir bare trygg klassifiseringslogikk som senere conversation insight sync kan bygge videre på.
+
+## Approval boundary
+
+AHA Sync skal ikke ha en parallell confirmation gate.
+
+Sync candidates skal behandles som source approval candidates og følge eksisterende Personal AI Loop source approval-regler:
+
+- local-only
+- explicit-action only
+- compact/redacted only
+- no raw private payload
+- no write
+- no sync
+- no publish/share
+- fail closed ved missing/unknown state
+
+Allowed/blocked-state-modellen skal gjenbrukes fra:
+
+[`docs/AHA_PERSONAL_AI_LOOP_SOURCE_APPROVAL_SURFACE.md`](./AHA_PERSONAL_AI_LOOP_SOURCE_APPROVAL_SURFACE.md)
+
+Riktig flyt:
+
+```text
+source event
+→ AHASyncChannelRouter
+→ AHASyncCandidateBuilder
+→ existing Personal AI Loop source approval boundary
+→ explicit user action required later
+→ først senere kan sync vurderes
+```
 
 ## Formål
 
