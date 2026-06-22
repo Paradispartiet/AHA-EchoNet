@@ -30,6 +30,7 @@
   function retrievalApi() { return global.AHAPersonalRetrieval; }
   function semanticApi() { return global.AHASemanticRetrieval; }
   function auditApi() { return global.AHAPersonalAiLoopAudit; }
+  function answerComposerApi() { return global.AHAPersonalAnswerComposer; }
 
   function setStat(id, value) {
     const el = $(id);
@@ -242,9 +243,35 @@
         <div class="aha-mini-stat"><strong>${(Number(approved.confirmedClaims) || 0) + (Number(approved.importantClaims) || 0)}</strong><span>Memory claims</span></div>
         <div class="aha-mini-stat"><strong>${Number(audit.retrieval?.indexedItems) || 0}</strong><span>Indexed retrieval items</span></div>
         <div class="aha-mini-stat"><strong>${Number(audit.checks?.sampleQuery?.resultCount) || 0}</strong><span>Sample query results</span></div>
+        <div class="aha-mini-stat"><strong>${audit.answerComposer?.ready ? "Klar" : "Ikke klar"}</strong><span>Answer Composer status</span></div>
+        <div class="aha-mini-stat"><strong>${escapeHtml(audit.answerComposer?.sampleIntent || "unknown")}</strong><span>Sample intent</span></div>
+        <div class="aha-mini-stat"><strong>${Number(audit.answerComposer?.selectedSourceCount) || 0}</strong><span>Selected sources</span></div>
+        <div class="aha-mini-stat"><strong>${audit.answerComposer?.hasPreview ? "Ja" : "Nei"}</strong><span>Preview status</span></div>
       </div>
       <p class="module-meta">${escapeHtml(audit.summary || "")}</p>
       <ul class="aha-training-recommendations">${recommendations}</ul>
+    `;
+  }
+
+  function renderAnswerComposer(packArg = null) {
+    const mount = $("training-answer-composer-report");
+    if (!mount) return;
+    const api = answerComposerApi();
+    if (!api?.buildAnswerPackage) {
+      mount.innerHTML = `<p class="aha-training-empty">Answer Composer-modulen er ikke lastet.</p>`;
+      return;
+    }
+    const pack = packArg || api.buildAnswerPackage("Hva vet AHA om mine viktigste prosjekter og begreper?");
+    const sources = asArray(pack.context?.selectedSources).slice(0, 6).map((item) => `<li><strong>${escapeHtml(item.title)}</strong> — ${escapeHtml(item.sourceType || item.source)}<br><small>${escapeHtml(asArray(item.reasons).join(" · "))}</small></li>`).join("");
+    mount.innerHTML = `
+      <div class="aha-training-stats">
+        <div class="aha-mini-stat"><strong>${escapeHtml(pack.status?.intent || "unknown")}</strong><span>Intent</span></div>
+        <div class="aha-mini-stat"><strong>${Number(pack.status?.selectedSourceCount) || 0}</strong><span>Selected sources</span></div>
+        <div class="aha-mini-stat"><strong>${pack.status?.ready ? "Klar" : "Ikke klar"}</strong><span>Ready</span></div>
+      </div>
+      <p class="module-meta"><strong>Local preview:</strong> ${escapeHtml(pack.localPreview?.summary || "Ingen preview.")}</p>
+      <ul class="aha-training-recommendations">${sources || "<li>Ingen toppkilder.</li>"}</ul>
+      <details><summary>Prompt preview</summary><pre>${escapeHtml(shortText(pack.prompt, 2500))}</pre></details>
     `;
   }
 
@@ -259,6 +286,7 @@
     renderRetrieval();
     renderSemanticRetrieval();
     renderAiLoopAudit();
+    renderAnswerComposer();
     renderCorpusList();
     renderExamplesList();
   }
@@ -312,6 +340,14 @@
     renderRetrieval();
   }
 
+  function handleAnswerComposerTest() {
+    const api = answerComposerApi();
+    if (!api?.buildAnswerPackage) return;
+    const pack = api.buildAnswerPackage("Hva vet AHA om mine viktigste prosjekter og begreper?");
+    setMessage(`Answer Composer: ${pack.status.intent}, ${pack.status.selectedSourceCount} kilder.`);
+    renderAnswerComposer(pack);
+  }
+
   function handleAiLoopAudit() {
     const api = auditApi();
     if (!api?.runAudit) return;
@@ -329,6 +365,7 @@
     $("training-retrieval-btn")?.addEventListener("click", handleRetrievalRefresh);
     $("training-semantic-retrieval-btn")?.addEventListener("click", handleSemanticRetrievalRefresh);
     $("training-ai-loop-audit-btn")?.addEventListener("click", handleAiLoopAudit);
+    $("training-answer-composer-btn")?.addEventListener("click", handleAnswerComposerTest);
 
     $("training-corpus-list")?.addEventListener("click", (event) => {
       const target = event.target;
@@ -376,7 +413,7 @@
     renderAll();
   }
 
-  const AHATrainingDashboard = { init, renderAll, renderStats, renderReadiness, renderRetrieval, renderSemanticRetrieval, renderAiLoopAudit, renderCorpusList, renderExamplesList, handleRetrievalRefresh, handleSemanticRetrievalRefresh, handleAiLoopAudit };
+  const AHATrainingDashboard = { init, renderAll, renderStats, renderReadiness, renderRetrieval, renderSemanticRetrieval, renderAiLoopAudit, renderCorpusList, renderExamplesList, handleRetrievalRefresh, handleSemanticRetrievalRefresh, handleAiLoopAudit, renderAnswerComposer, handleAnswerComposerTest };
 
   if (typeof module !== "undefined" && module.exports) {
     module.exports = AHATrainingDashboard;

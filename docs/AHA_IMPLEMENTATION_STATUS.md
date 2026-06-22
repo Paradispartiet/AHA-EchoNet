@@ -2333,3 +2333,15 @@ Neste anbefalte PR:
 ```text
 docs: review Personal AI Loop export/report surface
 ```
+
+## AHA Personal Answer Composer V1
+
+AHA Personal Answer Composer samler personlig kontekst, lexical retrieval og semantiske/hybride treff til et strukturert svargrunnlag for AHA Chat. Modulen bygger en `answerContext` fra brukerens melding, `AHAChatPersonalContext`, `AHAPersonalRetrieval`, `AHASemanticRetrieval`, Meta Insights Memory og Personal Model Readiness.
+
+V1 lager answer intent, answer plan, selected sources, composer prompt og local preview. Prompten er kompakt, norsk og forklarer hvordan AHA skal skille mellom godkjent materiale og egen vurdering, samtidig som den bevarer source metadata, scores og reasons.
+
+Chat kan nå vise «Svargrunnlag» med Answer Composer-status, valgt intensjon, svarplan, toppkilder, reasons og lokal preview. Dette gir source transparency som kan forklare om grunnlaget kommer fra godkjent corpus, bekreftet selvinnsikt, training examples, prosjektmatch, begrepsmatch eller semantisk nærhet.
+
+Personal AI Loop Audit måler Answer Composer-status med egen `answerComposer`-sjekk, og Training Dashboard kan teste Composer med standardmeldingen «Hva vet AHA om mine viktigste prosjekter og begreper?». Meta Insights Agent får et kompakt `answerComposerPack`, slik at Meta Insights AI vet at AHA Chat har et eget svar-komposisjonslag.
+
+Dette er broen mellom Semantic Retrieval V2 og en full personlig AHA-svarmotor. En fremtidig V2 kan legge til bedre response templates, tydeligere citations i selve svaret og evalueringsscore for svar.

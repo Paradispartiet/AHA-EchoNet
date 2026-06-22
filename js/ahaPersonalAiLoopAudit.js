@@ -194,6 +194,22 @@
     };
   }
 
+  function checkAnswerComposer(query = DEFAULT_QUERY, options = {}) {
+    const api = global.AHAPersonalAnswerComposer;
+    if (!api?.buildAnswerPackage) return { ok: false, available: false, sampleIntent: "unknown", selectedSourceCount: 0, hasPrompt: false, hasPreview: false, ready: false };
+    const pack = asObject(safeCall(() => api.buildAnswerPackage(query, { ...options, limit: 6 }), null));
+    const status = asObject(pack.status);
+    return {
+      ok: Boolean(status.ready && asText(pack.prompt) && pack.localPreview),
+      available: true,
+      sampleIntent: asText(status.intent) || asText(pack.context?.answerIntent) || "unknown",
+      selectedSourceCount: Number(status.selectedSourceCount) || asArray(pack.context?.selectedSources).length,
+      hasPrompt: Boolean(asText(pack.prompt)),
+      hasPreview: Boolean(pack.localPreview),
+      ready: Boolean(status.ready)
+    };
+  }
+
 
   const VALID_RECOMMENDATION_SEVERITIES = ["ok", "info", "suggestion", "warning", "blocker"];
   const FORBIDDEN_OPERATOR_AUTOMATION = [
@@ -571,6 +587,7 @@
     const chat = checkChatIntegration();
     const privacy = checkPrivacyAndConsent();
     const semanticRetrieval = checkSemanticRetrieval();
+    const answerComposer = checkAnswerComposer(options.query || DEFAULT_QUERY, options);
     const readiness = asObject(safeCall(() => global.AHAPersonalModelReadiness?.buildReadinessReport?.(), {}));
     let score = 0;
     score += Math.round((dataSources.availableCount / MODULES.length) * 15);
@@ -581,6 +598,10 @@
     if (chat.ok) score += 10;
     if (privacy.ok && privacy.consentAware) score += 15;
     if (semanticRetrieval.ok) score += 5;
+    if (answerComposer.available) score += 5;
+    if (answerComposer.ready && answerComposer.hasPrompt) score += 10;
+    if (answerComposer.selectedSourceCount > 0) score += 5;
+    if (answerComposer.hasPreview) score += 5;
     score = Math.min(100, score);
     const materialCount = approvedMaterial.confirmedClaims + approvedMaterial.importantClaims
       + approvedMaterial.approvedCorpus + approvedMaterial.approvedExamples;
@@ -591,7 +612,7 @@
       generatedAt: new Date(options.now || Date.now()).toISOString(),
       status,
       score,
-      checks: { dataSources, approvedMaterial, retrievalIndex: retrieval, sampleQuery, chatIntegration: chat, privacyAndConsent: privacy },
+      checks: { dataSources, approvedMaterial, retrievalIndex: retrieval, sampleQuery, chatIntegration: chat, privacyAndConsent: privacy, answerComposer },
       dataFlow: {
         input: "chat message",
         personalContext: dataSources.modules.AHAChatPersonalContext,
@@ -607,6 +628,7 @@
       chat,
       privacy,
       semanticRetrieval,
+      answerComposer,
       recommendations: [],
       summary: ""
     };
@@ -636,6 +658,7 @@
     checkChatIntegration,
     checkPrivacyAndConsent,
     checkSemanticRetrieval,
+    checkAnswerComposer,
     buildRecommendations,
     buildOperatorRecommendations,
     buildCompactOperatorRecommendationSummary,
