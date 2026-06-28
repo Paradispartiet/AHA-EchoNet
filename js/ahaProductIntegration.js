@@ -98,6 +98,7 @@
     const nav = status.navigation || collectNavigationStatus();
     const actions = [];
     if (status.personalAI?.ready) actions.push({ id: "open-chat", label: "Åpne AHA Chat og still et spørsmål.", href: nav.chatHref });
+    if (status.chat?.chatPersistenceAvailable && (status.dataIntake?.total || 0) < 3) actions.push({ id: "scan-chat-intake", label: "Skann Chat til Data Intake", href: nav.dataIntakeHref });
     if (status.sourceConnectors?.available) actions.push({ id: "scan-source-connectors", label: "Skann aktive Source Connectors.", href: nav.dataIntakeHref });
     if (status.dataIntake?.available) actions.push({ id: "open-data-intake", label: "Åpne Data Intake og vurder nytt materiale.", href: nav.dataIntakeHref });
     actions.push({ id: "approve-training", label: "Åpne Training Corpus og godkjenn materiale.", href: nav.trainingHref });
@@ -110,6 +111,7 @@
 
   function getPrimaryNextAction(status) {
     const nav = status.navigation || collectNavigationStatus();
+    if (status.chat?.chatPersistenceAvailable && (status.dataIntake?.total || 0) < 3) return { id: "scan-chat-intake", label: "Skann Chat til Data Intake", href: nav.dataIntakeHref, description: "Chat-minne finnes og kan foreslås som Data Intake-kandidater." };
     if (status.personalAI?.ready) return { id: "chat", label: "Åpne AHA Chat", href: nav.chatHref, description: "Personal AI er klar nok til at chat er neste hovedhandling." };
     if (status.dataIntake?.reviewCount) return { id: "data-intake", label: "Åpne Data Intake", href: nav.dataIntakeHref, description: "Nytt materiale venter på vurdering før Training Corpus." };
     if (!status.training?.approvedCount) return { id: "training", label: "Åpne Training", href: nav.trainingHref, description: "Godkjenn materiale slik at AHA får et tryggere grunnlag." };
@@ -130,6 +132,8 @@
     const modules = collectModuleStatus();
     const navigation = collectNavigationStatus();
     const sourceConnectorStatus = window.AHASourceConnectors?.collectConnectorStatus?.() || null;
+    const chatStats = window.AHAChatPersistence?.collectChatStats?.() || null;
+    const chatCandidates = window.AHAChatPersistence?.buildChatIntakeCandidates?.({ dryRun:true }) || null;
     const dataIntakeSummary = window.AHADataIntake?.buildIntakeSummary?.() || { available: modules.hasDataIntake, total: 0, reviewCount: 0, approvedCount: 0, importedCount: 0, nextAction: "Skann AHA-kilder." };
     const trainingItems = window.AHATrainingCorpus?.listCorpus?.() || [];
     const approvedCount = trainingItems.filter((item) => item?.status === "approved").length;
@@ -139,7 +143,7 @@
       version: VERSION,
       navigation,
       home: { available: true, href: navigation.homeHref, modulesVisible: modules.modules.length, summary: "AHA Home er hovedinngangen til samlet produktflyt." },
-      chat: { available: modules.hasChat, href: navigation.chatHref, summary: "AHA Chat er hovedsamtalen med godkjent personlig kontekst når den finnes." },
+      chat: { available: modules.hasChat, href: navigation.chatHref, chatPersistenceAvailable: Boolean(window.AHAChatPersistence), chatSessions: chatStats?.sessions || 0, chatMessages: chatStats?.messages || 0, chatIntakeCandidates: chatCandidates?.items?.length || 0, summary: "AHA Chat er hovedsamtalen med godkjent personlig kontekst når den finnes." },
       personalAI: { available: modules.hasPersonalAI, controlAvailable: Boolean(window.AHAPersonalAiControl) || modules.hasPersonalAI, ready: personalReady, href: navigation.personalAiHref, summary: "Personal AI viser status for minne, corpus, retrieval, composer og evaluation." },
       sourceConnectors: { available: Boolean(window.AHASourceConnectors), active: sourceConnectorStatus?.active || 0, planned: sourceConnectorStatus?.planned || 0, missing: sourceConnectorStatus?.missing || 0, totalAvailable: sourceConnectorStatus?.totalAvailable || 0, nextAction: sourceConnectorStatus?.active ? "Skann aktive kilder." : "Koble runtime-kilder før skann." },
       dataIntake: { available: Boolean(window.AHADataIntake) || modules.hasDataIntake, href: navigation.dataIntakeHref, total: dataIntakeSummary.total || 0, reviewCount: dataIntakeSummary.reviewCount || 0, approvedCount: dataIntakeSummary.approvedCount || 0, importedCount: dataIntakeSummary.importedCount || 0, nextAction: dataIntakeSummary.nextAction || "Skann AHA-kilder.", summary: "Data Intake samler kilder før Training Corpus." },

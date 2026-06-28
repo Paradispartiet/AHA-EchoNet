@@ -423,6 +423,15 @@
   function buildDataIntakePackSafe(){ try { return global.AHADataIntake?.buildIntakeSummary?.() || null; } catch { return null; } }
   function buildSourceConnectorsPackSafe(){ const api=global.AHASourceConnectors; if(!api?.collectConnectorStatus) return null; try { const s=api.collectConnectorStatus(); return { available:true, active:Number(s.active)||0, planned:Number(s.planned)||0, missing:Number(s.missing)||0, totalAvailable:Number(s.totalAvailable)||0, summary:asText(s.summary) }; } catch { return { available:true, active:0, planned:0, missing:0, totalAvailable:0, summary:"Source Connectors status unavailable." }; } }
 
+  function buildChatPersistencePackSafe() {
+    try {
+      const api = global.AHAChatPersistence;
+      if (!api?.collectChatStats) return { available: false, sessions: 0, messages: 0, userMessages: 0, assistantMessages: 0, withEvaluation: 0, lastMessageAt: "" };
+      const s = api.collectChatStats();
+      return { available: true, sessions: Number(s.sessions) || 0, messages: Number(s.messages) || 0, userMessages: Number(s.userMessages) || 0, assistantMessages: Number(s.assistantMessages) || 0, withEvaluation: Number(s.withEvaluation) || 0, lastMessageAt: String(s.lastMessageAt || "") };
+    } catch { return { available: false, sessions: 0, messages: 0, userMessages: 0, assistantMessages: 0, withEvaluation: 0, lastMessageAt: "" }; }
+  }
+
   function buildAgentContext(profile, options = {}) {
     const safe = asObject(profile);
     const context = {
@@ -438,6 +447,8 @@
     };
     const sourceConnectorsPack = options.sourceConnectorsPack && typeof options.sourceConnectorsPack === "object" ? options.sourceConnectorsPack : buildSourceConnectorsPackSafe();
     if (sourceConnectorsPack) context.sourceConnectorsPack = sourceConnectorsPack;
+    const chatPersistencePack = options.chatPersistencePack && typeof options.chatPersistencePack === "object" ? options.chatPersistencePack : buildChatPersistencePackSafe();
+    if (chatPersistencePack) context.chatPersistencePack = chatPersistencePack;
     const dataIntakePack = options.dataIntakePack && typeof options.dataIntakePack === "object" ? options.dataIntakePack : buildDataIntakePackSafe();
     if (dataIntakePack) context.dataIntakePack = dataIntakePack;
     const trainingPack = options.trainingPack && typeof options.trainingPack === "object"
