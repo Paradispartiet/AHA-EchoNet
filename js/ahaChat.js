@@ -6288,6 +6288,8 @@
   async function submitAhaChatMessage(text, textarea = null) {
     const cleanText = String(text || "").trim();
     if (!cleanText) return null;
+    const persistedUserMessage = global.AHAChatPersistence?.appendUserMessage?.(cleanText, { source: "aha_chat", threadId: CHAT_THREAD_ID });
+    renderAhaChatMemoryStatus();
     appendChat("user", cleanText);
     if (isAhaMemoryQuestion(cleanText)) {
       if (textarea) textarea.value = "";
@@ -6295,10 +6297,15 @@
       try {
         const memoryStatus = await buildAhaMemoryStatus();
         renderAhaMemoryStatus(memoryStatus);
-        appendChat("aha", buildAhaLearningContractReply(memoryStatus), { categoryChips: ["minne", "læring", "innsiktskammer"] });
+        const learningReply = buildAhaLearningContractReply(memoryStatus);
+        global.AHAChatPersistence?.appendAssistantMessage?.(learningReply, { source: "aha_chat", threadId: CHAT_THREAD_ID, tags: ["minne", "læring", "innsiktskammer"] });
+        renderAhaChatMemoryStatus();
+        appendChat("aha", learningReply, { categoryChips: ["minne", "læring", "innsiktskammer"] });
         return { type: "learning_contract", memoryStatus };
       } catch (err) {
         console.warn("AHA Learning Contract kunne ikke lese status", err);
+        global.AHAChatPersistence?.appendAssistantMessage?.("Minnestatus kunne ikke leses akkurat nå.", { source: "aha_chat", threadId: CHAT_THREAD_ID, tags: ["status"] });
+        renderAhaChatMemoryStatus();
         appendChat("aha", "Minnestatus kunne ikke leses akkurat nå.");
         return { type: "learning_contract", error: err };
       } finally {
@@ -6364,8 +6371,13 @@
       }
       const visibleReply = normalizeAhaVisibleReply(safeReply, cleanText) || safeReply;
       const categoryChips = memoryUseEnabled ? suggestCategoryChips() : [];
+      const persistedAssistantMessage = global.AHAChatPersistence?.appendAssistantMessage?.(visibleReply, { source: "aha_chat", threadId: CHAT_THREAD_ID, answerPackageId: answerPackage?.id, intent: answerPackage?.status?.intent, retrievalSummary: personalContext?.retrieval?.summary || memoryContext?.reason || "", tags: categoryChips, concepts: subjectMatches?.map?.((m)=>m.label||m.title||m.id).filter(Boolean) });
+      if (persistedAssistantMessage?.id && answerPackage) global.AHAChatPersistence?.attachAnswerPackage?.(persistedAssistantMessage.id, answerPackage);
+      renderAhaChatMemoryStatus();
       const ahaRow = appendChat("aha", visibleReply, { categoryChips, subjectMatches, memoryContext });
       const answerEvaluation = evaluateAhaAnswerForChat(cleanText, visibleReply, answerPackage, ahaRow);
+      if (persistedAssistantMessage?.id && answerEvaluation) global.AHAChatPersistence?.attachAnswerEvaluation?.(persistedAssistantMessage.id, answerEvaluation);
+      renderAhaChatMemoryStatus();
       // Meta Insights AI-session: parse rå-svaret (før visningsnormalisering)
       // til claims med feedback-knapper.
       try { maybeHandleMetaAiAgentReply(reply); } catch (metaErr) { console.warn("Meta Insights AI-claims feilet", metaErr); }
@@ -6402,6 +6414,8 @@
       return { type: "agent_reply", agent, memoryContext, personalContext, answerPackage, savingEnabled, memoryUseEnabled };
     } catch (err) {
       console.warn("AHA-agent utilgjengelig", err);
+      global.AHAChatPersistence?.appendAssistantMessage?.("AHA-agenten er ikke tilgjengelig akkurat nå.", { source: "aha_chat", threadId: CHAT_THREAD_ID, tags: ["status"] });
+      renderAhaChatMemoryStatus();
       appendChat("aha", "AHA-agenten er ikke tilgjengelig akkurat nå.");
       try { await renderAutoOutputs(cleanText, "", { subjectMatches: [], persist: savingEnabled }); } catch (autoErr) { console.warn("Auto-output feilet", autoErr); }
       if (savingEnabled) {
@@ -6412,6 +6426,20 @@
       setAhaProcessing(false);
       void updateAhaMemoryStatus();
     }
+  }
+
+  function renderAhaChatMemoryStatus() {
+    const host = document.getElementById("aha-chat-memory-status");
+    if (!host) return null;
+    const api = global.AHAChatPersistence;
+    if (!api?.collectChatStats) {
+      host.textContent = "Chat-minne er ikke aktivt. Samtaler brukes ikke som treningsgrunnlag før du har godkjent dem i Data Intake.";
+      return null;
+    }
+    const session = api.getOrCreateCurrentSession?.();
+    const stats = api.collectChatStats();
+    host.textContent = `Lagring aktiv. Session: ${session?.id || "ukjent"}. Meldinger i session: ${(session?.messages || []).length}. Totalt: ${stats.messages}. Samtaler brukes ikke som treningsgrunnlag før du har godkjent dem i Data Intake.`;
+    return stats;
   }
 
   function bind() {
@@ -6457,6 +6485,7 @@
       global.addEventListener(eventName, () => { void updateAhaMemoryStatus(); });
     });
     void updateAhaMemoryStatus();
+    renderAhaChatMemoryStatus();
     renderAhaPersonalContextStatus();
 
     updateEmptyState();

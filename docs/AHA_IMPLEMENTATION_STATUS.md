@@ -2426,3 +2426,15 @@ Sync Hub, AHA Music, History Go, Chat, Notes, Feed og Articles kobles bare aktiv
 Data Intake Dashboard viser connector-status, active/planned/missing-tellinger, total scanned, total added, warnings og scan-handlinger for alle kilder. Knapper for kilder som ikke finnes er disabled via connector-status. Product Integration inkluderer `sourceConnectors` i produktstatusen og produktflyten er: Kilder → Source Connectors → Data Intake → Training Corpus → Personal AI → AHA Chat. Personal AI Control inkluderer source connector-status og anbefaler å skanne aktive kilder, koble Sync Hub, koble AHA Music når runtime-data finnes og bygge chatlogg-connector. Meta Insights Agent får `sourceConnectorsPack` i agentContext, slik at Meta Insights AI vet hvilke kilder som kan mate AHA.
 
 Dette gjør Data Intake klar for bredere datatilførsel uten falske connectors eller dummyimport.
+
+## AHA Chat Persistence + Source Connector Audit V1
+
+AHA Chat Persistence lagrer AHA-samtaler lokalt i `aha_chat_sessions_v1` via `window.AHAChatPersistence`. Hver session har `type: "aha_chat_session"`, metadata og meldinger med rolle, tekst, prosjekt, tags, konsepter, Answer Composer-referanse, Answer Evaluation-referanse og retrieval-sammendrag.
+
+`aha_chat` Source Connector er nå aktiv når Chat Persistence finnes. Connectoren leser ikke dummydata: den bruker `AHAChatPersistence.buildChatIntakeCandidates()` når runtime-modulen er tilgjengelig, dedupliserer via Data Intake og lager `review`-kandidater med `source: "aha_chat"` og `sourceType: "chat_message"`.
+
+Samtaler brukes ikke som treningsgrunnlag før du har godkjent dem i Data Intake. Flyten er fortsatt: chatlogg → intake candidate → bruker godkjenner → Training Corpus. Data Intake er godkjenningsgrensen, og chat-kandidater får `useForTrainingCorpus: false` til brukeren eksplisitt godkjenner.
+
+Source Connector Audit V1 viser at connectorene dekker AHA Chat, Sync Hub, AHA Music, History Go, Notes, Feed, Articles, Meta Insights, Personal AI evaluations og Training suggestions. Active/planned/missing-status beregnes fra runtime-moduler og localStorage-nøkler, og `intake.html` viser Source Connectors-panelet med “Skann Chat” og “Skann alle kilder”.
+
+Dette gjør AHA Chat til en trygg og kontrollerbar læringskilde for Personal AI, retrieval og Meta Insights uten automatisk import til Training Corpus.
