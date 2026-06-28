@@ -2413,3 +2413,16 @@ Consent styrer bruk til memory, Training Corpus, retrieval, style, fine-tuning, 
 Data Intake kan skanne eksisterende lokale AHA-lagre og opprette kandidater uten å kjøre Sync Hub execution. Godkjente items med `useForTrainingCorpus` importeres via `AHATrainingCorpus.addCorpusItem` og markeres som `imported` etter vellykket import.
 
 Product Integration og Personal AI Control får intake-status med total, review, approved og imported counts. Meta Insights Agent får `dataIntakePack`, slik at AI-laget vet om nytt materiale venter på godkjenning. Dette gjør AHA klar for bredere datatilførsel etter Personal AI V1.
+
+
+## AHA Source Connectors V1
+
+AHA Source Connectors kobler eksisterende AHA-kilder til Data Intake uten dummydata. Connectors er conditional: de blir `active` når en reell runtime-kilde/global modul eller relevant localStorage-data finnes, `planned` når repoet har produkt-/broflate men mangler importbar runtime-data, og `missing` når kilden ikke finnes som faktisk lager ennå.
+
+V1 støtter Personal AI evaluations og Meta Insights Memory som sikre interne kilder. Personal AI-connectoren leser `AHAPersonalAnswerEvaluation.loadEvaluations()` og importerer evalueringer med training suggestions/draft examples og tekstlige answer summaries til Data Intake. Meta Insights-connectoren leser `AHAMetaInsightsMemory.summarizeMemory()` og `buildMemoryPack()` read-only, og importerer confirmed/important claims, aktive self-model-objekter og tekstlige meta summaries.
+
+Sync Hub, AHA Music, History Go, Chat, Notes, Feed og Articles kobles bare aktivt der faktiske data finnes i eksisterende moduler eller localStorage-nøkler. Når runtime-data mangler, viser Source Connectors `planned` eller `missing` og lager ingen import-items. Chat persistence connector bør bygges senere dersom chatlogg fortsatt ikke lagres.
+
+Data Intake Dashboard viser connector-status, active/planned/missing-tellinger, total scanned, total added, warnings og scan-handlinger for alle kilder. Knapper for kilder som ikke finnes er disabled via connector-status. Product Integration inkluderer `sourceConnectors` i produktstatusen og produktflyten er: Kilder → Source Connectors → Data Intake → Training Corpus → Personal AI → AHA Chat. Personal AI Control inkluderer source connector-status og anbefaler å skanne aktive kilder, koble Sync Hub, koble AHA Music når runtime-data finnes og bygge chatlogg-connector. Meta Insights Agent får `sourceConnectorsPack` i agentContext, slik at Meta Insights AI vet hvilke kilder som kan mate AHA.
+
+Dette gjør Data Intake klar for bredere datatilførsel uten falske connectors eller dummyimport.
