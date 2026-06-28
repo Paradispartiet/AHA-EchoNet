@@ -98,6 +98,7 @@
     const nav = status.navigation || collectNavigationStatus();
     const actions = [];
     if (status.personalAI?.ready) actions.push({ id: "open-chat", label: "Åpne AHA Chat og still et spørsmål.", href: nav.chatHref });
+    if (status.sourceConnectors?.available) actions.push({ id: "scan-source-connectors", label: "Skann aktive Source Connectors.", href: nav.dataIntakeHref });
     if (status.dataIntake?.available) actions.push({ id: "open-data-intake", label: "Åpne Data Intake og vurder nytt materiale.", href: nav.dataIntakeHref });
     actions.push({ id: "approve-training", label: "Åpne Training Corpus og godkjenn materiale.", href: nav.trainingHref });
     actions.push({ id: "check-personal-ai", label: "Åpne Personal AI og kjør full kontrolltest.", href: nav.personalAiHref });
@@ -128,6 +129,7 @@
   function buildProductStatus(options = {}) {
     const modules = collectModuleStatus();
     const navigation = collectNavigationStatus();
+    const sourceConnectorStatus = window.AHASourceConnectors?.collectConnectorStatus?.() || null;
     const dataIntakeSummary = window.AHADataIntake?.buildIntakeSummary?.() || { available: modules.hasDataIntake, total: 0, reviewCount: 0, approvedCount: 0, importedCount: 0, nextAction: "Skann AHA-kilder." };
     const trainingItems = window.AHATrainingCorpus?.listCorpus?.() || [];
     const approvedCount = trainingItems.filter((item) => item?.status === "approved").length;
@@ -139,6 +141,7 @@
       home: { available: true, href: navigation.homeHref, modulesVisible: modules.modules.length, summary: "AHA Home er hovedinngangen til samlet produktflyt." },
       chat: { available: modules.hasChat, href: navigation.chatHref, summary: "AHA Chat er hovedsamtalen med godkjent personlig kontekst når den finnes." },
       personalAI: { available: modules.hasPersonalAI, controlAvailable: Boolean(window.AHAPersonalAiControl) || modules.hasPersonalAI, ready: personalReady, href: navigation.personalAiHref, summary: "Personal AI viser status for minne, corpus, retrieval, composer og evaluation." },
+      sourceConnectors: { available: Boolean(window.AHASourceConnectors), active: sourceConnectorStatus?.active || 0, planned: sourceConnectorStatus?.planned || 0, missing: sourceConnectorStatus?.missing || 0, totalAvailable: sourceConnectorStatus?.totalAvailable || 0, nextAction: sourceConnectorStatus?.active ? "Skann aktive kilder." : "Koble runtime-kilder før skann." },
       dataIntake: { available: Boolean(window.AHADataIntake) || modules.hasDataIntake, href: navigation.dataIntakeHref, total: dataIntakeSummary.total || 0, reviewCount: dataIntakeSummary.reviewCount || 0, approvedCount: dataIntakeSummary.approvedCount || 0, importedCount: dataIntakeSummary.importedCount || 0, nextAction: dataIntakeSummary.nextAction || "Skann AHA-kilder.", summary: "Data Intake samler kilder før Training Corpus." },
       training: { available: modules.hasTraining, href: navigation.trainingHref, approvedCount, summary: "Training Corpus er datagodkjennings- og treningslaget." },
       syncHub: { available: modules.hasSyncHub, href: navigation.syncHubHref, summary: "Sync Hub henter/importerer materiale som senere kan godkjennes." },
@@ -150,6 +153,7 @@
     let score = 0;
     if (modules.modules.length) score += 15;
     if (status.chat.available) score += 15;
+    if (status.sourceConnectors.available) score += 5;
     if (status.personalAI.controlAvailable) score += 20;
     if (status.dataIntake.available) score += 10;
     if ((status.dataIntake.reviewCount || 0) + (status.dataIntake.approvedCount || 0) > 0) score += 5;
@@ -163,7 +167,7 @@
     if (status.primaryNextAction?.href) score += 5;
     score = Math.min(100, score);
     status.overall = { status: statusFromScore(score), score, label: `${score}/100 · ${statusFromScore(score)}` };
-    status.summary = `AHA er ${status.overall.status}: Home, Chat, Data Intake, Training, Personal AI, Sync Hub, AHA Music og History Go er samlet i én produktflyt.`;
+    status.summary = `AHA er ${status.overall.status}: Kilder, Source Connectors, Data Intake, Training Corpus, Personal AI og AHA Chat er samlet i én produktflyt.`;
     if (options.save !== false) saveProductStatus(status);
     return status;
   }
