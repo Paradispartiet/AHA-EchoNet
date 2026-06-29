@@ -1,3 +1,4 @@
+// Åpne Knowledge Workbench → knowledge-workbench.html
 // ahaTrainingDashboard.js
 // ─────────────────────────────────────────────
 // UI-laget for AHA Training Corpus. Binder AHATrainingCorpus og
