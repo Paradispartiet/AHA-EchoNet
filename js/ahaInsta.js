@@ -11,8 +11,31 @@
   const FOLLOWS_KEY = "aha_insta_follows_v1";
   const MAX_MEDIA_DATA_URL_SIZE = 10 * 1024 * 1024;
 
+  const ICON_HEART_OUTLINE = '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
+  const ICON_HEART_FILLED = '<svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
+  const ICON_COMMENT = '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>';
+  const ICON_SHARE = '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>';
+
   const createId = (prefix) => `${prefix}_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
   const nowIso = () => new Date().toISOString();
+
+  function formatRelativeTime(value) {
+    const date = new Date(value || 0);
+    const time = date.getTime();
+    if (!value || Number.isNaN(time)) return "";
+
+    const diffSec = Math.floor((Date.now() - time) / 1000);
+    if (diffSec < 60) return "nå";
+    const diffMin = Math.floor(diffSec / 60);
+    if (diffMin < 60) return `${diffMin}m`;
+    const diffHour = Math.floor(diffMin / 60);
+    if (diffHour < 24) return `${diffHour}t`;
+    const diffDay = Math.floor(diffHour / 24);
+    if (diffDay < 7) return `${diffDay}d`;
+    const diffWeek = Math.floor(diffDay / 7);
+    if (diffWeek < 5) return `${diffWeek}u`;
+    return date.toLocaleDateString("no-NO", { day: "numeric", month: "short" });
+  }
 
   function readArray(key) {
     try {
@@ -601,14 +624,27 @@
     if (!mount) return;
 
     mount.innerHTML = `
-      <article class="module-card insta-profile-card">
-        ${profile.avatar ? `<img class="insta-avatar" src="${escapeHtml(profile.avatar)}" alt="avatar"/>` : ""}
+      <div class="insta-profile-header">
+        ${renderAvatar(profile.displayName || profile.username, profile.avatar, "insta-avatar-lg")}
+        <div class="insta-profile-stats">
+          <div><strong>${postCount}</strong><span>poster</span></div>
+          <div><strong>${followerCount}</strong><span>følgere</span></div>
+          <div><strong>${followingCount}</strong><span>følger</span></div>
+        </div>
+      </div>
+      <div class="insta-profile-namebio">
         <strong>${escapeHtml(profile.displayName || "Meg")}</strong>
-        <div>@${escapeHtml(profile.username || "meg")}</div>
-        <p>${escapeHtml(profile.bio || "")}</p>
-        <div class="module-meta">poster:${postCount} · følgere:${followerCount} · følger:${followingCount}</div>
-      </article>
+        <span class="module-meta">@${escapeHtml(profile.username || "meg")}</span>
+        ${profile.bio ? `<p>${escapeHtml(profile.bio)}</p>` : ""}
+      </div>
     `;
+  }
+
+  function renderAvatar(name, avatarUrl, sizeClass) {
+    const initial = escapeHtml(String(name || "?").trim().slice(0, 1).toUpperCase() || "?");
+    const safeAvatar = String(avatarUrl || "").trim();
+    const inner = safeAvatar ? `<img src="${escapeHtml(safeAvatar)}" alt="" />` : initial;
+    return `<span class="insta-avatar ${sizeClass}">${inner}</span>`;
   }
 
   function getPostOwner(post) {
@@ -618,64 +654,111 @@
     return { id, username };
   }
 
+  const expandedComments = new Set();
+
+  function toggleCommentsExpanded(postId) {
+    if (expandedComments.has(postId)) expandedComments.delete(postId);
+    else expandedComments.add(postId);
+    render();
+  }
+
+  async function sharePost(postId) {
+    const post = load().find((entry) => entry.id === postId);
+    if (!post) return;
+
+    const owner = getPostOwner(post);
+    const text = [post.title, post.caption].filter(Boolean).join(" — ") || `Post av @${owner.username}`;
+    const url = String(post.src || "").trim();
+
+    if (navigator.share) {
+      try {
+        await navigator.share(url ? { text, url } : { text });
+      } catch {
+        /* brukeren avbrøt delingen */
+      }
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText([text, url].filter(Boolean).join("\n"));
+    } catch {
+      /* utklippstavle ikke tilgjengelig */
+    }
+  }
+
   function renderComments(post) {
     const me = ensureProfile();
     const comments = getCommentsForPost(post.id);
+    const previewCount = 2;
+    const expanded = expandedComments.has(post.id);
+    const hasMore = comments.length > previewCount && !expanded;
+    const visible = hasMore ? comments.slice(-previewCount) : comments;
 
-    const list = comments.length
-      ? comments
-          .map((comment) => `
-            <li class="insta-comment-item">
-              <span><strong>@${escapeHtml(comment.username)}:</strong> ${escapeHtml(comment.text)}</span>
-              ${comment.user_id === me.id ? `<button type="button" data-insta-delete-comment="${escapeHtml(comment.id)}">Slett</button>` : ""}
-            </li>
-          `)
-          .join("")
-      : '<li class="insta-comment-item">Ingen kommentarer ennå.</li>';
-
-    return `
-      <ul class="insta-comments">${list}</ul>
-      <div class="insta-comment-input">
-        <input type="text" data-insta-comment-input="${escapeHtml(post.id)}" placeholder="Skriv kommentar …" />
-        <button type="button" data-insta-comment="${escapeHtml(post.id)}">Kommenter</button>
-      </div>
-    `;
-  }
-
-  function renderSocialRow(post) {
-    const me = ensureProfile();
-    const owner = getPostOwner(post);
-    const canFollow = !!owner.username && owner.username !== me.username;
-    const followButton = canFollow
-      ? `<button type="button" data-insta-follow="${escapeHtml(owner.username)}">${isFollowing(owner.username) ? "Unfollow" : "Følg"}</button>`
+    const viewAllLink = comments.length > previewCount
+      ? `<button type="button" class="insta-view-comments" data-insta-toggle-comments="${escapeHtml(post.id)}">${expanded ? "Vis færre kommentarer" : `Se alle ${comments.length} kommentarer`}</button>`
       : "";
 
+    const list = visible
+      .map((comment) => `
+        <li class="insta-comment-item">
+          <span><strong>@${escapeHtml(comment.username)}</strong> ${escapeHtml(comment.text)}</span>
+          ${comment.user_id === me.id ? `<button type="button" class="insta-comment-delete" data-insta-delete-comment="${escapeHtml(comment.id)}" aria-label="Slett kommentar">×</button>` : ""}
+        </li>
+      `)
+      .join("");
+
     return `
-      <div class="insta-social-row">
-        <span class="module-meta">@${escapeHtml(owner.username)}</span>
-        ${followButton}
-        <button type="button" data-insta-like="${escapeHtml(post.id)}">${hasLiked(post.id) ? "Likt" : "Lik"}</button>
-        <span>${getLikeCount(post.id)} liker</span>
-        <span>${getCommentsForPost(post.id).length} kommentarer</span>
+      <div class="insta-comments-block">
+        ${viewAllLink}
+        ${list ? `<ul class="insta-comments">${list}</ul>` : ""}
+        <div class="insta-comment-input">
+          <input type="text" data-insta-comment-input="${escapeHtml(post.id)}" placeholder="Skriv en kommentar …" />
+          <button type="button" class="insta-comment-send" data-insta-comment="${escapeHtml(post.id)}">Post</button>
+        </div>
       </div>
     `;
   }
 
   function renderPostCard(post) {
+    const me = ensureProfile();
+    const owner = getPostOwner(post);
+    const isOwner = owner.username === me.username;
+    const canFollow = !!owner.username && !isOwner;
+    const liked = hasLiked(post.id);
+    const likeCount = getLikeCount(post.id);
+
     return `
-      <article class="module-card">
-        ${renderMedia(post.src, post.content_type)}
-        <h3>${escapeHtml(post.title || "Uten tittel")}</h3>
-        <p>${escapeHtml(post.caption || "")}</p>
-        <div class="module-meta">
-          ${escapeHtml(post.created_at || "")}
-          ${post.originalInstagramDate ? ` · opprinnelig: ${escapeHtml(post.originalInstagramDate)}` : ""}
-          ${post.imported ? " · Importert fra Instagram" : ""}
-          ${post.last_source_event_id ? ` · source: ${escapeHtml(post.last_source_event_id)}` : ""}
+      <article class="insta-post">
+        <header class="insta-post-header">
+          ${renderAvatar(owner.username, "", "insta-avatar-sm")}
+          <div class="insta-post-header-meta">
+            <strong>@${escapeHtml(owner.username)}</strong>
+            <span class="insta-post-time">${escapeHtml(formatRelativeTime(post.created_at))}${post.imported ? " · importert" : ""}</span>
+          </div>
+          ${canFollow ? `<button type="button" class="insta-follow-btn" data-insta-follow="${escapeHtml(owner.username)}">${isFollowing(owner.username) ? "Følger" : "Følg"}</button>` : ""}
+          ${isOwner ? `
+            <details class="insta-post-menu">
+              <summary aria-label="Mer">⋯</summary>
+              <div class="insta-post-menu-list">
+                <button type="button" data-insta-delete="${escapeHtml(post.id)}">Slett post</button>
+              </div>
+            </details>
+          ` : ""}
+        </header>
+
+        <div class="insta-post-media">${renderMedia(post.src, post.content_type)}</div>
+
+        <div class="insta-post-actions">
+          <button type="button" class="insta-icon-btn ${liked ? "is-liked" : ""}" data-insta-like="${escapeHtml(post.id)}" aria-label="Lik">${liked ? ICON_HEART_FILLED : ICON_HEART_OUTLINE}</button>
+          <button type="button" class="insta-icon-btn" data-insta-focus-comment="${escapeHtml(post.id)}" aria-label="Kommenter">${ICON_COMMENT}</button>
+          <button type="button" class="insta-icon-btn" data-insta-share="${escapeHtml(post.id)}" aria-label="Del">${ICON_SHARE}</button>
         </div>
-        ${renderSocialRow(post)}
+
+        ${likeCount > 0 ? `<p class="insta-like-count">${likeCount} liker</p>` : ""}
+        ${post.title ? `<p class="insta-post-title">${escapeHtml(post.title)}</p>` : ""}
+        ${post.caption ? `<p class="insta-caption"><strong>@${escapeHtml(owner.username)}</strong> ${escapeHtml(post.caption)}</p>` : ""}
+
         ${renderComments(post)}
-        <div class="module-actions"><button type="button" data-insta-delete="${escapeHtml(post.id)}">Slett</button></div>
       </article>
     `;
   }
@@ -1097,6 +1180,13 @@
     `;
   }
 
+  let activeStoryId = null;
+
+  function setActiveStory(storyId) {
+    activeStoryId = activeStoryId === storyId ? null : storyId;
+    renderStories();
+  }
+
   function renderStories() {
     const mount = document.getElementById("insta-stories");
     if (!mount) return;
@@ -1107,20 +1197,28 @@
       return;
     }
 
+    const activeStory = stories.find((story) => story.id === activeStoryId) || null;
+
     mount.innerHTML = `
       <div class="insta-stories-row">
         ${stories
           .map(
             (story) => `
-              <article class="module-card insta-story-card">
-                ${renderMedia(story.src, story.mediaType)}
-                <p>${escapeHtml(story.caption || "")}</p>
-                ${story.imported ? '<div class="module-meta">importert</div>' : ""}
-              </article>
+              <button type="button" class="insta-story" data-insta-story="${escapeHtml(story.id)}">
+                <span class="insta-story-ring">${renderAvatar(story.ownerUsername || "?", "", "insta-avatar-md")}</span>
+                <span class="insta-story-name">${escapeHtml(story.ownerUsername || (story.imported ? "Importert" : "Story"))}</span>
+              </button>
             `
           )
           .join("")}
       </div>
+      ${activeStory ? `
+        <article class="insta-story-viewer">
+          ${renderMedia(activeStory.src, activeStory.mediaType)}
+          ${activeStory.caption ? `<p>${escapeHtml(activeStory.caption)}</p>` : ""}
+          <button type="button" class="insta-story-close" data-insta-story-close="1">Lukk</button>
+        </article>
+      ` : ""}
     `;
   }
 
@@ -1240,12 +1338,18 @@
     });
 
     document.getElementById("insta-list")?.addEventListener("click", (event) => {
-      const target = event.target;
-      if (!(target instanceof HTMLElement)) return;
+      const target = event.target instanceof HTMLElement ? event.target.closest("button") : null;
+      if (!target) return;
       if (target.dataset.instaDelete) deletePost(target.dataset.instaDelete);
       if (target.dataset.instaLike) toggleLike(target.dataset.instaLike);
       if (target.dataset.instaFollow) toggleFollow(target.dataset.instaFollow);
       if (target.dataset.instaDeleteComment) deleteComment(target.dataset.instaDeleteComment);
+      if (target.dataset.instaShare) sharePost(target.dataset.instaShare);
+      if (target.dataset.instaToggleComments) toggleCommentsExpanded(target.dataset.instaToggleComments);
+      if (target.dataset.instaFocusComment) {
+        const input = document.querySelector(`[data-insta-comment-input="${target.dataset.instaFocusComment}"]`);
+        input?.focus();
+      }
       if (target.dataset.instaComment) {
         const postId = target.dataset.instaComment;
         const input = document.querySelector(`[data-insta-comment-input="${postId}"]`);
@@ -1258,6 +1362,13 @@
       const target = event.target;
       if (!(target instanceof HTMLElement)) return;
       if (target.dataset.feedFilter) setFeedFilter(target.dataset.feedFilter);
+    });
+
+    document.getElementById("insta-stories")?.addEventListener("click", (event) => {
+      const target = event.target instanceof HTMLElement ? event.target.closest("button") : null;
+      if (!target) return;
+      if (target.dataset.instaStory) setActiveStory(target.dataset.instaStory);
+      if (target.dataset.instaStoryClose) setActiveStory(null);
     });
 
     bindProfileForm();
