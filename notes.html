@@ -5,26 +5,40 @@
   <title>AHA Notes</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="css/aha-chat.css" />
+  <link rel="stylesheet" href="css/aha-dashboard.css" />
   <link rel="stylesheet" href="css/ahaModule.css" />
   <link rel="stylesheet" href="css/aha-notes.css" />
+  <link rel="stylesheet" href="css/aha-global-nav.css" />
 </head>
 <body>
-  <p><a href="index.html">← AHA Dashboard</a></p>
-  <header class="module-header">
-    <h1>AHA Notes</h1>
-    <p>Egne notater og tekster. Alt lagres lokalt og sendes inn i eksisterende AHA-motor via AHAIngest.</p>
-  </header>
+  <div id="aha-global-nav"></div>
+  <main class="aha-dashboard" style="max-width: 900px;">
+    <section class="aha-panel aha-module-shell">
+      <header class="aha-module-shell-header">
+        <div>
+          <p class="eyebrow">AHA Modul</p>
+          <h1>AHA Notes</h1>
+          <p class="aha-module-purpose">Egne notater og tekster. Alt lagres lokalt og sendes inn i eksisterende AHA-motor via AHAIngest.</p>
+        </div>
+      </header>
+      <div class="aha-module-actions">
+        <a class="aha-tile-btn aha-tile-btn-primary" href="index.html">Tilbake til AHA Home</a>
+      </div>
+    </section>
 
-  <form id="note-form" class="module-form">
-    <input id="note-title" type="text" placeholder="Tittel" />
-    <textarea id="note-text" placeholder="Skriv notat …"></textarea>
-    <button type="submit">Lagre notat</button>
-  </form>
+    <section class="aha-panel">
+      <form id="note-form" class="module-form">
+        <input id="note-title" type="text" placeholder="Tittel" />
+        <textarea id="note-text" placeholder="Skriv notat …"></textarea>
+        <button type="submit">Lagre notat</button>
+      </form>
+    </section>
 
-  <section>
-    <h2>Lagrede notater</h2>
-    <div id="notes-list" class="module-list"></div>
-  </section>
+    <section class="aha-panel">
+      <h2>Lagrede notater</h2>
+      <div id="notes-list" class="module-list"></div>
+    </section>
+  </main>
 
   <script src="js/insightsChamber.js"></script>
   <script src="js/metaInsightsEngine.js"></script>
@@ -43,5 +57,7 @@
   <script src="js/ahaIngest.js"></script>
   <script src="js/ahaContracts.js"></script>
   <script src="js/ahaNotes.js"></script>
+<script src="js/ahaModules.js"></script>
+<script src="js/ahaGlobalNav.js"></script>
 </body>
 </html>

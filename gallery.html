@@ -5,27 +5,41 @@
   <title>AHA Galleri</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="css/aha-chat.css" />
+  <link rel="stylesheet" href="css/aha-dashboard.css" />
   <link rel="stylesheet" href="css/ahaModule.css" />
   <link rel="stylesheet" href="css/aha-gallery.css" />
+  <link rel="stylesheet" href="css/aha-global-nav.css" />
 </head>
 <body>
-  <p><a href="index.html">← AHA Dashboard</a></p>
-  <header class="module-header">
-    <h1>AHA Galleri</h1>
-    <p>Personlig galleri for bilder, minner og visuelle uttrykk. Første MVP bruker URL/path, ikke filopplasting.</p>
-  </header>
+  <div id="aha-global-nav"></div>
+  <main class="aha-dashboard" style="max-width: 900px;">
+    <section class="aha-panel aha-module-shell">
+      <header class="aha-module-shell-header">
+        <div>
+          <p class="eyebrow">AHA Modul</p>
+          <h1>AHA Galleri</h1>
+          <p class="aha-module-purpose">Personlig galleri for bilder, minner og visuelle uttrykk. Første MVP bruker URL/path, ikke filopplasting.</p>
+        </div>
+      </header>
+      <div class="aha-module-actions">
+        <a class="aha-tile-btn aha-tile-btn-primary" href="index.html">Tilbake til AHA Home</a>
+      </div>
+    </section>
 
-  <form id="gallery-form" class="module-form">
-    <input id="gallery-title" type="text" placeholder="Tittel" />
-    <input id="gallery-src" type="text" placeholder="Bilde-/videoadresse eller path" />
-    <textarea id="gallery-description" placeholder="Beskrivelse / minne / kontekst …"></textarea>
-    <button type="submit">Legg til i galleri</button>
-  </form>
+    <section class="aha-panel">
+      <form id="gallery-form" class="module-form">
+        <input id="gallery-title" type="text" placeholder="Tittel" />
+        <input id="gallery-src" type="text" placeholder="Bilde-/videoadresse eller path" />
+        <textarea id="gallery-description" placeholder="Beskrivelse / minne / kontekst …"></textarea>
+        <button type="submit">Legg til i galleri</button>
+      </form>
+    </section>
 
-  <section>
-    <h2>Galleri</h2>
-    <div id="gallery-list" class="module-list"></div>
-  </section>
+    <section class="aha-panel">
+      <h2>Galleri</h2>
+      <div id="gallery-list" class="module-list"></div>
+    </section>
+  </main>
 
   <script src="js/insightsChamber.js"></script>
   <script src="js/metaInsightsEngine.js"></script>
@@ -44,5 +58,7 @@
   <script src="js/ahaIngest.js"></script>
   <script src="js/ahaContracts.js"></script>
   <script src="js/ahaGallery.js"></script>
+<script src="js/ahaModules.js"></script>
+<script src="js/ahaGlobalNav.js"></script>
 </body>
 </html>

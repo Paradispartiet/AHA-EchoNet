@@ -5,25 +5,39 @@
   <title>AHA Feed</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="css/aha-chat.css" />
+  <link rel="stylesheet" href="css/aha-dashboard.css" />
   <link rel="stylesheet" href="css/ahaModule.css" />
   <link rel="stylesheet" href="css/aha-feed.css" />
+  <link rel="stylesheet" href="css/aha-global-nav.css" />
 </head>
 <body>
-  <p><a href="index.html">← AHA Dashboard</a></p>
-  <header class="module-header">
-    <h1>AHA Feed / Twitter</h1>
-    <p>Korte poster, innsikter og delinger. Første MVP er lokal og reklamefri.</p>
-  </header>
+  <div id="aha-global-nav"></div>
+  <main class="aha-dashboard" style="max-width: 900px;">
+    <section class="aha-panel aha-module-shell">
+      <header class="aha-module-shell-header">
+        <div>
+          <p class="eyebrow">AHA Modul</p>
+          <h1>AHA Feed / Twitter</h1>
+          <p class="aha-module-purpose">Korte poster, innsikter og delinger. Første MVP er lokal og reklamefri.</p>
+        </div>
+      </header>
+      <div class="aha-module-actions">
+        <a class="aha-tile-btn aha-tile-btn-primary" href="index.html">Tilbake til AHA Home</a>
+      </div>
+    </section>
 
-  <form id="feed-form" class="module-form">
-    <textarea id="feed-text" placeholder="Skriv en kort post …"></textarea>
-    <button type="submit">Publiser lokalt</button>
-  </form>
+    <section class="aha-panel">
+      <form id="feed-form" class="module-form">
+        <textarea id="feed-text" placeholder="Skriv en kort post …"></textarea>
+        <button type="submit">Publiser lokalt</button>
+      </form>
+    </section>
 
-  <section>
-    <h2>Poster</h2>
-    <div id="feed-list" class="module-list"></div>
-  </section>
+    <section class="aha-panel">
+      <h2>Poster</h2>
+      <div id="feed-list" class="module-list"></div>
+    </section>
+  </main>
 
   <script src="js/insightsChamber.js"></script>
   <script src="js/metaInsightsEngine.js"></script>
@@ -42,5 +56,7 @@
   <script src="js/ahaIngest.js"></script>
   <script src="js/ahaContracts.js"></script>
   <script src="js/ahaFeed.js"></script>
+<script src="js/ahaModules.js"></script>
+<script src="js/ahaGlobalNav.js"></script>
 </body>
 </html>

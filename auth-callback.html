@@ -5,13 +5,25 @@
   <title>AHA innlogging</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="css/aha-chat.css" />
+  <link rel="stylesheet" href="css/aha-dashboard.css" />
   <link rel="stylesheet" href="css/ahaModule.css" />
+  <link rel="stylesheet" href="css/aha-global-nav.css" />
 </head>
 <body>
-  <main class="module-header">
-    <h1>AHA innlogging</h1>
-    <p id="auth-callback-status">Fullfører innlogging …</p>
-    <p><a href="index.html">Gå til AHA Dashboard</a></p>
+  <div id="aha-global-nav"></div>
+  <main class="aha-dashboard" style="max-width: 640px;">
+    <section class="aha-panel aha-module-shell">
+      <header class="aha-module-shell-header">
+        <div>
+          <p class="eyebrow">AHA Konto</p>
+          <h1>AHA innlogging</h1>
+          <p class="aha-module-purpose" id="auth-callback-status">Fullfører innlogging …</p>
+        </div>
+      </header>
+      <div class="aha-module-actions">
+        <a class="aha-tile-btn aha-tile-btn-primary" href="index.html">Gå til AHA Dashboard</a>
+      </div>
+    </section>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -19,5 +31,7 @@
   <script src="js/ahaDb.js"></script>
   <script src="js/ahaAuth.js"></script>
   <script src="js/ahaAuthCallback.js"></script>
+<script src="js/ahaModules.js"></script>
+<script src="js/ahaGlobalNav.js"></script>
 </body>
 </html>

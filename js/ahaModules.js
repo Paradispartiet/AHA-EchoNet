@@ -405,6 +405,7 @@
   window.AHA_MODULES = AHA_MODULES;
   window.AHAModules = {
     modules: AHA_MODULES,
+    icons: MODULE_ICONS,
     healthStatuses: [...MODULE_HEALTH_STATUSES],
     normalizeModuleHealth,
     emptyStateTypes: [...MODULE_EMPTY_STATE_TYPES],

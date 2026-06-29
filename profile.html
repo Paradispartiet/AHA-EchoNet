@@ -6,13 +6,19 @@
   <title>AHA Profil</title>
   <link rel="stylesheet" href="css/aha-chat.css" />
   <link rel="stylesheet" href="css/aha-dashboard.css" />
+  <link rel="stylesheet" href="css/aha-global-nav.css" />
 </head>
 <body>
+  <div id="aha-global-nav"></div>
   <main class="aha-dashboard" style="max-width: 900px;">
-    <section class="aha-panel">
-      <p class="eyebrow">AHA Home</p>
-      <h1>AHA Profil</h1>
-      <p>Din personlige innsiktsflate.</p>
+    <section class="aha-panel aha-module-shell">
+      <header class="aha-module-shell-header">
+        <div>
+          <p class="eyebrow">AHA Home</p>
+          <h1>AHA Profil</h1>
+          <p class="aha-module-purpose">Din personlige innsiktsflate.</p>
+        </div>
+      </header>
       <div class="aha-status-stack">
         <strong id="aha-home-profile-name">Lokal AHA-bruker</strong>
         <span id="aha-home-profile-mode">Lokal modus</span>
@@ -53,5 +59,6 @@
   <script src="js/ahaModules.js"></script>
   <script src="js/ahaDashboard.js"></script>
   <script src="js/ahaProfile.js"></script>
+<script src="js/ahaGlobalNav.js"></script>
 </body>
 </html>

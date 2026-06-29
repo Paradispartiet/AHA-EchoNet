@@ -1,0 +1,239 @@
+/* aha-global-nav.css
+   Selvstendig, nøytral navigasjonstopp som lastes på alle AHA-sider.
+   Bruker egne variabler (ikke avhengig av aha-dashboard.css eller aha-chat.css)
+   slik at den ser identisk ut uansett hvilke andre stilark siden laster.
+*/
+
+:root {
+  --gnav-bg: rgba(9, 11, 17, .94);
+  --gnav-surface: #12141d;
+  --gnav-line: rgba(255, 255, 255, .12);
+  --gnav-text: #f3f3ee;
+  --gnav-muted: rgba(243, 243, 238, .68);
+  --gnav-accent: #f6c800;
+  --gnav-accent-soft: rgba(246, 200, 0, .16);
+}
+
+.aha-global-nav {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: var(--gnav-text);
+}
+
+.aha-global-nav-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 6px 14px;
+  background: var(--gnav-bg);
+  border-bottom: 1px solid var(--gnav-line);
+  backdrop-filter: blur(10px);
+}
+
+.aha-global-nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: inherit;
+  text-decoration: none;
+  font-weight: 700;
+  letter-spacing: .02em;
+  flex: 0 0 auto;
+}
+
+.aha-global-nav-brand-mark {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  background: var(--gnav-accent);
+  color: #14110a;
+  font-size: .8rem;
+  font-weight: 900;
+}
+
+.aha-global-nav-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--gnav-line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .04);
+  color: var(--gnav-text);
+  font-size: .85rem;
+  font-weight: 600;
+  padding: 7px 14px;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+.aha-global-nav-toggle:hover,
+.aha-global-nav-toggle[aria-expanded="true"] {
+  background: rgba(255, 255, 255, .09);
+}
+
+.aha-global-nav-toggle-icon { font-size: 1rem; line-height: 1; }
+
+.aha-global-nav-current {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: .85rem;
+  color: var(--gnav-muted);
+  text-align: center;
+}
+
+.aha-global-nav-home {
+  flex: 0 0 auto;
+  color: var(--gnav-muted);
+  text-decoration: none;
+  font-size: .85rem;
+  font-weight: 600;
+  padding: 7px 10px;
+  border-radius: 999px;
+}
+
+.aha-global-nav-home:hover { color: var(--gnav-text); background: rgba(255, 255, 255, .06); }
+
+.aha-global-nav-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.aha-global-nav-overlay[hidden] { display: none; }
+
+.aha-global-nav-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 6, 10, .68);
+}
+
+.aha-global-nav-panel {
+  position: relative;
+  width: min(560px, 100%);
+  height: 100%;
+  overflow-y: auto;
+  background: var(--gnav-surface);
+  border-left: 1px solid var(--gnav-line);
+  box-shadow: -24px 0 60px rgba(0, 0, 0, .4);
+  padding: 18px 18px 32px;
+}
+
+.aha-global-nav-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.aha-global-nav-panel-header h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.aha-global-nav-close {
+  border: 1px solid var(--gnav-line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .04);
+  color: var(--gnav-text);
+  width: 32px;
+  height: 32px;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.aha-global-nav-close:hover { background: rgba(255, 255, 255, .1); }
+
+.aha-global-nav-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.aha-global-nav-group h3 {
+  margin: 0 0 8px;
+  font-size: .78rem;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--gnav-muted);
+}
+
+.aha-global-nav-group-items {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.aha-global-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 12px;
+  color: inherit;
+  text-decoration: none;
+  border: 1px solid transparent;
+}
+
+.aha-global-nav-item:hover { background: rgba(255, 255, 255, .06); }
+
+.aha-global-nav-item.is-active {
+  background: var(--gnav-accent-soft);
+  border-color: rgba(246, 200, 0, .3);
+}
+
+.aha-global-nav-item-icon {
+  flex: 0 0 auto;
+  width: 26px;
+  text-align: center;
+  font-size: 1rem;
+  opacity: .85;
+}
+
+.aha-global-nav-item-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.aha-global-nav-item-copy strong { font-size: .92rem; }
+
+.aha-global-nav-item-copy small {
+  color: var(--gnav-muted);
+  font-size: .76rem;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.aha-global-nav-item-tag {
+  flex: 0 0 auto;
+  font-size: .68rem;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--gnav-muted);
+  border: 1px solid var(--gnav-line);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+body.aha-global-nav-open { overflow: hidden; }
+
+@media (max-width: 640px) {
+  .aha-global-nav-current { display: none; }
+  .aha-global-nav-panel { width: 100%; }
+}
