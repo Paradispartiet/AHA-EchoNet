@@ -154,3 +154,58 @@ hopper over `enrichWithEmneMatcher` for alt med `imported: true`,
 `source_app: "historygo"` eller `source_type` som starter med
 `"historygo"`. AHA stoler på History Go sin egen eksporterte metadata
 (concepts, related_emner, categoryId, place_id, person_id).
+
+## Operasjonelle arkitekturdokumenter
+
+Denne filen beskriver hovedarkitekturen. For analyseflyt, kildebinding, cache og feilsøking skal disse dokumentene brukes som arbeidsgrunnlag:
+
+```text
+docs/AHA_ANALYSIS_PIPELINE.md
+= faktisk runtime-flyt for AHA Chat-analyse, fra sourceText til export bundle.
+
+docs/SOURCE_GROUNDING.md
+= kontrakten som skiller kildetekst, minne, chamber og UI/export-state.
+
+docs/CACHE_AND_STATE.md
+= localStorage, cache, auto-output, afterwork og state-regler.
+
+docs/MEMORY_AND_CHAMBER.md
+= grenser mellom source event, signal, insight, chamber og memory context.
+
+docs/UI_EXPORT_FLOW.md
+= Explorer, quality layer og eksportpakke.
+
+docs/DEBUGGING.md
+= praktisk feilsøking ved rar analyse eller kildeblanding.
+
+docs/QUALITY_GATES.md
+= shape, source binding, topic consistency, memory isolation og score ceilings.
+
+docs/KNOWN_FAILURE_MODES.md
+= kjente feilmodi som stale payload, stale afterwork, memory contamination og DOM mismatch.
+```
+
+## Kildeanalyse-regel
+
+For alle analyser som presenteres som analyse av en konkret tekst:
+
+```text
+sourceText
+→ sourceTextHash
+→ source-bound analysis
+→ source-bound afterwork
+→ source-bound export
+```
+
+Chamber, personlig minne og meta-profil kan vises som egne lag, men de skal ikke overstyre AHA SER eller etterarbeid for gjeldende kilde.
+
+## Fail-closed-prinsipp
+
+Hvis AHA ikke kan verifisere at et analysefelt hører til gjeldende `sourceTextHash`, skal feltet ikke vises som fasit.
+
+```text
+Vis kilden.
+Merk analysen som uverifisert.
+Regenerer AHA SER / afterwork.
+Ikke lagre ugyldig analyse som ny innsikt.
+```
