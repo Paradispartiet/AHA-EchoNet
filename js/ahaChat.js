@@ -6291,6 +6291,15 @@
     const persistedUserMessage = global.AHAChatPersistence?.appendUserMessage?.(cleanText, { source: "aha_chat", threadId: CHAT_THREAD_ID });
     renderAhaChatMemoryStatus();
     appendChat("user", cleanText);
+    if (global.AHALinkReader?.hasUrls?.(cleanText)) {
+      void global.AHALinkReader.processUrlsFromMessage(cleanText, {
+        subject_id: SUBJECT_ID,
+        theme_id: getThemeId(),
+        field_id: getFieldId()
+      }).catch((err) => {
+        console.warn("AHA Link Reader feilet", err?.message || err);
+      });
+    }
     if (isAhaMemoryQuestion(cleanText)) {
       if (textarea) textarea.value = "";
       setAhaProcessing(true, "AHA leser minnestatus …");

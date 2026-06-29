@@ -8,6 +8,8 @@
 import express from "express";
 import cors from "cors";
 import OpenAI from "openai";
+import dns from "node:dns/promises";
+import net from "node:net";
 
 const PORT = Number(process.env.PORT || 3030);
 const VOYAGE_API_KEY = process.env.VOYAGE_API_KEY;
@@ -27,6 +29,141 @@ if (!OPENAI_API_KEY) {
 }
 
 const openai = OPENAI_API_KEY ? new OpenAI({ apiKey: OPENAI_API_KEY }) : null;
+
+
+const AHA_READER_USER_AGENT = "AHAReader/0.1 user-initiated transient article analysis";
+const MAX_REDIRECTS = 4;
+const FETCH_TIMEOUT_MS = 12000;
+
+function normalizeWhitespace(value, max = 500) {
+  return String(value || "").replace(/\s+/g, " ").trim().slice(0, max);
+}
+
+function isPrivateIp(ip) {
+  if (!ip) return true;
+  if (ip === "::1" || ip.startsWith("fe80:") || ip.startsWith("fc") || ip.startsWith("fd")) return true;
+  if (net.isIP(ip) === 4) {
+    const parts = ip.split(".").map(Number);
+    const [a, b] = parts;
+    if (a === 10 || a === 127 || a === 0) return true;
+    if (a === 169 && b === 254) return true;
+    if (a === 172 && b >= 16 && b <= 31) return true;
+    if (a === 192 && b === 168) return true;
+    if (a >= 224) return true;
+  }
+  return false;
+}
+
+async function validatePublicArticleUrl(rawUrl) {
+  let parsed;
+  try { parsed = new URL(String(rawUrl || "").trim()); }
+  catch { return { ok: false, error: "invalid_url" }; }
+  if (!["http:", "https:"].includes(parsed.protocol)) return { ok: false, error: "blocked_protocol" };
+  const host = parsed.hostname.toLowerCase();
+  if (!host || host === "localhost" || host.endsWith(".localhost") || host.endsWith(".local")) return { ok: false, error: "blocked_host" };
+  if (net.isIP(host) && isPrivateIp(host)) return { ok: false, error: "blocked_private_ip" };
+  try {
+    const records = await dns.lookup(host, { all: true, verbatim: true });
+    if (!records.length || records.some((record) => isPrivateIp(record.address))) return { ok: false, error: "blocked_private_dns" };
+  } catch {
+    return { ok: false, error: "dns_lookup_failed" };
+  }
+  return { ok: true, url: parsed.toString() };
+}
+
+async function fetchArticleHtml(url, redirects = 0) {
+  const validation = await validatePublicArticleUrl(url);
+  if (!validation.ok) return { ok: false, access_status: "blocked", error: validation.error, final_url: url };
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  try {
+    const response = await fetch(validation.url, {
+      redirect: "manual",
+      signal: controller.signal,
+      headers: {
+        "User-Agent": AHA_READER_USER_AGENT,
+        Accept: "text/html,application/xhtml+xml;q=0.9,*/*;q=0.5"
+      }
+    });
+    if ([301, 302, 303, 307, 308].includes(response.status)) {
+      if (redirects >= MAX_REDIRECTS) return { ok: false, access_status: "blocked", error: "too_many_redirects", final_url: validation.url };
+      const location = response.headers.get("location");
+      if (!location) return { ok: false, access_status: "blocked", error: "redirect_without_location", final_url: validation.url };
+      return fetchArticleHtml(new URL(location, validation.url).toString(), redirects + 1);
+    }
+    if ([401, 402, 403].includes(response.status)) return { ok: false, access_status: response.status === 403 ? "blocked" : "paywall", error: `http_${response.status}`, final_url: validation.url };
+    if (!response.ok) return { ok: false, access_status: "error", error: `http_${response.status}`, final_url: validation.url };
+    const type = response.headers.get("content-type") || "";
+    if (!/html|xml/i.test(type)) return { ok: false, access_status: "metadata_only", error: "not_html", final_url: validation.url };
+    return { ok: true, html: await response.text(), final_url: validation.url };
+  } catch (err) {
+    return { ok: false, access_status: err?.name === "AbortError" ? "blocked" : "error", error: err?.name || "fetch_failed", final_url: validation.url };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function readMeta(html, finalUrl) {
+  const get = (re) => normalizeWhitespace((html.match(re) || [])[1] || "", 1000);
+  const title = get(/<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)/i) || get(/<title[^>]*>([^<]+)/i);
+  const description = get(/<meta[^>]+(?:name|property)=["'](?:description|og:description)["'][^>]+content=["']([^"']+)/i);
+  const canonical = get(/<link[^>]+rel=["']canonical["'][^>]+href=["']([^"']+)/i) || finalUrl;
+  const publisher = get(/<meta[^>]+property=["']og:site_name["'][^>]+content=["']([^"']+)/i);
+  const author = get(/<meta[^>]+(?:name|property)=["'](?:author|article:author)["'][^>]+content=["']([^"']+)/i);
+  const published_at = get(/<meta[^>]+(?:name|property)=["'](?:article:published_time|date|pubdate)["'][^>]+content=["']([^"']+)/i);
+  const image = get(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)/i);
+  return { url: finalUrl, canonical_url: canonical, domain: new URL(finalUrl).hostname.replace(/^www\./, ""), publisher, title, description, author, published_at, image };
+}
+
+function stripHtmlToText(html) {
+  return normalizeWhitespace(html
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<nav[\s\S]*?<\/nav>/gi, " ")
+    .replace(/<aside[\s\S]*?<\/aside>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&"), 50000);
+}
+
+async function extractArticleText(html, url) {
+  try {
+    const [{ JSDOM }, { Readability }] = await Promise.all([import("jsdom"), import("@mozilla/readability")]);
+    const dom = new JSDOM(html, { url });
+    const article = new Readability(dom.window.document).parse();
+    const text = normalizeWhitespace(article?.textContent || "", 50000);
+    if (text.length >= 700) return { text, method: "readability" };
+  } catch {}
+  const fallback = stripHtmlToText(html);
+  return { text: fallback.length >= 900 ? fallback : "", method: "html_text_fallback" };
+}
+
+function metadataCandidate() {
+  return [{ title: "Kilde registrert", summary: "AHA fant metadata for lenken, men kunne ikke lese full artikkeltekst. Brukeren kan lime inn tekst manuelt for full analyse.", text: "Kilde registrert fra metadata. Full artikkeltekst ikke tilgjengelig.", functional_type: "observation", concepts: ["kilde", "metadata", "lenke"], candidate_type: "web_article_metadata" }];
+}
+
+function safeArticleAnalysisFallback(source, text) {
+  const concepts = [...new Set(String(text || "").toLowerCase().match(/[a-zæøåA-ZÆØÅ][\wæøåÆØÅ-]{4,}/g) || [])].slice(0, 8);
+  const summary = source.description || `AHA leste tilgjengelig tekst fra ${source.publisher || source.domain || "kilden"} transient og laget en kort avledet analyse.`;
+  return { short_summary: summary, main_points: [summary], actors: [], claims: [], concepts, conflict_lines: [], possible_ahaavisa_angles: [], candidates: [{ title: source.title || "Analyse av webkilde", summary, text: `Avledet analyse av webkilden: ${summary}`, functional_type: "observation", concepts: concepts.slice(0, 5), candidate_type: "web_article_analysis" }] };
+}
+
+async function analyzeArticleTextForAha({ source, text }) {
+  if (!openai) return safeArticleAnalysisFallback(source, text);
+  const systemInstruction = "Du analyserer en artikkel for AHA. Returner KUN gyldig JSON. Ikke gjengi artikkelen. Ikke kopier lange utdrag. Ikke skriv markdown. Skill tydelig mellom hva artikkelen sier, hvilke påstander som fremmes, hvilke aktører som omtales, hvilke begreper som er sentrale, og hvilke mulige AHA-innsikter som kan lagres. Kandidater skal være avledet analyse, ikke rå avskrift.";
+  const payload = JSON.stringify({ source, text, expected_json: { short_summary: "...", main_points: [], actors: [], claims: [{ claim: "...", speaker: "...", needs_verification: true }], concepts: [], conflict_lines: [], possible_ahaavisa_angles: [], candidates: [] } });
+  try {
+    const response = openai.responses && typeof openai.responses.create === "function"
+      ? await openai.responses.create({ model: OPENAI_MODEL, input: [{ role: "system", content: systemInstruction }, { role: "user", content: payload }] })
+      : null;
+    const raw = response?.output_text || "{}";
+    const parsed = JSON.parse(raw);
+    return Object.assign(safeArticleAnalysisFallback(source, text), parsed, { candidates: safeParseJsonCandidatePayload({ candidates: parsed.candidates }).map((c) => sanitizeInsightCandidate(Object.assign({}, c, { candidate_type: "web_article_analysis" }), parsed.short_summary)).filter(Boolean).slice(0, 5) });
+  } catch (err) {
+    console.warn("[aha-agent] analyze-url OpenAI analyse feilet", err?.message || err);
+    return safeArticleAnalysisFallback(source, text);
+  }
+}
 
 
 const INSIGHT_FUNCTIONAL_TYPES = new Set([
@@ -395,6 +532,38 @@ app.post("/api/aha-agent/insight-candidates", async (req, res) => {
       status: err?.status || err?.code || null,
       type: err?.type || null
     });
+  }
+});
+
+
+app.post("/api/aha-agent/analyze-url", async (req, res) => {
+  try {
+    const body = req.body || {};
+    if (body.mode !== "transient_article_analysis_v1") return res.status(400).json({ ok: false, error: "invalid_mode" });
+    if (body.return_raw_text !== false) return res.status(400).json({ ok: false, error: "return_raw_text_must_be_false" });
+    const validation = await validatePublicArticleUrl(body.url);
+    if (!validation.ok) return res.status(400).json({ ok: false, access_status: "blocked", error: validation.error, policy: { raw_article_stored: false, raw_article_returned: false, transient_fulltext_read: false } });
+    const fetched = await fetchArticleHtml(validation.url);
+    if (!fetched.ok || !fetched.html) {
+      const finalUrl = fetched.final_url || validation.url;
+      const source = { url: validation.url, canonical_url: finalUrl, domain: new URL(finalUrl).hostname.replace(/^www\./, ""), publisher: "", title: finalUrl, description: "", author: "", published_at: "", image: "" };
+      return res.json({ ok: true, access_status: fetched.access_status || "error", source, analysis: { short_summary: "Full artikkeltekst var ikke tilgjengelig for AHA.", main_points: [], actors: [], claims: [], concepts: ["kilde", "metadata", "lenke"], conflict_lines: [], possible_ahaavisa_angles: [] }, candidates: metadataCandidate(), policy: { raw_article_stored: false, raw_article_returned: false, transient_fulltext_read: false } });
+    }
+    const source = readMeta(fetched.html, fetched.final_url);
+    const extracted = await extractArticleText(fetched.html, fetched.final_url);
+    const maxChars = Math.min(Math.max(Number(body.max_analysis_chars) || 12000, 1000), 12000);
+    const articleText = String(extracted.text || "").slice(0, maxChars);
+    const paywallLikely = /abonnement|logg inn|betalingsmur|subscribe|subscription|sign in/i.test(articleText.slice(0, 2000));
+    if (!articleText || paywallLikely) {
+      const status = paywallLikely ? "paywall" : "metadata_only";
+      return res.json({ ok: true, access_status: status, source: Object.assign(source, { extraction_method: extracted.method }), analysis: { short_summary: status === "paywall" ? "Kilden ser ut til å kreve innlogging eller abonnement." : "Full artikkeltekst var ikke tilgjengelig for AHA.", main_points: [], actors: [], claims: [], concepts: ["kilde", "metadata", "lenke"], conflict_lines: [], possible_ahaavisa_angles: [] }, candidates: metadataCandidate(), policy: { raw_article_stored: false, raw_article_returned: false, transient_fulltext_read: false } });
+    }
+    const analysisWithCandidates = await analyzeArticleTextForAha({ source, text: articleText });
+    const { candidates, ...analysis } = analysisWithCandidates;
+    return res.json({ ok: true, access_status: "full", source: Object.assign(source, { extraction_method: extracted.method }), analysis, candidates: Array.isArray(candidates) && candidates.length ? candidates : safeArticleAnalysisFallback(source, articleText).candidates, policy: { raw_article_stored: false, raw_article_returned: false, transient_fulltext_read: true } });
+  } catch (err) {
+    console.error("[aha-agent] analyze-url crashed", err);
+    return res.status(500).json({ ok: false, access_status: "error", error: "internal_error", policy: { raw_article_stored: false, raw_article_returned: false, transient_fulltext_read: false } });
   }
 });
 
