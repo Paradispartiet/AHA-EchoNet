@@ -15,7 +15,8 @@
     historyGoHref: "historygo.html",
     dataIntakeHref: "intake.html",
     knowledgeMapHref: "knowledge-map.html",
-    knowledgeGraphIntelligenceHref: "knowledge-map.html#graph-intelligence"
+    knowledgeGraphIntelligenceHref: "knowledge-map.html#graph-intelligence",
+    knowledgeWorkbenchHref: "knowledge-workbench.html"
   };
 
   function getModules() {
@@ -55,6 +56,7 @@
       modules,
       hasChat: hasModuleByTerms(modules, ["chat"]),
       hasTraining: hasModuleByTerms(modules, ["training"]),
+      hasKnowledgeWorkbench: hasModuleByTerms(modules, ["knowledge-workbench", "knowledge workbench", "workbench"]),
       hasDataIntake: hasModuleByTerms(modules, ["data-intake", "data intake", "intake"]),
       hasKnowledgeCuration: hasModuleByTerms(modules, ["knowledge-curation", "knowledge curation", "curation"]),
       hasKnowledgeMap: hasModuleByTerms(modules, ["knowledge-map", "knowledge map"]),
@@ -70,6 +72,7 @@
     const moduleStatus = collectModuleStatus();
     const chat = findModule(modules, ["chat"]);
     const training = findModule(modules, ["training"]);
+    const knowledgeWorkbench = findModule(modules, ["knowledge-workbench", "knowledge workbench", "workbench"]);
     const dataIntake = findModule(modules, ["data-intake", "data intake", "intake"]);
     const knowledgeCuration = findModule(modules, ["knowledge-curation", "knowledge curation", "curation"]);
     const knowledgeMap = findModule(modules, ["knowledge-map", "knowledge map"]);
@@ -81,6 +84,7 @@
       homeHref: DEFAULT_LINKS.homeHref,
       chatHref: normalizeHref(chat?.href, DEFAULT_LINKS.chatHref),
       trainingHref: normalizeHref(training?.href, DEFAULT_LINKS.trainingHref),
+      knowledgeWorkbenchHref: normalizeHref(knowledgeWorkbench?.href, DEFAULT_LINKS.knowledgeWorkbenchHref),
       dataIntakeHref: normalizeHref(dataIntake?.href, DEFAULT_LINKS.dataIntakeHref),
       knowledgeCurationHref: normalizeHref(knowledgeCuration?.href, "curation.html"),
       knowledgeMapHref: normalizeHref(knowledgeMap?.href, DEFAULT_LINKS.knowledgeMapHref),
@@ -91,7 +95,7 @@
       missingLinks: []
     };
     [
-      ["chatHref", moduleStatus.hasChat], ["dataIntakeHref", moduleStatus.hasDataIntake], ["knowledgeCurationHref", moduleStatus.hasKnowledgeCuration], ["knowledgeMapHref", moduleStatus.hasKnowledgeMap], ["trainingHref", moduleStatus.hasTraining], ["personalAiHref", moduleStatus.hasPersonalAI],
+      ["chatHref", moduleStatus.hasChat], ["knowledgeWorkbenchHref", moduleStatus.hasKnowledgeWorkbench], ["dataIntakeHref", moduleStatus.hasDataIntake], ["knowledgeCurationHref", moduleStatus.hasKnowledgeCuration], ["knowledgeMapHref", moduleStatus.hasKnowledgeMap], ["trainingHref", moduleStatus.hasTraining], ["personalAiHref", moduleStatus.hasPersonalAI],
       ["syncHubHref", moduleStatus.hasSyncHub], ["musicHref", moduleStatus.hasMusic], ["historyGoHref", moduleStatus.hasHistoryGo]
     ].forEach(([key, available]) => { if (!available || !nav[key]) nav.missingLinks.push(key); });
     return nav;
@@ -107,7 +111,8 @@
     const actions = [];
     if (status.personalAI?.ready) actions.push({ id: "open-chat", label: "Åpne AHA Chat og still et spørsmål.", href: nav.chatHref });
     if (status.chat?.chatPersistenceAvailable && (status.dataIntake?.total || 0) < 3) actions.push({ id: "scan-chat-intake", label: "Skann Chat til Data Intake", href: nav.dataIntakeHref });
-    if (status.sourceConnectors?.available) actions.push({ id: "scan-source-connectors", label: "Skann aktive Source Connectors.", href: nav.dataIntakeHref });
+    if (status.knowledgeWorkbench?.available) actions.push({ id: "open-knowledge-workbench", label: "Åpne Knowledge Workbench.", href: nav.knowledgeWorkbenchHref });
+    if (status.sourceConnectors?.available) actions.push({ id: "scan-source-connectors", label: "Skann aktive Source Connectors.", href: nav.knowledgeWorkbenchHref || nav.dataIntakeHref });
     if (status.dataIntake?.available) actions.push({ id: "open-data-intake", label: "Åpne Data Intake og vurder nytt materiale.", href: nav.dataIntakeHref });
     if (status.knowledgeCuration?.available) actions.push({ id: "open-knowledge-curation", label: "Rydd Data Intake i Knowledge Curation.", href: nav.knowledgeCurationHref || "curation.html" });
     if (status.knowledgeMap?.available) actions.push({ id: "open-knowledge-map", label: "Se koblinger i Knowledge Map.", href: nav.knowledgeMapHref || "knowledge-map.html" });
@@ -146,6 +151,7 @@
     const sourceConnectorStatus = window.AHASourceConnectors?.collectConnectorStatus?.() || null;
     const chatStats = window.AHAChatPersistence?.collectChatStats?.() || null;
     const chatCandidates = window.AHAChatPersistence?.buildChatIntakeCandidates?.({ dryRun:true }) || null;
+    const workbenchStatus = window.AHAKnowledgeWorkbench?.buildWorkbenchStatus?.({ save:false }) || null;
     const graphIntelligenceSummary = window.AHAKnowledgeGraphIntelligence?.buildGraphIntelligenceSummary?.() || { available: Boolean(window.AHAKnowledgeGraphIntelligence), status:"empty", score:0, insightCount:0, nextAction:"Analyser Knowledge Map." };
     const knowledgeMapSummary = window.AHAKnowledgeMap?.buildKnowledgeMapSummary?.() || { available: modules.hasKnowledgeMap, nodes:0, edges:0, projects:0, concepts:0, nextAction:"Bygg Knowledge Map fra kuratert materiale." };
     const curationSummary = window.AHAKnowledgeCuration?.buildCurationSummary?.() || { available: modules.hasKnowledgeCuration, total: 0, reviewCount: 0, highPriority: 0, duplicateGroups: 0, trainingReady: 0, nextAction: "Bygg kurateringskø fra Data Intake." };
@@ -158,6 +164,7 @@
       version: VERSION,
       navigation,
       home: { available: true, href: navigation.homeHref, modulesVisible: modules.modules.length, summary: "AHA Home er hovedinngangen til samlet produktflyt." },
+      knowledgeWorkbench: { available: Boolean(window.AHAKnowledgeWorkbench) || modules.hasKnowledgeWorkbench, href: navigation.knowledgeWorkbenchHref, status: workbenchStatus?.overall?.status || "empty", score: workbenchStatus?.overall?.score || 0, currentStage: workbenchStatus?.workflow?.currentStage || "sources", nextAction: workbenchStatus?.nextAction || null, summary: "Knowledge Workbench samler Kilder → Data Intake → Curation → Knowledge Map → Graph Intelligence → Training → Personal AI → Chat." },
       chat: { available: modules.hasChat, href: navigation.chatHref, chatPersistenceAvailable: Boolean(window.AHAChatPersistence), chatSessions: chatStats?.sessions || 0, chatMessages: chatStats?.messages || 0, chatIntakeCandidates: chatCandidates?.items?.length || 0, summary: "AHA Chat er hovedsamtalen med godkjent personlig kontekst når den finnes." },
       personalAI: { available: modules.hasPersonalAI, controlAvailable: Boolean(window.AHAPersonalAiControl) || modules.hasPersonalAI, ready: personalReady, href: navigation.personalAiHref, summary: "Personal AI viser status for minne, corpus, retrieval, composer og evaluation." },
       sourceConnectors: { available: Boolean(window.AHASourceConnectors), active: sourceConnectorStatus?.active || 0, planned: sourceConnectorStatus?.planned || 0, missing: sourceConnectorStatus?.missing || 0, totalAvailable: sourceConnectorStatus?.totalAvailable || 0, nextAction: sourceConnectorStatus?.active ? "Skann aktive kilder." : "Koble runtime-kilder før skann." },
@@ -175,6 +182,7 @@
     let score = 0;
     if (modules.modules.length) score += 15;
     if (status.chat.available) score += 15;
+    if (status.knowledgeWorkbench.available) score += 10;
     if (status.sourceConnectors.available) score += 5;
     if (status.personalAI.controlAvailable) score += 20;
     if (status.dataIntake.available) score += 10;
@@ -190,7 +198,7 @@
     if (status.primaryNextAction?.href) score += 5;
     score = Math.min(100, score);
     status.overall = { status: statusFromScore(score), score, label: `${score}/100 · ${statusFromScore(score)}` };
-    status.summary = `AHA er ${status.overall.status}: Kilder, Source Connectors, Data Intake, Knowledge Curation, Knowledge Map, Graph Intelligence, Training Corpus, Personal AI og AHA Chat er samlet i én produktflyt.`;
+    status.summary = `AHA er ${status.overall.status}: Kilder, Knowledge Workbench, Data Intake, Knowledge Curation, Knowledge Map, Graph Intelligence, Training Corpus, Personal AI og AHA Chat er samlet i én produktflyt.`;
     if (options.save !== false) saveProductStatus(status);
     return status;
   }

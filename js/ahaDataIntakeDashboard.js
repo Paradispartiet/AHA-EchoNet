@@ -1,3 +1,4 @@
+// Åpne Knowledge Workbench → knowledge-workbench.html
 // Dashboard for AHA Data Intake V1.
 (function (global) {
   "use strict";

@@ -2487,3 +2487,13 @@ Knowledge Map-dashboardet viser et nytt “Graph Intelligence”-panel med statu
 Personal AI Control inkluderer `knowledgeGraphIntelligence` i modulstatus og anbefaler å analysere Knowledge Map, godkjenne/avvise suggested links, sende graph insights til Curation og lage training examples for underforklarte begreper. Product Integration inkluderer `knowledgeGraphIntelligence` med href, status, score, insight count og next action, og produktflyten er oppdatert til: Kilder → Source Connectors → Data Intake → Knowledge Curation → Knowledge Map → Graph Intelligence → Training Corpus / Personal AI / Chat. Meta Insights Agent får `knowledgeGraphIntelligencePack` slik at agenten kan forstå dominerende prosjekter, begreper og kunnskapshull.
 
 Bevisste V2-restpunkter: ingen ny retrieval-motor, ingen automatisk Training Corpus-import, ingen automatisk confirmed memory, ingen tung separat graph editor og ingen direkte Knowledge Map-mutasjon uten en tydelig bruker-/curation-flyt.
+
+## AHA Knowledge Workbench V1
+
+AHA Knowledge Workbench samler Data Intake, Knowledge Curation, Knowledge Map, Graph Intelligence og Training Corpus i én arbeidsflate.
+
+Workbench viser workflow fra kilder til Chat, samlet status, anbefalinger og neste handling for kunnskapsarbeidet. Den kan kjøre trygge refresh/build/analyze-steg: source connector status, bygging av curation queue fra eksisterende intake, oppdatering av Knowledge Map, Graph Intelligence-analyse og innsamling av training readiness.
+
+Workbench godkjenner eller importerer ikke materiale automatisk. Approval, import til Training Corpus, memory confirmation og consent-endringer krever eksplisitt brukerhandling i relevante flater.
+
+Product Integration, Personal AI Control og Meta Insights Agent får workbench-status slik at AHA kan forstå hvor i kunnskapsflyten systemet står. Dette gjør AHA sitt kunnskapsarbeid operasjonelt og samlet.
