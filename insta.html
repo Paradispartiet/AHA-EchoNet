@@ -8,11 +8,12 @@
   <link rel="stylesheet" href="css/aha-dashboard.css" />
   <link rel="stylesheet" href="css/ahaModule.css" />
   <link rel="stylesheet" href="css/aha-feed.css" />
+  <link rel="stylesheet" href="css/aha-insta.css" />
   <link rel="stylesheet" href="css/aha-global-nav.css" />
 </head>
 <body>
   <div id="aha-global-nav"></div>
-  <main class="aha-dashboard" style="max-width: 900px;">
+  <main class="aha-dashboard insta-page">
     <section class="aha-panel aha-module-shell">
       <header class="aha-module-shell-header">
         <div>
@@ -26,59 +27,64 @@
       </div>
     </section>
 
-    <section class="aha-panel module-form insta-import-focus">
-    <h2>Flytt fra Instagram</h2>
-    <p>Ta med deg egne bilder, videoer, captions og stories fra Instagram-eksporten din.</p>
-    <ol class="insta-import-steps">
-      <li>Last ned data fra Instagram</li>
-      <li>Last opp eksportfilene her</li>
-      <li>Velg hva du vil importere</li>
-      <li>Forhåndsvis importen</li>
-      <li>Publiser eller lagre privat</li>
-    </ol>
-    <label for="insta-import-files">Last opp eksportfiler</label>
-    <input id="insta-import-files" type="file" multiple accept=".json,.zip,image/*,video/*" />
-    <label for="insta-import-folder">Velg mappe der nettleseren støtter det</label>
-    <input id="insta-import-folder" type="file" multiple webkitdirectory />
-    <div id="insta-import-status" class="module-meta"></div>
-    <div id="insta-import-preview" class="module-list"></div>
-  </section>
+    <section class="aha-panel insta-profile-section" id="insta-profile-section">
+      <h2 class="sr-only">Min profil</h2>
+      <div id="insta-profile-card"></div>
+      <details class="insta-collapsible">
+        <summary>Rediger profil</summary>
+        <div class="module-form">
+          <input id="insta-profile-username" type="text" placeholder="Brukernavn" />
+          <input id="insta-profile-display-name" type="text" placeholder="Visningsnavn" />
+          <textarea id="insta-profile-bio" placeholder="Bio"></textarea>
+          <input id="insta-profile-avatar" type="text" placeholder="Avatar-URL/path" />
+          <button id="insta-profile-save" type="button">Lagre profil</button>
+        </div>
+      </details>
+    </section>
 
-  <section class="aha-panel module-form" id="insta-profile-section">
-    <h2>Min AHA Insta-profil</h2>
-    <input id="insta-profile-username" type="text" placeholder="Brukernavn" />
-    <input id="insta-profile-display-name" type="text" placeholder="Visningsnavn" />
-    <textarea id="insta-profile-bio" placeholder="Bio"></textarea>
-    <input id="insta-profile-avatar" type="text" placeholder="Avatar-URL/path" />
-    <button id="insta-profile-save" type="button">Lagre profil</button>
-    <div id="insta-profile-card"></div>
-  </section>
+    <section class="aha-panel insta-stories-section">
+      <h2 class="sr-only">Stories</h2>
+      <div id="insta-stories" class="module-list"></div>
+    </section>
 
-  <section class="aha-panel">
-    <form id="insta-form" class="module-form">
-      <h2>Publiser ny post</h2>
-      <input id="insta-title" type="text" placeholder="Tittel" />
-      <input id="insta-src" type="text" placeholder="Bilde-/video-url eller path" />
-      <textarea id="insta-caption" placeholder="Caption …"></textarea>
-      <button type="submit">Publiser lokalt</button>
-    </form>
-  </section>
+    <section class="aha-panel insta-feed-section">
+      <div id="insta-feed-controls"></div>
+      <div id="insta-list" class="module-list"></div>
+    </section>
 
-  <section class="aha-panel module-form">
-    <h2>Importer fra enhet</h2>
-    <p>Bruk samme opplaster over for enkeltfiler fra enheten din (bilde/video/json).</p>
-  </section>
+    <section class="aha-panel">
+      <details class="insta-collapsible">
+        <summary>+ Ny post</summary>
+        <form id="insta-form" class="module-form">
+          <input id="insta-title" type="text" placeholder="Tittel" />
+          <input id="insta-src" type="text" placeholder="Bilde-/video-url eller path" />
+          <textarea id="insta-caption" placeholder="Caption …"></textarea>
+          <button type="submit">Publiser lokalt</button>
+        </form>
+      </details>
+    </section>
 
-  <section class="aha-panel">
-    <h2>Stories</h2>
-    <div id="insta-stories" class="module-list"></div>
-  </section>
-
-  <section class="aha-panel">
-    <h2>Poster</h2>
-    <div id="insta-feed-controls"></div>
-    <div id="insta-list" class="module-list"></div>
-  </section>
+    <section class="aha-panel">
+      <details class="insta-collapsible">
+        <summary>Flytt fra Instagram / importer fra enhet</summary>
+        <div class="module-form insta-import-focus">
+          <p>Ta med deg egne bilder, videoer, captions og stories fra Instagram-eksporten din, eller last opp enkeltfiler fra enheten din.</p>
+          <ol class="insta-import-steps">
+            <li>Last ned data fra Instagram</li>
+            <li>Last opp eksportfilene her</li>
+            <li>Velg hva du vil importere</li>
+            <li>Forhåndsvis importen</li>
+            <li>Publiser eller lagre privat</li>
+          </ol>
+          <label for="insta-import-files">Last opp eksportfiler</label>
+          <input id="insta-import-files" type="file" multiple accept=".json,.zip,image/*,video/*" />
+          <label for="insta-import-folder">Velg mappe der nettleseren støtter det</label>
+          <input id="insta-import-folder" type="file" multiple webkitdirectory />
+          <div id="insta-import-status" class="module-meta"></div>
+          <div id="insta-import-preview" class="module-list"></div>
+        </div>
+      </details>
+    </section>
   </main>
 
   <script src="js/insightsChamber.js"></script>
