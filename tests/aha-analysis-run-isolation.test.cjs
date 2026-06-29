@@ -44,4 +44,34 @@ function ctx(){
   assert.doesNotMatch(els.get('aha-auto-output').innerHTML, /helsejournalistikk|pinse/i);
   assert.match(els.get('aha-answer-evaluation-status').textContent, /venter på aktiv analyse/i);
 }
+
+{
+  const {c}=ctx(); const h=c.AHATestHooks;
+  const source='lokal helsejournalistikk pasienter pårørende mediedramaturgi kommunal forvaltning sykehus';
+  const run=h.createAnalysisRun(source);
+  const memory={ used:true, reason:'Semantisk søk fant treff', confidence:.8, mode:'semantic_match',
+    selectedInsights:[
+      {id:'pinse', title:'Pinse', summary:'Den hellige ånd tungetale Babels tårn apostlene', concepts:['pinse']},
+      {id:'helse', title:'Helsejournalistikk', summary:'lokal helsejournalistikk om pasienter pårørende og kommunal forvaltning', concepts:['helsejournalistikk']}
+    ],
+    localMatches:[{insight:{id:'pinse-local', title:'Pinse lokalt', summary:'tungetale og apostlene'}}],
+    semanticMatches:[{id:'helse-sem', title:'Lokal helsejournalistikk', summary:'pasienter og pårørende i kommunal forvaltning'}],
+    summaryForAgent:'gammel summary'
+  };
+  const filtered=h.filterMemoryContextForActiveSource(memory, source, run);
+  assert.equal(filtered.used, true);
+  assert.equal(filtered.selectedInsights.length,1);
+  assert.equal(filtered.selectedInsights[0].id,'helse');
+  assert.doesNotMatch(filtered.summaryForAgent, /pinse|Babel|tungetale|apostlene|hellige ånd/i);
+}
+
+{
+  const {c}=ctx(); const h=c.AHATestHooks;
+  const source='fotball kamp trener scoring tabell';
+  const memory={ used:true, reason:'Semantisk søk fant treff', confidence:.8, mode:'semantic_match', selectedInsights:[{id:'helse', title:'Helsejournalistikk', summary:'pasienter pårørende kommunal forvaltning'}], localMatches:[], semanticMatches:[], summaryForAgent:'helsejournalistikk' };
+  const filtered=h.filterMemoryContextForActiveSource(memory, source, h.createAnalysisRun(source));
+  assert.equal(filtered.used, false);
+  assert.equal(filtered.summaryForAgent, '');
+}
+
 console.log('aha-analysis-run-isolation tests passed');
