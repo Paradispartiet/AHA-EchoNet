@@ -14,7 +14,8 @@
     musicHref: "music.html",
     historyGoHref: "historygo.html",
     dataIntakeHref: "intake.html",
-    knowledgeMapHref: "knowledge-map.html"
+    knowledgeMapHref: "knowledge-map.html",
+    knowledgeGraphIntelligenceHref: "knowledge-map.html#graph-intelligence"
   };
 
   function getModules() {
@@ -110,6 +111,7 @@
     if (status.dataIntake?.available) actions.push({ id: "open-data-intake", label: "Åpne Data Intake og vurder nytt materiale.", href: nav.dataIntakeHref });
     if (status.knowledgeCuration?.available) actions.push({ id: "open-knowledge-curation", label: "Rydd Data Intake i Knowledge Curation.", href: nav.knowledgeCurationHref || "curation.html" });
     if (status.knowledgeMap?.available) actions.push({ id: "open-knowledge-map", label: "Se koblinger i Knowledge Map.", href: nav.knowledgeMapHref || "knowledge-map.html" });
+    if (status.knowledgeGraphIntelligence?.available) actions.push({ id: "open-graph-intelligence", label: "Analyser Knowledge Map med Graph Intelligence.", href: status.knowledgeGraphIntelligence.href });
     actions.push({ id: "approve-training", label: "Åpne Training Corpus og godkjenn materiale.", href: nav.trainingHref });
     actions.push({ id: "check-personal-ai", label: "Åpne Personal AI og kjør full kontrolltest.", href: nav.personalAiHref });
     if (status.syncHub?.available) actions.push({ id: "open-sync-hub", label: "Åpne Sync Hub og se importkandidater.", href: nav.syncHubHref });
@@ -144,6 +146,7 @@
     const sourceConnectorStatus = window.AHASourceConnectors?.collectConnectorStatus?.() || null;
     const chatStats = window.AHAChatPersistence?.collectChatStats?.() || null;
     const chatCandidates = window.AHAChatPersistence?.buildChatIntakeCandidates?.({ dryRun:true }) || null;
+    const graphIntelligenceSummary = window.AHAKnowledgeGraphIntelligence?.buildGraphIntelligenceSummary?.() || { available: Boolean(window.AHAKnowledgeGraphIntelligence), status:"empty", score:0, insightCount:0, nextAction:"Analyser Knowledge Map." };
     const knowledgeMapSummary = window.AHAKnowledgeMap?.buildKnowledgeMapSummary?.() || { available: modules.hasKnowledgeMap, nodes:0, edges:0, projects:0, concepts:0, nextAction:"Bygg Knowledge Map fra kuratert materiale." };
     const curationSummary = window.AHAKnowledgeCuration?.buildCurationSummary?.() || { available: modules.hasKnowledgeCuration, total: 0, reviewCount: 0, highPriority: 0, duplicateGroups: 0, trainingReady: 0, nextAction: "Bygg kurateringskø fra Data Intake." };
     const dataIntakeSummary = window.AHADataIntake?.buildIntakeSummary?.() || { available: modules.hasDataIntake, total: 0, reviewCount: 0, approvedCount: 0, importedCount: 0, nextAction: "Skann AHA-kilder." };
@@ -161,6 +164,7 @@
       dataIntake: { available: Boolean(window.AHADataIntake) || modules.hasDataIntake, href: navigation.dataIntakeHref, total: dataIntakeSummary.total || 0, reviewCount: dataIntakeSummary.reviewCount || 0, approvedCount: dataIntakeSummary.approvedCount || 0, importedCount: dataIntakeSummary.importedCount || 0, nextAction: dataIntakeSummary.nextAction || "Skann AHA-kilder.", summary: "Data Intake samler kilder før Training Corpus." },
       knowledgeCuration: { available: Boolean(window.AHAKnowledgeCuration) || modules.hasKnowledgeCuration, href: navigation.knowledgeCurationHref || "curation.html", total: curationSummary.total || 0, reviewCount: curationSummary.reviewCount || 0, highPriority: curationSummary.highPriority || 0, duplicateGroups: curationSummary.duplicateGroups || 0, trainingReady: curationSummary.trainingReady || 0, nextAction: curationSummary.nextAction || "Bygg kurateringskø fra Data Intake.", summary: "Knowledge Curation rydder materiale mellom Data Intake og Training Corpus." },
       knowledgeMap: { available: Boolean(window.AHAKnowledgeMap) || modules.hasKnowledgeMap, href: navigation.knowledgeMapHref || "knowledge-map.html", nodes: knowledgeMapSummary.nodes || 0, edges: knowledgeMapSummary.edges || 0, projects: knowledgeMapSummary.projects || 0, concepts: knowledgeMapSummary.concepts || 0, nextAction: knowledgeMapSummary.nextAction || "Bygg Knowledge Map fra kuratert materiale.", summary: "Knowledge Map synliggjør koblinger før Training Corpus, Personal AI og Chat." },
+      knowledgeGraphIntelligence: { available: Boolean(window.AHAKnowledgeGraphIntelligence), href: DEFAULT_LINKS.knowledgeGraphIntelligenceHref, status: graphIntelligenceSummary.status || "empty", score: graphIntelligenceSummary.score || 0, insights: graphIntelligenceSummary.insightCount || 0, nextAction: graphIntelligenceSummary.nextAction || "Analyser Knowledge Map.", summary: "Graph Intelligence analyserer Knowledge Map før Training Corpus, Personal AI og Chat." },
       training: { available: modules.hasTraining, href: navigation.trainingHref, approvedCount, summary: "Training Corpus er datagodkjennings- og treningslaget." },
       syncHub: { available: modules.hasSyncHub, href: navigation.syncHubHref, summary: "Sync Hub henter/importerer materiale som senere kan godkjennes." },
       music: { available: modules.hasMusic, href: navigation.musicHref, summary: "AHA Music kobler musikkdata til innsikt, kanon og History Go." },
@@ -180,12 +184,13 @@
     if (status.syncHub.available) score += 10;
     if (status.music.available) score += 10;
     if (status.historyGo.available) score += 10;
+    if (status.knowledgeGraphIntelligence.available) score += 5;
     status.nextActions = buildProductNextActions(status);
     status.primaryNextAction = getPrimaryNextAction(status);
     if (status.primaryNextAction?.href) score += 5;
     score = Math.min(100, score);
     status.overall = { status: statusFromScore(score), score, label: `${score}/100 · ${statusFromScore(score)}` };
-    status.summary = `AHA er ${status.overall.status}: Kilder, Source Connectors, Data Intake, Knowledge Curation, Knowledge Map, Training Corpus, Personal AI og AHA Chat er samlet i én produktflyt.`;
+    status.summary = `AHA er ${status.overall.status}: Kilder, Source Connectors, Data Intake, Knowledge Curation, Knowledge Map, Graph Intelligence, Training Corpus, Personal AI og AHA Chat er samlet i én produktflyt.`;
     if (options.save !== false) saveProductStatus(status);
     return status;
   }

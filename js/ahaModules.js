@@ -47,7 +47,16 @@
       type: "system",
       status: "active",
       href: "knowledge-map.html",
-      description: "Viser prosjekter, begreper, kilder og koblinger i AHA sin kuraterte kunnskap.",
+      description: "Viser prosjekter, begreper, kilder og koblinger i AHA sin kuraterte kunnskap, med Graph Intelligence for koblingsforslag, hull og neste kunnskapsarbeid.",
+      phase: 2
+    },
+    {
+      id: "knowledge-graph-intelligence",
+      title: "Graph Intelligence",
+      type: "system",
+      status: "active",
+      href: "knowledge-map.html#graph-intelligence",
+      description: "Analyserer AHA sitt kunnskapskart og foreslår koblinger, hull og neste kunnskapsarbeid.",
       phase: 2
     },
     {

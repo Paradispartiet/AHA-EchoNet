@@ -432,6 +432,7 @@
   function buildDataIntakePackSafe(){ try { return global.AHADataIntake?.buildIntakeSummary?.() || null; } catch { return null; } }
   function buildKnowledgeCurationPackSafe(){ try { return global.AHAKnowledgeCuration?.buildCurationSummary?.() || null; } catch { return null; } }
   function buildKnowledgeMapPackSafe(){ try { const v=global.AHAKnowledgeMap?.buildKnowledgeMapSummary?.(); return v ? { available:Boolean(v.available), nodes:Number(v.nodes)||0, edges:Number(v.edges)||0, projects:Number(v.projects)||0, concepts:Number(v.concepts)||0, topProjects:asArray(v.topProjects).slice(0,5), topConcepts:asArray(v.topConcepts).slice(0,5), nextAction:asText(v.nextAction) } : null; } catch { return null; } }
+  function buildKnowledgeGraphIntelligencePackSafe(){ try { const v=global.AHAKnowledgeGraphIntelligence?.buildGraphIntelligenceSummary?.(); return v ? { available:Boolean(v.available), status:asText(v.status), score:Number(v.score)||0, insightCount:Number(v.insightCount)||0, topInsights:asArray(v.topInsights).slice(0,5), nextAction:asText(v.nextAction) } : null; } catch { return null; } }
   function buildSourceConnectorsPackSafe(){ const api=global.AHASourceConnectors; if(!api?.collectConnectorStatus) return null; try { const s=api.collectConnectorStatus(); return { available:true, active:Number(s.active)||0, planned:Number(s.planned)||0, missing:Number(s.missing)||0, totalAvailable:Number(s.totalAvailable)||0, summary:asText(s.summary) }; } catch { return { available:true, active:0, planned:0, missing:0, totalAvailable:0, summary:"Source Connectors status unavailable." }; } }
 
   function buildChatPersistencePackSafe() {
@@ -466,6 +467,8 @@
     if (knowledgeCurationPack) context.knowledgeCurationPack = knowledgeCurationPack;
     const knowledgeMapPack = options.knowledgeMapPack && typeof options.knowledgeMapPack === "object" ? options.knowledgeMapPack : buildKnowledgeMapPackSafe();
     if (knowledgeMapPack) context.knowledgeMapPack = knowledgeMapPack;
+    const knowledgeGraphIntelligencePack = options.knowledgeGraphIntelligencePack && typeof options.knowledgeGraphIntelligencePack === "object" ? options.knowledgeGraphIntelligencePack : buildKnowledgeGraphIntelligencePackSafe();
+    if (knowledgeGraphIntelligencePack) context.knowledgeGraphIntelligencePack = knowledgeGraphIntelligencePack;
     const trainingPack = options.trainingPack && typeof options.trainingPack === "object"
       ? options.trainingPack
       : buildTrainingPackSafe();
