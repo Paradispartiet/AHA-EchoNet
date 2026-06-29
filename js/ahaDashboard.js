@@ -2769,9 +2769,14 @@
   }
 
   async function renderDashboard() {
+    const event = arguments[0];
     const renderSeq = ++ahaDashboardRenderSeq;
     try {
-      const authState = await loadAuthState();
+      const eventAuthState = event?.detail?.user
+        ? { user: event.detail.user, profile: event.detail.profile || null, profileResult: event.detail.profile ? { ok: true, data: event.detail.profile } : null }
+        : null;
+      if (eventAuthState) renderIdentity(eventAuthState);
+      const authState = eventAuthState || await loadAuthState();
       if (renderSeq !== ahaDashboardRenderSeq) return;
       if (authState.user?.id && isHistoryGoLoginReturnRequest()) {
         redirectBackToHistoryGoProfile();
@@ -2779,6 +2784,7 @@
       }
 
       renderIdentity(authState);
+      safeRender("renderProductIntegration", renderProductIntegration);
 
       const local = safeRender("localStats", localStats) || {};
       let dbResult = { ok: false, fallback: "not_loaded" };
@@ -2796,11 +2802,7 @@
       const moduleHealth = safeRender("buildModuleHealth", () => buildModuleHealth(stats, authState)) || {};
       lastState = { authState, stats, sourceLabel, moduleHealth };
 
-      try {
-        renderModules(moduleHealth);
-      } catch (error) {
-        console.warn("AHADashboard: renderModules feilet", error);
-      }
+      safeRender("renderModules", function () { renderModules(moduleHealth); });
       safeRender("bindHistoryGoHomeTile", bindHistoryGoHomeTile);
       safeRender("bindHistoryGoImportTrigger", bindHistoryGoImportTrigger);
       safeRender("bindImportButtons", bindImportButtons);
@@ -2816,11 +2818,7 @@
       const stats = safeRender("localStats", localStats) || {};
       const moduleHealth = safeRender("buildModuleHealth", () => buildModuleHealth(stats, authState)) || {};
       lastState = { authState, stats, sourceLabel: "localStorage", moduleHealth, error };
-      try {
-        renderModules(moduleHealth);
-      } catch (error) {
-        console.warn("AHADashboard: renderModules feilet", error);
-      }
+      safeRender("renderModules", function () { renderModules(moduleHealth); });
       safeRender("bindHistoryGoHomeTile", bindHistoryGoHomeTile);
       safeRender("bindHistoryGoImportTrigger", bindHistoryGoImportTrigger);
       safeRender("bindImportButtons", bindImportButtons);
@@ -2950,21 +2948,18 @@
 
   function bind() {
     persistAuthReturnTargetFromUrl();
-    // Mount the static module registry before auth/database diagnostics can delay
-    // the richer dashboard refresh. renderDashboard replaces these badges with
-    // live health data when its asynchronous work completes.
-    try {
-      renderModules({});
-    } catch (error) {
-      console.warn("AHADashboard: renderModules feilet", error);
-    }
-    safeRender("renderProductIntegration", renderProductIntegration);
+    // Own the header immediately so static markup never remains stuck on the
+    // loading copy while slower, non-critical dashboard modules initialize.
+    renderIdentity({ user: null, profile: null, profileResult: { ok: false, reason: "initializing" } });
     bindProfileNameForm();
     bindLoginModal();
     bindProfileNameModal();
     bindDashboardKeyboardShortcuts();
-    safeRender("renderSyncHubStatus", renderSyncHubStatus);
+    // Mount non-critical panels defensively after identity controls are bound.
+    // renderDashboard refreshes these with live auth/database state when ready.
+    safeRender("renderModules", function () { renderModules({}); });
     safeRender("renderProductIntegration", renderProductIntegration);
+    safeRender("renderSyncHubStatus", renderSyncHubStatus);
     renderDashboard();
     window.addEventListener("aha:source-event-added", renderDashboard);
     window.addEventListener("aha:historygo-imported", renderDashboard);
