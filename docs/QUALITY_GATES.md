@@ -1,0 +1,209 @@
+# AHA Quality Gates
+
+Dette dokumentet definerer kvalitetsporter for AHA-analyser.
+
+## Hvorfor quality gates trengs
+
+AHA kan ha korrekt schema, korrekt UI og korrekt eksportformat, men likevel analysere feil tekst. Derfor må kvalitet sjekkes på mer enn shape.
+
+## Eksisterende validering
+
+Repoet har allerede fixture-validering via:
+
+```text
+npm run validate:aha-fixtures
+```
+
+Scriptet leser `docs/fixtures/aha-analysis` og validerer at fixtures har:
+
+```text
+id
+title
+inputText
+expectedCanonicalAnalysis
+```
+
+og at canonical analysis har riktig shape:
+
+```text
+contentType
+domain
+theme
+mainTension
+keyInsight
+fieldConnections
+historyGoLinks
+suggestedActions
+confidence
+warnings
+```
+
+Dette er nødvendig, men ikke tilstrekkelig.
+
+## Gate 1: Shape
+
+Sjekker at objektet har riktig form.
+
+```text
+Pass: felt finnes og har riktig type.
+Fail: manglende felt, feil array/object/string/number.
+```
+
+Status i dag: delvis implementert.
+
+## Gate 2: Source binding
+
+Sjekker at kildebaserte felt tilhører samme `sourceTextHash`.
+
+```text
+Pass: field.sourceTextHash === currentSourceTextHash
+Fail: feil hash, manglende hash uten same-run-bevis, eller selectedAfterwork fra annen kilde
+```
+
+Status i dag: må strammes.
+
+## Gate 3: Topic consistency
+
+Sjekker at output faktisk handler om input.
+
+```text
+Pass: output-termer overlapper kildetermer.
+Fail: output domineres av temaer som ikke finnes i kilden.
+```
+
+Minimum:
+
+```text
+sourceTerms = extractTopTerms(sourceText)
+outputTerms = extractTopTerms(ahaSer + canonicalAnalysis + afterwork)
+intersectionRatio >= threshold
+```
+
+I tillegg:
+
+```text
+forbiddenTerms må ikke finnes i output.
+```
+
+## Gate 4: Memory isolation
+
+Sjekker at personlig/chamber-minne ikke overtar kildeanalyse.
+
+```text
+Pass: memory vises bare i eget felt når det brukes.
+Fail: AHA SER eller afterwork beskriver tidligere minne i stedet for kilden.
+```
+
+## Gate 5: Export consistency
+
+Sjekker at eksportpakken ikke blander lag.
+
+```text
+Pass: ahaSer, canonicalAnalysis, afterwork og rawAutoPayload har samme source binding.
+Fail: sourceText er ny, men afterwork/payload er gammel.
+```
+
+## Gate 6: Score ceiling
+
+Svar-evaluering må ha maks-score ved alvorlige feil.
+
+```text
+Hvis source mismatch:
+  source_grounding <= 20
+  total_score <= 30
+
+Hvis forbidden terms finnes:
+  total_score <= 20
+  status = invalid_source_mismatch
+```
+
+## Fixture-utvidelse
+
+Utvid fixture-formatet:
+
+```json
+{
+  "id": "nmt_conceptual_articles",
+  "title": "NMT konseptuelle artikler",
+  "inputText": "...",
+  "expectedCanonicalAnalysis": { },
+  "requiredTerms": ["konseptuelle artikler", "begreper", "offentlighet"],
+  "forbiddenTerms": ["old_domain_term_1", "old_domain_term_2"],
+  "expectedSourceHashBinding": true
+}
+```
+
+## Testlogikk
+
+Pseudo:
+
+```text
+runAnalysis(inputText)
+assert shape ok
+assert sourceTextHash exists
+assert all source-grounded fields match sourceTextHash
+assert requiredTerms appear in output
+assert forbiddenTerms do not appear in output
+assert answer score respects mismatch ceilings
+```
+
+## Golden mismatch test
+
+Bygg en test der chamberet fylles med irrelevant tidligere materiale før ny analyse.
+
+```text
+Seed chamber: gammelt domene A
+Input text: tydelig domene B
+Expected: AHA SER handler om B
+Forbidden: ord fra A
+```
+
+Denne testen er viktigere enn ren happy path.
+
+## UI quality gate
+
+Explorer skal ikke få uvalidert analyse.
+
+```text
+if analysis.quality.status !== "valid":
+  render source text
+  render warning
+  hide AHA SER / afterwork action buttons
+```
+
+## Export quality gate
+
+Eksport skal alltid inkludere:
+
+```text
+quality.status
+quality.sourceBinding
+quality.topicConsistency
+quality.memoryIsolation
+invalidFields
+```
+
+## Minimum statusverdier
+
+```text
+valid
+warning_unverified_binding
+invalid_source_mismatch
+invalid_stale_afterwork
+invalid_stale_payload
+invalid_memory_contamination
+invalid_shape
+```
+
+## Praktisk prioritet
+
+Første implementering bør være enkel:
+
+```text
+1. sourceTextHash-match
+2. forbiddenTerms
+3. requiredTerms
+4. score ceiling
+```
+
+Deretter kan semantisk overlap og embeddings legges til.
