@@ -4,6 +4,10 @@
 // Python-motor vs. JavaScript-fallback. Harnessen er selvinneholdt diagnostikk:
 // den leser/skriver bare localStorage og global.AHAEngineClient, og kaller ikke
 // inn i øvrig ahaChat-logikk. Lastes etter ahaChat.js.
+//
+// I tillegg reparerer den auto-output source binding etter render, slik at
+// payload/canonicalAnalysis får samme sourceTextHash som wrapperen før eksport
+// eller Explorer leser siste auto-output.
 
 (function (global) {
   "use strict";
@@ -20,6 +24,138 @@
     } catch {
       return null;
     }
+  }
+
+  function shortHash(input) {
+    let hash = 5381;
+    const value = String(input || "");
+    for (let i = 0; i < value.length; i += 1) {
+      hash = ((hash << 5) + hash) + value.charCodeAt(i);
+      hash |= 0;
+    }
+    return Math.abs(hash).toString(36);
+  }
+
+  function normalizeSourceHash(value) {
+    return String(value || "").trim();
+  }
+
+  function readObjectSourceHash(value) {
+    const obj = value && typeof value === "object" && !Array.isArray(value) ? value : {};
+    return normalizeSourceHash(
+      obj.sourceTextHash
+      || obj.source_text_hash
+      || obj.sourceHash
+      || obj.source_hash
+      || obj.source_binding?.currentSourceTextHash
+      || obj.source_binding?.sourceTextHash
+      || obj.sourceBinding?.sourceTextHash
+    );
+  }
+
+  function resolveAutoOutputSourceHash(autoOutput) {
+    const auto = autoOutput && typeof autoOutput === "object" && !Array.isArray(autoOutput) ? autoOutput : {};
+    const topLevelHash = readObjectSourceHash(auto);
+    if (topLevelHash) return topLevelHash;
+    const payloadHash = readObjectSourceHash(auto.payload);
+    if (payloadHash) return payloadHash;
+    const sourceText = String(auto.sourceText || auto.payload?.sourceText || "");
+    return sourceText.trim() ? shortHash(sourceText) : "";
+  }
+
+  function buildSourceBinding(field, sourceTextHash, existingHash, reason) {
+    const current = normalizeSourceHash(sourceTextHash);
+    const fieldHash = normalizeSourceHash(existingHash);
+    const hasFieldHash = Boolean(fieldHash);
+    const valid = Boolean(current) && (!hasFieldHash || fieldHash === current);
+    return {
+      field,
+      status: !current
+        ? "invalid_missing_current_source_hash"
+        : hasFieldHash
+          ? (valid ? "verified" : "invalid_hash_mismatch")
+          : "inferred_from_auto_output_wrapper",
+      valid,
+      currentSourceTextHash: current || null,
+      fieldSourceTextHash: fieldHash || null,
+      inferred: !hasFieldHash && Boolean(current),
+      reason: reason || "auto_output_render_repair"
+    };
+  }
+
+  function bindObjectToCurrentSource(value, field, sourceTextHash) {
+    if (!value || typeof value !== "object" || Array.isArray(value)) return value;
+    const existingHash = readObjectSourceHash(value);
+    const binding = buildSourceBinding(field, sourceTextHash, existingHash, "auto_output_render_repair");
+    if (!existingHash && binding.currentSourceTextHash) value.sourceTextHash = binding.currentSourceTextHash;
+    value.source_binding = Object.assign({}, value.source_binding || {}, binding);
+    return value;
+  }
+
+  function bindAutoOutputToSource(autoOutput) {
+    if (!autoOutput || typeof autoOutput !== "object" || Array.isArray(autoOutput)) return autoOutput;
+    const sourceTextHash = resolveAutoOutputSourceHash(autoOutput);
+    if (sourceTextHash && !autoOutput.sourceTextHash) autoOutput.sourceTextHash = sourceTextHash;
+    autoOutput.source_binding = buildSourceBinding("autoOutput", sourceTextHash, autoOutput.sourceTextHash, "auto_output_render_repair");
+
+    const payload = autoOutput.payload && typeof autoOutput.payload === "object" && !Array.isArray(autoOutput.payload)
+      ? autoOutput.payload
+      : null;
+    if (payload) {
+      bindObjectToCurrentSource(payload, "rawAutoPayload", sourceTextHash);
+      bindObjectToCurrentSource(payload.canonicalAnalysis, "canonicalAnalysis", sourceTextHash);
+      bindObjectToCurrentSource(payload.ahaSer, "ahaSer", sourceTextHash);
+    }
+
+    const bindings = [
+      autoOutput.source_binding,
+      payload?.source_binding,
+      payload?.canonicalAnalysis?.source_binding,
+      payload?.ahaSer?.source_binding
+    ].filter(Boolean);
+    autoOutput.sourceBinding = {
+      currentSourceTextHash: sourceTextHash || null,
+      bindings,
+      invalidFields: bindings
+        .filter((binding) => binding.valid === false)
+        .map((binding) => ({ field: binding.field, status: binding.status, reason: binding.reason })),
+      stampedAt: new Date().toISOString()
+    };
+    return autoOutput;
+  }
+
+  function repairStoredAutoOutputSourceBinding() {
+    const storage = getAhaSmokeTestLocalStorage();
+    if (!storage) return null;
+    const raw = storage.getItem(AUTO_OUTPUT_STORAGE_KEY);
+    if (!raw) return null;
+    let parsed;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      return null;
+    }
+    const before = JSON.stringify(parsed);
+    const bound = bindAutoOutputToSource(parsed);
+    const after = JSON.stringify(bound);
+    if (after !== before) storage.setItem(AUTO_OUTPUT_STORAGE_KEY, after);
+    return bound;
+  }
+
+  function scheduleAutoOutputBindingRepair() {
+    const run = () => repairStoredAutoOutputSourceBinding();
+    if (typeof global.requestAnimationFrame === "function") global.requestAnimationFrame(run);
+    else global.setTimeout?.(run, 0);
+  }
+
+  function installAutoOutputBindingRepairObserver() {
+    if (typeof document === "undefined" || typeof MutationObserver === "undefined") return false;
+    const host = document.getElementById("aha-auto-output") || document.getElementById("aha-explorer");
+    if (!host) return false;
+    const observer = new MutationObserver(scheduleAutoOutputBindingRepair);
+    observer.observe(host, { childList: true, subtree: true, characterData: true });
+    scheduleAutoOutputBindingRepair();
+    return true;
   }
 
   function isPythonEngineFeatureEnabled() {
@@ -54,6 +190,7 @@
   }
 
   function getLatestAutoOutput() {
+    repairStoredAutoOutputSourceBinding();
     const storage = getAhaSmokeTestLocalStorage();
     if (!storage) return null;
     const raw = storage.getItem(AUTO_OUTPUT_STORAGE_KEY);
@@ -79,6 +216,7 @@
   function printAhaPythonEngineSmokeStatus() {
     const flags = getAhaSmokeTestFeatureFlags();
     const meta = getLatestEngineMeta();
+    const latest = getLatestAutoOutput();
     const status = {
       featureFlagEnabled: flags.featureFlagEnabled,
       configuredEngineUrl: flags.configuredUrl,
@@ -88,7 +226,9 @@
       latestSource: meta?.source || "n/a",
       latestReason: meta?.reason || "",
       latestStatus: typeof meta?.status === "number" ? meta.status : null,
-      latestUrl: meta?.url || null
+      latestUrl: meta?.url || null,
+      latestSourceTextHash: latest?.sourceTextHash || null,
+      latestPayloadSourceBinding: latest?.payload?.source_binding?.status || null
     };
     console.info("[AHAPythonEngineSmokeTest]", status);
     return status;
@@ -156,6 +296,19 @@
     ].join("\n"));
     return guide;
   }
+
+  repairStoredAutoOutputSourceBinding();
+  if (typeof document !== "undefined") {
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", installAutoOutputBindingRepairObserver, { once: true });
+    else installAutoOutputBindingRepairObserver();
+  }
+
+  global.AHAAutoOutputSourceBinding = Object.assign({}, global.AHAAutoOutputSourceBinding || {}, {
+    bindAutoOutputToSource,
+    repairStored: repairStoredAutoOutputSourceBinding,
+    installObserver: installAutoOutputBindingRepairObserver,
+    getLatestAutoOutput
+  });
 
   global.AHAPythonEngineSmokeTest = Object.assign({}, global.AHAPythonEngineSmokeTest || {}, {
     getLatestAutoOutput,
