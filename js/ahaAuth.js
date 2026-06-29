@@ -240,11 +240,24 @@
     return profileId;
   }
 
+  function isDashboardAuthHeader() {
+    return Boolean(
+      document.getElementById("aha-header-status") &&
+      document.getElementById("aha-profile-id") &&
+      document.getElementById("aha-open-login-modal")
+    );
+  }
+
+  function setAuthStatusText(mount, text) {
+    if (!mount || isDashboardAuthHeader()) return;
+    mount.textContent = text;
+  }
+
   async function renderAuthStatus() {
     const mount = document.getElementById("aha-auth-status");
 
     if (!isReady()) {
-      if (mount) mount.textContent = "Database ikke konfigurert. Appen bruker localStorage.";
+      setAuthStatusText(mount, "Database ikke konfigurert. Appen bruker localStorage.");
       cacheProfileId(null);
       emitAuthReady(null, null);
       return;
@@ -253,12 +266,12 @@
     const callbackResult = await handleAuthCallback();
     if (!callbackResult?.ok) {
       console.warn("AHAAuth: auth callback feilet", callbackResult?.error || callbackResult?.reason);
-      if (mount) mount.textContent = "Kunne ikke fullføre innlogging. Prøv igjen.";
+      setAuthStatusText(mount, "Kunne ikke fullføre innlogging. Prøv igjen.");
     }
 
     const user = await getUser();
     if (!user) {
-      if (mount && callbackResult?.ok) mount.textContent = "Ikke innlogget. LocalStorage fungerer fortsatt.";
+      if (callbackResult?.ok) setAuthStatusText(mount, "Ikke innlogget. LocalStorage fungerer fortsatt.");
       cacheProfileId(null);
       emitAuthReady(null, null);
       return;
@@ -267,11 +280,12 @@
     cacheProfileId(user.id);
     const profile = await ensureProfile();
     const displayName = cleanText(profile?.data?.display_name);
-    if (mount) {
-      mount.textContent = displayName
+    setAuthStatusText(
+      mount,
+      displayName
         ? `Innlogget: ${displayName}`
-        : `Innlogget: ${user.email || user.id}. Opprett AHA-profilnavn.`;
-    }
+        : `Innlogget: ${user.email || user.id}. Opprett AHA-profilnavn.`
+    );
     emitAuthReady(user, profile?.data || null);
   }
 

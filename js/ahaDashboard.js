@@ -80,6 +80,24 @@
     if (el) el.textContent = value;
   }
 
+  async function safeAsync(label, fallback, fn) {
+    try {
+      return await fn();
+    } catch (error) {
+      console.warn(`AHADashboard: ${label} feilet`, error);
+      return fallback;
+    }
+  }
+
+  function safeRender(label, fn) {
+    try {
+      return fn();
+    } catch (error) {
+      console.warn(`AHADashboard: ${label} feilet`, error);
+      return undefined;
+    }
+  }
+
   function setClassState(el, state) {
     if (!el) return;
     el.classList.remove("is-loading", "is-signed-in", "is-signed-out", "is-missing-profile");
@@ -2650,7 +2668,7 @@
     const missingProfile = signedIn && !displayName;
     const profileTitle = displayName || (signedIn ? "Opprett AHA-profil" : "Din AHA-profil");
     const avatarText = initials(displayName || user?.email || "AHA");
-    const statusText = !signedIn ? "Ikke innlogget" : missingProfile ? "Mangler profilnavn" : "Innlogget";
+    const statusText = signedIn ? "Innlogget" : "Ikke innlogget";
     const statusClass = !signedIn ? "is-signed-out" : missingProfile ? "is-missing-profile" : "is-signed-in";
 
     setText("aha-profile-name", profileTitle);
@@ -2665,8 +2683,12 @@
     setText("aha-header-status", statusText);
     setText("aha-auth-status", statusText);
 
-    setClassState($("aha-header-status"), statusClass);
-    setClassState($("aha-auth-status"), statusClass);
+    const headerStatus = $("aha-header-status");
+    const authStatus = $("aha-auth-status");
+    setClassState(headerStatus, statusClass);
+    setClassState(authStatus, statusClass);
+    authStatus?.classList.add("is-hidden");
+    authStatus?.setAttribute("aria-hidden", "true");
 
     const form = $("aha-auth-form");
     const signOut = $("aha-auth-signout");
@@ -2756,47 +2778,57 @@
         return;
       }
 
-      const local = localStats();
+      renderIdentity(authState);
+
+      const local = safeRender("localStats", localStats) || {};
       let dbResult = { ok: false, fallback: "not_loaded" };
       let stats = local;
 
       if (authState.user?.id) {
-        dbResult = await databaseStats();
+        dbResult = await safeAsync("databaseStats", { ok: false, fallback: "error" }, databaseStats);
         if (renderSeq !== ahaDashboardRenderSeq) return;
         if (dbResult?.ok && dbResult.counts) stats = { ...local, ...dbResult.counts };
       }
 
       const sourceLabel = localDataSourceLabel(dbResult);
-      await loadAhaManualSyncHistoryPreview();
+      await safeAsync("loadAhaManualSyncHistoryPreview", null, loadAhaManualSyncHistoryPreview);
       if (renderSeq !== ahaDashboardRenderSeq) return;
-      const moduleHealth = buildModuleHealth(stats, authState);
+      const moduleHealth = safeRender("buildModuleHealth", () => buildModuleHealth(stats, authState)) || {};
       lastState = { authState, stats, sourceLabel, moduleHealth };
 
-      renderModules(moduleHealth);
-      bindHistoryGoHomeTile();
-      bindHistoryGoImportTrigger();
-      bindImportButtons();
+      try {
+        renderModules(moduleHealth);
+      } catch (error) {
+        console.warn("AHADashboard: renderModules feilet", error);
+      }
+      safeRender("bindHistoryGoHomeTile", bindHistoryGoHomeTile);
+      safeRender("bindHistoryGoImportTrigger", bindHistoryGoImportTrigger);
+      safeRender("bindImportButtons", bindImportButtons);
       renderIdentity(authState);
-      renderProfileStats(stats, sourceLabel);
-      renderStatCards(stats, sourceLabel, authState, moduleHealth);
-      renderSyncHubStatus();
-      renderInsightsActivity(stats);
+      safeRender("renderProfileStats", () => renderProfileStats(stats, sourceLabel));
+      safeRender("renderStatCards", () => renderStatCards(stats, sourceLabel, authState, moduleHealth));
+      safeRender("renderSyncHubStatus", renderSyncHubStatus);
+      safeRender("renderInsightsActivity", () => renderInsightsActivity(stats));
     } catch (error) {
       if (renderSeq !== ahaDashboardRenderSeq) return;
       console.warn("AHADashboard: renderDashboard feilet", error);
       const authState = { user: null, profile: null, profileResult: { ok: false, reason: "render_error", error } };
-      const stats = localStats();
-      const moduleHealth = buildModuleHealth(stats, authState);
+      const stats = safeRender("localStats", localStats) || {};
+      const moduleHealth = safeRender("buildModuleHealth", () => buildModuleHealth(stats, authState)) || {};
       lastState = { authState, stats, sourceLabel: "localStorage", moduleHealth, error };
-      renderModules(moduleHealth);
-      bindHistoryGoHomeTile();
-      bindHistoryGoImportTrigger();
-      bindImportButtons();
+      try {
+        renderModules(moduleHealth);
+      } catch (error) {
+        console.warn("AHADashboard: renderModules feilet", error);
+      }
+      safeRender("bindHistoryGoHomeTile", bindHistoryGoHomeTile);
+      safeRender("bindHistoryGoImportTrigger", bindHistoryGoImportTrigger);
+      safeRender("bindImportButtons", bindImportButtons);
       renderIdentity(authState);
-      renderProfileStats(stats, "localStorage");
-      renderStatCards(stats, "localStorage", authState, moduleHealth);
-      renderSyncHubStatus();
-      renderInsightsActivity(stats);
+      safeRender("renderProfileStats", () => renderProfileStats(stats, "localStorage"));
+      safeRender("renderStatCards", () => renderStatCards(stats, "localStorage", authState, moduleHealth));
+      safeRender("renderSyncHubStatus", renderSyncHubStatus);
+      safeRender("renderInsightsActivity", () => renderInsightsActivity(stats));
       setText("aha-auth-output", "Dashboardet bruker localStorage fordi en innlastingsfeil oppstod.");
     }
   }
@@ -2921,14 +2953,18 @@
     // Mount the static module registry before auth/database diagnostics can delay
     // the richer dashboard refresh. renderDashboard replaces these badges with
     // live health data when its asynchronous work completes.
-    renderModules({});
-    renderProductIntegration();
+    try {
+      renderModules({});
+    } catch (error) {
+      console.warn("AHADashboard: renderModules feilet", error);
+    }
+    safeRender("renderProductIntegration", renderProductIntegration);
     bindProfileNameForm();
     bindLoginModal();
     bindProfileNameModal();
     bindDashboardKeyboardShortcuts();
-    renderSyncHubStatus();
-    renderProductIntegration();
+    safeRender("renderSyncHubStatus", renderSyncHubStatus);
+    safeRender("renderProductIntegration", renderProductIntegration);
     renderDashboard();
     window.addEventListener("aha:source-event-added", renderDashboard);
     window.addEventListener("aha:historygo-imported", renderDashboard);
