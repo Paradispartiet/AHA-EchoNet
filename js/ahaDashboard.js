@@ -2319,6 +2319,62 @@
   }
 
 
+
+  function renderAhaSyncReviewQueueSummary(sourceEvents) {
+    const queueHelper = window.AHASyncReviewQueue;
+    if (typeof queueHelper?.buildReviewQueue !== "function") {
+      return '<section class="aha-sync-review-queue" aria-label="AHA Sync Review Queue Summary"><h4>AHA Sync Review Queue Summary</h4><p class="aha-sync-hub-notice">Review queue summary ikke tilgjengelig ennå. Ingen sync kjøres.</p></section>';
+    }
+
+    let summary = null;
+    try {
+      summary = queueHelper.buildReviewQueue(Array.isArray(sourceEvents) ? sourceEvents : []);
+    } catch (error) {
+      console.warn("AHADashboard: review queue summary kunne ikke bygges", error);
+    }
+
+    if (!summary || typeof summary !== "object") {
+      return '<section class="aha-sync-review-queue" aria-label="AHA Sync Review Queue Summary"><h4>AHA Sync Review Queue Summary</h4><p class="aha-sync-hub-notice">Review queue summary kunne ikke bygges. Ingen sync kjøres.</p></section>';
+    }
+
+    const channelCounts = summary.byChannel && typeof summary.byChannel === "object" && !Array.isArray(summary.byChannel)
+      ? summary.byChannel
+      : {};
+    const stateCounts = summary.byApprovalState && typeof summary.byApprovalState === "object" && !Array.isArray(summary.byApprovalState)
+      ? summary.byApprovalState
+      : {};
+    const channelIds = Array.isArray(window.AHA_SYNC_CHANNELS) && window.AHA_SYNC_CHANNELS.length
+      ? window.AHA_SYNC_CHANNELS.map((channel) => String(channel?.id || "").trim()).filter(Boolean)
+      : Object.keys(channelCounts);
+    Object.keys(channelCounts).forEach((id) => {
+      if (!channelIds.includes(id)) channelIds.push(id);
+    });
+    const approvalStates = ["suggested", "review_needed", "approved", "rejected", "blocked", "unknown"];
+    const lines = Array.isArray(summary.lines) ? summary.lines : [];
+
+    return `
+      <section class="aha-sync-review-queue" aria-label="AHA Sync Review Queue Summary">
+        <h4>AHA Sync Review Queue Summary</h4>
+        <p class="aha-sync-hub-notice">Read-only/local-only oppsummering av kandidater som senere må vurderes manuelt. Bare trygge counts vises.</p>
+        <p class="aha-sync-hub-notice">Ingen approval-action, deling, backend, EchoNet eller sync kjøres her.</p>
+        <dl class="aha-sync-hub-meta">
+          <div><dt>Total candidates</dt><dd>${escapeHtml(Number(summary.totalCandidates || 0))}</dd></div>
+          <div><dt>Review items</dt><dd>${escapeHtml(Number(summary.totalReviewItems || 0))}</dd></div>
+          <div><dt>Requires confirmation</dt><dd>${escapeHtml(Number(summary.requiresUserConfirmation || 0))}</dd></div>
+          <div><dt>Local-only</dt><dd>${escapeHtml(Number(summary.localOnly || 0))}</dd></div>
+          <div><dt>Approval boundary</dt><dd>${escapeHtml(summary.approvalBoundary || "personal_ai_loop_source_approval")}</dd></div>
+        </dl>
+        <ul class="aha-sync-hub-list" aria-label="Review queue counts by channel">
+          ${channelIds.map((id) => `<li class="aha-sync-hub-row" data-review-queue-channel-id="${escapeHtml(id)}"><div class="aha-sync-hub-row-heading"><strong>${escapeHtml(getAhaSyncChannelName(id))}</strong><span class="aha-sync-hub-badge is-planned">${escapeHtml(Number(channelCounts[id] || 0))}</span></div></li>`).join("")}
+        </ul>
+        <ul class="aha-sync-hub-list" aria-label="Review queue counts by approval state">
+          ${approvalStates.map((state) => `<li class="aha-sync-hub-row" data-review-queue-approval-state="${escapeHtml(state)}"><div class="aha-sync-hub-row-heading"><strong>${escapeHtml(state)}</strong><span class="aha-sync-hub-badge is-planned">${escapeHtml(Number(stateCounts[state] || 0))}</span></div></li>`).join("")}
+        </ul>
+        ${lines.length ? `<ul class="aha-sync-hub-list" aria-label="Review queue safe summary lines">${lines.map((line) => `<li class="aha-sync-hub-row"><p>${escapeHtml(line)}</p></li>`).join("")}</ul>` : ""}
+      </section>
+    `;
+  }
+
   function renderAhaSyncInsightDigest(sourceEvents) {
     const digestHelper = window.AHASyncInsightDigest;
     if (typeof digestHelper?.buildDigest !== "function") {
@@ -2464,6 +2520,7 @@
         </dl>
         ${rows ? `<ul class="aha-sync-hub-list" aria-label="Route counts per channel">${rows}</ul>` : ""}
         ${renderAhaSyncInsightDigest(sourceEvents)}
+        ${renderAhaSyncReviewQueueSummary(sourceEvents)}
         ${candidateSummaryHtml}
       </section>
     `;
