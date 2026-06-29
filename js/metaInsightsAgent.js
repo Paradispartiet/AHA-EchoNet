@@ -170,6 +170,15 @@
     }
   }
 
+  function buildKnowledgeMapPackSafe() {
+    const api = global.AHAKnowledgeMap;
+    if (!api || typeof api.buildKnowledgeMapSummary !== "function") return null;
+    try {
+      const s = api.buildKnowledgeMapSummary();
+      return { available: Boolean(s.available), nodes: Number(s.nodes) || 0, edges: Number(s.edges) || 0, projects: Number(s.projects) || 0, concepts: Number(s.concepts) || 0, topProjects: asArray(s.topProjects).slice(0,5), topConcepts: asArray(s.topConcepts).slice(0,5), nextAction: asText(s.nextAction) };
+    } catch { return null; }
+  }
+
   function buildTrainingPackSafe() {
     const corpusApi = global.AHATrainingCorpus;
     const examplesApi = global.AHATrainingExamples;
@@ -422,6 +431,7 @@
   // 1. Agentkontekst: alt agenten trenger for å resonnere over profilen.
   function buildDataIntakePackSafe(){ try { return global.AHADataIntake?.buildIntakeSummary?.() || null; } catch { return null; } }
   function buildKnowledgeCurationPackSafe(){ try { return global.AHAKnowledgeCuration?.buildCurationSummary?.() || null; } catch { return null; } }
+  function buildKnowledgeMapPackSafe(){ try { const v=global.AHAKnowledgeMap?.buildKnowledgeMapSummary?.(); return v ? { available:Boolean(v.available), nodes:Number(v.nodes)||0, edges:Number(v.edges)||0, projects:Number(v.projects)||0, concepts:Number(v.concepts)||0, topProjects:asArray(v.topProjects).slice(0,5), topConcepts:asArray(v.topConcepts).slice(0,5), nextAction:asText(v.nextAction) } : null; } catch { return null; } }
   function buildSourceConnectorsPackSafe(){ const api=global.AHASourceConnectors; if(!api?.collectConnectorStatus) return null; try { const s=api.collectConnectorStatus(); return { available:true, active:Number(s.active)||0, planned:Number(s.planned)||0, missing:Number(s.missing)||0, totalAvailable:Number(s.totalAvailable)||0, summary:asText(s.summary) }; } catch { return { available:true, active:0, planned:0, missing:0, totalAvailable:0, summary:"Source Connectors status unavailable." }; } }
 
   function buildChatPersistencePackSafe() {
@@ -454,6 +464,8 @@
     if (dataIntakePack) context.dataIntakePack = dataIntakePack;
     const knowledgeCurationPack = options.knowledgeCurationPack && typeof options.knowledgeCurationPack === "object" ? options.knowledgeCurationPack : buildKnowledgeCurationPackSafe();
     if (knowledgeCurationPack) context.knowledgeCurationPack = knowledgeCurationPack;
+    const knowledgeMapPack = options.knowledgeMapPack && typeof options.knowledgeMapPack === "object" ? options.knowledgeMapPack : buildKnowledgeMapPackSafe();
+    if (knowledgeMapPack) context.knowledgeMapPack = knowledgeMapPack;
     const trainingPack = options.trainingPack && typeof options.trainingPack === "object"
       ? options.trainingPack
       : buildTrainingPackSafe();
