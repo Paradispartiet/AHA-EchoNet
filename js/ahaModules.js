@@ -24,6 +24,15 @@
     },
 
     {
+      id: "knowledge-workbench",
+      title: "Knowledge Workbench",
+      type: "system",
+      status: "active",
+      href: "knowledge-workbench.html",
+      description: "Samlet arbeidsbord for intake, curation, knowledge map, graph intelligence og Training Corpus.",
+      phase: 2
+    },
+    {
       id: "data-intake",
       title: "Data Intake",
       type: "system",

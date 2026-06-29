@@ -429,6 +429,7 @@
   }
 
   // 1. Agentkontekst: alt agenten trenger for å resonnere over profilen.
+  function buildKnowledgeWorkbenchPackSafe(){ try { const v=global.AHAKnowledgeWorkbench?.buildWorkbenchStatus?.({save:false}); return v ? { available:true, status:asText(v.overall?.status), score:Number(v.overall?.score)||0, currentStage:asText(v.workflow?.currentStage), nextAction:v.nextAction||null, recommendations:asArray(v.recommendations).slice(0,7) } : null; } catch { return null; } }
   function buildDataIntakePackSafe(){ try { return global.AHADataIntake?.buildIntakeSummary?.() || null; } catch { return null; } }
   function buildKnowledgeCurationPackSafe(){ try { return global.AHAKnowledgeCuration?.buildCurationSummary?.() || null; } catch { return null; } }
   function buildKnowledgeMapPackSafe(){ try { const v=global.AHAKnowledgeMap?.buildKnowledgeMapSummary?.(); return v ? { available:Boolean(v.available), nodes:Number(v.nodes)||0, edges:Number(v.edges)||0, projects:Number(v.projects)||0, concepts:Number(v.concepts)||0, topProjects:asArray(v.topProjects).slice(0,5), topConcepts:asArray(v.topConcepts).slice(0,5), nextAction:asText(v.nextAction) } : null; } catch { return null; } }
@@ -461,6 +462,8 @@
     if (sourceConnectorsPack) context.sourceConnectorsPack = sourceConnectorsPack;
     const chatPersistencePack = options.chatPersistencePack && typeof options.chatPersistencePack === "object" ? options.chatPersistencePack : buildChatPersistencePackSafe();
     if (chatPersistencePack) context.chatPersistencePack = chatPersistencePack;
+    const knowledgeWorkbenchPack = options.knowledgeWorkbenchPack && typeof options.knowledgeWorkbenchPack === "object" ? options.knowledgeWorkbenchPack : buildKnowledgeWorkbenchPackSafe();
+    if (knowledgeWorkbenchPack) context.knowledgeWorkbenchPack = knowledgeWorkbenchPack;
     const dataIntakePack = options.dataIntakePack && typeof options.dataIntakePack === "object" ? options.dataIntakePack : buildDataIntakePackSafe();
     if (dataIntakePack) context.dataIntakePack = dataIntakePack;
     const knowledgeCurationPack = options.knowledgeCurationPack && typeof options.knowledgeCurationPack === "object" ? options.knowledgeCurationPack : buildKnowledgeCurationPackSafe();
