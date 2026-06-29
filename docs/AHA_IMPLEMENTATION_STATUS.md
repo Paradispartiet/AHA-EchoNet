@@ -2473,3 +2473,17 @@ Kartet er en avledet oversikt over materiale brukeren allerede har samlet eller 
 Product Integration, Personal AI Control og Meta Insights Agent får Knowledge Map-status slik at AHA kan se dominerende prosjekter, begreper og neste handling i produktflyten.
 
 Dette gjør AHA sin kunnskap forståelig før videre arbeid med History Go, AHA Music og mer avansert graph/RAG.
+
+## AHA Knowledge Graph Intelligence V1
+
+AHA Knowledge Graph Intelligence V1 er første intelligenslag over AHA sitt kunnskapskart. Modulen analyserer eksisterende Knowledge Map lokalt og forklarbart, uten å endre consent, uten å flytte materiale automatisk til Training Corpus og uten å opprette confirmed memory automatisk.
+
+Graph Intelligence finner sterke prosjekter, svake prosjekter, sentrale begreper, underforklarte begreper, isolerte noder, manglende koblinger og kunnskapshull. Den foreslår også training opportunities, memory opportunities, History Go opportunities og Music Canon opportunities basert på eksisterende nodes, edges, prosjekter, concepts, entities og kildemetadata.
+
+V1-flyten er: Knowledge Map → graph analysis → graph insights → suggested links / weak areas / opportunities → bruker vurderer → send til Curation / Training / Memory candidate. Insights kan sendes videre til Knowledge Curation etter brukerhandling som `knowledge_graph_insight` med `review`-status og foreslåtte targets.
+
+Knowledge Map-dashboardet viser et nytt “Graph Intelligence”-panel med status, score, insight count, strong projects, weak projects, central concepts, isolated nodes, suggested links, training opportunities, memory opportunities, History Go / Music opportunities og anbefalte neste handlinger. Suggested links vises med relationType, confidence og reason, og V1 muterer ikke Knowledge Map direkte uten eksplisitt brukerhandling.
+
+Personal AI Control inkluderer `knowledgeGraphIntelligence` i modulstatus og anbefaler å analysere Knowledge Map, godkjenne/avvise suggested links, sende graph insights til Curation og lage training examples for underforklarte begreper. Product Integration inkluderer `knowledgeGraphIntelligence` med href, status, score, insight count og next action, og produktflyten er oppdatert til: Kilder → Source Connectors → Data Intake → Knowledge Curation → Knowledge Map → Graph Intelligence → Training Corpus / Personal AI / Chat. Meta Insights Agent får `knowledgeGraphIntelligencePack` slik at agenten kan forstå dominerende prosjekter, begreper og kunnskapshull.
+
+Bevisste V2-restpunkter: ingen ny retrieval-motor, ingen automatisk Training Corpus-import, ingen automatisk confirmed memory, ingen tung separat graph editor og ingen direkte Knowledge Map-mutasjon uten en tydelig bruker-/curation-flyt.

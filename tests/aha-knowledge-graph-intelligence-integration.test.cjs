@@ -1,0 +1,8 @@
+const assert=require('assert'),fs=require('fs'),vm=require('vm');
+function run(file,c){vm.runInNewContext(fs.readFileSync(file,'utf8'),c,{filename:file});}
+const html=fs.readFileSync('knowledge-map.html','utf8'); assert.ok(html.includes('Graph Intelligence')); assert.ok(html.includes('knowledge-graph-intelligence-panel'));;
+const dash=fs.readFileSync('js/ahaKnowledgeMapDashboard.js','utf8'); assert.ok(dash.includes('Graph Intelligence')); assert.ok(dash.includes('confidence')); assert.ok(dash.includes('Send til Curation'));
+let c={window:null,globalThis:null,console,localStorage:{getItem:()=>null,setItem:()=>{}},document:null}; c.window=c;c.globalThis=c;run('js/ahaKnowledgeGraphIntelligence.js',c);run('js/ahaPersonalAiControl.js',c);assert.ok(c.AHAPersonalAiControl.collectModuleStatus().knowledgeGraphIntelligence);
+c={window:null,globalThis:null,console,localStorage:{getItem:()=>null,setItem:()=>{}},document:null,AHA_MODULES:[]}; c.window=c;c.globalThis=c;c.AHAKnowledgeGraphIntelligence={buildGraphIntelligenceSummary:()=>({available:true,status:'usable',score:50,insightCount:2,nextAction:'Do it'})};run('js/ahaProductIntegration.js',c);assert.ok(c.AHAProductIntegration.buildProductStatus({save:false}).knowledgeGraphIntelligence);
+c={window:null,globalThis:null,console,localStorage:{getItem:()=>null,setItem:()=>{}},document:null}; c.window=c;c.globalThis=c;c.AHAKnowledgeGraphIntelligence={buildGraphIntelligenceSummary:()=>({available:true,status:'usable',score:50,insightCount:2,topInsights:[{title:'x'}],nextAction:'Do it'})};run('js/metaInsightsAgent.js',c);assert.ok(c.AHAMetaInsightsAgent.buildAgentContext({}).knowledgeGraphIntelligencePack);
+console.log('aha-knowledge-graph-intelligence integration tests passed');
