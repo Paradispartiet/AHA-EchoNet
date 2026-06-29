@@ -385,7 +385,6 @@
           <span class="aha-tile-icon" aria-hidden="true">${icon}</span>
           <strong>${escapeHtml(module.title)}</strong>
         </span>
-        <span class="aha-module-description">${escapeHtml(module.description)}</span>
         ${badge}
       `;
 
