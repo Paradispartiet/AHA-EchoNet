@@ -6,7 +6,7 @@
 (function (global) {
   "use strict";
 
-  const TAB_NAMES = ["oversikt", "innsikter", "begreper", "fag", "struktur", "kart", "data"];
+  const TAB_NAMES = ["oversikt", "innsikter", "begreper", "fag", "kilder", "struktur", "kart", "data"];
 
   let currentBundle = null;
   let initialized = false;
@@ -263,6 +263,55 @@
     ].filter(Boolean).join("");
   }
 
+
+  // ── Kilder ──────────────────────────────────────────────────
+  function loadWebArticleSourceEvents() {
+    try {
+      const apiEvents = global.AHASources?.loadSourceEvents?.();
+      const events = Array.isArray(apiEvents)
+        ? apiEvents
+        : JSON.parse(localStorage.getItem("aha_source_events_v1") || "[]");
+      return asList(events)
+        .filter((event) => event?.source_type === "web_article" && event?.source_app === "aha_link_reader")
+        .slice(0, 12);
+    } catch {
+      return [];
+    }
+  }
+
+  function sourceEventCard(event) {
+    const meta = event?.meta || {};
+    const title = asText(event?.title) || asText(meta.url) || "Webkilde";
+    const publisher = asText(meta.publisher || meta.domain) || "Ukjent kilde";
+    const status = asText(meta.access_status) || "metadata_only";
+    const usedFulltext = meta.transient_fulltext_read === true ? "Ja" : "Nei";
+    const rawStored = meta.raw_article_stored === true ? "Ja" : "Nei";
+    const url = asText(meta.canonical_url || meta.url);
+    const rows = [
+      dlRow("Kilde", publisher),
+      dlRow("Status", status),
+      dlRow("Fulltekst brukt transient", usedFulltext),
+      dlRow("Rå artikkeltekst lagret", rawStored),
+      dlRow("URL", url)
+    ].join("");
+    return `<article class="exp-card exp-source-card">
+      <h3>${esc(title)}</h3>
+      <dl class="exp-dl">${rows}</dl>
+      <p class="exp-kicker">Brukt til analyse</p>
+      <p>${esc(asText(event?.text) || "AHA lagret bare trygg metadata/oppsummering for denne kilden.")}</p>
+    </article>`;
+  }
+
+  function renderKilder() {
+    const host = getContainer("kilder");
+    if (!host) return;
+    const events = loadWebArticleSourceEvents();
+    host.innerHTML = events.length
+      ? events.map(sourceEventCard).join("")
+      : emptyNote("Kilder fra lenker vises her.");
+    setTabCount("kilder", events.length);
+  }
+
   // ── Struktur ────────────────────────────────────────────────
   function renderStruktur(b) {
     const host = getContainer("struktur");
@@ -479,6 +528,9 @@
     if (!root) return;
     initialized = true;
     bindDelegatedActions();
+    global.addEventListener?.("aha:source-event-added", () => {
+      renderKilder();
+    });
     open("oversikt");
   }
 
@@ -490,12 +542,14 @@
     renderInnsikter(bundle);
     renderBegreper(bundle);
     renderFag(bundle);
+    renderKilder();
     renderStruktur(bundle);
     renderKart(bundle);
     renderData(bundle);
     setTabCount("innsikter", asList(bundle.insights).filter(Boolean).length + asList(bundle.chamberInsights).length);
     setTabCount("begreper", [...new Set(asList(bundle.concepts).map(asText).filter(Boolean))].length);
     setTabCount("fag", asList(bundle.subjectMatches).length);
+    setTabCount("kilder", loadWebArticleSourceEvents().length);
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);

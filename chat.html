@@ -137,6 +137,7 @@
             <button type="button" role="tab" data-tab="innsikter" aria-selected="false">Innsikter <span class="exp-tab-count"></span></button>
             <button type="button" role="tab" data-tab="begreper" aria-selected="false">Begreper <span class="exp-tab-count"></span></button>
             <button type="button" role="tab" data-tab="fag" aria-selected="false">Fag <span class="exp-tab-count"></span></button>
+            <button type="button" role="tab" data-tab="kilder" aria-selected="false">Kilder <span class="exp-tab-count"></span></button>
             <button type="button" role="tab" data-tab="struktur" aria-selected="false">Struktur</button>
             <button type="button" role="tab" data-tab="kart" aria-selected="false">Kart</button>
             <button type="button" role="tab" data-tab="data" aria-selected="false">Data</button>
@@ -156,6 +157,10 @@
 
           <section class="explorer-panel" data-tab-panel="fag" role="tabpanel" aria-label="Fag" hidden>
             <div id="exp-fag"><p class="exp-empty">Fagkoblinger vises her.</p></div>
+          </section>
+
+          <section class="explorer-panel" data-tab-panel="kilder" role="tabpanel" aria-label="Kilder" hidden>
+            <div id="exp-kilder"><p class="exp-empty">Kilder fra lenker vises her.</p></div>
           </section>
 
           <section class="explorer-panel" data-tab-panel="struktur" role="tabpanel" aria-label="Struktur" hidden>
@@ -252,6 +257,7 @@
   <script src="js/ahaExplorer.js"></script>
   <script src="js/ahaChatReplyFormat.js"></script>
   <script src="js/ahaEngineClient.js"></script>
+  <script src="js/ahaLinkReader.js"></script>
   <script src="js/ahaChat.js"></script>
   <script src="js/ahaChatPythonSmoke.js"></script>
   <script src="js/ahaAnalysisQualityLayer.js"></script>
