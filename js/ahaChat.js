@@ -56,6 +56,15 @@
     return Boolean(hash && hash === run.sourceHash);
   }
 
+  function isActiveAnalysisRun(run) {
+    return Boolean(
+      run &&
+      activeAnalysisRun &&
+      String(run.analysisId || "") === String(activeAnalysisRun.analysisId || "") &&
+      String(run.sourceId || "") === String(activeAnalysisRun.sourceId || "")
+    );
+  }
+
   function clearActiveAnalysisState(run, message = "AHA analyserer ny kilde …") {
     if (run) activeAnalysisRun = run;
     const host = document.getElementById("aha-auto-output");
@@ -1174,6 +1183,52 @@
     if (container.context && typeof container.context === "object") filterRetrievalForActiveSource(container.context, sourceText, run);
     if (Array.isArray(container.selectedSources)) container.selectedSources = filterResults(container.selectedSources);
     return container;
+  }
+
+  function filterMemoryContextForActiveSource(memoryContext, sourceText, run = activeAnalysisRun) {
+    const src = memoryContext && typeof memoryContext === "object" ? memoryContext : buildAhaMemoryOffContext("Minne mangler.");
+    if (!src.used) return src;
+    const rejected = [];
+    const keepInsight = (item) => {
+      const insight = item?.insight && typeof item.insight === "object" ? item.insight : item;
+      const score = scoreRetrievalAgainstSource(insight, sourceText);
+      const keep = score >= 0.08;
+      if (!keep) rejected.push({ title: insight?.title || insight?.id || "memory", score });
+      else if (insight && typeof insight === "object") {
+        insight.analysisId = run?.analysisId || insight.analysisId;
+        insight.sourceIdForAnalysis = run?.sourceId || insight.sourceIdForAnalysis;
+        insight.sourceHash = run?.sourceHash || insight.sourceHash;
+        insight.relevanceToActiveSource = score;
+      }
+      return keep;
+    };
+    const selectedInsights = (Array.isArray(src.selectedInsights) ? src.selectedInsights : []).filter(keepInsight);
+    const localMatches = (Array.isArray(src.localMatches) ? src.localMatches : []).filter(keepInsight);
+    const semanticMatches = (Array.isArray(src.semanticMatches) ? src.semanticMatches : []).filter(keepInsight);
+    if (rejected.length) console.warn("AHA irrelevant memoryContext forkastet for aktiv kilde", { analysisId: run?.analysisId, sourceId: run?.sourceId, rejected });
+    if (!selectedInsights.length) {
+      return Object.assign({}, src, {
+        used: false,
+        reason: "Tidligere minne ble forkastet: ikke relevant for aktiv kildetekst.",
+        confidence: 0,
+        mode: "filtered_irrelevant",
+        localMatches,
+        semanticMatches,
+        selectedInsights: [],
+        summaryForAgent: ""
+      });
+    }
+    const next = Object.assign({}, src, {
+      used: true,
+      reason: src.reason || "Relevant minne matcher aktiv kildetekst.",
+      localMatches,
+      semanticMatches,
+      selectedInsights
+    });
+    next.summaryForAgent = formatAhaMemoryContextForAgent(next);
+    next.used = Boolean(next.summaryForAgent);
+    if (!next.used) next.reason = "Tidligere minne ble forkastet: ingen relevant agent-oppsummering.";
+    return next;
   }
 
   function formatAhaMemoryContextForAgent(memoryContext) {
@@ -6457,9 +6512,12 @@
     const savingEnabled = isAhaSavingEnabled();
     const memoryUseEnabled = isAhaMemoryUseEnabled();
     setAhaProcessing(true, memoryUseEnabled ? "AHA vurderer relevant minne …" : "AHA svarer uten tidligere minne …");
-    const memoryContext = memoryUseEnabled ? await buildAhaMemoryContext(cleanText) : buildAhaMemoryOffContext();
+    const rawMemoryContext = memoryUseEnabled ? await buildAhaMemoryContext(cleanText) : buildAhaMemoryOffContext();
+    if (!isActiveAnalysisRun(analysisRun)) return null;
+    const memoryContext = filterMemoryContextForActiveSource(rawMemoryContext, cleanText, analysisRun);
     const personalContext = filterRetrievalForActiveSource(buildAhaPersonalMessageContext(cleanText), cleanText, analysisRun);
     const answerPackage = filterRetrievalForActiveSource(buildAhaAnswerPackage(cleanText), cleanText, analysisRun);
+    if (!isActiveAnalysisRun(analysisRun)) return null;
     if (personalContext && answerPackage) personalContext.answerPackage = answerPackage;
     renderAhaPersonalRetrieval(personalContext?.retrieval);
     renderAhaAnswerComposer(answerPackage);
@@ -6489,11 +6547,13 @@
     try {
       setAhaProcessing(true, savingEnabled ? "AHA lager svar og etterarbeid …" : "AHA lager svar uten å lagre nye innsikter …");
       const agent = await askAhaAgent(cleanText, { memoryContext, personalContext });
+      if (!isActiveAnalysisRun(analysisRun)) return null;
       const reply = String(agent?.reply || "").trim() || "AHA-agenten returnerte tomt svar.";
       const analysisText = cleanArticleText(cleanText);
       const rawSubjectMatches = global.AHASubjectEngine?.matchText
         ? await global.AHASubjectEngine.matchText(analysisText, { source: "chat", textType: detectTextType(cleanText) })
         : [];
+      if (!isActiveAnalysisRun(analysisRun)) return null;
       const climateEnriched = enrichSubjectMatchesForClimateConflict(analysisText, rawSubjectMatches);
       const publicAdminEnriched = enrichSubjectMatchesForPublicAdministration(analysisText, climateEnriched);
       const domain = detectAutoAnalysisDomain(analysisText, { reflection: reply, subjectMatches: publicAdminEnriched });
@@ -6510,6 +6570,7 @@
         safeReply = forceInstitutionalMediaHistoryFagkoblingerInReply(safeReply, analysisText, { subjectMatches });
       }
       const visibleReply = normalizeAhaVisibleReply(safeReply, cleanText) || safeReply;
+      if (!isActiveAnalysisRun(analysisRun)) return null;
       const categoryChips = memoryUseEnabled ? suggestCategoryChips() : [];
       const persistedAssistantMessage = global.AHAChatPersistence?.appendAssistantMessage?.(visibleReply, { source: "aha_chat", threadId: CHAT_THREAD_ID, answerPackageId: answerPackage?.id, intent: answerPackage?.status?.intent, retrievalSummary: personalContext?.retrieval?.summary || memoryContext?.reason || "", tags: categoryChips, concepts: subjectMatches?.map?.((m)=>m.label||m.title||m.id).filter(Boolean) });
       if (persistedAssistantMessage?.id && answerPackage) global.AHAChatPersistence?.attachAnswerPackage?.(persistedAssistantMessage.id, answerPackage);
@@ -6521,7 +6582,9 @@
       // Meta Insights AI-session: parse rå-svaret (før visningsnormalisering)
       // til claims med feedback-knapper.
       try { maybeHandleMetaAiAgentReply(reply); } catch (metaErr) { console.warn("Meta Insights AI-claims feilet", metaErr); }
+      if (!isActiveAnalysisRun(analysisRun)) return null;
       try { await renderAutoOutputs(cleanText, safeReply, { subjectMatches, persist: savingEnabled, analysisRun }); } catch (autoErr) { console.warn("Auto-output feilet", autoErr); }
+      if (!isActiveAnalysisRun(analysisRun)) return null;
       if (savingEnabled) {
         try { ensureAfterworkForLatestAnalysis(cleanText, { subjectMatches, ...analysisRun }); } catch (afterErr) { console.warn("Auto-etterarbeid feilet", afterErr); }
         // AHA-agentens egne svar skal vises i chatten og logges som
@@ -6554,17 +6617,20 @@
       return { type: "agent_reply", agent, memoryContext, personalContext, answerPackage, savingEnabled, memoryUseEnabled };
     } catch (err) {
       console.warn("AHA-agent utilgjengelig", err);
+      if (!isActiveAnalysisRun(analysisRun)) return null;
       global.AHAChatPersistence?.appendAssistantMessage?.("AHA-agenten er ikke tilgjengelig akkurat nå.", { source: "aha_chat", threadId: CHAT_THREAD_ID, tags: ["status"] });
       renderAhaChatMemoryStatus();
       appendChat("aha", "AHA-agenten er ikke tilgjengelig akkurat nå.");
-      try { await renderAutoOutputs(cleanText, "", { subjectMatches: [], persist: savingEnabled }); } catch (autoErr) { console.warn("Auto-output feilet", autoErr); }
-      if (savingEnabled) {
-        try { ensureAfterworkForLatestAnalysis(cleanText, { subjectMatches: [] }); } catch (afterErr) { console.warn("Auto-etterarbeid feilet", afterErr); }
+      try { await renderAutoOutputs(cleanText, "", { subjectMatches: [], persist: savingEnabled, analysisRun }); } catch (autoErr) { console.warn("Auto-output feilet", autoErr); }
+      if (savingEnabled && isActiveAnalysisRun(analysisRun)) {
+        try { ensureAfterworkForLatestAnalysis(cleanText, { subjectMatches: [], ...analysisRun }); } catch (afterErr) { console.warn("Auto-etterarbeid feilet", afterErr); }
       }
       return { type: "agent_error", error: err, memoryContext, personalContext, answerPackage, savingEnabled, memoryUseEnabled };
     } finally {
-      setAhaProcessing(false);
-      void updateAhaMemoryStatus();
+      if (isActiveAnalysisRun(analysisRun)) {
+        setAhaProcessing(false);
+        void updateAhaMemoryStatus();
+      }
     }
   }
 
@@ -6698,7 +6764,7 @@
 
   global.loadChamberFromStorage = global.loadChamberFromStorage || loadChamberFromStorage;
   global.saveChamberToStorage = global.saveChamberToStorage || saveChamberToStorage;
-  global.AHATestHooks = Object.assign({}, global.AHATestHooks || {}, { detectTextType, buildCanonicalAnalysis, buildAhaAnalysisExportBundle, formatAhaAnalysisExportMarkdown, buildAutoOutputs, normalizeFagkoblinger, resolveCanonicalAnalysisWithOptionalPythonEngine, isAhaMemoryQuestion, buildAhaLearningContractReply, buildAhaMemoryStatus, shouldUseAhaMemory, buildAhaMemoryContext, buildAhaMemoryOffContext, loadAhaMemoryControls, saveAhaMemoryControls, setAhaMemoryControl, isAhaSavingEnabled, isAhaMemoryUseEnabled, loadAhaMemoryExclusions, saveAhaMemoryExclusions, getAhaMemoryInsightStableKey, getAhaMemoryInsightKey, isAhaMemoryInsightExcluded, excludeAhaMemoryInsight, includeAhaMemoryInsight, resetAhaMemoryExclusions, getAhaExcludedMemoryItems, renderAhaMemoryControls, bindAhaMemoryControls, submitAhaChatMessage, findRelevantLocalMemory, formatAhaMemoryContextForAgent, isAhaMemoryDebugEnabled, buildAhaMemoryTransparency, formatAhaMemoryTransparencyDetails, renderAhaMemoryTransparency, appendChat, updateAnswerActionsVisibility, getActiveMetaAiSession, startMetaAiSession, renderMetaAiSessionBox, renderMetaAiClaims, maybeHandleMetaAiAgentReply, saveMetaAiClaimFeedback, buildAhaPersonalAiLoopChatReadinessStatus, renderAhaPersonalAiLoopStatus, buildAhaAnswerPackage, renderAhaAnswerComposer, createAnalysisRun, bindAnalysisArtifact, artifactMatchesActiveRun, clearActiveAnalysisState, renderAutoOutputPayload, filterRetrievalForActiveSource, scoreRetrievalAgainstSource });
+  global.AHATestHooks = Object.assign({}, global.AHATestHooks || {}, { detectTextType, buildCanonicalAnalysis, buildAhaAnalysisExportBundle, formatAhaAnalysisExportMarkdown, buildAutoOutputs, normalizeFagkoblinger, resolveCanonicalAnalysisWithOptionalPythonEngine, isAhaMemoryQuestion, buildAhaLearningContractReply, buildAhaMemoryStatus, shouldUseAhaMemory, buildAhaMemoryContext, buildAhaMemoryOffContext, loadAhaMemoryControls, saveAhaMemoryControls, setAhaMemoryControl, isAhaSavingEnabled, isAhaMemoryUseEnabled, loadAhaMemoryExclusions, saveAhaMemoryExclusions, getAhaMemoryInsightStableKey, getAhaMemoryInsightKey, isAhaMemoryInsightExcluded, excludeAhaMemoryInsight, includeAhaMemoryInsight, resetAhaMemoryExclusions, getAhaExcludedMemoryItems, renderAhaMemoryControls, bindAhaMemoryControls, submitAhaChatMessage, findRelevantLocalMemory, formatAhaMemoryContextForAgent, isAhaMemoryDebugEnabled, buildAhaMemoryTransparency, formatAhaMemoryTransparencyDetails, renderAhaMemoryTransparency, appendChat, updateAnswerActionsVisibility, getActiveMetaAiSession, startMetaAiSession, renderMetaAiSessionBox, renderMetaAiClaims, maybeHandleMetaAiAgentReply, saveMetaAiClaimFeedback, buildAhaPersonalAiLoopChatReadinessStatus, renderAhaPersonalAiLoopStatus, buildAhaAnswerPackage, renderAhaAnswerComposer, createAnalysisRun, bindAnalysisArtifact, artifactMatchesActiveRun, clearActiveAnalysisState, renderAutoOutputPayload, filterRetrievalForActiveSource, scoreRetrievalAgainstSource, filterMemoryContextForActiveSource, isActiveAnalysisRun });
 
   global.AHAChat = {
     loadChamberFromStorage,
@@ -6747,7 +6813,9 @@
     clearActiveAnalysisState,
     renderAutoOutputPayload,
     filterRetrievalForActiveSource,
-    scoreRetrievalAgainstSource
+    scoreRetrievalAgainstSource,
+    filterMemoryContextForActiveSource,
+    isActiveAnalysisRun
   };
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bind);
