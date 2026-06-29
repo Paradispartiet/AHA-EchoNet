@@ -28,6 +28,18 @@ function validateArrayOfNonEmptyStrings(value, fileName, fieldPath, errors) {
   });
 }
 
+function validateOptionalArrayOfNonEmptyStrings(value, fileName, fieldPath, errors) {
+  if (typeof value === 'undefined') return;
+  validateArrayOfNonEmptyStrings(value, fileName, fieldPath, errors);
+}
+
+function validateOptionalBoolean(value, fileName, fieldPath, errors) {
+  if (typeof value === 'undefined') return;
+  if (typeof value !== 'boolean') {
+    addError(errors, fileName, fieldPath, 'must be a boolean when present');
+  }
+}
+
 function validateConfidence(value, fileName, fieldPath, errors) {
   if (value === null || typeof value !== 'object' || Array.isArray(value)) {
     addError(errors, fileName, fieldPath, 'must be an object');
@@ -112,6 +124,10 @@ function validateFixture(data, fileName, errors) {
   }
 
   validateExpectedCanonicalAnalysis(data.expectedCanonicalAnalysis, fileName, errors);
+
+  validateOptionalArrayOfNonEmptyStrings(data.requiredTerms, fileName, 'requiredTerms', errors);
+  validateOptionalArrayOfNonEmptyStrings(data.forbiddenTerms, fileName, 'forbiddenTerms', errors);
+  validateOptionalBoolean(data.expectedSourceHashBinding, fileName, 'expectedSourceHashBinding', errors);
 }
 
 async function main() {
