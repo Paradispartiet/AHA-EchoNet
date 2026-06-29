@@ -7,14 +7,20 @@
   <link rel="stylesheet" href="css/aha-chat.css" />
   <link rel="stylesheet" href="css/aha-dashboard.css" />
   <link rel="stylesheet" href="css/aha-mindmap.css" />
+  <link rel="stylesheet" href="css/aha-global-nav.css" />
 </head>
 <body>
+  <div id="aha-global-nav"></div>
   <main class="aha-dashboard" style="max-width: 1200px;">
-    <section class="aha-panel">
-      <p class="eyebrow">AHA Graph · Fase 3G</p>
-      <h1>Tankekart</h1>
-      <p>Read-only visning av lokale koblinger mellom source events, innsikter, lister, stier, artikler og øvrige AHA-objekter.</p>
-      <div class="aha-tile-actions">
+    <section class="aha-panel aha-module-shell">
+      <header class="aha-module-shell-header">
+        <div>
+          <p class="eyebrow">AHA Graph · Fase 3G</p>
+          <h1>Tankekart</h1>
+          <p class="aha-module-purpose">Read-only visning av lokale koblinger mellom source events, innsikter, lister, stier, artikler og øvrige AHA-objekter.</p>
+        </div>
+      </header>
+      <div class="aha-module-actions">
         <a class="aha-tile-btn aha-tile-btn-primary" href="index.html">Tilbake til AHA Home</a>
         <button id="mindmap-refresh" type="button" class="aha-tile-btn">Oppdater</button>
       </div>
@@ -64,5 +70,7 @@
 
   <script src="js/ahaContracts.js"></script>
   <script src="js/ahaMindmap.js"></script>
+<script src="js/ahaModules.js"></script>
+<script src="js/ahaGlobalNav.js"></script>
 </body>
 </html>

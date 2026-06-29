@@ -7,14 +7,20 @@
   <link rel="stylesheet" href="css/aha-chat.css" />
   <link rel="stylesheet" href="css/aha-dashboard.css" />
   <link rel="stylesheet" href="css/aha-search.css" />
+  <link rel="stylesheet" href="css/aha-global-nav.css" />
 </head>
 <body>
+  <div id="aha-global-nav"></div>
   <main class="aha-dashboard" style="max-width: 900px;">
-    <section class="aha-panel">
-      <p class="eyebrow">AHA Modul</p>
-      <h1>Søk / Bibliotek</h1>
-      <p>Lokalt samlet, read-only søk på tvers av AHA-objekter fra innsikter, notater, feed, galleri, insta, lister, stier og AHAavisa.</p>
-      <div class="aha-search-top-actions">
+    <section class="aha-panel aha-module-shell">
+      <header class="aha-module-shell-header">
+        <div>
+          <p class="eyebrow">AHA Modul</p>
+          <h1>Søk / Bibliotek</h1>
+          <p class="aha-module-purpose">Lokalt samlet, read-only søk på tvers av AHA-objekter fra innsikter, notater, feed, galleri, insta, lister, stier og AHAavisa.</p>
+        </div>
+      </header>
+      <div class="aha-module-actions aha-search-top-actions">
         <a class="aha-tile-btn aha-tile-btn-primary" href="index.html">Tilbake til AHA Home</a>
         <button id="search-refresh" type="button" class="aha-tile-btn">Oppdater</button>
       </div>
@@ -54,5 +60,7 @@
 
   <script src="js/ahaContracts.js"></script>
   <script src="js/ahaSearch.js"></script>
+<script src="js/ahaModules.js"></script>
+<script src="js/ahaGlobalNav.js"></script>
 </body>
 </html>

@@ -6,14 +6,20 @@
   <title>History Go i AHA</title>
   <link rel="stylesheet" href="css/aha-chat.css" />
   <link rel="stylesheet" href="css/aha-dashboard.css" />
+  <link rel="stylesheet" href="css/aha-global-nav.css" />
 </head>
 <body>
+  <div id="aha-global-nav"></div>
   <main class="aha-dashboard" style="max-width: 960px;">
-    <section class="aha-panel">
-      <p class="eyebrow">AHA Modul</p>
-      <h1>History Go i AHA</h1>
-      <p>History Go er samlings- og læringsuniverset. AHA leser importert materiale som personlig innsikt.</p>
-      <div class="aha-tile-actions">
+    <section class="aha-panel aha-module-shell">
+      <header class="aha-module-shell-header">
+        <div>
+          <p class="eyebrow">AHA Modul</p>
+          <h1>History Go i AHA</h1>
+          <p class="aha-module-purpose">History Go er samlings- og læringsuniverset. AHA leser importert materiale som personlig innsikt.</p>
+        </div>
+      </header>
+      <div class="aha-module-actions">
         <a class="aha-tile-btn aha-tile-btn-secondary" href="index.html">Tilbake til AHA Home</a>
         <a class="aha-tile-btn aha-tile-btn-primary" href="/History-Go/">Åpne History Go</a>
         <button class="aha-tile-btn aha-tile-btn-secondary" id="btn-hg-refresh" type="button">Oppdater</button>
@@ -120,5 +126,7 @@
       });
     })();
   </script>
+<script src="js/ahaModules.js"></script>
+<script src="js/ahaGlobalNav.js"></script>
 </body>
 </html>

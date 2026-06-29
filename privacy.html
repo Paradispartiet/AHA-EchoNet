@@ -7,14 +7,20 @@
   <link rel="stylesheet" href="css/aha-chat.css" />
   <link rel="stylesheet" href="css/aha-dashboard.css" />
   <link rel="stylesheet" href="css/aha-privacy.css" />
+  <link rel="stylesheet" href="css/aha-global-nav.css" />
 </head>
 <body>
+  <div id="aha-global-nav"></div>
   <main class="aha-dashboard" style="max-width: 1100px;">
-    <section class="aha-panel">
-      <p class="eyebrow">AHA System · Fase 3H</p>
-      <h1>Personvern / Kontroll</h1>
-      <p>Se hva som lagres lokalt, styr samtykker, eksporter AHA-data og slett lokale AHA-nøkler med eksplisitt tekstbekreftelse.</p>
-      <div class="aha-tile-actions privacy-actions">
+    <section class="aha-panel aha-module-shell">
+      <header class="aha-module-shell-header">
+        <div>
+          <p class="eyebrow">AHA System · Fase 3H</p>
+          <h1>Personvern / Kontroll</h1>
+          <p class="aha-module-purpose">Se hva som lagres lokalt, styr samtykker, eksporter AHA-data og slett lokale AHA-nøkler med eksplisitt tekstbekreftelse.</p>
+        </div>
+      </header>
+      <div class="aha-module-actions privacy-actions">
         <a class="aha-tile-btn aha-tile-btn-primary" href="index.html">Tilbake til AHA Home</a>
         <button id="privacy-refresh" type="button" class="aha-tile-btn">Oppdater</button>
         <button id="privacy-export" type="button" class="aha-tile-btn">Eksporter AHA-data</button>
@@ -60,5 +66,7 @@
 
   <script src="js/ahaContracts.js"></script>
   <script src="js/ahaPrivacy.js"></script>
+<script src="js/ahaModules.js"></script>
+<script src="js/ahaGlobalNav.js"></script>
 </body>
 </html>

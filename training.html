@@ -6,15 +6,21 @@
   <title>AHA Training Corpus</title>
   <link rel="stylesheet" href="css/aha-chat.css" />
   <link rel="stylesheet" href="css/aha-dashboard.css" />
+  <link rel="stylesheet" href="css/aha-global-nav.css" />
 </head>
 <body>
+  <div id="aha-global-nav"></div>
   <main class="aha-dashboard training-page" style="max-width: 1100px;">
-    <section class="aha-panel">
-      <p class="eyebrow">AHA Training</p>
-      <h1>AHA Training Corpus</h1>
-      <p>Training Corpus er stedet der AHA får godkjent materiale å lære av.</p>
-      <p class="module-meta">Rått materiale blir først nyttig når det er godkjent. Godkjent materiale kan brukes i chat, retrieval, treningseksempler og senere eksport når samtykke er slått på.</p>
-      <div class="aha-tile-actions">
+    <section class="aha-panel aha-module-shell">
+      <header class="aha-module-shell-header">
+        <div>
+          <p class="eyebrow">AHA Training</p>
+          <h1>AHA Training Corpus</h1>
+          <p class="aha-module-purpose">Training Corpus er stedet der AHA får godkjent materiale å lære av.</p>
+          <p class="module-meta">Rått materiale blir først nyttig når det er godkjent. Godkjent materiale kan brukes i chat, retrieval, treningseksempler og senere eksport når samtykke er slått på.</p>
+        </div>
+      </header>
+      <div class="aha-module-actions">
         <button id="training-import-btn" type="button">Importer fra AHA</button>
         <button id="training-intake-import-btn" type="button">Importer godkjent intake</button>
         <button id="training-curation-import-btn" type="button">Importer godkjent kuratering til Training Corpus</button>
@@ -117,5 +123,7 @@
   <script src="js/ahaPersonalAnswerComposer.js"></script>
   <script src="js/ahaPersonalAnswerEvaluation.js"></script>
   <script src="js/ahaTrainingDashboard.js"></script>
+<script src="js/ahaModules.js"></script>
+<script src="js/ahaGlobalNav.js"></script>
 </body>
 </html>

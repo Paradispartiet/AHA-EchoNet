@@ -7,14 +7,20 @@
   <link rel="stylesheet" href="css/aha-chat.css" />
   <link rel="stylesheet" href="css/aha-dashboard.css" />
   <link rel="stylesheet" href="css/aha-insights.css" />
+  <link rel="stylesheet" href="css/aha-global-nav.css" />
 </head>
 <body>
+  <div id="aha-global-nav"></div>
   <main class="aha-dashboard insights-page" style="max-width: 1100px;">
-    <section class="aha-panel">
-      <p class="eyebrow">AHA Innsiktsarkiv</p>
-      <h1>Innsikter</h1>
-      <p>Her ser du innsikter som allerede er laget i AHA-motoren, med koblinger til source events der det finnes.</p>
-      <div class="aha-tile-actions">
+    <section class="aha-panel aha-module-shell">
+      <header class="aha-module-shell-header">
+        <div>
+          <p class="eyebrow">AHA Innsiktsarkiv</p>
+          <h1>Innsikter</h1>
+          <p class="aha-module-purpose">Her ser du innsikter som allerede er laget i AHA-motoren, med koblinger til source events der det finnes.</p>
+        </div>
+      </header>
+      <div class="aha-module-actions">
         <a class="aha-tile-btn aha-tile-btn-primary" href="index.html">Tilbake til AHA Home</a>
         <button id="insights-refresh" type="button">Oppdater</button>
       </div>
@@ -53,5 +59,7 @@
   <script src="js/ahaSources.js"></script>
   <script src="js/ahaSubjectEngine.js"></script>
   <script src="js/ahaInsights.js"></script>
+<script src="js/ahaModules.js"></script>
+<script src="js/ahaGlobalNav.js"></script>
 </body>
 </html>
