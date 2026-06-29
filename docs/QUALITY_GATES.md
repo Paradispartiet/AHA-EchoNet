@@ -160,6 +160,29 @@ Forbidden: ord fra A
 
 Denne testen er viktigere enn ren happy path.
 
+
+## Geopolitics consistency gate
+
+Geopolitics-eksport er koblet til `quality.topicConsistency`. Når kildeteksten handler om USA/Kina og global makt, må eksporten beholde de normaliserte requiredTerms `usa` og `kina` i output-laget. Stale eller irrelevant geopolitics-output skal fail-close dersom det trekker inn gamle institusjonelle temaer som ikke finnes i kilden.
+
+Dette er en quality gate, ikke en ny feature:
+
+```text
+Pass: geopolitics-output matcher requiredTerms og har ingen forbiddenTerms.
+Fail: stale/irrelevant output har forbiddenTerms eller mangler requiredTerms.
+```
+
+Ved fail skal:
+
+```text
+quality.status != valid
+quality.failClosed = true
+quality.sourceBinding.invalidFields inkluderer topicConsistency
+markdown/full teknisk eksport viser topicConsistency-status og term-problemet
+```
+
+RequiredTerms/forbiddenTerms gjelder også geopolitics exports, og termene normaliseres før sammenligning slik at gate-logikken ikke avhenger av casing eller enkel tegnsetting.
+
 ## UI quality gate
 
 Explorer skal ikke få uvalidert analyse.
