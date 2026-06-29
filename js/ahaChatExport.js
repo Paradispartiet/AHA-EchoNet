@@ -57,22 +57,189 @@
     }
   }
 
+  function safeObject(value) {
+    return value && typeof value === "object" && !Array.isArray(value) ? value : {};
+  }
+
+  function normalizeSourceHash(value) {
+    return String(value || "").trim();
+  }
+
+  function readSourceTextHash(value) {
+    const obj = safeObject(value);
+    return normalizeSourceHash(
+      obj.sourceTextHash
+      || obj.source_text_hash
+      || obj.sourceHash
+      || obj.source_hash
+      || obj.meta?.sourceTextHash
+      || obj.meta?.source_text_hash
+      || obj.sourceBinding?.sourceTextHash
+      || obj.source_binding?.sourceTextHash
+    );
+  }
+
+  function objectHasMeaningfulKeys(value) {
+    return Boolean(value && typeof value === "object" && !Array.isArray(value) && Object.keys(value).length);
+  }
+
+  function makeSourceBinding(field, value, currentSourceTextHash, options = {}) {
+    const currentHash = normalizeSourceHash(currentSourceTextHash);
+    const explicitHash = readSourceTextHash(value);
+    const hasValue = objectHasMeaningfulKeys(value);
+
+    if (!hasValue) {
+      return {
+        field,
+        status: "no_data",
+        valid: true,
+        currentSourceTextHash: currentHash || null,
+        fieldSourceTextHash: null,
+        inferred: false,
+        reason: "no_data"
+      };
+    }
+
+    if (!currentHash) {
+      return {
+        field,
+        status: "invalid_missing_current_source_hash",
+        valid: false,
+        currentSourceTextHash: null,
+        fieldSourceTextHash: explicitHash || null,
+        inferred: false,
+        reason: "missing_current_source_hash"
+      };
+    }
+
+    if (explicitHash) {
+      const valid = explicitHash === currentHash;
+      return {
+        field,
+        status: valid ? "verified" : "invalid_hash_mismatch",
+        valid,
+        currentSourceTextHash: currentHash,
+        fieldSourceTextHash: explicitHash,
+        inferred: false,
+        reason: valid ? "hash_match" : "hash_mismatch"
+      };
+    }
+
+    if (options.allowInferredSameRun === true) {
+      return {
+        field,
+        status: options.inferredStatus || "inferred_same_run",
+        valid: true,
+        currentSourceTextHash: currentHash,
+        fieldSourceTextHash: null,
+        inferred: true,
+        reason: options.reason || "same_run_wrapper"
+      };
+    }
+
+    return {
+      field,
+      status: "warning_unverified_binding",
+      valid: false,
+      currentSourceTextHash: currentHash,
+      fieldSourceTextHash: null,
+      inferred: false,
+      reason: "missing_field_source_hash"
+    };
+  }
+
+  function annotateSourceBoundObject(value, binding, currentSourceTextHash) {
+    const base = safeObject(value);
+    return Object.assign({}, base, {
+      sourceTextHash: normalizeSourceHash(readSourceTextHash(base) || currentSourceTextHash),
+      source_binding: {
+        field: binding?.field || "unknown",
+        status: binding?.status || "unknown",
+        valid: binding?.valid === true,
+        currentSourceTextHash: normalizeSourceHash(currentSourceTextHash) || null,
+        fieldSourceTextHash: binding?.fieldSourceTextHash || null,
+        inferred: binding?.inferred === true,
+        reason: binding?.reason || "unknown"
+      }
+    });
+  }
+
+  function collectInvalidBindings(bindings) {
+    return (Array.isArray(bindings) ? bindings : [])
+      .filter((binding) => binding && binding.valid === false)
+      .map((binding) => ({
+        field: binding.field,
+        status: binding.status,
+        reason: binding.reason,
+        currentSourceTextHash: binding.currentSourceTextHash || null,
+        fieldSourceTextHash: binding.fieldSourceTextHash || null
+      }));
+  }
+
+  function buildQualityReport({ sourceText, sourceTextHash, bindings, rejectedRawAutoPayload, rejectedSelectedAfterwork }) {
+    const invalidFields = collectInvalidBindings(bindings);
+    const warnings = [];
+    if (!String(sourceText || "").trim()) warnings.push("missing_source_text");
+    if (!normalizeSourceHash(sourceTextHash)) warnings.push("missing_source_text_hash");
+
+    const inferredFields = (Array.isArray(bindings) ? bindings : [])
+      .filter((binding) => binding?.valid === true && binding?.inferred === true)
+      .map((binding) => binding.field);
+    if (inferredFields.length) warnings.push(`inferred_source_binding:${inferredFields.join(",")}`);
+
+    let status = "valid";
+    if (invalidFields.length) status = "invalid_source_mismatch";
+    else if (warnings.length) status = "warning_unverified_binding";
+
+    return {
+      status,
+      sourceBinding: {
+        currentSourceTextHash: normalizeSourceHash(sourceTextHash) || null,
+        bindings,
+        invalidFields,
+        inferredFields,
+        rejectedRawAutoPayload: Boolean(rejectedRawAutoPayload),
+        rejectedSelectedAfterwork: Boolean(rejectedSelectedAfterwork)
+      },
+      warnings,
+      failClosed: invalidFields.length > 0
+    };
+  }
+
   function buildAhaAnalysisExportBundle(deps) {
     const nowIso = new Date().toISOString();
     const auto = deps.loadAutoOutputs() || {};
-    const payload = auto?.payload && typeof auto.payload === "object" ? auto.payload : {};
+    const autoSourceText = String(auto?.sourceText || "");
+    const sourceText = autoSourceText;
+    const sourceTextHash = normalizeSourceHash(auto?.sourceTextHash || deps.sourceHash(sourceText));
+    const autoBinding = makeSourceBinding("auto", auto, sourceTextHash, {
+      allowInferredSameRun: Boolean(sourceTextHash),
+      inferredStatus: "inferred_current_auto_wrapper",
+      reason: "auto_wrapper_is_current_export_source"
+    });
+
+    const rawPayloadCandidate = auto?.payload && typeof auto.payload === "object" ? auto.payload : {};
+    const rawPayloadBinding = makeSourceBinding("rawAutoPayload", rawPayloadCandidate, sourceTextHash, {
+      allowInferredSameRun: autoBinding.valid === true,
+      inferredStatus: "inferred_from_auto_wrapper",
+      reason: "payload_wrapped_by_current_auto_output"
+    });
+    const payload = rawPayloadBinding.valid ? rawPayloadCandidate : {};
+    const rejectedRawAutoPayload = rawPayloadBinding.valid ? null : rawPayloadCandidate;
+
     const explicitAhaSer = payload?.ahaSer && typeof payload.ahaSer === "object" ? payload.ahaSer : {};
     const chamber = deps.loadChamberFromStorage() || {};
     const afterworks = deps.loadAfterworkEntries();
-    const sourceText = String(auto?.sourceText || "");
-    const sourceTextHash = String(auto?.sourceTextHash || deps.sourceHash(sourceText));
     const relevantAfterworks = afterworks.filter((entry) => String(entry?.sourceTextHash || "") === sourceTextHash);
     const selectedAfterworkCandidate = relevantAfterworks.length
       ? relevantAfterworks[relevantAfterworks.length - 1]
       : {};
-    const selectedAfterwork = String(selectedAfterworkCandidate?.sourceTextHash || "") === sourceTextHash
-      ? selectedAfterworkCandidate
-      : {};
+    const selectedAfterworkBinding = makeSourceBinding("selectedAfterwork", selectedAfterworkCandidate, sourceTextHash, {
+      allowInferredSameRun: false
+    });
+    const selectedAfterwork = selectedAfterworkBinding.valid ? selectedAfterworkCandidate : {};
+    const rejectedSelectedAfterwork = selectedAfterworkBinding.valid ? null : selectedAfterworkCandidate;
+
     const chatLog = Array.isArray(chamber?.chatLog) ? chamber.chatLog : [];
     const latestAhaReplyText = deps.getLatestAhaReplyFromDom();
     const subjectMatches = deps.normalizeSubjectLinks(selectedAfterwork?.subjectLinks || payload?.subjectMatches || []);
@@ -80,13 +247,23 @@
     const concepts = Array.isArray(selectedAfterwork?.concepts) ? selectedAfterwork.concepts : [];
     const canonical = deps.buildCanonicalAnalysis(payload, sourceText);
     const canonicalAnalysis = normalizeAhaAnalysis(canonical);
+    canonicalAnalysis.sourceTextHash = sourceTextHash;
+    canonicalAnalysis.source_binding = {
+      field: "canonicalAnalysis",
+      status: rawPayloadBinding.valid ? "source_bound" : "rebuilt_from_source_after_payload_rejection",
+      valid: true,
+      currentSourceTextHash: sourceTextHash || null,
+      dependsOnPayload: rawPayloadBinding.valid === true,
+      payloadBindingStatus: rawPayloadBinding.status
+    };
+
     const selectedAfterworkType = String(selectedAfterwork?.textType || selectedAfterwork?.innholdstype || "").trim();
     const canonicalType = String(canonical?.contentType || "").trim();
     const isAcademicType = (type) => {
       const key = String(type || "").trim().toLowerCase();
       return key === "academic_article" || key === "theory_idea";
     };
-    const allowAfterwork = !selectedAfterworkType || selectedAfterworkType === canonicalType || (isAcademicType(selectedAfterworkType) && isAcademicType(canonicalType));
+    const allowAfterwork = selectedAfterworkBinding.valid === true && (!selectedAfterworkType || selectedAfterworkType === canonicalType || (isAcademicType(selectedAfterworkType) && isAcademicType(canonicalType)));
     const forceCanonicalOverDayLog = String(selectedAfterworkType || "").toLowerCase() === "day_log" && isAcademicType(canonicalType);
     const calibrationStatus = deps.getCalibrationStatus();
     const metaProfile = deps.buildMetaProfile(chamber);
@@ -100,6 +277,42 @@
       path: (allowAfterwork && !forceCanonicalOverDayLog && Array.isArray(selectedAfterwork?.learningPath) && selectedAfterwork.learningPath.length) ? selectedAfterwork.learningPath : (canonical?.path?.length ? canonical.path : (Array.isArray(payload?.path) ? payload.path : [])),
       thoughts: selectedAfterwork?.thoughtSorting || payload?.thoughts || {}
     }, canonical);
+    const afterworkBinding = {
+      field: "afterwork",
+      status: allowAfterwork ? "verified_or_canonical_merge" : "canonical_or_payload_only",
+      valid: true,
+      currentSourceTextHash: sourceTextHash || null,
+      fieldSourceTextHash: allowAfterwork ? selectedAfterworkBinding.fieldSourceTextHash : null,
+      inferred: !allowAfterwork,
+      reason: allowAfterwork ? "selected_afterwork_hash_match" : "selected_afterwork_not_used"
+    };
+    const sourceBoundAfterwork = annotateSourceBoundObject(mergedAfterwork, afterworkBinding, sourceTextHash);
+
+    const ahaSer = {
+      innholdstype: String(canonical?.contentType || payload?.innholdstype || payload?.textType || ""),
+      tema: String(canonical?.ahaSer?.tema || explicitAhaSer?.tema || payload?.tema || ""),
+      hovedspenning: String(canonical?.ahaSer?.hovedspenning || explicitAhaSer?.hovedspenning || payload?.hovedspenning || ""),
+      viktigsteInnsikt: String(canonical?.ahaSer?.viktigsteInnsikt || explicitAhaSer?.viktigsteInnsikt || payload?.viktigsteInnsikt || ""),
+      fagkoblinger: deps.normalizeFagkoblinger(canonical?.ahaSer?.fagkoblinger || explicitAhaSer?.fagkoblinger || payload?.fagkoblinger),
+      nesteSteg: String(canonical?.ahaSer?.nesteSteg || explicitAhaSer?.nesteSteg || payload?.nesteSteg || ""),
+      kortSvar: String(canonical?.ahaSer?.kortSvar || explicitAhaSer?.kortSvar || payload?.kortSvar || ""),
+      sourceTextHash,
+      source_binding: {
+        field: "ahaSer",
+        status: "source_bound_from_canonical",
+        valid: true,
+        currentSourceTextHash: sourceTextHash || null
+      }
+    };
+
+    const bindings = [autoBinding, rawPayloadBinding, selectedAfterworkBinding, afterworkBinding, canonicalAnalysis.source_binding, ahaSer.source_binding];
+    const quality = buildQualityReport({
+      sourceText,
+      sourceTextHash,
+      bindings,
+      rejectedRawAutoPayload,
+      rejectedSelectedAfterwork
+    });
 
     return {
       version: "aha_analysis_export_v1",
@@ -109,25 +322,26 @@
       sourceText,
       sourceTextPreview: String(auto?.sourceTextPreview || selectedAfterwork?.sourceTextPreview || sourceText.replace(/\s+/g, " ").slice(0, 180)),
       ahaReply: latestAhaReplyText || String(explicitAhaSer?.kortSvar || payload?.kortSvar || ""),
-      ahaSer: {
-        innholdstype: String(canonical?.contentType || payload?.innholdstype || payload?.textType || ""),
-        tema: String(canonical?.ahaSer?.tema || explicitAhaSer?.tema || payload?.tema || ""),
-        hovedspenning: String(canonical?.ahaSer?.hovedspenning || explicitAhaSer?.hovedspenning || payload?.hovedspenning || ""),
-        viktigsteInnsikt: String(canonical?.ahaSer?.viktigsteInnsikt || explicitAhaSer?.viktigsteInnsikt || payload?.viktigsteInnsikt || ""),
-        fagkoblinger: deps.normalizeFagkoblinger(canonical?.ahaSer?.fagkoblinger || explicitAhaSer?.fagkoblinger || payload?.fagkoblinger),
-        nesteSteg: String(canonical?.ahaSer?.nesteSteg || explicitAhaSer?.nesteSteg || payload?.nesteSteg || ""),
-        kortSvar: String(canonical?.ahaSer?.kortSvar || explicitAhaSer?.kortSvar || payload?.kortSvar || "")
+      ahaReplySourceBinding: {
+        field: "ahaReply",
+        status: latestAhaReplyText ? "dom_fallback_unverified" : "payload_or_empty",
+        valid: !latestAhaReplyText,
+        currentSourceTextHash: sourceTextHash || null,
+        reason: latestAhaReplyText ? "latest_reply_read_from_dom_not_run_object" : "no_dom_reply_used"
       },
+      ahaSer,
       canonicalAnalysis,
-      afterwork: mergedAfterwork,
+      afterwork: sourceBoundAfterwork,
       insights,
       concepts: (allowAfterwork && !forceCanonicalOverDayLog && concepts.length) ? concepts : (canonical?.concepts || []),
       subjectMatches,
       metaProfile,
       knowledgeMap,
-      rawAutoPayload: payload,
-      selectedAfterwork,
-      relevantAfterworks,
+      rawAutoPayload: annotateSourceBoundObject(payload, rawPayloadBinding, sourceTextHash),
+      rejectedRawAutoPayload: rejectedRawAutoPayload ? safeSerializeForExport(rejectedRawAutoPayload) : null,
+      selectedAfterwork: annotateSourceBoundObject(selectedAfterwork, selectedAfterworkBinding, sourceTextHash),
+      rejectedSelectedAfterwork: rejectedSelectedAfterwork ? safeSerializeForExport(rejectedSelectedAfterwork) : null,
+      relevantAfterworks: relevantAfterworks.map((entry) => annotateSourceBoundObject(entry, makeSourceBinding("relevantAfterwork", entry, sourceTextHash), sourceTextHash)),
       allAfterworkCount: afterworks.length,
       chamberInsights: Array.isArray(chamber?.insights) ? chamber.insights : [],
       chamberChatLog: chatLog,
@@ -138,7 +352,9 @@
         recentAfterworkCount: relevantAfterworks.length,
         chatTurns: chatLog.length
       },
-      calibrationStatus
+      calibrationStatus,
+      quality,
+      sourceBinding: quality.sourceBinding
     };
   }
 
@@ -189,6 +405,7 @@
     const afterwork = b.afterwork || {};
     const sortItems = Array.isArray(afterwork.sortItems) ? afterwork.sortItems : [];
     const asBullet = (items) => (Array.isArray(items) && items.length ? items.map((item) => `- ${typeof item === "string" ? item : (item?.label ? `${item.label}: ${item.text || ""}` : JSON.stringify(item))}`).join("\n") : "- (ingen)");
+    const quality = b.quality || {};
     return `# AHA analyse
 
 ## Kildetekst
@@ -231,6 +448,14 @@ ${asBullet(b.concepts)}
 - Meta-profil: ${JSON.stringify(safeSerializeForExport(b.metaProfile || {}))}
 - Kunnskapskart/chamber-status: ${JSON.stringify(safeSerializeForExport(b.chamberSummary || {}))}
 
+## Kildebinding / kvalitet
+- quality.status: ${quality.status || "unknown"}
+- failClosed: ${quality.failClosed === true ? "true" : "false"}
+- warnings: ${Array.isArray(quality.warnings) && quality.warnings.length ? quality.warnings.join(", ") : "(ingen)"}
+- invalidFields: ${Array.isArray(quality.sourceBinding?.invalidFields) && quality.sourceBinding.invalidFields.length ? quality.sourceBinding.invalidFields.map((item) => item.field).join(", ") : "(ingen)"}
+- inferredFields: ${Array.isArray(quality.sourceBinding?.inferredFields) && quality.sourceBinding.inferredFields.length ? quality.sourceBinding.inferredFields.join(", ") : "(ingen)"}
+- ahaReplyBinding: ${b.ahaReplySourceBinding?.status || "unknown"}
+
 ## Teknisk
 - sourceTextHash: ${b.sourceTextHash || ""}
 - createdAt: ${b.createdAt || ""}
@@ -249,9 +474,19 @@ ${"```"}json
 ${formatJsonForMarkdown(b.rawAutoPayload, {})}
 ${"```"}
 
+### Rejected raw auto-output payload
+${"```"}json
+${formatJsonForMarkdown(b.rejectedRawAutoPayload, null)}
+${"```"}
+
 ### Valgt afterwork
 ${"```"}json
 ${formatJsonForMarkdown(b.selectedAfterwork, {})}
+${"```"}
+
+### Rejected selected afterwork
+${"```"}json
+${formatJsonForMarkdown(b.rejectedSelectedAfterwork, null)}
 ${"```"}
 
 ### Relevante afterworks
@@ -287,6 +522,11 @@ ${"```"}
 ### Calibration status
 ${"```"}json
 ${formatJsonForMarkdown(b.calibrationStatus, {})}
+${"```"}
+
+### Source binding
+${"```"}json
+${formatJsonForMarkdown(b.sourceBinding, {})}
 ${"```"}
 
 ### Full chamber snapshot
