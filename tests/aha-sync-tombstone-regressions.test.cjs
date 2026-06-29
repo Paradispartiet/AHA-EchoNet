@@ -306,6 +306,13 @@ async function testInstaSyncRegressions() {
   assert.ok(deleted.deleted_at, 'insta deletePost should set deleted_at');
   assert.equal(deleted.updated_at, deleted.deleted_at, 'insta deletePost should set updated_at to deleted_at');
 
+  Insta.save([
+    { id: 'insta_other_user', title: 'Other user', src: 'other.jpg', caption: 'not mine', ownerId: 'user_other', ownerUsername: 'other', created_at: '2026-01-01T00:00:00.000Z' }
+  ]);
+  const deniedDelete = Insta.deletePost('insta_other_user');
+  assert.equal(deniedDelete, null, 'insta deletePost should deny direct deletion of another user post');
+  assert.equal(Insta.load()[0].deleted_at, undefined, 'insta deletePost should leave another user post active');
+
   const added = await Insta.addPost({ title: 'Insta source', src: 'insta.jpg', caption: 'Source type check' });
   assert.ok(added, 'insta addPost should create a post');
   assert.equal(ingestCalls.at(-1).source_type, 'insta_post', 'insta addPost should ingest source_type insta_post');

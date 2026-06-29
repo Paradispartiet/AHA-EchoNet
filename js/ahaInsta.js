@@ -1242,9 +1242,13 @@
   }
 
   function deletePost(postId) {
+    const profile = ensureProfile();
     const entries = load();
     const index = entries.findIndex((entry) => entry.id === postId);
     if (index < 0) return null;
+
+    const owner = getPostOwner(entries[index]);
+    if (owner.id !== profile.id && owner.username !== profile.username) return null;
 
     const deletedAt = nowIso();
     entries[index] = { ...entries[index], deleted_at: deletedAt, updated_at: deletedAt };
