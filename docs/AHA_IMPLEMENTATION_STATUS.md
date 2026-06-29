@@ -20,6 +20,13 @@ source event
 
 
 
+
+## Read-only AHA Sync Insight Digest
+
+`js/ahaSyncInsightDigest.js` bygger nå en compact/read-only digest for AHA Home fra eksisterende lokale source events, `AHASyncChannelRouter` og `AHASyncCandidateBuilder`. Digesten viser bare trygge tellere, boolean-signaler og generiske linjer for aktive innsiktskanaler, åpne spørsmål, begrepskoblinger, perspektiver, spenninger og samtalekoblinger.
+
+Digesten er ikke ekte sync, deling, EchoNet eller prosjektstatus. Den skriver ikke til `localStorage`, sender ikke data, viser ikke rå `sourceEvent.text`, lager ingen backend og bruker fortsatt eksisterende Personal AI Loop source approval boundary: `personal_ai_loop_source_approval`.
+
 ## Read-only AHA Sync Candidate Builder
 
 `js/ahaSyncCandidateBuilder.js` bygger nå midlertidige sync-kandidater fra lokale source events ved å bruke `AHASyncChannelRouter.routeSourceEvent(sourceEvent)` mot `AHA_SYNC_CHANNELS`. Kandidatene er bare en lokal conversation insight sync-modell: de har `visibility: "local_only"`, `requiresUserConfirmation: true`, `confidence: "candidate"`, `createdFrom: "read_only_route_candidate"`, `approvalBoundary: "personal_ai_loop_source_approval"` og `approvalState: "suggested"`.

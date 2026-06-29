@@ -2318,6 +2318,55 @@
     `;
   }
 
+
+  function renderAhaSyncInsightDigest(sourceEvents) {
+    const digestHelper = window.AHASyncInsightDigest;
+    if (typeof digestHelper?.buildDigest !== "function") {
+      return '<section class="aha-sync-insight-digest" aria-label="AHA Sync Insight Digest"><h4>AHA Sync Insight Digest</h4><p class="aha-sync-hub-notice">Insight digest ikke tilgjengelig ennå. Ingen sync kjøres.</p></section>';
+    }
+
+    let digest = null;
+    try {
+      digest = digestHelper.buildDigest(Array.isArray(sourceEvents) ? sourceEvents : []);
+    } catch (error) {
+      console.warn("AHADashboard: insight digest kunne ikke bygges", error);
+    }
+
+    if (!digest || typeof digest !== "object") {
+      return '<section class="aha-sync-insight-digest" aria-label="AHA Sync Insight Digest"><h4>AHA Sync Insight Digest</h4><p class="aha-sync-hub-notice">Insight digest kunne ikke bygges. Ingen sync kjøres.</p></section>';
+    }
+
+    const flags = [
+      ["Åpne spørsmål", digest.hasOpenQuestions],
+      ["Begrepskoblinger", digest.hasConceptLinks],
+      ["Perspektiver", digest.hasPerspectives],
+      ["Spenninger", digest.hasTensions],
+      ["Samtalekoblinger", digest.hasConversationLinks]
+    ];
+    const lines = Array.isArray(digest.lines) ? digest.lines : [];
+
+    return `
+      <section class="aha-sync-insight-digest" aria-label="AHA Sync Insight Digest">
+        <h4>AHA Sync Insight Digest</h4>
+        <p class="aha-sync-hub-notice">Compact/read-only innsiktsdigest fra lokale source events. Ingen rå brukerinnhold vises.</p>
+        <dl class="aha-sync-hub-meta">
+          <div><dt>Source events</dt><dd>${escapeHtml(Number(digest.totalSourceEvents || 0))}</dd></div>
+          <div><dt>Routede events</dt><dd>${escapeHtml(Number(digest.totalRoutedEvents || 0))}</dd></div>
+          <div><dt>Kandidater</dt><dd>${escapeHtml(Number(digest.totalCandidates || 0))}</dd></div>
+          <div><dt>Aktive kanaler</dt><dd>${escapeHtml(Number(digest.activeChannels || 0))}</dd></div>
+          <div><dt>Toppkanal</dt><dd>${escapeHtml(digest.topChannelId || "Ingen")}</dd></div>
+          <div><dt>Approval boundary</dt><dd>${escapeHtml(digest.approvalBoundary || "personal_ai_loop_source_approval")}</dd></div>
+          <div><dt>localOnly</dt><dd>${escapeHtml(String(digest.localOnly === true))}</dd></div>
+          <div><dt>requiresUserConfirmation</dt><dd>${escapeHtml(String(digest.requiresUserConfirmation === true))}</dd></div>
+        </dl>
+        <ul class="aha-sync-hub-list" aria-label="Insight signal flags">
+          ${flags.map(([label, value]) => `<li class="aha-sync-hub-row"><div class="aha-sync-hub-row-heading"><strong>${escapeHtml(label)}</strong><span class="aha-sync-hub-badge is-planned">${escapeHtml(value ? "ja" : "nei")}</span></div></li>`).join("")}
+        </ul>
+        ${lines.length ? `<ul class="aha-sync-hub-list" aria-label="Insight digest lines">${lines.map((line) => `<li class="aha-sync-hub-row"><p>${escapeHtml(line)}</p></li>`).join("")}</ul>` : ""}
+      </section>
+    `;
+  }
+
   function renderAhaSyncChannelPreview() {
     const router = window.AHASyncChannelRouter;
     const sources = window.AHASources;
@@ -2414,6 +2463,7 @@
           <div><dt>Ikke routet</dt><dd>${escapeHtml(Number(summary.unrouted || 0))}</dd></div>
         </dl>
         ${rows ? `<ul class="aha-sync-hub-list" aria-label="Route counts per channel">${rows}</ul>` : ""}
+        ${renderAhaSyncInsightDigest(sourceEvents)}
         ${candidateSummaryHtml}
       </section>
     `;
