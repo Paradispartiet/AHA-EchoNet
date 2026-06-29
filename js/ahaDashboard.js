@@ -8,6 +8,7 @@
   let isAhaManualSyncConfirmationModalOpen = false;
   let selectedPreviewTarget = "not_configured";
   let lastAhaManualSyncResult = null;
+  let ahaDashboardRenderSeq = 0;
   let ahaManualSyncHistoryState = { status: "idle", entries: [], reason: null };
   let selectedAhaManualSyncHistoryRunId = null;
 
@@ -17,18 +18,20 @@
     return Boolean(String(localStorage.getItem("aha_import_payload_v1") || "").trim());
   }
 
-  function persistAuthReturnTargetFromUrl() {
+  function isHistoryGoLoginReturnRequest() {
     const params = new URLSearchParams(window.location.search);
-    if (params.get("source") !== "historygo") return;
+    return params.get("source") === "historygo" && params.get("auth") === "login";
+  }
+
+  function persistAuthReturnTargetFromUrl() {
+    if (!isHistoryGoLoginReturnRequest()) {
+      clearAuthReturnTarget();
+      return;
+    }
 
     try {
       localStorage.setItem(AHA_AUTH_RETURN_TO_KEY, HISTORY_GO_PROFILE_URL);
     } catch {}
-  }
-
-  function isHistoryGoLoginReturnRequest() {
-    const params = new URLSearchParams(window.location.search);
-    return params.get("source") === "historygo";
   }
 
   function clearAuthReturnTarget() {
@@ -2744,8 +2747,10 @@
   }
 
   async function renderDashboard() {
+    const renderSeq = ++ahaDashboardRenderSeq;
     try {
       const authState = await loadAuthState();
+      if (renderSeq !== ahaDashboardRenderSeq) return;
       if (authState.user?.id && isHistoryGoLoginReturnRequest()) {
         redirectBackToHistoryGoProfile();
         return;
@@ -2757,11 +2762,13 @@
 
       if (authState.user?.id) {
         dbResult = await databaseStats();
+        if (renderSeq !== ahaDashboardRenderSeq) return;
         if (dbResult?.ok && dbResult.counts) stats = { ...local, ...dbResult.counts };
       }
 
       const sourceLabel = localDataSourceLabel(dbResult);
       await loadAhaManualSyncHistoryPreview();
+      if (renderSeq !== ahaDashboardRenderSeq) return;
       const moduleHealth = buildModuleHealth(stats, authState);
       lastState = { authState, stats, sourceLabel, moduleHealth };
 
@@ -2775,6 +2782,7 @@
       renderSyncHubStatus();
       renderInsightsActivity(stats);
     } catch (error) {
+      if (renderSeq !== ahaDashboardRenderSeq) return;
       console.warn("AHADashboard: renderDashboard feilet", error);
       const authState = { user: null, profile: null, profileResult: { ok: false, reason: "render_error", error } };
       const stats = localStats();
@@ -2852,6 +2860,7 @@
       modal.setAttribute("aria-hidden", "true");
     };
     const openModal = () => {
+      if (!isHistoryGoLoginReturnRequest()) clearAuthReturnTarget();
       modal.classList.remove("is-hidden");
       modal.setAttribute("aria-hidden", "false");
     };
@@ -2936,6 +2945,9 @@
     renderDashboard,
     getLastState: () => lastState,
     saveProfileName,
+    isHistoryGoLoginReturnRequest,
+    persistAuthReturnTargetFromUrl,
+    clearAuthReturnTarget,
     loadAhaManualSyncHistoryPreview,
     renderAhaSyncChannelPreview,
     getAhaManualSyncHistoryState: () => ahaManualSyncHistoryState
