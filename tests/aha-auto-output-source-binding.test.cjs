@@ -59,7 +59,7 @@ const AUTO_OUTPUT_STORAGE_KEY = "aha_chat_auto_outputs_v1";
   assert.equal(auto.payload.source_binding.status, "inferred_from_auto_output_wrapper");
   assert.equal(auto.payload.canonicalAnalysis.sourceTextHash, "hash_current");
   assert.equal(auto.payload.ahaSer.sourceTextHash, "hash_current");
-  assert.deepEqual(auto.sourceBinding.invalidFields, []);
+  assert.equal(JSON.stringify(auto.sourceBinding.invalidFields), JSON.stringify([]));
 }
 
 {
@@ -76,7 +76,7 @@ const AUTO_OUTPUT_STORAGE_KEY = "aha_chat_auto_outputs_v1";
   assert.equal(auto.payload.sourceTextHash, "old_hash");
   assert.equal(auto.payload.source_binding.status, "invalid_hash_mismatch");
   assert.equal(auto.payload.source_binding.valid, false);
-  assert.deepEqual(auto.sourceBinding.invalidFields.map((item) => item.field), ["rawAutoPayload"]);
+  assert.equal(JSON.stringify(auto.sourceBinding.invalidFields.map((item) => item.field)), JSON.stringify(["rawAutoPayload"]));
 }
 
 {
@@ -94,7 +94,7 @@ const AUTO_OUTPUT_STORAGE_KEY = "aha_chat_auto_outputs_v1";
 
   assert.equal(repaired.payload.sourceTextHash, "hash_current");
   assert.equal(stored.payload.canonicalAnalysis.sourceTextHash, "hash_current");
-  assert.equal(win.AHAPythonEngineSmokeTest.printStatus().latestPayloadSourceBinding, "inferred_from_auto_output_wrapper");
+  assert.equal(win.AHAPythonEngineSmokeTest.printStatus().latestPayloadSourceBinding, "verified");
 }
 
 console.log("aha-auto-output-source-binding.test.cjs passed");

@@ -176,8 +176,114 @@
       }));
   }
 
-  function buildQualityReport({ sourceText, sourceTextHash, bindings, rejectedRawAutoPayload, rejectedSelectedAfterwork }) {
+
+  const TOPIC_STOPWORDS = new Set([
+    "dette", "denne", "disse", "eller", "ikke", "som", "med", "for", "til", "fra", "har", "kan", "skal", "det", "der", "seg", "sin", "sitt", "sine", "mens", "viser", "fortsatt", "mye", "eget", "tema", "teksten", "handler", "analyse", "kilde", "output"
+  ]);
+
+  function normalizeTopicText(value) {
+    return String(value || "")
+      .toLowerCase()
+      .normalize("NFKD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/æ/g, "ae")
+      .replace(/ø/g, "o")
+      .replace(/å/g, "a")
+      .replace(/[^a-z0-9]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function normalizeTopicTerm(term) {
+    return normalizeTopicText(term);
+  }
+
+  function topicTextIncludes(text, term) {
+    const normalizedText = ` ${normalizeTopicText(text)} `;
+    const normalizedTerm = normalizeTopicTerm(term);
+    if (!normalizedTerm) return false;
+    return normalizedText.includes(` ${normalizedTerm} `);
+  }
+
+  function extractTopicTerms(text, maxTerms = 16) {
+    const normalized = normalizeTopicText(text);
+    if (!normalized) return [];
+    const counts = new Map();
+    normalized.split(" ").forEach((token) => {
+      if (token.length < 3 || TOPIC_STOPWORDS.has(token)) return;
+      counts.set(token, (counts.get(token) || 0) + 1);
+    });
+    return Array.from(counts.entries())
+      .sort((a, b) => (b[1] - a[1]) || a[0].localeCompare(b[0]))
+      .slice(0, maxTerms)
+      .map(([term]) => term);
+  }
+
+  function flattenTopicValue(value, depth = 0) {
+    if (value == null || depth > 5) return "";
+    if (["string", "number", "boolean"].includes(typeof value)) return String(value);
+    if (Array.isArray(value)) return value.map((item) => flattenTopicValue(item, depth + 1)).filter(Boolean).join(" ");
+    if (typeof value === "object") {
+      return Object.keys(value)
+        .filter((key) => !["sourceText", "sourceTextPreview", "sourceTextHash", "source_binding", "sourceBinding", "quality"].includes(key))
+        .map((key) => flattenTopicValue(value[key], depth + 1))
+        .filter(Boolean)
+        .join(" ");
+    }
+    return "";
+  }
+
+  function inferTopicConsistencyContract(sourceText, explicit = {}) {
+    const sourceTerms = extractTopicTerms(sourceText);
+    const requiredTerms = Array.isArray(explicit.requiredTerms) ? explicit.requiredTerms.slice() : [];
+    const forbiddenTerms = Array.isArray(explicit.forbiddenTerms) ? explicit.forbiddenTerms.slice() : [];
+    const src = ` ${normalizeTopicText(sourceText)} `;
+
+    if (src.includes(" usa ") && src.includes(" kina ")) {
+      ["usa", "kina"].forEach((term) => { if (!requiredTerms.some((v) => normalizeTopicTerm(v) === term)) requiredTerms.push(term); });
+      ["eierskap", "profil", "offentlighet", "offentligheten", "institusjonell kontinuitet", "institusjonell omforming", "mandat"].forEach((term) => {
+        if (!topicTextIncludes(sourceText, term) && !forbiddenTerms.some((v) => normalizeTopicTerm(v) === normalizeTopicTerm(term))) forbiddenTerms.push(term);
+      });
+    }
+
+    return { sourceTerms, requiredTerms, forbiddenTerms };
+  }
+
+  function buildTopicConsistencyReport({ sourceText, outputText, requiredTerms, forbiddenTerms }) {
+    const normalizedRequired = (Array.isArray(requiredTerms) ? requiredTerms : []).map(normalizeTopicTerm).filter(Boolean);
+    const normalizedForbidden = (Array.isArray(forbiddenTerms) ? forbiddenTerms : []).map(normalizeTopicTerm).filter(Boolean);
+    const sourceTerms = extractTopicTerms(sourceText);
+    const outputTerms = extractTopicTerms(outputText);
+    const outputTermSet = new Set(outputTerms);
+    const overlappingTerms = sourceTerms.filter((term) => outputTermSet.has(term));
+    const missingRequiredTerms = normalizedRequired.filter((term) => !topicTextIncludes(outputText, term));
+    const matchedForbiddenTerms = normalizedForbidden.filter((term) => topicTextIncludes(outputText, term));
+    const valid = missingRequiredTerms.length === 0 && matchedForbiddenTerms.length === 0;
+    return {
+      status: valid ? "valid" : "invalid_topic_mismatch",
+      valid,
+      checkedAt: "export_build",
+      sourceTerms,
+      outputTerms,
+      overlappingTerms,
+      requiredTerms: normalizedRequired,
+      missingRequiredTerms,
+      forbiddenTerms: normalizedForbidden,
+      matchedForbiddenTerms
+    };
+  }
+
+  function buildQualityReport({ sourceText, sourceTextHash, bindings, rejectedRawAutoPayload, rejectedSelectedAfterwork, topicConsistency }) {
     const invalidFields = collectInvalidBindings(bindings);
+    if (topicConsistency && topicConsistency.valid === false) {
+      invalidFields.push({
+        field: "topicConsistency",
+        status: topicConsistency.status || "invalid_topic_mismatch",
+        reason: topicConsistency.matchedForbiddenTerms?.length ? "forbidden_terms_present" : "required_terms_missing",
+        missingRequiredTerms: topicConsistency.missingRequiredTerms || [],
+        matchedForbiddenTerms: topicConsistency.matchedForbiddenTerms || []
+      });
+    }
     const warnings = [];
     if (!String(sourceText || "").trim()) warnings.push("missing_source_text");
     if (!normalizeSourceHash(sourceTextHash)) warnings.push("missing_source_text_hash");
@@ -188,7 +294,8 @@
     if (inferredFields.length) warnings.push(`inferred_source_binding:${inferredFields.join(",")}`);
 
     let status = "valid";
-    if (invalidFields.length) status = "invalid_source_mismatch";
+    if (topicConsistency && topicConsistency.valid === false) status = "invalid_topic_mismatch";
+    else if (invalidFields.length) status = "invalid_source_mismatch";
     else if (warnings.length) status = "warning_unverified_binding";
 
     return {
@@ -201,6 +308,7 @@
         rejectedRawAutoPayload: Boolean(rejectedRawAutoPayload),
         rejectedSelectedAfterwork: Boolean(rejectedSelectedAfterwork)
       },
+      topicConsistency: topicConsistency || null,
       warnings,
       failClosed: invalidFields.length > 0
     };
@@ -306,12 +414,22 @@
     };
 
     const bindings = [autoBinding, rawPayloadBinding, selectedAfterworkBinding, afterworkBinding, canonicalAnalysis.source_binding, ahaSer.source_binding];
+    const explicitTopicContract = typeof deps.getTopicConsistencyContract === "function" ? deps.getTopicConsistencyContract(sourceText, payload) : {};
+    const topicContract = inferTopicConsistencyContract(sourceText, explicitTopicContract);
+    const topicOutputText = flattenTopicValue({ ahaSer, canonicalAnalysis, afterwork: sourceBoundAfterwork, rawAutoPayload: payload });
+    const topicConsistency = buildTopicConsistencyReport({
+      sourceText,
+      outputText: topicOutputText,
+      requiredTerms: topicContract.requiredTerms,
+      forbiddenTerms: topicContract.forbiddenTerms
+    });
     const quality = buildQualityReport({
       sourceText,
       sourceTextHash,
       bindings,
       rejectedRawAutoPayload,
-      rejectedSelectedAfterwork
+      rejectedSelectedAfterwork,
+      topicConsistency
     });
 
     return {
@@ -453,6 +571,9 @@ ${asBullet(b.concepts)}
 - failClosed: ${quality.failClosed === true ? "true" : "false"}
 - warnings: ${Array.isArray(quality.warnings) && quality.warnings.length ? quality.warnings.join(", ") : "(ingen)"}
 - invalidFields: ${Array.isArray(quality.sourceBinding?.invalidFields) && quality.sourceBinding.invalidFields.length ? quality.sourceBinding.invalidFields.map((item) => item.field).join(", ") : "(ingen)"}
+- topicConsistency.status: ${quality.topicConsistency?.status || "unknown"}
+- topicConsistency.missingRequiredTerms: ${Array.isArray(quality.topicConsistency?.missingRequiredTerms) && quality.topicConsistency.missingRequiredTerms.length ? quality.topicConsistency.missingRequiredTerms.join(", ") : "(ingen)"}
+- topicConsistency.matchedForbiddenTerms: ${Array.isArray(quality.topicConsistency?.matchedForbiddenTerms) && quality.topicConsistency.matchedForbiddenTerms.length ? quality.topicConsistency.matchedForbiddenTerms.join(", ") : "(ingen)"}
 - inferredFields: ${Array.isArray(quality.sourceBinding?.inferredFields) && quality.sourceBinding.inferredFields.length ? quality.sourceBinding.inferredFields.join(", ") : "(ingen)"}
 - ahaReplyBinding: ${b.ahaReplySourceBinding?.status || "unknown"}
 

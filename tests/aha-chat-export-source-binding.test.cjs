@@ -95,7 +95,7 @@ assert.equal(typeof api.buildAhaAnalysisExportBundle, "function");
 
   assert.equal(bundle.quality.status, "invalid_source_mismatch");
   assert.equal(bundle.quality.failClosed, true);
-  assert.deepEqual(bundle.sourceBinding.invalidFields.map((item) => item.field), ["rawAutoPayload"]);
+  assert.equal(JSON.stringify(bundle.sourceBinding.invalidFields.map((item) => item.field)), JSON.stringify(["rawAutoPayload"]));
   assert.equal(bundle.rawAutoPayload.source_binding.valid, false);
   assert.equal(bundle.rejectedRawAutoPayload.sourceTextHash, "old_hash");
   assert.equal(bundle.ahaSer.tema, "Konseptuelle artikler i medievitenskap");

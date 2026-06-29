@@ -53,11 +53,40 @@ const bundle = hooks.buildAhaAnalysisExportBundle();
 const md = hooks.formatAhaAnalysisExportMarkdown(bundle);
 
 assert.equal(bundle.sourceTextHash, 'geo_hash');
-assert.deepEqual(bundle.selectedAfterwork, {});
+assert.equal(bundle.selectedAfterwork.source_binding.status, 'no_data');
+assert.equal(bundle.selectedAfterwork.source_binding.valid, true);
+assert.equal(bundle.quality.topicConsistency.status, 'valid');
+assert.deepEqual(bundle.quality.topicConsistency.missingRequiredTerms, []);
+assert.deepEqual(bundle.quality.topicConsistency.matchedForbiddenTerms, []);
+assert.ok(bundle.quality.topicConsistency.requiredTerms.includes('usa'));
+assert.ok(bundle.quality.topicConsistency.requiredTerms.includes('kina'));
 assert.ok(md.includes('USA'));
 assert.ok(md.includes('Kina'));
+assert.ok(md.includes('topicConsistency.status: valid'));
 for (const phrase of ['eierskap, profil og rolle i offentligheten','Institusjonell kontinuitet ↔ institusjonell omforming']) {
   assert.ok(!md.includes(phrase), `should not include stale institutional fallback: ${phrase}`);
 }
+
+context.localStorage.setItem('aha_chat_auto_outputs_v1', JSON.stringify({
+  createdAt: new Date().toISOString(),
+  sourceText: text,
+  sourceTextHash: 'geo_hash',
+  payload: {
+    sourceTextHash: 'geo_hash',
+    reflection: 'USAs historiske utvikling, eierskap, profil og rolle i offentligheten',
+    sortItems: [{ label: 'Hovedspenning', text: 'Institusjonell kontinuitet ↔ institusjonell omforming' }],
+    list: ['eierskap'],
+    learningPath: ['mandat'],
+    ahaSer: { tema: 'Institusjonell profil', kortSvar: 'Gammel institusjonell analyse.' }
+  }
+}));
+const staleBundle = hooks.buildAhaAnalysisExportBundle();
+const staleMd = hooks.formatAhaAnalysisExportMarkdown(staleBundle);
+assert.equal(staleBundle.quality.status, 'invalid_topic_mismatch');
+assert.equal(staleBundle.quality.failClosed, true);
+assert.ok(staleBundle.quality.sourceBinding.invalidFields.some((item) => item.field === 'topicConsistency'));
+assert.ok(staleBundle.quality.topicConsistency.matchedForbiddenTerms.includes('eierskap'));
+assert.ok(staleMd.includes('topicConsistency.status: invalid_topic_mismatch'));
+assert.ok(staleMd.includes('topicConsistency'));
 
 console.log('aha-geopolitics-consistency passed');
