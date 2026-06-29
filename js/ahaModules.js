@@ -42,6 +42,15 @@
       phase: 2
     },
     {
+      id: "knowledge-map",
+      title: "Knowledge Map",
+      type: "system",
+      status: "active",
+      href: "knowledge-map.html",
+      description: "Viser prosjekter, begreper, kilder og koblinger i AHA sin kuraterte kunnskap.",
+      phase: 2
+    },
+    {
       id: "personal-ai",
       title: "Personal AI",
       type: "system",
@@ -220,6 +229,7 @@
     meet: "⟡",
     "data-intake": "⇥",
     "knowledge-curation": "◇",
+    "knowledge-map": "🕸",
     "sync-hub": "⇄",
     music: "♫",
     avisa: "📰",
@@ -247,7 +257,7 @@
     read_error: { title: "Could not read module data.", message: "Try again later or view diagnostics." },
     unknown: { title: "Nothing to show.", message: "No module data is available." }
   };
-  const PREFERRED_ORDER = ["chat", "data-intake", "training", "personal-ai", "insights", "sync-hub", "music", "historygo", "gallery", "notes", "feed", "avisa", "profile", "search", "privacy"];
+  const PREFERRED_ORDER = ["chat", "data-intake", "knowledge-curation", "knowledge-map", "training", "personal-ai", "insights", "sync-hub", "music", "historygo", "gallery", "notes", "feed", "avisa", "profile", "search", "privacy"];
 
   function escapeHtml(value) {
     return String(value ?? "")

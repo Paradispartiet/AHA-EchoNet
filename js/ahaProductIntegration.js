@@ -13,7 +13,8 @@
     syncHubHref: "index.html#aha-sync-hub-status",
     musicHref: "music.html",
     historyGoHref: "historygo.html",
-    dataIntakeHref: "intake.html"
+    dataIntakeHref: "intake.html",
+    knowledgeMapHref: "knowledge-map.html"
   };
 
   function getModules() {
@@ -55,6 +56,7 @@
       hasTraining: hasModuleByTerms(modules, ["training"]),
       hasDataIntake: hasModuleByTerms(modules, ["data-intake", "data intake", "intake"]),
       hasKnowledgeCuration: hasModuleByTerms(modules, ["knowledge-curation", "knowledge curation", "curation"]),
+      hasKnowledgeMap: hasModuleByTerms(modules, ["knowledge-map", "knowledge map"]),
       hasPersonalAI: hasModuleByTerms(modules, ["personal-ai", "personal ai"]),
       hasSyncHub: hasModuleByTerms(modules, ["sync", "sync hub"]),
       hasMusic: hasModuleByTerms(modules, ["music", "musikk"]),
@@ -69,6 +71,7 @@
     const training = findModule(modules, ["training"]);
     const dataIntake = findModule(modules, ["data-intake", "data intake", "intake"]);
     const knowledgeCuration = findModule(modules, ["knowledge-curation", "knowledge curation", "curation"]);
+    const knowledgeMap = findModule(modules, ["knowledge-map", "knowledge map"]);
     const personalAI = findModule(modules, ["personal-ai", "personal ai"]);
     const syncHub = findModule(modules, ["sync", "sync hub"]);
     const music = findModule(modules, ["music", "musikk"]);
@@ -79,6 +82,7 @@
       trainingHref: normalizeHref(training?.href, DEFAULT_LINKS.trainingHref),
       dataIntakeHref: normalizeHref(dataIntake?.href, DEFAULT_LINKS.dataIntakeHref),
       knowledgeCurationHref: normalizeHref(knowledgeCuration?.href, "curation.html"),
+      knowledgeMapHref: normalizeHref(knowledgeMap?.href, DEFAULT_LINKS.knowledgeMapHref),
       personalAiHref: normalizeHref(personalAI?.href, DEFAULT_LINKS.personalAiHref),
       syncHubHref: normalizeHref(syncHub?.href, DEFAULT_LINKS.syncHubHref),
       musicHref: normalizeHref(music?.href, DEFAULT_LINKS.musicHref),
@@ -86,7 +90,7 @@
       missingLinks: []
     };
     [
-      ["chatHref", moduleStatus.hasChat], ["dataIntakeHref", moduleStatus.hasDataIntake], ["knowledgeCurationHref", moduleStatus.hasKnowledgeCuration], ["trainingHref", moduleStatus.hasTraining], ["personalAiHref", moduleStatus.hasPersonalAI],
+      ["chatHref", moduleStatus.hasChat], ["dataIntakeHref", moduleStatus.hasDataIntake], ["knowledgeCurationHref", moduleStatus.hasKnowledgeCuration], ["knowledgeMapHref", moduleStatus.hasKnowledgeMap], ["trainingHref", moduleStatus.hasTraining], ["personalAiHref", moduleStatus.hasPersonalAI],
       ["syncHubHref", moduleStatus.hasSyncHub], ["musicHref", moduleStatus.hasMusic], ["historyGoHref", moduleStatus.hasHistoryGo]
     ].forEach(([key, available]) => { if (!available || !nav[key]) nav.missingLinks.push(key); });
     return nav;
@@ -105,6 +109,7 @@
     if (status.sourceConnectors?.available) actions.push({ id: "scan-source-connectors", label: "Skann aktive Source Connectors.", href: nav.dataIntakeHref });
     if (status.dataIntake?.available) actions.push({ id: "open-data-intake", label: "Åpne Data Intake og vurder nytt materiale.", href: nav.dataIntakeHref });
     if (status.knowledgeCuration?.available) actions.push({ id: "open-knowledge-curation", label: "Rydd Data Intake i Knowledge Curation.", href: nav.knowledgeCurationHref || "curation.html" });
+    if (status.knowledgeMap?.available) actions.push({ id: "open-knowledge-map", label: "Se koblinger i Knowledge Map.", href: nav.knowledgeMapHref || "knowledge-map.html" });
     actions.push({ id: "approve-training", label: "Åpne Training Corpus og godkjenn materiale.", href: nav.trainingHref });
     actions.push({ id: "check-personal-ai", label: "Åpne Personal AI og kjør full kontrolltest.", href: nav.personalAiHref });
     if (status.syncHub?.available) actions.push({ id: "open-sync-hub", label: "Åpne Sync Hub og se importkandidater.", href: nav.syncHubHref });
@@ -139,6 +144,7 @@
     const sourceConnectorStatus = window.AHASourceConnectors?.collectConnectorStatus?.() || null;
     const chatStats = window.AHAChatPersistence?.collectChatStats?.() || null;
     const chatCandidates = window.AHAChatPersistence?.buildChatIntakeCandidates?.({ dryRun:true }) || null;
+    const knowledgeMapSummary = window.AHAKnowledgeMap?.buildKnowledgeMapSummary?.() || { available: modules.hasKnowledgeMap, nodes:0, edges:0, projects:0, concepts:0, nextAction:"Bygg Knowledge Map fra kuratert materiale." };
     const curationSummary = window.AHAKnowledgeCuration?.buildCurationSummary?.() || { available: modules.hasKnowledgeCuration, total: 0, reviewCount: 0, highPriority: 0, duplicateGroups: 0, trainingReady: 0, nextAction: "Bygg kurateringskø fra Data Intake." };
     const dataIntakeSummary = window.AHADataIntake?.buildIntakeSummary?.() || { available: modules.hasDataIntake, total: 0, reviewCount: 0, approvedCount: 0, importedCount: 0, nextAction: "Skann AHA-kilder." };
     const trainingItems = window.AHATrainingCorpus?.listCorpus?.() || [];
@@ -154,6 +160,7 @@
       sourceConnectors: { available: Boolean(window.AHASourceConnectors), active: sourceConnectorStatus?.active || 0, planned: sourceConnectorStatus?.planned || 0, missing: sourceConnectorStatus?.missing || 0, totalAvailable: sourceConnectorStatus?.totalAvailable || 0, nextAction: sourceConnectorStatus?.active ? "Skann aktive kilder." : "Koble runtime-kilder før skann." },
       dataIntake: { available: Boolean(window.AHADataIntake) || modules.hasDataIntake, href: navigation.dataIntakeHref, total: dataIntakeSummary.total || 0, reviewCount: dataIntakeSummary.reviewCount || 0, approvedCount: dataIntakeSummary.approvedCount || 0, importedCount: dataIntakeSummary.importedCount || 0, nextAction: dataIntakeSummary.nextAction || "Skann AHA-kilder.", summary: "Data Intake samler kilder før Training Corpus." },
       knowledgeCuration: { available: Boolean(window.AHAKnowledgeCuration) || modules.hasKnowledgeCuration, href: navigation.knowledgeCurationHref || "curation.html", total: curationSummary.total || 0, reviewCount: curationSummary.reviewCount || 0, highPriority: curationSummary.highPriority || 0, duplicateGroups: curationSummary.duplicateGroups || 0, trainingReady: curationSummary.trainingReady || 0, nextAction: curationSummary.nextAction || "Bygg kurateringskø fra Data Intake.", summary: "Knowledge Curation rydder materiale mellom Data Intake og Training Corpus." },
+      knowledgeMap: { available: Boolean(window.AHAKnowledgeMap) || modules.hasKnowledgeMap, href: navigation.knowledgeMapHref || "knowledge-map.html", nodes: knowledgeMapSummary.nodes || 0, edges: knowledgeMapSummary.edges || 0, projects: knowledgeMapSummary.projects || 0, concepts: knowledgeMapSummary.concepts || 0, nextAction: knowledgeMapSummary.nextAction || "Bygg Knowledge Map fra kuratert materiale.", summary: "Knowledge Map synliggjør koblinger før Training Corpus, Personal AI og Chat." },
       training: { available: modules.hasTraining, href: navigation.trainingHref, approvedCount, summary: "Training Corpus er datagodkjennings- og treningslaget." },
       syncHub: { available: modules.hasSyncHub, href: navigation.syncHubHref, summary: "Sync Hub henter/importerer materiale som senere kan godkjennes." },
       music: { available: modules.hasMusic, href: navigation.musicHref, summary: "AHA Music kobler musikkdata til innsikt, kanon og History Go." },
@@ -178,7 +185,7 @@
     if (status.primaryNextAction?.href) score += 5;
     score = Math.min(100, score);
     status.overall = { status: statusFromScore(score), score, label: `${score}/100 · ${statusFromScore(score)}` };
-    status.summary = `AHA er ${status.overall.status}: Kilder, Source Connectors, Data Intake, Knowledge Curation, Training Corpus, Personal AI og AHA Chat er samlet i én produktflyt.`;
+    status.summary = `AHA er ${status.overall.status}: Kilder, Source Connectors, Data Intake, Knowledge Curation, Knowledge Map, Training Corpus, Personal AI og AHA Chat er samlet i én produktflyt.`;
     if (options.save !== false) saveProductStatus(status);
     return status;
   }

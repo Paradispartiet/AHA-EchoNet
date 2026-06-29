@@ -265,9 +265,16 @@
     };
   }
 
+  function getKnowledgeMapBoosts(query) {
+    const km = global.AHAKnowledgeMap;
+    if (!km || typeof km.searchKnowledgeMap !== "function") return { available:false, projects:[], concepts:[], relatedNodes:[] };
+    try { const results = km.searchKnowledgeMap(query).results || []; return { available:true, projects: results.filter((n)=>n.nodeType==="project").slice(0,5), concepts: results.filter((n)=>n.nodeType==="concept").slice(0,8), relatedNodes: results.slice(0,10) }; }
+    catch { return { available:true, projects:[], concepts:[], relatedNodes:[] }; }
+  }
+
   global.AHAPersonalRetrieval = {
     STORAGE_KEY, VERSION, buildRetrievalIndex, saveRetrievalIndex, loadRetrievalIndex,
     refreshRetrievalIndex, tokenize, scoreItemAgainstQuery, searchPersonalKnowledge,
-    buildRagContext, buildRagPromptBlock, getRetrievalStatus
+    buildRagContext, buildRagPromptBlock, getRetrievalStatus, getKnowledgeMapBoosts
   };
 })(typeof window !== "undefined" ? window : globalThis);

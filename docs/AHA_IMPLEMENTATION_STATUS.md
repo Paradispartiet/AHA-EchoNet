@@ -2461,3 +2461,15 @@ AHA Knowledge Curation er kurateringslaget mellom Data Intake og Training Corpus
 - Training Dashboard viser curation training-ready status og kan importere godkjent kuratering til Training Corpus uten å erstatte eksisterende Data Intake → Training-flyt.
 - Product Integration, Personal AI Control og Meta Insights Agent får curation-status via `knowledgeCuration` / `knowledgeCurationPack`, slik at Home, Personal AI og Meta Insights vet om kurateringsarbeid venter.
 - Dette er neste stabiliseringslag etter Chat Persistence og Source Connectors, og hjelper AHA å holde personlig kunnskap ryddig når flere kilder kobles inn.
+
+## AHA Knowledge Map V1
+
+AHA Knowledge Map visualiserer koblinger mellom prosjekter, begreper, kilder, Data Intake-items, Knowledge Curation-items, Training Corpus, Training Examples og Meta Insights Memory claims.
+
+V1 bruker en enkel HTML-basert graf/oversikt med prosjektkort, begrepskort, relasjonslister, søk og nabolag rundt valgt node. Den bruker ikke tung grafmotor eller canvas-bibliotek.
+
+Kartet er en avledet oversikt over materiale brukeren allerede har samlet eller godkjent. Det endrer ikke samtykke og gjør ikke nytt materiale tilgjengelig som treningsgrunnlag.
+
+Product Integration, Personal AI Control og Meta Insights Agent får Knowledge Map-status slik at AHA kan se dominerende prosjekter, begreper og neste handling i produktflyten.
+
+Dette gjør AHA sin kunnskap forståelig før videre arbeid med History Go, AHA Music og mer avansert graph/RAG.
