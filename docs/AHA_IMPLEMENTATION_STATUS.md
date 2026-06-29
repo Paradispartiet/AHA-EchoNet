@@ -2438,3 +2438,19 @@ Samtaler brukes ikke som treningsgrunnlag før du har godkjent dem i Data Intake
 Source Connector Audit V1 viser at connectorene dekker AHA Chat, Sync Hub, AHA Music, History Go, Notes, Feed, Articles, Meta Insights, Personal AI evaluations og Training suggestions. Active/planned/missing-status beregnes fra runtime-moduler og localStorage-nøkler, og `intake.html` viser Source Connectors-panelet med “Skann Chat” og “Skann alle kilder”.
 
 Dette gjør AHA Chat til en trygg og kontrollerbar læringskilde for Personal AI, retrieval og Meta Insights uten automatisk import til Training Corpus.
+
+## AHA Knowledge Curation V1
+
+AHA Knowledge Curation er kurateringslaget mellom Data Intake og Training Corpus. Flyten er nå: Kilder → Source Connectors → Data Intake → Knowledge Curation → bruker-godkjenning → Training Corpus / Memory / Retrieval / History Go / AHA Music Canon.
+
+- `curation.html`, `js/ahaKnowledgeCuration.js` og `js/ahaKnowledgeCurationDashboard.js` innfører en lokal kurateringskø lagret i `aha_knowledge_curation_v1`.
+- Modulen grupperer intake items i clusters basert på prosjekt, begreper, tags, kilde, sourceType, tittel-/tekstoverlapp, linked objects og entities.
+- Curation-items har stabilt schema med `sourceItemIds`, `sources`, `sourceTypes`, `theme`, `project`, `concepts`, `entities`, `tags`, `clusterKey`, `confidence`, `suggestedTargets`, `recommendedAction`, `priority` og auditfelt for godkjenning/dismiss.
+- Dedup finner overlapp via samme source/sourceId, teksthash, svært lik tittel/tekst og kjente koblinger som chat message id, evaluation id og corpus id.
+- Prioritering løfter mange kilder, gjentatte temaer, viktige AHA-/Training-/Personal AI-prosjekter og bekreftet memory-relatert innhold til high priority.
+- Knowledge Curation foreslår mål for materiale: Training Corpus, Meta Insights Memory, Personal Retrieval, Training Examples, History Go Discovery og AHA Music Canon.
+- Brukeren må fortsatt godkjenne før materiale blir Training Corpus. Kuratert materiale blir ikke brukt som treningsgrunnlag før brukeren godkjenner og sender det videre.
+- Data Intake er fortsatt inngangen; Data Intake Dashboard viser curation-total, review count, high priority og duplicates, og kan bygge kurateringskø.
+- Training Dashboard viser curation training-ready status og kan importere godkjent kuratering til Training Corpus uten å erstatte eksisterende Data Intake → Training-flyt.
+- Product Integration, Personal AI Control og Meta Insights Agent får curation-status via `knowledgeCuration` / `knowledgeCurationPack`, slik at Home, Personal AI og Meta Insights vet om kurateringsarbeid venter.
+- Dette er neste stabiliseringslag etter Chat Persistence og Source Connectors, og hjelper AHA å holde personlig kunnskap ryddig når flere kilder kobles inn.

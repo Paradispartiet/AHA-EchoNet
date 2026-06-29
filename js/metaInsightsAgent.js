@@ -421,6 +421,7 @@
 
   // 1. Agentkontekst: alt agenten trenger for å resonnere over profilen.
   function buildDataIntakePackSafe(){ try { return global.AHADataIntake?.buildIntakeSummary?.() || null; } catch { return null; } }
+  function buildKnowledgeCurationPackSafe(){ try { return global.AHAKnowledgeCuration?.buildCurationSummary?.() || null; } catch { return null; } }
   function buildSourceConnectorsPackSafe(){ const api=global.AHASourceConnectors; if(!api?.collectConnectorStatus) return null; try { const s=api.collectConnectorStatus(); return { available:true, active:Number(s.active)||0, planned:Number(s.planned)||0, missing:Number(s.missing)||0, totalAvailable:Number(s.totalAvailable)||0, summary:asText(s.summary) }; } catch { return { available:true, active:0, planned:0, missing:0, totalAvailable:0, summary:"Source Connectors status unavailable." }; } }
 
   function buildChatPersistencePackSafe() {
@@ -451,6 +452,8 @@
     if (chatPersistencePack) context.chatPersistencePack = chatPersistencePack;
     const dataIntakePack = options.dataIntakePack && typeof options.dataIntakePack === "object" ? options.dataIntakePack : buildDataIntakePackSafe();
     if (dataIntakePack) context.dataIntakePack = dataIntakePack;
+    const knowledgeCurationPack = options.knowledgeCurationPack && typeof options.knowledgeCurationPack === "object" ? options.knowledgeCurationPack : buildKnowledgeCurationPackSafe();
+    if (knowledgeCurationPack) context.knowledgeCurationPack = knowledgeCurationPack;
     const trainingPack = options.trainingPack && typeof options.trainingPack === "object"
       ? options.trainingPack
       : buildTrainingPackSafe();
