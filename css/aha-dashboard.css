@@ -742,7 +742,7 @@ html, body { max-width: 100%; overflow-x: hidden; }
   align-items: start;
 }
 .aha-panel { border-radius: 22px; padding: 16px; }
-.aha-home-panel, .aha-status-panel { max-height: calc(100vh - 210px); overflow: auto; }
+.aha-home-panel, .aha-modules-panel, .aha-status-panel { max-height: calc(100vh - 210px); overflow: auto; }
 
 .aha-modules-panel h2, .aha-home-panel h1, .aha-status-panel h2 { font-size: 1.2rem; }
 .aha-grid { grid-template-columns: 1fr; gap: 8px; margin-bottom: 0; }
@@ -1771,7 +1771,6 @@ html, body { max-width: 100%; overflow-x: hidden; }
 
 .aha-tile .aha-module-menu-heading .aha-tile-icon { flex: 0 0 auto; }
 .aha-tile .aha-module-menu-heading strong { min-width: 0; }
-.aha-tile .aha-module-description { font-size: .78rem; }
 
 .aha-module-health-badge {
   display: inline-flex;
