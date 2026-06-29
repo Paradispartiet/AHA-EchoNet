@@ -2244,6 +2244,80 @@
     `;
   }
 
+  function renderAhaSyncCandidatesByChannel() {
+    const candidateBuilder = window.AHASyncCandidateBuilder;
+    const sources = window.AHASources;
+    const channels = Array.isArray(window.AHA_SYNC_CHANNELS) ? window.AHA_SYNC_CHANNELS : [];
+    const approvalStates = ["suggested", "review_needed", "approved", "rejected", "blocked", "unknown"];
+
+    if (typeof candidateBuilder?.buildCandidates !== "function" || typeof sources?.loadSourceEvents !== "function") {
+      return '<section class="aha-sync-candidates-by-channel" aria-label="Sync-kandidater per kanal"><h4>Sync-kandidater per kanal</h4><p class="aha-sync-hub-notice">Read-only oversikt over lokale sync-kandidater gruppert etter innsiktskanal. Ingen rå brukerdata vises.</p><p class="aha-sync-hub-notice"><strong>Sync-kandidater per kanal ikke tilgjengelig ennå.</strong></p></section>';
+    }
+
+    let sourceEvents = [];
+    let candidates = [];
+    try {
+      const loadedEvents = sources.loadSourceEvents();
+      sourceEvents = Array.isArray(loadedEvents) ? loadedEvents : [];
+      candidates = candidateBuilder.buildCandidates(sourceEvents);
+      candidates = Array.isArray(candidates) ? candidates : [];
+    } catch (error) {
+      console.warn("AHADashboard: sync-kandidater per kanal kunne ikke rendres", error);
+      candidates = [];
+    }
+
+    const byChannel = {};
+    channels.forEach((channel) => {
+      const id = String(channel?.id || "").trim();
+      if (!id) return;
+      byChannel[id] = { total: 0, states: { suggested: 0, review_needed: 0, approved: 0, rejected: 0, blocked: 0, unknown: 0 } };
+    });
+
+    candidates.forEach((candidate) => {
+      const channelId = String(candidate?.channelId || "").trim();
+      if (!channelId) return;
+      if (!byChannel[channelId]) {
+        byChannel[channelId] = { total: 0, states: { suggested: 0, review_needed: 0, approved: 0, rejected: 0, blocked: 0, unknown: 0 } };
+      }
+      const rawState = String(candidate?.approvalState || "unknown").trim();
+      const approvalState = approvalStates.includes(rawState) ? rawState : "unknown";
+      byChannel[channelId].total += 1;
+      byChannel[channelId].states[approvalState] += 1;
+    });
+
+    const channelIds = channels.length
+      ? channels.map((channel) => String(channel?.id || "").trim()).filter(Boolean)
+      : Object.keys(byChannel);
+    Object.keys(byChannel).forEach((id) => {
+      if (!channelIds.includes(id)) channelIds.push(id);
+    });
+
+    const rows = channelIds.map((id) => {
+      const counts = byChannel[id] || { total: 0, states: { suggested: 0, review_needed: 0, approved: 0, rejected: 0, blocked: 0, unknown: 0 } };
+      const candidateLabel = Number(counts.total) === 1 ? "kandidat" : "kandidater";
+      const stateSummary = approvalStates
+        .map((state) => `${state}: ${Number(counts.states[state] || 0)}`)
+        .join(" · ");
+      return `
+        <li class="aha-sync-hub-row" data-sync-candidates-channel-id="${escapeHtml(id)}">
+          <div class="aha-sync-hub-row-heading">
+            <strong>${escapeHtml(getAhaSyncChannelName(id))}</strong>
+            <span class="aha-sync-hub-badge is-planned">${escapeHtml(Number(counts.total || 0))} ${escapeHtml(candidateLabel)}</span>
+          </div>
+          <p><strong>Approval states:</strong> ${escapeHtml(stateSummary)}</p>
+        </li>
+      `;
+    }).join("");
+
+    return `
+      <section class="aha-sync-candidates-by-channel" aria-label="Sync-kandidater per kanal">
+        <h4>Sync-kandidater per kanal</h4>
+        <p class="aha-sync-hub-notice">Read-only oversikt over lokale sync-kandidater gruppert etter innsiktskanal. Ingen rå brukerdata vises.</p>
+        ${rows ? `<ul class="aha-sync-hub-list" aria-label="Sync candidate counts by channel">${rows}</ul>` : '<p class="aha-sync-hub-notice"><strong>Ingen AHA_SYNC_CHANNELS å vise kandidater for ennå.</strong></p>'}
+      </section>
+    `;
+  }
+
   function renderAhaSyncChannelPreview() {
     const router = window.AHASyncChannelRouter;
     const sources = window.AHASources;
@@ -2323,6 +2397,7 @@
             </dl>
             ${candidateRows ? `<ul class="aha-sync-hub-list" aria-label="Candidate counts per channel">${candidateRows}</ul>` : ""}
             ${renderAhaSyncCandidateApprovalSummary(sourceEvents)}
+            ${renderAhaSyncCandidatesByChannel()}
           </div>
         `;
       } catch (error) {
