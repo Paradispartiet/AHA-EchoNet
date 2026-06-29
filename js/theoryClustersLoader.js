@@ -7,7 +7,10 @@
 (function (global) {
   "use strict";
 
-  const URL = new URL("data/theoryClusters.json", global.document?.baseURI || global.location?.href || "/").toString();
+  const THEORY_CLUSTERS_URL = new global.URL(
+    "data/theoryClusters.json",
+    global.document?.baseURI || global.location?.href || "/"
+  ).toString();
   let _cache = null;
   let _pending = null;
 
@@ -15,7 +18,7 @@
     if (_cache) return _cache;
     if (_pending) return _pending;
 
-    _pending = fetch(URL)
+    _pending = fetch(THEORY_CLUSTERS_URL)
       .then((res) => {
         if (!res.ok) throw new Error("HTTP " + res.status);
         return res.json();
@@ -34,7 +37,7 @@
         return clusters;
       })
       .catch((err) => {
-        console.warn("TheoryClustersLoader: kunne ikke laste", URL, err);
+        console.warn("TheoryClustersLoader: kunne ikke laste", THEORY_CLUSTERS_URL, err);
         return [];
       })
       .finally(() => {
