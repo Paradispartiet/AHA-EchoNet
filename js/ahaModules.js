@@ -33,6 +33,15 @@
       phase: 2
     },
     {
+      id: "knowledge-curation",
+      title: "Knowledge Curation",
+      type: "system",
+      status: "active",
+      href: "curation.html",
+      description: "Rydder, grupperer og prioriterer materiale før det blir varig AHA-kunnskap.",
+      phase: 2
+    },
+    {
       id: "personal-ai",
       title: "Personal AI",
       type: "system",
@@ -210,6 +219,7 @@
     feed: "#",
     meet: "⟡",
     "data-intake": "⇥",
+    "knowledge-curation": "◇",
     "sync-hub": "⇄",
     music: "♫",
     avisa: "📰",

@@ -315,6 +315,10 @@
     if (el) el.textContent = text || "";
   }
 
+  function renderCuration() { const s=global.AHAKnowledgeCuration?.buildCurationSummary?.()||{}; setStat("training-curation-total", s.total||0); setStat("training-curation-review", s.reviewCount||0); setStat("training-curation-trainingReady", s.trainingReady||0); }
+
+  function handleCurationImport() { let n=0; (global.AHAKnowledgeCuration?.loadCurationItems?.()||[]).filter(i=>i.status==="approved"&&i.suggestedTargets?.includes("training_corpus")).forEach(i=>{ if(global.AHAKnowledgeCuration.sendToTrainingCorpus(i.id).ok) n++; }); setMessage(`${n} godkjente curation items importert til Training Corpus.`); renderAll(); }
+
   function renderAll() {
     renderStats();
     renderReadiness();
@@ -418,6 +422,7 @@
     if (!doc) return;
     $("training-import-btn")?.addEventListener("click", handleImport);
     $("training-intake-import-btn")?.addEventListener("click", handleDataIntakeImport);
+    $("training-curation-import-btn")?.addEventListener("click", handleCurationImport);
     $("training-generate-btn")?.addEventListener("click", handleGenerate);
     $("training-export-btn")?.addEventListener("click", handleExport);
     $("training-retrieval-btn")?.addEventListener("click", handleRetrievalRefresh);
@@ -472,7 +477,7 @@
     renderAll();
   }
 
-  const AHATrainingDashboard = { init, renderAll, renderStats, renderReadiness, renderRetrieval, renderSemanticRetrieval, renderAiLoopAudit, renderCorpusList, renderExamplesList, handleRetrievalRefresh, handleSemanticRetrievalRefresh, handleAiLoopAudit, renderAnswerComposer, handleAnswerComposerTest, renderAnswerEvaluation, handleAnswerEvaluationTest, handleDataIntakeImport };
+  const AHATrainingDashboard = { init, renderAll, renderStats, renderReadiness, renderRetrieval, renderSemanticRetrieval, renderAiLoopAudit, renderCorpusList, renderExamplesList, handleRetrievalRefresh, handleSemanticRetrievalRefresh, handleAiLoopAudit, renderAnswerComposer, handleAnswerComposerTest, renderAnswerEvaluation, handleAnswerEvaluationTest, handleDataIntakeImport, handleCurationImport, renderCuration };
 
   if (typeof module !== "undefined" && module.exports) {
     module.exports = AHATrainingDashboard;

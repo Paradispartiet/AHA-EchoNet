@@ -17,6 +17,7 @@
       <div class="aha-tile-actions">
         <button id="training-import-btn" type="button">Importer fra AHA</button>
         <button id="training-intake-import-btn" type="button">Importer godkjent intake</button>
+        <button id="training-curation-import-btn" type="button">Importer godkjent kuratering til Training Corpus</button>
         <button id="training-generate-btn" type="button">Lag treningseksempler</button>
         <button id="training-export-btn" type="button">Eksporter godkjente eksempler</button>
         <button id="training-retrieval-btn" type="button">Bygg personlig søkeindeks</button>
@@ -25,6 +26,7 @@
         <button id="training-answer-composer-btn" type="button">Test Answer Composer</button>
         <button id="training-answer-evaluation-btn" type="button">Test Answer Evaluation</button>
         <a class="aha-tile-btn aha-tile-btn-primary" href="intake.html">Åpne Data Intake</a>
+        <a class="aha-tile-btn" href="curation.html">Åpne Curation</a>
         <a class="aha-tile-btn" href="personal-ai.html">Åpne Personal AI Control Panel</a>
         <a class="aha-tile-btn" href="chat.html">Åpne Chat</a>
         <a class="aha-tile-btn" href="index.html">Til AHA Home</a>
@@ -56,6 +58,8 @@
         <div class="aha-mini-stat"><strong id="training-intake-imported">0</strong><span>Imported</span></div>
       </div>
     </section>
+
+    <section class="aha-panel" id="training-curation-panel"><h2>Knowledge Curation</h2><p class="module-meta">Curation gir en ryddigere vei fra Data Intake til Training når materialet vokser.</p><div class="aha-training-stats"><div class="aha-mini-stat"><strong id="training-curation-total">0</strong><span>Curation total</span></div><div class="aha-mini-stat"><strong id="training-curation-review">0</strong><span>Review</span></div><div class="aha-mini-stat"><strong id="training-curation-trainingReady">0</strong><span>Training ready</span></div></div><div class="aha-tile-actions"><a class="aha-tile-btn" href="curation.html">Åpne Curation</a></div></section>
 
     <section class="aha-panel" id="training-readiness-panel">
       <h2>Personal Model Readiness</h2>
@@ -102,6 +106,7 @@
 
   <script src="js/ahaDataIntake.js"></script>
   <script src="js/ahaTrainingCorpus.js"></script>
+  <script src="js/ahaKnowledgeCuration.js"></script>
   <script src="js/ahaTrainingExamples.js"></script>
   <script src="js/ahaPersonalModelReadiness.js"></script>
   <script src="js/metaInsightsMemory.js"></script>
