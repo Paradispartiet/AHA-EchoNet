@@ -17,6 +17,62 @@
   const AHA_MEMORY_USE_OFF_REASON = "Bruk av eksisterende minne er slått av av brukeren.";
 
 
+  let activeAnalysisRun = null;
+
+  function createAnalysisRun(sourceText, options = {}) {
+    const source = String(sourceText || "").trim();
+    const fingerprint = sourceHash(source);
+    const createdAt = new Date().toISOString();
+    const base = `${fingerprint}|${createdAt}|${Math.random().toString(36).slice(2)}`;
+    return {
+      analysisId: options.analysisId || `analysis_${shortHash(base)}`,
+      runId: options.runId || `run_${shortHash(`${base}|run`)}`,
+      sourceId: options.sourceId || `source_${fingerprint || shortHash(base)}`,
+      sessionId: options.sessionId || CHAT_THREAD_ID,
+      createdAt,
+      sourceHash: fingerprint,
+      sourceFingerprint: fingerprint
+    };
+  }
+
+  function bindAnalysisArtifact(artifact, run = activeAnalysisRun) {
+    if (!artifact || typeof artifact !== "object" || !run) return artifact;
+    return Object.assign(artifact, {
+      analysisId: run.analysisId,
+      runId: run.runId,
+      sourceId: run.sourceId,
+      sessionId: run.sessionId,
+      createdAt: artifact.createdAt || run.createdAt,
+      sourceHash: artifact.sourceHash || run.sourceHash,
+      sourceFingerprint: artifact.sourceFingerprint || run.sourceFingerprint
+    });
+  }
+
+  function artifactMatchesActiveRun(artifact, run = activeAnalysisRun) {
+    if (!artifact || typeof artifact !== "object" || !run) return false;
+    const hasRunIds = artifact.analysisId || artifact.sourceId || artifact.runId;
+    if (hasRunIds) return String(artifact.analysisId || "") === run.analysisId && String(artifact.sourceId || "") === run.sourceId;
+    const hash = String(artifact.sourceHash || artifact.sourceTextHash || artifact.sourceFingerprint || "");
+    return Boolean(hash && hash === run.sourceHash);
+  }
+
+  function clearActiveAnalysisState(run, message = "AHA analyserer ny kilde …") {
+    if (run) activeAnalysisRun = run;
+    const host = document.getElementById("aha-auto-output");
+    if (host) {
+      host.dataset.analysisId = run?.analysisId || "";
+      host.dataset.runId = run?.runId || "";
+      host.dataset.sourceId = run?.sourceId || "";
+      host.dataset.sourceTextHash = run?.sourceHash || "";
+      host.innerHTML = `<div class="auto-output-head"><h2>AHA etterarbeid</h2><p>${escHtml(message)}</p></div>`;
+    }
+    renderAhaPersonalRetrieval(null);
+    renderAhaAnswerComposer(null);
+    const evaluationStatus = document.getElementById("aha-answer-evaluation-status");
+    if (evaluationStatus) evaluationStatus.textContent = "Svar-evaluering venter på aktiv analyse.";
+    setExportButtonsEnabled(false);
+  }
+
 
   function normalizeAhaMemoryExclusionList(items) {
     const seen = new Set();
@@ -1079,6 +1135,45 @@
     if (semanticMatches.length) return { useMemory: true, reason: "Semantisk søk fant sterke relevante minnetreff.", confidence: Math.min(0.86, 0.58 + semanticMatches[0].similarity / 3), mode: "semantic_match" };
     if (localMatches.length) return { useMemory: true, reason: "Lokale innsikter matcher tydelig på prosjekt, tema eller begreper.", confidence: Math.min(0.82, 0.52 + localMatches[0].score / 20), mode: "semantic_match" };
     return off("Ingen tydelige, relevante minnetreff.");
+  }
+  function tokenizeAnalysisRelevance(text) {
+    const stop = new Set(["det","den","der","som","for","med","til","fra","ikke","eller","og","i","på","av","en","et","å","er","har","kan","skal","vil","the","and","this","that","with","from"]);
+    return String(text || "").toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").match(/[a-zæøå0-9]{4,}/g)?.filter((t) => !stop.has(t)).slice(0, 240) || [];
+  }
+
+  function retrievalItemText(item) {
+    return [item?.title, item?.summary, item?.excerpt, item?.text, item?.sourceType, ...(Array.isArray(item?.concepts) ? item.concepts : []), ...(Array.isArray(item?.reasons) ? item.reasons : [])].filter(Boolean).join(" ");
+  }
+
+  function scoreRetrievalAgainstSource(item, sourceText) {
+    const sourceTokens = new Set(tokenizeAnalysisRelevance(sourceText));
+    const itemTokens = tokenizeAnalysisRelevance(retrievalItemText(item));
+    if (!sourceTokens.size || !itemTokens.length) return 0;
+    let overlap = 0;
+    itemTokens.forEach((token) => { if (sourceTokens.has(token)) overlap += 1; });
+    return overlap / Math.max(8, Math.min(itemTokens.length, sourceTokens.size));
+  }
+
+  function filterRetrievalForActiveSource(container, sourceText, run = activeAnalysisRun) {
+    if (!container || typeof container !== "object") return container;
+    const filterResults = (results) => {
+      const rejected = [];
+      const kept = (Array.isArray(results) ? results : []).filter((item) => {
+        const score = scoreRetrievalAgainstSource(item, sourceText);
+        const keep = score >= 0.08;
+        if (!keep) rejected.push({ title: item?.title || item?.sourceId || "retrieval", score });
+        else { item.analysisId = run?.analysisId || item.analysisId; item.sourceIdForAnalysis = run?.sourceId || item.sourceIdForAnalysis; item.sourceHash = run?.sourceHash || item.sourceHash; item.relevanceToActiveSource = score; }
+        return keep;
+      });
+      if (rejected.length) console.warn("AHA irrelevant retrieval forkastet for aktiv kilde", { analysisId: run?.analysisId, sourceId: run?.sourceId, rejected });
+      return kept;
+    };
+    if (Array.isArray(container.results)) container.results = filterResults(container.results);
+    if (container.retrieval && typeof container.retrieval === "object") filterRetrievalForActiveSource(container.retrieval, sourceText, run);
+    if (container.semanticRetrieval && typeof container.semanticRetrieval === "object") filterRetrievalForActiveSource(container.semanticRetrieval, sourceText, run);
+    if (container.context && typeof container.context === "object") filterRetrievalForActiveSource(container.context, sourceText, run);
+    if (Array.isArray(container.selectedSources)) container.selectedSources = filterResults(container.selectedSources);
+    return container;
   }
 
   function formatAhaMemoryContextForAgent(memoryContext) {
@@ -4818,12 +4913,18 @@
       .slice(0, 12);
     return {
       id: `afterwork_${Date.now()}_${shortHash(`${sourceTextHash}|${JSON.stringify(normalizedPayload)}`)}`,
+      analysisId: options?.analysisId || activeAnalysisRun?.analysisId || "",
+      runId: options?.runId || activeAnalysisRun?.runId || "",
+      sourceId: options?.sourceId || activeAnalysisRun?.sourceId || (sourceTextHash ? `source_${sourceTextHash}` : ""),
+      sessionId: options?.sessionId || activeAnalysisRun?.sessionId || CHAT_THREAD_ID,
       type: "aha_afterwork",
       source: "chat",
       textType: normalizedPayload.textType || detectTextType(source),
       createdAt: new Date().toISOString(),
       sourceText,
       sourceTextHash,
+      sourceHash: sourceTextHash,
+      sourceFingerprint: sourceTextHash,
       sourceTextPreview: source.replace(/\s+/g, " ").slice(0, 180),
       reflection: String(normalizedPayload.reflection || ""),
       sortItems: safeSortItems,
@@ -5492,6 +5593,12 @@
   function renderAutoOutputPayload(payload) {
     const host = document.getElementById("aha-auto-output");
     if (!host || !payload) return;
+    if (activeAnalysisRun && !artifactMatchesActiveRun(payload, activeAnalysisRun)) {
+      console.warn("AHA analysis run mismatch: forkaster stale auto-output", { active: activeAnalysisRun, artifact: { analysisId: payload.analysisId, sourceId: payload.sourceId, sourceHash: payload.sourceHash || payload.sourceTextHash } });
+      host.innerHTML = '<div class="auto-output-head"><h2>AHA etterarbeid</h2><p>Venter på etterarbeid for aktiv analyse.</p></div>';
+      setExportButtonsEnabled(false);
+      return;
+    }
     const safeSortItems = safeMarkupSortItems(payload.sortItems);
     const safeList = safeMarkupList(payload.list);
     const safeInsightCards = safeMarkupList(payload.insightCards);
@@ -5982,7 +6089,11 @@
     const host = document.getElementById("aha-auto-output");
     if (!sourceText.trim()) {
       if (host) {
+      const run = options.analysisRun || activeAnalysisRun || {};
       host.dataset.sourceText = sourceText;
+      host.dataset.analysisId = run.analysisId || "";
+      host.dataset.runId = run.runId || "";
+      host.dataset.sourceId = run.sourceId || "";
       host.dataset.sourceTextHash = sourceHash(sourceText);
       host.dataset.sourceTextPreview = sourceText.replace(/\s+/g, " ").slice(0, 180);
     }
@@ -6026,10 +6137,18 @@
     });
     payload.canonicalAnalysis = resolvedCanonical.analysis;
     payload.canonicalAnalysisMeta = resolvedCanonical.meta;
+    bindAnalysisArtifact(payload, options.analysisRun || activeAnalysisRun);
+    if (payload.canonicalAnalysis && typeof payload.canonicalAnalysis === "object") bindAnalysisArtifact(payload.canonicalAnalysis, options.analysisRun || activeAnalysisRun);
     if (options.persist !== false) {
       localStorage.setItem(AUTO_OUTPUT_STORAGE_KEY, JSON.stringify({
         payload,
         sourceText,
+        analysisId: payload.analysisId || "",
+        runId: payload.runId || "",
+        sourceId: payload.sourceId || "",
+        sessionId: payload.sessionId || CHAT_THREAD_ID,
+        sourceHash: payload.sourceHash || sourceHash(sourceText),
+        sourceFingerprint: payload.sourceFingerprint || sourceHash(sourceText),
         sourceTextHash: sourceHash(sourceText),
         sourceTextPreview: sourceText.replace(/\s+/g, " ").slice(0, 180),
         createdAt: new Date().toISOString()
@@ -6037,6 +6156,9 @@
     }
     if (host) {
       host.dataset.sourceText = sourceText;
+      host.dataset.analysisId = payload.analysisId || "";
+      host.dataset.runId = payload.runId || "";
+      host.dataset.sourceId = payload.sourceId || "";
       host.dataset.sourceTextHash = sourceHash(sourceText);
       host.dataset.sourceTextPreview = sourceText.replace(/\s+/g, " ").slice(0, 180);
     }
@@ -6107,9 +6229,15 @@
     }
     const payload = cache?.payload && typeof cache.payload === "object" ? cache.payload : cache;
     const sourceText = String(cache?.sourceText || "");
+    const cachedRun = { analysisId: cache.analysisId || payload.analysisId || `analysis_${cache.sourceTextHash || sourceHash(sourceText)}`, runId: cache.runId || payload.runId || "restored", sourceId: cache.sourceId || payload.sourceId || `source_${cache.sourceTextHash || sourceHash(sourceText)}`, sessionId: cache.sessionId || payload.sessionId || CHAT_THREAD_ID, createdAt: cache.createdAt || payload.createdAt || new Date().toISOString(), sourceHash: cache.sourceHash || cache.sourceTextHash || sourceHash(sourceText), sourceFingerprint: cache.sourceFingerprint || cache.sourceTextHash || sourceHash(sourceText) };
+    activeAnalysisRun = cachedRun;
+    bindAnalysisArtifact(payload, cachedRun);
     const host = document.getElementById("aha-auto-output");
     if (host) {
       host.dataset.sourceText = sourceText;
+      host.dataset.analysisId = payload.analysisId || "";
+      host.dataset.runId = payload.runId || "";
+      host.dataset.sourceId = payload.sourceId || "";
       host.dataset.sourceTextHash = sourceHash(sourceText);
       host.dataset.sourceTextPreview = sourceText.replace(/\s+/g, " ").slice(0, 180);
     }
@@ -6323,12 +6451,15 @@
       }
     }
 
+    const analysisRun = createAnalysisRun(cleanText, { sourceId: persistedUserMessage?.id ? `chat_message_${persistedUserMessage.id}` : undefined });
+    activeAnalysisRun = analysisRun;
+    clearActiveAnalysisState(analysisRun);
     const savingEnabled = isAhaSavingEnabled();
     const memoryUseEnabled = isAhaMemoryUseEnabled();
     setAhaProcessing(true, memoryUseEnabled ? "AHA vurderer relevant minne …" : "AHA svarer uten tidligere minne …");
     const memoryContext = memoryUseEnabled ? await buildAhaMemoryContext(cleanText) : buildAhaMemoryOffContext();
-    const personalContext = buildAhaPersonalMessageContext(cleanText);
-    const answerPackage = buildAhaAnswerPackage(cleanText);
+    const personalContext = filterRetrievalForActiveSource(buildAhaPersonalMessageContext(cleanText), cleanText, analysisRun);
+    const answerPackage = filterRetrievalForActiveSource(buildAhaAnswerPackage(cleanText), cleanText, analysisRun);
     if (personalContext && answerPackage) personalContext.answerPackage = answerPackage;
     renderAhaPersonalRetrieval(personalContext?.retrieval);
     renderAhaAnswerComposer(answerPackage);
@@ -6390,9 +6521,9 @@
       // Meta Insights AI-session: parse rå-svaret (før visningsnormalisering)
       // til claims med feedback-knapper.
       try { maybeHandleMetaAiAgentReply(reply); } catch (metaErr) { console.warn("Meta Insights AI-claims feilet", metaErr); }
-      try { await renderAutoOutputs(cleanText, safeReply, { subjectMatches, persist: savingEnabled }); } catch (autoErr) { console.warn("Auto-output feilet", autoErr); }
+      try { await renderAutoOutputs(cleanText, safeReply, { subjectMatches, persist: savingEnabled, analysisRun }); } catch (autoErr) { console.warn("Auto-output feilet", autoErr); }
       if (savingEnabled) {
-        try { ensureAfterworkForLatestAnalysis(cleanText, { subjectMatches }); } catch (afterErr) { console.warn("Auto-etterarbeid feilet", afterErr); }
+        try { ensureAfterworkForLatestAnalysis(cleanText, { subjectMatches, ...analysisRun }); } catch (afterErr) { console.warn("Auto-etterarbeid feilet", afterErr); }
         // AHA-agentens egne svar skal vises i chatten og logges som
         // source event, men IKKE bli en ordinær brukerinnsikt. AI-
         // oppsummeringer hører ikke hjemme i innsiktskammeret. skip_insight
@@ -6567,7 +6698,7 @@
 
   global.loadChamberFromStorage = global.loadChamberFromStorage || loadChamberFromStorage;
   global.saveChamberToStorage = global.saveChamberToStorage || saveChamberToStorage;
-  global.AHATestHooks = Object.assign({}, global.AHATestHooks || {}, { detectTextType, buildCanonicalAnalysis, buildAhaAnalysisExportBundle, formatAhaAnalysisExportMarkdown, buildAutoOutputs, normalizeFagkoblinger, resolveCanonicalAnalysisWithOptionalPythonEngine, isAhaMemoryQuestion, buildAhaLearningContractReply, buildAhaMemoryStatus, shouldUseAhaMemory, buildAhaMemoryContext, buildAhaMemoryOffContext, loadAhaMemoryControls, saveAhaMemoryControls, setAhaMemoryControl, isAhaSavingEnabled, isAhaMemoryUseEnabled, loadAhaMemoryExclusions, saveAhaMemoryExclusions, getAhaMemoryInsightStableKey, getAhaMemoryInsightKey, isAhaMemoryInsightExcluded, excludeAhaMemoryInsight, includeAhaMemoryInsight, resetAhaMemoryExclusions, getAhaExcludedMemoryItems, renderAhaMemoryControls, bindAhaMemoryControls, submitAhaChatMessage, findRelevantLocalMemory, formatAhaMemoryContextForAgent, isAhaMemoryDebugEnabled, buildAhaMemoryTransparency, formatAhaMemoryTransparencyDetails, renderAhaMemoryTransparency, appendChat, updateAnswerActionsVisibility, getActiveMetaAiSession, startMetaAiSession, renderMetaAiSessionBox, renderMetaAiClaims, maybeHandleMetaAiAgentReply, saveMetaAiClaimFeedback, buildAhaPersonalAiLoopChatReadinessStatus, renderAhaPersonalAiLoopStatus, buildAhaAnswerPackage, renderAhaAnswerComposer });
+  global.AHATestHooks = Object.assign({}, global.AHATestHooks || {}, { detectTextType, buildCanonicalAnalysis, buildAhaAnalysisExportBundle, formatAhaAnalysisExportMarkdown, buildAutoOutputs, normalizeFagkoblinger, resolveCanonicalAnalysisWithOptionalPythonEngine, isAhaMemoryQuestion, buildAhaLearningContractReply, buildAhaMemoryStatus, shouldUseAhaMemory, buildAhaMemoryContext, buildAhaMemoryOffContext, loadAhaMemoryControls, saveAhaMemoryControls, setAhaMemoryControl, isAhaSavingEnabled, isAhaMemoryUseEnabled, loadAhaMemoryExclusions, saveAhaMemoryExclusions, getAhaMemoryInsightStableKey, getAhaMemoryInsightKey, isAhaMemoryInsightExcluded, excludeAhaMemoryInsight, includeAhaMemoryInsight, resetAhaMemoryExclusions, getAhaExcludedMemoryItems, renderAhaMemoryControls, bindAhaMemoryControls, submitAhaChatMessage, findRelevantLocalMemory, formatAhaMemoryContextForAgent, isAhaMemoryDebugEnabled, buildAhaMemoryTransparency, formatAhaMemoryTransparencyDetails, renderAhaMemoryTransparency, appendChat, updateAnswerActionsVisibility, getActiveMetaAiSession, startMetaAiSession, renderMetaAiSessionBox, renderMetaAiClaims, maybeHandleMetaAiAgentReply, saveMetaAiClaimFeedback, buildAhaPersonalAiLoopChatReadinessStatus, renderAhaPersonalAiLoopStatus, buildAhaAnswerPackage, renderAhaAnswerComposer, createAnalysisRun, bindAnalysisArtifact, artifactMatchesActiveRun, clearActiveAnalysisState, renderAutoOutputPayload, filterRetrievalForActiveSource, scoreRetrievalAgainstSource });
 
   global.AHAChat = {
     loadChamberFromStorage,
@@ -6609,7 +6740,14 @@
     buildAhaPersonalAiLoopChatReadinessStatus,
     renderAhaPersonalAiLoopStatus,
     buildAhaAnswerPackage,
-    renderAhaAnswerComposer
+    renderAhaAnswerComposer,
+    createAnalysisRun,
+    bindAnalysisArtifact,
+    artifactMatchesActiveRun,
+    clearActiveAnalysisState,
+    renderAutoOutputPayload,
+    filterRetrievalForActiveSource,
+    scoreRetrievalAgainstSource
   };
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bind);
