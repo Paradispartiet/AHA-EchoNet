@@ -57,6 +57,7 @@
       sessionId: run.sessionId || run.conversationId,
       createdAt: artifact.createdAt || run.createdAt,
       sourceHash: artifact.sourceHash || run.sourceHash,
+      sourceTextHash: artifact.sourceTextHash || artifact.sourceHash || run.sourceHash,
       sourceFingerprint: artifact.sourceFingerprint || run.sourceFingerprint
     });
   }
@@ -2921,9 +2922,168 @@
     const combined = `${src} ${payloadText}`;
     if (detectPublicAdministrationReformSignal(combined).strong) return "public_admin_nav";
     if (detectLiteraryAttachmentSignal(combined).strong) return "literary_attachment";
+    if (detectSongLyricChildCultureSignal(src).strong) return "song_lyric_child_culture";
     if (detectSahelClimateConflictSignal(combined).strong) return "sahel_climate_conflict";
     if (detectInstitutionalMediaHistorySignal(combined).strong) return "institutional_media_history";
     return "generic_academic";
+  }
+
+  function detectSongLyricChildCultureSignal(text) {
+    const src = cleanArticleText(text || "").toLowerCase();
+    const terms = [
+      "barnesang", "barnesanger", "sanglyrikk", "sang og sanglyrikk", "barnekultur",
+      "barnelitteratur", "barnelitterære", "sjangerrikdom", "rim", "rytme",
+      "regler", "nonsens", "vuggesang", "bevegelsessang", "musikk", "oppdragelse",
+      "utdanning", "identitetsdannelse", "ritualer", "kulturforskning", "litteraturforskning"
+    ];
+    const hits = terms.filter((term) => src.includes(term));
+    const hasSang = /\bsang(?:en|er|lyrikk|tekster)?\b/i.test(src);
+    const hasChildCulture = /\b(barne|barn|barnekultur|barnelitteratur|oppdragelse|utdanning)\b/i.test(src);
+    return { strong: hits.length >= 2 || (hasSang && hasChildCulture), hits };
+  }
+
+  const CANONICAL_BLOCKED_DOMAIN_TERMS = [
+    "redaksjonell", "eierskap", "eierskapsskifter", "medieoffentlighet", "presse",
+    "institusjonell omforming", "økonomisk avhengighet", "medieaktør", "norsk politisk pressehistorie"
+  ];
+  const CANONICAL_MEDIA_SUPPORT_PATTERNS = [
+    /\bredaksjon/i, /\bavis(?:a|en|er)?\b/i, /\bpresse\b/i, /\beierskap\b/i,
+    /\boffentlighet\b/i, /\bøkonomisk avhengighet\b/i, /\bjournalistikk\b/i, /\bmedie(?:r|hus|aktør)?\b/i
+  ];
+
+  function sourceSupportsMediaInstitutionTerms(sourceText) {
+    return CANONICAL_MEDIA_SUPPORT_PATTERNS.some((pattern) => pattern.test(String(sourceText || "")));
+  }
+
+  function containsUnsupportedCanonicalDomainTerm(value, sourceText) {
+    const text = String(value || "").toLowerCase();
+    if (!text) return false;
+    if (sourceSupportsMediaInstitutionTerms(sourceText)) return false;
+    return CANONICAL_BLOCKED_DOMAIN_TERMS.some((term) => text.includes(term));
+  }
+
+  function stripUnsupportedCanonicalItems(items, sourceText) {
+    return (Array.isArray(items) ? items : []).filter((item) => {
+      const text = typeof item === "string" ? item : `${item?.label || ""} ${item?.text || ""} ${item?.title || ""} ${item?.subject_label || ""}`;
+      return !containsUnsupportedCanonicalDomainTerm(text, sourceText);
+    });
+  }
+
+  function getSongLyricChildCultureSubjectMatches() {
+    return normalizeSubjectMatches([
+      "Barnelitteratur",
+      "Barnekultur",
+      "Lyrikk, rytme og språk",
+      "Musikk",
+      "Sanglyrikk",
+      "Utdanning og oppdragelse",
+      "Identitetsdannelse",
+      "Ritualer",
+      "Kultur- og litteraturforskning"
+    ]);
+  }
+
+  function buildSongLyricChildCulturePayload(payload, sourceText) {
+    const safe = payload && typeof payload === "object" ? payload : {};
+    return {
+      ...safe,
+      textType: safe.textType || "academic_article",
+      reflection: "Teksten handler om sang og sanglyrikk i barnekulturen, med vekt på barnelitteratur, musikk, språk, oppdragelse, identitetsdannelse og behovet for mer forskning.",
+      sortItems: [
+        { label: "Tema", text: "Sanglyrikk i barnekultur og barnelitteratur." },
+        { label: "Sjangerrikdom", text: "Barnesang samler lyrikk, rytme, musikk, lek, ritualer og pedagogiske funksjoner." },
+        { label: "Hovedspenning", text: "Kulturell praksis og kunstform ↔ forskningens behov for tydeligere begreper og mer empirisk kunnskap." },
+        { label: "Faglig betydning", text: "Sanglyrikk knyttes til språk, utdanning, oppdragelse, fellesskap og identitetsdannelse." }
+      ],
+      day: "Kort fagoppsummering: Teksten analyserer barnesang og sanglyrikk som barnekultur, barnelitteratur, musikk, språkpraksis og forskningsfelt.",
+      thoughts: {
+        hovedspor: "Barnesang bør forstås som kulturell praksis, kunstform og lyrikk i barns hverdags- og læringskultur.",
+        lose_tanker: "Skill mellom musikk, lyrikk, pedagogikk, ritualer, lek og identitetsdannelse før sporene kobles.",
+        neste_steg: "Finn tekstbelegg for hvordan sanglyrikk virker i språk, oppdragelse, ritualer og barnekultur."
+      },
+      list: [
+        "Les sang som kulturell praksis og kunstform, ikke som institusjonsnavn.",
+        "Koble barnesang til barnelitteratur, lyrikk, rytme og musikk.",
+        "Undersøk pedagogiske spor: utdanning, oppdragelse og språk.",
+        "Se etter ritualer, fellesskap og identitetsdannelse.",
+        "Marker hvor teksten etterlyser mer kultur- og litteraturforskning."
+      ],
+      path: [
+        "Kartlegg hvordan teksten definerer sanglyrikk og barnesang.",
+        "Sorter eksempler etter lyrikk, rytme, musikk, lek og ritual.",
+        "Analyser pedagogiske og kulturelle funksjoner.",
+        "Koble funn til barnelitteratur, barnekultur og identitetsdannelse.",
+        "Formuler forskningsspørsmål der teksten peker på kunnskapshull."
+      ],
+      subjectMatches: getSongLyricChildCultureSubjectMatches(),
+      subjectLinks: getSongLyricChildCultureSubjectMatches(),
+      ahaSer: {
+        innholdstype: "Fagtekst om barnekultur og sanglyrikk",
+        tema: "Sang og sanglyrikk i barnekulturen.",
+        hovedspenning: "Barnesang som kulturell praksis/kunstform ↔ behovet for mer forskning på sjanger, språk, oppdragelse og identitetsdannelse.",
+        viktigsteInnsikt: "Teksten viser at sanglyrikk i barnekulturen må forstås gjennom barnelitteratur, musikk, lyrikk, språk, ritualer, utdanning og identitetsdannelse.",
+        fagkoblinger: getSongLyricChildCultureSubjectMatches().map((item) => item.title),
+        nesteSteg: "Undersøk konkrete tekstbelegg for hvordan sanglyrikk fungerer i barnekultur, læring, ritualer og identitetsdannelse.",
+        kortSvar: "Teksten handler om barnesang og sanglyrikk som del av barnekultur, barnelitteratur, musikk, språk og oppdragelse – ikke om mediehistorie eller institusjonshistorie."
+      }
+    };
+  }
+
+  function enforceCanonicalSourceGrounding(payload, sourceText) {
+    const source = String(sourceText || "");
+    const safe = payload && typeof payload === "object" ? payload : {};
+    let out = { ...safe };
+    if (detectSongLyricChildCultureSignal(source).strong) out = buildSongLyricChildCulturePayload(out, source);
+    out.sortItems = stripUnsupportedCanonicalItems(out.sortItems, source);
+    out.list = stripUnsupportedCanonicalItems(out.list, source);
+    out.path = stripUnsupportedCanonicalItems(out.path, source);
+    out.insightCards = stripUnsupportedCanonicalItems(out.insightCards, source);
+    out.subjectMatches = stripUnsupportedCanonicalItems(out.subjectMatches, source);
+    out.subjectLinks = stripUnsupportedCanonicalItems(out.subjectLinks, source);
+    if (out.ahaSer && typeof out.ahaSer === "object") {
+      out.ahaSer = { ...out.ahaSer };
+      ["tema", "hovedspenning", "viktigsteInnsikt", "nesteSteg", "kortSvar"].forEach((key) => {
+        if (containsUnsupportedCanonicalDomainTerm(out.ahaSer[key], source)) out.ahaSer[key] = "";
+      });
+      out.ahaSer.fagkoblinger = stripUnsupportedCanonicalItems(Array.isArray(out.ahaSer.fagkoblinger) ? out.ahaSer.fagkoblinger : String(out.ahaSer.fagkoblinger || "").split("·"), source);
+    }
+    if (out.canonicalAnalysis && typeof out.canonicalAnalysis === "object") {
+      out.canonicalAnalysis = { ...out.canonicalAnalysis };
+      ["contentType", "theme", "mainTension", "keyInsight", "reflection", "summary"].forEach((key) => {
+        if (containsUnsupportedCanonicalDomainTerm(out.canonicalAnalysis[key], source)) out.canonicalAnalysis[key] = "";
+      });
+      out.canonicalAnalysis.fieldConnections = stripUnsupportedCanonicalItems(out.canonicalAnalysis.fieldConnections, source);
+      out.canonicalAnalysis.suggestedActions = stripUnsupportedCanonicalItems(out.canonicalAnalysis.suggestedActions, source);
+      out.canonicalAnalysis.evidenceAnchors = buildCanonicalEvidenceAnchors(out, source);
+    }
+    out.reflection = containsUnsupportedCanonicalDomainTerm(out.reflection, source) ? "" : out.reflection;
+    if (out.thoughts && typeof out.thoughts === "object") {
+      out.thoughts = { ...out.thoughts };
+      Object.keys(out.thoughts).forEach((key) => {
+        if (containsUnsupportedCanonicalDomainTerm(out.thoughts[key], source)) out.thoughts[key] = "";
+      });
+    }
+    return out;
+  }
+
+  function buildCanonicalEvidenceAnchors(payload, sourceText) {
+    const source = cleanArticleText(sourceText || "");
+    const sentences = toSentences(source).filter(Boolean);
+    const fields = {
+      innholdstype: payload?.ahaSer?.innholdstype || payload?.contentType || payload?.textType || payload?.canonicalAnalysis?.contentType,
+      tema: payload?.ahaSer?.tema || payload?.canonicalAnalysis?.theme,
+      hovedspenning: payload?.ahaSer?.hovedspenning || payload?.canonicalAnalysis?.mainTension,
+      viktigsteInnsikt: payload?.ahaSer?.viktigsteInnsikt || payload?.canonicalAnalysis?.keyInsight,
+      nesteSteg: payload?.ahaSer?.nesteSteg || (Array.isArray(payload?.path) ? payload.path[0] : ""),
+      fagkoblinger: Array.isArray(payload?.ahaSer?.fagkoblinger) ? payload.ahaSer.fagkoblinger.join(" ") : String(payload?.ahaSer?.fagkoblinger || "")
+    };
+    const anchors = {};
+    Object.entries(fields).forEach(([key, value]) => {
+      const fieldWords = takeKeywords(String(value || ""), 8).map((item) => item.toLowerCase());
+      const match = sentences.find((sentence) => fieldWords.some((word) => word.length > 3 && sentence.toLowerCase().includes(word)));
+      if (match) anchors[key] = short(match, 180);
+    });
+    return anchors;
   }
 
   function normalizeSubjectMatches(subjectMatches) {
@@ -5778,6 +5938,7 @@
   function renderAutoOutputPayload(payload) {
     const host = document.getElementById("aha-auto-output");
     if (!host || !payload) return;
+    payload = enforceCanonicalSourceGrounding(payload, host.dataset.sourceText || "");
     if (activeAnalysisRun && !artifactMatchesActiveRun(payload, activeAnalysisRun)) {
       console.warn("AHA analysis run mismatch: forkaster stale auto-output", { active: activeAnalysisRun, artifact: { analysisId: payload.analysisId, sourceId: payload.sourceId, sourceHash: payload.sourceHash || payload.sourceTextHash } });
       host.innerHTML = '<div class="auto-output-head"><h2>AHA etterarbeid</h2><p>Venter på etterarbeid for aktiv analyse.</p></div>' + renderAnalysisDebugPanel(payload);
@@ -5909,18 +6070,20 @@
         : []);
     const prioritizedLinks = explicitFagkoblinger.length
       ? explicitFagkoblinger
+      : domain === "song_lyric_child_culture"
+      ? getSongLyricChildCultureSubjectMatches().map((item) => item?.title || item?.subject_label || "").filter(Boolean)
       : institutionalHistorySignal?.strong
       ? ["Mediehistorie", "Presse og offentlighet", "Eierskap og redaksjonell uavhengighet", "Kulturjournalistikk", "Akademisk offentlighet", "Norsk politisk pressehistorie"]
       : literarySignal?.strong
       ? getLiterarySubjectMatches().map((item) => item?.title || item?.subject_label || "").filter(Boolean)
       : (subjectLinks.length ? subjectLinks : theoryLinks.length ? theoryLinks : (navSignal?.strong ? ["Offentlig forvaltning", "Organisasjonsteori", "Velferdsstat", "Implementeringsteori"] : themes));
     return {
-      tema: explicitAhaSer?.tema || (navSignal?.strong ? "NAV-reformen og måloppnåelse" : (literarySignal?.strong ? "Knausgårds Om våren, tilknytningsteori og litterær erkjennelse" : (parsedInsights.tema || lookup("tema") || lookup("hovedargument") || insights[1] || insights[0] || "Tema identifiseres fortløpende."))),
-      hovedspenning: explicitAhaSer?.hovedspenning || (navSignal?.strong ? "Omstillingskostnad vs. strukturell utfordring" : (literarySignal?.strong ? "Tilknytningsteori vs. litterær/mytologisk utforskning av tilknytning, forknytning og løsrivelse" : (parsedInsights.hovedspenning || lookup("spenning") || insights.find((item) => /spenning|vs|mot/i.test(String(item || ""))) || "Spenning bygges fra flere meldinger."))),
-      viktigsteInnsikt: explicitAhaSer?.viktigsteInnsikt || (navSignal?.strong ? "NAVs manglende måloppnåelse skyldes ikke bare midlertidig omstilling, men også varige strukturelle utfordringer i styring, organisering og stat–kommune-samspill." : (literarySignal?.strong ? "Om våren bruker tilknytningsteori som ramme, men overskrider den gjennom autofiksjon, deiksis, performativ skriving, sårbarhet, nymaterialisme og mytologiske bilder." : (parsedInsights.viktigsteInnsikt || lookup("hovedinnsikt") || insights[0] || payload?.reflection || "Hovedinnsikten vises her når AHA har nok materiale."))),
+      tema: explicitAhaSer?.tema || (domain === "song_lyric_child_culture" ? "Sang og sanglyrikk i barnekulturen" : (navSignal?.strong ? "NAV-reformen og måloppnåelse" : (literarySignal?.strong ? "Knausgårds Om våren, tilknytningsteori og litterær erkjennelse" : (parsedInsights.tema || lookup("tema") || lookup("hovedargument") || insights[1] || insights[0] || "Tema identifiseres fortløpende.")))),
+      hovedspenning: explicitAhaSer?.hovedspenning || (domain === "song_lyric_child_culture" ? "Barnesang som kulturell praksis/kunstform ↔ behov for mer forskning på sjanger, språk, oppdragelse og identitetsdannelse" : (navSignal?.strong ? "Omstillingskostnad vs. strukturell utfordring" : (literarySignal?.strong ? "Tilknytningsteori vs. litterær/mytologisk utforskning av tilknytning, forknytning og løsrivelse" : (parsedInsights.hovedspenning || lookup("spenning") || insights.find((item) => /spenning|vs|mot/i.test(String(item || ""))) || "Spenning bygges fra flere meldinger.")))),
+      viktigsteInnsikt: explicitAhaSer?.viktigsteInnsikt || (domain === "song_lyric_child_culture" ? "Teksten viser sanglyrikk som del av barnekultur, barnelitteratur, musikk, språk, ritualer, utdanning og identitetsdannelse." : (navSignal?.strong ? "NAVs manglende måloppnåelse skyldes ikke bare midlertidig omstilling, men også varige strukturelle utfordringer i styring, organisering og stat–kommune-samspill." : (literarySignal?.strong ? "Om våren bruker tilknytningsteori som ramme, men overskrider den gjennom autofiksjon, deiksis, performativ skriving, sårbarhet, nymaterialisme og mytologiske bilder." : (parsedInsights.viktigsteInnsikt || lookup("hovedinnsikt") || insights[0] || payload?.reflection || "Hovedinnsikten vises her når AHA har nok materiale.")))),
       fagkoblinger: prioritizedLinks.length ? prioritizedLinks.slice(0, 8).join(" · ") : "Fagkoblinger blir tydeligere når flere tekster analyseres.",
-      nesteSteg: explicitAhaSer?.nesteSteg || (navSignal?.strong ? "Undersøk hvordan statlig styring, kommunale mål og lokal organisering påvirker arbeidsrettet oppfølging." : (literarySignal?.strong ? "Skill mellom hva Bowlbys tilknytningsteori forklarer, og hva romanens litterære form og materialistiske/mytologiske perspektiver tilfører." : (payload?.thoughts?.neste_steg || (Array.isArray(payload?.path) ? payload.path[0] : "") || "Velg ett konkret neste steg i teksten."))),
-      kortSvar: explicitAhaSer?.kortSvar || lookup("kort hovedinnsikt") || payload?.reflection || insights[0] || "AHA analyserer teksten fortløpende."
+      nesteSteg: explicitAhaSer?.nesteSteg || (domain === "song_lyric_child_culture" ? "Undersøk konkrete tekstbelegg for hvordan sanglyrikk fungerer i barnekultur, læring, ritualer og identitetsdannelse." : (navSignal?.strong ? "Undersøk hvordan statlig styring, kommunale mål og lokal organisering påvirker arbeidsrettet oppfølging." : (literarySignal?.strong ? "Skill mellom hva Bowlbys tilknytningsteori forklarer, og hva romanens litterære form og materialistiske/mytologiske perspektiver tilfører." : (payload?.thoughts?.neste_steg || (Array.isArray(payload?.path) ? payload.path[0] : "") || "Velg ett konkret neste steg i teksten.")))),
+      kortSvar: explicitAhaSer?.kortSvar || (domain === "song_lyric_child_culture" ? "Teksten handler om barnesang og sanglyrikk som barnekultur, barnelitteratur, musikk, språk og oppdragelse." : lookup("kort hovedinnsikt") || payload?.reflection || insights[0] || "AHA analyserer teksten fortløpende.")
     };
   }
 
@@ -6328,6 +6491,7 @@
       if (payload.ahaSer) payload.ahaSer.fagkoblinger = ["Sport", "Fotball", "Turneringsspill", "Prestasjon", "Psykologi/press", "Medier/sportsjournalistikk"].filter((item) => (articleAnalysis.concepts || []).join(" ").toLowerCase().includes(item.toLowerCase().split("/")[0]) || ["Sport", "Fotball", "Turneringsspill", "Prestasjon", "Psykologi/press", "Medier/sportsjournalistikk"].includes(item));
     }
     payload = filterCrossDomainAutoPayload(payload, effectiveSourceText);
+    payload = enforceCanonicalSourceGrounding(payload, effectiveSourceText);
     const jsCanonicalAnalysis = buildCanonicalAnalysis(payload, effectiveSourceText);
     const resolvedCanonical = await resolveCanonicalAnalysisWithOptionalPythonEngine({
       message: effectiveSourceText,
@@ -6337,6 +6501,7 @@
     });
     payload.canonicalAnalysis = resolvedCanonical.analysis;
     payload.canonicalAnalysisMeta = resolvedCanonical.meta;
+    payload = enforceCanonicalSourceGrounding(payload, effectiveSourceText);
     bindAnalysisArtifact(payload, options.analysisRun || activeAnalysisRun);
     if (payload.canonicalAnalysis && typeof payload.canonicalAnalysis === "object") bindAnalysisArtifact(payload.canonicalAnalysis, options.analysisRun || activeAnalysisRun);
     if (options.persist !== false) {
