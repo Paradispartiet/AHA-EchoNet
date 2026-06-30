@@ -2970,17 +2970,33 @@
     return CANONICAL_MEDIA_SUPPORT_PATTERNS.some((pattern) => pattern.test(String(sourceText || "")));
   }
 
-  function containsUnsupportedCanonicalDomainTerm(value, sourceText) {
+  function firstUnsupportedCanonicalDomainTerm(value, sourceText) {
     const text = String(value || "").toLowerCase();
-    if (!text) return false;
-    if (sourceSupportsMediaInstitutionTerms(sourceText)) return false;
-    return CANONICAL_BLOCKED_DOMAIN_TERMS.some((term) => text.includes(term));
+    if (!text) return "";
+    if (sourceSupportsMediaInstitutionTerms(sourceText)) return "";
+    return CANONICAL_BLOCKED_DOMAIN_TERMS.find((term) => text.includes(term)) || "";
   }
 
-  function stripUnsupportedCanonicalItems(items, sourceText) {
+  function containsUnsupportedCanonicalDomainTerm(value, sourceText) {
+    return Boolean(firstUnsupportedCanonicalDomainTerm(value, sourceText));
+  }
+
+  function logSkippedUnsupportedCanonicalField(field, term, sourceText) {
+    const safeField = String(field || "unknown");
+    const safeTerm = String(term || "unknown");
+    const hash = sourceHash(sourceText || "");
+    console.warn(`Skipped unsupported canonicalAnalysis field: field=${safeField}, term=${safeTerm}, sourceHash=${hash}`);
+  }
+
+  function stripUnsupportedCanonicalItems(items, sourceText, field = "unknown") {
     return (Array.isArray(items) ? items : []).filter((item) => {
       const text = typeof item === "string" ? item : `${item?.label || ""} ${item?.text || ""} ${item?.title || ""} ${item?.subject_label || ""}`;
-      return !containsUnsupportedCanonicalDomainTerm(text, sourceText);
+      const term = firstUnsupportedCanonicalDomainTerm(text, sourceText);
+      if (term) {
+        logSkippedUnsupportedCanonicalField(field, term, sourceText);
+        return false;
+      }
+      return true;
     });
   }
 
@@ -3032,6 +3048,15 @@
       ],
       subjectMatches: getSongLyricChildCultureSubjectMatches(),
       subjectLinks: getSongLyricChildCultureSubjectMatches(),
+      canonicalAnalysis: {
+        ...(safe.canonicalAnalysis && typeof safe.canonicalAnalysis === "object" ? safe.canonicalAnalysis : {}),
+        contentType: "Fagtekst om barnekultur og sanglyrikk",
+        theme: "Sang og sanglyrikk i barnekulturen",
+        mainTension: "Barnesang som kulturell praksis/kunstform ↔ behovet for mer forskning på sjanger, språk, oppdragelse og identitetsdannelse.",
+        keyInsight: "Sanglyrikk i barnekulturen forstås gjennom barnelitteratur, musikk, lyrikk, språk, ritualer, utdanning og identitetsdannelse.",
+        nextStep: "Undersøk tekstbelegg for hvordan sanglyrikk fungerer i barnekultur, læring, ritualer og identitetsdannelse.",
+        fieldConnections: getSongLyricChildCultureSubjectMatches().map((item) => item.title)
+      },
       ahaSer: {
         innholdstype: "Fagtekst om barnekultur og sanglyrikk",
         tema: "Sang og sanglyrikk i barnekulturen.",
@@ -3049,33 +3074,53 @@
     const safe = payload && typeof payload === "object" ? payload : {};
     let out = { ...safe };
     if (detectSongLyricChildCultureSignal(source).strong) out = buildSongLyricChildCulturePayload(out, source);
-    out.sortItems = stripUnsupportedCanonicalItems(out.sortItems, source);
-    out.list = stripUnsupportedCanonicalItems(out.list, source);
-    out.path = stripUnsupportedCanonicalItems(out.path, source);
-    out.insightCards = stripUnsupportedCanonicalItems(out.insightCards, source);
-    out.subjectMatches = stripUnsupportedCanonicalItems(out.subjectMatches, source);
-    out.subjectLinks = stripUnsupportedCanonicalItems(out.subjectLinks, source);
+    out.sortItems = stripUnsupportedCanonicalItems(out.sortItems, source, "structure");
+    out.list = stripUnsupportedCanonicalItems(out.list, source, "list");
+    out.path = stripUnsupportedCanonicalItems(out.path, source, "learningPath");
+    out.insightCards = stripUnsupportedCanonicalItems(out.insightCards, source, "mainInsight");
+    out.subjectMatches = stripUnsupportedCanonicalItems(out.subjectMatches, source, "fagkoblinger");
+    out.subjectLinks = stripUnsupportedCanonicalItems(out.subjectLinks, source, "fagkoblinger");
     if (out.ahaSer && typeof out.ahaSer === "object") {
       out.ahaSer = { ...out.ahaSer };
       ["tema", "hovedspenning", "viktigsteInnsikt", "nesteSteg", "kortSvar"].forEach((key) => {
-        if (containsUnsupportedCanonicalDomainTerm(out.ahaSer[key], source)) out.ahaSer[key] = "";
+        const term = firstUnsupportedCanonicalDomainTerm(out.ahaSer[key], source);
+        if (term) {
+          logSkippedUnsupportedCanonicalField(key, term, source);
+          out.ahaSer[key] = "";
+        }
       });
-      out.ahaSer.fagkoblinger = stripUnsupportedCanonicalItems(Array.isArray(out.ahaSer.fagkoblinger) ? out.ahaSer.fagkoblinger : String(out.ahaSer.fagkoblinger || "").split("·"), source);
+      out.ahaSer.fagkoblinger = stripUnsupportedCanonicalItems(Array.isArray(out.ahaSer.fagkoblinger) ? out.ahaSer.fagkoblinger : String(out.ahaSer.fagkoblinger || "").split("·"), source, "fagkoblinger");
     }
     if (out.canonicalAnalysis && typeof out.canonicalAnalysis === "object") {
       out.canonicalAnalysis = { ...out.canonicalAnalysis };
-      ["contentType", "theme", "mainTension", "keyInsight", "reflection", "summary"].forEach((key) => {
-        if (containsUnsupportedCanonicalDomainTerm(out.canonicalAnalysis[key], source)) out.canonicalAnalysis[key] = "";
+      ["contentType", "topic", "theme", "mainTension", "keyInsight", "mainInsight", "nextStep", "reflection", "summary"].forEach((key) => {
+        const term = firstUnsupportedCanonicalDomainTerm(out.canonicalAnalysis[key], source);
+        if (term) {
+          logSkippedUnsupportedCanonicalField(key, term, source);
+          out.canonicalAnalysis[key] = "";
+        }
       });
-      out.canonicalAnalysis.fieldConnections = stripUnsupportedCanonicalItems(out.canonicalAnalysis.fieldConnections, source);
-      out.canonicalAnalysis.suggestedActions = stripUnsupportedCanonicalItems(out.canonicalAnalysis.suggestedActions, source);
+      out.canonicalAnalysis.fieldConnections = stripUnsupportedCanonicalItems(out.canonicalAnalysis.fieldConnections, source, "fagkoblinger");
+      out.canonicalAnalysis.suggestedActions = stripUnsupportedCanonicalItems(out.canonicalAnalysis.suggestedActions, source, "nextStep");
+      out.canonicalAnalysis.analysisRunId = out.canonicalAnalysis.analysisRunId || out.analysisRunId || out.runId || "";
+      out.canonicalAnalysis.runId = out.canonicalAnalysis.runId || out.runId || out.analysisRunId || "";
+      out.canonicalAnalysis.sourceHash = out.canonicalAnalysis.sourceHash || out.sourceHash || out.sourceTextHash || sourceHash(source);
+      out.canonicalAnalysis.sourceTextHash = out.canonicalAnalysis.sourceTextHash || out.sourceTextHash || out.sourceHash || sourceHash(source);
       out.canonicalAnalysis.evidenceAnchors = buildCanonicalEvidenceAnchors(out, source);
     }
-    out.reflection = containsUnsupportedCanonicalDomainTerm(out.reflection, source) ? "" : out.reflection;
+    const reflectionTerm = firstUnsupportedCanonicalDomainTerm(out.reflection, source);
+    if (reflectionTerm) {
+      logSkippedUnsupportedCanonicalField("mainInsight", reflectionTerm, source);
+      out.reflection = "";
+    }
     if (out.thoughts && typeof out.thoughts === "object") {
       out.thoughts = { ...out.thoughts };
       Object.keys(out.thoughts).forEach((key) => {
-        if (containsUnsupportedCanonicalDomainTerm(out.thoughts[key], source)) out.thoughts[key] = "";
+        const term = firstUnsupportedCanonicalDomainTerm(out.thoughts[key], source);
+        if (term) {
+          logSkippedUnsupportedCanonicalField(key === "neste_steg" ? "nextStep" : "mainInsight", term, source);
+          out.thoughts[key] = "";
+        }
       });
     }
     return out;
@@ -7114,7 +7159,7 @@
 
   global.loadChamberFromStorage = global.loadChamberFromStorage || loadChamberFromStorage;
   global.saveChamberToStorage = global.saveChamberToStorage || saveChamberToStorage;
-  global.AHATestHooks = Object.assign({}, global.AHATestHooks || {}, { detectTextType, buildCanonicalAnalysis, buildAhaAnalysisExportBundle, formatAhaAnalysisExportMarkdown, buildAutoOutputs, normalizeFagkoblinger, resolveCanonicalAnalysisWithOptionalPythonEngine, isAhaMemoryQuestion, buildAhaLearningContractReply, buildAhaMemoryStatus, shouldUseAhaMemory, buildAhaMemoryContext, buildAhaMemoryOffContext, loadAhaMemoryControls, saveAhaMemoryControls, setAhaMemoryControl, isAhaSavingEnabled, isAhaMemoryUseEnabled, loadAhaMemoryExclusions, saveAhaMemoryExclusions, getAhaMemoryInsightStableKey, getAhaMemoryInsightKey, isAhaMemoryInsightExcluded, excludeAhaMemoryInsight, includeAhaMemoryInsight, resetAhaMemoryExclusions, getAhaExcludedMemoryItems, renderAhaMemoryControls, bindAhaMemoryControls, submitAhaChatMessage, findRelevantLocalMemory, formatAhaMemoryContextForAgent, isAhaMemoryDebugEnabled, buildAhaMemoryTransparency, formatAhaMemoryTransparencyDetails, renderAhaMemoryTransparency, appendChat, updateAnswerActionsVisibility, getActiveMetaAiSession, startMetaAiSession, renderMetaAiSessionBox, renderMetaAiClaims, maybeHandleMetaAiAgentReply, saveMetaAiClaimFeedback, buildAhaPersonalAiLoopChatReadinessStatus, renderAhaPersonalAiLoopStatus, buildAhaAnswerPackage, renderAhaAnswerComposer, createAnalysisRun, bindAnalysisArtifact, artifactMatchesActiveRun, clearActiveAnalysisState, renderAutoOutputPayload, filterRetrievalForActiveSource, scoreRetrievalAgainstSource, filterMemoryContextForActiveSource, isActiveAnalysisRun });
+  global.AHATestHooks = Object.assign({}, global.AHATestHooks || {}, { detectTextType, buildCanonicalAnalysis, buildAhaAnalysisExportBundle, formatAhaAnalysisExportMarkdown, buildAutoOutputs, normalizeFagkoblinger, resolveCanonicalAnalysisWithOptionalPythonEngine, isAhaMemoryQuestion, buildAhaLearningContractReply, buildAhaMemoryStatus, shouldUseAhaMemory, buildAhaMemoryContext, buildAhaMemoryOffContext, loadAhaMemoryControls, saveAhaMemoryControls, setAhaMemoryControl, isAhaSavingEnabled, isAhaMemoryUseEnabled, loadAhaMemoryExclusions, saveAhaMemoryExclusions, getAhaMemoryInsightStableKey, getAhaMemoryInsightKey, isAhaMemoryInsightExcluded, excludeAhaMemoryInsight, includeAhaMemoryInsight, resetAhaMemoryExclusions, getAhaExcludedMemoryItems, renderAhaMemoryControls, bindAhaMemoryControls, submitAhaChatMessage, findRelevantLocalMemory, formatAhaMemoryContextForAgent, isAhaMemoryDebugEnabled, buildAhaMemoryTransparency, formatAhaMemoryTransparencyDetails, renderAhaMemoryTransparency, appendChat, updateAnswerActionsVisibility, getActiveMetaAiSession, startMetaAiSession, renderMetaAiSessionBox, renderMetaAiClaims, maybeHandleMetaAiAgentReply, saveMetaAiClaimFeedback, buildAhaPersonalAiLoopChatReadinessStatus, renderAhaPersonalAiLoopStatus, buildAhaAnswerPackage, renderAhaAnswerComposer, createAnalysisRun, bindAnalysisArtifact, artifactMatchesActiveRun, clearActiveAnalysisState, renderAutoOutputPayload, enforceCanonicalSourceGrounding, filterRetrievalForActiveSource, scoreRetrievalAgainstSource, filterMemoryContextForActiveSource, isActiveAnalysisRun });
 
   global.AHAActiveRun = {
     get() { return activeAnalysisRun; },
