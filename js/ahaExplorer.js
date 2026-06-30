@@ -6,7 +6,7 @@
 (function (global) {
   "use strict";
 
-  const TAB_NAMES = ["oversikt", "innsikter", "begreper", "fag", "kilder", "struktur", "kart", "data"];
+  const TAB_NAMES = ["oversikt", "innsikter", "begreper", "fag", "kilder", "struktur", "etterarbeid", "kart", "data"];
 
   let currentBundle = null;
   let initialized = false;
@@ -50,9 +50,9 @@
       legal_text: "Juridisk tekst",
       technical_work: "Teknisk arbeid",
       learning_note: "Læringsnotat",
-      general: "Ukjent / blandet materiale"
+      general: "AHA venter på tekst"
     };
-    return labels[key] || (key ? key : "Ukjent / blandet materiale");
+    return labels[key] || (key ? key : "AHA venter på tekst");
   }
 
   function card(title, bodyHtml, opts = {}) {
@@ -95,7 +95,7 @@
     const kortSvar = asText(ser.kortSvar) || asText(b.ahaReply);
     const hasAnything = kortSvar || asText(ser.tema) || asText(afterwork.summary) || asList(b.insights).length;
     if (!hasAnything) {
-      host.innerHTML = emptyNote("AHA har ikke analysert noe ennå. Send en tekst i chatten over, så dukker analysen opp her.");
+      host.innerHTML = emptyNote("AHA venter på tekst. Oversikten vises her når AHA har nok materiale.");
       return;
     }
     const points = asList(b.insights).map(asText).filter(Boolean);
@@ -192,7 +192,7 @@
       <p class="exp-kicker">Forekomst</p>
       <p>${snippet ? esc(snippet) : "AHA fant begrepet i analysen av teksten."}</p>
       <p class="exp-kicker">Koblinger</p>
-      ${uniqueLinks.length ? chipRow(uniqueLinks) : emptyNote("Ingen tydelige koblinger ennå.")}
+      ${uniqueLinks.length ? chipRow(uniqueLinks) : emptyNote("Koblinger vises her når AHA finner tydelige sammenhenger.")}
       <p class="exp-kicker">Handling</p>
       <button type="button" class="exp-action-btn" data-concept-add="${esc(concept)}">Legg til i kunnskapskart</button>
     </article>`;
@@ -209,7 +209,7 @@
       parts.push(`<p class="exp-kicker">Begreper funnet</p>`);
       parts.push(`<div class="exp-chips">${concepts.map((c) => `<button type="button" class="exp-chip exp-chip-btn" data-concept="${esc(c)}">${esc(c)}</button>`).join("")}</div>`);
     } else {
-      parts.push(emptyNote("Ingen tydelige begreper funnet ennå. AHA kan likevel vise ord, temaer og mulige begrepskandidater."));
+      parts.push(emptyNote("Begreper vises her når AHA finner tydelige mønstre i teksten."));
     }
     if (candidates.length) {
       parts.push(`<p class="exp-kicker">Mulige begrepskandidater</p>`);
@@ -308,7 +308,7 @@
     const events = loadWebArticleSourceEvents();
     host.innerHTML = events.length
       ? events.map(sourceEventCard).join("")
-      : emptyNote("Kilder fra lenker vises her.");
+      : emptyNote("Kilder vises her når teksten inneholder lenker eller referanser.");
     setTabCount("kilder", events.length);
   }
 
@@ -391,6 +391,38 @@
       parts.push(`<details class="exp-acc"><summary>Chamber-status</summary><pre class="exp-json">${esc(safeJson(meta))}</pre></details>`);
     }
     host.innerHTML = parts.join("");
+  }
+
+
+  function renderAhaNow(b) {
+    const host = document.getElementById("aha-now-content");
+    if (!host) return;
+    const ser = b.ahaSer || {};
+    const rows = [
+      dlRow("Innholdstype", ser.innholdstype ? humanizeTextType(ser.innholdstype) : ""),
+      dlRow("Tema", ser.tema),
+      dlRow("Hovedspenning", ser.hovedspenning),
+      dlRow("Viktigste innsikt", ser.viktigsteInnsikt),
+      dlRow("Neste steg", ser.nesteSteg)
+    ].join("");
+    host.innerHTML = rows
+      ? `<dl class="aha-now-list">${rows}</dl>`
+      : emptyNote("Send en tekst, så bygger AHA oversikt, begreper og innsikter her.");
+  }
+
+  function renderEtterarbeid(b) {
+    const host = getContainer("etterarbeid");
+    if (!host) return;
+    const afterwork = b.afterwork || {};
+    const rows = [
+      dlRow("Oppsummering", afterwork.summary),
+      dlRow("Innsikt", afterwork.insight),
+      dlRow("Refleksjon", afterwork.reflection),
+      dlRow("Neste steg", afterwork?.thoughts?.neste_steg)
+    ].join("");
+    host.innerHTML = rows
+      ? card("Etterarbeid", `<dl class="exp-dl">${rows}</dl>`)
+      : emptyNote("Etterarbeid vises her når AHA har nok materiale til forslag, lister eller læringssteg.");
   }
 
   // ── Data ────────────────────────────────────────────────────
@@ -538,12 +570,14 @@
     if (!bundle || typeof bundle !== "object") return;
     init();
     currentBundle = bundle;
+    renderAhaNow(bundle);
     renderOversikt(bundle);
     renderInnsikter(bundle);
     renderBegreper(bundle);
     renderFag(bundle);
     renderKilder();
     renderStruktur(bundle);
+    renderEtterarbeid(bundle);
     renderKart(bundle);
     renderData(bundle);
     setTabCount("innsikter", asList(bundle.insights).filter(Boolean).length + asList(bundle.chamberInsights).length);

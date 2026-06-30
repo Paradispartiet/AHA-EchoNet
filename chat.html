@@ -2,7 +2,7 @@
 <html lang="no">
 <head>
   <meta charset="UTF-8" />
-  <title>AHA Chat – Innsiktsmotor + Metamotor</title>
+  <title>AHA Chat – Hva vil du forstå i dag?</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="css/aha-chat.css" />
   <link rel="stylesheet" href="css/aha-global-nav.css" />
@@ -23,7 +23,7 @@
       </a>
       <div class="chat-title-wrap">
         <h1>AHA Chat</h1>
-        <p>AHA Chat bruker godkjent personlig kontekst, Personal AI, retrieval og svar-evaluering når det finnes relevant grunnlag.</p>
+        <p>En rolig chatflate med innsikter underveis.</p>
       </div>
       <span class="status-pill">Klar</span>
       <div class="chat-profile-card" aria-live="polite">
@@ -53,10 +53,15 @@
           <section id="empty-state" class="empty-state" aria-live="polite"><h2>Hva vil du forstå i dag?</h2><p>Skriv til AHA nedenfor. Du får ett tydelig svar – og innsikter lagres automatisk i bakgrunnen.</p></section>
         </section>
 
-        <section class="composer-wrap" aria-label="Skriv til AHA">
+        <section class="composer-wrap chat-hero" aria-label="Skriv til AHA">
           <div class="row composer-row">
+            <div class="chat-hero-copy">
+              <p class="eyebrow">AHA Chat</p>
+              <h2>Hva vil du forstå i dag?</h2>
+              <p>Skriv, lim inn tekst eller still et spørsmål. AHA svarer tydelig og bygger innsikter underveis.</p>
+            </div>
             <label for="msg">Skriv til AHA</label>
-            <textarea id="msg" placeholder="Skriv til AHA…"></textarea>
+            <textarea id="msg" placeholder="Skriv, lim inn tekst eller still et spørsmål …"></textarea>
             <div class="composer-actions">
               <button id="btn-send" class="send-btn" type="button">Send</button>
             </div>
@@ -64,45 +69,12 @@
               <span class="aha-processing-spinner" aria-hidden="true"></span>
               <span id="aha-processing-text">AHA analyserer teksten …</span>
             </div>
+            <div class="compact-status-line" aria-label="Kort AHA-status">
+              <span class="status-pill">AHA klar</span>
+              <span class="status-pill">Minne på</span>
+              <span class="status-pill">Lagring på</span>
+            </div>
             <div id="chat-status-note" class="chat-status-note" aria-live="polite"></div>
-            <div class="aha-memory-status" aria-label="Diskret chatstatus">Personal Context · Personal Retrieval · Semantic Retrieval · Answer Composer · Answer Evaluation</div>
-            <div id="aha-memory-status" class="aha-memory-status" aria-live="polite">Leser minnestatus …</div>
-            <div id="aha-memory-controls" class="aha-memory-controls" aria-label="Minnestyring"></div>
-            <details id="aha-personal-context-panel" class="aha-personal-context-panel">
-              <summary>Personlig kontekst</summary>
-              <div id="aha-personal-context-status" class="aha-personal-context-status" aria-live="polite">Leser personlig kontekst …</div>
-              <div class="aha-personal-context-actions">
-                <a href="training.html">Se Training Corpus</a>
-                <a href="index.html">Se AHA Home</a>
-              </div>
-            </details>
-            <details id="aha-personal-retrieval-panel" class="aha-personal-context-panel">
-              <summary>Personlig søk</summary>
-              <div id="aha-personal-retrieval-status" class="aha-personal-context-status" aria-live="polite">Personlig søk er ikke brukt i denne meldingen ennå.</div>
-              <div id="aha-personal-retrieval-results" class="aha-personal-retrieval-results"></div>
-              <div class="aha-personal-context-actions"><a href="training.html">Åpne Training og bygg indeks</a></div>
-            </details>
-            <details id="aha-answer-composer-panel" class="aha-personal-context-panel">
-              <summary>Svargrunnlag</summary>
-              <div id="aha-answer-composer-status" class="aha-personal-context-status" aria-live="polite">AHA Answer Composer er ikke brukt i denne meldingen ennå.</div>
-              <div id="aha-answer-composer-details" class="aha-personal-retrieval-results"></div>
-              <div class="aha-personal-context-actions"><a href="training.html#training-answer-composer-panel">Åpne Training</a></div>
-            </details>
-            <details id="aha-answer-evaluation-panel" class="aha-personal-context-panel">
-              <summary>Svar-evaluering</summary>
-              <div id="aha-answer-evaluation-status" class="aha-personal-context-status" aria-live="polite">AHA Answer Evaluation er ikke brukt i denne meldingen ennå.</div>
-              <div class="aha-personal-context-actions"><a href="training.html#training-answer-evaluation-panel">Åpne Training</a></div>
-            </details>
-            <details id="aha-chat-memory-panel" class="aha-personal-context-panel">
-              <summary>Chat-minne</summary>
-              <div id="aha-chat-memory-status" class="aha-personal-context-status" aria-live="polite">Leser chat-minne …</div>
-              <div class="aha-personal-context-actions"><a href="intake.html">Åpne Data Intake</a></div>
-            </details>
-            <details id="aha-personal-ai-loop-panel" class="aha-personal-context-panel">
-              <summary>Personal AI Loop: aktiv</summary>
-              <div id="aha-personal-ai-loop-status" class="aha-personal-context-status" aria-live="polite">Leser AI-loop-status …</div>
-              <div class="aha-personal-context-actions"><a href="training.html#training-ai-loop-audit-panel">Åpne full audit</a></div>
-            </details>
           </div>
         </section>
 
@@ -127,6 +99,22 @@
           (#aha-auto-output, #panel, #out, #meta-profile-panel,
           #afterwork-panel) beholdes fordi ahaChat.js rendrer inn i dem.
         -->
+        <section class="aha-now-card" aria-labelledby="aha-now-title">
+          <header>
+            <p class="eyebrow">Analyse</p>
+            <h2 id="aha-now-title">AHA ser nå</h2>
+          </header>
+          <div id="aha-now-content" class="aha-now-content">
+            <p class="aha-calm-empty">Send en tekst, så bygger AHA oversikt, begreper og innsikter her.</p>
+          </div>
+        </section>
+
+        <section class="memory-card" aria-labelledby="memory-card-title">
+          <h2 id="memory-card-title">Minne</h2>
+          <div id="aha-memory-status" class="aha-memory-status" aria-live="polite">Leser minnestatus …</div>
+          <button type="button" class="secondary-action" data-open-advanced="true">Avansert status</button>
+        </section>
+
         <section class="aha-explorer" id="aha-explorer" aria-label="Utforsk det AHA fant">
           <header class="explorer-head">
             <h2>Utforsk det AHA fant</h2>
@@ -136,15 +124,18 @@
             <button type="button" role="tab" data-tab="oversikt" aria-selected="true" class="is-active">Oversikt</button>
             <button type="button" role="tab" data-tab="innsikter" aria-selected="false">Innsikter <span class="exp-tab-count"></span></button>
             <button type="button" role="tab" data-tab="begreper" aria-selected="false">Begreper <span class="exp-tab-count"></span></button>
-            <button type="button" role="tab" data-tab="fag" aria-selected="false">Fag <span class="exp-tab-count"></span></button>
             <button type="button" role="tab" data-tab="kilder" aria-selected="false">Kilder <span class="exp-tab-count"></span></button>
             <button type="button" role="tab" data-tab="struktur" aria-selected="false">Struktur</button>
-            <button type="button" role="tab" data-tab="kart" aria-selected="false">Kart</button>
-            <button type="button" role="tab" data-tab="data" aria-selected="false">Data</button>
+            <button type="button" role="tab" data-tab="etterarbeid" aria-selected="false">Etterarbeid</button>
+            <details class="more-tabs"><summary>Mer</summary>
+              <button type="button" role="tab" data-tab="fag" aria-selected="false">Fag <span class="exp-tab-count"></span></button>
+              <button type="button" role="tab" data-tab="kart" aria-selected="false">Kart</button>
+              <button type="button" role="tab" data-tab="oversikt" aria-selected="false">Kort svar</button>
+            </details>
           </div>
 
           <section class="explorer-panel" data-tab-panel="oversikt" role="tabpanel" aria-label="Oversikt">
-            <div id="exp-oversikt"><p class="exp-empty">AHA har ikke analysert noe ennå. Send en tekst i chatten over.</p></div>
+            <div id="exp-oversikt"><p class="exp-empty">AHA venter på tekst. Oversikten vises her når AHA har nok materiale.</p></div>
           </section>
 
           <section class="explorer-panel" data-tab-panel="innsikter" role="tabpanel" aria-label="Innsikter" hidden>
@@ -160,7 +151,7 @@
           </section>
 
           <section class="explorer-panel" data-tab-panel="kilder" role="tabpanel" aria-label="Kilder" hidden>
-            <div id="exp-kilder"><p class="exp-empty">Kilder fra lenker vises her.</p></div>
+            <div id="exp-kilder"><p class="exp-empty">Kilder vises her når teksten inneholder lenker eller referanser.</p></div>
           </section>
 
           <section class="explorer-panel" data-tab-panel="struktur" role="tabpanel" aria-label="Struktur" hidden>
@@ -175,12 +166,13 @@
             </details>
           </section>
 
+          <section class="explorer-panel" data-tab-panel="etterarbeid" role="tabpanel" aria-label="Etterarbeid" hidden>
+            <div id="exp-etterarbeid"><p class="exp-empty">Etterarbeid vises her når AHA har nok materiale til forslag, lister eller læringssteg.</p></div>
+          </section>
+
           <section class="explorer-panel" data-tab-panel="kart" role="tabpanel" aria-label="Kart" hidden>
             <div id="exp-kart"><p class="exp-empty">Kunnskapskart og chamber-status vises her.</p></div>
-            <details class="exp-acc">
-              <summary>Meta-profil</summary>
-              <div id="meta-profile-panel"></div>
-            </details>
+
           </section>
 
           <section class="explorer-panel" data-tab-panel="data" role="tabpanel" aria-label="Data" hidden>
@@ -206,6 +198,26 @@
             </details>
           </section>
         </section>
+
+        <details id="aha-advanced-panel" class="advanced-panel">
+          <summary>Avansert</summary>
+          <div class="advanced-grid">
+            <details id="aha-personal-context-panel" class="aha-personal-context-panel"><summary>Personlig kontekst / Personal Context</summary><div id="aha-personal-context-status" class="aha-personal-context-status" aria-live="polite">Leser personlig kontekst …</div><div class="aha-personal-context-actions"><a href="training.html">Se Training Corpus</a><a href="index.html">Se AHA Home</a></div></details>
+            <details id="aha-personal-retrieval-panel" class="aha-personal-context-panel"><summary>Personal Retrieval</summary><div id="aha-personal-retrieval-status" class="aha-personal-context-status" aria-live="polite">Personlig søk er ikke brukt i denne meldingen ennå.</div><div id="aha-personal-retrieval-results" class="aha-personal-retrieval-results"></div><div class="aha-personal-context-actions"><a href="training.html">Åpne Training og bygg indeks</a></div></details>
+            <details class="aha-personal-context-panel"><summary>Semantic Retrieval</summary><p class="aha-personal-context-status">Semantisk status vises i minne- og datafeltene når tilgjengelig.</p></details>
+            <details id="aha-answer-composer-panel" class="aha-personal-context-panel"><summary>Svargrunnlag / Answer Composer</summary><div id="aha-answer-composer-status" class="aha-personal-context-status" aria-live="polite">AHA Answer Composer er ikke brukt i denne meldingen ennå.</div><div id="aha-answer-composer-details" class="aha-personal-retrieval-results"></div><div class="aha-personal-context-actions"><a href="training.html#training-answer-composer-panel">Åpne Training</a></div></details>
+            <details id="aha-answer-evaluation-panel" class="aha-personal-context-panel"><summary>Svar-evaluering / Answer Evaluation</summary><div id="aha-answer-evaluation-status" class="aha-personal-context-status" aria-live="polite">AHA Answer Evaluation er ikke brukt i denne meldingen ennå.</div><div class="aha-personal-context-actions"><a href="training.html#training-answer-evaluation-panel">Åpne Training</a></div></details>
+            <details id="aha-chat-memory-panel" class="aha-personal-context-panel"><summary>Chat-minne</summary><div id="aha-chat-memory-status" class="aha-personal-context-status" aria-live="polite">Leser chat-minne …</div><div class="aha-personal-context-actions"><a href="intake.html">Åpne Data Intake</a></div></details>
+            <details class="aha-personal-context-panel"><summary>Embedding-minne</summary><p class="aha-personal-context-status">Detaljert embedding-status ligger i minnekortets statusdata.</p></details>
+            <details class="aha-personal-context-panel"><summary>Meta-profil</summary><div id="meta-profile-panel"></div></details>
+            <details id="aha-personal-ai-loop-panel" class="aha-personal-context-panel"><summary>Personal AI Loop: aktiv / Calibration status</summary><div id="aha-personal-ai-loop-status" class="aha-personal-context-status" aria-live="polite">Leser AI-loop-status …</div><div class="aha-personal-context-actions"><a href="training.html#training-ai-loop-audit-panel">Åpne full audit</a></div></details>
+            <div id="aha-memory-controls" class="aha-memory-controls" aria-label="Minnestyring"></div>
+          </div>
+          <details class="exp-acc">
+            <summary>Rå auto-output payload · Canonical analysis · Full chamber snapshot · Full bundle</summary>
+            <button type="button" class="exp-action-btn" data-open-tab="data">Åpne datafanen</button>
+          </details>
+        </details>
       </section>
     </main>
 
@@ -306,6 +318,15 @@
             window.AHAExplorer?.open(tab);
             explorer?.scrollIntoView({ behavior: 'smooth', block: 'start' });
           }, 150);
+        });
+      });
+      document.querySelectorAll('[data-open-advanced]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const panel = document.getElementById('aha-advanced-panel');
+          if (panel) {
+            panel.open = true;
+            panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
         });
       });
     })();
