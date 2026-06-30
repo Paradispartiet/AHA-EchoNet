@@ -6,6 +6,7 @@
   --aha-text: #f5f5f5;
   --aha-muted: rgba(245, 245, 245, 0.68);
   --aha-accent: #ffd347;
+  --aha-content-max: 1180px;
 }
 
 * { box-sizing: border-box; }
@@ -18,7 +19,7 @@ body {
 }
 
 .app-shell { min-height: 100dvh; padding: 18px; background: radial-gradient(circle at 20% 0%, rgba(255,211,71,0.08), transparent 44%), linear-gradient(180deg, #050814 0%, #070d1c 36%, #050814 100%); }
-.chat-header, .chat-main, .composer-wrap > .row { max-width: 1180px; margin: 0 auto; }
+.chat-header, .chat-main, .composer-wrap > .row { width: 100%; max-width: var(--aha-content-max, 1180px); margin: 0 auto; }
 .chat-header { display:flex; align-items:center; justify-content:space-between; gap:12px; min-width:0; background: linear-gradient(145deg, rgba(15,24,49,0.9), rgba(10,16,34,0.92)); border: 1px solid var(--aha-border); border-radius: 16px; padding: 8px 12px; margin-bottom: 12px; box-shadow: 0 12px 28px rgba(0,0,0,0.3); backdrop-filter: blur(8px); }
 .back-link { flex:0 0 auto; color: var(--aha-accent); text-decoration:none; font-size:12px; white-space:nowrap; }
 .chat-brand { display:flex; flex:0 0 auto; gap:8px; align-items:center; color: var(--aha-text); text-decoration:none; }
@@ -42,7 +43,7 @@ body {
 .back-link:hover, .chat-brand:hover, .profile-indicator:hover { color:var(--aha-accent); }
 .back-link:focus-visible, .chat-brand:focus-visible, .profile-indicator:focus-visible { outline:2px solid var(--aha-accent); outline-offset:3px; }
 
-.chat-layout { display:grid; grid-template-columns: minmax(0, 1fr); gap: 14px; max-width:1180px; margin:0 auto; align-items:start; }
+.chat-layout { display:grid; grid-template-columns: minmax(0, 1fr); gap: 14px; width:100%; max-width:var(--aha-content-max, 1180px); margin:0 auto; align-items:start; }
 .chat-main { display:grid; gap:12px; }
 .aha-module-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; align-items: start; }
 
@@ -681,7 +682,27 @@ pre#out { max-height: 22vh; overflow:auto; white-space: pre-wrap; }
 .chat-hero-copy p:not(.eyebrow) { margin: 0; max-width: 64ch; color: var(--aha-muted); line-height: 1.55; }
 .compact-status-line { display:flex; flex-wrap:wrap; gap:8px; margin-top: 10px; }
 .compact-status-line .status-pill { background: rgba(127, 255, 184, .09); border-color: rgba(127, 255, 184, .28); color: #bdf8d2; }
-.aha-now-card, .memory-card, .advanced-panel { max-width: 1180px; margin: 0 auto; border: 1px solid var(--aha-border); border-radius: 18px; background: linear-gradient(170deg, rgba(10,16,34,0.92), rgba(8,13,29,0.9)); padding: 16px; }
+.aha-now-card, .memory-card, .advanced-panel,
+.aha-live-analysis, .aha-analysis-panel, .aha-now-panel, .aha-see-now, .aha-memory-panel {
+  width: 100%;
+  max-width: none;
+  margin-left: 0;
+  margin-right: 0;
+  border: 1px solid var(--aha-border);
+  border-radius: 18px;
+  background: linear-gradient(170deg, rgba(10,16,34,0.92), rgba(8,13,29,0.9));
+  padding: 16px;
+}
+.aha-analysis-shell, .aha-after-chat-shell, .aha-side-status-shell {
+  width: 100%;
+  max-width: var(--aha-content-max, 1180px);
+  margin-inline: auto;
+}
+.aha-live-analysis-grid, .aha-now-grid, .aha-analysis-grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
 .aha-now-card header { margin-bottom: 10px; }
 .aha-now-card h2, .memory-card h2 { margin: 0; font-size: 22px; }
 .aha-now-content .exp-empty, .aha-calm-empty { margin:0; padding: 14px; border: 1px dashed rgba(255,255,255,.14); border-radius: 14px; color: var(--aha-muted); background: rgba(255,255,255,.025); }
