@@ -37,6 +37,47 @@
     }
   }
 
+
+  function getActiveRun() {
+    return global.AHAActiveRun?.get?.() || null;
+  }
+
+  function payloadRunId(value) {
+    return String(value?.analysisRunId || value?.runId || value?.activeRun?.analysisRunId || value?.activeRun?.runId || "");
+  }
+
+  function payloadSourceHash(value) {
+    return String(value?.sourceHash || value?.sourceTextHash || value?.normalizedSourceHash || value?.sourceFingerprint || value?.activeRun?.sourceHash || "");
+  }
+
+  function bundleMatchesActiveRun(bundle) {
+    const run = getActiveRun();
+    if (!run) return true;
+    const expected = String(run.analysisRunId || run.runId || run.sourceHash || "");
+    const gotRun = payloadRunId(bundle) || payloadRunId(bundle?.rawAutoPayload) || payloadRunId(bundle?.canonicalAnalysis) || payloadRunId(bundle?.afterwork);
+    const gotHash = payloadSourceHash(bundle) || payloadSourceHash(bundle?.rawAutoPayload) || payloadSourceHash(bundle?.canonicalAnalysis) || payloadSourceHash(bundle?.afterwork);
+    if (gotRun && gotRun !== String(run.analysisRunId || run.runId || "")) {
+      console.warn(`Skipped stale AHA analysis payload: expected ${expected}, got ${gotRun}.`);
+      return false;
+    }
+    if (gotHash && run.sourceHash && gotHash !== run.sourceHash) {
+      console.warn(`Skipped stale AHA analysis payload: expected ${run.sourceHash}, got ${gotHash}.`);
+      return false;
+    }
+    return true;
+  }
+
+  function clear(run = getActiveRun()) {
+    init();
+    currentBundle = null;
+    TAB_NAMES.forEach((name) => {
+      const host = getContainer(name);
+      if (host) host.innerHTML = emptyNote(name === "innsikter" ? "Lagrede innsikter vises separat. AHA venter på ny analyse." : "AHA venter på ny analyse.");
+      setTabCount(name, 0);
+    });
+    renderAhaNow({ ahaSer: {}, afterwork: {}, insights: [], concepts: [], sourceTextHash: run?.sourceHash || "", analysisRunId: run?.analysisRunId || run?.runId || "" });
+  }
+
   function humanizeTextType(type) {
     const key = String(type || "").trim().toLowerCase();
     const labels = {
@@ -153,7 +194,7 @@
       parts.push(simple.map((text) => `<article class="exp-card"><p>${esc(text)}</p></article>`).join(""));
     }
     if (chamber.length) {
-      parts.push(`<p class="exp-kicker">Innsikter i kammeret (${chamber.length})</p>`);
+      parts.push(`<p class="exp-kicker">Lagrede innsikter / relevante tidligere innsikter (${chamber.length})</p>`);
       parts.push(chamber.map(chamberInsightCard).join(""));
     }
     host.innerHTML = parts.join("");
@@ -561,6 +602,7 @@
   function render(bundle) {
     if (!bundle || typeof bundle !== "object") return;
     init();
+    if (!bundleMatchesActiveRun(bundle)) return;
     currentBundle = bundle;
     renderAhaNow(bundle);
     renderOversikt(bundle);
@@ -581,5 +623,5 @@
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
   else init();
 
-  global.AHAExplorer = { render, open, init };
+  global.AHAExplorer = { render, open, init, clear, bundleMatchesActiveRun };
 }(window));

@@ -39,7 +39,10 @@
       createdAt,
       topicLabel,
       sourceHash: fingerprint,
-      sourceFingerprint: fingerprint
+      normalizedSourceHash: fingerprint,
+      sourceTextHash: fingerprint,
+      sourceFingerprint: fingerprint,
+      sourcePreview: source.replace(/\s+/g, " ").slice(0, 180)
     };
   }
 
@@ -56,9 +59,11 @@
       topicLabel: run.topicLabel || artifact.topicLabel || "",
       sessionId: run.sessionId || run.conversationId,
       createdAt: artifact.createdAt || run.createdAt,
-      sourceHash: artifact.sourceHash || run.sourceHash,
-      sourceTextHash: artifact.sourceTextHash || artifact.sourceHash || run.sourceHash,
-      sourceFingerprint: artifact.sourceFingerprint || run.sourceFingerprint
+      sourceHash: run.sourceHash || artifact.sourceHash,
+      normalizedSourceHash: run.normalizedSourceHash || run.sourceHash || artifact.normalizedSourceHash,
+      sourceTextHash: run.sourceTextHash || run.sourceHash || artifact.sourceTextHash || artifact.sourceHash,
+      sourceFingerprint: run.sourceFingerprint || run.sourceHash || artifact.sourceFingerprint,
+      sourcePreview: run.sourcePreview || artifact.sourcePreview || artifact.sourceTextPreview || ""
     });
   }
 
@@ -66,7 +71,11 @@
     if (!artifact || typeof artifact !== "object" || !run) return false;
     const artifactRunId = String(artifact.analysisRunId || artifact.runId || "");
     const activeRunId = String(run.analysisRunId || run.runId || "");
-    if (artifactRunId || activeRunId) return Boolean(artifactRunId && activeRunId && artifactRunId === activeRunId);
+    if (artifactRunId || activeRunId) {
+      if (!(artifactRunId && activeRunId && artifactRunId === activeRunId)) return false;
+      const hash = String(artifact.sourceHash || artifact.sourceTextHash || artifact.normalizedSourceHash || artifact.sourceFingerprint || "");
+      return !(hash && run.sourceHash && hash !== run.sourceHash);
+    }
     const hasRunIds = artifact.analysisId || artifact.sourceId;
     if (hasRunIds) return String(artifact.analysisId || "") === run.analysisId && String(artifact.sourceId || "") === run.sourceId;
     const hash = String(artifact.sourceHash || artifact.sourceTextHash || artifact.sourceFingerprint || "");
@@ -121,6 +130,7 @@
 
   function clearActiveAnalysisState(run, message = "AHA analyserer ny kilde …") {
     if (run) activeAnalysisRun = run;
+    try { global.localStorage?.removeItem(AUTO_OUTPUT_STORAGE_KEY); } catch {}
     const host = document.getElementById("aha-auto-output");
     if (host) {
       host.dataset.analysisId = run?.analysisId || "";
@@ -128,10 +138,15 @@
       host.dataset.runId = run?.runId || run?.analysisRunId || "";
       host.dataset.sourceId = run?.sourceId || "";
       host.dataset.sourceTextHash = run?.sourceHash || "";
+      host.dataset.sourceTextPreview = run?.sourcePreview || "";
       host.innerHTML = `<div class="auto-output-head"><h2>AHA etterarbeid</h2><p>${escHtml(message)}</p></div>${renderAnalysisDebugPanel({})}`;
     }
     renderAhaPersonalRetrieval(null);
     renderAhaAnswerComposer(null);
+    renderPanel("");
+    const afterworkPanel = document.getElementById("afterwork-panel");
+    if (afterworkPanel) afterworkPanel.innerHTML = "";
+    try { global.AHAExplorer?.clear?.(run); } catch (err) { console.warn("AHA Explorer clear feilet", err); }
     const evaluationStatus = document.getElementById("aha-answer-evaluation-status");
     if (evaluationStatus) evaluationStatus.textContent = "Svar-evaluering venter på aktiv analyse.";
     setExportButtonsEnabled(false);
@@ -741,8 +756,8 @@
     const api = global.AHAPersonalAnswerEvaluation;
     if (!api?.evaluateAnswer) return null;
     try {
-      const evaluation = api.evaluateAnswer(userMessage, answerText, answerPackage);
-      const saved = api.saveEvaluation ? api.saveEvaluation(evaluation) : evaluation;
+      const evaluation = bindAnalysisArtifact(api.evaluateAnswer(userMessage, answerText, answerPackage), activeAnalysisRun);
+      const saved = api.saveEvaluation ? bindAnalysisArtifact(api.saveEvaluation(evaluation), activeAnalysisRun) : evaluation;
       renderAhaAnswerEvaluation(row, saved);
       return saved;
     } catch (err) {
@@ -5261,6 +5276,12 @@
     const autoSourceHash = String(auto?.sourceTextHash || sourceHash(auto?.sourceText || source));
     const currentHash = sourceHash(source);
     if (!autoSourceHash || autoSourceHash !== currentHash) return { saved: false, reason: "hash_mismatch", entry: null };
+    const expectedRunId = String(options?.analysisRunId || options?.runId || activeAnalysisRun?.analysisRunId || activeAnalysisRun?.runId || "");
+    const gotRunId = String(auto?.analysisRunId || auto?.runId || payload?.analysisRunId || payload?.runId || "");
+    if (expectedRunId && gotRunId && expectedRunId !== gotRunId) {
+      console.warn(`Skipped stale AHA analysis payload: expected ${expectedRunId}, got ${gotRunId}.`);
+      return { saved: false, reason: "run_mismatch", entry: null };
+    }
     const result = saveAutoOutputAsAfterwork(payload, source, options);
     if (result.reason === "duplicate") {
       const entries = loadAfterworkEntries();
@@ -5940,7 +5961,7 @@
     if (!host || !payload) return;
     payload = enforceCanonicalSourceGrounding(payload, host.dataset.sourceText || "");
     if (activeAnalysisRun && !artifactMatchesActiveRun(payload, activeAnalysisRun)) {
-      console.warn("AHA analysis run mismatch: forkaster stale auto-output", { active: activeAnalysisRun, artifact: { analysisId: payload.analysisId, sourceId: payload.sourceId, sourceHash: payload.sourceHash || payload.sourceTextHash } });
+      console.warn(`Skipped stale AHA analysis payload: expected ${activeAnalysisRun.analysisRunId || activeAnalysisRun.runId || activeAnalysisRun.sourceHash}, got ${payload.analysisRunId || payload.runId || payload.sourceHash || payload.sourceTextHash || "unknown"}.`);
       host.innerHTML = '<div class="auto-output-head"><h2>AHA etterarbeid</h2><p>Venter på etterarbeid for aktiv analyse.</p></div>' + renderAnalysisDebugPanel(payload);
       setExportButtonsEnabled(false);
       return;
@@ -6499,6 +6520,7 @@
       historyGoContext: { subjectMatches: payload.subjectMatches || [] },
       fallbackAnalysis: jsCanonicalAnalysis
     });
+    if (!isActiveAnalysisRun(options.analysisRun || activeAnalysisRun)) return;
     payload.canonicalAnalysis = resolvedCanonical.analysis;
     payload.canonicalAnalysisMeta = resolvedCanonical.meta;
     payload = enforceCanonicalSourceGrounding(payload, effectiveSourceText);
@@ -6506,6 +6528,7 @@
     if (payload.canonicalAnalysis && typeof payload.canonicalAnalysis === "object") bindAnalysisArtifact(payload.canonicalAnalysis, options.analysisRun || activeAnalysisRun);
     if (options.persist !== false) {
       localStorage.setItem(AUTO_OUTPUT_STORAGE_KEY, JSON.stringify({
+        activeRun: options.analysisRun || activeAnalysisRun || null,
         payload,
         sourceText,
         analysisId: payload.analysisId || "",
@@ -7092,6 +7115,13 @@
   global.loadChamberFromStorage = global.loadChamberFromStorage || loadChamberFromStorage;
   global.saveChamberToStorage = global.saveChamberToStorage || saveChamberToStorage;
   global.AHATestHooks = Object.assign({}, global.AHATestHooks || {}, { detectTextType, buildCanonicalAnalysis, buildAhaAnalysisExportBundle, formatAhaAnalysisExportMarkdown, buildAutoOutputs, normalizeFagkoblinger, resolveCanonicalAnalysisWithOptionalPythonEngine, isAhaMemoryQuestion, buildAhaLearningContractReply, buildAhaMemoryStatus, shouldUseAhaMemory, buildAhaMemoryContext, buildAhaMemoryOffContext, loadAhaMemoryControls, saveAhaMemoryControls, setAhaMemoryControl, isAhaSavingEnabled, isAhaMemoryUseEnabled, loadAhaMemoryExclusions, saveAhaMemoryExclusions, getAhaMemoryInsightStableKey, getAhaMemoryInsightKey, isAhaMemoryInsightExcluded, excludeAhaMemoryInsight, includeAhaMemoryInsight, resetAhaMemoryExclusions, getAhaExcludedMemoryItems, renderAhaMemoryControls, bindAhaMemoryControls, submitAhaChatMessage, findRelevantLocalMemory, formatAhaMemoryContextForAgent, isAhaMemoryDebugEnabled, buildAhaMemoryTransparency, formatAhaMemoryTransparencyDetails, renderAhaMemoryTransparency, appendChat, updateAnswerActionsVisibility, getActiveMetaAiSession, startMetaAiSession, renderMetaAiSessionBox, renderMetaAiClaims, maybeHandleMetaAiAgentReply, saveMetaAiClaimFeedback, buildAhaPersonalAiLoopChatReadinessStatus, renderAhaPersonalAiLoopStatus, buildAhaAnswerPackage, renderAhaAnswerComposer, createAnalysisRun, bindAnalysisArtifact, artifactMatchesActiveRun, clearActiveAnalysisState, renderAutoOutputPayload, filterRetrievalForActiveSource, scoreRetrievalAgainstSource, filterMemoryContextForActiveSource, isActiveAnalysisRun });
+
+  global.AHAActiveRun = {
+    get() { return activeAnalysisRun; },
+    isActive(run) { return isActiveAnalysisRun(run); },
+    matches(artifact) { return artifactMatchesActiveRun(artifact, activeAnalysisRun); },
+    bind(artifact) { return bindAnalysisArtifact(artifact, activeAnalysisRun); }
+  };
 
   global.AHAChat = {
     loadChamberFromStorage,
