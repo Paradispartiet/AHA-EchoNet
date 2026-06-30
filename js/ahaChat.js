@@ -5182,8 +5182,81 @@
   }
   global.refreshAhaExplorer = refreshAhaExplorer;
 
+
+  function getUrlDominanceInfo(text) {
+    const raw = String(text || "").trim();
+    const urls = global.AHALinkReader?.detectUrls?.(raw) || [];
+    const urlLength = urls.reduce((sum, url) => sum + String(url || "").length, 0);
+    const withoutUrls = urls.reduce((acc, url) => acc.replace(url, " "), raw).replace(/https?:\/\/[^\s<>'"]+/gi, " ").replace(/\s+/g, " ").trim();
+    const helperOnly = !withoutUrls || /^(?:(?:les|lese|sjekk|se|åpne|apne|analyser|vurder|hva|med|denne|dette|her|artikkelen|lenken|linken|url|kilden|kan|du|please|pls|ta|en|på|pa|om|kort|oppsummer)[\s.,!?-]*)+$/i.test(withoutUrls);
+    const urlOnly = Boolean(raw && urls.length && !withoutUrls);
+    const urlDominated = Boolean(raw && urls.length && urlLength / Math.max(raw.length, 1) > 0.7 && helperOnly);
+    return { urls, urlLength, withoutUrls, helperOnly, urlOnly, urlDominated, isSourceAction: urlOnly || urlDominated };
+  }
+
+  function isSportsArticleAnalysis(analysis = {}) {
+    const haystack = [analysis.title, analysis.short_summary, ...(analysis.main_points || []), ...(analysis.concepts || [])].join(" ").toLowerCase();
+    return /\b(sport|fotball|kamp|straffe|straffer|straffespark|turnering|marokko|nederland|spiller|mål|maal|utslagskamp)\b/i.test(haystack);
+  }
+
+  function buildArticleSourceTextFromAnalysis(analysis = {}) {
+    return [analysis.title, analysis.short_summary, ...(analysis.main_points || []), ...(analysis.concepts || []), ...(analysis.conflict_lines || [])].filter(Boolean).join("\n");
+  }
+
+  function buildArticleAutoOutputsFromAnalysis(analysis = {}) {
+    const sports = isSportsArticleAnalysis(analysis);
+    const mainPoints = (Array.isArray(analysis.main_points) ? analysis.main_points : []).filter(Boolean);
+    const concepts = (Array.isArray(analysis.concepts) ? analysis.concepts : []).filter(Boolean);
+    const candidates = (Array.isArray(analysis.candidates) ? analysis.candidates : []).filter(Boolean);
+    const title = String(analysis.title || "Nyhetsartikkel").trim();
+    const summary = String(analysis.short_summary || mainPoints[0] || title).trim();
+    const conflict = (analysis.conflict_lines || [])[0] || (sports ? "Mentalt press i utslagskamp" : "Kildens hovedspenning må leses i artikkelens hendelser og konsekvenser.");
+    const subjectMatches = sports ? [
+      { title: "Sport", subject_label: "Sport", score: 0.95 },
+      { title: "Fotball", subject_label: "Fotball", score: 0.95 },
+      { title: "Turneringsspill", subject_label: "Turneringsspill", score: 0.82 },
+      { title: "Psykologi/press", subject_label: "Psykologi/press", score: 0.78 },
+      { title: "Medier/sportsjournalistikk", subject_label: "Medier/sportsjournalistikk", score: 0.72 }
+    ] : concepts.slice(0, 5).map((c) => ({ title: c, subject_label: c, score: 0.7 }));
+    const sortItems = (mainPoints.length ? mainPoints : [summary]).slice(0, 6).map((point, idx) => ({
+      label: sports ? (["Kampforløp", "Avgjørelse", "Konsekvens", "Menneskelig drama", "Kontekst", "Neste spor"][idx] || `Punkt ${idx + 1}`) : `Punkt ${idx + 1}`,
+      text: point
+    }));
+    return {
+      contentType: sports ? "Sportsartikkel" : "Nyhetsartikkel",
+      reflection: summary,
+      keywords: concepts.slice(0, 8),
+      sortItems,
+      day: sports ? `Kort artikkeloppsummering: ${summary}` : `Kort nyhetsoppsummering: ${summary}`,
+      thoughts: {
+        hovedspor: title,
+        lose_tanker: mainPoints.slice(1, 3).join(" ") || summary,
+        neste_steg: sports ? "Se hvilke spillere, hendelser og turneringskonsekvenser saken peker mot." : "Kontroller aktører, påstander og konsekvenser i kilden."
+      },
+      list: (mainPoints.length ? mainPoints : [summary]).slice(0, 6),
+      path: sports ? ["Forstå kampforløpet.", "Skill avgjørende hendelser fra emosjonelle øyeblikk.", "Se turneringskonsekvensene."] : ["Forstå hovedhendelsen.", "Identifiser aktører og påstander.", "Vurder konsekvenser og videre spørsmål."],
+      insightCards: candidates.map((c) => c.summary || c.title).filter(Boolean).slice(0, 5),
+      subjectMatches,
+      subjectLinks: subjectMatches,
+      theoryLinks: [],
+      ahaSer: {
+        innholdstype: sports ? "Sportsartikkel" : "Nyhetsartikkel",
+        tema: title,
+        hovedspenning: conflict,
+        viktigsteInnsikt: candidates[0]?.summary || summary,
+        fagkoblinger: subjectMatches.map((m) => m.title),
+        nesteSteg: sports ? "Se hvilke spillere, hendelser og turneringskonsekvenser saken peker mot." : "Kontroller aktører, påstander og konsekvenser i kilden.",
+        kortSvar: summary
+      },
+      articleAnalysis: analysis
+    };
+  }
+
   function buildAutoOutputs(userText, ahaReply) {
     const raw = String(userText || "").trim();
+    const linkInfo = getUrlDominanceInfo(raw);
+    const latestArticleAnalysis = global.AHALinkReader?.getLatestArticleAnalysis?.();
+    if (linkInfo.isSourceAction && latestArticleAnalysis) return buildArticleAutoOutputsFromAnalysis(latestArticleAnalysis);
     const reply = String(ahaReply || "").trim();
     const textType = detectTextType(raw);
     const analysisText = cleanArticleText(raw);
@@ -5658,7 +5731,7 @@
     const safeList = safeMarkupList(payload.list);
     const safeInsightCards = safeMarkupList(payload.insightCards);
     const safePath = safeMarkupList(payload.path);
-    const textTypeLabel = humanizeTextType(payload.textType || detectTextType(host.dataset.sourceText || ""));
+    const textTypeLabel = String(payload.contentType || "").trim() || humanizeTextType(payload.textType || detectTextType(host.dataset.sourceText || ""));
     const ahaSer = buildAhaSerCard(payload, host.dataset.sourceText || "");
     const historyGoSuggestion = buildHistoryGoSuggestion(payload, host.dataset.sourceText || "");
     host.innerHTML = `
@@ -6166,9 +6239,12 @@
       });
       payload = buildAutoOutputFallbackPayload(userText, ahaReply, options);
     }
-    const domain = detectAutoAnalysisDomain(sourceText, payload);
+    const linkInfo = getUrlDominanceInfo(sourceText);
+    const articleAnalysis = linkInfo.isSourceAction ? (payload.articleAnalysis || global.AHALinkReader?.getLatestArticleAnalysis?.()) : null;
+    const effectiveSourceText = articleAnalysis ? buildArticleSourceTextFromAnalysis(articleAnalysis) : sourceText;
+    const domain = detectAutoAnalysisDomain(effectiveSourceText, payload);
     payload.subjectMatches = normalizeSubjectMatches(Array.isArray(options.subjectMatches) ? options.subjectMatches : []);
-    if (global.AHACalibration?.matchText) {
+    if (!articleAnalysis && global.AHACalibration?.matchText) {
       try {
         const calibrated = global.AHACalibration.matchText(sourceText, { topN: 10 });
         const calibratedMatches = subjectMatchesFromCalibration(calibrated);
@@ -6182,10 +6258,16 @@
       payload.subjectLinks = getLiterarySubjectMatches();
       payload.path = getLiteraryAttachmentLearningPath();
     }
-    payload = filterCrossDomainAutoPayload(payload, sourceText);
-    const jsCanonicalAnalysis = buildCanonicalAnalysis(payload, sourceText);
+    if (articleAnalysis && isSportsArticleAnalysis(articleAnalysis)) {
+      payload.subjectMatches = payload.subjectMatches || [];
+      payload.subjectLinks = payload.subjectMatches;
+      payload.theoryLinks = [];
+      if (payload.ahaSer) payload.ahaSer.fagkoblinger = ["Sport", "Fotball", "Turneringsspill", "Prestasjon", "Psykologi/press", "Medier/sportsjournalistikk"].filter((item) => (articleAnalysis.concepts || []).join(" ").toLowerCase().includes(item.toLowerCase().split("/")[0]) || ["Sport", "Fotball", "Turneringsspill", "Prestasjon", "Psykologi/press", "Medier/sportsjournalistikk"].includes(item));
+    }
+    payload = filterCrossDomainAutoPayload(payload, effectiveSourceText);
+    const jsCanonicalAnalysis = buildCanonicalAnalysis(payload, effectiveSourceText);
     const resolvedCanonical = await resolveCanonicalAnalysisWithOptionalPythonEngine({
-      message: userText,
+      message: effectiveSourceText,
       assistantReply: ahaReply,
       historyGoContext: { subjectMatches: payload.subjectMatches || [] },
       fallbackAnalysis: jsCanonicalAnalysis
@@ -6471,17 +6553,22 @@
   async function submitAhaChatMessage(text, textarea = null) {
     const cleanText = String(text || "").trim();
     if (!cleanText) return null;
-    const persistedUserMessage = global.AHAChatPersistence?.appendUserMessage?.(cleanText, { source: "aha_chat", threadId: CHAT_THREAD_ID });
+    const urlInfo = getUrlDominanceInfo(cleanText);
+    const persistedUserMessage = global.AHAChatPersistence?.appendUserMessage?.(cleanText, { source: "aha_chat", threadId: CHAT_THREAD_ID, skip_insight: urlInfo.isSourceAction });
     renderAhaChatMemoryStatus();
     appendChat("user", cleanText);
+    let linkReadPromise = null;
     if (global.AHALinkReader?.hasUrls?.(cleanText)) {
-      void global.AHALinkReader.processUrlsFromMessage(cleanText, {
+      linkReadPromise = global.AHALinkReader.processUrlsFromMessage(cleanText, {
         subject_id: SUBJECT_ID,
         theme_id: getThemeId(),
         field_id: getFieldId()
       }).catch((err) => {
         console.warn("AHA Link Reader feilet", err?.message || err);
       });
+    }
+    if (urlInfo.isSourceAction) {
+      global.AHAIngest?.ingest?.({ source_type: "chat_source_action", source_app: "aha_chat", content_type: "url", title: "AHA Chat-lenke", text: cleanText, user_created: true, imported: false, skip_insight: true, created_at: new Date().toISOString(), meta: { skip_insight: true, url_only: urlInfo.urlOnly, url_dominated: urlInfo.urlDominated } });
     }
     if (isAhaMemoryQuestion(cleanText)) {
       if (textarea) textarea.value = "";
@@ -6512,11 +6599,16 @@
     const savingEnabled = isAhaSavingEnabled();
     const memoryUseEnabled = isAhaMemoryUseEnabled();
     setAhaProcessing(true, memoryUseEnabled ? "AHA vurderer relevant minne …" : "AHA svarer uten tidligere minne …");
-    const rawMemoryContext = memoryUseEnabled ? await buildAhaMemoryContext(cleanText) : buildAhaMemoryOffContext();
+    if (urlInfo.isSourceAction && linkReadPromise) {
+      setAhaProcessing(true, "AHA leser artikkelen …");
+      await linkReadPromise;
+    }
+    const analysisInputText = urlInfo.isSourceAction ? (buildArticleSourceTextFromAnalysis(global.AHALinkReader?.getLatestArticleAnalysis?.() || {}) || cleanText) : cleanText;
+    const rawMemoryContext = memoryUseEnabled ? await buildAhaMemoryContext(analysisInputText) : buildAhaMemoryOffContext();
     if (!isActiveAnalysisRun(analysisRun)) return null;
-    const memoryContext = filterMemoryContextForActiveSource(rawMemoryContext, cleanText, analysisRun);
-    const personalContext = filterRetrievalForActiveSource(buildAhaPersonalMessageContext(cleanText), cleanText, analysisRun);
-    const answerPackage = filterRetrievalForActiveSource(buildAhaAnswerPackage(cleanText), cleanText, analysisRun);
+    const memoryContext = filterMemoryContextForActiveSource(rawMemoryContext, analysisInputText, analysisRun);
+    const personalContext = filterRetrievalForActiveSource(buildAhaPersonalMessageContext(analysisInputText), analysisInputText, analysisRun);
+    const answerPackage = filterRetrievalForActiveSource(buildAhaAnswerPackage(analysisInputText), analysisInputText, analysisRun);
     if (!isActiveAnalysisRun(analysisRun)) return null;
     if (personalContext && answerPackage) personalContext.answerPackage = answerPackage;
     renderAhaPersonalRetrieval(personalContext?.retrieval);
@@ -6528,7 +6620,7 @@
     renderAhaPersonalContextStatus();
     renderAhaPersonalAiLoopStatus();
     let count = 0;
-    if (savingEnabled) {
+    if (savingEnabled && !urlInfo.isSourceAction) {
       count = handleUserMessage(cleanText);
       void handleUserMessageInsightCandidatesInBackground(cleanText)
         .then((aiCount) => {
@@ -6546,10 +6638,10 @@
     setAhaProcessing(true, "AHA analyserer teksten …");
     try {
       setAhaProcessing(true, savingEnabled ? "AHA lager svar og etterarbeid …" : "AHA lager svar uten å lagre nye innsikter …");
-      const agent = await askAhaAgent(cleanText, { memoryContext, personalContext });
+      const agent = await askAhaAgent(analysisInputText, { memoryContext, personalContext });
       if (!isActiveAnalysisRun(analysisRun)) return null;
       const reply = String(agent?.reply || "").trim() || "AHA-agenten returnerte tomt svar.";
-      const analysisText = cleanArticleText(cleanText);
+      const analysisText = cleanArticleText(analysisInputText);
       const rawSubjectMatches = global.AHASubjectEngine?.matchText
         ? await global.AHASubjectEngine.matchText(analysisText, { source: "chat", textType: detectTextType(cleanText) })
         : [];
@@ -6583,10 +6675,10 @@
       // til claims med feedback-knapper.
       try { maybeHandleMetaAiAgentReply(reply); } catch (metaErr) { console.warn("Meta Insights AI-claims feilet", metaErr); }
       if (!isActiveAnalysisRun(analysisRun)) return null;
-      try { await renderAutoOutputs(cleanText, safeReply, { subjectMatches, persist: savingEnabled, analysisRun }); } catch (autoErr) { console.warn("Auto-output feilet", autoErr); }
+      try { await renderAutoOutputs(cleanText, safeReply, { subjectMatches: urlInfo.isSourceAction ? [] : subjectMatches, persist: savingEnabled, analysisRun }); } catch (autoErr) { console.warn("Auto-output feilet", autoErr); }
       if (!isActiveAnalysisRun(analysisRun)) return null;
       if (savingEnabled) {
-        try { ensureAfterworkForLatestAnalysis(cleanText, { subjectMatches, ...analysisRun }); } catch (afterErr) { console.warn("Auto-etterarbeid feilet", afterErr); }
+        try { ensureAfterworkForLatestAnalysis(cleanText, { subjectMatches: urlInfo.isSourceAction ? [] : subjectMatches, ...analysisRun }); } catch (afterErr) { console.warn("Auto-etterarbeid feilet", afterErr); }
         // AHA-agentens egne svar skal vises i chatten og logges som
         // source event, men IKKE bli en ordinær brukerinnsikt. AI-
         // oppsummeringer hører ikke hjemme i innsiktskammeret. skip_insight
