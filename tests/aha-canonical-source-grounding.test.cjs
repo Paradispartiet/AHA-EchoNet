@@ -36,4 +36,27 @@ const sangText = 'Sang og sanglyrikk i barnekulturen handler om barnesang, barne
   assert.ok(evaluation.score < 60);
 }
 
+{
+  const warnings = [];
+  const originalWarn = console.warn;
+  console.warn = (msg) => warnings.push(String(msg || ''));
+  try {
+    const {c}=ctx(); const h=c.AHATestHooks;
+    const run = h.createAnalysisRun(sangText, { sourceKind:'pasted_text' });
+    h.clearActiveAnalysisState(run);
+    const payload = h.bindAnalysisArtifact({
+      sortItems: [{ label:'Hovedspenning', text:'Redaksjonell uavhengighet ↔ økonomisk avhengighet' }],
+      canonicalAnalysis: {
+        theme:'Morgenbladets historie',
+        mainTension:'Redaksjonell uavhengighet ↔ økonomisk avhengighet',
+        fieldConnections:['Norsk politisk pressehistorie']
+      }
+    }, run);
+    h.enforceCanonicalSourceGrounding(payload, boligText);
+  } finally {
+    console.warn = originalWarn;
+  }
+  assert.ok(warnings.some((line) => /Skipped unsupported canonicalAnalysis field: field=/.test(line) && /sourceHash=/.test(line)), 'unsupported canonical fields must be logged with field, term and sourceHash');
+}
+
 console.log('aha-canonical-source-grounding tests passed');
