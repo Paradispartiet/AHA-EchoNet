@@ -319,6 +319,8 @@
     const auto = deps.loadAutoOutputs() || {};
     const autoSourceText = String(auto?.sourceText || "");
     const sourceText = autoSourceText;
+    const activeRun = safeObject(auto?.activeRun);
+    const analysisRunId = String(auto?.analysisRunId || auto?.runId || activeRun.analysisRunId || activeRun.runId || auto?.payload?.analysisRunId || auto?.payload?.runId || "");
     const sourceTextHash = normalizeSourceHash(auto?.sourceTextHash || deps.sourceHash(sourceText));
     const autoBinding = makeSourceBinding("auto", auto, sourceTextHash, {
       allowInferredSameRun: Boolean(sourceTextHash),
@@ -355,6 +357,10 @@
     const concepts = Array.isArray(selectedAfterwork?.concepts) ? selectedAfterwork.concepts : [];
     const canonical = deps.buildCanonicalAnalysis(payload, sourceText);
     const canonicalAnalysis = normalizeAhaAnalysis(canonical);
+    canonicalAnalysis.analysisRunId = analysisRunId;
+    canonicalAnalysis.runId = analysisRunId;
+    canonicalAnalysis.sourceHash = sourceTextHash;
+    canonicalAnalysis.normalizedSourceHash = sourceTextHash;
     canonicalAnalysis.sourceTextHash = sourceTextHash;
     canonicalAnalysis.source_binding = {
       field: "canonicalAnalysis",
@@ -394,7 +400,7 @@
       inferred: !allowAfterwork,
       reason: allowAfterwork ? "selected_afterwork_hash_match" : "selected_afterwork_not_used"
     };
-    const sourceBoundAfterwork = annotateSourceBoundObject(mergedAfterwork, afterworkBinding, sourceTextHash);
+    const sourceBoundAfterwork = Object.assign(annotateSourceBoundObject(mergedAfterwork, afterworkBinding, sourceTextHash), { analysisRunId, runId: analysisRunId, sourceHash: sourceTextHash, normalizedSourceHash: sourceTextHash });
 
     const ahaSer = {
       innholdstype: String(canonical?.contentType || payload?.innholdstype || payload?.textType || ""),
@@ -404,6 +410,10 @@
       fagkoblinger: deps.normalizeFagkoblinger(canonical?.ahaSer?.fagkoblinger || explicitAhaSer?.fagkoblinger || payload?.fagkoblinger),
       nesteSteg: String(canonical?.ahaSer?.nesteSteg || explicitAhaSer?.nesteSteg || payload?.nesteSteg || ""),
       kortSvar: String(canonical?.ahaSer?.kortSvar || explicitAhaSer?.kortSvar || payload?.kortSvar || ""),
+      analysisRunId,
+      runId: analysisRunId,
+      sourceHash: sourceTextHash,
+      normalizedSourceHash: sourceTextHash,
       sourceTextHash,
       source_binding: {
         field: "ahaSer",
@@ -435,6 +445,11 @@
     return {
       version: "aha_analysis_export_v1",
       exportedAt: nowIso,
+      analysisRunId,
+      runId: analysisRunId,
+      activeRun,
+      sourceHash: sourceTextHash,
+      normalizedSourceHash: sourceTextHash,
       createdAt: String(auto?.createdAt || selectedAfterwork?.createdAt || nowIso),
       sourceTextHash,
       sourceText,
