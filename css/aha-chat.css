@@ -672,3 +672,45 @@ pre#out { max-height: 22vh; overflow:auto; white-space: pre-wrap; }
 .aha-personal-retrieval-results { display: grid; gap: 8px; margin-top: 10px; }
 .aha-personal-retrieval-result { display: grid; gap: 3px; padding: 9px 10px; border: 1px solid rgba(255,255,255,.1); border-radius: 9px; }
 .aha-personal-retrieval-result span, .aha-personal-retrieval-result small { color: var(--aha-muted); }
+
+/* Calm chat IA refresh */
+.chat-hero .composer-row { padding: 18px; border-radius: 20px; }
+.chat-hero-copy { margin-bottom: 14px; }
+.eyebrow { margin: 0 0 6px; color: var(--aha-accent); font-size: 11px; text-transform: uppercase; letter-spacing: .12em; font-weight: 700; }
+.chat-hero-copy h2 { margin: 0 0 6px; font-size: clamp(26px, 4vw, 44px); line-height: 1.05; }
+.chat-hero-copy p:not(.eyebrow) { margin: 0; max-width: 64ch; color: var(--aha-muted); line-height: 1.55; }
+.compact-status-line { display:flex; flex-wrap:wrap; gap:8px; margin-top: 10px; }
+.compact-status-line .status-pill { background: rgba(127, 255, 184, .09); border-color: rgba(127, 255, 184, .28); color: #bdf8d2; }
+.aha-now-card, .memory-card, .advanced-panel { max-width: 1180px; margin: 0 auto; border: 1px solid var(--aha-border); border-radius: 18px; background: linear-gradient(170deg, rgba(10,16,34,0.92), rgba(8,13,29,0.9)); padding: 16px; }
+.aha-now-card header { margin-bottom: 10px; }
+.aha-now-card h2, .memory-card h2 { margin: 0; font-size: 22px; }
+.aha-now-content .exp-empty, .aha-calm-empty { margin:0; padding: 14px; border: 1px dashed rgba(255,255,255,.14); border-radius: 14px; color: var(--aha-muted); background: rgba(255,255,255,.025); }
+.aha-now-list { margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
+.aha-now-list div { padding: 12px; border: 1px solid rgba(255,255,255,.1); border-radius: 14px; background: rgba(15,24,49,.52); }
+.aha-now-list dt { color: var(--aha-accent); font-size: 10px; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px; }
+.aha-now-list dd { margin: 0; line-height: 1.45; }
+.memory-card { display:grid; gap: 10px; }
+.memory-card .aha-memory-status { margin: 0; background: rgba(127,255,184,.06); border-color: rgba(127,255,184,.2); }
+.memory-warning { color: #ffdca3; }
+.more-tabs { position: relative; }
+.more-tabs > summary { cursor: pointer; border-radius: 999px; padding: 8px 14px; font-size: 13px; background: rgba(15,24,49,0.65); border: 1px solid var(--aha-border); color: var(--aha-text); list-style: none; }
+.more-tabs > summary::-webkit-details-marker { display:none; }
+.more-tabs[open] { flex-basis: 100%; display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+.more-tabs[open] > summary { color: var(--aha-accent); border-color: rgba(255,211,71,.55); }
+.advanced-panel { margin-top: 0; }
+.advanced-panel > summary { cursor:pointer; color: var(--aha-accent); font-weight: 700; font-size: 15px; }
+.advanced-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; margin-top: 14px; }
+.aha-personal-context-panel { border:1px solid var(--aha-border); border-radius: 12px; padding: 10px 12px; background: rgba(5,8,20,.45); }
+.aha-personal-context-panel > summary { cursor:pointer; color: var(--aha-text); font-weight: 650; }
+.aha-personal-context-status { margin-top: 8px; color: var(--aha-muted); font-size: 12px; line-height: 1.45; }
+.aha-personal-context-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top: 8px; }
+.aha-personal-context-actions a { color: var(--aha-accent); font-size: 12px; }
+@media (max-width: 720px) {
+  .chat-conversation { order: 1; }
+  .chat-hero { order: 0; }
+  .aha-now-card { order: 2; }
+  .aha-explorer { order: 3; }
+  .memory-card, .advanced-panel, .answer-actions { order: 4; }
+  .explorer-tabs { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; }
+  .aha-now-list { grid-template-columns: 1fr; }
+}

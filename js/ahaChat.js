@@ -1605,25 +1605,23 @@
     const el = document.getElementById("aha-memory-status");
     if (!el) return;
     if (!status || typeof status !== "object") {
-      el.textContent = "Minnestatus kunne ikke leses akkurat nå.";
+      el.textContent = "Minne kunne ikke leses akkurat nå.";
       return;
     }
     const local = status.local || {};
-    const localLabel = local.state === "active" ? "aktivt" : local.state === "empty" ? "tomt" : "utilgjengelig";
-    const afterworkText = status.afterwork?.available ? String(status.afterwork.count || 0) : "ukjent";
-    const embeddingText = describeAhaEmbeddingStatus(status.embedding);
     const controls = normalizeAhaMemoryControls(status.controls || loadAhaMemoryControls());
-    const exclusionCount = getAhaMemoryExclusionCount(status.exclusions || loadAhaMemoryExclusions());
-    const savedAt = formatAhaMemoryTimestamp(local.lastLocalSave);
+    const savedCount = Number(local.activeInsights || 0);
+    const savedAt = local.lastLocalSave ? formatAhaMemoryTimestamp(local.lastLocalSave) : "";
+    const embeddingCode = String(status.embedding?.status || status.embedding?.reason || "");
+    const backendWarning = embeddingCode === "backend_unreachable"
+      ? `<span class="memory-warning">Backend utilgjengelig – semantisk minne kan være begrenset.</span>`
+      : "";
     el.innerHTML = `
-      <span><strong>Lokalt innsiktskammer:</strong> ${escHtml(localLabel)}</span>
-      <span><strong>Aktive innsikter:</strong> ${escHtml(String(local.activeInsights || 0))}</span>
-      <span><strong>Etterarbeid:</strong> ${escHtml(afterworkText)}</span>
-      <span><strong>Embedding-minne:</strong> ${escHtml(embeddingText)}</span>
-      <span><strong>Lagring av nye innsikter:</strong> ${controls.saveNewInsights ? "på" : "av"}</span>
-      <span><strong>Bruk av eksisterende minne:</strong> ${controls.useExistingMemory ? "på" : "av"}</span>
-      <span><strong>Ekskluderte innsikter:</strong> ${escHtml(String(exclusionCount))}</span>
-      <span><strong>Sist lokal lagring:</strong> ${escHtml(savedAt)}</span>
+      <span><strong>Lokalt minne aktivt</strong></span>
+      <span>${escHtml(String(savedCount))} innsikt${savedCount === 1 ? "" : "er"} lagret</span>
+      ${savedAt ? `<span><strong>Siste lagring:</strong> ${escHtml(savedAt)}</span>` : ""}
+      <span><strong>Lagring:</strong> ${controls.saveNewInsights ? "på" : "av"}</span>
+      ${backendWarning}
     `;
   }
 
@@ -5819,9 +5817,9 @@
       legal_text: "Juridisk tekst",
       technical_work: "Teknisk arbeid",
       learning_note: "Læringsnotat",
-      general: "Ukjent / blandet materiale"
+      general: "AHA venter på tekst"
     };
-    return labels[key] || "Ukjent / blandet materiale";
+    return labels[key] || "AHA venter på tekst";
   }
 
   function buildAhaSerCard(payload, sourceText = "") {
@@ -5854,7 +5852,7 @@
     return {
       tema: explicitAhaSer?.tema || (navSignal?.strong ? "NAV-reformen og måloppnåelse" : (literarySignal?.strong ? "Knausgårds Om våren, tilknytningsteori og litterær erkjennelse" : (parsedInsights.tema || lookup("tema") || lookup("hovedargument") || insights[1] || insights[0] || "Tema identifiseres fortløpende."))),
       hovedspenning: explicitAhaSer?.hovedspenning || (navSignal?.strong ? "Omstillingskostnad vs. strukturell utfordring" : (literarySignal?.strong ? "Tilknytningsteori vs. litterær/mytologisk utforskning av tilknytning, forknytning og løsrivelse" : (parsedInsights.hovedspenning || lookup("spenning") || insights.find((item) => /spenning|vs|mot/i.test(String(item || ""))) || "Spenning bygges fra flere meldinger."))),
-      viktigsteInnsikt: explicitAhaSer?.viktigsteInnsikt || (navSignal?.strong ? "NAVs manglende måloppnåelse skyldes ikke bare midlertidig omstilling, men også varige strukturelle utfordringer i styring, organisering og stat–kommune-samspill." : (literarySignal?.strong ? "Om våren bruker tilknytningsteori som ramme, men overskrider den gjennom autofiksjon, deiksis, performativ skriving, sårbarhet, nymaterialisme og mytologiske bilder." : (parsedInsights.viktigsteInnsikt || lookup("hovedinnsikt") || insights[0] || payload?.reflection || "Ingen tydelig hovedinnsikt ennå."))),
+      viktigsteInnsikt: explicitAhaSer?.viktigsteInnsikt || (navSignal?.strong ? "NAVs manglende måloppnåelse skyldes ikke bare midlertidig omstilling, men også varige strukturelle utfordringer i styring, organisering og stat–kommune-samspill." : (literarySignal?.strong ? "Om våren bruker tilknytningsteori som ramme, men overskrider den gjennom autofiksjon, deiksis, performativ skriving, sårbarhet, nymaterialisme og mytologiske bilder." : (parsedInsights.viktigsteInnsikt || lookup("hovedinnsikt") || insights[0] || payload?.reflection || "Hovedinnsikten vises her når AHA har nok materiale."))),
       fagkoblinger: prioritizedLinks.length ? prioritizedLinks.slice(0, 8).join(" · ") : "Fagkoblinger blir tydeligere når flere tekster analyseres.",
       nesteSteg: explicitAhaSer?.nesteSteg || (navSignal?.strong ? "Undersøk hvordan statlig styring, kommunale mål og lokal organisering påvirker arbeidsrettet oppfølging." : (literarySignal?.strong ? "Skill mellom hva Bowlbys tilknytningsteori forklarer, og hva romanens litterære form og materialistiske/mytologiske perspektiver tilfører." : (payload?.thoughts?.neste_steg || (Array.isArray(payload?.path) ? payload.path[0] : "") || "Velg ett konkret neste steg i teksten."))),
       kortSvar: explicitAhaSer?.kortSvar || lookup("kort hovedinnsikt") || payload?.reflection || insights[0] || "AHA analyserer teksten fortløpende."
