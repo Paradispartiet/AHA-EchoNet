@@ -529,6 +529,7 @@ pre#out { max-height: 22vh; overflow:auto; white-space: pre-wrap; }
 .explorer-tabs .is-active .exp-tab-count { color: var(--aha-accent); }
 
 .explorer-panel { display: grid; gap: 12px; }
+.explorer-panel[hidden] { display: none !important; }
 .exp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; align-items: start; }
 
 .exp-card {

@@ -134,20 +134,26 @@
     const ser = b.ahaSer || {};
     const afterwork = b.afterwork || {};
     const kortSvar = asText(ser.kortSvar) || asText(b.ahaReply);
-    const hasAnything = kortSvar || asText(ser.tema) || asText(afterwork.summary) || asList(b.insights).length;
+    const hasAnything = kortSvar || asText(ser.tema) || asText(afterwork.summary) || asList(b.insights).length || asList(b.concepts).length || asList(b.subjectMatches).length;
     if (!hasAnything) {
       host.innerHTML = emptyNote("AHA venter på tekst. Oversikten vises her når AHA har nok materiale.");
       return;
     }
-    const points = asList(b.insights).map(asText).filter(Boolean);
-    const fallbackPoints = asList(afterwork.list).map(asText).filter(Boolean);
-    const mainPoints = (points.length ? points : fallbackPoints).slice(0, 5);
-    const nesteSteg = asText(ser.nesteSteg) || asText(afterwork?.thoughts?.neste_steg) || asText(asList(afterwork.path)[0]);
+    const points = asList(b.insights).map(asText).filter(Boolean).slice(0, 4);
+    const concepts = [...new Set(asList(b.concepts).map(asText).filter(Boolean))].slice(0, 8);
+    const subjectLinks = [
+      ...asList(ser.fagkoblinger).map(asText),
+      ...asList(b.subjectMatches).map((match) => asText(match?.title || match?.subject_label))
+    ].filter(Boolean).slice(0, 6);
+    const sourceCount = loadWebArticleSourceEvents().length;
+    const nesteSteg = asText(ser.nesteSteg);
     host.innerHTML = [
       kortSvar ? card("Kort svar", `<p class="exp-lede">${esc(kortSvar)}</p>`, { primary: true }) : "",
-      asText(afterwork.summary) ? card("Oppsummering", `<p>${esc(afterwork.summary)}</p>`) : "",
-      mainPoints.length ? card("Viktigste punkter", orderedList(mainPoints, 5)) : "",
-      nesteSteg && !asText(ser.nesteSteg) ? card("Neste steg", `<p>${esc(nesteSteg)}</p>`) : ""
+      card("Innsikter", points.length ? orderedList(points, 4) : emptyNote("Innsikter vises her når AHA finner tydelige hovedpoeng.")),
+      card("Begreper", concepts.length ? chipRow(concepts) : emptyNote("Begreper vises her når analysen har begrepsforslag.")),
+      card("Fagkoblinger fra AHA SER", subjectLinks.length ? chipRow(subjectLinks) : emptyNote("Fagkoblinger vises her når AHA SER finner relevante fagspor.")),
+      card("Kilder", sourceCount ? `<p>${esc(String(sourceCount))} kilde${sourceCount === 1 ? "" : "r"} funnet. Se Kilder-fanen for detaljer.</p>` : emptyNote("Kilder vises her når teksten inneholder lenker eller referanser.")),
+      nesteSteg ? card("Neste steg", `<p>${esc(nesteSteg)}</p>`) : ""
     ].filter(Boolean).join("");
   }
 
@@ -355,23 +361,10 @@
       .filter((item) => item.text);
     const list = asList(afterwork.list).map(asText).filter(Boolean);
     const path = asList(afterwork.path).map(asText).filter(Boolean);
-    const thoughts = afterwork.thoughts || {};
-    const thoughtRows = [
-      dlRow("Hovedspor", thoughts.hovedspor),
-      dlRow("Løse tanker", thoughts.lose_tanker),
-      dlRow("Neste steg", thoughts.neste_steg)
-    ].join("");
-    const afterworkRows = [
-      dlRow("Oppsummering", afterwork.summary),
-      dlRow("Innsikt", afterwork.insight),
-      dlRow("Refleksjon", afterwork.reflection)
-    ].join("");
     const parts = [
       sortItems.length ? card("Sortert struktur", `<ul class="exp-sort-list">${sortItems.map((item) => `<li><strong>${esc(item.label)}:</strong> ${esc(item.text)}</li>`).join("")}</ul>`) : "",
       list.length ? card("Liste", orderedList(list)) : "",
-      path.length ? card("Læringssti", orderedList(path)) : "",
-      afterworkRows ? card("Etterarbeid", `<dl class="exp-dl">${afterworkRows}</dl>`) : "",
-      thoughtRows ? card("Tanker", `<dl class="exp-dl">${thoughtRows}</dl>`) : ""
+      path.length ? card("Læringssti", orderedList(path)) : ""
     ].filter(Boolean);
     host.innerHTML = parts.length
       ? `<div class="exp-grid">${parts.join("")}</div>`
@@ -447,14 +440,28 @@
     const host = getContainer("etterarbeid");
     if (!host) return;
     const afterwork = b.afterwork || {};
+    const sortItems = asList(afterwork.sortItems)
+      .map((item) => ({ label: asText(item?.label) || "Punkt", text: asText(item?.text) }))
+      .filter((item) => item.text);
+    const list = asList(afterwork.list).map(asText).filter(Boolean);
+    const path = asList(afterwork.path).map(asText).filter(Boolean);
+    const thoughts = afterwork.thoughts || {};
     const rows = [
       dlRow("Oppsummering", afterwork.summary),
       dlRow("Innsikt", afterwork.insight),
       dlRow("Refleksjon", afterwork.reflection),
-      dlRow("Neste steg", afterwork?.thoughts?.neste_steg)
+      dlRow("Hovedspor", thoughts.hovedspor),
+      dlRow("Løse tanker", thoughts.lose_tanker),
+      dlRow("Neste steg", thoughts.neste_steg)
     ].join("");
-    host.innerHTML = rows
-      ? card("Etterarbeid", `<dl class="exp-dl">${rows}</dl>`)
+    const parts = [
+      rows ? card("Etterarbeid", `<dl class="exp-dl">${rows}</dl>`) : "",
+      sortItems.length ? card("Refleksjonskort", `<ul class="exp-sort-list">${sortItems.map((item) => `<li><strong>${esc(item.label)}:</strong> ${esc(item.text)}</li>`).join("")}</ul>`) : "",
+      list.length ? card("Liste", orderedList(list)) : "",
+      path.length ? card("Læringssti", orderedList(path)) : ""
+    ].filter(Boolean);
+    host.innerHTML = parts.length
+      ? `<div class="exp-grid">${parts.join("")}</div>`
       : emptyNote("Etterarbeid vises her når AHA har nok materiale til forslag, lister eller læringssteg.");
   }
 
@@ -547,12 +554,14 @@
       btn.setAttribute("aria-selected", active ? "true" : "false");
     });
     root.querySelectorAll("[data-tab-panel]").forEach((panel) => {
-      panel.hidden = panel.dataset.tabPanel !== name;
+      const active = panel.dataset.tabPanel === name;
+      panel.hidden = !active;
+      panel.setAttribute("aria-hidden", active ? "false" : "true");
     });
     // Legacy-panelene fylles av ahaChat.js sine eksisterende motorer.
     try {
       if (name === "kart") global.showMeta?.();
-      if (name === "struktur") global.showSavedAfterwork?.();
+      if (name === "etterarbeid") global.showSavedAfterwork?.();
     } catch (err) {
       console.warn("AHA Explorer: klarte ikke å oppdatere legacy-panel", err);
     }

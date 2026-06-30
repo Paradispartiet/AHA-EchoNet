@@ -130,7 +130,7 @@
             <details class="more-tabs"><summary>Mer</summary>
               <button type="button" role="tab" data-tab="fag" aria-selected="false">Fag <span class="exp-tab-count"></span></button>
               <button type="button" role="tab" data-tab="kart" aria-selected="false">Kart</button>
-              <button type="button" role="tab" data-tab="oversikt" aria-selected="false">Kort svar</button>
+              <button type="button" role="tab" data-tab="data" aria-selected="false">Mer</button>
             </details>
           </div>
 
@@ -156,6 +156,10 @@
 
           <section class="explorer-panel" data-tab-panel="struktur" role="tabpanel" aria-label="Struktur" hidden>
             <div id="exp-struktur"><p class="exp-empty">Sortert struktur, lister og læringsstier vises her.</p></div>
+          </section>
+
+          <section class="explorer-panel" data-tab-panel="etterarbeid" role="tabpanel" aria-label="Etterarbeid" hidden>
+            <div id="exp-etterarbeid"><p class="exp-empty">Etterarbeid vises her når AHA har nok materiale til forslag, lister eller læringssteg.</p></div>
             <details class="exp-acc">
               <summary>AHA etterarbeid – detaljert visning og lagring</summary>
               <div id="aha-auto-output" class="aha-auto-output" aria-live="polite"></div>
@@ -164,10 +168,6 @@
               <summary>Lagrede etterarbeid</summary>
               <div id="afterwork-panel"></div>
             </details>
-          </section>
-
-          <section class="explorer-panel" data-tab-panel="etterarbeid" role="tabpanel" aria-label="Etterarbeid" hidden>
-            <div id="exp-etterarbeid"><p class="exp-empty">Etterarbeid vises her når AHA har nok materiale til forslag, lister eller læringssteg.</p></div>
           </section>
 
           <section class="explorer-panel" data-tab-panel="kart" role="tabpanel" aria-label="Kart" hidden>
