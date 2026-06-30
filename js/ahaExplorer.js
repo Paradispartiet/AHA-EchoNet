@@ -102,16 +102,8 @@
     const fallbackPoints = asList(afterwork.list).map(asText).filter(Boolean);
     const mainPoints = (points.length ? points : fallbackPoints).slice(0, 5);
     const nesteSteg = asText(ser.nesteSteg) || asText(afterwork?.thoughts?.neste_steg) || asText(asList(afterwork.path)[0]);
-    const serRows = [
-      dlRow("Innholdstype", ser.innholdstype ? humanizeTextType(ser.innholdstype) : ""),
-      dlRow("Tema", ser.tema),
-      dlRow("Hovedspenning", ser.hovedspenning),
-      dlRow("Viktigste innsikt", ser.viktigsteInnsikt),
-      dlRow("Neste steg", ser.nesteSteg)
-    ].join("");
     host.innerHTML = [
       kortSvar ? card("Kort svar", `<p class="exp-lede">${esc(kortSvar)}</p>`, { primary: true }) : "",
-      serRows ? card("AHA SER", `<dl class="exp-dl">${serRows}</dl>`) : "",
       asText(afterwork.summary) ? card("Oppsummering", `<p>${esc(afterwork.summary)}</p>`) : "",
       mainPoints.length ? card("Viktigste punkter", orderedList(mainPoints, 5)) : "",
       nesteSteg && !asText(ser.nesteSteg) ? card("Neste steg", `<p>${esc(nesteSteg)}</p>`) : ""
