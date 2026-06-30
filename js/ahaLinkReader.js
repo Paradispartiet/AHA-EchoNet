@@ -5,6 +5,7 @@
 
   const MAX_URLS = 3;
   let lastLinkReadResults = [];
+  let latestArticleAnalysis = null;
 
   function normalizeUrlCandidate(raw) {
     const cleaned = String(raw || "").trim().replace(/[),.;!?]+$/g, "");
@@ -95,6 +96,60 @@
     };
   }
 
+
+  function safeList(list, maxItems, maxLen) {
+    return (Array.isArray(list) ? list : [])
+      .map((item) => {
+        if (item && typeof item === "object") return compact(item.claim || item.label || item.title || item.name || item.text || item.summary || "");
+        return compact(item);
+      })
+      .filter(Boolean)
+      .map((item) => item.slice(0, maxLen || 260))
+      .slice(0, maxItems || 8);
+  }
+
+  function buildSafeArticleAnalysis(result, url, candidates) {
+    const data = result && typeof result === "object" ? result : {};
+    const source = data.source && typeof data.source === "object" ? data.source : {};
+    const analysis = data.analysis && typeof data.analysis === "object" ? data.analysis : {};
+    const policy = data.policy && typeof data.policy === "object" ? data.policy : {};
+    const accessStatus = compact(data.access_status, "metadata_only");
+    return {
+      source_id: compact(source.source_id || source.id || source.canonical_url || url, url),
+      source_type: "web_article",
+      url: compact(source.url || url),
+      title: compact(source.title, source.url || url).slice(0, 220),
+      publisher: compact(source.publisher, source.domain || "ukjent kilde").slice(0, 120),
+      domain: compact(source.domain).slice(0, 120),
+      access_status: accessStatus,
+      short_summary: compact(analysis.short_summary).slice(0, 700),
+      main_points: safeList(analysis.main_points, 8, 320),
+      actors: safeList(analysis.actors, 10, 120),
+      claims: safeList(analysis.claims, 8, 260),
+      concepts: safeList(analysis.concepts, 12, 80),
+      conflict_lines: safeList(analysis.conflict_lines, 8, 220),
+      candidates: safeCandidates(candidates || data.candidates).slice(0, 5),
+      raw_article_stored: false,
+      transient_fulltext_read: policy.transient_fulltext_read === true || accessStatus === "full"
+    };
+  }
+
+  function setLatestArticleAnalysis(value) {
+    latestArticleAnalysis = value && typeof value === "object" ? Object.assign({}, value, { raw_article_stored: false }) : null;
+    return latestArticleAnalysis;
+  }
+
+  function getLatestArticleAnalysis() {
+    return latestArticleAnalysis ? Object.assign({}, latestArticleAnalysis, {
+      main_points: (latestArticleAnalysis.main_points || []).slice(),
+      actors: (latestArticleAnalysis.actors || []).slice(),
+      claims: (latestArticleAnalysis.claims || []).slice(),
+      concepts: (latestArticleAnalysis.concepts || []).slice(),
+      conflict_lines: (latestArticleAnalysis.conflict_lines || []).slice(),
+      candidates: (latestArticleAnalysis.candidates || []).map((item) => Object.assign({}, item))
+    }) : null;
+  }
+
   function safeCandidates(candidates) {
     return (Array.isArray(candidates) ? candidates : [])
       .filter((item) => item && typeof item === "object")
@@ -126,9 +181,11 @@
     if (!res.ok || data?.ok === false) throw new Error(data?.error || `HTTP ${res.status}`);
     const sourcePayload = buildSafeSourcePayload(data, Object.assign({}, context || {}, { url }));
     const candidates = safeCandidates(data.candidates);
+    const safeAnalysis = buildSafeArticleAnalysis(data, url, candidates);
+    setLatestArticleAnalysis(safeAnalysis);
     const ingestResult = global.AHAIngest?.ingestWithCandidates?.(sourcePayload, candidates);
     global.refreshAhaExplorer?.();
-    return { url, data, sourcePayload, candidate_count: candidates.length, ingestResult };
+    return { url, data, sourcePayload, analysis: safeAnalysis, candidate_count: candidates.length, ingestResult };
   }
 
   async function processUrlsFromMessage(text, context) {
@@ -149,6 +206,7 @@
       access_status: item.data?.access_status || "error",
       source: item.data?.source || null,
       candidate_count: item.candidate_count || 0,
+      analysis: item.analysis || null,
       policy: item.data?.policy || { raw_article_stored: false, raw_article_returned: false }
     }));
     const first = lastLinkReadResults.find((item) => item.ok) || lastLinkReadResults[0];
@@ -163,5 +221,5 @@
     return lastLinkReadResults.slice();
   }
 
-  global.AHALinkReader = { detectUrls, hasUrls, processUrlsFromMessage, buildSafeSourcePayload, renderLinkStatus, getLastLinkReadResults };
+  global.AHALinkReader = { detectUrls, hasUrls, processUrlsFromMessage, buildSafeSourcePayload, renderLinkStatus, getLastLinkReadResults, setLatestArticleAnalysis, getLatestArticleAnalysis };
 }(window));
