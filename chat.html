@@ -127,11 +127,8 @@
             <button type="button" role="tab" data-tab="kilder" aria-selected="false">Kilder <span class="exp-tab-count"></span></button>
             <button type="button" role="tab" data-tab="struktur" aria-selected="false">Struktur</button>
             <button type="button" role="tab" data-tab="etterarbeid" aria-selected="false">Etterarbeid</button>
-            <details class="more-tabs"><summary>Mer</summary>
-              <button type="button" role="tab" data-tab="fag" aria-selected="false">Fag <span class="exp-tab-count"></span></button>
-              <button type="button" role="tab" data-tab="kart" aria-selected="false">Kart</button>
-              <button type="button" role="tab" data-tab="data" aria-selected="false">Mer</button>
-            </details>
+            <button type="button" role="tab" data-tab="verktoy" aria-selected="false">Verktøy</button>
+            <button type="button" role="tab" data-tab="mer" aria-selected="false">Mer</button>
           </div>
 
           <section class="explorer-panel" data-tab-panel="oversikt" role="tabpanel" aria-label="Oversikt">
@@ -175,7 +172,22 @@
 
           </section>
 
-          <section class="explorer-panel" data-tab-panel="data" role="tabpanel" aria-label="Data" hidden>
+          <section class="explorer-panel" data-tab-panel="mer" role="tabpanel" aria-label="Mer" hidden>
+            <div id="exp-mer" class="exp-grid">
+              <article class="exp-card">
+                <h3>Fag</h3>
+                <p>Fagkoblinger og relevante fagspor ligger fortsatt tilgjengelig her.</p>
+                <button type="button" class="exp-action-btn" data-tab="fag">Åpne Fag</button>
+              </article>
+              <article class="exp-card">
+                <h3>Kart</h3>
+                <p>Kunnskapskart og chamber-status ligger fortsatt tilgjengelig her.</p>
+                <button type="button" class="exp-action-btn" data-tab="kart">Åpne Kart</button>
+              </article>
+            </div>
+          </section>
+
+          <section class="explorer-panel" data-tab-panel="verktoy" role="tabpanel" aria-label="Verktøy" hidden>
             <div class="exp-tools" aria-label="Verktøy og eksport">
               <p class="exp-kicker">Verktøy</p>
               <div class="buttons utility-buttons">
@@ -215,7 +227,7 @@
           </div>
           <details class="exp-acc">
             <summary>Rå auto-output payload · Canonical analysis · Full chamber snapshot · Full bundle</summary>
-            <button type="button" class="exp-action-btn" data-open-tab="data">Åpne datafanen</button>
+            <button type="button" class="exp-action-btn" data-open-tab="verktoy">Åpne verktøyfanen</button>
           </details>
         </details>
       </section>

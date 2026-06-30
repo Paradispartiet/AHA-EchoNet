@@ -1,12 +1,12 @@
 // AHA Analyse Explorer v1
 // Viser alt AHA har hentet ut av samtalen i navigerbare faner under chatten:
-// Oversikt · Innsikter · Begreper · Fag · Struktur · Kart · Data.
+// Oversikt · Innsikter · Begreper · Fag · Struktur · Kart · Verktøy · Mer.
 // Modulen endrer ingen analyse – den presenterer eksportbundlen fra
 // AHAChatExport.buildAhaAnalysisExportBundle på en lesbar måte.
 (function (global) {
   "use strict";
 
-  const TAB_NAMES = ["oversikt", "innsikter", "begreper", "fag", "kilder", "struktur", "etterarbeid", "kart", "data"];
+  const TAB_NAMES = ["oversikt", "innsikter", "begreper", "fag", "kilder", "struktur", "etterarbeid", "verktoy", "mer", "kart"];
 
   let currentBundle = null;
   let initialized = false;
@@ -72,7 +72,7 @@
     currentBundle = null;
     TAB_NAMES.forEach((name) => {
       const host = getContainer(name);
-      if (host) host.innerHTML = emptyNote(name === "innsikter" ? "Lagrede innsikter vises separat. AHA venter på ny analyse." : "AHA venter på ny analyse.");
+      if (host && name !== "mer") host.innerHTML = emptyNote(name === "innsikter" ? "Lagrede innsikter vises separat. AHA venter på ny analyse." : "AHA venter på ny analyse.");
       setTabCount(name, 0);
     });
     renderAhaNow({ ahaSer: {}, afterwork: {}, insights: [], concepts: [], sourceTextHash: run?.sourceHash || "", analysisRunId: run?.analysisRunId || run?.runId || "" });
@@ -465,7 +465,7 @@
       : emptyNote("Etterarbeid vises her når AHA har nok materiale til forslag, lister eller læringssteg.");
   }
 
-  // ── Data ────────────────────────────────────────────────────
+  // ── Verktøy / dataeksport ───────────────────────────────────
   const DATA_SECTIONS = [
     { key: "fullBundle", label: "Full bundle", get: (b) => b },
     { key: "rawAutoPayload", label: "Rå auto-output payload", get: (b) => b.rawAutoPayload },
