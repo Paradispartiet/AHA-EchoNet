@@ -24,12 +24,20 @@
     const fingerprint = sourceHash(source);
     const createdAt = new Date().toISOString();
     const base = `${fingerprint}|${createdAt}|${Math.random().toString(36).slice(2)}`;
+    const analysisRunId = options.analysisRunId || options.runId || `run_${shortHash(`${base}|run`)}`;
+    const conversationId = options.conversationId || options.sessionId || CHAT_THREAD_ID;
+    const topicLabel = options.topicLabel || takeKeywords(source, 4).join(" · ") || "ukjent tema";
     return {
       analysisId: options.analysisId || `analysis_${shortHash(base)}`,
-      runId: options.runId || `run_${shortHash(`${base}|run`)}`,
+      analysisRunId,
+      runId: analysisRunId,
+      conversationId,
+      sessionId: conversationId,
+      turnId: options.turnId || `turn_${shortHash(`${conversationId}|${analysisRunId}|${createdAt}`)}`,
       sourceId: options.sourceId || `source_${fingerprint || shortHash(base)}`,
-      sessionId: options.sessionId || CHAT_THREAD_ID,
+      sourceKind: options.sourceKind || "chat",
       createdAt,
+      topicLabel,
       sourceHash: fingerprint,
       sourceFingerprint: fingerprint
     };
@@ -39,9 +47,14 @@
     if (!artifact || typeof artifact !== "object" || !run) return artifact;
     return Object.assign(artifact, {
       analysisId: run.analysisId,
-      runId: run.runId,
+      analysisRunId: run.analysisRunId || run.runId,
+      runId: run.runId || run.analysisRunId,
+      conversationId: run.conversationId || run.sessionId,
+      turnId: run.turnId,
       sourceId: run.sourceId,
-      sessionId: run.sessionId,
+      sourceKind: run.sourceKind || artifact.sourceKind || "chat",
+      topicLabel: run.topicLabel || artifact.topicLabel || "",
+      sessionId: run.sessionId || run.conversationId,
       createdAt: artifact.createdAt || run.createdAt,
       sourceHash: artifact.sourceHash || run.sourceHash,
       sourceFingerprint: artifact.sourceFingerprint || run.sourceFingerprint
@@ -50,7 +63,10 @@
 
   function artifactMatchesActiveRun(artifact, run = activeAnalysisRun) {
     if (!artifact || typeof artifact !== "object" || !run) return false;
-    const hasRunIds = artifact.analysisId || artifact.sourceId || artifact.runId;
+    const artifactRunId = String(artifact.analysisRunId || artifact.runId || "");
+    const activeRunId = String(run.analysisRunId || run.runId || "");
+    if (artifactRunId || activeRunId) return Boolean(artifactRunId && activeRunId && artifactRunId === activeRunId);
+    const hasRunIds = artifact.analysisId || artifact.sourceId;
     if (hasRunIds) return String(artifact.analysisId || "") === run.analysisId && String(artifact.sourceId || "") === run.sourceId;
     const hash = String(artifact.sourceHash || artifact.sourceTextHash || artifact.sourceFingerprint || "");
     return Boolean(hash && hash === run.sourceHash);
@@ -60,9 +76,46 @@
     return Boolean(
       run &&
       activeAnalysisRun &&
-      String(run.analysisId || "") === String(activeAnalysisRun.analysisId || "") &&
+      String(run.analysisRunId || run.runId || "") === String(activeAnalysisRun.analysisRunId || activeAnalysisRun.runId || "") &&
       String(run.sourceId || "") === String(activeAnalysisRun.sourceId || "")
     );
+  }
+
+
+  function topKeywordOverlap(sourceText, artifact) {
+    const sourceTerms = new Set(takeKeywords(String(sourceText || ""), 12).map((item) => item.toLowerCase()));
+    const artifactText = [artifact?.topicLabel, artifact?.theme, artifact?.keyInsight, artifact?.reflection, artifact?.summary, artifact?.ahaSer?.tema, artifact?.ahaSer?.viktigsteInnsikt, ...(Array.isArray(artifact?.sortItems) ? artifact.sortItems.map((i) => `${i?.label || ""} ${i?.text || ""}`) : [])].join(" ").toLowerCase();
+    if (!sourceTerms.size || !artifactText.trim()) return true;
+    return Array.from(sourceTerms).some((term) => term.length > 3 && artifactText.includes(term));
+  }
+
+  function analysisTopicMismatch(payload, run = activeAnalysisRun) {
+    if (!payload || !run) return false;
+    if (!artifactMatchesActiveRun(payload, run)) return true;
+    const sourceText = String(document.getElementById("aha-auto-output")?.dataset?.sourceText || "");
+    const canonical = payload.canonicalAnalysis && typeof payload.canonicalAnalysis === "object" ? payload.canonicalAnalysis : payload;
+    if (canonical && !artifactMatchesActiveRun(canonical, run)) return true;
+    const artifactHash = String(canonical?.sourceHash || canonical?.sourceTextHash || payload.sourceHash || payload.sourceTextHash || "");
+    if (artifactHash && run.sourceHash && artifactHash !== run.sourceHash) return true;
+    const canonicalLabel = String(canonical?.topicLabel || payload.topicLabel || "").toLowerCase();
+    const activeLabel = String(run.topicLabel || "").toLowerCase();
+    if (canonicalLabel && activeLabel && canonicalLabel !== activeLabel && !canonicalLabel.includes(activeLabel.split(" · ")[0] || "") && !activeLabel.includes(canonicalLabel.split(" · ")[0] || "")) return true;
+    return !topKeywordOverlap(sourceText, canonical);
+  }
+
+  function renderAnalysisDebugPanel(payload = {}) {
+    const canonical = payload?.canonicalAnalysis && typeof payload.canonicalAnalysis === "object" ? payload.canonicalAnalysis : {};
+    const afterwork = payload && typeof payload === "object" ? payload : {};
+    const run = activeAnalysisRun || {};
+    const activeRunId = run.analysisRunId || run.runId || "";
+    return `<aside class="aha-analysis-debug" data-dev-info="analysis-run"><strong>Dev analysebinding</strong><dl>` +
+      `<div><dt>activeRunId</dt><dd>${escHtml(activeRunId)}</dd></div>` +
+      `<div><dt>canonicalAnalysis.runId</dt><dd>${escHtml(canonical.analysisRunId || canonical.runId || "")}</dd></div>` +
+      `<div><dt>afterwork.runId</dt><dd>${escHtml(afterwork.analysisRunId || afterwork.runId || "")}</dd></div>` +
+      `<div><dt>sourceHash</dt><dd>${escHtml(afterwork.sourceHash || afterwork.sourceTextHash || run.sourceHash || "")}</dd></div>` +
+      `<div><dt>sourceKind</dt><dd>${escHtml(afterwork.sourceKind || run.sourceKind || "")}</dd></div>` +
+      `<div><dt>lastUpdated</dt><dd>${escHtml(afterwork.lastUpdated || afterwork.createdAt || new Date().toISOString())}</dd></div>` +
+      `</dl></aside>`;
   }
 
   function clearActiveAnalysisState(run, message = "AHA analyserer ny kilde …") {
@@ -70,10 +123,11 @@
     const host = document.getElementById("aha-auto-output");
     if (host) {
       host.dataset.analysisId = run?.analysisId || "";
-      host.dataset.runId = run?.runId || "";
+      host.dataset.analysisRunId = run?.analysisRunId || run?.runId || "";
+      host.dataset.runId = run?.runId || run?.analysisRunId || "";
       host.dataset.sourceId = run?.sourceId || "";
       host.dataset.sourceTextHash = run?.sourceHash || "";
-      host.innerHTML = `<div class="auto-output-head"><h2>AHA etterarbeid</h2><p>${escHtml(message)}</p></div>`;
+      host.innerHTML = `<div class="auto-output-head"><h2>AHA etterarbeid</h2><p>${escHtml(message)}</p></div>${renderAnalysisDebugPanel({})}`;
     }
     renderAhaPersonalRetrieval(null);
     renderAhaAnswerComposer(null);
@@ -4967,9 +5021,14 @@
     return {
       id: `afterwork_${Date.now()}_${shortHash(`${sourceTextHash}|${JSON.stringify(normalizedPayload)}`)}`,
       analysisId: options?.analysisId || activeAnalysisRun?.analysisId || "",
-      runId: options?.runId || activeAnalysisRun?.runId || "",
+      analysisRunId: options?.analysisRunId || options?.runId || activeAnalysisRun?.analysisRunId || activeAnalysisRun?.runId || "",
+      runId: options?.runId || options?.analysisRunId || activeAnalysisRun?.runId || activeAnalysisRun?.analysisRunId || "",
+      conversationId: options?.conversationId || options?.sessionId || activeAnalysisRun?.conversationId || activeAnalysisRun?.sessionId || CHAT_THREAD_ID,
+      turnId: options?.turnId || activeAnalysisRun?.turnId || "",
       sourceId: options?.sourceId || activeAnalysisRun?.sourceId || (sourceTextHash ? `source_${sourceTextHash}` : ""),
-      sessionId: options?.sessionId || activeAnalysisRun?.sessionId || CHAT_THREAD_ID,
+      sourceKind: options?.sourceKind || activeAnalysisRun?.sourceKind || "chat",
+      topicLabel: options?.topicLabel || activeAnalysisRun?.topicLabel || takeKeywords(source, 4).join(" · "),
+      sessionId: options?.sessionId || options?.conversationId || activeAnalysisRun?.sessionId || activeAnalysisRun?.conversationId || CHAT_THREAD_ID,
       type: "aha_afterwork",
       source: "chat",
       textType: normalizedPayload.textType || detectTextType(source),
@@ -5721,7 +5780,12 @@
     if (!host || !payload) return;
     if (activeAnalysisRun && !artifactMatchesActiveRun(payload, activeAnalysisRun)) {
       console.warn("AHA analysis run mismatch: forkaster stale auto-output", { active: activeAnalysisRun, artifact: { analysisId: payload.analysisId, sourceId: payload.sourceId, sourceHash: payload.sourceHash || payload.sourceTextHash } });
-      host.innerHTML = '<div class="auto-output-head"><h2>AHA etterarbeid</h2><p>Venter på etterarbeid for aktiv analyse.</p></div>';
+      host.innerHTML = '<div class="auto-output-head"><h2>AHA etterarbeid</h2><p>Venter på etterarbeid for aktiv analyse.</p></div>' + renderAnalysisDebugPanel(payload);
+      setExportButtonsEnabled(false);
+      return;
+    }
+    if (analysisTopicMismatch(payload, activeAnalysisRun)) {
+      host.innerHTML = '<div class="auto-output-head"><h2>AHA etterarbeid</h2><p>Analyseobjektet matcher ikke aktiv tekst. Kjør analysen på nytt.</p></div>' + renderAnalysisDebugPanel(payload);
       setExportButtonsEnabled(false);
       return;
     }
@@ -5772,7 +5836,8 @@
       </section>
       <div class="auto-output-actions">
         <button id="btn-save-afterwork" type="button">Lagre etterarbeid</button><p class="auto-output-save-status" id="auto-output-save-status"></p>
-      </div>`;
+      </div>
+      ${renderAnalysisDebugPanel(payload)}`;
 
     const saveButton = host.querySelector("#btn-save-afterwork");
     if (saveButton) {
@@ -6279,9 +6344,13 @@
         payload,
         sourceText,
         analysisId: payload.analysisId || "",
-        runId: payload.runId || "",
+        analysisRunId: payload.analysisRunId || payload.runId || "",
+        runId: payload.runId || payload.analysisRunId || "",
+        conversationId: payload.conversationId || payload.sessionId || CHAT_THREAD_ID,
+        turnId: payload.turnId || "",
         sourceId: payload.sourceId || "",
-        sessionId: payload.sessionId || CHAT_THREAD_ID,
+        sourceKind: payload.sourceKind || (linkInfo.isSourceAction ? "url" : "pasted_text"),
+        sessionId: payload.sessionId || payload.conversationId || CHAT_THREAD_ID,
         sourceHash: payload.sourceHash || sourceHash(sourceText),
         sourceFingerprint: payload.sourceFingerprint || sourceHash(sourceText),
         sourceTextHash: sourceHash(sourceText),
@@ -6292,7 +6361,8 @@
     if (host) {
       host.dataset.sourceText = sourceText;
       host.dataset.analysisId = payload.analysisId || "";
-      host.dataset.runId = payload.runId || "";
+      host.dataset.analysisRunId = payload.analysisRunId || payload.runId || "";
+      host.dataset.runId = payload.runId || payload.analysisRunId || "";
       host.dataset.sourceId = payload.sourceId || "";
       host.dataset.sourceTextHash = sourceHash(sourceText);
       host.dataset.sourceTextPreview = sourceText.replace(/\s+/g, " ").slice(0, 180);
@@ -6364,14 +6434,15 @@
     }
     const payload = cache?.payload && typeof cache.payload === "object" ? cache.payload : cache;
     const sourceText = String(cache?.sourceText || "");
-    const cachedRun = { analysisId: cache.analysisId || payload.analysisId || `analysis_${cache.sourceTextHash || sourceHash(sourceText)}`, runId: cache.runId || payload.runId || "restored", sourceId: cache.sourceId || payload.sourceId || `source_${cache.sourceTextHash || sourceHash(sourceText)}`, sessionId: cache.sessionId || payload.sessionId || CHAT_THREAD_ID, createdAt: cache.createdAt || payload.createdAt || new Date().toISOString(), sourceHash: cache.sourceHash || cache.sourceTextHash || sourceHash(sourceText), sourceFingerprint: cache.sourceFingerprint || cache.sourceTextHash || sourceHash(sourceText) };
+    const cachedRun = { analysisId: cache.analysisId || payload.analysisId || `analysis_${cache.sourceTextHash || sourceHash(sourceText)}`, analysisRunId: cache.analysisRunId || cache.runId || payload.analysisRunId || payload.runId || "restored", runId: cache.runId || cache.analysisRunId || payload.runId || payload.analysisRunId || "restored", conversationId: cache.conversationId || cache.sessionId || payload.conversationId || payload.sessionId || CHAT_THREAD_ID, turnId: cache.turnId || payload.turnId || "", sourceId: cache.sourceId || payload.sourceId || `source_${cache.sourceTextHash || sourceHash(sourceText)}`, sourceKind: cache.sourceKind || payload.sourceKind || "chat", topicLabel: cache.topicLabel || payload.topicLabel || takeKeywords(sourceText, 4).join(" · "), sessionId: cache.sessionId || cache.conversationId || payload.sessionId || payload.conversationId || CHAT_THREAD_ID, createdAt: cache.createdAt || payload.createdAt || new Date().toISOString(), sourceHash: cache.sourceHash || cache.sourceTextHash || sourceHash(sourceText), sourceFingerprint: cache.sourceFingerprint || cache.sourceTextHash || sourceHash(sourceText) };
     activeAnalysisRun = cachedRun;
     bindAnalysisArtifact(payload, cachedRun);
     const host = document.getElementById("aha-auto-output");
     if (host) {
       host.dataset.sourceText = sourceText;
       host.dataset.analysisId = payload.analysisId || "";
-      host.dataset.runId = payload.runId || "";
+      host.dataset.analysisRunId = payload.analysisRunId || payload.runId || "";
+      host.dataset.runId = payload.runId || payload.analysisRunId || "";
       host.dataset.sourceId = payload.sourceId || "";
       host.dataset.sourceTextHash = sourceHash(sourceText);
       host.dataset.sourceTextPreview = sourceText.replace(/\s+/g, " ").slice(0, 180);
@@ -6591,7 +6662,8 @@
       }
     }
 
-    const analysisRun = createAnalysisRun(cleanText, { sourceId: persistedUserMessage?.id ? `chat_message_${persistedUserMessage.id}` : undefined });
+    const sourceKind = urlInfo.isSourceAction ? "url" : "pasted_text";
+    const analysisRun = createAnalysisRun(cleanText, { sourceId: persistedUserMessage?.id ? `chat_message_${persistedUserMessage.id}` : undefined, sourceKind });
     activeAnalysisRun = analysisRun;
     clearActiveAnalysisState(analysisRun);
     const savingEnabled = isAhaSavingEnabled();
