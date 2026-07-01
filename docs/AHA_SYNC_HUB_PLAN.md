@@ -896,3 +896,8 @@ Neste anbefalte PR er:
 ```text
 chore: review AHA module pages from Home entry points
 ```
+
+
+### Channel-source matrix i Sync Overview
+
+Den konsoliderte AHA Sync Overview-flaten inkluderer nå en lokal, read-only channel-source matrix. Den viser counts per `AHA_SYNC_CHANNELS` og trygg source-event-type, inkludert at URL-artikler bare vises som `url_article`/count. Rå source text, private URL-er, metadata og brukeridentifikatorer vises ikke. Ingen sync, backend, deling eller approval-action kjøres; Sync er fortsatt NO-GO. Personal AI Loop source approval boundary forblir sikkerhetsmodellen.
