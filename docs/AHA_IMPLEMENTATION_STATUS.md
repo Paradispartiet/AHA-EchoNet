@@ -2,6 +2,14 @@
 
 ## Consolidated read-only AHA Sync Overview
 
+## Read-only AHA Sync Coverage Gaps Summary
+
+✅ AHA Sync Coverage Gaps safety: test-locked
+
+AHA Sync Overview har nå coverage gaps / dekningshull som read-only/local-only summary. Coverage gaps viser bare aktive/tomme `AHA_SYNC_CHANNELS` og aktive/manglende source-event-typer som counts/labels-only. URL-artikler vises bare som `url_article`/count.
+
+Coverage gaps viser no raw user data / ingen rå brukerdata: ingen rå tekst, URL-er, metadata, router reasons, candidate labels eller brukeridentifikatorer. Flaten har ingen approve/reject/sync-action, ingen ny confirmation gate og ingen prosjektstyringsfelt. Sync er fortsatt **NO-GO** / no sync, og Personal AI Loop source approval boundary er fortsatt sikkerhetsmodellen.
+
 ## Read-only AHA Sync Source Type Summary
 
 AHA Sync Overview viser nå en liten read-only/local-only source type summary for lokale source events. Summaryen viser bare trygge counts per canonical source-event-type, inkludert chat, note, reflection, url_article, import, source_event og unknown. URL-artikler telles som source actions / `url_article`, ikke som rå URL-tekst.
