@@ -2503,6 +2503,7 @@
     const builder = window.AHASyncCandidateBuilder;
     const digestHelper = window.AHASyncInsightDigest;
     const queueHelper = window.AHASyncReviewQueue;
+    const sourceTypeHelper = window.AHASyncSourceTypeSummary;
     const readiness = buildAhaSyncOverviewReadiness(events);
 
     let routeSummary = { total: events.length, byChannel: {}, unrouted: 0 };
@@ -2555,10 +2556,32 @@
       }
     }
 
+    let sourceTypeSummary = null;
+    if (typeof sourceTypeHelper?.buildSourceTypeSummary === "function") {
+      try {
+        const builtSourceTypeSummary = sourceTypeHelper.buildSourceTypeSummary(events);
+        if (builtSourceTypeSummary && typeof builtSourceTypeSummary === "object" && !Array.isArray(builtSourceTypeSummary)) {
+          sourceTypeSummary = builtSourceTypeSummary;
+        }
+      } catch (error) {
+        console.warn("AHADashboard: sync overview source type summary feilet", error);
+      }
+    }
+
     const routeByChannel = routeSummary.byChannel && typeof routeSummary.byChannel === "object" && !Array.isArray(routeSummary.byChannel) ? routeSummary.byChannel : {};
     const candidateByChannel = candidateSummary.byChannel && typeof candidateSummary.byChannel === "object" && !Array.isArray(candidateSummary.byChannel) ? candidateSummary.byChannel : {};
     const stateCounts = reviewQueue.byApprovalState && typeof reviewQueue.byApprovalState === "object" && !Array.isArray(reviewQueue.byApprovalState) ? reviewQueue.byApprovalState : {};
     const digestLines = Array.isArray(digest.lines) ? digest.lines : [];
+    const sourceTypeLabels = sourceTypeHelper?.labels && typeof sourceTypeHelper.labels === "object" && !Array.isArray(sourceTypeHelper.labels) ? sourceTypeHelper.labels : {};
+    const sourceTypeCounts = sourceTypeSummary?.byType && typeof sourceTypeSummary.byType === "object" && !Array.isArray(sourceTypeSummary.byType) ? sourceTypeSummary.byType : {};
+    const sourceTypeOrder = Array.isArray(sourceTypeSummary?.knownTypes) ? sourceTypeSummary.knownTypes.slice() : ["chat", "note", "reflection", "url_article", "import", "source_event"];
+    if (!sourceTypeOrder.includes("unknown")) sourceTypeOrder.push("unknown");
+    const sourceTypeLines = Array.isArray(sourceTypeSummary?.lines) ? sourceTypeSummary.lines : [];
+    const sourceTypeSummaryHtml = sourceTypeSummary ? `
+          <div class="aha-sync-overview-card"><h5>Kildetyper</h5><dl class="aha-sync-hub-meta"><div><dt>totalSourceEvents</dt><dd>${escapeHtml(Number(sourceTypeSummary.totalSourceEvents || 0))}</dd></div><div><dt>unknownCount</dt><dd>${escapeHtml(Number(sourceTypeSummary.unknownCount || 0))}</dd></div><div><dt>localOnly</dt><dd>${escapeHtml(String(sourceTypeSummary.localOnly === true))}</dd></div><div><dt>noSync</dt><dd>${escapeHtml(String(sourceTypeSummary.noSync === true))}</dd></div></dl><ul class="aha-sync-hub-list" aria-label="Source types">${sourceTypeOrder.map((type) => `<li class="aha-sync-hub-row"><div class="aha-sync-hub-row-heading"><strong>${escapeHtml(sourceTypeLabels[type] || type)}</strong><span class="aha-sync-hub-badge is-planned">${escapeHtml(Number(sourceTypeCounts[type] || 0))}</span></div></li>`).join("")}</ul>${sourceTypeLines.length ? `<ul class="aha-sync-hub-list" aria-label="Source type safe lines">${sourceTypeLines.map((line) => `<li class="aha-sync-hub-row"><p>${escapeHtml(line)}</p></li>`).join("")}</ul>` : ""}</div>
+    ` : `
+          <div class="aha-sync-overview-card"><h5>Kildetyper</h5><p class="aha-sync-hub-notice">Kildetype-summary ikke tilgjengelig ennå.</p></div>
+    `;
     const channelIds = channels.length ? channels.map((channel) => String(channel?.id || "").trim()).filter(Boolean) : Object.keys({ ...routeByChannel, ...candidateByChannel });
     Object.keys({ ...routeByChannel, ...candidateByChannel }).forEach((id) => { if (!channelIds.includes(id)) channelIds.push(id); });
     const approvalStates = ["suggested", "review_needed", "approved", "rejected", "blocked", "unknown"];
@@ -2580,6 +2603,7 @@
           <div class="aha-sync-overview-card"><h5>Readiness</h5><dl class="aha-sync-hub-meta">${readinessFields.map(([label, value]) => `<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(String(value))}</dd></div>`).join("")}</dl></div>
           <div class="aha-sync-overview-card"><h5>Digest</h5><dl class="aha-sync-hub-meta"><div><dt>totalSourceEvents</dt><dd>${escapeHtml(Number(digest.totalSourceEvents || events.length))}</dd></div><div><dt>totalRoutedEvents</dt><dd>${escapeHtml(Number(digest.totalRoutedEvents || 0))}</dd></div><div><dt>totalCandidates</dt><dd>${escapeHtml(Number(digest.totalCandidates || candidateSummary.total || 0))}</dd></div><div><dt>activeChannels</dt><dd>${escapeHtml(Number(digest.activeChannels || 0))}</dd></div></dl>${digestLines.length ? `<ul class="aha-sync-hub-list" aria-label="Generic digest lines">${digestLines.map((line) => `<li class="aha-sync-hub-row"><p>${escapeHtml(line)}</p></li>`).join("")}</ul>` : ""}</div>
           <div class="aha-sync-overview-card"><h5>Review queue</h5><dl class="aha-sync-hub-meta"><div><dt>totalReviewItems</dt><dd>${escapeHtml(Number(reviewQueue.totalReviewItems || 0))}</dd></div><div><dt>requiresUserConfirmation</dt><dd>${escapeHtml(Number(reviewQueue.requiresUserConfirmation || candidateSummary.requiresConfirmation || 0))}</dd></div><div><dt>localOnly</dt><dd>${escapeHtml(Number(reviewQueue.localOnly || candidateSummary.localOnly || 0))}</dd></div></dl><ul class="aha-sync-hub-list" aria-label="Review queue approval counts">${approvalStates.map((state) => `<li class="aha-sync-hub-row"><div class="aha-sync-hub-row-heading"><strong>${escapeHtml(state)}</strong><span class="aha-sync-hub-badge is-planned">${escapeHtml(Number(stateCounts[state] || 0))}</span></div></li>`).join("")}</ul></div>
+          ${sourceTypeSummaryHtml}
         </div>
         <div class="aha-sync-overview-card"><h5>Channels</h5>${channelIds.length ? `<ul class="aha-sync-hub-list" aria-label="Compact channel counts">${channelIds.map((id) => `<li class="aha-sync-hub-row" data-overview-channel-id="${escapeHtml(id)}"><div class="aha-sync-hub-row-heading"><strong>${escapeHtml(getAhaSyncChannelName(id))}</strong><span class="aha-sync-hub-badge is-planned">${escapeHtml(Number(candidateByChannel[id] || 0))} candidates</span></div><p><strong>signals:</strong> ${escapeHtml(Number(routeByChannel[id] || 0))}</p></li>`).join("")}</ul>` : `<p class="aha-sync-hub-notice"><strong>Ingen AHA_SYNC_CHANNELS å vise ennå.</strong></p>`}</div>
       </section>
