@@ -2463,6 +2463,30 @@
     };
   }
 
+  function renderAhaSyncOverviewLegend() {
+    const channels = Array.isArray(window.AHA_SYNC_CHANNELS) ? window.AHA_SYNC_CHANNELS : [];
+    const channelNames = channels
+      .map((channel) => String(channel?.name || "").trim())
+      .filter(Boolean);
+    const channelCopy = channelNames.length
+      ? channelNames.join(", ")
+      : "samtaleinnsikter, åpne spørsmål, begrepskoblinger, perspektiver, spenninger, samtalekoblinger";
+
+    return `
+      <details class="aha-sync-overview-legend">
+        <summary>Hva betyr dette?</summary>
+        <div class="aha-sync-overview-legend-body">
+          <p><strong>AHA Sync Overview:</strong> Dette er en lokal forhåndsvisning av innsiktssignaler. Ingen sync kjøres her.</p>
+          <p><strong>Kanaler:</strong> Kanaler er trygge kategorier for innsiktssignaler fra AHA_SYNC_CHANNELS: ${escapeHtml(channelCopy)}.</p>
+          <p><strong>Kildetyper:</strong> Kildetyper er bare trygge typer/counts: chat, note, reflection, url_article, import, source_event, unknown. URL-artikler telles som url_article, ikke som rå URL eller artikkeltekst.</p>
+          <p><strong>Kilde-kanal-matrise:</strong> Matrixen viser bare hvor mange lokale signaler av en kildetype som havner i en kanal.</p>
+          <p><strong>Dekningshull:</strong> Dekningshull viser hvilke kanaler eller kildetyper som foreløpig ikke har lokale signaler.</p>
+          <p><strong>Sikkerhet:</strong> Read-only / local-only / ingen sync / ingen rå brukerdata.</p>
+        </div>
+      </details>
+    `;
+  }
+
   function renderAhaSyncOverview(sourceEvents) {
     const sources = window.AHASources;
     if (typeof sources?.loadSourceEvents !== "function" && !Array.isArray(sourceEvents)) {
@@ -2472,6 +2496,7 @@
           <h4>AHA Sync Overview</h4>
           <p class="aha-sync-hub-notice"><strong>Read-only / local-only / ingen sync</strong></p>
           <p class="aha-sync-hub-notice">Ingen lokal source event-leser tilgjengelig for AHA Sync preview.</p>
+          ${renderAhaSyncOverviewLegend()}
         </section>
       `;
     }
@@ -2494,6 +2519,7 @@
           <h4>AHA Sync Overview</h4>
           <p class="aha-sync-hub-notice"><strong>Read-only / local-only / ingen sync</strong></p>
           <p class="aha-sync-hub-notice">Ingen lokale source events å forhåndsvise ennå.</p>
+          ${renderAhaSyncOverviewLegend()}
         </section>
       `;
     }
@@ -2640,6 +2666,7 @@
         <h4>AHA Sync Overview</h4>
         <p class="aha-sync-hub-notice"><strong>Read-only / local-only / ingen sync</strong></p>
         <p class="aha-sync-hub-notice">Én samlet oversikt for trygge AHA_SYNC_CHANNELS-signaler. Ingen approval-action, backend, EchoNet eller sync kjøres.</p>
+        ${renderAhaSyncOverviewLegend()}
         <div class="aha-sync-overview-grid">
           <div class="aha-sync-overview-card"><h5>Readiness</h5><dl class="aha-sync-hub-meta">${readinessFields.map(([label, value]) => `<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(String(value))}</dd></div>`).join("")}</dl></div>
           <div class="aha-sync-overview-card"><h5>Digest</h5><dl class="aha-sync-hub-meta"><div><dt>totalSourceEvents</dt><dd>${escapeHtml(Number(digest.totalSourceEvents || events.length))}</dd></div><div><dt>totalRoutedEvents</dt><dd>${escapeHtml(Number(digest.totalRoutedEvents || 0))}</dd></div><div><dt>totalCandidates</dt><dd>${escapeHtml(Number(digest.totalCandidates || candidateSummary.total || 0))}</dd></div><div><dt>activeChannels</dt><dd>${escapeHtml(Number(digest.activeChannels || 0))}</dd></div></dl>${digestLines.length ? `<ul class="aha-sync-hub-list" aria-label="Generic digest lines">${digestLines.map((line) => `<li class="aha-sync-hub-row"><p>${escapeHtml(line)}</p></li>`).join("")}</ul>` : ""}</div>
