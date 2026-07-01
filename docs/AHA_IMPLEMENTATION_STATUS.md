@@ -2,6 +2,10 @@
 
 ## Consolidated read-only AHA Sync Overview
 
+✅ AHA Sync Overview safety: test-locked
+
+AHA Sync Overview er nå låst med en egen safety/regression-test som verifiserer at Home-flaten fortsatt er én samlet overview, read-only/local-only og uten sync. Overviewet viser bare counts, booleans og generiske linjer fra eksisterende helper-brikker; det viser ikke rå brukerdata, source payloads, private metadata eller private URL-er. Flaten har ingen approve/reject/sync-action, ingen localStorage-skriving, ingen backend-kall og ingen EchoNet-runtime. Sync er fortsatt **NO-GO**.
+
 AHA Home viser nå én samlet `AHA Sync Overview` i Sync Hub-flaten. Overviewet konsoliderer eksisterende read-only signaler fra digest, review queue, readiness og channel counts i stedet for å presentere dem som mange separate debugpaneler.
 
 Overviewet viser bare trygge counts, booleans, generiske linjer og kanalnavn. Det viser ikke rå brukerdata, full source events, full candidates, private payloads, private metadata eller private URL-er. Ingen approval-action finnes i overviewet, ingen approve/reject-knapper rendres, ingen sync-knapp rendres, ingen localStorage-skriving skjer, ingen backend kalles, og Sync er fortsatt NO-GO.
