@@ -2,6 +2,13 @@
 
 ## Consolidated read-only AHA Sync Overview
 
+## AHA Sync Overview legend / forklaring
+
+AHA Sync Overview har nå en kompakt read-only/local-only forklaring med tittelen “Hva betyr dette?”. Legenden forklarer kanaler fra `AHA_SYNC_CHANNELS`, trygge kildetyper/counts (`chat`, `note`, `reflection`, `url_article`, `import`, `source_event`, `unknown`), kilde-kanal-matrise og dekningshull. URL-artikler omtales bare som `url_article`, ikke som rå URL eller artikkeltekst.
+
+Legenden viser ikke rå brukerdata og legger ikke til sync, approval, backend, EchoNet-runtime eller ny confirmation gate. Sync er fortsatt **NO-GO**. `AHA_SYNC_CHANNELS` er fortsatt hovedmodell, og Personal AI Loop source approval boundary er fortsatt sikkerhetsmodell.
+
+
 ## AHA Sync global safety gate
 
 ✅ AHA Sync global safety gate: test-locked
