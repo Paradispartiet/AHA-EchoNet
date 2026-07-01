@@ -2,6 +2,14 @@
 
 ## Consolidated read-only AHA Sync Overview
 
+## AHA Sync global safety gate
+
+✅ AHA Sync global safety gate: test-locked
+
+Den globale gaten dekker hele AHA Sync helperfamilien samlet og låser `js/ahaSync*.js`, `js/ahaDashboard.js` og `index.html` som read-only/local-only. AHA Sync viser bare counts only / labels only, ingen raw source text, URL-er, metadata, router reasons eller brukeridentifikatorer.
+
+Gaten bekrefter også at det ikke finnes approve/reject/sync-action, ingen ny confirmation gate, ingen backend/network-write, ingen `localStorage`-skriving, ingen EchoNet-runtime og ingen parallell approvalmodell. `AHA_SYNC_CHANNELS` er fortsatt hovedmodellen, Personal AI Loop source approval boundary er fortsatt sikkerhetsmodellen, og Sync er fortsatt **NO-GO**.
+
 ## Read-only AHA Sync Coverage Gaps Summary
 
 ✅ AHA Sync Coverage Gaps safety: test-locked
