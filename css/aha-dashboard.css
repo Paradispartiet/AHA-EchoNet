@@ -2083,3 +2083,27 @@ html, body { max-width: 100%; overflow-x: hidden; }
 .aha-historygo-music-card ul { margin: 0; padding-left: 18px; display: grid; gap: 8px; }
 .aha-historygo-music-card p,
 .aha-historygo-music-audit p { color: var(--aha-muted); margin: 0; }
+
+.aha-sync-overview {
+  display: grid;
+  gap: 10px;
+}
+.aha-sync-overview-grid {
+  display: grid;
+  gap: 8px;
+}
+.aha-sync-overview-card {
+  display: grid;
+  gap: 7px;
+  padding: 10px;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 10px;
+  background: rgba(0,0,0,.1);
+}
+.aha-sync-overview-card h5,
+.aha-sync-channel-registry-details summary { margin: 0; font-size: .82rem; }
+.aha-sync-channel-registry-details {
+  display: grid;
+  gap: 8px;
+}
+.aha-sync-channel-registry-details[open] summary { margin-bottom: 8px; }

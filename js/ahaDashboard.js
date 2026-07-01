@@ -2444,6 +2444,149 @@
     `;
   }
 
+  function buildAhaSyncOverviewReadiness(sourceEvents) {
+    const helper = window.AHASyncReadinessSummary;
+    if (typeof helper?.buildReadinessSummary === "function") {
+      try {
+        const summary = helper.buildReadinessSummary(Array.isArray(sourceEvents) ? sourceEvents : []);
+        if (summary && typeof summary === "object" && !Array.isArray(summary)) return summary;
+      } catch (error) {
+        console.warn("AHADashboard: sync readiness summary kunne ikke bygges", error);
+      }
+    }
+    return {
+      readyForSync: false,
+      status: "blocked_read_only",
+      noSync: true,
+      localOnly: true,
+      requiresUserConfirmation: true
+    };
+  }
+
+  function renderAhaSyncOverview(sourceEvents) {
+    const sources = window.AHASources;
+    if (typeof sources?.loadSourceEvents !== "function" && !Array.isArray(sourceEvents)) {
+      return `
+        <section class="aha-sync-overview" aria-label="AHA Sync Overview">
+          <p class="eyebrow">Sync Hub</p>
+          <h4>AHA Sync Overview</h4>
+          <p class="aha-sync-hub-notice"><strong>Read-only / local-only / ingen sync</strong></p>
+          <p class="aha-sync-hub-notice">Ingen lokal source event-leser tilgjengelig for AHA Sync preview.</p>
+        </section>
+      `;
+    }
+
+    let events = Array.isArray(sourceEvents) ? sourceEvents : [];
+    if (!Array.isArray(sourceEvents)) {
+      try {
+        const loadedEvents = sources.loadSourceEvents();
+        events = Array.isArray(loadedEvents) ? loadedEvents : [];
+      } catch (error) {
+        console.warn("AHADashboard: sync overview kunne ikke lese source events", error);
+        events = [];
+      }
+    }
+
+    if (!events.length) {
+      return `
+        <section class="aha-sync-overview" aria-label="AHA Sync Overview">
+          <p class="eyebrow">Sync Hub</p>
+          <h4>AHA Sync Overview</h4>
+          <p class="aha-sync-hub-notice"><strong>Read-only / local-only / ingen sync</strong></p>
+          <p class="aha-sync-hub-notice">Ingen lokale source events å forhåndsvise ennå.</p>
+        </section>
+      `;
+    }
+
+    const channels = Array.isArray(window.AHA_SYNC_CHANNELS) ? window.AHA_SYNC_CHANNELS : [];
+    const router = window.AHASyncChannelRouter;
+    const builder = window.AHASyncCandidateBuilder;
+    const digestHelper = window.AHASyncInsightDigest;
+    const queueHelper = window.AHASyncReviewQueue;
+    const readiness = buildAhaSyncOverviewReadiness(events);
+
+    let routeSummary = { total: events.length, byChannel: {}, unrouted: 0 };
+    if (typeof router?.summarizeRoutes === "function") {
+      try {
+        const routed = router.summarizeRoutes(events);
+        if (routed && typeof routed === "object" && !Array.isArray(routed)) routeSummary = routed;
+      } catch (error) {
+        console.warn("AHADashboard: sync overview route summary feilet", error);
+      }
+    }
+
+    let candidates = [];
+    if (typeof builder?.buildCandidates === "function") {
+      try {
+        const built = builder.buildCandidates(events);
+        candidates = Array.isArray(built) ? built : [];
+      } catch (error) {
+        console.warn("AHADashboard: sync overview candidate summary feilet", error);
+      }
+    }
+
+    let candidateSummary = { total: candidates.length, byChannel: {}, requiresConfirmation: 0, localOnly: 0 };
+    if (typeof builder?.summarizeCandidates === "function") {
+      try {
+        const summarized = builder.summarizeCandidates(candidates);
+        if (summarized && typeof summarized === "object" && !Array.isArray(summarized)) candidateSummary = summarized;
+      } catch (error) {
+        console.warn("AHADashboard: sync overview candidate counts feilet", error);
+      }
+    }
+
+    let digest = { totalSourceEvents: events.length, totalRoutedEvents: 0, totalCandidates: candidates.length, activeChannels: 0, lines: [] };
+    if (typeof digestHelper?.buildDigest === "function") {
+      try {
+        const builtDigest = digestHelper.buildDigest(events);
+        if (builtDigest && typeof builtDigest === "object" && !Array.isArray(builtDigest)) digest = builtDigest;
+      } catch (error) {
+        console.warn("AHADashboard: sync overview digest feilet", error);
+      }
+    }
+
+    let reviewQueue = { totalReviewItems: 0, byApprovalState: {}, requiresUserConfirmation: 0, localOnly: 0 };
+    if (typeof queueHelper?.buildReviewQueue === "function") {
+      try {
+        const builtQueue = queueHelper.buildReviewQueue(events);
+        if (builtQueue && typeof builtQueue === "object" && !Array.isArray(builtQueue)) reviewQueue = builtQueue;
+      } catch (error) {
+        console.warn("AHADashboard: sync overview review queue feilet", error);
+      }
+    }
+
+    const routeByChannel = routeSummary.byChannel && typeof routeSummary.byChannel === "object" && !Array.isArray(routeSummary.byChannel) ? routeSummary.byChannel : {};
+    const candidateByChannel = candidateSummary.byChannel && typeof candidateSummary.byChannel === "object" && !Array.isArray(candidateSummary.byChannel) ? candidateSummary.byChannel : {};
+    const stateCounts = reviewQueue.byApprovalState && typeof reviewQueue.byApprovalState === "object" && !Array.isArray(reviewQueue.byApprovalState) ? reviewQueue.byApprovalState : {};
+    const digestLines = Array.isArray(digest.lines) ? digest.lines : [];
+    const channelIds = channels.length ? channels.map((channel) => String(channel?.id || "").trim()).filter(Boolean) : Object.keys({ ...routeByChannel, ...candidateByChannel });
+    Object.keys({ ...routeByChannel, ...candidateByChannel }).forEach((id) => { if (!channelIds.includes(id)) channelIds.push(id); });
+    const approvalStates = ["suggested", "review_needed", "approved", "rejected", "blocked", "unknown"];
+    const readinessFields = [
+      ["readyForSync", readiness.readyForSync === true],
+      ["status", readiness.status || "blocked_read_only"],
+      ["noSync", readiness.noSync !== false],
+      ["localOnly", readiness.localOnly !== false],
+      ["requiresUserConfirmation", readiness.requiresUserConfirmation !== false]
+    ];
+
+    return `
+      <section class="aha-sync-overview" aria-label="AHA Sync Overview">
+        <p class="eyebrow">Sync Hub</p>
+        <h4>AHA Sync Overview</h4>
+        <p class="aha-sync-hub-notice"><strong>Read-only / local-only / ingen sync</strong></p>
+        <p class="aha-sync-hub-notice">Én samlet oversikt for trygge AHA_SYNC_CHANNELS-signaler. Ingen approval-action, backend, EchoNet eller sync kjøres.</p>
+        <div class="aha-sync-overview-grid">
+          <div class="aha-sync-overview-card"><h5>Readiness</h5><dl class="aha-sync-hub-meta">${readinessFields.map(([label, value]) => `<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(String(value))}</dd></div>`).join("")}</dl></div>
+          <div class="aha-sync-overview-card"><h5>Digest</h5><dl class="aha-sync-hub-meta"><div><dt>totalSourceEvents</dt><dd>${escapeHtml(Number(digest.totalSourceEvents || events.length))}</dd></div><div><dt>totalRoutedEvents</dt><dd>${escapeHtml(Number(digest.totalRoutedEvents || 0))}</dd></div><div><dt>totalCandidates</dt><dd>${escapeHtml(Number(digest.totalCandidates || candidateSummary.total || 0))}</dd></div><div><dt>activeChannels</dt><dd>${escapeHtml(Number(digest.activeChannels || 0))}</dd></div></dl>${digestLines.length ? `<ul class="aha-sync-hub-list" aria-label="Generic digest lines">${digestLines.map((line) => `<li class="aha-sync-hub-row"><p>${escapeHtml(line)}</p></li>`).join("")}</ul>` : ""}</div>
+          <div class="aha-sync-overview-card"><h5>Review queue</h5><dl class="aha-sync-hub-meta"><div><dt>totalReviewItems</dt><dd>${escapeHtml(Number(reviewQueue.totalReviewItems || 0))}</dd></div><div><dt>requiresUserConfirmation</dt><dd>${escapeHtml(Number(reviewQueue.requiresUserConfirmation || candidateSummary.requiresConfirmation || 0))}</dd></div><div><dt>localOnly</dt><dd>${escapeHtml(Number(reviewQueue.localOnly || candidateSummary.localOnly || 0))}</dd></div></dl><ul class="aha-sync-hub-list" aria-label="Review queue approval counts">${approvalStates.map((state) => `<li class="aha-sync-hub-row"><div class="aha-sync-hub-row-heading"><strong>${escapeHtml(state)}</strong><span class="aha-sync-hub-badge is-planned">${escapeHtml(Number(stateCounts[state] || 0))}</span></div></li>`).join("")}</ul></div>
+        </div>
+        <div class="aha-sync-overview-card"><h5>Channels</h5>${channelIds.length ? `<ul class="aha-sync-hub-list" aria-label="Compact channel counts">${channelIds.map((id) => `<li class="aha-sync-hub-row" data-overview-channel-id="${escapeHtml(id)}"><div class="aha-sync-hub-row-heading"><strong>${escapeHtml(getAhaSyncChannelName(id))}</strong><span class="aha-sync-hub-badge is-planned">${escapeHtml(Number(candidateByChannel[id] || 0))} candidates</span></div><p><strong>signals:</strong> ${escapeHtml(Number(routeByChannel[id] || 0))}</p></li>`).join("")}</ul>` : `<p class="aha-sync-hub-notice"><strong>Ingen AHA_SYNC_CHANNELS å vise ennå.</strong></p>`}</div>
+      </section>
+    `;
+  }
+
+
   function renderAhaSyncChannelPreview() {
     const router = window.AHASyncChannelRouter;
     const sources = window.AHASources;
@@ -2580,12 +2723,14 @@
       : "";
 
     mount.innerHTML = `
-      <p class="eyebrow">Sync Hub</p>
       <h3>AHA Sync Hub</h3>
       <p class="aha-panel-subtitle">Samtale- og innsiktskanaler</p>
       ${routerStatus}
-      <ul class="aha-sync-hub-list">${rows}</ul>
-      ${renderAhaSyncChannelPreview()}
+      ${renderAhaSyncOverview()}
+      <details class="aha-sync-channel-registry-details">
+        <summary>AHA_SYNC_CHANNELS registry</summary>
+        <ul class="aha-sync-hub-list">${rows}</ul>
+      </details>
       <p class="aha-sync-hub-footer">Read-only kanalregister. Ingen backend, ekte sync eller lagring kjøres her. Modul ikke lastet på Home.</p>
     `;
     return true;

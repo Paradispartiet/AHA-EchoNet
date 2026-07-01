@@ -1,5 +1,13 @@
 # AHA Sync Hub / Control Center plan
 
+## Consolidated read-only AHA Sync Overview
+
+AHA Home viser nå én samlet `AHA Sync Overview` i Sync Hub-flaten. Overviewet konsoliderer eksisterende read-only signaler fra digest, review queue, readiness og channel counts i stedet for å presentere dem som mange separate debugpaneler.
+
+Overviewet viser bare trygge counts, booleans, generiske linjer og kanalnavn. Det viser ikke rå brukerdata, full source events, full candidates, private payloads, private metadata eller private URL-er. Ingen approval-action finnes i overviewet, ingen approve/reject-knapper rendres, ingen sync-knapp rendres, ingen localStorage-skriving skjer, ingen backend kalles, og Sync er fortsatt NO-GO.
+
+`AHA_SYNC_CHANNELS` er fortsatt hovedmodellen for conversation insight sync-preview. Personal AI Loop source approval boundary (`personal_ai_loop_source_approval`) er fortsatt sikkerhetsmodellen for kandidater og senere eksplisitt brukerhandling.
+
 ## Current Sync Hub boundary
 
 AHA Sync Hub er nå en read-only innsiktsflate. Den er ikke et prosjektdashboard, ikke sync runtime, ikke approval surface og ikke EchoNet runtime. Huben kan vise trygg lokal status/preview, men den skal ikke godkjenne, skrive, synke, dele eller aktivere EchoNet.
