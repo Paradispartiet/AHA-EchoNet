@@ -1,5 +1,21 @@
 # AHA Implementation Status
 
+## Current clean baseline
+
+Gjeldende baseline er en grønn dokumentert status før neste feature: `npm test` er grønn på siste baseline med 115/115 tester passert. Dette er en statuskonsolidering, ikke en runtime-, UI- eller Sync Hub-endring.
+
+Kort status:
+
+- AHA export quality inkluderer nå `topicConsistency`.
+- `requiredTerms` og `forbiddenTerms` håndheves i quality gate-laget.
+- Source-binding-testene er grønne og låser at stale eller feilbundet output fail-closes.
+- Geopolitics consistency gate er grønn og låser USA/Kina-requiredTerms mot stale institusjonelle forbiddenTerms.
+- AHA Sync Hub er fortsatt read-only/local-only.
+- AHA Sync bruker `AHA_SYNC_CHANNELS` som hovedmodell; `AHA_SYNC_HUB_PROJECTS` er bare legacy utviklingspreview/fallback.
+- AHA Sync candidates bruker eksisterende Personal AI Loop source approval boundary.
+- Ingen sync runtime er aktivert.
+- Ingen EchoNet-aktivering er gjort.
+
 ## Read-only AHA sync candidate approval summary
 
 AHA Home viser nå en kompakt, redigert og lokal-only approval summary for AHA sync candidates under Sync Hub-previewen. Summaryen gjenbruker den eksisterende Personal AI Loop source approval-boundaryen via `buildPersonalAiLoopSourceApprovalSummary(...)`; det finnes ingen separat sync confirmation gate, ingen ny approvalmodell og ingen dupliserte source approval states.

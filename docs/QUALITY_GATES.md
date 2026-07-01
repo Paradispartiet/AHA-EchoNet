@@ -6,6 +6,23 @@ Dette dokumentet definerer kvalitetsporter for AHA-analyser.
 
 AHA kan ha korrekt schema, korrekt UI og korrekt eksportformat, men likevel analysere feil tekst. Derfor må kvalitet sjekkes på mer enn shape.
 
+## Current status
+
+Quality gates er nå aktivert som baselinevern for topic/source/geopolitics-sporet:
+
+- `topicConsistency`: implemented.
+- `sourceBinding`: implemented/tested.
+- `geopolitics consistency`: implemented/tested.
+- Stale/irrelevant output: fail-closed.
+- `forbiddenTerms` mismatch: fail-closed.
+- `requiredTerms` mismatch: invalid/quality issue.
+
+Gjenstående arbeid i dette dokumentets opprinnelige quality-gate-liste er fortsatt:
+
+- semantic overlap
+- memoryIsolation
+- score ceiling
+
 ## Eksisterende validering
 
 Repoet har allerede fixture-validering via:
@@ -60,7 +77,7 @@ Pass: field.sourceTextHash === currentSourceTextHash
 Fail: feil hash, manglende hash uten same-run-bevis, eller selectedAfterwork fra annen kilde
 ```
 
-Status i dag: må strammes.
+Status i dag: implemented/tested.
 
 ## Gate 3: Topic consistency
 
@@ -229,4 +246,4 @@ Første implementering bør være enkel:
 4. score ceiling
 ```
 
-Deretter kan semantisk overlap og embeddings legges til.
+Deretter kan semantic overlap/embeddings, memoryIsolation og score ceiling strammes videre.
