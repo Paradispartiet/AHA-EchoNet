@@ -2533,3 +2533,8 @@ Workbench viser workflow fra kilder til Chat, samlet status, anbefalinger og nes
 Workbench godkjenner eller importerer ikke materiale automatisk. Approval, import til Training Corpus, memory confirmation og consent-endringer krever eksplisitt brukerhandling i relevante flater.
 
 Product Integration, Personal AI Control og Meta Insights Agent får workbench-status slik at AHA kan forstå hvor i kunnskapsflyten systemet står. Dette gjør AHA sitt kunnskapsarbeid operasjonelt og samlet.
+
+
+### AHA Sync channel-source matrix
+
+AHA Sync Overview viser nå en read-only channel-source matrix. Matrisen viser bare counts per `AHA_SYNC_CHANNELS` og trygg source-event-type. URL-artikler telles kun som `url_article`/count, ikke som rå URL eller artikkeltekst. Matrisen viser ikke raw source text, URL-er, metadata eller brukeridentifikatorer. Ingen sync kjøres; Sync er fortsatt NO-GO. `AHA_SYNC_CHANNELS` er fortsatt hovedmodell, og Personal AI Loop source approval boundary er fortsatt sikkerhetsmodellen.

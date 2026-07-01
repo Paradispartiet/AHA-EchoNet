@@ -214,3 +214,8 @@ Ikke legg til disse feltene i AHA Sync Hub som produktmodell:
 * projectRoadmap
 
 Slike felter hører hjemme i intern prosjektledelse, ikke i AHA.
+
+
+### Read-only channel-source matrix
+
+AHA Sync Overview viser nå hvilke trygge source-event-typer som teller mot `AHA_SYNC_CHANNELS` gjennom en counts-only channel-source matrix. URL-artikler representeres bare som `url_article`/count, aldri som rå URL eller artikkeltekst. Matrisen eksponerer ikke raw source text, metadata eller brukeridentifikatorer, og den kjører ingen sync. Sync er fortsatt NO-GO, `AHA_SYNC_CHANNELS` er hovedmodellen, og Personal AI Loop source approval boundary er sikkerhetsmodellen.
