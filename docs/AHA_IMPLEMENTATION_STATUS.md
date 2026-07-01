@@ -1,5 +1,13 @@
 # AHA Implementation Status
 
+## Consolidated read-only AHA Sync Overview
+
+AHA Home viser nå én samlet `AHA Sync Overview` i Sync Hub-flaten. Overviewet konsoliderer eksisterende read-only signaler fra digest, review queue, readiness og channel counts i stedet for å presentere dem som mange separate debugpaneler.
+
+Overviewet viser bare trygge counts, booleans, generiske linjer og kanalnavn. Det viser ikke rå brukerdata, full source events, full candidates, private payloads, private metadata eller private URL-er. Ingen approval-action finnes i overviewet, ingen approve/reject-knapper rendres, ingen sync-knapp rendres, ingen localStorage-skriving skjer, ingen backend kalles, og Sync er fortsatt NO-GO.
+
+`AHA_SYNC_CHANNELS` er fortsatt hovedmodellen for conversation insight sync-preview. Personal AI Loop source approval boundary (`personal_ai_loop_source_approval`) er fortsatt sikkerhetsmodellen for kandidater og senere eksplisitt brukerhandling.
+
 ## Current clean baseline
 
 Gjeldende baseline er en grønn dokumentert status før neste feature: `npm test` er grønn på siste baseline med 115/115 tester passert. Dette er en statuskonsolidering, ikke en runtime-, UI- eller Sync Hub-endring.
