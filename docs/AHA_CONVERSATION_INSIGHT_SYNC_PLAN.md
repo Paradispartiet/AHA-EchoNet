@@ -1,5 +1,25 @@
 # AHA Conversation Insight Sync Plan
 
+## AHA Sync status
+
+Gjeldende AHA Sync-status er read-only/local-only og fortsatt **NO-GO** for ekte sync:
+
+- Channels registry finnes (`AHA_SYNC_CHANNELS`).
+- Router finnes (`AHASyncChannelRouter`).
+- Candidate builder finnes (`AHASyncCandidateBuilder`).
+- Approval summary finnes via eksisterende Personal AI Loop source approval boundary.
+- Candidates by channel finnes.
+- Signal summary finnes.
+- Insight digest finnes.
+- Review queue finnes.
+- Readiness summary finnes.
+- Safety tests finnes.
+- Sync er fortsatt **NO-GO**.
+- Approval action er fortsatt ikke implementert.
+- Alt er read-only/local-only.
+
+Dette er ikke prosjektstyring og legger ikke til phase/priority/roadmap-felter.
+
 ## Read-only AHA sync candidate approval summary
 
 AHA Home viser nå en kompakt, redigert og lokal-only approval summary for AHA sync candidates under Sync Hub-previewen. Summaryen gjenbruker den eksisterende Personal AI Loop source approval-boundaryen via `buildPersonalAiLoopSourceApprovalSummary(...)`; det finnes ingen separat sync confirmation gate, ingen ny approvalmodell og ingen dupliserte source approval states.

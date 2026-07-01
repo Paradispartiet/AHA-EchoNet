@@ -1,5 +1,11 @@
 # AHA Sync Hub / Control Center plan
 
+## Current Sync Hub boundary
+
+AHA Sync Hub er nå en read-only innsiktsflate. Den er ikke et prosjektdashboard, ikke sync runtime, ikke approval surface og ikke EchoNet runtime. Huben kan vise trygg lokal status/preview, men den skal ikke godkjenne, skrive, synke, dele eller aktivere EchoNet.
+
+Neste mulige produktsteg senere må være bedre lesbarhet og trygg preview. Det skal fortsatt ikke være faktisk sync og ikke auto-approval.
+
 ## Read-only AHA sync candidate approval summary
 
 AHA Home viser nå en kompakt, redigert og lokal-only approval summary for AHA sync candidates under Sync Hub-previewen. Summaryen gjenbruker den eksisterende Personal AI Loop source approval-boundaryen via `buildPersonalAiLoopSourceApprovalSummary(...)`; det finnes ingen separat sync confirmation gate, ingen ny approvalmodell og ingen dupliserte source approval states.

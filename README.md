@@ -1,5 +1,7 @@
 # AHA-EchoNet
 
+**Status baseline:** AHA quality gates for topic/source/geopolitics are green on the latest `npm test` baseline (115/115), while AHA Sync remains read-only/local-only and NO-GO for real sync or EchoNet activation.
+
 ## Read-only AHA sync candidate approval summary
 
 AHA Home viser nå en kompakt, redigert og lokal-only approval summary for AHA sync candidates under Sync Hub-previewen. Summaryen gjenbruker den eksisterende Personal AI Loop source approval-boundaryen via `buildPersonalAiLoopSourceApprovalSummary(...)`; det finnes ingen separat sync confirmation gate, ingen ny approvalmodell og ingen dupliserte source approval states.
