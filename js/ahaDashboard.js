@@ -2494,7 +2494,7 @@
         <section class="aha-sync-overview" aria-label="AHA Sync Overview">
           <p class="eyebrow">Sync Hub</p>
           <h4>AHA Sync Overview</h4>
-          <p class="aha-sync-hub-notice"><strong>Read-only / local-only / ingen sync</strong></p>
+          <p class="aha-sync-overview-status"><strong>Lokal forhåndsvisning · read-only · local-only · ingen sync · ingen rå brukerdata</strong></p>
           <p class="aha-sync-hub-notice">Ingen lokal source event-leser tilgjengelig for AHA Sync preview.</p>
           ${renderAhaSyncOverviewLegend()}
         </section>
@@ -2517,7 +2517,7 @@
         <section class="aha-sync-overview" aria-label="AHA Sync Overview">
           <p class="eyebrow">Sync Hub</p>
           <h4>AHA Sync Overview</h4>
-          <p class="aha-sync-hub-notice"><strong>Read-only / local-only / ingen sync</strong></p>
+          <p class="aha-sync-overview-status"><strong>Lokal forhåndsvisning · read-only · local-only · ingen sync · ingen rå brukerdata</strong></p>
           <p class="aha-sync-hub-notice">Ingen lokale source events å forhåndsvise ennå.</p>
           ${renderAhaSyncOverviewLegend()}
         </section>
@@ -2635,19 +2635,19 @@
     const matrixLines = Array.isArray(channelSourceMatrix?.lines) ? channelSourceMatrix.lines : [];
     const coverageGapLines = Array.isArray(coverageGaps?.lines) ? coverageGaps.lines : [];
     const coverageGapsHtml = coverageGaps ? `
-          <div class="aha-sync-overview-card"><h5>Coverage gaps / Dekningshull</h5><p class="aha-sync-hub-notice">Read-only/local-only, counts only, labels only, ingen rå brukerdata og ingen sync.</p><dl class="aha-sync-hub-meta"><div><dt>activeChannelCount</dt><dd>${escapeHtml(Number(coverageGaps.activeChannelCount || 0))}</dd></div><div><dt>emptyChannelCount</dt><dd>${escapeHtml(Number(coverageGaps.emptyChannelCount || 0))}</dd></div><div><dt>activeSourceTypes</dt><dd>${escapeHtml(Number((coverageGaps.activeSourceTypes || []).length || 0))}</dd></div><div><dt>missingSourceTypes</dt><dd>${escapeHtml(Number((coverageGaps.missingSourceTypes || []).length || 0))}</dd></div><div><dt>localOnly</dt><dd>${escapeHtml(String(coverageGaps.localOnly === true))}</dd></div><div><dt>noSync</dt><dd>${escapeHtml(String(coverageGaps.noSync === true))}</dd></div></dl><ul class="aha-sync-hub-list" aria-label="Coverage gap safe lines">${coverageGapLines.map((line) => `<li class="aha-sync-hub-row"><p>${escapeHtml(line)}</p></li>`).join("")}</ul></div>
+          <details class="aha-sync-overview-card aha-sync-overview-details"><summary>Coverage gaps / Dekningshull</summary><dl class="aha-sync-hub-meta"><div><dt>activeChannelCount</dt><dd>${escapeHtml(Number(coverageGaps.activeChannelCount || 0))}</dd></div><div><dt>emptyChannelCount</dt><dd>${escapeHtml(Number(coverageGaps.emptyChannelCount || 0))}</dd></div><div><dt>activeSourceTypes</dt><dd>${escapeHtml(Number((coverageGaps.activeSourceTypes || []).length || 0))}</dd></div><div><dt>missingSourceTypes</dt><dd>${escapeHtml(Number((coverageGaps.missingSourceTypes || []).length || 0))}</dd></div></dl><ul class="aha-sync-hub-list" aria-label="Coverage gap safe lines">${coverageGapLines.map((line) => `<li class="aha-sync-hub-row"><p>${escapeHtml(line)}</p></li>`).join("")}</ul></details>
     ` : `
-          <div class="aha-sync-overview-card"><h5>Coverage gaps / Dekningshull</h5><p class="aha-sync-hub-notice">Coverage gaps ikke tilgjengelig ennå. Ingen sync kjøres.</p></div>
+          <details class="aha-sync-overview-card aha-sync-overview-details"><summary>Coverage gaps / Dekningshull</summary><p class="aha-sync-hub-notice">Coverage gaps ikke tilgjengelig ennå. Ingen sync kjøres.</p></details>
     `;
     const channelSourceMatrixHtml = channelSourceMatrix ? `
-          <div class="aha-sync-overview-card"><h5>Kilde-kanal-matrise</h5><dl class="aha-sync-hub-meta"><div><dt>totalSourceEvents</dt><dd>${escapeHtml(Number(channelSourceMatrix.totalSourceEvents || 0))}</dd></div><div><dt>totalRoutedEvents</dt><dd>${escapeHtml(Number(channelSourceMatrix.totalRoutedEvents || 0))}</dd></div><div><dt>localOnly</dt><dd>${escapeHtml(String(channelSourceMatrix.localOnly === true))}</dd></div><div><dt>noSync</dt><dd>${escapeHtml(String(channelSourceMatrix.noSync === true))}</dd></div></dl>${Number(channelSourceMatrix.totalSourceEvents || 0) <= 0 ? `<p class="aha-sync-hub-notice">Ingen lokale source events å fordele på kanaler ennå.</p>` : ""}${matrixChannels.length && matrixSourceTypes.length ? `<ul class="aha-sync-hub-list" aria-label="Channel-source matrix">${matrixChannels.map((channelId) => `<li class="aha-sync-hub-row"><div class="aha-sync-hub-row-heading"><strong>${escapeHtml(getAhaSyncChannelName(channelId))}</strong><span class="aha-sync-hub-badge is-planned">${escapeHtml(channelId)}</span></div><dl class="aha-sync-hub-meta">${matrixSourceTypes.map((type) => `<div><dt>${escapeHtml(sourceTypeLabels[type] || type)}</dt><dd>${escapeHtml(Number((matrixCounts[channelId] || {})[type] || 0))}</dd></div>`).join("")}</dl></li>`).join("")}</ul>` : ""}${matrixLines.length ? `<ul class="aha-sync-hub-list" aria-label="Channel-source safe lines">${matrixLines.map((line) => `<li class="aha-sync-hub-row"><p>${escapeHtml(line)}</p></li>`).join("")}</ul>` : ""}</div>
+          <details class="aha-sync-overview-card aha-sync-overview-details"><summary>Kilde-kanal-matrise / Channel-source matrix</summary><dl class="aha-sync-hub-meta"><div><dt>totalSourceEvents</dt><dd>${escapeHtml(Number(channelSourceMatrix.totalSourceEvents || 0))}</dd></div><div><dt>totalRoutedEvents</dt><dd>${escapeHtml(Number(channelSourceMatrix.totalRoutedEvents || 0))}</dd></div></dl>${Number(channelSourceMatrix.totalSourceEvents || 0) <= 0 ? `<p class="aha-sync-hub-notice">Ingen lokale source events å fordele på kanaler ennå.</p>` : ""}${matrixChannels.length && matrixSourceTypes.length ? `<ul class="aha-sync-hub-list" aria-label="Channel-source matrix">${matrixChannels.map((channelId) => `<li class="aha-sync-hub-row"><div class="aha-sync-hub-row-heading"><strong>${escapeHtml(getAhaSyncChannelName(channelId))}</strong><span class="aha-sync-hub-badge is-planned">${escapeHtml(channelId)}</span></div><dl class="aha-sync-hub-meta">${matrixSourceTypes.map((type) => `<div><dt>${escapeHtml(sourceTypeLabels[type] || type)}</dt><dd>${escapeHtml(Number((matrixCounts[channelId] || {})[type] || 0))}</dd></div>`).join("")}</dl></li>`).join("")}</ul>` : ""}${matrixLines.length ? `<ul class="aha-sync-hub-list" aria-label="Channel-source safe lines">${matrixLines.map((line) => `<li class="aha-sync-hub-row"><p>${escapeHtml(line)}</p></li>`).join("")}</ul>` : ""}</details>
     ` : `
-          <div class="aha-sync-overview-card"><h5>Kilde-kanal-matrise</h5><p class="aha-sync-hub-notice">Kilde-kanal-matrise ikke tilgjengelig ennå.</p></div>
+          <details class="aha-sync-overview-card aha-sync-overview-details"><summary>Kilde-kanal-matrise / Channel-source matrix</summary><p class="aha-sync-hub-notice">Kilde-kanal-matrise ikke tilgjengelig ennå.</p></details>
     `;
     const sourceTypeSummaryHtml = sourceTypeSummary ? `
-          <div class="aha-sync-overview-card"><h5>Kildetyper</h5><dl class="aha-sync-hub-meta"><div><dt>totalSourceEvents</dt><dd>${escapeHtml(Number(sourceTypeSummary.totalSourceEvents || 0))}</dd></div><div><dt>unknownCount</dt><dd>${escapeHtml(Number(sourceTypeSummary.unknownCount || 0))}</dd></div><div><dt>localOnly</dt><dd>${escapeHtml(String(sourceTypeSummary.localOnly === true))}</dd></div><div><dt>noSync</dt><dd>${escapeHtml(String(sourceTypeSummary.noSync === true))}</dd></div></dl><ul class="aha-sync-hub-list" aria-label="Source types">${sourceTypeOrder.map((type) => `<li class="aha-sync-hub-row"><div class="aha-sync-hub-row-heading"><strong>${escapeHtml(sourceTypeLabels[type] || type)}</strong><span class="aha-sync-hub-badge is-planned">${escapeHtml(Number(sourceTypeCounts[type] || 0))}</span></div></li>`).join("")}</ul>${sourceTypeLines.length ? `<ul class="aha-sync-hub-list" aria-label="Source type safe lines">${sourceTypeLines.map((line) => `<li class="aha-sync-hub-row"><p>${escapeHtml(line)}</p></li>`).join("")}</ul>` : ""}</div>
+          <details class="aha-sync-overview-card aha-sync-overview-details"><summary>Kildetyper / Source types</summary><dl class="aha-sync-hub-meta"><div><dt>totalSourceEvents</dt><dd>${escapeHtml(Number(sourceTypeSummary.totalSourceEvents || 0))}</dd></div><div><dt>unknownCount</dt><dd>${escapeHtml(Number(sourceTypeSummary.unknownCount || 0))}</dd></div></dl><ul class="aha-sync-hub-list" aria-label="Source types">${sourceTypeOrder.map((type) => `<li class="aha-sync-hub-row"><div class="aha-sync-hub-row-heading"><strong>${escapeHtml(sourceTypeLabels[type] || type)}</strong><span class="aha-sync-hub-badge is-planned">${escapeHtml(Number(sourceTypeCounts[type] || 0))}</span></div></li>`).join("")}</ul>${sourceTypeLines.length ? `<ul class="aha-sync-hub-list" aria-label="Source type safe lines">${sourceTypeLines.map((line) => `<li class="aha-sync-hub-row"><p>${escapeHtml(line)}</p></li>`).join("")}</ul>` : ""}</details>
     ` : `
-          <div class="aha-sync-overview-card"><h5>Kildetyper</h5><p class="aha-sync-hub-notice">Kildetype-summary ikke tilgjengelig ennå.</p></div>
+          <details class="aha-sync-overview-card aha-sync-overview-details"><summary>Kildetyper / Source types</summary><p class="aha-sync-hub-notice">Kildetype-summary ikke tilgjengelig ennå.</p></details>
     `;
     const channelIds = channels.length ? channels.map((channel) => String(channel?.id || "").trim()).filter(Boolean) : Object.keys({ ...routeByChannel, ...candidateByChannel });
     Object.keys({ ...routeByChannel, ...candidateByChannel }).forEach((id) => { if (!channelIds.includes(id)) channelIds.push(id); });
@@ -2659,21 +2659,31 @@
       ["localOnly", readiness.localOnly !== false],
       ["requiresUserConfirmation", readiness.requiresUserConfirmation !== false]
     ];
+    const emptyChannelCount = Number(coverageGaps?.emptyChannelCount || Math.max(0, channelIds.length - Number(digest.activeChannels || 0)) || 0);
+    const topMetrics = [
+      ["source events", Number(digest.totalSourceEvents || events.length)],
+      ["routed events", Number(digest.totalRoutedEvents || 0)],
+      ["candidates", Number(digest.totalCandidates || candidateSummary.total || 0)],
+      ["active channels", Number(digest.activeChannels || 0)],
+      ["empty channels", emptyChannelCount],
+      ["review items", Number(reviewQueue.totalReviewItems || 0)]
+    ];
 
     return `
       <section class="aha-sync-overview" aria-label="AHA Sync Overview">
         <p class="eyebrow">Sync Hub</p>
         <h4>AHA Sync Overview</h4>
-        <p class="aha-sync-hub-notice"><strong>Read-only / local-only / ingen sync</strong></p>
-        <p class="aha-sync-hub-notice">Én samlet oversikt for trygge AHA_SYNC_CHANNELS-signaler. Ingen approval-action, backend, EchoNet eller sync kjøres.</p>
-        ${renderAhaSyncOverviewLegend()}
+        <p class="aha-sync-overview-status"><strong>Lokal forhåndsvisning · read-only · local-only · ingen sync · ingen rå brukerdata</strong></p>
+        <p class="aha-sync-hub-notice">Trygge AHA_SYNC_CHANNELS-signaler. Ingen backend, EchoNet-runtime eller sync kjøres.</p>
+        <dl class="aha-sync-overview-metrics">${topMetrics.map(([label, value]) => `<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(Number(value || 0))}</dd></div>`).join("")}</dl>
         <div class="aha-sync-overview-grid">
           <div class="aha-sync-overview-card"><h5>Readiness</h5><dl class="aha-sync-hub-meta">${readinessFields.map(([label, value]) => `<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(String(value))}</dd></div>`).join("")}</dl></div>
-          <div class="aha-sync-overview-card"><h5>Digest</h5><dl class="aha-sync-hub-meta"><div><dt>totalSourceEvents</dt><dd>${escapeHtml(Number(digest.totalSourceEvents || events.length))}</dd></div><div><dt>totalRoutedEvents</dt><dd>${escapeHtml(Number(digest.totalRoutedEvents || 0))}</dd></div><div><dt>totalCandidates</dt><dd>${escapeHtml(Number(digest.totalCandidates || candidateSummary.total || 0))}</dd></div><div><dt>activeChannels</dt><dd>${escapeHtml(Number(digest.activeChannels || 0))}</dd></div></dl>${digestLines.length ? `<ul class="aha-sync-hub-list" aria-label="Generic digest lines">${digestLines.map((line) => `<li class="aha-sync-hub-row"><p>${escapeHtml(line)}</p></li>`).join("")}</ul>` : ""}</div>
-          <div class="aha-sync-overview-card"><h5>Review queue</h5><dl class="aha-sync-hub-meta"><div><dt>totalReviewItems</dt><dd>${escapeHtml(Number(reviewQueue.totalReviewItems || 0))}</dd></div><div><dt>requiresUserConfirmation</dt><dd>${escapeHtml(Number(reviewQueue.requiresUserConfirmation || candidateSummary.requiresConfirmation || 0))}</dd></div><div><dt>localOnly</dt><dd>${escapeHtml(Number(reviewQueue.localOnly || candidateSummary.localOnly || 0))}</dd></div></dl><ul class="aha-sync-hub-list" aria-label="Review queue approval counts">${approvalStates.map((state) => `<li class="aha-sync-hub-row"><div class="aha-sync-hub-row-heading"><strong>${escapeHtml(state)}</strong><span class="aha-sync-hub-badge is-planned">${escapeHtml(Number(stateCounts[state] || 0))}</span></div></li>`).join("")}</ul></div>
+          <details class="aha-sync-overview-card aha-sync-overview-details"><summary>Digest</summary>${digestLines.length ? `<ul class="aha-sync-hub-list" aria-label="Generic digest lines">${digestLines.map((line) => `<li class="aha-sync-hub-row"><p>${escapeHtml(line)}</p></li>`).join("")}</ul>` : `<p class="aha-sync-hub-notice">Ingen digest-linjer ennå.</p>`}</details>
+          <details class="aha-sync-overview-card aha-sync-overview-details"><summary>Review queue</summary><dl class="aha-sync-hub-meta"><div><dt>totalReviewItems</dt><dd>${escapeHtml(Number(reviewQueue.totalReviewItems || 0))}</dd></div><div><dt>requiresUserConfirmation</dt><dd>${escapeHtml(Number(reviewQueue.requiresUserConfirmation || candidateSummary.requiresConfirmation || 0))}</dd></div><div><dt>localOnly</dt><dd>${escapeHtml(Number(reviewQueue.localOnly || candidateSummary.localOnly || 0))}</dd></div></dl><ul class="aha-sync-hub-list" aria-label="Review queue approval counts">${approvalStates.map((state) => `<li class="aha-sync-hub-row"><div class="aha-sync-hub-row-heading"><strong>${escapeHtml(state)}</strong><span class="aha-sync-hub-badge is-planned">${escapeHtml(Number(stateCounts[state] || 0))}</span></div></li>`).join("")}</ul></details>
           ${sourceTypeSummaryHtml}
           ${channelSourceMatrixHtml}
           ${coverageGapsHtml}
+          ${renderAhaSyncOverviewLegend()}
         </div>
         <div class="aha-sync-overview-card"><h5>Channels</h5>${channelIds.length ? `<ul class="aha-sync-hub-list" aria-label="Compact channel counts">${channelIds.map((id) => `<li class="aha-sync-hub-row" data-overview-channel-id="${escapeHtml(id)}"><div class="aha-sync-hub-row-heading"><strong>${escapeHtml(getAhaSyncChannelName(id))}</strong><span class="aha-sync-hub-badge is-planned">${escapeHtml(Number(candidateByChannel[id] || 0))} candidates</span></div><p><strong>signals:</strong> ${escapeHtml(Number(routeByChannel[id] || 0))}</p></li>`).join("")}</ul>` : `<p class="aha-sync-hub-notice"><strong>Ingen AHA_SYNC_CHANNELS å vise ennå.</strong></p>`}</div>
       </section>

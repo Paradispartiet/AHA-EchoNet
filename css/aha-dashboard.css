@@ -2092,6 +2092,34 @@ html, body { max-width: 100%; overflow-x: hidden; }
   display: grid;
   gap: 8px;
 }
+.aha-sync-overview-status {
+  margin: 0;
+  color: var(--aha-text);
+  font-size: .9rem;
+}
+.aha-sync-overview-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+.aha-sync-overview-metrics div {
+  padding: 8px 10px;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 10px;
+  background: rgba(255,255,255,.04);
+}
+.aha-sync-overview-metrics dt {
+  color: var(--aha-muted);
+  font-size: .72rem;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.aha-sync-overview-metrics dd {
+  margin: 2px 0 0;
+  font-size: 1rem;
+  font-weight: 800;
+}
 .aha-sync-overview-card {
   display: grid;
   gap: 7px;
@@ -2101,7 +2129,13 @@ html, body { max-width: 100%; overflow-x: hidden; }
   background: rgba(0,0,0,.1);
 }
 .aha-sync-overview-card h5,
+.aha-sync-overview-details summary,
 .aha-sync-channel-registry-details summary { margin: 0; font-size: .82rem; }
+.aha-sync-overview-details summary {
+  cursor: pointer;
+  font-weight: 800;
+}
+.aha-sync-overview-details[open] summary { margin-bottom: 6px; }
 .aha-sync-channel-registry-details {
   display: grid;
   gap: 8px;

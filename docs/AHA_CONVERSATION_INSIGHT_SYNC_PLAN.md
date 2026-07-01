@@ -1,3 +1,12 @@
+
+## Compact AHA Sync Overview layout
+
+AHA Sync Overview er nå ytterligere kompaktert for en mer produktklar read-only/local-only flate. Toppen viser en synlig statuslinje med `Lokal forhåndsvisning · read-only · local-only · ingen sync · ingen rå brukerdata`, og hovedraden samler eksisterende counts fra digest/review/coverage uten å legge til nye metrics.
+
+Tunge detaljer som review queue, kildetyper/source types, kilde-kanal-matrise/channel-source matrix, coverage gaps/dekningshull og forklaring/legend kan foldes ut med `<details>`. Overviewet viser fortsatt bare trygge counts, labels og generiske linjer fra `AHA_SYNC_CHANNELS`; ingen rå brukerdata, private URL-er, router reasons eller candidate labels vises.
+
+Det er ikke lagt til backend, ekte sync, approval-modell, approve/reject-actions, sync-knapp, EchoNet-runtime eller ny confirmation gate. Personal AI Loop source approval boundary er fortsatt sikkerhetsmodellen, og Sync er fortsatt **NO-GO**.
+
 # AHA Conversation Insight Sync Plan
 
 ## Consolidated read-only AHA Sync Overview
