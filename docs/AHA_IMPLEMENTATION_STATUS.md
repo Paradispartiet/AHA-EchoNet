@@ -6,7 +6,9 @@
 
 AHA Sync Overview viser nå en liten read-only/local-only source type summary for lokale source events. Summaryen viser bare trygge counts per canonical source-event-type, inkludert chat, note, reflection, url_article, import, source_event og unknown. URL-artikler telles som source actions / `url_article`, ikke som rå URL-tekst.
 
-Summaryen viser ikke raw source text, URL-er, titles, metadata, brukeridentifikatorer eller rå brukerdata. Den skriver ingenting, sender ingenting, kjører ingen sync og lager ingen backend. Sync er fortsatt **NO-GO**. `AHA_SYNC_CHANNELS` er fortsatt hovedmodellen, og Personal AI Loop source approval boundary er fortsatt sikkerhetsmodellen.
+Summaryen viser ikke raw source text, URL-er, titles, metadata, brukeridentifikatorer eller rå brukerdata (no raw user data). Den skriver ingenting, sender ingenting, kjører ingen sync og lager ingen backend. Sync er fortsatt **NO-GO**. `AHA_SYNC_CHANNELS` er fortsatt hovedmodellen, og Personal AI Loop source approval boundary er fortsatt sikkerhetsmodellen.
+
+✅ AHA Sync Source Type Summary safety: test-locked
 
 ✅ AHA Sync Overview safety: test-locked
 
