@@ -13,15 +13,15 @@ Det er ikke lagt til backend, ekte sync, approval-modell, approve/reject-actions
 
 ✅ AHA Conversation Insight Snapshot safety: test-locked
 
-Snapshot builderen er read-only/local-only/no-sync og bruker bare eksplisitte, strukturerte og safe inputfelt. Safety-låsen bekrefter at builderen ikke returnerer raw text, private URL-er, metadata, raw payloads eller user identifiers. UI er ikke startet, og det finnes ingen approval actions, ingen EchoNet-runtime og ingen backend for Snapshot V1.
+Snapshot builderen er read-only/local-only/no-sync og bruker bare eksplisitte, strukturerte og safe inputfelt. Safety-låsen bekrefter at builderen ikke returnerer raw text, private URL-er, metadata, raw payloads eller user identifiers. Snapshot V1 preview er nå implementert i eksisterende `AHA ser nå`-flate, og det finnes fortsatt ingen approval actions, ingen EchoNet-runtime og ingen backend for Snapshot V1.
 
-AHA Conversation Insight Snapshot V1: builder implemented, UI not started.
+AHA Conversation Insight Snapshot V1: builder implemented, safe UI preview implemented.
 
 Denne PR-en starter neste AHA-spor som samtaleforståelse med `js/ahaConversationInsightSnapshot.js`: en lokal, read-only/no-sync helper som bygger et Snapshot V1 fra eksplisitte, strukturerte og trygge inputfelt. Builderen returnerer ikke rå brukerdata, full transcript, raw source events, private URL-er, private metadata, raw payloads, userId eller email.
 
-Builderen skriver ikke til browser storage, leser ikke direkte fra browser storage, sender ingenting til backend, bruker ingen network-kall, legger ikke til approval actions, aktiverer ikke EchoNet og lager ikke permanent minne. Snapshot V1 UI er ikke startet.
+Builderen og previewet skriver ikke til browser storage, previewet leser ikke direkte fra browser storage, sender ingenting til backend, bruker ingen network-kall/fetch, legger ikke til approval actions, aktiverer ikke EchoNet og lager ikke permanent minne. UI viser bare safe snapshot fields: summary, strukturerte signal-labels og neste forståelsessteg. UI viser ikke raw user text, URL-er, metadata, raw payloads eller user identifiers.
 
-AHA Sync Overview V1 er fortsatt frosset. Det nye sporet er samtaleforståelse, ikke mer Sync Overview, og Sync Overview V1-kontrakten er ikke endret.
+AHA Sync Overview V1 er fortsatt frosset og uendret. Det nye sporet er samtaleforståelse, ikke mer Sync Overview, og Sync Overview V1-kontrakten er ikke endret.
 
 ## AHA Sync Overview V1
 

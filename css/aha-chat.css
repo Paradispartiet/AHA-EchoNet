@@ -711,6 +711,14 @@ pre#out { max-height: 22vh; overflow:auto; white-space: pre-wrap; }
 .aha-now-list div { padding: 12px; border: 1px solid rgba(255,255,255,.1); border-radius: 14px; background: rgba(15,24,49,.52); }
 .aha-now-list dt { color: var(--aha-accent); font-size: 10px; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px; }
 .aha-now-list dd { margin: 0; line-height: 1.45; }
+.aha-snapshot-preview { display: grid; gap: 12px; }
+.aha-snapshot-status { margin: 0; color: #bdf8d2; font-size: 12px; }
+.aha-snapshot-summary { padding: 12px; border: 1px solid rgba(255,255,255,.1); border-radius: 14px; background: rgba(15,24,49,.52); }
+.aha-snapshot-summary h3, .aha-snapshot-group h3, .aha-snapshot-steps h3 { margin: 0 0 6px; font-size: 13px; color: var(--aha-accent); }
+.aha-snapshot-summary p { margin: 0; color: var(--aha-muted); line-height: 1.5; }
+.aha-snapshot-groups { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+.aha-snapshot-group, .aha-snapshot-steps { padding: 10px; border: 1px solid rgba(255,255,255,.1); border-radius: 14px; background: rgba(255,255,255,.025); }
+.aha-snapshot-chip { display: inline-flex; margin: 3px 4px 3px 0; padding: 5px 8px; border-radius: 999px; background: rgba(127,255,184,.08); border: 1px solid rgba(127,255,184,.18); color: var(--aha-text); font-size: 12px; }
 .memory-card { display:grid; gap: 10px; }
 .memory-card .aha-memory-status { margin: 0; background: rgba(127,255,184,.06); border-color: rgba(127,255,184,.2); }
 .memory-warning { color: #ffdca3; }

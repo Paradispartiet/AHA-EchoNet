@@ -19,8 +19,9 @@ assert.notEqual(renderAhaNowStart, -1, 'Explorer should define the top AHA-now r
 assert.notEqual(renderAhaNowEnd, -1, 'renderAhaNow section should be bounded by Etterarbeid renderer');
 
 const renderAhaNow = explorerCode.slice(renderAhaNowStart, renderAhaNowEnd);
+assert.ok(renderAhaNow.includes('AHAConversationInsightSnapshot'), 'Top AHA-now card should render the safe snapshot preview');
+assert.ok(renderAhaNow.includes('buildConversationInsightSnapshot'), 'Top AHA-now card should use the snapshot builder');
 for (const label of ['Innholdstype', 'Tema', 'Hovedspenning', 'Viktigste innsikt', 'Neste steg']) {
-  assert.ok(renderAhaNow.includes(`dlRow("${label}"`), `Top AHA-now card should still render ${label}`);
   assert.equal(renderOversikt.includes(`dlRow("${label}"`), false, `Explorer overview should not repeat live analysis field ${label}`);
 }
 

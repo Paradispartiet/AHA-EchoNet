@@ -202,7 +202,7 @@ const combinedDocs = `${docsText}\n${statusText}`;
   'aha conversation insight snapshot v1',
   'read-only',
   'local-only',
-  'ui not started'
+  'safe ui preview implemented'
 ].forEach((term) => assert.ok(combinedDocs.includes(term), term));
 assert.ok(combinedDocs.includes('no-sync') || combinedDocs.includes('ingen sync'), 'no-sync documented');
 assert.ok(/runtime.*builder|builder.*implemented|builder implementert|runtime\/builder implementert/i.test(combinedDocs), 'runtime/builder implemented documented');
