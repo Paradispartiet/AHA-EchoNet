@@ -75,6 +75,8 @@
       if (host && name !== "mer") host.innerHTML = emptyNote(name === "innsikter" ? "Lagrede innsikter vises separat. AHA venter på ny analyse." : "AHA venter på ny analyse.");
       setTabCount(name, 0);
     });
+    const dataHost = getContainer("data");
+    if (dataHost) dataHost.innerHTML = emptyNote("AHA venter på ny analyse.");
     renderAhaNow({ ahaSer: {}, afterwork: {}, insights: [], concepts: [], sourceTextHash: run?.sourceHash || "", analysisRunId: run?.analysisRunId || run?.runId || "" });
   }
 

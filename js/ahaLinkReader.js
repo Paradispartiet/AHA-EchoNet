@@ -139,6 +139,11 @@
     return latestArticleAnalysis;
   }
 
+  function clearLatestArticleAnalysis() {
+    latestArticleAnalysis = null;
+    return latestArticleAnalysis;
+  }
+
   function getLatestArticleAnalysis() {
     return latestArticleAnalysis ? Object.assign({}, latestArticleAnalysis, {
       main_points: (latestArticleAnalysis.main_points || []).slice(),
@@ -191,6 +196,7 @@
   async function processUrlsFromMessage(text, context) {
     const urls = detectUrls(text);
     if (!urls.length) return [];
+    clearLatestArticleAnalysis();
     renderLinkStatus("Lenke oppdaget – AHA leser kilden …");
     const results = [];
     for (const url of urls) {
@@ -221,5 +227,5 @@
     return lastLinkReadResults.slice();
   }
 
-  global.AHALinkReader = { detectUrls, hasUrls, processUrlsFromMessage, buildSafeSourcePayload, renderLinkStatus, getLastLinkReadResults, setLatestArticleAnalysis, getLatestArticleAnalysis };
+  global.AHALinkReader = { detectUrls, hasUrls, processUrlsFromMessage, buildSafeSourcePayload, renderLinkStatus, getLastLinkReadResults, setLatestArticleAnalysis, getLatestArticleAnalysis, clearLatestArticleAnalysis };
 }(window));

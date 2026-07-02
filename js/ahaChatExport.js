@@ -190,6 +190,7 @@
       .replace(/ø/g, "o")
       .replace(/å/g, "a")
       .replace(/[^a-z0-9]+/g, " ")
+      .replace(/\b(usa|kina)s\b/g, "$1")
       .replace(/\s+/g, " ")
       .trim();
   }
