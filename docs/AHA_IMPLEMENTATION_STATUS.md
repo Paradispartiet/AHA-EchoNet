@@ -9,6 +9,14 @@ Det er ikke lagt til backend, ekte sync, approval-modell, approve/reject-actions
 
 # AHA Implementation Status
 
+## AHA Conversation Insight Snapshot V1
+
+AHA Conversation Insight Snapshot V1: contract defined, runtime not started.
+
+Denne PR-en definerer neste AHA-spor som samtaleforståelse: en lokal, read-only oppsummering av hva AHA ser i én samtale eller analyse akkurat nå. Kontrakten er dokumentert som local-only/no-sync, uten rå brukerdata, private URL-er, brukeridentifikatorer, approval actions, backend, permanent minne eller EchoNet-aktivering.
+
+AHA Sync Overview V1 er fortsatt frosset. Neste spor er samtaleforståelse, ikke mer Sync Overview, og det er ingen runtime-endring i denne PR-en.
+
 ## AHA Sync Overview V1
 
 AHA Sync Overview V1 er nå frosset som dokumentert kontrakt for den samlede Sync Overview-flaten. V1 er en trygg read-only/local-only toppstatus og innsiktsoversikt som består av:
