@@ -2,9 +2,9 @@
 
 ## Status
 
-**AHA Conversation Insight Snapshot V1** is now implemented as a local helper/runtime builder. UI is **not started** in this PR.
+**AHA Conversation Insight Snapshot V1** is now implemented as a local helper/runtime builder with a compact read-only UI preview in the existing `AHA ser nå` surface.
 
-Snapshot V1 defines a local, read-only understanding layer for what AHA can safely summarize from one current conversation or one current analysis. It does not change AHA Home, AHA Sync Overview, History Go, EchoNet, source storage, exports, approval surfaces, backend contracts, or tests.
+Snapshot V1 defines a local, read-only understanding layer for what AHA can safely summarize from one current conversation or one current analysis. It does not change AHA Sync Overview, History Go, EchoNet, source storage, exports, approval surfaces, backend contracts, or tests.
 
 ## Purpose
 
@@ -33,7 +33,7 @@ Snapshot V1 is **not**:
 
 ## V1 output contract
 
-The V1 contract is implemented by `js/ahaConversationInsightSnapshot.js` as a plain browser global helper. It provides the local read-only/no-sync builder only; no UI rendering, persistence, backend API, approval action, or EchoNet behavior is implemented here.
+The V1 contract is implemented by `js/ahaConversationInsightSnapshot.js` as a plain browser global helper. It provides the local read-only/no-sync builder; the UI preview only renders safe fields returned from that builder and does not add persistence, backend API, approval action, sync action, or EchoNet behavior.
 
 ```js
 {
@@ -76,7 +76,18 @@ The V1 contract is implemented by `js/ahaConversationInsightSnapshot.js` as a pl
 
 The builder does not read from or write to browser storage, does not call a backend, does not use network requests, does not add approval actions, does not activate EchoNet, and does not create permanent memory. It sanitizes output so snapshots do not return raw user text, full transcripts, private URLs, private metadata, raw payloads, raw source events, user IDs, or email addresses.
 
-Snapshot V1 UI is not started. This helper only makes the contract available locally for later safe use.
+Snapshot V1 preview is implemented in the existing `AHA ser nå` panel. The preview is read-only/local-only/no-sync, calls `window.AHAConversationInsightSnapshot.buildConversationInsightSnapshot(...)`, and displays only safe snapshot fields: summary, structured signal labels, and next understanding steps. It does not show raw user text, full transcripts, raw source events, private URLs, private metadata, raw payloads, userId/email, full source refs, or invalid raw fields. It adds no approval actions, no sync controls, no EchoNet runtime, no backend, no localStorage reads/writes, and no fetch calls.
+
+## UI preview status
+
+Snapshot V1 preview is implemented in the existing AHA Chat `AHA ser nå` surface rather than as a duplicate panel. The preview shows `Lokal forhåndsvisning · read-only · local-only · ingen sync · ingen rå brukerdata`, then renders the builder output for:
+
+- `summary.headline`
+- `summary.shortDescription`
+- safe signal groups for concepts, open questions, perspectives, tensions, and conversation links
+- `nextUnderstandingSteps` as understanding prompts only
+
+The preview uses already structured analysis fields and falls back safely if the builder or structured signals are unavailable. It does not read directly from `localStorage`, write to `localStorage`, call `fetch`, send data, show raw user text, expose URLs/metadata/user identifiers, add approval actions, build EchoNet, or change AHA Sync Overview V1.
 
 ## Field explanations
 
