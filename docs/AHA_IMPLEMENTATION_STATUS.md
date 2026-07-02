@@ -11,6 +11,10 @@ Det er ikke lagt til backend, ekte sync, approval-modell, approve/reject-actions
 
 ## AHA Conversation Insight Snapshot V1
 
+✅ AHA Conversation Insight Snapshot safety: test-locked
+
+Snapshot builderen er read-only/local-only/no-sync og bruker bare eksplisitte, strukturerte og safe inputfelt. Safety-låsen bekrefter at builderen ikke returnerer raw text, private URL-er, metadata, raw payloads eller user identifiers. UI er ikke startet, og det finnes ingen approval actions, ingen EchoNet-runtime og ingen backend for Snapshot V1.
+
 AHA Conversation Insight Snapshot V1: builder implemented, UI not started.
 
 Denne PR-en starter neste AHA-spor som samtaleforståelse med `js/ahaConversationInsightSnapshot.js`: en lokal, read-only/no-sync helper som bygger et Snapshot V1 fra eksplisitte, strukturerte og trygge inputfelt. Builderen returnerer ikke rå brukerdata, full transcript, raw source events, private URL-er, private metadata, raw payloads, userId eller email.

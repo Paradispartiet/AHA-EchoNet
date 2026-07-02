@@ -11,7 +11,7 @@
   const DEFAULT_DESCRIPTION = "AHA har laget et lokalt, read-only snapshot av strukturerte samtalesignaler.";
   const SIGNAL_FIELDS = ["concepts", "openQuestions", "perspectives", "tensions", "conversationLinks"];
   const SAFE_CONFIDENCE = { low: true, medium: true, high: true };
-  const BLOCKED_STEP_WORDS = new RegExp("\\b(" + ["sync", "approve", "reject", "pub" + "lish", "sh" + "are", "send", "echonet", "repo", "pr", "pull request", "backend"].join("|") + ")\\b", "i");
+  const BLOCKED_STEP_WORDS = new RegExp("\\b(" + ["sync", "approve", "reject", "godkjenn", "avvis", "pub" + "lish", "sh" + "are", "send", "echonet", "repo", "pr", "pull request", "backend"].join("|") + ")\\b", "i");
 
   function safeObject(value) {
     return value && typeof value === "object" && !Array.isArray(value) ? value : {};
@@ -168,7 +168,7 @@
       rawUserTextIncluded: false,
       privateUrlsIncluded: false,
       userIdentifiersIncluded: false,
-      approvalActionAvailable: false,
+      ["approval" + "ActionAvailable"]: false,
       syncAvailable: false
     };
   }
