@@ -9,6 +9,25 @@ Det er ikke lagt til backend, ekte sync, approval-modell, approve/reject-actions
 
 # AHA Implementation Status
 
+## AHA Sync Overview V1
+
+AHA Sync Overview V1 er nå frosset som dokumentert kontrakt for den samlede Sync Overview-flaten. V1 er en trygg read-only/local-only toppstatus og innsiktsoversikt som består av:
+
+- readiness
+- digest
+- review queue summary
+- channel summary
+- source type summary
+- channel-source matrix
+- coverage gaps
+- legend/forklaring
+- compact layout
+- global safety gate
+
+V1-kontrakten er eksplisitt ikke ekte sync: `readyForSync` er `false`, `noSync` er `true`, ingen ekte sync kjøres, ingen approve/reject-action finnes, og ingen sync-knapp eller ny confirmation gate er innført. Overviewet viser bare trygge counts, labels og generiske linjer fra `AHA_SYNC_CHANNELS`; ingen raw source text, ingen private URL-er, ingen brukeridentifikatorer og ingen rå brukerdata vises.
+
+AHA Sync Overview V1 aktiverer ikke EchoNet-runtime, innfører ingen backend og innfører ingen prosjektstyringsmodell. Personal AI Loop source approval boundary er fortsatt sikkerhetsmodellen for source approval-grensen, og Sync er fortsatt **NO-GO**.
+
 ## Consolidated read-only AHA Sync Overview
 
 ## AHA Sync Overview legend / forklaring

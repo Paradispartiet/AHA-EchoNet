@@ -1,6 +1,6 @@
 # AHA-EchoNet
 
-**Status baseline:** AHA quality gates for topic/source/geopolitics are green on the latest `npm test` baseline (115/115), while AHA Sync remains read-only/local-only and NO-GO for real sync or EchoNet activation.
+**Status baseline:** AHA quality gates for topic/source/geopolitics are green on the latest `npm test` baseline (115/115), while AHA Sync remains read-only/local-only and NO-GO for real sync or EchoNet activation. AHA Sync Overview V1 is a local read-only overview. It does not perform sync, approval, publishing, or EchoNet network actions.
 
 ## Read-only AHA sync candidate approval summary
 

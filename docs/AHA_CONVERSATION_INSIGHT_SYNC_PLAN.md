@@ -9,6 +9,22 @@ Det er ikke lagt til backend, ekte sync, approval-modell, approve/reject-actions
 
 # AHA Conversation Insight Sync Plan
 
+## V1/V2/EchoNet boundary
+
+### 1. Nåværende V1: local read-only overview
+
+Nåværende V1 er en local read-only overview for samtaleinnsiktssignaler. Den samler readiness, digest, review queue summary, channel summary, source type summary, channel-source matrix, coverage gaps, legend/forklaring, compact layout og global safety gate. Den er local-only, viser bare trygge counts/labels/generiske linjer, bruker `AHA_SYNC_CHANNELS`, og holder Personal AI Loop source approval boundary som sikkerhetsmodell.
+
+V1 kjører ingen sync, skriver ikke data, har ingen approve/reject-actions, viser ingen rå brukerdata, private URL-er eller brukeridentifikatorer, aktiverer ikke EchoNet og innfører ingen backend. Sync er fortsatt **NO-GO**.
+
+### 2. Senere mulig V2: user-reviewed insight preparation
+
+En mulig senere V2 kan bare beskrives som user-reviewed insight preparation. Det betyr at brukeren eventuelt kan få forberedt, redigert og eksplisitt gjennomgått innsiktskandidater innenfor samme sikkerhetsgrense før noen fremtidig handling vurderes. V2 er ikke startet her, approval actions finnes ikke, og sync er ikke implementert.
+
+### 3. Fortsatt senere / ikke nå: EchoNet/network sync
+
+EchoNet/network sync er fortsatt et senere og ikke-aktivert spor. Det finnes ingen EchoNet-runtime i AHA Sync Overview V1, ingen network sync, ingen publish/share og ingen backend-kontrakt for dette i denne planen.
+
 ## Consolidated read-only AHA Sync Overview
 
 ## AHA Sync Overview legend / forklaring
