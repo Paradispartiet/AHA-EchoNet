@@ -9,6 +9,23 @@ Det er ikke lagt til backend, ekte sync, approval-modell, approve/reject-actions
 
 # AHA Sync Hub / Control Center plan
 
+## AHA Sync Hub V1 status: frozen read-only overview
+
+AHA Sync Hub V1 er frosset som en lokal innsiktsoversikt, ikke en sync-motor. Den viser mønstre, counts og trygge labels fra lokale source events og eksisterende helper-brikker. Den bruker `AHA_SYNC_CHANNELS` som hovedmodell og Personal AI Loop source approval boundary som sikkerhetsgrense.
+
+V1 har ikke approval actions, approve/reject-knapper, manual sync, auto-sync, publish/share, real sync, backend eller EchoNet runtime. Den skal ikke bli et prosjektdashboard og skal ikke introdusere prosjektstyringsfelter som phase, priority, health, nextPr eller repoStatus. Sync er fortsatt **NO-GO**.
+
+### V1 non-goals
+
+- no backend
+- no auto-sync
+- no manual sync
+- no publish/share
+- no approve/reject
+- no raw user data
+- no project management fields
+- no EchoNet activation
+
 ## Consolidated read-only AHA Sync Overview
 
 ## AHA Sync Overview legend / forklaring
