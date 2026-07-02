@@ -423,17 +423,52 @@
   function renderAhaNow(b) {
     const host = document.getElementById("aha-now-content");
     if (!host) return;
+    const builder = global.AHAConversationInsightSnapshot?.buildConversationInsightSnapshot;
+    if (typeof builder !== "function") {
+      host.innerHTML = emptyNote("Samtaleinnsikt er ikke tilgjengelig ennå.");
+      return;
+    }
     const ser = b.ahaSer || {};
-    const rows = [
-      dlRow("Innholdstype", ser.innholdstype ? humanizeTextType(ser.innholdstype) : ""),
-      dlRow("Tema", ser.tema),
-      dlRow("Hovedspenning", ser.hovedspenning),
-      dlRow("Viktigste innsikt", ser.viktigsteInnsikt),
-      dlRow("Neste steg", ser.nesteSteg)
-    ].join("");
-    host.innerHTML = rows
-      ? `<dl class="aha-now-list">${rows}</dl>`
-      : emptyNote("Send en tekst, så bygger AHA oversikt, begreper og innsikter her.");
+    const structured = {
+      headline: asText(ser.tema) || asText(ser.innholdstype ? humanizeTextType(ser.innholdstype) : ""),
+      shortDescription: asText(ser.kortSvar) || asText(b.afterwork?.summary),
+      concepts: asList(b.concepts).concat(asList(ser.begreper)),
+      openQuestions: asList(ser.apneSporsmal).concat(asList(b.openQuestions)),
+      perspectives: asList(ser.perspektiver).concat(asList(b.perspectives)),
+      tensions: [ser.hovedspenning].concat(asList(ser.spenninger), asList(b.tensions)),
+      conversationLinks: asList(ser.fagkoblinger).concat(asList(b.subjectMatches).map((match) => match?.title || match?.subject_label)),
+      nextUnderstandingSteps: [ser.nesteSteg].concat(asList(b.nextUnderstandingSteps)),
+      quality: b.quality
+    };
+    const snapshot = builder(structured);
+    const signals = snapshot.signals || {};
+    const groups = [
+      ["Begreper", signals.concepts],
+      ["Åpne spørsmål", signals.openQuestions],
+      ["Perspektiver", signals.perspectives],
+      ["Spenninger", signals.tensions],
+      ["Samtalekoblinger", signals.conversationLinks]
+    ];
+    const hasSignals = groups.some(([, items]) => asList(items).length) || asList(snapshot.nextUnderstandingSteps).length;
+    const groupHtml = groups.map(([label, items]) => {
+      const safeItems = asList(items).map((item) => asText(item?.label)).filter(Boolean).slice(0, 4);
+      return `<section class="aha-snapshot-group"><h3>${esc(label)}</h3>${safeItems.length ? chipRow(safeItems, "aha-snapshot-chip") : emptyNote("Ingen strukturerte signaler ennå.")}</section>`;
+    }).join("");
+    const steps = asList(snapshot.nextUnderstandingSteps).map(asText).filter(Boolean).slice(0, 4);
+    host.innerHTML = `
+      <article class="aha-snapshot-preview" aria-label="Samtaleinnsikt">
+        <p class="aha-snapshot-status">Lokal forhåndsvisning · read-only · local-only · ingen sync · ingen rå brukerdata</p>
+        <div class="aha-snapshot-summary">
+          <h3>${esc(snapshot.summary?.headline || "Samtaleinnsikt")}</h3>
+          <p>${esc(hasSignals ? snapshot.summary?.shortDescription : "AHA har ikke nok strukturerte signaler ennå.")}</p>
+        </div>
+        <div class="aha-snapshot-groups">${groupHtml}</div>
+        <section class="aha-snapshot-steps">
+          <h3>Neste forståelsessteg</h3>
+          ${steps.length ? orderedList(steps, 4) : emptyNote("AHA har ikke nok strukturerte signaler ennå.")}
+        </section>
+      </article>
+    `;
   }
 
   function renderEtterarbeid(b) {
