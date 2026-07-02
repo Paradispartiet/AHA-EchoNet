@@ -11,11 +11,13 @@ Det er ikke lagt til backend, ekte sync, approval-modell, approve/reject-actions
 
 ## AHA Conversation Insight Snapshot V1
 
-AHA Conversation Insight Snapshot V1: contract defined, runtime not started.
+AHA Conversation Insight Snapshot V1: builder implemented, UI not started.
 
-Denne PR-en definerer neste AHA-spor som samtaleforståelse: en lokal, read-only oppsummering av hva AHA ser i én samtale eller analyse akkurat nå. Kontrakten er dokumentert som local-only/no-sync, uten rå brukerdata, private URL-er, brukeridentifikatorer, approval actions, backend, permanent minne eller EchoNet-aktivering.
+Denne PR-en starter neste AHA-spor som samtaleforståelse med `js/ahaConversationInsightSnapshot.js`: en lokal, read-only/no-sync helper som bygger et Snapshot V1 fra eksplisitte, strukturerte og trygge inputfelt. Builderen returnerer ikke rå brukerdata, full transcript, raw source events, private URL-er, private metadata, raw payloads, userId eller email.
 
-AHA Sync Overview V1 er fortsatt frosset. Neste spor er samtaleforståelse, ikke mer Sync Overview, og det er ingen runtime-endring i denne PR-en.
+Builderen skriver ikke til browser storage, leser ikke direkte fra browser storage, sender ingenting til backend, bruker ingen network-kall, legger ikke til approval actions, aktiverer ikke EchoNet og lager ikke permanent minne. Snapshot V1 UI er ikke startet.
+
+AHA Sync Overview V1 er fortsatt frosset. Det nye sporet er samtaleforståelse, ikke mer Sync Overview, og Sync Overview V1-kontrakten er ikke endret.
 
 ## AHA Sync Overview V1
 

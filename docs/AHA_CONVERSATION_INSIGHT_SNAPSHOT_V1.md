@@ -2,7 +2,7 @@
 
 ## Status
 
-**AHA Conversation Insight Snapshot V1** is a documentation-only contract. Runtime is **not started** in this PR.
+**AHA Conversation Insight Snapshot V1** is now implemented as a local helper/runtime builder. UI is **not started** in this PR.
 
 Snapshot V1 defines a local, read-only understanding layer for what AHA can safely summarize from one current conversation or one current analysis. It does not change AHA Home, AHA Sync Overview, History Go, EchoNet, source storage, exports, approval surfaces, backend contracts, or tests.
 
@@ -33,7 +33,7 @@ Snapshot V1 is **not**:
 
 ## V1 output contract
 
-The V1 contract is a documentation contract only. No runtime builder, UI rendering, persistence, backend API, or EchoNet behavior is implemented here.
+The V1 contract is implemented by `js/ahaConversationInsightSnapshot.js` as a plain browser global helper. It provides the local read-only/no-sync builder only; no UI rendering, persistence, backend API, approval action, or EchoNet behavior is implemented here.
 
 ```js
 {
@@ -60,9 +60,23 @@ The V1 contract is a documentation contract only. No runtime builder, UI renderi
     approvalActionAvailable: false,
     syncAvailable: false
   },
+  quality: {
+    sourceBound: null,
+    topicConsistent: null,
+    staleDataGuarded: null
+  },
   nextUnderstandingSteps: []
 }
 ```
+
+
+## Runtime builder status
+
+`js/ahaConversationInsightSnapshot.js` implements the Snapshot V1 builder as `window.AHAConversationInsightSnapshot`. The builder is read-only, local-only, and no-sync. It accepts explicit input and extracts only structured/safe fields such as summary labels, concepts, open questions, perspectives, tensions, conversation links, next understanding steps, and safe quality booleans/status values.
+
+The builder does not read from or write to browser storage, does not call a backend, does not use network requests, does not add approval actions, does not activate EchoNet, and does not create permanent memory. It sanitizes output so snapshots do not return raw user text, full transcripts, private URLs, private metadata, raw payloads, raw source events, user IDs, or email addresses.
+
+Snapshot V1 UI is not started. This helper only makes the contract available locally for later safe use.
 
 ## Field explanations
 
