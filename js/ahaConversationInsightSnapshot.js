@@ -30,7 +30,7 @@
     const text = compactWhitespace(value);
     if (!text) return true;
     if (UNSAFE_URL_OR_PATH_PATTERN.test(text) || /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i.test(text)) return true;
-    if (/\b(user[_-]?id|email|token|private[_-]?payload|raw[_-]?payload|transcript)\b/i.test(text)) return true;
+    if (/\b(user[_-]?id|email|token|private[_-]?payload|raw[_-]?payload|transcript|source\.url|href)\b/i.test(text)) return true;
     return false;
   }
 
@@ -48,7 +48,7 @@
 
   function normalizeSignalItem(item) {
     const candidate = item && typeof item === "object" ? item : { label: item };
-    const label = clipSafeText(candidate.label || candidate.name || candidate.title || candidate.value, 80);
+    const label = clipSafeText(candidate.label || candidate.name || candidate.title || candidate.value || candidate.question || candidate.concept, 80);
     if (!label) return null;
     return {
       label,
@@ -57,12 +57,26 @@
     };
   }
 
-  function collectField(input, field) {
-    return []
-      .concat(safeArray(input[field]))
-      .concat(safeArray(safeObject(input.analysis)[field]))
-      .concat(safeArray(safeObject(input.canonicalAnalysis)[field]))
-      .concat(safeArray(safeObject(input.ahaSer)[field]));
+  function asSignalValues(value) {
+    if (Array.isArray(value)) return value;
+    if (value && typeof value === "object") return [value];
+    return value == null || value === "" ? [] : [value];
+  }
+
+  function collectStructuredSignalValues(input, field, aliases) {
+    const roots = [input, safeObject(input.analysis), safeObject(input.canonicalAnalysis), safeObject(input.ahaSer)];
+    const keys = [field].concat(safeArray(aliases));
+    return roots.reduce((items, root) => {
+      keys.forEach((key) => {
+        items.push.apply(items, asSignalValues(safeObject(root)[key]));
+      });
+      return items;
+    }, []);
+  }
+
+  function collectInsightCardValues(input) {
+    const roots = [input, safeObject(input.analysis), safeObject(input.canonicalAnalysis), safeObject(input.ahaSer)];
+    return roots.reduce((items, root) => items.concat(safeArray(safeObject(root).insightCards)), []);
   }
 
   function dedupeLimit(items, limit) {
@@ -97,7 +111,7 @@
     const topicConsistency = safeObject(input.topicConsistency);
     return {
       sourceBound: booleanOrNull(quality.sourceBound) ?? pickSafeStatus(sourceBinding.valid ?? sourceBinding.status ?? quality.sourceBinding),
-      topicConsistent: booleanOrNull(quality.topicConsistent) ?? pickSafeStatus(topicConsistency.valid ?? topicConsistency.status ?? quality.topicConsistency),
+      topicConsistent: booleanOrNull(quality.topicConsistent) ?? pickSafeStatus(quality.topicConsistent ?? quality.topicConsistency ?? topicConsistency.valid ?? topicConsistency.status),
       staleDataGuarded: booleanOrNull(quality.staleDataGuarded) ?? pickSafeStatus(quality.staleDataGuarded)
     };
   }
@@ -107,20 +121,21 @@
     return {
       headline: clipSafeText(src.headline || safeObject(src.summary).headline, 90),
       shortDescription: clipSafeText(src.shortDescription || safeObject(src.summary).shortDescription, 240),
-      concepts: collectField(src, "concepts"),
-      openQuestions: collectField(src, "openQuestions"),
-      perspectives: collectField(src, "perspectives"),
-      tensions: collectField(src, "tensions"),
-      conversationLinks: collectField(src, "conversationLinks"),
-      nextUnderstandingSteps: safeArray(src.nextUnderstandingSteps),
+      concepts: collectStructuredSignalValues(src, "concepts", ["fieldConnections", "fagkoblinger"]).concat(collectInsightCardValues(src)),
+      openQuestions: collectStructuredSignalValues(src, "openQuestions", ["questions"]),
+      perspectives: collectStructuredSignalValues(src, "perspectives", ["viewpoints", "angles"]),
+      tensions: collectStructuredSignalValues(src, "tensions", ["mainTension", "hovedspenning"]),
+      conversationLinks: collectStructuredSignalValues(src, "conversationLinks", ["links", "historyGoLinks"]),
+      nextUnderstandingSteps: collectStructuredSignalValues(src, "nextUnderstandingSteps", ["suggestedActions", "nesteSteg"]),
       quality: normalizeQuality(src)
     };
   }
 
   function buildSnapshotSummary(normalized) {
     const src = safeObject(normalized);
+    const firstConcept = normalizeSignalItem(safeArray(src.concepts)[0]);
     return {
-      headline: src.headline || DEFAULT_HEADLINE,
+      headline: src.headline || (firstConcept ? `Samtaleinnsikt: ${firstConcept.label}` : DEFAULT_HEADLINE),
       shortDescription: src.shortDescription || DEFAULT_DESCRIPTION
     };
   }

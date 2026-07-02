@@ -19,6 +19,8 @@ Previewet er read-only/local-only/no-sync og viser bare safe snapshot fields: su
 
 Snapshot builderen er read-only/local-only/no-sync og bruker bare eksplisitte, strukturerte og safe inputfelt. Safety-låsen bekrefter at builderen ikke returnerer raw text, private URL-er, metadata, raw payloads eller user identifiers. Snapshot V1 preview er nå implementert i eksisterende `AHA ser nå`-flate, og det finnes fortsatt ingen approval actions, ingen EchoNet-runtime og ingen backend for Snapshot V1.
 
+Builderen henter nå flere trygge signaler fra allerede strukturerte analysis-felt, inkludert `analysis`, `canonicalAnalysis`, `ahaSer`, strukturerte insight cards, samt safe boolean/status fra `quality`, `sourceBinding` og `topicConsistency`. Signalene dedupliseres case-insensitivt, begrenses per gruppe og filtreres slik at raw chat text, transcript, URL-er, userId/email, raw source events og private payloads ikke returneres. UI-kontrakten er uendret, AHA Sync Overview V1 er uendret, og det er fortsatt ingen sync, approval, EchoNet eller backend lagt til.
+
 AHA Conversation Insight Snapshot V1: builder implemented, safe UI preview implemented.
 
 Denne PR-en starter neste AHA-spor som samtaleforståelse med `js/ahaConversationInsightSnapshot.js`: en lokal, read-only/no-sync helper som bygger et Snapshot V1 fra eksplisitte, strukturerte og trygge inputfelt. Builderen returnerer ikke rå brukerdata, full transcript, raw source events, private URL-er, private metadata, raw payloads, userId eller email.

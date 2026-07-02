@@ -76,6 +76,8 @@ The V1 contract is implemented by `js/ahaConversationInsightSnapshot.js` as a pl
 
 The builder does not read from or write to browser storage, does not call a backend, does not use network requests, does not add approval actions, does not activate EchoNet, and does not create permanent memory. It sanitizes output so snapshots do not return raw user text, full transcripts, private URLs, private metadata, raw payloads, raw source events, user IDs, or email addresses.
 
+Structured signal enrichment is now part of the same V1 builder contract. The builder can collect safe labels from existing structured analysis objects such as `analysis`, `canonicalAnalysis`, `ahaSer`, `quality`, `sourceBinding`, `topicConsistency`, and structured insight cards when those fields already exist in the explicit input. It deduplicates signal labels case-insensitively, trims empty values, limits each signal group to eight items, clips long labels safely, and drops URL-like or email-like labels. The UI contract is unchanged: no new UI, no AHA Sync Overview V1 change, no sync, no approval flow, no EchoNet runtime, and no backend have been added.
+
 Snapshot V1 preview is implemented in the existing `AHA ser nå` panel. The preview is read-only/local-only/no-sync, calls `window.AHAConversationInsightSnapshot.buildConversationInsightSnapshot(...)`, and displays only safe snapshot fields: summary, structured signal labels, and next understanding steps. It does not show raw user text, full transcripts, raw source events, private URLs, private metadata, raw payloads, userId/email, full source refs, or invalid raw fields. It adds no approval actions, no sync controls, no EchoNet runtime, no backend, no localStorage reads/writes, and no fetch calls.
 
 ## UI preview status
