@@ -23,6 +23,12 @@ function ctx(){
 const staleWords = /pinse|apostlene|Den hellige ånd|Babel|tungetale/i;
 const pinseText = 'Pinse handler om apostlene, Den hellige ånd, Babel og tungetale i kristen tradisjon.';
 const boligText = 'Boligleiemarkedet preges av høye leiepriser, press i byene, depositum, kontrakter, utleiere og leietakere.';
+const linkReaderSource = fs.readFileSync('js/ahaLinkReader.js', 'utf8');
+assert.match(linkReaderSource, /function clearLatestArticleAnalysis\(\)/, 'link reader must expose stale article-analysis clearing');
+assert.match(linkReaderSource, /function processUrlsFromMessage[\s\S]*clearLatestArticleAnalysis\(\);[\s\S]*for \(const url of urls\)/, 'new URL reads must clear previous article analysis before fetch attempts');
+assert.match(linkReaderSource, /clearLatestArticleAnalysis/, 'link reader export must include clearLatestArticleAnalysis');
+const explorerSource = fs.readFileSync('js/ahaExplorer.js', 'utf8');
+assert.match(explorerSource, /const dataHost = getContainer\("data"\);[\s\S]*dataHost\.innerHTML = emptyNote/, 'AHAExplorer.clear must clear #exp-data/data export host');
 
 {
   const {c,els}=ctx(); const h=c.AHATestHooks;

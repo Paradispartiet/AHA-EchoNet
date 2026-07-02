@@ -33,6 +33,10 @@ assert.equal(c.AHADataIntake.collectIntakeStats().trainingReady, 0, 'chat candid
 
 assert.ok(fs.readFileSync('intake.html','utf8').includes('Skann Chat'));
 assert.ok(fs.readFileSync('chat.html','utf8').includes('js/ahaChatPersistence.js'));
+const chatSource = fs.readFileSync('js/ahaChat.js','utf8');
+assert.match(chatSource, /const savingEnabled = isAhaSavingEnabled\(\);[\s\S]*persistedUserMessage = savingEnabled \? global\.AHAChatPersistence\?\.appendUserMessage/, 'user chat persistence must respect the save-new-insights toggle');
+assert.match(chatSource, /persistedAssistantMessage = savingEnabled \? global\.AHAChatPersistence\?\.appendAssistantMessage/, 'assistant chat persistence must respect the save-new-insights toggle');
+assert.ok(chatSource.includes('if (savingEnabled) global.AHAChatPersistence?.appendAssistantMessage?.("AHA-agenten er ikke tilgjengelig akkurat nå."'), 'assistant error persistence must respect the save-new-insights toggle');
 assert.ok(fs.readFileSync('js/ahaProductIntegration.js','utf8').includes('chatPersistenceAvailable'));
 assert.ok(fs.readFileSync('js/ahaPersonalAiControl.js','utf8').includes('chatPersistence'));
 assert.ok(fs.readFileSync('js/metaInsightsAgent.js','utf8').includes('chatPersistencePack'));

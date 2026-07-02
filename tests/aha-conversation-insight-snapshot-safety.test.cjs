@@ -104,6 +104,13 @@ assert.ok(structured.nextUnderstandingSteps.includes('Undersøk begrepet nærmer
 const unsafeTerms = [
   'RAW_SIGNAL_TEXT_SECRET',
   'https://private.example/signal',
+  'file:///Users/private/secret.txt',
+  's3://private-bucket/snapshot.json',
+  '/Users/private/local-secret.txt',
+  './relative/private-secret.txt',
+  'http://localhost:3000/private',
+  'http://192.168.1.10/private',
+  'http://intranet.local/private',
   'signal.person@example.test',
   'USER_ID_SIGNAL_SECRET',
   'rawPayload',
