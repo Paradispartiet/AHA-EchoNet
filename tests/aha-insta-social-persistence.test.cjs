@@ -2,9 +2,9 @@ const assert = require('assert');
 const fs = require('fs');
 const vm = require('vm');
 
-// Verifies that AHA Insta persists profile/likes/comments/follows through
-// AHARepository (best-effort), and that syncSocialFromDatabase merges remote
-// rows back into the localStorage-canonical store.
+// Verifies explicit opt-in database sync/persist for AHA Insta profile/likes/comments/follows
+// through AHARepository (best-effort), and that syncSocialFromDatabase merges remote
+// rows back into the localStorage-canonical store when the dev flag is enabled.
 
 function makeLocalStorage() {
   const map = new Map();
@@ -75,7 +75,8 @@ const sandbox = {
   },
   addEventListener: () => {},
   AHADb: { getClient: () => supa },
-  AHAAuth: { getProfileId: async () => 'profile-1' }
+  AHAAuth: { getProfileId: async () => 'profile-1' },
+  AHA_CONFIG: { insta: { enableDatabaseSync: true } }
 };
 sandbox.window = sandbox;
 

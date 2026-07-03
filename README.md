@@ -1004,6 +1004,17 @@ Det gjøres ingen usikker fuzzy-match. Hvis et entydig History Go-`placeId` finn
 `music.html` laster `js/ahaMusicHistoryGoBridge.js` og viser en enkel **Musikken din på kartet**-seksjon i biblioteket. Den teller sanger og artister med stedskobling, viser stedskandidater, og lister hvilke sanger som peker til hvert sted. Artistkort kan vise **Knyttet til steder** med `relationType`, `confidence` og `status`. Sangkort kan vise **Kan oppdages i History Go** med forklaring om at koblingen er arvet via artisten, for eksempel: “Denne sangen kan kobles til Oslo gjennom artisten a-ha.”
 
 
+
+### AHA Insta local-only boundary
+
+AHA Insta er en lokal AHA-flate for bilde-, video-, post- og story-objekter. Modulen er ikke en Instagram API-klient, kobler ikke til Instagram API og skal ikke scrape Instagram.
+
+AHA Insta publiserer ikke eksternt, bruker ikke native ekstern deling og deler ikke til EchoNet. Database-sync er ikke automatisk; database-persist/sync krever eksplisitt utvikler- eller brukerhandling og er deaktivert som standard i local-only-grensen.
+
+Import-preview er fortsatt bare forhåndsvisning i `aha_insta_import_preview_v1`. Parsing av Instagram-eksport eller lokale filer sender ikke automatisk data til `AHAIngest` og skriver ikke automatisk til database. Fullføring av import lagrer valgte objekter lokalt, og kobling til AHAIngest krever eksplisitt valg.
+
+Bare tekstlig kontekst — tittel, caption eller notat — sendes til `AHAIngest`. Media-only poster uten tekst lagres lokalt, men ingestes ikke.
+
 ### AHA Gallery local-only boundary
 
 AHA Gallery er en lokal AHA-flate for bilder, minner og visuelle uttrykk. Gallery-objekter lagres i `aha_gallery_v1` som lokale brukerdata, merkes som `local_only`, og er ikke publisert eksternt eller delt til EchoNet.
