@@ -163,7 +163,7 @@ Must be `false`. Snapshot V1 must not expose, trigger, queue, or imply sync.
 
 ### `nextUnderstandingSteps`
 
-Careful suggestions for what the user may investigate, compare, clarify, or ask next. These are understanding prompts only, not automatic recommendations, project tasks, sync actions, approval actions, or publishing actions.
+Careful suggestions for what the user may investigate, compare, clarify, or ask next. These are understanding prompts only, not automatic recommendations, project tasks, sync actions, approval actions, or publishing actions. The Snapshot V1 builder now derives these short steps from structured signals (`concepts`, `openQuestions`, `perspectives`, `tensions`, `conversationLinks`) plus safe quality status only. It does not use raw chat text, full transcripts, raw source events, URLs/private URLs, user identifiers, or email addresses when building the steps. The improved steps add no backend, no sync, no approval model, no EchoNet runtime, no project-management fields, and AHA Sync Overview V1 is unchanged.
 
 ## Safety rules
 
