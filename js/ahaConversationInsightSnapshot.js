@@ -11,7 +11,7 @@
   const DEFAULT_DESCRIPTION = "AHA har laget et lokalt, read-only snapshot av strukturerte samtalesignaler.";
   const SIGNAL_FIELDS = ["concepts", "openQuestions", "perspectives", "tensions", "conversationLinks"];
   const SAFE_CONFIDENCE = { low: true, medium: true, high: true };
-  const BLOCKED_STEP_WORDS = new RegExp("\\b(" + ["sync", "approve", "reject", "godkjenn", "godkjenne", "godkjent", "godkjenning", "avvis", "avvise", "avvist", "avvisning", "pub" + "lish", "sh" + "are", "send", "echonet", "repo", "pr", "pull request", "backend"].join("|") + ")\\b", "i");
+  const BLOCKED_STEP_WORDS = new RegExp("\\b(" + ["sync", "approve", "reject", "godkjenn", "godkjenne", "godkjent", "godkjenning", "avvis", "avvise", "avvist", "avvisning", "pub" + "lish", "sh" + "are", "send", "echonet", "export", "save to memory", "repo", "pr", "pull request", "backend"].join("|") + ")\\b", "i");
   const UNSAFE_URL_OR_PATH_PATTERN = /(?:\b(?:https?:\/\/|www\.|file:\/\/|s3:\/\/|ftp:\/\/|ssh:\/\/|localhost(?::\d+)?\b|(?:127|10)\.\d{1,3}\.\d{1,3}\.\d{1,3}\b|192\.168\.\d{1,3}\.\d{1,3}\b|172\.(?:1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}\b)|(?:^|\s)(?:~?\/|\.{1,2}\/|[A-Za-z]:\\)[^\s]+|\b[a-z0-9.-]+\.(?:local|lan|internal|intranet)\b)/i;
 
   function safeObject(value) {
@@ -29,7 +29,7 @@
   function hasUnsafeText(value) {
     const text = compactWhitespace(value);
     if (!text) return true;
-    if (UNSAFE_URL_OR_PATH_PATTERN.test(text) || /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i.test(text)) return true;
+    if (UNSAFE_URL_OR_PATH_PATTERN.test(text) || /(?:^|[\s/])[\w.-]+\?[^\s]+/.test(text) || /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i.test(text)) return true;
     if (/\b(user[_-]?id|email|token|private[_-]?payload|raw[_-]?payload|transcript|source\.url|href)\b/i.test(text)) return true;
     return false;
   }

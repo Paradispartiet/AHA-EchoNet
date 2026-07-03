@@ -15,11 +15,15 @@ Det er ikke lagt til backend, ekte sync, approval-modell, approve/reject-actions
 
 ✅ AHA Conversation Insight Snapshot Preview safety: test-locked
 
+✅ AHA Conversation Insight Snapshot structured signals safety: test-locked
+
 Previewet er read-only/local-only/no-sync og viser bare safe snapshot fields: summary, begreper, åpne spørsmål, perspektiver, spenninger, samtalekoblinger og neste forståelsessteg. Previewet viser ikke raw text, URL-er/private URL-er, metadata eller user identifiers, har ingen approval actions, aktiverer ikke EchoNet, lager ingen backend, og AHA Sync Overview V1 er uendret.
 
 Snapshot builderen er read-only/local-only/no-sync og bruker bare eksplisitte, strukturerte og safe inputfelt. Safety-låsen bekrefter at builderen ikke returnerer raw text, private URL-er, metadata, raw payloads eller user identifiers. Snapshot V1 preview er nå implementert i eksisterende `AHA ser nå`-flate, og det finnes fortsatt ingen approval actions, ingen EchoNet-runtime og ingen backend for Snapshot V1.
 
 Builderen henter nå flere trygge signaler fra allerede strukturerte analysis-felt, inkludert `analysis`, `canonicalAnalysis`, `ahaSer`, strukturerte insight cards, samt safe boolean/status fra `quality`, `sourceBinding` og `topicConsistency`. Signalene dedupliseres case-insensitivt, begrenses per gruppe og filtreres slik at raw chat text, transcript, URL-er, userId/email, raw source events og private payloads ikke returneres. UI-kontrakten er uendret, AHA Sync Overview V1 er uendret, og det er fortsatt ingen sync, approval, EchoNet eller backend lagt til.
+
+Structured signals safety-låsen bekrefter at signal enrichment er read-only/local-only/no-sync, at builderen bare henter fra strukturerte og safe inputfelt, og at snapshotet ikke returnerer raw text, transcript, URL-er/private URL-er, metadata, raw payloads eller user identifiers. UI-kontrakten er uendret: ingen approval actions, ingen EchoNet, ingen backend og AHA Sync Overview V1 er uendret.
 
 AHA Conversation Insight Snapshot V1: builder implemented, safe UI preview implemented.
 
