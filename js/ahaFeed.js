@@ -5,6 +5,70 @@
 
   const KEY = "aha_feed_posts_v1";
 
+  const FEED_SOURCE_METADATA = Object.freeze({
+    source_app: "aha",
+    source_type: "aha_feed_post",
+    content_type: "text",
+    user_created: true,
+    imported: false,
+    local_only: true
+  });
+
+  function normalizeText(value) {
+    return String(value || "").replace(/\s+/g, " ").trim();
+  }
+
+  function safePostId(value) {
+    const raw = String(value || "").trim();
+    const cleaned = raw.replace(/[^a-zA-Z0-9_-]/g, "_").replace(/_+/g, "_").replace(/^_+|_+$/g, "");
+    if (cleaned) return cleaned.slice(0, 120);
+    return `feed_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
+  }
+
+  function normalizeTags(tags) {
+    const raw = Array.isArray(tags) ? tags : (typeof tags === "string" ? tags.split(",") : []);
+    const out = [];
+    const seen = new Set();
+    raw.forEach((tag) => {
+      const value = normalizeText(tag);
+      const key = value.toLowerCase();
+      if (!value || seen.has(key)) return;
+      seen.add(key);
+      out.push(value);
+    });
+    return out;
+  }
+
+  function createLocalOnlyMeta(post) {
+    return {
+      feed_post_id: post.id,
+      source_app: FEED_SOURCE_METADATA.source_app,
+      source_type: FEED_SOURCE_METADATA.source_type,
+      content_type: FEED_SOURCE_METADATA.content_type,
+      user_created: true,
+      imported: false,
+      local_only: true,
+      external_published: false,
+      echonet_shared: false,
+      created_at: post.created_at,
+      updated_at: post.updated_at || post.created_at,
+      tags: normalizeTags(post.tags)
+    };
+  }
+
+  function createIngestInput(post) {
+    const meta = createLocalOnlyMeta(post);
+    return {
+      ...FEED_SOURCE_METADATA,
+      title: "AHA Feed lokal post",
+      text: normalizeText(post.text),
+      created_at: post.created_at,
+      updated_at: post.updated_at || post.created_at,
+      tags: meta.tags,
+      meta
+    };
+  }
+
   function load() {
     try {
       const parsed = JSON.parse(localStorage.getItem(KEY) || "[]");
@@ -88,55 +152,73 @@
       ? posts.map((post) => `
         <article class="module-card">
           <p>${escapeHtml(post.text || "")}</p>
-          <div class="module-meta">${escapeHtml(post.created_at || "")}${post.last_source_event_id ? ` · source: ${escapeHtml(post.last_source_event_id)}` : ""}</div>
-          <div class="module-actions"><button type="button" data-feed-delete="${escapeHtml(post.id)}">Slett</button></div>
+          <div class="module-meta">Lokal post · Ikke delt · ${escapeHtml(post.created_at || "")}${post.last_source_event_id ? ` · AHA source: ${escapeHtml(post.last_source_event_id)}` : ""}</div>
+          <div class="module-actions"><button type="button" data-feed-ingest="${escapeHtml(post.id)}">Send til AHA</button><button type="button" data-feed-delete="${escapeHtml(post.id)}">Slett</button></div>
         </article>
       `).join("")
       : "<p>Ingen poster ennå.</p>";
   }
 
+  async function ingestPost(postOrId) {
+    const posts = load();
+    const post = typeof postOrId === "string"
+      ? posts.find((item) => item?.id === postOrId)
+      : postOrId;
+    if (!post || post.deleted_at || !normalizeText(post.text)) return null;
+    if (post.last_source_event_id) {
+      return { ok: true, skipped: true, reason: "already_ingested", source_event_id: post.last_source_event_id };
+    }
+
+    const ingestResult = await window.AHAIngest?.ingest?.(createIngestInput(post));
+    if (ingestResult?.sourceEvent?.id) {
+      post.last_source_event_id = ingestResult.sourceEvent.id;
+      post.updated_at = post.updated_at || post.created_at;
+      const index = posts.findIndex((item) => item?.id === post.id);
+      if (index >= 0) {
+        posts[index] = post;
+        save(posts);
+        persistPost(post);
+        render(posts);
+      }
+    }
+    return ingestResult || null;
+  }
+
   async function addPost(input) {
+    const now = new Date().toISOString();
     const post = {
-      id: `feed_${Date.now()}_${Math.floor(Math.random() * 100000)}`,
-      text: String(input.text || "").trim(),
-      tags: Array.isArray(input.tags) ? input.tags : [],
+      id: safePostId(input?.id),
+      text: normalizeText(input?.text),
+      tags: normalizeTags(input?.tags),
       meta: {},
-      created_at: new Date().toISOString()
+      created_at: input?.created_at || now,
+      updated_at: input?.updated_at || input?.created_at || now,
+      local_only: true,
+      external_published: false,
+      echonet_shared: false
     };
+    if (!post.text) return null;
+    post.meta = createLocalOnlyMeta(post);
     const baseContract = window.AHAContracts?.createBaseItem?.({
       id: post.id,
-      title: "AHA Feed-post",
-      type: "feed_post",
-      source: "aha_feed",
+      title: "AHA Feed lokal post",
+      type: "aha_feed_post",
+      source: "aha",
       createdAt: post.created_at,
-      updatedAt: post.created_at,
+      updatedAt: post.updated_at,
       tags: post.tags,
-      meta: { feed_post_id: post.id }
+      meta: post.meta
     });
     if (baseContract) post.base = baseContract;
-    if (!post.text) return null;
-
-    const ingestResult = await window.AHAIngest?.ingest?.({
-      source_type: "feed_post",
-      source_app: "aha_feed",
-      content_type: "text",
-      title: "AHA Feed-post",
-      text: post.text,
-      user_created: true,
-      imported: false,
-      created_at: post.created_at,
-      meta: { feed_post_id: post.id }
-    });
-
-    if (ingestResult?.sourceEvent?.id) post.last_source_event_id = ingestResult.sourceEvent.id;
 
     const posts = load();
     posts.unshift(post);
     save(posts);
     persistPost(post);
-
     render(posts);
-    return post;
+
+    await ingestPost(post.id);
+    return load().find((item) => item?.id === post.id) || post;
   }
 
   function deletePost(id) {
@@ -163,16 +245,20 @@
     document.getElementById("feed-list")?.addEventListener("click", (event) => {
       const target = event.target;
       if (!(target instanceof HTMLElement)) return;
+      const ingestId = target.dataset.feedIngest;
+      if (ingestId) {
+        ingestPost(ingestId);
+        return;
+      }
       const id = target.dataset.feedDelete;
       if (id) deletePost(id);
     });
 
     render();
-    syncFromDatabase();
-    window.addEventListener("aha:auth-ready", syncFromDatabase);
+    // Feed er lokal-only som standard. Database-sync finnes kun som eksplisitt API for eldre migrering/tester.
   }
 
-  window.AHAFeed = { load, save, syncFromDatabase, addPost, deletePost, render };
+  window.AHAFeed = { load, save, syncFromDatabase, addPost, ingestPost, deletePost, render, createIngestInput, normalizeText, safePostId };
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bind);
   else bind();

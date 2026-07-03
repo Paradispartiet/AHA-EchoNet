@@ -444,6 +444,12 @@ forslag.
 
 `AHAIngest` fyrer `aha:emne-suggested` når nye forslag legges til.
 
+## AHA Feed local-only boundary
+
+AHA Feed er en lokal AHA-flate for korte brukeropprettede tekstposter. Feed-poster lagres i `aha_feed_posts_v1` og merkes som lokale brukerdata, ikke som eksternt publiserte objekter.
+
+Feed poster ikke til eksterne nettverk, aktiverer ikke sosial deling og deler ikke til EchoNet. Når en lokal feed-post skal bli AHA-innsikt, går den via eksisterende `AHAIngest` med `source_type: "aha_feed_post"`, `source_app: "aha"` og `local_only: true`, slik at source event og eventuell insight-signal kan spores uten å bygge en ny motor.
+
 For History Go-import skal AHA-EchoNet stole på History Go sin egen
 lokale lærings-/innsiktsmotor og den eksporterte payloaden. `AHAIngest`
 hopper eksplisitt over `ahaEmneMatcher` for alt importert materiale
