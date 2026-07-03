@@ -9,6 +9,12 @@ Det er ikke lagt til backend, ekte sync, approval-modell, approve/reject-actions
 
 # AHA Implementation Status
 
+## AHA Local Insight Home V1
+
+AHA Local Insight Home V1: contract defined, runtime not started. This is a docs-only planning boundary for the next local read-only start surface that will later combine the three frozen V1 layers: AHA Sync Overview V1, AHA Conversation Insight Snapshot V1, and AHA Quality Status Surface V1.
+
+Sync Overview V1 is frozen. Conversation Insight Snapshot V1 is frozen. Quality Status Surface V1 is frozen. Local Insight Home V1 is the next combined local start surface, but this PR introduces no runtime change, no UI change, no backend, no storage, no approval actions, no EchoNet activation, and no sync.
+
 ## AHA Quality Status Surface V1
 
 ✅ AHA Quality Status Surface V1: frozen local quality layer

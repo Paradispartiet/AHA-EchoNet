@@ -1,5 +1,10 @@
 # AHA-EchoNet
 
+
+## AHA Local Insight Home V1
+
+AHA Local Insight Home V1 is defined as the next local read-only surface that will combine the frozen Sync Overview, Conversation Snapshot, and Quality Status V1 layers. Runtime is not implemented yet.
+
 AHA Conversation Insight Snapshot V1 is frozen as a local read-only understanding layer. It does not perform sync, approval, publishing, backend storage, or EchoNet actions.
 
 AHA Quality Status Surface V1 is frozen as a local read-only quality layer. It does not perform sync, approval, publishing, backend storage, or EchoNet actions.
