@@ -1,0 +1,12 @@
+.aha-sources-page { max-width: 1180px; margin: 0 auto; padding: 24px; }
+.aha-audit-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+.aha-audit-card, .aha-source-event { background: rgba(255,255,255,.88); border: 1px solid rgba(31,41,55,.12); border-radius: 18px; padding: 16px; box-shadow: 0 10px 30px rgba(15,23,42,.06); }
+.aha-audit-card strong { display:block; font-size: 1.6rem; }
+.aha-filter-chip, .aha-pill { border: 1px solid rgba(31,41,55,.18); border-radius: 999px; padding: 6px 10px; margin: 4px; background: #fff; }
+.aha-filter-chip.is-active { background:#172554; color:#fff; }
+.aha-source-event { margin: 14px 0; }
+.aha-source-event header { display:flex; justify-content:space-between; gap:16px; align-items:flex-start; }
+.aha-source-event h3 { margin: 4px 0; }
+.aha-meta-summary { color:#475569; }
+.aha-source-event pre { white-space: pre-wrap; overflow:auto; background:#0f172a; color:#e2e8f0; padding:12px; border-radius:12px; }
+.is-muted { opacity:.72; }
