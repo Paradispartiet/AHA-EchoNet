@@ -11,7 +11,7 @@ AHA Quality Status Surface V1 global safety gate: test-locked
 
 AHA Quality Status Surface V1 is frozen as the local, read-only, no-sync quality layer for one current conversation or analysis. It is a documentation contract plus the existing `js/ahaQualityStatusSurface.js` builder, the conservative overall status, the `sourceBinding`, `topicConsistency`, `staleData`, and `analysisIsolation` checks, `safeSummary`, safety flags, the compact preview in the existing AHA UI, the builder safety-test, the preview safety-test, and the global safety gate.
 
-Quality Status V1 is a local quality surface, not an action engine. It does not create decisions, approvals, sync, EchoNet runtime, backend writes, project management, or new analysis semantics. It presents existing safe quality/status signals for the current conversation or current analysis.
+Quality Status V1 is a local quality surface, not an action engine. It does not create decisions, approvals, sync, EchoNet runtime, backend writes, project management, or new analysis semantics. It presents existing safe quality/status signals for the current conversation or current analysis. This frozen status is a documentation/contract freeze of the already implemented local layer; it is not a request to add runtime behavior or UI.
 
 ## Runtime boundaries
 
@@ -103,7 +103,7 @@ Quality Status V1 skal ikke:
 - vise raw payloads
 - bruke prosjektstyringsfelt
 
-The builder uses only safe quality/status fields. It does not return raw user text, full transcripts, source excerpts, URLs/private URLs, private metadata, raw payloads, raw invalid fields, raw source events, user identifiers, userId, or email addresses.
+The builder uses only safe quality/status fields. It does not return raw user text, full transcripts, source excerpts, URLs/private URLs, private metadata, raw payloads, raw invalid fields, raw source events, user identifiers, userId, or email addresses. The compact preview must preserve the same display boundary and show only the frozen V1 status, checks, safe summary, and safety flags.
 
 If explicit input contains raw or private fields, the builder ignores them and does not copy them into `checks`, `safeSummary`, or `safety`.
 

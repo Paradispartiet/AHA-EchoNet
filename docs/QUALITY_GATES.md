@@ -26,7 +26,7 @@ Gjenstående arbeid i dette dokumentets opprinnelige quality-gate-liste er forts
 
 ## AHA Quality Status Surface V1 global safety gate
 
-AHA Quality Status Surface V1 is frozen as the local read-only surface for presenting existing quality-gate results.
+AHA Quality Status Surface V1 is frozen as the local read-only surface for presenting existing quality-gate results. It presents the existing source-binding, topic-consistency, stale-data, analysis-isolation, and relevant geopolitics-consistency gate outcomes without changing gate logic or weakening requirements.
 
 AHA Quality Status Surface V1 builder: implemented. AHA Quality Status Surface V1 preview: implemented. The global safety gate is test-locked for the full Quality Status layer.
 
