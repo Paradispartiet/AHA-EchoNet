@@ -26,6 +26,8 @@ Gjenstående arbeid i dette dokumentets opprinnelige quality-gate-liste er forts
 
 ## AHA Quality Status Surface V1 global safety gate
 
+AHA Quality Status Surface V1 is frozen as the local read-only surface for presenting existing quality-gate results.
+
 AHA Quality Status Surface V1 builder: implemented. AHA Quality Status Surface V1 preview: implemented. The global safety gate is test-locked for the full Quality Status layer.
 
 The gate keeps Quality Status read-only, local-only, and no-sync. It verifies that builder and preview use only safe quality/status fields and do not return or show raw user text, transcript, source excerpts, URL-er/private URL-er, metadata, raw payloads, raw invalid fields, raw source events, userId/email, or other user identifiers. It also verifies no approval actions, no EchoNet runtime, no backend, no fetch/network behavior, and no storage writes. AHA Sync Overview V1 is unchanged, and Conversation Insight Snapshot V1 contract is unchanged.

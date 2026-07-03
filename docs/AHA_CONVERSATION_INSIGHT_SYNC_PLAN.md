@@ -11,17 +11,34 @@ Det er ikke lagt til backend, ekte sync, approval-modell, approve/reject-actions
 
 ## V1/V2/EchoNet boundary
 
-### 1. Ferdig V1: AHA Conversation Insight Snapshot V1 — local understanding layer
+### 1. Ferdig V1
+
+```text
+AHA Conversation Insight Snapshot V1 — local understanding layer
+AHA Quality Status Surface V1 — local quality layer
+```
 
 AHA Conversation Insight Snapshot V1 is frozen as the local read-only/no-sync understanding layer for one current conversation or analysis. It includes the builder, preview, summary, structured signals, concepts, open questions, perspectives, tensions, conversation links, `nextUnderstandingSteps`, quality summary, safety flags, and the global snapshot safety gate.
 
-This finished V1 is not AHA Sync Overview V1. AHA Sync Overview V1 remains unchanged as a local overview for source-event coverage and patterns. Snapshot V1 does not run sync, write data, add approve/reject-actions, show raw user data, return private URLs or user identifiers, activate EchoNet, or introduce backend storage.
+AHA Quality Status Surface V1 is frozen as the local read-only/no-sync quality layer for one current conversation or analysis. It presents existing quality-gate status and safe quality summaries only; it is not sync readiness, approval, backend storage, EchoNet runtime, or a project/action engine.
+
+These finished V1 layers are not AHA Sync Overview V1. AHA Sync Overview V1 remains unchanged as a local overview for source-event coverage and patterns. Snapshot V1 and Quality Status V1 do not run sync, write data, add approve/reject-actions, show raw user data, return private URLs or user identifiers, activate EchoNet, or introduce backend storage.
 
 ### 2. Mulig senere V2: user-reviewed insight preparation
 
-A possible later V2 can only be described as `user-reviewed insight preparation`. That would mean user-reviewed, editable preparation of safe insight candidates inside the same safety boundary before any future action is considered. V2 is not started, approval actions do not exist, sync does not exist, and EchoNet is not activated.
+A possible later V2 can only be described as:
+
+```text
+user-reviewed insight preparation
+```
+
+That possible V2 can only be user-reviewed, editable preparation of safe insight candidates inside the same safety boundary before any future action is considered. V2 is not started, approval actions do not exist, sync does not exist, and EchoNet is not activated.
 
 ### 3. Ikke nå: EchoNet/network sync
+
+```text
+EchoNet/network sync
+```
 
 EchoNet/network sync is explicitly not now. There is no EchoNet runtime, no network sync, no publish/share, no backend contract, and no approval workflow in this plan.
 

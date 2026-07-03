@@ -2,6 +2,8 @@
 
 AHA Conversation Insight Snapshot V1 is frozen as a local read-only understanding layer. It does not perform sync, approval, publishing, backend storage, or EchoNet actions.
 
+AHA Quality Status Surface V1 is frozen as a local read-only quality layer. It does not perform sync, approval, publishing, backend storage, or EchoNet actions.
+
 **Status baseline:** AHA quality gates for topic/source/geopolitics are green on the latest `npm test` baseline (115/115), while AHA Sync remains read-only/local-only and NO-GO for real sync or EchoNet activation. AHA Sync Overview V1 is a local read-only overview. It does not perform sync, approval, publishing, or EchoNet network actions.
 
 
