@@ -11,19 +11,19 @@ Det er ikke lagt til backend, ekte sync, approval-modell, approve/reject-actions
 
 ## V1/V2/EchoNet boundary
 
-### 1. Nåværende V1: local read-only overview
+### 1. Ferdig V1: AHA Conversation Insight Snapshot V1 — local understanding layer
 
-Nåværende V1 er en local read-only overview for samtaleinnsiktssignaler. Den samler readiness, digest, review queue summary, channel summary, source type summary, channel-source matrix, coverage gaps, legend/forklaring, compact layout og global safety gate. Den er local-only, viser bare trygge counts/labels/generiske linjer, bruker `AHA_SYNC_CHANNELS`, og holder Personal AI Loop source approval boundary som sikkerhetsmodell.
+AHA Conversation Insight Snapshot V1 is frozen as the local read-only/no-sync understanding layer for one current conversation or analysis. It includes the builder, preview, summary, structured signals, concepts, open questions, perspectives, tensions, conversation links, `nextUnderstandingSteps`, quality summary, safety flags, and the global snapshot safety gate.
 
-V1 kjører ingen sync, skriver ikke data, har ingen approve/reject-actions, viser ingen rå brukerdata, private URL-er eller brukeridentifikatorer, aktiverer ikke EchoNet og innfører ingen backend. Sync er fortsatt **NO-GO**.
+This finished V1 is not AHA Sync Overview V1. AHA Sync Overview V1 remains unchanged as a local overview for source-event coverage and patterns. Snapshot V1 does not run sync, write data, add approve/reject-actions, show raw user data, return private URLs or user identifiers, activate EchoNet, or introduce backend storage.
 
-### 2. Senere mulig V2: user-reviewed insight preparation
+### 2. Mulig senere V2: user-reviewed insight preparation
 
-En mulig senere V2 kan bare beskrives som user-reviewed insight preparation. Det betyr at brukeren eventuelt kan få forberedt, redigert og eksplisitt gjennomgått innsiktskandidater innenfor samme sikkerhetsgrense før noen fremtidig handling vurderes. V2 er ikke startet her, approval actions finnes ikke, og sync er ikke implementert.
+A possible later V2 can only be described as `user-reviewed insight preparation`. That would mean user-reviewed, editable preparation of safe insight candidates inside the same safety boundary before any future action is considered. V2 is not started, approval actions do not exist, sync does not exist, and EchoNet is not activated.
 
-### 3. Fortsatt senere / ikke nå: EchoNet/network sync
+### 3. Ikke nå: EchoNet/network sync
 
-EchoNet/network sync er fortsatt et senere og ikke-aktivert spor. Det finnes ingen EchoNet-runtime i AHA Sync Overview V1, ingen network sync, ingen publish/share og ingen backend-kontrakt for dette i denne planen.
+EchoNet/network sync is explicitly not now. There is no EchoNet runtime, no network sync, no publish/share, no backend contract, and no approval workflow in this plan.
 
 ## Consolidated read-only AHA Sync Overview
 

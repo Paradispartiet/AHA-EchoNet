@@ -2,9 +2,29 @@
 
 ## Status
 
-**AHA Conversation Insight Snapshot V1** is now implemented as a local helper/runtime builder with a compact read-only UI preview in the existing `AHA ser nå` surface.
+```text
+AHA Conversation Insight Snapshot V1 status: frozen local understanding layer
+```
 
-Snapshot V1 defines a local, read-only understanding layer for what AHA can safely summarize from one current conversation or one current analysis. It does not change AHA Sync Overview, History Go, EchoNet, source storage, exports, approval surfaces, backend contracts, or tests.
+**AHA Conversation Insight Snapshot V1** is frozen as a local, read-only understanding layer for one current conversation or one current analysis. It is not a handlingsmotor/action engine, not sync, not approval, not EchoNet, and not project management.
+
+The frozen V1 layer consists of:
+
+- builder
+- preview
+- summary
+- structured signals
+- concepts
+- open questions
+- perspectives
+- tensions
+- conversation links
+- `nextUnderstandingSteps`
+- quality summary
+- safety flags
+- global safety gate
+
+Snapshot V1 only gives AHA a safe local understanding surface. It does not change AHA Sync Overview, History Go, EchoNet, source storage, exports, approval surfaces, backend contracts, runtime logic, or UI beyond the already existing read-only preview.
 
 ## Purpose
 
@@ -165,31 +185,33 @@ Must be `false`. Snapshot V1 must not expose, trigger, queue, or imply sync.
 
 Careful suggestions for what the user may investigate, compare, clarify, or ask next. These are understanding prompts only, not automatic recommendations, project tasks, sync actions, approval actions, or publishing actions. The Snapshot V1 builder now derives these short steps from structured signals (`concepts`, `openQuestions`, `perspectives`, `tensions`, `conversationLinks`) plus safe quality status only. It does not use raw chat text, full transcripts, raw source events, URLs/private URLs, user identifiers, or email addresses when building the steps. The improved steps add no backend, no sync, no approval model, no EchoNet runtime, no project-management fields, and AHA Sync Overview V1 is unchanged.
 
-## Safety rules
+## V1 safety contract
 
-Conversation Insight Snapshot V1 must:
+Conversation Insight Snapshot V1 must stay read-only, local-only, no-sync, and safe structured-signals only. Snapshot V1 shall not:
 
-- be read-only
-- be local-only
-- run no sync
-- write nothing to `localStorage`
-- send no data to a backend
-- show no raw user data
-- include no private URLs
-- include no `userId`, email, or account identifier
-- use no approval actions
-- publish or share nothing
-- activate no EchoNet runtime
-- create no backend model
-- create no permanent memory
-- create no raw transcript browser
-- create no project dashboard
-- introduce no project-management fields such as `phase`, `priority`, `health`, `nextPr`, `repoStatus`, or equivalent product-model fields
+- read `localStorage` directly
+- write `localStorage`
+- use `fetch` or network calls
+- send data to a backend
+- run sync
+- publish
+- share
+- approve or reject
+- activate EchoNet
+- return raw user text
+- return a transcript or full transcript
+- return URLs or private URLs
+- return `userId`, email, account identifiers, or equivalent direct identifiers
+- return raw payloads
+- return raw source events
+- use project-management fields such as `phase`, `priority`, `health`, `nextPr`, `repoStatus`, or equivalent product-model fields
+
+The safety flags in the V1 contract must therefore remain `rawUserTextIncluded: false`, `privateUrlsIncluded: false`, `userIdentifiersIncluded: false`, `approvalActionAvailable: false`, and `syncAvailable: false`.
 
 ## Relationship to AHA Sync Overview V1
 
-AHA Sync Overview V1 shows patterns in local source events.
-AHA Conversation Insight Snapshot V1 describes what AHA understands in one conversation or analysis.
+AHA Sync Overview V1 viser lokal dekning og mønstre i source-event-signaler.
+AHA Conversation Insight Snapshot V1 viser lokal forståelse av én samtale/analyse.
 
 The difference is:
 
@@ -200,12 +222,13 @@ The difference is:
 - Neither runs sync.
 - Neither activates EchoNet.
 - Neither is project management.
+- Both are read-only, local-only, no-sync, without EchoNet runtime, without approval actions, and without raw user data.
 
 AHA Sync Overview V1 remains frozen. Snapshot V1 is the next planning track after that freeze, but it must not modify the Sync Overview contract or UI.
 
 ## Relationship to quality gates
 
-Later runtime, if implemented, must follow existing AHA quality gates and fail closed when the snapshot cannot be safely bound to the current source.
+Snapshot V1 must respect the existing AHA quality gates and fail closed when the snapshot cannot be safely bound to the current source.
 
 The relevant gates are:
 
@@ -215,21 +238,25 @@ The relevant gates are:
 - Stale-data guards: snapshots must not reuse old AHA SER, afterwork, canonical analysis, or chamber output as if it belonged to the current source.
 - Analysis run isolation: a snapshot must not mix fields from another analysis run, another source text hash, or another conversation.
 
-If a future runtime cannot verify source binding or topic consistency, it should not produce a normal snapshot. It should fail closed with a safe local status instead of presenting stale or unbound understanding as valid.
+Snapshot V1 must not be presented as robust understanding when `sourceBinding`, `topicConsistency`, stale-data guards, analysis run isolation, or geopolitics consistency indicate mismatch or uncertainty. If the source binding or topic consistency cannot be verified, the snapshot should fail closed with a safe local status instead of presenting stale or unbound understanding as valid.
 
 ## Not in V1
 
 Snapshot V1 does not include:
 
+- backend storage
 - multi-user sync
 - EchoNet graph
 - shared memory
 - approval workflow
 - approve/reject buttons
+- publish/share
 - public publishing
-- backend storage
 - raw transcript browser
 - project dashboard
+- automatic task/action engine
+- PR/repo planning
+- source review UI
 - automatic recommendations
 - sync button
 - confirmation gate
