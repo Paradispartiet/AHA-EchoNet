@@ -4,6 +4,15 @@ AHA Conversation Insight Snapshot V1 is frozen as a local read-only understandin
 
 **Status baseline:** AHA quality gates for topic/source/geopolitics are green on the latest `npm test` baseline (115/115), while AHA Sync remains read-only/local-only and NO-GO for real sync or EchoNet activation. AHA Sync Overview V1 is a local read-only overview. It does not perform sync, approval, publishing, or EchoNet network actions.
 
+
+## AHA Sources / Ingest Audit V1
+
+`Sources / Ingest Audit` (`sources.html`) er et lokalt innsynslag over eksisterende AHA source/ingest-pipeline. Audit-visningen leser `aha_source_events_v1` og `aha_insight_chamber_v1` for å vise hva som kom inn som source events og hvilke innsikter/signaler som kan kobles tilbake til dem.
+
+Visningen kan vise materiale fra Chat, Notes, Feed, Gallery, Insta og History Go når disse modulene har lagret stabil metadata som `source_app`, `source_type` eller `source_event_id`. Den gjør ingen skjult auto-discovery av localStorage-nøkler.
+
+Audit-siden skriver ikke data, reparerer ikke gamle events, importerer ikke automatisk og aktiverer ikke sync, EchoNet, sosial deling eller backend. Den er kun en read-only oversikt over eksisterende lokal pipeline.
+
 ## Read-only AHA sync candidate approval summary
 
 AHA Home viser nå en kompakt, redigert og lokal-only approval summary for AHA sync candidates under Sync Hub-previewen. Summaryen gjenbruker den eksisterende Personal AI Loop source approval-boundaryen via `buildPersonalAiLoopSourceApprovalSummary(...)`; det finnes ingen separat sync confirmation gate, ingen ny approvalmodell og ingen dupliserte source approval states.

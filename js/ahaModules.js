@@ -96,6 +96,15 @@
       phase: 1
     },
     {
+      id: "sources",
+      title: "Sources",
+      type: "system",
+      status: "active",
+      href: "sources.html",
+      description: "Lokal read-only source/ingest audit for source events og insight-koblinger.",
+      phase: 2
+    },
+    {
       id: "sync-hub",
       title: "Sync Hub",
       type: "integration",
@@ -236,6 +245,7 @@
     profile: "◌",
     chat: "✦",
     insights: "◎",
+    sources: "⇥",
     lists: "☰",
     paths: "↠",
     mindmap: "⎔",
@@ -275,7 +285,7 @@
     read_error: { title: "Could not read module data.", message: "Try again later or view diagnostics." },
     unknown: { title: "Nothing to show.", message: "No module data is available." }
   };
-  const PREFERRED_ORDER = ["chat", "data-intake", "knowledge-curation", "knowledge-map", "training", "personal-ai", "insights", "sync-hub", "music", "historygo", "gallery", "notes", "feed", "avisa", "profile", "search", "privacy"];
+  const PREFERRED_ORDER = ["chat", "data-intake", "knowledge-curation", "knowledge-map", "training", "personal-ai", "insights", "sources", "sync-hub", "music", "historygo", "gallery", "notes", "feed", "avisa", "profile", "search", "privacy"];
 
   function escapeHtml(value) {
     return String(value ?? "")
