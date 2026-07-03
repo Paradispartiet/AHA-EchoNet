@@ -14,7 +14,7 @@
   const ICON_HEART_OUTLINE = '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
   const ICON_HEART_FILLED = '<svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
   const ICON_COMMENT = '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>';
-  const ICON_SHARE = '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>';
+  const ICON_COPY = '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>';
 
   const createId = (prefix) => `${prefix}_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
   const nowIso = () => new Date().toISOString();
@@ -399,7 +399,31 @@
     }
   }
 
+  function isDatabaseSyncEnabled() {
+    return window.AHA_CONFIG?.insta?.enableDatabaseSync === true;
+  }
+
+  function localOnlyMeta(extra = {}) {
+    return {
+      source_app: "aha",
+      origin_app: "aha_insta",
+      local_only: true,
+      published_external: false,
+      echonet_shared: false,
+      sync_enabled: false,
+      user_created: true,
+      imported: false,
+      ...extra
+    };
+  }
+
+  function hasTextualContent(item = {}) {
+    return Boolean(String(item.title || item.caption || item.note || "").trim());
+  }
+
   function persistSocial(method, record) {
+    // AHA Insta is local-only by default. Database persistence requires an explicit dev/user flag.
+    if (!isDatabaseSyncEnabled()) return;
     const repo = window.AHARepository;
     if (!repo || typeof repo[method] !== "function") return;
 
@@ -662,25 +686,15 @@
     render();
   }
 
-  async function sharePost(postId) {
+  async function copyPostText(postId) {
     const post = load().find((entry) => entry.id === postId);
     if (!post) return;
 
     const owner = getPostOwner(post);
-    const text = [post.title, post.caption].filter(Boolean).join(" — ") || `Post av @${owner.username}`;
-    const url = String(post.src || "").trim();
-
-    if (navigator.share) {
-      try {
-        await navigator.share(url ? { text, url } : { text });
-      } catch {
-        /* brukeren avbrøt delingen */
-      }
-      return;
-    }
+    const text = [post.title, post.caption].filter(Boolean).join(" — ") || `Lokal AHA Insta-post av @${owner.username}`;
 
     try {
-      await navigator.clipboard.writeText([text, url].filter(Boolean).join("\n"));
+      await navigator.clipboard?.writeText?.(text);
     } catch {
       /* utklippstavle ikke tilgjengelig */
     }
@@ -751,7 +765,7 @@
         <div class="insta-post-actions">
           <button type="button" class="insta-icon-btn ${liked ? "is-liked" : ""}" data-insta-like="${escapeHtml(post.id)}" aria-label="Lik">${liked ? ICON_HEART_FILLED : ICON_HEART_OUTLINE}</button>
           <button type="button" class="insta-icon-btn" data-insta-focus-comment="${escapeHtml(post.id)}" aria-label="Kommenter">${ICON_COMMENT}</button>
-          <button type="button" class="insta-icon-btn" data-insta-share="${escapeHtml(post.id)}" aria-label="Del">${ICON_SHARE}</button>
+          <button type="button" class="insta-icon-btn" data-insta-copy="${escapeHtml(post.id)}" aria-label="Kopier tekst lokalt" title="Kopier tekst">${ICON_COPY}</button>
         </div>
 
         ${likeCount > 0 ? `<p class="insta-like-count">${likeCount} liker</p>` : ""}
@@ -764,6 +778,8 @@
   }
 
   function persistPost(post) {
+    // AHA Insta is local-only by default. Database persistence requires an explicit dev/user flag.
+    if (!isDatabaseSyncEnabled()) return;
     if (!window.AHARepository?.saveInstaPost) return;
 
     window.AHARepository
@@ -779,6 +795,7 @@
   }
 
   async function pushLocalToDatabase(items) {
+    if (!isDatabaseSyncEnabled()) return { ok: false, fallback: "localOnly", database_sync_disabled: true };
     if (!window.AHARepository?.saveInstaPost) return { ok: false, fallback: "localStorage" };
 
     const results = [];
@@ -862,6 +879,7 @@
   }
 
   async function syncFromDatabase() {
+    if (!isDatabaseSyncEnabled()) return { ok: false, fallback: "localOnly", database_sync_disabled: true };
     if (!window.AHARepository?.loadInstaPosts) return { ok: false, fallback: "localStorage" };
 
     const localPosts = load();
@@ -944,6 +962,7 @@
   }
 
   async function syncSocialFromDatabase() {
+    if (!isDatabaseSyncEnabled()) return { ok: false, fallback: "localOnly", database_sync_disabled: true };
     const repo = window.AHARepository;
     if (!repo) return { ok: false, fallback: "localStorage" };
 
@@ -1050,32 +1069,44 @@
           originalInstagramDate: item.originalInstagramDate || null,
           imported: true,
           archived: false,
-          source_app: "instagram",
-          source_type: "instagram_export",
+          source_app: "aha",
+          source_type: "aha_insta_imported_story",
+          origin_app: "instagram",
+          origin_type: "instagram_export",
+          local_only: true,
+          published_external: false,
+          echonet_shared: false,
+          sync_enabled: false,
           visibility,
-          meta: { import_session_id: options.sessionId || null }
+          meta: localOnlyMeta({ source_type: "aha_insta_imported_story", origin_app: "instagram", origin_type: "instagram_export", user_created: false, imported: true, import_session_id: options.sessionId || null, insta_object_type: "story" })
         });
         continue;
       }
 
       const post = normalizePostShape({
         id: createId("insta"),
-        title: item.title || "Importert",
+        title: item.title || "",
         src: item.src || "",
         caption: item.caption || "",
         content_type: item.mediaType === "video" ? "video" : "image",
         tags: [],
         created_at: nowIso(),
         imported: true,
-        source_app: "instagram",
-        source_type: "instagram_export",
+        source_app: "aha",
+        source_type: "aha_insta_imported_post",
+        origin_app: "instagram",
+        origin_type: "instagram_export",
+        local_only: true,
+        published_external: false,
+        echonet_shared: false,
+        sync_enabled: false,
         visibility,
         originalInstagramDate: item.originalInstagramDate || null,
         ownerId: profile.id,
         ownerUsername: profile.username,
         like_count: 0,
         comment_count: 0,
-        meta: { import_session_id: options.sessionId || null }
+        meta: localOnlyMeta({ source_type: "aha_insta_imported_post", origin_app: "instagram", origin_type: "instagram_export", user_created: false, imported: true, import_session_id: options.sessionId || null, insta_object_type: "post" })
       });
 
       const beforeMerged = findMergedPost(posts, post);
@@ -1089,20 +1120,26 @@
         persistPost(mergedPost);
       }
 
-      if (shouldPersistOrIngest && connectIngest && (mergedPost.caption || mergedPost.title)) {
+      if (shouldPersistOrIngest && connectIngest && hasTextualContent(mergedPost)) {
         await window.AHAIngest?.ingest?.({
-          source_type: "insta_post",
-          source_app: "aha_insta",
+          source_type: "aha_insta_imported_post",
+          source_app: "aha",
           content_type: mergedPost.content_type,
           title: mergedPost.title,
           text: [mergedPost.title, mergedPost.caption].filter(Boolean).join("\n"),
-          user_created: true,
+          user_created: false,
           imported: true,
           created_at: mergedPost.created_at,
           meta: {
             insta_post_id: mergedPost.id,
+            insta_object_type: "post",
             src: mergedPost.src,
-            import_session_id: options.sessionId || null
+            local_only: true,
+            published_external: false,
+            echonet_shared: false,
+            sync_enabled: false,
+            import_session_id: options.sessionId || null,
+            origin_app: "instagram"
           }
         });
       }
@@ -1158,10 +1195,10 @@
 
     const counts = buildInstagramImportPreview(previewItems).counts;
     mount.innerHTML = `
-      <div class="module-meta">Mulige poster: ${counts.posts} · stories: ${counts.stories} · media: ${counts.media}</div>
-      <label><input type="radio" name="insta-visibility" value="private" checked /> Publiser som private</label>
-      <label><input type="radio" name="insta-visibility" value="public" /> Publiser som offentlige</label>
-      <label><input id="insta-import-connect-ingest" type="checkbox" /> Koble importerte captions til AHA-innsikt</label>
+      <div class="module-meta">Preview lokalt – ikke delt eksternt · EchoNet ikke aktivert · Database-sync ikke automatisk · Mulige poster: ${counts.posts} · stories: ${counts.stories} · media: ${counts.media}</div>
+      <label><input type="radio" name="insta-visibility" value="private" checked /> Lagre som privat lokal post</label>
+      <label><input type="radio" name="insta-visibility" value="public" /> Lagre som synlig i lokal AHA-flate</label>
+      <label><input id="insta-import-connect-ingest" type="checkbox" /> Koble importerte captions/titler til lokal AHA-innsikt</label>
       <div>
         ${previewItems
           .map(
@@ -1270,7 +1307,16 @@
       caption: String(input.caption || "").trim(),
       content_type: contentType,
       tags: Array.isArray(input.tags) ? input.tags : [],
-      meta: {},
+      source_app: "aha",
+      source_type: "aha_insta_post",
+      origin_app: "aha_insta",
+      local_only: true,
+      published_external: false,
+      echonet_shared: false,
+      sync_enabled: false,
+      user_created: true,
+      imported: false,
+      meta: localOnlyMeta({ source_type: "aha_insta_post", insta_object_type: "post" }),
       ownerId: profile.id,
       ownerUsername: profile.username,
       visibility: "public",
@@ -1296,17 +1342,20 @@
 
     if (!post.title && !post.caption && !post.src) return null;
 
-    const ingestResult = await window.AHAIngest?.ingest?.({
-      source_type: "insta_post",
-      source_app: "aha_insta",
-      content_type: post.content_type,
-      title: post.title,
-      text: [post.title, post.caption].filter(Boolean).join("\n"),
-      user_created: true,
-      imported: false,
-      created_at: post.created_at,
-      meta: { insta_post_id: post.id, src: post.src }
-    });
+    let ingestResult = null;
+    if (hasTextualContent(post)) {
+      ingestResult = await window.AHAIngest?.ingest?.({
+        source_type: "aha_insta_post",
+        source_app: "aha",
+        content_type: post.content_type,
+        title: post.title,
+        text: [post.title, post.caption].filter(Boolean).join("\n"),
+        user_created: true,
+        imported: false,
+        created_at: post.created_at,
+        meta: { insta_post_id: post.id, insta_object_type: "post", src: post.src, local_only: true, published_external: false, echonet_shared: false, sync_enabled: false, origin_app: "aha_insta" }
+      });
+    }
 
     if (ingestResult?.sourceEvent?.id) {
       post.last_source_event_id = ingestResult.sourceEvent.id;
@@ -1348,7 +1397,7 @@
       if (target.dataset.instaLike) toggleLike(target.dataset.instaLike);
       if (target.dataset.instaFollow) toggleFollow(target.dataset.instaFollow);
       if (target.dataset.instaDeleteComment) deleteComment(target.dataset.instaDeleteComment);
-      if (target.dataset.instaShare) sharePost(target.dataset.instaShare);
+      if (target.dataset.instaCopy) copyPostText(target.dataset.instaCopy);
       if (target.dataset.instaToggleComments) toggleCommentsExpanded(target.dataset.instaToggleComments);
       if (target.dataset.instaFocusComment) {
         const input = document.querySelector(`[data-insta-comment-input="${target.dataset.instaFocusComment}"]`);
@@ -1403,11 +1452,9 @@
     renderStories();
     renderImportStatus();
     renderImportPreview();
-    syncFromDatabase();
-    syncSocialFromDatabase();
     window.addEventListener("aha:auth-ready", () => {
-      syncFromDatabase();
-      syncSocialFromDatabase();
+      renderProfile();
+      render();
     });
   }
 
@@ -1458,6 +1505,7 @@
     syncSocialFromDatabase,
     addPost,
     deletePost,
+    copyPostText,
     render
   };
 

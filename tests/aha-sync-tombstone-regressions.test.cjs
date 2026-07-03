@@ -12,7 +12,7 @@ function makeLocalStorage() {
   };
 }
 
-function makeSandbox({ repository = {}, ingest } = {}) {
+function makeSandbox({ repository = {}, ingest, config = {} } = {}) {
   const sandbox = {
     console,
     setTimeout,
@@ -30,6 +30,7 @@ function makeSandbox({ repository = {}, ingest } = {}) {
     },
     addEventListener: () => {},
     AHARepository: repository,
+    AHA_CONFIG: config,
     AHAIngest: ingest || { ingest: async () => ({ ok: true, sourceEvent: { id: 'source-event-1' } }) },
     AHAContracts: { createBaseItem: () => null },
     prompt: () => null
@@ -272,6 +273,7 @@ async function testInstaSyncRegressions() {
   let loadedAfterPush = false;
   const ingestCalls = [];
   const sandbox = loadModule('js/ahaInsta.js', {
+    config: { insta: { enableDatabaseSync: true } },
     repository: {
       saveInstaProfile: async (profile) => ({ ok: true, data: profile }),
       saveInstaPost: async (post) => { saveCalls.push(post); return { ok: true, data: post }; },
@@ -319,9 +321,10 @@ async function testInstaSyncRegressions() {
 
   const added = await Insta.addPost({ title: 'Insta source', src: 'insta.jpg', caption: 'Source type check' });
   assert.ok(added, 'insta addPost should create a post');
-  assert.equal(ingestCalls.at(-1).source_type, 'insta_post', 'insta addPost should ingest source_type insta_post');
+  assert.equal(ingestCalls.at(-1).source_type, 'aha_insta_post', 'insta addPost should ingest source_type aha_insta_post');
 
   const invalidSandbox = loadModule('js/ahaInsta.js', {
+    config: { insta: { enableDatabaseSync: true } },
     repository: {
       saveInstaProfile: async (profile) => ({ ok: true, data: profile }),
       saveInstaPost: async (post) => ({ ok: true, data: post }),
