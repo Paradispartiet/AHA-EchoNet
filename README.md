@@ -7,6 +7,12 @@ AHA Quality Status Surface V1 is frozen as a local read-only quality layer. It d
 **Status baseline:** AHA quality gates for topic/source/geopolitics are green on the latest `npm test` baseline (115/115), while AHA Sync remains read-only/local-only and NO-GO for real sync or EchoNet activation. AHA Sync Overview V1 is a local read-only overview. It does not perform sync, approval, publishing, or EchoNet network actions.
 
 
+## AHA Lists local reference collections
+
+`Lists` lagrer lokale referansesamlinger i `aha_lists_v1`. En liste peker bare til eksisterende AHA-objekter fra innsikter, notater, Feed, Galleri eller AHA Insta; den oppretter ikke ny insight og er ikke en egen læringsmotor.
+
+Lists er local-only som standard. Database-sync er av med mindre `AHA_CONFIG.lists.enableDatabaseSync === true` settes eksplisitt, og EchoNet/deling er ikke aktivert. Lists skal derfor brukes som lokal organisering av eksisterende materiale, ikke som sosial deling, backend-sync eller ny AHA-motor.
+
 ## AHA Sources / Ingest Audit V1
 
 `Sources / Ingest Audit` (`sources.html`) er et lokalt innsynslag over eksisterende AHA source/ingest-pipeline. Audit-visningen leser `aha_source_events_v1` og `aha_insight_chamber_v1` for å vise hva som kom inn som source events og hvilke innsikter/signaler som kan kobles tilbake til dem.

@@ -7,7 +7,7 @@ const index = read('index.html');
 const modulesCode = read('js/ahaModules.js');
 const dashboardCss = read('css/aha-dashboard.css');
 const pages = {
-  lists: { html: read('lists.html'), js: read('js/ahaLists.js'), title: 'Lists', purpose: 'Organize saved AHA items.', action: 'Create list', empty: 'No lists yet.' },
+  lists: { html: read('lists.html'), js: read('js/ahaLists.js'), title: 'Lists', purpose: 'Lokale samlinger av eksisterende AHA-objekter.', action: 'Lag liste', empty: 'No lists yet.' },
   paths: { html: read('paths.html'), js: read('js/ahaPaths.js'), title: 'Paths', purpose: 'Build ordered learning routes and review their sequence.', action: 'Create path', empty: 'No paths yet.' },
   groups: { html: read('groups.html'), js: read('js/ahaGroups.js'), title: 'Groups', purpose: 'Group related AHA material.', action: 'Create group', empty: 'No groups yet.' },
   avisa: { html: read('avisa.html'), js: read('js/ahaAvisa.js'), title: 'AHAavisa', purpose: 'Collect drafts and published AHA notes.', action: 'New note', empty: 'No AHAavisa notes yet.' }

@@ -56,15 +56,15 @@ function makeContext(seed = {}) {
 
 const listsHtml = fs.readFileSync(path.join(__dirname, '..', 'lists.html'), 'utf8');
 assert.match(listsHtml, /<h1 id="lists-module-title">Lists<\/h1>/, 'Lists page should render the module title');
-assert.match(listsHtml, /Organize saved AHA items\./, 'Lists page should render its purpose');
+assert.match(listsHtml, /Lokale samlinger av eksisterende AHA-objekter/, 'Lists page should render its purpose');
 assert.match(listsHtml, /id="aha-module-health"/, 'Lists page should include a textual health badge');
-assert.match(listsHtml, /href="#lists-create">Create list<\/a>/, 'existing create flow should remain the primary action');
+assert.match(listsHtml, /href="#lists-create">Lag liste<\/a>/, 'existing create flow should remain the primary action');
 
 const empty = makeContext({ aha_lists_v1: '[]' });
 empty.Lists.render();
 assert.equal(empty.elements['lists-count'].textContent, '0', 'empty Lists should render a zero count');
-assert.match(empty.elements['lists-list'].innerHTML, /No lists yet\./, 'empty Lists should use the standard no-data title');
-assert.match(empty.elements['lists-list'].innerHTML, /Lists will appear here when available\./, 'empty Lists should explain when data appears');
+assert.match(empty.elements['lists-list'].innerHTML, /Ingen lister ennå\./, 'empty Lists should use the standard no-data title');
+assert.match(empty.elements['lists-list'].innerHTML, /Lag en lokal liste/, 'empty Lists should explain when data appears');
 assert.equal(empty.healthCalls.at(-1).health.status, 'empty', 'empty Lists should report empty health');
 
 const rows = [
