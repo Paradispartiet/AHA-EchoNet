@@ -33,6 +33,13 @@
     { key: "aha_gallery_v1", label: "AHA Gallery", kind: "array", isAHA: true, isHistoryGo: false, canClear: true },
     { key: "aha_feed_posts_v1", label: "AHA Feed", kind: "array", isAHA: true, isHistoryGo: false, canClear: true },
     { key: "aha_insta_posts_v1", label: "AHA Insta", kind: "array", isAHA: true, isHistoryGo: false, canClear: true },
+    { key: "aha_insta_stories_v1", label: "AHA Insta Stories", kind: "array", isAHA: true, isHistoryGo: false, canClear: true },
+    { key: "aha_insta_import_sessions_v1", label: "AHA Insta importøkter", kind: "array", isAHA: true, isHistoryGo: false, canClear: true },
+    { key: "aha_insta_import_preview_v1", label: "AHA Insta import-preview", kind: "array", isAHA: true, isHistoryGo: false, canClear: true },
+    { key: "aha_insta_profile_v1", label: "AHA Insta profil", kind: "object", isAHA: true, isHistoryGo: false, canClear: true },
+    { key: "aha_insta_likes_v1", label: "AHA Insta lokale likes", kind: "array", isAHA: true, isHistoryGo: false, canClear: true },
+    { key: "aha_insta_comments_v1", label: "AHA Insta lokale kommentarer", kind: "array", isAHA: true, isHistoryGo: false, canClear: true },
+    { key: "aha_insta_follows_v1", label: "AHA Insta lokale følgerelasjoner", kind: "array", isAHA: true, isHistoryGo: false, canClear: true },
     { key: "aha_lists_v1", label: "AHA Lister", kind: "array", isAHA: true, isHistoryGo: false, canClear: true },
     { key: "aha_paths_v1", label: "AHA Stier", kind: "array", isAHA: true, isHistoryGo: false, canClear: true },
     { key: "aha_articles_v1", label: "AHAavisa artikler", kind: "array", isAHA: true, isHistoryGo: false, canClear: true },
@@ -102,27 +109,90 @@
     return settings;
   }
 
-  function countItems(parsed, key) {
-    if (Array.isArray(parsed)) return parsed.length;
-    if (!parsed || typeof parsed !== "object") return 0;
-    if (key === "aha_insight_chamber_v1") return asArray(parsed.insights).length;
-    return Object.keys(parsed).length;
+  function hasDeletionMarker(item) {
+    return Boolean(item && typeof item === "object" && (item.deleted_at || item.deletedAt));
+  }
+
+  function analyzeStorageValue(def, parsed) {
+    const empty = {
+      itemCount: 0,
+      activeCount: 0,
+      deletedCount: 0,
+      archivedCount: 0,
+      importedCount: 0,
+      localOnlyCount: 0,
+      externalPublishedCount: 0,
+      echonetSharedCount: 0,
+      syncEnabledCount: 0,
+      hasPreviewData: false,
+      hasImportData: false
+    };
+
+    if (!Array.isArray(parsed)) {
+      if (!parsed || typeof parsed !== "object") return empty;
+      return {
+        ...empty,
+        itemCount: 1,
+        activeCount: hasDeletionMarker(parsed) ? 0 : 1,
+        deletedCount: hasDeletionMarker(parsed) ? 1 : 0,
+        archivedCount: parsed.archived === true ? 1 : 0,
+        importedCount: parsed.imported === true ? 1 : 0,
+        localOnlyCount: parsed.local_only === true ? 1 : 0,
+        externalPublishedCount: parsed.published_external === true ? 1 : 0,
+        echonetSharedCount: parsed.echonet_shared === true ? 1 : 0,
+        syncEnabledCount: parsed.sync_enabled === true ? 1 : 0,
+        hasPreviewData: Boolean(def.key.includes("preview") || parsed.preview || parsed.previewData || parsed.preview_data),
+        hasImportData: Boolean(def.key.includes("import") || parsed.imported === true || parsed.import_session_id || parsed.importSessionId)
+      };
+    }
+
+    return parsed.reduce((summary, item) => {
+      const isObject = item && typeof item === "object";
+      const deleted = hasDeletionMarker(item);
+      summary.itemCount += 1;
+      if (!deleted) summary.activeCount += 1;
+      if (deleted) summary.deletedCount += 1;
+      if (isObject && item.archived === true) summary.archivedCount += 1;
+      if (isObject && item.imported === true) summary.importedCount += 1;
+      if (isObject && item.local_only === true) summary.localOnlyCount += 1;
+      if (isObject && item.published_external === true) summary.externalPublishedCount += 1;
+      if (isObject && item.echonet_shared === true) summary.echonetSharedCount += 1;
+      if (isObject && item.sync_enabled === true) summary.syncEnabledCount += 1;
+      if (isObject && (item.preview || item.previewData || item.preview_data)) summary.hasPreviewData = true;
+      if (isObject && (item.imported === true || item.import_session_id || item.importSessionId)) summary.hasImportData = true;
+      return summary;
+    }, {
+      ...empty,
+      hasPreviewData: def.key.includes("preview"),
+      hasImportData: def.key.includes("import")
+    });
   }
 
   function collectStorageReport() {
     return STORAGE_DEFINITIONS.map((def) => {
       const raw = localStorage.getItem(def.key);
       const parsed = safeParse(raw, null);
+      const analysis = analyzeStorageValue(def, parsed);
       return {
         key: def.key,
         label: def.label,
         exists: raw !== null,
         bytes: raw ? raw.length : 0,
-        itemCount: countItems(parsed, def.key),
+        itemCount: analysis.itemCount,
         kind: def.kind,
         isHistoryGo: def.isHistoryGo,
         isAHA: def.isAHA,
-        canClear: def.canClear
+        canClear: def.canClear,
+        activeCount: analysis.activeCount,
+        deletedCount: analysis.deletedCount,
+        archivedCount: analysis.archivedCount,
+        importedCount: analysis.importedCount,
+        localOnlyCount: analysis.localOnlyCount,
+        externalPublishedCount: analysis.externalPublishedCount,
+        echonetSharedCount: analysis.echonetSharedCount,
+        syncEnabledCount: analysis.syncEnabledCount,
+        hasPreviewData: analysis.hasPreviewData,
+        hasImportData: analysis.hasImportData
       };
     });
   }
@@ -140,7 +210,8 @@
         app: "AHA-EchoNet",
         version: 1
       },
-      data
+      data,
+      privacyReport: collectStorageReport()
     };
 
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
@@ -197,6 +268,35 @@
     if (updated) updated.textContent = settings.updatedAt ? `Sist oppdatert: ${settings.updatedAt}` : "Ikke lagret ennå";
   }
 
+  function sumReport(report, field) {
+    return report.reduce((sum, item) => sum + (Number(item[field]) || 0), 0);
+  }
+
+  function renderReportSummary(report) {
+    const target = document.getElementById("privacy-storage-summary");
+    if (!target) return;
+    const ahaKeys = report.filter((item) => item.isAHA && item.exists).length;
+    const historyGoKeys = report.filter((item) => item.isHistoryGo && item.exists).length;
+    const rows = [
+      ["AHA-nøkler", ahaKeys],
+      ["History Go-nøkler", historyGoKeys],
+      ["Bytes", sumReport(report, "bytes")],
+      ["Aktive objekter", sumReport(report, "activeCount")],
+      ["Tombstoned/slettet", sumReport(report, "deletedCount")],
+      ["Local-only", sumReport(report, "localOnlyCount")],
+      ["Importert", sumReport(report, "importedCount")],
+      ["Sync aktivert", sumReport(report, "syncEnabledCount")],
+      ["EchoNet-delt", sumReport(report, "echonetSharedCount")],
+      ["Ekstern-publisert", sumReport(report, "externalPublishedCount")]
+    ];
+    target.innerHTML = rows.map(([label, value]) => `
+      <article class="privacy-summary-card">
+        <strong>${escapeHtml(String(value))}</strong>
+        <span>${escapeHtml(label)}</span>
+      </article>
+    `).join("");
+  }
+
   function renderReport(report) {
     const target = document.getElementById("privacy-storage-report");
     if (!target) return;
@@ -211,7 +311,9 @@
             <span class="privacy-pill">${item.isHistoryGo ? "History Go" : "AHA"}</span>
             <span class="privacy-pill">${escapeHtml(item.kind)}</span>
           </div>
-          <p class="privacy-small">Objekter: ${escapeHtml(String(item.itemCount))} · Bytes: ${escapeHtml(String(item.bytes))}</p>
+          <p class="privacy-small">Objekter: ${escapeHtml(String(item.itemCount))} · Aktive: ${escapeHtml(String(item.activeCount))} · Bytes: ${escapeHtml(String(item.bytes))}</p>
+          <p class="privacy-small">Slettet/tombstoned: ${escapeHtml(String(item.deletedCount))} · Arkivert: ${escapeHtml(String(item.archivedCount))} · Importert: ${escapeHtml(String(item.importedCount))} · Local-only: ${escapeHtml(String(item.localOnlyCount))}</p>
+          <p class="privacy-small">Ekstern publisering: ${escapeHtml(String(item.externalPublishedCount))} · EchoNet: ${escapeHtml(String(item.echonetSharedCount))} · Sync: ${escapeHtml(String(item.syncEnabledCount))}</p>
         </div>
         <div class="privacy-clear-row">
           ${item.canClear
@@ -228,6 +330,7 @@
     const report = collectStorageReport();
     renderStatus(settings);
     renderConsent(settings);
+    renderReportSummary(report);
     renderReport(report);
   }
 
@@ -276,6 +379,7 @@
     loadSettings,
     saveSettings,
     collectStorageReport,
+    analyzeStorageValue,
     exportAllData,
     clearStorageKey,
     render,
