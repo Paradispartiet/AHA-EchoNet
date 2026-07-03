@@ -11,6 +11,7 @@
 
   const ALLOWED_PATH_TYPES = ["learning", "process", "project", "habit", "reading", "historygo", "publishing"];
   const ALLOWED_STEP_STATUS = ["planned", "active", "done", "skipped"];
+  const ALLOWED_STEP_SOURCES = ["aha_insights", "aha_lists", "aha_notes"];
   let selectedPathId = "";
 
   function safeParse(raw, fallback) {
@@ -86,9 +87,28 @@
       tags,
       steps: sortedSteps,
       source: asText(path?.source, "aha_paths"),
-      meta: path && typeof path.meta === "object" && !Array.isArray(path.meta) ? path.meta : {},
+      local_only: path?.local_only !== false,
+      published_external: path?.published_external === true,
+      echonet_shared: path?.echonet_shared === true,
+      sync_enabled: path?.sync_enabled === true,
+      meta: {
+        ...(path && typeof path.meta === "object" && !Array.isArray(path.meta) ? path.meta : {}),
+        local_only: path?.meta?.local_only === false ? false : true,
+        published_external: path?.meta?.published_external === true,
+        echonet_shared: path?.meta?.echonet_shared === true,
+        sync_enabled: path?.meta?.sync_enabled === true,
+        automation_enabled: path?.meta?.automation_enabled === true
+      },
       deletedAt: path?.deletedAt || path?.deleted_at || ""
     };
+  }
+
+  function isDatabaseSyncEnabled() {
+    return global.AHA_CONFIG?.paths?.enableDatabaseSync === true;
+  }
+
+  function isUnavailableRecord(record) {
+    return Boolean(record?.deletedAt || record?.deleted_at || record?.archived === true);
   }
 
   function loadPaths() {
@@ -101,6 +121,9 @@
   }
 
   async function persistPath(path) {
+    if (!isDatabaseSyncEnabled()) {
+      return { ok: false, fallback: "localOnly", database_sync_disabled: true };
+    }
     if (!global.AHARepository?.savePath) return null;
     try {
       return await global.AHARepository.savePath(path);
@@ -159,6 +182,9 @@
   }
 
   async function pushLocalToDatabase(paths) {
+    if (!isDatabaseSyncEnabled()) {
+      return { ok: false, fallback: "localOnly", database_sync_disabled: true };
+    }
     try {
       const savePath = global.AHARepository?.savePath;
       if (!savePath) return null;
@@ -170,6 +196,9 @@
 
   async function syncFromDatabase() {
     const localPaths = loadPaths();
+    if (!isDatabaseSyncEnabled()) {
+      return { ok: false, fallback: "localOnly", database_sync_disabled: true, data: localPaths };
+    }
     if (localPaths.length) await pushLocalToDatabase(localPaths);
 
     let loadPathsFromRepository;
@@ -217,7 +246,18 @@
       tags: input?.tags,
       steps: [],
       source: "aha_paths",
-      meta: { createdBy: "paths_ui" }
+      local_only: true,
+      published_external: false,
+      echonet_shared: false,
+      sync_enabled: false,
+      meta: {
+        createdBy: "paths_ui",
+        local_only: true,
+        published_external: false,
+        echonet_shared: false,
+        sync_enabled: false,
+        automation_enabled: false
+      }
     });
 
     paths.unshift(created);
@@ -253,21 +293,21 @@
 
   function addStepToPath(pathId, stepInput) {
     const paths = loadPaths();
-    const index = paths.findIndex((path) => path.id === pathId && !path.deletedAt);
-    if (index < 0) return null;
+    const index = paths.findIndex((path) => path.id === pathId && !isUnavailableRecord(path));
+    if (index < 0) return { ok: false, reason: "path_not_found" };
 
     const path = paths[index];
-    const source = asText(stepInput?.source, "");
-    const refId = asText(stepInput?.refId || stepInput?.ref_id, "");
-    if (!source || !refId) return null;
+    const validation = validatePathStepReference(stepInput);
+    if (!validation.ok) return { ok: false, reason: "invalid_reference", detail: validation.reason };
+    const { source, refId, title, type } = validation.item;
 
     const duplicate = path.steps.some((step) => step.source === source && step.refId === refId);
-    if (duplicate) return path;
+    if (duplicate) return { ok: false, reason: "duplicate", path };
 
     const step = normalizeStep({
       id: uid("path_step"),
-      title: stepInput?.title,
-      type: stepInput?.type,
+      title,
+      type,
       source,
       refId,
       order: path.steps.length,
@@ -281,12 +321,12 @@
     paths[index] = normalizePath(path);
     savePaths(paths);
     persistPath(paths[index]);
-    return step;
+    return { ok: true, step, path: paths[index] };
   }
 
   function removeStepFromPath(pathId, stepId) {
     const paths = loadPaths();
-    const index = paths.findIndex((path) => path.id === pathId && !path.deletedAt);
+    const index = paths.findIndex((path) => path.id === pathId && !isUnavailableRecord(path));
     if (index < 0) return null;
 
     const path = paths[index];
@@ -311,9 +351,6 @@
     return asText(path?.status, "Local");
   }
 
-  function isDeletedRecord(record) {
-    return Boolean(record?.deletedAt || record?.deleted_at);
-  }
 
   function renderStepCount(count) {
     return `${count} ${count === 1 ? "step" : "steps"}`;
@@ -359,7 +396,7 @@
         <li class="aha-path-step-row">
           <div>
             <strong>${escapeHtml(step.title)}</strong>
-            <div class="module-meta">#${step.order + 1} · ${escapeHtml(step.type)} · ${escapeHtml(step.status)}</div>
+            <div class="module-meta">#${step.order + 1} · ${escapeHtml(step.type)} · ${escapeHtml(step.status)}${buildAvailableStepIndex(availableItems).has(`${step.source}::${step.refId}`) ? "" : " · ikke lenger tilgjengelig"}</div>
           </div>
           <button type="button" class="aha-tile-btn" data-step-remove="${escapeHtml(path.id)}::${escapeHtml(step.id)}" aria-label="Remove ${escapeHtml(step.title)} from ${escapeHtml(path.title)}">Remove</button>
         </li>`).join("")
@@ -397,6 +434,7 @@
             </select>
             <button type="button" data-step-add="${escapeHtml(path.id)}">Add step</button>
           </div>
+          <div class="statuslinje" data-path-action-status="${escapeHtml(path.id)}" aria-live="polite"></div>
           <div class="aha-path-add-row">
             ${groups.length ? `
             <select class="gruppe-select" data-path-group-select="${escapeHtml(path.id)}" aria-label="Choose a group for ${escapeHtml(path.title)}">
@@ -418,7 +456,9 @@
 
     const chamber = loadRawByKey(INSIGHTS_KEY, { insights: [] });
     asArray(chamber?.insights).forEach((insight, index) => {
-      const refId = asText(insight?.id, `insight_idx_${index}`);
+      if (isUnavailableRecord(insight)) return;
+      const refId = asText(insight?.id, "");
+      if (!refId) return;
       out.push({
         id: `insight_${refId}`,
         title: asText(insight?.title || insight?.heading || insight?.label || insight?.summary || insight?.text, "Innsikt"),
@@ -430,7 +470,7 @@
     });
 
     asArray(loadRawByKey(LISTS_KEY, []))
-      .filter((list) => !list?.deletedAt && !list?.deleted_at)
+      .filter((list) => !isUnavailableRecord(list))
       .forEach((list) => {
         const refId = asText(list?.id, "");
         if (!refId) return;
@@ -445,7 +485,7 @@
       });
 
     asArray(loadRawByKey(NOTES_KEY, []))
-      .filter((note) => !note?.deleted_at)
+      .filter((note) => !isUnavailableRecord(note))
       .forEach((note) => {
         const refId = asText(note?.id, "");
         if (!refId) return;
@@ -462,12 +502,37 @@
     return out;
   }
 
+  function buildAvailableStepIndex(items = collectAvailablePathItems()) {
+    const index = new Map();
+    asArray(items).forEach((item) => {
+      const source = asText(item?.source, "");
+      const refId = asText(item?.refId || item?.ref_id, "");
+      if (source && refId) index.set(`${source}::${refId}`, item);
+    });
+    return index;
+  }
+
+  function validatePathStepReference(stepInput, availableItems = collectAvailablePathItems()) {
+    const source = asText(stepInput?.source, "");
+    const refId = asText(stepInput?.refId || stepInput?.ref_id, "");
+    if (!source) return { ok: false, reason: "missing_source" };
+    if (!refId) return { ok: false, reason: "missing_refId" };
+    if (!ALLOWED_STEP_SOURCES.includes(source)) return { ok: false, reason: "unknown_source" };
+    const item = buildAvailableStepIndex(availableItems).get(`${source}::${refId}`);
+    if (!item) return { ok: false, reason: "unavailable_reference" };
+    if (isUnavailableRecord(item)) return { ok: false, reason: "unavailable_reference" };
+    if (!asText(item.title, "") || !asText(item.type, "") || !asText(item.source, "") || !asText(item.refId, "")) {
+      return { ok: false, reason: "invalid_item" };
+    }
+    return { ok: true, item };
+  }
+
   function renderContent() {
     const rawDataset = localStorage.getItem(PATHS_KEY);
     const datasetExists = rawDataset !== null;
     if (datasetExists) JSON.parse(rawDataset);
     const paths = loadPaths()
-      .filter((path) => !isDeletedRecord(path))
+      .filter((path) => !isUnavailableRecord(path))
       .sort((a, b) => pathActionTime(b) - pathActionTime(a));
     const groups = global.AHAGroups?.getActiveGroups ? asArray(global.AHAGroups.getActiveGroups()) : [];
     const availableItems = collectAvailablePathItems();
@@ -490,8 +555,9 @@
       mount.innerHTML = global.AHAModules.buildModuleEmptyState({
         type: "no_data",
         moduleId: "paths",
-        message: "Paths will appear here when available.",
-        hint: "Use Create path above when you are ready."
+        title: "Ingen stier ennå.",
+        message: "Lag en lokal sti for å sette innsikter, lister eller notater i rekkefølge.",
+        hint: "Paths er local-only, uten autoplanlegging, sync eller EchoNet."
       });
       return;
     }
@@ -574,11 +640,14 @@
       if (stepAdd) {
         const escapedStepId = global.CSS?.escape ? global.CSS.escape(stepAdd) : stepAdd.replace(/"/g, '\"');
         const select = document.querySelector(`[data-path-select="${escapedStepId}"]`);
-        if (!(select instanceof HTMLSelectElement) || !select.value) return;
+        const status = document.querySelector(`[data-path-action-status="${escapedStepId}"]`);
+        if (!(select instanceof HTMLSelectElement) || !select.value) { if (status instanceof HTMLElement) status.textContent = "Velg et objekt først"; return; }
         const [source, refId, type, title] = select.value.split("::");
-        if (!source || !refId) return;
-        addStepToPath(stepAdd, { source, refId, type, title });
-        refresh();
+        const result = addStepToPath(stepAdd, { source, refId, type, title });
+        if (result?.ok) { refresh(); return; }
+        if (status instanceof HTMLElement) {
+          status.textContent = result?.reason === "duplicate" ? "Finnes allerede i stien" : "Kilden finnes ikke lenger";
+        }
         return;
       }
 
@@ -590,7 +659,7 @@
         const groupStatus = card?.querySelector("[data-path-group-status]");
         if (!(groupSelect instanceof HTMLSelectElement) || !(groupStatus instanceof HTMLElement)) return;
         if (!groupSelect.value) { groupStatus.textContent = "Velg en gruppe først"; return; }
-        const currentPath = loadPaths().find((path) => path.id === addGroupPath && !path.deletedAt);
+        const currentPath = loadPaths().find((path) => path.id === addGroupPath && !isUnavailableRecord(path));
         if (!currentPath || !global.AHAGroups?.addReferenceToGroupByObject) return;
         const result = global.AHAGroups.addReferenceToGroupByObject(groupSelect.value, {
           title: currentPath.title,
@@ -619,6 +688,9 @@
     removeStepFromPath,
     syncFromDatabase,
     collectAvailablePathItems,
+    buildAvailableStepIndex,
+    validatePathStepReference,
+    isDatabaseSyncEnabled,
     selectPath(id) {
       selectedPathId = asText(id, "");
       render();
