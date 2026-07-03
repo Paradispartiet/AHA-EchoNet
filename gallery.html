@@ -18,7 +18,7 @@
         <div>
           <p class="eyebrow">AHA Modul</p>
           <h1>AHA Galleri</h1>
-          <p class="aha-module-purpose">Personlig galleri for bilder, minner og visuelle uttrykk. Første MVP bruker URL/path, ikke filopplasting.</p>
+          <p class="aha-module-purpose">Lokalt galleri for bilder, minner og visuelle uttrykk. Gallery lagrer bare lokale referanser, er ikke delt, og bildeanalyse er ikke aktivert.</p>
         </div>
       </header>
       <div class="aha-module-actions">
@@ -29,14 +29,15 @@
     <section class="aha-panel">
       <form id="gallery-form" class="module-form">
         <input id="gallery-title" type="text" placeholder="Tittel" />
-        <input id="gallery-src" type="text" placeholder="Bilde-/videoadresse eller path" />
+        <input id="gallery-src" type="text" placeholder="Lokal bilde-/videoreferanse eller path" />
         <textarea id="gallery-description" placeholder="Beskrivelse / minne / kontekst …"></textarea>
-        <button type="submit">Legg til i galleri</button>
+        <button type="submit">Lagre lokalt og send tekst til AHA</button>
       </form>
     </section>
 
     <section class="aha-panel">
-      <h2>Galleri</h2>
+      <h2>Lokalt galleri</h2>
+      <p class="aha-module-purpose">Ikke delt. Bildeanalyse ikke aktivert.</p>
       <div id="gallery-list" class="module-list"></div>
     </section>
   </main>
@@ -45,12 +46,6 @@
   <script src="js/metaInsightsEngine.js"></script>
   <script src="js/theoryClustersLoader.js"></script>
   <script src="js/ahaFieldProfiles.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/ahaConfig.js"></script>
-  <script src="js/ahaDb.js"></script>
-  <script src="js/ahaAuth.js"></script>
-  <script src="js/ahaRepository.js"></script>
-  <script src="js/ahaChamberSync.js"></script>
   <script src="js/ahaSources.js"></script>
   <script src="js/emnerLoader.js"></script>
   <script src="js/ahaEmneMatcher.js"></script>
