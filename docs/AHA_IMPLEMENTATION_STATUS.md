@@ -11,6 +11,10 @@ Det er ikke lagt til backend, ekte sync, approval-modell, approve/reject-actions
 
 ## AHA Conversation Insight Snapshot V1
 
+✅ AHA Conversation Insight Snapshot V1: frozen local understanding layer
+
+Snapshot V1 is frozen as the local read-only/no-sync understanding layer. The builder exists, the preview exists, structured signals exist, `nextUnderstandingSteps` exist as understanding prompts only, and the global snapshot safety gate exists. Runtime remains read-only/local-only/no-sync: it does not add backend storage, approval actions, EchoNet activation, publishing, or sync, and AHA Sync Overview V1 is unchanged.
+
 ✅ AHA Conversation Insight Snapshot safety: test-locked
 
 ✅ AHA Conversation Insight Snapshot Preview safety: test-locked
