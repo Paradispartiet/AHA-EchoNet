@@ -744,3 +744,12 @@ pre#out { max-height: 22vh; overflow:auto; white-space: pre-wrap; }
   .explorer-tabs { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; }
   .aha-now-list { grid-template-columns: 1fr; }
 }
+.aha-quality-status-preview { display: grid; gap: 8px; padding: 10px; border: 1px solid rgba(127,255,184,.16); border-radius: 14px; background: rgba(127,255,184,.045); }
+.aha-quality-status-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; align-items: baseline; }
+.aha-quality-status-head h3 { margin: 0; font-size: 13px; color: var(--aha-accent); }
+.aha-quality-status-head span, .aha-quality-status-safety { margin: 0; color: #bdf8d2; font-size: 12px; }
+.aha-quality-status-checks { margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 6px; }
+.aha-quality-status-checks div { padding: 8px; border: 1px solid rgba(255,255,255,.08); border-radius: 10px; background: rgba(5,8,20,.25); }
+.aha-quality-status-checks dt { color: var(--aha-muted); font-size: 11px; }
+.aha-quality-status-checks dd { margin: 2px 0 0; font-size: 12px; font-weight: 700; }
+.aha-quality-status-summary { margin: 0; padding-left: 18px; color: var(--aha-muted); font-size: 12px; line-height: 1.45; }

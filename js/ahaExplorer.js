@@ -421,6 +421,49 @@
     host.innerHTML = parts.join("");
   }
 
+  function pickQualityStatusInput(b) {
+    const src = b && typeof b === "object" ? b : {};
+    return {
+      quality: src.quality,
+      sourceBinding: src.sourceBinding,
+      topicConsistency: src.topicConsistency,
+      staleData: src.staleData,
+      staleDataGuarded: src.staleDataGuarded,
+      analysisIsolation: src.analysisIsolation,
+      isolated: src.isolated,
+      canonicalAnalysis: { quality: src.canonicalAnalysis?.quality },
+      analysis: { quality: src.analysis?.quality },
+      snapshotQuality: src.snapshotQuality
+    };
+  }
+
+  function renderQualityStatusPreview(b) {
+    const builder = global.AHAQualityStatusSurface?.buildQualityStatusSurface;
+    if (typeof builder !== "function") return "";
+    const qualityStatus = builder(pickQualityStatusInput(b));
+    const checks = qualityStatus.checks || {};
+    const rows = [
+      ["Kildebinding", checks.sourceBinding],
+      ["Temakonsistens", checks.topicConsistency],
+      ["Stale-data guard", checks.staleData],
+      ["Analyse-isolering", checks.analysisIsolation]
+    ];
+    const summaryLines = asList(qualityStatus.safeSummary?.lines).map(asText).filter(Boolean).slice(0, 4);
+    return `
+      <aside class="aha-quality-status-preview" aria-label="Kvalitetsstatus">
+        <div class="aha-quality-status-head">
+          <h3>Kvalitetsstatus</h3>
+          <span>Status: ${esc(qualityStatus.status || "unknown")}</span>
+        </div>
+        <dl class="aha-quality-status-checks">
+          ${rows.map(([label, check]) => `<div><dt>${esc(label)}</dt><dd>${esc(check?.status || "unknown")}</dd></div>`).join("")}
+        </dl>
+        ${summaryLines.length ? `<ul class="aha-quality-status-summary">${summaryLines.map((line) => `<li>${esc(line)}</li>`).join("")}</ul>` : ""}
+        <p class="aha-quality-status-safety">Lokal, read-only status. Ingen sync. Ingen rå brukerdata.</p>
+      </aside>
+    `;
+  }
+
 
   function renderAhaNow(b) {
     const host = document.getElementById("aha-now-content");
@@ -469,6 +512,7 @@
           <h3>Neste forståelsessteg</h3>
           ${steps.length ? orderedList(steps, 4) : emptyNote("AHA har ikke nok strukturerte signaler ennå.")}
         </section>
+        ${renderQualityStatusPreview(b)}
       </article>
     `;
   }

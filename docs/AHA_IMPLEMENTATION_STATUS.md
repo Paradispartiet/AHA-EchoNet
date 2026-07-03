@@ -13,11 +13,13 @@ Det er ikke lagt til backend, ekte sync, approval-modell, approve/reject-actions
 
 ✅ AHA Quality Status Surface V1 builder: implemented
 
-Quality Status Surface V1 is implemented as `window.AHAQualityStatusSurface` in `js/ahaQualityStatusSurface.js`. The builder is read-only/local-only/no-sync and accepts explicit input only. UI work has not started.
+✅ AHA Quality Status Surface V1 preview: implemented
+
+Quality Status Surface V1 is implemented as `window.AHAQualityStatusSurface` in `js/ahaQualityStatusSurface.js`. The builder is read-only/local-only/no-sync and accepts explicit input only. The preview is implemented in the existing AHA Chat `AHA ser nå` UI as a compact local-only/read-only/no-sync status surface, not as a new dashboard or action surface.
 
 The builder uses only safe quality/status fields for source binding, topic consistency, stale-data guard status, and analysis isolation status. It returns the V1 contract with conservative `unknown`, `ok`, `warning`, or `blocked` status and never treats all-unknown checks as `ok`.
 
-The builder does not return raw user text, full transcript, source excerpts, URLs/private URLs, private metadata, raw payloads, raw invalid fields, raw source events, user identifiers, userId, or email. It has no approval actions, no EchoNet activation, no backend, no fetch/network behavior, and no storage reads or writes. AHA Sync Overview V1 is unchanged, and AHA Conversation Insight Snapshot V1 is unchanged.
+The builder and preview do not return or show raw user text, full transcript, source excerpts, URLs/private URLs, private metadata, raw payloads, raw invalid fields, raw source events, user identifiers, userId, or email. The preview shows only safe status, checks, and safe summary lines, with safety copy that it is local, read-only, no-sync, and contains no raw user data. It has no approval actions, no approve/reject controls, no EchoNet activation, no backend, no fetch/network behavior, and no storage reads or writes. AHA Sync Overview V1 is unchanged, and AHA Conversation Insight Snapshot V1-kontrakt is unchanged.
 
 
 ## AHA Conversation Insight Snapshot V1
