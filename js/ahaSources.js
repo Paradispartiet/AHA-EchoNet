@@ -29,6 +29,7 @@
       text: String(src.text || "").trim(),
       user_created: src.user_created !== false,
       imported: src.imported === true,
+      local_only: src.local_only === true || safeObject(src.meta).local_only === true,
       created_at: src.created_at || new Date().toISOString(),
       tags: safeArray(src.tags).map((x) => String(x || "").trim()).filter(Boolean),
       meta: safeObject(src.meta)
