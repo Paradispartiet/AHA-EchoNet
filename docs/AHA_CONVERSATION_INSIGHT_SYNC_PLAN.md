@@ -20,7 +20,7 @@ AHA Quality Status Surface V1 — local quality layer
 
 AHA Conversation Insight Snapshot V1 is frozen as the local read-only/no-sync understanding layer for one current conversation or analysis. It includes the builder, preview, summary, structured signals, concepts, open questions, perspectives, tensions, conversation links, `nextUnderstandingSteps`, quality summary, safety flags, and the global snapshot safety gate.
 
-AHA Quality Status Surface V1 is frozen as the local read-only/no-sync quality layer for one current conversation or analysis. It presents existing quality-gate status and safe quality summaries only; it is not sync readiness, approval, backend storage, EchoNet runtime, or a project/action engine.
+AHA Quality Status Surface V1 is frozen as the local read-only/no-sync quality layer for one current conversation or analysis. It presents existing quality-gate status and safe quality summaries only; it is not sync readiness, approval, backend storage, EchoNet runtime, or a project/action engine. The finished V1 boundary must remain separate from any possible later user-reviewed insight preparation.
 
 These finished V1 layers are not AHA Sync Overview V1. AHA Sync Overview V1 remains unchanged as a local overview for source-event coverage and patterns. Snapshot V1 and Quality Status V1 do not run sync, write data, add approve/reject-actions, show raw user data, return private URLs or user identifiers, activate EchoNet, or introduce backend storage.
 
