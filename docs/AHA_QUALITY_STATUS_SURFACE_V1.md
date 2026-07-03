@@ -5,6 +5,7 @@
 ```text
 AHA Quality Status Surface V1 builder: implemented
 AHA Quality Status Surface V1 preview: implemented
+AHA Quality Status Surface V1 global safety gate: test-locked
 ```
 
 AHA Quality Status Surface V1 is implemented as a local, read-only, no-sync builder in `js/ahaQualityStatusSurface.js`. It exposes `window.AHAQualityStatusSurface` and builds a safe quality-status contract from explicit input only. The Quality Status Surface V1 preview is implemented in the existing AHA Chat `AHA ser nå` UI as a compact local-only/read-only/no-sync status surface.
@@ -92,6 +93,12 @@ The preview is a small read-only section next to the existing Conversation Insig
 The preview shows only the overall status, the four safe checks (Kildebinding, Temakonsistens, Stale-data guard, Analyse-isolering), up to four safe summary lines, and the safety copy: `Lokal, read-only status. Ingen sync. Ingen rå brukerdata.`
 
 The preview does not show raw user text, full transcript, source excerpts, URL-er/private URL-er, raw invalid fields, metadata, raw payloads, raw source events, userId, or email. It has no approval actions, no approve/reject controls, no sync action, no EchoNet activation, and no backend. AHA Sync Overview V1 is unchanged, and the Conversation Insight Snapshot V1 contract is unchanged.
+
+## Global safety gate
+
+The AHA Quality Status Surface V1 global safety gate is test-locked across the builder, preview, and documentation. The gate verifies that the builder is implemented, the preview is implemented, and the full Quality Status layer stays read-only, local-only, and no-sync.
+
+The global safety gate also locks that the builder and preview do not return or show raw user text, transcript, source excerpts, URL-er/private URL-er, metadata, raw payloads, raw invalid fields, raw source events, userId/email, or other user identifiers. It verifies there are no approval actions, no EchoNet runtime, no backend, and no network/storage behavior. AHA Sync Overview V1 is unchanged, and Conversation Insight Snapshot V1 contract is unchanged.
 
 ## Non-goals
 
