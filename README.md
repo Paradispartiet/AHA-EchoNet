@@ -18,6 +18,13 @@ AHA Quality Status Surface V1 is frozen as a local read-only quality layer. It d
 
 Lists er local-only som standard. Database-sync er av med mindre `AHA_CONFIG.lists.enableDatabaseSync === true` settes eksplisitt, og EchoNet/deling er ikke aktivert. Lists skal derfor brukes som lokal organisering av eksisterende materiale, ikke som sosial deling, backend-sync eller ny AHA-motor.
 
+
+## AHA Paths local sequences
+
+`Paths` lagrer lokale sekvenser i `aha_paths_v1`. En path peker til eksisterende AHA-objekter fra innsikter, lister eller notater, og organiserer bare rekkefølgen mellom disse referansene.
+
+Paths skaper ikke ny insight alene, kjører ikke autoplanlegging og er ikke en læringsmotor. Modulen er local-only som standard. Database-sync er av med mindre `AHA_CONFIG.paths.enableDatabaseSync === true` settes eksplisitt, og EchoNet/deling er ikke aktivert.
+
 ## AHA Sources / Ingest Audit V1
 
 `Sources / Ingest Audit` (`sources.html`) er et lokalt innsynslag over eksisterende AHA source/ingest-pipeline. Audit-visningen leser `aha_source_events_v1` og `aha_insight_chamber_v1` for å vise hva som kom inn som source events og hvilke innsikter/signaler som kan kobles tilbake til dem.

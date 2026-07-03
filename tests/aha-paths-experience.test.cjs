@@ -56,17 +56,17 @@ function makeContext(seed = {}) {
 
 const pathsHtml = fs.readFileSync(path.join(__dirname, '..', 'paths.html'), 'utf8');
 assert.match(pathsHtml, /<h1 id="paths-module-title">Paths<\/h1>/, 'Paths page should render the module title');
-assert.match(pathsHtml, /Build ordered learning routes and review their sequence\./, 'Paths page should render its purpose');
+assert.match(pathsHtml, /Lokale sekvenser av eksisterende AHA-objekter\. Paths organiserer rekkefølge/, 'Paths page should render its purpose');
 assert.match(pathsHtml, /id="aha-module-health"/, 'Paths page should include a textual health badge');
-assert.match(pathsHtml, /href="#paths-create">Create path<\/a>/, 'existing create flow should remain the primary action');
-assert.match(pathsHtml, />Create path<\/button>/, 'create form submit should use Create path label');
+assert.match(pathsHtml, /href="#paths-create">Lag sti<\/a>/, 'localized create flow should remain the primary action');
+assert.match(pathsHtml, />Lag sti<\/button>/, 'create form submit should use Lag sti label');
 
 const empty = makeContext({ aha_paths_v1: '[]' });
 empty.Paths.render();
 assert.equal(empty.elements['paths-count'].textContent, '0', 'empty Paths should render a zero count');
 assert.equal(empty.elements['path-steps-count'].textContent, '0', 'empty Paths should render a zero step count');
-assert.match(empty.elements['paths-list'].innerHTML, /No paths yet\./, 'empty Paths should use the standard no-data title');
-assert.match(empty.elements['paths-list'].innerHTML, /Paths will appear here when available\./, 'empty Paths should explain when data appears');
+assert.match(empty.elements['paths-list'].innerHTML, /Ingen stier ennå\./, 'empty Paths should use the standard no-data title');
+assert.match(empty.elements['paths-list'].innerHTML, /Lag en lokal sti for å sette innsikter, lister eller notater i rekkefølge\./, 'empty Paths should explain when data appears');
 assert.equal(empty.healthCalls.at(-1).health.status, 'empty', 'empty Paths should report empty health');
 
 const rows = [
