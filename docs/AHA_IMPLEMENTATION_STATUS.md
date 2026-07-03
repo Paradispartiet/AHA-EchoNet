@@ -17,6 +17,10 @@ Det er ikke lagt til backend, ekte sync, approval-modell, approve/reject-actions
 
 ✅ AHA Conversation Insight Snapshot structured signals safety: test-locked
 
+✅ AHA Conversation Insight Snapshot nextUnderstandingSteps safety: test-locked
+
+`nextUnderstandingSteps` er read-only/local-only/no-sync og er låst som forståelsessteg, ikke actions. Stegene baseres på strukturerte/safe signaler fra begreper, åpne spørsmål, perspektiver, spenninger, samtalekoblinger og safe quality-status, og returnerer ikke raw text, transcript, URL-er/private URL-er, metadata, raw payloads eller user identifiers. Det finnes fortsatt ingen approval actions, ingen EchoNet-runtime, ingen backend, og AHA Sync Overview V1 er uendret.
+
 Previewet er read-only/local-only/no-sync og viser bare safe snapshot fields: summary, begreper, åpne spørsmål, perspektiver, spenninger, samtalekoblinger og neste forståelsessteg. Previewet viser ikke raw text, URL-er/private URL-er, metadata eller user identifiers, har ingen approval actions, aktiverer ikke EchoNet, lager ingen backend, og AHA Sync Overview V1 er uendret.
 
 Snapshot builderen er read-only/local-only/no-sync og bruker bare eksplisitte, strukturerte og safe inputfelt. Safety-låsen bekrefter at builderen ikke returnerer raw text, private URL-er, metadata, raw payloads eller user identifiers. Snapshot V1 preview er nå implementert i eksisterende `AHA ser nå`-flate, og det finnes fortsatt ingen approval actions, ingen EchoNet-runtime og ingen backend for Snapshot V1.
