@@ -25,6 +25,8 @@ Builderen henter nå flere trygge signaler fra allerede strukturerte analysis-fe
 
 Structured signals safety-låsen bekrefter at signal enrichment er read-only/local-only/no-sync, at builderen bare henter fra strukturerte og safe inputfelt, og at snapshotet ikke returnerer raw text, transcript, URL-er/private URL-er, metadata, raw payloads eller user identifiers. UI-kontrakten er uendret: ingen approval actions, ingen EchoNet, ingen backend og AHA Sync Overview V1 er uendret.
 
+`nextUnderstandingSteps` er forbedret som korte forståelsessteg, ikke actions. Stegene baseres deterministisk på strukturerte signaler som begreper, åpne spørsmål, perspektiver, spenninger, samtalekoblinger og safe quality-status. De bruker ikke raw chat text, transcript, raw source events, URL-er/private URL-er, userId/email eller private payloads, og de legger ikke til sync, approval, EchoNet, backend eller prosjektstyring. AHA Sync Overview V1 er fortsatt uendret.
+
 AHA Conversation Insight Snapshot V1: builder implemented, safe UI preview implemented.
 
 Denne PR-en starter neste AHA-spor som samtaleforståelse med `js/ahaConversationInsightSnapshot.js`: en lokal, read-only/no-sync helper som bygger et Snapshot V1 fra eksplisitte, strukturerte og trygge inputfelt. Builderen returnerer ikke rå brukerdata, full transcript, raw source events, private URL-er, private metadata, raw payloads, userId eller email.

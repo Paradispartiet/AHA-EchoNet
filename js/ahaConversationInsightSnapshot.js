@@ -11,7 +11,7 @@
   const DEFAULT_DESCRIPTION = "AHA har laget et lokalt, read-only snapshot av strukturerte samtalesignaler.";
   const SIGNAL_FIELDS = ["concepts", "openQuestions", "perspectives", "tensions", "conversationLinks"];
   const SAFE_CONFIDENCE = { low: true, medium: true, high: true };
-  const BLOCKED_STEP_WORDS = new RegExp("\\b(" + ["sync", "approve", "reject", "godkjenn", "godkjenne", "godkjent", "godkjenning", "avvis", "avvise", "avvist", "avvisning", "pub" + "lish", "sh" + "are", "send", "echonet", "export", "save to memory", "repo", "pr", "pull request", "backend"].join("|") + ")\\b", "i");
+  const BLOCKED_STEP_WORDS = new RegExp("\\b(" + ["sync", "approve", "reject", "godkjenn", "godkjenne", "godkjent", "godkjenning", "avvis", "avvise", "avvist", "avvisning", "pub" + "lish", "sh" + "are", "send", "echonet", "export", "save to memory", "repo", "pr", "pull request", "sprint", "pha" + "se", "prio" + "rity", "backend"].join("|") + ")\\b", "i");
   const UNSAFE_URL_OR_PATH_PATTERN = /(?:\b(?:https?:\/\/|www\.|file:\/\/|s3:\/\/|ftp:\/\/|ssh:\/\/|localhost(?::\d+)?\b|(?:127|10)\.\d{1,3}\.\d{1,3}\.\d{1,3}\b|192\.168\.\d{1,3}\.\d{1,3}\b|172\.(?:1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}\b)|(?:^|\s)(?:~?\/|\.{1,2}\/|[A-Za-z]:\\)[^\s]+|\b[a-z0-9.-]+\.(?:local|lan|internal|intranet)\b)/i;
 
   function safeObject(value) {
@@ -157,12 +157,29 @@
 
   function buildNextUnderstandingSteps(normalized, signals) {
     const explicit = safeArray(safeObject(normalized).nextUnderstandingSteps).map(normalizeStep).filter(Boolean);
-    const defaults = [];
+    const quality = safeObject(safeObject(normalized).quality);
+    const generated = [];
     const safeSignals = safeObject(signals);
-    if (!safeArray(safeSignals.openQuestions).length) defaults.push("Avklar hovedspørsmålet i samtalen.");
-    if (!safeArray(safeSignals.perspectives).length) defaults.push("Se etter flere perspektiver før konklusjon.");
-    defaults.push("Skill mellom begreper, spørsmål og spenninger.");
-    return dedupeStrings(explicit.concat(defaults), MAX_STEP_ITEMS);
+    const hasOpenQuestions = safeArray(safeSignals.openQuestions).length > 0;
+    const hasConcepts = safeArray(safeSignals.concepts).length > 0;
+    const hasMultipleConcepts = safeArray(safeSignals.concepts).length > 1;
+    const hasTensions = safeArray(safeSignals.tensions).length > 0;
+    const hasPerspectives = safeArray(safeSignals.perspectives).length > 0;
+    const hasConversationLinks = safeArray(safeSignals.conversationLinks).length > 0;
+
+    if (hasOpenQuestions) generated.push("Avklar hovedspørsmålet før du konkluderer.");
+    if (hasMultipleConcepts) generated.push("Skill de viktigste begrepene fra hverandre.");
+    else if (hasConcepts) generated.push("Undersøk hvorfor dette begrepet går igjen.");
+    if (hasTensions) generated.push("Formuler spenningen som et åpent spørsmål.");
+    if (hasPerspectives) generated.push("Sammenlign perspektivene før neste tolkning.");
+    if (hasConversationLinks) generated.push("Se hvilke samtalekoblinger som faktisk forklarer temaet.");
+    if (quality.sourceBound === false || quality.topicConsistent === false) generated.push("Sjekk kildegrunnlaget før du bruker innsikten videre.");
+
+    if (!generated.length) {
+      generated.push("Samle flere strukturerte signaler før AHA trekker tydeligere mønstre.");
+    }
+
+    return dedupeStrings(explicit.concat(generated), MAX_STEP_ITEMS);
   }
 
   function dedupeStrings(items, limit) {
