@@ -49,8 +49,16 @@
     return safeParse(localStorage.getItem(key) || JSON.stringify(fallback), fallback);
   }
 
+  function isDatabaseSyncEnabled() {
+    return global.AHA_CONFIG?.lists?.enableDatabaseSync === true;
+  }
+
   function isDeletedRecord(record) {
     return Boolean(record?.deletedAt || record?.deleted_at);
+  }
+
+  function isUnavailableRecord(record) {
+    return isDeletedRecord(record) || record?.archived === true;
   }
 
   function normalizeListItem(item, listId) {
@@ -92,7 +100,17 @@
       tags: global.AHAContracts?.normalizeTags ? global.AHAContracts.normalizeTags(list?.tags) : asArray(list?.tags),
       items: asArray(list?.items).map((item) => normalizeListItem(item, list?.id)),
       source: asText(list?.source || base?.source, "aha_lists"),
-      meta: list && typeof list.meta === "object" && !Array.isArray(list.meta) ? list.meta : {},
+      local_only: list?.local_only !== false,
+      published_external: list?.published_external === true,
+      echonet_shared: list?.echonet_shared === true,
+      sync_enabled: list?.sync_enabled === true,
+      meta: {
+        ...(list && typeof list.meta === "object" && !Array.isArray(list.meta) ? list.meta : {}),
+        local_only: list?.meta?.local_only !== false,
+        published_external: list?.meta?.published_external === true,
+        echonet_shared: list?.meta?.echonet_shared === true,
+        sync_enabled: list?.meta?.sync_enabled === true
+      },
       deletedAt: list?.deletedAt || list?.deleted_at || ""
     };
   }
@@ -108,11 +126,14 @@
   }
 
   async function persistList(list) {
-    if (!global.AHARepository?.saveList) return null;
+    if (!isDatabaseSyncEnabled()) {
+      return { ok: false, fallback: "localOnly", database_sync_disabled: true };
+    }
+    if (!global.AHARepository?.saveList) return { ok: false, fallback: "localOnly", repository_unavailable: true };
     try {
       return await global.AHARepository.saveList(list);
     } catch (error) {
-      return { ok: false, error };
+      return { ok: false, error, fallback: "localOnly" };
     }
   }
 
@@ -154,7 +175,10 @@
   }
 
   async function pushLocalToDatabase(lists) {
-    if (!global.AHARepository?.saveList) return null;
+    if (!isDatabaseSyncEnabled()) {
+      return { ok: false, fallback: "localOnly", database_sync_disabled: true };
+    }
+    if (!global.AHARepository?.saveList) return { ok: false, fallback: "localOnly", repository_unavailable: true };
     return Promise.allSettled(asArray(lists).map((list) => {
       return Promise.resolve().then(() => global.AHARepository.saveList(list));
     }));
@@ -162,6 +186,9 @@
 
   async function syncFromDatabase() {
     const localLists = loadLists();
+    if (!isDatabaseSyncEnabled()) {
+      return { ok: false, fallback: "localOnly", database_sync_disabled: true, data: localLists };
+    }
     if (localLists.length) await pushLocalToDatabase(localLists);
     if (!global.AHARepository?.loadLists) {
       return { ok: false, fallback: "localStorage", data: localLists };
@@ -199,7 +226,17 @@
       tags: input?.tags,
       items: [],
       source: "aha_lists",
-      meta: { createdBy: "lists_ui" }
+      local_only: true,
+      published_external: false,
+      echonet_shared: false,
+      sync_enabled: false,
+      meta: {
+        createdBy: "lists_ui",
+        local_only: true,
+        published_external: false,
+        echonet_shared: false,
+        sync_enabled: false
+      }
     });
     if (!created.title) return null;
     current.unshift(created);
@@ -234,23 +271,20 @@
   function addItemToList(listId, itemInput) {
     const lists = loadLists();
     const index = lists.findIndex((list) => list.id === listId && !isDeletedRecord(list));
-    if (index < 0) return null;
+    if (index < 0) return { ok: false, reason: "list_not_found" };
 
     const list = lists[index];
-    const refId = asText(itemInput?.refId || itemInput?.ref_id, "");
-    if (!refId) return null;
+    const validation = validateListReference(itemInput);
+    if (!validation.ok) return { ok: false, reason: "invalid_reference", detail: validation.reason };
 
-    const duplicate = list.items.some((it) => String(it.refId) === refId && String(it.source) === String(itemInput?.source));
-    if (duplicate) return list;
+    const duplicate = list.items.some((it) => String(it.refId) === String(validation.item.refId) && String(it.source) === String(validation.item.source));
+    if (duplicate) return { ok: false, reason: "duplicate", list };
 
     const item = normalizeListItem({
+      ...validation.item,
       id: uid("list_item"),
-      title: itemInput?.title,
-      type: itemInput?.type,
-      source: itemInput?.source,
-      refId,
       addedAt: new Date().toISOString(),
-      meta: itemInput?.meta || {}
+      meta: itemInput?.meta || validation.item.meta || {}
     }, listId);
 
     list.items.push(item);
@@ -258,7 +292,7 @@
     lists[index] = list;
     saveLists(lists);
     persistList(list);
-    return item;
+    return { ok: true, item, list };
   }
 
   function removeItemFromList(listId, itemId) {
@@ -283,7 +317,7 @@
 
     const chamber = loadRawByKey(INSIGHTS_KEY, { insights: [] });
     asArray(chamber?.insights).forEach((insight, index) => {
-      if (isDeletedRecord(insight)) return;
+      if (isUnavailableRecord(insight)) return;
       const refId = asText(insight?.id, `insight_idx_${index}`);
       out.push({
         id: `insight_${refId}`,
@@ -295,25 +329,51 @@
       });
     });
 
-    asArray(loadRawByKey(NOTES_KEY, [])).filter((note) => !isDeletedRecord(note)).forEach((note) => {
+    asArray(loadRawByKey(NOTES_KEY, [])).filter((note) => !isUnavailableRecord(note)).forEach((note) => {
       out.push({ id: `note_${note.id}`, title: asText(note?.title, "Notat"), type: "note", source: "aha_notes", refId: asText(note?.id, ""), meta: {} });
     });
 
-    asArray(loadRawByKey(FEED_KEY, [])).filter((post) => !isDeletedRecord(post)).forEach((post) => {
+    asArray(loadRawByKey(FEED_KEY, [])).filter((post) => !isUnavailableRecord(post)).forEach((post) => {
       const raw = asText(post?.text, "");
       const title = raw ? `${raw.slice(0, 60)}${raw.length > 60 ? "…" : ""}` : "Feed-post";
       out.push({ id: `feed_${post.id}`, title, type: "feed_post", source: "aha_feed", refId: asText(post?.id, ""), meta: {} });
     });
 
-    asArray(loadRawByKey(GALLERY_KEY, [])).filter((item) => !isDeletedRecord(item)).forEach((item) => {
+    asArray(loadRawByKey(GALLERY_KEY, [])).filter((item) => !isUnavailableRecord(item)).forEach((item) => {
       out.push({ id: `gallery_${item.id}`, title: asText(item?.title, "Galleriobjekt"), type: "gallery_item", source: "aha_gallery", refId: asText(item?.id, ""), meta: {} });
     });
 
-    asArray(loadRawByKey(INSTA_KEY, [])).filter((post) => !isDeletedRecord(post)).forEach((post) => {
+    asArray(loadRawByKey(INSTA_KEY, [])).filter((post) => !isUnavailableRecord(post)).forEach((post) => {
       out.push({ id: `insta_${post.id}`, title: asText(post?.title || post?.caption, "Insta-post"), type: "insta_post", source: "aha_insta", refId: asText(post?.id, ""), meta: {} });
     });
 
     return out.filter((item) => item.refId);
+  }
+
+  function buildAvailableItemIndex(items = collectAvailableItems()) {
+    const index = new Map();
+    asArray(items).forEach((item) => {
+      const source = asText(item?.source, "");
+      const refId = asText(item?.refId || item?.ref_id, "");
+      if (source && refId) index.set(`${source}::${refId}`, item);
+    });
+    return index;
+  }
+
+  function validateListReference(itemInput, availableItems = collectAvailableItems()) {
+    const allowedSources = new Set(["aha_insights", "aha_notes", "aha_feed", "aha_gallery", "aha_insta"]);
+    const source = asText(itemInput?.source, "");
+    const refId = asText(itemInput?.refId || itemInput?.ref_id, "");
+    if (!source) return { ok: false, reason: "missing_source" };
+    if (!allowedSources.has(source)) return { ok: false, reason: "unknown_source" };
+    if (!refId) return { ok: false, reason: "missing_refId" };
+    const item = buildAvailableItemIndex(availableItems).get(`${source}::${refId}`);
+    if (!item) return { ok: false, reason: "source_missing" };
+    if (isUnavailableRecord(item)) return { ok: false, reason: "source_unavailable" };
+    if (!asText(item.title, "") || !asText(item.type, "") || !asText(item.source, "") || !asText(item.refId || item.ref_id, "")) {
+      return { ok: false, reason: "incomplete_reference" };
+    }
+    return { ok: true, item };
   }
 
   function formatDate(value) {
@@ -365,7 +425,7 @@
         <li class="aha-list-item-row">
           <div>
             <strong>${escapeHtml(item.title)}</strong>
-            <div class="module-meta">${escapeHtml(item.type)}</div>
+            <div class="module-meta">${escapeHtml(item.type)}${buildAvailableItemIndex(allItems).has(`${item.source}::${item.refId}`) ? "" : " · ikke lenger tilgjengelig"}</div>
           </div>
           <button type="button" class="aha-tile-btn" data-list-remove="${escapeHtml(list.id)}::${escapeHtml(item.id)}" aria-label="Remove ${escapeHtml(item.title)} from ${escapeHtml(list.title)}">Remove</button>
         </li>`).join("")
@@ -401,6 +461,7 @@
               ${options}
             </select>
             <button type="button" data-list-add="${escapeHtml(list.id)}">Add item</button>
+            <div class="statuslinje" data-list-action-status="${escapeHtml(list.id)}" aria-live="polite"></div>
           </div>
           <div class="aha-list-add-row">
             ${groups.length ? `
@@ -445,8 +506,9 @@
       mount.innerHTML = global.AHAModules.buildModuleEmptyState({
         type: "no_data",
         moduleId: "lists",
-        message: "Lists will appear here when available.",
-        hint: "Use Create list above when you are ready."
+        title: "Ingen lister ennå.",
+        message: "Lag en lokal liste for å samle innsikter, notater, feedposter, galleriobjekter eller Insta-poster.",
+        hint: "Lists er local-only og deles ikke med EchoNet."
       });
       return;
     }
@@ -534,14 +596,18 @@
       const addPayload = target.dataset.listAdd;
       if (addPayload) {
         const select = document.querySelector(`[data-list-select="${addPayload}"]`);
+        const status = document.querySelector(`[data-list-action-status="${addPayload}"]`);
         if (!(select instanceof HTMLSelectElement)) return;
         const value = select.value || "";
-        if (!value) return;
+        if (!value) { if (status instanceof HTMLElement) status.textContent = "Velg et objekt først"; return; }
         const [source, refId] = value.split("::");
         const available = collectAvailableItems();
         const found = available.find((it) => it.source === source && String(it.refId) === String(refId));
-        if (!found) return;
-        addItemToList(addPayload, found);
+        const result = addItemToList(addPayload, found || { source, refId });
+        if (!result?.ok) {
+          if (status instanceof HTMLElement) status.textContent = result?.reason === "duplicate" ? "Finnes allerede i listen" : "Kilden finnes ikke lenger";
+          return;
+        }
         select.value = "";
         render();
       }
@@ -575,6 +641,8 @@
     addItemToList,
     removeItemFromList,
     collectAvailableItems,
+    buildAvailableItemIndex,
+    validateListReference,
     syncFromDatabase,
     selectList(id) {
       selectedListId = asText(id, "");

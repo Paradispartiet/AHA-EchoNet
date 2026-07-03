@@ -159,8 +159,8 @@ localStorage.writeJson('aha_lists_v1', [
   { id: 'deleted-snake-list', title: 'Deleted snake list', deleted_at: '2026-01-02T00:00:00.000Z', items: [] }
 ]);
 assert.ok(Lists.addItemToList('active-list', { title: 'Live note', source: 'aha_notes', refId: 'note-live', type: 'note' }), 'addItemToList should still update active lists');
-assert.equal(Lists.addItemToList('deleted-at-list', { title: 'Blocked', source: 'aha_notes', refId: 'note-live', type: 'note' }), null, 'addItemToList should reject deletedAt lists');
-assert.equal(Lists.addItemToList('deleted-snake-list', { title: 'Blocked', source: 'aha_notes', refId: 'note-live', type: 'note' }), null, 'addItemToList should reject deleted_at lists');
+assert.equal(Lists.addItemToList('deleted-at-list', { title: 'Blocked', source: 'aha_notes', refId: 'note-live', type: 'note' }).reason, 'list_not_found', 'addItemToList should reject deletedAt lists');
+assert.equal(Lists.addItemToList('deleted-snake-list', { title: 'Blocked', source: 'aha_notes', refId: 'note-live', type: 'note' }).reason, 'list_not_found', 'addItemToList should reject deleted_at lists');
 storedLists = localStorage.readJson('aha_lists_v1', []);
 assert.equal(storedLists.find((list) => list.id === 'active-list').items.length, 1, 'active list should receive the item');
 assert.equal(storedLists.find((list) => list.id === 'deleted-at-list').items.length, 0, 'deletedAt list should not change');
@@ -201,6 +201,7 @@ function makeListsContext(repository) {
     AHAIngest: forbiddenApi('AHAIngest', calls),
     AHASources: forbiddenApi('AHASources', calls),
     AHARepository: repository,
+    AHA_CONFIG: { lists: { enableDatabaseSync: true } },
     AHAGroups: {
       getActiveGroups() { return []; },
       addReferenceToGroupByObject() { throw new Error('group add should not be invoked by this test'); }
@@ -243,12 +244,13 @@ assert.ok(persistedDelete.deletedAt, 'deleteList should return a tombstone with 
 assert.equal(persistedLists[2].deletedAt, persistedDelete.deletedAt, 'deleteList should persist the tombstone deletedAt');
 
 const itemList = PersistLists.createList({ title: 'Items list', type: 'favorites' });
+persistStorage.writeJson('aha_notes_v1', [{ id: 'note-1', title: 'Note ref' }]);
 const addedItem = PersistLists.addItemToList(itemList.id, { title: 'Note ref', source: 'aha_notes', refId: 'note-1', type: 'note' });
 assert.equal(persistedLists.length, 5, 'addItemToList should call AHARepository.saveList after the createList save');
 assert.equal(persistedLists[4].items.length, 1, 'addItemToList should persist the updated items array');
-assert.equal(persistedLists[4].items[0].id, addedItem.id, 'addItemToList should persist the added item');
+assert.equal(persistedLists[4].items[0].id, addedItem.item.id, 'addItemToList should persist the added item');
 
-const removedList = PersistLists.removeItemFromList(itemList.id, addedItem.id);
+const removedList = PersistLists.removeItemFromList(itemList.id, addedItem.item.id);
 assert.equal(persistedLists.length, 6, 'removeItemFromList should call AHARepository.saveList');
 assert.equal(persistedLists[5].id, removedList.id, 'removeItemFromList should persist the updated list');
 assert.equal(persistedLists[5].items.length, 0, 'removeItemFromList should persist the updated items array');
@@ -275,9 +277,10 @@ assert.ok(throwingCreated?.id, 'createList should not break when AHARepository.s
 assert.ok(ThrowingLists.updateList(throwingCreated.id, { title: 'Throwing update' }), 'updateList should not break when AHARepository.saveList throws');
 assert.ok(ThrowingLists.deleteList(throwingCreated.id), 'deleteList should not break when AHARepository.saveList throws');
 const throwingItemList = ThrowingLists.createList({ title: 'Throwing item list', type: 'favorites' });
+throwingStorage.writeJson('aha_notes_v1', [{ id: 'throw-note-1', title: 'Note ref' }]);
 const throwingAddedItem = ThrowingLists.addItemToList(throwingItemList.id, { title: 'Note ref', source: 'aha_notes', refId: 'throw-note-1', type: 'note' });
 assert.ok(throwingAddedItem, 'addItemToList should not break when AHARepository.saveList throws');
-assert.ok(ThrowingLists.removeItemFromList(throwingItemList.id, throwingAddedItem.id), 'removeItemFromList should not break when AHARepository.saveList throws');
+assert.ok(ThrowingLists.removeItemFromList(throwingItemList.id, throwingAddedItem.item.id), 'removeItemFromList should not break when AHARepository.saveList throws');
 assert.equal(throwingStorage.readJson('aha_lists_v1', []).length, 2, 'repository errors should not break localStorage flow');
 
 async function runSyncTests() {
