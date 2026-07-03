@@ -11,9 +11,11 @@ Det er ikke lagt til backend, ekte sync, approval-modell, approve/reject-actions
 
 ## AHA Local Insight Home V1
 
-AHA Local Insight Home V1: contract defined, runtime not started. This is a docs-only planning boundary for the next local read-only start surface that will later combine the three frozen V1 layers: AHA Sync Overview V1, AHA Conversation Insight Snapshot V1, and AHA Quality Status Surface V1.
+✅ AHA Local Insight Home V1 builder: implemented
 
-Sync Overview V1 is frozen. Conversation Insight Snapshot V1 is frozen. Quality Status Surface V1 is frozen. Local Insight Home V1 is the next combined local start surface, but this PR introduces no runtime change, no UI change, no backend, no storage, no approval actions, no EchoNet activation, and no sync.
+AHA Local Insight Home V1 is implemented as `window.AHALocalInsightHome` in `js/ahaLocalInsightHome.js`. The builder is local-only, read-only, no-sync, and accepts explicit input only. UI is not started. It composes only safe outputs from the three frozen V1 layers: AHA Sync Overview V1, AHA Conversation Insight Snapshot V1, and AHA Quality Status Surface V1.
+
+The builder does not create new analysis, does not read raw localStorage data, does not write browser storage, does not call network APIs, does not create backend state, does not run sync, does not activate EchoNet, and does not add approval actions. It returns no raw user text, transcript, source excerpts, private URLs, metadata, raw invalid fields, raw source events, user identifiers, userId, or email. It introduces no project-management fields and no approval/sync controls. AHA Sync Overview V1 is unchanged. Conversation Insight Snapshot V1 is unchanged. Quality Status Surface V1 is unchanged.
 
 ## AHA Quality Status Surface V1
 

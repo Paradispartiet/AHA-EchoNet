@@ -2,7 +2,7 @@
 
 ## Status
 
-AHA Local Insight Home V1 is a documentation-only contract. Runtime is not started, no UI is built, and no production code changes are part of this V1 definition.
+AHA Local Insight Home V1 builder is implemented as a local, read-only, no-sync runtime helper. UI is not started.
 
 AHA Local Insight Home V1 is a small, local, read-only start surface that will later combine the three frozen AHA V1 layers:
 
@@ -21,7 +21,7 @@ It does not provide actions.
 
 ## V1 contract
 
-This contract is documentation-only for now. Do not implement runtime in this PR.
+The runtime helper `window.AHALocalInsightHome` returns this compact V1 contract and only composes safe outputs from frozen V1 layers.
 
 ```js
 {
@@ -124,6 +124,12 @@ The following are not part of AHA Local Insight Home V1:
 - PR/repo planning
 - new scoring model
 - new analysis engine
+
+## Runtime status
+
+`js/ahaLocalInsightHome.js` implements `window.AHALocalInsightHome` with `buildLocalInsightHome`, `normalizeLocalInsightHomeInput`, `buildHomeSections`, `buildHomeDisplay`, and `buildHomeSafety`. The builder accepts only explicit input objects, uses finished V1 objects when provided, and may call existing safe builders for Quality Status Surface V1 and Conversation Insight Snapshot V1 when explicit safe input is provided. It does not read browser storage, write browser storage, call network APIs, create backend state, run sync, activate EchoNet, or add approval actions.
+
+The builder returns only compact safe fields from AHA Quality Status Surface V1, AHA Conversation Insight Snapshot V1, and AHA Sync Overview V1. It does not return raw user text, transcript, source excerpts, private URLs, metadata, raw invalid fields, raw source events, userId, email, approval controls, sync controls, EchoNet controls, or project-management fields. AHA Sync Overview V1 is unchanged. Conversation Insight Snapshot V1 is unchanged. Quality Status Surface V1 is unchanged.
 
 ## Relationship to existing V1 layers
 
