@@ -1003,6 +1003,13 @@ Det gjøres ingen usikker fuzzy-match. Hvis et entydig History Go-`placeId` finn
 
 `music.html` laster `js/ahaMusicHistoryGoBridge.js` og viser en enkel **Musikken din på kartet**-seksjon i biblioteket. Den teller sanger og artister med stedskobling, viser stedskandidater, og lister hvilke sanger som peker til hvert sted. Artistkort kan vise **Knyttet til steder** med `relationType`, `confidence` og `status`. Sangkort kan vise **Kan oppdages i History Go** med forklaring om at koblingen er arvet via artisten, for eksempel: “Denne sangen kan kobles til Oslo gjennom artisten a-ha.”
 
+
+### AHA Gallery local-only boundary
+
+AHA Gallery er en lokal AHA-flate for bilder, minner og visuelle uttrykk. Gallery-objekter lagres i `aha_gallery_v1` som lokale brukerdata, merkes som `local_only`, og er ikke publisert eksternt eller delt til EchoNet.
+
+Gallery laster ikke opp bilder eksternt, sender ikke bildeinnhold til backend, gjør ikke automatisk bildeanalyse og aktiverer ikke sync. Modulen kan derimot sende tekstlig kontekst — som tittel, caption/notat og tags — til eksisterende `AHAIngest` slik at AHA kan lage source event og eventuelt insight-signal fra brukerens tekst.
+
 ### AHA Music Canon v1
 
 AHA Music har nå et eget datadrevet kanon-lag som er avgrenset fra Spotify-importen og AHA Music Library. Kanonen er første kuraterte datasett for å kunne sortere importert musikk historisk, kulturelt, teoretisk og vitenskapelig uten å kjøre automatisk klassifisering.

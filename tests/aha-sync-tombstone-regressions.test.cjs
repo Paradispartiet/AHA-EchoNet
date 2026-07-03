@@ -233,18 +233,21 @@ async function testGallerySyncRegressions() {
     { id: 'gallery_deleted_local', title: 'Local deleted item', src: 'local.jpg', created_at: '2026-01-01T00:00:00.000Z', updated_at: '2026-01-10T00:00:00.000Z', deleted_at: '2026-01-10T00:00:00.000Z' },
     { id: 'gallery_remote_newer', title: 'Local stale item', src: 'stale.jpg', created_at: '2026-01-01T00:00:00.000Z', updated_at: '2026-01-03T00:00:00.000Z' }
   ]);
-  await Gallery.syncFromDatabase();
+  const syncResult = await Gallery.syncFromDatabase();
+  assert.equal(syncResult.local_only, true, 'gallery sync should stay local-only');
   const merged = Gallery.load();
-  assert.ok(byId(merged, 'gallery_deleted_local').deleted_at, 'newer local gallery tombstone should beat older remote active item');
-  assert.equal(byId(merged, 'gallery_remote_newer').title, 'Remote newer item', 'newer remote gallery item should beat older local item');
+  assert.ok(byId(merged, 'gallery_deleted_local').deleted_at, 'local gallery tombstone should remain local');
+  assert.equal(byId(merged, 'gallery_remote_newer').title, 'Local stale item', 'gallery should not merge remote items in local-only mode');
 
   const deleted = Gallery.deleteItem('gallery_remote_newer');
   assert.ok(deleted.deleted_at, 'gallery deleteItem should set deleted_at');
   assert.equal(deleted.updated_at, deleted.deleted_at, 'gallery deleteItem should set updated_at to deleted_at');
 
   const added = await Gallery.addItem({ title: 'Gallery source', src: 'source.jpg', description: 'Source type check' });
-  assert.equal(added.source_type, 'gallery', 'gallery addItem should keep source_type gallery on saved item');
-  assert.equal(ingestCalls.at(-1).source_type, 'gallery', 'gallery addItem should ingest source_type gallery');
+  assert.equal(added.source_type, 'aha_gallery_item', 'gallery addItem should keep gallery item source_type');
+  assert.equal(added.local_only, true, 'gallery addItem should stay local_only');
+  assert.equal(ingestCalls.at(-1).source_type, 'aha_gallery_item', 'gallery addItem should ingest gallery item source_type');
+  assert.equal(ingestCalls.at(-1).local_only, true, 'gallery addItem should ingest local_only metadata');
 
   const invalidSandbox = loadModule('js/ahaGallery.js', {
     repository: {
@@ -258,9 +261,10 @@ async function testGallerySyncRegressions() {
   const before = invalidSandbox.localStorage.raw('aha_gallery_v1');
   const fallback = await invalidGallery.syncFromDatabase();
   assert.equal(fallback.ok, false, 'invalid gallery remote payload should fail safely');
-  assert.equal(fallback.fallback, 'localStorage', 'invalid gallery remote payload should use localStorage fallback');
-  assert.equal(invalidSandbox.localStorage.raw('aha_gallery_v1'), before, 'invalid gallery remote payload should not rewrite localStorage');
-  assert.deepEqual(fallback.data, local, 'invalid gallery remote payload should return local data');
+  assert.equal(fallback.fallback, 'localStorage', 'gallery sync should use localStorage fallback');
+  assert.equal(fallback.local_only, true, 'gallery sync fallback should declare local_only');
+  assert.equal(invalidSandbox.localStorage.raw('aha_gallery_v1'), before, 'gallery sync should not rewrite localStorage');
+  assert.deepEqual(fallback.data, local, 'gallery sync should return local data');
 }
 
 async function testInstaSyncRegressions() {
