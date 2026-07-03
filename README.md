@@ -167,6 +167,17 @@ AHAavisa kan nå lage lokale artikkelutkast fra innsikter, lister, stier og nota
 Tankekart kan nå vise lokale koblinger mellom AHA-objekter som noder og referansebaserte edges.
 
 Personvern / Kontroll kan nå vise lokal datarapport, eksportere AHA-data og lagre lokale samtykkeinnstillinger.
+
+## AHA Privacy Data Report V2
+
+Privacy / Kontroll er en lokal rapport over AHA-data i nettleserens `localStorage` på denne enheten. Rapporten svarer nøkternt på hva AHA kjenner til lokalt, uten å aktivere ny produktlogikk.
+
+- History Go-nøkler vises for transparens, men slettes ikke fra Privacy.
+- AHA-data kan eksporteres som JSON, inkludert rå AHA-nøkler og en `privacyReport` med samme lokale datarapport.
+- AHA-nøkler kan slettes enkeltvis når brukeren skriver den eksplisitte bekreftelsen `SLETT`.
+- Rapporten viser tellere for local-only, import, tombstone/slettet, sync, EchoNet og publiseringsflagg der feltene finnes.
+- Rapporten aktiverer ikke sync, sosial deling, ekstern publisering eller EchoNet.
+
 AHA Home / Profil samler nå lokal status fra innsikter, notes, galleri, feed, insta, lister, stier, AHAavisa, History Go-import og personvern.
 Grupper / Sirkler kan nå lage lokale grupperom med medlemmer og referanser til AHA-objekter, uten ekte deling ennå.
 Grupper / Sirkler har nå lokale arbeidsrom som viser medlemmer, delt bibliotek, resolved referanser og gruppeaktivitet.
