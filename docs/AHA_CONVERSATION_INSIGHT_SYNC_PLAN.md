@@ -11,6 +11,12 @@ Det er ikke lagt til backend, ekte sync, approval-modell, approve/reject-actions
 
 ## V1/V2/EchoNet boundary
 
+### AHA Local Insight Home V1 boundary
+
+AHA Local Insight Home V1 is defined as a local, read-only, no-sync collection surface for the finished V1 layers: AHA Sync Overview V1, AHA Conversation Insight Snapshot V1, and AHA Quality Status Surface V1. It is not a sync plan, not backend storage, not an approval workflow, not an EchoNet/network sync surface, and not a new analysis engine.
+
+The Local Insight Home V1 contract keeps EchoNet/network sync explicitly not started. It provides no actions, no approve/reject controls, no sync controls, no publishing, and no raw user data display.
+
 ### 1. Ferdig V1
 
 ```text
