@@ -430,6 +430,7 @@
 
   // 1. Agentkontekst: alt agenten trenger for å resonnere over profilen.
   function buildKnowledgeWorkbenchPackSafe(){ try { const v=global.AHAKnowledgeWorkbench?.buildWorkbenchStatus?.({save:false}); return v ? { available:true, status:asText(v.overall?.status), score:Number(v.overall?.score)||0, currentStage:asText(v.workflow?.currentStage), nextAction:v.nextAction||null, recommendations:asArray(v.recommendations).slice(0,7) } : null; } catch { return null; } }
+  function buildKnowledgeWorkflowAuditPackSafe(){ try { const api=global.AHAKnowledgeWorkflowAudit; if(!api) return { available:false, status:"missing", score:0, missingStages:[], consentWarnings:[], recommendations:[] }; const a=api.runWorkflowAudit?.({save:false}) || api.loadLastAudit?.() || {}; return { available:true, status:asText(a.status), score:Number(a.score)||0, missingStages:asArray(a.stages?.missing).map(s=>s.id||s.label).slice(0,20), consentWarnings:asArray(a.consent?.warnings).map(w=>w.label||w).slice(0,10), recommendations:asArray(a.recommendations).slice(0,7) }; } catch { return { available:false, status:"error", score:0, missingStages:[], consentWarnings:["Workflow audit status unavailable."], recommendations:[] }; } }
   function buildDataIntakePackSafe(){ try { return global.AHADataIntake?.buildIntakeSummary?.() || null; } catch { return null; } }
   function buildKnowledgeCurationPackSafe(){ try { return global.AHAKnowledgeCuration?.buildCurationSummary?.() || null; } catch { return null; } }
   function buildKnowledgeMapPackSafe(){ try { const v=global.AHAKnowledgeMap?.buildKnowledgeMapSummary?.(); return v ? { available:Boolean(v.available), nodes:Number(v.nodes)||0, edges:Number(v.edges)||0, projects:Number(v.projects)||0, concepts:Number(v.concepts)||0, topProjects:asArray(v.topProjects).slice(0,5), topConcepts:asArray(v.topConcepts).slice(0,5), nextAction:asText(v.nextAction) } : null; } catch { return null; } }
@@ -464,6 +465,8 @@
     if (chatPersistencePack) context.chatPersistencePack = chatPersistencePack;
     const knowledgeWorkbenchPack = options.knowledgeWorkbenchPack && typeof options.knowledgeWorkbenchPack === "object" ? options.knowledgeWorkbenchPack : buildKnowledgeWorkbenchPackSafe();
     if (knowledgeWorkbenchPack) context.knowledgeWorkbenchPack = knowledgeWorkbenchPack;
+    const knowledgeWorkflowAuditPack = options.knowledgeWorkflowAuditPack && typeof options.knowledgeWorkflowAuditPack === "object" ? options.knowledgeWorkflowAuditPack : buildKnowledgeWorkflowAuditPackSafe();
+    if (knowledgeWorkflowAuditPack) context.knowledgeWorkflowAuditPack = knowledgeWorkflowAuditPack;
     const dataIntakePack = options.dataIntakePack && typeof options.dataIntakePack === "object" ? options.dataIntakePack : buildDataIntakePackSafe();
     if (dataIntakePack) context.dataIntakePack = dataIntakePack;
     const knowledgeCurationPack = options.knowledgeCurationPack && typeof options.knowledgeCurationPack === "object" ? options.knowledgeCurationPack : buildKnowledgeCurationPackSafe();
