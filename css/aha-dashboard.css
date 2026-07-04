@@ -1807,6 +1807,68 @@ html, body { max-width: 100%; overflow-x: hidden; }
   .aha-module-health-badge { max-width: 100%; }
 }
 
+/* Relevant per-module content in the AHA Home app menu */
+.aha-tile .aha-module-summary {
+  margin: 0;
+  color: var(--aha-muted);
+  font-size: .82rem;
+  font-weight: 500;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.aha-tile .aha-module-tags {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+  margin-top: auto;
+  padding-top: 4px;
+}
+
+.aha-tile .aha-module-tags .aha-module-health-badge { margin-top: 0; }
+
+.aha-module-type-tag {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 4px 9px;
+  border: 1px solid rgba(255, 255, 255, .14);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .05);
+  color: var(--aha-muted);
+  font-size: .68rem;
+  font-weight: 900;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* Per-type accent so each module reads as its own kind of surface */
+.aha-tile[data-module-type="personal"] .aha-tile-icon,
+.aha-tile[data-module-type="personal"] .aha-module-type-tag { color: #ffd479; border-color: rgba(255, 212, 121, .32); background: rgba(255, 212, 121, .1); }
+.aha-tile[data-module-type="core"] .aha-tile-icon,
+.aha-tile[data-module-type="core"] .aha-module-type-tag { color: #f6c800; border-color: rgba(246, 200, 0, .38); background: rgba(246, 200, 0, .12); }
+.aha-tile[data-module-type="system"] .aha-tile-icon,
+.aha-tile[data-module-type="system"] .aha-module-type-tag { color: #8fd0ff; border-color: rgba(143, 208, 255, .3); background: rgba(143, 208, 255, .1); }
+.aha-tile[data-module-type="knowledge"] .aha-tile-icon,
+.aha-tile[data-module-type="knowledge"] .aha-module-type-tag { color: #b79bff; border-color: rgba(183, 155, 255, .32); background: rgba(183, 155, 255, .1); }
+.aha-tile[data-module-type="integration"] .aha-tile-icon,
+.aha-tile[data-module-type="integration"] .aha-module-type-tag { color: #6fe3c4; border-color: rgba(111, 227, 196, .3); background: rgba(111, 227, 196, .1); }
+.aha-tile[data-module-type="historygo"] .aha-tile-icon,
+.aha-tile[data-module-type="historygo"] .aha-module-type-tag { color: #ff9d76; border-color: rgba(255, 157, 118, .32); background: rgba(255, 157, 118, .1); }
+.aha-tile[data-module-type="social"] .aha-tile-icon,
+.aha-tile[data-module-type="social"] .aha-module-type-tag { color: #ff9ecb; border-color: rgba(255, 158, 203, .32); background: rgba(255, 158, 203, .1); }
+.aha-tile[data-module-type="publishing"] .aha-tile-icon,
+.aha-tile[data-module-type="publishing"] .aha-module-type-tag { color: #9bd0a0; border-color: rgba(155, 208, 160, .3); background: rgba(155, 208, 160, .1); }
+
+@media (max-width: 720px) {
+  .aha-tile .aha-module-summary { -webkit-line-clamp: 2; font-size: .78rem; }
+}
+
 /* Final AHA Home polish and accessibility */
 .aha-home-panel h1 { margin: 0; letter-spacing: -.04em; }
 

@@ -268,6 +268,17 @@
     privacy: "⚑"
   };
 
+  const MODULE_TYPE_LABELS = {
+    personal: "Personlig",
+    core: "Kjerne",
+    system: "System",
+    knowledge: "Kunnskap",
+    integration: "Integrasjon",
+    historygo: "History Go",
+    social: "Sosialt",
+    publishing: "Publisering"
+  };
+
   const MODULE_HEALTH_STATUSES = new Set(["ready", "warning", "blocked", "empty", "missing", "unknown"]);
   const MODULE_EMPTY_STATE_TYPES = new Set(["no_data", "missing_source", "not_configured", "filtered_empty", "read_error", "unknown"]);
   const MODULE_EMPTY_STATE_COPY = {
@@ -381,6 +392,16 @@
     return { status: "unknown", count: null, reason: "Module status unavailable." };
   }
 
+  function moduleTypeLabel(type) {
+    return MODULE_TYPE_LABELS[type] || "Modul";
+  }
+
+  function renderModuleTypeTag(module) {
+    const type = String(module?.type || "");
+    const label = moduleTypeLabel(type);
+    return `<span class="aha-module-type-tag" data-module-type="${escapeHtml(type)}">${escapeHtml(label)}</span>`;
+  }
+
   function renderMenu({ healthByModule = {}, mountId = "aha-modules-grid" } = {}) {
     const grid = document.getElementById(mountId);
     if (!grid) return;
@@ -390,16 +411,24 @@
       const tileClass = `aha-tile${isPriority ? " aha-tile-priority" : ""}`;
       const icon = MODULE_ICONS[module.id] || "◌";
       const badge = renderHealthBadge(module, healthByModule[module.id]);
+      const typeTag = renderModuleTypeTag(module);
+      const description = module.description
+        ? `<p class="aha-module-summary">${escapeHtml(module.description)}</p>`
+        : "";
       const cardInner = `
         <span class="aha-module-menu-heading">
           <span class="aha-tile-icon" aria-hidden="true">${icon}</span>
           <strong>${escapeHtml(module.title)}</strong>
         </span>
-        ${badge}
+        ${description}
+        <span class="aha-module-tags">
+          ${typeTag}
+          ${badge}
+        </span>
       `;
 
       if (module.id === "historygo") {
-        return `<article class="${tileClass} aha-home-tile" id="aha-historygo-home" data-module="imports" aria-labelledby="aha-historygo-title">${cardInner.replace(`<strong>${escapeHtml(module.title)}</strong>`, `<strong id="aha-historygo-title">${escapeHtml(module.title)}</strong>`)}
+        return `<article class="${tileClass} aha-home-tile" id="aha-historygo-home" data-module="imports" data-module-type="${escapeHtml(module.type || "")}" aria-labelledby="aha-historygo-title">${cardInner.replace(`<strong>${escapeHtml(module.title)}</strong>`, `<strong id="aha-historygo-title">${escapeHtml(module.title)}</strong>`)}
           <div class="aha-tile-actions">
             <a class="aha-tile-btn aha-tile-btn-primary" href="/History-Go/">Åpne History Go</a>
             <button class="aha-tile-btn aha-tile-btn-secondary" id="btn-import-hg" type="button">Importer data</button>
@@ -407,7 +436,7 @@
         </article>`;
       }
 
-      return `<a class="${tileClass}" href="${escapeHtml(module.href)}" data-module="${escapeHtml(module.id)}">${cardInner}</a>`;
+      return `<a class="${tileClass}" href="${escapeHtml(module.href)}" data-module="${escapeHtml(module.id)}" data-module-type="${escapeHtml(module.type || "")}">${cardInner}</a>`;
     }).join("");
   }
 
@@ -415,6 +444,8 @@
   window.AHAModules = {
     modules: AHA_MODULES,
     icons: MODULE_ICONS,
+    typeLabels: MODULE_TYPE_LABELS,
+    moduleTypeLabel,
     healthStatuses: [...MODULE_HEALTH_STATUSES],
     normalizeModuleHealth,
     emptyStateTypes: [...MODULE_EMPTY_STATE_TYPES],
