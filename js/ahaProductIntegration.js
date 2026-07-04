@@ -152,6 +152,7 @@
     const chatStats = window.AHAChatPersistence?.collectChatStats?.() || null;
     const chatCandidates = window.AHAChatPersistence?.buildChatIntakeCandidates?.({ dryRun:true }) || null;
     const workbenchStatus = window.AHAKnowledgeWorkbench?.buildWorkbenchStatus?.({ save:false }) || null;
+    const workflowAudit = window.AHAKnowledgeWorkflowAudit?.runWorkflowAudit?.({ save:false }) || window.AHAKnowledgeWorkflowAudit?.loadLastAudit?.() || null;
     const graphIntelligenceSummary = window.AHAKnowledgeGraphIntelligence?.buildGraphIntelligenceSummary?.() || { available: Boolean(window.AHAKnowledgeGraphIntelligence), status:"empty", score:0, insightCount:0, nextAction:"Analyser Knowledge Map." };
     const knowledgeMapSummary = window.AHAKnowledgeMap?.buildKnowledgeMapSummary?.() || { available: modules.hasKnowledgeMap, nodes:0, edges:0, projects:0, concepts:0, nextAction:"Bygg Knowledge Map fra kuratert materiale." };
     const curationSummary = window.AHAKnowledgeCuration?.buildCurationSummary?.() || { available: modules.hasKnowledgeCuration, total: 0, reviewCount: 0, highPriority: 0, duplicateGroups: 0, trainingReady: 0, nextAction: "Bygg kurateringskø fra Data Intake." };
@@ -164,6 +165,7 @@
       version: VERSION,
       navigation,
       home: { available: true, href: navigation.homeHref, modulesVisible: modules.modules.length, summary: "AHA Home er hovedinngangen til samlet produktflyt." },
+      workflowAudit: { available: Boolean(window.AHAKnowledgeWorkflowAudit), status: workflowAudit?.status || "empty", score: workflowAudit?.score || 0, missingStages: (workflowAudit?.stages?.missing || []).map(s=>s.id), consentWarnings: workflowAudit?.consent?.warnings || [], recommendations: (workflowAudit?.recommendations || []).slice(0,7), summary: "Workflow Audit sjekker stage availability, lenker, storage, samtykkegrenser og trygg mock workflow." },
       knowledgeWorkbench: { available: Boolean(window.AHAKnowledgeWorkbench) || modules.hasKnowledgeWorkbench, href: navigation.knowledgeWorkbenchHref, status: workbenchStatus?.overall?.status || "empty", score: workbenchStatus?.overall?.score || 0, currentStage: workbenchStatus?.workflow?.currentStage || "sources", nextAction: workbenchStatus?.nextAction || null, summary: "Knowledge Workbench samler Kilder → Data Intake → Curation → Knowledge Map → Graph Intelligence → Training → Personal AI → Chat." },
       chat: { available: modules.hasChat, href: navigation.chatHref, chatPersistenceAvailable: Boolean(window.AHAChatPersistence), chatSessions: chatStats?.sessions || 0, chatMessages: chatStats?.messages || 0, chatIntakeCandidates: chatCandidates?.items?.length || 0, summary: "AHA Chat er hovedsamtalen med godkjent personlig kontekst når den finnes." },
       personalAI: { available: modules.hasPersonalAI, controlAvailable: Boolean(window.AHAPersonalAiControl) || modules.hasPersonalAI, ready: personalReady, href: navigation.personalAiHref, summary: "Personal AI viser status for minne, corpus, retrieval, composer og evaluation." },

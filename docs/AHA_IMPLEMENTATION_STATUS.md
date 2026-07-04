@@ -2660,3 +2660,17 @@ AHA Sync Overview viser nå en read-only channel-source matrix. Matrisen viser b
 ✅ AHA Sync Channel-Source Matrix safety: test-locked
 
 Matrisen i AHA Sync Overview er read-only/local-only og viser bare counts per `AHA_SYNC_CHANNELS` og trygg source type. URL-artikler vises bare som `url_article`/count. Matrisen viser ingen rå brukerdata, rå tekst, private URL-er, metadata eller brukeridentifikatorer. Den har ingen approve/reject/sync-action, ingen approval-action og ingen ny confirmation gate. Sync er fortsatt NO-GO, og Personal AI Loop source approval boundary er fortsatt sikkerhetsmodellen.
+
+## AHA Knowledge Workflow Stabilization V1
+
+AHA Knowledge Workflow Stabilization V1 stabiliserer hele kunnskapsløypa fra kilder til Chat: Kilder → Source Connectors → Data Intake → Knowledge Workbench → Knowledge Curation → Knowledge Map → Graph Intelligence → Training Corpus → Personal AI → Retrieval / Semantic Retrieval → AHA Chat.
+
+Denne versjonen legger til `AHAKnowledgeWorkflowAudit` som en lokal workflow audit for stage availability, sidekoblinger, localStorage-konsistens, samtykkegrenser og en trygg full mock workflow. Audit lagres i `aha_knowledge_workflow_audit_v1` bare når audit kjøres, og simuleringen bruker isolerte mock-data i returverdien i stedet for å importere ekte materiale.
+
+Knowledge Workbench er hovedflaten for kunnskapsarbeidet. Workbench viser overall status, workflow stages, counts, primary next action, anbefalinger, safe pipeline-resultat og Workflow Audit-resultat. Page load er read-only/status-only: den godkjenner ikke intake, sender ikke curation til Training Corpus, endrer ikke consent og bygger ikke memory claims automatisk.
+
+Muterende handlinger krever eksplisitt brukerklikk: skann kilder, bygg curation queue, godkjenn intake, godkjenn curation, send til Training Corpus, bygg Knowledge Map, kjør Graph Intelligence og bygg retrieval/semantic index. Chat blir ikke Training Corpus automatisk, intake og curation er approval-grenser, Graph Intelligence endrer ikke consent, memory claims blir ikke confirmed automatisk, og fine-tuning-eksport krever eget samtykke.
+
+Product Integration, Personal AI Control og Meta Insights Agent får workflow-audit-status. Product Integration inkluderer `workflowAudit` i produktstatusen, Personal AI Control inkluderer `workflowAudit` i modulstatusen, og Meta Insights Agent får `knowledgeWorkflowAuditPack` med availability, status, score, missing stages, consent warnings og anbefalinger.
+
+Dette markerer AHA Knowledge Workflow V1 som stabilisert grunnflyt: brukeren kan gå fra nytt materiale til et personlig AHA-svar gjennom en sammenhengende, trygg og forståelig arbeidsflyt, samtidig som alle approval- og consent-grenser er eksplisitte.
