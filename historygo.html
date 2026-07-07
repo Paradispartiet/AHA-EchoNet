@@ -16,7 +16,7 @@
         <div>
           <p class="eyebrow">AHA Modul</p>
           <h1>History Go i AHA</h1>
-          <p class="aha-module-purpose">History Go er samlings- og læringsuniverset. AHA leser importert materiale som personlig innsikt.</p>
+          <p class="aha-module-purpose">History Go er samlings- og læringsuniverset. AHA importerer bare utvalgte History Go-signaler som personlige AHA source events/insights. AHA skriver ikke tilbake til History Go-lagring som standard.</p>
         </div>
       </header>
       <div class="aha-module-actions">
@@ -31,6 +31,24 @@
     <section class="aha-panel">
       <h2>Status</h2>
       <div id="hg-status-cards" class="aha-profile-status-grid"></div>
+    </section>
+
+    <section class="aha-panel">
+      <h2>Import boundary</h2>
+      <ul id="hg-import-boundary" class="aha-historygo-payload-list">
+        <li>AHA reads <code>aha_import_payload_v1</code>.</li>
+        <li>Manual import only.</li>
+        <li>Writes AHA source events/insights.</li>
+        <li>Does not write back to HG storage by default.</li>
+        <li>Database persist disabled by default.</li>
+        <li>EchoNet/sync disabled.</li>
+      </ul>
+    </section>
+
+    <section class="aha-panel">
+      <h2>Lokal importlogg</h2>
+      <p>Kompakt AHA-logg lagres i <code>aha_historygo_imports_v1</code>; hele History Go-payloaden dupliseres ikke her.</p>
+      <ul id="hg-import-log-summary" class="aha-historygo-payload-list"></ul>
     </section>
 
     <section class="aha-panel">
@@ -66,10 +84,12 @@
     <section class="aha-panel">
       <h2>Forklaring</h2>
       <ul class="aha-historygo-payload-list">
-        <li>History Go samler steder, personer, badges og kunnskap.</li>
-        <li>AHA importerer dette som signaler.</li>
+        <li>History Go er samlings- og læringsuniverset.</li>
+        <li>AHA importerer bare utvalgte History Go-signaler som personlige AHA source events/insights.</li>
         <li>AHA lager ikke ny History Go-motor.</li>
+        <li>AHA skriver ikke tilbake til History Go-lagring som standard.</li>
         <li>Import skjer bare når brukeren trykker import.</li>
+        <li>Sync, backend og EchoNet er ikke aktivert.</li>
       </ul>
     </section>
   </main>
