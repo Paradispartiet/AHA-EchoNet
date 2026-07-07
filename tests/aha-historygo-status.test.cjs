@@ -50,7 +50,7 @@ assert.equal(log.databasePersistEnabled, false);
 assert.equal(log.historygoStorageApplyEnabled, false);
 assert.equal(localStorage.writes.length, 0, 'status collection should not write localStorage');
 
-for (const forbidden of ['fetch(', 'createClient', 'supabase']) {
+for (const forbidden of ['fetch(', 'AHAEchoNet', 'SyncHub', 'createClient', 'supabase']) {
   assert.equal(source.includes(forbidden), false, `status should not include ${forbidden}`);
 }
 
