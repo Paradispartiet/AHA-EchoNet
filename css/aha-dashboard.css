@@ -2225,16 +2225,20 @@ html, body { max-width: 100%; overflow-x: hidden; }
 .aha-local-insight-home .eyebrow { color: rgba(245, 187, 48, 0.82); }
 .aha-home-hero {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, max-content);
   align-items: end;
+  min-width: 0;
   gap: .75rem;
   padding: .85rem;
   border-radius: 16px;
   background: linear-gradient(135deg, rgba(245,187,48,.08), rgba(255,255,255,.025));
 }
-.aha-home-hero h2 { font-size: clamp(1.25rem, 2vw, 1.75rem); line-height: 1.08; margin: .15rem 0 .25rem; }
-.aha-home-hero p { margin: 0; max-width: 68ch; }
-.aha-home-hero-actions, .aha-local-home-refresh-row { display: flex; flex-wrap: wrap; gap: .45rem; justify-content: flex-end; }
+.aha-home-hero-copy,
+.aha-home-hero > div:first-child { min-width: 0; max-width: 72ch; }
+.aha-home-hero h2 { font-size: clamp(1.25rem, 2vw, 1.75rem); line-height: 1.08; margin: .15rem 0 .25rem; overflow-wrap: normal; word-break: normal; hyphens: manual; }
+.aha-home-hero p { margin: 0; max-width: 68ch; overflow-wrap: normal; word-break: normal; hyphens: manual; }
+.aha-home-hero-actions, .aha-local-home-refresh-row { display: flex; flex-wrap: wrap; gap: .45rem; justify-content: flex-end; min-width: 0; }
+.aha-home-hero-actions .aha-tile-btn { white-space: nowrap; }
 .aha-home-priority-strip { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .55rem; }
 .aha-home-status-chip, .aha-home-next-chip, .aha-home-source-chip, .aha-home-tag, .aha-home-tag-row span {
   display: inline-flex; align-items: center; gap: .35rem; min-width: 0;
@@ -2242,9 +2246,10 @@ html, body { max-width: 100%; overflow-x: hidden; }
   background: rgba(255,255,255,.04); color: inherit; font-size: .82rem;
 }
 .aha-home-status-chip strong { color: #fff; }
-.aha-home-main-grid { grid-template-columns: minmax(0, 1.18fr) minmax(260px, .82fr); gap: .6rem; }
+.aha-home-main-grid { grid-template-columns: minmax(0, 1.18fr) minmax(0, .82fr); gap: .6rem; }
 .aha-home-main-column { display: grid; gap: .6rem; min-width: 0; }
-.aha-local-home-card { padding: .68rem; border-radius: 14px; background: rgba(255,255,255,.028); }
+.aha-local-home-card { padding: .68rem; border-radius: 14px; background: rgba(255,255,255,.028); min-width: 0; }
+.aha-home-empty-state { color: var(--aha-muted); border: 1px dashed rgba(255,255,255,.12); border-radius: 12px; padding: .65rem; background: rgba(0,0,0,.10); }
 .aha-local-home-card h3 { margin: .12rem 0 .4rem; font-size: 1rem; }
 .aha-local-home-card p { margin: .2rem 0; }
 .aha-home-highlight-list { grid-template-columns: 1fr; gap: .4rem; }
@@ -2265,8 +2270,9 @@ html, body { max-width: 100%; overflow-x: hidden; }
 .aha-local-home-card a:focus-visible, .aha-home-hero-actions a:focus-visible, .aha-local-home-refresh-row button:focus-visible { outline: 2px solid rgba(245,187,48,.85); outline-offset: 2px; }
 .aha-local-home-card a:hover, .aha-home-work-chip:hover, .aha-home-module-compact-tile:hover { border-color: rgba(245,187,48,.28); }
 @media (max-width: 760px) {
-  .aha-home-hero, .aha-home-main-grid { grid-template-columns: 1fr; }
+  .aha-home-hero, .aha-home-main-grid { grid-template-columns: minmax(0, 1fr); }
   .aha-home-hero-actions { justify-content: flex-start; }
+  .aha-home-hero-actions .aha-tile-btn { white-space: normal; }
   .aha-home-module-compact-grid { grid-template-columns: 1fr; }
   .aha-local-insight-home { max-width: 100%; }
 }

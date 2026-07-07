@@ -4,14 +4,17 @@
   const $ = (id) => global.document?.getElementById(id);
   const esc = (v) => String(v == null ? "" : v).replace(/[&<>"']/g, (c) => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
   const safe = (items) => Array.isArray(items) ? items : [];
-  const first = (items) => safe(items)[0] || {};
-  const list = (items, render) => safe(items).map(render).join("");
+  const first = (items) => safe(items).find((item) => item && typeof item === "object") || {};
+  const list = (items, render) => safe(items).map(render).filter(Boolean).join("");
+  const hasText = (value) => String(value == null ? "" : value).trim().length > 0;
+  const hasRenderable = (...values) => values.some(hasText);
   function set(id, html) { const node = $(id); if (node) node.innerHTML = html; }
   function short(value, max = 110) { const t = String(value == null ? "" : value).replace(/\s+/g, " ").trim(); return t.length > max ? `${t.slice(0, max - 1).trim()}…` : t; }
   function statusText(status) { return ({ needs_review: "Trenger vurdering", strong: "Sterk", active: "Aktiv", starting: "Starter", empty: "Tom", unavailable: "Ikke klar", not_configured: "Ikke satt opp" })[status] || status || "Starter"; }
   function renderHero(payload) {
     const a = first(payload.nextActions);
-    set("aha-local-home-hero", `<div><p class="eyebrow">AHA Home</p><h2>${esc(payload.headline || "AHA er klar")}</h2><p>${esc(short(payload.summary || "Home er klart, men AHA har ikke noe nytt materiale ennå. Start i Chat eller legg inn tekst i Data Intake.", 180))}</p></div><div class="aha-home-hero-actions"><a class="aha-tile-btn aha-tile-btn-primary" href="${esc(a.href || "chat.html")}">${esc(a.label || "Åpne Chat")}</a><a class="aha-tile-btn" href="chat.html">Åpne Chat</a><a class="aha-tile-btn" href="knowledge-workbench.html">Åpne Workbench</a></div>`);
+    const summary = payload.summary || "Home er klart, men AHA har ikke noe nytt materiale ennå.";
+    set("aha-local-home-hero", `<div class="aha-home-hero-copy"><p class="eyebrow">AHA Home</p><h2>${esc(payload.headline || "AHA er klar")}</h2><p>${esc(short(summary, 180))}</p></div><div class="aha-home-hero-actions"><a class="aha-tile-btn aha-tile-btn-primary" href="${esc(a.href || "chat.html")}">${esc(a.label || "Åpne Chat")}</a><a class="aha-tile-btn" href="chat.html">Åpne Chat</a><a class="aha-tile-btn" href="knowledge-workbench.html">Åpne Workbench</a></div>`);
   }
   function renderPriorityStrip(payload) {
     const c = payload.counts || {};
@@ -36,13 +39,16 @@
     set("aha-local-home-next-action", `<p class="eyebrow">Neste steg</p><h3>${esc(a.label || "Åpne Chat")}</h3><p>${esc(short(a.description || "Bruk AHA med dagens lokale innsiktsgrunnlag.", 140))}</p><span class="aha-home-next-chip">Hvorfor dette? Høyest prioritet akkurat nå.</span>`);
   }
   function renderHighlights(payload) {
-    const items = safe(payload.highlights).slice(0, 5);
-    set("aha-local-home-highlights", `<p class="eyebrow">Viktig akkurat nå</p><h3>Highlights</h3><div class="aha-local-card-grid aha-home-highlight-list">${list(items, (h) => `<article class="aha-local-card aha-home-highlight"><strong>${esc(short(h.title, 54))}</strong><p>${esc(short(h.summary, 96))}</p><div class="aha-home-card-foot"><span class="aha-home-source-chip">${esc(h.source || "AHA")}</span>${h.href ? `<a href="${esc(h.href)}">${esc(h.actionLabel || "Åpne")}</a>` : ""}</div></article>`)}</div>`);
+    const items = safe(payload.highlights).filter((h) => hasRenderable(h?.title, h?.summary, h?.source)).slice(0, 5);
+    const content = items.length
+      ? `<div class="aha-local-card-grid aha-home-highlight-list">${list(items, (h) => `<article class="aha-local-card aha-home-highlight"><strong>${esc(short(h.title || "Teknisk funn", 54))}</strong>${hasText(h.summary) ? `<p>${esc(short(h.summary, 96))}</p>` : ""}<div class="aha-home-card-foot"><span class="aha-home-source-chip">${esc(h.source || "AHA")}</span>${h.href ? `<a href="${esc(h.href)}">${esc(h.actionLabel || "Åpne")}</a>` : ""}</div></article>`)}</div>`
+      : `<p class="aha-home-empty-state">Ingen tekniske funn ennå.</p>`;
+    set("aha-local-home-highlights", `<p class="eyebrow">Viktig akkurat nå</p><h3>Highlights</h3>${content}`);
   }
   function renderActiveWork(payload) {
-    const rows = safe(payload.pendingWork).slice(0, 5);
-    const empty = rows.every((w) => !(Number(w.count) > 0) && !w.status);
-    set("aha-local-home-active-work", `<p class="eyebrow">Aktivt arbeid</p><h3>Kø</h3>${empty ? `<p>Alt er ryddig akkurat nå. Start med Chat eller skann kilder.</p>` : `<div class="aha-home-work-queue">${list(rows, (w) => `<a class="aha-home-work-chip" href="${esc(w.href)}"><strong>${esc(w.count || w.status || 0)}</strong><span>${esc(w.label)}</span></a>`)}</div>`}`);
+    const rows = safe(payload.pendingWork).filter((w) => hasRenderable(w?.label) && (Number(w?.count) > 0 || hasText(w?.status))).slice(0, 5);
+    const visibleRows = rows.filter((w) => Number(w.count) > 0 || !["0", "empty", "tom"].includes(String(w.status || "").toLowerCase()));
+    set("aha-local-home-active-work", `<p class="eyebrow">Aktivt arbeid</p><h3>Kø</h3>${visibleRows.length ? `<div class="aha-home-work-queue">${list(visibleRows, (w) => `<a class="aha-home-work-chip" href="${esc(w.href || "knowledge-workbench.html")}"><strong>${esc(w.count || w.status)}</strong><span>${esc(w.label)}</span></a>`)}</div>` : `<p class="aha-home-empty-state">Home er klart, men AHA har ikke noe nytt materiale ennå.</p>`}`);
   }
   function renderProjectsConcepts(payload) {
     const c = payload.counts || {}; const projects = safe(payload.activeProjects).slice(0, 3);
@@ -57,9 +63,9 @@
   function renderTechnicalDetails(payload) {
     set("aha-local-home-technical-content", `<p>Home lagrer kun lokal status-snapshot og kjører ingen godkjenning, training, sync eller import ved lasting.</p><pre>${esc(JSON.stringify({ generatedAt: payload.generatedAt, version: payload.version, status: payload.status, counts: payload.counts, warnings: payload.warnings || [] }, null, 2))}</pre>`);
   }
-  function render(payload) { if (!payload) return; renderHero(payload); renderPriorityStrip(payload); renderDailyLoop(); renderNextAction(payload); renderHighlights(payload); renderActiveWork(payload); renderProjectsConcepts(payload); renderRecentActivity(payload); renderModuleTiles(payload); renderTechnicalDetails(payload); bindActions(); }
+  function render(payload) { if (!payload) payload = { status: "empty", headline: "AHA er klar for første lokale innsikt.", summary: "Home er klart, men AHA har ikke noe nytt materiale ennå.", counts: {}, nextActions: [{ label: "Åpne Chat", href: "chat.html" }], highlights: [], pendingWork: [], activeProjects: [], recentActivity: [], moduleTiles: [], warnings: [] }; renderHero(payload); renderPriorityStrip(payload); renderDailyLoop(); renderNextAction(payload); renderHighlights(payload); renderActiveWork(payload); renderProjectsConcepts(payload); renderRecentActivity(payload); renderModuleTiles(payload); renderTechnicalDetails(payload); bindActions(); }
   function bindActions() { const btn = $("aha-local-home-refresh"); if (btn && !btn.dataset.bound) { btn.dataset.bound = "true"; btn.addEventListener("click", () => render(global.AHALocalInsightHome?.refreshHome?.({ save: true }))); } }
-  function init() { const payload = global.AHALocalInsightHome?.refreshHome?.({ save: true }); render(payload); }
+  function init() { const payload = global.AHALocalInsightHome?.refreshHome?.({ save: true }) || null; render(payload); }
   global.AHALocalInsightHomeDashboard = { init, render, renderHero, renderPriorityStrip, renderNextAction, renderHighlights, renderActiveWork, renderProjectsConcepts, renderRecentActivity, renderModuleTiles, renderDailyLoop, renderTechnicalDetails, bindActions };
   if (global.document) global.document.addEventListener("DOMContentLoaded", init);
 })(typeof window !== "undefined" ? window : globalThis);
