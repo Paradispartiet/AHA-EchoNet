@@ -2694,3 +2694,15 @@ AHA Home er stabilisert som en daglig lokal startflate, ikke et teknisk dashboar
 Teknisk status er nedtonet og lagt i `details`, slik at rå counts, warnings og lokal snapshot-status ikke dominerer hovedflaten. Home page load er fortsatt read-only: lasting kan lese status, bygge Home payload og lagre et lokalt home-status-snapshot, men muterende handlinger som scanning, godkjenning, Training, sync, eksport eller consent-endringer krever eksplisitt brukerklikk.
 
 Layouten er gjort mer kompakt, rolig og mobilvennlig med Home-spesifikke CSS-klasser, mindre padding/gap, mindre gul aksent, kompakte chips og én-kolonne mobilvisning uten horisontal overflow.
+
+## AHA Daily Operating Loop V1
+
+AHA Daily Operating Loop binder Home, Chat og Workbench til en daglig arbeidsflyt. Løkken svarer på hva status er nå, hva som bør gjøres først, hva som har endret seg siden sist, hva som bør ryddes, hva som bør bli kunnskap, hva brukeren bør spørre AHA om, og hva neste beste handling er.
+
+Daily Loop viser status, endringer siden sist, neste beste handling, action queue og foreslåtte Chat-prompts. Modulen samler read-only status fra Local Insight Home, Knowledge Workbench, Workflow Audit, Chat Persistence, Answer Evaluation, Data Intake, Curation, Graph Intelligence, Training Corpus og Personal AI-indekser med graceful fallback når en kilde mangler eller er tom.
+
+Daily Loop er read-only på page load og utfører ikke muterende handlinger automatisk. Den skanner ikke kilder, godkjenner ikke intake eller curation, sender ikke til Training, bekrefter ikke memory, bygger ikke indeks, endrer ikke consent, eksporterer ikke data og sender ikke chatmelding. Tillatte handlinger på lasting er å lese status, bygge et lokalt Daily Loop-snapshot og vise anbefalinger. Chat-prompts kan bare fylle chat-input ved eksplisitt brukerklikk.
+
+Home viser en kompakt seksjon kalt “Dagens AHA-løype” med current focus, endringer siden sist, next best action, tre køhandlinger og tre foreslåtte Chat-prompts. Chat viser Daily Loop-status og foreslåtte prompts uten å sende automatisk. Workbench viser Daily Loop-status, action queue, lenke tilbake til Home og lenke til Chat med foreslått prompt.
+
+Product Integration, Personal AI Control og Meta Insights Agent får dailyOperatingLoop-status slik at AHA kan bruke dagens operative fokus i produktstatus, kontrollrom og meta-innsikt. Dette gjør AHA mer operasjonell som daglig personlig AI-startflate.
