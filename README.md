@@ -31,6 +31,17 @@ Paths skaper ikke ny insight alene, kjører ikke autoplanlegging og er ikke en l
 
 Mindmap viser bare koblinger som allerede finnes i lokale referansefelt. Den skriver ikke data, reparerer ikke manglende koblinger, skaper ikke nye insights og er ikke en full kunnskapsmodell, anbefalingsmotor eller graph-database. Backend, sync og EchoNet er ikke aktivert for Mindmap.
 
+
+## AHA / History Go import boundary
+
+History Go er et eget samlings- og læringsunivers. AHA leser bare den delte eksportnøkkelen `aha_import_payload_v1`, og import skjer manuelt når brukeren trykker importknappen i `historygo.html`.
+
+Importen lager AHA source events/insights via eksisterende `AHAIngest`; den bygger ikke ny AHA-motor og endrer ikke History Go-motoren. AHA skriver ikke tilbake til History Go-storage som standard. Slik write-back til `knowledge_universe`, `hg_learning_log_v1`, `hg_insights_events_v1`, `merits_by_category` og `people_collected` krever eksplisitt dev/test-flagg: `AHA_CONFIG.historygo.allowApplyToHistoryGoStorage === true`.
+
+AHA databasepersist er også av som standard og `AHARepository.saveImport` brukes bare når `AHA_CONFIG.historygo.enableDatabasePersist === true`. Hver import skriver en kompakt lokal auditlogg i `aha_historygo_imports_v1` med import-id, payload-nøkler, counts og boundary-status, men ikke hele History Go-payloaden.
+
+EchoNet, sync og backend er ikke aktivert for History Go-importen. `ahaEmneMatcher.js` skal ikke brukes for History Go-import; importgrensen går fra History Go-payload til AHA source events/insights og lokal importlogg.
+
 ## AHA Sources / Ingest Audit V1
 
 `Sources / Ingest Audit` (`sources.html`) er et lokalt innsynslag over eksisterende AHA source/ingest-pipeline. Audit-visningen leser `aha_source_events_v1` og `aha_insight_chamber_v1` for å vise hva som kom inn som source events og hvilke innsikter/signaler som kan kobles tilbake til dem.

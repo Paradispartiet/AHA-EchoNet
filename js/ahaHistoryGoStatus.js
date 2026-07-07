@@ -8,7 +8,8 @@
     peopleCollected: "people_collected",
     progress: "historygo_progress",
     sourceEvents: "aha_source_events_v1",
-    chamber: "aha_insight_chamber_v1"
+    chamber: "aha_insight_chamber_v1",
+    importLog: "aha_historygo_imports_v1"
   };
 
   function escapeHtml(value) {
@@ -109,6 +110,21 @@
     return false;
   }
 
+  function collectImportLogSummary() {
+    const entries = asArray(safeParse(readRaw(KEYS.importLog), []));
+    const last = entries.length ? asObject(entries[entries.length - 1]) : {};
+    const storageResult = asObject(last.historygo_storage_apply_result);
+    return {
+      totalCount: entries.length,
+      lastImportedAt: String(last.imported_at || "").trim(),
+      lastImportId: String(last.id || "").trim(),
+      storageApplySkipped: storageResult.skipped === true,
+      storageApplyReason: String(storageResult.reason || "").trim(),
+      historygoStorageApplyEnabled: last.historygo_storage_apply_enabled === true,
+      databasePersistEnabled: last.database_persist_enabled === true
+    };
+  }
+
   function collectImportedAhaEvents() {
     const events = asArray(safeParse(readRaw(KEYS.sourceEvents), []));
     const importedEvents = events.filter(isHistoryGoImportedEvent);
@@ -174,6 +190,7 @@
     const status = collectHistoryGoStatus();
     const payload = collectImportPayloadSummary();
     const imported = collectImportedAhaEvents();
+    const importLog = collectImportLogSummary();
 
     const statusEl = document.getElementById("hg-status-cards");
     if (statusEl) {
@@ -199,6 +216,29 @@
         <li>Dialogs count: <strong>${escapeHtml(String(payload.dialogsCount))}</strong></li>
         <li>Payload keys: <code>${escapeHtml(payload.payloadKeys.join(", ") || "(ingen)")}</code></li>
         <li>Payload tidspunkt: <strong>${escapeHtml(payload.exportedAt || "Ukjent")}</strong></li>
+      `;
+    }
+
+    const boundaryEl = document.getElementById("hg-import-boundary");
+    if (boundaryEl) {
+      boundaryEl.innerHTML = `
+        <li>AHA reads <code>aha_import_payload_v1</code>.</li>
+        <li>Manual import only: ingen auto-import ved page load.</li>
+        <li>Writes AHA source events/insights via eksisterende AHAIngest.</li>
+        <li>Does not write back to History Go storage by default.</li>
+        <li>Database persist disabled by default.</li>
+        <li>EchoNet/sync disabled; ingen backend-import.</li>
+      `;
+    }
+
+    const importLogEl = document.getElementById("hg-import-log-summary");
+    if (importLogEl) {
+      importLogEl.innerHTML = `
+        <li>Importlogg entries: <strong>${escapeHtml(String(importLog.totalCount))}</strong></li>
+        <li>Siste importtidspunkt: <strong>${escapeHtml(importLog.lastImportedAt || "Ukjent")}</strong></li>
+        <li>Siste import_id: <code>${escapeHtml(importLog.lastImportId || "Ingen")}</code></li>
+        <li>Storage apply: <strong>${importLog.historygoStorageApplyEnabled ? "enabled" : "disabled/skipped"}</strong>${importLog.storageApplyReason ? ` (${escapeHtml(importLog.storageApplyReason)})` : ""}</li>
+        <li>Database persist: <strong>${importLog.databasePersistEnabled ? "enabled" : "disabled"}</strong></li>
       `;
     }
 
@@ -238,6 +278,7 @@
     collectHistoryGoStatus,
     collectImportPayloadSummary,
     collectImportedAhaEvents,
+    collectImportLogSummary,
     renderMusicDiscovery,
     render,
     refresh

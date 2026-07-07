@@ -5,6 +5,7 @@
   "use strict";
 
   const PAYLOAD_KEY = "aha_import_payload_v1";
+  const IMPORT_LOG_KEY = "aha_historygo_imports_v1";
 
   let importSaveChain = Promise.resolve();
   let latestImportSaveToken = 0;
@@ -21,11 +22,36 @@
     return value && typeof value === "object" && !Array.isArray(value) ? value : {};
   }
 
-  function ingestSignal(input) {
+  function isDatabasePersistEnabled() {
+    return global.AHA_CONFIG?.historygo?.enableDatabasePersist === true;
+  }
+
+  function isHistoryGoStorageApplyEnabled() {
+    return global.AHA_CONFIG?.historygo?.allowApplyToHistoryGoStorage === true;
+  }
+
+  function withImportMeta(input, importContext) {
+    const meta = obj(input?.meta);
+    const context = obj(importContext);
+    return {
+      ...obj(input),
+      source_app: "historygo",
+      imported: true,
+      meta: {
+        ...meta,
+        import_id: context.import_id || null,
+        source_app: "historygo",
+        import_source: "historygo",
+        local_only: true
+      }
+    };
+  }
+
+  function ingestSignal(input, importContext) {
     if (!global.AHAIngest || typeof global.AHAIngest.ingest !== "function") {
       return null;
     }
-    return global.AHAIngest.ingest(input);
+    return global.AHAIngest.ingest(withImportMeta(input, importContext));
   }
 
   function writeJsonToStorage(key, value) {
@@ -38,6 +64,15 @@
   }
 
   function applyPayloadToRuntimeAndStorage(payload) {
+    if (!isHistoryGoStorageApplyEnabled()) {
+      return {
+        ok: false,
+        skipped: true,
+        reason: "historygo_storage_apply_disabled",
+        applied: []
+      };
+    }
+
     const p = obj(payload);
     const applied = [];
 
@@ -66,11 +101,57 @@
       global.peopleCollected.splice(0, global.peopleCollected.length, ...p.people_collected);
     }
 
-    return applied;
+    return { ok: true, skipped: false, applied };
+  }
+
+  function readJsonFromStorage(key, fallback) {
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) return fallback;
+      const parsed = JSON.parse(raw);
+      return parsed === null || parsed === undefined ? fallback : parsed;
+    } catch {
+      return fallback;
+    }
+  }
+
+  function appendImportLog(payload, counts, options = {}) {
+    const p = obj(payload);
+    const c = obj(counts);
+    const historygoStorageApplyResult = obj(options.historygo_storage_apply_result || c.historygo_storage_apply_result);
+    const entry = {
+      id: s(c.import_id || options.import_id || `historygo_import_log_${Date.now()}_${Math.floor(Math.random() * 100000)}`),
+      source_app: "historygo",
+      imported_at: new Date().toISOString(),
+      payload_exported_at: s(p.exported_at || p.exportedAt || p.updated_at || p.updatedAt || ""),
+      payload_keys: Object.keys(p),
+      counts: {
+        nextup: c.nextup || 0,
+        learning_log: c.learning_log || 0,
+        insight_events: c.insight_events || 0,
+        knowledge: c.knowledge || 0,
+        notes: c.notes || 0,
+        dialogs: c.dialogs || 0,
+        storage_keys_applied: c.storage_keys_applied || 0
+      },
+      local_only: true,
+      database_persist_enabled: isDatabasePersistEnabled(),
+      historygo_storage_apply_enabled: isHistoryGoStorageApplyEnabled(),
+      historygo_storage_apply_result: historygoStorageApplyResult,
+      imported_source_event_count: Number.isFinite(c.importedSignals) ? c.importedSignals : undefined,
+      imported_signal_count: Number.isFinite(c.importedSignals) ? c.importedSignals : undefined
+    };
+    const existing = arr(readJsonFromStorage(IMPORT_LOG_KEY, []));
+    existing.push(entry);
+    const ok = writeJsonToStorage(IMPORT_LOG_KEY, existing.slice(-100));
+    return { ok, entry: ok ? entry : null };
   }
 
   function persistImport(payload, counts) {
-    if (!global.AHARepository?.saveImport) return;
+    if (!isDatabasePersistEnabled()) {
+      return { ok: false, fallback: "localOnly", database_persist_disabled: true };
+    }
+    if (!global.AHARepository?.saveImport) return { ok: false, fallback: "localOnly", repository_missing: true };
     latestImportSaveToken += 1;
     const requestToken = latestImportSaveToken;
     importSaveChain = importSaveChain
@@ -87,9 +168,10 @@
           console.warn("AHAHistoryGoImport: database-save feilet", result.error);
         }
       });
+    return { ok: true, queued: true };
   }
 
-  function collectNextUpSignal(chamber, nextupLearningSignal, fallbackTimestamp) {
+  function collectNextUpSignal(chamber, nextupLearningSignal, fallbackTimestamp, importContext) {
     const signal = obj(nextupLearningSignal);
     if (!Object.keys(signal).length) return 0;
 
@@ -117,12 +199,12 @@
       imported: true,
       created_at: fallbackTimestamp,
       meta: signal
-    });
+    }, importContext);
 
     return 1;
   }
 
-  function collectLearningLogSignals(chamber, events, fallbackTimestamp) {
+  function collectLearningLogSignals(chamber, events, fallbackTimestamp, importContext) {
     let count = 0;
     arr(events).forEach((event) => {
       const e = obj(event);
@@ -160,13 +242,13 @@
           total: e.total ?? null,
           raw: e
         }
-      });
+      }, importContext);
       count += 1;
     });
     return count;
   }
 
-  function collectInsightEventSignals(chamber, events, fallbackTimestamp) {
+  function collectInsightEventSignals(chamber, events, fallbackTimestamp, importContext) {
     let count = 0;
     arr(events).forEach((event) => {
       const e = obj(event);
@@ -190,13 +272,13 @@
           quizId: e.quizId || null,
           raw: e
         }
-      });
+      }, importContext);
       count += 1;
     });
     return count;
   }
 
-  function collectKnowledgeSignals(chamber, universe, fallbackTimestamp) {
+  function collectKnowledgeSignals(chamber, universe, fallbackTimestamp, importContext) {
     let count = 0;
     const uni = obj(universe);
 
@@ -224,7 +306,7 @@
               knowledge_id: k.id || null,
               raw: k
             }
-          });
+          }, importContext);
           count += 1;
         });
       });
@@ -233,7 +315,7 @@
     return count;
   }
 
-  function collectNoteSignals(items, sourceType, fallbackTimestamp) {
+  function collectNoteSignals(items, sourceType, fallbackTimestamp, importContext) {
     let count = 0;
     arr(items).forEach((item) => {
       const n = obj(item);
@@ -251,7 +333,7 @@
         imported: true,
         created_at: n.created_at || n.date || fallbackTimestamp,
         meta: { raw: n }
-      });
+      }, importContext);
       count += 1;
     });
     return count;
@@ -287,19 +369,31 @@
     }
     const fallbackTimestamp = p.exported_at || new Date().toISOString();
     const chamber = null;
-    const appliedStorageKeys = applyPayloadToRuntimeAndStorage(p);
+    const importId = `historygo_import_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
+    const importContext = { import_id: importId };
+    const storageApplyResult = applyPayloadToRuntimeAndStorage(p);
+    const appliedStorageKeys = arr(storageApplyResult.applied);
 
     const counts = {
-      nextup: collectNextUpSignal(chamber, p.nextup_learning_signal || p.nextup?.learning_signal, fallbackTimestamp),
-      learning_log: collectLearningLogSignals(chamber, p.hg_learning_log_v1, fallbackTimestamp),
-      insight_events: collectInsightEventSignals(chamber, p.hg_insights_events_v1, fallbackTimestamp),
-      knowledge: collectKnowledgeSignals(chamber, p.knowledge_universe, fallbackTimestamp),
-      notes: collectNoteSignals(p.notes, "historygo_note", fallbackTimestamp),
-      dialogs: collectNoteSignals(p.dialogs, "historygo_dialog", fallbackTimestamp),
+      import_id: importId,
+      source_app: "historygo",
+      local_only: true,
+      database_persist_enabled: isDatabasePersistEnabled(),
+      historygo_storage_apply_enabled: isHistoryGoStorageApplyEnabled(),
+      historygo_storage_apply_result: storageApplyResult,
+      nextup: collectNextUpSignal(chamber, p.nextup_learning_signal || p.nextup?.learning_signal, fallbackTimestamp, importContext),
+      learning_log: collectLearningLogSignals(chamber, p.hg_learning_log_v1, fallbackTimestamp, importContext),
+      insight_events: collectInsightEventSignals(chamber, p.hg_insights_events_v1, fallbackTimestamp, importContext),
+      knowledge: collectKnowledgeSignals(chamber, p.knowledge_universe, fallbackTimestamp, importContext),
+      notes: collectNoteSignals(p.notes, "historygo_note", fallbackTimestamp, importContext),
+      dialogs: collectNoteSignals(p.dialogs, "historygo_dialog", fallbackTimestamp, importContext),
       storage_keys_applied: appliedStorageKeys.length
     };
+    counts.importedSignals = counts.nextup + counts.learning_log + counts.insight_events + counts.knowledge + counts.notes + counts.dialogs;
 
-    persistImport(p, counts);
+    const importLogResult = appendImportLog(p, counts, { import_id: importId, historygo_storage_apply_result: storageApplyResult });
+    counts.import_log_written = importLogResult.ok === true;
+    counts.database_persist_result = persistImport(p, counts);
 
     try {
       global.dispatchEvent(new CustomEvent("aha:historygo-imported", { detail: counts }));
@@ -320,6 +414,12 @@
 
   global.AHAHistoryGoImport = {
     PAYLOAD_KEY,
+    IMPORT_LOG_KEY,
+    isDatabasePersistEnabled,
+    isHistoryGoStorageApplyEnabled,
+    applyPayloadToRuntimeAndStorage,
+    persistImport,
+    appendImportLog,
     importHistoryGoData,
     importHistoryGoDataFromSharedStorage,
     collectKnowledgeSignals,
