@@ -25,6 +25,12 @@ Lists er local-only som standard. Database-sync er av med mindre `AHA_CONFIG.lis
 
 Paths skaper ikke ny insight alene, kjører ikke autoplanlegging og er ikke en læringsmotor. Modulen er local-only som standard. Database-sync er av med mindre `AHA_CONFIG.paths.enableDatabaseSync === true` settes eksplisitt, og EchoNet/deling er ikke aktivert.
 
+## AHA Mindmap read-only local graph
+
+`Mindmap` (`mindmap.html` / `js/ahaMindmap.js`) er en read-only lokal graf over eksisterende AHA-objekter og referanser. Den leser kjente lokale AHA-nøkler fra `localStorage`, blant annet insights, source events, lists, paths, articles, notes, feed, gallery, insta og groups.
+
+Mindmap viser bare koblinger som allerede finnes i lokale referansefelt. Den skriver ikke data, reparerer ikke manglende koblinger, skaper ikke nye insights og er ikke en full kunnskapsmodell, anbefalingsmotor eller graph-database. Backend, sync og EchoNet er ikke aktivert for Mindmap.
+
 ## AHA Sources / Ingest Audit V1
 
 `Sources / Ingest Audit` (`sources.html`) er et lokalt innsynslag over eksisterende AHA source/ingest-pipeline. Audit-visningen leser `aha_source_events_v1` og `aha_insight_chamber_v1` for å vise hva som kom inn som source events og hvilke innsikter/signaler som kan kobles tilbake til dem.
