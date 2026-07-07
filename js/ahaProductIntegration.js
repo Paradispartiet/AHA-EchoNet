@@ -160,11 +160,13 @@
     const trainingItems = window.AHATrainingCorpus?.listCorpus?.() || [];
     const approvedCount = trainingItems.filter((item) => item?.status === "approved").length;
     const personalReady = isPersonalAiReady(options);
+    const localInsightPayload = window.AHALocalInsightHome?.loadHomePayload?.() || window.AHALocalInsightHome?.buildHomeInsightPayload?.({ lightweight: true, save: false });
     const status = {
       generatedAt: options.now || new Date().toISOString(),
       version: VERSION,
       navigation,
       home: { available: true, href: navigation.homeHref, modulesVisible: modules.modules.length, summary: "AHA Home er hovedinngangen til samlet produktflyt." },
+      localInsightHome: { available: Boolean(window.AHALocalInsightHome), href: navigation.homeHref, status: localInsightPayload?.status || "unavailable", headline: localInsightPayload?.headline || "AHA Local Insight Home er ikke bygget ennå.", nextAction: localInsightPayload?.nextActions?.[0] || null, highlights: (localInsightPayload?.highlights || []).slice(0, 6), pendingWork: (localInsightPayload?.pendingWork || []).slice(0, 8) },
       workflowAudit: { available: Boolean(window.AHAKnowledgeWorkflowAudit), status: workflowAudit?.status || "empty", score: workflowAudit?.score || 0, missingStages: (workflowAudit?.stages?.missing || []).map(s=>s.id), consentWarnings: workflowAudit?.consent?.warnings || [], recommendations: (workflowAudit?.recommendations || []).slice(0,7), summary: "Workflow Audit sjekker stage availability, lenker, storage, samtykkegrenser og trygg mock workflow." },
       knowledgeWorkbench: { available: Boolean(window.AHAKnowledgeWorkbench) || modules.hasKnowledgeWorkbench, href: navigation.knowledgeWorkbenchHref, status: workbenchStatus?.overall?.status || "empty", score: workbenchStatus?.overall?.score || 0, currentStage: workbenchStatus?.workflow?.currentStage || "sources", nextAction: workbenchStatus?.nextAction || null, summary: "Knowledge Workbench samler Kilder → Data Intake → Curation → Knowledge Map → Graph Intelligence → Training → Personal AI → Chat." },
       chat: { available: modules.hasChat, href: navigation.chatHref, chatPersistenceAvailable: Boolean(window.AHAChatPersistence), chatSessions: chatStats?.sessions || 0, chatMessages: chatStats?.messages || 0, chatIntakeCandidates: chatCandidates?.items?.length || 0, summary: "AHA Chat er hovedsamtalen med godkjent personlig kontekst når den finnes." },

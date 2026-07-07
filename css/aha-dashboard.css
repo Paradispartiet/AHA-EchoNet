@@ -2203,3 +2203,15 @@ html, body { max-width: 100%; overflow-x: hidden; }
   gap: 8px;
 }
 .aha-sync-channel-registry-details[open] summary { margin-bottom: 8px; }
+
+.aha-local-insight-home { border-color: rgba(245, 187, 48, 0.24); }
+.aha-local-home-hero { padding: 1rem; border-radius: 18px; background: linear-gradient(135deg, rgba(245,187,48,.14), rgba(255,255,255,.04)); }
+.aha-local-home-hero h2 { margin: .2rem 0 .35rem; }
+.aha-local-home-layout { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; margin-top: .75rem; }
+.aha-local-home-card { padding: .85rem; border: 1px solid rgba(255,255,255,.10); border-radius: 16px; background: rgba(255,255,255,.035); }
+.aha-local-home-wide { grid-column: 1 / -1; }
+.aha-local-card-grid, .aha-local-module-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .55rem; }
+.aha-local-card, .aha-local-module-tile { display: grid; gap: .25rem; padding: .7rem; border-radius: 14px; border: 1px solid rgba(255,255,255,.10); background: rgba(0,0,0,.12); color: inherit; text-decoration: none; }
+.aha-local-card p { margin: 0; }
+.aha-local-module-tile span, .aha-local-card small { color: var(--aha-muted, #9ca3af); font-size: .85rem; }
+@media (max-width: 760px) { .aha-local-home-layout { grid-template-columns: 1fr; } }

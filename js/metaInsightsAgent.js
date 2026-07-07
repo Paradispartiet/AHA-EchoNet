@@ -437,6 +437,15 @@
   function buildKnowledgeGraphIntelligencePackSafe(){ try { const v=global.AHAKnowledgeGraphIntelligence?.buildGraphIntelligenceSummary?.(); return v ? { available:Boolean(v.available), status:asText(v.status), score:Number(v.score)||0, insightCount:Number(v.insightCount)||0, topInsights:asArray(v.topInsights).slice(0,5), nextAction:asText(v.nextAction) } : null; } catch { return null; } }
   function buildSourceConnectorsPackSafe(){ const api=global.AHASourceConnectors; if(!api?.collectConnectorStatus) return null; try { const s=api.collectConnectorStatus(); return { available:true, active:Number(s.active)||0, planned:Number(s.planned)||0, missing:Number(s.missing)||0, totalAvailable:Number(s.totalAvailable)||0, summary:asText(s.summary) }; } catch { return { available:true, active:0, planned:0, missing:0, totalAvailable:0, summary:"Source Connectors status unavailable." }; } }
 
+  function buildLocalInsightHomePackSafe() {
+    try {
+      const api = global.AHALocalInsightHome;
+      if (!api) return { available: false, status: "missing", headline: "AHA Local Insight Home mangler.", highlights: [], pendingWork: [], nextAction: null };
+      const h = api.loadHomePayload?.() || api.buildHomeInsightPayload?.({ lightweight: true, save: false }) || {};
+      return { available: true, status: asText(h.status), headline: asText(h.headline), highlights: asArray(h.highlights).slice(0, 6), pendingWork: asArray(h.pendingWork).slice(0, 8), nextAction: asArray(h.nextActions)[0] || null };
+    } catch { return { available: false, status: "error", headline: "AHA Local Insight Home status unavailable.", highlights: [], pendingWork: [], nextAction: null }; }
+  }
+
   function buildChatPersistencePackSafe() {
     try {
       const api = global.AHAChatPersistence;
@@ -459,6 +468,8 @@
       memoryPack: options.memoryPack && typeof options.memoryPack === "object" ? options.memoryPack : buildMemoryPackSafe(),
       reasoningFrame: buildReasoningFrame()
     };
+    const localInsightHomePack = options.localInsightHomePack && typeof options.localInsightHomePack === "object" ? options.localInsightHomePack : buildLocalInsightHomePackSafe();
+    if (localInsightHomePack) context.localInsightHomePack = localInsightHomePack;
     const sourceConnectorsPack = options.sourceConnectorsPack && typeof options.sourceConnectorsPack === "object" ? options.sourceConnectorsPack : buildSourceConnectorsPackSafe();
     if (sourceConnectorsPack) context.sourceConnectorsPack = sourceConnectorsPack;
     const chatPersistencePack = options.chatPersistencePack && typeof options.chatPersistencePack === "object" ? options.chatPersistencePack : buildChatPersistencePackSafe();

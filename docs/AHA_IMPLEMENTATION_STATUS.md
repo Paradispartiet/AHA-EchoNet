@@ -11,6 +11,18 @@ Det er ikke lagt til backend, ekte sync, approval-modell, approve/reject-actions
 
 ## AHA Local Insight Home V1
 
+AHA Home er nå en lokal innsiktsflate, ikke bare en moduloversikt. `js/ahaLocalInsightHome.js` eksponerer `window.AHALocalInsightHome`, bruker localStorage-nøkkelen `aha_local_insight_home_v1`, og bygger et read-only Home-payload med status, headline, summary, highlights, primary next action, aktivt arbeid, prosjekter/begreper, siste aktivitet og modulfliser med faktisk lokalt innhold.
+
+Home samler status og highlights fra Product Integration, Knowledge Workbench, Workflow Audit, Data Intake, Knowledge Curation, Knowledge Map, Graph Intelligence, Training Corpus/Examples, Personal AI Control, Meta Insights Memory, Chat Persistence og Personal Answer Evaluation når modulene finnes. Alle kilder håndteres med graceful fallback som `unavailable`, `empty`, `not configured` eller `no data yet` i stedet for å kreve en ny datamodell.
+
+`index.html` viser AHA Local Insight Home med hero/status, neste handling, innsikt akkurat nå, aktivt kunnskapsarbeid, prosjekter/begreper, siste aktivitet og kompakte module tiles. Module tiles viser konkrete lokale tall for Chat, Workbench, Data Intake, Curation, Knowledge Map, Graph Intelligence, Training, Personal AI, Meta Insights, Sync Hub, AHA Music og History Go når data finnes.
+
+Page load er fortsatt read-only/status-only/render-only. Home refresh bygger og lagrer bare Home-payload; scanning av kilder, godkjenning, import, sending til Training Corpus, memory-confirmation, eksport, sync eller consent-endringer krever eksplisitte brukerhandlinger utenfor page-load. Trygge quick actions er lenker til Chat, Knowledge Workbench, Data Intake, Curation og Training samt eksplisitt Home refresh.
+
+Product Integration, Personal AI Control og Meta Insights Agent får nå `localInsightHome`/`localInsightHomePack` med availability, status, headline, pending work, highlights og next action. Dette gjør AHA Home til startpunktet for lokalt kunnskapsarbeid på tvers av Kilder → Source Connectors → Data Intake → Knowledge Workbench → Workflow Audit → Knowledge Curation → Knowledge Map → Graph Intelligence → Training Corpus → Personal AI → Chat.
+
+## AHA Local Insight Home V1
+
 ✅ AHA Local Insight Home V1 builder: implemented
 
 AHA Local Insight Home V1 is implemented as `window.AHALocalInsightHome` in `js/ahaLocalInsightHome.js`. The builder is local-only, read-only, no-sync, and accepts explicit input only. UI is not started. It composes only safe outputs from the three frozen V1 layers: AHA Sync Overview V1, AHA Conversation Insight Snapshot V1, and AHA Quality Status Surface V1.
