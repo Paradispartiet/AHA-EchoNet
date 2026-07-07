@@ -50,7 +50,7 @@ assert.ok(api.buildHighlights(payload).some(h => h.source === 'Graph Intelligenc
 assert.ok(api.buildHighlights(payload).some(h => h.source === 'Knowledge Curation'));
 assert.ok(api.buildPendingWork(payload).some(w => w.id === 'training' && w.count === 2));
 assert.ok(api.buildRecentActivity(payload).length >= 1);
-assert.ok(api.buildModuleTiles(payload).find(t => t.id === 'map').metrics.some(m => m.includes('9 nodes')));
+assert.ok(api.buildModuleTiles(payload).find(t => t.id === 'map').metrics.some(m => m.includes('9 noder')));
 const before = JSON.stringify(payload.sources.intake);
 const refreshed = api.refreshHome({ save: false });
 assert.equal(JSON.stringify(refreshed.sources.intake), before);

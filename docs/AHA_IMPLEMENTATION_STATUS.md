@@ -2686,3 +2686,11 @@ Muterende handlinger krever eksplisitt brukerklikk: skann kilder, bygg curation 
 Product Integration, Personal AI Control og Meta Insights Agent får workflow-audit-status. Product Integration inkluderer `workflowAudit` i produktstatusen, Personal AI Control inkluderer `workflowAudit` i modulstatusen, og Meta Insights Agent får `knowledgeWorkflowAuditPack` med availability, status, score, missing stages, consent warnings og anbefalinger.
 
 Dette markerer AHA Knowledge Workflow V1 som stabilisert grunnflyt: brukeren kan gå fra nytt materiale til et personlig AHA-svar gjennom en sammenhengende, trygg og forståelig arbeidsflyt, samtidig som alle approval- og consent-grenser er eksplisitte.
+
+## AHA Home UX Stabilization V1
+
+AHA Home er stabilisert som en daglig lokal startflate, ikke et teknisk dashboard. Flaten prioriterer nå kort status, én tydelig neste handling, Chat og Workbench som hovedinnganger, deretter highlights, aktivt arbeid, prosjekter/begreper, siste aktivitet og kompakte moduler.
+
+Teknisk status er nedtonet og lagt i `details`, slik at rå counts, warnings og lokal snapshot-status ikke dominerer hovedflaten. Home page load er fortsatt read-only: lasting kan lese status, bygge Home payload og lagre et lokalt home-status-snapshot, men muterende handlinger som scanning, godkjenning, Training, sync, eksport eller consent-endringer krever eksplisitt brukerklikk.
+
+Layouten er gjort mer kompakt, rolig og mobilvennlig med Home-spesifikke CSS-klasser, mindre padding/gap, mindre gul aksent, kompakte chips og én-kolonne mobilvisning uten horisontal overflow.
