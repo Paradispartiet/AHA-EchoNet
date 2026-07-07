@@ -2276,3 +2276,28 @@ html, body { max-width: 100%; overflow-x: hidden; }
   .aha-home-module-compact-grid { grid-template-columns: 1fr; }
   .aha-local-insight-home { max-width: 100%; }
 }
+
+/* FIX: AHA Home hero skal ikke klemme teksten på iPad/tablet */
+.aha-home-hero {
+  grid-template-columns: minmax(260px, 1fr) minmax(0, 320px);
+}
+
+.aha-home-hero-actions {
+  align-content: end;
+}
+
+.aha-home-hero-actions .aha-tile-btn {
+  white-space: normal;
+  text-align: center;
+}
+
+@media (max-width: 1080px) {
+  .aha-home-hero {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .aha-home-hero-actions {
+    justify-content: flex-start;
+  }
+}
