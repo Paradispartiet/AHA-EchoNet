@@ -12,6 +12,14 @@ AHA Quality Status Surface V1 is frozen as a local read-only quality layer. It d
 **Status baseline:** AHA quality gates for topic/source/geopolitics are green on the latest `npm test` baseline (115/115), while AHA Sync remains read-only/local-only and NO-GO for real sync or EchoNet activation. AHA Sync Overview V1 is a local read-only overview. It does not perform sync, approval, publishing, or EchoNet network actions.
 
 
+## AHAavisa local publishing boundary
+
+`AHAavisa` lagrer lokale artikkelutkast og lokale publiseringsmarkeringer i `aha_articles_v1`. `published_local` betyr bare at artikkelen er markert som publisert i den aktuelle nettleseren; det er ikke ekstern publisering, sosial deling eller backend-publisering.
+
+`public_candidate` er bare en lokal kandidatmerking for mulig senere vurdering. Kandidatmerkingen er ikke samtykke til publisering alene, sender ikke data ut, aktiverer ikke EchoNet og oppretter ingen backend- eller sync-flyt.
+
+Database-sync er av som standard og kan bare bruke repository-laget når `AHA_CONFIG.avisa.enableDatabaseSync === true` er satt eksplisitt. AHAavisa-referanser valideres mot eksisterende lokale AHA-objekter fra innsikter, lister, stier og notater, og deleted/archived objekter brukes ikke som nye referansemål.
+
 ## AHA Lists local reference collections
 
 `Lists` lagrer lokale referansesamlinger i `aha_lists_v1`. En liste peker bare til eksisterende AHA-objekter fra innsikter, notater, Feed, Galleri eller AHA Insta; den oppretter ikke ny insight og er ikke en egen læringsmotor.

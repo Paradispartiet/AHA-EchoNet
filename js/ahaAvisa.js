@@ -31,7 +31,12 @@
   function asText(value, fallback) { const text = String(value ?? "").trim(); return text || fallback; }
   function uid(prefix) { return `${prefix}_${Date.now()}_${Math.floor(Math.random() * 100000)}`; }
   function safeObject(value) { return value && typeof value === "object" && !Array.isArray(value) ? value : {}; }
-  function isDeletedRecord(record) { return Boolean(record?.deletedAt || record?.deleted_at); }
+  function isDatabaseSyncEnabled() {
+    return global.AHA_CONFIG?.avisa?.enableDatabaseSync === true;
+  }
+  function databaseSyncDisabledResult(data) { return { ok: false, fallback: "localOnly", database_sync_disabled: true, data }; }
+  function isUnavailableRecord(record) { return Boolean(record?.deletedAt || record?.deleted_at || record?.archived === true); }
+  function isDeletedRecord(record) { return isUnavailableRecord(record); }
 
   function escapeHtml(value) {
     return String(value ?? "")
@@ -105,8 +110,23 @@
       references: asArray(src.references).map((ref) => normalizeReference(ref)).filter((ref) => ref.source && ref.refId),
       source: asText(src.source, "aha_avisa"),
       publicationLayer: inferPublicationLayer(src),
-      meta: safeObject(src.meta),
-      deletedAt: src.deletedAt || src.deleted_at || ""
+      published_local: src.published_local === true || normalizeStatus(src.status) === "published_local",
+      publishedLocalAt: src.publishedLocalAt || src.published_local_at || "",
+      local_only: true,
+      published_external: src.published_external === true || src.publishedExternal === true,
+      echonet_shared: src.echonet_shared === true || src.echonetShared === true,
+      sync_enabled: src.sync_enabled === true || src.syncEnabled === true,
+      external_publish_enabled: src.external_publish_enabled === true || src.externalPublishEnabled === true,
+      meta: {
+        ...safeObject(src.meta),
+        local_only: true,
+        published_external: safeObject(src.meta).published_external === true || src.published_external === true || src.publishedExternal === true,
+        echonet_shared: safeObject(src.meta).echonet_shared === true || src.echonet_shared === true || src.echonetShared === true,
+        sync_enabled: safeObject(src.meta).sync_enabled === true || src.sync_enabled === true || src.syncEnabled === true,
+        external_publish_enabled: safeObject(src.meta).external_publish_enabled === true || src.external_publish_enabled === true || src.externalPublishEnabled === true
+      },
+      deletedAt: src.deletedAt || src.deleted_at || "",
+      archived: src.archived === true
     };
   }
 
@@ -120,7 +140,8 @@
   }
 
   async function persistArticle(article) {
-    if (!global.AHARepository?.saveArticle) return null;
+    if (!isDatabaseSyncEnabled()) return databaseSyncDisabledResult(article);
+    if (!global.AHARepository?.saveArticle) return databaseSyncDisabledResult(article);
     try {
       return await global.AHARepository.saveArticle(article);
     } catch (error) {
@@ -179,13 +200,14 @@
   }
 
   async function pushLocalToDatabase(articles) {
+    if (!isDatabaseSyncEnabled()) return databaseSyncDisabledResult(asArray(articles));
     let saveArticle = null;
     try {
       saveArticle = global.AHARepository?.saveArticle;
     } catch {
-      return null;
+      return databaseSyncDisabledResult(asArray(articles));
     }
-    if (typeof saveArticle !== "function") return null;
+    if (typeof saveArticle !== "function") return databaseSyncDisabledResult(asArray(articles));
 
     return Promise.allSettled(asArray(articles).map((article) => {
       try {
@@ -198,6 +220,7 @@
 
   async function syncFromDatabase() {
     const localArticles = loadArticles();
+    if (!isDatabaseSyncEnabled()) return databaseSyncDisabledResult(localArticles);
     if (localArticles.length) await pushLocalToDatabase(localArticles);
 
     let loadArticlesFromRepository = null;
@@ -247,7 +270,19 @@
       tags: input?.tags,
       references: [],
       source: "aha_avisa",
-      meta: { createdBy: "avisa_ui" },
+      local_only: true,
+      published_external: false,
+      echonet_shared: false,
+      sync_enabled: false,
+      external_publish_enabled: false,
+      meta: {
+        createdBy: "avisa_ui",
+        local_only: true,
+        published_external: false,
+        echonet_shared: false,
+        sync_enabled: false,
+        external_publish_enabled: false
+      },
       deletedAt: ""
     });
 
@@ -287,6 +322,17 @@
   function setArticleStatus(articleId, status) {
     const normalizedStatus = normalizeStatus(status);
     if (!ALLOWED_STATUS.includes(normalizedStatus)) return null;
+    if (normalizedStatus === "published_local") {
+      return updateArticle(articleId, {
+        status: "published_local",
+        published_local: true,
+        publishedLocalAt: new Date().toISOString(),
+        published_external: false,
+        echonet_shared: false,
+        sync_enabled: false,
+        external_publish_enabled: false
+      });
+    }
     return updateArticle(articleId, { status: normalizedStatus });
   }
 
@@ -297,9 +343,14 @@
     const index = articles.findIndex((article) => article.id === articleId);
     if (index < 0) return null;
     const current = articles[index];
+    if (isUnavailableRecord(current)) return null;
     const updated = normalizeArticle({
       ...current,
       publicationLayer: normalizedLayer,
+      published_external: false,
+      echonet_shared: false,
+      sync_enabled: false,
+      external_publish_enabled: false,
       updatedAt: new Date().toISOString(),
       references: current.references
     });
@@ -317,27 +368,28 @@
 
   function addReferenceToArticle(articleId, referenceInput) {
     const articles = loadArticles();
-    const index = articles.findIndex((article) => article.id === articleId && !article.deletedAt);
-    if (index < 0) return null;
+    const index = articles.findIndex((article) => article.id === articleId && !isUnavailableRecord(article));
+    if (index < 0) return { ok: false, reason: "article_not_found" };
 
     const article = articles[index];
-    const ref = normalizeReference({ ...safeObject(referenceInput), id: uid("article_ref") });
-    if (!ref.source || !ref.refId) return null;
+    const validation = validateArticleReference(referenceInput);
+    if (!validation.ok) return { ok: false, reason: "invalid_reference", detail: validation.reason };
+    const ref = normalizeReference({ ...validation.item, ...safeObject(referenceInput), id: uid("article_ref") });
 
     const duplicate = article.references.some((item) => item.source === ref.source && item.refId === ref.refId);
-    if (duplicate) return article;
+    if (duplicate) return { ok: false, reason: "duplicate", article };
 
     article.references.push(ref);
     article.updatedAt = new Date().toISOString();
     articles[index] = normalizeArticle(article);
     saveArticles(articles);
     persistArticle(articles[index]);
-    return ref;
+    return { ok: true, reference: ref, article: articles[index] };
   }
 
   function removeReferenceFromArticle(articleId, referenceId) {
     const articles = loadArticles();
-    const index = articles.findIndex((article) => article.id === articleId && !article.deletedAt);
+    const index = articles.findIndex((article) => article.id === articleId && !isUnavailableRecord(article));
     if (index < 0) return null;
 
     const article = articles[index];
@@ -355,7 +407,7 @@
   function collectAvailableArticleSources() {
     const out = [];
     const chamber = safeParse(localStorage.getItem(INSIGHTS_KEY) || "{}", { insights: [] });
-    asArray(chamber?.insights).filter((insight) => !isDeletedRecord(insight)).forEach((insight, index) => {
+    asArray(chamber?.insights).filter((insight) => !isUnavailableRecord(insight)).forEach((insight, index) => {
       out.push({
         id: `insight_${asText(insight?.id, `insight_idx_${index}`)}`,
         title: asText(insight?.title || insight?.heading || insight?.label || insight?.summary || insight?.text, "Innsikt"),
@@ -367,7 +419,7 @@
     });
 
     asArray(safeParse(localStorage.getItem(LISTS_KEY) || "[]", []))
-      .filter((list) => !isDeletedRecord(list))
+      .filter((list) => !isUnavailableRecord(list))
       .forEach((list) => {
         const refId = asText(list?.id, "");
         if (!refId) return;
@@ -375,7 +427,7 @@
       });
 
     asArray(safeParse(localStorage.getItem(PATHS_KEY) || "[]", []))
-      .filter((path) => !isDeletedRecord(path))
+      .filter((path) => !isUnavailableRecord(path))
       .forEach((path) => {
         const refId = asText(path?.id, "");
         if (!refId) return;
@@ -383,7 +435,7 @@
       });
 
     asArray(safeParse(localStorage.getItem(NOTES_KEY) || "[]", []))
-      .filter((note) => !isDeletedRecord(note))
+      .filter((note) => !isUnavailableRecord(note))
       .forEach((note) => {
         const refId = asText(note?.id, "");
         if (!refId) return;
@@ -391,6 +443,33 @@
       });
 
     return out;
+  }
+
+  function buildAvailableArticleSourceIndex(items = collectAvailableArticleSources()) {
+    const index = new Map();
+    asArray(items).forEach((item) => {
+      const source = asText(item?.source, "");
+      const refId = asText(item?.refId || item?.ref_id, "");
+      if (source && refId) index.set(`${source}::${refId}`, item);
+    });
+    return index;
+  }
+
+  function validateArticleReference(referenceInput, availableItems = collectAvailableArticleSources()) {
+    const ref = safeObject(referenceInput);
+    const source = asText(ref.source, "");
+    const refId = asText(ref.refId || ref.ref_id, "");
+    const allowed = new Set(["aha_insights", "aha_lists", "aha_paths", "aha_notes"]);
+    if (!source) return { ok: false, reason: "missing_source" };
+    if (!refId) return { ok: false, reason: "missing_refId" };
+    if (!allowed.has(source)) return { ok: false, reason: "unknown_source" };
+    const item = buildAvailableArticleSourceIndex(availableItems).get(`${source}::${refId}`);
+    if (!item) return { ok: false, reason: "target_unavailable" };
+    if (isUnavailableRecord(item)) return { ok: false, reason: "target_unavailable" };
+    if (!asText(item.title, "") || !asText(item.type, "") || !asText(item.source, "") || !asText(item.refId, "")) {
+      return { ok: false, reason: "invalid_target" };
+    }
+    return { ok: true, item };
   }
 
   function renderContent() {
@@ -409,7 +488,7 @@
     const groupCountEl = document.getElementById("avisa-group-count");
     const publicCandidateCountEl = document.getElementById("avisa-public-candidate-count");
 
-    const articles = loadArticles().filter((article) => !article.deletedAt);
+    const articles = loadArticles().filter((article) => !isUnavailableRecord(article));
     const groups = global.AHAGroups?.getActiveGroups ? asArray(global.AHAGroups.getActiveGroups()) : [];
     const availableRefs = collectAvailableArticleSources();
     const draftCount = articles.filter((a) => a.status === "draft").length;
@@ -440,8 +519,8 @@
     if (privacyWarningEl) {
       privacyWarningEl.hidden = false;
       privacyWarningEl.textContent = publicPublishingAllowed
-        ? "Offentlig kandidat betyr at artikkelen kan vurderes senere for offentlig AHAavisa/Paradisavisa-format. Ingenting publiseres nå."
-        : "Offentlig publisering er ikke samtykket til. Kandidatmerking er bare lokal.";
+        ? "Offentlig kandidat er bare lokal merking for senere vurdering. Det publiserer ikke artikkelen. Ingenting publiseres nå."
+        : "Offentlig kandidat er bare lokal merking for senere vurdering. Det publiserer ikke artikkelen.";
     }
 
     if (!mount) return;
@@ -449,7 +528,7 @@
       mount.innerHTML = global.AHAModules.buildModuleEmptyState({
         type: datasetExists ? "no_data" : "missing_source",
         moduleId: "avisa",
-        hint: datasetExists ? "Use New note above when you are ready." : "AHAavisa notes will appear here when available."
+        hint: datasetExists ? "Bruk Nytt utkast over når du er klar." : "Lokale AHAavisa-artikler vises her når de finnes."
       });
       return;
     }
@@ -474,7 +553,7 @@
           <li>
             <div>
               <strong>${escapeHtml(ref.title)}</strong>
-              <div class="module-meta">${escapeHtml(ref.type)} · ${escapeHtml(ref.source)} · ref: ${escapeHtml(ref.refId)}</div>
+              <div class="module-meta">${escapeHtml(ref.type)} · ${escapeHtml(ref.source)} · ref: ${escapeHtml(ref.refId)}${validateArticleReference(ref, availableRefs).ok ? "" : " · ikke lenger tilgjengelig"}</div>
             </div>
             <button type="button" data-avisa-remove-ref="${escapeHtml(article.id)}::${escapeHtml(ref.id)}">Fjern</button>
           </li>
@@ -489,7 +568,7 @@
             <span class="avisa-badge avisa-layer-badge">${article.publicationLayer === "group" ? "Gruppe" : (article.publicationLayer === "public_candidate" ? "Offentlig kandidat" : "Personlig")}</span>
           </header>
           ${hasGroupDraft ? `<p class="group-draft-badge">Gruppeutkast${groupMetaTitle ? ` · ${escapeHtml(groupMetaTitle)}` : ""}${groupMetaId ? ` · <a href="groups.html#group=${escapeHtml(groupMetaId)}">åpne gruppe</a>` : ""}</p>` : ""}
-          ${article.publicationLayer === "public_candidate" ? `<p class="module-meta">${publicPublishingAllowed ? "Offentlig kandidat betyr at artikkelen kan vurderes senere for offentlig AHAavisa/Paradisavisa-format. Ingenting publiseres nå." : "Offentlig publisering er ikke samtykket til. Kandidatmerking er bare lokal."}</p>` : ""}
+          ${article.publicationLayer === "public_candidate" ? `<p class="module-meta">${publicPublishingAllowed ? "Offentlig kandidat er bare lokal merking for senere vurdering. Det publiserer ikke artikkelen. Ingenting publiseres nå." : "Offentlig kandidat er bare lokal merking for senere vurdering. Det publiserer ikke artikkelen."}</p>` : ""}
           <p class="module-meta">Seksjon: ${escapeHtml(article.section)} · Opprettet: ${escapeHtml(article.createdAt)} · Oppdatert: ${escapeHtml(article.updatedAt)}</p>
           <p>${escapeHtml(article.summary || "Ingen ingress ennå.")}</p>
           <div class="avisa-tags">${tags || "<span class='module-meta'>Ingen tags.</span>"}</div>
@@ -517,6 +596,7 @@
               </select>
               <button type="button" data-avisa-add-ref="${escapeHtml(article.id)}">Legg til referanse</button>
             </div>
+            <div class="statuslinje" data-avisa-ref-status="${escapeHtml(article.id)}" aria-live="polite"></div>
             <div class="avisa-ref-add">
               ${groups.length ? `
               <select class="gruppe-select" data-avisa-group-select="${escapeHtml(article.id)}">
@@ -605,12 +685,14 @@
       if (addRefArticle) {
         const select = document.querySelector(`[data-avisa-add-select="${CSS.escape(addRefArticle)}"]`);
         const value = select?.value || "";
-        if (!value.includes("::")) return;
+        const statusEl = document.querySelector(`[data-avisa-ref-status="${CSS.escape(addRefArticle)}"]`);
+        if (!value.includes("::")) { if (statusEl) statusEl.textContent = "Velg et objekt først"; return; }
         const [source, refId] = value.split("::");
         const available = collectAvailableArticleSources();
         const match = available.find((item) => item.source === source && item.refId === refId);
-        if (!match) return;
-        addReferenceToArticle(addRefArticle, match);
+        if (!match) { if (statusEl) statusEl.textContent = "Kilden finnes ikke lenger"; return; }
+        const result = addReferenceToArticle(addRefArticle, match);
+        if (!result?.ok) { if (statusEl) statusEl.textContent = result?.reason === "duplicate" ? "Finnes allerede i artikkelen" : "Kilden finnes ikke lenger"; return; }
         render();
       }
       const addGroupArticle = target.getAttribute("data-avisa-add-group");
@@ -620,7 +702,7 @@
         const groupStatus = card?.querySelector("[data-avisa-group-status]");
         if (!(groupSelect instanceof HTMLSelectElement) || !(groupStatus instanceof HTMLElement)) return;
         if (!groupSelect.value) { groupStatus.textContent = "Velg en gruppe først"; return; }
-        const article = loadArticles().find((item) => item.id === addGroupArticle && !item.deletedAt);
+        const article = loadArticles().find((item) => item.id === addGroupArticle && !isUnavailableRecord(item));
         if (!article || !global.AHAGroups?.addReferenceToGroupByObject) return;
         const result = global.AHAGroups.addReferenceToGroupByObject(groupSelect.value, {
           title: article.title,
@@ -657,6 +739,10 @@
     removeReferenceFromArticle,
     setArticleStatus,
     setArticlePublicationLayer,
+    isDatabaseSyncEnabled,
+    isUnavailableRecord,
+    buildAvailableArticleSourceIndex,
+    validateArticleReference,
     collectAvailableArticleSources,
     syncFromDatabase,
     render,

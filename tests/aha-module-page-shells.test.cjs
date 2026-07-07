@@ -10,7 +10,7 @@ const pages = {
   lists: { html: read('lists.html'), js: read('js/ahaLists.js'), title: 'Lists', purpose: 'Lokale samlinger av eksisterende AHA-objekter.', action: 'Lag liste', empty: 'No lists yet.' },
   paths: { html: read('paths.html'), js: read('js/ahaPaths.js'), title: 'Paths', purpose: 'Lokale sekvenser av eksisterende AHA-objekter.', action: 'Lag sti', empty: 'No paths yet.' },
   groups: { html: read('groups.html'), js: read('js/ahaGroups.js'), title: 'Groups', purpose: 'Group related AHA material.', action: 'Create group', empty: 'No groups yet.' },
-  avisa: { html: read('avisa.html'), js: read('js/ahaAvisa.js'), title: 'AHAavisa', purpose: 'Collect drafts and published AHA notes.', action: 'New note', empty: 'No AHAavisa notes yet.' }
+  avisa: { html: read('avisa.html'), js: read('js/ahaAvisa.js'), title: 'AHAavisa', purpose: 'Lokale artikkelutkast og publiserte-lokalt tekster. AHAavisa organiserer egne AHA-notater og referanser, men publiserer ikke eksternt.', action: 'Nytt utkast', empty: 'No AHAavisa notes yet.' }
 };
 
 for (const [moduleId, page] of Object.entries(pages)) {

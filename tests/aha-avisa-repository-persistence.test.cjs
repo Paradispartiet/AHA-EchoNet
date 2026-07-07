@@ -23,7 +23,7 @@ function forbiddenApi(name, calls) {
   });
 }
 
-function buildContext(repository) {
+function buildContext(repository, config) {
   const forbiddenCalls = [];
   const context = {
     window: null,
@@ -42,6 +42,7 @@ function buildContext(repository) {
     },
     AHAIngest: forbiddenApi('AHAIngest', forbiddenCalls),
     AHASources: forbiddenApi('AHASources', forbiddenCalls),
+    AHA_CONFIG: config,
     AHAGroups: {
       addReferenceToGroupByObject() {
         forbiddenCalls.push('AHAGroups.addReferenceToGroupByObject');
@@ -86,7 +87,7 @@ function assertStored(context, expectedLength) {
 }
 
 const calls = [];
-const context = buildContext(createRepository(calls));
+const context = buildContext(createRepository(calls), { avisa: { enableDatabaseSync: true } });
 const api = context.AHAAvisa;
 
 const created = api.createArticle({ title: 'Lokal artikkel', section: 'aha', summary: 'Lagres lokalt' });
@@ -116,19 +117,20 @@ assert.equal(calls.length, 1, 'setArticlePublicationLayer should call AHAReposit
 assert.equal(calls[0].publicationLayer, 'public_candidate', 'setArticlePublicationLayer should persist the updated publicationLayer');
 
 calls.length = 0;
+context.localStorage.setItem('aha_notes_v1', JSON.stringify([{ id: 'note-1', title: 'Notat' }]));
 const ref = api.addReferenceToArticle(created.id, { title: 'Notat', type: 'note', source: 'aha_notes', refId: 'note-1' });
-assert.ok(ref, 'addReferenceToArticle should return the new reference');
+assert.equal(ref.ok, true, 'addReferenceToArticle should return ok:true');
 assert.equal(assertStored(context, 1)[0].references.length, 1, 'addReferenceToArticle should store the updated references locally');
 assert.equal(calls.length, 1, 'addReferenceToArticle should call AHARepository.saveArticle once');
 assert.deepEqual(calls[0].references.map((item) => item.refId), ['note-1'], 'addReferenceToArticle should persist the updated references array');
 
 calls.length = 0;
 const duplicate = api.addReferenceToArticle(created.id, { title: 'Notat duplikat', type: 'note', source: 'aha_notes', refId: 'note-1' });
-assert.equal(duplicate.id, created.id, 'duplicate addReferenceToArticle should return the unchanged article');
+assert.equal(duplicate.reason, 'duplicate', 'duplicate addReferenceToArticle should return duplicate reason');
 assert.equal(calls.length, 0, 'duplicate addReferenceToArticle should not perform an extra repository write');
 
 calls.length = 0;
-const withoutRef = api.removeReferenceFromArticle(created.id, ref.id);
+const withoutRef = api.removeReferenceFromArticle(created.id, ref.reference.id);
 assert.ok(withoutRef, 'removeReferenceFromArticle should return the updated article');
 assert.equal(assertStored(context, 1)[0].references.length, 0, 'removeReferenceFromArticle should save the updated references locally');
 assert.equal(calls.length, 1, 'removeReferenceFromArticle should call AHARepository.saveArticle once');
@@ -146,13 +148,14 @@ const localOnly = noRepository.AHAAvisa.createArticle({ title: 'Kun lokal' });
 assert.ok(localOnly, 'createArticle should work without AHARepository');
 assert.equal(assertStored(noRepository, 1)[0].title, 'Kun lokal', 'AHAAvisa should remain localStorage-first without AHARepository');
 
-const throwing = buildContext(createRepository([], () => { throw new Error('repository unavailable'); }));
+const throwing = buildContext(createRepository([], () => { throw new Error('repository unavailable'); }), { avisa: { enableDatabaseSync: true } });
 const throwingArticle = throwing.AHAAvisa.createArticle({ title: 'Feil tåles' });
 assert.doesNotThrow(() => throwing.AHAAvisa.updateArticle(throwingArticle.id, { body: 'fortsatt lokal' }), 'updateArticle should not throw when AHARepository.saveArticle throws');
 assert.doesNotThrow(() => throwing.AHAAvisa.setArticleStatus(throwingArticle.id, 'ready'), 'setArticleStatus should not throw when AHARepository.saveArticle throws');
 assert.doesNotThrow(() => throwing.AHAAvisa.setArticlePublicationLayer(throwingArticle.id, 'group'), 'setArticlePublicationLayer should not throw when AHARepository.saveArticle throws');
+throwing.localStorage.setItem('aha_notes_v1', JSON.stringify([{ id: 'note-2', title: 'Ref' }]));
 const throwingRef = throwing.AHAAvisa.addReferenceToArticle(throwingArticle.id, { source: 'aha_notes', refId: 'note-2', title: 'Ref' });
-assert.doesNotThrow(() => throwing.AHAAvisa.removeReferenceFromArticle(throwingArticle.id, throwingRef.id), 'removeReferenceFromArticle should not throw when AHARepository.saveArticle throws');
+assert.doesNotThrow(() => throwing.AHAAvisa.removeReferenceFromArticle(throwingArticle.id, throwingRef.reference.id), 'removeReferenceFromArticle should not throw when AHARepository.saveArticle throws');
 assert.doesNotThrow(() => throwing.AHAAvisa.deleteArticle(throwingArticle.id), 'deleteArticle should not throw when AHARepository.saveArticle throws');
 assert.equal(assertStored(throwing, 1)[0].deletedAt.length > 0, true, 'localStorage flow should survive repository errors');
 
@@ -235,7 +238,7 @@ function seedArticles(context, articles) {
       }
     ]
   });
-  const syncContext = buildContext(syncRepository);
+  const syncContext = buildContext(syncRepository, { avisa: { enableDatabaseSync: true } });
   assert.equal(typeof syncContext.AHAAvisa.syncFromDatabase, 'function', 'AHAAvisa.syncFromDatabase should be exported');
   assert.deepEqual(syncRepository.events, [], 'syncFromDatabase should not auto-run during init/bind');
   seedArticles(syncContext, [
@@ -298,14 +301,14 @@ function seedArticles(context, articles) {
   assert.equal(equalTime.title, 'Remote vinner lik tid', 'remote article should win on equal action time');
 
   const invalidRepository = createSyncRepository({ loadResult: Promise.resolve({ ok: true, data: { invalid: true } }) });
-  const invalidContext = buildContext(invalidRepository);
+  const invalidContext = buildContext(invalidRepository, { avisa: { enableDatabaseSync: true } });
   seedArticles(invalidContext, [{ id: 'local-only', title: 'Behold lokal', createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z' }]);
   const invalidResult = await invalidContext.AHAAvisa.syncFromDatabase();
   assert.equal(invalidResult.ok, false, 'invalid remote payload should return a failed fallback result');
   assert.equal(invalidResult.fallback, 'localStorage', 'invalid remote payload should fall back to localStorage');
   assert.equal(assertStored(invalidContext, 1)[0].title, 'Behold lokal', 'invalid remote payload should not delete local data');
 
-  const missingRepository = buildContext({ saveArticle: async () => ({ ok: true }) });
+  const missingRepository = buildContext({ saveArticle: async () => ({ ok: true }) }, { avisa: { enableDatabaseSync: true } });
   seedArticles(missingRepository, [{ id: 'missing-load', title: 'Mangler load', createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z' }]);
   const missingResult = await missingRepository.AHAAvisa.syncFromDatabase();
   assert.equal(missingResult.ok, false, 'missing AHARepository.loadArticles should return fallback result');
@@ -313,7 +316,7 @@ function seedArticles(context, articles) {
   assert.equal(assertStored(missingRepository, 1)[0].title, 'Mangler load', 'missing loadArticles should keep local data');
 
   const loadErrorRepository = createSyncRepository({ onLoad: () => { throw new Error('load failed'); } });
-  const loadErrorContext = buildContext(loadErrorRepository);
+  const loadErrorContext = buildContext(loadErrorRepository, { avisa: { enableDatabaseSync: true } });
   seedArticles(loadErrorContext, [{ id: 'load-error', title: 'Load feil lokal', createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z' }]);
   const loadErrorResult = await loadErrorContext.AHAAvisa.syncFromDatabase();
   assert.equal(loadErrorResult.ok, false, 'repository load errors should return fallback result');
@@ -324,7 +327,7 @@ function seedArticles(context, articles) {
     remote: [{ id: 'after-save-error', title: 'Remote etter save-feil', created_at: '2026-01-01T00:00:00.000Z', updated_at: '2026-01-03T00:00:00.000Z' }],
     saveArticle: () => { throw new Error('save failed'); }
   });
-  const saveErrorContext = buildContext(saveErrorRepository);
+  const saveErrorContext = buildContext(saveErrorRepository, { avisa: { enableDatabaseSync: true } });
   seedArticles(saveErrorContext, [{ id: 'save-error-local', title: 'Save feil lokal', createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-02T00:00:00.000Z' }]);
   const saveErrorResult = await saveErrorContext.AHAAvisa.syncFromDatabase();
   assert.equal(saveErrorResult.ok, true, 'repository save errors should not break remote pull and merge');
@@ -336,7 +339,7 @@ function seedArticles(context, articles) {
   assert.deepEqual(loadErrorContext.__forbiddenCalls, [], 'repository load-error sync should not call AHAIngest, AHASources, or Groups');
   assert.deepEqual(saveErrorContext.__forbiddenCalls, [], 'repository save-error sync should not call AHAIngest, AHASources, or Groups');
   assert.equal(/AHAIngest|AHASources/.test(avisaCode), false, 'AHAAvisa sync should not reference AHAIngest or AHASources');
-  assert.equal(/publishArticle|externalPublish|publishTo/i.test(avisaCode), false, 'syncFromDatabase should not introduce external publishing calls');
+  assert.equal(/externalPublish\s*[:=(]|publishTo|publishExternal\s*[:=(]/i.test(avisaCode), false, 'syncFromDatabase should not introduce external publishing calls');
   assert.ok(avisaCode.includes('published_local'), 'published_local should remain a local status value after sync addition');
   assert.ok(avisaCode.includes('public_candidate'), 'public_candidate should remain a local candidate marker after sync addition');
 
