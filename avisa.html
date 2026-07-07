@@ -17,16 +17,16 @@
         <div>
           <p class="eyebrow">AHA module</p>
           <h1 id="avisa-module-title">AHAavisa</h1>
-          <p class="aha-module-purpose">Collect drafts and published AHA notes.</p>
+          <p class="aha-module-purpose">Lokale artikkelutkast og publiserte-lokalt tekster. AHAavisa organiserer egne AHA-notater og referanser, men publiserer ikke eksternt.</p>
         </div>
         <span id="aha-module-health" class="aha-module-health-badge aha-module-health-unknown" role="status" aria-label="AHAavisa: Unknown">
           <span>Unknown</span>
         </span>
       </header>
       <div class="aha-module-actions" aria-label="AHAavisa actions">
-        <a class="aha-tile-btn aha-tile-btn-primary" href="#avisa-create">New note</a>
-        <button id="avisa-refresh-btn" class="aha-tile-btn" type="button">Refresh AHAavisa</button>
-        <a class="aha-tile-btn" href="index.html">Back to AHA Home</a>
+        <a class="aha-tile-btn aha-tile-btn-primary" href="#avisa-create">Nytt utkast</a>
+        <button id="avisa-refresh-btn" class="aha-tile-btn" type="button">Oppdater</button>
+        <a class="aha-tile-btn" href="index.html">Tilbake til AHA Home</a>
       </div>
     </section>
 
@@ -67,13 +67,13 @@
       <details class="aha-module-details">
         <summary>Advanced details</summary>
         <div id="avisa-privacy-warning" class="local-publish-note" hidden></div>
-        <p class="local-publish-note">“Publiser lokalt” betyr bare at artikkelen markeres som lokal publisert i denne nettleseren. Ingen data sendes ut. Ekte publisering kommer senere.</p>
+        <p class="local-publish-note">AHAavisa er local-only. “Publiser lokalt” markerer bare en artikkel som publisert i denne nettleseren. Ingen data sendes ut, ingen backend brukes, og EchoNet er ikke aktivert.</p>
       </details>
       <div class="section-filter" id="avisa-layer-filter" role="group" aria-label="Filtrer publiseringslag">
         <button type="button" data-layer-filter="all" class="is-active">Alle</button>
         <button type="button" data-layer-filter="personal">Personlig avis</button>
         <button type="button" data-layer-filter="group">Gruppeavis</button>
-        <button type="button" data-layer-filter="public_candidate">Offentlig kandidatlag</button>
+        <button type="button" data-layer-filter="public_candidate">Offentlig kandidat</button>
       </div>
       <div class="section-filter" id="avisa-section-filter" role="group" aria-label="Filtrer seksjon">
         <button type="button" data-section-filter="alle" class="is-active">Alle</button>
