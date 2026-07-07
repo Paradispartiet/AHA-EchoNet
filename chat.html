@@ -78,6 +78,12 @@
           </div>
         </section>
 
+
+        <section id="aha-chat-daily-loop" class="aha-now-card" aria-label="Dagens AHA-løype">
+          <header><p class="eyebrow">Dagens AHA-løype</p><h2>Dagens AHA-løype</h2></header>
+          <div id="aha-chat-daily-loop-content"><p class="aha-calm-empty">Laster dagens neste handling …</p></div>
+        </section>
+
         <section class="answer-actions" aria-label="Handlinger for AHA-svar">
           <p class="answer-actions-hint">Når AHA har svart, kan du bygge videre:</p>
           <div class="chips answer-actions-row">
@@ -284,6 +290,7 @@
   <script src="js/ahaChatReplyFormat.js"></script>
   <script src="js/ahaEngineClient.js"></script>
   <script src="js/ahaLinkReader.js"></script>
+  <script src="js/ahaDailyOperatingLoop.js"></script>
   <script src="js/ahaChat.js"></script>
   <script src="js/ahaChatPythonSmoke.js"></script>
   <script src="js/ahaAnalysisQualityLayer.js"></script>
@@ -343,6 +350,21 @@
           }
         });
       });
+    })();
+  </script>
+
+  <script>
+    (function(){
+      const esc=(v)=>String(v==null?"":v).replace(/[&<>"']/g,(c)=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+      const short=(v,n=96)=>{const t=String(v||"").replace(/\s+/g," ").trim();return t.length>n?t.slice(0,n-1).trim()+"…":t;};
+      function render(){
+        const loop=window.AHADailyOperatingLoop?.refreshDailyLoop?.({save:true,lightweight:true});
+        const el=document.getElementById("aha-chat-daily-loop-content"); if(!el||!loop) return;
+        const a=loop.nextBestAction||{}; const prompts=(loop.suggestedPrompts||[]).slice(0,3);
+        el.innerHTML=`<p><strong>${esc(a.label||"Åpne Chat")}</strong> — ${esc(short(a.description||"Bruk AHA med dagens status."))}</p><div class="chips">${prompts.map(p=>`<button class="action-chip" type="button" data-daily-prompt="${esc(p.prompt)}">${esc(p.label)}</button>`).join("")}<a class="action-chip" href="knowledge-workbench.html">Åpne Workbench</a></div>`;
+        el.querySelectorAll("[data-daily-prompt]").forEach((btn)=>btn.addEventListener("click",()=>{const input=document.getElementById("msg"); if(input){input.value=btn.dataset.dailyPrompt||""; input.focus();}}));
+      }
+      document.addEventListener("DOMContentLoaded", render);
     })();
   </script>
 

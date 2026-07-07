@@ -20,6 +20,17 @@
     ];
     set("aha-local-home-priority-strip", list(chips, ([label, value]) => `<span class="aha-home-status-chip"><strong>${esc(value)}</strong>${esc(label)}</span>`));
   }
+
+  function renderDailyLoop() {
+    const loop = global.AHADailyOperatingLoop?.refreshDailyLoop?.({ save: true, lightweight: true }) || global.AHADailyOperatingLoop?.loadDailyLoopStatus?.();
+    if (!loop) { set("aha-local-home-daily-loop", `<p class="eyebrow">Dagens AHA-løype</p><h3>Ikke klar ennå</h3><p>Daily Operating Loop lastes når modulen er tilgjengelig.</p>`); return; }
+    const action = loop.nextBestAction || {};
+    const queue = safe(loop.actionQueue).slice(0, 3);
+    const prompts = safe(loop.suggestedPrompts).slice(0, 3);
+    set("aha-local-home-daily-loop", `<p class="eyebrow">Dagens AHA-løype</p><h3>${esc(short(loop.currentFocus || action.label || "Neste beste handling", 72))}</h3><p>${esc(loop.changedSinceLastRun?.summary || "Ingen endringer siden sist.")}</p><div class="aha-home-status-chip"><strong>${esc(action.label || "Åpne Chat")}</strong>${esc(short(action.description || "Start dagens AHA-arbeid.", 96))}</div><div class="aha-home-work-queue">${list(queue, (a) => `<a class="aha-home-work-chip" href="${esc(a.href || "chat.html")}"><strong>${esc(a.priority || "•")}</strong><span>${esc(short(a.label, 38))}</span></a>`)}</div><div class="aha-home-tag-list">${list(prompts, (p) => `<a class="aha-home-tag" href="${esc(p.href || "chat.html")}" title="${esc(p.prompt)}">${esc(short(p.label, 32))}</a>`)}</div><div class="aha-tile-actions"><a class="aha-tile-btn aha-tile-btn-primary" href="chat.html">Åpne Chat</a><a class="aha-tile-btn" href="knowledge-workbench.html">Åpne Workbench</a><button id="aha-daily-loop-refresh" class="aha-tile-btn" type="button">Oppdater dagens løype</button></div>`);
+    const btn = $("aha-daily-loop-refresh"); if (btn) btn.addEventListener("click", () => renderDailyLoop());
+  }
+
   function renderNextAction(payload) {
     const a = first(payload.nextActions);
     set("aha-local-home-next-action", `<p class="eyebrow">Neste steg</p><h3>${esc(a.label || "Åpne Chat")}</h3><p>${esc(short(a.description || "Bruk AHA med dagens lokale innsiktsgrunnlag.", 140))}</p><span class="aha-home-next-chip">Hvorfor dette? Høyest prioritet akkurat nå.</span>`);
@@ -46,9 +57,9 @@
   function renderTechnicalDetails(payload) {
     set("aha-local-home-technical-content", `<p>Home lagrer kun lokal status-snapshot og kjører ingen godkjenning, training, sync eller import ved lasting.</p><pre>${esc(JSON.stringify({ generatedAt: payload.generatedAt, version: payload.version, status: payload.status, counts: payload.counts, warnings: payload.warnings || [] }, null, 2))}</pre>`);
   }
-  function render(payload) { if (!payload) return; renderHero(payload); renderPriorityStrip(payload); renderNextAction(payload); renderHighlights(payload); renderActiveWork(payload); renderProjectsConcepts(payload); renderRecentActivity(payload); renderModuleTiles(payload); renderTechnicalDetails(payload); bindActions(); }
+  function render(payload) { if (!payload) return; renderHero(payload); renderPriorityStrip(payload); renderDailyLoop(); renderNextAction(payload); renderHighlights(payload); renderActiveWork(payload); renderProjectsConcepts(payload); renderRecentActivity(payload); renderModuleTiles(payload); renderTechnicalDetails(payload); bindActions(); }
   function bindActions() { const btn = $("aha-local-home-refresh"); if (btn && !btn.dataset.bound) { btn.dataset.bound = "true"; btn.addEventListener("click", () => render(global.AHALocalInsightHome?.refreshHome?.({ save: true }))); } }
   function init() { const payload = global.AHALocalInsightHome?.refreshHome?.({ save: true }); render(payload); }
-  global.AHALocalInsightHomeDashboard = { init, render, renderHero, renderPriorityStrip, renderNextAction, renderHighlights, renderActiveWork, renderProjectsConcepts, renderRecentActivity, renderModuleTiles, renderTechnicalDetails, bindActions };
+  global.AHALocalInsightHomeDashboard = { init, render, renderHero, renderPriorityStrip, renderNextAction, renderHighlights, renderActiveWork, renderProjectsConcepts, renderRecentActivity, renderModuleTiles, renderDailyLoop, renderTechnicalDetails, bindActions };
   if (global.document) global.document.addEventListener("DOMContentLoaded", init);
 })(typeof window !== "undefined" ? window : globalThis);
