@@ -25,7 +25,15 @@
   }
 
   function renderDailyLoop() {
-    const loop = global.AHADailyOperatingLoop?.refreshDailyLoop?.({ save: true, lightweight: true }) || global.AHADailyOperatingLoop?.loadDailyLoopStatus?.();
+    let loop = null;
+
+    try {
+      loop =
+        global.AHADailyOperatingLoop?.refreshDailyLoop?.({ save: true, lightweight: true }) ||
+        global.AHADailyOperatingLoop?.loadDailyLoopStatus?.();
+    } catch (err) {
+      console.warn("AHA Daily Loop kunne ikke renderes", err);
+    }
     if (!loop) { set("aha-local-home-daily-loop", `<p class="eyebrow">Dagens AHA-løype</p><h3>Ikke klar ennå</h3><p>Daily Operating Loop lastes når modulen er tilgjengelig.</p>`); return; }
     const action = loop.nextBestAction || {};
     const queue = safe(loop.actionQueue).slice(0, 3);
