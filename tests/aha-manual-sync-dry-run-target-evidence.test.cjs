@@ -103,7 +103,7 @@ assert.throws(() => { targets[0].executionAllowed = true; }, /read only|Cannot a
 
 // C. Dry-run plan
 const plan = adapter.createManualSyncDryRunPlan();
-assert.equal(plan.mode, 'dry_run');
+assert.equal(plan.mode, 'planned_noop_dry_run');
 assert.equal(plan.executionAllowed, false);
 assert.equal(plan.autoSync, false);
 assert.equal(plan.blocked, true);

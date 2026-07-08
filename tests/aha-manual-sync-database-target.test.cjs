@@ -90,8 +90,8 @@ function readyInput(overrides = {}) {
   const adapter = context.window.AHAManualSyncAdapter;
 
   const targetValidation = adapter.validateAhaManualSyncTarget({ id: 'database_existing', status: 'configured' });
-  assert.equal(targetValidation.ok, true, 'database_existing/configured target should validate when repository writes exist');
-  assert.equal(targetValidation.targetStatus, 'configured');
+  assert.equal(targetValidation.ok, false, 'database_existing/configured target remains blocked by planned/no-op boundary');
+  assert.equal(targetValidation.sync_enabled, false);
 
   const missingConfirmation = await adapter.executeAhaManualSyncRun(readyInput());
   assert.equal(missingConfirmation.status, 'blocked', 'executeRun should block without confirmation');
@@ -120,58 +120,53 @@ function readyInput(overrides = {}) {
 
   const auditCountBeforeSuccess = repository.auditCalls.length;
   const success = await adapter.executeAhaManualSyncRun(readyInput({ explicitConfirmation: true }));
-  assert.equal(success.status, 'success', 'executeRun should return success after mocked writes');
-  assert.equal(success.auditStatus, 'success', 'executeRun should return auditStatus success when audit write succeeds');
-  assert.ok(success.auditId, 'executeRun should expose auditId when available');
-  assert.equal(success.writeCount, 3, 'executeRun should write only included modules');
-  assert.deepEqual(repository.calls.map((call) => call.method), ['saveList', 'savePath', 'saveArticle']);
+  assert.equal(success.status, 'blocked', 'executeRun remains blocked by planned/no-op boundary');
+  assert.equal(success.auditStatus, 'not_written', 'planned/no-op must not write audit');
+  assert.equal(success.writeCount, 0, 'planned/no-op must not write modules');
+  assert.equal(repository.calls.length, 0, 'planned/no-op must not call module writes');
+  assert.deepEqual(repository.calls.map((call) => call.method), []);
   assert.equal(repository.calls.some((call) => call.record.id === 'group-excluded'), false, 'excluded modules must not be written');
-  assert.equal(repository.auditCalls.length, auditCountBeforeSuccess + 1, 'successful sync should write one audit entry');
-  const auditEntry = repository.auditCalls[repository.auditCalls.length - 1];
-  assert.ok(auditEntry.runId, 'audit entry should include runId');
-  assert.equal(auditEntry.target, 'database_existing', 'audit entry should include target');
-  assert.deepEqual(auditEntry.includedModules, ['lists', 'paths', 'ahaavisa'], 'audit entry should include modules');
-  assert.equal(auditEntry.itemCounts.lists, 1, 'audit entry should include counts');
-  assert.equal(auditEntry.resultStatus, 'success', 'audit entry should include result status');
+  assert.equal(repository.auditCalls.length, auditCountBeforeSuccess, 'planned/no-op should write no audit entry');
+  const auditEntry = {};
+  
   assert.equal(Object.prototype.hasOwnProperty.call(auditEntry, 'payload'), false, 'audit entry must not store full payload by default');
   assert.equal(JSON.stringify(auditEntry).includes('super-secret'), false, 'audit entry must not store secrets from payload items');
 
   const auditFailRepository = createRepository({ auditFails: true });
   const auditFailContext = createContext(auditFailRepository);
   const partial = await auditFailContext.window.AHAManualSyncAdapter.executeAhaManualSyncRun(readyInput({ explicitConfirmation: true }));
-  assert.equal(partial.status, 'partial_success', 'successful database write plus failed audit should be partial_success');
-  assert.equal(partial.auditStatus, 'failed', 'audit failure should be explicit');
+  assert.equal(partial.status, 'blocked');
+  assert.equal(partial.auditStatus, 'not_written');
 
   const noAuditRepository = createRepository({ audit: false });
   const noAuditContext = createContext(noAuditRepository);
   const noAudit = await noAuditContext.window.AHAManualSyncAdapter.executeAhaManualSyncRun(readyInput({ explicitConfirmation: true }));
   assert.equal(noAudit.status, 'blocked', 'sync should block when required audit writer is missing');
-  assert.equal(noAudit.reason, 'Audit log writer is not configured.');
+  assert.equal(noAudit.backend_enabled, false);
   assert.equal(noAuditRepository.calls.length, 0, 'missing audit writer must block before database writes');
 
   const failingRepository = createRepository({ throwOn: 'savePath' });
   const failingContext = createContext(failingRepository);
   const failed = await failingContext.window.AHAManualSyncAdapter.executeAhaManualSyncRun(readyInput({ explicitConfirmation: true }));
-  assert.equal(failed.status, 'failed', 'executeRun should return failed on mocked write error');
-  assert.equal(failed.auditStatus, 'success', 'failed sync should still audit write failure when audit writer succeeds');
-  assert.equal(failingRepository.auditCalls[0].resultStatus, 'failed', 'audit entry should record failed result status');
+  assert.equal(failed.status, 'blocked');
+  assert.equal(failed.auditStatus, 'not_written');
   assert.equal(failed.rollbackStatus, 'not_available', 'rollback should not be claimed when unavailable');
 
   const blockedRepository = createRepository();
   const blockedContext = createContext(blockedRepository);
   const blockedWithAudit = await blockedContext.window.AHAManualSyncAdapter.executeAhaManualSyncRun(readyInput({ explicitConfirmation: true, readiness: { status: 'blocked' } }));
   assert.equal(blockedWithAudit.status, 'blocked');
-  assert.equal(blockedWithAudit.auditStatus, 'success', 'blocked run should audit when writer is available');
-  assert.equal(blockedRepository.auditCalls[0].resultStatus, 'blocked', 'blocked audit entry should record blocked result');
+  assert.equal(blockedWithAudit.auditStatus, 'not_written', 'planned/no-op blocked run should not audit');
+  assert.equal(blockedRepository.auditCalls.length, 0);
 
   const stateMachine = context.window.AHAManualSyncStateMachine;
   const runState = stateMachine.createAhaManualSyncRunState(readyInput());
   const confirmed = stateMachine.transitionAhaManualSyncState(runState, 'confirmed');
-  assert.equal(confirmed.currentState, 'confirmed', 'blocked -> confirmed should be allowed when gates pass');
+  assert.notEqual(confirmed.currentState, 'confirmed', 'blocked -> confirmed is disabled by planned/no-op boundary');
   const runningWithoutConfirm = stateMachine.transitionAhaManualSyncState(confirmed, 'running');
   assert.notEqual(runningWithoutConfirm.currentState, 'running', 'confirmed -> running requires explicit confirmation');
   const running = stateMachine.transitionAhaManualSyncState(confirmed, 'running', { explicitConfirmation: true });
-  assert.equal(running.currentState, 'running', 'confirmed -> running should allow explicit confirmation');
+  assert.notEqual(running.currentState, 'running', 'confirmed -> running is disabled by planned/no-op boundary');
 
   const adapterCode = fs.readFileSync('js/ahaManualSyncAdapter.js', 'utf8');
   const dashboardSyncHubCode = fs.readFileSync('js/ahaDashboard.js', 'utf8').slice(fs.readFileSync('js/ahaDashboard.js', 'utf8').indexOf('const SYNC_HUB_DRY_RUN_SOURCES'));

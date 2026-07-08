@@ -110,7 +110,7 @@
       type: "integration",
       status: "planned",
       href: "index.html#aha-sync-hub-status",
-      description: "Datatilførselsmodul som viser import- og sync-kandidater før materiale godkjennes i Training Corpus.",
+      description: "Planlagt local-only oversikt for sync-kandidater, dry-run og manuell review. Ingen auto-sync, backend, EchoNet eller ekstern deling er aktivert.",
       phase: 2
     },
     {

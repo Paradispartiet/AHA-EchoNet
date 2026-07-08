@@ -61,7 +61,8 @@ context.window.AHALists = {
 const readyRuntime = hub.inspectModule(hub.modules[0]);
 assert.equal(readyRuntime.status, 'sync_klar');
 assert.equal(readyRuntime.fallback, null);
-assert.equal(readyRuntime.canSyncHere, true);
+assert.equal(readyRuntime.canSyncHere, false);
+assert.equal(readyRuntime.deprecatedCanSyncHere, true);
 assert.equal(syncCalls, 0, 'runtime inspection must not call syncFromDatabase');
 
 context.window.AHAPaths = {};
@@ -73,7 +74,7 @@ assert.equal(missingSync.canSyncHere, false);
 storageCalls.length = 0;
 const inspection = hub.inspectAll();
 assert.equal(inspection.ok, true);
-assert.equal(inspection.mode, 'read_only');
+assert.equal(inspection.mode, 'planned_noop');
 assert.equal(inspection.autoSync, false);
 assert.equal(inspection.modules.length, 4);
 assert.deepEqual(

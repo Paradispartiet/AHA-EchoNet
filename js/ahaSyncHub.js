@@ -19,12 +19,39 @@
     }
   }
 
+  function isSyncHubEnabled() {
+    return window.AHA_CONFIG?.syncHub?.enableSyncHub === true;
+  }
+
+  function isEchoNetEnabled() {
+    return window.AHA_CONFIG?.syncHub?.enableEchoNet === true;
+  }
+
+  function syncHubDisabledResult(data) {
+    return {
+      ok: false,
+      mode: "planned_noop",
+      local_only: true,
+      dry_run_only: true,
+      autoSync: false,
+      sync_enabled: false,
+      echonet_enabled: false,
+      backend_enabled: false,
+      reason: "sync_hub_disabled",
+      data
+    };
+  }
+
+  function isUnavailableRecord(record) {
+    return Boolean(record?.deletedAt || record?.deleted_at || record?.archived === true);
+  }
+
   function isDeletedRecord(record) {
-    return Boolean(record?.deletedAt || record?.deleted_at);
+    return isUnavailableRecord(record);
   }
 
   function countActiveRecords(key) {
-    return safeReadArray(key).filter((record) => !isDeletedRecord(record)).length;
+    return safeReadArray(key).filter((record) => !isUnavailableRecord(record)).length;
   }
 
   function inspectModule(moduleConfig) {
@@ -49,18 +76,29 @@
       table: moduleConfig.table,
       localCount: countActiveRecords(moduleConfig.key),
       runtimeLoaded,
+      syncFunctionAvailable: syncAvailable,
       syncAvailable,
       status,
       fallback,
-      canSyncHere: syncAvailable
+      local_only: true,
+      dryRunOnly: true,
+      manualReviewRequired: true,
+      canAutoSyncHere: false,
+      canSyncHere: false,
+      deprecatedCanSyncHere: syncAvailable
     };
   }
 
   function inspectAll() {
     return {
       ok: true,
-      mode: "read_only",
+      mode: "planned_noop",
+      local_only: true,
+      dry_run_only: true,
       autoSync: false,
+      sync_enabled: false,
+      echonet_enabled: false,
+      backend_enabled: false,
       modules: MODULES.map(inspectModule)
     };
   }
@@ -68,6 +106,10 @@
   window.AHASyncHub = {
     modules: MODULES,
     safeReadArray,
+    isSyncHubEnabled,
+    isEchoNetEnabled,
+    syncHubDisabledResult,
+    isUnavailableRecord,
     isDeletedRecord,
     countActiveRecords,
     inspectModule,

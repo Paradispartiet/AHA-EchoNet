@@ -4,8 +4,8 @@
   "use strict";
 
   const BLOCKED_REASON = "Manual sync gates are not passed.";
-  const READY_REASON = "Manual sync gates passed; explicit confirmation is still required.";
-  const WRITE_STATUS_READY = "manual_gated_existing_database_target";
+  const READY_REASON = "Manual sync remains planned/no-op; execution is disabled until explicit future contract.";
+  const WRITE_STATUS_READY = "planned_noop_blocked";
   const WRITE_STATUS_BLOCKED = "blocked";
 
   const AHA_MANUAL_SYNC_STATES = Object.freeze({
@@ -116,10 +116,10 @@
       warnings: cloneArray(source.warnings),
       errors: cloneArray(source.errors).concat(blockers),
       blockers,
-      canExecute,
-      canWrite: canExecute,
+      canExecute: false,
+      canWrite: false,
       isStub: false,
-      writeStatus: canExecute ? WRITE_STATUS_READY : WRITE_STATUS_BLOCKED,
+      writeStatus: WRITE_STATUS_BLOCKED,
       rollbackStatus: "not_available",
       createdAt: source.createdAt || now.toISOString()
     };
@@ -130,10 +130,10 @@
       currentState: AHA_MANUAL_SYNC_STATES.BLOCKED,
       previousState: AHA_MANUAL_SYNC_STATES.NOT_STARTED,
       reason: READY_REASON,
-      canExecute: true,
-      canWrite: true,
+      canExecute: false,
+      canWrite: false,
       isStub: false,
-      writeStatus: WRITE_STATUS_READY,
+      writeStatus: WRITE_STATUS_BLOCKED,
       rollbackStatus: "not_available",
       states: values(AHA_MANUAL_SYNC_STATES),
       allowedTransitions: Object.keys(AHA_MANUAL_SYNC_ALLOWED_TRANSITIONS).reduce((copy, state) => {
@@ -144,7 +144,7 @@
         copy[state] = AHA_MANUAL_SYNC_ALLOWED_TRANSITIONS[state].slice();
         return copy;
       }, {}),
-      disabledExecutionStates: [],
+      disabledExecutionStates: values(AHA_MANUAL_SYNC_STATES),
       blockedTransitionReason: BLOCKED_REASON
     };
   }
@@ -170,7 +170,13 @@
 
     if (normalizedCurrent === AHA_MANUAL_SYNC_STATES.BLOCKED && normalizedNext === AHA_MANUAL_SYNC_STATES.CONFIRMED) {
       const blockers = getGateBlockers({ ...source, ...options });
-      if (blockers.length) return { allowed: false, reason: blockers[0], currentState: normalizedCurrent, nextState: normalizedNext, blockers };
+      return {
+        allowed: false,
+        reason: "Manual sync is planned/no-op; future activation requires an explicit contract.",
+        currentState: normalizedCurrent,
+        nextState: normalizedNext,
+        blockers: blockers.concat("sync_hub_planned_noop")
+      };
     }
 
     if (normalizedCurrent === AHA_MANUAL_SYNC_STATES.CONFIRMED && normalizedNext === AHA_MANUAL_SYNC_STATES.RUNNING) {
@@ -213,10 +219,10 @@
       previousState: decision.currentState,
       currentState: decision.nextState,
       reason: decision.reason,
-      canExecute: decision.nextState === AHA_MANUAL_SYNC_STATES.CONFIRMED || decision.nextState === AHA_MANUAL_SYNC_STATES.RUNNING,
-      canWrite: decision.nextState === AHA_MANUAL_SYNC_STATES.CONFIRMED || decision.nextState === AHA_MANUAL_SYNC_STATES.RUNNING,
+      canExecute: false,
+      canWrite: false,
       isStub: false,
-      writeStatus: WRITE_STATUS_READY,
+      writeStatus: WRITE_STATUS_BLOCKED,
       rollbackStatus: source.rollbackStatus || "not_available"
     };
   }

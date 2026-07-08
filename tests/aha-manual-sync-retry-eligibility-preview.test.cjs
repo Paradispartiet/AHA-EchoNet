@@ -98,8 +98,8 @@ function auditRun(patch = {}) {
   vm.runInContext(fs.readFileSync('js/ahaManualSyncAdapter.js', 'utf8'), adapterContext, { filename: 'js/ahaManualSyncAdapter.js' });
   const historyResult = await adapterContext.AHAManualSyncAdapter.loadAhaManualSyncHistory({ limit: 10 });
   assert.equal(historyResult.ok, true);
-  assert.equal(historyResult.entries.length, 1, 'history reader should return only manual sync audit entries');
-  assert.deepEqual(sideEffects, ['loadSourceEvents'], 'history/retry preview must read only and never sync, execute, audit-write, or database-write');
+  assert.equal(historyResult.entries.length, 0, 'planned/no-op history reader returns sanitized empty local dry-run history');
+  assert.deepEqual(sideEffects, [], 'history/retry preview must not sync, execute, audit-write, database-write, or repository-read');
 
   console.log('aha-manual-sync-retry-eligibility-preview.test.cjs passed');
 })().catch((error) => {

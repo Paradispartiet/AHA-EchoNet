@@ -64,7 +64,7 @@
   }
 
   function isTombstone(record) {
-    return Boolean(record && (record.deletedAt || record.deleted_at));
+    return Boolean(record && (record.deletedAt || record.deleted_at || record.archived === true));
   }
 
   function inspectManualSyncTarget(targetId) {
@@ -83,6 +83,12 @@
         runtimeLoaded: false,
         syncFunctionAvailable: false,
         executionAllowed: false,
+        local_only: true,
+        dry_run_only: true,
+        sync_enabled: false,
+        echonet_enabled: false,
+        backend_enabled: false,
+        applied: false,
         dryRunOnly: true,
         blocked: true,
         blockers: ["unknown_target", ...EXECUTION_BLOCKERS]
@@ -112,6 +118,12 @@
       runtimeLoaded,
       syncFunctionAvailable,
       executionAllowed: false,
+      local_only: true,
+      dry_run_only: true,
+      sync_enabled: false,
+      echonet_enabled: false,
+      backend_enabled: false,
+      applied: false,
       dryRunOnly: true,
       blocked: true,
       blockers
@@ -134,7 +146,13 @@
 
     return {
       ok: true,
-      mode: "dry_run",
+      mode: "planned_noop_dry_run",
+      local_only: true,
+      dry_run_only: true,
+      sync_enabled: false,
+      echonet_enabled: false,
+      backend_enabled: false,
+      applied: false,
       executionAllowed: false,
       autoSync: false,
       blocked: true,

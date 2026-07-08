@@ -56,7 +56,15 @@
         approvalBoundary: "personal_ai_loop_source_approval",
         approvalState: "suggested",
         requiresUserConfirmation: true,
+        requires_manual_review: true,
         visibility: "local_only",
+        local_only: true,
+        candidate_only: true,
+        dry_run_only: true,
+        sync_enabled: false,
+        echonet_enabled: false,
+        backend_enabled: false,
+        external_share_enabled: false,
         createdFrom: "read_only_route_candidate"
       };
     }).filter((candidate) => candidate.channelId);

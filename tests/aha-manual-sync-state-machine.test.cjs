@@ -22,8 +22,8 @@ function loadScript(file, context) {
   ]);
 
   const status = stateMachine.getAhaManualSyncStateMachineStatus();
-  assert.equal(status.canExecute, true, 'state machine can execute only with per-run gates');
-  assert.equal(status.canWrite, true, 'state machine can write only with per-run gates');
+  assert.equal(status.canExecute, false, 'state machine is planned/no-op');
+  assert.equal(status.canWrite, false, 'state machine cannot write in planned/no-op mode');
   assert.equal(status.isStub, false);
   assert.deepEqual(status.allowedTransitions.blocked, ['confirmed']);
   assert.deepEqual(status.allowedTransitions.confirmed, ['running']);
@@ -52,17 +52,15 @@ function loadScript(file, context) {
   const readySnapshot = JSON.stringify(readyInput);
   const readyState = stateMachine.createAhaManualSyncRunState(readyInput);
   assert.equal(JSON.stringify(readyInput), readySnapshot, 'createRunState must not mutate input');
-  assert.equal(readyState.canExecute, true);
-  assert.equal(readyState.canWrite, true);
+  assert.equal(readyState.canExecute, false);
+  assert.equal(readyState.canWrite, false);
 
   const confirmed = stateMachine.transitionAhaManualSyncState(readyState, 'confirmed');
-  assert.equal(confirmed.currentState, 'confirmed');
+  assert.notEqual(confirmed.currentState, 'confirmed');
   const runningBlocked = stateMachine.transitionAhaManualSyncState(confirmed, 'running');
   assert.notEqual(runningBlocked.currentState, 'running', 'running requires explicit confirmation');
   const running = stateMachine.transitionAhaManualSyncState(confirmed, 'running', { explicitConfirmation: true });
-  assert.equal(running.currentState, 'running');
-  assert.equal(stateMachine.transitionAhaManualSyncState(running, 'success').currentState, 'success');
-  assert.equal(stateMachine.transitionAhaManualSyncState(running, 'failed').currentState, 'failed');
+  assert.notEqual(running.currentState, 'running');
 
   const failed = stateMachine.transitionAhaManualSyncState(running, 'failed');
   const rolledBack = stateMachine.transitionAhaManualSyncState(failed, 'rolled_back');

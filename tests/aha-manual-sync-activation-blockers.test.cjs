@@ -81,10 +81,10 @@ function readyInput(patch = {}) {
   const adapter = context.window.AHAManualSyncAdapter;
 
   const status = adapter.getAhaManualSyncAdapterStatus();
-  assert.equal(status.adapterStatus, 'ready');
-  assert.equal(status.target, 'database_existing');
-  assert.equal(status.targetStatus, 'configured');
-  assert.equal(status.canExecute, true);
+  assert.equal(status.status, 'blocked');
+  assert.equal(status.sync_enabled, false);
+  assert.equal(status.backend_enabled, false);
+  assert.equal(status.canExecute, false);
 
   const dryRun = adapter.runAhaManualSyncTargetDryRun(readyInput());
   assert.equal(dryRun.ok, true);
@@ -92,13 +92,12 @@ function readyInput(patch = {}) {
   assert.equal(repo.calls.length, 0, 'dry-run must not call repository writes');
 
   const prepared = adapter.prepareAhaManualSyncRun(readyInput());
-  assert.equal(prepared.status, 'prepared');
+  assert.equal(prepared.status, 'blocked');
   assert.equal(repo.calls.length, 0, 'prepare must not call repository writes');
 
   const blocked = await adapter.executeAhaManualSyncRun(readyInput());
   assert.equal(blocked.status, 'blocked', 'execution without confirmation remains blocked');
-  assert.equal(repo.calls.length, 1, 'blocked execution should call only audit writer');
-  assert.equal(repo.calls[0][0], 'writeAhaManualSyncAuditLog', 'blocked execution without confirmation should audit but not write modules');
+  assert.equal(repo.calls.length, 0, 'planned/no-op execution must not call repository or audit writer');
 
   console.log('aha-manual-sync-activation-blockers.test.cjs passed');
 })();
