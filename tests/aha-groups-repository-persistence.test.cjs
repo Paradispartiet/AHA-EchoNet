@@ -85,7 +85,7 @@ function makeAvisa(calls) {
   };
 }
 
-function makeSandbox({ repository, seed = {}, avisa } = {}) {
+function makeSandbox({ repository, seed = {}, avisa, config } = {}) {
   const forbiddenCalls = [];
   const repositoryCalls = [];
   const avisaCalls = [];
@@ -106,6 +106,7 @@ function makeSandbox({ repository, seed = {}, avisa } = {}) {
       querySelectorAll() { return []; }
     },
     location: { hash: '' },
+    AHA_CONFIG: config,
     AHARepository: repository === undefined ? undefined : repository(repositoryCalls, sequence),
     AHAIngest: forbiddenApi('AHAIngest', forbiddenCalls),
     AHASources: forbiddenApi('AHASources', forbiddenCalls),
@@ -125,7 +126,7 @@ const source = fs.readFileSync(path.join(__dirname, '..', 'js', 'ahaGroups.js'),
 assert.match(source, /syncFromDatabase/, 'AHAGroups should define syncFromDatabase');
 
 {
-  const sandbox = makeSandbox({ repository: makeRepository });
+  const sandbox = makeSandbox({ config: { groups: { enableDatabaseSync: true } }, repository: makeRepository });
   const Groups = sandbox.AHAGroups;
   assert.ok(Groups, 'AHAGroups should be exported');
 
@@ -142,7 +143,7 @@ assert.match(source, /syncFromDatabase/, 'AHAGroups should define syncFromDataba
 }
 
 {
-  const sandbox = makeSandbox({ repository: makeRepository });
+  const sandbox = makeSandbox({ config: { groups: { enableDatabaseSync: true } }, repository: makeRepository });
   const Groups = sandbox.AHAGroups;
   const created = Groups.createGroup({ title: 'Original' });
   sandbox.repositoryCalls.length = 0;
@@ -157,7 +158,7 @@ assert.match(source, /syncFromDatabase/, 'AHAGroups should define syncFromDataba
 }
 
 {
-  const sandbox = makeSandbox({ repository: makeRepository });
+  const sandbox = makeSandbox({ config: { groups: { enableDatabaseSync: true } }, repository: makeRepository });
   const Groups = sandbox.AHAGroups;
   const created = Groups.createGroup({ title: 'Slett meg' });
   sandbox.repositoryCalls.length = 0;
@@ -171,39 +172,41 @@ assert.match(source, /syncFromDatabase/, 'AHAGroups should define syncFromDataba
 }
 
 {
-  const sandbox = makeSandbox({ repository: makeRepository });
+  const sandbox = makeSandbox({ config: { groups: { enableDatabaseSync: true } }, repository: makeRepository });
   const Groups = sandbox.AHAGroups;
   const created = Groups.createGroup({ title: 'Medlemmer' });
   sandbox.repositoryCalls.length = 0;
 
   const member = Groups.addMemberToGroup(created.id, { name: 'Ada', role: 'editor' });
-  assert.ok(member?.id, 'addMemberToGroup should return the added member');
+  assert.ok(member?.member?.id, 'addMemberToGroup should return the added member');
   assert.equal(sandbox.repositoryCalls.length, 1, 'addMemberToGroup should call AHARepository.saveGroup');
   assert.equal(sandbox.repositoryCalls[0].groupRecord.members.length, 1, 'addMemberToGroup should persist the updated members array');
   assert.equal(sandbox.repositoryCalls[0].groupRecord.members[0].name, 'Ada', 'addMemberToGroup should persist the new member');
 
   sandbox.repositoryCalls.length = 0;
-  const removed = Groups.removeMemberFromGroup(created.id, member.id);
+  const removed = Groups.removeMemberFromGroup(created.id, member.member.id);
   assert.ok(removed, 'removeMemberFromGroup should return the updated group');
   assert.equal(sandbox.repositoryCalls.length, 1, 'removeMemberFromGroup should call AHARepository.saveGroup');
   assert.equal(sandbox.repositoryCalls[0].groupRecord.members.length, 0, 'removeMemberFromGroup should persist the updated members array');
 }
 
 {
-  const sandbox = makeSandbox({ repository: makeRepository });
+  const sandbox = makeSandbox({ config: { groups: { enableDatabaseSync: true } }, repository: makeRepository });
   const Groups = sandbox.AHAGroups;
   const created = Groups.createGroup({ title: 'Referanser' });
   sandbox.repositoryCalls.length = 0;
 
+  sandbox.localStorage.setItem('aha_notes_v1', JSON.stringify([{ id: 'note-1', title: 'Note' }, { id: 'note-local', title: 'Lokal ref' }, { id: 'note-throw', title: 'Ref' }, { id: 'note-avisa', title: 'Note' }]));
+  sandbox.localStorage.setItem('aha_paths_v1', JSON.stringify([{ id: 'path-1', title: 'Path' }]));
   const reference = Groups.addReferenceToGroup(created.id, { title: 'Note', type: 'note', source: 'aha_notes', refId: 'note-1' });
-  assert.ok(reference?.id, 'addReferenceToGroup should return the added reference');
+  assert.ok(reference?.reference?.id, 'addReferenceToGroup should return the added reference');
   assert.equal(sandbox.repositoryCalls.length, 1, 'addReferenceToGroup should call AHARepository.saveGroup');
   assert.equal(sandbox.repositoryCalls[0].groupRecord.references.length, 1, 'addReferenceToGroup should persist the updated references array');
   assert.equal(sandbox.repositoryCalls[0].groupRecord.references[0].refId, 'note-1', 'addReferenceToGroup should persist the new reference');
 
   sandbox.repositoryCalls.length = 0;
   const objectReference = Groups.addReferenceToGroupByObject(created.id, { title: 'Path', type: 'path', source: 'aha_paths', refId: 'path-1' });
-  assert.ok(objectReference?.id, 'addReferenceToGroupByObject should return the added reference');
+  assert.ok(objectReference?.reference?.id, 'addReferenceToGroupByObject should return the added reference');
   assert.equal(sandbox.repositoryCalls.length, 1, 'addReferenceToGroupByObject should persist exactly once through addReferenceToGroup');
   assert.equal(sandbox.repositoryCalls[0].groupRecord.references.length, 2, 'addReferenceToGroupByObject should persist the updated references array');
 
@@ -227,17 +230,18 @@ assert.match(source, /syncFromDatabase/, 'AHAGroups should define syncFromDataba
   assert.equal(sandbox.localStorage.readJson(GROUPS_KEY, []).length, 1, 'createGroup should still save locally without AHARepository');
   assert.equal(Groups.updateGroup(created.id, { title: 'Kun lokal oppdatert' }).title, 'Kun lokal oppdatert', 'updateGroup should work without AHARepository');
   const member = Groups.addMemberToGroup(created.id, { name: 'Lokal medlem' });
-  assert.ok(member?.id, 'addMemberToGroup should work without AHARepository');
-  assert.ok(Groups.removeMemberFromGroup(created.id, member.id), 'removeMemberFromGroup should work without AHARepository');
+  assert.ok(member?.member?.id, 'addMemberToGroup should work without AHARepository');
+  assert.ok(Groups.removeMemberFromGroup(created.id, member.member.id), 'removeMemberFromGroup should work without AHARepository');
+  sandbox.localStorage.setItem('aha_notes_v1', JSON.stringify([{ id: 'note-local', title: 'Lokal ref' }]));
   const reference = Groups.addReferenceToGroup(created.id, { title: 'Lokal ref', source: 'aha_notes', refId: 'note-local' });
-  assert.ok(reference?.id, 'addReferenceToGroup should work without AHARepository');
-  assert.ok(Groups.removeReferenceFromGroup(created.id, reference.id), 'removeReferenceFromGroup should work without AHARepository');
+  assert.ok(reference?.reference?.id, 'addReferenceToGroup should work without AHARepository');
+  assert.ok(Groups.removeReferenceFromGroup(created.id, reference.reference.id), 'removeReferenceFromGroup should work without AHARepository');
   assert.ok(Groups.deleteGroup(created.id).deletedAt, 'deleteGroup should work without AHARepository');
   assert.equal(sandbox.localStorage.readJson(GROUPS_KEY, []).length, 1, 'localStorage should remain the primary storage without AHARepository');
 }
 
 {
-  const sandbox = makeSandbox({ repository: (calls, sequence) => makeRepository(calls, sequence, 'throw') });
+  const sandbox = makeSandbox({ config: { groups: { enableDatabaseSync: true } }, repository: (calls, sequence) => makeRepository(calls, sequence, 'throw') });
   const Groups = sandbox.AHAGroups;
 
   let created;
@@ -246,6 +250,7 @@ assert.match(source, /syncFromDatabase/, 'AHAGroups should define syncFromDataba
   assert.doesNotThrow(() => Groups.addMemberToGroup(created.id, { name: 'Ada' }), 'addMemberToGroup should not throw when saveGroup throws');
   const memberId = sandbox.localStorage.readJson(GROUPS_KEY, [])[0].members[0].id;
   assert.doesNotThrow(() => Groups.removeMemberFromGroup(created.id, memberId), 'removeMemberFromGroup should not throw when saveGroup throws');
+  sandbox.localStorage.setItem('aha_notes_v1', JSON.stringify([{ id: 'note-throw', title: 'Ref' }]));
   assert.doesNotThrow(() => Groups.addReferenceToGroup(created.id, { title: 'Ref', source: 'aha_notes', refId: 'note-throw' }), 'addReferenceToGroup should not throw when saveGroup throws');
   const referenceId = sandbox.localStorage.readJson(GROUPS_KEY, [])[0].references[0].id;
   assert.doesNotThrow(() => Groups.removeReferenceFromGroup(created.id, referenceId), 'removeReferenceFromGroup should not throw when saveGroup throws');
@@ -254,7 +259,7 @@ assert.match(source, /syncFromDatabase/, 'AHAGroups should define syncFromDataba
 }
 
 {
-  const sandbox = makeSandbox({ repository: makeRepository });
+  const sandbox = makeSandbox({ config: { groups: { enableDatabaseSync: true } }, repository: makeRepository });
   const Groups = sandbox.AHAGroups;
   Groups.createGroup({ title: 'Forbudte API-er' });
   assert.deepEqual(sandbox.forbiddenCalls, [], 'AHAGroups should not call AHAIngest or AHASources');
@@ -262,9 +267,10 @@ assert.match(source, /syncFromDatabase/, 'AHAGroups should define syncFromDataba
 }
 
 {
-  const sandbox = makeSandbox({ repository: makeRepository, avisa: true });
+  const sandbox = makeSandbox({ config: { groups: { enableDatabaseSync: true } }, repository: makeRepository, avisa: true });
   const Groups = sandbox.AHAGroups;
   const group = Groups.createGroup({ title: 'Avisa-gruppe', tags: ['publisering'] });
+  sandbox.localStorage.setItem('aha_notes_v1', JSON.stringify([{ id: 'note-avisa', title: 'Note' }]));
   Groups.addReferenceToGroup(group.id, { title: 'Note', type: 'note', source: 'aha_notes', refId: 'note-avisa' });
   sandbox.repositoryCalls.length = 0;
 
@@ -367,6 +373,7 @@ async function runSyncTests() {
       }
     ];
     const sandbox = makeSandbox({
+      config: { groups: { enableDatabaseSync: true } },
       repository: makeSyncRepository({ remote: remoteRows }),
       seed: { [GROUPS_KEY]: JSON.stringify(localGroups) },
       avisa: true
@@ -405,10 +412,11 @@ async function runSyncTests() {
 
   {
     const localGroups = [{ id: 'local-only', title: 'Lokal beholdes', createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-02T00:00:00.000Z' }];
-    const sandbox = makeSandbox({ repository: makeSyncRepository({ remote: { not: 'array' } }), seed: { [GROUPS_KEY]: JSON.stringify(localGroups) } });
+    const sandbox = makeSandbox({ config: { groups: { enableDatabaseSync: true } },
+      repository: makeSyncRepository({ remote: { not: 'array' } }), seed: { [GROUPS_KEY]: JSON.stringify(localGroups) } });
     const result = await sandbox.AHAGroups.syncFromDatabase();
     assert.equal(result.ok, false, 'invalid remote payload should return a failed fallback result');
-    assert.equal(result.fallback, 'localStorage', 'invalid remote payload should report localStorage fallback');
+    assert.equal(result.fallback, 'localOnly', 'invalid remote payload should report localStorage fallback');
     assert.equal(sandbox.localStorage.readJson(GROUPS_KEY, [])[0].title, 'Lokal beholdes', 'invalid remote payload should not delete local data');
   }
 
@@ -417,16 +425,17 @@ async function runSyncTests() {
     const sandbox = makeSandbox({ seed: { [GROUPS_KEY]: JSON.stringify(localGroups) } });
     const result = await sandbox.AHAGroups.syncFromDatabase();
     assert.equal(result.ok, false, 'missing AHARepository/loadGroups should fall back');
-    assert.equal(result.fallback, 'localStorage', 'missing AHARepository/loadGroups should report localStorage fallback');
+    assert.equal(result.fallback, 'localOnly', 'missing AHARepository/loadGroups should report localStorage fallback');
     assert.equal(sandbox.localStorage.readJson(GROUPS_KEY, [])[0].title, 'Ingen repo', 'missing AHARepository/loadGroups should keep local data');
   }
 
   {
     const localGroups = [{ id: 'local-error', title: 'Repo feil', createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-02T00:00:00.000Z' }];
-    const sandbox = makeSandbox({ repository: makeSyncRepository({ saveMode: 'throw', loadMode: 'throw' }), seed: { [GROUPS_KEY]: JSON.stringify(localGroups) } });
+    const sandbox = makeSandbox({ config: { groups: { enableDatabaseSync: true } },
+      repository: makeSyncRepository({ saveMode: 'throw', loadMode: 'throw' }), seed: { [GROUPS_KEY]: JSON.stringify(localGroups) } });
     const result = await sandbox.AHAGroups.syncFromDatabase();
     assert.equal(result.ok, false, 'repository errors should return a failed fallback result');
-    assert.equal(result.fallback, 'localStorage', 'repository errors should report localStorage fallback');
+    assert.equal(result.fallback, 'localOnly', 'repository errors should report localStorage fallback');
     assert.equal(sandbox.localStorage.readJson(GROUPS_KEY, [])[0].title, 'Repo feil', 'repository errors should not break local data');
   }
 }

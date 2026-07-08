@@ -11,6 +11,14 @@
   const ALLOWED_MEMBER_ROLES = ["owner", "editor", "member", "observer"];
   const ALLOWED_MEMBER_STATUS = ["local", "invited_later", "inactive"];
   const LIBRARY_FILTERS = ["all", "insights", "lists", "paths", "articles", "notes", "feed"];
+  const ALLOWED_REFERENCE_SOURCES = new Set([
+    "aha_insights",
+    "aha_lists",
+    "aha_paths",
+    "aha_avisa",
+    "aha_notes",
+    "aha_feed"
+  ]);
 
   function safeParse(raw, fallback) {
     try {
@@ -25,6 +33,18 @@
   function asText(value, fallback) { const s = String(value ?? "").trim(); return s || fallback; }
   function asObject(value) { return value && typeof value === "object" && !Array.isArray(value) ? value : {}; }
   function uid(prefix) { return `${prefix}_${Date.now()}_${Math.floor(Math.random() * 100000)}`; }
+  function isDatabaseSyncEnabled() {
+    return global.AHA_CONFIG?.groups?.enableDatabaseSync === true;
+  }
+  function databaseSyncDisabledResult(data) {
+    return { ok: false, fallback: "localOnly", database_sync_disabled: true, data };
+  }
+  function isUnavailableRecord(record) {
+    return Boolean(record?.deletedAt || record?.deleted_at || record?.archived === true);
+  }
+  function isDeletedRecord(record) {
+    return isUnavailableRecord(record);
+  }
 
   function escapeHtml(value) {
     return String(value ?? "")
@@ -61,7 +81,19 @@
       role,
       status,
       addedAt: src.addedAt || src.added_at || now,
-      meta: asObject(src.meta)
+      local_only: true,
+      external_identity: false,
+      invitation_sent: false,
+      account_linked: false,
+      sync_enabled: false,
+      meta: {
+        ...asObject(src.meta),
+        local_only: true,
+        external_identity: false,
+        invitation_sent: false,
+        account_linked: false,
+        sync_enabled: false
+      }
     };
   }
 
@@ -94,8 +126,21 @@
       members: asArray(src.members).map((item) => normalizeMember(item)),
       references: asArray(src.references).map((item) => normalizeReference(item)).filter((ref) => ref.source && ref.refId),
       source: asText(src.source, "aha_groups"),
-      meta: asObject(src.meta),
-      deletedAt: src.deletedAt || src.deleted_at || ""
+      local_only: true,
+      shared_external: src.shared_external === true || src.sharedExternal === true,
+      echonet_shared: src.echonet_shared === true || src.echonetShared === true,
+      sync_enabled: src.sync_enabled === true || src.syncEnabled === true,
+      external_share_enabled: src.external_share_enabled === true || src.externalShareEnabled === true,
+      meta: {
+        ...asObject(src.meta),
+        local_only: true,
+        shared_external: asObject(src.meta).shared_external === true || src.shared_external === true || src.sharedExternal === true,
+        echonet_shared: asObject(src.meta).echonet_shared === true || src.echonet_shared === true || src.echonetShared === true,
+        sync_enabled: asObject(src.meta).sync_enabled === true || src.sync_enabled === true || src.syncEnabled === true,
+        external_share_enabled: asObject(src.meta).external_share_enabled === true || src.external_share_enabled === true || src.externalShareEnabled === true
+      },
+      deletedAt: src.deletedAt || src.deleted_at || "",
+      archived: src.archived === true
     };
   }
 
@@ -104,7 +149,7 @@
   }
 
   function getActiveGroups() {
-    return loadGroups().filter((group) => !group.deletedAt);
+    return loadGroups().filter((group) => !isUnavailableRecord(group));
   }
 
   function saveGroups(groups) {
@@ -113,7 +158,8 @@
   }
 
   async function persistGroup(group) {
-    if (!global.AHARepository?.saveGroup) return null;
+    if (!isDatabaseSyncEnabled()) return databaseSyncDisabledResult(group);
+    if (!global.AHARepository?.saveGroup) return databaseSyncDisabledResult(group);
     try {
       return await global.AHARepository.saveGroup(group);
     } catch (error) {
@@ -173,7 +219,8 @@
   }
 
   async function pushLocalToDatabase(groups) {
-    if (!global.AHARepository?.saveGroup) return null;
+    if (!isDatabaseSyncEnabled()) return databaseSyncDisabledResult(asArray(groups));
+    if (!global.AHARepository?.saveGroup) return databaseSyncDisabledResult(asArray(groups));
     const saves = asArray(groups).map(async (group) => {
       try {
         return await global.AHARepository.saveGroup(group);
@@ -186,21 +233,22 @@
 
   async function syncFromDatabase() {
     const localGroups = loadGroups();
+    if (!isDatabaseSyncEnabled()) return databaseSyncDisabledResult(localGroups);
     if (localGroups.length) await pushLocalToDatabase(localGroups);
     if (!global.AHARepository?.loadGroups) {
-      return { ok: false, fallback: "localStorage", data: localGroups };
+      return databaseSyncDisabledResult(localGroups);
     }
 
     let result;
     try {
       result = await global.AHARepository.loadGroups();
     } catch (error) {
-      return { ok: false, fallback: "localStorage", data: localGroups, error };
+      return { ok: false, fallback: "localOnly", data: localGroups, error };
     }
 
     if (!result?.ok) return result || { ok: false };
     if (!Array.isArray(result.data)) {
-      return { ...result, ok: false, fallback: "localStorage", data: localGroups };
+      return { ...result, ok: false, fallback: "localOnly", data: localGroups };
     }
 
     const remoteGroups = result.data.map((group) => normalizeRemoteGroup(group));
@@ -226,7 +274,7 @@
       members: [],
       references: [],
       source: "aha_groups",
-      meta: { createdBy: "groups_ui" }
+      meta: { createdBy: "groups_ui", local_only: true, shared_external: false, echonet_shared: false, sync_enabled: false, external_share_enabled: false }
     });
     groups.unshift(group);
     saveGroups(groups);
@@ -260,57 +308,58 @@
 
   function addMemberToGroup(groupId, memberInput) {
     const groups = loadGroups();
-    const idx = groups.findIndex((g) => g.id === groupId && !g.deletedAt);
-    if (idx < 0) return null;
+    const idx = groups.findIndex((g) => g.id === groupId && !isUnavailableRecord(g));
+    if (idx < 0) return { ok: false, reason: "group_not_found" };
     const group = groups[idx];
     const name = asText(memberInput?.name, "");
-    if (!name) return null;
+    if (!name) return { ok: false, reason: "missing_name" };
 
     const duplicate = group.members.some((m) => m.name.toLowerCase() === name.toLowerCase() && m.role === (memberInput?.role || "member"));
-    if (duplicate) return group;
+    if (duplicate) return { ok: false, reason: "duplicate", group };
 
     group.members.push(normalizeMember({ ...memberInput, id: uid("group_member"), name, status: memberInput?.status || "local" }));
     group.updatedAt = new Date().toISOString();
     groups[idx] = normalizeGroup(group);
     saveGroups(groups);
     persistGroup(groups[idx]);
-    return group.members[group.members.length - 1];
+    return { ok: true, member: group.members[group.members.length - 1], group: groups[idx] };
   }
 
   function removeMemberFromGroup(groupId, memberId) {
     const groups = loadGroups();
-    const idx = groups.findIndex((g) => g.id === groupId && !g.deletedAt);
-    if (idx < 0) return null;
+    const idx = groups.findIndex((g) => g.id === groupId && !isUnavailableRecord(g));
+    if (idx < 0) return { ok: false, reason: "group_not_found" };
     const group = groups[idx];
     const next = group.members.filter((m) => m.id !== memberId);
-    if (next.length === group.members.length) return null;
+    if (next.length === group.members.length) return { ok: false, reason: "member_not_found" };
     group.members = next;
     group.updatedAt = new Date().toISOString();
     groups[idx] = normalizeGroup(group);
     saveGroups(groups);
     persistGroup(groups[idx]);
-    return group;
+    return { ok: true, group };
   }
 
   function addReferenceToGroup(groupId, referenceInput) {
     const groups = loadGroups();
     const lookupId = String(groupId);
-    const idx = groups.findIndex((g) => String(g.id) === lookupId && !g.deletedAt);
-    if (idx < 0) return null;
+    const idx = groups.findIndex((g) => String(g.id) === lookupId && !isUnavailableRecord(g));
+    if (idx < 0) return { ok: false, reason: "group_not_found" };
     const group = groups[idx];
 
-    const candidate = normalizeReference({ ...referenceInput, id: uid("group_ref") });
-    if (!candidate.source || !candidate.refId) return null;
+    const validation = validateGroupReference(referenceInput);
+    if (!validation.ok) return { ok: false, reason: "invalid_reference", detail: validation.reason };
+    const candidate = normalizeReference({ ...validation.item, ...referenceInput, id: uid("group_ref") });
 
     const duplicate = group.references.some((ref) => ref.source === candidate.source && ref.refId === candidate.refId);
-    if (duplicate) return group;
+    if (duplicate) return { ok: false, reason: "duplicate", group };
 
     group.references.push(candidate);
     group.updatedAt = new Date().toISOString();
     groups[idx] = normalizeGroup(group);
     saveGroups(groups);
     persistGroup(groups[idx]);
-    return candidate;
+    return { ok: true, reference: candidate, group: groups[idx] };
   }
 
   function addReferenceToGroupByObject(groupId, objectInput) {
@@ -327,23 +376,23 @@
 
   function removeReferenceFromGroup(groupId, referenceId) {
     const groups = loadGroups();
-    const idx = groups.findIndex((g) => g.id === groupId && !g.deletedAt);
-    if (idx < 0) return null;
+    const idx = groups.findIndex((g) => g.id === groupId && !isUnavailableRecord(g));
+    if (idx < 0) return { ok: false, reason: "group_not_found" };
     const group = groups[idx];
     const next = group.references.filter((ref) => ref.id !== referenceId);
-    if (next.length === group.references.length) return null;
+    if (next.length === group.references.length) return { ok: false, reason: "reference_not_found" };
     group.references = next;
     group.updatedAt = new Date().toISOString();
     groups[idx] = normalizeGroup(group);
     saveGroups(groups);
     persistGroup(groups[idx]);
-    return group;
+    return { ok: true, group };
   }
 
   function collectFromInsightChamber(out) {
     const chamber = asObject(safeParse(localStorage.getItem("aha_insight_chamber_v1") || "{}", {}));
     asArray(chamber.insights).forEach((item, index) => {
-      if (item?.deletedAt || item?.deleted_at) return;
+      if (isUnavailableRecord(item)) return;
       const refId = asText(
         item?.id || item?.base?.id || item?.source_event_id || item?.sourceEventId || item?.source_id || item?.sourceId || item?.event_id || item?.eventId,
         `insight_idx_${index}`
@@ -355,7 +404,7 @@
   function collectFromArrayKey(storageKey, type, source, titleReader) {
     const arr = asArray(safeParse(localStorage.getItem(storageKey) || "[]", []));
     return arr
-      .filter((item) => !item?.deletedAt && !item?.deleted_at)
+      .filter((item) => !isUnavailableRecord(item))
       .map((item, index) => {
         const refId = asText(item?.id, `${type}_idx_${index}`);
         return { title: asText(titleReader(item), type), type, source, refId };
@@ -372,15 +421,38 @@
     out.push(...collectFromArrayKey("aha_feed_posts_v1", "feed_post", "aha_feed", (item) => item?.text || item?.title || "Feed-post"));
     return out;
   }
+  function buildAvailableGroupReferenceIndex(items = collectAvailableGroupReferences()) {
+    const index = new Map();
+    asArray(items).forEach((item) => {
+      const source = asText(item?.source, "");
+      const refId = asText(item?.refId || item?.ref_id, "");
+      if (source && refId) index.set(`${source}::${refId}`, item);
+    });
+    return index;
+  }
 
-
+  function validateGroupReference(referenceInput, availableItems = collectAvailableGroupReferences()) {
+    const ref = asObject(referenceInput);
+    const source = asText(ref.source, "");
+    const refId = asText(ref.refId || ref.ref_id, "");
+    if (!source) return { ok: false, reason: "missing_source" };
+    if (!refId) return { ok: false, reason: "missing_refId" };
+    if (!ALLOWED_REFERENCE_SOURCES.has(source)) return { ok: false, reason: "unknown_source" };
+    const item = buildAvailableGroupReferenceIndex(availableItems).get(`${source}::${refId}`);
+    if (!item) return { ok: false, reason: "target_unavailable" };
+    if (isUnavailableRecord(item)) return { ok: false, reason: "target_unavailable" };
+    if (!asText(item.title, "") || !asText(item.type, "") || !asText(item.source, "") || !asText(item.refId || item.ref_id, "")) {
+      return { ok: false, reason: "invalid_target" };
+    }
+    return { ok: true, item };
+  }
 
   function collectGroupArticleDrafts(groupId) {
     const targetId = asText(groupId, "");
     if (!targetId) return [];
     const articles = asArray(safeParse(localStorage.getItem("aha_articles_v1") || "[]", []));
     return articles.filter((article) => {
-      if (article?.deletedAt || article?.deleted_at) return false;
+      if (isUnavailableRecord(article)) return false;
       const metaGroupId = asText(article?.meta?.createdFromGroupId, "");
       if (metaGroupId && metaGroupId === targetId) return true;
       return asArray(article?.references).some((ref) => asText(ref?.source, "") === "aha_groups" && asText(ref?.refId || ref?.ref_id, "") === targetId);
@@ -477,10 +549,19 @@
       body: `Dette utkastet er opprettet fra gruppen/sirkelen "${title}". Det bygger på gruppens delte bibliotek og lokale referanser.`,
       tags,
       source: "aha_avisa",
+      publicationLayer: "group",
+      local_only: true,
+      published_external: false,
+      external_publish_enabled: false,
+      echonet_shared: false,
+      sync_enabled: false,
       meta: {
         createdFromGroupId: group.id,
         createdFromGroupTitle: title,
-        source: "aha_groups"
+        source: "aha_groups",
+        local_only: true,
+        echonet_shared: false,
+        sync_enabled: false
       }
     };
 
@@ -495,6 +576,12 @@
         body: articleInput.body,
         tags: articleInput.tags,
         source: "aha_avisa",
+        publicationLayer: "group",
+        local_only: true,
+        published_external: false,
+        external_publish_enabled: false,
+        echonet_shared: false,
+        sync_enabled: false,
         meta: articleInput.meta
       })
       : created;
@@ -568,7 +655,7 @@
       const items = asArray(chamber.insights);
       for (let i = 0; i < items.length; i += 1) {
         const item = items[i];
-        if (item?.deletedAt || item?.deleted_at) continue;
+        if (isUnavailableRecord(item)) continue;
         const candidates = [
           item?.id, item?.base?.id, item?.source_event_id, item?.sourceEventId, item?.source_id, item?.sourceId, item?.event_id, item?.eventId, `insight_idx_${i}`
         ].map((x) => asText(x, ""));
@@ -588,7 +675,7 @@
     const items = asArray(safeParse(localStorage.getItem(sourceConfig.key) || "[]", []));
     for (let i = 0; i < items.length; i += 1) {
       const item = items[i];
-      if (item?.deletedAt || item?.deleted_at) continue;
+      if (isUnavailableRecord(item)) continue;
       const fallbackId = `${sourceConfig.fallbackPrefix}_idx_${i}`;
       const candidates = [item?.id, fallbackId].map((x) => asText(x, ""));
       if (candidates.includes(refId)) return item;
@@ -631,7 +718,7 @@
     const rawDataset = localStorage.getItem(GROUPS_KEY);
     const datasetExists = rawDataset !== null;
     if (datasetExists) JSON.parse(rawDataset);
-    const groups = loadGroups().filter((group) => !group.deletedAt);
+    const groups = getActiveGroups();
     const references = collectAvailableGroupReferences();
     const activeGroupId = hashGroupId();
     const activeGroup = groups.find((g) => g.id === activeGroupId) || null;
@@ -643,7 +730,7 @@
     const referenceCount = groups.reduce((sum, g) => sum + g.references.length, 0);
 
     const privacyText = privacy.allowSocialSharing
-      ? "Sosial deling er tillatt lokalt, men ekte deling er ikke bygget ennå."
+      ? "Sosial deling er bare samtykke/plan for senere. Ekte deling er ikke bygget eller aktivert."
       : "Sosial deling er av. Dette er kun lokal gruppeplanlegging.";
 
     root.innerHTML = `
@@ -652,17 +739,18 @@
           <div>
             <p class="eyebrow">AHA module</p>
             <h1 id="groups-module-title">Groups</h1>
-            <p class="aha-module-purpose">Group related AHA material.</p>
+            <p class="aha-module-purpose">Lokale grupperom for AHA-objekter, roller og delte referanser. Groups organiserer materiale lokalt, men deler ikke eksternt.</p>
           </div>
           <span id="aha-module-health" class="aha-module-health-badge aha-module-health-unknown" role="status" aria-label="Groups: Unknown"><span>Unknown</span></span>
         </header>
         <div class="aha-module-actions" aria-label="Groups actions">
-          <a class="aha-tile-btn aha-tile-btn-primary" href="#groups-create">Create group</a>
-          <button type="button" class="aha-tile-btn" id="groups-refresh-btn">Refresh groups</button>
-          <a class="aha-tile-btn" href="index.html">Back to AHA Home</a>
+          <a class="aha-tile-btn aha-tile-btn-primary" href="#groups-create">Lag gruppe</a>
+          <button type="button" class="aha-tile-btn" id="groups-refresh-btn">Oppdater</button>
+          <a class="aha-tile-btn" href="index.html">Tilbake til AHA Home</a>
         </div>
         <details class="aha-module-details">
           <summary>Advanced details</summary>
+          <p>Groups er local-only. Medlemmer er lokale roller, ikke ekte brukerkontoer. Ingen invitasjoner sendes, ingen data deles eksternt, ingen backend brukes, og EchoNet er ikke aktivert.</p>
           <p class="groups-privacy-note">${escapeHtml(privacyText)}</p>
         </details>
       </section>
@@ -735,6 +823,7 @@
                 <select name="memberRole">${ALLOWED_MEMBER_ROLES.map((role) => `<option value="${escapeHtml(role)}">${escapeHtml(role)}</option>`).join("")}</select>
                 <button type="submit">Legg til medlem</button>
               </form>
+              <p class="groups-statusline" data-status="add-member" data-group-id="${escapeHtml(group.id)}" aria-live="polite"></p>
             </section>
 
             <section class="groups-subsection">
@@ -754,12 +843,13 @@
                 </select>
                 <button type="submit">Legg til referanse</button>
               </form>
+              <p class="groups-statusline" data-status="add-reference" data-group-id="${escapeHtml(group.id)}" aria-live="polite"></p>
             </section>
           </article>
         `).join("") : global.AHAModules.buildModuleEmptyState({
           type: datasetExists ? "no_data" : "missing_source",
           moduleId: "groups",
-          hint: datasetExists ? "Use Create group above when you are ready." : "Groups will appear here when available."
+          hint: datasetExists ? "Use Lag gruppe above when you are ready." : "Groups will appear here when available."
         })}
       </section>
 
@@ -826,6 +916,7 @@
               <select name="memberRole">${ALLOWED_MEMBER_ROLES.map((role) => `<option value="${escapeHtml(role)}">${escapeHtml(role)}</option>`).join("")}</select>
               <button type="submit">Legg til medlem</button>
             </form>
+            <p class="groups-statusline" data-status="add-member" data-group-id="${escapeHtml(activeGroup.id)}" aria-live="polite"></p>
           </section>
 
           <section class="groups-subsection groups-shared-library">
@@ -838,7 +929,7 @@
                 ? activeGroup.references.filter((ref) => referenceFilterMatches(activeFilter, ref)).map((ref) => {
                   const obj = resolveReferenceObject(ref);
                   const preview = obj ? previewForObject(obj) : "";
-                  return `<li><span><strong>${escapeHtml(ref.title)}</strong> · ${escapeHtml(ref.type)} · ${escapeHtml(ref.source)} · ${escapeHtml(ref.refId)}${preview ? `<br/><small>${escapeHtml(preview.slice(0, 160))}</small>` : ""}${obj ? "" : "<br/><small>Referansen finnes, men objektet ble ikke funnet.</small>"}<br/><a href="${escapeHtml(resolveModuleHref(ref.source))}">Åpne modul</a></span><button type="button" data-action="remove-reference" data-group-id="${escapeHtml(activeGroup.id)}" data-reference-id="${escapeHtml(ref.id)}">Fjern</button></li>`;
+                  return `<li><span><strong>${escapeHtml(ref.title)}</strong> · ${escapeHtml(ref.type)} · ${escapeHtml(ref.source)} · ${escapeHtml(ref.refId)}${preview ? `<br/><small>${escapeHtml(preview.slice(0, 160))}</small>` : ""}${obj ? "" : "<br/><small>Referansen finnes i gruppen, men objektet er ikke lenger tilgjengelig.</small>"}<br/><a href="${escapeHtml(resolveModuleHref(ref.source))}">Åpne modul</a></span><button type="button" data-action="remove-reference" data-group-id="${escapeHtml(activeGroup.id)}" data-reference-id="${escapeHtml(ref.id)}">Fjern</button></li>`;
                 }).join("")
                 : "<li>Ingen referanser i valgt filter.</li>"}
             </ul>
@@ -869,10 +960,10 @@
       if (root) root.innerHTML = `
         <section class="aha-panel aha-module-shell" aria-labelledby="groups-module-title">
           <header class="aha-module-shell-header">
-            <div><p class="eyebrow">AHA module</p><h1 id="groups-module-title">Groups</h1><p class="aha-module-purpose">Group related AHA material.</p></div>
+            <div><p class="eyebrow">AHA module</p><h1 id="groups-module-title">Groups</h1><p class="aha-module-purpose">Lokale grupperom for AHA-objekter, roller og delte referanser. Groups organiserer materiale lokalt, men deler ikke eksternt.</p></div>
             <span class="aha-module-health-badge aha-module-health-blocked" role="status" aria-label="Groups: Blocked"><span>Blocked</span></span>
           </header>
-          <div class="aha-module-actions"><a class="aha-tile-btn" href="index.html">Back to AHA Home</a></div>
+          <div class="aha-module-actions"><a class="aha-tile-btn" href="index.html">Tilbake til AHA Home</a></div>
         </section>
         ${global.AHAModules.buildModuleEmptyState({ type: "read_error", moduleId: "groups" })}`;
     }
@@ -943,13 +1034,14 @@
       form.addEventListener("submit", (event) => {
         event.preventDefault();
         const formData = new FormData(form);
-        addMemberToGroup(form.getAttribute("data-group-id"), {
+        const result = addMemberToGroup(form.getAttribute("data-group-id"), {
           name: formData.get("memberName"),
           role: formData.get("memberRole"),
           status: "local"
         });
-        form.reset();
-        refresh();
+        const statusEl = form.parentElement?.querySelector('[data-status="add-member"]');
+        if (result?.ok) { form.reset(); refresh(); return; }
+        if (statusEl) statusEl.textContent = result?.reason === "duplicate" ? "Medlem finnes allerede lokalt" : "Gruppen finnes ikke lenger";
       });
     });
 
@@ -972,12 +1064,17 @@
         event.preventDefault();
         const formData = new FormData(form);
         const rawReferenceKey = formData.get("referenceKey");
-        if (rawReferenceKey === null || rawReferenceKey === "") return;
+        const statusEl = form.parentElement?.querySelector('[data-status="add-reference"]');
+        if (rawReferenceKey === null || rawReferenceKey === "") { if (statusEl) statusEl.textContent = "Velg et objekt først"; return; }
         const idx = Number(rawReferenceKey);
-        if (!Number.isInteger(idx) || !availableReferences[idx]) return;
-        addReferenceToGroup(form.getAttribute("data-group-id"), availableReferences[idx]);
-        form.reset();
-        refresh();
+        if (!Number.isInteger(idx) || !availableReferences[idx]) { if (statusEl) statusEl.textContent = "Kilden finnes ikke lenger"; return; }
+        const result = addReferenceToGroup(form.getAttribute("data-group-id"), availableReferences[idx]);
+        if (result?.ok) { form.reset(); refresh(); return; }
+        if (statusEl) {
+          if (result?.reason === "duplicate") statusEl.textContent = "Finnes allerede i gruppen";
+          else if (result?.reason === "group_not_found") statusEl.textContent = "Gruppen finnes ikke lenger";
+          else statusEl.textContent = "Kilden finnes ikke lenger";
+        }
       });
     });
   }
@@ -998,6 +1095,9 @@
     addReferenceToGroupByObject,
     removeReferenceFromGroup,
     collectAvailableGroupReferences,
+    buildAvailableGroupReferenceIndex,
+    validateGroupReference,
+    resolveReferenceObject,
     buildGroupReport,
     createArticleDraftFromGroup,
     render,

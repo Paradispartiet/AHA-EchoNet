@@ -9,6 +9,7 @@
   const LISTS_KEY = "aha_lists_v1";
   const PATHS_KEY = "aha_paths_v1";
   const NOTES_KEY = "aha_notes_v1";
+  const GROUPS_KEY = "aha_groups_v1";
 
   const ALLOWED_SECTIONS = ["nyheter", "kultur", "politikk", "sport", "teknologi", "filosofi", "historygo", "aha", "debatt", "notater"];
   const ALLOWED_STATUS = ["draft", "review", "ready", "published_local"];
@@ -442,6 +443,14 @@
         out.push({ id: `note_${refId}`, title: asText(note?.title, "Notat"), type: "note", source: "aha_notes", refId, meta: {} });
       });
 
+    asArray(safeParse(localStorage.getItem(GROUPS_KEY) || "[]", []))
+      .filter((group) => !isUnavailableRecord(group))
+      .forEach((group) => {
+        const refId = asText(group?.id, "");
+        if (!refId) return;
+        out.push({ id: `group_${refId}`, title: asText(group?.title, "Gruppe"), type: "group", source: "aha_groups", refId, meta: { local_only: true } });
+      });
+
     return out;
   }
 
@@ -459,7 +468,7 @@
     const ref = safeObject(referenceInput);
     const source = asText(ref.source, "");
     const refId = asText(ref.refId || ref.ref_id, "");
-    const allowed = new Set(["aha_insights", "aha_lists", "aha_paths", "aha_notes"]);
+    const allowed = new Set(["aha_insights", "aha_lists", "aha_paths", "aha_notes", "aha_groups"]);
     if (!source) return { ok: false, reason: "missing_source" };
     if (!refId) return { ok: false, reason: "missing_refId" };
     if (!allowed.has(source)) return { ok: false, reason: "unknown_source" };
