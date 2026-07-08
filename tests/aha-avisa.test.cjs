@@ -109,6 +109,9 @@ function makeContext({ seed = {}, repository, config, allowPublicPublishing = fa
   assert.equal(Avisa.validateArticleReference({ source: 'aha_notes', refId: 'note-1' }).ok, true, 'valid local reference should pass');
   assert.equal(Avisa.validateArticleReference({ source: 'web', refId: 'note-1' }).reason, 'unknown_source', 'unknown source should fail');
   assert.equal(Avisa.validateArticleReference({ source: 'aha_notes' }).reason, 'missing_refId', 'missing refId should fail');
+  storage.writeJson('aha_groups_v1', [{ id: 'group-1', title: 'Group' }, { id: 'group-arch', title: 'Archived group', archived: true }]);
+  assert.equal(Avisa.validateArticleReference({ source: 'aha_groups', refId: 'group-1' }).ok, true, 'valid aha_groups reference should pass when local group exists');
+  assert.equal(Avisa.validateArticleReference({ source: 'aha_groups', refId: 'group-arch' }).reason, 'target_unavailable', 'archived aha_groups reference should fail');
   assert.equal(Avisa.addReferenceToArticle(article.id, { source: 'web', refId: 'x' }).reason, 'invalid_reference', 'invalid add should be rejected');
   const addOk = Avisa.addReferenceToArticle(article.id, { source: 'aha_notes', refId: 'note-1' });
   assert.equal(addOk.ok, true, 'valid add should return ok:true');

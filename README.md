@@ -37,6 +37,12 @@ Paths skaper ikke ny insight alene, kjører ikke autoplanlegging og er ikke en l
 
 `Mindmap` (`mindmap.html` / `js/ahaMindmap.js`) er en read-only lokal graf over eksisterende AHA-objekter og referanser. Den leser kjente lokale AHA-nøkler fra `localStorage`, blant annet insights, source events, lists, paths, articles, notes, feed, gallery, insta og groups.
 
+## Groups local-only boundary
+
+`Groups` (`groups.html` / `js/ahaGroups.js`) er et lokalt grupperom som lagrer grupper i `aha_groups_v1`. Medlemmer er lokale roller, ikke ekte brukerkontoer, og `invited_later` er bare lokal planmerking for senere vurdering.
+
+Referanser i grupper peker til eksisterende lokale AHA-objekter (insights, lists, paths, AHAavisa-artikler, notes og feed). AHAavisa-utkast opprettet fra en gruppe forblir lokale gruppeutkast. Groups sender ingen invitasjoner, deler ikke eksternt, bruker ingen backend, aktiverer ikke EchoNet og kjører ikke database-sync med mindre `AHA_CONFIG.groups.enableDatabaseSync === true` settes eksplisitt.
+
 Mindmap viser bare koblinger som allerede finnes i lokale referansefelt. Den skriver ikke data, reparerer ikke manglende koblinger, skaper ikke nye insights og er ikke en full kunnskapsmodell, anbefalingsmotor eller graph-database. Backend, sync og EchoNet er ikke aktivert for Mindmap.
 
 
