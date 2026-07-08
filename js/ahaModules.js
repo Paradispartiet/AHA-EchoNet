@@ -191,7 +191,7 @@
       type: "social",
       status: "shell",
       href: "meet.html",
-      description: "Møtepunkt for samtaler, avtaler og samarbeidsflater.",
+      description: "Shell for local-only personlig møtearkiv og refleksjon; ingen invitasjoner, kalender, EchoNet, sync, backend eller History Go write-back.",
       phase: 2
     },
     {
