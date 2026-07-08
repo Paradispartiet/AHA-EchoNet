@@ -1029,6 +1029,17 @@ AHA Music har nå en første datadrevet Spotify-import for brukerens eget biblio
 - Denne MVP-en bygger ikke AI-klassifisering. History Go-broen under bruker kun en kuratert seed-liste og nøktern lokal matching; den oppretter ikke nye History Go-steder.
 - `localStorage` er lokal fallback/cache via `aha_music_library_v1`. Når AHA Supabase er konfigurert, kan samme normaliserte metadata speiles til tabellene `music_sources`, `music_playlists`, `music_tracks`, `music_albums`, `music_artists`, `music_track_artists` og `music_playlist_tracks`.
 
+
+### AHA Music metadata-only boundary
+
+AHA Music er modnet som et lokalt metadata-bibliotek, ikke som lydavspiller, Spotify-klient-backend eller AI-klassifiserer. `aha_music_library_v1` inneholder normaliserte metadata for kilder, spillelister, spor, album, artister, imports og relasjoner, men ingen lydfiler, audio blobs eller tokens.
+
+- Spotify brukes bare etter eksplisitt brukerhandling: OAuth-tilkobling og valgt import av metadata.
+- Spotify token og PKCE-verifier ligger i `sessionStorage` under `aha_music_spotify_token_v1` og `aha_music_spotify_pkce_v1`, ikke i localStorage-biblioteket eller privacy-exporten.
+- Biblioteket lagres local-first i `aha_music_library_v1`; database-sync krever eksplisitt `AHA_CONFIG.music.enableDatabaseSync === true`.
+- History Go-broen lagrer bare lokale forslag/rapporter i `aha_music_history_go_bridge_v1` og skriver ikke tilbake til History Go-lagring, `visited_places` eller `knowledge_universe`.
+- EchoNet, Sync Hub, automatisk ingest, AI-klassifisering og audio playback/storage er avgrenset bort fra AHA Music.
+
 ### AHA Music Library v1
 
 Biblioteklaget på `music.html` bruker den samme normaliserte Spotify-importen som MVP-en allerede skriver til `aha_music_library_v1` og, når Supabase er konfigurert, til tabellene `music_sources`, `music_playlists`, `music_tracks`, `music_albums`, `music_artists`, `music_track_artists` og `music_playlist_tracks`.

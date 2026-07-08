@@ -18,21 +18,21 @@
       <div>
         <p class="eyebrow">AHA Music</p>
         <h1>AHA Music</h1>
-        <p>Importer Spotify-spillelister som strukturerte metadata i AHA Music.</p>
+        <p>AHA Music importerer metadata fra Spotify til et lokalt bibliotek. Det lagres ikke lyd, det spilles ikke av lyd, og ingenting deles eksternt.</p>
       </div>
       <span id="aha-module-health" class="aha-module-health-badge aha-module-health-unknown" role="status">Unknown</span>
     </header>
 
     <section class="aha-panel aha-music-notice" aria-label="Spotify-begrensninger">
       <strong>Trygg import:</strong>
-      <span>AHA lagrer kun metadata og Spotify-referanser. Ingen lydfiler lastes ned, ingen AI-klassifisering kjøres og modulen kobles ikke mot History Go.</span>
+      <span>Spotify-tilkobling brukes bare til å hente metadata du velger å importere. History Go-broen foreslår lokale koblinger mellom artister/spor og steder. Den skriver ikke tilbake til History Go.</span>
     </section>
 
     <section class="aha-panel aha-music-connect" aria-labelledby="spotify-connect-title">
       <div>
         <p class="eyebrow">Spotify OAuth PKCE</p>
         <h2 id="spotify-connect-title">Koble til Spotify</h2>
-        <p>Trykk på knappen og fullfør innloggingen sikkert hos Spotify.</p>
+        <p>Spotify-tilkobling brukes bare til å hente metadata du velger å importere.</p>
       </div>
       <button id="spotify-connect-button" type="button">Koble til Spotify</button>
       <p id="spotify-auth-status" class="aha-music-status" role="status" data-state="disconnected">Ikke koblet til Spotify.</p>
@@ -63,7 +63,7 @@
         <div>
           <p class="eyebrow">AHA Music Library v1</p>
           <h2 id="imported-music-title">Bibliotek</h2>
-          <p>Normaliserte spillelister, sanger, artister og album bygger på Spotify-importen og tabellene <code>music_*</code>.</p>
+          <p>Normaliserte spillelister, sanger, artister og album lagres lokalt som metadata. Database-sync er av som standard.</p>
         </div>
         <button id="clear-local-music-button" class="aha-ghost-button" type="button">Tøm lokal musikkcache</button>
       </div>
