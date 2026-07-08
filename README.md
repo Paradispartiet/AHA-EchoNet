@@ -1,6 +1,15 @@
 # AHA-EchoNet
 
 
+
+## AHA Meet shell contract
+
+`AHA Meet` er foreløpig bare en shell og kontraktside for et senere personlig møtearkiv. Rollen er personlig refleksjon, møtenotater, innsikter og etterarbeid rundt møter, personer, steder og temaer; den er ikke sosial koordinering.
+
+History Go er arenaen for steder, ruter og aktiviteter ute i verden. AHA Meet kan senere lese eller importere slike signaler som personlig refleksjonsmateriale, men skal ikke skrive tilbake til History Go-storage eller History Go-runtime.
+
+AHA Meet har ingen invitasjoner, ingen kalenderintegrasjon, ingen EchoNet-deling, ingen Sync Hub-aktivering og ingen backend. Meet skal holdes som shell til en eksplisitt local-only datamodell, referansevalidering og separat delings-/backend-kontrakt finnes.
+
 ## AHA Local Insight Home V1
 
 AHA Local Insight Home V1 is defined as the next local read-only surface that will combine the frozen Sync Overview, Conversation Snapshot, and Quality Status V1 layers. Runtime is not implemented yet.
