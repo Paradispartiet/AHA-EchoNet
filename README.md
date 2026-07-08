@@ -55,6 +55,14 @@ Referanser i grupper peker til eksisterende lokale AHA-objekter (insights, lists
 Mindmap viser bare koblinger som allerede finnes i lokale referansefelt. Den skriver ikke data, reparerer ikke manglende koblinger, skaper ikke nye insights og er ikke en full kunnskapsmodell, anbefalingsmotor eller graph-database. Backend, sync og EchoNet er ikke aktivert for Mindmap.
 
 
+## Sync Hub planned/no-op boundary
+
+Sync Hub er ikke aktiv sync. Det er en planlagt/no-op integrasjonsflate som kan vise lokale kandidater, dry-run-status, coverage gaps og manuell review-status.
+
+Sync Hub kaller ikke modulenes `syncFromDatabase()` automatisk, bruker ikke backend, bruker ikke EchoNet, deler ikke eksternt og skriver ikke tilbake til History Go. Moduler kan ha egne database-flagg, men Sync Hub kaller dem ikke automatisk.
+
+EchoNet er et senere kollektivt lag og er ikke aktivert. All senere aktivering krever eksplisitt produkt-, backend-, personvern-, samtykke- og EchoNet-kontrakt før noen aktiv sync kan bygges.
+
 ## AHA / History Go import boundary
 
 History Go er et eget samlings- og læringsunivers. AHA leser bare den delte eksportnøkkelen `aha_import_payload_v1`, og import skjer manuelt når brukeren trykker importknappen i `historygo.html`.

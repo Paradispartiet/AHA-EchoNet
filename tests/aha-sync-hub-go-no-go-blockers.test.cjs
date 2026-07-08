@@ -110,7 +110,7 @@ function readyInput(patch = {}) {
   assert.ok(hub, 'Sync Hub must export window.AHASyncHub');
   assert.equal(typeof hub.inspectAll, 'function', 'Sync Hub must expose inspectAll');
   const inspection = hub.inspectAll();
-  assert.equal(inspection.mode, 'read_only', 'inspectAll must report read_only mode');
+  assert.equal(inspection.mode, 'planned_noop', 'inspectAll must report planned_noop mode');
   assert.equal(inspection.autoSync, false, 'inspectAll must keep auto-sync disabled');
   assert.equal(syncCalls, 0, 'inspectAll must not call a loaded syncFromDatabase function');
   assert.equal(storageCalls.some(([method]) => method !== 'getItem'), false, 'inspectAll must only read localStorage');
@@ -118,7 +118,7 @@ function readyInput(patch = {}) {
   loadScript(DRY_RUN_TARGET_ADAPTER_FILE, syncContext);
   const dryRunTargetAdapter = syncContext.window.AHAManualSyncDryRunTargetAdapter;
   const dryRunTargetPlan = dryRunTargetAdapter.createManualSyncDryRunPlan();
-  assert.equal(dryRunTargetPlan.mode, 'dry_run', 'target adapter must remain preview-only');
+  assert.equal(dryRunTargetPlan.mode, 'planned_noop_dry_run', 'target adapter must remain preview-only/no-op');
   assert.equal(dryRunTargetPlan.executionAllowed, false, 'target adapter must block execution');
   assert.equal(dryRunTargetPlan.autoSync, false, 'target adapter must keep auto-sync permanently forbidden');
   assert.equal(dryRunTargetPlan.blocked, true, 'target adapter plan must remain blocked');

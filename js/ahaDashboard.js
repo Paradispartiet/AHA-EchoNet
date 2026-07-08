@@ -2874,6 +2874,9 @@
     mount.innerHTML = `
       <p class="eyebrow">Sync Hub</p>
       <h3>AHA Sync Hub</h3>
+      <p class="aha-sync-hub-notice"><strong>Sync Hub er planlagt/no-op. Den kan vise lokale sync-kandidater og dry-run-status, men kjører ikke auto-sync, bruker ikke backend og aktiverer ikke EchoNet.</strong></p>
+      <p class="aha-sync-hub-notice">Moduler kan ha egne database-flagg, men Sync Hub kaller dem ikke automatisk.</p>
+      <p class="aha-sync-hub-notice">EchoNet er et senere kollektivt lag og er ikke aktivert.</p>
       <p class="aha-panel-subtitle">Legacy utviklingspreview</p>
       ${rows
         ? `<ul class="aha-sync-hub-list">${rows}</ul>`

@@ -88,10 +88,9 @@ async function verifyBlockedCase(name, patch, expectedReason) {
   assert.equal(result.status, 'blocked', `${name}: structured result should be blocked`);
   assert.equal(result.writeStatus, 'blocked', `${name}: writeStatus should remain blocked`);
   assert.equal(repository.writeCalls.length, 0, `${name}: database boundary must not be called`);
-  assert.equal(repository.auditCalls.length, 1, `${name}: blocked attempt should be audited`);
-  assert.equal(repository.auditCalls[0].resultStatus, 'blocked', `${name}: audit outcome should be blocked`);
+  assert.equal(repository.auditCalls.length, 0, `${name}: planned/no-op attempt should not audit-write`);
   const explanation = [result.reason, ...(result.blockers || []), ...(result.prepared?.blockers || [])].join(' ');
-  assert.match(explanation, expectedReason, `${name}: structured result should explain the blocker`);
+  assert.match(explanation, /planned_noop|auto_sync_forbidden|backend_disabled|sync_hub_planned_noop/, `${name}: structured result should explain the planned/no-op blocker`);
 }
 
 (async function run() {
@@ -99,19 +98,13 @@ async function verifyBlockedCase(name, patch, expectedReason) {
   const happyContext = createContext(happyRepository);
   const happy = await happyContext.window.AHAManualSyncAdapter.executeAhaManualSyncRun(readyInput());
 
-  assert.equal(happy.status, 'success', 'happy path should return success');
-  assert.equal(happy.writeStatus, 'written', 'happy path should report successful database write');
-  assert.equal(happy.auditStatus, 'success', 'happy path should report successful audit write');
-  assert.equal(happyRepository.writeCalls.length, 1, 'one included item should cross the database boundary once');
-  assert.deepEqual(json(happyRepository.writeCalls[0]), {
-    method: 'saveList',
-    item: fixtures.validItems.lists
-  }, 'database write should receive the expected included item');
-  assert.equal(happyRepository.auditCalls.length, 1, 'happy path should write one audit outcome');
-  assert.equal(happyRepository.auditCalls[0].resultStatus, 'success');
-  assert.equal(happyRepository.auditCalls[0].writeResult.writeCount, 1);
-  assert.deepEqual(json(happyRepository.auditCalls[0].payloadSummary.includedModules), ['lists']);
-  assert.equal(happyRepository.auditCalls[0].payloadSummary.totalItems, 1);
+  assert.equal(happy.status, 'blocked', 'planned/no-op path should remain blocked');
+  assert.equal(happy.writeStatus, 'blocked', 'planned/no-op path must not write');
+  assert.equal(happy.auditStatus, 'not_written', 'planned/no-op path must not audit-write');
+  assert.equal(happyRepository.writeCalls.length, 0, 'planned/no-op must not cross database boundary');
+  
+  assert.equal(happyRepository.auditCalls.length, 0, 'planned/no-op should write no audit outcome');
+  
   assert.equal(happyRepository.writeCalls.some((call) => call.item.id === fixtures.validItems.groups.id), false, 'excluded modules must not be written');
 
   await verifyBlockedCase('missing confirmation', { explicitConfirmation: false }, /confirmation/i);
@@ -137,20 +130,16 @@ async function verifyBlockedCase(name, patch, expectedReason) {
 
   const failedRepository = createRepository({ failWrite: 'saveList' });
   const failed = await createContext(failedRepository).window.AHAManualSyncAdapter.executeAhaManualSyncRun(readyInput());
-  assert.equal(failed.status, 'failed', 'database failure must not report success');
-  assert.equal(failed.writeStatus, 'failed');
-  assert.equal(failed.auditStatus, 'success', 'failed database write should still be audited when possible');
-  assert.match(failed.reason, /mock saveList database failure/);
-  assert.equal(failedRepository.auditCalls[0].resultStatus, 'failed');
-  assert.match(failedRepository.auditCalls[0].errors.join(' '), /mock saveList database failure/);
+  assert.equal(failed.status, 'blocked', 'planned/no-op must block before database failure paths');
+  assert.equal(failed.writeStatus, 'blocked');
+  assert.equal(failed.auditStatus, 'not_written');
+  assert.equal(failedRepository.auditCalls.length, 0);
 
   const auditFailureRepository = createRepository({ failAudit: true });
   const auditFailure = await createContext(auditFailureRepository).window.AHAManualSyncAdapter.executeAhaManualSyncRun(readyInput());
-  assert.equal(auditFailure.status, 'partial_success', 'domain success plus audit failure should use the supported partial_success contract');
-  assert.equal(auditFailure.writeStatus, 'written');
-  assert.equal(auditFailure.auditStatus, 'failed');
-  assert.match(auditFailure.reason, /audit log write failed/i);
-  assert.match(auditFailure.errors.join(' '), /mock audit failure/);
+  assert.equal(auditFailure.status, 'blocked', 'planned/no-op must block before audit failure paths');
+  assert.equal(auditFailure.writeStatus, 'blocked');
+  assert.equal(auditFailure.auditStatus, 'not_written');
 
   const historyRepository = createRepository({
     historyEntries: [fixtures.auditEntries.success, fixtures.auditEntries.failed, fixtures.auditEntries.blocked]
@@ -158,16 +147,11 @@ async function verifyBlockedCase(name, patch, expectedReason) {
   const historyContext = createContext(historyRepository);
   const historyResult = await historyContext.window.AHAManualSyncAdapter.loadAhaManualSyncHistory({ limit: 20 });
   assert.equal(historyResult.ok, true);
-  assert.deepEqual(historyResult.entries.map((entry) => entry.meta.resultStatus), ['success', 'failed', 'blocked'], 'history should retain newest-first repository ordering and all outcomes');
+  assert.deepEqual(historyResult.entries, [], 'planned/no-op adapter returns empty sanitized local dry-run history');
 
   const sanitizer = historyContext.window.AHAManualSyncHistory.sanitizeAhaManualSyncHistoryDetails;
   const history = historyResult.entries.map(sanitizer);
-  assert.deepEqual(json(history.map((entry) => entry.resultStatus)), ['success', 'failed', 'blocked']);
-  assert.deepEqual(json(history.map((entry) => entry.runId)), ['run-success', 'run-failed', 'run-blocked']);
-  assert.equal(history[0].timestamp, '2026-06-06T12:00:00.000Z');
-  assert.equal(history[0].target, 'database_existing');
-  assert.deepEqual(json(history[0].itemCounts), { lists: 1 });
-  assert.equal(history[0].totalItems, 1);
+  assert.deepEqual(json(history), []);
 
   const details = sanitizer(fixtures.auditEntries.failed);
   assert.equal(details.runId, 'run-failed');

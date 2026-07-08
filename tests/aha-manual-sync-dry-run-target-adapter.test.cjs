@@ -123,7 +123,7 @@ assert.equal(storageCalls.some(([method]) => method !== 'getItem'), false);
 
 const plan = adapter.createManualSyncDryRunPlan();
 assert.equal(plan.ok, true);
-assert.equal(plan.mode, 'dry_run');
+assert.equal(plan.mode, 'planned_noop_dry_run');
 assert.equal(plan.executionAllowed, false);
 assert.equal(plan.autoSync, false);
 assert.equal(plan.blocked, true);
