@@ -1078,13 +1078,15 @@ Det gjøres ingen usikker fuzzy-match. Hvis et entydig History Go-`placeId` finn
 
 ### AHA Insta local-only boundary
 
-AHA Insta er en lokal AHA-flate for bilde-, video-, post- og story-objekter. Modulen er ikke en Instagram API-klient, kobler ikke til Instagram API og skal ikke scrape Instagram.
+AHA Insta er en lokal Instagram-lignende AHA-flate for bilde-, video-, post-, story- og profilobjekter. Modulen er ikke en Instagram API-klient, kobler ikke til Instagram API, scraper ikke Instagram og har ingen backend eller ekstern bildelagring.
 
-AHA Insta publiserer ikke eksternt, bruker ikke native ekstern deling og deler ikke til EchoNet. Database-sync er ikke automatisk; database-persist/sync krever eksplisitt utvikler- eller brukerhandling og er deaktivert som standard i local-only-grensen.
+Lagringen er lokal: poster ligger i `aha_insta_posts_v1`, stories i `aha_insta_stories_v1`, profilen i `aha_insta_profile_v1`, import-preview i `aha_insta_import_preview_v1` og import sessions i `aha_insta_import_sessions_v1`. Likes, comments og follows ligger i egne `aha_insta_likes_v1`, `aha_insta_comments_v1` og `aha_insta_follows_v1`-nøkler og er bare lokale interaksjoner/filterdata, ikke en ekte sosial graf.
 
-Import-preview er fortsatt bare forhåndsvisning i `aha_insta_import_preview_v1`. Parsing av Instagram-eksport eller lokale filer sender ikke automatisk data til `AHAIngest` og skriver ikke automatisk til database. Fullføring av import lagrer valgte objekter lokalt, og kobling til AHAIngest krever eksplisitt valg.
+`visibility: "public"` betyr bare synlig lokalt i AHA-flaten, ikke ekstern publisering. AHA Insta publiserer ikke eksternt, bruker ikke native share, deler ikke til EchoNet og oppretter ikke ekstern konto-/profilkobling.
 
-Bare tekstlig kontekst — tittel, caption eller notat — sendes til `AHAIngest`. Media-only poster uten tekst lagres lokalt, men ingestes ikke.
+Import-preview er fortsatt bare forhåndsvisning i `aha_insta_import_preview_v1`. Parsing av Instagram-eksport eller lokale filer sender ingenting ut, skriver ikke til database og sender ikke automatisk data til `AHAIngest`; preview ryddes først når brukeren fullfører en valgt import.
+
+Bare tekstlig kontekst — tittel eller caption — kan sendes til `AHAIngest`, og det skjer bare ved eksplisitt handling (`connectIngest: true`). Media-only poster uten tekst lagres lokalt, men ingestes ikke. Database-sync krever eksplisitt `AHA_CONFIG.insta.enableDatabaseSync === true`; uten dette holder `persistPost`, social persist, push og sync seg local-only.
 
 ### AHA Gallery local-only boundary
 

@@ -51,7 +51,7 @@
   }
 
   function load() {
-    return readArray(POSTS_KEY);
+    return readArray(POSTS_KEY).map((post) => normalizePostShape(post));
   }
 
   function save(items) {
@@ -86,6 +86,10 @@
     localStorage.removeItem(IMPORT_PREVIEW_KEY);
   }
 
+  function isUnavailableRecord(record) {
+    return Boolean(record?.deleted_at || record?.deletedAt || record?.archived === true);
+  }
+
   function createImportSession(input = {}) {
     const session = {
       id: createId("insta_import"),
@@ -98,7 +102,12 @@
       importedMediaCount: 0,
       errors: [],
       filesSeen: [],
-      parserMode: input.parserMode || "v1"
+      parserMode: input.parserMode || "v1",
+      local_only: true,
+      import_preview_only: true,
+      published_external: false,
+      echonet_shared: false,
+      sync_enabled: false
     };
 
     const sessions = loadImportSessions();
@@ -203,6 +212,10 @@
 
   function normalizePostShape(input = {}, fallback = {}) {
     const profile = ensureProfile();
+    const legacyPublishedExternal = input.published_external === true || fallback.published_external === true || input.publishedExternal === true || fallback.publishedExternal === true;
+    const legacyEchonetShared = input.echonet_shared === true || fallback.echonet_shared === true || input.echonetShared === true || fallback.echonetShared === true;
+    const legacySyncEnabled = input.sync_enabled === true || fallback.sync_enabled === true || input.syncEnabled === true || fallback.syncEnabled === true;
+    const legacyExternalShareEnabled = input.external_share_enabled === true || fallback.external_share_enabled === true || input.externalShareEnabled === true || fallback.externalShareEnabled === true;
     const src = String(input.src || fallback.src || "").trim();
     const createdAt = input.created_at || fallback.created_at || nowIso();
     const contentType = String(input.content_type || fallback.content_type || (detectMediaType(src) === "video" ? "video" : "image")).trim() || "image";
@@ -223,8 +236,24 @@
       like_count: Number(input.like_count ?? fallback.like_count ?? 0),
       comment_count: Number(input.comment_count ?? fallback.comment_count ?? 0),
       created_at: createdAt,
+      source_app: "aha",
+      origin_app: "aha_insta",
+      local_only: true,
+      published_external: legacyPublishedExternal,
+      echonet_shared: legacyEchonetShared,
+      sync_enabled: legacySyncEnabled,
+      external_share_enabled: legacyExternalShareEnabled,
       source_signature: signature,
-      meta: mergedMeta
+      meta: {
+        ...mergedMeta,
+        source_app: "aha",
+        origin_app: "aha_insta",
+        local_only: true,
+        published_external: legacyPublishedExternal,
+        echonet_shared: legacyEchonetShared,
+        sync_enabled: legacySyncEnabled,
+        external_share_enabled: legacyExternalShareEnabled
+      }
     };
   }
   function dedupeImportItems(items) {
@@ -287,6 +316,11 @@
           type,
           imported: true,
           visibility: "private",
+          local_only: true,
+          import_preview_only: true,
+          published_external: false,
+          echonet_shared: false,
+          sync_enabled: false,
           created_at: nowIso(),
           meta: { file: file.name, rawType: node.type || hint }
         });
@@ -361,6 +395,11 @@
             type: inferInstagramItemType({}, "media", file.name),
             imported: true,
             visibility: "private",
+            local_only: true,
+            import_preview_only: true,
+            published_external: false,
+            echonet_shared: false,
+            sync_enabled: false,
             created_at: nowIso(),
             meta: { file: file.name, dataUrl: true, originalFileName: file.name }
           });
@@ -411,6 +450,7 @@
       published_external: false,
       echonet_shared: false,
       sync_enabled: false,
+      external_share_enabled: false,
       user_created: true,
       imported: false,
       ...extra
@@ -438,15 +478,75 @@
       });
   }
 
+
+  function normalizeProfileShape(profile = {}) {
+    const timestamp = nowIso();
+    return {
+      ...profile,
+      id: profile.id || createId("user"),
+      username: normalizeUsername(profile.username || "meg"),
+      displayName: profile.displayName || profile.display_name || profile.username || "Meg",
+      bio: profile.bio || "",
+      avatar: profile.avatar || "",
+      created_at: profile.created_at || timestamp,
+      updated_at: profile.updated_at || timestamp,
+      local_only: true,
+      external_identity: false,
+      account_linked: false,
+      published_external: false,
+      echonet_shared: false,
+      sync_enabled: false,
+      meta: {
+        ...(profile.meta || {}),
+        source_app: "aha",
+        origin_app: "aha_insta",
+        local_only: true,
+        external_identity: false,
+        account_linked: false,
+        published_external: false,
+        echonet_shared: false,
+        sync_enabled: false
+      }
+    };
+  }
+
+  function socialSafetyMeta(extra = {}) {
+    return {
+      source_app: "aha",
+      origin_app: "aha_insta",
+      local_only: true,
+      social_local_only: true,
+      published_external: false,
+      echonet_shared: false,
+      sync_enabled: false,
+      external_share_enabled: false,
+      ...extra
+    };
+  }
+
+  function withSocialSafety(record = {}) {
+    return {
+      ...record,
+      local_only: true,
+      social_local_only: true,
+      published_external: false,
+      echonet_shared: false,
+      sync_enabled: false,
+      external_share_enabled: false,
+      meta: socialSafetyMeta(record.meta || {})
+    };
+  }
+
   function saveProfile(profile) {
-    localStorage.setItem(PROFILE_KEY, JSON.stringify(profile || null));
-    if (profile) persistSocial("saveInstaProfile", profile);
-    return profile;
+    const safeProfile = profile ? normalizeProfileShape(profile) : null;
+    localStorage.setItem(PROFILE_KEY, JSON.stringify(safeProfile));
+    if (safeProfile) persistSocial("saveInstaProfile", safeProfile);
+    return safeProfile;
   }
 
   function ensureProfile() {
     const existing = loadProfile();
-    if (existing?.username) return existing;
+    if (existing?.username) return saveProfile(existing);
 
     const timestamp = nowIso();
     const profile = {
@@ -486,10 +586,10 @@
 
     let record;
     if (index >= 0) {
-      record = { ...likes[index], deleted_at: nowIso() };
+      record = withSocialSafety({ ...likes[index], deleted_at: nowIso() });
       likes.splice(index, 1);
     } else {
-      record = { id: `like_${postId}_${profile.id}`, post_id: postId, user_id: profile.id, created_at: nowIso(), deleted_at: null };
+      record = withSocialSafety({ id: `like_${postId}_${profile.id}`, post_id: postId, user_id: profile.id, created_at: nowIso(), deleted_at: null });
       likes.push(record);
     }
 
@@ -505,7 +605,7 @@
 
     const profile = ensureProfile();
     const comments = loadComments();
-    const comment = {
+    const comment = withSocialSafety({
       id: createId("comment"),
       post_id: postId,
       user_id: profile.id,
@@ -513,7 +613,7 @@
       text: trimmed,
       created_at: nowIso(),
       deleted_at: null
-    };
+    });
 
     comments.push(comment);
     saveComments(comments);
@@ -528,7 +628,7 @@
     const index = comments.findIndex((comment) => comment.id === commentId && comment.user_id === profile.id);
     if (index < 0) return null;
 
-    comments[index] = { ...comments[index], deleted_at: nowIso() };
+    comments[index] = withSocialSafety({ ...comments[index], deleted_at: nowIso() });
     saveComments(comments);
     persistSocial("saveInstaComment", comments[index]);
     render();
@@ -536,7 +636,7 @@
   }
 
   function getCommentsForPost(postId) {
-    return loadComments().filter((comment) => comment.post_id === postId && !comment.deleted_at);
+    return loadComments().filter((comment) => comment.post_id === postId && !isUnavailableRecord(comment));
   }
 
   function isFollowing(username) {
@@ -551,10 +651,10 @@
 
     let record;
     if (index >= 0) {
-      record = { ...follows[index], deleted_at: nowIso() };
+      record = withSocialSafety({ ...follows[index], deleted_at: nowIso() });
       follows.splice(index, 1);
     } else {
-      record = { id: `follow_${profile.id}_${username}`, follower_id: profile.id, following_id: `user_${username}`, following_username: username, created_at: nowIso(), deleted_at: null };
+      record = withSocialSafety({ id: `follow_${profile.id}_${username}`, follower_id: profile.id, following_id: `user_${username}`, following_username: username, follow_type: "local_filter", external_follow: false, created_at: nowIso(), deleted_at: null });
       follows.push(record);
     }
 
@@ -882,7 +982,7 @@
     if (!isDatabaseSyncEnabled()) return { ok: false, fallback: "localOnly", database_sync_disabled: true };
     if (!window.AHARepository?.loadInstaPosts) return { ok: false, fallback: "localStorage" };
 
-    const localPosts = load();
+    const localPosts = readArray(POSTS_KEY);
     // Push both active posts and tombstones before pull so local deletes are not dependent on prior persistPost timing.
     if (localPosts.length) {
       await pushLocalToDatabase(localPosts);
@@ -920,6 +1020,7 @@
   }
 
   async function pushSocialCollection(items, method) {
+    if (!isDatabaseSyncEnabled()) return { ok: false, fallback: "localOnly", database_sync_disabled: true };
     const repo = window.AHARepository;
     if (!repo || typeof repo[method] !== "function") return;
     for (const item of Array.isArray(items) ? items : []) {
@@ -936,6 +1037,7 @@
   // reconciled state back. Pulling before pushing is what lets a remote
   // tombstone win instead of being clobbered by stale local state.
   async function reconcileSocialCollection({ loadLocal, saveLocal, loadRemote, pushMethod, mapRemote, keepDeleted }) {
+    if (!isDatabaseSyncEnabled()) return { ok: false, fallback: "localOnly", database_sync_disabled: true };
     const repo = window.AHARepository;
     if (!repo || typeof repo[loadRemote] !== "function") {
       await pushSocialCollection(loadLocal(), pushMethod);
@@ -957,7 +1059,7 @@
     }
 
     const reconciled = reconcileSocial(loadLocal(), remoteRows, mapRemote);
-    saveLocal(keepDeleted ? reconciled : reconciled.filter((row) => !row.deleted_at));
+    saveLocal(keepDeleted ? reconciled : reconciled.filter((row) => !isUnavailableRecord(row)));
     await pushSocialCollection(reconciled, pushMethod);
   }
 
@@ -1077,6 +1179,7 @@
           published_external: false,
           echonet_shared: false,
           sync_enabled: false,
+          external_share_enabled: false,
           visibility,
           meta: localOnlyMeta({ source_type: "aha_insta_imported_story", origin_app: "instagram", origin_type: "instagram_export", user_created: false, imported: true, import_session_id: options.sessionId || null, insta_object_type: "story" })
         });
@@ -1195,12 +1298,13 @@
 
     const counts = buildInstagramImportPreview(previewItems).counts;
     mount.innerHTML = `
-      <div class="module-meta">Preview lokalt – ikke delt eksternt · EchoNet ikke aktivert · Database-sync ikke automatisk · Mulige poster: ${counts.posts} · stories: ${counts.stories} · media: ${counts.media}</div>
+      <div class="module-meta">Preview lokalt – ikke delt eksternt · Database-sync ikke automatisk · Mulige poster: ${counts.posts} · stories: ${counts.stories} · media: ${counts.media}</div>
       <label><input type="radio" name="insta-visibility" value="private" checked /> Lagre som privat lokal post</label>
-      <label><input type="radio" name="insta-visibility" value="public" /> Lagre som synlig i lokal AHA-flate</label>
+      <label><input type="radio" name="insta-visibility" value="public" /> Lagre som synlig lokalt i AHA — ikke publisert eksternt</label>
       <label><input id="insta-import-connect-ingest" type="checkbox" /> Koble importerte captions/titler til lokal AHA-innsikt</label>
       <div>
         ${previewItems
+          .filter((item) => !isUnavailableRecord(item))
           .map(
             (item) => `
               <article class="module-card insta-import-card">
@@ -1228,7 +1332,7 @@
     const mount = document.getElementById("insta-stories");
     if (!mount) return;
 
-    const stories = loadStories().filter((story) => !story.archived);
+    const stories = loadStories().filter((story) => !isUnavailableRecord(story));
     if (!stories.length) {
       mount.innerHTML = "<p>Ingen stories ennå.</p>";
       return;
@@ -1263,7 +1367,7 @@
     const mount = document.getElementById("insta-list");
     if (!mount) return;
 
-    const activePosts = (Array.isArray(source) ? source : load()).filter((post) => !post?.deleted_at);
+    const activePosts = (Array.isArray(source) ? source : load()).filter((post) => !isUnavailableRecord(post));
     const posts = getFilteredPosts(activePosts);
     if (!posts.length) {
       const emptyText = currentFeedFilter === "mine"
@@ -1314,6 +1418,7 @@
       published_external: false,
       echonet_shared: false,
       sync_enabled: false,
+      external_share_enabled: false,
       user_created: true,
       imported: false,
       meta: localOnlyMeta({ source_type: "aha_insta_post", insta_object_type: "post" }),

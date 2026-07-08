@@ -219,7 +219,7 @@
       }));
     });
 
-    asArray(loadByKey(STORAGE_KEYS.insta, [])).filter((post) => !post?.deleted_at).forEach((post) => {
+    asArray(loadByKey(STORAGE_KEYS.insta, [])).filter((post) => !(post?.deleted_at || post?.deletedAt || post?.archived === true || post?.import_preview_only === true)).forEach((post) => {
       const base = withBase(post, { type: "insta_post", source: "aha_insta" });
       const refId = asText(post?.id || base?.id, "");
       if (!refId) return;
