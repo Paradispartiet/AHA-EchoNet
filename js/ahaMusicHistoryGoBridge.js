@@ -46,6 +46,29 @@
       .replaceAll("'", "&#039;");
   }
 
+  function bridgeMeta(extra = {}) {
+    return {
+      source_app: "aha",
+      origin_app: "aha_music_historygo_bridge",
+      local_only: true,
+      metadata_only: true,
+      historygo_bridge_only: true,
+      historygo_writeback_enabled: false,
+      echonet_shared: false,
+      sync_enabled: false,
+      verified_by_user: false,
+      ...extra
+    };
+  }
+
+  function withBridgeMeta(objectType, extra = {}) {
+    return {
+      ...bridgeMeta({ object_type: objectType }),
+      meta: bridgeMeta({ object_type: objectType }),
+      ...extra
+    };
+  }
+
   function safeParse(raw, fallback) {
     try {
       const parsed = JSON.parse(raw);
@@ -187,7 +210,8 @@
           createdAt,
           reviewedAt: historyGoPlaceId ? createdAt : null,
           matchStrategy: match.strategy,
-          seedCandidateId: candidate.id
+          seedCandidateId: candidate.id,
+          ...withBridgeMeta("artist_place_relation", { verified_by_user: false })
         });
       });
     });
@@ -241,7 +265,8 @@
             relationType: relation.relationType,
             inheritedFromArtistRelationId: relation.id,
             confidence: relation.confidence,
-            status: relation.status
+            status: relation.status,
+            ...withBridgeMeta("track_place_relation", { verified_by_user: false })
           });
         });
       });
@@ -290,6 +315,7 @@
       };
     }).filter((coverage) => coverage.linkedTrackPlaceRelations > 0);
     return {
+      ...withBridgeMeta("bridge_report"),
       generatedAt: new Date().toISOString(),
       importedArtistsAnalyzed: importedArtistIds.size,
       artistsWithPlaceCandidate: artistsWithCandidate.size,
@@ -308,7 +334,7 @@
     const artistRelations = buildArtistPlaceRelations(library, seeds, options);
     const trackRelations = buildTrackPlaceRelations(library, artistRelations);
     const report = buildBridgeReport(library, artistRelations, trackRelations);
-    return { artistRelations, trackRelations, report };
+    return { ...withBridgeMeta("bridge_snapshot"), artistRelations, trackRelations, report };
   }
 
   function validateSeedCandidate(candidate) {
@@ -413,9 +439,10 @@
   }
 
   function saveBridgeSnapshot(bridge) {
-    if (!global.localStorage) return bridge;
-    global.localStorage.setItem(STORAGE_KEY, JSON.stringify(bridge));
-    return bridge;
+    const snapshot = { ...withBridgeMeta("bridge_snapshot"), ...(bridge || {}) };
+    if (!global.localStorage) return snapshot;
+    global.localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
+    return snapshot;
   }
 
   function loadBridgeSnapshot() {
@@ -430,6 +457,7 @@
     allowedStatuses,
     allowedSourceTypes,
     normalizeName,
+    bridgeMeta,
     buildCandidateIndex,
     findCandidateMatches,
     buildArtistPlaceRelations,

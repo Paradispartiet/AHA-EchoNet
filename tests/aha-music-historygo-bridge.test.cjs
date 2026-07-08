@@ -58,10 +58,11 @@ assert.ok(readme.includes('AHA Music → History Go Bridge v1'), 'README should 
 assert.ok(readme.includes('track → artist → place'), 'README should explain track to place inheritance');
 assert.ok(readme.includes('npm run build:music-historygo-bridge'), 'README should document the bridge npm script');
 
+const storage = new Map();
 const sandbox = {
   window: {},
   document: { readyState: 'loading', addEventListener: () => {}, getElementById: () => null },
-  localStorage: { getItem: () => null, setItem: () => {} },
+  localStorage: { getItem: (key) => storage.get(key) || null, setItem: (key, value) => storage.set(key, String(value)) },
   fetch: async () => { throw new Error('not used in unit validation'); },
   console
 };
@@ -98,6 +99,24 @@ assert.equal(bridge.artistRelations.length, 3, 'a-ha should get one relation and
 assert.equal(bridge.trackRelations.length, 3, 'tracks should inherit place relations from matched artists');
 assert.ok(bridge.artistRelations.every((relation) => relation.status === 'needs_place_review'), 'relations without local place ids should require place review');
 assert.ok(bridge.artistRelations.every((relation) => relation.historyGoPlaceId === null), 'relations should preserve null History Go place ids when no local match exists');
+for (const relation of [...bridge.artistRelations, ...bridge.trackRelations]) {
+  assert.strictEqual(relation.local_only, true);
+  assert.strictEqual(relation.metadata_only, true);
+  assert.strictEqual(relation.historygo_bridge_only, true);
+  assert.strictEqual(relation.historygo_writeback_enabled, false);
+  assert.strictEqual(relation.echonet_shared, false);
+  assert.strictEqual(relation.sync_enabled, false);
+}
+assert.strictEqual(bridge.local_only, true, 'bridge snapshot is local-only');
+assert.strictEqual(bridge.report.local_only, true, 'bridge report is local-only');
+const beforeHistoryGo = new Map(['visited_places', 'knowledge_universe', 'hg_learning_log_v1', 'aha_import_payload_v1'].map((key) => [key, storage.get(key)]));
+sandbox.AHAMusicHistoryGoBridge.saveBridgeSnapshot(bridge);
+assert.ok(storage.has('aha_music_history_go_bridge_v1'), 'bridge snapshot is stored in local AHA Music bridge key');
+for (const [key, value] of beforeHistoryGo) assert.strictEqual(storage.get(key), value, `bridge must not write ${key}`);
+for (const forbidden of ['EchoNet', 'AHASyncHub', 'SyncHub', 'knowledge_universe', 'hg_learning_log_v1']) {
+  assert.ok(!bridgeJs.includes(`${forbidden}.`), `bridge must not call/write ${forbidden}`);
+}
+assert.ok(!/fetch\([^)]*https?:/i.test(bridgeJs), 'bridge must not do external artist/place lookup');
 assert.equal(bridge.report.importedArtistsAnalyzed, 3, 'report should count imported artists analyzed');
 assert.equal(bridge.report.artistsWithPlaceCandidate, 2, 'report should count artists with place candidates');
 assert.equal(bridge.report.needsPlaceReview, 3, 'report should count needs_place_review artist relations');
@@ -121,6 +140,27 @@ assert.equal(generatedReport.trackPlaceRelationsCreated, 3, 'bridge job report s
 fs.writeFileSync('data/aha-music/history-go/musicArtistPlaceRelations.json', '[]\n');
 fs.writeFileSync('data/aha-music/history-go/musicTrackPlaceRelations.json', '[]\n');
 fs.writeFileSync('data/aha-music/history-go/musicHistoryGoBridgeReport.json', `${JSON.stringify({
+  source_app: 'aha',
+  origin_app: 'aha_music_historygo_bridge',
+  local_only: true,
+  metadata_only: true,
+  historygo_bridge_only: true,
+  historygo_writeback_enabled: false,
+  echonet_shared: false,
+  sync_enabled: false,
+  verified_by_user: false,
+  meta: {
+    source_app: 'aha',
+    origin_app: 'aha_music_historygo_bridge',
+    local_only: true,
+    metadata_only: true,
+    historygo_bridge_only: true,
+    historygo_writeback_enabled: false,
+    echonet_shared: false,
+    sync_enabled: false,
+    verified_by_user: false,
+    object_type: 'bridge_report'
+  },
   generatedAt: '2026-06-12T00:00:00.000Z',
   importedArtistsAnalyzed: 0,
   artistsWithPlaceCandidate: 0,

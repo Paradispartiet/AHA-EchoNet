@@ -13,7 +13,61 @@
   const SPOTIFY_API_URL = "https://api.spotify.com/v1";
   const DEFAULT_SCOPES = ["playlist-read-private", "playlist-read-collaborative", "user-library-read"];
 
+  function localMusicMeta(extra = {}) {
+    return {
+      source_app: "aha",
+      origin_app: "aha_music",
+      local_only: true,
+      metadata_only: true,
+      audio_stored: false,
+      audio_playback_enabled: false,
+      ai_classified: false,
+      echonet_shared: false,
+      sync_enabled: false,
+      external_publish_enabled: false,
+      historygo_writeback_enabled: false,
+      ...extra
+    };
+  }
+
+  function musicSafety(objectType, extra = {}) {
+    const meta = localMusicMeta({ provider: "spotify", object_type: objectType, ...(extra.meta || {}) });
+    return {
+      source_app: "aha",
+      origin_app: "aha_music",
+      provider: "spotify",
+      local_only: true,
+      metadata_only: true,
+      audio_stored: false,
+      audio_playback_enabled: false,
+      ai_classified: false,
+      echonet_shared: false,
+      sync_enabled: false,
+      external_publish_enabled: false,
+      ...extra,
+      meta
+    };
+  }
+
+  function isDatabaseSyncEnabled() {
+    return global.AHA_CONFIG?.music?.enableDatabaseSync === true;
+  }
+
+  function databaseSyncDisabledResult(data) {
+    return { ok: false, fallback: "localOnly", database_sync_disabled: true, data };
+  }
+
   const emptyLibrary = () => ({
+    local_only: true,
+    metadata_only: true,
+    audio_stored: false,
+    audio_playback_enabled: false,
+    ai_classified: false,
+    echonet_shared: false,
+    sync_enabled: false,
+    external_publish_enabled: false,
+    historygo_writeback_enabled: false,
+    meta: localMusicMeta(),
     sources: [],
     playlists: [],
     tracks: [],
@@ -71,41 +125,57 @@
     return text(entity?.external_urls?.spotify || entity?.spotify_url || "");
   }
 
-  function loadLibrary() {
-    const stored = safeParse(localStorage.getItem(STORAGE_KEY), emptyLibrary());
+  function normalizeLibrary(library) {
+    const stored = library || {};
     return {
       ...emptyLibrary(),
       ...stored,
+      local_only: true,
+      metadata_only: true,
+      audio_stored: false,
+      audio_playback_enabled: false,
+      ai_classified: false,
+      echonet_shared: false,
+      sync_enabled: isDatabaseSyncEnabled(),
+      external_publish_enabled: false,
+      historygo_writeback_enabled: false,
+      meta: localMusicMeta(stored.meta || {}),
       sources: asArray(stored.sources),
-      playlists: asArray(stored.playlists),
-      tracks: asArray(stored.tracks),
-      albums: asArray(stored.albums),
-      artists: asArray(stored.artists),
-      trackArtists: asArray(stored.trackArtists),
-      playlistTracks: asArray(stored.playlistTracks),
+      playlists: asArray(stored.playlists).map(normalizePlaylist),
+      tracks: asArray(stored.tracks).map(normalizeTrack),
+      albums: asArray(stored.albums).map(normalizeAlbum),
+      artists: asArray(stored.artists).map(normalizeArtist),
+      trackArtists: asArray(stored.trackArtists).map((link) => ({ ...link, ...musicSafety("track_artist_link"), meta: localMusicMeta({ provider: "spotify", object_type: "track_artist_link", ...(link?.meta || {}) }) })),
+      playlistTracks: asArray(stored.playlistTracks).map((link) => ({ ...link, ...musicSafety("playlist_track_link"), meta: localMusicMeta({ provider: "spotify", object_type: "playlist_track_link", ...(link?.meta || {}) }) })),
       trackCanonNodes: asArray(stored.trackCanonNodes),
       artistCanonNodes: asArray(stored.artistCanonNodes),
       playlistCanonNodes: asArray(stored.playlistCanonNodes),
       musicArtistPlaceRelations: asArray(stored.musicArtistPlaceRelations),
       musicTrackPlaceRelations: asArray(stored.musicTrackPlaceRelations),
       musicHistoryGoBridgeReport: stored.musicHistoryGoBridgeReport || null,
-      imports: asArray(stored.imports)
+      imports: asArray(stored.imports).map((entry) => ({ ...entry, ...musicSafety("spotify_import"), provider: "spotify", meta: localMusicMeta({ provider: "spotify", object_type: "spotify_import", ...(entry?.meta || {}) }) }))
     };
   }
 
+  function loadLibrary() {
+    return normalizeLibrary(safeParse(localStorage.getItem(STORAGE_KEY), emptyLibrary()));
+  }
+
   function saveLibrary(library) {
-    const normalized = { ...emptyLibrary(), ...(library || {}) };
+    const normalized = normalizeLibrary(library);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
     persistRemote(normalized);
     return normalized;
   }
 
   async function persistRemote(library) {
-    if (!global.AHARepository?.saveMusicLibrarySnapshot) return;
+    if (!isDatabaseSyncEnabled()) return databaseSyncDisabledResult(library);
+    if (!global.AHARepository?.saveMusicLibrarySnapshot) return databaseSyncDisabledResult(library);
     try {
-      await global.AHARepository.saveMusicLibrarySnapshot(library);
+      return await global.AHARepository.saveMusicLibrarySnapshot(library);
     } catch (error) {
       console.warn("AHA Music remote persistence skipped", error);
+      return databaseSyncDisabledResult(library);
     }
   }
 
@@ -127,7 +197,8 @@
       name: text(artist?.name, "Ukjent artist"),
       spotify_url: spotifyUrl(artist),
       source: "spotify",
-      updated_at: nowIso()
+      updated_at: nowIso(),
+      ...musicSafety("artist")
     };
   }
 
@@ -142,7 +213,8 @@
       image_url: text(album?.images?.[0]?.url),
       spotify_url: spotifyUrl(album),
       source: "spotify",
-      updated_at: nowIso()
+      updated_at: nowIso(),
+      ...musicSafety("album")
     };
   }
 
@@ -161,7 +233,8 @@
       album_name: album.name,
       artist_names: asArray(track?.artists).map((artist) => text(artist?.name)).filter(Boolean),
       source: "spotify",
-      updated_at: nowIso()
+      updated_at: nowIso(),
+      ...musicSafety("track")
     };
   }
 
@@ -176,7 +249,8 @@
       image_url: text(playlist?.images?.[0]?.url),
       spotify_url: spotifyUrl(playlist),
       source: "spotify",
-      updated_at: nowIso()
+      updated_at: nowIso(),
+      ...musicSafety("playlist")
     };
   }
 
@@ -195,7 +269,8 @@
         id: `${normalizedTrack.id}_${normalizedArtist.id}`,
         spotify_track_id: normalizedTrack.spotify_track_id,
         spotify_artist_id: normalizedArtist.spotify_artist_id,
-        artist_order: artistIndex
+        artist_order: artistIndex,
+        ...musicSafety("track_artist_link")
       }, ["spotify_track_id", "spotify_artist_id"]);
     });
 
@@ -205,7 +280,8 @@
         spotify_playlist_id: playlist.spotify_playlist_id,
         spotify_track_id: normalizedTrack.spotify_track_id,
         position: Number(position || 0),
-        added_at: nowIso()
+        added_at: nowIso(),
+        ...musicSafety("playlist_track_link")
       }, ["spotify_playlist_id", "spotify_track_id"]);
     }
     return library;
@@ -330,13 +406,20 @@
       provider: "spotify",
       providerAccountId: text(profile?.id),
       displayName: text(profile?.display_name),
-      connectedAt: nowIso()
+      connectedAt: nowIso(),
+      local_only: true,
+      metadata_only: true,
+      token_stored: false,
+      external_identity_linked: true,
+      account_linked_to_aha: false,
+      sync_enabled: false
     };
     sessionStorage.setItem(CONNECTION_KEY, JSON.stringify(connection));
     await loadSpotifyPlaylists();
     setAuthStatus("Spotify koblet", "connected");
   }
 
+  // Fetch boundary: only Spotify OAuth/API metadata calls after user action are allowed here; no generic backend, Supabase, EchoNet, SyncHub, audio, or preview_url fetches.
   async function spotifyFetch(path) {
     const token = getToken();
     if (!token) throw new Error("Spotify er ikke koblet til eller token er utløpt.");
@@ -379,7 +462,15 @@
       provider_account_id: safeParse(sessionStorage.getItem(CONNECTION_KEY), {})?.providerAccountId || "",
       scopes: getSpotifyConfig().scopes,
       metadata_only: true,
-      updated_at: startedAt
+      local_only: true,
+      audio_stored: false,
+      audio_playback_enabled: false,
+      ai_classified: false,
+      echonet_shared: false,
+      sync_enabled: false,
+      external_publish_enabled: false,
+      updated_at: startedAt,
+      meta: localMusicMeta({ provider: "spotify", object_type: "source" })
     }, "id");
 
     let importedPlaylistCount = 0;
@@ -418,11 +509,12 @@
       include_saved_tracks: includeSaved,
       track_count: library.tracks.length,
       started_at: startedAt,
-      completed_at: completedAt
+      completed_at: completedAt,
+      ...musicSafety("spotify_import")
     });
     saveLibrary(library);
     renderLibrary();
-    setImportStatus(`Import fullført: ${library.tracks.length} unike spor lagret som metadata.`);
+    setImportStatus("Import fullført: metadata lagret lokalt.");
   }
 
 
@@ -784,11 +876,13 @@
   }
 
   async function hydrateRemoteLibrary() {
-    if (!global.AHARepository?.loadMusicLibrarySnapshot) return;
     const local = loadLibrary();
-    if (local.tracks.length || local.playlists.length) return;
+    if (!isDatabaseSyncEnabled()) return databaseSyncDisabledResult(local);
+    if (!global.AHARepository?.loadMusicLibrarySnapshot) return databaseSyncDisabledResult(local);
+    if (local.tracks.length || local.playlists.length) return { ok: true, fallback: "localPresent", data: local };
     const result = await global.AHARepository.loadMusicLibrarySnapshot();
     if (result?.ok && (result.library?.tracks?.length || result.library?.playlists?.length)) saveLibrary(result.library);
+    return result;
   }
 
   async function init() {
@@ -812,13 +906,22 @@
     STORAGE_KEY,
     loadLibrary,
     saveLibrary,
+    persistRemote,
+    hydrateRemoteLibrary,
+    isDatabaseSyncEnabled,
+    databaseSyncDisabledResult,
+    localMusicMeta,
+    normalizeLibrary,
     normalizePlaylist,
     normalizeTrack,
     normalizeAlbum,
     normalizeArtist,
     mergeTrack,
     buildLibraryIndex,
-    formatDuration
+    formatDuration,
+    TOKEN_KEY,
+    PKCE_KEY,
+    CONNECTION_KEY
   };
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);

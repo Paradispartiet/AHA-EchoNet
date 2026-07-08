@@ -44,6 +44,8 @@
     { key: "aha_paths_v1", label: "AHA Stier", kind: "array", isAHA: true, isHistoryGo: false, canClear: true },
     { key: "aha_articles_v1", label: "AHAavisa artikler", kind: "array", isAHA: true, isHistoryGo: false, canClear: true },
     { key: "aha_groups_v1", label: "AHA Grupper / Sirkler", kind: "array", isAHA: true, isHistoryGo: false, canClear: true },
+    { key: "aha_music_library_v1", label: "AHA Music lokalt metadata-bibliotek (ingen lyd/tokens)", kind: "object", isAHA: true, isHistoryGo: false, canClear: true },
+    { key: "aha_music_history_go_bridge_v1", label: "AHA Music lokal History Go-bro (forslag/rapport, ikke write-back)", kind: "object", isAHA: true, isHistoryGo: false, canClear: true },
     { key: SETTINGS_KEY, label: "Personverninnstillinger", kind: "object", isAHA: true, isHistoryGo: false, canClear: true },
     { key: "aha_import_payload_v1", label: "History Go importpayload", kind: "object", isAHA: false, isHistoryGo: true, canClear: false },
     { key: "hg_unlocks_v1", label: "History Go unlocks", kind: "object", isAHA: false, isHistoryGo: true, canClear: false },

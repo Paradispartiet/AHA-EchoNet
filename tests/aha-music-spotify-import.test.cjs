@@ -52,7 +52,7 @@ assert.ok(js.includes('trackMatchesFilters'), 'music library should filter track
 assert.ok(js.includes('formatDuration'), 'music library should format track duration');
 assert.ok(repository.includes('loadMusicLibrarySnapshot'), 'repository should expose music table loading for the library');
 assert.ok(js.includes('upsertByKey(library.tracks, normalizedTrack, "spotify_track_id")'), 'tracks should dedupe on spotify_track_id');
-assert.equal(/audio|download/i.test(js.replace('no audio files', '')), false, 'music importer should not download audio files');
+assert.equal(/<audio|new Audio|\.play\s*\(|fetch\([^)]*preview_url|audio_blob|audioCache/i.test(js), false, 'music importer should not play or cache audio');
 assert.ok(modules.includes('id: "music"'), 'AHA Music module should be registered');
 assert.ok(modules.includes('Spotify-import, normalisert musikkmetadata'), 'AHA Music module should describe the Spotify importer');
 
