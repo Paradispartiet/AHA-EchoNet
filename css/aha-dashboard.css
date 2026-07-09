@@ -2916,3 +2916,33 @@ body:has(#aha-home-main) .aha-header-actions #btn-import-hg-primary {
   color: rgba(247,243,223,.78);
   text-decoration: underline;
 }
+
+/* AHA Status page */
+.aha-status-page {
+  width: min(920px, 100%);
+}
+
+.aha-status-page-header {
+  margin-bottom: 12px;
+  padding: 14px;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 18px;
+  background: rgba(255,255,255,.035);
+}
+
+.aha-status-page-header h1,
+.aha-status-page-header p {
+  margin: 0;
+}
+
+.aha-status-page-section {
+  margin-bottom: 12px;
+}
+
+.aha-status-page .aha-system-panel-content,
+.aha-status-page .aha-product-integration-panel,
+.aha-status-page .aha-product-flow-panel,
+.aha-status-page .aha-status-panel {
+  display: block;
+  opacity: 1;
+}

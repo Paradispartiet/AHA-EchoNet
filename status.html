@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <title>AHA Systemstatus</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="css/aha-chat.css" />
+  <link rel="stylesheet" href="css/aha-dashboard.css" />
+  <link rel="stylesheet" href="css/aha-global-nav.css" />
+</head>
+<body>
+  <a class="aha-skip-link" href="#aha-status-main">Hopp til hovedinnhold</a>
+  <div id="aha-global-nav"></div>
+
+  <main id="aha-status-main" class="aha-dashboard aha-status-page" tabindex="-1">
+    <header class="aha-status-page-header">
+      <p class="eyebrow">AHA System</p>
+      <h1>Systemstatus</h1>
+      <p>Teknisk status, produktflyt og integrasjoner.</p>
+      <a class="aha-tile-btn aha-tile-btn-secondary" href="index.html">Tilbake til AHA Home</a>
+    </header>
+
+    <section class="aha-panel aha-status-page-section aha-product-integration-panel" id="aha-product-integration" aria-label="AHA Product Integration V1">
+      <p class="eyebrow">AHA Product Integration V1</p>
+      <h2>AHA er klar til å arbeide med deg</h2>
+      <p id="aha-product-summary" class="aha-panel-subtitle">AHA samler Home, Chat, Personal AI, Training, Sync Hub, AHA Music og History Go i én produktflyt.</p>
+      <div class="aha-profile-status-grid" aria-label="Produktstatus">
+        <div class="aha-mini-stat"><strong id="aha-product-overall">Laster …</strong><span>Samlet status</span></div>
+        <div class="aha-mini-stat"><strong id="aha-product-personal-ai">Sjekker …</strong><span>Personal AI</span></div>
+        <div class="aha-mini-stat"><strong id="aha-product-training">Sjekker …</strong><span>Training</span></div>
+        <div class="aha-mini-stat"><strong id="aha-product-chat">Sjekker …</strong><span>Chat</span></div>
+      </div>
+      <div class="aha-tile-actions" aria-label="Primære produktinnganger">
+        <a class="aha-tile-btn aha-tile-btn-primary" href="chat.html">Åpne AHA Chat</a>
+        <a class="aha-tile-btn" href="personal-ai.html">Åpne Personal AI</a>
+        <a class="aha-tile-btn" href="training.html">Åpne Training</a>
+        <a class="aha-tile-btn" href="knowledge-workbench.html">Åpne Knowledge Workbench</a>
+        <a class="aha-tile-btn" href="intake.html">Åpne Data Intake</a>
+        <a class="aha-tile-btn aha-tile-btn-secondary" href="#aha-sync-hub-status">Sync Hub</a>
+        <a class="aha-tile-btn aha-tile-btn-secondary" href="music.html">AHA Music</a>
+        <a class="aha-tile-btn aha-tile-btn-secondary" href="historygo.html">History Go</a>
+      </div>
+      <div id="aha-product-primary-action" class="aha-status-stack" aria-live="polite">Neste handling lastes …</div>
+    </section>
+
+    <section class="aha-panel aha-status-page-section aha-product-flow-panel" id="aha-product-flow-panel" aria-label="Slik henger AHA sammen">
+      <p class="eyebrow">Produktflyt</p>
+      <h2>Slik henger AHA sammen</h2>
+      <div class="aha-profile-status-grid aha-product-flow-grid">
+        <div class="aha-mini-stat"><strong>Kilder</strong><span>Sync Hub / AHA Music / History Go</span></div>
+        <div class="aha-mini-stat"><strong>Training Corpus</strong><span>Rått materiale godkjennes for bruk</span></div>
+        <div class="aha-mini-stat"><strong>Personal AI</strong><span>Kontrollrom for minne, retrieval og evaluering</span></div>
+        <div class="aha-mini-stat"><strong>AHA Chat</strong><span>Hovedsamtalen med AHA</span></div>
+        <div class="aha-mini-stat"><strong>Tilbake til AHA</strong><span>Innsikter, musikk og History Go-oppdagelser</span></div>
+      </div>
+    </section>
+
+    <section class="aha-panel aha-status-page-section aha-status-panel" aria-labelledby="aha-status-title">
+      <div class="aha-panel-head">
+        <div>
+          <p class="eyebrow">System</p>
+          <h2 id="aha-status-title">Status</h2>
+        </div>
+        <span id="aha-status-updated" class="aha-status-updated" role="status" aria-live="polite">Oppdaterer …</span>
+      </div>
+
+      <div id="aha-dashboard-stats" class="aha-stats">Laster status …</div>
+      <div id="aha-historygo-status" class="aha-historygo-status"></div>
+      <div id="aha-privacy-status" class="aha-privacy-status"></div>
+
+      <div id="aha-sync-hub-status" aria-label="AHA Sync Hub status"></div>
+
+      <section class="aha-panel aha-activity-panel" aria-label="Activity">
+        <p class="eyebrow">AHA System</p>
+        <h3>Activity</h3>
+        <p class="aha-panel-subtitle">Latest 10 items.</p>
+        <ul id="aha-recent-activity" class="aha-activity-list"></ul>
+      </section>
+
+      <details class="aha-tech-status" open>
+        <summary>Teknisk status</summary>
+        <pre id="out" class="aha-dashboard-output"></pre>
+      </details>
+    </section>
+  </main>
+
+  <script src="js/insightsChamber.js"></script>
+  <script src="js/metaInsightsEngine.js"></script>
+  <script src="js/metaInsightsMemory.js"></script>
+  <script src="js/metaInsightsAgent.js"></script>
+  <script src="js/ahaTrainingCorpus.js"></script>
+  <script src="js/ahaTrainingExamples.js"></script>
+  <script src="js/theoryClustersLoader.js"></script>
+  <script src="js/ahaFieldProfiles.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/ahaConfig.js"></script>
+  <script src="js/ahaDb.js"></script>
+  <script src="js/ahaAuth.js"></script>
+  <script src="js/ahaRepository.js"></script>
+  <script src="js/ahaChamberSync.js"></script>
+  <script src="js/ahaSources.js"></script>
+  <script src="js/ahaEmbeddings.js"></script>
+  <script src="js/ahaCalibrationIndex.js"></script>
+  <script src="js/ahaIngest.js"></script>
+  <script src="js/ahaContracts.js"></script>
+  <script src="js/ahaHistoryGoImport.js"></script>
+  <script src="js/ahaModules.js"></script>
+  <script src="js/ahaProductIntegration.js"></script>
+  <script src="js/ahaSyncHub.js"></script>
+  <script src="js/ahaManualSyncDryRunTargetAdapter.js"></script>
+  <script src="js/ahaManualSyncStateMachine.js"></script>
+  <script src="js/ahaManualSyncAdapter.js"></script>
+  <script src="js/ahaManualSyncHistory.js"></script>
+  <script src="js/ahaProfile.js"></script>
+  <script src="js/ahaSyncHubRegistry.js"></script>
+  <script src="js/ahaSyncChannelsRegistry.js"></script>
+  <script src="js/ahaSyncChannelRouter.js"></script>
+  <script src="js/ahaSyncCandidateBuilder.js"></script>
+  <script src="js/ahaSyncInsightDigest.js"></script>
+  <script src="js/ahaSyncReviewQueue.js"></script>
+  <script src="js/ahaSyncSourceTypeSummary.js"></script>
+  <script src="js/ahaSyncChannelSourceMatrix.js"></script>
+  <script src="js/ahaSyncCoverageGaps.js"></script>
+  <script src="js/ahaConversationInsightSnapshot.js"></script>
+  <script src="js/ahaQualityStatusSurface.js"></script>
+  <script src="js/ahaLocalInsightHome.js"></script>
+  <script src="js/ahaDailyOperatingLoop.js"></script>
+  <script src="js/ahaLocalInsightHomeDashboard.js"></script>
+  <script src="js/ahaPersonalAiLoopAudit.js"></script>
+  <script src="js/ahaDashboard.js"></script>
+  <script src="js/ahaGlobalNav.js"></script>
+</body>
+</html>
