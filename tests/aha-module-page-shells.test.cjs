@@ -24,7 +24,7 @@ for (const [moduleId, page] of Object.entries(pages)) {
   assert.ok(shellSource.includes('role="status"'), `${page.title} health badge should expose textual status semantics`);
   assert.ok(shellSource.includes('aha-module-content'), `${page.title} should expose a consistent content area`);
   assert.ok(page.js.includes(`updatePageHealth?.("${moduleId}"`), `${page.title} renderer should update health without a database call`);
-  assert.ok(page.js.includes('type: \"read_error\"'), `${page.title} should render a normalized read error state`);
+  assert.ok(page.js.includes('type: "read_error"'), `${page.title} should render a normalized read error state`);
   assert.equal(/syncFromDatabase\s*\(\s*\)\s*;/.test(page.js), false, `${page.title} should not auto-call syncFromDatabase`);
   assert.equal(/autoSync/.test(page.js), false, `${page.title} should not introduce autoSync`);
   assert.equal(/createClient\s*\(/.test(page.js), false, `${page.title} should not create a database client`);
@@ -57,8 +57,8 @@ assert.deepEqual(
 const expectedNoData = {
   lists: ['No lists yet.', 'Lists will appear here when available.'],
   paths: ['No paths yet.', 'Paths will appear here when available.'],
-  groups: ['No groups yet.', 'Create or sync groups to organize related AHA material.'],
-  avisa: ['No AHAavisa notes yet.', 'Create or sync notes to collect drafts and published AHA material.']
+  groups: ['No groups yet.', 'Local groups will appear here when created.'],
+  avisa: ['No AHAavisa notes yet.', 'Local drafts and article notes will appear here when created.']
 };
 for (const [moduleId, copy] of Object.entries(expectedNoData)) {
   const html = health.buildModuleEmptyState({ type: 'no_data', moduleId });
