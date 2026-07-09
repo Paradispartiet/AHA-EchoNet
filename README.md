@@ -1,5 +1,21 @@
 # AHA-EchoNet
 
+## Release readiness snapshot
+
+The current AHA-EchoNet baseline is a local-only ready baseline.
+
+The release snapshot is documented in:
+
+- `docs/AHA_RELEASE_READINESS_SNAPSHOT.md`
+- `docs/AHA_RELEASE_READINESS_SNAPSHOT.json`
+
+Current intentional non-ready modules:
+
+- `meet`: shell
+- `sync-hub`: planned/no-op
+
+This baseline does not activate backend, account login, EchoNet, social sharing, active sync, external publishing, model training, fine-tuning or History Go write-back.
+
 ## Registry and maturity matrix consistency
 
 `js/ahaModules.js` is the runtime module registry.

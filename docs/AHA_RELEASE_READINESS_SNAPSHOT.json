@@ -1,0 +1,256 @@
+{
+  "snapshot_id": "aha_release_readiness_snapshot_v1",
+  "repo": "Paradispartiet/AHA-EchoNet",
+  "status": "local_only_ready_baseline",
+  "source_of_truth": {
+    "registry": "js/ahaModules.js",
+    "matrix": "docs/AHA_MODULE_MATURITY_MATRIX.md",
+    "consistency": "docs/AHA_REGISTRY_MATRIX_CONSISTENCY.md"
+  },
+  "global_boundaries": {
+    "backend_enabled": false,
+    "sync_enabled": false,
+    "echonet_enabled": false,
+    "external_sharing_enabled": false,
+    "model_training_enabled": false,
+    "fine_tuning_enabled": false,
+    "historygo_writeback_enabled": false,
+    "hidden_auto_discovery_enabled": false
+  },
+  "modules": [
+    {
+      "id": "profile",
+      "title": "AHA Profil",
+      "registry_status": "active",
+      "maturity": "ready",
+      "release_state": "ready",
+      "boundary": "Local-only read-only profil/statusflate som samler lokale AHA-tellinger, siste aktivitet, personvernstatus, AHA Meta-profil og History Go importstatus uten backend, sync, EchoNet, sosial profil, AHAIngest, insight-chamber writes eller History Go write-back."
+    },
+    {
+      "id": "chat",
+      "title": "AHA Chat",
+      "registry_status": "active",
+      "maturity": "ready",
+      "release_state": "ready",
+      "boundary": "Stor modul med mange fallback-løp; moden, men bør fortsatt beskyttes mot dupliserte source events og støy."
+    },
+    {
+      "id": "knowledge-workbench",
+      "title": "Knowledge Workbench",
+      "registry_status": "active",
+      "maturity": "ready",
+      "release_state": "ready",
+      "boundary": "Local-only kontroll-/statusflate for knowledge pipeline med tydelig manuell flyt; ingen AHAIngest, insight writes, auto-training, backend, sync, EchoNet eller auto-approval."
+    },
+    {
+      "id": "data-intake",
+      "title": "Data Intake",
+      "registry_status": "active",
+      "maturity": "ready",
+      "release_state": "ready",
+      "boundary": "Local-only kandidat-/inntakskø med safety metadata, samtykkegrenser, manuell godkjenning før Training Corpus, fine-tuning av som standard og tester for ingen backend/EchoNet/History Go write-back/AHAIngest/insight writes."
+    },
+    {
+      "id": "knowledge-curation",
+      "title": "Knowledge Curation",
+      "registry_status": "active",
+      "maturity": "ready",
+      "release_state": "ready",
+      "boundary": "Local-only kurateringslag som grupperer, dedupliserer og prioriterer intake-kandidater, men krever manuell godkjenning før eksport; Training Corpus/Examples eksport blir raw/needs-review og ingen History Go/EchoNet/backend/insight writes."
+    },
+    {
+      "id": "knowledge-map",
+      "title": "Knowledge Map",
+      "registry_status": "active",
+      "maturity": "ready",
+      "release_state": "ready",
+      "boundary": "Avledet local-only kunnskapskart med source/opphavsmetadata på noder/kanter, canonical_truth=false, ingen kilde-mutasjon, ingen AHAIngest/insight writes/backend/EchoNet/History Go write-back og tester for derived graph boundary."
+    },
+    {
+      "id": "knowledge-graph-intelligence",
+      "title": "Graph Intelligence",
+      "registry_status": "active",
+      "maturity": "ready",
+      "release_state": "ready",
+      "boundary": "Local-only suggestion layer for grafkoblinger, hull og neste review-steg med auto_apply av, canonical_truth=false og tester for ingen auto-write til map/curation/training/backend/EchoNet."
+    },
+    {
+      "id": "personal-ai",
+      "title": "Personal AI",
+      "registry_status": "active",
+      "maturity": "ready",
+      "release_state": "ready",
+      "boundary": "Local-only kontroll-, readiness-, retrieval-, preview-, evaluation- og auditflate basert på godkjent lokalt materiale, med tester for ingen modelltrening, fine-tuning, backend/API-kall, EchoNet, Sync Hub, AHAIngest, insight writes eller History Go write-back."
+    },
+    {
+      "id": "training",
+      "title": "Training",
+      "registry_status": "active",
+      "maturity": "ready",
+      "release_state": "ready",
+      "boundary": "Local-only review corpus og training examples med fine-tuning av som standard, tydelig skille mellom corpus/examples/retrieval og ekte modelltrening, lokal JSONL-eksport uten upload/backend, safety metadata og tester for ingen AHAIngest/insight writes/EchoNet/Sync Hub/History Go write-back."
+    },
+    {
+      "id": "insights",
+      "title": "Meta Insights",
+      "registry_status": "active",
+      "maturity": "ready",
+      "release_state": "ready",
+      "boundary": "Modulen er primært read-only arkiv/visning; videre skriving må fortsatt gå via eksisterende motor/ingest."
+    },
+    {
+      "id": "sources",
+      "title": "Sources",
+      "registry_status": "active",
+      "maturity": "ready",
+      "release_state": "ready",
+      "boundary": "Read-only audit over source events and insight links; no repair/write actions."
+    },
+    {
+      "id": "sync-hub",
+      "title": "Sync Hub",
+      "registry_status": "planned",
+      "maturity": "planned",
+      "release_state": "planned",
+      "boundary": "Planned/no-op boundary dokumentert: Sync Hub kan lese lokal status, vise kandidater, dry-run og manuell review, men kjører ingen auto-sync, backend, EchoNet, ekstern deling eller History Go write-back."
+    },
+    {
+      "id": "lists",
+      "title": "Lists",
+      "registry_status": "active",
+      "maturity": "ready",
+      "release_state": "ready",
+      "boundary": "Local-only referansesamling med eksplisitt database-sync av, safety metadata, referansevalidering mot lokale AHA-objekter, tombstone-håndtering og tester for duplikater/ugyldige referanser."
+    },
+    {
+      "id": "paths",
+      "title": "Paths",
+      "registry_status": "active",
+      "maturity": "ready",
+      "release_state": "ready",
+      "boundary": "Local-only sekvenssamling med eksplisitt database-sync av, safety metadata, stegvalidering mot lokale AHA-objekter, tombstone-håndtering og tester for duplikater/ugyldige referanser."
+    },
+    {
+      "id": "mindmap",
+      "title": "Tankekart",
+      "registry_status": "active",
+      "maturity": "ready",
+      "release_state": "ready",
+      "boundary": "Read-only lokal graf over eksisterende AHA-objekter og referanser med source/opprinnelsesmetadata, tombstone/archived-håndtering, edge-validering og tester som bekrefter ingen writes/backend/sync/EchoNet."
+    },
+    {
+      "id": "historygo",
+      "title": "History Go",
+      "registry_status": "active",
+      "maturity": "ready",
+      "release_state": "ready",
+      "boundary": "Manuell local-only import boundary fra `aha_import_payload_v1` til AHA source events/insights med kompakt importlogg, databasepersist av som standard, ingen write-back til History Go-lagring uten eksplisitt flagg, og tester for AHA/HG-separasjon, no sync/backend/EchoNet og no EmneMatcher."
+    },
+    {
+      "id": "gallery",
+      "title": "Galleri",
+      "registry_status": "active",
+      "maturity": "ready",
+      "release_state": "ready",
+      "boundary": "Lokal-only galleriobjekter har eksplisitt ikke-publisert/EchoNet-ikke-delt metadata, tekstlig AHAIngest-sporbarhet, stabil source-id mot åpenbar re-ingest-duplisering og søk-regresjonstest."
+    },
+    {
+      "id": "notes",
+      "title": "Notes",
+      "registry_status": "active",
+      "maturity": "ready",
+      "release_state": "ready",
+      "boundary": "Modulen har direkte AHAIngest-kobling; hovedrisiko er reanalyse/duplisering og tom tekst."
+    },
+    {
+      "id": "insta",
+      "title": "AHA Insta",
+      "registry_status": "active",
+      "maturity": "ready",
+      "release_state": "ready",
+      "boundary": "Local-only Instagram-lignende flate med lokale poster/stories/profil/likes/comments/follows, eksplisitt import-preview før import, optional AHAIngest kun for tekst/captions, database-sync av som standard, safety metadata på poster/import/profil/social records, tombstone/archived-håndtering og tester for ingen ekstern deling/backend/sync/EchoNet."
+    },
+    {
+      "id": "feed",
+      "title": "Feed",
+      "registry_status": "active",
+      "maturity": "ready",
+      "release_state": "ready",
+      "boundary": "Lokal-only postflyt med nøktern UI-copy, eksplisitt AHAIngest-sporbarhet og modulspesifikke tester for tom tekst, lagring, local_only, ingen fetch/sync/EchoNet og enkel duplikatbeskyttelse."
+    },
+    {
+      "id": "meet",
+      "title": "Meet",
+      "registry_status": "shell",
+      "maturity": "shell",
+      "release_state": "shell",
+      "boundary": "Shell-kontrakt dokumentert: AHA Meet er foreløpig local-only møtearkiv/refleksjonskonsept uten runtime, lagring, invitasjoner, kalender, backend, sync, EchoNet eller History Go write-back. Kan senere lese History Go-signaler som personlig refleksjonsmateriale."
+    },
+    {
+      "id": "music",
+      "title": "AHA Music",
+      "registry_status": "active",
+      "maturity": "ready",
+      "release_state": "ready",
+      "boundary": "Metadata-only AHA Music-bibliotek med Spotify-import av valgte metadata, database-sync av som standard, token/PKCE holdt utenfor localStorage-biblioteket, safety metadata på library/imports/tracks/artists/albums/playlists/relations, ingen lydlagring/avspilling, ingen AI-klassifisering, lokal History Go-bridge uten write-back og tester for no backend/EchoNet/SyncHub/audio/auto-ingest."
+    },
+    {
+      "id": "avisa",
+      "title": "AHAavisa",
+      "registry_status": "active",
+      "maturity": "ready",
+      "release_state": "ready",
+      "boundary": "Local-only artikkel- og publiseringsflate med `published_local` som nettleser-lokal status, database-sync av som standard, safety metadata, lokal referansevalidering, tombstone/archived-håndtering og tester som bekrefter ingen ekstern publisering/backend/sync/EchoNet."
+    },
+    {
+      "id": "groups",
+      "title": "Groups",
+      "registry_status": "active",
+      "maturity": "ready",
+      "release_state": "ready",
+      "boundary": "Local-only grupperom med lokale medlemmer/roller, delt bibliotek av validerte lokale AHA-referanser, database-sync av som standard, safety metadata, tombstone/archived-håndtering, lokal AHAavisa-utkastflyt og tester som bekrefter ingen ekstern deling/invitasjoner/backend/sync/EchoNet."
+    },
+    {
+      "id": "search",
+      "title": "Søk",
+      "registry_status": "active",
+      "maturity": "ready",
+      "release_state": "ready",
+      "boundary": "Eksplisitt local-only søkeindeks for modne AHA-lag inkludert Music metadata, Training review corpus/examples, Knowledge Pipeline, Knowledge Map, Graph Intelligence og Personal AI-evalueringer, med secret redaction, ingen auto-discovery, ingen writes, backend, EchoNet, Sync Hub eller History Go runtime-indexering."
+    },
+    {
+      "id": "privacy",
+      "title": "Personvern",
+      "registry_status": "active",
+      "maturity": "ready",
+      "release_state": "ready",
+      "boundary": "Privacy dekker eksplisitt modne AHA-lag inkludert Music, Training, Knowledge Pipeline, Personal AI og Profile, med token/PKCE/OAuth/API-key blokkering, local-only flagg, safe export og tester for ingen hemmeligheter eller sync/backend/EchoNet-implikasjon."
+    }
+  ],
+  "intentional_non_ready": [
+    {
+      "id": "meet",
+      "release_state": "shell",
+      "reason": "concept shell only"
+    },
+    {
+      "id": "sync-hub",
+      "release_state": "planned",
+      "reason": "planned/no-op only"
+    }
+  ],
+  "safe_next_steps": [
+    "release-readiness UI/status surface",
+    "demo path through ready modules",
+    "local data seed/examples",
+    "manual backup/export/import"
+  ],
+  "not_safe_yet": [
+    "backend login",
+    "EchoNet sharing",
+    "real Sync Hub",
+    "external publishing",
+    "model training/fine-tuning",
+    "History Go write-back"
+  ]
+}
