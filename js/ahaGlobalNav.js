@@ -98,6 +98,7 @@
           <div class="aha-global-nav-panel" role="dialog" aria-modal="true" aria-label="Alle AHA-moduler">
             <div class="aha-global-nav-panel-header">
               <h2>Alle AHA-moduler</h2>
+              <a class="aha-global-nav-home" href="modules.html">Åpne modulside</a>
               <button type="button" class="aha-global-nav-close" data-aha-global-nav-close aria-label="Lukk modulmeny">&times;</button>
             </div>
             <div class="aha-global-nav-groups">${groupsMarkup}</div>

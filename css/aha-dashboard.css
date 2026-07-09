@@ -3189,3 +3189,51 @@ body:has(#aha-home-main) .aha-header-actions #btn-import-hg-primary {
     padding-top: calc(var(--aha-fixed-header-height) + 8px);
   }
 }
+
+/* AHA Modules page */
+.aha-modules-page {
+  width: min(920px, 100%);
+}
+
+.aha-modules-page-header {
+  margin-bottom: 12px;
+  padding: 14px;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 18px;
+  background: rgba(255,255,255,.035);
+}
+
+.aha-modules-page-section {
+  margin-bottom: 14px;
+}
+
+.aha-modules-page-section h2 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+}
+
+.aha-modules-page-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.aha-module-page-card {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.075);
+  background: rgba(255,255,255,.038);
+}
+
+.aha-module-page-card h3,
+.aha-module-page-card p {
+  margin: 0;
+}
+
+@media (max-width: 720px) {
+  .aha-modules-page-grid {
+    grid-template-columns: 1fr;
+  }
+}

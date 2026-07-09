@@ -2,7 +2,7 @@
 // AHA Chat – enkel service worker med NETWORK-FIRST strategi
 // Prøver alltid nett først, bruker cache som fallback (slik at nye deploys synes med en gang)
 
-const CACHE_NAME = "aha-chat-v4.0.414";
+const CACHE_NAME = "aha-chat-v4.0.415";
 
 // Filer vi gjerne vil ha tilgjengelig offline (app-shell)
 // Bygg URL-er relativt til service worker scope, slik at GitHub Pages
@@ -12,6 +12,7 @@ const ASSET_PATHS = [
   "./",
   "index.html",
   "status.html",
+  "modules.html",
   "css/aha-chat.css",
   "js/insightsChamber.js",
   "js/metaInsightsEngine.js",

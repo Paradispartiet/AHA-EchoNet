@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <title>AHA Moduler</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="css/aha-chat.css" />
+  <link rel="stylesheet" href="css/aha-dashboard.css" />
+  <link rel="stylesheet" href="css/aha-global-nav.css" />
+</head>
+<body>
+  <a class="aha-skip-link" href="#aha-modules-page-main">Hopp til hovedinnhold</a>
+  <div id="aha-global-nav"></div>
+
+  <main id="aha-modules-page-main" class="aha-dashboard aha-modules-page" tabindex="-1">
+    <header class="aha-modules-page-header">
+      <p class="eyebrow">AHA Bibliotek</p>
+      <h1>Moduler</h1>
+      <p>Alle AHA-verktøy samlet ett sted</p>
+      <a class="aha-tile-btn aha-tile-btn-secondary" href="index.html">Tilbake til AHA Home</a>
+    </header>
+
+    <div id="aha-modules-page-grid" class="aha-modules-page-grid" aria-live="polite">Moduler lastes …</div>
+  </main>
+
+  <script src="js/ahaModules.js"></script>
+  <script src="js/ahaGlobalNav.js"></script>
+  <script>
+    (function () {
+      "use strict";
+
+      const groups = [
+        { id: "core", label: "Kjerne", moduleIds: ["chat", "insights", "search"] },
+        { id: "engine", label: "Kunnskapsmotor", moduleIds: ["data-intake", "knowledge-curation", "knowledge-map", "knowledge-graph-intelligence", "training", "personal-ai"] },
+        { id: "collections", label: "Egne samlinger", moduleIds: ["lists", "paths", "mindmap"] },
+        { id: "personal", label: "Personlig", moduleIds: ["profile", "gallery", "notes", "insta", "music", "historygo"] },
+        { id: "social", label: "Sosialt og publisering", moduleIds: ["feed", "meet", "groups", "avisa"] },
+        { id: "system", label: "System", moduleIds: ["sync-hub", "privacy"] }
+      ];
+
+      function escapeHtml(value) {
+        return String(value ?? "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/\"/g, "&quot;")
+          .replace(/'/g, "&#39;");
+      }
+
+      function statusLabel(status) {
+        if (!status) return "";
+        if (status === "planned") return "Planlagt";
+        if (status === "shell") return "Forhåndsvisning";
+        if (status === "active") return "Aktiv";
+        return status;
+      }
+
+      function moduleCard(module) {
+        const status = statusLabel(module.status);
+        return `<article class="aha-module-page-card" data-module="${escapeHtml(module.id)}">
+          <h3>${escapeHtml(module.title)}</h3>
+          ${module.description ? `<p>${escapeHtml(module.description)}</p>` : ""}
+          ${status ? `<span class="aha-global-nav-item-tag">${escapeHtml(status)}</span>` : ""}
+          <a class="aha-tile-btn aha-tile-btn-primary" href="${escapeHtml(module.href)}">Åpne</a>
+        </article>`;
+      }
+
+      function renderModulesPage() {
+        const mount = document.getElementById("aha-modules-page-grid");
+        const modules = Array.isArray(window.AHA_MODULES) ? window.AHA_MODULES : [];
+        if (!mount || modules.length === 0) return;
+
+        const modulesById = new Map(modules.map((module) => [module.id, module]));
+        mount.classList.remove("aha-modules-page-grid");
+        mount.innerHTML = groups.map((group) => {
+          const cards = group.moduleIds
+            .map((id) => modulesById.get(id))
+            .filter(Boolean)
+            .map(moduleCard)
+            .join("");
+          if (!cards) return "";
+          return `<section class="aha-modules-page-section" aria-labelledby="aha-modules-page-${escapeHtml(group.id)}">
+            <h2 id="aha-modules-page-${escapeHtml(group.id)}">${escapeHtml(group.label)}</h2>
+            <div class="aha-modules-page-grid">${cards}</div>
+          </section>`;
+        }).join("");
+      }
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", renderModulesPage);
+      } else {
+        renderModulesPage();
+      }
+    })();
+  </script>
+</body>
+</html>
