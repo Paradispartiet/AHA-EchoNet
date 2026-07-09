@@ -78,6 +78,11 @@
 
     const groupsMarkup = GROUPS.map((group) => buildGroupMarkup(group, modulesById, icons, activeFile)).join("");
 
+    const existingOverlay = global.document.getElementById("aha-global-nav-overlay");
+    if (existingOverlay && existingOverlay.parentElement !== mount) {
+      existingOverlay.remove();
+    }
+
     mount.innerHTML = `
       <header class="aha-global-nav" data-aha-global-nav>
         <div class="aha-global-nav-bar">
@@ -107,12 +112,16 @@
       </header>
     `;
 
-    bindEvents(mount);
+    const overlay = mount.querySelector("#aha-global-nav-overlay");
+    if (overlay && overlay.parentElement !== global.document.body) {
+      global.document.body.appendChild(overlay);
+    }
+
+    bindEvents(mount, overlay);
   }
 
-  function bindEvents(mount) {
+  function bindEvents(mount, overlay) {
     const toggle = mount.querySelector("#aha-global-nav-toggle");
-    const overlay = mount.querySelector("#aha-global-nav-overlay");
     if (!toggle || !overlay) return;
 
     function open() {
@@ -135,7 +144,7 @@
       else close();
     });
 
-    mount.querySelectorAll("[data-aha-global-nav-close]").forEach((el) => {
+    overlay.querySelectorAll("[data-aha-global-nav-close]").forEach((el) => {
       el.addEventListener("click", close);
     });
 
