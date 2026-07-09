@@ -1200,3 +1200,14 @@ npm run music:export:history-go:audit -- path/to/aha_music_library_v1.json
 ```
 
 Kun relasjoner med en eksisterende `historyGoPlaceId` er sikre History Go-koblinger og får unlock-tekst. Relasjoner uten place ID blir med som `needs_place_review`, men skal ikke brukes som sikre sted-unlocks før de er verifisert. `rejected` relasjoner eksporteres ikke. Se eksportmappens `README.md` for full kontrakt, input-fallbacks og determinismeregler.
+
+## AHA Knowledge Pipeline boundary
+
+- **Knowledge Workbench** is a local control/status surface for pipeline health and next manual steps.
+- **Data Intake** is a local candidate queue. Candidate items are not canonical knowledge.
+- **Knowledge Curation** is the manual approval, dedupe and priority layer before any export.
+- **Training Corpus export** must be explicit and approved, and creates only raw/needs-review local material.
+- **Knowledge Map** is a derived local graph over approved/curated material, not canonical truth.
+- **Graph Intelligence** is suggestion-only for gaps, links and next review actions.
+- The pipeline does not call backend services, activate EchoNet, activate Sync Hub, write back to History Go, call AHAIngest, or write to the insight chamber.
+- The pipeline does not auto-train models or fine-tune models.
