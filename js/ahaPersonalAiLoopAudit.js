@@ -1,7 +1,10 @@
-// AHA Personal AI Loop Audit V1 – lokal, read-only validering av kjeden
-// godkjent personlig materiale → retrieval → RAG → AHA Chat.
+// AHA Personal AI Loop Audit V1 – lokal audit only av kjeden
+// godkjent personlig materiale → retrieval → preview/evaluering. Ingen auto-repair, auto-training, auto-export, backend eller model API.
 (function (global) {
   "use strict";
+
+  function personalAiBoundaryMeta(extra = {}) { return { source_app: "aha", origin_app: extra.origin_app || "aha_personal_ai", local_only: true, control_surface_only: extra.control_surface_only ?? false, retrieval_only: extra.retrieval_only ?? false, evaluation_only: extra.evaluation_only ?? false, preview_only: extra.preview_only ?? false, model_training_enabled: false, fine_tuning_enabled: false, remote_upload_enabled: false, backend_enabled: false, echonet_shared: false, sync_enabled: false, historygo_writeback_enabled: false, writes_to_insight_chamber: false, calls_model_api: false, ...extra }; }
+  function isUnavailableRecord(record) { return Boolean(record?.deleted_at || record?.deletedAt || record?.archived === true || record?.status === "archived" || record?.status === "rejected"); }
 
   const STORAGE_KEY = "aha_personal_ai_loop_audit_v1";
   const DEFAULT_QUERY = "Hva vet AHA om mine viktigste prosjekter og begreper?";
@@ -632,6 +635,7 @@
     if (materialCount > 0 && score >= 85 && dataSources.ok && chat.ok && semanticRetrieval.ok) status = "strong";
     const audit = {
       generatedAt: new Date(options.now || Date.now()).toISOString(),
+      local_only: true, audit_only: true, evaluation_only: true, model_training_enabled: false, fine_tuning_enabled: false, remote_upload_enabled: false, backend_enabled: false, calls_model_api: false, writes_to_insight_chamber: false, meta: personalAiBoundaryMeta({ origin_app: "aha_personal_ai_loop_audit", object_type: "loop_audit", evaluation_only: true }),
       status,
       score,
       checks: { dataSources, approvedMaterial, retrievalIndex: retrieval, sampleQuery, chatIntegration: chat, privacyAndConsent: privacy, answerComposer, answerEvaluation },
@@ -671,7 +675,7 @@
     try { return JSON.parse(global.localStorage?.getItem(STORAGE_KEY) || "null"); } catch { return null; }
   }
 
-  global.AHAPersonalAiLoopAudit = {
+  global.AHAPersonalAiLoopAudit = { personalAiBoundaryMeta, isUnavailableRecord,
     STORAGE_KEY,
     DEFAULT_QUERY,
     runAudit,

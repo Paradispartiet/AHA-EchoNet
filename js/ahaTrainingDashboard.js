@@ -4,7 +4,7 @@
 // UI-laget for AHA Training Corpus. Binder AHATrainingCorpus og
 // AHATrainingExamples til training.html: statuskort, handlinger,
 // corpus-liste med samtykke-kontroller og training examples-liste.
-// Alt lokalt; ingen sync, ingen nettverkskall.
+// Alt lokalt; ingen sync, ingen nettverkskall. Training betyr lokalt corpus/examples for review, retrieval og manuell lokal JSONL-eksport – ikke modelltrening, upload eller fine-tuning-start.
 // ─────────────────────────────────────────────
 
 (function (global) {
@@ -84,7 +84,7 @@
     const items = corpus?.loadCorpus?.() || [];
 
     if (!items.length) {
-      mount.innerHTML = `<p class="aha-training-empty">Training Corpus er tomt. Importer tekster fra AHA for å starte.</p>`;
+      mount.innerHTML = `<p class="aha-training-empty">Training Corpus er tomt. Importer lokalt AHA-materiale for review; dette trener ikke en modell.</p>`;
       return;
     }
 
@@ -102,7 +102,7 @@
           <button type="button" data-corpus-reject="${escapeHtml(item.id)}">Avvis</button>
           <button type="button" data-corpus-consent="useForMemory" data-corpus-id="${escapeHtml(item.id)}">${item.consent?.useForMemory ? "✓ " : ""}Tillat minne</button>
           <button type="button" data-corpus-consent="useForKnowledge" data-corpus-id="${escapeHtml(item.id)}">${item.consent?.useForKnowledge ? "✓ " : ""}Tillat kunnskap/RAG</button>
-          <button type="button" data-corpus-consent="useForTrainingExamples" data-corpus-id="${escapeHtml(item.id)}">${item.consent?.useForTrainingExamples ? "✓ " : ""}Tillat treningseksempler</button>
+          <button type="button" data-corpus-consent="useForTrainingExamples" data-corpus-id="${escapeHtml(item.id)}">${item.consent?.useForTrainingExamples ? "✓ " : ""}Tillat lokale examples</button>
           <button type="button" data-corpus-consent="useForStyle" data-corpus-id="${escapeHtml(item.id)}">${item.consent?.useForStyle ? "✓ " : ""}Tillat stil</button>
           <button type="button" data-corpus-consent="useForFineTuning" data-corpus-id="${escapeHtml(item.id)}">${item.consent?.useForFineTuning ? "✓ " : ""}Tillat finjustering</button>
           <button type="button" data-corpus-delete="${escapeHtml(item.id)}">Slett</button>
@@ -131,7 +131,7 @@
         <div class="aha-mini-stat"><strong>${Number(report.examples?.approved) || 0}</strong><span>Godkjente examples</span></div>
         <div class="aha-mini-stat"><strong>${Number(report.exportReadiness?.exportableExamples) || 0}</strong><span>Eksporterbare</span></div>
         <div class="aha-mini-stat"><strong>${escapeHtml(flag(report.ragReadiness?.ready))}</strong><span>RAG readiness</span></div>
-        <div class="aha-mini-stat"><strong>${escapeHtml(flag(report.fineTuningReadiness?.ready))}</strong><span>Fine-tuning readiness</span></div>
+        <div class="aha-mini-stat"><strong>${escapeHtml(flag(report.fineTuningReadiness?.ready))}</strong><span>Lokal export readiness</span></div>
         <div class="aha-mini-stat"><strong>${escapeHtml(flag(report.styleReadiness?.ready))}</strong><span>Style readiness</span></div>
       </div>
       <p class="module-meta">${escapeHtml(report.summary)}</p>
@@ -304,7 +304,7 @@
         <div class="aha-mini-stat"><strong>${Number(stats.good) || 0}</strong><span>Good</span></div>
         <div class="aha-mini-stat"><strong>${Number(stats.usable) || 0}</strong><span>Usable</span></div>
         <div class="aha-mini-stat"><strong>${Number(stats.weak) || 0}</strong><span>Weak</span></div>
-        <div class="aha-mini-stat"><strong>${Number(stats.trainingSuggestions) || 0}</strong><span>Training suggestions</span></div>
+        <div class="aha-mini-stat"><strong>${Number(stats.trainingSuggestions) || 0}</strong><span>Lokale example-forslag</span></div>
       </div>
       ${latest ? `<p class="module-meta"><strong>Siste evaluering:</strong> ${Number(latest.score) || 0}/100 · ${escapeHtml(latest.status || "unknown")} · ${escapeHtml(latest.summary || "")}</p>
       <details><summary>Dimensjoner</summary><pre>${escapeHtml(JSON.stringify(latest.dimensions || {}, null, 2))}</pre></details>` : `<p class="aha-training-empty">Ingen evalueringer lagret ennå.</p>`}

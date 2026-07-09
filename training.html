@@ -16,10 +16,11 @@
         <div>
           <p class="eyebrow">AHA Training</p>
           <h1>AHA Training Corpus</h1>
-          <p class="aha-module-purpose">Training Corpus er stedet der AHA får godkjent materiale å lære av.</p>
+          <p class="aha-module-purpose">Training i AHA betyr lokalt corpus og lokale examples for review, retrieval og eventuell manuell JSONL-eksport. Det trener ikke en modell, laster ikke opp data og starter ikke fine-tuning.</p>
           <p class="module-meta">Rått materiale blir først nyttig når det er godkjent. Godkjent materiale kan brukes i chat, retrieval, treningseksempler og senere eksport når samtykke er slått på.</p>
         </div>
       </header>
+      <p class="module-meta">Fine-tuning-samtykke betyr bare at et godkjent example kan bli med i en lokal JSONL-eksport senere. Ingen opplasting eller modelltrening skjer her.</p><p class="module-meta">Training Corpus = rått/godkjent lokalt materiale. Training Examples = lokale eksempler som må godkjennes. Personal AI bruker dette til lokal readiness, retrieval, preview og evaluering.</p>
       <div class="aha-module-actions">
         <button id="training-import-btn" type="button">Importer fra AHA</button>
         <button id="training-intake-import-btn" type="button">Importer godkjent intake</button>
@@ -48,7 +49,7 @@
         <div class="aha-mini-stat"><strong id="training-stat-raw">0</strong><span>Raw</span></div>
         <div class="aha-mini-stat"><strong id="training-stat-approved">0</strong><span>Godkjente</span></div>
         <div class="aha-mini-stat"><strong id="training-stat-training-allowed">0</strong><span>Treningseksempler tillatt</span></div>
-        <div class="aha-mini-stat"><strong id="training-stat-finetuning-allowed">0</strong><span>Finjustering tillatt</span></div>
+        <div class="aha-mini-stat"><strong id="training-stat-finetuning-allowed">0</strong><span>Lokal JSONL-eksport mulig</span></div>
         <div class="aha-mini-stat"><strong id="training-stat-examples-total">0</strong><span>Treningseksempler</span></div>
         <div class="aha-mini-stat"><strong id="training-stat-examples-approved">0</strong><span>Godkjente eksempler</span></div>
       </div>
@@ -56,7 +57,7 @@
 
     <section class="aha-panel" id="training-data-intake-panel">
       <h2>Data Intake</h2>
-      <p class="module-meta">Nytt materiale inn går via Data Intake før godkjenning til Training Corpus.</p>
+      <p class="module-meta">Nytt materiale inn går via Data Intake før lokal godkjenning til Training Corpus. JSONL-eksport er lokal fil/streng, ikke backend/upload.</p>
       <div class="aha-training-stats">
         <div class="aha-mini-stat"><strong id="training-intake-total">0</strong><span>Intake items</span></div>
         <div class="aha-mini-stat"><strong id="training-intake-review">0</strong><span>Review</span></div>

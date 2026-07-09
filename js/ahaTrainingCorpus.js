@@ -1,12 +1,9 @@
 // ahaTrainingCorpus.js
 // ─────────────────────────────────────────────
-// AHA Training Corpus – local-first treningslag.
-// Samler tekst fra AHA (notater, feed, avisa, source events, etterarbeid,
-// innsikter) som strukturerte corpus items. Brukeren godkjenner bruk og
-// samtykke per item. Dette er første steg mot AHA Personal Model:
-//   tekst → corpus item → bruker-godkjenning → training example →
-//   example-godkjenning → JSONL-eksport.
-// Alt er lokalt (localStorage). Ingen sync, ingen nettverkskall.
+// AHA Training Corpus is a local review corpus. It stores user-approved local
+// material for retrieval, examples and later export decisions. It does not
+// train, fine-tune, upload, sync or call any model/backend. Alt er lokalt
+// (localStorage) og approval-basert.
 // ─────────────────────────────────────────────
 
 (function (global) {
@@ -21,7 +18,18 @@
 
   const CONSENT_KEYS = ["useForMemory", "useForTrainingExamples", "useForFineTuning", "useForStyle", "useForKnowledge"];
 
+  function trainingBoundaryMeta(extra = {}) {
+    return {
+      source_app: "aha", origin_app: extra.origin_app || "aha_training", local_only: true, review_required: true, approval_required: true,
+      training_data_candidate_only: extra.training_data_candidate_only ?? false, model_training_enabled: false, fine_tuning_enabled: false,
+      remote_upload_enabled: false, backend_enabled: false, echonet_shared: false, sync_enabled: false, historygo_writeback_enabled: false,
+      writes_to_insight_chamber: false, calls_model_api: false, ...extra
+    };
+  }
+  function isUnavailableRecord(record) { return Boolean(record?.deleted_at || record?.deletedAt || record?.archived === true || record?.status === "archived" || record?.status === "rejected"); }
+
   function defaultConsent() {
+    // useForFineTuning means only future explicit local export eligibility, not active fine-tuning.
     return {
       useForMemory: true,
       useForTrainingExamples: false,
@@ -159,7 +167,20 @@
       createdAt: src.createdAt || src.created_at || now,
       updatedAt: src.updatedAt || src.updated_at || src.createdAt || src.created_at || now,
       deletedAt: deletedAt || "",
-      meta: asObject(src.meta),
+      local_only: true,
+      review_required: true,
+      approval_required: true,
+      training_data_candidate_only: true,
+      model_training_enabled: false,
+      fine_tuning_enabled: false,
+      remote_upload_enabled: false,
+      backend_enabled: false,
+      echonet_shared: false,
+      sync_enabled: false,
+      historygo_writeback_enabled: false,
+      writes_to_insight_chamber: false,
+      calls_model_api: false,
+      meta: { ...asObject(src.meta), ...trainingBoundaryMeta({ origin_app: "aha_training_corpus", object_type: "training_corpus_item", training_data_candidate_only: true }) },
       textHash: asText(src.textHash) || textHash(text)
     };
   }
@@ -437,7 +458,7 @@
     });
 
     if (added) saveCorpus(all);
-    return { ok: true, added, skipped, total: loadCorpus().length };
+    return { ok: true, added, skipped, total: loadCorpus().length, ...trainingBoundaryMeta({ origin_app: "aha_training_corpus", object_type: "training_corpus_import", training_data_candidate_only: true }) };
   }
 
   const AHATrainingCorpus = {
@@ -461,7 +482,9 @@
     importFromExistingAhaSources,
     normalizeCorpusItem,
     textHash,
-    detectLanguage
+    detectLanguage,
+    trainingBoundaryMeta,
+    isUnavailableRecord
   };
 
   if (typeof module !== "undefined" && module.exports) {
