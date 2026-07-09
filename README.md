@@ -1,5 +1,22 @@
 # AHA-EchoNet
 
+## Registry and maturity matrix consistency
+
+`js/ahaModules.js` is the runtime module registry.
+
+`docs/AHA_MODULE_MATURITY_MATRIX.md` is the documented maturity and boundary audit for the same module IDs.
+
+Every module in the registry must have one matching matrix row, and every matrix module row must have one registry entry.
+
+Registry descriptions must be boundary-safe. They must not imply backend, EchoNet, Sync Hub activation, external publishing, social sharing, model training, fine-tuning, History Go write-back or login unless the module has an explicit contract and tests for that behavior.
+
+Current intentional non-ready statuses:
+
+- `meet`: shell
+- `sync-hub`: planned/no-op
+
+All other active modules should be treated according to their documented local-only/read-only/manual-review boundaries.
+
 
 
 ## AHA Profile boundary

@@ -10,7 +10,7 @@
       type: "personal",
       status: "active",
       href: "profile.html",
-      description: "Brukerens personlige representasjonslag: profil, innlogging, progresjon, galleri og innsikter.",
+      description: "Local-only profil/statusflate for lokale AHA-tellinger, siste aktivitet, personvern, Meta-profil og History Go importstatus. Ingen sosial profil, innlogging, backend, sync eller EchoNet.",
       phase: 1
     },
     {
@@ -19,7 +19,7 @@
       type: "core",
       status: "active",
       href: "chat.html",
-      description: "Refleksjon, samtale og innsiktsmotor via eksisterende AHAIngest-flyt.",
+      description: "AHA Chat bruker eksisterende AHAIngest/source-event-flyt for refleksjon og innsikt. Ingen ny parallell motor.",
       phase: 1
     },
 
@@ -29,7 +29,7 @@
       type: "system",
       status: "active",
       href: "knowledge-workbench.html",
-      description: "Samlet arbeidsbord for intake, curation, knowledge map, graph intelligence og Training Corpus.",
+      description: "Local-only kontrollflate for Data Intake, Curation, Knowledge Map, Graph Intelligence og Training. Viser manuelle neste steg; ingen auto-approval, backend, sync eller EchoNet.",
       phase: 2
     },
     {
@@ -38,7 +38,7 @@
       type: "system",
       status: "active",
       href: "intake.html",
-      description: "Samler nytt materiale før godkjenning til Training Corpus og Personal AI.",
+      description: "Local-only kandidat-/inntakskø før review og samtykke. Materiale blir ikke Training Corpus, sync, EchoNet eller History Go write-back automatisk.",
       phase: 2
     },
     {
@@ -47,7 +47,7 @@
       type: "system",
       status: "active",
       href: "curation.html",
-      description: "Rydder, grupperer og prioriterer materiale før det blir varig AHA-kunnskap.",
+      description: "Local-only kurateringslag som grupperer, dedupliserer og prioriterer kandidater før eksplisitt manuell eksport til raw/needs-review Training.",
       phase: 2
     },
     {
@@ -56,7 +56,7 @@
       type: "system",
       status: "active",
       href: "knowledge-map.html",
-      description: "Viser prosjekter, begreper, kilder og koblinger i AHA sin kuraterte kunnskap, med Graph Intelligence for koblingsforslag, hull og neste kunnskapsarbeid.",
+      description: "Avledet local-only graf over kuratert AHA-materiale. Ikke canonical sannhet, ikke graph-database, ingen kilde-mutasjon.",
       phase: 2
     },
     {
@@ -65,7 +65,7 @@
       type: "system",
       status: "active",
       href: "knowledge-map.html#graph-intelligence",
-      description: "Analyserer AHA sitt kunnskapskart og foreslår koblinger, hull og neste kunnskapsarbeid.",
+      description: "Local-only suggestion layer for koblinger, hull og neste review-steg i Knowledge Map. Forslag auto-appliseres ikke.",
       phase: 2
     },
     {
@@ -74,7 +74,7 @@
       type: "system",
       status: "active",
       href: "personal-ai.html",
-      description: "Kontrollpanel for AHA sin personlige AI-motor: minne, corpus, retrieval, composer og evaluation.",
+      description: "Local-only kontroll-, readiness-, retrieval-, preview-, evaluation- og auditflate basert på godkjent lokalt materiale. Ingen modelltrening, API-kall, backend, sync eller EchoNet.",
       phase: 1
     },
     {
@@ -83,7 +83,7 @@
       type: "system",
       status: "active",
       href: "training.html",
-      description: "Training Corpus er stedet der AHA får godkjent materiale å lære av og bruke i chat.",
+      description: "Local-only review corpus og training examples for retrieval, review og eventuell lokal JSONL-eksport. Trener ikke modell, starter ikke fine-tuning og laster ikke opp data.",
       phase: 2
     },
     {
@@ -92,7 +92,7 @@
       type: "knowledge",
       status: "active",
       href: "insights.html",
-      description: "Samlet innsiktsarkiv og metamotor med sporbarhet fra source events og meta-mønstre.",
+      description: "Read-only visning av AHA insight chamber og source-event-sporbarhet. Videre skriving skal gå via eksisterende AHAIngest/motor.",
       phase: 1
     },
     {
@@ -101,7 +101,7 @@
       type: "system",
       status: "active",
       href: "sources.html",
-      description: "Lokal read-only source/ingest audit for source events og insight-koblinger.",
+      description: "Local-only read-only audit over AHA source events og insight-koblinger. Ingen repair, import, backend, sync eller EchoNet.",
       phase: 2
     },
     {
@@ -110,7 +110,7 @@
       type: "integration",
       status: "planned",
       href: "index.html#aha-sync-hub-status",
-      description: "Planlagt local-only oversikt for sync-kandidater, dry-run og manuell review. Ingen auto-sync, backend, EchoNet eller ekstern deling er aktivert.",
+      description: "Planlagt local-only oversikt for sync-kandidater, dry-run og manuell review. Planned/no-op. Ingen auto-sync, backend, EchoNet, ekstern deling eller History Go write-back.",
       phase: 2
     },
     {
@@ -119,7 +119,7 @@
       type: "knowledge",
       status: "active",
       href: "lists.html",
-      description: "Favoritter, gjøremål og AI-støttede lister koblet til innsikter.",
+      description: "Local-only referansesamlinger til eksisterende AHA-objekter. Ikke egen kunnskapsmotor, sosial deling eller backend-sync.",
       phase: 1
     },
     {
@@ -128,7 +128,7 @@
       type: "knowledge",
       status: "active",
       href: "paths.html",
-      description: "Læringsreiser over tid: samtale → innsikt → handling.",
+      description: "Local-only sekvenser/stier som organiserer eksisterende AHA-objekter. Ikke autoplanlegging, læringsmotor, sync eller sosial deling.",
       phase: 1
     },
     {
@@ -137,7 +137,7 @@
       type: "knowledge",
       status: "active",
       href: "mindmap.html",
-      description: "Visuell graf for sammenhenger mellom samtaler, innsikter og begreper.",
+      description: "Read-only lokal graf over eksisterende AHA-objekter og referanser. Ingen writes, backend, sync, EchoNet eller graph-database.",
       phase: 1
     },
     {
@@ -146,7 +146,7 @@
       type: "historygo",
       status: "active",
       href: "historygo.html",
-      description: "Importbro og oversikt mellom History Go og AHA uten å blande motorene.",
+      description: "Manuell local-only importbro fra History Go til AHA source events/insights. AHA skriver ikke tilbake til History Go uten eksplisitt dev/test-flagg.",
       phase: 1
     },
     {
@@ -155,7 +155,7 @@
       type: "personal",
       status: "active",
       href: "gallery.html",
-      description: "Personlig bildegalleri, minner og visuelle uttrykk som kan ingestes.",
+      description: "Local-only galleri for personlige visuelle objekter og tekstlig AHAIngest-sporbarhet. Ingen filopplasting, bildeanalyse, sync eller EchoNet-deling.",
       phase: 1
     },
     {
@@ -164,7 +164,7 @@
       type: "personal",
       status: "active",
       href: "notes.html",
-      description: "Egne notater og tekster sendt gjennom AHAIngest.",
+      description: "Local-only notater og tekster med eksplisitt AHAIngest-flyt. Beskyttes mot tom tekst og duplisert reanalyse.",
       phase: 1
     },
     {
@@ -173,7 +173,7 @@
       type: "personal",
       status: "active",
       href: "insta.html",
-      description: "Bilde- og videostrøm med personlig kontekst.",
+      description: "Local-only Instagram-lignende personlig medieflate med poster/stories/import-preview. Ingen ekstern publisering, konto-linking, backend, sync eller EchoNet.",
       phase: 1
     },
     {
@@ -182,7 +182,7 @@
       type: "social",
       status: "active",
       href: "feed.html",
-      description: "Korte poster og delte refleksjoner i AHA.",
+      description: "Local-only postflyt for korte refleksjoner med AHAIngest-sporbarhet. Ingen sosial publisering, sync, backend eller EchoNet.",
       phase: 1
     },
     {
@@ -191,7 +191,7 @@
       type: "social",
       status: "shell",
       href: "meet.html",
-      description: "Shell for local-only personlig møtearkiv og refleksjon; ingen invitasjoner, kalender, EchoNet, sync, backend eller History Go write-back.",
+      description: "Shell for local-only personlig møtearkiv/refleksjon. Ingen runtime-lagring, invitasjoner, kalender, backend, sync, EchoNet eller History Go write-back.",
       phase: 2
     },
     {
@@ -200,7 +200,7 @@
       type: "personal",
       status: "active",
       href: "music.html",
-      description: "Spotify-import, normalisert musikkmetadata og personlig AHA Music-bibliotek som kan bli innsikt, kanon, artistkoblinger og History Go-oppdagelser.",
+      description: "Metadata-only AHA Music-bibliotek med Spotify-import, normalisert musikkmetadata og lokal History Go-bridge uten write-back. Ingen lydlagring, avspilling, AI-klassifisering, backend, sync eller EchoNet.",
       phase: 2
     },
     {
@@ -209,7 +209,7 @@
       type: "publishing",
       status: "active",
       href: "avisa.html",
-      description: "Kuraterte historier og personlige oppsummeringer basert på innsikter.",
+      description: "Local-only artikkel- og skriveflate med lokale publiseringsmarkeringer. Ingen ekstern publisering, backend, sync eller EchoNet.",
       phase: 2
     },
     {
@@ -218,7 +218,7 @@
       type: "social",
       status: "active",
       href: "groups.html",
-      description: "Fellesrom for samarbeid, deling og kollektiv EchoNet-bygging.",
+      description: "Local-only grupperom for lokale medlemmer/roller og referanser til AHA-objekter. Ingen invitasjoner, ekstern deling, backend, sync eller EchoNet.",
       phase: 2
     },
     {
@@ -227,7 +227,7 @@
       type: "system",
       status: "active",
       href: "search.html",
-      description: "Tverrgående søk i samtaler, notater, galleri, feed og importerte kilder.",
+      description: "Read-only eksplisitt local-only søk i modne AHA-lag. Ingen blind lokal lagringsindeksering, tokenindeksering, writes, backend, Sync Hub eller EchoNet.",
       phase: 2
     },
     {
@@ -236,7 +236,7 @@
       type: "system",
       status: "active",
       href: "privacy.html",
-      description: "Transparens, datakontroll og samtykke for hele AHA-laget.",
+      description: "Local-only personvernrapport, samtykke og safe export for eksplisitte AHA-lag. Tokens, OAuth/PKCE/API-nøkler og hemmeligheter eksporteres ikke.",
       phase: 1
     }
   ];
@@ -286,9 +286,9 @@
       default: { title: "Nothing here yet.", message: "Items will appear here when available." },
       lists: { title: "No lists yet.", message: "Lists will appear here when available." },
       paths: { title: "No paths yet.", message: "Paths will appear here when available." },
-      groups: { title: "No groups yet.", message: "Create or sync groups to organize related AHA material." },
-      avisa: { title: "No AHAavisa notes yet.", message: "Create or sync notes to collect drafts and published AHA material." },
-      music: { title: "No imported music yet.", message: "Connect Spotify and import playlists to build your AHA Music library." }
+      groups: { title: "No groups yet.", message: "Local groups will appear here when created." },
+      avisa: { title: "No AHAavisa notes yet.", message: "Local drafts and article notes will appear here when created." },
+      music: { title: "No imported music metadata yet.", message: "Metadata-only music items will appear here after a local import." }
     },
     missing_source: { title: "Module data not found.", message: "This module has no available local data source." },
     not_configured: { title: "Module not configured.", message: "This module needs a configured data source before items can appear." },
@@ -296,7 +296,34 @@
     read_error: { title: "Could not read module data.", message: "Try again later or view diagnostics." },
     unknown: { title: "Nothing to show.", message: "No module data is available." }
   };
-  const PREFERRED_ORDER = ["chat", "data-intake", "knowledge-curation", "knowledge-map", "training", "personal-ai", "insights", "sources", "sync-hub", "music", "historygo", "gallery", "notes", "feed", "avisa", "profile", "search", "privacy"];
+  const PREFERRED_ORDER = [
+    "chat",
+    "profile",
+    "notes",
+    "feed",
+    "gallery",
+    "insta",
+    "insights",
+    "sources",
+    "lists",
+    "paths",
+    "mindmap",
+    "search",
+    "historygo",
+    "music",
+    "knowledge-workbench",
+    "data-intake",
+    "knowledge-curation",
+    "knowledge-map",
+    "knowledge-graph-intelligence",
+    "training",
+    "personal-ai",
+    "privacy",
+    "avisa",
+    "groups",
+    "meet",
+    "sync-hub"
+  ];
 
   function escapeHtml(value) {
     return String(value ?? "")
