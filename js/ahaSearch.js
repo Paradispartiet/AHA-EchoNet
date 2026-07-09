@@ -14,10 +14,42 @@
     lists: "aha_lists_v1",
     paths: "aha_paths_v1",
     articles: "aha_articles_v1",
-    groups: "aha_groups_v1"
+    groups: "aha_groups_v1",
+    musicLibrary: "aha_music_library_v1",
+    musicBridge: "aha_music_history_go_bridge_v1",
+    musicBridgeAlt: "aha_music_historygo_bridge_v1",
+    trainingCorpus: "aha_training_corpus_v1",
+    trainingExamples: "aha_training_examples_v1",
+    dataIntake: "aha_data_intake_queue_v1",
+    knowledgeCuration: "aha_knowledge_curation_v1",
+    knowledgeMap: "aha_knowledge_map_v1",
+    graphIntelligence: "aha_knowledge_graph_intelligence_v1",
+    personalAnswerEvaluations: "aha_personal_answer_evaluations_v1",
+    personalAiLoopAudit: "aha_personal_ai_loop_audit_v1"
   };
 
+  const SECRET_KEY_PATTERNS = [
+    /token/i,
+    /refresh/i,
+    /access/i,
+    /secret/i,
+    /pkce/i,
+    /oauth/i,
+    /api[_-]?key/i,
+    /authorization/i
+  ];
+
   let allItems = [];
+
+  function isSecretKey(key) {
+    return SECRET_KEY_PATTERNS.some((pattern) => pattern.test(String(key || "")));
+  }
+
+  function redactSearchText(value) {
+    const text = String(value ?? "");
+    if (!text) return "";
+    return text.length > 1200 ? `${text.slice(0, 1200)}…` : text;
+  }
 
   function safeParse(raw, fallback) {
     try {
@@ -102,18 +134,66 @@
       type: asText(input?.type, "item"),
       source: asText(input?.source, "aha"),
       refId: asText(input?.refId, ""),
-      text: asText(input?.text, ""),
+      text: redactSearchText(input?.text),
       tags: normalizeTags(input?.tags),
       createdAt: input?.createdAt || "",
       updatedAt: input?.updatedAt || "",
       last_reanalyzed_at: input?.last_reanalyzed_at || "",
       href: asText(input?.href, "index.html"),
-      meta: input?.meta && typeof input.meta === "object" && !Array.isArray(input.meta) ? input.meta : {}
+      local_only: true,
+      read_only: true,
+      search_index_item: true,
+      derived_index_only: true,
+      backend_enabled: false,
+      echonet_shared: false,
+      sync_enabled: false,
+      external_publish_enabled: false,
+      historygo_writeback_enabled: false,
+      contains_secret: false,
+      ...(input?.safety && typeof input.safety === "object" && !Array.isArray(input.safety) ? input.safety : {}),
+      meta: {
+        source_app: "aha",
+        origin_app: "aha_search",
+        source_key: asText(input?.sourceKey, ""),
+        object_type: asText(input?.objectType || input?.type, "item"),
+        ...(input?.meta && typeof input.meta === "object" && !Array.isArray(input.meta) ? input.meta : {})
+      }
     };
   }
 
   function loadByKey(key, fallback) {
+    if (isSecretKey(key)) return fallback;
     return safeParse(localStorage.getItem(key) || JSON.stringify(fallback), fallback);
+  }
+
+  function safeField(value, fallback) {
+    return redactSearchText(asText(value, fallback || ""));
+  }
+
+  function fieldText(record, fields) {
+    return fields.filter((field) => !isSecretKey(field)).map((field) => safeField(record?.[field], "")).filter(Boolean).join(" ");
+  }
+
+  function pushGeneric(out, sourceKey, sourceId, records, options) {
+    asArray(records).filter((record) => record && typeof record === "object" && !isDeletedRecord(record)).forEach((record, index) => {
+      const refId = asText(record.id || record.key || record.uuid, `${sourceId}_${index}`);
+      out.push(createSearchItem({
+        id: `${sourceId}_${refId}`,
+        title: safeField(record.title || record.name || record.label || record.query || record.input, options.title || "AHA-objekt"),
+        type: options.type,
+        source: sourceId,
+        sourceKey,
+        objectType: options.type,
+        refId,
+        text: fieldText(record, options.fields || []),
+        tags: record.tags || record.keywords || record.concepts,
+        createdAt: record.createdAt || record.created_at || "",
+        updatedAt: record.updatedAt || record.updated_at || record.lastUpdated || "",
+        href: options.href || "index.html",
+        safety: options.safety || {},
+        meta: { index, sourceId }
+      }));
+    });
   }
 
   function collectSearchItems() {
@@ -321,6 +401,36 @@
         meta: { index }
       }));
     });
+
+
+    const musicSafety = { metadata_only: true, audio_stored: false, audio_playback_enabled: false, spotify_token_included: false };
+    const music = loadByKey(STORAGE_KEYS.musicLibrary, {});
+    pushGeneric(out, STORAGE_KEYS.musicLibrary, "aha_music_library", asArray(music?.tracks), { type: "music_track", title: "Music track", fields: ["title", "name", "artist", "album", "description"], href: "music.html", safety: musicSafety });
+    pushGeneric(out, STORAGE_KEYS.musicLibrary, "aha_music_library", asArray(music?.artists), { type: "music_artist", title: "Music artist", fields: ["name", "title", "description", "genres"], href: "music.html", safety: musicSafety });
+    pushGeneric(out, STORAGE_KEYS.musicLibrary, "aha_music_library", asArray(music?.albums), { type: "music_album", title: "Music album", fields: ["name", "title", "artist", "description"], href: "music.html", safety: musicSafety });
+    pushGeneric(out, STORAGE_KEYS.musicLibrary, "aha_music_library", asArray(music?.playlists), { type: "music_playlist", title: "Music playlist", fields: ["name", "title", "description"], href: "music.html", safety: musicSafety });
+
+    const bridge = loadByKey(STORAGE_KEYS.musicBridge, loadByKey(STORAGE_KEYS.musicBridgeAlt, {}));
+    pushGeneric(out, STORAGE_KEYS.musicBridge, "aha_music_historygo_bridge", asArray(bridge?.relations || bridge?.matches || bridge?.items || bridge?.reports), { type: "music_historygo_bridge_metadata", title: "Music History Go bridge", fields: ["title", "summary", "description", "relation", "sourceTitle", "trackTitle", "artistName"], href: "music.html", safety: musicSafety });
+
+    const trainingSafety = { training_data_candidate_only: true, model_training_enabled: false, fine_tuning_enabled: false, remote_upload_enabled: false };
+    pushGeneric(out, STORAGE_KEYS.trainingCorpus, "aha_training_corpus", loadByKey(STORAGE_KEYS.trainingCorpus, []), { type: "training_corpus_item", title: "Training corpus item", fields: ["title", "summary", "text", "sourceTitle"], href: "training.html", safety: trainingSafety });
+    pushGeneric(out, STORAGE_KEYS.trainingExamples, "aha_training_examples", loadByKey(STORAGE_KEYS.trainingExamples, []), { type: "training_example", title: "Training example", fields: ["taskType", "input", "output", "summary"], href: "training.html", safety: trainingSafety });
+
+    pushGeneric(out, STORAGE_KEYS.dataIntake, "aha_data_intake", loadByKey(STORAGE_KEYS.dataIntake, []), { type: "data_intake_candidate", title: "Data intake candidate", fields: ["title", "summary", "text", "sourceType"], href: "intake.html" });
+    pushGeneric(out, STORAGE_KEYS.knowledgeCuration, "aha_knowledge_curation", loadByKey(STORAGE_KEYS.knowledgeCuration, []), { type: "knowledge_curation_item", title: "Curation item", fields: ["title", "summary", "text", "reviewNote"], href: "curation.html" });
+
+    const graphSafety = { derived_graph_only: true, canonical_truth: false };
+    const map = loadByKey(STORAGE_KEYS.knowledgeMap, {});
+    pushGeneric(out, STORAGE_KEYS.knowledgeMap, "aha_knowledge_map", asArray(map?.nodes), { type: "knowledge_map_node", title: "Knowledge map node", fields: ["title", "label", "summary", "description"], href: "knowledge-map.html", safety: graphSafety });
+    pushGeneric(out, STORAGE_KEYS.knowledgeMap, "aha_knowledge_map", asArray(map?.edges), { type: "knowledge_map_edge", title: "Knowledge map edge", fields: ["title", "label", "summary", "relation", "from", "to"], href: "knowledge-map.html", safety: graphSafety });
+    const gi = loadByKey(STORAGE_KEYS.graphIntelligence, {});
+    pushGeneric(out, STORAGE_KEYS.graphIntelligence, "aha_knowledge_graph_intelligence", asArray(gi?.suggestions || gi?.items), { type: "graph_intelligence_suggestion", title: "Graph suggestion", fields: ["title", "summary", "reason", "suggestion"], href: "knowledge-map.html#graph-intelligence", safety: graphSafety });
+
+    const evalSafety = { evaluation_only: true, control_surface_only: true, model_training_enabled: false, calls_model_api: false };
+    pushGeneric(out, STORAGE_KEYS.personalAnswerEvaluations, "aha_personal_answer_evaluations", loadByKey(STORAGE_KEYS.personalAnswerEvaluations, []), { type: "personal_answer_evaluation", title: "Personal answer evaluation", fields: ["query", "summary", "score", "rating"], href: "personal-ai.html", safety: evalSafety });
+    const audit = loadByKey(STORAGE_KEYS.personalAiLoopAudit, {});
+    pushGeneric(out, STORAGE_KEYS.personalAiLoopAudit, "aha_personal_ai_loop_audit_summary", asArray(audit?.summaries || audit?.runs || audit?.items), { type: "personal_ai_loop_audit_summary", title: "Personal AI loop audit summary", fields: ["query", "summary", "status", "score"], href: "personal-ai.html", safety: evalSafety });
 
     return out;
   }
