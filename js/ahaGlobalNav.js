@@ -90,6 +90,7 @@
             <span>Moduler</span>
           </button>
           <span class="aha-global-nav-current" aria-hidden="true">${escapeHtml(currentLabel)}</span>
+          <a class="aha-global-nav-home" href="sync.html">Sync Hub</a>
           <a class="aha-global-nav-home" href="index.html">Hjem</a>
         </div>
         <div class="aha-global-nav-overlay" id="aha-global-nav-overlay" hidden>
