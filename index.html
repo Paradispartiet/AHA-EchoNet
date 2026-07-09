@@ -73,13 +73,6 @@
     </div>
 
     <section class="aha-app-shell" aria-label="AHA appflate">
-      <aside class="aha-panel aha-modules-panel" aria-labelledby="aha-modules-title">
-        <p class="eyebrow">AHA Home</p>
-        <h2 id="aha-modules-title">Modules</h2>
-        <p class="aha-panel-subtitle">Module status at a glance.</p>
-        <nav id="aha-modules-grid" class="aha-grid" aria-label="AHA modules"></nav>
-      </aside>
-
       <section class="aha-panel aha-home-panel" aria-labelledby="aha-home-title">
         <p class="eyebrow">AHA Home</p>
         <h1 id="aha-home-title">AHA Home</h1>
@@ -128,41 +121,6 @@
         </div>
 
 
-        <section class="aha-insights-panel aha-product-integration-panel" id="aha-product-integration" aria-label="AHA Product Integration V1">
-          <p class="eyebrow">AHA Product Integration V1</p>
-          <h2>AHA er klar til å arbeide med deg</h2>
-          <p id="aha-product-summary" class="aha-panel-subtitle">AHA samler Home, Chat, Personal AI, Training, Sync Hub, AHA Music og History Go i én produktflyt.</p>
-          <div class="aha-profile-status-grid" aria-label="Produktstatus">
-            <div class="aha-mini-stat"><strong id="aha-product-overall">Laster …</strong><span>Samlet status</span></div>
-            <div class="aha-mini-stat"><strong id="aha-product-personal-ai">Sjekker …</strong><span>Personal AI</span></div>
-            <div class="aha-mini-stat"><strong id="aha-product-training">Sjekker …</strong><span>Training</span></div>
-            <div class="aha-mini-stat"><strong id="aha-product-chat">Sjekker …</strong><span>Chat</span></div>
-          </div>
-          <div class="aha-tile-actions" aria-label="Primære produktinnganger">
-            <a class="aha-tile-btn aha-tile-btn-primary" href="chat.html">Åpne AHA Chat</a>
-            <a class="aha-tile-btn" href="personal-ai.html">Åpne Personal AI</a>
-            <a class="aha-tile-btn" href="training.html">Åpne Training</a>
-            <a class="aha-tile-btn" href="knowledge-workbench.html">Åpne Knowledge Workbench</a>
-            <a class="aha-tile-btn" href="intake.html">Åpne Data Intake</a>
-            <a class="aha-tile-btn aha-tile-btn-secondary" href="#aha-sync-hub-status">Sync Hub</a>
-            <a class="aha-tile-btn aha-tile-btn-secondary" href="music.html">AHA Music</a>
-            <a class="aha-tile-btn aha-tile-btn-secondary" href="historygo.html">History Go</a>
-          </div>
-          <div id="aha-product-primary-action" class="aha-status-stack" aria-live="polite">Neste handling lastes …</div>
-        </section>
-
-        <section class="aha-insights-panel aha-product-flow-panel" id="aha-product-flow-panel" aria-label="Slik henger AHA sammen">
-          <p class="eyebrow">Produktflyt</p>
-          <h2>Slik henger AHA sammen</h2>
-          <div class="aha-profile-status-grid aha-product-flow-grid">
-            <div class="aha-mini-stat"><strong>Kilder</strong><span>Sync Hub / AHA Music / History Go</span></div>
-            <div class="aha-mini-stat"><strong>Training Corpus</strong><span>Rått materiale godkjennes for bruk</span></div>
-            <div class="aha-mini-stat"><strong>Personal AI</strong><span>Kontrollrom for minne, retrieval og evaluering</span></div>
-            <div class="aha-mini-stat"><strong>AHA Chat</strong><span>Hovedsamtalen med AHA</span></div>
-            <div class="aha-mini-stat"><strong>Tilbake til AHA</strong><span>Innsikter, musikk og History Go-oppdagelser</span></div>
-          </div>
-        </section>
-
         <div id="aha-profile-status-grid" class="aha-profile-status-grid" aria-label="Nøkkeltall"></div>
         <div id="aha-profile-stats" class="aha-profile-stats" aria-label="AHA nøkkeltall"></div>
 
@@ -205,6 +163,59 @@
         </section>
       </section>
 
+
+
+      <aside class="aha-panel aha-modules-panel" aria-labelledby="aha-modules-title">
+        <p class="eyebrow">AHA Home</p>
+        <h2 id="aha-modules-title">Modules</h2>
+        <p class="aha-panel-subtitle">Module status at a glance.</p>
+        <nav id="aha-modules-grid" class="aha-grid" aria-label="AHA modules"></nav>
+      </aside>
+
+      <details class="aha-panel aha-system-panel" aria-label="Teknisk og systemstatus">
+        <summary>
+          <span>
+            <span class="eyebrow">System</span>
+            <strong>Teknisk / system</strong>
+          </span>
+          <small>Produktflyt, integrasjoner og status</small>
+        </summary>
+        <div class="aha-system-panel-content">
+        <section class="aha-insights-panel aha-product-integration-panel" id="aha-product-integration" aria-label="AHA Product Integration V1">
+          <p class="eyebrow">AHA Product Integration V1</p>
+          <h2>AHA er klar til å arbeide med deg</h2>
+          <p id="aha-product-summary" class="aha-panel-subtitle">AHA samler Home, Chat, Personal AI, Training, Sync Hub, AHA Music og History Go i én produktflyt.</p>
+          <div class="aha-profile-status-grid" aria-label="Produktstatus">
+            <div class="aha-mini-stat"><strong id="aha-product-overall">Laster …</strong><span>Samlet status</span></div>
+            <div class="aha-mini-stat"><strong id="aha-product-personal-ai">Sjekker …</strong><span>Personal AI</span></div>
+            <div class="aha-mini-stat"><strong id="aha-product-training">Sjekker …</strong><span>Training</span></div>
+            <div class="aha-mini-stat"><strong id="aha-product-chat">Sjekker …</strong><span>Chat</span></div>
+          </div>
+          <div class="aha-tile-actions" aria-label="Primære produktinnganger">
+            <a class="aha-tile-btn aha-tile-btn-primary" href="chat.html">Åpne AHA Chat</a>
+            <a class="aha-tile-btn" href="personal-ai.html">Åpne Personal AI</a>
+            <a class="aha-tile-btn" href="training.html">Åpne Training</a>
+            <a class="aha-tile-btn" href="knowledge-workbench.html">Åpne Knowledge Workbench</a>
+            <a class="aha-tile-btn" href="intake.html">Åpne Data Intake</a>
+            <a class="aha-tile-btn aha-tile-btn-secondary" href="#aha-sync-hub-status">Sync Hub</a>
+            <a class="aha-tile-btn aha-tile-btn-secondary" href="music.html">AHA Music</a>
+            <a class="aha-tile-btn aha-tile-btn-secondary" href="historygo.html">History Go</a>
+          </div>
+          <div id="aha-product-primary-action" class="aha-status-stack" aria-live="polite">Neste handling lastes …</div>
+        </section>
+
+        <section class="aha-insights-panel aha-product-flow-panel" id="aha-product-flow-panel" aria-label="Slik henger AHA sammen">
+          <p class="eyebrow">Produktflyt</p>
+          <h2>Slik henger AHA sammen</h2>
+          <div class="aha-profile-status-grid aha-product-flow-grid">
+            <div class="aha-mini-stat"><strong>Kilder</strong><span>Sync Hub / AHA Music / History Go</span></div>
+            <div class="aha-mini-stat"><strong>Training Corpus</strong><span>Rått materiale godkjennes for bruk</span></div>
+            <div class="aha-mini-stat"><strong>Personal AI</strong><span>Kontrollrom for minne, retrieval og evaluering</span></div>
+            <div class="aha-mini-stat"><strong>AHA Chat</strong><span>Hovedsamtalen med AHA</span></div>
+            <div class="aha-mini-stat"><strong>Tilbake til AHA</strong><span>Innsikter, musikk og History Go-oppdagelser</span></div>
+          </div>
+        </section>
+
       <aside class="aha-panel aha-status-panel" aria-labelledby="aha-status-title">
         <div class="aha-panel-head">
           <div>
@@ -232,6 +243,8 @@
           <pre id="out" class="aha-dashboard-output"></pre>
         </details>
       </aside>
+        </div>
+      </details>
     </section>
 
 <nav class="aha-mobile-nav" aria-label="Mobilnavigasjon">
