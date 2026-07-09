@@ -47,6 +47,9 @@
     { key: "aha_music_library_v1", label: "AHA Music lokalt metadata-bibliotek (ingen lyd/tokens)", kind: "object", isAHA: true, isHistoryGo: false, canClear: true },
     { key: "aha_music_history_go_bridge_v1", label: "AHA Music lokal History Go-bro (forslag/rapport, ikke write-back)", kind: "object", isAHA: true, isHistoryGo: false, canClear: true },
     { key: SETTINGS_KEY, label: "Personverninnstillinger", kind: "object", isAHA: true, isHistoryGo: false, canClear: true },
+    { key: "aha_profile_name", label: "AHA Profil lokalt visningsnavn (local-only, ingen EchoNet/sync)", kind: "string", isAHA: true, isHistoryGo: false, canClear: true },
+    { key: "aha_profile_id", label: "AHA Profil lokal ID (local-only, ingen EchoNet/sync)", kind: "string", isAHA: true, isHistoryGo: false, canClear: true },
+    { key: "aha_pending_chat_prompt_v1", label: "AHA Profil pending chat-prompt (eksplisitt lokal handling, ingen EchoNet/sync)", kind: "object", isAHA: true, isHistoryGo: false, canClear: true },
     { key: "aha_import_payload_v1", label: "History Go importpayload", kind: "object", isAHA: false, isHistoryGo: true, canClear: false },
     { key: "hg_unlocks_v1", label: "History Go unlocks", kind: "object", isAHA: false, isHistoryGo: true, canClear: false },
     { key: "visited_places", label: "History Go besøkte steder", kind: "array", isAHA: false, isHistoryGo: true, canClear: false },
@@ -115,6 +118,10 @@
     return Boolean(item && typeof item === "object" && (item.deleted_at || item.deletedAt));
   }
 
+  function rawStorageExists(key) {
+    try { return localStorage.getItem(key) !== null; } catch { return false; }
+  }
+
   function analyzeStorageValue(def, parsed) {
     const empty = {
       itemCount: 0,
@@ -131,7 +138,14 @@
     };
 
     if (!Array.isArray(parsed)) {
-      if (!parsed || typeof parsed !== "object") return empty;
+      if (!parsed || typeof parsed !== "object") {
+        return {
+          ...empty,
+          itemCount: rawStorageExists(def.key) ? 1 : 0,
+          activeCount: rawStorageExists(def.key) ? 1 : 0,
+          localOnlyCount: rawStorageExists(def.key) && def.key.startsWith("aha_profile") ? 1 : 0
+        };
+      }
       return {
         ...empty,
         itemCount: 1,

@@ -37,7 +37,37 @@
   function asArray(value) { return Array.isArray(value) ? value : []; }
   function asObject(value) { return value && typeof value === "object" && !Array.isArray(value) ? value : {}; }
   function asText(value, fallback) { const s = String(value ?? "").trim(); return s || fallback; }
-  function isDeleted(item) { return Boolean(item?.deleted_at || item?.deletedAt); }
+  function profileBoundaryMeta(extra = {}) {
+    return {
+      source_app: "aha",
+      origin_app: "aha_profile",
+      local_only: true,
+      read_only: true,
+      status_surface_only: true,
+      profile_identity_external: false,
+      social_profile_enabled: false,
+      echonet_shared: false,
+      sync_enabled: false,
+      backend_enabled: false,
+      historygo_writeback_enabled: false,
+      writes_to_insight_chamber: false,
+      ...extra
+    };
+  }
+
+  function profileBoundaryResult(data = {}) {
+    return {
+      ok: true,
+      ...profileBoundaryMeta(),
+      data
+    };
+  }
+
+  function isUnavailableRecord(record) {
+    return Boolean(record?.deleted_at || record?.deletedAt || record?.archived === true);
+  }
+
+  function isDeleted(item) { return isUnavailableRecord(item); }
   function ts(item) {
     const raw = item?.updatedAt || item?.updated_at || item?.last_updated || item?.lastUpdated || item?.createdAt || item?.created_at || item?.first_seen || item?.firstSeen || "";
     const t = Date.parse(raw);
@@ -176,7 +206,24 @@
         createdAt: item?.createdAt || ""
       }));
 
-    return { topThemes, topConcepts, topTensions, topSubjectLinks, recentAfterwork, sourceCounts: { insights: insights.length, afterwork: afterwork.length }, fullMeta, metaInsight };
+    return {
+      topThemes,
+      topConcepts,
+      topTensions,
+      topSubjectLinks,
+      recentAfterwork,
+      sourceCounts: { insights: insights.length, afterwork: afterwork.length },
+      fullMeta,
+      metaInsight,
+      local_only: true,
+      read_only: true,
+      meta_profile_snapshot_only: true,
+      writes_to_insight_chamber: false,
+      echonet_shared: false,
+      sync_enabled: false,
+      backend_enabled: false,
+      meta: profileBoundaryMeta({ object_type: "aha_meta_profile_snapshot" })
+    };
   }
 
   function collectProfileStatus() {
@@ -213,7 +260,16 @@
       groupMembersCount,
       groupReferencesCount,
       readyArticlesCount: articles.filter((a) => String(a?.status || "").toLowerCase() === "ready").length,
-      lastActivityAt: latestTs ? new Date(latestTs).toISOString() : ""
+      lastActivityAt: latestTs ? new Date(latestTs).toISOString() : "",
+      local_only: true,
+      read_only: true,
+      status_surface_only: true,
+      echonet_shared: false,
+      sync_enabled: false,
+      backend_enabled: false,
+      historygo_writeback_enabled: false,
+      writes_to_insight_chamber: false,
+      meta: profileBoundaryMeta({ object_type: "profile_status" })
     };
   }
 
@@ -241,7 +297,14 @@
           source,
           createdAt: item?.createdAt || item?.created_at || item?.first_seen || item?.firstSeen || "",
           updatedAt: item?.updatedAt || item?.updated_at || item?.last_updated || item?.lastUpdated || item?.createdAt || item?.created_at || item?.first_seen || item?.firstSeen || "",
-          href
+          href,
+          local_only: true,
+          read_only: true,
+          activity_snapshot_only: true,
+          echonet_shared: false,
+          sync_enabled: false,
+          backend_enabled: false,
+          meta: profileBoundaryMeta({ object_type: "recent_activity_item", source })
         });
       });
     });
@@ -254,7 +317,14 @@
         source: "aha_afterwork",
         createdAt: item?.createdAt || "",
         updatedAt: item?.updatedAt || item?.createdAt || "",
-        href: "chat.html"
+        href: "chat.html",
+        local_only: true,
+        read_only: true,
+        activity_snapshot_only: true,
+        echonet_shared: false,
+        sync_enabled: false,
+        backend_enabled: false,
+        meta: profileBoundaryMeta({ object_type: "recent_activity_item", source: "aha_afterwork" })
       });
     });
     return out.sort((a, b) => ts(b) - ts(a)).slice(0, 10);
@@ -280,7 +350,14 @@
           createdAt: item?.createdAt || "",
           concepts,
           insightsCount: asArray(item?.insights).length,
-          learningPathCount: asArray(item?.learningPath).length || asArray(item?.learningPaths).length
+          learningPathCount: asArray(item?.learningPath).length || asArray(item?.learningPaths).length,
+          local_only: true,
+          read_only: true,
+          archive_snapshot_only: true,
+          echonet_shared: false,
+          sync_enabled: false,
+          backend_enabled: false,
+          meta: profileBoundaryMeta({ object_type: "afterwork_archive_item" })
         };
       });
   }
@@ -291,14 +368,25 @@
     const unlocks = safeParse(localStorage.getItem(KEYS.unlocks) || "[]", []);
     const visitedPlaces = safeParse(localStorage.getItem(KEYS.visitedPlaces) || "[]", []);
     const people = safeParse(localStorage.getItem(KEYS.peopleCollected) || "[]", []);
+    const activeUnlocks = Array.isArray(unlocks) ? unlocks.filter((item) => !isUnavailableRecord(item)) : unlocks;
+    const activeVisitedPlaces = Array.isArray(visitedPlaces) ? visitedPlaces.filter((item) => !isUnavailableRecord(item)) : visitedPlaces;
+    const activePeople = Array.isArray(people) ? people.filter((item) => !isUnavailableRecord(item)) : people;
     const progressRaw = localStorage.getItem(KEYS.historyProgress);
     return {
       hasImportPayload: Boolean(String(payloadRaw || "").trim()),
-      visitedPlacesCount: Array.isArray(visitedPlaces) ? visitedPlaces.length : Object.keys(asObject(visitedPlaces)).length,
-      peopleCollectedCount: Array.isArray(people) ? people.length : Object.keys(asObject(people)).length,
-      unlocksCount: Array.isArray(unlocks) ? unlocks.length : Object.keys(asObject(unlocks)).length,
+      visitedPlacesCount: Array.isArray(activeVisitedPlaces) ? activeVisitedPlaces.length : Object.keys(asObject(activeVisitedPlaces)).length,
+      peopleCollectedCount: Array.isArray(activePeople) ? activePeople.length : Object.keys(asObject(activePeople)).length,
+      unlocksCount: Array.isArray(activeUnlocks) ? activeUnlocks.length : Object.keys(asObject(activeUnlocks)).length,
       progressExists: Boolean(String(progressRaw || "").trim()),
-      lastImportAt: asText(payload?.exported_at || payload?.updatedAt || payload?.updated_at || payload?.createdAt || payload?.created_at, "")
+      lastImportAt: asText(payload?.exported_at || payload?.updatedAt || payload?.updated_at || payload?.createdAt || payload?.created_at, ""),
+      local_only: true,
+      read_only: true,
+      historygo_read_only: true,
+      historygo_writeback_enabled: false,
+      echonet_shared: false,
+      sync_enabled: false,
+      backend_enabled: false,
+      meta: profileBoundaryMeta({ object_type: "historygo_profile_status" })
     };
   }
 
@@ -310,10 +398,20 @@
       allowPublicPublishing: typeof raw.allowPublicPublishing === "boolean" ? raw.allowPublicPublishing : PRIVACY_DEFAULTS.allowPublicPublishing,
       allowSocialSharing: typeof raw.allowSocialSharing === "boolean" ? raw.allowSocialSharing : PRIVACY_DEFAULTS.allowSocialSharing,
       allowHistoryGoImport: typeof raw.allowHistoryGoImport === "boolean" ? raw.allowHistoryGoImport : PRIVACY_DEFAULTS.allowHistoryGoImport,
-      allowAnalytics: typeof raw.allowAnalytics === "boolean" ? raw.allowAnalytics : PRIVACY_DEFAULTS.allowAnalytics
+      allowAnalytics: typeof raw.allowAnalytics === "boolean" ? raw.allowAnalytics : PRIVACY_DEFAULTS.allowAnalytics,
+      local_only: true,
+      read_only: true,
+      privacy_status_snapshot_only: true,
+      echonet_shared: false,
+      sync_enabled: false,
+      backend_enabled: false,
+      meta: profileBoundaryMeta({ object_type: "privacy_status" })
     };
   }
 
+  // Boundary exception: this is the only write AHA Profile is allowed to make.
+  // It stores a local pending prompt only after explicit user action to open Chat;
+  // it is not ingest, sync, backend persistence or a History Go write-back.
   function savePendingChatPrompt(prompt, options = {}) {
     if (typeof prompt !== "string") return false;
     const trimmedPrompt = prompt.trim();
@@ -380,16 +478,6 @@ Forklar hvordan materialet mitt kan kobles til dette fagområdet, og foreslå en
       return;
     }
 
-    // "Tenk med Meta AI" – start Meta Insights AI-agentsesjon og åpne chat.
-    if (action === "meta-think-ai") {
-      const fullMeta = latestMetaProfile.fullMeta;
-      const agent = global.AHAMetaInsightsAgent;
-      if (!fullMeta || !agent || typeof agent.savePendingAgentSession !== "function") return;
-      const result = agent.savePendingAgentSession(fullMeta);
-      if (!result || !result.ok) return;
-      window.location.href = "chat.html";
-      return;
-    }
 
     const index = Number.parseInt(button.getAttribute("data-index") || "", 10);
     if (!Number.isInteger(index) || index < 0) return;
@@ -447,7 +535,6 @@ Forklar hvordan materialet mitt kan kobles til dette fagområdet, og foreslå en
       ${patternsMarkup ? `<div class="aha-meta-insight-row"><strong>Mønstre</strong>${patternsMarkup}</div>` : ""}
       ${tensionMarkup}
       <button type="button" class="aha-meta-action aha-tile-btn aha-tile-btn-secondary" data-action="meta-confirm-insight">Bekreft med AHA</button>
-      <button type="button" class="aha-meta-action aha-tile-btn aha-tile-btn-secondary" data-action="meta-think-ai">Tenk med Meta AI</button>
     </section>`;
   }
 
@@ -537,7 +624,20 @@ Forklar hvordan materialet mitt kan kobles til dette fagområdet, og foreslå en
 
   function refresh() { render(); }
 
-  global.AHAProfile = { collectProfileStatus, collectRecentActivity, collectHistoryGoStatus, collectPrivacyStatus, collectAfterworkArchive, collectAhaMetaProfile, render, refresh };
+  global.AHAProfile = {
+    profileBoundaryMeta,
+    profileBoundaryResult,
+    isUnavailableRecord,
+    collectProfileStatus,
+    collectRecentActivity,
+    collectHistoryGoStatus,
+    collectPrivacyStatus,
+    collectAfterworkArchive,
+    collectAhaMetaProfile,
+    render,
+    refresh,
+    savePendingChatPrompt
+  };
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", render);
   else render();
