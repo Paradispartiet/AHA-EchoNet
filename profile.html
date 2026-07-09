@@ -17,6 +17,8 @@
           <p class="eyebrow">AHA Home</p>
           <h1>AHA Profil</h1>
           <p class="aha-module-purpose">Din personlige innsiktsflate.</p>
+          <p class="aha-module-purpose">AHA Profil er en lokal statusflate for din AHA. Den viser lokale tellinger, siste aktivitet, personvern og importstatus, men publiserer ikke en sosial profil.</p>
+          <p class="aha-module-purpose">Ingen profil deles eksternt. Ingen EchoNet-identitet er aktivert.</p>
         </div>
       </header>
       <div class="aha-status-stack">
@@ -30,21 +32,34 @@
     <section class="aha-panel">
       <p class="eyebrow">Siste aktivitet</p>
       <h2>Siste 10 objekter</h2>
-      <ul id="aha-recent-activity" class="aha-activity-list"></ul>
+      <ul id="aha-recent-activity" class="aha-activity-list"><li>Ingen lokal aktivitet ennå. Denne read-only listen fylles bare av eksisterende lokale AHA-data.</li></ul>
     </section>
 
     <section class="aha-panel">
       <p class="eyebrow">History Go</p>
       <h2>Status</h2>
-      <div id="aha-historygo-status" class="aha-historygo-status"></div>
+      <p class="aha-module-purpose">History Go-statusen vises som lokal read-only importstatus. AHA Profil skriver ikke tilbake til History Go.</p>
+      <div id="aha-historygo-status" class="aha-historygo-status"><p>Ingen History Go-import funnet lokalt ennå.</p></div>
       <div class="aha-tile-actions"><a class="aha-tile-btn aha-tile-btn-secondary" href="historygo.html">Åpne History Go-status</a></div>
     </section>
 
     <section class="aha-panel">
       <p class="eyebrow">Personvern</p>
       <h2>Kontrollstatus</h2>
-      <div id="aha-privacy-status" class="aha-privacy-status"></div>
+      <div id="aha-privacy-status" class="aha-privacy-status"><p>Ingen personverninnstillinger lagret ennå. Standard lokal read-only status vises.</p></div>
       <div class="aha-tile-actions"><a class="aha-tile-btn aha-tile-btn-secondary" href="privacy.html">Personvern / Kontroll</a></div>
+    </section>
+
+    <section class="aha-panel">
+      <p class="eyebrow">AHA Meta-profil</p>
+      <h2>Read-only lokalt mønsterbilde</h2>
+      <div id="aha-meta-profile-home" class="aha-meta-profile-home"><p class="aha-afterwork-empty">Ingen Meta-profil-materiale ennå. Denne statusflaten skriver ikke til innsiktskammeret.</p></div>
+    </section>
+
+    <section class="aha-panel">
+      <p class="eyebrow">Etterarbeid</p>
+      <h2>Lokalt arkivutdrag</h2>
+      <div id="aha-afterwork-archive" class="aha-afterwork-archive"><p class="aha-afterwork-empty">Ingen lagrede etterarbeid ennå.</p></div>
     </section>
 
     <section class="aha-panel">

@@ -2,6 +2,16 @@
 
 
 
+## AHA Profile boundary
+
+AHA Profile is a local status/audit surface for the user's AHA. It shows local counts, recent activity, privacy status, AHA Meta-profile summaries, afterwork archive previews and local History Go import status.
+
+AHA Profile is not a public or social profile. It does not create an EchoNet identity, account identity, backend profile, sync model or external profile sharing surface.
+
+AHA Profile must not call AHAIngest, write source events, write to the insight chamber, write to History Go keys, modify privacy settings, call backend APIs or perform hidden sync. History Go information is read as local import/status only and AHA Profile does not write back to History Go.
+
+The only allowed write from AHA Profile is `aha_pending_chat_prompt_v1`, and only after an explicit user action that opens Chat with a prepared local prompt. This pending prompt is not ingest, sync or backend persistence.
+
 ## AHA Meet shell contract
 
 `AHA Meet` er foreløpig bare en shell og kontraktside for et senere personlig møtearkiv. Rollen er personlig refleksjon, møtenotater, innsikter og etterarbeid rundt møter, personer, steder og temaer; den er ikke sosial koordinering.
