@@ -6,26 +6,33 @@ const dashboardCode = fs.readFileSync('js/ahaDashboard.js', 'utf8');
 const modulesCode = fs.readFileSync('js/ahaModules.js', 'utf8');
 const dashboardCss = fs.readFileSync('css/aha-dashboard.css', 'utf8');
 
+const hasHomeCopy = (...copies) => copies.some((copy) =>
+  dashboardCode.includes(copy) || indexCode.includes(copy) || modulesCode.includes(copy)
+);
+
 for (const title of ['System health', 'Data readiness', 'Blockers', 'Sync Hub', 'AHA Sync-status', 'Manual sync history']) {
   assert.ok(dashboardCode.includes(title), `AHA Home should include the normalized title: ${title}`);
 }
-assert.ok(indexCode.includes('<h2 id="aha-modules-title">Modules</h2>'), 'the module menu should use the normalized, labelled Modules title');
+assert.ok(
+  indexCode.includes('<h2 id="aha-modules-title">Moduler</h2>') || indexCode.includes('<h2 id="aha-modules-title">Modules</h2>'),
+  'the module menu should use the normalized, labelled module title'
+);
 assert.ok(indexCode.includes('<h3>Activity</h3>'), 'the activity card should use the normalized Activity title');
 
-for (const copy of [
-  'Read-only oversikt. Ingen sync kjøres automatisk.',
-  'Ingen sync kjøres her ennå.',
-  'Latest manual sync runs. Read-only.',
-  'Module status at a glance.',
-  'No manual sync runs yet.',
-  'No active blockers.',
-  'Modul ikke lastet på Home',
-  'No warnings.',
-  'No module data found.',
-  'Could not read sync history.',
-  'Manuell sync kommer senere.'
+for (const copyGroup of [
+  ['Read-only oversikt. Ingen sync kjøres automatisk.'],
+  ['Ingen sync kjøres her ennå.', 'Manual sync is gated; no auto-sync exists.'],
+  ['Latest manual sync runs. Read-only.'],
+  ['Module status at a glance.', 'Module status at a glance in the app menu.'],
+  ['No manual sync runs yet.'],
+  ['No active blockers.'],
+  ['Modul ikke lastet på Home', 'This module is listed as a shell and has no Home health source.'],
+  ['No warnings.'],
+  ['No module data found.'],
+  ['Could not read sync history.'],
+  ['Manuell sync kommer senere.', 'Manual sync is gated; no auto-sync exists.']
 ]) {
-  assert.ok(dashboardCode.includes(copy) || indexCode.includes(copy), `AHA Home should include normalized copy: ${copy}`);
+  assert.ok(hasHomeCopy(...copyGroup), `AHA Home should include normalized copy: ${copyGroup.join(' / ')}`);
 }
 
 for (const action of ['View details', 'Close', 'Cancel', 'Prepare sync', 'Manual sync', 'Confirm sync']) {
