@@ -20,7 +20,7 @@ assert.ok(
 assert.ok(indexCode.includes('<h3>Activity</h3>'), 'the activity card should use the normalized Activity title');
 
 for (const copyGroup of [
-  ['Read-only oversikt. Ingen sync kjøres automatisk.'],
+  ['Read-only oversikt. Ingen sync kjøres automatisk.', 'Preview only. No data is written and no sync is performed.'],
   ['Ingen sync kjøres her ennå.', 'Manual sync is gated; no auto-sync exists.'],
   ['Latest manual sync runs. Read-only.'],
   ['Module status at a glance.', 'Module status at a glance in the app menu.'],
