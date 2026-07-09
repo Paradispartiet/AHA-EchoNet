@@ -17,6 +17,25 @@
     updatedAt: "",
     meta: {}
   };
+  const SECRET_KEY_PATTERNS = [
+    /token/i,
+    /refresh/i,
+    /access/i,
+    /secret/i,
+    /pkce/i,
+    /oauth/i,
+    /api[_-]?key/i,
+    /authorization/i
+  ];
+
+  const BLOCKED_EXPORT_KEYS = [
+    "aha_music_" + "spotify_" + "token_v1",
+    "spotify_" + "access_" + "token",
+    "spotify_" + "refresh_" + "token",
+    "spotify_" + "pkce_" + "verifier",
+    "spotify_" + "oauth_" + "state"
+  ];
+
   const PRIVACY_CHECKBOX_KEYS = Object.freeze([
     "localOnly",
     "allowCollectiveLearning",
@@ -46,7 +65,10 @@
     { key: "aha_groups_v1", label: "AHA Grupper / Sirkler", kind: "array", isAHA: true, isHistoryGo: false, canClear: true },
     { key: "aha_music_library_v1", label: "AHA Music lokalt metadata-bibliotek (ingen lyd/tokens)", kind: "object", isAHA: true, isHistoryGo: false, canClear: true },
     { key: "aha_music_history_go_bridge_v1", label: "AHA Music lokal History Go-bro (forslag/rapport, ikke write-back)", kind: "object", isAHA: true, isHistoryGo: false, canClear: true },
+    { key: "aha_music_historygo_bridge_v1", label: "AHA Music lokal History Go-bro alias (metadata only, ikke write-back)", kind: "object", isAHA: true, isHistoryGo: false, canClear: true },
+    { key: "aha_music_export_audit_v1", label: "AHA Music lokal eksport-/auditlogg (ingen tokens)", kind: "array", isAHA: true, isHistoryGo: false, canClear: true },
     { key: "aha_data_intake_queue_v1", label: "AHA Data Intake lokal kandidat-/inntakskø (manual review, ikke trening/sync)", kind: "array", isAHA: true, isHistoryGo: false, canClear: true },
+    { key: "aha_source_connectors_last_scan_v1", label: "AHA Source Connectors siste lokale scan (status/metadata only)", kind: "object", isAHA: true, isHistoryGo: false, canClear: true },
     { key: "aha_knowledge_curation_v1", label: "AHA Knowledge Curation lokale review-/approval-items", kind: "array", isAHA: true, isHistoryGo: false, canClear: true },
     { key: "aha_knowledge_map_v1", label: "AHA Knowledge Map avledet lokal graf (ikke canonical sannhet)", kind: "object", isAHA: true, isHistoryGo: false, canClear: true },
     { key: "aha_knowledge_workbench_status_v1", label: "AHA Knowledge Workbench lokal statusflate", kind: "object", isAHA: true, isHistoryGo: false, canClear: true },
@@ -59,15 +81,34 @@
     { key: "aha_personal_ai_loop_audit_v1", label: "AHA Personal AI Loop Audit lokal kontroll (ingen auto-training/export)", kind: "object", isAHA: true, isHistoryGo: false, canClear: true },
     { key: "aha_personal_answer_evaluations_v1", label: "AHA Personal Answer Evaluations lokale evalueringer (ingen trenings-trigger)", kind: "array", isAHA: true, isHistoryGo: false, canClear: true },
     { key: SETTINGS_KEY, label: "Personverninnstillinger", kind: "object", isAHA: true, isHistoryGo: false, canClear: true },
-    { key: "aha_profile_name", label: "AHA Profil lokalt visningsnavn (local-only, ingen EchoNet/sync)", kind: "string", isAHA: true, isHistoryGo: false, canClear: true },
-    { key: "aha_profile_id", label: "AHA Profil lokal ID (local-only, ingen EchoNet/sync)", kind: "string", isAHA: true, isHistoryGo: false, canClear: true },
-    { key: "aha_pending_chat_prompt_v1", label: "AHA Profil pending chat-prompt (eksplisitt lokal handling, ingen EchoNet/sync)", kind: "object", isAHA: true, isHistoryGo: false, canClear: true },
+    { key: "aha_profile_name", label: "AHA Profil lokalt visningsnavn (local-only, ingen kollektiv deling/sync)", kind: "string", isAHA: true, isHistoryGo: false, canClear: true },
+    { key: "aha_profile_id", label: "AHA Profil lokal ID (local-only, ingen kollektiv deling/sync)", kind: "string", isAHA: true, isHistoryGo: false, canClear: true },
+    { key: "aha_pending_chat_prompt_v1", label: "AHA Profil pending chat-prompt (eksplisitt lokal handling, ingen kollektiv deling/sync)", kind: "object", isAHA: true, isHistoryGo: false, canClear: true },
     { key: "aha_import_payload_v1", label: "History Go importpayload", kind: "object", isAHA: false, isHistoryGo: true, canClear: false },
     { key: "hg_unlocks_v1", label: "History Go unlocks", kind: "object", isAHA: false, isHistoryGo: true, canClear: false },
     { key: "visited_places", label: "History Go besøkte steder", kind: "array", isAHA: false, isHistoryGo: true, canClear: false },
     { key: "people_collected", label: "History Go personer samlet", kind: "array", isAHA: false, isHistoryGo: true, canClear: false },
     { key: "historygo_progress", label: "History Go progresjon", kind: "object", isAHA: false, isHistoryGo: true, canClear: false }
   ];
+
+  function isExportBlockedKey(key) {
+    return SECRET_KEY_PATTERNS.some((pattern) => pattern.test(String(key || "")));
+  }
+
+  function redactPreview(value) {
+    const text = String(value ?? "");
+    if (!text) return "";
+    return text.length > 180 ? `${text.slice(0, 180)}…` : text;
+  }
+
+  function sanitizeForExport(value) {
+    if (Array.isArray(value)) return value.map((item) => sanitizeForExport(item));
+    if (!value || typeof value !== "object") return value;
+    return Object.fromEntries(Object.entries(value).map(([key, entry]) => {
+      if (isExportBlockedKey(key)) return [key, { blocked: true, redacted: true }];
+      return [key, sanitizeForExport(entry)];
+    }));
+  }
 
   function escapeHtml(value) {
     return String(value ?? "")
@@ -151,7 +192,10 @@
       fineTuningEnabledCount: 0,
       autoTrainingEnabledCount: 0,
       hasPreviewData: false,
-      hasImportData: false
+      hasImportData: false,
+      modelTrainingEnabledCount: 0,
+      remoteUploadEnabledCount: 0,
+      containsSecretCount: isExportBlockedKey(def.key) ? 1 : 0
     };
 
     if (!Array.isArray(parsed)) {
@@ -179,6 +223,9 @@
         derivedGraphCount: parsed.derived_graph_only === true || parsed.derived_graph_node === true || parsed.derived_graph_edge === true ? 1 : 0,
         fineTuningEnabledCount: parsed.fine_tuning_enabled === true ? 1 : 0,
         autoTrainingEnabledCount: parsed.auto_training_enabled === true ? 1 : 0,
+        modelTrainingEnabledCount: parsed.model_training_enabled === true ? 1 : 0,
+        remoteUploadEnabledCount: parsed.remote_upload_enabled === true ? 1 : 0,
+        containsSecretCount: parsed.contains_secret === true || isExportBlockedKey(def.key) ? 1 : 0,
         hasPreviewData: Boolean(def.key.includes("preview") || parsed.preview || parsed.previewData || parsed.preview_data),
         hasImportData: Boolean(def.key.includes("import") || parsed.imported === true || parsed.import_session_id || parsed.importSessionId)
       };
@@ -201,6 +248,9 @@
       if (isObject && (item.derived_graph_only === true || item.derived_graph_node === true || item.derived_graph_edge === true)) summary.derivedGraphCount += 1;
       if (isObject && item.fine_tuning_enabled === true) summary.fineTuningEnabledCount += 1;
       if (isObject && item.auto_training_enabled === true) summary.autoTrainingEnabledCount += 1;
+      if (isObject && item.model_training_enabled === true) summary.modelTrainingEnabledCount += 1;
+      if (isObject && item.remote_upload_enabled === true) summary.remoteUploadEnabledCount += 1;
+      if (isObject && item.contains_secret === true) summary.containsSecretCount += 1;
       if (isObject && (item.preview || item.previewData || item.preview_data)) summary.hasPreviewData = true;
       if (isObject && (item.imported === true || item.import_session_id || item.importSessionId)) summary.hasImportData = true;
       return summary;
@@ -240,24 +290,71 @@
         fineTuningEnabledCount: analysis.fineTuningEnabledCount,
         autoTrainingEnabledCount: analysis.autoTrainingEnabledCount,
         hasPreviewData: analysis.hasPreviewData,
-        hasImportData: analysis.hasImportData
+        hasImportData: analysis.hasImportData,
+        local_only: true,
+        has_tombstones: analysis.deletedCount > 0,
+        has_deleted: analysis.deletedCount > 0,
+        has_archived: analysis.archivedCount > 0,
+        modelTrainingEnabledCount: analysis.modelTrainingEnabledCount || 0,
+        fineTuningEnabledCount: analysis.fineTuningEnabledCount,
+        remoteUploadEnabledCount: analysis.remoteUploadEnabledCount || 0,
+        containsSecret: isExportBlockedKey(def.key) || (analysis.containsSecretCount || 0) > 0
       };
-    });
+    }).concat(BLOCKED_EXPORT_KEYS.map((key) => ({
+      key,
+      label: "Blokkert/redigert hemmelig nøkkel",
+      exists: rawStorageExists(key),
+      bytes: 0,
+      itemCount: 0,
+      kind: "blocked_secret",
+      isHistoryGo: false,
+      isAHA: true,
+      canClear: false,
+      activeCount: 0,
+      deletedCount: 0,
+      archivedCount: 0,
+      importedCount: 0,
+      localOnlyCount: 0,
+      externalPublishedCount: 0,
+      echonetSharedCount: 0,
+      syncEnabledCount: 0,
+      candidateOnlyCount: 0,
+      curationOnlyCount: 0,
+      derivedGraphCount: 0,
+      fineTuningEnabledCount: 0,
+      autoTrainingEnabledCount: 0,
+      modelTrainingEnabledCount: 0,
+      remoteUploadEnabledCount: 0,
+      hasPreviewData: false,
+      hasImportData: false,
+      local_only: true,
+      has_tombstones: false,
+      has_deleted: false,
+      has_archived: false,
+      containsSecret: true,
+      blocked: true,
+      redacted: true,
+      note: "Token/OAuth/PKCE/session-hemmeligheter rapporteres som blokkert og eksporteres ikke rått."
+    })));
   }
 
   function exportAllData() {
     const data = {};
-    STORAGE_DEFINITIONS.filter((def) => def.isAHA).forEach((def) => {
+    STORAGE_DEFINITIONS.filter((def) => def.isAHA && !isExportBlockedKey(def.key)).forEach((def) => {
       const raw = localStorage.getItem(def.key);
-      data[def.key] = safeParse(raw, raw);
+      data[def.key] = sanitizeForExport(safeParse(raw, raw));
     });
+    const blocked = BLOCKED_EXPORT_KEYS.filter((key) => rawStorageExists(key) || isExportBlockedKey(key)).map((key) => ({ key, blocked: true, redacted: true, preview: redactPreview("[redacted secret]") }));
 
     const payload = {
       meta: {
         exportedAt: new Date().toISOString(),
-        app: "AHA-EchoNet",
-        version: 1
+        app: "AHA",
+        version: 1,
+        local_only: true,
+        sessionStorage_note: "sessionStorage token/PKCE payloads are not included in this export."
       },
+      blockedSecrets: blocked,
       data,
       privacyReport: collectStorageReport()
     };
@@ -334,7 +431,7 @@
       ["Local-only", sumReport(report, "localOnlyCount")],
       ["Importert", sumReport(report, "importedCount")],
       ["Sync aktivert", sumReport(report, "syncEnabledCount")],
-      ["EchoNet-delt", sumReport(report, "echonetSharedCount")],
+      ["Kollektivt delt", sumReport(report, "echonetSharedCount")],
       ["Ekstern-publisert", sumReport(report, "externalPublishedCount")]
     ];
     target.innerHTML = rows.map(([label, value]) => `
@@ -361,7 +458,7 @@
           </div>
           <p class="privacy-small">Objekter: ${escapeHtml(String(item.itemCount))} · Aktive: ${escapeHtml(String(item.activeCount))} · Bytes: ${escapeHtml(String(item.bytes))}</p>
           <p class="privacy-small">Slettet/tombstoned: ${escapeHtml(String(item.deletedCount))} · Arkivert: ${escapeHtml(String(item.archivedCount))} · Importert: ${escapeHtml(String(item.importedCount))} · Local-only: ${escapeHtml(String(item.localOnlyCount))}</p>
-          <p class="privacy-small">Ekstern publisering: ${escapeHtml(String(item.externalPublishedCount))} · EchoNet: ${escapeHtml(String(item.echonetSharedCount))} · Sync: ${escapeHtml(String(item.syncEnabledCount))}</p>
+          <p class="privacy-small">Ekstern publisering: ${escapeHtml(String(item.externalPublishedCount))} · Kollektiv deling: ${escapeHtml(String(item.echonetSharedCount))} · Sync: ${escapeHtml(String(item.syncEnabledCount))}</p>
         </div>
         <div class="privacy-clear-row">
           ${item.canClear
@@ -424,6 +521,8 @@
   }
 
   global.AHAPrivacy = {
+    isExportBlockedKey,
+    sanitizeForExport,
     loadSettings,
     saveSettings,
     collectStorageReport,

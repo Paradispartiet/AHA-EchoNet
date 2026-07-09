@@ -1221,3 +1221,15 @@ Training Examples are local examples and JSONL candidates. They require review a
 Personal AI is a local control/readiness/retrieval/preview/evaluation/audit surface. It builds local readiness reports, local retrieval indexes, local context, local preview answer packages, local evaluations and loop audits from approved material.
 
 Boundary: no backend, no API/model call, no OpenAI/fine-tuning job, no remote upload, no EchoNet, no Sync Hub, no History Go write-back, no AHAIngest and no insight-chamber writes. Ekte ekstern modell/API/backend-integrasjon krever separat eksplisitt kontrakt og samtykke.
+
+## AHA Search + Privacy coverage
+
+AHA Search indexes only explicit local AHA layers. It does not perform a blind `localStorage` scan and it does not index tokens, OAuth/PKCE data, API keys, backend secrets or connection secrets.
+
+Music is shown as metadata-only: tracks, artists, albums, playlists and local bridge metadata can be searched, but no audio playback, Spotify API call or token data is part of the search index.
+
+Training and Personal AI appear only as local review, retrieval and evaluation surfaces. Training corpus items, training examples and answer evaluations are not treated as trained model data, and the coverage does not imply model training, fine-tuning or remote upload.
+
+Knowledge Map search entries are derived graph metadata, not canonical truth.
+
+AHA Privacy exports a safe local report for explicit AHA keys only. It blocks token, OAuth, PKCE, API-key and secret-bearing keys, includes local-only/report flags, and does not activate backend, EchoNet, Sync Hub or History Go write-back.
