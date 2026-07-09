@@ -2640,3 +2640,165 @@ html, body { max-width: 100%; }
     flex-basis: 100%;
   }
 }
+
+/* AHA Home patch 4: real app home */
+body:has(#aha-home-main) .aha-header-actions .aha-cta-primary,
+body:has(#aha-home-main) .aha-header-actions #btn-import-hg-primary {
+  display: none;
+}
+
+.aha-home-panel {
+  gap: 10px;
+}
+
+.aha-local-insight-home {
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.aha-home-section-heading {
+  margin: 10px 0 4px;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.aha-home-subtitle {
+  margin-bottom: 0;
+}
+
+.aha-home-hero,
+.aha-home-priority-strip,
+.aha-modules-panel,
+.aha-home-modules-compact,
+#aha-local-home-module-tiles {
+  display: none;
+}
+
+.aha-home-app-feed {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.aha-home-app-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-radius: 16px;
+  background: rgba(255,255,255,.045);
+  border: 1px solid rgba(255,255,255,.09);
+  box-shadow: none;
+  padding: 10px;
+}
+
+.aha-home-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.aha-home-card-head h2,
+.aha-home-card-head h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.aha-home-card-head .eyebrow {
+  margin-bottom: 2px;
+}
+
+.aha-home-card-head .aha-cta-primary,
+.aha-home-card-head .aha-cta-secondary {
+  flex: 0 0 auto;
+  min-height: 34px;
+  padding: 7px 10px;
+  border-radius: 12px;
+  white-space: nowrap;
+}
+
+.aha-local-home-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.aha-local-home-card,
+.aha-insights-panel,
+.aha-next-panel {
+  border-radius: 16px;
+  background: rgba(255,255,255,.045);
+  border: 1px solid rgba(255,255,255,.09);
+  box-shadow: none;
+}
+
+.aha-home-app-card > .aha-local-home-card,
+.aha-home-app-card > .aha-insights-panel,
+.aha-home-app-card .aha-local-home-layout > .aha-local-home-card {
+  padding: 9px;
+  background: rgba(0,0,0,.12);
+}
+
+.aha-home-profile-compact {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.aha-home-profile-compact .aha-profile-status-grid,
+.aha-home-profile-compact .aha-profile-stats {
+  gap: 6px;
+}
+
+.aha-home-app-card .aha-panel-head .aha-tile-btn,
+.aha-home-app-card .aha-home-hero-actions,
+.aha-home-app-card .aha-tile-actions,
+.aha-home-app-card a[href="knowledge-workbench.html"] {
+  display: none;
+}
+
+.aha-home-more-tools,
+.aha-home-technical-details,
+.aha-system-panel {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+  opacity: .58;
+  font-size: .82rem;
+}
+
+.aha-home-more-tools > summary,
+.aha-home-technical-details > summary,
+.aha-system-panel > summary {
+  cursor: pointer;
+  list-style-position: inside;
+  padding: 4px 0;
+}
+
+.aha-system-panel-content {
+  margin-top: 8px;
+}
+
+.aha-system-status-link {
+  color: rgba(255,255,255,.72);
+  text-decoration: none;
+}
+
+.aha-system-status-link:hover {
+  color: #fff;
+  text-decoration: underline;
+}
+
+@media (max-width: 620px) {
+  .aha-home-card-head {
+    flex-direction: column;
+  }
+
+  .aha-home-card-head .aha-cta-primary,
+  .aha-home-card-head .aha-cta-secondary {
+    width: 100%;
+    text-align: center;
+  }
+}

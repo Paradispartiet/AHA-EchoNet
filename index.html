@@ -79,100 +79,108 @@
         <p class="aha-home-subtitle">Din personlige innsiktsmotor</p>
         <div class="aha-home-section-heading">
           <p class="eyebrow">Start</p>
-          <h2>Start</h2>
+          <h2>Dagens AHA</h2>
         </div>
         <section id="aha-local-insight-home" class="aha-insights-panel aha-local-insight-home" aria-label="AHA Local Insight Home">
-          <div id="aha-local-home-hero" class="aha-local-home-hero aha-home-hero">
+          <div id="aha-local-home-hero" class="aha-local-home-hero aha-home-hero" aria-hidden="true">
             <p class="eyebrow">AHA Home</p>
             <h2>Laster lokalt innsiktshjem …</h2>
           </div>
           <div id="aha-local-home-priority-strip" class="aha-home-priority-strip" aria-label="Prioritert status"></div>
-          <div class="aha-local-home-layout aha-home-main-grid">
-            <div class="aha-home-main-column">
+
+          <div class="aha-home-app-feed" aria-label="AHA Home appkort">
+            <section class="aha-home-app-card aha-home-app-card-daily" aria-labelledby="aha-home-daily-title">
+              <div class="aha-home-card-head">
+                <div>
+                  <p class="eyebrow">1</p>
+                  <h2 id="aha-home-daily-title">Dagens AHA</h2>
+                </div>
+                <a class="aha-cta-primary" href="chat.html">Snakk med AHA</a>
+              </div>
               <section id="aha-local-home-daily-loop" class="aha-local-home-card aha-home-next-action" aria-label="Dagens AHA-løype"></section>
               <section id="aha-local-home-next-action" class="aha-local-home-card aha-home-next-action" aria-label="Neste handling"></section>
-              <section id="aha-local-home-highlights" class="aha-local-home-card aha-home-important-now" aria-label="Viktig akkurat nå"></section>
-              <section id="aha-local-home-active-work" class="aha-local-home-card aha-home-active-work" aria-label="Aktivt kunnskapsarbeid"></section>
-            </div>
-            <div class="aha-home-main-column">
-              <section id="aha-local-home-projects" class="aha-local-home-card aha-home-projects" aria-label="Prosjekter og begreper"></section>
-              <section id="aha-local-home-recent" class="aha-local-home-card aha-home-recent" aria-label="Siste aktivitet"></section>
-            </div>
-            <section id="aha-local-home-module-tiles" class="aha-local-home-card aha-local-home-wide aha-home-modules-compact" aria-label="Kompakt moduloversikt"></section>
+            </section>
+
+            <section class="aha-home-app-card aha-home-app-card-insight" aria-labelledby="aha-home-insight-title">
+              <div class="aha-home-card-head">
+                <div>
+                  <p class="eyebrow">2</p>
+                  <h2 id="aha-home-insight-title">Siste innsikt</h2>
+                </div>
+                <a class="aha-cta-secondary" href="insights.html">Se innsikter</a>
+              </div>
+              <section class="aha-insights-panel" id="aha-insights-activity" aria-label="Mine innsikter">
+                <p class="eyebrow">Siste innsikt</p>
+                <p id="aha-latest-insight">Ingen importerte innsikter ennå</p>
+                <small id="aha-insight-empty-hint">Importer fra History Go eller start en samtale med AHA.</small>
+              </section>
+            </section>
+
+            <section class="aha-home-app-card aha-home-app-card-work" aria-labelledby="aha-home-work-title">
+              <div class="aha-home-card-head">
+                <div>
+                  <p class="eyebrow">3</p>
+                  <h2 id="aha-home-work-title">Fortsett arbeidet</h2>
+                </div>
+              </div>
+              <div class="aha-local-home-layout aha-home-main-grid">
+                <section id="aha-local-home-active-work" class="aha-local-home-card aha-home-active-work" aria-label="Aktivt kunnskapsarbeid"></section>
+                <section id="aha-local-home-projects" class="aha-local-home-card aha-home-projects" aria-label="Prosjekter og begreper"></section>
+                <section id="aha-local-home-recent" class="aha-local-home-card aha-home-recent" aria-label="Siste aktivitet"></section>
+              </div>
+            </section>
+
+            <section class="aha-home-app-card aha-home-app-card-mine" aria-labelledby="aha-home-mine-title">
+              <div class="aha-home-card-head">
+                <div>
+                  <p class="eyebrow">4</p>
+                  <h2 id="aha-home-mine-title">Mine ting</h2>
+                </div>
+                <button class="aha-cta-secondary" id="btn-import-hg-secondary" type="button">Importer History Go</button>
+              </div>
+              <div class="aha-home-profile-compact" aria-label="Profil og nøkkeltall">
+                <div class="aha-status-stack">
+                  <strong id="aha-home-profile-name">Lokal AHA-bruker</strong>
+                  <span id="aha-home-profile-mode">Lokal modus</span>
+                  <small id="aha-home-last-activity">Ingen aktivitet registrert</small>
+                </div>
+                <div id="aha-profile-status-grid" class="aha-profile-status-grid" aria-label="Nøkkeltall"></div>
+                <div id="aha-profile-stats" class="aha-profile-stats" aria-label="AHA nøkkeltall"></div>
+              </div>
+              <section class="aha-insights-panel aha-afterwork-archive" aria-label="Innsiktsarkiv">
+                <div class="aha-panel-head">
+                  <div>
+                    <p class="eyebrow">Arkiv</p>
+                    <h3>Innsiktsarkiv</h3>
+                  </div>
+                </div>
+                <div id="aha-afterwork-archive"></div>
+              </section>
+              <section class="aha-insights-panel aha-meta-profile-panel" aria-label="AHA Meta-profil">
+                <div class="aha-panel-head">
+                  <div>
+                    <p class="eyebrow">Meta-profil</p>
+                    <h3>Hva AHA ser i materialet ditt</h3>
+                  </div>
+                </div>
+                <div id="aha-meta-profile-home"></div>
+              </section>
+            </section>
           </div>
+
+          <details class="aha-home-more-tools">
+            <summary>Flere verktøy</summary>
+            <section id="aha-local-home-module-tiles" class="aha-local-home-card aha-local-home-wide aha-home-modules-compact" aria-label="Kompakt moduloversikt"></section>
+          </details>
+
           <details id="aha-local-home-technical-details" class="aha-local-home-card aha-home-technical-details">
             <summary>Teknisk status</summary>
+            <div id="aha-local-home-highlights" class="aha-local-home-card aha-home-important-now" aria-label="Viktig akkurat nå"></div>
             <div id="aha-local-home-technical-content"></div>
+            <div class="aha-tile-actions aha-local-home-refresh-row">
+              <button id="aha-local-home-refresh" class="aha-tile-btn" type="button">Oppdater Home-status</button>
+            </div>
           </details>
-          <div class="aha-tile-actions aha-local-home-refresh-row">
-            <button id="aha-local-home-refresh" class="aha-tile-btn" type="button">Oppdater Home-status</button>
-          </div>
-        </section>
-
-        <div class="aha-status-stack">
-          <strong id="aha-home-profile-name">Lokal AHA-bruker</strong>
-          <span id="aha-home-profile-mode">Lokal modus</span>
-          <small id="aha-home-last-activity">Ingen aktivitet registrert</small>
-        </div>
-
-        <div class="aha-action-buttons">
-          <p class="aha-panel-subtitle">Hva vil du gjøre nå?</p>
-          <a class="aha-cta-primary" href="chat.html">Snakk med AHA</a>
-          <div class="aha-cta-secondary-row">
-            <a class="aha-cta-secondary" href="insights.html">Se innsikter</a>
-            <button class="aha-cta-secondary" id="btn-import-hg-secondary" type="button">Importer History Go</button>
-            <a class="aha-cta-secondary" href="gallery.html">Åpne galleri</a>
-          </div>
-        </div>
-
-
-        <div class="aha-home-section-heading">
-          <p class="eyebrow">Mine ting</p>
-          <h2>Mine innsikter</h2>
-        </div>
-        <div id="aha-profile-status-grid" class="aha-profile-status-grid" aria-label="Nøkkeltall"></div>
-        <div id="aha-profile-stats" class="aha-profile-stats" aria-label="AHA nøkkeltall"></div>
-
-        <section class="aha-insights-panel" id="aha-insights-activity" aria-label="Mine innsikter">
-          <p class="eyebrow">Siste innsikt</p>
-          <p id="aha-latest-insight">Ingen importerte innsikter ennå</p>
-          <small id="aha-insight-empty-hint">Importer fra History Go eller start en samtale med AHA.</small>
-        </section>
-
-        <section class="aha-insights-panel aha-afterwork-archive" aria-label="Innsiktsarkiv">
-          <div class="aha-panel-head">
-            <div>
-              <p class="eyebrow">Arkiv</p>
-              <h3>Innsiktsarkiv</h3>
-            </div>
-            <a class="aha-tile-btn aha-tile-btn-secondary" href="chat.html">Åpne AHA Chat</a>
-          </div>
-          <div id="aha-afterwork-archive"></div>
-        </section>
-
-
-        <section class="aha-insights-panel aha-meta-profile-panel" aria-label="AHA Meta-profil">
-          <div class="aha-panel-head">
-            <div>
-              <p class="eyebrow">Meta-profil</p>
-              <h3>Hva AHA ser i materialet ditt</h3>
-            </div>
-            <a class="aha-tile-btn aha-tile-btn-secondary" href="chat.html">Bygg videre</a>
-          </div>
-          <div id="aha-meta-profile-home"></div>
-        </section>
-
-        <div class="aha-home-section-heading">
-          <p class="eyebrow">Neste</p>
-          <h2>Neste steg</h2>
-        </div>
-        <section class="aha-panel aha-next-panel" aria-label="Neste anbefalte handling">
-          <p class="eyebrow">Anbefalt</p>
-          <h3>Neste anbefalte handling</h3>
-          <div class="aha-tile-actions">
-            <a class="aha-tile-btn aha-tile-btn-primary" href="chat.html">Åpne Chat</a>
-            <a class="aha-tile-btn aha-tile-btn-secondary" href="privacy.html">Personvern / Kontroll</a>
-          </div>
         </section>
       </section>
 
@@ -191,7 +199,7 @@
             <span class="eyebrow">System</span>
             <strong>System og utviklerstatus</strong>
           </span>
-          <small>Skjult for vanlig bruk</small>
+          <small><a class="aha-system-status-link" href="status.html">Systemstatus</a></small>
         </summary>
         <div class="aha-system-panel-content">
         <section class="aha-insights-panel aha-product-integration-panel" id="aha-product-integration" aria-label="AHA Product Integration V1">
