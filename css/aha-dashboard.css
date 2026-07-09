@@ -2802,3 +2802,117 @@ body:has(#aha-home-main) .aha-header-actions #btn-import-hg-primary {
     text-align: center;
   }
 }
+
+/* AHA Home patch 5: calmer app feed and discreet system surface */
+.aha-home-section-heading,
+.aha-home-more-tools,
+.aha-home-technical-details,
+.aha-system-panel-content {
+  display: none;
+}
+
+.aha-home-panel {
+  gap: 12px;
+  background: rgba(255,255,255,.032);
+  border-color: rgba(255,255,255,.07);
+}
+
+.aha-home-subtitle {
+  margin: 2px 0 2px;
+  color: rgba(247,243,223,.66);
+  font-weight: 700;
+}
+
+.aha-home-app-feed {
+  gap: 10px;
+}
+
+.aha-home-app-card {
+  gap: 10px;
+  border-radius: 18px;
+  padding: 12px;
+  background: rgba(255,255,255,.038);
+  border: 1px solid rgba(255,255,255,.075);
+}
+
+.aha-home-card-head {
+  align-items: center;
+}
+
+.aha-home-card-head h2,
+.aha-home-card-head h3 {
+  font-size: 1.02rem;
+  letter-spacing: -.015em;
+}
+
+.aha-home-card-head .eyebrow {
+  color: rgba(247,243,223,.46);
+}
+
+.aha-home-card-head .aha-cta-primary,
+.aha-home-card-head .aha-cta-secondary {
+  min-height: 32px;
+  padding: 7px 11px;
+  border-radius: 11px;
+  font-size: .82rem;
+}
+
+.aha-local-home-card,
+.aha-insights-panel,
+.aha-next-panel,
+.aha-home-app-card > .aha-local-home-card,
+.aha-home-app-card > .aha-insights-panel,
+.aha-home-app-card .aha-local-home-layout > .aha-local-home-card {
+  border-color: rgba(255,255,255,.065);
+  background: rgba(0,0,0,.105);
+  box-shadow: none;
+}
+
+.aha-home-main-grid,
+.aha-local-home-layout,
+.aha-home-profile-compact {
+  gap: 8px;
+}
+
+.aha-home-app-card .aha-panel-head .aha-tile-btn,
+.aha-home-app-card .aha-home-hero-actions,
+.aha-home-app-card .aha-tile-actions,
+.aha-home-app-card a[href="knowledge-workbench.html"],
+.aha-home-app-card a[href="chat.html"].aha-tile-btn,
+.aha-home-app-card a[href="chat.html"].aha-cta-secondary {
+  display: none;
+}
+
+.aha-system-panel {
+  display: block;
+  margin-top: 2px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0 2px;
+  opacity: 1;
+  font-size: .76rem;
+}
+
+.aha-system-panel > summary {
+  display: block;
+  padding: 2px 0;
+  color: rgba(247,243,223,.42);
+  list-style: none;
+  cursor: default;
+}
+
+.aha-system-panel > summary::-webkit-details-marker {
+  display: none;
+}
+
+.aha-system-status-link {
+  color: rgba(247,243,223,.42);
+  text-decoration: none;
+}
+
+.aha-system-status-link:hover,
+.aha-system-status-link:focus-visible {
+  color: rgba(247,243,223,.78);
+  text-decoration: underline;
+}
