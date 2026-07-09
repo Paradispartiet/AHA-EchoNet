@@ -2321,3 +2321,90 @@ html, body { max-width: 100%; overflow-x: hidden; }
     justify-content: flex-start;
   }
 }
+
+/* AHA Home patch 2: quieter secondary areas and clearer home sections */
+.aha-home-subtitle {
+  margin: 6px 0 18px;
+  color: var(--aha-muted);
+  font-size: .98rem;
+  font-weight: 800;
+}
+
+.aha-home-section-heading {
+  margin: 24px 0 12px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255,255,255,.09);
+}
+
+.aha-home-section-heading:first-of-type {
+  margin-top: 16px;
+}
+
+.aha-home-section-heading h2 {
+  margin: 0;
+  font-size: clamp(1.2rem, 2vw, 1.55rem);
+  letter-spacing: -.025em;
+}
+
+.aha-modules-panel {
+  background: rgba(255,255,255,.028);
+  border-color: rgba(255,255,255,.075);
+  box-shadow: none;
+}
+
+.aha-modules-panel > .eyebrow,
+.aha-modules-panel .aha-panel-subtitle {
+  opacity: .72;
+}
+
+.aha-modules-panel .aha-grid {
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 7px;
+}
+
+.aha-modules-panel .aha-tile {
+  min-height: 0;
+  padding: 10px;
+  border-radius: 14px;
+  background: rgba(255,255,255,.035);
+  box-shadow: none;
+}
+
+.aha-modules-panel .aha-tile:hover {
+  background: rgba(255,255,255,.06);
+}
+
+.aha-modules-panel .aha-tile strong {
+  font-size: .92rem;
+}
+
+.aha-modules-panel .aha-tile .aha-module-summary {
+  display: none;
+}
+
+.aha-modules-panel .aha-tile small {
+  margin-top: 4px;
+}
+
+.aha-system-panel {
+  font-size: .88rem;
+  opacity: .78;
+}
+
+.aha-system-panel > summary {
+  padding: 2px 0;
+}
+
+.aha-system-panel > summary strong {
+  font-size: .95rem;
+  color: rgba(247,243,223,.82);
+}
+
+.aha-system-panel > summary small {
+  color: rgba(247,243,223,.48);
+  font-size: .78rem;
+}
+
+.aha-system-panel-content {
+  opacity: .92;
+}
