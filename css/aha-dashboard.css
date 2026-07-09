@@ -709,8 +709,8 @@ input:focus { border-color: rgba(255,255,255,.4); box-shadow: 0 0 0 3px rgba(255
 
 
 /* App-layout refactor */
-html, body { max-width: 100%; overflow-x: hidden; }
-.aha-dashboard { width: min(1320px, 100%); padding-bottom: 110px; }
+html, body { max-width: 100%; }
+.aha-dashboard { width: min(760px, 100%); max-width: 100%; padding: 10px 10px 104px; }
 .aha-app-header { padding: 10px 14px; border-radius: 18px; margin-bottom: 14px; }
 .aha-brand-mark { width: 38px; height: 38px; font-size: 1rem; }
 
@@ -801,8 +801,8 @@ html, body { max-width: 100%; overflow-x: hidden; }
   .aha-profile-avatar { align-self: flex-start; }
   .aha-profile-quick-actions { margin-left: 0; min-width: 0; width: 100%; grid-template-columns: repeat(2,minmax(0,1fr)); }
   .aha-home-panel, .aha-modules-panel, .aha-status-panel { overflow: visible; }
-  .aha-modules-panel .aha-grid { display: flex; overflow-x: auto; gap: 8px; padding-bottom: 4px; }
-  .aha-modules-panel .aha-grid > * { flex: 0 0 220px; }
+  .aha-modules-panel .aha-grid { display: grid; grid-template-columns: 1fr; gap: 8px; padding-bottom: 0; }
+  .aha-modules-panel .aha-grid > * { min-width: 0; }
 }
 @media (max-width: 620px) {
   .aha-dashboard { padding: 12px 12px 120px; }
@@ -2379,7 +2379,11 @@ html, body { max-width: 100%; overflow-x: hidden; }
 }
 
 .aha-modules-panel .aha-tile .aha-module-summary {
-  display: none;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  opacity: .72;
 }
 
 .aha-modules-panel .aha-tile small {
@@ -2407,4 +2411,232 @@ html, body { max-width: 100%; overflow-x: hidden; }
 
 .aha-system-panel-content {
   opacity: .92;
+}
+
+
+/* AHA Home patch 3: app-width feed and overflow-safe layout */
+.aha-dashboard {
+  width: min(760px, 100%);
+  max-width: 100%;
+  padding: 10px 10px 104px;
+}
+
+.aha-app-shell,
+.aha-panel,
+.aha-insights-panel,
+.aha-local-insight-home,
+.aha-local-home-layout,
+.aha-home-main-grid,
+.aha-home-main-column,
+.aha-home-panel,
+.aha-modules-panel,
+.aha-status-panel,
+.aha-system-panel,
+.aha-home-hero,
+.aha-app-header {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.aha-dashboard,
+.aha-dashboard * {
+  overflow-wrap: anywhere;
+}
+
+.aha-app-header {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    "brand"
+    "meta"
+    "profile"
+    "actions";
+  align-items: stretch;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 16px;
+  max-height: none;
+}
+
+.aha-brand { grid-area: brand; }
+.aha-header-meta {
+  grid-area: meta;
+  flex-wrap: wrap;
+  overflow: visible;
+}
+.aha-header-profile {
+  grid-area: profile;
+  justify-content: flex-start;
+  padding: 8px;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 14px;
+  background: rgba(255,255,255,.025);
+}
+.aha-header-profile #aha-profile-name,
+.aha-header-profile #aha-profile-subtitle,
+.aha-header-profile #aha-profile-connection {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+.aha-header-profile .aha-profile-id-row { max-width: 100%; }
+
+.aha-header-actions {
+  grid-area: actions;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.aha-header-actions .aha-cta-primary,
+.aha-header-actions .aha-cta-secondary,
+.aha-header-actions .aha-ghost-button {
+  min-height: 34px;
+  padding: 7px 10px;
+  white-space: normal;
+  border-radius: 13px;
+  flex: 1 1 142px;
+}
+
+.aha-home-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border-radius: 18px;
+  padding: 14px;
+}
+
+.aha-local-insight-home {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-x: visible;
+  border-radius: 16px;
+}
+
+.aha-home-hero,
+.aha-local-home-layout,
+.aha-home-main-grid {
+  grid-template-columns: 1fr;
+}
+
+.aha-home-hero {
+  align-items: start;
+  padding: .7rem;
+  border-radius: 14px;
+  background: rgba(245,187,48,.055);
+}
+
+.aha-home-hero h2,
+.aha-home-hero p {
+  overflow-wrap: anywhere;
+  word-break: normal;
+  hyphens: auto;
+}
+
+.aha-home-hero-actions,
+.aha-local-home-refresh-row,
+.aha-tile-actions,
+.aha-action-buttons,
+.aha-cta-secondary-row {
+  flex-wrap: wrap;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.aha-home-hero-actions { justify-content: flex-start; }
+.aha-home-hero-actions .aha-tile-btn,
+.aha-tile-btn,
+.aha-cta-primary,
+.aha-cta-secondary,
+.aha-ghost-button {
+  white-space: normal;
+  min-width: 0;
+}
+
+.aha-home-priority-strip,
+.aha-home-work-queue,
+.aha-home-tag-list,
+.aha-home-tag-row {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.aha-home-status-chip,
+.aha-home-next-chip,
+.aha-home-source-chip,
+.aha-home-tag,
+.aha-home-tag-row span {
+  max-width: 100%;
+}
+
+.aha-local-home-card {
+  max-width: 100%;
+  border-radius: 13px;
+  padding: .62rem;
+}
+
+.aha-local-card-grid,
+.aha-local-module-grid,
+.aha-home-module-compact-grid,
+.aha-profile-status-grid,
+.aha-profile-stats,
+.aha-modules-panel .aha-grid {
+  grid-template-columns: 1fr;
+}
+
+.aha-modules-panel {
+  order: 2;
+  border-radius: 16px;
+}
+
+.aha-modules-panel .aha-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.aha-modules-panel .aha-tile {
+  display: grid;
+  grid-template-columns: 1fr;
+  min-width: 0;
+  max-width: 100%;
+  border-radius: 13px;
+  padding: 10px;
+}
+
+.aha-modules-panel .aha-tile .aha-module-summary {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  opacity: .72;
+}
+
+.aha-system-panel {
+  order: 3;
+  border-radius: 16px;
+  font-size: .86rem;
+  opacity: .76;
+}
+
+.aha-system-panel-content {
+  min-width: 0;
+  max-width: 100%;
+}
+
+@media (max-width: 620px) {
+  .aha-dashboard {
+    width: 100%;
+    padding: 8px 8px 112px;
+  }
+
+  .aha-home-panel,
+  .aha-panel {
+    padding: 12px;
+  }
+
+  .aha-header-actions .aha-cta-primary,
+  .aha-header-actions .aha-cta-secondary,
+  .aha-header-actions .aha-ghost-button {
+    flex-basis: 100%;
+  }
 }
