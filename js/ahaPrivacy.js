@@ -46,6 +46,11 @@
     { key: "aha_groups_v1", label: "AHA Grupper / Sirkler", kind: "array", isAHA: true, isHistoryGo: false, canClear: true },
     { key: "aha_music_library_v1", label: "AHA Music lokalt metadata-bibliotek (ingen lyd/tokens)", kind: "object", isAHA: true, isHistoryGo: false, canClear: true },
     { key: "aha_music_history_go_bridge_v1", label: "AHA Music lokal History Go-bro (forslag/rapport, ikke write-back)", kind: "object", isAHA: true, isHistoryGo: false, canClear: true },
+    { key: "aha_data_intake_queue_v1", label: "AHA Data Intake lokal kandidat-/inntakskø (manual review, ikke trening/sync)", kind: "array", isAHA: true, isHistoryGo: false, canClear: true },
+    { key: "aha_knowledge_curation_v1", label: "AHA Knowledge Curation lokale review-/approval-items", kind: "array", isAHA: true, isHistoryGo: false, canClear: true },
+    { key: "aha_knowledge_map_v1", label: "AHA Knowledge Map avledet lokal graf (ikke canonical sannhet)", kind: "object", isAHA: true, isHistoryGo: false, canClear: true },
+    { key: "aha_knowledge_workbench_status_v1", label: "AHA Knowledge Workbench lokal statusflate", kind: "object", isAHA: true, isHistoryGo: false, canClear: true },
+    { key: "aha_knowledge_graph_intelligence_v1", label: "AHA Graph Intelligence lokale forslag/audit (ikke auto-apply)", kind: "object", isAHA: true, isHistoryGo: false, canClear: true },
     { key: SETTINGS_KEY, label: "Personverninnstillinger", kind: "object", isAHA: true, isHistoryGo: false, canClear: true },
     { key: "aha_profile_name", label: "AHA Profil lokalt visningsnavn (local-only, ingen EchoNet/sync)", kind: "string", isAHA: true, isHistoryGo: false, canClear: true },
     { key: "aha_profile_id", label: "AHA Profil lokal ID (local-only, ingen EchoNet/sync)", kind: "string", isAHA: true, isHistoryGo: false, canClear: true },
@@ -133,6 +138,11 @@
       externalPublishedCount: 0,
       echonetSharedCount: 0,
       syncEnabledCount: 0,
+      candidateOnlyCount: 0,
+      curationOnlyCount: 0,
+      derivedGraphCount: 0,
+      fineTuningEnabledCount: 0,
+      autoTrainingEnabledCount: 0,
       hasPreviewData: false,
       hasImportData: false
     };
@@ -157,6 +167,11 @@
         externalPublishedCount: parsed.published_external === true ? 1 : 0,
         echonetSharedCount: parsed.echonet_shared === true ? 1 : 0,
         syncEnabledCount: parsed.sync_enabled === true ? 1 : 0,
+        candidateOnlyCount: parsed.candidate_only === true ? 1 : 0,
+        curationOnlyCount: parsed.curation_only === true ? 1 : 0,
+        derivedGraphCount: parsed.derived_graph_only === true || parsed.derived_graph_node === true || parsed.derived_graph_edge === true ? 1 : 0,
+        fineTuningEnabledCount: parsed.fine_tuning_enabled === true ? 1 : 0,
+        autoTrainingEnabledCount: parsed.auto_training_enabled === true ? 1 : 0,
         hasPreviewData: Boolean(def.key.includes("preview") || parsed.preview || parsed.previewData || parsed.preview_data),
         hasImportData: Boolean(def.key.includes("import") || parsed.imported === true || parsed.import_session_id || parsed.importSessionId)
       };
@@ -174,6 +189,11 @@
       if (isObject && item.published_external === true) summary.externalPublishedCount += 1;
       if (isObject && item.echonet_shared === true) summary.echonetSharedCount += 1;
       if (isObject && item.sync_enabled === true) summary.syncEnabledCount += 1;
+      if (isObject && item.candidate_only === true) summary.candidateOnlyCount += 1;
+      if (isObject && item.curation_only === true) summary.curationOnlyCount += 1;
+      if (isObject && (item.derived_graph_only === true || item.derived_graph_node === true || item.derived_graph_edge === true)) summary.derivedGraphCount += 1;
+      if (isObject && item.fine_tuning_enabled === true) summary.fineTuningEnabledCount += 1;
+      if (isObject && item.auto_training_enabled === true) summary.autoTrainingEnabledCount += 1;
       if (isObject && (item.preview || item.previewData || item.preview_data)) summary.hasPreviewData = true;
       if (isObject && (item.imported === true || item.import_session_id || item.importSessionId)) summary.hasImportData = true;
       return summary;
@@ -207,6 +227,11 @@
         externalPublishedCount: analysis.externalPublishedCount,
         echonetSharedCount: analysis.echonetSharedCount,
         syncEnabledCount: analysis.syncEnabledCount,
+        candidateOnlyCount: analysis.candidateOnlyCount,
+        curationOnlyCount: analysis.curationOnlyCount,
+        derivedGraphCount: analysis.derivedGraphCount,
+        fineTuningEnabledCount: analysis.fineTuningEnabledCount,
+        autoTrainingEnabledCount: analysis.autoTrainingEnabledCount,
         hasPreviewData: analysis.hasPreviewData,
         hasImportData: analysis.hasImportData
       };
