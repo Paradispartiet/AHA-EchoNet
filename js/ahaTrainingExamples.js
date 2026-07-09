@@ -1,11 +1,9 @@
 // ahaTrainingExamples.js
 // ─────────────────────────────────────────────
-// AHA Training Examples – genererer og forvalter treningseksempler.
-// Tar godkjente corpus items fra AHATrainingCorpus og lager enkle
-// algoritmiske training examples (V1). Brukeren godkjenner hvert example,
-// og kun godkjente examples med fine-tuning-samtykke eksporteres som JSONL.
-//   corpus item → training example → example-godkjenning → JSONL-eksport
-// Alt er lokalt (localStorage). Ingen sync, ingen nettverkskall.
+// AHA Training Examples – lokale examples / JSONL-kandidater, ikke faktisk
+// modelltrening. Examples lages algoritmisk lokalt fra godkjent corpus, må
+// reviewes/godkjennes manuelt og kan eksporteres som lokal JSONL-streng/fil.
+// Ingen upload, fine-tuning, backend, sync eller model/API-kall.
 // ─────────────────────────────────────────────
 
 (function (global) {
@@ -36,6 +34,10 @@
     "jeg liker"
   ];
 
+  function trainingBoundaryMeta(extra = {}) {
+    return { source_app: "aha", origin_app: extra.origin_app || "aha_training", local_only: true, review_required: true, approval_required: true, training_data_candidate_only: extra.training_data_candidate_only ?? false, model_training_enabled: false, fine_tuning_enabled: false, remote_upload_enabled: false, backend_enabled: false, echonet_shared: false, sync_enabled: false, historygo_writeback_enabled: false, writes_to_insight_chamber: false, calls_model_api: false, ...extra };
+  }
+  function isUnavailableRecord(record) { return Boolean(record?.deleted_at || record?.deletedAt || record?.archived === true || record?.status === "archived" || record?.status === "rejected"); }
   function asArray(value) { return Array.isArray(value) ? value : []; }
   function asObject(value) { return value && typeof value === "object" && !Array.isArray(value) ? value : {}; }
   function asText(value) { return String(value ?? "").trim(); }
@@ -118,7 +120,10 @@
       createdAt: src.createdAt || src.created_at || now,
       updatedAt: src.updatedAt || src.updated_at || src.createdAt || src.created_at || now,
       deletedAt: deletedAt || "",
-      meta: asObject(src.meta)
+      local_only: true, review_required: true, approval_required: true, training_example_candidate_only: true,
+      model_training_enabled: false, fine_tuning_enabled: false, remote_upload_enabled: false, backend_enabled: false,
+      echonet_shared: false, sync_enabled: false, historygo_writeback_enabled: false, writes_to_insight_chamber: false, calls_model_api: false,
+      meta: { ...asObject(src.meta), ...trainingBoundaryMeta({ origin_app: "aha_training_examples", object_type: "training_example", training_example_candidate_only: true }) }
     };
   }
 
@@ -227,7 +232,8 @@
     const base = {
       corpusItemId: asText(item.id),
       source: asText(item.source) || "aha_training_examples",
-      language
+      language,
+      status: asText(opts.status) || "needs_review"
     };
 
     // summary
@@ -299,7 +305,7 @@
   function generateExamplesFromApprovedCorpus(options = {}) {
     const corpusApi = global.AHATrainingCorpus;
     if (!corpusApi || typeof corpusApi.loadCorpus !== "function") {
-      return { ok: false, error: "missing_corpus", added: 0, total: loadExamples().length };
+      return { ok: false, error: "missing_corpus", added: 0, total: loadExamples().length, ...trainingBoundaryMeta({ origin_app: "aha_training_examples", object_type: "training_example_generation", training_example_candidate_only: true, generated_examples_only: true }) };
     }
 
     const opts = asObject(options);
@@ -322,7 +328,7 @@
     });
 
     if (added) saveExamples(all);
-    return { ok: true, added, corpusItems: corpus.length, total: loadExamples().length };
+    return { ok: true, added, corpusItems: corpus.length, total: loadExamples().length, generated_examples_only: true, ...trainingBoundaryMeta({ origin_app: "aha_training_examples", object_type: "training_example_generation", training_example_candidate_only: true, generated_examples_only: true }) };
   }
 
   // 10. collectExampleStats – status- og taskType-telling.
@@ -383,10 +389,13 @@
   // 11. exportApprovedExamples – returnerer JSONL-streng for godkjente
   //     examples med fine-tuning-samtykke på corpus-laget.
   function exportApprovedExamples(format = "jsonl") {
-    if (asText(format).toLowerCase() !== "jsonl") {
-      return "";
-    }
+    if (asText(format).toLowerCase() !== "jsonl") return "";
     return selectExportableExamples().map(exampleToJsonlLine).join("\n");
+  }
+
+  function exportApprovedExamplesBundle(format = "jsonl") {
+    const content = exportApprovedExamples(format);
+    return { ok: asText(format).toLowerCase() === "jsonl", format: "jsonl", local_only: true, export_only: true, remote_upload_enabled: false, model_training_enabled: false, fine_tuning_enabled: false, content, itemCount: content ? content.split("\n").filter(Boolean).length : 0 };
   }
 
   // 12. downloadApprovedExamples – lokal browser-nedlasting av JSONL.
@@ -404,9 +413,9 @@
       link.click();
       doc.body.removeChild(link);
       global.URL.revokeObjectURL(url);
-      return { ok: true, fileName, bytes: content.length };
+      return { ok: true, fileName, bytes: content.length, local_only: true, export_only: true, remote_upload_enabled: false, model_training_enabled: false, fine_tuning_enabled: false };
     } catch (error) {
-      return { ok: false, error: String(error), content };
+      return { ok: false, error: String(error), content, local_only: true, export_only: true, remote_upload_enabled: false, model_training_enabled: false, fine_tuning_enabled: false };
     }
   }
 
@@ -428,8 +437,11 @@
     collectExampleStats,
     selectExportableExamples,
     exportApprovedExamples,
+    exportApprovedExamplesBundle,
     downloadApprovedExamples,
-    normalizeExample
+    normalizeExample,
+    trainingBoundaryMeta,
+    isUnavailableRecord
   };
 
   if (typeof module !== "undefined" && module.exports) {

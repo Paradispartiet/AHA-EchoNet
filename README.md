@@ -1211,3 +1211,13 @@ Kun relasjoner med en eksisterende `historyGoPlaceId` er sikre History Go-koblin
 - **Graph Intelligence** is suggestion-only for gaps, links and next review actions.
 - The pipeline does not call backend services, activate EchoNet, activate Sync Hub, write back to History Go, call AHAIngest, or write to the insight chamber.
 - The pipeline does not auto-train models or fine-tune models.
+
+## AHA Training and Personal AI boundary
+
+Training Corpus is a local review corpus. It stores approved local AHA material for retrieval, context building, local example generation and future export decisions; it is not trained model data.
+
+Training Examples are local examples and JSONL candidates. They require review and approval, and approved JSONL export is a local file/string only. Fine-tuning consent means future local export eligibility only; it does not start fine-tuning.
+
+Personal AI is a local control/readiness/retrieval/preview/evaluation/audit surface. It builds local readiness reports, local retrieval indexes, local context, local preview answer packages, local evaluations and loop audits from approved material.
+
+Boundary: no backend, no API/model call, no OpenAI/fine-tuning job, no remote upload, no EchoNet, no Sync Hub, no History Go write-back, no AHAIngest and no insight-chamber writes. Ekte ekstern modell/API/backend-integrasjon krever separat eksplisitt kontrakt og samtykke.

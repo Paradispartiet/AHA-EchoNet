@@ -9,6 +9,9 @@
 (function (global) {
   "use strict";
 
+  function personalAiBoundaryMeta(extra = {}) { return { source_app: "aha", origin_app: extra.origin_app || "aha_personal_ai", local_only: true, control_surface_only: extra.control_surface_only ?? false, retrieval_only: extra.retrieval_only ?? false, evaluation_only: extra.evaluation_only ?? false, preview_only: extra.preview_only ?? false, model_training_enabled: false, fine_tuning_enabled: false, remote_upload_enabled: false, backend_enabled: false, echonet_shared: false, sync_enabled: false, historygo_writeback_enabled: false, writes_to_insight_chamber: false, calls_model_api: false, ...extra }; }
+  function isUnavailableRecord(record) { return Boolean(record?.deleted_at || record?.deletedAt || record?.archived === true || record?.status === "archived" || record?.status === "rejected"); }
+
   const VERSION = "v1";
   const SOURCE = "aha_chat_personal_context";
   const PREFERRED_TASK_TYPES = ["memory_fact", "project_explanation", "style_example", "concept_explanation", "summary"];
@@ -301,7 +304,7 @@
       retrieval.semanticAvailable = Boolean(retrieval.semanticAvailable);
     }
     const prompt = [personalPrompt, retrievalPrompt].filter(Boolean).join("\n\n");
-    return { context, relevant, retrieval, prompt };
+    return { context, relevant, retrieval, prompt, local_only: true, context_only: true, model_training_enabled: false, fine_tuning_enabled: false, remote_upload_enabled: false, backend_enabled: false, writes_to_insight_chamber: false, calls_model_api: false, meta: personalAiBoundaryMeta({ origin_app: "aha_chat_personal_context", object_type: "chat_personal_context", retrieval_only: true }) };
   }
 
   function getPersonalContextStatus() {
@@ -327,7 +330,7 @@
     };
   }
 
-  const AHAChatPersonalContext = {
+  const AHAChatPersonalContext = { personalAiBoundaryMeta, isUnavailableRecord,
     VERSION,
     SOURCE,
     buildPersonalContext,

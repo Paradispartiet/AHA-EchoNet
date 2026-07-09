@@ -1,5 +1,5 @@
 // ahaPrivacy.js
-// Fase 3H: første fungerende AHA Personvern / Kontroll-modul (localStorage-first).
+// Fase 3H: første fungerende AHA Personvern / Kontroll-modul (localStorage-first). Training/Personal AI er local-only: ingen modelltrening, ingen fine-tuning startes, ingen remote upload; JSONL-eksport er lokal fil/streng og Personal AI status/evalueringer lagres lokalt.
 
 (function (global) {
   "use strict";
@@ -51,6 +51,13 @@
     { key: "aha_knowledge_map_v1", label: "AHA Knowledge Map avledet lokal graf (ikke canonical sannhet)", kind: "object", isAHA: true, isHistoryGo: false, canClear: true },
     { key: "aha_knowledge_workbench_status_v1", label: "AHA Knowledge Workbench lokal statusflate", kind: "object", isAHA: true, isHistoryGo: false, canClear: true },
     { key: "aha_knowledge_graph_intelligence_v1", label: "AHA Graph Intelligence lokale forslag/audit (ikke auto-apply)", kind: "object", isAHA: true, isHistoryGo: false, canClear: true },
+    { key: "aha_training_corpus_v1", label: "AHA Training Corpus lokal review-corpus (ikke modelltrening/fine-tuning/upload)", kind: "array", isAHA: true, isHistoryGo: false, canClear: true },
+    { key: "aha_training_examples_v1", label: "AHA Training Examples lokale JSONL-kandidater (lokal eksport only, ingen upload)", kind: "array", isAHA: true, isHistoryGo: false, canClear: true },
+    { key: "aha_personal_ai_control_status_v1", label: "AHA Personal AI lokal kontroll-/readiness-status (ingen backend/model API)", kind: "object", isAHA: true, isHistoryGo: false, canClear: true },
+    { key: "aha_personal_retrieval_index_v1", label: "AHA Personal Retrieval lokal indeks (ikke delt/synket/History Go write-back)", kind: "object", isAHA: true, isHistoryGo: false, canClear: true },
+    { key: "aha_personal_semantic_index_v1", label: "AHA Semantic Retrieval lokal algoritmisk indeks (ingen vector API/backend)", kind: "object", isAHA: true, isHistoryGo: false, canClear: true },
+    { key: "aha_personal_ai_loop_audit_v1", label: "AHA Personal AI Loop Audit lokal kontroll (ingen auto-training/export)", kind: "object", isAHA: true, isHistoryGo: false, canClear: true },
+    { key: "aha_personal_answer_evaluations_v1", label: "AHA Personal Answer Evaluations lokale evalueringer (ingen trenings-trigger)", kind: "array", isAHA: true, isHistoryGo: false, canClear: true },
     { key: SETTINGS_KEY, label: "Personverninnstillinger", kind: "object", isAHA: true, isHistoryGo: false, canClear: true },
     { key: "aha_profile_name", label: "AHA Profil lokalt visningsnavn (local-only, ingen EchoNet/sync)", kind: "string", isAHA: true, isHistoryGo: false, canClear: true },
     { key: "aha_profile_id", label: "AHA Profil lokal ID (local-only, ingen EchoNet/sync)", kind: "string", isAHA: true, isHistoryGo: false, canClear: true },

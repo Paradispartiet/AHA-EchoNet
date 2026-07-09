@@ -1,13 +1,16 @@
 // ahaPersonalModelReadiness.js
 // ─────────────────────────────────────────────
 // AHA Personal Model Readiness V1.
-// Leser Training Corpus og Training Examples lokalt og vurderer om
-// brukerens materiale er klart for RAG, eksport og senere personlig
-// modelltilpasning. Ingen nettverkskall, ingen sync.
+// Lokal report-only readiness: vurderer corpus/examples for retrieval, lokal
+// JSONL-eksport og evaluering. Den trener ikke modell, starter ikke fine-tuning,
+// laster ikke opp og kaller ikke backend/EchoNet.
 // ─────────────────────────────────────────────
 
 (function (global) {
   "use strict";
+
+  function personalAiBoundaryMeta(extra = {}) { return { source_app: "aha", origin_app: extra.origin_app || "aha_personal_ai", local_only: true, control_surface_only: extra.control_surface_only ?? false, retrieval_only: extra.retrieval_only ?? false, evaluation_only: extra.evaluation_only ?? false, preview_only: extra.preview_only ?? false, model_training_enabled: false, fine_tuning_enabled: false, remote_upload_enabled: false, backend_enabled: false, echonet_shared: false, sync_enabled: false, historygo_writeback_enabled: false, writes_to_insight_chamber: false, calls_model_api: false, ...extra }; }
+  function isUnavailableRecord(record) { return Boolean(record?.deleted_at || record?.deletedAt || record?.archived === true || record?.status === "archived" || record?.status === "rejected"); }
 
   function asArray(value) { return Array.isArray(value) ? value : []; }
   function asObject(value) { return value && typeof value === "object" && !Array.isArray(value) ? value : {}; }
@@ -252,6 +255,7 @@
 
     const report = {
       generatedAt: nowIso(options),
+      local_only: true, readiness_report_only: true, report_only: true, model_training_enabled: false, fine_tuning_enabled: false, remote_upload_enabled: false, backend_enabled: false, echonet_shared: false, sync_enabled: false, calls_model_api: false, meta: personalAiBoundaryMeta({ origin_app: "aha_personal_model_readiness", object_type: "readiness_report", control_surface_only: true }),
       level: scored.level,
       score: scored.score,
       corpus: {
@@ -302,7 +306,9 @@
     analyzeConsent,
     analyzeExportReadiness,
     buildRecommendations,
-    buildCompactPack
+    buildCompactPack,
+    personalAiBoundaryMeta,
+    isUnavailableRecord
   };
 
   if (typeof module !== "undefined" && module.exports) {

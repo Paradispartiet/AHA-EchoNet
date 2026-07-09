@@ -1,6 +1,9 @@
-// AHA Personal Retrieval / RAG V1 – lokal, samtykkestyrt og forklarbar.
+// AHA Personal Retrieval / RAG V1 – lokal indeks/kontekst only; ingen vector API, backend, upload, EchoNet eller modellkall.
 (function (global) {
   "use strict";
+
+  function personalAiBoundaryMeta(extra = {}) { return { source_app: "aha", origin_app: extra.origin_app || "aha_personal_ai", local_only: true, control_surface_only: extra.control_surface_only ?? false, retrieval_only: extra.retrieval_only ?? false, evaluation_only: extra.evaluation_only ?? false, preview_only: extra.preview_only ?? false, model_training_enabled: false, fine_tuning_enabled: false, remote_upload_enabled: false, backend_enabled: false, echonet_shared: false, sync_enabled: false, historygo_writeback_enabled: false, writes_to_insight_chamber: false, calls_model_api: false, ...extra }; }
+  function isUnavailableRecord(record) { return Boolean(record?.deleted_at || record?.deletedAt || record?.archived === true || record?.status === "archived" || record?.status === "rejected"); }
 
   const STORAGE_KEY = "aha_personal_retrieval_index_v1";
   const VERSION = "v1";
@@ -133,7 +136,7 @@
       bySourceType[item.sourceType] = (bySourceType[item.sourceType] || 0) + 1;
     });
     return {
-      generatedAt: nowIso(options), version: VERSION, items,
+      generatedAt: nowIso(options), version: VERSION, local_only: true, retrieval_only: true, model_training_enabled: false, fine_tuning_enabled: false, remote_upload_enabled: false, backend_enabled: false, echonet_shared: false, sync_enabled: false, calls_model_api: false, meta: personalAiBoundaryMeta({ origin_app: "aha_personal_retrieval", object_type: "retrieval_index", retrieval_only: true }), items,
       stats: {
         total: items.length, bySource, bySourceType,
         corpusItems: bySource.training_corpus || 0,
@@ -209,7 +212,7 @@
         concepts: item.concepts, taskType: item.taskType, meta: item.meta
       }));
     return {
-      query: asText(query), generatedAt: nowIso(options), results,
+      query: asText(query), generatedAt: nowIso(options), local_only: true, retrieval_only: true, model_training_enabled: false, fine_tuning_enabled: false, remote_upload_enabled: false, backend_enabled: false, calls_model_api: false, results,
       stats: { indexedItems: asArray(index?.items).length, matchedItems: results.length, returnedItems: results.length }
     };
   }
@@ -229,7 +232,7 @@
     if (!search.results.length) lines.push("Ingen relevante godkjente personlige kilder funnet.");
     lines.push("Bruk dette når det er relevant for brukerens spørsmål.");
     return {
-      query: search.query, generatedAt: search.generatedAt, results: search.results,
+      query: search.query, generatedAt: search.generatedAt, local_only: true, retrieval_only: true, model_training_enabled: false, fine_tuning_enabled: false, remote_upload_enabled: false, backend_enabled: false, calls_model_api: false, results: search.results,
       mode: "lexical", semanticAvailable: Boolean(global.AHASemanticRetrieval),
       contextText: truncate(lines.join("\n"), maxLength),
       sourceSummary: search.results.reduce((out, item) => {
@@ -272,7 +275,7 @@
     catch { return { available:true, projects:[], concepts:[], relatedNodes:[] }; }
   }
 
-  global.AHAPersonalRetrieval = {
+  global.AHAPersonalRetrieval = { personalAiBoundaryMeta, isUnavailableRecord,
     STORAGE_KEY, VERSION, buildRetrievalIndex, saveRetrievalIndex, loadRetrievalIndex,
     refreshRetrievalIndex, tokenize, scoreItemAgainstQuery, searchPersonalKnowledge,
     buildRagContext, buildRagPromptBlock, getRetrievalStatus, getKnowledgeMapBoosts

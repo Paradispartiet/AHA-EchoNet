@@ -2,6 +2,9 @@
 (function (global) {
   "use strict";
 
+  function personalAiBoundaryMeta(extra = {}) { return { source_app: "aha", origin_app: extra.origin_app || "aha_personal_ai", local_only: true, control_surface_only: extra.control_surface_only ?? false, retrieval_only: extra.retrieval_only ?? false, evaluation_only: extra.evaluation_only ?? false, preview_only: extra.preview_only ?? false, model_training_enabled: false, fine_tuning_enabled: false, remote_upload_enabled: false, backend_enabled: false, echonet_shared: false, sync_enabled: false, historygo_writeback_enabled: false, writes_to_insight_chamber: false, calls_model_api: false, ...extra }; }
+  function isUnavailableRecord(record) { return Boolean(record?.deleted_at || record?.deletedAt || record?.archived === true || record?.status === "archived" || record?.status === "rejected"); }
+
   const VERSION = "v1";
   const DEFAULT_QUERY = "Hva vet AHA om mine viktigste prosjekter og begreper?";
   const INTENTS = ["question","project_status","planning","reflection","writing_help","technical_help","training_model","meta_insight","unknown"];
@@ -158,8 +161,8 @@
     const context = buildAnswerContext(userMessage || DEFAULT_QUERY, options);
     const localPreview = composeLocalAnswerPreview(context, options);
     const status = { hasPersonalContext: Boolean(context.personalContext?.prompt || context.personalContext?.context), hasRetrieval: Boolean(asArray(context.retrieval?.results).length), hasSemanticRetrieval: Boolean(asArray(context.semanticRetrieval?.results).length || asArray(context.evidence?.hybridRetrieval?.results).length), selectedSourceCount: asArray(context.selectedSources).length, intent: context.answerIntent, ready: Boolean(context.promptBlock && context.answerPlan) };
-    return { generatedAt: context.generatedAt, userMessage: context.userMessage, context, prompt: context.promptBlock, localPreview, status };
+    return { generatedAt: context.generatedAt, userMessage: context.userMessage, context, prompt: context.promptBlock, localPreview, status, local_only: true, preview_only: true, local_preview_only: true, model_training_enabled: false, fine_tuning_enabled: false, remote_upload_enabled: false, backend_enabled: false, calls_model_api: false, meta: personalAiBoundaryMeta({ origin_app: "aha_personal_answer_composer", object_type: "answer_preview_package", preview_only: true }) };
   }
 
-  global.AHAPersonalAnswerComposer = { VERSION, DEFAULT_QUERY, INTENTS, buildAnswerContext, detectAnswerIntent, buildAnswerPlan, selectSourcesForAnswer, buildComposerPrompt, composeLocalAnswerPreview, buildAnswerPackage };
+  global.AHAPersonalAnswerComposer = { personalAiBoundaryMeta, isUnavailableRecord, VERSION, DEFAULT_QUERY, INTENTS, buildAnswerContext, detectAnswerIntent, buildAnswerPlan, selectSourcesForAnswer, buildComposerPrompt, composeLocalAnswerPreview, buildAnswerPackage };
 })(typeof window !== "undefined" ? window : globalThis);
