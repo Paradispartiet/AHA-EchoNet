@@ -2918,9 +2918,9 @@
     const displayName = cleanName(profile?.display_name || "");
     const signedIn = Boolean(user?.id);
     const missingProfile = signedIn && !displayName;
-    const profileTitle = displayName || (signedIn ? "Opprett AHA-profil" : "Din AHA-profil");
+    const profileTitle = "Din AHA-profil";
     const avatarText = initials(displayName || user?.email || "AHA");
-    const statusText = signedIn ? "Innlogget" : "Ikke innlogget";
+    const statusText = signedIn ? `AHA-ID ${shortId(user.id)}` : "Ikke innlogget";
     const statusClass = !signedIn ? "is-signed-out" : missingProfile ? "is-missing-profile" : "is-signed-in";
 
     setText("aha-profile-name", profileTitle);
@@ -2930,14 +2930,10 @@
     setText("aha-profile-connection", signedIn
       ? hasHistoryGoPayload() ? "Logget inn · History Go koblet til" : "Logget inn · Klar for History Go-import"
       : "Ikke logget inn · Koble til for å bygge innsikt");
-    setText("aha-profile-id", signedIn ? shortId(user.id) : "Ikke innlogget");
+    setText("aha-profile-id", statusText);
     setText("aha-profile-avatar", avatarText);
-    setText("aha-header-status", statusText);
-    setText("aha-auth-status", statusText);
 
-    const headerStatus = $("aha-header-status");
     const authStatus = $("aha-auth-status");
-    setClassState(headerStatus, statusClass);
     setClassState(authStatus, statusClass);
     authStatus?.classList.add("is-hidden");
     authStatus?.setAttribute("aria-hidden", "true");
