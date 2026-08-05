@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build-politics-corpus:
@@ -20,10 +20,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout AHA-EchoNet
+      - name: Checkout AHA-EchoNet head branch
         uses: actions/checkout@v5
         with:
           path: aha
+          ref: ${{ github.head_ref || github.ref_name }}
+          fetch-depth: 0
 
       - name: Checkout locked History Go source
         uses: actions/checkout@v5
@@ -64,6 +66,25 @@ jobs:
           if (audit.activation_recommendation !== 'review_required_before_runtime_activation') throw new Error('Audit must remain review-gated before runtime activation.');
           console.log(`Verified Politics corpus: ${corpus.entries.length}/13 chapters; ${audit.term_collision_summary.high_risk} high-risk terms require review.`);
           NODE
+
+      - name: Materialize review artifacts on the PR branch
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        working-directory: aha
+        env:
+          HEAD_BRANCH: ${{ github.head_ref }}
+        run: |
+          mkdir -p data/integrations/review
+          cp artifacts/history-go-fagverk-politikk.audit.v1.json data/integrations/review/history-go-fagverk-politikk.audit.v1.json
+          cp artifacts/history-go-fagverk-politikk.audit-report.v1.json data/integrations/review/history-go-fagverk-politikk.audit-report.v1.json
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/integrations/review/history-go-fagverk-politikk.audit.v1.json data/integrations/review/history-go-fagverk-politikk.audit-report.v1.json
+          if git diff --cached --quiet; then
+            echo "Review artifacts already match the locked History Go source."
+            exit 0
+          fi
+          git commit -m "Materialize Politics Fagverk audit artifacts"
+          git push origin "HEAD:${HEAD_BRANCH}"
 
       - name: Upload Politics audit artifacts
         uses: actions/upload-artifact@v4
