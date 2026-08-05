@@ -1,0 +1,90 @@
+name: AHA History Go Fagverk release validation
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'scripts/sync-history-go-fagverk-release.mjs'
+      - 'scripts/build-history-go-fagverk-corpus.mjs'
+      - 'tests/aha-history-go-fagverk-release-sync.test.mjs'
+      - 'tests/aha-history-go-fagverk-release-observation.test.cjs'
+      - 'data/integrations/history-go-fagverk-release.observed.json'
+      - 'data/integrations/review/history-go-fagverk-release-update.v1.json'
+      - 'data/integrations/candidates/**'
+      - '.github/workflows/aha-history-go-fagverk-release-sync.yml'
+      - '.github/workflows/aha-history-go-fagverk-release-validate.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Verify observed Fagverk release and candidates
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout AHA-EchoNet
+        uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Read observed History Go source
+        id: observed
+        run: |
+          echo "source_ref=$(node -p "require('./data/integrations/history-go-fagverk-release.observed.json').source_commit")" >> "$GITHUB_OUTPUT"
+      - name: Checkout exact History Go source
+        uses: actions/checkout@v5
+        with:
+          repository: Paradispartiet/History-Go
+          ref: ${{ steps.observed.outputs.source_ref }}
+          path: history-go
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify producer release at observed commit
+        working-directory: history-go
+        run: |
+          node --check scripts/build-fagverk-release-manifest.mjs
+          node scripts/build-fagverk-release-manifest.mjs --check
+      - name: Verify synchronizer and checked contracts
+        run: |
+          node --check scripts/sync-history-go-fagverk-release.mjs
+          node --test tests/aha-history-go-fagverk-release-sync.test.mjs
+          node tests/aha-history-go-fagverk-release-observation.test.cjs
+      - name: Verify observed digest against producer release
+        run: |
+          node - <<'NODE'
+          const fs = require('fs');
+          const observed = JSON.parse(fs.readFileSync('data/integrations/history-go-fagverk-release.observed.json', 'utf8'));
+          const release = JSON.parse(fs.readFileSync('history-go/data/fagverk/fagverk_release.json', 'utf8'));
+          if (observed.source_commit !== process.env.SOURCE_REF) throw new Error('Observed source commit mismatch.');
+          if (observed.release_sha256 !== release.release_sha256) throw new Error('Observed release digest differs from producer release.');
+          if (observed.registry.content_sha256 !== release.registry.content_sha256) throw new Error('Observed registry digest differs from producer release.');
+          for (const [subjectId, expected] of Object.entries(observed.subjects)) {
+            const source = release.subjects[subjectId];
+            if (!source) throw new Error(`${subjectId}: missing from producer release.`);
+            for (const field of ['chapter_count', 'module_file_count', 'referenced_file_count', 'structure_sha256', 'content_sha256']) {
+              if (expected[field] !== source[field]) throw new Error(`${subjectId}: ${field} differs from producer release.`);
+            }
+          }
+          NODE
+        env:
+          SOURCE_REF: ${{ steps.observed.outputs.source_ref }}
+      - name: Preserve checked-in candidate artifacts
+        run: cp -R data/integrations/candidates /tmp/fagverk-candidates-checked
+      - name: Rebuild every observed subject candidate
+        run: |
+          rm -rf data/integrations/candidates
+          mkdir -p data/integrations/candidates
+          SUBJECTS=$(node -p "Object.keys(require('./data/integrations/history-go-fagverk-release.observed.json').subjects).join(',')")
+          IFS=',' read -ra ITEMS <<< "$SUBJECTS"
+          for subject in "${ITEMS[@]}"; do
+            node scripts/build-history-go-fagverk-corpus.mjs \
+              --history-go-root history-go \
+              --subject "$subject" \
+              --output "data/integrations/candidates/history-go-fagverk-${subject}.candidate.v1.json" \
+              --audit-output "data/integrations/candidates/history-go-fagverk-${subject}.candidate-audit.v1.json"
+          done
+      - name: Verify candidate parity
+        run: |
+          diff -ru /tmp/fagverk-candidates-checked data/integrations/candidates
+          node tests/aha-history-go-fagverk-release-observation.test.cjs
