@@ -1,0 +1,19 @@
+{
+  "schema": "aha_history_go_fagverk_runtime_active_v1",
+  "version": "1.0.0",
+  "status": "seed_runtime_active",
+  "source_repo": "Paradispartiet/History-Go",
+  "active_source_commit": "9e9644e83998ff715005bf80c96cde6193107c13",
+  "approved_contract": "data/integrations/history-go-fagverk-release.approved.json",
+  "active_corpus": {
+    "path": "data/integrations/history-go-fagverk-corpus.v1.json",
+    "entry_count": 3
+  },
+  "full_release_active": false,
+  "activation_rules": {
+    "observed_release_is_not_runtime": true,
+    "candidate_release_is_not_runtime": true,
+    "approved_release_requires_explicit_pointer_update": true,
+    "explicit_activation_pull_request_required": true
+  }
+}

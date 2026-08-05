@@ -1,6 +1,6 @@
 {
   "schema": "aha_history_go_fagverk_approved_runtime_v1",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "status": "seed_runtime_approved",
   "source_repo": "Paradispartiet/History-Go",
   "approved_source_commit": "9e9644e83998ff715005bf80c96cde6193107c13",
@@ -28,6 +28,8 @@
     "observed_release_is_not_approved": true,
     "candidate_corpora_are_not_runtime_inputs": true,
     "subject_policy_and_correction_gates_required": true,
+    "approval_does_not_change_runtime_without_active_pointer": true,
+    "runtime_active_pointer_required": true,
     "explicit_activation_pull_request_required": true
   }
 }

@@ -6,6 +6,13 @@ on:
   repository_dispatch:
     types: [history-go-fagverk-release]
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/sync-history-go-fagverk-release.mjs'
+      - 'scripts/build-history-go-fagverk-candidate.mjs'
+      - 'scripts/build-history-go-fagverk-corpus.mjs'
+      - '.github/workflows/aha-history-go-fagverk-release-sync.yml'
 
 permissions:
   contents: write
@@ -17,7 +24,7 @@ concurrency:
 
 jobs:
   sync:
-    name: Observe History Go Fagverk release
+    name: Observe History Go Fagverk release v2
     runs-on: ubuntu-latest
     steps:
       - name: Checkout AHA-EchoNet
@@ -35,19 +42,28 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@v5
         with:
-          node-version: 22
-      - name: Verify producer release parity
+          node-version: 24
+      - name: Verify producer release v2 parity
         working-directory: history-go
         run: |
           node --check scripts/build-fagverk-release-manifest.mjs
           node scripts/build-fagverk-release-manifest.mjs --check
+          node - <<'NODE'
+          const release = require('./data/fagverk/fagverk_release.json');
+          if (release.schema !== 'history_go_fagverk_release_v2') throw new Error(`Unexpected producer release schema: ${release.schema}`);
+          if (release.summary.subject_count !== 18) throw new Error(`Expected 18 producer packages, got ${release.summary.subject_count}.`);
+          if (release.summary.root_subject_count + release.summary.specialization_count !== release.summary.subject_count) {
+            throw new Error('Producer package inventory is inconsistent.');
+          }
+          if (release.summary.missing_file_count !== 0) throw new Error('Producer release contains blocking missing references.');
+          NODE
       - name: Prepare automation branch from current main
         working-directory: aha
         run: |
           git fetch origin main
           git fetch origin automation/history-go-fagverk-release:refs/remotes/origin/automation/history-go-fagverk-release || true
           git checkout -B automation/history-go-fagverk-release origin/main
-      - name: Observe release and build update report
+      - name: Observe release and build semantic update report
         working-directory: aha
         run: node scripts/sync-history-go-fagverk-release.mjs --history-go-root ../history-go
       - name: Read sync status
@@ -71,7 +87,7 @@ jobs:
               "data/integrations/candidates/history-go-fagverk-${subject}.candidate.v1.json" \
               "data/integrations/candidates/history-go-fagverk-${subject}.candidate-audit.v1.json"
           done
-      - name: Build changed subject candidate corpora
+      - name: Build changed subject review candidates
         if: steps.status.outputs.changed == 'true'
         working-directory: aha
         env:
@@ -81,13 +97,13 @@ jobs:
           IFS=',' read -ra SUBJECTS <<< "$BUILD_SUBJECTS"
           for subject in "${SUBJECTS[@]}"; do
             [ -n "$subject" ] || continue
-            node scripts/build-history-go-fagverk-corpus.mjs \
+            node scripts/build-history-go-fagverk-candidate.mjs \
               --history-go-root ../history-go \
               --subject "$subject" \
               --output "data/integrations/candidates/history-go-fagverk-${subject}.candidate.v1.json" \
               --audit-output "data/integrations/candidates/history-go-fagverk-${subject}.candidate-audit.v1.json"
           done
-      - name: Verify candidate counts against release
+      - name: Verify candidates against observed release
         if: steps.status.outputs.changed == 'true'
         working-directory: aha
         run: |
@@ -95,6 +111,8 @@ jobs:
           const fs = require('fs');
           const observed = JSON.parse(fs.readFileSync('data/integrations/history-go-fagverk-release.observed.json', 'utf8'));
           const report = JSON.parse(fs.readFileSync('data/integrations/review/history-go-fagverk-release-update.v1.json', 'utf8'));
+          if (observed.schema !== 'aha_history_go_fagverk_observed_release_v2') throw new Error(`Unexpected observed schema: ${observed.schema}`);
+          if (report.schema !== 'aha_history_go_fagverk_release_update_v2') throw new Error(`Unexpected report schema: ${report.schema}`);
           for (const change of report.subjects.filter((item) => item.status !== 'unchanged')) {
             const subjectId = change.subject_id;
             const corpusPath = `data/integrations/candidates/history-go-fagverk-${subjectId}.candidate.v1.json`;
@@ -103,19 +121,35 @@ jobs:
               if (fs.existsSync(corpusPath) || fs.existsSync(auditPath)) throw new Error(`${subjectId}: retired candidate still exists.`);
               continue;
             }
-            const corpus = JSON.parse(fs.readFileSync(corpusPath, 'utf8'));
+            const candidate = JSON.parse(fs.readFileSync(corpusPath, 'utf8'));
             const audit = JSON.parse(fs.readFileSync(auditPath, 'utf8'));
             const expected = observed.subjects[subjectId];
             if (!expected) throw new Error(`${subjectId}: missing observed subject.`);
-            if (corpus.source_ref !== observed.source_commit) throw new Error(`${subjectId}: source ref mismatch.`);
-            if (corpus.entries.length !== expected.chapter_count) throw new Error(`${subjectId}: expected ${expected.chapter_count} chapters, got ${corpus.entries.length}.`);
+            if (candidate.source_ref !== observed.source_commit) throw new Error(`${subjectId}: source ref mismatch.`);
+            if (candidate.release_sha256 && candidate.release_sha256 !== observed.release_sha256) throw new Error(`${subjectId}: release digest mismatch.`);
             if (!audit.gate?.passed) throw new Error(`${subjectId}: candidate audit failed: ${(audit.gate?.errors || []).join(' ')}`);
-            const modules = audit.chapters.reduce((sum, chapter) => sum + chapter.module_file_count, 0);
-            if (modules !== expected.module_file_count) throw new Error(`${subjectId}: expected ${expected.module_file_count} modules, got ${modules}.`);
+            if (expected.chapter_status === 'materialized') {
+              if (candidate.schema !== 'aha_history_go_fagverk_corpus_v1') throw new Error(`${subjectId}: expected chapter corpus candidate.`);
+              if (candidate.entries.length !== expected.chapter_count) throw new Error(`${subjectId}: expected ${expected.chapter_count} chapters, got ${candidate.entries.length}.`);
+              const modules = audit.chapters.reduce((sum, chapter) => sum + chapter.module_file_count, 0);
+              if (modules !== expected.module_file_count) throw new Error(`${subjectId}: expected ${expected.module_file_count} modules, got ${modules}.`);
+            } else {
+              if (candidate.schema !== 'aha_history_go_fagverk_package_candidate_v1') throw new Error(`${subjectId}: expected package inventory candidate.`);
+              if (candidate.candidate_kind !== 'package_inventory') throw new Error(`${subjectId}: invalid package candidate kind.`);
+              if (candidate.package_file_count !== expected.package_file_count) throw new Error(`${subjectId}: package file count mismatch.`);
+              if (candidate.existing_package_file_count !== expected.package_file_count - expected.optional_gap_count) throw new Error(`${subjectId}: existing package file count mismatch.`);
+              for (const field of ['package_content_sha256', 'structure_sha256', 'content_sha256']) {
+                if (candidate[field] !== expected[field]) throw new Error(`${subjectId}: ${field} mismatch.`);
+              }
+              if (audit.coverage.declared_package_files !== expected.package_file_count) throw new Error(`${subjectId}: audit package inventory mismatch.`);
+            }
+            if (candidate.runtime_activation_allowed !== false || audit.runtime_activation_allowed !== false) {
+              throw new Error(`${subjectId}: runtime activation boundary failed.`);
+            }
           }
-          if (report.runtime_activation_allowed !== false || observed.runtime_activation_allowed !== false) throw new Error('Runtime activation boundary failed.');
+          if (report.runtime_activation_allowed !== false || observed.runtime_activation_allowed !== false) throw new Error('Release runtime activation boundary failed.');
           NODE
-      - name: Commit observed release and candidates
+      - name: Commit observed release and review candidates
         if: steps.status.outputs.changed == 'true'
         working-directory: aha
         run: |

@@ -5,11 +5,14 @@ on:
     branches: [main]
     paths:
       - 'scripts/sync-history-go-fagverk-release.mjs'
+      - 'scripts/build-history-go-fagverk-candidate.mjs'
       - 'scripts/build-history-go-fagverk-corpus.mjs'
       - 'tests/aha-history-go-fagverk-release-sync.test.mjs'
+      - 'tests/aha-history-go-fagverk-candidate.test.mjs'
       - 'tests/aha-history-go-fagverk-release-observation.test.cjs'
       - 'data/integrations/history-go-fagverk-release.observed.json'
       - 'data/integrations/history-go-fagverk-release.approved.json'
+      - 'data/integrations/history-go-fagverk-release.runtime-active.json'
       - 'data/integrations/review/history-go-fagverk-release-update.v1.json'
       - 'data/integrations/candidates/**'
       - 'docs/AHA_HISTORY_GO_FAGVERK_RELEASE_SYNC.md'
@@ -22,18 +25,19 @@ permissions:
 
 jobs:
   validate:
-    name: Verify observed Fagverk release and candidates
+    name: Verify observed Fagverk release and review candidates
     runs-on: ubuntu-latest
     steps:
       - name: Checkout AHA-EchoNet
         uses: actions/checkout@v5
       - uses: actions/setup-node@v5
         with:
-          node-version: 22
+          node-version: 24
       - name: Read observed History Go source
         id: observed
         run: |
           echo "source_ref=$(node -p "require('./data/integrations/history-go-fagverk-release.observed.json').source_commit")" >> "$GITHUB_OUTPUT"
+          echo "schema=$(node -p "require('./data/integrations/history-go-fagverk-release.observed.json').schema")" >> "$GITHUB_OUTPUT"
       - name: Checkout exact History Go source
         uses: actions/checkout@v5
         with:
@@ -47,12 +51,17 @@ jobs:
         run: |
           node --check scripts/build-fagverk-release-manifest.mjs
           node scripts/build-fagverk-release-manifest.mjs --check
-      - name: Verify synchronizer and checked contracts
+      - name: Verify synchronizer, candidate builders and lifecycle contracts
         run: |
           node --check scripts/sync-history-go-fagverk-release.mjs
+          node --check scripts/build-history-go-fagverk-candidate.mjs
+          node --check scripts/build-history-go-fagverk-corpus.mjs
           node --test tests/aha-history-go-fagverk-release-sync.test.mjs
+          node --test tests/aha-history-go-fagverk-candidate.test.mjs
           node tests/aha-history-go-fagverk-release-observation.test.cjs
       - name: Verify observed digest against producer release
+        env:
+          SOURCE_REF: ${{ steps.observed.outputs.source_ref }}
         run: |
           node - <<'NODE'
           const fs = require('fs');
@@ -64,30 +73,52 @@ jobs:
           if (observed.summary.subject_count !== release.summary.subject_count || observed.summary.chapter_count !== release.summary.chapter_count || observed.summary.module_file_count !== release.summary.module_file_count) {
             throw new Error('Observed release summary differs from producer release.');
           }
+          const isV2 = observed.schema === 'aha_history_go_fagverk_observed_release_v2';
+          if (isV2) {
+            if (release.schema !== 'history_go_fagverk_release_v2') throw new Error(`Expected producer v2, got ${release.schema}.`);
+            if (observed.subject_inventory.content_sha256 !== release.subject_inventory.content_sha256) throw new Error('Subject inventory digest differs from producer release.');
+            if (observed.fag_manifest.content_sha256 !== release.fag_manifest.content_sha256) throw new Error('Fag manifest digest differs from producer release.');
+            for (const field of ['root_subject_count', 'specialization_count', 'package_file_count', 'chapter_referenced_file_count', 'referenced_file_count', 'optional_gap_count']) {
+              if (observed.summary[field] !== release.summary[field]) throw new Error(`Observed summary ${field} differs from producer release.`);
+            }
+          } else if (release.schema !== 'history_go_fagverk_release_v1') {
+            throw new Error(`Expected producer v1 during migration, got ${release.schema}.`);
+          }
           for (const [subjectId, expected] of Object.entries(observed.subjects)) {
             const source = release.subjects[subjectId];
             if (!source) throw new Error(`${subjectId}: missing from producer release.`);
-            for (const field of ['chapter_count', 'module_file_count', 'referenced_file_count', 'structure_sha256', 'content_sha256']) {
+            const fields = isV2
+              ? ['kind', 'parent_subject_id', 'schema_family', 'package_status', 'chapter_status', 'package_file_count', 'chapter_count', 'module_file_count', 'referenced_file_count', 'package_content_sha256', 'chapter_content_sha256', 'structure_sha256', 'content_sha256']
+              : ['chapter_count', 'module_file_count', 'referenced_file_count', 'structure_sha256', 'content_sha256'];
+            for (const field of fields) {
               if (expected[field] !== source[field]) throw new Error(`${subjectId}: ${field} differs from producer release.`);
             }
+            if (isV2 && expected.optional_gap_count !== source.missing_optional_files.length) throw new Error(`${subjectId}: optional gap count differs from producer release.`);
           }
           NODE
-        env:
-          SOURCE_REF: ${{ steps.observed.outputs.source_ref }}
       - name: Rebuild every observed subject candidate in isolation
         run: |
           rm -rf /tmp/fagverk-candidates-rebuilt
           mkdir -p /tmp/fagverk-candidates-rebuilt
+          OBSERVED_SCHEMA=$(node -p "require('./data/integrations/history-go-fagverk-release.observed.json').schema")
           SUBJECTS=$(node -p "Object.keys(require('./data/integrations/history-go-fagverk-release.observed.json').subjects).join(',')")
           IFS=',' read -ra ITEMS <<< "$SUBJECTS"
           for subject in "${ITEMS[@]}"; do
-            node scripts/build-history-go-fagverk-corpus.mjs \
-              --history-go-root history-go \
-              --subject "$subject" \
-              --output "/tmp/fagverk-candidates-rebuilt/history-go-fagverk-${subject}.candidate.v1.json" \
-              --audit-output "/tmp/fagverk-candidates-rebuilt/history-go-fagverk-${subject}.candidate-audit.v1.json"
+            if [ "$OBSERVED_SCHEMA" = 'aha_history_go_fagverk_observed_release_v2' ]; then
+              node scripts/build-history-go-fagverk-candidate.mjs \
+                --history-go-root history-go \
+                --subject "$subject" \
+                --output "/tmp/fagverk-candidates-rebuilt/history-go-fagverk-${subject}.candidate.v1.json" \
+                --audit-output "/tmp/fagverk-candidates-rebuilt/history-go-fagverk-${subject}.candidate-audit.v1.json"
+            else
+              node scripts/build-history-go-fagverk-corpus.mjs \
+                --history-go-root history-go \
+                --subject "$subject" \
+                --output "/tmp/fagverk-candidates-rebuilt/history-go-fagverk-${subject}.candidate.v1.json" \
+                --audit-output "/tmp/fagverk-candidates-rebuilt/history-go-fagverk-${subject}.candidate-audit.v1.json"
+            fi
           done
-      - name: Verify candidate parity and inventory
+      - name: Verify candidate parity and complete inventory
         run: |
           node - <<'NODE'
           const fs = require('fs');
