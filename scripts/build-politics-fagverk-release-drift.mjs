@@ -45,8 +45,11 @@ function writeJson(relativePath, value) {
 const same = (left, right) => JSON.stringify(left) === JSON.stringify(right);
 
 function politicsSubject(observed) {
-  const subject = (observed.subjects || observed.packages || []).find((item) => item.subject_id === "politikk");
-  if (!subject) throw new Error("Observed release lacks Politics.");
+  const inventory = observed.subjects || observed.packages || {};
+  const subject = Array.isArray(inventory)
+    ? inventory.find((item) => item.subject_id === "politikk")
+    : inventory.politikk;
+  if (!subject || subject.subject_id !== "politikk") throw new Error("Observed release lacks Politics.");
   return subject;
 }
 
