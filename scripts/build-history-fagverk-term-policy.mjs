@@ -13,7 +13,12 @@ const DEFAULT_CORPUS = "data/integrations/candidates/history-go-fagverk-historie
 const DEFAULT_AUDIT = "data/integrations/candidates/history-go-fagverk-historie.candidate-audit.v1.json";
 const DEFAULT_OUTPUT = "data/integrations/review/history-go-fagverk-historie.term-policy.v1.json";
 
-const GENERIC_LANGUAGE_TERMS = new Set(["aktivitet", "alene", "alternativ", "alternativer", "analyse", "analysen", "andre", "aktør", "aktører", "bare", "beskriver", "beskrives", "begge", "både", "case", "data", "derfor", "dokumentasjon", "dokumentere", "dokumenterer", "endring", "endringer", "ett", "faktisk", "felles", "flere", "fordi", "forklaring", "forklaringer", "former", "før", "følger", "får", "gjennomføring", "gjennomføres", "gir", "gjør", "handler", "historie", "historien", "historisk", "historiske", "hvem", "hvor", "hvorfor", "hvilken", "hvordan", "i perioder", "institusjon", "institusjoner", "kan", "kilden", "kilder", "konsekvenser", "konkret", "krever", "ledd", "men", "mennesker", "mer", "mens", "mål", "når", "offentlig", "over", "over tid", "periode", "perioder", "produserte", "ressurs", "ressurser", "saken", "samlet", "seg", "senere", "slik", "skill", "skille", "skiller", "sted", "stedet", "system", "systemet", "systemer", "tekst", "teksten", "tid", "tidsrom", "tidligere", "tiltak", "tiltaket", "tolkning", "underbygges", "undersøker", "ulike", "uten", "utvikling", "utfall", "var", "vedtak", "viser", "viktig", "være", "forstå"]);
+const GENERIC_LANGUAGE_TERMS = new Set(["aktivitet", "alene", "alternativ", "alternativer", "analyse", "analysen", "andre", "aktør", "aktører", "bare", "beskriver", "beskrives", "begge", "både", "case", "data", "derfor", "dokumentasjon", "dokumentere", "dokumenterer", "endring", "endringer", "ett", "faktisk", "felles", "flere", "fordi", "forklaring", "forklaringer", "former", "før", "følger", "får", "gjennomføring", "gjennomføres", "gir", "gjør", "handler", "historie", "historien", "historisk", "historiske", "hvem", "hvor", "hvorfor", "hvilken", "hvordan", "i perioder", "institusjon", "institusjoner", "institusjonene", "kan", "kilden", "kilder", "konsekvenser", "konkret", "krever", "ledd", "men", "mennesker", "mer", "mens", "mål", "når", "offentlig", "over", "over tid", "periode", "perioder", "produserte", "ressurs", "ressurser", "saken", "samlet", "seg", "senere", "slik", "skill", "skille", "skiller", "staten", "sted", "stedet", "system", "systemet", "systemer", "tekst", "teksten", "tid", "tidsrom", "tidligere", "tiltak", "tiltaket", "tolkning", "underbygges", "undersøker", "ulike", "uten", "utvikling", "utfall", "var", "vedtak", "viser", "viktig", "være", "forstå"]);
+const REVIEWED_COLLISION_OVERRIDES = new Map([
+  ["hushold", { category: "reviewed_chapter_scoped_evidence", action: "down_weight", multiplier: 0.3 }],
+  ["historiebruk", { category: "reviewed_chapter_scoped_evidence", action: "down_weight", multiplier: 0.3 }],
+  ["diaspora", { category: "reviewed_chapter_scoped_evidence", action: "down_weight", multiplier: 0.3 }]
+]);
 const CHAPTER_RULES = Object.freeze({
   "1814_statsdannelse": {
     "required_anchor_terms": [
@@ -213,11 +218,16 @@ const CHAPTER_RULES = Object.freeze({
   "industri_arbeid_sosialhistorie": {
     "required_anchor_terms": [
       "industrialisering",
+      "industrialiseringen",
       "arbeiderbevegelse",
+      "arbeiderbevegelsen",
       "fabrikk",
+      "fabrikkarbeid",
       "arbeidsdeling",
       "klasse",
-      "fagforening"
+      "klasseforhold",
+      "fagforening",
+      "fagforeninger"
     ],
     "supplemental_evidence_terms": [
       {
@@ -586,6 +596,18 @@ const CHAPTER_RULES = Object.freeze({
         "weight": 4
       },
       {
+        "term": "redaksjonelle profil",
+        "weight": 4
+      },
+      {
+        "term": "medieinstitusjoner",
+        "weight": 4
+      },
+      {
+        "term": "dannelsesoffentlighet",
+        "weight": 4
+      },
+      {
         "term": "medielandskapet",
         "weight": 4
       },
@@ -763,7 +785,7 @@ const CHAPTER_RULES = Object.freeze({
 const TEMPORAL_GATE = Object.freeze({
   required: true,
   year_pattern: "\\b(?:1[0-9]{3}|20[0-9]{2})\\b",
-  terms: ["historie", "historisk", "historiske", "historien", "over tid", "i perioder", "periode", "perioder", "tidligere", "senere", "utvikling", "utviklet", "endring", "endret", "ombygging", "etterkrigstiden", "mellomkrigstiden", "middelalder", "forhistorie", "fortiden", "kronologi", "århundre", "århundrer", "1814", "1905", "1914", "1918", "1939", "1940", "1945", "1991"]
+  terms: ["historie", "historisk", "historiske", "historien", "over tid", "i perioder", "periode", "perioder", "tidligere", "senere", "utvikling", "utviklet", "endring", "endret", "ombygging", "etterkrigstiden", "mellomkrigstiden", "dekolonisering", "over generasjoner", "over flere generasjoner", "gjennom livsløpet", "middelalder", "forhistorie", "forhistorien", "fortiden", "kronologi", "århundre", "århundrer", "1814", "1905", "1914", "1918", "1939", "1940", "1945", "1991"]
 });
 
 function parseArgs(argv) {
@@ -808,6 +830,7 @@ function allCollisions(audit) {
 
 function classifyCollision(collision) {
   const term = normalize(collision.term);
+  if (REVIEWED_COLLISION_OVERRIDES.has(term)) return REVIEWED_COLLISION_OVERRIDES.get(term);
   if (GENERIC_LANGUAGE_TERMS.has(term)) return { category: "generic_language", action: "non_scoring", multiplier: 0 };
   if (collision.risk === "high") return { category: "subject_wide_or_multi_chapter", action: "non_scoring", multiplier: 0 };
   if (collision.risk === "medium") return { category: "cross_chapter", action: "down_weight", multiplier: 0.3 };
