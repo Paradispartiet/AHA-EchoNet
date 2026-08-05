@@ -1,0 +1,69 @@
+{
+  "schema": "aha_history_go_fagverk_observed_release_v1",
+  "version": "1.0.0",
+  "source_repo": "Paradispartiet/History-Go",
+  "source_commit": "db005a95f2f310aff1ec55c806b9f4c34bcc6156",
+  "release_sha256": "8de14a018fb96ba5ad74737039e0745179f1abee4df47052587f4cab49bed508",
+  "registry": {
+    "path": "data/fagverk/fagverk_registry.json",
+    "schema": "history_go_fagverk_registry_v1",
+    "version": "2.19.0",
+    "updated_at": "2026-08-04",
+    "content_sha256": "41c909c6f412eb24f2b818d398538eff9427056c4468ec76a31768f8c0a1bc0b"
+  },
+  "summary": {
+    "subject_count": 5,
+    "chapter_count": 67,
+    "module_file_count": 168,
+    "referenced_file_count": 285,
+    "missing_file_count": 0
+  },
+  "subjects": {
+    "historie": {
+      "subject_id": "historie",
+      "title": "Historie",
+      "chapter_count": 23,
+      "module_file_count": 69,
+      "referenced_file_count": 92,
+      "structure_sha256": "8307728cde3adf57c08de55c9af46c6b4b1bb14aa500edd7ae3bddad6dbfe85e",
+      "content_sha256": "ae09b4a944a3c0e02dfcb5f9b749abda8d027295bafcb467fc706aeb95d9cc57"
+    },
+    "naeringsliv": {
+      "subject_id": "naeringsliv",
+      "title": "Økonomi og næringsliv",
+      "chapter_count": 12,
+      "module_file_count": 36,
+      "referenced_file_count": 72,
+      "structure_sha256": "c896989eec22ec7622c5852710e3a115b75cf82625e337d758817b0a52e694c1",
+      "content_sha256": "43b0728db81c085f5569ca87c8021c8af65d59a4af64a302e9846a92e1b31bd9"
+    },
+    "natur": {
+      "subject_id": "natur",
+      "title": "Natur & miljø",
+      "chapter_count": 11,
+      "module_file_count": 0,
+      "referenced_file_count": 11,
+      "structure_sha256": "d7a12ac65659dbd2485b02f53104358586ef218736f64798e4044f3b5c425162",
+      "content_sha256": "bb96a9c4867c050915f8f60e81262f0be5c86b61443d59b5ba2e4296444a9240"
+    },
+    "politikk": {
+      "subject_id": "politikk",
+      "title": "Politikk og samfunn",
+      "chapter_count": 13,
+      "module_file_count": 39,
+      "referenced_file_count": 78,
+      "structure_sha256": "bdcda8790adf27f8df76b8bbde9280f3965b822f472c5c9fb7bdf80f39cd7c92",
+      "content_sha256": "c007d0364d73d54d7e3439862d0dd9ca54adec85e5cc8f740302d0bc5b11046c"
+    },
+    "subkultur": {
+      "subject_id": "subkultur",
+      "title": "Subkultur",
+      "chapter_count": 8,
+      "module_file_count": 24,
+      "referenced_file_count": 32,
+      "structure_sha256": "472d98ae1d864b57d30b2da5e9a0e737d6c0751f4aa3513f0dea2788f0bc215f",
+      "content_sha256": "92435469195c0dafd6802c2d2ac044cc4c255498a20de0cc3068aa4f9d92f118"
+    }
+  },
+  "runtime_activation_allowed": false
+}
