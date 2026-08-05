@@ -1,0 +1,72 @@
+name: AHA History Fagverk review
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "scripts/lib/history-fagverk-scoring.mjs"
+      - "scripts/build-history-fagverk-term-policy.mjs"
+      - "scripts/build-history-fagverk-expansion-review.mjs"
+      - "scripts/evaluate-history-fagverk-policy.mjs"
+      - "scripts/compare-history-fixture-corrections.mjs"
+      - "tests/aha-history-fagverk-review.test.cjs"
+      - "data/evaluation/aha-history-fagverk-evaluation-matrix.v1.json"
+      - "data/evaluation/aha-history-fagverk-evaluation-report.v1.json"
+      - "data/evaluation/aha-history-fixture-corrections.v1.json"
+      - "data/evaluation/aha-history-fixture-correction-report.v1.json"
+      - "data/integrations/candidates/history-go-fagverk-historie.candidate.v1.json"
+      - "data/integrations/candidates/history-go-fagverk-historie.candidate-audit.v1.json"
+      - "data/integrations/review/history-go-fagverk-historie.*.v1.json"
+      - "data/integrations/review/history-go-fagverk-subject-approval-registry.v1.json"
+      - "data/integrations/approvals/history-go-fagverk-historie.approved.v1.json"
+      - "data/integrations/history-go-fagverk-release.approved.json"
+      - "data/integrations/history-go-fagverk-release.runtime-active.json"
+      - ".github/workflows/aha-history-fagverk-review.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-history-review:
+    name: Rebuild complete History review package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Rebuild complete History review evidence
+        run: |
+          node scripts/build-history-fagverk-term-policy.mjs
+          node scripts/build-history-fagverk-expansion-review.mjs
+          node scripts/evaluate-history-fagverk-policy.mjs
+          node scripts/compare-history-fixture-corrections.mjs
+          node scripts/build-history-go-fagverk-subject-approvals.mjs --subject historie
+          node tests/aha-history-fagverk-review.test.cjs
+
+      - name: Verify checked-in parity and runtime isolation
+        run: |
+          git diff --exit-code -- \
+            data/evaluation/aha-history-fagverk-evaluation-report.v1.json \
+            data/evaluation/aha-history-fixture-correction-report.v1.json \
+            data/integrations/approvals/history-go-fagverk-historie.approved.v1.json \
+            data/integrations/review/history-go-fagverk-historie.expansion-review.v1.json \
+            data/integrations/review/history-go-fagverk-historie.term-policy.v1.json
+          git diff --exit-code -- \
+            data/integrations/history-go-fagverk-release.approved.json \
+            data/integrations/history-go-fagverk-release.runtime-active.json
+
+      - name: Upload History review evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: aha-history-fagverk-review
+          path: |
+            data/evaluation/aha-history-fagverk-evaluation-report.v1.json
+            data/evaluation/aha-history-fixture-correction-report.v1.json
+            data/integrations/approvals/history-go-fagverk-historie.approved.v1.json
+            data/integrations/review/history-go-fagverk-historie.expansion-review.v1.json
+            data/integrations/review/history-go-fagverk-historie.term-policy.v1.json
+          if-no-files-found: error
+          retention-days: 14

@@ -1,0 +1,68 @@
+name: Bootstrap History review finalization
+
+on:
+  push:
+    branches:
+      - review/history-fagverk-v1
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: review/history-fagverk-v1
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Build complete History review evidence
+        run: |
+          node scripts/build-history-fagverk-term-policy.mjs
+          node scripts/build-history-fagverk-expansion-review.mjs
+          node scripts/evaluate-history-fagverk-policy.mjs
+          node scripts/compare-history-fixture-corrections.mjs
+          node scripts/build-history-go-fagverk-subject-approvals.mjs --subject historie
+          node tests/aha-history-fagverk-review.test.cjs
+
+      - name: Verify materialization scope and runtime isolation
+        run: |
+          mapfile -t changed < <(git status --porcelain | sed 's/^...//' | sort)
+          expected=(
+            data/evaluation/aha-history-fagverk-evaluation-report.v1.json
+            data/evaluation/aha-history-fixture-correction-report.v1.json
+            data/integrations/approvals/history-go-fagverk-historie.approved.v1.json
+            data/integrations/review/history-go-fagverk-historie.expansion-review.v1.json
+            data/integrations/review/history-go-fagverk-historie.term-policy.v1.json
+          )
+          if [[ ${#changed[@]} -eq 0 ]]; then
+            echo "History review evidence is already current."
+            exit 0
+          fi
+          if [[ "${changed[*]}" != "${expected[*]}" ]]; then
+            printf 'Unexpected History materialization diff:\n%s\n' "${changed[*]}"
+            exit 1
+          fi
+          git diff --exit-code -- \
+            data/integrations/history-go-fagverk-release.approved.json \
+            data/integrations/history-go-fagverk-release.runtime-active.json
+
+      - name: Commit materialized History review evidence
+        run: |
+          if [[ -z "$(git status --porcelain)" ]]; then
+            echo "History review evidence is already current."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            data/evaluation/aha-history-fagverk-evaluation-report.v1.json \
+            data/evaluation/aha-history-fixture-correction-report.v1.json \
+            data/integrations/approvals/history-go-fagverk-historie.approved.v1.json \
+            data/integrations/review/history-go-fagverk-historie.expansion-review.v1.json \
+            data/integrations/review/history-go-fagverk-historie.term-policy.v1.json
+          git commit -m "Materialize approved History Fagverk review evidence"
+          git push origin HEAD:review/history-fagverk-v1
