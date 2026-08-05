@@ -1,0 +1,93 @@
+{
+  "schema": "aha_history_go_fagverk_package_candidate_v1",
+  "version": "1.0.0",
+  "candidate_kind": "package_inventory",
+  "lifecycle_stage": "imported_review_candidate",
+  "status": "generated_package_review_candidate",
+  "source_repo": "Paradispartiet/History-Go",
+  "source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
+  "release_sha256": "21cec482d0bde5423cef0bd836dc2b6b8fa4445226bd2ab8df1b44eaefccd627",
+  "subject_id": "media",
+  "title": "media",
+  "kind": "subject",
+  "parent_subject_id": null,
+  "schema_family": "standard_canonical",
+  "package_status": "complete",
+  "chapter_status": "not_materialized",
+  "package_file_count": 7,
+  "existing_package_file_count": 7,
+  "required_package_file_count": 4,
+  "optional_package_file_count": 3,
+  "referenced_file_count": 7,
+  "package_content_sha256": "db7d0241f65f2dcc10cbc36bd8da2ad7ccccd5ccb895c25615d3a229908bd8ac",
+  "structure_sha256": "98290b62e9baa11594ef75cc324e6fe1d211d52417d075d6ab58c88bdaebd9cb",
+  "content_sha256": "db7d0241f65f2dcc10cbc36bd8da2ad7ccccd5ccb895c25615d3a229908bd8ac",
+  "package_files": [
+    {
+      "path": "data/fag/media/emner_media_populaerkultur_canonical_v4_5.json",
+      "required": true,
+      "fields": [
+        "emner"
+      ],
+      "exists": true,
+      "content_sha256": "85a5d5d21b75d4a98a3689aa21f0b777571526e812ac7d6752629b316168026e"
+    },
+    {
+      "path": "data/fag/media/fagkart_media_canonical_v4_5.json",
+      "required": true,
+      "fields": [
+        "fagkart"
+      ],
+      "exists": true,
+      "content_sha256": "0a9c343c1a89b82febabdba8377c62a2250e62236b759d60d94a1857e095b125"
+    },
+    {
+      "path": "data/fag/media/mediapensum_canonical_v4_5.json",
+      "required": true,
+      "fields": [
+        "pensum"
+      ],
+      "exists": true,
+      "content_sha256": "d43717e7905f4322b790662f154a4d976d5524af7dbde4cd4ab64b7de846fa8e"
+    },
+    {
+      "path": "data/fag/media/methods_media_canonical_v4_5.json",
+      "required": true,
+      "fields": [
+        "methods"
+      ],
+      "exists": true,
+      "content_sha256": "cdf6aac3339a552a1f2a2663ef909b6b0fbcabb073a2443741a246cfa79001b8"
+    },
+    {
+      "path": "data/fag/media/supersetQUIZMAL_media.json",
+      "required": false,
+      "fields": [
+        "supersetQuizMal"
+      ],
+      "exists": true,
+      "content_sha256": "858910051370d1e57f4a7eaf34172fd398fcb41c12295b87efe8c06f6f872413"
+    },
+    {
+      "path": "data/quiz/regler/QUIZ_PRODUCTION_CANONICAL.md",
+      "required": false,
+      "fields": [
+        "quizStandard"
+      ],
+      "exists": true,
+      "content_sha256": "98b23395fb461f7a7cf4920774551902060facc20d9013e5fe4d3e8327aceb33"
+    },
+    {
+      "path": "data/quiz/regler/QUIZ_QUESTION_SCHEMA_V2.json",
+      "required": false,
+      "fields": [
+        "quizQuestionSchema"
+      ],
+      "exists": true,
+      "content_sha256": "f16c375238d416b175a744c9f0e36b621cd3b0a92686f30a111a15b72c836c46"
+    }
+  ],
+  "optional_gaps": [],
+  "approval_required": true,
+  "runtime_activation_allowed": false
+}

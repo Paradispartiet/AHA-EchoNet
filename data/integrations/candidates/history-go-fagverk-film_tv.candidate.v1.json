@@ -1,0 +1,93 @@
+{
+  "schema": "aha_history_go_fagverk_package_candidate_v1",
+  "version": "1.0.0",
+  "candidate_kind": "package_inventory",
+  "lifecycle_stage": "imported_review_candidate",
+  "status": "generated_package_review_candidate",
+  "source_repo": "Paradispartiet/History-Go",
+  "source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
+  "release_sha256": "21cec482d0bde5423cef0bd836dc2b6b8fa4445226bd2ab8df1b44eaefccd627",
+  "subject_id": "film_tv",
+  "title": "film_tv",
+  "kind": "subject",
+  "parent_subject_id": null,
+  "schema_family": "standard_canonical",
+  "package_status": "complete",
+  "chapter_status": "not_materialized",
+  "package_file_count": 7,
+  "existing_package_file_count": 7,
+  "required_package_file_count": 4,
+  "optional_package_file_count": 3,
+  "referenced_file_count": 7,
+  "package_content_sha256": "728ca3a003bd91f50ed17aaf77f6c1cd5fdcbab5981cdb5b5c576b07f53d1cb2",
+  "structure_sha256": "955d2d44f08c2fc2a1a10d9fcf2081f9133320835de23e2782bcb1f755a9bc32",
+  "content_sha256": "728ca3a003bd91f50ed17aaf77f6c1cd5fdcbab5981cdb5b5c576b07f53d1cb2",
+  "package_files": [
+    {
+      "path": "data/fag/TV_og_Film/emner_film_tv_canonical_v4_5.json",
+      "required": true,
+      "fields": [
+        "emner"
+      ],
+      "exists": true,
+      "content_sha256": "dd610e3f52140186e148e5ca6a05524e2b8099c8941eaf7e9dc81e65aeeb11df"
+    },
+    {
+      "path": "data/fag/TV_og_Film/fagkart_film_tv_canonical_v4_5.json",
+      "required": true,
+      "fields": [
+        "fagkart"
+      ],
+      "exists": true,
+      "content_sha256": "b6f92fbc2dada89df34aa2baa724207176f436e8b21d6601a11fd1e69776af19"
+    },
+    {
+      "path": "data/fag/TV_og_Film/film_tvpensum_canonical_v4_5.json",
+      "required": true,
+      "fields": [
+        "pensum"
+      ],
+      "exists": true,
+      "content_sha256": "8037338c74fa0af2a56830875301994a3d9dda16e675f3e8cab38ba246d9405b"
+    },
+    {
+      "path": "data/fag/TV_og_Film/methods_film_tv_canonical_v4_5.json",
+      "required": true,
+      "fields": [
+        "methods"
+      ],
+      "exists": true,
+      "content_sha256": "7cb9cf4e247cbeff43fc90bb0539fec66ea5de84520e49245629447ff302293f"
+    },
+    {
+      "path": "data/fag/TV_og_Film/supersetQUIZMAL_film_tv.json",
+      "required": false,
+      "fields": [
+        "supersetQuizMal"
+      ],
+      "exists": true,
+      "content_sha256": "bcbff212c8af801395cca58f0dc00331f1c6e1c2f34a54c317dd5522a4f89665"
+    },
+    {
+      "path": "data/quiz/regler/QUIZ_PRODUCTION_CANONICAL.md",
+      "required": false,
+      "fields": [
+        "quizStandard"
+      ],
+      "exists": true,
+      "content_sha256": "98b23395fb461f7a7cf4920774551902060facc20d9013e5fe4d3e8327aceb33"
+    },
+    {
+      "path": "data/quiz/regler/QUIZ_QUESTION_SCHEMA_V2.json",
+      "required": false,
+      "fields": [
+        "quizQuestionSchema"
+      ],
+      "exists": true,
+      "content_sha256": "f16c375238d416b175a744c9f0e36b621cd3b0a92686f30a111a15b72c836c46"
+    }
+  ],
+  "optional_gaps": [],
+  "approval_required": true,
+  "runtime_activation_allowed": false
+}

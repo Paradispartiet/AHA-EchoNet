@@ -1,0 +1,129 @@
+{
+  "schema": "aha_history_go_fagverk_package_candidate_v1",
+  "version": "1.0.0",
+  "candidate_kind": "package_inventory",
+  "lifecycle_stage": "imported_review_candidate",
+  "status": "generated_package_review_candidate",
+  "source_repo": "Paradispartiet/History-Go",
+  "source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
+  "release_sha256": "21cec482d0bde5423cef0bd836dc2b6b8fa4445226bd2ab8df1b44eaefccd627",
+  "subject_id": "musikk",
+  "title": "musikk",
+  "kind": "subject",
+  "parent_subject_id": null,
+  "schema_family": "standard_canonical",
+  "package_status": "complete",
+  "chapter_status": "not_materialized",
+  "package_file_count": 11,
+  "existing_package_file_count": 11,
+  "required_package_file_count": 4,
+  "optional_package_file_count": 7,
+  "referenced_file_count": 11,
+  "package_content_sha256": "b652a62580e8d878ae08efd552b5f50e14bdd5378f0745cb5044cbebb3af78c9",
+  "structure_sha256": "5b267da800c8ab3777c64226ad0c0f096096edc91c8af07d64f7e208639b1403",
+  "content_sha256": "b652a62580e8d878ae08efd552b5f50e14bdd5378f0745cb5044cbebb3af78c9",
+  "package_files": [
+    {
+      "path": "data/fag/musikk/emner_musikk_canonical_v4_5.json",
+      "required": true,
+      "fields": [
+        "emner"
+      ],
+      "exists": true,
+      "content_sha256": "ef6fe710c6b2838c77ffbd93a2cb7582dc37a6f800954807854ae5c0ccfdc8a2"
+    },
+    {
+      "path": "data/fag/musikk/fagkart_musikk_canonical_v4_5.json",
+      "required": true,
+      "fields": [
+        "fagkart"
+      ],
+      "exists": true,
+      "content_sha256": "c236a1c2006a195ab028419bad5c81ff607eaf25f02370737f0694834e08b861"
+    },
+    {
+      "path": "data/fag/musikk/methods_musikk_canonical_v4_5.json",
+      "required": true,
+      "fields": [
+        "methods"
+      ],
+      "exists": true,
+      "content_sha256": "9deac558cc3c16f81573e63a72c2f82db2ea13c4ad074ab68cd52da7294ab4b0"
+    },
+    {
+      "path": "data/fag/musikk/musikkpensum_canonical_v4_5.json",
+      "required": true,
+      "fields": [
+        "pensum"
+      ],
+      "exists": true,
+      "content_sha256": "12722b075062e1a82105bf7d128d3170b646688d106da3a2330e9694ca32414f"
+    },
+    {
+      "path": "data/fag/musikk/scientific_package.json",
+      "required": false,
+      "fields": [
+        "scientificPackage"
+      ],
+      "exists": true,
+      "content_sha256": "e47702c7501f14d11c5a32e3b00eae65202dc9215f187d366b299b1abb7aa305"
+    },
+    {
+      "path": "data/fag/musikk/supersetQUIZMAL_musikk.json",
+      "required": false,
+      "fields": [
+        "supersetQuizMal"
+      ],
+      "exists": true,
+      "content_sha256": "cdef0969b4c9e2ed5050fb1f96b81a6afc5defe61806e8dbc8bb3ed9f810f215"
+    },
+    {
+      "path": "data/quiz/musikk/musikk_subject_pathways_v1.json",
+      "required": false,
+      "fields": [
+        "subjectPathwayPackage"
+      ],
+      "exists": true,
+      "content_sha256": "ddb373763cf640732d856e1150510ecdeae2c1b6b16abf1c613e5839a33e3028"
+    },
+    {
+      "path": "data/quiz/regler/QUIZ_PACKAGE_SCHEMA_V1.json",
+      "required": false,
+      "fields": [
+        "quizPackageSchema"
+      ],
+      "exists": true,
+      "content_sha256": "3a01fb4177c9cf81df823d3bacdb24b1a37b2bdbfd45dade8aa18f4d0e5ec8d6"
+    },
+    {
+      "path": "data/quiz/regler/QUIZ_PRODUCTION_CANONICAL.md",
+      "required": false,
+      "fields": [
+        "quizStandard"
+      ],
+      "exists": true,
+      "content_sha256": "98b23395fb461f7a7cf4920774551902060facc20d9013e5fe4d3e8327aceb33"
+    },
+    {
+      "path": "data/quiz/regler/QUIZ_QUESTION_SCHEMA_V2.json",
+      "required": false,
+      "fields": [
+        "quizQuestionSchema"
+      ],
+      "exists": true,
+      "content_sha256": "f16c375238d416b175a744c9f0e36b621cd3b0a92686f30a111a15b72c836c46"
+    },
+    {
+      "path": "data/quiz/regler/QUIZ_SUBJECT_PATHWAY_PACKAGE_SCHEMA_V1.json",
+      "required": false,
+      "fields": [
+        "subjectPathwaySchema"
+      ],
+      "exists": true,
+      "content_sha256": "f19ed931d5a47c3969551cf58d9895049a399aff71dc397a3ea63ac76e31d2c5"
+    }
+  ],
+  "optional_gaps": [],
+  "approval_required": true,
+  "runtime_activation_allowed": false
+}

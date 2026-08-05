@@ -1,0 +1,138 @@
+{
+  "schema": "aha_history_go_fagverk_package_candidate_v1",
+  "version": "1.0.0",
+  "candidate_kind": "package_inventory",
+  "lifecycle_stage": "imported_review_candidate",
+  "status": "generated_package_review_candidate",
+  "source_repo": "Paradispartiet/History-Go",
+  "source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
+  "release_sha256": "21cec482d0bde5423cef0bd836dc2b6b8fa4445226bd2ab8df1b44eaefccd627",
+  "subject_id": "by",
+  "title": "by",
+  "kind": "subject",
+  "parent_subject_id": null,
+  "schema_family": "by_compatibility",
+  "package_status": "complete",
+  "chapter_status": "not_materialized",
+  "package_file_count": 12,
+  "existing_package_file_count": 12,
+  "required_package_file_count": 4,
+  "optional_package_file_count": 8,
+  "referenced_file_count": 12,
+  "package_content_sha256": "e28f80e3cf54d5908b8af0ee6061ca45d72dbbe81443d592ce7bf87603a022e0",
+  "structure_sha256": "3ea96832ef3fb3444a829b0c302bde487fd5e6b672f5e29bbbacb7e7f9a01d95",
+  "content_sha256": "e28f80e3cf54d5908b8af0ee6061ca45d72dbbe81443d592ce7bf87603a022e0",
+  "package_files": [
+    {
+      "path": "data/fag/by/emner_by.json",
+      "required": true,
+      "fields": [
+        "emner"
+      ],
+      "exists": true,
+      "content_sha256": "d53d02de4658059a411dc393d30b3765b8ea7ece7af33173811a3641f7e5efac"
+    },
+    {
+      "path": "data/fag/by/fagkart_by.json",
+      "required": true,
+      "fields": [
+        "fagkart"
+      ],
+      "exists": true,
+      "content_sha256": "67c8d76f44b312b64f0f809f2cd35417dbcc1564417f598c4fc095642f350f74"
+    },
+    {
+      "path": "data/fag/by/methods_by.json",
+      "required": true,
+      "fields": [
+        "methods"
+      ],
+      "exists": true,
+      "content_sha256": "5391bf55e0a764158e15eac31e5f7b8b34cf02f4acc40dea56a97977ff6ebd0b"
+    },
+    {
+      "path": "data/fag/by/pensum_by.json",
+      "required": true,
+      "fields": [
+        "pensum"
+      ],
+      "exists": true,
+      "content_sha256": "98271a067dc29328537b3f16151e5a925d45df088cce912682c6d45a734471b6"
+    },
+    {
+      "path": "data/fag/by/supersetQUIZMAL_by.json",
+      "required": false,
+      "fields": [
+        "supersetQuizMal"
+      ],
+      "exists": true,
+      "content_sha256": "289f1004b8cd8fd3a551b7e884908ee2653ea9d4315a58dce417ffb064007956"
+    },
+    {
+      "path": "data/quiz/by/deichman_bjorvika_sets.json",
+      "required": false,
+      "fields": [
+        "quizProduction"
+      ],
+      "exists": true,
+      "content_sha256": "0bbf806341a777cac2cddaaa839716623bf9202dca3ba604ed956b1b7501617d"
+    },
+    {
+      "path": "data/quiz/production_briefs/by/deichman_bjorvika.json",
+      "required": false,
+      "fields": [
+        "quizProduction"
+      ],
+      "exists": true,
+      "content_sha256": "39c221abfd5d9cd96d3d2850152521e7a05a1aac463c6995863dd72a23009672"
+    },
+    {
+      "path": "data/quiz/production_context/by/deichman_bjorvika.json",
+      "required": false,
+      "fields": [
+        "quizProduction"
+      ],
+      "exists": true,
+      "content_sha256": "a63aaa584189c5a8f2a24dc0eba37249340ec129d1630d886255cc1f35d77ab7"
+    },
+    {
+      "path": "data/quiz/regler/QUIZ_PACKAGE_SCHEMA_V1.json",
+      "required": false,
+      "fields": [
+        "quizPackageSchema"
+      ],
+      "exists": true,
+      "content_sha256": "3a01fb4177c9cf81df823d3bacdb24b1a37b2bdbfd45dade8aa18f4d0e5ec8d6"
+    },
+    {
+      "path": "data/quiz/regler/QUIZ_PRODUCTION_CANONICAL.md",
+      "required": false,
+      "fields": [
+        "quizStandard"
+      ],
+      "exists": true,
+      "content_sha256": "98b23395fb461f7a7cf4920774551902060facc20d9013e5fe4d3e8327aceb33"
+    },
+    {
+      "path": "data/quiz/regler/QUIZ_QUESTION_SCHEMA_V2.json",
+      "required": false,
+      "fields": [
+        "quizQuestionSchema"
+      ],
+      "exists": true,
+      "content_sha256": "f16c375238d416b175a744c9f0e36b621cd3b0a92686f30a111a15b72c836c46"
+    },
+    {
+      "path": "scripts/build-quiz-production-context.mjs",
+      "required": false,
+      "fields": [
+        "quizProduction"
+      ],
+      "exists": true,
+      "content_sha256": "636265081b34aef4899fb33a8dd8ad7b03233480abdbfb812edced0d6a1a14d5"
+    }
+  ],
+  "optional_gaps": [],
+  "approval_required": true,
+  "runtime_activation_allowed": false
+}

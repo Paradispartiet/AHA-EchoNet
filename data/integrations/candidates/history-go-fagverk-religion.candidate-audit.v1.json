@@ -1,0 +1,34 @@
+{
+  "schema": "aha_history_go_fagverk_package_candidate_audit_v1",
+  "version": "1.0.0",
+  "candidate_kind": "package_inventory",
+  "lifecycle_stage": "imported_review_candidate_audit",
+  "source_repo": "Paradispartiet/History-Go",
+  "source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
+  "release_sha256": "21cec482d0bde5423cef0bd836dc2b6b8fa4445226bd2ab8df1b44eaefccd627",
+  "subject_id": "religion",
+  "package_status": "complete",
+  "chapter_status": "not_materialized",
+  "coverage": {
+    "declared_package_files": 7,
+    "expected_existing_package_files": 7,
+    "materialized_existing_package_files": 7,
+    "required_package_files": 4,
+    "optional_package_files": 3,
+    "optional_gaps": [],
+    "missing_required_files": [],
+    "missing_chapter_files": []
+  },
+  "digests": {
+    "package_content_sha256": "1c0d0af736e46db7402d0bb514d2aca03553eb46d1580a57a83ef709700e3acf",
+    "structure_sha256": "b0d15d6d852934f96b8703a62499287f09e96eb83b20fc32cad3e0f52e5b899b",
+    "content_sha256": "1c0d0af736e46db7402d0bb514d2aca03553eb46d1580a57a83ef709700e3acf"
+  },
+  "activation_recommendation": "subject_specific_review_gates_required_before_runtime_activation",
+  "approval_required": true,
+  "runtime_activation_allowed": false,
+  "gate": {
+    "passed": true,
+    "errors": []
+  }
+}
