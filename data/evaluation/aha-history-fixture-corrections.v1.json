@@ -1,0 +1,107 @@
+{
+  "schema": "aha_history_fixture_corrections_v1",
+  "version": "1.0.0",
+  "status": "full_fixture_review_baseline_not_runtime_active",
+  "subject_id": "historie",
+  "source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
+  "corpus_sha256": "e5123cb96d9b89c83aad56efc327c1089bfe5f887f29322d39a4a936c9f19444",
+  "runtime_activation_allowed": false,
+  "cases": [
+    {
+      "id": "history-fixture-pinse",
+      "fixture_path": "docs/fixtures/aha-analysis/01-pinse-religion.json",
+      "expected_history_status": "unsupported",
+      "expected_chapter_id": null
+    },
+    {
+      "id": "history-fixture-morgenbladet-mediehistorie",
+      "fixture_path": "docs/fixtures/aha-analysis/02-morgenbladet-mediehistorie.json",
+      "expected_history_status": "grounded",
+      "expected_chapter_id": "offentlighet_mobilisering_bevegelser"
+    },
+    {
+      "id": "history-fixture-nav-reform",
+      "fixture_path": "docs/fixtures/aha-analysis/03-nav-reformen-forvaltning.json",
+      "expected_history_status": "unsupported",
+      "expected_chapter_id": null
+    },
+    {
+      "id": "history-fixture-literary-attachment",
+      "fixture_path": "docs/fixtures/aha-analysis/04-litteraer-tilknytningsteori.json",
+      "expected_history_status": "unsupported",
+      "expected_chapter_id": null
+    },
+    {
+      "id": "history-fixture-diary",
+      "fixture_path": "docs/fixtures/aha-analysis/05-dagbok-refleksjon.json",
+      "expected_history_status": "unsupported",
+      "expected_chapter_id": null
+    },
+    {
+      "id": "history-fixture-technical-project",
+      "fixture_path": "docs/fixtures/aha-analysis/06-prosjektplan-teknisk-notat.json",
+      "expected_history_status": "unsupported",
+      "expected_chapter_id": null
+    },
+    {
+      "id": "history-fixture-legal",
+      "fixture_path": "docs/fixtures/aha-analysis/07-juridisk-tekst.json",
+      "expected_history_status": "unsupported",
+      "expected_chapter_id": null
+    },
+    {
+      "id": "history-fixture-unclear",
+      "fixture_path": "docs/fixtures/aha-analysis/08-uklar-lav-confidence.json",
+      "expected_history_status": "unsupported",
+      "expected_chapter_id": null
+    },
+    {
+      "id": "history-fixture-morgenbladet-public-sphere",
+      "fixture_path": "docs/fixtures/aha-analysis/09-morgenbladet-offentlighet-kulturkritikk.json",
+      "expected_history_status": "grounded",
+      "expected_chapter_id": "offentlighet_mobilisering_bevegelser"
+    },
+    {
+      "id": "history-fixture-nav-user",
+      "fixture_path": "docs/fixtures/aha-analysis/10-nav-reformen-brukermoete.json",
+      "expected_history_status": "unsupported",
+      "expected_chapter_id": null
+    },
+    {
+      "id": "history-fixture-learning",
+      "fixture_path": "docs/fixtures/aha-analysis/11-refleksjon-laering-feil-vaner.json",
+      "expected_history_status": "unsupported",
+      "expected_chapter_id": null
+    },
+    {
+      "id": "history-fixture-urban-attention",
+      "fixture_path": "docs/fixtures/aha-analysis/12-refleksjon-byrom-uro-konsentrasjon.json",
+      "expected_history_status": "unsupported",
+      "expected_chapter_id": null
+    },
+    {
+      "id": "history-fixture-eidsvoll",
+      "fixture_path": "docs/fixtures/aha-analysis/13-historygo-eidsvoll-grunnloven.json",
+      "expected_history_status": "grounded",
+      "expected_chapter_id": "1814_statsdannelse"
+    },
+    {
+      "id": "history-fixture-bislett",
+      "fixture_path": "docs/fixtures/aha-analysis/14-historygo-bislett-byrom-stadion.json",
+      "expected_history_status": "grounded",
+      "expected_chapter_id": "byhistorie_stedsendring"
+    },
+    {
+      "id": "history-fixture-fragmented",
+      "fixture_path": "docs/fixtures/aha-analysis/15-uklar-fragmentert-lav-kvalitet.json",
+      "expected_history_status": "unsupported",
+      "expected_chapter_id": null
+    },
+    {
+      "id": "history-fixture-ai-learning",
+      "fixture_path": "docs/fixtures/aha-analysis/16-tverrfaglig-ai-laering-kunnskap.json",
+      "expected_history_status": "unsupported",
+      "expected_chapter_id": null
+    }
+  ]
+}

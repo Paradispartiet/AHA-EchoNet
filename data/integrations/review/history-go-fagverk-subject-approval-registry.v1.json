@@ -1,8 +1,105 @@
 {
   "schema": "aha_history_go_fagverk_subject_approval_registry_v1",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "status": "review_gate_registry_not_runtime_input",
   "subjects": {
+    "historie": {
+      "subject_id": "historie",
+      "approval_path": "data/integrations/approvals/history-go-fagverk-historie.approved.v1.json",
+      "candidate": {
+        "path": "data/integrations/candidates/history-go-fagverk-historie.candidate.v1.json",
+        "source_ref_field": "source_ref",
+        "digest_field": "content_sha256"
+      },
+      "review_corpus": {
+        "path": "data/integrations/candidates/history-go-fagverk-historie.candidate.v1.json",
+        "source_ref_field": "source_ref",
+        "digest_field": "content_sha256"
+      },
+      "gates": [
+        {
+          "id": "corpus_audit",
+          "path": "data/integrations/candidates/history-go-fagverk-historie.candidate-audit.v1.json",
+          "status_field": "gate.passed",
+          "expected_status": true,
+          "source_ref_field": "source_ref"
+        },
+        {
+          "id": "subject_expansion",
+          "path": "data/integrations/review/history-go-fagverk-historie.expansion-review.v1.json",
+          "status_field": "status",
+          "expected_status": "reviewed_subject_expansion_not_runtime_active",
+          "source_ref_field": "candidate.source_ref",
+          "digest_field": "candidate.corpus_sha256",
+          "approval_field": "approval_required",
+          "expected_approval": true,
+          "runtime_field": "runtime_activation_allowed",
+          "expected_runtime": false,
+          "summary_expectations": {
+            "baseline.chapter_count": 1,
+            "candidate.chapter_count": 23,
+            "candidate.module_file_count": 69,
+            "delta.retained_chapter_count": 1,
+            "delta.added_chapter_count": 22,
+            "delta.removed_chapter_count": 0
+          }
+        },
+        {
+          "id": "term_policy",
+          "path": "data/integrations/review/history-go-fagverk-historie.term-policy.v1.json",
+          "status_field": "status",
+          "expected_status": "review_policy_full_fixture_candidate_not_runtime_active",
+          "source_ref_field": "source_ref",
+          "digest_field": "corpus_sha256",
+          "approval_field": "approval_required",
+          "expected_approval": true,
+          "runtime_field": "runtime_activation_allowed",
+          "expected_runtime": false,
+          "summary_expectations": {
+            "summary.total": 292,
+            "summary.risks.high": 96,
+            "summary.risks.medium": 108,
+            "summary.risks.low": 88
+          }
+        },
+        {
+          "id": "evaluation",
+          "path": "data/evaluation/aha-history-fagverk-evaluation-report.v1.json",
+          "status_field": "status",
+          "expected_status": "passed_review_gate",
+          "source_ref_field": "source_ref",
+          "digest_field": "corpus_sha256",
+          "runtime_field": "runtime_activation_allowed",
+          "expected_runtime": false,
+          "summary_expectations": {
+            "summary.total": 58,
+            "summary.passed": 58,
+            "summary.failed": 0,
+            "summary.chapters_covered": 23,
+            "summary.evidence_errors": 0
+          }
+        },
+        {
+          "id": "fixture_corrections",
+          "path": "data/evaluation/aha-history-fixture-correction-report.v1.json",
+          "status_field": "status",
+          "expected_status": "passed_correction_gate",
+          "source_ref_field": "source_ref",
+          "digest_field": "corpus_sha256",
+          "runtime_field": "runtime_activation_allowed",
+          "expected_runtime": false,
+          "summary_expectations": {
+            "summary.total": 16,
+            "summary.passed": 16,
+            "summary.failed": 0,
+            "summary.validation_errors": 0,
+            "summary.grounded": 4,
+            "summary.unsupported": 12,
+            "summary.ambiguous": 0
+          }
+        }
+      ]
+    },
     "politikk": {
       "subject_id": "politikk",
       "approval_path": "data/integrations/approvals/history-go-fagverk-politikk.approved.v1.json",
