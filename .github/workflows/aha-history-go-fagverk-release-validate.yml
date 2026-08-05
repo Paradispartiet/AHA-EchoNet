@@ -9,8 +9,10 @@ on:
       - 'tests/aha-history-go-fagverk-release-sync.test.mjs'
       - 'tests/aha-history-go-fagverk-release-observation.test.cjs'
       - 'data/integrations/history-go-fagverk-release.observed.json'
+      - 'data/integrations/history-go-fagverk-release.approved.json'
       - 'data/integrations/review/history-go-fagverk-release-update.v1.json'
       - 'data/integrations/candidates/**'
+      - 'docs/AHA_HISTORY_GO_FAGVERK_RELEASE_SYNC.md'
       - '.github/workflows/aha-history-go-fagverk-release-sync.yml'
       - '.github/workflows/aha-history-go-fagverk-release-validate.yml'
   workflow_dispatch:
@@ -59,6 +61,9 @@ jobs:
           if (observed.source_commit !== process.env.SOURCE_REF) throw new Error('Observed source commit mismatch.');
           if (observed.release_sha256 !== release.release_sha256) throw new Error('Observed release digest differs from producer release.');
           if (observed.registry.content_sha256 !== release.registry.content_sha256) throw new Error('Observed registry digest differs from producer release.');
+          if (observed.summary.subject_count !== release.summary.subject_count || observed.summary.chapter_count !== release.summary.chapter_count || observed.summary.module_file_count !== release.summary.module_file_count) {
+            throw new Error('Observed release summary differs from producer release.');
+          }
           for (const [subjectId, expected] of Object.entries(observed.subjects)) {
             const source = release.subjects[subjectId];
             if (!source) throw new Error(`${subjectId}: missing from producer release.`);
@@ -69,22 +74,35 @@ jobs:
           NODE
         env:
           SOURCE_REF: ${{ steps.observed.outputs.source_ref }}
-      - name: Preserve checked-in candidate artifacts
-        run: cp -R data/integrations/candidates /tmp/fagverk-candidates-checked
-      - name: Rebuild every observed subject candidate
+      - name: Rebuild every observed subject candidate in isolation
         run: |
-          rm -rf data/integrations/candidates
-          mkdir -p data/integrations/candidates
+          rm -rf /tmp/fagverk-candidates-rebuilt
+          mkdir -p /tmp/fagverk-candidates-rebuilt
           SUBJECTS=$(node -p "Object.keys(require('./data/integrations/history-go-fagverk-release.observed.json').subjects).join(',')")
           IFS=',' read -ra ITEMS <<< "$SUBJECTS"
           for subject in "${ITEMS[@]}"; do
             node scripts/build-history-go-fagverk-corpus.mjs \
               --history-go-root history-go \
               --subject "$subject" \
-              --output "data/integrations/candidates/history-go-fagverk-${subject}.candidate.v1.json" \
-              --audit-output "data/integrations/candidates/history-go-fagverk-${subject}.candidate-audit.v1.json"
+              --output "/tmp/fagverk-candidates-rebuilt/history-go-fagverk-${subject}.candidate.v1.json" \
+              --audit-output "/tmp/fagverk-candidates-rebuilt/history-go-fagverk-${subject}.candidate-audit.v1.json"
           done
-      - name: Verify candidate parity
+      - name: Verify candidate parity and inventory
         run: |
-          diff -ru /tmp/fagverk-candidates-checked data/integrations/candidates
+          node - <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
+          const observed = JSON.parse(fs.readFileSync('data/integrations/history-go-fagverk-release.observed.json', 'utf8'));
+          const expectedFiles = Object.keys(observed.subjects).flatMap((subjectId) => [
+            `history-go-fagverk-${subjectId}.candidate.v1.json`,
+            `history-go-fagverk-${subjectId}.candidate-audit.v1.json`
+          ]).sort();
+          const actualFiles = fs.readdirSync('data/integrations/candidates').filter((name) => /^history-go-fagverk-.*\.candidate(?:-audit)?\.v1\.json$/.test(name)).sort();
+          if (JSON.stringify(actualFiles) !== JSON.stringify(expectedFiles)) throw new Error(`Candidate inventory mismatch: ${JSON.stringify(actualFiles)} != ${JSON.stringify(expectedFiles)}`);
+          for (const fileName of expectedFiles) {
+            const checked = fs.readFileSync(path.join('data/integrations/candidates', fileName));
+            const rebuilt = fs.readFileSync(path.join('/tmp/fagverk-candidates-rebuilt', fileName));
+            if (!checked.equals(rebuilt)) throw new Error(`Stale candidate artifact: ${fileName}`);
+          }
+          NODE
           node tests/aha-history-go-fagverk-release-observation.test.cjs
