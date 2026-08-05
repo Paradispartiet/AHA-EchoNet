@@ -1,0 +1,57 @@
+name: Debug History Morgenbladet scoring
+
+on:
+  push:
+    branches:
+      - review/history-fagverk-v1
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: review/history-fagverk-v1
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Apply current reviewed corrections in workspace
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path('scripts/build-history-fagverk-term-policy.mjs')
+          t = p.read_text(encoding='utf-8')
+          pairs = [
+            ('"institusjon", "institusjoner", "kan"','"institusjon", "institusjoner", "institusjonene", "kan"'),
+            ('"slik", "skill", "skille", "skiller", "sted", "stedet"','"slik", "skill", "skille", "skiller", "staten", "sted", "stedet"'),
+            ('const CHAPTER_RULES = Object.freeze({','const REVIEWED_COLLISION_OVERRIDES = new Map([["hushold", { category: "reviewed_chapter_scoped_evidence", action: "down_weight", multiplier: 0.3 }],["historiebruk", { category: "reviewed_chapter_scoped_evidence", action: "down_weight", multiplier: 0.3 }],["diaspora", { category: "reviewed_chapter_scoped_evidence", action: "down_weight", multiplier: 0.3 }]]);\nconst CHAPTER_RULES = Object.freeze({'),
+            ('function classifyCollision(collision) {\n  const term = normalize(collision.term);\n  if (GENERIC_LANGUAGE_TERMS.has(term))','function classifyCollision(collision) {\n  const term = normalize(collision.term);\n  if (REVIEWED_COLLISION_OVERRIDES.has(term)) return REVIEWED_COLLISION_OVERRIDES.get(term);\n  if (GENERIC_LANGUAGE_TERMS.has(term))'),
+            ('"industrialisering",\n      "arbeiderbevegelse",\n      "fabrikk",\n      "arbeidsdeling",\n      "klasse",\n      "fagforening"','"industrialisering",\n      "industrialiseringen",\n      "arbeiderbevegelse",\n      "arbeiderbevegelsen",\n      "fabrikk",\n      "fabrikkarbeid",\n      "arbeidsdeling",\n      "klasse",\n      "klasseforhold",\n      "fagforening",\n      "fagforeninger"'),
+            ('"middelalder", "forhistorie", "fortiden", "kronologi"','"middelalder", "forhistorie", "forhistorien", "fortiden", "kronologi"'),
+            ('"etterkrigstiden", "mellomkrigstiden", "middelalder"','"etterkrigstiden", "mellomkrigstiden", "dekolonisering", "over generasjoner", "over flere generasjoner", "gjennom livsløpet", "middelalder"')
+          ]
+          for old,new in pairs:
+            t=t.replace(old,new,1)
+          p.write_text(t,encoding='utf-8')
+          PY
+          node scripts/build-history-fagverk-term-policy.mjs
+      - name: Print exact fixture rankings
+        run: |
+          node --input-type=module - <<'NODE'
+          import fs from 'node:fs';
+          import { scoreHistory } from './scripts/lib/history-fagverk-scoring.mjs';
+          const corpus=JSON.parse(fs.readFileSync('data/integrations/candidates/history-go-fagverk-historie.candidate.v1.json','utf8'));
+          const policy=JSON.parse(fs.readFileSync('data/integrations/review/history-go-fagverk-historie.term-policy.v1.json','utf8'));
+          for (const path of ['docs/fixtures/aha-analysis/02-morgenbladet-mediehistorie.json','docs/fixtures/aha-analysis/09-morgenbladet-offentlighet-kulturkritikk.json']) {
+            const fixture=JSON.parse(fs.readFileSync(path,'utf8'));
+            console.log(path);
+            console.log(JSON.stringify(scoreHistory(fixture.inputText,corpus,policy),null,2));
+          }
+          const focus=new Set(['offentlighet','idédebatt','redaksjonell profil','medielandskapet','kulturkritikk','medieinstitusjoner','dannelsesoffentlighet']);
+          console.log('TERMS',JSON.stringify(policy.terms.filter(item=>focus.has(item.term)),null,2));
+          console.log('RULE',JSON.stringify(policy.chapter_rules.offentlighet_mobilisering_bevegelser,null,2));
+          NODE
