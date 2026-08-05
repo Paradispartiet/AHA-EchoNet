@@ -1,0 +1,62 @@
+{
+  "schema": "aha_history_fagverk_expansion_review_v1",
+  "version": "1.0.0",
+  "status": "reviewed_subject_expansion_not_runtime_active",
+  "lifecycle_stage": "subject_release_review",
+  "subject_id": "historie",
+  "source_repo": "Paradispartiet/History-Go",
+  "baseline": {
+    "source_ref": "9e9644e83998ff715005bf80c96cde6193107c13",
+    "corpus_path": "data/integrations/history-go-fagverk-corpus.v1.json",
+    "chapter_count": 1,
+    "chapter_ids": [
+      "1814_statsdannelse"
+    ]
+  },
+  "candidate": {
+    "source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
+    "corpus_path": "data/integrations/candidates/history-go-fagverk-historie.candidate.v1.json",
+    "corpus_sha256": "e5123cb96d9b89c83aad56efc327c1089bfe5f887f29322d39a4a936c9f19444",
+    "chapter_count": 23,
+    "module_file_count": 69
+  },
+  "delta": {
+    "retained_chapter_count": 1,
+    "added_chapter_count": 22,
+    "removed_chapter_count": 0,
+    "retained_chapter_ids": [
+      "1814_statsdannelse"
+    ],
+    "added_chapter_ids": [
+      "byhistorie_stedsendring",
+      "forhistorie_arkeologi",
+      "forste_verdenskrig_mellomkrig",
+      "global_kolonial_transnasjonal",
+      "historisk_tid_periodisering",
+      "industri_arbeid_sosialhistorie",
+      "kald_krig_etterkrig",
+      "katastrofer_brudd_ulykker",
+      "kilder_arkiv_spor",
+      "kjonn_familie_livslop",
+      "krig_okkupasjon_motstand",
+      "makt_stat_institusjoner",
+      "middelalder_kirke_kongemakt",
+      "migrasjon_minoritet_tilhorighet",
+      "miljo_klima_landskap",
+      "minne_kulturarv_historiebruk",
+      "offentlighet_mobilisering_bevegelser",
+      "okonomi_handel_materielle_systemer",
+      "religion_reformasjon_livssyn",
+      "samisk_urfolkshistorie",
+      "velferd_rett_hverdagsliv",
+      "vitenskap_teknologi_kunnskap"
+    ],
+    "removed_chapter_ids": [],
+    "source_ref_changed": true,
+    "semantic_expansion": true
+  },
+  "review_finding": "History expands from one legacy seed chapter to the complete 23-chapter registered subject. This is an intentional semantic expansion, not a no-drift source rebase.",
+  "approval_required": true,
+  "runtime_activation_allowed": false,
+  "explicit_runtime_activation_pull_request_required": true
+}
