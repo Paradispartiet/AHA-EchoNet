@@ -14,7 +14,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   fixture-corrections:
@@ -22,25 +22,26 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout AHA-EchoNet head branch
+      - name: Checkout AHA-EchoNet
         uses: actions/checkout@v5
-        with:
-          ref: ${{ github.head_ref || github.ref_name }}
-          fetch-depth: 0
 
       - name: Setup Node
         uses: actions/setup-node@v5
         with:
           node-version: 22
 
-      - name: Build correction comparison report
+      - name: Preserve checked-in correction report
+        run: cp data/evaluation/aha-politics-fixture-correction-report.v1.json /tmp/politics-correction-report.checked.json
+
+      - name: Rebuild correction comparison report
         run: node scripts/compare-politics-fixture-corrections.mjs
 
-      - name: Verify correction baseline
+      - name: Verify correction baseline and checked-in parity
         run: |
           node - <<'NODE'
           const fs = require('fs');
-          const report = JSON.parse(fs.readFileSync('data/evaluation/aha-politics-fixture-correction-report.v1.json', 'utf8'));
+          const reportPath = 'data/evaluation/aha-politics-fixture-correction-report.v1.json';
+          const report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
           const expected = {
             total: 8,
             passed: 3,
@@ -57,23 +58,9 @@ jobs:
             throw new Error(`Unexpected comparison split: ${JSON.stringify(comparisons)}`);
           }
           if (report.status !== 'correction_required' || report.runtime_activation_allowed !== false) throw new Error('Baseline must expose corrections and remain runtime-blocked.');
+          if (!fs.readFileSync(reportPath).equals(fs.readFileSync('/tmp/politics-correction-report.checked.json'))) throw new Error('Checked-in correction report is stale.');
           console.log('Verified correction baseline: 3/8 pass; 2 false positives; 3 false negatives.');
           NODE
-
-      - name: Materialize correction report on the PR branch
-        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
-        env:
-          HEAD_BRANCH: ${{ github.head_ref }}
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/evaluation/aha-politics-fixture-correction-report.v1.json
-          if git diff --cached --quiet; then
-            echo "Correction report already matches the branch."
-            exit 0
-          fi
-          git commit -m "Materialize Politics fixture correction report"
-          git push origin "HEAD:${HEAD_BRANCH}"
 
       - name: Upload correction report
         uses: actions/upload-artifact@v4
