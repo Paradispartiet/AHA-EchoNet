@@ -65,7 +65,28 @@ export function buildPackageCandidate({ release, subjectId, sourceRef }) {
   const subject = release.subjects?.[subjectId];
   const errors = verifySubject(subjectId, subject);
   if (errors.length) throw new Error(errors.join(" "));
-  const existingFiles = (subject.package_files || []).filter((file) => file.exists);
+
+  const packageFiles = (subject.package_files || []).map((file) => ({
+    path: file.path,
+    required: Boolean(file.required),
+    fields: [...(file.fields || [])],
+    exists: Boolean(file.exists),
+    content_sha256: file.content_sha256 || null
+  }));
+  const existingFiles = packageFiles.filter((file) => file.exists);
+  const optionalGaps = [...(subject.missing_optional_files || [])];
+  const expectedExistingFiles = Number(subject.package_file_count || 0) - optionalGaps.length;
+  const coverageErrors = [];
+  if (packageFiles.length !== subject.package_file_count) {
+    coverageErrors.push(`Expected ${subject.package_file_count} declared package files, found ${packageFiles.length}.`);
+  }
+  if (existingFiles.length !== expectedExistingFiles) {
+    coverageErrors.push(`Expected ${expectedExistingFiles} existing package files after optional gaps, materialized ${existingFiles.length}.`);
+  }
+  for (const file of packageFiles.filter((item) => item.required && !item.exists)) {
+    coverageErrors.push(`Required package file is missing: ${file.path}.`);
+  }
+
   const candidate = {
     schema: "aha_history_go_fagverk_package_candidate_v1",
     version: "1.0.0",
@@ -83,25 +104,23 @@ export function buildPackageCandidate({ release, subjectId, sourceRef }) {
     package_status: subject.package_status,
     chapter_status: subject.chapter_status,
     package_file_count: subject.package_file_count,
+    existing_package_file_count: existingFiles.length,
     required_package_file_count: subject.required_package_file_count,
     optional_package_file_count: subject.optional_package_file_count,
     referenced_file_count: subject.referenced_file_count,
     package_content_sha256: subject.package_content_sha256,
     structure_sha256: subject.structure_sha256,
     content_sha256: subject.content_sha256,
-    package_files: existingFiles.map((file) => ({
-      path: file.path,
-      required: file.required,
-      fields: file.fields,
-      content_sha256: file.content_sha256
-    })),
-    optional_gaps: [...(subject.missing_optional_files || [])],
+    package_files: packageFiles,
+    optional_gaps: optionalGaps,
+    approval_required: true,
     runtime_activation_allowed: false
   };
   const audit = {
     schema: "aha_history_go_fagverk_package_candidate_audit_v1",
     version: "1.0.0",
     candidate_kind: "package_inventory",
+    lifecycle_stage: "imported_review_candidate_audit",
     source_repo: release.source.repository,
     source_ref: sourceRef,
     release_sha256: release.release_sha256,
@@ -109,11 +128,12 @@ export function buildPackageCandidate({ release, subjectId, sourceRef }) {
     package_status: subject.package_status,
     chapter_status: subject.chapter_status,
     coverage: {
-      expected_package_files: subject.package_file_count,
-      materialized_package_files: existingFiles.length,
+      declared_package_files: subject.package_file_count,
+      expected_existing_package_files: expectedExistingFiles,
+      materialized_existing_package_files: existingFiles.length,
       required_package_files: subject.required_package_file_count,
       optional_package_files: subject.optional_package_file_count,
-      optional_gaps: [...(subject.missing_optional_files || [])],
+      optional_gaps: optionalGaps,
       missing_required_files: [...(subject.missing_required_files || [])],
       missing_chapter_files: [...(subject.missing_chapter_files || [])]
     },
@@ -123,12 +143,11 @@ export function buildPackageCandidate({ release, subjectId, sourceRef }) {
       content_sha256: subject.content_sha256
     },
     activation_recommendation: "subject_specific_review_gates_required_before_runtime_activation",
+    approval_required: true,
     runtime_activation_allowed: false,
     gate: {
-      passed: errors.length === 0 && existingFiles.length === subject.package_file_count,
-      errors: existingFiles.length === subject.package_file_count
-        ? []
-        : [`Expected ${subject.package_file_count} package files, materialized ${existingFiles.length}.`]
+      passed: errors.length === 0 && coverageErrors.length === 0,
+      errors: [...errors, ...coverageErrors]
     }
   };
   if (!audit.gate.passed) throw new Error(audit.gate.errors.join(" "));
@@ -171,7 +190,7 @@ function main() {
   const { candidate, audit } = buildPackageCandidate({ release, subjectId: args.subject, sourceRef });
   writeJson(path.resolve(args.output), candidate);
   writeJson(path.resolve(args.auditOutput), audit);
-  console.log(`Built package inventory candidate for ${args.subject}: ${candidate.package_file_count} files.`);
+  console.log(`Built package inventory candidate for ${args.subject}: ${candidate.existing_package_file_count}/${candidate.package_file_count} files, ${candidate.optional_gaps.length} optional gaps.`);
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === SCRIPT_PATH) main();
