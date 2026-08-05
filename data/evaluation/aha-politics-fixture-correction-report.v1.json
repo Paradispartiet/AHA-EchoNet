@@ -1,25 +1,138 @@
 {
   "schema": "aha_politics_fixture_correction_report_v1",
   "version": "1.1.0",
-  "status": "passed_correction_gate",
+  "status": "correction_required",
   "runtime_activation_allowed": false,
   "source_ref": "9e9644e83998ff715005bf80c96cde6193107c13",
   "corpus_sha256": "981ab3ad25f972bd13c70a0247f26b8796e43b8cd3cde7282b7d073bfcc79dec",
   "policy_version": "1.1.0",
-  "correction_version": "1.0.0",
+  "correction_version": "1.1.0",
   "summary": {
-    "total": 8,
-    "passed": 8,
-    "failed": 0,
-    "exact_legacy_baselines": 6,
-    "qualitative_targets": 2,
+    "total": 16,
+    "passed": 15,
+    "failed": 1,
+    "exact_legacy_baselines": 8,
+    "qualitative_targets": 8,
     "comparisons": {
-      "correct": 8
+      "correct": 15,
+      "false_positive": 1
     },
     "validation_errors": 0
   },
   "validation_errors": [],
-  "failures": [],
+  "failures": [
+    {
+      "id": "correction-literary-attachment-non-politics",
+      "fixture_path": "docs/fixtures/aha-analysis/04-litteraer-tilknytningsteori.json",
+      "fixture_id": "litteraer-tilknytning-001",
+      "fixture_role": "legacy_exact_baseline",
+      "legacy_analysis": {
+        "content_type": "academic_article",
+        "domain": "literary_attachment",
+        "theme": "tilknytningsteori som tolkningsramme i romananalyse",
+        "main_tension": "estetisk fortelling kontra psykologisk begrepsbruk",
+        "confidence": {
+          "contentType": 0.9,
+          "domain": 0.87,
+          "theme": 0.9,
+          "mainTension": 0.83,
+          "historyGoLinks": 0.12
+        }
+      },
+      "human_review": {
+        "expected_politics_status": "unsupported",
+        "expected_chapter_id": null,
+        "source_evidence": [
+          "nærhetssøking",
+          "ambivalent tilknytning",
+          "klinisk språk"
+        ],
+        "supported_concepts": [],
+        "forbidden_chapter_ids": [
+          "normer-identitet-hverdagsliv",
+          "konflikt-makt-sivilsamfunn"
+        ],
+        "unsupported_interpretations": [
+          "Relasjon, konflikt og ambivalens i en roman er ikke belegg for politiske normer, identitet eller samfunnskonflikt."
+        ],
+        "required_uncertainty": [
+          "AHA skal skille litterær karaktertolkning fra både politisk kategorisering og klinisk diagnose."
+        ]
+      },
+      "policy_grounding": {
+        "status": "grounded",
+        "selected_chapter_id": "konflikt-makt-sivilsamfunn",
+        "top_score": 6.5,
+        "second_score": 0,
+        "ranking": [
+          {
+            "chapter_id": "konflikt-makt-sivilsamfunn",
+            "title": "Konflikt, makt og sivilsamfunn",
+            "score": 6.5,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "konflikt",
+                "group": "title_terms",
+                "base_weight": 5,
+                "multiplier": 1,
+                "contribution": 5
+              },
+              {
+                "term": "språk",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "fordeling-velferd-ulikhet",
+            "title": "Fordeling, velferd og ulikhet",
+            "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "forvaltning",
+            "title": "Offentlig forvaltning",
+            "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "internasjonal-politikk-sikkerhet-samarbeid",
+            "title": "Internasjonal politikk, sikkerhet og samarbeid",
+            "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "normer-identitet-hverdagsliv",
+            "title": "Normer, identitet og hverdagsliv",
+            "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          }
+        ]
+      },
+      "comparison": "false_positive",
+      "passed": false,
+      "forbidden_chapter_selected": true,
+      "validation_errors": []
+    }
+  ],
   "cases": [
     {
       "id": "correction-pinse-non-politics",
@@ -404,6 +517,117 @@
       "validation_errors": []
     },
     {
+      "id": "correction-literary-attachment-non-politics",
+      "fixture_path": "docs/fixtures/aha-analysis/04-litteraer-tilknytningsteori.json",
+      "fixture_id": "litteraer-tilknytning-001",
+      "fixture_role": "legacy_exact_baseline",
+      "legacy_analysis": {
+        "content_type": "academic_article",
+        "domain": "literary_attachment",
+        "theme": "tilknytningsteori som tolkningsramme i romananalyse",
+        "main_tension": "estetisk fortelling kontra psykologisk begrepsbruk",
+        "confidence": {
+          "contentType": 0.9,
+          "domain": 0.87,
+          "theme": 0.9,
+          "mainTension": 0.83,
+          "historyGoLinks": 0.12
+        }
+      },
+      "human_review": {
+        "expected_politics_status": "unsupported",
+        "expected_chapter_id": null,
+        "source_evidence": [
+          "nærhetssøking",
+          "ambivalent tilknytning",
+          "klinisk språk"
+        ],
+        "supported_concepts": [],
+        "forbidden_chapter_ids": [
+          "normer-identitet-hverdagsliv",
+          "konflikt-makt-sivilsamfunn"
+        ],
+        "unsupported_interpretations": [
+          "Relasjon, konflikt og ambivalens i en roman er ikke belegg for politiske normer, identitet eller samfunnskonflikt."
+        ],
+        "required_uncertainty": [
+          "AHA skal skille litterær karaktertolkning fra både politisk kategorisering og klinisk diagnose."
+        ]
+      },
+      "policy_grounding": {
+        "status": "grounded",
+        "selected_chapter_id": "konflikt-makt-sivilsamfunn",
+        "top_score": 6.5,
+        "second_score": 0,
+        "ranking": [
+          {
+            "chapter_id": "konflikt-makt-sivilsamfunn",
+            "title": "Konflikt, makt og sivilsamfunn",
+            "score": 6.5,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "konflikt",
+                "group": "title_terms",
+                "base_weight": 5,
+                "multiplier": 1,
+                "contribution": 5
+              },
+              {
+                "term": "språk",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "fordeling-velferd-ulikhet",
+            "title": "Fordeling, velferd og ulikhet",
+            "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "forvaltning",
+            "title": "Offentlig forvaltning",
+            "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "internasjonal-politikk-sikkerhet-samarbeid",
+            "title": "Internasjonal politikk, sikkerhet og samarbeid",
+            "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "normer-identitet-hverdagsliv",
+            "title": "Normer, identitet og hverdagsliv",
+            "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          }
+        ]
+      },
+      "comparison": "false_positive",
+      "passed": false,
+      "forbidden_chapter_selected": true,
+      "validation_errors": []
+    },
+    {
       "id": "correction-diary-non-politics",
       "fixture_path": "docs/fixtures/aha-analysis/05-dagbok-refleksjon.json",
       "fixture_id": "dagbok-refleksjon-001",
@@ -457,6 +681,110 @@
             "matched_terms": [
               {
                 "term": "arbeid",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "fordeling-velferd-ulikhet",
+            "title": "Fordeling, velferd og ulikhet",
+            "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "forvaltning",
+            "title": "Offentlig forvaltning",
+            "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "internasjonal-politikk-sikkerhet-samarbeid",
+            "title": "Internasjonal politikk, sikkerhet og samarbeid",
+            "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "konflikt-makt-sivilsamfunn",
+            "title": "Konflikt, makt og sivilsamfunn",
+            "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          }
+        ]
+      },
+      "comparison": "correct",
+      "passed": true,
+      "forbidden_chapter_selected": false,
+      "validation_errors": []
+    },
+    {
+      "id": "correction-technical-project-non-politics",
+      "fixture_path": "docs/fixtures/aha-analysis/06-prosjektplan-teknisk-notat.json",
+      "fixture_id": "prosjektplan-teknisk-001",
+      "fixture_role": "legacy_exact_baseline",
+      "legacy_analysis": {
+        "content_type": "project_note",
+        "domain": "generic_academic",
+        "theme": "kontrollert innfasing av analysemodul",
+        "main_tension": "leveransehastighet kontra kvalitetssikring",
+        "confidence": {
+          "contentType": 0.94,
+          "domain": 0.92,
+          "theme": 0.9,
+          "mainTension": 0.87,
+          "historyGoLinks": 0.1
+        }
+      },
+      "human_review": {
+        "expected_politics_status": "unsupported",
+        "expected_chapter_id": null,
+        "source_evidence": [
+          "analyseklassifisering",
+          "stabile grensesnitt",
+          "testdata er representative"
+        ],
+        "supported_concepts": [],
+        "forbidden_chapter_ids": [
+          "offentlig-politikk-beslutning-implementering",
+          "statsvitenskapelig-metode-og-sammenligning"
+        ],
+        "unsupported_interpretations": [
+          "Prosjektfase, implementering, avviksmåling og testdata er teknisk utviklingsspråk, ikke automatisk policyprosess eller statsvitenskapelig metode."
+        ],
+        "required_uncertainty": [
+          "Teksten må forbli teknisk prosjektarbeid med mindre politiske institusjoner eller forskningsdesign omtales eksplisitt."
+        ]
+      },
+      "policy_grounding": {
+        "status": "unsupported",
+        "selected_chapter_id": null,
+        "top_score": 1.5,
+        "second_score": 0,
+        "ranking": [
+          {
+            "chapter_id": "rett-lov-rettssikkerhet",
+            "title": "Rett, lov og rettssikkerhet",
+            "score": 1.5,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "avhenger",
                 "group": "support_terms",
                 "base_weight": 1.5,
                 "multiplier": 1,
@@ -1103,6 +1431,759 @@
             "matched_terms": [
               {
                 "term": "systemer",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          }
+        ]
+      },
+      "comparison": "correct",
+      "passed": true,
+      "forbidden_chapter_selected": false,
+      "validation_errors": []
+    },
+    {
+      "id": "correction-learning-reflection-non-politics",
+      "fixture_path": "docs/fixtures/aha-analysis/11-refleksjon-laering-feil-vaner.json",
+      "fixture_id": "refleksjon-laering-feil-001",
+      "fixture_role": "qualitative_target_fixture",
+      "legacy_analysis": {
+        "content_type": "day_log",
+        "domain": "learning_reflection",
+        "theme": "læring gjennom mønstergjenkjenning og justering",
+        "main_tension": "feil som nederlag kontra feil som praktisk læringsdata",
+        "confidence": {
+          "contentType": 0.91,
+          "domain": 0.84,
+          "theme": 0.88,
+          "mainTension": 0.84,
+          "historyGoLinks": 0.04
+        }
+      },
+      "human_review": {
+        "expected_politics_status": "unsupported",
+        "expected_chapter_id": null,
+        "source_evidence": [
+          "feilene mine",
+          "små vaner",
+          "kunnskapen fester seg"
+        ],
+        "supported_concepts": [],
+        "forbidden_chapter_ids": [
+          "normer-identitet-hverdagsliv",
+          "statsvitenskapelig-metode-og-sammenligning"
+        ],
+        "unsupported_interpretations": [
+          "Personlig læring, vanedannelse og refleksjon over feil er ikke politisk normanalyse eller statsvitenskapelig metode."
+        ],
+        "required_uncertainty": [
+          "AHA skal beholde teksten som personlig læringsrefleksjon uten å oppgradere den til et samfunnsfaglig forskningsdesign."
+        ]
+      },
+      "policy_grounding": {
+        "status": "unsupported",
+        "selected_chapter_id": null,
+        "top_score": 1.5,
+        "second_score": 1.5,
+        "ranking": [
+          {
+            "chapter_id": "norsk-politikk-eos-eu-flernivastyring",
+            "title": "Norsk politikk, EØS/EU og flernivåstyring",
+            "score": 1.5,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "enn",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "regimer-og-institusjoner",
+            "title": "Regimer og institusjoner",
+            "score": 1.5,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "gjøre",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "statsvitenskapelig-metode-og-sammenligning",
+            "title": "Statsvitenskapelig metode og sammenligning",
+            "score": 1.5,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "dem",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "fordeling-velferd-ulikhet",
+            "title": "Fordeling, velferd og ulikhet",
+            "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "forvaltning",
+            "title": "Offentlig forvaltning",
+            "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          }
+        ]
+      },
+      "comparison": "correct",
+      "passed": true,
+      "forbidden_chapter_selected": false,
+      "validation_errors": []
+    },
+    {
+      "id": "correction-urban-attention-non-politics",
+      "fixture_path": "docs/fixtures/aha-analysis/12-refleksjon-byrom-uro-konsentrasjon.json",
+      "fixture_id": "refleksjon-byrom-uro-001",
+      "fixture_role": "qualitative_target_fixture",
+      "legacy_analysis": {
+        "content_type": "day_log",
+        "domain": "urban_attention_reflection",
+        "theme": "konsentrasjon i møte med byrommets rytme",
+        "main_tension": "stimulerende byliv kontra oppmerksomhetsbrudd",
+        "confidence": {
+          "contentType": 0.9,
+          "domain": 0.8,
+          "theme": 0.86,
+          "mainTension": 0.83,
+          "historyGoLinks": 0.04
+        }
+      },
+      "human_review": {
+        "expected_politics_status": "unsupported",
+        "expected_chapter_id": null,
+        "source_evidence": [
+          "travle plassen ved trikken",
+          "folkestrømmen",
+          "konsentrasjon"
+        ],
+        "supported_concepts": [],
+        "forbidden_chapter_ids": [
+          "normer-identitet-hverdagsliv",
+          "fordeling-velferd-ulikhet"
+        ],
+        "unsupported_interpretations": [
+          "Et personlig møte med byrom, uro og oppmerksomhet er ikke belegg for politiske normer, universell adgang eller velferdsfordeling."
+        ],
+        "required_uncertainty": [
+          "Erfaringen skal forstås som situert refleksjon, ikke politisk struktur eller klinisk diagnose."
+        ]
+      },
+      "policy_grounding": {
+        "status": "unsupported",
+        "selected_chapter_id": null,
+        "top_score": 1.5,
+        "second_score": 1.5,
+        "ranking": [
+          {
+            "chapter_id": "konflikt-makt-sivilsamfunn",
+            "title": "Konflikt, makt og sivilsamfunn",
+            "score": 1.5,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "bevegelse",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "norsk-politikk-eos-eu-flernivastyring",
+            "title": "Norsk politikk, EØS/EU og flernivåstyring",
+            "score": 1.5,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "enn",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "fordeling-velferd-ulikhet",
+            "title": "Fordeling, velferd og ulikhet",
+            "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "forvaltning",
+            "title": "Offentlig forvaltning",
+            "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "internasjonal-politikk-sikkerhet-samarbeid",
+            "title": "Internasjonal politikk, sikkerhet og samarbeid",
+            "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          }
+        ]
+      },
+      "comparison": "correct",
+      "passed": true,
+      "forbidden_chapter_selected": false,
+      "validation_errors": []
+    },
+    {
+      "id": "correction-eidsvoll-history-non-politics",
+      "fixture_path": "docs/fixtures/aha-analysis/13-historygo-eidsvoll-grunnloven.json",
+      "fixture_id": "historygo-eidsvoll-grunnloven-001",
+      "fixture_role": "qualitative_target_fixture",
+      "legacy_analysis": {
+        "content_type": "academic_article",
+        "domain": "constitutional_democratic_history",
+        "theme": "Eidsvoll og Grunnloven som demokratisk grunnfortelling",
+        "main_tension": "nasjonal grunnleggelse kontra demokratiets historiske avgrensninger",
+        "confidence": {
+          "contentType": 0.92,
+          "domain": 0.89,
+          "theme": 0.9,
+          "mainTension": 0.87,
+          "historyGoLinks": 0.62
+        }
+      },
+      "human_review": {
+        "expected_politics_status": "unsupported",
+        "expected_chapter_id": null,
+        "source_evidence": [
+          "eidsvoll i 1814",
+          "grunnloven",
+          "politiske deltakere"
+        ],
+        "supported_concepts": [],
+        "forbidden_chapter_ids": [
+          "parlamentarisme",
+          "rett-lov-rettssikkerhet",
+          "norsk-politikk-eos-eu-flernivastyring"
+        ],
+        "unsupported_interpretations": [
+          "Historisk demokrati-, grunnlovs- og nasjonsbyggingsanalyse skal ikke presses inn i et moderne Politikk-kapittel når det canonical Historie-kapittelet om 1814 er mer presist."
+        ],
+        "required_uncertainty": [
+          "Politikk kan være et tverrfaglig spor, men kapittelvalget skal avstå til Historie-grounding kan sammenlignes."
+        ]
+      },
+      "policy_grounding": {
+        "status": "unsupported",
+        "selected_chapter_id": null,
+        "top_score": 1.5,
+        "second_score": 0.525,
+        "ranking": [
+          {
+            "chapter_id": "parlamentarisme",
+            "title": "Parlamentarisme, representasjon og offentlighet",
+            "score": 3,
+            "eligible": false,
+            "eligibility_reason": "missing_required_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "folkestyre",
+                "group": "concept_terms",
+                "base_weight": 3,
+                "multiplier": 1,
+                "contribution": 3
+              }
+            ]
+          },
+          {
+            "chapter_id": "politisk-okonomi-stat-marked",
+            "title": "Politisk økonomi, stat og marked",
+            "score": 1.5,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "samlet",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "konflikt-makt-sivilsamfunn",
+            "title": "Konflikt, makt og sivilsamfunn",
+            "score": 0.525,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "rettigheter",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 0.35,
+                "contribution": 0.525
+              }
+            ]
+          },
+          {
+            "chapter_id": "normer-identitet-hverdagsliv",
+            "title": "Normer, identitet og hverdagsliv",
+            "score": 0.525,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "rettigheter",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 0.35,
+                "contribution": 0.525
+              }
+            ]
+          },
+          {
+            "chapter_id": "fordeling-velferd-ulikhet",
+            "title": "Fordeling, velferd og ulikhet",
+            "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          }
+        ]
+      },
+      "comparison": "correct",
+      "passed": true,
+      "forbidden_chapter_selected": false,
+      "validation_errors": []
+    },
+    {
+      "id": "correction-bislett-sport-non-politics",
+      "fixture_path": "docs/fixtures/aha-analysis/14-historygo-bislett-byrom-stadion.json",
+      "fixture_id": "historygo-bislett-stadion-001",
+      "fixture_role": "qualitative_target_fixture",
+      "legacy_analysis": {
+        "content_type": "academic_article",
+        "domain": "urban_sports_history",
+        "theme": "Bislett stadion som idrettshistorisk og urbant sosialt rom",
+        "main_tension": "sportslig arena kontra levende byrom",
+        "confidence": {
+          "contentType": 0.91,
+          "domain": 0.87,
+          "theme": 0.88,
+          "mainTension": 0.84,
+          "historyGoLinks": 0.6
+        }
+      },
+      "human_review": {
+        "expected_politics_status": "unsupported",
+        "expected_chapter_id": null,
+        "source_evidence": [
+          "bislett stadion",
+          "idrettsarena",
+          "sportshistorie"
+        ],
+        "supported_concepts": [],
+        "forbidden_chapter_ids": [
+          "konflikt-makt-sivilsamfunn",
+          "normer-identitet-hverdagsliv",
+          "fordeling-velferd-ulikhet"
+        ],
+        "unsupported_interpretations": [
+          "Fellesskap, lokal identitet og byutvikling rundt et stadion er ikke nok til å velge politisk konflikt, normer eller velferdsfordeling."
+        ],
+        "required_uncertainty": [
+          "Sport-, by- og arkitekturhistorie skal ha forrang uten eksplisitte politiske vedtak, institusjoner eller fordelingskonflikter."
+        ]
+      },
+      "policy_grounding": {
+        "status": "unsupported",
+        "selected_chapter_id": null,
+        "top_score": 3,
+        "second_score": 1.75,
+        "ranking": [
+          {
+            "chapter_id": "norsk-politikk-eos-eu-flernivastyring",
+            "title": "Norsk politikk, EØS/EU og flernivåstyring",
+            "score": 3,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "enn",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              },
+              {
+                "term": "lokal",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "normer-identitet-hverdagsliv",
+            "title": "Normer, identitet og hverdagsliv",
+            "score": 1.75,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "identitet",
+                "group": "title_terms",
+                "base_weight": 5,
+                "multiplier": 0.35,
+                "contribution": 1.75
+              }
+            ]
+          },
+          {
+            "chapter_id": "konflikt-makt-sivilsamfunn",
+            "title": "Konflikt, makt og sivilsamfunn",
+            "score": 0.525,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "identitet",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 0.35,
+                "contribution": 0.525
+              }
+            ]
+          },
+          {
+            "chapter_id": "fordeling-velferd-ulikhet",
+            "title": "Fordeling, velferd og ulikhet",
+            "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "forvaltning",
+            "title": "Offentlig forvaltning",
+            "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          }
+        ]
+      },
+      "comparison": "correct",
+      "passed": true,
+      "forbidden_chapter_selected": false,
+      "validation_errors": []
+    },
+    {
+      "id": "correction-fragmented-non-politics",
+      "fixture_path": "docs/fixtures/aha-analysis/15-uklar-fragmentert-lav-kvalitet.json",
+      "fixture_id": "uklar-fragmentert-002",
+      "fixture_role": "qualitative_target_fixture",
+      "legacy_analysis": {
+        "content_type": "general",
+        "domain": "generic_academic",
+        "theme": "uklar problemforståelse uten tydelig kontekst",
+        "main_tension": "opplevd sammenheng kontra manglende konkretisering",
+        "confidence": {
+          "contentType": 0.34,
+          "domain": 0.2,
+          "theme": 0.36,
+          "mainTension": 0.32,
+          "historyGoLinks": 0.02
+        }
+      },
+      "human_review": {
+        "expected_politics_status": "unsupported",
+        "expected_chapter_id": null,
+        "source_evidence": [
+          "vet ikke",
+          "klarer ikke forklare",
+          "systemet"
+        ],
+        "supported_concepts": [],
+        "forbidden_chapter_ids": [
+          "regimer-og-institusjoner",
+          "forvaltning",
+          "konflikt-makt-sivilsamfunn"
+        ],
+        "unsupported_interpretations": [
+          "Fragmentene system, folk og annerledes gir ikke tilstrekkelig faglig eller politisk belegg."
+        ],
+        "required_uncertainty": [
+          "Teksten skal avstå med lav sikkerhet og etterspørre konkret aktør, hendelse og ønsket endring."
+        ]
+      },
+      "policy_grounding": {
+        "status": "unsupported",
+        "selected_chapter_id": null,
+        "top_score": 1.5,
+        "second_score": 1.5,
+        "ranking": [
+          {
+            "chapter_id": "rett-lov-rettssikkerhet",
+            "title": "Rett, lov og rettssikkerhet",
+            "score": 1.5,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "feil",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "valg-partier-velgeratferd",
+            "title": "Valg, partier og velgeratferd",
+            "score": 1.5,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "forklare",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "fordeling-velferd-ulikhet",
+            "title": "Fordeling, velferd og ulikhet",
+            "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "forvaltning",
+            "title": "Offentlig forvaltning",
+            "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "internasjonal-politikk-sikkerhet-samarbeid",
+            "title": "Internasjonal politikk, sikkerhet og samarbeid",
+            "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          }
+        ]
+      },
+      "comparison": "correct",
+      "passed": true,
+      "forbidden_chapter_selected": false,
+      "validation_errors": []
+    },
+    {
+      "id": "correction-ai-learning-non-politics",
+      "fixture_path": "docs/fixtures/aha-analysis/16-tverrfaglig-ai-laering-kunnskap.json",
+      "fixture_id": "tverrfaglig-ai-laering-001",
+      "fixture_role": "qualitative_target_fixture",
+      "legacy_analysis": {
+        "content_type": "academic_article",
+        "domain": "digital_pedagogy_knowledge_systems",
+        "theme": "AI som støtte for læring og kollektiv kunnskapsbygging",
+        "main_tension": "automatisert tilgang til kunnskap kontra menneskelig vurdering og forståelse",
+        "confidence": {
+          "contentType": 0.9,
+          "domain": 0.86,
+          "theme": 0.88,
+          "mainTension": 0.87,
+          "historyGoLinks": 0.05
+        }
+      },
+      "human_review": {
+        "expected_politics_status": "unsupported",
+        "expected_chapter_id": null,
+        "source_evidence": [
+          "ai-verktøy",
+          "kollektiv kunnskap",
+          "menneskelig forståelse"
+        ],
+        "supported_concepts": [],
+        "forbidden_chapter_ids": [
+          "offentlig-politikk-beslutning-implementering",
+          "normer-identitet-hverdagsliv",
+          "statsvitenskapelig-metode-og-sammenligning"
+        ],
+        "unsupported_interpretations": [
+          "Automatisering, læring og kollektiv kunnskap er ikke automatisk offentlig politikk, normanalyse eller statsvitenskapelig metode."
+        ],
+        "required_uncertainty": [
+          "AHA skal beholde pedagogikk, teknologi og kunnskapsteori som primære spor uten eksplisitt politisk styring eller institusjonell regulering."
+        ]
+      },
+      "policy_grounding": {
+        "status": "unsupported",
+        "selected_chapter_id": null,
+        "top_score": 3,
+        "second_score": 2.025,
+        "ranking": [
+          {
+            "chapter_id": "regimer-og-institusjoner",
+            "title": "Regimer og institusjoner",
+            "score": 3,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "endres",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              },
+              {
+                "term": "gjøre",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "statsvitenskapelig-metode-og-sammenligning",
+            "title": "Statsvitenskapelig metode og sammenligning",
+            "score": 2.025,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "spørsmål",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              },
+              {
+                "term": "usikkerhet",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 0.35,
+                "contribution": 0.525
+              }
+            ]
+          },
+          {
+            "chapter_id": "internasjonal-politikk-sikkerhet-samarbeid",
+            "title": "Internasjonal politikk, sikkerhet og samarbeid",
+            "score": 1.75,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "usikkerhet",
+                "group": "title_terms",
+                "base_weight": 5,
+                "multiplier": 0.35,
+                "contribution": 1.75
+              }
+            ]
+          },
+          {
+            "chapter_id": "fordeling-velferd-ulikhet",
+            "title": "Fordeling, velferd og ulikhet",
+            "score": 1.5,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "vurdering",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "forvaltning",
+            "title": "Offentlig forvaltning",
+            "score": 1.5,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "bruker",
                 "group": "support_terms",
                 "base_weight": 1.5,
                 "multiplier": 1,
