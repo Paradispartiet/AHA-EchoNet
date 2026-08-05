@@ -1,0 +1,71 @@
+name: AHA Politics fixture corrections
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "scripts/compare-politics-fixture-corrections.mjs"
+      - "data/evaluation/aha-politics-fixture-corrections.v1.json"
+      - "data/evaluation/aha-politics-fixture-correction-report.v1.json"
+      - "tests/aha-politics-fixture-corrections.test.cjs"
+      - "docs/AHA_POLITICS_FIXTURE_CORRECTIONS_V1.md"
+      - ".github/workflows/aha-politics-fixture-corrections.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fixture-corrections:
+    name: Compare legacy fixtures with Politics corrections
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout AHA-EchoNet
+        uses: actions/checkout@v5
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Preserve checked-in correction report
+        run: cp data/evaluation/aha-politics-fixture-correction-report.v1.json /tmp/politics-correction-report.checked.json
+
+      - name: Rebuild correction comparison report
+        run: node scripts/compare-politics-fixture-corrections.mjs
+
+      - name: Verify correction baseline and checked-in parity
+        run: |
+          node - <<'NODE'
+          const fs = require('fs');
+          const reportPath = 'data/evaluation/aha-politics-fixture-correction-report.v1.json';
+          const report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
+          const expected = {
+            total: 8,
+            passed: 3,
+            failed: 5,
+            exact_legacy_baselines: 6,
+            qualitative_targets: 2,
+            validation_errors: 0
+          };
+          for (const [key, value] of Object.entries(expected)) {
+            if (report.summary?.[key] !== value) throw new Error(`Unexpected correction summary ${key}: ${report.summary?.[key]} (expected ${value})`);
+          }
+          const comparisons = report.summary?.comparisons || {};
+          if (comparisons.correct !== 3 || comparisons.false_positive !== 2 || comparisons.false_negative !== 3) {
+            throw new Error(`Unexpected comparison split: ${JSON.stringify(comparisons)}`);
+          }
+          if (report.status !== 'correction_required' || report.runtime_activation_allowed !== false) throw new Error('Baseline must expose corrections and remain runtime-blocked.');
+          if (!fs.readFileSync(reportPath).equals(fs.readFileSync('/tmp/politics-correction-report.checked.json'))) throw new Error('Checked-in correction report is stale.');
+          console.log('Verified correction baseline: 3/8 pass; 2 false positives; 3 false negatives.');
+          NODE
+
+      - name: Upload correction report
+        uses: actions/upload-artifact@v4
+        with:
+          name: aha-politics-fixture-corrections
+          path: data/evaluation/aha-politics-fixture-correction-report.v1.json
+          if-no-files-found: error
+          retention-days: 14

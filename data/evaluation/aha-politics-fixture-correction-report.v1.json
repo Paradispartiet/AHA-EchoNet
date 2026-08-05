@@ -1,0 +1,1582 @@
+{
+  "schema": "aha_politics_fixture_correction_report_v1",
+  "version": "1.0.0",
+  "status": "correction_required",
+  "runtime_activation_allowed": false,
+  "source_ref": "9e9644e83998ff715005bf80c96cde6193107c13",
+  "corpus_sha256": "981ab3ad25f972bd13c70a0247f26b8796e43b8cd3cde7282b7d073bfcc79dec",
+  "policy_version": "1.0.0",
+  "correction_version": "1.0.0",
+  "summary": {
+    "total": 8,
+    "passed": 3,
+    "failed": 5,
+    "exact_legacy_baselines": 6,
+    "qualitative_targets": 2,
+    "comparisons": {
+      "correct": 3,
+      "false_positive": 2,
+      "false_negative": 3
+    },
+    "validation_errors": 0
+  },
+  "validation_errors": [],
+  "failures": [
+    {
+      "id": "correction-morgenbladet-media-non-politics",
+      "fixture_path": "docs/fixtures/aha-analysis/02-morgenbladet-mediehistorie.json",
+      "fixture_id": "morgenbladet-mediehistorie-001",
+      "fixture_role": "legacy_exact_baseline",
+      "legacy_analysis": {
+        "content_type": "academic_article",
+        "domain": "institutional_media_history",
+        "theme": "Morgenbladet som idéoffentlig institusjon",
+        "main_tension": "dyptpløyende offentlighet kontra tempoorientert nyhetslogikk",
+        "confidence": {
+          "contentType": 0.92,
+          "domain": 0.93,
+          "theme": 0.9,
+          "mainTension": 0.86,
+          "historyGoLinks": 0.84
+        }
+      },
+      "human_review": {
+        "expected_politics_status": "unsupported",
+        "expected_chapter_id": null,
+        "source_evidence": [
+          "idédebatt",
+          "kulturkritikk",
+          "medielandskapet"
+        ],
+        "supported_concepts": [],
+        "forbidden_chapter_ids": [
+          "parlamentarisme",
+          "konflikt-makt-sivilsamfunn"
+        ],
+        "unsupported_interpretations": [
+          "Offentlighet og debatt alene dokumenterer ikke parlamentarisme, representasjon eller sivilsamfunnskonflikt."
+        ],
+        "required_uncertainty": [
+          "Mediehistorisk offentlighet må holdes atskilt fra politiske institusjoner når teksten ikke omtaler dem."
+        ]
+      },
+      "policy_grounding": {
+        "status": "grounded",
+        "selected_chapter_id": "parlamentarisme",
+        "top_score": 7.275,
+        "second_score": 5.525,
+        "ranking": [
+          {
+            "chapter_id": "parlamentarisme",
+            "title": "Parlamentarisme, representasjon og offentlighet",
+            "score": 7.275,
+            "matched_terms": [
+              {
+                "term": "debatt",
+                "group": "title_terms",
+                "base_weight": 5,
+                "multiplier": 1,
+                "contribution": 5
+              },
+              {
+                "term": "offentlighet",
+                "group": "title_terms",
+                "base_weight": 5,
+                "multiplier": 0.35,
+                "contribution": 1.75
+              },
+              {
+                "term": "arena",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 0.35,
+                "contribution": 0.525
+              }
+            ]
+          },
+          {
+            "chapter_id": "konflikt-makt-sivilsamfunn",
+            "title": "Konflikt, makt og sivilsamfunn",
+            "score": 5.525,
+            "matched_terms": [
+              {
+                "term": "over",
+                "group": "title_terms",
+                "base_weight": 5,
+                "multiplier": 1,
+                "contribution": 5
+              },
+              {
+                "term": "arena",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 0.35,
+                "contribution": 0.525
+              }
+            ]
+          },
+          {
+            "chapter_id": "norsk-politikk-eos-eu-flernivastyring",
+            "title": "Norsk politikk, EØS/EU og flernivåstyring",
+            "score": 5,
+            "matched_terms": [
+              {
+                "term": "norsk",
+                "group": "title_terms",
+                "base_weight": 5,
+                "multiplier": 1,
+                "contribution": 5
+              }
+            ]
+          },
+          {
+            "chapter_id": "forvaltning",
+            "title": "Offentlig forvaltning",
+            "score": 2.55,
+            "matched_terms": [
+              {
+                "term": "tid",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              },
+              {
+                "term": "offentlighet",
+                "group": "concept_terms",
+                "base_weight": 3,
+                "multiplier": 0.35,
+                "contribution": 1.05
+              }
+            ]
+          },
+          {
+            "chapter_id": "fordeling-velferd-ulikhet",
+            "title": "Fordeling, velferd og ulikhet",
+            "score": 0,
+            "matched_terms": []
+          }
+        ]
+      },
+      "comparison": "false_positive",
+      "passed": false,
+      "forbidden_chapter_selected": true,
+      "validation_errors": []
+    },
+    {
+      "id": "correction-nav-reform-forvaltning",
+      "fixture_path": "docs/fixtures/aha-analysis/03-nav-reformen-forvaltning.json",
+      "fixture_id": "nav-reform-forvaltning-001",
+      "fixture_role": "legacy_exact_baseline",
+      "legacy_analysis": {
+        "content_type": "academic_article",
+        "domain": "public_administration_reform",
+        "theme": "samordning og styring i NAV-reformen",
+        "main_tension": "politisk mål om helhet versus organisatorisk kompleksitet",
+        "confidence": {
+          "contentType": 0.94,
+          "domain": 0.95,
+          "theme": 0.91,
+          "mainTension": 0.89,
+          "historyGoLinks": 0.88
+        }
+      },
+      "human_review": {
+        "expected_politics_status": "grounded",
+        "expected_chapter_id": "forvaltning",
+        "source_evidence": [
+          "velferdsforvaltningen",
+          "etatskulturer",
+          "uklare ansvarsforhold"
+        ],
+        "supported_concepts": [
+          "samordning",
+          "organisatorisk ansvar",
+          "velferdsforvaltning"
+        ],
+        "forbidden_chapter_ids": [
+          "offentlig-politikk-beslutning-implementering"
+        ],
+        "unsupported_interpretations": [
+          "Teksten dokumenterer ikke primært dagsordensetting eller policy feedback; den beskriver organisering, styring og ansvar."
+        ],
+        "required_uncertainty": [
+          "Teksten sier ikke hvilke konkrete styringslinjer som sviktet eller hvilke evalueringsfunn som beviser effekten."
+        ]
+      },
+      "policy_grounding": {
+        "status": "unsupported",
+        "selected_chapter_id": null,
+        "top_score": 3,
+        "second_score": 0,
+        "ranking": [
+          {
+            "chapter_id": "offentlig-politikk-beslutning-implementering",
+            "title": "Offentlig politikk, beslutning og implementering",
+            "score": 3,
+            "matched_terms": [
+              {
+                "term": "samordning",
+                "group": "concept_terms",
+                "base_weight": 3,
+                "multiplier": 1,
+                "contribution": 3
+              }
+            ]
+          },
+          {
+            "chapter_id": "fordeling-velferd-ulikhet",
+            "title": "Fordeling, velferd og ulikhet",
+            "score": 0,
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "forvaltning",
+            "title": "Offentlig forvaltning",
+            "score": 0,
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "internasjonal-politikk-sikkerhet-samarbeid",
+            "title": "Internasjonal politikk, sikkerhet og samarbeid",
+            "score": 0,
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "konflikt-makt-sivilsamfunn",
+            "title": "Konflikt, makt og sivilsamfunn",
+            "score": 0,
+            "matched_terms": []
+          }
+        ]
+      },
+      "comparison": "false_negative",
+      "passed": false,
+      "forbidden_chapter_selected": false,
+      "validation_errors": []
+    },
+    {
+      "id": "correction-legal-rights",
+      "fixture_path": "docs/fixtures/aha-analysis/07-juridisk-tekst.json",
+      "fixture_id": "juridisk-tekst-001",
+      "fixture_role": "legacy_exact_baseline",
+      "legacy_analysis": {
+        "content_type": "academic_article",
+        "domain": "generic_academic",
+        "theme": "forholdsmessighet som rettslig avveiningsnorm",
+        "main_tension": "offentlig myndighetsutøvelse kontra individvern",
+        "confidence": {
+          "contentType": 0.93,
+          "domain": 0.94,
+          "theme": 0.89,
+          "mainTension": 0.9,
+          "historyGoLinks": 0.18
+        }
+      },
+      "human_review": {
+        "expected_politics_status": "grounded",
+        "expected_chapter_id": "rett-lov-rettssikkerhet",
+        "source_evidence": [
+          "hjemmel i lov",
+          "legitimt formål",
+          "forholdsmessig",
+          "individets rettigheter"
+        ],
+        "supported_concepts": [
+          "inngrepshjemmel",
+          "forholdsmessighet",
+          "individvern"
+        ],
+        "forbidden_chapter_ids": [
+          "offentlig-politikk-beslutning-implementering",
+          "forvaltning"
+        ],
+        "unsupported_interpretations": [
+          "Ordet tiltak gjør ikke teksten til policy-design; kjernen er rettslig prøving av inngrep."
+        ],
+        "required_uncertainty": [
+          "Teksten oppgir ikke rettskilde, domstol eller konkret hjemmel og kan derfor ikke avgjøre gyldighet i en bestemt sak."
+        ]
+      },
+      "policy_grounding": {
+        "status": "unsupported",
+        "selected_chapter_id": null,
+        "top_score": 5,
+        "second_score": 3.25,
+        "ranking": [
+          {
+            "chapter_id": "offentlig-politikk-beslutning-implementering",
+            "title": "Offentlig politikk, beslutning og implementering",
+            "score": 5,
+            "matched_terms": [
+              {
+                "term": "tiltak",
+                "group": "title_terms",
+                "base_weight": 5,
+                "multiplier": 1,
+                "contribution": 5
+              }
+            ]
+          },
+          {
+            "chapter_id": "rett-lov-rettssikkerhet",
+            "title": "Rett, lov og rettssikkerhet",
+            "score": 3.25,
+            "matched_terms": [
+              {
+                "term": "lov",
+                "group": "title_terms",
+                "base_weight": 5,
+                "multiplier": 0.35,
+                "contribution": 1.75
+              },
+              {
+                "term": "formål",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "fordeling-velferd-ulikhet",
+            "title": "Fordeling, velferd og ulikhet",
+            "score": 3,
+            "matched_terms": [
+              {
+                "term": "resultat",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              },
+              {
+                "term": "vurdering",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "internasjonal-politikk-sikkerhet-samarbeid",
+            "title": "Internasjonal politikk, sikkerhet og samarbeid",
+            "score": 1.5,
+            "matched_terms": [
+              {
+                "term": "mot",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "politisk-okonomi-stat-marked",
+            "title": "Politisk økonomi, stat og marked",
+            "score": 1.5,
+            "matched_terms": [
+              {
+                "term": "samlet",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          }
+        ]
+      },
+      "comparison": "false_negative",
+      "passed": false,
+      "forbidden_chapter_selected": false,
+      "validation_errors": []
+    },
+    {
+      "id": "correction-morgenbladet-public-sphere-non-politics",
+      "fixture_path": "docs/fixtures/aha-analysis/09-morgenbladet-offentlighet-kulturkritikk.json",
+      "fixture_id": "morgenbladet-offentlighet-002",
+      "fixture_role": "qualitative_target_fixture",
+      "legacy_analysis": {
+        "content_type": "academic_article",
+        "domain": "institutional_media_history",
+        "theme": "Morgenbladet som arena for langsom idéoffentlighet",
+        "main_tension": "demokratisk offentlig samtale kontra smal dannelsesoffentlighet",
+        "confidence": {
+          "contentType": 0.93,
+          "domain": 0.94,
+          "theme": 0.91,
+          "mainTension": 0.87,
+          "historyGoLinks": 0.86
+        }
+      },
+      "human_review": {
+        "expected_politics_status": "unsupported",
+        "expected_chapter_id": null,
+        "source_evidence": [
+          "kulturkritikk",
+          "langsom journalistikk",
+          "dannelsesoffentlighet"
+        ],
+        "supported_concepts": [],
+        "forbidden_chapter_ids": [
+          "parlamentarisme",
+          "konflikt-makt-sivilsamfunn"
+        ],
+        "unsupported_interpretations": [
+          "Demokratisk samtale og offentlighet er ikke tilstrekkelig belegg for parlamentarisme uten regjering, Storting, representasjon eller kontroll."
+        ],
+        "required_uncertainty": [
+          "Teksten kan kobles til medie- og offentlighetsteori, men Politikk-kapittel skal avstå."
+        ]
+      },
+      "policy_grounding": {
+        "status": "grounded",
+        "selected_chapter_id": "parlamentarisme",
+        "top_score": 6.75,
+        "second_score": 5,
+        "ranking": [
+          {
+            "chapter_id": "parlamentarisme",
+            "title": "Parlamentarisme, representasjon og offentlighet",
+            "score": 6.75,
+            "matched_terms": [
+              {
+                "term": "debatt",
+                "group": "title_terms",
+                "base_weight": 5,
+                "multiplier": 1,
+                "contribution": 5
+              },
+              {
+                "term": "offentlighet",
+                "group": "title_terms",
+                "base_weight": 5,
+                "multiplier": 0.35,
+                "contribution": 1.75
+              }
+            ]
+          },
+          {
+            "chapter_id": "konflikt-makt-sivilsamfunn",
+            "title": "Konflikt, makt og sivilsamfunn",
+            "score": 5,
+            "matched_terms": [
+              {
+                "term": "over",
+                "group": "title_terms",
+                "base_weight": 5,
+                "multiplier": 1,
+                "contribution": 5
+              }
+            ]
+          },
+          {
+            "chapter_id": "norsk-politikk-eos-eu-flernivastyring",
+            "title": "Norsk politikk, EØS/EU og flernivåstyring",
+            "score": 5,
+            "matched_terms": [
+              {
+                "term": "norsk",
+                "group": "title_terms",
+                "base_weight": 5,
+                "multiplier": 1,
+                "contribution": 5
+              }
+            ]
+          },
+          {
+            "chapter_id": "forvaltning",
+            "title": "Offentlig forvaltning",
+            "score": 3.6,
+            "matched_terms": [
+              {
+                "term": "tid",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              },
+              {
+                "term": "institusjon",
+                "group": "concept_terms",
+                "base_weight": 3,
+                "multiplier": 0.35,
+                "contribution": 1.05
+              },
+              {
+                "term": "offentlighet",
+                "group": "concept_terms",
+                "base_weight": 3,
+                "multiplier": 0.35,
+                "contribution": 1.05
+              }
+            ]
+          },
+          {
+            "chapter_id": "politisk-okonomi-stat-marked",
+            "title": "Politisk økonomi, stat og marked",
+            "score": 1.05,
+            "matched_terms": [
+              {
+                "term": "institusjon",
+                "group": "concept_terms",
+                "base_weight": 3,
+                "multiplier": 0.35,
+                "contribution": 1.05
+              }
+            ]
+          }
+        ]
+      },
+      "comparison": "false_positive",
+      "passed": false,
+      "forbidden_chapter_selected": true,
+      "validation_errors": []
+    },
+    {
+      "id": "correction-nav-user-meeting-forvaltning",
+      "fixture_path": "docs/fixtures/aha-analysis/10-nav-reformen-brukermoete.json",
+      "fixture_id": "nav-reform-brukermoete-002",
+      "fixture_role": "qualitative_target_fixture",
+      "legacy_analysis": {
+        "content_type": "academic_article",
+        "domain": "public_administration_reform",
+        "theme": "NAV-reformen mellom samordningsideal og brukernær kompleksitet",
+        "main_tension": "helhetlig velferdsforvaltning kontra praktisk byråkratisk kompleksitet",
+        "confidence": {
+          "contentType": 0.94,
+          "domain": 0.95,
+          "theme": 0.91,
+          "mainTension": 0.9,
+          "historyGoLinks": 0.89
+        }
+      },
+      "human_review": {
+        "expected_politics_status": "grounded",
+        "expected_chapter_id": "forvaltning",
+        "source_evidence": [
+          "ett kontaktpunkt",
+          "styringslinjer",
+          "uklart ansvar"
+        ],
+        "supported_concepts": [
+          "brukermøte",
+          "styringslinje",
+          "byråkratisk kompleksitet"
+        ],
+        "forbidden_chapter_ids": [
+          "offentlig-politikk-beslutning-implementering"
+        ],
+        "unsupported_interpretations": [
+          "Teksten analyserer først og fremst hvordan organisasjon og ansvar møter brukeren, ikke en generell policyprosess."
+        ],
+        "required_uncertainty": [
+          "Brukeropplevd effekt kan ikke generaliseres uten konkrete kontor- eller evalueringsdata."
+        ]
+      },
+      "policy_grounding": {
+        "status": "unsupported",
+        "selected_chapter_id": null,
+        "top_score": 3,
+        "second_score": 1.5,
+        "ranking": [
+          {
+            "chapter_id": "offentlig-politikk-beslutning-implementering",
+            "title": "Offentlig politikk, beslutning og implementering",
+            "score": 3,
+            "matched_terms": [
+              {
+                "term": "samordning",
+                "group": "concept_terms",
+                "base_weight": 3,
+                "multiplier": 1,
+                "contribution": 3
+              }
+            ]
+          },
+          {
+            "chapter_id": "internasjonal-politikk-sikkerhet-samarbeid",
+            "title": "Internasjonal politikk, sikkerhet og samarbeid",
+            "score": 1.5,
+            "matched_terms": [
+              {
+                "term": "mot",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "politisk-okonomi-stat-marked",
+            "title": "Politisk økonomi, stat og marked",
+            "score": 1.5,
+            "matched_terms": [
+              {
+                "term": "støtte",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "regimer-og-institusjoner",
+            "title": "Regimer og institusjoner",
+            "score": 1.5,
+            "matched_terms": [
+              {
+                "term": "systemer",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "fordeling-velferd-ulikhet",
+            "title": "Fordeling, velferd og ulikhet",
+            "score": 0,
+            "matched_terms": []
+          }
+        ]
+      },
+      "comparison": "false_negative",
+      "passed": false,
+      "forbidden_chapter_selected": false,
+      "validation_errors": []
+    }
+  ],
+  "cases": [
+    {
+      "id": "correction-pinse-non-politics",
+      "fixture_path": "docs/fixtures/aha-analysis/01-pinse-religion.json",
+      "fixture_id": "pinse-religion-001",
+      "fixture_role": "legacy_exact_baseline",
+      "legacy_analysis": {
+        "content_type": "academic_article",
+        "domain": "generic_academic",
+        "theme": "pinse som teologisk og kulturell markør",
+        "main_tension": "balansen mellom religiøs betydning og samfunnsmessig tradisjon",
+        "confidence": {
+          "contentType": 0.95,
+          "domain": 0.94,
+          "theme": 0.9,
+          "mainTension": 0.82,
+          "historyGoLinks": 0.2
+        }
+      },
+      "human_review": {
+        "expected_politics_status": "unsupported",
+        "expected_chapter_id": null,
+        "source_evidence": [
+          "kirkens fødselsdag",
+          "den hellige ånd",
+          "teologisk høytid"
+        ],
+        "supported_concepts": [],
+        "forbidden_chapter_ids": [
+          "parlamentarisme",
+          "norsk-politikk-eos-eu-flernivastyring"
+        ],
+        "unsupported_interpretations": [
+          "At en religiøs bevegelse omtales som offentlig er ikke belegg for et parlamentarisk eller norsk-politisk kapittel."
+        ],
+        "required_uncertainty": [
+          "Politikk-kapittel skal ikke velges uten eksplisitte politiske institusjoner eller prosesser."
+        ]
+      },
+      "policy_grounding": {
+        "status": "unsupported",
+        "selected_chapter_id": null,
+        "top_score": 5,
+        "second_score": 1.5,
+        "ranking": [
+          {
+            "chapter_id": "norsk-politikk-eos-eu-flernivastyring",
+            "title": "Norsk politikk, EØS/EU og flernivåstyring",
+            "score": 5,
+            "matched_terms": [
+              {
+                "term": "norsk",
+                "group": "title_terms",
+                "base_weight": 5,
+                "multiplier": 1,
+                "contribution": 5
+              }
+            ]
+          },
+          {
+            "chapter_id": "konflikt-makt-sivilsamfunn",
+            "title": "Konflikt, makt og sivilsamfunn",
+            "score": 1.5,
+            "matched_terms": [
+              {
+                "term": "bevegelse",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "valg-partier-velgeratferd",
+            "title": "Valg, partier og velgeratferd",
+            "score": 1.5,
+            "matched_terms": [
+              {
+                "term": "forklare",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "fordeling-velferd-ulikhet",
+            "title": "Fordeling, velferd og ulikhet",
+            "score": 0,
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "forvaltning",
+            "title": "Offentlig forvaltning",
+            "score": 0,
+            "matched_terms": []
+          }
+        ]
+      },
+      "comparison": "correct",
+      "passed": true,
+      "forbidden_chapter_selected": false,
+      "validation_errors": []
+    },
+    {
+      "id": "correction-morgenbladet-media-non-politics",
+      "fixture_path": "docs/fixtures/aha-analysis/02-morgenbladet-mediehistorie.json",
+      "fixture_id": "morgenbladet-mediehistorie-001",
+      "fixture_role": "legacy_exact_baseline",
+      "legacy_analysis": {
+        "content_type": "academic_article",
+        "domain": "institutional_media_history",
+        "theme": "Morgenbladet som idéoffentlig institusjon",
+        "main_tension": "dyptpløyende offentlighet kontra tempoorientert nyhetslogikk",
+        "confidence": {
+          "contentType": 0.92,
+          "domain": 0.93,
+          "theme": 0.9,
+          "mainTension": 0.86,
+          "historyGoLinks": 0.84
+        }
+      },
+      "human_review": {
+        "expected_politics_status": "unsupported",
+        "expected_chapter_id": null,
+        "source_evidence": [
+          "idédebatt",
+          "kulturkritikk",
+          "medielandskapet"
+        ],
+        "supported_concepts": [],
+        "forbidden_chapter_ids": [
+          "parlamentarisme",
+          "konflikt-makt-sivilsamfunn"
+        ],
+        "unsupported_interpretations": [
+          "Offentlighet og debatt alene dokumenterer ikke parlamentarisme, representasjon eller sivilsamfunnskonflikt."
+        ],
+        "required_uncertainty": [
+          "Mediehistorisk offentlighet må holdes atskilt fra politiske institusjoner når teksten ikke omtaler dem."
+        ]
+      },
+      "policy_grounding": {
+        "status": "grounded",
+        "selected_chapter_id": "parlamentarisme",
+        "top_score": 7.275,
+        "second_score": 5.525,
+        "ranking": [
+          {
+            "chapter_id": "parlamentarisme",
+            "title": "Parlamentarisme, representasjon og offentlighet",
+            "score": 7.275,
+            "matched_terms": [
+              {
+                "term": "debatt",
+                "group": "title_terms",
+                "base_weight": 5,
+                "multiplier": 1,
+                "contribution": 5
+              },
+              {
+                "term": "offentlighet",
+                "group": "title_terms",
+                "base_weight": 5,
+                "multiplier": 0.35,
+                "contribution": 1.75
+              },
+              {
+                "term": "arena",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 0.35,
+                "contribution": 0.525
+              }
+            ]
+          },
+          {
+            "chapter_id": "konflikt-makt-sivilsamfunn",
+            "title": "Konflikt, makt og sivilsamfunn",
+            "score": 5.525,
+            "matched_terms": [
+              {
+                "term": "over",
+                "group": "title_terms",
+                "base_weight": 5,
+                "multiplier": 1,
+                "contribution": 5
+              },
+              {
+                "term": "arena",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 0.35,
+                "contribution": 0.525
+              }
+            ]
+          },
+          {
+            "chapter_id": "norsk-politikk-eos-eu-flernivastyring",
+            "title": "Norsk politikk, EØS/EU og flernivåstyring",
+            "score": 5,
+            "matched_terms": [
+              {
+                "term": "norsk",
+                "group": "title_terms",
+                "base_weight": 5,
+                "multiplier": 1,
+                "contribution": 5
+              }
+            ]
+          },
+          {
+            "chapter_id": "forvaltning",
+            "title": "Offentlig forvaltning",
+            "score": 2.55,
+            "matched_terms": [
+              {
+                "term": "tid",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              },
+              {
+                "term": "offentlighet",
+                "group": "concept_terms",
+                "base_weight": 3,
+                "multiplier": 0.35,
+                "contribution": 1.05
+              }
+            ]
+          },
+          {
+            "chapter_id": "fordeling-velferd-ulikhet",
+            "title": "Fordeling, velferd og ulikhet",
+            "score": 0,
+            "matched_terms": []
+          }
+        ]
+      },
+      "comparison": "false_positive",
+      "passed": false,
+      "forbidden_chapter_selected": true,
+      "validation_errors": []
+    },
+    {
+      "id": "correction-nav-reform-forvaltning",
+      "fixture_path": "docs/fixtures/aha-analysis/03-nav-reformen-forvaltning.json",
+      "fixture_id": "nav-reform-forvaltning-001",
+      "fixture_role": "legacy_exact_baseline",
+      "legacy_analysis": {
+        "content_type": "academic_article",
+        "domain": "public_administration_reform",
+        "theme": "samordning og styring i NAV-reformen",
+        "main_tension": "politisk mål om helhet versus organisatorisk kompleksitet",
+        "confidence": {
+          "contentType": 0.94,
+          "domain": 0.95,
+          "theme": 0.91,
+          "mainTension": 0.89,
+          "historyGoLinks": 0.88
+        }
+      },
+      "human_review": {
+        "expected_politics_status": "grounded",
+        "expected_chapter_id": "forvaltning",
+        "source_evidence": [
+          "velferdsforvaltningen",
+          "etatskulturer",
+          "uklare ansvarsforhold"
+        ],
+        "supported_concepts": [
+          "samordning",
+          "organisatorisk ansvar",
+          "velferdsforvaltning"
+        ],
+        "forbidden_chapter_ids": [
+          "offentlig-politikk-beslutning-implementering"
+        ],
+        "unsupported_interpretations": [
+          "Teksten dokumenterer ikke primært dagsordensetting eller policy feedback; den beskriver organisering, styring og ansvar."
+        ],
+        "required_uncertainty": [
+          "Teksten sier ikke hvilke konkrete styringslinjer som sviktet eller hvilke evalueringsfunn som beviser effekten."
+        ]
+      },
+      "policy_grounding": {
+        "status": "unsupported",
+        "selected_chapter_id": null,
+        "top_score": 3,
+        "second_score": 0,
+        "ranking": [
+          {
+            "chapter_id": "offentlig-politikk-beslutning-implementering",
+            "title": "Offentlig politikk, beslutning og implementering",
+            "score": 3,
+            "matched_terms": [
+              {
+                "term": "samordning",
+                "group": "concept_terms",
+                "base_weight": 3,
+                "multiplier": 1,
+                "contribution": 3
+              }
+            ]
+          },
+          {
+            "chapter_id": "fordeling-velferd-ulikhet",
+            "title": "Fordeling, velferd og ulikhet",
+            "score": 0,
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "forvaltning",
+            "title": "Offentlig forvaltning",
+            "score": 0,
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "internasjonal-politikk-sikkerhet-samarbeid",
+            "title": "Internasjonal politikk, sikkerhet og samarbeid",
+            "score": 0,
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "konflikt-makt-sivilsamfunn",
+            "title": "Konflikt, makt og sivilsamfunn",
+            "score": 0,
+            "matched_terms": []
+          }
+        ]
+      },
+      "comparison": "false_negative",
+      "passed": false,
+      "forbidden_chapter_selected": false,
+      "validation_errors": []
+    },
+    {
+      "id": "correction-diary-non-politics",
+      "fixture_path": "docs/fixtures/aha-analysis/05-dagbok-refleksjon.json",
+      "fixture_id": "dagbok-refleksjon-001",
+      "fixture_role": "legacy_exact_baseline",
+      "legacy_analysis": {
+        "content_type": "day_log",
+        "domain": "generic_academic",
+        "theme": "indre konflikt mellom produktivitet og nærvær",
+        "main_tension": "mestringsfølelse kontra emosjonell distanse",
+        "confidence": {
+          "contentType": 0.93,
+          "domain": 0.82,
+          "theme": 0.88,
+          "mainTension": 0.86,
+          "historyGoLinks": 0.05
+        }
+      },
+      "human_review": {
+        "expected_politics_status": "unsupported",
+        "expected_chapter_id": null,
+        "source_evidence": [
+          "motivert og urolig",
+          "ikke var til stede",
+          "vanskelige valg"
+        ],
+        "supported_concepts": [],
+        "forbidden_chapter_ids": [
+          "normer-identitet-hverdagsliv",
+          "konflikt-makt-sivilsamfunn"
+        ],
+        "unsupported_interpretations": [
+          "Personlig uro og valg er ikke i seg selv belegg for politiske normer, identitet eller konflikt."
+        ],
+        "required_uncertainty": [
+          "AHA skal avstå fra politisk kategorisering og klinisk diagnose."
+        ]
+      },
+      "policy_grounding": {
+        "status": "unsupported",
+        "selected_chapter_id": null,
+        "top_score": 1.5,
+        "second_score": 1.5,
+        "ranking": [
+          {
+            "chapter_id": "internasjonal-politikk-sikkerhet-samarbeid",
+            "title": "Internasjonal politikk, sikkerhet og samarbeid",
+            "score": 1.5,
+            "matched_terms": [
+              {
+                "term": "var",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "normer-identitet-hverdagsliv",
+            "title": "Normer, identitet og hverdagsliv",
+            "score": 1.5,
+            "matched_terms": [
+              {
+                "term": "arbeid",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "fordeling-velferd-ulikhet",
+            "title": "Fordeling, velferd og ulikhet",
+            "score": 0,
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "forvaltning",
+            "title": "Offentlig forvaltning",
+            "score": 0,
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "konflikt-makt-sivilsamfunn",
+            "title": "Konflikt, makt og sivilsamfunn",
+            "score": 0,
+            "matched_terms": []
+          }
+        ]
+      },
+      "comparison": "correct",
+      "passed": true,
+      "forbidden_chapter_selected": false,
+      "validation_errors": []
+    },
+    {
+      "id": "correction-legal-rights",
+      "fixture_path": "docs/fixtures/aha-analysis/07-juridisk-tekst.json",
+      "fixture_id": "juridisk-tekst-001",
+      "fixture_role": "legacy_exact_baseline",
+      "legacy_analysis": {
+        "content_type": "academic_article",
+        "domain": "generic_academic",
+        "theme": "forholdsmessighet som rettslig avveiningsnorm",
+        "main_tension": "offentlig myndighetsutøvelse kontra individvern",
+        "confidence": {
+          "contentType": 0.93,
+          "domain": 0.94,
+          "theme": 0.89,
+          "mainTension": 0.9,
+          "historyGoLinks": 0.18
+        }
+      },
+      "human_review": {
+        "expected_politics_status": "grounded",
+        "expected_chapter_id": "rett-lov-rettssikkerhet",
+        "source_evidence": [
+          "hjemmel i lov",
+          "legitimt formål",
+          "forholdsmessig",
+          "individets rettigheter"
+        ],
+        "supported_concepts": [
+          "inngrepshjemmel",
+          "forholdsmessighet",
+          "individvern"
+        ],
+        "forbidden_chapter_ids": [
+          "offentlig-politikk-beslutning-implementering",
+          "forvaltning"
+        ],
+        "unsupported_interpretations": [
+          "Ordet tiltak gjør ikke teksten til policy-design; kjernen er rettslig prøving av inngrep."
+        ],
+        "required_uncertainty": [
+          "Teksten oppgir ikke rettskilde, domstol eller konkret hjemmel og kan derfor ikke avgjøre gyldighet i en bestemt sak."
+        ]
+      },
+      "policy_grounding": {
+        "status": "unsupported",
+        "selected_chapter_id": null,
+        "top_score": 5,
+        "second_score": 3.25,
+        "ranking": [
+          {
+            "chapter_id": "offentlig-politikk-beslutning-implementering",
+            "title": "Offentlig politikk, beslutning og implementering",
+            "score": 5,
+            "matched_terms": [
+              {
+                "term": "tiltak",
+                "group": "title_terms",
+                "base_weight": 5,
+                "multiplier": 1,
+                "contribution": 5
+              }
+            ]
+          },
+          {
+            "chapter_id": "rett-lov-rettssikkerhet",
+            "title": "Rett, lov og rettssikkerhet",
+            "score": 3.25,
+            "matched_terms": [
+              {
+                "term": "lov",
+                "group": "title_terms",
+                "base_weight": 5,
+                "multiplier": 0.35,
+                "contribution": 1.75
+              },
+              {
+                "term": "formål",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "fordeling-velferd-ulikhet",
+            "title": "Fordeling, velferd og ulikhet",
+            "score": 3,
+            "matched_terms": [
+              {
+                "term": "resultat",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              },
+              {
+                "term": "vurdering",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "internasjonal-politikk-sikkerhet-samarbeid",
+            "title": "Internasjonal politikk, sikkerhet og samarbeid",
+            "score": 1.5,
+            "matched_terms": [
+              {
+                "term": "mot",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "politisk-okonomi-stat-marked",
+            "title": "Politisk økonomi, stat og marked",
+            "score": 1.5,
+            "matched_terms": [
+              {
+                "term": "samlet",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          }
+        ]
+      },
+      "comparison": "false_negative",
+      "passed": false,
+      "forbidden_chapter_selected": false,
+      "validation_errors": []
+    },
+    {
+      "id": "correction-unclear-non-politics",
+      "fixture_path": "docs/fixtures/aha-analysis/08-uklar-lav-confidence.json",
+      "fixture_id": "uklar-tekst-001",
+      "fixture_role": "legacy_exact_baseline",
+      "legacy_analysis": {
+        "content_type": "general",
+        "domain": "generic_academic",
+        "theme": "usikker årsaksforståelse",
+        "main_tension": "behov for forklaring kontra manglende spesifisitet",
+        "confidence": {
+          "contentType": 0.38,
+          "domain": 0.22,
+          "theme": 0.41,
+          "mainTension": 0.35,
+          "historyGoLinks": 0.03
+        }
+      },
+      "human_review": {
+        "expected_politics_status": "unsupported",
+        "expected_chapter_id": null,
+        "source_evidence": [
+          "vanskelig å si",
+          "systemet",
+          "personene"
+        ],
+        "supported_concepts": [],
+        "forbidden_chapter_ids": [
+          "regimer-og-institusjoner",
+          "forvaltning",
+          "konflikt-makt-sivilsamfunn"
+        ],
+        "unsupported_interpretations": [
+          "Ordene system og personer gir ikke belegg for politiske institusjoner, forvaltning eller konflikt."
+        ],
+        "required_uncertainty": [
+          "Kontekst, aktører, hendelse og konsekvens mangler; analysen skal avstå."
+        ]
+      },
+      "policy_grounding": {
+        "status": "unsupported",
+        "selected_chapter_id": null,
+        "top_score": 1.5,
+        "second_score": 0,
+        "ranking": [
+          {
+            "chapter_id": "politisk-okonomi-stat-marked",
+            "title": "Politisk økonomi, stat og marked",
+            "score": 1.5,
+            "matched_terms": [
+              {
+                "term": "virker",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "fordeling-velferd-ulikhet",
+            "title": "Fordeling, velferd og ulikhet",
+            "score": 0,
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "forvaltning",
+            "title": "Offentlig forvaltning",
+            "score": 0,
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "internasjonal-politikk-sikkerhet-samarbeid",
+            "title": "Internasjonal politikk, sikkerhet og samarbeid",
+            "score": 0,
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "konflikt-makt-sivilsamfunn",
+            "title": "Konflikt, makt og sivilsamfunn",
+            "score": 0,
+            "matched_terms": []
+          }
+        ]
+      },
+      "comparison": "correct",
+      "passed": true,
+      "forbidden_chapter_selected": false,
+      "validation_errors": []
+    },
+    {
+      "id": "correction-morgenbladet-public-sphere-non-politics",
+      "fixture_path": "docs/fixtures/aha-analysis/09-morgenbladet-offentlighet-kulturkritikk.json",
+      "fixture_id": "morgenbladet-offentlighet-002",
+      "fixture_role": "qualitative_target_fixture",
+      "legacy_analysis": {
+        "content_type": "academic_article",
+        "domain": "institutional_media_history",
+        "theme": "Morgenbladet som arena for langsom idéoffentlighet",
+        "main_tension": "demokratisk offentlig samtale kontra smal dannelsesoffentlighet",
+        "confidence": {
+          "contentType": 0.93,
+          "domain": 0.94,
+          "theme": 0.91,
+          "mainTension": 0.87,
+          "historyGoLinks": 0.86
+        }
+      },
+      "human_review": {
+        "expected_politics_status": "unsupported",
+        "expected_chapter_id": null,
+        "source_evidence": [
+          "kulturkritikk",
+          "langsom journalistikk",
+          "dannelsesoffentlighet"
+        ],
+        "supported_concepts": [],
+        "forbidden_chapter_ids": [
+          "parlamentarisme",
+          "konflikt-makt-sivilsamfunn"
+        ],
+        "unsupported_interpretations": [
+          "Demokratisk samtale og offentlighet er ikke tilstrekkelig belegg for parlamentarisme uten regjering, Storting, representasjon eller kontroll."
+        ],
+        "required_uncertainty": [
+          "Teksten kan kobles til medie- og offentlighetsteori, men Politikk-kapittel skal avstå."
+        ]
+      },
+      "policy_grounding": {
+        "status": "grounded",
+        "selected_chapter_id": "parlamentarisme",
+        "top_score": 6.75,
+        "second_score": 5,
+        "ranking": [
+          {
+            "chapter_id": "parlamentarisme",
+            "title": "Parlamentarisme, representasjon og offentlighet",
+            "score": 6.75,
+            "matched_terms": [
+              {
+                "term": "debatt",
+                "group": "title_terms",
+                "base_weight": 5,
+                "multiplier": 1,
+                "contribution": 5
+              },
+              {
+                "term": "offentlighet",
+                "group": "title_terms",
+                "base_weight": 5,
+                "multiplier": 0.35,
+                "contribution": 1.75
+              }
+            ]
+          },
+          {
+            "chapter_id": "konflikt-makt-sivilsamfunn",
+            "title": "Konflikt, makt og sivilsamfunn",
+            "score": 5,
+            "matched_terms": [
+              {
+                "term": "over",
+                "group": "title_terms",
+                "base_weight": 5,
+                "multiplier": 1,
+                "contribution": 5
+              }
+            ]
+          },
+          {
+            "chapter_id": "norsk-politikk-eos-eu-flernivastyring",
+            "title": "Norsk politikk, EØS/EU og flernivåstyring",
+            "score": 5,
+            "matched_terms": [
+              {
+                "term": "norsk",
+                "group": "title_terms",
+                "base_weight": 5,
+                "multiplier": 1,
+                "contribution": 5
+              }
+            ]
+          },
+          {
+            "chapter_id": "forvaltning",
+            "title": "Offentlig forvaltning",
+            "score": 3.6,
+            "matched_terms": [
+              {
+                "term": "tid",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              },
+              {
+                "term": "institusjon",
+                "group": "concept_terms",
+                "base_weight": 3,
+                "multiplier": 0.35,
+                "contribution": 1.05
+              },
+              {
+                "term": "offentlighet",
+                "group": "concept_terms",
+                "base_weight": 3,
+                "multiplier": 0.35,
+                "contribution": 1.05
+              }
+            ]
+          },
+          {
+            "chapter_id": "politisk-okonomi-stat-marked",
+            "title": "Politisk økonomi, stat og marked",
+            "score": 1.05,
+            "matched_terms": [
+              {
+                "term": "institusjon",
+                "group": "concept_terms",
+                "base_weight": 3,
+                "multiplier": 0.35,
+                "contribution": 1.05
+              }
+            ]
+          }
+        ]
+      },
+      "comparison": "false_positive",
+      "passed": false,
+      "forbidden_chapter_selected": true,
+      "validation_errors": []
+    },
+    {
+      "id": "correction-nav-user-meeting-forvaltning",
+      "fixture_path": "docs/fixtures/aha-analysis/10-nav-reformen-brukermoete.json",
+      "fixture_id": "nav-reform-brukermoete-002",
+      "fixture_role": "qualitative_target_fixture",
+      "legacy_analysis": {
+        "content_type": "academic_article",
+        "domain": "public_administration_reform",
+        "theme": "NAV-reformen mellom samordningsideal og brukernær kompleksitet",
+        "main_tension": "helhetlig velferdsforvaltning kontra praktisk byråkratisk kompleksitet",
+        "confidence": {
+          "contentType": 0.94,
+          "domain": 0.95,
+          "theme": 0.91,
+          "mainTension": 0.9,
+          "historyGoLinks": 0.89
+        }
+      },
+      "human_review": {
+        "expected_politics_status": "grounded",
+        "expected_chapter_id": "forvaltning",
+        "source_evidence": [
+          "ett kontaktpunkt",
+          "styringslinjer",
+          "uklart ansvar"
+        ],
+        "supported_concepts": [
+          "brukermøte",
+          "styringslinje",
+          "byråkratisk kompleksitet"
+        ],
+        "forbidden_chapter_ids": [
+          "offentlig-politikk-beslutning-implementering"
+        ],
+        "unsupported_interpretations": [
+          "Teksten analyserer først og fremst hvordan organisasjon og ansvar møter brukeren, ikke en generell policyprosess."
+        ],
+        "required_uncertainty": [
+          "Brukeropplevd effekt kan ikke generaliseres uten konkrete kontor- eller evalueringsdata."
+        ]
+      },
+      "policy_grounding": {
+        "status": "unsupported",
+        "selected_chapter_id": null,
+        "top_score": 3,
+        "second_score": 1.5,
+        "ranking": [
+          {
+            "chapter_id": "offentlig-politikk-beslutning-implementering",
+            "title": "Offentlig politikk, beslutning og implementering",
+            "score": 3,
+            "matched_terms": [
+              {
+                "term": "samordning",
+                "group": "concept_terms",
+                "base_weight": 3,
+                "multiplier": 1,
+                "contribution": 3
+              }
+            ]
+          },
+          {
+            "chapter_id": "internasjonal-politikk-sikkerhet-samarbeid",
+            "title": "Internasjonal politikk, sikkerhet og samarbeid",
+            "score": 1.5,
+            "matched_terms": [
+              {
+                "term": "mot",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "politisk-okonomi-stat-marked",
+            "title": "Politisk økonomi, stat og marked",
+            "score": 1.5,
+            "matched_terms": [
+              {
+                "term": "støtte",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "regimer-og-institusjoner",
+            "title": "Regimer og institusjoner",
+            "score": 1.5,
+            "matched_terms": [
+              {
+                "term": "systemer",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "fordeling-velferd-ulikhet",
+            "title": "Fordeling, velferd og ulikhet",
+            "score": 0,
+            "matched_terms": []
+          }
+        ]
+      },
+      "comparison": "false_negative",
+      "passed": false,
+      "forbidden_chapter_selected": false,
+      "validation_errors": []
+    }
+  ]
+}
