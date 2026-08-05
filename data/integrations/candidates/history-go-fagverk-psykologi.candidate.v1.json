@@ -1,0 +1,93 @@
+{
+  "schema": "aha_history_go_fagverk_package_candidate_v1",
+  "version": "1.0.0",
+  "candidate_kind": "package_inventory",
+  "lifecycle_stage": "imported_review_candidate",
+  "status": "generated_package_review_candidate",
+  "source_repo": "Paradispartiet/History-Go",
+  "source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
+  "release_sha256": "21cec482d0bde5423cef0bd836dc2b6b8fa4445226bd2ab8df1b44eaefccd627",
+  "subject_id": "psykologi",
+  "title": "psykologi",
+  "kind": "subject",
+  "parent_subject_id": null,
+  "schema_family": "standard_canonical",
+  "package_status": "complete",
+  "chapter_status": "not_materialized",
+  "package_file_count": 7,
+  "existing_package_file_count": 7,
+  "required_package_file_count": 4,
+  "optional_package_file_count": 3,
+  "referenced_file_count": 7,
+  "package_content_sha256": "e0efdc0d258fa2fa5cfe3784849c3e175640b48a0c2fbf3f5c2e0d2dad414ba3",
+  "structure_sha256": "090af8f6add45be6d7baf341f4248ea62f7a1305c9e52983ccbf458527f30432",
+  "content_sha256": "e0efdc0d258fa2fa5cfe3784849c3e175640b48a0c2fbf3f5c2e0d2dad414ba3",
+  "package_files": [
+    {
+      "path": "data/fag/psykologi/emner_psykologi_canonical_v4_5.json",
+      "required": true,
+      "fields": [
+        "emner"
+      ],
+      "exists": true,
+      "content_sha256": "3b5cc741ee0c65b27d68a42f5fc4926dbec31a9e48a5afebb5cf222c6b3b391b"
+    },
+    {
+      "path": "data/fag/psykologi/fagkart_psykologi_canonical_v4_5.json",
+      "required": true,
+      "fields": [
+        "fagkart"
+      ],
+      "exists": true,
+      "content_sha256": "009a2be8c48196cd445b2b6f65592bc24aec2a86864b0cd9dd91185b7f9bff0c"
+    },
+    {
+      "path": "data/fag/psykologi/methods_psykologi_canonical_v4_5.json",
+      "required": true,
+      "fields": [
+        "methods"
+      ],
+      "exists": true,
+      "content_sha256": "6578e8f46de12cb17d6009474f9d1597c219887a8c066cabef14fe5d98856570"
+    },
+    {
+      "path": "data/fag/psykologi/psykologipensum_canonical_v4_5.json",
+      "required": true,
+      "fields": [
+        "pensum"
+      ],
+      "exists": true,
+      "content_sha256": "a0c9f74e7f28e0a5070011fbe516d3564f53ef658e7ffe00c83dc5f5e59acc64"
+    },
+    {
+      "path": "data/fag/psykologi/supersetQUIZMAL_psykologi.json",
+      "required": false,
+      "fields": [
+        "supersetQuizMal"
+      ],
+      "exists": true,
+      "content_sha256": "5069ef81afdcffcbdd1c6160aa4d89c0b29927cbf200c85de084337cd0985816"
+    },
+    {
+      "path": "data/quiz/regler/QUIZ_PRODUCTION_CANONICAL.md",
+      "required": false,
+      "fields": [
+        "quizStandard"
+      ],
+      "exists": true,
+      "content_sha256": "98b23395fb461f7a7cf4920774551902060facc20d9013e5fe4d3e8327aceb33"
+    },
+    {
+      "path": "data/quiz/regler/QUIZ_QUESTION_SCHEMA_V2.json",
+      "required": false,
+      "fields": [
+        "quizQuestionSchema"
+      ],
+      "exists": true,
+      "content_sha256": "f16c375238d416b175a744c9f0e36b621cd3b0a92686f30a111a15b72c836c46"
+    }
+  ],
+  "optional_gaps": [],
+  "approval_required": true,
+  "runtime_activation_allowed": false
+}

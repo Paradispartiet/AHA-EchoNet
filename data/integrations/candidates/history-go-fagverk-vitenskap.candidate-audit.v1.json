@@ -1,0 +1,34 @@
+{
+  "schema": "aha_history_go_fagverk_package_candidate_audit_v1",
+  "version": "1.0.0",
+  "candidate_kind": "package_inventory",
+  "lifecycle_stage": "imported_review_candidate_audit",
+  "source_repo": "Paradispartiet/History-Go",
+  "source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
+  "release_sha256": "21cec482d0bde5423cef0bd836dc2b6b8fa4445226bd2ab8df1b44eaefccd627",
+  "subject_id": "vitenskap",
+  "package_status": "complete",
+  "chapter_status": "not_materialized",
+  "coverage": {
+    "declared_package_files": 7,
+    "expected_existing_package_files": 7,
+    "materialized_existing_package_files": 7,
+    "required_package_files": 4,
+    "optional_package_files": 3,
+    "optional_gaps": [],
+    "missing_required_files": [],
+    "missing_chapter_files": []
+  },
+  "digests": {
+    "package_content_sha256": "a7557c6a3ef61cb4808af3b802cde6704cb58a7c60b40f903c117cd0ce6eb8c9",
+    "structure_sha256": "a8862d834e23e8c3c1f0d8759acb0d3f3886c8cc40a08e90b4801b18f58eb651",
+    "content_sha256": "a7557c6a3ef61cb4808af3b802cde6704cb58a7c60b40f903c117cd0ce6eb8c9"
+  },
+  "activation_recommendation": "subject_specific_review_gates_required_before_runtime_activation",
+  "approval_required": true,
+  "runtime_activation_allowed": false,
+  "gate": {
+    "passed": true,
+    "errors": []
+  }
+}

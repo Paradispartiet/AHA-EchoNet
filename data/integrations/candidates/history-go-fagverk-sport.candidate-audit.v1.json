@@ -1,0 +1,36 @@
+{
+  "schema": "aha_history_go_fagverk_package_candidate_audit_v1",
+  "version": "1.0.0",
+  "candidate_kind": "package_inventory",
+  "lifecycle_stage": "imported_review_candidate_audit",
+  "source_repo": "Paradispartiet/History-Go",
+  "source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
+  "release_sha256": "21cec482d0bde5423cef0bd836dc2b6b8fa4445226bd2ab8df1b44eaefccd627",
+  "subject_id": "sport",
+  "package_status": "complete_with_optional_gaps",
+  "chapter_status": "not_materialized",
+  "coverage": {
+    "declared_package_files": 10,
+    "expected_existing_package_files": 9,
+    "materialized_existing_package_files": 9,
+    "required_package_files": 4,
+    "optional_package_files": 6,
+    "optional_gaps": [
+      "README/KNOWLEDGE_MEMORY_CHAMBER.md"
+    ],
+    "missing_required_files": [],
+    "missing_chapter_files": []
+  },
+  "digests": {
+    "package_content_sha256": "005c7f738725a8e4ed148aacb3d85728402c66c61fd48a9d5c125ce527ea5adf",
+    "structure_sha256": "77c00355a4eca39aba31d4572659daf25cc97bebc47aed7d5a0e3877efa516f4",
+    "content_sha256": "005c7f738725a8e4ed148aacb3d85728402c66c61fd48a9d5c125ce527ea5adf"
+  },
+  "activation_recommendation": "subject_specific_review_gates_required_before_runtime_activation",
+  "approval_required": true,
+  "runtime_activation_allowed": false,
+  "gate": {
+    "passed": true,
+    "errors": []
+  }
+}

@@ -1,0 +1,129 @@
+{
+  "schema": "aha_history_go_fagverk_package_candidate_v1",
+  "version": "1.0.0",
+  "candidate_kind": "package_inventory",
+  "lifecycle_stage": "imported_review_candidate",
+  "status": "generated_package_review_candidate",
+  "source_repo": "Paradispartiet/History-Go",
+  "source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
+  "release_sha256": "21cec482d0bde5423cef0bd836dc2b6b8fa4445226bd2ab8df1b44eaefccd627",
+  "subject_id": "teknologi",
+  "title": "Teknologi",
+  "kind": "specialization",
+  "parent_subject_id": "vitenskap",
+  "schema_family": "technology_scientific_v2_4",
+  "package_status": "complete",
+  "chapter_status": "not_materialized",
+  "package_file_count": 11,
+  "existing_package_file_count": 11,
+  "required_package_file_count": 4,
+  "optional_package_file_count": 7,
+  "referenced_file_count": 11,
+  "package_content_sha256": "dab54cdd92b96b659f103d03db727d6b826b003ad49c6bd97cbcb190a708aa60",
+  "structure_sha256": "03816d9c7cadcb0d215b83d964d0c62b79886676aafdc0e3b822d20c53be14b4",
+  "content_sha256": "dab54cdd92b96b659f103d03db727d6b826b003ad49c6bd97cbcb190a708aa60",
+  "package_files": [
+    {
+      "path": "data/fag/teknologi/emner_teknologi_canonical_v2_4.json",
+      "required": true,
+      "fields": [
+        "emner"
+      ],
+      "exists": true,
+      "content_sha256": "f7ce69abaeaf37d0e185eced4586eedd3d537245d105d89cb933f5b7a4dcb117"
+    },
+    {
+      "path": "data/fag/teknologi/fagkart_teknologi_canonical_v2_4.json",
+      "required": true,
+      "fields": [
+        "fagkart"
+      ],
+      "exists": true,
+      "content_sha256": "2e700d85cb6595214197460df7154ef098e71a8d78f98d815aeba22b16b155db"
+    },
+    {
+      "path": "data/fag/teknologi/methods_teknologi_canonical_v2_4.json",
+      "required": true,
+      "fields": [
+        "methods"
+      ],
+      "exists": true,
+      "content_sha256": "e2f888c8959453716b7e6a5b4fad3f17ec2c4ad74d1415a3cd933f3b48dcb562"
+    },
+    {
+      "path": "data/fag/teknologi/supersetQUIZMAL_teknologi.json",
+      "required": false,
+      "fields": [
+        "supersetQuizMal"
+      ],
+      "exists": true,
+      "content_sha256": "47762ce5ef542660042107b37a39c8179b60e6507f87d10b74341440c147320c"
+    },
+    {
+      "path": "data/fag/teknologi/teknologi_scientific_v2/index.json",
+      "required": false,
+      "fields": [
+        "scientificPackage"
+      ],
+      "exists": true,
+      "content_sha256": "9f16241ef5cbafc270e29c1e8809d80710cee8b07e17abc12461a146cd240650"
+    },
+    {
+      "path": "data/fag/teknologi/teknologipensum_canonical_v2_4.json",
+      "required": true,
+      "fields": [
+        "pensum"
+      ],
+      "exists": true,
+      "content_sha256": "05e7aa4eff09b0b755375be08bd04b9cb32f34ccab01aef3a096d271d44615f1"
+    },
+    {
+      "path": "data/quiz/regler/QUIZ_PACKAGE_SCHEMA_V1.json",
+      "required": false,
+      "fields": [
+        "quizPackageSchema"
+      ],
+      "exists": true,
+      "content_sha256": "3a01fb4177c9cf81df823d3bacdb24b1a37b2bdbfd45dade8aa18f4d0e5ec8d6"
+    },
+    {
+      "path": "data/quiz/regler/QUIZ_PRODUCTION_CANONICAL.md",
+      "required": false,
+      "fields": [
+        "quizStandard"
+      ],
+      "exists": true,
+      "content_sha256": "98b23395fb461f7a7cf4920774551902060facc20d9013e5fe4d3e8327aceb33"
+    },
+    {
+      "path": "data/quiz/regler/QUIZ_QUESTION_SCHEMA_V2.json",
+      "required": false,
+      "fields": [
+        "quizQuestionSchema"
+      ],
+      "exists": true,
+      "content_sha256": "f16c375238d416b175a744c9f0e36b621cd3b0a92686f30a111a15b72c836c46"
+    },
+    {
+      "path": "data/quiz/regler/QUIZ_SUBJECT_PATHWAY_PACKAGE_SCHEMA_V1.json",
+      "required": false,
+      "fields": [
+        "subjectPathwaySchema"
+      ],
+      "exists": true,
+      "content_sha256": "f19ed931d5a47c3969551cf58d9895049a399aff71dc397a3ea63ac76e31d2c5"
+    },
+    {
+      "path": "data/quiz/teknologi/teknologi_subject_pathways_v1.json",
+      "required": false,
+      "fields": [
+        "subjectPathwayPackage"
+      ],
+      "exists": true,
+      "content_sha256": "553e8d34ff7c20975b24d7999cee871e81b21c8d1bcc839f630b8797d5ade6a7"
+    }
+  ],
+  "optional_gaps": [],
+  "approval_required": true,
+  "runtime_activation_allowed": false
+}

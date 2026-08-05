@@ -2,7 +2,7 @@
   "schema": "aha_fagverk_corpus_audit_v1",
   "version": "1.0.0",
   "source_repo": "Paradispartiet/History-Go",
-  "source_ref": "db005a95f2f310aff1ec55c806b9f4c34bcc6156",
+  "source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
   "registry_version": "2.19.0",
   "registry_updated_at": "2026-08-04",
   "subject_filter": [
@@ -3905,5 +3905,8 @@
   "gate": {
     "passed": true,
     "errors": []
-  }
+  },
+  "lifecycle_stage": "imported_review_candidate_audit",
+  "approval_required": true,
+  "runtime_activation_allowed": false
 }

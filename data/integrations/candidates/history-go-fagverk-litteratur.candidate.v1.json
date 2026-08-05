@@ -1,0 +1,93 @@
+{
+  "schema": "aha_history_go_fagverk_package_candidate_v1",
+  "version": "1.0.0",
+  "candidate_kind": "package_inventory",
+  "lifecycle_stage": "imported_review_candidate",
+  "status": "generated_package_review_candidate",
+  "source_repo": "Paradispartiet/History-Go",
+  "source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
+  "release_sha256": "21cec482d0bde5423cef0bd836dc2b6b8fa4445226bd2ab8df1b44eaefccd627",
+  "subject_id": "litteratur",
+  "title": "litteratur",
+  "kind": "subject",
+  "parent_subject_id": null,
+  "schema_family": "standard_canonical",
+  "package_status": "complete",
+  "chapter_status": "not_materialized",
+  "package_file_count": 7,
+  "existing_package_file_count": 7,
+  "required_package_file_count": 4,
+  "optional_package_file_count": 3,
+  "referenced_file_count": 7,
+  "package_content_sha256": "c54e6519861f41c645c18a2288805afba2b6689a7cd53acb815e3f9616e64fe1",
+  "structure_sha256": "8f866476dbe201b9612e1f7919be60a8f4bbe5f648dadfa1f673aa89ef6c0d18",
+  "content_sha256": "c54e6519861f41c645c18a2288805afba2b6689a7cd53acb815e3f9616e64fe1",
+  "package_files": [
+    {
+      "path": "data/fag/litteratur/emner_litteratur_canonical_v4_5.json",
+      "required": true,
+      "fields": [
+        "emner"
+      ],
+      "exists": true,
+      "content_sha256": "d108509e92db95d25690fc7dbfa0e8d6d74bf193d6cd45d1179f2374de7c3f85"
+    },
+    {
+      "path": "data/fag/litteratur/fagkart_litteratur_canonical_v4_5.json",
+      "required": true,
+      "fields": [
+        "fagkart"
+      ],
+      "exists": true,
+      "content_sha256": "b5e547049912c38e34b1ed91209de29b385f0bc9265cbe4aa830b517363679e3"
+    },
+    {
+      "path": "data/fag/litteratur/litteraturpensum_canonical_v4_5.json",
+      "required": true,
+      "fields": [
+        "pensum"
+      ],
+      "exists": true,
+      "content_sha256": "9089ab6530e88e67b122843528209fbf4f8d712dda97d80f8534f1a130a85d6f"
+    },
+    {
+      "path": "data/fag/litteratur/methods_litteratur_canonical_v4_5.json",
+      "required": true,
+      "fields": [
+        "methods"
+      ],
+      "exists": true,
+      "content_sha256": "e9f57ff2c9e4a03fdb084b1132806565af483348b22a0aaa95affb4e98cac300"
+    },
+    {
+      "path": "data/fag/litteratur/supersetQUIZMAL_litteratur.json",
+      "required": false,
+      "fields": [
+        "supersetQuizMal"
+      ],
+      "exists": true,
+      "content_sha256": "6f02fcd363bbacd3b16ff26ac23229798ad07a574f173ba112e13b532085c6b0"
+    },
+    {
+      "path": "data/quiz/regler/QUIZ_PRODUCTION_CANONICAL.md",
+      "required": false,
+      "fields": [
+        "quizStandard"
+      ],
+      "exists": true,
+      "content_sha256": "98b23395fb461f7a7cf4920774551902060facc20d9013e5fe4d3e8327aceb33"
+    },
+    {
+      "path": "data/quiz/regler/QUIZ_QUESTION_SCHEMA_V2.json",
+      "required": false,
+      "fields": [
+        "quizQuestionSchema"
+      ],
+      "exists": true,
+      "content_sha256": "f16c375238d416b175a744c9f0e36b621cd3b0a92686f30a111a15b72c836c46"
+    }
+  ],
+  "optional_gaps": [],
+  "approval_required": true,
+  "runtime_activation_allowed": false
+}

@@ -1,0 +1,34 @@
+{
+  "schema": "aha_history_go_fagverk_package_candidate_audit_v1",
+  "version": "1.0.0",
+  "candidate_kind": "package_inventory",
+  "lifecycle_stage": "imported_review_candidate_audit",
+  "source_repo": "Paradispartiet/History-Go",
+  "source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
+  "release_sha256": "21cec482d0bde5423cef0bd836dc2b6b8fa4445226bd2ab8df1b44eaefccd627",
+  "subject_id": "by",
+  "package_status": "complete",
+  "chapter_status": "not_materialized",
+  "coverage": {
+    "declared_package_files": 12,
+    "expected_existing_package_files": 12,
+    "materialized_existing_package_files": 12,
+    "required_package_files": 4,
+    "optional_package_files": 8,
+    "optional_gaps": [],
+    "missing_required_files": [],
+    "missing_chapter_files": []
+  },
+  "digests": {
+    "package_content_sha256": "e28f80e3cf54d5908b8af0ee6061ca45d72dbbe81443d592ce7bf87603a022e0",
+    "structure_sha256": "3ea96832ef3fb3444a829b0c302bde487fd5e6b672f5e29bbbacb7e7f9a01d95",
+    "content_sha256": "e28f80e3cf54d5908b8af0ee6061ca45d72dbbe81443d592ce7bf87603a022e0"
+  },
+  "activation_recommendation": "subject_specific_review_gates_required_before_runtime_activation",
+  "approval_required": true,
+  "runtime_activation_allowed": false,
+  "gate": {
+    "passed": true,
+    "errors": []
+  }
+}
