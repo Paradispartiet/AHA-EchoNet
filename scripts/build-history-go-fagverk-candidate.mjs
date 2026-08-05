@@ -60,6 +60,23 @@ function verifySubject(subjectId, subject) {
   return errors;
 }
 
+export function applyReviewBoundary(candidate, audit) {
+  return {
+    candidate: {
+      ...candidate,
+      lifecycle_stage: candidate.lifecycle_stage || "imported_review_candidate",
+      approval_required: true,
+      runtime_activation_allowed: false
+    },
+    audit: {
+      ...audit,
+      lifecycle_stage: audit.lifecycle_stage || "imported_review_candidate_audit",
+      approval_required: true,
+      runtime_activation_allowed: false
+    }
+  };
+}
+
 export function buildPackageCandidate({ release, subjectId, sourceRef }) {
   if (release.schema !== "history_go_fagverk_release_v2") throw new Error(`Unexpected producer release schema: ${release.schema}`);
   const subject = release.subjects?.[subjectId];
@@ -166,6 +183,12 @@ function buildChapterCandidate(args, subject) {
   ];
   const result = spawnSync(process.execPath, command, { stdio: "inherit" });
   if (result.status !== 0) throw new Error(`${args.subject}: chapter candidate builder failed with exit code ${result.status}.`);
+
+  const outputPath = path.resolve(args.output);
+  const auditOutputPath = path.resolve(args.auditOutput);
+  const bounded = applyReviewBoundary(readJson(outputPath), readJson(auditOutputPath));
+  writeJson(outputPath, bounded.candidate);
+  writeJson(auditOutputPath, bounded.audit);
 }
 
 function main() {
