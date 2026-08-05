@@ -125,8 +125,9 @@ assert.equal(activeHistory.source_commit, "c16a187453d16a40f9cab4ca694c32e96014f
 assert.equal(activeHistory.chapter_count, 23);
 assert.equal(activeHistory.corpus_path, "data/integrations/runtime/history-go-fagverk-historie.corpus.v1.json");
 assert.equal(activeHistory.policy_path, "data/integrations/runtime/history-go-fagverk-historie.policy.v1.json");
+assert.equal(runtime.active_subjects?.natur?.chapter_count, 11);
 assert.equal(runtime.full_release_active, false);
-assert.equal(runtime.effective_entry_count, 37);
+assert.equal(runtime.effective_entry_count, 47);
 
 const matrixDigest = crypto.createHash("sha256").update(fs.readFileSync(paths.matrix)).digest("hex");
 assert.match(matrixDigest, /^[0-9a-f]{64}$/);
