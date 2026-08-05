@@ -1,138 +1,25 @@
 {
   "schema": "aha_politics_fixture_correction_report_v1",
   "version": "1.1.0",
-  "status": "correction_required",
+  "status": "passed_correction_gate",
   "runtime_activation_allowed": false,
   "source_ref": "9e9644e83998ff715005bf80c96cde6193107c13",
   "corpus_sha256": "981ab3ad25f972bd13c70a0247f26b8796e43b8cd3cde7282b7d073bfcc79dec",
-  "policy_version": "1.1.0",
+  "policy_version": "1.2.0",
   "correction_version": "1.1.0",
   "summary": {
     "total": 16,
-    "passed": 15,
-    "failed": 1,
+    "passed": 16,
+    "failed": 0,
     "exact_legacy_baselines": 8,
     "qualitative_targets": 8,
     "comparisons": {
-      "correct": 15,
-      "false_positive": 1
+      "correct": 16
     },
     "validation_errors": 0
   },
   "validation_errors": [],
-  "failures": [
-    {
-      "id": "correction-literary-attachment-non-politics",
-      "fixture_path": "docs/fixtures/aha-analysis/04-litteraer-tilknytningsteori.json",
-      "fixture_id": "litteraer-tilknytning-001",
-      "fixture_role": "legacy_exact_baseline",
-      "legacy_analysis": {
-        "content_type": "academic_article",
-        "domain": "literary_attachment",
-        "theme": "tilknytningsteori som tolkningsramme i romananalyse",
-        "main_tension": "estetisk fortelling kontra psykologisk begrepsbruk",
-        "confidence": {
-          "contentType": 0.9,
-          "domain": 0.87,
-          "theme": 0.9,
-          "mainTension": 0.83,
-          "historyGoLinks": 0.12
-        }
-      },
-      "human_review": {
-        "expected_politics_status": "unsupported",
-        "expected_chapter_id": null,
-        "source_evidence": [
-          "nærhetssøking",
-          "ambivalent tilknytning",
-          "klinisk språk"
-        ],
-        "supported_concepts": [],
-        "forbidden_chapter_ids": [
-          "normer-identitet-hverdagsliv",
-          "konflikt-makt-sivilsamfunn"
-        ],
-        "unsupported_interpretations": [
-          "Relasjon, konflikt og ambivalens i en roman er ikke belegg for politiske normer, identitet eller samfunnskonflikt."
-        ],
-        "required_uncertainty": [
-          "AHA skal skille litterær karaktertolkning fra både politisk kategorisering og klinisk diagnose."
-        ]
-      },
-      "policy_grounding": {
-        "status": "grounded",
-        "selected_chapter_id": "konflikt-makt-sivilsamfunn",
-        "top_score": 6.5,
-        "second_score": 0,
-        "ranking": [
-          {
-            "chapter_id": "konflikt-makt-sivilsamfunn",
-            "title": "Konflikt, makt og sivilsamfunn",
-            "score": 6.5,
-            "eligible": true,
-            "eligibility_reason": "eligible",
-            "matched_anchor_terms": [],
-            "matched_terms": [
-              {
-                "term": "konflikt",
-                "group": "title_terms",
-                "base_weight": 5,
-                "multiplier": 1,
-                "contribution": 5
-              },
-              {
-                "term": "språk",
-                "group": "support_terms",
-                "base_weight": 1.5,
-                "multiplier": 1,
-                "contribution": 1.5
-              }
-            ]
-          },
-          {
-            "chapter_id": "fordeling-velferd-ulikhet",
-            "title": "Fordeling, velferd og ulikhet",
-            "score": 0,
-            "eligible": true,
-            "eligibility_reason": "eligible",
-            "matched_anchor_terms": [],
-            "matched_terms": []
-          },
-          {
-            "chapter_id": "forvaltning",
-            "title": "Offentlig forvaltning",
-            "score": 0,
-            "eligible": true,
-            "eligibility_reason": "eligible",
-            "matched_anchor_terms": [],
-            "matched_terms": []
-          },
-          {
-            "chapter_id": "internasjonal-politikk-sikkerhet-samarbeid",
-            "title": "Internasjonal politikk, sikkerhet og samarbeid",
-            "score": 0,
-            "eligible": true,
-            "eligibility_reason": "eligible",
-            "matched_anchor_terms": [],
-            "matched_terms": []
-          },
-          {
-            "chapter_id": "normer-identitet-hverdagsliv",
-            "title": "Normer, identitet og hverdagsliv",
-            "score": 0,
-            "eligible": true,
-            "eligibility_reason": "eligible",
-            "matched_anchor_terms": [],
-            "matched_terms": []
-          }
-        ]
-      },
-      "comparison": "false_positive",
-      "passed": false,
-      "forbidden_chapter_selected": true,
-      "validation_errors": []
-    }
-  ],
+  "failures": [],
   "cases": [
     {
       "id": "correction-pinse-non-politics",
@@ -176,25 +63,8 @@
         "status": "unsupported",
         "selected_chapter_id": null,
         "top_score": 1.5,
-        "second_score": 1.5,
+        "second_score": 0,
         "ranking": [
-          {
-            "chapter_id": "konflikt-makt-sivilsamfunn",
-            "title": "Konflikt, makt og sivilsamfunn",
-            "score": 1.5,
-            "eligible": true,
-            "eligibility_reason": "eligible",
-            "matched_anchor_terms": [],
-            "matched_terms": [
-              {
-                "term": "bevegelse",
-                "group": "support_terms",
-                "base_weight": 1.5,
-                "multiplier": 1,
-                "contribution": 1.5
-              }
-            ]
-          },
           {
             "chapter_id": "valg-partier-velgeratferd",
             "title": "Valg, partier og velgeratferd",
@@ -205,6 +75,23 @@
             "matched_terms": [
               {
                 "term": "forklare",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "konflikt-makt-sivilsamfunn",
+            "title": "Konflikt, makt og sivilsamfunn",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_required_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "bevegelse",
                 "group": "support_terms",
                 "base_weight": 1.5,
                 "multiplier": 1,
@@ -288,7 +175,7 @@
         "status": "unsupported",
         "selected_chapter_id": null,
         "top_score": 1.05,
-        "second_score": 0.525,
+        "second_score": 0,
         "ranking": [
           {
             "chapter_id": "parlamentarisme",
@@ -342,8 +229,8 @@
             "chapter_id": "konflikt-makt-sivilsamfunn",
             "title": "Konflikt, makt og sivilsamfunn",
             "score": 0.525,
-            "eligible": true,
-            "eligibility_reason": "eligible",
+            "eligible": false,
+            "eligibility_reason": "missing_required_anchor",
             "matched_anchor_terms": [],
             "matched_terms": [
               {
@@ -501,8 +388,8 @@
             "matched_terms": []
           },
           {
-            "chapter_id": "konflikt-makt-sivilsamfunn",
-            "title": "Konflikt, makt og sivilsamfunn",
+            "chapter_id": "normer-identitet-hverdagsliv",
+            "title": "Normer, identitet og hverdagsliv",
             "score": 0,
             "eligible": true,
             "eligibility_reason": "eligible",
@@ -555,17 +442,17 @@
         ]
       },
       "policy_grounding": {
-        "status": "grounded",
-        "selected_chapter_id": "konflikt-makt-sivilsamfunn",
-        "top_score": 6.5,
+        "status": "unsupported",
+        "selected_chapter_id": null,
+        "top_score": 0,
         "second_score": 0,
         "ranking": [
           {
             "chapter_id": "konflikt-makt-sivilsamfunn",
             "title": "Konflikt, makt og sivilsamfunn",
             "score": 6.5,
-            "eligible": true,
-            "eligibility_reason": "eligible",
+            "eligible": false,
+            "eligibility_reason": "missing_required_anchor",
             "matched_anchor_terms": [],
             "matched_terms": [
               {
@@ -622,9 +509,9 @@
           }
         ]
       },
-      "comparison": "false_positive",
-      "passed": false,
-      "forbidden_chapter_selected": true,
+      "comparison": "correct",
+      "passed": true,
+      "forbidden_chapter_selected": false,
       "validation_errors": []
     },
     {
@@ -716,8 +603,8 @@
             "matched_terms": []
           },
           {
-            "chapter_id": "konflikt-makt-sivilsamfunn",
-            "title": "Konflikt, makt og sivilsamfunn",
+            "chapter_id": "norsk-politikk-eos-eu-flernivastyring",
+            "title": "Norsk politikk, EØS/EU og flernivåstyring",
             "score": 0,
             "eligible": true,
             "eligibility_reason": "eligible",
@@ -820,8 +707,8 @@
             "matched_terms": []
           },
           {
-            "chapter_id": "konflikt-makt-sivilsamfunn",
-            "title": "Konflikt, makt og sivilsamfunn",
+            "chapter_id": "normer-identitet-hverdagsliv",
+            "title": "Normer, identitet og hverdagsliv",
             "score": 0,
             "eligible": true,
             "eligibility_reason": "eligible",
@@ -1122,8 +1009,8 @@
             "matched_terms": []
           },
           {
-            "chapter_id": "konflikt-makt-sivilsamfunn",
-            "title": "Konflikt, makt og sivilsamfunn",
+            "chapter_id": "normer-identitet-hverdagsliv",
+            "title": "Normer, identitet og hverdagsliv",
             "score": 0,
             "eligible": true,
             "eligibility_reason": "eligible",
@@ -1607,25 +1494,8 @@
         "status": "unsupported",
         "selected_chapter_id": null,
         "top_score": 1.5,
-        "second_score": 1.5,
+        "second_score": 0,
         "ranking": [
-          {
-            "chapter_id": "konflikt-makt-sivilsamfunn",
-            "title": "Konflikt, makt og sivilsamfunn",
-            "score": 1.5,
-            "eligible": true,
-            "eligibility_reason": "eligible",
-            "matched_anchor_terms": [],
-            "matched_terms": [
-              {
-                "term": "bevegelse",
-                "group": "support_terms",
-                "base_weight": 1.5,
-                "multiplier": 1,
-                "contribution": 1.5
-              }
-            ]
-          },
           {
             "chapter_id": "norsk-politikk-eos-eu-flernivastyring",
             "title": "Norsk politikk, EØS/EU og flernivåstyring",
@@ -1636,6 +1506,23 @@
             "matched_terms": [
               {
                 "term": "enn",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "konflikt-makt-sivilsamfunn",
+            "title": "Konflikt, makt og sivilsamfunn",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_required_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "bevegelse",
                 "group": "support_terms",
                 "base_weight": 1.5,
                 "multiplier": 1,
@@ -1757,8 +1644,8 @@
             ]
           },
           {
-            "chapter_id": "konflikt-makt-sivilsamfunn",
-            "title": "Konflikt, makt og sivilsamfunn",
+            "chapter_id": "normer-identitet-hverdagsliv",
+            "title": "Normer, identitet og hverdagsliv",
             "score": 0.525,
             "eligible": true,
             "eligibility_reason": "eligible",
@@ -1774,11 +1661,11 @@
             ]
           },
           {
-            "chapter_id": "normer-identitet-hverdagsliv",
-            "title": "Normer, identitet og hverdagsliv",
+            "chapter_id": "konflikt-makt-sivilsamfunn",
+            "title": "Konflikt, makt og sivilsamfunn",
             "score": 0.525,
-            "eligible": true,
-            "eligibility_reason": "eligible",
+            "eligible": false,
+            "eligibility_reason": "missing_required_anchor",
             "matched_anchor_terms": [],
             "matched_terms": [
               {
@@ -1896,8 +1783,8 @@
             "chapter_id": "konflikt-makt-sivilsamfunn",
             "title": "Konflikt, makt og sivilsamfunn",
             "score": 0.525,
-            "eligible": true,
-            "eligibility_reason": "eligible",
+            "eligible": false,
+            "eligibility_reason": "missing_required_anchor",
             "matched_anchor_terms": [],
             "matched_terms": [
               {

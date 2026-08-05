@@ -1,7 +1,7 @@
 {
   "schema": "aha_politics_fagverk_term_policy_v1",
-  "version": "1.1.0",
-  "status": "review_policy_correction_candidate_not_runtime_active",
+  "version": "1.2.0",
+  "status": "review_policy_full_fixture_candidate_not_runtime_active",
   "source_repo": "Paradispartiet/History-Go",
   "source_ref": "9e9644e83998ff715005bf80c96cde6193107c13",
   "corpus_sha256": "981ab3ad25f972bd13c70a0247f26b8796e43b8cd3cde7282b7d073bfcc79dec",
@@ -156,6 +156,23 @@
         "politisk ansvar",
         "regjeringsansvar",
         "kontroll"
+      ],
+      "supplemental_evidence_terms": []
+    },
+    "konflikt-makt-sivilsamfunn": {
+      "required_anchor_terms": [
+        "protest",
+        "sivilsamfunn",
+        "handlingsrepertoar",
+        "dagsordenmakt",
+        "motoffentlighet",
+        "kollektiv handling",
+        "sosial bevegelse",
+        "sosiale bevegelser",
+        "demonstrasjon",
+        "streik",
+        "mobilisering",
+        "organisering"
       ],
       "supplemental_evidence_terms": []
     },
@@ -4923,7 +4940,20 @@
         "arbeidskamp"
       ],
       "chapter_rule": {
-        "required_anchor_terms": [],
+        "required_anchor_terms": [
+          "protest",
+          "sivilsamfunn",
+          "handlingsrepertoar",
+          "dagsordenmakt",
+          "motoffentlighet",
+          "kollektiv handling",
+          "sosial bevegelse",
+          "sosiale bevegelser",
+          "demonstrasjon",
+          "streik",
+          "mobilisering",
+          "organisering"
+        ],
         "supplemental_evidence_terms": []
       }
     },
