@@ -1,0 +1,796 @@
+{
+  "schema": "aha_fagverk_corpus_audit_v1",
+  "version": "1.0.0",
+  "source_repo": "Paradispartiet/History-Go",
+  "source_ref": "9e9644e83998ff715005bf80c96cde6193107c13",
+  "registry_version": "2.19.0",
+  "registry_updated_at": "2026-08-04",
+  "subject_filter": [
+    "politikk"
+  ],
+  "coverage": {
+    "expected": 13,
+    "registered": 13,
+    "materialized": 13,
+    "missing": [],
+    "unexpected": [],
+    "duplicate_chapter_ids": []
+  },
+  "chapters": [
+    {
+      "subject_id": "politikk",
+      "chapter_id": "fordeling-velferd-ulikhet",
+      "title": "Fordeling, velferd og ulikhet",
+      "source_path": "data/fagverk/politikk/fordeling-velferd-ulikhet.json",
+      "title_term_count": 13,
+      "concept_term_count": 26,
+      "support_term_count": 0
+    },
+    {
+      "subject_id": "politikk",
+      "chapter_id": "forvaltning",
+      "title": "Offentlig forvaltning",
+      "source_path": "data/fagverk/politikk/forvaltning.json",
+      "title_term_count": 10,
+      "concept_term_count": 30,
+      "support_term_count": 0
+    },
+    {
+      "subject_id": "politikk",
+      "chapter_id": "internasjonal-politikk-sikkerhet-samarbeid",
+      "title": "Internasjonal politikk, sikkerhet og samarbeid",
+      "source_path": "data/fagverk/politikk/internasjonal-politikk-sikkerhet-samarbeid.json",
+      "title_term_count": 15,
+      "concept_term_count": 22,
+      "support_term_count": 2
+    },
+    {
+      "subject_id": "politikk",
+      "chapter_id": "konflikt-makt-sivilsamfunn",
+      "title": "Konflikt, makt og sivilsamfunn",
+      "source_path": "data/fagverk/politikk/konflikt-makt-sivilsamfunn.json",
+      "title_term_count": 17,
+      "concept_term_count": 28,
+      "support_term_count": 0
+    },
+    {
+      "subject_id": "politikk",
+      "chapter_id": "normer-identitet-hverdagsliv",
+      "title": "Normer, identitet og hverdagsliv",
+      "source_path": "data/fagverk/politikk/normer-identitet-hverdagsliv.json",
+      "title_term_count": 15,
+      "concept_term_count": 27,
+      "support_term_count": 1
+    },
+    {
+      "subject_id": "politikk",
+      "chapter_id": "norsk-politikk-eos-eu-flernivastyring",
+      "title": "Norsk politikk, EØS/EU og flernivåstyring",
+      "source_path": "data/fagverk/politikk/norsk-politikk-eos-eu-flernivastyring.json",
+      "title_term_count": 17,
+      "concept_term_count": 30,
+      "support_term_count": 3
+    },
+    {
+      "subject_id": "politikk",
+      "chapter_id": "offentlig-politikk-beslutning-implementering",
+      "title": "Offentlig politikk, beslutning og implementering",
+      "source_path": "data/fagverk/politikk/offentlig-politikk-beslutning-implementering.json",
+      "title_term_count": 14,
+      "concept_term_count": 19,
+      "support_term_count": 1
+    },
+    {
+      "subject_id": "politikk",
+      "chapter_id": "parlamentarisme",
+      "title": "Parlamentarisme, representasjon og offentlighet",
+      "source_path": "data/fagverk/politikk/parlamentarisme.json",
+      "title_term_count": 11,
+      "concept_term_count": 31,
+      "support_term_count": 0
+    },
+    {
+      "subject_id": "politikk",
+      "chapter_id": "politisk-okonomi-stat-marked",
+      "title": "Politisk økonomi, stat og marked",
+      "source_path": "data/fagverk/politikk/politisk-okonomi-stat-marked.json",
+      "title_term_count": 15,
+      "concept_term_count": 21,
+      "support_term_count": 0
+    },
+    {
+      "subject_id": "politikk",
+      "chapter_id": "regimer-og-institusjoner",
+      "title": "Regimer og institusjoner",
+      "source_path": "data/fagverk/politikk/regimer-og-institusjoner.json",
+      "title_term_count": 11,
+      "concept_term_count": 27,
+      "support_term_count": 0
+    },
+    {
+      "subject_id": "politikk",
+      "chapter_id": "rett-lov-rettssikkerhet",
+      "title": "Rett, lov og rettssikkerhet",
+      "source_path": "data/fagverk/politikk/rett-lov-rettssikkerhet.json",
+      "title_term_count": 13,
+      "concept_term_count": 27,
+      "support_term_count": 0
+    },
+    {
+      "subject_id": "politikk",
+      "chapter_id": "statsvitenskapelig-metode-og-sammenligning",
+      "title": "Statsvitenskapelig metode og sammenligning",
+      "source_path": "data/fagverk/politikk/statsvitenskapelig-metode-og-sammenligning.json",
+      "title_term_count": 12,
+      "concept_term_count": 23,
+      "support_term_count": 0
+    },
+    {
+      "subject_id": "politikk",
+      "chapter_id": "valg-partier-velgeratferd",
+      "title": "Valg, partier og velgeratferd",
+      "source_path": "data/fagverk/politikk/valg-partier-velgeratferd.json",
+      "title_term_count": 10,
+      "concept_term_count": 22,
+      "support_term_count": 0
+    }
+  ],
+  "term_collision_summary": {
+    "total": 19,
+    "high_risk": 7,
+    "medium_risk": 12,
+    "low_risk": 0
+  },
+  "high_risk_terms": [
+    {
+      "term": "former",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "konflikt-makt-sivilsamfunn",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "normer-identitet-hverdagsliv",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "politisk-okonomi-stat-marked",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "regimer-og-institusjoner",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "institusjoner",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "fordeling-velferd-ulikhet",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-politikk-sikkerhet-samarbeid",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "politisk-okonomi-stat-marked",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "regimer-og-institusjoner",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "regler",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "fordeling-velferd-ulikhet",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "normer-identitet-hverdagsliv",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "regimer-og-institusjoner",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "rett-lov-rettssikkerhet",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "offentlig",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "forvaltning",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "offentlig-politikk-beslutning-implementering",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rett-lov-rettssikkerhet",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "politikk",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "internasjonal-politikk-sikkerhet-samarbeid",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "norsk-politikk-eos-eu-flernivastyring",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "offentlig-politikk-beslutning-implementering",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "politisk",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "konflikt-makt-sivilsamfunn",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "politisk-okonomi-stat-marked",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "valg-partier-velgeratferd",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "ressurser",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "fordeling-velferd-ulikhet",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "forvaltning",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "konflikt-makt-sivilsamfunn",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    }
+  ],
+  "term_collisions": [
+    {
+      "term": "former",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "konflikt-makt-sivilsamfunn",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "normer-identitet-hverdagsliv",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "politisk-okonomi-stat-marked",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "regimer-og-institusjoner",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "institusjoner",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "fordeling-velferd-ulikhet",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-politikk-sikkerhet-samarbeid",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "politisk-okonomi-stat-marked",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "regimer-og-institusjoner",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "regler",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "fordeling-velferd-ulikhet",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "normer-identitet-hverdagsliv",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "regimer-og-institusjoner",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "rett-lov-rettssikkerhet",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "offentlig",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "forvaltning",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "offentlig-politikk-beslutning-implementering",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rett-lov-rettssikkerhet",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "politikk",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "internasjonal-politikk-sikkerhet-samarbeid",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "norsk-politikk-eos-eu-flernivastyring",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "offentlig-politikk-beslutning-implementering",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "politisk",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "konflikt-makt-sivilsamfunn",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "politisk-okonomi-stat-marked",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "valg-partier-velgeratferd",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "ressurser",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "fordeling-velferd-ulikhet",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "forvaltning",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "konflikt-makt-sivilsamfunn",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "ansvar",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "norsk-politikk-eos-eu-flernivastyring",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "valg-partier-velgeratferd",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "demokratisk",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "konflikt-makt-sivilsamfunn",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "parlamentarisme",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "dokumenter",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "forvaltning",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "norsk-politikk-eos-eu-flernivastyring",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "fordeling",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "fordeling-velferd-ulikhet",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "politisk-okonomi-stat-marked",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "kontroll",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "konflikt-makt-sivilsamfunn",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "parlamentarisme",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "makt",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "konflikt-makt-sivilsamfunn",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "rett-lov-rettssikkerhet",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "myndighet",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "forvaltning",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "parlamentarisme",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "organisering",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "konflikt-makt-sivilsamfunn",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "parlamentarisme",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "politiske",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "regimer-og-institusjoner",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "statsvitenskapelig-metode-og-sammenligning",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "problemer",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "internasjonal-politikk-sikkerhet-samarbeid",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "offentlig-politikk-beslutning-implementering",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "stemmer",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "parlamentarisme",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "valg-partier-velgeratferd",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "tjenester",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "fordeling-velferd-ulikhet",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "normer-identitet-hverdagsliv",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    }
+  ],
+  "activation_recommendation": "review_required_before_runtime_activation",
+  "gate": {
+    "passed": true,
+    "errors": []
+  }
+}
