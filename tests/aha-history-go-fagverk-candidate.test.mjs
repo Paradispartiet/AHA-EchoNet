@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { buildPackageCandidate } from "../scripts/build-history-go-fagverk-candidate.mjs";
+import { applyReviewBoundary, buildPackageCandidate } from "../scripts/build-history-go-fagverk-candidate.mjs";
 
 function producerSubject({ optionalGap = false } = {}) {
   const files = [
@@ -47,6 +47,29 @@ function release(subject) {
     subjects: { sport: subject }
   };
 }
+
+test("applies the explicit review boundary to chapter candidates and audits", () => {
+  const originalCandidate = {
+    schema: "aha_history_go_fagverk_corpus_v1",
+    status: "generated_subject_audit_corpus"
+  };
+  const originalAudit = {
+    schema: "aha_fagverk_corpus_audit_v1",
+    gate: { passed: true, errors: [] }
+  };
+  const { candidate, audit } = applyReviewBoundary(originalCandidate, originalAudit);
+
+  assert.equal(candidate.lifecycle_stage, "imported_review_candidate");
+  assert.equal(candidate.approval_required, true);
+  assert.equal(candidate.runtime_activation_allowed, false);
+  assert.equal(candidate.status, originalCandidate.status);
+  assert.equal(audit.lifecycle_stage, "imported_review_candidate_audit");
+  assert.equal(audit.approval_required, true);
+  assert.equal(audit.runtime_activation_allowed, false);
+  assert.equal(audit.gate.passed, true);
+  assert.equal(originalCandidate.runtime_activation_allowed, undefined);
+  assert.equal(originalAudit.runtime_activation_allowed, undefined);
+});
 
 test("builds a package inventory candidate without inventing chapters", () => {
   const { candidate, audit } = buildPackageCandidate({
