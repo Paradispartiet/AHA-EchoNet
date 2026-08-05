@@ -27,6 +27,7 @@ function makeFixture() {
       primary_domain_id: `politics_domain_${index}`,
       emne_ids: ['em_pol_makt_institusjoner', `em_pol_specific_${index}`]
     });
+    const modulePath = `data/fagverk/politikk/${chapterId}/01-grunnlag.json`;
     writeJson(path.join(root, sourcePath), {
       schema: 'history_go_fagverk_chapter_v1',
       id: chapterId,
@@ -34,7 +35,25 @@ function makeFixture() {
       subtitle: `Makt, institusjon og ansvar ${index}`,
       lead: `Makt og institusjon former ansvar. Særbegrep${index} forklarer ansvar og institusjon i dette kapittelet.`,
       learningObjectives: [`forklare særbegrep ${index} og ansvar`],
-      diagnosticQuestions: [{ question: `Hva er særbegrep ${index}?`, answer: `Et avgrenset politisk begrep ${index}.` }]
+      diagnosticQuestions: [{ question: `Hva er særbegrep ${index}?`, answer: `Et avgrenset politisk begrep ${index}.` }],
+      moduleFiles: [modulePath]
+    });
+    writeJson(path.join(root, modulePath), {
+      sections: [{
+        id: `section-${index}`,
+        title: `Modulspesifikk analyse ${index}`,
+        paragraphs: [
+          `Modulterm${index} forklarer et avgrenset forhold. Modulterm${index} må brukes med dokumentert kontekst.`,
+          `Institusjon og ansvar kobles til modulterm${index}, men et generelt ord er ikke nok.`
+        ],
+        paragraphClaimIds: [[`claim-${index}`], [`claim-${index}`]],
+        keyPoints: [`Modulterm${index} krever kapittelspesifikt belegg.`]
+      }],
+      concepts: [{
+        id: `module-concept-${index}`,
+        term: `Modulbegrep ${index}`,
+        definition: `Et faglig begrep som bare hører til modul ${index}.`
+      }]
     });
   }
   writeJson(path.join(root, 'data/fagverk/natur/nature.json'), {
@@ -91,6 +110,10 @@ assert.equal(corpus.entries.every((entry) => entry.subject_id === 'politikk'), t
 assert.equal(new Set(corpus.entries.map((entry) => entry.chapter_id)).size, 13);
 assert.equal(corpus.entries.every((entry) => entry.source_path.startsWith('data/fagverk/politikk/')), true);
 assert.equal(corpus.entries.every((entry) => entry.provenance.source_kind === 'canonical_fagverk_chapter'), true);
+assert.equal(corpus.entries.every((entry) => entry.provenance.module_file_count === 1), true, 'registered module files must be loaded');
+assert.equal(corpus.entries.every((entry) => entry.module_source_paths.length === 1), true);
+assert.equal(corpus.entries.every((entry) => entry.support_terms.length > 0), true, 'module paragraphs must contribute support terms');
+assert.ok(corpus.entries[0].concept_terms.some((term) => /modulbegrep/.test(term)), 'module concepts must contribute concept terms');
 assert.match(corpus.source_ref, /^[0-9a-f]{40}$/);
 
 assert.equal(audit.schema, 'aha_fagverk_corpus_audit_v1');
@@ -104,6 +127,8 @@ assert.deepEqual(audit.coverage, {
   duplicate_chapter_ids: []
 });
 assert.equal(audit.chapters.length, 13);
+assert.equal(audit.chapters.every((chapter) => chapter.module_file_count === 1), true);
+assert.equal(audit.chapters.every((chapter) => chapter.support_term_count > 0), true);
 assert.ok(audit.term_collision_summary.high_risk > 0, 'shared single-token terms must be visible');
 assert.ok(audit.high_risk_terms.some((item) => item.term === 'makt'));
 assert.equal(audit.activation_recommendation, 'review_required_before_runtime_activation');
