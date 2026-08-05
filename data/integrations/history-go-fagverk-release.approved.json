@@ -14,10 +14,24 @@
       "politikk"
     ],
     "overridden_subject_ids": [
+      "historie",
       "politikk"
     ]
   },
   "approved_subjects": {
+    "historie": {
+      "subject_id": "historie",
+      "source_commit": "c16a187453d16a40f9cab4ca694c32e96014f31b",
+      "subject_approval_path": "data/integrations/approvals/history-go-fagverk-historie.approved.v1.json",
+      "corpus_path": "data/integrations/runtime/history-go-fagverk-historie.corpus.v1.json",
+      "corpus_sha256": "e5123cb96d9b89c83aad56efc327c1089bfe5f887f29322d39a4a936c9f19444",
+      "corpus_artifact_sha256": "8385299e8bde2a3cba01979aa8de20df219bc0e839d98d131fc49c4e2d7fd9ed",
+      "policy_path": "data/integrations/runtime/history-go-fagverk-historie.policy.v1.json",
+      "policy_artifact_sha256": "3b011a889eff7eef41c013ee94c458454ee2957e2c85a3d83d20f5adb589205a",
+      "chapter_count": 23,
+      "scoring_mode": "subject_policy_v1",
+      "approval_status": "runtime_subject_approved"
+    },
     "politikk": {
       "subject_id": "politikk",
       "source_commit": "c16a187453d16a40f9cab4ca694c32e96014f31b",
@@ -40,5 +54,5 @@
     "approval_does_not_activate_unregistered_subjects": true,
     "explicit_activation_pull_request_required": true
   },
-  "artifact_sha256": "f58ce460f4dfa4fbf0eda0bf4abcc54beb2ebb66fd58c8b960db052559c42d96"
+  "artifact_sha256": "8750415c228886a99d7582cfc232627305e1805ce08cbe34ef413d1ea4feb843"
 }

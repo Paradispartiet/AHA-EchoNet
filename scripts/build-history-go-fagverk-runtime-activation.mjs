@@ -116,6 +116,7 @@ function buildRuntimePolicy(config, approval, candidate, reviewPolicy) {
     default_weights: reviewPolicy.default_weights,
     policy_rules: reviewPolicy.policy_rules,
     global_non_scoring_terms: reviewPolicy.global_non_scoring_terms,
+    ...(reviewPolicy.temporal_gate ? { temporal_gate: reviewPolicy.temporal_gate } : {}),
     chapter_rules: reviewPolicy.chapter_rules,
     terms: reviewPolicy.terms,
     approval_path: config.approval_path,

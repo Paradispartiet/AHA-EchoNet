@@ -141,9 +141,21 @@ def _policy_entry_score(
         contributions.append((term, round(contribution, 3)))
         score += contribution
 
+    temporal_gate = policy.get("temporal_gate") or {}
+    temporal_required = temporal_gate.get("required") is True
+    temporal_terms = [_normalize(term) for term in temporal_gate.get("terms", []) if _normalize(term)]
+    temporal_term_matched = any(_policy_term_present(message, tokens, term) for term in temporal_terms)
+    year_pattern = str(temporal_gate.get("year_pattern") or r"\b(?:1[0-9]{3}|20[0-9]{2})\b")
+    try:
+        temporal_year_matched = bool(re.search(year_pattern, message))
+    except re.error as exc:
+        raise ValueError(f"Invalid runtime Fagverk temporal year pattern: {year_pattern}") from exc
+    temporal_eligible = not temporal_required or temporal_term_matched or temporal_year_matched
+
     required_anchors = [_normalize(term) for term in rule.get("required_anchor_terms", []) if _normalize(term)]
     matched_anchors = [term for term in required_anchors if _policy_term_present(message, tokens, term)]
-    eligible = not required_anchors or bool(matched_anchors)
+    anchor_eligible = not required_anchors or bool(matched_anchors)
+    eligible = temporal_eligible and anchor_eligible
     contributions.sort(key=lambda item: (-item[1], item[0]))
     return round(score, 3), tuple(term for term, _ in contributions), eligible
 
