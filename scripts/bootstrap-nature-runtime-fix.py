@@ -4,6 +4,7 @@ path = Path("tests/aha-fagverk-subject-approvals.test.cjs")
 text = path.read_text(encoding="utf-8")
 replacements = {
     "assert.deepEqual(Object.keys(runtimeActive.active_subjects), ['historie', 'politikk']);": "assert.deepEqual(Object.keys(runtimeActive.active_subjects), ['historie', 'natur', 'politikk']);",
+    "assert.equal(runtimeActive.active_subjects.natur, undefined);": "assert.equal(runtimeActive.active_subjects.natur.subject_id, 'natur');\nassert.equal(runtimeActive.active_subjects.natur.chapter_count, 11);\nassert.equal(runtimeActive.active_subjects.natur.activation_status, 'runtime_subject_active');",
     "assert.equal(runtimeActive.effective_entry_count, 37);": "assert.equal(runtimeActive.effective_entry_count, 47);",
 }
 for old, new in replacements.items():
