@@ -1,0 +1,94 @@
+{
+  "schema": "aha_history_go_fagverk_subject_approval_registry_v1",
+  "version": "1.0.0",
+  "status": "review_gate_registry_not_runtime_input",
+  "subjects": {
+    "politikk": {
+      "subject_id": "politikk",
+      "approval_path": "data/integrations/approvals/history-go-fagverk-politikk.approved.v1.json",
+      "candidate": {
+        "path": "data/integrations/candidates/history-go-fagverk-politikk.candidate.v1.json",
+        "source_ref_field": "source_ref",
+        "digest_field": "content_sha256"
+      },
+      "review_corpus": {
+        "path": "data/integrations/review/history-go-fagverk-politikk.audit.v1.json",
+        "source_ref_field": "source_ref",
+        "digest_field": "content_sha256"
+      },
+      "gates": [
+        {
+          "id": "corpus_audit",
+          "path": "data/integrations/review/history-go-fagverk-politikk.audit-report.v1.json",
+          "status_field": "gate.passed",
+          "expected_status": true,
+          "source_ref_field": "source_ref"
+        },
+        {
+          "id": "release_drift",
+          "path": "data/integrations/review/history-go-fagverk-politikk.release-drift.v1.json",
+          "status_field": "status",
+          "expected_status": "source_rebased_no_semantic_drift",
+          "source_ref_field": "reviewed_source_ref",
+          "digest_field": "reviewed_corpus_sha256",
+          "approval_field": "approval_required",
+          "expected_approval": true,
+          "runtime_field": "runtime_activation_allowed",
+          "expected_runtime": false
+        },
+        {
+          "id": "term_policy",
+          "path": "data/integrations/review/history-go-fagverk-politikk.term-policy.v1.json",
+          "status_field": "status",
+          "expected_status": "review_policy_full_fixture_candidate_not_runtime_active",
+          "source_ref_field": "source_ref",
+          "digest_field": "corpus_sha256",
+          "approval_field": "approval_required",
+          "expected_approval": true,
+          "runtime_field": "runtime_activation_allowed",
+          "expected_runtime": false,
+          "summary_expectations": {
+            "summary.total": 143,
+            "summary.non_scoring": 84,
+            "summary.down_weight": 55,
+            "summary.context_only": 4
+          }
+        },
+        {
+          "id": "evaluation",
+          "path": "data/evaluation/aha-politics-fagverk-evaluation-report.v1.json",
+          "status_field": "status",
+          "expected_status": "passed_review_gate",
+          "source_ref_field": "source_ref",
+          "digest_field": "corpus_sha256",
+          "runtime_field": "runtime_activation_allowed",
+          "expected_runtime": false,
+          "summary_expectations": {
+            "summary.total": 34,
+            "summary.passed": 34,
+            "summary.failed": 0,
+            "summary.chapters_covered": 13,
+            "summary.evidence_errors": 0
+          }
+        },
+        {
+          "id": "fixture_corrections",
+          "path": "data/evaluation/aha-politics-fixture-correction-report.v1.json",
+          "status_field": "status",
+          "expected_status": "passed_correction_gate",
+          "source_ref_field": "source_ref",
+          "digest_field": "corpus_sha256",
+          "runtime_field": "runtime_activation_allowed",
+          "expected_runtime": false,
+          "summary_expectations": {
+            "summary.total": 16,
+            "summary.passed": 16,
+            "summary.failed": 0,
+            "summary.validation_errors": 0
+          }
+        }
+      ]
+    }
+  },
+  "runtime_activation_allowed": false
+}
