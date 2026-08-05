@@ -4,6 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
+import { normalize } from "./lib/politics-fagverk-scoring.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(here, "..");
@@ -20,6 +21,44 @@ const GENERIC_LANGUAGE_TERMS = new Set([
   "men", "mer", "mens", "mekanisme", "mål", "når", "problemer", "samme", "samtidig", "seg",
   "skille", "skiller", "skill", "tid", "tidsrom", "ulike", "uten", "utfall", "viser", "være"
 ]);
+
+const GLOBAL_NON_SCORING_EXTRAS = new Set(["norsk", "over", "saken", "tiltak", "var"]);
+
+const CHAPTER_RULES = Object.freeze({
+  parlamentarisme: {
+    required_anchor_terms: [
+      "mistillit", "parlamentarisme", "stortinget", "regjering", "representasjon", "mandat",
+      "politisk ansvar", "regjeringsansvar", "kontroll"
+    ],
+    supplemental_evidence_terms: []
+  },
+  forvaltning: {
+    required_anchor_terms: [],
+    supplemental_evidence_terms: [
+      { term: "ansvarsforhold", weight: 3 },
+      { term: "byråkratisk kompleksitet", weight: 3 },
+      { term: "etatskultur", weight: 3 },
+      { term: "etatskulturer", weight: 3 },
+      { term: "ett kontaktpunkt", weight: 3 },
+      { term: "brukermøte", weight: 3 },
+      { term: "brukermøtet", weight: 3 },
+      { term: "styringslinjer", weight: 3 },
+      { term: "velferdsforvaltning", weight: 3 },
+      { term: "velferdsforvaltningen", weight: 3 }
+    ]
+  },
+  "rett-lov-rettssikkerhet": {
+    required_anchor_terms: [],
+    supplemental_evidence_terms: [
+      { term: "forholdsmessig", weight: 3 },
+      { term: "hjemmel i lov", weight: 3 },
+      { term: "individets rettigheter", weight: 3 },
+      { term: "legitimt formål", weight: 3 },
+      { term: "mindre inngripende tiltak", weight: 3 },
+      { term: "rettsanvendelsen", weight: 3 }
+    ]
+  }
+});
 
 function parseArgs(argv) {
   const args = { corpus: DEFAULT_CORPUS, audit: DEFAULT_AUDIT, output: DEFAULT_OUTPUT };
@@ -44,10 +83,6 @@ function writeJson(relativePath, value) {
   fs.writeFileSync(outputPath, `${JSON.stringify(value, null, 2)}\n`, "utf8");
 }
 
-function normalize(value) {
-  return String(value ?? "").normalize("NFKC").toLowerCase().replace(/\s+/g, " ").trim();
-}
-
 function eligibleUniqueTerm(term) {
   const value = normalize(term);
   if (!value || value.length > 64 || value.split(" ").length > 4) return false;
@@ -58,15 +93,9 @@ function eligibleUniqueTerm(term) {
 
 function classifyCollision(collision) {
   const term = normalize(collision.term);
-  if (GENERIC_LANGUAGE_TERMS.has(term)) {
-    return { category: "generic_language", action: "non_scoring", multiplier: 0 };
-  }
-  if (collision.risk === "high") {
-    return { category: "subject_wide_or_multi_chapter", action: "non_scoring", multiplier: 0 };
-  }
-  if (collision.risk === "medium") {
-    return { category: "cross_chapter", action: "down_weight", multiplier: 0.35 };
-  }
+  if (GENERIC_LANGUAGE_TERMS.has(term)) return { category: "generic_language", action: "non_scoring", multiplier: 0 };
+  if (collision.risk === "high") return { category: "subject_wide_or_multi_chapter", action: "non_scoring", multiplier: 0 };
+  if (collision.risk === "medium") return { category: "cross_chapter", action: "down_weight", multiplier: 0.35 };
   return { category: "shared_phrase", action: "context_only", multiplier: 0 };
 }
 
@@ -77,6 +106,7 @@ function buildPolicy(corpus, audit) {
   }
   const collisions = audit.term_collisions || [];
   const collisionSet = new Set(collisions.map((item) => normalize(item.term)));
+  const globalNonScoring = new Set([...GENERIC_LANGUAGE_TERMS, ...GLOBAL_NON_SCORING_EXTRAS]);
   const terms = collisions.map((collision) => ({
     term: normalize(collision.term),
     risk: collision.risk,
@@ -88,12 +118,13 @@ function buildPolicy(corpus, audit) {
   const chapters = corpus.entries.map((entry) => {
     const candidates = [...entry.title_terms, ...entry.concept_terms, ...entry.support_terms]
       .map(normalize)
-      .filter((term) => !collisionSet.has(term))
+      .filter((term) => !collisionSet.has(term) && !globalNonScoring.has(term))
       .filter(eligibleUniqueTerm);
     return {
       chapter_id: entry.chapter_id,
       title: entry.title,
-      unique_evidence_terms: [...new Set(candidates)].slice(0, 40)
+      unique_evidence_terms: [...new Set(candidates)].slice(0, 40),
+      chapter_rule: CHAPTER_RULES[entry.chapter_id] || { required_anchor_terms: [], supplemental_evidence_terms: [] }
     };
   });
 
@@ -106,26 +137,25 @@ function buildPolicy(corpus, audit) {
 
   return {
     schema: "aha_politics_fagverk_term_policy_v1",
-    version: "1.0.0",
-    status: "review_policy_not_runtime_active",
+    version: "1.1.0",
+    status: "review_policy_correction_candidate_not_runtime_active",
     source_repo: corpus.source_repo,
     source_ref: corpus.source_ref,
     corpus_sha256: corpus.content_sha256,
     subject_id: "politikk",
     activation_allowed: false,
-    default_weights: {
-      title_term: 5,
-      concept_term: 3,
-      support_term: 1.5,
-      down_weight_multiplier: 0.35
-    },
+    default_weights: { title_term: 5, concept_term: 3, support_term: 1.5, down_weight_multiplier: 0.35 },
     policy_rules: {
       high_risk: "non_scoring",
       medium_risk: "down_weight_unless_generic_language",
       low_risk_shared_phrase: "context_only",
-      generic_language: "non_scoring"
+      generic_language: "non_scoring",
+      chapter_anchor: "required_when_configured",
+      supplemental_evidence: "chapter_scoped_only"
     },
     generic_language_terms: [...GENERIC_LANGUAGE_TERMS].sort((a, b) => a.localeCompare(b, "nb")),
+    global_non_scoring_terms: [...globalNonScoring].sort((a, b) => a.localeCompare(b, "nb")),
+    chapter_rules: CHAPTER_RULES,
     summary,
     terms,
     chapters
@@ -140,7 +170,7 @@ function main() {
   }
   const policy = buildPolicy(readJson(args.corpus), readJson(args.audit));
   writeJson(args.output, policy);
-  console.log(`Wrote Politics term policy: ${policy.summary.total} collisions; ${policy.summary.non_scoring} non-scoring; ${policy.summary.down_weight} down-weighted; ${policy.summary.context_only} context-only.`);
+  console.log(`Wrote Politics term policy ${policy.version}: ${policy.summary.total} collisions; ${policy.global_non_scoring_terms.length} global non-scoring terms.`);
 }
 
 main();
