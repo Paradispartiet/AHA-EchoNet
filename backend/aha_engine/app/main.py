@@ -5,7 +5,7 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.engine.analyzer import analyze_message
+from app.engine.fagverk_grounding import analyze_message_with_fagverk
 from app.schemas import AnalyzeRequest, CanonicalAhaAnalysis
 
 DEFAULT_ALLOWED_ORIGINS = [
@@ -23,7 +23,7 @@ def parse_allowed_origins(value: str | None) -> list[str]:
     return origins or DEFAULT_ALLOWED_ORIGINS.copy()
 
 
-app = FastAPI(title="AHA Engine", version="0.1.0")
+app = FastAPI(title="AHA Engine", version="0.2.0")
 
 allowed_origins = parse_allowed_origins(os.getenv("AHA_ENGINE_ALLOWED_ORIGINS"))
 app.add_middleware(
@@ -42,4 +42,4 @@ def health() -> dict[str, str]:
 
 @app.post("/api/aha/analyze", response_model=CanonicalAhaAnalysis)
 def analyze(request: AnalyzeRequest) -> CanonicalAhaAnalysis:
-    return analyze_message(request)
+    return analyze_message_with_fagverk(request)
