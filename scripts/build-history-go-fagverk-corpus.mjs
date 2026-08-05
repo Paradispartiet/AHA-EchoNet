@@ -64,6 +64,16 @@ function stringsFrom(value) {
   return Object.values(value).flatMap(stringsFrom);
 }
 
+function semanticStrings(value) {
+  if (typeof value === "string") return [value];
+  if (Array.isArray(value)) return value.flatMap(semanticStrings);
+  if (!value || typeof value !== "object") return [];
+  return Object.entries(value).flatMap(([key, nested]) => {
+    if (/^(?:id|.*(?:claim|source|file|url).*|.*ids?)$/i.test(key)) return [];
+    return semanticStrings(nested);
+  });
+}
+
 function readJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, "utf8"));
 }
@@ -73,26 +83,45 @@ function safeGitHead(root) {
   return result.status === 0 ? result.stdout.trim() : "unknown";
 }
 
-function extractChapterEntry(subjectId, registryChapter, chapter, sourcePath) {
+function extractChapterEntry(subjectId, registryChapter, chapter, sourcePath, modules = []) {
   const title = chapter.title || registryChapter.title || registryChapter.id;
   const subtitle = chapter.subtitle || registryChapter.subtitle || "";
   const titleTerms = unique([title, subtitle, ...tokens(title), ...tokens(subtitle)]);
 
-  const concepts = Array.isArray(chapter.concepts) ? chapter.concepts : [];
+  const concepts = [
+    ...(Array.isArray(chapter.concepts) ? chapter.concepts : []),
+    ...modules.flatMap((module) => Array.isArray(module.data?.concepts) ? module.data.concepts : [])
+  ];
   const conceptTerms = unique([
     ...concepts.flatMap((concept) => [concept?.term, concept?.title, concept?.id, concept?.definition]),
     ...(chapter.learningObjectives || []),
     ...(chapter.emne_ids || registryChapter.emne_ids || []).map((id) => String(id).replace(/^em_[^_]+_/, "").replaceAll("_", " ")),
     ...stringsFrom(chapter.diagnosticQuestions || []),
-    ...stringsFrom(chapter.commonMisconceptions || [])
+    ...stringsFrom(chapter.commonMisconceptions || []),
+    ...modules.flatMap((module) => semanticStrings({
+      learningObjectives: module.data?.learningObjectives,
+      diagnosticQuestions: module.data?.diagnosticQuestions,
+      commonMisconceptions: module.data?.commonMisconceptions
+    }))
   ]).filter((term) => term.length <= 120);
 
   const supportText = [
     chapter.lead,
-    ...stringsFrom(chapter.sections || []),
-    ...stringsFrom(chapter.workedExamples || []),
-    ...stringsFrom(chapter.applicationTasks || []),
-    ...stringsFrom(chapter.selfCheck || [])
+    ...semanticStrings({
+      sections: chapter.sections,
+      workedExamples: chapter.workedExamples,
+      applicationTasks: chapter.applicationTasks,
+      selfCheck: chapter.selfCheck
+    }),
+    ...modules.flatMap((module) => semanticStrings({
+      sections: module.data?.sections,
+      workedExamples: module.data?.workedExamples,
+      applicationTasks: module.data?.applicationTasks,
+      selfCheck: module.data?.selfCheck,
+      caseStudies: module.data?.caseStudies,
+      examples: module.data?.examples,
+      methods: module.data?.methods
+    }))
   ].filter(Boolean).join(" ");
 
   const frequencies = new Map();
@@ -109,13 +138,15 @@ function extractChapterEntry(subjectId, registryChapter, chapter, sourcePath) {
     primary_domain_id: chapter.primary_domain_id || registryChapter.primary_domain_id || chapter.id || registryChapter.id,
     title,
     source_path: sourcePath.replaceAll(path.sep, "/"),
+    module_source_paths: modules.map((module) => module.sourcePath.replaceAll(path.sep, "/")),
     title_terms: titleTerms,
     concept_terms: conceptTerms.slice(0, 96),
     support_terms: supportTerms,
     provenance: {
       chapter_schema: chapter.schema || "unknown",
       review_status: chapter.editorialStatus || chapter.status || "unknown",
-      source_kind: "canonical_fagverk_chapter"
+      source_kind: "canonical_fagverk_chapter",
+      module_file_count: modules.length
     }
   };
 }
@@ -206,6 +237,8 @@ function buildAudit({ registry, entries, selectedSubjects, expectedCount, source
       chapter_id: entry.chapter_id,
       title: entry.title,
       source_path: entry.source_path,
+      module_source_paths: entry.module_source_paths,
+      module_file_count: entry.provenance.module_file_count,
       title_term_count: entry.title_terms.length,
       concept_term_count: entry.concept_terms.length,
       support_term_count: entry.support_terms.length
@@ -249,7 +282,13 @@ function buildCorpus(historyGoRoot, { subject = "", expectedCount = null } = {})
       const absolutePath = path.join(historyGoRoot, registryChapter.file);
       if (!fs.existsSync(absolutePath)) throw new Error(`Missing registered chapter: ${registryChapter.file}`);
       const chapter = readJson(absolutePath);
-      entries.push(extractChapterEntry(subjectId, registryChapter, chapter, registryChapter.file));
+      const modulePaths = Array.isArray(chapter.moduleFiles) ? chapter.moduleFiles : [];
+      const modules = modulePaths.map((modulePath) => {
+        const absoluteModulePath = path.join(historyGoRoot, modulePath);
+        if (!fs.existsSync(absoluteModulePath)) throw new Error(`Missing registered module: ${modulePath}`);
+        return { sourcePath: modulePath, data: readJson(absoluteModulePath) };
+      });
+      entries.push(extractChapterEntry(subjectId, registryChapter, chapter, registryChapter.file, modules));
     }
   }
 
