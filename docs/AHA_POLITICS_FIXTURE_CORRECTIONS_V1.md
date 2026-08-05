@@ -2,17 +2,15 @@
 
 ## Status
 
-Politics Fixture Corrections V1 compares existing legacy analysis fixtures with the review-only Politics policy and an explicit human expectation.
+Politics Fixture Corrections V1 now covers **all sixteen current analysis fixtures**. It compares the legacy fixture, the review-only Politics policy and an explicit human expectation for Politics grounding.
 
-The first baseline recorded five failures. Policy version **1.1.0** now passes all eight cases while remaining outside runtime.
+Policy **1.2.0** passes all sixteen cases while remaining outside runtime.
 
-## Why this layer exists
+## Correction contract
 
-The legacy fixture suite protects exact output from the hand-authored Python analyzer. That is useful for compatibility, but it does not prove that a new text receives the right Fagverk chapter.
+Every case records:
 
-Each Politics correction case instead records:
-
-- fixture path and fixture role
+- fixture path and role
 - expected Politics status and chapter
 - exact source evidence
 - supported concepts
@@ -20,33 +18,41 @@ Each Politics correction case instead records:
 - unsupported interpretations
 - required uncertainty
 
-The correction layer does not overwrite the old fixtures.
+The correction layer does not overwrite the legacy expected analysis.
 
-## Pilot set
+## Full fixture set
 
-Expected grounding:
-
-```text
-NAV reform → forvaltning
-NAV user meeting → forvaltning
-legal proportionality text → rett-lov-rettssikkerhet
-```
-
-Expected Politics abstention:
+Correct Politics grounding:
 
 ```text
-pinse
-Morgenbladet media history
-personal diary
-vague low-information text
-Morgenbladet public-sphere and culture criticism
+03 NAV reform → forvaltning
+07 legal proportionality → rett-lov-rettssikkerhet
+10 NAV user meeting → forvaltning
 ```
 
-Six cases are exact legacy baselines. Two are later qualitative targets.
+Correct Politics abstention:
 
-## Initial result
+```text
+01 pinse/religion
+02 Morgenbladet media history
+04 literary attachment theory
+05 personal diary
+06 technical project plan
+08 vague low-information text
+09 Morgenbladet public sphere
+11 learning reflection
+12 urban attention reflection
+13 Eidsvoll/1814 history
+14 Bislett/sport/byrom
+15 fragmentary low-quality text
+16 AI, learning and collective knowledge
+```
 
-Policy 1.0.0 produced:
+Eight cases are exact legacy baselines and eight are qualitative targets.
+
+## Development history
+
+The original eight-case baseline produced:
 
 ```text
 3/8 correct
@@ -54,32 +60,22 @@ Policy 1.0.0 produced:
 3 false negatives
 ```
 
-Both Morgenbladet texts were incorrectly selected as `parlamentarisme`. Both NAV texts and the legal text lacked their required Politics chapters.
+Policy 1.1.0 corrected the two Morgenbladet false positives and the NAV/legal false negatives, reaching 8/8.
 
-## Correction strategy
+Expanding to all sixteen fixtures then exposed one additional false positive:
 
-The correction did not lower global thresholds.
+```text
+literary attachment analysis → conflict, power and civil society
+```
 
-### Morgenbladet
+The literary text contained `conflict` and `language`, but no political protest, civil-society or collective-action evidence.
 
-`parlamentarisme` now requires an explicit parliamentary anchor. Public-sphere words such as `debatt`, `offentlighet` and `arena` cannot select the chapter alone.
-
-Residual generic unique words such as `over`, `norsk`, `var`, `saken` and `tiltak` are globally non-scoring.
-
-### NAV
-
-Chapter-scoped evidence was added to `forvaltning`, including welfare-administration forms, organizational cultures, responsibility relations, steering lines, user meetings and one-contact-point language.
-
-### Legal text
-
-Chapter-scoped evidence was added to `rett-lov-rettssikkerhet`, including legal basis, legitimate purpose, proportionality, individual rights and less intrusive measures.
+Policy 1.2.0 therefore added a political-conflict anchor requirement. The word conflict remains available in other contexts; only the political chapter requires political or collective anchors.
 
 ## Current result
 
-Policy 1.1.0 records:
-
 ```text
-8/8 passed
+16/16 passed
 0 false positives
 0 false negatives
 0 validation errors
@@ -91,21 +87,19 @@ The report status is:
 passed_correction_gate
 ```
 
-The two Morgenbladet cases now remain `unsupported`. Their `parlamentarisme` ranking is explicitly marked ineligible because the required anchor is missing.
+The literary case now remains unsupported because `konflikt-makt-sivilsamfunn` is ineligible without a political-conflict anchor.
 
-Both NAV cases select `forvaltning` using chapter-scoped supplemental evidence.
-
-The legal case selects `rett-lov-rettssikkerhet` through explicit proportionality and rights phrases.
+Eidsvoll/1814 also remains Politics-unsupported. The canonical History chapter is more precise than forcing the text into modern parliamentary, legal or multilevel-governance categories. Politics may later appear as a secondary link when multiple subject corpora can be compared.
 
 ## Shared implementation
 
-The 34-case matrix and 8-case correction set use the same scorer:
+The 34-case Politics matrix and the 16-case fixture correction set use the same scorer:
 
 ```text
 scripts/lib/politics-fagverk-scoring.mjs
 ```
 
-This prevents one evaluator from passing while another silently uses different matching logic.
+This prevents evaluator drift.
 
 ## Deterministic files
 
@@ -120,7 +114,7 @@ Build the report with:
 node scripts/compare-politics-fixture-corrections.mjs
 ```
 
-The permanent workflow regenerates the report, requires 8/8 and byte-for-byte parity, and runs with read-only repository permissions.
+The permanent workflow regenerates the report, requires 16/16 and byte-for-byte parity, and runs with read-only repository permissions.
 
 ## Runtime boundary
 
@@ -130,15 +124,8 @@ The active Python engine does not load the correction set, correction report or 
 runtime_activation_allowed: false
 ```
 
-Passing eight fixtures is a correction milestone, not runtime approval.
+Full fixture coverage is a stronger review milestone, but not runtime approval.
 
 ## Next step
 
-Expand the correction corpus with more real articles, especially:
-
-- public-sphere texts that mention democratic concepts without parliamentary institutions
-- administration texts with varied inflection and organizational vocabulary
-- legal texts that distinguish proportionality review from policy design
-- cross-domain negatives from media, religion, psychology and personal reflection
-
-Runtime activation requires a larger correction corpus, source-span review and a separate activation audit.
+The repository fixture set is now exhausted. The next correction corpus must use additional real articles and adversarial texts, with reviewed source spans and explicit cross-domain alternatives. Runtime activation remains a separate audit and decision.

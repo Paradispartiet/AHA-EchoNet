@@ -1,10 +1,10 @@
 {
   "schema": "aha_politics_fixture_corrections_v1",
-  "version": "1.0.0",
-  "status": "human_review_baseline_not_runtime_active",
+  "version": "1.1.0",
+  "status": "full_fixture_review_baseline_not_runtime_active",
   "subject_id": "politikk",
   "corpus_sha256": "981ab3ad25f972bd13c70a0247f26b8796e43b8cd3cde7282b7d073bfcc79dec",
-  "policy_version": "1.0.0",
+  "policy_version": "1.1.0",
   "runtime_activation_allowed": false,
   "cases": [
     {
@@ -42,6 +42,17 @@
       "required_uncertainty": ["Teksten sier ikke hvilke konkrete styringslinjer som sviktet eller hvilke evalueringsfunn som beviser effekten."]
     },
     {
+      "id": "correction-literary-attachment-non-politics",
+      "fixture_path": "docs/fixtures/aha-analysis/04-litteraer-tilknytningsteori.json",
+      "fixture_role": "legacy_exact_baseline",
+      "expected_politics_status": "unsupported",
+      "expected_chapter_id": null,
+      "source_evidence": ["nærhetssøking", "ambivalent tilknytning", "klinisk språk"],
+      "forbidden_chapter_ids": ["normer-identitet-hverdagsliv", "konflikt-makt-sivilsamfunn"],
+      "unsupported_interpretations": ["Relasjon, konflikt og ambivalens i en roman er ikke belegg for politiske normer, identitet eller samfunnskonflikt."],
+      "required_uncertainty": ["AHA skal skille litterær karaktertolkning fra både politisk kategorisering og klinisk diagnose."]
+    },
+    {
       "id": "correction-diary-non-politics",
       "fixture_path": "docs/fixtures/aha-analysis/05-dagbok-refleksjon.json",
       "fixture_role": "legacy_exact_baseline",
@@ -51,6 +62,17 @@
       "forbidden_chapter_ids": ["normer-identitet-hverdagsliv", "konflikt-makt-sivilsamfunn"],
       "unsupported_interpretations": ["Personlig uro og valg er ikke i seg selv belegg for politiske normer, identitet eller konflikt."],
       "required_uncertainty": ["AHA skal avstå fra politisk kategorisering og klinisk diagnose."]
+    },
+    {
+      "id": "correction-technical-project-non-politics",
+      "fixture_path": "docs/fixtures/aha-analysis/06-prosjektplan-teknisk-notat.json",
+      "fixture_role": "legacy_exact_baseline",
+      "expected_politics_status": "unsupported",
+      "expected_chapter_id": null,
+      "source_evidence": ["analyseklassifisering", "stabile grensesnitt", "testdata er representative"],
+      "forbidden_chapter_ids": ["offentlig-politikk-beslutning-implementering", "statsvitenskapelig-metode-og-sammenligning"],
+      "unsupported_interpretations": ["Prosjektfase, implementering, avviksmåling og testdata er teknisk utviklingsspråk, ikke automatisk policyprosess eller statsvitenskapelig metode."],
+      "required_uncertainty": ["Teksten må forbli teknisk prosjektarbeid med mindre politiske institusjoner eller forskningsdesign omtales eksplisitt."]
     },
     {
       "id": "correction-legal-rights",
@@ -97,6 +119,72 @@
       "forbidden_chapter_ids": ["offentlig-politikk-beslutning-implementering"],
       "unsupported_interpretations": ["Teksten analyserer først og fremst hvordan organisasjon og ansvar møter brukeren, ikke en generell policyprosess."],
       "required_uncertainty": ["Brukeropplevd effekt kan ikke generaliseres uten konkrete kontor- eller evalueringsdata."]
+    },
+    {
+      "id": "correction-learning-reflection-non-politics",
+      "fixture_path": "docs/fixtures/aha-analysis/11-refleksjon-laering-feil-vaner.json",
+      "fixture_role": "qualitative_target_fixture",
+      "expected_politics_status": "unsupported",
+      "expected_chapter_id": null,
+      "source_evidence": ["feilene mine", "små vaner", "kunnskapen fester seg"],
+      "forbidden_chapter_ids": ["normer-identitet-hverdagsliv", "statsvitenskapelig-metode-og-sammenligning"],
+      "unsupported_interpretations": ["Personlig læring, vanedannelse og refleksjon over feil er ikke politisk normanalyse eller statsvitenskapelig metode."],
+      "required_uncertainty": ["AHA skal beholde teksten som personlig læringsrefleksjon uten å oppgradere den til et samfunnsfaglig forskningsdesign."]
+    },
+    {
+      "id": "correction-urban-attention-non-politics",
+      "fixture_path": "docs/fixtures/aha-analysis/12-refleksjon-byrom-uro-konsentrasjon.json",
+      "fixture_role": "qualitative_target_fixture",
+      "expected_politics_status": "unsupported",
+      "expected_chapter_id": null,
+      "source_evidence": ["travle plassen ved trikken", "folkestrømmen", "konsentrasjon"],
+      "forbidden_chapter_ids": ["normer-identitet-hverdagsliv", "fordeling-velferd-ulikhet"],
+      "unsupported_interpretations": ["Et personlig møte med byrom, uro og oppmerksomhet er ikke belegg for politiske normer, universell adgang eller velferdsfordeling."],
+      "required_uncertainty": ["Erfaringen skal forstås som situert refleksjon, ikke politisk struktur eller klinisk diagnose."]
+    },
+    {
+      "id": "correction-eidsvoll-history-non-politics",
+      "fixture_path": "docs/fixtures/aha-analysis/13-historygo-eidsvoll-grunnloven.json",
+      "fixture_role": "qualitative_target_fixture",
+      "expected_politics_status": "unsupported",
+      "expected_chapter_id": null,
+      "source_evidence": ["eidsvoll i 1814", "grunnloven", "politiske deltakere"],
+      "forbidden_chapter_ids": ["parlamentarisme", "rett-lov-rettssikkerhet", "norsk-politikk-eos-eu-flernivastyring"],
+      "unsupported_interpretations": ["Historisk demokrati-, grunnlovs- og nasjonsbyggingsanalyse skal ikke presses inn i et moderne Politikk-kapittel når det canonical Historie-kapittelet om 1814 er mer presist."],
+      "required_uncertainty": ["Politikk kan være et tverrfaglig spor, men kapittelvalget skal avstå til Historie-grounding kan sammenlignes."]
+    },
+    {
+      "id": "correction-bislett-sport-non-politics",
+      "fixture_path": "docs/fixtures/aha-analysis/14-historygo-bislett-byrom-stadion.json",
+      "fixture_role": "qualitative_target_fixture",
+      "expected_politics_status": "unsupported",
+      "expected_chapter_id": null,
+      "source_evidence": ["bislett stadion", "idrettsarena", "sportshistorie"],
+      "forbidden_chapter_ids": ["konflikt-makt-sivilsamfunn", "normer-identitet-hverdagsliv", "fordeling-velferd-ulikhet"],
+      "unsupported_interpretations": ["Fellesskap, lokal identitet og byutvikling rundt et stadion er ikke nok til å velge politisk konflikt, normer eller velferdsfordeling."],
+      "required_uncertainty": ["Sport-, by- og arkitekturhistorie skal ha forrang uten eksplisitte politiske vedtak, institusjoner eller fordelingskonflikter."]
+    },
+    {
+      "id": "correction-fragmented-non-politics",
+      "fixture_path": "docs/fixtures/aha-analysis/15-uklar-fragmentert-lav-kvalitet.json",
+      "fixture_role": "qualitative_target_fixture",
+      "expected_politics_status": "unsupported",
+      "expected_chapter_id": null,
+      "source_evidence": ["vet ikke", "klarer ikke forklare", "systemet"],
+      "forbidden_chapter_ids": ["regimer-og-institusjoner", "forvaltning", "konflikt-makt-sivilsamfunn"],
+      "unsupported_interpretations": ["Fragmentene system, folk og annerledes gir ikke tilstrekkelig faglig eller politisk belegg."],
+      "required_uncertainty": ["Teksten skal avstå med lav sikkerhet og etterspørre konkret aktør, hendelse og ønsket endring."]
+    },
+    {
+      "id": "correction-ai-learning-non-politics",
+      "fixture_path": "docs/fixtures/aha-analysis/16-tverrfaglig-ai-laering-kunnskap.json",
+      "fixture_role": "qualitative_target_fixture",
+      "expected_politics_status": "unsupported",
+      "expected_chapter_id": null,
+      "source_evidence": ["ai-verktøy", "kollektiv kunnskap", "menneskelig forståelse"],
+      "forbidden_chapter_ids": ["offentlig-politikk-beslutning-implementering", "normer-identitet-hverdagsliv", "statsvitenskapelig-metode-og-sammenligning"],
+      "unsupported_interpretations": ["Automatisering, læring og kollektiv kunnskap er ikke automatisk offentlig politikk, normanalyse eller statsvitenskapelig metode."],
+      "required_uncertainty": ["AHA skal beholde pedagogikk, teknologi og kunnskapsteori som primære spor uten eksplisitt politisk styring eller institusjonell regulering."]
     }
   ]
 }

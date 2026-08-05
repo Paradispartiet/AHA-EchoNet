@@ -3,7 +3,7 @@
   "version": "1.1.0",
   "source_ref": "9e9644e83998ff715005bf80c96cde6193107c13",
   "corpus_sha256": "981ab3ad25f972bd13c70a0247f26b8796e43b8cd3cde7282b7d073bfcc79dec",
-  "policy_version": "1.1.0",
+  "policy_version": "1.2.0",
   "matrix_version": "1.0.0",
   "status": "passed_review_gate",
   "runtime_activation_allowed": false,
@@ -96,8 +96,8 @@
             "matched_terms": []
           },
           {
-            "chapter_id": "konflikt-makt-sivilsamfunn",
-            "title": "Konflikt, makt og sivilsamfunn",
+            "chapter_id": "normer-identitet-hverdagsliv",
+            "title": "Normer, identitet og hverdagsliv",
             "score": 0,
             "eligible": true,
             "eligibility_reason": "eligible",
@@ -105,8 +105,8 @@
             "matched_terms": []
           },
           {
-            "chapter_id": "normer-identitet-hverdagsliv",
-            "title": "Normer, identitet og hverdagsliv",
+            "chapter_id": "norsk-politikk-eos-eu-flernivastyring",
+            "title": "Norsk politikk, EØS/EU og flernivåstyring",
             "score": 0,
             "eligible": true,
             "eligibility_reason": "eligible",
@@ -315,8 +315,8 @@
             "matched_terms": []
           },
           {
-            "chapter_id": "konflikt-makt-sivilsamfunn",
-            "title": "Konflikt, makt og sivilsamfunn",
+            "chapter_id": "normer-identitet-hverdagsliv",
+            "title": "Normer, identitet og hverdagsliv",
             "score": 0,
             "eligible": true,
             "eligibility_reason": "eligible",
@@ -396,8 +396,8 @@
             "matched_terms": []
           },
           {
-            "chapter_id": "konflikt-makt-sivilsamfunn",
-            "title": "Konflikt, makt og sivilsamfunn",
+            "chapter_id": "normer-identitet-hverdagsliv",
+            "title": "Normer, identitet og hverdagsliv",
             "score": 0,
             "eligible": true,
             "eligibility_reason": "eligible",
@@ -617,8 +617,8 @@
             "matched_terms": []
           },
           {
-            "chapter_id": "konflikt-makt-sivilsamfunn",
-            "title": "Konflikt, makt og sivilsamfunn",
+            "chapter_id": "normer-identitet-hverdagsliv",
+            "title": "Normer, identitet og hverdagsliv",
             "score": 0,
             "eligible": true,
             "eligibility_reason": "eligible",
@@ -719,8 +719,8 @@
             "matched_terms": []
           },
           {
-            "chapter_id": "konflikt-makt-sivilsamfunn",
-            "title": "Konflikt, makt og sivilsamfunn",
+            "chapter_id": "normer-identitet-hverdagsliv",
+            "title": "Normer, identitet og hverdagsliv",
             "score": 0,
             "eligible": true,
             "eligibility_reason": "eligible",
@@ -843,8 +843,8 @@
             "matched_terms": []
           },
           {
-            "chapter_id": "konflikt-makt-sivilsamfunn",
-            "title": "Konflikt, makt og sivilsamfunn",
+            "chapter_id": "normer-identitet-hverdagsliv",
+            "title": "Normer, identitet og hverdagsliv",
             "score": 0,
             "eligible": true,
             "eligibility_reason": "eligible",
@@ -1036,8 +1036,8 @@
             "matched_terms": []
           },
           {
-            "chapter_id": "konflikt-makt-sivilsamfunn",
-            "title": "Konflikt, makt og sivilsamfunn",
+            "chapter_id": "normer-identitet-hverdagsliv",
+            "title": "Normer, identitet og hverdagsliv",
             "score": 0,
             "eligible": true,
             "eligibility_reason": "eligible",
@@ -1139,8 +1139,8 @@
             "matched_terms": []
           },
           {
-            "chapter_id": "konflikt-makt-sivilsamfunn",
-            "title": "Konflikt, makt og sivilsamfunn",
+            "chapter_id": "normer-identitet-hverdagsliv",
+            "title": "Normer, identitet og hverdagsliv",
             "score": 0,
             "eligible": true,
             "eligibility_reason": "eligible",
@@ -1167,7 +1167,12 @@
             "score": 15.05,
             "eligible": true,
             "eligibility_reason": "eligible",
-            "matched_anchor_terms": [],
+            "matched_anchor_terms": [
+              "protest",
+              "handlingsrepertoar",
+              "dagsordenmakt",
+              "motoffentlighet"
+            ],
             "matched_terms": [
               {
                 "term": "krav",
@@ -1351,8 +1356,8 @@
             "matched_terms": []
           },
           {
-            "chapter_id": "konflikt-makt-sivilsamfunn",
-            "title": "Konflikt, makt og sivilsamfunn",
+            "chapter_id": "norsk-politikk-eos-eu-flernivastyring",
+            "title": "Norsk politikk, EØS/EU og flernivåstyring",
             "score": 0,
             "eligible": true,
             "eligibility_reason": "eligible",
@@ -1432,8 +1437,8 @@
             "matched_terms": []
           },
           {
-            "chapter_id": "konflikt-makt-sivilsamfunn",
-            "title": "Konflikt, makt og sivilsamfunn",
+            "chapter_id": "normer-identitet-hverdagsliv",
+            "title": "Normer, identitet og hverdagsliv",
             "score": 0,
             "eligible": true,
             "eligibility_reason": "eligible",
@@ -1520,8 +1525,8 @@
             "matched_terms": []
           },
           {
-            "chapter_id": "konflikt-makt-sivilsamfunn",
-            "title": "Konflikt, makt og sivilsamfunn",
+            "chapter_id": "normer-identitet-hverdagsliv",
+            "title": "Normer, identitet og hverdagsliv",
             "score": 0,
             "eligible": true,
             "eligibility_reason": "eligible",
@@ -1618,8 +1623,8 @@
             "matched_terms": []
           },
           {
-            "chapter_id": "konflikt-makt-sivilsamfunn",
-            "title": "Konflikt, makt og sivilsamfunn",
+            "chapter_id": "normer-identitet-hverdagsliv",
+            "title": "Normer, identitet og hverdagsliv",
             "score": 0,
             "eligible": true,
             "eligibility_reason": "eligible",
@@ -1788,8 +1793,8 @@
             "matched_terms": []
           },
           {
-            "chapter_id": "konflikt-makt-sivilsamfunn",
-            "title": "Konflikt, makt og sivilsamfunn",
+            "chapter_id": "normer-identitet-hverdagsliv",
+            "title": "Normer, identitet og hverdagsliv",
             "score": 0,
             "eligible": true,
             "eligibility_reason": "eligible",
@@ -1797,8 +1802,8 @@
             "matched_terms": []
           },
           {
-            "chapter_id": "normer-identitet-hverdagsliv",
-            "title": "Normer, identitet og hverdagsliv",
+            "chapter_id": "norsk-politikk-eos-eu-flernivastyring",
+            "title": "Norsk politikk, EØS/EU og flernivåstyring",
             "score": 0,
             "eligible": true,
             "eligibility_reason": "eligible",
@@ -1907,8 +1912,8 @@
             "matched_terms": []
           },
           {
-            "chapter_id": "konflikt-makt-sivilsamfunn",
-            "title": "Konflikt, makt og sivilsamfunn",
+            "chapter_id": "normer-identitet-hverdagsliv",
+            "title": "Normer, identitet og hverdagsliv",
             "score": 0,
             "eligible": true,
             "eligibility_reason": "eligible",
@@ -2018,8 +2023,8 @@
             "matched_terms": []
           },
           {
-            "chapter_id": "konflikt-makt-sivilsamfunn",
-            "title": "Konflikt, makt og sivilsamfunn",
+            "chapter_id": "normer-identitet-hverdagsliv",
+            "title": "Normer, identitet og hverdagsliv",
             "score": 0,
             "eligible": true,
             "eligibility_reason": "eligible",
@@ -2113,8 +2118,8 @@
             "matched_terms": []
           },
           {
-            "chapter_id": "konflikt-makt-sivilsamfunn",
-            "title": "Konflikt, makt og sivilsamfunn",
+            "chapter_id": "normer-identitet-hverdagsliv",
+            "title": "Normer, identitet og hverdagsliv",
             "score": 0,
             "eligible": true,
             "eligibility_reason": "eligible",
@@ -2192,8 +2197,8 @@
             "matched_terms": []
           },
           {
-            "chapter_id": "konflikt-makt-sivilsamfunn",
-            "title": "Konflikt, makt og sivilsamfunn",
+            "chapter_id": "normer-identitet-hverdagsliv",
+            "title": "Normer, identitet og hverdagsliv",
             "score": 0,
             "eligible": true,
             "eligibility_reason": "eligible",
@@ -2201,8 +2206,8 @@
             "matched_terms": []
           },
           {
-            "chapter_id": "normer-identitet-hverdagsliv",
-            "title": "Normer, identitet og hverdagsliv",
+            "chapter_id": "norsk-politikk-eos-eu-flernivastyring",
+            "title": "Norsk politikk, EØS/EU og flernivåstyring",
             "score": 0,
             "eligible": true,
             "eligibility_reason": "eligible",
@@ -2290,8 +2295,8 @@
             "matched_terms": []
           },
           {
-            "chapter_id": "konflikt-makt-sivilsamfunn",
-            "title": "Konflikt, makt og sivilsamfunn",
+            "chapter_id": "normer-identitet-hverdagsliv",
+            "title": "Normer, identitet og hverdagsliv",
             "score": 0,
             "eligible": true,
             "eligibility_reason": "eligible",
@@ -2498,8 +2503,8 @@
             "matched_terms": []
           },
           {
-            "chapter_id": "konflikt-makt-sivilsamfunn",
-            "title": "Konflikt, makt og sivilsamfunn",
+            "chapter_id": "norsk-politikk-eos-eu-flernivastyring",
+            "title": "Norsk politikk, EØS/EU og flernivåstyring",
             "score": 0,
             "eligible": true,
             "eligibility_reason": "eligible",
@@ -2526,7 +2531,11 @@
             "score": 14.525,
             "eligible": true,
             "eligibility_reason": "eligible",
-            "matched_anchor_terms": [],
+            "matched_anchor_terms": [
+              "handlingsrepertoar",
+              "dagsordenmakt",
+              "motoffentlighet"
+            ],
             "matched_terms": [
               {
                 "term": "konflikt",
@@ -2651,8 +2660,8 @@
             "matched_terms": []
           },
           {
-            "chapter_id": "konflikt-makt-sivilsamfunn",
-            "title": "Konflikt, makt og sivilsamfunn",
+            "chapter_id": "normer-identitet-hverdagsliv",
+            "title": "Normer, identitet og hverdagsliv",
             "score": 0,
             "eligible": true,
             "eligibility_reason": "eligible",
@@ -2660,8 +2669,8 @@
             "matched_terms": []
           },
           {
-            "chapter_id": "normer-identitet-hverdagsliv",
-            "title": "Normer, identitet og hverdagsliv",
+            "chapter_id": "norsk-politikk-eos-eu-flernivastyring",
+            "title": "Norsk politikk, EØS/EU og flernivåstyring",
             "score": 0,
             "eligible": true,
             "eligibility_reason": "eligible",
@@ -2710,8 +2719,8 @@
             "matched_terms": []
           },
           {
-            "chapter_id": "konflikt-makt-sivilsamfunn",
-            "title": "Konflikt, makt og sivilsamfunn",
+            "chapter_id": "normer-identitet-hverdagsliv",
+            "title": "Normer, identitet og hverdagsliv",
             "score": 0,
             "eligible": true,
             "eligibility_reason": "eligible",
@@ -2719,8 +2728,8 @@
             "matched_terms": []
           },
           {
-            "chapter_id": "normer-identitet-hverdagsliv",
-            "title": "Normer, identitet og hverdagsliv",
+            "chapter_id": "norsk-politikk-eos-eu-flernivastyring",
+            "title": "Norsk politikk, EØS/EU og flernivåstyring",
             "score": 0,
             "eligible": true,
             "eligibility_reason": "eligible",
@@ -2769,8 +2778,8 @@
             "matched_terms": []
           },
           {
-            "chapter_id": "konflikt-makt-sivilsamfunn",
-            "title": "Konflikt, makt og sivilsamfunn",
+            "chapter_id": "normer-identitet-hverdagsliv",
+            "title": "Normer, identitet og hverdagsliv",
             "score": 0,
             "eligible": true,
             "eligibility_reason": "eligible",
@@ -2778,8 +2787,8 @@
             "matched_terms": []
           },
           {
-            "chapter_id": "normer-identitet-hverdagsliv",
-            "title": "Normer, identitet og hverdagsliv",
+            "chapter_id": "norsk-politikk-eos-eu-flernivastyring",
+            "title": "Norsk politikk, EØS/EU og flernivåstyring",
             "score": 0,
             "eligible": true,
             "eligibility_reason": "eligible",
@@ -2828,8 +2837,8 @@
             "matched_terms": []
           },
           {
-            "chapter_id": "konflikt-makt-sivilsamfunn",
-            "title": "Konflikt, makt og sivilsamfunn",
+            "chapter_id": "normer-identitet-hverdagsliv",
+            "title": "Normer, identitet og hverdagsliv",
             "score": 0,
             "eligible": true,
             "eligibility_reason": "eligible",
@@ -2837,8 +2846,8 @@
             "matched_terms": []
           },
           {
-            "chapter_id": "normer-identitet-hverdagsliv",
-            "title": "Normer, identitet og hverdagsliv",
+            "chapter_id": "norsk-politikk-eos-eu-flernivastyring",
+            "title": "Norsk politikk, EØS/EU og flernivåstyring",
             "score": 0,
             "eligible": true,
             "eligibility_reason": "eligible",
@@ -2887,8 +2896,8 @@
             "matched_terms": []
           },
           {
-            "chapter_id": "konflikt-makt-sivilsamfunn",
-            "title": "Konflikt, makt og sivilsamfunn",
+            "chapter_id": "normer-identitet-hverdagsliv",
+            "title": "Normer, identitet og hverdagsliv",
             "score": 0,
             "eligible": true,
             "eligibility_reason": "eligible",
@@ -2896,8 +2905,8 @@
             "matched_terms": []
           },
           {
-            "chapter_id": "normer-identitet-hverdagsliv",
-            "title": "Normer, identitet og hverdagsliv",
+            "chapter_id": "norsk-politikk-eos-eu-flernivastyring",
+            "title": "Norsk politikk, EØS/EU og flernivåstyring",
             "score": 0,
             "eligible": true,
             "eligibility_reason": "eligible",
@@ -2954,8 +2963,8 @@
             "matched_terms": []
           },
           {
-            "chapter_id": "konflikt-makt-sivilsamfunn",
-            "title": "Konflikt, makt og sivilsamfunn",
+            "chapter_id": "normer-identitet-hverdagsliv",
+            "title": "Normer, identitet og hverdagsliv",
             "score": 0,
             "eligible": true,
             "eligibility_reason": "eligible",
@@ -2963,8 +2972,8 @@
             "matched_terms": []
           },
           {
-            "chapter_id": "normer-identitet-hverdagsliv",
-            "title": "Normer, identitet og hverdagsliv",
+            "chapter_id": "norsk-politikk-eos-eu-flernivastyring",
+            "title": "Norsk politikk, EØS/EU og flernivåstyring",
             "score": 0,
             "eligible": true,
             "eligibility_reason": "eligible",
@@ -3013,8 +3022,8 @@
             "matched_terms": []
           },
           {
-            "chapter_id": "konflikt-makt-sivilsamfunn",
-            "title": "Konflikt, makt og sivilsamfunn",
+            "chapter_id": "normer-identitet-hverdagsliv",
+            "title": "Normer, identitet og hverdagsliv",
             "score": 0,
             "eligible": true,
             "eligibility_reason": "eligible",
@@ -3022,8 +3031,8 @@
             "matched_terms": []
           },
           {
-            "chapter_id": "normer-identitet-hverdagsliv",
-            "title": "Normer, identitet og hverdagsliv",
+            "chapter_id": "norsk-politikk-eos-eu-flernivastyring",
+            "title": "Norsk politikk, EØS/EU og flernivåstyring",
             "score": 0,
             "eligible": true,
             "eligibility_reason": "eligible",
@@ -3072,8 +3081,8 @@
             "matched_terms": []
           },
           {
-            "chapter_id": "konflikt-makt-sivilsamfunn",
-            "title": "Konflikt, makt og sivilsamfunn",
+            "chapter_id": "normer-identitet-hverdagsliv",
+            "title": "Normer, identitet og hverdagsliv",
             "score": 0,
             "eligible": true,
             "eligibility_reason": "eligible",
@@ -3081,8 +3090,8 @@
             "matched_terms": []
           },
           {
-            "chapter_id": "normer-identitet-hverdagsliv",
-            "title": "Normer, identitet og hverdagsliv",
+            "chapter_id": "norsk-politikk-eos-eu-flernivastyring",
+            "title": "Norsk politikk, EØS/EU og flernivåstyring",
             "score": 0,
             "eligible": true,
             "eligibility_reason": "eligible",

@@ -32,6 +32,14 @@ const CHAPTER_RULES = Object.freeze({
     ],
     supplemental_evidence_terms: []
   },
+  "konflikt-makt-sivilsamfunn": {
+    required_anchor_terms: [
+      "protest", "sivilsamfunn", "handlingsrepertoar", "dagsordenmakt", "motoffentlighet",
+      "kollektiv handling", "sosial bevegelse", "sosiale bevegelser", "demonstrasjon", "streik",
+      "mobilisering", "organisering"
+    ],
+    supplemental_evidence_terms: []
+  },
   forvaltning: {
     required_anchor_terms: [],
     supplemental_evidence_terms: [
@@ -137,8 +145,8 @@ function buildPolicy(corpus, audit) {
 
   return {
     schema: "aha_politics_fagverk_term_policy_v1",
-    version: "1.1.0",
-    status: "review_policy_correction_candidate_not_runtime_active",
+    version: "1.2.0",
+    status: "review_policy_full_fixture_candidate_not_runtime_active",
     source_repo: corpus.source_repo,
     source_ref: corpus.source_ref,
     corpus_sha256: corpus.content_sha256,
