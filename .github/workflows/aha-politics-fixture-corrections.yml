@@ -20,7 +20,7 @@ permissions:
 
 jobs:
   fixture-corrections:
-    name: Compare legacy fixtures with Politics corrections
+    name: Compare all analysis fixtures with Politics corrections
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -29,18 +29,20 @@ jobs:
           node-version: 22
       - name: Preserve checked-in correction report
         run: cp data/evaluation/aha-politics-fixture-correction-report.v1.json /tmp/politics-correction-report.checked.json
-      - name: Rebuild correction comparison report
+      - name: Rebuild full correction comparison report
         run: node scripts/compare-politics-fixture-corrections.mjs
-      - name: Verify 8-of-8 correction candidate and parity
+      - name: Verify 16-of-16 full-fixture correction contract and parity
         run: |
           node - <<'NODE'
           const fs = require('fs');
+          const corrections = JSON.parse(fs.readFileSync('data/evaluation/aha-politics-fixture-corrections.v1.json', 'utf8'));
           const reportPath = 'data/evaluation/aha-politics-fixture-correction-report.v1.json';
           const report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
-          const expected = { total: 8, passed: 8, failed: 0, exact_legacy_baselines: 6, qualitative_targets: 2, validation_errors: 0 };
+          if (corrections.version !== '1.1.0' || corrections.cases.length !== 16 || new Set(corrections.cases.map((item) => item.fixture_path)).size !== 16) throw new Error('Unexpected full correction corpus.');
+          const expected = { total: 16, passed: 16, failed: 0, exact_legacy_baselines: 8, qualitative_targets: 8, validation_errors: 0 };
           for (const [key, value] of Object.entries(expected)) if (report.summary?.[key] !== value) throw new Error(`Unexpected correction ${key}`);
-          if (report.summary?.comparisons?.correct !== 8 || Object.keys(report.summary.comparisons).length !== 1) throw new Error(`Unexpected comparison split: ${JSON.stringify(report.summary.comparisons)}`);
-          if (report.version !== '1.1.0' || report.policy_version !== '1.1.0' || report.status !== 'passed_correction_gate' || report.runtime_activation_allowed !== false) throw new Error('Unexpected correction boundary.');
+          if (report.summary?.comparisons?.correct !== 16 || Object.keys(report.summary.comparisons).length !== 1) throw new Error(`Unexpected comparison split: ${JSON.stringify(report.summary.comparisons)}`);
+          if (report.version !== '1.1.0' || report.policy_version !== '1.2.0' || report.correction_version !== '1.1.0' || report.status !== 'passed_correction_gate' || report.runtime_activation_allowed !== false) throw new Error('Unexpected correction boundary.');
           if (!fs.readFileSync(reportPath).equals(fs.readFileSync('/tmp/politics-correction-report.checked.json'))) throw new Error('Checked-in correction report is stale.');
           NODE
       - uses: actions/upload-artifact@v4
