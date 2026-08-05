@@ -1,0 +1,120 @@
+name: Bootstrap History runtime finalization
+
+on:
+  push:
+    branches:
+      - activate/history-fagverk-v1
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: activate/history-fagverk-v1
+          fetch-depth: 0
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Reapply reviewed activation patch
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import textwrap
+
+          source = Path('scripts/bootstrap-history-runtime-activation.source.yml').read_text(encoding='utf-8')
+          marker = "          cat > /tmp/patch_history_runtime.py <<'PY'\n"
+          end_marker = "\n          PY\n          python /tmp/patch_history_runtime.py"
+          start = source.index(marker) + len(marker)
+          end = source.index(end_marker, start)
+          Path('/tmp/patch_history_runtime.py').write_text(textwrap.dedent(source[start:end]), encoding='utf-8')
+          PY
+          python /tmp/patch_history_runtime.py
+
+      - name: Advance History review lifecycle assertion
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('tests/aha-history-fagverk-review.test.cjs')
+          text = path.read_text(encoding='utf-8')
+          old = '''assert.equal(runtime.active_subjects?.historie, undefined);
+          assert.equal(runtime.full_release_active, false);
+          assert.equal(runtime.effective_entry_count, 15);
+          '''
+          new = '''const activeHistory = runtime.active_subjects?.historie;
+          assert.equal(activeHistory.subject_id, "historie");
+          assert.equal(activeHistory.source_commit, "c16a187453d16a40f9cab4ca694c32e96014f31b");
+          assert.equal(activeHistory.chapter_count, 23);
+          assert.equal(activeHistory.corpus_path, "data/integrations/runtime/history-go-fagverk-historie.corpus.v1.json");
+          assert.equal(activeHistory.policy_path, "data/integrations/runtime/history-go-fagverk-historie.policy.v1.json");
+          assert.equal(runtime.full_release_active, false);
+          assert.equal(runtime.effective_entry_count, 37);
+          '''
+          if text.count(old) != 1:
+              raise SystemExit('History review lifecycle assertion no longer matches the reviewed baseline')
+          path.write_text(text.replace(old, new), encoding='utf-8')
+          PY
+
+      - name: Materialize History runtime package
+        run: node scripts/build-history-go-fagverk-runtime-activation.mjs
+
+      - name: Verify deterministic Node contracts
+        run: |
+          node tests/aha-fagverk-runtime-activation.test.cjs
+          node tests/aha-history-fagverk-review.test.cjs
+
+      - name: Install Python engine dependencies
+        working-directory: backend/aha_engine
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Verify Python runtime parity
+        working-directory: backend/aha_engine
+        run: python -m pytest tests/test_fagverk_grounding.py tests/test_history_fagverk_runtime.py
+
+      - name: Remove temporary patch source
+        run: git rm scripts/bootstrap-history-runtime-activation.source.yml
+
+      - name: Verify exact activation scope
+        run: |
+          python - <<'PY'
+          import subprocess
+
+          expected = {
+              '.github/workflows/aha-fagverk-runtime-activation.yml',
+              'backend/aha_engine/app/engine/fagverk_grounding.py',
+              'backend/aha_engine/tests/test_fagverk_grounding.py',
+              'backend/aha_engine/tests/test_history_fagverk_runtime.py',
+              'data/integrations/history-go-fagverk-release.approved.json',
+              'data/integrations/history-go-fagverk-release.runtime-active.json',
+              'data/integrations/runtime/history-go-fagverk-historie.corpus.v1.json',
+              'data/integrations/runtime/history-go-fagverk-historie.policy.v1.json',
+              'data/integrations/runtime/history-go-fagverk-runtime-registry.v1.json',
+              'docs/AHA_HISTORY_FAGVERK_RUNTIME_ACTIVATION_V1.md',
+              'scripts/bootstrap-history-runtime-activation.source.yml',
+              'scripts/build-history-go-fagverk-runtime-activation.mjs',
+              'tests/aha-fagverk-runtime-activation.test.cjs',
+              'tests/aha-history-fagverk-review.test.cjs',
+          }
+          actual = set(subprocess.check_output(['git', 'diff', '--name-only', 'HEAD'], text=True).splitlines())
+          if actual != expected:
+              raise SystemExit(f'Unexpected activation scope. Missing={sorted(expected-actual)} Extra={sorted(actual-expected)}')
+          PY
+
+      - name: Commit materialized activation
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Activate History Fagverk runtime"
+          git push origin HEAD:activate/history-fagverk-v1
