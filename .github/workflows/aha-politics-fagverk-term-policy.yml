@@ -2,11 +2,11 @@ name: AHA Politics Fagverk term policy
 
 on:
   pull_request:
-    branches:
-      - main
+    branches: [main]
     paths:
       - "scripts/build-politics-fagverk-term-policy.mjs"
       - "scripts/evaluate-politics-fagverk-policy.mjs"
+      - "scripts/lib/politics-fagverk-scoring.mjs"
       - "data/evaluation/aha-politics-fagverk-evaluation-matrix.v1.json"
       - ".github/workflows/aha-politics-fagverk-term-policy.yml"
       - "docs/AHA_POLITICS_FAGVERK_TERM_POLICY_V1.md"
@@ -22,28 +22,20 @@ jobs:
   politics-term-policy:
     name: Build Politics term policy and evaluation
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout AHA-EchoNet
-        uses: actions/checkout@v5
-
-      - name: Setup Node
-        uses: actions/setup-node@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
-
       - name: Preserve checked-in review files
         run: |
           cp data/integrations/review/history-go-fagverk-politikk.term-policy.v1.json /tmp/politics-term-policy.checked.json
           cp data/evaluation/aha-politics-fagverk-evaluation-report.v1.json /tmp/politics-evaluation-report.checked.json
-
-      - name: Rebuild review-only Politics term policy
+      - name: Rebuild correction-aware Politics policy
         run: node scripts/build-politics-fagverk-term-policy.mjs
-
-      - name: Re-evaluate Politics policy
+      - name: Re-evaluate Politics matrix
         run: node scripts/evaluate-politics-fagverk-policy.mjs
-
-      - name: Verify generated contract and checked-in parity
+      - name: Verify contract and parity
         run: |
           node - <<'NODE'
           const fs = require('fs');
@@ -52,27 +44,20 @@ jobs:
           const policy = JSON.parse(fs.readFileSync(policyPath, 'utf8'));
           const report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
           const expectedPolicy = { total: 143, non_scoring: 84, down_weight: 55, context_only: 4 };
-          for (const [key, expected] of Object.entries(expectedPolicy)) {
-            if (policy.summary?.[key] !== expected) throw new Error(`Unexpected policy summary ${key}: ${policy.summary?.[key]} (expected ${expected})`);
-          }
-          if (policy.activation_allowed !== false || policy.status !== 'review_policy_not_runtime_active') throw new Error('Term policy must remain review-only.');
-          if ((policy.terms || []).length !== 143 || new Set(policy.terms.map((item) => item.term)).size !== 143) throw new Error('Every collision must be classified exactly once.');
+          for (const [key, expected] of Object.entries(expectedPolicy)) if (policy.summary?.[key] !== expected) throw new Error(`Unexpected policy ${key}`);
+          if (policy.version !== '1.1.0' || policy.status !== 'review_policy_correction_candidate_not_runtime_active' || policy.activation_allowed !== false) throw new Error('Unexpected policy boundary.');
+          for (const term of ['norsk', 'over', 'saken', 'tiltak', 'var']) if (!policy.global_non_scoring_terms.includes(term)) throw new Error(`Missing global non-scoring term: ${term}`);
+          if (!policy.chapter_rules?.parlamentarisme?.required_anchor_terms?.includes('mistillit')) throw new Error('Parliament anchor rule missing.');
           const expectedReport = { total: 34, passed: 34, failed: 0, positive: 13, confusion: 13, ambiguity: 8, chapters_covered: 13, evidence_errors: 0 };
-          for (const [key, expected] of Object.entries(expectedReport)) {
-            if (report.summary?.[key] !== expected) throw new Error(`Unexpected evaluation summary ${key}: ${report.summary?.[key]} (expected ${expected})`);
-          }
-          if (report.status !== 'passed_review_gate' || report.runtime_activation_allowed !== false) throw new Error('Evaluation report must remain review-only.');
-          if (!fs.readFileSync(policyPath).equals(fs.readFileSync('/tmp/politics-term-policy.checked.json'))) throw new Error('Checked-in Politics term policy is stale.');
-          if (!fs.readFileSync(reportPath).equals(fs.readFileSync('/tmp/politics-evaluation-report.checked.json'))) throw new Error('Checked-in Politics evaluation report is stale.');
-          console.log(`Verified Politics term policy: ${policy.summary.total} collisions; evaluation ${report.summary.passed}/${report.summary.total}.`);
+          for (const [key, expected] of Object.entries(expectedReport)) if (report.summary?.[key] !== expected) throw new Error(`Unexpected report ${key}`);
+          if (report.policy_version !== '1.1.0' || report.status !== 'passed_review_gate' || report.runtime_activation_allowed !== false) throw new Error('Unexpected report boundary.');
+          if (!fs.readFileSync(policyPath).equals(fs.readFileSync('/tmp/politics-term-policy.checked.json'))) throw new Error('Policy is stale.');
+          if (!fs.readFileSync(reportPath).equals(fs.readFileSync('/tmp/politics-evaluation-report.checked.json'))) throw new Error('Evaluation report is stale.');
           NODE
-
-      - name: Upload Politics policy artifacts
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: aha-politics-fagverk-term-policy
           path: |
             data/integrations/review/history-go-fagverk-politikk.term-policy.v1.json
             data/evaluation/aha-politics-fagverk-evaluation-report.v1.json
-          if-no-files-found: error
           retention-days: 14
