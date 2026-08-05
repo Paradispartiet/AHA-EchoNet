@@ -1,0 +1,7168 @@
+{
+  "schema": "aha_fagverk_corpus_audit_v1",
+  "version": "1.0.0",
+  "source_repo": "Paradispartiet/History-Go",
+  "source_ref": "db005a95f2f310aff1ec55c806b9f4c34bcc6156",
+  "registry_version": "2.19.0",
+  "registry_updated_at": "2026-08-04",
+  "subject_filter": [
+    "naeringsliv"
+  ],
+  "coverage": {
+    "expected": 12,
+    "registered": 12,
+    "materialized": 12,
+    "missing": [],
+    "unexpected": [],
+    "duplicate_chapter_ids": []
+  },
+  "chapters": [
+    {
+      "subject_id": "naeringsliv",
+      "chapter_id": "arbeid-produksjon-verdiskaping",
+      "title": "Arbeid, produksjon og verdiskaping",
+      "source_path": "data/fagverk/naeringsliv/arbeid-produksjon-verdiskaping.json",
+      "module_source_paths": [
+        "data/fagverk/naeringsliv/arbeid-produksjon-verdiskaping/01-grunnlag.json",
+        "data/fagverk/naeringsliv/arbeid-produksjon-verdiskaping/02-fordypning.json",
+        "data/fagverk/naeringsliv/arbeid-produksjon-verdiskaping/03-anvendelse.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 16,
+      "concept_term_count": 74,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "naeringsliv",
+      "chapter_id": "forretningsjus-skatt-compliance",
+      "title": "Forretningsjus, skatt og compliance",
+      "source_path": "data/fagverk/naeringsliv/forretningsjus-skatt-compliance.json",
+      "module_source_paths": [
+        "data/fagverk/naeringsliv/forretningsjus-skatt-compliance/01-grunnlag.json",
+        "data/fagverk/naeringsliv/forretningsjus-skatt-compliance/02-fordypning.json",
+        "data/fagverk/naeringsliv/forretningsjus-skatt-compliance/03-anvendelse.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 12,
+      "concept_term_count": 67,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "naeringsliv",
+      "chapter_id": "handel-forbruk-marked",
+      "title": "Handel, forbruk og marked",
+      "source_path": "data/fagverk/naeringsliv/handel-forbruk-marked.json",
+      "module_source_paths": [
+        "data/fagverk/naeringsliv/handel-forbruk-marked/01-grunnlag.json",
+        "data/fagverk/naeringsliv/handel-forbruk-marked/02-fordypning.json",
+        "data/fagverk/naeringsliv/handel-forbruk-marked/03-anvendelse.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 15,
+      "concept_term_count": 73,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "naeringsliv",
+      "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+      "title": "Internasjonal økonomi, operations og prosjekt",
+      "source_path": "data/fagverk/naeringsliv/internasjonal-okonomi-operations-prosjekt.json",
+      "module_source_paths": [
+        "data/fagverk/naeringsliv/internasjonal-okonomi-operations-prosjekt/01-grunnlag.json",
+        "data/fagverk/naeringsliv/internasjonal-okonomi-operations-prosjekt/02-fordypning.json",
+        "data/fagverk/naeringsliv/internasjonal-okonomi-operations-prosjekt/03-anvendelse.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 14,
+      "concept_term_count": 74,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "naeringsliv",
+      "chapter_id": "kapital-eierskap-finans",
+      "title": "Kapital, eierskap og finans",
+      "source_path": "data/fagverk/naeringsliv/kapital-eierskap-finans.json",
+      "module_source_paths": [
+        "data/fagverk/naeringsliv/kapital-eierskap-finans/01-grunnlag.json",
+        "data/fagverk/naeringsliv/kapital-eierskap-finans/02-fordypning.json",
+        "data/fagverk/naeringsliv/kapital-eierskap-finans/03-anvendelse.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 14,
+      "concept_term_count": 74,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "naeringsliv",
+      "chapter_id": "kvantitative-metoder-business-analytics",
+      "title": "Kvantitative metoder og business analytics",
+      "source_path": "data/fagverk/naeringsliv/kvantitative-metoder-business-analytics.json",
+      "module_source_paths": [
+        "data/fagverk/naeringsliv/kvantitative-metoder-business-analytics/01-grunnlag.json",
+        "data/fagverk/naeringsliv/kvantitative-metoder-business-analytics/02-fordypning.json",
+        "data/fagverk/naeringsliv/kvantitative-metoder-business-analytics/03-anvendelse.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 14,
+      "concept_term_count": 66,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "naeringsliv",
+      "chapter_id": "logistikk-infrastruktur-okonomisk-rom",
+      "title": "Logistikk, infrastruktur og økonomisk rom",
+      "source_path": "data/fagverk/naeringsliv/logistikk-infrastruktur-okonomisk-rom.json",
+      "module_source_paths": [
+        "data/fagverk/naeringsliv/logistikk-infrastruktur-okonomisk-rom/01-grunnlag.json",
+        "data/fagverk/naeringsliv/logistikk-infrastruktur-okonomisk-rom/02-fordypning.json",
+        "data/fagverk/naeringsliv/logistikk-infrastruktur-okonomisk-rom/03-anvendelse.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 13,
+      "concept_term_count": 38,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "naeringsliv",
+      "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+      "title": "Makroøkonomi, konjunkturer og økonomisk politikk",
+      "source_path": "data/fagverk/naeringsliv/makrookonomi-konjunkturer-okonomisk-politikk.json",
+      "module_source_paths": [
+        "data/fagverk/naeringsliv/makrookonomi-konjunkturer-okonomisk-politikk/01-grunnlag.json",
+        "data/fagverk/naeringsliv/makrookonomi-konjunkturer-okonomisk-politikk/02-fordypning.json",
+        "data/fagverk/naeringsliv/makrookonomi-konjunkturer-okonomisk-politikk/03-anvendelse.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 12,
+      "concept_term_count": 40,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "naeringsliv",
+      "chapter_id": "makt-regulering-baerekraft",
+      "title": "Makt, regulering og bærekraft",
+      "source_path": "data/fagverk/naeringsliv/makt-regulering-baerekraft.json",
+      "module_source_paths": [
+        "data/fagverk/naeringsliv/makt-regulering-baerekraft/01-grunnlag.json",
+        "data/fagverk/naeringsliv/makt-regulering-baerekraft/02-fordypning.json",
+        "data/fagverk/naeringsliv/makt-regulering-baerekraft/03-anvendelse.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 12,
+      "concept_term_count": 39,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "naeringsliv",
+      "chapter_id": "markedsforing-strategi-kunder",
+      "title": "Markedsføring, strategi og kunder",
+      "source_path": "data/fagverk/naeringsliv/markedsforing-strategi-kunder.json",
+      "module_source_paths": [
+        "data/fagverk/naeringsliv/markedsforing-strategi-kunder/01-grunnlag.json",
+        "data/fagverk/naeringsliv/markedsforing-strategi-kunder/02-fordypning.json",
+        "data/fagverk/naeringsliv/markedsforing-strategi-kunder/03-anvendelse.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 13,
+      "concept_term_count": 60,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "naeringsliv",
+      "chapter_id": "regnskap-revisjon-okonomistyring",
+      "title": "Regnskap, revisjon og økonomistyring",
+      "source_path": "data/fagverk/naeringsliv/regnskap-revisjon-okonomistyring.json",
+      "module_source_paths": [
+        "data/fagverk/naeringsliv/regnskap-revisjon-okonomistyring/01-grunnlag.json",
+        "data/fagverk/naeringsliv/regnskap-revisjon-okonomistyring/02-fordypning.json",
+        "data/fagverk/naeringsliv/regnskap-revisjon-okonomistyring/03-anvendelse.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 12,
+      "concept_term_count": 63,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "naeringsliv",
+      "chapter_id": "teknologi-innovasjon-plattformer",
+      "title": "Teknologi, innovasjon og plattformer",
+      "source_path": "data/fagverk/naeringsliv/teknologi-innovasjon-plattformer.json",
+      "module_source_paths": [
+        "data/fagverk/naeringsliv/teknologi-innovasjon-plattformer/01-grunnlag.json",
+        "data/fagverk/naeringsliv/teknologi-innovasjon-plattformer/02-fordypning.json",
+        "data/fagverk/naeringsliv/teknologi-innovasjon-plattformer/03-anvendelse.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 14,
+      "concept_term_count": 43,
+      "support_term_count": 48
+    }
+  ],
+  "term_collision_summary": {
+    "total": 140,
+    "high_risk": 65,
+    "medium_risk": 51,
+    "low_risk": 24
+  },
+  "high_risk_terms": [
+    {
+      "term": "før",
+      "token_count": 1,
+      "chapter_count": 11,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-produksjon-verdiskaping",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "handel-forbruk-marked",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kapital-eierskap-finans",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-regulering-baerekraft",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "teknologi-innovasjon-plattformer",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "mot",
+      "token_count": 1,
+      "chapter_count": 9,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "logistikk-infrastruktur-okonomisk-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-regulering-baerekraft",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "teknologi-innovasjon-plattformer",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "data",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "handel-forbruk-marked",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "teknologi-innovasjon-plattformer",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "skill",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "handel-forbruk-marked",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kapital-eierskap-finans",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "uten",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-produksjon-verdiskaping",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "handel-forbruk-marked",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kapital-eierskap-finans",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "logistikk-infrastruktur-okonomisk-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-regulering-baerekraft",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "analysen",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-produksjon-verdiskaping",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-regulering-baerekraft",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "dokumenter",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "teknologi-innovasjon-plattformer",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "krever",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-produksjon-verdiskaping",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "logistikk-infrastruktur-okonomisk-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-regulering-baerekraft",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "teknologi-innovasjon-plattformer",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "kunne",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-regulering-baerekraft",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "skille",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-produksjon-verdiskaping",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-regulering-baerekraft",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "alternativt",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "analyseenhet",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "analyseenheten",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "antakelser",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "avgrens",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "begreper",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "beregnet",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "beregning",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "beregningen",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "beslutning",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "beslutningsansvar",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "concept_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "case",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "definisjon",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "derfor",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-produksjon-verdiskaping",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "handel-forbruk-marked",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kapital-eierskap-finans",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "logistikk-infrastruktur-okonomisk-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "teknologi-innovasjon-plattformer",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "eksplisitt",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "enheter",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "ett",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "evidensen",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "faglig",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "faktisk",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-produksjon-verdiskaping",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "handel-forbruk-marked",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "logistikk-infrastruktur-okonomisk-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-regulering-baerekraft",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "teknologi-innovasjon-plattformer",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "forklaring",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "gjentas",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "kapittelet",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "konflikten",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "metode",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "minst",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "resultat",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "concept_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "scenario",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "concept_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "testes",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "transformasjoner",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "variabler",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "velges",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "hvorfor",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "handel-forbruk-marked",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kapital-eierskap-finans",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "logistikk-infrastruktur-okonomisk-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-regulering-baerekraft",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "teknologi-innovasjon-plattformer",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "men",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-produksjon-verdiskaping",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "handel-forbruk-marked",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kapital-eierskap-finans",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-regulering-baerekraft",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "teknologi-innovasjon-plattformer",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "samme",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-produksjon-verdiskaping",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kapital-eierskap-finans",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "teknologi-innovasjon-plattformer",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "ansvar",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-produksjon-verdiskaping",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "concept_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "logistikk-infrastruktur-okonomisk-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-regulering-baerekraft",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "avgrensning",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "logistikk-infrastruktur-okonomisk-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-regulering-baerekraft",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "bare",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-produksjon-verdiskaping",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "handel-forbruk-marked",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "logistikk-infrastruktur-okonomisk-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "teknologi-innovasjon-plattformer",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "kontroll",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-produksjon-verdiskaping",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kapital-eierskap-finans",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "teknologi-innovasjon-plattformer",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "når",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "handel-forbruk-marked",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kapital-eierskap-finans",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-regulering-baerekraft",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "teknologi-innovasjon-plattformer",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "periode",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "anvendes",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "brukes",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "dokumentert",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-regulering-baerekraft",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "hvem",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-produksjon-verdiskaping",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kapital-eierskap-finans",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-regulering-baerekraft",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "kapasitet",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-produksjon-verdiskaping",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "title_terms",
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "logistikk-infrastruktur-okonomisk-rom",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "kompetanse",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-produksjon-verdiskaping",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "teknologi-innovasjon-plattformer",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "marked",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "handel-forbruk-marked",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "concept_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "teknologi-innovasjon-plattformer",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "organiserer",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "handel-forbruk-marked",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "kapital-eierskap-finans",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "logistikk-infrastruktur-okonomisk-rom",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "pris",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "handel-forbruk-marked",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "title_terms",
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "risiko",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "kapital-eierskap-finans",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-regulering-baerekraft",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "teknologi-innovasjon-plattformer",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "robusthet",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "logistikk-infrastruktur-okonomisk-rom",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "verdi",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-produksjon-verdiskaping",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "kapital-eierskap-finans",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "concept_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "viser",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-produksjon-verdiskaping",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kapital-eierskap-finans",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "logistikk-infrastruktur-okonomisk-rom",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "økonomisk",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "kapital-eierskap-finans",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "logistikk-infrastruktur-okonomisk-rom",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    }
+  ],
+  "term_collisions": [
+    {
+      "term": "før",
+      "token_count": 1,
+      "chapter_count": 11,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-produksjon-verdiskaping",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "handel-forbruk-marked",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kapital-eierskap-finans",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-regulering-baerekraft",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "teknologi-innovasjon-plattformer",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "mot",
+      "token_count": 1,
+      "chapter_count": 9,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "logistikk-infrastruktur-okonomisk-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-regulering-baerekraft",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "teknologi-innovasjon-plattformer",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "data",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "handel-forbruk-marked",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "teknologi-innovasjon-plattformer",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "skill",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "handel-forbruk-marked",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kapital-eierskap-finans",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "uten",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-produksjon-verdiskaping",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "handel-forbruk-marked",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kapital-eierskap-finans",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "logistikk-infrastruktur-okonomisk-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-regulering-baerekraft",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "analysen",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-produksjon-verdiskaping",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-regulering-baerekraft",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "dokumenter",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "teknologi-innovasjon-plattformer",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "krever",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-produksjon-verdiskaping",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "logistikk-infrastruktur-okonomisk-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-regulering-baerekraft",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "teknologi-innovasjon-plattformer",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "kunne",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-regulering-baerekraft",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "skille",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-produksjon-verdiskaping",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-regulering-baerekraft",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "alternativt",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "analyseenhet",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "analyseenheten",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "antakelser",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "avgrens",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "begreper",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "beregnet",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "beregning",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "beregningen",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "beslutning",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "beslutningsansvar",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "concept_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "case",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "definisjon",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "derfor",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-produksjon-verdiskaping",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "handel-forbruk-marked",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kapital-eierskap-finans",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "logistikk-infrastruktur-okonomisk-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "teknologi-innovasjon-plattformer",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "eksplisitt",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "enheter",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "ett",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "evidensen",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "faglig",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "faktisk",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-produksjon-verdiskaping",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "handel-forbruk-marked",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "logistikk-infrastruktur-okonomisk-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-regulering-baerekraft",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "teknologi-innovasjon-plattformer",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "forklaring",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "gjentas",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "kapittelet",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "konflikten",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "metode",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "minst",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "resultat",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "concept_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "scenario",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "concept_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "testes",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "transformasjoner",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "variabler",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "velges",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "hvorfor",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "handel-forbruk-marked",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kapital-eierskap-finans",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "logistikk-infrastruktur-okonomisk-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-regulering-baerekraft",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "teknologi-innovasjon-plattformer",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "men",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-produksjon-verdiskaping",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "handel-forbruk-marked",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kapital-eierskap-finans",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-regulering-baerekraft",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "teknologi-innovasjon-plattformer",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "samme",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-produksjon-verdiskaping",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kapital-eierskap-finans",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "teknologi-innovasjon-plattformer",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "ansvar",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-produksjon-verdiskaping",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "concept_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "logistikk-infrastruktur-okonomisk-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-regulering-baerekraft",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "avgrensning",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "logistikk-infrastruktur-okonomisk-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-regulering-baerekraft",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "bare",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-produksjon-verdiskaping",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "handel-forbruk-marked",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "logistikk-infrastruktur-okonomisk-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "teknologi-innovasjon-plattformer",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "kontroll",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-produksjon-verdiskaping",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kapital-eierskap-finans",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "teknologi-innovasjon-plattformer",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "når",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "handel-forbruk-marked",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kapital-eierskap-finans",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-regulering-baerekraft",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "teknologi-innovasjon-plattformer",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "periode",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "anvendes",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "brukes",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "dokumentert",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-regulering-baerekraft",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "hvem",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-produksjon-verdiskaping",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kapital-eierskap-finans",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-regulering-baerekraft",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "kapasitet",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-produksjon-verdiskaping",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "title_terms",
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "logistikk-infrastruktur-okonomisk-rom",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "kompetanse",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-produksjon-verdiskaping",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "teknologi-innovasjon-plattformer",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "marked",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "handel-forbruk-marked",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "concept_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "teknologi-innovasjon-plattformer",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "organiserer",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "handel-forbruk-marked",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "kapital-eierskap-finans",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "logistikk-infrastruktur-okonomisk-rom",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "pris",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "handel-forbruk-marked",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "title_terms",
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "risiko",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "kapital-eierskap-finans",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-regulering-baerekraft",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "teknologi-innovasjon-plattformer",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "robusthet",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "logistikk-infrastruktur-okonomisk-rom",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "verdi",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-produksjon-verdiskaping",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "kapital-eierskap-finans",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "concept_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "viser",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-produksjon-verdiskaping",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kapital-eierskap-finans",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "logistikk-infrastruktur-okonomisk-rom",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "økonomisk",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "kapital-eierskap-finans",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "logistikk-infrastruktur-okonomisk-rom",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "aktør",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "logistikk-infrastruktur-okonomisk-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-regulering-baerekraft",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "alene",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-produksjon-verdiskaping",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kapital-eierskap-finans",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "arbeid",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-produksjon-verdiskaping",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "teknologi-innovasjon-plattformer",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "arbeidstid",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-produksjon-verdiskaping",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "avvik",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "behandle",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "behov",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "betaling",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "handel-forbruk-marked",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kapital-eierskap-finans",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "dokumenterte",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "fordeler",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-produksjon-verdiskaping",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-regulering-baerekraft",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "følges",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "logistikk-infrastruktur-okonomisk-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-regulering-baerekraft",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "gir",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "handel-forbruk-marked",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kapital-eierskap-finans",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "gjelder",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "handel-forbruk-marked",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kapital-eierskap-finans",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "gjør",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "kapital-eierskap-finans",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "teknologi-innovasjon-plattformer",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "handel",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "handel-forbruk-marked",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "title_terms",
+            "concept_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "infrastruktur",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "logistikk-infrastruktur-okonomisk-rom",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "teknologi-innovasjon-plattformer",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "kapital",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "kapital-eierskap-finans",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "kartlegg",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "logistikk-infrastruktur-okonomisk-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-regulering-baerekraft",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "konklusjon",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "konkurranse",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "handel-forbruk-marked",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "kontantstrøm",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "kapital-eierskap-finans",
+          "groups": [
+            "concept_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "title_terms",
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "kostnad",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "logistikk-infrastruktur-okonomisk-rom",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "kunder",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "teknologi-innovasjon-plattformer",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "kvalitet",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "handel-forbruk-marked",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "concept_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "likviditet",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "kapital-eierskap-finans",
+          "groups": [
+            "concept_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "lønn",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-produksjon-verdiskaping",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-regulering-baerekraft",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "makt",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "kapital-eierskap-finans",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-regulering-baerekraft",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "mangel",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "handel-forbruk-marked",
+          "groups": [
+            "concept_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "markedsmakt",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "handel-forbruk-marked",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-regulering-baerekraft",
+          "groups": [
+            "title_terms",
+            "concept_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "medvirkning",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-produksjon-verdiskaping",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-regulering-baerekraft",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "mengde",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "handel-forbruk-marked",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "logistikk-infrastruktur-okonomisk-rom",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "mens",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "handel-forbruk-marked",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kapital-eierskap-finans",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "merkevare",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "handel-forbruk-marked",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "måling",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-produksjon-verdiskaping",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "nye",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-produksjon-verdiskaping",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kapital-eierskap-finans",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "omsetning",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-produksjon-verdiskaping",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "handel-forbruk-marked",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "omstilling",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-produksjon-verdiskaping",
+          "groups": [
+            "concept_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-regulering-baerekraft",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "periodisering",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "title_terms",
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "personvern",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "priser",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-produksjon-verdiskaping",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "handel-forbruk-marked",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "produkt",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "handel-forbruk-marked",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "teknologi-innovasjon-plattformer",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "reell",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "regnskap",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "kapital-eierskap-finans",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "resultater",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "logistikk-infrastruktur-okonomisk-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-regulering-baerekraft",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "rettigheter",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "handel-forbruk-marked",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "teknologi-innovasjon-plattformer",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "sikkerhetslager",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "logistikk-infrastruktur-okonomisk-rom",
+          "groups": [
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "skiller",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "kapital-eierskap-finans",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "teknologi-innovasjon-plattformer",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "styring",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "teknologi-innovasjon-plattformer",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "ulike",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "handel-forbruk-marked",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kapital-eierskap-finans",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "utvalg",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "verdiskaping",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-produksjon-verdiskaping",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "risiko regulering",
+      "token_count": 2,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "kapital-eierskap-finans",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "low"
+    },
+    {
+      "term": "eierskap styring",
+      "token_count": 2,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "kapital-eierskap-finans",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "low"
+    },
+    {
+      "term": "kapital finans",
+      "token_count": 2,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "kapital-eierskap-finans",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "low"
+    },
+    {
+      "term": "marked konkurranse pris",
+      "token_count": 3,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "handel-forbruk-marked",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "low"
+    },
+    {
+      "term": "effektivitet optimalisering",
+      "token_count": 2,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-produksjon-verdiskaping",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "low"
+    },
+    {
+      "term": "logistikk verdikjeder",
+      "token_count": 2,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "logistikk-infrastruktur-okonomisk-rom",
+          "groups": [
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "low"
+    },
+    {
+      "term": "produksjon produktivitet",
+      "token_count": 2,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-produksjon-verdiskaping",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "low"
+    },
+    {
+      "term": "ledelse kontrollsystemer",
+      "token_count": 2,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "teknologi-innovasjon-plattformer",
+          "groups": [
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "low"
+    },
+    {
+      "term": "omstilling kriser skift",
+      "token_count": 3,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-produksjon-verdiskaping",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "low"
+    },
+    {
+      "term": "tjenesteyting og service",
+      "token_count": 2,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "handel-forbruk-marked",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "low"
+    },
+    {
+      "term": "verdsetting pris regnskap",
+      "token_count": 3,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "kapital-eierskap-finans",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "groups": [
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "low"
+    },
+    {
+      "term": "arbeidsliv organisering",
+      "token_count": 2,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-produksjon-verdiskaping",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "low"
+    },
+    {
+      "term": "baerekraft eksternaliteter",
+      "token_count": 2,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "forretningsjus-skatt-compliance",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-regulering-baerekraft",
+          "groups": [
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "low"
+    },
+    {
+      "term": "begrep-markedsmakt",
+      "token_count": 2,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "handel-forbruk-marked",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-regulering-baerekraft",
+          "groups": [
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "low"
+    },
+    {
+      "term": "data algoritmer verdiskaping",
+      "token_count": 3,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "teknologi-innovasjon-plattformer",
+          "groups": [
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "low"
+    },
+    {
+      "term": "digitalisering plattformokonomi",
+      "token_count": 2,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "teknologi-innovasjon-plattformer",
+          "groups": [
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "low"
+    },
+    {
+      "term": "doxa vekst effektivitet",
+      "token_count": 3,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "kvantitative-metoder-business-analytics",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "teknologi-innovasjon-plattformer",
+          "groups": [
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "low"
+    },
+    {
+      "term": "forbruk marked",
+      "token_count": 2,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "handel-forbruk-marked",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "low"
+    },
+    {
+      "term": "handel butikk byrom",
+      "token_count": 3,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "handel-forbruk-marked",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "low"
+    },
+    {
+      "term": "havn transport",
+      "token_count": 2,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "logistikk-infrastruktur-okonomisk-rom",
+          "groups": [
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "low"
+    },
+    {
+      "term": "kriser boomer omstilling",
+      "token_count": 3,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "kapital-eierskap-finans",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "makrookonomi-konjunkturer-okonomisk-politikk",
+          "groups": [
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "low"
+    },
+    {
+      "term": "merkevare og status",
+      "token_count": 2,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "handel-forbruk-marked",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "low"
+    },
+    {
+      "term": "organisasjoner ledelse",
+      "token_count": 2,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "kapital-eierskap-finans",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "markedsforing-strategi-kunder",
+          "groups": [
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "low"
+    },
+    {
+      "term": "startup grunder innovasjon",
+      "token_count": 3,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "teknologi-innovasjon-plattformer",
+          "groups": [
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "low"
+    }
+  ],
+  "activation_recommendation": "review_required_before_runtime_activation",
+  "gate": {
+    "passed": true,
+    "errors": []
+  }
+}

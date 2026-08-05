@@ -1,0 +1,4448 @@
+{
+  "schema": "aha_fagverk_corpus_audit_v1",
+  "version": "1.0.0",
+  "source_repo": "Paradispartiet/History-Go",
+  "source_ref": "db005a95f2f310aff1ec55c806b9f4c34bcc6156",
+  "registry_version": "2.19.0",
+  "registry_updated_at": "2026-08-04",
+  "subject_filter": [
+    "subkultur"
+  ],
+  "coverage": {
+    "expected": 8,
+    "registered": 8,
+    "materialized": 8,
+    "missing": [],
+    "unexpected": [],
+    "duplicate_chapter_ids": []
+  },
+  "chapters": [
+    {
+      "subject_id": "subkultur",
+      "chapter_id": "fellesskap_scener_egenorganisering",
+      "title": "Fellesskap, scener og egenorganisering",
+      "source_path": "data/fagverk/subkultur/fellesskap_scener_egenorganisering.json",
+      "module_source_paths": [
+        "data/fagverk/subkultur/fellesskap_scener_egenorganisering/01-grunnlag.json",
+        "data/fagverk/subkultur/fellesskap_scener_egenorganisering/02-mekanismer.json",
+        "data/fagverk/subkultur/fellesskap_scener_egenorganisering/03-anvendelse.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 13,
+      "concept_term_count": 58,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "subkultur",
+      "chapter_id": "kommersialisering_institusjonalisering_minne",
+      "title": "Kommersialisering, institusjonalisering og minne",
+      "source_path": "data/fagverk/subkultur/kommersialisering_institusjonalisering_minne.json",
+      "module_source_paths": [
+        "data/fagverk/subkultur/kommersialisering_institusjonalisering_minne/01-grunnlag.json",
+        "data/fagverk/subkultur/kommersialisering_institusjonalisering_minne/02-mekanismer.json",
+        "data/fagverk/subkultur/kommersialisering_institusjonalisering_minne/03-anvendelse.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 11,
+      "concept_term_count": 53,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "subkultur",
+      "chapter_id": "medier_objekter_praksiser",
+      "title": "Medier, objekter og praksiser",
+      "source_path": "data/fagverk/subkultur/medier_objekter_praksiser.json",
+      "module_source_paths": [
+        "data/fagverk/subkultur/medier_objekter_praksiser/01-grunnlag.json",
+        "data/fagverk/subkultur/medier_objekter_praksiser/02-mekanismer.json",
+        "data/fagverk/subkultur/medier_objekter_praksiser/03-anvendelse.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 12,
+      "concept_term_count": 56,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "subkultur",
+      "chapter_id": "motstand_avvik_kontroll",
+      "title": "Motstand, avvik og kontroll",
+      "source_path": "data/fagverk/subkultur/motstand_avvik_kontroll.json",
+      "module_source_paths": [
+        "data/fagverk/subkultur/motstand_avvik_kontroll/01-grunnlag.json",
+        "data/fagverk/subkultur/motstand_avvik_kontroll/02-mekanismer.json",
+        "data/fagverk/subkultur/motstand_avvik_kontroll/03-anvendelse.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 11,
+      "concept_term_count": 54,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "subkultur",
+      "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+      "title": "Sosiale randsoner, omsorg og skadereduksjon",
+      "source_path": "data/fagverk/subkultur/sosiale_randsoner_omsorg_skadereduksjon.json",
+      "module_source_paths": [
+        "data/fagverk/subkultur/sosiale_randsoner_omsorg_skadereduksjon/01-grunnlag.json",
+        "data/fagverk/subkultur/sosiale_randsoner_omsorg_skadereduksjon/02-mekanismer.json",
+        "data/fagverk/subkultur/sosiale_randsoner_omsorg_skadereduksjon/03-anvendelse.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 12,
+      "concept_term_count": 55,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "subkultur",
+      "chapter_id": "steder_territorier_okkupering",
+      "title": "Steder, territorier og okkupasjon",
+      "source_path": "data/fagverk/subkultur/steder_territorier_okkupering.json",
+      "module_source_paths": [
+        "data/fagverk/subkultur/steder_territorier_okkupering/01-grunnlag.json",
+        "data/fagverk/subkultur/steder_territorier_okkupering/02-mekanismer.json",
+        "data/fagverk/subkultur/steder_territorier_okkupering/03-anvendelse.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 11,
+      "concept_term_count": 58,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "subkultur",
+      "chapter_id": "stil_symboler_koder_kropp",
+      "title": "Stil, symboler, koder og kropp",
+      "source_path": "data/fagverk/subkultur/stil_symboler_koder_kropp.json",
+      "module_source_paths": [
+        "data/fagverk/subkultur/stil_symboler_koder_kropp/01-grunnlag.json",
+        "data/fagverk/subkultur/stil_symboler_koder_kropp/02-mekanismer.json",
+        "data/fagverk/subkultur/stil_symboler_koder_kropp/03-anvendelse.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 13,
+      "concept_term_count": 59,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "subkultur",
+      "chapter_id": "subkulturteori_feltgrenser",
+      "title": "Subkulturteori og feltgrenser",
+      "source_path": "data/fagverk/subkultur/subkulturteori_feltgrenser.json",
+      "module_source_paths": [
+        "data/fagverk/subkultur/subkulturteori_feltgrenser/01-grunnlag.json",
+        "data/fagverk/subkultur/subkulturteori_feltgrenser/02-mekanismer.json",
+        "data/fagverk/subkultur/subkulturteori_feltgrenser/03-anvendelse.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 11,
+      "concept_term_count": 47,
+      "support_term_count": 48
+    }
+  ],
+  "term_collision_summary": {
+    "total": 64,
+    "high_risk": 40,
+    "medium_risk": 24,
+    "low_risk": 0
+  },
+  "high_risk_terms": [
+    {
+      "term": "alternativ",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "analysen",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "avgrensningen",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "beholdes",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "brukes",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "case",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "denne",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "derfor",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "dokumenteres",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "dokumentert",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "ett",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "forklaring",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "fortsatt",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "før",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "hvilken",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "hvilket",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "konkret",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "materiale",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "mulig",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "oppgi",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "samtidig",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "støtter",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "tolkningen",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "undersøker",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "undersøkes",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "analyserer",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "praksis",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "sosial",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "miljøer",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "uten",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "kontroll",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "men",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "miljø",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "rom",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "adgang",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "bruk",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "krever",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "normer",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "tilgang",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "tilhørighet",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    }
+  ],
+  "term_collisions": [
+    {
+      "term": "alternativ",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "analysen",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "avgrensningen",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "beholdes",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "brukes",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "case",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "denne",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "derfor",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "dokumenteres",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "dokumentert",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "ett",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "forklaring",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "fortsatt",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "før",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "hvilken",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "hvilket",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "konkret",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "materiale",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "mulig",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "oppgi",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "samtidig",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "støtter",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "tolkningen",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "undersøker",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "undersøkes",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "analyserer",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "praksis",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "sosial",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "miljøer",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "uten",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "kontroll",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "men",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "miljø",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "rom",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "adgang",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "bruk",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "krever",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "normer",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "tilgang",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "tilhørighet",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "aktører",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "deltakere",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "gjentatt",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "gjør",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "grenser",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "kollektiv",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "medier",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "omsorg",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "over",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "posisjon",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "praksiser",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "private",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "regulering",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "relasjoner",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "ressurser",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "risiko",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "roller",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "samtykke",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "scene",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "scener",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "subkulturteori_feltgrenser",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "steder",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "steder_territorier_okkupering",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "stil",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "synlighet",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "medier_objekter_praksiser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "motstand_avvik_kontroll",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "tegn",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "kommersialisering_institusjonalisering_minne",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "stil_symboler_koder_kropp",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    }
+  ],
+  "activation_recommendation": "review_required_before_runtime_activation",
+  "gate": {
+    "passed": true,
+    "errors": []
+  }
+}

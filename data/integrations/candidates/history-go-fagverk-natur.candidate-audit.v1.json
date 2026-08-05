@@ -1,0 +1,3909 @@
+{
+  "schema": "aha_fagverk_corpus_audit_v1",
+  "version": "1.0.0",
+  "source_repo": "Paradispartiet/History-Go",
+  "source_ref": "db005a95f2f310aff1ec55c806b9f4c34bcc6156",
+  "registry_version": "2.19.0",
+  "registry_updated_at": "2026-08-04",
+  "subject_filter": [
+    "natur"
+  ],
+  "coverage": {
+    "expected": 11,
+    "registered": 11,
+    "materialized": 11,
+    "missing": [],
+    "unexpected": [],
+    "duplicate_chapter_ids": []
+  },
+  "chapters": [
+    {
+      "subject_id": "natur",
+      "chapter_id": "artskunnskap_systematikk",
+      "title": "Artskunnskap og systematikk",
+      "source_path": "data/fagverk/natur/artskunnskap_systematikk.json",
+      "module_source_paths": [],
+      "module_file_count": 0,
+      "title_term_count": 8,
+      "concept_term_count": 44,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "natur",
+      "chapter_id": "botanikk_vegetasjon",
+      "title": "Botanikk og vegetasjon",
+      "source_path": "data/fagverk/natur/botanikk_vegetasjon.json",
+      "module_source_paths": [],
+      "module_file_count": 0,
+      "title_term_count": 7,
+      "concept_term_count": 44,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "natur",
+      "chapter_id": "evolusjon_biologisk_mangfold",
+      "title": "Evolusjon og biologisk mangfold",
+      "source_path": "data/fagverk/natur/evolusjon_biologisk_mangfold.json",
+      "module_source_paths": [],
+      "module_file_count": 0,
+      "title_term_count": 11,
+      "concept_term_count": 47,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "natur",
+      "chapter_id": "geologi_landskap_tid",
+      "title": "Geologi, landskap og lang tid",
+      "source_path": "data/fagverk/natur/geologi_landskap_tid.json",
+      "module_source_paths": [],
+      "module_file_count": 0,
+      "title_term_count": 11,
+      "concept_term_count": 40,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "natur",
+      "chapter_id": "klima_energi_resiliens",
+      "title": "Klima, energi og resiliens",
+      "source_path": "data/fagverk/natur/klima_energi_resiliens.json",
+      "module_source_paths": [],
+      "module_file_count": 0,
+      "title_term_count": 8,
+      "concept_term_count": 38,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "natur",
+      "chapter_id": "miljopavirkning_forvaltning_regenerasjon",
+      "title": "Miljøpåvirkning, forvaltning og regenerasjon",
+      "source_path": "data/fagverk/natur/miljopavirkning_forvaltning_regenerasjon.json",
+      "module_source_paths": [],
+      "module_file_count": 0,
+      "title_term_count": 9,
+      "concept_term_count": 41,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "natur",
+      "chapter_id": "okosystem_mangfold_habitat",
+      "title": "Økosystem, mangfold og habitat",
+      "source_path": "data/fagverk/natur/okosystem_mangfold_habitat.json",
+      "module_source_paths": [],
+      "module_file_count": 0,
+      "title_term_count": 8,
+      "concept_term_count": 45,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "natur",
+      "chapter_id": "organismebiologi_fysiologi",
+      "title": "Organismebiologi og fysiologi",
+      "source_path": "data/fagverk/natur/organismebiologi_fysiologi.json",
+      "module_source_paths": [],
+      "module_file_count": 0,
+      "title_term_count": 9,
+      "concept_term_count": 43,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "natur",
+      "chapter_id": "urban_okologi_gronnstruktur",
+      "title": "Urban økologi og grønnstruktur",
+      "source_path": "data/fagverk/natur/urban_okologi_gronnstruktur.json",
+      "module_source_paths": [],
+      "module_file_count": 0,
+      "title_term_count": 10,
+      "concept_term_count": 45,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "natur",
+      "chapter_id": "vann_hydrologi_kretslop",
+      "title": "Vann, hydrologi og kretsløp",
+      "source_path": "data/fagverk/natur/vann_hydrologi_kretslop.json",
+      "module_source_paths": [],
+      "module_file_count": 0,
+      "title_term_count": 8,
+      "concept_term_count": 40,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "natur",
+      "chapter_id": "zoologi_dyreliv",
+      "title": "Zoologi og dyreliv",
+      "source_path": "data/fagverk/natur/zoologi_dyreliv.json",
+      "module_source_paths": [],
+      "module_file_count": 0,
+      "title_term_count": 8,
+      "concept_term_count": 46,
+      "support_term_count": 48
+    }
+  ],
+  "term_collision_summary": {
+    "total": 99,
+    "high_risk": 37,
+    "medium_risk": 53,
+    "low_risk": 9
+  },
+  "high_risk_terms": [
+    {
+      "term": "mens",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "artskunnskap_systematikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "botanikk_vegetasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "evolusjon_biologisk_mangfold",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "geologi_landskap_tid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima_energi_resiliens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okosystem_mangfold_habitat",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "organismebiologi_fysiologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "zoologi_dyreliv",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "men",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "artskunnskap_systematikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "botanikk_vegetasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okosystem_mangfold_habitat",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "organismebiologi_fysiologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urban_okologi_gronnstruktur",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vann_hydrologi_kretslop",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "zoologi_dyreliv",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "derfor",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "artskunnskap_systematikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "geologi_landskap_tid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima_energi_resiliens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okosystem_mangfold_habitat",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urban_okologi_gronnstruktur",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vann_hydrologi_kretslop",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "krever",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "evolusjon_biologisk_mangfold",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "geologi_landskap_tid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima_energi_resiliens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "miljopavirkning_forvaltning_regenerasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okosystem_mangfold_habitat",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "organismebiologi_fysiologi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "både",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "botanikk_vegetasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "geologi_landskap_tid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okosystem_mangfold_habitat",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urban_okologi_gronnstruktur",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vann_hydrologi_kretslop",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "entydig",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "artskunnskap_systematikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "botanikk_vegetasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "evolusjon_biologisk_mangfold",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "organismebiologi_fysiologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "zoologi_dyreliv",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "samme",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "botanikk_vegetasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "evolusjon_biologisk_mangfold",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okosystem_mangfold_habitat",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "organismebiologi_fysiologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vann_hydrologi_kretslop",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "ulike",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "artskunnskap_systematikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima_energi_resiliens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "miljopavirkning_forvaltning_regenerasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urban_okologi_gronnstruktur",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "zoologi_dyreliv",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "vann",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "botanikk_vegetasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "geologi_landskap_tid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "miljopavirkning_forvaltning_regenerasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "organismebiologi_fysiologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vann_hydrologi_kretslop",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "være",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "artskunnskap_systematikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "geologi_landskap_tid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima_energi_resiliens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "miljopavirkning_forvaltning_regenerasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urban_okologi_gronnstruktur",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "arter",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "artskunnskap_systematikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "evolusjon_biologisk_mangfold",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okosystem_mangfold_habitat",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urban_okologi_gronnstruktur",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "data",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "artskunnskap_systematikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "miljopavirkning_forvaltning_regenerasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vann_hydrologi_kretslop",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "zoologi_dyreliv",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "flere",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "miljopavirkning_forvaltning_regenerasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okosystem_mangfold_habitat",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vann_hydrologi_kretslop",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "zoologi_dyreliv",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "når",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "botanikk_vegetasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "evolusjon_biologisk_mangfold",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okosystem_mangfold_habitat",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "zoologi_dyreliv",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "over",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "geologi_landskap_tid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima_energi_resiliens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "organismebiologi_fysiologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urban_okologi_gronnstruktur",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "tid",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "geologi_landskap_tid",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima_energi_resiliens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okosystem_mangfold_habitat",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vann_hydrologi_kretslop",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "art",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "artskunnskap_systematikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okosystem_mangfold_habitat",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urban_okologi_gronnstruktur",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "bare",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "evolusjon_biologisk_mangfold",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "organismebiologi_fysiologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urban_okologi_gronnstruktur",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "beskriver",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "klima_energi_resiliens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "miljopavirkning_forvaltning_regenerasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okosystem_mangfold_habitat",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "drift",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "evolusjon_biologisk_mangfold",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima_energi_resiliens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urban_okologi_gronnstruktur",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "endring",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "evolusjon_biologisk_mangfold",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima_energi_resiliens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "miljopavirkning_forvaltning_regenerasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "energi",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "klima_energi_resiliens",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okosystem_mangfold_habitat",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "organismebiologi_fysiologi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "fare",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "geologi_landskap_tid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima_energi_resiliens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vann_hydrologi_kretslop",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "habitat",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "okosystem_mangfold_habitat",
+          "groups": [
+            "title_terms",
+            "concept_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urban_okologi_gronnstruktur",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vann_hydrologi_kretslop",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "hvem",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "klima_energi_resiliens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "miljopavirkning_forvaltning_regenerasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urban_okologi_gronnstruktur",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "jord",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "geologi_landskap_tid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urban_okologi_gronnstruktur",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vann_hydrologi_kretslop",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "konkret",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "artskunnskap_systematikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "geologi_landskap_tid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "miljopavirkning_forvaltning_regenerasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "mange",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "botanikk_vegetasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okosystem_mangfold_habitat",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "zoologi_dyreliv",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "påvirker",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "geologi_landskap_tid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "organismebiologi_fysiologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urban_okologi_gronnstruktur",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "seg",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "geologi_landskap_tid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okosystem_mangfold_habitat",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vann_hydrologi_kretslop",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "temperatur",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "klima_energi_resiliens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "organismebiologi_fysiologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vann_hydrologi_kretslop",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "tilstand",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "klima_energi_resiliens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "miljopavirkning_forvaltning_regenerasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okosystem_mangfold_habitat",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "usikkerhet",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "artskunnskap_systematikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "evolusjon_biologisk_mangfold",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okosystem_mangfold_habitat",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "uten",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "artskunnskap_systematikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "miljopavirkning_forvaltning_regenerasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "zoologi_dyreliv",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "vegetasjon",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "botanikk_vegetasjon",
+          "groups": [
+            "title_terms",
+            "concept_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima_energi_resiliens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vann_hydrologi_kretslop",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "viser",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "artskunnskap_systematikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "geologi_landskap_tid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima_energi_resiliens",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "vurder",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "klima_energi_resiliens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "miljopavirkning_forvaltning_regenerasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urban_okologi_gronnstruktur",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    }
+  ],
+  "term_collisions": [
+    {
+      "term": "mens",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "artskunnskap_systematikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "botanikk_vegetasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "evolusjon_biologisk_mangfold",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "geologi_landskap_tid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima_energi_resiliens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okosystem_mangfold_habitat",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "organismebiologi_fysiologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "zoologi_dyreliv",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "men",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "artskunnskap_systematikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "botanikk_vegetasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okosystem_mangfold_habitat",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "organismebiologi_fysiologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urban_okologi_gronnstruktur",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vann_hydrologi_kretslop",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "zoologi_dyreliv",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "derfor",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "artskunnskap_systematikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "geologi_landskap_tid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima_energi_resiliens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okosystem_mangfold_habitat",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urban_okologi_gronnstruktur",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vann_hydrologi_kretslop",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "krever",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "evolusjon_biologisk_mangfold",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "geologi_landskap_tid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima_energi_resiliens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "miljopavirkning_forvaltning_regenerasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okosystem_mangfold_habitat",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "organismebiologi_fysiologi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "både",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "botanikk_vegetasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "geologi_landskap_tid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okosystem_mangfold_habitat",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urban_okologi_gronnstruktur",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vann_hydrologi_kretslop",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "entydig",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "artskunnskap_systematikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "botanikk_vegetasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "evolusjon_biologisk_mangfold",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "organismebiologi_fysiologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "zoologi_dyreliv",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "samme",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "botanikk_vegetasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "evolusjon_biologisk_mangfold",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okosystem_mangfold_habitat",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "organismebiologi_fysiologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vann_hydrologi_kretslop",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "ulike",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "artskunnskap_systematikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima_energi_resiliens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "miljopavirkning_forvaltning_regenerasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urban_okologi_gronnstruktur",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "zoologi_dyreliv",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "vann",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "botanikk_vegetasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "geologi_landskap_tid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "miljopavirkning_forvaltning_regenerasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "organismebiologi_fysiologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vann_hydrologi_kretslop",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "være",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "artskunnskap_systematikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "geologi_landskap_tid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima_energi_resiliens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "miljopavirkning_forvaltning_regenerasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urban_okologi_gronnstruktur",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "arter",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "artskunnskap_systematikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "evolusjon_biologisk_mangfold",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okosystem_mangfold_habitat",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urban_okologi_gronnstruktur",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "data",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "artskunnskap_systematikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "miljopavirkning_forvaltning_regenerasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vann_hydrologi_kretslop",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "zoologi_dyreliv",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "flere",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "miljopavirkning_forvaltning_regenerasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okosystem_mangfold_habitat",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vann_hydrologi_kretslop",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "zoologi_dyreliv",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "når",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "botanikk_vegetasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "evolusjon_biologisk_mangfold",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okosystem_mangfold_habitat",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "zoologi_dyreliv",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "over",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "geologi_landskap_tid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima_energi_resiliens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "organismebiologi_fysiologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urban_okologi_gronnstruktur",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "tid",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "geologi_landskap_tid",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima_energi_resiliens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okosystem_mangfold_habitat",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vann_hydrologi_kretslop",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "art",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "artskunnskap_systematikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okosystem_mangfold_habitat",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urban_okologi_gronnstruktur",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "bare",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "evolusjon_biologisk_mangfold",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "organismebiologi_fysiologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urban_okologi_gronnstruktur",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "beskriver",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "klima_energi_resiliens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "miljopavirkning_forvaltning_regenerasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okosystem_mangfold_habitat",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "drift",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "evolusjon_biologisk_mangfold",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima_energi_resiliens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urban_okologi_gronnstruktur",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "endring",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "evolusjon_biologisk_mangfold",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima_energi_resiliens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "miljopavirkning_forvaltning_regenerasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "energi",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "klima_energi_resiliens",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okosystem_mangfold_habitat",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "organismebiologi_fysiologi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "fare",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "geologi_landskap_tid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima_energi_resiliens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vann_hydrologi_kretslop",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "habitat",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "okosystem_mangfold_habitat",
+          "groups": [
+            "title_terms",
+            "concept_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urban_okologi_gronnstruktur",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vann_hydrologi_kretslop",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "hvem",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "klima_energi_resiliens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "miljopavirkning_forvaltning_regenerasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urban_okologi_gronnstruktur",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "jord",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "geologi_landskap_tid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urban_okologi_gronnstruktur",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vann_hydrologi_kretslop",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "konkret",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "artskunnskap_systematikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "geologi_landskap_tid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "miljopavirkning_forvaltning_regenerasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "mange",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "botanikk_vegetasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okosystem_mangfold_habitat",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "zoologi_dyreliv",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "påvirker",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "geologi_landskap_tid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "organismebiologi_fysiologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urban_okologi_gronnstruktur",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "seg",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "geologi_landskap_tid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okosystem_mangfold_habitat",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vann_hydrologi_kretslop",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "temperatur",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "klima_energi_resiliens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "organismebiologi_fysiologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vann_hydrologi_kretslop",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "tilstand",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "klima_energi_resiliens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "miljopavirkning_forvaltning_regenerasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okosystem_mangfold_habitat",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "usikkerhet",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "artskunnskap_systematikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "evolusjon_biologisk_mangfold",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okosystem_mangfold_habitat",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "uten",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "artskunnskap_systematikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "miljopavirkning_forvaltning_regenerasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "zoologi_dyreliv",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "vegetasjon",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "botanikk_vegetasjon",
+          "groups": [
+            "title_terms",
+            "concept_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima_energi_resiliens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vann_hydrologi_kretslop",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "viser",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "artskunnskap_systematikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "geologi_landskap_tid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima_energi_resiliens",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "vurder",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "klima_energi_resiliens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "miljopavirkning_forvaltning_regenerasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urban_okologi_gronnstruktur",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "andre",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "botanikk_vegetasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okosystem_mangfold_habitat",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "barrierer",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "evolusjon_biologisk_mangfold",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urban_okologi_gronnstruktur",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "befruktning",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "botanikk_vegetasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "evolusjon_biologisk_mangfold",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "beskriv",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "geologi_landskap_tid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vann_hydrologi_kretslop",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "biologisk",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "evolusjon_biologisk_mangfold",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okosystem_mangfold_habitat",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "celler",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "botanikk_vegetasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "organismebiologi_fysiologi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "dokumentert",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "artskunnskap_systematikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "miljopavirkning_forvaltning_regenerasjon",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "effekt",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "klima_energi_resiliens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urban_okologi_gronnstruktur",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "egenskaper",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "evolusjon_biologisk_mangfold",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "miljopavirkning_forvaltning_regenerasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "eksponering",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "klima_energi_resiliens",
+          "groups": [
+            "concept_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vann_hydrologi_kretslop",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "erosjon",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "geologi_landskap_tid",
+          "groups": [
+            "concept_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vann_hydrologi_kretslop",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "ett",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "artskunnskap_systematikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "zoologi_dyreliv",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "faktisk",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "organismebiologi_fysiologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "zoologi_dyreliv",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "flytter",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "botanikk_vegetasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "organismebiologi_fysiologi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "forbindelser",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "botanikk_vegetasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okosystem_mangfold_habitat",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "forhold",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "klima_energi_resiliens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vann_hydrologi_kretslop",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "forklaring",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "evolusjon_biologisk_mangfold",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "organismebiologi_fysiologi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "funksjon",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "urban_okologi_gronnstruktur",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "zoologi_dyreliv",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "fysisk",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "klima_energi_resiliens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vann_hydrologi_kretslop",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "før",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "klima_energi_resiliens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "organismebiologi_fysiologi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "genetisk",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "artskunnskap_systematikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "evolusjon_biologisk_mangfold",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "gir",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "botanikk_vegetasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "zoologi_dyreliv",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "historie",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "evolusjon_biologisk_mangfold",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "geologi_landskap_tid",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "hvor",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "organismebiologi_fysiologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vann_hydrologi_kretslop",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "indikatorer",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "miljopavirkning_forvaltning_regenerasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vann_hydrologi_kretslop",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "kjemiske",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "organismebiologi_fysiologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vann_hydrologi_kretslop",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "klima",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "evolusjon_biologisk_mangfold",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima_energi_resiliens",
+          "groups": [
+            "title_terms",
+            "concept_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "landskap",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "geologi_landskap_tid",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "urban_okologi_gronnstruktur",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "landskapet",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "geologi_landskap_tid",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "vann_hydrologi_kretslop",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "mangfold",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "evolusjon_biologisk_mangfold",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okosystem_mangfold_habitat",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "mangler",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "botanikk_vegetasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "zoologi_dyreliv",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "miljø",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "evolusjon_biologisk_mangfold",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "organismebiologi_fysiologi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "mønstre",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "botanikk_vegetasjon",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima_energi_resiliens",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "mål",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "klima_energi_resiliens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "miljopavirkning_forvaltning_regenerasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "natur",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "geologi_landskap_tid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okosystem_mangfold_habitat",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "ofte",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "organismebiologi_fysiologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "zoologi_dyreliv",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "organismer",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "okosystem_mangfold_habitat",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "organismebiologi_fysiologi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "prosesser",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "geologi_landskap_tid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okosystem_mangfold_habitat",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "regulering",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "organismebiologi_fysiologi",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vann_hydrologi_kretslop",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "relevante",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "artskunnskap_systematikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "organismebiologi_fysiologi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "reproduksjon",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "evolusjon_biologisk_mangfold",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "organismebiologi_fysiologi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "resiliens",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "klima_energi_resiliens",
+          "groups": [
+            "title_terms",
+            "concept_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okosystem_mangfold_habitat",
+          "groups": [
+            "concept_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "restaurering",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "miljopavirkning_forvaltning_regenerasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vann_hydrologi_kretslop",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "risiko",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "klima_energi_resiliens",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vann_hydrologi_kretslop",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "sammen",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "vann_hydrologi_kretslop",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "zoologi_dyreliv",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "samtidig",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "geologi_landskap_tid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "miljopavirkning_forvaltning_regenerasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "sediment",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "miljopavirkning_forvaltning_regenerasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vann_hydrologi_kretslop",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "skala",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "klima_energi_resiliens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okosystem_mangfold_habitat",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "sårbarhet",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "klima_energi_resiliens",
+          "groups": [
+            "concept_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vann_hydrologi_kretslop",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "transport",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "geologi_landskap_tid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "organismebiologi_fysiologi",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "trekk",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "artskunnskap_systematikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "botanikk_vegetasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "urban",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "klima_energi_resiliens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urban_okologi_gronnstruktur",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "variasjon",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "evolusjon_biologisk_mangfold",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okosystem_mangfold_habitat",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "en biologisk gruppe kan ordnes som en stige fra enkel til avansert.",
+      "token_count": 6,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "artskunnskap_systematikk",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "botanikk_vegetasjon",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "evolusjon_biologisk_mangfold",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "organismebiologi_fysiologi",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "zoologi_dyreliv",
+          "groups": [
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "low"
+    },
+    {
+      "term": "er ett observert trekk nok for en sikker biologisk konklusjon?",
+      "token_count": 7,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "artskunnskap_systematikk",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "botanikk_vegetasjon",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "evolusjon_biologisk_mangfold",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "organismebiologi_fysiologi",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "zoologi_dyreliv",
+          "groups": [
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "low"
+    },
+    {
+      "term": "et tydelig helhetsinntrykk er det samme som en sikker bestemmelse.",
+      "token_count": 5,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "artskunnskap_systematikk",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "botanikk_vegetasjon",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "evolusjon_biologisk_mangfold",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "organismebiologi_fysiologi",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "zoologi_dyreliv",
+          "groups": [
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "low"
+    },
+    {
+      "term": "grupper er forgreinede utviklingslinjer med ulike funksjonelle løsninger, ikke trinn på én skala.",
+      "token_count": 8,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "artskunnskap_systematikk",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "botanikk_vegetasjon",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "evolusjon_biologisk_mangfold",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "organismebiologi_fysiologi",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "zoologi_dyreliv",
+          "groups": [
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "low"
+    },
+    {
+      "term": "kan en fagmodell erstatte kilden til et konkret funn?",
+      "token_count": 5,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "artskunnskap_systematikk",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "botanikk_vegetasjon",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "evolusjon_biologisk_mangfold",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "organismebiologi_fysiologi",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "zoologi_dyreliv",
+          "groups": [
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "low"
+    },
+    {
+      "term": "nei. objekt, kjennetegn, metode, sammenligningsgrunnlag og usikkerhet må dokumenteres.",
+      "token_count": 7,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "artskunnskap_systematikk",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "botanikk_vegetasjon",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "evolusjon_biologisk_mangfold",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "organismebiologi_fysiologi",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "zoologi_dyreliv",
+          "groups": [
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "low"
+    },
+    {
+      "term": "når et resultat virker plausibelt, er metodeusikkerhet bare en detalj.",
+      "token_count": 7,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "artskunnskap_systematikk",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "botanikk_vegetasjon",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "evolusjon_biologisk_mangfold",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "organismebiologi_fysiologi",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "zoologi_dyreliv",
+          "groups": [
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "low"
+    },
+    {
+      "term": "prøve, innsats, oppdagbarhet, referanser og avgrensning bestemmer hva resultatet faktisk kan støtte.",
+      "token_count": 9,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "artskunnskap_systematikk",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "botanikk_vegetasjon",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "evolusjon_biologisk_mangfold",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "organismebiologi_fysiologi",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "zoologi_dyreliv",
+          "groups": [
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "low"
+    },
+    {
+      "term": "sikkerhet krever diagnostiske trekk, egnet metode og kontroll mot relevante alternativer.",
+      "token_count": 10,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "artskunnskap_systematikk",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "botanikk_vegetasjon",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "evolusjon_biologisk_mangfold",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "organismebiologi_fysiologi",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "zoologi_dyreliv",
+          "groups": [
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "low"
+    }
+  ],
+  "activation_recommendation": "review_required_before_runtime_activation",
+  "gate": {
+    "passed": true,
+    "errors": []
+  }
+}

@@ -1,0 +1,150 @@
+name: AHA History Go Fagverk release sync
+
+on:
+  schedule:
+    - cron: '17 * * * *'
+  repository_dispatch:
+    types: [history-go-fagverk-release]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: aha-history-go-fagverk-release-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    name: Observe History Go Fagverk release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout AHA-EchoNet
+        uses: actions/checkout@v5
+        with:
+          path: aha
+          fetch-depth: 0
+      - name: Checkout History Go main
+        uses: actions/checkout@v5
+        with:
+          repository: Paradispartiet/History-Go
+          ref: main
+          path: history-go
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Verify producer release parity
+        working-directory: history-go
+        run: |
+          node --check scripts/build-fagverk-release-manifest.mjs
+          node scripts/build-fagverk-release-manifest.mjs --check
+      - name: Prepare automation branch from current main
+        working-directory: aha
+        run: |
+          git fetch origin main
+          git fetch origin automation/history-go-fagverk-release:refs/remotes/origin/automation/history-go-fagverk-release || true
+          git checkout -B automation/history-go-fagverk-release origin/main
+      - name: Observe release and build update report
+        working-directory: aha
+        run: node scripts/sync-history-go-fagverk-release.mjs --history-go-root ../history-go
+      - name: Read sync status
+        id: status
+        working-directory: aha
+        run: |
+          echo "changed=$(node -p "require('./artifacts/history-go-fagverk-release-status.json').changed")" >> "$GITHUB_OUTPUT"
+          echo "source_ref=$(node -p "require('./artifacts/history-go-fagverk-release-status.json').source_commit")" >> "$GITHUB_OUTPUT"
+          echo "build_subjects=$(node -p "require('./data/integrations/review/history-go-fagverk-release-update.v1.json').subjects.filter(x => x.status !== 'unchanged' && x.status !== 'removed').map(x => x.subject_id).join(',')")" >> "$GITHUB_OUTPUT"
+          echo "removed_subjects=$(node -p "require('./data/integrations/review/history-go-fagverk-release-update.v1.json').subjects.filter(x => x.status === 'removed').map(x => x.subject_id).join(',')")" >> "$GITHUB_OUTPUT"
+      - name: Remove retired subject candidates
+        if: steps.status.outputs.changed == 'true'
+        working-directory: aha
+        env:
+          REMOVED_SUBJECTS: ${{ steps.status.outputs.removed_subjects }}
+        run: |
+          IFS=',' read -ra SUBJECTS <<< "$REMOVED_SUBJECTS"
+          for subject in "${SUBJECTS[@]}"; do
+            [ -n "$subject" ] || continue
+            rm -f \
+              "data/integrations/candidates/history-go-fagverk-${subject}.candidate.v1.json" \
+              "data/integrations/candidates/history-go-fagverk-${subject}.candidate-audit.v1.json"
+          done
+      - name: Build changed subject candidate corpora
+        if: steps.status.outputs.changed == 'true'
+        working-directory: aha
+        env:
+          BUILD_SUBJECTS: ${{ steps.status.outputs.build_subjects }}
+        run: |
+          mkdir -p data/integrations/candidates
+          IFS=',' read -ra SUBJECTS <<< "$BUILD_SUBJECTS"
+          for subject in "${SUBJECTS[@]}"; do
+            [ -n "$subject" ] || continue
+            node scripts/build-history-go-fagverk-corpus.mjs \
+              --history-go-root ../history-go \
+              --subject "$subject" \
+              --output "data/integrations/candidates/history-go-fagverk-${subject}.candidate.v1.json" \
+              --audit-output "data/integrations/candidates/history-go-fagverk-${subject}.candidate-audit.v1.json"
+          done
+      - name: Verify candidate counts against release
+        if: steps.status.outputs.changed == 'true'
+        working-directory: aha
+        run: |
+          node - <<'NODE'
+          const fs = require('fs');
+          const observed = JSON.parse(fs.readFileSync('data/integrations/history-go-fagverk-release.observed.json', 'utf8'));
+          const report = JSON.parse(fs.readFileSync('data/integrations/review/history-go-fagverk-release-update.v1.json', 'utf8'));
+          for (const change of report.subjects.filter((item) => item.status !== 'unchanged')) {
+            const subjectId = change.subject_id;
+            const corpusPath = `data/integrations/candidates/history-go-fagverk-${subjectId}.candidate.v1.json`;
+            const auditPath = `data/integrations/candidates/history-go-fagverk-${subjectId}.candidate-audit.v1.json`;
+            if (change.status === 'removed') {
+              if (fs.existsSync(corpusPath) || fs.existsSync(auditPath)) throw new Error(`${subjectId}: retired candidate still exists.`);
+              continue;
+            }
+            const corpus = JSON.parse(fs.readFileSync(corpusPath, 'utf8'));
+            const audit = JSON.parse(fs.readFileSync(auditPath, 'utf8'));
+            const expected = observed.subjects[subjectId];
+            if (!expected) throw new Error(`${subjectId}: missing observed subject.`);
+            if (corpus.source_ref !== observed.source_commit) throw new Error(`${subjectId}: source ref mismatch.`);
+            if (corpus.entries.length !== expected.chapter_count) throw new Error(`${subjectId}: expected ${expected.chapter_count} chapters, got ${corpus.entries.length}.`);
+            if (!audit.gate?.passed) throw new Error(`${subjectId}: candidate audit failed: ${(audit.gate?.errors || []).join(' ')}`);
+            const modules = audit.chapters.reduce((sum, chapter) => sum + chapter.module_file_count, 0);
+            if (modules !== expected.module_file_count) throw new Error(`${subjectId}: expected ${expected.module_file_count} modules, got ${modules}.`);
+          }
+          if (report.runtime_activation_allowed !== false || observed.runtime_activation_allowed !== false) throw new Error('Runtime activation boundary failed.');
+          NODE
+      - name: Commit observed release and candidates
+        if: steps.status.outputs.changed == 'true'
+        working-directory: aha
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A \
+            data/integrations/history-go-fagverk-release.observed.json \
+            data/integrations/review/history-go-fagverk-release-update.v1.json \
+            data/integrations/candidates
+          git commit -m "Observe History Go Fagverk release ${{ steps.status.outputs.source_ref }}"
+          git push --force-with-lease origin HEAD:refs/heads/automation/history-go-fagverk-release
+      - name: Create or update review PR
+        if: steps.status.outputs.changed == 'true'
+        working-directory: aha
+        env:
+          GH_TOKEN: ${{ secrets.AHA_FAGVERK_AUTOMATION_TOKEN || github.token }}
+        run: |
+          PR_NUMBER=$(gh pr list --head automation/history-go-fagverk-release --base main --state open --json number --jq '.[0].number // empty')
+          if [ -z "$PR_NUMBER" ]; then
+            gh pr create \
+              --head automation/history-go-fagverk-release \
+              --base main \
+              --title 'Observe updated History Go Fagverk release' \
+              --body-file artifacts/history-go-fagverk-release-pr.md
+          else
+            gh pr edit "$PR_NUMBER" \
+              --title 'Observe updated History Go Fagverk release' \
+              --body-file artifacts/history-go-fagverk-release-pr.md
+          fi
+      - name: No release change
+        if: steps.status.outputs.changed != 'true'
+        run: echo 'AHA already observes the current History Go Fagverk release.'
