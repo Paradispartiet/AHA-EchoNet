@@ -28,6 +28,7 @@ jobs:
         run: |
           python scripts/bootstrap-nature-fagverk-runtime.py
           python scripts/bootstrap-nature-runtime-fix.py
+          python scripts/bootstrap-nature-runtime-evidence-fix.py
 
       - name: Materialize Nature runtime artifacts
         run: node scripts/build-history-go-fagverk-runtime-activation.mjs
@@ -49,11 +50,12 @@ jobs:
 
       - name: Verify exact activation scope
         env:
-          ALLOWED_JSON: '[".github/workflows/aha-fagverk-runtime-activation.yml",".github/workflows/bootstrap-nature-fagverk-runtime.yml","backend/aha_engine/app/engine/fagverk_grounding.py","backend/aha_engine/tests/test_fagverk_grounding.py","backend/aha_engine/tests/test_nature_fagverk_runtime.py","data/integrations/history-go-fagverk-release.approved.json","data/integrations/history-go-fagverk-release.runtime-active.json","data/integrations/runtime/history-go-fagverk-natur.corpus.v1.json","data/integrations/runtime/history-go-fagverk-natur.policy.v1.json","data/integrations/runtime/history-go-fagverk-runtime-registry.v1.json","docs/AHA_NATURE_FAGVERK_RUNTIME_V1.md","scripts/bootstrap-nature-fagverk-runtime.py","scripts/bootstrap-nature-runtime-fix.py","scripts/build-history-go-fagverk-runtime-activation.mjs","tests/aha-fagverk-runtime-activation.test.cjs","tests/aha-fagverk-subject-approvals.test.cjs"]'
+          ALLOWED_JSON: '[".github/workflows/aha-fagverk-runtime-activation.yml",".github/workflows/bootstrap-nature-fagverk-runtime.yml","backend/aha_engine/app/engine/fagverk_grounding.py","backend/aha_engine/tests/test_fagverk_grounding.py","backend/aha_engine/tests/test_nature_fagverk_runtime.py","data/evaluation/aha-fagverk-grounding-cases.v1.json","data/integrations/history-go-fagverk-release.approved.json","data/integrations/history-go-fagverk-release.runtime-active.json","data/integrations/runtime/history-go-fagverk-natur.corpus.v1.json","data/integrations/runtime/history-go-fagverk-natur.policy.v1.json","data/integrations/runtime/history-go-fagverk-runtime-registry.v1.json","docs/AHA_NATURE_FAGVERK_RUNTIME_V1.md","scripts/bootstrap-nature-fagverk-runtime.py","scripts/bootstrap-nature-runtime-evidence-fix.py","scripts/bootstrap-nature-runtime-fix.py","scripts/build-history-go-fagverk-runtime-activation.mjs","tests/aha-fagverk-runtime-activation.test.cjs","tests/aha-fagverk-subject-approvals.test.cjs"]'
         run: |
           rm .github/workflows/bootstrap-nature-fagverk-runtime.yml
           rm scripts/bootstrap-nature-fagverk-runtime.py
           rm scripts/bootstrap-nature-runtime-fix.py
+          rm scripts/bootstrap-nature-runtime-evidence-fix.py
           node - <<'NODE'
           const { execFileSync } = require("child_process");
           const allowed = new Set(JSON.parse(process.env.ALLOWED_JSON));
