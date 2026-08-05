@@ -1,0 +1,12 @@
+{
+  "name": "AHA-EchoNet",
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "containerEnv": {
+    "NODE_EXTRA_CA_CERTS": "/etc/ssl/certs/ca-certificates.crt",
+    "SSL_CERT_FILE": "/etc/ssl/certs/ca-certificates.crt",
+    "PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT": "180000"
+  },
+  "postCreateCommand": "bash .devcontainer/setup-tools.sh"
+}
