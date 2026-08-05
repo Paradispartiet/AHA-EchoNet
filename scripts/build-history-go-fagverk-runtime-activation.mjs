@@ -95,7 +95,8 @@ function buildRuntimePolicy(config, approval, candidate, reviewPolicy) {
   if (reviewPolicy.source_ref !== approval.source_ref) throw new Error(`${config.subject_id}: review policy source is not approved.`);
   if (reviewPolicy.corpus_sha256 !== candidate.content_sha256) throw new Error(`${config.subject_id}: review policy corpus digest mismatch.`);
   if (reviewPolicy.status !== "review_policy_full_fixture_candidate_not_runtime_active") throw new Error(`${config.subject_id}: review policy has unexpected status.`);
-  if (reviewPolicy.activation_allowed !== false) throw new Error(`${config.subject_id}: review policy must remain non-runtime before materialization.`);
+  const reviewRuntimeAllowed = reviewPolicy.runtime_activation_allowed ?? reviewPolicy.activation_allowed;
+  if (reviewRuntimeAllowed !== false) throw new Error(`${config.subject_id}: review policy must remain non-runtime before materialization.`);
   const sourcePolicyPayload = { ...reviewPolicy };
   return withDigest({
     schema: "aha_history_go_fagverk_runtime_subject_policy_v1",
@@ -117,6 +118,7 @@ function buildRuntimePolicy(config, approval, candidate, reviewPolicy) {
     policy_rules: reviewPolicy.policy_rules,
     global_non_scoring_terms: reviewPolicy.global_non_scoring_terms,
     ...(reviewPolicy.temporal_gate ? { temporal_gate: reviewPolicy.temporal_gate } : {}),
+    ...(reviewPolicy.domain_gate ? { domain_gate: reviewPolicy.domain_gate } : {}),
     chapter_rules: reviewPolicy.chapter_rules,
     terms: reviewPolicy.terms,
     approval_path: config.approval_path,

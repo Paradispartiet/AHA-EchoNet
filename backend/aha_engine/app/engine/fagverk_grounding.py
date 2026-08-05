@@ -141,6 +141,13 @@ def _policy_entry_score(
         contributions.append((term, round(contribution, 3)))
         score += contribution
 
+    domain_gate = policy.get("domain_gate") or {}
+    domain_required = domain_gate.get("required") is True
+    domain_terms = [_normalize(term) for term in domain_gate.get("terms", []) if _normalize(term)]
+    domain_eligible = not domain_required or any(
+        _policy_term_present(message, tokens, term) for term in domain_terms
+    )
+
     temporal_gate = policy.get("temporal_gate") or {}
     temporal_required = temporal_gate.get("required") is True
     temporal_terms = [_normalize(term) for term in temporal_gate.get("terms", []) if _normalize(term)]
@@ -155,7 +162,7 @@ def _policy_entry_score(
     required_anchors = [_normalize(term) for term in rule.get("required_anchor_terms", []) if _normalize(term)]
     matched_anchors = [term for term in required_anchors if _policy_term_present(message, tokens, term)]
     anchor_eligible = not required_anchors or bool(matched_anchors)
-    eligible = temporal_eligible and anchor_eligible
+    eligible = domain_eligible and temporal_eligible and anchor_eligible
     contributions.sort(key=lambda item: (-item[1], item[0]))
     return round(score, 3), tuple(term for term, _ in contributions), eligible
 

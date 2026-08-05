@@ -27,10 +27,10 @@ const registry = JSON.parse(fs.readFileSync(registryPath, 'utf8'));
 const legacy = JSON.parse(fs.readFileSync(legacyCorpusPath, 'utf8'));
 const approved = JSON.parse(fs.readFileSync(approvedPath, 'utf8'));
 const active = JSON.parse(fs.readFileSync(activePath, 'utf8'));
-const subjectIds = Object.keys(registry.active_subjects);
+const subjectIds = Object.keys(registry.active_subjects).sort();
 
 assert.equal(registry.schema, 'aha_history_go_fagverk_runtime_registry_v1');
-assert.deepEqual(subjectIds, ['historie', 'politikk']);
+assert.deepEqual(subjectIds, ['historie', 'natur', 'politikk']);
 assert.equal(legacy.entries.length, 3, 'legacy seed must remain byte-stable and separate');
 assert.deepEqual(Object.keys(approved.approved_subjects), subjectIds);
 assert.deepEqual(Object.keys(active.active_subjects), subjectIds);
@@ -40,6 +40,12 @@ const expected = {
     sourceRef: 'c16a187453d16a40f9cab4ca694c32e96014f31b',
     corpusSha: 'e5123cb96d9b89c83aad56efc327c1089bfe5f887f29322d39a4a936c9f19444',
     chapterCount: 23,
+    thresholds: { minimum_score: 7, minimum_terms: 2, ambiguity_margin: 3 },
+  },
+  natur: {
+    sourceRef: 'c16a187453d16a40f9cab4ca694c32e96014f31b',
+    corpusSha: 'd29f05a0b08fd5673e4bc0d320e896e4f75ec67ff217284188d0e77bed14b00e',
+    chapterCount: 11,
     thresholds: { minimum_score: 7, minimum_terms: 2, ambiguity_margin: 3 },
   },
   politikk: {
@@ -79,9 +85,17 @@ for (const subjectId of subjectIds) {
     assert.equal(policy.temporal_gate.required, true);
     assert.equal(Array.isArray(policy.temporal_gate.terms), true);
     assert.equal(policy.temporal_gate.terms.includes('over tid'), true);
+    assert.equal(policy.domain_gate, undefined);
     assert.equal(Object.keys(policy.chapter_rules).length, 23);
+  } else if (subjectId === 'natur') {
+    assert.equal(policy.temporal_gate, undefined);
+    assert.equal(policy.domain_gate.required, true);
+    assert.equal(policy.domain_gate.terms.includes('artsbestemmelse'), true);
+    assert.equal(policy.domain_gate.terms.includes('hydrologi'), true);
+    assert.equal(Object.keys(policy.chapter_rules).length, 11);
   } else {
     assert.equal(policy.temporal_gate, undefined);
+    assert.equal(policy.domain_gate, undefined);
     assert.equal(policy.chapter_rules.parlamentarisme.required_anchor_terms.includes('mistillit'), true);
   }
 
@@ -103,7 +117,7 @@ assert.equal(approved.artifact_sha256, digestArtifact(approved));
 assert.equal(active.schema, 'aha_history_go_fagverk_runtime_active_v2');
 assert.equal(active.status, 'partial_subject_runtime_active');
 assert.equal(active.active_source_commit, legacy.source_ref);
-assert.equal(active.effective_entry_count, 37);
+assert.equal(active.effective_entry_count, 47);
 assert.equal(active.full_release_active, false);
 assert.equal(active.artifact_sha256, digestArtifact(active));
 
@@ -113,6 +127,7 @@ assert.equal(runtimeCode.includes('data/integrations/approvals'), false);
 assert.equal(runtimeCode.includes('history-go-fagverk-release.runtime-active.json'), true);
 assert.equal(runtimeCode.includes('subject_policies'), true);
 assert.equal(runtimeCode.includes('temporal_gate'), true);
+assert.equal(runtimeCode.includes('domain_gate'), true);
 
 const outputRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'aha-fagverk-runtime-'));
 const result = spawnSync(process.execPath, [

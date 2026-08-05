@@ -15,6 +15,7 @@
     ],
     "overridden_subject_ids": [
       "historie",
+      "natur",
       "politikk"
     ]
   },
@@ -32,6 +33,19 @@
       "scoring_mode": "subject_policy_v1",
       "activation_status": "runtime_subject_active"
     },
+    "natur": {
+      "subject_id": "natur",
+      "source_commit": "c16a187453d16a40f9cab4ca694c32e96014f31b",
+      "subject_approval_path": "data/integrations/approvals/history-go-fagverk-natur.approved.v1.json",
+      "corpus_path": "data/integrations/runtime/history-go-fagverk-natur.corpus.v1.json",
+      "corpus_sha256": "d29f05a0b08fd5673e4bc0d320e896e4f75ec67ff217284188d0e77bed14b00e",
+      "corpus_artifact_sha256": "85eb39a76b655c8b5a5124cac17c00d9eed09c9d55adbc9b4a207fc1eccf91c9",
+      "policy_path": "data/integrations/runtime/history-go-fagverk-natur.policy.v1.json",
+      "policy_artifact_sha256": "8a8297d4635680f452dee1da62ac0ec0415969aee2f359339df8bb5f5614765e",
+      "chapter_count": 11,
+      "scoring_mode": "subject_policy_v1",
+      "activation_status": "runtime_subject_active"
+    },
     "politikk": {
       "subject_id": "politikk",
       "source_commit": "c16a187453d16a40f9cab4ca694c32e96014f31b",
@@ -46,7 +60,7 @@
       "activation_status": "runtime_subject_active"
     }
   },
-  "effective_entry_count": 37,
+  "effective_entry_count": 47,
   "full_release_active": false,
   "activation_rules": {
     "active_subjects_override_legacy_subject_entries": true,
@@ -55,5 +69,5 @@
     "no_runtime_network_fetch": true,
     "no_history_go_writeback": true
   },
-  "artifact_sha256": "e00189e2736b7739a5c110abef3d59c98c262b66b0a076427dfca7a6e5f2154d"
+  "artifact_sha256": "058e000f4ec20777a1b9d47816453ec6980dba7962af61c447af709b42b6cfcd"
 }
