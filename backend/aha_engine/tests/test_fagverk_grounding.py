@@ -8,14 +8,40 @@ from app.schemas import AnalyzeRequest
 
 ROOT = Path(__file__).resolve().parents[3]
 EVALUATION_PATH = ROOT / "data" / "evaluation" / "aha-fagverk-grounding-cases.v1.json"
+POLITICS_MATRIX_PATH = ROOT / "data" / "evaluation" / "aha-politics-fagverk-evaluation-matrix.v1.json"
+POLITICS_CORRECTIONS_PATH = ROOT / "data" / "evaluation" / "aha-politics-fixture-corrections.v1.json"
+ACTIVE_MANIFEST_PATH = ROOT / "data" / "integrations" / "history-go-fagverk-release.runtime-active.json"
 
 
 def test_corpus_schema_and_provenance() -> None:
     corpus = load_fagverk_corpus()
     assert corpus["schema"] == "aha_history_go_fagverk_corpus_v1"
+    assert corpus["version"] == "2.0.0"
+    assert corpus["status"] == "composed_partial_subject_runtime_corpus"
     assert corpus["source_repo"] == "Paradispartiet/History-Go"
     assert corpus["source_ref"]
+    assert len(corpus["entries"]) == 15
     assert all(entry.get("source_path") for entry in corpus["entries"])
+    politics_entries = [entry for entry in corpus["entries"] if entry["subject_id"] == "politikk"]
+    assert len(politics_entries) == 13
+    assert len({entry["chapter_id"] for entry in politics_entries}) == 13
+    assert "politikk" in corpus["subject_policies"]
+
+
+def test_runtime_manifest_uses_materialized_subject_artifacts_only() -> None:
+    manifest = json.loads(ACTIVE_MANIFEST_PATH.read_text(encoding="utf-8"))
+    assert manifest["schema"] == "aha_history_go_fagverk_runtime_active_v2"
+    assert manifest["status"] == "partial_subject_runtime_active"
+    assert manifest["effective_entry_count"] == 15
+    politics = manifest["active_subjects"]["politikk"]
+    assert politics["chapter_count"] == 13
+    assert politics["source_commit"] == "c16a187453d16a40f9cab4ca694c32e96014f31b"
+    assert politics["corpus_path"].startswith("data/integrations/runtime/")
+    assert politics["policy_path"].startswith("data/integrations/runtime/")
+    assert "/review/" not in politics["corpus_path"]
+    assert "/review/" not in politics["policy_path"]
+    assert "/approvals/" not in politics["corpus_path"]
+    assert "/approvals/" not in politics["policy_path"]
 
 
 def test_grounding_evaluation_cases() -> None:
@@ -28,6 +54,40 @@ def test_grounding_evaluation_cases() -> None:
             assert match["subject_id"] == case["expected_subject_id"], (case["id"], result)
             assert match["chapter_id"] == case["expected_chapter_id"], (case["id"], result)
             assert len(match["matched_terms"]) >= 2
+
+
+def test_all_reviewed_politics_matrix_cases_pass_in_python_runtime() -> None:
+    matrix = json.loads(POLITICS_MATRIX_PATH.read_text(encoding="utf-8"))
+    cases = [
+        *(dict(item, kind="positive") for item in matrix["positive_cases"]),
+        *(dict(item, kind="confusion") for item in matrix["confusion_cases"]),
+        *(dict(item, kind="ambiguity") for item in matrix["ambiguity_cases"]),
+    ]
+    assert len(cases) == 34
+    for case in cases:
+        result = ground_message(case["text"])
+        if case["kind"] == "ambiguity":
+            assert result["status"] in case["allowed_statuses"], (case["id"], result)
+            continue
+        assert result["status"] == case["expected_status"], (case["id"], result)
+        assert result["match"]["subject_id"] == "politikk", (case["id"], result)
+        assert result["match"]["chapter_id"] == case["expected_chapter_id"], (case["id"], result)
+        assert result["match"]["scoring_mode"] == "subject_policy_v1"
+        assert result["match"]["chapter_id"] not in case.get("forbidden_chapter_ids", [])
+
+
+def test_all_reviewed_fixture_corrections_pass_in_python_runtime() -> None:
+    corrections = json.loads(POLITICS_CORRECTIONS_PATH.read_text(encoding="utf-8"))
+    assert len(corrections["cases"]) == 16
+    for correction in corrections["cases"]:
+        fixture = json.loads((ROOT / correction["fixture_path"]).read_text(encoding="utf-8"))
+        result = ground_message(fixture["inputText"])
+        expected_status = correction["expected_politics_status"]
+        assert result["status"] == expected_status, (correction["id"], result)
+        if expected_status == "grounded":
+            assert result["match"]["subject_id"] == "politikk", (correction["id"], result)
+            assert result["match"]["chapter_id"] == correction["expected_chapter_id"], (correction["id"], result)
+            assert result["match"]["chapter_id"] not in correction.get("forbidden_chapter_ids", [])
 
 
 def test_grounded_analysis_replaces_generic_canned_fallback() -> None:
