@@ -1,0 +1,79 @@
+{
+  "schema": "aha_history_go_fagverk_subject_approval_v1",
+  "version": "1.0.0",
+  "status": "subject_review_approved_not_runtime_active",
+  "lifecycle_stage": "subject_approval",
+  "subject_id": "natur",
+  "source_repo": "Paradispartiet/History-Go",
+  "source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
+  "observed_release_sha256": "21cec482d0bde5423cef0bd836dc2b6b8fa4445226bd2ab8df1b44eaefccd627",
+  "candidate": {
+    "path": "data/integrations/candidates/history-go-fagverk-natur.candidate.v1.json",
+    "corpus_sha256": "d29f05a0b08fd5673e4bc0d320e896e4f75ec67ff217284188d0e77bed14b00e",
+    "chapter_count": 11
+  },
+  "reviewed_corpus": {
+    "path": "data/integrations/candidates/history-go-fagverk-natur.candidate.v1.json",
+    "corpus_sha256": "d29f05a0b08fd5673e4bc0d320e896e4f75ec67ff217284188d0e77bed14b00e",
+    "chapter_count": 11
+  },
+  "gate_summary": {
+    "total": 5,
+    "passed": 5,
+    "failed": 0
+  },
+  "gates": [
+    {
+      "id": "corpus_audit",
+      "path": "data/integrations/candidates/history-go-fagverk-natur.candidate-audit.v1.json",
+      "status_field": "gate.passed",
+      "status": true,
+      "expected_status": true,
+      "passed": true,
+      "errors": []
+    },
+    {
+      "id": "subject_expansion",
+      "path": "data/integrations/review/history-go-fagverk-natur.expansion-review.v1.json",
+      "status_field": "status",
+      "status": "reviewed_subject_expansion_not_runtime_active",
+      "expected_status": "reviewed_subject_expansion_not_runtime_active",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "id": "term_policy",
+      "path": "data/integrations/review/history-go-fagverk-natur.term-policy.v1.json",
+      "status_field": "status",
+      "status": "review_policy_full_fixture_candidate_not_runtime_active",
+      "expected_status": "review_policy_full_fixture_candidate_not_runtime_active",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "id": "evaluation",
+      "path": "data/evaluation/aha-nature-fagverk-evaluation-report.v1.json",
+      "status_field": "status",
+      "status": "passed_review_gate",
+      "expected_status": "passed_review_gate",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "id": "fixture_corrections",
+      "path": "data/evaluation/aha-nature-fixture-correction-report.v1.json",
+      "status_field": "status",
+      "status": "passed_correction_gate",
+      "expected_status": "passed_correction_gate",
+      "passed": true,
+      "errors": []
+    }
+  ],
+  "errors": [],
+  "approval_scope": "subject_review_artifacts_only",
+  "approval_required_for_runtime": true,
+  "runtime_activation_allowed": false,
+  "runtime_approved_pointer_changed": false,
+  "runtime_active_pointer_changed": false,
+  "explicit_runtime_activation_pull_request_required": true
+}

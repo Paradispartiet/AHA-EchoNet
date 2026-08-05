@@ -1,6 +1,6 @@
 {
   "schema": "aha_history_go_fagverk_subject_approval_registry_v1",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "status": "review_gate_registry_not_runtime_input",
   "subjects": {
     "historie": {
@@ -95,6 +95,107 @@
             "summary.validation_errors": 0,
             "summary.grounded": 4,
             "summary.unsupported": 12,
+            "summary.ambiguous": 0
+          }
+        }
+      ]
+    },
+    "natur": {
+      "subject_id": "natur",
+      "approval_path": "data/integrations/approvals/history-go-fagverk-natur.approved.v1.json",
+      "candidate": {
+        "path": "data/integrations/candidates/history-go-fagverk-natur.candidate.v1.json",
+        "source_ref_field": "source_ref",
+        "digest_field": "content_sha256"
+      },
+      "review_corpus": {
+        "path": "data/integrations/candidates/history-go-fagverk-natur.candidate.v1.json",
+        "source_ref_field": "source_ref",
+        "digest_field": "content_sha256"
+      },
+      "gates": [
+        {
+          "id": "corpus_audit",
+          "path": "data/integrations/candidates/history-go-fagverk-natur.candidate-audit.v1.json",
+          "status_field": "gate.passed",
+          "expected_status": true,
+          "source_ref_field": "source_ref"
+        },
+        {
+          "id": "subject_expansion",
+          "path": "data/integrations/review/history-go-fagverk-natur.expansion-review.v1.json",
+          "status_field": "status",
+          "expected_status": "reviewed_subject_expansion_not_runtime_active",
+          "source_ref_field": "candidate.source_ref",
+          "digest_field": "candidate.corpus_sha256",
+          "approval_field": "approval_required",
+          "expected_approval": true,
+          "runtime_field": "runtime_activation_allowed",
+          "expected_runtime": false,
+          "summary_expectations": {
+            "baseline.chapter_count": 1,
+            "candidate.chapter_count": 11,
+            "candidate.module_file_count": 0,
+            "delta.retained_chapter_count": 1,
+            "delta.added_chapter_count": 10,
+            "delta.removed_chapter_count": 0,
+            "materialization_assessment.chapter_contract_sufficient_for_subject_review": true,
+            "materialization_assessment.module_absence_is_visible_review_debt": true
+          }
+        },
+        {
+          "id": "term_policy",
+          "path": "data/integrations/review/history-go-fagverk-natur.term-policy.v1.json",
+          "status_field": "status",
+          "expected_status": "review_policy_full_fixture_candidate_not_runtime_active",
+          "source_ref_field": "source_ref",
+          "digest_field": "corpus_sha256",
+          "approval_field": "approval_required",
+          "expected_approval": true,
+          "runtime_field": "runtime_activation_allowed",
+          "expected_runtime": false,
+          "summary_expectations": {
+            "summary.total": 99,
+            "summary.risks.high": 37,
+            "summary.risks.medium": 53,
+            "summary.risks.low": 9,
+            "summary.chapter_count": 11,
+            "summary.module_file_count": 0
+          }
+        },
+        {
+          "id": "evaluation",
+          "path": "data/evaluation/aha-nature-fagverk-evaluation-report.v1.json",
+          "status_field": "status",
+          "expected_status": "passed_review_gate",
+          "source_ref_field": "source_ref",
+          "digest_field": "corpus_sha256",
+          "runtime_field": "runtime_activation_allowed",
+          "expected_runtime": false,
+          "summary_expectations": {
+            "summary.total": 34,
+            "summary.passed": 34,
+            "summary.failed": 0,
+            "summary.chapters_covered": 11,
+            "summary.evidence_errors": 0
+          }
+        },
+        {
+          "id": "fixture_corrections",
+          "path": "data/evaluation/aha-nature-fixture-correction-report.v1.json",
+          "status_field": "status",
+          "expected_status": "passed_correction_gate",
+          "source_ref_field": "source_ref",
+          "digest_field": "corpus_sha256",
+          "runtime_field": "runtime_activation_allowed",
+          "expected_runtime": false,
+          "summary_expectations": {
+            "summary.total": 16,
+            "summary.passed": 16,
+            "summary.failed": 0,
+            "summary.validation_errors": 0,
+            "summary.grounded": 0,
+            "summary.unsupported": 16,
             "summary.ambiguous": 0
           }
         }

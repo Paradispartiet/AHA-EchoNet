@@ -1,0 +1,57 @@
+{
+  "schema": "aha_nature_fagverk_expansion_review_v1",
+  "version": "1.0.0",
+  "status": "reviewed_subject_expansion_not_runtime_active",
+  "lifecycle_stage": "subject_release_review",
+  "subject_id": "natur",
+  "source_repo": "Paradispartiet/History-Go",
+  "baseline": {
+    "source_ref": "9e9644e83998ff715005bf80c96cde6193107c13",
+    "corpus_path": "data/integrations/history-go-fagverk-corpus.v1.json",
+    "chapter_count": 1,
+    "chapter_ids": [
+      "okosystem_mangfold_habitat"
+    ]
+  },
+  "candidate": {
+    "source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
+    "corpus_path": "data/integrations/candidates/history-go-fagverk-natur.candidate.v1.json",
+    "corpus_sha256": "d29f05a0b08fd5673e4bc0d320e896e4f75ec67ff217284188d0e77bed14b00e",
+    "chapter_count": 11,
+    "module_file_count": 0
+  },
+  "delta": {
+    "retained_chapter_count": 1,
+    "added_chapter_count": 10,
+    "removed_chapter_count": 0,
+    "retained_chapter_ids": [
+      "okosystem_mangfold_habitat"
+    ],
+    "added_chapter_ids": [
+      "artskunnskap_systematikk",
+      "botanikk_vegetasjon",
+      "evolusjon_biologisk_mangfold",
+      "geologi_landskap_tid",
+      "klima_energi_resiliens",
+      "miljopavirkning_forvaltning_regenerasjon",
+      "organismebiologi_fysiologi",
+      "urban_okologi_gronnstruktur",
+      "vann_hydrologi_kretslop",
+      "zoologi_dyreliv"
+    ],
+    "removed_chapter_ids": [],
+    "source_ref_changed": true,
+    "semantic_expansion": true
+  },
+  "materialization_assessment": {
+    "chapter_contract_sufficient_for_subject_review": true,
+    "module_files_required_before_subject_review": false,
+    "module_file_count": 0,
+    "module_absence_is_visible_review_debt": true,
+    "runtime_activation_requires_separate_pull_request": true
+  },
+  "review_finding": "Nature expands from one legacy ecosystem seed to the complete 11-chapter registered subject. The canonical chapter files are sufficient for subject review, while the absence of separate module files remains explicit and runtime activation requires a separate pull request.",
+  "approval_required": true,
+  "runtime_activation_allowed": false,
+  "explicit_runtime_activation_pull_request_required": true
+}

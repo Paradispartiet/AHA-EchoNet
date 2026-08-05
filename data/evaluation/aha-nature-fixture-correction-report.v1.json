@@ -1,0 +1,1463 @@
+{
+  "schema": "aha_nature_fixture_correction_report_v1",
+  "version": "1.0.0",
+  "source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
+  "corpus_sha256": "d29f05a0b08fd5673e4bc0d320e896e4f75ec67ff217284188d0e77bed14b00e",
+  "policy_version": "1.0.0",
+  "status": "passed_correction_gate",
+  "runtime_activation_allowed": false,
+  "summary": {
+    "total": 16,
+    "passed": 16,
+    "failed": 0,
+    "validation_errors": 0,
+    "grounded": 0,
+    "unsupported": 16,
+    "ambiguous": 0
+  },
+  "validation_errors": [],
+  "failures": [],
+  "cases": [
+    {
+      "id": "nature-fixture-01",
+      "fixture_path": "docs/fixtures/aha-analysis/01-pinse-religion.json",
+      "passed": true,
+      "errors": [],
+      "expected_nature_status": "unsupported",
+      "expected_chapter_id": null,
+      "result": {
+        "status": "unsupported",
+        "selected_chapter_id": null,
+        "top_score": 0,
+        "second_score": 0,
+        "domain_evidence": {
+          "matched_terms": [],
+          "eligible": false
+        },
+        "ranking": [
+          {
+            "chapter_id": "organismebiologi_fysiologi",
+            "title": "Organismebiologi og fysiologi",
+            "score": 3,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "bevegelse",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              },
+              {
+                "term": "ofte",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "geologi_landskap_tid",
+            "title": "Geologi, landskap og lang tid",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "hvorfor",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "zoologi_dyreliv",
+            "title": "Zoologi og dyreliv",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "ofte",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "artskunnskap_systematikk",
+            "title": "Artskunnskap og systematikk",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "botanikk_vegetasjon",
+            "title": "Botanikk og vegetasjon",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "nature-fixture-02",
+      "fixture_path": "docs/fixtures/aha-analysis/02-morgenbladet-mediehistorie.json",
+      "passed": true,
+      "errors": [],
+      "expected_nature_status": "unsupported",
+      "expected_chapter_id": null,
+      "result": {
+        "status": "unsupported",
+        "selected_chapter_id": null,
+        "top_score": 0,
+        "second_score": 0,
+        "domain_evidence": {
+          "matched_terms": [],
+          "eligible": false
+        },
+        "ranking": [
+          {
+            "chapter_id": "zoologi_dyreliv",
+            "title": "Zoologi og dyreliv",
+            "score": 3,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "ofte",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              },
+              {
+                "term": "tydelig",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "organismebiologi_fysiologi",
+            "title": "Organismebiologi og fysiologi",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "ofte",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "artskunnskap_systematikk",
+            "title": "Artskunnskap og systematikk",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "botanikk_vegetasjon",
+            "title": "Botanikk og vegetasjon",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "evolusjon_biologisk_mangfold",
+            "title": "Evolusjon og biologisk mangfold",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "nature-fixture-03",
+      "fixture_path": "docs/fixtures/aha-analysis/03-nav-reformen-forvaltning.json",
+      "passed": true,
+      "errors": [],
+      "expected_nature_status": "unsupported",
+      "expected_chapter_id": null,
+      "result": {
+        "status": "unsupported",
+        "selected_chapter_id": null,
+        "top_score": 0,
+        "second_score": 0,
+        "domain_evidence": {
+          "matched_terms": [],
+          "eligible": false
+        },
+        "ranking": [
+          {
+            "chapter_id": "miljopavirkning_forvaltning_regenerasjon",
+            "title": "Miljøpåvirkning, forvaltning og regenerasjon",
+            "score": 3,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "mål",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              },
+              {
+                "term": "samtidig",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "artskunnskap_systematikk",
+            "title": "Artskunnskap og systematikk",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "ett",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "geologi_landskap_tid",
+            "title": "Geologi, landskap og lang tid",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "samtidig",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "klima_energi_resiliens",
+            "title": "Klima, energi og resiliens",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "mål",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "zoologi_dyreliv",
+            "title": "Zoologi og dyreliv",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "ett",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "nature-fixture-04",
+      "fixture_path": "docs/fixtures/aha-analysis/04-litteraer-tilknytningsteori.json",
+      "passed": true,
+      "errors": [],
+      "expected_nature_status": "unsupported",
+      "expected_chapter_id": null,
+      "result": {
+        "status": "unsupported",
+        "selected_chapter_id": null,
+        "top_score": 0,
+        "second_score": 0,
+        "domain_evidence": {
+          "matched_terms": [],
+          "eligible": false
+        },
+        "ranking": [
+          {
+            "chapter_id": "urban_okologi_gronnstruktur",
+            "title": "Urban økologi og grønnstruktur",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "avstand",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "artskunnskap_systematikk",
+            "title": "Artskunnskap og systematikk",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "botanikk_vegetasjon",
+            "title": "Botanikk og vegetasjon",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "evolusjon_biologisk_mangfold",
+            "title": "Evolusjon og biologisk mangfold",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "geologi_landskap_tid",
+            "title": "Geologi, landskap og lang tid",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "nature-fixture-05",
+      "fixture_path": "docs/fixtures/aha-analysis/05-dagbok-refleksjon.json",
+      "passed": true,
+      "errors": [],
+      "expected_nature_status": "unsupported",
+      "expected_chapter_id": null,
+      "result": {
+        "status": "unsupported",
+        "selected_chapter_id": null,
+        "top_score": 0,
+        "second_score": 0,
+        "domain_evidence": {
+          "matched_terms": [],
+          "eligible": false
+        },
+        "ranking": [
+          {
+            "chapter_id": "miljopavirkning_forvaltning_regenerasjon",
+            "title": "Miljøpåvirkning, forvaltning og regenerasjon",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "alene",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "artskunnskap_systematikk",
+            "title": "Artskunnskap og systematikk",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "botanikk_vegetasjon",
+            "title": "Botanikk og vegetasjon",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "evolusjon_biologisk_mangfold",
+            "title": "Evolusjon og biologisk mangfold",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "geologi_landskap_tid",
+            "title": "Geologi, landskap og lang tid",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "nature-fixture-06",
+      "fixture_path": "docs/fixtures/aha-analysis/06-prosjektplan-teknisk-notat.json",
+      "passed": true,
+      "errors": [],
+      "expected_nature_status": "unsupported",
+      "expected_chapter_id": null,
+      "result": {
+        "status": "unsupported",
+        "selected_chapter_id": null,
+        "top_score": 0,
+        "second_score": 0,
+        "domain_evidence": {
+          "matched_terms": [],
+          "eligible": false
+        },
+        "ranking": [
+          {
+            "chapter_id": "urban_okologi_gronnstruktur",
+            "title": "Urban økologi og grønnstruktur",
+            "score": 3,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "funksjoner",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              },
+              {
+                "term": "tre",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "evolusjon_biologisk_mangfold",
+            "title": "Evolusjon og biologisk mangfold",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "eksisterende",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "geologi_landskap_tid",
+            "title": "Geologi, landskap og lang tid",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "avhenger",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "artskunnskap_systematikk",
+            "title": "Artskunnskap og systematikk",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "botanikk_vegetasjon",
+            "title": "Botanikk og vegetasjon",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "nature-fixture-07",
+      "fixture_path": "docs/fixtures/aha-analysis/07-juridisk-tekst.json",
+      "passed": true,
+      "errors": [],
+      "expected_nature_status": "unsupported",
+      "expected_chapter_id": null,
+      "result": {
+        "status": "unsupported",
+        "selected_chapter_id": null,
+        "top_score": 0,
+        "second_score": 0,
+        "domain_evidence": {
+          "matched_terms": [],
+          "eligible": false
+        },
+        "ranking": [
+          {
+            "chapter_id": "vann_hydrologi_kretslop",
+            "title": "Vann, hydrologi og kretsløp",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "mot",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "artskunnskap_systematikk",
+            "title": "Artskunnskap og systematikk",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "botanikk_vegetasjon",
+            "title": "Botanikk og vegetasjon",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "evolusjon_biologisk_mangfold",
+            "title": "Evolusjon og biologisk mangfold",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "geologi_landskap_tid",
+            "title": "Geologi, landskap og lang tid",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "nature-fixture-08",
+      "fixture_path": "docs/fixtures/aha-analysis/08-uklar-lav-confidence.json",
+      "passed": true,
+      "errors": [],
+      "expected_nature_status": "unsupported",
+      "expected_chapter_id": null,
+      "result": {
+        "status": "unsupported",
+        "selected_chapter_id": null,
+        "top_score": 0,
+        "second_score": 0,
+        "domain_evidence": {
+          "matched_terms": [],
+          "eligible": false
+        },
+        "ranking": [
+          {
+            "chapter_id": "vann_hydrologi_kretslop",
+            "title": "Vann, hydrologi og kretsløp",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "sammen",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "zoologi_dyreliv",
+            "title": "Zoologi og dyreliv",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "sammen",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "artskunnskap_systematikk",
+            "title": "Artskunnskap og systematikk",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "botanikk_vegetasjon",
+            "title": "Botanikk og vegetasjon",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "evolusjon_biologisk_mangfold",
+            "title": "Evolusjon og biologisk mangfold",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "nature-fixture-09",
+      "fixture_path": "docs/fixtures/aha-analysis/09-morgenbladet-offentlighet-kulturkritikk.json",
+      "passed": true,
+      "errors": [],
+      "expected_nature_status": "unsupported",
+      "expected_chapter_id": null,
+      "result": {
+        "status": "unsupported",
+        "selected_chapter_id": null,
+        "top_score": 0,
+        "second_score": 0,
+        "domain_evidence": {
+          "matched_terms": [],
+          "eligible": false
+        },
+        "ranking": [
+          {
+            "chapter_id": "artskunnskap_systematikk",
+            "title": "Artskunnskap og systematikk",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "botanikk_vegetasjon",
+            "title": "Botanikk og vegetasjon",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "evolusjon_biologisk_mangfold",
+            "title": "Evolusjon og biologisk mangfold",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "geologi_landskap_tid",
+            "title": "Geologi, landskap og lang tid",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "klima_energi_resiliens",
+            "title": "Klima, energi og resiliens",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "nature-fixture-10",
+      "fixture_path": "docs/fixtures/aha-analysis/10-nav-reformen-brukermoete.json",
+      "passed": true,
+      "errors": [],
+      "expected_nature_status": "unsupported",
+      "expected_chapter_id": null,
+      "result": {
+        "status": "unsupported",
+        "selected_chapter_id": null,
+        "top_score": 0,
+        "second_score": 0,
+        "domain_evidence": {
+          "matched_terms": [],
+          "eligible": false
+        },
+        "ranking": [
+          {
+            "chapter_id": "okosystem_mangfold_habitat",
+            "title": "Økosystem, mangfold og habitat",
+            "score": 5,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "systemer",
+                "group": "title_terms",
+                "base_weight": 5,
+                "multiplier": 1,
+                "contribution": 5
+              }
+            ]
+          },
+          {
+            "chapter_id": "artskunnskap_systematikk",
+            "title": "Artskunnskap og systematikk",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "ett",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "botanikk_vegetasjon",
+            "title": "Botanikk og vegetasjon",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "støtte",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "miljopavirkning_forvaltning_regenerasjon",
+            "title": "Miljøpåvirkning, forvaltning og regenerasjon",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "ansvar",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "vann_hydrologi_kretslop",
+            "title": "Vann, hydrologi og kretsløp",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "mot",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "nature-fixture-11",
+      "fixture_path": "docs/fixtures/aha-analysis/11-refleksjon-laering-feil-vaner.json",
+      "passed": true,
+      "errors": [],
+      "expected_nature_status": "unsupported",
+      "expected_chapter_id": null,
+      "result": {
+        "status": "unsupported",
+        "selected_chapter_id": null,
+        "top_score": 0,
+        "second_score": 0,
+        "domain_evidence": {
+          "matched_terms": [],
+          "eligible": false
+        },
+        "ranking": [
+          {
+            "chapter_id": "geologi_landskap_tid",
+            "title": "Geologi, landskap og lang tid",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "ned",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "organismebiologi_fysiologi",
+            "title": "Organismebiologi og fysiologi",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "faktisk",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "zoologi_dyreliv",
+            "title": "Zoologi og dyreliv",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "faktisk",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "artskunnskap_systematikk",
+            "title": "Artskunnskap og systematikk",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "botanikk_vegetasjon",
+            "title": "Botanikk og vegetasjon",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "nature-fixture-12",
+      "fixture_path": "docs/fixtures/aha-analysis/12-refleksjon-byrom-uro-konsentrasjon.json",
+      "passed": true,
+      "errors": [],
+      "expected_nature_status": "unsupported",
+      "expected_chapter_id": null,
+      "result": {
+        "status": "unsupported",
+        "selected_chapter_id": null,
+        "top_score": 0,
+        "second_score": 0,
+        "domain_evidence": {
+          "matched_terms": [],
+          "eligible": false
+        },
+        "ranking": [
+          {
+            "chapter_id": "urban_okologi_gronnstruktur",
+            "title": "Urban økologi og grønnstruktur",
+            "score": 5,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "byen",
+                "group": "title_terms",
+                "base_weight": 5,
+                "multiplier": 1,
+                "contribution": 5
+              }
+            ]
+          },
+          {
+            "chapter_id": "miljopavirkning_forvaltning_regenerasjon",
+            "title": "Miljøpåvirkning, forvaltning og regenerasjon",
+            "score": 3,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "alene",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              },
+              {
+                "term": "samtidig",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "vann_hydrologi_kretslop",
+            "title": "Vann, hydrologi og kretsløp",
+            "score": 3,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "hele",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              },
+              {
+                "term": "konsentrasjon",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "geologi_landskap_tid",
+            "title": "Geologi, landskap og lang tid",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "samtidig",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "organismebiologi_fysiologi",
+            "title": "Organismebiologi og fysiologi",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "bevegelse",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "nature-fixture-13",
+      "fixture_path": "docs/fixtures/aha-analysis/13-historygo-eidsvoll-grunnloven.json",
+      "passed": true,
+      "errors": [],
+      "expected_nature_status": "unsupported",
+      "expected_chapter_id": null,
+      "result": {
+        "status": "unsupported",
+        "selected_chapter_id": null,
+        "top_score": 0,
+        "second_score": 0,
+        "domain_evidence": {
+          "matched_terms": [],
+          "eligible": false
+        },
+        "ranking": [
+          {
+            "chapter_id": "organismebiologi_fysiologi",
+            "title": "Organismebiologi og fysiologi",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "ofte",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "zoologi_dyreliv",
+            "title": "Zoologi og dyreliv",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "ofte",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "artskunnskap_systematikk",
+            "title": "Artskunnskap og systematikk",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "botanikk_vegetasjon",
+            "title": "Botanikk og vegetasjon",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "evolusjon_biologisk_mangfold",
+            "title": "Evolusjon og biologisk mangfold",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "nature-fixture-14",
+      "fixture_path": "docs/fixtures/aha-analysis/14-historygo-bislett-byrom-stadion.json",
+      "passed": true,
+      "errors": [],
+      "expected_nature_status": "unsupported",
+      "expected_chapter_id": null,
+      "result": {
+        "status": "unsupported",
+        "selected_chapter_id": null,
+        "top_score": 0,
+        "second_score": 0,
+        "domain_evidence": {
+          "matched_terms": [],
+          "eligible": false
+        },
+        "ranking": [
+          {
+            "chapter_id": "urban_okologi_gronnstruktur",
+            "title": "Urban økologi og grønnstruktur",
+            "score": 5,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "sosialt",
+                "group": "title_terms",
+                "base_weight": 5,
+                "multiplier": 1,
+                "contribution": 5
+              }
+            ]
+          },
+          {
+            "chapter_id": "zoologi_dyreliv",
+            "title": "Zoologi og dyreliv",
+            "score": 3,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "ett",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              },
+              {
+                "term": "sammen",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "artskunnskap_systematikk",
+            "title": "Artskunnskap og systematikk",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "ett",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "geologi_landskap_tid",
+            "title": "Geologi, landskap og lang tid",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "samtidig",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "klima_energi_resiliens",
+            "title": "Klima, energi og resiliens",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "lokal",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "nature-fixture-15",
+      "fixture_path": "docs/fixtures/aha-analysis/15-uklar-fragmentert-lav-kvalitet.json",
+      "passed": true,
+      "errors": [],
+      "expected_nature_status": "unsupported",
+      "expected_chapter_id": null,
+      "result": {
+        "status": "unsupported",
+        "selected_chapter_id": null,
+        "top_score": 0,
+        "second_score": 0,
+        "domain_evidence": {
+          "matched_terms": [],
+          "eligible": false
+        },
+        "ranking": [
+          {
+            "chapter_id": "geologi_landskap_tid",
+            "title": "Geologi, landskap og lang tid",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "hvorfor",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "vann_hydrologi_kretslop",
+            "title": "Vann, hydrologi og kretsløp",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "sammen",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "zoologi_dyreliv",
+            "title": "Zoologi og dyreliv",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "sammen",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "artskunnskap_systematikk",
+            "title": "Artskunnskap og systematikk",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "botanikk_vegetasjon",
+            "title": "Botanikk og vegetasjon",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "nature-fixture-16",
+      "fixture_path": "docs/fixtures/aha-analysis/16-tverrfaglig-ai-laering-kunnskap.json",
+      "passed": true,
+      "errors": [],
+      "expected_nature_status": "unsupported",
+      "expected_chapter_id": null,
+      "result": {
+        "status": "unsupported",
+        "selected_chapter_id": null,
+        "top_score": 0,
+        "second_score": 0,
+        "domain_evidence": {
+          "matched_terms": [],
+          "eligible": false
+        },
+        "ranking": [
+          {
+            "chapter_id": "botanikk_vegetasjon",
+            "title": "Botanikk og vegetasjon",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "støtte",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "miljopavirkning_forvaltning_regenerasjon",
+            "title": "Miljøpåvirkning, forvaltning og regenerasjon",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "kilder",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "organismebiologi_fysiologi",
+            "title": "Organismebiologi og fysiologi",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "endres",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "artskunnskap_systematikk",
+            "title": "Artskunnskap og systematikk",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "evolusjon_biologisk_mangfold",
+            "title": "Evolusjon og biologisk mangfold",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          }
+        ]
+      }
+    }
+  ]
+}
