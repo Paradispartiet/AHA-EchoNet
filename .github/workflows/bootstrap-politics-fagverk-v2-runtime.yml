@@ -28,7 +28,7 @@ jobs:
       - name: Verify write scope and activation contract
         run: |
           node tests/aha-fagverk-runtime-activation.test.cjs
-          mapfile -t changed < <(git diff --name-only | sort)
+          mapfile -t changed < <(git status --porcelain | sed -E 's/^.. //' | sort)
           expected=(
             data/integrations/history-go-fagverk-release.approved.json
             data/integrations/history-go-fagverk-release.runtime-active.json
@@ -43,7 +43,7 @@ jobs:
 
       - name: Commit materialized runtime artifacts
         run: |
-          if git diff --quiet; then
+          if [[ -z "$(git status --porcelain)" ]]; then
             echo "Runtime artifacts are already current."
             exit 0
           fi
