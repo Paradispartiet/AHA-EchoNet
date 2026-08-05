@@ -1,0 +1,52 @@
+{
+  "schema": "aha_politics_fagverk_release_drift_v1",
+  "version": "1.0.0",
+  "status": "source_rebased_no_semantic_drift",
+  "lifecycle_stage": "subject_release_review",
+  "subject_id": "politikk",
+  "source_repo": "Paradispartiet/History-Go",
+  "previous_source_ref": "9e9644e83998ff715005bf80c96cde6193107c13",
+  "observed_source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
+  "reviewed_source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
+  "observed_release_sha256": "21cec482d0bde5423cef0bd836dc2b6b8fa4445226bd2ab8df1b44eaefccd627",
+  "previous_corpus_sha256": "981ab3ad25f972bd13c70a0247f26b8796e43b8cd3cde7282b7d073bfcc79dec",
+  "reviewed_corpus_sha256": "981ab3ad25f972bd13c70a0247f26b8796e43b8cd3cde7282b7d073bfcc79dec",
+  "observed_subject": {
+    "package_status": "complete",
+    "chapter_status": "materialized",
+    "chapter_count": 13,
+    "module_file_count": 39,
+    "referenced_file_count": 87
+  },
+  "checks": {
+    "source_rebased": true,
+    "observed_source_matches_candidate": true,
+    "candidate_matches_review_source": true,
+    "corpus_content_changed": false,
+    "chapter_inventory_changed": false,
+    "module_depth_changed": false,
+    "policy_summary_changed": false,
+    "evaluation_regressed": false,
+    "fixture_corrections_regressed": false,
+    "audit_gate_passed": true,
+    "candidate_review_only": true,
+    "approved_pointer_unchanged": true,
+    "active_pointer_not_observed_release": true
+  },
+  "summary": {
+    "semantic_drift_detected": false,
+    "quality_regression_detected": false,
+    "approval_boundary_failure_detected": false,
+    "chapter_count": 13,
+    "module_files_per_chapter": 3,
+    "policy_terms": 143,
+    "evaluation_passed": 34,
+    "evaluation_total": 34,
+    "fixture_corrections_passed": 16,
+    "fixture_corrections_total": 16
+  },
+  "approval_recommendation": "review_artifacts_may_be_approved_for_current_source_without_runtime_activation",
+  "approval_required": true,
+  "runtime_activation_allowed": false,
+  "explicit_activation_pull_request_required": true
+}
