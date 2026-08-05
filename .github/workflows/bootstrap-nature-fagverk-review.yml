@@ -1,0 +1,66 @@
+name: Bootstrap Nature Fagverk review
+
+on:
+  push:
+    branches: [review/natur-fagverk-v1]
+    paths:
+      - ".github/workflows/bootstrap-nature-fagverk-review.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: review/natur-fagverk-v1
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Install reviewed Nature sources
+        run: |
+          cat data/tmp/nature-review.part*.b64 | tr -d '\n' | base64 -d > /tmp/nature-review.tar.gz
+          tar -xzf /tmp/nature-review.tar.gz -C .
+          rm data/tmp/nature-review.part*.b64
+
+      - name: Materialize Nature review evidence
+        run: |
+          node scripts/build-nature-fagverk-term-policy.mjs
+          node scripts/build-nature-fagverk-expansion-review.mjs
+          node scripts/evaluate-nature-fagverk-policy.mjs
+          node scripts/compare-nature-fixture-corrections.mjs
+          node scripts/build-history-go-fagverk-subject-approvals.mjs --subject natur
+          node tests/aha-nature-fagverk-review.test.cjs
+          node tests/aha-fagverk-subject-approvals.test.cjs
+
+      - name: Verify runtime isolation and exact scope
+        env:
+          ALLOWED_JSON: '["data/evaluation/aha-nature-fagverk-evaluation-matrix.v1.json","data/evaluation/aha-nature-fagverk-evaluation-report.v1.json","data/evaluation/aha-nature-fixture-correction-report.v1.json","data/evaluation/aha-nature-fixture-corrections.v1.json","data/integrations/approvals/history-go-fagverk-natur.approved.v1.json","data/integrations/review/history-go-fagverk-natur.expansion-review.v1.json","data/integrations/review/history-go-fagverk-natur.term-policy.v1.json","data/integrations/review/history-go-fagverk-subject-approval-registry.v1.json","data/tmp/nature-review.part1.b64","data/tmp/nature-review.part2.b64","data/tmp/nature-review.part3.b64","data/tmp/nature-review.part4.b64","data/tmp/nature-review.part5.b64","docs/AHA_NATURE_FAGVERK_REVIEW_V1.md","scripts/build-nature-fagverk-expansion-review.mjs","scripts/build-nature-fagverk-term-policy.mjs","scripts/compare-nature-fixture-corrections.mjs","scripts/evaluate-nature-fagverk-policy.mjs","scripts/lib/nature-fagverk-scoring.mjs","tests/aha-fagverk-subject-approvals.test.cjs","tests/aha-nature-fagverk-review.test.cjs"]'
+        run: |
+          git diff --exit-code -- data/integrations/history-go-fagverk-release.approved.json
+          git diff --exit-code -- data/integrations/history-go-fagverk-release.runtime-active.json
+          node - <<'NODE'
+          const { execFileSync } = require("child_process");
+          const allowed = new Set(JSON.parse(process.env.ALLOWED_JSON));
+          const status = execFileSync("git", ["status", "--porcelain"], { encoding: "utf8" });
+          const actual = status.trim().split(/\n/).filter(Boolean).map((line) => line.slice(3));
+          const unexpected = actual.filter((file) => !allowed.has(file));
+          const missing = [...allowed].filter((file) => !actual.includes(file));
+          if (unexpected.length || missing.length) {
+            console.error({ unexpected, missing, actual });
+            process.exit(1);
+          }
+          console.log(`Nature review scope verified: ${actual.length} files.`);
+          NODE
+
+      - name: Commit Nature review package
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A -- data/evaluation/aha-nature-fagverk-evaluation-matrix.v1.json data/evaluation/aha-nature-fagverk-evaluation-report.v1.json data/evaluation/aha-nature-fixture-correction-report.v1.json data/evaluation/aha-nature-fixture-corrections.v1.json data/integrations/approvals/history-go-fagverk-natur.approved.v1.json data/integrations/review/history-go-fagverk-natur.expansion-review.v1.json data/integrations/review/history-go-fagverk-natur.term-policy.v1.json data/integrations/review/history-go-fagverk-subject-approval-registry.v1.json data/tmp/nature-review.part1.b64 data/tmp/nature-review.part2.b64 data/tmp/nature-review.part3.b64 data/tmp/nature-review.part4.b64 data/tmp/nature-review.part5.b64 docs/AHA_NATURE_FAGVERK_REVIEW_V1.md scripts/build-nature-fagverk-expansion-review.mjs scripts/build-nature-fagverk-term-policy.mjs scripts/compare-nature-fixture-corrections.mjs scripts/evaluate-nature-fagverk-policy.mjs scripts/lib/nature-fagverk-scoring.mjs tests/aha-fagverk-subject-approvals.test.cjs tests/aha-nature-fagverk-review.test.cjs
+          git commit -m "Review complete Nature Fagverk subject"
+          git push origin HEAD:review/natur-fagverk-v1
