@@ -1,0 +1,46 @@
+name: AHA Fagverk runtime activation
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "scripts/build-history-go-fagverk-runtime-activation.mjs"
+      - "tests/aha-fagverk-runtime-activation.test.cjs"
+      - ".github/workflows/aha-fagverk-runtime-activation.yml"
+      - "backend/aha_engine/app/engine/fagverk_grounding.py"
+      - "backend/aha_engine/tests/test_fagverk_grounding.py"
+      - "data/integrations/runtime/**"
+      - "data/integrations/history-go-fagverk-corpus.v1.json"
+      - "data/integrations/history-go-fagverk-release.approved.json"
+      - "data/integrations/history-go-fagverk-release.runtime-active.json"
+      - "data/integrations/approvals/**"
+      - "data/integrations/candidates/history-go-fagverk-politikk.candidate.v1.json"
+      - "data/integrations/review/history-go-fagverk-politikk.term-policy.v1.json"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-runtime-activation:
+    name: Rebuild active Fagverk runtime package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Rebuild runtime activation artifacts
+        run: node scripts/build-history-go-fagverk-runtime-activation.mjs --output-root artifacts/runtime-activation
+
+      - name: Verify activation contract and checked-in parity
+        run: node tests/aha-fagverk-runtime-activation.test.cjs
+
+      - name: Upload runtime activation artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: aha-fagverk-runtime-activation
+          path: artifacts/runtime-activation/*.json
+          if-no-files-found: error
+          retention-days: 14
