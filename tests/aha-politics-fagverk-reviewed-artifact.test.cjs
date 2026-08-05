@@ -3,6 +3,8 @@ const fs = require('fs');
 
 const corpusPath = 'data/integrations/review/history-go-fagverk-politikk.audit.v1.json';
 const auditPath = 'data/integrations/review/history-go-fagverk-politikk.audit-report.v1.json';
+const candidatePath = 'data/integrations/candidates/history-go-fagverk-politikk.candidate.v1.json';
+const observedPath = 'data/integrations/history-go-fagverk-release.observed.json';
 const runtimePath = 'backend/aha_engine/app/engine/fagverk_grounding.py';
 
 assert.equal(fs.existsSync(corpusPath), true, 'checked-in Politics review corpus exists');
@@ -10,6 +12,8 @@ assert.equal(fs.existsSync(auditPath), true, 'checked-in Politics audit report e
 
 const corpus = JSON.parse(fs.readFileSync(corpusPath, 'utf8'));
 const audit = JSON.parse(fs.readFileSync(auditPath, 'utf8'));
+const candidate = JSON.parse(fs.readFileSync(candidatePath, 'utf8'));
+const observed = JSON.parse(fs.readFileSync(observedPath, 'utf8'));
 
 const expectedChapterIds = [
   'fordeling-velferd-ulikhet',
@@ -31,10 +35,12 @@ assert.equal(corpus.schema, 'aha_history_go_fagverk_corpus_v1');
 assert.equal(corpus.version, '1.1.0');
 assert.equal(corpus.status, 'generated_subject_audit_corpus');
 assert.equal(corpus.source_repo, 'Paradispartiet/History-Go');
-assert.equal(corpus.source_ref, '9e9644e83998ff715005bf80c96cde6193107c13');
+assert.equal(corpus.source_ref, observed.source_commit);
+assert.equal(corpus.source_ref, candidate.source_ref);
 assert.equal(corpus.registry_version, '2.19.0');
 assert.equal(corpus.subject_filter, 'politikk');
 assert.equal(corpus.content_sha256, '981ab3ad25f972bd13c70a0247f26b8796e43b8cd3cde7282b7d073bfcc79dec');
+assert.equal(corpus.content_sha256, candidate.content_sha256);
 assert.deepEqual(corpus.entries.map((entry) => entry.chapter_id), expectedChapterIds);
 assert.equal(corpus.entries.every((entry) => entry.subject_id === 'politikk'), true);
 assert.equal(corpus.entries.every((entry) => entry.source_path === `data/fagverk/politikk/${entry.chapter_id}.json`), true);
@@ -44,6 +50,8 @@ assert.equal(corpus.entries.every((entry) => entry.module_source_paths.length ==
 assert.equal(corpus.entries.every((entry) => entry.module_source_paths.every((sourcePath) => sourcePath.startsWith(`data/fagverk/politikk/${entry.chapter_id}/`))), true);
 assert.equal(corpus.entries.every((entry) => entry.support_terms.length === 48), true, 'module text must supply the reviewed support-term window');
 assert.equal(corpus.entries.every((entry) => entry.concept_terms.length > 0), true);
+assert.equal(candidate.approval_required, true);
+assert.equal(candidate.runtime_activation_allowed, false);
 
 assert.equal(audit.schema, 'aha_fagverk_corpus_audit_v1');
 assert.equal(audit.source_ref, corpus.source_ref);
@@ -86,6 +94,7 @@ const highRiskTerms = new Set(audit.high_risk_terms.map((item) => item.term));
 
 const runtimeCode = fs.readFileSync(runtimePath, 'utf8');
 assert.equal(runtimeCode.includes('data/integrations/review'), false, 'review corpus must not be active in runtime');
+assert.equal(runtimeCode.includes('data/integrations/candidates'), false, 'candidate corpus must not be active in runtime');
 assert.match(runtimeCode, /history-go-fagverk-corpus\.v1\.json/);
 
 console.log('aha-politics-fagverk-reviewed-artifact tests passed');

@@ -7,10 +7,14 @@ on:
       - "scripts/compare-politics-fixture-corrections.mjs"
       - "scripts/lib/politics-fagverk-scoring.mjs"
       - "scripts/build-politics-fagverk-term-policy.mjs"
+      - "data/integrations/candidates/history-go-fagverk-politikk.candidate.v1.json"
+      - "data/integrations/review/history-go-fagverk-politikk.audit.v1.json"
       - "data/integrations/review/history-go-fagverk-politikk.term-policy.v1.json"
+      - "data/integrations/review/history-go-fagverk-politikk.release-drift.v1.json"
       - "data/evaluation/aha-politics-fixture-corrections.v1.json"
       - "data/evaluation/aha-politics-fixture-correction-report.v1.json"
       - "tests/aha-politics-fixture-corrections.test.cjs"
+      - "tests/aha-politics-fagverk-release-drift.test.cjs"
       - "docs/AHA_POLITICS_FIXTURE_CORRECTIONS_V1.md"
       - ".github/workflows/aha-politics-fixture-corrections.yml"
   workflow_dispatch:
@@ -20,7 +24,7 @@ permissions:
 
 jobs:
   fixture-corrections:
-    name: Compare all analysis fixtures with Politics corrections
+    name: Compare all analysis fixtures with observed Politics corrections
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -31,18 +35,24 @@ jobs:
         run: cp data/evaluation/aha-politics-fixture-correction-report.v1.json /tmp/politics-correction-report.checked.json
       - name: Rebuild full correction comparison report
         run: node scripts/compare-politics-fixture-corrections.mjs
-      - name: Verify 16-of-16 full-fixture correction contract and parity
+      - name: Verify 16-of-16 observed-candidate correction contract and parity
         run: |
           node - <<'NODE'
           const fs = require('fs');
+          const candidate = JSON.parse(fs.readFileSync('data/integrations/candidates/history-go-fagverk-politikk.candidate.v1.json', 'utf8'));
+          const policy = JSON.parse(fs.readFileSync('data/integrations/review/history-go-fagverk-politikk.term-policy.v1.json', 'utf8'));
+          const drift = JSON.parse(fs.readFileSync('data/integrations/review/history-go-fagverk-politikk.release-drift.v1.json', 'utf8'));
           const corrections = JSON.parse(fs.readFileSync('data/evaluation/aha-politics-fixture-corrections.v1.json', 'utf8'));
           const reportPath = 'data/evaluation/aha-politics-fixture-correction-report.v1.json';
           const report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
           if (corrections.version !== '1.1.0' || corrections.cases.length !== 16 || new Set(corrections.cases.map((item) => item.fixture_path)).size !== 16) throw new Error('Unexpected full correction corpus.');
+          if (corrections.corpus_sha256 !== candidate.content_sha256 || policy.corpus_sha256 !== candidate.content_sha256) throw new Error('Correction inputs are not bound to the observed Politics candidate.');
           const expected = { total: 16, passed: 16, failed: 0, exact_legacy_baselines: 8, qualitative_targets: 8, validation_errors: 0 };
           for (const [key, value] of Object.entries(expected)) if (report.summary?.[key] !== value) throw new Error(`Unexpected correction ${key}`);
           if (report.summary?.comparisons?.correct !== 16 || Object.keys(report.summary.comparisons).length !== 1) throw new Error(`Unexpected comparison split: ${JSON.stringify(report.summary.comparisons)}`);
+          if (report.source_ref !== candidate.source_ref || report.corpus_sha256 !== candidate.content_sha256) throw new Error('Correction report is not bound to the observed Politics candidate.');
           if (report.version !== '1.1.0' || report.policy_version !== '1.2.0' || report.correction_version !== '1.1.0' || report.status !== 'passed_correction_gate' || report.runtime_activation_allowed !== false) throw new Error('Unexpected correction boundary.');
+          if (drift.status !== 'source_rebased_no_semantic_drift' || drift.runtime_activation_allowed !== false) throw new Error('Correction gate requires a clean, non-runtime release drift report.');
           if (!fs.readFileSync(reportPath).equals(fs.readFileSync('/tmp/politics-correction-report.checked.json'))) throw new Error('Checked-in correction report is stale.');
           NODE
       - uses: actions/upload-artifact@v4

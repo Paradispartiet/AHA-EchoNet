@@ -107,11 +107,20 @@ function classifyCollision(collision) {
   return { category: "shared_phrase", action: "context_only", multiplier: 0 };
 }
 
-function buildPolicy(corpus, audit) {
+function validateReviewInputs(corpus, audit) {
   if (corpus.source_ref !== audit.source_ref) throw new Error("Corpus and audit source_ref differ.");
-  if (corpus.content_sha256 !== "981ab3ad25f972bd13c70a0247f26b8796e43b8cd3cde7282b7d073bfcc79dec") {
-    throw new Error(`Unexpected Politics corpus digest: ${corpus.content_sha256}`);
+  if (corpus.subject_filter !== "politikk") throw new Error(`Unexpected subject_filter: ${corpus.subject_filter}`);
+  if (JSON.stringify(audit.subject_filter) !== JSON.stringify(["politikk"])) throw new Error("Audit is not Politics-scoped.");
+  if (!Array.isArray(corpus.entries) || !corpus.entries.length) throw new Error("Politics corpus is empty.");
+  if (corpus.entries.some((entry) => entry.subject_id !== "politikk")) throw new Error("Non-Politics entry leaked into corpus.");
+  if (audit.gate?.passed !== true || (audit.gate?.errors || []).length) throw new Error("Politics corpus audit gate has not passed.");
+  if (audit.coverage?.materialized !== corpus.entries.length || audit.coverage?.registered !== corpus.entries.length) {
+    throw new Error("Politics corpus and registry coverage differ.");
   }
+}
+
+function buildPolicy(corpus, audit) {
+  validateReviewInputs(corpus, audit);
   const collisions = audit.term_collisions || [];
   const collisionSet = new Set(collisions.map((item) => normalize(item.term)));
   const globalNonScoring = new Set([...GENERIC_LANGUAGE_TERMS, ...GLOBAL_NON_SCORING_EXTRAS]);
@@ -121,7 +130,7 @@ function buildPolicy(corpus, audit) {
     chapter_count: collision.chapter_count,
     chapters: collision.chapters,
     ...classifyCollision(collision)
-  })).sort((a, b) => a.term.localeCompare(b.term, "nb"));
+  })).sort((a, b) => a.term.localeCompare(b, "nb"));
 
   const chapters = corpus.entries.map((entry) => {
     const candidates = [...entry.title_terms, ...entry.concept_terms, ...entry.support_terms]
@@ -151,7 +160,10 @@ function buildPolicy(corpus, audit) {
     source_ref: corpus.source_ref,
     corpus_sha256: corpus.content_sha256,
     subject_id: "politikk",
+    lifecycle_stage: "subject_release_review",
+    approval_required: true,
     activation_allowed: false,
+    runtime_activation_allowed: false,
     default_weights: { title_term: 5, concept_term: 3, support_term: 1.5, down_weight_multiplier: 0.35 },
     policy_rules: {
       high_risk: "non_scoring",
