@@ -360,7 +360,9 @@ def apply_fagverk_grounding(base: CanonicalAhaAnalysis, grounding: dict[str, Any
     domain_confidence = float(base_confidence.get("domain", 0.0))
     theme_confidence = float(base_confidence.get("theme", 0.0))
     grounding_confidence = float(match.get("confidence", 0.0))
-    should_replace_generic = data.get("domain") == "generic_academic" or domain_confidence < 0.6
+    should_replace_generic = domain_confidence < 0.6
+    if not should_replace_generic:
+        return base
 
     if should_replace_generic:
         data["domain"] = match["primary_domain_id"]
