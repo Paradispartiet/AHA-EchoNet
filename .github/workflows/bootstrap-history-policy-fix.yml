@@ -56,6 +56,10 @@ jobs:
               (
                   '"etterkrigstiden", "mellomkrigstiden", "middelalder"',
                   '"etterkrigstiden", "mellomkrigstiden", "dekolonisering", "over generasjoner", "over flere generasjoner", "gjennom livsløpet", "middelalder"'
+              ),
+              (
+                  '''      {\n        "term": "redaksjonell profil",\n        "weight": 4\n      },\n      {\n        "term": "medielandskapet",''',
+                  '''      {\n        "term": "redaksjonell profil",\n        "weight": 4\n      },\n      {\n        "term": "redaksjonelle profil",\n        "weight": 4\n      },\n      {\n        "term": "medieinstitusjoner",\n        "weight": 4\n      },\n      {\n        "term": "dannelsesoffentlighet",\n        "weight": 4\n      },\n      {\n        "term": "medielandskapet",'''
               )
           ]
 
@@ -101,5 +105,5 @@ jobs:
           fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git commit -m 'Correct History review anchors and negatives'
+          git commit -m 'Correct History review anchors and media evidence'
           git push origin HEAD:review/history-fagverk-v1
