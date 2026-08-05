@@ -1,0 +1,56 @@
+{
+  "schema": "aha_history_go_fagverk_corpus_v1",
+  "version": "1.0.0",
+  "status": "seed_grounding_corpus",
+  "source_repo": "Paradispartiet/History-Go",
+  "source_ref": "9e9644e83998ff715005bf80c96cde6193107c13",
+  "generated_at": "2026-08-05T04:45:00Z",
+  "generation_mode": "reviewed_seed",
+  "entries": [
+    {
+      "subject_id": "natur",
+      "chapter_id": "okosystem_mangfold_habitat",
+      "primary_domain_id": "okosystem_mangfold_habitat",
+      "title": "Økosystem, mangfold og habitat",
+      "source_path": "data/fagverk/natur/okosystem_mangfold_habitat.json",
+      "title_terms": ["økosystem", "biologisk mangfold", "habitat"],
+      "concept_terms": ["art", "individ", "bestand", "habitat", "naturtype", "økosystem", "næringsnett", "kretsløp", "artsrikdom", "biologisk mangfold", "resiliens", "konnektivitet", "suksesjon", "fremmede arter", "økosystemtjenester", "habitatkvalitet", "registreringsinnsats"],
+      "support_terms": ["artsfunn", "bestandsutvikling", "pollinering", "nedbrytning", "predasjon", "produsenter", "planteetere", "rovdyr", "jordliv", "genetisk variasjon", "økologisk funksjon", "forstyrrelse", "naturverdi", "egenverdi"],
+      "provenance": {
+        "chapter_schema": "history_go_fagverk_chapter_v1",
+        "review_status": "chapter_ready",
+        "source_kind": "canonical_fagverk_chapter"
+      }
+    },
+    {
+      "subject_id": "politikk",
+      "chapter_id": "forvaltning",
+      "primary_domain_id": "styring_institusjoner_forvaltning",
+      "title": "Offentlig forvaltning",
+      "source_path": "data/fagverk/politikk/forvaltning.json",
+      "title_terms": ["offentlig forvaltning", "myndighet", "borgerutfall"],
+      "concept_terms": ["departement", "direktorat", "politisk ledelse", "embetsverk", "delegasjon", "instruks", "vedtak", "budsjett", "administrasjon", "frontlinjeskjønn", "ekspertmakt", "politisk ansvar", "hjemmel", "habilitet", "utredning", "begrunnelse", "innsyn", "klage", "arkiv", "regulering"],
+      "support_terms": ["stat", "kommune", "byråd", "bystyre", "resultatmål", "kapasitet", "likebehandling", "myndighetsutøvelse", "forvaltningsanalyse", "regelbundet praksis", "ressursfordeling"],
+      "provenance": {
+        "chapter_schema": "history_go_fagverk_chapter_v1",
+        "review_status": "chapter_ready",
+        "source_kind": "canonical_fagverk_chapter"
+      }
+    },
+    {
+      "subject_id": "historie",
+      "chapter_id": "1814_statsdannelse",
+      "primary_domain_id": "1814_statsdannelse",
+      "title": "1814, grunnlov og statsdannelse",
+      "source_path": "data/fagverk/historie/1814_statsdannelse.json",
+      "title_terms": ["1814", "grunnloven", "statsdannelse"],
+      "concept_terms": ["Eidsvoll", "representasjon", "embetsstat", "bonderepresentasjon", "parlamentarisme", "formannskapslovene", "lokalt selvstyre", "stemmerett", "nasjonsbygging", "statsborgerskap", "1905", "unionsoppløsning", "demokratisering", "eksklusjon"],
+      "support_terms": ["grunnlovstekst", "politisk adgang", "kjønn", "eiendom", "språk", "offisiell historiebruk", "minoritetsgrenser", "institusjonell omforming", "selvstendighet", "Eidsvollsbygningen", "Stortinget"],
+      "provenance": {
+        "chapter_schema": "history_go_fagverk_chapter_v1",
+        "review_status": "chapter_ready",
+        "source_kind": "canonical_fagverk_chapter"
+      }
+    }
+  ]
+}
