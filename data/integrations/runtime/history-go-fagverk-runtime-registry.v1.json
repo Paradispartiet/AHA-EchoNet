@@ -1,6 +1,6 @@
 {
   "schema": "aha_history_go_fagverk_runtime_registry_v1",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "status": "runtime_activation_registry",
   "legacy_seed": {
     "corpus_path": "data/integrations/history-go-fagverk-corpus.v1.json",
@@ -15,6 +15,18 @@
       "review_policy_path": "data/integrations/review/history-go-fagverk-historie.term-policy.v1.json",
       "runtime_corpus_path": "data/integrations/runtime/history-go-fagverk-historie.corpus.v1.json",
       "runtime_policy_path": "data/integrations/runtime/history-go-fagverk-historie.policy.v1.json",
+      "scoring_mode": "subject_policy_v1",
+      "minimum_score": 7,
+      "minimum_terms": 2,
+      "ambiguity_margin": 3
+    },
+    "natur": {
+      "subject_id": "natur",
+      "approval_path": "data/integrations/approvals/history-go-fagverk-natur.approved.v1.json",
+      "candidate_corpus_path": "data/integrations/candidates/history-go-fagverk-natur.candidate.v1.json",
+      "review_policy_path": "data/integrations/review/history-go-fagverk-natur.term-policy.v1.json",
+      "runtime_corpus_path": "data/integrations/runtime/history-go-fagverk-natur.corpus.v1.json",
+      "runtime_policy_path": "data/integrations/runtime/history-go-fagverk-natur.policy.v1.json",
       "scoring_mode": "subject_policy_v1",
       "minimum_score": 7,
       "minimum_terms": 2,

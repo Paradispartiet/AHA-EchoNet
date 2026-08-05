@@ -5,43 +5,55 @@
   "cases": [
     {
       "id": "nature_population_from_observation",
-      "text": "Ett artsfunn er ikke det samme som en bestand. Vi må vurdere habitatkvalitet, registreringsinnsats, konnektivitet og endring over tid før vi trekker konklusjoner om økosystemet.",
-      "expected_status": ["grounded"],
+      "text": "Ett artsfunn er ikke det samme som en bestand. Næringsnett vurderes som økologisk næringsnett sammen med målt habitatkvalitet og populasjon og bestand før vi trekker en bestandskonklusjon.",
+      "expected_status": [
+        "grounded"
+      ],
       "expected_subject_id": "natur",
       "expected_chapter_id": "okosystem_mangfold_habitat"
     },
     {
       "id": "politics_administration_chain",
       "text": "Departementet delegerer oppgaver til et direktorat, men hjemmel, budsjett, begrunnelse, innsyn og klage avgjør hvordan offentlig forvaltning møter borgeren.",
-      "expected_status": ["grounded"],
+      "expected_status": [
+        "grounded"
+      ],
       "expected_subject_id": "politikk",
       "expected_chapter_id": "forvaltning"
     },
     {
       "id": "history_1814_access",
       "text": "Grunnloven i 1814 etablerte representasjon, men stemmerett, kjønn, eiendom og faktisk politisk adgang viser at demokratisering og eksklusjon utviklet seg over lang tid etter Eidsvoll.",
-      "expected_status": ["grounded"],
+      "expected_status": [
+        "grounded"
+      ],
       "expected_subject_id": "historie",
       "expected_chapter_id": "1814_statsdannelse"
     },
     {
       "id": "unsupported_personal_day",
       "text": "Jeg sov dårlig og er litt sliten i dag, men håper ettermiddagen blir roligere.",
-      "expected_status": ["unsupported"],
+      "expected_status": [
+        "unsupported"
+      ],
       "expected_subject_id": null,
       "expected_chapter_id": null
     },
     {
       "id": "unsupported_barnesang_no_media_leak",
       "text": "Barnesang bruker rytme, språk og gjentakelse i barnekultur og oppdragelse.",
-      "expected_status": ["unsupported"],
+      "expected_status": [
+        "unsupported"
+      ],
       "expected_subject_id": null,
       "expected_chapter_id": null
     },
     {
       "id": "weak_generic_institutions",
       "text": "Institusjoner og samfunn virker sammen, og makt kan forstås på flere måter.",
-      "expected_status": ["unsupported"],
+      "expected_status": [
+        "unsupported"
+      ],
       "expected_subject_id": null,
       "expected_chapter_id": null
     }

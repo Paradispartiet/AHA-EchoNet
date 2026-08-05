@@ -48,9 +48,11 @@ for (const [subjectId, config] of Object.entries(registry.subjects)) {
 
 assert.notEqual(runtimeApproved.approved_source_commit, observed.source_commit);
 assert.notEqual(runtimeActive.active_source_commit, observed.source_commit);
-assert.deepEqual(Object.keys(runtimeActive.active_subjects), ['historie', 'politikk']);
-assert.equal(runtimeActive.active_subjects.natur, undefined);
-assert.equal(runtimeActive.effective_entry_count, 37);
+assert.deepEqual(Object.keys(runtimeActive.active_subjects), ['historie', 'natur', 'politikk']);
+assert.equal(runtimeActive.active_subjects.natur.subject_id, 'natur');
+assert.equal(runtimeActive.active_subjects.natur.chapter_count, 11);
+assert.equal(runtimeActive.active_subjects.natur.activation_status, 'runtime_subject_active');
+assert.equal(runtimeActive.effective_entry_count, 47);
 assert.equal(runtimeCode.includes('data/integrations/approvals'), false);
 assert.equal(runtimeCode.includes('subject_review_approved_not_runtime_active'), false);
 
