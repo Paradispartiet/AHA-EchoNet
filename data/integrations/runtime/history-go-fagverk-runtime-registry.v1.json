@@ -1,0 +1,25 @@
+{
+  "schema": "aha_history_go_fagverk_runtime_registry_v1",
+  "version": "1.0.0",
+  "status": "runtime_activation_registry",
+  "legacy_seed": {
+    "corpus_path": "data/integrations/history-go-fagverk-corpus.v1.json",
+    "approved_path": "data/integrations/history-go-fagverk-release.approved.json",
+    "active_path": "data/integrations/history-go-fagverk-release.runtime-active.json"
+  },
+  "active_subjects": {
+    "politikk": {
+      "subject_id": "politikk",
+      "approval_path": "data/integrations/approvals/history-go-fagverk-politikk.approved.v1.json",
+      "candidate_corpus_path": "data/integrations/candidates/history-go-fagverk-politikk.candidate.v1.json",
+      "review_policy_path": "data/integrations/review/history-go-fagverk-politikk.term-policy.v1.json",
+      "runtime_corpus_path": "data/integrations/runtime/history-go-fagverk-politikk.corpus.v1.json",
+      "runtime_policy_path": "data/integrations/runtime/history-go-fagverk-politikk.policy.v1.json",
+      "scoring_mode": "subject_policy_v1",
+      "minimum_score": 6,
+      "minimum_terms": 2,
+      "ambiguity_margin": 3
+    }
+  },
+  "full_release_active": false
+}

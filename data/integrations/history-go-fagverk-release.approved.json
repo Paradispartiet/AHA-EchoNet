@@ -1,35 +1,44 @@
 {
-  "schema": "aha_history_go_fagverk_approved_runtime_v1",
-  "version": "1.1.0",
-  "status": "seed_runtime_approved",
+  "schema": "aha_history_go_fagverk_approved_runtime_v2",
+  "version": "2.0.0",
+  "status": "partial_subject_runtime_approved",
   "source_repo": "Paradispartiet/History-Go",
   "approved_source_commit": "9e9644e83998ff715005bf80c96cde6193107c13",
-  "approved_corpus": {
-    "path": "data/integrations/history-go-fagverk-corpus.v1.json",
-    "source_blob_sha": "2f1b847639b51a1ad5b40e7dc7cb9da26623e869",
+  "legacy_seed": {
+    "source_commit": "9e9644e83998ff715005bf80c96cde6193107c13",
+    "corpus_path": "data/integrations/history-go-fagverk-corpus.v1.json",
     "entry_count": 3,
-    "entries": [
-      {
-        "subject_id": "natur",
-        "chapter_id": "okosystem_mangfold_habitat"
-      },
-      {
-        "subject_id": "politikk",
-        "chapter_id": "forvaltning"
-      },
-      {
-        "subject_id": "historie",
-        "chapter_id": "1814_statsdannelse"
-      }
+    "subject_ids": [
+      "historie",
+      "natur",
+      "politikk"
+    ],
+    "overridden_subject_ids": [
+      "politikk"
     ]
+  },
+  "approved_subjects": {
+    "politikk": {
+      "subject_id": "politikk",
+      "source_commit": "c16a187453d16a40f9cab4ca694c32e96014f31b",
+      "subject_approval_path": "data/integrations/approvals/history-go-fagverk-politikk.approved.v1.json",
+      "corpus_path": "data/integrations/runtime/history-go-fagverk-politikk.corpus.v1.json",
+      "corpus_sha256": "981ab3ad25f972bd13c70a0247f26b8796e43b8cd3cde7282b7d073bfcc79dec",
+      "corpus_artifact_sha256": "9e0faabb5eb4e689a1c68be66a8cf5032a607967d0597cd526e616f0e4411810",
+      "policy_path": "data/integrations/runtime/history-go-fagverk-politikk.policy.v1.json",
+      "policy_artifact_sha256": "7897362ddcd047e647557e83675781b156fccb839520ee539d44ecdf3d33373f",
+      "chapter_count": 13,
+      "scoring_mode": "subject_policy_v1",
+      "approval_status": "runtime_subject_approved"
+    }
   },
   "full_release_approved": false,
   "activation_rules": {
-    "observed_release_is_not_approved": true,
-    "candidate_corpora_are_not_runtime_inputs": true,
-    "subject_policy_and_correction_gates_required": true,
-    "approval_does_not_change_runtime_without_active_pointer": true,
-    "runtime_active_pointer_required": true,
+    "subject_review_approval_required": true,
+    "runtime_artifacts_must_be_materialized": true,
+    "subject_policy_required_when_registered": true,
+    "approval_does_not_activate_unregistered_subjects": true,
     "explicit_activation_pull_request_required": true
-  }
+  },
+  "artifact_sha256": "f58ce460f4dfa4fbf0eda0bf4abcc54beb2ebb66fd58c8b960db052559c42d96"
 }

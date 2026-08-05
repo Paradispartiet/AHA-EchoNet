@@ -1,19 +1,45 @@
 {
-  "schema": "aha_history_go_fagverk_runtime_active_v1",
-  "version": "1.0.0",
-  "status": "seed_runtime_active",
+  "schema": "aha_history_go_fagverk_runtime_active_v2",
+  "version": "2.0.0",
+  "status": "partial_subject_runtime_active",
   "source_repo": "Paradispartiet/History-Go",
   "active_source_commit": "9e9644e83998ff715005bf80c96cde6193107c13",
-  "approved_contract": "data/integrations/history-go-fagverk-release.approved.json",
-  "active_corpus": {
-    "path": "data/integrations/history-go-fagverk-corpus.v1.json",
-    "entry_count": 3
+  "legacy_seed": {
+    "source_commit": "9e9644e83998ff715005bf80c96cde6193107c13",
+    "corpus_path": "data/integrations/history-go-fagverk-corpus.v1.json",
+    "entry_count": 3,
+    "subject_ids": [
+      "historie",
+      "natur",
+      "politikk"
+    ],
+    "overridden_subject_ids": [
+      "politikk"
+    ]
   },
+  "active_subjects": {
+    "politikk": {
+      "subject_id": "politikk",
+      "source_commit": "c16a187453d16a40f9cab4ca694c32e96014f31b",
+      "subject_approval_path": "data/integrations/approvals/history-go-fagverk-politikk.approved.v1.json",
+      "corpus_path": "data/integrations/runtime/history-go-fagverk-politikk.corpus.v1.json",
+      "corpus_sha256": "981ab3ad25f972bd13c70a0247f26b8796e43b8cd3cde7282b7d073bfcc79dec",
+      "corpus_artifact_sha256": "9e0faabb5eb4e689a1c68be66a8cf5032a607967d0597cd526e616f0e4411810",
+      "policy_path": "data/integrations/runtime/history-go-fagverk-politikk.policy.v1.json",
+      "policy_artifact_sha256": "7897362ddcd047e647557e83675781b156fccb839520ee539d44ecdf3d33373f",
+      "chapter_count": 13,
+      "scoring_mode": "subject_policy_v1",
+      "activation_status": "runtime_subject_active"
+    }
+  },
+  "effective_entry_count": 15,
   "full_release_active": false,
   "activation_rules": {
-    "observed_release_is_not_runtime": true,
-    "candidate_release_is_not_runtime": true,
-    "approved_release_requires_explicit_pointer_update": true,
-    "explicit_activation_pull_request_required": true
-  }
+    "active_subjects_override_legacy_subject_entries": true,
+    "unregistered_candidates_are_not_runtime": true,
+    "subject_policy_is_runtime_input_only_after_materialization": true,
+    "no_runtime_network_fetch": true,
+    "no_history_go_writeback": true
+  },
+  "artifact_sha256": "88d1cdb700e4decda81388f7a2d414b5abf41463564d33c9e12b66b908add0af"
 }
