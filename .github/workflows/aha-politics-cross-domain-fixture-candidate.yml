@@ -1,0 +1,56 @@
+name: AHA Politics cross-domain fixture candidate
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "data/evaluation/aha-politics-fixture-corrections.v1.json"
+      - "scripts/compare-politics-fixture-corrections.mjs"
+      - "scripts/lib/politics-fagverk-scoring.mjs"
+      - ".github/workflows/aha-politics-cross-domain-fixture-candidate.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  materialize-full-fixture-report:
+    name: Materialize 16-fixture Politics report
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Build full fixture comparison
+        run: node scripts/compare-politics-fixture-corrections.mjs
+      - name: Verify full correction set structure
+        run: |
+          node - <<'NODE'
+          const fs = require('fs');
+          const corrections = JSON.parse(fs.readFileSync('data/evaluation/aha-politics-fixture-corrections.v1.json', 'utf8'));
+          const report = JSON.parse(fs.readFileSync('data/evaluation/aha-politics-fixture-correction-report.v1.json', 'utf8'));
+          if (corrections.cases.length !== 16) throw new Error(`Expected 16 correction cases, got ${corrections.cases.length}.`);
+          if (new Set(corrections.cases.map((item) => item.fixture_path)).size !== 16) throw new Error('Correction fixtures are not unique.');
+          if (report.summary?.total !== 16) throw new Error(`Expected 16 report cases, got ${report.summary?.total}.`);
+          if (report.summary?.validation_errors !== 0 || report.validation_errors?.length) throw new Error('Correction set has validation errors.');
+          if (report.runtime_activation_allowed !== false) throw new Error('Runtime boundary must remain blocked.');
+          console.log(`Full Politics fixture baseline: ${report.summary.passed}/${report.summary.total} pass; ${report.summary.failed} failures.`);
+          NODE
+      - name: Materialize full report on PR branch
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          HEAD_BRANCH: ${{ github.head_ref }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/evaluation/aha-politics-fixture-correction-report.v1.json
+          if git diff --cached --quiet; then
+            echo "Full correction report already matches."
+            exit 0
+          fi
+          git commit -m "Materialize full Politics fixture correction report"
+          git push origin "HEAD:${HEAD_BRANCH}"
