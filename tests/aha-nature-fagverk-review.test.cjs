@@ -123,10 +123,16 @@ assert.equal(approval.gate_summary.failed, 0);
 assert.equal(approval.runtime_activation_allowed, false);
 assert.equal(approval.runtime_active_pointer_changed, false);
 
-assert.equal(runtime.active_subjects?.natur, undefined);
-assert.deepEqual(Object.keys(runtime.active_subjects), ["historie", "politikk"]);
+const activeNature = runtime.active_subjects?.natur;
+assert.equal(activeNature.subject_id, "natur");
+assert.equal(activeNature.source_commit, candidate.source_ref);
+assert.equal(activeNature.chapter_count, 11);
+assert.equal(activeNature.corpus_path, "data/integrations/runtime/history-go-fagverk-natur.corpus.v1.json");
+assert.equal(activeNature.policy_path, "data/integrations/runtime/history-go-fagverk-natur.policy.v1.json");
+assert.equal(activeNature.activation_status, "runtime_subject_active");
+assert.deepEqual(Object.keys(runtime.active_subjects), ["historie", "natur", "politikk"]);
 assert.equal(runtime.full_release_active, false);
-assert.equal(runtime.effective_entry_count, 37);
+assert.equal(runtime.effective_entry_count, 47);
 
 const matrixDigest = crypto.createHash("sha256").update(fs.readFileSync(paths.matrix)).digest("hex");
 assert.match(matrixDigest, /^[0-9a-f]{64}$/);
