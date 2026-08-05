@@ -1,0 +1,69 @@
+name: AHA Fagverk subject approvals
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "scripts/build-history-go-fagverk-subject-approvals.mjs"
+      - "tests/aha-fagverk-subject-approvals.test.cjs"
+      - ".github/workflows/aha-fagverk-subject-approvals.yml"
+      - "data/integrations/history-go-fagverk-release.observed.json"
+      - "data/integrations/history-go-fagverk-release.approved.json"
+      - "data/integrations/history-go-fagverk-release.runtime-active.json"
+      - "data/integrations/candidates/**"
+      - "data/integrations/review/**"
+      - "data/integrations/approvals/**"
+      - "data/evaluation/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-subject-approvals:
+    name: Rebuild registered subject approvals
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Rebuild registered subject approvals
+        run: node scripts/build-history-go-fagverk-subject-approvals.mjs --all --output-root artifacts/subject-approvals
+
+      - name: Verify approval inventory, parity and runtime isolation
+        run: |
+          node - <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
+          const registry = require('./data/integrations/review/history-go-fagverk-subject-approval-registry.v1.json');
+          const observed = require('./data/integrations/history-go-fagverk-release.observed.json');
+          const runtimeApproved = require('./data/integrations/history-go-fagverk-release.approved.json');
+          const runtimeActive = require('./data/integrations/history-go-fagverk-release.runtime-active.json');
+          const expected = Object.values(registry.subjects).map((config) => path.basename(config.approval_path)).sort();
+          const generated = fs.readdirSync('artifacts/subject-approvals').filter((name) => name.endsWith('.json')).sort();
+          if (JSON.stringify(generated) !== JSON.stringify(expected)) throw new Error(`Unexpected generated approval inventory: ${JSON.stringify(generated)} != ${JSON.stringify(expected)}`);
+          for (const [subjectId, config] of Object.entries(registry.subjects)) {
+            const generatedPath = path.join('artifacts/subject-approvals', path.basename(config.approval_path));
+            if (!fs.existsSync(config.approval_path)) throw new Error(`${subjectId}: checked approval is missing.`);
+            if (!fs.readFileSync(generatedPath).equals(fs.readFileSync(config.approval_path))) throw new Error(`${subjectId}: checked approval is stale.`);
+            const approval = JSON.parse(fs.readFileSync(config.approval_path, 'utf8'));
+            if (approval.status !== 'subject_review_approved_not_runtime_active') throw new Error(`${subjectId}: subject review is not approved.`);
+            if (approval.source_ref !== observed.source_commit) throw new Error(`${subjectId}: subject approval is not bound to the observed release.`);
+            if (approval.gate_summary?.failed !== 0 || approval.gate_summary?.passed !== approval.gate_summary?.total) throw new Error(`${subjectId}: one or more approval gates failed.`);
+            if (approval.runtime_activation_allowed !== false || approval.runtime_approved_pointer_changed !== false || approval.runtime_active_pointer_changed !== false) throw new Error(`${subjectId}: runtime boundary changed.`);
+          }
+          if (runtimeApproved.approved_source_commit === observed.source_commit) throw new Error('Subject approval must not update the legacy runtime-approved pointer.');
+          if (runtimeActive.active_source_commit === observed.source_commit) throw new Error('Subject approval must not update the runtime-active pointer.');
+          const runtime = fs.readFileSync('backend/aha_engine/app/engine/fagverk_grounding.py', 'utf8');
+          if (runtime.includes('data/integrations/approvals')) throw new Error('Subject approvals leaked into runtime.');
+          NODE
+
+      - name: Upload subject approval artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: aha-fagverk-subject-approvals
+          path: artifacts/subject-approvals/*.json
+          if-no-files-found: error
+          retention-days: 14
