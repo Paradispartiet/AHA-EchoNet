@@ -1,0 +1,102 @@
+{
+  "schema": "aha_politics_fixture_corrections_v1",
+  "version": "1.0.0",
+  "status": "human_review_baseline_not_runtime_active",
+  "subject_id": "politikk",
+  "corpus_sha256": "981ab3ad25f972bd13c70a0247f26b8796e43b8cd3cde7282b7d073bfcc79dec",
+  "policy_version": "1.0.0",
+  "runtime_activation_allowed": false,
+  "cases": [
+    {
+      "id": "correction-pinse-non-politics",
+      "fixture_path": "docs/fixtures/aha-analysis/01-pinse-religion.json",
+      "fixture_role": "legacy_exact_baseline",
+      "expected_politics_status": "unsupported",
+      "expected_chapter_id": null,
+      "source_evidence": ["kirkens fødselsdag", "den hellige ånd", "teologisk høytid"],
+      "forbidden_chapter_ids": ["parlamentarisme", "norsk-politikk-eos-eu-flernivastyring"],
+      "unsupported_interpretations": ["At en religiøs bevegelse omtales som offentlig er ikke belegg for et parlamentarisk eller norsk-politisk kapittel."],
+      "required_uncertainty": ["Politikk-kapittel skal ikke velges uten eksplisitte politiske institusjoner eller prosesser."]
+    },
+    {
+      "id": "correction-morgenbladet-media-non-politics",
+      "fixture_path": "docs/fixtures/aha-analysis/02-morgenbladet-mediehistorie.json",
+      "fixture_role": "legacy_exact_baseline",
+      "expected_politics_status": "unsupported",
+      "expected_chapter_id": null,
+      "source_evidence": ["idédebatt", "kulturkritikk", "medielandskapet"],
+      "forbidden_chapter_ids": ["parlamentarisme", "konflikt-makt-sivilsamfunn"],
+      "unsupported_interpretations": ["Offentlighet og debatt alene dokumenterer ikke parlamentarisme, representasjon eller sivilsamfunnskonflikt."],
+      "required_uncertainty": ["Mediehistorisk offentlighet må holdes atskilt fra politiske institusjoner når teksten ikke omtaler dem."]
+    },
+    {
+      "id": "correction-nav-reform-forvaltning",
+      "fixture_path": "docs/fixtures/aha-analysis/03-nav-reformen-forvaltning.json",
+      "fixture_role": "legacy_exact_baseline",
+      "expected_politics_status": "grounded",
+      "expected_chapter_id": "forvaltning",
+      "source_evidence": ["velferdsforvaltningen", "etatskulturer", "uklare ansvarsforhold"],
+      "supported_concepts": ["samordning", "organisatorisk ansvar", "velferdsforvaltning"],
+      "forbidden_chapter_ids": ["offentlig-politikk-beslutning-implementering"],
+      "unsupported_interpretations": ["Teksten dokumenterer ikke primært dagsordensetting eller policy feedback; den beskriver organisering, styring og ansvar."],
+      "required_uncertainty": ["Teksten sier ikke hvilke konkrete styringslinjer som sviktet eller hvilke evalueringsfunn som beviser effekten."]
+    },
+    {
+      "id": "correction-diary-non-politics",
+      "fixture_path": "docs/fixtures/aha-analysis/05-dagbok-refleksjon.json",
+      "fixture_role": "legacy_exact_baseline",
+      "expected_politics_status": "unsupported",
+      "expected_chapter_id": null,
+      "source_evidence": ["motivert og urolig", "ikke var til stede", "vanskelige valg"],
+      "forbidden_chapter_ids": ["normer-identitet-hverdagsliv", "konflikt-makt-sivilsamfunn"],
+      "unsupported_interpretations": ["Personlig uro og valg er ikke i seg selv belegg for politiske normer, identitet eller konflikt."],
+      "required_uncertainty": ["AHA skal avstå fra politisk kategorisering og klinisk diagnose."]
+    },
+    {
+      "id": "correction-legal-rights",
+      "fixture_path": "docs/fixtures/aha-analysis/07-juridisk-tekst.json",
+      "fixture_role": "legacy_exact_baseline",
+      "expected_politics_status": "grounded",
+      "expected_chapter_id": "rett-lov-rettssikkerhet",
+      "source_evidence": ["hjemmel i lov", "legitimt formål", "forholdsmessig", "individets rettigheter"],
+      "supported_concepts": ["inngrepshjemmel", "forholdsmessighet", "individvern"],
+      "forbidden_chapter_ids": ["offentlig-politikk-beslutning-implementering", "forvaltning"],
+      "unsupported_interpretations": ["Ordet tiltak gjør ikke teksten til policy-design; kjernen er rettslig prøving av inngrep."],
+      "required_uncertainty": ["Teksten oppgir ikke rettskilde, domstol eller konkret hjemmel og kan derfor ikke avgjøre gyldighet i en bestemt sak."]
+    },
+    {
+      "id": "correction-unclear-non-politics",
+      "fixture_path": "docs/fixtures/aha-analysis/08-uklar-lav-confidence.json",
+      "fixture_role": "legacy_exact_baseline",
+      "expected_politics_status": "unsupported",
+      "expected_chapter_id": null,
+      "source_evidence": ["vanskelig å si", "systemet", "personene"],
+      "forbidden_chapter_ids": ["regimer-og-institusjoner", "forvaltning", "konflikt-makt-sivilsamfunn"],
+      "unsupported_interpretations": ["Ordene system og personer gir ikke belegg for politiske institusjoner, forvaltning eller konflikt."],
+      "required_uncertainty": ["Kontekst, aktører, hendelse og konsekvens mangler; analysen skal avstå."]
+    },
+    {
+      "id": "correction-morgenbladet-public-sphere-non-politics",
+      "fixture_path": "docs/fixtures/aha-analysis/09-morgenbladet-offentlighet-kulturkritikk.json",
+      "fixture_role": "qualitative_target_fixture",
+      "expected_politics_status": "unsupported",
+      "expected_chapter_id": null,
+      "source_evidence": ["kulturkritikk", "langsom journalistikk", "dannelsesoffentlighet"],
+      "forbidden_chapter_ids": ["parlamentarisme", "konflikt-makt-sivilsamfunn"],
+      "unsupported_interpretations": ["Demokratisk samtale og offentlighet er ikke tilstrekkelig belegg for parlamentarisme uten regjering, Storting, representasjon eller kontroll."],
+      "required_uncertainty": ["Teksten kan kobles til medie- og offentlighetsteori, men Politikk-kapittel skal avstå."]
+    },
+    {
+      "id": "correction-nav-user-meeting-forvaltning",
+      "fixture_path": "docs/fixtures/aha-analysis/10-nav-reformen-brukermoete.json",
+      "fixture_role": "qualitative_target_fixture",
+      "expected_politics_status": "grounded",
+      "expected_chapter_id": "forvaltning",
+      "source_evidence": ["ett kontaktpunkt", "styringslinjer", "uklart ansvar"],
+      "supported_concepts": ["brukermøte", "styringslinje", "byråkratisk kompleksitet"],
+      "forbidden_chapter_ids": ["offentlig-politikk-beslutning-implementering"],
+      "unsupported_interpretations": ["Teksten analyserer først og fremst hvordan organisasjon og ansvar møter brukeren, ikke en generell policyprosess."],
+      "required_uncertainty": ["Brukeropplevd effekt kan ikke generaliseres uten konkrete kontor- eller evalueringsdata."]
+    }
+  ]
+}
