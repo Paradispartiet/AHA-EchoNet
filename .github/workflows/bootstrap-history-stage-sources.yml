@@ -48,7 +48,7 @@ jobs:
           node --check scripts/compare-history-fixture-corrections.mjs
           node -e "for (const p of ['data/evaluation/aha-history-fagverk-evaluation-matrix.v1.json','data/evaluation/aha-history-fixture-corrections.v1.json','data/integrations/review/history-go-fagverk-subject-approval-registry.v1.json']) JSON.parse(require('fs').readFileSync(p,'utf8'))"
 
-      - name: Commit review sources only
+      - name: Commit inspectable review sources
         run: |
           git add \
             scripts/lib/history-fagverk-scoring.mjs \
@@ -60,7 +60,6 @@ jobs:
             data/evaluation/aha-history-fixture-corrections.v1.json \
             data/integrations/review/history-go-fagverk-subject-approval-registry.v1.json \
             tests/aha-history-fagverk-review.test.cjs \
-            .github/workflows/aha-history-fagverk-review.yml \
             docs/AHA_HISTORY_FAGVERK_REVIEW_V1.md
           if git diff --cached --quiet; then
             echo 'History review sources are already staged.'
