@@ -1,7 +1,7 @@
 {
   "schema": "aha_politics_fagverk_term_policy_v1",
-  "version": "1.0.0",
-  "status": "review_policy_not_runtime_active",
+  "version": "1.1.0",
+  "status": "review_policy_correction_candidate_not_runtime_active",
   "source_repo": "Paradispartiet/History-Go",
   "source_ref": "9e9644e83998ff715005bf80c96cde6193107c13",
   "corpus_sha256": "981ab3ad25f972bd13c70a0247f26b8796e43b8cd3cde7282b7d073bfcc79dec",
@@ -17,7 +17,9 @@
     "high_risk": "non_scoring",
     "medium_risk": "down_weight_unless_generic_language",
     "low_risk_shared_phrase": "context_only",
-    "generic_language": "non_scoring"
+    "generic_language": "non_scoring",
+    "chapter_anchor": "required_when_configured",
+    "supplemental_evidence": "chapter_scoped_only"
   },
   "generic_language_terms": [
     "aktivitet",
@@ -78,6 +80,160 @@
     "viser",
     "være"
   ],
+  "global_non_scoring_terms": [
+    "aktivitet",
+    "alene",
+    "alternativ",
+    "alternativer",
+    "analyse",
+    "analysen",
+    "analyseres",
+    "andre",
+    "automatisk",
+    "bare",
+    "begge",
+    "både",
+    "case",
+    "derfor",
+    "ett",
+    "faktisk",
+    "felles",
+    "flere",
+    "fordi",
+    "forklaring",
+    "forklaringer",
+    "former",
+    "følger",
+    "før",
+    "får",
+    "gir",
+    "gjelder",
+    "gjennomføring",
+    "gjør",
+    "hvem",
+    "hvilken",
+    "hvor",
+    "hvorfor",
+    "innenfor",
+    "konkrete",
+    "krever",
+    "ledd",
+    "mekanisme",
+    "men",
+    "mens",
+    "mer",
+    "mål",
+    "norsk",
+    "når",
+    "over",
+    "problemer",
+    "saken",
+    "samme",
+    "samtidig",
+    "seg",
+    "skill",
+    "skille",
+    "skiller",
+    "tid",
+    "tidsrom",
+    "tiltak",
+    "ulike",
+    "uten",
+    "utfall",
+    "var",
+    "viser",
+    "være"
+  ],
+  "chapter_rules": {
+    "parlamentarisme": {
+      "required_anchor_terms": [
+        "mistillit",
+        "parlamentarisme",
+        "stortinget",
+        "regjering",
+        "representasjon",
+        "mandat",
+        "politisk ansvar",
+        "regjeringsansvar",
+        "kontroll"
+      ],
+      "supplemental_evidence_terms": []
+    },
+    "forvaltning": {
+      "required_anchor_terms": [],
+      "supplemental_evidence_terms": [
+        {
+          "term": "ansvarsforhold",
+          "weight": 3
+        },
+        {
+          "term": "byråkratisk kompleksitet",
+          "weight": 3
+        },
+        {
+          "term": "etatskultur",
+          "weight": 3
+        },
+        {
+          "term": "etatskulturer",
+          "weight": 3
+        },
+        {
+          "term": "ett kontaktpunkt",
+          "weight": 3
+        },
+        {
+          "term": "brukermøte",
+          "weight": 3
+        },
+        {
+          "term": "brukermøtet",
+          "weight": 3
+        },
+        {
+          "term": "styringslinjer",
+          "weight": 3
+        },
+        {
+          "term": "velferdsforvaltning",
+          "weight": 3
+        },
+        {
+          "term": "velferdsforvaltningen",
+          "weight": 3
+        }
+      ]
+    },
+    "rett-lov-rettssikkerhet": {
+      "required_anchor_terms": [],
+      "supplemental_evidence_terms": [
+        {
+          "term": "forholdsmessig",
+          "weight": 3
+        },
+        {
+          "term": "hjemmel i lov",
+          "weight": 3
+        },
+        {
+          "term": "individets rettigheter",
+          "weight": 3
+        },
+        {
+          "term": "legitimt formål",
+          "weight": 3
+        },
+        {
+          "term": "mindre inngripende tiltak",
+          "weight": 3
+        },
+        {
+          "term": "rettsanvendelsen",
+          "weight": 3
+        }
+      ]
+    }
+  },
   "summary": {
     "total": 143,
     "non_scoring": 84,
@@ -4574,7 +4730,11 @@
         "behov",
         "hjelp",
         "materiell"
-      ]
+      ],
+      "chapter_rule": {
+        "required_anchor_terms": [],
+        "supplemental_evidence_terms": []
+      }
     },
     {
       "chapter_id": "forvaltning",
@@ -4617,10 +4777,55 @@
         "innsyn",
         "oppgaver",
         "saker",
-        "tid",
         "bruker",
-        "ekspertise"
-      ]
+        "ekspertise",
+        "fullmakter"
+      ],
+      "chapter_rule": {
+        "required_anchor_terms": [],
+        "supplemental_evidence_terms": [
+          {
+            "term": "ansvarsforhold",
+            "weight": 3
+          },
+          {
+            "term": "byråkratisk kompleksitet",
+            "weight": 3
+          },
+          {
+            "term": "etatskultur",
+            "weight": 3
+          },
+          {
+            "term": "etatskulturer",
+            "weight": 3
+          },
+          {
+            "term": "ett kontaktpunkt",
+            "weight": 3
+          },
+          {
+            "term": "brukermøte",
+            "weight": 3
+          },
+          {
+            "term": "brukermøtet",
+            "weight": 3
+          },
+          {
+            "term": "styringslinjer",
+            "weight": 3
+          },
+          {
+            "term": "velferdsforvaltning",
+            "weight": 3
+          },
+          {
+            "term": "velferdsforvaltningen",
+            "weight": 3
+          }
+        ]
+      }
     },
     {
       "chapter_id": "internasjonal-politikk-sikkerhet-samarbeid",
@@ -4661,12 +4866,16 @@
         "konkurrerende",
         "forsvar",
         "internasjonale",
-        "var",
         "mot",
         "nasjonal",
         "nasjonalt",
-        "handling"
-      ]
+        "handling",
+        "håndtere"
+      ],
+      "chapter_rule": {
+        "required_anchor_terms": [],
+        "supplemental_evidence_terms": []
+      }
     },
     {
       "chapter_id": "konflikt-makt-sivilsamfunn",
@@ -4677,7 +4886,6 @@
         "konflikt",
         "konflikt, makt og sivilsamfunn",
         "krav",
-        "over",
         "respons",
         "strid",
         "agonisme",
@@ -4711,8 +4919,13 @@
         "myndighetsrespons",
         "målgruppe",
         "språk",
-        "tradisjoner"
-      ]
+        "tradisjoner",
+        "arbeidskamp"
+      ],
+      "chapter_rule": {
+        "required_anchor_terms": [],
+        "supplemental_evidence_terms": []
+      }
     },
     {
       "chapter_id": "normer-identitet-hverdagsliv",
@@ -4758,7 +4971,11 @@
         "arbeid",
         "bygg",
         "minoritet"
-      ]
+      ],
+      "chapter_rule": {
+        "required_anchor_terms": [],
+        "supplemental_evidence_terms": []
+      }
     },
     {
       "chapter_id": "norsk-politikk-eos-eu-flernivastyring",
@@ -4771,7 +4988,6 @@
         "flernivåstyring",
         "lokale",
         "nivåer",
-        "norsk",
         "norske",
         "penger",
         "samiske",
@@ -4803,8 +5019,13 @@
         "sak",
         "samtykke",
         "hvilket",
-        "styring"
-      ]
+        "styring",
+        "betyr"
+      ],
+      "chapter_rule": {
+        "required_anchor_terms": [],
+        "supplemental_evidence_terms": []
+      }
     },
     {
       "chapter_id": "offentlig-politikk-beslutning-implementering",
@@ -4812,7 +5033,6 @@
       "unique_evidence_terms": [
         "dagsorden",
         "resultater",
-        "tiltak",
         "valgt",
         "vurdert",
         "bakkebyrakrati",
@@ -4846,7 +5066,11 @@
         "endringer",
         "hendelser",
         "hos"
-      ]
+      ],
+      "chapter_rule": {
+        "required_anchor_terms": [],
+        "supplemental_evidence_terms": []
+      }
     },
     {
       "chapter_id": "parlamentarisme",
@@ -4887,7 +5111,21 @@
         "stortingets",
         "symbolsk",
         "bevegelser"
-      ]
+      ],
+      "chapter_rule": {
+        "required_anchor_terms": [
+          "mistillit",
+          "parlamentarisme",
+          "stortinget",
+          "regjering",
+          "representasjon",
+          "mandat",
+          "politisk ansvar",
+          "regjeringsansvar",
+          "kontroll"
+        ],
+        "supplemental_evidence_terms": []
+      }
     },
     {
       "chapter_id": "politisk-okonomi-stat-marked",
@@ -4932,7 +5170,11 @@
         "produksjon",
         "regulering",
         "relevant"
-      ]
+      ],
+      "chapter_rule": {
+        "required_anchor_terms": [],
+        "supplemental_evidence_terms": []
+      }
     },
     {
       "chapter_id": "regimer-og-institusjoner",
@@ -4978,7 +5220,11 @@
         "staten",
         "demokrati",
         "endres"
-      ]
+      ],
+      "chapter_rule": {
+        "required_anchor_terms": [],
+        "supplemental_evidence_terms": []
+      }
     },
     {
       "chapter_id": "rett-lov-rettssikkerhet",
@@ -5015,7 +5261,6 @@
         "straff kontroll",
         "strukturell vold",
         "dom",
-        "saken",
         "vilkår",
         "bevis",
         "forsvarlig",
@@ -5023,8 +5268,38 @@
         "likevel",
         "lovbrudd",
         "virkning",
-        "avgjør"
-      ]
+        "avgjør",
+        "avhenger"
+      ],
+      "chapter_rule": {
+        "required_anchor_terms": [],
+        "supplemental_evidence_terms": [
+          {
+            "term": "forholdsmessig",
+            "weight": 3
+          },
+          {
+            "term": "hjemmel i lov",
+            "weight": 3
+          },
+          {
+            "term": "individets rettigheter",
+            "weight": 3
+          },
+          {
+            "term": "legitimt formål",
+            "weight": 3
+          },
+          {
+            "term": "mindre inngripende tiltak",
+            "weight": 3
+          },
+          {
+            "term": "rettsanvendelsen",
+            "weight": 3
+          }
+        ]
+      }
     },
     {
       "chapter_id": "statsvitenskapelig-metode-og-sammenligning",
@@ -5070,7 +5345,11 @@
         "egenskaper",
         "spørsmål",
         "behandling"
-      ]
+      ],
+      "chapter_rule": {
+        "required_anchor_terms": [],
+        "supplemental_evidence_terms": []
+      }
     },
     {
       "chapter_id": "valg-partier-velgeratferd",
@@ -5114,7 +5393,11 @@
         "finnes",
         "forklare",
         "frafall"
-      ]
+      ],
+      "chapter_rule": {
+        "required_anchor_terms": [],
+        "supplemental_evidence_terms": []
+      }
     }
   ]
 }
