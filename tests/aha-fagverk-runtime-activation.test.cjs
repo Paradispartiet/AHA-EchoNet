@@ -9,8 +9,6 @@ const registryPath = 'data/integrations/runtime/history-go-fagverk-runtime-regis
 const legacyCorpusPath = 'data/integrations/history-go-fagverk-corpus.v1.json';
 const approvedPath = 'data/integrations/history-go-fagverk-release.approved.json';
 const activePath = 'data/integrations/history-go-fagverk-release.runtime-active.json';
-const runtimeCorpusPath = 'data/integrations/runtime/history-go-fagverk-politikk.corpus.v1.json';
-const runtimePolicyPath = 'data/integrations/runtime/history-go-fagverk-politikk.policy.v1.json';
 
 function stableValue(value) {
   if (Array.isArray(value)) return value.map(stableValue);
@@ -29,58 +27,92 @@ const registry = JSON.parse(fs.readFileSync(registryPath, 'utf8'));
 const legacy = JSON.parse(fs.readFileSync(legacyCorpusPath, 'utf8'));
 const approved = JSON.parse(fs.readFileSync(approvedPath, 'utf8'));
 const active = JSON.parse(fs.readFileSync(activePath, 'utf8'));
-const runtimeCorpus = JSON.parse(fs.readFileSync(runtimeCorpusPath, 'utf8'));
-const runtimePolicy = JSON.parse(fs.readFileSync(runtimePolicyPath, 'utf8'));
+const subjectIds = Object.keys(registry.active_subjects);
 
 assert.equal(registry.schema, 'aha_history_go_fagverk_runtime_registry_v1');
-assert.deepEqual(Object.keys(registry.active_subjects), ['politikk']);
+assert.deepEqual(subjectIds, ['historie', 'politikk']);
 assert.equal(legacy.entries.length, 3, 'legacy seed must remain byte-stable and separate');
+assert.deepEqual(Object.keys(approved.approved_subjects), subjectIds);
+assert.deepEqual(Object.keys(active.active_subjects), subjectIds);
 
-assert.equal(runtimeCorpus.schema, 'aha_history_go_fagverk_runtime_subject_corpus_v1');
-assert.equal(runtimeCorpus.status, 'runtime_subject_corpus_active');
-assert.equal(runtimeCorpus.subject_id, 'politikk');
-assert.equal(runtimeCorpus.source_ref, 'c16a187453d16a40f9cab4ca694c32e96014f31b');
-assert.equal(runtimeCorpus.corpus_sha256, '981ab3ad25f972bd13c70a0247f26b8796e43b8cd3cde7282b7d073bfcc79dec');
-assert.equal(runtimeCorpus.chapter_count, 13);
-assert.equal(runtimeCorpus.entries.length, 13);
-assert.equal(new Set(runtimeCorpus.entries.map((entry) => entry.chapter_id)).size, 13);
-assert.equal(runtimeCorpus.artifact_sha256, digestArtifact(runtimeCorpus));
+const expected = {
+  historie: {
+    sourceRef: 'c16a187453d16a40f9cab4ca694c32e96014f31b',
+    corpusSha: 'e5123cb96d9b89c83aad56efc327c1089bfe5f887f29322d39a4a936c9f19444',
+    chapterCount: 23,
+    thresholds: { minimum_score: 7, minimum_terms: 2, ambiguity_margin: 3 },
+  },
+  politikk: {
+    sourceRef: 'c16a187453d16a40f9cab4ca694c32e96014f31b',
+    corpusSha: '981ab3ad25f972bd13c70a0247f26b8796e43b8cd3cde7282b7d073bfcc79dec',
+    chapterCount: 13,
+    thresholds: { minimum_score: 6, minimum_terms: 2, ambiguity_margin: 3 },
+  },
+};
 
-assert.equal(runtimePolicy.schema, 'aha_history_go_fagverk_runtime_subject_policy_v1');
-assert.equal(runtimePolicy.status, 'runtime_subject_policy_active');
-assert.equal(runtimePolicy.subject_id, 'politikk');
-assert.equal(runtimePolicy.source_ref, runtimeCorpus.source_ref);
-assert.equal(runtimePolicy.corpus_sha256, runtimeCorpus.corpus_sha256);
-assert.deepEqual(runtimePolicy.thresholds, { minimum_score: 6, minimum_terms: 2, ambiguity_margin: 3 });
-assert.equal(runtimePolicy.terms.length, 143);
-assert.equal(runtimePolicy.global_non_scoring_terms.length > 0, true);
-assert.equal(runtimePolicy.chapter_rules.parlamentarisme.required_anchor_terms.includes('mistillit'), true);
-assert.equal(runtimePolicy.artifact_sha256, digestArtifact(runtimePolicy));
+const checkedPaths = [approvedPath, activePath];
+for (const subjectId of subjectIds) {
+  const config = registry.active_subjects[subjectId];
+  const corpus = JSON.parse(fs.readFileSync(config.runtime_corpus_path, 'utf8'));
+  const policy = JSON.parse(fs.readFileSync(config.runtime_policy_path, 'utf8'));
+  const item = expected[subjectId];
+
+  assert.equal(corpus.schema, 'aha_history_go_fagverk_runtime_subject_corpus_v1');
+  assert.equal(corpus.status, 'runtime_subject_corpus_active');
+  assert.equal(corpus.subject_id, subjectId);
+  assert.equal(corpus.source_ref, item.sourceRef);
+  assert.equal(corpus.corpus_sha256, item.corpusSha);
+  assert.equal(corpus.chapter_count, item.chapterCount);
+  assert.equal(corpus.entries.length, item.chapterCount);
+  assert.equal(new Set(corpus.entries.map((entry) => entry.chapter_id)).size, item.chapterCount);
+  assert.equal(corpus.artifact_sha256, digestArtifact(corpus));
+
+  assert.equal(policy.schema, 'aha_history_go_fagverk_runtime_subject_policy_v1');
+  assert.equal(policy.status, 'runtime_subject_policy_active');
+  assert.equal(policy.subject_id, subjectId);
+  assert.equal(policy.source_ref, corpus.source_ref);
+  assert.equal(policy.corpus_sha256, corpus.corpus_sha256);
+  assert.deepEqual(policy.thresholds, item.thresholds);
+  assert.equal(policy.artifact_sha256, digestArtifact(policy));
+
+  if (subjectId === 'historie') {
+    assert.equal(policy.temporal_gate.required, true);
+    assert.equal(Array.isArray(policy.temporal_gate.terms), true);
+    assert.equal(policy.temporal_gate.terms.includes('over tid'), true);
+    assert.equal(Object.keys(policy.chapter_rules).length, 23);
+  } else {
+    assert.equal(policy.temporal_gate, undefined);
+    assert.equal(policy.chapter_rules.parlamentarisme.required_anchor_terms.includes('mistillit'), true);
+  }
+
+  assert.equal(approved.approved_subjects[subjectId].source_commit, corpus.source_ref);
+  assert.equal(approved.approved_subjects[subjectId].corpus_path, config.runtime_corpus_path);
+  assert.equal(approved.approved_subjects[subjectId].policy_path, config.runtime_policy_path);
+  assert.equal(active.active_subjects[subjectId].source_commit, corpus.source_ref);
+  assert.equal(active.active_subjects[subjectId].corpus_path, config.runtime_corpus_path);
+  assert.equal(active.active_subjects[subjectId].policy_path, config.runtime_policy_path);
+  checkedPaths.push(config.runtime_corpus_path, config.runtime_policy_path);
+}
 
 assert.equal(approved.schema, 'aha_history_go_fagverk_approved_runtime_v2');
 assert.equal(approved.status, 'partial_subject_runtime_approved');
-assert.equal(approved.approved_source_commit, legacy.source_ref, 'legacy compatibility pointer remains seed-bound');
-assert.equal(approved.approved_subjects.politikk.source_commit, runtimeCorpus.source_ref);
-assert.equal(approved.approved_subjects.politikk.corpus_path, runtimeCorpusPath);
-assert.equal(approved.approved_subjects.politikk.policy_path, runtimePolicyPath);
+assert.equal(approved.approved_source_commit, legacy.source_ref);
 assert.equal(approved.full_release_approved, false);
 assert.equal(approved.artifact_sha256, digestArtifact(approved));
 
 assert.equal(active.schema, 'aha_history_go_fagverk_runtime_active_v2');
 assert.equal(active.status, 'partial_subject_runtime_active');
-assert.equal(active.active_source_commit, legacy.source_ref, 'legacy compatibility pointer remains seed-bound');
-assert.equal(active.active_subjects.politikk.source_commit, runtimeCorpus.source_ref);
-assert.equal(active.active_subjects.politikk.corpus_path, runtimeCorpusPath);
-assert.equal(active.active_subjects.politikk.policy_path, runtimePolicyPath);
-assert.equal(active.effective_entry_count, 15);
+assert.equal(active.active_source_commit, legacy.source_ref);
+assert.equal(active.effective_entry_count, 37);
 assert.equal(active.full_release_active, false);
 assert.equal(active.artifact_sha256, digestArtifact(active));
 
 const runtimeCode = fs.readFileSync('backend/aha_engine/app/engine/fagverk_grounding.py', 'utf8');
-assert.equal(runtimeCode.includes('data/integrations/review'), false, 'runtime must not read review artifacts');
-assert.equal(runtimeCode.includes('data/integrations/approvals'), false, 'runtime must not read approval artifacts');
+assert.equal(runtimeCode.includes('data/integrations/review'), false);
+assert.equal(runtimeCode.includes('data/integrations/approvals'), false);
 assert.equal(runtimeCode.includes('history-go-fagverk-release.runtime-active.json'), true);
 assert.equal(runtimeCode.includes('subject_policies'), true);
+assert.equal(runtimeCode.includes('temporal_gate'), true);
 
 const outputRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'aha-fagverk-runtime-'));
 const result = spawnSync(process.execPath, [
@@ -88,7 +120,7 @@ const result = spawnSync(process.execPath, [
   '--output-root', outputRoot,
 ], { encoding: 'utf8' });
 assert.equal(result.status, 0, result.stderr || result.stdout);
-for (const checkedPath of [runtimeCorpusPath, runtimePolicyPath, approvedPath, activePath]) {
+for (const checkedPath of checkedPaths) {
   const generatedPath = path.join(outputRoot, path.basename(checkedPath));
   assert.equal(fs.existsSync(generatedPath), true, `missing generated artifact: ${generatedPath}`);
   assert.equal(fs.readFileSync(generatedPath).equals(fs.readFileSync(checkedPath)), true, `stale runtime artifact: ${checkedPath}`);

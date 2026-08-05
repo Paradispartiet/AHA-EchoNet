@@ -32,19 +32,28 @@ def test_corpus_schema_and_provenance() -> None:
     assert corpus["status"] == "composed_partial_subject_runtime_corpus"
     assert corpus["source_repo"] == "Paradispartiet/History-Go"
     assert corpus["source_ref"]
-    assert len(corpus["entries"]) == 15
+    assert len(corpus["entries"]) == 37
     assert all(entry.get("source_path") for entry in corpus["entries"])
     politics_entries = [entry for entry in corpus["entries"] if entry["subject_id"] == "politikk"]
     assert len(politics_entries) == 13
     assert len({entry["chapter_id"] for entry in politics_entries}) == 13
-    assert "politikk" in corpus["subject_policies"]
+    history_entries = [entry for entry in corpus["entries"] if entry["subject_id"] == "historie"]
+    assert len(history_entries) == 23
+    assert len({entry["chapter_id"] for entry in history_entries}) == 23
+    assert set(corpus["subject_policies"]) == {"historie", "politikk"}
 
 
 def test_runtime_manifest_uses_materialized_subject_artifacts_only() -> None:
     manifest = json.loads(ACTIVE_MANIFEST_PATH.read_text(encoding="utf-8"))
     assert manifest["schema"] == "aha_history_go_fagverk_runtime_active_v2"
     assert manifest["status"] == "partial_subject_runtime_active"
-    assert manifest["effective_entry_count"] == 15
+    assert manifest["effective_entry_count"] == 37
+    assert set(manifest["active_subjects"]) == {"historie", "politikk"}
+    history = manifest["active_subjects"]["historie"]
+    assert history["chapter_count"] == 23
+    assert history["source_commit"] == "c16a187453d16a40f9cab4ca694c32e96014f31b"
+    assert history["corpus_path"].startswith("data/integrations/runtime/")
+    assert history["policy_path"].startswith("data/integrations/runtime/")
     politics = manifest["active_subjects"]["politikk"]
     assert politics["chapter_count"] == 13
     assert politics["source_commit"] == "c16a187453d16a40f9cab4ca694c32e96014f31b"

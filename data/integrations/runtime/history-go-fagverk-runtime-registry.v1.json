@@ -8,6 +8,18 @@
     "active_path": "data/integrations/history-go-fagverk-release.runtime-active.json"
   },
   "active_subjects": {
+    "historie": {
+      "subject_id": "historie",
+      "approval_path": "data/integrations/approvals/history-go-fagverk-historie.approved.v1.json",
+      "candidate_corpus_path": "data/integrations/candidates/history-go-fagverk-historie.candidate.v1.json",
+      "review_policy_path": "data/integrations/review/history-go-fagverk-historie.term-policy.v1.json",
+      "runtime_corpus_path": "data/integrations/runtime/history-go-fagverk-historie.corpus.v1.json",
+      "runtime_policy_path": "data/integrations/runtime/history-go-fagverk-historie.policy.v1.json",
+      "scoring_mode": "subject_policy_v1",
+      "minimum_score": 7,
+      "minimum_terms": 2,
+      "ambiguity_margin": 3
+    },
     "politikk": {
       "subject_id": "politikk",
       "approval_path": "data/integrations/approvals/history-go-fagverk-politikk.approved.v1.json",

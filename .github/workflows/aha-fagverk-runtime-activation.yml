@@ -9,13 +9,16 @@ on:
       - ".github/workflows/aha-fagverk-runtime-activation.yml"
       - "backend/aha_engine/app/engine/fagverk_grounding.py"
       - "backend/aha_engine/tests/test_fagverk_grounding.py"
+      - "backend/aha_engine/tests/test_history_fagverk_runtime.py"
       - "data/integrations/runtime/**"
       - "data/integrations/history-go-fagverk-corpus.v1.json"
       - "data/integrations/history-go-fagverk-release.approved.json"
       - "data/integrations/history-go-fagverk-release.runtime-active.json"
       - "data/integrations/approvals/**"
-      - "data/integrations/candidates/history-go-fagverk-politikk.candidate.v1.json"
-      - "data/integrations/review/history-go-fagverk-politikk.term-policy.v1.json"
+      - "data/integrations/candidates/history-go-fagverk-*.candidate.v1.json"
+      - "data/integrations/review/history-go-fagverk-*.term-policy.v1.json"
+      - "data/evaluation/aha-*-fagverk-evaluation-matrix.v1.json"
+      - "data/evaluation/aha-*-fixture-corrections.v1.json"
   workflow_dispatch:
 
 permissions:
