@@ -1,0 +1,40 @@
+name: Debug History review scoring
+
+on:
+  push:
+    branches:
+      - review/history-fagverk-v1
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: review/history-fagverk-v1
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Build policy and evaluation report
+        run: |
+          node scripts/build-history-fagverk-term-policy.mjs
+          node scripts/evaluate-history-fagverk-policy.mjs || true
+      - name: Print focused diagnostics
+        run: |
+          node - <<'NODE'
+          const fs = require('fs');
+          const report = JSON.parse(fs.readFileSync('data/evaluation/aha-history-fagverk-evaluation-report.v1.json', 'utf8'));
+          const policy = JSON.parse(fs.readFileSync('data/integrations/review/history-go-fagverk-historie.term-policy.v1.json', 'utf8'));
+          console.log('EVIDENCE_ERRORS');
+          console.log(JSON.stringify(report.evidence_errors, null, 2));
+          console.log('FAILURES');
+          for (const failure of report.failures) {
+            console.log(JSON.stringify({ id: failure.id, errors: failure.errors, result: failure.result }, null, 2));
+          }
+          console.log('FOCUSED_TERMS');
+          const focus = new Set(['hushold','historiebruk','diaspora','staten','institusjonene','ressurser']);
+          console.log(JSON.stringify(policy.terms.filter(item => focus.has(item.term)), null, 2));
+          NODE
