@@ -32,7 +32,7 @@ jobs:
       - name: Materialize Nature runtime artifacts
         run: node scripts/build-history-go-fagverk-runtime-activation.mjs
 
-      - name: Validate Node runtime contract
+      - name: Validate complete Node runtime contract
         run: |
           node tests/aha-fagverk-runtime-activation.test.cjs
           node tests/aha-fagverk-subject-approvals.test.cjs
