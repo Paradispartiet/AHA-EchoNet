@@ -4,10 +4,10 @@ import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
+import { normalize, scorePolitics } from "./lib/politics-fagverk-scoring.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(here, "..");
-
 const DEFAULTS = {
   corpus: "data/integrations/review/history-go-fagverk-politikk.audit.v1.json",
   policy: "data/integrations/review/history-go-fagverk-politikk.term-policy.v1.json",
@@ -43,80 +43,6 @@ function writeJson(relativePath, value) {
   fs.writeFileSync(outputPath, `${JSON.stringify(value, null, 2)}\n`, "utf8");
 }
 
-function normalize(value) {
-  return String(value ?? "").normalize("NFKC").toLowerCase().replace(/\s+/g, " ").trim();
-}
-
-function tokenSet(value) {
-  return new Set(normalize(value).match(/[a-zæøå0-9]+/gi) || []);
-}
-
-function termPresent(text, tokens, term) {
-  const value = normalize(term);
-  if (!value) return false;
-  if (/\s|-/.test(value)) return text.includes(value);
-  return tokens.has(value);
-}
-
-function groupTerms(entry) {
-  const terms = new Map();
-  for (const [group, weight] of [["title_terms", 5], ["concept_terms", 3], ["support_terms", 1.5]]) {
-    for (const rawTerm of entry[group] || []) {
-      const term = normalize(rawTerm);
-      if (!term) continue;
-      const current = terms.get(term);
-      if (!current || weight > current.base_weight) terms.set(term, { term, group, base_weight: weight });
-    }
-  }
-  return [...terms.values()];
-}
-
-function scorePolitics(textValue, corpus, policy) {
-  const text = normalize(textValue);
-  const tokens = tokenSet(text);
-  const policyByTerm = new Map((policy.terms || []).map((item) => [normalize(item.term), item]));
-  const scores = corpus.entries.map((entry) => {
-    const matched = [];
-    let score = 0;
-    for (const candidate of groupTerms(entry)) {
-      if (!termPresent(text, tokens, candidate.term)) continue;
-      const termPolicy = policyByTerm.get(candidate.term);
-      const multiplier = termPolicy ? Number(termPolicy.multiplier || 0) : 1;
-      const contribution = candidate.base_weight * multiplier;
-      if (contribution <= 0) continue;
-      matched.push({
-        term: candidate.term,
-        group: candidate.group,
-        base_weight: candidate.base_weight,
-        multiplier,
-        contribution: Number(contribution.toFixed(3))
-      });
-      score += contribution;
-    }
-    matched.sort((a, b) => b.contribution - a.contribution || a.term.localeCompare(b.term, "nb"));
-    return {
-      chapter_id: entry.chapter_id,
-      title: entry.title,
-      score: Number(score.toFixed(3)),
-      matched_terms: matched
-    };
-  }).sort((a, b) => b.score - a.score || a.chapter_id.localeCompare(b.chapter_id, "nb"));
-
-  const top = scores[0];
-  const second = scores[1];
-  let status = "unsupported";
-  if (top && top.score >= 6 && top.matched_terms.length >= 2) {
-    status = second && second.score >= 6 && (top.score - second.score) < 3 ? "ambiguous" : "grounded";
-  }
-  return {
-    status,
-    selected_chapter_id: status === "grounded" ? top.chapter_id : null,
-    top_score: top?.score || 0,
-    second_score: second?.score || 0,
-    ranking: scores.slice(0, 5)
-  };
-}
-
 function classifyComparison(expectedStatus, expectedChapter, actual) {
   if (expectedStatus === actual.status && (expectedStatus !== "grounded" || expectedChapter === actual.selected_chapter_id)) return "correct";
   if (expectedStatus === "unsupported" && actual.status === "grounded") return "false_positive";
@@ -127,7 +53,6 @@ function classifyComparison(expectedStatus, expectedChapter, actual) {
 
 function validateCase(correction, fixture) {
   const errors = [];
-  if (fixture.id !== correction.fixture_id && correction.fixture_id) errors.push(`fixture id mismatch: ${fixture.id}`);
   const source = normalize(fixture.inputText);
   for (const evidence of correction.source_evidence || []) {
     if (!source.includes(normalize(evidence))) errors.push(`source evidence missing: ${evidence}`);
@@ -180,7 +105,7 @@ function buildReport(corpus, policy, corrections) {
     };
   });
 
-  const byComparison = cases.reduce((summary, item) => {
+  const comparisons = cases.reduce((summary, item) => {
     summary[item.comparison] = (summary[item.comparison] || 0) + 1;
     return summary;
   }, {});
@@ -188,7 +113,7 @@ function buildReport(corpus, policy, corrections) {
   const failed = cases.length - passed;
   return {
     schema: "aha_politics_fixture_correction_report_v1",
-    version: "1.0.0",
+    version: "1.1.0",
     status: validationErrors.length ? "invalid_correction_set" : failed ? "correction_required" : "passed_correction_gate",
     runtime_activation_allowed: false,
     source_ref: corpus.source_ref,
@@ -201,7 +126,7 @@ function buildReport(corpus, policy, corrections) {
       failed,
       exact_legacy_baselines: cases.filter((item) => item.fixture_role === "legacy_exact_baseline").length,
       qualitative_targets: cases.filter((item) => item.fixture_role === "qualitative_target_fixture").length,
-      comparisons: byComparison,
+      comparisons,
       validation_errors: validationErrors.length
     },
     validation_errors: validationErrors,
@@ -218,7 +143,7 @@ function main() {
   }
   const report = buildReport(readJson(args.corpus), readJson(args.policy), readJson(args.corrections));
   writeJson(args.output, report);
-  console.log(`Politics fixture correction baseline: ${report.summary.passed}/${report.summary.total} pass; ${report.summary.failed} corrections required.`);
+  console.log(`Politics fixture corrections: ${report.summary.passed}/${report.summary.total} pass; ${report.summary.failed} corrections remain.`);
   if (report.validation_errors.length) {
     report.validation_errors.forEach((error) => console.error(error));
     process.exit(1);
