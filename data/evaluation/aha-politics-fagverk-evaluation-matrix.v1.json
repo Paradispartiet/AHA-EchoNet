@@ -1,0 +1,257 @@
+{
+  "schema": "aha_politics_fagverk_evaluation_matrix_v1",
+  "version": "1.0.0",
+  "status": "review_matrix_not_runtime_active",
+  "source_ref": "9e9644e83998ff715005bf80c96cde6193107c13",
+  "corpus_sha256": "981ab3ad25f972bd13c70a0247f26b8796e43b8cd3cde7282b7d073bfcc79dec",
+  "subject_id": "politikk",
+  "positive_cases": [
+    {
+      "id": "politics-positive-forvaltning",
+      "text": "Et departement kan bruke delegasjon overfor et direktorat, men instruksjonsrett og forvaltningsskjønn må spores gjennom saken.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "forvaltning",
+      "required_evidence": ["delegasjon", "instruksjonsrett", "forvaltningsskjønn"]
+    },
+    {
+      "id": "politics-positive-parlamentarisme",
+      "text": "Mistillit og politisk offentlighet påvirker hvordan regjeringen står ansvarlig overfor Stortinget i et parlamentarisk system.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "parlamentarisme",
+      "required_evidence": ["mistillit", "politisk offentlighet"]
+    },
+    {
+      "id": "politics-positive-regimer",
+      "text": "Sammenlign presidentstyre med andre institusjonelle systemer og undersøk hvordan demokratisk tilbakegang kan endre maktfordelingen.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "regimer-og-institusjoner",
+      "required_evidence": ["presidentstyre", "demokratisk tilbakegang"]
+    },
+    {
+      "id": "politics-positive-valg",
+      "text": "Sperregrense og utjevningsmandat påvirker mandatfordelingen, mens strategisk stemmegivning påvirker velgeratferden.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "valg-partier-velgeratferd",
+      "required_evidence": ["sperregrense", "utjevningsmandat", "strategisk stemmegivning"]
+    },
+    {
+      "id": "politics-positive-policy",
+      "text": "Problemdefinisjon påvirker dagsorden, mens et virkemiddel og policy feedback viser hvordan et tiltak endres etter implementering.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "offentlig-politikk-beslutning-implementering",
+      "required_evidence": ["problemdefinisjon", "virkemiddel", "policy feedback"]
+    },
+    {
+      "id": "politics-positive-internasjonal",
+      "text": "Et sikkerhetsdilemma kan forsterkes av avskrekking, og en småstat må vurdere allianser under internasjonal usikkerhet.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "internasjonal-politikk-sikkerhet-samarbeid",
+      "required_evidence": ["sikkerhetsdilemma", "avskrekking", "småstat"]
+    },
+    {
+      "id": "politics-positive-okonomi",
+      "text": "Markedsfeil kan møtes med karbonprising, mens pengepolitikk og finanspolitikk påvirker økonomisk stabilitet.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "politisk-okonomi-stat-marked",
+      "required_evidence": ["markedsfeil", "karbonprising", "pengepolitikk"]
+    },
+    {
+      "id": "politics-positive-metode",
+      "text": "Operasjonalisering må koble begrep til indikator, intern validitet må vurderes, og et kontrafaktisk sammenligningsgrunnlag trengs for kausal analyse.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "statsvitenskapelig-metode-og-sammenligning",
+      "required_evidence": ["operasjonalisering", "intern validitet", "kontrafaktisk"]
+    },
+    {
+      "id": "politics-positive-norsk-eos",
+      "text": "EØS-innlemmelse krever nasjonal gjennomføring, mens kommunalt selvstyre påvirker hvordan regler virker i flernivåstyringen.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "norsk-politikk-eos-eu-flernivastyring",
+      "required_evidence": ["eøs-innlemmelse", "nasjonal gjennomføring", "kommunalt selvstyre"]
+    },
+    {
+      "id": "politics-positive-rett",
+      "text": "Forholdsmessighet, kontradiksjon og et effektivt rettsmiddel er nødvendige deler av en rettssikker prøving av inngrep.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "rett-lov-rettssikkerhet",
+      "required_evidence": ["forholdsmessighet", "kontradiksjon", "effektivt rettsmiddel"]
+    },
+    {
+      "id": "politics-positive-velferd",
+      "text": "Gini-koeffisient måler fordeling, universalisme beskriver tjenesteprinsippet, og bostøtte påvirker husholdets betalbarhet.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "fordeling-velferd-ulikhet",
+      "required_evidence": ["gini-koeffisient", "universalisme", "bostøtte"]
+    },
+    {
+      "id": "politics-positive-konflikt",
+      "text": "Et handlingsrepertoar og dagsordenmakt former protest, mens en motoffentlighet kan gi nye krav en politisk arena.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "konflikt-makt-sivilsamfunn",
+      "required_evidence": ["handlingsrepertoar", "dagsordenmakt", "motoffentlighet"]
+    },
+    {
+      "id": "politics-positive-normer",
+      "text": "Normalitet og interseksjonalitet påvirker sosial kategorisering, mens universell utforming kan gi reell adgang.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "normer-identitet-hverdagsliv",
+      "required_evidence": ["normalitet", "interseksjonalitet", "universell utforming"]
+    }
+  ],
+  "confusion_cases": [
+    {
+      "id": "politics-confusion-policy-not-forvaltning",
+      "text": "Et offentlig vedtak omtaler ansvar og ressurser, men analysen gjelder problemdefinisjon, virkemiddel og policy feedback.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "offentlig-politikk-beslutning-implementering",
+      "forbidden_chapter_ids": ["forvaltning"],
+      "required_evidence": ["problemdefinisjon", "virkemiddel", "policy feedback"]
+    },
+    {
+      "id": "politics-confusion-regime-not-parliament",
+      "text": "Representasjon er nevnt, men hovedspørsmålet er presidentstyre, liberal konstitusjonalisme og demokratisk tilbakegang.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "regimer-og-institusjoner",
+      "forbidden_chapter_ids": ["parlamentarisme"],
+      "required_evidence": ["presidentstyre", "liberal konstitusjonalisme", "demokratisk tilbakegang"]
+    },
+    {
+      "id": "politics-confusion-parliament-not-regime",
+      "text": "Institusjoner og makt er bakgrunn, men saken gjelder mistillit, politisk offentlighet og mediemangfold i parlamentarismen.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "parlamentarisme",
+      "forbidden_chapter_ids": ["regimer-og-institusjoner"],
+      "required_evidence": ["mistillit", "politisk offentlighet", "mediemangfold"]
+    },
+    {
+      "id": "politics-confusion-election-not-parliament",
+      "text": "Stemmer og representasjon er felles bakgrunn, men teksten analyserer sperregrense, partisystem og strategisk stemmegivning.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "valg-partier-velgeratferd",
+      "forbidden_chapter_ids": ["parlamentarisme"],
+      "required_evidence": ["sperregrense", "partisystem", "strategisk stemmegivning"]
+    },
+    {
+      "id": "politics-confusion-forvaltning-not-policy",
+      "text": "Gjennomføring er bakgrunn, men saken handler om delegasjon, instruksjonsrett og frontlinjebyråkrati i forvaltningen.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "forvaltning",
+      "forbidden_chapter_ids": ["offentlig-politikk-beslutning-implementering"],
+      "required_evidence": ["delegasjon", "instruksjonsrett", "frontlinjebyråkrati"]
+    },
+    {
+      "id": "politics-confusion-eos-not-international",
+      "text": "Internasjonale bindinger er bakgrunn, men teksten gjelder EØS-innlemmelse, nasjonal gjennomføring og rammefinansiering.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "norsk-politikk-eos-eu-flernivastyring",
+      "forbidden_chapter_ids": ["internasjonal-politikk-sikkerhet-samarbeid"],
+      "required_evidence": ["eøs-innlemmelse", "nasjonal gjennomføring", "rammefinansiering"]
+    },
+    {
+      "id": "politics-confusion-velferd-not-okonomi",
+      "text": "Fordeling er et felles tema, men analysen bruker gini-koeffisient, bostøtte og ekvivalensskala for å vurdere ulikhet.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "fordeling-velferd-ulikhet",
+      "forbidden_chapter_ids": ["politisk-okonomi-stat-marked"],
+      "required_evidence": ["gini-koeffisient", "bostøtte", "ekvivalensskala"]
+    },
+    {
+      "id": "politics-confusion-method-not-policy",
+      "text": "Et politisk tiltak er case, men oppgaven gjelder operasjonalisering, intern validitet og ekstern validitet i forskningsdesignet.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "statsvitenskapelig-metode-og-sammenligning",
+      "forbidden_chapter_ids": ["offentlig-politikk-beslutning-implementering"],
+      "required_evidence": ["operasjonalisering", "intern validitet", "ekstern validitet"]
+    },
+    {
+      "id": "politics-confusion-international-not-eos",
+      "text": "Norsk politikk er nevnt, men analysen gjelder sikkerhetsdilemma, avskrekking og to-nivåspill i internasjonal politikk.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "internasjonal-politikk-sikkerhet-samarbeid",
+      "forbidden_chapter_ids": ["norsk-politikk-eos-eu-flernivastyring"],
+      "required_evidence": ["sikkerhetsdilemma", "avskrekking", "to-nivåspill"]
+    },
+    {
+      "id": "politics-confusion-law-not-administration",
+      "text": "Et offentlig organ har truffet vedtak, men prøvingen gjelder forholdsmessighet, kontradiksjon og inngrepshjemmel.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "rett-lov-rettssikkerhet",
+      "forbidden_chapter_ids": ["forvaltning"],
+      "required_evidence": ["forholdsmessighet", "kontradiksjon", "inngrepshjemmel"]
+    },
+    {
+      "id": "politics-confusion-okonomi-not-velferd",
+      "text": "Ulikhet er en mulig virkning, men teksten analyserer markedsfeil, karbonprising og pengepolitikk som økonomiske virkemidler.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "politisk-okonomi-stat-marked",
+      "forbidden_chapter_ids": ["fordeling-velferd-ulikhet"],
+      "required_evidence": ["markedsfeil", "karbonprising", "pengepolitikk"]
+    },
+    {
+      "id": "politics-confusion-norms-not-conflict",
+      "text": "Makt er bakgrunn, men teksten undersøker normalitet, interseksjonalitet og sosial kontroll i hverdagslivet.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "normer-identitet-hverdagsliv",
+      "forbidden_chapter_ids": ["konflikt-makt-sivilsamfunn"],
+      "required_evidence": ["normalitet", "interseksjonalitet", "sosial kontroll"]
+    },
+    {
+      "id": "politics-confusion-conflict-not-norms",
+      "text": "Identitet er en del av saken, men analysen gjelder handlingsrepertoar, motoffentlighet og dagsordenmakt i kollektiv konflikt.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "konflikt-makt-sivilsamfunn",
+      "forbidden_chapter_ids": ["normer-identitet-hverdagsliv"],
+      "required_evidence": ["handlingsrepertoar", "motoffentlighet", "dagsordenmakt"]
+    }
+  ],
+  "ambiguity_cases": [
+    {
+      "id": "politics-ambiguous-power-institutions-rules",
+      "text": "Makt, institusjoner og regler former politiske utfall.",
+      "allowed_statuses": ["unsupported", "ambiguous"],
+      "non_scoring_evidence": ["makt", "institusjoner", "regler"]
+    },
+    {
+      "id": "politics-ambiguous-public-politics",
+      "text": "Offentlig politikk krever politisk ansvar.",
+      "allowed_statuses": ["unsupported", "ambiguous"],
+      "non_scoring_evidence": ["offentlig", "politikk", "politisk", "ansvar"]
+    },
+    {
+      "id": "politics-ambiguous-control-resources",
+      "text": "Kontroll, kapasitet og ressurser påvirker vedtak.",
+      "allowed_statuses": ["unsupported", "ambiguous"],
+      "non_scoring_evidence": ["kontroll", "kapasitet", "ressurser", "vedtak"]
+    },
+    {
+      "id": "politics-ambiguous-representation-participation",
+      "text": "Representasjon, deltakelse og valg er viktige.",
+      "allowed_statuses": ["unsupported", "ambiguous"],
+      "non_scoring_evidence": ["representasjon", "deltakelse", "valg"]
+    },
+    {
+      "id": "politics-ambiguous-analysis-explanation",
+      "text": "Analyse og forklaring viser ulike utfall.",
+      "allowed_statuses": ["unsupported", "ambiguous"],
+      "non_scoring_evidence": ["analyse", "forklaring", "utfall"]
+    },
+    {
+      "id": "politics-ambiguous-law-administration",
+      "text": "Hjemmel, kompetanse og skjønn må vurderes.",
+      "allowed_statuses": ["unsupported", "ambiguous"],
+      "non_scoring_evidence": ["hjemmel", "kompetanse", "skjønn"]
+    },
+    {
+      "id": "politics-ambiguous-method-capacity",
+      "text": "Prosessporing, analyseenhet og kapasitet brukes i analysen.",
+      "allowed_statuses": ["unsupported", "ambiguous"],
+      "non_scoring_evidence": ["prosessporing", "analyseenhet", "kapasitet", "analysen"]
+    },
+    {
+      "id": "politics-ambiguous-services-access",
+      "text": "Tjenester, adgang og begrunnelse påvirker praksis.",
+      "allowed_statuses": ["unsupported", "ambiguous"],
+      "non_scoring_evidence": ["tjenester", "adgang", "begrunnelse", "praksis"]
+    }
+  ]
+}
