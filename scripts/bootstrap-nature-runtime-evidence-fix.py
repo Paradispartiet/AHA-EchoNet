@@ -39,3 +39,14 @@ new = '"Næringsnett vurderes som økologisk næringsnett sammen med målt habit
 if text.count(old) != 1:
     raise SystemExit("Expected one weak Nature runtime example")
 path.write_text(text.replace(old, new), encoding="utf-8")
+
+workflow_path = Path(".github/workflows/aha-fagverk-runtime-activation.yml")
+workflow = workflow_path.read_text(encoding="utf-8")
+old = (
+    '      - "backend/aha_engine/tests/test_history_fagverk_runtime.py"\n'
+    '      - "backend/aha_engine/tests/test_nature_fagverk_runtime.py"\n'
+)
+new = '      - "backend/aha_engine/tests/test_history_fagverk_runtime.py"\n'
+if workflow.count(old) != 1:
+    raise SystemExit("Expected one temporary Nature workflow path addition")
+workflow_path.write_text(workflow.replace(old, new), encoding="utf-8")
