@@ -24,9 +24,9 @@ function assertStep(input, pattern, message) {
   assert.match(stepsFor(input).join('\n'), pattern, message);
 }
 
-function assertSafeSteps(snapshot, rawValues = []) {
+function assertSafeSteps(snapshot, rawValues = [], { allowEmpty = false } = {}) {
   assert.ok(Array.isArray(snapshot.nextUnderstandingSteps));
-  assert.ok(snapshot.nextUnderstandingSteps.length > 0);
+  if (!allowEmpty) assert.ok(snapshot.nextUnderstandingSteps.length > 0);
   assert.ok(snapshot.nextUnderstandingSteps.length <= 5);
   assert.equal(new Set(snapshot.nextUnderstandingSteps.map((step) => step.toLowerCase())).size, snapshot.nextUnderstandingSteps.length);
   const json = JSON.stringify(snapshot.nextUnderstandingSteps);
@@ -40,8 +40,8 @@ function assertSafeSteps(snapshot, rawValues = []) {
 }
 
 const empty = api.buildConversationInsightSnapshot();
-assertSafeSteps(empty);
-assert.ok(empty.nextUnderstandingSteps.includes('Samle flere strukturerte signaler før AHA trekker tydeligere mønstre.'));
+assertSafeSteps(empty, [], { allowEmpty: true });
+assert.deepEqual(empty.nextUnderstandingSteps, []);
 
 assertStep({ openQuestions: ['Hva er uklart?'] }, /Avklar hovedspørsmålet før du konkluderer\./, 'open questions step');
 assertStep({ concepts: ['Makt', 'Tillit'] }, /Skill de viktigste begrepene fra hverandre\./, 'multiple concepts step');
@@ -49,8 +49,15 @@ assertStep({ concepts: ['Makt'] }, /Undersøk hvorfor dette begrepet går igjen\
 assertStep({ tensions: ['Trygghet og frihet'] }, /Formuler spenningen som et åpent spørsmål\./, 'tension step');
 assertStep({ perspectives: ['Borgerperspektiv'] }, /Sammenlign perspektivene før neste tolkning\./, 'perspective step');
 assertStep({ conversationLinks: ['Tidligere tema'] }, /Se hvilke samtalekoblinger som faktisk forklarer temaet\./, 'conversation links step');
-assertStep({ quality: { sourceBound: false } }, /Sjekk kildegrunnlaget før du bruker innsikten videre\./, 'source quality step');
-assertStep({ quality: { topicConsistent: false } }, /Sjekk kildegrunnlaget før du bruker innsikten videre\./, 'topic quality step');
+
+const sourceQualityOnly = api.buildConversationInsightSnapshot({ quality: { sourceBound: false } });
+assertSafeSteps(sourceQualityOnly, [], { allowEmpty: true });
+assert.deepEqual(sourceQualityOnly.nextUnderstandingSteps, []);
+const topicQualityOnly = api.buildConversationInsightSnapshot({ quality: { topicConsistent: false } });
+assertSafeSteps(topicQualityOnly, [], { allowEmpty: true });
+assert.deepEqual(topicQualityOnly.nextUnderstandingSteps, []);
+assertStep({ concepts: ['Makt'], quality: { sourceBound: false } }, /Sjekk kildegrunnlaget før du bruker innsikten videre\./, 'source quality step with evidence');
+assertStep({ concepts: ['Makt'], quality: { topicConsistent: false } }, /Sjekk kildegrunnlaget før du bruker innsikten videre\./, 'topic quality step with evidence');
 
 const rich = api.buildConversationInsightSnapshot({
   concepts: ['A', 'B'],
