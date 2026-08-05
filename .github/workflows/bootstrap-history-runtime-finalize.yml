@@ -178,8 +178,10 @@ jobs:
         working-directory: backend/aha_engine
         run: python -m pytest tests/test_fagverk_grounding.py tests/test_history_fagverk_runtime.py
 
-      - name: Remove temporary patch source
-        run: git rm scripts/bootstrap-history-runtime-activation.source.yml
+      - name: Remove temporary patch source and restore permanent workflow
+        run: |
+          git rm scripts/bootstrap-history-runtime-activation.source.yml
+          git restore -- .github/workflows/aha-fagverk-runtime-activation.yml
 
       - name: Verify exact activation scope
         run: |
@@ -187,7 +189,6 @@ jobs:
           import subprocess
 
           expected = {
-              '.github/workflows/aha-fagverk-runtime-activation.yml',
               'backend/aha_engine/app/engine/fagverk_grounding.py',
               'backend/aha_engine/tests/test_fagverk_grounding.py',
               'backend/aha_engine/tests/test_history_fagverk_runtime.py',
