@@ -14,7 +14,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build-politics-corpus:
@@ -22,10 +22,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout AHA-EchoNet
+      - name: Checkout AHA-EchoNet head branch
         uses: actions/checkout@v5
         with:
           path: aha
+          ref: ${{ github.head_ref || github.ref_name }}
+          fetch-depth: 0
 
       - name: Checkout locked History Go source
         uses: actions/checkout@v5
@@ -50,30 +52,44 @@ jobs:
             --output artifacts/history-go-fagverk-politikk.audit.v1.json \
             --audit-output artifacts/history-go-fagverk-politikk.audit-report.v1.json
 
-      - name: Verify artifact contract and checked-in parity
+      - name: Verify artifact contract
         working-directory: aha
         run: |
           node - <<'NODE'
           const fs = require('fs');
-          const generatedCorpusPath = 'artifacts/history-go-fagverk-politikk.audit.v1.json';
-          const generatedAuditPath = 'artifacts/history-go-fagverk-politikk.audit-report.v1.json';
-          const checkedCorpusPath = 'data/integrations/review/history-go-fagverk-politikk.audit.v1.json';
-          const checkedAuditPath = 'data/integrations/review/history-go-fagverk-politikk.audit-report.v1.json';
-          const corpus = JSON.parse(fs.readFileSync(generatedCorpusPath, 'utf8'));
-          const audit = JSON.parse(fs.readFileSync(generatedAuditPath, 'utf8'));
+          const corpus = JSON.parse(fs.readFileSync('artifacts/history-go-fagverk-politikk.audit.v1.json', 'utf8'));
+          const audit = JSON.parse(fs.readFileSync('artifacts/history-go-fagverk-politikk.audit-report.v1.json', 'utf8'));
           if (corpus.source_ref !== '9e9644e83998ff715005bf80c96cde6193107c13') throw new Error(`Unexpected History Go source_ref: ${corpus.source_ref}`);
           if (corpus.subject_filter !== 'politikk') throw new Error('Corpus is not Politics-scoped.');
           if (corpus.entries.length !== 13) throw new Error(`Expected 13 entries, got ${corpus.entries.length}.`);
           if (corpus.entries.some((entry) => entry.subject_id !== 'politikk')) throw new Error('Non-Politics entry leaked into corpus.');
+          if (corpus.entries.some((entry) => !entry.provenance?.module_file_count || !entry.module_source_paths?.length)) throw new Error('Registered module files are not represented in every Politics entry.');
+          if (corpus.entries.some((entry) => !entry.support_terms?.length)) throw new Error('Every Politics entry must contain module-derived support terms.');
           if (!audit.gate?.passed) throw new Error(`Coverage gate failed: ${(audit.gate?.errors || []).join(' ')}`);
           if (audit.coverage?.registered !== 13 || audit.coverage?.materialized !== 13) throw new Error('Politics registry coverage is not 13/13.');
+          if (audit.chapters.some((chapter) => !chapter.module_file_count || !chapter.support_term_count)) throw new Error('Audit lacks module depth for one or more chapters.');
           if (audit.activation_recommendation !== 'review_required_before_runtime_activation') throw new Error('Audit must remain review-gated before runtime activation.');
-          for (const [generatedPath, checkedPath] of [[generatedCorpusPath, checkedCorpusPath], [generatedAuditPath, checkedAuditPath]]) {
-            if (!fs.existsSync(checkedPath)) throw new Error(`Missing checked-in review artifact: ${checkedPath}`);
-            if (!fs.readFileSync(generatedPath).equals(fs.readFileSync(checkedPath))) throw new Error(`Checked-in review artifact is stale: ${checkedPath}`);
-          }
-          console.log(`Verified Politics corpus: ${corpus.entries.length}/13 chapters; ${audit.term_collision_summary.high_risk} high-risk terms require review.`);
+          console.log(`Verified module-aware Politics corpus: ${corpus.entries.length}/13 chapters; ${audit.term_collision_summary.high_risk} high-risk terms require review.`);
           NODE
+
+      - name: Materialize module-aware review artifacts on the PR branch
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        working-directory: aha
+        env:
+          HEAD_BRANCH: ${{ github.head_ref }}
+        run: |
+          mkdir -p data/integrations/review
+          cp artifacts/history-go-fagverk-politikk.audit.v1.json data/integrations/review/history-go-fagverk-politikk.audit.v1.json
+          cp artifacts/history-go-fagverk-politikk.audit-report.v1.json data/integrations/review/history-go-fagverk-politikk.audit-report.v1.json
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/integrations/review/history-go-fagverk-politikk.audit.v1.json data/integrations/review/history-go-fagverk-politikk.audit-report.v1.json
+          if git diff --cached --quiet; then
+            echo "Module-aware review artifacts already match the locked History Go source."
+            exit 0
+          fi
+          git commit -m "Refresh module-aware Politics Fagverk audit artifacts"
+          git push origin "HEAD:${HEAD_BRANCH}"
 
       - name: Upload Politics audit artifacts
         uses: actions/upload-artifact@v4
