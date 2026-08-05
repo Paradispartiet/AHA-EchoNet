@@ -154,8 +154,7 @@ const actionSteps = [
 ];
 const actionSnapshot = api.buildConversationInsightSnapshot({ nextUnderstandingSteps: actionSteps.concat(['Undersøk begrepet videre']) });
 assertNoLeak(actionSnapshot, actionSteps);
-assert.ok(actionSnapshot.nextUnderstandingSteps.includes('Undersøk begrepet videre'));
-assert.ok(actionSnapshot.nextUnderstandingSteps.includes('Samle flere strukturerte signaler før AHA trekker tydeligere mønstre.'));
+assert.deepEqual(actionSnapshot.nextUnderstandingSteps, ['Undersøk begrepet videre']);
 
 [
   'localStorage.setItem', 'localStorage.removeItem', 'localStorage.getItem', 'fetch(',

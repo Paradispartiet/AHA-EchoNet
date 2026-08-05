@@ -155,9 +155,21 @@
     return label;
   }
 
+  function hasStructuredEvidence(normalized, signals, explicitSteps) {
+    const src = safeObject(normalized);
+    const safeSignals = safeObject(signals);
+    return Boolean(
+      src.headline
+      || src.shortDescription
+      || safeArray(explicitSteps).length
+      || SIGNAL_FIELDS.some((field) => safeArray(safeSignals[field]).length > 0)
+    );
+  }
+
   function buildNextUnderstandingSteps(normalized, signals) {
-    const explicit = safeArray(safeObject(normalized).nextUnderstandingSteps).map(normalizeStep).filter(Boolean);
-    const quality = safeObject(safeObject(normalized).quality);
+    const src = safeObject(normalized);
+    const explicit = safeArray(src.nextUnderstandingSteps).map(normalizeStep).filter(Boolean);
+    const quality = safeObject(src.quality);
     const generated = [];
     const safeSignals = safeObject(signals);
     const hasOpenQuestions = safeArray(safeSignals.openQuestions).length > 0;
@@ -167,6 +179,8 @@
     const hasPerspectives = safeArray(safeSignals.perspectives).length > 0;
     const hasConversationLinks = safeArray(safeSignals.conversationLinks).length > 0;
 
+    if (!hasStructuredEvidence(src, safeSignals, explicit)) return [];
+
     if (hasOpenQuestions) generated.push("Avklar hovedspørsmålet før du konkluderer.");
     if (hasMultipleConcepts) generated.push("Skill de viktigste begrepene fra hverandre.");
     else if (hasConcepts) generated.push("Undersøk hvorfor dette begrepet går igjen.");
@@ -175,7 +189,7 @@
     if (hasConversationLinks) generated.push("Se hvilke samtalekoblinger som faktisk forklarer temaet.");
     if (quality.sourceBound === false || quality.topicConsistent === false) generated.push("Sjekk kildegrunnlaget før du bruker innsikten videre.");
 
-    if (!generated.length) {
+    if (!generated.length && (src.headline || src.shortDescription)) {
       generated.push("Samle flere strukturerte signaler før AHA trekker tydeligere mønstre.");
     }
 

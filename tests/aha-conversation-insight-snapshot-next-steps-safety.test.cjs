@@ -38,9 +38,9 @@ function assertSnapshotContract(snapshot) {
   assert.equal(snapshot.safety.approvalActionAvailable, false);
 }
 
-function assertSafeStepShape(snapshot) {
+function assertSafeStepShape(snapshot, { allowEmpty = false } = {}) {
   assert.ok(Array.isArray(snapshot.nextUnderstandingSteps));
-  assert.ok(snapshot.nextUnderstandingSteps.length > 0);
+  if (!allowEmpty) assert.ok(snapshot.nextUnderstandingSteps.length > 0);
   assert.ok(snapshot.nextUnderstandingSteps.length <= 5, snapshot.nextUnderstandingSteps.join('\n'));
   assert.equal(
     new Set(snapshot.nextUnderstandingSteps.map((step) => step.toLowerCase())).size,
@@ -88,16 +88,16 @@ function assertNoLeak(snapshot, values) {
   assert.equal(/https?:\/\/|www\.|[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}|user[_-]?12345/i.test(json), false, json);
 }
 
-function assertSafe(snapshot, rawValues = []) {
+function assertSafe(snapshot, rawValues = [], options = {}) {
   assertSnapshotContract(snapshot);
-  assertSafeStepShape(snapshot);
+  assertSafeStepShape(snapshot, options);
   assertNoForbiddenStepLanguage(snapshot);
   assertNoLeak(snapshot, rawValues);
 }
 
 const empty = build();
-assertSafe(empty);
-assert.match(stepsJson(empty), /strukturerte signaler/i);
+assertSafe(empty, [], { allowEmpty: true });
+assert.deepEqual(empty.nextUnderstandingSteps, []);
 
 const structured = build({
   concepts: ['Makt', 'Tillit'],
@@ -121,8 +121,16 @@ const weakQuality = build({
   sourceBinding: { status: 'failed' },
   topicConsistency: { status: 'mismatch' }
 });
-assertSafe(weakQuality);
-assert.match(stepsJson(weakQuality), /kilde/i);
+assertSafe(weakQuality, [], { allowEmpty: true });
+assert.deepEqual(weakQuality.nextUnderstandingSteps, []);
+
+const weakQualityWithSignal = build({
+  concepts: ['Kildekritikk'],
+  sourceBinding: { status: 'failed' },
+  topicConsistency: { status: 'mismatch' }
+});
+assertSafe(weakQualityWithSignal);
+assert.match(stepsJson(weakQualityWithSignal), /kilde/i);
 
 const rawValues = [
   'RAW_NEXT_STEPS_SAFETY_TEXT_SECRET',
