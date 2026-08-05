@@ -1,0 +1,416 @@
+{
+  "schema": "aha_nature_fagverk_evaluation_matrix_v1",
+  "version": "1.0.0",
+  "status": "review_matrix_not_runtime_active",
+  "subject_id": "natur",
+  "source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
+  "corpus_sha256": "d29f05a0b08fd5673e4bc0d320e896e4f75ec67ff217284188d0e77bed14b00e",
+  "runtime_activation_allowed": false,
+  "positive_cases": [
+    {
+      "id": "nature-positive-artskunnskap_systematikk",
+      "text": "Artsbestemmelse må bygge på diagnostiske artskjennetegn og morfologisk nøkkelbestemmelse før taksonomisk rang fastsettes.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "artskunnskap_systematikk",
+      "required_evidence": [
+        "diagnostiske artskjennetegn",
+        "morfologisk nøkkelbestemmelse"
+      ]
+    },
+    {
+      "id": "nature-positive-botanikk_vegetasjon",
+      "text": "Plantevev undersøkes gjennom plantecelle og vev samt xylem og floem før vegetasjonsanalyse utføres.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "botanikk_vegetasjon",
+      "required_evidence": [
+        "plantecelle og vev",
+        "xylem og floem"
+      ]
+    },
+    {
+      "id": "nature-positive-evolusjon_biologisk_mangfold",
+      "text": "Allelfrekvens endres gjennom en populasjonsgenetisk prosess, og en reproduktiv barriere kan gi artsdannelse.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "evolusjon_biologisk_mangfold",
+      "required_evidence": [
+        "populasjonsgenetisk prosess",
+        "reproduktiv barriere"
+      ]
+    },
+    {
+      "id": "nature-positive-geologi_landskap_tid",
+      "text": "Bergart tolkes gjennom geologisk tidsdybde og berggrunn og løsmasser, med sedimentær avsetning som prosess.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "geologi_landskap_tid",
+      "required_evidence": [
+        "geologisk tidsdybde",
+        "berggrunn og løsmasser"
+      ]
+    },
+    {
+      "id": "nature-positive-klima_energi_resiliens",
+      "text": "Strålingsbalanse analyseres som jordens strålingsbalanse sammen med atmosfærisk drivhuseffekt i klimasystemet.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "klima_energi_resiliens",
+      "required_evidence": [
+        "jordens strålingsbalanse",
+        "atmosfærisk drivhuseffekt"
+      ]
+    },
+    {
+      "id": "nature-positive-miljopavirkning_forvaltning_regenerasjon",
+      "text": "Økologisk tilstand dokumenteres som målt økologisk tilstand før restaurering av natur og adaptiv naturforvaltning planlegges.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "miljopavirkning_forvaltning_regenerasjon",
+      "required_evidence": [
+        "målt økologisk tilstand",
+        "restaurering av natur"
+      ]
+    },
+    {
+      "id": "nature-positive-okosystem_mangfold_habitat",
+      "text": "Næringsnett vurderes som økologisk næringsnett sammen med målt habitatkvalitet og populasjon og bestand.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "okosystem_mangfold_habitat",
+      "required_evidence": [
+        "økologisk næringsnett",
+        "målt habitatkvalitet"
+      ]
+    },
+    {
+      "id": "nature-positive-organismebiologi_fysiologi",
+      "text": "Homeostase undersøkes som fysiologisk homeostase gjennom respirasjon og gassutveksling og osmotisk regulering.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "organismebiologi_fysiologi",
+      "required_evidence": [
+        "fysiologisk homeostase",
+        "respirasjon og gassutveksling"
+      ]
+    },
+    {
+      "id": "nature-positive-urban_okologi_gronnstruktur",
+      "text": "Urban økologi analyserer økologisk grønnstruktur i by og blågrønn overvannsløsning som urban habitatkonnektivitet.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "urban_okologi_gronnstruktur",
+      "required_evidence": [
+        "økologisk grønnstruktur i by",
+        "blågrønn overvannsløsning"
+      ]
+    },
+    {
+      "id": "nature-positive-vann_hydrologi_kretslop",
+      "text": "Nedbørfelt måles som hydrologisk nedbørfelt med målt vannføring og grunnvannsmagasin.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "vann_hydrologi_kretslop",
+      "required_evidence": [
+        "hydrologisk nedbørfelt",
+        "målt vannføring"
+      ]
+    },
+    {
+      "id": "nature-positive-zoologi_dyreliv",
+      "text": "Zoologi skiller en zoologisk artsgruppe gjennom dyrenes atferdsøkologi og virveldyr og virvelløse.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "zoologi_dyreliv",
+      "required_evidence": [
+        "zoologisk artsgruppe",
+        "dyrenes atferdsøkologi"
+      ]
+    }
+  ],
+  "confusion_cases": [
+    {
+      "id": "nature-confusion-artskunnskap_systematikk",
+      "text": "Et historisk museum viser arter, men artsbestemmelse avgjøres av diagnostiske artskjennetegn og integrativ taksonomi, ikke av fortellingen.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "artskunnskap_systematikk",
+      "required_evidence": [
+        "diagnostiske artskjennetegn",
+        "integrativ taksonomi"
+      ],
+      "forbidden_chapter_ids": [
+        "evolusjon_biologisk_mangfold"
+      ]
+    },
+    {
+      "id": "nature-confusion-botanikk_vegetasjon",
+      "text": "Byrom og grønn politikk omtales, men plantevev analyseres gjennom vegetasjonsrute og herbariedokumentasjon.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "botanikk_vegetasjon",
+      "required_evidence": [
+        "vegetasjonsrute",
+        "herbariedokumentasjon"
+      ],
+      "forbidden_chapter_ids": [
+        "urban_okologi_gronnstruktur"
+      ]
+    },
+    {
+      "id": "nature-confusion-evolusjon_biologisk_mangfold",
+      "text": "Forvaltning av arter diskuteres, men allelfrekvens forklares med endring i allelfrekvens og evolusjonær tilpasning.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "evolusjon_biologisk_mangfold",
+      "required_evidence": [
+        "endring i allelfrekvens",
+        "evolusjonær tilpasning"
+      ],
+      "forbidden_chapter_ids": [
+        "miljopavirkning_forvaltning_regenerasjon"
+      ]
+    },
+    {
+      "id": "nature-confusion-geologi_landskap_tid",
+      "text": "Historisk stedsendring nevnes, men bergart tolkes gjennom glasial landskapsforming og tektonisk prosess.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "geologi_landskap_tid",
+      "required_evidence": [
+        "glasial landskapsforming",
+        "tektonisk prosess"
+      ],
+      "forbidden_chapter_ids": [
+        "urban_okologi_gronnstruktur"
+      ]
+    },
+    {
+      "id": "nature-confusion-klima_energi_resiliens",
+      "text": "Bedriftens energiressurser omtales, men strålingsbalanse analyseres med tilbakekobling i klimasystemet og karbonbudsjett og kretsløp.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "klima_energi_resiliens",
+      "required_evidence": [
+        "tilbakekobling i klimasystemet",
+        "karbonbudsjett og kretsløp"
+      ],
+      "forbidden_chapter_ids": [
+        "miljopavirkning_forvaltning_regenerasjon"
+      ]
+    },
+    {
+      "id": "nature-confusion-miljopavirkning_forvaltning_regenerasjon",
+      "text": "Et kommunalt vedtak nevnes, men økologisk tilstand vurderes med adaptiv naturforvaltning og påvirkningsfaktor i natur.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "miljopavirkning_forvaltning_regenerasjon",
+      "required_evidence": [
+        "adaptiv naturforvaltning",
+        "påvirkningsfaktor i natur"
+      ],
+      "forbidden_chapter_ids": [
+        "klima_energi_resiliens"
+      ]
+    },
+    {
+      "id": "nature-confusion-okosystem_mangfold_habitat",
+      "text": "Klima og ressurser nevnes, men næringsnett analyseres gjennom økosystemets funksjon og biologisk artsmangfold.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "okosystem_mangfold_habitat",
+      "required_evidence": [
+        "økosystemets funksjon",
+        "biologisk artsmangfold"
+      ],
+      "forbidden_chapter_ids": [
+        "klima_energi_resiliens"
+      ]
+    },
+    {
+      "id": "nature-confusion-organismebiologi_fysiologi",
+      "text": "Dyreliv nevnes generelt, men homeostase forklares med sirkulasjonssystemets funksjon og organismens energibalanse.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "organismebiologi_fysiologi",
+      "required_evidence": [
+        "sirkulasjonssystemets funksjon",
+        "organismens energibalanse"
+      ],
+      "forbidden_chapter_ids": [
+        "zoologi_dyreliv"
+      ]
+    },
+    {
+      "id": "nature-confusion-urban_okologi_gronnstruktur",
+      "text": "Byutvikling omtales politisk, men urban økologi dokumenteres gjennom infiltrasjon i byjord og økologisk korridor i bylandskap.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "urban_okologi_gronnstruktur",
+      "required_evidence": [
+        "infiltrasjon i byjord",
+        "økologisk korridor i bylandskap"
+      ],
+      "forbidden_chapter_ids": [
+        "miljopavirkning_forvaltning_regenerasjon"
+      ]
+    },
+    {
+      "id": "nature-confusion-vann_hydrologi_kretslop",
+      "text": "Vannressurser omtales økonomisk, men hydrologi vurderes gjennom grunnvannsmagasin og overflateavrenning.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "vann_hydrologi_kretslop",
+      "required_evidence": [
+        "grunnvannsmagasin",
+        "overflateavrenning"
+      ],
+      "forbidden_chapter_ids": [
+        "klima_energi_resiliens"
+      ]
+    },
+    {
+      "id": "nature-confusion-zoologi_dyreliv",
+      "text": "Artsmangfold omtales bredt, men zoologi dokumenteres gjennom faunistisk kartlegging og dyreorganismens levevis.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "zoologi_dyreliv",
+      "required_evidence": [
+        "faunistisk kartlegging",
+        "dyreorganismens levevis"
+      ],
+      "forbidden_chapter_ids": [
+        "artskunnskap_systematikk"
+      ]
+    }
+  ],
+  "ambiguity_cases": [
+    {
+      "id": "nature-abstain-politics-management",
+      "text": "Kommunen diskuterer forvaltning, ressurser og tiltak i en ny plan.",
+      "allowed_statuses": [
+        "unsupported",
+        "ambiguous"
+      ],
+      "non_scoring_evidence": [
+        "forvaltning",
+        "ressurser"
+      ]
+    },
+    {
+      "id": "nature-abstain-history-landscape",
+      "text": "Teksten beskriver historisk utvikling og landskap over lang tid.",
+      "allowed_statuses": [
+        "unsupported",
+        "ambiguous"
+      ],
+      "non_scoring_evidence": [
+        "historisk",
+        "landskap"
+      ]
+    },
+    {
+      "id": "nature-abstain-city-green",
+      "text": "Prosjektet handler om byrom, grønn utvikling og kommunale tiltak.",
+      "allowed_statuses": [
+        "unsupported",
+        "ambiguous"
+      ],
+      "non_scoring_evidence": [
+        "byrom",
+        "grønn"
+      ]
+    },
+    {
+      "id": "nature-abstain-business-climate",
+      "text": "Bedriften arbeider med energi, klima og ressurser i markedet.",
+      "allowed_statuses": [
+        "unsupported",
+        "ambiguous"
+      ],
+      "non_scoring_evidence": [
+        "energi",
+        "klima",
+        "ressurser"
+      ]
+    },
+    {
+      "id": "nature-abstain-generic-water",
+      "text": "Rapporten nevner vann, system og utvikling uten metode eller måling.",
+      "allowed_statuses": [
+        "unsupported",
+        "ambiguous"
+      ],
+      "non_scoring_evidence": [
+        "vann",
+        "system"
+      ]
+    },
+    {
+      "id": "nature-abstain-generic-species",
+      "text": "Art og arter omtales som eksempler uten artsbestemmelse eller biologisk metode.",
+      "allowed_statuses": [
+        "unsupported",
+        "ambiguous"
+      ],
+      "non_scoring_evidence": [
+        "art",
+        "arter"
+      ]
+    },
+    {
+      "id": "nature-abstain-generic-environment",
+      "text": "Miljø og natur er viktige temaer i teksten.",
+      "allowed_statuses": [
+        "unsupported",
+        "ambiguous"
+      ],
+      "non_scoring_evidence": [
+        "miljø",
+        "natur"
+      ]
+    },
+    {
+      "id": "nature-abstain-policy-climate",
+      "text": "Klimapolitikk diskuteres som forvaltning og ressursfordeling.",
+      "allowed_statuses": [
+        "unsupported",
+        "ambiguous"
+      ],
+      "non_scoring_evidence": [
+        "forvaltning",
+        "klima"
+      ]
+    },
+    {
+      "id": "nature-abstain-historical-nature",
+      "text": "Historie om natur og miljø formidles til publikum.",
+      "allowed_statuses": [
+        "unsupported",
+        "ambiguous"
+      ],
+      "non_scoring_evidence": [
+        "historie",
+        "natur",
+        "miljø"
+      ]
+    },
+    {
+      "id": "nature-abstain-urban-resources",
+      "text": "Byen planlegger ressurser, energi og grønn vekst.",
+      "allowed_statuses": [
+        "unsupported",
+        "ambiguous"
+      ],
+      "non_scoring_evidence": [
+        "ressurser",
+        "energi",
+        "grønn"
+      ]
+    },
+    {
+      "id": "nature-abstain-generic-diversity",
+      "text": "Mangfold og utvikling omtales uten biologisk dokumentasjon.",
+      "allowed_statuses": [
+        "unsupported",
+        "ambiguous"
+      ],
+      "non_scoring_evidence": [
+        "mangfold",
+        "utvikling"
+      ]
+    },
+    {
+      "id": "nature-abstain-generic-process",
+      "text": "En prosess i et system beskrives med data og analyse.",
+      "allowed_statuses": [
+        "unsupported",
+        "ambiguous"
+      ],
+      "non_scoring_evidence": [
+        "prosess",
+        "system",
+        "data"
+      ]
+    }
+  ]
+}

@@ -14,7 +14,7 @@ const runtimeCode = fs.readFileSync('backend/aha_engine/app/engine/fagverk_groun
 assert.equal(registry.schema, 'aha_history_go_fagverk_subject_approval_registry_v1');
 assert.equal(registry.status, 'review_gate_registry_not_runtime_input');
 assert.equal(registry.runtime_activation_allowed, false);
-assert.deepEqual(Object.keys(registry.subjects), ['historie', 'politikk']);
+assert.deepEqual(Object.keys(registry.subjects), ['historie', 'natur', 'politikk']);
 
 const outputRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'aha-fagverk-subject-approvals-'));
 const result = spawnSync(process.execPath, ['scripts/build-history-go-fagverk-subject-approvals.mjs', '--all', '--output-root', outputRoot], {
@@ -48,6 +48,9 @@ for (const [subjectId, config] of Object.entries(registry.subjects)) {
 
 assert.notEqual(runtimeApproved.approved_source_commit, observed.source_commit);
 assert.notEqual(runtimeActive.active_source_commit, observed.source_commit);
+assert.deepEqual(Object.keys(runtimeActive.active_subjects), ['historie', 'politikk']);
+assert.equal(runtimeActive.active_subjects.natur, undefined);
+assert.equal(runtimeActive.effective_entry_count, 37);
 assert.equal(runtimeCode.includes('data/integrations/approvals'), false);
 assert.equal(runtimeCode.includes('subject_review_approved_not_runtime_active'), false);
 
