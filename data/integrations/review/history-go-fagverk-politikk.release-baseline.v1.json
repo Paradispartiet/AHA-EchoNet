@@ -1,0 +1,48 @@
+{
+  "schema": "aha_politics_fagverk_release_baseline_v1",
+  "version": "1.0.0",
+  "status": "review_baseline_not_runtime_input",
+  "source_repo": "Paradispartiet/History-Go",
+  "source_ref": "9e9644e83998ff715005bf80c96cde6193107c13",
+  "subject_id": "politikk",
+  "corpus_sha256": "981ab3ad25f972bd13c70a0247f26b8796e43b8cd3cde7282b7d073bfcc79dec",
+  "chapter_ids": [
+    "fordeling-velferd-ulikhet",
+    "forvaltning",
+    "internasjonal-politikk-sikkerhet-samarbeid",
+    "konflikt-makt-sivilsamfunn",
+    "normer-identitet-hverdagsliv",
+    "norsk-politikk-eos-eu-flernivastyring",
+    "offentlig-politikk-beslutning-implementering",
+    "parlamentarisme",
+    "politisk-okonomi-stat-marked",
+    "regimer-og-institusjoner",
+    "rett-lov-rettssikkerhet",
+    "statsvitenskapelig-metode-og-sammenligning",
+    "valg-partier-velgeratferd"
+  ],
+  "module_files_per_chapter": 3,
+  "term_policy": {
+    "version": "1.2.0",
+    "total": 143,
+    "non_scoring": 84,
+    "down_weight": 55,
+    "context_only": 4
+  },
+  "evaluation": {
+    "version": "1.1.0",
+    "total": 34,
+    "passed": 34,
+    "failed": 0,
+    "chapters_covered": 13,
+    "evidence_errors": 0
+  },
+  "fixture_corrections": {
+    "version": "1.1.0",
+    "total": 16,
+    "passed": 16,
+    "failed": 0,
+    "validation_errors": 0
+  },
+  "runtime_activation_allowed": false
+}
