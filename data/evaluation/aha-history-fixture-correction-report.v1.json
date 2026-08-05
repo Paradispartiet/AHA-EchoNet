@@ -1,0 +1,1647 @@
+{
+  "schema": "aha_history_fixture_correction_report_v1",
+  "version": "1.0.0",
+  "source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
+  "corpus_sha256": "e5123cb96d9b89c83aad56efc327c1089bfe5f887f29322d39a4a936c9f19444",
+  "policy_version": "1.0.0",
+  "status": "passed_correction_gate",
+  "runtime_activation_allowed": false,
+  "summary": {
+    "total": 16,
+    "passed": 16,
+    "failed": 0,
+    "validation_errors": 0,
+    "grounded": 4,
+    "unsupported": 12,
+    "ambiguous": 0
+  },
+  "validation_errors": [],
+  "failures": [],
+  "cases": [
+    {
+      "id": "history-fixture-pinse",
+      "fixture_path": "docs/fixtures/aha-analysis/01-pinse-religion.json",
+      "passed": true,
+      "errors": [],
+      "expected_history_status": "unsupported",
+      "expected_chapter_id": null,
+      "result": {
+        "status": "unsupported",
+        "selected_chapter_id": null,
+        "top_score": 0,
+        "second_score": 0,
+        "temporal_evidence": {
+          "matched_terms": [],
+          "matched_years": [],
+          "eligible": false
+        },
+        "ranking": [
+          {
+            "chapter_id": "forhistorie_arkeologi",
+            "title": "Forhistorie og arkeologi",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "kontekst",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "global_kolonial_transnasjonal",
+            "title": "Global, kolonial og transnasjonal historie",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "kulturell",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "migrasjon_minoritet_tilhorighet",
+            "title": "Migrasjon, minoritet og tilhørighet",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "gruppe",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "1814_statsdannelse",
+            "title": "1814, grunnlov og statsdannelse",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "byhistorie_stedsendring",
+            "title": "Byhistorie og stedsendring",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "history-fixture-morgenbladet-mediehistorie",
+      "fixture_path": "docs/fixtures/aha-analysis/02-morgenbladet-mediehistorie.json",
+      "passed": true,
+      "errors": [],
+      "expected_history_status": "grounded",
+      "expected_chapter_id": "offentlighet_mobilisering_bevegelser",
+      "result": {
+        "status": "grounded",
+        "selected_chapter_id": "offentlighet_mobilisering_bevegelser",
+        "top_score": 9.5,
+        "second_score": 0,
+        "temporal_evidence": {
+          "matched_terms": [
+            "over tid",
+            "i perioder",
+            "perioder"
+          ],
+          "matched_years": [],
+          "eligible": true
+        },
+        "ranking": [
+          {
+            "chapter_id": "offentlighet_mobilisering_bevegelser",
+            "title": "Offentlighet, mobilisering og sosiale bevegelser",
+            "score": 9.5,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [
+              "offentlighet"
+            ],
+            "matched_terms": [
+              {
+                "term": "medielandskapet",
+                "group": "supplemental_evidence_terms",
+                "base_weight": 4,
+                "multiplier": 1,
+                "contribution": 4
+              },
+              {
+                "term": "redaksjonelle profil",
+                "group": "supplemental_evidence_terms",
+                "base_weight": 4,
+                "multiplier": 1,
+                "contribution": 4
+              },
+              {
+                "term": "offentlighet",
+                "group": "title_terms",
+                "base_weight": 5,
+                "multiplier": 0.3,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "religion_reformasjon_livssyn",
+            "title": "Religion, reformasjon og livssyn",
+            "score": 0.9,
+            "eligible": false,
+            "eligibility_reason": "missing_required_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "offentlighet",
+                "group": "concept_terms",
+                "base_weight": 3,
+                "multiplier": 0.3,
+                "contribution": 0.9
+              }
+            ]
+          },
+          {
+            "chapter_id": "1814_statsdannelse",
+            "title": "1814, grunnlov og statsdannelse",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_required_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "byhistorie_stedsendring",
+            "title": "Byhistorie og stedsendring",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_required_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "forhistorie_arkeologi",
+            "title": "Forhistorie og arkeologi",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_required_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "history-fixture-nav-reform",
+      "fixture_path": "docs/fixtures/aha-analysis/03-nav-reformen-forvaltning.json",
+      "passed": true,
+      "errors": [],
+      "expected_history_status": "unsupported",
+      "expected_chapter_id": null,
+      "result": {
+        "status": "unsupported",
+        "selected_chapter_id": null,
+        "top_score": 0,
+        "second_score": 0,
+        "temporal_evidence": {
+          "matched_terms": [],
+          "matched_years": [],
+          "eligible": false
+        },
+        "ranking": [
+          {
+            "chapter_id": "velferd_rett_hverdagsliv",
+            "title": "Velferd, rett og hverdagsliv",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "tjenester",
+                "group": "title_terms",
+                "base_weight": 5,
+                "multiplier": 0.3,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "okonomi_handel_materielle_systemer",
+            "title": "Økonomi, handel og materielle systemer",
+            "score": 0.45,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "tjenester",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 0.3,
+                "contribution": 0.45
+              }
+            ]
+          },
+          {
+            "chapter_id": "1814_statsdannelse",
+            "title": "1814, grunnlov og statsdannelse",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "byhistorie_stedsendring",
+            "title": "Byhistorie og stedsendring",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "forhistorie_arkeologi",
+            "title": "Forhistorie og arkeologi",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "history-fixture-literary-attachment",
+      "fixture_path": "docs/fixtures/aha-analysis/04-litteraer-tilknytningsteori.json",
+      "passed": true,
+      "errors": [],
+      "expected_history_status": "unsupported",
+      "expected_chapter_id": null,
+      "result": {
+        "status": "unsupported",
+        "selected_chapter_id": null,
+        "top_score": 0,
+        "second_score": 0,
+        "temporal_evidence": {
+          "matched_terms": [],
+          "matched_years": [],
+          "eligible": false
+        },
+        "ranking": [
+          {
+            "chapter_id": "kjonn_familie_livslop",
+            "title": "Kjønn, familie, seksualitet og livsløp",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "relasjoner",
+                "group": "title_terms",
+                "base_weight": 5,
+                "multiplier": 0.3,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "middelalder_kirke_kongemakt",
+            "title": "Middelalder, kirke og kongemakt",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "direkte",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "miljo_klima_landskap",
+            "title": "Miljø-, klima- og landskapshistorie",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "relasjoner",
+                "group": "title_terms",
+                "base_weight": 5,
+                "multiplier": 0.3,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "forste_verdenskrig_mellomkrig",
+            "title": "Første verdenskrig og mellomkrigstiden",
+            "score": 0.45,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "konflikt",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 0.3,
+                "contribution": 0.45
+              }
+            ]
+          },
+          {
+            "chapter_id": "makt_stat_institusjoner",
+            "title": "Makt, stat og institusjoner",
+            "score": 0.45,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "konflikt",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 0.3,
+                "contribution": 0.45
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "history-fixture-diary",
+      "fixture_path": "docs/fixtures/aha-analysis/05-dagbok-refleksjon.json",
+      "passed": true,
+      "errors": [],
+      "expected_history_status": "unsupported",
+      "expected_chapter_id": null,
+      "result": {
+        "status": "unsupported",
+        "selected_chapter_id": null,
+        "top_score": 0,
+        "second_score": 0,
+        "temporal_evidence": {
+          "matched_terms": [],
+          "matched_years": [],
+          "eligible": false
+        },
+        "ranking": [
+          {
+            "chapter_id": "1814_statsdannelse",
+            "title": "1814, grunnlov og statsdannelse",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "byhistorie_stedsendring",
+            "title": "Byhistorie og stedsendring",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "forhistorie_arkeologi",
+            "title": "Forhistorie og arkeologi",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "forste_verdenskrig_mellomkrig",
+            "title": "Første verdenskrig og mellomkrigstiden",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "global_kolonial_transnasjonal",
+            "title": "Global, kolonial og transnasjonal historie",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "history-fixture-technical-project",
+      "fixture_path": "docs/fixtures/aha-analysis/06-prosjektplan-teknisk-notat.json",
+      "passed": true,
+      "errors": [],
+      "expected_history_status": "unsupported",
+      "expected_chapter_id": null,
+      "result": {
+        "status": "unsupported",
+        "selected_chapter_id": null,
+        "top_score": 0,
+        "second_score": 0,
+        "temporal_evidence": {
+          "matched_terms": [],
+          "matched_years": [],
+          "eligible": false
+        },
+        "ranking": [
+          {
+            "chapter_id": "vitenskap_teknologi_kunnskap",
+            "title": "Vitenskap-, teknologi- og kunnskapshistorie",
+            "score": 7,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [
+              "måling"
+            ],
+            "matched_terms": [
+              {
+                "term": "måling",
+                "group": "supplemental_evidence_terms",
+                "base_weight": 4,
+                "multiplier": 1,
+                "contribution": 4
+              },
+              {
+                "term": "kartlegging",
+                "group": "concept_terms",
+                "base_weight": 3,
+                "multiplier": 1,
+                "contribution": 3
+              }
+            ]
+          },
+          {
+            "chapter_id": "katastrofer_brudd_ulykker",
+            "title": "Katastrofer, branner, ulykker og historiske brudd",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "funksjoner",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "1814_statsdannelse",
+            "title": "1814, grunnlov og statsdannelse",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "byhistorie_stedsendring",
+            "title": "Byhistorie og stedsendring",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "forhistorie_arkeologi",
+            "title": "Forhistorie og arkeologi",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "history-fixture-legal",
+      "fixture_path": "docs/fixtures/aha-analysis/07-juridisk-tekst.json",
+      "passed": true,
+      "errors": [],
+      "expected_history_status": "unsupported",
+      "expected_chapter_id": null,
+      "result": {
+        "status": "unsupported",
+        "selected_chapter_id": null,
+        "top_score": 0,
+        "second_score": 0,
+        "temporal_evidence": {
+          "matched_terms": [],
+          "matched_years": [],
+          "eligible": false
+        },
+        "ranking": [
+          {
+            "chapter_id": "kilder_arkiv_spor",
+            "title": "Kilder, arkiv og spor",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "formål",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "middelalder_kirke_kongemakt",
+            "title": "Middelalder, kirke og kongemakt",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "lov",
+                "group": "title_terms",
+                "base_weight": 5,
+                "multiplier": 0.3,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "1814_statsdannelse",
+            "title": "1814, grunnlov og statsdannelse",
+            "score": 0.45,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "mot",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 0.3,
+                "contribution": 0.45
+              }
+            ]
+          },
+          {
+            "chapter_id": "kald_krig_etterkrig",
+            "title": "Den kalde krigen og etterkrigssamfunnet 1945–1991",
+            "score": 0.45,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "mot",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 0.3,
+                "contribution": 0.45
+              }
+            ]
+          },
+          {
+            "chapter_id": "kjonn_familie_livslop",
+            "title": "Kjønn, familie, seksualitet og livsløp",
+            "score": 0.45,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "lov",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 0.3,
+                "contribution": 0.45
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "history-fixture-unclear",
+      "fixture_path": "docs/fixtures/aha-analysis/08-uklar-lav-confidence.json",
+      "passed": true,
+      "errors": [],
+      "expected_history_status": "unsupported",
+      "expected_chapter_id": null,
+      "result": {
+        "status": "unsupported",
+        "selected_chapter_id": null,
+        "top_score": 0,
+        "second_score": 0,
+        "temporal_evidence": {
+          "matched_terms": [],
+          "matched_years": [],
+          "eligible": false
+        },
+        "ranking": [
+          {
+            "chapter_id": "forhistorie_arkeologi",
+            "title": "Forhistorie og arkeologi",
+            "score": 0.45,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "sammen",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 0.3,
+                "contribution": 0.45
+              }
+            ]
+          },
+          {
+            "chapter_id": "forste_verdenskrig_mellomkrig",
+            "title": "Første verdenskrig og mellomkrigstiden",
+            "score": 0.45,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "sammen",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 0.3,
+                "contribution": 0.45
+              }
+            ]
+          },
+          {
+            "chapter_id": "1814_statsdannelse",
+            "title": "1814, grunnlov og statsdannelse",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "byhistorie_stedsendring",
+            "title": "Byhistorie og stedsendring",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "global_kolonial_transnasjonal",
+            "title": "Global, kolonial og transnasjonal historie",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "history-fixture-morgenbladet-public-sphere",
+      "fixture_path": "docs/fixtures/aha-analysis/09-morgenbladet-offentlighet-kulturkritikk.json",
+      "passed": true,
+      "errors": [],
+      "expected_history_status": "grounded",
+      "expected_chapter_id": "offentlighet_mobilisering_bevegelser",
+      "result": {
+        "status": "grounded",
+        "selected_chapter_id": "offentlighet_mobilisering_bevegelser",
+        "top_score": 9.5,
+        "second_score": 0,
+        "temporal_evidence": {
+          "matched_terms": [
+            "over tid"
+          ],
+          "matched_years": [],
+          "eligible": true
+        },
+        "ranking": [
+          {
+            "chapter_id": "offentlighet_mobilisering_bevegelser",
+            "title": "Offentlighet, mobilisering og sosiale bevegelser",
+            "score": 9.5,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [
+              "offentlighet"
+            ],
+            "matched_terms": [
+              {
+                "term": "dannelsesoffentlighet",
+                "group": "supplemental_evidence_terms",
+                "base_weight": 4,
+                "multiplier": 1,
+                "contribution": 4
+              },
+              {
+                "term": "medieinstitusjoner",
+                "group": "supplemental_evidence_terms",
+                "base_weight": 4,
+                "multiplier": 1,
+                "contribution": 4
+              },
+              {
+                "term": "offentlighet",
+                "group": "title_terms",
+                "base_weight": 5,
+                "multiplier": 0.3,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "historisk_tid_periodisering",
+            "title": "Historisk tid og periodisering",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_required_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "spørsmålet",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "religion_reformasjon_livssyn",
+            "title": "Religion, reformasjon og livssyn",
+            "score": 0.9,
+            "eligible": false,
+            "eligibility_reason": "missing_required_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "offentlighet",
+                "group": "concept_terms",
+                "base_weight": 3,
+                "multiplier": 0.3,
+                "contribution": 0.9
+              }
+            ]
+          },
+          {
+            "chapter_id": "1814_statsdannelse",
+            "title": "1814, grunnlov og statsdannelse",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_required_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "byhistorie_stedsendring",
+            "title": "Byhistorie og stedsendring",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_required_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "history-fixture-nav-user",
+      "fixture_path": "docs/fixtures/aha-analysis/10-nav-reformen-brukermoete.json",
+      "passed": true,
+      "errors": [],
+      "expected_history_status": "unsupported",
+      "expected_chapter_id": null,
+      "result": {
+        "status": "unsupported",
+        "selected_chapter_id": null,
+        "top_score": 0,
+        "second_score": 0,
+        "temporal_evidence": {
+          "matched_terms": [
+            "tidligere"
+          ],
+          "matched_years": [],
+          "eligible": true
+        },
+        "ranking": [
+          {
+            "chapter_id": "1814_statsdannelse",
+            "title": "1814, grunnlov og statsdannelse",
+            "score": 1.95,
+            "eligible": false,
+            "eligibility_reason": "missing_required_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "dermed",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              },
+              {
+                "term": "mot",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 0.3,
+                "contribution": 0.45
+              }
+            ]
+          },
+          {
+            "chapter_id": "kilder_arkiv_spor",
+            "title": "Kilder, arkiv og spor",
+            "score": 1.95,
+            "eligible": false,
+            "eligibility_reason": "missing_required_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "støtte",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              },
+              {
+                "term": "digitale",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 0.3,
+                "contribution": 0.45
+              }
+            ]
+          },
+          {
+            "chapter_id": "middelalder_kirke_kongemakt",
+            "title": "Middelalder, kirke og kongemakt",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_required_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "gjorde",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "kald_krig_etterkrig",
+            "title": "Den kalde krigen og etterkrigssamfunnet 1945–1991",
+            "score": 0.45,
+            "eligible": false,
+            "eligibility_reason": "missing_required_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "mot",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 0.3,
+                "contribution": 0.45
+              }
+            ]
+          },
+          {
+            "chapter_id": "offentlighet_mobilisering_bevegelser",
+            "title": "Offentlighet, mobilisering og sosiale bevegelser",
+            "score": 0.45,
+            "eligible": false,
+            "eligibility_reason": "missing_required_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "digitale",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 0.3,
+                "contribution": 0.45
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "history-fixture-learning",
+      "fixture_path": "docs/fixtures/aha-analysis/11-refleksjon-laering-feil-vaner.json",
+      "passed": true,
+      "errors": [],
+      "expected_history_status": "unsupported",
+      "expected_chapter_id": null,
+      "result": {
+        "status": "unsupported",
+        "selected_chapter_id": null,
+        "top_score": 0,
+        "second_score": 0,
+        "temporal_evidence": {
+          "matched_terms": [],
+          "matched_years": [],
+          "eligible": false
+        },
+        "ranking": [
+          {
+            "chapter_id": "forhistorie_arkeologi",
+            "title": "Forhistorie og arkeologi",
+            "score": 1.95,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "gjøre",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              },
+              {
+                "term": "enn",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 0.3,
+                "contribution": 0.45
+              }
+            ]
+          },
+          {
+            "chapter_id": "kilder_arkiv_spor",
+            "title": "Kilder, arkiv og spor",
+            "score": 0.45,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "enn",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 0.3,
+                "contribution": 0.45
+              }
+            ]
+          },
+          {
+            "chapter_id": "1814_statsdannelse",
+            "title": "1814, grunnlov og statsdannelse",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "byhistorie_stedsendring",
+            "title": "Byhistorie og stedsendring",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "forste_verdenskrig_mellomkrig",
+            "title": "Første verdenskrig og mellomkrigstiden",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "history-fixture-urban-attention",
+      "fixture_path": "docs/fixtures/aha-analysis/12-refleksjon-byrom-uro-konsentrasjon.json",
+      "passed": true,
+      "errors": [],
+      "expected_history_status": "unsupported",
+      "expected_chapter_id": null,
+      "result": {
+        "status": "unsupported",
+        "selected_chapter_id": null,
+        "top_score": 0,
+        "second_score": 0,
+        "temporal_evidence": {
+          "matched_terms": [],
+          "matched_years": [],
+          "eligible": false
+        },
+        "ranking": [
+          {
+            "chapter_id": "byhistorie_stedsendring",
+            "title": "Byhistorie og stedsendring",
+            "score": 5,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "byen",
+                "group": "title_terms",
+                "base_weight": 5,
+                "multiplier": 1,
+                "contribution": 5
+              }
+            ]
+          },
+          {
+            "chapter_id": "miljo_klima_landskap",
+            "title": "Miljø-, klima- og landskapshistorie",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "energi",
+                "group": "title_terms",
+                "base_weight": 5,
+                "multiplier": 0.3,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "forhistorie_arkeologi",
+            "title": "Forhistorie og arkeologi",
+            "score": 0.45,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "enn",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 0.3,
+                "contribution": 0.45
+              }
+            ]
+          },
+          {
+            "chapter_id": "industri_arbeid_sosialhistorie",
+            "title": "Industri, arbeid og sosialhistorie",
+            "score": 0.45,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "energi",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 0.3,
+                "contribution": 0.45
+              }
+            ]
+          },
+          {
+            "chapter_id": "kilder_arkiv_spor",
+            "title": "Kilder, arkiv og spor",
+            "score": 0.45,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "enn",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 0.3,
+                "contribution": 0.45
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "history-fixture-eidsvoll",
+      "fixture_path": "docs/fixtures/aha-analysis/13-historygo-eidsvoll-grunnloven.json",
+      "passed": true,
+      "errors": [],
+      "expected_history_status": "grounded",
+      "expected_chapter_id": "1814_statsdannelse",
+      "result": {
+        "status": "grounded",
+        "selected_chapter_id": "1814_statsdannelse",
+        "top_score": 10.5,
+        "second_score": 0,
+        "temporal_evidence": {
+          "matched_terms": [
+            "senere",
+            "1814"
+          ],
+          "matched_years": [
+            "1814"
+          ],
+          "eligible": true
+        },
+        "ranking": [
+          {
+            "chapter_id": "1814_statsdannelse",
+            "title": "1814, grunnlov og statsdannelse",
+            "score": 10.5,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [
+              "1814",
+              "eidsvoll",
+              "grunnloven"
+            ],
+            "matched_terms": [
+              {
+                "term": "nasjonsbygging",
+                "group": "title_terms",
+                "base_weight": 5,
+                "multiplier": 1,
+                "contribution": 5
+              },
+              {
+                "term": "eidsvoll",
+                "group": "supplemental_evidence_terms",
+                "base_weight": 4,
+                "multiplier": 1,
+                "contribution": 4
+              },
+              {
+                "term": "1814",
+                "group": "title_terms",
+                "base_weight": 5,
+                "multiplier": 0.3,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "global_kolonial_transnasjonal",
+            "title": "Global, kolonial og transnasjonal historie",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_required_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "norge",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "offentlighet_mobilisering_bevegelser",
+            "title": "Offentlighet, mobilisering og sosiale bevegelser",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_required_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "politiske",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "historisk_tid_periodisering",
+            "title": "Historisk tid og periodisering",
+            "score": 0.45,
+            "eligible": false,
+            "eligibility_reason": "missing_required_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "1814",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 0.3,
+                "contribution": 0.45
+              }
+            ]
+          },
+          {
+            "chapter_id": "byhistorie_stedsendring",
+            "title": "Byhistorie og stedsendring",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_required_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "history-fixture-bislett",
+      "fixture_path": "docs/fixtures/aha-analysis/14-historygo-bislett-byrom-stadion.json",
+      "passed": true,
+      "errors": [],
+      "expected_history_status": "grounded",
+      "expected_chapter_id": "byhistorie_stedsendring",
+      "result": {
+        "status": "grounded",
+        "selected_chapter_id": "byhistorie_stedsendring",
+        "top_score": 13.5,
+        "second_score": 0,
+        "temporal_evidence": {
+          "matched_terms": [
+            "ombygging"
+          ],
+          "matched_years": [],
+          "eligible": true
+        },
+        "ranking": [
+          {
+            "chapter_id": "byhistorie_stedsendring",
+            "title": "Byhistorie og stedsendring",
+            "score": 13.5,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [
+              "ombygging"
+            ],
+            "matched_terms": [
+              {
+                "term": "byutvikling",
+                "group": "supplemental_evidence_terms",
+                "base_weight": 4,
+                "multiplier": 1,
+                "contribution": 4
+              },
+              {
+                "term": "ombygging",
+                "group": "supplemental_evidence_terms",
+                "base_weight": 4,
+                "multiplier": 1,
+                "contribution": 4
+              },
+              {
+                "term": "stadion",
+                "group": "supplemental_evidence_terms",
+                "base_weight": 4,
+                "multiplier": 1,
+                "contribution": 4
+              },
+              {
+                "term": "rom",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "katastrofer_brudd_ulykker",
+            "title": "Katastrofer, branner, ulykker og historiske brudd",
+            "score": 3,
+            "eligible": false,
+            "eligibility_reason": "missing_required_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "byrom",
+                "group": "concept_terms",
+                "base_weight": 3,
+                "multiplier": 1,
+                "contribution": 3
+              }
+            ]
+          },
+          {
+            "chapter_id": "global_kolonial_transnasjonal",
+            "title": "Global, kolonial og transnasjonal historie",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_required_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "lokal",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "forhistorie_arkeologi",
+            "title": "Forhistorie og arkeologi",
+            "score": 1.35,
+            "eligible": false,
+            "eligibility_reason": "missing_required_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "enn",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 0.3,
+                "contribution": 0.45
+              },
+              {
+                "term": "identitet",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 0.3,
+                "contribution": 0.45
+              },
+              {
+                "term": "sammen",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 0.3,
+                "contribution": 0.45
+              }
+            ]
+          },
+          {
+            "chapter_id": "kjonn_familie_livslop",
+            "title": "Kjønn, familie, seksualitet og livsløp",
+            "score": 0.9,
+            "eligible": false,
+            "eligibility_reason": "missing_required_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "identitet",
+                "group": "concept_terms",
+                "base_weight": 3,
+                "multiplier": 0.3,
+                "contribution": 0.9
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "history-fixture-fragmented",
+      "fixture_path": "docs/fixtures/aha-analysis/15-uklar-fragmentert-lav-kvalitet.json",
+      "passed": true,
+      "errors": [],
+      "expected_history_status": "unsupported",
+      "expected_chapter_id": null,
+      "result": {
+        "status": "unsupported",
+        "selected_chapter_id": null,
+        "top_score": 0,
+        "second_score": 0,
+        "temporal_evidence": {
+          "matched_terms": [],
+          "matched_years": [],
+          "eligible": false
+        },
+        "ranking": [
+          {
+            "chapter_id": "forhistorie_arkeologi",
+            "title": "Forhistorie og arkeologi",
+            "score": 0.45,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "sammen",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 0.3,
+                "contribution": 0.45
+              }
+            ]
+          },
+          {
+            "chapter_id": "forste_verdenskrig_mellomkrig",
+            "title": "Første verdenskrig og mellomkrigstiden",
+            "score": 0.45,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "sammen",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 0.3,
+                "contribution": 0.45
+              }
+            ]
+          },
+          {
+            "chapter_id": "1814_statsdannelse",
+            "title": "1814, grunnlov og statsdannelse",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "byhistorie_stedsendring",
+            "title": "Byhistorie og stedsendring",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "global_kolonial_transnasjonal",
+            "title": "Global, kolonial og transnasjonal historie",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "history-fixture-ai-learning",
+      "fixture_path": "docs/fixtures/aha-analysis/16-tverrfaglig-ai-laering-kunnskap.json",
+      "passed": true,
+      "errors": [],
+      "expected_history_status": "unsupported",
+      "expected_chapter_id": null,
+      "result": {
+        "status": "unsupported",
+        "selected_chapter_id": null,
+        "top_score": 0,
+        "second_score": 0,
+        "temporal_evidence": {
+          "matched_terms": [],
+          "matched_years": [],
+          "eligible": false
+        },
+        "ranking": [
+          {
+            "chapter_id": "forhistorie_arkeologi",
+            "title": "Forhistorie og arkeologi",
+            "score": 8,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "menneskelig",
+                "group": "title_terms",
+                "base_weight": 5,
+                "multiplier": 1,
+                "contribution": 5
+              },
+              {
+                "term": "gjøre",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              },
+              {
+                "term": "usikkerhet",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "offentlighet_mobilisering_bevegelser",
+            "title": "Offentlighet, mobilisering og sosiale bevegelser",
+            "score": 5,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "kollektiv",
+                "group": "title_terms",
+                "base_weight": 5,
+                "multiplier": 1,
+                "contribution": 5
+              }
+            ]
+          },
+          {
+            "chapter_id": "kilder_arkiv_spor",
+            "title": "Kilder, arkiv og spor",
+            "score": 3,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "spørsmål",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              },
+              {
+                "term": "støtte",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "historisk_tid_periodisering",
+            "title": "Historisk tid og periodisering",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "spørsmålet",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "katastrofer_brudd_ulykker",
+            "title": "Katastrofer, branner, ulykker og historiske brudd",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "læring",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

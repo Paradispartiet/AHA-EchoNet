@@ -1,0 +1,732 @@
+{
+  "schema": "aha_history_fagverk_evaluation_matrix_v1",
+  "version": "1.0.0",
+  "status": "review_matrix_not_runtime_active",
+  "source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
+  "corpus_sha256": "e5123cb96d9b89c83aad56efc327c1089bfe5f887f29322d39a4a936c9f19444",
+  "subject_id": "historie",
+  "positive_cases": [
+    {
+      "id": "history-positive-1814-statsdannelse",
+      "text": "I 1814 møttes representanter på Eidsvoll, og Grunnloven av 1814 la grunnlaget for en ny statsdannelse. Embetsstaten og formannskapslovene viser hvordan politisk adgang senere ble utvidet fram mot unionsoppløsningen i 1905.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "1814_statsdannelse",
+      "required_evidence": [
+        "eidsvoll",
+        "grunnloven av 1814",
+        "embetsstat"
+      ]
+    },
+    {
+      "id": "history-positive-byhistorie-stedsendring",
+      "text": "Over tid endret byfornyelse og gentrifisering både eierskap og bruk av kvartalet. Urban morfologi, ombygging og byutvikling viser hvordan stedsendring må rekonstrueres før og etter inngrepene.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "byhistorie_stedsendring",
+      "required_evidence": [
+        "byfornyelse",
+        "gentrifisering",
+        "urban morfologi"
+      ]
+    },
+    {
+      "id": "history-positive-forhistorie-arkeologi",
+      "text": "I forhistorien må et arkeologisk lag leses gjennom stratigrafi, funnkontekst og radiokarbondatering. Typologi kan støtte dateringen, men må kontrolleres mot konteksten.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "forhistorie_arkeologi",
+      "required_evidence": [
+        "stratigrafi",
+        "radiokarbondatering",
+        "funnkontekst"
+      ]
+    },
+    {
+      "id": "history-positive-forste-verdenskrig-mellomkrig",
+      "text": "Første verdenskrig ble preget av skyttergravskrig, og Versaillestraktaten formet mellomkrigstiden. Massearbeidsledighet og fascisme må analyseres som senere utviklinger, ikke som én automatisk følge.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "forste_verdenskrig_mellomkrig",
+      "required_evidence": [
+        "skyttergravskrig",
+        "versaillestraktaten",
+        "mellomkrigstiden"
+      ]
+    },
+    {
+      "id": "history-positive-global-kolonial-transnasjonal",
+      "text": "Fra 1800-tallet bandt kolonialisme og imperium sammen råvarer, slavehandel og transnasjonale nettverk. Dekolonisering endret de formelle maktforholdene, men ikke alle økonomiske forbindelser.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "global_kolonial_transnasjonal",
+      "required_evidence": [
+        "kolonialisme",
+        "imperium",
+        "dekolonisering"
+      ]
+    },
+    {
+      "id": "history-positive-historisk-tid-periodisering",
+      "text": "Historisk periodisering må skille kronologi fra tolkning. Kontinuitet og brudd kan opptre samtidig, og anakronisme oppstår når senere kategorier legges ukritisk på fortiden.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "historisk_tid_periodisering",
+      "required_evidence": [
+        "periodisering",
+        "kronologi",
+        "kontinuitet og brudd"
+      ]
+    },
+    {
+      "id": "history-positive-industri-arbeid-sosialhistorie",
+      "text": "Under industrialiseringen endret fabrikkarbeid, arbeidsdeling og klasseforhold hverdagen. Arbeiderbevegelsen og fagforeningene viser hvordan kollektiv organisering vokste fram over tid.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "industri_arbeid_sosialhistorie",
+      "required_evidence": [
+        "industrialisering",
+        "fabrikkarbeid",
+        "arbeiderbevegelse"
+      ]
+    },
+    {
+      "id": "history-positive-kald-krig-etterkrig",
+      "text": "Etter 1945 delte den kalde krigen Europa gjennom blokkdeling og jernteppet. NATO og atomavskrekking formet sikkerhetspolitikken fram til 1991.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "kald_krig_etterkrig",
+      "required_evidence": [
+        "kald krig",
+        "jernteppet",
+        "atomavskrekking"
+      ]
+    },
+    {
+      "id": "history-positive-katastrofer-brudd-ulykker",
+      "text": "Etter storbrannen må hendelsesforløp, sårbarhet og beredskap rekonstrueres hver for seg. Gjenoppbyggingen viser hvordan en katastrofe kan bli et historisk brudd uten at alle konsekvenser skyldes selve brannen.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "katastrofer_brudd_ulykker",
+      "required_evidence": [
+        "katastrofe",
+        "sårbarhet",
+        "beredskap"
+      ]
+    },
+    {
+      "id": "history-positive-kilder-arkiv-spor",
+      "text": "Historisk kildekritikk krever proveniens, kontekstualisering og kontroll av om en tekst er en førstehåndskilde. Arkivtaushet må behandles som en begrensning, ikke som bevis for at noe ikke skjedde.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "kilder_arkiv_spor",
+      "required_evidence": [
+        "kildekritikk",
+        "proveniens",
+        "arkivtaushet"
+      ]
+    },
+    {
+      "id": "history-positive-kjonn-familie-livslop",
+      "text": "Kjønnshistorie undersøker hvordan hushold, seksualitet og reproduksjon endret seg gjennom livsløpet. Familiehistorie må skille normative idealer fra dokumentert praksis over tid.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "kjonn_familie_livslop",
+      "required_evidence": [
+        "kjønnshistorie",
+        "livsløp",
+        "hushold"
+      ]
+    },
+    {
+      "id": "history-positive-krig-okkupasjon-motstand",
+      "text": "Under okkupasjonen 1940–1945 virket motstandsbevegelsen gjennom blant annet illegal presse. Kollaborasjon og frigjøring må dokumenteres med ulike kilder og tydelig kronologi.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "krig_okkupasjon_motstand",
+      "required_evidence": [
+        "okkupasjon",
+        "motstandsbevegelse",
+        "kollaborasjon"
+      ]
+    },
+    {
+      "id": "history-positive-makt-stat-institusjoner",
+      "text": "Historisk institusjonsbygging kan følges gjennom mandat, kompetanse og statlig kapasitet. Legitimitet må vurderes over tid og kan ikke utledes av formell myndighet alene.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "makt_stat_institusjoner",
+      "required_evidence": [
+        "institusjonsbygging",
+        "statlig kapasitet",
+        "mandat"
+      ]
+    },
+    {
+      "id": "history-positive-middelalder-kirke-kongemakt",
+      "text": "I middelalderen ble kongemakt, kirkeorganisasjon og tingordning utviklet i overlappende prosesser. Svartedauden endret befolkning og eiendomsforhold, men utslettet ikke alle eldre institusjoner.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "middelalder_kirke_kongemakt",
+      "required_evidence": [
+        "middelalder",
+        "kongemakt",
+        "kirkeorganisasjon"
+      ]
+    },
+    {
+      "id": "history-positive-migrasjon-minoritet-tilhorighet",
+      "text": "Migrasjonshistorie må skille utvandring, innvandring og diaspora. Tilhørighet og minoritetsposisjon ble forhandlet over tid gjennom arbeid, familie og institusjoner.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "migrasjon_minoritet_tilhorighet",
+      "required_evidence": [
+        "migrasjonshistorie",
+        "utvandring",
+        "innvandring"
+      ]
+    },
+    {
+      "id": "history-positive-miljo-klima-landskap",
+      "text": "Miljøhistorie og klimahistorie undersøker hvordan ressursbruk og naturinngrep endret landskapet over tid. Landskapshistorie krever både naturdata og dokumentasjon av menneskelig bruk.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "miljo_klima_landskap",
+      "required_evidence": [
+        "miljøhistorie",
+        "klimahistorie",
+        "landskapshistorie"
+      ]
+    },
+    {
+      "id": "history-positive-minne-kulturarv-historiebruk",
+      "text": "Et monument kan endre betydning over tid gjennom kollektivt minne, kulturarv og historiebruk. Minnepolitikk avgjør hvilke fortellinger et minnested løfter fram eller utelater.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "minne_kulturarv_historiebruk",
+      "required_evidence": [
+        "kollektivt minne",
+        "kulturarv",
+        "historiebruk"
+      ]
+    },
+    {
+      "id": "history-positive-offentlighet-mobilisering-bevegelser",
+      "text": "Avisen utviklet over tid en presseoffentlighet preget av idédebatt og en tydelig redaksjonell profil. Medielandskapet ga senere rom for mobilisering og nye sosiale bevegelser.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "offentlighet_mobilisering_bevegelser",
+      "required_evidence": [
+        "presseoffentlighet",
+        "idédebatt",
+        "redaksjonell profil"
+      ]
+    },
+    {
+      "id": "history-positive-okonomi-handel-materielle-systemer",
+      "text": "På 1800-tallet bandt kreditt, sjøfart og kommersielle nettverk markeder sammen. Markedsintegrasjon og kapitalakkumulasjon må måles gjennom priser, eiendom og varestrømmer over tid.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "okonomi_handel_materielle_systemer",
+      "required_evidence": [
+        "kreditt",
+        "markedsintegrasjon",
+        "sjøfart"
+      ]
+    },
+    {
+      "id": "history-positive-religion-reformasjon-livssyn",
+      "text": "Reformasjonen og konfesjonaliseringen endret statskirke og religiøs praksis. Senere sekularisering og trosfrihet skapte et mer pluralistisk livssynsfelt.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "religion_reformasjon_livssyn",
+      "required_evidence": [
+        "reformasjon",
+        "konfesjonalisering",
+        "statskirke"
+      ]
+    },
+    {
+      "id": "history-positive-samisk-urfolkshistorie",
+      "text": "Fornorsking påvirket samisk språk og institusjoner over flere generasjoner. Siida, urfolkshistorie og revitalisering må dokumenteres fra samiske kilder og ikke bare statlige arkiver.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "samisk_urfolkshistorie",
+      "required_evidence": [
+        "fornorsking",
+        "siida",
+        "urfolkshistorie"
+      ]
+    },
+    {
+      "id": "history-positive-velferd-rett-hverdagsliv",
+      "text": "Fra fattigloven til sosialforsikring og trygd endret velferdsstaten adgang til hjelp. Hospital og kommunale tjenester viser hvordan rettigheter og kontroll virket i hverdagen.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "velferd_rett_hverdagsliv",
+      "required_evidence": [
+        "fattiglov",
+        "sosialforsikring",
+        "trygd"
+      ]
+    },
+    {
+      "id": "history-positive-vitenskap-teknologi-kunnskap",
+      "text": "Historisk fikk kunnskapsinstitusjoner autoritet gjennom standardisering, måling og statistikk. Digitalisering og datamakt viser hvordan tekniske systemer senere endret klassifikasjon og ekspertise.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "vitenskap_teknologi_kunnskap",
+      "required_evidence": [
+        "kunnskapsinstitusjoner",
+        "standardisering",
+        "måling"
+      ]
+    }
+  ],
+  "confusion_cases": [
+    {
+      "id": "history-confusion-1814-not-institutions",
+      "text": "I 1814 står Eidsvoll, Grunnloven av 1814 og embetsstaten i sentrum; formannskapslovene og 1905 viser den videre statsdannelsen.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "1814_statsdannelse",
+      "forbidden_chapter_ids": [
+        "makt_stat_institusjoner"
+      ],
+      "required_evidence": [
+        "eidsvoll",
+        "grunnloven av 1814",
+        "embetsstat"
+      ]
+    },
+    {
+      "id": "history-confusion-city-not-environment",
+      "text": "Over tid førte byfornyelse, gentrifisering og ombygging til ny urban morfologi i kvartalet; poenget er stedsendring, ikke klima.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "byhistorie_stedsendring",
+      "forbidden_chapter_ids": [
+        "miljo_klima_landskap"
+      ],
+      "required_evidence": [
+        "byfornyelse",
+        "gentrifisering",
+        "urban morfologi"
+      ]
+    },
+    {
+      "id": "history-confusion-archaeology-not-sources",
+      "text": "I forhistorien dateres laget med stratigrafi, radiokarbondatering og funnkontekst; kildearbeidet er arkeologisk, ikke en generell arkivøvelse.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "forhistorie_arkeologi",
+      "forbidden_chapter_ids": [
+        "kilder_arkiv_spor"
+      ],
+      "required_evidence": [
+        "stratigrafi",
+        "radiokarbondatering",
+        "funnkontekst"
+      ]
+    },
+    {
+      "id": "history-confusion-ww1-not-occupation",
+      "text": "Skyttergravskrig og Versaillestraktaten formet første verdenskrig og mellomkrigstiden, mens fascisme vokste fram i den senere krisen.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "forste_verdenskrig_mellomkrig",
+      "forbidden_chapter_ids": [
+        "krig_okkupasjon_motstand"
+      ],
+      "required_evidence": [
+        "skyttergravskrig",
+        "versaillestraktaten",
+        "mellomkrigstiden"
+      ]
+    },
+    {
+      "id": "history-confusion-colonial-not-migration",
+      "text": "Kolonialisme, imperium og slavehandel skapte transnasjonale nettverk før dekolonisering; migrasjon er en følge, ikke hovedrammen.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "global_kolonial_transnasjonal",
+      "forbidden_chapter_ids": [
+        "migrasjon_minoritet_tilhorighet"
+      ],
+      "required_evidence": [
+        "kolonialisme",
+        "imperium",
+        "dekolonisering"
+      ]
+    },
+    {
+      "id": "history-confusion-periodization-not-sources",
+      "text": "Periodisering organiserer kronologi gjennom kontinuitet og brudd, og må unngå anakronisme; dette er en analyse av historisk tid.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "historisk_tid_periodisering",
+      "forbidden_chapter_ids": [
+        "kilder_arkiv_spor"
+      ],
+      "required_evidence": [
+        "periodisering",
+        "kronologi",
+        "kontinuitet og brudd"
+      ]
+    },
+    {
+      "id": "history-confusion-industry-not-economy",
+      "text": "Industrialiseringen endret fabrikkarbeid og klasseforhold, og arbeiderbevegelsen organiserte fagforeninger over tid.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "industri_arbeid_sosialhistorie",
+      "forbidden_chapter_ids": [
+        "okonomi_handel_materielle_systemer"
+      ],
+      "required_evidence": [
+        "industrialisering",
+        "fabrikkarbeid",
+        "arbeiderbevegelse"
+      ]
+    },
+    {
+      "id": "history-confusion-coldwar-not-war",
+      "text": "Etter 1945 ble jernteppet, blokkdeling og NATO sentrale i den kalde krigen; atomavskrekking var ikke en okkupasjonshistorie.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "kald_krig_etterkrig",
+      "forbidden_chapter_ids": [
+        "krig_okkupasjon_motstand"
+      ],
+      "required_evidence": [
+        "kald krig",
+        "jernteppet",
+        "atomavskrekking"
+      ]
+    },
+    {
+      "id": "history-confusion-disaster-not-war",
+      "text": "Etter brannen må katastrofens hendelsesforløp, sårbarhet og beredskap skilles fra den senere gjenoppbyggingen.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "katastrofer_brudd_ulykker",
+      "forbidden_chapter_ids": [
+        "krig_okkupasjon_motstand"
+      ],
+      "required_evidence": [
+        "katastrofe",
+        "sårbarhet",
+        "beredskap"
+      ]
+    },
+    {
+      "id": "history-confusion-sources-not-periodization",
+      "text": "Kildekritikk, proveniens og arkivtaushet avgjør hva førstehåndskilden kan støtte; kronologi er bare én del av kontrollen.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "kilder_arkiv_spor",
+      "forbidden_chapter_ids": [
+        "historisk_tid_periodisering"
+      ],
+      "required_evidence": [
+        "kildekritikk",
+        "proveniens",
+        "arkivtaushet"
+      ]
+    },
+    {
+      "id": "history-confusion-gender-not-welfare",
+      "text": "Kjønnshistorie følger hushold, seksualitet og reproduksjon gjennom livsløpet; velferdsordninger er bakgrunn.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "kjonn_familie_livslop",
+      "forbidden_chapter_ids": [
+        "velferd_rett_hverdagsliv"
+      ],
+      "required_evidence": [
+        "kjønnshistorie",
+        "livsløp",
+        "hushold"
+      ]
+    },
+    {
+      "id": "history-confusion-occupation-not-coldwar",
+      "text": "Under okkupasjonen 1940–1945 brukte motstandsbevegelsen illegal presse, mens kollaborasjon og frigjøring må dokumenteres særskilt.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "krig_okkupasjon_motstand",
+      "forbidden_chapter_ids": [
+        "kald_krig_etterkrig"
+      ],
+      "required_evidence": [
+        "okkupasjon",
+        "motstandsbevegelse",
+        "illegal presse"
+      ]
+    },
+    {
+      "id": "history-confusion-institutions-not-1814",
+      "text": "Institusjonsbygging over tid må følges gjennom mandat, kompetanse og statlig kapasitet; legitimitet er hovedproblemet, ikke 1814.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "makt_stat_institusjoner",
+      "forbidden_chapter_ids": [
+        "1814_statsdannelse"
+      ],
+      "required_evidence": [
+        "institusjonsbygging",
+        "statlig kapasitet",
+        "mandat"
+      ]
+    },
+    {
+      "id": "history-confusion-medieval-not-religion",
+      "text": "I middelalderen ble kongemakt, kirkeorganisasjon og tingordning endret før svartedauden omformet samfunnsgrunnlaget.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "middelalder_kirke_kongemakt",
+      "forbidden_chapter_ids": [
+        "religion_reformasjon_livssyn"
+      ],
+      "required_evidence": [
+        "middelalder",
+        "kongemakt",
+        "kirkeorganisasjon"
+      ]
+    },
+    {
+      "id": "history-confusion-migration-not-colonial",
+      "text": "Migrasjonshistorie følger utvandring, innvandring og diaspora over tid, med tilhørighet som hovedspørsmål.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "migrasjon_minoritet_tilhorighet",
+      "forbidden_chapter_ids": [
+        "global_kolonial_transnasjonal"
+      ],
+      "required_evidence": [
+        "migrasjonshistorie",
+        "utvandring",
+        "diaspora"
+      ]
+    },
+    {
+      "id": "history-confusion-environment-not-city",
+      "text": "Miljøhistorie og klimahistorie viser hvordan ressursbruk og naturinngrep endret landskapet over tid, ikke primært byens eiendomsstruktur.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "miljo_klima_landskap",
+      "forbidden_chapter_ids": [
+        "byhistorie_stedsendring"
+      ],
+      "required_evidence": [
+        "miljøhistorie",
+        "klimahistorie",
+        "ressursbruk"
+      ]
+    },
+    {
+      "id": "history-confusion-memory-not-public",
+      "text": "Monumentet ble over tid omstridt gjennom kollektivt minne, historiebruk og minnepolitikk; offentlig debatt er arenaen, ikke hovedemnet.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "minne_kulturarv_historiebruk",
+      "forbidden_chapter_ids": [
+        "offentlighet_mobilisering_bevegelser"
+      ],
+      "required_evidence": [
+        "kollektivt minne",
+        "historiebruk",
+        "minnepolitikk"
+      ]
+    },
+    {
+      "id": "history-confusion-public-not-memory",
+      "text": "Over tid utviklet avisen en presseoffentlighet med idédebatt og redaksjonell profil, før mobilisering skapte en sosial bevegelse.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "offentlighet_mobilisering_bevegelser",
+      "forbidden_chapter_ids": [
+        "minne_kulturarv_historiebruk"
+      ],
+      "required_evidence": [
+        "presseoffentlighet",
+        "idédebatt",
+        "redaksjonell profil"
+      ]
+    },
+    {
+      "id": "history-confusion-economy-not-industry",
+      "text": "På 1800-tallet bandt kreditt, sjøfart og kommersielle nettverk markedene sammen gjennom markedsintegrasjon.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "okonomi_handel_materielle_systemer",
+      "forbidden_chapter_ids": [
+        "industri_arbeid_sosialhistorie"
+      ],
+      "required_evidence": [
+        "kreditt",
+        "markedsintegrasjon",
+        "sjøfart"
+      ]
+    },
+    {
+      "id": "history-confusion-religion-not-medieval",
+      "text": "Reformasjonen og konfesjonaliseringen endret statskirken, mens sekularisering og trosfrihet kom senere.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "religion_reformasjon_livssyn",
+      "forbidden_chapter_ids": [
+        "middelalder_kirke_kongemakt"
+      ],
+      "required_evidence": [
+        "reformasjon",
+        "konfesjonalisering",
+        "statskirke"
+      ]
+    },
+    {
+      "id": "history-confusion-sami-not-migration",
+      "text": "Fornorsking påvirket samisk språk over generasjoner; siida, urfolkshistorie og revitalisering er hovedrammen.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "samisk_urfolkshistorie",
+      "forbidden_chapter_ids": [
+        "migrasjon_minoritet_tilhorighet"
+      ],
+      "required_evidence": [
+        "fornorsking",
+        "siida",
+        "urfolkshistorie"
+      ]
+    },
+    {
+      "id": "history-confusion-welfare-not-economy",
+      "text": "Fra fattigloven til sosialforsikring og trygd endret velferdsstaten hverdagslig adgang til hjelp.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "velferd_rett_hverdagsliv",
+      "forbidden_chapter_ids": [
+        "okonomi_handel_materielle_systemer"
+      ],
+      "required_evidence": [
+        "fattiglov",
+        "sosialforsikring",
+        "trygd"
+      ]
+    },
+    {
+      "id": "history-confusion-science-not-economy",
+      "text": "Historisk fikk kunnskapsinstitusjoner autoritet gjennom standardisering, måling og statistikk, før datamakt endret systemene.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "vitenskap_teknologi_kunnskap",
+      "forbidden_chapter_ids": [
+        "okonomi_handel_materielle_systemer"
+      ],
+      "required_evidence": [
+        "kunnskapsinstitusjoner",
+        "standardisering",
+        "måling"
+      ]
+    }
+  ],
+  "ambiguity_cases": [
+    {
+      "id": "history-negative-generic-system",
+      "text": "En historisk analyse viser at systemet, aktørene og endringen var viktig over tid.",
+      "allowed_statuses": [
+        "unsupported"
+      ],
+      "non_scoring_evidence": [
+        "historisk",
+        "analyse",
+        "viser",
+        "systemet"
+      ]
+    },
+    {
+      "id": "history-negative-legal",
+      "text": "Et vedtak må være forholdsmessig og ha hjemmel i lov, men teksten oppgir ingen historisk periode eller utvikling.",
+      "allowed_statuses": [
+        "unsupported"
+      ],
+      "non_scoring_evidence": [
+        "historisk",
+        "tekst",
+        "vedtak"
+      ]
+    },
+    {
+      "id": "history-negative-technical",
+      "text": "Prosjektet skal implementere systemet, teste data og dokumentere avvik før neste fase.",
+      "allowed_statuses": [
+        "unsupported"
+      ],
+      "non_scoring_evidence": [
+        "systemet",
+        "data",
+        "dokumentere"
+      ]
+    },
+    {
+      "id": "history-negative-diary",
+      "text": "Jeg tenkte mye på valgene mine i går og prøver å forstå hvorfor jeg ble urolig.",
+      "allowed_statuses": [
+        "unsupported"
+      ],
+      "non_scoring_evidence": [
+        "forstå",
+        "hvorfor"
+      ]
+    },
+    {
+      "id": "history-negative-theology",
+      "text": "Pinse beskrives som kirkens fødselsdag og handler om Den hellige ånd og tro.",
+      "allowed_statuses": [
+        "unsupported"
+      ],
+      "non_scoring_evidence": [
+        "handler",
+        "beskrives"
+      ]
+    },
+    {
+      "id": "history-negative-policy",
+      "text": "Tiltaket skal gjennomføres av et direktorat med klare mål, ansvar og evaluering.",
+      "allowed_statuses": [
+        "unsupported"
+      ],
+      "non_scoring_evidence": [
+        "tiltaket",
+        "gjennomføres",
+        "mål"
+      ]
+    },
+    {
+      "id": "history-negative-place",
+      "text": "Stedet er viktig for mennesker og viser hvordan identitet og fellesskap kan formes.",
+      "allowed_statuses": [
+        "unsupported"
+      ],
+      "non_scoring_evidence": [
+        "stedet",
+        "viser",
+        "hvordan"
+      ]
+    },
+    {
+      "id": "history-negative-change",
+      "text": "Det skjedde en endring, og flere aktører fikk andre roller i systemet.",
+      "allowed_statuses": [
+        "unsupported"
+      ],
+      "non_scoring_evidence": [
+        "endring",
+        "aktører",
+        "systemet"
+      ]
+    },
+    {
+      "id": "history-negative-source-word",
+      "text": "Kilden viser noe viktig, men analysen sier ikke når, hvor eller hvem som produserte den.",
+      "allowed_statuses": [
+        "unsupported"
+      ],
+      "non_scoring_evidence": [
+        "kilden",
+        "viser",
+        "analysen"
+      ]
+    },
+    {
+      "id": "history-negative-economy",
+      "text": "Markedet, staten og institusjonene påvirker ressurser, priser og fordeling.",
+      "allowed_statuses": [
+        "unsupported"
+      ],
+      "non_scoring_evidence": [
+        "staten",
+        "institusjonene",
+        "ressurser"
+      ]
+    },
+    {
+      "id": "history-negative-environment",
+      "text": "Klima og natur påvirker landskapet, men teksten beskriver bare dagens forhold uten tidsrom, kilder eller dokumentert endring.",
+      "allowed_statuses": [
+        "unsupported"
+      ],
+      "non_scoring_evidence": [
+        "teksten",
+        "tidsrom",
+        "kilder",
+        "endring"
+      ]
+    },
+    {
+      "id": "history-negative-ai",
+      "text": "AI-verktøy kan støtte læring, kunnskap og kollektiv refleksjon når mennesker bruker dem kritisk.",
+      "allowed_statuses": [
+        "unsupported"
+      ],
+      "non_scoring_evidence": [
+        "kunnskap",
+        "mennesker"
+      ]
+    }
+  ]
+}
