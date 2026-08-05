@@ -13,6 +13,18 @@ POLITICS_CORRECTIONS_PATH = ROOT / "data" / "evaluation" / "aha-politics-fixture
 ACTIVE_MANIFEST_PATH = ROOT / "data" / "integrations" / "history-go-fagverk-release.runtime-active.json"
 
 
+def _politics_only_corpus() -> dict:
+    corpus = load_fagverk_corpus()
+    return {
+        "schema": corpus["schema"],
+        "version": corpus["version"],
+        "source_repo": corpus["source_repo"],
+        "source_ref": corpus["source_ref"],
+        "entries": [entry for entry in corpus["entries"] if entry["subject_id"] == "politikk"],
+        "subject_policies": {"politikk": corpus["subject_policies"]["politikk"]},
+    }
+
+
 def test_corpus_schema_and_provenance() -> None:
     corpus = load_fagverk_corpus()
     assert corpus["schema"] == "aha_history_go_fagverk_corpus_v1"
@@ -58,6 +70,7 @@ def test_grounding_evaluation_cases() -> None:
 
 def test_all_reviewed_politics_matrix_cases_pass_in_python_runtime() -> None:
     matrix = json.loads(POLITICS_MATRIX_PATH.read_text(encoding="utf-8"))
+    politics_corpus = _politics_only_corpus()
     cases = [
         *(dict(item, kind="positive") for item in matrix["positive_cases"]),
         *(dict(item, kind="confusion") for item in matrix["confusion_cases"]),
@@ -65,7 +78,7 @@ def test_all_reviewed_politics_matrix_cases_pass_in_python_runtime() -> None:
     ]
     assert len(cases) == 34
     for case in cases:
-        result = ground_message(case["text"])
+        result = ground_message(case["text"], politics_corpus)
         if case["kind"] == "ambiguity":
             assert result["status"] in case["allowed_statuses"], (case["id"], result)
             continue
@@ -78,10 +91,11 @@ def test_all_reviewed_politics_matrix_cases_pass_in_python_runtime() -> None:
 
 def test_all_reviewed_fixture_corrections_pass_in_python_runtime() -> None:
     corrections = json.loads(POLITICS_CORRECTIONS_PATH.read_text(encoding="utf-8"))
+    politics_corpus = _politics_only_corpus()
     assert len(corrections["cases"]) == 16
     for correction in corrections["cases"]:
         fixture = json.loads((ROOT / correction["fixture_path"]).read_text(encoding="utf-8"))
-        result = ground_message(fixture["inputText"])
+        result = ground_message(fixture["inputText"], politics_corpus)
         expected_status = correction["expected_politics_status"]
         assert result["status"] == expected_status, (correction["id"], result)
         if expected_status == "grounded":
@@ -103,6 +117,16 @@ def test_grounded_analysis_replaces_generic_canned_fallback() -> None:
     assert "usikker årsaksforståelse" not in analysis.theme.casefold()
     assert any(link.type == "fagverk_chapter" and link.id == "okosystem_mangfold_habitat" for link in analysis.historyGoLinks)
     assert analysis.confidence.domain >= 0.65
+
+
+def test_high_confidence_specialized_analysis_is_not_mutated() -> None:
+    fixture = json.loads((ROOT / "docs/fixtures/aha-analysis/07-juridisk-tekst.json").read_text(encoding="utf-8"))
+    expected = fixture["expectedCanonicalAnalysis"]
+    analysis = analyze_message_with_fagverk(AnalyzeRequest(message=fixture["inputText"]))
+    assert analysis.domain == expected["domain"]
+    assert analysis.theme == expected["theme"]
+    assert analysis.mainTension == expected["mainTension"]
+    assert [link.model_dump() for link in analysis.historyGoLinks] == expected["historyGoLinks"]
 
 
 def test_unsupported_personal_text_is_not_forced_into_fagverk() -> None:
