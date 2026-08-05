@@ -14,7 +14,7 @@ const runtimeCode = fs.readFileSync('backend/aha_engine/app/engine/fagverk_groun
 assert.equal(registry.schema, 'aha_history_go_fagverk_subject_approval_registry_v1');
 assert.equal(registry.status, 'review_gate_registry_not_runtime_input');
 assert.equal(registry.runtime_activation_allowed, false);
-assert.deepEqual(Object.keys(registry.subjects), ['politikk']);
+assert.deepEqual(Object.keys(registry.subjects), ['historie', 'politikk']);
 
 const outputRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'aha-fagverk-subject-approvals-'));
 const result = spawnSync(process.execPath, ['scripts/build-history-go-fagverk-subject-approvals.mjs', '--all', '--output-root', outputRoot], {
