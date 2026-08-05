@@ -1,9 +1,9 @@
 {
   "schema": "aha_politics_fagverk_evaluation_report_v1",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "source_ref": "9e9644e83998ff715005bf80c96cde6193107c13",
   "corpus_sha256": "981ab3ad25f972bd13c70a0247f26b8796e43b8cd3cde7282b7d073bfcc79dec",
-  "policy_version": "1.0.0",
+  "policy_version": "1.1.0",
   "matrix_version": "1.0.0",
   "status": "passed_review_gate",
   "runtime_activation_allowed": false,
@@ -44,12 +44,15 @@
         "status": "grounded",
         "selected_chapter_id": "forvaltning",
         "top_score": 9,
-        "second_score": 1.5,
+        "second_score": 0,
         "ranking": [
           {
             "chapter_id": "forvaltning",
             "title": "Offentlig forvaltning",
             "score": 9,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": [
               {
                 "term": "delegasjon",
@@ -75,35 +78,39 @@
             ]
           },
           {
-            "chapter_id": "rett-lov-rettssikkerhet",
-            "title": "Rett, lov og rettssikkerhet",
-            "score": 1.5,
-            "matched_terms": [
-              {
-                "term": "saken",
-                "group": "support_terms",
-                "base_weight": 1.5,
-                "multiplier": 1,
-                "contribution": 1.5
-              }
-            ]
-          },
-          {
             "chapter_id": "fordeling-velferd-ulikhet",
             "title": "Fordeling, velferd og ulikhet",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "internasjonal-politikk-sikkerhet-samarbeid",
             "title": "Internasjonal politikk, sikkerhet og samarbeid",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "konflikt-makt-sivilsamfunn",
             "title": "Konflikt, makt og sivilsamfunn",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "normer-identitet-hverdagsliv",
+            "title": "Normer, identitet og hverdagsliv",
+            "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           }
         ]
@@ -124,6 +131,12 @@
             "chapter_id": "parlamentarisme",
             "title": "Parlamentarisme, representasjon og offentlighet",
             "score": 8.275,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [
+              "mistillit",
+              "stortinget"
+            ],
             "matched_terms": [
               {
                 "term": "mistillit",
@@ -159,6 +172,9 @@
             "chapter_id": "regimer-og-institusjoner",
             "title": "Regimer og institusjoner",
             "score": 1.5,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": [
               {
                 "term": "system",
@@ -173,6 +189,9 @@
             "chapter_id": "forvaltning",
             "title": "Offentlig forvaltning",
             "score": 1.05,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": [
               {
                 "term": "offentlighet",
@@ -187,6 +206,9 @@
             "chapter_id": "norsk-politikk-eos-eu-flernivastyring",
             "title": "Norsk politikk, EØS/EU og flernivåstyring",
             "score": 0.525,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": [
               {
                 "term": "stortinget",
@@ -201,6 +223,9 @@
             "chapter_id": "fordeling-velferd-ulikhet",
             "title": "Fordeling, velferd og ulikhet",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           }
         ]
@@ -221,6 +246,9 @@
             "chapter_id": "regimer-og-institusjoner",
             "title": "Regimer og institusjoner",
             "score": 12,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": [
               {
                 "term": "demokratisk tilbakegang",
@@ -263,24 +291,36 @@
             "chapter_id": "fordeling-velferd-ulikhet",
             "title": "Fordeling, velferd og ulikhet",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "forvaltning",
             "title": "Offentlig forvaltning",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "internasjonal-politikk-sikkerhet-samarbeid",
             "title": "Internasjonal politikk, sikkerhet og samarbeid",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "konflikt-makt-sivilsamfunn",
             "title": "Konflikt, makt og sivilsamfunn",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           }
         ]
@@ -301,6 +341,9 @@
             "chapter_id": "valg-partier-velgeratferd",
             "title": "Valg, partier og velgeratferd",
             "score": 9,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": [
               {
                 "term": "sperregrense",
@@ -329,24 +372,36 @@
             "chapter_id": "fordeling-velferd-ulikhet",
             "title": "Fordeling, velferd og ulikhet",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "forvaltning",
             "title": "Offentlig forvaltning",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "internasjonal-politikk-sikkerhet-samarbeid",
             "title": "Internasjonal politikk, sikkerhet og samarbeid",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "konflikt-makt-sivilsamfunn",
             "title": "Konflikt, makt og sivilsamfunn",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           }
         ]
@@ -360,23 +415,19 @@
       "result": {
         "status": "grounded",
         "selected_chapter_id": "offentlig-politikk-beslutning-implementering",
-        "top_score": 20.75,
+        "top_score": 15.75,
         "second_score": 1.5,
         "ranking": [
           {
             "chapter_id": "offentlig-politikk-beslutning-implementering",
             "title": "Offentlig politikk, beslutning og implementering",
-            "score": 20.75,
+            "score": 15.75,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": [
               {
                 "term": "dagsorden",
-                "group": "title_terms",
-                "base_weight": 5,
-                "multiplier": 1,
-                "contribution": 5
-              },
-              {
-                "term": "tiltak",
                 "group": "title_terms",
                 "base_weight": 5,
                 "multiplier": 1,
@@ -416,6 +467,9 @@
             "chapter_id": "regimer-og-institusjoner",
             "title": "Regimer og institusjoner",
             "score": 1.5,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": [
               {
                 "term": "endres",
@@ -430,6 +484,9 @@
             "chapter_id": "internasjonal-politikk-sikkerhet-samarbeid",
             "title": "Internasjonal politikk, sikkerhet og samarbeid",
             "score": 0.525,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": [
               {
                 "term": "implementering",
@@ -444,12 +501,18 @@
             "chapter_id": "fordeling-velferd-ulikhet",
             "title": "Fordeling, velferd og ulikhet",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "forvaltning",
             "title": "Offentlig forvaltning",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           }
         ]
@@ -470,6 +533,9 @@
             "chapter_id": "internasjonal-politikk-sikkerhet-samarbeid",
             "title": "Internasjonal politikk, sikkerhet og samarbeid",
             "score": 20.75,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": [
               {
                 "term": "allianser",
@@ -519,6 +585,9 @@
             "chapter_id": "statsvitenskapelig-metode-og-sammenligning",
             "title": "Statsvitenskapelig metode og sammenligning",
             "score": 0.525,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": [
               {
                 "term": "usikkerhet",
@@ -533,18 +602,27 @@
             "chapter_id": "fordeling-velferd-ulikhet",
             "title": "Fordeling, velferd og ulikhet",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "forvaltning",
             "title": "Offentlig forvaltning",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "konflikt-makt-sivilsamfunn",
             "title": "Konflikt, makt og sivilsamfunn",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           }
         ]
@@ -565,6 +643,9 @@
             "chapter_id": "politisk-okonomi-stat-marked",
             "title": "Politisk økonomi, stat og marked",
             "score": 18.5,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": [
               {
                 "term": "stabilitet",
@@ -614,24 +695,36 @@
             "chapter_id": "fordeling-velferd-ulikhet",
             "title": "Fordeling, velferd og ulikhet",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "forvaltning",
             "title": "Offentlig forvaltning",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "internasjonal-politikk-sikkerhet-samarbeid",
             "title": "Internasjonal politikk, sikkerhet og samarbeid",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "konflikt-makt-sivilsamfunn",
             "title": "Konflikt, makt og sivilsamfunn",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           }
         ]
@@ -652,6 +745,9 @@
             "chapter_id": "statsvitenskapelig-metode-og-sammenligning",
             "title": "Statsvitenskapelig metode og sammenligning",
             "score": 19.5,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": [
               {
                 "term": "begrep",
@@ -715,6 +811,9 @@
             "chapter_id": "fordeling-velferd-ulikhet",
             "title": "Fordeling, velferd og ulikhet",
             "score": 1.5,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": [
               {
                 "term": "vurderes",
@@ -729,18 +828,27 @@
             "chapter_id": "forvaltning",
             "title": "Offentlig forvaltning",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "internasjonal-politikk-sikkerhet-samarbeid",
             "title": "Internasjonal politikk, sikkerhet og samarbeid",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "konflikt-makt-sivilsamfunn",
             "title": "Konflikt, makt og sivilsamfunn",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           }
         ]
@@ -761,6 +869,9 @@
             "chapter_id": "norsk-politikk-eos-eu-flernivastyring",
             "title": "Norsk politikk, EØS/EU og flernivåstyring",
             "score": 14,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": [
               {
                 "term": "eøs",
@@ -796,6 +907,9 @@
             "chapter_id": "internasjonal-politikk-sikkerhet-samarbeid",
             "title": "Internasjonal politikk, sikkerhet og samarbeid",
             "score": 1.5,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": [
               {
                 "term": "nasjonal",
@@ -810,6 +924,9 @@
             "chapter_id": "politisk-okonomi-stat-marked",
             "title": "Politisk økonomi, stat og marked",
             "score": 1.5,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": [
               {
                 "term": "virker",
@@ -824,6 +941,9 @@
             "chapter_id": "regimer-og-institusjoner",
             "title": "Regimer og institusjoner",
             "score": 1.5,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": [
               {
                 "term": "selvstyre",
@@ -838,6 +958,9 @@
             "chapter_id": "fordeling-velferd-ulikhet",
             "title": "Fordeling, velferd og ulikhet",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           }
         ]
@@ -858,6 +981,9 @@
             "chapter_id": "rett-lov-rettssikkerhet",
             "title": "Rett, lov og rettssikkerhet",
             "score": 9,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": [
               {
                 "term": "effektivt rettsmiddel",
@@ -886,24 +1012,36 @@
             "chapter_id": "fordeling-velferd-ulikhet",
             "title": "Fordeling, velferd og ulikhet",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "forvaltning",
             "title": "Offentlig forvaltning",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "internasjonal-politikk-sikkerhet-samarbeid",
             "title": "Internasjonal politikk, sikkerhet og samarbeid",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "konflikt-makt-sivilsamfunn",
             "title": "Konflikt, makt og sivilsamfunn",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           }
         ]
@@ -924,6 +1062,9 @@
             "chapter_id": "fordeling-velferd-ulikhet",
             "title": "Fordeling, velferd og ulikhet",
             "score": 13.75,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": [
               {
                 "term": "betalbarhet",
@@ -966,6 +1107,9 @@
             "chapter_id": "politisk-okonomi-stat-marked",
             "title": "Politisk økonomi, stat og marked",
             "score": 1.75,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": [
               {
                 "term": "fordeling",
@@ -980,18 +1124,27 @@
             "chapter_id": "forvaltning",
             "title": "Offentlig forvaltning",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "internasjonal-politikk-sikkerhet-samarbeid",
             "title": "Internasjonal politikk, sikkerhet og samarbeid",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "konflikt-makt-sivilsamfunn",
             "title": "Konflikt, makt og sivilsamfunn",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           }
         ]
@@ -1006,12 +1159,15 @@
         "status": "grounded",
         "selected_chapter_id": "konflikt-makt-sivilsamfunn",
         "top_score": 15.05,
-        "second_score": 1.05,
+        "second_score": 0,
         "ranking": [
           {
             "chapter_id": "konflikt-makt-sivilsamfunn",
             "title": "Konflikt, makt og sivilsamfunn",
             "score": 15.05,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": [
               {
                 "term": "krav",
@@ -1061,6 +1217,9 @@
             "chapter_id": "parlamentarisme",
             "title": "Parlamentarisme, representasjon og offentlighet",
             "score": 1.05,
+            "eligible": false,
+            "eligibility_reason": "missing_required_anchor",
+            "matched_anchor_terms": [],
             "matched_terms": [
               {
                 "term": "arena",
@@ -1082,18 +1241,27 @@
             "chapter_id": "fordeling-velferd-ulikhet",
             "title": "Fordeling, velferd og ulikhet",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "forvaltning",
             "title": "Offentlig forvaltning",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "internasjonal-politikk-sikkerhet-samarbeid",
             "title": "Internasjonal politikk, sikkerhet og samarbeid",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           }
         ]
@@ -1114,6 +1282,9 @@
             "chapter_id": "normer-identitet-hverdagsliv",
             "title": "Normer, identitet og hverdagsliv",
             "score": 13.5,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": [
               {
                 "term": "interseksjonalitet",
@@ -1156,24 +1327,36 @@
             "chapter_id": "fordeling-velferd-ulikhet",
             "title": "Fordeling, velferd og ulikhet",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "forvaltning",
             "title": "Offentlig forvaltning",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "internasjonal-politikk-sikkerhet-samarbeid",
             "title": "Internasjonal politikk, sikkerhet og samarbeid",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "konflikt-makt-sivilsamfunn",
             "title": "Konflikt, makt og sivilsamfunn",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           }
         ]
@@ -1194,6 +1377,9 @@
             "chapter_id": "offentlig-politikk-beslutning-implementering",
             "title": "Offentlig politikk, beslutning og implementering",
             "score": 9,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": [
               {
                 "term": "policy feedback",
@@ -1222,24 +1408,36 @@
             "chapter_id": "fordeling-velferd-ulikhet",
             "title": "Fordeling, velferd og ulikhet",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "forvaltning",
             "title": "Offentlig forvaltning",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "internasjonal-politikk-sikkerhet-samarbeid",
             "title": "Internasjonal politikk, sikkerhet og samarbeid",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "konflikt-makt-sivilsamfunn",
             "title": "Konflikt, makt og sivilsamfunn",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           }
         ]
@@ -1260,6 +1458,9 @@
             "chapter_id": "regimer-og-institusjoner",
             "title": "Regimer og institusjoner",
             "score": 10.5,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": [
               {
                 "term": "demokratisk tilbakegang",
@@ -1295,24 +1496,36 @@
             "chapter_id": "fordeling-velferd-ulikhet",
             "title": "Fordeling, velferd og ulikhet",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "forvaltning",
             "title": "Offentlig forvaltning",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "internasjonal-politikk-sikkerhet-samarbeid",
             "title": "Internasjonal politikk, sikkerhet og samarbeid",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "konflikt-makt-sivilsamfunn",
             "title": "Konflikt, makt og sivilsamfunn",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           }
         ]
@@ -1327,12 +1540,17 @@
         "status": "grounded",
         "selected_chapter_id": "parlamentarisme",
         "top_score": 10.75,
-        "second_score": 1.5,
+        "second_score": 1.05,
         "ranking": [
           {
             "chapter_id": "parlamentarisme",
             "title": "Parlamentarisme, representasjon og offentlighet",
             "score": 10.75,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [
+              "mistillit"
+            ],
             "matched_terms": [
               {
                 "term": "mediemangfold",
@@ -1365,23 +1583,12 @@
             ]
           },
           {
-            "chapter_id": "rett-lov-rettssikkerhet",
-            "title": "Rett, lov og rettssikkerhet",
-            "score": 1.5,
-            "matched_terms": [
-              {
-                "term": "saken",
-                "group": "support_terms",
-                "base_weight": 1.5,
-                "multiplier": 1,
-                "contribution": 1.5
-              }
-            ]
-          },
-          {
             "chapter_id": "forvaltning",
             "title": "Offentlig forvaltning",
             "score": 1.05,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": [
               {
                 "term": "offentlighet",
@@ -1396,12 +1603,27 @@
             "chapter_id": "fordeling-velferd-ulikhet",
             "title": "Fordeling, velferd og ulikhet",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "internasjonal-politikk-sikkerhet-samarbeid",
             "title": "Internasjonal politikk, sikkerhet og samarbeid",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "konflikt-makt-sivilsamfunn",
+            "title": "Konflikt, makt og sivilsamfunn",
+            "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           }
         ]
@@ -1422,6 +1644,9 @@
             "chapter_id": "valg-partier-velgeratferd",
             "title": "Valg, partier og velgeratferd",
             "score": 10.75,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": [
               {
                 "term": "partisystem",
@@ -1457,6 +1682,11 @@
             "chapter_id": "parlamentarisme",
             "title": "Parlamentarisme, representasjon og offentlighet",
             "score": 1.75,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [
+              "representasjon"
+            ],
             "matched_terms": [
               {
                 "term": "stemmer",
@@ -1471,18 +1701,27 @@
             "chapter_id": "fordeling-velferd-ulikhet",
             "title": "Fordeling, velferd og ulikhet",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "forvaltning",
             "title": "Offentlig forvaltning",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "internasjonal-politikk-sikkerhet-samarbeid",
             "title": "Internasjonal politikk, sikkerhet og samarbeid",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           }
         ]
@@ -1497,12 +1736,15 @@
         "status": "grounded",
         "selected_chapter_id": "forvaltning",
         "top_score": 9,
-        "second_score": 1.5,
+        "second_score": 0,
         "ranking": [
           {
             "chapter_id": "forvaltning",
             "title": "Offentlig forvaltning",
             "score": 9,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": [
               {
                 "term": "delegasjon",
@@ -1528,35 +1770,39 @@
             ]
           },
           {
-            "chapter_id": "rett-lov-rettssikkerhet",
-            "title": "Rett, lov og rettssikkerhet",
-            "score": 1.5,
-            "matched_terms": [
-              {
-                "term": "saken",
-                "group": "support_terms",
-                "base_weight": 1.5,
-                "multiplier": 1,
-                "contribution": 1.5
-              }
-            ]
-          },
-          {
             "chapter_id": "fordeling-velferd-ulikhet",
             "title": "Fordeling, velferd og ulikhet",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "internasjonal-politikk-sikkerhet-samarbeid",
             "title": "Internasjonal politikk, sikkerhet og samarbeid",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "konflikt-makt-sivilsamfunn",
             "title": "Konflikt, makt og sivilsamfunn",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "normer-identitet-hverdagsliv",
+            "title": "Normer, identitet og hverdagsliv",
+            "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           }
         ]
@@ -1577,6 +1823,9 @@
             "chapter_id": "norsk-politikk-eos-eu-flernivastyring",
             "title": "Norsk politikk, EØS/EU og flernivåstyring",
             "score": 14,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": [
               {
                 "term": "eøs",
@@ -1612,6 +1861,9 @@
             "chapter_id": "internasjonal-politikk-sikkerhet-samarbeid",
             "title": "Internasjonal politikk, sikkerhet og samarbeid",
             "score": 8,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": [
               {
                 "term": "bindinger",
@@ -1640,18 +1892,27 @@
             "chapter_id": "fordeling-velferd-ulikhet",
             "title": "Fordeling, velferd og ulikhet",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "forvaltning",
             "title": "Offentlig forvaltning",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "konflikt-makt-sivilsamfunn",
             "title": "Konflikt, makt og sivilsamfunn",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           }
         ]
@@ -1672,6 +1933,9 @@
             "chapter_id": "fordeling-velferd-ulikhet",
             "title": "Fordeling, velferd og ulikhet",
             "score": 15.75,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": [
               {
                 "term": "ulikhet",
@@ -1714,6 +1978,9 @@
             "chapter_id": "politisk-okonomi-stat-marked",
             "title": "Politisk økonomi, stat og marked",
             "score": 1.75,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": [
               {
                 "term": "fordeling",
@@ -1728,6 +1995,9 @@
             "chapter_id": "forvaltning",
             "title": "Offentlig forvaltning",
             "score": 1.5,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": [
               {
                 "term": "bruker",
@@ -1742,12 +2012,18 @@
             "chapter_id": "internasjonal-politikk-sikkerhet-samarbeid",
             "title": "Internasjonal politikk, sikkerhet og samarbeid",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "konflikt-makt-sivilsamfunn",
             "title": "Konflikt, makt og sivilsamfunn",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           }
         ]
@@ -1762,12 +2038,15 @@
         "status": "grounded",
         "selected_chapter_id": "statsvitenskapelig-metode-og-sammenligning",
         "top_score": 13.5,
-        "second_score": 5,
+        "second_score": 0,
         "ranking": [
           {
             "chapter_id": "statsvitenskapelig-metode-og-sammenligning",
             "title": "Statsvitenskapelig metode og sammenligning",
             "score": 13.5,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": [
               {
                 "term": "ekstern validitet",
@@ -1807,35 +2086,39 @@
             ]
           },
           {
-            "chapter_id": "offentlig-politikk-beslutning-implementering",
-            "title": "Offentlig politikk, beslutning og implementering",
-            "score": 5,
-            "matched_terms": [
-              {
-                "term": "tiltak",
-                "group": "title_terms",
-                "base_weight": 5,
-                "multiplier": 1,
-                "contribution": 5
-              }
-            ]
-          },
-          {
             "chapter_id": "fordeling-velferd-ulikhet",
             "title": "Fordeling, velferd og ulikhet",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "forvaltning",
             "title": "Offentlig forvaltning",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "internasjonal-politikk-sikkerhet-samarbeid",
             "title": "Internasjonal politikk, sikkerhet og samarbeid",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "konflikt-makt-sivilsamfunn",
+            "title": "Konflikt, makt og sivilsamfunn",
+            "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           }
         ]
@@ -1850,12 +2133,15 @@
         "status": "grounded",
         "selected_chapter_id": "internasjonal-politikk-sikkerhet-samarbeid",
         "top_score": 14,
-        "second_score": 5,
+        "second_score": 0,
         "ranking": [
           {
             "chapter_id": "internasjonal-politikk-sikkerhet-samarbeid",
             "title": "Internasjonal politikk, sikkerhet og samarbeid",
             "score": 14,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": [
               {
                 "term": "internasjonal",
@@ -1888,35 +2174,39 @@
             ]
           },
           {
-            "chapter_id": "norsk-politikk-eos-eu-flernivastyring",
-            "title": "Norsk politikk, EØS/EU og flernivåstyring",
-            "score": 5,
-            "matched_terms": [
-              {
-                "term": "norsk",
-                "group": "title_terms",
-                "base_weight": 5,
-                "multiplier": 1,
-                "contribution": 5
-              }
-            ]
-          },
-          {
             "chapter_id": "fordeling-velferd-ulikhet",
             "title": "Fordeling, velferd og ulikhet",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "forvaltning",
             "title": "Offentlig forvaltning",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "konflikt-makt-sivilsamfunn",
             "title": "Konflikt, makt og sivilsamfunn",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "normer-identitet-hverdagsliv",
+            "title": "Normer, identitet og hverdagsliv",
+            "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           }
         ]
@@ -1937,6 +2227,9 @@
             "chapter_id": "rett-lov-rettssikkerhet",
             "title": "Rett, lov og rettssikkerhet",
             "score": 9,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": [
               {
                 "term": "forholdsmessighet",
@@ -1965,6 +2258,9 @@
             "chapter_id": "forvaltning",
             "title": "Offentlig forvaltning",
             "score": 1.5,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": [
               {
                 "term": "organ",
@@ -1979,18 +2275,27 @@
             "chapter_id": "fordeling-velferd-ulikhet",
             "title": "Fordeling, velferd og ulikhet",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "internasjonal-politikk-sikkerhet-samarbeid",
             "title": "Internasjonal politikk, sikkerhet og samarbeid",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "konflikt-makt-sivilsamfunn",
             "title": "Konflikt, makt og sivilsamfunn",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           }
         ]
@@ -2011,6 +2316,9 @@
             "chapter_id": "politisk-okonomi-stat-marked",
             "title": "Politisk økonomi, stat og marked",
             "score": 10.75,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": [
               {
                 "term": "karbonprising",
@@ -2046,6 +2354,9 @@
             "chapter_id": "fordeling-velferd-ulikhet",
             "title": "Fordeling, velferd og ulikhet",
             "score": 5,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": [
               {
                 "term": "ulikhet",
@@ -2060,6 +2371,9 @@
             "chapter_id": "regimer-og-institusjoner",
             "title": "Regimer og institusjoner",
             "score": 1.5,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": [
               {
                 "term": "mulig",
@@ -2074,6 +2388,9 @@
             "chapter_id": "rett-lov-rettssikkerhet",
             "title": "Rett, lov og rettssikkerhet",
             "score": 1.5,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": [
               {
                 "term": "virkning",
@@ -2088,6 +2405,9 @@
             "chapter_id": "offentlig-politikk-beslutning-implementering",
             "title": "Offentlig politikk, beslutning og implementering",
             "score": 0.525,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": [
               {
                 "term": "virkemidler",
@@ -2116,6 +2436,9 @@
             "chapter_id": "normer-identitet-hverdagsliv",
             "title": "Normer, identitet og hverdagsliv",
             "score": 10.5,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": [
               {
                 "term": "interseksjonalitet",
@@ -2151,24 +2474,36 @@
             "chapter_id": "fordeling-velferd-ulikhet",
             "title": "Fordeling, velferd og ulikhet",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "forvaltning",
             "title": "Offentlig forvaltning",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "internasjonal-politikk-sikkerhet-samarbeid",
             "title": "Internasjonal politikk, sikkerhet og samarbeid",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "konflikt-makt-sivilsamfunn",
             "title": "Konflikt, makt og sivilsamfunn",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           }
         ]
@@ -2189,6 +2524,9 @@
             "chapter_id": "konflikt-makt-sivilsamfunn",
             "title": "Konflikt, makt og sivilsamfunn",
             "score": 14.525,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": [
               {
                 "term": "konflikt",
@@ -2231,6 +2569,9 @@
             "chapter_id": "normer-identitet-hverdagsliv",
             "title": "Normer, identitet og hverdagsliv",
             "score": 1.75,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": [
               {
                 "term": "identitet",
@@ -2242,29 +2583,30 @@
             ]
           },
           {
-            "chapter_id": "rett-lov-rettssikkerhet",
-            "title": "Rett, lov og rettssikkerhet",
-            "score": 1.5,
-            "matched_terms": [
-              {
-                "term": "saken",
-                "group": "support_terms",
-                "base_weight": 1.5,
-                "multiplier": 1,
-                "contribution": 1.5
-              }
-            ]
-          },
-          {
             "chapter_id": "fordeling-velferd-ulikhet",
             "title": "Fordeling, velferd og ulikhet",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "forvaltning",
             "title": "Offentlig forvaltning",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "internasjonal-politikk-sikkerhet-samarbeid",
+            "title": "Internasjonal politikk, sikkerhet og samarbeid",
+            "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           }
         ]
@@ -2285,30 +2627,45 @@
             "chapter_id": "fordeling-velferd-ulikhet",
             "title": "Fordeling, velferd og ulikhet",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "forvaltning",
             "title": "Offentlig forvaltning",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "internasjonal-politikk-sikkerhet-samarbeid",
             "title": "Internasjonal politikk, sikkerhet og samarbeid",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "konflikt-makt-sivilsamfunn",
             "title": "Konflikt, makt og sivilsamfunn",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "normer-identitet-hverdagsliv",
             "title": "Normer, identitet og hverdagsliv",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           }
         ]
@@ -2329,30 +2686,45 @@
             "chapter_id": "fordeling-velferd-ulikhet",
             "title": "Fordeling, velferd og ulikhet",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "forvaltning",
             "title": "Offentlig forvaltning",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "internasjonal-politikk-sikkerhet-samarbeid",
             "title": "Internasjonal politikk, sikkerhet og samarbeid",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "konflikt-makt-sivilsamfunn",
             "title": "Konflikt, makt og sivilsamfunn",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "normer-identitet-hverdagsliv",
             "title": "Normer, identitet og hverdagsliv",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           }
         ]
@@ -2373,30 +2745,45 @@
             "chapter_id": "fordeling-velferd-ulikhet",
             "title": "Fordeling, velferd og ulikhet",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "forvaltning",
             "title": "Offentlig forvaltning",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "internasjonal-politikk-sikkerhet-samarbeid",
             "title": "Internasjonal politikk, sikkerhet og samarbeid",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "konflikt-makt-sivilsamfunn",
             "title": "Konflikt, makt og sivilsamfunn",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "normer-identitet-hverdagsliv",
             "title": "Normer, identitet og hverdagsliv",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           }
         ]
@@ -2417,30 +2804,45 @@
             "chapter_id": "fordeling-velferd-ulikhet",
             "title": "Fordeling, velferd og ulikhet",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "forvaltning",
             "title": "Offentlig forvaltning",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "internasjonal-politikk-sikkerhet-samarbeid",
             "title": "Internasjonal politikk, sikkerhet og samarbeid",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "konflikt-makt-sivilsamfunn",
             "title": "Konflikt, makt og sivilsamfunn",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "normer-identitet-hverdagsliv",
             "title": "Normer, identitet og hverdagsliv",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           }
         ]
@@ -2461,30 +2863,45 @@
             "chapter_id": "fordeling-velferd-ulikhet",
             "title": "Fordeling, velferd og ulikhet",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "forvaltning",
             "title": "Offentlig forvaltning",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "internasjonal-politikk-sikkerhet-samarbeid",
             "title": "Internasjonal politikk, sikkerhet og samarbeid",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "konflikt-makt-sivilsamfunn",
             "title": "Konflikt, makt og sivilsamfunn",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "normer-identitet-hverdagsliv",
             "title": "Normer, identitet og hverdagsliv",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           }
         ]
@@ -2505,6 +2922,9 @@
             "chapter_id": "fordeling-velferd-ulikhet",
             "title": "Fordeling, velferd og ulikhet",
             "score": 1.5,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": [
               {
                 "term": "vurderes",
@@ -2519,24 +2939,36 @@
             "chapter_id": "forvaltning",
             "title": "Offentlig forvaltning",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "internasjonal-politikk-sikkerhet-samarbeid",
             "title": "Internasjonal politikk, sikkerhet og samarbeid",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "konflikt-makt-sivilsamfunn",
             "title": "Konflikt, makt og sivilsamfunn",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "normer-identitet-hverdagsliv",
             "title": "Normer, identitet og hverdagsliv",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           }
         ]
@@ -2557,30 +2989,45 @@
             "chapter_id": "fordeling-velferd-ulikhet",
             "title": "Fordeling, velferd og ulikhet",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "forvaltning",
             "title": "Offentlig forvaltning",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "internasjonal-politikk-sikkerhet-samarbeid",
             "title": "Internasjonal politikk, sikkerhet og samarbeid",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "konflikt-makt-sivilsamfunn",
             "title": "Konflikt, makt og sivilsamfunn",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "normer-identitet-hverdagsliv",
             "title": "Normer, identitet og hverdagsliv",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           }
         ]
@@ -2601,30 +3048,45 @@
             "chapter_id": "fordeling-velferd-ulikhet",
             "title": "Fordeling, velferd og ulikhet",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "forvaltning",
             "title": "Offentlig forvaltning",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "internasjonal-politikk-sikkerhet-samarbeid",
             "title": "Internasjonal politikk, sikkerhet og samarbeid",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "konflikt-makt-sivilsamfunn",
             "title": "Konflikt, makt og sivilsamfunn",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           },
           {
             "chapter_id": "normer-identitet-hverdagsliv",
             "title": "Normer, identitet og hverdagsliv",
             "score": 0,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [],
             "matched_terms": []
           }
         ]

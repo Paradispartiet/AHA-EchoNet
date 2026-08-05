@@ -2,183 +2,143 @@
 
 ## Status
 
-Politics Fixture Corrections V1 is the first human-reviewed comparison baseline between:
+Politics Fixture Corrections V1 compares existing legacy analysis fixtures with the review-only Politics policy and an explicit human expectation.
 
-1. the existing legacy analysis fixtures
-2. the review-only Politics term policy
-3. an explicit human expectation for Politics grounding
+The first baseline recorded five failures. Policy version **1.1.0** now passes all eight cases while remaining outside runtime.
 
-The baseline deliberately records current errors. It is not a success claim and does not activate Politics grounding in runtime.
+## Why this layer exists
 
-## Why this baseline is needed
+The legacy fixture suite protects exact output from the hand-authored Python analyzer. That is useful for compatibility, but it does not prove that a new text receives the right Fagverk chapter.
 
-The original fixture suite contains sixteen analysis examples. The first eight are used as exact golden parity for the hand-authored Python analyzer. That protects compatibility, but it also rewards reproducing prepared themes, tensions and recommendations rather than improving interpretation of new texts.
+Each Politics correction case instead records:
 
-The Politics correction baseline asks a different question:
-
-> Given the current source text, should the Politics corpus select a chapter, select no chapter, or remain uncertain?
-
-Each correction case therefore records source evidence, supported concepts, forbidden chapter choices, unsupported interpretations and required uncertainty.
-
-## Pilot cases
-
-Eight existing fixtures are included.
-
-### Expected Politics grounding
-
-- `03-nav-reformen-forvaltning.json` → `forvaltning`
-- `10-nav-reformen-brukermoete.json` → `forvaltning`
-- `07-juridisk-tekst.json` → `rett-lov-rettssikkerhet`
-
-### Expected Politics abstention
-
-- `01-pinse-religion.json`
-- `02-morgenbladet-mediehistorie.json`
-- `05-dagbok-refleksjon.json`
-- `08-uklar-lav-confidence.json`
-- `09-morgenbladet-offentlighet-kulturkritikk.json`
-
-Six cases come from the exact legacy baseline. Two later fixtures are qualitative targets.
-
-## Correction schema
-
-The reviewed correction file is:
-
-```text
-data/evaluation/aha-politics-fixture-corrections.v1.json
-```
-
-Every case contains:
-
-- fixture path and role
-- expected Politics status
-- expected Politics chapter, when applicable
-- exact source evidence present in the fixture
+- fixture path and fixture role
+- expected Politics status and chapter
+- exact source evidence
 - supported concepts
-- forbidden chapter IDs
-- interpretations the system must not make
-- uncertainty the system must preserve
+- forbidden chapter choices
+- unsupported interpretations
+- required uncertainty
 
-The correction set does not overwrite the old fixtures. It places a new human-review layer beside them.
+The correction layer does not overwrite the old fixtures.
 
-## Comparison report
+## Pilot set
 
-The deterministic comparison report is:
-
-```text
-data/evaluation/aha-politics-fixture-correction-report.v1.json
-```
-
-Build it with:
-
-```bash
-node scripts/compare-politics-fixture-corrections.mjs
-```
-
-The report includes:
-
-- selected fields from the legacy expected analysis
-- the human-reviewed Politics expectation
-- the term-policy grounding result and ranked chapter evidence
-- comparison type
-- forbidden-chapter detection
-- validation errors
-
-## Baseline result
+Expected grounding:
 
 ```text
-8 cases total
-3 correct
-5 incorrect
+NAV reform → forvaltning
+NAV user meeting → forvaltning
+legal proportionality text → rett-lov-rettssikkerhet
+```
+
+Expected Politics abstention:
+
+```text
+pinse
+Morgenbladet media history
+personal diary
+vague low-information text
+Morgenbladet public-sphere and culture criticism
+```
+
+Six cases are exact legacy baselines. Two are later qualitative targets.
+
+## Initial result
+
+Policy 1.0.0 produced:
+
+```text
+3/8 correct
 2 false positives
 3 false negatives
+```
+
+Both Morgenbladet texts were incorrectly selected as `parlamentarisme`. Both NAV texts and the legal text lacked their required Politics chapters.
+
+## Correction strategy
+
+The correction did not lower global thresholds.
+
+### Morgenbladet
+
+`parlamentarisme` now requires an explicit parliamentary anchor. Public-sphere words such as `debatt`, `offentlighet` and `arena` cannot select the chapter alone.
+
+Residual generic unique words such as `over`, `norsk`, `var`, `saken` and `tiltak` are globally non-scoring.
+
+### NAV
+
+Chapter-scoped evidence was added to `forvaltning`, including welfare-administration forms, organizational cultures, responsibility relations, steering lines, user meetings and one-contact-point language.
+
+### Legal text
+
+Chapter-scoped evidence was added to `rett-lov-rettssikkerhet`, including legal basis, legitimate purpose, proportionality, individual rights and less intrusive measures.
+
+## Current result
+
+Policy 1.1.0 records:
+
+```text
+8/8 passed
+0 false positives
+0 false negatives
 0 validation errors
 ```
 
 The report status is:
 
 ```text
-correction_required
+passed_correction_gate
 ```
 
-### Correct abstentions
+The two Morgenbladet cases now remain `unsupported`. Their `parlamentarisme` ranking is explicitly marked ineligible because the required anchor is missing.
 
-The policy correctly abstains for:
+Both NAV cases select `forvaltning` using chapter-scoped supplemental evidence.
 
-- pinse
-- personal diary reflection
-- vague low-information text
+The legal case selects `rett-lov-rettssikkerhet` through explicit proportionality and rights phrases.
 
-### False positives
+## Shared implementation
 
-Both Morgenbladet texts are incorrectly grounded to:
+The 34-case matrix and 8-case correction set use the same scorer:
 
 ```text
-parlamentarisme
+scripts/lib/politics-fagverk-scoring.mjs
 ```
 
-The first false positive is driven mainly by terms such as:
+This prevents one evaluator from passing while another silently uses different matching logic.
 
-- `debatt`
-- `offentlighet`
-- `arena`
+## Deterministic files
 
-This demonstrates that public-sphere vocabulary is still too easy to confuse with parliamentary politics. Media history, culture criticism and editorial form must not become parliamentary grounding without evidence such as government responsibility, the Storting, representation, confidence or institutional control.
+```text
+data/evaluation/aha-politics-fixture-corrections.v1.json
+data/evaluation/aha-politics-fixture-correction-report.v1.json
+```
 
-The ranking also exposes residual generic terms such as `over` that should never contribute strong title evidence.
+Build the report with:
 
-### False negatives
+```bash
+node scripts/compare-politics-fixture-corrections.mjs
+```
 
-The current policy fails to ground:
-
-- both NAV texts to `forvaltning`
-- the proportionality text to `rett-lov-rettssikkerhet`
-
-The NAV fixtures contain clear human evidence around welfare administration, organizational cultures, steering lines and unclear responsibility. The legal fixture contains legal basis, legitimate purpose, proportionality and individual rights.
-
-These failures show that chapter-specific phrase and concept coverage is still incomplete even after the collision policy passed the synthetic matrix.
-
-## Meaning of the result
-
-The 34-case Politics evaluation matrix is useful but insufficient. It proves internal consistency with curated chapter terms. The fixture correction baseline proves that real existing texts still reveal false positives and false negatives.
-
-A review gate may therefore be green while runtime readiness remains blocked.
-
-The correct response is not to lower thresholds globally. That would likely fix some NAV and legal false negatives while making Morgenbladet false positives worse.
+The permanent workflow regenerates the report, requires 8/8 and byte-for-byte parity, and runs with read-only repository permissions.
 
 ## Runtime boundary
 
-The active Python engine does not load:
-
-```text
-aha-politics-fixture-corrections.v1.json
-aha-politics-fixture-correction-report.v1.json
-```
-
-The report explicitly keeps:
+The active Python engine does not load the correction set, correction report or Politics policy. The report retains:
 
 ```text
 runtime_activation_allowed: false
 ```
 
-No runtime behavior, sync, EchoNet, model training, external source storage or History Go write-back is introduced.
+Passing eight fixtures is a correction milestone, not runtime approval.
 
-## Next correction work
+## Next step
 
-The next policy revision should address the five failures with targeted changes:
+Expand the correction corpus with more real articles, especially:
 
-1. make residual generic terms such as `over` non-scoring
-2. require parliamentary institution evidence before `parlamentarisme` can win
-3. strengthen NAV/forvaltning phrases and concepts without lowering the global threshold
-4. strengthen legal proportionality evidence for `rett-lov-rettssikkerhet`
-5. rerun both the 34-case matrix and the 8-case correction baseline
+- public-sphere texts that mention democratic concepts without parliamentary institutions
+- administration texts with varied inflection and organizational vocabulary
+- legal texts that distinguish proportionality review from policy design
+- cross-domain negatives from media, religion, psychology and personal reflection
 
-The next acceptable target is:
-
-```text
-34/34 synthetic cases remain green
-8/8 fixture corrections pass
-0 new cross-domain false positives
-```
-
-Only after that should more real articles be added to the correction corpus. Runtime activation remains a later, separate decision.
+Runtime activation requires a larger correction corpus, source-span review and a separate activation audit.
