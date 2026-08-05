@@ -41,30 +41,44 @@ jobs:
         run: |
           node --check scripts/build-fagverk-release-manifest.mjs
           node scripts/build-fagverk-release-manifest.mjs --check
-      - name: Prepare automation branch
+      - name: Prepare automation branch from current main
         working-directory: aha
         run: |
           git fetch origin main
+          git fetch origin automation/history-go-fagverk-release:refs/remotes/origin/automation/history-go-fagverk-release || true
           git checkout -B automation/history-go-fagverk-release origin/main
       - name: Observe release and build update report
         working-directory: aha
-        run: |
-          node scripts/sync-history-go-fagverk-release.mjs --history-go-root ../history-go
+        run: node scripts/sync-history-go-fagverk-release.mjs --history-go-root ../history-go
       - name: Read sync status
         id: status
         working-directory: aha
         run: |
           echo "changed=$(node -p "require('./artifacts/history-go-fagverk-release-status.json').changed")" >> "$GITHUB_OUTPUT"
-          echo "subjects=$(node -p "require('./artifacts/history-go-fagverk-release-status.json').changed_subjects.join(',')")" >> "$GITHUB_OUTPUT"
           echo "source_ref=$(node -p "require('./artifacts/history-go-fagverk-release-status.json').source_commit")" >> "$GITHUB_OUTPUT"
+          echo "build_subjects=$(node -p "require('./data/integrations/review/history-go-fagverk-release-update.v1.json').subjects.filter(x => x.status !== 'unchanged' && x.status !== 'removed').map(x => x.subject_id).join(',')")" >> "$GITHUB_OUTPUT"
+          echo "removed_subjects=$(node -p "require('./data/integrations/review/history-go-fagverk-release-update.v1.json').subjects.filter(x => x.status === 'removed').map(x => x.subject_id).join(',')")" >> "$GITHUB_OUTPUT"
+      - name: Remove retired subject candidates
+        if: steps.status.outputs.changed == 'true'
+        working-directory: aha
+        env:
+          REMOVED_SUBJECTS: ${{ steps.status.outputs.removed_subjects }}
+        run: |
+          IFS=',' read -ra SUBJECTS <<< "$REMOVED_SUBJECTS"
+          for subject in "${SUBJECTS[@]}"; do
+            [ -n "$subject" ] || continue
+            rm -f \
+              "data/integrations/candidates/history-go-fagverk-${subject}.candidate.v1.json" \
+              "data/integrations/candidates/history-go-fagverk-${subject}.candidate-audit.v1.json"
+          done
       - name: Build changed subject candidate corpora
         if: steps.status.outputs.changed == 'true'
         working-directory: aha
         env:
-          CHANGED_SUBJECTS: ${{ steps.status.outputs.subjects }}
+          BUILD_SUBJECTS: ${{ steps.status.outputs.build_subjects }}
         run: |
           mkdir -p data/integrations/candidates
-          IFS=',' read -ra SUBJECTS <<< "$CHANGED_SUBJECTS"
+          IFS=',' read -ra SUBJECTS <<< "$BUILD_SUBJECTS"
           for subject in "${SUBJECTS[@]}"; do
             [ -n "$subject" ] || continue
             node scripts/build-history-go-fagverk-corpus.mjs \
@@ -81,9 +95,14 @@ jobs:
           const fs = require('fs');
           const observed = JSON.parse(fs.readFileSync('data/integrations/history-go-fagverk-release.observed.json', 'utf8'));
           const report = JSON.parse(fs.readFileSync('data/integrations/review/history-go-fagverk-release-update.v1.json', 'utf8'));
-          for (const subjectId of report.changed_subjects) {
+          for (const change of report.subjects.filter((item) => item.status !== 'unchanged')) {
+            const subjectId = change.subject_id;
             const corpusPath = `data/integrations/candidates/history-go-fagverk-${subjectId}.candidate.v1.json`;
             const auditPath = `data/integrations/candidates/history-go-fagverk-${subjectId}.candidate-audit.v1.json`;
+            if (change.status === 'removed') {
+              if (fs.existsSync(corpusPath) || fs.existsSync(auditPath)) throw new Error(`${subjectId}: retired candidate still exists.`);
+              continue;
+            }
             const corpus = JSON.parse(fs.readFileSync(corpusPath, 'utf8'));
             const audit = JSON.parse(fs.readFileSync(auditPath, 'utf8'));
             const expected = observed.subjects[subjectId];
@@ -102,12 +121,12 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add \
+          git add -A \
             data/integrations/history-go-fagverk-release.observed.json \
             data/integrations/review/history-go-fagverk-release-update.v1.json \
             data/integrations/candidates
           git commit -m "Observe History Go Fagverk release ${{ steps.status.outputs.source_ref }}"
-          git push --force-with-lease origin automation/history-go-fagverk-release
+          git push --force-with-lease origin HEAD:refs/heads/automation/history-go-fagverk-release
       - name: Create or update review PR
         if: steps.status.outputs.changed == 'true'
         working-directory: aha
