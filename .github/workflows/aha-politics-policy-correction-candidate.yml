@@ -1,0 +1,62 @@
+name: AHA Politics policy correction candidate
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "scripts/lib/politics-fagverk-scoring.mjs"
+      - "scripts/build-politics-fagverk-term-policy.mjs"
+      - "scripts/evaluate-politics-fagverk-policy.mjs"
+      - "scripts/compare-politics-fixture-corrections.mjs"
+      - ".github/workflows/aha-politics-policy-correction-candidate.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  materialize-candidate:
+    name: Materialize 34-of-34 and 8-of-8 candidate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Build all review artifacts
+        run: |
+          node scripts/build-politics-fagverk-term-policy.mjs
+          node scripts/evaluate-politics-fagverk-policy.mjs
+          node scripts/compare-politics-fixture-corrections.mjs
+      - name: Verify candidate
+        run: |
+          node - <<'NODE'
+          const fs = require('fs');
+          const policy = JSON.parse(fs.readFileSync('data/integrations/review/history-go-fagverk-politikk.term-policy.v1.json', 'utf8'));
+          const matrix = JSON.parse(fs.readFileSync('data/evaluation/aha-politics-fagverk-evaluation-report.v1.json', 'utf8'));
+          const corrections = JSON.parse(fs.readFileSync('data/evaluation/aha-politics-fixture-correction-report.v1.json', 'utf8'));
+          if (policy.version !== '1.1.0' || policy.activation_allowed !== false) throw new Error('Policy boundary failed.');
+          if (matrix.summary?.passed !== 34 || matrix.summary?.failed !== 0 || matrix.runtime_activation_allowed !== false) throw new Error('34-case matrix failed.');
+          if (corrections.summary?.passed !== 8 || corrections.summary?.failed !== 0 || corrections.runtime_activation_allowed !== false) throw new Error('8-case correction set failed.');
+          console.log('Candidate verified: 34/34 synthetic and 8/8 fixture corrections.');
+          NODE
+      - name: Materialize candidate artifacts on PR branch
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          HEAD_BRANCH: ${{ github.head_ref }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            data/integrations/review/history-go-fagverk-politikk.term-policy.v1.json \
+            data/evaluation/aha-politics-fagverk-evaluation-report.v1.json \
+            data/evaluation/aha-politics-fixture-correction-report.v1.json
+          if git diff --cached --quiet; then
+            echo "Candidate artifacts already match."
+            exit 0
+          fi
+          git commit -m "Materialize corrected Politics policy artifacts"
+          git push origin "HEAD:${HEAD_BRANCH}"
