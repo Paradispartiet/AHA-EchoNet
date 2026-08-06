@@ -1,6 +1,11 @@
 name: AHA Business Fagverk review
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/aha-business-fagverk-review.yml"
   pull_request:
     branches:
       - main
@@ -24,6 +29,7 @@ permissions:
 jobs:
   materialize-review:
     if: >-
+      github.event_name == 'push' ||
       github.event_name == 'schedule' ||
       (github.event_name == 'pull_request' && github.head_ref == 'review/naeringsliv-fagverk-v1') ||
       (github.event_name == 'issue_comment' && github.event.issue.number == 595 && github.event.comment.body == '/materialize-business-review')
