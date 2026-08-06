@@ -51,7 +51,16 @@ function evaluate(item, kind, corpus, policy) {
     const matched = new Set((top?.matched_reviewed_evidence_terms || []).map((row) => normalize(row.term)));
     for (const term of item.required_evidence || []) if (!matched.has(normalize(term))) errors.push(`Missing reviewed evidence: ${term}.`);
   }
-  return { id: item.id, kind, passed: errors.length === 0, errors, result };
+  return {
+    id: item.id,
+    kind,
+    expected_status: kind === "ambiguity" ? item.allowed_statuses : item.expected_status,
+    expected_chapter_id: item.expected_chapter_id || null,
+    actual_status: result.status,
+    actual_chapter_id: result.selected_chapter_id,
+    passed: errors.length === 0,
+    errors
+  };
 }
 
 function main() {
