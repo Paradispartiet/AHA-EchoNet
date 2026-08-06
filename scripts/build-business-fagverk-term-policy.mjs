@@ -37,7 +37,7 @@ function write(relativePath, value) {
   fs.writeFileSync(target, `${JSON.stringify(value, null, 2)}\n`, "utf8");
 }
 
-function buildPolicy(corpus, audit, config, auditPath) {
+function buildPolicy(corpus, audit, config, paths) {
   if (corpus.subject_filter !== "naeringsliv" || config.subject_id !== "naeringsliv" || audit.subject_filter?.[0] !== "naeringsliv") throw new Error("Business subject identity mismatch.");
   if (corpus.source_ref !== audit.source_ref || corpus.source_ref !== config.source_ref) throw new Error("Business source refs differ.");
   if (corpus.content_sha256 !== config.corpus_sha256) throw new Error("Business corpus digest differs from policy config.");
@@ -49,7 +49,6 @@ function buildPolicy(corpus, audit, config, auditPath) {
   if (JSON.stringify(expectedIds) !== JSON.stringify(actualIds)) throw new Error("Policy config does not exactly cover the Business corpus.");
   const collision = audit.term_collision_summary || {};
   if (collision.total !== 140 || collision.high_risk !== 65 || collision.medium_risk !== 51 || collision.low_risk !== 24) throw new Error("Business collision audit changed.");
-  const domainTerms = [...new Set(Object.values(config.chapter_rules).flatMap((rule) => rule.required_anchor_terms || []))];
   return {
     schema: "aha_business_fagverk_term_policy_v1",
     version: "1.0.0",
@@ -58,9 +57,10 @@ function buildPolicy(corpus, audit, config, auditPath) {
     source_repo: corpus.source_repo,
     source_ref: corpus.source_ref,
     corpus_sha256: corpus.content_sha256,
-    source_audit_path: auditPath,
+    source_audit_path: paths.audit,
+    policy_config_path: paths.config,
+    policy_config_version: config.version,
     thresholds: config.thresholds,
-    default_weights: config.default_weights,
     policy_rules: {
       candidate_title_concept_support_terms: "non_decisive_review_context_only",
       collision_inventory: "documented_in_source_audit_not_runtime_scoring_input",
@@ -73,18 +73,10 @@ function buildPolicy(corpus, audit, config, auditPath) {
       total: collision.total,
       risks: { high: collision.high_risk, medium: collision.medium_risk, low: collision.low_risk },
       chapter_count: corpus.entries.length,
-      module_file_count: moduleFileCount
+      module_file_count: moduleFileCount,
+      required_anchor_count: Object.values(config.chapter_rules).reduce((sum, rule) => sum + rule.required_anchor_terms.length, 0),
+      supplemental_evidence_count: Object.values(config.chapter_rules).reduce((sum, rule) => sum + rule.supplemental_evidence_terms.length, 0)
     },
-    global_non_scoring_terms: config.global_non_scoring_terms,
-    domain_gate: { required: true, terms: domainTerms },
-    chapter_rules: config.chapter_rules,
-    chapters: corpus.entries.map((entry) => ({
-      chapter_id: entry.chapter_id,
-      title: entry.title,
-      required_anchor_terms: config.chapter_rules[entry.chapter_id].required_anchor_terms,
-      supplemental_evidence_terms: config.chapter_rules[entry.chapter_id].supplemental_evidence_terms,
-      module_file_count: entry.module_source_paths.length
-    })),
     approval_required: true,
     runtime_activation_allowed: false,
     explicit_runtime_activation_pull_request_required: true
@@ -97,7 +89,7 @@ function main() {
     console.log("Usage: node scripts/build-business-fagverk-term-policy.mjs [--corpus path] [--audit path] [--config path] [--output path]");
     return;
   }
-  const policy = buildPolicy(read(options.corpus), read(options.audit), read(options.config), options.audit);
+  const policy = buildPolicy(read(options.corpus), read(options.audit), read(options.config), options);
   write(options.output, policy);
   console.log(`Business term policy: ${policy.summary.total} collisions, ${policy.summary.chapter_count} chapters, runtime inactive.`);
 }
