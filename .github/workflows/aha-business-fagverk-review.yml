@@ -15,7 +15,7 @@ on:
   issue_comment:
     types: [created]
   schedule:
-    - cron: "*/5 * * * *"
+    - cron: "27 * * * *"
   workflow_dispatch:
 
 permissions:
