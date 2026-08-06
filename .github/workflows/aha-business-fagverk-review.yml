@@ -7,6 +7,7 @@ on:
     paths:
       - "scripts/business-review-trigger.txt"
       - "scripts/bootstrap-business-fagverk-review.py"
+      - "scripts/prepare-business-review-bootstrap.py"
       - "scripts/lib/business-fagverk-scoring.mjs"
       - "scripts/build-business-fagverk-term-policy.mjs"
       - "scripts/build-business-fagverk-expansion-review.mjs"
@@ -49,6 +50,10 @@ jobs:
             echo "run=false" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Prepare bootstrap replacements
+        if: steps.mode.outputs.run == 'true'
+        run: python scripts/prepare-business-review-bootstrap.py
+
       - name: Generate review sources and matrices
         if: steps.mode.outputs.run == 'true'
         run: python scripts/bootstrap-business-fagverk-review.py
@@ -72,12 +77,13 @@ jobs:
         if: steps.mode.outputs.run == 'true'
         run: |
           rm scripts/bootstrap-business-fagverk-review.py
+          rm scripts/prepare-business-review-bootstrap.py
           rm scripts/business-review-trigger.txt
 
       - name: Verify exact review scope
         if: steps.mode.outputs.run == 'true'
         env:
-          ALLOWED_JSON: '["data/evaluation/aha-business-fagverk-evaluation-matrix.v1.json","data/evaluation/aha-business-fagverk-evaluation-report.v1.json","data/evaluation/aha-business-fixture-corrections.v1.json","data/evaluation/aha-business-fixture-correction-report.v1.json","data/integrations/approvals/history-go-fagverk-naeringsliv.approved.v1.json","data/integrations/review/history-go-fagverk-naeringsliv.expansion-review.v1.json","data/integrations/review/history-go-fagverk-naeringsliv.term-policy.v1.json","data/integrations/review/history-go-fagverk-subject-approval-registry.v1.json","docs/AHA_BUSINESS_FAGVERK_REVIEW_V1.md","scripts/bootstrap-business-fagverk-review.py","scripts/business-review-trigger.txt","scripts/compare-business-fixture-corrections.mjs","scripts/evaluate-business-fagverk-policy.mjs","tests/aha-business-fagverk-review.test.cjs","tests/aha-fagverk-subject-approvals.test.cjs"]'
+          ALLOWED_JSON: '["data/evaluation/aha-business-fagverk-evaluation-matrix.v1.json","data/evaluation/aha-business-fagverk-evaluation-report.v1.json","data/evaluation/aha-business-fixture-corrections.v1.json","data/evaluation/aha-business-fixture-correction-report.v1.json","data/integrations/approvals/history-go-fagverk-naeringsliv.approved.v1.json","data/integrations/review/history-go-fagverk-naeringsliv.expansion-review.v1.json","data/integrations/review/history-go-fagverk-naeringsliv.term-policy.v1.json","data/integrations/review/history-go-fagverk-subject-approval-registry.v1.json","docs/AHA_BUSINESS_FAGVERK_REVIEW_V1.md","scripts/bootstrap-business-fagverk-review.py","scripts/prepare-business-review-bootstrap.py","scripts/business-review-trigger.txt","scripts/compare-business-fixture-corrections.mjs","scripts/evaluate-business-fagverk-policy.mjs","tests/aha-business-fagverk-review.test.cjs","tests/aha-fagverk-subject-approvals.test.cjs"]'
         run: |
           node - <<'NODE'
           const { execFileSync } = require('child_process');
