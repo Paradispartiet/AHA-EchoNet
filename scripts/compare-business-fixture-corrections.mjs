@@ -4,12 +4,13 @@ import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
-import { scoreBusiness } from "./lib/business-fagverk-scoring.mjs";
+import { hydrateBusinessPolicy, scoreBusiness } from "./lib/business-fagverk-scoring.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const defaults = {
   corpus: "data/integrations/candidates/history-go-fagverk-naeringsliv.candidate.v1.json",
   policy: "data/integrations/review/history-go-fagverk-naeringsliv.term-policy.v1.json",
+  config: "data/integrations/review/history-go-fagverk-naeringsliv.policy-config.v1.json",
   corrections: "data/evaluation/aha-business-fixture-corrections.v1.json",
   output: "data/evaluation/aha-business-fixture-correction-report.v1.json"
 };
@@ -20,6 +21,7 @@ function args(argv) {
     const token = argv[i];
     if (token === "--corpus") result.corpus = argv[++i] || result.corpus;
     else if (token === "--policy") result.policy = argv[++i] || result.policy;
+    else if (token === "--config") result.config = argv[++i] || result.config;
     else if (token === "--corrections") result.corrections = argv[++i] || result.corrections;
     else if (token === "--output") result.output = argv[++i] || result.output;
     else if (token === "--help") result.help = true;
@@ -41,16 +43,19 @@ function write(relativePath, value) {
 function main() {
   const options = args(process.argv.slice(2));
   if (options.help) {
-    console.log("Usage: node scripts/compare-business-fixture-corrections.mjs [--corpus path] [--policy path] [--corrections path] [--output path]");
+    console.log("Usage: node scripts/compare-business-fixture-corrections.mjs [--corpus path] [--policy path] [--config path] [--corrections path] [--output path]");
     return;
   }
   const corpus = read(options.corpus);
-  const policy = read(options.policy);
+  const rawPolicy = read(options.policy);
+  const config = read(options.config);
+  const policy = hydrateBusinessPolicy(rawPolicy, config);
   const corrections = read(options.corrections);
   const validationErrors = [];
   if (corpus.subject_filter !== "naeringsliv" || policy.subject_id !== "naeringsliv" || corrections.subject_id !== "naeringsliv") validationErrors.push("Fixture inputs are not consistently Business-scoped.");
   if (corpus.source_ref !== policy.source_ref || corpus.source_ref !== corrections.source_ref) validationErrors.push("Fixture source refs differ.");
   if (corpus.content_sha256 !== policy.corpus_sha256 || corpus.content_sha256 !== corrections.corpus_sha256) validationErrors.push("Fixture corpus digests differ.");
+  if (rawPolicy.policy_config_path !== options.config) validationErrors.push("Policy config path differs from fixture input.");
   if (corrections.cases.length !== 16) validationErrors.push("Business fixture matrix must contain all 16 canonical fixtures.");
 
   const cases = corrections.cases.map((correction) => {
