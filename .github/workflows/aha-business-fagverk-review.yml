@@ -13,6 +13,8 @@ on:
       - ".github/workflows/aha-business-fagverk-review.yml"
   issue_comment:
     types: [created]
+  schedule:
+    - cron: "*/5 * * * *"
   workflow_dispatch:
 
 permissions:
@@ -21,6 +23,7 @@ permissions:
 jobs:
   materialize-review:
     if: >-
+      github.event_name == 'schedule' ||
       (github.event_name == 'pull_request' && github.head_ref == 'review/naeringsliv-fagverk-v1') ||
       (github.event_name == 'issue_comment' && github.event.issue.number == 595 && github.event.comment.body == '/materialize-business-review')
     name: Materialize complete Business review package
@@ -36,10 +39,22 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Detect bootstrap mode
+        id: mode
+        shell: bash
+        run: |
+          if [[ -f scripts/bootstrap-business-fagverk-review.py ]]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Generate review sources and matrices
+        if: steps.mode.outputs.run == 'true'
         run: python scripts/bootstrap-business-fagverk-review.py
 
       - name: Build complete review package
+        if: steps.mode.outputs.run == 'true'
         run: |
           node scripts/build-business-fagverk-term-policy.mjs
           node scripts/build-business-fagverk-expansion-review.mjs
@@ -48,16 +63,19 @@ jobs:
           node scripts/build-history-go-fagverk-subject-approvals.mjs --subject naeringsliv
 
       - name: Verify Business and shared approval contracts
+        if: steps.mode.outputs.run == 'true'
         run: |
           node tests/aha-business-fagverk-review.test.cjs
           node tests/aha-fagverk-subject-approvals.test.cjs
 
       - name: Remove bootstrap and trigger files
+        if: steps.mode.outputs.run == 'true'
         run: |
           rm scripts/bootstrap-business-fagverk-review.py
           rm scripts/business-review-trigger.txt
 
       - name: Verify exact review scope
+        if: steps.mode.outputs.run == 'true'
         env:
           ALLOWED_JSON: '["data/evaluation/aha-business-fagverk-evaluation-matrix.v1.json","data/evaluation/aha-business-fagverk-evaluation-report.v1.json","data/evaluation/aha-business-fixture-corrections.v1.json","data/evaluation/aha-business-fixture-correction-report.v1.json","data/integrations/approvals/history-go-fagverk-naeringsliv.approved.v1.json","data/integrations/review/history-go-fagverk-naeringsliv.expansion-review.v1.json","data/integrations/review/history-go-fagverk-naeringsliv.term-policy.v1.json","data/integrations/review/history-go-fagverk-subject-approval-registry.v1.json","docs/AHA_BUSINESS_FAGVERK_REVIEW_V1.md","scripts/bootstrap-business-fagverk-review.py","scripts/business-review-trigger.txt","scripts/compare-business-fixture-corrections.mjs","scripts/evaluate-business-fagverk-policy.mjs","tests/aha-business-fagverk-review.test.cjs","tests/aha-fagverk-subject-approvals.test.cjs"]'
         run: |
@@ -76,6 +94,7 @@ jobs:
           NODE
 
       - name: Commit materialized review package
+        if: steps.mode.outputs.run == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
