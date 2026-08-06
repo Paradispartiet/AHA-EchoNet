@@ -1,1 +1,1 @@
-Trigger the branch workflow after its definition exists.
+Trigger the already registered branch workflow after its definition exists.
