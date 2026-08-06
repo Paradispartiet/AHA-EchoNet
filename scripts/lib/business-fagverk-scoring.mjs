@@ -53,6 +53,7 @@ export function scoreBusiness(textValue, corpus, policy) {
   const thresholds = {
     minimum_score: Number(policy.thresholds?.minimum_score ?? 7),
     minimum_terms: Number(policy.thresholds?.minimum_terms ?? 2),
+    minimum_reviewed_evidence_terms: Number(policy.thresholds?.minimum_reviewed_evidence_terms ?? 2),
     ambiguity_margin: Number(policy.thresholds?.ambiguity_margin ?? 3)
   };
   const domain = domainEvidence(text, tokens, policy.domain_gate || { required: true, terms: [] });
@@ -83,16 +84,25 @@ export function scoreBusiness(textValue, corpus, policy) {
 
     const requiredAnchors = (rule.required_anchor_terms || []).map(normalize).filter(Boolean);
     const matchedAnchors = requiredAnchors.filter((term) => termPresent(text, tokens, term));
+    const matchedReviewedEvidence = matched.filter((item) => item.group === "supplemental_evidence_terms");
     const anchorEligible = requiredAnchors.length > 0 && matchedAnchors.length > 0;
-    const eligible = domain.eligible && anchorEligible;
+    const evidenceEligible = matchedReviewedEvidence.length >= thresholds.minimum_reviewed_evidence_terms;
+    const eligible = domain.eligible && anchorEligible && evidenceEligible;
     matched.sort((a, b) => b.contribution - a.contribution || a.term.localeCompare(b.term, "nb"));
     return {
       chapter_id: entry.chapter_id,
       title: entry.title,
       score: Number(score.toFixed(3)),
       eligible,
-      eligibility_reason: !domain.eligible ? "missing_business_domain_anchor" : anchorEligible ? "eligible" : "missing_required_anchor",
+      eligibility_reason: !domain.eligible
+        ? "missing_business_domain_anchor"
+        : !anchorEligible
+          ? "missing_required_anchor"
+          : evidenceEligible
+            ? "eligible"
+            : "insufficient_reviewed_evidence",
       matched_anchor_terms: matchedAnchors,
+      matched_reviewed_evidence_terms: matchedReviewedEvidence,
       matched_terms: matched
     };
   });
@@ -106,6 +116,7 @@ export function scoreBusiness(textValue, corpus, policy) {
   if (top && top.score >= thresholds.minimum_score && top.matched_terms.length >= thresholds.minimum_terms) {
     status = second
       && second.score >= thresholds.minimum_score
+      && second.matched_terms.length >= thresholds.minimum_terms
       && (top.score - second.score) < thresholds.ambiguity_margin
       ? "ambiguous"
       : "grounded";
@@ -116,6 +127,7 @@ export function scoreBusiness(textValue, corpus, policy) {
     selected_chapter_id: status === "grounded" ? top.chapter_id : null,
     top_score: top?.score || 0,
     second_score: second?.score || 0,
+    thresholds,
     domain_evidence: domain,
     ranking: scores
       .sort((a, b) => b.score - a.score || Number(b.eligible) - Number(a.eligible) || a.chapter_id.localeCompare(b.chapter_id, "nb"))
