@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - review/naeringsliv-fagverk-v1
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
