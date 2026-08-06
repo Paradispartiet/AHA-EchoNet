@@ -1,1 +1,1 @@
-Run the registered Business review materialization workflow now.
+Synchronize the registered Business review workflow after activation.
