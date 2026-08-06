@@ -13,26 +13,10 @@ export function termPresent(text, tokens, term) {
   return tokens.has(value);
 }
 
-function chapterTerms(entry, rule) {
-  const terms = new Map();
-  for (const [group, weight] of [["title_terms", 5], ["concept_terms", 3], ["support_terms", 1.5]]) {
-    for (const rawTerm of entry[group] || []) {
-      const term = normalize(rawTerm);
-      if (!term) continue;
-      const current = terms.get(term);
-      if (!current || weight > current.base_weight) terms.set(term, { term, group, base_weight: weight });
-    }
-  }
-  for (const supplemental of rule?.supplemental_evidence_terms || []) {
-    const term = normalize(supplemental.term);
-    const weight = Number(supplemental.weight || 0);
-    if (!term || weight <= 0) continue;
-    const current = terms.get(term);
-    if (!current || weight > current.base_weight) {
-      terms.set(term, { term, group: "supplemental_evidence_terms", base_weight: weight });
-    }
-  }
-  return [...terms.values()];
+function reviewedEvidence(rule) {
+  return (rule?.supplemental_evidence_terms || [])
+    .map((item) => ({ term: normalize(item.term), weight: Number(item.weight || 0) }))
+    .filter((item) => item.term && item.weight > 0);
 }
 
 function domainEvidence(text, tokens, domainGate) {
@@ -47,8 +31,6 @@ function domainEvidence(text, tokens, domainGate) {
 export function scoreBusiness(textValue, corpus, policy) {
   const text = normalize(textValue);
   const tokens = tokenSet(text);
-  const policyByTerm = new Map((policy.terms || []).map((item) => [normalize(item.term), item]));
-  const globalNonScoring = new Set((policy.global_non_scoring_terms || []).map(normalize));
   const chapterRules = policy.chapter_rules || {};
   const thresholds = {
     minimum_score: Number(policy.thresholds?.minimum_score ?? 7),
@@ -60,35 +42,22 @@ export function scoreBusiness(textValue, corpus, policy) {
 
   const scores = corpus.entries.map((entry) => {
     const rule = chapterRules[entry.chapter_id] || {};
-    const matched = [];
-    let score = 0;
-    for (const candidate of chapterTerms(entry, rule)) {
-      if (!termPresent(text, tokens, candidate.term)) continue;
-      const termPolicy = policyByTerm.get(candidate.term);
-      const multiplier = globalNonScoring.has(candidate.term)
-        ? 0
-        : termPolicy
-          ? Number(termPolicy.multiplier ?? 0)
-          : 1;
-      const contribution = candidate.base_weight * multiplier;
-      if (contribution <= 0) continue;
-      matched.push({
-        term: candidate.term,
-        group: candidate.group,
-        base_weight: candidate.base_weight,
-        multiplier,
-        contribution: Number(contribution.toFixed(3))
-      });
-      score += contribution;
-    }
-
+    const matchedReviewedEvidence = reviewedEvidence(rule)
+      .filter((item) => termPresent(text, tokens, item.term))
+      .map((item) => ({
+        term: item.term,
+        group: "supplemental_evidence_terms",
+        base_weight: item.weight,
+        multiplier: 1,
+        contribution: item.weight
+      }))
+      .sort((a, b) => b.contribution - a.contribution || a.term.localeCompare(b.term, "nb"));
+    const score = matchedReviewedEvidence.reduce((sum, item) => sum + item.contribution, 0);
     const requiredAnchors = (rule.required_anchor_terms || []).map(normalize).filter(Boolean);
     const matchedAnchors = requiredAnchors.filter((term) => termPresent(text, tokens, term));
-    const matchedReviewedEvidence = matched.filter((item) => item.group === "supplemental_evidence_terms");
     const anchorEligible = requiredAnchors.length > 0 && matchedAnchors.length > 0;
     const evidenceEligible = matchedReviewedEvidence.length >= thresholds.minimum_reviewed_evidence_terms;
     const eligible = domain.eligible && anchorEligible && evidenceEligible;
-    matched.sort((a, b) => b.contribution - a.contribution || a.term.localeCompare(b.term, "nb"));
     return {
       chapter_id: entry.chapter_id,
       title: entry.title,
@@ -103,7 +72,7 @@ export function scoreBusiness(textValue, corpus, policy) {
             : "insufficient_reviewed_evidence",
       matched_anchor_terms: matchedAnchors,
       matched_reviewed_evidence_terms: matchedReviewedEvidence,
-      matched_terms: matched
+      matched_terms: matchedReviewedEvidence
     };
   });
 
