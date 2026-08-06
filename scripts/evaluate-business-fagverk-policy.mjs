@@ -4,12 +4,13 @@ import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
-import { normalize, scoreBusiness } from "./lib/business-fagverk-scoring.mjs";
+import { hydrateBusinessPolicy, normalize, scoreBusiness } from "./lib/business-fagverk-scoring.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const defaults = {
   corpus: "data/integrations/candidates/history-go-fagverk-naeringsliv.candidate.v1.json",
   policy: "data/integrations/review/history-go-fagverk-naeringsliv.term-policy.v1.json",
+  config: "data/integrations/review/history-go-fagverk-naeringsliv.policy-config.v1.json",
   matrix: "data/evaluation/aha-business-fagverk-evaluation-matrix.v1.json",
   output: "data/evaluation/aha-business-fagverk-evaluation-report.v1.json"
 };
@@ -20,6 +21,7 @@ function args(argv) {
     const token = argv[i];
     if (token === "--corpus") result.corpus = argv[++i] || result.corpus;
     else if (token === "--policy") result.policy = argv[++i] || result.policy;
+    else if (token === "--config") result.config = argv[++i] || result.config;
     else if (token === "--matrix") result.matrix = argv[++i] || result.matrix;
     else if (token === "--output") result.output = argv[++i] || result.output;
     else if (token === "--help") result.help = true;
@@ -66,16 +68,19 @@ function evaluate(item, kind, corpus, policy) {
 function main() {
   const options = args(process.argv.slice(2));
   if (options.help) {
-    console.log("Usage: node scripts/evaluate-business-fagverk-policy.mjs [--corpus path] [--policy path] [--matrix path] [--output path]");
+    console.log("Usage: node scripts/evaluate-business-fagverk-policy.mjs [--corpus path] [--policy path] [--config path] [--matrix path] [--output path]");
     return;
   }
   const corpus = read(options.corpus);
-  const policy = read(options.policy);
+  const rawPolicy = read(options.policy);
+  const config = read(options.config);
+  const policy = hydrateBusinessPolicy(rawPolicy, config);
   const matrix = read(options.matrix);
   const inputErrors = [];
   if (corpus.subject_filter !== "naeringsliv" || policy.subject_id !== "naeringsliv" || matrix.subject_id !== "naeringsliv") inputErrors.push("Business identity mismatch.");
   if (corpus.source_ref !== policy.source_ref || corpus.source_ref !== matrix.source_ref) inputErrors.push("Source refs differ.");
   if (corpus.content_sha256 !== policy.corpus_sha256 || corpus.content_sha256 !== matrix.corpus_sha256) inputErrors.push("Corpus digests differ.");
+  if (rawPolicy.policy_config_path !== options.config) inputErrors.push("Policy config path differs from evaluator input.");
   if (corpus.entries.length !== 12) inputErrors.push("Corpus must contain 12 chapters.");
   if (matrix.positive_cases.length !== 12 || matrix.confusion_cases.length !== 12 || matrix.ambiguity_cases.length !== 12) inputErrors.push("Matrix must be 12 + 12 + 12.");
   const cases = [
