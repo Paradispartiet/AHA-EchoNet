@@ -67,8 +67,7 @@ function main() {
       actual_status: result.status,
       actual_chapter_id: result.selected_chapter_id,
       passed: errors.length === 0,
-      errors,
-      result
+      errors
     };
   });
   const failed = cases.filter((item) => !item.passed);
