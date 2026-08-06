@@ -1,0 +1,29 @@
+{
+  "schema": "aha_business_fixture_correction_report_v1",
+  "version": "1.0.0",
+  "source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
+  "corpus_sha256": "a1c399977c2656d567ee461228b8e7d21f457da8e0863bf53a7888a8ac5fbfea",
+  "status": "passed_correction_gate",
+  "runtime_activation_allowed": false,
+  "summary": {"total":16,"passed":16,"failed":0,"validation_errors":0,"grounded":0,"unsupported":16,"ambiguous":0},
+  "validation_errors": [],
+  "failures": [],
+  "cases": [
+    {"id":"business-fixture-01","fixture_path":"docs/fixtures/aha-analysis/01-pinse-religion.json","expected_business_status":"unsupported","expected_chapter_id":null,"actual_status":"unsupported","actual_chapter_id":null,"passed":true,"errors":[]},
+    {"id":"business-fixture-02","fixture_path":"docs/fixtures/aha-analysis/02-morgenbladet-mediehistorie.json","expected_business_status":"unsupported","expected_chapter_id":null,"actual_status":"unsupported","actual_chapter_id":null,"passed":true,"errors":[]},
+    {"id":"business-fixture-03","fixture_path":"docs/fixtures/aha-analysis/03-nav-reformen-forvaltning.json","expected_business_status":"unsupported","expected_chapter_id":null,"actual_status":"unsupported","actual_chapter_id":null,"passed":true,"errors":[]},
+    {"id":"business-fixture-04","fixture_path":"docs/fixtures/aha-analysis/04-litteraer-tilknytningsteori.json","expected_business_status":"unsupported","expected_chapter_id":null,"actual_status":"unsupported","actual_chapter_id":null,"passed":true,"errors":[]},
+    {"id":"business-fixture-05","fixture_path":"docs/fixtures/aha-analysis/05-dagbok-refleksjon.json","expected_business_status":"unsupported","expected_chapter_id":null,"actual_status":"unsupported","actual_chapter_id":null,"passed":true,"errors":[]},
+    {"id":"business-fixture-06","fixture_path":"docs/fixtures/aha-analysis/06-prosjektplan-teknisk-notat.json","expected_business_status":"unsupported","expected_chapter_id":null,"actual_status":"unsupported","actual_chapter_id":null,"passed":true,"errors":[]},
+    {"id":"business-fixture-07","fixture_path":"docs/fixtures/aha-analysis/07-juridisk-tekst.json","expected_business_status":"unsupported","expected_chapter_id":null,"actual_status":"unsupported","actual_chapter_id":null,"passed":true,"errors":[]},
+    {"id":"business-fixture-08","fixture_path":"docs/fixtures/aha-analysis/08-uklar-lav-confidence.json","expected_business_status":"unsupported","expected_chapter_id":null,"actual_status":"unsupported","actual_chapter_id":null,"passed":true,"errors":[]},
+    {"id":"business-fixture-09","fixture_path":"docs/fixtures/aha-analysis/09-morgenbladet-offentlighet-kulturkritikk.json","expected_business_status":"unsupported","expected_chapter_id":null,"actual_status":"unsupported","actual_chapter_id":null,"passed":true,"errors":[]},
+    {"id":"business-fixture-10","fixture_path":"docs/fixtures/aha-analysis/10-nav-reformen-brukermoete.json","expected_business_status":"unsupported","expected_chapter_id":null,"actual_status":"unsupported","actual_chapter_id":null,"passed":true,"errors":[]},
+    {"id":"business-fixture-11","fixture_path":"docs/fixtures/aha-analysis/11-refleksjon-laering-feil-vaner.json","expected_business_status":"unsupported","expected_chapter_id":null,"actual_status":"unsupported","actual_chapter_id":null,"passed":true,"errors":[]},
+    {"id":"business-fixture-12","fixture_path":"docs/fixtures/aha-analysis/12-refleksjon-byrom-uro-konsentrasjon.json","expected_business_status":"unsupported","expected_chapter_id":null,"actual_status":"unsupported","actual_chapter_id":null,"passed":true,"errors":[]},
+    {"id":"business-fixture-13","fixture_path":"docs/fixtures/aha-analysis/13-historygo-eidsvoll-grunnloven.json","expected_business_status":"unsupported","expected_chapter_id":null,"actual_status":"unsupported","actual_chapter_id":null,"passed":true,"errors":[]},
+    {"id":"business-fixture-14","fixture_path":"docs/fixtures/aha-analysis/14-historygo-bislett-byrom-stadion.json","expected_business_status":"unsupported","expected_chapter_id":null,"actual_status":"unsupported","actual_chapter_id":null,"passed":true,"errors":[]},
+    {"id":"business-fixture-15","fixture_path":"docs/fixtures/aha-analysis/15-uklar-fragmentert-lav-kvalitet.json","expected_business_status":"unsupported","expected_chapter_id":null,"actual_status":"unsupported","actual_chapter_id":null,"passed":true,"errors":[]},
+    {"id":"business-fixture-16","fixture_path":"docs/fixtures/aha-analysis/16-tverrfaglig-ai-laering-kunnskap.json","expected_business_status":"unsupported","expected_chapter_id":null,"actual_status":"unsupported","actual_chapter_id":null,"passed":true,"errors":[]}
+  ]
+}
