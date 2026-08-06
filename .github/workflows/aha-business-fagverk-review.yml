@@ -22,6 +22,9 @@ on:
   schedule:
     - cron: "27 * * * *"
   workflow_dispatch:
+  workflow_run:
+    workflows: ["AHA History Go Fagverk release sync"]
+    types: [completed]
 
 permissions:
   contents: write
@@ -29,6 +32,7 @@ permissions:
 jobs:
   materialize-review:
     if: >-
+      github.event_name == 'workflow_run' ||
       github.event_name == 'push' ||
       github.event_name == 'schedule' ||
       (github.event_name == 'pull_request' && github.head_ref == 'review/naeringsliv-fagverk-v1') ||
