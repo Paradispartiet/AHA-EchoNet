@@ -1,0 +1,207 @@
+{
+  "schema": "aha_business_fagverk_policy_config_v1",
+  "version": "1.0.0",
+  "subject_id": "naeringsliv",
+  "source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
+  "corpus_sha256": "a1c399977c2656d567ee461228b8e7d21f457da8e0863bf53a7888a8ac5fbfea",
+  "thresholds": {
+    "minimum_score": 7,
+    "minimum_terms": 2,
+    "minimum_reviewed_evidence_terms": 2,
+    "ambiguity_margin": 3
+  },
+  "default_weights": {
+    "title_term": 5,
+    "concept_term": 3,
+    "support_term": 1.5,
+    "supplemental_evidence_term": 4,
+    "down_weight_multiplier": 0.3
+  },
+  "global_non_scoring_terms": [
+    "aktivitet",
+    "analyse",
+    "andre",
+    "ansvar",
+    "arbeid",
+    "bare",
+    "bedrift",
+    "begge",
+    "både",
+    "case",
+    "data",
+    "derfor",
+    "dokumentasjon",
+    "endring",
+    "endringer",
+    "felles",
+    "flere",
+    "fordi",
+    "forklaring",
+    "former",
+    "gir",
+    "gjør",
+    "handel",
+    "handler",
+    "hvordan",
+    "kan",
+    "kapital",
+    "konsekvenser",
+    "krever",
+    "kunde",
+    "kunder",
+    "marked",
+    "markeder",
+    "men",
+    "mens",
+    "måling",
+    "når",
+    "organisasjon",
+    "pris",
+    "priser",
+    "produksjon",
+    "prosjekt",
+    "ressurser",
+    "risiko",
+    "samlet",
+    "seg",
+    "slik",
+    "strategi",
+    "system",
+    "systemet",
+    "teknologi",
+    "tekst",
+    "teksten",
+    "tiltak",
+    "ulike",
+    "uten",
+    "utvikling",
+    "verdi",
+    "viktig",
+    "virksomhet",
+    "være",
+    "økonomi",
+    "økonomisk"
+  ],
+  "chapter_rules": {
+    "arbeid-produksjon-verdiskaping": {
+      "required_anchor_terms": ["arbeidskraftproduktivitet", "bruttoprodukt", "kapasitetsutnyttelse", "reallønn", "lønnsandel"],
+      "supplemental_evidence_terms": [
+        {"term": "produksjonsverdi fratrukket produktinnsats", "weight": 4},
+        {"term": "faktisk utførte timeverk", "weight": 4},
+        {"term": "automatisering av arbeidsoppgaver", "weight": 4},
+        {"term": "verdiskaping per arbeidstime", "weight": 4},
+        {"term": "lønnens andel av verdiskapingen", "weight": 4}
+      ]
+    },
+    "forretningsjus-skatt-compliance": {
+      "required_anchor_terms": ["avtaleinngåelse", "selskapsstyring", "arbeidsrett", "merverdiavgift", "compliance"],
+      "supplemental_evidence_terms": [
+        {"term": "juridisk faktummatrise", "weight": 4},
+        {"term": "dokumentert skattegrunnlag", "weight": 4},
+        {"term": "styrets rettslige ansvar", "weight": 4},
+        {"term": "misligholdsbeføyelser i avtalen", "weight": 4},
+        {"term": "behandling av personopplysninger", "weight": 4}
+      ]
+    },
+    "handel-forbruk-marked": {
+      "required_anchor_terms": ["markedsavgrensning", "førpris", "prisindeks", "markedsandel", "betalingsinstrument"],
+      "supplemental_evidence_terms": [
+        {"term": "produktmarked og geografisk marked", "weight": 4},
+        {"term": "dokumentert sammenligningspris", "weight": 4},
+        {"term": "omsetning skilt fra salgsvolum", "weight": 4},
+        {"term": "kundesubstitusjon i markedet", "weight": 4},
+        {"term": "totalpris og kontraktsvilkår", "weight": 4}
+      ]
+    },
+    "internasjonal-okonomi-operations-prosjekt": {
+      "required_anchor_terms": ["valutakurs", "komparative fortrinn", "flaskehals", "sikkerhetslager", "kritisk linje"],
+      "supplemental_evidence_terms": [
+        {"term": "valutaeksponering i verdikjeden", "weight": 4},
+        {"term": "little’s law i prosessflyten", "weight": 4},
+        {"term": "total cost of ownership", "weight": 4},
+        {"term": "opptjent verdi i prosjektet", "weight": 4},
+        {"term": "leverandørvalg og forsyningsrisiko", "weight": 4}
+      ]
+    },
+    "kapital-eierskap-finans": {
+      "required_anchor_terms": ["egenkapital", "gjeldsgrad", "nåverdi", "kapitalkostnad", "kontantstrøm"],
+      "supplemental_evidence_terms": [
+        {"term": "diskontert fri kontantstrøm", "weight": 4},
+        {"term": "vektet kapitalkostnad", "weight": 4},
+        {"term": "eierandel og stemmerett", "weight": 4},
+        {"term": "likviditetsrisiko og soliditet", "weight": 4},
+        {"term": "nåverdi av investeringen", "weight": 4}
+      ]
+    },
+    "kvantitative-metoder-business-analytics": {
+      "required_anchor_terms": ["regresjonsanalyse", "konfidensintervall", "kausalitet", "utvalgsbias", "prognosefeil"],
+      "supplemental_evidence_terms": [
+        {"term": "estimat med usikkerhetsintervall", "weight": 4},
+        {"term": "korrelasjon er ikke kausal effekt", "weight": 4},
+        {"term": "treningsdata og testdata", "weight": 4},
+        {"term": "sensitivitetsanalyse av modellen", "weight": 4},
+        {"term": "målefeil og seleksjonsbias", "weight": 4}
+      ]
+    },
+    "logistikk-infrastruktur-okonomisk-rom": {
+      "required_anchor_terms": ["transportkostnad", "knutepunkt", "lagerbinding", "ledetid", "verdikjede"],
+      "supplemental_evidence_terms": [
+        {"term": "dør til dør-ledetid", "weight": 4},
+        {"term": "lagerets kapitalbinding", "weight": 4},
+        {"term": "transportnettets flaskehals", "weight": 4},
+        {"term": "lokalisering og markedsadgang", "weight": 4},
+        {"term": "vareflyt gjennom logistikkleddene", "weight": 4}
+      ]
+    },
+    "makrookonomi-konjunkturer-okonomisk-politikk": {
+      "required_anchor_terms": ["bruttonasjonalprodukt", "produksjonsgap", "styringsrente", "konsumprisindeks", "arbeidsledighet"],
+      "supplemental_evidence_terms": [
+        {"term": "realvekst i bruttonasjonalprodukt", "weight": 4},
+        {"term": "sesongjustert arbeidsledighet", "weight": 4},
+        {"term": "inflasjon målt med konsumprisindeks", "weight": 4},
+        {"term": "finanspolitisk impuls", "weight": 4},
+        {"term": "pengepolitikk gjennom styringsrenten", "weight": 4}
+      ]
+    },
+    "makt-regulering-baerekraft": {
+      "required_anchor_terms": ["eksternalitet", "markedsmakt", "reguleringssvikt", "dobbel vesentlighet", "naturkapital"],
+      "supplemental_evidence_terms": [
+        {"term": "negativ eksternalitet utenfor prisen", "weight": 4},
+        {"term": "konsentrasjon og dokumentert markedsmakt", "weight": 4},
+        {"term": "reguleringens fordelingsvirkning", "weight": 4},
+        {"term": "dobbel vesentlighetsanalyse", "weight": 4},
+        {"term": "verdikjedens klima- og naturpåvirkning", "weight": 4}
+      ]
+    },
+    "markedsforing-strategi-kunder": {
+      "required_anchor_terms": ["kundesegment", "posisjonering", "konverteringsrate", "kundelivstidsverdi", "attribusjon"],
+      "supplemental_evidence_terms": [
+        {"term": "segmentering etter dokumentert kundebehov", "weight": 4},
+        {"term": "posisjonering mot et definert alternativ", "weight": 4},
+        {"term": "kundelivstidsverdi og anskaffelseskostnad", "weight": 4},
+        {"term": "eksperimentell måling av konvertering", "weight": 4},
+        {"term": "attribusjon mellom markedskanaler", "weight": 4}
+      ]
+    },
+    "regnskap-revisjon-okonomistyring": {
+      "required_anchor_terms": ["periodisering", "balanseføring", "kontantstrømoppstilling", "revisjonsbevis", "dekningsbidrag"],
+      "supplemental_evidence_terms": [
+        {"term": "periodisert inntekt og kostnad", "weight": 4},
+        {"term": "avstemming mellom resultat og kontantstrøm", "weight": 4},
+        {"term": "tilstrekkelig og hensiktsmessig revisjonsbevis", "weight": 4},
+        {"term": "dekningsbidrag per flaskehalsenhet", "weight": 4},
+        {"term": "budsjettavvik med pris- og volumeffekt", "weight": 4}
+      ]
+    },
+    "teknologi-innovasjon-plattformer": {
+      "required_anchor_terms": ["nettverkseffekt", "plattformøkonomi", "byttkostnad", "innovasjonsportefølje", "skalering"],
+      "supplemental_evidence_terms": [
+        {"term": "tosidig marked med nettverkseffekt", "weight": 4},
+        {"term": "plattformens styringsregler", "weight": 4},
+        {"term": "brukerens byttkostnad", "weight": 4},
+        {"term": "innovasjonsportefølje med opsjoner", "weight": 4},
+        {"term": "skalering uten tilsvarende marginalkostnad", "weight": 4}
+      ]
+    }
+  }
+}
