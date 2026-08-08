@@ -5,10 +5,10 @@
   "lifecycle_stage": "imported_review_candidate",
   "status": "generated_package_review_candidate",
   "source_repo": "Paradispartiet/History-Go",
-  "source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
-  "release_sha256": "21cec482d0bde5423cef0bd836dc2b6b8fa4445226bd2ab8df1b44eaefccd627",
+  "source_ref": "b11fd592059ebf4908e2566e301531844a3ceb42",
+  "release_sha256": "a292de9356583d89f644d98806d3b470fae4c82049fca243bfdbfd7b5f238d9d",
   "subject_id": "by",
-  "title": "by",
+  "title": "By & arkitektur",
   "kind": "subject",
   "parent_subject_id": null,
   "schema_family": "by_compatibility",
@@ -19,9 +19,9 @@
   "required_package_file_count": 4,
   "optional_package_file_count": 8,
   "referenced_file_count": 12,
-  "package_content_sha256": "e28f80e3cf54d5908b8af0ee6061ca45d72dbbe81443d592ce7bf87603a022e0",
+  "package_content_sha256": "e03da357cc8f53e56c7941b8a2fc533a71acf1924521a83ffd8aee96d3e1cc19",
   "structure_sha256": "3ea96832ef3fb3444a829b0c302bde487fd5e6b672f5e29bbbacb7e7f9a01d95",
-  "content_sha256": "e28f80e3cf54d5908b8af0ee6061ca45d72dbbe81443d592ce7bf87603a022e0",
+  "content_sha256": "e03da357cc8f53e56c7941b8a2fc533a71acf1924521a83ffd8aee96d3e1cc19",
   "package_files": [
     {
       "path": "data/fag/by/emner_by.json",
@@ -39,7 +39,7 @@
         "fagkart"
       ],
       "exists": true,
-      "content_sha256": "67c8d76f44b312b64f0f809f2cd35417dbcc1564417f598c4fc095642f350f74"
+      "content_sha256": "d84cb69488e5f7dab2237c231489c6ce7bf0769e47f780a29ee27add98606889"
     },
     {
       "path": "data/fag/by/methods_by.json",
@@ -93,7 +93,7 @@
         "quizProduction"
       ],
       "exists": true,
-      "content_sha256": "a63aaa584189c5a8f2a24dc0eba37249340ec129d1630d886255cc1f35d77ab7"
+      "content_sha256": "65c46983929de157a806b8b9111ae2a880f0713711748e0b4812087617d8cc05"
     },
     {
       "path": "data/quiz/regler/QUIZ_PACKAGE_SCHEMA_V1.json",

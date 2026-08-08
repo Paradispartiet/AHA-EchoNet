@@ -5,8 +5,8 @@
   "lifecycle_stage": "imported_review_candidate",
   "status": "generated_package_review_candidate",
   "source_repo": "Paradispartiet/History-Go",
-  "source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
-  "release_sha256": "21cec482d0bde5423cef0bd836dc2b6b8fa4445226bd2ab8df1b44eaefccd627",
+  "source_ref": "b11fd592059ebf4908e2566e301531844a3ceb42",
+  "release_sha256": "a292de9356583d89f644d98806d3b470fae4c82049fca243bfdbfd7b5f238d9d",
   "subject_id": "litteratur",
   "title": "litteratur",
   "kind": "subject",
@@ -14,15 +14,24 @@
   "schema_family": "standard_canonical",
   "package_status": "complete",
   "chapter_status": "not_materialized",
-  "package_file_count": 7,
-  "existing_package_file_count": 7,
+  "package_file_count": 13,
+  "existing_package_file_count": 13,
   "required_package_file_count": 4,
-  "optional_package_file_count": 3,
-  "referenced_file_count": 7,
-  "package_content_sha256": "c54e6519861f41c645c18a2288805afba2b6689a7cd53acb815e3f9616e64fe1",
-  "structure_sha256": "8f866476dbe201b9612e1f7919be60a8f4bbe5f648dadfa1f673aa89ef6c0d18",
-  "content_sha256": "c54e6519861f41c645c18a2288805afba2b6689a7cd53acb815e3f9616e64fe1",
+  "optional_package_file_count": 9,
+  "referenced_file_count": 13,
+  "package_content_sha256": "e343d0fc163adaae3eecf78aac9fb43bdfbd5cc1dcb955c3b114e90b027d0607",
+  "structure_sha256": "99926d393ec27754b0768624e119da7190a0d3f2dbcb11c252eff0cbc27cc442",
+  "content_sha256": "e343d0fc163adaae3eecf78aac9fb43bdfbd5cc1dcb955c3b114e90b027d0607",
   "package_files": [
+    {
+      "path": "data/fag/litteratur/emnemapping_litteratur_canonical_v4_5.json",
+      "required": false,
+      "fields": [
+        "emneMappings"
+      ],
+      "exists": true,
+      "content_sha256": "488c0abb5028f49d9f0dd234a4d4e0ced5cb6ec17eca23fa9f04b4d8e458448b"
+    },
     {
       "path": "data/fag/litteratur/emner_litteratur_canonical_v4_5.json",
       "required": true,
@@ -51,6 +60,33 @@
       "content_sha256": "9089ab6530e88e67b122843528209fbf4f8d712dda97d80f8534f1a130a85d6f"
     },
     {
+      "path": "data/fag/litteratur/litteraturvitenskap_canonical_v1/coverage_contract_v1.json",
+      "required": false,
+      "fields": [
+        "coverageContract"
+      ],
+      "exists": true,
+      "content_sha256": "be7b7a742eae8a06d580bbde2288f5d6248a9913629b98786661bc9d34da5668"
+    },
+    {
+      "path": "data/fag/litteratur/litteraturvitenskap_canonical_v1/index.json",
+      "required": false,
+      "fields": [
+        "scientificPackage"
+      ],
+      "exists": true,
+      "content_sha256": "3d2c7320ff7958f54e3c7489a4e22cedff8a81f5ea13f6497913c599231be98e"
+    },
+    {
+      "path": "data/fag/litteratur/litteraturvitenskap_canonical_v1/topic_foundations_v1.json",
+      "required": false,
+      "fields": [
+        "topicFoundations"
+      ],
+      "exists": true,
+      "content_sha256": "b4f6e4a4d93e6c09f771ed882280796be31f066038b4723752f03f3eb36ee28e"
+    },
+    {
       "path": "data/fag/litteratur/methods_litteratur_canonical_v4_5.json",
       "required": true,
       "fields": [
@@ -69,6 +105,15 @@
       "content_sha256": "6f02fcd363bbacd3b16ff26ac23229798ad07a574f173ba112e13b532085c6b0"
     },
     {
+      "path": "data/quiz/litteratur/litteratur_subject_pathways_v1.json",
+      "required": false,
+      "fields": [
+        "subjectPathwayPackage"
+      ],
+      "exists": true,
+      "content_sha256": "c7d49e027681ccbb641ca51e62794bf7240bf5ad45e5e4919386f912a3117707"
+    },
+    {
       "path": "data/quiz/regler/QUIZ_PRODUCTION_CANONICAL.md",
       "required": false,
       "fields": [
@@ -85,6 +130,15 @@
       ],
       "exists": true,
       "content_sha256": "f16c375238d416b175a744c9f0e36b621cd3b0a92686f30a111a15b72c836c46"
+    },
+    {
+      "path": "data/quiz/regler/QUIZ_SUBJECT_PATHWAY_PACKAGE_SCHEMA_V1.json",
+      "required": false,
+      "fields": [
+        "subjectPathwaySchema"
+      ],
+      "exists": true,
+      "content_sha256": "f19ed931d5a47c3969551cf58d9895049a399aff71dc397a3ea63ac76e31d2c5"
     }
   ],
   "optional_gaps": [],

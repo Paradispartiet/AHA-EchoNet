@@ -5,10 +5,10 @@
   "lifecycle_stage": "imported_review_candidate",
   "status": "generated_package_review_candidate",
   "source_repo": "Paradispartiet/History-Go",
-  "source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
-  "release_sha256": "21cec482d0bde5423cef0bd836dc2b6b8fa4445226bd2ab8df1b44eaefccd627",
+  "source_ref": "b11fd592059ebf4908e2566e301531844a3ceb42",
+  "release_sha256": "a292de9356583d89f644d98806d3b470fae4c82049fca243bfdbfd7b5f238d9d",
   "subject_id": "vitenskap",
-  "title": "vitenskap",
+  "title": "Vitenskap & teknologi",
   "kind": "subject",
   "parent_subject_id": null,
   "schema_family": "standard_canonical",
@@ -19,9 +19,9 @@
   "required_package_file_count": 4,
   "optional_package_file_count": 3,
   "referenced_file_count": 7,
-  "package_content_sha256": "a7557c6a3ef61cb4808af3b802cde6704cb58a7c60b40f903c117cd0ce6eb8c9",
+  "package_content_sha256": "4657773fc809d95f24e8c33c34824f555d11e89d34578cf4739b6caf22bec31e",
   "structure_sha256": "a8862d834e23e8c3c1f0d8759acb0d3f3886c8cc40a08e90b4801b18f58eb651",
-  "content_sha256": "a7557c6a3ef61cb4808af3b802cde6704cb58a7c60b40f903c117cd0ce6eb8c9",
+  "content_sha256": "4657773fc809d95f24e8c33c34824f555d11e89d34578cf4739b6caf22bec31e",
   "package_files": [
     {
       "path": "data/fag/vitenskap/emner_vitenskap_canonical_v4_5.json",
@@ -30,7 +30,7 @@
         "emner"
       ],
       "exists": true,
-      "content_sha256": "f637c35c87b44a4bce0358f5373b83f6790bccd72dde5f9050332a1335538638"
+      "content_sha256": "3656ea6c23288379b9f2c7b0eacc5ae28be7c3efdb1d3f1d4633dc08bb4a34a5"
     },
     {
       "path": "data/fag/vitenskap/fagkart_vitenskap_canonical_v4_5.json",
@@ -39,7 +39,7 @@
         "fagkart"
       ],
       "exists": true,
-      "content_sha256": "b0badf4c6aceede2cd559aa9f517565a9a5212099b3d142dca7f3650393298c2"
+      "content_sha256": "83fc0ef4778b2ded06c71dfa4124bf8982b79066891ef93801c845502d541957"
     },
     {
       "path": "data/fag/vitenskap/methods_vitenskap_canonical_v4_5.json",
@@ -66,7 +66,7 @@
         "pensum"
       ],
       "exists": true,
-      "content_sha256": "7c8e64a3568a44f7df69040d1f0a29d83c48b7b17ee2299c13427d76be4f72a9"
+      "content_sha256": "888b5d696727a3ba009e422f938bfb94f462d6b01da72cdbdbcd9fa2bbc6960a"
     },
     {
       "path": "data/quiz/regler/QUIZ_PRODUCTION_CANONICAL.md",

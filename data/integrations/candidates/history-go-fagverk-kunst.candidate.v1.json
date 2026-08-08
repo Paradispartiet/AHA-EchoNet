@@ -5,24 +5,33 @@
   "lifecycle_stage": "imported_review_candidate",
   "status": "generated_package_review_candidate",
   "source_repo": "Paradispartiet/History-Go",
-  "source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
-  "release_sha256": "21cec482d0bde5423cef0bd836dc2b6b8fa4445226bd2ab8df1b44eaefccd627",
+  "source_ref": "b11fd592059ebf4908e2566e301531844a3ceb42",
+  "release_sha256": "a292de9356583d89f644d98806d3b470fae4c82049fca243bfdbfd7b5f238d9d",
   "subject_id": "kunst",
-  "title": "kunst",
+  "title": "Kunst & kultur",
   "kind": "subject",
   "parent_subject_id": null,
   "schema_family": "standard_canonical",
   "package_status": "complete",
   "chapter_status": "not_materialized",
-  "package_file_count": 7,
-  "existing_package_file_count": 7,
+  "package_file_count": 8,
+  "existing_package_file_count": 8,
   "required_package_file_count": 4,
-  "optional_package_file_count": 3,
-  "referenced_file_count": 7,
-  "package_content_sha256": "cba8fdb754df3a927791a765a0cca57db1f1918e040f75846dd4838c209d99c9",
-  "structure_sha256": "eb91dd117ebbd3c41bfd7afa727884ef0b9a02e2cec14782624366d48e2ec665",
-  "content_sha256": "cba8fdb754df3a927791a765a0cca57db1f1918e040f75846dd4838c209d99c9",
+  "optional_package_file_count": 4,
+  "referenced_file_count": 8,
+  "package_content_sha256": "7508fbcc72de7396b7d19efaeb03802a650e580af4678f757db3bdee82683eda",
+  "structure_sha256": "cb9626aa41c12696d209c7a2ad88dfee476bb6d033fda768617dd5bf31a35fe6",
+  "content_sha256": "7508fbcc72de7396b7d19efaeb03802a650e580af4678f757db3bdee82683eda",
   "package_files": [
+    {
+      "path": "data/fag/kunst/emnemapping_kunst_canonical_v4_5.json",
+      "required": false,
+      "fields": [
+        "emneMappings"
+      ],
+      "exists": true,
+      "content_sha256": "2e5d4f7ea0f355ce97532d7622e6c2b8de97d4634b4af659e34e84bf6c30abbe"
+    },
     {
       "path": "data/fag/kunst/emner_kunst_canonical_v4_5.json",
       "required": true,
@@ -39,7 +48,7 @@
         "fagkart"
       ],
       "exists": true,
-      "content_sha256": "7426a1bf7642d8a55cbc214c4bd64693bcde0a263b2b42927205247970f502c1"
+      "content_sha256": "fb48d79431441aca14708ec59986b600d608c482f674d50d6572f9a754153553"
     },
     {
       "path": "data/fag/kunst/kunstpensum_canonical_v4_5.json",
@@ -48,7 +57,7 @@
         "pensum"
       ],
       "exists": true,
-      "content_sha256": "a715f90e1c9306c4c0c5813075e7ffb9d2e4f2400191c98ac7557234ea0473fc"
+      "content_sha256": "755444672ef553031adad24bc8ad570ec311f64b01f8298eb29fb5fb89950c56"
     },
     {
       "path": "data/fag/kunst/methods_kunst_canonical_v4_5.json",

@@ -5,8 +5,8 @@
   "lifecycle_stage": "imported_review_candidate",
   "status": "generated_package_review_candidate",
   "source_repo": "Paradispartiet/History-Go",
-  "source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
-  "release_sha256": "21cec482d0bde5423cef0bd836dc2b6b8fa4445226bd2ab8df1b44eaefccd627",
+  "source_ref": "b11fd592059ebf4908e2566e301531844a3ceb42",
+  "release_sha256": "a292de9356583d89f644d98806d3b470fae4c82049fca243bfdbfd7b5f238d9d",
   "subject_id": "teknologi",
   "title": "Teknologi",
   "kind": "specialization",
@@ -19,36 +19,36 @@
   "required_package_file_count": 4,
   "optional_package_file_count": 7,
   "referenced_file_count": 11,
-  "package_content_sha256": "dab54cdd92b96b659f103d03db727d6b826b003ad49c6bd97cbcb190a708aa60",
-  "structure_sha256": "03816d9c7cadcb0d215b83d964d0c62b79886676aafdc0e3b822d20c53be14b4",
-  "content_sha256": "dab54cdd92b96b659f103d03db727d6b826b003ad49c6bd97cbcb190a708aa60",
+  "package_content_sha256": "5969344da09f9514e3ec5fd2e131d1b750b837c6d53bf7cd868b5bbf302170fe",
+  "structure_sha256": "22dfbbe4ea926079ff5506593f43e3c5b7e8746f4603df845123da0e6e6272c5",
+  "content_sha256": "5969344da09f9514e3ec5fd2e131d1b750b837c6d53bf7cd868b5bbf302170fe",
   "package_files": [
     {
-      "path": "data/fag/teknologi/emner_teknologi_canonical_v2_4.json",
+      "path": "data/fag/teknologi/emner_teknologi_canonical_v3.json",
       "required": true,
       "fields": [
         "emner"
       ],
       "exists": true,
-      "content_sha256": "f7ce69abaeaf37d0e185eced4586eedd3d537245d105d89cb933f5b7a4dcb117"
+      "content_sha256": "8e2a606260273ab6fffc306b241036ad5d563dad2c740fd54d6f225473dba062"
     },
     {
-      "path": "data/fag/teknologi/fagkart_teknologi_canonical_v2_4.json",
+      "path": "data/fag/teknologi/fagkart_teknologi_canonical_v3.json",
       "required": true,
       "fields": [
         "fagkart"
       ],
       "exists": true,
-      "content_sha256": "2e700d85cb6595214197460df7154ef098e71a8d78f98d815aeba22b16b155db"
+      "content_sha256": "39b386f316391cadd3bf6af92c0886470ac171510a3caee9849b39d3b3ebd191"
     },
     {
-      "path": "data/fag/teknologi/methods_teknologi_canonical_v2_4.json",
+      "path": "data/fag/teknologi/methods_teknologi_canonical_v3.json",
       "required": true,
       "fields": [
         "methods"
       ],
       "exists": true,
-      "content_sha256": "e2f888c8959453716b7e6a5b4fad3f17ec2c4ad74d1415a3cd933f3b48dcb562"
+      "content_sha256": "da83fcef6e0835c50f60ef21a2324e89ede6980f5714e4e9462ad404e7320a1e"
     },
     {
       "path": "data/fag/teknologi/supersetQUIZMAL_teknologi.json",
@@ -69,13 +69,13 @@
       "content_sha256": "9f16241ef5cbafc270e29c1e8809d80710cee8b07e17abc12461a146cd240650"
     },
     {
-      "path": "data/fag/teknologi/teknologipensum_canonical_v2_4.json",
+      "path": "data/fag/teknologi/teknologipensum_canonical_v3.json",
       "required": true,
       "fields": [
         "pensum"
       ],
       "exists": true,
-      "content_sha256": "05e7aa4eff09b0b755375be08bd04b9cb32f34ccab01aef3a096d271d44615f1"
+      "content_sha256": "9a7497edb5766eac57ecb8d46f3d9ca5019b6596ac63e167f682ff862b1b8f7e"
     },
     {
       "path": "data/quiz/regler/QUIZ_PACKAGE_SCHEMA_V1.json",
@@ -120,7 +120,7 @@
         "subjectPathwayPackage"
       ],
       "exists": true,
-      "content_sha256": "553e8d34ff7c20975b24d7999cee871e81b21c8d1bcc839f630b8797d5ade6a7"
+      "content_sha256": "cdb4209eaa267639f14e1bf8ab014ea6bf7d715ec78a527950896933d250a036"
     }
   ],
   "optional_gaps": [],

@@ -4,8 +4,8 @@
   "candidate_kind": "package_inventory",
   "lifecycle_stage": "imported_review_candidate_audit",
   "source_repo": "Paradispartiet/History-Go",
-  "source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
-  "release_sha256": "21cec482d0bde5423cef0bd836dc2b6b8fa4445226bd2ab8df1b44eaefccd627",
+  "source_ref": "b11fd592059ebf4908e2566e301531844a3ceb42",
+  "release_sha256": "a292de9356583d89f644d98806d3b470fae4c82049fca243bfdbfd7b5f238d9d",
   "subject_id": "by",
   "package_status": "complete",
   "chapter_status": "not_materialized",
@@ -20,9 +20,9 @@
     "missing_chapter_files": []
   },
   "digests": {
-    "package_content_sha256": "e28f80e3cf54d5908b8af0ee6061ca45d72dbbe81443d592ce7bf87603a022e0",
+    "package_content_sha256": "e03da357cc8f53e56c7941b8a2fc533a71acf1924521a83ffd8aee96d3e1cc19",
     "structure_sha256": "3ea96832ef3fb3444a829b0c302bde487fd5e6b672f5e29bbbacb7e7f9a01d95",
-    "content_sha256": "e28f80e3cf54d5908b8af0ee6061ca45d72dbbe81443d592ce7bf87603a022e0"
+    "content_sha256": "e03da357cc8f53e56c7941b8a2fc533a71acf1924521a83ffd8aee96d3e1cc19"
   },
   "activation_recommendation": "subject_specific_review_gates_required_before_runtime_activation",
   "approval_required": true,

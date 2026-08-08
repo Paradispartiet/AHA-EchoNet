@@ -1,34 +1,2491 @@
 {
-  "schema": "aha_history_go_fagverk_package_candidate_audit_v1",
+  "schema": "aha_fagverk_corpus_audit_v1",
   "version": "1.0.0",
-  "candidate_kind": "package_inventory",
-  "lifecycle_stage": "imported_review_candidate_audit",
   "source_repo": "Paradispartiet/History-Go",
-  "source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
-  "release_sha256": "21cec482d0bde5423cef0bd836dc2b6b8fa4445226bd2ab8df1b44eaefccd627",
-  "subject_id": "musikk",
-  "package_status": "complete",
-  "chapter_status": "not_materialized",
+  "source_ref": "b11fd592059ebf4908e2566e301531844a3ceb42",
+  "registry_version": "2.29.0",
+  "registry_updated_at": "2026-08-08",
+  "subject_filter": [
+    "musikk"
+  ],
   "coverage": {
-    "declared_package_files": 11,
-    "expected_existing_package_files": 11,
-    "materialized_existing_package_files": 11,
-    "required_package_files": 4,
-    "optional_package_files": 7,
-    "optional_gaps": [],
-    "missing_required_files": [],
-    "missing_chapter_files": []
+    "expected": 8,
+    "registered": 8,
+    "materialized": 8,
+    "missing": [],
+    "unexpected": [],
+    "duplicate_chapter_ids": []
   },
-  "digests": {
-    "package_content_sha256": "b652a62580e8d878ae08efd552b5f50e14bdd5378f0745cb5044cbebb3af78c9",
-    "structure_sha256": "5b267da800c8ab3777c64226ad0c0f096096edc91c8af07d64f7e208639b1403",
-    "content_sha256": "b652a62580e8d878ae08efd552b5f50e14bdd5378f0745cb5044cbebb3af78c9"
+  "chapters": [
+    {
+      "subject_id": "musikk",
+      "chapter_id": "etnomusikologi-kultur-samfunn",
+      "title": "Etnomusikologi, kultur og samfunn",
+      "source_path": "data/fagverk/musikk/etnomusikologi-kultur-samfunn.json",
+      "module_source_paths": [
+        "data/fagverk/musikk/etnomusikologi-kultur-samfunn/01-feltarbeid-intervju-identitet.json",
+        "data/fagverk/musikk/etnomusikologi-kultur-samfunn/02-migrasjon-ritual-kunnskapsstyring.json",
+        "data/fagverk/musikk/etnomusikologi-kultur-samfunn/03-anvendelse-etikk-selvtest.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 12,
+      "concept_term_count": 38,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "musikk",
+      "chapter_id": "framforing-praksis-samspill",
+      "title": "Framføring, praksis og samspill",
+      "source_path": "data/fagverk/musikk/framforing-praksis-samspill.json",
+      "module_source_paths": [
+        "data/fagverk/musikk/framforing-praksis-samspill/01-fortolkning-kropp-koordinering.json",
+        "data/fagverk/musikk/framforing-praksis-samspill/02-rom-publikum-notasjon.json",
+        "data/fagverk/musikk/framforing-praksis-samspill/03-anvendelse-kritikk-selvtest.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 12,
+      "concept_term_count": 38,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "musikk",
+      "chapter_id": "historisk-musikkvitenskap-historiografi",
+      "title": "Historisk musikkvitenskap og historiografi",
+      "source_path": "data/fagverk/musikk/historisk-musikkvitenskap-historiografi.json",
+      "module_source_paths": [
+        "data/fagverk/musikk/historisk-musikkvitenskap-historiografi/01-kilder-tidslag-kategorier.json",
+        "data/fagverk/musikk/historisk-musikkvitenskap-historiografi/02-institusjoner-resepsjon-sirkulasjon.json",
+        "data/fagverk/musikk/historisk-musikkvitenskap-historiografi/03-anvendelse-kritikk-selvtest.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 11,
+      "concept_term_count": 38,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "musikk",
+      "chapter_id": "institusjoner-okonomi-politikk-offentlighet",
+      "title": "Institusjoner, økonomi, politikk og musikalske offentligheter",
+      "source_path": "data/fagverk/musikk/institusjoner-okonomi-politikk-offentlighet.json",
+      "module_source_paths": [
+        "data/fagverk/musikk/institusjoner-okonomi-politikk-offentlighet/01-arbeid-verdi-rettigheter.json",
+        "data/fagverk/musikk/institusjoner-okonomi-politikk-offentlighet/02-scener-priser-stotte.json",
+        "data/fagverk/musikk/institusjoner-okonomi-politikk-offentlighet/03-arkiv-anvendelse-selvtest.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 14,
+      "concept_term_count": 38,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "musikk",
+      "chapter_id": "lydmedier-teknologi-beregning",
+      "title": "Lydmedier, teknologi og beregningsmetoder",
+      "source_path": "data/fagverk/musikk/lydmedier-teknologi-beregning.json",
+      "module_source_paths": [
+        "data/fagverk/musikk/lydmedier-teknologi-beregning/01-studio-instrument-plattform.json",
+        "data/fagverk/musikk/lydmedier-teknologi-beregning/02-sampling-mir-anbefaling.json",
+        "data/fagverk/musikk/lydmedier-teknologi-beregning/03-anvendelse-kritikk-selvtest.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 13,
+      "concept_term_count": 38,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "musikk",
+      "chapter_id": "musikalsk-analyse-lyd-struktur",
+      "title": "Musikalsk analyse, lyd og struktur",
+      "source_path": "data/fagverk/musikk/musikalsk-analyse-lyd-struktur.json",
+      "module_source_paths": [
+        "data/fagverk/musikk/musikalsk-analyse-lyd-struktur/01-objekt-observasjon-evidens.json",
+        "data/fagverk/musikk/musikalsk-analyse-lyd-struktur/02-rytme-tone-klang-form.json",
+        "data/fagverk/musikk/musikalsk-analyse-lyd-struktur/03-anvendelse-kritikk-selvtest.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 13,
+      "concept_term_count": 38,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "musikk",
+      "chapter_id": "norsk-nordisk-samisk-sted-arkiv",
+      "title": "Norsk, nordisk og samisk musikk; sted og arkiv",
+      "source_path": "data/fagverk/musikk/norsk-nordisk-samisk-sted-arkiv.json",
+      "module_source_paths": [
+        "data/fagverk/musikk/norsk-nordisk-samisk-sted-arkiv/01-historiografi-nordisk-relasjon.json",
+        "data/fagverk/musikk/norsk-nordisk-samisk-sted-arkiv/02-joik-muntlighet-arkiv.json",
+        "data/fagverk/musikk/norsk-nordisk-samisk-sted-arkiv/03-minoritet-sted-anvendelse.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 18,
+      "concept_term_count": 40,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "musikk",
+      "chapter_id": "persepsjon-kognisjon-akustikk",
+      "title": "Musikkpersepsjon, kognisjon og akustikk",
+      "source_path": "data/fagverk/musikk/persepsjon-kognisjon-akustikk.json",
+      "module_source_paths": [
+        "data/fagverk/musikk/persepsjon-kognisjon-akustikk/01-signal-scene-tid.json",
+        "data/fagverk/musikk/persepsjon-kognisjon-akustikk/02-forventning-laering-inferens.json",
+        "data/fagverk/musikk/persepsjon-kognisjon-akustikk/03-anvendelse-kritikk-selvtest.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 13,
+      "concept_term_count": 38,
+      "support_term_count": 48
+    }
+  ],
+  "term_collision_summary": {
+    "total": 60,
+    "high_risk": 24,
+    "medium_risk": 36,
+    "low_risk": 0
   },
-  "activation_recommendation": "subject_specific_review_gates_required_before_runtime_activation",
-  "approval_required": true,
-  "runtime_activation_allowed": false,
+  "high_risk_terms": [
+    {
+      "term": "derfor",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "etnomusikologi-kultur-samfunn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "framforing-praksis-samspill",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historisk-musikkvitenskap-historiografi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "institusjoner-okonomi-politikk-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "lydmedier-teknologi-beregning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "musikalsk-analyse-lyd-struktur",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "norsk-nordisk-samisk-sted-arkiv",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "gjør",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "etnomusikologi-kultur-samfunn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "framforing-praksis-samspill",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historisk-musikkvitenskap-historiografi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "lydmedier-teknologi-beregning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "musikalsk-analyse-lyd-struktur",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "norsk-nordisk-samisk-sted-arkiv",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "persepsjon-kognisjon-akustikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "men",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "etnomusikologi-kultur-samfunn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historisk-musikkvitenskap-historiografi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "institusjoner-okonomi-politikk-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "lydmedier-teknologi-beregning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "musikalsk-analyse-lyd-struktur",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "norsk-nordisk-samisk-sted-arkiv",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "persepsjon-kognisjon-akustikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "samme",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "etnomusikologi-kultur-samfunn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "framforing-praksis-samspill",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historisk-musikkvitenskap-historiografi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "institusjoner-okonomi-politikk-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "lydmedier-teknologi-beregning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "musikalsk-analyse-lyd-struktur",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "norsk-nordisk-samisk-sted-arkiv",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "viser",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "framforing-praksis-samspill",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historisk-musikkvitenskap-historiografi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "institusjoner-okonomi-politikk-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "lydmedier-teknologi-beregning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "musikalsk-analyse-lyd-struktur",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "persepsjon-kognisjon-akustikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "caset",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "etnomusikologi-kultur-samfunn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "framforing-praksis-samspill",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historisk-musikkvitenskap-historiografi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "lydmedier-teknologi-beregning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "norsk-nordisk-samisk-sted-arkiv",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "dokumenterer",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "etnomusikologi-kultur-samfunn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "framforing-praksis-samspill",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historisk-musikkvitenskap-historiografi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "lydmedier-teknologi-beregning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "norsk-nordisk-samisk-sted-arkiv",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "hvorfor",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "etnomusikologi-kultur-samfunn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "framforing-praksis-samspill",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historisk-musikkvitenskap-historiografi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "lydmedier-teknologi-beregning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "musikalsk-analyse-lyd-struktur",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "når",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "etnomusikologi-kultur-samfunn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historisk-musikkvitenskap-historiografi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "lydmedier-teknologi-beregning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "musikalsk-analyse-lyd-struktur",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "norsk-nordisk-samisk-sted-arkiv",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "objekt",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "etnomusikologi-kultur-samfunn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "framforing-praksis-samspill",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "institusjoner-okonomi-politikk-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "lydmedier-teknologi-beregning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "musikalsk-analyse-lyd-struktur",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "ett",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "framforing-praksis-samspill",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "lydmedier-teknologi-beregning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "norsk-nordisk-samisk-sted-arkiv",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "persepsjon-kognisjon-akustikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "alene",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "framforing-praksis-samspill",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "lydmedier-teknologi-beregning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "persepsjon-kognisjon-akustikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "analyse",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "historisk-musikkvitenskap-historiografi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "musikalsk-analyse-lyd-struktur",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "persepsjon-kognisjon-akustikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "bare",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "framforing-praksis-samspill",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "lydmedier-teknologi-beregning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "musikalsk-analyse-lyd-struktur",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "bruk",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "etnomusikologi-kultur-samfunn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historisk-musikkvitenskap-historiografi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "norsk-nordisk-samisk-sted-arkiv",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "bygg",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "etnomusikologi-kultur-samfunn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "norsk-nordisk-samisk-sted-arkiv",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "persepsjon-kognisjon-akustikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "forbudt",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "institusjoner-okonomi-politikk-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "lydmedier-teknologi-beregning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "persepsjon-kognisjon-akustikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "korpus",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "historisk-musikkvitenskap-historiografi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "institusjoner-okonomi-politikk-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "norsk-nordisk-samisk-sted-arkiv",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "mål",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "institusjoner-okonomi-politikk-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "lydmedier-teknologi-beregning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "persepsjon-kognisjon-akustikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "oppgi",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "lydmedier-teknologi-beregning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "musikalsk-analyse-lyd-struktur",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "persepsjon-kognisjon-akustikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "skriv",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "institusjoner-okonomi-politikk-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "lydmedier-teknologi-beregning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "persepsjon-kognisjon-akustikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "tilgang",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "etnomusikologi-kultur-samfunn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historisk-musikkvitenskap-historiografi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "institusjoner-okonomi-politikk-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "tre",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "framforing-praksis-samspill",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "musikalsk-analyse-lyd-struktur",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "persepsjon-kognisjon-akustikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "uten",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "institusjoner-okonomi-politikk-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "norsk-nordisk-samisk-sted-arkiv",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "persepsjon-kognisjon-akustikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    }
+  ],
+  "term_collisions": [
+    {
+      "term": "derfor",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "etnomusikologi-kultur-samfunn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "framforing-praksis-samspill",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historisk-musikkvitenskap-historiografi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "institusjoner-okonomi-politikk-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "lydmedier-teknologi-beregning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "musikalsk-analyse-lyd-struktur",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "norsk-nordisk-samisk-sted-arkiv",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "gjør",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "etnomusikologi-kultur-samfunn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "framforing-praksis-samspill",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historisk-musikkvitenskap-historiografi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "lydmedier-teknologi-beregning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "musikalsk-analyse-lyd-struktur",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "norsk-nordisk-samisk-sted-arkiv",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "persepsjon-kognisjon-akustikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "men",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "etnomusikologi-kultur-samfunn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historisk-musikkvitenskap-historiografi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "institusjoner-okonomi-politikk-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "lydmedier-teknologi-beregning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "musikalsk-analyse-lyd-struktur",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "norsk-nordisk-samisk-sted-arkiv",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "persepsjon-kognisjon-akustikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "samme",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "etnomusikologi-kultur-samfunn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "framforing-praksis-samspill",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historisk-musikkvitenskap-historiografi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "institusjoner-okonomi-politikk-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "lydmedier-teknologi-beregning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "musikalsk-analyse-lyd-struktur",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "norsk-nordisk-samisk-sted-arkiv",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "viser",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "framforing-praksis-samspill",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historisk-musikkvitenskap-historiografi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "institusjoner-okonomi-politikk-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "lydmedier-teknologi-beregning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "musikalsk-analyse-lyd-struktur",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "persepsjon-kognisjon-akustikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "caset",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "etnomusikologi-kultur-samfunn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "framforing-praksis-samspill",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historisk-musikkvitenskap-historiografi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "lydmedier-teknologi-beregning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "norsk-nordisk-samisk-sted-arkiv",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "dokumenterer",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "etnomusikologi-kultur-samfunn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "framforing-praksis-samspill",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historisk-musikkvitenskap-historiografi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "lydmedier-teknologi-beregning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "norsk-nordisk-samisk-sted-arkiv",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "hvorfor",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "etnomusikologi-kultur-samfunn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "framforing-praksis-samspill",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historisk-musikkvitenskap-historiografi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "lydmedier-teknologi-beregning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "musikalsk-analyse-lyd-struktur",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "når",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "etnomusikologi-kultur-samfunn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historisk-musikkvitenskap-historiografi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "lydmedier-teknologi-beregning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "musikalsk-analyse-lyd-struktur",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "norsk-nordisk-samisk-sted-arkiv",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "objekt",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "etnomusikologi-kultur-samfunn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "framforing-praksis-samspill",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "institusjoner-okonomi-politikk-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "lydmedier-teknologi-beregning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "musikalsk-analyse-lyd-struktur",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "ett",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "framforing-praksis-samspill",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "lydmedier-teknologi-beregning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "norsk-nordisk-samisk-sted-arkiv",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "persepsjon-kognisjon-akustikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "alene",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "framforing-praksis-samspill",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "lydmedier-teknologi-beregning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "persepsjon-kognisjon-akustikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "analyse",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "historisk-musikkvitenskap-historiografi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "musikalsk-analyse-lyd-struktur",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "persepsjon-kognisjon-akustikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "bare",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "framforing-praksis-samspill",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "lydmedier-teknologi-beregning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "musikalsk-analyse-lyd-struktur",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "bruk",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "etnomusikologi-kultur-samfunn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historisk-musikkvitenskap-historiografi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "norsk-nordisk-samisk-sted-arkiv",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "bygg",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "etnomusikologi-kultur-samfunn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "norsk-nordisk-samisk-sted-arkiv",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "persepsjon-kognisjon-akustikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "forbudt",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "institusjoner-okonomi-politikk-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "lydmedier-teknologi-beregning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "persepsjon-kognisjon-akustikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "korpus",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "historisk-musikkvitenskap-historiografi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "institusjoner-okonomi-politikk-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "norsk-nordisk-samisk-sted-arkiv",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "mål",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "institusjoner-okonomi-politikk-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "lydmedier-teknologi-beregning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "persepsjon-kognisjon-akustikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "oppgi",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "lydmedier-teknologi-beregning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "musikalsk-analyse-lyd-struktur",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "persepsjon-kognisjon-akustikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "skriv",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "institusjoner-okonomi-politikk-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "lydmedier-teknologi-beregning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "persepsjon-kognisjon-akustikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "tilgang",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "etnomusikologi-kultur-samfunn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historisk-musikkvitenskap-historiografi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "institusjoner-okonomi-politikk-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "tre",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "framforing-praksis-samspill",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "musikalsk-analyse-lyd-struktur",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "persepsjon-kognisjon-akustikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "uten",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "institusjoner-okonomi-politikk-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "norsk-nordisk-samisk-sted-arkiv",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "persepsjon-kognisjon-akustikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "aktører",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "institusjoner-okonomi-politikk-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "norsk-nordisk-samisk-sted-arkiv",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "alle",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "etnomusikologi-kultur-samfunn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "framforing-praksis-samspill",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "alternativ",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "framforing-praksis-samspill",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historisk-musikkvitenskap-historiografi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "alternative",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "framforing-praksis-samspill",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "institusjoner-okonomi-politikk-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "bestemte",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "lydmedier-teknologi-beregning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "musikalsk-analyse-lyd-struktur",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "bon",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "etnomusikologi-kultur-samfunn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "framforing-praksis-samspill",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "bærer",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "institusjoner-okonomi-politikk-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "norsk-nordisk-samisk-sted-arkiv",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "case",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "etnomusikologi-kultur-samfunn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "framforing-praksis-samspill",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "claim",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "etnomusikologi-kultur-samfunn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "institusjoner-okonomi-politikk-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "data",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "institusjoner-okonomi-politikk-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "persepsjon-kognisjon-akustikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "datasett",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "lydmedier-teknologi-beregning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "musikalsk-analyse-lyd-struktur",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "dokumentert",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "historisk-musikkvitenskap-historiografi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "norsk-nordisk-samisk-sted-arkiv",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "enn",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "musikalsk-analyse-lyd-struktur",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "persepsjon-kognisjon-akustikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "erfaring",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "etnomusikologi-kultur-samfunn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "framforing-praksis-samspill",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "faglig",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "historisk-musikkvitenskap-historiografi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "lydmedier-teknologi-beregning",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "faktisk",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "institusjoner-okonomi-politikk-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "persepsjon-kognisjon-akustikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "felles",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "framforing-praksis-samspill",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "musikalsk-analyse-lyd-struktur",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "flere",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "framforing-praksis-samspill",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "institusjoner-okonomi-politikk-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "framføring",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "etnomusikologi-kultur-samfunn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "framforing-praksis-samspill",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "fysisk",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "norsk-nordisk-samisk-sted-arkiv",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "persepsjon-kognisjon-akustikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "før",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "lydmedier-teknologi-beregning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "musikalsk-analyse-lyd-struktur",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "gjennomføring",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "historisk-musikkvitenskap-historiografi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "institusjoner-okonomi-politikk-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "historiografi",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "historisk-musikkvitenskap-historiografi",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "norsk-nordisk-samisk-sted-arkiv",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "hvem",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "etnomusikologi-kultur-samfunn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "lydmedier-teknologi-beregning",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "hvilken",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "etnomusikologi-kultur-samfunn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historisk-musikkvitenskap-historiografi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "institusjon",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "institusjoner-okonomi-politikk-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "norsk-nordisk-samisk-sted-arkiv",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "institusjoner",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "historisk-musikkvitenskap-historiografi",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "institusjoner-okonomi-politikk-offentlighet",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "instrument",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "lydmedier-teknologi-beregning",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "persepsjon-kognisjon-akustikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "intensjon",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "framforing-praksis-samspill",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "musikalsk-analyse-lyd-struktur",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "krever",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "etnomusikologi-kultur-samfunn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "framforing-praksis-samspill",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "produksjon",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "historisk-musikkvitenskap-historiografi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "norsk-nordisk-samisk-sted-arkiv",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "rebonds",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "framforing-praksis-samspill",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "musikalsk-analyse-lyd-struktur",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "scene",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "norsk-nordisk-samisk-sted-arkiv",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "persepsjon-kognisjon-akustikk",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "slutning",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "etnomusikologi-kultur-samfunn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "persepsjon-kognisjon-akustikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "utvalg",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "norsk-nordisk-samisk-sted-arkiv",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "persepsjon-kognisjon-akustikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "versjon",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "institusjoner-okonomi-politikk-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "lydmedier-teknologi-beregning",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    }
+  ],
+  "activation_recommendation": "review_required_before_runtime_activation",
   "gate": {
     "passed": true,
     "errors": []
-  }
+  },
+  "lifecycle_stage": "imported_review_candidate_audit",
+  "approval_required": true,
+  "runtime_activation_allowed": false
 }
