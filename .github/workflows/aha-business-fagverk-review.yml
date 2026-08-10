@@ -1,74 +1,58 @@
-name: AHA Business Fagverk review
+name: Bootstrap Business Fagverk runtime activation
 
 on:
-  pull_request:
-    branches: [main]
-    paths:
-      - "scripts/lib/business-fagverk-scoring.mjs"
-      - "scripts/build-business-fagverk-term-policy.mjs"
-      - "scripts/build-business-fagverk-expansion-review.mjs"
-      - "scripts/evaluate-business-fagverk-policy.mjs"
-      - "scripts/compare-business-fixture-corrections.mjs"
-      - "data/integrations/review/history-go-fagverk-naeringsliv.policy-config.v1.json"
-      - "tests/aha-business-fagverk-review.test.cjs"
-      - "tests/aha-fagverk-subject-approvals.test.cjs"
-      - "data/evaluation/aha-business-fagverk-evaluation-matrix.v1.json"
-      - "data/evaluation/aha-business-fagverk-evaluation-report.v1.json"
-      - "data/evaluation/aha-business-fixture-corrections.v1.json"
-      - "data/evaluation/aha-business-fixture-correction-report.v1.json"
-      - "data/integrations/candidates/history-go-fagverk-naeringsliv.candidate.v1.json"
-      - "data/integrations/candidates/history-go-fagverk-naeringsliv.candidate-audit.v1.json"
-      - "data/integrations/review/history-go-fagverk-naeringsliv.*.v1.json"
-      - "data/integrations/review/history-go-fagverk-subject-approval-registry.v1.json"
-      - "data/integrations/approvals/history-go-fagverk-naeringsliv.approved.v1.json"
-      - "data/integrations/history-go-fagverk-release.approved.json"
-      - "data/integrations/history-go-fagverk-release.runtime-active.json"
-  workflow_dispatch:
+  push:
+    branches:
+      - activation/naeringsliv-fagverk-v1-runtime
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  validate-business-review:
-    name: Rebuild complete Business review package
+  materialize-business-runtime:
+    name: Materialize Business runtime activation
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: activation/naeringsliv-fagverk-v1-runtime
       - uses: actions/setup-node@v5
         with:
           node-version: 22
-
-      - name: Rebuild Business review evidence
-        run: |
-          node scripts/build-business-fagverk-term-policy.mjs
-          node scripts/build-business-fagverk-expansion-review.mjs
-          node scripts/evaluate-business-fagverk-policy.mjs
-          node scripts/compare-business-fixture-corrections.mjs
-          node scripts/build-history-go-fagverk-subject-approvals.mjs --subject naeringsliv
-          node tests/aha-business-fagverk-review.test.cjs
-          node tests/aha-fagverk-subject-approvals.test.cjs
-
-      - name: Verify checked-in parity and runtime isolation
-        run: |
-          git diff --exit-code -- \
-            data/evaluation/aha-business-fagverk-evaluation-report.v1.json \
-            data/evaluation/aha-business-fixture-correction-report.v1.json \
-            data/integrations/approvals/history-go-fagverk-naeringsliv.approved.v1.json \
-            data/integrations/review/history-go-fagverk-naeringsliv.expansion-review.v1.json \
-            data/integrations/review/history-go-fagverk-naeringsliv.term-policy.v1.json
-          git diff --exit-code -- \
-            data/integrations/history-go-fagverk-release.approved.json \
-            data/integrations/history-go-fagverk-release.runtime-active.json
-
-      - name: Upload Business review evidence
-        uses: actions/upload-artifact@v4
+      - uses: actions/setup-python@v5
         with:
-          name: aha-business-fagverk-review
-          path: |
-            data/evaluation/aha-business-fagverk-evaluation-report.v1.json
-            data/evaluation/aha-business-fixture-correction-report.v1.json
-            data/integrations/approvals/history-go-fagverk-naeringsliv.approved.v1.json
-            data/integrations/review/history-go-fagverk-naeringsliv.expansion-review.v1.json
-            data/integrations/review/history-go-fagverk-naeringsliv.term-policy.v1.json
-          if-no-files-found: error
-          retention-days: 14
+          python-version: "3.11"
+
+      - name: Materialize and validate Business runtime
+        run: python scripts/bootstrap-business-runtime-activation.py
+
+      - name: Remove bootstrap source and Python caches
+        run: |
+          rm scripts/bootstrap-business-runtime-activation.py
+          find . -type d -name __pycache__ -prune -exec rm -rf {} +
+
+      - name: Verify exact activation scope
+        env:
+          ALLOWED_JSON: '["backend/aha_engine/app/engine/fagverk_grounding.py","backend/aha_engine/tests/test_fagverk_grounding.py","data/integrations/history-go-fagverk-release.approved.json","data/integrations/history-go-fagverk-release.runtime-active.json","data/integrations/runtime/history-go-fagverk-naeringsliv.corpus.v1.json","data/integrations/runtime/history-go-fagverk-naeringsliv.policy.v1.json","data/integrations/runtime/history-go-fagverk-runtime-registry.v1.json","scripts/bootstrap-business-runtime-activation.py","scripts/build-history-go-fagverk-runtime-activation.mjs","tests/aha-business-fagverk-review.test.cjs","tests/aha-fagverk-runtime-activation.test.cjs","tests/aha-fagverk-subject-approvals.test.cjs","tests/aha-history-fagverk-review.test.cjs","tests/aha-nature-fagverk-review.test.cjs"]'
+        run: |
+          node - <<'NODE'
+          const { execFileSync } = require('child_process');
+          const allowed = new Set(JSON.parse(process.env.ALLOWED_JSON));
+          const status = execFileSync('git', ['status', '--porcelain'], { encoding: 'utf8' });
+          const actual = status.trimEnd().split(/\n/).filter(Boolean).map((line) => line.slice(3));
+          const unexpected = actual.filter((file) => !allowed.has(file));
+          const missing = [...allowed].filter((file) => !actual.includes(file));
+          if (unexpected.length || missing.length) {
+            console.error({ unexpected, missing, actual });
+            process.exit(1);
+          }
+          console.log(`Business runtime activation scope verified: ${actual.length} files.`);
+          NODE
+
+      - name: Commit materialized activation
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Materialize Business Fagverk runtime activation"
+          git push origin HEAD:activation/naeringsliv-fagverk-v1-runtime
