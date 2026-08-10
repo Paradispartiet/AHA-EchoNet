@@ -130,9 +130,9 @@ assert.equal(activeNature.chapter_count, 11);
 assert.equal(activeNature.corpus_path, "data/integrations/runtime/history-go-fagverk-natur.corpus.v1.json");
 assert.equal(activeNature.policy_path, "data/integrations/runtime/history-go-fagverk-natur.policy.v1.json");
 assert.equal(activeNature.activation_status, "runtime_subject_active");
-assert.deepEqual(Object.keys(runtime.active_subjects), ["historie", "naeringsliv", "natur", "politikk"]);
+assert.deepEqual(Object.keys(runtime.active_subjects), ["historie", "naeringsliv", "natur", "politikk", "subkultur"]);
 assert.equal(runtime.full_release_active, false);
-assert.equal(runtime.effective_entry_count, 59);
+assert.equal(runtime.effective_entry_count, 67);
 
 const matrixDigest = crypto.createHash("sha256").update(fs.readFileSync(paths.matrix)).digest("hex");
 assert.match(matrixDigest, /^[0-9a-f]{64}$/);

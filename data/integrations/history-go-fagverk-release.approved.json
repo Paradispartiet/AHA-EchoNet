@@ -17,7 +17,8 @@
       "historie",
       "naeringsliv",
       "natur",
-      "politikk"
+      "politikk",
+      "subkultur"
     ]
   },
   "approved_subjects": {
@@ -72,6 +73,19 @@
       "chapter_count": 13,
       "scoring_mode": "subject_policy_v1",
       "approval_status": "runtime_subject_approved"
+    },
+    "subkultur": {
+      "subject_id": "subkultur",
+      "source_commit": "c16a187453d16a40f9cab4ca694c32e96014f31b",
+      "subject_approval_path": "data/integrations/approvals/history-go-fagverk-subkultur.approved.v1.json",
+      "corpus_path": "data/integrations/runtime/history-go-fagverk-subkultur.corpus.v1.json",
+      "corpus_sha256": "e554b96513313139898a44e98f374d9fea2f01e8c8e8b015dcc5d6fdfa60d7f8",
+      "corpus_artifact_sha256": "14f6da1e9236fbab15e311c009110bc677cf602c2c507fd69d6390755ea90e03",
+      "policy_path": "data/integrations/runtime/history-go-fagverk-subkultur.policy.v1.json",
+      "policy_artifact_sha256": "f88f4743ab2b04b1ec79300eece1a7345133c61d90e11d7ccbcaf92316730ff4",
+      "chapter_count": 8,
+      "scoring_mode": "subject_policy_v1",
+      "approval_status": "runtime_subject_approved"
     }
   },
   "full_release_approved": false,
@@ -82,5 +96,5 @@
     "approval_does_not_activate_unregistered_subjects": true,
     "explicit_activation_pull_request_required": true
   },
-  "artifact_sha256": "fa2feafb8a4bf113154797e3466680564f0f6a673421e50fa12bf500cb6115fb"
+  "artifact_sha256": "d96f1046f1bc4e15fccb6bb8eb06cdae7c68291e2504c9eaa8057e32100ea7ef"
 }

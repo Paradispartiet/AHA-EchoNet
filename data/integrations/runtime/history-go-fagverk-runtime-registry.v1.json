@@ -1,6 +1,6 @@
 {
   "schema": "aha_history_go_fagverk_runtime_registry_v1",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "status": "runtime_activation_registry",
   "legacy_seed": {
     "corpus_path": "data/integrations/history-go-fagverk-corpus.v1.json",
@@ -56,6 +56,20 @@
       "scoring_mode": "subject_policy_v1",
       "minimum_score": 6,
       "minimum_terms": 2,
+      "ambiguity_margin": 3
+    },
+    "subkultur": {
+      "subject_id": "subkultur",
+      "approval_path": "data/integrations/approvals/history-go-fagverk-subkultur.approved.v1.json",
+      "candidate_corpus_path": "data/integrations/candidates/history-go-fagverk-subkultur.candidate.v1.json",
+      "review_policy_path": "data/integrations/review/history-go-fagverk-subkultur.term-policy.v1.json",
+      "review_policy_config_path": "data/integrations/review/history-go-fagverk-subkultur.policy-config.v1.json",
+      "runtime_corpus_path": "data/integrations/runtime/history-go-fagverk-subkultur.corpus.v1.json",
+      "runtime_policy_path": "data/integrations/runtime/history-go-fagverk-subkultur.policy.v1.json",
+      "scoring_mode": "subject_policy_v1",
+      "minimum_score": 7,
+      "minimum_terms": 2,
+      "minimum_reviewed_evidence_terms": 2,
       "ambiguity_margin": 3
     }
   },

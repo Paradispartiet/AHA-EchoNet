@@ -14,6 +14,8 @@ NATURE_MATRIX_PATH = ROOT / "data" / "evaluation" / "aha-nature-fagverk-evaluati
 NATURE_CORRECTIONS_PATH = ROOT / "data" / "evaluation" / "aha-nature-fixture-corrections.v1.json"
 BUSINESS_MATRIX_PATH = ROOT / "data" / "evaluation" / "aha-business-fagverk-evaluation-matrix.v1.json"
 BUSINESS_CORRECTIONS_PATH = ROOT / "data" / "evaluation" / "aha-business-fixture-corrections.v1.json"
+SUBCULTURE_MATRIX_PATH = ROOT / "data" / "evaluation" / "aha-subculture-fagverk-evaluation-matrix.v1.json"
+SUBCULTURE_CORRECTIONS_PATH = ROOT / "data" / "evaluation" / "aha-subculture-fixture-corrections.v1.json"
 ACTIVE_MANIFEST_PATH = ROOT / "data" / "integrations" / "history-go-fagverk-release.runtime-active.json"
 
 
@@ -41,6 +43,18 @@ def _business_only_corpus() -> dict:
     }
 
 
+def _subculture_only_corpus() -> dict:
+    corpus = load_fagverk_corpus()
+    return {
+        "schema": corpus["schema"],
+        "version": corpus["version"],
+        "source_repo": corpus["source_repo"],
+        "source_ref": corpus["source_ref"],
+        "entries": [entry for entry in corpus["entries"] if entry["subject_id"] == "subkultur"],
+        "subject_policies": {"subkultur": corpus["subject_policies"]["subkultur"]},
+    }
+
+
 def test_corpus_schema_and_provenance() -> None:
     corpus = load_fagverk_corpus()
     assert corpus["schema"] == "aha_history_go_fagverk_corpus_v1"
@@ -48,7 +62,7 @@ def test_corpus_schema_and_provenance() -> None:
     assert corpus["status"] == "composed_partial_subject_runtime_corpus"
     assert corpus["source_repo"] == "Paradispartiet/History-Go"
     assert corpus["source_ref"]
-    assert len(corpus["entries"]) == 59
+    assert len(corpus["entries"]) == 67
     assert all(entry.get("source_path") for entry in corpus["entries"])
     nature_entries = [entry for entry in corpus["entries"] if entry["subject_id"] == "natur"]
     assert len(nature_entries) == 11
@@ -62,15 +76,18 @@ def test_corpus_schema_and_provenance() -> None:
     business_entries = [entry for entry in corpus["entries"] if entry["subject_id"] == "naeringsliv"]
     assert len(business_entries) == 12
     assert len({entry["chapter_id"] for entry in business_entries}) == 12
-    assert set(corpus["subject_policies"]) == {"historie", "naeringsliv", "natur", "politikk"}
+    subculture_entries = [entry for entry in corpus["entries"] if entry["subject_id"] == "subkultur"]
+    assert len(subculture_entries) == 8
+    assert len({entry["chapter_id"] for entry in subculture_entries}) == 8
+    assert set(corpus["subject_policies"]) == {"historie", "naeringsliv", "natur", "politikk", "subkultur"}
 
 
 def test_runtime_manifest_uses_materialized_subject_artifacts_only() -> None:
     manifest = json.loads(ACTIVE_MANIFEST_PATH.read_text(encoding="utf-8"))
     assert manifest["schema"] == "aha_history_go_fagverk_runtime_active_v2"
     assert manifest["status"] == "partial_subject_runtime_active"
-    assert manifest["effective_entry_count"] == 59
-    assert set(manifest["active_subjects"]) == {"historie", "naeringsliv", "natur", "politikk"}
+    assert manifest["effective_entry_count"] == 67
+    assert set(manifest["active_subjects"]) == {"historie", "naeringsliv", "natur", "politikk", "subkultur"}
     history = manifest["active_subjects"]["historie"]
     assert history["chapter_count"] == 23
     assert history["source_commit"] == "c16a187453d16a40f9cab4ca694c32e96014f31b"
@@ -90,6 +107,13 @@ def test_runtime_manifest_uses_materialized_subject_artifacts_only() -> None:
     assert nature["policy_path"].startswith("data/integrations/runtime/")
     assert "/review/" not in nature["corpus_path"]
     assert "/review/" not in nature["policy_path"]
+    subculture = manifest["active_subjects"]["subkultur"]
+    assert subculture["chapter_count"] == 8
+    assert subculture["source_commit"] == "c16a187453d16a40f9cab4ca694c32e96014f31b"
+    assert subculture["corpus_path"].startswith("data/integrations/runtime/")
+    assert subculture["policy_path"].startswith("data/integrations/runtime/")
+    assert "/review/" not in subculture["corpus_path"]
+    assert "/review/" not in subculture["policy_path"]
     politics = manifest["active_subjects"]["politikk"]
     assert politics["chapter_count"] == 13
     assert politics["source_commit"] == "c16a187453d16a40f9cab4ca694c32e96014f31b"
@@ -178,6 +202,37 @@ def test_all_reviewed_business_fixture_abstentions_pass_in_python_runtime() -> N
         fixture = json.loads((ROOT / correction["fixture_path"]).read_text(encoding="utf-8"))
         result = ground_message(fixture["inputText"], business_corpus)
         assert result["status"] == correction["expected_business_status"], (correction["id"], result)
+        assert correction["expected_chapter_id"] is None
+
+
+def test_all_reviewed_subculture_matrix_cases_pass_in_python_runtime() -> None:
+    matrix = json.loads(SUBCULTURE_MATRIX_PATH.read_text(encoding="utf-8"))
+    subculture_corpus = _subculture_only_corpus()
+    cases = [
+        *(dict(item, kind="positive") for item in matrix["positive_cases"]),
+        *(dict(item, kind="confusion") for item in matrix["confusion_cases"]),
+        *(dict(item, kind="ambiguity") for item in matrix["ambiguity_cases"]),
+    ]
+    assert len(cases) == 28
+    for case in cases:
+        result = ground_message(case["text"], subculture_corpus)
+        if case["kind"] == "ambiguity":
+            assert result["status"] in case["allowed_statuses"], (case["id"], result)
+            continue
+        assert result["status"] == case["expected_status"], (case["id"], result)
+        assert result["match"]["subject_id"] == "subkultur", (case["id"], result)
+        assert result["match"]["chapter_id"] == case["expected_chapter_id"], (case["id"], result)
+        assert result["match"]["scoring_mode"] == "subject_policy_v1"
+
+
+def test_all_reviewed_subculture_fixture_abstentions_pass_in_python_runtime() -> None:
+    corrections = json.loads(SUBCULTURE_CORRECTIONS_PATH.read_text(encoding="utf-8"))
+    subculture_corpus = _subculture_only_corpus()
+    assert len(corrections["cases"]) == 16
+    for correction in corrections["cases"]:
+        fixture = json.loads((ROOT / correction["fixture_path"]).read_text(encoding="utf-8"))
+        result = ground_message(fixture["inputText"], subculture_corpus)
+        assert result["status"] == correction["expected_subculture_status"], (correction["id"], result)
         assert correction["expected_chapter_id"] is None
 
 
