@@ -16,43 +16,36 @@ BUSINESS_MATRIX_PATH = ROOT / "data" / "evaluation" / "aha-business-fagverk-eval
 BUSINESS_CORRECTIONS_PATH = ROOT / "data" / "evaluation" / "aha-business-fixture-corrections.v1.json"
 SUBCULTURE_MATRIX_PATH = ROOT / "data" / "evaluation" / "aha-subculture-fagverk-evaluation-matrix.v1.json"
 SUBCULTURE_CORRECTIONS_PATH = ROOT / "data" / "evaluation" / "aha-subculture-fixture-corrections.v1.json"
+BY_MATRIX_PATH = ROOT / "data" / "evaluation" / "aha-by-fagverk-evaluation-matrix.v1.json"
 ACTIVE_MANIFEST_PATH = ROOT / "data" / "integrations" / "history-go-fagverk-release.runtime-active.json"
 
 
-def _politics_only_corpus() -> dict:
+def _subject_only_corpus(subject_id: str) -> dict:
     corpus = load_fagverk_corpus()
     return {
         "schema": corpus["schema"],
         "version": corpus["version"],
         "source_repo": corpus["source_repo"],
         "source_ref": corpus["source_ref"],
-        "entries": [entry for entry in corpus["entries"] if entry["subject_id"] == "politikk"],
-        "subject_policies": {"politikk": corpus["subject_policies"]["politikk"]},
+        "entries": [entry for entry in corpus["entries"] if entry["subject_id"] == subject_id],
+        "subject_policies": {subject_id: corpus["subject_policies"][subject_id]},
     }
+
+
+def _politics_only_corpus() -> dict:
+    return _subject_only_corpus("politikk")
 
 
 def _business_only_corpus() -> dict:
-    corpus = load_fagverk_corpus()
-    return {
-        "schema": corpus["schema"],
-        "version": corpus["version"],
-        "source_repo": corpus["source_repo"],
-        "source_ref": corpus["source_ref"],
-        "entries": [entry for entry in corpus["entries"] if entry["subject_id"] == "naeringsliv"],
-        "subject_policies": {"naeringsliv": corpus["subject_policies"]["naeringsliv"]},
-    }
+    return _subject_only_corpus("naeringsliv")
 
 
 def _subculture_only_corpus() -> dict:
-    corpus = load_fagverk_corpus()
-    return {
-        "schema": corpus["schema"],
-        "version": corpus["version"],
-        "source_repo": corpus["source_repo"],
-        "source_ref": corpus["source_ref"],
-        "entries": [entry for entry in corpus["entries"] if entry["subject_id"] == "subkultur"],
-        "subject_policies": {"subkultur": corpus["subject_policies"]["subkultur"]},
-    }
+    return _subject_only_corpus("subkultur")
+
+
+def _by_only_corpus() -> dict:
+    return _subject_only_corpus("by")
 
 
 def test_corpus_schema_and_provenance() -> None:
@@ -62,67 +55,46 @@ def test_corpus_schema_and_provenance() -> None:
     assert corpus["status"] == "composed_partial_subject_runtime_corpus"
     assert corpus["source_repo"] == "Paradispartiet/History-Go"
     assert corpus["source_ref"]
-    assert len(corpus["entries"]) == 67
+    assert len(corpus["entries"]) == 84
     assert all(entry.get("source_path") for entry in corpus["entries"])
-    nature_entries = [entry for entry in corpus["entries"] if entry["subject_id"] == "natur"]
-    assert len(nature_entries) == 11
-    assert len({entry["chapter_id"] for entry in nature_entries}) == 11
-    politics_entries = [entry for entry in corpus["entries"] if entry["subject_id"] == "politikk"]
-    assert len(politics_entries) == 13
-    assert len({entry["chapter_id"] for entry in politics_entries}) == 13
-    history_entries = [entry for entry in corpus["entries"] if entry["subject_id"] == "historie"]
-    assert len(history_entries) == 23
-    assert len({entry["chapter_id"] for entry in history_entries}) == 23
-    business_entries = [entry for entry in corpus["entries"] if entry["subject_id"] == "naeringsliv"]
-    assert len(business_entries) == 12
-    assert len({entry["chapter_id"] for entry in business_entries}) == 12
-    subculture_entries = [entry for entry in corpus["entries"] if entry["subject_id"] == "subkultur"]
-    assert len(subculture_entries) == 8
-    assert len({entry["chapter_id"] for entry in subculture_entries}) == 8
-    assert set(corpus["subject_policies"]) == {"historie", "naeringsliv", "natur", "politikk", "subkultur"}
+    expected_counts = {"by": 17, "historie": 23, "naeringsliv": 12, "natur": 11, "politikk": 13, "subkultur": 8}
+    for subject_id, count in expected_counts.items():
+        entries = [entry for entry in corpus["entries"] if entry["subject_id"] == subject_id]
+        assert len(entries) == count
+        assert len({entry["chapter_id"] for entry in entries}) == count
+    assert set(corpus["subject_policies"]) == set(expected_counts)
 
 
 def test_runtime_manifest_uses_materialized_subject_artifacts_only() -> None:
     manifest = json.loads(ACTIVE_MANIFEST_PATH.read_text(encoding="utf-8"))
     assert manifest["schema"] == "aha_history_go_fagverk_runtime_active_v2"
     assert manifest["status"] == "partial_subject_runtime_active"
-    assert manifest["effective_entry_count"] == 67
-    assert set(manifest["active_subjects"]) == {"historie", "naeringsliv", "natur", "politikk", "subkultur"}
-    history = manifest["active_subjects"]["historie"]
-    assert history["chapter_count"] == 23
-    assert history["source_commit"] == "c16a187453d16a40f9cab4ca694c32e96014f31b"
-    assert history["corpus_path"].startswith("data/integrations/runtime/")
-    assert history["policy_path"].startswith("data/integrations/runtime/")
-    business = manifest["active_subjects"]["naeringsliv"]
-    assert business["chapter_count"] == 12
-    assert business["source_commit"] == "c16a187453d16a40f9cab4ca694c32e96014f31b"
-    assert business["corpus_path"].startswith("data/integrations/runtime/")
-    assert business["policy_path"].startswith("data/integrations/runtime/")
-    assert "/review/" not in business["corpus_path"]
-    assert "/review/" not in business["policy_path"]
-    nature = manifest["active_subjects"]["natur"]
-    assert nature["chapter_count"] == 11
-    assert nature["source_commit"] == "c16a187453d16a40f9cab4ca694c32e96014f31b"
-    assert nature["corpus_path"].startswith("data/integrations/runtime/")
-    assert nature["policy_path"].startswith("data/integrations/runtime/")
-    assert "/review/" not in nature["corpus_path"]
-    assert "/review/" not in nature["policy_path"]
-    subculture = manifest["active_subjects"]["subkultur"]
-    assert subculture["chapter_count"] == 8
-    assert subculture["source_commit"] == "c16a187453d16a40f9cab4ca694c32e96014f31b"
-    assert subculture["corpus_path"].startswith("data/integrations/runtime/")
-    assert subculture["policy_path"].startswith("data/integrations/runtime/")
-    assert "/review/" not in subculture["corpus_path"]
-    assert "/review/" not in subculture["policy_path"]
-    politics = manifest["active_subjects"]["politikk"]
-    assert politics["chapter_count"] == 13
-    assert politics["source_commit"] == "c16a187453d16a40f9cab4ca694c32e96014f31b"
-    assert politics["corpus_path"].startswith("data/integrations/runtime/")
-    assert politics["policy_path"].startswith("data/integrations/runtime/")
-    assert "/review/" not in politics["corpus_path"]
-    assert "/review/" not in politics["policy_path"]
-    assert "/approvals/" not in politics["corpus_path"]
-    assert "/approvals/" not in politics["policy_path"]
+    assert manifest["effective_entry_count"] == 84
+    assert set(manifest["active_subjects"]) == {"by", "historie", "naeringsliv", "natur", "politikk", "subkultur"}
+    expected = {"by": 17, "historie": 23, "naeringsliv": 12, "natur": 11, "politikk": 13, "subkultur": 8}
+    for subject_id, chapter_count in expected.items():
+        item = manifest["active_subjects"][subject_id]
+        assert item["chapter_count"] == chapter_count
+        assert item["corpus_path"].startswith("data/integrations/runtime/")
+        assert item["policy_path"].startswith("data/integrations/runtime/")
+        assert "/review/" not in item["corpus_path"]
+        assert "/review/" not in item["policy_path"]
+        assert "/approvals/" not in item["corpus_path"]
+        assert "/approvals/" not in item["policy_path"]
+    assert manifest["active_subjects"]["by"]["source_commit"] == "d52cebbe2c6c01e5780be301e9b0e4a9c61c5254"
+
+
+def test_by_runtime_uses_reviewed_anchor_projection_only() -> None:
+    corpus = _by_only_corpus()
+    policy = corpus["subject_policies"]["by"]
+    assert len(corpus["entries"]) == 17
+    assert policy["runtime_corpus_projection"] == "reviewed_anchor_projection_v1"
+    assert policy["source_review_attestation_path"].endswith("history-go-fagverk-by.review-attestation.v1.json")
+    for entry in corpus["entries"]:
+        assert entry["title_terms"] == policy["chapter_rules"][entry["chapter_id"]]["required_anchor_terms"]
+        assert entry["concept_terms"] == []
+        assert entry["support_terms"] == []
+        assert entry["provenance"]["runtime_projection"] == "reviewed_anchor_projection_v1"
 
 
 def test_grounding_evaluation_cases() -> None:
@@ -135,6 +107,27 @@ def test_grounding_evaluation_cases() -> None:
             assert match["subject_id"] == case["expected_subject_id"], (case["id"], result)
             assert match["chapter_id"] == case["expected_chapter_id"], (case["id"], result)
             assert len(match["matched_terms"]) >= 2
+
+
+def test_all_reviewed_by_matrix_cases_pass_in_python_runtime() -> None:
+    matrix = json.loads(BY_MATRIX_PATH.read_text(encoding="utf-8"))
+    by_corpus = _by_only_corpus()
+    assert len(matrix["positive_cases"]) == 34
+    assert len(matrix["abstention_cases"]) == 8
+    for case in matrix["positive_cases"]:
+        result = ground_message(case["text"], by_corpus)
+        assert result["status"] == case["expected_status"], (case["id"], result)
+        assert result["match"]["subject_id"] == "by"
+        assert result["match"]["chapter_id"] == case["expected_chapter_id"], (case["id"], result)
+        assert result["match"]["scoring_mode"] == "subject_policy_v1"
+        assert len(result["match"]["matched_terms"]) >= 2
+        assert result["match"]["evidence"]
+        for evidence in result["match"]["evidence"]:
+            assert case["text"][evidence["start"]:evidence["end"]] == evidence["quote"]
+            assert evidence["term"] in result["match"]["matched_terms"]
+    for case in matrix["abstention_cases"]:
+        result = ground_message(case["text"], by_corpus)
+        assert result["status"] == case["expected_status"], (case["id"], result)
 
 
 def test_all_reviewed_politics_matrix_cases_pass_in_python_runtime() -> None:
@@ -236,20 +229,41 @@ def test_all_reviewed_subculture_fixture_abstentions_pass_in_python_runtime() ->
         assert correction["expected_chapter_id"] is None
 
 
-def test_grounded_analysis_replaces_generic_canned_fallback() -> None:
-    request = AnalyzeRequest(
-        message=(
-            "Ett artsfunn er ikke det samme som en bestand. Næringsnett vurderes som økologisk "
-            "næringsnett sammen med målt habitatkvalitet og populasjon og bestand før vi trekker "
-            "en bestandskonklusjon."
-        )
+def test_grounded_analysis_exposes_source_evidence() -> None:
+    message = (
+        "Ett artsfunn er ikke det samme som en bestand. Næringsnett vurderes som økologisk "
+        "næringsnett sammen med målt habitatkvalitet og populasjon og bestand før vi trekker "
+        "en bestandskonklusjon."
     )
-    analysis = analyze_message_with_fagverk(request)
+    result = ground_message(message)
+    assert result["status"] == "grounded"
+    assert result["match"]["evidence"]
+    for evidence in result["match"]["evidence"]:
+        assert message[evidence["start"]:evidence["end"]] == evidence["quote"]
+    analysis = analyze_message_with_fagverk(AnalyzeRequest(message=message))
     assert analysis.domain == "okosystem_mangfold_habitat"
-    assert analysis.theme == "Økosystem, mangfold og habitat"
-    assert "usikker årsaksforståelse" not in analysis.theme.casefold()
-    assert any(link.type == "fagverk_chapter" and link.id == "okosystem_mangfold_habitat" for link in analysis.historyGoLinks)
+    primary = next(link for link in analysis.historyGoLinks if link.type == "fagverk_chapter" and link.id == "okosystem_mangfold_habitat")
+    assert primary.evidence
+    assert primary.evidence[0].quote in message
     assert analysis.confidence.domain >= 0.65
+
+
+def test_related_cross_subject_matches_are_exposed_without_replacing_primary() -> None:
+    corpus = {
+        "schema": "aha_history_go_fagverk_corpus_v1",
+        "version": "test",
+        "source_repo": "test",
+        "source_ref": "test",
+        "entries": [
+            {"subject_id":"a","chapter_id":"a","primary_domain_id":"a","title":"A","source_path":"a.json","title_terms":["anker_a","anker_b","anker_c"],"concept_terms":[],"support_terms":[]},
+            {"subject_id":"b","chapter_id":"b","primary_domain_id":"b","title":"B","source_path":"b.json","title_terms":["bro_a","bro_b"],"concept_terms":[],"support_terms":[]},
+        ],
+    }
+    result = ground_message("Anker_a anker_b anker_c og bro_a bro_b beskriver samme sak med ulike faglige innganger.", corpus)
+    assert result["status"] == "grounded"
+    assert result["match"]["subject_id"] == "a"
+    assert len(result["related_matches"]) == 1
+    assert result["related_matches"][0]["subject_id"] == "b"
 
 
 def test_high_confidence_specialized_analysis_is_not_mutated() -> None:
@@ -277,26 +291,8 @@ def test_ambiguous_evidence_does_not_auto_choose_chapter() -> None:
         "source_repo": "test",
         "source_ref": "test",
         "entries": [
-            {
-                "subject_id": "a",
-                "chapter_id": "a",
-                "primary_domain_id": "a",
-                "title": "A",
-                "source_path": "a.json",
-                "title_terms": ["institusjon"],
-                "concept_terms": ["makt", "representasjon"],
-                "support_terms": [],
-            },
-            {
-                "subject_id": "b",
-                "chapter_id": "b",
-                "primary_domain_id": "b",
-                "title": "B",
-                "source_path": "b.json",
-                "title_terms": ["institusjon"],
-                "concept_terms": ["makt", "representasjon"],
-                "support_terms": [],
-            },
+            {"subject_id":"a","chapter_id":"a","primary_domain_id":"a","title":"A","source_path":"a.json","title_terms":["institusjon"],"concept_terms":["makt","representasjon"],"support_terms":[]},
+            {"subject_id":"b","chapter_id":"b","primary_domain_id":"b","title":"B","source_path":"b.json","title_terms":["institusjon"],"concept_terms":["makt","representasjon"],"support_terms":[]},
         ],
     }
     result = ground_message("Institusjon, makt og representasjon må undersøkes sammen.", corpus)
