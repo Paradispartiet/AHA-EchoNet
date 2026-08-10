@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 const here = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(here, "..");
 const DEFAULT_REGISTRY = "data/integrations/review/history-go-fagverk-subject-approval-registry.v1.json";
+const DEFAULT_SUBJECT_BASELINE = "data/integrations/review/history-go-fagverk-subject-content-baseline.v1.json";
 const DEFAULT_OBSERVED = "data/integrations/history-go-fagverk-release.observed.json";
 const DEFAULT_RUNTIME_APPROVED = "data/integrations/history-go-fagverk-release.approved.json";
 const DEFAULT_RUNTIME_ACTIVE = "data/integrations/history-go-fagverk-release.runtime-active.json";
@@ -15,6 +16,7 @@ const DEFAULT_RUNTIME_ACTIVE = "data/integrations/history-go-fagverk-release.run
 function parseArgs(argv) {
   const args = {
     registry: DEFAULT_REGISTRY,
+    subjectBaseline: DEFAULT_SUBJECT_BASELINE,
     observed: DEFAULT_OBSERVED,
     runtimeApproved: DEFAULT_RUNTIME_APPROVED,
     runtimeActive: DEFAULT_RUNTIME_ACTIVE,
@@ -25,6 +27,7 @@ function parseArgs(argv) {
   for (let index = 0; index < argv.length; index += 1) {
     const token = argv[index];
     if (token === "--registry") args.registry = argv[++index] || args.registry;
+    else if (token === "--subject-baseline") args.subjectBaseline = argv[++index] || args.subjectBaseline;
     else if (token === "--observed") args.observed = argv[++index] || args.observed;
     else if (token === "--runtime-approved") args.runtimeApproved = argv[++index] || args.runtimeApproved;
     else if (token === "--runtime-active") args.runtimeActive = argv[++index] || args.runtimeActive;
@@ -65,6 +68,20 @@ function validateRegistry(registry) {
   if (registry.runtime_activation_allowed !== false) throw new Error("Subject approval registry must never allow runtime activation.");
 }
 
+function validateSubjectBaseline(baseline, registry) {
+  if (baseline.schema !== "aha_history_go_fagverk_subject_content_baseline_v1") throw new Error(`Unexpected subject baseline schema: ${baseline.schema}`);
+  if (baseline.runtime_activation_allowed !== false) throw new Error("Subject content baseline must never allow runtime activation.");
+  const registrySubjects = Object.keys(registry.subjects).sort((a, b) => a.localeCompare(b, "nb"));
+  const baselineSubjects = Object.keys(baseline.subjects || {}).sort((a, b) => a.localeCompare(b, "nb"));
+  if (JSON.stringify(registrySubjects) !== JSON.stringify(baselineSubjects)) throw new Error("Subject content baseline must cover exactly the approval registry subjects.");
+  for (const subjectId of registrySubjects) {
+    const item = baseline.subjects[subjectId];
+    for (const field of ["approved_source_ref", "approved_release_sha256", "subject_content_sha256"]) {
+      if (!item?.[field]) throw new Error(`${subjectId}: subject content baseline is missing ${field}.`);
+    }
+  }
+}
+
 function validateGate(gate, artifact, expectedSource, expectedDigest) {
   const errors = [];
   const status = get(artifact, gate.status_field);
@@ -93,19 +110,24 @@ function buildApproval(subjectId, config, context) {
   const corpus = readJson(config.review_corpus.path);
   const sourceRef = get(candidate, config.candidate.source_ref_field);
   const corpusDigest = get(candidate, config.candidate.digest_field);
+  const baseline = context.subjectBaseline.subjects[subjectId];
+  const observedSubject = context.observed.subjects?.[subjectId];
   const errors = [];
 
   if (candidate.subject_filter !== subjectId) errors.push("Candidate subject_filter differs from registry subject.");
   if (candidate.approval_required !== true || candidate.runtime_activation_allowed !== false) errors.push("Candidate is not review-only.");
-  if (sourceRef !== context.observed.source_commit) errors.push("Candidate source differs from observed release.");
+  if (!baseline) errors.push("Subject content baseline is missing.");
+  if (baseline && sourceRef !== baseline.approved_source_ref) errors.push("Candidate source differs from approved subject-content baseline.");
+  if (!observedSubject) errors.push("Observed release is missing the approved subject.");
+  if (baseline && observedSubject?.content_sha256 !== baseline.subject_content_sha256) errors.push("Observed subject content differs from approved subject-content baseline.");
   if (get(corpus, config.review_corpus.source_ref_field) !== sourceRef) errors.push("Reviewed corpus source differs from candidate.");
   if (get(corpus, config.review_corpus.digest_field) !== corpusDigest) errors.push("Reviewed corpus digest differs from candidate.");
 
   const gateResults = config.gates.map((gate) => validateGate(gate, readJson(gate.path), sourceRef, corpusDigest));
   errors.push(...gateResults.flatMap((gate) => gate.errors));
 
-  if (context.runtimeApproved.approved_source_commit === sourceRef) errors.push("Observed source is already represented as runtime-approved by the legacy runtime contract.");
-  if (context.runtimeActive.active_source_commit === sourceRef) errors.push("Observed source is already runtime-active.");
+  if (context.runtimeApproved.approved_source_commit === sourceRef) errors.push("Approved subject source is already represented as runtime-approved by the legacy runtime contract.");
+  if (context.runtimeActive.active_source_commit === sourceRef) errors.push("Approved subject source is already represented as the legacy runtime-active source.");
 
   const passed = errors.length === 0;
   return {
@@ -116,7 +138,7 @@ function buildApproval(subjectId, config, context) {
     subject_id: subjectId,
     source_repo: candidate.source_repo,
     source_ref: sourceRef,
-    observed_release_sha256: context.observed.release_sha256,
+    observed_release_sha256: baseline?.approved_release_sha256 || context.observed.release_sha256,
     candidate: {
       path: config.candidate.path,
       corpus_sha256: corpusDigest,
@@ -146,13 +168,16 @@ function buildApproval(subjectId, config, context) {
 function main() {
   const args = parseArgs(process.argv.slice(2));
   if (args.help) {
-    console.log("Usage: node scripts/build-history-go-fagverk-subject-approvals.mjs (--all | --subject id) [--output-root dir]");
+    console.log("Usage: node scripts/build-history-go-fagverk-subject-approvals.mjs (--all | --subject id) [--subject-baseline path] [--output-root dir]");
     return;
   }
   if (args.all === Boolean(args.subject)) throw new Error("Choose exactly one of --all or --subject.");
   const registry = readJson(args.registry);
   validateRegistry(registry);
+  const subjectBaseline = readJson(args.subjectBaseline);
+  validateSubjectBaseline(subjectBaseline, registry);
   const context = {
+    subjectBaseline,
     observed: readJson(args.observed),
     runtimeApproved: readJson(args.runtimeApproved),
     runtimeActive: readJson(args.runtimeActive)

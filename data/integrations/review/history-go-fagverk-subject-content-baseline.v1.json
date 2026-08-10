@@ -1,0 +1,33 @@
+{
+  "schema": "aha_history_go_fagverk_subject_content_baseline_v1",
+  "version": "1.0.0",
+  "status": "review_approval_subject_content_baseline",
+  "subjects": {
+    "historie": {
+      "approved_source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
+      "approved_release_sha256": "21cec482d0bde5423cef0bd836dc2b6b8fa4445226bd2ab8df1b44eaefccd627",
+      "subject_content_sha256": "fe9f74f0ad244729151c7c6ce5789d19359d39a805a5f899712a5d4605a2e988"
+    },
+    "naeringsliv": {
+      "approved_source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
+      "approved_release_sha256": "21cec482d0bde5423cef0bd836dc2b6b8fa4445226bd2ab8df1b44eaefccd627",
+      "subject_content_sha256": "41e35ea18bf69a24149cd42fae09cd0e6d12e9016715b93aa47349548b6a3941"
+    },
+    "natur": {
+      "approved_source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
+      "approved_release_sha256": "21cec482d0bde5423cef0bd836dc2b6b8fa4445226bd2ab8df1b44eaefccd627",
+      "subject_content_sha256": "349c6d081d51588654ef5e1575861118b0792bde64f8383d1061bdbe1472c6ff"
+    },
+    "politikk": {
+      "approved_source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
+      "approved_release_sha256": "21cec482d0bde5423cef0bd836dc2b6b8fa4445226bd2ab8df1b44eaefccd627",
+      "subject_content_sha256": "7798747650cf84cf0f0ee6e4441b95c26b853a700713da5117555fe7b19bf3c0"
+    },
+    "subkultur": {
+      "approved_source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
+      "approved_release_sha256": "21cec482d0bde5423cef0bd836dc2b6b8fa4445226bd2ab8df1b44eaefccd627",
+      "subject_content_sha256": "fe7495e7b655533271f698987a8b075f23ccf0723dbf24c73bbd9f323baa90a0"
+    }
+  },
+  "runtime_activation_allowed": false
+}
