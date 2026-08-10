@@ -1,0 +1,41 @@
+{
+  "schema": "aha_subculture_fagverk_term_policy_v1",
+  "version": "1.0.0",
+  "status": "review_policy_full_fixture_candidate_not_runtime_active",
+  "subject_id": "subkultur",
+  "source_repo": "Paradispartiet/History-Go",
+  "source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
+  "corpus_sha256": "e554b96513313139898a44e98f374d9fea2f01e8c8e8b015dcc5d6fdfa60d7f8",
+  "source_audit_path": "data/integrations/candidates/history-go-fagverk-subkultur.candidate-audit.v1.json",
+  "policy_config_path": "data/integrations/review/history-go-fagverk-subkultur.policy-config.v1.json",
+  "policy_config_version": "1.0.0",
+  "thresholds": {
+    "minimum_score": 7,
+    "minimum_terms": 2,
+    "minimum_reviewed_evidence_terms": 2,
+    "ambiguity_margin": 3
+  },
+  "policy_rules": {
+    "candidate_title_concept_support_terms": "non_decisive_review_context_only",
+    "collision_inventory": "documented_in_source_audit_not_runtime_scoring_input",
+    "generic_language": "non_scoring",
+    "subculture_domain_anchor": "required_for_every_subculture_selection",
+    "chapter_anchor": "required_for_every_chapter",
+    "supplemental_evidence": "at_least_two_chapter_scoped_terms_required"
+  },
+  "summary": {
+    "total": 64,
+    "risks": {
+      "high": 40,
+      "medium": 24,
+      "low": 0
+    },
+    "chapter_count": 8,
+    "module_file_count": 24,
+    "required_anchor_count": 40,
+    "supplemental_evidence_count": 40
+  },
+  "approval_required": true,
+  "runtime_activation_allowed": false,
+  "explicit_runtime_activation_pull_request_required": true
+}

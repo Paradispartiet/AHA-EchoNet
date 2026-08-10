@@ -1,0 +1,193 @@
+{
+  "schema": "aha_subculture_fagverk_evaluation_matrix_v1",
+  "version": "1.0.0",
+  "subject_id": "subkultur",
+  "source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
+  "corpus_sha256": "e554b96513313139898a44e98f374d9fea2f01e8c8e8b015dcc5d6fdfa60d7f8",
+  "positive_cases": [
+    {
+      "id": "subculture-positive-01",
+      "text": "Vi undersøker scene og fellesskap. uformelle portvoktere styrer adgang. gradvis deltakelse lærer normer og roller.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "fellesskap_scener_egenorganisering"
+    },
+    {
+      "id": "subculture-positive-02",
+      "text": "Vi undersøker kommersialisering. varer billetter og sponsorater endrer adgang. uformelle praksiser får faste regler og finansiering.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "kommersialisering_institusjonalisering_minne"
+    },
+    {
+      "id": "subculture-positive-03",
+      "text": "Vi undersøker diy-praksis. selvpublisering fungerer som organisatorisk strategi. fanzinen binder informasjon estetikk og intern debatt.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "medier_objekter_praksiser"
+    },
+    {
+      "id": "subculture-positive-04",
+      "text": "Vi undersøker moralpanikk. stempling definerer praksiser som avvik. symboltung bekymring fremstiller gruppen som samfunnstrussel.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "motstand_avvik_kontroll"
+    },
+    {
+      "id": "subculture-positive-05",
+      "text": "Vi undersøker skadereduksjon og lavterskeltiltak. lavterskelhjelp reduserer skade uten rusfrihetskrav. uformell deling av mat vern og informasjon.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "sosiale_randsoner_omsorg_skadereduksjon"
+    },
+    {
+      "id": "subculture-positive-06",
+      "text": "Vi undersøker gentrifisering og tap. gjentatt bruk gjør stedet til sosialt knutepunkt. støyregler og arealbruk former scenens rom.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "steder_territorier_okkupering"
+    },
+    {
+      "id": "subculture-positive-07",
+      "text": "Vi undersøker subkulturell stil. klær og symboler markerer intern tilhørighet. kropp og fremføring bærer lærte koder.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "stil_symboler_koder_kropp"
+    },
+    {
+      "id": "subculture-positive-08",
+      "text": "Vi undersøker subkulturell kapital. teorien skiller analytiske kategorier fra deltakernes egne begreper. feltgrensen må dokumenteres empirisk.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "subkulturteori_feltgrenser"
+    }
+  ],
+  "confusion_cases": [
+    {
+      "id": "subculture-confusion-01",
+      "text": "Teksten nevner by, historie, politikk, marked og media, men dokumenterer portvoktere og innvielse. ritualer skaper tilhørighet og minne. dugnad fordeler arbeid og ansvar.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "fellesskap_scener_egenorganisering"
+    },
+    {
+      "id": "subculture-confusion-02",
+      "text": "Teksten nevner by, historie, politikk, marked og media, men dokumenterer institusjonalisering. museum og vern gjør undergrunn bevaringsverdig. arkivet fordeler hvem som blir husket.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "kommersialisering_institusjonalisering_minne"
+    },
+    {
+      "id": "subculture-confusion-03",
+      "text": "Teksten nevner by, historie, politikk, marked og media, men dokumenterer fanziner og plakater. forumtråder bygger felles referanser og grensearbeid. lan-miljøet kombinerer teknisk infrastruktur og kollektiv læring.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "medier_objekter_praksiser"
+    },
+    {
+      "id": "subculture-confusion-04",
+      "text": "Teksten nevner by, historie, politikk, marked og media, men dokumenterer kriminalisering. ordensregulering endrer miljøets handlingsrom. synlighet gir både anerkjennelse og overvåkning.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "motstand_avvik_kontroll"
+    },
+    {
+      "id": "subculture-confusion-05",
+      "text": "Teksten nevner by, historie, politikk, marked og media, men dokumenterer åpne rusmiljøer og gatefellesskap. språk og bilder kan forsterke eller motvirke stigma. ustabile boforhold former tilgang til møteplasser.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "sosiale_randsoner_omsorg_skadereduksjon"
+    },
+    {
+      "id": "subculture-confusion-06",
+      "text": "Teksten nevner by, historie, politikk, marked og media, men dokumenterer graffiti og gatekunst. territoriale koder signaliserer hvem som kjenner området. øvingsrom gir infrastruktur for produksjon og sosialisering.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "steder_territorier_okkupering"
+    },
+    {
+      "id": "subculture-confusion-07",
+      "text": "Teksten nevner by, historie, politikk, marked og media, men dokumenterer kleskode og tilhørighet. stil vurderes ulikt innenfor og utenfor scenen. autentisitet forhandles gjennom tegn og praksis.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "stil_symboler_koder_kropp"
+    },
+    {
+      "id": "subculture-confusion-08",
+      "text": "Teksten nevner by, historie, politikk, marked og media, men dokumenterer feltgrenser. subkulturell kapital fordeler status og anerkjennelse. scene-begrepet kobler steder aktører og praksiser.",
+      "expected_status": "grounded",
+      "expected_chapter_id": "subkulturteori_feltgrenser"
+    }
+  ],
+  "ambiguity_cases": [
+    {
+      "id": "subculture-abstain-01",
+      "text": "Byrommet har benker, trær og mye fotgjengertrafikk, men teksten dokumenterer ingen særskilt scene eller subkulturell praksis.",
+      "allowed_statuses": [
+        "unsupported"
+      ]
+    },
+    {
+      "id": "subculture-abstain-02",
+      "text": "Kommunen regulerer arealbruk og støynivå gjennom ordinære planprosesser uten dokumentasjon av et subkulturelt miljø.",
+      "allowed_statuses": [
+        "unsupported"
+      ]
+    },
+    {
+      "id": "subculture-abstain-03",
+      "text": "Bedriften endrer pris, markedsføring og distribusjon for å øke salget i et konkurranseutsatt marked.",
+      "allowed_statuses": [
+        "unsupported"
+      ]
+    },
+    {
+      "id": "subculture-abstain-04",
+      "text": "Museet katalogiserer historiske gjenstander og arkivmateriale uten at teksten beskriver undergrunn, revival eller subkulturell historiemakt.",
+      "allowed_statuses": [
+        "unsupported"
+      ]
+    },
+    {
+      "id": "subculture-abstain-05",
+      "text": "En ungdom bruker klær og symboler hun liker, men teksten viser ikke lærte interne koder eller et avgrenset miljø.",
+      "allowed_statuses": [
+        "unsupported"
+      ]
+    },
+    {
+      "id": "subculture-abstain-06",
+      "text": "Politiet håndhever trafikkregler under et arrangement uten stempling, moralpanikk eller særskilt kontroll av en subkultur.",
+      "allowed_statuses": [
+        "unsupported"
+      ]
+    },
+    {
+      "id": "subculture-abstain-07",
+      "text": "En digital gruppe deler memes og diskuterer nyheter, men det finnes ingen dokumenterte varige relasjoner, normer eller egne publiseringsformer.",
+      "allowed_statuses": [
+        "unsupported"
+      ]
+    },
+    {
+      "id": "subculture-abstain-08",
+      "text": "Et nabolag opplever prisvekst og flytting, men teksten dokumenterer ikke en scene som mister eller forsvarer konkrete rom.",
+      "allowed_statuses": [
+        "unsupported"
+      ]
+    },
+    {
+      "id": "subculture-abstain-09",
+      "text": "Frivillige arrangerer dugnad i borettslaget uten portvokting, innvielse eller sceneorganisering.",
+      "allowed_statuses": [
+        "unsupported"
+      ]
+    },
+    {
+      "id": "subculture-abstain-10",
+      "text": "Helsevesenet tilbyr lavterskel helsehjelp som ordinær offentlig tjeneste uten dokumentasjon av et sosialt randsonemiljø.",
+      "allowed_statuses": [
+        "unsupported"
+      ]
+    },
+    {
+      "id": "subculture-abstain-11",
+      "text": "En forsker diskuterer feltbegrepet generelt uten subkulturteori, subkulturell kapital eller empirisk avgrensning av en scene.",
+      "allowed_statuses": [
+        "unsupported"
+      ]
+    },
+    {
+      "id": "subculture-abstain-12",
+      "text": "Konserten har publikum, billetter og musikk, men teksten dokumenterer ingen egenorganisert scene, interne koder eller subkulturell grense.",
+      "allowed_statuses": [
+        "unsupported"
+      ]
+    }
+  ]
+}
