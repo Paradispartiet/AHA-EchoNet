@@ -1,0 +1,304 @@
+{
+  "schema": "aha_subculture_fagverk_policy_config_v1",
+  "version": "1.0.0",
+  "subject_id": "subkultur",
+  "source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
+  "corpus_sha256": "e554b96513313139898a44e98f374d9fea2f01e8c8e8b015dcc5d6fdfa60d7f8",
+  "thresholds": {
+    "minimum_score": 7,
+    "minimum_terms": 2,
+    "minimum_reviewed_evidence_terms": 2,
+    "ambiguity_margin": 3
+  },
+  "default_weights": {
+    "title_term": 5,
+    "concept_term": 3,
+    "support_term": 1.5,
+    "supplemental_evidence_term": 4,
+    "down_weight_multiplier": 0.3
+  },
+  "global_non_scoring_terms": [
+    "adgang",
+    "alternativ",
+    "analyse",
+    "analysen",
+    "ansvar",
+    "arbeid",
+    "bruk",
+    "case",
+    "dokumentert",
+    "fellesskap",
+    "historie",
+    "identitet",
+    "kultur",
+    "materiale",
+    "medier",
+    "miljø",
+    "miljøer",
+    "motstand",
+    "normer",
+    "omsorg",
+    "praksis",
+    "regulering",
+    "ressurser",
+    "roller",
+    "rom",
+    "scene",
+    "sosial",
+    "steder",
+    "stil",
+    "symboler",
+    "tilgang",
+    "undersøker"
+  ],
+  "chapter_rules": {
+    "fellesskap_scener_egenorganisering": {
+      "required_anchor_terms": [
+        "scene og fellesskap",
+        "portvoktere og innvielse",
+        "grensearbeid og autentisitet",
+        "ritualer og praksis",
+        "arrangører og dugnad"
+      ],
+      "supplemental_evidence_terms": [
+        {
+          "term": "uformelle portvoktere styrer adgang",
+          "weight": 4
+        },
+        {
+          "term": "gradvis deltakelse lærer normer og roller",
+          "weight": 4
+        },
+        {
+          "term": "ritualer skaper tilhørighet og minne",
+          "weight": 4
+        },
+        {
+          "term": "dugnad fordeler arbeid og ansvar",
+          "weight": 4
+        },
+        {
+          "term": "intern konflikt former scenens organisering",
+          "weight": 4
+        }
+      ]
+    },
+    "kommersialisering_institusjonalisering_minne": {
+      "required_anchor_terms": [
+        "kommersialisering",
+        "institusjonalisering",
+        "kulturarv og undergrunn",
+        "historiemakt",
+        "nostalgi og revival"
+      ],
+      "supplemental_evidence_terms": [
+        {
+          "term": "varer billetter og sponsorater endrer adgang",
+          "weight": 4
+        },
+        {
+          "term": "uformelle praksiser får faste regler og finansiering",
+          "weight": 4
+        },
+        {
+          "term": "museum og vern gjør undergrunn bevaringsverdig",
+          "weight": 4
+        },
+        {
+          "term": "arkivet fordeler hvem som blir husket",
+          "weight": 4
+        },
+        {
+          "term": "revival kuraterer tidligere uttrykk på nytt",
+          "weight": 4
+        }
+      ]
+    },
+    "medier_objekter_praksiser": {
+      "required_anchor_terms": [
+        "diy-praksis",
+        "fanziner og plakater",
+        "nettforum og memer",
+        "gaming og lan",
+        "uavhengige medier"
+      ],
+      "supplemental_evidence_terms": [
+        {
+          "term": "selvpublisering fungerer som organisatorisk strategi",
+          "weight": 4
+        },
+        {
+          "term": "fanzinen binder informasjon estetikk og intern debatt",
+          "weight": 4
+        },
+        {
+          "term": "forumtråder bygger felles referanser og grensearbeid",
+          "weight": 4
+        },
+        {
+          "term": "lan-miljøet kombinerer teknisk infrastruktur og kollektiv læring",
+          "weight": 4
+        },
+        {
+          "term": "uavhengige kanaler utvikler egne publiseringsnormer",
+          "weight": 4
+        }
+      ]
+    },
+    "motstand_avvik_kontroll": {
+      "required_anchor_terms": [
+        "moralpanikk",
+        "kriminalisering",
+        "politi og kontroll",
+        "rett til byen",
+        "kulturpolitikk og subkultur"
+      ],
+      "supplemental_evidence_terms": [
+        {
+          "term": "stempling definerer praksiser som avvik",
+          "weight": 4
+        },
+        {
+          "term": "symboltung bekymring fremstiller gruppen som samfunnstrussel",
+          "weight": 4
+        },
+        {
+          "term": "ordensregulering endrer miljøets handlingsrom",
+          "weight": 4
+        },
+        {
+          "term": "synlighet gir både anerkjennelse og overvåkning",
+          "weight": 4
+        },
+        {
+          "term": "interne normer og sanksjoner regulerer adgang",
+          "weight": 4
+        }
+      ]
+    },
+    "sosiale_randsoner_omsorg_skadereduksjon": {
+      "required_anchor_terms": [
+        "skadereduksjon og lavterskeltiltak",
+        "åpne rusmiljøer og gatefellesskap",
+        "gjensidig hjelp og omsorg",
+        "stigma og representasjon",
+        "skeive miljøer"
+      ],
+      "supplemental_evidence_terms": [
+        {
+          "term": "lavterskelhjelp reduserer skade uten rusfrihetskrav",
+          "weight": 4
+        },
+        {
+          "term": "uformell deling av mat vern og informasjon",
+          "weight": 4
+        },
+        {
+          "term": "språk og bilder kan forsterke eller motvirke stigma",
+          "weight": 4
+        },
+        {
+          "term": "ustabile boforhold former tilgang til møteplasser",
+          "weight": 4
+        },
+        {
+          "term": "erfaringskompetanse endrer hvordan hjelp organiseres",
+          "weight": 4
+        }
+      ]
+    },
+    "steder_territorier_okkupering": {
+      "required_anchor_terms": [
+        "gentrifisering og tap",
+        "graffiti og gatekunst",
+        "klubbkultur og natt",
+        "okkuperte rom",
+        "skate og byrom"
+      ],
+      "supplemental_evidence_terms": [
+        {
+          "term": "gjentatt bruk gjør stedet til sosialt knutepunkt",
+          "weight": 4
+        },
+        {
+          "term": "støyregler og arealbruk former scenens rom",
+          "weight": 4
+        },
+        {
+          "term": "territoriale koder signaliserer hvem som kjenner området",
+          "weight": 4
+        },
+        {
+          "term": "øvingsrom gir infrastruktur for produksjon og sosialisering",
+          "weight": 4
+        },
+        {
+          "term": "prisendring og regulering kan fortrenge miljøet",
+          "weight": 4
+        }
+      ]
+    },
+    "stil_symboler_koder_kropp": {
+      "required_anchor_terms": [
+        "subkulturell stil",
+        "kleskode og tilhørighet",
+        "symbolsk grensearbeid",
+        "kroppslig praksis",
+        "autentisitetskode"
+      ],
+      "supplemental_evidence_terms": [
+        {
+          "term": "klær og symboler markerer intern tilhørighet",
+          "weight": 4
+        },
+        {
+          "term": "kropp og fremføring bærer lærte koder",
+          "weight": 4
+        },
+        {
+          "term": "stil vurderes ulikt innenfor og utenfor scenen",
+          "weight": 4
+        },
+        {
+          "term": "autentisitet forhandles gjennom tegn og praksis",
+          "weight": 4
+        },
+        {
+          "term": "kommersielle kopier kan endre betydningen av symboler",
+          "weight": 4
+        }
+      ]
+    },
+    "subkulturteori_feltgrenser": {
+      "required_anchor_terms": [
+        "subkulturell kapital",
+        "feltgrenser",
+        "scene-teori",
+        "subkulturteori",
+        "postsubkultur"
+      ],
+      "supplemental_evidence_terms": [
+        {
+          "term": "teorien skiller analytiske kategorier fra deltakernes egne begreper",
+          "weight": 4
+        },
+        {
+          "term": "feltgrensen må dokumenteres empirisk",
+          "weight": 4
+        },
+        {
+          "term": "subkulturell kapital fordeler status og anerkjennelse",
+          "weight": 4
+        },
+        {
+          "term": "scene-begrepet kobler steder aktører og praksiser",
+          "weight": 4
+        },
+        {
+          "term": "postsubkultur utfordrer faste medlemskapsgrenser",
+          "weight": 4
+        }
+      ]
+    }
+  }
+}

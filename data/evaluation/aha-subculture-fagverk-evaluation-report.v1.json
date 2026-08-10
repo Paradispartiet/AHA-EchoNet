@@ -1,0 +1,297 @@
+{
+  "schema": "aha_subculture_fagverk_evaluation_report_v1",
+  "version": "1.0.0",
+  "status": "passed_review_gate",
+  "subject_id": "subkultur",
+  "source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
+  "corpus_sha256": "e554b96513313139898a44e98f374d9fea2f01e8c8e8b015dcc5d6fdfa60d7f8",
+  "runtime_activation_allowed": false,
+  "summary": {
+    "total": 28,
+    "passed": 28,
+    "failed": 0,
+    "positive": 8,
+    "confusion": 8,
+    "ambiguity": 12,
+    "chapters_covered": 8,
+    "evidence_errors": 0
+  },
+  "cases": [
+    {
+      "id": "subculture-positive-01",
+      "kind": "positive",
+      "expected_status": "grounded",
+      "expected_chapter_id": "fellesskap_scener_egenorganisering",
+      "actual_status": "grounded",
+      "actual_chapter_id": "fellesskap_scener_egenorganisering",
+      "passed": true
+    },
+    {
+      "id": "subculture-positive-02",
+      "kind": "positive",
+      "expected_status": "grounded",
+      "expected_chapter_id": "kommersialisering_institusjonalisering_minne",
+      "actual_status": "grounded",
+      "actual_chapter_id": "kommersialisering_institusjonalisering_minne",
+      "passed": true
+    },
+    {
+      "id": "subculture-positive-03",
+      "kind": "positive",
+      "expected_status": "grounded",
+      "expected_chapter_id": "medier_objekter_praksiser",
+      "actual_status": "grounded",
+      "actual_chapter_id": "medier_objekter_praksiser",
+      "passed": true
+    },
+    {
+      "id": "subculture-positive-04",
+      "kind": "positive",
+      "expected_status": "grounded",
+      "expected_chapter_id": "motstand_avvik_kontroll",
+      "actual_status": "grounded",
+      "actual_chapter_id": "motstand_avvik_kontroll",
+      "passed": true
+    },
+    {
+      "id": "subculture-positive-05",
+      "kind": "positive",
+      "expected_status": "grounded",
+      "expected_chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+      "actual_status": "grounded",
+      "actual_chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+      "passed": true
+    },
+    {
+      "id": "subculture-positive-06",
+      "kind": "positive",
+      "expected_status": "grounded",
+      "expected_chapter_id": "steder_territorier_okkupering",
+      "actual_status": "grounded",
+      "actual_chapter_id": "steder_territorier_okkupering",
+      "passed": true
+    },
+    {
+      "id": "subculture-positive-07",
+      "kind": "positive",
+      "expected_status": "grounded",
+      "expected_chapter_id": "stil_symboler_koder_kropp",
+      "actual_status": "grounded",
+      "actual_chapter_id": "stil_symboler_koder_kropp",
+      "passed": true
+    },
+    {
+      "id": "subculture-positive-08",
+      "kind": "positive",
+      "expected_status": "grounded",
+      "expected_chapter_id": "subkulturteori_feltgrenser",
+      "actual_status": "grounded",
+      "actual_chapter_id": "subkulturteori_feltgrenser",
+      "passed": true
+    },
+    {
+      "id": "subculture-confusion-01",
+      "kind": "confusion",
+      "expected_status": "grounded",
+      "expected_chapter_id": "fellesskap_scener_egenorganisering",
+      "actual_status": "grounded",
+      "actual_chapter_id": "fellesskap_scener_egenorganisering",
+      "passed": true
+    },
+    {
+      "id": "subculture-confusion-02",
+      "kind": "confusion",
+      "expected_status": "grounded",
+      "expected_chapter_id": "kommersialisering_institusjonalisering_minne",
+      "actual_status": "grounded",
+      "actual_chapter_id": "kommersialisering_institusjonalisering_minne",
+      "passed": true
+    },
+    {
+      "id": "subculture-confusion-03",
+      "kind": "confusion",
+      "expected_status": "grounded",
+      "expected_chapter_id": "medier_objekter_praksiser",
+      "actual_status": "grounded",
+      "actual_chapter_id": "medier_objekter_praksiser",
+      "passed": true
+    },
+    {
+      "id": "subculture-confusion-04",
+      "kind": "confusion",
+      "expected_status": "grounded",
+      "expected_chapter_id": "motstand_avvik_kontroll",
+      "actual_status": "grounded",
+      "actual_chapter_id": "motstand_avvik_kontroll",
+      "passed": true
+    },
+    {
+      "id": "subculture-confusion-05",
+      "kind": "confusion",
+      "expected_status": "grounded",
+      "expected_chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+      "actual_status": "grounded",
+      "actual_chapter_id": "sosiale_randsoner_omsorg_skadereduksjon",
+      "passed": true
+    },
+    {
+      "id": "subculture-confusion-06",
+      "kind": "confusion",
+      "expected_status": "grounded",
+      "expected_chapter_id": "steder_territorier_okkupering",
+      "actual_status": "grounded",
+      "actual_chapter_id": "steder_territorier_okkupering",
+      "passed": true
+    },
+    {
+      "id": "subculture-confusion-07",
+      "kind": "confusion",
+      "expected_status": "grounded",
+      "expected_chapter_id": "stil_symboler_koder_kropp",
+      "actual_status": "grounded",
+      "actual_chapter_id": "stil_symboler_koder_kropp",
+      "passed": true
+    },
+    {
+      "id": "subculture-confusion-08",
+      "kind": "confusion",
+      "expected_status": "grounded",
+      "expected_chapter_id": "subkulturteori_feltgrenser",
+      "actual_status": "grounded",
+      "actual_chapter_id": "subkulturteori_feltgrenser",
+      "passed": true
+    },
+    {
+      "id": "subculture-abstain-01",
+      "kind": "ambiguity",
+      "expected_status": [
+        "unsupported"
+      ],
+      "expected_chapter_id": null,
+      "actual_status": "unsupported",
+      "actual_chapter_id": null,
+      "passed": true
+    },
+    {
+      "id": "subculture-abstain-02",
+      "kind": "ambiguity",
+      "expected_status": [
+        "unsupported"
+      ],
+      "expected_chapter_id": null,
+      "actual_status": "unsupported",
+      "actual_chapter_id": null,
+      "passed": true
+    },
+    {
+      "id": "subculture-abstain-03",
+      "kind": "ambiguity",
+      "expected_status": [
+        "unsupported"
+      ],
+      "expected_chapter_id": null,
+      "actual_status": "unsupported",
+      "actual_chapter_id": null,
+      "passed": true
+    },
+    {
+      "id": "subculture-abstain-04",
+      "kind": "ambiguity",
+      "expected_status": [
+        "unsupported"
+      ],
+      "expected_chapter_id": null,
+      "actual_status": "unsupported",
+      "actual_chapter_id": null,
+      "passed": true
+    },
+    {
+      "id": "subculture-abstain-05",
+      "kind": "ambiguity",
+      "expected_status": [
+        "unsupported"
+      ],
+      "expected_chapter_id": null,
+      "actual_status": "unsupported",
+      "actual_chapter_id": null,
+      "passed": true
+    },
+    {
+      "id": "subculture-abstain-06",
+      "kind": "ambiguity",
+      "expected_status": [
+        "unsupported"
+      ],
+      "expected_chapter_id": null,
+      "actual_status": "unsupported",
+      "actual_chapter_id": null,
+      "passed": true
+    },
+    {
+      "id": "subculture-abstain-07",
+      "kind": "ambiguity",
+      "expected_status": [
+        "unsupported"
+      ],
+      "expected_chapter_id": null,
+      "actual_status": "unsupported",
+      "actual_chapter_id": null,
+      "passed": true
+    },
+    {
+      "id": "subculture-abstain-08",
+      "kind": "ambiguity",
+      "expected_status": [
+        "unsupported"
+      ],
+      "expected_chapter_id": null,
+      "actual_status": "unsupported",
+      "actual_chapter_id": null,
+      "passed": true
+    },
+    {
+      "id": "subculture-abstain-09",
+      "kind": "ambiguity",
+      "expected_status": [
+        "unsupported"
+      ],
+      "expected_chapter_id": null,
+      "actual_status": "unsupported",
+      "actual_chapter_id": null,
+      "passed": true
+    },
+    {
+      "id": "subculture-abstain-10",
+      "kind": "ambiguity",
+      "expected_status": [
+        "unsupported"
+      ],
+      "expected_chapter_id": null,
+      "actual_status": "unsupported",
+      "actual_chapter_id": null,
+      "passed": true
+    },
+    {
+      "id": "subculture-abstain-11",
+      "kind": "ambiguity",
+      "expected_status": [
+        "unsupported"
+      ],
+      "expected_chapter_id": null,
+      "actual_status": "unsupported",
+      "actual_chapter_id": null,
+      "passed": true
+    },
+    {
+      "id": "subculture-abstain-12",
+      "kind": "ambiguity",
+      "expected_status": [
+        "unsupported"
+      ],
+      "expected_chapter_id": null,
+      "actual_status": "unsupported",
+      "actual_chapter_id": null,
+      "passed": true
+    }
+  ]
+}
