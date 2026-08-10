@@ -1,0 +1,115 @@
+{
+  "schema": "aha_by_fagverk_review_config_v1",
+  "version": "1.0.0",
+  "status": "review_policy_full_fixture_candidate_not_runtime_active",
+  "subject_id": "by",
+  "lifecycle_stage": "subject_release_review",
+  "approval_required": true,
+  "activation_allowed": false,
+  "runtime_activation_allowed": false,
+  "scoring": {
+    "title_term": 5,
+    "concept_term": 3,
+    "support_term": 1.5,
+    "supplemental_evidence_term": 3,
+    "down_weight_multiplier": 0.35,
+    "grounded_min_score": 6,
+    "grounded_min_terms": 2,
+    "ambiguity_margin": 3
+  },
+  "collision_policy": {
+    "internal_high_risk": "non_scoring",
+    "internal_medium_risk": "down_weight",
+    "internal_low_risk": "context_only",
+    "cross_subject_min_subjects": 2,
+    "cross_subject_action": "down_weight",
+    "required_anchor_exemption": true
+  },
+  "generic_language_terms": [
+    "aktivitet", "akse", "analyse", "arena", "bruk", "by", "byen", "byrom", "byrommet", "endring",
+    "faktisk", "folk", "hvordan", "hvem", "konflikt", "møte", "møter", "offentlig", "plan", "planer",
+    "praksis", "rom", "saken", "sosial", "spor", "sted", "steder", "system", "tiltak"
+  ],
+  "context_only_terms": [
+    "arkitektur", "bevegelse", "bolig", "gate", "handel", "kontroll", "lys", "lyd", "migrasjon", "nabolag",
+    "nettverk", "område", "plass", "protest", "regler", "risiko", "sentrum", "strøm", "tilgang", "trygghet",
+    "vann", "varme", "vær"
+  ],
+  "abstention_rules": [
+    "Generic spatial or city language never grounds a By chapter by itself.",
+    "Every By chapter requires at least one chapter-specific mandatory anchor.",
+    "At least two scoring evidence terms and score 6 are required for grounding.",
+    "Personal reflection, sport, media, religion, technical work and other domains remain unsupported unless explicit urban-studies evidence crosses the chapter threshold.",
+    "Runtime activation is forbidden in this review stage."
+  ],
+  "chapter_rules": {
+    "administrasjon-plan-kontroll-beredskap": {
+      "required_anchor_terms": ["planvedtak", "ulovlighetsoppfølging", "tilsyn", "beredskap"],
+      "supplemental_evidence_terms": [{"term":"planvedtak","weight":3},{"term":"ulovlighetsoppfølging","weight":3}]
+    },
+    "arbeid-naering-handel-logistikk": {
+      "required_anchor_terms": ["arbeidsby", "logistikk", "varelogistikk"],
+      "supplemental_evidence_terms": [{"term":"arbeidsby","weight":3},{"term":"varelogistikk","weight":3}]
+    },
+    "arkitektur-gatekant-makt-ombruk": {
+      "required_anchor_terms": ["gatekant", "ombruk", "førsteetasjer"],
+      "supplemental_evidence_terms": [{"term":"gatekant","weight":3},{"term":"ombruk","weight":3}]
+    },
+    "arkitektur-type-skala-byform": {
+      "required_anchor_terms": ["hageby", "høyhus", "byform"],
+      "supplemental_evidence_terms": [{"term":"hageby","weight":3},{"term":"høyhus","weight":3}]
+    },
+    "bolig-nabolag-tilgang-endring": {
+      "required_anchor_terms": ["nabolagsendring", "gentrifisering", "bofasthet"],
+      "supplemental_evidence_terms": [{"term":"nabolagsendring","weight":3},{"term":"gentrifisering","weight":3}]
+    },
+    "boligpolitikk-pris-leie-eie-tilgang": {
+      "required_anchor_terms": ["boligbyrde", "boligtrygghet", "leiemarked"],
+      "supplemental_evidence_terms": [{"term":"boligbyrde","weight":3},{"term":"boligtrygghet","weight":3}]
+    },
+    "byliv-hendelser-midlertidighet": {
+      "required_anchor_terms": ["midlertidighet", "arrangementsby", "midlertidig bruk"],
+      "supplemental_evidence_terms": [{"term":"midlertidighet","weight":3},{"term":"arrangementsby","weight":3}]
+    },
+    "byliv-offentlige-rom": {
+      "required_anchor_terms": ["møteplasser", "opphold", "oppholdskvalitet"],
+      "supplemental_evidence_terms": [{"term":"møteplasser","weight":3},{"term":"oppholdskvalitet","weight":3}]
+    },
+    "byliv-rytmer-miks-konflikt": {
+      "required_anchor_terms": ["hverdagsfriksjon", "sosial miks", "byrytmer"],
+      "supplemental_evidence_terms": [{"term":"hverdagsfriksjon","weight":3},{"term":"sosial miks","weight":3}]
+    },
+    "byliv-sosial-offentlighet": {
+      "required_anchor_terms": ["sosial offentlighet", "lavterskel byliv", "venting"],
+      "supplemental_evidence_terms": [{"term":"sosial offentlighet","weight":3},{"term":"lavterskel byliv","weight":3}]
+    },
+    "byliv-stemning-mikrokomfort": {
+      "required_anchor_terms": ["mikrokomfort", "materialitet", "mikroklima"],
+      "supplemental_evidence_terms": [{"term":"mikrokomfort","weight":3},{"term":"materialitet","weight":3}]
+    },
+    "data-styring-kart-plan-medvirkning-algoritmer": {
+      "required_anchor_terms": ["algoritmer", "algoritmisk styring", "datastyring"],
+      "supplemental_evidence_terms": [{"term":"algoritmisk styring","weight":3},{"term":"datastyring","weight":3}]
+    },
+    "historiske-lag-ruiner-minner": {
+      "required_anchor_terms": ["minnespor", "ruiner", "historiske lag"],
+      "supplemental_evidence_terms": [{"term":"minnespor","weight":3},{"term":"ruiner","weight":3}]
+    },
+    "klima-helse-varme-vann-tilgjengelighet": {
+      "required_anchor_terms": ["overvann", "varmeøy", "klimatilpasning"],
+      "supplemental_evidence_terms": [{"term":"overvann","weight":3},{"term":"varmeøy","weight":3}]
+    },
+    "makt-konflikt-protest-grenser-trygghet": {
+      "required_anchor_terms": ["protest", "tilgangskontroll", "bruksgrenser"],
+      "supplemental_evidence_terms": [{"term":"tilgangskontroll","weight":3},{"term":"bruksgrenser","weight":3}]
+    },
+    "regional-global-pendling-migrasjon-sammenligning": {
+      "required_anchor_terms": ["pendling", "migrasjon", "byregion"],
+      "supplemental_evidence_terms": [{"term":"pendling","weight":3},{"term":"byregion","weight":3}]
+    },
+    "urbanisme-idealer-forbindelser-fortetting": {
+      "required_anchor_terms": ["byidealer", "fortetting", "planmodell"],
+      "supplemental_evidence_terms": [{"term":"byidealer","weight":3},{"term":"fortetting","weight":3}]
+    }
+  }
+}

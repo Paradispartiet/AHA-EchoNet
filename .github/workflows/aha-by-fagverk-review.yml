@@ -1,0 +1,43 @@
+name: AHA By Fagverk Review
+
+on:
+  pull_request:
+    paths:
+      - 'data/integrations/candidates/history-go-fagverk-by.*'
+      - 'data/integrations/review/history-go-fagverk-by.*'
+      - 'data/evaluation/aha-by-*'
+      - 'scripts/build-by-fagverk-term-policy.mjs'
+      - 'scripts/evaluate-by-fagverk-policy.mjs'
+      - 'scripts/compare-by-full-fixtures.mjs'
+      - 'scripts/lib/by-fagverk-scoring.mjs'
+      - 'tests/aha-by-fagverk-review.test.cjs'
+      - '.github/workflows/aha-by-fagverk-review.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  review:
+    name: Validate By review policy and fixtures
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Build review-only By term policy
+        run: node scripts/build-by-fagverk-term-policy.mjs --output /tmp/aha-by-policy.json
+      - name: Evaluate 17-chapter constructed matrix
+        run: node scripts/evaluate-by-fagverk-policy.mjs --policy /tmp/aha-by-policy.json --output /tmp/aha-by-evaluation.json
+      - name: Compare all human-reviewed analysis fixtures
+        run: node scripts/compare-by-full-fixtures.mjs --policy /tmp/aha-by-policy.json --output /tmp/aha-by-fixtures.json
+      - name: Verify review contract and runtime boundary
+        run: node tests/aha-by-fagverk-review.test.cjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aha-by-fagverk-review
+          path: |
+            /tmp/aha-by-policy.json
+            /tmp/aha-by-evaluation.json
+            /tmp/aha-by-fixtures.json
