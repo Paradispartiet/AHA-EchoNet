@@ -17,12 +17,48 @@
     "corpus_sha256": "0bd12a658e1b18bac17f1da8c6a251e88ebd8ca9db0ffce9328058a27ffa48bc",
     "chapter_count": 6
   },
-  "gate_summary": {"total":4,"passed":4,"failed":0},
+  "gate_summary": {
+    "total": 4,
+    "passed": 4,
+    "failed": 0
+  },
   "gates": [
-    {"id":"corpus_audit","path":"data/integrations/candidates/history-go-fagverk-kunst.candidate-audit.v1.json","status_field":"gate.passed","status":true,"expected_status":true,"passed":true,"errors":[]},
-    {"id":"review_config","path":"data/integrations/review/history-go-fagverk-kunst.review-config.v1.json","status_field":"status","status":"review_policy_full_fixture_candidate_not_runtime_active","expected_status":"review_policy_full_fixture_candidate_not_runtime_active","passed":true,"errors":[]},
-    {"id":"review_attestation","path":"data/integrations/review/history-go-fagverk-kunst.review-attestation.v1.json","status_field":"status","status":"review_artifacts_attested_passed","expected_status":"review_artifacts_attested_passed","passed":true,"errors":[]},
-    {"id":"evaluation_matrix","path":"data/evaluation/aha-kunst-fagverk-evaluation-matrix.v1.json","status_field":"status","status":"constructed_review_matrix_not_runtime_active","expected_status":"constructed_review_matrix_not_runtime_active","passed":true,"errors":[]}
+    {
+      "id": "corpus_audit",
+      "path": "data/integrations/candidates/history-go-fagverk-kunst.candidate-audit.v1.json",
+      "status_field": "gate.passed",
+      "status": true,
+      "expected_status": true,
+      "passed": true,
+      "errors": []
+    },
+    {
+      "id": "review_config",
+      "path": "data/integrations/review/history-go-fagverk-kunst.review-config.v1.json",
+      "status_field": "status",
+      "status": "review_policy_full_fixture_candidate_not_runtime_active",
+      "expected_status": "review_policy_full_fixture_candidate_not_runtime_active",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "id": "review_attestation",
+      "path": "data/integrations/review/history-go-fagverk-kunst.review-attestation.v1.json",
+      "status_field": "status",
+      "status": "review_artifacts_attested_passed",
+      "expected_status": "review_artifacts_attested_passed",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "id": "evaluation_matrix",
+      "path": "data/evaluation/aha-kunst-fagverk-evaluation-matrix.v1.json",
+      "status_field": "status",
+      "status": "constructed_review_matrix_not_runtime_active",
+      "expected_status": "constructed_review_matrix_not_runtime_active",
+      "passed": true,
+      "errors": []
+    }
   ],
   "errors": [],
   "approval_scope": "subject_review_artifacts_only",
