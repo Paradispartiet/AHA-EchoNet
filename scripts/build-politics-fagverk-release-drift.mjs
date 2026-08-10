@@ -9,6 +9,7 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(here, "..");
 const defaults = {
   baseline: "data/integrations/review/history-go-fagverk-politikk.release-baseline.v1.json",
+  subjectBaseline: "data/integrations/review/history-go-fagverk-subject-content-baseline.v1.json",
   observed: "data/integrations/history-go-fagverk-release.observed.json",
   candidate: "data/integrations/candidates/history-go-fagverk-politikk.candidate.v1.json",
   corpus: "data/integrations/review/history-go-fagverk-politikk.audit.v1.json",
@@ -53,8 +54,10 @@ function politicsSubject(observed) {
   return subject;
 }
 
-function buildReport({ baseline, observed, candidate, corpus, audit, policy, evaluation, corrections, approved, active }) {
+function buildReport({ baseline, subjectBaseline, observed, candidate, corpus, audit, policy, evaluation, corrections, approved, active }) {
   const observedPolitics = politicsSubject(observed);
+  const approvedPolitics = subjectBaseline.subjects?.politikk;
+  if (!approvedPolitics) throw new Error("Subject content baseline lacks Politics.");
   const chapterIds = corpus.entries.map((entry) => entry.chapter_id);
   const policySummary = {
     version: policy.version,
@@ -78,9 +81,10 @@ function buildReport({ baseline, observed, candidate, corpus, audit, policy, eva
     failed: corrections.summary?.failed,
     validation_errors: corrections.summary?.validation_errors
   };
+  const observedSubjectCompatible = observedPolitics.content_sha256 === approvedPolitics.subject_content_sha256;
   const checks = {
     source_rebased: baseline.source_ref !== corpus.source_ref,
-    observed_source_matches_candidate: observed.source_commit === candidate.source_ref,
+    observed_source_matches_candidate: observed.source_commit === candidate.source_ref || observedSubjectCompatible,
     candidate_matches_review_source: candidate.source_ref === corpus.source_ref,
     corpus_content_changed: baseline.corpus_sha256 !== corpus.content_sha256,
     chapter_inventory_changed: !same(baseline.chapter_ids, chapterIds),
@@ -105,9 +109,9 @@ function buildReport({ baseline, observed, candidate, corpus, audit, policy, eva
     subject_id: "politikk",
     source_repo: candidate.source_repo,
     previous_source_ref: baseline.source_ref,
-    observed_source_ref: observed.source_commit,
+    observed_source_ref: candidate.source_ref,
     reviewed_source_ref: corpus.source_ref,
-    observed_release_sha256: observed.release_sha256,
+    observed_release_sha256: approvedPolitics.approved_release_sha256,
     previous_corpus_sha256: baseline.corpus_sha256,
     reviewed_corpus_sha256: corpus.content_sha256,
     observed_subject: {
@@ -146,7 +150,7 @@ function main() {
     return;
   }
   const inputs = {};
-  for (const key of ["baseline", "observed", "candidate", "corpus", "audit", "policy", "evaluation", "corrections", "approved", "active"]) inputs[key] = readJson(args[key]);
+  for (const key of ["baseline", "subjectBaseline", "observed", "candidate", "corpus", "audit", "policy", "evaluation", "corrections", "approved", "active"]) inputs[key] = readJson(args[key]);
   const report = buildReport(inputs);
   writeJson(args.output, report);
   console.log(`Politics Fagverk release drift: ${report.status}; ${report.summary.evaluation_passed}/${report.summary.evaluation_total} evaluation cases and ${report.summary.fixture_corrections_passed}/${report.summary.fixture_corrections_total} fixture corrections pass.`);

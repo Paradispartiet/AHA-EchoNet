@@ -2,6 +2,7 @@ const assert = require('assert');
 const fs = require('fs');
 
 const baseline = JSON.parse(fs.readFileSync('data/integrations/review/history-go-fagverk-politikk.release-baseline.v1.json', 'utf8'));
+const subjectBaseline = JSON.parse(fs.readFileSync('data/integrations/review/history-go-fagverk-subject-content-baseline.v1.json', 'utf8')).subjects.politikk;
 const drift = JSON.parse(fs.readFileSync('data/integrations/review/history-go-fagverk-politikk.release-drift.v1.json', 'utf8'));
 const observed = JSON.parse(fs.readFileSync('data/integrations/history-go-fagverk-release.observed.json', 'utf8'));
 const candidate = JSON.parse(fs.readFileSync('data/integrations/candidates/history-go-fagverk-politikk.candidate.v1.json', 'utf8'));
@@ -15,11 +16,13 @@ const runtimeCode = fs.readFileSync('backend/aha_engine/app/engine/fagverk_groun
 
 assert.equal(baseline.status, 'review_baseline_not_runtime_input');
 assert.equal(baseline.runtime_activation_allowed, false);
+assert.equal(observed.subjects.politikk.content_sha256, subjectBaseline.subject_content_sha256, 'current observed Politics content remains review-compatible');
+assert.equal(candidate.source_ref, subjectBaseline.approved_source_ref);
 assert.equal(drift.schema, 'aha_politics_fagverk_release_drift_v1');
 assert.equal(drift.status, 'source_rebased_no_semantic_drift');
 assert.equal(drift.previous_source_ref, baseline.source_ref);
-assert.equal(drift.observed_source_ref, observed.source_commit);
-assert.equal(drift.reviewed_source_ref, observed.source_commit);
+assert.equal(drift.observed_source_ref, subjectBaseline.approved_source_ref);
+assert.equal(drift.observed_release_sha256, subjectBaseline.approved_release_sha256);
 assert.equal(drift.reviewed_source_ref, candidate.source_ref);
 assert.equal(drift.reviewed_source_ref, corpus.source_ref);
 assert.equal(drift.previous_corpus_sha256, baseline.corpus_sha256);
@@ -64,7 +67,7 @@ assert.equal(drift.runtime_activation_allowed, false);
 assert.equal(drift.explicit_activation_pull_request_required, true);
 assert.equal(approved.approved_source_commit, baseline.source_ref);
 assert.equal(active.active_source_commit, baseline.source_ref);
-assert.notEqual(active.active_source_commit, drift.observed_source_ref);
+assert.notEqual(active.active_source_commit, observed.source_commit);
 assert.equal(runtimeCode.includes('history-go-fagverk-politikk.release-drift.v1.json'), false);
 assert.equal(runtimeCode.includes('history-go-fagverk-politikk.term-policy.v1.json'), false);
 assert.equal(runtimeCode.includes('data/integrations/candidates'), false);

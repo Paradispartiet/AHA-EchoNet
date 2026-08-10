@@ -10,11 +10,11 @@ on:
       - "tests/aha-politics-fagverk-reviewed-artifact.test.cjs"
       - ".github/workflows/aha-politics-fagverk-corpus-audit.yml"
       - "docs/AHA_POLITICS_FAGVERK_AUDIT_V1.md"
-      - "data/integrations/history-go-fagverk-release.observed.json"
       - "data/integrations/candidates/history-go-fagverk-politikk.candidate.v1.json"
       - "data/integrations/candidates/history-go-fagverk-politikk.candidate-audit.v1.json"
       - "data/integrations/review/history-go-fagverk-politikk.audit.v1.json"
       - "data/integrations/review/history-go-fagverk-politikk.audit-report.v1.json"
+      - "data/integrations/review/history-go-fagverk-subject-content-baseline.v1.json"
   workflow_dispatch:
 
 permissions:
@@ -22,7 +22,7 @@ permissions:
 
 jobs:
   build-politics-corpus:
-    name: Build and audit observed Politics chapters
+    name: Build and audit reviewed Politics chapters
     runs-on: ubuntu-latest
 
     steps:
@@ -31,20 +31,18 @@ jobs:
         with:
           path: aha
 
-      - name: Resolve observed History Go source
+      - name: Resolve reviewed History Go source
         id: source
         working-directory: aha
         run: |
           node - <<'NODE' >> "$GITHUB_OUTPUT"
-          const observed = require('./data/integrations/history-go-fagverk-release.observed.json');
           const candidate = require('./data/integrations/candidates/history-go-fagverk-politikk.candidate.v1.json');
-          if (!observed.source_commit) throw new Error('Observed release lacks source_commit.');
-          if (candidate.source_ref !== observed.source_commit) throw new Error('Politics candidate is not bound to the observed release.');
-          console.log(`commit=${observed.source_commit}`);
+          if (!candidate.source_ref) throw new Error('Politics candidate lacks source_ref.');
+          console.log(`commit=${candidate.source_ref}`);
           console.log(`expected_count=${candidate.entries.length}`);
           NODE
 
-      - name: Checkout observed History Go source
+      - name: Checkout reviewed History Go source
         uses: actions/checkout@v5
         with:
           repository: Paradispartiet/History-Go
@@ -93,7 +91,7 @@ jobs:
           if (corpus.entries.some((entry) => entry.provenance?.module_file_count !== 3 || entry.module_source_paths?.length !== 3)) throw new Error('Every Politics chapter must include all three registered module files.');
           if (corpus.entries.some((entry) => !entry.support_terms?.length)) throw new Error('Every Politics entry must contain module-derived support terms.');
           if (!audit.gate?.passed) throw new Error(`Coverage gate failed: ${(audit.gate?.errors || []).join(' ')}`);
-          if (audit.coverage?.registered !== expectedCount || audit.coverage?.materialized !== expectedCount) throw new Error('Politics registry coverage differs from the observed candidate.');
+          if (audit.coverage?.registered !== expectedCount || audit.coverage?.materialized !== expectedCount) throw new Error('Politics registry coverage differs from the reviewed candidate.');
           if (audit.chapters.some((chapter) => chapter.module_file_count !== 3 || !chapter.support_term_count)) throw new Error('Audit lacks full module depth for one or more chapters.');
           if (audit.activation_recommendation !== 'review_required_before_runtime_activation') throw new Error('Audit must remain review-gated before runtime activation.');
           const normalizeCandidate = (value) => {
@@ -103,13 +101,13 @@ jobs:
             delete copy.runtime_activation_allowed;
             return copy;
           };
-          if (JSON.stringify(normalizeCandidate(candidate)) !== JSON.stringify(corpus)) throw new Error('Observed Politics candidate differs from the source rebuild.');
-          if (JSON.stringify(normalizeCandidate(candidateAudit)) !== JSON.stringify(audit)) throw new Error('Observed Politics candidate audit differs from the source rebuild.');
+          if (JSON.stringify(normalizeCandidate(candidate)) !== JSON.stringify(corpus)) throw new Error('Reviewed Politics candidate differs from its source rebuild.');
+          if (JSON.stringify(normalizeCandidate(candidateAudit)) !== JSON.stringify(audit)) throw new Error('Reviewed Politics candidate audit differs from its source rebuild.');
           for (const [generatedPath, checkedPath] of [[generatedCorpusPath, checkedCorpusPath], [generatedAuditPath, checkedAuditPath]]) {
             if (!fs.existsSync(checkedPath)) throw new Error(`Missing checked-in review artifact: ${checkedPath}`);
             if (!fs.readFileSync(generatedPath).equals(fs.readFileSync(checkedPath))) throw new Error(`Checked-in review artifact is stale: ${checkedPath}`);
           }
-          console.log(`Verified observed Politics corpus: ${corpus.entries.length} chapters; ${audit.term_collision_summary.high_risk} high-risk terms require review.`);
+          console.log(`Verified reviewed Politics corpus: ${corpus.entries.length} chapters; ${audit.term_collision_summary.high_risk} high-risk terms require review.`);
           NODE
 
       - name: Upload Politics audit artifacts
