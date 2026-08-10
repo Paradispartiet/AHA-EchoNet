@@ -44,7 +44,7 @@ jobs:
         run: pip install -r requirements.txt
       - name: Run Python Fagverk runtime tests
         working-directory: backend/aha_engine
-        run: pytest -q tests/test_fagverk_grounding.py
+        run: PYTHONPATH=. pytest -q tests/test_fagverk_grounding.py
       - name: Run full Node suite
         run: npm test
       - name: Remove bootstrap source
