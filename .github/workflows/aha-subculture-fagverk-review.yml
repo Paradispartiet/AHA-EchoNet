@@ -1,58 +1,48 @@
-name: Bootstrap Subculture Fagverk runtime activation
+name: AHA Subculture Fagverk review
 
 on:
-  push:
-    branches:
-      - activation/subkultur-fagverk-v1-runtime
+  pull_request:
+    branches: [main]
+    paths:
+      - "scripts/lib/subculture-fagverk-scoring.mjs"
+      - "scripts/build-subculture-fagverk-term-policy.mjs"
+      - "scripts/build-subculture-fagverk-expansion-review.mjs"
+      - "scripts/evaluate-subculture-fagverk-policy.mjs"
+      - "scripts/compare-subculture-fixture-corrections.mjs"
+      - "data/integrations/review/history-go-fagverk-subkultur.*.v1.json"
+      - "data/evaluation/aha-subculture-*"
+      - "data/integrations/review/history-go-fagverk-subject-approval-registry.v1.json"
+      - "data/integrations/approvals/history-go-fagverk-subkultur.approved.v1.json"
+      - "tests/aha-subculture-fagverk-review.test.cjs"
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  materialize-subculture-runtime:
+  validate-subculture-review:
+    name: Rebuild complete Subculture review package
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-        with:
-          ref: activation/subkultur-fagverk-v1-runtime
       - uses: actions/setup-node@v5
         with:
           node-version: 22
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-      - name: Fix reviewed-to-active transition in bootstrap source
+      - name: Rebuild Subculture review evidence
         run: |
-          python - <<'PY'
-          from pathlib import Path
-          p = Path('scripts/bootstrap-subculture-runtime-activation.py')
-          text = p.read_text(encoding='utf-8')
-          old = '''replace(approval_test,
-                  "assert.equal(runtimeActive.active_subjects.subkultur, undefined);",
-                  "assert.equal(runtimeActive.active_subjects.subkultur.subject_id, 'subkultur');\\nassert.equal(runtimeActive.active_subjects.subkultur.chapter_count, 8);\\nassert.equal(runtimeActive.active_subjects.subkultur.activation_status, 'runtime_subject_active');")'''
-          new = '''replace(approval_test,
-                  "assert.equal(runtimeActive.active_subjects.natur.activation_status, 'runtime_subject_active');",
-                  "assert.equal(runtimeActive.active_subjects.natur.activation_status, 'runtime_subject_active');\\nassert.equal(runtimeActive.active_subjects.subkultur.subject_id, 'subkultur');\\nassert.equal(runtimeActive.active_subjects.subkultur.chapter_count, 8);\\nassert.equal(runtimeActive.active_subjects.subkultur.activation_status, 'runtime_subject_active');")'''
-          if old not in text:
-              raise SystemExit('stale Subculture transition block not found')
-          p.write_text(text.replace(old, new), encoding='utf-8')
-          PY
-      - name: Materialize Subculture runtime
-        run: python scripts/bootstrap-subculture-runtime-activation.py
-      - name: Install Python engine test dependencies
-        working-directory: backend/aha_engine
-        run: pip install -r requirements.txt
-      - name: Run Python Fagverk runtime tests
-        working-directory: backend/aha_engine
-        run: PYTHONPATH=. pytest -q tests/test_fagverk_grounding.py
-      - name: Run full Node suite
-        run: npm test
-      - name: Remove bootstrap source
-        run: rm scripts/bootstrap-subculture-runtime-activation.py
-      - name: Commit materialized activation
+          node scripts/build-subculture-fagverk-term-policy.mjs
+          node scripts/build-subculture-fagverk-expansion-review.mjs
+          node scripts/evaluate-subculture-fagverk-policy.mjs
+          node scripts/compare-subculture-fixture-corrections.mjs
+          node scripts/build-history-go-fagverk-subject-approvals.mjs --subject subkultur
+          node tests/aha-subculture-fagverk-review.test.cjs
+          node tests/aha-fagverk-subject-approvals.test.cjs
+      - name: Verify deterministic parity and runtime isolation
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A ':!.github/workflows/aha-subculture-fagverk-review.yml'
-          git commit -m "Materialize Subculture Fagverk runtime activation"
-          git push origin HEAD:activation/subkultur-fagverk-v1-runtime
+          git diff --exit-code -- \
+            data/integrations/review/history-go-fagverk-subkultur.term-policy.v1.json \
+            data/integrations/review/history-go-fagverk-subkultur.expansion-review.v1.json \
+            data/evaluation/aha-subculture-fagverk-evaluation-report.v1.json \
+            data/evaluation/aha-subculture-fixture-correction-report.v1.json \
+            data/integrations/approvals/history-go-fagverk-subkultur.approved.v1.json
+          node -e 'const r=require("./data/integrations/history-go-fagverk-release.runtime-active.json"); if(r.active_subjects.subkultur||r.effective_entry_count!==59) process.exit(1)'
