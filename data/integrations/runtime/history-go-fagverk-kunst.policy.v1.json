@@ -93,10 +93,22 @@
         "konseptkunst"
       ],
       "supplemental_evidence_terms": [
-        {"term": "ikonografi", "weight": 3},
-        {"term": "appropriasjon", "weight": 3},
-        {"term": "abstraksjon", "weight": 3},
-        {"term": "konseptkunst", "weight": 3}
+        {
+          "term": "ikonografi",
+          "weight": 3
+        },
+        {
+          "term": "appropriasjon",
+          "weight": 3
+        },
+        {
+          "term": "abstraksjon",
+          "weight": 3
+        },
+        {
+          "term": "konseptkunst",
+          "weight": 3
+        }
       ]
     },
     "felt-og-institusjon": {
@@ -107,10 +119,22 @@
         "samlingsproveniens"
       ],
       "supplemental_evidence_terms": [
-        {"term": "kanondannelse", "weight": 3},
-        {"term": "kuratorisk utvalg", "weight": 3},
-        {"term": "kunstnerstyrt", "weight": 3},
-        {"term": "samlingsproveniens", "weight": 3}
+        {
+          "term": "kanondannelse",
+          "weight": 3
+        },
+        {
+          "term": "kuratorisk utvalg",
+          "weight": 3
+        },
+        {
+          "term": "kunstnerstyrt",
+          "weight": 3
+        },
+        {
+          "term": "samlingsproveniens",
+          "weight": 3
+        }
       ]
     },
     "makt-og-legitimitet": {
@@ -121,10 +145,22 @@
         "jurybegrunnelser"
       ],
       "supplemental_evidence_terms": [
-        {"term": "symbolsk kapital", "weight": 3},
-        {"term": "institusjonskritikk", "weight": 3},
-        {"term": "politisk kunst", "weight": 3},
-        {"term": "jurybegrunnelser", "weight": 3}
+        {
+          "term": "symbolsk kapital",
+          "weight": 3
+        },
+        {
+          "term": "institusjonskritikk",
+          "weight": 3
+        },
+        {
+          "term": "politisk kunst",
+          "weight": 3
+        },
+        {
+          "term": "jurybegrunnelser",
+          "weight": 3
+        }
       ]
     },
     "produksjon-og-praksis": {
@@ -135,10 +171,22 @@
         "selvorganisering"
       ],
       "supplemental_evidence_terms": [
-        {"term": "atelier", "weight": 3},
-        {"term": "verksted", "weight": 3},
-        {"term": "kunstnerøkonomi", "weight": 3},
-        {"term": "selvorganisering", "weight": 3}
+        {
+          "term": "atelier",
+          "weight": 3
+        },
+        {
+          "term": "verksted",
+          "weight": 3
+        },
+        {
+          "term": "kunstnerøkonomi",
+          "weight": 3
+        },
+        {
+          "term": "selvorganisering",
+          "weight": 3
+        }
       ]
     },
     "publikum-og-offentlighet": {
@@ -149,10 +197,22 @@
         "resepsjon"
       ],
       "supplemental_evidence_terms": [
-        {"term": "offentlig kunst", "weight": 3},
-        {"term": "publikumsstruktur", "weight": 3},
-        {"term": "monument", "weight": 3},
-        {"term": "resepsjon", "weight": 3}
+        {
+          "term": "offentlig kunst",
+          "weight": 3
+        },
+        {
+          "term": "publikumsstruktur",
+          "weight": 3
+        },
+        {
+          "term": "monument",
+          "weight": 3
+        },
+        {
+          "term": "resepsjon",
+          "weight": 3
+        }
       ]
     },
     "tid-og-transformasjon": {
@@ -163,10 +223,22 @@
         "repetisjon"
       ],
       "supplemental_evidence_terms": [
-        {"term": "epoker", "weight": 3},
-        {"term": "brudd og kontinuitet", "weight": 3},
-        {"term": "hverdagsestetikk", "weight": 3},
-        {"term": "repetisjon", "weight": 3}
+        {
+          "term": "epoker",
+          "weight": 3
+        },
+        {
+          "term": "brudd og kontinuitet",
+          "weight": 3
+        },
+        {
+          "term": "hverdagsestetikk",
+          "weight": 3
+        },
+        {
+          "term": "repetisjon",
+          "weight": 3
+        }
       ]
     }
   },
