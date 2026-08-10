@@ -151,6 +151,7 @@ function buildRuntimeCorpus(config, approval, candidate, reviewPolicy) {
       };
     });
   }
+
   return withDigest({
     schema: "aha_history_go_fagverk_runtime_subject_corpus_v1",
     version: "1.0.0",
@@ -162,7 +163,7 @@ function buildRuntimeCorpus(config, approval, candidate, reviewPolicy) {
     corpus_sha256: candidate.content_sha256,
     chapter_count: candidate.entries.length,
     scoring_mode: config.scoring_mode,
-    projection_mode: config.runtime_corpus_projection || "candidate_entries_v1",
+    ...(config.runtime_corpus_projection ? { projection_mode: config.runtime_corpus_projection } : {}),
     approval_path: config.approval_path,
     entries,
     runtime_activation_allowed: true
@@ -177,6 +178,7 @@ function buildRuntimePolicy(config, approval, candidate, reviewPolicy, attestati
   const reviewRuntimeAllowed = reviewPolicy.runtime_activation_allowed ?? reviewPolicy.activation_allowed;
   if (reviewRuntimeAllowed !== false) throw new Error(`${config.subject_id}: review policy must remain non-runtime before materialization.`);
   const sourcePolicyPayload = { ...reviewPolicy };
+
   return withDigest({
     schema: "aha_history_go_fagverk_runtime_subject_policy_v1",
     version: "1.0.0",
@@ -197,7 +199,7 @@ function buildRuntimePolicy(config, approval, candidate, reviewPolicy, attestati
       source_review_artifact_sha256: attestation.artifact_sha256,
       source_review_head_sha: attestation.review_head_sha
     } : {}),
-    runtime_corpus_projection: config.runtime_corpus_projection || "candidate_entries_v1",
+    ...(config.runtime_corpus_projection ? { runtime_corpus_projection: config.runtime_corpus_projection } : {}),
     scoring_mode: config.scoring_mode,
     thresholds: {
       minimum_score: Number(config.minimum_score),
@@ -206,12 +208,12 @@ function buildRuntimePolicy(config, approval, candidate, reviewPolicy, attestati
       ambiguity_margin: Number(config.ambiguity_margin)
     },
     default_weights: reviewPolicy.default_weights,
-    policy_rules: reviewPolicy.policy_rules || {},
-    global_non_scoring_terms: reviewPolicy.global_non_scoring_terms || [],
+    policy_rules: reviewPolicy.policy_rules,
+    global_non_scoring_terms: reviewPolicy.global_non_scoring_terms,
     ...(reviewPolicy.temporal_gate ? { temporal_gate: reviewPolicy.temporal_gate } : {}),
     ...(reviewPolicy.domain_gate ? { domain_gate: reviewPolicy.domain_gate } : {}),
     chapter_rules: reviewPolicy.chapter_rules,
-    terms: reviewPolicy.terms || [],
+    terms: reviewPolicy.terms,
     approval_path: config.approval_path,
     runtime_activation_allowed: true
   });
@@ -219,7 +221,10 @@ function buildRuntimePolicy(config, approval, candidate, reviewPolicy, attestati
 
 function main() {
   const args = parseArgs(process.argv.slice(2));
-  if (args.help) { console.log("Usage: node scripts/build-history-go-fagverk-runtime-activation.mjs [--output-root path]"); return; }
+  if (args.help) {
+    console.log("Usage: node scripts/build-history-go-fagverk-runtime-activation.mjs [--output-root path]");
+    return;
+  }
   const registry = readJson(args.registry);
   if (registry.schema !== "aha_history_go_fagverk_runtime_registry_v1") throw new Error("Unsupported runtime registry schema.");
   const legacyCorpus = readJson(registry.legacy_seed.corpus_path);
@@ -235,7 +240,9 @@ function main() {
     const candidate = readJson(config.candidate_corpus_path);
     validateApproval(config, approval);
     const attestation = validateReviewAttestation(config, candidate);
-    const sourceReviewPolicy = config.review_policy_path ? readJson(config.review_policy_path) : synthesizeReviewPolicy(config, candidate, attestation);
+    const sourceReviewPolicy = config.review_policy_path
+      ? readJson(config.review_policy_path)
+      : synthesizeReviewPolicy(config, candidate, attestation);
     const reviewPolicy = hydrateReviewPolicy(config, sourceReviewPolicy, candidate);
     const runtimeCorpus = buildRuntimeCorpus(config, approval, candidate, reviewPolicy);
     const runtimePolicy = buildRuntimePolicy(config, approval, candidate, reviewPolicy, attestation);
@@ -265,18 +272,40 @@ function main() {
     overridden_subject_ids: activatedSubjectIds
   };
   const approved = withDigest({
-    schema: "aha_history_go_fagverk_approved_runtime_v2", version: "2.0.0", status: "partial_subject_runtime_approved",
-    source_repo: legacyCorpus.source_repo, approved_source_commit: legacyCorpus.source_ref, legacy_seed: legacySeed,
-    approved_subjects: approvedSubjects, full_release_approved: false,
-    activation_rules: { subject_review_approval_required: true, runtime_artifacts_must_be_materialized: true, subject_policy_required_when_registered: true, approval_does_not_activate_unregistered_subjects: true, explicit_activation_pull_request_required: true }
+    schema: "aha_history_go_fagverk_approved_runtime_v2",
+    version: "2.0.0",
+    status: "partial_subject_runtime_approved",
+    source_repo: legacyCorpus.source_repo,
+    approved_source_commit: legacyCorpus.source_ref,
+    legacy_seed: legacySeed,
+    approved_subjects: approvedSubjects,
+    full_release_approved: false,
+    activation_rules: {
+      subject_review_approval_required: true,
+      runtime_artifacts_must_be_materialized: true,
+      subject_policy_required_when_registered: true,
+      approval_does_not_activate_unregistered_subjects: true,
+      explicit_activation_pull_request_required: true
+    }
   });
   const active = withDigest({
-    schema: "aha_history_go_fagverk_runtime_active_v2", version: "2.0.0", status: "partial_subject_runtime_active",
-    source_repo: legacyCorpus.source_repo, active_source_commit: legacyCorpus.source_ref, legacy_seed: legacySeed,
+    schema: "aha_history_go_fagverk_runtime_active_v2",
+    version: "2.0.0",
+    status: "partial_subject_runtime_active",
+    source_repo: legacyCorpus.source_repo,
+    active_source_commit: legacyCorpus.source_ref,
+    legacy_seed: legacySeed,
     active_subjects: activeSubjects,
-    effective_entry_count: legacyCorpus.entries.filter((entry) => !activatedSubjectIds.includes(entry.subject_id)).length + Object.values(activeSubjects).reduce((sum, item) => sum + item.chapter_count, 0),
+    effective_entry_count: legacyCorpus.entries.filter((entry) => !activatedSubjectIds.includes(entry.subject_id)).length
+      + Object.values(activeSubjects).reduce((sum, item) => sum + item.chapter_count, 0),
     full_release_active: false,
-    activation_rules: { active_subjects_override_legacy_subject_entries: true, unregistered_candidates_are_not_runtime: true, subject_policy_is_runtime_input_only_after_materialization: true, no_runtime_network_fetch: true, no_history_go_writeback: true }
+    activation_rules: {
+      active_subjects_override_legacy_subject_entries: true,
+      unregistered_candidates_are_not_runtime: true,
+      subject_policy_is_runtime_input_only_after_materialization: true,
+      no_runtime_network_fetch: true,
+      no_history_go_writeback: true
+    }
   });
   writeJson(args.approved, approved, args.outputRoot);
   writeJson(args.active, active, args.outputRoot);
