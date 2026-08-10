@@ -135,6 +135,7 @@ jobs:
             delete copy.source_ref;
             delete copy.registry_version;
             delete copy.release_sha256;
+            delete copy.title;
             return copy;
           };
 
