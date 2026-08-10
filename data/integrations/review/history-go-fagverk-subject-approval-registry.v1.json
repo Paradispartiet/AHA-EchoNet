@@ -1,14 +1,13 @@
 {
   "schema": "aha_history_go_fagverk_subject_approval_registry_v1",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "status": "review_gate_registry_not_runtime_input",
   "subjects": {
     "historie": {
-      "subject_id": "historie",
-      "approval_path": "data/integrations/approvals/history-go-fagverk-historie.approved.v1.json",
-      "candidate": {"path":"data/integrations/candidates/history-go-fagverk-historie.candidate.v1.json","source_ref_field":"source_ref","digest_field":"content_sha256"},
-      "review_corpus": {"path":"data/integrations/candidates/history-go-fagverk-historie.candidate.v1.json","source_ref_field":"source_ref","digest_field":"content_sha256"},
-      "gates": [
+      "subject_id":"historie","approval_path":"data/integrations/approvals/history-go-fagverk-historie.approved.v1.json",
+      "candidate":{"path":"data/integrations/candidates/history-go-fagverk-historie.candidate.v1.json","source_ref_field":"source_ref","digest_field":"content_sha256"},
+      "review_corpus":{"path":"data/integrations/candidates/history-go-fagverk-historie.candidate.v1.json","source_ref_field":"source_ref","digest_field":"content_sha256"},
+      "gates":[
         {"id":"corpus_audit","path":"data/integrations/candidates/history-go-fagverk-historie.candidate-audit.v1.json","status_field":"gate.passed","expected_status":true,"source_ref_field":"source_ref"},
         {"id":"subject_expansion","path":"data/integrations/review/history-go-fagverk-historie.expansion-review.v1.json","status_field":"status","expected_status":"reviewed_subject_expansion_not_runtime_active","source_ref_field":"candidate.source_ref","digest_field":"candidate.corpus_sha256","approval_field":"approval_required","expected_approval":true,"runtime_field":"runtime_activation_allowed","expected_runtime":false},
         {"id":"term_policy","path":"data/integrations/review/history-go-fagverk-historie.term-policy.v1.json","status_field":"status","expected_status":"review_policy_full_fixture_candidate_not_runtime_active","source_ref_field":"source_ref","digest_field":"corpus_sha256","approval_field":"approval_required","expected_approval":true,"runtime_field":"runtime_activation_allowed","expected_runtime":false},
@@ -17,11 +16,10 @@
       ]
     },
     "naeringsliv": {
-      "subject_id": "naeringsliv",
-      "approval_path": "data/integrations/approvals/history-go-fagverk-naeringsliv.approved.v1.json",
-      "candidate": {"path":"data/integrations/candidates/history-go-fagverk-naeringsliv.candidate.v1.json","source_ref_field":"source_ref","digest_field":"content_sha256"},
-      "review_corpus": {"path":"data/integrations/candidates/history-go-fagverk-naeringsliv.candidate.v1.json","source_ref_field":"source_ref","digest_field":"content_sha256"},
-      "gates": [
+      "subject_id":"naeringsliv","approval_path":"data/integrations/approvals/history-go-fagverk-naeringsliv.approved.v1.json",
+      "candidate":{"path":"data/integrations/candidates/history-go-fagverk-naeringsliv.candidate.v1.json","source_ref_field":"source_ref","digest_field":"content_sha256"},
+      "review_corpus":{"path":"data/integrations/candidates/history-go-fagverk-naeringsliv.candidate.v1.json","source_ref_field":"source_ref","digest_field":"content_sha256"},
+      "gates":[
         {"id":"corpus_audit","path":"data/integrations/candidates/history-go-fagverk-naeringsliv.candidate-audit.v1.json","status_field":"gate.passed","expected_status":true,"source_ref_field":"source_ref"},
         {"id":"subject_expansion","path":"data/integrations/review/history-go-fagverk-naeringsliv.expansion-review.v1.json","status_field":"status","expected_status":"reviewed_subject_expansion_not_runtime_active","source_ref_field":"candidate.source_ref","digest_field":"candidate.corpus_sha256","approval_field":"approval_required","expected_approval":true,"runtime_field":"runtime_activation_allowed","expected_runtime":false},
         {"id":"term_policy","path":"data/integrations/review/history-go-fagverk-naeringsliv.term-policy.v1.json","status_field":"status","expected_status":"review_policy_full_fixture_candidate_not_runtime_active","source_ref_field":"source_ref","digest_field":"corpus_sha256","approval_field":"approval_required","expected_approval":true,"runtime_field":"runtime_activation_allowed","expected_runtime":false},
@@ -30,11 +28,10 @@
       ]
     },
     "natur": {
-      "subject_id": "natur",
-      "approval_path": "data/integrations/approvals/history-go-fagverk-natur.approved.v1.json",
-      "candidate": {"path":"data/integrations/candidates/history-go-fagverk-natur.candidate.v1.json","source_ref_field":"source_ref","digest_field":"content_sha256"},
-      "review_corpus": {"path":"data/integrations/candidates/history-go-fagverk-natur.candidate.v1.json","source_ref_field":"source_ref","digest_field":"content_sha256"},
-      "gates": [
+      "subject_id":"natur","approval_path":"data/integrations/approvals/history-go-fagverk-natur.approved.v1.json",
+      "candidate":{"path":"data/integrations/candidates/history-go-fagverk-natur.candidate.v1.json","source_ref_field":"source_ref","digest_field":"content_sha256"},
+      "review_corpus":{"path":"data/integrations/candidates/history-go-fagverk-natur.candidate.v1.json","source_ref_field":"source_ref","digest_field":"content_sha256"},
+      "gates":[
         {"id":"corpus_audit","path":"data/integrations/candidates/history-go-fagverk-natur.candidate-audit.v1.json","status_field":"gate.passed","expected_status":true,"source_ref_field":"source_ref"},
         {"id":"subject_expansion","path":"data/integrations/review/history-go-fagverk-natur.expansion-review.v1.json","status_field":"status","expected_status":"reviewed_subject_expansion_not_runtime_active","source_ref_field":"candidate.source_ref","digest_field":"candidate.corpus_sha256","approval_field":"approval_required","expected_approval":true,"runtime_field":"runtime_activation_allowed","expected_runtime":false},
         {"id":"term_policy","path":"data/integrations/review/history-go-fagverk-natur.term-policy.v1.json","status_field":"status","expected_status":"review_policy_full_fixture_candidate_not_runtime_active","source_ref_field":"source_ref","digest_field":"corpus_sha256","approval_field":"approval_required","expected_approval":true,"runtime_field":"runtime_activation_allowed","expected_runtime":false},
@@ -43,11 +40,10 @@
       ]
     },
     "politikk": {
-      "subject_id": "politikk",
-      "approval_path": "data/integrations/approvals/history-go-fagverk-politikk.approved.v1.json",
-      "candidate": {"path":"data/integrations/candidates/history-go-fagverk-politikk.candidate.v1.json","source_ref_field":"source_ref","digest_field":"content_sha256"},
-      "review_corpus": {"path":"data/integrations/review/history-go-fagverk-politikk.audit.v1.json","source_ref_field":"source_ref","digest_field":"content_sha256"},
-      "gates": [
+      "subject_id":"politikk","approval_path":"data/integrations/approvals/history-go-fagverk-politikk.approved.v1.json",
+      "candidate":{"path":"data/integrations/candidates/history-go-fagverk-politikk.candidate.v1.json","source_ref_field":"source_ref","digest_field":"content_sha256"},
+      "review_corpus":{"path":"data/integrations/review/history-go-fagverk-politikk.audit.v1.json","source_ref_field":"source_ref","digest_field":"content_sha256"},
+      "gates":[
         {"id":"corpus_audit","path":"data/integrations/review/history-go-fagverk-politikk.audit-report.v1.json","status_field":"gate.passed","expected_status":true,"source_ref_field":"source_ref"},
         {"id":"release_drift","path":"data/integrations/review/history-go-fagverk-politikk.release-drift.v1.json","status_field":"status","expected_status":"source_rebased_no_semantic_drift","source_ref_field":"reviewed_source_ref","digest_field":"reviewed_corpus_sha256","approval_field":"approval_required","expected_approval":true,"runtime_field":"runtime_activation_allowed","expected_runtime":false},
         {"id":"term_policy","path":"data/integrations/review/history-go-fagverk-politikk.term-policy.v1.json","status_field":"status","expected_status":"review_policy_full_fixture_candidate_not_runtime_active","source_ref_field":"source_ref","digest_field":"corpus_sha256","approval_field":"approval_required","expected_approval":true,"runtime_field":"runtime_activation_allowed","expected_runtime":false},
@@ -56,11 +52,10 @@
       ]
     },
     "subkultur": {
-      "subject_id": "subkultur",
-      "approval_path": "data/integrations/approvals/history-go-fagverk-subkultur.approved.v1.json",
-      "candidate": {"path":"data/integrations/candidates/history-go-fagverk-subkultur.candidate.v1.json","source_ref_field":"source_ref","digest_field":"content_sha256"},
-      "review_corpus": {"path":"data/integrations/candidates/history-go-fagverk-subkultur.candidate.v1.json","source_ref_field":"source_ref","digest_field":"content_sha256"},
-      "gates": [
+      "subject_id":"subkultur","approval_path":"data/integrations/approvals/history-go-fagverk-subkultur.approved.v1.json",
+      "candidate":{"path":"data/integrations/candidates/history-go-fagverk-subkultur.candidate.v1.json","source_ref_field":"source_ref","digest_field":"content_sha256"},
+      "review_corpus":{"path":"data/integrations/candidates/history-go-fagverk-subkultur.candidate.v1.json","source_ref_field":"source_ref","digest_field":"content_sha256"},
+      "gates":[
         {"id":"corpus_audit","path":"data/integrations/candidates/history-go-fagverk-subkultur.candidate-audit.v1.json","status_field":"gate.passed","expected_status":true,"source_ref_field":"source_ref"},
         {"id":"subject_expansion","path":"data/integrations/review/history-go-fagverk-subkultur.expansion-review.v1.json","status_field":"status","expected_status":"reviewed_subject_expansion_not_runtime_active","source_ref_field":"candidate.source_ref","digest_field":"candidate.corpus_sha256","approval_field":"approval_required","expected_approval":true,"runtime_field":"runtime_activation_allowed","expected_runtime":false},
         {"id":"term_policy","path":"data/integrations/review/history-go-fagverk-subkultur.term-policy.v1.json","status_field":"status","expected_status":"review_policy_full_fixture_candidate_not_runtime_active","source_ref_field":"source_ref","digest_field":"corpus_sha256","approval_field":"approval_required","expected_approval":true,"runtime_field":"runtime_activation_allowed","expected_runtime":false},
@@ -69,15 +64,25 @@
       ]
     },
     "by": {
-      "subject_id": "by",
-      "approval_path": "data/integrations/approvals/history-go-fagverk-by.approved.v1.json",
-      "candidate": {"path":"data/integrations/candidates/history-go-fagverk-by.candidate.v1.json","source_ref_field":"source_ref","digest_field":"content_sha256"},
-      "review_corpus": {"path":"data/integrations/candidates/history-go-fagverk-by.candidate.v1.json","source_ref_field":"source_ref","digest_field":"content_sha256"},
-      "gates": [
+      "subject_id":"by","approval_path":"data/integrations/approvals/history-go-fagverk-by.approved.v1.json",
+      "candidate":{"path":"data/integrations/candidates/history-go-fagverk-by.candidate.v1.json","source_ref_field":"source_ref","digest_field":"content_sha256"},
+      "review_corpus":{"path":"data/integrations/candidates/history-go-fagverk-by.candidate.v1.json","source_ref_field":"source_ref","digest_field":"content_sha256"},
+      "gates":[
         {"id":"corpus_audit","path":"data/integrations/candidates/history-go-fagverk-by.candidate-audit.v1.json","status_field":"gate.passed","expected_status":true,"source_ref_field":"source_ref"},
         {"id":"review_config","path":"data/integrations/review/history-go-fagverk-by.review-config.v1.json","status_field":"status","expected_status":"review_policy_full_fixture_candidate_not_runtime_active","source_ref_field":"source_ref","digest_field":"corpus_sha256","approval_field":"approval_required","expected_approval":true,"runtime_field":"runtime_activation_allowed","expected_runtime":false},
         {"id":"review_attestation","path":"data/integrations/review/history-go-fagverk-by.review-attestation.v1.json","status_field":"status","expected_status":"review_artifacts_attested_passed","source_ref_field":"source_ref","digest_field":"corpus_sha256","approval_field":"approval_required","expected_approval":true,"runtime_field":"runtime_activation_allowed","expected_runtime":false},
         {"id":"evaluation_matrix","path":"data/evaluation/aha-by-fagverk-evaluation-matrix.v1.json","status_field":"status","expected_status":"constructed_review_matrix_not_runtime_active","runtime_field":"runtime_activation_allowed","expected_runtime":false}
+      ]
+    },
+    "kunst": {
+      "subject_id":"kunst","approval_path":"data/integrations/approvals/history-go-fagverk-kunst.approved.v1.json",
+      "candidate":{"path":"data/integrations/candidates/history-go-fagverk-kunst.candidate.v1.json","source_ref_field":"source_ref","digest_field":"content_sha256"},
+      "review_corpus":{"path":"data/integrations/candidates/history-go-fagverk-kunst.candidate.v1.json","source_ref_field":"source_ref","digest_field":"content_sha256"},
+      "gates":[
+        {"id":"corpus_audit","path":"data/integrations/candidates/history-go-fagverk-kunst.candidate-audit.v1.json","status_field":"gate.passed","expected_status":true,"source_ref_field":"source_ref"},
+        {"id":"review_config","path":"data/integrations/review/history-go-fagverk-kunst.review-config.v1.json","status_field":"status","expected_status":"review_policy_full_fixture_candidate_not_runtime_active","source_ref_field":"source_ref","digest_field":"corpus_sha256","approval_field":"approval_required","expected_approval":true,"runtime_field":"runtime_activation_allowed","expected_runtime":false},
+        {"id":"review_attestation","path":"data/integrations/review/history-go-fagverk-kunst.review-attestation.v1.json","status_field":"status","expected_status":"review_artifacts_attested_passed","source_ref_field":"source_ref","digest_field":"corpus_sha256","approval_field":"approval_required","expected_approval":true,"runtime_field":"runtime_activation_allowed","expected_runtime":false},
+        {"id":"evaluation_matrix","path":"data/evaluation/aha-kunst-fagverk-evaluation-matrix.v1.json","status_field":"status","expected_status":"constructed_review_matrix_not_runtime_active","runtime_field":"runtime_activation_allowed","expected_runtime":false}
       ]
     }
   },
