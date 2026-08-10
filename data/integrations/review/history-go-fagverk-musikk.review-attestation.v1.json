@@ -1,0 +1,33 @@
+{
+  "schema": "aha_musikk_fagverk_review_attestation_v1",
+  "version": "1.0.0",
+  "status": "review_artifacts_attested_passed",
+  "subject_id": "musikk",
+  "source_repo": "Paradispartiet/History-Go",
+  "source_ref": "d52cebbe2c6c01e5780be301e9b0e4a9c61c5254",
+  "corpus_sha256": "86ec812f4e84e6b7a7761d42da7ac8ac9bb64f72cf247ca00013df359f985a00",
+  "review_head_sha": "e1598523a961e66e002aecfc7617706c10058a3f",
+  "workflow_run_id": 31440869239,
+  "artifact_id": 9082782942,
+  "artifact_name": "aha-musikk-fagverk-review",
+  "artifact_sha256": "66505a9649fb03bd98376c0fcda9722357fb3934161d66d99d383a1a74460bd7",
+  "outputs": {
+    "policy": {
+      "file": "aha-musikk-policy.json",
+      "sha256": "9fc3d670e8d461779222a0d6f70c52f384cecb74e995cbebe0fa4025dd57f32c",
+      "summary": {"total":189,"non_scoring":50,"down_weight":127,"context_only":12}
+    },
+    "evaluation": {
+      "file": "aha-musikk-evaluation.json",
+      "sha256": "76e56b586b451c6d2f093dceb9555fdf9d5a9a9cfeffe72b29d03f5371e044eb",
+      "summary": {"total":24,"passed":24,"failed":0,"positive":16,"abstention":8,"chapters_covered":8,"evidence_errors":0}
+    },
+    "fixtures": {
+      "file": "aha-musikk-fixtures.json",
+      "sha256": "ba85556dfaab9806bae1b4accdc5a248239cae3c970302cbdc78b2a6df11dfce",
+      "summary": {"total":16,"passed":16,"failed":0,"unsupported":16,"false_positives":0,"evidence_errors":0}
+    }
+  },
+  "approval_required": true,
+  "runtime_activation_allowed": false
+}

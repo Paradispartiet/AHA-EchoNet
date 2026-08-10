@@ -1,0 +1,194 @@
+{
+  "schema": "aha_history_go_fagverk_runtime_subject_corpus_v1",
+  "version": "1.0.0",
+  "status": "runtime_subject_corpus_active",
+  "subject_id": "musikk",
+  "source_repo": "Paradispartiet/History-Go",
+  "source_ref": "d52cebbe2c6c01e5780be301e9b0e4a9c61c5254",
+  "registry_version": "2.58.0",
+  "corpus_sha256": "86ec812f4e84e6b7a7761d42da7ac8ac9bb64f72cf247ca00013df359f985a00",
+  "chapter_count": 8,
+  "scoring_mode": "subject_policy_v1",
+  "projection_mode": "reviewed_anchor_projection_v1",
+  "approval_path": "data/integrations/approvals/history-go-fagverk-musikk.approved.v1.json",
+  "entries": [
+    {
+      "subject_id": "musikk",
+      "chapter_id": "etnomusikologi-kultur-samfunn",
+      "primary_domain_id": "etnomusikologi_kultur_samfunn",
+      "title": "Etnomusikologi, kultur og samfunn",
+      "source_path": "data/fagverk/musikk/etnomusikologi-kultur-samfunn.json",
+      "title_terms": [
+        "etnomusikologi",
+        "feltrolle",
+        "fellesskapsstyrt",
+        "diaspora"
+      ],
+      "concept_terms": [],
+      "support_terms": [],
+      "provenance": {
+        "chapter_schema": "history_go_fagverk_chapter_v1",
+        "review_status": "chapter_ready",
+        "source_kind": "canonical_fagverk_chapter",
+        "module_file_count": 3,
+        "runtime_projection": "reviewed_anchor_projection_v1"
+      }
+    },
+    {
+      "subject_id": "musikk",
+      "chapter_id": "framforing-praksis-samspill",
+      "primary_domain_id": "framforing_praksis_samspill",
+      "title": "Framføring, praksis og samspill",
+      "source_path": "data/fagverk/musikk/framforing-praksis-samspill.json",
+      "title_terms": [
+        "ensemblekoordinering",
+        "fortolkningsvariant",
+        "notasjon",
+        "samspill"
+      ],
+      "concept_terms": [],
+      "support_terms": [],
+      "provenance": {
+        "chapter_schema": "history_go_fagverk_chapter_v1",
+        "review_status": "chapter_ready",
+        "source_kind": "canonical_fagverk_chapter",
+        "module_file_count": 3,
+        "runtime_projection": "reviewed_anchor_projection_v1"
+      }
+    },
+    {
+      "subject_id": "musikk",
+      "chapter_id": "historisk-musikkvitenskap-historiografi",
+      "primary_domain_id": "historisk_musikkvitenskap_historiografi",
+      "title": "Historisk musikkvitenskap og historiografi",
+      "source_path": "data/fagverk/musikk/historisk-musikkvitenskap-historiografi.json",
+      "title_terms": [
+        "kildeproveniens",
+        "musikkvitenskap",
+        "periodisering",
+        "sirkulasjoner"
+      ],
+      "concept_terms": [],
+      "support_terms": [],
+      "provenance": {
+        "chapter_schema": "history_go_fagverk_chapter_v1",
+        "review_status": "chapter_ready",
+        "source_kind": "canonical_fagverk_chapter",
+        "module_file_count": 3,
+        "runtime_projection": "reviewed_anchor_projection_v1"
+      }
+    },
+    {
+      "subject_id": "musikk",
+      "chapter_id": "institusjoner-okonomi-politikk-offentlighet",
+      "primary_domain_id": "institusjoner_okonomi_politikk_offentlighet",
+      "title": "Institusjoner, økonomi, politikk og musikalske offentligheter",
+      "source_path": "data/fagverk/musikk/institusjoner-okonomi-politikk-offentlighet.json",
+      "title_terms": [
+        "sceneøkologi",
+        "arkivtilgang",
+        "kulturstøtte",
+        "offentligheter"
+      ],
+      "concept_terms": [],
+      "support_terms": [],
+      "provenance": {
+        "chapter_schema": "history_go_fagverk_chapter_v1",
+        "review_status": "chapter_ready",
+        "source_kind": "canonical_fagverk_chapter",
+        "module_file_count": 3,
+        "runtime_projection": "reviewed_anchor_projection_v1"
+      }
+    },
+    {
+      "subject_id": "musikk",
+      "chapter_id": "lydmedier-teknologi-beregning",
+      "primary_domain_id": "lydmedier_teknologi_beregning",
+      "title": "Lydmedier, teknologi og beregningsmetoder",
+      "source_path": "data/fagverk/musikk/lydmedier-teknologi-beregning.json",
+      "title_terms": [
+        "multisporsesjon",
+        "plattformkuratering",
+        "mir",
+        "sampling"
+      ],
+      "concept_terms": [],
+      "support_terms": [],
+      "provenance": {
+        "chapter_schema": "history_go_fagverk_chapter_v1",
+        "review_status": "chapter_ready",
+        "source_kind": "canonical_fagverk_chapter",
+        "module_file_count": 3,
+        "runtime_projection": "reviewed_anchor_projection_v1"
+      }
+    },
+    {
+      "subject_id": "musikk",
+      "chapter_id": "musikalsk-analyse-lyd-struktur",
+      "primary_domain_id": "musikalsk_analyse_lyd_struktur",
+      "title": "Musikalsk analyse, lyd og struktur",
+      "source_path": "data/fagverk/musikk/musikalsk-analyse-lyd-struktur.json",
+      "title_terms": [
+        "rytmemåling",
+        "tidskodet",
+        "harmoni",
+        "motiv"
+      ],
+      "concept_terms": [],
+      "support_terms": [],
+      "provenance": {
+        "chapter_schema": "history_go_fagverk_chapter_v1",
+        "review_status": "chapter_ready",
+        "source_kind": "canonical_fagverk_chapter",
+        "module_file_count": 3,
+        "runtime_projection": "reviewed_anchor_projection_v1"
+      }
+    },
+    {
+      "subject_id": "musikk",
+      "chapter_id": "norsk-nordisk-samisk-sted-arkiv",
+      "primary_domain_id": "norsk_nordisk_samisk_sted_arkiv",
+      "title": "Norsk, nordisk og samisk musikk; sted og arkiv",
+      "source_path": "data/fagverk/musikk/norsk-nordisk-samisk-sted-arkiv.json",
+      "title_terms": [
+        "joikproveniens",
+        "musikksted",
+        "riksscenen",
+        "fellesskapsmyndighet"
+      ],
+      "concept_terms": [],
+      "support_terms": [],
+      "provenance": {
+        "chapter_schema": "history_go_fagverk_chapter_v1",
+        "review_status": "chapter_ready",
+        "source_kind": "canonical_fagverk_chapter",
+        "module_file_count": 3,
+        "runtime_projection": "reviewed_anchor_projection_v1"
+      }
+    },
+    {
+      "subject_id": "musikk",
+      "chapter_id": "persepsjon-kognisjon-akustikk",
+      "primary_domain_id": "persepsjon_kognisjon_akustikk",
+      "title": "Musikkpersepsjon, kognisjon og akustikk",
+      "source_path": "data/fagverk/musikk/persepsjon-kognisjon-akustikk.json",
+      "title_terms": [
+        "musikkpersepsjon",
+        "familiaritet",
+        "akustikk",
+        "timing"
+      ],
+      "concept_terms": [],
+      "support_terms": [],
+      "provenance": {
+        "chapter_schema": "history_go_fagverk_chapter_v1",
+        "review_status": "chapter_ready",
+        "source_kind": "canonical_fagverk_chapter",
+        "module_file_count": 3,
+        "runtime_projection": "reviewed_anchor_projection_v1"
+      }
+    }
+  ],
+  "runtime_activation_allowed": true,
+  "artifact_sha256": "28026589eeb28ad643a570aa3a24f93e7961ceb2483fd643041f4fa70e8099c5"
+}

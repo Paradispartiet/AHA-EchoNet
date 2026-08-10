@@ -1,0 +1,315 @@
+{
+  "schema": "aha_history_go_fagverk_runtime_subject_policy_v1",
+  "version": "1.0.0",
+  "status": "runtime_subject_policy_active",
+  "subject_id": "musikk",
+  "source_repo": "Paradispartiet/History-Go",
+  "source_ref": "d52cebbe2c6c01e5780be301e9b0e4a9c61c5254",
+  "corpus_sha256": "86ec812f4e84e6b7a7761d42da7ac8ac9bb64f72cf247ca00013df359f985a00",
+  "source_policy_version": "1.0.0",
+  "source_policy_sha256": "031c2104408176fb82524207788399ec25f4981d1aee3c771d1beef3302907b0",
+  "source_policy_config_path": "data/integrations/review/history-go-fagverk-musikk.review-config.v1.json",
+  "source_policy_config_version": "1.0.0",
+  "source_policy_config_sha256": "22f921ab22e84fb3d8bcbd3e0036fa0ab5953e4e76e0e88df2f151fa01b04f89",
+  "source_review_attestation_path": "data/integrations/review/history-go-fagverk-musikk.review-attestation.v1.json",
+  "source_review_artifact_sha256": "66505a9649fb03bd98376c0fcda9722357fb3934161d66d99d383a1a74460bd7",
+  "source_review_head_sha": "e1598523a961e66e002aecfc7617706c10058a3f",
+  "runtime_corpus_projection": "reviewed_anchor_projection_v1",
+  "scoring_mode": "subject_policy_v1",
+  "thresholds": {
+    "minimum_score": 6,
+    "minimum_terms": 2,
+    "ambiguity_margin": 3
+  },
+  "default_weights": {
+    "title_term": 5,
+    "concept_term": 3,
+    "support_term": 1.5
+  },
+  "policy_rules": {},
+  "global_non_scoring_terms": [
+    "analyse",
+    "arkiv",
+    "arbeid",
+    "data",
+    "digital",
+    "form",
+    "historie",
+    "historisk",
+    "institusjon",
+    "institusjoner",
+    "kultur",
+    "lyd",
+    "modell",
+    "musikk",
+    "musikalsk",
+    "musikalske",
+    "offentlig",
+    "offentlighet",
+    "politikk",
+    "praksis",
+    "prosess",
+    "publikum",
+    "rom",
+    "samfunn",
+    "scene",
+    "sted",
+    "struktur",
+    "system",
+    "teknologi",
+    "tilgang",
+    "verk",
+    "økonomi"
+  ],
+  "domain_gate": {
+    "required": true,
+    "terms": [
+      "akustikk",
+      "arkivtilgang",
+      "diaspora",
+      "ensemblekoordinering",
+      "etnomusikologi",
+      "familiaritet",
+      "fellesskapsmyndighet",
+      "fellesskapsstyrt",
+      "feltrolle",
+      "fortolkningsvariant",
+      "harmoni",
+      "joikproveniens",
+      "kildeproveniens",
+      "kulturstøtte",
+      "mir",
+      "motiv",
+      "multisporsesjon",
+      "musikkpersepsjon",
+      "musikksted",
+      "musikkvitenskap",
+      "notasjon",
+      "offentligheter",
+      "periodisering",
+      "plattformkuratering",
+      "riksscenen",
+      "rytmemåling",
+      "sampling",
+      "samspill",
+      "sceneøkologi",
+      "sirkulasjoner",
+      "tidskodet",
+      "timing"
+    ]
+  },
+  "chapter_rules": {
+    "etnomusikologi-kultur-samfunn": {
+      "required_anchor_terms": [
+        "etnomusikologi",
+        "feltrolle",
+        "fellesskapsstyrt",
+        "diaspora"
+      ],
+      "supplemental_evidence_terms": [
+        {
+          "term": "etnomusikologi",
+          "weight": 3
+        },
+        {
+          "term": "feltrolle",
+          "weight": 3
+        },
+        {
+          "term": "fellesskapsstyrt",
+          "weight": 3
+        },
+        {
+          "term": "diaspora",
+          "weight": 3
+        }
+      ]
+    },
+    "framforing-praksis-samspill": {
+      "required_anchor_terms": [
+        "ensemblekoordinering",
+        "fortolkningsvariant",
+        "notasjon",
+        "samspill"
+      ],
+      "supplemental_evidence_terms": [
+        {
+          "term": "ensemblekoordinering",
+          "weight": 3
+        },
+        {
+          "term": "fortolkningsvariant",
+          "weight": 3
+        },
+        {
+          "term": "notasjon",
+          "weight": 3
+        },
+        {
+          "term": "samspill",
+          "weight": 3
+        }
+      ]
+    },
+    "historisk-musikkvitenskap-historiografi": {
+      "required_anchor_terms": [
+        "kildeproveniens",
+        "musikkvitenskap",
+        "periodisering",
+        "sirkulasjoner"
+      ],
+      "supplemental_evidence_terms": [
+        {
+          "term": "kildeproveniens",
+          "weight": 3
+        },
+        {
+          "term": "musikkvitenskap",
+          "weight": 3
+        },
+        {
+          "term": "periodisering",
+          "weight": 3
+        },
+        {
+          "term": "sirkulasjoner",
+          "weight": 3
+        }
+      ]
+    },
+    "institusjoner-okonomi-politikk-offentlighet": {
+      "required_anchor_terms": [
+        "sceneøkologi",
+        "arkivtilgang",
+        "kulturstøtte",
+        "offentligheter"
+      ],
+      "supplemental_evidence_terms": [
+        {
+          "term": "sceneøkologi",
+          "weight": 3
+        },
+        {
+          "term": "arkivtilgang",
+          "weight": 3
+        },
+        {
+          "term": "kulturstøtte",
+          "weight": 3
+        },
+        {
+          "term": "offentligheter",
+          "weight": 3
+        }
+      ]
+    },
+    "lydmedier-teknologi-beregning": {
+      "required_anchor_terms": [
+        "multisporsesjon",
+        "plattformkuratering",
+        "mir",
+        "sampling"
+      ],
+      "supplemental_evidence_terms": [
+        {
+          "term": "multisporsesjon",
+          "weight": 3
+        },
+        {
+          "term": "plattformkuratering",
+          "weight": 3
+        },
+        {
+          "term": "mir",
+          "weight": 3
+        },
+        {
+          "term": "sampling",
+          "weight": 3
+        }
+      ]
+    },
+    "musikalsk-analyse-lyd-struktur": {
+      "required_anchor_terms": [
+        "rytmemåling",
+        "tidskodet",
+        "harmoni",
+        "motiv"
+      ],
+      "supplemental_evidence_terms": [
+        {
+          "term": "rytmemåling",
+          "weight": 3
+        },
+        {
+          "term": "tidskodet",
+          "weight": 3
+        },
+        {
+          "term": "harmoni",
+          "weight": 3
+        },
+        {
+          "term": "motiv",
+          "weight": 3
+        }
+      ]
+    },
+    "norsk-nordisk-samisk-sted-arkiv": {
+      "required_anchor_terms": [
+        "joikproveniens",
+        "musikksted",
+        "riksscenen",
+        "fellesskapsmyndighet"
+      ],
+      "supplemental_evidence_terms": [
+        {
+          "term": "joikproveniens",
+          "weight": 3
+        },
+        {
+          "term": "musikksted",
+          "weight": 3
+        },
+        {
+          "term": "riksscenen",
+          "weight": 3
+        },
+        {
+          "term": "fellesskapsmyndighet",
+          "weight": 3
+        }
+      ]
+    },
+    "persepsjon-kognisjon-akustikk": {
+      "required_anchor_terms": [
+        "musikkpersepsjon",
+        "familiaritet",
+        "akustikk",
+        "timing"
+      ],
+      "supplemental_evidence_terms": [
+        {
+          "term": "musikkpersepsjon",
+          "weight": 3
+        },
+        {
+          "term": "familiaritet",
+          "weight": 3
+        },
+        {
+          "term": "akustikk",
+          "weight": 3
+        },
+        {
+          "term": "timing",
+          "weight": 3
+        }
+      ]
+    }
+  },
+  "terms": [],
+  "approval_path": "data/integrations/approvals/history-go-fagverk-musikk.approved.v1.json",
+  "runtime_activation_allowed": true,
+  "artifact_sha256": "8370439ffd62617ffb293717781382505dcbb3f64700f6628c6f2db5765bc8a9"
+}

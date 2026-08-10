@@ -1,0 +1,38 @@
+{
+  "schema": "aha_musikk_fagverk_review_config_v1",
+  "version": "1.0.0",
+  "status": "review_policy_full_fixture_candidate_not_runtime_active",
+  "subject_id": "musikk",
+  "source_repo": "Paradispartiet/History-Go",
+  "source_ref": "d52cebbe2c6c01e5780be301e9b0e4a9c61c5254",
+  "registry_version": "2.58.0",
+  "corpus_sha256": "86ec812f4e84e6b7a7761d42da7ac8ac9bb64f72cf247ca00013df359f985a00",
+  "lifecycle_stage": "subject_release_review",
+  "approval_required": true,
+  "activation_allowed": false,
+  "runtime_activation_allowed": false,
+  "thresholds": {"minimum_score": 6, "minimum_terms": 2, "ambiguity_margin": 3},
+  "default_weights": {"title_term": 5, "concept_term": 3, "support_term": 1.5},
+  "scoring": {"title_term": 5, "concept_term": 3, "support_term": 1.5, "supplemental_evidence_term": 3, "down_weight_multiplier": 0.35, "grounded_min_score": 6, "grounded_min_terms": 2, "ambiguity_margin": 3},
+  "collision_policy": {"internal_high_risk": "non_scoring", "internal_medium_risk": "down_weight", "internal_low_risk": "context_only", "cross_subject_min_subjects": 2, "cross_subject_action": "down_weight", "required_anchor_exemption": true},
+  "generic_language_terms": ["analyse","arkiv","arbeid","data","digital","form","historie","historisk","institusjon","institusjoner","kultur","lyd","modell","musikk","musikalsk","musikalske","offentlig","offentlighet","politikk","praksis","prosess","publikum","rom","samfunn","scene","sted","struktur","system","teknologi","tilgang","verk","økonomi"],
+  "global_non_scoring_terms": ["analyse","arkiv","arbeid","data","digital","form","historie","historisk","institusjon","institusjoner","kultur","lyd","modell","musikk","musikalsk","musikalske","offentlig","offentlighet","politikk","praksis","prosess","publikum","rom","samfunn","scene","sted","struktur","system","teknologi","tilgang","verk","økonomi"],
+  "context_only_terms": ["identitet","intervju","korpus","migrasjon","nettverk","produksjon","proveniens","resepsjon","rettigheter","ritual","signal","utvalg"],
+  "abstention_rules": [
+    "Generic music, culture, history, technology, sound, institutional or psychological language never grounds a Musikk chapter by itself.",
+    "Every Musikk chapter requires at least one chapter-specific mandatory anchor.",
+    "At least two scoring evidence terms and score 6 are required for grounding.",
+    "General history, psychology, technology, business, politics, religion, urban venue language and personal listening remain unsupported unless explicit music-study evidence crosses a chapter threshold.",
+    "Runtime activation is forbidden in this review stage."
+  ],
+  "chapter_rules": {
+    "etnomusikologi-kultur-samfunn": {"required_anchor_terms": ["etnomusikologi","feltrolle","fellesskapsstyrt","diaspora"], "supplemental_evidence_terms": [{"term":"etnomusikologi","weight":3},{"term":"feltrolle","weight":3},{"term":"fellesskapsstyrt","weight":3},{"term":"diaspora","weight":3}]},
+    "framforing-praksis-samspill": {"required_anchor_terms": ["ensemblekoordinering","fortolkningsvariant","notasjon","samspill"], "supplemental_evidence_terms": [{"term":"ensemblekoordinering","weight":3},{"term":"fortolkningsvariant","weight":3},{"term":"notasjon","weight":3},{"term":"samspill","weight":3}]},
+    "historisk-musikkvitenskap-historiografi": {"required_anchor_terms": ["kildeproveniens","musikkvitenskap","periodisering","sirkulasjoner"], "supplemental_evidence_terms": [{"term":"kildeproveniens","weight":3},{"term":"musikkvitenskap","weight":3},{"term":"periodisering","weight":3},{"term":"sirkulasjoner","weight":3}]},
+    "institusjoner-okonomi-politikk-offentlighet": {"required_anchor_terms": ["sceneøkologi","arkivtilgang","kulturstøtte","offentligheter"], "supplemental_evidence_terms": [{"term":"sceneøkologi","weight":3},{"term":"arkivtilgang","weight":3},{"term":"kulturstøtte","weight":3},{"term":"offentligheter","weight":3}]},
+    "lydmedier-teknologi-beregning": {"required_anchor_terms": ["multisporsesjon","plattformkuratering","mir","sampling"], "supplemental_evidence_terms": [{"term":"multisporsesjon","weight":3},{"term":"plattformkuratering","weight":3},{"term":"mir","weight":3},{"term":"sampling","weight":3}]},
+    "musikalsk-analyse-lyd-struktur": {"required_anchor_terms": ["rytmemåling","tidskodet","harmoni","motiv"], "supplemental_evidence_terms": [{"term":"rytmemåling","weight":3},{"term":"tidskodet","weight":3},{"term":"harmoni","weight":3},{"term":"motiv","weight":3}]},
+    "norsk-nordisk-samisk-sted-arkiv": {"required_anchor_terms": ["joikproveniens","musikksted","riksscenen","fellesskapsmyndighet"], "supplemental_evidence_terms": [{"term":"joikproveniens","weight":3},{"term":"musikksted","weight":3},{"term":"riksscenen","weight":3},{"term":"fellesskapsmyndighet","weight":3}]},
+    "persepsjon-kognisjon-akustikk": {"required_anchor_terms": ["musikkpersepsjon","familiaritet","akustikk","timing"], "supplemental_evidence_terms": [{"term":"musikkpersepsjon","weight":3},{"term":"familiaritet","weight":3},{"term":"akustikk","weight":3},{"term":"timing","weight":3}]}
+  }
+}
