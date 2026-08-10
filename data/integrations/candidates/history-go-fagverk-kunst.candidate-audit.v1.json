@@ -1,34 +1,2676 @@
 {
-  "schema": "aha_history_go_fagverk_package_candidate_audit_v1",
+  "schema": "aha_fagverk_corpus_audit_v1",
   "version": "1.0.0",
-  "candidate_kind": "package_inventory",
-  "lifecycle_stage": "imported_review_candidate_audit",
   "source_repo": "Paradispartiet/History-Go",
-  "source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
-  "release_sha256": "21cec482d0bde5423cef0bd836dc2b6b8fa4445226bd2ab8df1b44eaefccd627",
-  "subject_id": "kunst",
-  "package_status": "complete",
-  "chapter_status": "not_materialized",
+  "source_ref": "d52cebbe2c6c01e5780be301e9b0e4a9c61c5254",
+  "registry_version": "2.58.0",
+  "registry_updated_at": "2026-08-10",
+  "subject_filter": [
+    "kunst"
+  ],
   "coverage": {
-    "declared_package_files": 7,
-    "expected_existing_package_files": 7,
-    "materialized_existing_package_files": 7,
-    "required_package_files": 4,
-    "optional_package_files": 3,
-    "optional_gaps": [],
-    "missing_required_files": [],
-    "missing_chapter_files": []
+    "expected": 6,
+    "registered": 6,
+    "materialized": 6,
+    "missing": [],
+    "unexpected": [],
+    "duplicate_chapter_ids": []
   },
-  "digests": {
-    "package_content_sha256": "cba8fdb754df3a927791a765a0cca57db1f1918e040f75846dd4838c209d99c9",
-    "structure_sha256": "eb91dd117ebbd3c41bfd7afa727884ef0b9a02e2cec14782624366d48e2ec665",
-    "content_sha256": "cba8fdb754df3a927791a765a0cca57db1f1918e040f75846dd4838c209d99c9"
+  "chapters": [
+    {
+      "subject_id": "kunst",
+      "chapter_id": "estetisk-sprak-og-form",
+      "title": "Estetisk språk og form: hvordan verk kommuniserer",
+      "source_path": "data/fagverk/kunst/estetisk-sprak-og-form.json",
+      "module_source_paths": [
+        "data/fagverk/kunst/estetisk-sprak-og-form/01-grunnlag.json",
+        "data/fagverk/kunst/estetisk-sprak-og-form/02-fordypning.json",
+        "data/fagverk/kunst/estetisk-sprak-og-form/03-anvendelse.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 16,
+      "concept_term_count": 34,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "kunst",
+      "chapter_id": "felt-og-institusjon",
+      "title": "Felt og institusjon: hvem gjør kunst synlig, varig og legitim?",
+      "source_path": "data/fagverk/kunst/felt-og-institusjon.json",
+      "module_source_paths": [
+        "data/fagverk/kunst/felt-og-institusjon/01-grunnlag.json",
+        "data/fagverk/kunst/felt-og-institusjon/02-fordypning.json",
+        "data/fagverk/kunst/felt-og-institusjon/03-anvendelse.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 17,
+      "concept_term_count": 25,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "kunst",
+      "chapter_id": "makt-og-legitimitet",
+      "title": "Makt og legitimitet: hvem definerer kunstens verdi?",
+      "source_path": "data/fagverk/kunst/makt-og-legitimitet.json",
+      "module_source_paths": [
+        "data/fagverk/kunst/makt-og-legitimitet/01-grunnlag.json",
+        "data/fagverk/kunst/makt-og-legitimitet/02-fordypning.json",
+        "data/fagverk/kunst/makt-og-legitimitet/03-anvendelse.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 17,
+      "concept_term_count": 34,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "kunst",
+      "chapter_id": "produksjon-og-praksis",
+      "title": "Produksjon og praksis: hvordan kunst blir til",
+      "source_path": "data/fagverk/kunst/produksjon-og-praksis.json",
+      "module_source_paths": [
+        "data/fagverk/kunst/produksjon-og-praksis/01-grunnlag.json",
+        "data/fagverk/kunst/produksjon-og-praksis/02-fordypning.json",
+        "data/fagverk/kunst/produksjon-og-praksis/03-anvendelse.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 12,
+      "concept_term_count": 32,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "kunst",
+      "chapter_id": "publikum-og-offentlighet",
+      "title": "Publikum og offentlighet: hvor og hvordan kunst blir felles",
+      "source_path": "data/fagverk/kunst/publikum-og-offentlighet.json",
+      "module_source_paths": [
+        "data/fagverk/kunst/publikum-og-offentlighet/01-grunnlag.json",
+        "data/fagverk/kunst/publikum-og-offentlighet/02-fordypning.json",
+        "data/fagverk/kunst/publikum-og-offentlighet/03-anvendelse.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 15,
+      "concept_term_count": 35,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "kunst",
+      "chapter_id": "tid-og-transformasjon",
+      "title": "Tid og transformasjon: hvordan kunsthistorien blir skrevet om",
+      "source_path": "data/fagverk/kunst/tid-og-transformasjon.json",
+      "module_source_paths": [
+        "data/fagverk/kunst/tid-og-transformasjon/01-grunnlag.json",
+        "data/fagverk/kunst/tid-og-transformasjon/02-fordypning.json",
+        "data/fagverk/kunst/tid-og-transformasjon/03-anvendelse.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 16,
+      "concept_term_count": 32,
+      "support_term_count": 48
+    }
+  ],
+  "term_collision_summary": {
+    "total": 66,
+    "high_risk": 27,
+    "medium_risk": 39,
+    "low_risk": 0
   },
-  "activation_recommendation": "subject_specific_review_gates_required_before_runtime_activation",
-  "approval_required": true,
-  "runtime_activation_allowed": false,
+  "high_risk_terms": [
+    {
+      "term": "beskriver",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "estetisk-sprak-og-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "felt-og-institusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-og-legitimitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "produksjon-og-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-og-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "tid-og-transformasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "dokumenterer",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "estetisk-sprak-og-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "felt-og-institusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-og-legitimitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "produksjon-og-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-og-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "tid-og-transformasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "men",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "estetisk-sprak-og-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "felt-og-institusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-og-legitimitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "produksjon-og-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-og-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "tid-og-transformasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "derfor",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "estetisk-sprak-og-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "felt-og-institusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-og-legitimitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "produksjon-og-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "tid-og-transformasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "dokumentert",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "estetisk-sprak-og-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-og-legitimitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "produksjon-og-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-og-offentlighet",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "tid-og-transformasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "gjør",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "estetisk-sprak-og-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "felt-og-institusjon",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "produksjon-og-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-og-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "tid-og-transformasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "uten",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "estetisk-sprak-og-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "felt-og-institusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-og-legitimitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "produksjon-og-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-og-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "verk",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "estetisk-sprak-og-form",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "felt-og-institusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-og-legitimitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-og-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "tid-og-transformasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "viser",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "felt-og-institusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-og-legitimitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "produksjon-og-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-og-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "tid-og-transformasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "alene",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "makt-og-legitimitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "produksjon-og-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-og-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "tid-og-transformasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "bare",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "felt-og-institusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-og-legitimitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "produksjon-og-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-og-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "før",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "estetisk-sprak-og-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "felt-og-institusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "produksjon-og-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "tid-og-transformasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "hvem",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "felt-og-institusjon",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-og-legitimitet",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "produksjon-og-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-og-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "kunst",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "felt-og-institusjon",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-og-legitimitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "produksjon-og-praksis",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-og-offentlighet",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "munch",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "estetisk-sprak-og-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "felt-og-institusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-og-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "tid-og-transformasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "samme",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "estetisk-sprak-og-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "felt-og-institusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-og-legitimitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-og-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "analysen",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "makt-og-legitimitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "produksjon-og-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-og-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "bruk",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "felt-og-institusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "produksjon-og-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-og-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "digital",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "felt-og-institusjon",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "produksjon-og-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-og-offentlighet",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "ett",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "felt-og-institusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-og-legitimitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "tid-og-transformasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "finansiering",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "felt-og-institusjon",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-og-legitimitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "produksjon-og-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "kunstnere",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "felt-og-institusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-og-legitimitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "produksjon-og-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "materiale",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "estetisk-sprak-og-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "produksjon-og-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "tid-og-transformasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "motiv",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "estetisk-sprak-og-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-og-legitimitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "tid-og-transformasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "senere",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "estetisk-sprak-og-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-og-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "tid-og-transformasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "skill",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "produksjon-og-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-og-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "tid-og-transformasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "språk",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "estetisk-sprak-og-form",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-og-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "tid-og-transformasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    }
+  ],
+  "term_collisions": [
+    {
+      "term": "beskriver",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "estetisk-sprak-og-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "felt-og-institusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-og-legitimitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "produksjon-og-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-og-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "tid-og-transformasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "dokumenterer",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "estetisk-sprak-og-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "felt-og-institusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-og-legitimitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "produksjon-og-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-og-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "tid-og-transformasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "men",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "estetisk-sprak-og-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "felt-og-institusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-og-legitimitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "produksjon-og-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-og-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "tid-og-transformasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "derfor",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "estetisk-sprak-og-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "felt-og-institusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-og-legitimitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "produksjon-og-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "tid-og-transformasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "dokumentert",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "estetisk-sprak-og-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-og-legitimitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "produksjon-og-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-og-offentlighet",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "tid-og-transformasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "gjør",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "estetisk-sprak-og-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "felt-og-institusjon",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "produksjon-og-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-og-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "tid-og-transformasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "uten",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "estetisk-sprak-og-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "felt-og-institusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-og-legitimitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "produksjon-og-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-og-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "verk",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "estetisk-sprak-og-form",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "felt-og-institusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-og-legitimitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-og-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "tid-og-transformasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "viser",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "felt-og-institusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-og-legitimitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "produksjon-og-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-og-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "tid-og-transformasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "alene",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "makt-og-legitimitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "produksjon-og-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-og-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "tid-og-transformasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "bare",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "felt-og-institusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-og-legitimitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "produksjon-og-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-og-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "før",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "estetisk-sprak-og-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "felt-og-institusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "produksjon-og-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "tid-og-transformasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "hvem",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "felt-og-institusjon",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-og-legitimitet",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "produksjon-og-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-og-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "kunst",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "felt-og-institusjon",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-og-legitimitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "produksjon-og-praksis",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-og-offentlighet",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "munch",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "estetisk-sprak-og-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "felt-og-institusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-og-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "tid-og-transformasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "samme",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "estetisk-sprak-og-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "felt-og-institusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-og-legitimitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-og-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "analysen",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "makt-og-legitimitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "produksjon-og-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-og-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "bruk",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "felt-og-institusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "produksjon-og-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-og-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "digital",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "felt-og-institusjon",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "produksjon-og-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-og-offentlighet",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "ett",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "felt-og-institusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-og-legitimitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "tid-og-transformasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "finansiering",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "felt-og-institusjon",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-og-legitimitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "produksjon-og-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "kunstnere",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "felt-og-institusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-og-legitimitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "produksjon-og-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "materiale",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "estetisk-sprak-og-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "produksjon-og-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "tid-og-transformasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "motiv",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "estetisk-sprak-og-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-og-legitimitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "tid-og-transformasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "senere",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "estetisk-sprak-og-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-og-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "tid-og-transformasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "skill",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "produksjon-og-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-og-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "tid-og-transformasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "språk",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "estetisk-sprak-og-form",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-og-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "tid-og-transformasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "adgang",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "produksjon-og-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-og-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "alle",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "felt-og-institusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-og-legitimitet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "astrup",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "estetisk-sprak-og-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "tid-og-transformasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "bestemt",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "felt-og-institusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-og-legitimitet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "både",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "estetisk-sprak-og-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "felt-og-institusjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "dokumentasjon",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "estetisk-sprak-og-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "produksjon-og-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "effekt",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "makt-og-legitimitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "produksjon-og-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "endrer",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "estetisk-sprak-og-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "tid-og-transformasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "endring",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "makt-og-legitimitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "tid-og-transformasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "farge",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "estetisk-sprak-og-form",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "tid-og-transformasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "flere",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "estetisk-sprak-og-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "tid-og-transformasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "fordi",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "estetisk-sprak-og-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "felt-og-institusjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "fortolkning",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "estetisk-sprak-og-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-og-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "historisk",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "estetisk-sprak-og-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "tid-og-transformasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "hus",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "felt-og-institusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-og-legitimitet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "hvilken",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "felt-og-institusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "tid-og-transformasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "hvor",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "estetisk-sprak-og-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-og-offentlighet",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "institusjonell",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "felt-og-institusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-og-legitimitet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "institusjoner",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "makt-og-legitimitet",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "tid-og-transformasjon",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "katalog",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "felt-og-institusjon",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-og-offentlighet",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "kritikk",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "makt-og-legitimitet",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "tid-og-transformasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "kunstnerisk",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "felt-og-institusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "produksjon-og-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "kunstnernes",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "felt-og-institusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-og-legitimitet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "kvalitet",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "makt-og-legitimitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "produksjon-og-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "metadata",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "felt-og-institusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-og-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "motivet",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "estetisk-sprak-og-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "tid-og-transformasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "nasjonalmuseet",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "felt-og-institusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "tid-og-transformasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "oslo",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "makt-og-legitimitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "tid-og-transformasjon",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "over",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "felt-og-institusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-og-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "plattform",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "felt-og-institusjon",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-og-offentlighet",
+          "groups": [
+            "title_terms",
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "representasjon",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "estetisk-sprak-og-form",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-og-legitimitet",
+          "groups": [
+            "title_terms",
+            "concept_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "resepsjon",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "publikum-og-offentlighet",
+          "groups": [
+            "title_terms",
+            "concept_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "tid-og-transformasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "samling",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "felt-og-institusjon",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-og-legitimitet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "samlingen",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "felt-og-institusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "tid-og-transformasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "sammenlign",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "produksjon-og-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "tid-og-transformasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "seg",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "makt-og-legitimitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "produksjon-og-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "sirkulasjon",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "estetisk-sprak-og-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-og-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "tilgang",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "produksjon-og-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-og-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "utvalg",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "felt-og-institusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-og-legitimitet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    }
+  ],
+  "activation_recommendation": "review_required_before_runtime_activation",
   "gate": {
     "passed": true,
     "errors": []
-  }
+  },
+  "lifecycle_stage": "imported_review_candidate_audit",
+  "approval_required": true,
+  "runtime_activation_allowed": false
 }

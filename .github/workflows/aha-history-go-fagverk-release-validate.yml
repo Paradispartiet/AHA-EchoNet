@@ -134,6 +134,7 @@ jobs:
             const copy = JSON.parse(JSON.stringify(value));
             delete copy.source_ref;
             delete copy.registry_version;
+            delete copy.registry_updated_at;
             delete copy.release_sha256;
             delete copy.title;
             return copy;
