@@ -1,0 +1,77 @@
+name: AHA Musikk materialize temp
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'data/integrations/review/history-go-fagverk-musikk.*'
+      - 'data/evaluation/aha-musikk-*'
+      - 'data/integrations/review/history-go-fagverk-subject-content-baseline.v1.json'
+      - '.github/workflows/aha-musikk-materialize-temp.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Add Musikk to approval and runtime registries in workspace
+        run: |
+          node - <<'NODE'
+          const fs = require('fs');
+          const approvalPath = 'data/integrations/review/history-go-fagverk-subject-approval-registry.v1.json';
+          const approval = JSON.parse(fs.readFileSync(approvalPath, 'utf8'));
+          approval.version = '1.7.0';
+          approval.subjects.musikk = {
+            subject_id: 'musikk',
+            approval_path: 'data/integrations/approvals/history-go-fagverk-musikk.approved.v1.json',
+            candidate: {path:'data/integrations/candidates/history-go-fagverk-musikk.candidate.v1.json',source_ref_field:'source_ref',digest_field:'content_sha256'},
+            review_corpus: {path:'data/integrations/candidates/history-go-fagverk-musikk.candidate.v1.json',source_ref_field:'source_ref',digest_field:'content_sha256'},
+            gates: [
+              {id:'corpus_audit',path:'data/integrations/candidates/history-go-fagverk-musikk.candidate-audit.v1.json',status_field:'gate.passed',expected_status:true,source_ref_field:'source_ref'},
+              {id:'review_config',path:'data/integrations/review/history-go-fagverk-musikk.review-config.v1.json',status_field:'status',expected_status:'review_policy_full_fixture_candidate_not_runtime_active',source_ref_field:'source_ref',digest_field:'corpus_sha256',approval_field:'approval_required',expected_approval:true,runtime_field:'runtime_activation_allowed',expected_runtime:false},
+              {id:'review_attestation',path:'data/integrations/review/history-go-fagverk-musikk.review-attestation.v1.json',status_field:'status',expected_status:'review_artifacts_attested_passed',source_ref_field:'source_ref',digest_field:'corpus_sha256',approval_field:'approval_required',expected_approval:true,runtime_field:'runtime_activation_allowed',expected_runtime:false},
+              {id:'evaluation_matrix',path:'data/evaluation/aha-musikk-fagverk-evaluation-matrix.v1.json',status_field:'status',expected_status:'constructed_review_matrix_not_runtime_active',runtime_field:'runtime_activation_allowed',expected_runtime:false}
+            ]
+          };
+          fs.writeFileSync(approvalPath, JSON.stringify(approval,null,2)+'\n');
+
+          const runtimePath = 'data/integrations/runtime/history-go-fagverk-runtime-registry.v1.json';
+          const runtime = JSON.parse(fs.readFileSync(runtimePath, 'utf8'));
+          runtime.version = '1.6.0';
+          runtime.active_subjects.musikk = {
+            subject_id:'musikk',
+            approval_path:'data/integrations/approvals/history-go-fagverk-musikk.approved.v1.json',
+            candidate_corpus_path:'data/integrations/candidates/history-go-fagverk-musikk.candidate.v1.json',
+            review_policy_config_path:'data/integrations/review/history-go-fagverk-musikk.review-config.v1.json',
+            review_attestation_path:'data/integrations/review/history-go-fagverk-musikk.review-attestation.v1.json',
+            runtime_corpus_projection:'reviewed_anchor_projection_v1',
+            runtime_corpus_path:'data/integrations/runtime/history-go-fagverk-musikk.corpus.v1.json',
+            runtime_policy_path:'data/integrations/runtime/history-go-fagverk-musikk.policy.v1.json',
+            scoring_mode:'subject_policy_v1',minimum_score:6,minimum_terms:2,ambiguity_margin:3
+          };
+          fs.writeFileSync(runtimePath, JSON.stringify(runtime,null,2)+'\n');
+          NODE
+      - name: Build deterministic approvals and runtime outputs
+        run: |
+          node scripts/build-history-go-fagverk-subject-approvals.mjs --all --output-root artifacts/subject-approvals
+          cp artifacts/subject-approvals/history-go-fagverk-musikk.approved.v1.json data/integrations/approvals/history-go-fagverk-musikk.approved.v1.json
+          node scripts/build-history-go-fagverk-runtime-activation.mjs --output-root artifacts/runtime
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aha-musikk-materialized
+          path: |
+            data/integrations/review/history-go-fagverk-subject-approval-registry.v1.json
+            data/integrations/runtime/history-go-fagverk-runtime-registry.v1.json
+            artifacts/subject-approvals/history-go-fagverk-musikk.approved.v1.json
+            artifacts/runtime/history-go-fagverk-musikk.corpus.v1.json
+            artifacts/runtime/history-go-fagverk-musikk.policy.v1.json
+            artifacts/runtime/history-go-fagverk-release.approved.json
+            artifacts/runtime/history-go-fagverk-release.runtime-active.json
+          if-no-files-found: error
