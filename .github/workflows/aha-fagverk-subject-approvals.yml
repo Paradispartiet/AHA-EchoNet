@@ -38,6 +38,7 @@ jobs:
           const fs = require('fs');
           const path = require('path');
           const registry = require('./data/integrations/review/history-go-fagverk-subject-approval-registry.v1.json');
+          const baseline = require('./data/integrations/review/history-go-fagverk-subject-content-baseline.v1.json');
           const observed = require('./data/integrations/history-go-fagverk-release.observed.json');
           const runtimeApproved = require('./data/integrations/history-go-fagverk-release.approved.json');
           const runtimeActive = require('./data/integrations/history-go-fagverk-release.runtime-active.json');
@@ -49,8 +50,13 @@ jobs:
             if (!fs.existsSync(config.approval_path)) throw new Error(`${subjectId}: checked approval is missing.`);
             if (!fs.readFileSync(generatedPath).equals(fs.readFileSync(config.approval_path))) throw new Error(`${subjectId}: checked approval is stale.`);
             const approval = JSON.parse(fs.readFileSync(config.approval_path, 'utf8'));
+            const subjectBaseline = baseline.subjects?.[subjectId];
+            const observedSubject = observed.subjects?.[subjectId];
+            if (!subjectBaseline || !observedSubject) throw new Error(`${subjectId}: subject compatibility evidence is missing.`);
             if (approval.status !== 'subject_review_approved_not_runtime_active') throw new Error(`${subjectId}: subject review is not approved.`);
-            if (approval.source_ref !== observed.source_commit) throw new Error(`${subjectId}: subject approval is not bound to the observed release.`);
+            if (approval.source_ref !== subjectBaseline.approved_source_ref) throw new Error(`${subjectId}: subject approval source differs from approved content baseline.`);
+            if (approval.observed_release_sha256 !== subjectBaseline.approved_release_sha256) throw new Error(`${subjectId}: subject approval release differs from approved content baseline.`);
+            if (observedSubject.content_sha256 !== subjectBaseline.subject_content_sha256) throw new Error(`${subjectId}: observed subject content changed and requires re-review.`);
             if (approval.gate_summary?.failed !== 0 || approval.gate_summary?.passed !== approval.gate_summary?.total) throw new Error(`${subjectId}: one or more approval gates failed.`);
             if (approval.runtime_activation_allowed !== false || approval.runtime_approved_pointer_changed !== false || approval.runtime_active_pointer_changed !== false) throw new Error(`${subjectId}: runtime boundary changed.`);
           }
