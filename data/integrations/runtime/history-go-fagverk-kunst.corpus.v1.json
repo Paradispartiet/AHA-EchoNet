@@ -18,10 +18,21 @@
       "primary_domain_id": "estetisk_sprak_form",
       "title": "Estetisk språk og form: hvordan verk kommuniserer",
       "source_path": "data/fagverk/kunst/estetisk-sprak-og-form.json",
-      "title_terms": ["ikonografi", "appropriasjon", "abstraksjon", "konseptkunst"],
+      "title_terms": [
+        "ikonografi",
+        "appropriasjon",
+        "abstraksjon",
+        "konseptkunst"
+      ],
       "concept_terms": [],
       "support_terms": [],
-      "provenance": {"chapter_schema":"history_go_fagverk_chapter_v1","review_status":"chapter_ready","source_kind":"canonical_fagverk_chapter","module_file_count":3,"runtime_projection":"reviewed_anchor_projection_v1"}
+      "provenance": {
+        "chapter_schema": "history_go_fagverk_chapter_v1",
+        "review_status": "chapter_ready",
+        "source_kind": "canonical_fagverk_chapter",
+        "module_file_count": 3,
+        "runtime_projection": "reviewed_anchor_projection_v1"
+      }
     },
     {
       "subject_id": "kunst",
@@ -29,10 +40,21 @@
       "primary_domain_id": "felt_institusjon",
       "title": "Felt og institusjon: hvem gjør kunst synlig, varig og legitim?",
       "source_path": "data/fagverk/kunst/felt-og-institusjon.json",
-      "title_terms": ["kanondannelse", "kuratorisk utvalg", "kunstnerstyrt", "samlingsproveniens"],
+      "title_terms": [
+        "kanondannelse",
+        "kuratorisk utvalg",
+        "kunstnerstyrt",
+        "samlingsproveniens"
+      ],
       "concept_terms": [],
       "support_terms": [],
-      "provenance": {"chapter_schema":"history_go_fagverk_chapter_v1","review_status":"chapter_ready","source_kind":"canonical_fagverk_chapter","module_file_count":3,"runtime_projection":"reviewed_anchor_projection_v1"}
+      "provenance": {
+        "chapter_schema": "history_go_fagverk_chapter_v1",
+        "review_status": "chapter_ready",
+        "source_kind": "canonical_fagverk_chapter",
+        "module_file_count": 3,
+        "runtime_projection": "reviewed_anchor_projection_v1"
+      }
     },
     {
       "subject_id": "kunst",
@@ -40,10 +62,21 @@
       "primary_domain_id": "makt_legitimitet",
       "title": "Makt og legitimitet: hvem definerer kunstens verdi?",
       "source_path": "data/fagverk/kunst/makt-og-legitimitet.json",
-      "title_terms": ["symbolsk kapital", "institusjonskritikk", "politisk kunst", "jurybegrunnelser"],
+      "title_terms": [
+        "symbolsk kapital",
+        "institusjonskritikk",
+        "politisk kunst",
+        "jurybegrunnelser"
+      ],
       "concept_terms": [],
       "support_terms": [],
-      "provenance": {"chapter_schema":"history_go_fagverk_chapter_v1","review_status":"chapter_ready","source_kind":"canonical_fagverk_chapter","module_file_count":3,"runtime_projection":"reviewed_anchor_projection_v1"}
+      "provenance": {
+        "chapter_schema": "history_go_fagverk_chapter_v1",
+        "review_status": "chapter_ready",
+        "source_kind": "canonical_fagverk_chapter",
+        "module_file_count": 3,
+        "runtime_projection": "reviewed_anchor_projection_v1"
+      }
     },
     {
       "subject_id": "kunst",
@@ -51,10 +84,21 @@
       "primary_domain_id": "produksjon_praksis",
       "title": "Produksjon og praksis: hvordan kunst blir til",
       "source_path": "data/fagverk/kunst/produksjon-og-praksis.json",
-      "title_terms": ["atelier", "verksted", "kunstnerøkonomi", "selvorganisering"],
+      "title_terms": [
+        "atelier",
+        "verksted",
+        "kunstnerøkonomi",
+        "selvorganisering"
+      ],
       "concept_terms": [],
       "support_terms": [],
-      "provenance": {"chapter_schema":"history_go_fagverk_chapter_v1","review_status":"chapter_ready","source_kind":"canonical_fagverk_chapter","module_file_count":3,"runtime_projection":"reviewed_anchor_projection_v1"}
+      "provenance": {
+        "chapter_schema": "history_go_fagverk_chapter_v1",
+        "review_status": "chapter_ready",
+        "source_kind": "canonical_fagverk_chapter",
+        "module_file_count": 3,
+        "runtime_projection": "reviewed_anchor_projection_v1"
+      }
     },
     {
       "subject_id": "kunst",
@@ -62,10 +106,21 @@
       "primary_domain_id": "publikum_offentlighet",
       "title": "Publikum og offentlighet: hvor og hvordan kunst blir felles",
       "source_path": "data/fagverk/kunst/publikum-og-offentlighet.json",
-      "title_terms": ["offentlig kunst", "publikumsstruktur", "monument", "resepsjon"],
+      "title_terms": [
+        "offentlig kunst",
+        "publikumsstruktur",
+        "monument",
+        "resepsjon"
+      ],
       "concept_terms": [],
       "support_terms": [],
-      "provenance": {"chapter_schema":"history_go_fagverk_chapter_v1","review_status":"chapter_ready","source_kind":"canonical_fagverk_chapter","module_file_count":3,"runtime_projection":"reviewed_anchor_projection_v1"}
+      "provenance": {
+        "chapter_schema": "history_go_fagverk_chapter_v1",
+        "review_status": "chapter_ready",
+        "source_kind": "canonical_fagverk_chapter",
+        "module_file_count": 3,
+        "runtime_projection": "reviewed_anchor_projection_v1"
+      }
     },
     {
       "subject_id": "kunst",
@@ -73,10 +128,21 @@
       "primary_domain_id": "tid_transformasjon",
       "title": "Tid og transformasjon: hvordan kunsthistorien blir skrevet om",
       "source_path": "data/fagverk/kunst/tid-og-transformasjon.json",
-      "title_terms": ["epoker", "brudd og kontinuitet", "hverdagsestetikk", "repetisjon"],
+      "title_terms": [
+        "epoker",
+        "brudd og kontinuitet",
+        "hverdagsestetikk",
+        "repetisjon"
+      ],
       "concept_terms": [],
       "support_terms": [],
-      "provenance": {"chapter_schema":"history_go_fagverk_chapter_v1","review_status":"chapter_ready","source_kind":"canonical_fagverk_chapter","module_file_count":3,"runtime_projection":"reviewed_anchor_projection_v1"}
+      "provenance": {
+        "chapter_schema": "history_go_fagverk_chapter_v1",
+        "review_status": "chapter_ready",
+        "source_kind": "canonical_fagverk_chapter",
+        "module_file_count": 3,
+        "runtime_projection": "reviewed_anchor_projection_v1"
+      }
     }
   ],
   "runtime_activation_allowed": true,
