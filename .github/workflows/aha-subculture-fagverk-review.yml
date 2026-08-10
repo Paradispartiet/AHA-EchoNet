@@ -1,0 +1,48 @@
+name: AHA Subculture Fagverk review
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "scripts/lib/subculture-fagverk-scoring.mjs"
+      - "scripts/build-subculture-fagverk-term-policy.mjs"
+      - "scripts/build-subculture-fagverk-expansion-review.mjs"
+      - "scripts/evaluate-subculture-fagverk-policy.mjs"
+      - "scripts/compare-subculture-fixture-corrections.mjs"
+      - "data/integrations/review/history-go-fagverk-subkultur.*.v1.json"
+      - "data/evaluation/aha-subculture-*"
+      - "data/integrations/review/history-go-fagverk-subject-approval-registry.v1.json"
+      - "data/integrations/approvals/history-go-fagverk-subkultur.approved.v1.json"
+      - "tests/aha-subculture-fagverk-review.test.cjs"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-subculture-review:
+    name: Rebuild complete Subculture review package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Rebuild Subculture review evidence
+        run: |
+          node scripts/build-subculture-fagverk-term-policy.mjs
+          node scripts/build-subculture-fagverk-expansion-review.mjs
+          node scripts/evaluate-subculture-fagverk-policy.mjs
+          node scripts/compare-subculture-fixture-corrections.mjs
+          node scripts/build-history-go-fagverk-subject-approvals.mjs --subject subkultur
+          node tests/aha-subculture-fagverk-review.test.cjs
+          node tests/aha-fagverk-subject-approvals.test.cjs
+      - name: Verify deterministic parity and runtime isolation
+        run: |
+          git diff --exit-code -- \
+            data/integrations/review/history-go-fagverk-subkultur.term-policy.v1.json \
+            data/integrations/review/history-go-fagverk-subkultur.expansion-review.v1.json \
+            data/evaluation/aha-subculture-fagverk-evaluation-report.v1.json \
+            data/evaluation/aha-subculture-fixture-correction-report.v1.json \
+            data/integrations/approvals/history-go-fagverk-subkultur.approved.v1.json
+          node -e 'const r=require("./data/integrations/history-go-fagverk-release.runtime-active.json"); if(r.active_subjects.subkultur||r.effective_entry_count!==59) process.exit(1)'
