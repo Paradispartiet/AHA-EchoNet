@@ -1,18 +1,7 @@
 name: AHA History Go Fagverk release sync
 
 on:
-  schedule:
-    - cron: '17 * * * *'
-  repository_dispatch:
-    types: [history-go-fagverk-release]
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - 'scripts/sync-history-go-fagverk-release.mjs'
-      - 'scripts/build-history-go-fagverk-candidate.mjs'
-      - 'scripts/build-history-go-fagverk-corpus.mjs'
-      - '.github/workflows/aha-history-go-fagverk-release-sync.yml'
 
 permissions:
   contents: write
