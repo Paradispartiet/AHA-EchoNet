@@ -1,6 +1,6 @@
 {
   "schema": "aha_history_go_fagverk_runtime_registry_v1",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "status": "runtime_activation_registry",
   "legacy_seed": {
     "corpus_path": "data/integrations/history-go-fagverk-corpus.v1.json",
@@ -8,84 +8,13 @@
     "active_path": "data/integrations/history-go-fagverk-release.runtime-active.json"
   },
   "active_subjects": {
-    "historie": {
-      "subject_id": "historie",
-      "approval_path": "data/integrations/approvals/history-go-fagverk-historie.approved.v1.json",
-      "candidate_corpus_path": "data/integrations/candidates/history-go-fagverk-historie.candidate.v1.json",
-      "review_policy_path": "data/integrations/review/history-go-fagverk-historie.term-policy.v1.json",
-      "runtime_corpus_path": "data/integrations/runtime/history-go-fagverk-historie.corpus.v1.json",
-      "runtime_policy_path": "data/integrations/runtime/history-go-fagverk-historie.policy.v1.json",
-      "scoring_mode": "subject_policy_v1",
-      "minimum_score": 7,
-      "minimum_terms": 2,
-      "ambiguity_margin": 3
-    },
-    "naeringsliv": {
-      "subject_id": "naeringsliv",
-      "approval_path": "data/integrations/approvals/history-go-fagverk-naeringsliv.approved.v1.json",
-      "candidate_corpus_path": "data/integrations/candidates/history-go-fagverk-naeringsliv.candidate.v1.json",
-      "review_policy_path": "data/integrations/review/history-go-fagverk-naeringsliv.term-policy.v1.json",
-      "review_policy_config_path": "data/integrations/review/history-go-fagverk-naeringsliv.policy-config.v1.json",
-      "runtime_corpus_path": "data/integrations/runtime/history-go-fagverk-naeringsliv.corpus.v1.json",
-      "runtime_policy_path": "data/integrations/runtime/history-go-fagverk-naeringsliv.policy.v1.json",
-      "scoring_mode": "subject_policy_v1",
-      "minimum_score": 7,
-      "minimum_terms": 2,
-      "minimum_reviewed_evidence_terms": 2,
-      "ambiguity_margin": 3
-    },
-    "natur": {
-      "subject_id": "natur",
-      "approval_path": "data/integrations/approvals/history-go-fagverk-natur.approved.v1.json",
-      "candidate_corpus_path": "data/integrations/candidates/history-go-fagverk-natur.candidate.v1.json",
-      "review_policy_path": "data/integrations/review/history-go-fagverk-natur.term-policy.v1.json",
-      "runtime_corpus_path": "data/integrations/runtime/history-go-fagverk-natur.corpus.v1.json",
-      "runtime_policy_path": "data/integrations/runtime/history-go-fagverk-natur.policy.v1.json",
-      "scoring_mode": "subject_policy_v1",
-      "minimum_score": 7,
-      "minimum_terms": 2,
-      "ambiguity_margin": 3
-    },
-    "politikk": {
-      "subject_id": "politikk",
-      "approval_path": "data/integrations/approvals/history-go-fagverk-politikk.approved.v1.json",
-      "candidate_corpus_path": "data/integrations/candidates/history-go-fagverk-politikk.candidate.v1.json",
-      "review_policy_path": "data/integrations/review/history-go-fagverk-politikk.term-policy.v1.json",
-      "runtime_corpus_path": "data/integrations/runtime/history-go-fagverk-politikk.corpus.v1.json",
-      "runtime_policy_path": "data/integrations/runtime/history-go-fagverk-politikk.policy.v1.json",
-      "scoring_mode": "subject_policy_v1",
-      "minimum_score": 6,
-      "minimum_terms": 2,
-      "ambiguity_margin": 3
-    },
-    "subkultur": {
-      "subject_id": "subkultur",
-      "approval_path": "data/integrations/approvals/history-go-fagverk-subkultur.approved.v1.json",
-      "candidate_corpus_path": "data/integrations/candidates/history-go-fagverk-subkultur.candidate.v1.json",
-      "review_policy_path": "data/integrations/review/history-go-fagverk-subkultur.term-policy.v1.json",
-      "review_policy_config_path": "data/integrations/review/history-go-fagverk-subkultur.policy-config.v1.json",
-      "runtime_corpus_path": "data/integrations/runtime/history-go-fagverk-subkultur.corpus.v1.json",
-      "runtime_policy_path": "data/integrations/runtime/history-go-fagverk-subkultur.policy.v1.json",
-      "scoring_mode": "subject_policy_v1",
-      "minimum_score": 7,
-      "minimum_terms": 2,
-      "minimum_reviewed_evidence_terms": 2,
-      "ambiguity_margin": 3
-    },
-    "by": {
-      "subject_id": "by",
-      "approval_path": "data/integrations/approvals/history-go-fagverk-by.approved.v1.json",
-      "candidate_corpus_path": "data/integrations/candidates/history-go-fagverk-by.candidate.v1.json",
-      "review_policy_config_path": "data/integrations/review/history-go-fagverk-by.review-config.v1.json",
-      "review_attestation_path": "data/integrations/review/history-go-fagverk-by.review-attestation.v1.json",
-      "runtime_corpus_projection": "reviewed_anchor_projection_v1",
-      "runtime_corpus_path": "data/integrations/runtime/history-go-fagverk-by.corpus.v1.json",
-      "runtime_policy_path": "data/integrations/runtime/history-go-fagverk-by.policy.v1.json",
-      "scoring_mode": "subject_policy_v1",
-      "minimum_score": 6,
-      "minimum_terms": 2,
-      "ambiguity_margin": 3
-    }
+    "historie": {"subject_id":"historie","approval_path":"data/integrations/approvals/history-go-fagverk-historie.approved.v1.json","candidate_corpus_path":"data/integrations/candidates/history-go-fagverk-historie.candidate.v1.json","review_policy_path":"data/integrations/review/history-go-fagverk-historie.term-policy.v1.json","runtime_corpus_path":"data/integrations/runtime/history-go-fagverk-historie.corpus.v1.json","runtime_policy_path":"data/integrations/runtime/history-go-fagverk-historie.policy.v1.json","scoring_mode":"subject_policy_v1","minimum_score":7,"minimum_terms":2,"ambiguity_margin":3},
+    "naeringsliv": {"subject_id":"naeringsliv","approval_path":"data/integrations/approvals/history-go-fagverk-naeringsliv.approved.v1.json","candidate_corpus_path":"data/integrations/candidates/history-go-fagverk-naeringsliv.candidate.v1.json","review_policy_path":"data/integrations/review/history-go-fagverk-naeringsliv.term-policy.v1.json","review_policy_config_path":"data/integrations/review/history-go-fagverk-naeringsliv.policy-config.v1.json","runtime_corpus_path":"data/integrations/runtime/history-go-fagverk-naeringsliv.corpus.v1.json","runtime_policy_path":"data/integrations/runtime/history-go-fagverk-naeringsliv.policy.v1.json","scoring_mode":"subject_policy_v1","minimum_score":7,"minimum_terms":2,"minimum_reviewed_evidence_terms":2,"ambiguity_margin":3},
+    "natur": {"subject_id":"natur","approval_path":"data/integrations/approvals/history-go-fagverk-natur.approved.v1.json","candidate_corpus_path":"data/integrations/candidates/history-go-fagverk-natur.candidate.v1.json","review_policy_path":"data/integrations/review/history-go-fagverk-natur.term-policy.v1.json","runtime_corpus_path":"data/integrations/runtime/history-go-fagverk-natur.corpus.v1.json","runtime_policy_path":"data/integrations/runtime/history-go-fagverk-natur.policy.v1.json","scoring_mode":"subject_policy_v1","minimum_score":7,"minimum_terms":2,"ambiguity_margin":3},
+    "politikk": {"subject_id":"politikk","approval_path":"data/integrations/approvals/history-go-fagverk-politikk.approved.v1.json","candidate_corpus_path":"data/integrations/candidates/history-go-fagverk-politikk.candidate.v1.json","review_policy_path":"data/integrations/review/history-go-fagverk-politikk.term-policy.v1.json","runtime_corpus_path":"data/integrations/runtime/history-go-fagverk-politikk.corpus.v1.json","runtime_policy_path":"data/integrations/runtime/history-go-fagverk-politikk.policy.v1.json","scoring_mode":"subject_policy_v1","minimum_score":6,"minimum_terms":2,"ambiguity_margin":3},
+    "subkultur": {"subject_id":"subkultur","approval_path":"data/integrations/approvals/history-go-fagverk-subkultur.approved.v1.json","candidate_corpus_path":"data/integrations/candidates/history-go-fagverk-subkultur.candidate.v1.json","review_policy_path":"data/integrations/review/history-go-fagverk-subkultur.term-policy.v1.json","review_policy_config_path":"data/integrations/review/history-go-fagverk-subkultur.policy-config.v1.json","runtime_corpus_path":"data/integrations/runtime/history-go-fagverk-subkultur.corpus.v1.json","runtime_policy_path":"data/integrations/runtime/history-go-fagverk-subkultur.policy.v1.json","scoring_mode":"subject_policy_v1","minimum_score":7,"minimum_terms":2,"minimum_reviewed_evidence_terms":2,"ambiguity_margin":3},
+    "by": {"subject_id":"by","approval_path":"data/integrations/approvals/history-go-fagverk-by.approved.v1.json","candidate_corpus_path":"data/integrations/candidates/history-go-fagverk-by.candidate.v1.json","review_policy_config_path":"data/integrations/review/history-go-fagverk-by.review-config.v1.json","review_attestation_path":"data/integrations/review/history-go-fagverk-by.review-attestation.v1.json","runtime_corpus_projection":"reviewed_anchor_projection_v1","runtime_corpus_path":"data/integrations/runtime/history-go-fagverk-by.corpus.v1.json","runtime_policy_path":"data/integrations/runtime/history-go-fagverk-by.policy.v1.json","scoring_mode":"subject_policy_v1","minimum_score":6,"minimum_terms":2,"ambiguity_margin":3},
+    "kunst": {"subject_id":"kunst","approval_path":"data/integrations/approvals/history-go-fagverk-kunst.approved.v1.json","candidate_corpus_path":"data/integrations/candidates/history-go-fagverk-kunst.candidate.v1.json","review_policy_config_path":"data/integrations/review/history-go-fagverk-kunst.review-config.v1.json","review_attestation_path":"data/integrations/review/history-go-fagverk-kunst.review-attestation.v1.json","runtime_corpus_projection":"reviewed_anchor_projection_v1","runtime_corpus_path":"data/integrations/runtime/history-go-fagverk-kunst.corpus.v1.json","runtime_policy_path":"data/integrations/runtime/history-go-fagverk-kunst.policy.v1.json","scoring_mode":"subject_policy_v1","minimum_score":6,"minimum_terms":2,"ambiguity_margin":3}
   },
   "full_release_active": false
 }

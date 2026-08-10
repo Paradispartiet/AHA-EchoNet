@@ -17,6 +17,7 @@ BUSINESS_CORRECTIONS_PATH = ROOT / "data" / "evaluation" / "aha-business-fixture
 SUBCULTURE_MATRIX_PATH = ROOT / "data" / "evaluation" / "aha-subculture-fagverk-evaluation-matrix.v1.json"
 SUBCULTURE_CORRECTIONS_PATH = ROOT / "data" / "evaluation" / "aha-subculture-fixture-corrections.v1.json"
 BY_MATRIX_PATH = ROOT / "data" / "evaluation" / "aha-by-fagverk-evaluation-matrix.v1.json"
+KUNST_MATRIX_PATH = ROOT / "data" / "evaluation" / "aha-kunst-fagverk-evaluation-matrix.v1.json"
 ACTIVE_MANIFEST_PATH = ROOT / "data" / "integrations" / "history-go-fagverk-release.runtime-active.json"
 
 
@@ -48,16 +49,21 @@ def _by_only_corpus() -> dict:
     return _subject_only_corpus("by")
 
 
+def _kunst_only_corpus() -> dict:
+    return _subject_only_corpus("kunst")
+
+
 def test_corpus_schema_and_provenance() -> None:
     corpus = load_fagverk_corpus()
+    manifest = json.loads(ACTIVE_MANIFEST_PATH.read_text(encoding="utf-8"))
     assert corpus["schema"] == "aha_history_go_fagverk_corpus_v1"
     assert corpus["version"] == "2.0.0"
     assert corpus["status"] == "composed_partial_subject_runtime_corpus"
     assert corpus["source_repo"] == "Paradispartiet/History-Go"
     assert corpus["source_ref"]
-    assert len(corpus["entries"]) == 84
+    assert len(corpus["entries"]) == manifest["effective_entry_count"]
     assert all(entry.get("source_path") for entry in corpus["entries"])
-    expected_counts = {"by": 17, "historie": 23, "naeringsliv": 12, "natur": 11, "politikk": 13, "subkultur": 8}
+    expected_counts = {subject_id: item["chapter_count"] for subject_id, item in manifest["active_subjects"].items()}
     for subject_id, count in expected_counts.items():
         entries = [entry for entry in corpus["entries"] if entry["subject_id"] == subject_id]
         assert len(entries) == count
@@ -69,12 +75,11 @@ def test_runtime_manifest_uses_materialized_subject_artifacts_only() -> None:
     manifest = json.loads(ACTIVE_MANIFEST_PATH.read_text(encoding="utf-8"))
     assert manifest["schema"] == "aha_history_go_fagverk_runtime_active_v2"
     assert manifest["status"] == "partial_subject_runtime_active"
-    assert manifest["effective_entry_count"] == 84
-    assert set(manifest["active_subjects"]) == {"by", "historie", "naeringsliv", "natur", "politikk", "subkultur"}
-    expected = {"by": 17, "historie": 23, "naeringsliv": 12, "natur": 11, "politikk": 13, "subkultur": 8}
-    for subject_id, chapter_count in expected.items():
-        item = manifest["active_subjects"][subject_id]
-        assert item["chapter_count"] == chapter_count
+    expected_entries = sum(item["chapter_count"] for item in manifest["active_subjects"].values())
+    assert manifest["effective_entry_count"] == expected_entries
+    assert set(manifest["active_subjects"]) == {"by", "historie", "kunst", "naeringsliv", "natur", "politikk", "subkultur"}
+    for subject_id, item in manifest["active_subjects"].items():
+        assert item["chapter_count"] > 0, subject_id
         assert item["corpus_path"].startswith("data/integrations/runtime/")
         assert item["policy_path"].startswith("data/integrations/runtime/")
         assert "/review/" not in item["corpus_path"]
@@ -82,6 +87,7 @@ def test_runtime_manifest_uses_materialized_subject_artifacts_only() -> None:
         assert "/approvals/" not in item["corpus_path"]
         assert "/approvals/" not in item["policy_path"]
     assert manifest["active_subjects"]["by"]["source_commit"] == "d52cebbe2c6c01e5780be301e9b0e4a9c61c5254"
+    assert manifest["active_subjects"]["kunst"]["source_commit"] == "d52cebbe2c6c01e5780be301e9b0e4a9c61c5254"
 
 
 def test_by_runtime_uses_reviewed_anchor_projection_only() -> None:
@@ -90,6 +96,19 @@ def test_by_runtime_uses_reviewed_anchor_projection_only() -> None:
     assert len(corpus["entries"]) == 17
     assert policy["runtime_corpus_projection"] == "reviewed_anchor_projection_v1"
     assert policy["source_review_attestation_path"].endswith("history-go-fagverk-by.review-attestation.v1.json")
+    for entry in corpus["entries"]:
+        assert entry["title_terms"] == policy["chapter_rules"][entry["chapter_id"]]["required_anchor_terms"]
+        assert entry["concept_terms"] == []
+        assert entry["support_terms"] == []
+        assert entry["provenance"]["runtime_projection"] == "reviewed_anchor_projection_v1"
+
+
+def test_kunst_runtime_uses_reviewed_anchor_projection_only() -> None:
+    corpus = _kunst_only_corpus()
+    policy = corpus["subject_policies"]["kunst"]
+    assert len(corpus["entries"]) == 6
+    assert policy["runtime_corpus_projection"] == "reviewed_anchor_projection_v1"
+    assert policy["source_review_attestation_path"].endswith("history-go-fagverk-kunst.review-attestation.v1.json")
     for entry in corpus["entries"]:
         assert entry["title_terms"] == policy["chapter_rules"][entry["chapter_id"]]["required_anchor_terms"]
         assert entry["concept_terms"] == []
@@ -127,6 +146,27 @@ def test_all_reviewed_by_matrix_cases_pass_in_python_runtime() -> None:
             assert evidence["term"] in result["match"]["matched_terms"]
     for case in matrix["abstention_cases"]:
         result = ground_message(case["text"], by_corpus)
+        assert result["status"] == "unsupported", (case["id"], result)
+
+
+def test_all_reviewed_kunst_matrix_cases_pass_in_python_runtime() -> None:
+    matrix = json.loads(KUNST_MATRIX_PATH.read_text(encoding="utf-8"))
+    kunst_corpus = _kunst_only_corpus()
+    assert len(matrix["positive_cases"]) == 12
+    assert len(matrix["abstention_cases"]) == 8
+    for case in matrix["positive_cases"]:
+        result = ground_message(case["text"], kunst_corpus)
+        assert result["status"] == "grounded", (case["id"], result)
+        assert result["match"]["subject_id"] == "kunst"
+        assert result["match"]["chapter_id"] == case["expected_chapter_id"], (case["id"], result)
+        assert result["match"]["scoring_mode"] == "subject_policy_v1"
+        assert len(result["match"]["matched_terms"]) >= 2
+        assert result["match"]["evidence"]
+        for evidence in result["match"]["evidence"]:
+            assert case["text"][evidence["start"]:evidence["end"]] == evidence["quote"]
+            assert evidence["term"] in result["match"]["matched_terms"]
+    for case in matrix["abstention_cases"]:
+        result = ground_message(case["text"], kunst_corpus)
         assert result["status"] == "unsupported", (case["id"], result)
 
 

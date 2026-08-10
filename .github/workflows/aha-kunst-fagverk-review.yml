@@ -1,0 +1,36 @@
+name: AHA Kunst Fagverk Review
+
+on:
+  pull_request:
+    paths:
+      - 'data/integrations/candidates/history-go-fagverk-kunst.*'
+      - 'data/integrations/review/history-go-fagverk-kunst.*'
+      - 'data/evaluation/aha-kunst-*'
+      - 'scripts/review-kunst-fagverk.mjs'
+      - 'tests/aha-kunst-fagverk-review.test.cjs'
+      - '.github/workflows/aha-kunst-fagverk-review.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  review:
+    name: Validate Kunst review policy and fixtures
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Build and evaluate review-only Kunst policy
+        run: node scripts/review-kunst-fagverk.mjs
+      - name: Verify review contract and runtime boundary
+        run: node tests/aha-kunst-fagverk-review.test.cjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aha-kunst-fagverk-review
+          path: |
+            /tmp/aha-kunst-policy.json
+            /tmp/aha-kunst-evaluation.json
+            /tmp/aha-kunst-fixtures.json

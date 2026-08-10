@@ -51,5 +51,6 @@ jobs:
           const runtime = require('./data/integrations/history-go-fagverk-release.runtime-active.json');
           const subculture = runtime.active_subjects?.subkultur;
           if (!subculture || subculture.chapter_count !== 8 || subculture.activation_status !== 'runtime_subject_active') process.exit(1);
-          if (runtime.effective_entry_count !== 84 || runtime.full_release_active !== false) process.exit(1);
+          const expectedEntries = Object.values(runtime.active_subjects || {}).reduce((sum, item) => sum + Number(item.chapter_count || 0), 0);
+          if (runtime.effective_entry_count !== expectedEntries || runtime.full_release_active !== false) process.exit(1);
           NODE

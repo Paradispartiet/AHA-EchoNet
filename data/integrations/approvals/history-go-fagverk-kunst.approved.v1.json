@@ -1,0 +1,70 @@
+{
+  "schema": "aha_history_go_fagverk_subject_approval_v1",
+  "version": "1.0.0",
+  "status": "subject_review_approved_not_runtime_active",
+  "lifecycle_stage": "subject_approval",
+  "subject_id": "kunst",
+  "source_repo": "Paradispartiet/History-Go",
+  "source_ref": "d52cebbe2c6c01e5780be301e9b0e4a9c61c5254",
+  "observed_release_sha256": "387dca2da02c5062738d7a0e7a97ab1fe7ec0c2d95be85aacaaa9bd0f3a011ed",
+  "candidate": {
+    "path": "data/integrations/candidates/history-go-fagverk-kunst.candidate.v1.json",
+    "corpus_sha256": "0bd12a658e1b18bac17f1da8c6a251e88ebd8ca9db0ffce9328058a27ffa48bc",
+    "chapter_count": 6
+  },
+  "reviewed_corpus": {
+    "path": "data/integrations/candidates/history-go-fagverk-kunst.candidate.v1.json",
+    "corpus_sha256": "0bd12a658e1b18bac17f1da8c6a251e88ebd8ca9db0ffce9328058a27ffa48bc",
+    "chapter_count": 6
+  },
+  "gate_summary": {
+    "total": 4,
+    "passed": 4,
+    "failed": 0
+  },
+  "gates": [
+    {
+      "id": "corpus_audit",
+      "path": "data/integrations/candidates/history-go-fagverk-kunst.candidate-audit.v1.json",
+      "status_field": "gate.passed",
+      "status": true,
+      "expected_status": true,
+      "passed": true,
+      "errors": []
+    },
+    {
+      "id": "review_config",
+      "path": "data/integrations/review/history-go-fagverk-kunst.review-config.v1.json",
+      "status_field": "status",
+      "status": "review_policy_full_fixture_candidate_not_runtime_active",
+      "expected_status": "review_policy_full_fixture_candidate_not_runtime_active",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "id": "review_attestation",
+      "path": "data/integrations/review/history-go-fagverk-kunst.review-attestation.v1.json",
+      "status_field": "status",
+      "status": "review_artifacts_attested_passed",
+      "expected_status": "review_artifacts_attested_passed",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "id": "evaluation_matrix",
+      "path": "data/evaluation/aha-kunst-fagverk-evaluation-matrix.v1.json",
+      "status_field": "status",
+      "status": "constructed_review_matrix_not_runtime_active",
+      "expected_status": "constructed_review_matrix_not_runtime_active",
+      "passed": true,
+      "errors": []
+    }
+  ],
+  "errors": [],
+  "approval_scope": "subject_review_artifacts_only",
+  "approval_required_for_runtime": true,
+  "runtime_activation_allowed": false,
+  "runtime_approved_pointer_changed": false,
+  "runtime_active_pointer_changed": false,
+  "explicit_runtime_activation_pull_request_required": true
+}

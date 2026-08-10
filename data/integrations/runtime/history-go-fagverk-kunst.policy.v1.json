@@ -1,0 +1,249 @@
+{
+  "schema": "aha_history_go_fagverk_runtime_subject_policy_v1",
+  "version": "1.0.0",
+  "status": "runtime_subject_policy_active",
+  "subject_id": "kunst",
+  "source_repo": "Paradispartiet/History-Go",
+  "source_ref": "d52cebbe2c6c01e5780be301e9b0e4a9c61c5254",
+  "corpus_sha256": "0bd12a658e1b18bac17f1da8c6a251e88ebd8ca9db0ffce9328058a27ffa48bc",
+  "source_policy_version": "1.0.0",
+  "source_policy_sha256": "a93722bba10a3e8cf2051bc8a3ffbe3d79f8c630093a4f66588d283a73f96308",
+  "source_policy_config_path": "data/integrations/review/history-go-fagverk-kunst.review-config.v1.json",
+  "source_policy_config_version": "1.0.0",
+  "source_policy_config_sha256": "37f1c26b8973030930f27a85e767809f7fa0758b7b6dc90f78d87376cad90916",
+  "source_review_attestation_path": "data/integrations/review/history-go-fagverk-kunst.review-attestation.v1.json",
+  "source_review_artifact_sha256": "fcad304f426a03026424a0a96aa8e49cb8375481bc02153d4f48b057519605dc",
+  "source_review_head_sha": "c27ea2856de4fbb9391da4b618ba4f729c6b5909",
+  "runtime_corpus_projection": "reviewed_anchor_projection_v1",
+  "scoring_mode": "subject_policy_v1",
+  "thresholds": {
+    "minimum_score": 6,
+    "minimum_terms": 2,
+    "ambiguity_margin": 3
+  },
+  "default_weights": {
+    "title_term": 5,
+    "concept_term": 3,
+    "support_term": 1.5
+  },
+  "policy_rules": {},
+  "global_non_scoring_terms": [
+    "analyse",
+    "endring",
+    "felt",
+    "felles",
+    "form",
+    "historie",
+    "historisk",
+    "hvordan",
+    "hvem",
+    "institusjon",
+    "kunst",
+    "kunstner",
+    "kunstnere",
+    "offentlig",
+    "offentlighet",
+    "praksis",
+    "prosess",
+    "rom",
+    "sted",
+    "synlig",
+    "system",
+    "tid",
+    "varig",
+    "verdi",
+    "verk",
+    "verket"
+  ],
+  "domain_gate": {
+    "required": true,
+    "terms": [
+      "abstraksjon",
+      "appropriasjon",
+      "atelier",
+      "brudd og kontinuitet",
+      "epoker",
+      "hverdagsestetikk",
+      "ikonografi",
+      "institusjonskritikk",
+      "jurybegrunnelser",
+      "kanondannelse",
+      "konseptkunst",
+      "kunstnerstyrt",
+      "kunstnerøkonomi",
+      "kuratorisk utvalg",
+      "monument",
+      "offentlig kunst",
+      "politisk kunst",
+      "publikumsstruktur",
+      "repetisjon",
+      "resepsjon",
+      "samlingsproveniens",
+      "selvorganisering",
+      "symbolsk kapital",
+      "verksted"
+    ]
+  },
+  "chapter_rules": {
+    "estetisk-sprak-og-form": {
+      "required_anchor_terms": [
+        "ikonografi",
+        "appropriasjon",
+        "abstraksjon",
+        "konseptkunst"
+      ],
+      "supplemental_evidence_terms": [
+        {
+          "term": "ikonografi",
+          "weight": 3
+        },
+        {
+          "term": "appropriasjon",
+          "weight": 3
+        },
+        {
+          "term": "abstraksjon",
+          "weight": 3
+        },
+        {
+          "term": "konseptkunst",
+          "weight": 3
+        }
+      ]
+    },
+    "felt-og-institusjon": {
+      "required_anchor_terms": [
+        "kanondannelse",
+        "kuratorisk utvalg",
+        "kunstnerstyrt",
+        "samlingsproveniens"
+      ],
+      "supplemental_evidence_terms": [
+        {
+          "term": "kanondannelse",
+          "weight": 3
+        },
+        {
+          "term": "kuratorisk utvalg",
+          "weight": 3
+        },
+        {
+          "term": "kunstnerstyrt",
+          "weight": 3
+        },
+        {
+          "term": "samlingsproveniens",
+          "weight": 3
+        }
+      ]
+    },
+    "makt-og-legitimitet": {
+      "required_anchor_terms": [
+        "symbolsk kapital",
+        "institusjonskritikk",
+        "politisk kunst",
+        "jurybegrunnelser"
+      ],
+      "supplemental_evidence_terms": [
+        {
+          "term": "symbolsk kapital",
+          "weight": 3
+        },
+        {
+          "term": "institusjonskritikk",
+          "weight": 3
+        },
+        {
+          "term": "politisk kunst",
+          "weight": 3
+        },
+        {
+          "term": "jurybegrunnelser",
+          "weight": 3
+        }
+      ]
+    },
+    "produksjon-og-praksis": {
+      "required_anchor_terms": [
+        "atelier",
+        "verksted",
+        "kunstnerøkonomi",
+        "selvorganisering"
+      ],
+      "supplemental_evidence_terms": [
+        {
+          "term": "atelier",
+          "weight": 3
+        },
+        {
+          "term": "verksted",
+          "weight": 3
+        },
+        {
+          "term": "kunstnerøkonomi",
+          "weight": 3
+        },
+        {
+          "term": "selvorganisering",
+          "weight": 3
+        }
+      ]
+    },
+    "publikum-og-offentlighet": {
+      "required_anchor_terms": [
+        "offentlig kunst",
+        "publikumsstruktur",
+        "monument",
+        "resepsjon"
+      ],
+      "supplemental_evidence_terms": [
+        {
+          "term": "offentlig kunst",
+          "weight": 3
+        },
+        {
+          "term": "publikumsstruktur",
+          "weight": 3
+        },
+        {
+          "term": "monument",
+          "weight": 3
+        },
+        {
+          "term": "resepsjon",
+          "weight": 3
+        }
+      ]
+    },
+    "tid-og-transformasjon": {
+      "required_anchor_terms": [
+        "epoker",
+        "brudd og kontinuitet",
+        "hverdagsestetikk",
+        "repetisjon"
+      ],
+      "supplemental_evidence_terms": [
+        {
+          "term": "epoker",
+          "weight": 3
+        },
+        {
+          "term": "brudd og kontinuitet",
+          "weight": 3
+        },
+        {
+          "term": "hverdagsestetikk",
+          "weight": 3
+        },
+        {
+          "term": "repetisjon",
+          "weight": 3
+        }
+      ]
+    }
+  },
+  "terms": [],
+  "approval_path": "data/integrations/approvals/history-go-fagverk-kunst.approved.v1.json",
+  "runtime_activation_allowed": true,
+  "artifact_sha256": "87041561587e091b2d3eb6405a39878529284ac0d3774425895cbbb2ebff5b87"
+}

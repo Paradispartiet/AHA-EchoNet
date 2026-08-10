@@ -1,0 +1,33 @@
+{
+  "schema": "aha_kunst_fagverk_evaluation_matrix_v1",
+  "version": "1.0.0",
+  "status": "constructed_review_matrix_not_runtime_active",
+  "subject_id": "kunst",
+  "source_ref": "d52cebbe2c6c01e5780be301e9b0e4a9c61c5254",
+  "corpus_sha256": "0bd12a658e1b18bac17f1da8c6a251e88ebd8ca9db0ffce9328058a27ffa48bc",
+  "runtime_activation_allowed": false,
+  "positive_cases": [
+    {"id":"kunst-estetisk-1","expected_chapter_id":"estetisk-sprak-og-form","text":"I verksanalysen skiller vi ikonografi fra fri assosiasjon og undersøker appropriasjon som en dokumenterbar kunstnerisk operasjon.","required_evidence":["ikonografi","appropriasjon"]},
+    {"id":"kunst-estetisk-2","expected_chapter_id":"estetisk-sprak-og-form","text":"Abstraksjon kan ha grader, mens konseptkunst må analyseres gjennom både ideen og den materielle realiseringen.","required_evidence":["abstraksjon","konseptkunst"]},
+    {"id":"kunst-felt-1","expected_chapter_id":"felt-og-institusjon","text":"Kanondannelse kan spores gjennom innkjøp og et kuratorisk utvalg som bestemmer hva som vises og bevares.","required_evidence":["kanondannelse","kuratorisk utvalg"]},
+    {"id":"kunst-felt-2","expected_chapter_id":"felt-og-institusjon","text":"Et kunstnerstyrt visningssted kan undersøkes gjennom medlemskap og samlingsproveniens i den dokumenterte institusjonshistorien.","required_evidence":["kunstnerstyrt","samlingsproveniens"]},
+    {"id":"kunst-makt-1","expected_chapter_id":"makt-og-legitimitet","text":"Symbolsk kapital oppstår gjennom anerkjennelse, mens institusjonskritikk må prøves mot museets faktiske rammer og respons.","required_evidence":["symbolsk kapital","institusjonskritikk"]},
+    {"id":"kunst-makt-2","expected_chapter_id":"makt-og-legitimitet","text":"Politisk kunst dokumenterer ikke effekt alene; jurybegrunnelser og mottakelse må analyseres som situerte verdidommer.","required_evidence":["politisk kunst","jurybegrunnelser"]},
+    {"id":"kunst-produksjon-1","expected_chapter_id":"produksjon-og-praksis","text":"Atelier og verksted setter konkrete vilkår for skala, verktøy, sikkerhet og hvordan et arbeid faktisk kan produseres.","required_evidence":["atelier","verksted"]},
+    {"id":"kunst-produksjon-2","expected_chapter_id":"produksjon-og-praksis","text":"Kunstnerøkonomi må skilles fra kunstnerisk effekt, og selvorganisering innebærer også ansvar, drift og beslutningsformer.","required_evidence":["kunstnerøkonomi","selvorganisering"]},
+    {"id":"kunst-publikum-1","expected_chapter_id":"publikum-og-offentlighet","text":"Offentlig kunst må analyseres som verk, sted og brukssituasjon, mens publikumsstruktur krever mer enn bare besøkstall.","required_evidence":["offentlig kunst","publikumsstruktur"]},
+    {"id":"kunst-publikum-2","expected_chapter_id":"publikum-og-offentlighet","text":"Et monument har dokumenterbar ikonografi, men resepsjon kan endres når publikum bruker og fortolker stedet på nye måter.","required_evidence":["monument","resepsjon"]},
+    {"id":"kunst-tid-1","expected_chapter_id":"tid-og-transformasjon","text":"Epoker er analytiske argumenter, og brudd og kontinuitet må dokumenteres i samme motiv- eller institusjonsspor.","required_evidence":["epoker","brudd og kontinuitet"]},
+    {"id":"kunst-tid-2","expected_chapter_id":"tid-og-transformasjon","text":"Hverdagsestetikk fra reklame og design kan bli kunsthistorisk materiale, mens repetisjon viser hvordan motiver forandres over tid.","required_evidence":["hverdagsestetikk","repetisjon"]}
+  ],
+  "abstention_cases": [
+    {"id":"kunst-abstain-generic","text":"Kunst og verk kan være viktige for kultur og historie, og institusjoner gjør dem synlige.","expected_status":"unsupported"},
+    {"id":"kunst-abstain-history","text":"I 1814 møttes representanter på Eidsvoll og skrev Grunnloven som del av norsk statsdannelse.","expected_status":"unsupported"},
+    {"id":"kunst-abstain-media","text":"Avisen driver kulturkritikk og idédebatt i en offentlighet preget av langsom journalistikk.","expected_status":"unsupported"},
+    {"id":"kunst-abstain-architecture","text":"Bygget har tydelig form, materiale, komposisjon og et offentlig rom rundt inngangen.","expected_status":"unsupported"},
+    {"id":"kunst-abstain-politics","text":"Makt, institusjoner og politisk konflikt påvirker hvordan ressurser fordeles i samfunnet.","expected_status":"unsupported"},
+    {"id":"kunst-abstain-personal","text":"Jeg prøvde å male i går og ble usikker på om fargene fungerte, men jeg likte resultatet.","expected_status":"unsupported"},
+    {"id":"kunst-abstain-technical-design","text":"Prosjektet trenger bedre design, komposisjon, systemarkitektur og stabile grensesnitt før lansering.","expected_status":"unsupported"},
+    {"id":"kunst-abstain-museum-generic","text":"Museet har samling, katalog, utstilling og digital plattform, men teksten sier ikke noe mer om kunstfaglig analyse.","expected_status":"unsupported"}
+  ]
+}
