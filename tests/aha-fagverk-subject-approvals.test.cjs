@@ -14,7 +14,7 @@ const runtimeCode = fs.readFileSync('backend/aha_engine/app/engine/fagverk_groun
 assert.equal(registry.schema, 'aha_history_go_fagverk_subject_approval_registry_v1');
 assert.equal(registry.status, 'review_gate_registry_not_runtime_input');
 assert.equal(registry.runtime_activation_allowed, false);
-assert.deepEqual(Object.keys(registry.subjects), ['historie', 'natur', 'politikk']);
+assert.deepEqual(Object.keys(registry.subjects), ['historie', 'naeringsliv', 'natur', 'politikk']);
 
 const outputRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'aha-fagverk-subject-approvals-'));
 const result = spawnSync(process.execPath, ['scripts/build-history-go-fagverk-subject-approvals.mjs', '--all', '--output-root', outputRoot], {
@@ -46,9 +46,16 @@ for (const [subjectId, config] of Object.entries(registry.subjects)) {
   assert.equal(approval.explicit_runtime_activation_pull_request_required, true);
 }
 
+const businessApproval = JSON.parse(fs.readFileSync('data/integrations/approvals/history-go-fagverk-naeringsliv.approved.v1.json', 'utf8'));
+assert.equal(businessApproval.candidate.chapter_count, 12);
+assert.equal(businessApproval.reviewed_corpus.chapter_count, 12);
+assert.equal(businessApproval.gate_summary.total, 5);
+assert.equal(businessApproval.gate_summary.passed, 5);
+
 assert.notEqual(runtimeApproved.approved_source_commit, observed.source_commit);
 assert.notEqual(runtimeActive.active_source_commit, observed.source_commit);
 assert.deepEqual(Object.keys(runtimeActive.active_subjects), ['historie', 'natur', 'politikk']);
+assert.equal(runtimeActive.active_subjects.naeringsliv, undefined);
 assert.equal(runtimeActive.active_subjects.natur.subject_id, 'natur');
 assert.equal(runtimeActive.active_subjects.natur.chapter_count, 11);
 assert.equal(runtimeActive.active_subjects.natur.activation_status, 'runtime_subject_active');

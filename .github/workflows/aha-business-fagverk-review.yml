@@ -9,7 +9,7 @@ on:
       - "scripts/build-business-fagverk-expansion-review.mjs"
       - "scripts/evaluate-business-fagverk-policy.mjs"
       - "scripts/compare-business-fixture-corrections.mjs"
-      - "scripts/business-fagverk-policy-config.v1.json"
+      - "data/integrations/review/history-go-fagverk-naeringsliv.policy-config.v1.json"
       - "tests/aha-business-fagverk-review.test.cjs"
       - "tests/aha-fagverk-subject-approvals.test.cjs"
       - "data/evaluation/aha-business-fagverk-evaluation-matrix.v1.json"

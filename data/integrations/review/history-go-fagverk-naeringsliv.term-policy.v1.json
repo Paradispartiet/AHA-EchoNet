@@ -1,0 +1,41 @@
+{
+  "schema": "aha_business_fagverk_term_policy_v1",
+  "version": "1.0.0",
+  "status": "review_policy_full_fixture_candidate_not_runtime_active",
+  "subject_id": "naeringsliv",
+  "source_repo": "Paradispartiet/History-Go",
+  "source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
+  "corpus_sha256": "a1c399977c2656d567ee461228b8e7d21f457da8e0863bf53a7888a8ac5fbfea",
+  "source_audit_path": "data/integrations/candidates/history-go-fagverk-naeringsliv.candidate-audit.v1.json",
+  "policy_config_path": "data/integrations/review/history-go-fagverk-naeringsliv.policy-config.v1.json",
+  "policy_config_version": "1.0.0",
+  "thresholds": {
+    "minimum_score": 7,
+    "minimum_terms": 2,
+    "minimum_reviewed_evidence_terms": 2,
+    "ambiguity_margin": 3
+  },
+  "policy_rules": {
+    "candidate_title_concept_support_terms": "non_decisive_review_context_only",
+    "collision_inventory": "documented_in_source_audit_not_runtime_scoring_input",
+    "generic_language": "non_scoring",
+    "business_domain_anchor": "required_for_every_business_selection",
+    "chapter_anchor": "required_for_every_chapter",
+    "supplemental_evidence": "at_least_two_chapter_scoped_terms_required"
+  },
+  "summary": {
+    "total": 140,
+    "risks": {
+      "high": 65,
+      "medium": 51,
+      "low": 24
+    },
+    "chapter_count": 12,
+    "module_file_count": 36,
+    "required_anchor_count": 60,
+    "supplemental_evidence_count": 60
+  },
+  "approval_required": true,
+  "runtime_activation_allowed": false,
+  "explicit_runtime_activation_pull_request_required": true
+}
