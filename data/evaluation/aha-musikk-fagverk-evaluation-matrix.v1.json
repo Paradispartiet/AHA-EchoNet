@@ -26,9 +26,9 @@
   ],
   "abstention_cases": [
     {"id":"musikk-abstain-generic","text":"Musikk, kultur og lyd er viktige deler av samfunnet og skaper mange ulike opplevelser.","expected_status":"unsupported"},
-    {"id":"musikk-abstain-history","text":"Historiske kilder og periodisering brukes for å forklare statsdannelse og politiske institusjoner over tid.","expected_status":"unsupported"},
-    {"id":"musikk-abstain-psychology","text":"Familiaritet og ekspertise kan påvirke oppmerksomhet, hukommelse og læring i en generell psykologisk oppgave.","expected_status":"unsupported"},
-    {"id":"musikk-abstain-technology","text":"Et digitalt system bruker algoritmer, sampling og datasett for å anbefale innhold på en plattform.","expected_status":"unsupported"},
+    {"id":"musikk-abstain-history","text":"Historiske kilder og tidsinndeling brukes for å forklare statsdannelse og politiske institusjoner over tid.","expected_status":"unsupported"},
+    {"id":"musikk-abstain-psychology","text":"Erfaring og ekspertise kan påvirke oppmerksomhet, hukommelse og læring i en generell psykologisk oppgave.","expected_status":"unsupported"},
+    {"id":"musikk-abstain-technology","text":"Et digitalt system bruker algoritmer og datasett for å anbefale innhold på en plattform.","expected_status":"unsupported"},
     {"id":"musikk-abstain-business","text":"Rettigheter, betaling, marked og støtteordninger påvirker økonomien i en bransje.","expected_status":"unsupported"},
     {"id":"musikk-abstain-religion","text":"Ritual og fellesskap kan gi religiøs tilhørighet, men teksten beskriver ingen musikalsk praksis eller feltstudie.","expected_status":"unsupported"},
     {"id":"musikk-abstain-urban","text":"Scenen ligger i et offentlig byrom med publikum, aktivitet, arkiv og kulturtilbud gjennom året.","expected_status":"unsupported"},
