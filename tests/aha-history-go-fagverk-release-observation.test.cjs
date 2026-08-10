@@ -71,8 +71,8 @@ if (!isRuntimeV2) {
   assert.equal(runtimeActive.status, 'partial_subject_runtime_active');
   assert.equal(runtimeActive.active_source_commit, runtimeCorpus.source_ref, 'legacy compatibility pointer remains seed-bound');
 
-  const activeIds = ['historie', 'naeringsliv', 'natur', 'politikk', 'subkultur'];
-  const expectedCounts = { historie: 23, naeringsliv: 12, natur: 11, politikk: 13, subkultur: 8 };
+  const activeIds = ['by', 'historie', 'naeringsliv', 'natur', 'politikk', 'subkultur'];
+  const expectedCounts = { by: 17, historie: 23, naeringsliv: 12, natur: 11, politikk: 13, subkultur: 8 };
   assert.deepEqual(approved.legacy_seed.overridden_subject_ids, activeIds);
   assert.deepEqual(runtimeActive.legacy_seed.overridden_subject_ids, activeIds);
   assert.deepEqual(Object.keys(approved.approved_subjects), activeIds);
@@ -93,7 +93,7 @@ if (!isRuntimeV2) {
     assert.equal(approvedSubject.corpus_path.startsWith('data/integrations/runtime/'), true);
     assert.equal(approvedSubject.policy_path.startsWith('data/integrations/runtime/'), true);
   }
-  assert.equal(runtimeActive.effective_entry_count, 67);
+  assert.equal(runtimeActive.effective_entry_count, 84);
   assert.equal(runtimeActive.activation_rules.active_subjects_override_legacy_subject_entries, true);
   assert.equal(runtimeActive.activation_rules.unregistered_candidates_are_not_runtime, true);
   assert.equal(runtimeActive.activation_rules.no_runtime_network_fetch, true);
