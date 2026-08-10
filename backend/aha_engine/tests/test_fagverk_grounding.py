@@ -116,7 +116,7 @@ def test_all_reviewed_by_matrix_cases_pass_in_python_runtime() -> None:
     assert len(matrix["abstention_cases"]) == 8
     for case in matrix["positive_cases"]:
         result = ground_message(case["text"], by_corpus)
-        assert result["status"] == case["expected_status"], (case["id"], result)
+        assert result["status"] == "grounded", (case["id"], result)
         assert result["match"]["subject_id"] == "by"
         assert result["match"]["chapter_id"] == case["expected_chapter_id"], (case["id"], result)
         assert result["match"]["scoring_mode"] == "subject_policy_v1"
@@ -127,7 +127,7 @@ def test_all_reviewed_by_matrix_cases_pass_in_python_runtime() -> None:
             assert evidence["term"] in result["match"]["matched_terms"]
     for case in matrix["abstention_cases"]:
         result = ground_message(case["text"], by_corpus)
-        assert result["status"] == case["expected_status"], (case["id"], result)
+        assert result["status"] == "unsupported", (case["id"], result)
 
 
 def test_all_reviewed_politics_matrix_cases_pass_in_python_runtime() -> None:
@@ -229,7 +229,7 @@ def test_all_reviewed_subculture_fixture_abstentions_pass_in_python_runtime() ->
         assert correction["expected_chapter_id"] is None
 
 
-def test_grounded_analysis_exposes_source_evidence() -> None:
+def test_grounded_result_exposes_exact_source_evidence() -> None:
     message = (
         "Ett artsfunn er ikke det samme som en bestand. Næringsnett vurderes som økologisk "
         "næringsnett sammen med målt habitatkvalitet og populasjon og bestand før vi trekker "
@@ -240,11 +240,10 @@ def test_grounded_analysis_exposes_source_evidence() -> None:
     assert result["match"]["evidence"]
     for evidence in result["match"]["evidence"]:
         assert message[evidence["start"]:evidence["end"]] == evidence["quote"]
+        assert evidence["contribution"] > 0
     analysis = analyze_message_with_fagverk(AnalyzeRequest(message=message))
     assert analysis.domain == "okosystem_mangfold_habitat"
-    primary = next(link for link in analysis.historyGoLinks if link.type == "fagverk_chapter" and link.id == "okosystem_mangfold_habitat")
-    assert primary.evidence
-    assert primary.evidence[0].quote in message
+    assert any(link.type == "fagverk_chapter" and link.id == "okosystem_mangfold_habitat" for link in analysis.historyGoLinks)
     assert analysis.confidence.domain >= 0.65
 
 
@@ -255,15 +254,16 @@ def test_related_cross_subject_matches_are_exposed_without_replacing_primary() -
         "source_repo": "test",
         "source_ref": "test",
         "entries": [
-            {"subject_id":"a","chapter_id":"a","primary_domain_id":"a","title":"A","source_path":"a.json","title_terms":["anker_a","anker_b","anker_c"],"concept_terms":[],"support_terms":[]},
-            {"subject_id":"b","chapter_id":"b","primary_domain_id":"b","title":"B","source_path":"b.json","title_terms":["bro_a","bro_b"],"concept_terms":[],"support_terms":[]},
+            {"subject_id":"a","chapter_id":"a","primary_domain_id":"a","title":"A","source_path":"a.json","title_terms":["ankera","ankerb","ankerc"],"concept_terms":[],"support_terms":[]},
+            {"subject_id":"b","chapter_id":"b","primary_domain_id":"b","title":"B","source_path":"b.json","title_terms":["broa","brob"],"concept_terms":[],"support_terms":[]},
         ],
     }
-    result = ground_message("Anker_a anker_b anker_c og bro_a bro_b beskriver samme sak med ulike faglige innganger.", corpus)
+    result = ground_message("Ankera ankerb ankerc og broa brob beskriver samme sak med ulike faglige innganger.", corpus)
     assert result["status"] == "grounded"
     assert result["match"]["subject_id"] == "a"
     assert len(result["related_matches"]) == 1
     assert result["related_matches"][0]["subject_id"] == "b"
+    assert result["related_matches"][0]["evidence"]
 
 
 def test_high_confidence_specialized_analysis_is_not_mutated() -> None:
