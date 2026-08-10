@@ -16,7 +16,7 @@ const runtimeCode = fs.readFileSync('backend/aha_engine/app/engine/fagverk_groun
 assert.equal(registry.schema, 'aha_history_go_fagverk_subject_approval_registry_v1');
 assert.equal(registry.status, 'review_gate_registry_not_runtime_input');
 assert.equal(registry.runtime_activation_allowed, false);
-assert.deepEqual(Object.keys(registry.subjects), ['historie', 'naeringsliv', 'natur', 'politikk', 'subkultur', 'by']);
+assert.deepEqual(Object.keys(registry.subjects), ['historie', 'naeringsliv', 'natur', 'politikk', 'subkultur', 'by', 'kunst']);
 assert.equal(baseline.schema, 'aha_history_go_fagverk_subject_content_baseline_v1');
 assert.equal(baseline.status, 'review_approval_subject_content_baseline');
 assert.equal(baseline.runtime_activation_allowed, false);
@@ -59,6 +59,13 @@ assert.equal(byApproval.gate_summary.total, 4);
 assert.equal(byApproval.gate_summary.passed, 4);
 assert.equal(byApproval.source_ref, 'd52cebbe2c6c01e5780be301e9b0e4a9c61c5254');
 
+const kunstApproval = JSON.parse(fs.readFileSync('data/integrations/approvals/history-go-fagverk-kunst.approved.v1.json', 'utf8'));
+assert.equal(kunstApproval.candidate.chapter_count, 6);
+assert.equal(kunstApproval.reviewed_corpus.chapter_count, 6);
+assert.equal(kunstApproval.gate_summary.total, 4);
+assert.equal(kunstApproval.gate_summary.passed, 4);
+assert.equal(kunstApproval.source_ref, 'd52cebbe2c6c01e5780be301e9b0e4a9c61c5254');
+
 const compatibilityRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'aha-fagverk-subject-compatibility-'));
 const advancedObserved = structuredClone(observed);
 advancedObserved.source_commit = 'synthetic-next-release-commit';
@@ -91,10 +98,12 @@ assert.equal(businessApproval.candidate.chapter_count, 12);
 assert.equal(businessApproval.gate_summary.total, 5);
 assert.notEqual(runtimeApproved.approved_source_commit, observed.source_commit);
 assert.notEqual(runtimeActive.active_source_commit, observed.source_commit);
-assert.deepEqual(Object.keys(runtimeActive.active_subjects), ['by', 'historie', 'naeringsliv', 'natur', 'politikk', 'subkultur']);
+assert.deepEqual(Object.keys(runtimeActive.active_subjects), ['by', 'historie', 'kunst', 'naeringsliv', 'natur', 'politikk', 'subkultur']);
 assert.equal(runtimeActive.active_subjects.by.chapter_count, 17);
 assert.equal(runtimeActive.active_subjects.by.activation_status, 'runtime_subject_active');
-assert.equal(runtimeActive.effective_entry_count, 84);
+assert.equal(runtimeActive.active_subjects.kunst.chapter_count, 6);
+assert.equal(runtimeActive.active_subjects.kunst.activation_status, 'runtime_subject_active');
+assert.equal(runtimeActive.effective_entry_count, 90);
 assert.equal(runtimeCode.includes('data/integrations/approvals'), false);
 assert.equal(runtimeCode.includes('subject_review_approved_not_runtime_active'), false);
 
