@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from app.engine.analyzer import analyze_message
-from app.schemas import CanonicalAhaAnalysis, Confidence, HistoryGoLink, AnalyzeRequest
+from app.schemas import AnalyzeRequest, CanonicalAhaAnalysis, Confidence, HistoryGoEvidence, HistoryGoLink
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
 LEGACY_CORPUS_PATH = REPO_ROOT / "data" / "integrations" / "history-go-fagverk-corpus.v1.json"
@@ -23,6 +23,7 @@ STOPWORDS = {
 }
 
 TOKEN_RE = re.compile(r"[a-zæøå0-9]+", re.IGNORECASE)
+SEGMENT_RE = re.compile(r"[^.!?\n]+(?:[.!?]+|$)", re.MULTILINE)
 
 
 @dataclass(frozen=True)
@@ -35,6 +36,7 @@ class GroundingMatch:
     score: float
     confidence: float
     matched_terms: tuple[str, ...]
+    evidence: tuple[dict[str, Any], ...] = ()
     scoring_mode: str = "generic_v1"
     minimum_score: float = 8.0
     minimum_terms: int = 2
@@ -72,32 +74,37 @@ def _policy_term_present(message: str, tokens: set[str], term: str) -> bool:
     return normalized_term in tokens
 
 
-def _generic_entry_score(message: str, entry: dict[str, Any]) -> tuple[float, tuple[str, ...], bool]:
+def _generic_entry_score(
+    message: str,
+    entry: dict[str, Any],
+) -> tuple[float, tuple[str, ...], bool, tuple[tuple[str, float, str], ...]]:
     weighted_groups = (
-        (entry.get("title_terms", []), 5.0),
-        (entry.get("concept_terms", []), 3.0),
-        (entry.get("support_terms", []), 1.5),
+        ("title_terms", entry.get("title_terms", []), 5.0),
+        ("concept_terms", entry.get("concept_terms", []), 3.0),
+        ("support_terms", entry.get("support_terms", []), 1.5),
     )
-    score = 0.0
+    contributions: list[tuple[str, float, str]] = []
     matched: list[str] = []
-    for terms, weight in weighted_groups:
+    for group, terms, weight in weighted_groups:
         for raw_term in terms:
             term = _normalize(raw_term)
             if not term or term in matched or not _phrase_present(message, term):
                 continue
             matched.append(term)
-            score += weight + (1.0 if " " in term else 0.0)
+            contributions.append((term, weight + (1.0 if " " in term else 0.0), group))
 
     if len(matched) == 1 and " " not in matched[0]:
-        score *= 0.35
-    return score, tuple(matched), True
+        contributions = [(term, round(weight * 0.35, 3), group) for term, weight, group in contributions]
+    score = round(sum(weight for _, weight, _ in contributions), 3)
+    contributions.sort(key=lambda item: (-item[1], item[0]))
+    return score, tuple(term for term, _, _ in contributions), True, tuple(contributions)
 
 
 def _policy_entry_score(
     message: str,
     entry: dict[str, Any],
     policy: dict[str, Any],
-) -> tuple[float, tuple[str, ...], bool]:
+) -> tuple[float, tuple[str, ...], bool, tuple[tuple[str, float, str], ...]]:
     tokens = _all_tokens(message)
     policy_by_term = {_normalize(item.get("term", "")): item for item in policy.get("terms", [])}
     global_non_scoring = {_normalize(term) for term in policy.get("global_non_scoring_terms", [])}
@@ -127,7 +134,6 @@ def _policy_entry_score(
             candidates[term] = ("supplemental_evidence_terms", weight)
 
     contributions: list[tuple[str, float, str]] = []
-    score = 0.0
     for term, (group, base_weight) in candidates.items():
         if not _policy_term_present(message, tokens, term):
             continue
@@ -142,7 +148,6 @@ def _policy_entry_score(
         if contribution <= 0:
             continue
         contributions.append((term, round(contribution, 3), group))
-        score += contribution
 
     minimum_reviewed_evidence_terms = int(policy.get("thresholds", {}).get("minimum_reviewed_evidence_terms", 0))
     reviewed_evidence_count = sum(1 for _, _, group in contributions if group == "supplemental_evidence_terms")
@@ -151,9 +156,7 @@ def _policy_entry_score(
     domain_gate = policy.get("domain_gate") or {}
     domain_required = domain_gate.get("required") is True
     domain_terms = [_normalize(term) for term in domain_gate.get("terms", []) if _normalize(term)]
-    domain_eligible = not domain_required or any(
-        _policy_term_present(message, tokens, term) for term in domain_terms
-    )
+    domain_eligible = not domain_required or any(_policy_term_present(message, tokens, term) for term in domain_terms)
 
     temporal_gate = policy.get("temporal_gate") or {}
     temporal_required = temporal_gate.get("required") is True
@@ -171,7 +174,48 @@ def _policy_entry_score(
     anchor_eligible = not required_anchors or bool(matched_anchors)
     eligible = domain_eligible and temporal_eligible and anchor_eligible and reviewed_evidence_eligible
     contributions.sort(key=lambda item: (-item[1], item[0]))
-    return round(score, 3), tuple(term for term, _, _ in contributions), eligible
+    return round(sum(item[1] for item in contributions), 3), tuple(term for term, _, _ in contributions), eligible, tuple(contributions)
+
+
+def _evidence_for_contributions(
+    original_message: str,
+    contributions: tuple[tuple[str, float, str], ...],
+) -> tuple[dict[str, Any], ...]:
+    segments: list[tuple[int, int, str, str, set[str]]] = []
+    for match in SEGMENT_RE.finditer(original_message):
+        raw = match.group(0)
+        leading = len(raw) - len(raw.lstrip())
+        trailing = len(raw) - len(raw.rstrip())
+        quote = raw.strip()
+        if not quote:
+            continue
+        start = match.start() + leading
+        end = match.end() - trailing
+        normalized = _normalize(quote)
+        segments.append((start, end, quote, normalized, _all_tokens(normalized)))
+
+    evidence: list[dict[str, Any]] = []
+    for term, contribution, group in contributions:
+        selected: tuple[int, int, str, str, set[str]] | None = None
+        for segment in segments:
+            if _policy_term_present(segment[3], segment[4], term):
+                selected = segment
+                break
+        if selected is None:
+            quote = original_message.strip()[:280]
+            start = 0
+            end = min(len(original_message), len(quote))
+        else:
+            start, end, quote = selected[0], selected[1], selected[2]
+        evidence.append({
+            "term": term,
+            "quote": quote[:280],
+            "start": start,
+            "end": end,
+            "group": group,
+            "contribution": round(float(contribution), 3),
+        })
+    return tuple(evidence)
 
 
 def _confidence(score: float, matched_count: int) -> float:
@@ -260,6 +304,10 @@ def load_fagverk_corpus(path: str | Path | None = None) -> dict[str, Any]:
     return payload
 
 
+def _match_passes_threshold(match: GroundingMatch) -> bool:
+    return match.score >= match.minimum_score and len(match.matched_terms) >= match.minimum_terms
+
+
 def ground_message(message: str, corpus: dict[str, Any] | None = None) -> dict[str, Any]:
     normalized = _normalize(message)
     if len(normalized) < 24:
@@ -272,14 +320,14 @@ def ground_message(message: str, corpus: dict[str, Any] | None = None) -> dict[s
         subject_id = str(entry.get("subject_id") or "")
         policy = subject_policies.get(subject_id)
         if policy:
-            score, matched_terms, eligible = _policy_entry_score(normalized, entry, policy)
+            score, matched_terms, eligible, contributions = _policy_entry_score(normalized, entry, policy)
             thresholds = policy.get("thresholds", {})
             scoring_mode = str(policy.get("scoring_mode") or "subject_policy_v1")
             minimum_score = float(thresholds.get("minimum_score", 6.0))
             minimum_terms = int(thresholds.get("minimum_terms", 2))
             ambiguity_margin = float(thresholds.get("ambiguity_margin", 3.0))
         else:
-            score, matched_terms, eligible = _generic_entry_score(normalized, entry)
+            score, matched_terms, eligible, contributions = _generic_entry_score(normalized, entry)
             scoring_mode = "generic_v1"
             minimum_score = 8.0
             minimum_terms = 2
@@ -296,6 +344,7 @@ def ground_message(message: str, corpus: dict[str, Any] | None = None) -> dict[s
                 score=round(score, 3),
                 confidence=_confidence(score, len(matched_terms)),
                 matched_terms=matched_terms,
+                evidence=_evidence_for_contributions(message, contributions),
                 scoring_mode=scoring_mode,
                 minimum_score=minimum_score,
                 minimum_terms=minimum_terms,
@@ -309,24 +358,29 @@ def ground_message(message: str, corpus: dict[str, Any] | None = None) -> dict[s
 
     top = matches[0]
     second = matches[1] if len(matches) > 1 else None
-    if top.score < top.minimum_score or len(top.matched_terms) < top.minimum_terms:
+    if not _match_passes_threshold(top):
         return {
             "status": "unsupported",
             "reason": "insufficient_fagverk_evidence",
             "matches": [match.__dict__ for match in matches[:3]],
         }
 
-    if second and second.score >= second.minimum_score and (top.score - second.score) < top.ambiguity_margin:
+    if second and _match_passes_threshold(second) and (top.score - second.score) < top.ambiguity_margin:
         return {
             "status": "ambiguous",
             "reason": "multiple_chapters_close",
             "matches": [match.__dict__ for match in matches[:3]],
         }
 
+    related_matches = [
+        match for match in matches[1:]
+        if _match_passes_threshold(match) and match.subject_id != top.subject_id
+    ][:2]
     return {
         "status": "grounded",
         "reason": "chapter_evidence_threshold_met",
         "match": top.__dict__,
+        "related_matches": [match.__dict__ for match in related_matches],
         "matches": [match.__dict__ for match in matches[:3]],
         "corpus": {
             "schema": payload.get("schema"),
@@ -356,6 +410,19 @@ def _dedupe(values: list[str]) -> list[str]:
     return result
 
 
+def _history_go_link(match: dict[str, Any], link_type: str) -> HistoryGoLink:
+    matched_terms = list(match.get("matched_terms", []))[:6]
+    evidence_label = ", ".join(matched_terms)
+    evidence = [HistoryGoEvidence(**item) for item in match.get("evidence", [])[:6]]
+    return HistoryGoLink(
+        type=link_type,
+        id=match["chapter_id"],
+        title=match["title"],
+        reason=f"Kildebundet Fagverk-treff basert på eksplisitte begreper: {evidence_label}.",
+        evidence=evidence,
+    )
+
+
 def apply_fagverk_grounding(base: CanonicalAhaAnalysis, grounding: dict[str, Any]) -> CanonicalAhaAnalysis:
     if grounding.get("status") != "grounded":
         if grounding.get("status") == "ambiguous":
@@ -368,27 +435,23 @@ def apply_fagverk_grounding(base: CanonicalAhaAnalysis, grounding: dict[str, Any
         return base
 
     match = grounding["match"]
+    related_matches = list(grounding.get("related_matches", []))[:2]
     data = _model_dump(base)
     matched_terms = list(match.get("matched_terms", []))[:6]
     evidence_label = ", ".join(matched_terms)
-    link = HistoryGoLink(
-        type="fagverk_chapter",
-        id=match["chapter_id"],
-        title=match["title"],
-        reason=f"Kildebundet Fagverk-treff basert på eksplisitte begreper: {evidence_label}.",
-    )
+    links = [_history_go_link(match, "fagverk_chapter")]
+    links.extend(_history_go_link(item, "fagverk_chapter_related") for item in related_matches)
 
     existing_links = [HistoryGoLink(**item) if isinstance(item, dict) else item for item in data.get("historyGoLinks", [])]
-    if not any(item.type == link.type and item.id == link.id for item in existing_links):
-        existing_links.append(link)
+    for link in links:
+        if not any(item.type == link.type and item.id == link.id for item in existing_links):
+            existing_links.append(link)
 
     base_confidence = data.get("confidence", {})
     domain_confidence = float(base_confidence.get("domain", 0.0))
     theme_confidence = float(base_confidence.get("theme", 0.0))
     grounding_confidence = float(match.get("confidence", 0.0))
     should_replace_generic = domain_confidence < 0.6
-    if not should_replace_generic:
-        return base
 
     if should_replace_generic:
         data["domain"] = match["primary_domain_id"]
@@ -408,9 +471,10 @@ def apply_fagverk_grounding(base: CanonicalAhaAnalysis, grounding: dict[str, Any
             if not any(fragment in warning.casefold() for fragment in generic_warning_fragments)
         ]
 
-    data["fieldConnections"] = _dedupe(
-        list(data.get("fieldConnections", [])) + [match["subject_id"], match["title"]]
-    )
+    connections = [match["subject_id"], match["title"]]
+    for related in related_matches:
+        connections.extend([related["subject_id"], related["title"]])
+    data["fieldConnections"] = _dedupe(list(data.get("fieldConnections", [])) + connections)
     data["historyGoLinks"] = [_model_dump(item) for item in existing_links]
     data["confidence"] = _model_dump(
         Confidence(
