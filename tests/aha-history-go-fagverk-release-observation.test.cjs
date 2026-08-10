@@ -68,8 +68,8 @@ if (!isRuntimeV2) {
   assert.equal(approved.approved_source_commit, runtimeCorpus.source_ref, 'legacy compatibility pointer remains seed-bound');
   assert.equal(approved.legacy_seed.corpus_path, runtimeCorpusPath);
   assert.equal(approved.legacy_seed.entry_count, runtimeCorpus.entries.length);
-  assert.deepEqual(approved.legacy_seed.overridden_subject_ids, ['historie', 'natur', 'politikk']);
-  assert.deepEqual(Object.keys(approved.approved_subjects), ['historie', 'natur', 'politikk']);
+  assert.deepEqual(approved.legacy_seed.overridden_subject_ids, ['historie', 'naeringsliv', 'natur', 'politikk']);
+  assert.deepEqual(Object.keys(approved.approved_subjects), ['historie', 'naeringsliv', 'natur', 'politikk']);
 
   const approvedHistory = approved.approved_subjects.historie;
   assert.equal(approvedHistory.source_commit, observed.source_commit);
@@ -77,6 +77,13 @@ if (!isRuntimeV2) {
   assert.equal(approvedHistory.policy_path.startsWith('data/integrations/runtime/'), true);
   assert.equal(approvedHistory.chapter_count, 23);
   assert.equal(approvedHistory.scoring_mode, 'subject_policy_v1');
+
+  const approvedBusiness = approved.approved_subjects.naeringsliv;
+  assert.equal(approvedBusiness.source_commit, observed.source_commit);
+  assert.equal(approvedBusiness.corpus_path.startsWith('data/integrations/runtime/'), true);
+  assert.equal(approvedBusiness.policy_path.startsWith('data/integrations/runtime/'), true);
+  assert.equal(approvedBusiness.chapter_count, 12);
+  assert.equal(approvedBusiness.scoring_mode, 'subject_policy_v1');
 
   const approvedNature = approved.approved_subjects.natur;
   assert.equal(approvedNature.source_commit, observed.source_commit);
@@ -97,8 +104,8 @@ if (!isRuntimeV2) {
   assert.equal(runtimeActive.active_source_commit, runtimeCorpus.source_ref, 'legacy compatibility pointer remains seed-bound');
   assert.equal(runtimeActive.legacy_seed.corpus_path, runtimeCorpusPath);
   assert.equal(runtimeActive.legacy_seed.entry_count, runtimeCorpus.entries.length);
-  assert.deepEqual(runtimeActive.legacy_seed.overridden_subject_ids, ['historie', 'natur', 'politikk']);
-  assert.deepEqual(Object.keys(runtimeActive.active_subjects), ['historie', 'natur', 'politikk']);
+  assert.deepEqual(runtimeActive.legacy_seed.overridden_subject_ids, ['historie', 'naeringsliv', 'natur', 'politikk']);
+  assert.deepEqual(Object.keys(runtimeActive.active_subjects), ['historie', 'naeringsliv', 'natur', 'politikk']);
 
   const activeHistory = runtimeActive.active_subjects.historie;
   assert.equal(activeHistory.source_commit, observed.source_commit);
@@ -106,6 +113,13 @@ if (!isRuntimeV2) {
   assert.equal(activeHistory.policy_path, approvedHistory.policy_path);
   assert.equal(activeHistory.chapter_count, 23);
   assert.equal(activeHistory.scoring_mode, 'subject_policy_v1');
+
+  const activeBusiness = runtimeActive.active_subjects.naeringsliv;
+  assert.equal(activeBusiness.source_commit, observed.source_commit);
+  assert.equal(activeBusiness.corpus_path, approvedBusiness.corpus_path);
+  assert.equal(activeBusiness.policy_path, approvedBusiness.policy_path);
+  assert.equal(activeBusiness.chapter_count, 12);
+  assert.equal(activeBusiness.scoring_mode, 'subject_policy_v1');
 
   const activeNature = runtimeActive.active_subjects.natur;
   assert.equal(activeNature.source_commit, observed.source_commit);
@@ -121,7 +135,7 @@ if (!isRuntimeV2) {
   assert.equal(activePolitics.chapter_count, 13);
   assert.equal(activePolitics.scoring_mode, 'subject_policy_v1');
 
-  assert.equal(runtimeActive.effective_entry_count, 47);
+  assert.equal(runtimeActive.effective_entry_count, 59);
   assert.equal(runtimeActive.activation_rules.active_subjects_override_legacy_subject_entries, true);
   assert.equal(runtimeActive.activation_rules.unregistered_candidates_are_not_runtime, true);
   assert.equal(runtimeActive.activation_rules.no_runtime_network_fetch, true);
