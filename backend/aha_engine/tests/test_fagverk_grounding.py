@@ -77,7 +77,7 @@ def test_runtime_manifest_uses_materialized_subject_artifacts_only() -> None:
     assert manifest["status"] == "partial_subject_runtime_active"
     expected_entries = sum(item["chapter_count"] for item in manifest["active_subjects"].values())
     assert manifest["effective_entry_count"] == expected_entries
-    assert set(manifest["active_subjects"]) == {"by", "historie", "kunst", "naeringsliv", "natur", "politikk", "subkultur"}
+    assert set(manifest["active_subjects"]) == {"by", "historie", "kunst", "musikk", "naeringsliv", "natur", "politikk", "subkultur"}
     for subject_id, item in manifest["active_subjects"].items():
         assert item["chapter_count"] > 0, subject_id
         assert item["corpus_path"].startswith("data/integrations/runtime/")
