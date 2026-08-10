@@ -17,7 +17,8 @@
       "historie",
       "naeringsliv",
       "natur",
-      "politikk"
+      "politikk",
+      "subkultur"
     ]
   },
   "active_subjects": {
@@ -72,9 +73,22 @@
       "chapter_count": 13,
       "scoring_mode": "subject_policy_v1",
       "activation_status": "runtime_subject_active"
+    },
+    "subkultur": {
+      "subject_id": "subkultur",
+      "source_commit": "c16a187453d16a40f9cab4ca694c32e96014f31b",
+      "subject_approval_path": "data/integrations/approvals/history-go-fagverk-subkultur.approved.v1.json",
+      "corpus_path": "data/integrations/runtime/history-go-fagverk-subkultur.corpus.v1.json",
+      "corpus_sha256": "e554b96513313139898a44e98f374d9fea2f01e8c8e8b015dcc5d6fdfa60d7f8",
+      "corpus_artifact_sha256": "14f6da1e9236fbab15e311c009110bc677cf602c2c507fd69d6390755ea90e03",
+      "policy_path": "data/integrations/runtime/history-go-fagverk-subkultur.policy.v1.json",
+      "policy_artifact_sha256": "f88f4743ab2b04b1ec79300eece1a7345133c61d90e11d7ccbcaf92316730ff4",
+      "chapter_count": 8,
+      "scoring_mode": "subject_policy_v1",
+      "activation_status": "runtime_subject_active"
     }
   },
-  "effective_entry_count": 59,
+  "effective_entry_count": 67,
   "full_release_active": false,
   "activation_rules": {
     "active_subjects_override_legacy_subject_entries": true,
@@ -83,5 +97,5 @@
     "no_runtime_network_fetch": true,
     "no_history_go_writeback": true
   },
-  "artifact_sha256": "439bae930f90fa82faab560650b1ad4d407fe7695b4e3d208022bb35399e7355"
+  "artifact_sha256": "58544c24c5b78bc1cbc0bf36fb665f1e09df1e11002dc73f788238ba89fadb41"
 }
