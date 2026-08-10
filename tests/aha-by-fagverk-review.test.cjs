@@ -38,9 +38,9 @@ assert.ok(policy.summary.down_weight > 0, 'expected down-weighted cross-subject 
 assert.ok(policy.summary.context_only > 0, 'expected context-only terms');
 
 for (const term of ['plan', 'byrom', 'sted', 'konflikt', 'akse', 'spor', 'arena']) {
+  assert.ok(policy.global_non_scoring_terms.includes(term), `${term} must be globally non-scoring`);
   const rule = policy.terms.find((item) => item.term === term);
-  assert.ok(rule, `${term} must be classified`);
-  assert.equal(rule.action, 'non_scoring', `${term} must be non-scoring`);
+  if (rule) assert.equal(rule.action, 'non_scoring', `${term} expanded row must be non-scoring`);
 }
 
 assert.equal(matrix.positive_cases.length, 34);
