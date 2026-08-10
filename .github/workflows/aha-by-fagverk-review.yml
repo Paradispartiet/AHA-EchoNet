@@ -34,6 +34,24 @@ jobs:
         run: node scripts/compare-by-full-fixtures.mjs --policy /tmp/aha-by-policy.json --output /tmp/aha-by-fixtures.json
       - name: Verify review contract and runtime boundary
         run: node tests/aha-by-fagverk-review.test.cjs
+      - name: Verify attested review artifact digests
+        run: |
+          node - <<'NODE'
+          const crypto = require('crypto');
+          const fs = require('fs');
+          const attestation = require('./data/integrations/review/history-go-fagverk-by.review-attestation.v1.json');
+          const files = {
+            policy: '/tmp/aha-by-policy.json',
+            evaluation: '/tmp/aha-by-evaluation.json',
+            fixtures: '/tmp/aha-by-fixtures.json',
+          };
+          for (const [key, file] of Object.entries(files)) {
+            const digest = crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+            if (digest !== attestation.outputs[key].sha256) {
+              throw new Error(`${key} digest drifted: ${digest} != ${attestation.outputs[key].sha256}`);
+            }
+          }
+          NODE
       - uses: actions/upload-artifact@v4
         with:
           name: aha-by-fagverk-review
