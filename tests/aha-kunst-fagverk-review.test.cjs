@@ -16,6 +16,9 @@ const matrix=JSON.parse(fs.readFileSync("data/evaluation/aha-kunst-fagverk-evalu
 const policy=JSON.parse(fs.readFileSync(policyPath,"utf8"));
 const evaluation=JSON.parse(fs.readFileSync(evaluationPath,"utf8"));
 const fixtures=JSON.parse(fs.readFileSync(fixturesPath,"utf8"));
+const runtime=JSON.parse(fs.readFileSync("data/integrations/history-go-fagverk-release.runtime-active.json","utf8"));
+const runtimeCorpus=JSON.parse(fs.readFileSync("data/integrations/runtime/history-go-fagverk-kunst.corpus.v1.json","utf8"));
+const runtimePolicy=JSON.parse(fs.readFileSync("data/integrations/runtime/history-go-fagverk-kunst.policy.v1.json","utf8"));
 
 assert.equal(audit.gate.passed,true);
 assert.deepEqual(audit.coverage,{expected:6,registered:6,materialized:6,missing:[],unexpected:[],duplicate_chapter_ids:[]});
@@ -43,8 +46,22 @@ assert.equal(fixtures.summary.total,16);
 assert.equal(fixtures.summary.passed,16);
 assert.equal(fixtures.summary.false_positives,0);
 assert.equal(fixtures.summary.evidence_errors,0);
+
+const activeKunst=runtime.active_subjects?.kunst;
+assert.equal(activeKunst.subject_id,"kunst");
+assert.equal(activeKunst.source_commit,config.source_ref);
+assert.equal(activeKunst.chapter_count,6);
+assert.equal(activeKunst.activation_status,"runtime_subject_active");
+assert.equal(activeKunst.corpus_path,"data/integrations/runtime/history-go-fagverk-kunst.corpus.v1.json");
+assert.equal(activeKunst.policy_path,"data/integrations/runtime/history-go-fagverk-kunst.policy.v1.json");
+assert.equal(runtimeCorpus.projection_mode,"reviewed_anchor_projection_v1");
+assert.equal(runtimeCorpus.chapter_count,6);
+assert.equal(runtimePolicy.runtime_corpus_projection,"reviewed_anchor_projection_v1");
+assert.equal(runtimePolicy.domain_gate.required,true);
+assert.equal(Object.keys(runtimePolicy.chapter_rules).length,6);
+
 const runtimeCode=fs.readFileSync("backend/aha_engine/app/engine/fagverk_grounding.py","utf8");
 assert.equal(runtimeCode.includes("history-go-fagverk-kunst.review-config.v1.json"),false);
 assert.equal(runtimeCode.includes("data/integrations/review"),false);
 assert.match(runtimeCode,/history-go-fagverk-release\.runtime-active\.json/);
-console.log(`Kunst review gate passed: ${evaluation.summary.passed}/${evaluation.summary.total} constructed cases and ${fixtures.summary.passed}/${fixtures.summary.total} human-reviewed fixtures.`);
+console.log(`Kunst review/runtime gate passed: ${evaluation.summary.passed}/${evaluation.summary.total} constructed cases, ${fixtures.summary.passed}/${fixtures.summary.total} fixtures, 6 runtime chapters.`);
