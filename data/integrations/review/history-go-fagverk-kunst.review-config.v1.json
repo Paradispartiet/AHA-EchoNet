@@ -1,0 +1,36 @@
+{
+  "schema": "aha_kunst_fagverk_review_config_v1",
+  "version": "1.0.0",
+  "status": "review_policy_full_fixture_candidate_not_runtime_active",
+  "subject_id": "kunst",
+  "source_repo": "Paradispartiet/History-Go",
+  "source_ref": "d52cebbe2c6c01e5780be301e9b0e4a9c61c5254",
+  "registry_version": "2.58.0",
+  "corpus_sha256": "0bd12a658e1b18bac17f1da8c6a251e88ebd8ca9db0ffce9328058a27ffa48bc",
+  "lifecycle_stage": "subject_release_review",
+  "approval_required": true,
+  "activation_allowed": false,
+  "runtime_activation_allowed": false,
+  "thresholds": {"minimum_score": 6, "minimum_terms": 2, "ambiguity_margin": 3},
+  "default_weights": {"title_term": 5, "concept_term": 3, "support_term": 1.5},
+  "scoring": {"title_term": 5, "concept_term": 3, "support_term": 1.5, "supplemental_evidence_term": 3, "down_weight_multiplier": 0.35, "grounded_min_score": 6, "grounded_min_terms": 2, "ambiguity_margin": 3},
+  "collision_policy": {"internal_high_risk": "non_scoring", "internal_medium_risk": "down_weight", "internal_low_risk": "context_only", "cross_subject_min_subjects": 2, "cross_subject_action": "down_weight", "required_anchor_exemption": true},
+  "generic_language_terms": ["analyse","endring","felt","felles","form","historie","historisk","hvordan","hvem","institusjon","kunst","kunstner","kunstnere","offentlig","offentlighet","praksis","prosess","rom","sted","synlig","system","tid","varig","verdi","verk","verket"],
+  "global_non_scoring_terms": ["analyse","endring","felt","felles","form","historie","historisk","hvordan","hvem","institusjon","kunst","kunstner","kunstnere","offentlig","offentlighet","praksis","prosess","rom","sted","synlig","system","tid","varig","verdi","verk","verket"],
+  "context_only_terms": ["arkiv","design","digital","farge","finansiering","katalog","komposisjon","kritikk","kultur","makt","materiale","medium","motiv","museum","museet","plattform","politisk","samling","stil","utdanning","utstilling"],
+  "abstention_rules": [
+    "Generic art, culture, history or institutional language never grounds a Kunst chapter by itself.",
+    "Every Kunst chapter requires at least one chapter-specific mandatory anchor.",
+    "At least two scoring evidence terms and score 6 are required for grounding.",
+    "Media criticism, general political power, architecture, personal creativity, historical narrative and technical design remain unsupported unless explicit art-study evidence crosses the chapter threshold.",
+    "Runtime activation is forbidden in this review stage."
+  ],
+  "chapter_rules": {
+    "estetisk-sprak-og-form": {"required_anchor_terms": ["ikonografi","appropriasjon","abstraksjon","konseptkunst"], "supplemental_evidence_terms": [{"term":"ikonografi","weight":3},{"term":"appropriasjon","weight":3},{"term":"abstraksjon","weight":3},{"term":"konseptkunst","weight":3}]},
+    "felt-og-institusjon": {"required_anchor_terms": ["kanondannelse","kuratorisk utvalg","kunstnerstyrt","samlingsproveniens"], "supplemental_evidence_terms": [{"term":"kanondannelse","weight":3},{"term":"kuratorisk utvalg","weight":3},{"term":"kunstnerstyrt","weight":3},{"term":"samlingsproveniens","weight":3}]},
+    "makt-og-legitimitet": {"required_anchor_terms": ["symbolsk kapital","institusjonskritikk","politisk kunst","jurybegrunnelser"], "supplemental_evidence_terms": [{"term":"symbolsk kapital","weight":3},{"term":"institusjonskritikk","weight":3},{"term":"politisk kunst","weight":3},{"term":"jurybegrunnelser","weight":3}]},
+    "produksjon-og-praksis": {"required_anchor_terms": ["atelier","verksted","kunstnerøkonomi","selvorganisering"], "supplemental_evidence_terms": [{"term":"atelier","weight":3},{"term":"verksted","weight":3},{"term":"kunstnerøkonomi","weight":3},{"term":"selvorganisering","weight":3}]},
+    "publikum-og-offentlighet": {"required_anchor_terms": ["offentlig kunst","publikumsstruktur","monument","resepsjon"], "supplemental_evidence_terms": [{"term":"offentlig kunst","weight":3},{"term":"publikumsstruktur","weight":3},{"term":"monument","weight":3},{"term":"resepsjon","weight":3}]},
+    "tid-og-transformasjon": {"required_anchor_terms": ["epoker","brudd og kontinuitet","hverdagsestetikk","repetisjon"], "supplemental_evidence_terms": [{"term":"epoker","weight":3},{"term":"brudd og kontinuitet","weight":3},{"term":"hverdagsestetikk","weight":3},{"term":"repetisjon","weight":3}]}
+  }
+}
