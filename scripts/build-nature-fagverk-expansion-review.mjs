@@ -11,6 +11,7 @@ const PATHS = {
   baseline: "data/integrations/history-go-fagverk-corpus.v1.json",
   candidate: "data/integrations/candidates/history-go-fagverk-natur.candidate.v1.json",
   observed: "data/integrations/history-go-fagverk-release.observed.json",
+  subjectBaseline: "data/integrations/review/history-go-fagverk-subject-content-baseline.v1.json",
   output: "data/integrations/review/history-go-fagverk-natur.expansion-review.v1.json"
 };
 
@@ -21,6 +22,7 @@ function parseArgs(argv) {
     if (token === "--baseline") args.baseline = argv[++index] || args.baseline;
     else if (token === "--candidate") args.candidate = argv[++index] || args.candidate;
     else if (token === "--observed") args.observed = argv[++index] || args.observed;
+    else if (token === "--subject-baseline") args.subjectBaseline = argv[++index] || args.subjectBaseline;
     else if (token === "--output") args.output = argv[++index] || args.output;
     else if (token === "--help") args.help = true;
     else throw new Error(`Unknown argument: ${token}`);
@@ -38,9 +40,21 @@ function writeJson(relativePath, value) {
   fs.writeFileSync(outputPath, `${JSON.stringify(value, null, 2)}\n`, "utf8");
 }
 
-function buildReview(baseline, candidate, observed) {
+function validateSubjectCompatibility(candidate, observed, subjectBaseline) {
+  const approved = subjectBaseline.subjects?.natur;
+  const observedSubject = observed.subjects?.natur;
+  if (!approved || !observedSubject) throw new Error("Nature subject compatibility evidence is missing.");
+  if (candidate.source_ref !== approved.approved_source_ref) {
+    throw new Error("Nature candidate differs from the approved subject-content baseline source.");
+  }
+  if (observedSubject.content_sha256 !== approved.subject_content_sha256) {
+    throw new Error("Observed Nature content changed and requires a new subject review.");
+  }
+}
+
+function buildReview(baseline, candidate, observed, subjectBaseline) {
   if (candidate.subject_filter !== "natur") throw new Error("Candidate is not Nature-scoped.");
-  if (candidate.source_ref !== observed.source_commit) throw new Error("Nature candidate is not built from the observed release.");
+  validateSubjectCompatibility(candidate, observed, subjectBaseline);
   if (candidate.entries.length !== 11) throw new Error("Nature candidate must contain 11 chapters.");
   const baselineEntries = (baseline.entries || []).filter((entry) => entry.subject_id === "natur");
   if (baselineEntries.length !== 1 || baselineEntries[0].chapter_id !== "okosystem_mangfold_habitat") {
@@ -105,10 +119,15 @@ function buildReview(baseline, candidate, observed) {
 function main() {
   const args = parseArgs(process.argv.slice(2));
   if (args.help) {
-    console.log("Usage: node scripts/build-nature-fagverk-expansion-review.mjs [--baseline path] [--candidate path] [--observed path] [--output path]");
+    console.log("Usage: node scripts/build-nature-fagverk-expansion-review.mjs [--baseline path] [--candidate path] [--observed path] [--subject-baseline path] [--output path]");
     return;
   }
-  const review = buildReview(readJson(args.baseline), readJson(args.candidate), readJson(args.observed));
+  const review = buildReview(
+    readJson(args.baseline),
+    readJson(args.candidate),
+    readJson(args.observed),
+    readJson(args.subjectBaseline)
+  );
   writeJson(args.output, review);
   console.log(`Nature expansion reviewed: ${review.baseline.chapter_count} -> ${review.candidate.chapter_count} chapters; runtime remains inactive.`);
 }
