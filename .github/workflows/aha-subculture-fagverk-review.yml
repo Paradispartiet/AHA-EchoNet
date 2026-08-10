@@ -21,6 +21,22 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      - name: Fix reviewed-to-active transition in bootstrap source
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('scripts/bootstrap-subculture-runtime-activation.py')
+          text = p.read_text(encoding='utf-8')
+          old = '''replace(approval_test,
+                  "assert.equal(runtimeActive.active_subjects.subkultur, undefined);",
+                  "assert.equal(runtimeActive.active_subjects.subkultur.subject_id, 'subkultur');\\nassert.equal(runtimeActive.active_subjects.subkultur.chapter_count, 8);\\nassert.equal(runtimeActive.active_subjects.subkultur.activation_status, 'runtime_subject_active');")'''
+          new = '''replace(approval_test,
+                  "assert.equal(runtimeActive.active_subjects.natur.activation_status, 'runtime_subject_active');",
+                  "assert.equal(runtimeActive.active_subjects.natur.activation_status, 'runtime_subject_active');\\nassert.equal(runtimeActive.active_subjects.subkultur.subject_id, 'subkultur');\\nassert.equal(runtimeActive.active_subjects.subkultur.chapter_count, 8);\\nassert.equal(runtimeActive.active_subjects.subkultur.activation_status, 'runtime_subject_active');")'''
+          if old not in text:
+              raise SystemExit('stale Subculture transition block not found')
+          p.write_text(text.replace(old, new), encoding='utf-8')
+          PY
       - name: Materialize Subculture runtime
         run: python scripts/bootstrap-subculture-runtime-activation.py
       - name: Install Python engine test dependencies
