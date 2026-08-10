@@ -16,6 +16,7 @@
     "overridden_subject_ids": [
       "by",
       "historie",
+      "kunst",
       "naeringsliv",
       "natur",
       "politikk",
@@ -46,6 +47,19 @@
       "policy_path": "data/integrations/runtime/history-go-fagverk-historie.policy.v1.json",
       "policy_artifact_sha256": "3b011a889eff7eef41c013ee94c458454ee2957e2c85a3d83d20f5adb589205a",
       "chapter_count": 23,
+      "scoring_mode": "subject_policy_v1",
+      "activation_status": "runtime_subject_active"
+    },
+    "kunst": {
+      "subject_id": "kunst",
+      "source_commit": "d52cebbe2c6c01e5780be301e9b0e4a9c61c5254",
+      "subject_approval_path": "data/integrations/approvals/history-go-fagverk-kunst.approved.v1.json",
+      "corpus_path": "data/integrations/runtime/history-go-fagverk-kunst.corpus.v1.json",
+      "corpus_sha256": "0bd12a658e1b18bac17f1da8c6a251e88ebd8ca9db0ffce9328058a27ffa48bc",
+      "corpus_artifact_sha256": "4cd324773d53b7aae50b2feefa9fef160bbfbe02a7182c94c49a7a9c46f50f89",
+      "policy_path": "data/integrations/runtime/history-go-fagverk-kunst.policy.v1.json",
+      "policy_artifact_sha256": "87041561587e091b2d3eb6405a39878529284ac0d3774425895cbbb2ebff5b87",
+      "chapter_count": 6,
       "scoring_mode": "subject_policy_v1",
       "activation_status": "runtime_subject_active"
     },
@@ -102,7 +116,7 @@
       "activation_status": "runtime_subject_active"
     }
   },
-  "effective_entry_count": 84,
+  "effective_entry_count": 90,
   "full_release_active": false,
   "activation_rules": {
     "active_subjects_override_legacy_subject_entries": true,
@@ -111,5 +125,5 @@
     "no_runtime_network_fetch": true,
     "no_history_go_writeback": true
   },
-  "artifact_sha256": "817c5cd6dbe6784c33ff3856ea73fd69d7eca99ec4fc41727f5e7026b4f71302"
+  "artifact_sha256": "27321f7688885b0513d7f867841d1a1d03f7d504476631a590a1b7afa4d2ab88"
 }
