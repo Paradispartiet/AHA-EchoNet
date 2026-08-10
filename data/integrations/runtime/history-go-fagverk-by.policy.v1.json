@@ -1,47 +1,414 @@
 {
-  "schema":"aha_history_go_fagverk_runtime_subject_policy_v1",
-  "version":"1.0.0",
-  "status":"runtime_subject_policy_active",
-  "subject_id":"by",
-  "source_repo":"Paradispartiet/History-Go",
-  "source_ref":"d52cebbe2c6c01e5780be301e9b0e4a9c61c5254",
-  "corpus_sha256":"823e79dcd7c767ee3251a924d7697b0b2cee51cbb89699dda7d318aa81c9e10b",
-  "source_policy_version":"1.1.0",
-  "source_policy_sha256":"beafcf1dc48e66fd547a748e93f699f1473acc640ae6b409d6956c367a78623c",
-  "source_policy_config_path":"data/integrations/review/history-go-fagverk-by.review-config.v1.json",
-  "source_policy_config_version":"1.1.0",
-  "source_policy_config_sha256":"d81e1b0d4dbb60e229d1f773c27a94137d930626a01c37a12b1176a22ed6282b",
-  "source_review_attestation_path":"data/integrations/review/history-go-fagverk-by.review-attestation.v1.json",
-  "source_review_artifact_sha256":"da490aac9009e680143c97d05d2e9369265cb4133ffd476c626b0214ae4ea384",
-  "source_review_head_sha":"353cc48ca2a7eaaf38629d7912ef662532614228",
-  "runtime_corpus_projection":"reviewed_anchor_projection_v1",
-  "scoring_mode":"subject_policy_v1",
-  "thresholds":{"minimum_score":6,"minimum_terms":2,"ambiguity_margin":3},
-  "default_weights":{"title_term":5,"concept_term":3,"support_term":1.5},
-  "policy_rules":{},
-  "global_non_scoring_terms":["aktivitet","akse","analyse","arena","bruk","by","byen","byrom","byrommet","endring","faktisk","folk","hvordan","hvem","konflikt","møte","møter","offentlig","plan","planer","praksis","rom","saken","sosial","spor","sted","steder","system","tiltak"],
-  "domain_gate":{"required":true,"terms":["algoritmer","algoritmisk styring","arbeidsby","arrangementsby","beredskap","bofasthet","boligbyrde","boligtrygghet","bruksgrenser","byform","byidealer","byregion","byrytmer","datastyring","fortetting","førsteetasjer","gatekant","gentrifisering","hageby","historiske lag","hverdagsfriksjon","høyhus","klimatilpasning","lavterskel byliv","leiemarked","logistikk","materialitet","midlertidig bruk","midlertidighet","migrasjon","mikroklima","mikrokomfort","minnespor","møteplasser","nabolagsendring","ombruk","opphold","oppholdskvalitet","overvann","pendling","planmodell","planvedtak","protest","ruiner","sosial miks","sosial offentlighet","tilgangskontroll","tilsyn","ulovlighetsoppfølging","varelogistikk","varmeøy","venting"]},
-  "chapter_rules":{
-    "administrasjon-plan-kontroll-beredskap":{"required_anchor_terms":["planvedtak","ulovlighetsoppfølging","tilsyn","beredskap"],"supplemental_evidence_terms":[{"term":"planvedtak","weight":3},{"term":"ulovlighetsoppfølging","weight":3}]},
-    "arbeid-naering-handel-logistikk":{"required_anchor_terms":["arbeidsby","logistikk","varelogistikk"],"supplemental_evidence_terms":[{"term":"arbeidsby","weight":3},{"term":"varelogistikk","weight":3}]},
-    "arkitektur-gatekant-makt-ombruk":{"required_anchor_terms":["gatekant","ombruk","førsteetasjer"],"supplemental_evidence_terms":[{"term":"gatekant","weight":3},{"term":"ombruk","weight":3}]},
-    "arkitektur-type-skala-byform":{"required_anchor_terms":["hageby","høyhus","byform"],"supplemental_evidence_terms":[{"term":"hageby","weight":3},{"term":"høyhus","weight":3}]},
-    "bolig-nabolag-tilgang-endring":{"required_anchor_terms":["nabolagsendring","gentrifisering","bofasthet"],"supplemental_evidence_terms":[{"term":"nabolagsendring","weight":3},{"term":"gentrifisering","weight":3}]},
-    "boligpolitikk-pris-leie-eie-tilgang":{"required_anchor_terms":["boligbyrde","boligtrygghet","leiemarked"],"supplemental_evidence_terms":[{"term":"boligbyrde","weight":3},{"term":"boligtrygghet","weight":3}]},
-    "byliv-hendelser-midlertidighet":{"required_anchor_terms":["midlertidighet","arrangementsby","midlertidig bruk"],"supplemental_evidence_terms":[{"term":"midlertidighet","weight":3},{"term":"arrangementsby","weight":3}]},
-    "byliv-offentlige-rom":{"required_anchor_terms":["møteplasser","opphold","oppholdskvalitet"],"supplemental_evidence_terms":[{"term":"møteplasser","weight":3},{"term":"oppholdskvalitet","weight":3}]},
-    "byliv-rytmer-miks-konflikt":{"required_anchor_terms":["hverdagsfriksjon","sosial miks","byrytmer"],"supplemental_evidence_terms":[{"term":"hverdagsfriksjon","weight":3},{"term":"sosial miks","weight":3}]},
-    "byliv-sosial-offentlighet":{"required_anchor_terms":["sosial offentlighet","lavterskel byliv","venting"],"supplemental_evidence_terms":[{"term":"sosial offentlighet","weight":3},{"term":"lavterskel byliv","weight":3}]},
-    "byliv-stemning-mikrokomfort":{"required_anchor_terms":["mikrokomfort","materialitet","mikroklima"],"supplemental_evidence_terms":[{"term":"mikrokomfort","weight":3},{"term":"materialitet","weight":3}]},
-    "data-styring-kart-plan-medvirkning-algoritmer":{"required_anchor_terms":["algoritmer","algoritmisk styring","datastyring"],"supplemental_evidence_terms":[{"term":"algoritmisk styring","weight":3},{"term":"datastyring","weight":3}]},
-    "historiske-lag-ruiner-minner":{"required_anchor_terms":["minnespor","ruiner","historiske lag"],"supplemental_evidence_terms":[{"term":"minnespor","weight":3},{"term":"ruiner","weight":3}]},
-    "klima-helse-varme-vann-tilgjengelighet":{"required_anchor_terms":["overvann","varmeøy","klimatilpasning"],"supplemental_evidence_terms":[{"term":"overvann","weight":3},{"term":"varmeøy","weight":3}]},
-    "makt-konflikt-protest-grenser-trygghet":{"required_anchor_terms":["protest","tilgangskontroll","bruksgrenser"],"supplemental_evidence_terms":[{"term":"tilgangskontroll","weight":3},{"term":"bruksgrenser","weight":3}]},
-    "regional-global-pendling-migrasjon-sammenligning":{"required_anchor_terms":["pendling","migrasjon","byregion"],"supplemental_evidence_terms":[{"term":"pendling","weight":3},{"term":"byregion","weight":3}]},
-    "urbanisme-idealer-forbindelser-fortetting":{"required_anchor_terms":["byidealer","fortetting","planmodell"],"supplemental_evidence_terms":[{"term":"byidealer","weight":3},{"term":"fortetting","weight":3}]}
+  "schema": "aha_history_go_fagverk_runtime_subject_policy_v1",
+  "version": "1.0.0",
+  "status": "runtime_subject_policy_active",
+  "subject_id": "by",
+  "source_repo": "Paradispartiet/History-Go",
+  "source_ref": "d52cebbe2c6c01e5780be301e9b0e4a9c61c5254",
+  "corpus_sha256": "823e79dcd7c767ee3251a924d7697b0b2cee51cbb89699dda7d318aa81c9e10b",
+  "source_policy_version": "1.1.0",
+  "source_policy_sha256": "beafcf1dc48e66fd547a748e93f699f1473acc640ae6b409d6956c367a78623c",
+  "source_policy_config_path": "data/integrations/review/history-go-fagverk-by.review-config.v1.json",
+  "source_policy_config_version": "1.1.0",
+  "source_policy_config_sha256": "d81e1b0d4dbb60e229d1f773c27a94137d930626a01c37a12b1176a22ed6282b",
+  "source_review_attestation_path": "data/integrations/review/history-go-fagverk-by.review-attestation.v1.json",
+  "source_review_artifact_sha256": "da490aac9009e680143c97d05d2e9369265cb4133ffd476c626b0214ae4ea384",
+  "source_review_head_sha": "353cc48ca2a7eaaf38629d7912ef662532614228",
+  "runtime_corpus_projection": "reviewed_anchor_projection_v1",
+  "scoring_mode": "subject_policy_v1",
+  "thresholds": {
+    "minimum_score": 6,
+    "minimum_terms": 2,
+    "ambiguity_margin": 3
   },
-  "terms":[],
-  "approval_path":"data/integrations/approvals/history-go-fagverk-by.approved.v1.json",
-  "runtime_activation_allowed":true,
-  "artifact_sha256":"1494b5829495a64ed3e1968a88a838c3a7d30a95cb570de61f6b7a7fe17bc667"
+  "default_weights": {
+    "title_term": 5,
+    "concept_term": 3,
+    "support_term": 1.5
+  },
+  "policy_rules": {},
+  "global_non_scoring_terms": [
+    "aktivitet",
+    "akse",
+    "analyse",
+    "arena",
+    "bruk",
+    "by",
+    "byen",
+    "byrom",
+    "byrommet",
+    "endring",
+    "faktisk",
+    "folk",
+    "hvordan",
+    "hvem",
+    "konflikt",
+    "møte",
+    "møter",
+    "offentlig",
+    "plan",
+    "planer",
+    "praksis",
+    "rom",
+    "saken",
+    "sosial",
+    "spor",
+    "sted",
+    "steder",
+    "system",
+    "tiltak"
+  ],
+  "domain_gate": {
+    "required": true,
+    "terms": [
+      "algoritmer",
+      "algoritmisk styring",
+      "arbeidsby",
+      "arrangementsby",
+      "beredskap",
+      "bofasthet",
+      "boligbyrde",
+      "boligtrygghet",
+      "bruksgrenser",
+      "byform",
+      "byidealer",
+      "byregion",
+      "byrytmer",
+      "datastyring",
+      "fortetting",
+      "førsteetasjer",
+      "gatekant",
+      "gentrifisering",
+      "hageby",
+      "historiske lag",
+      "hverdagsfriksjon",
+      "høyhus",
+      "klimatilpasning",
+      "lavterskel byliv",
+      "leiemarked",
+      "logistikk",
+      "materialitet",
+      "midlertidig bruk",
+      "midlertidighet",
+      "migrasjon",
+      "mikroklima",
+      "mikrokomfort",
+      "minnespor",
+      "møteplasser",
+      "nabolagsendring",
+      "ombruk",
+      "opphold",
+      "oppholdskvalitet",
+      "overvann",
+      "pendling",
+      "planmodell",
+      "planvedtak",
+      "protest",
+      "ruiner",
+      "sosial miks",
+      "sosial offentlighet",
+      "tilgangskontroll",
+      "tilsyn",
+      "ulovlighetsoppfølging",
+      "varelogistikk",
+      "varmeøy",
+      "venting"
+    ]
+  },
+  "chapter_rules": {
+    "administrasjon-plan-kontroll-beredskap": {
+      "required_anchor_terms": [
+        "planvedtak",
+        "ulovlighetsoppfølging",
+        "tilsyn",
+        "beredskap"
+      ],
+      "supplemental_evidence_terms": [
+        {
+          "term": "planvedtak",
+          "weight": 3
+        },
+        {
+          "term": "ulovlighetsoppfølging",
+          "weight": 3
+        }
+      ]
+    },
+    "arbeid-naering-handel-logistikk": {
+      "required_anchor_terms": [
+        "arbeidsby",
+        "logistikk",
+        "varelogistikk"
+      ],
+      "supplemental_evidence_terms": [
+        {
+          "term": "arbeidsby",
+          "weight": 3
+        },
+        {
+          "term": "varelogistikk",
+          "weight": 3
+        }
+      ]
+    },
+    "arkitektur-gatekant-makt-ombruk": {
+      "required_anchor_terms": [
+        "gatekant",
+        "ombruk",
+        "førsteetasjer"
+      ],
+      "supplemental_evidence_terms": [
+        {
+          "term": "gatekant",
+          "weight": 3
+        },
+        {
+          "term": "ombruk",
+          "weight": 3
+        }
+      ]
+    },
+    "arkitektur-type-skala-byform": {
+      "required_anchor_terms": [
+        "hageby",
+        "høyhus",
+        "byform"
+      ],
+      "supplemental_evidence_terms": [
+        {
+          "term": "hageby",
+          "weight": 3
+        },
+        {
+          "term": "høyhus",
+          "weight": 3
+        }
+      ]
+    },
+    "bolig-nabolag-tilgang-endring": {
+      "required_anchor_terms": [
+        "nabolagsendring",
+        "gentrifisering",
+        "bofasthet"
+      ],
+      "supplemental_evidence_terms": [
+        {
+          "term": "nabolagsendring",
+          "weight": 3
+        },
+        {
+          "term": "gentrifisering",
+          "weight": 3
+        }
+      ]
+    },
+    "boligpolitikk-pris-leie-eie-tilgang": {
+      "required_anchor_terms": [
+        "boligbyrde",
+        "boligtrygghet",
+        "leiemarked"
+      ],
+      "supplemental_evidence_terms": [
+        {
+          "term": "boligbyrde",
+          "weight": 3
+        },
+        {
+          "term": "boligtrygghet",
+          "weight": 3
+        }
+      ]
+    },
+    "byliv-hendelser-midlertidighet": {
+      "required_anchor_terms": [
+        "midlertidighet",
+        "arrangementsby",
+        "midlertidig bruk"
+      ],
+      "supplemental_evidence_terms": [
+        {
+          "term": "midlertidighet",
+          "weight": 3
+        },
+        {
+          "term": "arrangementsby",
+          "weight": 3
+        }
+      ]
+    },
+    "byliv-offentlige-rom": {
+      "required_anchor_terms": [
+        "møteplasser",
+        "opphold",
+        "oppholdskvalitet"
+      ],
+      "supplemental_evidence_terms": [
+        {
+          "term": "møteplasser",
+          "weight": 3
+        },
+        {
+          "term": "oppholdskvalitet",
+          "weight": 3
+        }
+      ]
+    },
+    "byliv-rytmer-miks-konflikt": {
+      "required_anchor_terms": [
+        "hverdagsfriksjon",
+        "sosial miks",
+        "byrytmer"
+      ],
+      "supplemental_evidence_terms": [
+        {
+          "term": "hverdagsfriksjon",
+          "weight": 3
+        },
+        {
+          "term": "sosial miks",
+          "weight": 3
+        }
+      ]
+    },
+    "byliv-sosial-offentlighet": {
+      "required_anchor_terms": [
+        "sosial offentlighet",
+        "lavterskel byliv",
+        "venting"
+      ],
+      "supplemental_evidence_terms": [
+        {
+          "term": "sosial offentlighet",
+          "weight": 3
+        },
+        {
+          "term": "lavterskel byliv",
+          "weight": 3
+        }
+      ]
+    },
+    "byliv-stemning-mikrokomfort": {
+      "required_anchor_terms": [
+        "mikrokomfort",
+        "materialitet",
+        "mikroklima"
+      ],
+      "supplemental_evidence_terms": [
+        {
+          "term": "mikrokomfort",
+          "weight": 3
+        },
+        {
+          "term": "materialitet",
+          "weight": 3
+        }
+      ]
+    },
+    "data-styring-kart-plan-medvirkning-algoritmer": {
+      "required_anchor_terms": [
+        "algoritmer",
+        "algoritmisk styring",
+        "datastyring"
+      ],
+      "supplemental_evidence_terms": [
+        {
+          "term": "algoritmisk styring",
+          "weight": 3
+        },
+        {
+          "term": "datastyring",
+          "weight": 3
+        }
+      ]
+    },
+    "historiske-lag-ruiner-minner": {
+      "required_anchor_terms": [
+        "minnespor",
+        "ruiner",
+        "historiske lag"
+      ],
+      "supplemental_evidence_terms": [
+        {
+          "term": "minnespor",
+          "weight": 3
+        },
+        {
+          "term": "ruiner",
+          "weight": 3
+        }
+      ]
+    },
+    "klima-helse-varme-vann-tilgjengelighet": {
+      "required_anchor_terms": [
+        "overvann",
+        "varmeøy",
+        "klimatilpasning"
+      ],
+      "supplemental_evidence_terms": [
+        {
+          "term": "overvann",
+          "weight": 3
+        },
+        {
+          "term": "varmeøy",
+          "weight": 3
+        }
+      ]
+    },
+    "makt-konflikt-protest-grenser-trygghet": {
+      "required_anchor_terms": [
+        "protest",
+        "tilgangskontroll",
+        "bruksgrenser"
+      ],
+      "supplemental_evidence_terms": [
+        {
+          "term": "tilgangskontroll",
+          "weight": 3
+        },
+        {
+          "term": "bruksgrenser",
+          "weight": 3
+        }
+      ]
+    },
+    "regional-global-pendling-migrasjon-sammenligning": {
+      "required_anchor_terms": [
+        "pendling",
+        "migrasjon",
+        "byregion"
+      ],
+      "supplemental_evidence_terms": [
+        {
+          "term": "pendling",
+          "weight": 3
+        },
+        {
+          "term": "byregion",
+          "weight": 3
+        }
+      ]
+    },
+    "urbanisme-idealer-forbindelser-fortetting": {
+      "required_anchor_terms": [
+        "byidealer",
+        "fortetting",
+        "planmodell"
+      ],
+      "supplemental_evidence_terms": [
+        {
+          "term": "byidealer",
+          "weight": 3
+        },
+        {
+          "term": "fortetting",
+          "weight": 3
+        }
+      ]
+    }
+  },
+  "terms": [],
+  "approval_path": "data/integrations/approvals/history-go-fagverk-by.approved.v1.json",
+  "runtime_activation_allowed": true,
+  "artifact_sha256": "1494b5829495a64ed3e1968a88a838c3a7d30a95cb570de61f6b7a7fe17bc667"
 }
