@@ -156,9 +156,9 @@ assert.equal(activeBusiness.chapter_count, 12);
 assert.equal(activeBusiness.corpus_path, 'data/integrations/runtime/history-go-fagverk-naeringsliv.corpus.v1.json');
 assert.equal(activeBusiness.policy_path, 'data/integrations/runtime/history-go-fagverk-naeringsliv.policy.v1.json');
 assert.equal(activeBusiness.activation_status, 'runtime_subject_active');
-assert.deepEqual(Object.keys(runtime.active_subjects), ['historie', 'naeringsliv', 'natur', 'politikk', 'subkultur']);
+assert.deepEqual(Object.keys(runtime.active_subjects), ['by', 'historie', 'naeringsliv', 'natur', 'politikk', 'subkultur']);
 assert.equal(runtime.full_release_active, false);
-assert.equal(runtime.effective_entry_count, 67);
+assert.equal(runtime.effective_entry_count, 84);
 
 for (const path of [paths.config, paths.matrix, paths.corrections]) {
   const digest = crypto.createHash('sha256').update(fs.readFileSync(path)).digest('hex');
