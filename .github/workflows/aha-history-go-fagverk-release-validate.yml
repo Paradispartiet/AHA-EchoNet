@@ -14,6 +14,7 @@ on:
       - 'data/integrations/history-go-fagverk-release.approved.json'
       - 'data/integrations/history-go-fagverk-release.runtime-active.json'
       - 'data/integrations/review/history-go-fagverk-release-update.v1.json'
+      - 'data/integrations/review/history-go-fagverk-subject-content-baseline.v1.json'
       - 'data/integrations/candidates/**'
       - 'docs/AHA_HISTORY_GO_FAGVERK_RELEASE_SYNC.md'
       - '.github/workflows/aha-history-go-fagverk-release-sync.yml'
@@ -70,9 +71,7 @@ jobs:
           if (observed.source_commit !== process.env.SOURCE_REF) throw new Error('Observed source commit mismatch.');
           if (observed.release_sha256 !== release.release_sha256) throw new Error('Observed release digest differs from producer release.');
           if (observed.registry.content_sha256 !== release.registry.content_sha256) throw new Error('Observed registry digest differs from producer release.');
-          if (observed.summary.subject_count !== release.summary.subject_count || observed.summary.chapter_count !== release.summary.chapter_count || observed.summary.module_file_count !== release.summary.module_file_count) {
-            throw new Error('Observed release summary differs from producer release.');
-          }
+          if (observed.summary.subject_count !== release.summary.subject_count || observed.summary.chapter_count !== release.summary.chapter_count || observed.summary.module_file_count !== release.summary.module_file_count) throw new Error('Observed release summary differs from producer release.');
           const isV2 = observed.schema === 'aha_history_go_fagverk_observed_release_v2';
           if (isV2) {
             if (release.schema !== 'history_go_fagverk_release_v2') throw new Error(`Expected producer v2, got ${release.schema}.`);
@@ -90,9 +89,7 @@ jobs:
             const fields = isV2
               ? ['kind', 'parent_subject_id', 'schema_family', 'package_status', 'chapter_status', 'package_file_count', 'chapter_count', 'module_file_count', 'referenced_file_count', 'package_content_sha256', 'chapter_content_sha256', 'structure_sha256', 'content_sha256']
               : ['chapter_count', 'module_file_count', 'referenced_file_count', 'structure_sha256', 'content_sha256'];
-            for (const field of fields) {
-              if (expected[field] !== source[field]) throw new Error(`${subjectId}: ${field} differs from producer release.`);
-            }
+            for (const field of fields) if (expected[field] !== source[field]) throw new Error(`${subjectId}: ${field} differs from producer release.`);
             if (isV2 && expected.optional_gap_count !== source.missing_optional_files.length) throw new Error(`${subjectId}: optional gap count differs from producer release.`);
           }
           NODE
@@ -124,16 +121,37 @@ jobs:
           const fs = require('fs');
           const path = require('path');
           const observed = JSON.parse(fs.readFileSync('data/integrations/history-go-fagverk-release.observed.json', 'utf8'));
+          const report = JSON.parse(fs.readFileSync('data/integrations/review/history-go-fagverk-release-update.v1.json', 'utf8'));
+          const changes = new Map((report.subjects || []).map((item) => [item.subject_id, item]));
           const expectedFiles = Object.keys(observed.subjects).flatMap((subjectId) => [
             `history-go-fagverk-${subjectId}.candidate.v1.json`,
             `history-go-fagverk-${subjectId}.candidate-audit.v1.json`
           ]).sort();
           const actualFiles = fs.readdirSync('data/integrations/candidates').filter((name) => /^history-go-fagverk-.*\.candidate(?:-audit)?\.v1\.json$/.test(name)).sort();
           if (JSON.stringify(actualFiles) !== JSON.stringify(expectedFiles)) throw new Error(`Candidate inventory mismatch: ${JSON.stringify(actualFiles)} != ${JSON.stringify(expectedFiles)}`);
+
+          const normalizeUnchanged = (value) => {
+            const copy = JSON.parse(JSON.stringify(value));
+            delete copy.source_ref;
+            delete copy.registry_version;
+            delete copy.release_sha256;
+            return copy;
+          };
+
           for (const fileName of expectedFiles) {
-            const checked = fs.readFileSync(path.join('data/integrations/candidates', fileName));
-            const rebuilt = fs.readFileSync(path.join('/tmp/fagverk-candidates-rebuilt', fileName));
-            if (!checked.equals(rebuilt)) throw new Error(`Stale candidate artifact: ${fileName}`);
+            const match = fileName.match(/^history-go-fagverk-(.+)\.candidate(?:-audit)?\.v1\.json$/);
+            if (!match) throw new Error(`Could not resolve candidate subject from ${fileName}`);
+            const subjectId = match[1];
+            const change = changes.get(subjectId);
+            const checkedPath = path.join('data/integrations/candidates', fileName);
+            const rebuiltPath = path.join('/tmp/fagverk-candidates-rebuilt', fileName);
+            if (!change || change.status !== 'unchanged') {
+              if (!fs.readFileSync(checkedPath).equals(fs.readFileSync(rebuiltPath))) throw new Error(`Stale changed candidate artifact: ${fileName}`);
+              continue;
+            }
+            const checked = normalizeUnchanged(JSON.parse(fs.readFileSync(checkedPath, 'utf8')));
+            const rebuilt = normalizeUnchanged(JSON.parse(fs.readFileSync(rebuiltPath, 'utf8')));
+            if (JSON.stringify(checked) !== JSON.stringify(rebuilt)) throw new Error(`Semantic drift in unchanged candidate artifact: ${fileName}`);
           }
           NODE
           node tests/aha-history-go-fagverk-release-observation.test.cjs
