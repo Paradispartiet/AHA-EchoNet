@@ -11,13 +11,15 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   materialize:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.head_ref }}
       - uses: actions/setup-node@v5
         with:
           node-version: 22
@@ -63,15 +65,22 @@ jobs:
           node scripts/build-history-go-fagverk-subject-approvals.mjs --all --output-root artifacts/subject-approvals
           cp artifacts/subject-approvals/history-go-fagverk-musikk.approved.v1.json data/integrations/approvals/history-go-fagverk-musikk.approved.v1.json
           node scripts/build-history-go-fagverk-runtime-activation.mjs --output-root artifacts/runtime
-      - uses: actions/upload-artifact@v4
-        with:
-          name: aha-musikk-materialized
-          path: |
-            data/integrations/review/history-go-fagverk-subject-approval-registry.v1.json
-            data/integrations/runtime/history-go-fagverk-runtime-registry.v1.json
-            artifacts/subject-approvals/history-go-fagverk-musikk.approved.v1.json
-            artifacts/runtime/history-go-fagverk-musikk.corpus.v1.json
-            artifacts/runtime/history-go-fagverk-musikk.policy.v1.json
-            artifacts/runtime/history-go-fagverk-release.approved.json
-            artifacts/runtime/history-go-fagverk-release.runtime-active.json
-          if-no-files-found: error
+          cp artifacts/runtime/history-go-fagverk-musikk.corpus.v1.json data/integrations/runtime/history-go-fagverk-musikk.corpus.v1.json
+          cp artifacts/runtime/history-go-fagverk-musikk.policy.v1.json data/integrations/runtime/history-go-fagverk-musikk.policy.v1.json
+          cp artifacts/runtime/history-go-fagverk-release.approved.json data/integrations/history-go-fagverk-release.approved.json
+          cp artifacts/runtime/history-go-fagverk-release.runtime-active.json data/integrations/history-go-fagverk-release.runtime-active.json
+      - name: Commit generated artifacts to PR branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            data/integrations/review/history-go-fagverk-subject-approval-registry.v1.json \
+            data/integrations/runtime/history-go-fagverk-runtime-registry.v1.json \
+            data/integrations/approvals/history-go-fagverk-musikk.approved.v1.json \
+            data/integrations/runtime/history-go-fagverk-musikk.corpus.v1.json \
+            data/integrations/runtime/history-go-fagverk-musikk.policy.v1.json \
+            data/integrations/history-go-fagverk-release.approved.json \
+            data/integrations/history-go-fagverk-release.runtime-active.json
+          git diff --cached --quiet && exit 0
+          git commit -m 'Materialize Musikk in existing Fagverk runtime'
+          git push origin HEAD:${{ github.head_ref }}
