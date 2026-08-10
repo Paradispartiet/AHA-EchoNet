@@ -13,10 +13,10 @@ on:
       - "docs/AHA_POLITICS_FAGVERK_TERM_POLICY_V1.md"
       - "tests/aha-politics-fagverk-term-policy.test.cjs"
       - "tests/aha-politics-fagverk-release-drift.test.cjs"
-      - "data/integrations/history-go-fagverk-release.observed.json"
       - "data/integrations/history-go-fagverk-release.approved.json"
       - "data/integrations/history-go-fagverk-release.runtime-active.json"
       - "data/integrations/candidates/history-go-fagverk-politikk.candidate.v1.json"
+      - "data/integrations/review/history-go-fagverk-subject-content-baseline.v1.json"
       - "data/integrations/review/history-go-fagverk-politikk.audit.v1.json"
       - "data/integrations/review/history-go-fagverk-politikk.audit-report.v1.json"
       - "data/integrations/review/history-go-fagverk-politikk.term-policy.v1.json"
@@ -53,23 +53,27 @@ jobs:
           node - <<'NODE'
           const fs = require('fs');
           const candidate = JSON.parse(fs.readFileSync('data/integrations/candidates/history-go-fagverk-politikk.candidate.v1.json', 'utf8'));
+          const baseline = JSON.parse(fs.readFileSync('data/integrations/review/history-go-fagverk-subject-content-baseline.v1.json', 'utf8')).subjects.politikk;
+          const observed = JSON.parse(fs.readFileSync('data/integrations/history-go-fagverk-release.observed.json', 'utf8'));
           const policyPath = 'data/integrations/review/history-go-fagverk-politikk.term-policy.v1.json';
           const reportPath = 'data/evaluation/aha-politics-fagverk-evaluation-report.v1.json';
           const driftPath = 'data/integrations/review/history-go-fagverk-politikk.release-drift.v1.json';
           const policy = JSON.parse(fs.readFileSync(policyPath, 'utf8'));
           const report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
           const drift = JSON.parse(fs.readFileSync(driftPath, 'utf8'));
+          if (candidate.source_ref !== baseline.approved_source_ref) throw new Error('Politics candidate source differs from approved subject baseline.');
+          if (observed.subjects?.politikk?.content_sha256 !== baseline.subject_content_sha256) throw new Error('Observed Politics content changed and requires re-review.');
           const expectedPolicy = { total: 143, non_scoring: 84, down_weight: 55, context_only: 4 };
           for (const [key, expected] of Object.entries(expectedPolicy)) if (policy.summary?.[key] !== expected) throw new Error(`Unexpected policy ${key}`);
           if (policy.version !== '1.2.0' || policy.status !== 'review_policy_full_fixture_candidate_not_runtime_active') throw new Error('Unexpected policy contract.');
-          if (policy.source_ref !== candidate.source_ref || policy.corpus_sha256 !== candidate.content_sha256) throw new Error('Policy is not bound to the observed Politics candidate.');
+          if (policy.source_ref !== candidate.source_ref || policy.corpus_sha256 !== candidate.content_sha256) throw new Error('Policy is not bound to the reviewed Politics candidate.');
           if (policy.approval_required !== true || policy.activation_allowed !== false || policy.runtime_activation_allowed !== false) throw new Error('Unexpected policy approval boundary.');
           for (const term of ['norsk', 'over', 'saken', 'tiltak', 'var']) if (!policy.global_non_scoring_terms.includes(term)) throw new Error(`Missing global non-scoring term: ${term}`);
           if (!policy.chapter_rules?.parlamentarisme?.required_anchor_terms?.includes('mistillit')) throw new Error('Parliament anchor rule missing.');
           if (!policy.chapter_rules?.['konflikt-makt-sivilsamfunn']?.required_anchor_terms?.includes('protest')) throw new Error('Political conflict anchor rule missing.');
           const expectedReport = { total: 34, passed: 34, failed: 0, positive: 13, confusion: 13, ambiguity: 8, chapters_covered: 13, evidence_errors: 0 };
           for (const [key, expected] of Object.entries(expectedReport)) if (report.summary?.[key] !== expected) throw new Error(`Unexpected report ${key}`);
-          if (report.source_ref !== candidate.source_ref || report.corpus_sha256 !== candidate.content_sha256) throw new Error('Evaluation is not bound to the observed Politics candidate.');
+          if (report.source_ref !== candidate.source_ref || report.corpus_sha256 !== candidate.content_sha256) throw new Error('Evaluation is not bound to the reviewed Politics candidate.');
           if (report.policy_version !== '1.2.0' || report.status !== 'passed_review_gate' || report.runtime_activation_allowed !== false) throw new Error('Unexpected report boundary.');
           if (drift.status !== 'source_rebased_no_semantic_drift' || drift.summary?.semantic_drift_detected !== false || drift.summary?.quality_regression_detected !== false) throw new Error('Politics release drift is not clean.');
           if (drift.reviewed_source_ref !== candidate.source_ref || drift.approval_required !== true || drift.runtime_activation_allowed !== false || drift.explicit_activation_pull_request_required !== true) throw new Error('Unexpected drift approval boundary.');
