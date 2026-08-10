@@ -12,6 +12,8 @@ POLITICS_MATRIX_PATH = ROOT / "data" / "evaluation" / "aha-politics-fagverk-eval
 POLITICS_CORRECTIONS_PATH = ROOT / "data" / "evaluation" / "aha-politics-fixture-corrections.v1.json"
 NATURE_MATRIX_PATH = ROOT / "data" / "evaluation" / "aha-nature-fagverk-evaluation-matrix.v1.json"
 NATURE_CORRECTIONS_PATH = ROOT / "data" / "evaluation" / "aha-nature-fixture-corrections.v1.json"
+BUSINESS_MATRIX_PATH = ROOT / "data" / "evaluation" / "aha-business-fagverk-evaluation-matrix.v1.json"
+BUSINESS_CORRECTIONS_PATH = ROOT / "data" / "evaluation" / "aha-business-fixture-corrections.v1.json"
 ACTIVE_MANIFEST_PATH = ROOT / "data" / "integrations" / "history-go-fagverk-release.runtime-active.json"
 
 
@@ -27,6 +29,18 @@ def _politics_only_corpus() -> dict:
     }
 
 
+def _business_only_corpus() -> dict:
+    corpus = load_fagverk_corpus()
+    return {
+        "schema": corpus["schema"],
+        "version": corpus["version"],
+        "source_repo": corpus["source_repo"],
+        "source_ref": corpus["source_ref"],
+        "entries": [entry for entry in corpus["entries"] if entry["subject_id"] == "naeringsliv"],
+        "subject_policies": {"naeringsliv": corpus["subject_policies"]["naeringsliv"]},
+    }
+
+
 def test_corpus_schema_and_provenance() -> None:
     corpus = load_fagverk_corpus()
     assert corpus["schema"] == "aha_history_go_fagverk_corpus_v1"
@@ -34,7 +48,7 @@ def test_corpus_schema_and_provenance() -> None:
     assert corpus["status"] == "composed_partial_subject_runtime_corpus"
     assert corpus["source_repo"] == "Paradispartiet/History-Go"
     assert corpus["source_ref"]
-    assert len(corpus["entries"]) == 47
+    assert len(corpus["entries"]) == 59
     assert all(entry.get("source_path") for entry in corpus["entries"])
     nature_entries = [entry for entry in corpus["entries"] if entry["subject_id"] == "natur"]
     assert len(nature_entries) == 11
@@ -45,20 +59,30 @@ def test_corpus_schema_and_provenance() -> None:
     history_entries = [entry for entry in corpus["entries"] if entry["subject_id"] == "historie"]
     assert len(history_entries) == 23
     assert len({entry["chapter_id"] for entry in history_entries}) == 23
-    assert set(corpus["subject_policies"]) == {"historie", "natur", "politikk"}
+    business_entries = [entry for entry in corpus["entries"] if entry["subject_id"] == "naeringsliv"]
+    assert len(business_entries) == 12
+    assert len({entry["chapter_id"] for entry in business_entries}) == 12
+    assert set(corpus["subject_policies"]) == {"historie", "naeringsliv", "natur", "politikk"}
 
 
 def test_runtime_manifest_uses_materialized_subject_artifacts_only() -> None:
     manifest = json.loads(ACTIVE_MANIFEST_PATH.read_text(encoding="utf-8"))
     assert manifest["schema"] == "aha_history_go_fagverk_runtime_active_v2"
     assert manifest["status"] == "partial_subject_runtime_active"
-    assert manifest["effective_entry_count"] == 47
-    assert set(manifest["active_subjects"]) == {"historie", "natur", "politikk"}
+    assert manifest["effective_entry_count"] == 59
+    assert set(manifest["active_subjects"]) == {"historie", "naeringsliv", "natur", "politikk"}
     history = manifest["active_subjects"]["historie"]
     assert history["chapter_count"] == 23
     assert history["source_commit"] == "c16a187453d16a40f9cab4ca694c32e96014f31b"
     assert history["corpus_path"].startswith("data/integrations/runtime/")
     assert history["policy_path"].startswith("data/integrations/runtime/")
+    business = manifest["active_subjects"]["naeringsliv"]
+    assert business["chapter_count"] == 12
+    assert business["source_commit"] == "c16a187453d16a40f9cab4ca694c32e96014f31b"
+    assert business["corpus_path"].startswith("data/integrations/runtime/")
+    assert business["policy_path"].startswith("data/integrations/runtime/")
+    assert "/review/" not in business["corpus_path"]
+    assert "/review/" not in business["policy_path"]
     nature = manifest["active_subjects"]["natur"]
     assert nature["chapter_count"] == 11
     assert nature["source_commit"] == "c16a187453d16a40f9cab4ca694c32e96014f31b"
@@ -123,6 +147,38 @@ def test_all_reviewed_fixture_corrections_pass_in_python_runtime() -> None:
             assert result["match"]["subject_id"] == "politikk", (correction["id"], result)
             assert result["match"]["chapter_id"] == correction["expected_chapter_id"], (correction["id"], result)
             assert result["match"]["chapter_id"] not in correction.get("forbidden_chapter_ids", [])
+
+
+def test_all_reviewed_business_matrix_cases_pass_in_python_runtime() -> None:
+    matrix = json.loads(BUSINESS_MATRIX_PATH.read_text(encoding="utf-8"))
+    business_corpus = _business_only_corpus()
+    cases = [
+        *(dict(item, kind="positive") for item in matrix["positive_cases"]),
+        *(dict(item, kind="confusion") for item in matrix["confusion_cases"]),
+        *(dict(item, kind="ambiguity") for item in matrix["ambiguity_cases"]),
+    ]
+    assert len(cases) == 36
+    for case in cases:
+        result = ground_message(case["text"], business_corpus)
+        if case["kind"] == "ambiguity":
+            assert result["status"] in case["allowed_statuses"], (case["id"], result)
+            continue
+        assert result["status"] == case["expected_status"], (case["id"], result)
+        assert result["match"]["subject_id"] == "naeringsliv", (case["id"], result)
+        assert result["match"]["chapter_id"] == case["expected_chapter_id"], (case["id"], result)
+        assert result["match"]["scoring_mode"] == "subject_policy_v1"
+        assert result["match"]["chapter_id"] not in case.get("forbidden_chapter_ids", [])
+
+
+def test_all_reviewed_business_fixture_abstentions_pass_in_python_runtime() -> None:
+    corrections = json.loads(BUSINESS_CORRECTIONS_PATH.read_text(encoding="utf-8"))
+    business_corpus = _business_only_corpus()
+    assert len(corrections["cases"]) == 16
+    for correction in corrections["cases"]:
+        fixture = json.loads((ROOT / correction["fixture_path"]).read_text(encoding="utf-8"))
+        result = ground_message(fixture["inputText"], business_corpus)
+        assert result["status"] == correction["expected_business_status"], (correction["id"], result)
+        assert correction["expected_chapter_id"] is None
 
 
 def test_grounded_analysis_replaces_generic_canned_fallback() -> None:

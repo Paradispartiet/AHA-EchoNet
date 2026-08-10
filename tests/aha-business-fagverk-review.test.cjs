@@ -149,10 +149,16 @@ assert.equal(approval.gate_summary.failed, 0);
 assert.equal(approval.runtime_activation_allowed, false);
 assert.equal(approval.runtime_active_pointer_changed, false);
 
-assert.equal(runtime.active_subjects?.naeringsliv, undefined);
-assert.deepEqual(Object.keys(runtime.active_subjects), ['historie', 'natur', 'politikk']);
+const activeBusiness = runtime.active_subjects?.naeringsliv;
+assert.equal(activeBusiness.subject_id, 'naeringsliv');
+assert.equal(activeBusiness.source_commit, candidate.source_ref);
+assert.equal(activeBusiness.chapter_count, 12);
+assert.equal(activeBusiness.corpus_path, 'data/integrations/runtime/history-go-fagverk-naeringsliv.corpus.v1.json');
+assert.equal(activeBusiness.policy_path, 'data/integrations/runtime/history-go-fagverk-naeringsliv.policy.v1.json');
+assert.equal(activeBusiness.activation_status, 'runtime_subject_active');
+assert.deepEqual(Object.keys(runtime.active_subjects), ['historie', 'naeringsliv', 'natur', 'politikk']);
 assert.equal(runtime.full_release_active, false);
-assert.equal(runtime.effective_entry_count, 47);
+assert.equal(runtime.effective_entry_count, 59);
 
 for (const path of [paths.config, paths.matrix, paths.corrections]) {
   const digest = crypto.createHash('sha256').update(fs.readFileSync(path)).digest('hex');

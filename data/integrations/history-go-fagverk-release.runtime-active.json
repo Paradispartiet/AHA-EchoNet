@@ -15,6 +15,7 @@
     ],
     "overridden_subject_ids": [
       "historie",
+      "naeringsliv",
       "natur",
       "politikk"
     ]
@@ -30,6 +31,19 @@
       "policy_path": "data/integrations/runtime/history-go-fagverk-historie.policy.v1.json",
       "policy_artifact_sha256": "3b011a889eff7eef41c013ee94c458454ee2957e2c85a3d83d20f5adb589205a",
       "chapter_count": 23,
+      "scoring_mode": "subject_policy_v1",
+      "activation_status": "runtime_subject_active"
+    },
+    "naeringsliv": {
+      "subject_id": "naeringsliv",
+      "source_commit": "c16a187453d16a40f9cab4ca694c32e96014f31b",
+      "subject_approval_path": "data/integrations/approvals/history-go-fagverk-naeringsliv.approved.v1.json",
+      "corpus_path": "data/integrations/runtime/history-go-fagverk-naeringsliv.corpus.v1.json",
+      "corpus_sha256": "a1c399977c2656d567ee461228b8e7d21f457da8e0863bf53a7888a8ac5fbfea",
+      "corpus_artifact_sha256": "f1d4784cfcd13fac75d15f0b4ffab4a19a2c308cf0c803520bfe7edb35ff2044",
+      "policy_path": "data/integrations/runtime/history-go-fagverk-naeringsliv.policy.v1.json",
+      "policy_artifact_sha256": "76b3c61ed9840b68b91619d3e8afc321d8f5c199485e531cfdfbfb80c52dd1f2",
+      "chapter_count": 12,
       "scoring_mode": "subject_policy_v1",
       "activation_status": "runtime_subject_active"
     },
@@ -60,7 +74,7 @@
       "activation_status": "runtime_subject_active"
     }
   },
-  "effective_entry_count": 47,
+  "effective_entry_count": 59,
   "full_release_active": false,
   "activation_rules": {
     "active_subjects_override_legacy_subject_entries": true,
@@ -69,5 +83,5 @@
     "no_runtime_network_fetch": true,
     "no_history_go_writeback": true
   },
-  "artifact_sha256": "058e000f4ec20777a1b9d47816453ec6980dba7962af61c447af709b42b6cfcd"
+  "artifact_sha256": "439bae930f90fa82faab560650b1ad4d407fe7695b4e3d208022bb35399e7355"
 }

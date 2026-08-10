@@ -30,7 +30,7 @@ const active = JSON.parse(fs.readFileSync(activePath, 'utf8'));
 const subjectIds = Object.keys(registry.active_subjects).sort();
 
 assert.equal(registry.schema, 'aha_history_go_fagverk_runtime_registry_v1');
-assert.deepEqual(subjectIds, ['historie', 'natur', 'politikk']);
+assert.deepEqual(subjectIds, ['historie', 'naeringsliv', 'natur', 'politikk']);
 assert.equal(legacy.entries.length, 3, 'legacy seed must remain byte-stable and separate');
 assert.deepEqual(Object.keys(approved.approved_subjects), subjectIds);
 assert.deepEqual(Object.keys(active.active_subjects), subjectIds);
@@ -41,6 +41,12 @@ const expected = {
     corpusSha: 'e5123cb96d9b89c83aad56efc327c1089bfe5f887f29322d39a4a936c9f19444',
     chapterCount: 23,
     thresholds: { minimum_score: 7, minimum_terms: 2, ambiguity_margin: 3 },
+  },
+  naeringsliv: {
+    sourceRef: 'c16a187453d16a40f9cab4ca694c32e96014f31b',
+    corpusSha: 'a1c399977c2656d567ee461228b8e7d21f457da8e0863bf53a7888a8ac5fbfea',
+    chapterCount: 12,
+    thresholds: { minimum_score: 7, minimum_terms: 2, minimum_reviewed_evidence_terms: 2, ambiguity_margin: 3 },
   },
   natur: {
     sourceRef: 'c16a187453d16a40f9cab4ca694c32e96014f31b',
@@ -87,6 +93,15 @@ for (const subjectId of subjectIds) {
     assert.equal(policy.temporal_gate.terms.includes('over tid'), true);
     assert.equal(policy.domain_gate, undefined);
     assert.equal(Object.keys(policy.chapter_rules).length, 23);
+  } else if (subjectId === 'naeringsliv') {
+    assert.equal(policy.temporal_gate, undefined);
+    assert.equal(policy.domain_gate.required, true);
+    assert.equal(policy.domain_gate.terms.includes('bruttoprodukt'), true);
+    assert.equal(policy.domain_gate.terms.includes('nettverkseffekt'), true);
+    assert.equal(policy.policy_rules.candidate_title_concept_support_terms, 'non_decisive_review_context_only');
+    assert.equal(policy.source_policy_config_path, 'data/integrations/review/history-go-fagverk-naeringsliv.policy-config.v1.json');
+    assert.match(policy.source_policy_config_sha256, /^[0-9a-f]{64}$/);
+    assert.equal(Object.keys(policy.chapter_rules).length, 12);
   } else if (subjectId === 'natur') {
     assert.equal(policy.temporal_gate, undefined);
     assert.equal(policy.domain_gate.required, true);
@@ -117,7 +132,7 @@ assert.equal(approved.artifact_sha256, digestArtifact(approved));
 assert.equal(active.schema, 'aha_history_go_fagverk_runtime_active_v2');
 assert.equal(active.status, 'partial_subject_runtime_active');
 assert.equal(active.active_source_commit, legacy.source_ref);
-assert.equal(active.effective_entry_count, 47);
+assert.equal(active.effective_entry_count, 59);
 assert.equal(active.full_release_active, false);
 assert.equal(active.artifact_sha256, digestArtifact(active));
 
@@ -128,6 +143,8 @@ assert.equal(runtimeCode.includes('history-go-fagverk-release.runtime-active.jso
 assert.equal(runtimeCode.includes('subject_policies'), true);
 assert.equal(runtimeCode.includes('temporal_gate'), true);
 assert.equal(runtimeCode.includes('domain_gate'), true);
+assert.equal(runtimeCode.includes('minimum_reviewed_evidence_terms'), true);
+assert.equal(runtimeCode.includes('non_decisive_review_context_only'), true);
 
 const outputRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'aha-fagverk-runtime-'));
 const result = spawnSync(process.execPath, [

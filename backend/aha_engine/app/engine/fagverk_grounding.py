@@ -109,13 +109,16 @@ def _policy_entry_score(
         ("support_terms", float(default_weights.get("support_term", 1.5))),
     )
 
+    policy_rules = policy.get("policy_rules") or {}
+    candidate_terms_decisive = policy_rules.get("candidate_title_concept_support_terms") != "non_decisive_review_context_only"
     candidates: dict[str, tuple[str, float]] = {}
-    for group, weight in group_weights:
-        for raw_term in entry.get(group, []):
-            term = _normalize(raw_term)
-            current = candidates.get(term)
-            if term and (current is None or weight > current[1]):
-                candidates[term] = (group, weight)
+    if candidate_terms_decisive:
+        for group, weight in group_weights:
+            for raw_term in entry.get(group, []):
+                term = _normalize(raw_term)
+                current = candidates.get(term)
+                if term and (current is None or weight > current[1]):
+                    candidates[term] = (group, weight)
     for supplemental in rule.get("supplemental_evidence_terms", []):
         term = _normalize(supplemental.get("term", ""))
         weight = float(supplemental.get("weight", 0.0))
@@ -123,9 +126,9 @@ def _policy_entry_score(
         if term and weight > 0 and (current is None or weight > current[1]):
             candidates[term] = ("supplemental_evidence_terms", weight)
 
-    contributions: list[tuple[str, float]] = []
+    contributions: list[tuple[str, float, str]] = []
     score = 0.0
-    for term, (_, base_weight) in candidates.items():
+    for term, (group, base_weight) in candidates.items():
         if not _policy_term_present(message, tokens, term):
             continue
         term_policy = policy_by_term.get(term)
@@ -138,8 +141,12 @@ def _policy_entry_score(
         contribution = base_weight * multiplier
         if contribution <= 0:
             continue
-        contributions.append((term, round(contribution, 3)))
+        contributions.append((term, round(contribution, 3), group))
         score += contribution
+
+    minimum_reviewed_evidence_terms = int(policy.get("thresholds", {}).get("minimum_reviewed_evidence_terms", 0))
+    reviewed_evidence_count = sum(1 for _, _, group in contributions if group == "supplemental_evidence_terms")
+    reviewed_evidence_eligible = reviewed_evidence_count >= minimum_reviewed_evidence_terms
 
     domain_gate = policy.get("domain_gate") or {}
     domain_required = domain_gate.get("required") is True
@@ -162,9 +169,9 @@ def _policy_entry_score(
     required_anchors = [_normalize(term) for term in rule.get("required_anchor_terms", []) if _normalize(term)]
     matched_anchors = [term for term in required_anchors if _policy_term_present(message, tokens, term)]
     anchor_eligible = not required_anchors or bool(matched_anchors)
-    eligible = domain_eligible and temporal_eligible and anchor_eligible
+    eligible = domain_eligible and temporal_eligible and anchor_eligible and reviewed_evidence_eligible
     contributions.sort(key=lambda item: (-item[1], item[0]))
-    return round(score, 3), tuple(term for term, _ in contributions), eligible
+    return round(score, 3), tuple(term for term, _, _ in contributions), eligible
 
 
 def _confidence(score: float, matched_count: int) -> float:
