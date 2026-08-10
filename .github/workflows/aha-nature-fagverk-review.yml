@@ -1,86 +1,72 @@
-name: Bootstrap Business Fagverk review
+name: AHA Nature Fagverk review
 
 on:
-  push:
-    branches:
-      - review/naeringsliv-fagverk-v1
+  pull_request:
+    branches: [main]
+    paths:
+      - "scripts/lib/nature-fagverk-scoring.mjs"
+      - "scripts/build-nature-fagverk-term-policy.mjs"
+      - "scripts/build-nature-fagverk-expansion-review.mjs"
+      - "scripts/evaluate-nature-fagverk-policy.mjs"
+      - "scripts/compare-nature-fixture-corrections.mjs"
+      - "tests/aha-nature-fagverk-review.test.cjs"
+      - "data/evaluation/aha-nature-fagverk-evaluation-matrix.v1.json"
+      - "data/evaluation/aha-nature-fagverk-evaluation-report.v1.json"
+      - "data/evaluation/aha-nature-fixture-corrections.v1.json"
+      - "data/evaluation/aha-nature-fixture-correction-report.v1.json"
+      - "data/integrations/candidates/history-go-fagverk-natur.candidate.v1.json"
+      - "data/integrations/candidates/history-go-fagverk-natur.candidate-audit.v1.json"
+      - "data/integrations/review/history-go-fagverk-natur.*.v1.json"
+      - "data/integrations/review/history-go-fagverk-subject-approval-registry.v1.json"
+      - "data/integrations/approvals/history-go-fagverk-natur.approved.v1.json"
+      - "data/integrations/history-go-fagverk-release.approved.json"
+      - "data/integrations/history-go-fagverk-release.runtime-active.json"
+      - ".github/workflows/aha-nature-fagverk-review.yml"
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  materialize-review:
-    name: Materialize complete Business review package
+  validate-nature-review:
+    name: Rebuild complete Nature review package
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-        with:
-          ref: review/naeringsliv-fagverk-v1
       - uses: actions/setup-node@v5
         with:
           node-version: 22
-      - uses: actions/setup-python@v5
+
+      - name: Rebuild complete Nature review evidence
+        run: |
+          node scripts/build-nature-fagverk-term-policy.mjs
+          node scripts/build-nature-fagverk-expansion-review.mjs
+          node scripts/evaluate-nature-fagverk-policy.mjs
+          node scripts/compare-nature-fixture-corrections.mjs
+          node scripts/build-history-go-fagverk-subject-approvals.mjs --subject natur
+          node tests/aha-nature-fagverk-review.test.cjs
+
+      - name: Verify checked-in parity and runtime isolation
+        run: |
+          git diff --exit-code -- \
+            data/evaluation/aha-nature-fagverk-evaluation-report.v1.json \
+            data/evaluation/aha-nature-fixture-correction-report.v1.json \
+            data/integrations/approvals/history-go-fagverk-natur.approved.v1.json \
+            data/integrations/review/history-go-fagverk-natur.expansion-review.v1.json \
+            data/integrations/review/history-go-fagverk-natur.term-policy.v1.json
+          git diff --exit-code -- \
+            data/integrations/history-go-fagverk-release.approved.json \
+            data/integrations/history-go-fagverk-release.runtime-active.json
+
+      - name: Upload Nature review evidence
+        uses: actions/upload-artifact@v4
         with:
-          python-version: "3.11"
-
-      - name: Detect bootstrap mode
-        id: mode
-        shell: bash
-        run: |
-          if [[ -f scripts/bootstrap-business-fagverk-review.py ]]; then
-            echo "run=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "run=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Generate review sources and matrices
-        if: steps.mode.outputs.run == 'true'
-        run: python scripts/bootstrap-business-fagverk-review.py
-
-      - name: Build complete review package
-        if: steps.mode.outputs.run == 'true'
-        run: |
-          node scripts/build-business-fagverk-term-policy.mjs
-          node scripts/build-business-fagverk-expansion-review.mjs
-          node scripts/evaluate-business-fagverk-policy.mjs
-          node scripts/compare-business-fixture-corrections.mjs
-          node scripts/build-history-go-fagverk-subject-approvals.mjs --subject naeringsliv
-
-      - name: Verify Business and shared approval contracts
-        if: steps.mode.outputs.run == 'true'
-        run: |
-          node tests/aha-business-fagverk-review.test.cjs
-          node tests/aha-fagverk-subject-approvals.test.cjs
-
-      - name: Remove bootstrap generator
-        if: steps.mode.outputs.run == 'true'
-        run: rm scripts/bootstrap-business-fagverk-review.py
-
-      - name: Verify exact review scope
-        if: steps.mode.outputs.run == 'true'
-        env:
-          ALLOWED_JSON: '["data/evaluation/aha-business-fagverk-evaluation-matrix.v1.json","data/evaluation/aha-business-fagverk-evaluation-report.v1.json","data/evaluation/aha-business-fixture-corrections.v1.json","data/evaluation/aha-business-fixture-correction-report.v1.json","data/integrations/approvals/history-go-fagverk-naeringsliv.approved.v1.json","data/integrations/review/history-go-fagverk-naeringsliv.expansion-review.v1.json","data/integrations/review/history-go-fagverk-naeringsliv.term-policy.v1.json","data/integrations/review/history-go-fagverk-subject-approval-registry.v1.json","docs/AHA_BUSINESS_FAGVERK_REVIEW_V1.md","scripts/bootstrap-business-fagverk-review.py","scripts/compare-business-fixture-corrections.mjs","scripts/evaluate-business-fagverk-policy.mjs","tests/aha-business-fagverk-review.test.cjs","tests/aha-fagverk-subject-approvals.test.cjs"]'
-        run: |
-          node - <<'NODE'
-          const { execFileSync } = require('child_process');
-          const allowed = new Set(JSON.parse(process.env.ALLOWED_JSON));
-          const status = execFileSync('git', ['status', '--porcelain'], { encoding: 'utf8' });
-          const actual = status.trimEnd().split(/\n/).filter(Boolean).map((line) => line.slice(3));
-          const unexpected = actual.filter((file) => !allowed.has(file));
-          const missing = [...allowed].filter((file) => !actual.includes(file));
-          if (unexpected.length || missing.length) {
-            console.error({ unexpected, missing, actual });
-            process.exit(1);
-          }
-          console.log(`Business review scope verified: ${actual.length} files.`);
-          NODE
-
-      - name: Commit materialized review package
-        if: steps.mode.outputs.run == 'true'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git commit -m "Materialize complete Business Fagverk review"
-          git push origin HEAD:review/naeringsliv-fagverk-v1
+          name: aha-nature-fagverk-review
+          path: |
+            data/evaluation/aha-nature-fagverk-evaluation-report.v1.json
+            data/evaluation/aha-nature-fixture-correction-report.v1.json
+            data/integrations/approvals/history-go-fagverk-natur.approved.v1.json
+            data/integrations/review/history-go-fagverk-natur.expansion-review.v1.json
+            data/integrations/review/history-go-fagverk-natur.term-policy.v1.json
+          if-no-files-found: error
+          retention-days: 14
