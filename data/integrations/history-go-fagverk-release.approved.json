@@ -17,6 +17,7 @@
       "by",
       "historie",
       "kunst",
+      "musikk",
       "naeringsliv",
       "natur",
       "politikk",
@@ -60,6 +61,19 @@
       "policy_path": "data/integrations/runtime/history-go-fagverk-kunst.policy.v1.json",
       "policy_artifact_sha256": "87041561587e091b2d3eb6405a39878529284ac0d3774425895cbbb2ebff5b87",
       "chapter_count": 6,
+      "scoring_mode": "subject_policy_v1",
+      "approval_status": "runtime_subject_approved"
+    },
+    "musikk": {
+      "subject_id": "musikk",
+      "source_commit": "d52cebbe2c6c01e5780be301e9b0e4a9c61c5254",
+      "subject_approval_path": "data/integrations/approvals/history-go-fagverk-musikk.approved.v1.json",
+      "corpus_path": "data/integrations/runtime/history-go-fagverk-musikk.corpus.v1.json",
+      "corpus_sha256": "86ec812f4e84e6b7a7761d42da7ac8ac9bb64f72cf247ca00013df359f985a00",
+      "corpus_artifact_sha256": "28026589eeb28ad643a570aa3a24f93e7961ceb2483fd643041f4fa70e8099c5",
+      "policy_path": "data/integrations/runtime/history-go-fagverk-musikk.policy.v1.json",
+      "policy_artifact_sha256": "8370439ffd62617ffb293717781382505dcbb3f64700f6628c6f2db5765bc8a9",
+      "chapter_count": 8,
       "scoring_mode": "subject_policy_v1",
       "approval_status": "runtime_subject_approved"
     },
@@ -124,5 +138,5 @@
     "approval_does_not_activate_unregistered_subjects": true,
     "explicit_activation_pull_request_required": true
   },
-  "artifact_sha256": "6bfba23afc495443844f0cd854d1d3455e967583922e20657d1df14cca7fdf09"
+  "artifact_sha256": "1ef2e0ea1c1823efd6bbc9eca6db085548f9eb18463d1b010e86a1a607650ed3"
 }
