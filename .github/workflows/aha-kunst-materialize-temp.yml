@@ -1,0 +1,34 @@
+name: AHA Kunst materialize temp
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'data/integrations/runtime/history-go-fagverk-runtime-registry.v1.json'
+      - 'data/integrations/approvals/history-go-fagverk-kunst.approved.v1.json'
+      - 'data/integrations/review/history-go-fagverk-kunst.*'
+      - '.github/workflows/aha-kunst-materialize-temp.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Build deterministic approvals and runtime outputs
+        run: |
+          node scripts/build-history-go-fagverk-subject-approvals.mjs --all --output-root artifacts/subject-approvals
+          node scripts/build-history-go-fagverk-runtime-activation.mjs --output-root artifacts/runtime
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aha-kunst-materialized
+          path: |
+            artifacts/subject-approvals/*.json
+            artifacts/runtime/*.json
+          if-no-files-found: error
