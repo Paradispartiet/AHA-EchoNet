@@ -7,10 +7,10 @@
   "source_ref":"d52cebbe2c6c01e5780be301e9b0e4a9c61c5254",
   "corpus_sha256":"823e79dcd7c767ee3251a924d7697b0b2cee51cbb89699dda7d318aa81c9e10b",
   "source_policy_version":"1.1.0",
-  "source_policy_sha256":"df6f40293871b3385ca3c381fbbb0f8dddbd6816e3097b8d45faa67d04667f22",
+  "source_policy_sha256":"beafcf1dc48e66fd547a748e93f699f1473acc640ae6b409d6956c367a78623c",
   "source_policy_config_path":"data/integrations/review/history-go-fagverk-by.review-config.v1.json",
   "source_policy_config_version":"1.1.0",
-  "source_policy_config_sha256":"fc5c46e0cfd43f8a14e2f41ca6e783e672dba37820ca06a3db21d1b5e123c856",
+  "source_policy_config_sha256":"d81e1b0d4dbb60e229d1f773c27a94137d930626a01c37a12b1176a22ed6282b",
   "source_review_attestation_path":"data/integrations/review/history-go-fagverk-by.review-attestation.v1.json",
   "source_review_artifact_sha256":"da490aac9009e680143c97d05d2e9369265cb4133ffd476c626b0214ae4ea384",
   "source_review_head_sha":"353cc48ca2a7eaaf38629d7912ef662532614228",
@@ -19,7 +19,7 @@
   "thresholds":{"minimum_score":6,"minimum_terms":2,"ambiguity_margin":3},
   "default_weights":{"title_term":5,"concept_term":3,"support_term":1.5},
   "policy_rules":{},
-  "global_non_scoring_terms":["akse","aktivitet","analyse","arena","bruk","by","byen","byrom","byrommet","endring","faktisk","folk","hvem","hvordan","konflikt","møte","møter","offentlig","plan","planer","praksis","rom","saken","sosial","spor","sted","steder","system","tiltak"],
+  "global_non_scoring_terms":["aktivitet","akse","analyse","arena","bruk","by","byen","byrom","byrommet","endring","faktisk","folk","hvordan","hvem","konflikt","møte","møter","offentlig","plan","planer","praksis","rom","saken","sosial","spor","sted","steder","system","tiltak"],
   "domain_gate":{"required":true,"terms":["algoritmer","algoritmisk styring","arbeidsby","arrangementsby","beredskap","bofasthet","boligbyrde","boligtrygghet","bruksgrenser","byform","byidealer","byregion","byrytmer","datastyring","fortetting","førsteetasjer","gatekant","gentrifisering","hageby","historiske lag","hverdagsfriksjon","høyhus","klimatilpasning","lavterskel byliv","leiemarked","logistikk","materialitet","midlertidig bruk","midlertidighet","migrasjon","mikroklima","mikrokomfort","minnespor","møteplasser","nabolagsendring","ombruk","opphold","oppholdskvalitet","overvann","pendling","planmodell","planvedtak","protest","ruiner","sosial miks","sosial offentlighet","tilgangskontroll","tilsyn","ulovlighetsoppfølging","varelogistikk","varmeøy","venting"]},
   "chapter_rules":{
     "administrasjon-plan-kontroll-beredskap":{"required_anchor_terms":["planvedtak","ulovlighetsoppfølging","tilsyn","beredskap"],"supplemental_evidence_terms":[{"term":"planvedtak","weight":3},{"term":"ulovlighetsoppfølging","weight":3}]},
@@ -43,5 +43,5 @@
   "terms":[],
   "approval_path":"data/integrations/approvals/history-go-fagverk-by.approved.v1.json",
   "runtime_activation_allowed":true,
-  "artifact_sha256":"7727d8249091488f4943dc27dc63a7bbd060527bc0c24c673915d32e5075b345"
+  "artifact_sha256":"1494b5829495a64ed3e1968a88a838c3a7d30a95cb570de61f6b7a7fe17bc667"
 }
