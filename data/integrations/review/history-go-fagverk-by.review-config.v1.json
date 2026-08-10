@@ -1,12 +1,26 @@
 {
   "schema": "aha_by_fagverk_review_config_v1",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "status": "review_policy_full_fixture_candidate_not_runtime_active",
   "subject_id": "by",
+  "source_repo": "Paradispartiet/History-Go",
+  "source_ref": "d52cebbe2c6c01e5780be301e9b0e4a9c61c5254",
+  "registry_version": "2.58.0",
+  "corpus_sha256": "823e79dcd7c767ee3251a924d7697b0b2cee51cbb89699dda7d318aa81c9e10b",
   "lifecycle_stage": "subject_release_review",
   "approval_required": true,
   "activation_allowed": false,
   "runtime_activation_allowed": false,
+  "thresholds": {
+    "minimum_score": 6,
+    "minimum_terms": 2,
+    "ambiguity_margin": 3
+  },
+  "default_weights": {
+    "title_term": 5,
+    "concept_term": 3,
+    "support_term": 1.5
+  },
   "scoring": {
     "title_term": 5,
     "concept_term": 3,
@@ -26,6 +40,11 @@
     "required_anchor_exemption": true
   },
   "generic_language_terms": [
+    "aktivitet", "akse", "analyse", "arena", "bruk", "by", "byen", "byrom", "byrommet", "endring",
+    "faktisk", "folk", "hvordan", "hvem", "konflikt", "møte", "møter", "offentlig", "plan", "planer",
+    "praksis", "rom", "saken", "sosial", "spor", "sted", "steder", "system", "tiltak"
+  ],
+  "global_non_scoring_terms": [
     "aktivitet", "akse", "analyse", "arena", "bruk", "by", "byen", "byrom", "byrommet", "endring",
     "faktisk", "folk", "hvordan", "hvem", "konflikt", "møte", "møter", "offentlig", "plan", "planer",
     "praksis", "rom", "saken", "sosial", "spor", "sted", "steder", "system", "tiltak"

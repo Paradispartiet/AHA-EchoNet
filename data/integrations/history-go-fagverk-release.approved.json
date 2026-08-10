@@ -14,6 +14,7 @@
       "politikk"
     ],
     "overridden_subject_ids": [
+      "by",
       "historie",
       "naeringsliv",
       "natur",
@@ -22,6 +23,19 @@
     ]
   },
   "approved_subjects": {
+    "by": {
+      "subject_id": "by",
+      "source_commit": "d52cebbe2c6c01e5780be301e9b0e4a9c61c5254",
+      "subject_approval_path": "data/integrations/approvals/history-go-fagverk-by.approved.v1.json",
+      "corpus_path": "data/integrations/runtime/history-go-fagverk-by.corpus.v1.json",
+      "corpus_sha256": "823e79dcd7c767ee3251a924d7697b0b2cee51cbb89699dda7d318aa81c9e10b",
+      "corpus_artifact_sha256": "b50aaf4d53f3919d9cf442ca7fbcda3051c082fd1246e34bab67cbe60fb30b16",
+      "policy_path": "data/integrations/runtime/history-go-fagverk-by.policy.v1.json",
+      "policy_artifact_sha256": "1494b5829495a64ed3e1968a88a838c3a7d30a95cb570de61f6b7a7fe17bc667",
+      "chapter_count": 17,
+      "scoring_mode": "subject_policy_v1",
+      "approval_status": "runtime_subject_approved"
+    },
     "historie": {
       "subject_id": "historie",
       "source_commit": "c16a187453d16a40f9cab4ca694c32e96014f31b",
@@ -96,5 +110,5 @@
     "approval_does_not_activate_unregistered_subjects": true,
     "explicit_activation_pull_request_required": true
   },
-  "artifact_sha256": "d96f1046f1bc4e15fccb6bb8eb06cdae7c68291e2504c9eaa8057e32100ea7ef"
+  "artifact_sha256": "20cd656a922f6e73d30a0089d9f29267e553c6638299ea344ebd1ea09e25e54d"
 }

@@ -1,6 +1,6 @@
 {
   "schema": "aha_history_go_fagverk_subject_content_baseline_v1",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "status": "review_approval_subject_content_baseline",
   "subjects": {
     "historie": {
@@ -27,6 +27,11 @@
       "approved_source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
       "approved_release_sha256": "21cec482d0bde5423cef0bd836dc2b6b8fa4445226bd2ab8df1b44eaefccd627",
       "subject_content_sha256": "fe7495e7b655533271f698987a8b075f23ccf0723dbf24c73bbd9f323baa90a0"
+    },
+    "by": {
+      "approved_source_ref": "d52cebbe2c6c01e5780be301e9b0e4a9c61c5254",
+      "approved_release_sha256": "387dca2da02c5062738d7a0e7a97ab1fe7ec0c2d95be85aacaaa9bd0f3a011ed",
+      "subject_content_sha256": "3eaf2562c952a47e1bfef2efdba75c7cf391b249842e4113cd358d45c7718d13"
     }
   },
   "runtime_activation_allowed": false

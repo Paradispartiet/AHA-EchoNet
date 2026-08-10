@@ -1,6 +1,6 @@
 {
   "schema": "aha_history_go_fagverk_runtime_registry_v1",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "status": "runtime_activation_registry",
   "legacy_seed": {
     "corpus_path": "data/integrations/history-go-fagverk-corpus.v1.json",
@@ -70,6 +70,20 @@
       "minimum_score": 7,
       "minimum_terms": 2,
       "minimum_reviewed_evidence_terms": 2,
+      "ambiguity_margin": 3
+    },
+    "by": {
+      "subject_id": "by",
+      "approval_path": "data/integrations/approvals/history-go-fagverk-by.approved.v1.json",
+      "candidate_corpus_path": "data/integrations/candidates/history-go-fagverk-by.candidate.v1.json",
+      "review_policy_config_path": "data/integrations/review/history-go-fagverk-by.review-config.v1.json",
+      "review_attestation_path": "data/integrations/review/history-go-fagverk-by.review-attestation.v1.json",
+      "runtime_corpus_projection": "reviewed_anchor_projection_v1",
+      "runtime_corpus_path": "data/integrations/runtime/history-go-fagverk-by.corpus.v1.json",
+      "runtime_policy_path": "data/integrations/runtime/history-go-fagverk-by.policy.v1.json",
+      "scoring_mode": "subject_policy_v1",
+      "minimum_score": 6,
+      "minimum_terms": 2,
       "ambiguity_margin": 3
     }
   },
