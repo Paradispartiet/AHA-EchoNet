@@ -4,8 +4,8 @@
   "candidate_kind": "package_inventory",
   "lifecycle_stage": "imported_review_candidate_audit",
   "source_repo": "Paradispartiet/History-Go",
-  "source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
-  "release_sha256": "21cec482d0bde5423cef0bd836dc2b6b8fa4445226bd2ab8df1b44eaefccd627",
+  "source_ref": "d52cebbe2c6c01e5780be301e9b0e4a9c61c5254",
+  "release_sha256": "387dca2da02c5062738d7a0e7a97ab1fe7ec0c2d95be85aacaaa9bd0f3a011ed",
   "subject_id": "vitenskap",
   "package_status": "complete",
   "chapter_status": "not_materialized",
@@ -20,9 +20,9 @@
     "missing_chapter_files": []
   },
   "digests": {
-    "package_content_sha256": "a7557c6a3ef61cb4808af3b802cde6704cb58a7c60b40f903c117cd0ce6eb8c9",
+    "package_content_sha256": "4657773fc809d95f24e8c33c34824f555d11e89d34578cf4739b6caf22bec31e",
     "structure_sha256": "a8862d834e23e8c3c1f0d8759acb0d3f3886c8cc40a08e90b4801b18f58eb651",
-    "content_sha256": "a7557c6a3ef61cb4808af3b802cde6704cb58a7c60b40f903c117cd0ce6eb8c9"
+    "content_sha256": "4657773fc809d95f24e8c33c34824f555d11e89d34578cf4739b6caf22bec31e"
   },
   "activation_recommendation": "subject_specific_review_gates_required_before_runtime_activation",
   "approval_required": true,

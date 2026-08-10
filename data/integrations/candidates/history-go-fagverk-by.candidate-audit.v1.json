@@ -1,34 +1,8259 @@
 {
-  "schema": "aha_history_go_fagverk_package_candidate_audit_v1",
+  "schema": "aha_fagverk_corpus_audit_v1",
   "version": "1.0.0",
-  "candidate_kind": "package_inventory",
-  "lifecycle_stage": "imported_review_candidate_audit",
   "source_repo": "Paradispartiet/History-Go",
-  "source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
-  "release_sha256": "21cec482d0bde5423cef0bd836dc2b6b8fa4445226bd2ab8df1b44eaefccd627",
-  "subject_id": "by",
-  "package_status": "complete",
-  "chapter_status": "not_materialized",
+  "source_ref": "d52cebbe2c6c01e5780be301e9b0e4a9c61c5254",
+  "registry_version": "2.58.0",
+  "registry_updated_at": "2026-08-10",
+  "subject_filter": [
+    "by"
+  ],
   "coverage": {
-    "declared_package_files": 12,
-    "expected_existing_package_files": 12,
-    "materialized_existing_package_files": 12,
-    "required_package_files": 4,
-    "optional_package_files": 8,
-    "optional_gaps": [],
-    "missing_required_files": [],
-    "missing_chapter_files": []
+    "expected": 17,
+    "registered": 17,
+    "materialized": 17,
+    "missing": [],
+    "unexpected": [],
+    "duplicate_chapter_ids": []
   },
-  "digests": {
-    "package_content_sha256": "e28f80e3cf54d5908b8af0ee6061ca45d72dbbe81443d592ce7bf87603a022e0",
-    "structure_sha256": "3ea96832ef3fb3444a829b0c302bde487fd5e6b672f5e29bbbacb7e7f9a01d95",
-    "content_sha256": "e28f80e3cf54d5908b8af0ee6061ca45d72dbbe81443d592ce7bf87603a022e0"
+  "chapters": [
+    {
+      "subject_id": "by",
+      "chapter_id": "administrasjon-plan-kontroll-beredskap",
+      "title": "Regler, kontroll og beredskap: hvordan byen styres i praksis",
+      "source_path": "data/fagverk/by/administrasjon-plan-kontroll-beredskap.json",
+      "module_source_paths": [
+        "data/fagverk/by/administrasjon-plan-kontroll-beredskap/01-grunnlag.json",
+        "data/fagverk/by/administrasjon-plan-kontroll-beredskap/02-fordypning.json",
+        "data/fagverk/by/administrasjon-plan-kontroll-beredskap/03-anvendelse.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 14,
+      "concept_term_count": 30,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "by",
+      "chapter_id": "arbeid-naering-handel-logistikk",
+      "title": "Arbeidsby, handel og logistikk: økonomien i byrommet",
+      "source_path": "data/fagverk/by/arbeid-naering-handel-logistikk.json",
+      "module_source_paths": [
+        "data/fagverk/by/arbeid-naering-handel-logistikk/01-grunnlag.json",
+        "data/fagverk/by/arbeid-naering-handel-logistikk/02-fordypning.json",
+        "data/fagverk/by/arbeid-naering-handel-logistikk/03-anvendelse.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 14,
+      "concept_term_count": 37,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "by",
+      "chapter_id": "arkitektur-gatekant-makt-ombruk",
+      "title": "Gatekant, symbol og ombruk: hvordan arkitektur virker og styres",
+      "source_path": "data/fagverk/by/arkitektur-gatekant-makt-ombruk.json",
+      "module_source_paths": [
+        "data/fagverk/by/arkitektur-gatekant-makt-ombruk/01-grunnlag.json",
+        "data/fagverk/by/arkitektur-gatekant-makt-ombruk/02-fordypning.json",
+        "data/fagverk/by/arkitektur-gatekant-makt-ombruk/03-anvendelse.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 14,
+      "concept_term_count": 36,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "by",
+      "chapter_id": "arkitektur-type-skala-byform",
+      "title": "Type, skala og byform: fra hageby til høyhus",
+      "source_path": "data/fagverk/by/arkitektur-type-skala-byform.json",
+      "module_source_paths": [
+        "data/fagverk/by/arkitektur-type-skala-byform/01-grunnlag.json",
+        "data/fagverk/by/arkitektur-type-skala-byform/02-fordypning.json",
+        "data/fagverk/by/arkitektur-type-skala-byform/03-anvendelse.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 23,
+      "concept_term_count": 37,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "by",
+      "chapter_id": "bolig-nabolag-tilgang-endring",
+      "title": "Bolig, tilgang og nabolagsendring: hvem kan bli boende?",
+      "source_path": "data/fagverk/by/bolig-nabolag-tilgang-endring.json",
+      "module_source_paths": [
+        "data/fagverk/by/bolig-nabolag-tilgang-endring/01-grunnlag.json",
+        "data/fagverk/by/bolig-nabolag-tilgang-endring/02-fordypning.json",
+        "data/fagverk/by/bolig-nabolag-tilgang-endring/03-anvendelse.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 14,
+      "concept_term_count": 34,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "by",
+      "chapter_id": "boligpolitikk-pris-leie-eie-tilgang",
+      "title": "Hvem har råd til byen? Pris, leie, eie og boligtrygghet",
+      "source_path": "data/fagverk/by/boligpolitikk-pris-leie-eie-tilgang.json",
+      "module_source_paths": [
+        "data/fagverk/by/boligpolitikk-pris-leie-eie-tilgang/01-grunnlag.json",
+        "data/fagverk/by/boligpolitikk-pris-leie-eie-tilgang/02-fordypning.json",
+        "data/fagverk/by/boligpolitikk-pris-leie-eie-tilgang/03-anvendelse.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 17,
+      "concept_term_count": 30,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "by",
+      "chapter_id": "byliv-hendelser-midlertidighet",
+      "title": "Hendelser og midlertidighet: når byrom skifter modus",
+      "source_path": "data/fagverk/by/byliv-hendelser-midlertidighet.json",
+      "module_source_paths": [
+        "data/fagverk/by/byliv-hendelser-midlertidighet/01-grunnlag.json",
+        "data/fagverk/by/byliv-hendelser-midlertidighet/02-fordypning.json",
+        "data/fagverk/by/byliv-hendelser-midlertidighet/03-anvendelse.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 23,
+      "concept_term_count": 43,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "by",
+      "chapter_id": "byliv-offentlige-rom",
+      "title": "Offentlige rom: opphold, bevegelse og møteplasser",
+      "source_path": "data/fagverk/by/byliv-offentlige-rom.json",
+      "module_source_paths": [
+        "data/fagverk/by/byliv-offentlige-rom/01-grunnlag.json",
+        "data/fagverk/by/byliv-offentlige-rom/02-fordypning.json",
+        "data/fagverk/by/byliv-offentlige-rom/03-anvendelse.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 20,
+      "concept_term_count": 44,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "by",
+      "chapter_id": "byliv-rytmer-miks-konflikt",
+      "title": "Rytmer, sosial miks og hverdagsfriksjon: hvem deler byen når?",
+      "source_path": "data/fagverk/by/byliv-rytmer-miks-konflikt.json",
+      "module_source_paths": [
+        "data/fagverk/by/byliv-rytmer-miks-konflikt/01-grunnlag.json",
+        "data/fagverk/by/byliv-rytmer-miks-konflikt/02-fordypning.json",
+        "data/fagverk/by/byliv-rytmer-miks-konflikt/03-anvendelse.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 23,
+      "concept_term_count": 33,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "by",
+      "chapter_id": "byliv-sosial-offentlighet",
+      "title": "Sosial offentlighet: møter, venting og lavterskel byliv",
+      "source_path": "data/fagverk/by/byliv-sosial-offentlighet.json",
+      "module_source_paths": [
+        "data/fagverk/by/byliv-sosial-offentlighet/01-grunnlag.json",
+        "data/fagverk/by/byliv-sosial-offentlighet/02-fordypning.json",
+        "data/fagverk/by/byliv-sosial-offentlighet/03-anvendelse.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 19,
+      "concept_term_count": 45,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "by",
+      "chapter_id": "byliv-stemning-mikrokomfort",
+      "title": "Stemning og mikrokomfort: lyd, lys, materialitet og vær i byrommet",
+      "source_path": "data/fagverk/by/byliv-stemning-mikrokomfort.json",
+      "module_source_paths": [
+        "data/fagverk/by/byliv-stemning-mikrokomfort/01-grunnlag.json",
+        "data/fagverk/by/byliv-stemning-mikrokomfort/02-fordypning.json",
+        "data/fagverk/by/byliv-stemning-mikrokomfort/03-anvendelse.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 24,
+      "concept_term_count": 29,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "by",
+      "chapter_id": "data-styring-kart-plan-medvirkning-algoritmer",
+      "title": "Kart, vedtak og algoritmer: hvem styrer den målte byen?",
+      "source_path": "data/fagverk/by/data-styring-kart-plan-medvirkning-algoritmer.json",
+      "module_source_paths": [
+        "data/fagverk/by/data-styring-kart-plan-medvirkning-algoritmer/01-grunnlag.json",
+        "data/fagverk/by/data-styring-kart-plan-medvirkning-algoritmer/02-fordypning.json",
+        "data/fagverk/by/data-styring-kart-plan-medvirkning-algoritmer/03-anvendelse.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 16,
+      "concept_term_count": 33,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "by",
+      "chapter_id": "historiske-lag-ruiner-minner",
+      "title": "Ruiner, tomrom og minnespor: hvordan byen husker",
+      "source_path": "data/fagverk/by/historiske-lag-ruiner-minner.json",
+      "module_source_paths": [
+        "data/fagverk/by/historiske-lag-ruiner-minner/01-grunnlag.json",
+        "data/fagverk/by/historiske-lag-ruiner-minner/02-fordypning.json",
+        "data/fagverk/by/historiske-lag-ruiner-minner/03-anvendelse.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 16,
+      "concept_term_count": 31,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "by",
+      "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+      "title": "Varme, vann og tilgjengelighet: hvem tåler byen?",
+      "source_path": "data/fagverk/by/klima-helse-varme-vann-tilgjengelighet.json",
+      "module_source_paths": [
+        "data/fagverk/by/klima-helse-varme-vann-tilgjengelighet/01-grunnlag.json",
+        "data/fagverk/by/klima-helse-varme-vann-tilgjengelighet/02-fordypning.json",
+        "data/fagverk/by/klima-helse-varme-vann-tilgjengelighet/03-anvendelse.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 16,
+      "concept_term_count": 35,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "by",
+      "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+      "title": "Protest, grenser og trygghet: hvem får bruke byen?",
+      "source_path": "data/fagverk/by/makt-konflikt-protest-grenser-trygghet.json",
+      "module_source_paths": [
+        "data/fagverk/by/makt-konflikt-protest-grenser-trygghet/01-grunnlag.json",
+        "data/fagverk/by/makt-konflikt-protest-grenser-trygghet/02-fordypning.json",
+        "data/fagverk/by/makt-konflikt-protest-grenser-trygghet/03-anvendelse.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 19,
+      "concept_term_count": 34,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "by",
+      "chapter_id": "regional-global-pendling-migrasjon-sammenligning",
+      "title": "Oslo i strømmen: pendling, migrasjon og sammenlignbare byer",
+      "source_path": "data/fagverk/by/regional-global-pendling-migrasjon-sammenligning.json",
+      "module_source_paths": [
+        "data/fagverk/by/regional-global-pendling-migrasjon-sammenligning/01-grunnlag.json",
+        "data/fagverk/by/regional-global-pendling-migrasjon-sammenligning/02-fordypning.json",
+        "data/fagverk/by/regional-global-pendling-migrasjon-sammenligning/03-anvendelse.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 16,
+      "concept_term_count": 32,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "by",
+      "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+      "title": "Byidealer, forbindelser og fortetting: fra planmodell til faktisk by",
+      "source_path": "data/fagverk/by/urbanisme-idealer-forbindelser-fortetting.json",
+      "module_source_paths": [
+        "data/fagverk/by/urbanisme-idealer-forbindelser-fortetting/01-grunnlag.json",
+        "data/fagverk/by/urbanisme-idealer-forbindelser-fortetting/02-fordypning.json",
+        "data/fagverk/by/urbanisme-idealer-forbindelser-fortetting/03-anvendelse.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 16,
+      "concept_term_count": 35,
+      "support_term_count": 48
+    }
+  ],
+  "term_collision_summary": {
+    "total": 150,
+    "high_risk": 69,
+    "medium_risk": 81,
+    "low_risk": 0
   },
-  "activation_recommendation": "subject_specific_review_gates_required_before_runtime_activation",
-  "approval_required": true,
-  "runtime_activation_allowed": false,
+  "high_risk_terms": [
+    {
+      "term": "men",
+      "token_count": 1,
+      "chapter_count": 17,
+      "chapters": [
+        {
+          "chapter_id": "administrasjon-plan-kontroll-beredskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arbeid-naering-handel-logistikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-gatekant-makt-ombruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-type-skala-byform",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "bolig-nabolag-tilgang-endring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "boligpolitikk-pris-leie-eie-tilgang",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "data-styring-kart-plan-medvirkning-algoritmer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historiske-lag-ruiner-minner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regional-global-pendling-migrasjon-sammenligning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "faktisk",
+      "token_count": 1,
+      "chapter_count": 16,
+      "chapters": [
+        {
+          "chapter_id": "administrasjon-plan-kontroll-beredskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arbeid-naering-handel-logistikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-gatekant-makt-ombruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "bolig-nabolag-tilgang-endring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "boligpolitikk-pris-leie-eie-tilgang",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "data-styring-kart-plan-medvirkning-algoritmer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historiske-lag-ruiner-minner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regional-global-pendling-migrasjon-sammenligning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "oslo",
+      "token_count": 1,
+      "chapter_count": 15,
+      "chapters": [
+        {
+          "chapter_id": "administrasjon-plan-kontroll-beredskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arbeid-naering-handel-logistikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-gatekant-makt-ombruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-type-skala-byform",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "bolig-nabolag-tilgang-endring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "data-styring-kart-plan-medvirkning-algoritmer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historiske-lag-ruiner-minner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regional-global-pendling-migrasjon-sammenligning",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "uten",
+      "token_count": 1,
+      "chapter_count": 15,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-naering-handel-logistikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-gatekant-makt-ombruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-type-skala-byform",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "bolig-nabolag-tilgang-endring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "boligpolitikk-pris-leie-eie-tilgang",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "data-styring-kart-plan-medvirkning-algoritmer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historiske-lag-ruiner-minner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regional-global-pendling-migrasjon-sammenligning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "derfor",
+      "token_count": 1,
+      "chapter_count": 14,
+      "chapters": [
+        {
+          "chapter_id": "administrasjon-plan-kontroll-beredskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arbeid-naering-handel-logistikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-gatekant-makt-ombruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-type-skala-byform",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "bolig-nabolag-tilgang-endring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "boligpolitikk-pris-leie-eie-tilgang",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "data-styring-kart-plan-medvirkning-algoritmer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historiske-lag-ruiner-minner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "før",
+      "token_count": 1,
+      "chapter_count": 14,
+      "chapters": [
+        {
+          "chapter_id": "administrasjon-plan-kontroll-beredskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arbeid-naering-handel-logistikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-gatekant-makt-ombruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-type-skala-byform",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "boligpolitikk-pris-leie-eie-tilgang",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "data-styring-kart-plan-medvirkning-algoritmer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historiske-lag-ruiner-minner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "samme",
+      "token_count": 1,
+      "chapter_count": 14,
+      "chapters": [
+        {
+          "chapter_id": "administrasjon-plan-kontroll-beredskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arbeid-naering-handel-logistikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-type-skala-byform",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "bolig-nabolag-tilgang-endring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "boligpolitikk-pris-leie-eie-tilgang",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historiske-lag-ruiner-minner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regional-global-pendling-migrasjon-sammenligning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "bruk",
+      "token_count": 1,
+      "chapter_count": 12,
+      "chapters": [
+        {
+          "chapter_id": "administrasjon-plan-kontroll-beredskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arbeid-naering-handel-logistikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-gatekant-makt-ombruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "bolig-nabolag-tilgang-endring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regional-global-pendling-migrasjon-sammenligning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "beskriver",
+      "token_count": 1,
+      "chapter_count": 11,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-naering-handel-logistikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-gatekant-makt-ombruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-type-skala-byform",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "bolig-nabolag-tilgang-endring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "boligpolitikk-pris-leie-eie-tilgang",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "dokumentert",
+      "token_count": 1,
+      "chapter_count": 11,
+      "chapters": [
+        {
+          "chapter_id": "administrasjon-plan-kontroll-beredskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-gatekant-makt-ombruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-type-skala-byform",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "bolig-nabolag-tilgang-endring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "boligpolitikk-pris-leie-eie-tilgang",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "historiske-lag-ruiner-minner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "fysisk",
+      "token_count": 1,
+      "chapter_count": 10,
+      "chapters": [
+        {
+          "chapter_id": "administrasjon-plan-kontroll-beredskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arbeid-naering-handel-logistikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "data-styring-kart-plan-medvirkning-algoritmer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historiske-lag-ruiner-minner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "hvem",
+      "token_count": 1,
+      "chapter_count": 10,
+      "chapters": [
+        {
+          "chapter_id": "administrasjon-plan-kontroll-beredskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-gatekant-makt-ombruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "bolig-nabolag-tilgang-endring",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "boligpolitikk-pris-leie-eie-tilgang",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "data-styring-kart-plan-medvirkning-algoritmer",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "når",
+      "token_count": 1,
+      "chapter_count": 10,
+      "chapters": [
+        {
+          "chapter_id": "administrasjon-plan-kontroll-beredskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arbeid-naering-handel-logistikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historiske-lag-ruiner-minner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "viser",
+      "token_count": 1,
+      "chapter_count": 10,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-naering-handel-logistikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-type-skala-byform",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "bolig-nabolag-tilgang-endring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "boligpolitikk-pris-leie-eie-tilgang",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "data-styring-kart-plan-medvirkning-algoritmer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regional-global-pendling-migrasjon-sammenligning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "bare",
+      "token_count": 1,
+      "chapter_count": 9,
+      "chapters": [
+        {
+          "chapter_id": "administrasjon-plan-kontroll-beredskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arbeid-naering-handel-logistikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-gatekant-makt-ombruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-type-skala-byform",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "brukes",
+      "token_count": 1,
+      "chapter_count": 9,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-naering-handel-logistikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-type-skala-byform",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "byen",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "administrasjon-plan-kontroll-beredskap",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "boligpolitikk-pris-leie-eie-tilgang",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "data-styring-kart-plan-medvirkning-algoritmer",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "historiske-lag-ruiner-minner",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "krever",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-naering-handel-logistikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "bolig-nabolag-tilgang-endring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regional-global-pendling-migrasjon-sammenligning",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "automatisk",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-naering-handel-logistikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-type-skala-byform",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "boligpolitikk-pris-leie-eie-tilgang",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "data-styring-kart-plan-medvirkning-algoritmer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historiske-lag-ruiner-minner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regional-global-pendling-migrasjon-sammenligning",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "aktivitet",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-naering-handel-logistikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "alene",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "arkitektur-gatekant-makt-ombruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-type-skala-byform",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "boligpolitikk-pris-leie-eie-tilgang",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "data-styring-kart-plan-medvirkning-algoritmer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "andre",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-naering-handel-logistikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-gatekant-makt-ombruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "bør",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "arkitektur-type-skala-byform",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historiske-lag-ruiner-minner",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "både",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "administrasjon-plan-kontroll-beredskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "bolig-nabolag-tilgang-endring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historiske-lag-ruiner-minner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "data",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "bolig-nabolag-tilgang-endring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "data-styring-kart-plan-medvirkning-algoritmer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "hvorfor",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "bolig-nabolag-tilgang-endring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "boligpolitikk-pris-leie-eie-tilgang",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "lag",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "arkitektur-type-skala-byform",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "data-styring-kart-plan-medvirkning-algoritmer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historiske-lag-ruiner-minner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regional-global-pendling-migrasjon-sammenligning",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "plan",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "administrasjon-plan-kontroll-beredskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-type-skala-byform",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "data-styring-kart-plan-medvirkning-algoritmer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "annet",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "administrasjon-plan-kontroll-beredskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arbeid-naering-handel-logistikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-gatekant-makt-ombruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historiske-lag-ruiner-minner",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "bygg",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "arkitektur-gatekant-makt-ombruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-type-skala-byform",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "boligpolitikk-pris-leie-eie-tilgang",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regional-global-pendling-migrasjon-sammenligning",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "byrom",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "ett",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-naering-handel-logistikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "gjør",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "data-styring-kart-plan-medvirkning-algoritmer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regional-global-pendling-migrasjon-sammenligning",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "sammenlign",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "boligpolitikk-pris-leie-eie-tilgang",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regional-global-pendling-migrasjon-sammenligning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "tiltak",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "administrasjon-plan-kontroll-beredskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "være",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historiske-lag-ruiner-minner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "bolig",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "bolig-nabolag-tilgang-endring",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "boligpolitikk-pris-leie-eie-tilgang",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regional-global-pendling-migrasjon-sammenligning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "dokumenterer",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-naering-handel-logistikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "data-styring-kart-plan-medvirkning-algoritmer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regional-global-pendling-migrasjon-sammenligning",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "enn",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-naering-handel-logistikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-gatekant-makt-ombruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "bolig-nabolag-tilgang-endring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "forskjellige",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "administrasjon-plan-kontroll-beredskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "bolig-nabolag-tilgang-endring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historiske-lag-ruiner-minner",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "historisk",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "arkitektur-type-skala-byform",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "bolig-nabolag-tilgang-endring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historiske-lag-ruiner-minner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "hvor",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-naering-handel-logistikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "mens",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "administrasjon-plan-kontroll-beredskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arbeid-naering-handel-logistikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historiske-lag-ruiner-minner",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "observasjon",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "arkitektur-type-skala-byform",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "offentlig",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "administrasjon-plan-kontroll-beredskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arbeid-naering-handel-logistikk",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-gatekant-makt-ombruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "opphold",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "title_terms",
+            "concept_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "seg",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "spor",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "arkitektur-type-skala-byform",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "data-styring-kart-plan-medvirkning-algoritmer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historiske-lag-ruiner-minner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "sted",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "stedet",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "synlig",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "administrasjon-plan-kontroll-beredskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historiske-lag-ruiner-minner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "undersøkes",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "arrangement",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "boliger",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "bolig-nabolag-tilgang-endring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "boligpolitikk-pris-leie-eie-tilgang",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "byliv",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "drift",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "data-styring-kart-plan-medvirkning-algoritmer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regional-global-pendling-migrasjon-sammenligning",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "effekt",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "flere",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "bolig-nabolag-tilgang-endring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "forveksle",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "funksjon",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "arkitektur-gatekant-makt-ombruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-type-skala-byform",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "fysiske",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "følg",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "boligpolitikk-pris-leie-eie-tilgang",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regional-global-pendling-migrasjon-sammenligning",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "gir",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "arkitektur-gatekant-makt-ombruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regional-global-pendling-migrasjon-sammenligning",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "offentlige",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "regler",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "administrasjon-plan-kontroll-beredskap",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "risiko",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "administrasjon-plan-kontroll-beredskap",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "data-styring-kart-plan-medvirkning-algoritmer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "sosial",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "tilgjengelighet",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "concept_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "vedtak",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "administrasjon-plan-kontroll-beredskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "data-styring-kart-plan-medvirkning-algoritmer",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    }
+  ],
+  "term_collisions": [
+    {
+      "term": "men",
+      "token_count": 1,
+      "chapter_count": 17,
+      "chapters": [
+        {
+          "chapter_id": "administrasjon-plan-kontroll-beredskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arbeid-naering-handel-logistikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-gatekant-makt-ombruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-type-skala-byform",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "bolig-nabolag-tilgang-endring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "boligpolitikk-pris-leie-eie-tilgang",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "data-styring-kart-plan-medvirkning-algoritmer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historiske-lag-ruiner-minner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regional-global-pendling-migrasjon-sammenligning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "faktisk",
+      "token_count": 1,
+      "chapter_count": 16,
+      "chapters": [
+        {
+          "chapter_id": "administrasjon-plan-kontroll-beredskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arbeid-naering-handel-logistikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-gatekant-makt-ombruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "bolig-nabolag-tilgang-endring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "boligpolitikk-pris-leie-eie-tilgang",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "data-styring-kart-plan-medvirkning-algoritmer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historiske-lag-ruiner-minner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regional-global-pendling-migrasjon-sammenligning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "oslo",
+      "token_count": 1,
+      "chapter_count": 15,
+      "chapters": [
+        {
+          "chapter_id": "administrasjon-plan-kontroll-beredskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arbeid-naering-handel-logistikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-gatekant-makt-ombruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-type-skala-byform",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "bolig-nabolag-tilgang-endring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "data-styring-kart-plan-medvirkning-algoritmer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historiske-lag-ruiner-minner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regional-global-pendling-migrasjon-sammenligning",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "uten",
+      "token_count": 1,
+      "chapter_count": 15,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-naering-handel-logistikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-gatekant-makt-ombruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-type-skala-byform",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "bolig-nabolag-tilgang-endring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "boligpolitikk-pris-leie-eie-tilgang",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "data-styring-kart-plan-medvirkning-algoritmer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historiske-lag-ruiner-minner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regional-global-pendling-migrasjon-sammenligning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "derfor",
+      "token_count": 1,
+      "chapter_count": 14,
+      "chapters": [
+        {
+          "chapter_id": "administrasjon-plan-kontroll-beredskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arbeid-naering-handel-logistikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-gatekant-makt-ombruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-type-skala-byform",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "bolig-nabolag-tilgang-endring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "boligpolitikk-pris-leie-eie-tilgang",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "data-styring-kart-plan-medvirkning-algoritmer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historiske-lag-ruiner-minner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "før",
+      "token_count": 1,
+      "chapter_count": 14,
+      "chapters": [
+        {
+          "chapter_id": "administrasjon-plan-kontroll-beredskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arbeid-naering-handel-logistikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-gatekant-makt-ombruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-type-skala-byform",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "boligpolitikk-pris-leie-eie-tilgang",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "data-styring-kart-plan-medvirkning-algoritmer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historiske-lag-ruiner-minner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "samme",
+      "token_count": 1,
+      "chapter_count": 14,
+      "chapters": [
+        {
+          "chapter_id": "administrasjon-plan-kontroll-beredskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arbeid-naering-handel-logistikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-type-skala-byform",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "bolig-nabolag-tilgang-endring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "boligpolitikk-pris-leie-eie-tilgang",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historiske-lag-ruiner-minner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regional-global-pendling-migrasjon-sammenligning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "bruk",
+      "token_count": 1,
+      "chapter_count": 12,
+      "chapters": [
+        {
+          "chapter_id": "administrasjon-plan-kontroll-beredskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arbeid-naering-handel-logistikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-gatekant-makt-ombruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "bolig-nabolag-tilgang-endring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regional-global-pendling-migrasjon-sammenligning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "beskriver",
+      "token_count": 1,
+      "chapter_count": 11,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-naering-handel-logistikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-gatekant-makt-ombruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-type-skala-byform",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "bolig-nabolag-tilgang-endring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "boligpolitikk-pris-leie-eie-tilgang",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "dokumentert",
+      "token_count": 1,
+      "chapter_count": 11,
+      "chapters": [
+        {
+          "chapter_id": "administrasjon-plan-kontroll-beredskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-gatekant-makt-ombruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-type-skala-byform",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "bolig-nabolag-tilgang-endring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "boligpolitikk-pris-leie-eie-tilgang",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "historiske-lag-ruiner-minner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "fysisk",
+      "token_count": 1,
+      "chapter_count": 10,
+      "chapters": [
+        {
+          "chapter_id": "administrasjon-plan-kontroll-beredskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arbeid-naering-handel-logistikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "data-styring-kart-plan-medvirkning-algoritmer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historiske-lag-ruiner-minner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "hvem",
+      "token_count": 1,
+      "chapter_count": 10,
+      "chapters": [
+        {
+          "chapter_id": "administrasjon-plan-kontroll-beredskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-gatekant-makt-ombruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "bolig-nabolag-tilgang-endring",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "boligpolitikk-pris-leie-eie-tilgang",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "data-styring-kart-plan-medvirkning-algoritmer",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "når",
+      "token_count": 1,
+      "chapter_count": 10,
+      "chapters": [
+        {
+          "chapter_id": "administrasjon-plan-kontroll-beredskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arbeid-naering-handel-logistikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historiske-lag-ruiner-minner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "viser",
+      "token_count": 1,
+      "chapter_count": 10,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-naering-handel-logistikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-type-skala-byform",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "bolig-nabolag-tilgang-endring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "boligpolitikk-pris-leie-eie-tilgang",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "data-styring-kart-plan-medvirkning-algoritmer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regional-global-pendling-migrasjon-sammenligning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "bare",
+      "token_count": 1,
+      "chapter_count": 9,
+      "chapters": [
+        {
+          "chapter_id": "administrasjon-plan-kontroll-beredskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arbeid-naering-handel-logistikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-gatekant-makt-ombruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-type-skala-byform",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "brukes",
+      "token_count": 1,
+      "chapter_count": 9,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-naering-handel-logistikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-type-skala-byform",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "byen",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "administrasjon-plan-kontroll-beredskap",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "boligpolitikk-pris-leie-eie-tilgang",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "data-styring-kart-plan-medvirkning-algoritmer",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "historiske-lag-ruiner-minner",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "krever",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-naering-handel-logistikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "bolig-nabolag-tilgang-endring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regional-global-pendling-migrasjon-sammenligning",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "automatisk",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-naering-handel-logistikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-type-skala-byform",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "boligpolitikk-pris-leie-eie-tilgang",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "data-styring-kart-plan-medvirkning-algoritmer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historiske-lag-ruiner-minner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regional-global-pendling-migrasjon-sammenligning",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "aktivitet",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-naering-handel-logistikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "alene",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "arkitektur-gatekant-makt-ombruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-type-skala-byform",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "boligpolitikk-pris-leie-eie-tilgang",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "data-styring-kart-plan-medvirkning-algoritmer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "andre",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-naering-handel-logistikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-gatekant-makt-ombruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "bør",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "arkitektur-type-skala-byform",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historiske-lag-ruiner-minner",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "både",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "administrasjon-plan-kontroll-beredskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "bolig-nabolag-tilgang-endring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historiske-lag-ruiner-minner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "data",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "bolig-nabolag-tilgang-endring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "data-styring-kart-plan-medvirkning-algoritmer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "hvorfor",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "bolig-nabolag-tilgang-endring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "boligpolitikk-pris-leie-eie-tilgang",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "lag",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "arkitektur-type-skala-byform",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "data-styring-kart-plan-medvirkning-algoritmer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historiske-lag-ruiner-minner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regional-global-pendling-migrasjon-sammenligning",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "plan",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "administrasjon-plan-kontroll-beredskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-type-skala-byform",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "data-styring-kart-plan-medvirkning-algoritmer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "annet",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "administrasjon-plan-kontroll-beredskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arbeid-naering-handel-logistikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-gatekant-makt-ombruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historiske-lag-ruiner-minner",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "bygg",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "arkitektur-gatekant-makt-ombruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-type-skala-byform",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "boligpolitikk-pris-leie-eie-tilgang",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regional-global-pendling-migrasjon-sammenligning",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "byrom",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "ett",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-naering-handel-logistikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "gjør",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "data-styring-kart-plan-medvirkning-algoritmer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regional-global-pendling-migrasjon-sammenligning",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "sammenlign",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "boligpolitikk-pris-leie-eie-tilgang",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regional-global-pendling-migrasjon-sammenligning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "tiltak",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "administrasjon-plan-kontroll-beredskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "være",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historiske-lag-ruiner-minner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "bolig",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "bolig-nabolag-tilgang-endring",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "boligpolitikk-pris-leie-eie-tilgang",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regional-global-pendling-migrasjon-sammenligning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "dokumenterer",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-naering-handel-logistikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "data-styring-kart-plan-medvirkning-algoritmer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regional-global-pendling-migrasjon-sammenligning",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "enn",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-naering-handel-logistikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-gatekant-makt-ombruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "bolig-nabolag-tilgang-endring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "forskjellige",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "administrasjon-plan-kontroll-beredskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "bolig-nabolag-tilgang-endring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historiske-lag-ruiner-minner",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "historisk",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "arkitektur-type-skala-byform",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "bolig-nabolag-tilgang-endring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historiske-lag-ruiner-minner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "hvor",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-naering-handel-logistikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "mens",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "administrasjon-plan-kontroll-beredskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arbeid-naering-handel-logistikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historiske-lag-ruiner-minner",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "observasjon",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "arkitektur-type-skala-byform",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "offentlig",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "administrasjon-plan-kontroll-beredskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arbeid-naering-handel-logistikk",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-gatekant-makt-ombruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "opphold",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "title_terms",
+            "concept_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "seg",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "spor",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "arkitektur-type-skala-byform",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "data-styring-kart-plan-medvirkning-algoritmer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historiske-lag-ruiner-minner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "sted",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "stedet",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "synlig",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "administrasjon-plan-kontroll-beredskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historiske-lag-ruiner-minner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "undersøkes",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "arrangement",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "boliger",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "bolig-nabolag-tilgang-endring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "boligpolitikk-pris-leie-eie-tilgang",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "byliv",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "drift",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "data-styring-kart-plan-medvirkning-algoritmer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regional-global-pendling-migrasjon-sammenligning",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "effekt",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "flere",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "bolig-nabolag-tilgang-endring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "forveksle",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "funksjon",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "arkitektur-gatekant-makt-ombruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-type-skala-byform",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "fysiske",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "følg",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "boligpolitikk-pris-leie-eie-tilgang",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regional-global-pendling-migrasjon-sammenligning",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "gir",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "arkitektur-gatekant-makt-ombruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regional-global-pendling-migrasjon-sammenligning",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "offentlige",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "regler",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "administrasjon-plan-kontroll-beredskap",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "risiko",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "administrasjon-plan-kontroll-beredskap",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "data-styring-kart-plan-medvirkning-algoritmer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "sosial",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "tilgjengelighet",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "concept_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "vedtak",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "administrasjon-plan-kontroll-beredskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "data-styring-kart-plan-medvirkning-algoritmer",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "aktiviteter",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "aktører",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regional-global-pendling-migrasjon-sammenligning",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "alle",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "boligpolitikk-pris-leie-eie-tilgang",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "analyse",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "arkitektur-gatekant-makt-ombruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-type-skala-byform",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "ansvar",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "boligpolitikk-pris-leie-eie-tilgang",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "data-styring-kart-plan-medvirkning-algoritmer",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "arealbruk",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-naering-handel-logistikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regional-global-pendling-migrasjon-sammenligning",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "arrangementer",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "arrangementsmodus",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "avvik",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "administrasjon-plan-kontroll-beredskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "data-styring-kart-plan-medvirkning-algoritmer",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "belastning",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regional-global-pendling-migrasjon-sammenligning",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "bestemt",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-naering-handel-logistikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "boligpolitikk-pris-leie-eie-tilgang",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "bjørvika",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "data-styring-kart-plan-medvirkning-algoritmer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regional-global-pendling-migrasjon-sammenligning",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "blant",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "administrasjon-plan-kontroll-beredskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "bruke",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "bolig-nabolag-tilgang-endring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "bygget",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "arkitektur-gatekant-makt-ombruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "data-styring-kart-plan-medvirkning-algoritmer",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "bygningstype",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "arkitektur-type-skala-byform",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "bolig-nabolag-tilgang-endring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "byrommet",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-naering-handel-logistikk",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "dagens",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "historiske-lag-ruiner-minner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "definisjon",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "data-styring-kart-plan-medvirkning-algoritmer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regional-global-pendling-migrasjon-sammenligning",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "deltakelse",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "data-styring-kart-plan-medvirkning-algoritmer",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "dibk",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "administrasjon-plan-kontroll-beredskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-type-skala-byform",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "direkte",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "bolig-nabolag-tilgang-endring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "dokumentere",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-naering-handel-logistikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "eie",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "bolig-nabolag-tilgang-endring",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "boligpolitikk-pris-leie-eie-tilgang",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "eierskap",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "arkitektur-gatekant-makt-ombruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "endring",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "data-styring-kart-plan-medvirkning-algoritmer",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "ferdig",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "data-styring-kart-plan-medvirkning-algoritmer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "finnes",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "flytting",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "bolig-nabolag-tilgang-endring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regional-global-pendling-migrasjon-sammenligning",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "forbindelser",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "regional-global-pendling-migrasjon-sammenligning",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "fordi",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "administrasjon-plan-kontroll-beredskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "form",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "arkitektur-type-skala-byform",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "formelle",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "administrasjon-plan-kontroll-beredskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-type-skala-byform",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "forskjeller",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "bolig-nabolag-tilgang-endring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "funksjoner",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "først",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "arkitektur-type-skala-byform",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "gate",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "gater",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "gjøre",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "arkitektur-type-skala-byform",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "regional-global-pendling-migrasjon-sammenligning",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "handel",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-naering-handel-logistikk",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regional-global-pendling-migrasjon-sammenligning",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "hele",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "data-styring-kart-plan-medvirkning-algoritmer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "hendelser",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "historiske",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "arkitektur-type-skala-byform",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historiske-lag-ruiner-minner",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "hvilken",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "administrasjon-plan-kontroll-beredskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historiske-lag-ruiner-minner",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "identitet",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "regional-global-pendling-migrasjon-sammenligning",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "inkludering",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "innspill",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "administrasjon-plan-kontroll-beredskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "data-styring-kart-plan-medvirkning-algoritmer",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "inntekt",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "bolig-nabolag-tilgang-endring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "boligpolitikk-pris-leie-eie-tilgang",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "kapasitet",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-naering-handel-logistikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "kart",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "data-styring-kart-plan-medvirkning-algoritmer",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historiske-lag-ruiner-minner",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "kartet",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "data-styring-kart-plan-medvirkning-algoritmer",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "kartlegg",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "data-styring-kart-plan-medvirkning-algoritmer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regional-global-pendling-migrasjon-sammenligning",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "kommunale",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "boligpolitikk-pris-leie-eie-tilgang",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "kontroll",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "administrasjon-plan-kontroll-beredskap",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "leie",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "bolig-nabolag-tilgang-endring",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "boligpolitikk-pris-leie-eie-tilgang",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "medvirkning",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "administrasjon-plan-kontroll-beredskap",
+          "groups": [
+            "title_terms",
+            "concept_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "data-styring-kart-plan-medvirkning-algoritmer",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "mer",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "bolig-nabolag-tilgang-endring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "midlertidig",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "arbeid-naering-handel-logistikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "mål",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "nye",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "prosent",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "bolig-nabolag-tilgang-endring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "registrer",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "rom",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "samtilstedeværelse",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "title_terms",
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "separate",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "skilt",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "historiske-lag-ruiner-minner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "skygge",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "status",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "historiske-lag-ruiner-minner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "urbanisme-idealer-forbindelser-fortetting",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "styres",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "administrasjon-plan-kontroll-beredskap",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "arkitektur-gatekant-makt-ombruk",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "støy",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "tidspunkt",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "tidsvindu",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "byliv-rytmer-miks-konflikt",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "tilgang",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "bolig-nabolag-tilgang-endring",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "boligpolitikk-pris-leie-eie-tilgang",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "torg",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "ulike",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "byliv-hendelser-midlertidighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "universell",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "arkitektur-gatekant-makt-ombruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-stemning-mikrokomfort",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "utforming",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "arkitektur-gatekant-makt-ombruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klima-helse-varme-vann-tilgjengelighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "vernestatus",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "arkitektur-type-skala-byform",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historiske-lag-ruiner-minner",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "vilkår",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "boligpolitikk-pris-leie-eie-tilgang",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt-konflikt-protest-grenser-trygghet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "youngstorget",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "byliv-offentlige-rom",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byliv-sosial-offentlighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "åpne",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "arkitektur-gatekant-makt-ombruk",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "data-styring-kart-plan-medvirkning-algoritmer",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    }
+  ],
+  "activation_recommendation": "review_required_before_runtime_activation",
   "gate": {
     "passed": true,
     "errors": []
-  }
+  },
+  "lifecycle_stage": "imported_review_candidate_audit",
+  "approval_required": true,
+  "runtime_activation_allowed": false
 }

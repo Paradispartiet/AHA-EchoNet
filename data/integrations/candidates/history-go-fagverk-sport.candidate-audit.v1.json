@@ -4,17 +4,17 @@
   "candidate_kind": "package_inventory",
   "lifecycle_stage": "imported_review_candidate_audit",
   "source_repo": "Paradispartiet/History-Go",
-  "source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
-  "release_sha256": "21cec482d0bde5423cef0bd836dc2b6b8fa4445226bd2ab8df1b44eaefccd627",
+  "source_ref": "d52cebbe2c6c01e5780be301e9b0e4a9c61c5254",
+  "release_sha256": "387dca2da02c5062738d7a0e7a97ab1fe7ec0c2d95be85aacaaa9bd0f3a011ed",
   "subject_id": "sport",
   "package_status": "complete_with_optional_gaps",
   "chapter_status": "not_materialized",
   "coverage": {
-    "declared_package_files": 10,
-    "expected_existing_package_files": 9,
-    "materialized_existing_package_files": 9,
+    "declared_package_files": 11,
+    "expected_existing_package_files": 10,
+    "materialized_existing_package_files": 10,
     "required_package_files": 4,
-    "optional_package_files": 6,
+    "optional_package_files": 7,
     "optional_gaps": [
       "README/KNOWLEDGE_MEMORY_CHAMBER.md"
     ],
@@ -22,9 +22,9 @@
     "missing_chapter_files": []
   },
   "digests": {
-    "package_content_sha256": "005c7f738725a8e4ed148aacb3d85728402c66c61fd48a9d5c125ce527ea5adf",
-    "structure_sha256": "77c00355a4eca39aba31d4572659daf25cc97bebc47aed7d5a0e3877efa516f4",
-    "content_sha256": "005c7f738725a8e4ed148aacb3d85728402c66c61fd48a9d5c125ce527ea5adf"
+    "package_content_sha256": "c3192eff524cbcb12bf002528628cdac8e71193727d76cd8f88a896939e96a87",
+    "structure_sha256": "b1f3f7d43885fc54691541e5be8523561f524a4e31fb5b9c5251b2202da4cfcc",
+    "content_sha256": "c3192eff524cbcb12bf002528628cdac8e71193727d76cd8f88a896939e96a87"
   },
   "activation_recommendation": "subject_specific_review_gates_required_before_runtime_activation",
   "approval_required": true,

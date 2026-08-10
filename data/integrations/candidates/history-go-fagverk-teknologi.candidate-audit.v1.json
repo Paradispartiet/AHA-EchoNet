@@ -4,8 +4,8 @@
   "candidate_kind": "package_inventory",
   "lifecycle_stage": "imported_review_candidate_audit",
   "source_repo": "Paradispartiet/History-Go",
-  "source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
-  "release_sha256": "21cec482d0bde5423cef0bd836dc2b6b8fa4445226bd2ab8df1b44eaefccd627",
+  "source_ref": "d52cebbe2c6c01e5780be301e9b0e4a9c61c5254",
+  "release_sha256": "387dca2da02c5062738d7a0e7a97ab1fe7ec0c2d95be85aacaaa9bd0f3a011ed",
   "subject_id": "teknologi",
   "package_status": "complete",
   "chapter_status": "not_materialized",
@@ -20,9 +20,9 @@
     "missing_chapter_files": []
   },
   "digests": {
-    "package_content_sha256": "dab54cdd92b96b659f103d03db727d6b826b003ad49c6bd97cbcb190a708aa60",
-    "structure_sha256": "03816d9c7cadcb0d215b83d964d0c62b79886676aafdc0e3b822d20c53be14b4",
-    "content_sha256": "dab54cdd92b96b659f103d03db727d6b826b003ad49c6bd97cbcb190a708aa60"
+    "package_content_sha256": "5969344da09f9514e3ec5fd2e131d1b750b837c6d53bf7cd868b5bbf302170fe",
+    "structure_sha256": "22dfbbe4ea926079ff5506593f43e3c5b7e8746f4603df845123da0e6e6272c5",
+    "content_sha256": "5969344da09f9514e3ec5fd2e131d1b750b837c6d53bf7cd868b5bbf302170fe"
   },
   "activation_recommendation": "subject_specific_review_gates_required_before_runtime_activation",
   "approval_required": true,
