@@ -1,0 +1,36 @@
+name: AHA Musikk Fagverk Review
+
+on:
+  pull_request:
+    paths:
+      - 'data/integrations/candidates/history-go-fagverk-musikk.*'
+      - 'data/integrations/review/history-go-fagverk-musikk.*'
+      - 'data/evaluation/aha-musikk-*'
+      - 'scripts/review-musikk-fagverk.mjs'
+      - 'tests/aha-musikk-fagverk-review.test.cjs'
+      - '.github/workflows/aha-musikk-fagverk-review.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  review:
+    name: Validate Musikk review policy and fixtures
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Build and evaluate review-only Musikk policy
+        run: node scripts/review-musikk-fagverk.mjs
+      - name: Verify review contract and runtime boundary
+        run: node tests/aha-musikk-fagverk-review.test.cjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aha-musikk-fagverk-review
+          path: |
+            /tmp/aha-musikk-policy.json
+            /tmp/aha-musikk-evaluation.json
+            /tmp/aha-musikk-fixtures.json
