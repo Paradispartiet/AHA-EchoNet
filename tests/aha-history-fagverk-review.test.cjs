@@ -127,7 +127,7 @@ assert.equal(activeHistory.corpus_path, "data/integrations/runtime/history-go-fa
 assert.equal(activeHistory.policy_path, "data/integrations/runtime/history-go-fagverk-historie.policy.v1.json");
 assert.equal(runtime.active_subjects?.natur?.chapter_count, 11);
 assert.equal(runtime.full_release_active, false);
-assert.equal(runtime.effective_entry_count, 47);
+assert.equal(runtime.effective_entry_count, 59);
 
 const matrixDigest = crypto.createHash("sha256").update(fs.readFileSync(paths.matrix)).digest("hex");
 assert.match(matrixDigest, /^[0-9a-f]{64}$/);

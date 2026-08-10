@@ -108,10 +108,18 @@ function buildRuntimePolicy(config, approval, candidate, reviewPolicy) {
     corpus_sha256: reviewPolicy.corpus_sha256,
     source_policy_version: reviewPolicy.version,
     source_policy_sha256: sha256(sourcePolicyPayload),
+    ...(reviewPolicy.policy_config_path ? {
+      source_policy_config_path: reviewPolicy.policy_config_path,
+      source_policy_config_version: reviewPolicy.policy_config_version,
+      source_policy_config_sha256: reviewPolicy.policy_config_sha256
+    } : {}),
     scoring_mode: config.scoring_mode,
     thresholds: {
       minimum_score: Number(config.minimum_score),
       minimum_terms: Number(config.minimum_terms),
+      ...(config.minimum_reviewed_evidence_terms != null
+        ? { minimum_reviewed_evidence_terms: Number(config.minimum_reviewed_evidence_terms) }
+        : {}),
       ambiguity_margin: Number(config.ambiguity_margin)
     },
     default_weights: reviewPolicy.default_weights,
@@ -138,6 +146,47 @@ function validateApproval(config, approval) {
   }
 }
 
+function hydrateReviewPolicy(config, reviewPolicy, candidate) {
+  const configPath = config.review_policy_config_path;
+  if (!configPath) return reviewPolicy;
+  const policyConfig = readJson(configPath);
+  if (policyConfig.subject_id !== config.subject_id) throw new Error(`${config.subject_id}: policy config subject mismatch.`);
+  if (policyConfig.source_ref !== reviewPolicy.source_ref || policyConfig.source_ref !== candidate.source_ref) {
+    throw new Error(`${config.subject_id}: policy config source mismatch.`);
+  }
+  if (policyConfig.corpus_sha256 !== reviewPolicy.corpus_sha256 || policyConfig.corpus_sha256 !== candidate.content_sha256) {
+    throw new Error(`${config.subject_id}: policy config corpus digest mismatch.`);
+  }
+  const configThresholds = policyConfig.thresholds || {};
+  for (const key of ["minimum_score", "minimum_terms", "ambiguity_margin"]) {
+    if (Number(configThresholds[key]) !== Number(config[key])) throw new Error(`${config.subject_id}: ${key} differs between runtime registry and policy config.`);
+  }
+  if (config.minimum_reviewed_evidence_terms != null
+      && Number(configThresholds.minimum_reviewed_evidence_terms) !== Number(config.minimum_reviewed_evidence_terms)) {
+    throw new Error(`${config.subject_id}: minimum_reviewed_evidence_terms differs between runtime registry and policy config.`);
+  }
+  const chapterRules = policyConfig.chapter_rules || {};
+  const candidateChapterIds = new Set((candidate.entries || []).map((entry) => entry.chapter_id));
+  const configuredChapterIds = new Set(Object.keys(chapterRules));
+  if (candidateChapterIds.size !== configuredChapterIds.size
+      || [...candidateChapterIds].some((chapterId) => !configuredChapterIds.has(chapterId))) {
+    throw new Error(`${config.subject_id}: policy config chapter rules do not match candidate chapters.`);
+  }
+  const domainTerms = [...new Set(Object.values(chapterRules).flatMap((rule) => rule.required_anchor_terms || []))].sort();
+  if (!domainTerms.length) throw new Error(`${config.subject_id}: policy config produced an empty domain gate.`);
+  return {
+    ...reviewPolicy,
+    thresholds: policyConfig.thresholds,
+    default_weights: policyConfig.default_weights,
+    global_non_scoring_terms: policyConfig.global_non_scoring_terms,
+    domain_gate: { required: true, terms: domainTerms },
+    chapter_rules: chapterRules,
+    policy_config_path: configPath,
+    policy_config_version: policyConfig.version,
+    policy_config_sha256: sha256(policyConfig)
+  };
+}
+
 function main() {
   const args = parseArgs(process.argv.slice(2));
   if (args.help) {
@@ -158,8 +207,9 @@ function main() {
     if (config.subject_id !== subjectId) throw new Error(`${subjectId}: registry key and subject_id differ.`);
     const approval = readJson(config.approval_path);
     const candidate = readJson(config.candidate_corpus_path);
-    const reviewPolicy = readJson(config.review_policy_path);
+    const sourceReviewPolicy = readJson(config.review_policy_path);
     validateApproval(config, approval);
+    const reviewPolicy = hydrateReviewPolicy(config, sourceReviewPolicy, candidate);
     const runtimeCorpus = buildRuntimeCorpus(config, approval, candidate);
     const runtimePolicy = buildRuntimePolicy(config, approval, candidate, reviewPolicy);
     writeJson(config.runtime_corpus_path, runtimeCorpus, args.outputRoot);
