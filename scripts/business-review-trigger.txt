@@ -1,0 +1,1 @@
+Synchronize the registered Business review workflow after activation.

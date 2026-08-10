@@ -1,0 +1,55 @@
+{
+  "schema": "aha_business_fagverk_expansion_review_v1",
+  "version": "1.0.0",
+  "status": "reviewed_subject_expansion_not_runtime_active",
+  "lifecycle_stage": "subject_release_review",
+  "subject_id": "naeringsliv",
+  "source_repo": "Paradispartiet/History-Go",
+  "baseline": {
+    "source_ref": "9e9644e83998ff715005bf80c96cde6193107c13",
+    "corpus_path": "data/integrations/history-go-fagverk-corpus.v1.json",
+    "chapter_count": 0,
+    "chapter_ids": []
+  },
+  "candidate": {
+    "source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
+    "corpus_path": "data/integrations/candidates/history-go-fagverk-naeringsliv.candidate.v1.json",
+    "corpus_sha256": "a1c399977c2656d567ee461228b8e7d21f457da8e0863bf53a7888a8ac5fbfea",
+    "chapter_count": 12,
+    "module_file_count": 36
+  },
+  "delta": {
+    "retained_chapter_count": 0,
+    "added_chapter_count": 12,
+    "removed_chapter_count": 0,
+    "retained_chapter_ids": [],
+    "added_chapter_ids": [
+      "arbeid-produksjon-verdiskaping",
+      "forretningsjus-skatt-compliance",
+      "handel-forbruk-marked",
+      "internasjonal-okonomi-operations-prosjekt",
+      "kapital-eierskap-finans",
+      "kvantitative-metoder-business-analytics",
+      "logistikk-infrastruktur-okonomisk-rom",
+      "makrookonomi-konjunkturer-okonomisk-politikk",
+      "makt-regulering-baerekraft",
+      "markedsforing-strategi-kunder",
+      "regnskap-revisjon-okonomistyring",
+      "teknologi-innovasjon-plattformer"
+    ],
+    "removed_chapter_ids": [],
+    "source_ref_changed": true,
+    "semantic_expansion": true
+  },
+  "materialization_assessment": {
+    "chapter_contract_sufficient_for_subject_review": true,
+    "module_files_required_before_subject_review": true,
+    "module_file_count": 36,
+    "complete_three_module_structure_per_chapter": true,
+    "runtime_activation_requires_separate_pull_request": true
+  },
+  "review_finding": "Business enters the reviewed architecture as a complete 12-chapter, 36-module subject. The chapter and module contracts are sufficient for policy and fixture review, while runtime activation remains a separate explicit decision.",
+  "approval_required": true,
+  "runtime_activation_allowed": false,
+  "explicit_runtime_activation_pull_request_required": true
+}
