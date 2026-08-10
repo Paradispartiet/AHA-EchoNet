@@ -13,6 +13,8 @@ on:
       - "data/evaluation/aha-subculture-*"
       - "data/integrations/review/history-go-fagverk-subject-approval-registry.v1.json"
       - "data/integrations/approvals/history-go-fagverk-subkultur.approved.v1.json"
+      - "data/integrations/runtime/history-go-fagverk-subkultur.*.v1.json"
+      - "data/integrations/history-go-fagverk-release.runtime-active.json"
       - "tests/aha-subculture-fagverk-review.test.cjs"
   workflow_dispatch:
 
@@ -37,7 +39,7 @@ jobs:
           node scripts/build-history-go-fagverk-subject-approvals.mjs --subject subkultur
           node tests/aha-subculture-fagverk-review.test.cjs
           node tests/aha-fagverk-subject-approvals.test.cjs
-      - name: Verify deterministic parity and runtime isolation
+      - name: Verify deterministic parity and explicit runtime activation
         run: |
           git diff --exit-code -- \
             data/integrations/review/history-go-fagverk-subkultur.term-policy.v1.json \
@@ -45,4 +47,9 @@ jobs:
             data/evaluation/aha-subculture-fagverk-evaluation-report.v1.json \
             data/evaluation/aha-subculture-fixture-correction-report.v1.json \
             data/integrations/approvals/history-go-fagverk-subkultur.approved.v1.json
-          node -e 'const r=require("./data/integrations/history-go-fagverk-release.runtime-active.json"); if(r.active_subjects.subkultur||r.effective_entry_count!==59) process.exit(1)'
+          node - <<'NODE'
+          const runtime = require('./data/integrations/history-go-fagverk-release.runtime-active.json');
+          const subculture = runtime.active_subjects?.subkultur;
+          if (!subculture || subculture.chapter_count !== 8 || subculture.activation_status !== 'runtime_subject_active') process.exit(1);
+          if (runtime.effective_entry_count !== 67 || runtime.full_release_active !== false) process.exit(1);
+          NODE
