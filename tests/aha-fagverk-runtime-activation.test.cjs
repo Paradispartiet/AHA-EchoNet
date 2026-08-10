@@ -27,7 +27,7 @@ const active = JSON.parse(fs.readFileSync(activePath, 'utf8'));
 const subjectIds = Object.keys(registry.active_subjects).sort();
 
 assert.equal(registry.schema, 'aha_history_go_fagverk_runtime_registry_v1');
-assert.deepEqual(subjectIds, ['by', 'historie', 'naeringsliv', 'natur', 'politikk', 'subkultur']);
+assert.deepEqual(subjectIds, ['by', 'historie', 'kunst', 'naeringsliv', 'natur', 'politikk', 'subkultur']);
 assert.equal(legacy.entries.length, 3, 'legacy seed must remain byte-stable and separate');
 assert.deepEqual(Object.keys(approved.approved_subjects), subjectIds);
 assert.deepEqual(Object.keys(active.active_subjects), subjectIds);
@@ -35,6 +35,7 @@ assert.deepEqual(Object.keys(active.active_subjects), subjectIds);
 const expected = {
   by: { sourceRef: 'd52cebbe2c6c01e5780be301e9b0e4a9c61c5254', corpusSha: '823e79dcd7c767ee3251a924d7697b0b2cee51cbb89699dda7d318aa81c9e10b', chapterCount: 17, thresholds: { minimum_score: 6, minimum_terms: 2, ambiguity_margin: 3 } },
   historie: { sourceRef: 'c16a187453d16a40f9cab4ca694c32e96014f31b', corpusSha: 'e5123cb96d9b89c83aad56efc327c1089bfe5f887f29322d39a4a936c9f19444', chapterCount: 23, thresholds: { minimum_score: 7, minimum_terms: 2, ambiguity_margin: 3 } },
+  kunst: { sourceRef: 'd52cebbe2c6c01e5780be301e9b0e4a9c61c5254', corpusSha: '0bd12a658e1b18bac17f1da8c6a251e88ebd8ca9db0ffce9328058a27ffa48bc', chapterCount: 6, thresholds: { minimum_score: 6, minimum_terms: 2, ambiguity_margin: 3 } },
   naeringsliv: { sourceRef: 'c16a187453d16a40f9cab4ca694c32e96014f31b', corpusSha: 'a1c399977c2656d567ee461228b8e7d21f457da8e0863bf53a7888a8ac5fbfea', chapterCount: 12, thresholds: { minimum_score: 7, minimum_terms: 2, minimum_reviewed_evidence_terms: 2, ambiguity_margin: 3 } },
   natur: { sourceRef: 'c16a187453d16a40f9cab4ca694c32e96014f31b', corpusSha: 'd29f05a0b08fd5673e4bc0d320e896e4f75ec67ff217284188d0e77bed14b00e', chapterCount: 11, thresholds: { minimum_score: 7, minimum_terms: 2, ambiguity_margin: 3 } },
   politikk: { sourceRef: 'c16a187453d16a40f9cab4ca694c32e96014f31b', corpusSha: '981ab3ad25f972bd13c70a0247f26b8796e43b8cd3cde7282b7d073bfcc79dec', chapterCount: 13, thresholds: { minimum_score: 6, minimum_terms: 2, ambiguity_margin: 3 } },
@@ -64,20 +65,25 @@ for (const subjectId of subjectIds) {
   assert.deepEqual(policy.thresholds, item.thresholds);
   assert.equal(policy.artifact_sha256, digestArtifact(policy));
 
-  if (subjectId === 'by') {
+  if (subjectId === 'by' || subjectId === 'kunst') {
     assert.equal(corpus.projection_mode, 'reviewed_anchor_projection_v1');
     assert.equal(policy.runtime_corpus_projection, 'reviewed_anchor_projection_v1');
-    assert.equal(policy.source_review_attestation_path, 'data/integrations/review/history-go-fagverk-by.review-attestation.v1.json');
+    assert.equal(policy.source_review_attestation_path, `data/integrations/review/history-go-fagverk-${subjectId}.review-attestation.v1.json`);
     assert.match(policy.source_review_artifact_sha256, /^[0-9a-f]{64}$/);
     assert.equal(policy.domain_gate.required, true);
-    assert.equal(policy.domain_gate.terms.includes('planvedtak'), true);
-    assert.equal(policy.domain_gate.terms.includes('fortetting'), true);
-    assert.equal(Object.keys(policy.chapter_rules).length, 17);
+    assert.equal(Object.keys(policy.chapter_rules).length, item.chapterCount);
     for (const entry of corpus.entries) {
       assert.deepEqual(entry.concept_terms, []);
       assert.deepEqual(entry.support_terms, []);
       assert.deepEqual(entry.title_terms, policy.chapter_rules[entry.chapter_id].required_anchor_terms);
       assert.equal(entry.provenance.runtime_projection, 'reviewed_anchor_projection_v1');
+    }
+    if (subjectId === 'by') {
+      assert.equal(policy.domain_gate.terms.includes('planvedtak'), true);
+      assert.equal(policy.domain_gate.terms.includes('fortetting'), true);
+    } else {
+      assert.equal(policy.domain_gate.terms.includes('ikonografi'), true);
+      assert.equal(policy.domain_gate.terms.includes('kunstnerøkonomi'), true);
     }
   } else if (subjectId === 'historie') {
     assert.equal(policy.temporal_gate.required, true);
@@ -110,7 +116,7 @@ for (const subjectId of subjectIds) {
 
 assert.equal(approved.artifact_sha256, digestArtifact(approved));
 assert.equal(active.artifact_sha256, digestArtifact(active));
-assert.equal(active.effective_entry_count, 84);
+assert.equal(active.effective_entry_count, 90);
 assert.equal(approved.approved_source_commit, legacy.source_ref);
 assert.equal(active.active_source_commit, legacy.source_ref);
 
