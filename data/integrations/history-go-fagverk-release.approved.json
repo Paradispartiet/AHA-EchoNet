@@ -1,100 +1,15 @@
 {
-  "schema": "aha_history_go_fagverk_approved_runtime_v2",
-  "version": "2.0.0",
-  "status": "partial_subject_runtime_approved",
-  "source_repo": "Paradispartiet/History-Go",
-  "approved_source_commit": "9e9644e83998ff715005bf80c96cde6193107c13",
-  "legacy_seed": {
-    "source_commit": "9e9644e83998ff715005bf80c96cde6193107c13",
-    "corpus_path": "data/integrations/history-go-fagverk-corpus.v1.json",
-    "entry_count": 3,
-    "subject_ids": [
-      "historie",
-      "natur",
-      "politikk"
-    ],
-    "overridden_subject_ids": [
-      "historie",
-      "naeringsliv",
-      "natur",
-      "politikk",
-      "subkultur"
-    ]
+  "schema":"aha_history_go_fagverk_approved_runtime_v2","version":"2.0.0","status":"partial_subject_runtime_approved","source_repo":"Paradispartiet/History-Go","approved_source_commit":"9e9644e83998ff715005bf80c96cde6193107c13",
+  "legacy_seed":{"source_commit":"9e9644e83998ff715005bf80c96cde6193107c13","corpus_path":"data/integrations/history-go-fagverk-corpus.v1.json","entry_count":3,"subject_ids":["historie","natur","politikk"],"overridden_subject_ids":["by","historie","naeringsliv","natur","politikk","subkultur"]},
+  "approved_subjects":{
+    "by":{"subject_id":"by","source_commit":"d52cebbe2c6c01e5780be301e9b0e4a9c61c5254","subject_approval_path":"data/integrations/approvals/history-go-fagverk-by.approved.v1.json","corpus_path":"data/integrations/runtime/history-go-fagverk-by.corpus.v1.json","corpus_sha256":"823e79dcd7c767ee3251a924d7697b0b2cee51cbb89699dda7d318aa81c9e10b","corpus_artifact_sha256":"b50aaf4d53f3919d9cf442ca7fbcda3051c082fd1246e34bab67cbe60fb30b16","policy_path":"data/integrations/runtime/history-go-fagverk-by.policy.v1.json","policy_artifact_sha256":"7727d8249091488f4943dc27dc63a7bbd060527bc0c24c673915d32e5075b345","chapter_count":17,"scoring_mode":"subject_policy_v1","approval_status":"runtime_subject_approved"},
+    "historie":{"subject_id":"historie","source_commit":"c16a187453d16a40f9cab4ca694c32e96014f31b","subject_approval_path":"data/integrations/approvals/history-go-fagverk-historie.approved.v1.json","corpus_path":"data/integrations/runtime/history-go-fagverk-historie.corpus.v1.json","corpus_sha256":"e5123cb96d9b89c83aad56efc327c1089bfe5f887f29322d39a4a936c9f19444","corpus_artifact_sha256":"8385299e8bde2a3cba01979aa8de20df219bc0e839d98d131fc49c4e2d7fd9ed","policy_path":"data/integrations/runtime/history-go-fagverk-historie.policy.v1.json","policy_artifact_sha256":"3b011a889eff7eef41c013ee94c458454ee2957e2c85a3d83d20f5adb589205a","chapter_count":23,"scoring_mode":"subject_policy_v1","approval_status":"runtime_subject_approved"},
+    "naeringsliv":{"subject_id":"naeringsliv","source_commit":"c16a187453d16a40f9cab4ca694c32e96014f31b","subject_approval_path":"data/integrations/approvals/history-go-fagverk-naeringsliv.approved.v1.json","corpus_path":"data/integrations/runtime/history-go-fagverk-naeringsliv.corpus.v1.json","corpus_sha256":"a1c399977c2656d567ee461228b8e7d21f457da8e0863bf53a7888a8ac5fbfea","corpus_artifact_sha256":"f1d4784cfcd13fac75d15f0b4ffab4a19a2c308cf0c803520bfe7edb35ff2044","policy_path":"data/integrations/runtime/history-go-fagverk-naeringsliv.policy.v1.json","policy_artifact_sha256":"76b3c61ed9840b68b91619d3e8afc321d8f5c199485e531cfdfbfb80c52dd1f2","chapter_count":12,"scoring_mode":"subject_policy_v1","approval_status":"runtime_subject_approved"},
+    "natur":{"subject_id":"natur","source_commit":"c16a187453d16a40f9cab4ca694c32e96014f31b","subject_approval_path":"data/integrations/approvals/history-go-fagverk-natur.approved.v1.json","corpus_path":"data/integrations/runtime/history-go-fagverk-natur.corpus.v1.json","corpus_sha256":"d29f05a0b08fd5673e4bc0d320e896e4f75ec67ff217284188d0e77bed14b00e","corpus_artifact_sha256":"85eb39a76b655c8b5a5124cac17c00d9eed09c9d55adbc9b4a207fc1eccf91c9","policy_path":"data/integrations/runtime/history-go-fagverk-natur.policy.v1.json","policy_artifact_sha256":"8a8297d4635680f452dee1da62ac0ec0415969aee2f359339df8bb5f5614765e","chapter_count":11,"scoring_mode":"subject_policy_v1","approval_status":"runtime_subject_approved"},
+    "politikk":{"subject_id":"politikk","source_commit":"c16a187453d16a40f9cab4ca694c32e96014f31b","subject_approval_path":"data/integrations/approvals/history-go-fagverk-politikk.approved.v1.json","corpus_path":"data/integrations/runtime/history-go-fagverk-politikk.corpus.v1.json","corpus_sha256":"981ab3ad25f972bd13c70a0247f26b8796e43b8cd3cde7282b7d073bfcc79dec","corpus_artifact_sha256":"9e0faabb5eb4e689a1c68be66a8cf5032a607967d0597cd526e616f0e4411810","policy_path":"data/integrations/runtime/history-go-fagverk-politikk.policy.v1.json","policy_artifact_sha256":"7897362ddcd047e647557e83675781b156fccb839520ee539d44ecdf3d33373f","chapter_count":13,"scoring_mode":"subject_policy_v1","approval_status":"runtime_subject_approved"},
+    "subkultur":{"subject_id":"subkultur","source_commit":"c16a187453d16a40f9cab4ca694c32e96014f31b","subject_approval_path":"data/integrations/approvals/history-go-fagverk-subkultur.approved.v1.json","corpus_path":"data/integrations/runtime/history-go-fagverk-subkultur.corpus.v1.json","corpus_sha256":"e554b96513313139898a44e98f374d9fea2f01e8c8e8b015dcc5d6fdfa60d7f8","corpus_artifact_sha256":"14f6da1e9236fbab15e311c009110bc677cf602c2c507fd69d6390755ea90e03","policy_path":"data/integrations/runtime/history-go-fagverk-subkultur.policy.v1.json","policy_artifact_sha256":"f88f4743ab2b04b1ec79300eece1a7345133c61d90e11d7ccbcaf92316730ff4","chapter_count":8,"scoring_mode":"subject_policy_v1","approval_status":"runtime_subject_approved"}
   },
-  "approved_subjects": {
-    "historie": {
-      "subject_id": "historie",
-      "source_commit": "c16a187453d16a40f9cab4ca694c32e96014f31b",
-      "subject_approval_path": "data/integrations/approvals/history-go-fagverk-historie.approved.v1.json",
-      "corpus_path": "data/integrations/runtime/history-go-fagverk-historie.corpus.v1.json",
-      "corpus_sha256": "e5123cb96d9b89c83aad56efc327c1089bfe5f887f29322d39a4a936c9f19444",
-      "corpus_artifact_sha256": "8385299e8bde2a3cba01979aa8de20df219bc0e839d98d131fc49c4e2d7fd9ed",
-      "policy_path": "data/integrations/runtime/history-go-fagverk-historie.policy.v1.json",
-      "policy_artifact_sha256": "3b011a889eff7eef41c013ee94c458454ee2957e2c85a3d83d20f5adb589205a",
-      "chapter_count": 23,
-      "scoring_mode": "subject_policy_v1",
-      "approval_status": "runtime_subject_approved"
-    },
-    "naeringsliv": {
-      "subject_id": "naeringsliv",
-      "source_commit": "c16a187453d16a40f9cab4ca694c32e96014f31b",
-      "subject_approval_path": "data/integrations/approvals/history-go-fagverk-naeringsliv.approved.v1.json",
-      "corpus_path": "data/integrations/runtime/history-go-fagverk-naeringsliv.corpus.v1.json",
-      "corpus_sha256": "a1c399977c2656d567ee461228b8e7d21f457da8e0863bf53a7888a8ac5fbfea",
-      "corpus_artifact_sha256": "f1d4784cfcd13fac75d15f0b4ffab4a19a2c308cf0c803520bfe7edb35ff2044",
-      "policy_path": "data/integrations/runtime/history-go-fagverk-naeringsliv.policy.v1.json",
-      "policy_artifact_sha256": "76b3c61ed9840b68b91619d3e8afc321d8f5c199485e531cfdfbfb80c52dd1f2",
-      "chapter_count": 12,
-      "scoring_mode": "subject_policy_v1",
-      "approval_status": "runtime_subject_approved"
-    },
-    "natur": {
-      "subject_id": "natur",
-      "source_commit": "c16a187453d16a40f9cab4ca694c32e96014f31b",
-      "subject_approval_path": "data/integrations/approvals/history-go-fagverk-natur.approved.v1.json",
-      "corpus_path": "data/integrations/runtime/history-go-fagverk-natur.corpus.v1.json",
-      "corpus_sha256": "d29f05a0b08fd5673e4bc0d320e896e4f75ec67ff217284188d0e77bed14b00e",
-      "corpus_artifact_sha256": "85eb39a76b655c8b5a5124cac17c00d9eed09c9d55adbc9b4a207fc1eccf91c9",
-      "policy_path": "data/integrations/runtime/history-go-fagverk-natur.policy.v1.json",
-      "policy_artifact_sha256": "8a8297d4635680f452dee1da62ac0ec0415969aee2f359339df8bb5f5614765e",
-      "chapter_count": 11,
-      "scoring_mode": "subject_policy_v1",
-      "approval_status": "runtime_subject_approved"
-    },
-    "politikk": {
-      "subject_id": "politikk",
-      "source_commit": "c16a187453d16a40f9cab4ca694c32e96014f31b",
-      "subject_approval_path": "data/integrations/approvals/history-go-fagverk-politikk.approved.v1.json",
-      "corpus_path": "data/integrations/runtime/history-go-fagverk-politikk.corpus.v1.json",
-      "corpus_sha256": "981ab3ad25f972bd13c70a0247f26b8796e43b8cd3cde7282b7d073bfcc79dec",
-      "corpus_artifact_sha256": "9e0faabb5eb4e689a1c68be66a8cf5032a607967d0597cd526e616f0e4411810",
-      "policy_path": "data/integrations/runtime/history-go-fagverk-politikk.policy.v1.json",
-      "policy_artifact_sha256": "7897362ddcd047e647557e83675781b156fccb839520ee539d44ecdf3d33373f",
-      "chapter_count": 13,
-      "scoring_mode": "subject_policy_v1",
-      "approval_status": "runtime_subject_approved"
-    },
-    "subkultur": {
-      "subject_id": "subkultur",
-      "source_commit": "c16a187453d16a40f9cab4ca694c32e96014f31b",
-      "subject_approval_path": "data/integrations/approvals/history-go-fagverk-subkultur.approved.v1.json",
-      "corpus_path": "data/integrations/runtime/history-go-fagverk-subkultur.corpus.v1.json",
-      "corpus_sha256": "e554b96513313139898a44e98f374d9fea2f01e8c8e8b015dcc5d6fdfa60d7f8",
-      "corpus_artifact_sha256": "14f6da1e9236fbab15e311c009110bc677cf602c2c507fd69d6390755ea90e03",
-      "policy_path": "data/integrations/runtime/history-go-fagverk-subkultur.policy.v1.json",
-      "policy_artifact_sha256": "f88f4743ab2b04b1ec79300eece1a7345133c61d90e11d7ccbcaf92316730ff4",
-      "chapter_count": 8,
-      "scoring_mode": "subject_policy_v1",
-      "approval_status": "runtime_subject_approved"
-    }
-  },
-  "full_release_approved": false,
-  "activation_rules": {
-    "subject_review_approval_required": true,
-    "runtime_artifacts_must_be_materialized": true,
-    "subject_policy_required_when_registered": true,
-    "approval_does_not_activate_unregistered_subjects": true,
-    "explicit_activation_pull_request_required": true
-  },
-  "artifact_sha256": "d96f1046f1bc4e15fccb6bb8eb06cdae7c68291e2504c9eaa8057e32100ea7ef"
+  "full_release_approved":false,
+  "activation_rules":{"subject_review_approval_required":true,"runtime_artifacts_must_be_materialized":true,"subject_policy_required_when_registered":true,"approval_does_not_activate_unregistered_subjects":true,"explicit_activation_pull_request_required":true},
+  "artifact_sha256":"eab6e8558597e7fca8fe86a2439967ebe44b5dbc97695cce294b6f028f83000a"
 }
