@@ -11,21 +11,11 @@ class AnalyzeRequest(BaseModel):
     historyGoContext: dict[str, Any] = Field(default_factory=dict)
 
 
-class HistoryGoEvidence(BaseModel):
-    term: str
-    quote: str
-    start: int = Field(ge=0)
-    end: int = Field(ge=0)
-    group: str
-    contribution: float = Field(ge=0)
-
-
 class HistoryGoLink(BaseModel):
     type: str
     id: str
     title: str
     reason: str
-    evidence: list[HistoryGoEvidence] = Field(default_factory=list)
 
 
 class Confidence(BaseModel):
