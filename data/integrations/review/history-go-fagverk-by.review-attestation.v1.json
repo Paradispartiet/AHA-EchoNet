@@ -1,0 +1,53 @@
+{
+  "schema": "aha_by_fagverk_review_attestation_v1",
+  "version": "1.0.0",
+  "status": "review_artifacts_attested_passed",
+  "subject_id": "by",
+  "source_repo": "Paradispartiet/History-Go",
+  "source_ref": "d52cebbe2c6c01e5780be301e9b0e4a9c61c5254",
+  "corpus_sha256": "823e79dcd7c767ee3251a924d7697b0b2cee51cbb89699dda7d318aa81c9e10b",
+  "review_head_sha": "353cc48ca2a7eaaf38629d7912ef662532614228",
+  "workflow_run_id": 31434460743,
+  "artifact_id": 9080413019,
+  "artifact_name": "aha-by-fagverk-review",
+  "artifact_sha256": "da490aac9009e680143c97d05d2e9369265cb4133ffd476c626b0214ae4ea384",
+  "outputs": {
+    "policy": {
+      "file": "aha-by-policy.json",
+      "sha256": "f962b0e318161b8bc808c935dac69f6fc7b9091810bebf98f7c99f0eeeb63cdb",
+      "summary": {
+        "total": 311,
+        "non_scoring": 74,
+        "down_weight": 219,
+        "context_only": 18
+      }
+    },
+    "evaluation": {
+      "file": "aha-by-evaluation.json",
+      "sha256": "c128bb09037c8a72f39f35bfb4aa1c783a2527033f6293d68f782178b814c3f0",
+      "summary": {
+        "total": 42,
+        "passed": 42,
+        "failed": 0,
+        "positive": 34,
+        "abstention": 8,
+        "chapters_covered": 17,
+        "evidence_errors": 0
+      }
+    },
+    "fixtures": {
+      "file": "aha-by-fixtures.json",
+      "sha256": "9a4b73f2bc4d4badd50596643143c7decc3594155666970dfa424a6fa480340a",
+      "summary": {
+        "total": 16,
+        "passed": 16,
+        "failed": 0,
+        "unsupported": 16,
+        "false_positives": 0,
+        "evidence_errors": 0
+      }
+    }
+  },
+  "approval_required": true,
+  "runtime_activation_allowed": false
+}
