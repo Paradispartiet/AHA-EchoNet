@@ -1,0 +1,37 @@
+{
+  "schema": "aha_musikk_fagverk_evaluation_matrix_v1",
+  "version": "1.0.0",
+  "status": "constructed_review_matrix_not_runtime_active",
+  "subject_id": "musikk",
+  "source_ref": "d52cebbe2c6c01e5780be301e9b0e4a9c61c5254",
+  "corpus_sha256": "86ec812f4e84e6b7a7761d42da7ac8ac9bb64f72cf247ca00013df359f985a00",
+  "runtime_activation_allowed": false,
+  "positive_cases": [
+    {"id":"musikk-etno-1","expected_chapter_id":"etnomusikologi-kultur-samfunn","text":"Etnomusikologi krever at feltrolle og relasjoner dokumenteres før intervjuet brukes som evidens om musikalsk praksis.","required_evidence":["etnomusikologi","feltrolle"]},
+    {"id":"musikk-etno-2","expected_chapter_id":"etnomusikologi-kultur-samfunn","text":"Diaspora må studeres situert, og fellesskapsstyrt kunnskap setter egne vilkår for hvordan feltmaterialet kan brukes.","required_evidence":["diaspora","fellesskapsstyrt"]},
+    {"id":"musikk-framforing-1","expected_chapter_id":"framforing-praksis-samspill","text":"En fortolkningsvariant kan sammenlignes mot ensemblekoordinering uten å gjøre samtidige gester til bevis på intensjon.","required_evidence":["fortolkningsvariant","ensemblekoordinering"]},
+    {"id":"musikk-framforing-2","expected_chapter_id":"framforing-praksis-samspill","text":"Notasjon og samspill må kobles til faktisk utøverhandling når en framføring sammenlignes med en remediert representasjon.","required_evidence":["notasjon","samspill"]},
+    {"id":"musikk-historisk-1","expected_chapter_id":"historisk-musikkvitenskap-historiografi","text":"Kildeproveniens og periodisering må dokumenteres når historiske opptak brukes til å bygge en musikkhistorisk fortelling.","required_evidence":["kildeproveniens","periodisering"]},
+    {"id":"musikk-historisk-2","expected_chapter_id":"historisk-musikkvitenskap-historiografi","text":"Musikkvitenskap kan spore sirkulasjoner gjennom medier og aktører uten å anta påvirkningsretning fra musikalsk likhet alene.","required_evidence":["musikkvitenskap","sirkulasjoner"]},
+    {"id":"musikk-institusjon-1","expected_chapter_id":"institusjoner-okonomi-politikk-offentlighet","text":"Sceneøkologi og kulturstøtte må følges fra regel og aktør til aktivitet og dokumentert utfall i musikklivet.","required_evidence":["sceneøkologi","kulturstøtte"]},
+    {"id":"musikk-institusjon-2","expected_chapter_id":"institusjoner-okonomi-politikk-offentlighet","text":"Arkivtilgang og musikalske offentligheter er ulike institusjonelle forhold; digital tilgang er ikke automatisk gjenbruksrett.","required_evidence":["arkivtilgang","offentligheter"]},
+    {"id":"musikk-tech-1","expected_chapter_id":"lydmedier-teknologi-beregning","text":"En multisporsesjon og plattformkuratering må dokumenteres som ulike tekniske og institusjonelle ledd i musikkproduksjonen.","required_evidence":["multisporsesjon","plattformkuratering"]},
+    {"id":"musikk-tech-2","expected_chapter_id":"lydmedier-teknologi-beregning","text":"MIR og sampling krever eksplisitte inputdata, parametre og rettighetsgrenser før resultatet kan generaliseres.","required_evidence":["mir","sampling"]},
+    {"id":"musikk-analyse-1","expected_chapter_id":"musikalsk-analyse-lyd-struktur","text":"Rytmemåling og tidskodet lytting gjør det mulig å finne igjen passasjen og skille måling fra fortolkning.","required_evidence":["rytmemåling","tidskodet"]},
+    {"id":"musikk-analyse-2","expected_chapter_id":"musikalsk-analyse-lyd-struktur","text":"Harmoni og motiv må analyseres med eksplisitte segmenterings- og funksjonskriterier, ikke som rå egenskaper ved verket.","required_evidence":["harmoni","motiv"]},
+    {"id":"musikk-nordisk-1","expected_chapter_id":"norsk-nordisk-samisk-sted-arkiv","text":"Joikproveniens og Riksscenen må knyttes til navngitte aktører, steder, tidsrom og dokumenterte arkiv- eller scenehendelser.","required_evidence":["joikproveniens","riksscenen"]},
+    {"id":"musikk-nordisk-2","expected_chapter_id":"norsk-nordisk-samisk-sted-arkiv","text":"Et musikksted må dokumenteres med aktivitet og tidsramme, mens fellesskapsmyndighet styrer bruk av enkelte samiske arkivobjekter.","required_evidence":["musikksted","fellesskapsmyndighet"]},
+    {"id":"musikk-persepsjon-1","expected_chapter_id":"persepsjon-kognisjon-akustikk","text":"Musikkpersepsjon og familiaritet må måles med eksplisitt stimulus, oppgave og responsmål før en psykologisk slutning trekkes.","required_evidence":["musikkpersepsjon","familiaritet"]},
+    {"id":"musikk-persepsjon-2","expected_chapter_id":"persepsjon-kognisjon-akustikk","text":"Akustikk og timing er ikke det samme som opplevelse; signalendring og respons må kobles empirisk i musikkpersepsjon.","required_evidence":["akustikk","timing"]}
+  ],
+  "abstention_cases": [
+    {"id":"musikk-abstain-generic","text":"Musikk, kultur og lyd er viktige deler av samfunnet og skaper mange ulike opplevelser.","expected_status":"unsupported"},
+    {"id":"musikk-abstain-history","text":"Historiske kilder og periodisering brukes for å forklare statsdannelse og politiske institusjoner over tid.","expected_status":"unsupported"},
+    {"id":"musikk-abstain-psychology","text":"Familiaritet og ekspertise kan påvirke oppmerksomhet, hukommelse og læring i en generell psykologisk oppgave.","expected_status":"unsupported"},
+    {"id":"musikk-abstain-technology","text":"Et digitalt system bruker algoritmer, sampling og datasett for å anbefale innhold på en plattform.","expected_status":"unsupported"},
+    {"id":"musikk-abstain-business","text":"Rettigheter, betaling, marked og støtteordninger påvirker økonomien i en bransje.","expected_status":"unsupported"},
+    {"id":"musikk-abstain-religion","text":"Ritual og fellesskap kan gi religiøs tilhørighet, men teksten beskriver ingen musikalsk praksis eller feltstudie.","expected_status":"unsupported"},
+    {"id":"musikk-abstain-urban","text":"Scenen ligger i et offentlig byrom med publikum, aktivitet, arkiv og kulturtilbud gjennom året.","expected_status":"unsupported"},
+    {"id":"musikk-abstain-personal","text":"Jeg hørte på en sang i går og likte lyden, rytmen og stemningen bedre enn jeg forventet.","expected_status":"unsupported"}
+  ]
+}
