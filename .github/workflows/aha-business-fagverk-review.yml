@@ -23,7 +23,6 @@ on:
       - "data/integrations/approvals/history-go-fagverk-naeringsliv.approved.v1.json"
       - "data/integrations/history-go-fagverk-release.approved.json"
       - "data/integrations/history-go-fagverk-release.runtime-active.json"
-      - ".github/workflows/aha-business-fagverk-review.yml"
   workflow_dispatch:
 
 permissions:
