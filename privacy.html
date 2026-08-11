@@ -19,13 +19,13 @@
           <h1>Personvern / Kontroll</h1>
           <p class="aha-module-purpose">Se hva som lagres lokalt, styr samtykker, eksporter AHA-data og slett lokale AHA-nøkler med eksplisitt tekstbekreftelse.</p>
           <p class="aha-module-purpose">Personvernrapporten dekker lokale AHA-lag eksplisitt. Tokens, OAuth/PKCE, API-nøkler og andre hemmeligheter eksporteres ikke.</p>
-          <p class="aha-module-purpose">Training- og Personal AI-data i rapporten betyr lokalt corpus, lokale examples, retrieval/status og evalueringer. Det betyr ikke at modelltrening eller fine-tuning har skjedd.</p>
+          <p class="aha-module-purpose">Training- og Personal AI-data i rapporten betyr lokalt corpus, lokale examples, retrieval/status, evalueringer og Meta Insights Memory. Det betyr ikke at modelltrening eller fine-tuning har skjedd.</p>
         </div>
       </header>
       <div class="aha-module-actions privacy-actions">
         <a class="aha-tile-btn aha-tile-btn-primary" href="index.html">Tilbake til AHA Home</a>
         <button id="privacy-refresh" type="button" class="aha-tile-btn">Oppdater</button>
-        <button id="privacy-export" type="button" class="aha-tile-btn">Eksporter AHA-data</button>
+        <button id="privacy-export-complete" type="button" class="aha-tile-btn">Eksporter AHA-data</button>
       </div>
       <p id="privacy-action-message" class="privacy-action-message"></p>
     </section>
@@ -51,22 +51,22 @@
 
     <section class="aha-panel">
       <h2>Datarapport</h2>
-      <p class="privacy-small">History Go-nøkler vises for transparens, men kan ikke slettes her i første versjon.</p>
+      <p class="privacy-small">History Go-nøkler vises for transparens, men kan ikke slettes her i første versjon. Meta Insights Memory vises separat og styres fra Personal AI-siden.</p>
       <div id="privacy-storage-summary" class="privacy-storage-summary"></div>
       <div id="privacy-storage-report" class="privacy-storage-list"></div>
     </section>
 
     <section class="aha-panel">
       <h2>Gjenopprett AHA-backup</h2>
-      <p class="privacy-small">Gjenoppretting er additiv og local-only. Du må alltid se en forhåndsvisning før noe skrives. History Go-data, ukjente nøkler, tokens, OAuth/PKCE, API-nøkler, credentials og andre hemmeligheter hoppes over.</p>
+      <p class="privacy-small">Gjenoppretting er additiv og local-only. Du må alltid se en forhåndsvisning før noe skrives. History Go-data, ukjente nøkler, tokens, OAuth/PKCE, API-nøkler, credentials og andre hemmeligheter hoppes over. Meta Insights Memory følger backupen; avledede Personal AI-søkeindekser ugyldiggjøres etter restore og bygges på nytt fra den gjenopprettede selvmodellen.</p>
       <div class="privacy-form">
         <label class="privacy-check" for="privacy-restore-file">
           <span><strong>Backupfil</strong><br />Velg en JSON-eksport fra AHA.</span>
         </label>
         <input id="privacy-restore-file" type="file" accept="application/json,.json" />
         <div class="aha-module-actions privacy-actions">
-          <button id="privacy-restore-preview" type="button" class="aha-tile-btn">Vis forhåndsvisning</button>
-          <button id="privacy-restore-apply" type="button" class="aha-tile-btn aha-tile-btn-primary" disabled>Gjenopprett tillatte data</button>
+          <button id="privacy-restore-preview-complete" type="button" class="aha-tile-btn">Vis forhåndsvisning</button>
+          <button id="privacy-restore-apply-complete" type="button" class="aha-tile-btn aha-tile-btn-primary" disabled>Gjenopprett tillatte data</button>
         </div>
         <pre id="privacy-restore-preview-result" class="privacy-small" style="white-space: pre-wrap;"></pre>
       </div>
@@ -86,6 +86,7 @@
   <script src="js/ahaContracts.js"></script>
   <script src="js/ahaPrivacy.js"></script>
   <script src="js/ahaPrivacyRestore.js"></script>
+  <script src="js/ahaPrivacyPersonalAiMemory.js"></script>
 <script src="js/ahaModules.js"></script>
 <script src="js/ahaGlobalNav.js"></script>
 </body>
