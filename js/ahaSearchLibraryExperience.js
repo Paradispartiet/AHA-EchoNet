@@ -110,12 +110,7 @@
     });
     const other = items.filter((item) => libraryGroupFor(item) === "other");
     if (other.length) groups.push({ id: "other", label: "Andre AHA-objekter", description: "Lokale AHA-objekter som ikke passer i hovedgruppene ennå.", count: other.length, items: other });
-    return {
-      total: items.length,
-      groups,
-      recent: items.slice(0, 8),
-      items
-    };
+    return { total: items.length, groups, recent: items.slice(0, 8), items };
   }
 
   function itemCard(item) {
@@ -162,11 +157,24 @@
       : '<article class="aha-search-card"><p>Ingen objekter i denne delen av biblioteket ennå.</p></article>';
   }
 
+  function hasActiveSearch() {
+    const query = text(doc?.getElementById?.("search-query")?.value);
+    const source = text(doc?.getElementById?.("search-source-filter")?.value);
+    const type = text(doc?.getElementById?.("search-type-filter")?.value);
+    return Boolean(query || source || type);
+  }
+
+  function updateSearchResultsVisibility() {
+    const panel = doc?.getElementById?.("search-results-panel");
+    if (panel) panel.hidden = !hasActiveSearch();
+  }
+
   function render() {
     const items = global.AHASearch?.collectSearchItems?.() || [];
     const model = buildLibraryModel(items);
     renderGroups(model);
     renderRecent(model);
+    updateSearchResultsVisibility();
     const status = doc?.getElementById?.("search-library-status");
     if (status) status.textContent = `${model.total} lokale objekter er tilgjengelige i biblioteket. Biblioteket er en read-only visning av den samme indeksen som Søk bruker.`;
     return model;
@@ -182,11 +190,14 @@
       render();
     });
     doc?.getElementById?.("search-refresh")?.addEventListener?.("click", () => render());
+    doc?.getElementById?.("search-query")?.addEventListener?.("input", updateSearchResultsVisibility);
+    doc?.getElementById?.("search-source-filter")?.addEventListener?.("change", updateSearchResultsVisibility);
+    doc?.getElementById?.("search-type-filter")?.addEventListener?.("change", updateSearchResultsVisibility);
   }
 
   function init() { bind(); render(); }
 
-  const api = { GROUPS, libraryGroupFor, sourceLabel, typeLabel, buildLibraryModel, render };
+  const api = { GROUPS, libraryGroupFor, sourceLabel, typeLabel, buildLibraryModel, hasActiveSearch, updateSearchResultsVisibility, render };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   global.AHASearchLibraryExperience = api;
   if (doc) doc.readyState === "loading" ? doc.addEventListener("DOMContentLoaded", init) : init();
