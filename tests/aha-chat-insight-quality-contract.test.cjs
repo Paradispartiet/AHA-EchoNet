@@ -17,6 +17,22 @@ let originalCalls = 0;
 let receivedInput = null;
 let receivedCandidates = null;
 
+const activeRun = {
+  analysisId: 'analysis_abc123',
+  analysisRunId: 'run_abc123',
+  runId: 'run_abc123',
+  conversationId: 'default_thread',
+  sessionId: 'default_thread',
+  turnId: 'turn_abc123',
+  sourceId: 'chat_message_msg_42',
+  sourceKind: 'pasted_text',
+  createdAt: '2026-08-11T07:40:00.000Z',
+  sourceHash: 'src-hash-original',
+  normalizedSourceHash: 'src-hash-original',
+  sourceTextHash: 'src-hash-original',
+  sourceFingerprint: 'src-hash-original'
+};
+
 const context = {
   console,
   Date,
@@ -35,6 +51,11 @@ const context = {
   saveChamberToStorage(next) {
     savedChamber = JSON.parse(JSON.stringify(next));
   },
+  AHAActiveRun: {
+    get() {
+      return activeRun;
+    }
+  },
   AHAIngest: {
     ingestWithCandidates(input, candidates) {
       originalCalls += 1;
@@ -44,8 +65,8 @@ const context = {
         ok: true,
         sourceEvent: { id: 'src_chat_1', meta: input.meta || {} },
         items: candidates.map((candidate, index) => ({
-          signal: { text: candidate.text || candidate.summary || candidate },
-          meta: { insight_id: index === 0 ? 'ins_1' : 'ins_2', action: 'created' }
+          signal: { text: candidate.text || candidate.summary || candidate, meta: input.meta || {} },
+          meta: { insight_id: index === 0 ? 'ins_1' : 'ins_2', action: index === 0 ? 'created' : 'reinforced' }
         }))
       };
     }
@@ -58,6 +79,7 @@ vm.runInContext(source, context, { filename: 'js/ahaContracts.js' });
 assert.ok(context.AHAContracts, 'AHAContracts skal finnes');
 assert.equal(typeof context.AHAContracts.prepareInsightCandidates, 'function');
 assert.equal(typeof context.AHAContracts.installInsightQualityContract, 'function');
+assert.equal(typeof context.AHAContracts.normalizeAnalysisTrace, 'function');
 assert.equal(context.AHAIngest.__ahaInsightQualityContractInstalled, true, 'kvalitetskontrakten skal installeres på chat.html');
 
 const candidates = [
@@ -107,10 +129,23 @@ assert.equal(receivedInput.meta.insight_quality_contract.candidate_count, 3);
 assert.equal(receivedInput.meta.insight_quality_contract.unique_candidate_count, 2);
 assert.equal(receivedInput.meta.insight_quality_contract.duplicates_skipped, 1);
 assert.match(receivedInput.meta.insight_quality_contract.source_fingerprint, /^src_[0-9a-f]{8}$/);
+assert.equal(receivedInput.meta.insight_quality_contract.analysis_run_id, activeRun.analysisRunId);
+assert.equal(receivedInput.meta.insight_quality_contract.turn_id, activeRun.turnId);
+assert.equal(receivedInput.meta.insight_quality_contract.analysis_source_hash, activeRun.sourceHash);
+
+assert.deepEqual(JSON.parse(JSON.stringify(receivedInput.meta.analysis_trace)), activeRun, 'source-event-meta skal få den aktive Chat-kjøringen');
+assert.equal(result.analysis_trace.analysisRunId, activeRun.analysisRunId);
+assert.equal(result.analysis_trace.conversationId, activeRun.conversationId);
+assert.equal(result.analysis_trace.turnId, activeRun.turnId);
+assert.equal(result.analysis_trace.sourceHash, activeRun.sourceHash);
 
 assert.equal(result.items[0].signal.candidate_fingerprint, first.candidate_fingerprint, 'returnert signal skal ha kandidatfingeravtrykk');
 assert.equal(result.items[0].signal.candidate_origin, 'ai');
 assert.equal(result.items[0].signal.candidate_quality.source_event_id, 'src_chat_1');
+assert.equal(result.items[0].signal.analysisRunId, activeRun.analysisRunId, 'signalet skal beholde analysisRunId');
+assert.equal(result.items[0].signal.conversationId, activeRun.conversationId, 'signalet skal beholde conversationId');
+assert.equal(result.items[0].signal.turnId, activeRun.turnId, 'signalet skal beholde turnId');
+assert.equal(result.items[0].signal.sourceHash, activeRun.sourceHash, 'signalet skal beholde original source hash');
 
 assert.ok(savedChamber, 'chamber skal lagres etter metadata-berikelse');
 const storedFirst = savedChamber.insights.find((item) => item.id === 'ins_1');
@@ -120,7 +155,24 @@ assert.equal(storedFirst.candidate_fingerprint, first.candidate_fingerprint);
 assert.equal(storedFirst.candidate_origin, 'ai');
 assert.equal(storedFirst.candidate_provenance.length, 1);
 assert.equal(storedFirst.candidate_provenance[0].source_event_id, 'src_chat_1');
+assert.equal(storedFirst.candidate_provenance[0].analysisRunId, activeRun.analysisRunId);
+assert.equal(storedFirst.candidate_provenance[0].conversationId, activeRun.conversationId);
+assert.equal(storedFirst.candidate_provenance[0].turnId, activeRun.turnId);
+assert.equal(storedFirst.candidate_provenance[0].sourceHash, activeRun.sourceHash);
 assert.equal(storedSecond.candidate_origin, 'semantic');
+
+assert.equal(storedFirst.analysisRunId, activeRun.analysisRunId, 'lagret insight skal peke på siste analyse-kjøring');
+assert.equal(storedFirst.conversationId, activeRun.conversationId);
+assert.equal(storedFirst.turnId, activeRun.turnId);
+assert.equal(storedFirst.sourceHash, activeRun.sourceHash);
+assert.equal(storedFirst.analysis_trace.sourceId, activeRun.sourceId);
+assert.equal(storedFirst.analysis_provenance.length, 1, 'lagret insight skal bevare analyseproveniens');
+assert.equal(storedFirst.analysis_provenance[0].analysisRunId, activeRun.analysisRunId);
+assert.equal(storedFirst.analysis_provenance[0].turnId, activeRun.turnId);
+assert.equal(storedFirst.analysis_provenance[0].source_event_id, 'src_chat_1');
+assert.equal(storedFirst.analysis_provenance[0].candidate_fingerprint, first.candidate_fingerprint);
+assert.equal(storedFirst.analysis_provenance[0].ingest_action, 'created');
+assert.equal(storedSecond.analysis_provenance[0].ingest_action, 'reinforced');
 
 const again = context.AHAContracts.prepareInsightCandidates([
   { text: 'Makt formes av stedet og institusjonene rundt det.', candidate_type: 'ai' },
@@ -128,6 +180,16 @@ const again = context.AHAContracts.prepareInsightCandidates([
 ]);
 assert.equal(again.candidates.length, 1, 'normalisering skal gi stabil duplikatdeteksjon');
 assert.equal(again.duplicatesSkipped, 1);
+
+const normalizedTrace = context.AHAContracts.normalizeAnalysisTrace({
+  runId: 'run_fallback',
+  sessionId: 'session_fallback',
+  turnId: 'turn_fallback',
+  sourceTextHash: 'hash_fallback'
+});
+assert.equal(normalizedTrace.analysisRunId, 'run_fallback');
+assert.equal(normalizedTrace.conversationId, 'session_fallback');
+assert.equal(normalizedTrace.sourceHash, 'hash_fallback');
 
 const base = context.AHAContracts.normalizeBaseItem({ title: 'Test' }, { type: 'note', source: 'aha' });
 assert.equal(base.type, 'note', 'eksisterende AHAContracts-funksjoner skal bevares');

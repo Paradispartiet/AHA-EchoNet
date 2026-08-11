@@ -124,6 +124,61 @@
     return "caller_supplied_candidate";
   }
 
+  function normalizeAnalysisTrace(run) {
+    const src = safeObject(run);
+    const analysisRunId = String(src.analysisRunId || src.runId || "").trim();
+    const conversationId = String(src.conversationId || src.sessionId || "").trim();
+    const sourceHash = String(src.sourceHash || src.sourceTextHash || src.normalizedSourceHash || src.sourceFingerprint || "").trim();
+    const turnId = String(src.turnId || "").trim();
+    if (!analysisRunId && !conversationId && !turnId && !sourceHash) return null;
+    return {
+      analysisId: String(src.analysisId || "").trim() || null,
+      analysisRunId: analysisRunId || null,
+      runId: analysisRunId || null,
+      conversationId: conversationId || null,
+      sessionId: String(src.sessionId || conversationId || "").trim() || null,
+      turnId: turnId || null,
+      sourceId: String(src.sourceId || "").trim() || null,
+      sourceKind: String(src.sourceKind || "chat").trim() || "chat",
+      sourceHash: sourceHash || null,
+      normalizedSourceHash: String(src.normalizedSourceHash || sourceHash || "").trim() || null,
+      sourceTextHash: String(src.sourceTextHash || sourceHash || "").trim() || null,
+      sourceFingerprint: String(src.sourceFingerprint || sourceHash || "").trim() || null,
+      createdAt: String(src.createdAt || "").trim() || null
+    };
+  }
+
+  function getActiveAnalysisTrace() {
+    try {
+      if (!global.AHAActiveRun || typeof global.AHAActiveRun.get !== "function") return null;
+      return normalizeAnalysisTrace(global.AHAActiveRun.get());
+    } catch {
+      return null;
+    }
+  }
+
+  function applyAnalysisTrace(target, trace) {
+    if (!target || typeof target !== "object" || !trace) return target;
+    target.analysis_trace = Object.assign({}, trace);
+    [
+      "analysisId",
+      "analysisRunId",
+      "runId",
+      "conversationId",
+      "sessionId",
+      "turnId",
+      "sourceId",
+      "sourceKind",
+      "sourceHash",
+      "normalizedSourceHash",
+      "sourceTextHash",
+      "sourceFingerprint"
+    ].forEach((key) => {
+      if (trace[key]) target[key] = trace[key];
+    });
+    return target;
+  }
+
   function prepareInsightCandidates(candidates) {
     const list = Array.isArray(candidates) ? candidates : [];
     const seen = new Set();
@@ -174,18 +229,31 @@
     } catch { return false; }
   }
 
-  function enrichResultItem(item, descriptor, sourceEventId) {
+  function enrichResultItem(item, descriptor, sourceEventId, analysisTrace) {
     if (!item || !descriptor) return null;
     const quality = Object.assign({}, descriptor.quality, { source_event_id: sourceEventId || null });
+    if (analysisTrace?.analysisRunId) quality.analysis_run_id = analysisTrace.analysisRunId;
+    if (analysisTrace?.turnId) quality.turn_id = analysisTrace.turnId;
     if (item.signal && typeof item.signal === "object") {
       item.signal.candidate_fingerprint = descriptor.fingerprint;
       item.signal.candidate_origin = descriptor.origin;
       item.signal.candidate_quality = quality;
+      applyAnalysisTrace(item.signal, analysisTrace);
     }
     return quality;
   }
 
-  function persistCandidateProvenance(items, descriptors, sourceEventId) {
+  function buildAnalysisProvenance(trace, descriptor, sourceEventId, action) {
+    if (!trace) return null;
+    return Object.assign({}, trace, {
+      source_event_id: sourceEventId || null,
+      candidate_fingerprint: descriptor?.fingerprint || null,
+      candidate_origin: descriptor?.origin || null,
+      ingest_action: String(action || "").trim() || null
+    });
+  }
+
+  function persistCandidateProvenance(items, descriptors, sourceEventId, analysisTrace) {
     if (!Array.isArray(items) || !items.length) return false;
     const chamber = loadChamber();
     if (!chamber || !Array.isArray(chamber.insights)) return false;
@@ -196,7 +264,7 @@
       const signalFp = stableFingerprint(item?.signal?.text || "", "cand");
       const descriptor = descriptors.find((entry) => entry.fingerprint === signalFp) || descriptors[index];
       if (!descriptor) return;
-      const quality = enrichResultItem(item, descriptor, sourceEventId);
+      const quality = enrichResultItem(item, descriptor, sourceEventId, analysisTrace);
       const evidence = {
         version: QUALITY_VERSION,
         source_event_id: sourceEventId || null,
@@ -206,6 +274,10 @@
         acceptance_basis: quality.acceptance_basis
       };
       if (Number.isFinite(quality.confidence)) evidence.confidence = quality.confidence;
+      if (analysisTrace?.analysisRunId) evidence.analysisRunId = analysisTrace.analysisRunId;
+      if (analysisTrace?.conversationId) evidence.conversationId = analysisTrace.conversationId;
+      if (analysisTrace?.turnId) evidence.turnId = analysisTrace.turnId;
+      if (analysisTrace?.sourceHash) evidence.sourceHash = analysisTrace.sourceHash;
       const existing = Array.isArray(target.candidate_provenance) ? target.candidate_provenance.slice() : [];
       const key = `${evidence.source_event_id || ""}|${evidence.candidate_fingerprint}`;
       if (!existing.some((entry) => `${entry?.source_event_id || ""}|${entry?.candidate_fingerprint || ""}` === key)) existing.push(evidence);
@@ -214,6 +286,16 @@
       target.candidate_origin = descriptor.origin;
       target.candidate_quality = quality;
       if (!target.source_event_id && sourceEventId) target.source_event_id = sourceEventId;
+      if (analysisTrace) {
+        applyAnalysisTrace(target, analysisTrace);
+        const provenance = Array.isArray(target.analysis_provenance) ? target.analysis_provenance.slice() : [];
+        const entry = buildAnalysisProvenance(analysisTrace, descriptor, sourceEventId, item?.meta?.action);
+        const provenanceKey = `${entry?.analysisRunId || ""}|${entry?.turnId || ""}|${entry?.source_event_id || ""}|${entry?.candidate_fingerprint || ""}`;
+        if (entry && !provenance.some((candidate) => `${candidate?.analysisRunId || ""}|${candidate?.turnId || ""}|${candidate?.source_event_id || ""}|${candidate?.candidate_fingerprint || ""}` === provenanceKey)) {
+          provenance.push(entry);
+        }
+        target.analysis_provenance = provenance.slice(-40);
+      }
       changed = true;
     });
     if (changed) saveChamber(chamber);
@@ -229,6 +311,7 @@
     ingestApi.ingestWithCandidates = function qualityWrappedIngest(input, candidates) {
       const prepared = prepareInsightCandidates(candidates);
       const inputMeta = safeObject(input?.meta);
+      const analysisTrace = getActiveAnalysisTrace();
       const contractMeta = {
         version: QUALITY_VERSION,
         source_fingerprint: stableFingerprint(input?.text || input?.title || "", "src") || null,
@@ -237,20 +320,26 @@
         duplicates_skipped: prepared.duplicatesSkipped,
         empty_skipped: prepared.emptySkipped
       };
-      const enrichedInput = Object.assign({}, input || {}, { meta: Object.assign({}, inputMeta, { insight_quality_contract: contractMeta }) });
+      if (analysisTrace?.analysisRunId) contractMeta.analysis_run_id = analysisTrace.analysisRunId;
+      if (analysisTrace?.turnId) contractMeta.turn_id = analysisTrace.turnId;
+      if (analysisTrace?.sourceHash) contractMeta.analysis_source_hash = analysisTrace.sourceHash;
+      const enrichedMeta = Object.assign({}, inputMeta, { insight_quality_contract: contractMeta });
+      if (analysisTrace) enrichedMeta.analysis_trace = Object.assign({}, analysisTrace);
+      const enrichedInput = Object.assign({}, input || {}, { meta: enrichedMeta });
       const result = original.call(this, enrichedInput, prepared.candidates);
       if (!result || typeof result !== "object") return result;
       const sourceEventId = String(result?.sourceEvent?.id || "").trim() || null;
       if (Array.isArray(result.items)) {
         result.items.forEach((item, index) => {
           const fp = stableFingerprint(item?.signal?.text || "", "cand");
-          enrichResultItem(item, prepared.descriptors.find((entry) => entry.fingerprint === fp) || prepared.descriptors[index], sourceEventId);
+          enrichResultItem(item, prepared.descriptors.find((entry) => entry.fingerprint === fp) || prepared.descriptors[index], sourceEventId, analysisTrace);
         });
-        persistCandidateProvenance(result.items, prepared.descriptors, sourceEventId);
+        persistCandidateProvenance(result.items, prepared.descriptors, sourceEventId, analysisTrace);
       }
       result.duplicates_skipped = prepared.duplicatesSkipped;
       result.empty_candidates_skipped = prepared.emptySkipped;
       result.quality_contract = QUALITY_VERSION;
+      if (analysisTrace) result.analysis_trace = Object.assign({}, analysisTrace);
       return result;
     };
 
@@ -272,6 +361,9 @@
     isValidBaseItem,
     normalizeFingerprintText,
     stableFingerprint,
+    normalizeAnalysisTrace,
+    getActiveAnalysisTrace,
+    applyAnalysisTrace,
     prepareInsightCandidates,
     persistCandidateProvenance,
     installInsightQualityContract,
