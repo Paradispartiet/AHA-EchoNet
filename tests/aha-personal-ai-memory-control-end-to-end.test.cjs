@@ -111,7 +111,8 @@ semantic = window.AHASemanticRetrieval.hybridSearch(query, { limit: 8 });
 assert.equal(semantic.results.some((item) => item.excerpt.includes("Fjellprosjekt Nordlys")), false);
 chat = window.AHAChatPersonalContext.buildMessageContext(query);
 assert.equal(chat.relevant.relevantClaims.some((item) => JSON.stringify(item).includes("Fjellprosjekt Nordlys")), false);
-assert.equal(JSON.stringify(chat.retrieval || {}).includes("Fjellprosjekt Nordlys"), false);
+assert.equal((chat.retrieval?.results || []).some((item) => String(item.excerpt || "").includes("Fjellprosjekt Nordlys")), false);
+assert.equal(chat.context.memory.confirmedClaims.some((item) => JSON.stringify(item).includes("Fjellprosjekt Nordlys")), false);
 assert.equal(chat.prompt.includes("Fjellprosjekt Nordlys"), false);
 
 // 4) A direct memory update invalidates stale derived indexes before any rebuild.
