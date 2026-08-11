@@ -145,8 +145,10 @@ assert.equal(backup.data.aha_meta_insights_memory_v1.selfModel.confirmedClaims.s
 assert.equal(backup.data.aha_meta_insights_memory_v1.selfModel.outdatedClaims.some((claim) => claim.claimText === 'Jeg jobber bare i Oslo'), true);
 
 const nav = source('js/ahaGlobalNav.js');
+const modules = source('js/ahaModules.js');
+const productReachability = nav + modules + source('index.html') + source('profile.html');
 for (const destination of ['index.html', 'chat.html', 'search.html', 'personal-ai.html', 'profile.html', 'privacy.html', 'lists.html', 'paths.html', 'mindmap.html']) {
-  assert.match(nav + source('index.html') + source('profile.html'), new RegExp(destination.replace('.', '\\.')), `${destination} must remain reachable from product navigation/overview`);
+  assert.match(productReachability, new RegExp(destination.replace('.', '\\.')), `${destination} must remain reachable through canonical product navigation or module registry`);
 }
 assert.match(nav, /Start/);
 assert.match(nav, /Chat/);
@@ -154,6 +156,12 @@ assert.match(nav, /Bibliotek/);
 assert.match(nav, /Personal AI/);
 assert.match(nav, /Mitt AHA/);
 assert.match(nav, /Avanserte verktøy/);
+assert.match(nav, /moduleId: "lists"/);
+assert.match(nav, /moduleId: "paths"/);
+assert.match(nav, /moduleId: "mindmap"/);
+assert.match(modules, /id: "lists"[\s\S]*href: "lists\.html"/);
+assert.match(modules, /id: "paths"[\s\S]*href: "paths\.html"/);
+assert.match(modules, /id: "mindmap"[\s\S]*href: "mindmap\.html"/);
 
 const orgSource = source('js/ahaOrganizationFlow.js');
 const mindmapSource = source('js/ahaMindmap.js');
