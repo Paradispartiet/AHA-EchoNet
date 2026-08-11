@@ -1,5 +1,5 @@
 // ahaChatInsightFeedback.js
-// Chat-only feedback for what the canonical insight ingest changed, plus a read-only persisted surface.
+// Chat-only feedback for canonical insight changes and Personal AI answer transparency.
 
 (function (global) {
   "use strict";
@@ -7,6 +7,7 @@
   const STATUS_ID = "chat-status-note";
   const MAX_RUNS = 20;
   const feedbackByRun = new Map();
+  const personalAnswerTransparencyQueue = [];
 
   function text(value) {
     return String(value == null ? "" : value).trim();
@@ -243,8 +244,133 @@
     return true;
   }
 
+  function personalSourceLabel(source) {
+    const sourceType = text(source?.sourceType).toLowerCase();
+    const origin = text(source?.source).toLowerCase();
+    if (sourceType === "confirmed_claim") return "Bekreftet selvinnsikt";
+    if (sourceType === "important_claim") return "Viktig selvinnsikt";
+    if (sourceType === "corpus_item" || origin === "training_corpus") return "Godkjent kunnskapsgrunnlag";
+    if (sourceType === "training_example" || origin === "training_examples") return "Godkjent eksempel";
+    if (sourceType === "readiness_summary") return "Readiness-status";
+    return "Personlig kilde";
+  }
+
+  function safePersonalSource(source) {
+    const title = text(source?.title || source?.excerpt || personalSourceLabel(source)).replace(/\s+/g, " ").slice(0, 140);
+    return { label: personalSourceLabel(source), title: title || personalSourceLabel(source) };
+  }
+
+  function buildPersonalAnswerTransparency(evaluation) {
+    const used = Array.isArray(evaluation?.sourceUse?.usedSources) ? evaluation.sourceUse.usedSources : [];
+    const unused = Array.isArray(evaluation?.sourceUse?.unusedSources) ? evaluation.sourceUse.unusedSources : [];
+    const dims = evaluation && typeof evaluation.dimensions === "object" ? evaluation.dimensions : {};
+    return {
+      used: used.map(safePersonalSource).slice(0, 6),
+      unused: unused.map(safePersonalSource).slice(0, 6),
+      usedCount: used.length,
+      selectedCount: used.length + unused.length,
+      score: number(evaluation?.score),
+      status: text(evaluation?.status || "unknown"),
+      sourceGrounding: number(dims.sourceGrounding?.score),
+      personalRelevance: number(dims.personalRelevance?.score),
+      transparency: number(dims.transparency?.score)
+    };
+  }
+
+  function personalAnswerSummaryText(summary) {
+    if (!summary) return "";
+    if (summary.usedCount === 1) {
+      return "1 personlig kilde ble identifisert som tydelig brukt. Ikke alt i svaret kommer fra personlig materiale; resten er AHA sin formulering og vurdering.";
+    }
+    if (summary.usedCount > 1) {
+      return `${summary.usedCount} personlige kilder ble identifisert som tydelig brukt. Ikke alt i svaret kommer fra personlig materiale; resten er AHA sin formulering og vurdering.`;
+    }
+    if (summary.selectedCount > 0) {
+      return "Personlig materiale ble hentet frem, men ingen kilde ble identifisert som tydelig brukt i svaret. Les derfor svaret primært som AHA sin formulering og vurdering.";
+    }
+    return "Ingen personlige kilder ble identifisert som tydelig brukt i dette svaret. Personal AI har derfor ikke dokumentert kildebruk fra ditt lagrede materiale her.";
+  }
+
+  function personalSourceList(items, emptyText) {
+    const list = Array.isArray(items) ? items : [];
+    if (!list.length) return `<p>${esc(emptyText)}</p>`;
+    return `<ul>${list.map((item) => `<li><strong>${esc(item.label)}:</strong> ${esc(item.title)}</li>`).join("")}</ul>`;
+  }
+
+  function renderPersonalAnswerTransparency(node, summary) {
+    if (!node || !summary) return false;
+    node.classList?.add?.("aha-personal-answer-grounding");
+    if (node.dataset) node.dataset.personalGrounding = "true";
+    node.innerHTML = `
+      <strong>Personlig grunnlag</strong>
+      <span>${esc(personalAnswerSummaryText(summary))}</span>
+      <details>
+        <summary>Vis personlig grunnlag og svar-evaluering</summary>
+        <div><strong>Identifisert som brukt i svaret</strong>${personalSourceList(summary.used, "Ingen personlige kilder ble identifisert som tydelig brukt.")}</div>
+        ${summary.unused.length ? `<div><strong>Hentet frem, men lite synlig i svaret</strong>${personalSourceList(summary.unused, "")}</div>` : ""}
+        <div><strong>Teknisk svar-evaluering:</strong> ${summary.score}/100 · status ${esc(summary.status)} · kildegrunnlag ${summary.sourceGrounding} · personlig relevans ${summary.personalRelevance} · transparens ${summary.transparency}.</div>
+        <p>Dette er en heuristisk kontroll av teksten. Den kan vise synlig kildebruk, men kan ikke bevise nøyaktig hva svarmodellen brukte internt.</p>
+      </details>`;
+    return true;
+  }
+
+  function installPersonalAnswerEvaluationCapture() {
+    const chatLog = global.document?.getElementById?.("chat-log");
+    if (!chatLog) return false;
+
+    // Chat-only boundary: do not read the evaluation API unless the Chat log exists.
+    const api = global.AHAPersonalAnswerEvaluation;
+    if (!api || typeof api.evaluateAnswer !== "function") return false;
+    if (api.__ahaPersonalAnswerTransparencyCaptureInstalled === true) return true;
+
+    const original = api.evaluateAnswer;
+    api.evaluateAnswer = function evaluateWithPersonalTransparency(...args) {
+      const result = original.apply(this, args);
+      if (result && typeof result === "object") {
+        personalAnswerTransparencyQueue.push(buildPersonalAnswerTransparency(result));
+        while (personalAnswerTransparencyQueue.length > MAX_RUNS) personalAnswerTransparencyQueue.shift();
+      }
+      return result;
+    };
+    api.__ahaPersonalAnswerTransparencyCaptureInstalled = true;
+    return true;
+  }
+
+  function evaluationNodesFromAddedNode(node) {
+    if (!node || typeof node !== "object") return [];
+    const out = [];
+    if (typeof node.matches === "function" && node.matches(".aha-answer-evaluation")) out.push(node);
+    if (typeof node.querySelectorAll === "function") {
+      node.querySelectorAll(".aha-answer-evaluation").forEach((item) => out.push(item));
+    }
+    return out;
+  }
+
+  function installPersonalAnswerTransparencyObserver() {
+    const chatLog = global.document?.getElementById?.("chat-log");
+    if (!chatLog || typeof global.MutationObserver !== "function") return false;
+    if (global.__ahaPersonalAnswerTransparencyObserver) return true;
+
+    const observer = new global.MutationObserver((mutations) => {
+      (Array.isArray(mutations) ? mutations : []).forEach((mutation) => {
+        const addedNodes = mutation?.addedNodes ? Array.from(mutation.addedNodes) : [];
+        addedNodes.forEach((addedNode) => {
+          evaluationNodesFromAddedNode(addedNode).forEach((node) => {
+            if (node?.dataset?.personalGrounding === "true") return;
+            const summary = personalAnswerTransparencyQueue.shift();
+            if (summary) renderPersonalAnswerTransparency(node, summary);
+          });
+        });
+      });
+    });
+    observer.observe(chatLog, { childList: true, subtree: true });
+    global.__ahaPersonalAnswerTransparencyObserver = observer;
+    return true;
+  }
+
   function resetFeedbackForTests() {
     feedbackByRun.clear();
+    personalAnswerTransparencyQueue.length = 0;
   }
 
   global.AHAChatInsightFeedback = {
@@ -258,12 +384,20 @@
     formatPersistedInsightSummary,
     renderPersistedInsightChanges,
     installExplorerInsightChangesSurface,
+    personalSourceLabel,
+    buildPersonalAnswerTransparency,
+    personalAnswerSummaryText,
+    renderPersonalAnswerTransparency,
+    installPersonalAnswerEvaluationCapture,
+    installPersonalAnswerTransparencyObserver,
     resetFeedbackForTests
   };
 
   function init() {
     installInsightIngestFeedback();
     installExplorerInsightChangesSurface();
+    installPersonalAnswerEvaluationCapture();
+    installPersonalAnswerTransparencyObserver();
   }
 
   if (global.document?.readyState === "loading") {
