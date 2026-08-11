@@ -7,6 +7,7 @@
   const SOURCE_SCOPE = "current_conversation_or_analysis";
   const MAX_SIGNAL_ITEMS = 8;
   const MAX_STEP_ITEMS = 5;
+  const MAX_INSIGHT_CHANGE_ITEMS = 8;
   const DEFAULT_HEADLINE = "Samtaleinnsikt";
   const DEFAULT_DESCRIPTION = "AHA har laget et lokalt, read-only snapshot av strukturerte samtalesignaler.";
   const SIGNAL_FIELDS = ["concepts", "openQuestions", "perspectives", "tensions", "conversationLinks"];
@@ -210,11 +211,93 @@
     return out.slice(0, limit);
   }
 
+  function analysisRunIdFrom(input) {
+    const src = safeObject(input);
+    const activeRun = safeObject(src.activeRun);
+    return compactWhitespace(src.analysisRunId || src.runId || activeRun.analysisRunId || activeRun.runId);
+  }
+
+  function normalizeIngestAction(value) {
+    const action = compactWhitespace(value).toLowerCase();
+    if (action === "created" || action === "create") return "created";
+    if (action === "reinforced" || action === "reinforce") return "reinforced";
+    return "";
+  }
+
+  function safeInsightChange(insight, action) {
+    const title = clipSafeText(insight?.title || insight?.summary, 100);
+    const summary = clipSafeText(insight?.summary, 260);
+    if (!title && !summary) return null;
+    const evidenceCount = Number(insight?.strength?.evidence_count);
+    const totalScore = Number(insight?.strength?.total_score);
+    const item = {
+      action,
+      title: title || "Innsikt",
+      summary
+    };
+    if (Number.isFinite(evidenceCount) && evidenceCount > 0) item.evidenceCount = evidenceCount;
+    if (Number.isFinite(totalScore) && totalScore > 0) item.totalScore = totalScore;
+    return item;
+  }
+
+  function emptyInsightChanges() {
+    return {
+      created: [],
+      reinforced: [],
+      createdCount: 0,
+      reinforcedCount: 0,
+      totalTouched: 0
+    };
+  }
+
+  function buildInsightChanges(input) {
+    const src = safeObject(input);
+    const runId = analysisRunIdFrom(src);
+    if (!runId) return emptyInsightChanges();
+
+    const created = [];
+    const reinforced = [];
+    const seenInsightKeys = new Set();
+
+    safeArray(src.chamberInsights).forEach((insight, index) => {
+      if (!insight || typeof insight !== "object") return;
+      const matching = safeArray(insight.analysis_provenance).filter((entry) => {
+        const provenanceRunId = compactWhitespace(entry?.analysisRunId || entry?.analysis_run_id || entry?.runId);
+        return provenanceRunId && provenanceRunId === runId;
+      });
+      if (!matching.length) return;
+
+      const actions = new Set(matching.map((entry) => normalizeIngestAction(entry?.ingest_action || entry?.action)).filter(Boolean));
+      const action = actions.has("created") ? "created" : (actions.has("reinforced") ? "reinforced" : "");
+      if (!action) return;
+
+      const insightKey = compactWhitespace(insight.id) || `${clipSafeText(insight.title, 100)}|${index}`;
+      if (seenInsightKeys.has(insightKey)) return;
+      seenInsightKeys.add(insightKey);
+
+      const safeItem = safeInsightChange(insight, action);
+      if (!safeItem) return;
+      if (action === "created") created.push(safeItem);
+      else reinforced.push(safeItem);
+    });
+
+    const limitedCreated = created.slice(0, MAX_INSIGHT_CHANGE_ITEMS);
+    const limitedReinforced = reinforced.slice(0, MAX_INSIGHT_CHANGE_ITEMS);
+    return {
+      created: limitedCreated,
+      reinforced: limitedReinforced,
+      createdCount: created.length,
+      reinforcedCount: reinforced.length,
+      totalTouched: created.length + reinforced.length
+    };
+  }
+
   function buildSnapshotSafety() {
     return {
       rawUserTextIncluded: false,
       privateUrlsIncluded: false,
       userIdentifiersIncluded: false,
+      technicalProvenanceIncluded: false,
       ["approval" + "ActionAvailable"]: false,
       syncAvailable: false
     };
@@ -231,6 +314,7 @@
       sourceScope: SOURCE_SCOPE,
       summary: buildSnapshotSummary(normalized),
       signals,
+      insightChanges: buildInsightChanges(input),
       safety: buildSnapshotSafety(),
       quality: normalized.quality,
       nextUnderstandingSteps: buildNextUnderstandingSteps(normalized, signals)
@@ -243,6 +327,7 @@
     buildSnapshotSummary,
     buildSnapshotSignals,
     buildNextUnderstandingSteps,
+    buildInsightChanges,
     buildSnapshotSafety
   };
 })(window);
