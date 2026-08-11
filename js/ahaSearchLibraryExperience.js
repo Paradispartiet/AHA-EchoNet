@@ -99,6 +99,30 @@
     return labels[type] || type.replaceAll("_", " ") || "AHA-objekt";
   }
 
+  function humanizeSearchMetaText(value) {
+    const raw = text(value);
+    const parts = raw.split(" · ");
+    if (parts.length < 2) return raw;
+    const type = text(parts.shift());
+    const source = text(parts.join(" · "));
+    if (!type || !source) return raw;
+    return `${typeLabel({ type, source })} · ${sourceLabel({ type, source })}`;
+  }
+
+  function enhanceSearchResultLabels() {
+    const nodes = doc?.querySelectorAll?.("#search-results .aha-search-card-head .aha-search-meta");
+    if (!nodes) return 0;
+    let changed = 0;
+    Array.from(nodes).forEach((node) => {
+      const before = text(node?.textContent);
+      const after = humanizeSearchMetaText(before);
+      if (!before || before === after) return;
+      node.textContent = after;
+      changed += 1;
+    });
+    return changed;
+  }
+
   function buildLibraryModel(itemsArg) {
     const items = arr(itemsArg)
       .filter((item) => item && item.local_only === true && item.read_only === true)
@@ -169,12 +193,18 @@
     if (panel) panel.hidden = !hasActiveSearch();
   }
 
+  function handleSearchUiChange() {
+    updateSearchResultsVisibility();
+    enhanceSearchResultLabels();
+  }
+
   function render() {
     const items = global.AHASearch?.collectSearchItems?.() || [];
     const model = buildLibraryModel(items);
     renderGroups(model);
     renderRecent(model);
     updateSearchResultsVisibility();
+    enhanceSearchResultLabels();
     const status = doc?.getElementById?.("search-library-status");
     if (status) status.textContent = `${model.total} lokale objekter er tilgjengelige i biblioteket. Biblioteket er en read-only visning av den samme indeksen som Søk bruker.`;
     return model;
@@ -190,14 +220,25 @@
       render();
     });
     doc?.getElementById?.("search-refresh")?.addEventListener?.("click", () => render());
-    doc?.getElementById?.("search-query")?.addEventListener?.("input", updateSearchResultsVisibility);
-    doc?.getElementById?.("search-source-filter")?.addEventListener?.("change", updateSearchResultsVisibility);
-    doc?.getElementById?.("search-type-filter")?.addEventListener?.("change", updateSearchResultsVisibility);
+    doc?.getElementById?.("search-query")?.addEventListener?.("input", handleSearchUiChange);
+    doc?.getElementById?.("search-source-filter")?.addEventListener?.("change", handleSearchUiChange);
+    doc?.getElementById?.("search-type-filter")?.addEventListener?.("change", handleSearchUiChange);
   }
 
   function init() { bind(); render(); }
 
-  const api = { GROUPS, libraryGroupFor, sourceLabel, typeLabel, buildLibraryModel, hasActiveSearch, updateSearchResultsVisibility, render };
+  const api = {
+    GROUPS,
+    libraryGroupFor,
+    sourceLabel,
+    typeLabel,
+    humanizeSearchMetaText,
+    enhanceSearchResultLabels,
+    buildLibraryModel,
+    hasActiveSearch,
+    updateSearchResultsVisibility,
+    render
+  };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   global.AHASearchLibraryExperience = api;
   if (doc) doc.readyState === "loading" ? doc.addEventListener("DOMContentLoaded", init) : init();
