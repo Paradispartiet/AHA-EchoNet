@@ -1,5 +1,5 @@
 // ahaChatInsightFeedback.js
-// Chat-only, ephemeral feedback for what the canonical insight ingest just changed.
+// Chat-only feedback for what the canonical insight ingest changed, plus a read-only persisted surface.
 
 (function (global) {
   "use strict";
@@ -15,6 +15,15 @@
   function number(value) {
     const parsed = Number(value);
     return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+  }
+
+  function esc(value) {
+    return String(value == null ? "" : value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
   }
 
   function normalizeAction(value) {
@@ -137,6 +146,103 @@
     return true;
   }
 
+  function emptyPersistedChanges() {
+    return { created: [], reinforced: [], createdCount: 0, reinforcedCount: 0, totalTouched: 0 };
+  }
+
+  function bundleRunId(bundle) {
+    const activeRun = bundle && typeof bundle.activeRun === "object" ? bundle.activeRun : {};
+    return text(bundle?.analysisRunId || bundle?.runId || activeRun.analysisRunId || activeRun.runId);
+  }
+
+  function buildPersistedInsightChanges(bundle) {
+    const builder = global.AHAConversationInsightSnapshot?.buildConversationInsightSnapshot;
+    if (typeof builder !== "function" || !bundle || typeof bundle !== "object") return emptyPersistedChanges();
+    const snapshot = builder({
+      analysisRunId: bundleRunId(bundle),
+      activeRun: bundle.activeRun,
+      chamberInsights: Array.isArray(bundle.chamberInsights) ? bundle.chamberInsights : []
+    });
+    return snapshot?.insightChanges || emptyPersistedChanges();
+  }
+
+  function formatPersistedInsightSummary(changes) {
+    if (!changes || !number(changes.totalTouched)) return "";
+    const parts = [];
+    if (number(changes.createdCount)) parts.push(changes.createdCount === 1 ? "1 ny" : `${changes.createdCount} nye`);
+    if (number(changes.reinforcedCount)) parts.push(`${changes.reinforcedCount} forsterket`);
+    return parts.length ? `Denne analysen · ${parts.join(" · ")}` : "";
+  }
+
+  function removePersistedSurface(host) {
+    host?.querySelectorAll?.("[data-conversation-insight-changes]")?.forEach?.((node) => node.remove?.());
+  }
+
+  function insightChangeCards(items, label) {
+    const list = Array.isArray(items) ? items : [];
+    if (!list.length) return "";
+    return `
+      <div class="exp-conversation-insight-change-group">
+        <p class="exp-kicker">${esc(label)}</p>
+        ${list.map((item) => {
+          const meta = [];
+          if (number(item?.evidenceCount)) meta.push(`${item.evidenceCount} belegg`);
+          if (number(item?.totalScore)) meta.push(`styrke ${item.totalScore}`);
+          return `<article class="exp-card exp-insight-card">
+            <h3>${esc(item?.title || "Innsikt")}</h3>
+            ${text(item?.summary) ? `<p>${esc(item.summary)}</p>` : ""}
+            ${meta.length ? `<div class="exp-chips">${meta.map((value) => `<span class="exp-chip exp-chip-meta">${esc(value)}</span>`).join("")}</div>` : ""}
+          </article>`;
+        }).join("")}
+      </div>`;
+  }
+
+  function renderPersistedInsightChanges(bundle) {
+    const changes = buildPersistedInsightChanges(bundle);
+    const nowHost = global.document?.getElementById?.("aha-now-content");
+    const insightHost = global.document?.getElementById?.("exp-innsikter");
+    removePersistedSurface(nowHost);
+    removePersistedSurface(insightHost);
+
+    const summary = formatPersistedInsightSummary(changes);
+    if (!summary) return changes;
+
+    const previewHost = nowHost?.querySelector?.(".aha-snapshot-preview") || nowHost;
+    previewHost?.insertAdjacentHTML?.("beforeend", `
+      <section class="aha-snapshot-group" data-conversation-insight-changes="true">
+        <h3>Innsikter fra denne analysen</h3>
+        <p>${esc(summary)}</p>
+      </section>`);
+
+    const detailed = `
+      <section data-conversation-insight-changes="true" aria-label="Innsiktsendringer fra denne analysen">
+        <p class="exp-kicker">${esc(summary)}</p>
+        ${insightChangeCards(changes.created, "Nye innsikter fra denne analysen")}
+        ${insightChangeCards(changes.reinforced, "Forsterket i denne analysen")}
+      </section>`;
+    insightHost?.insertAdjacentHTML?.("afterbegin", detailed);
+    return changes;
+  }
+
+  function installExplorerInsightChangesSurface() {
+    const explorerNode = global.document?.getElementById?.("aha-explorer");
+    if (!explorerNode) return false;
+
+    // Chat-only presentation adapter: do not even read AHAExplorer outside the Chat surface.
+    const explorer = global.AHAExplorer;
+    if (!explorer || typeof explorer.render !== "function") return false;
+    if (explorer.__ahaConversationInsightChangesInstalled === true) return true;
+
+    const originalRender = explorer.render;
+    explorer.render = function renderWithPersistedInsightChanges(bundle) {
+      const result = originalRender.call(this, bundle);
+      renderPersistedInsightChanges(bundle);
+      return result;
+    };
+    explorer.__ahaConversationInsightChangesInstalled = true;
+    return true;
+  }
+
   function resetFeedbackForTests() {
     feedbackByRun.clear();
   }
@@ -148,11 +254,16 @@
     renderInsightFeedback,
     scheduleInsightFeedback,
     installInsightIngestFeedback,
+    buildPersistedInsightChanges,
+    formatPersistedInsightSummary,
+    renderPersistedInsightChanges,
+    installExplorerInsightChangesSurface,
     resetFeedbackForTests
   };
 
   function init() {
     installInsightIngestFeedback();
+    installExplorerInsightChangesSurface();
   }
 
   if (global.document?.readyState === "loading") {
