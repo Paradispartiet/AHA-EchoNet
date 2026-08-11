@@ -138,7 +138,7 @@
     if (!num(c.intakeTotal)) out.push("Start med kilder eller eget materiale; alt kommer først inn som kandidater.");
     if (num(c.intakeReview)) out.push("Vurder nye intake-kandidater før du bygger videre på dem.");
     if (num(c.curationReview)) out.push("Godkjenn kurateringen manuelt før materialet behandles som kuratert kunnskap.");
-    if (num(c.mapNodes) && num(c.graphInsights)) out.push("Se gjennom grafinnsikter som forslag; de skal ikke bli sannhet automatisk.");
+    if (num(c.graphInsights)) out.push("Se gjennom grafinnsikter som forslag; de skal ikke bli sannhet automatisk.");
     if (num(c.trainingReady)) out.push("Flytt bare godkjent materiale videre til Training når du vil at Personal AI skal kunne bruke det.");
     if (!out.length) out.push("Kunnskapsløypa har ingen tydelig manuell restanse akkurat nå; følg neste handling over.");
     return out.slice(0, 4);
@@ -310,12 +310,7 @@
     });
   }
 
-  function init() {
-    bind();
-    render();
-    renderResult(null);
-    renderWorkflowAudit(global.AHAKnowledgeWorkflowAudit?.loadLastAudit?.() || null);
-  }
+  function init(){bind();render();renderResult(null);renderWorkflowAudit(global.AHAKnowledgeWorkflowAudit?.loadLastAudit?.() || null);}
 
   const dashboard = {
     init,
