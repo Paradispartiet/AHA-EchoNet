@@ -161,7 +161,15 @@ assert.ok(evaluation.score > 0);
 assert.ok(evaluation.sourceUse.usedSources.length > 0, 'evaluation should identify at least one selected source as visibly used');
 assert.ok(evaluation.dimensions.sourceGrounding.score > 0);
 assert.ok(evaluation.dimensions.personalRelevance.score > 0);
-assert.equal(evaluation.evidence.answerPackage.local_only, true);
+assert.equal(evaluation.local_only, true);
+assert.equal(evaluation.evaluation_only, true);
+assert.equal(evaluation.calls_model_api, false);
+assert.equal(evaluation.backend_enabled, false);
+assert.equal(evaluation.writes_to_insight_chamber, false);
+assert.ok(Array.isArray(evaluation.evidence.selectedSources));
+assert.equal(evaluation.evidence.answerIntent, answerPackage.context.answerIntent);
+assert.equal(Object.prototype.hasOwnProperty.call(evaluation.evidence, 'answerPackage'), false,
+  'saved evaluation evidence should not duplicate the whole answer package');
 
 // 7. The real self-knowledge display model must reflect safe memory buckets, not rejected content or private feedback internals.
 const selfKnowledge = context.AHAPersonalAiSelfKnowledge.buildSelfKnowledgeModel();
