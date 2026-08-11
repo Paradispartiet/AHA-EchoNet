@@ -1,23 +1,24 @@
 /* aha-global-nav.css
-   Selvstendig, nøytral navigasjonstopp som lastes på alle AHA-sider.
-   Bruker egne variabler (ikke avhengig av aha-dashboard.css eller aha-chat.css)
-   slik at den ser identisk ut uansett hvilke andre stilark siden laster.
+   Felles AHA-produktnavigasjon. Hovednivået er bevisst lite; tekniske verktøy
+   ligger under Mer. Stilarket er selvstendig slik at nav ser lik ut overalt.
 */
 
 :root {
-  --gnav-bg: rgba(9, 11, 17, .94);
-  --gnav-surface: #12141d;
+  --gnav-bg: rgba(7, 8, 13, .96);
+  --gnav-surface: #11131b;
+  --gnav-card: rgba(255, 255, 255, .045);
   --gnav-line: rgba(255, 255, 255, .12);
-  --gnav-text: #f3f3ee;
-  --gnav-muted: rgba(243, 243, 238, .68);
+  --gnav-text: #f7f3df;
+  --gnav-muted: rgba(247, 243, 223, .65);
   --gnav-accent: #f6c800;
-  --gnav-accent-soft: rgba(246, 200, 0, .16);
+  --gnav-accent-soft: rgba(246, 200, 0, .14);
 }
 
 .aha-global-nav {
   position: sticky;
   top: 0;
   z-index: 40;
+  width: 100%;
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   color: var(--gnav-text);
 }
@@ -26,20 +27,20 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  min-height: 48px;
+  min-height: 54px;
   padding: 6px 14px;
   background: var(--gnav-bg);
   border-bottom: 1px solid var(--gnav-line);
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(12px);
 }
 
 .aha-global-nav-brand {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 8px;
   color: inherit;
   text-decoration: none;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: .02em;
   flex: 0 0 auto;
 }
@@ -47,59 +48,66 @@
 .aha-global-nav-brand-mark {
   display: grid;
   place-items: center;
-  width: 26px;
-  height: 26px;
+  width: 30px;
+  height: 30px;
   border-radius: 999px;
   background: var(--gnav-accent);
   color: #14110a;
-  font-size: .8rem;
-  font-weight: 900;
+  font-size: .82rem;
+  font-weight: 950;
+}
+
+.aha-global-nav-primary {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.aha-global-nav-primary-link,
+.aha-global-nav-toggle {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  color: var(--gnav-muted);
+  font-size: .84rem;
+  font-weight: 720;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.aha-global-nav-primary-link { padding: 8px 12px; }
+
+.aha-global-nav-primary-link:hover,
+.aha-global-nav-primary-link.is-active {
+  color: var(--gnav-text);
+  background: rgba(255, 255, 255, .065);
+}
+
+.aha-global-nav-primary-link.is-active {
+  box-shadow: inset 0 0 0 1px rgba(246, 200, 0, .28);
+  background: var(--gnav-accent-soft);
 }
 
 .aha-global-nav-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border: 1px solid var(--gnav-line);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, .04);
-  color: var(--gnav-text);
-  font-size: .85rem;
-  font-weight: 600;
-  padding: 7px 14px;
-  cursor: pointer;
+  gap: 7px;
   flex: 0 0 auto;
+  border: 1px solid var(--gnav-line);
+  background: rgba(255, 255, 255, .04);
+  padding: 7px 12px;
+  cursor: pointer;
 }
 
 .aha-global-nav-toggle:hover,
 .aha-global-nav-toggle[aria-expanded="true"] {
+  color: var(--gnav-text);
   background: rgba(255, 255, 255, .09);
 }
 
-.aha-global-nav-toggle-icon { font-size: 1rem; line-height: 1; }
-
-.aha-global-nav-current {
-  flex: 1 1 auto;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: .85rem;
-  color: var(--gnav-muted);
-  text-align: center;
-}
-
-.aha-global-nav-home {
-  flex: 0 0 auto;
-  color: var(--gnav-muted);
-  text-decoration: none;
-  font-size: .85rem;
-  font-weight: 600;
-  padding: 7px 10px;
-  border-radius: 999px;
-}
-
-.aha-global-nav-home:hover { color: var(--gnav-text); background: rgba(255, 255, 255, .06); }
+.aha-global-nav-toggle-icon { font-size: .86rem; line-height: 1; }
 
 .aha-global-nav-overlay {
   position: fixed;
@@ -114,126 +122,181 @@
 .aha-global-nav-backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(5, 6, 10, .68);
+  background: rgba(5, 6, 10, .72);
+  backdrop-filter: blur(2px);
 }
 
 .aha-global-nav-panel {
   position: relative;
-  width: min(560px, 100%);
+  width: min(620px, 100%);
   height: 100%;
   overflow-y: auto;
   background: var(--gnav-surface);
   border-left: 1px solid var(--gnav-line);
-  box-shadow: -24px 0 60px rgba(0, 0, 0, .4);
-  padding: 18px 18px 32px;
+  box-shadow: -24px 0 60px rgba(0, 0, 0, .44);
+  padding: 22px 20px 34px;
 }
 
 .aha-global-nav-panel-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 12px;
+  gap: 16px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--gnav-line);
+  margin-bottom: 20px;
 }
 
-.aha-global-nav-panel-header h2 {
-  margin: 0;
-  font-size: 1.05rem;
-}
+.aha-global-nav-panel-header h2 { margin: 2px 0 5px; font-size: 1.35rem; }
+.aha-global-nav-panel-header p { margin: 0; color: var(--gnav-muted); line-height: 1.45; }
+.aha-global-nav-kicker { font-size: .72rem; text-transform: uppercase; letter-spacing: .12em; font-weight: 850; }
 
 .aha-global-nav-close {
   border: 1px solid var(--gnav-line);
   border-radius: 999px;
   background: rgba(255, 255, 255, .04);
   color: var(--gnav-text);
-  width: 32px;
-  height: 32px;
-  font-size: 1rem;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  font-size: 1.15rem;
   line-height: 1;
   cursor: pointer;
+  flex: 0 0 auto;
 }
 
 .aha-global-nav-close:hover { background: rgba(255, 255, 255, .1); }
 
 .aha-global-nav-groups {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
 }
 
-.aha-global-nav-group h3 {
-  margin: 0 0 8px;
-  font-size: .78rem;
-  text-transform: uppercase;
-  letter-spacing: .08em;
-  color: var(--gnav-muted);
+.aha-global-nav-group {
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--gnav-line);
+  border-radius: 16px;
+  background: var(--gnav-card);
 }
+
+.aha-global-nav-group-head { margin-bottom: 9px; }
+.aha-global-nav-group h3 { margin: 0 0 4px; font-size: .94rem; }
+.aha-global-nav-group-head p { margin: 0; color: var(--gnav-muted); font-size: .76rem; line-height: 1.35; }
 
 .aha-global-nav-group-items {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
 }
 
 .aha-global-nav-item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 9px 10px;
-  border-radius: 12px;
+  gap: 9px;
+  min-width: 0;
+  padding: 8px 8px;
+  border-radius: 11px;
   color: inherit;
   text-decoration: none;
   border: 1px solid transparent;
 }
 
-.aha-global-nav-item:hover { background: rgba(255, 255, 255, .06); }
-
-.aha-global-nav-item.is-active {
-  background: var(--gnav-accent-soft);
-  border-color: rgba(246, 200, 0, .3);
-}
+.aha-global-nav-item:hover { background: rgba(255, 255, 255, .065); }
+.aha-global-nav-item.is-active { background: var(--gnav-accent-soft); border-color: rgba(246, 200, 0, .3); }
 
 .aha-global-nav-item-icon {
   flex: 0 0 auto;
-  width: 26px;
+  width: 24px;
   text-align: center;
-  font-size: 1rem;
+  font-size: .95rem;
   opacity: .85;
 }
 
 .aha-global-nav-item-copy {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
   min-width: 0;
+  flex: 1 1 auto;
 }
 
-.aha-global-nav-item-copy strong { font-size: .92rem; }
-
+.aha-global-nav-item-copy strong { font-size: .86rem; }
 .aha-global-nav-item-copy small {
   color: var(--gnav-muted);
-  font-size: .76rem;
-  line-height: 1.3;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  font-size: .72rem;
+  line-height: 1.25;
   overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .aha-global-nav-item-tag {
   flex: 0 0 auto;
-  font-size: .68rem;
+  font-size: .61rem;
   text-transform: uppercase;
   letter-spacing: .04em;
   color: var(--gnav-muted);
   border: 1px solid var(--gnav-line);
   border-radius: 999px;
-  padding: 2px 8px;
+  padding: 2px 6px;
 }
 
-body.aha-global-nav-open { overflow: hidden; }
+.aha-global-nav-advanced {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--gnav-line);
+  border-radius: 14px;
+  background: rgba(0, 0, 0, .13);
+}
 
-@media (max-width: 640px) {
-  .aha-global-nav-current { display: none; }
-  .aha-global-nav-panel { width: 100%; }
+.aha-global-nav-advanced summary { cursor: pointer; font-size: .84rem; font-weight: 760; }
+.aha-global-nav-advanced > p { color: var(--gnav-muted); font-size: .75rem; line-height: 1.4; }
+.aha-global-nav-advanced .aha-global-nav-group-items { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.aha-global-nav-tools-link { display: inline-flex; margin-top: 10px; color: var(--gnav-text); font-size: .78rem; font-weight: 750; }
+
+body.aha-global-nav-open { overflow: hidden; }
+.aha-redundant-home-link { display: none !important; }
+
+/* Home: én merkevare, én produktnav og færre konkurrerende oversikter. */
+body.aha-route-index .aha-home-header-simplified .aha-app-header { grid-template-columns: 1fr auto; gap: 10px; padding: 0 14px 10px; }
+body.aha-route-index .aha-home-header-simplified .aha-brand { display: none; }
+body.aha-route-index .aha-home-header-simplified #aha-global-nav { grid-column: 1 / -1; grid-row: 1; margin: 0 -14px; }
+body.aha-route-index .aha-home-header-simplified .aha-header-profile { grid-column: 1; grid-row: 2; min-width: 0; }
+body.aha-route-index .aha-home-header-simplified .aha-header-actions { grid-column: 2; grid-row: 2; }
+body.aha-route-index .aha-home-header-simplified .aha-profile-avatar { width: 38px; height: 38px; font-size: .95rem; }
+body.aha-route-index .aha-home-header-simplified .aha-profile-copy p,
+body.aha-route-index .aha-home-header-simplified .aha-profile-id-row,
+body.aha-route-index .aha-home-header-simplified #btn-import-hg-primary { display: none; }
+body.aha-route-index .aha-home-panel > .eyebrow,
+body.aha-route-index .aha-home-panel > #aha-home-title,
+body.aha-route-index .aha-home-panel > .aha-home-subtitle { display: none; }
+body.aha-route-index .aha-modules-panel[hidden] { display: none !important; }
+
+/* Chat har allerede global produktnav; den lokale headeren skal bare forklare Chat. */
+body.aha-route-chat .aha-chat-header-simplified .back-link,
+body.aha-route-chat .aha-chat-header-simplified .chat-brand,
+body.aha-route-chat .aha-chat-header-simplified .profile-indicator { display: none !important; }
+body.aha-route-chat .aha-chat-header-simplified { grid-template-columns: minmax(0, 1fr) auto auto; }
+
+@media (max-width: 760px) {
+  .aha-global-nav-bar { gap: 5px; padding-inline: 8px; }
+  .aha-global-nav-brand-label { display: none; }
+  .aha-global-nav-primary { gap: 0; }
+  .aha-global-nav-primary-link { padding-inline: 9px; font-size: .78rem; }
+  .aha-global-nav-groups { grid-template-columns: 1fr; }
+  .aha-global-nav-panel { width: 100%; padding-inline: 14px; }
+  .aha-global-nav-advanced .aha-global-nav-group-items { grid-template-columns: 1fr; }
+  body.aha-route-index .aha-home-header-simplified .aha-header-actions .aha-cta-primary { display: none; }
+}
+
+@media (max-width: 520px) {
+  .aha-global-nav-primary-link[data-primary="home"],
+  .aha-global-nav-primary-link[data-primary="personal-ai"] { display: none; }
+  .aha-global-nav-primary-link { padding-inline: 8px; }
+  .aha-global-nav-toggle { padding-inline: 10px; }
+  body.aha-route-index .aha-home-header-simplified .aha-app-header { grid-template-columns: 1fr auto; }
+  body.aha-route-index .aha-home-header-simplified .aha-profile-copy p,
+  body.aha-route-index .aha-home-header-simplified .aha-profile-id-row { display: none !important; }
 }

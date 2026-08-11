@@ -2,7 +2,7 @@
 <html lang="no">
 <head>
   <meta charset="UTF-8" />
-  <title>AHA Moduler</title>
+  <title>AHA verktøy og moduler</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="css/aha-chat.css" />
   <link rel="stylesheet" href="css/aha-dashboard.css" />
@@ -14,13 +14,12 @@
 
   <main id="aha-modules-page-main" class="aha-dashboard aha-modules-page" tabindex="-1">
     <header class="aha-modules-page-header">
-      <p class="eyebrow">AHA Bibliotek</p>
-      <h1>Moduler</h1>
-      <p>Alle AHA-verktøy samlet ett sted</p>
-      <a class="aha-tile-btn aha-tile-btn-secondary" href="index.html">Tilbake til AHA Home</a>
+      <p class="eyebrow">Avansert</p>
+      <h1>AHA-verktøy og moduler</h1>
+      <p>Komplett verktøykatalog for kontroll, review og teknisk arbeid. Den vanlige AHA-løypen ligger i hovednavigasjonen over.</p>
     </header>
 
-    <div id="aha-modules-page-grid" class="aha-modules-page-grid" aria-live="polite">Moduler lastes …</div>
+    <div id="aha-modules-page-grid" class="aha-modules-page-grid" aria-live="polite">Verktøy lastes …</div>
   </main>
 
   <script src="js/ahaModules.js"></script>
@@ -30,12 +29,11 @@
       "use strict";
 
       const groups = [
-        { id: "core", label: "Kjerne", moduleIds: ["chat", "insights", "search"] },
-        { id: "engine", label: "Kunnskapsmotor", moduleIds: ["data-intake", "knowledge-curation", "knowledge-map", "knowledge-graph-intelligence", "training", "personal-ai"] },
-        { id: "collections", label: "Egne samlinger", moduleIds: ["lists", "paths", "mindmap"] },
-        { id: "personal", label: "Personlig", moduleIds: ["profile", "gallery", "notes", "insta", "music", "historygo"] },
-        { id: "social", label: "Sosialt og publisering", moduleIds: ["feed", "meet", "groups", "avisa"] },
-        { id: "system", label: "System", moduleIds: ["sync-hub", "privacy"] }
+        { id: "product", label: "Brukerflater", moduleIds: ["chat", "insights", "search", "personal-ai", "profile"] },
+        { id: "work", label: "Kunnskapsarbeid", moduleIds: ["knowledge-workbench", "data-intake", "knowledge-curation", "knowledge-map", "knowledge-graph-intelligence", "training", "sources"] },
+        { id: "organize", label: "Organisering", moduleIds: ["lists", "paths", "mindmap"] },
+        { id: "personal", label: "Skriv og samle", moduleIds: ["notes", "gallery", "insta", "music", "feed", "avisa"] },
+        { id: "system", label: "Koblinger og system", moduleIds: ["historygo", "privacy", "groups", "meet", "sync-hub"] }
       ];
 
       function escapeHtml(value) {
@@ -86,11 +84,8 @@
         }).join("");
       }
 
-      if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", renderModulesPage);
-      } else {
-        renderModulesPage();
-      }
+      if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", renderModulesPage);
+      else renderModulesPage();
     })();
   </script>
 </body>
