@@ -1,5 +1,5 @@
 // AHA Personal AI Memory Control – brukerens lokale kontroll over eksisterende Meta Insights Memory.
-// Ingen ny store: handlingene skriver kun ny feedback til AHAMetaInsightsMemory og bygger avledede retrieval-indekser på nytt.
+// Ingen ny store: handlingene skriver kun til AHAMetaInsightsMemory og bygger avledede retrieval-indekser på nytt.
 (function (global) {
   "use strict";
 
@@ -36,6 +36,7 @@
     let selfKnowledge = null;
     try { selfKnowledge = global.AHAPersonalAiSelfKnowledge?.refresh?.() || null; } catch {}
     try { global.AHAPersonalAiDashboard?.refresh?.(); } catch {}
+    try { global.AHAPersonalAiMemoryReview?.refresh?.(); } catch {}
     return selfKnowledge;
   }
 
@@ -78,7 +79,49 @@
     };
   }
 
+  function replaceClaim(input = {}) {
+    const api = global.AHAMetaInsightsMemory;
+    if (!api || typeof api.replaceClaim !== "function") return { ok: false, error: "memory_replace_unavailable" };
+    const claimText = asText(input.claimText);
+    const replacement = asText(input.replacement);
+    const note = asText(input.note);
+    if (!claimText) return { ok: false, error: "missing_claim_text" };
+    if (!replacement) return { ok: false, error: "missing_replacement" };
+    const saved = api.replaceClaim(claimText, replacement, { note });
+    if (!saved?.ok) return saved || { ok: false, error: "replace_failed" };
+    const refreshed = refreshDerivedIndexes();
+    const model = refreshSurfaces();
+    return {
+      ok: true,
+      claimText,
+      replacement,
+      response: saved.response,
+      message: "Formuleringen er erstattet. Den gamle holdes som utdatert historikk.",
+      refreshed,
+      model
+    };
+  }
+
   function handleClick(event) {
+    const replaceButton = event.target?.closest?.("[data-personal-ai-memory-replace]");
+    if (replaceButton) {
+      const item = replaceButton.closest?.("[data-personal-ai-memory-claim]");
+      if (!item) return;
+      const claimText = asText(item.getAttribute("data-personal-ai-memory-claim"));
+      const replacement = asText(item.querySelector?.("[data-personal-ai-memory-replacement]")?.value);
+      const note = asText(item.querySelector?.("[data-personal-ai-memory-note]")?.value);
+      const status = item.querySelector?.("[data-personal-ai-memory-item-status]");
+      const result = replaceClaim({ claimText, replacement, note });
+      if (status) status.textContent = result.ok
+        ? result.message
+        : result.error === "unchanged_claim_text"
+          ? "Den nye formuleringen er lik den gamle."
+          : result.error === "missing_replacement"
+            ? "Skriv den nye formuleringen først."
+            : "Kunne ikke erstatte denne selvinnsikten.";
+      return;
+    }
+
     const button = event.target?.closest?.("[data-personal-ai-memory-response]");
     if (!button) return;
     const item = button.closest?.("[data-personal-ai-memory-claim]");
@@ -107,6 +150,7 @@
     USER_RESPONSES: [...USER_RESPONSES],
     RESPONSE_LABELS,
     applyFeedback,
+    replaceClaim,
     refreshDerivedIndexes,
     bind
   };
