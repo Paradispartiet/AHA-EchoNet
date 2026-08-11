@@ -64,7 +64,7 @@
 
   <details id="workbench-advanced" class="aha-panel">
     <summary>Avansert kontroll og pipeline</summary>
-    <p class="module-meta">Knowledge Workbench er en lokal kontrollflate. Pipelineverktøyene under godkjenner ikke materiale automatisk, starter ikke trening eller fine-tuning, synkroniserer ikke og skriver ikke til History Go. «Kjør trygg pipeline» leser status; den gjør ingen approval, map refresh, graph analysis, consent, training eller import automatisk.</p>
+    <p class="module-meta">Knowledge Workbench er en lokal kontrollflate. Det er ikke automatisk trening: pipelineverktøyene under godkjenner ikke materiale automatisk, starter ikke trening eller fine-tuning, synkroniserer ikke og skriver ikke til History Go. «Kjør trygg pipeline» leser status; den gjør ingen approval, map refresh, graph analysis, consent, training eller import automatisk.</p>
 
     <div class="aha-module-actions">
       <button data-workbench-action="scan_sources" type="button">Skann kilder</button>
@@ -76,9 +76,14 @@
       <button data-workbench-action="workflow_audit" type="button">Kjør workflow audit</button>
       <button data-workbench-action="workflow_simulation" type="button">Kjør trygg workflow-simulering</button>
     </div>
+    <div class="aha-module-actions">
+      <a class="aha-tile-btn" href="personal-ai.html">Åpne Personal AI</a>
+      <a class="aha-tile-btn" href="chat.html">Åpne Chat</a>
+    </div>
 
     <section id="workbench-daily-loop-panel">
       <h2>Dagens AHA-løype</h2>
+      <p class="module-meta">Dette er neste steg i daglig løype.</p>
       <div id="workbench-daily-loop"></div>
     </section>
 
