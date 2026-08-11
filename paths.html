@@ -13,66 +13,28 @@
   <div id="aha-global-nav"></div>
   <main class="aha-dashboard" style="max-width: 900px;">
     <section class="aha-panel aha-module-shell" aria-labelledby="paths-module-title">
-      <header class="aha-module-shell-header">
-        <div>
-          <p class="eyebrow">AHA module</p>
-          <h1 id="paths-module-title">Paths</h1>
-          <p class="aha-module-purpose">Lokale sekvenser av eksisterende AHA-objekter. Paths organiserer rekkefølge, men skaper ikke ny innsikt eller automasjon alene.</p>
-        </div>
-        <span id="aha-module-health" class="aha-module-health-badge aha-module-health-unknown" role="status" aria-label="Paths: Unknown">
-          <span>Unknown</span>
-        </span>
-      </header>
-      <div class="aha-module-actions" aria-label="Paths actions">
-        <a class="aha-tile-btn aha-tile-btn-primary" href="#paths-create">Lag sti</a>
-        <button id="paths-refresh" class="aha-tile-btn" type="button">Oppdater</button>
-        <a class="aha-tile-btn" href="index.html">Tilbake til AHA Home</a>
-      </div>
+      <header class="aha-module-shell-header"><div><p class="eyebrow">AHA module</p><h1 id="paths-module-title">Paths</h1><p class="aha-module-purpose">Lokale sekvenser av eksisterende AHA-objekter. Paths organiserer rekkefølge, men skaper ikke ny innsikt eller automasjon alene.</p></div><span id="aha-module-health" class="aha-module-health-badge aha-module-health-unknown" role="status" aria-label="Paths: Unknown"><span>Unknown</span></span></header>
+      <div class="aha-module-actions" aria-label="Paths actions"><a class="aha-tile-btn aha-tile-btn-primary" href="#paths-create">Lag sti</a><button id="paths-refresh" class="aha-tile-btn" type="button">Oppdater</button><a class="aha-tile-btn" href="index.html">Tilbake til AHA Home</a></div>
     </section>
-
     <section id="paths-create" class="aha-panel">
       <h2>Lag sti</h2>
       <form id="path-create-form" class="aha-path-form">
-        <label for="path-title">Tittel</label>
-        <input id="path-title" required type="text" placeholder="F.eks. lokal lese- eller arbeidssti" />
-
-        <label for="path-type">Type</label>
-        <select id="path-type">
-          <option value="learning">learning</option>
-          <option value="process">process</option>
-          <option value="project">project</option>
-          <option value="habit">habit</option>
-          <option value="reading">reading</option>
-          <option value="historygo">historygo</option>
-          <option value="publishing">publishing</option>
-        </select>
-
-        <label for="path-description">Beskrivelse</label>
-        <textarea id="path-description" rows="3" placeholder="Kort forklaring av stien"></textarea>
-
-        <label for="path-tags">Tags (komma-separert)</label>
-        <input id="path-tags" type="text" placeholder="læring, fokus, skriv" />
-
+        <label for="path-title">Tittel</label><input id="path-title" required type="text" placeholder="F.eks. lokal lese- eller arbeidssti" />
+        <label for="path-type">Type</label><select id="path-type"><option value="learning">learning</option><option value="process">process</option><option value="project">project</option><option value="habit">habit</option><option value="reading">reading</option><option value="historygo">historygo</option><option value="publishing">publishing</option></select>
+        <label for="path-description">Beskrivelse</label><textarea id="path-description" rows="3" placeholder="Kort forklaring av stien"></textarea>
+        <label for="path-tags">Tags (komma-separert)</label><input id="path-tags" type="text" placeholder="læring, fokus, skriv" />
         <button type="submit" class="aha-tile-btn aha-tile-btn-primary">Lag sti</button>
       </form>
     </section>
-
-    <section class="aha-panel">
-      <h2>Oversikt</h2>
-      <div class="aha-path-stats">
-        <span class="aha-path-badge">Stier: <strong id="paths-count">0</strong></span>
-        <span class="aha-path-badge">Steg totalt: <strong id="path-steps-count">0</strong></span>
-      </div>
-    </section>
-
+    <section class="aha-panel"><h2>Oversikt</h2><div class="aha-path-stats"><span class="aha-path-badge">Stier: <strong id="paths-count">0</strong></span><span class="aha-path-badge">Steg totalt: <strong id="path-steps-count">0</strong></span></div></section>
     <section id="paths-list" class="aha-path-list aha-module-content" aria-live="polite"></section>
   </main>
-
   <script src="js/ahaModules.js"></script>
   <script src="js/ahaContracts.js"></script>
   <script src="js/ahaGroups.js"></script>
   <script src="js/ahaPaths.js"></script>
   <script src="js/ahaOrganizationRoles.js"></script>
-<script src="js/ahaGlobalNav.js"></script>
+  <script src="js/ahaOrganizationFlow.js"></script>
+  <script src="js/ahaGlobalNav.js"></script>
 </body>
 </html>
