@@ -118,6 +118,21 @@
     return true;
   }
 
+  function loadInsightQualityFeedback() {
+    if (!global.document?.head) return false;
+    if (global.AHAInsightQualityFeedback?.init) {
+      global.AHAInsightQualityFeedback.init();
+      return true;
+    }
+    if (global.document.querySelector('script[data-aha-insight-quality="true"]')) return true;
+    const script = global.document.createElement("script");
+    script.src = "js/ahaInsightQualityFeedback.js";
+    script.async = false;
+    script.dataset.ahaInsightQuality = "true";
+    global.document.head.appendChild(script);
+    return true;
+  }
+
   function primaryMarkup(activeFile) {
     return PRIMARY_NAV.map((item) => {
       const active = item.files.includes(activeFile);
@@ -169,29 +184,26 @@
     const route = activeFile.replace(/\.html$/i, "").replace(/[^a-z0-9-]/gi, "-") || "index";
     body.classList.add("aha-product-shell", `aha-route-${route}`);
 
-    // Generiske utviklingsetiketter skal ikke konkurrere med sidens faktiske navn.
-    // Men meningsbærende eyebrows som «Søk / Bibliotek», «Profil» og
-    // «AHA Knowledge Workbench» beholdes.
     global.document.querySelectorAll(".aha-module-shell .eyebrow").forEach((eyebrow) => {
       if (!isTechnicalEyebrow(eyebrow.textContent)) return;
       eyebrow.classList.add("aha-technical-eyebrow");
       eyebrow.setAttribute("aria-hidden", "true");
     });
 
-    // Home skal være et hjem, ikke en ny modulindeks. Teknisk status forblir
-    // tilgjengelig i de eksisterende kollapsede detaljene og i verktøysiden.
     if (activeFile === "index.html") {
       global.document.querySelector(".aha-modules-panel")?.setAttribute("hidden", "");
       global.document.querySelector(".aha-fixed-header")?.classList.add("aha-home-header-simplified");
       loadHomeContinueExperience();
     }
 
-    // Profilen skal være personlig oversikt, ikke enda en kopi av modulmenyen.
+    if (activeFile === "chat.html" || activeFile === "insights.html") {
+      loadInsightQualityFeedback();
+    }
+
     if (activeFile === "profile.html") {
       global.document.getElementById("aha-modules-grid")?.closest("section")?.setAttribute("hidden", "");
     }
 
-    // Global nav gjør tilbake-til-Home-knapper og Chatens egen lenkerekke unødvendige.
     global.document.querySelectorAll('.aha-module-actions a[href="index.html"], .aha-modules-page-header a[href="index.html"]').forEach((link) => {
       link.classList.add("aha-redundant-home-link");
       link.setAttribute("aria-hidden", "true");
@@ -271,7 +283,8 @@
     productGroups: PRODUCT_GROUPS,
     advancedItems: ADVANCED_ITEMS,
     isTechnicalEyebrow,
-    loadHomeContinueExperience
+    loadHomeContinueExperience,
+    loadInsightQualityFeedback
   };
 
   if (global.document.readyState === "loading") global.document.addEventListener("DOMContentLoaded", () => render());
