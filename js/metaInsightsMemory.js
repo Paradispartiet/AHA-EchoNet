@@ -175,6 +175,59 @@
     return { ok: true, entry: normalizedEntry, memory: saved };
   }
 
+  // Erstatter formuleringen av en aktiv claim uten ny memory-store og uten et
+  // mellomstadium der gammel og ny formulering er aktive samtidig. Den gamle
+  // formuleringen blir eksplisitt utdatert, den nye arver gjeldende status,
+  // og hele selvmodellen lagres én gang før retrieval-cachene ugyldiggjøres.
+  function replaceClaim(oldClaimText, newClaimText, optionsArg) {
+    const options = asObject(optionsArg);
+    const oldText = asText(oldClaimText);
+    const newText = asText(newClaimText);
+    if (!oldText) return { ok: false, error: "missing_old_claim_text" };
+    if (!newText) return { ok: false, error: "missing_new_claim_text" };
+    if (normalizeClaimText(oldText) === normalizeClaimText(newText)) {
+      return { ok: false, error: "unchanged_claim_text" };
+    }
+
+    const memory = loadMemory();
+    const latest = getLatestFeedbackForClaim(oldText, memory);
+    if (!latest) return { ok: false, error: "claim_not_found" };
+    if (["feil", "utdatert"].includes(latest.response)) {
+      return { ok: false, error: "claim_not_active" };
+    }
+
+    const requestedResponse = normalizeClaimText(options.response);
+    const nextResponse = ALLOWED_RESPONSES.includes(requestedResponse) ? requestedResponse : latest.response;
+    if (["feil", "utdatert"].includes(nextResponse)) {
+      return { ok: false, error: "replacement_must_be_active" };
+    }
+
+    const baseMs = Date.parse(asText(options.createdAt)) || Date.now();
+    const oldEntry = normalizeFeedbackEntry({
+      ...latest,
+      id: "",
+      createdAt: new Date(baseMs).toISOString(),
+      claimText: oldText,
+      response: "utdatert",
+      note: asText(options.note) || `Erstattet med: ${newText}`
+    });
+    const newEntry = normalizeFeedbackEntry({
+      ...latest,
+      id: "",
+      createdAt: new Date(baseMs + 1).toISOString(),
+      claimText: newText,
+      response: nextResponse,
+      note: asText(options.note),
+      claimId: asText(latest.claimId)
+    });
+
+    memory.feedback.unshift(oldEntry);
+    memory.feedback.unshift(newEntry);
+    memory.selfModel = updateSelfModelFromFeedback(memory);
+    const saved = saveMemory(memory);
+    return { ok: true, oldEntry, newEntry, response: nextResponse, memory: saved };
+  }
+
   function summarizeMemory(memoryArg) {
     const memory = memoryArg ? normalizeMemory(memoryArg) : loadMemory();
     const selfModel = updateSelfModelFromFeedback(memory);
@@ -232,6 +285,7 @@
     loadMemory,
     saveMemory,
     addFeedback,
+    replaceClaim,
     summarizeMemory,
     updateSelfModelFromFeedback,
     getLatestFeedbackForClaim,
