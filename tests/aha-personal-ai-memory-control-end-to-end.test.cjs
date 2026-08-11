@@ -171,7 +171,8 @@ const bridgeSource = fs.readFileSync(path.join(__dirname, "..", "js", "ahaPrivac
 
 assert.ok(personalAiHtml.includes('data-personal-ai-memory-response="feil"') || fs.readFileSync(path.join(__dirname, "..", "js", "ahaPersonalAiSelfKnowledge.js"), "utf8").includes('data-personal-ai-memory-response="feil"'));
 assert.ok(personalAiHtml.indexOf('js/ahaPersonalAiSelfKnowledge.js') < personalAiHtml.indexOf('js/ahaPersonalAiMemoryControl.js'));
-assert.match(personalAiHtml, /Du kan korrigere hver synlig selvinnsikt/);
+assert.match(personalAiHtml, /Du kan korrigere eller erstatte hver synlig selvinnsikt/);
+assert.ok(personalAiHtml.indexOf('js/ahaPersonalAiMemoryControl.js') < personalAiHtml.indexOf('js/ahaPersonalAiMemoryReview.js'));
 assert.ok(privacyHtml.indexOf('js/ahaPrivacyRestore.js') < privacyHtml.indexOf('js/ahaPrivacyPersonalAiMemory.js'));
 assert.match(privacyHtml, /Meta Insights Memory følger backupen/);
 assert.doesNotMatch(controlSource, /fetch\s*\(|XMLHttpRequest|WebSocket|echonet_shared\s*=\s*true|historygo_writeback_enabled\s*=\s*true/i);
