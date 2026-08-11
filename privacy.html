@@ -57,6 +57,22 @@
     </section>
 
     <section class="aha-panel">
+      <h2>Gjenopprett AHA-backup</h2>
+      <p class="privacy-small">Gjenoppretting er additiv og local-only. Du må alltid se en forhåndsvisning før noe skrives. History Go-data, ukjente nøkler, tokens, OAuth/PKCE, API-nøkler, credentials og andre hemmeligheter hoppes over.</p>
+      <div class="privacy-form">
+        <label class="privacy-check" for="privacy-restore-file">
+          <span><strong>Backupfil</strong><br />Velg en JSON-eksport fra AHA.</span>
+        </label>
+        <input id="privacy-restore-file" type="file" accept="application/json,.json" />
+        <div class="aha-module-actions privacy-actions">
+          <button id="privacy-restore-preview" type="button" class="aha-tile-btn">Vis forhåndsvisning</button>
+          <button id="privacy-restore-apply" type="button" class="aha-tile-btn aha-tile-btn-primary" disabled>Gjenopprett tillatte data</button>
+        </div>
+        <pre id="privacy-restore-preview-result" class="privacy-small" style="white-space: pre-wrap;"></pre>
+      </div>
+    </section>
+
+    <section class="aha-panel">
       <h2>Forklaring</h2>
       <div class="privacy-explain-grid">
         <article class="privacy-explain-card"><h3>Lokal data</h3><p>Data som ligger i nettleserens localStorage på denne enheten.</p></article>
@@ -69,6 +85,7 @@
 
   <script src="js/ahaContracts.js"></script>
   <script src="js/ahaPrivacy.js"></script>
+  <script src="js/ahaPrivacyRestore.js"></script>
 <script src="js/ahaModules.js"></script>
 <script src="js/ahaGlobalNav.js"></script>
 </body>
