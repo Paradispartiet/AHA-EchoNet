@@ -96,6 +96,13 @@
     return "";
   }
 
+  function isTechnicalEyebrow(value) {
+    const text = String(value ?? "").trim();
+    return /^AHA\s+Modul$/i.test(text)
+      || /^AHA\s+System\b/i.test(text)
+      || /(?:^|\s)Fase\s+\d+[A-Z]?\b/i.test(text);
+  }
+
   function primaryMarkup(activeFile) {
     return PRIMARY_NAV.map((item) => {
       const active = item.files.includes(activeFile);
@@ -146,6 +153,15 @@
     if (!body) return;
     const route = activeFile.replace(/\.html$/i, "").replace(/[^a-z0-9-]/gi, "-") || "index";
     body.classList.add("aha-product-shell", `aha-route-${route}`);
+
+    // Generiske utviklingsetiketter skal ikke konkurrere med sidens faktiske navn.
+    // Men meningsbærende eyebrows som «Søk / Bibliotek», «Profil» og
+    // «AHA Knowledge Workbench» beholdes.
+    global.document.querySelectorAll(".aha-module-shell .eyebrow").forEach((eyebrow) => {
+      if (!isTechnicalEyebrow(eyebrow.textContent)) return;
+      eyebrow.classList.add("aha-technical-eyebrow");
+      eyebrow.setAttribute("aria-hidden", "true");
+    });
 
     // Home skal være et hjem, ikke en ny modulindeks. Teknisk status forblir
     // tilgjengelig i de eksisterende kollapsede detaljene og i verktøysiden.
@@ -237,7 +253,8 @@
     render,
     primaryNav: PRIMARY_NAV,
     productGroups: PRODUCT_GROUPS,
-    advancedItems: ADVANCED_ITEMS
+    advancedItems: ADVANCED_ITEMS,
+    isTechnicalEyebrow
   };
 
   if (global.document.readyState === "loading") global.document.addEventListener("DOMContentLoaded", () => render());
