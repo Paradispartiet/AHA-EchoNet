@@ -8,6 +8,13 @@
   <link rel="stylesheet" href="css/aha-dashboard.css" />
   <link rel="stylesheet" href="css/aha-avisa.css" />
   <link rel="stylesheet" href="css/aha-global-nav.css" />
+  <style>
+    .avisa-user-guide{display:grid;grid-template-columns:minmax(0,1fr) minmax(220px,.8fr);gap:14px;margin:12px 0 14px;padding:14px;border:1px solid var(--aha-border,rgba(255,255,255,.12));border-radius:14px;background:rgba(255,255,255,.025)}
+    .avisa-user-guide p{margin:6px 0 0}.avisa-user-guide-next{align-self:start}.avisa-user-guide-next .aha-tile-btn{margin-top:4px}
+    .avisa-public-boundary{margin:12px 0;padding:14px;border:1px solid var(--aha-border,rgba(255,255,255,.16));border-radius:14px;background:rgba(255,255,255,.04)}
+    .avisa-public-boundary p{margin:7px 0 12px}.avisa-advanced-actions{margin-top:12px}.avisa-advanced-actions .status-actions{margin-top:10px}
+    @media (max-width:720px){.avisa-user-guide{grid-template-columns:1fr}}
+  </style>
 </head>
 <body>
   <div id="aha-global-nav"></div>
@@ -17,7 +24,7 @@
         <div>
           <p class="eyebrow">AHA module</p>
           <h1 id="avisa-module-title">AHAavisa</h1>
-          <p class="aha-module-purpose">Lokale artikkelutkast og publiserte-lokalt tekster. AHAavisa organiserer egne AHA-notater og referanser, men publiserer ikke eksternt.</p>
+          <p class="aha-module-purpose">Skriv, gjennomgå og organiser artikler fra det du allerede har i AHA. Alt her er fortsatt lokalt; AHAavisa publiserer ikke eksternt.</p>
         </div>
         <span id="aha-module-health" class="aha-module-health-badge aha-module-health-unknown" role="status" aria-label="AHAavisa: Unknown">
           <span>Unknown</span>
@@ -31,7 +38,8 @@
     </section>
 
     <section id="avisa-create" class="aha-panel">
-      <h2>Opprett artikkelutkast</h2>
+      <h2>Start et nytt utkast</h2>
+      <p class="module-meta">Begynn med tittel, ingress og noen få stikkord. Selve teksten kan du jobbe videre med i artikkelkortet.</p>
       <label>Tittel
         <input id="avisa-title" type="text" placeholder="Tittel" />
       </label>
@@ -42,22 +50,22 @@
           <option value="historygo">historygo</option><option value="aha">aha</option><option value="debatt">debatt</option><option value="notater" selected>notater</option>
         </select>
       </label>
-      <label>Kort ingress/summary
+      <label>Kort ingress
         <textarea id="avisa-summary" rows="3" placeholder="Ingress"></textarea>
       </label>
-      <label>Tags (komma-separert)
+      <label>Stikkord (komma-separert)
         <input id="avisa-tags" type="text" placeholder="tag1, tag2" />
       </label>
-      <button id="avisa-create-btn" type="button">Lag artikkelutkast</button>
+      <button id="avisa-create-btn" type="button">Lag utkast</button>
     </section>
 
     <section class="aha-panel avisa-overview">
-      <h2>Oversikt</h2>
+      <h2>Artiklene dine</h2>
       <div class="avisa-stats">
-        <span class="avisa-badge">Draft: <strong id="avisa-draft-count">0</strong></span>
-        <span class="avisa-badge">Review: <strong id="avisa-review-count">0</strong></span>
-        <span class="avisa-badge">Ready: <strong id="avisa-ready-count">0</strong></span>
-        <span class="avisa-badge">Publisert lokalt: <strong id="avisa-published-count">0</strong></span>
+        <span class="avisa-badge">Utkast: <strong id="avisa-draft-count">0</strong></span>
+        <span class="avisa-badge">Til gjennomgang: <strong id="avisa-review-count">0</strong></span>
+        <span class="avisa-badge">Klar: <strong id="avisa-ready-count">0</strong></span>
+        <span class="avisa-badge">Publisert i AHAavisa: <strong id="avisa-published-count">0</strong></span>
         <span class="avisa-badge">Seksjoner: <strong id="avisa-sections-count">0</strong></span>
         <span class="avisa-badge">Personlig: <strong id="avisa-personal-count">0</strong></span>
         <span class="avisa-badge">Gruppeavis: <strong id="avisa-group-count">0</strong></span>
@@ -65,9 +73,9 @@
         <span class="avisa-badge">Siste oppdatering: <strong id="avisa-last-updated">-</strong></span>
       </div>
       <details class="aha-module-details">
-        <summary>Advanced details</summary>
+        <summary>Avansert og teknisk status</summary>
         <div id="avisa-privacy-warning" class="local-publish-note" hidden></div>
-        <p class="local-publish-note">AHAavisa er local-only. “Publiser lokalt” markerer bare en artikkel som publisert i denne nettleseren. Ingen data sendes ut, ingen backend brukes, og EchoNet er ikke aktivert.</p>
+        <p class="local-publish-note">AHAavisa er local-only. «Publiser i min AHAavis» markerer bare artikkelen som publisert i denne nettleseren. Ingen data sendes ut, ingen backend brukes, og EchoNet er ikke aktivert.</p>
       </details>
       <div class="section-filter" id="avisa-layer-filter" role="group" aria-label="Filtrer publiseringslag">
         <button type="button" data-layer-filter="all" class="is-active">Alle</button>
@@ -93,6 +101,7 @@
   <script src="js/ahaGroups.js"></script>
   <script src="js/ahaPrivacy.js"></script>
   <script src="js/ahaAvisa.js"></script>
-<script src="js/ahaGlobalNav.js"></script>
+  <script src="js/ahaAvisaUserExperience.js"></script>
+  <script src="js/ahaGlobalNav.js"></script>
 </body>
 </html>
