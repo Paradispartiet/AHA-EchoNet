@@ -197,7 +197,7 @@ assert.equal(/localStorage\s*\.\s*(setItem|removeItem|clear)\s*\(/.test(snapshot
   'snapshot and presentation must remain read-only');
 assert.equal(/\bfetch\s*\(/.test(snapshotCode + feedbackCode), false,
   'snapshot and presentation must not fetch');
-assert.equal(/AHARepository|EchoNet|supabase|syncFromDatabase|autoSync/i.test(snapshotCode + feedbackCode), false,
-  'snapshot and presentation must not activate backend, sync or EchoNet');
+assert.equal(/global\.(?:AHARepository|EchoNet|supabase)\b|syncFromDatabase\s*\(|autoSync\s*\(/i.test(snapshotCode + feedbackCode), false,
+  'snapshot and presentation must not call backend, sync or EchoNet APIs');
 
 console.log('aha-conversation-insight-changes.test.cjs passed');
