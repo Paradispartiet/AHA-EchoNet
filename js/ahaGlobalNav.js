@@ -118,10 +118,26 @@
     return true;
   }
 
+  function loadInsightAvailabilityBridge() {
+    if (!global.document?.head) return false;
+    if (global.AHAInsightAvailabilityBridge?.reconcile) {
+      global.AHAInsightAvailabilityBridge.reconcile();
+      return true;
+    }
+    if (global.document.querySelector('script[data-aha-insight-availability="true"]')) return true;
+    const script = global.document.createElement("script");
+    script.src = "js/ahaInsightAvailabilityBridge.js";
+    script.async = false;
+    script.dataset.ahaInsightAvailability = "true";
+    global.document.head.appendChild(script);
+    return true;
+  }
+
   function loadInsightQualityFeedback() {
     if (!global.document?.head) return false;
     if (global.AHAInsightQualityFeedback?.init) {
       global.AHAInsightQualityFeedback.init();
+      loadInsightAvailabilityBridge();
       return true;
     }
     if (global.document.querySelector('script[data-aha-insight-quality="true"]')) return true;
@@ -129,6 +145,7 @@
     script.src = "js/ahaInsightQualityFeedback.js";
     script.async = false;
     script.dataset.ahaInsightQuality = "true";
+    script.addEventListener("load", loadInsightAvailabilityBridge, { once: true });
     global.document.head.appendChild(script);
     return true;
   }
@@ -284,7 +301,8 @@
     advancedItems: ADVANCED_ITEMS,
     isTechnicalEyebrow,
     loadHomeContinueExperience,
-    loadInsightQualityFeedback
+    loadInsightQualityFeedback,
+    loadInsightAvailabilityBridge
   };
 
   if (global.document.readyState === "loading") global.document.addEventListener("DOMContentLoaded", () => render());
