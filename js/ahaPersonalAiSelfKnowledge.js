@@ -99,7 +99,6 @@
   }
 
   function claimControlsMarkup(item) {
-    const safe = esc(item);
     return `
       <div class="aha-module-actions aha-personal-ai-memory-actions" aria-label="Styr denne selvinnsikten">
         <button type="button" data-personal-ai-memory-response="stemmer">Stemmer</button>
@@ -110,6 +109,14 @@
       <label class="module-meta">Kommentar eller nyanse (valgfritt)
         <input type="text" data-personal-ai-memory-note placeholder="Legg til en lokal kommentar" autocomplete="off" />
       </label>
+      <details class="aha-personal-ai-memory-rewrite">
+        <summary>Endre formuleringen</summary>
+        <p class="module-meta">Bruk dette når innholdet er riktig, men AHA har formulert det feil eller for upresist. Den gamle formuleringen beholdes kun som utdatert historikk.</p>
+        <label class="module-meta">Ny formulering
+          <input type="text" data-personal-ai-memory-replacement placeholder="Skriv hva AHA heller skal huske" autocomplete="off" />
+        </label>
+        <button type="button" data-personal-ai-memory-replace>Erstatt formuleringen</button>
+      </details>
       <span class="module-meta" data-personal-ai-memory-item-status aria-live="polite"></span>`;
   }
 
