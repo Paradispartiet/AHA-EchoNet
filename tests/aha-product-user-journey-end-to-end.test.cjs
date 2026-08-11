@@ -49,7 +49,6 @@ context.window = context;
 context.globalThis = context;
 vm.createContext(context);
 
-// Core local contracts used in the journey.
 [
   'js/ahaContracts.js',
   'js/ahaInsightQualityFeedback.js',
@@ -65,7 +64,6 @@ vm.createContext(context);
   'js/ahaHomeContinueExperience.js'
 ].forEach((path) => load(context, path));
 
-// HOME → user work, not technical audit.
 let home = context.AHAHomeContinueExperience.buildExperience({
   home: { counts: {} },
   latestInsight: { mode: 'chat_provenance', text: 'Makt og byrom bør utforskes videre', createdCount: 1 },
@@ -75,7 +73,6 @@ assert.equal(home.mode, 'continue_insight');
 assert.equal(home.primaryAction.href, 'chat.html');
 assert.doesNotMatch(home.primaryAction.label, /audit|workflow/i);
 
-// CHAT/INSIGHT QUALITY → explicit rejection changes canonical insight.
 let result = context.AHAInsightQualityFeedback.applyFeedback('ins_reject', 'not_insight');
 assert.equal(result.ok, true);
 let storedChamber = JSON.parse(storage.getItem('aha_insight_chamber_v1'));
@@ -84,34 +81,30 @@ context.AHAInsightAvailabilityBridge.reconcile();
 storedChamber = JSON.parse(storage.getItem('aha_insight_chamber_v1'));
 assert.equal(storedChamber.insights.find((i) => i.id === 'ins_reject').archived, true, 'user rejection must propagate to existing availability boundary');
 
-// LIBRARY → rejected insight must not reappear, active insight and note remain searchable.
 let searchItems = context.AHASearch.collectSearchItems();
 assert.equal(searchItems.some((item) => item.refId === 'ins_reject'), false);
 assert.equal(searchItems.some((item) => item.refId === 'ins_keep'), true);
 assert.equal(searchItems.some((item) => item.refId === 'note_1'), true);
 
-// LIBRARY → LIST uses the canonical Lists API/store.
 const list = context.AHALists.createList({ title: 'By og makt', type: 'concepts', description: 'Arbeidsliste', tags: ['makt'] });
 assert.ok(list?.id);
 const activeSearchItem = searchItems.find((item) => item.refId === 'ins_keep');
 result = context.AHAOrganizationFlow.addLibraryItemToList(activeSearchItem.id, list.id);
 assert.equal(result.ok, true);
 let lists = context.AHALists.loadLists();
-assert.equal(lists.length, 1);
-assert.equal(lists[0].items.length, 1);
+assert.equal(lists.length, 1, 'journey: canonical Lists store should contain the created list');
+assert.equal(lists[0].items.length, 1, 'journey: canonical list should contain the Library insight reference');
 assert.equal(lists[0].items[0].refId, 'ins_keep');
 assert.equal(lists[0].items.some((item) => item.refId === 'ins_reject'), false);
 
-// LIST → PATH uses canonical AHAPaths and preserves the list reference.
 result = context.AHAOrganizationFlow.createPathFromList(list.id, 'By og makt – læringssti');
 assert.equal(result.ok, true);
 let paths = context.AHAPaths.loadPaths();
-assert.equal(paths.length, 1);
-assert.equal(paths[0].steps.length, 1);
+assert.equal(paths.length, 1, 'journey: canonical Paths store should contain the created path');
+assert.equal(paths[0].steps.length, 1, 'journey: created path should contain the source List step');
 assert.equal(paths[0].steps[0].source, 'aha_lists');
 assert.equal(paths[0].steps[0].refId, list.id);
 
-// Add a canonical note step, then reorder through AHAPaths.updatePath via organization flow.
 result = context.AHAPaths.addStepToPath(paths[0].id, { source: 'aha_notes', refId: 'note_1', type: 'note', title: 'Notat om byrom' });
 assert.equal(result.ok, true);
 paths = context.AHAPaths.loadPaths();
@@ -122,7 +115,6 @@ paths = context.AHAPaths.loadPaths();
 assert.equal(paths[0].steps[0].refId, 'note_1');
 assert.equal(paths[0].steps[1].refId, list.id);
 
-// PATH → MINDMAP is derived/read-only and includes canonical references, not rejected insight.
 const graph = context.AHAMindmap.collectGraphData();
 assert.ok(graph.nodes.some((node) => node.type === 'list' && node.refId === list.id));
 assert.ok(graph.nodes.some((node) => node.type === 'path' && node.refId === paths[0].id));
@@ -131,7 +123,6 @@ assert.equal(graph.nodes.some((node) => node.type === 'insight' && node.refId ==
 assert.ok(graph.edges.some((edge) => edge.type === 'list_contains'));
 assert.ok(graph.edges.some((edge) => edge.type === 'path_contains'));
 
-// PERSONAL AI → replace wording atomically in the same Meta Insights Memory.
 context.AHAMetaInsightsMemory.addFeedback({ claimId: 'claim_city', claimText: 'Jeg jobber bare i Oslo', response: 'stemmer' });
 context.AHAPersonalRetrieval.refreshRetrievalIndex();
 context.AHASemanticRetrieval.refreshSemanticIndex();
@@ -147,14 +138,12 @@ let retrieval = context.AHAPersonalRetrieval.searchPersonalKnowledge('Tromsø', 
 assert.equal(retrieval.results.some((item) => String(item.excerpt || '').includes('Tromsø')), true);
 assert.equal(retrieval.results.some((item) => String(item.excerpt || '').includes('bare i Oslo')), false);
 
-// PRIVACY/BACKUP → corrected memory must survive complete local backup payload.
 ['js/ahaPrivacy.js', 'js/ahaPrivacyRestore.js', 'js/ahaPrivacyPersonalAiMemory.js'].forEach((path) => load(context, path));
 const backup = context.AHAPrivacyPersonalAiMemory.buildExportPayload();
 assert.ok(backup.data.aha_meta_insights_memory_v1);
 assert.equal(backup.data.aha_meta_insights_memory_v1.selfModel.confirmedClaims.some((claim) => claim.claimText === 'Jeg jobber hovedsakelig i Tromsø'), true);
 assert.equal(backup.data.aha_meta_insights_memory_v1.selfModel.outdatedClaims.some((claim) => claim.claimText === 'Jeg jobber bare i Oslo'), true);
 
-// PRODUCT JOURNEY / NAVIGATION → primary destinations and secondary control pages remain reachable.
 const nav = source('js/ahaGlobalNav.js');
 for (const destination of ['index.html', 'chat.html', 'search.html', 'personal-ai.html', 'profile.html', 'privacy.html', 'lists.html', 'paths.html', 'mindmap.html']) {
   assert.match(nav + source('index.html') + source('profile.html'), new RegExp(destination.replace('.', '\\.')), `${destination} must remain reachable from product navigation/overview`);
@@ -166,7 +155,6 @@ assert.match(nav, /Personal AI/);
 assert.match(nav, /Mitt AHA/);
 assert.match(nav, /Avanserte verktøy/);
 
-// Cross-cutting boundaries: no new organization store, Mindmap remains read-only, no backend/sync/EchoNet activation.
 const orgSource = source('js/ahaOrganizationFlow.js');
 const mindmapSource = source('js/ahaMindmap.js');
 assert.equal(/aha_organization_[a-z0-9_]+_v\d+/i.test(orgSource), false);
