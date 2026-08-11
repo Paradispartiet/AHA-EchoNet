@@ -103,6 +103,21 @@
       || /(?:^|\s)Fase\s+\d+[A-Z]?\b/i.test(text);
   }
 
+  function loadHomeContinueExperience() {
+    if (!global.document?.head) return false;
+    if (global.AHAHomeContinueExperience?.refresh) {
+      global.AHAHomeContinueExperience.refresh();
+      return true;
+    }
+    if (global.document.querySelector('script[data-aha-home-continue="true"]')) return true;
+    const script = global.document.createElement("script");
+    script.src = "js/ahaHomeContinueExperience.js";
+    script.async = false;
+    script.dataset.ahaHomeContinue = "true";
+    global.document.head.appendChild(script);
+    return true;
+  }
+
   function primaryMarkup(activeFile) {
     return PRIMARY_NAV.map((item) => {
       const active = item.files.includes(activeFile);
@@ -168,6 +183,7 @@
     if (activeFile === "index.html") {
       global.document.querySelector(".aha-modules-panel")?.setAttribute("hidden", "");
       global.document.querySelector(".aha-fixed-header")?.classList.add("aha-home-header-simplified");
+      loadHomeContinueExperience();
     }
 
     // Profilen skal være personlig oversikt, ikke enda en kopi av modulmenyen.
@@ -254,7 +270,8 @@
     primaryNav: PRIMARY_NAV,
     productGroups: PRODUCT_GROUPS,
     advancedItems: ADVANCED_ITEMS,
-    isTechnicalEyebrow
+    isTechnicalEyebrow,
+    loadHomeContinueExperience
   };
 
   if (global.document.readyState === "loading") global.document.addEventListener("DOMContentLoaded", () => render());
