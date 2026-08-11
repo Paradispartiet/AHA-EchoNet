@@ -10,7 +10,7 @@ const pages = {
   lists: { html: read('lists.html'), js: read('js/ahaLists.js'), title: 'Lists', purpose: 'Lokale samlinger av eksisterende AHA-objekter.', action: 'Lag liste', empty: 'No lists yet.' },
   paths: { html: read('paths.html'), js: read('js/ahaPaths.js'), title: 'Paths', purpose: 'Lokale sekvenser av eksisterende AHA-objekter.', action: 'Lag sti', empty: 'No paths yet.' },
   groups: { html: read('groups.html'), js: read('js/ahaGroups.js'), title: 'Groups', purpose: 'Lokale grupperom for AHA-objekter, roller og delte referanser. Groups organiserer materiale lokalt, men deler ikke eksternt.', action: 'Lag gruppe', empty: 'No groups yet.' },
-  avisa: { html: read('avisa.html'), js: read('js/ahaAvisa.js'), title: 'AHAavisa', purpose: 'Lokale artikkelutkast og publiserte-lokalt tekster. AHAavisa organiserer egne AHA-notater og referanser, men publiserer ikke eksternt.', action: 'Nytt utkast', empty: 'No AHAavisa notes yet.' }
+  avisa: { html: read('avisa.html'), js: read('js/ahaAvisa.js'), title: 'AHAavisa', purpose: 'Skriv, gjennomgå og organiser artikler fra det du allerede har i AHA. Alt her er fortsatt lokalt; AHAavisa publiserer ikke eksternt.', action: 'Nytt utkast', empty: 'No AHAavisa notes yet.' }
 };
 
 for (const [moduleId, page] of Object.entries(pages)) {
@@ -32,7 +32,7 @@ for (const [moduleId, page] of Object.entries(pages)) {
   assert.equal(/JSON\.stringify\s*\([^\n]*(payload|audit)/i.test(page.js), false, `${page.title} should not render a full payload or audit dump`);
 }
 
-assert.ok(pages.avisa.html.includes('<summary>Advanced details</summary>'), 'AHAavisa technical publishing details should be collapsed');
+assert.ok(pages.avisa.html.includes('<summary>Avansert og teknisk status</summary>'), 'AHAavisa technical publishing details should be collapsed');
 assert.ok(pages.groups.js.includes('<summary>Advanced details</summary>'), 'Groups technical sharing details should be collapsed');
 assert.ok(dashboardCss.includes('.aha-module-shell-header'), 'shared module shell styling should exist');
 assert.ok(dashboardCss.includes('.aha-module-actions'), 'shared action-row styling should exist');
