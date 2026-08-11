@@ -22,6 +22,7 @@ const context = {
   Date,
   Math,
   JSON,
+  location: { pathname: '/chat.html' },
   localStorage: {
     getItem(key) {
       if (key === 'aha_insight_chamber_v1') return JSON.stringify(chamber);
@@ -57,7 +58,7 @@ vm.runInContext(source, context, { filename: 'js/ahaContracts.js' });
 assert.ok(context.AHAContracts, 'AHAContracts skal finnes');
 assert.equal(typeof context.AHAContracts.prepareInsightCandidates, 'function');
 assert.equal(typeof context.AHAContracts.installInsightQualityContract, 'function');
-assert.equal(context.AHAIngest.__ahaInsightQualityContractInstalled, true, 'kvalitetskontrakten skal installeres når AHAIngest finnes');
+assert.equal(context.AHAIngest.__ahaInsightQualityContractInstalled, true, 'kvalitetskontrakten skal installeres på chat.html');
 
 const candidates = [
   {
