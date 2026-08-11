@@ -6,7 +6,7 @@ const code = fs.readFileSync('js/ahaSearchLibraryExperience.js', 'utf8');
 const html = fs.readFileSync('search.html', 'utf8');
 
 function load() {
-  const context = { console, Date, Array, Object, String, Number, Set, JSON, document: null };
+  const context = { console, Date, Array, Object, String, Number, Set, Map, JSON, document: null };
   context.window = context;
   context.globalThis = context;
   vm.createContext(context);
@@ -57,6 +57,7 @@ assert.equal(model.items.some((item) => item.id === 'remote'), false);
 assert.match(html, /Finn igjen det du har tenkt, skrevet og lagret/);
 assert.match(html, /Bla i det du allerede har i AHA/);
 assert.match(html, /Nylig lagret eller oppdatert/);
+assert.match(html, /Relatert materiale/);
 assert.match(html, /id="search-results-panel"[^>]*hidden/);
 assert.match(html, /Avansert søk og dekning/);
 assert.match(html, /Søk leser bare eksplisitt godkjente lokale AHA-lag/);
@@ -67,10 +68,17 @@ assert.ok(html.includes('<script src="js/ahaSearchLibraryExperience.js"></script
 assert.ok(html.indexOf('js/ahaSearch.js') < html.indexOf('js/ahaSearchLibraryExperience.js'), 'canonical search must load before the browse adapter');
 
 assert.match(code, /AHASearch\?\.collectSearchItems/);
-assert.match(code, /Biblioteket er en read-only visning av den samme indeksen som Søk bruker/);
+assert.match(code, /No library database or parallel index/);
+assert.match(code, /derived in-memory from the same search items/);
+assert.match(code, /findRelatedItems/);
+assert.match(code, /PENDING_CHAT_KEY = "aha_pending_chat_prompt_v1"/);
 assert.match(code, /hasActiveSearch/);
 assert.match(code, /updateSearchResultsVisibility/);
-assert.equal(/localStorage\s*\./.test(code), false, 'library adapter must not read or write localStorage directly');
+
+const versionedKeys = [...code.matchAll(/["'](aha_[a-z0-9_]+_v\d+)["']/g)].map((match) => match[1]);
+assert.deepEqual([...new Set(versionedKeys)], ['aha_pending_chat_prompt_v1'], 'Library may only write the existing transient Chat handoff key, never a Library database/index');
+assert.match(code, /localStorage\?\.setItem\?\.\(PENDING_CHAT_KEY/);
+assert.equal(/localStorage[^\n]*(?:aha_search|aha_library).*_v\d+/i.test(code), false, 'Library must not persist its own state/index');
 assert.equal(/\bfetch\s*\(/.test(code), false, 'library adapter must not fetch');
 assert.equal(/AHARepository|AHASyncHub|EchoNet|Supabase|createClient|AHAIngest/i.test(code), false, 'library adapter must not activate backend/sync/ingest');
 
