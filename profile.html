@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AHA Profil</title>
+  <title>Mitt AHA</title>
   <link rel="stylesheet" href="css/aha-chat.css" />
   <link rel="stylesheet" href="css/aha-dashboard.css" />
   <link rel="stylesheet" href="css/aha-global-nav.css" />
@@ -14,11 +14,10 @@
     <section class="aha-panel aha-module-shell">
       <header class="aha-module-shell-header">
         <div>
-          <p class="eyebrow">AHA Home</p>
-          <h1>AHA Profil</h1>
-          <p class="aha-module-purpose">Din personlige innsiktsflate.</p>
-          <p class="aha-module-purpose">AHA Profil er en lokal statusflate for din AHA. Den viser lokale tellinger, siste aktivitet, personvern og importstatus, men publiserer ikke en sosial profil.</p>
-          <p class="aha-module-purpose">Ingen profil deles eksternt. Ingen EchoNet-identitet er aktivert.</p>
+          <p class="eyebrow">Profil</p>
+          <h1>Mitt AHA</h1>
+          <p class="aha-module-purpose">Oversikten over det du har bygget opp i AHA, hva AHA ser i materialet ditt, og hvor du kan arbeide videre.</p>
+          <p class="aha-module-purpose">Dette er en lokal, personlig statusflate — ikke en sosial profil. Ingen profil deles eksternt, og ingen EchoNet-identitet er aktivert.</p>
         </div>
       </header>
       <div class="aha-status-stack">
@@ -26,7 +25,7 @@
         <span id="aha-home-profile-mode">Lokal modus</span>
         <small id="aha-home-last-activity">Ingen aktivitet registrert</small>
       </div>
-      <div id="aha-profile-status-grid" class="aha-profile-status-grid"></div>
+      <div id="aha-profile-overview" aria-live="polite"></div>
     </section>
 
     <section class="aha-panel">
@@ -51,8 +50,8 @@
     </section>
 
     <section class="aha-panel">
-      <p class="eyebrow">AHA Meta-profil</p>
-      <h2>Read-only lokalt mønsterbilde</h2>
+      <p class="eyebrow">Det AHA ser i materialet ditt</p>
+      <h2>Mønsterbildet ditt</h2>
       <div id="aha-meta-profile-home" class="aha-meta-profile-home"><p class="aha-afterwork-empty">Ingen Meta-profil-materiale ennå. Denne statusflaten skriver ikke til innsiktskammeret.</p></div>
     </section>
 
@@ -75,6 +74,7 @@
   <script src="js/ahaConversationInsightSnapshot.js"></script>
   <script src="js/ahaDashboard.js"></script>
   <script src="js/ahaProfile.js"></script>
-<script src="js/ahaGlobalNav.js"></script>
+  <script src="js/ahaProfileOverview.js"></script>
+  <script src="js/ahaGlobalNav.js"></script>
 </body>
 </html>
