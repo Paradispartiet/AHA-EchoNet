@@ -110,9 +110,6 @@
   function renderGuide(card, article) {
     if (!card || !article) return;
     const model = buildArticleExperience(article);
-    const previous = card.querySelector("[data-avisa-user-guide]");
-    if (previous) previous.remove();
-
     const guide = document.createElement("section");
     guide.setAttribute("data-avisa-user-guide", "");
     guide.className = "avisa-user-guide";
@@ -143,7 +140,7 @@
     boundary.className = "avisa-public-boundary";
     boundary.innerHTML = `
       <strong>Dette publiserer ikke artikkelen</strong>
-      <p>«Offentlig kandidat» er bare en lokal merkelapp for senere vurdering. AHA sender ikke teksten til en server, EchoNet eller et offentlig nettsted.</p>
+      <p>«Offentlig kandidat» er bare en lokal merkelapp for senere vurdering. AHA sender ikke teksten til en server, en ekstern tjeneste eller et offentlig nettsted.</p>
       <div class="aha-tile-actions">
         <button type="button" class="aha-tile-btn aha-tile-btn-primary" data-avisa-confirm-public-candidate="${escapeHtml(articleId)}">Jeg forstår – marker lokalt</button>
         <button type="button" class="aha-tile-btn" data-avisa-cancel-public-candidate>Avbryt</button>
@@ -155,10 +152,12 @@
   }
 
   function enhanceCard(card) {
-    const id = card?.getAttribute?.("data-avisa-article-id") || "";
+    if (!card || card.getAttribute("data-avisa-user-enhanced") === "1") return;
+    const id = card.getAttribute("data-avisa-article-id") || "";
     if (!id) return;
     const article = findArticle(id);
     if (!article) return;
+    card.setAttribute("data-avisa-user-enhanced", "1");
     const statusBadge = card.querySelector(".avisa-status");
     if (statusBadge) statusBadge.textContent = statusExperience(article.status).label;
     const layerBadge = card.querySelector(".avisa-layer-badge");
@@ -216,7 +215,7 @@
 
     const mount = document.getElementById("avisa-articles");
     if (mount && global.MutationObserver) {
-      const observer = new MutationObserver(function () { enhanceAll(); });
+      const observer = new global.MutationObserver(function () { enhanceAll(); });
       observer.observe(mount, { childList: true, subtree: true });
     }
     enhanceAll();
