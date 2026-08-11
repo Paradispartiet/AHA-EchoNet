@@ -1,10 +1,13 @@
-// AHA Search / Library Experience – read-only browse layer over the canonical AHASearch index.
-// No new index or storage. Everything comes from AHASearch.collectSearchItems().
+// AHA Search / Library Experience – browse + related-item layer over canonical AHASearch.
+// No library database or parallel index. Related ranking is derived in-memory from the same search items.
 (function (global) {
   "use strict";
 
   const doc = global.document;
+  const PENDING_CHAT_KEY = "aha_pending_chat_prompt_v1";
   let activeGroup = "all";
+  let currentModel = null;
+  let relatedToId = "";
 
   const GROUPS = [
     { id: "thoughts", label: "Tanker og innsikter", description: "Notater, innsikter, feed og spor fra egne analyser." },
@@ -13,6 +16,8 @@
     { id: "knowledge", label: "Kunnskapsarbeid", description: "Intake, kuratering, kunnskapskart, grafinnsikter og godkjent Training-materiale." },
     { id: "personal_ai", label: "Personal AI", description: "Lokale svar-evalueringer og auditspor fra Personal AI." }
   ];
+
+  const STOPWORDS = new Set(["dette", "denne", "disse", "eller", "ikke", "og", "som", "for", "med", "til", "fra", "det", "der", "har", "jeg", "deg", "aha"]);
 
   function arr(value) { return Array.isArray(value) ? value : []; }
   function text(value) { return String(value ?? "").replace(/\s+/g, " ").trim(); }
@@ -32,6 +37,15 @@
     const value = item?.last_reanalyzed_at || item?.updatedAt || item?.createdAt || "";
     const parsed = Date.parse(value);
     return Number.isFinite(parsed) ? parsed : 0;
+  }
+  function normalize(value) {
+    return text(value).toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "");
+  }
+  function wordSet(value) {
+    return new Set(normalize(value).split(/[^a-z0-9æøå]+/).filter((word) => word.length > 2 && !STOPWORDS.has(word)));
+  }
+  function normalizedTags(item) {
+    return new Set(arr(item?.tags).map(normalize).filter(Boolean));
   }
 
   function libraryGroupFor(item) {
@@ -61,6 +75,7 @@
       aha_gallery: "Galleri",
       aha_insta: "Insta",
       aha_articles: "AHAavisa",
+      aha_avisa: "AHAavisa",
       aha_music_library: "Musikkbibliotek",
       aha_data_intake: "Data Intake",
       aha_knowledge_curation: "Kuratering",
@@ -137,17 +152,73 @@
     return { total: items.length, groups, recent: items.slice(0, 8), items };
   }
 
-  function itemCard(item) {
+  function relatedScore(seed, candidate) {
+    if (!seed || !candidate || seed.id === candidate.id) return 0;
+    const seedTags = normalizedTags(seed);
+    const candidateTags = normalizedTags(candidate);
+    let sharedTags = 0;
+    seedTags.forEach((tag) => { if (candidateTags.has(tag)) sharedTags += 1; });
+
+    const seedWords = wordSet(`${seed.title || ""} ${seed.text || ""}`);
+    const candidateWords = wordSet(`${candidate.title || ""} ${candidate.text || ""}`);
+    let sharedWords = 0;
+    seedWords.forEach((word) => { if (candidateWords.has(word)) sharedWords += 1; });
+    const union = seedWords.size + candidateWords.size - sharedWords;
+    const textOverlap = union ? sharedWords / union : 0;
+    const sameGroup = libraryGroupFor(seed) === libraryGroupFor(candidate) ? 0.08 : 0;
+    const crossType = seed.type !== candidate.type ? 0.05 : 0;
+    return (sharedTags * 0.55) + (textOverlap * 0.95) + sameGroup + crossType;
+  }
+
+  function findRelatedItems(seed, itemsArg, limit = 6) {
+    return arr(itemsArg)
+      .filter((item) => item && item.id !== seed?.id)
+      .map((item) => ({ item, score: relatedScore(seed, item) }))
+      .filter((entry) => entry.score >= 0.12)
+      .sort((a, b) => b.score - a.score || timestamp(b.item) - timestamp(a.item))
+      .slice(0, Math.max(1, Number(limit) || 6));
+  }
+
+  function chatPromptForItem(item) {
+    const title = text(item?.title) || "dette materialet";
+    const snippet = truncate(item?.text, 320);
+    return `Hjelp meg å tenke videre på dette fra AHA-biblioteket: «${title}».${snippet ? `\n\nKontekst: ${snippet}` : ""}`;
+  }
+
+  function queueItemForChat(item) {
+    if (!item) return { ok: false, error: "missing_item" };
+    const prompt = chatPromptForItem(item);
+    const payload = {
+      type: "library_item_prompt",
+      source: "aha_search_library",
+      createdAt: new Date().toISOString(),
+      prompt
+    };
+    try {
+      global.localStorage?.setItem?.(PENDING_CHAT_KEY, JSON.stringify(payload));
+    } catch {
+      return { ok: false, error: "storage_unavailable" };
+    }
+    return { ok: true, payload };
+  }
+
+  function itemCard(item, options = {}) {
     const snippet = truncate(item?.text || "Ingen tekst tilgjengelig.", 180);
     const date = text(item?.last_reanalyzed_at || item?.updatedAt || item?.createdAt);
-    return `<article class="aha-search-card">
+    const score = Number(options.relatedScore || 0);
+    return `<article class="aha-search-card" data-library-item-id="${esc(item?.id || "")}">
       <header class="aha-search-card-head">
         <h3>${esc(item?.title || "Uten tittel")}</h3>
         <div class="aha-search-meta">${esc(typeLabel(item))} · ${esc(sourceLabel(item))}</div>
       </header>
       <p>${esc(snippet)}</p>
       ${date ? `<div class="aha-search-meta">Sist oppdatert: ${esc(date)}</div>` : ""}
-      <div class="aha-search-actions"><a class="aha-search-link" href="${esc(item?.href || "index.html")}">Åpne</a></div>
+      ${score ? `<div class="aha-search-meta">Relatert score: ${score.toFixed(2)}</div>` : ""}
+      <div class="aha-search-actions">
+        <a class="aha-search-link" href="${esc(item?.href || "index.html")}">Åpne</a>
+        <button type="button" class="aha-search-link" data-library-related="${esc(item?.id || "")}">Finn relatert</button>
+        <button type="button" class="aha-search-link" data-library-ask="${esc(item?.id || "")}">Spør AHA</button>
+      </div>
     </article>`;
   }
 
@@ -177,8 +248,29 @@
       ? "Nylig lagret eller oppdatert"
       : model.groups.find((group) => group.id === activeGroup)?.label || "Bibliotek";
     host.innerHTML = selected.length
-      ? selected.map(itemCard).join("")
+      ? selected.map((item) => itemCard(item)).join("")
       : '<article class="aha-search-card"><p>Ingen objekter i denne delen av biblioteket ennå.</p></article>';
+  }
+
+  function renderRelated(seedId = relatedToId) {
+    const panel = doc?.getElementById?.("search-library-related-panel");
+    const host = doc?.getElementById?.("search-library-related");
+    const title = doc?.getElementById?.("search-library-related-title");
+    if (!panel || !host || !currentModel) return [];
+    const seed = currentModel.items.find((item) => item.id === seedId);
+    if (!seed) {
+      panel.hidden = true;
+      host.innerHTML = "";
+      return [];
+    }
+    relatedToId = seed.id;
+    const related = findRelatedItems(seed, currentModel.items, 6);
+    panel.hidden = false;
+    if (title) title.textContent = `Relatert til «${truncate(seed.title, 70)}»`;
+    host.innerHTML = related.length
+      ? related.map((entry) => itemCard(entry.item, { relatedScore: entry.score })).join("")
+      : '<article class="aha-search-card"><p>Ingen tydelig relaterte objekter ble funnet i det lokale biblioteket.</p></article>';
+    return related;
   }
 
   function hasActiveSearch() {
@@ -201,13 +293,19 @@
   function render() {
     const items = global.AHASearch?.collectSearchItems?.() || [];
     const model = buildLibraryModel(items);
+    currentModel = model;
     renderGroups(model);
     renderRecent(model);
+    if (relatedToId) renderRelated(relatedToId);
     updateSearchResultsVisibility();
     enhanceSearchResultLabels();
     const status = doc?.getElementById?.("search-library-status");
-    if (status) status.textContent = `${model.total} lokale objekter er tilgjengelige i biblioteket. Biblioteket er en read-only visning av den samme indeksen som Søk bruker.`;
+    if (status) status.textContent = `${model.total} lokale objekter er tilgjengelige. «Finn relatert» rangerer bare eksisterende lokale søkeobjekter; det er ikke en ny database eller modell.`;
     return model;
+  }
+
+  function findItem(id) {
+    return currentModel?.items?.find?.((item) => item.id === id) || null;
   }
 
   function bind() {
@@ -215,9 +313,27 @@
       const target = event.target;
       if (!(target instanceof global.HTMLElement)) return;
       const group = target.getAttribute("data-library-group");
-      if (!group) return;
-      activeGroup = group;
-      render();
+      if (group) {
+        activeGroup = group;
+        render();
+        return;
+      }
+      const relatedId = target.getAttribute("data-library-related");
+      if (relatedId) {
+        renderRelated(relatedId);
+        doc?.getElementById?.("search-library-related-panel")?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+        return;
+      }
+      const askId = target.getAttribute("data-library-ask");
+      if (askId) {
+        const result = queueItemForChat(findItem(askId));
+        const status = doc?.getElementById?.("search-library-status");
+        if (!result.ok) {
+          if (status) status.textContent = "Kunne ikke klargjøre materialet for Chat lokalt.";
+          return;
+        }
+        global.location.href = "chat.html";
+      }
     });
     doc?.getElementById?.("search-refresh")?.addEventListener?.("click", () => render());
     doc?.getElementById?.("search-query")?.addEventListener?.("input", handleSearchUiChange);
@@ -229,14 +345,20 @@
 
   const api = {
     GROUPS,
+    PENDING_CHAT_KEY,
     libraryGroupFor,
     sourceLabel,
     typeLabel,
     humanizeSearchMetaText,
     enhanceSearchResultLabels,
     buildLibraryModel,
+    relatedScore,
+    findRelatedItems,
+    chatPromptForItem,
+    queueItemForChat,
     hasActiveSearch,
     updateSearchResultsVisibility,
+    renderRelated,
     render
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
