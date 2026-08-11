@@ -103,26 +103,25 @@
     return normalized;
   }
 
-  // Bygger selfModel på nytt fra feedback-listen. Nyeste feedback vinner,
-  // og hver claim telles bare én gang per liste (dedup på normalisert tekst).
+  // Bygger selfModel på nytt fra feedback-listen. Nyeste feedback vinner på
+  // tvers av alle statusbøtter, slik at samme claim aldri kan være både f.eks.
+  // bekreftet og avvist samtidig. Aktivt kuraterte spor beholdes separat.
   function updateSelfModelFromFeedback(memory) {
     const normalized = normalizeMemory(memory);
     const feedback = [...normalized.feedback].sort(
       (a, b) => (Date.parse(b.createdAt) || 0) - (Date.parse(a.createdAt) || 0)
     );
     const selfModel = emptySelfModel();
-    // Behold ev. manuelt kuraterte aktive mønstre/prosjekter/spenninger.
     selfModel.activePatterns = asArray(normalized.selfModel.activePatterns);
     selfModel.activeProjects = asArray(normalized.selfModel.activeProjects);
     selfModel.activeTensions = asArray(normalized.selfModel.activeTensions);
 
-    const seen = { confirmedClaims: new Set(), partialClaims: new Set(), rejectedClaims: new Set(), importantClaims: new Set(), outdatedClaims: new Set() };
+    const seenClaims = new Set();
     feedback.forEach((entry) => {
       const bucket = RESPONSE_TO_BUCKET[entry.response];
-      if (!bucket) return;
       const key = normalizeClaimText(entry.claimText);
-      if (!key || seen[bucket].has(key)) return;
-      seen[bucket].add(key);
+      if (!bucket || !key || seenClaims.has(key)) return;
+      seenClaims.add(key);
       selfModel[bucket].push({
         claimId: entry.claimId,
         claimText: entry.claimText,
@@ -133,6 +132,15 @@
       });
     });
     return selfModel;
+  }
+
+  function getLatestFeedbackForClaim(claimText, memoryArg) {
+    const key = normalizeClaimText(claimText);
+    if (!key) return null;
+    const memory = memoryArg ? normalizeMemory(memoryArg) : loadMemory();
+    return [...memory.feedback]
+      .filter((entry) => normalizeClaimText(entry.claimText) === key)
+      .sort((a, b) => (Date.parse(b.createdAt) || 0) - (Date.parse(a.createdAt) || 0))[0] || null;
   }
 
   function addFeedback(entry) {
@@ -153,14 +161,21 @@
   function summarizeMemory(memoryArg) {
     const memory = memoryArg ? normalizeMemory(memoryArg) : loadMemory();
     const selfModel = updateSelfModelFromFeedback(memory);
-    const countBy = (response) => memory.feedback.filter((entry) => entry.response === response).length;
+    const feedbackCountBy = (response) => memory.feedback.filter((entry) => entry.response === response).length;
     return {
       totalFeedback: memory.feedback.length,
-      confirmed: countBy("stemmer"),
-      partial: countBy("delvis"),
-      rejected: countBy("feil"),
-      important: countBy("viktig"),
-      outdated: countBy("utdatert"),
+      confirmed: selfModel.confirmedClaims.length,
+      partial: selfModel.partialClaims.length,
+      rejected: selfModel.rejectedClaims.length,
+      important: selfModel.importantClaims.length,
+      outdated: selfModel.outdatedClaims.length,
+      feedbackCounts: {
+        confirmed: feedbackCountBy("stemmer"),
+        partial: feedbackCountBy("delvis"),
+        rejected: feedbackCountBy("feil"),
+        important: feedbackCountBy("viktig"),
+        outdated: feedbackCountBy("utdatert")
+      },
       confirmedClaims: selfModel.confirmedClaims,
       partialClaims: selfModel.partialClaims,
       rejectedClaims: selfModel.rejectedClaims,
@@ -201,6 +216,7 @@
     addFeedback,
     summarizeMemory,
     updateSelfModelFromFeedback,
+    getLatestFeedbackForClaim,
     buildMemoryPack
   };
 
