@@ -98,10 +98,27 @@
     };
   }
 
-  function listMarkup(items, emptyText) {
+  function claimControlsMarkup(item) {
+    const safe = esc(item);
+    return `
+      <div class="aha-module-actions aha-personal-ai-memory-actions" aria-label="Styr denne selvinnsikten">
+        <button type="button" data-personal-ai-memory-response="stemmer">Stemmer</button>
+        <button type="button" data-personal-ai-memory-response="delvis">Nyanser</button>
+        <button type="button" data-personal-ai-memory-response="utdatert">Ikke lenger relevant</button>
+        <button type="button" data-personal-ai-memory-response="feil">Feil</button>
+      </div>
+      <label class="module-meta">Kommentar eller nyanse (valgfritt)
+        <input type="text" data-personal-ai-memory-note placeholder="Legg til en lokal kommentar" autocomplete="off" />
+      </label>
+      <span class="module-meta" data-personal-ai-memory-item-status aria-live="polite"></span>`;
+  }
+
+  function listMarkup(items, emptyText, controllable = false) {
     const values = asArray(items);
     if (!values.length) return `<p class="module-meta">${esc(emptyText)}</p>`;
-    return `<ul class="aha-training-recommendations">${values.slice(0, 8).map((item) => `<li>${esc(item)}</li>`).join("")}</ul>`;
+    return `<ul class="aha-training-recommendations">${values.slice(0, 8).map((item) => controllable
+      ? `<li data-personal-ai-memory-claim="${esc(item)}"><span>${esc(item)}</span>${claimControlsMarkup(item)}</li>`
+      : `<li>${esc(item)}</li>`).join("")}</ul>`;
   }
 
   function activeTrackMarkup(model) {
@@ -132,17 +149,17 @@
       <article class="aha-panel">
         <h3>Bekreftet om deg</h3>
         <p class="module-meta">Dette har du selv sagt stemmer. AHA kan behandle det som det tryggeste personlige grunnlaget.</p>
-        ${listMarkup(model.confirmed, "Ingen selvinnsikter er bekreftet som «stemmer» ennå.")}
+        ${listMarkup(model.confirmed, "Ingen selvinnsikter er bekreftet som «stemmer» ennå.", true)}
       </article>
       <article class="aha-panel">
         <h3>Viktig for deg</h3>
         <p class="module-meta">Markert som viktig. Viktig betyr prioritet, ikke automatisk at påstanden er bekreftet.</p>
-        ${listMarkup(model.important, "Ingen egne påstander er markert som viktige utover de bekreftede.")}
+        ${listMarkup(model.important, "Ingen egne påstander er markert som viktige utover de bekreftede.", true)}
       </article>
       <article class="aha-panel">
         <h3>Må nyanseres</h3>
         <p class="module-meta">Dette har du markert som delvis riktig og skal derfor brukes forsiktig.</p>
-        ${listMarkup(model.partial, "Ingen delvis bekreftede selvinnsikter venter på nyansering.")}
+        ${listMarkup(model.partial, "Ingen delvis bekreftede selvinnsikter venter på nyansering.", true)}
       </article>
       <article class="aha-panel">
         <h3>Aktive spor</h3>
