@@ -15,13 +15,13 @@
     try { return JSON.parse(raw); } catch { return fallback; }
   }
   function fingerprint(source) {
-    const text = typeof source === "string" ? source : JSON.stringify(source);
+    const value = typeof source === "string" ? source : JSON.stringify(source);
     let hash = 2166136261;
-    for (let i = 0; i < text.length; i += 1) {
-      hash ^= text.charCodeAt(i);
+    for (let i = 0; i < value.length; i += 1) {
+      hash ^= value.charCodeAt(i);
       hash = Math.imul(hash, 16777619);
     }
-    return `${text.length}:${(hash >>> 0).toString(16)}`;
+    return `${value.length}:${(hash >>> 0).toString(16)}`;
   }
   function sourceObject(source) {
     if (typeof source === "string") {
@@ -34,13 +34,14 @@
   }
   function extractMemoryCandidate(source) {
     const root = sourceObject(source);
+    const backup = asObject(root.backup);
     const containers = [
       root.data,
       root.localStorage,
       root.storage,
-      asObject(root.backup).data,
-      asObject(root.backup).localStorage,
-      asObject(root.backup).storage,
+      backup.data,
+      backup.localStorage,
+      backup.storage,
       root
     ];
     for (const container of containers) {
@@ -151,18 +152,31 @@
     global.URL.revokeObjectURL(url);
     return payload;
   }
+  function removeBaseUnknown(summary) {
+    const skipped = { ...asObject(summary.skipped) };
+    skipped.unknown = Math.max(0, Number(skipped.unknown || 0) - 1);
+    return {
+      ...summary,
+      skipped,
+      skippedEntries: Array.isArray(summary.skippedEntries)
+        ? summary.skippedEntries.filter((entry) => entry?.key !== MEMORY_KEY)
+        : []
+    };
+  }
   function previewRestore(source) {
     const base = global.AHAPrivacyRestore;
     if (!base?.previewRestore) throw new Error("AHA restore er ikke tilgjengelig.");
     const baseSummary = base.previewRestore(source);
     const candidate = extractMemoryCandidate(source);
-    const summary = {
+    let summary = {
       ...baseSummary,
       restorableKeys: Array.isArray(baseSummary.restorableKeys) ? [...baseSummary.restorableKeys] : [],
       skipped: { ...asObject(baseSummary.skipped) },
+      skippedEntries: Array.isArray(baseSummary.skippedEntries) ? baseSummary.skippedEntries.map((entry) => ({ ...entry })) : [],
       personalAiMemory: false
     };
     if (candidate.found) {
+      summary = removeBaseUnknown(summary);
       const validation = validateMemory(candidate.value);
       if (validation.ok) {
         summary.personalAiMemory = true;
@@ -170,6 +184,7 @@
         if (!summary.restorableKeys.includes(MEMORY_KEY)) summary.restorableKeys.push(MEMORY_KEY);
       } else {
         summary.skipped.invalid = Number(summary.skipped.invalid || 0) + 1;
+        summary.skippedEntries.push({ key: MEMORY_KEY, reason: "invalid" });
       }
     }
     lastPreviewFingerprint = fingerprint(source);
@@ -202,7 +217,8 @@
         global.localStorage?.setItem(MEMORY_KEY, JSON.stringify(cleanMemory));
         memoryWritten = true;
       }
-      const baseResult = global.AHAPrivacyRestore.applyRestore(source);
+      let baseResult = global.AHAPrivacyRestore.applyRestore(source);
+      if (candidate.found) baseResult = removeBaseUnknown(baseResult);
       const invalidatedDerivedCaches = memoryWritten ? invalidateDerivedCaches() : 0;
       lastPreviewFingerprint = "";
       return {
@@ -249,9 +265,9 @@
       `Tillatte nøkler: ${(summary.restorableKeys || []).join(", ") || "ingen"}`
     ].join("\n");
   }
-  function setMessage(text) {
+  function setMessage(value) {
     const target = global.document?.getElementById("privacy-action-message");
-    if (target) target.textContent = text;
+    if (target) target.textContent = value;
   }
   function bindUi() {
     const exportButton = global.document?.getElementById("privacy-export-complete");
