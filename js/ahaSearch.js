@@ -78,6 +78,12 @@
     return Boolean(record?.deletedAt || record?.deleted_at);
   }
 
+  function isSearchableInsight(insight) {
+    if (!insight || typeof insight !== "object" || insight.merged_into) return false;
+    const status = asText(insight.status, "suggested").toLowerCase();
+    return !["archived", "rejected", "merged"].includes(status) && !isDeletedRecord(insight);
+  }
+
   function truncate(text, max) {
     const value = asText(text, "");
     if (!value) return "";
@@ -200,7 +206,7 @@
     const out = [];
 
     const chamber = loadByKey(STORAGE_KEYS.insights, { insights: [] });
-    asArray(chamber?.insights).forEach((insight, index) => {
+    asArray(chamber?.insights).filter(isSearchableInsight).forEach((insight, index) => {
       const base = withBase(insight, { type: "insight", source: "aha_insights" });
       const refId = asText(insight?.id || base?.id, `insight_idx_${index}`);
       out.push(createSearchItem({
@@ -254,9 +260,7 @@
         updatedAt: note?.updatedAt || note?.updated_at || note?.lastUpdated || note?.last_updated || "",
         last_reanalyzed_at: lastReanalyzedAt,
         href: "notes.html",
-        meta: {
-          lastReanalyzedAt
-        }
+        meta: { lastReanalyzedAt }
       }));
     });
 
@@ -283,14 +287,14 @@
       const base = withBase(post, { type: "feed_post", source: "aha_feed" });
       const refId = asText(post?.id || base?.id, "");
       if (!refId) return;
-      const text = asText(post?.text, "");
+      const value = asText(post?.text, "");
       out.push(createSearchItem({
         id: `feed_${refId}`,
-        title: text ? truncate(text, 60) : "Feed-post",
+        title: value ? truncate(value, 60) : "Feed-post",
         type: "feed_post",
         source: "aha_feed",
         refId,
-        text,
+        text: value,
         tags: post?.tags || base?.tags,
         createdAt: base?.createdAt,
         updatedAt: base?.updatedAt,
@@ -402,7 +406,6 @@
       }));
     });
 
-
     const musicSafety = { metadata_only: true, audio_stored: false, audio_playback_enabled: false, spotify_token_included: false };
     const music = loadByKey(STORAGE_KEYS.musicLibrary, {});
     pushGeneric(out, STORAGE_KEYS.musicLibrary, "aha_music_library", asArray(music?.tracks), { type: "music_track", title: "Music track", fields: ["title", "name", "artist", "album", "description"], href: "music.html", safety: musicSafety });
@@ -443,9 +446,7 @@
     const filtered = allItems.filter((item) => {
       if (sourceFilter && item.source !== sourceFilter) return false;
       if (typeFilter && item.type !== typeFilter) return false;
-
       if (!q) return true;
-
       const haystack = [
         item.title,
         item.text,
@@ -454,7 +455,6 @@
         item.source,
         item.type
       ].join(" ").toLowerCase();
-
       return haystack.includes(q);
     });
 
@@ -468,13 +468,11 @@
 
     const selectedSource = sourceSelect.value;
     const selectedType = typeSelect.value;
-
     const sources = Array.from(new Set(allItems.map((item) => item.source))).sort();
     const types = Array.from(new Set(allItems.map((item) => item.type))).sort();
 
     sourceSelect.innerHTML = `<option value="">Alle kilder</option>${sources.map((s) => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join("")}`;
     typeSelect.innerHTML = `<option value="">Alle typer</option>${types.map((t) => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join("")}`;
-
     sourceSelect.value = sources.includes(selectedSource) ? selectedSource : "";
     typeSelect.value = types.includes(selectedType) ? selectedType : "";
   }
@@ -564,6 +562,7 @@
     collectSearchItems,
     searchItems,
     render,
-    refresh
+    refresh,
+    isSearchableInsight
   };
 })(window);
