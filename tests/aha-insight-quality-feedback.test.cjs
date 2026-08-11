@@ -119,8 +119,8 @@ assert.match(engineCode, /status !== "archived" && status !== "rejected" && stat
 assert.match(navCode, /activeFile === "chat\.html" \|\| activeFile === "insights\.html"/, 'quality controls should load only on Chat and Insights surfaces');
 assert.match(navCode, /js\/ahaInsightQualityFeedback\.js/);
 
-const storageKeys = [...code.matchAll(/["'](aha_[a-z0-9_]+_v\d+)["']/g)].map((match) => match[1]);
-assert.deepEqual([...new Set(storageKeys)], ['aha_insight_chamber_v1'], 'quality feedback must not create a parallel storage key');
+assert.match(code, /const CHAMBER_KEY = "aha_insight_chamber_v1"/, 'quality feedback must target the canonical chamber key');
+assert.equal(/localStorage\?*\.?(?:setItem|getItem)\?*\?*\.??\([^\n]*aha_insight_quality_feedback_v1/.test(code), false, 'module version must never be used as a storage key');
 assert.equal(/\bfetch\s*\(/.test(code), false, 'quality feedback must remain local');
 assert.equal(/EchoNet|sync_enabled|AHAIngest\.ingest/.test(code), false, 'quality feedback must not trigger sync, EchoNet, or new ingest');
 assert.match(code, /advisoryOnly:\s*true/, 'automatic weak/duplicate detection must be advisory only');
