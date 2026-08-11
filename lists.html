@@ -19,9 +19,7 @@
           <h1 id="lists-module-title">Lists</h1>
           <p class="aha-module-purpose">Lokale samlinger av eksisterende AHA-objekter. Lists organiserer materiale, men skaper ikke ny innsikt alene.</p>
         </div>
-        <span id="aha-module-health" class="aha-module-health-badge aha-module-health-unknown" role="status" aria-label="Lists: Unknown">
-          <span>Unknown</span>
-        </span>
+        <span id="aha-module-health" class="aha-module-health-badge aha-module-health-unknown" role="status" aria-label="Lists: Unknown"><span>Unknown</span></span>
       </header>
       <div class="aha-module-actions" aria-label="Lists actions">
         <a class="aha-tile-btn aha-tile-btn-primary" href="#lists-create">Lag liste</a>
@@ -29,59 +27,26 @@
         <a class="aha-tile-btn" href="index.html">Tilbake til AHA Home</a>
       </div>
     </section>
-
     <section id="lists-create" class="aha-panel">
       <h2>Lag liste</h2>
       <form id="list-create-form" class="aha-list-form-grid">
-        <label>
-          Tittel
-          <input id="list-title" name="title" required />
-        </label>
-        <label>
-          Type
-          <select id="list-type" name="type">
-            <option value="favorites">favorites</option>
-            <option value="todo">todo</option>
-            <option value="concepts">concepts</option>
-            <option value="process">process</option>
-            <option value="quality">quality</option>
-            <option value="ai">ai</option>
-            <option value="shared_later">shared_later</option>
-          </select>
-        </label>
-        <label>
-          Beskrivelse
-          <textarea id="list-description" name="description" rows="2"></textarea>
-        </label>
-        <label>
-          Tags (kommaseparert)
-          <input id="list-tags" name="tags" />
-        </label>
-        <div>
-          <button type="submit">Lag liste</button>
-        </div>
+        <label>Tittel<input id="list-title" name="title" required /></label>
+        <label>Type<select id="list-type" name="type"><option value="favorites">favorites</option><option value="todo">todo</option><option value="concepts">concepts</option><option value="process">process</option><option value="quality">quality</option><option value="ai">ai</option><option value="shared_later">shared_later</option></select></label>
+        <label>Beskrivelse<textarea id="list-description" name="description" rows="2"></textarea></label>
+        <label>Tags (kommaseparert)<input id="list-tags" name="tags" /></label>
+        <div><button type="submit">Lag liste</button></div>
       </form>
     </section>
-
-    <section class="aha-list-stats">
-      <article class="aha-list-stat-card">
-        <span>Antall lister</span>
-        <strong id="lists-count">0</strong>
-      </article>
-      <article class="aha-list-stat-card">
-        <span>Antall listepunkter totalt</span>
-        <strong id="list-items-count">0</strong>
-      </article>
-    </section>
-
+    <section class="aha-list-stats"><article class="aha-list-stat-card"><span>Antall lister</span><strong id="lists-count">0</strong></article><article class="aha-list-stat-card"><span>Antall listepunkter totalt</span><strong id="list-items-count">0</strong></article></section>
     <section id="lists-list" class="aha-lists-layout aha-module-content" aria-live="polite"></section>
   </main>
-
   <script src="js/ahaModules.js"></script>
   <script src="js/ahaContracts.js"></script>
   <script src="js/ahaGroups.js"></script>
   <script src="js/ahaLists.js"></script>
+  <script src="js/ahaPaths.js"></script>
   <script src="js/ahaOrganizationRoles.js"></script>
-<script src="js/ahaGlobalNav.js"></script>
+  <script src="js/ahaOrganizationFlow.js"></script>
+  <script src="js/ahaGlobalNav.js"></script>
 </body>
 </html>
