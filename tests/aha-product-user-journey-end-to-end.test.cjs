@@ -43,7 +43,7 @@ const context = {
   document, localStorage: storage, Blob,
   URL: { createObjectURL() { return 'blob:test'; }, revokeObjectURL() {} },
   addEventListener() {}, dispatchEvent() {}, CustomEvent: function CustomEvent(type, init) { this.type = type; this.detail = init?.detail; },
-  setTimeout() {}, clearTimeout() {}
+  setTimeout() {}, clearTimeout() {}, setInterval() { return 1; }, clearInterval() {}
 };
 context.window = context;
 context.globalThis = context;
