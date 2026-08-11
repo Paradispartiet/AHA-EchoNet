@@ -8,5 +8,6 @@
     "SSL_CERT_FILE": "/etc/ssl/certs/ca-certificates.crt",
     "PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT": "180000"
   },
-  "postCreateCommand": "bash .devcontainer/setup-tools.sh"
+  "postCreateCommand": "bash .devcontainer/setup-tools.sh",
+  "postStartCommand": "bash .devcontainer/ensure-gh.sh"
 }
