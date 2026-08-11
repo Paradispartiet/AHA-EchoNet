@@ -1,16 +1,90 @@
 <!DOCTYPE html>
 <html lang="no">
-<head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><title>AHA Personal AI</title><link rel="stylesheet" href="css/aha-chat.css" /><link rel="stylesheet" href="css/aha-dashboard.css" /><link rel="stylesheet" href="css/aha-global-nav.css"/></head>
-<body><div id="aha-global-nav"></div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AHA Personal AI</title>
+  <link rel="stylesheet" href="css/aha-chat.css" />
+  <link rel="stylesheet" href="css/aha-dashboard.css" />
+  <link rel="stylesheet" href="css/aha-global-nav.css" />
+</head>
+<body>
+<div id="aha-global-nav"></div>
 <main class="aha-dashboard personal-ai-page" style="max-width:1100px;">
-<section class="aha-panel aha-module-shell"><header class="aha-module-shell-header"><div><p class="eyebrow">AHA Personal AI Control Panel</p><h1>AHA Personal AI</h1><p class="aha-module-purpose">Personal AI er foreløpig en lokal kontroll- og testflate. Den bygger readiness, retrieval, kontekst, lokale preview-svar og evalueringer fra godkjent AHA-materiale. Den trener ikke en modell og kaller ikke backend.</p></div></header><p class="module-meta">Svarbygging her er lokal preview/svargrunnlag, ikke et bevis på at en personlig modell er trent.</p><p class="module-meta">Retrieval-indekser er lokale hjelpestrukturer. De deles ikke, synkes ikke og skrives ikke til History Go.</p><div class="aha-module-actions"><a class="aha-tile-btn aha-tile-btn-primary" href="knowledge-workbench.html">Åpne Knowledge Workbench</a><a class="aha-tile-btn aha-tile-btn-primary" href="training.html">Åpne Training Corpus</a><a class="aha-tile-btn" href="chat.html">Åpne Chat</a><button type="button" data-personal-ai-action="build_retrieval_index">Bygg personlig søkeindeks</button><button type="button" data-personal-ai-action="build_semantic_index">Bygg semantisk søkeindeks</button><button type="button" data-personal-ai-action="run_ai_loop_audit">Kjør AI-loop audit</button><button type="button" data-personal-ai-action="test_answer_composer">Test Answer Composer</button><button type="button" data-personal-ai-action="test_answer_evaluation">Test Answer Evaluation</button><button type="button" data-personal-ai-action="full_control_test">Kjør full kontrolltest</button></div><p id="personal-ai-message" class="module-meta" role="status" aria-live="polite"></p></section>
-<section id="personal-ai-empty" class="aha-panel"><p>AHA trenger godkjent lokalt materiale før Personal AI kan bygge trygg retrieval/preview. Ingen backend, upload eller fine-tuning startes her.</p></section>
-<section class="aha-panel"><h2>Overall status</h2><div id="personal-ai-overall"></div></section>
-<section><h2>Modulstatus</h2><div id="personal-ai-modules" class="module-grid"></div></section>
-<section class="aha-panel"><h2>Anbefalinger</h2><ul id="personal-ai-recommendations" class="aha-training-recommendations"></ul></section>
-<section class="aha-panel" id="personal-ai-result"><h2>Resultatpanel</h2><p class="module-meta">Kjør full kontrolltest for å se query, treff, valgte kilder, evaluering og audit.</p></section>
+  <section class="aha-panel aha-module-shell">
+    <header class="aha-module-shell-header">
+      <div>
+        <p class="eyebrow">Min Personal AI</p>
+        <h1>Hva AHA kan bruke når den svarer deg</h1>
+        <p class="aha-module-purpose">Personal AI bruker godkjent lokalt materiale, bekreftede selvinnsikter og personlig søk når det faktisk er relevant for spørsmålet ditt. Her ser du hva som er tilgjengelig og hvor godt svarsløyfen fungerer.</p>
+      </div>
+    </header>
+    <div class="aha-module-actions">
+      <a class="aha-tile-btn aha-tile-btn-primary" href="chat.html">Spør AHA</a>
+      <a class="aha-tile-btn" href="knowledge-workbench.html">Åpne Knowledge Workbench</a>
+      <a class="aha-tile-btn" href="training.html">Se godkjent materiale</a>
+    </div>
+    <p class="module-meta">AHA trener ikke en personlig modell her. Retrieval, svargrunnlag og evaluering er lokale hjelpestrukturer; de deles ikke, synkes ikke og skrives ikke til History Go.</p>
+  </section>
+
+  <section id="personal-ai-empty" class="aha-panel">
+    <p>AHA trenger godkjent lokalt materiale før Personal AI kan bruke personlig grunnlag i svarene. Start med å godkjenne materiale eller bekrefte selvinnsikter.</p>
+  </section>
+
+  <section class="aha-panel" aria-labelledby="personal-ai-experience-title">
+    <h2 id="personal-ai-experience-title">Personal AI akkurat nå</h2>
+    <div id="personal-ai-experience" class="module-grid">
+      <article class="aha-panel"><p class="module-meta">Leser hva AHA kan bruke …</p></article>
+    </div>
+    <p id="personal-ai-message" class="module-meta" role="status" aria-live="polite"></p>
+  </section>
+
+  <section class="aha-panel" aria-labelledby="personal-ai-next-title">
+    <h2 id="personal-ai-next-title">Hva bør du gjøre nå?</h2>
+    <div id="personal-ai-overall"></div>
+  </section>
+
+  <section class="aha-panel" aria-labelledby="personal-ai-recommendations-title">
+    <h2 id="personal-ai-recommendations-title">For å gjøre AHA mer personlig</h2>
+    <ul id="personal-ai-recommendations" class="aha-training-recommendations"></ul>
+  </section>
+
+  <details id="personal-ai-advanced" class="aha-panel">
+    <summary>Avansert kontroll og tester</summary>
+    <p class="module-meta">Disse verktøyene er for inspeksjon og vedlikehold. De endrer ikke AHA til en trent personlig modell.</p>
+    <div class="aha-module-actions">
+      <button type="button" data-personal-ai-action="build_retrieval_index">Bygg personlig søkeindeks</button>
+      <button type="button" data-personal-ai-action="build_semantic_index">Bygg semantisk søkeindeks</button>
+      <button type="button" data-personal-ai-action="run_ai_loop_audit">Kjør AI-loop audit</button>
+      <button type="button" data-personal-ai-action="test_answer_composer">Test Answer Composer</button>
+      <button type="button" data-personal-ai-action="test_answer_evaluation">Test Answer Evaluation</button>
+      <button type="button" data-personal-ai-action="full_control_test">Kjør full kontrolltest</button>
+    </div>
+    <section>
+      <h3>Modulstatus</h3>
+      <div id="personal-ai-modules" class="module-grid"></div>
+    </section>
+    <section class="aha-panel" id="personal-ai-result">
+      <h3>Resultatpanel</h3>
+      <p class="module-meta">Kjør full kontrolltest for å se query, treff, valgte kilder, evaluering og audit.</p>
+    </section>
+  </details>
 </main>
-<script src="js/metaInsightsMemory.js"></script><script src="js/metaInsightsAgent.js"></script><script src="js/ahaTrainingCorpus.js"></script><script src="js/ahaTrainingExamples.js"></script><script src="js/ahaPersonalModelReadiness.js"></script><script src="js/ahaChatPersonalContext.js"></script><script src="js/ahaPersonalRetrieval.js"></script><script src="js/ahaSemanticRetrieval.js"></script><script src="js/ahaPersonalAiLoopAudit.js"></script><script src="js/ahaPersonalAnswerComposer.js"></script><script src="js/ahaPersonalAnswerEvaluation.js"></script><script src="js/ahaKnowledgeGraphIntelligence.js"></script><script src="js/ahaPersonalAiControl.js"></script><script src="js/ahaPersonalAiDashboard.js"></script>
+<script src="js/metaInsightsMemory.js"></script>
+<script src="js/metaInsightsAgent.js"></script>
+<script src="js/ahaTrainingCorpus.js"></script>
+<script src="js/ahaTrainingExamples.js"></script>
+<script src="js/ahaPersonalModelReadiness.js"></script>
+<script src="js/ahaChatPersonalContext.js"></script>
+<script src="js/ahaPersonalRetrieval.js"></script>
+<script src="js/ahaSemanticRetrieval.js"></script>
+<script src="js/ahaPersonalAiLoopAudit.js"></script>
+<script src="js/ahaPersonalAnswerComposer.js"></script>
+<script src="js/ahaPersonalAnswerEvaluation.js"></script>
+<script src="js/ahaKnowledgeGraphIntelligence.js"></script>
+<script src="js/ahaPersonalAiControl.js"></script>
+<script src="js/ahaPersonalAiDashboard.js"></script>
 <script src="js/ahaModules.js"></script>
 <script src="js/ahaGlobalNav.js"></script>
-</body></html>
+</body>
+</html>
