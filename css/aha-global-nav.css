@@ -257,7 +257,56 @@
 .aha-global-nav-tools-link { display: inline-flex; margin-top: 10px; color: var(--gnav-text); font-size: .78rem; font-weight: 750; }
 
 body.aha-global-nav-open { overflow: hidden; }
-.aha-redundant-home-link { display: none !important; }
+.aha-redundant-home-link,
+.aha-technical-eyebrow { display: none !important; }
+
+/* Samme visuelle hierarki på tvers av AHA-sidene. Dette endrer kun
+   presentasjon: hvert modul-shell får én tydelig tittel, én lesbar forklaring
+   og sekundære handlinger som ikke konkurrerer med hovednavigasjonen. */
+body.aha-product-shell main.aha-dashboard {
+  padding-top: 22px;
+}
+
+body.aha-product-shell .aha-module-shell {
+  margin-bottom: 18px;
+}
+
+body.aha-product-shell .aha-module-shell-header {
+  align-items: flex-start;
+}
+
+body.aha-product-shell .aha-module-shell-header h1 {
+  max-width: 24ch;
+  margin-top: 0;
+  margin-bottom: 10px;
+  font-size: clamp(1.7rem, 3vw, 2.35rem);
+  line-height: 1.08;
+  letter-spacing: -.025em;
+}
+
+body.aha-product-shell .aha-module-shell .aha-module-purpose {
+  max-width: 74ch;
+  margin-top: 0;
+  margin-bottom: 8px;
+  color: var(--gnav-muted);
+  line-height: 1.55;
+}
+
+body.aha-product-shell .aha-module-shell .aha-module-actions {
+  margin-top: 14px;
+  gap: 8px;
+}
+
+body.aha-product-shell .aha-module-shell .aha-module-actions a,
+body.aha-product-shell .aha-module-shell .aha-module-actions button {
+  min-height: 38px;
+}
+
+body.aha-product-shell main.aha-dashboard > .aha-panel + .aha-panel,
+body.aha-product-shell main.aha-dashboard > .aha-panel + details.aha-panel,
+body.aha-product-shell main.aha-dashboard > details.aha-panel + .aha-panel {
+  margin-top: 14px;
+}
 
 /* Home: én merkevare, én produktnav og færre konkurrerende oversikter. */
 body.aha-route-index .aha-home-header-simplified .aha-app-header { grid-template-columns: 1fr auto; gap: 10px; padding: 0 14px 10px; }
@@ -289,6 +338,7 @@ body.aha-route-chat .aha-chat-header-simplified { grid-template-columns: minmax(
   .aha-global-nav-panel { width: 100%; padding-inline: 14px; }
   .aha-global-nav-advanced .aha-global-nav-group-items { grid-template-columns: 1fr; }
   body.aha-route-index .aha-home-header-simplified .aha-header-actions .aha-cta-primary { display: none; }
+  body.aha-product-shell .aha-module-shell-header h1 { max-width: none; }
 }
 
 @media (max-width: 520px) {
@@ -299,4 +349,6 @@ body.aha-route-chat .aha-chat-header-simplified { grid-template-columns: minmax(
   body.aha-route-index .aha-home-header-simplified .aha-app-header { grid-template-columns: 1fr auto; }
   body.aha-route-index .aha-home-header-simplified .aha-profile-copy p,
   body.aha-route-index .aha-home-header-simplified .aha-profile-id-row { display: none !important; }
+  body.aha-product-shell main.aha-dashboard { padding-top: 16px; }
+  body.aha-product-shell .aha-module-shell-header h1 { font-size: clamp(1.55rem, 8vw, 2rem); }
 }
