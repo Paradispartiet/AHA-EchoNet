@@ -18,6 +18,9 @@ proxy_env=(
   "NO_PROXY=${NO_PROXY:-${no_proxy:-}}"
 )
 
+echo "[codespaces] Ensuring GitHub CLI is available..."
+bash .devcontainer/ensure-gh.sh
+
 echo "[codespaces] Installing system certificates and browser dependencies..."
 sudo apt-get update
 sudo apt-get install -y ca-certificates curl openssl
@@ -80,7 +83,7 @@ for attempt in 1 2 3; do
 done
 
 echo "[codespaces] Verifying tools..."
-gh --version | head -n 1
+bash .devcontainer/ensure-gh.sh
 playwright --version
 playwright install --list
 
