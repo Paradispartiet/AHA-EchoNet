@@ -12,6 +12,7 @@
 
   const STORAGE_KEY = "aha_meta_insights_memory_v1";
   const VERSION = "v1";
+  const DERIVED_CACHE_KEYS = ["aha_personal_retrieval_index_v1", "aha_personal_semantic_index_v1"];
   const ALLOWED_RESPONSES = ["stemmer", "delvis", "feil", "viktig", "utdatert"];
   const RESPONSE_TO_BUCKET = {
     stemmer: "confirmedClaims",
@@ -35,6 +36,19 @@
 
   function getStorage() {
     try { return global.localStorage || null; } catch { return null; }
+  }
+
+  function invalidateDerivedPersonalAiCaches() {
+    const storage = getStorage();
+    if (!storage) return 0;
+    let removed = 0;
+    DERIVED_CACHE_KEYS.forEach((key) => {
+      try {
+        if (storage.getItem(key) !== null) removed += 1;
+        storage.removeItem(key);
+      } catch {}
+    });
+    return removed;
   }
 
   function emptySelfModel() {
@@ -99,7 +113,10 @@
   function saveMemory(memory) {
     const normalized = normalizeMemory(memory);
     normalized.updatedAt = new Date().toISOString();
-    try { getStorage()?.setItem(STORAGE_KEY, JSON.stringify(normalized)); } catch {}
+    try {
+      getStorage()?.setItem(STORAGE_KEY, JSON.stringify(normalized));
+      invalidateDerivedPersonalAiCaches();
+    } catch {}
     return normalized;
   }
 
@@ -210,6 +227,7 @@
 
   const AHAMetaInsightsMemory = {
     STORAGE_KEY,
+    DERIVED_CACHE_KEYS: [...DERIVED_CACHE_KEYS],
     ALLOWED_RESPONSES: [...ALLOWED_RESPONSES],
     loadMemory,
     saveMemory,
@@ -217,6 +235,7 @@
     summarizeMemory,
     updateSelfModelFromFeedback,
     getLatestFeedbackForClaim,
+    invalidateDerivedPersonalAiCaches,
     buildMemoryPack
   };
 
