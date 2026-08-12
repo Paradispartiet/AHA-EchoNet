@@ -27,6 +27,17 @@ function read(relativePath) {
 
 function makeContext(seed = {}) {
   const storage = new StorageMock(seed);
+  const document = {
+    readyState: 'loading',
+    body: null,
+    head: null,
+    addEventListener() {},
+    removeEventListener() {},
+    getElementById() { return null; },
+    querySelector() { return null; },
+    querySelectorAll() { return []; },
+    createElement() { return { style: {}, dataset: {}, addEventListener() {}, appendChild() {}, setAttribute() {} }; }
+  };
   const context = {
     console,
     Date,
@@ -41,6 +52,7 @@ function makeContext(seed = {}) {
     Map,
     Promise,
     Blob,
+    document,
     localStorage: storage,
     location: { pathname: '/index.html' },
     addEventListener() {},
