@@ -32,7 +32,9 @@ function localFetch(url) {
   };
 
   delete require.cache[require.resolve('../js/ahaFagverkRuntime.js')];
-  const runtime = require('../js/ahaFagverkRuntime.js');
+  require('../js/ahaFagverkRuntime.js');
+  const runtime = global.AHAFagverkRuntime;
+  assert.equal(typeof runtime?.groundText, 'function', 'browser Fagverk runtime must register its grounding API');
 
   const source = `
     I denne artikkelen diskuterer vi ulike former for nytte og hvordan den norske statsforvaltningen bruker evalueringer.
@@ -62,6 +64,9 @@ function localFetch(url) {
   const active = JSON.parse(fs.readFileSync(path.join(repoRoot, 'data/integrations/history-go-fagverk-release.runtime-active.json'), 'utf8'));
   assert.equal(active.active_subjects.politikk.activation_status, 'runtime_subject_active');
   assert.equal(active.active_subjects.politikk.corpus_path, 'data/integrations/runtime/history-go-fagverk-politikk.corpus.v1.json');
+
+  const chatSource = fs.readFileSync(path.join(repoRoot, 'js/ahaChat.js'), 'utf8');
+  assert.match(chatSource, /fagverkGroundingStatus\s*!==\s*["']ambiguous["']/, 'ambiguous approved Fagverk grounding must block Calibration fallback');
 
   console.log('aha-fagverk-browser-runtime-bridge passed: evaluation text -> Politikk / Offentlig forvaltning');
 })().catch((error) => {
