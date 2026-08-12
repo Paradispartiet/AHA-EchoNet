@@ -7,6 +7,7 @@ const repoRoot = path.resolve(__dirname, "..");
 const textUtilsCode = fs.readFileSync(path.join(repoRoot, "js/ahaChatTextUtils.js"), "utf8");
 const signalsCode = fs.readFileSync(path.join(repoRoot, "js/ahaChatSignals.js"), "utf8");
 const exportCode = fs.readFileSync(path.join(repoRoot, "js/ahaChatExport.js"), "utf8");
+const autoAnalysisCode = fs.readFileSync(path.join(repoRoot, "js/ahaChatAutoAnalysis.js"), "utf8");
 const chatCode = fs.readFileSync(path.join(repoRoot, "js/ahaChat.js"), "utf8");
 
 const windowObj = {};
@@ -43,12 +44,12 @@ const good = topicHooks.buildTopicConsistencyReport({ sourceText: evaluationSour
 assert.equal(good.valid, true);
 assert.ok(good.meaningfulOverlap.length >= 2);
 
-assert.match(chatCode, /durableKnowledgeSource:\s*"fagverk"/);
-assert.match(chatCode, /currentDocumentRole:\s*"analysis_source"/);
-assert.match(chatCode, /legacyArticleTemplatesEnabled:\s*false/);
-const buildStart = chatCode.indexOf("function buildAutoOutputs");
-const academicBranch = chatCode.indexOf('if (textType === "academic_article" && !AHA_RUNTIME_KNOWLEDGE_POLICY.legacyArticleTemplatesEnabled)', buildStart);
-const legacyAcademicBranch = chatCode.indexOf('else if (textType === "academic_article")', buildStart);
+assert.match(autoAnalysisCode, /durableKnowledgeSource:\s*"fagverk"/);
+assert.match(autoAnalysisCode, /currentDocumentRole:\s*"analysis_source"/);
+assert.match(autoAnalysisCode, /legacyArticleTemplatesEnabled:\s*false/);
+const buildStart = autoAnalysisCode.indexOf("function buildAutoOutputs");
+const academicBranch = autoAnalysisCode.indexOf('if (textType === "academic_article" && !AHA_RUNTIME_KNOWLEDGE_POLICY.legacyArticleTemplatesEnabled)', buildStart);
+const legacyAcademicBranch = autoAnalysisCode.indexOf('else if (textType === "academic_article")', buildStart);
 assert.ok(buildStart >= 0 && academicBranch > buildStart && academicBranch < legacyAcademicBranch, "source-grounded academic early return must precede legacy templates");
 assert.match(chatCode, /skip_insight:\s*urlInfo\.isSourceAction \|\| transientAnalysisDocument/);
 assert.match(chatCode, /savingEnabled && !urlInfo\.isSourceAction && !transientAnalysisDocument/);
