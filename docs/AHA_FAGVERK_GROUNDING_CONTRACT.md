@@ -148,6 +148,29 @@ A grounding change is acceptable only when:
 - provenance points to an exact History Go commit
 - no runtime network or write path is introduced
 
+## Production analysis quality matrix
+
+`npm run test:analysis-quality` runs the reviewed production matrix in
+`tests/fixtures/aha-production-analysis-quality-matrix.v1.json`.
+
+The matrix is registry-driven rather than quota-driven: every runtime-active
+canonical subject must have exactly one reviewed case, and activating another
+subject makes CI fail until a corresponding quality case is reviewed. For each
+case the gate verifies the complete local product chain:
+
+1. canonical subject and chapter provenance
+2. source-grounded AHA analysis and visible AHA Ser content
+3. fail-closed semantic source binding
+4. absence of reviewed cross-domain leakage terms
+5. source-grounded related terms in a Begrepsliste
+6. a narrative learning step with an explicit learning outcome
+7. a graphical Tankekart with the concept list as center and concepts as branches
+8. the Personal AI boundary that prevents automatic memory persistence
+
+The fixture is human-reviewed evaluation data, not model-training truth. Fagverk
+terms may become concept candidates only when the exact term is also present in
+the active source text.
+
 ## Next step
 
 After the full Fagverk corpus is generated and reviewed, the next engine PR should add a scored comparison report between:
