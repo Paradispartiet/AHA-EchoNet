@@ -3,6 +3,91 @@
   gap: 16px;
 }
 
+.aha-concept-list-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.aha-concept-list-card {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  border-color: rgba(123, 211, 184, .35);
+  background: linear-gradient(145deg, rgba(33, 89, 75, .18), rgba(255, 255, 255, .025));
+}
+
+.aha-concept-list-card h3,
+.aha-concept-list-card p { margin: 0; }
+
+.aha-concept-terms {
+  margin: 0;
+  padding-left: 1.3rem;
+  display: grid;
+  gap: 7px;
+}
+
+.aha-concept-term {
+  padding: 4px 0;
+  overflow-wrap: anywhere;
+}
+
+.aha-concept-term-main {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.aha-concept-term-definition {
+  display: block;
+  color: var(--muted, #aab4c3);
+  font-size: .88rem;
+  margin-top: 2px;
+}
+
+.aha-concept-term-remove {
+  min-width: 38px;
+  min-height: 38px;
+  padding: 4px 9px;
+}
+
+.aha-concept-add-form {
+  display: grid;
+  grid-template-columns: minmax(120px, .7fr) minmax(170px, 1.3fr) auto;
+  gap: 8px;
+  align-items: end;
+}
+
+.aha-concept-add-form label {
+  display: grid;
+  gap: 5px;
+  font-size: .85rem;
+}
+
+.aha-concept-add-form input {
+  width: 100%;
+  background: rgba(255,255,255,.04);
+  color: inherit;
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.aha-concept-list-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  border-top: 1px solid rgba(255,255,255,.1);
+  padding-top: 10px;
+}
+
+.aha-collections-intro {
+  margin-top: 12px;
+  border-color: rgba(130, 167, 255, .28);
+}
+
 .aha-list-stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -223,4 +308,7 @@
   .aha-list-delete {
     width: 100%;
   }
+
+  .aha-concept-add-form { grid-template-columns: 1fr; }
+  .aha-concept-add-form button { width: 100%; }
 }

@@ -41,6 +41,92 @@
   gap: 0.7rem;
 }
 
+.aha-path-goal {
+  border-left: 3px solid #7ac6ff;
+  padding: .65rem .8rem;
+  background: rgba(122, 198, 255, .07);
+  border-radius: 0 10px 10px 0;
+}
+
+.aha-path-outcome {
+  border-left-color: #7bd3b8;
+  background: rgba(123, 211, 184, .07);
+}
+
+.aha-path-story {
+  list-style: none;
+  padding: 0;
+  counter-reset: path-step;
+}
+
+.aha-path-story .aha-path-step-row {
+  position: relative;
+  align-items: flex-start;
+  border: 0;
+  padding: 0 0 1.15rem 3.2rem;
+}
+
+.aha-path-story .aha-path-step-row:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  left: 1.15rem;
+  top: 2.3rem;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(#7ac6ff, rgba(122, 198, 255, .18));
+}
+
+.aha-path-step-number {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: grid;
+  place-items: center;
+  width: 2.3rem;
+  height: 2.3rem;
+  border-radius: 999px;
+  background: #17375a;
+  border: 2px solid #7ac6ff;
+  color: #fff;
+  font-weight: 800;
+}
+
+.aha-path-step-content {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 12px;
+  background: rgba(255,255,255,.025);
+  padding: .75rem;
+}
+
+.aha-path-step-narrative,
+.aha-path-step-outcome {
+  margin: .45rem 0 0;
+  overflow-wrap: anywhere;
+}
+
+.aha-path-step-outcome {
+  color: #aee9d6;
+  font-size: .9rem;
+}
+
+.aha-path-step-fields {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.aha-path-step-fields textarea,
+.aha-path-step-fields input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: 8px;
+  background: rgba(255,255,255,.04);
+  color: inherit;
+}
+
 .aha-paths-workspace {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(280px, .8fr);

@@ -55,8 +55,8 @@ function makeContext(seed = {}) {
 }
 
 const pathsHtml = fs.readFileSync(path.join(__dirname, '..', 'paths.html'), 'utf8');
-assert.match(pathsHtml, /<h1 id="paths-module-title">Paths<\/h1>/, 'Paths page should render the module title');
-assert.match(pathsHtml, /Lokale sekvenser av eksisterende AHA-objekter\. Paths organiserer rekkefølge/, 'Paths page should render its purpose');
+assert.match(pathsHtml, /<h1 id="paths-module-title">Kunnskapsstier<\/h1>/, 'Paths page should render the product title');
+assert.match(pathsHtml, /narrative forløp og læringsreiser/, 'Paths page should render its narrative and learning purpose');
 assert.match(pathsHtml, /id="aha-module-health"/, 'Paths page should include a textual health badge');
 assert.match(pathsHtml, /href="#paths-create">Lag sti<\/a>/, 'localized create flow should remain the primary action');
 assert.match(pathsHtml, />Lag sti<\/button>/, 'create form submit should use Lag sti label');
@@ -66,7 +66,7 @@ empty.Paths.render();
 assert.equal(empty.elements['paths-count'].textContent, '0', 'empty Paths should render a zero count');
 assert.equal(empty.elements['path-steps-count'].textContent, '0', 'empty Paths should render a zero step count');
 assert.match(empty.elements['paths-list'].innerHTML, /Ingen stier ennå\./, 'empty Paths should use the standard no-data title');
-assert.match(empty.elements['paths-list'].innerHTML, /Lag en lokal sti for å sette innsikter, lister eller notater i rekkefølge\./, 'empty Paths should explain when data appears');
+assert.match(empty.elements['paths-list'].innerHTML, /fortelling eller læringsreise/, 'empty Paths should explain narrative and learning use');
 assert.equal(empty.healthCalls.at(-1).health.status, 'empty', 'empty Paths should report empty health');
 
 const rows = [
@@ -84,13 +84,16 @@ const rows = [
     title: 'Learning sprint',
     summary: 'Sequence to revisit',
     type: 'learning',
+    mode: 'learning',
+    goal: 'Understand the concept',
+    learningOutcome: 'Explain it independently',
     category: 'study',
     status: 'ready',
     createdAt: '2026-02-01T00:00:00.000Z',
     updatedAt: '2026-03-02T00:00:00.000Z',
     meta: { password: 'DO_NOT_RENDER', connectionString: 'postgres://secret' },
     sequence: [
-      { id: 'step-secret-ref', name: 'Read first note', type: 'note', source: 'aha_notes', refId: 'private-ref-one', meta: { token: 'SECRET_TOKEN' } },
+      { id: 'step-secret-ref', name: 'Read first note', type: 'note', source: 'aha_notes', refId: 'private-ref-one', narrative: 'Begin with the concrete example.', learningOutcome: 'Recognize the first idea.', meta: { token: 'SECRET_TOKEN' } },
       { key: 'second-key', label: 'Review concept', type: 'insight', source: 'aha_insights', refId: 'private-ref-two' }
     ]
   }
@@ -101,22 +104,24 @@ const overview = populated.elements['paths-list'].innerHTML;
 assert.equal(populated.elements['paths-count'].textContent, '2', 'overview should render the path count');
 assert.equal(populated.elements['path-steps-count'].textContent, '2', 'overview should render the total step count');
 assert.match(overview, /Learning sprint/, 'overview should render path titles');
-assert.match(overview, /2 steps/, 'overview should render per-path step counts');
+assert.match(overview, /2 steg/, 'overview should render per-path step counts');
 assert.ok(overview.indexOf('Learning sprint') < overview.indexOf('Older path'), 'overview should sort the newest updated path first');
 assert.doesNotMatch(overview, /DO_NOT_RENDER|postgres:\/\/secret|SECRET_TOKEN|private-ref/, 'overview should not dump metadata, secrets, or reference ids');
 assert.equal(populated.healthCalls.at(-1).health.status, 'ready', 'populated Paths should report ready health');
 
 populated.Paths.selectPath('newer');
 const preview = populated.elements['paths-list'].innerHTML;
-assert.match(preview, /Path preview/, 'selecting a path should open the details preview');
-assert.match(preview, /Sequence/, 'preview should label the sequence');
+assert.match(preview, /Læringssti/, 'selecting a path should identify its learning mode');
+assert.match(preview, /Fortelling og læringstrinn/, 'preview should label the narrative sequence');
 assert.match(preview, /Read first note/, 'preview should render first safe step title');
+assert.match(preview, /Begin with the concrete example/, 'preview should render the step narrative');
+assert.match(preview, /Recognize the first idea/, 'preview should render the step learning outcome');
 assert.match(preview, /Review concept/, 'preview should render step fallback labels');
-assert.match(preview, /Close path preview/, 'preview should provide an accessible close action');
+assert.match(preview, /Lukk kunnskapssti/, 'preview should provide an accessible close action');
 assert.doesNotMatch(preview, /DO_NOT_RENDER|postgres:\/\/secret|SECRET_TOKEN|private-ref/, 'preview should not render raw metadata, secrets, or reference ids');
 
 populated.Paths.selectPath('older');
-assert.match(populated.elements['paths-list'].innerHTML, /No steps available\./, 'preview should show a short no-steps message when sequence is empty');
+assert.match(populated.elements['paths-list'].innerHTML, /Ingen steg ennå\./, 'preview should show a short no-steps message when sequence is empty');
 
 const invalid = makeContext({ aha_paths_v1: '{not-json' });
 invalid.Paths.render();

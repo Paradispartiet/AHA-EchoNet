@@ -29,9 +29,9 @@
       label: "Organiser",
       description: "Samle tanker og kunnskap i strukturer du kan finne igjen.",
       items: [
-        { moduleId: "lists", label: "Lister", hint: "Samle relaterte ting" },
-        { moduleId: "paths", label: "Stier", hint: "Lag en rekkefølge gjennom materialet" },
-        { moduleId: "mindmap", label: "Tankekart", hint: "Se koblinger visuelt" }
+        { moduleId: "lists", label: "Begrepslister", hint: "Samle relaterte ord og begreper" },
+        { moduleId: "paths", label: "Kunnskapsstier", hint: "Følg fortellinger og læringstrinn" },
+        { moduleId: "mindmap", label: "Tankekart", hint: "Utforsk ideer som grener og undergrener" }
       ]
     },
     {

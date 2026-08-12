@@ -43,6 +43,12 @@ const store = new Map(Object.entries({
     ] },
     { id: 'list-archived', archived: true, items: [{ source: 'aha_insights', refId: 'insight-1', type: 'insight' }] }
   ]),
+  aha_concept_lists_v1: JSON.stringify([
+    { id: 'concept-list-1', title: 'Demokrati', terms: [
+      { id: 'term-1', term: 'valg', definition: 'Velgerne avgir stemmer.' },
+      { id: 'term-2', term: 'representasjon' }
+    ] }
+  ]),
   aha_paths_v1: JSON.stringify([
     { id: 'path-1', title: 'Path one', steps: [
       { id: 'step-1', source: 'aha_lists', refId: 'list-1', type: 'list' },
@@ -110,6 +116,9 @@ for (const expected of [
   'source_event::aha_source_events::source-1',
   'insight::aha_insights::insight-1',
   'list::aha_lists::list-1',
+  'concept_list::aha_concept_lists::concept-list-1',
+  'concept::aha_concept_lists::concept-list-1:term-1',
+  'concept::aha_concept_lists::concept-list-1:term-2',
   'path::aha_paths::path-1',
   'article::aha_avisa::article-1',
   'note::aha_notes::note-1',
@@ -129,6 +138,7 @@ assert.equal(context.AHAMindmap.isUnavailableRecord({ archived: true }), true);
 
 assert.ok(graph.edges.some((edge) => edge.type === 'source_to_insight' && edge.from === 'source_event::aha_source_events::source-1' && edge.to === 'insight::aha_insights::insight-1'));
 assert.ok(graph.edges.some((edge) => edge.type === 'list_contains' && edge.to === 'insight::aha_insights::insight-1'));
+assert.equal(graph.edges.filter((edge) => edge.type === 'concept_list_contains').length, 2, 'concept lists should branch to their terms');
 assert.ok(graph.edges.some((edge) => edge.type === 'path_contains' && edge.to === 'list::aha_lists::list-1'));
 assert.ok(graph.edges.some((edge) => edge.type === 'article_references' && edge.to === 'path::aha_paths::path-1'));
 assert.ok(graph.edges.some((edge) => edge.type === 'group_references' && edge.to === 'article::aha_avisa::article-1'));
@@ -154,6 +164,13 @@ assert.equal(graph.summary.publishedExternalNodes, 1);
 assert.equal(graph.summary.echonetSharedNodes, 1);
 assert.equal(graph.summary.syncEnabledNodes, 1);
 assert.ok(graph.summary.omittedUnavailableCount >= 10);
+
+const layout = context.AHAMindmap.buildMindmapLayout(graph.nodes, graph.edges, 'concept_list::aha_concept_lists::concept-list-1');
+assert.equal(layout.rootId, 'concept_list::aha_concept_lists::concept-list-1', 'selected idea should become the map root');
+assert.equal(layout.branches.length, 2, 'concept terms should become first-level branches');
+assert.ok(layout.nodes.some((node) => node.depth === 0), 'layout should contain a central idea');
+assert.ok(layout.nodes.some((node) => node.depth === 1), 'layout should contain graphical branches');
+assert.equal(layout.links.length, 2, 'layout should connect both concept branches to the center');
 
 context.AHAMindmap.render();
 context.AHAMindmap.refresh();

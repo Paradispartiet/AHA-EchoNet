@@ -277,8 +277,8 @@
   }
 
   const SYNC_HUB_DRY_RUN_SOURCES = [
-    { id: "lists", name: "Lists", key: "aha_lists_v1", itemLabel: "list items" },
-    { id: "paths", name: "Paths", key: "aha_paths_v1", itemLabel: "path items" },
+    { id: "lists", name: "Samlinger", key: "aha_lists_v1", itemLabel: "objekter i samlinger" },
+    { id: "paths", name: "Kunnskapsstier", key: "aha_paths_v1", itemLabel: "steg i kunnskapsstier" },
     { id: "groups", name: "Groups", key: "aha_groups_v1", itemLabel: "group items" },
     { id: "ahaavisa", name: "AHAavisa", key: "aha_articles_v1", itemLabel: "AHAavisa articles" }
   ];

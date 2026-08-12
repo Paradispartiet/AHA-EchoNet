@@ -8,6 +8,7 @@
     insights: "aha_insight_chamber_v1",
     sourceEvents: "aha_source_events_v1",
     lists: "aha_lists_v1",
+    conceptLists: "aha_concept_lists_v1",
     paths: "aha_paths_v1",
     articles: "aha_articles_v1",
     notes: "aha_notes_v1",
@@ -21,6 +22,8 @@
     insight: "Innsikt",
     source_event: "Kildehendelse",
     list: "Liste",
+    concept_list: "Begrepsliste",
+    concept: "Begrep",
     path: "Sti",
     article: "Artikkel",
     note: "Notat",
@@ -30,7 +33,8 @@
     group: "Gruppe"
   };
 
-  let graphState = { nodes: [], edges: [], selectedNodeId: "" };
+  const BRANCH_COLORS = ["#7ac6ff", "#7bd3b8", "#f5ba67", "#c99cff", "#ff8f9d", "#84d66b", "#71d5e8", "#d8c36a"];
+  let graphState = { nodes: [], edges: [], selectedNodeId: "", view: { x: 0, y: 0, scale: 1 } };
 
   function safeParse(raw, fallback) {
     try {
@@ -142,6 +146,23 @@
       const node = { id: nodeId("list", "aha_lists", refId), title: asText(list?.title, "Liste"), type: "list", source: "aha_lists", refId, href: "lists.html", meta: safetyMeta(list, STORAGE_KEYS.lists) };
       addNode(nodes, nodeIndex, node);
       registerRef(node);
+    });
+
+    asArray(raw.conceptLists).filter((list) => !isUnavailableRecord(list)).forEach((list) => {
+      const refId = asText(list?.id, "");
+      if (!refId) return;
+      const termCount = asArray(list?.terms || list?.concepts).length;
+      const node = { id: nodeId("concept_list", "aha_concept_lists", refId), title: asText(list?.title, "Begrepsliste"), type: "concept_list", source: "aha_concept_lists", refId, href: "lists.html", meta: safetyMeta(list, STORAGE_KEYS.conceptLists, { termCount }) };
+      addNode(nodes, nodeIndex, node);
+      registerRef(node);
+      asArray(list?.terms || list?.concepts).forEach((term, index) => {
+        const termTitle = asText(typeof term === "string" ? term : term?.term || term?.title || term?.label, "");
+        if (!termTitle) return;
+        const termRefId = `${refId}:${asText(term?.id, `term_${index}`)}`;
+        const termNode = { id: nodeId("concept", "aha_concept_lists", termRefId), title: termTitle, type: "concept", source: "aha_concept_lists", refId: termRefId, href: "lists.html", meta: safetyMeta(term, STORAGE_KEYS.conceptLists, { conceptListId: refId, definition: asText(term?.definition, "") }) };
+        addNode(nodes, nodeIndex, termNode);
+        registerRef(termNode);
+      });
     });
 
     asArray(raw.paths).filter((path) => !isUnavailableRecord(path)).forEach((path) => {
@@ -292,6 +313,21 @@
       });
     });
 
+    asArray(raw.conceptLists).filter((list) => !isUnavailableRecord(list)).forEach((list) => {
+      const fromId = nodeId("concept_list", "aha_concept_lists", asText(list?.id, ""));
+      asArray(list?.terms || list?.concepts).forEach((term, index) => {
+        const termTitle = asText(typeof term === "string" ? term : term?.term || term?.title || term?.label, "");
+        if (!termTitle) return;
+        const termRefId = `${asText(list?.id, "")}:${asText(term?.id, `term_${index}`)}`;
+        addEdge(fromId, nodeId("concept", "aha_concept_lists", termRefId), "concept_list_contains", "begrep", { created_from: "concept_lists", termId: asText(term?.id, "") });
+      });
+      const relatedReferences = asArray(list?.references);
+      relatedReferences.forEach((reference) => {
+        const toId = resolveRef(nodeBundle.refIndex, reference);
+        addEdge(fromId, toId, "concept_list_relates", "relatert begrepsliste", { created_from: "concept_lists", referenceId: reference?.id || "" });
+      });
+    });
+
     asArray(raw.paths).filter((path) => !isUnavailableRecord(path)).forEach((path) => {
       const fromId = nodeId("path", "aha_paths", asText(path?.id, ""));
       asArray(path?.steps).forEach((step) => {
@@ -323,6 +359,7 @@
     return asArray(raw.sourceEvents).filter(isUnavailableRecord).length
       + asArray(raw.insights?.insights).filter(isUnavailableRecord).length
       + asArray(raw.lists).filter(isUnavailableRecord).length
+      + asArray(raw.conceptLists).filter(isUnavailableRecord).length
       + asArray(raw.paths).filter(isUnavailableRecord).length
       + asArray(raw.articles).filter(isUnavailableRecord).length
       + asArray(raw.notes).filter(isUnavailableRecord).length
@@ -362,6 +399,7 @@
       insights: loadByKey(STORAGE_KEYS.insights, { insights: [] }),
       sourceEvents: loadByKey(STORAGE_KEYS.sourceEvents, []),
       lists: loadByKey(STORAGE_KEYS.lists, []),
+      conceptLists: loadByKey(STORAGE_KEYS.conceptLists, []),
       paths: loadByKey(STORAGE_KEYS.paths, []),
       articles: loadByKey(STORAGE_KEYS.articles, []),
       notes: loadByKey(STORAGE_KEYS.notes, []),
@@ -376,6 +414,182 @@
     const graph = { nodes: nodeBundle.nodes, edges };
     graph.summary = summarizeGraphOrigins(graph, countUnavailable(raw));
     return graph;
+  }
+
+  function truncateLabel(value, max = 24) {
+    const label = asText(value, "Uten tittel");
+    return label.length > max ? `${label.slice(0, max - 1)}…` : label;
+  }
+
+  function buildMindmapLayout(nodes, edges, requestedRootId = "", maxNodes = 48) {
+    const available = asArray(nodes);
+    const nodeMap = new Map(available.map((node) => [node.id, node]));
+    const adjacency = new Map(available.map((node) => [node.id, new Set()]));
+    asArray(edges).forEach((edge) => {
+      if (!nodeMap.has(edge.from) || !nodeMap.has(edge.to)) return;
+      adjacency.get(edge.from).add(edge.to);
+      adjacency.get(edge.to).add(edge.from);
+    });
+    const byDegree = (a, b) => (adjacency.get(b.id)?.size || 0) - (adjacency.get(a.id)?.size || 0) || a.title.localeCompare(b.title, "no");
+    const root = nodeMap.get(requestedRootId) || available.slice().sort(byDegree)[0] || null;
+    if (!root) return { rootId: "", nodes: [], links: [], branches: [] };
+
+    const positioned = [{ ...root, x: 0, y: 0, depth: 0, branch: -1, color: "#ffffff", width: 210, height: 60 }];
+    const links = [];
+    const used = new Set([root.id]);
+    const firstLevel = Array.from(adjacency.get(root.id) || [])
+      .map((id) => nodeMap.get(id))
+      .filter(Boolean)
+      .sort(byDegree)
+      .slice(0, Math.min(8, maxNodes - 1));
+    firstLevel.forEach((node) => used.add(node.id));
+
+    firstLevel.forEach((branchNode, branchIndex) => {
+      const angle = -Math.PI / 2 + (Math.PI * 2 * branchIndex / Math.max(1, firstLevel.length));
+      const color = BRANCH_COLORS[branchIndex % BRANCH_COLORS.length];
+      const branch = { ...branchNode, x: Math.cos(angle) * 245, y: Math.sin(angle) * 205, depth: 1, branch: branchIndex, color, width: 178, height: 52 };
+      positioned.push(branch);
+      links.push({ from: root.id, to: branch.id, color, depth: 1 });
+
+      const children = Array.from(adjacency.get(branch.id) || [])
+        .filter((id) => id !== root.id && !used.has(id))
+        .map((id) => nodeMap.get(id))
+        .filter(Boolean)
+        .sort(byDegree)
+        .slice(0, Math.min(5, maxNodes - positioned.length));
+      children.forEach((child, childIndex) => {
+        const spread = (childIndex - (children.length - 1) / 2) * 0.2;
+        const childAngle = angle + spread;
+        const radius = 430 + Math.abs(childIndex - (children.length - 1) / 2) * 18;
+        const placed = { ...child, x: Math.cos(childAngle) * radius, y: Math.sin(childAngle) * radius * .82, depth: 2, branch: branchIndex, color, width: 160, height: 48 };
+        positioned.push(placed);
+        used.add(placed.id);
+        links.push({ from: branch.id, to: placed.id, color, depth: 2 });
+      });
+    });
+
+    return {
+      rootId: root.id,
+      nodes: positioned,
+      links,
+      branches: firstLevel.map((node, index) => ({ id: node.id, title: node.title, color: BRANCH_COLORS[index % BRANCH_COLORS.length] }))
+    };
+  }
+
+  function linkPath(from, to) {
+    const startX = from.x;
+    const startY = from.y;
+    const endX = to.x;
+    const endY = to.y;
+    const controlX = (startX + endX) / 2;
+    return `M ${startX} ${startY} C ${controlX} ${startY}, ${controlX} ${endY}, ${endX} ${endY}`;
+  }
+
+  function applyMindmapTransform() {
+    const layer = document.getElementById("mindmap-canvas-layer");
+    if (!layer) return;
+    const { x, y, scale } = graphState.view;
+    layer.setAttribute("transform", `translate(${x} ${y}) scale(${scale})`);
+  }
+
+  function resetMindmapView() {
+    graphState.view = { x: 0, y: 0, scale: 1 };
+    applyMindmapTransform();
+  }
+
+  function zoomMindmap(delta) {
+    graphState.view.scale = Math.max(.45, Math.min(2.4, graphState.view.scale + delta));
+    applyMindmapTransform();
+  }
+
+  function bindVisualMindmap() {
+    const canvas = document.getElementById("mindmap-visual");
+    const svg = canvas?.querySelector?.("svg");
+    if (!canvas || !svg) return;
+    let dragging = false;
+    let lastX = 0;
+    let lastY = 0;
+
+    svg.querySelectorAll("[data-mindmap-node]").forEach((nodeElement) => {
+      nodeElement.addEventListener("click", (event) => {
+        event.stopPropagation();
+        graphState.selectedNodeId = nodeElement.getAttribute("data-mindmap-node") || "";
+        graphState.view = { x: 0, y: 0, scale: 1 };
+        render();
+      });
+      nodeElement.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        nodeElement.dispatchEvent(new Event("click"));
+      });
+    });
+
+    svg.addEventListener("pointerdown", (event) => {
+      if (event.target?.closest?.("[data-mindmap-node]")) return;
+      dragging = true;
+      lastX = event.clientX;
+      lastY = event.clientY;
+      canvas.classList.add("is-panning");
+      svg.setPointerCapture?.(event.pointerId);
+    });
+    svg.addEventListener("pointermove", (event) => {
+      if (!dragging) return;
+      graphState.view.x += (event.clientX - lastX) / graphState.view.scale;
+      graphState.view.y += (event.clientY - lastY) / graphState.view.scale;
+      lastX = event.clientX;
+      lastY = event.clientY;
+      applyMindmapTransform();
+    });
+    const stop = (event) => {
+      dragging = false;
+      canvas.classList.remove("is-panning");
+      svg.releasePointerCapture?.(event.pointerId);
+    };
+    svg.addEventListener("pointerup", stop);
+    svg.addEventListener("pointercancel", stop);
+    svg.addEventListener("wheel", (event) => {
+      event.preventDefault();
+      zoomMindmap(event.deltaY < 0 ? .12 : -.12);
+    }, { passive: false });
+  }
+
+  function renderVisualMindmap(visibleNodes, visibleEdges) {
+    const mount = document.getElementById("mindmap-visual");
+    const legend = document.getElementById("mindmap-branch-legend");
+    if (!mount) return;
+    if (!visibleNodes.length) {
+      mount.innerHTML = `<div class="mindmap-visual-empty"><p>Ingen tanker eller begreper matcher filteret.</p></div>`;
+      if (legend) legend.innerHTML = "";
+      return;
+    }
+
+    const layout = buildMindmapLayout(visibleNodes, visibleEdges, graphState.selectedNodeId);
+    if (!graphState.selectedNodeId || !visibleNodes.some((node) => node.id === graphState.selectedNodeId)) graphState.selectedNodeId = layout.rootId;
+    const positioned = new Map(layout.nodes.map((node) => [node.id, node]));
+    const links = layout.links.map((link) => {
+      const from = positioned.get(link.from);
+      const to = positioned.get(link.to);
+      return `<path class="mindmap-link" d="${linkPath(from, to)}" stroke="${link.color}" />`;
+    }).join("");
+    const nodes = layout.nodes.map((node) => {
+      const x = node.x - node.width / 2;
+      const y = node.y - node.height / 2;
+      const rootClass = node.depth === 0 ? " is-root" : "";
+      const selectedClass = node.id === graphState.selectedNodeId ? " is-selected" : "";
+      return `<g class="mindmap-node${rootClass}${selectedClass}" data-mindmap-node="${escapeHtml(node.id)}" transform="translate(${x} ${y})" tabindex="0" role="button" aria-label="Gjør ${escapeHtml(node.title)} til hovedidé" style="color:${node.color}">
+        <rect width="${node.width}" height="${node.height}" rx="${node.depth === 0 ? 18 : 13}" stroke="${node.color}"></rect>
+        <text class="mindmap-node-title" x="${node.width / 2}" y="${node.height / 2 - 3}" text-anchor="middle">${escapeHtml(truncateLabel(node.title, node.depth === 0 ? 28 : 22))}</text>
+        <text class="mindmap-node-type" x="${node.width / 2}" y="${node.height / 2 + 14}" text-anchor="middle">${escapeHtml(TYPE_LABELS[node.type] || node.type)}</text>
+      </g>`;
+    }).join("");
+    mount.innerHTML = `<svg class="mindmap-svg" viewBox="-600 -340 1200 680" aria-labelledby="mindmap-svg-title mindmap-svg-desc"><title id="mindmap-svg-title">Grafisk tankekart</title><desc id="mindmap-svg-desc">Hovedidé i sentrum med relaterte grener og undergrener.</desc><g id="mindmap-canvas-layer" class="mindmap-canvas-layer">${links}${nodes}</g></svg>`;
+    if (legend) {
+      legend.innerHTML = layout.branches.length
+        ? layout.branches.map((branch) => `<span class="mindmap-branch-chip"><span class="mindmap-branch-dot" style="background:${branch.color}"></span>${escapeHtml(truncateLabel(branch.title, 28))}</span>`).join("")
+        : `<span class="module-meta">Den valgte hovedideen har ingen registrerte grener ennå.</span>`;
+    }
+    applyMindmapTransform();
+    bindVisualMindmap();
   }
 
   function render() {
@@ -415,6 +629,8 @@
     if (statsEdges) statsEdges.textContent = String(visibleEdges.length);
     if (statsNodeTypes) statsNodeTypes.textContent = String(nodeTypes.size);
     if (statsEdgeTypes) statsEdgeTypes.textContent = String(edgeTypes.size);
+
+    renderVisualMindmap(visibleNodes, visibleEdges);
 
     renderOriginSummary(graphState.summary || summarizeGraphOrigins(graphState));
 
@@ -553,6 +769,9 @@
 
   function bindUi() {
     document.getElementById("mindmap-refresh")?.addEventListener("click", refresh);
+    document.getElementById("mindmap-zoom-in")?.addEventListener("click", () => zoomMindmap(.15));
+    document.getElementById("mindmap-zoom-out")?.addEventListener("click", () => zoomMindmap(-.15));
+    document.getElementById("mindmap-reset-view")?.addEventListener("click", resetMindmapView);
     document.getElementById("mindmap-node-type")?.addEventListener("change", render);
     document.getElementById("mindmap-edge-type")?.addEventListener("change", render);
     document.getElementById("mindmap-search")?.addEventListener("input", render);
@@ -564,6 +783,8 @@
     buildEdges,
     isUnavailableRecord,
     summarizeGraphOrigins,
+    buildMindmapLayout,
+    renderVisualMindmap,
     render,
     refresh
   };

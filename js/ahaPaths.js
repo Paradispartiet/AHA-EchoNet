@@ -7,11 +7,13 @@
   const PATHS_KEY = "aha_paths_v1";
   const INSIGHTS_KEY = "aha_insight_chamber_v1";
   const LISTS_KEY = "aha_lists_v1";
+  const CONCEPT_LISTS_KEY = "aha_concept_lists_v1";
   const NOTES_KEY = "aha_notes_v1";
 
   const ALLOWED_PATH_TYPES = ["learning", "process", "project", "habit", "reading", "historygo", "publishing"];
   const ALLOWED_STEP_STATUS = ["planned", "active", "done", "skipped"];
-  const ALLOWED_STEP_SOURCES = ["aha_insights", "aha_lists", "aha_notes"];
+  const ALLOWED_STEP_SOURCES = ["aha_insights", "aha_lists", "aha_concept_lists", "aha_notes"];
+  const ALLOWED_PATH_MODES = ["learning", "narrative", "process"];
   let selectedPathId = "";
 
   function safeParse(raw, fallback) {
@@ -62,6 +64,8 @@
       refId: asText(step?.refId || step?.ref_id, ""),
       order: Number.isFinite(Number(step?.order)) ? Number(step.order) : index,
       status,
+      narrative: asText(step?.narrative || step?.explanation || step?.transition, ""),
+      learningOutcome: asText(step?.learningOutcome || step?.learning_outcome || step?.outcome, ""),
       addedAt: step?.addedAt || step?.added_at || now,
       meta: step && typeof step.meta === "object" && !Array.isArray(step.meta) ? step.meta : {}
     };
@@ -70,6 +74,8 @@
   function normalizePath(path) {
     const now = new Date().toISOString();
     const type = ALLOWED_PATH_TYPES.includes(path?.type) ? path.type : "learning";
+    const inferredMode = type === "historygo" ? "narrative" : (["learning", "reading"].includes(type) ? "learning" : "process");
+    const mode = ALLOWED_PATH_MODES.includes(path?.mode) ? path.mode : inferredMode;
     const tags = global.AHAContracts?.normalizeTags ? global.AHAContracts.normalizeTags(path?.tags) : asArray(path?.tags);
     const stepSource = asArray(path?.steps).length ? path?.steps : (asArray(path?.sequence).length ? path?.sequence : (asArray(path?.items).length ? path?.items : path?.nodes));
     const rawSteps = asArray(stepSource).map((step, index) => normalizeStep(step, index));
@@ -79,9 +85,12 @@
       id: asText(path?.id, uid("path")),
       title: asText(path?.title, "Uten navn"),
       type,
+      mode,
       category: asText(path?.category, ""),
       status: asText(path?.status, "Local"),
       description: asText(path?.description || path?.summary, ""),
+      goal: asText(path?.goal || path?.purpose, ""),
+      learningOutcome: asText(path?.learningOutcome || path?.learning_outcome || path?.outcome, ""),
       createdAt: path?.createdAt || path?.created_at || now,
       updatedAt: path?.updatedAt || path?.updated_at || now,
       tags,
@@ -152,6 +161,9 @@
       title: remote?.title,
       type: remote?.type,
       description: remote?.description || remote?.summary,
+      mode: remote?.mode,
+      goal: remote?.goal || remote?.purpose,
+      learningOutcome: remote?.learningOutcome || remote?.learning_outcome || remote?.outcome,
       category: remote?.category,
       status: remote?.status,
       tags: remote?.tags,
@@ -240,7 +252,10 @@
       id: uid("path"),
       title,
       type: input?.type,
+      mode: input?.mode,
       description: asText(input?.description, ""),
+      goal: asText(input?.goal, ""),
+      learningOutcome: asText(input?.learningOutcome, ""),
       createdAt: now,
       updatedAt: now,
       tags: input?.tags,
@@ -312,6 +327,8 @@
       refId,
       order: path.steps.length,
       status: "planned",
+      narrative: asText(stepInput?.narrative, ""),
+      learningOutcome: asText(stepInput?.learningOutcome, ""),
       addedAt: new Date().toISOString(),
       meta: stepInput?.meta || {}
     }, path.steps.length);
@@ -322,6 +339,28 @@
     savePaths(paths);
     persistPath(paths[index]);
     return { ok: true, step, path: paths[index] };
+  }
+
+  function updatePathStep(pathId, stepId, changes) {
+    const paths = loadPaths();
+    const pathIndex = paths.findIndex((path) => path.id === pathId && !isUnavailableRecord(path));
+    if (pathIndex < 0) return null;
+    const stepIndex = paths[pathIndex].steps.findIndex((step) => step.id === stepId);
+    if (stepIndex < 0) return null;
+    const current = paths[pathIndex].steps[stepIndex];
+    paths[pathIndex].steps[stepIndex] = normalizeStep({
+      ...current,
+      narrative: changes?.narrative !== undefined ? changes.narrative : current.narrative,
+      learningOutcome: changes?.learningOutcome !== undefined ? changes.learningOutcome : current.learningOutcome,
+      status: changes?.status !== undefined ? changes.status : current.status,
+      id: current.id,
+      order: current.order
+    }, current.order);
+    paths[pathIndex].updatedAt = new Date().toISOString();
+    paths[pathIndex] = normalizePath(paths[pathIndex]);
+    savePaths(paths);
+    persistPath(paths[pathIndex]);
+    return paths[pathIndex];
   }
 
   function removeStepFromPath(pathId, stepId) {
@@ -353,7 +392,7 @@
 
 
   function renderStepCount(count) {
-    return `${count} ${count === 1 ? "step" : "steps"}`;
+    return `${count} ${count === 1 ? "steg" : "steg"}`;
   }
 
   function renderOverviewCard(path, isSelected) {
@@ -362,18 +401,18 @@
       <article class="aha-panel aha-path-overview-card${isSelected ? " is-selected" : ""}" data-path-card="${escapeHtml(path.id)}">
         <div class="aha-path-header">
           <div>
-            <p class="aha-path-card-kicker">${escapeHtml(pathStatusLabel(path))} path</p>
+            <p class="aha-path-card-kicker">${escapeHtml(path.mode === "narrative" ? "Narrativ sti" : path.mode === "process" ? "Arbeidsforløp" : "Læringssti")}</p>
             <h3>${escapeHtml(path.title)}</h3>
           </div>
           <span class="aha-path-badge">${renderStepCount(path.steps.length)}</span>
         </div>
-        <p class="aha-path-summary">${escapeHtml(path.description || "No description yet.")}</p>
+        <p class="aha-path-summary">${escapeHtml(path.description || path.goal || "Ingen innledning ennå.")}</p>
         <div class="aha-path-meta" aria-label="Path metadata">
           <span>${escapeHtml(category)}</span>
           <span>Updated ${escapeHtml(formatDate(path.updatedAt || path.createdAt))}</span>
         </div>
         <button type="button" class="aha-tile-btn${isSelected ? " aha-tile-btn-primary" : ""}" data-path-select-preview="${escapeHtml(path.id)}" aria-pressed="${isSelected ? "true" : "false"}">
-          ${isSelected ? "Selected" : "View details"}
+          ${isSelected ? "Valgt" : "Følg stien"}
         </button>
       </article>`;
   }
@@ -381,37 +420,46 @@
   function renderSelectedPreview(path, availableItems, groups) {
     if (!path) {
       return `<aside class="aha-panel aha-path-preview aha-path-preview-empty" aria-label="Path preview">
-        <p class="eyebrow">Path preview</p>
-        <h2>Select a path</h2>
-        <p>Choose a path from the overview to see sequence and metadata.</p>
+        <p class="eyebrow">Kunnskapssti</p>
+        <h2>Velg en sti</h2>
+        <p>Velg en sti for å følge fortellingen eller læringsforløpet steg for steg.</p>
       </aside>`;
     }
 
     const options = availableItems.map((item) => (
       `<option value="${escapeHtml(item.source)}::${escapeHtml(item.refId)}::${escapeHtml(item.type)}::${escapeHtml(item.title)}">${escapeHtml(item.title)} (${escapeHtml(item.type)})</option>`
     )).join("");
-    const visibleSteps = path.steps.slice().sort((a, b) => a.order - b.order).slice(0, 5);
+    const visibleSteps = path.steps.slice().sort((a, b) => a.order - b.order);
     const stepsHtml = visibleSteps.length
       ? visibleSteps.map((step) => `
         <li class="aha-path-step-row">
-          <div>
+          <span class="aha-path-step-number" aria-hidden="true">${step.order + 1}</span>
+          <div class="aha-path-step-content">
             <strong>${escapeHtml(step.title)}</strong>
-            <div class="module-meta">#${step.order + 1} · ${escapeHtml(step.type)} · ${escapeHtml(step.status)}${buildAvailableStepIndex(availableItems).has(`${step.source}::${step.refId}`) ? "" : " · ikke lenger tilgjengelig"}</div>
+            <div class="module-meta">${escapeHtml(step.type)} · ${escapeHtml(step.status)}${buildAvailableStepIndex(availableItems).has(`${step.source}::${step.refId}`) ? "" : " · ikke lenger tilgjengelig"}</div>
+            ${step.narrative ? `<p class="aha-path-step-narrative">${escapeHtml(step.narrative)}</p>` : `<p class="aha-path-step-narrative module-meta">Legg til hvorfor dette steget kommer her.</p>`}
+            ${step.learningOutcome ? `<p class="aha-path-step-outcome"><strong>Læringspunkt:</strong> ${escapeHtml(step.learningOutcome)}</p>` : ""}
+            <details class="aha-path-step-fields"><summary>Rediger forklaring</summary>
+              <label>Fortelling eller overgang<textarea data-step-narrative="${escapeHtml(path.id)}::${escapeHtml(step.id)}" rows="2">${escapeHtml(step.narrative)}</textarea></label>
+              <label>Læringspunkt<input data-step-outcome="${escapeHtml(path.id)}::${escapeHtml(step.id)}" value="${escapeHtml(step.learningOutcome)}" /></label>
+              <button type="button" data-step-save="${escapeHtml(path.id)}::${escapeHtml(step.id)}">Lagre stegtekst</button>
+            </details>
+            <button type="button" class="aha-tile-btn" data-step-remove="${escapeHtml(path.id)}::${escapeHtml(step.id)}" aria-label="Fjern ${escapeHtml(step.title)} fra ${escapeHtml(path.title)}">Fjern steg</button>
           </div>
-          <button type="button" class="aha-tile-btn" data-step-remove="${escapeHtml(path.id)}::${escapeHtml(step.id)}" aria-label="Remove ${escapeHtml(step.title)} from ${escapeHtml(path.title)}">Remove</button>
         </li>`).join("")
-      : `<li class="aha-path-preview-empty-step">No steps available.</li>`;
-    const remainingCount = Math.max(0, path.steps.length - visibleSteps.length);
+      : `<li class="aha-path-preview-empty-step">Ingen steg ennå. Legg til første innsikt, begrepsliste, samling eller notat.</li>`;
 
     return `<aside class="aha-panel aha-path-preview" aria-labelledby="path-preview-title">
       <div class="aha-path-header">
         <div>
-          <p class="eyebrow">Path preview</p>
+          <p class="eyebrow">${escapeHtml(path.mode === "narrative" ? "Narrativ kunnskapssti" : path.mode === "process" ? "Arbeidsforløp" : "Læringssti")}</p>
           <h2 id="path-preview-title" tabindex="-1">${escapeHtml(path.title)}</h2>
         </div>
-        <button type="button" class="aha-tile-btn" data-path-preview-close aria-label="Close path preview">Close</button>
+        <button type="button" class="aha-tile-btn" data-path-preview-close aria-label="Lukk kunnskapssti">Lukk</button>
       </div>
-      <p>${escapeHtml(path.description || "No description yet.")}</p>
+      <p>${escapeHtml(path.description || "Ingen innledning ennå.")}</p>
+      ${path.goal ? `<p class="aha-path-goal"><strong>Mål:</strong> ${escapeHtml(path.goal)}</p>` : ""}
+      ${path.learningOutcome ? `<p class="aha-path-goal aha-path-outcome"><strong>Etter stien:</strong> ${escapeHtml(path.learningOutcome)}</p>` : ""}
       <div class="aha-path-meta" aria-label="Selected path metadata">
         <span class="aha-path-badge">${escapeHtml(pathStatusLabel(path))}</span>
         <span class="aha-path-badge">${renderStepCount(path.steps.length)}</span>
@@ -420,19 +468,22 @@
         <span>Updated ${escapeHtml(formatDate(path.updatedAt || path.createdAt))}</span>
       </div>
       <section aria-labelledby="path-preview-steps-title">
-        <h3 id="path-preview-steps-title">Sequence</h3>
-        <ol class="aha-path-steps">${stepsHtml}</ol>
-        ${remainingCount ? `<p class="module-meta">${remainingCount} more ${remainingCount === 1 ? "step" : "steps"} not shown in this preview.</p>` : ""}
+        <h3 id="path-preview-steps-title">Fortelling og læringstrinn</h3>
+        <ol class="aha-path-steps aha-path-story">${stepsHtml}</ol>
       </section>
       <details class="aha-path-manage">
-        <summary>Manage path</summary>
+        <summary>Legg til neste steg</summary>
         <div class="aha-path-manage-content">
           <div class="aha-path-add-row">
             <select data-path-select="${escapeHtml(path.id)}" aria-label="Choose an AHA item to add to ${escapeHtml(path.title)}">
-              <option value="">Choose an insight, list, or note</option>
+              <option value="">Velg innsikt, begrepsliste, samling eller notat</option>
               ${options}
             </select>
-            <button type="button" data-step-add="${escapeHtml(path.id)}">Add step</button>
+            <button type="button" data-step-add="${escapeHtml(path.id)}">Legg til steg</button>
+          </div>
+          <div class="aha-path-step-fields">
+            <label>Hvorfor følger dette steget?<textarea data-new-step-narrative="${escapeHtml(path.id)}" rows="2" placeholder="Forklar overgangen eller fortsett fortellingen"></textarea></label>
+            <label>Hva skal brukeren forstå?<input data-new-step-outcome="${escapeHtml(path.id)}" placeholder="Kort læringspunkt" /></label>
           </div>
           <div class="statuslinje" data-path-action-status="${escapeHtml(path.id)}" aria-live="polite"></div>
           <div class="aha-path-add-row">
@@ -445,7 +496,7 @@
             <div class="statuslinje" data-path-group-status="${escapeHtml(path.id)}" aria-live="polite"></div>
             ` : `<p class="statuslinje">No groups yet. <a href="groups.html">Create a group first.</a></p>`}
           </div>
-          <button type="button" class="aha-path-delete" data-path-delete="${escapeHtml(path.id)}">Delete path</button>
+          <button type="button" class="aha-path-delete" data-path-delete="${escapeHtml(path.id)}">Slett sti</button>
         </div>
       </details>
     </aside>`;
@@ -479,6 +530,21 @@
           title: asText(list?.title, "Liste"),
           type: "list",
           source: "aha_lists",
+          refId,
+          meta: {}
+        });
+      });
+
+    asArray(loadRawByKey(CONCEPT_LISTS_KEY, []))
+      .filter((list) => !isUnavailableRecord(list))
+      .forEach((list) => {
+        const refId = asText(list?.id, "");
+        if (!refId) return;
+        out.push({
+          id: `concept_list_${refId}`,
+          title: asText(list?.title, "Begrepsliste"),
+          type: "concept_list",
+          source: "aha_concept_lists",
           refId,
           meta: {}
         });
@@ -556,8 +622,8 @@
         type: "no_data",
         moduleId: "paths",
         title: "Ingen stier ennå.",
-        message: "Lag en lokal sti for å sette innsikter, lister eller notater i rekkefølge.",
-        hint: "Paths er local-only, uten autoplanlegging, sync eller EchoNet."
+        message: "Lag en kunnskapssti som gjør innsikter, begrepslister, samlinger og notater til en fortelling eller læringsreise.",
+        hint: "Stien er lokal og du bestemmer selv rekkefølge, forklaringer og læringsmål."
       });
       return;
     }
@@ -567,8 +633,8 @@
       <section class="aha-path-overview" aria-labelledby="paths-overview-title">
         <div class="aha-path-section-heading">
           <div>
-            <p class="eyebrow">Overview</p>
-            <h2 id="paths-overview-title">Your paths</h2>
+            <p class="eyebrow">Oversikt</p>
+            <h2 id="paths-overview-title">Dine kunnskapsstier</h2>
           </div>
           <span>${paths.length} ${paths.length === 1 ? "path" : "paths"}</span>
         </div>
@@ -602,9 +668,12 @@
       event.preventDefault();
       const title = document.getElementById("path-title")?.value || "";
       const type = document.getElementById("path-type")?.value || "learning";
+      const mode = document.getElementById("path-mode")?.value || "learning";
       const description = document.getElementById("path-description")?.value || "";
+      const goal = document.getElementById("path-goal")?.value || "";
+      const learningOutcome = document.getElementById("path-learning-outcome")?.value || "";
       const tags = document.getElementById("path-tags")?.value || "";
-      const created = createPath({ title, type, description, tags });
+      const created = createPath({ title, type, mode, description, goal, learningOutcome, tags });
       if (!created) return;
       event.target.reset();
       refresh();
@@ -643,11 +712,24 @@
         const status = document.querySelector(`[data-path-action-status="${escapedStepId}"]`);
         if (!(select instanceof HTMLSelectElement) || !select.value) { if (status instanceof HTMLElement) status.textContent = "Velg et objekt først"; return; }
         const [source, refId, type, title] = select.value.split("::");
-        const result = addStepToPath(stepAdd, { source, refId, type, title });
+        const narrative = document.querySelector(`[data-new-step-narrative="${escapedStepId}"]`)?.value || "";
+        const learningOutcome = document.querySelector(`[data-new-step-outcome="${escapedStepId}"]`)?.value || "";
+        const result = addStepToPath(stepAdd, { source, refId, type, title, narrative, learningOutcome });
         if (result?.ok) { refresh(); return; }
         if (status instanceof HTMLElement) {
           status.textContent = result?.reason === "duplicate" ? "Finnes allerede i stien" : "Kilden finnes ikke lenger";
         }
+        return;
+      }
+
+      const stepSave = target.dataset.stepSave;
+      if (stepSave) {
+        const [pathId, stepId] = stepSave.split("::");
+        const selectorId = global.CSS?.escape ? global.CSS.escape(stepSave) : stepSave.replace(/"/g, '\\"');
+        const narrative = document.querySelector(`[data-step-narrative="${selectorId}"]`)?.value || "";
+        const learningOutcome = document.querySelector(`[data-step-outcome="${selectorId}"]`)?.value || "";
+        updatePathStep(pathId, stepId, { narrative, learningOutcome });
+        refresh();
         return;
       }
 
@@ -685,6 +767,7 @@
     updatePath,
     deletePath,
     addStepToPath,
+    updatePathStep,
     removeStepFromPath,
     syncFromDatabase,
     collectAvailablePathItems,

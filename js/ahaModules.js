@@ -115,20 +115,20 @@
     },
     {
       id: "lists",
-      title: "Lists",
+      title: "Begrepslister",
       type: "knowledge",
       status: "active",
       href: "lists.html",
-      description: "Local-only referansesamlinger til eksisterende AHA-objekter. Ikke egen kunnskapsmotor, sosial deling eller backend-sync.",
+      description: "Lister over relaterte ord og begreper. Eldre referanselister er bevart på samme side som Samlinger.",
       phase: 1
     },
     {
       id: "paths",
-      title: "Paths",
+      title: "Kunnskapsstier",
       type: "knowledge",
       status: "active",
       href: "paths.html",
-      description: "Local-only sekvenser/stier som organiserer eksisterende AHA-objekter. Ikke autoplanlegging, læringsmotor, sync eller sosial deling.",
+      description: "Narrative forløp og læringsreiser som organiserer AHA-materiale i forklarte trinn med mål og læringsutbytte.",
       phase: 1
     },
     {
@@ -137,7 +137,7 @@
       type: "knowledge",
       status: "active",
       href: "mindmap.html",
-      description: "Read-only lokal graf over eksisterende AHA-objekter og referanser. Ingen writes, backend, sync, EchoNet eller graph-database.",
+      description: "Grafisk studietankekart med sentral idé, grener og undergrener, bygget fra eksisterende lokale AHA-koblinger.",
       phase: 1
     },
     {

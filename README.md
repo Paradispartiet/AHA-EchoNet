@@ -72,22 +72,22 @@ AHA Quality Status Surface V1 is frozen as a local read-only quality layer. It d
 
 Database-sync er av som standard og kan bare bruke repository-laget når `AHA_CONFIG.avisa.enableDatabaseSync === true` er satt eksplisitt. AHAavisa-referanser valideres mot eksisterende lokale AHA-objekter fra innsikter, lister, stier og notater, og deleted/archived objekter brukes ikke som nye referansemål.
 
-## AHA Lists local reference collections
+## AHA Begrepslister og Samlinger
 
-`Lists` lagrer lokale referansesamlinger i `aha_lists_v1`. En liste peker bare til eksisterende AHA-objekter fra innsikter, notater, Feed, Galleri eller AHA Insta; den oppretter ikke ny insight og er ikke en egen læringsmotor.
+`Begrepslister` er lister over relaterte ord og begreper. De lagres lokalt i `aha_concept_lists_v1`, og hvert begrep kan ha en kort forklaring. Dette er den produktmessige betydningen av lister i AHA.
 
-Lists er local-only som standard. Database-sync er av med mindre `AHA_CONFIG.lists.enableDatabaseSync === true` settes eksplisitt, og EchoNet/deling er ikke aktivert. Lists skal derfor brukes som lokal organisering av eksisterende materiale, ikke som sosial deling, backend-sync eller ny AHA-motor.
+Den tidligere Lists-funksjonen er bevart som `Samlinger`. Samlinger lagres fortsatt i `aha_lists_v1` og peker til eksisterende AHA-objekter fra innsikter, notater, Feed, Galleri eller AHA Insta. Eksisterende data, referanser, gruppefunksjoner og eksplisitt database-sync-konfigurasjon er uendret.
 
 
-## AHA Paths local sequences
+## AHA Kunnskapsstier
 
-`Paths` lagrer lokale sekvenser i `aha_paths_v1`. En path peker til eksisterende AHA-objekter fra innsikter, lister eller notater, og organiserer bare rekkefølgen mellom disse referansene.
+`Kunnskapsstier` lagres bakoverkompatibelt i `aha_paths_v1`. En sti kan være en læringsreise, et narrativ eller et arbeidsforløp. Den kan ha mål og læringsutbytte, mens hvert steg kan ha forklarende overgangstekst og et eget læringspunkt. Stegene kan peke til innsikter, begrepslister, samlinger eller notater.
 
-Paths skaper ikke ny insight alene, kjører ikke autoplanlegging og er ikke en læringsmotor. Modulen er local-only som standard. Database-sync er av med mindre `AHA_CONFIG.paths.enableDatabaseSync === true` settes eksplisitt, og EchoNet/deling er ikke aktivert.
+Eksisterende stier uten de nye feltene normaliseres automatisk og beholder tidligere rekkefølge og referanser. Modulen kjører fortsatt ikke autoplanlegging eller automatisk deling.
 
-## AHA Mindmap read-only local graph
+## AHA grafisk Tankekart
 
-`Mindmap` (`mindmap.html` / `js/ahaMindmap.js`) er en read-only lokal graf over eksisterende AHA-objekter og referanser. Den leser kjente lokale AHA-nøkler fra `localStorage`, blant annet insights, source events, lists, paths, articles, notes, feed, gallery, insta og groups.
+`Tankekart` (`mindmap.html` / `js/ahaMindmap.js`) viser eksisterende lokale AHA-objekter som et grafisk studietankekart: én valgt hovedidé i sentrum, relaterte grener og undergrener rundt den. Brukeren kan velge ny hovedidé, panorere og zoome. Kartet leser blant annet insights, source events, begrepslister, samlinger, stier, artikler, notater, feed, galleri, insta og grupper.
 
 ## Groups local-only boundary
 
@@ -95,7 +95,7 @@ Paths skaper ikke ny insight alene, kjører ikke autoplanlegging og er ikke en l
 
 Referanser i grupper peker til eksisterende lokale AHA-objekter (insights, lists, paths, AHAavisa-artikler, notes og feed). AHAavisa-utkast opprettet fra en gruppe forblir lokale gruppeutkast. Groups sender ingen invitasjoner, deler ikke eksternt, bruker ingen backend, aktiverer ikke EchoNet og kjører ikke database-sync med mindre `AHA_CONFIG.groups.enableDatabaseSync === true` settes eksplisitt.
 
-Mindmap viser bare koblinger som allerede finnes i lokale referansefelt. Den skriver ikke data, reparerer ikke manglende koblinger, skaper ikke nye insights og er ikke en full kunnskapsmodell, anbefalingsmotor eller graph-database. Backend, sync og EchoNet er ikke aktivert for Mindmap.
+Tankekartet viser bare koblinger som allerede finnes i lokale referansefelt. Den tidligere kortbaserte node- og edge-visningen er bevart under «Relasjonsdata og teknisk kontroll». Modulen skriver ikke data, reparerer ikke manglende koblinger og skaper ikke nye innsikter.
 
 
 ## Sync Hub planned/no-op boundary
@@ -276,15 +276,15 @@ Det skal ikke lages en ny parallell AHA-motor. Nye moduler skal kobles inn i eks
 
 `insights.html` er nå første visningsmodul for innsiktskammeret og leser eksisterende innsiktsdata uten å endre kontraktene.
 
-`lists.html` er nå første modul som samler AHA-objekter på tvers via referanser fra innsikter, notater, feed, galleri og insta.
+`lists.html` viser både Begrepslister og Samlinger. Samlinger er det tidligere Lists-laget som samler AHA-objekter på tvers via referanser fra innsikter, notater, feed, galleri og insta.
 
-Innsiktskort kan nå legges direkte i AHA-lister som referanser.
+Innsiktskort kan fortsatt legges direkte i AHA-samlinger som referanser.
 
-Stier kan nå bygges av innsikter, lister og notater som referanser.
+Kunnskapsstier kan bygges av innsikter, begrepslister, samlinger og notater som referanser.
 
 AHAavisa kan nå lage lokale artikkelutkast fra innsikter, lister, stier og notater som referanser.
 
-Tankekart kan nå vise lokale koblinger mellom AHA-objekter som noder og referansebaserte edges.
+Tankekart viser lokale koblinger som et grafisk kart med hovedidé, grener og undergrener; tekniske noder og referansebaserte edges er fortsatt tilgjengelige i kontrollvisningen.
 
 Personvern / Kontroll kan nå vise lokal datarapport, eksportere AHA-data og lagre lokale samtykkeinnstillinger.
 
