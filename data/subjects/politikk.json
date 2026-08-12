@@ -1,28 +1,129 @@
 {
   "subject_id": "politikk",
   "subject_label": "Politikk & samfunn",
+  "history_go_fagverk": {
+    "source": "runtime_active_subject_corpus",
+    "corpus_path": "data/integrations/runtime/history-go-fagverk-politikk.corpus.v1.json",
+    "projections": [
+      {
+        "chapter_id": "forvaltning",
+        "emne_id": "fagverk_forvaltning",
+        "concept_terms": [
+          "Offentlig forvaltning",
+          "forvaltning",
+          "administrativ makt",
+          "delegasjon",
+          "instruksjonsrett",
+          "byråkrati",
+          "forvaltningsskjønn",
+          "frontlinjebyråkrati",
+          "mål- og resultatstyring",
+          "evaluering",
+          "teknokratisk styring"
+        ]
+      }
+    ]
+  },
   "emner": [
     {
       "emne_id": "straff_makt_kontroll",
       "title": "Straff, makt og sosial kontroll",
-      "core_concepts": ["straff", "makt", "sosial kontroll", "fengsel", "sikkerhetsrisiko"],
-      "keywords": ["straffekolonier", "legalisering", "narkomane", "kriminalpolitikk"],
-      "thinkers": ["Foucault", "Wacquant", "Becker", "Agamben"],
-      "learning_goals": ["forstå hvordan straff brukes som styring", "vurdere forholdet mellom sikkerhet og frihet"],
-      "checkpoints": ["kan forklare disiplinmakt", "kan diskutere legalisering vs straff"],
+      "core_concepts": [
+        "straff",
+        "makt",
+        "sosial kontroll",
+        "fengsel",
+        "sikkerhetsrisiko"
+      ],
+      "keywords": [
+        "straffekolonier",
+        "legalisering",
+        "narkomane",
+        "kriminalpolitikk"
+      ],
+      "thinkers": [
+        "Foucault",
+        "Wacquant",
+        "Becker",
+        "Agamben"
+      ],
+      "learning_goals": [
+        "forstå hvordan straff brukes som styring",
+        "vurdere forholdet mellom sikkerhet og frihet"
+      ],
+      "checkpoints": [
+        "kan forklare disiplinmakt",
+        "kan diskutere legalisering vs straff"
+      ],
       "summary": "Temaet kobler straffesystemer, institusjoner og samfunnets kontrollmekanismer.",
       "description": "Analyse av fengsel, avvik, marginalisering og hvordan risiko brukes politisk."
     },
     {
       "emne_id": "marginalisering_underkuede",
       "title": "Marginalisering og underkuede grupper",
-      "core_concepts": ["tilsidesatte", "underkuede", "pøblens historie"],
-      "keywords": ["klasse", "stigma", "ekskludering", "motmakt"],
-      "thinkers": ["Marx", "Fanon", "Becker", "Wacquant"],
-      "learning_goals": ["forstå strukturell ulikhet", "identifisere mekanismer for stigmatisering"],
-      "checkpoints": ["kan forklare forholdet mellom makt og marginalitet"],
+      "core_concepts": [
+        "tilsidesatte",
+        "underkuede",
+        "pøblens historie"
+      ],
+      "keywords": [
+        "klasse",
+        "stigma",
+        "ekskludering",
+        "motmakt"
+      ],
+      "thinkers": [
+        "Marx",
+        "Fanon",
+        "Becker",
+        "Wacquant"
+      ],
+      "learning_goals": [
+        "forstå strukturell ulikhet",
+        "identifisere mekanismer for stigmatisering"
+      ],
+      "checkpoints": [
+        "kan forklare forholdet mellom makt og marginalitet"
+      ],
       "summary": "Fokuserer på grupper som skyves ut av majoritetens normer.",
       "description": "Undersøker hvordan samfunn former kategorier av avvikere og hvem som får definisjonsmakt."
+    },
+    {
+      "emne_id": "fagverk_forvaltning",
+      "title": "Offentlig forvaltning",
+      "core_concepts": [
+        "Offentlig forvaltning",
+        "forvaltning",
+        "forvaltningen",
+        "forvaltninger",
+        "forvaltningene",
+        "administrativ makt",
+        "delegasjon",
+        "instruksjonsrett",
+        "byråkrati",
+        "forvaltningsskjønn",
+        "frontlinjebyråkrati",
+        "mål- og resultatstyring",
+        "evaluering",
+        "evalueringen",
+        "evalueringer",
+        "evalueringene",
+        "teknokratisk styring"
+      ],
+      "keywords": [],
+      "thinkers": [],
+      "learning_goals": [],
+      "checkpoints": [],
+      "summary": "Canonical History Go Fagverk-kapittel: Offentlig forvaltning.",
+      "description": "Materialisert fra godkjent, runtime-aktiv History Go Fagverk-corpus.",
+      "fagverk": {
+        "source_repo": "Paradispartiet/History-Go",
+        "source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
+        "corpus_path": "data/integrations/runtime/history-go-fagverk-politikk.corpus.v1.json",
+        "chapter_id": "forvaltning",
+        "source_path": "data/fagverk/politikk/forvaltning.json",
+        "generation_mode": "canonical_runtime_subject_projection_v1"
+      }
     }
   ]
 }

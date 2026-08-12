@@ -5,14 +5,17 @@ on:
     branches: [main]
     paths:
       - "scripts/build-history-go-fagverk-runtime-activation.mjs"
+      - "scripts/materialize-history-go-fagverk-subjects.mjs"
       - "tests/aha-fagverk-runtime-activation.test.cjs"
       - "tests/aha-fagverk-subject-approvals.test.cjs"
+      - "tests/aha-history-go-fagverk-subject-bridge.integration.test.cjs"
       - ".github/workflows/aha-fagverk-runtime-activation.yml"
       - "backend/aha_engine/app/engine/fagverk_grounding.py"
       - "backend/aha_engine/app/schemas.py"
       - "backend/aha_engine/tests/test_fagverk_grounding.py"
       - "backend/aha_engine/tests/test_history_fagverk_runtime.py"
       - "backend/aha_engine/tests/test_nature_fagverk_runtime.py"
+      - "data/subjects/**"
       - "data/integrations/runtime/**"
       - "data/integrations/history-go-fagverk-corpus.v1.json"
       - "data/integrations/history-go-fagverk-release.approved.json"
@@ -50,6 +53,11 @@ jobs:
         run: |
           node tests/aha-fagverk-runtime-activation.test.cjs
           node tests/aha-fagverk-subject-approvals.test.cjs
+
+      - name: Verify Subject Engine bridge to active Fagverk
+        run: |
+          node scripts/materialize-history-go-fagverk-subjects.mjs --check
+          node tests/aha-history-go-fagverk-subject-bridge.integration.test.cjs
 
       - name: Install Python dependencies
         working-directory: backend/aha_engine
