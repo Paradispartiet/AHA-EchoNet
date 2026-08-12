@@ -1,0 +1,270 @@
+{
+  "subject_id": "musikk",
+  "subject_label": "Musikk",
+  "history_go_fagverk": {
+    "source": "runtime_active_subject_registry",
+    "registry_path": "data/integrations/runtime/history-go-fagverk-runtime-registry.v1.json",
+    "fagverk_subject_id": "musikk",
+    "projection_mode": "all_runtime_chapters"
+  },
+  "emner": [
+    {
+      "emne_id": "fagverk_musikk_etnomusikologi-kultur-samfunn",
+      "title": "Etnomusikologi, kultur og samfunn",
+      "core_concepts": [
+        "etnomusikologi",
+        "feltrolle",
+        "fellesskapsstyrt",
+        "diaspora"
+      ],
+      "keywords": [],
+      "thinkers": [],
+      "learning_goals": [],
+      "checkpoints": [],
+      "summary": "Canonical History Go Fagverk-kapittel: Etnomusikologi, kultur og samfunn.",
+      "description": "Materialisert fra godkjent, runtime-aktiv History Go Fagverk-corpus og tilhørende fagpolicy.",
+      "fagverk": {
+        "source_repo": "Paradispartiet/History-Go",
+        "source_ref": "d52cebbe2c6c01e5780be301e9b0e4a9c61c5254",
+        "canonical_subject_id": "musikk",
+        "registry_path": "data/integrations/runtime/history-go-fagverk-runtime-registry.v1.json",
+        "corpus_path": "data/integrations/runtime/history-go-fagverk-musikk.corpus.v1.json",
+        "policy_path": "data/integrations/runtime/history-go-fagverk-musikk.policy.v1.json",
+        "chapter_id": "etnomusikologi-kultur-samfunn",
+        "source_path": "data/fagverk/musikk/etnomusikologi-kultur-samfunn.json",
+        "minimum_matched_terms": 2,
+        "ambiguity_margin": 3,
+        "term_source": "runtime_policy_required_anchors_v1",
+        "generation_mode": "canonical_runtime_subject_projection_v2"
+      }
+    },
+    {
+      "emne_id": "fagverk_musikk_framforing-praksis-samspill",
+      "title": "Framføring, praksis og samspill",
+      "core_concepts": [
+        "ensemblekoordinering",
+        "ensemblekoordineringen",
+        "ensemblekoordineringer",
+        "ensemblekoordineringene",
+        "fortolkningsvariant",
+        "notasjon",
+        "samspill"
+      ],
+      "keywords": [],
+      "thinkers": [],
+      "learning_goals": [],
+      "checkpoints": [],
+      "summary": "Canonical History Go Fagverk-kapittel: Framføring, praksis og samspill.",
+      "description": "Materialisert fra godkjent, runtime-aktiv History Go Fagverk-corpus og tilhørende fagpolicy.",
+      "fagverk": {
+        "source_repo": "Paradispartiet/History-Go",
+        "source_ref": "d52cebbe2c6c01e5780be301e9b0e4a9c61c5254",
+        "canonical_subject_id": "musikk",
+        "registry_path": "data/integrations/runtime/history-go-fagverk-runtime-registry.v1.json",
+        "corpus_path": "data/integrations/runtime/history-go-fagverk-musikk.corpus.v1.json",
+        "policy_path": "data/integrations/runtime/history-go-fagverk-musikk.policy.v1.json",
+        "chapter_id": "framforing-praksis-samspill",
+        "source_path": "data/fagverk/musikk/framforing-praksis-samspill.json",
+        "minimum_matched_terms": 2,
+        "ambiguity_margin": 3,
+        "term_source": "runtime_policy_required_anchors_v1",
+        "generation_mode": "canonical_runtime_subject_projection_v2"
+      }
+    },
+    {
+      "emne_id": "fagverk_musikk_historisk-musikkvitenskap-historiografi",
+      "title": "Historisk musikkvitenskap og historiografi",
+      "core_concepts": [
+        "kildeproveniens",
+        "musikkvitenskap",
+        "periodisering",
+        "periodiseringen",
+        "periodiseringer",
+        "periodiseringene",
+        "sirkulasjoner"
+      ],
+      "keywords": [],
+      "thinkers": [],
+      "learning_goals": [],
+      "checkpoints": [],
+      "summary": "Canonical History Go Fagverk-kapittel: Historisk musikkvitenskap og historiografi.",
+      "description": "Materialisert fra godkjent, runtime-aktiv History Go Fagverk-corpus og tilhørende fagpolicy.",
+      "fagverk": {
+        "source_repo": "Paradispartiet/History-Go",
+        "source_ref": "d52cebbe2c6c01e5780be301e9b0e4a9c61c5254",
+        "canonical_subject_id": "musikk",
+        "registry_path": "data/integrations/runtime/history-go-fagverk-runtime-registry.v1.json",
+        "corpus_path": "data/integrations/runtime/history-go-fagverk-musikk.corpus.v1.json",
+        "policy_path": "data/integrations/runtime/history-go-fagverk-musikk.policy.v1.json",
+        "chapter_id": "historisk-musikkvitenskap-historiografi",
+        "source_path": "data/fagverk/musikk/historisk-musikkvitenskap-historiografi.json",
+        "minimum_matched_terms": 2,
+        "ambiguity_margin": 3,
+        "term_source": "runtime_policy_required_anchors_v1",
+        "generation_mode": "canonical_runtime_subject_projection_v2"
+      }
+    },
+    {
+      "emne_id": "fagverk_musikk_institusjoner-okonomi-politikk-offentlighet",
+      "title": "Institusjoner, økonomi, politikk og musikalske offentligheter",
+      "core_concepts": [
+        "sceneøkologi",
+        "arkivtilgang",
+        "kulturstøtte",
+        "offentligheter"
+      ],
+      "keywords": [],
+      "thinkers": [],
+      "learning_goals": [],
+      "checkpoints": [],
+      "summary": "Canonical History Go Fagverk-kapittel: Institusjoner, økonomi, politikk og musikalske offentligheter.",
+      "description": "Materialisert fra godkjent, runtime-aktiv History Go Fagverk-corpus og tilhørende fagpolicy.",
+      "fagverk": {
+        "source_repo": "Paradispartiet/History-Go",
+        "source_ref": "d52cebbe2c6c01e5780be301e9b0e4a9c61c5254",
+        "canonical_subject_id": "musikk",
+        "registry_path": "data/integrations/runtime/history-go-fagverk-runtime-registry.v1.json",
+        "corpus_path": "data/integrations/runtime/history-go-fagverk-musikk.corpus.v1.json",
+        "policy_path": "data/integrations/runtime/history-go-fagverk-musikk.policy.v1.json",
+        "chapter_id": "institusjoner-okonomi-politikk-offentlighet",
+        "source_path": "data/fagverk/musikk/institusjoner-okonomi-politikk-offentlighet.json",
+        "minimum_matched_terms": 2,
+        "ambiguity_margin": 3,
+        "term_source": "runtime_policy_required_anchors_v1",
+        "generation_mode": "canonical_runtime_subject_projection_v2"
+      }
+    },
+    {
+      "emne_id": "fagverk_musikk_lydmedier-teknologi-beregning",
+      "title": "Lydmedier, teknologi og beregningsmetoder",
+      "core_concepts": [
+        "multisporsesjon",
+        "plattformkuratering",
+        "plattformkurateringen",
+        "plattformkurateringer",
+        "plattformkurateringene",
+        "mir",
+        "sampling",
+        "samplingen",
+        "samplinger",
+        "samplingene"
+      ],
+      "keywords": [],
+      "thinkers": [],
+      "learning_goals": [],
+      "checkpoints": [],
+      "summary": "Canonical History Go Fagverk-kapittel: Lydmedier, teknologi og beregningsmetoder.",
+      "description": "Materialisert fra godkjent, runtime-aktiv History Go Fagverk-corpus og tilhørende fagpolicy.",
+      "fagverk": {
+        "source_repo": "Paradispartiet/History-Go",
+        "source_ref": "d52cebbe2c6c01e5780be301e9b0e4a9c61c5254",
+        "canonical_subject_id": "musikk",
+        "registry_path": "data/integrations/runtime/history-go-fagverk-runtime-registry.v1.json",
+        "corpus_path": "data/integrations/runtime/history-go-fagverk-musikk.corpus.v1.json",
+        "policy_path": "data/integrations/runtime/history-go-fagverk-musikk.policy.v1.json",
+        "chapter_id": "lydmedier-teknologi-beregning",
+        "source_path": "data/fagverk/musikk/lydmedier-teknologi-beregning.json",
+        "minimum_matched_terms": 2,
+        "ambiguity_margin": 3,
+        "term_source": "runtime_policy_required_anchors_v1",
+        "generation_mode": "canonical_runtime_subject_projection_v2"
+      }
+    },
+    {
+      "emne_id": "fagverk_musikk_musikalsk-analyse-lyd-struktur",
+      "title": "Musikalsk analyse, lyd og struktur",
+      "core_concepts": [
+        "rytmemåling",
+        "rytmemålingen",
+        "rytmemålinger",
+        "rytmemålingene",
+        "tidskodet",
+        "harmoni",
+        "motiv"
+      ],
+      "keywords": [],
+      "thinkers": [],
+      "learning_goals": [],
+      "checkpoints": [],
+      "summary": "Canonical History Go Fagverk-kapittel: Musikalsk analyse, lyd og struktur.",
+      "description": "Materialisert fra godkjent, runtime-aktiv History Go Fagverk-corpus og tilhørende fagpolicy.",
+      "fagverk": {
+        "source_repo": "Paradispartiet/History-Go",
+        "source_ref": "d52cebbe2c6c01e5780be301e9b0e4a9c61c5254",
+        "canonical_subject_id": "musikk",
+        "registry_path": "data/integrations/runtime/history-go-fagverk-runtime-registry.v1.json",
+        "corpus_path": "data/integrations/runtime/history-go-fagverk-musikk.corpus.v1.json",
+        "policy_path": "data/integrations/runtime/history-go-fagverk-musikk.policy.v1.json",
+        "chapter_id": "musikalsk-analyse-lyd-struktur",
+        "source_path": "data/fagverk/musikk/musikalsk-analyse-lyd-struktur.json",
+        "minimum_matched_terms": 2,
+        "ambiguity_margin": 3,
+        "term_source": "runtime_policy_required_anchors_v1",
+        "generation_mode": "canonical_runtime_subject_projection_v2"
+      }
+    },
+    {
+      "emne_id": "fagverk_musikk_norsk-nordisk-samisk-sted-arkiv",
+      "title": "Norsk, nordisk og samisk musikk; sted og arkiv",
+      "core_concepts": [
+        "joikproveniens",
+        "musikksted",
+        "riksscenen",
+        "fellesskapsmyndighet"
+      ],
+      "keywords": [],
+      "thinkers": [],
+      "learning_goals": [],
+      "checkpoints": [],
+      "summary": "Canonical History Go Fagverk-kapittel: Norsk, nordisk og samisk musikk; sted og arkiv.",
+      "description": "Materialisert fra godkjent, runtime-aktiv History Go Fagverk-corpus og tilhørende fagpolicy.",
+      "fagverk": {
+        "source_repo": "Paradispartiet/History-Go",
+        "source_ref": "d52cebbe2c6c01e5780be301e9b0e4a9c61c5254",
+        "canonical_subject_id": "musikk",
+        "registry_path": "data/integrations/runtime/history-go-fagverk-runtime-registry.v1.json",
+        "corpus_path": "data/integrations/runtime/history-go-fagverk-musikk.corpus.v1.json",
+        "policy_path": "data/integrations/runtime/history-go-fagverk-musikk.policy.v1.json",
+        "chapter_id": "norsk-nordisk-samisk-sted-arkiv",
+        "source_path": "data/fagverk/musikk/norsk-nordisk-samisk-sted-arkiv.json",
+        "minimum_matched_terms": 2,
+        "ambiguity_margin": 3,
+        "term_source": "runtime_policy_required_anchors_v1",
+        "generation_mode": "canonical_runtime_subject_projection_v2"
+      }
+    },
+    {
+      "emne_id": "fagverk_musikk_persepsjon-kognisjon-akustikk",
+      "title": "Musikkpersepsjon, kognisjon og akustikk",
+      "core_concepts": [
+        "musikkpersepsjon",
+        "familiaritet",
+        "akustikk",
+        "timing",
+        "timingen",
+        "timinger",
+        "timingene"
+      ],
+      "keywords": [],
+      "thinkers": [],
+      "learning_goals": [],
+      "checkpoints": [],
+      "summary": "Canonical History Go Fagverk-kapittel: Musikkpersepsjon, kognisjon og akustikk.",
+      "description": "Materialisert fra godkjent, runtime-aktiv History Go Fagverk-corpus og tilhørende fagpolicy.",
+      "fagverk": {
+        "source_repo": "Paradispartiet/History-Go",
+        "source_ref": "d52cebbe2c6c01e5780be301e9b0e4a9c61c5254",
+        "canonical_subject_id": "musikk",
+        "registry_path": "data/integrations/runtime/history-go-fagverk-runtime-registry.v1.json",
+        "corpus_path": "data/integrations/runtime/history-go-fagverk-musikk.corpus.v1.json",
+        "policy_path": "data/integrations/runtime/history-go-fagverk-musikk.policy.v1.json",
+        "chapter_id": "persepsjon-kognisjon-akustikk",
+        "source_path": "data/fagverk/musikk/persepsjon-kognisjon-akustikk.json",
+        "minimum_matched_terms": 2,
+        "ambiguity_margin": 3,
+        "term_source": "runtime_policy_required_anchors_v1",
+        "generation_mode": "canonical_runtime_subject_projection_v2"
+      }
+    }
+  ]
+}

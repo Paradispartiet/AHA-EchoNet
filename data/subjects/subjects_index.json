@@ -11,6 +11,16 @@
       "file": "kultur_kunst.json"
     },
     {
+      "subject_id": "musikk",
+      "subject_label": "Musikk",
+      "file": "musikk.json"
+    },
+    {
+      "subject_id": "naeringsliv",
+      "subject_label": "Næringsliv",
+      "file": "naeringsliv.json"
+    },
+    {
       "subject_id": "natur",
       "subject_label": "Natur og omgivelser",
       "file": "natur.json"
@@ -29,6 +39,11 @@
       "subject_id": "politikk",
       "subject_label": "Politikk & samfunn",
       "file": "politikk.json"
+    },
+    {
+      "subject_id": "subkultur",
+      "subject_label": "Subkultur",
+      "file": "subkultur.json"
     },
     {
       "subject_id": "historie",
