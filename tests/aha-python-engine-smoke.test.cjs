@@ -100,6 +100,7 @@ function buildContext(seed = {}) {
     'js/ahaChatAnalysis.js',
     'js/ahaEngineClient.js',
     'js/ahaChatMemoryControls.js',
+    'js/ahaChatMemoryRuntime.js',
     'js/ahaChatRunContext.js',
     'js/ahaChat.js',
     'js/ahaChatPythonSmoke.js'
