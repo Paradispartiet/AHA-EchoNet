@@ -113,7 +113,7 @@ function buildContext() {
   [
     'js/ahaChatPersistence.js', 'js/metaInsightsMemory.js', 'js/ahaChatTextUtils.js',
     'js/ahaChatSignals.js', 'js/ahaChatSubjects.js', 'js/ahaChatAnalysis.js',
-    'js/ahaChatReplyFormat.js', 'js/ahaChatExport.js', 'js/ahaChatMemoryControls.js', 'js/ahaChatAfterwork.js', 'js/ahaChatMemoryRuntime.js', 'js/ahaChatRunContext.js', 'js/ahaChatInsightView.js', 'js/ahaChatAutoOutputView.js', 'js/ahaChat.js',
+    'js/ahaChatReplyFormat.js', 'js/ahaChatExport.js', 'js/ahaChatMemoryControls.js', 'js/ahaChatAfterwork.js', 'js/ahaChatMemoryRuntime.js', 'js/ahaChatRunContext.js', 'js/ahaChatInsightView.js', 'js/ahaChatAutoAnalysis.js', 'js/ahaChatAutoOutputView.js', 'js/ahaChat.js',
     'js/ahaLists.js', 'js/ahaPaths.js', 'js/ahaMindmap.js', 'js/ahaSearch.js'
   ].forEach((relativePath) => vm.runInContext(fs.readFileSync(path.join(ROOT, relativePath), 'utf8'), context, { filename: relativePath }));
   return { context, storage, elements };
