@@ -43,6 +43,8 @@ const good = topicHooks.buildTopicConsistencyReport({ sourceText: evaluationSour
 assert.equal(good.valid, true);
 assert.ok(good.meaningfulOverlap.length >= 2);
 
+assert.match(chatCode, /durableKnowledgeSource:\s*"fagverk"/);
+assert.match(chatCode, /currentDocumentRole:\s*"analysis_source"/);
 assert.match(chatCode, /legacyArticleTemplatesEnabled:\s*false/);
 const buildStart = chatCode.indexOf("function buildAutoOutputs");
 const academicBranch = chatCode.indexOf('if (textType === "academic_article" && !AHA_RUNTIME_KNOWLEDGE_POLICY.legacyArticleTemplatesEnabled)', buildStart);
