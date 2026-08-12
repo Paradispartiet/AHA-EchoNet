@@ -1,0 +1,132 @@
+{
+  "version": "aha_release_candidate_quality_cases_v1",
+  "reviewedAt": "2026-08-12",
+  "purpose": "Human-defined release-candidate cases for useful, weak and duplicate insight quality signals. These cases are deterministic review fixtures, not model ground truth.",
+  "weakCases": [
+    {
+      "id": "supported_pattern",
+      "expectedWeak": false,
+      "insight": {
+        "id": "q_supported_pattern",
+        "title": "Institusjoner former hvordan byrom brukes",
+        "summary": "Gjennom flere observasjoner går det igjen at institusjonelle rammer påvirker hvem som bruker byrommet og hvordan.",
+        "status": "suggested",
+        "strength": { "evidence_count": 4, "total_score": 72 },
+        "depth_score": 4,
+        "concepts": [{ "key": "institusjoner", "label": "Institusjoner" }]
+      }
+    },
+    {
+      "id": "short_but_supported",
+      "expectedWeak": false,
+      "insight": {
+        "id": "q_short_supported",
+        "title": "Sted påvirker handling",
+        "summary": "Det samme mønsteret er observert flere ganger.",
+        "status": "suggested",
+        "strength": { "evidence_count": 3, "total_score": 48 },
+        "depth_score": 0,
+        "concepts": []
+      }
+    },
+    {
+      "id": "concise_conceptual",
+      "expectedWeak": false,
+      "insight": {
+        "id": "q_concise_conceptual",
+        "title": "Makt samler seg rundt adgang",
+        "summary": "Adgang fungerer som et tilbakevendende organiserende prinsipp.",
+        "status": "suggested",
+        "strength": { "evidence_count": 1, "total_score": 22 },
+        "depth_score": 1,
+        "concepts": [{ "key": "adgang", "label": "Adgang" }]
+      }
+    },
+    {
+      "id": "banal_no_evidence",
+      "expectedWeak": true,
+      "insight": {
+        "id": "q_banal",
+        "title": "Noe skjer",
+        "summary": "Dette er interessant.",
+        "status": "suggested",
+        "strength": { "evidence_count": 0, "total_score": 0 },
+        "depth_score": 0,
+        "concepts": []
+      }
+    },
+    {
+      "id": "generic_single_observation",
+      "expectedWeak": true,
+      "insight": {
+        "id": "q_generic",
+        "title": "Brukeren liker ting",
+        "summary": "Det ser ut som brukeren liker dette.",
+        "status": "suggested",
+        "strength": { "evidence_count": 1, "total_score": 5 },
+        "depth_score": 0,
+        "concepts": []
+      }
+    },
+    {
+      "id": "long_context_not_auto_weak",
+      "expectedWeak": false,
+      "insight": {
+        "id": "q_long_context",
+        "title": "Et foreløpig mønster med kontekst",
+        "summary": "Dette er fortsatt bare én observasjon, men den inneholder nok konkret kontekst til at AHA ikke skal stemple den automatisk som svak. Den skal heller kunne vurderes av brukeren sammen med kilden og senere forsterkes eller avvises dersom flere observasjoner peker i samme eller motsatt retning.",
+        "status": "suggested",
+        "strength": { "evidence_count": 1, "total_score": 12 },
+        "depth_score": 0,
+        "concepts": []
+      }
+    },
+    {
+      "id": "rejected_is_not_review_candidate",
+      "expectedWeak": false,
+      "insight": {
+        "id": "q_rejected",
+        "title": "Noe skjer",
+        "summary": "Dette er interessant.",
+        "status": "rejected",
+        "rejection_reason": "user_not_insight",
+        "strength": { "evidence_count": 0, "total_score": 0 },
+        "depth_score": 0,
+        "concepts": []
+      }
+    },
+    {
+      "id": "archived_is_not_review_candidate",
+      "expectedWeak": false,
+      "insight": {
+        "id": "q_archived",
+        "title": "Noe skjer",
+        "summary": "Dette er interessant.",
+        "status": "archived",
+        "strength": { "evidence_count": 0, "total_score": 0 },
+        "depth_score": 0,
+        "concepts": []
+      }
+    }
+  ],
+  "duplicateCases": [
+    {
+      "id": "near_identical_duplicate",
+      "expectedDuplicate": true,
+      "a": "Institusjoner former offentligheten i byrom og påvirker hvem som får adgang til stedet",
+      "b": "Institusjoner former offentligheten i byrom og påvirker hvem som får adgang til stedet"
+    },
+    {
+      "id": "same_domain_distinct_claim",
+      "expectedDuplicate": false,
+      "a": "Institusjoner former offentligheten i byrom gjennom adgang og regler",
+      "b": "Vegetasjon kan redusere varmebelastningen i tette bygater om sommeren"
+    },
+    {
+      "id": "related_but_not_same",
+      "expectedDuplicate": false,
+      "a": "Makt formes av stedet og institusjonene rundt det",
+      "b": "Arkitektur påvirker hvordan mennesker beveger seg mellom offentlige og private rom"
+    }
+  ]
+}

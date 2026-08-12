@@ -202,7 +202,13 @@
       return { ok: false, error: "replacement_must_be_active" };
     }
 
-    const baseMs = Date.parse(asText(options.createdAt)) || Date.now();
+    // En eksplisitt erstatning må alltid være nyere enn claimens siste aktive
+    // feedback. Dette gjør operasjonen monoton også ved klokkeavvik eller en
+    // stale createdAt fra caller, og bevarer garantien om at gammel og ny
+    // formulering ikke kan være aktive samtidig.
+    const requestedMs = Date.parse(asText(options.createdAt)) || Date.now();
+    const latestMs = Date.parse(asText(latest.createdAt)) || 0;
+    const baseMs = Math.max(requestedMs, latestMs + 1);
     const oldEntry = normalizeFeedbackEntry({
       ...latest,
       id: "",
