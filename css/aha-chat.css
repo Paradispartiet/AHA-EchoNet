@@ -497,39 +497,70 @@ pre#out { max-height: 22vh; overflow:auto; white-space: pre-wrap; }
 }
 .meta-ai-feedback-btn:hover { border-color: var(--aha-accent); color: var(--aha-accent); }
 
-/* ── AHA Analyse Explorer v1 ─────────────────────────────────
-   Kunnskapsrommet under chatten: «Utforsk det AHA fant» med
-   fanene Oversikt · Innsikter · Begreper · Fag · Struktur · Kart · Data. */
+/* ── Samlet AHA-analyseflate ─────────────────────────────────
+   Alt AHA ser presenteres i synlige kort med ett kanonisk renderpunkt
+   per datagruppe. */
 .aha-explorer {
   border: 1px solid var(--aha-border);
   border-radius: 18px;
   background: linear-gradient(170deg, rgba(10,16,34,0.92), rgba(8,13,29,0.9));
   padding: 16px;
 }
-.explorer-head h2 { margin: 0 0 4px; font-size: 19px; }
+.explorer-head { margin-bottom: 14px; }
+.explorer-head h2 { margin: 0 0 4px; font-size: 22px; }
 .explorer-head p { margin: 0 0 12px; color: var(--aha-muted); font-size: 13px; }
 
-.explorer-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
-.explorer-tabs [role="tab"] {
-  border-radius: 999px;
-  padding: 8px 14px;
-  font-size: 13px;
-  background: rgba(15,24,49,0.65);
+.analysis-card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+.analysis-card {
+  min-width: 0;
+  display: grid;
+  gap: 10px;
+  scroll-margin-top: 20px;
+  border-radius: 14px;
+  padding: 14px 16px;
+  background: linear-gradient(150deg, rgba(16,26,54,0.9), rgba(10,16,34,0.88));
   border: 1px solid var(--aha-border);
-  color: var(--aha-text);
 }
-.explorer-tabs [role="tab"]:hover { border-color: rgba(255,211,71,0.5); }
-.explorer-tabs [role="tab"].is-active {
-  background: rgba(255,211,71,0.16);
-  border-color: rgba(255,211,71,0.6);
+.analysis-card-wide,
+.analysis-card-full { grid-column: 1 / -1; }
+.analysis-card-primary {
+  border-color: rgba(255,211,71,0.55);
+  box-shadow: 0 0 0 1px rgba(255,211,71,0.16) inset;
+}
+.analysis-card.is-targeted {
+  border-color: var(--aha-accent);
+  box-shadow: 0 0 0 2px rgba(255,211,71,0.18), 0 14px 40px rgba(0,0,0,0.22);
+}
+.analysis-card:focus { outline: none; }
+.analysis-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.analysis-card-head h3 { margin: 0; color: var(--aha-accent); font-size: 14px; }
+.analysis-card-head [data-analysis-count] {
+  min-width: 22px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  text-align: center;
   color: var(--aha-accent);
-  font-weight: 650;
+  background: rgba(255,211,71,.11);
+  border: 1px solid rgba(255,211,71,.25);
+  font-size: 11px;
 }
-.exp-tab-count { font-size: 11px; color: var(--aha-muted); }
-.explorer-tabs .is-active .exp-tab-count { color: var(--aha-accent); }
-
-.explorer-panel { display: grid; gap: 12px; }
-.explorer-panel[hidden] { display: none !important; }
+.analysis-card-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.analysis-summary { display: grid; gap: 12px; }
+.analysis-summary h4 { margin: 0; font-size: clamp(18px, 3vw, 26px); line-height: 1.2; }
+.analysis-summary-fields { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+.analysis-summary-fields div { padding: 10px; border-radius: 12px; background: rgba(5,8,20,.32); border: 1px solid rgba(255,255,255,.07); }
 .exp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; align-items: start; }
 
 .exp-card {
@@ -575,12 +606,16 @@ pre#out { max-height: 22vh; overflow:auto; white-space: pre-wrap; }
 
 .exp-concept-detail { margin-top: 10px; }
 .exp-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 999px;
   padding: 6px 12px;
   font-size: 12px;
   background: transparent;
   border: 1px solid rgba(255,211,71,0.5);
   color: var(--aha-accent);
+  text-decoration: none;
 }
 .exp-action-btn:hover { background: rgba(255,211,71,0.12); }
 
@@ -622,8 +657,9 @@ pre#out { max-height: 22vh; overflow:auto; white-space: pre-wrap; }
 
 @media (max-width: 720px) {
   .aha-explorer { padding: 12px; border-radius: 14px; }
-  .explorer-tabs { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; }
-  .explorer-tabs [role="tab"] { white-space: nowrap; }
+  .analysis-card-grid { grid-template-columns: 1fr; }
+  .analysis-card-wide, .analysis-card-full { grid-column: auto; }
+  .analysis-card { padding: 12px; }
   .exp-grid { grid-template-columns: 1fr; }
   .exp-json { max-height: 240px; }
 }
@@ -741,7 +777,6 @@ pre#out { max-height: 22vh; overflow:auto; white-space: pre-wrap; }
   .aha-now-card { order: 2; }
   .aha-explorer { order: 3; }
   .memory-card, .advanced-panel, .answer-actions { order: 4; }
-  .explorer-tabs { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; }
   .aha-now-list { grid-template-columns: 1fr; }
 }
 .aha-quality-status-preview { display: grid; gap: 8px; padding: 10px; border: 1px solid rgba(127,255,184,.16); border-radius: 14px; background: rgba(127,255,184,.045); }
