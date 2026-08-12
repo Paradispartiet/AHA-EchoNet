@@ -25,13 +25,13 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          import textwrap
           source = Path('.github/workflows/aha-apply-runtime-knowledge-policy.yml').read_text()
           start_marker = '      - name: Apply architecture patch\n        shell: bash\n        run: |\n'
           end_marker = '      - name: Syntax checks\n'
           start = source.index(start_marker) + len(start_marker)
           end = source.index(end_marker, start)
-          block = textwrap.dedent(source[start:end])
+          lines = source[start:end].splitlines()
+          block = '\n'.join(line[10:] if line.startswith('          ') else line for line in lines) + '\n'
           Path('/tmp/apply-runtime-policy.sh').write_text('set -euo pipefail\n' + block)
           PY
           bash /tmp/apply-runtime-policy.sh
