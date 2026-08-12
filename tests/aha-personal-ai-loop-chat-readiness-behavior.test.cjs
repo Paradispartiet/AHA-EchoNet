@@ -3,7 +3,7 @@ const fs = require("fs");
 const vm = require("vm");
 
 const CHAT_FILE = "js/ahaChat.js";
-const source = fs.readFileSync("js/ahaChatRunContext.js", "utf8") + "\n" + fs.readFileSync(CHAT_FILE, "utf8");
+const source = fs.readFileSync("js/ahaChatMemoryControls.js", "utf8") + "\n" + fs.readFileSync("js/ahaChatRunContext.js", "utf8") + "\n" + fs.readFileSync(CHAT_FILE, "utf8");
 const REQUIRED_KEYS = [
   "state", "label", "message", "blockerCount", "warningCount", "topBlockers", "topWarnings",
   "operatorNextStep", "source", "compactOnly", "redacted", "requiresManualReview"

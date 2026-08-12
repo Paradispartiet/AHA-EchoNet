@@ -8,7 +8,7 @@ const exportCode = fs.readFileSync('js/ahaChatExport.js', 'utf8');
 const subjectsCode = fs.readFileSync('js/ahaChatSubjects.js', 'utf8');
 const analysisCode = fs.readFileSync('js/ahaChatAnalysis.js', 'utf8');
 const engineClientCode = fs.readFileSync('js/ahaEngineClient.js', 'utf8');
-const chatCode = fs.readFileSync('js/ahaChatRunContext.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChat.js', 'utf8');
+const chatCode = fs.readFileSync('js/ahaChatMemoryControls.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatRunContext.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChat.js', 'utf8');
 const pythonSmokeCode = fs.readFileSync('js/ahaChatPythonSmoke.js', 'utf8');
 
 function buildContext(seed = {}) {
