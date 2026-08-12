@@ -38,15 +38,18 @@ jobs:
               raise SystemExit(f'expected exactly one policy domain assignment, got {count}')
           path.write_text(text.replace(old, new, 1))
           PY
-      - name: Install dependencies
+      - name: Install Node dependencies
+        run: npm ci
+      - name: Install Python Engine dependencies
+        working-directory: backend/aha_engine
         run: |
-          npm ci
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
       - name: Verify Node suite
         run: npm test
       - name: Verify Python Engine suite
-        run: python -m pytest backend/aha_engine
+        working-directory: backend/aha_engine
+        run: python -m pytest
       - name: Verify JS/Python comparison gate
         run: npm run check:aha-engine-comparison
       - name: Commit verified runtime fix and remove helper workflow
