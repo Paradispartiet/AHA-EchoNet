@@ -1,15 +1,218 @@
 {
   "subject_id": "kultur_kunst",
   "subject_label": "Kultur og kunst",
+  "history_go_fagverk": {
+    "source": "runtime_active_subject_registry",
+    "registry_path": "data/integrations/runtime/history-go-fagverk-runtime-registry.v1.json",
+    "fagverk_subject_id": "kunst",
+    "projection_mode": "all_runtime_chapters"
+  },
   "emner": [
     {
       "emne_id": "kropp_bevegelse_hverdagskultur",
       "title": "Kropp, bevegelse og hverdagskultur",
-      "core_concepts": ["kropp", "bevegelse", "hverdagskultur", "uttrykk", "deltakelse"],
-      "keywords": ["rytme", "lekende praksis", "gatekultur", "kreativ utfoldelse"],
-      "thinkers": ["Pierre Bourdieu", "Richard Sennett"],
+      "core_concepts": [
+        "kropp",
+        "bevegelse",
+        "hverdagskultur",
+        "uttrykk",
+        "deltakelse"
+      ],
+      "keywords": [
+        "rytme",
+        "lekende praksis",
+        "gatekultur",
+        "kreativ utfoldelse"
+      ],
+      "thinkers": [
+        "Pierre Bourdieu",
+        "Richard Sennett"
+      ],
       "summary": "Analyserer hvordan kropp og bevegelse bærer språk, tilhørighet og kulturell mening.",
       "description": "Knytter estetikk, hverdagsliv og fysiske praksiser til sosial læring og felles identitet."
+    },
+    {
+      "emne_id": "fagverk_kunst_estetisk-sprak-og-form",
+      "title": "Estetisk språk og form: hvordan verk kommuniserer",
+      "core_concepts": [
+        "ikonografi",
+        "appropriasjon",
+        "abstraksjon",
+        "konseptkunst"
+      ],
+      "keywords": [],
+      "thinkers": [],
+      "learning_goals": [],
+      "checkpoints": [],
+      "summary": "Canonical History Go Fagverk-kapittel: Estetisk språk og form: hvordan verk kommuniserer.",
+      "description": "Materialisert fra godkjent, runtime-aktiv History Go Fagverk-corpus og tilhørende fagpolicy.",
+      "fagverk": {
+        "source_repo": "Paradispartiet/History-Go",
+        "source_ref": "d52cebbe2c6c01e5780be301e9b0e4a9c61c5254",
+        "canonical_subject_id": "kunst",
+        "registry_path": "data/integrations/runtime/history-go-fagverk-runtime-registry.v1.json",
+        "corpus_path": "data/integrations/runtime/history-go-fagverk-kunst.corpus.v1.json",
+        "policy_path": "data/integrations/runtime/history-go-fagverk-kunst.policy.v1.json",
+        "chapter_id": "estetisk-sprak-og-form",
+        "source_path": "data/fagverk/kunst/estetisk-sprak-og-form.json",
+        "minimum_matched_terms": 2,
+        "ambiguity_margin": 3,
+        "term_source": "runtime_policy_required_anchors_v1",
+        "generation_mode": "canonical_runtime_subject_projection_v2"
+      }
+    },
+    {
+      "emne_id": "fagverk_kunst_felt-og-institusjon",
+      "title": "Felt og institusjon: hvem gjør kunst synlig, varig og legitim?",
+      "core_concepts": [
+        "kanondannelse",
+        "kuratorisk utvalg",
+        "kunstnerstyrt",
+        "samlingsproveniens"
+      ],
+      "keywords": [],
+      "thinkers": [],
+      "learning_goals": [],
+      "checkpoints": [],
+      "summary": "Canonical History Go Fagverk-kapittel: Felt og institusjon: hvem gjør kunst synlig, varig og legitim?.",
+      "description": "Materialisert fra godkjent, runtime-aktiv History Go Fagverk-corpus og tilhørende fagpolicy.",
+      "fagverk": {
+        "source_repo": "Paradispartiet/History-Go",
+        "source_ref": "d52cebbe2c6c01e5780be301e9b0e4a9c61c5254",
+        "canonical_subject_id": "kunst",
+        "registry_path": "data/integrations/runtime/history-go-fagverk-runtime-registry.v1.json",
+        "corpus_path": "data/integrations/runtime/history-go-fagverk-kunst.corpus.v1.json",
+        "policy_path": "data/integrations/runtime/history-go-fagverk-kunst.policy.v1.json",
+        "chapter_id": "felt-og-institusjon",
+        "source_path": "data/fagverk/kunst/felt-og-institusjon.json",
+        "minimum_matched_terms": 2,
+        "ambiguity_margin": 3,
+        "term_source": "runtime_policy_required_anchors_v1",
+        "generation_mode": "canonical_runtime_subject_projection_v2"
+      }
+    },
+    {
+      "emne_id": "fagverk_kunst_makt-og-legitimitet",
+      "title": "Makt og legitimitet: hvem definerer kunstens verdi?",
+      "core_concepts": [
+        "symbolsk kapital",
+        "institusjonskritikk",
+        "politisk kunst",
+        "jurybegrunnelser"
+      ],
+      "keywords": [],
+      "thinkers": [],
+      "learning_goals": [],
+      "checkpoints": [],
+      "summary": "Canonical History Go Fagverk-kapittel: Makt og legitimitet: hvem definerer kunstens verdi?.",
+      "description": "Materialisert fra godkjent, runtime-aktiv History Go Fagverk-corpus og tilhørende fagpolicy.",
+      "fagverk": {
+        "source_repo": "Paradispartiet/History-Go",
+        "source_ref": "d52cebbe2c6c01e5780be301e9b0e4a9c61c5254",
+        "canonical_subject_id": "kunst",
+        "registry_path": "data/integrations/runtime/history-go-fagverk-runtime-registry.v1.json",
+        "corpus_path": "data/integrations/runtime/history-go-fagverk-kunst.corpus.v1.json",
+        "policy_path": "data/integrations/runtime/history-go-fagverk-kunst.policy.v1.json",
+        "chapter_id": "makt-og-legitimitet",
+        "source_path": "data/fagverk/kunst/makt-og-legitimitet.json",
+        "minimum_matched_terms": 2,
+        "ambiguity_margin": 3,
+        "term_source": "runtime_policy_required_anchors_v1",
+        "generation_mode": "canonical_runtime_subject_projection_v2"
+      }
+    },
+    {
+      "emne_id": "fagverk_kunst_produksjon-og-praksis",
+      "title": "Produksjon og praksis: hvordan kunst blir til",
+      "core_concepts": [
+        "atelier",
+        "verksted",
+        "kunstnerøkonomi",
+        "selvorganisering",
+        "selvorganiseringen",
+        "selvorganiseringer",
+        "selvorganiseringene"
+      ],
+      "keywords": [],
+      "thinkers": [],
+      "learning_goals": [],
+      "checkpoints": [],
+      "summary": "Canonical History Go Fagverk-kapittel: Produksjon og praksis: hvordan kunst blir til.",
+      "description": "Materialisert fra godkjent, runtime-aktiv History Go Fagverk-corpus og tilhørende fagpolicy.",
+      "fagverk": {
+        "source_repo": "Paradispartiet/History-Go",
+        "source_ref": "d52cebbe2c6c01e5780be301e9b0e4a9c61c5254",
+        "canonical_subject_id": "kunst",
+        "registry_path": "data/integrations/runtime/history-go-fagverk-runtime-registry.v1.json",
+        "corpus_path": "data/integrations/runtime/history-go-fagverk-kunst.corpus.v1.json",
+        "policy_path": "data/integrations/runtime/history-go-fagverk-kunst.policy.v1.json",
+        "chapter_id": "produksjon-og-praksis",
+        "source_path": "data/fagverk/kunst/produksjon-og-praksis.json",
+        "minimum_matched_terms": 2,
+        "ambiguity_margin": 3,
+        "term_source": "runtime_policy_required_anchors_v1",
+        "generation_mode": "canonical_runtime_subject_projection_v2"
+      }
+    },
+    {
+      "emne_id": "fagverk_kunst_publikum-og-offentlighet",
+      "title": "Publikum og offentlighet: hvor og hvordan kunst blir felles",
+      "core_concepts": [
+        "offentlig kunst",
+        "publikumsstruktur",
+        "monument",
+        "resepsjon"
+      ],
+      "keywords": [],
+      "thinkers": [],
+      "learning_goals": [],
+      "checkpoints": [],
+      "summary": "Canonical History Go Fagverk-kapittel: Publikum og offentlighet: hvor og hvordan kunst blir felles.",
+      "description": "Materialisert fra godkjent, runtime-aktiv History Go Fagverk-corpus og tilhørende fagpolicy.",
+      "fagverk": {
+        "source_repo": "Paradispartiet/History-Go",
+        "source_ref": "d52cebbe2c6c01e5780be301e9b0e4a9c61c5254",
+        "canonical_subject_id": "kunst",
+        "registry_path": "data/integrations/runtime/history-go-fagverk-runtime-registry.v1.json",
+        "corpus_path": "data/integrations/runtime/history-go-fagverk-kunst.corpus.v1.json",
+        "policy_path": "data/integrations/runtime/history-go-fagverk-kunst.policy.v1.json",
+        "chapter_id": "publikum-og-offentlighet",
+        "source_path": "data/fagverk/kunst/publikum-og-offentlighet.json",
+        "minimum_matched_terms": 2,
+        "ambiguity_margin": 3,
+        "term_source": "runtime_policy_required_anchors_v1",
+        "generation_mode": "canonical_runtime_subject_projection_v2"
+      }
+    },
+    {
+      "emne_id": "fagverk_kunst_tid-og-transformasjon",
+      "title": "Tid og transformasjon: hvordan kunsthistorien blir skrevet om",
+      "core_concepts": [
+        "epoker",
+        "brudd og kontinuitet",
+        "hverdagsestetikk",
+        "repetisjon"
+      ],
+      "keywords": [],
+      "thinkers": [],
+      "learning_goals": [],
+      "checkpoints": [],
+      "summary": "Canonical History Go Fagverk-kapittel: Tid og transformasjon: hvordan kunsthistorien blir skrevet om.",
+      "description": "Materialisert fra godkjent, runtime-aktiv History Go Fagverk-corpus og tilhørende fagpolicy.",
+      "fagverk": {
+        "source_repo": "Paradispartiet/History-Go",
+        "source_ref": "d52cebbe2c6c01e5780be301e9b0e4a9c61c5254",
+        "canonical_subject_id": "kunst",
+        "registry_path": "data/integrations/runtime/history-go-fagverk-runtime-registry.v1.json",
+        "corpus_path": "data/integrations/runtime/history-go-fagverk-kunst.corpus.v1.json",
+        "policy_path": "data/integrations/runtime/history-go-fagverk-kunst.policy.v1.json",
+        "chapter_id": "tid-og-transformasjon",
+        "source_path": "data/fagverk/kunst/tid-og-transformasjon.json",
+        "minimum_matched_terms": 2,
+        "ambiguity_margin": 3,
+        "term_source": "runtime_policy_required_anchors_v1",
+        "generation_mode": "canonical_runtime_subject_projection_v2"
+      }
     }
   ]
 }

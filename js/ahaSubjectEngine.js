@@ -186,6 +186,8 @@
 
         const uniqueFound = Array.from(new Set(Object.values(fieldHits).flat())).filter((term) => !NOISE_TERMS.has(String(term || "").toLowerCase()));
         if (!uniqueFound.length) return;
+        const minimumFagverkTerms = Math.max(1, Number(emne?.fagverk?.minimum_matched_terms || 1));
+        if (emne?.fagverk && countRelevantTerms(uniqueFound) < minimumFagverkTerms) return;
 
         let score = weightedHits.reduce((sum, value) => sum + value, 0);
         const thematicDiversityBonus = Math.max(0, uniqueFound.length - 1) * 1.35;

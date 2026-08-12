@@ -6,6 +6,7 @@ on:
     paths:
       - "scripts/build-history-go-fagverk-runtime-activation.mjs"
       - "scripts/materialize-history-go-fagverk-subjects.mjs"
+      - "js/ahaSubjectEngine.js"
       - "tests/aha-fagverk-runtime-activation.test.cjs"
       - "tests/aha-fagverk-subject-approvals.test.cjs"
       - "tests/aha-history-go-fagverk-subject-bridge.integration.test.cjs"
