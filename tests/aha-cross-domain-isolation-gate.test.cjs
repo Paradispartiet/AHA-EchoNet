@@ -70,6 +70,7 @@ function makeContext() {
     'js/ahaChatAnalysis.js',
     'js/ahaChatReplyFormat.js',
     'js/ahaChatExport.js',
+    'js/ahaChatMemoryControls.js',
     'js/ahaChatRunContext.js',
     'js/ahaChat.js'
   ].forEach((file) => vm.runInNewContext(fs.readFileSync(file, 'utf8'), context, { filename: file }));
