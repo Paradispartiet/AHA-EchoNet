@@ -1,0 +1,59 @@
+name: Materialize browser Fagverk bridge
+
+on:
+  pull_request:
+    branches:
+      - fix/browser-fagverk-runtime-bridge-20260812
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    if: github.event.pull_request.head.ref == 'trigger/materialize-browser-fagverk-bridge'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: fix/browser-fagverk-runtime-bridge-20260812
+          fetch-depth: 0
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Wire approved Fagverk runtime into Chat
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          chat_html = Path('chat.html')
+          html = chat_html.read_text()
+          old = '  <script src="js/ahaSubjectEngine.js"></script>\n  <script src="js/ahaChatTextUtils.js"></script>'
+          new = '  <script src="js/ahaSubjectEngine.js"></script>\n  <script src="js/ahaFagverkRuntime.js"></script>\n  <script src="js/ahaChatTextUtils.js"></script>'
+          if html.count(old) != 1:
+              raise SystemExit(f'chat script insertion expected 1 match, got {html.count(old)}')
+          chat_html.write_text(html.replace(old, new, 1))
+
+          chat_js = Path('js/ahaChat.js')
+          js = chat_js.read_text()
+          old_id = 'const id = String(match?.subject_id || match?.id || title).trim().toLowerCase()'
+          new_id = 'const id = String(match?.id || match?.emne_id || match?.chapter_id || match?.subject_id || title).trim().toLowerCase()'
+          if js.count(old_id) != 1:
+              raise SystemExit(f'History Go link id expected 1 match, got {js.count(old_id)}')
+          chat_js.write_text(js.replace(old_id, new_id, 1))
+          PY
+      - name: Verify browser Fagverk bridge
+        run: |
+          node --check js/ahaFagverkRuntime.js
+          node --check js/ahaChat.js
+          node --check tests/aha-fagverk-browser-runtime-bridge.test.cjs
+          npm test
+      - name: Commit verified code and remove helper
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/aha-materialize-browser-fagverk-bridge.yml
+          git add chat.html js/ahaChat.js js/ahaFagverkRuntime.js tests/aha-fagverk-browser-runtime-bridge.test.cjs
+          git commit -m "feat: ground Chat with approved Fagverk runtime"
+          git push origin HEAD:fix/browser-fagverk-runtime-bridge-20260812
