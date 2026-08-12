@@ -12,13 +12,14 @@
     const isNewspaperText = /\b(avis|avisa|avisen|dagsavis|ukeavis|vekeavis|nisjeavis|kulturavis|kommentaravis|redaktør|redaktor|redaksjon)\b/i.test(src);
     const isMediaText = /\b(presse|journalistikk|mediehus|medium|medier|kringkaster|allmennkringkaster|redaksjonell)\b/i.test(src);
     const isInstitutionText = /\b(institusjon|organisasjon|stiftelse|universitet|museum|bibliotek|forlag|konsern|selskap)\b/i.test(src);
-    const institutionTerms = isNewspaperText || isMediaText || isInstitutionText || /\b(morgenbladet|tidsskrift|eierskap|mandat|profil|offentlig rolle)\b/i.test(src);
-    const historicalTerms = /\b(ble grunnlagt|grunnlagt|opprettet|etablert|historie|historisk|gjennom|fra .* til|tidligere|senere|på 18\d{2}|på 19\d{2}|på 20\d{2}|i 18\d{2}|i 19\d{2}|i 20\d{2}|over tid)\b/i.test(src);
+    const mediaCore = isNewspaperText || isMediaText || /\b(morgenbladet|tidsskrift|redaksjonell|redaksjon|eierskap)\b/i.test(src);
+    const institutionTerms = mediaCore || isInstitutionText || /\b(mandat|profil|offentlig rolle)\b/i.test(src);
+    const historicalTerms = /\b(ble grunnlagt|grunnlagt|opprettet|etablert|historie|historisk|fra .* til|tidligere|senere|på 18\d{2}|på 19\d{2}|på 20\d{2}|i 18\d{2}|i 19\d{2}|i 20\d{2}|over tid)\b/i.test(src);
     const profileTerms = /\b(konservativ|liberal|uavhengig|politisk profil|nisjeavis|kulturavis|kommentaravis|offentlighet)\b/i.test(src);
     const personDiaryNoise = /\b(jeg|meg|min|mitt|mamma|pappa|kjæreste)\b/i.test(src);
     const geopoliticalSignal = detectGeopoliticalPowerSignal(src);
     const score = (institutionTerms ? 2 : 0) + (historicalTerms ? 2 : 0) + (profileTerms ? 1 : 0) - (personDiaryNoise ? 1 : 0) - (geopoliticalSignal.strong ? 3 : 0);
-    return { strong: score >= 3, institutionTerms, historicalTerms, profileTerms, isMediaText, isNewspaperText, isInstitutionText };
+    return { strong: mediaCore && score >= 3, mediaCore, institutionTerms, historicalTerms, profileTerms, isMediaText, isNewspaperText, isInstitutionText };
   }
 
 
@@ -50,6 +51,32 @@
     const hasGovernanceCore = matchedTerms.some(([term]) => ["stat og kommune","statlig styring","kommunale mål","kommunale virkemidler","partnerskap"].includes(term));
     const strong = score >= 5.2 && matchedTerms.length >= 3 && (hasNAVCore || hasGovernanceCore);
     return { strong, score, matchedTerms: matchedTerms.map(([term]) => term) };
+  }
+
+  function detectPublicAdministrationSignal(text) {
+    const src = cleanArticleText(text || "").toLowerCase();
+    const governanceMarkers = [
+      /\boffentlig forvaltning\b/i,
+      /\bstatsforvaltning(?:en)?\b/i,
+      /\bstatlig sektor\b/i,
+      /\boffentlig sektor\b/i,
+      /\bmål-? og resultatstyring\b/i,
+      /\bstyringssystem(?:et|er|ene)?\b/i,
+      /\bdirektoratet for økonomistyring\b|\bdfø\b/i,
+      /\bvirksomhet(?:en|er|ene)?\b/i
+    ];
+    const evaluationMarkers = [
+      /\bevaluering(?:en|er|ene|sarbeid|spraksis|sstrategi|sresultat|sresultater|sfunn)?\b/i,
+      /\bevaluere(?:r|s|t)?\b/i,
+      /\boppdragsgiver(?:en|e|ne)?\b/i,
+      /\breferansegrupp(?:e|en|er|ene)\b/i,
+      /\bsamfunnsnytte\b/i,
+      /\boppfølging\b/i
+    ];
+    const governanceHits = governanceMarkers.filter((pattern) => pattern.test(src)).length;
+    const evaluationHits = evaluationMarkers.filter((pattern) => pattern.test(src)).length;
+    const score = governanceHits * 2 + evaluationHits;
+    return { strong: governanceHits >= 1 && evaluationHits >= 2 && score >= 5, score, governanceHits, evaluationHits };
   }
 
   function inferReligiousLexiconEvidence(rawText = "") {
@@ -125,6 +152,7 @@
     inferReligiousLexiconEvidence,
     detectLiteraryAttachmentSignal,
     detectPublicAdministrationReformSignal,
+    detectPublicAdministrationSignal,
     detectInstitutionalMediaHistorySignal
   };
 })(window);

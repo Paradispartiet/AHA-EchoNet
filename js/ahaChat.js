@@ -2902,44 +2902,35 @@
     return ranked[0]?.name || "hovedobjektet";
   }
   function subjectMatchesFromCalibration(calibrated) {
-    const safe = calibrated && typeof calibrated === "object" ? calibrated : {};
-    const out = [];
-    const push = (title, subject_id, extra = {}) => {
-      const t = String(title || "").trim();
-      if (!t) return;
-      out.push({
-        title: t,
-        subject_label: t,
-        subject_id: String(subject_id || normalizeConceptKey(t) || t.toLowerCase()),
-        id: String(extra.id || subject_id || normalizeConceptKey(t) || t.toLowerCase()),
-        ...extra
-      });
-    };
-    (Array.isArray(safe.matched_emner) ? safe.matched_emner : []).forEach((item) => {
-      const title = item?.title || item?.label || item?.name || item?.emne || item?.emne_id;
-      const subjectId = item?.subject_id || item?.emne_id || item?.id;
-      push(title, subjectId, { id: item?.id || subjectId });
-    });
-    (Array.isArray(safe.matched_categories) ? safe.matched_categories : []).forEach((item) => {
-      const title = item?.title || item?.label || item?.name || item?.category || item?.id;
-      push(title, item?.id || item?.category_id, { id: item?.id || item?.category_id });
-    });
-    (Array.isArray(safe.matched_concepts) ? safe.matched_concepts : []).forEach((item) => {
-      const title = item?.title || item?.label || item?.concept || item?.name || item?.id;
-      push(title, item?.id || item?.concept_id, { id: item?.id || item?.concept_id });
-    });
-    return normalizeSubjectMatches(out);
+    const emner = Array.isArray(calibrated?.matched_emner) ? calibrated.matched_emner : [];
+    if (!emner.length) return [];
+    const bestScore = Math.max(...emner.map((item) => Number(item?.score || 0)), 0);
+    const floor = Math.max(1.5, bestScore * 0.45);
+    const rows = emner
+      .filter((item) => item?.subject_id && item?.emne_id && Number(item?.score || 0) >= floor)
+      .slice(0, 6)
+      .map((item) => ({
+        title: String(item?.title || item?.short_label || item?.emne_id || "").trim(),
+        subject_label: String(item?.title || item?.short_label || item?.subject_id || "").trim(),
+        subject_id: String(item?.subject_id || "").trim(),
+        emne_id: String(item?.emne_id || "").trim(),
+        id: String(item?.emne_id || item?.subject_id || "").trim(),
+        score: Number(item?.score || 0),
+        source: "historygo_fag_calibration"
+      }));
+    return normalizeSubjectMatches(rows);
   }
 
   function detectAutoAnalysisDomain(sourceText, payload = {}) {
     const src = String(sourceText || "");
     const payloadText = `${payload?.reflection || ""} ${(Array.isArray(payload?.sortItems) ? payload.sortItems : []).map((item) => `${item?.label || ""} ${item?.text || ""}`).join(" ")}`;
-    const combined = `${src} ${payloadText}`;
-    if (detectPublicAdministrationReformSignal(combined).strong) return "public_admin_nav";
-    if (detectLiteraryAttachmentSignal(combined).strong) return "literary_attachment";
+    const domainText = src.trim().length >= 25 ? src : `${src} ${payloadText}`;
+    if (detectPublicAdministrationReformSignal(domainText).strong) return "public_admin_nav";
+    if (detectPublicAdministrationSignal(domainText).strong) return "public_administration";
+    if (detectLiteraryAttachmentSignal(domainText).strong) return "literary_attachment";
     if (detectSongLyricChildCultureSignal(src).strong) return "song_lyric_child_culture";
-    if (detectSahelClimateConflictSignal(combined).strong) return "sahel_climate_conflict";
-    if (detectInstitutionalMediaHistorySignal(combined).strong) return "institutional_media_history";
+    if (detectSahelClimateConflictSignal(domainText).strong) return "sahel_climate_conflict";
+    if (detectInstitutionalMediaHistorySignal(domainText).strong) return "institutional_media_history";
     return "generic_academic";
   }
 
@@ -5138,6 +5129,9 @@
   function detectPublicAdministrationReformSignal(text) {
     return global.AHAChatSignals.detectPublicAdministrationReformSignal(text);
   }
+  function detectPublicAdministrationSignal(text) {
+    return global.AHAChatSignals.detectPublicAdministrationSignal(text);
+  }
   function enrichSubjectMatchesForPublicAdministration(text, subjectMatches) {
     return global.AHAChatSubjects.enrichSubjectMatchesForPublicAdministration(text, subjectMatches);
   }
@@ -5405,7 +5399,10 @@
     if (!isAcademicLikeType(canonical?.contentType)) return afterwork;
     const out = Object.assign({}, afterwork);
     const summary = String(out.summary || "").trim();
-    if (!summary || /kort dagsoppsummering/i.test(summary) || /ikke dagbokmateriale/i.test(summary)) out.summary = "Kort fagoppsummering: Teksten forklarer et faglig tema gjennom definisjoner, nøkkelbegreper, historisk kontekst og tolkning.";
+    if (!summary || /kort dagsoppsummering/i.test(summary) || /ikke dagbokmateriale/i.test(summary)) {
+      const groundedSummary = String(canonical?.keyInsight || canonical?.reflection || canonical?.theme || "").trim();
+      out.summary = groundedSummary ? `Kort fagoppsummering: ${groundedSummary}` : "Kort fagoppsummering: Kilden analyseres ut fra sitt eget faglige innhold.";
+    }
     const reflection = String(out.reflection || "").trim();
     if (!reflection || /dagslogg/i.test(reflection)) out.reflection = String(canonical?.reflection || "");
     const path = Array.isArray(out.path) ? out.path : [];
@@ -5560,14 +5557,45 @@
     return String(hit || list[fallbackIndex] || list[0] || "").trim();
   }
 
+
+  function pickBestAcademicSourceSentence(sentences, kind, fallbackIndex = 0) {
+    const list = Array.isArray(sentences) ? sentences.filter(Boolean) : [];
+    if (!list.length) return "";
+    const rules = kind === "finding"
+      ? [
+          [/\bpotensialet\b[^.!?]{0,120}\bikke\b[^.!?]{0,80}\bevaluere mer, men bedre\b/i, 12],
+          [/\brespondentene\b[^.!?]{0,80}\b(etterlyser|mener)\b/i, 9],
+          [/\b(undersøkelsen|resultatene|funnene)\b[^.!?]{0,60}\b(vis(?:er|te)|bekrefter|tyder)\b/i, 7],
+          [/\bviser\b/i, 2]
+        ]
+      : [
+          [/\bundersøkelsen ble sendt til\b/i, 10],
+          [/\bdatainnsamlingsperioden\b/i, 9],
+          [/\bsurveyen ble gjennomført\b/i, 9],
+          [/\brespondent(?:ene|er)\b/i, 5],
+          [/\b(survey|datainnsamling|intervju|utvalg|metode|empiri)\b/i, 5],
+          [/\banalyse\b/i, 1]
+        ];
+    let best = { text: String(list[fallbackIndex] || list[0] || "").trim(), score: -1 };
+    list.forEach((sentenceText, index) => {
+      const text = String(sentenceText || "").trim();
+      let score = 0;
+      rules.forEach(([pattern, weight]) => { if (pattern.test(text)) score += weight; });
+      if (kind === "evidence" && /\b\d+\s*(?:prosent|%)\b/i.test(text)) score += 4;
+      if (kind === "finding" && index >= Math.floor(list.length * 0.45)) score += 0.75;
+      if (score > best.score) best = { text, score };
+    });
+    return best.score > 0 ? best.text : String(list[fallbackIndex] || list[0] || "").trim();
+  }
+
   function buildSourceGroundedAcademicPayload(sourceText) {
     const source = cleanArticleText(String(sourceText || "")).trim();
     const sentences = toSentences(source).map((item) => String(item || "").trim()).filter(Boolean);
     const keywords = takeKeywords(source, 8);
     const first = sentences[0] || "";
     const problem = pickAcademicSourceSentence(sentences, [/\b(formål|problemstilling|undersøker|undersøke|spørsmål|hensikt|målet med|denne artikkelen|studien)\b/i], 0);
-    const finding = pickAcademicSourceSentence(sentences, [/\b(funn|viser|fant|resultat|konklud|tyder|påviser|fremgår|framgår)\b/i], 0);
-    const evidence = pickAcademicSourceSentence(sentences, [/\b(metode|data|respondent|intervju|survey|undersøkelse|utvalg|referansegruppe|empiri|analyse)\b/i], 1);
+    const finding = pickBestAcademicSourceSentence(sentences, "finding", 0);
+    const evidence = pickBestAcademicSourceSentence(sentences, "evidence", 1);
     const tension = pickAcademicSourceSentence(sentences, [/\b(men|samtidig|imidlertid|derimot|på den ene siden|på den andre siden|utfordring|kritikk|spenning)\b/i], 1);
     const sortItems = [
       { label: "Problemstilling / formål", text: problem },
@@ -6216,7 +6244,7 @@
   function humanizeTextType(type) {
     const key = String(type || "").trim().toLowerCase();
     const labels = {
-      academic_article: "Fagtekst / leksikontekst / mediehistorisk tekst",
+      academic_article: "Fagtekst / akademisk tekst",
       day_log: "Dagbokmateriale",
       literary_diary: "Personlig refleksjon / dagbokprosa",
       literary_fragment: "Kreativ tekst",
@@ -6272,15 +6300,29 @@
 
 
 
+  function normalizeAcademicCandidateText(value) {
+    return String(value || "").toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^\p{L}\p{N}]+/gu, " ").replace(/\s+/g, " ").trim();
+  }
+
+  function academicCandidateInSource(sourceText, term) {
+    const haystack = normalizeAcademicCandidateText(cleanArticleText(sourceText));
+    const needle = normalizeAcademicCandidateText(term);
+    if (!haystack || !needle) return false;
+    return ` ${haystack} `.includes(` ${needle} `);
+  }
+
   function buildAcademicConceptCandidates(sourceText = "", payload = {}) {
-    const fromPayload = Array.isArray(payload?.concepts) ? payload.concepts : [];
-    const normalizedPayload = fromPayload.map((item) => String(item || "").trim()).filter(Boolean);
-    const text = ` ${cleanArticleText(sourceText).toLowerCase()} `;
+    const fromPayload = []
+      .concat(Array.isArray(payload?.concepts) ? payload.concepts : [])
+      .concat(Array.isArray(payload?.keywords) ? payload.keywords : [])
+      .map((item) => String(item || "").trim())
+      .filter(Boolean);
+    const phraseConcepts = typeof extractAcademicPhraseConcepts === "function" ? extractAcademicPhraseConcepts(sourceText).slice(0, 12) : [];
     const candidates = [
       "Pinse", "pentekosté", "Den hellige ånd", "tungetale", "nådegave", "tydning", "apostlene", "Babels tårn", "kirkens fødselsdag", "gregoriansk kalender", "juliansk kalender", "treenighetssøndag"
     ];
-    const lexiconHits = candidates.filter((term) => text.includes(term.toLowerCase()));
-    return Array.from(new Set(normalizedPayload.concat(lexiconHits))).slice(0, 20);
+    const lexiconHits = candidates.filter((term) => academicCandidateInSource(sourceText, term));
+    return Array.from(new Set(fromPayload.concat(phraseConcepts, lexiconHits))).slice(0, 20);
   }
 
 
@@ -6662,8 +6704,9 @@
     const articleAnalysis = linkInfo.isSourceAction ? (payload.articleAnalysis || global.AHALinkReader?.getLatestArticleAnalysis?.()) : null;
     const effectiveSourceText = articleAnalysis ? buildArticleSourceTextFromAnalysis(articleAnalysis) : sourceText;
     const domain = detectAutoAnalysisDomain(effectiveSourceText, payload);
-    payload.subjectMatches = normalizeSubjectMatches(Array.isArray(options.subjectMatches) ? options.subjectMatches : []);
-    if (!articleAnalysis && global.AHACalibration?.matchText) {
+    const primarySubjectMatches = normalizeSubjectMatches(Array.isArray(options.subjectMatches) ? options.subjectMatches : []);
+    payload.subjectMatches = primarySubjectMatches;
+    if (!articleAnalysis && !primarySubjectMatches.length && global.AHACalibration?.matchText) {
       try {
         const calibrated = global.AHACalibration.matchText(sourceText, { topN: 10 });
         const calibratedMatches = subjectMatchesFromCalibration(calibrated);
@@ -7289,7 +7332,7 @@
 
   global.loadChamberFromStorage = global.loadChamberFromStorage || loadChamberFromStorage;
   global.saveChamberToStorage = global.saveChamberToStorage || saveChamberToStorage;
-  global.AHATestHooks = Object.assign({}, global.AHATestHooks || {}, { detectTextType, buildCanonicalAnalysis, buildAhaAnalysisExportBundle, formatAhaAnalysisExportMarkdown, buildAutoOutputs, buildSourceGroundedAcademicPayload, applyRuntimeKnowledgePolicy, isTransientAnalysisDocument, AHA_RUNTIME_KNOWLEDGE_POLICY, normalizeFagkoblinger, resolveCanonicalAnalysisWithOptionalPythonEngine, isAhaMemoryQuestion, buildAhaLearningContractReply, buildAhaMemoryStatus, shouldUseAhaMemory, buildAhaMemoryContext, buildAhaMemoryOffContext, loadAhaMemoryControls, saveAhaMemoryControls, setAhaMemoryControl, isAhaSavingEnabled, isAhaMemoryUseEnabled, loadAhaMemoryExclusions, saveAhaMemoryExclusions, getAhaMemoryInsightStableKey, getAhaMemoryInsightKey, isAhaMemoryInsightExcluded, excludeAhaMemoryInsight, includeAhaMemoryInsight, resetAhaMemoryExclusions, getAhaExcludedMemoryItems, renderAhaMemoryControls, bindAhaMemoryControls, submitAhaChatMessage, findRelevantLocalMemory, formatAhaMemoryContextForAgent, isAhaMemoryDebugEnabled, buildAhaMemoryTransparency, formatAhaMemoryTransparencyDetails, renderAhaMemoryTransparency, appendChat, updateAnswerActionsVisibility, getActiveMetaAiSession, startMetaAiSession, renderMetaAiSessionBox, renderMetaAiClaims, maybeHandleMetaAiAgentReply, saveMetaAiClaimFeedback, buildAhaPersonalAiLoopChatReadinessStatus, renderAhaPersonalAiLoopStatus, buildAhaAnswerPackage, renderAhaAnswerComposer, createAnalysisRun, bindAnalysisArtifact, artifactMatchesActiveRun, clearActiveAnalysisState, renderAutoOutputPayload, enforceCanonicalSourceGrounding, filterRetrievalForActiveSource, scoreRetrievalAgainstSource, filterMemoryContextForActiveSource, isActiveAnalysisRun });
+  global.AHATestHooks = Object.assign({}, global.AHATestHooks || {}, { detectTextType, buildCanonicalAnalysis, buildAhaAnalysisExportBundle, formatAhaAnalysisExportMarkdown, buildAutoOutputs, renderAutoOutputs, detectAutoAnalysisDomain, buildAcademicConceptCandidates, buildSourceGroundedAcademicPayload, applyRuntimeKnowledgePolicy, isTransientAnalysisDocument, AHA_RUNTIME_KNOWLEDGE_POLICY, normalizeFagkoblinger, resolveCanonicalAnalysisWithOptionalPythonEngine, isAhaMemoryQuestion, buildAhaLearningContractReply, buildAhaMemoryStatus, shouldUseAhaMemory, buildAhaMemoryContext, buildAhaMemoryOffContext, loadAhaMemoryControls, saveAhaMemoryControls, setAhaMemoryControl, isAhaSavingEnabled, isAhaMemoryUseEnabled, loadAhaMemoryExclusions, saveAhaMemoryExclusions, getAhaMemoryInsightStableKey, getAhaMemoryInsightKey, isAhaMemoryInsightExcluded, excludeAhaMemoryInsight, includeAhaMemoryInsight, resetAhaMemoryExclusions, getAhaExcludedMemoryItems, renderAhaMemoryControls, bindAhaMemoryControls, submitAhaChatMessage, findRelevantLocalMemory, formatAhaMemoryContextForAgent, isAhaMemoryDebugEnabled, buildAhaMemoryTransparency, formatAhaMemoryTransparencyDetails, renderAhaMemoryTransparency, appendChat, updateAnswerActionsVisibility, getActiveMetaAiSession, startMetaAiSession, renderMetaAiSessionBox, renderMetaAiClaims, maybeHandleMetaAiAgentReply, saveMetaAiClaimFeedback, buildAhaPersonalAiLoopChatReadinessStatus, renderAhaPersonalAiLoopStatus, buildAhaAnswerPackage, renderAhaAnswerComposer, createAnalysisRun, bindAnalysisArtifact, artifactMatchesActiveRun, clearActiveAnalysisState, renderAutoOutputPayload, enforceCanonicalSourceGrounding, filterRetrievalForActiveSource, scoreRetrievalAgainstSource, filterMemoryContextForActiveSource, isActiveAnalysisRun });
 
   global.AHAActiveRun = {
     get() { return activeAnalysisRun; },

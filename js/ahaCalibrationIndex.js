@@ -352,7 +352,21 @@
     return { plannedFagFileCount, loadedFagFileCount, fileErrors, plannedCoreFileCount, loadedCoreFileCount, coreFileErrors, plannedSupportFileCount, loadedSupportFileCount, supportFileErrors };
   }
 
-  function scoreMatch(textNorm, term, weight) { if (!textNorm.includes(term)) return 0; return weight * (term.includes(" ") ? 1.35 : 1); }
+  function normalizeBoundaryText(value) {
+    return normalizeText(value).replace(/-/g, " ").replace(/\s+/g, " ").trim();
+  }
+
+  function containsCalibrationTerm(textNorm, term) {
+    const haystack = normalizeBoundaryText(textNorm);
+    const needle = normalizeBoundaryText(term);
+    if (!haystack || !needle) return false;
+    return ` ${haystack} `.includes(` ${needle} `);
+  }
+
+  function scoreMatch(textNorm, term, weight) {
+    if (!containsCalibrationTerm(textNorm, term)) return 0;
+    return weight * (String(term || "").includes(" ") ? 1.35 : 1);
+  }
 
   function compactPlace(place) {
     const obj = place && typeof place === "object" ? place : {};
@@ -703,5 +717,6 @@
   function rebuild() { return ensureLoaded(true); }
 
   global.AHACalibration = { ensureLoaded, getIndex, matchText, getStatus, rebuild };
+  global.AHACalibrationTestHooks = { normalizeText, containsCalibrationTerm, scoreMatch };
   ensureLoaded(false).catch(() => {});
 })(window);
