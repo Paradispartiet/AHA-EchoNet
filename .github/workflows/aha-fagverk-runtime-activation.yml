@@ -7,13 +7,16 @@ on:
       - "scripts/build-history-go-fagverk-runtime-activation.mjs"
       - "scripts/materialize-history-go-fagverk-subjects.mjs"
       - "scripts/audit-local-subject-knowledge.mjs"
+      - "scripts/check-history-go-fagverk-upstream-freshness.mjs"
       - "js/ahaSubjectEngine.js"
       - "tests/aha-fagverk-runtime-activation.test.cjs"
       - "tests/aha-fagverk-subject-approvals.test.cjs"
       - "tests/aha-history-go-fagverk-subject-bridge.integration.test.cjs"
+      - "tests/aha-history-go-fagverk-upstream-freshness.test.mjs"
       - "tests/aha-local-subject-knowledge-audit.test.cjs"
       - "reports/subject-bridge/local-subject-knowledge-audit.v1.json"
       - ".github/workflows/aha-fagverk-runtime-activation.yml"
+      - ".github/workflows/aha-fagverk-upstream-freshness.yml"
       - "backend/aha_engine/app/engine/fagverk_grounding.py"
       - "backend/aha_engine/app/schemas.py"
       - "backend/aha_engine/tests/test_fagverk_grounding.py"
@@ -67,6 +70,9 @@ jobs:
         run: |
           node scripts/audit-local-subject-knowledge.mjs --check
           node tests/aha-local-subject-knowledge-audit.test.cjs
+
+      - name: Verify upstream freshness checker contract
+        run: node tests/aha-history-go-fagverk-upstream-freshness.test.mjs
 
       - name: Install Python dependencies
         working-directory: backend/aha_engine
