@@ -52,7 +52,8 @@ const legacyAcademicBranch = chatCode.indexOf('else if (textType === "academic_a
 assert.ok(buildStart >= 0 && academicBranch > buildStart && academicBranch < legacyAcademicBranch, "source-grounded academic early return must precede legacy templates");
 assert.match(chatCode, /skip_insight:\s*urlInfo\.isSourceAction \|\| transientAnalysisDocument/);
 assert.match(chatCode, /savingEnabled && !urlInfo\.isSourceAction && !transientAnalysisDocument/);
-assert.match(chatCode, /policyAcademic \? "fagverk_routed_academic"/);
+assert.match(chatCode, /const domain = detectAutoAnalysisDomain\(sourceText \|\| "", safePayload \|\| \{\}\);/);
+assert.doesNotMatch(chatCode, /policyAcademic \? "fagverk_routed_academic"/);
 assert.match(chatCode, /Kildebasert fagkobling fra AHA Fagverk-kalibrering/);
 
 console.log("aha-runtime-knowledge-policy.test.cjs passed");
