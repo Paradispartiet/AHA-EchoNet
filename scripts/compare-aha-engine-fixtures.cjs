@@ -93,6 +93,7 @@ function createChatContext() {
     'js/ahaChatRunContext.js',
     'js/ahaChatInsightView.js',
     'js/ahaChatAutoAnalysis.js', 'js/ahaChatAutoOutputView.js',
+    'js/ahaChatCanonicalAnalysis.js',
     'js/ahaChat.js'
   ]) {
     const code = readFileSync(path.join(repoRoot, fileName), 'utf8');

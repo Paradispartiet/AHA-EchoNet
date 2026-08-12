@@ -8,6 +8,7 @@ const textUtilsCode = fs.readFileSync(path.join(repoRoot, "js/ahaChatTextUtils.j
 const signalsCode = fs.readFileSync(path.join(repoRoot, "js/ahaChatSignals.js"), "utf8");
 const exportCode = fs.readFileSync(path.join(repoRoot, "js/ahaChatExport.js"), "utf8");
 const autoAnalysisCode = fs.readFileSync(path.join(repoRoot, "js/ahaChatAutoAnalysis.js"), "utf8");
+const canonicalAnalysisCode = fs.readFileSync(path.join(repoRoot, "js/ahaChatCanonicalAnalysis.js"), "utf8");
 const chatCode = fs.readFileSync(path.join(repoRoot, "js/ahaChat.js"), "utf8");
 
 const windowObj = {};
@@ -53,8 +54,8 @@ const legacyAcademicBranch = autoAnalysisCode.indexOf('else if (textType === "ac
 assert.ok(buildStart >= 0 && academicBranch > buildStart && academicBranch < legacyAcademicBranch, "source-grounded academic early return must precede legacy templates");
 assert.match(chatCode, /skip_insight:\s*urlInfo\.isSourceAction \|\| transientAnalysisDocument/);
 assert.match(chatCode, /savingEnabled && !urlInfo\.isSourceAction && !transientAnalysisDocument/);
-assert.match(chatCode, /const domain = detectAutoAnalysisDomain\(sourceText \|\| "", safePayload \|\| \{\}\);/);
-assert.doesNotMatch(chatCode, /policyAcademic \? "fagverk_routed_academic"/);
-assert.match(chatCode, /Kildebasert fagkobling fra AHA Fagverk-kalibrering/);
+assert.match(canonicalAnalysisCode, /const domain = detectAutoAnalysisDomain\(sourceText \|\| "", safePayload \|\| \{\}\);/);
+assert.doesNotMatch(canonicalAnalysisCode, /policyAcademic \? "fagverk_routed_academic"/);
+assert.match(canonicalAnalysisCode, /Kildebasert fagkobling fra AHA Fagverk-kalibrering/);
 
 console.log("aha-runtime-knowledge-policy.test.cjs passed");
