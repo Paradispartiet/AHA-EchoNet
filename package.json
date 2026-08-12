@@ -10,6 +10,7 @@
   "scripts": {
     "start": "node server.js",
     "test": "node scripts/run-node-tests.mjs",
+    "test:release-candidate": "node tests/aha-release-candidate-audit.test.cjs",
     "build:music-historygo-bridge": "node scripts/build-music-history-go-bridge.cjs",
     "validate:aha-fixtures": "node scripts/validate-aha-analysis-fixtures.mjs",
     "test:aha-python-smoke": "node tests/aha-python-engine-smoke.test.cjs",
@@ -19,7 +20,7 @@
     "music:export:history-go:audit": "node scripts/export-aha-music-history-go.cjs --audit"
   },
   "dependencies": {
-    "cors": "^2.8.5",
+    "cors": "^4.19.2",
     "express": "^4.19.2",
     "openai": "^4.70.0"
   }
