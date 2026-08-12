@@ -171,6 +171,29 @@ The fixture is human-reviewed evaluation data, not model-training truth. Fagverk
 terms may become concept candidates only when the exact term is also present in
 the active source text.
 
+## Longitudinal user robustness gate
+
+`npm run test:longitudinal-robustness` reuses the reviewed production matrix
+through three user-life phases. It verifies 24 sequential analyses while the
+same local AHA installation also carries bounded historical chat sessions, a
+growing note library, corrected and rejected Personal AI claims, deleted
+Begrepslister and Kunnskapsstier, and the derived graphical Tankekart.
+
+The acceptance boundary is behavioral rather than a content quota:
+
+- every source switch rejects the preceding run artifact
+- source articles never become Personal AI memory automatically
+- corrected memory history grows by exactly one outdated and one active event
+- rejected claims remain separate from active memory
+- retrieval caches are invalidated after corrections
+- deleted structures disappear from Search and Tankekart
+- active structures remain searchable and graph-connected
+- old chat is review-gated and never becomes training material automatically
+- all Tankekart edges point to existing nodes
+
+Real iPad/iPhone Safari and split-view verification remains an explicit manual
+device gate; Node CI cannot certify the browser and device behavior.
+
 ## Next step
 
 After the full Fagverk corpus is generated and reviewed, the next engine PR should add a scored comparison report between:
