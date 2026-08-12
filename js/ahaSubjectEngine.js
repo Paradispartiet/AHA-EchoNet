@@ -20,10 +20,6 @@
     return String(text || "");
   }
 
-  // ------------------------------------------------------------
-  // 1) DATA LOADING LAYER (kan erstattes av felles loader senere)
-  // ------------------------------------------------------------
-
   async function loadIndex() {
     if (cache.index) return cache.index;
     try {
@@ -71,10 +67,6 @@
     return loaded.filter(Boolean);
   }
 
-  // ------------------------------------------------------------
-  // 2) MATCH / SCORING LAYER
-  // ------------------------------------------------------------
-
   function addMatch(matches, key, payload) {
     const previous = matches.get(key);
     if (!previous || previous.score < payload.score) {
@@ -98,7 +90,6 @@
   function scanField(text, values, boost, collector) {
     const terms = Array.isArray(values) ? values : [values];
     let matched = false;
-
     terms.forEach((term) => {
       const clean = String(term || "").trim();
       if (!clean) return;
@@ -107,7 +98,6 @@
         matched = true;
       }
     });
-
     return matched ? boost : 0;
   }
 
@@ -125,6 +115,38 @@
     if (!token) return 0;
     if (GENERIC_TERMS.has(token)) return Math.max(0.2, fieldBoost * 0.2);
     return fieldBoost;
+  }
+
+  function buildMatchProvenance(subject, emne) {
+    const fagverk = emne?.fagverk && typeof emne.fagverk === "object" ? emne.fagverk : null;
+    const localKnowledge = emne?.local_knowledge && typeof emne.local_knowledge === "object" ? emne.local_knowledge : null;
+    if (fagverk) {
+      return {
+        kind: "canonical_fagverk",
+        evidence_role: "reference_support_not_source_evidence",
+        canonical_subject_id: String(fagverk.canonical_subject_id || subject?.subject_id || ""),
+        chapter_id: String(fagverk.chapter_id || ""),
+        source_repo: String(fagverk.source_repo || ""),
+        source_ref: String(fagverk.source_ref || ""),
+        source_path: String(fagverk.source_path || ""),
+        registry_path: String(fagverk.registry_path || ""),
+        corpus_path: String(fagverk.corpus_path || ""),
+        policy_path: String(fagverk.policy_path || ""),
+        term_source: String(fagverk.term_source || ""),
+        generation_mode: String(fagverk.generation_mode || "")
+      };
+    }
+    if (localKnowledge) {
+      return {
+        kind: "aha_local_knowledge",
+        evidence_role: "local_reference_support_not_source_evidence",
+        classification: String(localKnowledge.classification || ""),
+        canonical_subject_ids: Array.isArray(localKnowledge.canonical_subject_ids) ? localKnowledge.canonical_subject_ids.slice() : [],
+        related_chapter_ids: Array.isArray(localKnowledge.related_chapter_ids) ? localKnowledge.related_chapter_ids.slice() : [],
+        revalidate_on_runtime_change: localKnowledge.revalidate_on_runtime_change === true
+      };
+    }
+    return null;
   }
 
   async function matchText(text, options) {
@@ -148,23 +170,13 @@
           type: "subject",
           score: subjectScore,
           matched_terms: subjectTerms,
-          source
+          source,
+          provenance: null
         });
       }
 
       (subject.emner || []).forEach((emne) => {
-        const found = [];
-        const fieldHits = {
-          title: [],
-          core: [],
-          keywords: [],
-          thinkers: [],
-          summary: [],
-          description: [],
-          goals: [],
-          checkpoints: []
-        };
-
+        const fieldHits = { title: [], core: [], keywords: [], thinkers: [], summary: [], description: [], goals: [], checkpoints: [] };
         scanField(target, emne.title, 3, fieldHits.title);
         scanField(target, emne.core_concepts, 3, fieldHits.core);
         scanField(target, emne.keywords, 2, fieldHits.keywords);
@@ -191,12 +203,9 @@
         if (governedKnowledge && countRelevantTerms(uniqueFound) < minimumGovernedTerms) return;
 
         let score = weightedHits.reduce((sum, value) => sum + value, 0);
-        const thematicDiversityBonus = Math.max(0, uniqueFound.length - 1) * 1.35;
-        score += thematicDiversityBonus;
-
+        score += Math.max(0, uniqueFound.length - 1) * 1.35;
         const fieldsWithHits = SEMANTIC_FIELDS.filter((field) => (fieldHits[field] || []).length > 0).length;
         if (fieldsWithHits > 1) score += (fieldsWithHits - 1) * 0.8;
-
         const strongFieldHit = fieldHits.title.length + fieldHits.core.length;
         const hasStrongFieldHit = strongFieldHit > 0;
         if (strongFieldHit > 0) score += 1.5 + strongFieldHit * 0.5;
@@ -209,17 +218,13 @@
         ]);
         const highSignalHitCount = uniqueFound.filter((term) => highSignalTerms.has(String(term || "").toLowerCase())).length;
         if (highSignalHitCount > 0) score += highSignalHitCount * 1.75;
-
         if (uniqueFound.length >= 3) score += 1.2;
         if (uniqueFound.length >= 5) score += 2.2;
 
         const genericTermsFound = uniqueFound.filter((term) => GENERIC_TERMS.has(String(term || "").toLowerCase()));
         const nonGenericHits = uniqueFound.length - genericTermsFound.length;
-        if (nonGenericHits === 0) {
-          score = Math.min(score, 0.45);
-        } else if (genericTermsFound.length > 0) {
-          score -= genericTermsFound.length * 0.2;
-        }
+        if (nonGenericHits === 0) score = Math.min(score, 0.45);
+        else if (genericTermsFound.length > 0) score -= genericTermsFound.length * 0.2;
 
         const thinkerHit = (emne.thinkers || []).some((t) => uniqueFound.includes(t));
         const conceptHit = (emne.core_concepts || []).some((c) => uniqueFound.includes(c));
@@ -234,7 +239,8 @@
           score,
           matched_terms: uniqueFound,
           strong: hasStrongFieldHit,
-          source
+          source,
+          provenance: buildMatchProvenance(subject, emne)
         });
       });
     });
@@ -254,7 +260,6 @@
     const bestScore = Number(sorted[0]?.score || 0);
     const globalFloor = Math.max(bestScore * 0.45, bestScore - 4);
     const maxKept = Math.min(maxResults, 6);
-
     const familyCounts = new Map();
     sorted.forEach((m) => {
       const key = String(m?.subject_id || "unknown");
@@ -274,14 +279,10 @@
         return;
       }
       if (score < globalFloor) return;
-      // Et utvetydig sterkt felt-treff (title/core) skal overleve med én relevant
-      // term. Svakere treff krever fortsatt minst to relevante termer for å unngå
-      // at enkeltord fra summary/keywords blåser opp resultatlisten.
       if (relevantTermCount >= 2 || (m?.strong && relevantTermCount >= 1)) outsideHits.push(m);
     });
 
-    const filtered = dominantHits.concat(outsideHits).sort((a, b) => b.score - a.score);
-    return filtered.slice(0, maxKept);
+    return dominantHits.concat(outsideHits).sort((a, b) => b.score - a.score).slice(0, maxKept);
   }
 
   function flattenValue(value) {
@@ -312,5 +313,5 @@
   }
 
   global.AHASubjectEngine = { listSubjects, loadSubject, loadAllSubjects, matchText, matchInsight };
-  global.AHASubjectEngineTestHooks = { normalizeSubjectMatchText, containsSubjectTerm };
+  global.AHASubjectEngineTestHooks = { normalizeSubjectMatchText, containsSubjectTerm, buildMatchProvenance };
 })(window);
