@@ -16,107 +16,35 @@
   const AHA_MEMORY_EXCLUSIONS_KEY = "aha_memory_exclusions_v1";
   const AHA_MEMORY_USE_OFF_REASON = "Bruk av eksisterende minne er slått av av brukeren.";
 
+  const runContext = global.AHAChatRunContext?.create?.({
+    sourceHash,
+    shortHash,
+    takeKeywords,
+    formatMemoryContextForAgent: formatAhaMemoryContextForAgent,
+    buildMemoryOffContext: buildAhaMemoryOffContext,
+    defaultConversationId: CHAT_THREAD_ID
+  });
+  if (!runContext) throw new Error("AHAChatRunContext må lastes før ahaChat.js.");
 
-  let activeAnalysisRun = null;
+  const getActiveAnalysisRun = runContext.getActiveAnalysisRun;
+  const setActiveAnalysisRun = runContext.setActiveAnalysisRun;
+  const createAnalysisRun = runContext.createAnalysisRun;
+  const bindAnalysisArtifact = runContext.bindAnalysisArtifact;
+  const artifactMatchesActiveRun = runContext.artifactMatchesActiveRun;
+  const isActiveAnalysisRun = runContext.isActiveAnalysisRun;
+  const scoreRetrievalAgainstSource = runContext.scoreRetrievalAgainstSource;
+  const filterRetrievalForActiveSource = runContext.filterRetrievalForActiveSource;
+  const filterMemoryContextForActiveSource = runContext.filterMemoryContextForActiveSource;
 
-  function createAnalysisRun(sourceText, options = {}) {
-    const source = String(sourceText || "").trim();
-    const fingerprint = sourceHash(source);
-    const createdAt = new Date().toISOString();
-    const base = `${fingerprint}|${createdAt}|${Math.random().toString(36).slice(2)}`;
-    const analysisRunId = options.analysisRunId || options.runId || `run_${shortHash(`${base}|run`)}`;
-    const conversationId = options.conversationId || options.sessionId || CHAT_THREAD_ID;
-    const topicLabel = options.topicLabel || takeKeywords(source, 4).join(" · ") || "ukjent tema";
-    return {
-      analysisId: options.analysisId || `analysis_${shortHash(base)}`,
-      analysisRunId,
-      runId: analysisRunId,
-      conversationId,
-      sessionId: conversationId,
-      turnId: options.turnId || `turn_${shortHash(`${conversationId}|${analysisRunId}|${createdAt}`)}`,
-      sourceId: options.sourceId || `source_${fingerprint || shortHash(base)}`,
-      sourceKind: options.sourceKind || "chat",
-      createdAt,
-      topicLabel,
-      sourceHash: fingerprint,
-      normalizedSourceHash: fingerprint,
-      sourceTextHash: fingerprint,
-      sourceFingerprint: fingerprint,
-      sourcePreview: source.replace(/\s+/g, " ").slice(0, 180)
-    };
-  }
-
-  function bindAnalysisArtifact(artifact, run = activeAnalysisRun) {
-    if (!artifact || typeof artifact !== "object" || !run) return artifact;
-    return Object.assign(artifact, {
-      analysisId: run.analysisId,
-      analysisRunId: run.analysisRunId || run.runId,
-      runId: run.runId || run.analysisRunId,
-      conversationId: run.conversationId || run.sessionId,
-      turnId: run.turnId,
-      sourceId: run.sourceId,
-      sourceKind: run.sourceKind || artifact.sourceKind || "chat",
-      topicLabel: run.topicLabel || artifact.topicLabel || "",
-      sessionId: run.sessionId || run.conversationId,
-      createdAt: artifact.createdAt || run.createdAt,
-      sourceHash: run.sourceHash || artifact.sourceHash,
-      normalizedSourceHash: run.normalizedSourceHash || run.sourceHash || artifact.normalizedSourceHash,
-      sourceTextHash: run.sourceTextHash || run.sourceHash || artifact.sourceTextHash || artifact.sourceHash,
-      sourceFingerprint: run.sourceFingerprint || run.sourceHash || artifact.sourceFingerprint,
-      sourcePreview: run.sourcePreview || artifact.sourcePreview || artifact.sourceTextPreview || ""
-    });
-  }
-
-  function artifactMatchesActiveRun(artifact, run = activeAnalysisRun) {
-    if (!artifact || typeof artifact !== "object" || !run) return false;
-    const artifactRunId = String(artifact.analysisRunId || artifact.runId || "");
-    const activeRunId = String(run.analysisRunId || run.runId || "");
-    if (artifactRunId || activeRunId) {
-      if (!(artifactRunId && activeRunId && artifactRunId === activeRunId)) return false;
-      const hash = String(artifact.sourceHash || artifact.sourceTextHash || artifact.normalizedSourceHash || artifact.sourceFingerprint || "");
-      return !(hash && run.sourceHash && hash !== run.sourceHash);
-    }
-    const hasRunIds = artifact.analysisId || artifact.sourceId;
-    if (hasRunIds) return String(artifact.analysisId || "") === run.analysisId && String(artifact.sourceId || "") === run.sourceId;
-    const hash = String(artifact.sourceHash || artifact.sourceTextHash || artifact.sourceFingerprint || "");
-    return Boolean(hash && hash === run.sourceHash);
-  }
-
-  function isActiveAnalysisRun(run) {
-    return Boolean(
-      run &&
-      activeAnalysisRun &&
-      String(run.analysisRunId || run.runId || "") === String(activeAnalysisRun.analysisRunId || activeAnalysisRun.runId || "") &&
-      String(run.sourceId || "") === String(activeAnalysisRun.sourceId || "")
-    );
-  }
-
-
-  function topKeywordOverlap(sourceText, artifact) {
-    const sourceTerms = new Set(takeKeywords(String(sourceText || ""), 12).map((item) => item.toLowerCase()));
-    const artifactText = [artifact?.topicLabel, artifact?.theme, artifact?.keyInsight, artifact?.reflection, artifact?.summary, artifact?.ahaSer?.tema, artifact?.ahaSer?.viktigsteInnsikt, ...(Array.isArray(artifact?.sortItems) ? artifact.sortItems.map((i) => `${i?.label || ""} ${i?.text || ""}`) : [])].join(" ").toLowerCase();
-    if (!sourceTerms.size || !artifactText.trim()) return true;
-    return Array.from(sourceTerms).some((term) => term.length > 3 && artifactText.includes(term));
-  }
-
-  function analysisTopicMismatch(payload, run = activeAnalysisRun) {
-    if (!payload || !run) return false;
-    if (!artifactMatchesActiveRun(payload, run)) return true;
+  function analysisTopicMismatch(payload, run = getActiveAnalysisRun()) {
     const sourceText = String(document.getElementById("aha-auto-output")?.dataset?.sourceText || "");
-    const canonical = payload.canonicalAnalysis && typeof payload.canonicalAnalysis === "object" ? payload.canonicalAnalysis : payload;
-    if (canonical && !artifactMatchesActiveRun(canonical, run)) return true;
-    const artifactHash = String(canonical?.sourceHash || canonical?.sourceTextHash || payload.sourceHash || payload.sourceTextHash || "");
-    if (artifactHash && run.sourceHash && artifactHash !== run.sourceHash) return true;
-    const canonicalLabel = String(canonical?.topicLabel || payload.topicLabel || "").toLowerCase();
-    const activeLabel = String(run.topicLabel || "").toLowerCase();
-    if (canonicalLabel && activeLabel && canonicalLabel !== activeLabel && !canonicalLabel.includes(activeLabel.split(" · ")[0] || "") && !activeLabel.includes(canonicalLabel.split(" · ")[0] || "")) return true;
-    return !topKeywordOverlap(sourceText, canonical);
+    return runContext.analysisTopicMismatch(payload, run, sourceText);
   }
 
   function renderAnalysisDebugPanel(payload = {}) {
     const canonical = payload?.canonicalAnalysis && typeof payload.canonicalAnalysis === "object" ? payload.canonicalAnalysis : {};
     const afterwork = payload && typeof payload === "object" ? payload : {};
-    const run = activeAnalysisRun || {};
+    const run = getActiveAnalysisRun() || {};
     const activeRunId = run.analysisRunId || run.runId || "";
     return `<aside class="aha-analysis-debug" data-dev-info="analysis-run"><strong>Dev analysebinding</strong><dl>` +
       `<div><dt>activeRunId</dt><dd>${escHtml(activeRunId)}</dd></div>` +
@@ -129,7 +57,7 @@
   }
 
   function clearActiveAnalysisState(run, message = "AHA analyserer ny kilde …") {
-    if (run) activeAnalysisRun = run;
+    if (run) setActiveAnalysisRun(run);
     try { global.localStorage?.removeItem(AUTO_OUTPUT_STORAGE_KEY); } catch {}
     const host = document.getElementById("aha-auto-output");
     if (host) {
@@ -756,8 +684,9 @@
     const api = global.AHAPersonalAnswerEvaluation;
     if (!api?.evaluateAnswer) return null;
     try {
-      const evaluation = bindAnalysisArtifact(api.evaluateAnswer(userMessage, answerText, answerPackage), activeAnalysisRun);
-      const saved = api.saveEvaluation ? bindAnalysisArtifact(api.saveEvaluation(evaluation), activeAnalysisRun) : evaluation;
+      const activeRun = getActiveAnalysisRun();
+      const evaluation = bindAnalysisArtifact(api.evaluateAnswer(userMessage, answerText, answerPackage), activeRun);
+      const saved = api.saveEvaluation ? bindAnalysisArtifact(api.saveEvaluation(evaluation), activeRun) : evaluation;
       renderAhaAnswerEvaluation(row, saved);
       return saved;
     } catch (err) {
@@ -1215,92 +1144,6 @@
     if (localMatches.length) return { useMemory: true, reason: "Lokale innsikter matcher tydelig på prosjekt, tema eller begreper.", confidence: Math.min(0.82, 0.52 + localMatches[0].score / 20), mode: "semantic_match" };
     return off("Ingen tydelige, relevante minnetreff.");
   }
-  function tokenizeAnalysisRelevance(text) {
-    const stop = new Set(["det","den","der","som","for","med","til","fra","ikke","eller","og","i","på","av","en","et","å","er","har","kan","skal","vil","the","and","this","that","with","from"]);
-    return String(text || "").toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").match(/[a-zæøå0-9]{4,}/g)?.filter((t) => !stop.has(t)).slice(0, 240) || [];
-  }
-
-  function retrievalItemText(item) {
-    return [item?.title, item?.summary, item?.excerpt, item?.text, item?.sourceType, ...(Array.isArray(item?.concepts) ? item.concepts : []), ...(Array.isArray(item?.reasons) ? item.reasons : [])].filter(Boolean).join(" ");
-  }
-
-  function scoreRetrievalAgainstSource(item, sourceText) {
-    const sourceTokens = new Set(tokenizeAnalysisRelevance(sourceText));
-    const itemTokens = tokenizeAnalysisRelevance(retrievalItemText(item));
-    if (!sourceTokens.size || !itemTokens.length) return 0;
-    let overlap = 0;
-    itemTokens.forEach((token) => { if (sourceTokens.has(token)) overlap += 1; });
-    return overlap / Math.max(8, Math.min(itemTokens.length, sourceTokens.size));
-  }
-
-  function filterRetrievalForActiveSource(container, sourceText, run = activeAnalysisRun) {
-    if (!container || typeof container !== "object") return container;
-    const filterResults = (results) => {
-      const rejected = [];
-      const kept = (Array.isArray(results) ? results : []).filter((item) => {
-        const score = scoreRetrievalAgainstSource(item, sourceText);
-        const keep = score >= 0.08;
-        if (!keep) rejected.push({ title: item?.title || item?.sourceId || "retrieval", score });
-        else { item.analysisId = run?.analysisId || item.analysisId; item.sourceIdForAnalysis = run?.sourceId || item.sourceIdForAnalysis; item.sourceHash = run?.sourceHash || item.sourceHash; item.relevanceToActiveSource = score; }
-        return keep;
-      });
-      if (rejected.length) console.warn("AHA irrelevant retrieval forkastet for aktiv kilde", { analysisId: run?.analysisId, sourceId: run?.sourceId, rejected });
-      return kept;
-    };
-    if (Array.isArray(container.results)) container.results = filterResults(container.results);
-    if (container.retrieval && typeof container.retrieval === "object") filterRetrievalForActiveSource(container.retrieval, sourceText, run);
-    if (container.semanticRetrieval && typeof container.semanticRetrieval === "object") filterRetrievalForActiveSource(container.semanticRetrieval, sourceText, run);
-    if (container.context && typeof container.context === "object") filterRetrievalForActiveSource(container.context, sourceText, run);
-    if (Array.isArray(container.selectedSources)) container.selectedSources = filterResults(container.selectedSources);
-    return container;
-  }
-
-  function filterMemoryContextForActiveSource(memoryContext, sourceText, run = activeAnalysisRun) {
-    const src = memoryContext && typeof memoryContext === "object" ? memoryContext : buildAhaMemoryOffContext("Minne mangler.");
-    if (!src.used) return src;
-    const rejected = [];
-    const keepInsight = (item) => {
-      const insight = item?.insight && typeof item.insight === "object" ? item.insight : item;
-      const score = scoreRetrievalAgainstSource(insight, sourceText);
-      const keep = score >= 0.08;
-      if (!keep) rejected.push({ title: insight?.title || insight?.id || "memory", score });
-      else if (insight && typeof insight === "object") {
-        insight.analysisId = run?.analysisId || insight.analysisId;
-        insight.sourceIdForAnalysis = run?.sourceId || insight.sourceIdForAnalysis;
-        insight.sourceHash = run?.sourceHash || insight.sourceHash;
-        insight.relevanceToActiveSource = score;
-      }
-      return keep;
-    };
-    const selectedInsights = (Array.isArray(src.selectedInsights) ? src.selectedInsights : []).filter(keepInsight);
-    const localMatches = (Array.isArray(src.localMatches) ? src.localMatches : []).filter(keepInsight);
-    const semanticMatches = (Array.isArray(src.semanticMatches) ? src.semanticMatches : []).filter(keepInsight);
-    if (rejected.length) console.warn("AHA irrelevant memoryContext forkastet for aktiv kilde", { analysisId: run?.analysisId, sourceId: run?.sourceId, rejected });
-    if (!selectedInsights.length) {
-      return Object.assign({}, src, {
-        used: false,
-        reason: "Tidligere minne ble forkastet: ikke relevant for aktiv kildetekst.",
-        confidence: 0,
-        mode: "filtered_irrelevant",
-        localMatches,
-        semanticMatches,
-        selectedInsights: [],
-        summaryForAgent: ""
-      });
-    }
-    const next = Object.assign({}, src, {
-      used: true,
-      reason: src.reason || "Relevant minne matcher aktiv kildetekst.",
-      localMatches,
-      semanticMatches,
-      selectedInsights
-    });
-    next.summaryForAgent = formatAhaMemoryContextForAgent(next);
-    next.used = Boolean(next.summaryForAgent);
-    if (!next.used) next.reason = "Tidligere minne ble forkastet: ingen relevant agent-oppsummering.";
-    return next;
-  }
-
   function formatAhaMemoryContextForAgent(memoryContext) {
     if (!memoryContext?.used) return "";
     const insights = (memoryContext.selectedInsights || []).slice(0, 5);
@@ -5239,17 +5082,18 @@
       .map((item) => String(item?.label || "").trim())
       .filter(Boolean)
       .slice(0, 12);
+    const activeRun = getActiveAnalysisRun();
     return {
       id: `afterwork_${Date.now()}_${shortHash(`${sourceTextHash}|${JSON.stringify(normalizedPayload)}`)}`,
-      analysisId: options?.analysisId || activeAnalysisRun?.analysisId || "",
-      analysisRunId: options?.analysisRunId || options?.runId || activeAnalysisRun?.analysisRunId || activeAnalysisRun?.runId || "",
-      runId: options?.runId || options?.analysisRunId || activeAnalysisRun?.runId || activeAnalysisRun?.analysisRunId || "",
-      conversationId: options?.conversationId || options?.sessionId || activeAnalysisRun?.conversationId || activeAnalysisRun?.sessionId || CHAT_THREAD_ID,
-      turnId: options?.turnId || activeAnalysisRun?.turnId || "",
-      sourceId: options?.sourceId || activeAnalysisRun?.sourceId || (sourceTextHash ? `source_${sourceTextHash}` : ""),
-      sourceKind: options?.sourceKind || activeAnalysisRun?.sourceKind || "chat",
-      topicLabel: options?.topicLabel || activeAnalysisRun?.topicLabel || takeKeywords(source, 4).join(" · "),
-      sessionId: options?.sessionId || options?.conversationId || activeAnalysisRun?.sessionId || activeAnalysisRun?.conversationId || CHAT_THREAD_ID,
+      analysisId: options?.analysisId || activeRun?.analysisId || "",
+      analysisRunId: options?.analysisRunId || options?.runId || activeRun?.analysisRunId || activeRun?.runId || "",
+      runId: options?.runId || options?.analysisRunId || activeRun?.runId || activeRun?.analysisRunId || "",
+      conversationId: options?.conversationId || options?.sessionId || activeRun?.conversationId || activeRun?.sessionId || CHAT_THREAD_ID,
+      turnId: options?.turnId || activeRun?.turnId || "",
+      sourceId: options?.sourceId || activeRun?.sourceId || (sourceTextHash ? `source_${sourceTextHash}` : ""),
+      sourceKind: options?.sourceKind || activeRun?.sourceKind || "chat",
+      topicLabel: options?.topicLabel || activeRun?.topicLabel || takeKeywords(source, 4).join(" · "),
+      sessionId: options?.sessionId || options?.conversationId || activeRun?.sessionId || activeRun?.conversationId || CHAT_THREAD_ID,
       type: "aha_afterwork",
       source: "chat",
       textType: normalizedPayload.textType || detectTextType(source),
@@ -5322,7 +5166,8 @@
     const autoSourceHash = String(auto?.sourceTextHash || sourceHash(auto?.sourceText || source));
     const currentHash = sourceHash(source);
     if (!autoSourceHash || autoSourceHash !== currentHash) return { saved: false, reason: "hash_mismatch", entry: null };
-    const expectedRunId = String(options?.analysisRunId || options?.runId || activeAnalysisRun?.analysisRunId || activeAnalysisRun?.runId || "");
+    const activeRun = getActiveAnalysisRun();
+    const expectedRunId = String(options?.analysisRunId || options?.runId || activeRun?.analysisRunId || activeRun?.runId || "");
     const gotRunId = String(auto?.analysisRunId || auto?.runId || payload?.analysisRunId || payload?.runId || "");
     if (expectedRunId && gotRunId && expectedRunId !== gotRunId) {
       console.warn(`Skipped stale AHA analysis payload: expected ${expectedRunId}, got ${gotRunId}.`);
@@ -6150,13 +5995,14 @@
     const host = document.getElementById("aha-auto-output");
     if (!host || !payload) return;
     payload = enforceCanonicalSourceGrounding(payload, host.dataset.sourceText || "");
-    if (activeAnalysisRun && !artifactMatchesActiveRun(payload, activeAnalysisRun)) {
-      console.warn(`Skipped stale AHA analysis payload: expected ${activeAnalysisRun.analysisRunId || activeAnalysisRun.runId || activeAnalysisRun.sourceHash}, got ${payload.analysisRunId || payload.runId || payload.sourceHash || payload.sourceTextHash || "unknown"}.`);
+    const activeRun = getActiveAnalysisRun();
+    if (activeRun && !artifactMatchesActiveRun(payload, activeRun)) {
+      console.warn(`Skipped stale AHA analysis payload: expected ${activeRun.analysisRunId || activeRun.runId || activeRun.sourceHash}, got ${payload.analysisRunId || payload.runId || payload.sourceHash || payload.sourceTextHash || "unknown"}.`);
       host.innerHTML = '<div class="auto-output-head"><h2>AHA etterarbeid</h2><p>Venter på etterarbeid for aktiv analyse.</p></div>' + renderAnalysisDebugPanel(payload);
       setExportButtonsEnabled(false);
       return;
     }
-    if (analysisTopicMismatch(payload, activeAnalysisRun)) {
+    if (analysisTopicMismatch(payload, activeRun)) {
       host.innerHTML = '<div class="auto-output-head"><h2>AHA etterarbeid</h2><p>Analyseobjektet matcher ikke aktiv tekst. Kjør analysen på nytt.</p></div>' + renderAnalysisDebugPanel(payload);
       setExportButtonsEnabled(false);
       return;
@@ -6684,7 +6530,7 @@
     const host = document.getElementById("aha-auto-output");
     if (!sourceText.trim()) {
       if (host) {
-      const run = options.analysisRun || activeAnalysisRun || {};
+      const run = options.analysisRun || getActiveAnalysisRun() || {};
       host.dataset.sourceText = sourceText;
       host.dataset.analysisId = run.analysisId || "";
       host.dataset.runId = run.runId || "";
@@ -6743,15 +6589,16 @@
       historyGoContext: { subjectMatches: payload.subjectMatches || [] },
       fallbackAnalysis: jsCanonicalAnalysis
     });
-    if (!isActiveAnalysisRun(options.analysisRun || activeAnalysisRun)) return;
+    const activeRun = options.analysisRun || getActiveAnalysisRun();
+    if (!isActiveAnalysisRun(activeRun)) return;
     payload.canonicalAnalysis = resolvedCanonical.analysis;
     payload.canonicalAnalysisMeta = resolvedCanonical.meta;
     payload = enforceCanonicalSourceGrounding(payload, effectiveSourceText);
-    bindAnalysisArtifact(payload, options.analysisRun || activeAnalysisRun);
-    if (payload.canonicalAnalysis && typeof payload.canonicalAnalysis === "object") bindAnalysisArtifact(payload.canonicalAnalysis, options.analysisRun || activeAnalysisRun);
+    bindAnalysisArtifact(payload, activeRun);
+    if (payload.canonicalAnalysis && typeof payload.canonicalAnalysis === "object") bindAnalysisArtifact(payload.canonicalAnalysis, activeRun);
     if (options.persist !== false) {
       localStorage.setItem(AUTO_OUTPUT_STORAGE_KEY, JSON.stringify({
-        activeRun: options.analysisRun || activeAnalysisRun || null,
+        activeRun: activeRun || null,
         payload,
         sourceText,
         analysisId: payload.analysisId || "",
@@ -6846,7 +6693,7 @@
     const payload = cache?.payload && typeof cache.payload === "object" ? cache.payload : cache;
     const sourceText = String(cache?.sourceText || "");
     const cachedRun = { analysisId: cache.analysisId || payload.analysisId || `analysis_${cache.sourceTextHash || sourceHash(sourceText)}`, analysisRunId: cache.analysisRunId || cache.runId || payload.analysisRunId || payload.runId || "restored", runId: cache.runId || cache.analysisRunId || payload.runId || payload.analysisRunId || "restored", conversationId: cache.conversationId || cache.sessionId || payload.conversationId || payload.sessionId || CHAT_THREAD_ID, turnId: cache.turnId || payload.turnId || "", sourceId: cache.sourceId || payload.sourceId || `source_${cache.sourceTextHash || sourceHash(sourceText)}`, sourceKind: cache.sourceKind || payload.sourceKind || "chat", topicLabel: cache.topicLabel || payload.topicLabel || takeKeywords(sourceText, 4).join(" · "), sessionId: cache.sessionId || cache.conversationId || payload.sessionId || payload.conversationId || CHAT_THREAD_ID, createdAt: cache.createdAt || payload.createdAt || new Date().toISOString(), sourceHash: cache.sourceHash || cache.sourceTextHash || sourceHash(sourceText), sourceFingerprint: cache.sourceFingerprint || cache.sourceTextHash || sourceHash(sourceText) };
-    activeAnalysisRun = cachedRun;
+    setActiveAnalysisRun(cachedRun);
     bindAnalysisArtifact(payload, cachedRun);
     const host = document.getElementById("aha-auto-output");
     if (host) {
@@ -7077,7 +6924,7 @@
 
     const sourceKind = urlInfo.isSourceAction ? "url" : "pasted_text";
     const analysisRun = createAnalysisRun(cleanText, { sourceId: persistedUserMessage?.id ? `chat_message_${persistedUserMessage.id}` : undefined, sourceKind });
-    activeAnalysisRun = analysisRun;
+    setActiveAnalysisRun(analysisRun);
     clearActiveAnalysisState(analysisRun);
     const memoryUseEnabled = isAhaMemoryUseEnabled();
     setAhaProcessing(true, memoryUseEnabled ? "AHA vurderer relevant minne …" : "AHA svarer uten tidligere minne …");
@@ -7341,10 +7188,10 @@
   global.AHATestHooks = Object.assign({}, global.AHATestHooks || {}, { detectTextType, buildCanonicalAnalysis, buildAhaAnalysisExportBundle, formatAhaAnalysisExportMarkdown, buildAutoOutputs, renderAutoOutputs, detectAutoAnalysisDomain, buildAcademicConceptCandidates, buildSourceGroundedAcademicPayload, applyRuntimeKnowledgePolicy, isTransientAnalysisDocument, AHA_RUNTIME_KNOWLEDGE_POLICY, normalizeFagkoblinger, resolveCanonicalAnalysisWithOptionalPythonEngine, isAhaMemoryQuestion, buildAhaLearningContractReply, buildAhaMemoryStatus, shouldUseAhaMemory, buildAhaMemoryContext, buildAhaMemoryOffContext, loadAhaMemoryControls, saveAhaMemoryControls, setAhaMemoryControl, isAhaSavingEnabled, isAhaMemoryUseEnabled, loadAhaMemoryExclusions, saveAhaMemoryExclusions, getAhaMemoryInsightStableKey, getAhaMemoryInsightKey, isAhaMemoryInsightExcluded, excludeAhaMemoryInsight, includeAhaMemoryInsight, resetAhaMemoryExclusions, getAhaExcludedMemoryItems, renderAhaMemoryControls, bindAhaMemoryControls, submitAhaChatMessage, findRelevantLocalMemory, formatAhaMemoryContextForAgent, isAhaMemoryDebugEnabled, buildAhaMemoryTransparency, formatAhaMemoryTransparencyDetails, renderAhaMemoryTransparency, appendChat, updateAnswerActionsVisibility, getActiveMetaAiSession, startMetaAiSession, renderMetaAiSessionBox, renderMetaAiClaims, maybeHandleMetaAiAgentReply, saveMetaAiClaimFeedback, buildAhaPersonalAiLoopChatReadinessStatus, renderAhaPersonalAiLoopStatus, buildAhaAnswerPackage, renderAhaAnswerComposer, createAnalysisRun, bindAnalysisArtifact, artifactMatchesActiveRun, clearActiveAnalysisState, renderAutoOutputPayload, enforceCanonicalSourceGrounding, filterRetrievalForActiveSource, scoreRetrievalAgainstSource, filterMemoryContextForActiveSource, isActiveAnalysisRun });
 
   global.AHAActiveRun = {
-    get() { return activeAnalysisRun; },
+    get() { return getActiveAnalysisRun(); },
     isActive(run) { return isActiveAnalysisRun(run); },
-    matches(artifact) { return artifactMatchesActiveRun(artifact, activeAnalysisRun); },
-    bind(artifact) { return bindAnalysisArtifact(artifact, activeAnalysisRun); }
+    matches(artifact) { return artifactMatchesActiveRun(artifact, getActiveAnalysisRun()); },
+    bind(artifact) { return bindAnalysisArtifact(artifact, getActiveAnalysisRun()); }
   };
 
   global.AHAChat = {

@@ -2,13 +2,21 @@ const assert = require('assert');
 const fs = require('fs');
 const vm = require('vm');
 
+const chatHtml = fs.readFileSync('chat.html', 'utf8');
+const runContextAt = chatHtml.indexOf('js/ahaChatRunContext.js');
+const chatAt = chatHtml.indexOf('js/ahaChat.js');
+assert.ok(runContextAt > -1 && runContextAt < chatAt, 'run context must load before ahaChat.js');
+const chatSource = fs.readFileSync('js/ahaChat.js', 'utf8');
+assert.doesNotMatch(chatSource, /\blet activeAnalysisRun\b/, 'ahaChat.js must not keep a second active-run owner');
+assert.doesNotMatch(chatSource, /function createAnalysisRun\s*\(/, 'run creation must remain extracted');
+
 class El { constructor(){ this.dataset={}; this._html=''; this.textContent=''; this.disabled=false; this.hidden=false; this.className=''; this.classList={toggle(){},add(){},remove(){}}; } set innerHTML(v){this._html=String(v||'');} get innerHTML(){return this._html;} querySelector(){return null;} querySelectorAll(){return [];} addEventListener(){} appendChild(){} }
 function ctx(){
   const store=new Map(); const els=new Map();
   ['aha-auto-output','aha-answer-composer-status','aha-answer-composer-details','aha-answer-evaluation-status','aha-processing-indicator','aha-processing-text','btn-send'].forEach(id=>els.set(id,new El()));
   const c={ window:null, console, document:{readyState:'loading', addEventListener(){}, body:new El(), getElementById:id=>els.get(id)||null, querySelectorAll:()=>[], createElement:()=>new El()}, localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,String(v)),removeItem:k=>store.delete(k)}, navigator:{clipboard:{}}, Event:function(t){this.type=t;}, CustomEvent:function(t,o){this.type=t;this.detail=o&&o.detail;}, setTimeout, clearTimeout, Date, Math, URL:{createObjectURL(){},revokeObjectURL(){}}, Blob:function(){}, fetch:async()=>({ok:true,json:async()=>({reply:'ok'})})};
   c.window=c; c.globalThis=c;
-  ['js/ahaChatTextUtils.js','js/ahaChatSignals.js','js/ahaChatSubjects.js','js/ahaChatAnalysis.js','js/ahaChatReplyFormat.js','js/ahaChatExport.js','js/ahaChat.js'].forEach(f=>vm.runInNewContext(fs.readFileSync(f,'utf8'),c,{filename:f}));
+  ['js/ahaChatTextUtils.js','js/ahaChatSignals.js','js/ahaChatSubjects.js','js/ahaChatAnalysis.js','js/ahaChatReplyFormat.js','js/ahaChatExport.js','js/ahaChatRunContext.js','js/ahaChat.js'].forEach(f=>vm.runInNewContext(fs.readFileSync(f,'utf8'),c,{filename:f}));
   return {c,els,store};
 }
 
