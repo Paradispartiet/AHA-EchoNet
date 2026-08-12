@@ -5,6 +5,7 @@ const vm = require('node:vm');
 
 const ROOT = path.resolve(__dirname, '..');
 const REGISTRY_PATH = 'data/integrations/runtime/history-go-fagverk-runtime-registry.v1.json';
+const QUALITY_MATRIX_PATH = 'tests/fixtures/aha-production-analysis-quality-matrix.v1.json';
 
 function readJson(relativePath) {
   return JSON.parse(fs.readFileSync(path.join(ROOT, relativePath), 'utf8'));
@@ -21,16 +22,15 @@ function localFetch() {
   };
 }
 
-const cases = [
-  ['by', 'by', 'data-styring-kart-plan-medvirkning-algoritmer', 'fagverk_by_data-styring-kart-plan-medvirkning-algoritmer', 'Kommunens planvedtak bygger på algoritmisk styring og datastyring. Algoritmer påvirker hvordan den målte byen prioriteres.'],
-  ['historie', 'historie', 'kilder_arkiv_spor', 'fagverk_historie_kilder_arkiv_spor', 'Arkivstudien bruker kildekritikk og undersøker arkivtaushet. En førstehåndskilde må leses med proveniens og kontekstualisering.'],
-  ['kunst', 'kultur_kunst', 'estetisk-sprak-og-form', 'fagverk_kunst_estetisk-sprak-og-form', 'Verket analyseres gjennom ikonografi, appropriasjon og abstraksjon, med konseptkunst som tydelig referanseramme.'],
-  ['musikk', 'musikk', 'musikalsk-analyse-lyd-struktur', 'fagverk_musikk_musikalsk-analyse-lyd-struktur', 'Den musikalske analysen kombinerer rytmemåling og tidskodet lytting med harmoni og motiv.'],
-  ['naeringsliv', 'naeringsliv', 'regnskap-revisjon-okonomistyring', 'fagverk_naeringsliv_regnskap-revisjon-okonomistyring', 'Regnskapet følger periodisering og balanseføring. Kontantstrømoppstilling, revisjonsbevis og dekningsbidrag kontrolleres særskilt.'],
-  ['natur', 'natur', 'botanikk_vegetasjon', 'fagverk_natur_botanikk_vegetasjon', 'Botanikeren undersøkte plantevev, xylem og floem med vegetasjonsanalyse og dokumenterte funnet som herbariebelegg.'],
-  ['politikk', 'politikk', 'forvaltning', 'fagverk_forvaltning', 'Offentlig ansatte ønsker at evalueringer skal følges bedre opp og integreres i mål- og resultatstyring. Statsforvaltningen trenger evalueringsstrategier, lederforankring og bedre forvaltningsskjønn.'],
-  ['subkultur', 'subkultur', 'subkulturteori_feltgrenser', 'fagverk_subkultur_subkulturteori_feltgrenser', 'Studien bruker subkulturell kapital og feltgrenser sammen med scene-teori, subkulturteori og postsubkultur.']
-];
+const qualityMatrix = readJson(QUALITY_MATRIX_PATH);
+assert.equal(qualityMatrix.version, 'aha_production_analysis_quality_matrix_v1');
+const cases = qualityMatrix.cases.map((item) => [
+  item.canonicalSubjectId,
+  item.ahaSubjectId,
+  item.chapterId,
+  item.emneId,
+  item.sourceText
+]);
 
 const registry = readJson(REGISTRY_PATH);
 const subjectIndex = readJson('data/subjects/subjects_index.json');
@@ -78,7 +78,8 @@ vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js/ahaSubjectEngine.js'), 'u
     ); checks += 1;
   }
 
-  assert.equal(checks, 80, `Expected 80 production assertions, got ${checks}`);
+  const expectedChecks = cases.length * 10;
+  assert.equal(checks, expectedChecks, `Expected ${expectedChecks} production assertions, got ${checks}`);
 
   const first = cases[0];
   let subjectEngineFinished = false;
@@ -135,7 +136,7 @@ vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js/ahaSubjectEngine.js'), 'u
   assert.match(pythonGrounding, /Mer detaljert tolkning må fortsatt dokumenteres direkte i kildeteksten/);
   assert.match(pythonGrounding, /Fagverk-grounding er referansestøtte, ikke automatisk sannhet eller modelltrening/);
 
-  console.log(`AHA production analysis pipeline audit: PASS (${checks}/80 dynamic subject checks; ${cases.length} subjects)`);
+  console.log(`AHA production analysis pipeline audit: PASS (${checks}/${expectedChecks} dynamic subject checks; ${cases.length} subjects)`);
 })().catch((error) => {
   console.error(error);
   process.exitCode = 1;

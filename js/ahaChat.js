@@ -6317,12 +6317,18 @@
       .concat(Array.isArray(payload?.keywords) ? payload.keywords : [])
       .map((item) => String(item || "").trim())
       .filter(Boolean);
+    const sourceBoundSubjectTerms = []
+      .concat(Array.isArray(payload?.subjectMatches) ? payload.subjectMatches : [])
+      .concat(Array.isArray(payload?.subjectLinks) ? payload.subjectLinks : [])
+      .flatMap((match) => Array.isArray(match?.matched_terms) ? match.matched_terms : [])
+      .map((item) => String(item || "").trim())
+      .filter((term) => term && academicCandidateInSource(sourceText, term));
     const phraseConcepts = typeof extractAcademicPhraseConcepts === "function" ? extractAcademicPhraseConcepts(sourceText).slice(0, 12) : [];
     const candidates = [
       "Pinse", "pentekosté", "Den hellige ånd", "tungetale", "nådegave", "tydning", "apostlene", "Babels tårn", "kirkens fødselsdag", "gregoriansk kalender", "juliansk kalender", "treenighetssøndag"
     ];
     const lexiconHits = candidates.filter((term) => academicCandidateInSource(sourceText, term));
-    return Array.from(new Set(fromPayload.concat(phraseConcepts, lexiconHits))).slice(0, 20);
+    return Array.from(new Set(sourceBoundSubjectTerms.concat(fromPayload, phraseConcepts, lexiconHits))).slice(0, 20);
   }
 
 
