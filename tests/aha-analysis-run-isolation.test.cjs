@@ -4,11 +4,13 @@ const vm = require('vm');
 
 const chatHtml = fs.readFileSync('chat.html', 'utf8');
 const memoryControlsAt = chatHtml.indexOf('js/ahaChatMemoryControls.js');
+const afterworkAt = chatHtml.indexOf('js/ahaChatAfterwork.js');
 const memoryRuntimeAt = chatHtml.indexOf('js/ahaChatMemoryRuntime.js');
 const runContextAt = chatHtml.indexOf('js/ahaChatRunContext.js');
 const insightViewAt = chatHtml.indexOf('js/ahaChatInsightView.js');
 const chatAt = chatHtml.indexOf('js/ahaChat.js');
-assert.ok(memoryControlsAt > -1 && memoryControlsAt < memoryRuntimeAt, 'memory controls must load before the memory runtime');
+assert.ok(memoryControlsAt > -1 && memoryControlsAt < afterworkAt, 'memory controls must load before afterwork');
+assert.ok(afterworkAt > -1 && afterworkAt < memoryRuntimeAt, 'afterwork must load before the memory runtime');
 assert.ok(memoryRuntimeAt > -1 && memoryRuntimeAt < runContextAt, 'memory runtime must load before the run context');
 assert.ok(runContextAt > -1 && runContextAt < insightViewAt, 'run context must load before the insight view');
 assert.ok(insightViewAt > -1 && insightViewAt < chatAt, 'insight view must load before ahaChat.js');
@@ -21,6 +23,8 @@ assert.doesNotMatch(chatSource, /function findRelevantLocalMemory\s*\(/, 'memory
 assert.doesNotMatch(chatSource, /function buildAhaMemoryStatus\s*\(/, 'memory status must remain extracted');
 assert.doesNotMatch(chatSource, /function renderInsightCard\s*\(/, 'insight card rendering must remain extracted');
 assert.doesNotMatch(chatSource, /function showInsights\s*\(/, 'insight panel orchestration must remain extracted');
+assert.doesNotMatch(chatSource, /function loadAfterworkEntries\s*\(/, 'afterwork persistence must remain extracted');
+assert.doesNotMatch(chatSource, /function showSavedAfterwork\s*\(/, 'afterwork presentation must remain extracted');
 
 class El { constructor(){ this.dataset={}; this._html=''; this.textContent=''; this.disabled=false; this.hidden=false; this.className=''; this.classList={toggle(){},add(){},remove(){}}; } set innerHTML(v){this._html=String(v||'');} get innerHTML(){return this._html;} querySelector(){return null;} querySelectorAll(){return [];} addEventListener(){} appendChild(){} }
 function ctx(){
@@ -28,7 +32,7 @@ function ctx(){
   ['aha-auto-output','aha-answer-composer-status','aha-answer-composer-details','aha-answer-evaluation-status','aha-processing-indicator','aha-processing-text','btn-send'].forEach(id=>els.set(id,new El()));
   const c={ window:null, console, document:{readyState:'loading', addEventListener(){}, body:new El(), getElementById:id=>els.get(id)||null, querySelectorAll:()=>[], createElement:()=>new El()}, localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,String(v)),removeItem:k=>store.delete(k)}, navigator:{clipboard:{}}, Event:function(t){this.type=t;}, CustomEvent:function(t,o){this.type=t;this.detail=o&&o.detail;}, setTimeout, clearTimeout, Date, Math, URL:{createObjectURL(){},revokeObjectURL(){}}, Blob:function(){}, fetch:async()=>({ok:true,json:async()=>({reply:'ok'})})};
   c.window=c; c.globalThis=c;
-  ['js/ahaChatTextUtils.js','js/ahaChatSignals.js','js/ahaChatSubjects.js','js/ahaChatAnalysis.js','js/ahaChatReplyFormat.js','js/ahaChatExport.js','js/ahaChatMemoryControls.js','js/ahaChatMemoryRuntime.js','js/ahaChatRunContext.js','js/ahaChatInsightView.js','js/ahaChat.js'].forEach(f=>vm.runInNewContext(fs.readFileSync(f,'utf8'),c,{filename:f}));
+  ['js/ahaChatTextUtils.js','js/ahaChatSignals.js','js/ahaChatSubjects.js','js/ahaChatAnalysis.js','js/ahaChatReplyFormat.js','js/ahaChatExport.js','js/ahaChatMemoryControls.js','js/ahaChatAfterwork.js','js/ahaChatMemoryRuntime.js','js/ahaChatRunContext.js','js/ahaChatInsightView.js','js/ahaChat.js'].forEach(f=>vm.runInNewContext(fs.readFileSync(f,'utf8'),c,{filename:f}));
   return {c,els,store};
 }
 
