@@ -2,6 +2,8 @@ name: AHA History Go Fagverk release sync
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: "17 4 * * *"
 
 permissions:
   contents: write
@@ -39,12 +41,37 @@ jobs:
           node scripts/build-fagverk-release-manifest.mjs --check
           node - <<'NODE'
           const release = require('./data/fagverk/fagverk_release.json');
+          const summary = release.summary || {};
+          const subjects = release.subjects && typeof release.subjects === 'object' && !Array.isArray(release.subjects)
+            ? release.subjects
+            : {};
+          const subjectEntries = Object.entries(subjects);
+          const subjectIds = subjectEntries.map(([subjectId]) => String(subjectId || '').trim()).filter(Boolean);
+
           if (release.schema !== 'history_go_fagverk_release_v2') throw new Error(`Unexpected producer release schema: ${release.schema}`);
-          if (release.summary.subject_count !== 18) throw new Error(`Expected 18 producer packages, got ${release.summary.subject_count}.`);
-          if (release.summary.root_subject_count + release.summary.specialization_count !== release.summary.subject_count) {
-            throw new Error('Producer package inventory is inconsistent.');
+          if (subjectEntries.length === 0) throw new Error('Producer release exposes no subject packages.');
+          if (summary.subject_count !== subjectEntries.length) {
+            throw new Error(`Producer package inventory is inconsistent: summary=${summary.subject_count}, subjects=${subjectEntries.length}.`);
           }
-          if (release.summary.missing_file_count !== 0) throw new Error('Producer release contains blocking missing references.');
+          if (summary.root_subject_count + summary.specialization_count !== summary.subject_count) {
+            throw new Error('Producer root/specialization package inventory is inconsistent.');
+          }
+          if (subjectIds.length !== subjectEntries.length || new Set(subjectIds).size !== subjectEntries.length) {
+            throw new Error('Producer release contains empty or duplicate subject package ids.');
+          }
+          if (release.subject_inventory?.root_subject_count !== summary.root_subject_count ||
+              release.subject_inventory?.specialization_count !== summary.specialization_count) {
+            throw new Error('Producer subject inventory and release summary disagree.');
+          }
+          if (summary.missing_file_count !== 0) throw new Error('Producer release contains blocking missing references.');
+
+          console.log(JSON.stringify({
+            subject_count: summary.subject_count,
+            root_subject_count: summary.root_subject_count,
+            specialization_count: summary.specialization_count,
+            chapter_count: summary.chapter_count,
+            missing_file_count: summary.missing_file_count
+          }, null, 2));
           NODE
       - name: Prepare automation branch from current main
         working-directory: aha
