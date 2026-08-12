@@ -87,6 +87,39 @@
   const filterRetrievalForActiveSource = runContext.filterRetrievalForActiveSource;
   const filterMemoryContextForActiveSource = runContext.filterMemoryContextForActiveSource;
 
+  const insightView = global.AHAChatInsightView?.create?.({
+    escHtml,
+    normalizeConceptKey,
+    normalizeDisplayText,
+    filterConceptLabels,
+    resolveConceptTerm,
+    canonicalizeDisplayConcept,
+    currentInsights,
+    readLatestAcademicContext,
+    filterDomainInsightCards,
+    buildAcademicSyntheticInsightCards,
+    loadChamber: loadChamberFromStorage,
+    saveChamber: saveChamberToStorage,
+    loadAfterworkEntries,
+    deleteAfterworkEntry,
+    buildFromAfterworkEntry,
+    setStatusNote,
+    renderPanel,
+    loadAutoOutputs
+  });
+  if (!insightView) throw new Error("AHAChatInsightView må lastes før ahaChat.js.");
+
+  const renderInsightCard = insightView.renderInsightCard;
+  const isFragmentaryInsightCard = insightView.isFragmentaryInsightCard;
+  const getDisplayInsights = insightView.getDisplayInsights;
+  const resolvePanelAction = insightView.resolvePanelAction;
+  const applyEmneSuggestionAction = insightView.applyEmneSuggestionAction;
+  const applyMergeAction = insightView.applyMergeAction;
+  const handleResolvedPanelAction = insightView.handleResolvedPanelAction;
+  const bindPanelActionHandler = insightView.bindPanelActionHandler;
+  const renderMergeSuggestionsSection = insightView.renderMergeSuggestionsSection;
+  const showInsights = insightView.showInsights;
+
   function analysisTopicMismatch(payload, run = getActiveAnalysisRun()) {
     const sourceText = String(document.getElementById("aha-auto-output")?.dataset?.sourceText || "");
     return runContext.analysisTopicMismatch(payload, run, sourceText);
@@ -2289,184 +2322,6 @@
     return `${normalized.slice(0, Math.max(0, maxLen - 1)).trimEnd()}…`;
   }
 
-  function renderLayerChips(items, getLabel) {
-    const labels = (items || [])
-      .map((item) => {
-        const label = getLabel(item);
-        return label ? escHtml(label) : "";
-      })
-      .filter(Boolean);
-    if (!labels.length) return "";
-    return `<div class="insight-layer-chips">${labels
-      .map((label) => `<span class="insight-chip">${label}</span>`)
-      .join("")}</div>`;
-  }
-
-  function renderEmneSuggestions(insight) {
-    const list = Array.isArray(insight.emne_suggestions) ? insight.emne_suggestions : [];
-    const open = list.filter((s) => s && s.emne_id && (s.status || "suggested") === "suggested");
-    if (!open.length) return "";
-
-    const items = open.map((s) => {
-      const label = escHtml(s.label || s.short_label || s.title || s.emne_id);
-      const subject = s.subject_id ? `<small class="emne-subject">${escHtml(s.subject_id)}</small>` : "";
-      const insightId = escHtml(insight.id || "");
-      const emneId = escHtml(s.emne_id);
-      return `<li class="emne-suggestion">
-        <span class="emne-suggestion-label">${label}${subject}</span>
-        <span class="emne-suggestion-actions">
-          <button type="button" class="emne-confirm-btn" data-action="confirm-emne" data-insight-id="${insightId}" data-emne-id="${emneId}">Legg til</button>
-          <button type="button" class="emne-dismiss-btn" data-action="dismiss-emne" data-insight-id="${insightId}" data-emne-id="${emneId}">Ignorer</button>
-        </span>
-      </li>`;
-    }).join("");
-
-    return `<div class="insight-section">
-      <span class="insight-section-label">Foreslåtte emner</span>
-      <ul class="emne-suggestion-list">${items}</ul>
-    </div>`;
-  }
-
-  function dedupeTheoryLabels(labels, excludedLower) {
-    const seen = new Set();
-    const excluded = excludedLower || new Set();
-    return (Array.isArray(labels) ? labels : [])
-      .map((label) => String(label || "").trim())
-      .filter((label) => {
-        if (!label) return false;
-        const key = label.toLowerCase();
-        if (excluded.has(key) || seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      });
-  }
-
-  function buildTheorySection(ins) {
-    const links = (Array.isArray(ins.theoretical_links) ? ins.theoretical_links : [])
-      .map((item) => ({
-        thinker: String(item?.name || "").trim(),
-        theory: String(item?.theory || "").trim(),
-        relation: String(item?.relation || "").trim()
-      }))
-      .filter((item) => item.thinker && item.relation)
-      .slice(0, 3);
-
-    const linkedThinkers = new Set(links.map((item) => item.thinker.toLowerCase()));
-    const fallbackTheoryChips = dedupeTheoryLabels(
-      []
-        .concat(Array.isArray(ins.thinkers) ? ins.thinkers : [])
-        .concat(Array.isArray(ins.theories) ? ins.theories : [])
-        .concat(Array.isArray(ins.traditions) ? ins.traditions : []),
-      linkedThinkers
-    );
-
-    if (!links.length && !fallbackTheoryChips.length) return "";
-
-    const linksHtml = links.length
-      ? `<div class="insight-theory-links">${links
-        .map((item) => `<article class="insight-theory-link">
-            <p><span class="insight-theory-key">Tenker:</span> ${escHtml(item.thinker)}</p>
-            ${item.theory ? `<p><span class="insight-theory-key">Teori:</span> ${escHtml(item.theory)}</p>` : ""}
-            <p><span class="insight-theory-key">Kobling:</span> ${escHtml(item.relation)}</p>
-          </article>`)
-        .join("")}</div>`
-      : "";
-
-    const fallbackChipsHtml = fallbackTheoryChips.length
-      ? renderLayerChips(fallbackTheoryChips.map((label) => ({ label })), (x) => x?.label)
-      : "";
-
-    return `<div class="insight-section"><span class="insight-section-label">Teori</span>${linksHtml}${fallbackChipsHtml}</div>`;
-  }
-
-  function renderInsightCard(ins) {
-    const cleanTitleRaw = sanitizeInsightText(ins.candidate_title || ins.title || "Innsikt");
-    const cleanSummaryRaw = sanitizeInsightText(ins.candidate_summary || ins.summary || "");
-    if (isFragmentaryInsightCard(ins, cleanTitleRaw, cleanSummaryRaw) || shouldHideInsightCard(cleanTitleRaw, cleanSummaryRaw)) return "";
-    const titleKey = normalizeConceptKey(cleanTitleRaw || ins?.title || "");
-    const isSyntheticAcademicCard = ins?.candidate_type === "synthetic"
-      && ["hovedinnsikt", "hovedargument", "motargument/kritikk", "spenning i teksten"].includes(titleKey);
-    const title = escHtml(normalizeDisplayText(cleanTitleRaw || "Innsikt"));
-    const summaryText = normalizeDisplayText(cleanSummaryRaw || "");
-    const summary = escHtml(summaryText);
-
-    const prioritizedConcepts = filterConceptLabels([
-      ...(Array.isArray(ins.concepts) ? ins.concepts : []),
-      ...(Array.isArray(ins.subjectLinks) ? ins.subjectLinks.map((item) => item?.title || item?.label || item?.key || item?.name || "") : []),
-      ...(Array.isArray(ins.keywords) ? ins.keywords : [])
-    ]
-      .map(resolveConceptTerm)
-      .map(canonicalizeDisplayConcept)
-      .filter(Boolean));
-    const conceptsHtml = renderLayerChips(prioritizedConcepts.map((label) => ({ label })), (c) => c?.label);
-    const patternsHtml = renderLayerChips(ins.patterns, (p) => p?.label || p?.key);
-    const markersHtml = renderLayerChips(ins.markers, (m) => m?.value);
-    const emnerHtml = renderLayerChips((ins.emner || []).map((e) => ({ key: e })), (e) => e?.key);
-    const theorySection = buildTheorySection(ins);
-    const suggestionsHtml = renderEmneSuggestions(ins);
-
-    const claims = isSyntheticAcademicCard
-      ? []
-      : (ins.claims || [])
-        .map((c) => (c && c.text) || "")
-        .filter((text) => {
-          const normalizedClaim = normalizeConceptKey(text || "");
-          const normalizedSummary = normalizeConceptKey(summaryText || "");
-          if (!normalizedClaim) return false;
-          if (normalizedSummary && (normalizedClaim === normalizedSummary || normalizedSummary.includes(normalizedClaim) || normalizedClaim.includes(normalizedSummary))) return false;
-          return true;
-        });
-    const claimsHtml = claims.length
-      ? `<ul class="insight-claims">${claims
-          .map((q) => `<li>“${escHtml(q)}”</li>`)
-          .join("")}</ul>`
-      : "";
-
-    const sections = [
-      conceptsHtml ? `<div class="insight-section"><span class="insight-section-label">Begreper</span>${conceptsHtml}</div>` : "",
-      patternsHtml ? `<div class="insight-section"><span class="insight-section-label">Mønstre</span>${patternsHtml}</div>` : "",
-      claimsHtml ? `<div class="insight-section"><span class="insight-section-label">Påstander</span>${claimsHtml}</div>` : "",
-      markersHtml ? `<div class="insight-section"><span class="insight-section-label">Markører</span>${markersHtml}</div>` : "",
-      emnerHtml ? `<div class="insight-section"><span class="insight-section-label">Bekreftede emner</span>${emnerHtml}</div>` : "",
-      theorySection,
-      suggestionsHtml
-    ].filter(Boolean).join("");
-
-    return `<li class="insight-card" data-insight-id="${escHtml(ins.id || "")}">
-      <strong class="insight-card-title">${title}</strong>
-      ${summary ? `<p class="insight-card-summary">${summary}</p>` : ""}
-      ${sections}
-    </li>`;
-  }
-
-
-  function endsMidWord(text) {
-    const raw = String(text || "").trim().toLowerCase();
-    if (!raw) return false;
-    return /(erfari|ressursknapphe|miljødegrader|politisk økolo|marginali|forklari)$/.test(raw);
-  }
-
-  function normalizedInsightComparableText(text) {
-    return String(text || "").toLowerCase().replace(/[….,;:!?]/g, " ").replace(/\s+/g, " ").trim();
-  }
-
-  function isFragmentaryInsightCard(ins, titleValue, summaryValue) {
-    const title = String(titleValue || ins?.candidate_title || ins?.title || "").trim();
-    const summary = String(summaryValue || ins?.candidate_summary || ins?.summary || "").trim();
-    const protectedTitles = new Set(["hovedinnsikt", "hovedargument", "motargument/kritikk", "spenning i teksten"]);
-    if (protectedTitles.has(normalizeConceptKey(title))) return false;
-    if (!title && !summary) return true;
-    const tNorm = normalizedInsightComparableText(title);
-    const sNorm = normalizedInsightComparableText(summary);
-    const overlap = tNorm && sNorm && (tNorm === sNorm || tNorm.includes(sNorm) || sNorm.includes(tNorm));
-    const fragmentSignals = /(erfari|marginali|forklari|ressursknapphe|miljødegrader|politisk økolo|manglende må|forståelsen av|implikasjonene av vår analyse)$/i;
-    const weakTitle = title.split(/\s+/).length <= 3 && !/[.!?…:]/.test(title);
-    const repeatedEllipsis = /…/.test(summary) && overlap;
-    const missingClaim = !/[.!?…]/.test(summary) && summary.split(/\s+/).length < 10;
-    const trailingFragment = /(manglende må|forståelsen av|implikasjonene av vår analyse|^vi diskuterer implikasjonene)/i.test(summary);
-    const titleHasTruncatedSignal = title.split(/\s+/).length > 3 && endsMidWord(title);
-    return titleHasTruncatedSignal || endsMidWord(summary) || fragmentSignals.test(title) || fragmentSignals.test(summary) || trailingFragment || (overlap && weakTitle) || repeatedEllipsis || (weakTitle && missingClaim);
-  }
 
   function hasAcademicSignals(payload, sourceText) {
     const sortItems = Array.isArray(payload?.sortItems) ? payload.sortItems : [];
@@ -2765,255 +2620,6 @@
     });
   }
 
-  function getDisplayInsights() {
-    try {
-      const insights = currentInsights();
-      const filtered = insights.filter((ins) => !isFragmentaryInsightCard(ins));
-      const context = readLatestAcademicContext();
-      const domainFiltered = filterDomainInsightCards(filtered, context?.sourceText || "");
-      if (context?.textType !== "academic_article") return domainFiltered;
-
-      const synthetic = filterDomainInsightCards(buildAcademicSyntheticInsightCards(), context?.sourceText || "");
-      if (synthetic.length >= 4) return synthetic.slice(0, 4);
-      if (synthetic.length > 0 && domainFiltered.length < 4) return synthetic;
-      if (synthetic.length > 0 && !domainFiltered.length) return synthetic;
-
-      const strong = domainFiltered.filter((ins) => /hoved|argument|kritikk|spenning|teori|synt/i.test(`${ins?.title || ""} ${ins?.summary || ""}`));
-      if (strong.length >= 2) return strong.slice(0, 4);
-      if (strong.length) return strong;
-      return domainFiltered;
-    } catch (err) {
-      console.warn("Kunne ikke bygge innsiktsvisning", err);
-      try {
-        return currentInsights().filter((ins) => !isFragmentaryInsightCard(ins));
-      } catch (nestedErr) {
-        console.warn("Kunne ikke bygge fallback for innsikter", nestedErr);
-        return [];
-      }
-    }
-  }
-
-  function resolvePanelAction(target) {
-    if (!target) return null;
-    const button = target.closest && target.closest("[data-action]");
-    if (!button) return null;
-    const action = button.getAttribute("data-action");
-    if (action === "confirm-emne" || action === "dismiss-emne") {
-      return {
-        action,
-        insightId: button.getAttribute("data-insight-id") || "",
-        emneId: button.getAttribute("data-emne-id") || ""
-      };
-    }
-    if (action === "delete-afterwork") {
-      return {
-        action,
-        afterworkId: button.getAttribute("data-afterwork-id") || ""
-      };
-    }
-    if (action === "build-from-afterwork") {
-      return {
-        action,
-        afterworkId: button.getAttribute("data-afterwork-id") || ""
-      };
-    }
-    if (action === "open-afterwork" || action === "export-afterwork-json" || action === "link-afterwork-historygo") {
-      return {
-        action,
-        afterworkId: button.getAttribute("data-afterwork-id") || ""
-      };
-    }
-    if (action === "confirm-merge" || action === "dismiss-merge") {
-      return {
-        action,
-        sourceId: button.getAttribute("data-source-id") || "",
-        targetId: button.getAttribute("data-target-id") || ""
-      };
-    }
-    return null;
-  }
-
-  function applyEmneSuggestionAction(action, insightId, emneId) {
-    if (!insightId || !emneId) return false;
-    const chamber = loadChamberFromStorage();
-    const insight = (chamber.insights || []).find((ins) => ins.id === insightId);
-    if (!insight) return false;
-
-    const engine = global.InsightsEngine || {};
-    let changed = false;
-    if (action === "confirm-emne" && typeof engine.confirmEmneSuggestion === "function") {
-      changed = engine.confirmEmneSuggestion(insight, emneId);
-    } else if (action === "dismiss-emne" && typeof engine.dismissEmneSuggestion === "function") {
-      changed = engine.dismissEmneSuggestion(insight, emneId);
-    }
-    if (!changed) return false;
-
-    saveChamberToStorage(chamber);
-
-    try {
-      global.dispatchEvent(new CustomEvent("aha:emne-suggestion-resolved", {
-        detail: { insight_id: insightId, emne_id: emneId, action }
-      }));
-    } catch {}
-
-    return true;
-  }
-
-  function refreshTargetEmbedding(target) {
-    if (!target?.id) return;
-    if (!global.AHAEmbeddings || typeof global.AHAEmbeddings.embedAndStore !== "function") return;
-    if (typeof global.AHAEmbeddings.isConfigured === "function" && !global.AHAEmbeddings.isConfigured()) return;
-    // Fire-and-forget: target-insighten har fått ny mening gjennom
-    // merge (concepts, claims, patterns, markers, emner). Vi re-embed-er
-    // den så semantisk søk treffer den nye representasjonen, men
-    // hovedflyten venter aldri på dette.
-    global.AHAEmbeddings.embedAndStore(target).then((result) => {
-      if (!result?.ok) return;
-      try {
-        global.dispatchEvent(new CustomEvent("aha:embedding-refreshed", {
-          detail: { insight_id: target.id, reason: "merge_confirmed" }
-        }));
-      } catch {}
-    }).catch((err) => {
-      console.warn("AHAChat: re-embed etter merge feilet", err);
-    });
-  }
-
-  function applyMergeAction(action, sourceId, targetId) {
-    if (!sourceId || !targetId) return false;
-    const chamber = loadChamberFromStorage();
-    const engine = global.InsightsEngine || {};
-    let changed = false;
-    if (action === "confirm-merge" && typeof engine.confirmMerge === "function") {
-      changed = engine.confirmMerge(chamber, sourceId, targetId);
-    } else if (action === "dismiss-merge" && typeof engine.dismissMergeSuggestion === "function") {
-      changed = engine.dismissMergeSuggestion(chamber, sourceId, targetId);
-    }
-    if (!changed) return false;
-
-    saveChamberToStorage(chamber);
-
-    if (action === "confirm-merge") {
-      const target = (chamber.insights || []).find((ins) => ins.id === targetId);
-      if (target) refreshTargetEmbedding(target);
-    }
-
-    try {
-      global.dispatchEvent(new CustomEvent("aha:merge-resolved", {
-        detail: { source_id: sourceId, target_id: targetId, action }
-      }));
-    } catch {}
-
-    return true;
-  }
-
-  function handleResolvedPanelAction(resolved, panelEl) {
-    if (!resolved || !panelEl) return false;
-    let ok = false;
-    if (resolved.action === "confirm-emne" || resolved.action === "dismiss-emne") {
-      ok = applyEmneSuggestionAction(resolved.action, resolved.insightId, resolved.emneId);
-    } else if (resolved.action === "confirm-merge" || resolved.action === "dismiss-merge") {
-      ok = applyMergeAction(resolved.action, resolved.sourceId, resolved.targetId);
-    } else if (resolved.action === "delete-afterwork") {
-      deleteAfterworkEntry(resolved.afterworkId);
-      ok = true;
-    } else if (resolved.action === "build-from-afterwork") {
-      buildFromAfterworkEntry(resolved.afterworkId);
-      ok = true;
-    } else if (resolved.action === "open-afterwork") {
-      const selector = `.saved-afterwork-card[data-afterwork-id="${resolved.afterworkId}"]`;
-      const detailsEl = panelEl.querySelector(`${selector} details`);
-      if (detailsEl) detailsEl.open = true;
-      panelEl.querySelector(selector)?.scrollIntoView?.({ behavior: "smooth", block: "center" });
-      setStatusNote("Etterarbeid åpnet.");
-      ok = true;
-    } else if (resolved.action === "export-afterwork-json") {
-      const entry = loadAfterworkEntries().find((item) => item?.id === resolved.afterworkId);
-      if (entry) {
-        if (navigator.clipboard?.writeText) {
-          navigator.clipboard.writeText(JSON.stringify(entry, null, 2))
-            .then(() => setStatusNote("Etterarbeid kopiert som JSON."))
-            .catch(() => setStatusNote("Kunne ikke kopiere JSON (clipboard utilgjengelig)."));
-        } else {
-          setStatusNote("Clipboard er ikke tilgjengelig i denne klienten.");
-        }
-        ok = true;
-      }
-    } else if (resolved.action === "link-afterwork-historygo") {
-      const entry = loadAfterworkEntries().find((item) => item?.id === resolved.afterworkId) || {};
-      const signalText = `${entry?.sourceTextPreview || ""} ${(Array.isArray(entry?.concepts) ? entry.concepts : []).join(" ")}`;
-      setStatusNote(/nav|forvaltning|kommune|statlig|velferd/i.test(signalText) ? "History Go-kobling: politikk — Politikk & samfunn." : "History Go-kobling foreslått basert på tema.");
-      ok = true;
-    }
-    if (ok && resolved.action !== "delete-afterwork" && resolved.action !== "build-from-afterwork") showInsights();
-    return ok;
-  }
-
-  function bindPanelActionHandler() {
-    ["panel", "afterwork-panel"].forEach((panelId) => {
-      const panel = document.getElementById(panelId);
-      if (!panel || panel.dataset.ahaPanelBound === "true") return;
-      panel.dataset.ahaPanelBound = "true";
-      panel.addEventListener("click", (event) => {
-        const resolved = resolvePanelAction(event.target);
-        if (!resolved) return;
-        event.preventDefault();
-        handleResolvedPanelAction(resolved, panel);
-      });
-    });
-  }
-
-  function renderMergeSuggestionsSection() {
-    const chamber = loadChamberFromStorage();
-    const suggestions = (Array.isArray(chamber.merge_suggestions) ? chamber.merge_suggestions : [])
-      .filter((s) => s && s.status === "pending");
-    if (!suggestions.length) return "";
-
-    const items = suggestions.map((s) => {
-      const sourceSummary = escHtml((s.source_summary || s.source_id || "").slice(0, 120));
-      const targetSummary = escHtml((s.target_summary || s.target_id || "").slice(0, 120));
-      const sim = Number.isFinite(s.similarity) ? s.similarity.toFixed(2) : "?";
-      const sourceId = escHtml(s.source_id || "");
-      const targetId = escHtml(s.target_id || "");
-      return `<li class="merge-suggestion">
-        <div class="merge-suggestion-text">
-          <div class="merge-suggestion-row"><span class="merge-suggestion-label">Ny:</span> ${sourceSummary}</div>
-          <div class="merge-suggestion-row"><span class="merge-suggestion-label">Ligner på:</span> ${targetSummary}</div>
-          <small class="merge-suggestion-meta">cosine ${sim}</small>
-        </div>
-        <div class="merge-suggestion-actions">
-          <button type="button" class="merge-confirm-btn" data-action="confirm-merge" data-source-id="${sourceId}" data-target-id="${targetId}">Slå sammen</button>
-          <button type="button" class="merge-dismiss-btn" data-action="dismiss-merge" data-source-id="${sourceId}" data-target-id="${targetId}">Ignorer</button>
-        </div>
-      </li>`;
-    }).join("");
-
-    return `<section class="merge-suggestion-panel">
-      <h3>Foreslåtte sammenslåinger</h3>
-      <p class="merge-suggestion-hint">Embedding-laget mener disse innsiktene kan være samme tanke. Ingenting slås sammen før du bekrefter.</p>
-      <ul class="merge-suggestion-list">${items}</ul>
-    </section>`;
-  }
-
-  function showInsights() {
-    let insights = getDisplayInsights();
-    if (!insights.length) {
-      const cache = loadAutoOutputs();
-      const payload = cache?.payload && typeof cache.payload === "object" ? cache.payload : null;
-      if (payload?.textType === "academic_article") {
-        const synthetic = buildAcademicSyntheticInsightCards();
-        if (synthetic.length) insights = synthetic;
-      }
-    }
-    const mergeSection = renderMergeSuggestionsSection();
-    renderPanel(
-      `<div class="insight-panel">${mergeSection}<h2>Innsikter</h2>${
-        insights.length
-          ? `<ul class="insight-list">${insights.map(renderInsightCard).join("")}</ul>`
-          : "<p>Ingen innsikter ennå.</p>"
-      }</div>`
-    );
-  }
 
   function showStatus() {
     const chamber = loadChamberFromStorage();

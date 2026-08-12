@@ -102,6 +102,7 @@ function buildContext(seed = {}) {
     'js/ahaChatMemoryControls.js',
     'js/ahaChatMemoryRuntime.js',
     'js/ahaChatRunContext.js',
+    'js/ahaChatInsightView.js',
     'js/ahaChat.js',
     'js/ahaChatPythonSmoke.js'
   ];
