@@ -28,7 +28,7 @@ const analysisCode = fs.readFileSync('js/ahaChatAnalysis.js', 'utf8');
 const replyFormatCode = fs.readFileSync('js/ahaChatReplyFormat.js', 'utf8');
 const memoryCode = fs.readFileSync('js/metaInsightsMemory.js', 'utf8');
 const agentCode = fs.readFileSync('js/metaInsightsAgent.js', 'utf8');
-const chatCode = fs.readFileSync('js/ahaChat.js', 'utf8');
+const chatCode = fs.readFileSync('js/ahaChatRunContext.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChat.js', 'utf8');
 
 class TestElement {
   constructor(tagName) {
