@@ -1,0 +1,28 @@
+{
+  "schema": "aha_retired_local_subject_knowledge_v1",
+  "version": "1.0.0",
+  "entries": [
+    {
+      "subject_id": "natur",
+      "emne_id": "parker_torg_fellesskap_natur",
+      "title": "Parker, torg og sosialt fellesskap",
+      "classification": "retired_competing_local_mirror",
+      "reason": "Dupliserte By-emnet med samme tittel og blandet sosial møteplasskunnskap inn i canonical Natur.",
+      "replacement": {
+        "subject_id": "by",
+        "emne_id": "parker_torg_fellesskap"
+      }
+    },
+    {
+      "subject_id": "politikk",
+      "emne_id": "marginalisering_underkuede",
+      "title": "Marginalisering og underkuede grupper",
+      "classification": "retired_competing_local_mirror",
+      "reason": "Gjentar Pøblens historie og underfra-perspektivet på tvers av Politikk og Historie uten en egen faglig avgrensning.",
+      "replacement": {
+        "subject_id": "historie",
+        "emne_id": "poblenes_historie"
+      }
+    }
+  ]
+}

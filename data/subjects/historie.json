@@ -11,6 +11,20 @@
     {
       "emne_id": "poblenes_historie",
       "title": "Pøblens historie og underfra-perspektiv",
+      "local_knowledge": {
+        "classification": "aha_specific_addition",
+        "canonical_subject_ids": [
+          "historie"
+        ],
+        "related_chapter_ids": [
+          "industri_arbeid_sosialhistorie",
+          "offentlighet_mobilisering_bevegelser"
+        ],
+        "scope": "Pedagogisk underfra-perspektiv på marginaliserte gruppers historiske erfaringer.",
+        "rationale": "Beholdes som AHA-linse i Historie; den konkurrerende Politikk-kopien er fjernet.",
+        "revalidate_on_runtime_change": true,
+        "minimum_matched_terms": 2
+      },
       "core_concepts": [
         "pøblens historie",
         "tilsidesatte",

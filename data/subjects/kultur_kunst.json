@@ -11,6 +11,20 @@
     {
       "emne_id": "kropp_bevegelse_hverdagskultur",
       "title": "Kropp, bevegelse og hverdagskultur",
+      "local_knowledge": {
+        "classification": "aha_specific_addition",
+        "canonical_subject_ids": [
+          "kunst"
+        ],
+        "related_chapter_ids": [
+          "produksjon-og-praksis",
+          "publikum-og-offentlighet"
+        ],
+        "scope": "Pedagogisk linse på kroppslig uttrykk og hverdagskultur.",
+        "rationale": "Supplerer canonical Kunst uten å definere en konkurrerende kunstfaglig struktur.",
+        "revalidate_on_runtime_change": true,
+        "minimum_matched_terms": 2
+      },
       "core_concepts": [
         "kropp",
         "bevegelse",

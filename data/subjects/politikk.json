@@ -29,6 +29,20 @@
     {
       "emne_id": "straff_makt_kontroll",
       "title": "Straff, makt og sosial kontroll",
+      "local_knowledge": {
+        "classification": "aha_specific_addition",
+        "canonical_subject_ids": [
+          "politikk"
+        ],
+        "related_chapter_ids": [
+          "rett-lov-rettssikkerhet",
+          "konflikt-makt-sivilsamfunn"
+        ],
+        "scope": "Pedagogisk linse på straff, kriminalpolitikk og sosial kontroll.",
+        "rationale": "Supplerer canonical Politikk uten å gjenta et helt canonicalt kapittel.",
+        "revalidate_on_runtime_change": true,
+        "minimum_matched_terms": 2
+      },
       "core_concepts": [
         "straff",
         "makt",
@@ -58,36 +72,6 @@
       ],
       "summary": "Temaet kobler straffesystemer, institusjoner og samfunnets kontrollmekanismer.",
       "description": "Analyse av fengsel, avvik, marginalisering og hvordan risiko brukes politisk."
-    },
-    {
-      "emne_id": "marginalisering_underkuede",
-      "title": "Marginalisering og underkuede grupper",
-      "core_concepts": [
-        "tilsidesatte",
-        "underkuede",
-        "pøblens historie"
-      ],
-      "keywords": [
-        "klasse",
-        "stigma",
-        "ekskludering",
-        "motmakt"
-      ],
-      "thinkers": [
-        "Marx",
-        "Fanon",
-        "Becker",
-        "Wacquant"
-      ],
-      "learning_goals": [
-        "forstå strukturell ulikhet",
-        "identifisere mekanismer for stigmatisering"
-      ],
-      "checkpoints": [
-        "kan forklare forholdet mellom makt og marginalitet"
-      ],
-      "summary": "Fokuserer på grupper som skyves ut av majoritetens normer.",
-      "description": "Undersøker hvordan samfunn former kategorier av avvikere og hvem som får definisjonsmakt."
     },
     {
       "emne_id": "fagverk_politikk_fordeling-velferd-ulikhet",
