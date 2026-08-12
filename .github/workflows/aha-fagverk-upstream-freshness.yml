@@ -1,0 +1,42 @@
+name: AHA Fagverk upstream freshness
+
+on:
+  schedule:
+    - cron: "17 4 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: aha-fagverk-upstream-freshness
+  cancel-in-progress: true
+
+jobs:
+  check-history-go:
+    name: Detect newer canonical History Go Fagverk
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Verify freshness checker contract
+        run: node tests/aha-history-go-fagverk-upstream-freshness.test.mjs
+
+      - name: Compare active AHA subjects with History Go main
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          node scripts/check-history-go-fagverk-upstream-freshness.mjs \
+            --json-output artifacts/history-go-fagverk-upstream-freshness.json
+
+      - name: Upload freshness report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aha-history-go-fagverk-upstream-freshness
+          path: artifacts/history-go-fagverk-upstream-freshness.json
+          if-no-files-found: warn
+          retention-days: 30
