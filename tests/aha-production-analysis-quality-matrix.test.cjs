@@ -188,11 +188,15 @@ vm.runInNewContext(read('js/ahaSubjectEngine.js'), subjectContext, { filename: '
     knowledgePaths: 0,
     graphicalMindmaps: 0,
     personalAiBoundaries: 0,
+    personalAiIsolations: 0,
     semanticBindings: 0,
-    leakageFailures: 0
+    leakageChecks: 0,
+    leakageFailures: 0,
+    requiredOutputChecks: fixture.cases.length * 6,
+    emptyOutputFailures: 0
   };
 
-  for (const item of fixture.cases) {
+  for (const [caseIndex, item] of fixture.cases.entries()) {
     assert.ok(item.sourceText.length >= 300, `${item.id}: source must be substantial enough for the production academic path`);
     assert.ok(item.expectedConceptTerms.length >= 2, `${item.id}: reviewed concepts missing`);
     assert.ok(item.forbiddenLeakageTerms.length >= 3, `${item.id}: leakage vocabulary missing`);
@@ -233,6 +237,7 @@ vm.runInNewContext(read('js/ahaSubjectEngine.js'), subjectContext, { filename: '
     });
 
     const leaked = item.forbiddenLeakageTerms.filter((term) => normalize(analysisSurface).includes(normalize(term)));
+    scorecard.leakageChecks += item.forbiddenLeakageTerms.length;
     scorecard.leakageFailures += leaked.length;
     assert.deepEqual(leaked, [], `${item.id}: cross-domain leakage: ${leaked.join(', ')}`);
 
@@ -248,6 +253,39 @@ vm.runInNewContext(read('js/ahaSubjectEngine.js'), subjectContext, { filename: '
 
     assert.equal(payload.analysisKnowledgePolicy?.persistAsMemory, false, `${item.id}: source article must not become Personal AI memory automatically`);
     scorecard.personalAiBoundaries += 1;
+
+    const relevantMemory = {
+      id: `relevant_${item.id}`,
+      title: `Relevant minne om ${item.canonicalSubjectId}`,
+      summary: item.expectedConceptTerms.join(' · '),
+      concepts: item.expectedConceptTerms
+    };
+    const adversarialMemory = {
+      id: `adversarial_${item.id}`,
+      title: `Stale minne fra et annet fag ${caseIndex}`,
+      summary: item.forbiddenLeakageTerms.join(' · '),
+      concepts: item.forbiddenLeakageTerms
+    };
+    const filteredRetrieval = hooks.filterRetrievalForActiveSource({
+      results: [adversarialMemory, relevantMemory],
+      context: { selectedSources: [adversarialMemory, relevantMemory] }
+    }, item.sourceText, run);
+    assert.deepEqual(Array.from(filteredRetrieval.results, (entry) => entry.id), [relevantMemory.id], `${item.id}: Personal AI retrieval kept an unrelated cross-domain memory`);
+    assert.deepEqual(Array.from(filteredRetrieval.context.selectedSources, (entry) => entry.id), [relevantMemory.id], `${item.id}: answer sources kept an unrelated cross-domain memory`);
+    const filteredMemory = hooks.filterMemoryContextForActiveSource({
+      used: true,
+      reason: 'Adversarial production matrix',
+      confidence: 0.9,
+      mode: 'semantic_match',
+      selectedInsights: [adversarialMemory, relevantMemory],
+      localMatches: [{ insight: adversarialMemory }, { insight: relevantMemory }],
+      semanticMatches: [adversarialMemory, relevantMemory],
+      summaryForAgent: 'stale pre-filter summary'
+    }, item.sourceText, run);
+    assert.equal(filteredMemory.used, true, `${item.id}: relevant Personal AI memory was lost`);
+    assert.deepEqual(Array.from(filteredMemory.selectedInsights, (entry) => entry.id), [relevantMemory.id], `${item.id}: active memory kept cross-domain material`);
+    item.forbiddenLeakageTerms.forEach((term) => assert.equal(normalize(filteredMemory.summaryForAgent).includes(normalize(term)), false, `${item.id}: cross-domain memory reached the agent summary: ${term}`));
+    scorecard.personalAiIsolations += 1;
 
     const binding = context.AHAAutoOutputSourceBinding.bindAutoOutputToSource(stored);
     assert.equal(binding.sourceBinding.invalidFields.length, 0, `${item.id}: invalid source-bound artifacts`);
@@ -298,13 +336,36 @@ vm.runInNewContext(read('js/ahaSubjectEngine.js'), subjectContext, { filename: '
     assert.ok(layout.links.length >= conceptList.terms.length, `${item.id}: graphical mindmap links missing`);
     assert.ok(graph.edges.some((edge) => edge.type === 'path_contains' && edge.to === rootId), `${item.id}: learning path is not connected to its concept list`);
     scorecard.graphicalMindmaps += 1;
+    scorecard.emptyOutputFailures += [
+      Boolean(payload.ahaSer?.viktigsteInnsikt),
+      Boolean(payload.canonicalAnalysis?.keyInsight),
+      Array.isArray(payload.sortItems) && payload.sortItems.length >= 3,
+      Boolean(conceptList?.terms?.length >= 2),
+      stepResult.ok === true,
+      layout.links.length >= conceptList.terms.length
+    ].filter((complete) => !complete).length;
   }
 
   assert.equal(scorecard.leakageFailures, 0, 'production matrix must have zero forbidden cross-domain terms');
   for (const field of [
     'subjectMatches', 'canonicalProvenance', 'sourceGroundedAnalyses', 'conceptLists',
-    'knowledgePaths', 'graphicalMindmaps', 'personalAiBoundaries', 'semanticBindings'
+    'knowledgePaths', 'graphicalMindmaps', 'personalAiBoundaries', 'personalAiIsolations', 'semanticBindings'
   ]) assert.equal(scorecard[field], scorecard.reviewedCases, `${field} must pass for every reviewed case`);
+
+  scorecard.metrics = {
+    leakageRate: Number((scorecard.leakageFailures / Math.max(1, scorecard.leakageChecks)).toFixed(4)),
+    emptyOutputRate: Number((scorecard.emptyOutputFailures / Math.max(1, scorecard.requiredOutputChecks)).toFixed(4)),
+    provenanceCompleteness: Number((scorecard.canonicalProvenance / scorecard.reviewedCases).toFixed(4)),
+    structureCompleteness: Number(((scorecard.conceptLists + scorecard.knowledgePaths + scorecard.graphicalMindmaps) / (scorecard.reviewedCases * 3)).toFixed(4)),
+    personalAiIsolationRate: Number((scorecard.personalAiIsolations / scorecard.reviewedCases).toFixed(4))
+  };
+  assert.deepEqual(scorecard.metrics, {
+    leakageRate: 0,
+    emptyOutputRate: 0,
+    provenanceCompleteness: 1,
+    structureCompleteness: 1,
+    personalAiIsolationRate: 1
+  });
 
   console.log(`AHA production analysis quality matrix: PASS\n${JSON.stringify(scorecard, null, 2)}`);
 })().catch((error) => {

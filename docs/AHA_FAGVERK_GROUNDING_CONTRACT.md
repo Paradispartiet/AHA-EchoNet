@@ -171,6 +171,13 @@ The fixture is human-reviewed evaluation data, not model-training truth. Fagverk
 terms may become concept candidates only when the exact term is also present in
 the active source text.
 
+The command emits a machine-readable scorecard with leakage rate, empty-output
+rate, provenance completeness, structure completeness and Personal AI isolation
+rate. Each reviewed case also receives an adversarial memory/retrieval candidate
+made from forbidden vocabulary from another domain. The candidate must be
+removed from retrieval results, answer sources and the agent memory summary,
+while the source-relevant candidate must remain.
+
 ## Longitudinal user robustness gate
 
 `npm run test:longitudinal-robustness` reuses the reviewed production matrix
