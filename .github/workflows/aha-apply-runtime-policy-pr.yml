@@ -5,8 +5,6 @@ on:
     branches:
       - main
 
-actions: {}
-
 permissions:
   contents: write
 
