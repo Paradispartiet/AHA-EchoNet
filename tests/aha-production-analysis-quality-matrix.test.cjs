@@ -154,6 +154,7 @@ function makeProductContext() {
     'js/ahaChatReplyFormat.js',
     'js/ahaChatExport.js',
     'js/ahaChatMemoryControls.js',
+    'js/ahaChatMemoryRuntime.js',
     'js/ahaChatRunContext.js',
     'js/ahaChat.js',
     'js/ahaLists.js',

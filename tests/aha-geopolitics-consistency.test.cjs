@@ -7,7 +7,7 @@ const signalsCode = fs.readFileSync('js/ahaChatSignals.js', 'utf8');
 const exportCode = fs.readFileSync('js/ahaChatExport.js', 'utf8');
 const subjectsCode = fs.readFileSync('js/ahaChatSubjects.js', 'utf8');
 const analysisCode = fs.readFileSync('js/ahaChatAnalysis.js', 'utf8');
-const chatCode = fs.readFileSync('js/ahaChatMemoryControls.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatRunContext.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChat.js', 'utf8');
+const chatCode = fs.readFileSync('js/ahaChatMemoryControls.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatMemoryRuntime.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatRunContext.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChat.js', 'utf8');
 
 const store = new Map();
 const text = `USA og Kina konkurrerer om global makt. Nominelt BNP favoriserer fortsatt USA, mens PPP viser at Kina har hentet inn mye. Demografi, militærmakt, Taiwan og KI-investeringer påvirker styrkeforholdet. USA har allierte og større forskningsøkosystem, mens Kina moderniserer militær kapasitet raskt.`;

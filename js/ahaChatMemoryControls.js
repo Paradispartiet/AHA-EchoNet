@@ -8,7 +8,16 @@
   function create(dependencies = {}) {
     const controlsKey = dependencies.controlsKey || "aha_memory_controls_v1";
     const exclusionsKey = dependencies.exclusionsKey || "aha_memory_exclusions_v1";
-    const normalizeText = typeof dependencies.normalizeText === "function" ? dependencies.normalizeText : (value) => String(value || "").toLowerCase();
+    const normalizeText = typeof dependencies.normalizeText === "function" ? dependencies.normalizeText : (value) => String(value || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/æ/g, "ae")
+      .replace(/ø/g, "o")
+      .replace(/å/g, "a")
+      .replace(/[^a-z0-9\s?]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
     const loadChamber = dependencies.loadChamber;
     const renderControls = dependencies.renderControls;
     const updateStatus = dependencies.updateStatus;
