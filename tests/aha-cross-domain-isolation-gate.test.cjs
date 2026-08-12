@@ -81,31 +81,31 @@ const cases = [
     id: 'public_admin',
     anchor: 'Forvaltningskompasset',
     subject: { subject_id: 'politikk', title: 'Politikk' },
-    source: `Studien undersøker Forvaltningskompasset som betegnelse på hvordan NAV-reformen påvirker offentlig forvaltning, velferdsstat og arbeidslinja. Data fra intervjuer med ansatte i stat og kommune viser at styring og skjønnsutøvelse trekker i ulike retninger. Metoden kombinerer dokumentanalyse og kvalitative intervjuer. Resultatene viser at organisatoriske grenser påvirker hvordan reformen brukes i praksis.`
+    source: `Sammendrag\nI denne artikkelen undersøker vi Forvaltningskompasset som betegnelse på hvordan NAV-reformen påvirker offentlig forvaltning, velferdsstat og arbeidslinja. Data fra intervjuer med ansatte i stat og kommune viser at styring og skjønnsutøvelse trekker i ulike retninger. Metoden kombinerer dokumentanalyse og kvalitative intervjuer. Resultatene viser at organisatoriske grenser påvirker hvordan reformen brukes i praksis.\nNøkkelord: NAV-reformen, offentlig forvaltning, stat og kommune, implementering, evaluering.`
   },
   {
     id: 'sahel',
     anchor: 'Sahelresiliens',
     subject: { subject_id: 'natur', title: 'Natur' },
-    source: `Artikkelen undersøker Sahelresiliens i Mali og Sahel gjennom politisk økologi, ressursknapphet og miljødegradering. Empirien bygger på feltarbeid og intervjuer om beite, jordbruk og lokal konflikt. Funnene viser at klima alene ikke forklarer vold, fordi makt, produksjonsforhold og institusjoner former sårbarheten. Studien sammenligner miljøsikkerhet med alternative forklaringer.`
+    source: `Sammendrag\nI denne artikkelen undersøker vi Sahelresiliens i Mali og Sahel gjennom politisk økologi, ressursknapphet og miljødegradering. Empirien bygger på feltarbeid og intervjuer om beite, jordbruk og lokal konflikt. Funnene viser at klima alene ikke forklarer vold, fordi makt, produksjonsforhold og institusjoner former sårbarheten. Studien sammenligner miljøsikkerhet med alternative forklaringer.\nNøkkelord: Sahel, Mali, politisk økologi, miljøsikkerhet, ressursknapphet.`
   },
   {
     id: 'media_history',
     anchor: 'Redaksjonsarkivet',
     subject: { subject_id: 'historie', title: 'Historie' },
-    source: `Denne studien undersøker Redaksjonsarkivet som kilde til Morgenbladets institusjons- og mediehistorie. Avisens redaksjonelle praksis, eierskap og offentlig rolle analyseres gjennom historiske utgaver, arkivmateriale og redaksjonelle dokumenter. Funnene viser hvordan institusjonen endret seg gjennom teknologiske og økonomiske skifter. Metoden er historisk kildekritikk og komparativ medieanalyse.`
+    source: `Sammendrag\nI denne artikkelen undersøker vi Redaksjonsarkivet som kilde til Morgenbladets institusjons- og mediehistorie. Avisens redaksjonelle praksis, eierskap og offentlig rolle analyseres gjennom historiske utgaver, arkivmateriale og redaksjonelle dokumenter. Funnene viser hvordan institusjonen endret seg gjennom teknologiske og økonomiske skifter. Metoden er historisk kildekritikk og komparativ medieanalyse.\nNøkkelord: Morgenbladet, mediehistorie, redaksjon, eierskap, institusjon.`
   },
   {
     id: 'literature',
     anchor: 'Fortellerbindingen',
     subject: { subject_id: 'litteratur', title: 'Litteratur' },
-    source: `Artikkelen undersøker Fortellerbindingen i Karl Ove Knausgårds Min kamp som litterært grep mellom selvbiografi, hukommelse og tilknytning. Nærlesning av fortellerposisjon og komposisjon viser hvordan jeget skaper avstand til egne erfaringer samtidig som teksten søker autentisitet. Metoden kombinerer narratologi og litterær analyse. Studien diskuterer spenningen mellom levd liv og litterær form.`
+    source: `Sammendrag\nI denne artikkelen undersøker vi Fortellerbindingen i Karl Ove Knausgårds Min kamp som litterært grep mellom selvbiografi, hukommelse og tilknytning. Nærlesning av fortellerposisjon og komposisjon viser hvordan jeget skaper avstand til egne erfaringer samtidig som teksten søker autentisitet. Metoden kombinerer narratologi og litterær analyse. Studien diskuterer spenningen mellom levd liv og litterær form.\nNøkkelord: Knausgård, Min kamp, narratologi, tilknytning, selvbiografi.`
   },
   {
     id: 'religion',
     anchor: 'Åndsnarrativet',
     subject: { subject_id: 'historie', title: 'Historie' },
-    source: `Studien undersøker Åndsnarrativet i pinsefortellingen, der Den hellige ånd, tungetale og apostlene står sentralt. Teksten sammenligner Apostlenes gjerninger med senere kristen tradisjon og spør hvordan pinse forstås som kirkens fødsel. Metoden er teksthistorisk analyse og religionshistorisk sammenligning. Funnene viser variasjon mellom liturgisk tradisjon og moderne kirkesamfunn.`
+    source: `Sammendrag\nI denne artikkelen undersøker vi Åndsnarrativet i pinsefortellingen, der Den hellige ånd, tungetale og apostlene står sentralt. Teksten sammenligner Apostlenes gjerninger med senere kristen tradisjon og spør hvordan pinse forstås som kirkens fødsel. Metoden er teksthistorisk analyse og religionshistorisk sammenligning. Funnene viser variasjon mellom liturgisk tradisjon og moderne kirkesamfunn.\nNøkkelord: pinse, Den hellige ånd, tungetale, apostlene, religionshistorie.`
   }
 ];
 
