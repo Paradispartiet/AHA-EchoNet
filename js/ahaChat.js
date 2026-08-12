@@ -6381,7 +6381,7 @@
     }
     const canonicalSer = buildAhaSerCard(safePayload, sourceText);
     const policyAcademic = !AHA_RUNTIME_KNOWLEDGE_POLICY.legacyArticleTemplatesEnabled && detectTextType(sourceText || "") === "academic_article";
-    const domain = policyAcademic ? "fagverk_routed_academic" : detectAutoAnalysisDomain(sourceText || "", safePayload || {});
+    const domain = detectAutoAnalysisDomain(sourceText || "", safePayload || {});
     const existingHistoryLinks = safePayload?.historyGoLinks || safePayload?.history_go_links || [];
     const derivedHistoryLinks = policyAcademic
       ? normalizeSubjectMatches(safePayload?.subjectMatches || []).slice(0, 5).map((match) => {
