@@ -5,6 +5,7 @@
   "use strict";
 
   const LISTS_KEY = "aha_lists_v1";
+  const CONCEPT_LISTS_KEY = "aha_concept_lists_v1";
   const INSIGHTS_KEY = "aha_insight_chamber_v1";
   const NOTES_KEY = "aha_notes_v1";
   const FEED_KEY = "aha_feed_posts_v1";
@@ -34,6 +35,13 @@
 
   function uid(prefix) {
     return `${prefix}_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
+  }
+
+  function stableId(prefix, value) {
+    const input = String(value || "").toLocaleLowerCase("no");
+    let hash = 5381;
+    for (let index = 0; index < input.length; index += 1) hash = ((hash << 5) + hash + input.charCodeAt(index)) >>> 0;
+    return `${prefix}_${hash.toString(36)}`;
   }
 
   function escapeHtml(value) {
@@ -113,6 +121,108 @@
       },
       deletedAt: list?.deletedAt || list?.deleted_at || ""
     };
+  }
+
+  function normalizeConceptTerm(term, index = 0, listId = "") {
+    const input = typeof term === "string" ? { term } : (term || {});
+    const title = asText(input.term || input.title || input.label, "");
+    return {
+      id: asText(input.id, stableId("concept_term", `${listId}:${title}:${index}`)),
+      term: title,
+      definition: asText(input.definition || input.description, ""),
+      relation: asText(input.relation, "related_to")
+    };
+  }
+
+  function normalizeConceptList(list) {
+    const now = new Date().toISOString();
+    return {
+      id: asText(list?.id, uid("concept_list")),
+      title: asText(list?.title || list?.theme, "Uten navn"),
+      description: asText(list?.description, ""),
+      terms: asArray(list?.terms || list?.concepts)
+        .map((term, index) => normalizeConceptTerm(term, index, list?.id || list?.title))
+        .filter((term) => term.term),
+      createdAt: list?.createdAt || list?.created_at || now,
+      updatedAt: list?.updatedAt || list?.updated_at || now,
+      source: "aha_concept_lists",
+      local_only: true,
+      deletedAt: list?.deletedAt || list?.deleted_at || ""
+    };
+  }
+
+  function loadConceptLists() {
+    return asArray(loadRawByKey(CONCEPT_LISTS_KEY, [])).map(normalizeConceptList);
+  }
+
+  function saveConceptLists(lists) {
+    localStorage.setItem(CONCEPT_LISTS_KEY, JSON.stringify(asArray(lists)));
+    return asArray(lists);
+  }
+
+  function parseInitialTerms(value) {
+    const raw = Array.isArray(value) ? value : String(value || "").split(",");
+    const seen = new Set();
+    return raw.map((term) => normalizeConceptTerm(term)).filter((term) => {
+      const key = term.term.toLocaleLowerCase("no");
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
+  function createConceptList(input) {
+    const title = asText(input?.title, "");
+    if (!title) return null;
+    const now = new Date().toISOString();
+    const lists = loadConceptLists();
+    const created = normalizeConceptList({
+      id: uid("concept_list"),
+      title,
+      description: input?.description,
+      terms: parseInitialTerms(input?.terms),
+      createdAt: now,
+      updatedAt: now
+    });
+    lists.unshift(created);
+    saveConceptLists(lists);
+    return created;
+  }
+
+  function addConceptTerm(listId, input) {
+    const term = normalizeConceptTerm(input);
+    if (!term.term) return { ok: false, reason: "missing_term" };
+    const lists = loadConceptLists();
+    const index = lists.findIndex((list) => list.id === listId && !isUnavailableRecord(list));
+    if (index < 0) return { ok: false, reason: "list_not_found" };
+    const duplicate = lists[index].terms.some((item) => item.term.toLocaleLowerCase("no") === term.term.toLocaleLowerCase("no"));
+    if (duplicate) return { ok: false, reason: "duplicate" };
+    lists[index].terms.push(term);
+    lists[index].updatedAt = new Date().toISOString();
+    saveConceptLists(lists);
+    return { ok: true, term, list: lists[index] };
+  }
+
+  function removeConceptTerm(listId, termId) {
+    const lists = loadConceptLists();
+    const index = lists.findIndex((list) => list.id === listId && !isUnavailableRecord(list));
+    if (index < 0) return null;
+    const next = lists[index].terms.filter((term) => term.id !== termId);
+    if (next.length === lists[index].terms.length) return null;
+    lists[index].terms = next;
+    lists[index].updatedAt = new Date().toISOString();
+    saveConceptLists(lists);
+    return lists[index];
+  }
+
+  function deleteConceptList(id) {
+    const lists = loadConceptLists();
+    const index = lists.findIndex((list) => list.id === id);
+    if (index < 0) return null;
+    lists[index].deletedAt = new Date().toISOString();
+    lists[index].updatedAt = lists[index].deletedAt;
+    saveConceptLists(lists);
+    return lists[index];
   }
 
   function loadLists() {
@@ -391,18 +501,18 @@
       <article class="aha-panel aha-list-overview-card${isSelected ? " is-selected" : ""}" data-list-card="${escapeHtml(list.id)}">
         <div class="aha-list-header">
           <div>
-            <p class="aha-list-card-kicker">${escapeHtml(listStatusLabel(list))} list</p>
+            <p class="aha-list-card-kicker">${escapeHtml(listStatusLabel(list))} samling</p>
             <h3>${escapeHtml(list.title)}</h3>
           </div>
           <span class="aha-list-badge">${list.items.length} ${list.items.length === 1 ? "item" : "items"}</span>
         </div>
-        <p class="aha-list-summary">${escapeHtml(list.description || "No description yet.")}</p>
+        <p class="aha-list-summary">${escapeHtml(list.description || "Ingen beskrivelse ennå.")}</p>
         <div class="aha-list-meta" aria-label="List metadata">
           <span>${escapeHtml(list.type)}</span>
           <span>Updated ${escapeHtml(formatDate(list.updatedAt || list.createdAt))}</span>
         </div>
         <button type="button" class="aha-tile-btn${isSelected ? " aha-tile-btn-primary" : ""}" data-list-select-preview="${escapeHtml(list.id)}" aria-pressed="${isSelected ? "true" : "false"}">
-          ${isSelected ? "Selected" : "View details"}
+          ${isSelected ? "Valgt" : "Vis samling"}
         </button>
       </article>`;
   }
@@ -410,9 +520,9 @@
   function renderSelectedPreview(list, allItems, groups) {
     if (!list) {
       return `<aside class="aha-panel aha-list-preview aha-list-preview-empty" aria-label="List preview">
-        <p class="eyebrow">List preview</p>
-        <h2>Select a list</h2>
-        <p>Choose a list from the overview to see its items and details.</p>
+        <p class="eyebrow">Forhåndsvisning av samling</p>
+        <h2>Velg en samling</h2>
+        <p>Velg en samling for å se objektene og detaljene.</p>
       </aside>`;
     }
 
@@ -435,12 +545,12 @@
     return `<aside class="aha-panel aha-list-preview" aria-labelledby="list-preview-title">
       <div class="aha-list-header">
         <div>
-          <p class="eyebrow">List preview</p>
+          <p class="eyebrow">Forhåndsvisning av samling</p>
           <h2 id="list-preview-title" tabindex="-1">${escapeHtml(list.title)}</h2>
         </div>
         <button type="button" class="aha-tile-btn" data-list-preview-close aria-label="Close list preview">Close</button>
       </div>
-      <p>${escapeHtml(list.description || "No description yet.")}</p>
+      <p>${escapeHtml(list.description || "Ingen beskrivelse ennå.")}</p>
       <div class="aha-list-meta" aria-label="Selected list metadata">
         <span class="aha-list-badge">${escapeHtml(listStatusLabel(list))}</span>
         <span class="aha-list-badge">${list.items.length} ${list.items.length === 1 ? "item" : "items"}</span>
@@ -448,19 +558,19 @@
         <span>Updated ${escapeHtml(formatDate(list.updatedAt || list.createdAt))}</span>
       </div>
       <section aria-labelledby="list-preview-items-title">
-        <h3 id="list-preview-items-title">Items</h3>
+        <h3 id="list-preview-items-title">Objekter</h3>
         <ul class="aha-list-items">${itemsHtml}</ul>
         ${remainingCount ? `<p class="module-meta">${remainingCount} more ${remainingCount === 1 ? "item" : "items"} not shown in this preview.</p>` : ""}
       </section>
       <details class="aha-list-manage">
-        <summary>Manage list</summary>
+        <summary>Administrer samling</summary>
         <div class="aha-list-manage-content">
           <div class="aha-list-add-row">
             <select data-list-select="${escapeHtml(list.id)}" aria-label="Choose an AHA item to add to ${escapeHtml(list.title)}">
-              <option value="">Choose an item from AHA modules</option>
+              <option value="">Velg et objekt fra AHA</option>
               ${options}
             </select>
-            <button type="button" data-list-add="${escapeHtml(list.id)}">Add item</button>
+            <button type="button" data-list-add="${escapeHtml(list.id)}">Legg til objekt</button>
             <div class="statuslinje" data-list-action-status="${escapeHtml(list.id)}" aria-live="polite"></div>
           </div>
           <div class="aha-list-add-row">
@@ -473,16 +583,56 @@
             <div class="statuslinje" data-list-group-status="${escapeHtml(list.id)}" aria-live="polite"></div>
             ` : `<p class="statuslinje">No groups yet. <a href="groups.html">Create a group first.</a></p>`}
           </div>
-          <button type="button" class="aha-list-delete" data-list-delete="${escapeHtml(list.id)}">Delete list</button>
+          <button type="button" class="aha-list-delete" data-list-delete="${escapeHtml(list.id)}">Slett samling</button>
         </div>
       </details>
     </aside>`;
   }
 
+  function renderConceptLists() {
+    const lists = loadConceptLists()
+      .filter((list) => !isUnavailableRecord(list))
+      .sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt));
+    const mount = document.getElementById("concept-lists-list");
+    const count = document.getElementById("concept-lists-count");
+    const termsCount = document.getElementById("concept-terms-count");
+    if (count) count.textContent = String(lists.length);
+    if (termsCount) termsCount.textContent = String(lists.reduce((sum, list) => sum + list.terms.length, 0));
+    if (!mount) return;
+
+    if (!lists.length) {
+      mount.innerHTML = `<article class="aha-panel aha-concept-list-card">
+        <p class="eyebrow">Ingen begrepslister ennå</p>
+        <h3>Start med et tema</h3>
+        <p>Lag en liste med ord og begreper som hører sammen, for eksempel demokrati, valg og representasjon.</p>
+      </article>`;
+      return;
+    }
+
+    mount.innerHTML = lists.map((list) => {
+      const terms = list.terms.length
+        ? `<ul class="aha-concept-terms">${list.terms.map((term) => `<li class="aha-concept-term"><div class="aha-concept-term-main"><span><strong>${escapeHtml(term.term)}</strong>${term.definition ? `<span class="aha-concept-term-definition">${escapeHtml(term.definition)}</span>` : ""}</span><button type="button" class="aha-concept-term-remove" data-concept-term-remove="${escapeHtml(list.id)}::${escapeHtml(term.id)}" aria-label="Fjern ${escapeHtml(term.term)}">×</button></div></li>`).join("")}</ul>`
+        : `<p class="module-meta">Listen er tom. Legg til det første begrepet nedenfor.</p>`;
+      return `<article class="aha-panel aha-concept-list-card" data-concept-list-card="${escapeHtml(list.id)}">
+        <div class="aha-list-header"><div><p class="eyebrow">Begrepsliste</p><h3>${escapeHtml(list.title)}</h3></div><span class="aha-list-badge">${list.terms.length} ${list.terms.length === 1 ? "begrep" : "begreper"}</span></div>
+        ${list.description ? `<p>${escapeHtml(list.description)}</p>` : ""}
+        ${terms}
+        <form class="aha-concept-add-form" data-concept-term-form="${escapeHtml(list.id)}">
+          <label>Begrep<input name="term" required placeholder="Nytt begrep" /></label>
+          <label>Kort forklaring<input name="definition" placeholder="Valgfri forklaring" /></label>
+          <button type="submit">Legg til</button>
+        </form>
+        <div class="aha-concept-list-actions"><span class="module-meta">Oppdatert ${escapeHtml(formatDate(list.updatedAt))}</span><button type="button" class="aha-list-delete" data-concept-list-delete="${escapeHtml(list.id)}">Slett liste</button></div>
+      </article>`;
+    }).join("");
+  }
+
   function renderContent() {
     const rawDataset = localStorage.getItem(LISTS_KEY);
-    const datasetExists = rawDataset !== null;
-    if (datasetExists) JSON.parse(rawDataset);
+    const rawConceptDataset = localStorage.getItem(CONCEPT_LISTS_KEY);
+    const datasetExists = rawDataset !== null || rawConceptDataset !== null;
+    if (rawDataset !== null) JSON.parse(rawDataset);
+    if (rawConceptDataset !== null) JSON.parse(rawConceptDataset);
     const lists = loadLists()
       .filter((list) => !isDeletedRecord(list))
       .sort((a, b) => listActionTime(b) - listActionTime(a));
@@ -497,7 +647,7 @@
     if (!mount) return;
 
     global.AHAModules?.updatePageHealth?.("lists", global.AHAModules.localPageHealth({
-      count: lists.length,
+      count: lists.length + loadConceptLists().filter((list) => !isUnavailableRecord(list)).length,
       datasetExists
     }));
 
@@ -506,9 +656,9 @@
       mount.innerHTML = global.AHAModules.buildModuleEmptyState({
         type: "no_data",
         moduleId: "lists",
-        title: "Ingen lister ennå.",
-        message: "Lag en lokal liste for å samle innsikter, notater, feedposter, galleriobjekter eller Insta-poster.",
-        hint: "Lists er local-only og deles ikke med EchoNet."
+        title: "Ingen samlinger ennå.",
+        message: "Lag en lokal samling for å samle innsikter, notater, feedposter, galleriobjekter eller Insta-poster.",
+        hint: "Samlinger er lokale og deles ikke automatisk."
       });
       return;
     }
@@ -518,8 +668,8 @@
       <section class="aha-list-overview" aria-labelledby="lists-overview-title">
         <div class="aha-list-section-heading">
           <div>
-            <p class="eyebrow">Overview</p>
-            <h2 id="lists-overview-title">Your lists</h2>
+            <p class="eyebrow">Oversikt</p>
+            <h2 id="lists-overview-title">Dine samlinger</h2>
           </div>
           <span>${lists.length} ${lists.length === 1 ? "list" : "lists"}</span>
         </div>
@@ -533,6 +683,7 @@
 
   function render() {
     try {
+      renderConceptLists();
       renderContent();
     } catch {
       const mount = document.getElementById("lists-list");
@@ -547,6 +698,46 @@
 
   function bind() {
     document.getElementById("lists-refresh")?.addEventListener("click", refresh);
+
+    document.getElementById("concept-list-create-form")?.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const title = document.getElementById("concept-list-title")?.value || "";
+      const description = document.getElementById("concept-list-description")?.value || "";
+      const terms = document.getElementById("concept-list-initial-terms")?.value || "";
+      const created = createConceptList({ title, description, terms });
+      if (!created) return;
+      event.target.reset();
+      render();
+    });
+
+    document.getElementById("concept-lists-list")?.addEventListener("submit", (event) => {
+      const form = event.target;
+      if (!(form instanceof HTMLFormElement) || !form.dataset.conceptTermForm) return;
+      event.preventDefault();
+      const data = new FormData(form);
+      const result = addConceptTerm(form.dataset.conceptTermForm, {
+        term: data.get("term"),
+        definition: data.get("definition")
+      });
+      if (!result?.ok) return;
+      form.reset();
+      render();
+    });
+
+    document.getElementById("concept-lists-list")?.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      if (target.dataset.conceptListDelete) {
+        deleteConceptList(target.dataset.conceptListDelete);
+        render();
+        return;
+      }
+      if (target.dataset.conceptTermRemove) {
+        const [listId, termId] = target.dataset.conceptTermRemove.split("::");
+        removeConceptTerm(listId, termId);
+        render();
+      }
+    });
 
     document.getElementById("list-create-form")?.addEventListener("submit", (event) => {
       event.preventDefault();
@@ -633,6 +824,12 @@
   }
 
   global.AHALists = {
+    loadConceptLists,
+    saveConceptLists,
+    createConceptList,
+    addConceptTerm,
+    removeConceptTerm,
+    deleteConceptList,
     loadLists,
     saveLists,
     createList,

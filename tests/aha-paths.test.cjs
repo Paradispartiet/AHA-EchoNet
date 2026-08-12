@@ -6,6 +6,7 @@ const vm = require('node:vm');
 const PATHS_KEY = 'aha_paths_v1';
 const INSIGHTS_KEY = 'aha_insight_chamber_v1';
 const LISTS_KEY = 'aha_lists_v1';
+const CONCEPT_LISTS_KEY = 'aha_concept_lists_v1';
 const NOTES_KEY = 'aha_notes_v1';
 
 function makeStorage(seed = {}) {
@@ -46,11 +47,12 @@ function makeContext({ seed = {}, repository, config } = {}) {
   const seedRefs = {
     [INSIGHTS_KEY]: JSON.stringify({ insights: [{ id: 'ins-1', title: 'Insight' }, { id: 'ins-deleted', title: 'Deleted', deletedAt: '2026-01-01' }, { id: 'ins-arch', title: 'Archived', archived: true }] }),
     [LISTS_KEY]: JSON.stringify([{ id: 'list-1', title: 'List' }, { id: 'list-deleted', title: 'Deleted', deleted_at: '2026-01-01' }, { id: 'list-arch', title: 'Archived', archived: true }]),
+    [CONCEPT_LISTS_KEY]: JSON.stringify([{ id: 'concept-list-1', title: 'Democracy concepts', terms: [{ term: 'election' }] }]),
     [NOTES_KEY]: JSON.stringify([{ id: 'note-1', title: 'Note' }, { id: 'note-deleted', title: 'Deleted', deletedAt: '2026-01-01' }, { id: 'note-arch', title: 'Archived', archived: true }])
   };
 
   const { Paths, storage, repoCalls, elements } = makeContext({ seed: seedRefs });
-  const created = Paths.createPath({ title: 'Local sequence', type: 'process' });
+  const created = Paths.createPath({ title: 'Local sequence', type: 'process', mode: 'narrative', goal: 'Follow the development', learningOutcome: 'Explain the development' });
   assert.ok(created.id, 'createPath should create an id');
   assert.equal(storage.readJson(PATHS_KEY, []).length, 1, 'createPath should save locally');
   assert.equal(created.local_only, true, 'new path should be local_only');
@@ -58,6 +60,9 @@ function makeContext({ seed = {}, repository, config } = {}) {
   assert.equal(created.echonet_shared, false, 'new path should not be EchoNet shared');
   assert.equal(created.sync_enabled, false, 'new path should not have sync enabled');
   assert.equal(created.meta.automation_enabled, false, 'new path should not enable automation');
+  assert.equal(created.mode, 'narrative', 'new path should preserve narrative mode');
+  assert.equal(created.goal, 'Follow the development', 'new path should preserve its goal');
+  assert.equal(created.learningOutcome, 'Explain the development', 'new path should preserve its learning outcome');
   assert.equal(repoCalls.length, 0, 'createPath should not call repository without explicit database sync flag');
   Paths.updatePath(created.id, { title: 'Updated sequence' });
   assert.equal(repoCalls.length, 0, 'updatePath should not call repository without explicit database sync flag');
@@ -68,7 +73,7 @@ function makeContext({ seed = {}, repository, config } = {}) {
 
   const items = Paths.collectAvailablePathItems();
   const keys = new Set(items.map((item) => `${item.source}::${item.refId}`));
-  for (const key of ['aha_insights::ins-1', 'aha_lists::list-1', 'aha_notes::note-1']) assert.ok(keys.has(key), `${key} should be collected`);
+  for (const key of ['aha_insights::ins-1', 'aha_lists::list-1', 'aha_concept_lists::concept-list-1', 'aha_notes::note-1']) assert.ok(keys.has(key), `${key} should be collected`);
   for (const key of ['aha_insights::ins-deleted', 'aha_insights::ins-arch', 'aha_lists::list-deleted', 'aha_lists::list-arch', 'aha_notes::note-deleted', 'aha_notes::note-arch']) assert.equal(keys.has(key), false, `${key} should be ignored`);
   assert.equal(Paths.validatePathStepReference({ source: 'aha_notes', refId: 'note-1' }).ok, true, 'valid local reference should pass');
   assert.equal(Paths.validatePathStepReference({ source: 'web', refId: 'note-1' }).reason, 'unknown_source', 'unknown source should fail');
@@ -76,9 +81,14 @@ function makeContext({ seed = {}, repository, config } = {}) {
 
   const active = Paths.createPath({ title: 'Active path' });
   assert.equal(Paths.addStepToPath(active.id, { source: 'aha_notes', refId: 'missing' }).ok, false, 'invalid reference should be rejected');
-  const addOk = Paths.addStepToPath(active.id, { source: 'aha_notes', refId: 'note-1' });
+  const addOk = Paths.addStepToPath(active.id, { source: 'aha_notes', refId: 'note-1', narrative: 'Start with the note.', learningOutcome: 'Identify the premise.' });
   assert.equal(addOk.ok, true, 'valid add should return ok:true');
   assert.ok(addOk.step.id, 'valid add should return step');
+  assert.equal(addOk.step.narrative, 'Start with the note.');
+  assert.equal(addOk.step.learningOutcome, 'Identify the premise.');
+  const rewritten = Paths.updatePathStep(active.id, addOk.step.id, { narrative: 'Use the note as the opening scene.', learningOutcome: 'Explain the premise.' });
+  assert.equal(rewritten.steps[0].narrative, 'Use the note as the opening scene.');
+  assert.equal(rewritten.steps[0].learningOutcome, 'Explain the premise.');
   assert.equal(Paths.addStepToPath(active.id, { source: 'aha_notes', refId: 'note-1' }).reason, 'duplicate', 'duplicate add should be rejected');
   const second = Paths.addStepToPath(active.id, { source: 'aha_lists', refId: 'list-1' });
   const removed = Paths.removeStepFromPath(active.id, addOk.step.id);

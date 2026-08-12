@@ -12,6 +12,7 @@
     feed: "aha_feed_posts_v1",
     insta: "aha_insta_posts_v1",
     lists: "aha_lists_v1",
+    conceptLists: "aha_concept_lists_v1",
     paths: "aha_paths_v1",
     articles: "aha_articles_v1",
     groups: "aha_groups_v1",
@@ -342,6 +343,27 @@
       }));
     });
 
+    asArray(loadByKey(STORAGE_KEYS.conceptLists, [])).filter((list) => !isDeletedRecord(list)).forEach((list) => {
+      const base = withBase(list, { type: "concept_list", source: "aha_concept_lists" });
+      const refId = asText(list?.id || base?.id, "");
+      if (!refId) return;
+      const terms = asArray(list?.terms || list?.concepts);
+      const termText = terms.map((term) => typeof term === "string" ? term : `${asText(term?.term || term?.title, "")} ${asText(term?.definition, "")}`).join(" ");
+      out.push(createSearchItem({
+        id: `concept_list_${refId}`,
+        title: asText(list?.title, "Begrepsliste"),
+        type: "concept_list",
+        source: "aha_concept_lists",
+        refId,
+        text: `${asText(list?.description, "")} ${termText}`.trim(),
+        tags: terms.map((term) => typeof term === "string" ? term : term?.term).filter(Boolean),
+        createdAt: base?.createdAt,
+        updatedAt: base?.updatedAt,
+        href: "lists.html",
+        meta: { termCount: terms.length }
+      }));
+    });
+
     asArray(loadByKey(STORAGE_KEYS.paths, [])).filter((path) => !isDeletedRecord(path)).forEach((path) => {
       const base = withBase(path, { type: "path", source: "aha_paths" });
       const refId = asText(path?.id || base?.id, "");
@@ -353,7 +375,7 @@
         type: "path",
         source: "aha_paths",
         refId,
-        text: `${asText(path?.description, "")} ${stepTitles}`.trim(),
+        text: `${asText(path?.description, "")} ${asText(path?.goal, "")} ${asText(path?.learningOutcome || path?.learning_outcome, "")} ${stepTitles} ${asArray(path?.steps).map((step) => `${asText(step?.narrative, "")} ${asText(step?.learningOutcome || step?.learning_outcome, "")}`).join(" ")}`.trim(),
         tags: path?.tags || base?.tags,
         createdAt: base?.createdAt,
         updatedAt: base?.updatedAt,

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Paths</title>
+  <title>Kunnskapsstier</title>
   <link rel="stylesheet" href="css/aha-chat.css" />
   <link rel="stylesheet" href="css/aha-dashboard.css" />
   <link rel="stylesheet" href="css/aha-paths.css" />
@@ -13,15 +13,18 @@
   <div id="aha-global-nav"></div>
   <main class="aha-dashboard" style="max-width: 900px;">
     <section class="aha-panel aha-module-shell" aria-labelledby="paths-module-title">
-      <header class="aha-module-shell-header"><div><p class="eyebrow">AHA module</p><h1 id="paths-module-title">Paths</h1><p class="aha-module-purpose">Lokale sekvenser av eksisterende AHA-objekter. Paths organiserer rekkefølge, men skaper ikke ny innsikt eller automasjon alene.</p></div><span id="aha-module-health" class="aha-module-health-badge aha-module-health-unknown" role="status" aria-label="Paths: Unknown"><span>Unknown</span></span></header>
+      <header class="aha-module-shell-header"><div><p class="eyebrow">AHA kunnskapsstruktur</p><h1 id="paths-module-title">Kunnskapsstier</h1><p class="aha-module-purpose">Bygg narrative forløp og læringsreiser i tydelige trinn. Hvert steg kan forklare hva det betyr, hvorfor det følger, og hva du skal sitte igjen med.</p></div><span id="aha-module-health" class="aha-module-health-badge aha-module-health-unknown" role="status" aria-label="Kunnskapsstier: Unknown"><span>Unknown</span></span></header>
       <div class="aha-module-actions" aria-label="Paths actions"><a class="aha-tile-btn aha-tile-btn-primary" href="#paths-create">Lag sti</a><button id="paths-refresh" class="aha-tile-btn" type="button">Oppdater</button><a class="aha-tile-btn" href="index.html">Tilbake til AHA Home</a></div>
     </section>
     <section id="paths-create" class="aha-panel">
       <h2>Lag sti</h2>
       <form id="path-create-form" class="aha-path-form">
         <label for="path-title">Tittel</label><input id="path-title" required type="text" placeholder="F.eks. lokal lese- eller arbeidssti" />
-        <label for="path-type">Type</label><select id="path-type"><option value="learning">learning</option><option value="process">process</option><option value="project">project</option><option value="habit">habit</option><option value="reading">reading</option><option value="historygo">historygo</option><option value="publishing">publishing</option></select>
-        <label for="path-description">Beskrivelse</label><textarea id="path-description" rows="3" placeholder="Kort forklaring av stien"></textarea>
+        <label for="path-mode">Form</label><select id="path-mode"><option value="learning">Læringssti</option><option value="narrative">Narrativ sti</option><option value="process">Arbeidsforløp</option></select>
+        <label for="path-type">Tema/type</label><select id="path-type"><option value="learning">læring</option><option value="process">prosess</option><option value="project">prosjekt</option><option value="habit">vane</option><option value="reading">lesing</option><option value="historygo">historisk forløp</option><option value="publishing">publisering</option></select>
+        <label for="path-description">Innledning</label><textarea id="path-description" rows="3" placeholder="Hva handler reisen eller fortellingen om?"></textarea>
+        <label for="path-goal">Mål</label><textarea id="path-goal" rows="2" placeholder="Hvor skal stien føre brukeren?"></textarea>
+        <label for="path-learning-outcome">Læringsutbytte</label><textarea id="path-learning-outcome" rows="2" placeholder="Hva skal brukeren forstå eller kunne etterpå?"></textarea>
         <label for="path-tags">Tags (komma-separert)</label><input id="path-tags" type="text" placeholder="læring, fokus, skriv" />
         <button type="submit" class="aha-tile-btn aha-tile-btn-primary">Lag sti</button>
       </form>

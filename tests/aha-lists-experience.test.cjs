@@ -17,6 +17,9 @@ function makeElement() {
 
 function makeContext(seed = {}) {
   const elements = {
+    'concept-lists-count': makeElement(),
+    'concept-terms-count': makeElement(),
+    'concept-lists-list': makeElement(),
     'lists-count': makeElement(),
     'list-items-count': makeElement(),
     'lists-list': makeElement()
@@ -55,16 +58,17 @@ function makeContext(seed = {}) {
 }
 
 const listsHtml = fs.readFileSync(path.join(__dirname, '..', 'lists.html'), 'utf8');
-assert.match(listsHtml, /<h1 id="lists-module-title">Lists<\/h1>/, 'Lists page should render the module title');
-assert.match(listsHtml, /Lokale samlinger av eksisterende AHA-objekter/, 'Lists page should render its purpose');
+assert.match(listsHtml, /<h1 id="lists-module-title">Begrepslister<\/h1>/, 'Lists page should render the product title');
+assert.match(listsHtml, /relaterte ord og begreper/, 'Lists page should render the concept-list purpose');
 assert.match(listsHtml, /id="aha-module-health"/, 'Lists page should include a textual health badge');
-assert.match(listsHtml, /href="#lists-create">Lag liste<\/a>/, 'existing create flow should remain the primary action');
+assert.match(listsHtml, /href="#concept-lists-create">Lag begrepsliste<\/a>/, 'concept list creation should be primary');
+assert.match(listsHtml, /<h2>Samlinger<\/h2>/, 'existing reference collections should remain available as Samlinger');
 
 const empty = makeContext({ aha_lists_v1: '[]' });
 empty.Lists.render();
 assert.equal(empty.elements['lists-count'].textContent, '0', 'empty Lists should render a zero count');
-assert.match(empty.elements['lists-list'].innerHTML, /Ingen lister ennå\./, 'empty Lists should use the standard no-data title');
-assert.match(empty.elements['lists-list'].innerHTML, /Lag en lokal liste/, 'empty Lists should explain when data appears');
+assert.match(empty.elements['lists-list'].innerHTML, /Ingen samlinger ennå\./, 'empty collections should use the renamed no-data title');
+assert.match(empty.elements['lists-list'].innerHTML, /Lag en lokal samling/, 'empty collections should explain when data appears');
 assert.equal(empty.healthCalls.at(-1).health.status, 'empty', 'empty Lists should report empty health');
 
 const rows = [
@@ -104,10 +108,10 @@ assert.equal(populated.healthCalls.at(-1).health.status, 'ready', 'populated Lis
 
 populated.Lists.selectList('newer');
 const preview = populated.elements['lists-list'].innerHTML;
-assert.match(preview, /List preview/, 'selecting a list should open the details preview');
+assert.match(preview, /Forhåndsvisning av samling/, 'selecting a collection should open the details preview');
 assert.match(preview, /First safe item/, 'preview should render safe item titles');
 assert.match(preview, /Second safe item/, 'preview should render up to five item titles');
-assert.match(preview, /Close list preview/, 'preview should provide an accessible close action');
+assert.match(preview, /Close list preview/, 'preview should preserve an accessible close action');
 assert.doesNotMatch(preview, /DO_NOT_RENDER|postgres:\/\/secret|SECRET_TOKEN|private-ref/, 'preview should not render raw metadata, secrets, or reference ids');
 
 const invalid = makeContext({ aha_lists_v1: '{not-json' });
@@ -115,6 +119,16 @@ invalid.Lists.render();
 assert.match(invalid.elements['lists-list'].innerHTML, /Could not read list data\./, 'invalid list data should render a short sanitized error');
 assert.doesNotMatch(invalid.elements['lists-list'].innerHTML, /SyntaxError|stack|not-json/, 'error UI should not dump raw errors or payloads');
 assert.equal(invalid.healthCalls.at(-1).health.status, 'blocked', 'read errors should report blocked health');
+
+const concepts = makeContext({ aha_lists_v1: '[]', aha_concept_lists_v1: '[]' });
+const conceptList = concepts.Lists.createConceptList({ title: 'Demokrati', description: 'Styreformer', terms: 'valg, folkestyre, valg' });
+assert.equal(conceptList.terms.length, 2, 'initial concept terms should be normalized and deduplicated');
+assert.equal(concepts.Lists.addConceptTerm(conceptList.id, { term: 'representasjon', definition: 'Valgte personer handler på vegne av andre.' }).ok, true);
+assert.equal(concepts.Lists.addConceptTerm(conceptList.id, { term: 'Representasjon' }).reason, 'duplicate', 'concept terms should be case-insensitively deduplicated');
+concepts.Lists.render();
+assert.equal(concepts.elements['concept-lists-count'].textContent, '1');
+assert.equal(concepts.elements['concept-terms-count'].textContent, '3');
+assert.match(concepts.elements['concept-lists-list'].innerHTML, /Demokrati|folkestyre|representasjon/, 'concept lists should render as actual term lists');
 
 const source = fs.readFileSync(path.join(__dirname, '..', 'js', 'ahaLists.js'), 'utf8');
 assert.equal(source.includes('autoSync'), false, 'Lists experience must not add autoSync');

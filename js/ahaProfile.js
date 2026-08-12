@@ -9,6 +9,7 @@
     feed: "aha_feed_posts_v1",
     insta: "aha_insta_posts_v1",
     lists: "aha_lists_v1",
+    conceptLists: "aha_concept_lists_v1",
     paths: "aha_paths_v1",
     articles: "aha_articles_v1",
     groups: "aha_groups_v1",
@@ -234,6 +235,7 @@
     const feed = loadArray(KEYS.feed).filter((x) => !isDeleted(x));
     const insta = loadArray(KEYS.insta).filter((x) => !isDeleted(x));
     const lists = loadArray(KEYS.lists).filter((x) => !isDeleted(x));
+    const conceptLists = loadArray(KEYS.conceptLists).filter((x) => !isDeleted(x));
     const paths = loadArray(KEYS.paths).filter((x) => !isDeleted(x));
     const articles = loadArray(KEYS.articles).filter((x) => !isDeleted(x));
     const groups = loadArray(KEYS.groups).filter((x) => !isDeleted(x));
@@ -242,7 +244,7 @@
 
     const groupMembersCount = groups.reduce((sum, group) => sum + asArray(group?.members).length, 0);
     const groupReferencesCount = groups.reduce((sum, group) => sum + asArray(group?.references).length, 0);
-    const all = insights.concat(sourceEvents, notes, gallery, feed, insta, lists, paths, articles, groups, afterwork);
+    const all = insights.concat(sourceEvents, notes, gallery, feed, insta, lists, conceptLists, paths, articles, groups, afterwork);
     const latestTs = all.reduce((max, item) => Math.max(max, ts(item)), 0);
 
     return {
@@ -253,6 +255,8 @@
       feedCount: feed.length,
       instaCount: insta.length,
       listsCount: lists.length,
+      conceptListsCount: conceptLists.length,
+      conceptTermsCount: conceptLists.reduce((sum, list) => sum + asArray(list?.terms || list?.concepts).length, 0),
       pathsCount: paths.length,
       articlesCount: articles.length,
       groupsCount: groups.length,
@@ -281,6 +285,7 @@
       [KEYS.feed, "feed_post", "aha_feed", "feed.html"],
       [KEYS.insta, "insta_post", "aha_insta", "insta.html"],
       [KEYS.lists, "list", "aha_lists", "lists.html"],
+      [KEYS.conceptLists, "concept_list", "aha_concept_lists", "lists.html"],
       [KEYS.paths, "path", "aha_paths", "paths.html"],
       [KEYS.articles, "article", "aha_avisa", "avisa.html"],
       [KEYS.groups, "group", "aha_groups", "groups.html"]

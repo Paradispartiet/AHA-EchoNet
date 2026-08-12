@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Lists</title>
+  <title>Begrepslister og samlinger</title>
   <link rel="stylesheet" href="css/aha-chat.css" />
   <link rel="stylesheet" href="css/aha-dashboard.css" />
   <link rel="stylesheet" href="css/aha-lists.css" />
@@ -16,28 +16,51 @@
       <header class="aha-module-shell-header">
         <div>
           <p class="eyebrow">AHA module</p>
-          <h1 id="lists-module-title">Lists</h1>
-          <p class="aha-module-purpose">Lokale samlinger av eksisterende AHA-objekter. Lists organiserer materiale, men skaper ikke ny innsikt alene.</p>
+          <h1 id="lists-module-title">Begrepslister</h1>
+          <p class="aha-module-purpose">Lag tydelige lister over relaterte ord og begreper. Tidligere Lists-funksjoner er bevart nedenfor som Samlinger.</p>
         </div>
         <span id="aha-module-health" class="aha-module-health-badge aha-module-health-unknown" role="status" aria-label="Lists: Unknown"><span>Unknown</span></span>
       </header>
-      <div class="aha-module-actions" aria-label="Lists actions">
-        <a class="aha-tile-btn aha-tile-btn-primary" href="#lists-create">Lag liste</a>
+      <div class="aha-module-actions" aria-label="Handlinger for begrepslister">
+        <a class="aha-tile-btn aha-tile-btn-primary" href="#concept-lists-create">Lag begrepsliste</a>
+        <a class="aha-tile-btn" href="#collections">Åpne samlinger</a>
         <button type="button" id="lists-refresh" class="aha-tile-btn">Oppdater</button>
         <a class="aha-tile-btn" href="index.html">Tilbake til AHA Home</a>
       </div>
     </section>
+    <section id="concept-lists-create" class="aha-panel">
+      <p class="eyebrow">Ord og begreper</p>
+      <h2>Lag begrepsliste</h2>
+      <p class="module-meta">Samle begreper som hører sammen. Du kan legge til korte forklaringer etterpå.</p>
+      <form id="concept-list-create-form" class="aha-list-form-grid">
+        <label>Tema eller tittel<input id="concept-list-title" name="title" required placeholder="F.eks. Demokrati" /></label>
+        <label>Begreper (kommaseparert)<input id="concept-list-initial-terms" name="terms" placeholder="folkestyre, valg, representasjon" /></label>
+        <label>Beskrivelse<textarea id="concept-list-description" name="description" rows="2" placeholder="Hva binder begrepene sammen?"></textarea></label>
+        <div><button type="submit">Lag begrepsliste</button></div>
+      </form>
+    </section>
+    <section class="aha-list-stats" aria-label="Begrepslisteoversikt">
+      <article class="aha-list-stat-card"><span>Begrepslister</span><strong id="concept-lists-count">0</strong></article>
+      <article class="aha-list-stat-card"><span>Begreper totalt</span><strong id="concept-terms-count">0</strong></article>
+    </section>
+    <section id="concept-lists-list" class="aha-concept-list-grid aha-module-content" aria-live="polite"></section>
+
+    <section id="collections" class="aha-panel aha-collections-intro">
+      <p class="eyebrow">Bevart funksjonalitet</p>
+      <h2>Samlinger</h2>
+      <p>Samlinger lagrer utvalgte innsikter, notater, feedposter, bilder og andre AHA-objekter. De er ikke begrepslister, men er fortsatt tilgjengelige med samme lokale data.</p>
+    </section>
     <section id="lists-create" class="aha-panel">
-      <h2>Lag liste</h2>
+      <h2>Lag samling</h2>
       <form id="list-create-form" class="aha-list-form-grid">
         <label>Tittel<input id="list-title" name="title" required /></label>
         <label>Type<select id="list-type" name="type"><option value="favorites">favorites</option><option value="todo">todo</option><option value="concepts">concepts</option><option value="process">process</option><option value="quality">quality</option><option value="ai">ai</option><option value="shared_later">shared_later</option></select></label>
         <label>Beskrivelse<textarea id="list-description" name="description" rows="2"></textarea></label>
         <label>Tags (kommaseparert)<input id="list-tags" name="tags" /></label>
-        <div><button type="submit">Lag liste</button></div>
+        <div><button type="submit">Lag samling</button></div>
       </form>
     </section>
-    <section class="aha-list-stats"><article class="aha-list-stat-card"><span>Antall lister</span><strong id="lists-count">0</strong></article><article class="aha-list-stat-card"><span>Antall listepunkter totalt</span><strong id="list-items-count">0</strong></article></section>
+    <section class="aha-list-stats"><article class="aha-list-stat-card"><span>Samlinger</span><strong id="lists-count">0</strong></article><article class="aha-list-stat-card"><span>Objekter i samlinger</span><strong id="list-items-count">0</strong></article></section>
     <section id="lists-list" class="aha-lists-layout aha-module-content" aria-live="polite"></section>
   </main>
   <script src="js/ahaModules.js"></script>

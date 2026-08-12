@@ -13,18 +13,25 @@
   <div id="aha-global-nav"></div>
   <main class="aha-dashboard" style="max-width: 1200px;">
     <section class="aha-panel aha-module-shell">
-      <header class="aha-module-shell-header"><div><p class="eyebrow">AHA Graph · Fase 3G</p><h1>Tankekart</h1><p class="aha-module-purpose">Read-only lokal graf over AHA-objekter og referanser. Mindmap viser koblinger som allerede finnes i localStorage, men er ikke en full kunnskapsmodell og skaper ikke nye innsikter.</p></div></header>
+      <header class="aha-module-shell-header"><div><p class="eyebrow">Visuell kunnskapsstruktur</p><h1>Tankekart</h1><p class="aha-module-purpose">Et grafisk tankekart med en sentral idé, grener og undergrener. Kartet bygger på eksisterende lokale AHA-koblinger og lar deg utforske hvordan tanker, innsikter og materiale henger sammen.</p></div></header>
       <div class="aha-module-actions"><a class="aha-tile-btn aha-tile-btn-primary" href="index.html">Tilbake til AHA Home</a><button id="mindmap-refresh" type="button" class="aha-tile-btn">Oppdater</button></div>
     </section>
     <section class="aha-panel mindmap-stats"><div class="mindmap-stat"><strong id="mindmap-stats-nodes">0</strong><span>Noder</span></div><div class="mindmap-stat"><strong id="mindmap-stats-edges">0</strong><span>Koblinger</span></div><div class="mindmap-stat"><strong id="mindmap-stats-node-types">0</strong><span>Node-typer</span></div><div class="mindmap-stat"><strong id="mindmap-stats-edge-types">0</strong><span>Edge-typer</span></div></section>
-    <section class="aha-panel mindmap-origin-summary"><h2>Opprinnelse og grenser</h2><div id="mindmap-origin-summary"></div></section>
     <section class="aha-panel mindmap-filters">
       <label>Node-type<select id="mindmap-node-type"><option value="all">Alle</option></select></label>
       <label>Edge-type<select id="mindmap-edge-type"><option value="all">Alle</option></select></label>
       <label>Søk<input id="mindmap-search" type="search" placeholder="Søk i tittel, type, source, refId" /></label>
     </section>
-    <section class="mindmap-grid"><section class="aha-panel"><h2>Noder</h2><div id="mindmap-node-list" class="mindmap-list"></div></section><section class="aha-panel"><h2>Koblinger</h2><div id="mindmap-edge-list" class="mindmap-list"></div></section></section>
+    <section class="aha-panel mindmap-visual-panel" aria-labelledby="mindmap-visual-title">
+      <div class="mindmap-visual-header">
+        <div><p class="eyebrow">Studievisning</p><h2 id="mindmap-visual-title">Grafisk tankekart</h2><p class="module-meta">Velg en node for å gjøre den til hovedidé. Dra i bakgrunnen for å flytte kartet, eller bruk zoom.</p></div>
+        <div class="mindmap-visual-controls" aria-label="Kontroller for tankekart"><button id="mindmap-zoom-out" type="button" aria-label="Zoom ut">−</button><button id="mindmap-reset-view" type="button">Tilpass</button><button id="mindmap-zoom-in" type="button" aria-label="Zoom inn">+</button></div>
+      </div>
+      <div id="mindmap-visual" class="mindmap-visual" role="application" aria-label="Interaktivt grafisk tankekart"></div>
+      <div id="mindmap-branch-legend" class="mindmap-branch-legend" aria-label="Kartgrener"></div>
+    </section>
     <section class="aha-panel"><h2>Node-detaljer</h2><div id="mindmap-details" class="mindmap-details"><p>Velg en node for å se detaljer.</p></div></section>
+    <details class="aha-panel mindmap-technical"><summary>Relasjonsdata og teknisk kontroll</summary><div class="mindmap-origin-summary"><h2>Opprinnelse og grenser</h2><div id="mindmap-origin-summary"></div></div><div class="mindmap-grid"><section><h2>Noder</h2><div id="mindmap-node-list" class="mindmap-list"></div></section><section><h2>Koblinger</h2><div id="mindmap-edge-list" class="mindmap-list"></div></section></div></details>
   </main>
   <script src="js/ahaContracts.js"></script>
   <script src="js/ahaMindmap.js"></script>

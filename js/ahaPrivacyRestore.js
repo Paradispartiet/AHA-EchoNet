@@ -23,6 +23,7 @@
     "aha_insta_comments_v1": "array",
     "aha_insta_follows_v1": "array",
     "aha_lists_v1": "array",
+    "aha_concept_lists_v1": "array",
     "aha_paths_v1": "array",
     "aha_articles_v1": "array",
     "aha_groups_v1": "array",
