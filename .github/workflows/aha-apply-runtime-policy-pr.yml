@@ -3,14 +3,14 @@ name: Materialize AHA runtime policy patch
 on:
   pull_request:
     branches:
-      - main
+      - fix/fagverk-authoritative-analysis-sources
 
 permissions:
   contents: write
 
 jobs:
   materialize:
-    if: github.event.pull_request.head.ref == 'fix/fagverk-authoritative-analysis-sources'
+    if: github.event.pull_request.head.ref == 'trigger/materialize-aha-runtime-policy'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
