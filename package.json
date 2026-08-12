@@ -10,6 +10,7 @@
   "scripts": {
     "start": "node server.js",
     "test": "node scripts/run-node-tests.mjs",
+    "test:analysis-quality": "node tests/aha-production-analysis-quality-matrix.test.cjs",
     "test:release-candidate": "node tests/aha-release-candidate-audit.test.cjs",
     "build:music-historygo-bridge": "node scripts/build-music-history-go-bridge.cjs",
     "validate:aha-fixtures": "node scripts/validate-aha-analysis-fixtures.mjs",
