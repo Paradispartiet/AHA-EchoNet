@@ -84,15 +84,25 @@
     previous.matched_terms = Array.from(new Set(previous.matched_terms.concat(payload.matched_terms)));
   }
 
+  function normalizeSubjectMatchText(value) {
+    return String(value || "").toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^\p{L}\p{N}]+/gu, " ").replace(/\s+/g, " ").trim();
+  }
+
+  function containsSubjectTerm(text, term) {
+    const haystack = normalizeSubjectMatchText(text);
+    const needle = normalizeSubjectMatchText(term);
+    if (!haystack || !needle) return false;
+    return ` ${haystack} `.includes(` ${needle} `);
+  }
+
   function scanField(text, values, boost, collector) {
-    const normalized = String(text || "").toLowerCase();
     const terms = Array.isArray(values) ? values : [values];
     let matched = false;
 
     terms.forEach((term) => {
       const clean = String(term || "").trim();
       if (!clean) return;
-      if (normalized.includes(clean.toLowerCase())) {
+      if (containsSubjectTerm(text, clean)) {
         collector.push(clean);
         matched = true;
       }
@@ -299,4 +309,5 @@
   }
 
   global.AHASubjectEngine = { listSubjects, loadSubject, loadAllSubjects, matchText, matchInsight };
+  global.AHASubjectEngineTestHooks = { normalizeSubjectMatchText, containsSubjectTerm };
 })(window);
