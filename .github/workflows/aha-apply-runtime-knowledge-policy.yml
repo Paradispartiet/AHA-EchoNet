@@ -1,0 +1,347 @@
+name: Apply AHA runtime knowledge policy patch
+
+on:
+  push:
+    branches:
+      - fix/fagverk-authoritative-analysis-sources
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Apply architecture patch
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_once(text, old, new, label):
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"{label}: expected exactly 1 match, got {count}")
+              return text.replace(old, new, 1)
+
+          chat_path = Path('js/ahaChat.js')
+          chat = chat_path.read_text()
+
+          policy_block = r'''
+  // Runtime-kunnskapspolitikk: Fagverk er den varige kunnskapsbasen.
+  // Dokumentet i aktiv run er analysemateriale, ikke en mal eller en automatisk
+  // varig kunnskapskilde. Legacy-artikkelmaler beholdes midlertidig som død
+  // kompatibilitetskode, men får ikke autorisere runtime-innhold.
+  const AHA_RUNTIME_KNOWLEDGE_POLICY = Object.freeze({
+    durableKnowledgeSource: "fagverk",
+    currentDocumentRole: "analysis_source",
+    legacyArticleTemplatesEnabled: false,
+    persistAnalysisDocumentsAsMemory: false
+  });
+
+  function pickAcademicSourceSentence(sentences, patterns, fallbackIndex = 0) {
+    const list = Array.isArray(sentences) ? sentences.filter(Boolean) : [];
+    const hit = list.find((sentenceText) => (Array.isArray(patterns) ? patterns : []).some((pattern) => pattern.test(sentenceText)));
+    return String(hit || list[fallbackIndex] || list[0] || "").trim();
+  }
+
+  function buildSourceGroundedAcademicPayload(sourceText) {
+    const source = cleanArticleText(String(sourceText || "")).trim();
+    const sentences = toSentences(source).map((item) => String(item || "").trim()).filter(Boolean);
+    const keywords = takeKeywords(source, 8);
+    const first = sentences[0] || "";
+    const problem = pickAcademicSourceSentence(sentences, [/\b(formål|problemstilling|undersøker|undersøke|spørsmål|hensikt|målet med|denne artikkelen|studien)\b/i], 0);
+    const finding = pickAcademicSourceSentence(sentences, [/\b(funn|viser|fant|resultat|konklud|tyder|påviser|fremgår|framgår)\b/i], 0);
+    const evidence = pickAcademicSourceSentence(sentences, [/\b(metode|data|respondent|intervju|survey|undersøkelse|utvalg|referansegruppe|empiri|analyse)\b/i], 1);
+    const tension = pickAcademicSourceSentence(sentences, [/\b(men|samtidig|imidlertid|derimot|på den ene siden|på den andre siden|utfordring|kritikk|spenning)\b/i], 1);
+    const sortItems = [
+      { label: "Problemstilling / formål", text: problem },
+      { label: "Hovedfunn / hovedpoeng", text: finding || first },
+      { label: "Empiri / metode", text: evidence },
+      { label: "Faglig spenning", text: tension }
+    ].filter((item) => item.text);
+    const insightCards = sortItems.slice(0, 4).map((item, index) => ({
+      id: `academic_source_${index + 1}`,
+      candidate_type: "synthetic",
+      candidate_title: item.label,
+      candidate_summary: item.text,
+      title: item.label,
+      summary: item.text,
+      concepts: keywords.slice(0, 4),
+      source_role: "analysis_source"
+    }));
+    const mainText = finding || problem || first;
+    const tensionText = tension || "Ingen eksplisitt hovedspenning er identifisert i kilden ennå.";
+    return {
+      textType: "academic_article",
+      contentType: "academic_article",
+      reflection: mainText,
+      keywords,
+      sortItems,
+      day: "Ikke dagbokmateriale – ingen dagsoppsummering laget.",
+      thoughts: {
+        hovedspor: mainText,
+        lose_tanker: evidence || "Skill tydelig mellom kildebelegg, tolkning og fagverkets begreper.",
+        neste_steg: "Koble relevante begreper og metoder fra Fagverk til eksplisitte belegg i denne kilden."
+      },
+      list: sentences.slice(0, 6),
+      path: [
+        "Avklar kildens problemstilling og hovedpåstand.",
+        "Skill empiri, metode og tolkning fra hverandre.",
+        "Koble relevante begreper og metoder fra Fagverk til konkrete tekstbelegg.",
+        "Test hovedtolkningen mot alternative forklaringer.",
+        "Formuler en kildebundet faglig syntese."
+      ],
+      insightCards,
+      subjectMatches: [],
+      subjectLinks: [],
+      theoryLinks: [],
+      ahaSer: {
+        innholdstype: "Fagtekst",
+        tema: keywords.slice(0, 4).join(" · ") || short(first, 120),
+        hovedspenning: tensionText,
+        viktigsteInnsikt: mainText,
+        fagkoblinger: [],
+        nesteSteg: "Bruk Fagverk-koblingene til å analysere denne kilden videre; ikke tidligere artikler som innholdsmal.",
+        kortSvar: short(mainText, 320)
+      },
+      analysisKnowledgePolicy: {
+        durableKnowledgeSource: AHA_RUNTIME_KNOWLEDGE_POLICY.durableKnowledgeSource,
+        currentDocumentRole: AHA_RUNTIME_KNOWLEDGE_POLICY.currentDocumentRole,
+        legacyArticleTemplatesEnabled: false,
+        persistAsMemory: false
+      }
+    };
+  }
+
+  function applyRuntimeKnowledgePolicy(payload, sourceText) {
+    const safe = payload && typeof payload === "object" ? payload : {};
+    if (AHA_RUNTIME_KNOWLEDGE_POLICY.legacyArticleTemplatesEnabled || detectTextType(sourceText) !== "academic_article") return safe;
+    const grounded = buildSourceGroundedAcademicPayload(sourceText);
+    const subjectMatches = normalizeSubjectMatches(Array.isArray(safe.subjectMatches) ? safe.subjectMatches : []);
+    const subjectLabels = subjectMatches.map((item) => String(item?.title || item?.label || item?.subject_label || item?.subject_id || "").trim()).filter(Boolean);
+    return {
+      ...grounded,
+      subjectMatches,
+      subjectLinks: subjectMatches,
+      theoryLinks: [],
+      ahaSer: { ...grounded.ahaSer, fagkoblinger: subjectLabels }
+    };
+  }
+
+  function isTransientAnalysisDocument(text, urlInfo = {}) {
+    if (urlInfo?.isSourceAction) return true;
+    return detectTextType(String(text || "")) === "academic_article";
+  }
+
+'''
+          chat = replace_once(chat, '  function buildAutoOutputs(userText, ahaReply) {', policy_block + '  function buildAutoOutputs(userText, ahaReply) {', 'insert runtime policy')
+
+          chat = replace_once(
+              chat,
+              '    const textType = detectTextType(raw);\n    const analysisText = cleanArticleText(raw);',
+              '    const textType = detectTextType(raw);\n    if (textType === "academic_article" && !AHA_RUNTIME_KNOWLEDGE_POLICY.legacyArticleTemplatesEnabled) {\n      return buildSourceGroundedAcademicPayload(raw);\n    }\n    const analysisText = cleanArticleText(raw);',
+              'academic early return'
+          )
+
+          chat = replace_once(
+              chat,
+              '  function normalizeAcademicAfterworkPayload(payload, sourceText, textType) {\n    const safePayload = payload && typeof payload === "object" ? payload : {};\n    const src = String(sourceText || "");',
+              '  function normalizeAcademicAfterworkPayload(payload, sourceText, textType) {\n    const safePayload = payload && typeof payload === "object" ? payload : {};\n    const src = String(sourceText || "");\n    if (!AHA_RUNTIME_KNOWLEDGE_POLICY.legacyArticleTemplatesEnabled && (textType === "academic_article" || detectTextType(src) === "academic_article")) {\n      return applyRuntimeKnowledgePolicy(safePayload, src);\n    }',
+              'afterwork policy gate'
+          )
+
+          chat = replace_once(
+              chat,
+              '  function buildAutoOutputFallbackPayload(userText, ahaReply, options = {}) {\n    const sourceText = String(userText || "");',
+              '  function buildAutoOutputFallbackPayload(userText, ahaReply, options = {}) {\n    const sourceText = String(userText || "");\n    if (!AHA_RUNTIME_KNOWLEDGE_POLICY.legacyArticleTemplatesEnabled && detectTextType(sourceText) === "academic_article") {\n      return buildSourceGroundedAcademicPayload(sourceText);\n    }',
+              'fallback policy gate'
+          )
+
+          chat = replace_once(
+              chat,
+              '  function buildAcademicSyntheticInsightCards() {\n    const context = readLatestAcademicContext();\n    const text = String(context?.sourceText || "").trim();\n    const payload = context?.payload && typeof context.payload === "object" ? context.payload : null;\n    const payloadSortItems = Array.isArray(payload?.sortItems) ? payload.sortItems : [];\n    const payloadInsightCards = Array.isArray(payload?.insightCards) ? payload.insightCards : [];\n    const payloadReflection = String(payload?.reflection || "").trim();',
+              '  function buildAcademicSyntheticInsightCards() {\n    const context = readLatestAcademicContext();\n    const text = String(context?.sourceText || "").trim();\n    const payload = context?.payload && typeof context.payload === "object" ? context.payload : null;\n    const payloadSortItems = Array.isArray(payload?.sortItems) ? payload.sortItems : [];\n    const payloadInsightCards = Array.isArray(payload?.insightCards) ? payload.insightCards : [];\n    const payloadReflection = String(payload?.reflection || "").trim();\n    if (!AHA_RUNTIME_KNOWLEDGE_POLICY.legacyArticleTemplatesEnabled) {\n      if (!text) return [];\n      return buildSourceGroundedAcademicPayload(text).insightCards;\n    }',
+              'synthetic insights policy gate'
+          )
+
+          chat = replace_once(
+              chat,
+              '    payload = filterCrossDomainAutoPayload(payload, effectiveSourceText);\n    payload = enforceCanonicalSourceGrounding(payload, effectiveSourceText);',
+              '    payload = (!AHA_RUNTIME_KNOWLEDGE_POLICY.legacyArticleTemplatesEnabled && detectTextType(effectiveSourceText) === "academic_article")\n      ? applyRuntimeKnowledgePolicy(payload, effectiveSourceText)\n      : filterCrossDomainAutoPayload(payload, effectiveSourceText);\n    payload = enforceCanonicalSourceGrounding(payload, effectiveSourceText);',
+              'final runtime policy gate'
+          )
+
+          chat = replace_once(
+              chat,
+              '    const canonicalSer = buildAhaSerCard(safePayload, sourceText);\n    const domain = detectAutoAnalysisDomain(sourceText || "", safePayload || {});\n    const existingHistoryLinks = safePayload?.historyGoLinks || safePayload?.history_go_links || [];\n    const derivedHistoryLinks = buildHistoryGoLinksFromDomain(domain, sourceText || "", canonicalSer);',
+              '    const canonicalSer = buildAhaSerCard(safePayload, sourceText);\n    const policyAcademic = !AHA_RUNTIME_KNOWLEDGE_POLICY.legacyArticleTemplatesEnabled && detectTextType(sourceText || "") === "academic_article";\n    const domain = policyAcademic ? "fagverk_routed_academic" : detectAutoAnalysisDomain(sourceText || "", safePayload || {});\n    const existingHistoryLinks = safePayload?.historyGoLinks || safePayload?.history_go_links || [];\n    const derivedHistoryLinks = policyAcademic\n      ? normalizeSubjectMatches(safePayload?.subjectMatches || []).slice(0, 5).map((match) => {\n          const title = String(match?.title || match?.label || match?.subject_label || match?.subject_id || "Fagverk").trim();\n          const id = String(match?.subject_id || match?.id || title).trim().toLowerCase().replace(/[^a-z0-9æøå]+/gi, "_").replace(/^_+|_+$/g, "");\n          return { type: "subject", id, title, reason: "Kildebasert fagkobling fra AHA Fagverk-kalibrering." };\n        }).filter((item) => item.id)\n      : buildHistoryGoLinksFromDomain(domain, sourceText || "", canonicalSer);',
+              'canonical fagverk routing'
+          )
+
+          chat = replace_once(
+              chat,
+              '    const urlInfo = getUrlDominanceInfo(cleanText);\n    const savingEnabled = isAhaSavingEnabled();\n    const persistedUserMessage = savingEnabled ? global.AHAChatPersistence?.appendUserMessage?.(cleanText, { source: "aha_chat", threadId: CHAT_THREAD_ID, skip_insight: urlInfo.isSourceAction }) : null;',
+              '    const urlInfo = getUrlDominanceInfo(cleanText);\n    const transientAnalysisDocument = isTransientAnalysisDocument(cleanText, urlInfo);\n    const savingEnabled = isAhaSavingEnabled();\n    const persistedUserMessage = savingEnabled ? global.AHAChatPersistence?.appendUserMessage?.(cleanText, { source: "aha_chat", threadId: CHAT_THREAD_ID, skip_insight: urlInfo.isSourceAction || transientAnalysisDocument, sourceRole: transientAnalysisDocument ? "analysis_source" : "user_memory", knowledgeEligible: !transientAnalysisDocument, memoryEligible: !transientAnalysisDocument, curationRequired: transientAnalysisDocument }) : null;',
+              'transient document persistence metadata'
+          )
+
+          chat = replace_once(
+              chat,
+              '    if (savingEnabled && !urlInfo.isSourceAction) {\n      count = handleUserMessage(cleanText);',
+              '    if (savingEnabled && !urlInfo.isSourceAction && !transientAnalysisDocument) {\n      count = handleUserMessage(cleanText);',
+              'skip durable ingestion for analysis documents'
+          )
+
+          chat = replace_once(
+              chat,
+              'global.AHATestHooks = Object.assign({}, global.AHATestHooks || {}, { detectTextType, buildCanonicalAnalysis, buildAhaAnalysisExportBundle, formatAhaAnalysisExportMarkdown, buildAutoOutputs,',
+              'global.AHATestHooks = Object.assign({}, global.AHATestHooks || {}, { detectTextType, buildCanonicalAnalysis, buildAhaAnalysisExportBundle, formatAhaAnalysisExportMarkdown, buildAutoOutputs, buildSourceGroundedAcademicPayload, applyRuntimeKnowledgePolicy, isTransientAnalysisDocument, AHA_RUNTIME_KNOWLEDGE_POLICY,',
+              'export runtime policy test hooks'
+          )
+          chat_path.write_text(chat)
+
+          signals_path = Path('js/ahaChatSignals.js')
+          signals = signals_path.read_text()
+          signals = replace_once(
+              signals,
+              '{ key: "bibel", weight: 2, test: /det nye testamentet|det gamle testamentet|apostlene|apostelgjerningene/i },',
+              '{ key: "bibel", weight: 2, test: /\\b(?:det nye testamentet|det gamle testamentet|apostlene|apostelgjerningene)\\b/i },',
+              'religious bible word boundaries'
+          )
+          signals = replace_once(
+              signals,
+              '{ key: "pinsenarrativ", weight: 2, test: /den hellige ånd|tungetale|nådegave|tydning|babels tårn|kirkens fødselsdag/i },',
+              '{ key: "pinsenarrativ", weight: 2, test: /\\b(?:den hellige ånd|tungetale|nådegave|tydning|babels tårn|kirkens fødselsdag)\\b/i },',
+              'religious narrative word boundaries'
+          )
+          signals = replace_once(
+              signals,
+              '    const score = hits.reduce((sum, hit) => sum + hit.weight, 0);\n    return { score, strong: score >= 4 && hits.length >= 3, markers: hits.map((h) => h.key) };',
+              '    const score = hits.reduce((sum, hit) => sum + hit.weight, 0);\n    const hasReligiousCore = hits.some((hit) => ["bibel", "pinsenarrativ", "pinse"].includes(hit.key));\n    return { score, strong: hasReligiousCore && score >= 4 && hits.length >= 2, markers: hits.map((h) => h.key), hasReligiousCore };',
+              'religious core requirement'
+          )
+          signals_path.write_text(signals)
+
+          export_path = Path('js/ahaChatExport.js')
+          export_code = export_path.read_text()
+          export_code = replace_once(
+              export_code,
+              '    "dette", "denne", "disse", "eller", "ikke", "som", "med", "for", "til", "fra", "har", "kan", "skal", "det", "der", "seg", "sin", "sitt", "sine", "mens", "viser", "fortsatt", "mye", "eget", "tema", "teksten", "handler", "analyse", "kilde", "output"',
+              '    "dette", "denne", "disse", "den", "de", "en", "et", "og", "av", "på", "i", "å", "om", "vi", "jeg", "man", "er", "var", "ble", "blir", "vil", "også", "så", "mot", "ved", "under", "over", "etter", "før", "eller", "ikke", "som", "med", "for", "til", "fra", "har", "kan", "skal", "det", "der", "seg", "sin", "sitt", "sine", "mens", "viser", "fortsatt", "mye", "eget", "tema", "teksten", "handler", "analyse", "kilde", "output"',
+              'topic stopwords'
+          )
+          export_code = replace_once(
+              export_code,
+              '    if (src.includes(" usa ") && src.includes(" kina ")) {',
+              '    if (!requiredTerms.length && normalizeTopicText(sourceText).split(" ").length >= 80) {\n      sourceTerms.slice(0, 2).forEach((term) => {\n        if (!requiredTerms.some((value) => normalizeTopicTerm(value) === term)) requiredTerms.push(term);\n      });\n    }\n\n    if (src.includes(" usa ") && src.includes(" kina ")) {',
+              'source-derived required terms'
+          )
+          export_code = replace_once(
+              export_code,
+              '    const overlappingTerms = sourceTerms.filter((term) => outputTermSet.has(term));\n    const missingRequiredTerms = normalizedRequired.filter((term) => !topicTextIncludes(outputText, term));\n    const matchedForbiddenTerms = normalizedForbidden.filter((term) => topicTextIncludes(outputText, term));\n    const valid = missingRequiredTerms.length === 0 && matchedForbiddenTerms.length === 0;\n    return {\n      status: valid ? "valid" : "invalid_topic_mismatch",',
+              '    const overlappingTerms = sourceTerms.filter((term) => outputTermSet.has(term));\n    const meaningfulOverlap = overlappingTerms.filter((term) => term.length >= 4);\n    const missingRequiredTerms = normalizedRequired.filter((term) => !topicTextIncludes(outputText, term));\n    const matchedForbiddenTerms = normalizedForbidden.filter((term) => topicTextIncludes(outputText, term));\n    const semanticCheckEligible = sourceTerms.length >= 6 && outputTerms.length >= 6;\n    const semanticTopicMismatch = semanticCheckEligible && meaningfulOverlap.length < 2;\n    const valid = missingRequiredTerms.length === 0 && matchedForbiddenTerms.length === 0 && !semanticTopicMismatch;\n    return {\n      status: valid ? "valid" : (semanticTopicMismatch ? "invalid_semantic_topic_mismatch" : "invalid_topic_mismatch"),',
+              'semantic topic mismatch gate'
+          )
+          export_code = replace_once(
+              export_code,
+              '      overlappingTerms,\n      requiredTerms: normalizedRequired,',
+              '      overlappingTerms,\n      meaningfulOverlap,\n      semanticCheckEligible,\n      semanticTopicMismatch,\n      requiredTerms: normalizedRequired,',
+              'topic report diagnostics'
+          )
+          export_code = replace_once(
+              export_code,
+              '        reason: topicConsistency.matchedForbiddenTerms?.length ? "forbidden_terms_present" : "required_terms_missing",',
+              '        reason: topicConsistency.status === "invalid_semantic_topic_mismatch" ? "semantic_topic_divergence" : (topicConsistency.matchedForbiddenTerms?.length ? "forbidden_terms_present" : "required_terms_missing"),',
+              'quality semantic reason'
+          )
+          export_code = replace_once(
+              export_code,
+              '  global.AHAChatExport = {\n    safeSerializeForExport,',
+              '  global.AHAChatExportTestHooks = { extractTopicTerms, inferTopicConsistencyContract, buildTopicConsistencyReport };\n\n  global.AHAChatExport = {\n    safeSerializeForExport,',
+              'export topic test hooks'
+          )
+          export_path.write_text(export_code)
+
+          test_path = Path('tests/aha-runtime-knowledge-policy.test.cjs')
+          test_path.write_text(r'''const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
+const vm = require("node:vm");
+
+const repoRoot = path.resolve(__dirname, "..");
+const textUtilsCode = fs.readFileSync(path.join(repoRoot, "js/ahaChatTextUtils.js"), "utf8");
+const signalsCode = fs.readFileSync(path.join(repoRoot, "js/ahaChatSignals.js"), "utf8");
+const exportCode = fs.readFileSync(path.join(repoRoot, "js/ahaChatExport.js"), "utf8");
+const chatCode = fs.readFileSync(path.join(repoRoot, "js/ahaChat.js"), "utf8");
+
+const windowObj = {};
+const sandbox = { window: windowObj, console, Set, Map, WeakSet, Date, JSON, String, Number, Boolean, Array, Object, Math, RegExp };
+windowObj.window = windowObj;
+vm.runInNewContext(textUtilsCode, sandbox, { filename: "ahaChatTextUtils.js" });
+vm.runInNewContext(signalsCode, sandbox, { filename: "ahaChatSignals.js" });
+vm.runInNewContext(exportCode, sandbox, { filename: "ahaChatExport.js" });
+
+const evaluationSource = `
+Evalueringer i offentlig forvaltning brukes til læring, styring og forbedring. Betydningen av kvalitet og relevans er stor.
+Respondentene mener evalueringene bør brukes mer systematisk, og ledelsen bør følge opp funnene.
+Formålet med evaluering er økt samfunnsnytte. Deltakende metoder og referansegrupper kan styrke relevansen.
+Forvaltningen trenger bedre evalueringer, ikke nødvendigvis flere. Tradisjon og historisk praksis kan påvirke hvordan evaluering brukes.
+Evaluering, evalueringer, forvaltningen, respondentene, kvalitet, relevans, samfunnsnytte, oppfølging, styring, metode.
+`;
+
+const religious = windowObj.AHAChatSignals.inferReligiousLexiconEvidence(evaluationSource);
+assert.equal(religious.strong, false, "betydning/tradisjon must not trigger Pentecost classification");
+assert.equal(religious.markers.includes("pinsenarrativ"), false, "tydning must not match inside betydning");
+
+const pentecost = windowObj.AHAChatSignals.inferReligiousLexiconEvidence("Pinse beskriver Den hellige ånd i Apostlenes gjerninger og tungetale.");
+assert.equal(pentecost.strong, true, "real Pentecost evidence should still classify as religious");
+
+const topicHooks = windowObj.AHAChatExportTestHooks;
+const stalePentecostOutput = "Pinse Den hellige ånd tungetale apostlene Babels tårn kirkens fødselsdag gregoriansk kalender.";
+const mismatch = topicHooks.buildTopicConsistencyReport({ sourceText: evaluationSource, outputText: stalePentecostOutput, requiredTerms: [], forbiddenTerms: [] });
+assert.equal(mismatch.valid, false);
+assert.equal(mismatch.status, "invalid_semantic_topic_mismatch");
+assert.equal(mismatch.semanticTopicMismatch, true);
+
+const goodOutput = "Evalueringer i offentlig forvaltning bør brukes mer systematisk. Kvalitet, relevans, samfunnsnytte og oppfølging står sentralt.";
+const good = topicHooks.buildTopicConsistencyReport({ sourceText: evaluationSource, outputText: goodOutput, requiredTerms: [], forbiddenTerms: [] });
+assert.equal(good.valid, true);
+assert.ok(good.meaningfulOverlap.length >= 2);
+
+assert.match(chatCode, /legacyArticleTemplatesEnabled:\s*false/);
+const buildStart = chatCode.indexOf("function buildAutoOutputs");
+const academicBranch = chatCode.indexOf('if (textType === "academic_article" && !AHA_RUNTIME_KNOWLEDGE_POLICY.legacyArticleTemplatesEnabled)', buildStart);
+const legacyAcademicBranch = chatCode.indexOf('else if (textType === "academic_article")', buildStart);
+assert.ok(buildStart >= 0 && academicBranch > buildStart && academicBranch < legacyAcademicBranch, "source-grounded academic early return must precede legacy templates");
+assert.match(chatCode, /skip_insight:\s*urlInfo\.isSourceAction \|\| transientAnalysisDocument/);
+assert.match(chatCode, /savingEnabled && !urlInfo\.isSourceAction && !transientAnalysisDocument/);
+assert.match(chatCode, /policyAcademic \? "fagverk_routed_academic"/);
+assert.match(chatCode, /Kildebasert fagkobling fra AHA Fagverk-kalibrering/);
+
+console.log("aha-runtime-knowledge-policy.test.cjs passed");
+''')
+          PY
+      - name: Syntax checks
+        run: |
+          node --check js/ahaChat.js
+          node --check js/ahaChatSignals.js
+          node --check js/ahaChatExport.js
+          node --check tests/aha-runtime-knowledge-policy.test.cjs
+      - name: Node tests
+        run: npm test
+      - name: Commit patched runtime policy
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/aha-apply-runtime-knowledge-policy.yml
+          git add js/ahaChat.js js/ahaChatSignals.js js/ahaChatExport.js tests/aha-runtime-knowledge-policy.test.cjs
+          git commit -m "fix: make Fagverk authoritative for document analysis"
+          git push origin HEAD:fix/fagverk-authoritative-analysis-sources
