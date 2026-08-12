@@ -5,6 +5,15 @@
     {
       "emne_id": "dialektikk_selvbevissthet",
       "title": "Dialektikk og selvbevissthet",
+      "local_knowledge": {
+        "classification": "awaiting_canonical_activation",
+        "canonical_subject_ids": ["vitenskap"],
+        "related_chapter_ids": [],
+        "scope": "Filosofisk linse på dialektikk, erkjennelse og selvbevissthet.",
+        "rationale": "Midlertidig lokalt emne fram til canonical Vitenskap blir runtime-aktivt i Subject Bridge.",
+        "revalidate_on_runtime_change": true,
+        "minimum_matched_terms": 2
+      },
       "core_concepts": ["selvbevissthet", "godt/ondt", "antagonistiske krefter", "aksjon/reaksjon"],
       "keywords": ["dialektikk", "erkjennelse", "motsigelser"],
       "thinkers": ["Hegel", "Nietzsche"],
@@ -16,6 +25,15 @@
     {
       "emne_id": "makt_kunnskap",
       "title": "Makt, kunnskap og institusjoner",
+      "local_knowledge": {
+        "classification": "awaiting_canonical_activation",
+        "canonical_subject_ids": ["vitenskap"],
+        "related_chapter_ids": [],
+        "scope": "Vitenskapsfilosofisk linse på kunnskapsproduksjon, normalisering og institusjoner.",
+        "rationale": "Midlertidig lokalt emne fram til canonical Vitenskap blir runtime-aktivt i Subject Bridge.",
+        "revalidate_on_runtime_change": true,
+        "minimum_matched_terms": 2
+      },
       "core_concepts": ["makt", "institusjon", "normalisering"],
       "keywords": ["fengsel", "disiplin", "kontroll"],
       "thinkers": ["Foucault", "Agamben"],

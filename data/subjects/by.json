@@ -11,6 +11,20 @@
     {
       "emne_id": "byrom_lek_offentlighet",
       "title": "Byrom, lek og offentlighet",
+      "local_knowledge": {
+        "classification": "aha_specific_addition",
+        "canonical_subject_ids": [
+          "by"
+        ],
+        "related_chapter_ids": [
+          "byliv-offentlige-rom",
+          "byliv-sosial-offentlighet"
+        ],
+        "scope": "Pedagogisk linse på lek og kroppslig deltakelse i byens offentlighet.",
+        "rationale": "Kobler læring og lek til byrom; dette er ikke et alternativt canonicalt By-kapittel.",
+        "revalidate_on_runtime_change": true,
+        "minimum_matched_terms": 2
+      },
       "core_concepts": [
         "byrom",
         "lek",
@@ -35,6 +49,20 @@
     {
       "emne_id": "parker_torg_fellesskap",
       "title": "Parker, torg og sosialt fellesskap",
+      "local_knowledge": {
+        "classification": "aha_specific_addition",
+        "canonical_subject_ids": [
+          "by"
+        ],
+        "related_chapter_ids": [
+          "byliv-offentlige-rom",
+          "byliv-sosial-offentlighet"
+        ],
+        "scope": "Sosial læringslinse på parker og torg som lavterskel møteplasser.",
+        "rationale": "Supplerer canonical By med en eksplisitt AHA-linse; den tidligere Natur-kopien er fjernet.",
+        "revalidate_on_runtime_change": true,
+        "minimum_matched_terms": 2
+      },
       "core_concepts": [
         "park",
         "torg",

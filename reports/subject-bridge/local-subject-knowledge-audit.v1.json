@@ -1,0 +1,609 @@
+{
+  "schema": "aha_local_subject_knowledge_audit_v1",
+  "version": "1.0.0",
+  "status": "passed",
+  "audit_basis": {
+    "subject_index_path": "data/subjects/subjects_index.json",
+    "runtime_registry_path": "data/integrations/runtime/history-go-fagverk-runtime-registry.v1.json",
+    "retired_registry_path": "data/subjects/retired_local_subject_knowledge.v1.json",
+    "revalidate_on_every_runtime_change": true,
+    "input_sha256": "93dd10ffa1934de2172aaa6ce32b120f1756fbf392eb3e7b7cf3385b746b721c"
+  },
+  "summary": {
+    "active_subject_count": 8,
+    "active_chapter_count": 98,
+    "local_emne_count": 15,
+    "retired_competing_mirror_count": 2,
+    "classification_counts": {
+      "aha_cross_subject_lens": 6,
+      "aha_specific_addition": 5,
+      "awaiting_canonical_activation": 4
+    },
+    "local_title_collision_count": 1,
+    "errors": 0
+  },
+  "runtime_snapshot": [
+    {
+      "subject_id": "by",
+      "source_ref": "d52cebbe2c6c01e5780be301e9b0e4a9c61c5254",
+      "chapter_count": 17,
+      "corpus_path": "data/integrations/runtime/history-go-fagverk-by.corpus.v1.json",
+      "policy_path": "data/integrations/runtime/history-go-fagverk-by.policy.v1.json"
+    },
+    {
+      "subject_id": "historie",
+      "source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
+      "chapter_count": 23,
+      "corpus_path": "data/integrations/runtime/history-go-fagverk-historie.corpus.v1.json",
+      "policy_path": "data/integrations/runtime/history-go-fagverk-historie.policy.v1.json"
+    },
+    {
+      "subject_id": "kunst",
+      "source_ref": "d52cebbe2c6c01e5780be301e9b0e4a9c61c5254",
+      "chapter_count": 6,
+      "corpus_path": "data/integrations/runtime/history-go-fagverk-kunst.corpus.v1.json",
+      "policy_path": "data/integrations/runtime/history-go-fagverk-kunst.policy.v1.json"
+    },
+    {
+      "subject_id": "musikk",
+      "source_ref": "d52cebbe2c6c01e5780be301e9b0e4a9c61c5254",
+      "chapter_count": 8,
+      "corpus_path": "data/integrations/runtime/history-go-fagverk-musikk.corpus.v1.json",
+      "policy_path": "data/integrations/runtime/history-go-fagverk-musikk.policy.v1.json"
+    },
+    {
+      "subject_id": "naeringsliv",
+      "source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
+      "chapter_count": 12,
+      "corpus_path": "data/integrations/runtime/history-go-fagverk-naeringsliv.corpus.v1.json",
+      "policy_path": "data/integrations/runtime/history-go-fagverk-naeringsliv.policy.v1.json"
+    },
+    {
+      "subject_id": "natur",
+      "source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
+      "chapter_count": 11,
+      "corpus_path": "data/integrations/runtime/history-go-fagverk-natur.corpus.v1.json",
+      "policy_path": "data/integrations/runtime/history-go-fagverk-natur.policy.v1.json"
+    },
+    {
+      "subject_id": "politikk",
+      "source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
+      "chapter_count": 13,
+      "corpus_path": "data/integrations/runtime/history-go-fagverk-politikk.corpus.v1.json",
+      "policy_path": "data/integrations/runtime/history-go-fagverk-politikk.policy.v1.json"
+    },
+    {
+      "subject_id": "subkultur",
+      "source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
+      "chapter_count": 8,
+      "corpus_path": "data/integrations/runtime/history-go-fagverk-subkultur.corpus.v1.json",
+      "policy_path": "data/integrations/runtime/history-go-fagverk-subkultur.policy.v1.json"
+    }
+  ],
+  "local_emner": [
+    {
+      "aha_subject_id": "by",
+      "emne_id": "byrom_lek_offentlighet",
+      "title": "Byrom, lek og offentlighet",
+      "classification": "aha_specific_addition",
+      "canonical_subject_ids": [
+        "by"
+      ],
+      "related_chapter_ids": [
+        "byliv-offentlige-rom",
+        "byliv-sosial-offentlighet"
+      ],
+      "minimum_matched_terms": 2,
+      "scope": "Pedagogisk linse på lek og kroppslig deltakelse i byens offentlighet.",
+      "rationale": "Kobler læring og lek til byrom; dette er ikke et alternativt canonicalt By-kapittel.",
+      "canonical_overlaps": [
+        {
+          "subject_id": "historie",
+          "chapter_id": "katastrofer_brudd_ulykker",
+          "title": "Katastrofer, branner, ulykker og historiske brudd",
+          "source_path": "data/fagverk/historie/katastrofer_brudd_ulykker.json",
+          "title_collision": false,
+          "exact_term_count": 1,
+          "local_term_coverage": 0.0909,
+          "exact_terms": [
+            "byrom"
+          ]
+        },
+        {
+          "subject_id": "politikk",
+          "chapter_id": "normer-identitet-hverdagsliv",
+          "title": "Normer, identitet og hverdagsliv",
+          "source_path": "data/fagverk/politikk/normer-identitet-hverdagsliv.json",
+          "title_collision": false,
+          "exact_term_count": 1,
+          "local_term_coverage": 0.0909,
+          "exact_terms": [
+            "hverdagsliv"
+          ]
+        }
+      ]
+    },
+    {
+      "aha_subject_id": "by",
+      "emne_id": "parker_torg_fellesskap",
+      "title": "Parker, torg og sosialt fellesskap",
+      "classification": "aha_specific_addition",
+      "canonical_subject_ids": [
+        "by"
+      ],
+      "related_chapter_ids": [
+        "byliv-offentlige-rom",
+        "byliv-sosial-offentlighet"
+      ],
+      "minimum_matched_terms": 2,
+      "scope": "Sosial læringslinse på parker og torg som lavterskel møteplasser.",
+      "rationale": "Supplerer canonical By med en eksplisitt AHA-linse; den tidligere Natur-kopien er fjernet.",
+      "canonical_overlaps": [
+        {
+          "subject_id": "historie",
+          "chapter_id": "migrasjon_minoritet_tilhorighet",
+          "title": "Migrasjon, minoritet og tilhørighet",
+          "source_path": "data/fagverk/historie/migrasjon_minoritet_tilhorighet.json",
+          "title_collision": false,
+          "exact_term_count": 1,
+          "local_term_coverage": 0.1,
+          "exact_terms": [
+            "tilhørighet"
+          ]
+        },
+        {
+          "subject_id": "politikk",
+          "chapter_id": "normer-identitet-hverdagsliv",
+          "title": "Normer, identitet og hverdagsliv",
+          "source_path": "data/fagverk/politikk/normer-identitet-hverdagsliv.json",
+          "title_collision": false,
+          "exact_term_count": 1,
+          "local_term_coverage": 0.1,
+          "exact_terms": [
+            "tilhørighet"
+          ]
+        },
+        {
+          "subject_id": "subkultur",
+          "chapter_id": "steder_territorier_okkupering",
+          "title": "Steder, territorier og okkupasjon",
+          "source_path": "data/fagverk/subkultur/steder_territorier_okkupering.json",
+          "title_collision": false,
+          "exact_term_count": 1,
+          "local_term_coverage": 0.1,
+          "exact_terms": [
+            "uformelle møteplasser"
+          ]
+        }
+      ]
+    },
+    {
+      "aha_subject_id": "historie",
+      "emne_id": "poblenes_historie",
+      "title": "Pøblens historie og underfra-perspektiv",
+      "classification": "aha_specific_addition",
+      "canonical_subject_ids": [
+        "historie"
+      ],
+      "related_chapter_ids": [
+        "industri_arbeid_sosialhistorie",
+        "offentlighet_mobilisering_bevegelser"
+      ],
+      "minimum_matched_terms": 2,
+      "scope": "Pedagogisk underfra-perspektiv på marginaliserte gruppers historiske erfaringer.",
+      "rationale": "Beholdes som AHA-linse i Historie; den konkurrerende Politikk-kopien er fjernet.",
+      "canonical_overlaps": []
+    },
+    {
+      "aha_subject_id": "klima_omstilling",
+      "emne_id": "energi_industri_omstilling",
+      "title": "Energi og industri",
+      "classification": "aha_cross_subject_lens",
+      "canonical_subject_ids": [
+        "natur",
+        "naeringsliv",
+        "politikk",
+        "historie"
+      ],
+      "related_chapter_ids": [],
+      "minimum_matched_terms": 2,
+      "scope": "Tverrfaglig linse på energisystemer, industri og omstilling.",
+      "rationale": "Komponerer aktive canonicale fag uten å duplisere deres faglige grunnstruktur.",
+      "canonical_overlaps": []
+    },
+    {
+      "aha_subject_id": "klima_omstilling",
+      "emne_id": "klima_omstilling_baerekraft",
+      "title": "Klima og omstilling",
+      "classification": "aha_cross_subject_lens",
+      "canonical_subject_ids": [
+        "natur",
+        "politikk",
+        "naeringsliv",
+        "historie"
+      ],
+      "related_chapter_ids": [],
+      "minimum_matched_terms": 2,
+      "scope": "Tverrfaglig omstillingslinse på klimaansvar, økonomi og samfunnsendring.",
+      "rationale": "Komponerer aktive canonicale fag uten å erstatte deres kapitler eller kilder.",
+      "canonical_overlaps": [
+        {
+          "subject_id": "naeringsliv",
+          "chapter_id": "makt-regulering-baerekraft",
+          "title": "Makt, regulering og bærekraft",
+          "source_path": "data/fagverk/naeringsliv/makt-regulering-baerekraft.json",
+          "title_collision": false,
+          "exact_term_count": 2,
+          "local_term_coverage": 0.1667,
+          "exact_terms": [
+            "omstilling",
+            "bærekraft"
+          ]
+        },
+        {
+          "subject_id": "naeringsliv",
+          "chapter_id": "arbeid-produksjon-verdiskaping",
+          "title": "Arbeid, produksjon og verdiskaping",
+          "source_path": "data/fagverk/naeringsliv/arbeid-produksjon-verdiskaping.json",
+          "title_collision": false,
+          "exact_term_count": 1,
+          "local_term_coverage": 0.0833,
+          "exact_terms": [
+            "omstilling"
+          ]
+        },
+        {
+          "subject_id": "politikk",
+          "chapter_id": "politisk-okonomi-stat-marked",
+          "title": "Politisk økonomi, stat og marked",
+          "source_path": "data/fagverk/politikk/politisk-okonomi-stat-marked.json",
+          "title_collision": false,
+          "exact_term_count": 1,
+          "local_term_coverage": 0.0833,
+          "exact_terms": [
+            "omstilling"
+          ]
+        }
+      ]
+    },
+    {
+      "aha_subject_id": "klima_omstilling",
+      "emne_id": "lokalsamfunn_maktfordeling",
+      "title": "Lokalsamfunn og maktfordeling",
+      "classification": "aha_cross_subject_lens",
+      "canonical_subject_ids": [
+        "politikk",
+        "naeringsliv",
+        "historie",
+        "by"
+      ],
+      "related_chapter_ids": [],
+      "minimum_matched_terms": 2,
+      "scope": "Tverrfaglig linse på geografisk fordeling av makt, ansvar og verdiskaping.",
+      "rationale": "Komponerer aktive canonicale fag uten å konkurrere med deres domeneinndeling.",
+      "canonical_overlaps": [
+        {
+          "subject_id": "politikk",
+          "chapter_id": "regimer-og-institusjoner",
+          "title": "Regimer og institusjoner",
+          "source_path": "data/fagverk/politikk/regimer-og-institusjoner.json",
+          "title_collision": false,
+          "exact_term_count": 1,
+          "local_term_coverage": 0.0909,
+          "exact_terms": [
+            "maktfordeling"
+          ]
+        }
+      ]
+    },
+    {
+      "aha_subject_id": "klima_omstilling",
+      "emne_id": "naturvern_arealpolitikk",
+      "title": "Naturvern og arealpolitikk",
+      "classification": "aha_cross_subject_lens",
+      "canonical_subject_ids": [
+        "natur",
+        "politikk",
+        "historie"
+      ],
+      "related_chapter_ids": [],
+      "minimum_matched_terms": 2,
+      "scope": "Tverrfaglig linse på naturvern, arealbruk og politiske beslutninger.",
+      "rationale": "Komponerer aktive canonicale fag uten å etablere en alternativ Natur- eller Politikk-struktur.",
+      "canonical_overlaps": [
+        {
+          "subject_id": "natur",
+          "chapter_id": "okosystem_mangfold_habitat",
+          "title": "Økosystem, mangfold og habitat",
+          "source_path": "data/fagverk/natur/okosystem_mangfold_habitat.json",
+          "title_collision": false,
+          "exact_term_count": 2,
+          "local_term_coverage": 0.1538,
+          "exact_terms": [
+            "økosystem",
+            "biologisk mangfold"
+          ]
+        },
+        {
+          "subject_id": "historie",
+          "chapter_id": "miljo_klima_landskap",
+          "title": "Miljø-, klima- og landskapshistorie",
+          "source_path": "data/fagverk/historie/miljo_klima_landskap.json",
+          "title_collision": false,
+          "exact_term_count": 1,
+          "local_term_coverage": 0.0769,
+          "exact_terms": [
+            "naturinngrep"
+          ]
+        }
+      ]
+    },
+    {
+      "aha_subject_id": "klima_omstilling",
+      "emne_id": "samiske_urfolksrettigheter",
+      "title": "Samiske rettigheter og urfolksrettigheter",
+      "classification": "aha_cross_subject_lens",
+      "canonical_subject_ids": [
+        "historie",
+        "politikk",
+        "natur",
+        "naeringsliv"
+      ],
+      "related_chapter_ids": [],
+      "minimum_matched_terms": 2,
+      "scope": "Tverrfaglig linse på urfolksrettigheter, naturinngrep og forvaltning.",
+      "rationale": "Komponerer aktive canonicale fag rundt rettighetskonflikter uten å erstatte canonical historie eller politikk.",
+      "canonical_overlaps": [
+        {
+          "subject_id": "historie",
+          "chapter_id": "samisk_urfolkshistorie",
+          "title": "Samisk og urfolkshistorie",
+          "source_path": "data/fagverk/historie/samisk_urfolkshistorie.json",
+          "title_collision": false,
+          "exact_term_count": 1,
+          "local_term_coverage": 0.0909,
+          "exact_terms": [
+            "urfolk"
+          ]
+        }
+      ]
+    },
+    {
+      "aha_subject_id": "klima_omstilling",
+      "emne_id": "sirkulaerokonomi_lokale_jobber",
+      "title": "Sirkulærøkonomi",
+      "classification": "aha_cross_subject_lens",
+      "canonical_subject_ids": [
+        "naeringsliv",
+        "natur",
+        "by",
+        "politikk"
+      ],
+      "related_chapter_ids": [],
+      "minimum_matched_terms": 2,
+      "scope": "Tverrfaglig linse på materialstrømmer, arbeid og lokal verdiskaping.",
+      "rationale": "Komponerer aktive canonicale fag rundt en omstillingsproblemstilling.",
+      "canonical_overlaps": [
+        {
+          "subject_id": "by",
+          "chapter_id": "arkitektur-gatekant-makt-ombruk",
+          "title": "Gatekant, symbol og ombruk: hvordan arkitektur virker og styres",
+          "source_path": "data/fagverk/by/arkitektur-gatekant-makt-ombruk.json",
+          "title_collision": false,
+          "exact_term_count": 1,
+          "local_term_coverage": 0.1111,
+          "exact_terms": [
+            "ombruk"
+          ]
+        },
+        {
+          "subject_id": "naeringsliv",
+          "chapter_id": "arbeid-produksjon-verdiskaping",
+          "title": "Arbeid, produksjon og verdiskaping",
+          "source_path": "data/fagverk/naeringsliv/arbeid-produksjon-verdiskaping.json",
+          "title_collision": false,
+          "exact_term_count": 1,
+          "local_term_coverage": 0.1111,
+          "exact_terms": [
+            "verdiskaping"
+          ]
+        },
+        {
+          "subject_id": "naeringsliv",
+          "chapter_id": "internasjonal-okonomi-operations-prosjekt",
+          "title": "Internasjonal økonomi, operations og prosjekt",
+          "source_path": "data/fagverk/naeringsliv/internasjonal-okonomi-operations-prosjekt.json",
+          "title_collision": false,
+          "exact_term_count": 1,
+          "local_term_coverage": 0.1111,
+          "exact_terms": [
+            "verdiskaping"
+          ]
+        }
+      ]
+    },
+    {
+      "aha_subject_id": "kultur_kunst",
+      "emne_id": "kropp_bevegelse_hverdagskultur",
+      "title": "Kropp, bevegelse og hverdagskultur",
+      "classification": "aha_specific_addition",
+      "canonical_subject_ids": [
+        "kunst"
+      ],
+      "related_chapter_ids": [
+        "produksjon-og-praksis",
+        "publikum-og-offentlighet"
+      ],
+      "minimum_matched_terms": 2,
+      "scope": "Pedagogisk linse på kroppslig uttrykk og hverdagskultur.",
+      "rationale": "Supplerer canonical Kunst uten å definere en konkurrerende kunstfaglig struktur.",
+      "canonical_overlaps": [
+        {
+          "subject_id": "subkultur",
+          "chapter_id": "fellesskap_scener_egenorganisering",
+          "title": "Fellesskap, scener og egenorganisering",
+          "source_path": "data/fagverk/subkultur/fellesskap_scener_egenorganisering.json",
+          "title_collision": false,
+          "exact_term_count": 1,
+          "local_term_coverage": 0.0909,
+          "exact_terms": [
+            "deltakelse"
+          ]
+        }
+      ]
+    },
+    {
+      "aha_subject_id": "politikk",
+      "emne_id": "straff_makt_kontroll",
+      "title": "Straff, makt og sosial kontroll",
+      "classification": "aha_specific_addition",
+      "canonical_subject_ids": [
+        "politikk"
+      ],
+      "related_chapter_ids": [
+        "rett-lov-rettssikkerhet",
+        "konflikt-makt-sivilsamfunn"
+      ],
+      "minimum_matched_terms": 2,
+      "scope": "Pedagogisk linse på straff, kriminalpolitikk og sosial kontroll.",
+      "rationale": "Supplerer canonical Politikk uten å gjenta et helt canonicalt kapittel.",
+      "canonical_overlaps": [
+        {
+          "subject_id": "politikk",
+          "chapter_id": "normer-identitet-hverdagsliv",
+          "title": "Normer, identitet og hverdagsliv",
+          "source_path": "data/fagverk/politikk/normer-identitet-hverdagsliv.json",
+          "title_collision": false,
+          "exact_term_count": 1,
+          "local_term_coverage": 0.0769,
+          "exact_terms": [
+            "sosial kontroll"
+          ]
+        },
+        {
+          "subject_id": "subkultur",
+          "chapter_id": "motstand_avvik_kontroll",
+          "title": "Motstand, avvik og kontroll",
+          "source_path": "data/fagverk/subkultur/motstand_avvik_kontroll.json",
+          "title_collision": false,
+          "exact_term_count": 1,
+          "local_term_coverage": 0.0769,
+          "exact_terms": [
+            "sosial kontroll"
+          ]
+        }
+      ]
+    },
+    {
+      "aha_subject_id": "psykologi_pedagogikk",
+      "emne_id": "lek_laring_kreativitet_psyk",
+      "title": "Lek, læring og kreativitet",
+      "classification": "awaiting_canonical_activation",
+      "canonical_subject_ids": [
+        "psykologi"
+      ],
+      "related_chapter_ids": [],
+      "minimum_matched_terms": 2,
+      "scope": "Psykologisk og pedagogisk linse på lek, motivasjon og utvikling.",
+      "rationale": "Midlertidig lokalt emne fram til canonical Psykologi blir runtime-aktivt i Subject Bridge.",
+      "canonical_overlaps": []
+    },
+    {
+      "aha_subject_id": "sport_lek",
+      "emne_id": "lek_laring_kreativitet",
+      "title": "Lek, læring og kreativitet",
+      "classification": "awaiting_canonical_activation",
+      "canonical_subject_ids": [
+        "sport"
+      ],
+      "related_chapter_ids": [],
+      "minimum_matched_terms": 2,
+      "scope": "Lek som sports- og aktivitetsfaglig læringsform.",
+      "rationale": "Midlertidig lokalt emne fram til canonical Sport blir runtime-aktivt i Subject Bridge.",
+      "canonical_overlaps": []
+    },
+    {
+      "aha_subject_id": "vitenskap",
+      "emne_id": "dialektikk_selvbevissthet",
+      "title": "Dialektikk og selvbevissthet",
+      "classification": "awaiting_canonical_activation",
+      "canonical_subject_ids": [
+        "vitenskap"
+      ],
+      "related_chapter_ids": [],
+      "minimum_matched_terms": 2,
+      "scope": "Filosofisk linse på dialektikk, erkjennelse og selvbevissthet.",
+      "rationale": "Midlertidig lokalt emne fram til canonical Vitenskap blir runtime-aktivt i Subject Bridge.",
+      "canonical_overlaps": []
+    },
+    {
+      "aha_subject_id": "vitenskap",
+      "emne_id": "makt_kunnskap",
+      "title": "Makt, kunnskap og institusjoner",
+      "classification": "awaiting_canonical_activation",
+      "canonical_subject_ids": [
+        "vitenskap"
+      ],
+      "related_chapter_ids": [],
+      "minimum_matched_terms": 2,
+      "scope": "Vitenskapsfilosofisk linse på kunnskapsproduksjon, normalisering og institusjoner.",
+      "rationale": "Midlertidig lokalt emne fram til canonical Vitenskap blir runtime-aktivt i Subject Bridge.",
+      "canonical_overlaps": [
+        {
+          "subject_id": "naeringsliv",
+          "chapter_id": "regnskap-revisjon-okonomistyring",
+          "title": "Regnskap, revisjon og økonomistyring",
+          "source_path": "data/fagverk/naeringsliv/regnskap-revisjon-okonomistyring.json",
+          "title_collision": false,
+          "exact_term_count": 1,
+          "local_term_coverage": 0.1667,
+          "exact_terms": [
+            "normalisering"
+          ]
+        }
+      ]
+    }
+  ],
+  "local_title_collisions": [
+    {
+      "normalized_title": "lek læring og kreativitet",
+      "emner": [
+        "psykologi_pedagogikk/lek_laring_kreativitet_psyk",
+        "sport_lek/lek_laring_kreativitet"
+      ],
+      "disposition": "explicit_distinct_canonical_lenses"
+    }
+  ],
+  "retired_local_emner": [
+    {
+      "subject_id": "natur",
+      "emne_id": "parker_torg_fellesskap_natur",
+      "title": "Parker, torg og sosialt fellesskap",
+      "classification": "retired_competing_local_mirror",
+      "replacement": {
+        "subject_id": "by",
+        "emne_id": "parker_torg_fellesskap"
+      }
+    },
+    {
+      "subject_id": "politikk",
+      "emne_id": "marginalisering_underkuede",
+      "title": "Marginalisering og underkuede grupper",
+      "classification": "retired_competing_local_mirror",
+      "replacement": {
+        "subject_id": "historie",
+        "emne_id": "poblenes_historie"
+      }
+    }
+  ],
+  "gates": {
+    "every_local_emne_classified": true,
+    "active_canonical_subjects_resolved": true,
+    "pending_subjects_not_yet_active": true,
+    "no_active_canonical_title_duplicates": true,
+    "no_unresolved_local_title_duplicates": true,
+    "retired_mirrors_not_reintroduced": true,
+    "local_minimum_term_guards_present": true
+  },
+  "artifact_sha256": "84ace39894dd6960c19d450b13cb91d0ace6a7583be7bd23c262e02b40fa7d66"
+}

@@ -110,6 +110,7 @@ const registry = readJson(registryPath);
 const subjectFiles = new Map();
 const canonicalToAha = new Map();
 let generatedCount = 0;
+let runtimeChapterCount = 0;
 
 for (const meta of subjectIndex.subjects || []) {
   const subject = readJson(`data/subjects/${meta.file}`);
@@ -125,6 +126,7 @@ for (const meta of subjectIndex.subjects || []) {
   const runtimeConfig = registry.active_subjects[bridge.fagverk_subject_id];
   assert.ok(runtimeConfig, `${bridge.fagverk_subject_id} must be runtime-active`);
   const corpus = readJson(runtimeConfig.runtime_corpus_path);
+  runtimeChapterCount += (corpus.entries || []).length;
   const generated = (subject.emner || []).filter((emne) => emne.fagverk?.generation_mode === 'canonical_runtime_subject_projection_v2');
   assert.equal(generated.length, corpus.entries.length, `${subject.subject_id} must project every active canonical chapter`);
   assert.deepEqual(
@@ -144,7 +146,7 @@ for (const meta of subjectIndex.subjects || []) {
 }
 
 assert.deepEqual([...canonicalToAha.keys()].sort(), Object.keys(registry.active_subjects).sort());
-assert.equal(generatedCount, 98, 'Subject Engine must materialize all 98 runtime-active canonical chapters');
+assert.equal(generatedCount, runtimeChapterCount, 'Subject Engine must materialize every runtime-active canonical chapter');
 assert.equal(canonicalToAha.get('kunst'), 'kultur_kunst', 'canonical Kunst must map explicitly to the existing AHA subject');
 
 const politics = subjectFiles.get('politikk');
@@ -204,7 +206,7 @@ vm.runInNewContext(
       `${testCase.fagverkSubjectId}: one Fagverk term must not activate ${testCase.emneId}`
     );
   }
-  console.log('aha-history-go-fagverk cross-subject bridge integration tests passed (8 subjects, 98 chapters)');
+  console.log(`aha-history-go-fagverk cross-subject bridge integration tests passed (${canonicalToAha.size} subjects, ${runtimeChapterCount} chapters)`);
 })().catch((error) => {
   console.error(error);
   process.exitCode = 1;
