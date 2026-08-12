@@ -20,7 +20,7 @@
     "music:export:history-go:audit": "node scripts/export-aha-music-history-go.cjs --audit"
   },
   "dependencies": {
-    "cors": "^4.19.2",
+    "cors": "^2.8.5",
     "express": "^4.19.2",
     "openai": "^4.70.0"
   }
