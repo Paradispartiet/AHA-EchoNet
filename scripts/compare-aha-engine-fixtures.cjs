@@ -80,7 +80,21 @@ function createChatContext() {
   context.addEventListener = () => {};
 
   vm.createContext(context);
-  for (const fileName of ['js/ahaChatTextUtils.js', 'js/ahaChatSignals.js', 'js/ahaChatSubjects.js', 'js/ahaChatAnalysis.js', 'js/ahaChatExport.js', 'js/ahaChatReplyFormat.js', 'js/ahaChat.js']) {
+  for (const fileName of [
+    'js/ahaChatTextUtils.js',
+    'js/ahaChatSignals.js',
+    'js/ahaChatSubjects.js',
+    'js/ahaChatAnalysis.js',
+    'js/ahaChatExport.js',
+    'js/ahaChatReplyFormat.js',
+    'js/ahaChatMemoryControls.js',
+    'js/ahaChatAfterwork.js',
+    'js/ahaChatMemoryRuntime.js',
+    'js/ahaChatRunContext.js',
+    'js/ahaChatInsightView.js',
+    'js/ahaChatAutoOutputView.js',
+    'js/ahaChat.js'
+  ]) {
     const code = readFileSync(path.join(repoRoot, fileName), 'utf8');
     vm.runInContext(code, context, { filename: fileName });
   }
