@@ -1,0 +1,87 @@
+{
+  "version": "aha_production_analysis_quality_matrix_v1",
+  "reviewedAt": "2026-08-12",
+  "purpose": "Human-reviewed, source-bound production cases. The matrix must cover every runtime-active canonical subject without turning the current subject count into a product quota.",
+  "cases": [
+    {
+      "id": "by_algorithmic_governance",
+      "canonicalSubjectId": "by",
+      "ahaSubjectId": "by",
+      "chapterId": "data-styring-kart-plan-medvirkning-algoritmer",
+      "emneId": "fagverk_by_data-styring-kart-plan-medvirkning-algoritmer",
+      "sourceText": "Sammendrag. I denne artikkelen undersøker vi hvordan kommunens planvedtak bygger på algoritmisk styring og datastyring. Algoritmer påvirker hvordan den målte byen prioriterer tjenester, mens medvirkning og planlegging avgjør hvem som får påvirke beslutningene. Forskerne sammenligner digitale kart, kommunale plandokumenter og intervjuer med innbyggere. Hovedfunnet er at datastyring kan gjøre prioriteringer tydeligere, men også skjule politiske verdivalg.",
+      "expectedConceptTerms": ["algoritmisk styring", "datastyring", "medvirkning"],
+      "forbiddenLeakageTerms": ["tungetale", "xylem", "dekningsbidrag", "subkulturell kapital"]
+    },
+    {
+      "id": "historie_archive_provenance",
+      "canonicalSubjectId": "historie",
+      "ahaSubjectId": "historie",
+      "chapterId": "kilder_arkiv_spor",
+      "emneId": "fagverk_historie_kilder_arkiv_spor",
+      "sourceText": "Sammendrag. I denne artikkelen bruker arkivstudien kildekritikk for å undersøke hvorfor enkelte erfaringer mangler i et offentlig arkiv. En førstehåndskilde må leses med proveniens og kontekstualisering, og arkivtaushet behandles som et historisk problem. Materialet består av brev, protokoller og katalogdata fra samme institusjon. Analysen viser at bevaringspraksis påvirker hvilke fortellinger senere historikere kan dokumentere.",
+      "expectedConceptTerms": ["kildekritikk", "proveniens", "arkivtaushet"],
+      "forbiddenLeakageTerms": ["tungetale", "xylem", "dekningsbidrag", "algoritmisk styring"]
+    },
+    {
+      "id": "kunst_form_language",
+      "canonicalSubjectId": "kunst",
+      "ahaSubjectId": "kultur_kunst",
+      "chapterId": "estetisk-sprak-og-form",
+      "emneId": "fagverk_kunst_estetisk-sprak-og-form",
+      "sourceText": "Sammendrag. I denne artikkelen analyseres verket gjennom ikonografi, appropriasjon og abstraksjon. Studien spør hvordan konseptkunst bruker form, materiale og rom til å endre betrakterens forståelse. Metoden kombinerer nærlesning av motivene med dokumentasjon av utstillingssituasjonen. Hovedpoenget er at den estetiske formen ikke bare illustrerer ideen, men produserer en egen måte å erfare den på.",
+      "expectedConceptTerms": ["ikonografi", "appropriasjon", "abstraksjon"],
+      "forbiddenLeakageTerms": ["tungetale", "xylem", "dekningsbidrag", "arkivtaushet"]
+    },
+    {
+      "id": "music_analysis_structure",
+      "canonicalSubjectId": "musikk",
+      "ahaSubjectId": "musikk",
+      "chapterId": "musikalsk-analyse-lyd-struktur",
+      "emneId": "fagverk_musikk_musikalsk-analyse-lyd-struktur",
+      "sourceText": "Sammendrag. I denne artikkelen kombinerer den musikalske analysen rytmemåling og tidskodet lytting med undersøkelser av harmoni og motiv. Forskerne sammenligner tre innspillinger for å se hvordan tempo, klang og frasering endrer strukturens virkning. Metoden knytter hvert analytisk utsagn til et konkret tidspunkt i lydopptaket. Resultatet viser at små rytmiske forskyvninger endrer hvordan hovedmotivet oppfattes.",
+      "expectedConceptTerms": ["rytmemåling", "tidskodet lytting", "harmoni"],
+      "forbiddenLeakageTerms": ["tungetale", "xylem", "dekningsbidrag", "arkivtaushet"]
+    },
+    {
+      "id": "business_accounting_audit",
+      "canonicalSubjectId": "naeringsliv",
+      "ahaSubjectId": "naeringsliv",
+      "chapterId": "regnskap-revisjon-okonomistyring",
+      "emneId": "fagverk_naeringsliv_regnskap-revisjon-okonomistyring",
+      "sourceText": "Sammendrag. I denne artikkelen undersøker vi et regnskap som følger periodisering og balanseføring, mens kontantstrømoppstillingen viser når pengene faktisk beveger seg. Revisjonen undersøker revisjonsbevis og sammenholder dem med virksomhetens bokføring. Analysen bruker dekningsbidrag for å vurdere lønnsomheten i hvert produktområde. Hovedfunnet er at positivt resultat ikke alene dokumenterer en robust kontantstrøm.",
+      "expectedConceptTerms": ["periodisering", "revisjonsbevis", "dekningsbidrag"],
+      "forbiddenLeakageTerms": ["tungetale", "xylem", "ikonografi", "arkivtaushet"]
+    },
+    {
+      "id": "nature_botany_transport",
+      "canonicalSubjectId": "natur",
+      "ahaSubjectId": "natur",
+      "chapterId": "botanikk_vegetasjon",
+      "emneId": "fagverk_natur_botanikk_vegetasjon",
+      "sourceText": "Sammendrag. I denne artikkelen undersøker botanikeren plantevev, xylem og floem gjennom mikroskopi og vegetasjonsanalyse. Prøver fra ulike voksesteder dokumenteres som herbariebelegg slik at artsbestemmelsen kan kontrolleres senere. Studien sammenligner vanntransport under tørre og fuktige forhold. Resultatene viser at variasjon i ledningsvevet henger sammen med plantenes tilgang på vann.",
+      "expectedConceptTerms": ["xylem", "floem", "herbariebelegg"],
+      "forbiddenLeakageTerms": ["tungetale", "dekningsbidrag", "ikonografi", "arkivtaushet"]
+    },
+    {
+      "id": "politics_public_evaluation",
+      "canonicalSubjectId": "politikk",
+      "ahaSubjectId": "politikk",
+      "chapterId": "forvaltning",
+      "emneId": "fagverk_forvaltning",
+      "sourceText": "Sammendrag. I denne artikkelen undersøker vi hvordan offentlig ansatte ønsker at evalueringer skal følges bedre opp og integreres i mål- og resultatstyring. Statsforvaltningen trenger evalueringsstrategier, lederforankring og bedre forvaltningsskjønn. Undersøkelsen ble sendt til 276 respondenter, og 30 prosent svarte. Respondentene etterlyser mer systematikk og fagkompetanse. Potensialet ligger ikke i å evaluere mer, men i å gjennomføre bedre evalueringer som gir samfunnsnytte.",
+      "expectedConceptTerms": ["evalueringer", "mål- og resultatstyring", "samfunnsnytte"],
+      "forbiddenLeakageTerms": ["pinse", "tungetale", "Den hellige ånd", "apostlene", "Babel"]
+    },
+    {
+      "id": "subculture_field_boundaries",
+      "canonicalSubjectId": "subkultur",
+      "ahaSubjectId": "subkultur",
+      "chapterId": "subkulturteori_feltgrenser",
+      "emneId": "fagverk_subkultur_subkulturteori_feltgrenser",
+      "sourceText": "Sammendrag. I denne artikkelen bruker studien subkulturell kapital og feltgrenser sammen med scene-teori, subkulturteori og postsubkultur. Forskerne undersøker hvordan deltakere skaper tilhørighet gjennom stil, møteplasser og kunnskap om miljøets interne koder. Intervjuer og observasjon brukes for å sammenligne ulike posisjoner i scenen. Analysen viser at grensene forhandles kontinuerlig, men fortsatt påvirker hvem som får status.",
+      "expectedConceptTerms": ["subkulturell kapital", "feltgrenser", "postsubkultur"],
+      "forbiddenLeakageTerms": ["tungetale", "xylem", "dekningsbidrag", "arkivtaushet"]
+    }
+  ]
+}
