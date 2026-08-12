@@ -57,15 +57,16 @@
     if (!text) return { score: 0, strong: false, markers: [] };
     const markerDefs = [
       { key: "definisjon", weight: 1, test: /\ber\b.{0,35}\b(en|et)\b|\bdefineres\b|\bbetyr\b|\bkalles\b|\bkommer av\b|\betymologi\b/i },
-      { key: "bibel", weight: 2, test: /det nye testamentet|det gamle testamentet|apostlene|apostelgjerningene/i },
-      { key: "pinsenarrativ", weight: 2, test: /den hellige ånd|tungetale|nådegave|tydning|babels tårn|kirkens fødselsdag/i },
+      { key: "bibel", weight: 2, test: /\b(?:det nye testamentet|det gamle testamentet|apostlene|apostelgjerningene)\b/i },
+      { key: "pinsenarrativ", weight: 2, test: /\b(?:den hellige ånd|tungetale|nådegave|tydning|babels tårn|kirkens fødselsdag)\b/i },
       { key: "kalender", weight: 1.5, test: /gregoriansk kalender|juliansk kalender|treenighetssøndag/i },
       { key: "historie_tradisjon", weight: 1.5, test: /historisk|tradisjon|feiring|kirkesamfunn|høytid|høytidens/i },
       { key: "pinse", weight: 2, test: /\bpinse\b|\bpentekost[eé]\b/i }
     ];
     const hits = markerDefs.filter((m) => m.test.test(text));
     const score = hits.reduce((sum, hit) => sum + hit.weight, 0);
-    return { score, strong: score >= 4 && hits.length >= 3, markers: hits.map((h) => h.key) };
+    const hasReligiousCore = hits.some((hit) => ["bibel", "pinsenarrativ", "pinse"].includes(hit.key));
+    return { score, strong: hasReligiousCore && score >= 4 && hits.length >= 2, markers: hits.map((h) => h.key), hasReligiousCore };
   }
 
   function detectTextType(raw) {

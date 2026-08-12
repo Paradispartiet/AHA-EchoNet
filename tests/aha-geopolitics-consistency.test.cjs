@@ -86,7 +86,7 @@ assert.equal(staleBundle.quality.status, 'invalid_topic_mismatch');
 assert.equal(staleBundle.quality.failClosed, true);
 assert.ok(staleBundle.quality.sourceBinding.invalidFields.some((item) => item.field === 'topicConsistency'));
 assert.ok(staleBundle.quality.topicConsistency.matchedForbiddenTerms.includes('eierskap'));
-assert.ok(staleMd.includes('topicConsistency.status: invalid_topic_mismatch'));
+assert.ok(staleMd.includes('topicConsistency.status: invalid_semantic_topic_mismatch'));
 assert.ok(staleMd.includes('topicConsistency'));
 
 console.log('aha-geopolitics-consistency passed');

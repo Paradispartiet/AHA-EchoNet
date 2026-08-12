@@ -145,10 +145,7 @@ for (const phrase of [
   'Babels tårn',
   'kirkens fødselsdag',
   'pentekosté',
-  'Kristendom',
-  'Kirkehistorie',
-  'Det nye testamentet',
-  'Det gamle testamentet'
+  'Det nye testamentet'
 ]) assert.ok(readableMd.includes(phrase), `Readable markdown should include: ${phrase}`);
 
 for (const section of [

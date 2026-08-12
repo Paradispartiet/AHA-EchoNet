@@ -178,7 +178,7 @@
 
 
   const TOPIC_STOPWORDS = new Set([
-    "dette", "denne", "disse", "eller", "ikke", "som", "med", "for", "til", "fra", "har", "kan", "skal", "det", "der", "seg", "sin", "sitt", "sine", "mens", "viser", "fortsatt", "mye", "eget", "tema", "teksten", "handler", "analyse", "kilde", "output"
+    "dette", "denne", "disse", "den", "de", "en", "et", "og", "av", "på", "i", "å", "om", "vi", "jeg", "man", "er", "var", "ble", "blir", "vil", "også", "så", "mot", "ved", "under", "over", "etter", "før", "eller", "ikke", "som", "med", "for", "til", "fra", "har", "kan", "skal", "det", "der", "seg", "sin", "sitt", "sine", "mens", "viser", "fortsatt", "mye", "eget", "tema", "teksten", "handler", "analyse", "kilde", "output"
   ]);
 
   function normalizeTopicText(value) {
@@ -240,6 +240,12 @@
     const forbiddenTerms = Array.isArray(explicit.forbiddenTerms) ? explicit.forbiddenTerms.slice() : [];
     const src = ` ${normalizeTopicText(sourceText)} `;
 
+    if (!requiredTerms.length && normalizeTopicText(sourceText).split(" ").length >= 80) {
+      sourceTerms.slice(0, 2).forEach((term) => {
+        if (!requiredTerms.some((value) => normalizeTopicTerm(value) === term)) requiredTerms.push(term);
+      });
+    }
+
     if (src.includes(" usa ") && src.includes(" kina ")) {
       ["usa", "kina"].forEach((term) => { if (!requiredTerms.some((v) => normalizeTopicTerm(v) === term)) requiredTerms.push(term); });
       ["eierskap", "profil", "offentlighet", "offentligheten", "institusjonell kontinuitet", "institusjonell omforming", "mandat"].forEach((term) => {
@@ -257,16 +263,22 @@
     const outputTerms = extractTopicTerms(outputText);
     const outputTermSet = new Set(outputTerms);
     const overlappingTerms = sourceTerms.filter((term) => outputTermSet.has(term));
+    const meaningfulOverlap = overlappingTerms.filter((term) => term.length >= 4);
     const missingRequiredTerms = normalizedRequired.filter((term) => !topicTextIncludes(outputText, term));
     const matchedForbiddenTerms = normalizedForbidden.filter((term) => topicTextIncludes(outputText, term));
-    const valid = missingRequiredTerms.length === 0 && matchedForbiddenTerms.length === 0;
+    const semanticCheckEligible = sourceTerms.length >= 6 && outputTerms.length >= 6;
+    const semanticTopicMismatch = semanticCheckEligible && meaningfulOverlap.length < 2;
+    const valid = missingRequiredTerms.length === 0 && matchedForbiddenTerms.length === 0 && !semanticTopicMismatch;
     return {
-      status: valid ? "valid" : "invalid_topic_mismatch",
+      status: valid ? "valid" : (semanticTopicMismatch ? "invalid_semantic_topic_mismatch" : "invalid_topic_mismatch"),
       valid,
       checkedAt: "export_build",
       sourceTerms,
       outputTerms,
       overlappingTerms,
+      meaningfulOverlap,
+      semanticCheckEligible,
+      semanticTopicMismatch,
       requiredTerms: normalizedRequired,
       missingRequiredTerms,
       forbiddenTerms: normalizedForbidden,
@@ -280,7 +292,7 @@
       invalidFields.push({
         field: "topicConsistency",
         status: topicConsistency.status || "invalid_topic_mismatch",
-        reason: topicConsistency.matchedForbiddenTerms?.length ? "forbidden_terms_present" : "required_terms_missing",
+        reason: topicConsistency.status === "invalid_semantic_topic_mismatch" ? "semantic_topic_divergence" : (topicConsistency.matchedForbiddenTerms?.length ? "forbidden_terms_present" : "required_terms_missing"),
         missingRequiredTerms: topicConsistency.missingRequiredTerms || [],
         matchedForbiddenTerms: topicConsistency.matchedForbiddenTerms || []
       });
@@ -706,6 +718,8 @@ ${"```"}
       deps.setStatusNote("Kunne ikke laste ned JSON. Viste data i Full analyse-panelet.");
     }
   }
+
+  global.AHAChatExportTestHooks = { extractTopicTerms, inferTopicConsistencyContract, buildTopicConsistencyReport };
 
   global.AHAChatExport = {
     safeSerializeForExport,

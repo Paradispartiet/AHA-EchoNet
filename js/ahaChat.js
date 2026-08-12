@@ -3393,6 +3393,9 @@
   function normalizeAcademicAfterworkPayload(payload, sourceText, textType) {
     const safePayload = payload && typeof payload === "object" ? payload : {};
     const src = String(sourceText || "");
+    if (!AHA_RUNTIME_KNOWLEDGE_POLICY.legacyArticleTemplatesEnabled && (textType === "academic_article" || detectTextType(src) === "academic_article")) {
+      return applyRuntimeKnowledgePolicy(safePayload, src);
+    }
     const payloadSignalText = `${safePayload.reflection || ""} ${(Array.isArray(safePayload.sortItems) ? safePayload.sortItems : []).map((item) => `${item?.label || ""} ${item?.text || ""}`).join(" ")}`;
     const publicAdminSignal = detectPublicAdministrationReformSignal(src);
     const payloadPublicAdminSignal = detectPublicAdministrationReformSignal(payloadSignalText);
@@ -3576,6 +3579,10 @@
     const payloadSortItems = Array.isArray(payload?.sortItems) ? payload.sortItems : [];
     const payloadInsightCards = Array.isArray(payload?.insightCards) ? payload.insightCards : [];
     const payloadReflection = String(payload?.reflection || "").trim();
+    if (!AHA_RUNTIME_KNOWLEDGE_POLICY.legacyArticleTemplatesEnabled) {
+      if (!text) return [];
+      return buildSourceGroundedAcademicPayload(text).insightCards;
+    }
     const sourceSortItems = payloadSortItems.length ? payloadSortItems : [];
 
     let fallbackSynthesis = null;
@@ -5535,6 +5542,113 @@
     };
   }
 
+
+  // Runtime-kunnskapspolitikk: Fagverk er den varige kunnskapsbasen.
+  // Dokumentet i aktiv run er analysemateriale, ikke en mal eller en automatisk
+  // varig kunnskapskilde. Legacy-artikkelmaler beholdes midlertidig som død
+  // kompatibilitetskode, men får ikke autorisere runtime-innhold.
+  const AHA_RUNTIME_KNOWLEDGE_POLICY = Object.freeze({
+    durableKnowledgeSource: "fagverk",
+    currentDocumentRole: "analysis_source",
+    legacyArticleTemplatesEnabled: false,
+    persistAnalysisDocumentsAsMemory: false
+  });
+
+  function pickAcademicSourceSentence(sentences, patterns, fallbackIndex = 0) {
+    const list = Array.isArray(sentences) ? sentences.filter(Boolean) : [];
+    const hit = list.find((sentenceText) => (Array.isArray(patterns) ? patterns : []).some((pattern) => pattern.test(sentenceText)));
+    return String(hit || list[fallbackIndex] || list[0] || "").trim();
+  }
+
+  function buildSourceGroundedAcademicPayload(sourceText) {
+    const source = cleanArticleText(String(sourceText || "")).trim();
+    const sentences = toSentences(source).map((item) => String(item || "").trim()).filter(Boolean);
+    const keywords = takeKeywords(source, 8);
+    const first = sentences[0] || "";
+    const problem = pickAcademicSourceSentence(sentences, [/\b(formål|problemstilling|undersøker|undersøke|spørsmål|hensikt|målet med|denne artikkelen|studien)\b/i], 0);
+    const finding = pickAcademicSourceSentence(sentences, [/\b(funn|viser|fant|resultat|konklud|tyder|påviser|fremgår|framgår)\b/i], 0);
+    const evidence = pickAcademicSourceSentence(sentences, [/\b(metode|data|respondent|intervju|survey|undersøkelse|utvalg|referansegruppe|empiri|analyse)\b/i], 1);
+    const tension = pickAcademicSourceSentence(sentences, [/\b(men|samtidig|imidlertid|derimot|på den ene siden|på den andre siden|utfordring|kritikk|spenning)\b/i], 1);
+    const sortItems = [
+      { label: "Problemstilling / formål", text: problem },
+      { label: "Hovedfunn / hovedpoeng", text: finding || first },
+      { label: "Empiri / metode", text: evidence },
+      { label: "Faglig spenning", text: tension }
+    ].filter((item) => item.text);
+    const insightCards = sortItems.slice(0, 4).map((item, index) => ({
+      id: `academic_source_${index + 1}`,
+      candidate_type: "synthetic",
+      candidate_title: item.label,
+      candidate_summary: item.text,
+      title: item.label,
+      summary: item.text,
+      concepts: keywords.slice(0, 4),
+      source_role: "analysis_source"
+    }));
+    const mainText = finding || problem || first;
+    const tensionText = tension || "Ingen eksplisitt hovedspenning er identifisert i kilden ennå.";
+    return {
+      textType: "academic_article",
+      contentType: "academic_article",
+      reflection: mainText,
+      keywords,
+      sortItems,
+      day: "Ikke dagbokmateriale – ingen dagsoppsummering laget.",
+      thoughts: {
+        hovedspor: mainText,
+        lose_tanker: evidence || "Skill tydelig mellom kildebelegg, tolkning og fagverkets begreper.",
+        neste_steg: "Koble relevante begreper og metoder fra Fagverk til eksplisitte belegg i denne kilden."
+      },
+      list: sentences.slice(0, 6),
+      path: [
+        "Avklar kildens problemstilling og hovedpåstand.",
+        "Skill empiri, metode og tolkning fra hverandre.",
+        "Koble relevante begreper og metoder fra Fagverk til konkrete tekstbelegg.",
+        "Test hovedtolkningen mot alternative forklaringer.",
+        "Formuler en kildebundet faglig syntese."
+      ],
+      insightCards,
+      subjectMatches: [],
+      subjectLinks: [],
+      theoryLinks: [],
+      ahaSer: {
+        innholdstype: "Fagtekst",
+        tema: keywords.slice(0, 4).join(" · ") || short(first, 120),
+        hovedspenning: tensionText,
+        viktigsteInnsikt: mainText,
+        fagkoblinger: [],
+        nesteSteg: "Bruk Fagverk-koblingene til å analysere denne kilden videre; ikke tidligere artikler som innholdsmal.",
+        kortSvar: short(mainText, 320)
+      },
+      analysisKnowledgePolicy: {
+        durableKnowledgeSource: AHA_RUNTIME_KNOWLEDGE_POLICY.durableKnowledgeSource,
+        currentDocumentRole: AHA_RUNTIME_KNOWLEDGE_POLICY.currentDocumentRole,
+        legacyArticleTemplatesEnabled: false,
+        persistAsMemory: false
+      }
+    };
+  }
+
+  function applyRuntimeKnowledgePolicy(payload, sourceText) {
+    const safe = payload && typeof payload === "object" ? payload : {};
+    if (AHA_RUNTIME_KNOWLEDGE_POLICY.legacyArticleTemplatesEnabled || detectTextType(sourceText) !== "academic_article") return safe;
+    const grounded = buildSourceGroundedAcademicPayload(sourceText);
+    const subjectMatches = normalizeSubjectMatches(Array.isArray(safe.subjectMatches) ? safe.subjectMatches : []);
+    const subjectLabels = subjectMatches.map((item) => String(item?.title || item?.label || item?.subject_label || item?.subject_id || "").trim()).filter(Boolean);
+    return {
+      ...grounded,
+      subjectMatches,
+      subjectLinks: subjectMatches,
+      theoryLinks: [],
+      ahaSer: { ...grounded.ahaSer, fagkoblinger: subjectLabels }
+    };
+  }
+
+  function isTransientAnalysisDocument(text, urlInfo = {}) {
+    if (urlInfo?.isSourceAction) return true;
+    return detectTextType(String(text || "")) === "academic_article";
+  }
+
   function buildAutoOutputs(userText, ahaReply) {
     const raw = String(userText || "").trim();
     const linkInfo = getUrlDominanceInfo(raw);
@@ -5542,6 +5656,9 @@
     if (linkInfo.isSourceAction && latestArticleAnalysis) return buildArticleAutoOutputsFromAnalysis(latestArticleAnalysis);
     const reply = String(ahaReply || "").trim();
     const textType = detectTextType(raw);
+    if (textType === "academic_article" && !AHA_RUNTIME_KNOWLEDGE_POLICY.legacyArticleTemplatesEnabled) {
+      return buildSourceGroundedAcademicPayload(raw);
+    }
     const analysisText = cleanArticleText(raw);
     const sentences = toSentences(analysisText);
     const keywords = takeKeywords(analysisText, 5);
@@ -6263,9 +6380,16 @@
       return safePayload.canonicalAnalysis;
     }
     const canonicalSer = buildAhaSerCard(safePayload, sourceText);
+    const policyAcademic = !AHA_RUNTIME_KNOWLEDGE_POLICY.legacyArticleTemplatesEnabled && detectTextType(sourceText || "") === "academic_article";
     const domain = detectAutoAnalysisDomain(sourceText || "", safePayload || {});
     const existingHistoryLinks = safePayload?.historyGoLinks || safePayload?.history_go_links || [];
-    const derivedHistoryLinks = buildHistoryGoLinksFromDomain(domain, sourceText || "", canonicalSer);
+    const derivedHistoryLinks = policyAcademic
+      ? normalizeSubjectMatches(safePayload?.subjectMatches || []).slice(0, 5).map((match) => {
+          const title = String(match?.title || match?.label || match?.subject_label || match?.subject_id || "Fagverk").trim();
+          const id = String(match?.subject_id || match?.id || title).trim().toLowerCase().replace(/[^a-z0-9æøå]+/gi, "_").replace(/^_+|_+$/g, "");
+          return { type: "subject", id, title, reason: "Kildebasert fagkobling fra AHA Fagverk-kalibrering." };
+        }).filter((item) => item.id)
+      : buildHistoryGoLinksFromDomain(domain, sourceText || "", canonicalSer);
     return {
       contentType: String(safePayload?.textType || detectTextType(sourceText || "")),
       domain,
@@ -6323,6 +6447,9 @@
 
   function buildAutoOutputFallbackPayload(userText, ahaReply, options = {}) {
     const sourceText = String(userText || "");
+    if (!AHA_RUNTIME_KNOWLEDGE_POLICY.legacyArticleTemplatesEnabled && detectTextType(sourceText) === "academic_article") {
+      return buildSourceGroundedAcademicPayload(sourceText);
+    }
     const replyText = String(ahaReply || "");
     const combined = `${sourceText} ${replyText}`.toLowerCase();
     const hasSahelAcademicEvidence = sourceHasAny(sourceText, [/\bsahel\b/i, /\bmali\b/i, /\bressursknapphet\b/i, /\bpolitisk økologi\b/i, /\bknapphetsskolen\b/i, /\bmiljøsikkerhet\b/i, /\benvironmental security\b/i, /\bclimate conflict\b/i]);
@@ -6556,7 +6683,9 @@
       payload.theoryLinks = [];
       if (payload.ahaSer) payload.ahaSer.fagkoblinger = ["Sport", "Fotball", "Turneringsspill", "Prestasjon", "Psykologi/press", "Medier/sportsjournalistikk"].filter((item) => (articleAnalysis.concepts || []).join(" ").toLowerCase().includes(item.toLowerCase().split("/")[0]) || ["Sport", "Fotball", "Turneringsspill", "Prestasjon", "Psykologi/press", "Medier/sportsjournalistikk"].includes(item));
     }
-    payload = filterCrossDomainAutoPayload(payload, effectiveSourceText);
+    payload = (!AHA_RUNTIME_KNOWLEDGE_POLICY.legacyArticleTemplatesEnabled && detectTextType(effectiveSourceText) === "academic_article")
+      ? applyRuntimeKnowledgePolicy(payload, effectiveSourceText)
+      : filterCrossDomainAutoPayload(payload, effectiveSourceText);
     payload = enforceCanonicalSourceGrounding(payload, effectiveSourceText);
     const jsCanonicalAnalysis = buildCanonicalAnalysis(payload, effectiveSourceText);
     const resolvedCanonical = await resolveCanonicalAnalysisWithOptionalPythonEngine({
@@ -6856,8 +6985,9 @@
     const cleanText = String(text || "").trim();
     if (!cleanText) return null;
     const urlInfo = getUrlDominanceInfo(cleanText);
+    const transientAnalysisDocument = isTransientAnalysisDocument(cleanText, urlInfo);
     const savingEnabled = isAhaSavingEnabled();
-    const persistedUserMessage = savingEnabled ? global.AHAChatPersistence?.appendUserMessage?.(cleanText, { source: "aha_chat", threadId: CHAT_THREAD_ID, skip_insight: urlInfo.isSourceAction }) : null;
+    const persistedUserMessage = savingEnabled ? global.AHAChatPersistence?.appendUserMessage?.(cleanText, { source: "aha_chat", threadId: CHAT_THREAD_ID, skip_insight: urlInfo.isSourceAction || transientAnalysisDocument, sourceRole: transientAnalysisDocument ? "analysis_source" : "user_memory", knowledgeEligible: !transientAnalysisDocument, memoryEligible: !transientAnalysisDocument, curationRequired: transientAnalysisDocument }) : null;
     renderAhaChatMemoryStatus();
     appendChat("user", cleanText);
     let linkReadPromise = null;
@@ -6923,7 +7053,7 @@
     renderAhaPersonalContextStatus();
     renderAhaPersonalAiLoopStatus();
     let count = 0;
-    if (savingEnabled && !urlInfo.isSourceAction) {
+    if (savingEnabled && !urlInfo.isSourceAction && !transientAnalysisDocument) {
       count = handleUserMessage(cleanText);
       void handleUserMessageInsightCandidatesInBackground(cleanText)
         .then((aiCount) => {
@@ -7159,7 +7289,7 @@
 
   global.loadChamberFromStorage = global.loadChamberFromStorage || loadChamberFromStorage;
   global.saveChamberToStorage = global.saveChamberToStorage || saveChamberToStorage;
-  global.AHATestHooks = Object.assign({}, global.AHATestHooks || {}, { detectTextType, buildCanonicalAnalysis, buildAhaAnalysisExportBundle, formatAhaAnalysisExportMarkdown, buildAutoOutputs, normalizeFagkoblinger, resolveCanonicalAnalysisWithOptionalPythonEngine, isAhaMemoryQuestion, buildAhaLearningContractReply, buildAhaMemoryStatus, shouldUseAhaMemory, buildAhaMemoryContext, buildAhaMemoryOffContext, loadAhaMemoryControls, saveAhaMemoryControls, setAhaMemoryControl, isAhaSavingEnabled, isAhaMemoryUseEnabled, loadAhaMemoryExclusions, saveAhaMemoryExclusions, getAhaMemoryInsightStableKey, getAhaMemoryInsightKey, isAhaMemoryInsightExcluded, excludeAhaMemoryInsight, includeAhaMemoryInsight, resetAhaMemoryExclusions, getAhaExcludedMemoryItems, renderAhaMemoryControls, bindAhaMemoryControls, submitAhaChatMessage, findRelevantLocalMemory, formatAhaMemoryContextForAgent, isAhaMemoryDebugEnabled, buildAhaMemoryTransparency, formatAhaMemoryTransparencyDetails, renderAhaMemoryTransparency, appendChat, updateAnswerActionsVisibility, getActiveMetaAiSession, startMetaAiSession, renderMetaAiSessionBox, renderMetaAiClaims, maybeHandleMetaAiAgentReply, saveMetaAiClaimFeedback, buildAhaPersonalAiLoopChatReadinessStatus, renderAhaPersonalAiLoopStatus, buildAhaAnswerPackage, renderAhaAnswerComposer, createAnalysisRun, bindAnalysisArtifact, artifactMatchesActiveRun, clearActiveAnalysisState, renderAutoOutputPayload, enforceCanonicalSourceGrounding, filterRetrievalForActiveSource, scoreRetrievalAgainstSource, filterMemoryContextForActiveSource, isActiveAnalysisRun });
+  global.AHATestHooks = Object.assign({}, global.AHATestHooks || {}, { detectTextType, buildCanonicalAnalysis, buildAhaAnalysisExportBundle, formatAhaAnalysisExportMarkdown, buildAutoOutputs, buildSourceGroundedAcademicPayload, applyRuntimeKnowledgePolicy, isTransientAnalysisDocument, AHA_RUNTIME_KNOWLEDGE_POLICY, normalizeFagkoblinger, resolveCanonicalAnalysisWithOptionalPythonEngine, isAhaMemoryQuestion, buildAhaLearningContractReply, buildAhaMemoryStatus, shouldUseAhaMemory, buildAhaMemoryContext, buildAhaMemoryOffContext, loadAhaMemoryControls, saveAhaMemoryControls, setAhaMemoryControl, isAhaSavingEnabled, isAhaMemoryUseEnabled, loadAhaMemoryExclusions, saveAhaMemoryExclusions, getAhaMemoryInsightStableKey, getAhaMemoryInsightKey, isAhaMemoryInsightExcluded, excludeAhaMemoryInsight, includeAhaMemoryInsight, resetAhaMemoryExclusions, getAhaExcludedMemoryItems, renderAhaMemoryControls, bindAhaMemoryControls, submitAhaChatMessage, findRelevantLocalMemory, formatAhaMemoryContextForAgent, isAhaMemoryDebugEnabled, buildAhaMemoryTransparency, formatAhaMemoryTransparencyDetails, renderAhaMemoryTransparency, appendChat, updateAnswerActionsVisibility, getActiveMetaAiSession, startMetaAiSession, renderMetaAiSessionBox, renderMetaAiClaims, maybeHandleMetaAiAgentReply, saveMetaAiClaimFeedback, buildAhaPersonalAiLoopChatReadinessStatus, renderAhaPersonalAiLoopStatus, buildAhaAnswerPackage, renderAhaAnswerComposer, createAnalysisRun, bindAnalysisArtifact, artifactMatchesActiveRun, clearActiveAnalysisState, renderAutoOutputPayload, enforceCanonicalSourceGrounding, filterRetrievalForActiveSource, scoreRetrievalAgainstSource, filterMemoryContextForActiveSource, isActiveAnalysisRun });
 
   global.AHAActiveRun = {
     get() { return activeAnalysisRun; },
