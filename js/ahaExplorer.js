@@ -533,9 +533,10 @@
     const cards = groups
       .filter(([, items]) => items.length)
       .map(([label, items]) => card(label, chipRow(items.slice(0, 8), "aha-snapshot-chip")));
-    host.innerHTML = cards.length
+    const safety = '<p class="aha-snapshot-status">Lokal forhåndsvisning · read-only · local-only · ingen sync · ingen rå brukerdata</p>';
+    host.innerHTML = safety + (cards.length
       ? `<div class="exp-grid">${cards.join("")}</div>`
-      : emptyNote("AHA har ikke funnet åpne spørsmål, perspektiver eller videre forståelsessteg ennå.");
+      : emptyNote("AHA har ikke funnet åpne spørsmål, perspektiver eller videre forståelsessteg ennå."));
   }
 
   function renderAhaNow(b) {

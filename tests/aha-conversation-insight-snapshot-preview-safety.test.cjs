@@ -58,9 +58,9 @@ const snapshotDocs = read('docs/AHA_CONVERSATION_INSIGHT_SNAPSHOT_V1.md');
 const combinedDocs = `${statusDocs}\n${snapshotDocs}`;
 const previewRenderer = stripLiteralSafetyLists(extractBetween(
   explorerSource,
-  'function renderAhaNow(b)',
+  'function buildConversationSnapshot(b)',
   'function renderEtterarbeid',
-  'AHA Conversation Insight Snapshot preview renderer'
+  'AHA Conversation Insight Snapshot unified preview renderer'
 ));
 const previewSurface = `${chatHtml}\n${previewRenderer}`;
 
@@ -81,8 +81,8 @@ assertMatchesAll(previewRenderer, [
   /Åpne spørsmål|open questions/i,
   /Perspektiver|perspectives/i,
   /Spenninger|tensions/i,
-  /Samtalekoblinger|conversation links/i,
-  /Neste forståelsessteg|next understanding steps/i
+  /Samtalekoblinger|conversation ?links/i,
+  /Neste forståelsessteg|Videre forståelsessteg|next understanding steps/i
 ].forEach((pattern) => assert.match(previewRenderer, pattern, `safe group ${pattern}`));
 assert.match(previewRenderer, /summary/i, 'preview renders snapshot summary');
 assert.match(previewRenderer, /nextUnderstandingSteps/, 'preview renders nextUnderstandingSteps');
