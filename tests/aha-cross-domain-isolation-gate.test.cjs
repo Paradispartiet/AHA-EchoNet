@@ -71,6 +71,7 @@ function makeContext() {
     'js/ahaChatReplyFormat.js',
     'js/ahaChatExport.js',
     'js/ahaChatMemoryControls.js',
+    'js/ahaChatAfterwork.js',
     'js/ahaChatMemoryRuntime.js',
     'js/ahaChatRunContext.js',
     'js/ahaChatInsightView.js',
