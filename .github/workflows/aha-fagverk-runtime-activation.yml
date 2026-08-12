@@ -8,10 +8,12 @@ on:
       - "scripts/materialize-history-go-fagverk-subjects.mjs"
       - "scripts/audit-local-subject-knowledge.mjs"
       - "js/ahaSubjectEngine.js"
+      - "js/ahaEngineClient.js"
       - "tests/aha-fagverk-runtime-activation.test.cjs"
       - "tests/aha-fagverk-subject-approvals.test.cjs"
       - "tests/aha-history-go-fagverk-subject-bridge.integration.test.cjs"
       - "tests/aha-local-subject-knowledge-audit.test.cjs"
+      - "tests/aha-production-analysis-pipeline-audit.test.cjs"
       - "reports/subject-bridge/local-subject-knowledge-audit.v1.json"
       - ".github/workflows/aha-fagverk-runtime-activation.yml"
       - "backend/aha_engine/app/engine/fagverk_grounding.py"
@@ -62,6 +64,9 @@ jobs:
         run: |
           node scripts/materialize-history-go-fagverk-subjects.mjs --check
           node tests/aha-history-go-fagverk-subject-bridge.integration.test.cjs
+
+      - name: Verify production analysis pipeline provenance and isolation
+        run: node tests/aha-production-analysis-pipeline-audit.test.cjs
 
       - name: Verify governed local Subject Engine knowledge
         run: |
