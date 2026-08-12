@@ -1,12 +1,12 @@
-// AHA Analyse Explorer v1
-// Viser alt AHA har hentet ut av samtalen i navigerbare faner under chatten:
-// Oversikt · Innsikter · Begreper · Fag · Struktur · Kart · Verktøy · Mer.
-// Modulen endrer ingen analyse – den presenterer eksportbundlen fra
-// AHAChatExport.buildAhaAnalysisExportBundle på en lesbar måte.
+// Samlet AHA-analyseflate.
+// Viser alt AHA har hentet ut av samtalen i synlige kort under chatten.
+// Hver datagruppe har ett kanonisk renderpunkt; handlinger flytter fokus til
+// riktig kort i stedet for å skjule og vise fanepaneler. Modulen endrer ingen
+// analyse – den presenterer eksportbundlen fra AHAChatExport på en lesbar måte.
 (function (global) {
   "use strict";
 
-  const TAB_NAMES = ["oversikt", "innsikter", "begreper", "fag", "kilder", "struktur", "etterarbeid", "verktoy", "mer", "kart"];
+  const CARD_NAMES = ["oversikt", "innsikter", "begreper", "samtalespor", "fag", "kilder", "struktur", "etterarbeid", "verktoy", "mer", "kart"];
 
   let currentBundle = null;
   let initialized = false;
@@ -26,6 +26,23 @@
 
   function asText(value) {
     return String(value == null ? "" : value).trim();
+  }
+
+  function uniqueText(values) {
+    const seen = new Set();
+    return asList(values).map(asText).filter((value) => {
+      if (!value) return false;
+      const key = value.toLocaleLowerCase("nb-NO");
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
+  function sameText(left, right) {
+    const a = asText(left).toLocaleLowerCase("nb-NO");
+    const b = asText(right).toLocaleLowerCase("nb-NO");
+    return Boolean(a && b && a === b);
   }
 
   function safeJson(value) {
@@ -70,10 +87,10 @@
   function clear(run = getActiveRun()) {
     init();
     currentBundle = null;
-    TAB_NAMES.forEach((name) => {
+    CARD_NAMES.forEach((name) => {
       const host = getContainer(name);
       if (host && name !== "mer") host.innerHTML = emptyNote(name === "innsikter" ? "Lagrede innsikter vises separat. AHA venter på ny analyse." : "AHA venter på ny analyse.");
-      setTabCount(name, 0);
+      setCardCount(name, 0);
     });
     const dataHost = getContainer("data");
     if (dataHost) dataHost.innerHTML = emptyNote("AHA venter på ny analyse.");
@@ -136,27 +153,27 @@
     const ser = b.ahaSer || {};
     const afterwork = b.afterwork || {};
     const kortSvar = asText(ser.kortSvar) || asText(b.ahaReply);
-    const hasAnything = kortSvar || asText(ser.tema) || asText(afterwork.summary) || asList(b.insights).length || asList(b.concepts).length || asList(b.subjectMatches).length;
+    const hasAnything = kortSvar || asText(ser.tema) || asText(ser.innholdstype) || asText(ser.hovedspenning) || asText(ser.viktigsteInnsikt) || asText(ser.nesteSteg) || asText(afterwork.summary);
     if (!hasAnything) {
-      host.innerHTML = emptyNote("AHA venter på tekst. Oversikten vises her når AHA har nok materiale.");
+      host.innerHTML = emptyNote("AHA venter på tekst. Hovedbildet vises her når AHA har nok materiale.");
       return;
     }
-    const points = asList(b.insights).map(asText).filter(Boolean).slice(0, 4);
-    const concepts = [...new Set(asList(b.concepts).map(asText).filter(Boolean))].slice(0, 8);
-    const subjectLinks = [
-      ...asList(ser.fagkoblinger).map(asText),
-      ...asList(b.subjectMatches).map((match) => asText(match?.title || match?.subject_label))
-    ].filter(Boolean).slice(0, 6);
-    const sourceCount = loadWebArticleSourceEvents().length;
-    const nesteSteg = asText(ser.nesteSteg);
-    host.innerHTML = [
-      kortSvar ? card("Kort svar", `<p class="exp-lede">${esc(kortSvar)}</p>`, { primary: true }) : "",
-      card("Innsikter", points.length ? orderedList(points, 4) : emptyNote("Innsikter vises her når AHA finner tydelige hovedpoeng.")),
-      card("Begreper", concepts.length ? chipRow(concepts) : emptyNote("Begreper vises her når analysen har begrepsforslag.")),
-      card("Fagkoblinger fra AHA SER", subjectLinks.length ? chipRow(subjectLinks) : emptyNote("Fagkoblinger vises her når AHA SER finner relevante fagspor.")),
-      card("Kilder", sourceCount ? `<p>${esc(String(sourceCount))} kilde${sourceCount === 1 ? "" : "r"} funnet. Se Kilder-fanen for detaljer.</p>` : emptyNote("Kilder vises her når teksten inneholder lenker eller referanser.")),
-      nesteSteg ? card("Neste steg", `<p>${esc(nesteSteg)}</p>`) : ""
-    ].filter(Boolean).join("");
+    const headline = asText(ser.tema) || humanizeTextType(ser.innholdstype) || "Samtaleinnsikt";
+    const description = kortSvar || asText(afterwork.summary);
+    const rows = [
+      dlRow("Innholdstype", ser.innholdstype ? humanizeTextType(ser.innholdstype) : ""),
+      dlRow("Hovedspenning", ser.hovedspenning),
+      dlRow("Viktigste innsikt", ser.viktigsteInnsikt),
+      dlRow("Neste steg", ser.nesteSteg)
+    ].join("");
+    host.innerHTML = `
+      <div class="analysis-summary">
+        <h4>${esc(headline)}</h4>
+        ${description ? `<p class="exp-lede">${esc(description)}</p>` : ""}
+        ${rows ? `<dl class="exp-dl analysis-summary-fields">${rows}</dl>` : ""}
+        ${renderQualityStatusPreview(b)}
+      </div>
+    `;
   }
 
   // ── Innsikter ───────────────────────────────────────────────
@@ -190,7 +207,8 @@
   function renderInnsikter(b) {
     const host = getContainer("innsikter");
     if (!host) return;
-    const simple = asList(b.insights).map(asText).filter(Boolean);
+    const primaryInsight = asText(b.ahaSer?.viktigsteInnsikt);
+    const simple = uniqueText(b.insights).filter((item) => !sameText(item, primaryInsight));
     const chamber = asList(b.chamberInsights).filter((ins) => ins && typeof ins === "object");
     if (!simple.length && !chamber.length) {
       host.innerHTML = emptyNote("AHA har ikke laget innsikter for denne analysen ennå. Innsikter bygges automatisk når du sender tekster i chatten.");
@@ -242,8 +260,8 @@
   function renderBegreper(b) {
     const host = getContainer("begreper");
     if (!host) return;
-    const concepts = [...new Set(asList(b.concepts).map(asText).filter(Boolean))];
-    const candidates = [...new Set(asList(b.rawAutoPayload?.keywords).map(asText).filter(Boolean))]
+    const concepts = uniqueText(asList(b.concepts).concat(asList(b.ahaSer?.begreper)));
+    const candidates = uniqueText(b.rawAutoPayload?.keywords)
       .filter((word) => !concepts.some((c) => c.toLowerCase() === word.toLowerCase()));
     const parts = [];
     if (concepts.length) {
@@ -279,11 +297,13 @@
     const host = getContainer("fag");
     if (!host) return;
     const matches = asList(b.subjectMatches).filter((m) => m && typeof m === "object");
-    const fagkoblinger = asList(b.ahaSer?.fagkoblinger).map(asText).filter(Boolean);
+    const fagkoblinger = uniqueText(b.ahaSer?.fagkoblinger);
     if (!matches.length && !fagkoblinger.length) {
       host.innerHTML = emptyNote("Ingen fagkoblinger funnet for denne analysen ennå.");
       return;
     }
+    const matchTitles = uniqueText(matches.map((match) => match?.title || match?.subject_label));
+    const unmatchedFagkoblinger = fagkoblinger.filter((item) => !matchTitles.some((title) => sameText(item, title)));
     const strong = [];
     const possible = [];
     const weak = [];
@@ -297,7 +317,7 @@
       ? `<p class="exp-kicker">${esc(label)} (${list.length})</p>${list.map(subjectMatchCard).join("")}`
       : "");
     host.innerHTML = [
-      fagkoblinger.length ? `<p class="exp-kicker">Fagkoblinger fra AHA SER</p>${chipRow(fagkoblinger)}` : "",
+      unmatchedFagkoblinger.length ? `<p class="exp-kicker">Andre fagkoblinger fra AHA SER</p>${chipRow(unmatchedFagkoblinger)}` : "",
       group("Sterke fagkoblinger", strong),
       group("Mulige fagkoblinger", possible),
       group("Svake / tekniske treff", weak)
@@ -350,7 +370,7 @@
     host.innerHTML = events.length
       ? events.map(sourceEventCard).join("")
       : emptyNote("Kilder vises her når teksten inneholder lenker eller referanser.");
-    setTabCount("kilder", events.length);
+    setCardCount("kilder", events.length);
   }
 
   // ── Struktur ────────────────────────────────────────────────
@@ -465,18 +485,12 @@
   }
 
 
-  function renderAhaNow(b) {
-    const host = document.getElementById("aha-now-content");
-    if (!host) return;
+  function buildConversationSnapshot(b) {
     const builder = global.AHAConversationInsightSnapshot?.buildConversationInsightSnapshot;
-    if (typeof builder !== "function") {
-      host.innerHTML = emptyNote("Samtaleinnsikt er ikke tilgjengelig ennå.");
-      return;
-    }
     const ser = b.ahaSer || {};
     const structured = {
       headline: asText(ser.tema) || asText(ser.innholdstype ? humanizeTextType(ser.innholdstype) : ""),
-      shortDescription: asText(ser.kortSvar) || asText(b.afterwork?.summary),
+      shortDescription: asText(ser.kortSvar) || asText(b.ahaReply) || asText(b.afterwork?.summary),
       concepts: asList(b.concepts).concat(asList(ser.begreper)),
       openQuestions: asList(ser.apneSporsmal).concat(asList(b.openQuestions)),
       perspectives: asList(ser.perspektiver).concat(asList(b.perspectives)),
@@ -485,65 +499,73 @@
       nextUnderstandingSteps: [ser.nesteSteg].concat(asList(b.nextUnderstandingSteps)),
       quality: b.quality
     };
-    const snapshot = builder(structured);
+    if (typeof builder === "function") return builder(structured);
+    const labels = (items) => uniqueText(items).map((label) => ({ label }));
+    return {
+      summary: { headline: structured.headline, shortDescription: structured.shortDescription },
+      signals: {
+        concepts: labels(structured.concepts),
+        openQuestions: labels(structured.openQuestions),
+        perspectives: labels(structured.perspectives),
+        tensions: labels(structured.tensions),
+        conversationLinks: labels(structured.conversationLinks)
+      },
+      nextUnderstandingSteps: uniqueText(structured.nextUnderstandingSteps)
+    };
+  }
+
+  function signalLabels(items) {
+    return uniqueText(asList(items).map((item) => (item && typeof item === "object" ? item.label : item)));
+  }
+
+  function renderSamtalespor(b) {
+    const host = getContainer("samtalespor");
+    if (!host) return;
+    const ser = b.ahaSer || {};
+    const snapshot = buildConversationSnapshot(b);
     const signals = snapshot.signals || {};
     const groups = [
-      ["Begreper", signals.concepts],
-      ["Åpne spørsmål", signals.openQuestions],
-      ["Perspektiver", signals.perspectives],
-      ["Spenninger", signals.tensions],
-      ["Samtalekoblinger", signals.conversationLinks]
+      ["Åpne spørsmål", signalLabels(signals.openQuestions)],
+      ["Perspektiver", signalLabels(signals.perspectives)],
+      ["Andre spenninger", signalLabels(signals.tensions).filter((item) => !sameText(item, ser.hovedspenning))],
+      ["Videre forståelsessteg", signalLabels(snapshot.nextUnderstandingSteps).filter((item) => !sameText(item, ser.nesteSteg))]
     ];
-    const hasSignals = groups.some(([, items]) => asList(items).length) || asList(snapshot.nextUnderstandingSteps).length;
-    const groupHtml = groups.map(([label, items]) => {
-      const safeItems = asList(items).map((item) => asText(item?.label)).filter(Boolean).slice(0, 4);
-      return `<section class="aha-snapshot-group"><h3>${esc(label)}</h3>${safeItems.length ? chipRow(safeItems, "aha-snapshot-chip") : emptyNote("Ingen strukturerte signaler ennå.")}</section>`;
-    }).join("");
-    const steps = asList(snapshot.nextUnderstandingSteps).map(asText).filter(Boolean).slice(0, 4);
-    host.innerHTML = `
-      <article class="aha-snapshot-preview" aria-label="Samtaleinnsikt">
-        <p class="aha-snapshot-status">Lokal forhåndsvisning · read-only · local-only · ingen sync · ingen rå brukerdata</p>
-        <div class="aha-snapshot-summary">
-          <h3>${esc(snapshot.summary?.headline || "Samtaleinnsikt")}</h3>
-          <p>${esc(hasSignals ? snapshot.summary?.shortDescription : "AHA har ikke nok strukturerte signaler ennå.")}</p>
-        </div>
-        <div class="aha-snapshot-groups">${groupHtml}</div>
-        <section class="aha-snapshot-steps">
-          <h3>Neste forståelsessteg</h3>
-          ${steps.length ? orderedList(steps, 4) : emptyNote("AHA har ikke nok strukturerte signaler ennå.")}
-        </section>
-        ${renderQualityStatusPreview(b)}
-      </article>
-    `;
+    const cards = groups
+      .filter(([, items]) => items.length)
+      .map(([label, items]) => card(label, chipRow(items.slice(0, 8), "aha-snapshot-chip")));
+    const safety = '<p class="aha-snapshot-status">Lokal forhåndsvisning · read-only · local-only · ingen sync · ingen rå brukerdata</p>';
+    host.innerHTML = safety + (cards.length
+      ? `<div class="exp-grid">${cards.join("")}</div>`
+      : emptyNote("AHA har ikke funnet åpne spørsmål, perspektiver eller videre forståelsessteg ennå."));
+  }
+
+  function renderAhaNow(b) {
+    renderOversikt(b);
   }
 
   function renderEtterarbeid(b) {
     const host = getContainer("etterarbeid");
     if (!host) return;
     const afterwork = b.afterwork || {};
-    const sortItems = asList(afterwork.sortItems)
-      .map((item) => ({ label: asText(item?.label) || "Punkt", text: asText(item?.text) }))
-      .filter((item) => item.text);
-    const list = asList(afterwork.list).map(asText).filter(Boolean);
-    const path = asList(afterwork.path).map(asText).filter(Boolean);
+    const ser = b.ahaSer || {};
     const thoughts = afterwork.thoughts || {};
+    const overviewDescription = asText(ser.kortSvar) || asText(b.ahaReply) || asText(afterwork.summary);
+    const insightOwners = [ser.viktigsteInnsikt].concat(asList(b.insights));
+    const nextStepOwners = [ser.nesteSteg].concat(asList(b.nextUnderstandingSteps));
+    const summary = sameText(afterwork.summary, overviewDescription) ? "" : afterwork.summary;
+    const insight = insightOwners.some((item) => sameText(afterwork.insight, item)) ? "" : afterwork.insight;
+    const nextStep = nextStepOwners.some((item) => sameText(thoughts.neste_steg, item)) ? "" : thoughts.neste_steg;
     const rows = [
-      dlRow("Oppsummering", afterwork.summary),
-      dlRow("Innsikt", afterwork.insight),
+      dlRow("Oppsummering", summary),
+      dlRow("Innsikt", insight),
       dlRow("Refleksjon", afterwork.reflection),
       dlRow("Hovedspor", thoughts.hovedspor),
       dlRow("Løse tanker", thoughts.lose_tanker),
-      dlRow("Neste steg", thoughts.neste_steg)
+      dlRow("Neste steg", nextStep)
     ].join("");
-    const parts = [
-      rows ? card("Etterarbeid", `<dl class="exp-dl">${rows}</dl>`) : "",
-      sortItems.length ? card("Refleksjonskort", `<ul class="exp-sort-list">${sortItems.map((item) => `<li><strong>${esc(item.label)}:</strong> ${esc(item.text)}</li>`).join("")}</ul>`) : "",
-      list.length ? card("Liste", orderedList(list)) : "",
-      path.length ? card("Læringssti", orderedList(path)) : ""
-    ].filter(Boolean);
-    host.innerHTML = parts.length
-      ? `<div class="exp-grid">${parts.join("")}</div>`
-      : emptyNote("Etterarbeid vises her når AHA har nok materiale til forslag, lister eller læringssteg.");
+    host.innerHTML = rows
+      ? `<dl class="exp-dl">${rows}</dl>`
+      : emptyNote("Etterarbeid vises her når AHA har nok materiale til refleksjon eller videre arbeid.");
   }
 
   // ── Verktøy / dataeksport ───────────────────────────────────
@@ -625,20 +647,12 @@
     URL.revokeObjectURL(url);
   }
 
-  // ── Faner ───────────────────────────────────────────────────
-  function open(name) {
+  // ── Kortfokus ───────────────────────────────────────────────
+  function focusCard(name) {
     const root = document.getElementById("aha-explorer");
-    if (!root || !TAB_NAMES.includes(name)) return;
-    root.querySelectorAll("[data-tab]").forEach((btn) => {
-      const active = btn.dataset.tab === name;
-      btn.classList.toggle("is-active", active);
-      btn.setAttribute("aria-selected", active ? "true" : "false");
-    });
-    root.querySelectorAll("[data-tab-panel]").forEach((panel) => {
-      const active = panel.dataset.tabPanel === name;
-      panel.hidden = !active;
-      panel.setAttribute("aria-hidden", active ? "false" : "true");
-    });
+    if (!root || !CARD_NAMES.includes(name)) return;
+    const card = document.getElementById(`analysis-card-${name}`);
+    if (!card) return;
     // Legacy-panelene fylles av ahaChat.js sine eksisterende motorer.
     try {
       if (name === "kart") global.showMeta?.();
@@ -646,11 +660,20 @@
     } catch (err) {
       console.warn("AHA Explorer: klarte ikke å oppdatere legacy-panel", err);
     }
+    root.querySelectorAll(".analysis-card.is-targeted").forEach((item) => item.classList.remove("is-targeted"));
+    card.classList.add("is-targeted");
+    card.setAttribute("tabindex", "-1");
+    card.focus({ preventScroll: true });
+    card.scrollIntoView({ behavior: "smooth", block: "start" });
+    global.setTimeout?.(() => card.classList.remove("is-targeted"), 1400);
   }
 
-  function setTabCount(name, count) {
-    const btn = document.querySelector(`#aha-explorer [data-tab="${name}"] .exp-tab-count`);
-    if (btn) btn.textContent = count > 0 ? String(count) : "";
+  function setCardCount(name, count) {
+    const badge = document.querySelector(`#aha-explorer [data-analysis-count="${name}"]`);
+    if (badge) {
+      badge.textContent = count > 0 ? String(count) : "";
+      badge.hidden = count <= 0;
+    }
   }
 
   function setComposerText(text) {
@@ -665,9 +688,9 @@
     const root = document.getElementById("aha-explorer");
     if (!root) return;
     root.addEventListener("click", (event) => {
-      const target = event.target.closest("[data-tab], [data-concept], [data-concept-add], [data-json-copy], [data-json-download]");
+      const target = event.target.closest("[data-analysis-target], [data-concept], [data-concept-add], [data-json-copy], [data-json-download]");
       if (!target) return;
-      if (target.dataset.tab) return open(target.dataset.tab);
+      if (target.dataset.analysisTarget) return focusCard(target.dataset.analysisTarget);
       if (target.dataset.concept) return renderConceptDetail(target.dataset.concept);
       if (target.dataset.conceptAdd) {
         return setComposerText(`Legg til begrepet «${target.dataset.conceptAdd}» i kunnskapskartet mitt.`);
@@ -686,7 +709,6 @@
     global.addEventListener?.("aha:source-event-added", () => {
       renderKilder();
     });
-    open("oversikt");
   }
 
   function render(bundle) {
@@ -695,23 +717,23 @@
     if (!bundleMatchesActiveRun(bundle)) return;
     currentBundle = bundle;
     renderAhaNow(bundle);
-    renderOversikt(bundle);
     renderInnsikter(bundle);
     renderBegreper(bundle);
+    renderSamtalespor(bundle);
     renderFag(bundle);
     renderKilder();
     renderStruktur(bundle);
     renderEtterarbeid(bundle);
     renderKart(bundle);
     renderData(bundle);
-    setTabCount("innsikter", asList(bundle.insights).filter(Boolean).length + asList(bundle.chamberInsights).length);
-    setTabCount("begreper", [...new Set(asList(bundle.concepts).map(asText).filter(Boolean))].length);
-    setTabCount("fag", asList(bundle.subjectMatches).length);
-    setTabCount("kilder", loadWebArticleSourceEvents().length);
+    setCardCount("innsikter", uniqueText(bundle.insights).length + asList(bundle.chamberInsights).length);
+    setCardCount("begreper", uniqueText(asList(bundle.concepts).concat(asList(bundle.ahaSer?.begreper))).length);
+    setCardCount("fag", uniqueText(asList(bundle.ahaSer?.fagkoblinger).concat(asList(bundle.subjectMatches).map((match) => match?.title || match?.subject_label))).length);
+    setCardCount("kilder", loadWebArticleSourceEvents().length);
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
   else init();
 
-  global.AHAExplorer = { render, open, init, clear, bundleMatchesActiveRun };
+  global.AHAExplorer = { render, open: focusCard, focus: focusCard, init, clear, bundleMatchesActiveRun };
 }(window));
