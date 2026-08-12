@@ -1,6 +1,13 @@
 {
   "subject_id": "politikk",
   "subject_label": "Politikk & samfunn",
+  "history_go_fagverk": {
+    "source": "runtime_active_subject_corpus",
+    "corpus_path": "data/integrations/runtime/history-go-fagverk-politikk.corpus.v1.json",
+    "chapter_ids": [
+      "forvaltning"
+    ]
+  },
   "emner": [
     {
       "emne_id": "straff_makt_kontroll",
