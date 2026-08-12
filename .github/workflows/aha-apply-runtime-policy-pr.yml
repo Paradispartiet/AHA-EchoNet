@@ -1,0 +1,55 @@
+name: Materialize AHA runtime policy patch
+
+on:
+  pull_request:
+    branches:
+      - main
+
+actions: {}
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    if: github.event.pull_request.head.ref == 'fix/fagverk-authoritative-analysis-sources'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/fagverk-authoritative-analysis-sources
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Run embedded architecture patch
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import textwrap
+          source = Path('.github/workflows/aha-apply-runtime-knowledge-policy.yml').read_text()
+          start_marker = '      - name: Apply architecture patch\n        shell: bash\n        run: |\n'
+          end_marker = '      - name: Syntax checks\n'
+          start = source.index(start_marker) + len(start_marker)
+          end = source.index(end_marker, start)
+          block = textwrap.dedent(source[start:end])
+          Path('/tmp/apply-runtime-policy.sh').write_text('set -euo pipefail\n' + block)
+          PY
+          bash /tmp/apply-runtime-policy.sh
+      - name: Verify patch
+        run: |
+          node --check js/ahaChat.js
+          node --check js/ahaChatSignals.js
+          node --check js/ahaChatExport.js
+          node --check tests/aha-runtime-knowledge-policy.test.cjs
+          npm test
+      - name: Commit materialized code only
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/aha-apply-runtime-knowledge-policy.yml .github/workflows/aha-apply-runtime-policy-pr.yml
+          git add js/ahaChat.js js/ahaChatSignals.js js/ahaChatExport.js tests/aha-runtime-knowledge-policy.test.cjs
+          git commit -m "fix: make Fagverk authoritative for document analysis"
+          git push origin HEAD:fix/fagverk-authoritative-analysis-sources
