@@ -153,6 +153,9 @@ for (const [moduleName, legacyGlobal, file] of chatModules) {
   assert.equal(Object.isFrozen(registered), true, `${moduleName} facade must be frozen`);
   assert.ok(context[legacyGlobal], `${legacyGlobal} compatibility alias must remain`);
 }
+for (const name of ['shortHash', 'takeKeywords', 'sourceHash']) {
+  assert.equal(typeof context.AHAModuleApi.get('chat.textUtils', { version: 1 })[name], 'function', `chat.textUtils must expose ${name}`);
+}
 
 const chatSource = fs.readFileSync('js/ahaChat.js', 'utf8');
 assert.match(chatSource, /function chatModule\(/, 'Chat must resolve extracted modules through the boundary');

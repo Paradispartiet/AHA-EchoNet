@@ -34,7 +34,7 @@ The legacy name is an intentional compatibility fallback during migration. New c
 - Loading the registry more than once is safe.
 - Version mismatches fail explicitly.
 
-The registered surface covers `insights`, `metaInsights`, `sources`, `repository`, `emneMatcher`, `embeddings`, `ingest`, `contracts`, `chat`, `chat.insightFeedback`, `historyGo.contract`, `historyGo.import`, and `historyGo.status` on pages where those modules are loaded. The extracted Chat providers also register under `chat.*`: text utilities, signals, academic analysis/source-grounding policy, concept canonicalization/graph-prioritization policy, the versioned analysis-run contract, academic context and synthetic insight view, subjects, analysis, export, reply formatting, memory controls/runtime, afterwork, run context, insight/knowledge/conversation views, insight pipeline, Personal UI, auto analysis/output view, and canonical analysis.
+The registered surface covers `insights`, `metaInsights`, `sources`, `repository`, `emneMatcher`, `embeddings`, `ingest`, `contracts`, `chat`, `chat.insightFeedback`, `historyGo.contract`, `historyGo.import`, and `historyGo.status` on pages where those modules are loaded. The extracted Chat providers also register under `chat.*`: text utilities with canonical source identity and keyword primitives, signals, academic analysis/source-grounding policy, concept canonicalization/graph-prioritization policy, the versioned analysis-run contract, academic context and synthetic insight view, subjects, analysis, export, reply formatting, memory controls/runtime, afterwork, run context, insight/knowledge/conversation views, insight pipeline, Personal UI, auto analysis/output view, and canonical analysis.
 
 ## Candidate-ingest extension point
 

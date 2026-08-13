@@ -95,13 +95,15 @@ Status:
   kildegrunning i den versjonerte `chat.analysisPolicy`-modulen
 - eier auto-output-ruting, litterær dagboksortering og tilhørende evidens i den
   versjonerte `chat.autoAnalysis`-modulen
+- eier normalisert kildeidentitet, deterministisk kort-hash og nøkkelordrangering
+  i den versjonerte `chat.textUtils`-modulen
 - eier begrepskanonisering og prioritering av synlige grafkanter i den
   DOM-frie, versjonerte `chat.conceptPolicy`-modulen
 - eier aktiv analyse-/kunnskapskontekst og kartvisning i `chat.knowledgeView`
 - eier meldingsrendering, fagchips, highlights og samtalens tom-/svarstatus i
   `chat.conversationView`, separat fra den lokale `ahaChatPersistence`-lagringen
-- bruker `ahaChat.js` som orkestrator uten parallelle analyse-, policy- eller
-  view-implementasjoner
+- bruker `ahaChat.js` som orkestrator uten parallelle kildeidentitets-, analyse-,
+  policy- eller view-implementasjoner
 
 Mangler før ferdig:
 - tydelig bokmerke-kolonne

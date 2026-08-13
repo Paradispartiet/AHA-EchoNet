@@ -107,7 +107,9 @@ fagfrase- og teoriuttrekket, begrepskandidatene, normaliseringen, fagkoblingene
 og den kanoniske kildegrunningsporten eies av den versjonerte
 `chat.analysisPolicy`-modulen. Auto-output-ruting, korte tekstformater og
 litterær dagboksortering/evidens eies av den versjonerte
-`chat.autoAnalysis`-modulen. Lesing av siste akademiske kontekst,
+`chat.autoAnalysis`-modulen. Normalisert kildehash, deterministisk kort-hash og
+nøkkelordrangering eies av `chat.textUtils`, slik at analysis-run, etterarbeid,
+eksport og view-lag deler samme kildeidentitet. Lesing av siste akademiske kontekst,
 tolking av merkede innsikter og bygging av syntetiske innsiktskort eies av
 `chat.academicInsightView`. Begrepskanonisering, filtrering og prioritering av
 synlige grafkanter eies av den DOM-frie `chat.conceptPolicy`, mens aktiv
@@ -115,7 +117,7 @@ analyse-/kunnskapskontekst og kartvisning eies av `chat.knowledgeView`.
 Meldingsrendering, fagchips, highlights-rail og samtalens tom-/svarstatus eies av
 `chat.conversationView`; varig lokal samtalelagring og Data Intake-utvalg forblir
 et separat ansvar i `ahaChatPersistence`. Hovedfila orkestrerer modulene uten å
-duplisere autoanalyse-, domene-, konsept- eller view-policy. Uttrekkene er delegert gjennom
+duplisere kildeidentitets-, autoanalyse-, domene-, konsept- eller view-policy. Uttrekkene er delegert gjennom
 samme offentlige modulgrense og endrer ikke den kildegrunnede output-kontrakten.
 
 ### `ahaEngineClient.js`
