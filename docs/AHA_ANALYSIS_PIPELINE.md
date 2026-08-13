@@ -103,11 +103,13 @@ Ansvar:
 ```
 
 `ahaChat.js` orkestrerer disse delene. Den akademiske domenepolicyen,
-normaliseringen, fagkoblingene og den kanoniske kildegrunningsporten eies av den
-versjonerte `chat.analysisPolicy`-modulen. Lesing av siste akademiske kontekst,
+fagfrase- og teoriuttrekket, begrepskandidatene, normaliseringen, fagkoblingene
+og den kanoniske kildegrunningsporten eies av den versjonerte
+`chat.analysisPolicy`-modulen. Lesing av siste akademiske kontekst,
 tolking av merkede innsikter og bygging av syntetiske innsiktskort eies av
 `chat.academicInsightView`. Hovedfila orkestrerer begge modulene uten å duplisere
-domenepolicy eller endre den kildegrunnede output-kontrakten.
+domenepolicy. Uttrekket er delegert gjennom samme offentlige modulgrense og
+endrer ikke den kildegrunnede output-kontrakten.
 
 ### `ahaEngineClient.js`
 

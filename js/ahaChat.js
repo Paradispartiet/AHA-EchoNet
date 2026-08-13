@@ -38,7 +38,8 @@
     inferReligiousLexiconEvidence,
     detectTextType,
     applyRuntimeKnowledgePolicy: (...args) => applyRuntimeKnowledgePolicy(...args),
-    getRuntimeKnowledgePolicy: () => AHA_RUNTIME_KNOWLEDGE_POLICY
+    getRuntimeKnowledgePolicy: () => AHA_RUNTIME_KNOWLEDGE_POLICY,
+    normalizeAfterworkConcept: (...args) => normalizeAfterworkConcept(...args)
   });
   if (!analysisPolicy) throw new Error("AHAChatAnalysisPolicy må lastes før ahaChat.js.");
 
@@ -69,6 +70,13 @@
   const hasAcademicSignals = analysisPolicy.hasAcademicSignals;
   const filterDomainInsightCards = analysisPolicy.filterDomainInsightCards;
   const normalizeAcademicAfterworkPayload = analysisPolicy.normalizeAcademicAfterworkPayload;
+  const isGenericDisplayConcept = analysisPolicy.isGenericDisplayConcept;
+  const extractAcademicPhraseConcepts = analysisPolicy.extractAcademicPhraseConcepts;
+  const normalizeSimpleStringList = analysisPolicy.normalizeSimpleStringList;
+  const normalizeTheoreticalLinks = analysisPolicy.normalizeTheoreticalLinks;
+  const extractAcademicTheoryLinks = analysisPolicy.extractAcademicTheoryLinks;
+  const mergeTheoryLinks = analysisPolicy.mergeTheoryLinks;
+  const buildAcademicConceptCandidates = analysisPolicy.buildAcademicConceptCandidates;
 
   const analysisRunContract = chatModule("analysisRunContract", "AHAChatAnalysisRunContract");
   if (!analysisRunContract) throw new Error("AHAChatAnalysisRunContract må lastes før ahaChat.js.");
@@ -547,124 +555,6 @@
     ])
   });
   const WEAK_CONCEPT_WORDS = new Set(["illustrasjon","logo","annonsørinnhold","annonsorinnhold","annonse","sponset","les","også","ogsa","les også","les ogsa","årets","arets","populære","populaere","kjole","kjoler","bryllupsgjesten","sesongens","favoritter","finnes","egen","form","lærer","mennesker","blir","ikke","bare","over","ligger","lavt","noen","helt","ennå","norske","norsk","moderne","viktig","viktigste","store","små","nye","gamle","tydelig","særlig","mildt","sagt","refleksjon","innsikt","samtale","analyse","nødvendighet","nodvendighet"]);
-  const GENERIC_DISPLAY_CONCEPTS = new Set(["kunnskap","forståelse","budskap","bekreftelse","sier","viser","dette","grunnlag","tillegg","verden","noen","videre","eksempel"]);
-  const ACADEMIC_PHRASE_CONCEPTS = [
-    "politisk økologi","empirisk forskning","internasjonal forskning","dominerende narrativ","politisk narrativ","knapphetsskolen","miljøsikkerhet","environmental security","scarcity school","statens politikk","marginalisering av pastoralister","marginalisering","pastoralister","politisk-historisk forklaring","politisk og historisk","klimadrevet konflikt","klimaendringer og konflikter","malthusiansk forklaring","ressursknapphet","miljødegradering","miljøforringelse","nedbørsdata","klimadata","casestudier fra Mali","Sahel","Mali","Sahel-greening","ørkenspredning","tørke","global klimaendring","lokale forhold","forskningsgrunnlag","policy-momentum",
-    "nav-reformen","nav-kontorene","strukturelle utfordringer","manglende måloppnåelse","statlig styring","kommunale målsetninger","kommunale virkemidler","stat–kommune-partnerskap","partnerskap mellom stat og kommune","lokal organisering","arbeidsrettet oppfølging","omstillingskostnader","omstillingsprosess","organisasjonsreform","innholdsreform","kontorstørrelse","ytelsessaksbehandling","arbeidsavklaringspenger","arbeidsevnevurdering","forenklingsarbeid","standardisering og byråkrati","virksomhetsutvikling","reformeffekter","effektforskning","prosessevaluering","arbeidslinja","individuell oppfølging","brukerrettet bistand","lokal implementering"
-  ];
-  const ACADEMIC_THEORY_RULES = [
-    {
-      key: "thomas_homer_dixon",
-      triggers: [/\bthomas\s+homer-?dixon\b/i, /\bhomer-?dixon\b/i],
-      link: {
-        thinker: "Thomas Homer-Dixon",
-        theory: "Knapphetsskolen / miljøsikkerhet",
-        connection: "Brukes i teksten som representant for teorien om ressursknapphet, miljødegradering og konflikt.",
-        score: 0.75
-      }
-    },
-    {
-      key: "knapphetsskolen",
-      triggers: [/\bknapphetsskolen\b/i, /\bscarcity\s+school\b/i, /\bressursknapphet\b/i, /\bmalthusiansk\b/i],
-      link: {
-        thinker: "Knapphetsskolen",
-        theory: "Ressursknapphet og konflikt",
-        connection: "Teksten diskuterer knapphetsskolens forklaring om at ressursknapphet kan føre til voldelig konflikt.",
-        score: 0.70
-      }
-    },
-    {
-      key: "miljosikkerhet",
-      triggers: [/\bmiljøsikkerhet\b/i, /\benvironmental\s+security\b/i, /\bthe\s+environmental\s+security\s+school\b/i],
-      link: {
-        thinker: "Miljøsikkerhet",
-        theory: "Miljøsikkerhet",
-        connection: "Teksten behandler miljøsikkerhet som en teori om koblingen mellom miljødegradering, ressursknapphet og konflikt.",
-        score: 0.70
-      }
-    },
-    {
-      key: "politisk_okologi",
-      triggers: [/\bpolitisk\s+økologi\b/i, /\bpolitical\s+ecology\b/i, /\bmaktperspektiv\b/i, /\bmakt-?\s*og\s*produksjonsforhold\b/i, /\bmaktforhold\b/i, /\bproduksjonsforhold\b/i],
-      link: {
-        thinker: "Politisk økologi",
-        theory: "Politisk økologi",
-        connection: "Teksten bruker politisk økologi som kritikk av enkle knapphetsforklaringer og vektlegger makt, kontekst og produksjonsforhold.",
-        score: 0.82
-      }
-    },
-    {
-      key: "peluso_watts",
-      triggers: [/\bpeluso\b/i, /\bwatts\b/i, /\bpeluso\s*&\s*watts\b/i],
-      link: {
-        thinker: "Peluso & Watts",
-        theory: "Politisk økologi / makt og vold",
-        connection: "Kobles til kritikken av enkel årsakskjede fra ressursknapphet til vold.",
-        score: 0.76
-      }
-    },
-    {
-      key: "ester_boserup",
-      triggers: [/\bester\s+boserup\b/i, /\bboserup\b/i, /\bbærekraftig\s+intensivering\b/i],
-      link: {
-        thinker: "Ester Boserup",
-        theory: "Boserupsk intensivering",
-        connection: "Teksten viser til Boserups teori om at befolkningsvekst kan bidra til intensivering og forbedret ressursgrunnlag.",
-        score: 0.72
-      }
-    },
-    {
-      key: "edward_said",
-      triggers: [/\bedward\s+said\b/i, /\bsaid\b/i, /\borientalisme?n?\b/i],
-      link: {
-        thinker: "Edward Said",
-        theory: "Orientalisme",
-        connection: "Teksten bruker orientalisme som kritikk av vestlige forestillinger om fattige land og afrikanske småbønder/husdyrgjetere.",
-        score: 0.75
-      }
-    },
-    {
-      key: "prio_gleditsch",
-      triggers: [/\bgleditsch\b/i, /\bprio\b/i, /\bfredsforskningsinstituttet\b/i, /\bnordås\s*&\s*gleditsch\b/i, /\bbinningsbø\b/i, /\bde\s+soysa\b/i, /\btheisen\b/i, /\braleigh\s*&\s*urdal\b/i],
-      link: {
-        thinker: "PRIO / Gleditsch",
-        theory: "Kvantitativ kritikk av klima-konflikt-koblingen",
-        connection: "Teksten viser til kvantitative studier som kritiserer den påståtte sammenhengen mellom klimaendringer, ressursknapphet og voldelige konflikter.",
-        score: 0.70
-      }
-    },
-    {
-      key: "robert_kaplan",
-      triggers: [/\brobert\s+kaplan\b/i, /\bkaplan\b/i],
-      link: {
-        thinker: "Robert Kaplan",
-        theory: "Populærmalthusiansk konfliktfortelling",
-        connection: "Teksten bruker Kaplan som eksempel på en innflytelsesrik journalistisk formidling av knapphet, overbefolkning og miljøkrise som konfliktforklaring.",
-        score: 0.62
-      }
-    },
-    {
-      key: "bachler_swiss_peace",
-      triggers: [/\bbächler\b/i, /\bbachler\b/i, /\bswiss\s+peace\b/i, /\bbächler\s*&\s*spillmann\b/i],
-      link: {
-        thinker: "Bächler / Swiss Peace",
-        theory: "Miljødegradering som konfliktforklaring",
-        connection: "Teksten viser til Bächler og Swiss Peace som eksempler på forskning som kobler afrikanske tørrlandsområder, miljødegradering og vold.",
-        score: 0.62
-      }
-    },
-    {
-      key: "barnett_salehyan",
-      triggers: [/\bbarnett\b/i, /\bsalehyan\b/i],
-      link: {
-        thinker: "Barnett / Salehyan",
-        theory: "Kritikk av klima-konflikt-koblingen",
-        connection: "Teksten viser til forskning som kritiserer ideen om at klimaendringer direkte fører til voldelige konflikter.",
-        score: 0.60
-      }
-    }
-  ];
-
   const INSIGHT_NOISE_PATTERN = /\b(les også|les ogsa|annonsørinnhold|annonsorinnhold|logo|illustrasjon|annonse|sponset|kjolefavoritter|bryllupsgjesten)\b/ig;
   const LEADING_PUNCTUATION_PATTERN = /^[\s"'“”«».,:;|\-–—]+/;
   const LES_OGSA_TEASER_PATTERN = /(«|»|"|')?\s*les\s+også\s*:?\s*[^.!?\n]*(?:[.!?]|$)/ig;
@@ -1161,125 +1051,6 @@
     return ingestUserMessageWithCandidates(text, aiCandidates);
   }
 
-
-  function isGenericDisplayConcept(value) {
-    return GENERIC_DISPLAY_CONCEPTS.has(normalizeAfterworkConcept(value));
-  }
-
-  function extractAcademicPhraseConcepts(text) {
-    const source = String(text || "");
-    if (!source.trim()) return [];
-    const out = [];
-    const seen = new Set();
-    ACADEMIC_PHRASE_CONCEPTS.forEach((phrase) => {
-      const escaped = phrase.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "\\s+");
-      const re = new RegExp(`(^|[^\\p{L}\\p{N}])(${escaped})(?=$|[^\\p{L}\\p{N}])`, "iu");
-      if (!re.test(source)) return;
-      const key = normalizeAfterworkConcept(phrase);
-      if (!key || seen.has(key)) return;
-      seen.add(key);
-      out.push(phrase);
-    });
-    return out.slice(0, 12);
-  }
-  function normalizeSimpleStringList(list, max) {
-    const out = [];
-    const seen = new Set();
-    (Array.isArray(list) ? list : []).forEach((item) => {
-      const value = String(item || "").trim();
-      if (!value) return;
-      const key = value.toLowerCase();
-      if (seen.has(key)) return;
-      seen.add(key);
-      out.push(value);
-    });
-    return out.slice(0, Math.max(1, Number(max || 5)));
-  }
-  function normalizeTheoreticalLinks(list, max) {
-    const out = [];
-    const seen = new Set();
-    (Array.isArray(list) ? list : []).forEach((item) => {
-      if (!item || typeof item !== "object") return;
-      const name = String(item.name || "").trim();
-      const relation = String(item.relation || "").trim();
-      if (!name || !relation) return;
-      const key = `${name.toLowerCase()}|${relation.toLowerCase()}`;
-      if (seen.has(key)) return;
-      seen.add(key);
-      out.push({ name, relation });
-    });
-    return out.slice(0, Math.max(1, Number(max || 5)));
-  }
-
-
-  function extractAcademicTheoryLinks(text) {
-    const source = String(text || "");
-    if (!source.trim()) return [];
-    const out = [];
-    const publicAdminSignal = detectPublicAdministrationReformSignal(source);
-    ACADEMIC_THEORY_RULES.forEach((rule) => {
-      if (rule?.key === "peluso_watts") return;
-      if (!Array.isArray(rule?.triggers) || !rule.triggers.some((re) => re.test(source))) return;
-      out.push({
-        thinker: rule.link.thinker,
-        theory: rule.link.theory,
-        score: Number(rule.link.score || 0),
-        connection: rule.link.connection
-      });
-    });
-    const paragraphs = source.split(/\n{2,}|\r\n{2,}/).map((part) => part.trim()).filter(Boolean);
-    const hasPelusoAndWattsInParagraph = paragraphs.some((part) => /\bpeluso\b/i.test(part) && /\bwatts\b/i.test(part));
-    const sentences = source.split(/(?<=[.!?])\s+/).map((part) => part.trim()).filter(Boolean);
-    const hasPelusoAndWattsInSentence = sentences.some((part) => /\bpeluso\b/i.test(part) && /\bwatts\b/i.test(part));
-    const pelusoMatches = Array.from(source.matchAll(/\bpeluso\b/gi));
-    const wattsMatches = Array.from(source.matchAll(/\bwatts\b/gi));
-    const hasPelusoWattsNearby = pelusoMatches.some((pelusoMatch) => wattsMatches.some((wattsMatch) => Math.abs((pelusoMatch.index || 0) - (wattsMatch.index || 0)) <= 300));
-    if (hasPelusoAndWattsInParagraph || hasPelusoAndWattsInSentence || hasPelusoWattsNearby) {
-      out.push({
-        thinker: "Peluso & Watts",
-        theory: "Politisk økologi / makt og vold",
-        score: 0.76,
-        connection: "Kobles til kritikken av enkel årsakskjede fra ressursknapphet via økonomisk nedgang og migrasjon til vold."
-      });
-    }
-    if (publicAdminSignal.strong) {
-      const txt = source.toLowerCase();
-      const has = (arr) => arr.some((term) => txt.includes(term));
-      const hits = (arr) => arr.filter((term) => txt.includes(term)).length;
-      const addTheory = (thinker, theory, score, connection) => out.push({ thinker, theory, score, connection });
-      if (has(["bakkebyråkrati", "street-level bureaucracy"]) || (has(["nav-kontor", "lokalkontor", "arbeidsrettet oppfølging"]) && has(["individuell oppfølging", "brukerrettet bistand", "arbeidsrettet oppfølging"]))) addTheory("Michael Lipsky", "Bakkebyråkrati / street-level bureaucracy", 0.74, "Teksten handler om hvordan lokale frontlinjekontorer skal omsette sentrale mål og regler til individuell oppfølging av brukere.");
-      if (has(["implementering", "iverksetting", "reformgjennomføring", "etablering av nav-kontor", "prosessevaluering", "omstillingsprosess"])) addTheory("Implementeringsteori", "Implementeringsteori", 0.76, "Teksten analyserer hvordan reformmål omsettes i lokal praksis gjennom etablering, organisering og iverksetting.");
-      if (hits(["implementering", "iverksetting", "reform", "nav-kontor", "måloppnåelse", "flere i arbeid"]) >= 3) addTheory("Pressman & Wildavsky", "Implementeringsteori", 0.68, "Teksten kan forstås som en analyse av implementeringsgapet mellom reformintensjon og lokal måloppnåelse.");
-      if (has(["organisasjonsreform", "organisering", "organisatorisk design", "fusjonert", "samlokalisert", "kontorstørrelse", "virksomhetsutvikling"])) addTheory("Organisasjonsteori", "Organisasjonsteori", 0.76, "Teksten analyserer hvordan organisering, kontorstørrelse og arbeidsdeling påvirker NAV-kontorenes resultater.");
-      if (has(["partnerskap mellom stat og kommune", "stat og kommune", "stat–kommune", "statlige mål", "kommunale mål"]) && has(["strukturelle utfordringer", "styring", "kommunale virkemidler"])) addTheory("Institusjonell teori", "Institusjonell teori", 0.72, "Teksten viser hvordan ulike institusjonelle logikker og målstrukturer kan skape varige spenninger i NAV-kontorene.");
-      if (has(["institusjonell teori", "institusjonelle logikker", "offentlig organisering", "statlige mål", "kommunale mål"]) && has(["organisasjonsreform", "styring"])) addTheory("March & Olsen", "Institusjonell organisasjonsteori", 0.64, "Teksten kan kobles til institusjonell organisasjonsteori gjennom analysen av mål, regler og organisasjonslogikker.");
-      if (hits(["standardisering", "målstyring", "effektivisering", "forenkling", "direktorat", "statlig styring", "resultat", "måloppnåelse"]) >= 2) addTheory("New Public Management", "New Public Management", 0.68, "Teksten berører styrings- og standardiseringslogikker i offentlig reform, særlig forholdet mellom mål, resultater og lokal oppgaveløsning.");
-      if (hits(["new public management", "standardisering", "målstyring", "offentlig reform", "resultatstyring"]) >= 2) addTheory("Christopher Hood", "New Public Management", 0.62, "Teksten kan kobles til New Public Management gjennom vekt på styring, standardisering og resultatorientering i offentlig sektor.");
-      if (has(["partnerskap", "stat og kommune", "stat–kommune", "kommunale mål", "statlige mål"])) addTheory("Samstyring / governance", "Samstyring / governance", 0.74, "Teksten analyserer hvordan partnerskapet mellom stat og kommune skaper koordinerings- og styringsutfordringer.");
-      if (has(["nav-evalueringen", "prosessevaluering", "effektevaluering", "effektforskning", "negative effekter", "måloppnåelse"])) addTheory("Reformevaluering", "Reformevaluering", 0.73, "Teksten bygger på prosess- og effektdata for å vurdere om NAV-reformen har nådd sine mål.");
-    }
-    return out;
-  }
-
-  function mergeTheoryLinks(existingLinks, extractedLinks, maxItems) {
-    const bestByKey = new Map();
-    const add = (item) => {
-      if (!item || typeof item !== "object") return;
-      const thinker = String(item.thinker || item.name || "").trim();
-      const theory = String(item.theory || "").trim();
-      const connection = String(item.connection || item.relation || "").trim();
-      const score = Number(item.score || item.relevance_score || 0);
-      if (!thinker && !theory) return;
-      const key = `${thinker.toLowerCase()}|${theory.toLowerCase()}`;
-      const prev = bestByKey.get(key);
-      if (!prev || score > prev.score) bestByKey.set(key, { thinker, theory, connection, score });
-    };
-    (Array.isArray(existingLinks) ? existingLinks : []).forEach(add);
-    (Array.isArray(extractedLinks) ? extractedLinks : []).forEach(add);
-    return Array.from(bestByKey.values())
-      .sort((a, b) => (b.score - a.score) || a.thinker.localeCompare(b.thinker))
-      .slice(0, Math.max(1, Number(maxItems || 5)));
-  }
 
   function collectTheoryNodeLabels(chamber) {
     const labels = new Map();
@@ -2078,38 +1849,6 @@
   function buildOpinionArticleQualityAnalysis(raw, evidence, sentences) {
     return chatModule("analysis", "AHAChatAnalysis").buildOpinionArticleQualityAnalysis(raw, evidence, sentences);
   }
-
-  function normalizeAcademicCandidateText(value) {
-    return String(value || "").toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^\p{L}\p{N}]+/gu, " ").replace(/\s+/g, " ").trim();
-  }
-
-  function academicCandidateInSource(sourceText, term) {
-    const haystack = normalizeAcademicCandidateText(cleanArticleText(sourceText));
-    const needle = normalizeAcademicCandidateText(term);
-    if (!haystack || !needle) return false;
-    return ` ${haystack} `.includes(` ${needle} `);
-  }
-
-  function buildAcademicConceptCandidates(sourceText = "", payload = {}) {
-    const fromPayload = []
-      .concat(Array.isArray(payload?.concepts) ? payload.concepts : [])
-      .concat(Array.isArray(payload?.keywords) ? payload.keywords : [])
-      .map((item) => String(item || "").trim())
-      .filter(Boolean);
-    const sourceBoundSubjectTerms = []
-      .concat(Array.isArray(payload?.subjectMatches) ? payload.subjectMatches : [])
-      .concat(Array.isArray(payload?.subjectLinks) ? payload.subjectLinks : [])
-      .flatMap((match) => Array.isArray(match?.matched_terms) ? match.matched_terms : [])
-      .map((item) => String(item || "").trim())
-      .filter((term) => term && academicCandidateInSource(sourceText, term));
-    const phraseConcepts = typeof extractAcademicPhraseConcepts === "function" ? extractAcademicPhraseConcepts(sourceText).slice(0, 12) : [];
-    const candidates = [
-      "Pinse", "pentekosté", "Den hellige ånd", "tungetale", "nådegave", "tydning", "apostlene", "Babels tårn", "kirkens fødselsdag", "gregoriansk kalender", "juliansk kalender", "treenighetssøndag"
-    ];
-    const lexiconHits = candidates.filter((term) => academicCandidateInSource(sourceText, term));
-    return Array.from(new Set(sourceBoundSubjectTerms.concat(fromPayload, phraseConcepts, lexiconHits))).slice(0, 20);
-  }
-
 
   function buildHistoryGoSuggestion(payload, sourceText) {
     const source = String(sourceText || "");

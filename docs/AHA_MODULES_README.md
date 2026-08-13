@@ -87,6 +87,9 @@ Status:
 - laster eksisterende motor
 - har feltvalg, quick actions, chatlogg, composer og insight rail
 - har importknapp for History Go
+- eier akademiske fagfraser, teoriregler, begrepskandidater og canonical
+  kildegrunning i den versjonerte `chat.analysisPolicy`-modulen
+- bruker `ahaChat.js` som orkestrator uten en parallell akademisk policyblokk
 
 Mangler før ferdig:
 - tydelig bokmerke-kolonne
