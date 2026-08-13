@@ -57,8 +57,10 @@
   }
 
   function persistSourceEvent(event) {
-    if (!global.AHARepository?.saveSourceEvent) return;
-    global.AHARepository.saveSourceEvent(event).then((result) => {
+    const repository = global.AHAModuleApi?.resolve?.("repository", "AHARepository", { version: 1 })
+      || global.AHARepository;
+    if (!repository?.saveSourceEvent) return;
+    repository.saveSourceEvent(event).then((result) => {
       if (result?.ok === false && result.error) {
         console.warn("AHASources: database-save feilet", result.error);
       }
@@ -81,11 +83,17 @@
     return event;
   }
 
-  global.AHASources = {
+  const api = {
     STORAGE_KEY,
     createSourceEvent,
     loadSourceEvents,
     saveSourceEvents,
     addSourceEvent
   };
+  global.AHASources = api;
+  global.AHAModuleApi?.register?.("sources", api, {
+    version: 1,
+    legacyGlobal: "AHASources",
+    exports: ["STORAGE_KEY", "createSourceEvent", "loadSourceEvents", "saveSourceEvents", "addSourceEvent"]
+  });
 })(window);

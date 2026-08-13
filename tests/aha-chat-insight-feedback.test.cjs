@@ -9,6 +9,12 @@ function buildChatContext(results) {
   const statusNode = { textContent: '' };
   const timers = [];
   let calls = 0;
+  const candidateMiddlewares = new Map();
+  function canonicalIngest() {
+    const result = results[Math.min(calls, results.length - 1)];
+    calls += 1;
+    return result;
+  }
   const context = {
     console,
     Map,
@@ -25,10 +31,21 @@ function buildChatContext(results) {
     },
     setTimeout(callback) { timers.push(callback); return timers.length; },
     AHAIngest: {
-      ingestWithCandidates() {
-        const result = results[Math.min(calls, results.length - 1)];
-        calls += 1;
-        return result;
+      useCandidateMiddleware(id, handler, options = {}) {
+        candidateMiddlewares.set(id, { id, handler, priority: Number(options.priority) || 0 });
+      },
+      hasCandidateMiddleware(id) { return candidateMiddlewares.has(id); },
+      ingestWithCandidates(input, candidates) {
+        const entries = Array.from(candidateMiddlewares.values()).sort((a, b) => b.priority - a.priority);
+        function dispatch(index, nextInput, nextCandidates) {
+          const entry = entries[index];
+          if (!entry) return canonicalIngest(nextInput, nextCandidates);
+          return entry.handler(
+            { input: nextInput, candidates: nextCandidates },
+            (forwardInput = nextInput, forwardCandidates = nextCandidates) => dispatch(index + 1, forwardInput, forwardCandidates)
+          );
+        }
+        return dispatch(0, input, candidates);
       }
     }
   };
@@ -71,7 +88,7 @@ const thirdResult = {
 const chat = buildChatContext([firstResult, secondResult, thirdResult]);
 const feedback = chat.context.AHAChatInsightFeedback;
 assert.ok(feedback, 'Chat feedback API should be exposed');
-assert.equal(chat.context.AHAIngest.__ahaChatInsightFeedbackInstalled, true, 'adapter should install automatically on the Chat surface');
+assert.equal(chat.context.AHAIngest.hasCandidateMiddleware('chat.insightFeedback'), true, 'adapter should install automatically on the Chat surface');
 
 const returnedFirst = chat.context.AHAIngest.ingestWithCandidates({}, []);
 assert.strictEqual(returnedFirst, firstResult, 'wrapper must return the exact canonical ingest result object');
@@ -139,7 +156,7 @@ assert.equal(forbiddenReads, 0, 'non-Chat guard must run before AHAIngest is rea
 assert.ok(chatHtml.includes('<script src="js/ahaChatInsightFeedback.js"></script>'), 'chat.html should load the Chat feedback adapter');
 assert.ok(
   chatHtml.indexOf('js/ahaContracts.js') < chatHtml.indexOf('js/ahaChatInsightFeedback.js'),
-  'feedback must wrap the already quality-wrapped canonical ingest'
+  'feedback must load after the quality middleware registration'
 );
 assert.ok(
   chatHtml.indexOf('js/ahaAnalysisQualityLayer.js') < chatHtml.indexOf('js/ahaChatInsightFeedback.js'),

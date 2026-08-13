@@ -169,7 +169,8 @@
       return { ok: true, skipped: true, reason: "already_ingested", source_event_id: post.last_source_event_id };
     }
 
-    const ingestResult = await window.AHAIngest?.ingest?.(createIngestInput(post));
+    const ingest = window.AHAModuleApi?.resolve?.("ingest", "AHAIngest", { version: 1 }) || window.AHAIngest;
+    const ingestResult = await ingest?.ingest?.(createIngestInput(post));
     if (ingestResult?.sourceEvent?.id) {
       post.last_source_event_id = ingestResult.sourceEvent.id;
       post.updated_at = post.updated_at || post.created_at;

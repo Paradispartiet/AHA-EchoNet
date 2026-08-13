@@ -132,12 +132,18 @@
     _emnerCache.clear();
   }
 
-  global.AHAEmneMatcher = {
+  const api = {
     matchEmneForText,
     matchAllSubjects,
     clearCache,
     SUBJECT_IDS
   };
+  global.AHAEmneMatcher = api;
+  global.AHAModuleApi?.register?.("emneMatcher", api, {
+    version: 1,
+    legacyGlobal: "AHAEmneMatcher",
+    exports: ["matchEmneForText", "matchAllSubjects", "clearCache", "SUBJECT_IDS"]
+  });
 
   // Bakoverkompatibilitet: behold den globale funksjonen som tidligere
   // ble eksponert direkte uten namespace.

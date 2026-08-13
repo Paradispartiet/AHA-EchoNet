@@ -16,6 +16,21 @@ let savedChamber = null;
 let originalCalls = 0;
 let receivedInput = null;
 let receivedCandidates = null;
+const candidateMiddlewares = new Map();
+
+function canonicalIngest(input, candidates) {
+  originalCalls += 1;
+  receivedInput = input;
+  receivedCandidates = candidates;
+  return {
+    ok: true,
+    sourceEvent: { id: 'src_chat_1', meta: input.meta || {} },
+    items: candidates.map((candidate, index) => ({
+      signal: { text: candidate.text || candidate.summary || candidate, meta: input.meta || {} },
+      meta: { insight_id: index === 0 ? 'ins_1' : 'ins_2', action: index === 0 ? 'created' : 'reinforced' }
+    }))
+  };
+}
 
 const activeRun = {
   analysisId: 'analysis_abc123',
@@ -57,18 +72,21 @@ const context = {
     }
   },
   AHAIngest: {
+    useCandidateMiddleware(id, handler, options = {}) {
+      candidateMiddlewares.set(id, { id, handler, priority: Number(options.priority) || 0 });
+    },
+    hasCandidateMiddleware(id) { return candidateMiddlewares.has(id); },
     ingestWithCandidates(input, candidates) {
-      originalCalls += 1;
-      receivedInput = input;
-      receivedCandidates = candidates;
-      return {
-        ok: true,
-        sourceEvent: { id: 'src_chat_1', meta: input.meta || {} },
-        items: candidates.map((candidate, index) => ({
-          signal: { text: candidate.text || candidate.summary || candidate, meta: input.meta || {} },
-          meta: { insight_id: index === 0 ? 'ins_1' : 'ins_2', action: index === 0 ? 'created' : 'reinforced' }
-        }))
-      };
+      const entries = Array.from(candidateMiddlewares.values()).sort((a, b) => b.priority - a.priority);
+      function dispatch(index, nextInput, nextCandidates) {
+        const entry = entries[index];
+        if (!entry) return canonicalIngest(nextInput, nextCandidates);
+        return entry.handler(
+          { input: nextInput, candidates: nextCandidates },
+          (forwardInput = nextInput, forwardCandidates = nextCandidates) => dispatch(index + 1, forwardInput, forwardCandidates)
+        );
+      }
+      return dispatch(0, input, candidates);
     }
   }
 };
@@ -80,7 +98,7 @@ assert.ok(context.AHAContracts, 'AHAContracts skal finnes');
 assert.equal(typeof context.AHAContracts.prepareInsightCandidates, 'function');
 assert.equal(typeof context.AHAContracts.installInsightQualityContract, 'function');
 assert.equal(typeof context.AHAContracts.normalizeAnalysisTrace, 'function');
-assert.equal(context.AHAIngest.__ahaInsightQualityContractInstalled, true, 'kvalitetskontrakten skal installeres på chat.html');
+assert.equal(context.AHAIngest.hasCandidateMiddleware('contracts.insightQuality'), true, 'kvalitetskontrakten skal installeres på chat.html');
 
 const candidates = [
   {

@@ -180,13 +180,18 @@ vm.createContext(context);
 vm.runInContext(ingestCode, context, { filename: 'js/ahaIngest.js' });
 const canonicalIngest = context.AHAIngest.ingestWithCandidates;
 vm.runInContext(contractsCode, context, { filename: 'js/ahaContracts.js' });
-assert.notStrictEqual(context.AHAIngest.ingestWithCandidates, canonicalIngest,
-  'quality/provenance contract must wrap the real canonical AHAIngest on Chat');
+assert.strictEqual(context.AHAIngest.ingestWithCandidates, canonicalIngest,
+  'quality/provenance must extend canonical ingest without replacing its public method');
 vm.runInContext(snapshotCode, context, { filename: 'js/ahaConversationInsightSnapshot.js' });
 vm.runInContext(feedbackCode, context, { filename: 'js/ahaChatInsightFeedback.js' });
 
-assert.equal(context.AHAIngest.__ahaInsightQualityContractInstalled, true);
-assert.equal(context.AHAIngest.__ahaChatInsightFeedbackInstalled, true);
+assert.equal(context.AHAIngest.hasCandidateMiddleware('contracts.insightQuality'), true);
+assert.equal(context.AHAIngest.hasCandidateMiddleware('chat.insightFeedback'), true);
+assert.deepEqual(
+  Array.from(context.AHAIngest.listCandidateMiddlewares(), (entry) => entry.id),
+  ['chat.insightFeedback', 'contracts.insightQuality'],
+  'candidate extensions must be explicit and ordered by priority'
+);
 assert.equal(context.AHAExplorer.__ahaConversationInsightChangesInstalled, true);
 
 const result = context.AHAIngest.ingestWithCandidates({

@@ -258,7 +258,7 @@
     };
   }
 
-  global.AHAHistoryGoImportContract = {
+  const api = {
     CONTRACT_ID,
     CONTRACT_VERSION,
     LEGACY_VERSION,
@@ -269,4 +269,10 @@
     migrateLegacyPayload,
     isRecognizedLegacyPayload
   };
+  global.AHAHistoryGoImportContract = api;
+  global.AHAModuleApi?.register?.("historyGo.contract", api, {
+    version: 1,
+    legacyGlobal: "AHAHistoryGoImportContract",
+    exports: ["CONTRACT_ID", "CONTRACT_VERSION", "LEGACY_VERSION", "TOP_LEVEL_KEYS", "REQUIRED_ARRAYS", "preparePayload", "validatePayload", "migrateLegacyPayload", "isRecognizedLegacyPayload"]
+  });
 })(window);

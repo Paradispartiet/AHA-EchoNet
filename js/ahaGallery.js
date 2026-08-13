@@ -97,10 +97,11 @@
   }
 
   async function ingestItemText(item) {
-    if (!window.AHAIngest?.ingest) return { ok: false, reason: "missing_AHAIngest" };
+    const ingest = window.AHAModuleApi?.resolve?.("ingest", "AHAIngest", { version: 1 }) || window.AHAIngest;
+    if (!ingest?.ingest) return { ok: false, reason: "missing_AHAIngest" };
     const payload = buildIngestPayload(item);
     if (!payload.title && !payload.text) return { ok: false, reason: "empty_text" };
-    return window.AHAIngest.ingest(payload);
+    return ingest.ingest(payload);
   }
 
   function escapeHtml(value) {

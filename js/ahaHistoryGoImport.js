@@ -10,6 +10,10 @@
   let importSaveChain = Promise.resolve();
   let latestImportSaveToken = 0;
 
+  function resolveModule(name, legacyGlobal) {
+    return global.AHAModuleApi?.resolve?.(name, legacyGlobal, { version: 1 }) || global[legacyGlobal] || null;
+  }
+
   function s(value) {
     return String(value ?? "").trim();
   }
@@ -48,10 +52,11 @@
   }
 
   function ingestSignal(input, importContext) {
-    if (!global.AHAIngest || typeof global.AHAIngest.ingest !== "function") {
+    const ingestApi = resolveModule("ingest", "AHAIngest");
+    if (!ingestApi || typeof ingestApi.ingest !== "function") {
       return null;
     }
-    return global.AHAIngest.ingest(withImportMeta(input, importContext));
+    return ingestApi.ingest(withImportMeta(input, importContext));
   }
 
   function writeJsonToStorage(key, value) {
@@ -399,7 +404,7 @@
     const importOptions = obj(options);
     if (importOptions.confirmed !== true) return consentRequiredResult();
 
-    const contract = global.AHAHistoryGoImportContract;
+    const contract = resolveModule("historyGo.contract", "AHAHistoryGoImportContract");
     if (!contract || typeof contract.preparePayload !== "function") {
       return {
         error: "History Go-importkontrakten mangler.",
@@ -411,7 +416,8 @@
     const prepared = contract.preparePayload(payload);
     if (!prepared?.ok) return invalidImportResult(prepared);
 
-    if (!global.AHAIngest || typeof global.AHAIngest.ingest !== "function") {
+    const ingestApi = resolveModule("ingest", "AHAIngest");
+    if (!ingestApi || typeof ingestApi.ingest !== "function") {
       return {
         error: "AHAIngest mangler.",
         importedSignals: 0
@@ -473,7 +479,7 @@
 
   // Import-knapp håndteres av historygo.html for å unngå dobbelt-binding.
 
-  global.AHAHistoryGoImport = {
+  const api = {
     PAYLOAD_KEY,
     IMPORT_LOG_KEY,
     isDatabasePersistEnabled,
@@ -489,5 +495,11 @@
     collectInsightEventSignals,
     collectNextUpSignal
   };
+  global.AHAHistoryGoImport = api;
+  global.AHAModuleApi?.register?.("historyGo.import", api, {
+    version: 1,
+    legacyGlobal: "AHAHistoryGoImport",
+    exports: Object.keys(api)
+  });
 
 })(window);

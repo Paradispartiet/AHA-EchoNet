@@ -7,6 +7,11 @@
 
   const QUALITY_VERSION = "aha_insight_quality_contract_v1";
   const CHAMBER_KEY = "aha_insight_chamber_v1";
+  const QUALITY_MIDDLEWARE_ID = "contracts.insightQuality";
+
+  function resolveModule(name, legacyGlobal) {
+    return global.AHAModuleApi?.resolve?.(name, legacyGlobal, { version: 1 }) || global[legacyGlobal] || null;
+  }
 
   function uid(prefix) {
     return `${prefix}_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
@@ -303,12 +308,13 @@
   }
 
   function installInsightQualityContract() {
-    const ingestApi = global.AHAIngest;
-    if (!ingestApi || typeof ingestApi.ingestWithCandidates !== "function") return false;
-    if (ingestApi.__ahaInsightQualityContractInstalled === true) return true;
-    const original = ingestApi.ingestWithCandidates;
+    const ingestApi = resolveModule("ingest", "AHAIngest");
+    if (!ingestApi || typeof ingestApi.useCandidateMiddleware !== "function") return false;
+    if (ingestApi.hasCandidateMiddleware?.(QUALITY_MIDDLEWARE_ID)) return true;
 
-    ingestApi.ingestWithCandidates = function qualityWrappedIngest(input, candidates) {
+    function qualityMiddleware(context, next) {
+      const input = context?.input;
+      const candidates = context?.candidates;
       const prepared = prepareInsightCandidates(candidates);
       const inputMeta = safeObject(input?.meta);
       const analysisTrace = getActiveAnalysisTrace();
@@ -326,7 +332,7 @@
       const enrichedMeta = Object.assign({}, inputMeta, { insight_quality_contract: contractMeta });
       if (analysisTrace) enrichedMeta.analysis_trace = Object.assign({}, analysisTrace);
       const enrichedInput = Object.assign({}, input || {}, { meta: enrichedMeta });
-      const result = original.call(this, enrichedInput, prepared.candidates);
+      const result = next(enrichedInput, prepared.candidates);
       if (!result || typeof result !== "object") return result;
       const sourceEventId = String(result?.sourceEvent?.id || "").trim() || null;
       if (Array.isArray(result.items)) {
@@ -341,10 +347,9 @@
       result.quality_contract = QUALITY_VERSION;
       if (analysisTrace) result.analysis_trace = Object.assign({}, analysisTrace);
       return result;
-    };
+    }
 
-    ingestApi.__ahaInsightQualityContractInstalled = true;
-    ingestApi.__ahaInsightQualityOriginal = original;
+    ingestApi.useCandidateMiddleware(QUALITY_MIDDLEWARE_ID, qualityMiddleware, { priority: 100 });
     return true;
   }
 
@@ -352,7 +357,7 @@
     return /(^|\/)chat\.html$/i.test(String(global.location?.pathname || "").trim());
   }
 
-  global.AHAContracts = {
+  const api = {
     createBaseItem,
     normalizeBaseItem,
     createLinkedItem,
@@ -368,8 +373,15 @@
     persistCandidateProvenance,
     installInsightQualityContract,
     isChatRuntime,
+    QUALITY_MIDDLEWARE_ID,
     INSIGHT_QUALITY_CONTRACT_VERSION: QUALITY_VERSION
   };
+  global.AHAContracts = api;
+  global.AHAModuleApi?.register?.("contracts", api, {
+    version: 1,
+    legacyGlobal: "AHAContracts",
+    exports: Object.keys(api)
+  });
 
   // Andre moduler kan laste AHAContracts uten at AHAIngest berøres.
   if (isChatRuntime()) installInsightQualityContract();

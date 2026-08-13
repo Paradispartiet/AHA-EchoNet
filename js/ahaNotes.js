@@ -129,7 +129,8 @@
     if (baseContract) note.base = baseContract;
     if (!note.title && !note.text) return null;
 
-    const ingestResult = await window.AHAIngest?.ingest?.({
+    const ingest = window.AHAModuleApi?.resolve?.("ingest", "AHAIngest", { version: 1 }) || window.AHAIngest;
+    const ingestResult = await ingest?.ingest?.({
       source_type: "note",
       source_app: "aha_notes",
       content_type: "text",
@@ -166,7 +167,8 @@
       updated_at: new Date().toISOString()
     };
 
-    const ingestResult = await window.AHAIngest?.ingest?.({
+    const ingest = window.AHAModuleApi?.resolve?.("ingest", "AHAIngest", { version: 1 }) || window.AHAIngest;
+    const ingestResult = await ingest?.ingest?.({
       source_type: "note_edit",
       source_app: "aha_notes",
       content_type: "text",
@@ -197,7 +199,8 @@
 
     const note = notes[index];
     const reanalyzedAt = new Date().toISOString();
-    const ingestResult = await window.AHAIngest?.ingest?.({
+    const ingest = window.AHAModuleApi?.resolve?.("ingest", "AHAIngest", { version: 1 }) || window.AHAIngest;
+    const ingestResult = await ingest?.ingest?.({
       source_type: "note_reanalysis",
       source_app: "aha_notes",
       content_type: "text",
