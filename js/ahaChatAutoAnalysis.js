@@ -704,6 +704,165 @@
       );
     }
 
+    function buildAutoOutputFallbackPayload(userText, ahaReply, options = {}) {
+      const sourceText = String(userText || "");
+      if (!AHA_RUNTIME_KNOWLEDGE_POLICY.legacyArticleTemplatesEnabled && detectTextType(sourceText) === "academic_article") {
+        return buildSourceGroundedAcademicPayload(sourceText);
+      }
+      const replyText = String(ahaReply || "");
+      const combined = `${sourceText} ${replyText}`.toLowerCase();
+      const hasSahelAcademicEvidence = sourceHasAny(sourceText, [/\bsahel\b/i, /\bmali\b/i, /\bressursknapphet\b/i, /\bpolitisk økologi\b/i, /\bknapphetsskolen\b/i, /\bmiljøsikkerhet\b/i, /\benvironmental security\b/i, /\bclimate conflict\b/i]);
+      const hasKnausgardEvidence = sourceHasAny(sourceText, [/\bknausgård\b/i, /\bkarl ove\b/i]);
+      const hasOmVaarenEvidence = sourceHasAny(sourceText, [/\bom våren\b/i]);
+      const hasLindaEvidence = sourceHasAny(sourceText, [/\blinda boström knausgård\b/i]);
+      const hasAttachmentTheoryEvidence = sourceHasAny(sourceText, [/\btilknytningsteori\b/i, /\bbowlby\b/i, /\battachment\b/i]);
+      const hasLiteraryWorkEvidence = hasKnausgardEvidence || hasOmVaarenEvidence || hasLindaEvidence;
+      const academicSignals = /(ressursknapphet|politisk økologi|knapphetsskolen|miljøsikkerhet|climate conflict|environmental security|tilknytningsteori|autofiksjon|deiksis|knausgård)/i;
+      const publicAdminSignal = detectPublicAdministrationReformSignal(sourceText);
+      const baseTextType = detectTextType(sourceText);
+      const isAcademic = baseTextType === "academic_article" || academicSignals.test(combined) || Boolean(publicAdminSignal?.strong) || hasSahelAcademicEvidence || hasAttachmentTheoryEvidence || hasLiteraryWorkEvidence;
+      const literaryAttachmentSignal = hasLiteraryWorkEvidence ? detectLiteraryAttachmentSignal(combined) : { strong: false };
+      const isNavAcademic = Boolean(publicAdminSignal?.strong);
+      const isSahelClimateAcademic = hasSahelAcademicEvidence;
+      const isLiteraryAttachmentAcademic = hasLiteraryWorkEvidence && literaryAttachmentSignal?.strong;
+      const reflectionCandidate = [replyText, sourceText]
+        .flatMap((text) => String(text || "").split(/(?<=[.!?])\s+/))
+        .map((part) => part.trim())
+        .find((part) => part && part.length >= 20 && /[a-zæøå]/i.test(part));
+
+      const payload = {
+        textType: baseTextType,
+        reflection: reflectionCandidate || sourceText || replyText || "Teksten peker på flere mulige tolkninger.",
+        sortItems: [],
+        day: "",
+        thoughts: {},
+        list: [],
+        insightCards: [],
+        path: [],
+        subjectMatches: Array.isArray(options.subjectMatches) ? options.subjectMatches : []
+      };
+
+      if (isAcademic) {
+        payload.textType = "academic_article";
+        payload.day = "Ikke dagbokmateriale – ingen dagsoppsummering laget.";
+        if (isNavAcademic) {
+          payload.sortItems = [
+            { label: "Kort hovedinnsikt", text: "NAVs manglende måloppnåelse skyldes ikke bare midlertidig omstilling, men også varige strukturelle utfordringer." },
+            { label: "Tema", text: "NAV-reformen og måloppnåelse." },
+            { label: "Hovedspenning", text: "Omstillingskostnad vs. strukturell utfordring." },
+            { label: "Hovedargument", text: "Styring, organisering og stat–kommune-samspill påvirker måloppnåelsen i NAV-kontorene." }
+          ];
+          payload.list = [
+            "Skill mellom omstillingsprosess og varige strukturelle utfordringer.",
+            "Analyser hvordan statlig styring og kommunale mål påvirker måloppnåelse.",
+            "Vurder kontorstørrelse og lokal organisering i arbeidsrettet oppfølging.",
+            "Koble reformevaluering til organisasjonsteori, bakkebyråkrati og governance/samstyring."
+          ];
+          payload.insightCards = [
+            "Hovedinnsikt: NAVs manglende måloppnåelse kan ikke forklares som midlertidig reformstøy alene.",
+            "Hovedargument: Statlig styring, kommunale mål og lokal organisering skaper varige strukturelle utfordringer.",
+            "Spenning i teksten: Omstillingskostnad versus strukturell forklaring.",
+            "Neste analyse: Undersøk hvordan stat–kommune-samspill former arbeidsrettet oppfølging."
+          ];
+          payload.path = [
+            "Definer måloppnåelse i NAV-reformen.",
+            "Sorter funn etter omstillingskostnad vs. strukturell forklaring.",
+            "Analyser stat–kommune-samspill og kontorstørrelse.",
+            "Test tolkningene mot organisasjonsteori og bakkebyråkrati."
+          ];
+          payload.thoughts = {
+            hovedspor: "NAV-reformen bør forstås gjennom strukturelle styrings- og organisasjonsforhold.",
+            lose_tanker: "Skille tydelig mellom implementeringsstøy, kommunale mål og varige organisasjonsutfordringer.",
+            neste_steg: "Undersøk hvordan statlig styring, kommunale mål og lokal organisering påvirker arbeidsrettet oppfølging."
+          };
+        } else if (isSahelClimateAcademic) {
+          payload.sortItems = [
+            { label: "Kort hovedinnsikt", text: "Teksten utfordrer en enkel klimaforklaring på konflikt og peker mot politiske, historiske og maktmessige årsaker." },
+            { label: "Hovedargument", text: "Klima og miljø kan være bakgrunnsfaktorer, men konfliktutvikling forklares bedre gjennom politikk, historie, marginalisering og institusjonelle forhold." },
+            { label: "Motargument / kritikk", text: "Knapphetsskolens lineære årsakskjede fra miljøforringelse til vold kritiseres for svak empirisk og kontekstuell forklaringskraft." },
+            { label: "Spenning i teksten", text: "Spenningen står mellom miljøsikkerhet/knapphetsskolen og politisk økologi." }
+          ];
+          payload.list = [
+            "Skille tydelig mellom empiri, teori og normativ vurdering.",
+            "Sammenlikn knapphetsskolen og politisk økologi med samme casegrunnlag.",
+            "Vis hvordan politisk marginalisering påvirker konfliktforløp.",
+            "Bruk sitater som belegg, men la syntesen være i egne ord.",
+            "Avslutt med hva analysen endrer i konfliktforståelsen."
+          ];
+          payload.insightCards = [
+            "Hovedinnsikt: Konflikter i Sahel/Mali kan ikke forklares lineært med klima alene.",
+            "Hovedargument: Politikk, historie og maktforhold gir sterkere forklaringskraft enn ressursdeterminisme.",
+            "Motargument/kritikk: Knapphetsskolen undervurderer institusjoner, aktørmakt og lokal kontekst.",
+            "Spenning i teksten: Miljøsikkerhet og politisk økologi peker på ulike årsakslogikker."
+          ];
+          payload.path = [
+            "Kartlegg hovedpåstand og motpåstand.",
+            "Sorter belegg etter forklaringsmodell.",
+            "Test modellene mot samme Mali-case.",
+            "Formuler syntese med blinde soner og forklaringskraft."
+          ];
+          payload.thoughts = {
+            hovedspor: "Konfliktutvikling forklares best når politiske og historiske forhold vektes tyngre enn lineær knapphet.",
+            lose_tanker: "Begreper som miljøsikkerhet, marginalisering og ressursknapphet må avgrenses tydelig for å unngå begrepsglidning.",
+            neste_steg: "Velg én empirisk case og vis konkret hva hver modell forklarer – og overser."
+          };
+        } else if (isLiteraryAttachmentAcademic) {
+          payload.reflection = "Teksten undersøker hvordan Karl Ove Knausgårds Om våren kan leses i dialog med tilknytningsteori. Den viser hvordan romanen både bruker psykologiske begreper om tilknytning, trygghet, arbeidsmodeller og relasjonell sårbarhet, og samtidig overskrider teorien gjennom autofiksjon, deiksis, performativ skriving, mytologiske bilder og nymaterialistiske perspektiver. Den faglige spenningen ligger mellom psykologisk teori og litterær erkjennelse.";
+          payload.sortItems = [
+            { label: "Problemstilling", text: "Hvordan kan Knausgårds Om våren leses i dialog med tilknytningsteori?" },
+            { label: "Hovedpåstand", text: "Romanen bekrefter deler av tilknytningsteorien, men overskrider den gjennom litterære, mytologiske og nymaterialistiske perspektiver." },
+            { label: "Teoretisk ramme", text: "Bowlbys tilknytningsteori, utviklingspsykologi, parterapi og litteraturvitenskapelig analyse." },
+            { label: "Litterær metode", text: "Analyse av autofiksjon, deiksis, tiltaleform, performativitet og relasjonen mellom liv og tekst." },
+            { label: "Hovedspenning", text: "Psykologisk tilknytningsteori vs. litterær/mytologisk utforskning av tilknytning, forknytning og løsrivelse." },
+            { label: "Implikasjon", text: "Litteraturen kan belyse psykologiske problemstillinger på måter fagpsykologien ikke fullt ut fanger." }
+          ];
+          payload.insightCards = [
+            "Hovedinnsikt: Om våren gjør tilknytning til et eksistensielt og litterært nøkkelbegrep, ikke bare et psykologisk fagbegrep.",
+            "Hovedargument: Romanen bekrefter deler av tilknytningsteorien, men viser også dens begrensninger gjennom skildringer av sårbarhet, sykdom, kropp, materialitet og uforklarlige vekstkrefter.",
+            "Motargument/kritikk: En ren tilknytningsteoretisk lesning blir for smal fordi romanen åpner for mytologiske, autofiksjonelle og nymaterialistiske forklaringsnivåer.",
+            "Spenning: Psykologisk tilknytningsteori står mot romanens bredere litterære utforskning av tilknytning, forknytning og løsrivelse."
+          ];
+          payload.list = ["Skill mellom tilknytning som psykologisk teori og tilknytning som litterært motiv.","Analyser hvordan deiksis og tiltaleformen skaper et performativt tilknytningsrom.","Vis hvordan romanen skildrer både tilknytning til barnet og løsrivelse fra ektefellen.","Koble Bowlbys teori til autofiksjonens problem om liv, tekst og ansvar.","Drøft hvordan nymaterialisme og mytologiske bilder utvider analysen utover psykologi."];
+          payload.path = ["Identifiser romanens bruk av tilknytningsteori.","Analyser deiktisk poetikk og tiltaleform.","Undersøk forholdet mellom far–barn-tilknytning og ekteskapelig løsrivelse.","Sammenlign Knausgårds og Linda Boström Knausgårds perspektiver.","Drøft hvordan nymaterialisme, sårbarhet og mytologi utfordrer en ren psykologisk forklaring."];
+          payload.thoughts = { hovedspor: "Knausgårds Om våren leses som en litterær utforskning av tilknytning, løsrivelse og sårbarhet i dialog med psykologisk tilknytningsteori.", lose_tanker: "Autofiksjon, deiksis, Bowlby, Linda Boström Knausgård, nymaterialisme og Valborg-motivet bør holdes analytisk adskilt før de kobles.", neste_steg: "Skill tydelig mellom hva tilknytningsteorien forklarer, og hva romanens litterære form, materialitet og mytologi tilfører." };
+          payload.subjectMatches = ["Litteraturvitenskap","Psykologi","Tilknytningsteori","Autofiksjon","Narratologi","Deiksis","Nymaterialisme","Virkelighetslitteratur"];
+        } else if (hasAttachmentTheoryEvidence) {
+          payload.sortItems = [
+            { label: "Problemstilling", text: "Hvordan brukes tilknytningsteori i tekstens analyse?" },
+            { label: "Hovedpåstand", text: "Teksten bruker tilknytning som tolkningsramme for relasjon, trygghet og sårbarhet." },
+            { label: "Teori", text: "Tydeliggjør hvilke begreper fra tilknytningsteori som faktisk brukes i materialet." },
+            { label: "Implikasjon", text: "Skill mellom hva teorien forklarer, og hva teksten selv tilfører gjennom form og tolkning." }
+          ];
+          payload.list = [
+            "Definer sentrale tilknytningsbegreper presist.",
+            "Koble teori direkte til konkrete tekstbelegg.",
+            "Skill mellom observasjon, tolkning og teoretisk påstand.",
+            "Vurder alternative forklaringer på samme materiale."
+          ];
+          payload.insightCards = [
+            "Hovedinnsikt: Tilknytningsteori brukes som analytisk ramme for relasjonelle mønstre.",
+            "Hovedargument: Teorien må forankres i konkrete tekstbelegg for å gi forklaringskraft.",
+            "Motargument/kritikk: En for bred teorianvendelse kan skjule tekstens egne nyanser.",
+            "Neste analyse: Skill tydelig mellom teori, metode, empiri og tolkning."
+          ];
+          payload.path = [
+            "Avklar problemstilling og begrepsbruk.",
+            "Sorter belegg etter teori, metode og empiri.",
+            "Test hovedtolkning mot et alternativ.",
+            "Formuler en nøktern faglig syntese."
+          ];
+        } else {
+          payload.sortItems = [
+            { label: "Problemstilling", text: "Hva er tekstens sentrale faglige spørsmål?" },
+            { label: "Hovedpåstand", text: "Teksten argumenterer for en tydelig faglig tolkning som bør testes mot alternative forklaringer." },
+            { label: "Faglig spenning", text: "Spenningen ligger mellom hovedforklaring og alternative forståelser i materialet." },
+            { label: "Implikasjon", text: "Presiser metode, teori og empiri for å styrke analysens forklaringskraft." }
+          ];
+        }
+      }
+      return payload;
+    }
+
     return {
       getUrlDominanceInfo,
       isSportsArticleAnalysis,
@@ -713,7 +872,8 @@
       buildSourceGroundedAcademicPayload,
       applyRuntimeKnowledgePolicy,
       isTransientAnalysisDocument,
-      buildAutoOutputs
+      buildAutoOutputs,
+      buildAutoOutputFallbackPayload
     };
   }
 
