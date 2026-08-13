@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "description": "Minimum acceptable AHA Engine comparison statuses for PR 30 regression gate. Improvements are allowed; lower-ranked statuses fail the gate.",
+  "description": "Minimum acceptable AHA Engine comparison statuses after deterministic semantic classification and History Go parity. Improvements are allowed; lower-ranked statuses fail the gate.",
   "generatedFrom": "docs/reports/aha-engine-fixture-comparison.md",
   "statusRank": {
     "match": 3,
@@ -47,7 +47,7 @@
         "mainTension": "partial",
         "keyInsight": "partial",
         "fieldConnections": "partial",
-        "historyGoLinks": "partial",
+        "historyGoLinks": "match",
         "suggestedActions": "partial",
         "confidence": "partial",
         "warnings": "match"
@@ -57,13 +57,13 @@
       "id": "nav-reform-forvaltning-001",
       "group": "baseline",
       "minimumStatuses": {
-        "contentType": "partial",
-        "domain": "partial",
+        "contentType": "match",
+        "domain": "match",
         "theme": "partial",
         "mainTension": "partial",
         "keyInsight": "partial",
         "fieldConnections": "partial",
-        "historyGoLinks": "partial",
+        "historyGoLinks": "match",
         "suggestedActions": "partial",
         "confidence": "partial",
         "warnings": "match"
@@ -73,8 +73,8 @@
       "id": "litteraer-tilknytning-001",
       "group": "baseline",
       "minimumStatuses": {
-        "contentType": "partial",
-        "domain": "partial",
+        "contentType": "match",
+        "domain": "match",
         "theme": "partial",
         "mainTension": "partial",
         "keyInsight": "partial",
@@ -105,7 +105,7 @@
       "id": "prosjektplan-teknisk-001",
       "group": "baseline",
       "minimumStatuses": {
-        "contentType": "partial",
+        "contentType": "match",
         "domain": "match",
         "theme": "partial",
         "mainTension": "partial",
@@ -121,7 +121,7 @@
       "id": "juridisk-tekst-001",
       "group": "baseline",
       "minimumStatuses": {
-        "contentType": "partial",
+        "contentType": "match",
         "domain": "match",
         "theme": "partial",
         "mainTension": "partial",
@@ -137,7 +137,7 @@
       "id": "uklar-tekst-001",
       "group": "baseline",
       "minimumStatuses": {
-        "contentType": "partial",
+        "contentType": "match",
         "domain": "match",
         "theme": "partial",
         "mainTension": "partial",
@@ -159,7 +159,7 @@
         "mainTension": "partial",
         "keyInsight": "partial",
         "fieldConnections": "partial",
-        "historyGoLinks": "mismatch",
+        "historyGoLinks": "match",
         "suggestedActions": "partial",
         "confidence": "partial",
         "warnings": "match"
@@ -170,12 +170,12 @@
       "group": "next-phase",
       "minimumStatuses": {
         "contentType": "match",
-        "domain": "partial",
+        "domain": "match",
         "theme": "partial",
         "mainTension": "partial",
         "keyInsight": "partial",
         "fieldConnections": "partial",
-        "historyGoLinks": "mismatch",
+        "historyGoLinks": "match",
         "suggestedActions": "partial",
         "confidence": "partial",
         "warnings": "match"
@@ -185,8 +185,8 @@
       "id": "refleksjon-laering-feil-001",
       "group": "next-phase",
       "minimumStatuses": {
-        "contentType": "mismatch",
-        "domain": "partial",
+        "contentType": "match",
+        "domain": "match",
         "theme": "partial",
         "mainTension": "partial",
         "keyInsight": "partial",
@@ -201,8 +201,8 @@
       "id": "refleksjon-byrom-uro-001",
       "group": "next-phase",
       "minimumStatuses": {
-        "contentType": "partial",
-        "domain": "partial",
+        "contentType": "match",
+        "domain": "match",
         "theme": "partial",
         "mainTension": "partial",
         "keyInsight": "partial",
@@ -217,13 +217,13 @@
       "id": "historygo-eidsvoll-grunnloven-001",
       "group": "next-phase",
       "minimumStatuses": {
-        "contentType": "partial",
-        "domain": "partial",
+        "contentType": "match",
+        "domain": "match",
         "theme": "partial",
         "mainTension": "partial",
         "keyInsight": "partial",
         "fieldConnections": "partial",
-        "historyGoLinks": "partial",
+        "historyGoLinks": "match",
         "suggestedActions": "partial",
         "confidence": "partial",
         "warnings": "partial"
@@ -234,12 +234,12 @@
       "group": "next-phase",
       "minimumStatuses": {
         "contentType": "match",
-        "domain": "partial",
+        "domain": "match",
         "theme": "partial",
         "mainTension": "partial",
         "keyInsight": "partial",
         "fieldConnections": "partial",
-        "historyGoLinks": "partial",
+        "historyGoLinks": "match",
         "suggestedActions": "partial",
         "confidence": "partial",
         "warnings": "partial"
@@ -249,7 +249,7 @@
       "id": "uklar-fragmentert-002",
       "group": "next-phase",
       "minimumStatuses": {
-        "contentType": "partial",
+        "contentType": "match",
         "domain": "match",
         "theme": "partial",
         "mainTension": "partial",
@@ -265,8 +265,8 @@
       "id": "tverrfaglig-ai-laering-001",
       "group": "next-phase",
       "minimumStatuses": {
-        "contentType": "mismatch",
-        "domain": "partial",
+        "contentType": "match",
+        "domain": "match",
         "theme": "partial",
         "mainTension": "partial",
         "keyInsight": "partial",

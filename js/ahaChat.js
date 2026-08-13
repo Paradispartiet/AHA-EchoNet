@@ -2328,12 +2328,11 @@
     const src = String(sourceText || "");
     const payloadText = `${payload?.reflection || ""} ${(Array.isArray(payload?.sortItems) ? payload.sortItems : []).map((item) => `${item?.label || ""} ${item?.text || ""}`).join(" ")}`;
     const domainText = src.trim().length >= 25 ? src : `${src} ${payloadText}`;
-    if (detectPublicAdministrationReformSignal(domainText).strong) return "public_admin_nav";
+    const canonicalDomain = global.AHAChatSignals.detectCanonicalAnalysisDomain(domainText);
+    if (canonicalDomain) return canonicalDomain;
     if (detectPublicAdministrationSignal(domainText).strong) return "public_administration";
-    if (detectLiteraryAttachmentSignal(domainText).strong) return "literary_attachment";
     if (detectSongLyricChildCultureSignal(src).strong) return "song_lyric_child_culture";
     if (detectSahelClimateConflictSignal(domainText).strong) return "sahel_climate_conflict";
-    if (detectInstitutionalMediaHistorySignal(domainText).strong) return "institutional_media_history";
     return "generic_academic";
   }
 
@@ -2830,7 +2829,7 @@
     };
 
     const domain = detectAutoAnalysisDomain(text, payload || {});
-    const sourceHasPublicAdmin = domain === "public_admin_nav";
+    const sourceHasPublicAdmin = domain === "public_admin_nav" || domain === "public_administration_reform";
     const sourceHasSahelMali = domain === "sahel_climate_conflict";
     const domainBlockedTerms = sourceHasPublicAdmin
       ? /(knapphetsskolen|politisk økologi|sahel|mali|ressursknapphet|miljødegradering)/i

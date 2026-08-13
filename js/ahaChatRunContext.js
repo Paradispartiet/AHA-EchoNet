@@ -121,7 +121,12 @@
     }
 
     function tokenizeAnalysisRelevance(text) {
-      const stop = new Set(["det","den","der","som","for","med","til","fra","ikke","eller","og","i","på","av","en","et","å","er","har","kan","skal","vil","the","and","this","that","with","from"]);
+      const stop = new Set([
+        "det","den","der","som","for","med","til","fra","ikke","eller","og","i","på","av","en","et","å","er","har","kan","skal","vil",
+        "the","and","this","that","with","from",
+        "sammendrag","artikkelen","undersøker","undersøkelse","undersøkelsen","studien","analyse","analysen","analyseres","metode","metoden",
+        "resultat","resultatet","resultater","resultatene","hovedfunnet","hovedpoenget","forskerne","sammenligner","hvordan","viser","dokumentasjon"
+      ]);
       return String(text || "").toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").match(/[a-zæøå0-9]{4,}/g)?.filter((token) => !stop.has(token)).slice(0, 240) || [];
     }
 

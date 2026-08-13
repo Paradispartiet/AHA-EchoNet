@@ -79,6 +79,24 @@
     return { strong: governanceHits >= 1 && evaluationHits >= 2 && score >= 5, score, governanceHits, evaluationHits };
   }
 
+  function countSemanticSignals(text, signals) {
+    return signals.reduce((count, signal) => count + (text.includes(signal) ? 1 : 0), 0);
+  }
+
+  function detectCanonicalAnalysisDomain(raw) {
+    const text = cleanArticleText(raw || "").toLowerCase();
+    if (!text) return "";
+    if (detectInstitutionalMediaHistorySignal(text).strong) return "institutional_media_history";
+    if (detectPublicAdministrationReformSignal(text).strong || countSemanticSignals(text, ["nav-reformen", "ett kontaktpunkt", "brukermøte", "brukermøtet", "etatskulturer", "styringslinjer", "styringsutfordringer", "samordning", "velferdsforvaltning", "velferdsforvaltningen", "byråkratisk kompleksitet"]) >= 1) return "public_administration_reform";
+    if (countSemanticSignals(text, ["roman", "tilknytningsteori", "ambivalent tilknytning", "fortellergrep"]) >= 1) return "literary_attachment";
+    if (countSemanticSignals(text, ["lærer mest", "feilene mine", "mønstrene", "vaner", "repetisjoner", "justering", "kunnskapen fester seg"]) >= 2) return "learning_reflection";
+    if (countSemanticSignals(text, ["uro", "konsentrasjon", "byrom", "trikk", "folkestrøm", "oppmerksomhet", "steder", "bevegelse gir energi"]) >= 3) return "urban_attention_reflection";
+    if (countSemanticSignals(text, ["eidsvoll", "1814", "grunnloven", "folkestyre", "rettigheter", "nasjonsbygging", "demokratiet", "politiske deltakere"]) >= 3) return "constitutional_democratic_history";
+    if (countSemanticSignals(text, ["bislett stadion", "idrettsarena", "stadion", "byrom", "løp", "mesterskap", "fellesskap", "lokal identitet", "ombygging", "sportshistorie", "arkitektur", "byutvikling"]) >= 3) return "urban_sports_history";
+    if (countSemanticSignals(text, ["ai-verktøy", "oppsummere", "stille spørsmål", "sammenligne kilder", "individuell læring", "kollektiv kunnskap", "automatisering", "menneskelig forståelse", "egen vurdering"]) >= 3) return "digital_pedagogy_knowledge_systems";
+    return "";
+  }
+
   function inferReligiousLexiconEvidence(rawText = "") {
     const text = cleanArticleText(rawText).toLowerCase();
     if (!text) return { score: 0, strong: false, markers: [] };
@@ -127,17 +145,24 @@
     const academicSignals = { theorists: /(homer-?dixon|peluso|watts|boserup|kaplan|gleditsch|salehyan|barnett|said)/i.test(text), years: /\b(19|20)\d{2}\b/.test(text), coreTerms: /(ressursknapphet|politisk økologi|miljødegradering|knapphetsskolen|sahel|mali|miljøsikkerhet|environmental security|pinse|pentekost[eé]|den hellige ånd|tungetale|babels tårn|treenighetssøndag|gregoriansk kalender|juliansk kalender)/i.test(text), citations: /\bifølge\b|\bviser til\b|\(([A-ZÆØÅ][A-Za-zÆØÅæøå-]+(?:\s*&\s*[A-ZÆØÅ][A-Za-zÆØÅæøå-]+)?\s+(?:19|20)\d{2}[a-z]?)\)/.test(raw || ""), articleMarkers: /(i denne artikkelen|casestudier|internasjonal forskning|klimadata|kritikk av|presenterer jeg|denne artikkelen drøfter|vi drøfter|vi diskuterer|analyse|implikasjoner)/i.test(text), modelDebate: /(på den ene siden|på den andre siden|kritiserer|forklaringsmodell|alternativ forklaring|drøfter|innvending)/i.test(text), abstractAndKeywords: hasAbstractHeader && hasKeywordsHeader, abstractAndArticle: hasAbstractHeader && /i denne artikkelen|denne artikkelen drøfter|vi drøfter|vi diskuterer/i.test(text), mixedMethods: /kvalitative og kvantitative data|kvalitative data|kvantitative data|empiriske data/i.test(text), publicAdminTerms: /nav-reformen|navreformen|nav-kontor|navkontor|lokalkontor|måloppnåelse|organisering|implementering|statlig styring|kommunale målsetninger|virkemidler|prosessevaluering|effektevaluering|organisasjonsreform|velferdsdirektorat|stat og kommune|partnerskap mellom stat og kommune|omstilling|reform/i.test(text) };
     const academicScore = Object.entries(academicSignals).reduce((sum, [key, hit]) => !hit ? sum : sum + ((key === "abstractAndKeywords" || key === "abstractAndArticle" || key === "mixedMethods") ? 2 : (key === "publicAdminTerms" ? 1.5 : 1)), 0);
     const lexiconSignal = inferReligiousLexiconEvidence(raw || text);
+    const canonicalDomain = detectCanonicalAnalysisDomain(raw || text);
+    const legalSignalCount = countSemanticSignals(text, ["hjemmel i lov", "legitimt formål", "forholdsmessig", "vedtaket", "rettigheter", "rettsanvendelsen"]);
     const hasAcademicHardOverride = academicScore >= 5 && (academicSignals.coreTerms || academicSignals.theorists || academicSignals.publicAdminTerms || academicSignals.abstractAndKeywords || academicSignals.mixedMethods);
     const hasAcademicComboOverride = (academicSignals.abstractAndKeywords && academicSignals.articleMarkers) || academicSignals.abstractAndArticle || (academicSignals.mixedMethods && (academicSignals.articleMarkers || academicSignals.publicAdminTerms)) || (/nav-reformen|navreformen/i.test(text) && hasKeywordsHeader && /i denne artikkelen/i.test(text));
+    if (["learning_reflection", "urban_attention_reflection"].includes(canonicalDomain)) return "day_log";
+    if (canonicalDomain && !["learning_reflection", "urban_attention_reflection"].includes(canonicalDomain)) return "academic_article";
+    if (legalSignalCount >= 2) return "academic_article";
     if (hasAcademicHardOverride || hasAcademicComboOverride || lexiconSignal.strong) return "academic_article";
     const institutionalHistorySignal = detectInstitutionalMediaHistorySignal(raw);
     if (institutionalHistorySignal.strong) return "academic_article";
     const hasStrongOpinion = opinionScore >= 5 || ((opinionEvidence.hasPoliticalActor || opinionEvidence.hasParty) && (opinionEvidence.hasClimateTransition || opinionEvidence.hasOilFossil || opinionEvidence.hasNatureProtection));
     if (hasStrongOpinion) return "opinion_article";
-    const strongProjectSignals = /(repo|repository|kode|koding|prompt|merge|pull request|\bpr\b|branch|commit|backend|frontend|\bui\b|\bux\b|\bapi\b|database|javascript|css|html|supabase|vercel|github|fil\b)/i;
-    if (strongProjectSignals.test(text)) return "project_note";
+    const strongProjectSignals = /(repo|repository|kode|koding|prompt|merge|pull request|branch|commit|backend|frontend|database|javascript|css|html|supabase|vercel|github|fil\b|modul|analyseklassifisering|grensesnitt|regresjoner|testdata)/i;
+    const projectAcronymSignals = /(^|[^a-zæøå0-9])(pr|ui|ux|api)(?=$|[^a-zæøå0-9])/i;
+    if (strongProjectSignals.test(text) || projectAcronymSignals.test(text)) return "project_note";
     if (theoryStrongSignals.test(text)) return "theory_idea";
-    if (theoryWeakSignals.test(text) && !hasDiaryShape && !literaryDiarySignals.test(text)) return "theory_idea";
+    const theoryWeakCount = ["kunnskap", "system", "metode"].filter((signal) => text.includes(signal)).length;
+    if (theoryWeakSignals.test(text) && theoryWeakCount >= 2 && !hasDiaryShape && !literaryDiarySignals.test(text)) return "theory_idea";
     if (daySignals.test(text)) return "day_log";
     if (literaryFragmentSignals.test(text) && sentenceCount >= 2) return "literary_fragment";
     const hasPersonalDiarySignals = daySignals.test(text) || diaryLifeSignals.test(text);
@@ -153,6 +178,7 @@
     detectLiteraryAttachmentSignal,
     detectPublicAdministrationReformSignal,
     detectPublicAdministrationSignal,
-    detectInstitutionalMediaHistorySignal
+    detectInstitutionalMediaHistorySignal,
+    detectCanonicalAnalysisDomain
   };
 })(window);

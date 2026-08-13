@@ -196,6 +196,7 @@ vm.runInNewContext(read('js/ahaSubjectEngine.js'), subjectContext, { filename: '
     graphicalMindmaps: 0,
     personalAiBoundaries: 0,
     personalAiIsolations: 0,
+    adversarialSharedTokenMemories: 0,
     semanticBindings: 0,
     leakageChecks: 0,
     leakageFailures: 0,
@@ -273,9 +274,23 @@ vm.runInNewContext(read('js/ahaSubjectEngine.js'), subjectContext, { filename: '
       summary: item.forbiddenLeakageTerms.join(' · '),
       concepts: item.forbiddenLeakageTerms
     };
+    const sharedAcademicLanguage = [
+      'artikkelen', 'undersøker', 'undersøkelsen', 'studien', 'analysen',
+      'metoden', 'resultatet', 'resultatene', 'forskerne', 'sammenligner'
+    ].filter((term) => sourceContains(item.sourceText, term));
+    assert.ok(sharedAcademicLanguage.length >= 2, `${item.id}: adversarial shared-token vocabulary is too weak`);
+    const sharedTokenAdversarialMemory = {
+      id: `adversarial_shared_${item.id}`,
+      title: `Tidligere artikkel fra et annet fag ${caseIndex}`,
+      summary: `${sharedAcademicLanguage.join(' · ')} · ${item.forbiddenLeakageTerms.join(' · ')}`,
+      concepts: [...sharedAcademicLanguage, ...item.forbiddenLeakageTerms]
+    };
+    sharedAcademicLanguage.forEach((term) => {
+      assert.equal(sourceContains(item.sourceText, term), true, `${item.id}: shared-token adversary must overlap active source text: ${term}`);
+    });
     const filteredRetrieval = hooks.filterRetrievalForActiveSource({
-      results: [adversarialMemory, relevantMemory],
-      context: { selectedSources: [adversarialMemory, relevantMemory] }
+      results: [adversarialMemory, sharedTokenAdversarialMemory, relevantMemory],
+      context: { selectedSources: [adversarialMemory, sharedTokenAdversarialMemory, relevantMemory] }
     }, item.sourceText, run);
     assert.deepEqual(Array.from(filteredRetrieval.results, (entry) => entry.id), [relevantMemory.id], `${item.id}: Personal AI retrieval kept an unrelated cross-domain memory`);
     assert.deepEqual(Array.from(filteredRetrieval.context.selectedSources, (entry) => entry.id), [relevantMemory.id], `${item.id}: answer sources kept an unrelated cross-domain memory`);
@@ -284,14 +299,17 @@ vm.runInNewContext(read('js/ahaSubjectEngine.js'), subjectContext, { filename: '
       reason: 'Adversarial production matrix',
       confidence: 0.9,
       mode: 'semantic_match',
-      selectedInsights: [adversarialMemory, relevantMemory],
-      localMatches: [{ insight: adversarialMemory }, { insight: relevantMemory }],
-      semanticMatches: [adversarialMemory, relevantMemory],
+      selectedInsights: [adversarialMemory, sharedTokenAdversarialMemory, relevantMemory],
+      localMatches: [{ insight: adversarialMemory }, { insight: sharedTokenAdversarialMemory }, { insight: relevantMemory }],
+      semanticMatches: [adversarialMemory, sharedTokenAdversarialMemory, relevantMemory],
       summaryForAgent: 'stale pre-filter summary'
     }, item.sourceText, run);
     assert.equal(filteredMemory.used, true, `${item.id}: relevant Personal AI memory was lost`);
     assert.deepEqual(Array.from(filteredMemory.selectedInsights, (entry) => entry.id), [relevantMemory.id], `${item.id}: active memory kept cross-domain material`);
+    assert.equal(filteredMemory.localMatches.some((entry) => (entry.insight || entry).id === sharedTokenAdversarialMemory.id), false, `${item.id}: shared-token memory survived local filtering`);
+    assert.equal(filteredMemory.semanticMatches.some((entry) => (entry.insight || entry).id === sharedTokenAdversarialMemory.id), false, `${item.id}: shared-token memory survived semantic filtering`);
     item.forbiddenLeakageTerms.forEach((term) => assert.equal(normalize(filteredMemory.summaryForAgent).includes(normalize(term)), false, `${item.id}: cross-domain memory reached the agent summary: ${term}`));
+    scorecard.adversarialSharedTokenMemories += 1;
     scorecard.personalAiIsolations += 1;
 
     const binding = context.AHAAutoOutputSourceBinding.bindAutoOutputToSource(stored);

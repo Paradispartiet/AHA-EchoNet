@@ -24,11 +24,45 @@ def detect_content_type(message: str) -> str:
     ):
         return "project_note"
 
+    learning_reflection_signals = [
+        "lærer mest",
+        "feilene mine",
+        "mønstrene",
+        "vaner",
+        "repetisjoner",
+        "justering",
+        "kunnskapen fester seg",
+    ]
     if (
         " jeg " in f" {normalized} "
         and _contains_any(normalized, ["i dag", "kjente jeg", "følelse", "kanskje handler det"])
-    ):
+    ) or _contains_count(normalized, learning_reflection_signals) >= 2:
         return "day_log"
+
+    academic_history_signals = [
+        "eidsvoll",
+        "1814",
+        "grunnloven",
+        "folkestyre",
+        "nasjonsbygging",
+        "bislett stadion",
+        "idrettsarena",
+        "sportshistorie",
+        "byutvikling",
+    ]
+    academic_pedagogy_signals = [
+        "ai-verktøy",
+        "sammenligne kilder",
+        "individuell læring",
+        "kollektiv kunnskap",
+        "automatisering",
+        "menneskelig forståelse",
+        "egen vurdering",
+    ]
+    if _contains_count(normalized, academic_history_signals) >= 3 or _contains_count(
+        normalized, academic_pedagogy_signals
+    ) >= 3:
+        return "academic_article"
 
     if _contains_any(
         normalized,
