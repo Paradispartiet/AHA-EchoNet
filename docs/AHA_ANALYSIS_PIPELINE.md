@@ -1,6 +1,6 @@
 # AHA Analysis Pipeline
 
-Dette dokumentet beskriver den faktiske analyseflyten slik repoet står nå. Det er skrevet etter kodegjennomgang av `chat.html`, `js/ahaChat.js`, `js/ahaChatAnalysis.js`, `js/ahaChatExport.js`, `js/ahaEngineClient.js`, `js/ahaIngest.js`, `js/ahaSources.js` og `js/ahaAnalysisQualityLayer.js`.
+Dette dokumentet beskriver den faktiske analyseflyten slik repoet står nå. Det er skrevet etter kodegjennomgang av `chat.html`, `js/ahaChat.js`, `js/ahaChatAnalysisPolicy.js`, `js/ahaChatAnalysis.js`, `js/ahaChatExport.js`, `js/ahaEngineClient.js`, `js/ahaIngest.js`, `js/ahaSources.js` og `js/ahaAnalysisQualityLayer.js`.
 
 Målet er å gjøre det tydelig hva som er kildetekst, hva som er minne, hva som er etterarbeid, hva som er cache, og hva som bare er visning.
 
@@ -84,9 +84,9 @@ source event / input
 
 Viktig: `skip_insight: true` betyr at kilden skal logges, men ikke bli brukerinnsikt. Dette brukes for eksempel for AHA-agentens egne svar.
 
-### `ahaChat.js`
+### `ahaChat.js` og `ahaChatAnalysisPolicy.js`
 
-Fil: `js/ahaChat.js`
+Filer: `js/ahaChat.js`, `js/ahaChatAnalysisPolicy.js`
 
 Ansvar:
 
@@ -102,7 +102,10 @@ Ansvar:
 - localStorage for auto-output og afterwork
 ```
 
-Denne filen er fortsatt svært stor og bærer flere ansvar. Det er et kjent arkitekturproblem.
+`ahaChat.js` orkestrerer disse delene. Den akademiske domenepolicyen,
+normaliseringen, fagkoblingene og den kanoniske kildegrunningsporten eies av den
+versjonerte `chat.analysisPolicy`-modulen. Hovedfila er fortsatt stor, men denne
+policyen kan nå testes og refaktoreres uten å nå inn i Chat-internals.
 
 ### `ahaEngineClient.js`
 

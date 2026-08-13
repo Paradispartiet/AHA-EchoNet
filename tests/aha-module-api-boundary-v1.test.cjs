@@ -125,6 +125,7 @@ assert.throws(
 const chatModules = [
   ['chat.textUtils', 'AHAChatTextUtils', 'js/ahaChatTextUtils.js'],
   ['chat.signals', 'AHAChatSignals', 'js/ahaChatSignals.js'],
+  ['chat.analysisPolicy', 'AHAChatAnalysisPolicy', 'js/ahaChatAnalysisPolicy.js'],
   ['chat.subjects', 'AHAChatSubjects', 'js/ahaChatSubjects.js'],
   ['chat.analysis', 'AHAChatAnalysis', 'js/ahaChatAnalysis.js'],
   ['chat.export', 'AHAChatExport', 'js/ahaChatExport.js'],
