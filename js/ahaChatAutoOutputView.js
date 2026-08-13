@@ -353,5 +353,7 @@
     return { renderAutoOutputs, focusAutoCard, restoreAutoOutputFromStorage };
   }
 
-  global.AHAChatAutoOutputView = Object.assign({}, global.AHAChatAutoOutputView || {}, { create, createRuntime });
+  const publicApi = Object.assign({}, global.AHAChatAutoOutputView || {}, { create, createRuntime });
+  global.AHAChatAutoOutputView = publicApi;
+  global.AHAModuleApi?.register?.("chat.autoOutputView", publicApi, { version: 1, legacyGlobal: "AHAChatAutoOutputView", exports: Object.keys(publicApi) });
 })(window);

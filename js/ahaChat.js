@@ -22,8 +22,9 @@
   function insightsApi() { return resolveModule("insights", "InsightsEngine"); }
   function ingestApi() { return resolveModule("ingest", "AHAIngest"); }
   function sourcesApi() { return resolveModule("sources", "AHASources"); }
+  function chatModule(name, legacyGlobal) { return resolveModule(`chat.${name}`, legacyGlobal); }
 
-  const memoryControls = global.AHAChatMemoryControls?.create?.({
+  const memoryControls = chatModule("memoryControls", "AHAChatMemoryControls")?.create?.({
     loadChamber: loadChamberFromStorage,
     renderControls: renderAhaMemoryControls,
     updateStatus: updateAhaMemoryStatus
@@ -49,7 +50,7 @@
   const resetAhaMemoryExclusions = memoryControls.resetAhaMemoryExclusions;
   const getAhaExcludedMemoryItems = memoryControls.getAhaExcludedMemoryItems;
 
-  const afterwork = global.AHAChatAfterwork?.create?.({
+  const afterwork = chatModule("afterwork", "AHAChatAfterwork")?.create?.({
     storageKey: AFTERWORK_STORAGE_KEY,
     sourceHash,
     escHtml,
@@ -73,7 +74,7 @@
   global.showMeta = showMeta;
   global.showSavedAfterwork = showSavedAfterwork;
 
-  const memoryRuntime = global.AHAChatMemoryRuntime?.create?.({
+  const memoryRuntime = chatModule("memoryRuntime", "AHAChatMemoryRuntime")?.create?.({
     loadChamber: loadChamberFromStorage,
     loadAfterworkEntries,
     loadControls: loadAhaMemoryControls,
@@ -101,7 +102,7 @@
   const buildAhaMemoryStatus = memoryRuntime.buildAhaMemoryStatus;
   const buildAhaLearningContractReply = memoryRuntime.buildAhaLearningContractReply;
 
-  const runContext = global.AHAChatRunContext?.create?.({
+  const runContext = chatModule("runContext", "AHAChatRunContext")?.create?.({
     sourceHash,
     shortHash,
     takeKeywords,
@@ -121,7 +122,7 @@
   const filterRetrievalForActiveSource = runContext.filterRetrievalForActiveSource;
   const filterMemoryContextForActiveSource = runContext.filterMemoryContextForActiveSource;
 
-  const afterworkAutoAdapter = global.AHAChatAfterwork?.createAutoOutputAdapter?.({
+  const afterworkAutoAdapter = chatModule("afterwork", "AHAChatAfterwork")?.createAutoOutputAdapter?.({
     defaultConversationId: CHAT_THREAD_ID,
     sourceHash,
     shortHash,
@@ -145,7 +146,7 @@
   const saveAutoOutputAsAfterwork = afterworkAutoAdapter.saveAutoOutputAsAfterwork;
   const ensureAfterworkForLatestAnalysis = afterworkAutoAdapter.ensureAfterworkForLatestAnalysis;
 
-  const insightView = global.AHAChatInsightView?.create?.({
+  const insightView = chatModule("insightView", "AHAChatInsightView")?.create?.({
     escHtml,
     normalizeConceptKey,
     normalizeDisplayText,
@@ -178,7 +179,7 @@
   const renderMergeSuggestionsSection = insightView.renderMergeSuggestionsSection;
   const showInsights = insightView.showInsights;
 
-  personalUi = global.AHAChatPersonalUi?.create?.({
+  personalUi = chatModule("personalUi", "AHAChatPersonalUi")?.create?.({
     getActiveAnalysisRun,
     bindAnalysisArtifact,
     buildAhaMemoryTransparency,
@@ -196,7 +197,7 @@
   });
   if (!personalUi) throw new Error("AHAChatPersonalUi må lastes før ahaChat.js.");
 
-  const autoAnalysis = global.AHAChatAutoAnalysis?.create?.({
+  const autoAnalysis = chatModule("autoAnalysis", "AHAChatAutoAnalysis")?.create?.({
     cleanArticleText,
     toSentences,
     takeKeywords,
@@ -234,7 +235,7 @@
   const buildAutoOutputs = autoAnalysis.buildAutoOutputs;
   const buildAutoOutputFallbackPayload = autoAnalysis.buildAutoOutputFallbackPayload;
 
-  const autoOutputView = global.AHAChatAutoOutputView?.create?.({
+  const autoOutputView = chatModule("autoOutputView", "AHAChatAutoOutputView")?.create?.({
     enforceCanonicalSourceGrounding,
     getActiveAnalysisRun,
     artifactMatchesActiveRun,
@@ -267,7 +268,7 @@
   const buildAhaSerCard = autoOutputView.buildAhaSerCard;
   const renderAutoOutputPayload = autoOutputView.renderAutoOutputPayload;
 
-  const canonicalAnalysis = global.AHAChatCanonicalAnalysis?.create?.({
+  const canonicalAnalysis = chatModule("canonicalAnalysis", "AHAChatCanonicalAnalysis")?.create?.({
     buildAhaSerCard,
     AHA_RUNTIME_KNOWLEDGE_POLICY,
     detectTextType,
@@ -288,7 +289,7 @@
   const normalizeAnalysisWarnings = canonicalAnalysis.normalizeAnalysisWarnings;
   const buildHistoryGoLinksFromDomain = canonicalAnalysis.buildHistoryGoLinksFromDomain;
 
-  const autoOutputRuntime = global.AHAChatAutoOutputView?.createRuntime?.({
+  const autoOutputRuntime = chatModule("autoOutputView", "AHAChatAutoOutputView")?.createRuntime?.({
     storageKey: AUTO_OUTPUT_STORAGE_KEY,
     defaultConversationId: CHAT_THREAD_ID,
     runtimeKnowledgePolicy: AHA_RUNTIME_KNOWLEDGE_POLICY,
@@ -325,7 +326,7 @@
   const focusAutoCard = autoOutputRuntime.focusAutoCard;
   const restoreAutoOutputFromStorage = autoOutputRuntime.restoreAutoOutputFromStorage;
 
-  const replySubjectPolicy = global.AHAChatReplyFormat?.createSubjectPolicy?.({
+  const replySubjectPolicy = chatModule("replyFormat", "AHAChatReplyFormat")?.createSubjectPolicy?.({
     detectAutoAnalysisDomain,
     getLiterarySubjectMatches,
     getInstitutionalMediaHistorySubjectMatches
@@ -353,7 +354,7 @@
   const renderMetaAiClaims = metaAiSession.renderMetaAiClaims;
   const maybeHandleMetaAiAgentReply = metaAiSession.maybeHandleMetaAiAgentReply;
 
-  const submissionRuntime = global.AHAChatRunContext?.createSubmissionRuntime?.({
+  const submissionRuntime = chatModule("runContext", "AHAChatRunContext")?.createSubmissionRuntime?.({
     config: {
       threadId: CHAT_THREAD_ID,
       subjectId: SUBJECT_ID
@@ -977,7 +978,7 @@
 
   function getInsightPipeline() {
     if (!insightPipeline) {
-      insightPipeline = global.AHAChatInsightPipeline?.create?.({
+      insightPipeline = chatModule("insightPipeline", "AHAChatInsightPipeline")?.create?.({
         filterConceptLabels,
         normalizeSimpleStringList,
         normalizeTheoreticalLinks,
@@ -1598,7 +1599,7 @@
 
 
   function detectLiteraryAttachmentSignal(text) {
-    return global.AHAChatSignals.detectLiteraryAttachmentSignal(text);
+    return chatModule("signals", "AHAChatSignals").detectLiteraryAttachmentSignal(text);
   }
   function detectSahelClimateConflictSignal(text) {
     const src = String(text || "");
@@ -1609,7 +1610,7 @@
     return { strong: (hasSahel && (hasConflict || hasClimate)) || (hasSahel && hasTheory), hasSahel, hasConflict, hasClimate, hasTheory };
   }
   function detectInstitutionalMediaHistorySignal(text) {
-    return global.AHAChatSignals.detectInstitutionalMediaHistorySignal(text);
+    return chatModule("signals", "AHAChatSignals").detectInstitutionalMediaHistorySignal(text);
   }
   function extractMainInstitutionName(text) {
     const source = String(text || "");
@@ -1673,7 +1674,7 @@
     const src = String(sourceText || "");
     const payloadText = `${payload?.reflection || ""} ${(Array.isArray(payload?.sortItems) ? payload.sortItems : []).map((item) => `${item?.label || ""} ${item?.text || ""}`).join(" ")}`;
     const domainText = src.trim().length >= 25 ? src : `${src} ${payloadText}`;
-    const canonicalDomain = global.AHAChatSignals.detectCanonicalAnalysisDomain(domainText);
+    const canonicalDomain = chatModule("signals", "AHAChatSignals").detectCanonicalAnalysisDomain(domainText);
     if (canonicalDomain) return canonicalDomain;
     if (detectPublicAdministrationSignal(domainText).strong) return "public_administration";
     if (detectSongLyricChildCultureSignal(src).strong) return "song_lyric_child_culture";
@@ -2238,7 +2239,7 @@
   }
 
 
-  const knowledgeView = global.AHAChatKnowledgeView?.create?.({
+  const knowledgeView = chatModule("knowledgeView", "AHAChatKnowledgeView")?.create?.({
     subjectId: SUBJECT_ID,
     loadChamberFromStorage,
     getThemeId,
@@ -2322,19 +2323,19 @@
   }
 
   function cleanArticleText(raw) {
-    return global.AHAChatTextUtils.cleanArticleText(raw);
+    return chatModule("textUtils", "AHAChatTextUtils").cleanArticleText(raw);
   }
 
   function toSentences(text) {
-    return global.AHAChatTextUtils.toSentences(text);
+    return chatModule("textUtils", "AHAChatTextUtils").toSentences(text);
   }
 
   function collectOpinionArticleEvidence(raw, sentences) {
-    return global.AHAChatTextUtils.collectOpinionArticleEvidence(raw, sentences);
+    return chatModule("textUtils", "AHAChatTextUtils").collectOpinionArticleEvidence(raw, sentences);
   }
 
   function detectTextType(raw) {
-    return global.AHAChatSignals.detectTextType(raw);
+    return chatModule("signals", "AHAChatSignals").detectTextType(raw);
   }
 
   function buildLiteraryDiarySortItems(raw, sentences) {
@@ -2524,19 +2525,19 @@
 
   // Fag-/emne-anriking ligger i ahaChatSubjects.js; her beholdes tynne delegerende wrappere.
   function normalizeSubjectLinks(subjectMatches) {
-    return global.AHAChatSubjects.normalizeSubjectLinks(subjectMatches);
+    return chatModule("subjects", "AHAChatSubjects").normalizeSubjectLinks(subjectMatches);
   }
   function enrichSubjectMatchesForClimateConflict(text, subjectMatches) {
-    return global.AHAChatSubjects.enrichSubjectMatchesForClimateConflict(text, subjectMatches);
+    return chatModule("subjects", "AHAChatSubjects").enrichSubjectMatchesForClimateConflict(text, subjectMatches);
   }
   function detectPublicAdministrationReformSignal(text) {
-    return global.AHAChatSignals.detectPublicAdministrationReformSignal(text);
+    return chatModule("signals", "AHAChatSignals").detectPublicAdministrationReformSignal(text);
   }
   function detectPublicAdministrationSignal(text) {
-    return global.AHAChatSignals.detectPublicAdministrationSignal(text);
+    return chatModule("signals", "AHAChatSignals").detectPublicAdministrationSignal(text);
   }
   function enrichSubjectMatchesForPublicAdministration(text, subjectMatches) {
-    return global.AHAChatSubjects.enrichSubjectMatchesForPublicAdministration(text, subjectMatches);
+    return chatModule("subjects", "AHAChatSubjects").enrichSubjectMatchesForPublicAdministration(text, subjectMatches);
   }
 
   function resolveConceptTerm(term) {
@@ -2557,7 +2558,7 @@
 
 
   function normalizeFagkoblinger(value) {
-    return global.AHAChatSubjects.normalizeFagkoblinger(value);
+    return chatModule("subjects", "AHAChatSubjects").normalizeFagkoblinger(value);
   }
 
   function normalizeHistoryGoLinks(value) {
@@ -2593,15 +2594,15 @@
   }
 
   function inferReligiousLexiconEvidence(rawText = "") {
-    return global.AHAChatSignals.inferReligiousLexiconEvidence(rawText);
+    return chatModule("signals", "AHAChatSignals").inferReligiousLexiconEvidence(rawText);
   }
 
   function isAcademicLikeType(type) {
-    return global.AHAChatSubjects.isAcademicLikeType(type);
+    return chatModule("subjects", "AHAChatSubjects").isAcademicLikeType(type);
   }
 
   function isDayLogType(type) {
-    return global.AHAChatSubjects.isDayLogType(type);
+    return chatModule("subjects", "AHAChatSubjects").isDayLogType(type);
   }
 
   function ensureAcademicAfterworkShape(afterwork = {}, canonical = {}) {
@@ -2645,19 +2646,19 @@
   }
 
   function buildAhaAnalysisExportBundle() {
-    return global.AHAChatExport.buildAhaAnalysisExportBundle(getAhaExportDeps());
+    return chatModule("export", "AHAChatExport").buildAhaAnalysisExportBundle(getAhaExportDeps());
   }
 
   function formatAhaAnalysisExportMarkdown(bundle) {
-    return global.AHAChatExport.formatAhaAnalysisExportMarkdown(bundle);
+    return chatModule("export", "AHAChatExport").formatAhaAnalysisExportMarkdown(bundle);
   }
 
   async function copyAhaAnalysisExportMarkdown() {
-    return global.AHAChatExport.copyAhaAnalysisExportMarkdown(getAhaExportDeps());
+    return chatModule("export", "AHAChatExport").copyAhaAnalysisExportMarkdown(getAhaExportDeps());
   }
 
   function exportAhaAnalysisJson() {
-    return global.AHAChatExport.exportAhaAnalysisJson(getAhaExportDeps());
+    return chatModule("export", "AHAChatExport").exportAhaAnalysisJson(getAhaExportDeps());
   }
 
   // AHA Analyse Explorer: fanene under chatten rendres fra samme
@@ -2679,7 +2680,7 @@
   global.refreshAhaExplorer = refreshAhaExplorer;
   // Analyse-hjelpere ligger i ahaChatAnalysis.js; her beholdes tynne delegerende wrappere.
   function buildOpinionArticleQualityAnalysis(raw, evidence, sentences) {
-    return global.AHAChatAnalysis.buildOpinionArticleQualityAnalysis(raw, evidence, sentences);
+    return chatModule("analysis", "AHAChatAnalysis").buildOpinionArticleQualityAnalysis(raw, evidence, sentences);
   }
 
   function normalizeAcademicCandidateText(value) {
@@ -2767,7 +2768,7 @@
   // AHA Chat viser ett relevant hovedsvar med passende lengde. Tekstnormaliseringen
   // ligger i ahaChatReplyFormat.js; her beholdes en tynn delegerende wrapper.
   function normalizeAhaVisibleReply(rawReply, userText) {
-    return global.AHAChatReplyFormat.normalizeAhaVisibleReply(rawReply, userText);
+    return chatModule("replyFormat", "AHAChatReplyFormat").normalizeAhaVisibleReply(rawReply, userText);
   }
 
   function consumePendingChatPrompt() {

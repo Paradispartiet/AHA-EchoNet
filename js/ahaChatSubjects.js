@@ -138,7 +138,7 @@
     return String(type || "").trim().toLowerCase() === "day_log";
   }
 
-  global.AHAChatSubjects = Object.assign({}, global.AHAChatSubjects || {}, {
+  const publicApi = Object.assign({}, global.AHAChatSubjects || {}, {
     normalizeSubjectLinks,
     enrichSubjectMatchesForClimateConflict,
     enrichSubjectMatchesForPublicAdministration,
@@ -146,4 +146,6 @@
     isAcademicLikeType,
     isDayLogType
   });
+  global.AHAChatSubjects = publicApi;
+  global.AHAModuleApi?.register?.("chat.subjects", publicApi, { version: 1, legacyGlobal: "AHAChatSubjects", exports: Object.keys(publicApi) });
 })(window);

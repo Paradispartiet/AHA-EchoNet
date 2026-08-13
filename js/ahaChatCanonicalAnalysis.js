@@ -285,5 +285,7 @@
     };
   }
 
-  global.AHAChatCanonicalAnalysis = Object.assign({}, global.AHAChatCanonicalAnalysis || {}, { create });
+  const publicApi = Object.assign({}, global.AHAChatCanonicalAnalysis || {}, { create });
+  global.AHAChatCanonicalAnalysis = publicApi;
+  global.AHAModuleApi?.register?.("chat.canonicalAnalysis", publicApi, { version: 1, legacyGlobal: "AHAChatCanonicalAnalysis", exports: Object.keys(publicApi) });
 })(window);

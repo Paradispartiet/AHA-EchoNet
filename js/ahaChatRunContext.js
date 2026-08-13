@@ -530,5 +530,7 @@
     });
   }
 
-  global.AHAChatRunContext = Object.freeze({ create, createSubmissionRuntime });
+  const publicApi = Object.freeze({ create, createSubmissionRuntime });
+  global.AHAChatRunContext = publicApi;
+  global.AHAModuleApi?.register?.("chat.runContext", publicApi, { version: 1, legacyGlobal: "AHAChatRunContext", exports: ["create", "createSubmissionRuntime"] });
 })(window);

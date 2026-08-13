@@ -199,7 +199,7 @@
     return [];
   }
 
-  global.AHAChatAnalysis = Object.assign({}, global.AHAChatAnalysis || {}, {
+  const publicApi = Object.assign({}, global.AHAChatAnalysis || {}, {
     detectOpinionDomain,
     buildOpinionArticleQualityAnalysis,
     isValidCanonicalAnalysisShape,
@@ -208,4 +208,6 @@
     normalizeAnalysisWarnings,
     buildHistoryGoLinksFromDomain
   });
+  global.AHAChatAnalysis = publicApi;
+  global.AHAModuleApi?.register?.("chat.analysis", publicApi, { version: 1, legacyGlobal: "AHAChatAnalysis", exports: Object.keys(publicApi) });
 })(window);

@@ -447,5 +447,7 @@
     };
   }
 
-  global.AHAChatAfterwork = Object.freeze({ create, createAutoOutputAdapter });
+  const publicApi = Object.freeze({ create, createAutoOutputAdapter });
+  global.AHAChatAfterwork = publicApi;
+  global.AHAModuleApi?.register?.("chat.afterwork", publicApi, { version: 1, legacyGlobal: "AHAChatAfterwork", exports: ["create", "createAutoOutputAdapter"] });
 })(typeof window !== "undefined" ? window : globalThis);

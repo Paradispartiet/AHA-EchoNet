@@ -806,5 +806,7 @@
     });
   }
 
-  global.AHAChatKnowledgeView = Object.freeze({ create });
+  const publicApi = Object.freeze({ create });
+  global.AHAChatKnowledgeView = publicApi;
+  global.AHAModuleApi?.register?.("chat.knowledgeView", publicApi, { version: 1, legacyGlobal: "AHAChatKnowledgeView", exports: ["create"] });
 })(typeof window !== "undefined" ? window : globalThis);

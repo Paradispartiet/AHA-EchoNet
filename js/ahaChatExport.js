@@ -721,11 +721,13 @@ ${"```"}
 
   global.AHAChatExportTestHooks = { extractTopicTerms, inferTopicConsistencyContract, buildTopicConsistencyReport };
 
-  global.AHAChatExport = {
+  const publicApi = {
     safeSerializeForExport,
     buildAhaAnalysisExportBundle,
     formatAhaAnalysisExportMarkdown,
     copyAhaAnalysisExportMarkdown,
     exportAhaAnalysisJson
   };
+  global.AHAChatExport = publicApi;
+  global.AHAModuleApi?.register?.("chat.export", publicApi, { version: 1, legacyGlobal: "AHAChatExport", exports: Object.keys(publicApi) });
 }(window));

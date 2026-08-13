@@ -141,7 +141,7 @@
     return evidence;
   }
 
-  global.AHAChatTextUtils = {
+  const publicApi = {
     cleanArticleText,
     toSentences,
     dedupeSentenceLikeContent,
@@ -150,4 +150,6 @@
     stripInlineBoilerplate,
     collectOpinionArticleEvidence
   };
+  global.AHAChatTextUtils = publicApi;
+  global.AHAModuleApi?.register?.("chat.textUtils", publicApi, { version: 1, legacyGlobal: "AHAChatTextUtils", exports: Object.keys(publicApi) });
 })(window);

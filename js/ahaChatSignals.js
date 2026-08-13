@@ -171,7 +171,7 @@
     return "general";
   }
 
-  global.AHAChatSignals = {
+  const publicApi = {
     detectGeopoliticalPowerSignal,
     detectTextType,
     inferReligiousLexiconEvidence,
@@ -181,4 +181,6 @@
     detectInstitutionalMediaHistorySignal,
     detectCanonicalAnalysisDomain
   };
+  global.AHAChatSignals = publicApi;
+  global.AHAModuleApi?.register?.("chat.signals", publicApi, { version: 1, legacyGlobal: "AHAChatSignals", exports: Object.keys(publicApi) });
 })(window);

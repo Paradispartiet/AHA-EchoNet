@@ -877,5 +877,7 @@
     };
   }
 
-  global.AHAChatAutoAnalysis = Object.assign({}, global.AHAChatAutoAnalysis || {}, { create });
+  const publicApi = Object.assign({}, global.AHAChatAutoAnalysis || {}, { create });
+  global.AHAChatAutoAnalysis = publicApi;
+  global.AHAModuleApi?.register?.("chat.autoAnalysis", publicApi, { version: 1, legacyGlobal: "AHAChatAutoAnalysis", exports: Object.keys(publicApi) });
 })(window);

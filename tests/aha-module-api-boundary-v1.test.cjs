@@ -122,6 +122,39 @@ assert.throws(
   'middleware ids must not be silently overwritten'
 );
 
+const chatModules = [
+  ['chat.textUtils', 'AHAChatTextUtils', 'js/ahaChatTextUtils.js'],
+  ['chat.signals', 'AHAChatSignals', 'js/ahaChatSignals.js'],
+  ['chat.subjects', 'AHAChatSubjects', 'js/ahaChatSubjects.js'],
+  ['chat.analysis', 'AHAChatAnalysis', 'js/ahaChatAnalysis.js'],
+  ['chat.export', 'AHAChatExport', 'js/ahaChatExport.js'],
+  ['chat.replyFormat', 'AHAChatReplyFormat', 'js/ahaChatReplyFormat.js'],
+  ['chat.memoryControls', 'AHAChatMemoryControls', 'js/ahaChatMemoryControls.js'],
+  ['chat.afterwork', 'AHAChatAfterwork', 'js/ahaChatAfterwork.js'],
+  ['chat.memoryRuntime', 'AHAChatMemoryRuntime', 'js/ahaChatMemoryRuntime.js'],
+  ['chat.runContext', 'AHAChatRunContext', 'js/ahaChatRunContext.js'],
+  ['chat.insightView', 'AHAChatInsightView', 'js/ahaChatInsightView.js'],
+  ['chat.knowledgeView', 'AHAChatKnowledgeView', 'js/ahaChatKnowledgeView.js'],
+  ['chat.insightPipeline', 'AHAChatInsightPipeline', 'js/ahaChatInsightPipeline.js'],
+  ['chat.personalUi', 'AHAChatPersonalUi', 'js/ahaChatPersonalUi.js'],
+  ['chat.autoAnalysis', 'AHAChatAutoAnalysis', 'js/ahaChatAutoAnalysis.js'],
+  ['chat.autoOutputView', 'AHAChatAutoOutputView', 'js/ahaChatAutoOutputView.js'],
+  ['chat.canonicalAnalysis', 'AHAChatCanonicalAnalysis', 'js/ahaChatCanonicalAnalysis.js']
+];
+for (const [moduleName, legacyGlobal, file] of chatModules) {
+  vm.runInContext(fs.readFileSync(file, 'utf8'), context, { filename: file });
+  const registered = context.AHAModuleApi.get(moduleName, { version: 1 });
+  assert.ok(registered, `${moduleName} must register`);
+  assert.equal(Object.isFrozen(registered), true, `${moduleName} facade must be frozen`);
+  assert.ok(context[legacyGlobal], `${legacyGlobal} compatibility alias must remain`);
+}
+
+const chatSource = fs.readFileSync('js/ahaChat.js', 'utf8');
+assert.match(chatSource, /function chatModule\(/, 'Chat must resolve extracted modules through the boundary');
+for (const [, legacyGlobal] of chatModules) {
+  assert.doesNotMatch(chatSource, new RegExp(`global\\.${legacyGlobal}\\b`), `Chat must not reach directly into ${legacyGlobal}`);
+}
+
 for (const file of ['js/ahaContracts.js', 'js/ahaChatInsightFeedback.js']) {
   const code = fs.readFileSync(file, 'utf8');
   assert.doesNotMatch(code, /ingestWithCandidates\s*=/, `${file} must not monkeypatch canonical ingest`);
