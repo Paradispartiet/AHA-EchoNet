@@ -76,7 +76,7 @@ function makeContext() {
     'js/ahaChatRunContext.js',
     'js/ahaChatInsightView.js',
     'js/ahaChatAutoAnalysis.js', 'js/ahaChatAutoOutputView.js',
-    'js/ahaChatAnalysisPolicy.js', 'js/ahaChatCanonicalAnalysis.js', 'js/ahaChatKnowledgeView.js', 'js/ahaChatInsightPipeline.js', 'js/ahaChatPersonalUi.js', 'js/ahaChat.js'
+    'js/ahaChatAnalysisPolicy.js', 'js/ahaChatCanonicalAnalysis.js', 'js/ahaChatKnowledgeView.js', 'js/ahaChatInsightPipeline.js', 'js/ahaChatPersonalUi.js', 'js/ahaChatAcademicInsightView.js', 'js/ahaChat.js'
   ].forEach((file) => vm.runInNewContext(fs.readFileSync(file, 'utf8'), context, { filename: file }));
 
   return context;

@@ -77,6 +77,7 @@ Eksisterende filer:
 - `chat.html`
 - `js/ahaChat.js`
 - `js/ahaChatAnalysisPolicy.js`
+- `js/ahaChatAcademicInsightView.js`
 - `aha-chat.css`
 
 Status:
@@ -647,6 +648,7 @@ Les først faktisk:
 - ahaDashboard.js
 - ahaChat.js
 - ahaChatAnalysisPolicy.js
+- ahaChatAcademicInsightView.js
 - ahaSources.js
 - ahaIngest.js
 - ahaHistoryGoImport.js

@@ -6,7 +6,7 @@ const ingestCode = fs.readFileSync('js/ahaIngest.js', 'utf8');
 const contractsCode = fs.readFileSync('js/ahaContracts.js', 'utf8');
 const snapshotCode = fs.readFileSync('js/ahaConversationInsightSnapshot.js', 'utf8');
 const feedbackCode = fs.readFileSync('js/ahaChatInsightFeedback.js', 'utf8');
-const chatCode = fs.readFileSync('js/ahaChatInsightPipeline.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatPersonalUi.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChat.js', 'utf8');
+const chatCode = fs.readFileSync('js/ahaChatInsightPipeline.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatPersonalUi.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatAcademicInsightView.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChat.js', 'utf8');
 const chatHtml = fs.readFileSync('chat.html', 'utf8');
 
 // Lock the browser wiring: canonical ingest + contracts must load before Chat,
@@ -14,6 +14,7 @@ const chatHtml = fs.readFileSync('chat.html', 'utf8');
 const scriptOrder = [
   'js/ahaIngest.js',
   'js/ahaContracts.js',
+  'js/ahaChatAcademicInsightView.js',
   'js/ahaConversationInsightSnapshot.js',
   'js/ahaExplorer.js',
   'js/ahaChat.js',
