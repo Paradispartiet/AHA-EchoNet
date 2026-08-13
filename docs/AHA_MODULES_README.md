@@ -76,6 +76,7 @@ Ansvar:
 Eksisterende filer:
 - `chat.html`
 - `js/ahaChat.js`
+- `js/ahaChatChamberStore.js`
 - `js/ahaChatAutoOutputView.js`
 - `js/ahaChatAnalysisStateView.js`
 - `js/ahaChatAutoAnalysis.js`
@@ -99,6 +100,8 @@ Status:
   versjonerte `chat.autoAnalysis`-modulen
 - eier auto-output-cachens nøkkel, format, legacy-lesing og sletting i den
   versjonerte `chat.autoOutputStore`-modulen
+- eier innsiktskammerets nøkkel, fallback, lokale skrivestempel,
+  `aha:chamber-saved`-signal og sletting i `chat.chamberStore`
 - eier synlig analysis-run-state, debugfelt, processing, eksporttilgjengelighet
   og visuell reset i den versjonerte `chat.analysisStateView`-modulen
 - eier normalisert kildeidentitet, deterministisk kort-hash og nøkkelordrangering
@@ -108,7 +111,7 @@ Status:
 - eier aktiv analyse-/kunnskapskontekst og kartvisning i `chat.knowledgeView`
 - eier meldingsrendering, fagchips, highlights og samtalens tom-/svarstatus i
   `chat.conversationView`, separat fra den lokale `ahaChatPersistence`-lagringen
-- bruker `ahaChat.js` som orkestrator uten parallelle cache-, analyse-state-,
+- bruker `ahaChat.js` som orkestrator uten parallelle kammerlager-, cache-, analyse-state-,
   kildeidentitets-, analyse-, policy- eller view-implementasjoner
 
 Mangler før ferdig:

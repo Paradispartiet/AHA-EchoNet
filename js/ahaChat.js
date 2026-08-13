@@ -5,7 +5,6 @@
   "use strict";
 
   const SUBJECT_ID = "sub_laring";
-  const STORAGE_KEY = "aha_insight_chamber_v1";
   const HIGHLIGHTS_STORAGE_KEY = "aha_chat_highlights_v1";
   const CHAT_THREAD_ID = "default_thread";
 
@@ -31,6 +30,14 @@
   if (typeof shortHash !== "function" || typeof takeKeywords !== "function" || typeof sourceHash !== "function") {
     throw new Error("AHAChatTextUtils må eksponere shortHash, takeKeywords og sourceHash.");
   }
+
+  const chamberStore = chatModule("chamberStore", "AHAChatChamberStore")?.create?.({
+    createEmptyChamber: () => insightsApi().createEmptyChamber()
+  });
+  if (!chamberStore) throw new Error("AHAChatChamberStore må lastes før ahaChat.js.");
+  const loadChamberFromStorage = chamberStore.load;
+  const saveChamberToStorage = chamberStore.save;
+  const clearChamberStorage = chamberStore.clear;
 
   const autoOutputStore = chatModule("autoOutputStore", "AHAChatAutoOutputStore")?.create?.({
     sourceHash,
@@ -582,35 +589,6 @@
   const LEADING_PUNCTUATION_PATTERN = /^[\s"'“”«».,:;|\-–—]+/;
   const LES_OGSA_TEASER_PATTERN = /(«|»|"|')?\s*les\s+også\s*:?\s*[^.!?\n]*(?:[.!?]|$)/ig;
   const TEASER_TITLE_PATTERN = /^(når\s+vekst\s+blir\s+en\s+trussel)\b/i;
-  function loadChamberFromStorage() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return insightsApi().createEmptyChamber();
-      return JSON.parse(raw);
-    } catch (e) {
-      console.warn("Kunne ikke laste innsiktskammer, lager nytt.", e);
-      return insightsApi().createEmptyChamber();
-    }
-  }
-
-  function saveChamberToStorage(chamber) {
-    try {
-      // Stempler hvert lokale skriv med tidspunkt så ahaChamberSync kan
-      // sammenligne mot Supabase sin updated_at i pull-fasen.
-      if (chamber && typeof chamber === "object") {
-        chamber._local_updated_at = new Date().toISOString();
-      }
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(chamber));
-      try {
-        global.dispatchEvent(new CustomEvent("aha:chamber-saved", {
-          detail: { source: "ahaChat", insight_count: (chamber?.insights || []).length }
-        }));
-      } catch {}
-    } catch (e) {
-      console.warn("Kunne ikke lagre innsiktskammer.", e);
-    }
-  }
-
   function getThemeId() {
     const input = document.getElementById("theme-id");
     const value = input && String(input.value || "").trim();
@@ -923,7 +901,7 @@
   }
 
   function reset() {
-    localStorage.removeItem(STORAGE_KEY);
+    clearChamberStorage();
     localStorage.removeItem(HIGHLIGHTS_STORAGE_KEY);
     clearAutoOutputs();
     localStorage.removeItem(AFTERWORK_STORAGE_KEY);

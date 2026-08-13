@@ -117,8 +117,9 @@ loadDashboardCounts()
 `ahaChamberSync.js` håndterer toveis sync:
 
 ```text
-- Lokale skriv via saveChamberToStorage / saveChamberFallback setter
-  chamber._local_updated_at og dispatcher aha:chamber-saved.
+- Lokale Chat-skriv via `chat.chamberStore` og øvrige skriv via
+  `saveChamberFallback` setter `chamber._local_updated_at` og dispatcher
+  `aha:chamber-saved`.
 - ahaChamberSync lytter og pusher til Supabase via AHARepository.saveChamber
   med 1.5 s debounce.
 - På aha:auth-ready trekker ahaChamberSync remote chamber via

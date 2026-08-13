@@ -124,6 +124,7 @@ assert.throws(
 
 const chatModules = [
   ['chat.textUtils', 'AHAChatTextUtils', 'js/ahaChatTextUtils.js'],
+  ['chat.chamberStore', 'AHAChatChamberStore', 'js/ahaChatChamberStore.js'],
   ['chat.signals', 'AHAChatSignals', 'js/ahaChatSignals.js'],
   ['chat.analysisPolicy', 'AHAChatAnalysisPolicy', 'js/ahaChatAnalysisPolicy.js'],
   ['chat.conceptPolicy', 'AHAChatConceptPolicy', 'js/ahaChatConceptPolicy.js'],
@@ -161,6 +162,10 @@ const autoOutputStore = context.AHAModuleApi.get('chat.autoOutputStore', { versi
 assert.equal(Object.isFrozen(autoOutputStore), true, 'chat.autoOutputStore facade must be frozen');
 assert.equal(autoOutputStore.STORAGE_KEY, 'aha_chat_auto_outputs_v1');
 assert.equal(typeof autoOutputStore.create, 'function');
+const chamberStore = context.AHAModuleApi.get('chat.chamberStore', { version: 1 });
+assert.equal(chamberStore.STORAGE_KEY, 'aha_insight_chamber_v1');
+assert.equal(chamberStore.SAVED_EVENT, 'aha:chamber-saved');
+assert.equal(typeof chamberStore.create, 'function');
 
 const chatSource = fs.readFileSync('js/ahaChat.js', 'utf8');
 assert.match(chatSource, /function chatModule\(/, 'Chat must resolve extracted modules through the boundary');
