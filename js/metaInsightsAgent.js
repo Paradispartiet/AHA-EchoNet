@@ -706,6 +706,152 @@
     };
   }
 
+  function createChatSession(deps = {}) {
+    const updateEmptyState = typeof deps.updateEmptyState === "function" ? deps.updateEmptyState : () => {};
+    const setStatusNote = typeof deps.setStatusNote === "function" ? deps.setStatusNote : () => {};
+    let activeSession = null;
+
+    function getActiveMetaAiSession() {
+      return activeSession;
+    }
+
+    function appendMetaAiLine(parent, className, text) {
+      const el = global.document.createElement("div");
+      el.className = className;
+      el.textContent = text;
+      parent.appendChild(el);
+      return el;
+    }
+
+    function renderMetaAiSessionBox(session) {
+      const log = global.document.getElementById("chat-log");
+      if (!log || !session) return null;
+      const summary = session.agentContext?.algorithmicSummary || {};
+      const readiness = summary.readiness || {};
+      const themes = (Array.isArray(summary.strongest_themes) ? summary.strongest_themes : []).slice(0, 3);
+      const concepts = (Array.isArray(summary.strongest_concepts) ? summary.strongest_concepts : []).slice(0, 3);
+      const box = global.document.createElement("section");
+      box.className = "meta-ai-session-box";
+      box.setAttribute("aria-label", "Meta Insights AI-session");
+      box.dataset.sessionId = String(session.sessionId || "");
+      appendMetaAiLine(box, "meta-ai-session-title", "Meta Insights AI");
+      appendMetaAiLine(box, "meta-ai-session-row", `Session: ${session.sessionId || "ukjent"}`);
+      appendMetaAiLine(box, "meta-ai-session-row", `Beredskap: ${readiness.level || "ukjent"} (${Number(readiness.score) || 0}/100)`);
+      appendMetaAiLine(box, "meta-ai-session-row", `Læringsmodus: ${summary.learning_mode || "ukjent"}`);
+      appendMetaAiLine(box, "meta-ai-session-row", `Topp temaer: ${themes.join(", ") || "ingen ennå"}`);
+      appendMetaAiLine(box, "meta-ai-session-row", `Topp begreper: ${concepts.join(", ") || "ingen ennå"}`);
+      log.appendChild(box);
+      log.scrollTop = log.scrollHeight;
+      updateEmptyState();
+      return box;
+    }
+
+    function startMetaAiSession(payload) {
+      activeSession = {
+        sessionId: String(payload?.sessionId || ""),
+        createdAt: String(payload?.createdAt || ""),
+        agentContext: payload?.agentContext && typeof payload.agentContext === "object" ? payload.agentContext : null
+      };
+      renderMetaAiSessionBox(activeSession);
+      setStatusNote("Meta Insights AI-session er klar. Send prompten for å la AHA tenke høyt.");
+      return activeSession;
+    }
+
+    function saveMetaAiClaimFeedback(claim, response, statusEl) {
+      const memoryApi = global.AHAMetaInsightsMemory;
+      const report = (text) => {
+        if (statusEl) statusEl.textContent = text;
+        setStatusNote(text);
+      };
+      if (!memoryApi || typeof memoryApi.addFeedback !== "function") {
+        report("Meta-minnet er ikke tilgjengelig.");
+        return null;
+      }
+      const result = memoryApi.addFeedback({
+        sessionId: activeSession?.sessionId || "",
+        claimId: claim?.id || "",
+        claimText: claim?.text || "",
+        response,
+        basis: Array.isArray(claim?.basis) ? claim.basis : [],
+        confidence: Number(claim?.confidence) || 0
+      });
+      report(result?.ok ? `Feedback lagret: «${response}».` : "Kunne ikke lagre feedback.");
+      return result;
+    }
+
+    function renderMetaAiClaimCard(parent, claim) {
+      const card = global.document.createElement("article");
+      card.className = "meta-ai-claim-card";
+      card.dataset.claimId = String(claim.id || "");
+      appendMetaAiLine(card, "meta-ai-claim-text", claim.text);
+      if (Array.isArray(claim.basis) && claim.basis.length) {
+        appendMetaAiLine(card, "meta-ai-claim-basis", `Grunnlag: ${claim.basis.join("; ")}`);
+      }
+      appendMetaAiLine(card, "meta-ai-claim-confidence", `Confidence: ${Number(claim.confidence) || 0}`);
+      const statusEl = appendMetaAiLine(card, "meta-ai-claim-status", "");
+      const buttonRow = global.document.createElement("div");
+      buttonRow.className = "meta-ai-claim-feedback";
+      const labels = { stemmer: "Stemmer", delvis: "Delvis", feil: "Feil", viktig: "Viktig", utdatert: "Utdatert" };
+      ["stemmer", "delvis", "feil", "viktig", "utdatert"].forEach((response) => {
+        const btn = global.document.createElement("button");
+        btn.type = "button";
+        btn.className = "meta-ai-feedback-btn";
+        btn.dataset.feedbackResponse = response;
+        btn.textContent = labels[response];
+        btn.addEventListener("click", () => saveMetaAiClaimFeedback(claim, response, statusEl));
+        buttonRow.appendChild(btn);
+      });
+      card.appendChild(buttonRow);
+      parent.appendChild(card);
+      return card;
+    }
+
+    function renderMetaAiClaims(parsed) {
+      const log = global.document.getElementById("chat-log");
+      if (!log) return null;
+      const section = global.document.createElement("section");
+      section.className = "meta-ai-claims";
+      section.setAttribute("aria-label", "Meta Insights AI-hypoteser");
+      if (parsed?.ok && Array.isArray(parsed.claims) && parsed.claims.length) {
+        appendMetaAiLine(section, "meta-ai-claims-title", "AHA sine meta-hypoteser – gi feedback:");
+        parsed.claims.forEach((claim) => renderMetaAiClaimCard(section, claim));
+        (parsed.questions || []).slice(0, 3).forEach((question) => {
+          appendMetaAiLine(section, "meta-ai-question", `Spørsmål: ${question}`);
+        });
+        if (parsed.suggested_next_step) {
+          appendMetaAiLine(section, "meta-ai-next-step", `Foreslått neste steg: ${parsed.suggested_next_step}`);
+        }
+      } else {
+        appendMetaAiLine(section, "meta-ai-claims-title", "AHA svarte i fritekst. Feedback-knappene aktiveres når svaret kommer strukturert.");
+      }
+      log.appendChild(section);
+      log.scrollTop = log.scrollHeight;
+      updateEmptyState();
+      return section;
+    }
+
+    function maybeHandleMetaAiAgentReply(rawReply) {
+      if (!activeSession) return null;
+      let parsed = null;
+      try {
+        parsed = parseAgentResponse(rawReply);
+      } catch {
+        return null;
+      }
+      renderMetaAiClaims(parsed);
+      return parsed;
+    }
+
+    return {
+      getActiveMetaAiSession,
+      renderMetaAiSessionBox,
+      startMetaAiSession,
+      saveMetaAiClaimFeedback,
+      renderMetaAiClaims,
+      maybeHandleMetaAiAgentReply
+    };
+  }
+
   const AHAMetaInsightsAgent = {
     AGENT_ID,
     AGENT_VERSION,
@@ -718,7 +864,8 @@
     buildAgentPrompt,
     createAgentSession,
     savePendingAgentSession,
-    parseAgentResponse
+    parseAgentResponse,
+    createChatSession
   };
 
   if (typeof module !== "undefined" && module.exports) {
