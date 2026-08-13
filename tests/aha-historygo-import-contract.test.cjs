@@ -17,6 +17,9 @@ assert.equal(schema.properties.contract_version.const, Contract.CONTRACT_VERSION
 assert.equal(schema.additionalProperties, false);
 assert.deepEqual(Object.keys(schema.properties).sort(), Array.from(Contract.TOP_LEVEL_KEYS));
 for (const key of Contract.REQUIRED_ARRAYS) assert.ok(schema.required.includes(key), `${key} must be required by schema`);
+for (const key of Contract.OBJECT_OR_ARRAY_FIELDS) {
+  assert.deepEqual(Array.from(schema.properties[key].type).sort(), ['array', 'object'], `${key} schema/runtime shapes must match`);
+}
 
 const valid = Contract.preparePayload(readFixture('valid-v1'));
 assert.equal(valid.ok, true);
@@ -51,5 +54,10 @@ assert.equal(unknownField.errors[0].code, 'unknown_property');
 const invalidItem = Contract.preparePayload({ ...readFixture('valid-v1'), notes: ['raw string'] });
 assert.equal(invalidItem.ok, false);
 assert.equal(invalidItem.errors[0].code, 'invalid_item_type');
+
+const realHistoryGoExport = Contract.preparePayload(readFixture('history-go-export-array-visited-v1'));
+assert.equal(realHistoryGoExport.ok, true, 'real History Go exporter fixture must satisfy the AHA runtime contract');
+assert.ok(Array.isArray(realHistoryGoExport.payload.visited_places));
+assert.deepEqual(Array.from(realHistoryGoExport.payload.visited_places), ['akershus_festning', 'stortinget']);
 
 console.log('aha-historygo-import-contract.test.cjs passed');

@@ -33,7 +33,7 @@
     "hg_learning_log_v1": { "type": "array", "items": { "type": "object" } },
     "hg_insights_events_v1": { "type": "array", "items": { "type": "object" } },
     "merits_by_category": { "type": "object" },
-    "visited_places": { "type": "object" },
+    "visited_places": { "type": ["object", "array"] },
     "people_collected": { "type": ["object", "array"] },
     "hg_unlocks_v1": { "type": ["object", "array"] },
     "quiz_progress": { "type": "object" },

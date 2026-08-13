@@ -1,0 +1,119 @@
+{
+  "schema_version": "aha_import_payload_v1",
+  "contract_version": 1,
+  "user_id": "local_user",
+  "profile_id": null,
+  "source": "historygo",
+  "auth_source": "localStorage",
+  "exported_at": "2026-08-13T12:00:00.000Z",
+  "hg_knowledge_entries_v2": [
+    {
+      "id": "knowledge-1",
+      "subject_id": "historie",
+      "topic": "Kildekritikk",
+      "text": "Kilder må vurderes i sin historiske sammenheng.",
+      "concept_ids": ["kildekritikk"]
+    }
+  ],
+  "hg_knowledge_memory_v1": { "version": 1 },
+  "hg_learning_log_v1": [
+    {
+      "type": "quiz",
+      "name": "Kildequiz",
+      "note": "Sammenlignet avsender og kontekst.",
+      "concepts": ["kildekritikk"],
+      "categoryId": "historie"
+    }
+  ],
+  "hg_insights_events_v1": [
+    {
+      "concepts": ["demokrati", "offentlighet"],
+      "categoryId": "samfunn",
+      "placeId": "stortinget"
+    }
+  ],
+  "merits_by_category": { "historie": 2 },
+  "visited_places": ["akershus_festning", "stortinget"],
+  "people_collected": { "eidsvollsmann_1": true },
+  "hg_unlocks_v1": ["akershus_festning"],
+  "quiz_progress": { "kildequiz": { "correct": 3, "total": 3 } },
+  "historygo_progress": { "level": 2 },
+  "trivia_universe": {},
+  "hg_groundhopper_stats_v1": { "version": 1 },
+  "hg_pc_wallet_v1": { "balance": 12 },
+  "local_profile": { "display_name": "Lokal bruker" },
+  "aha_profile_cache": {},
+  "nextup": {
+    "current": { "schema": "hg_nextup_tri_v1" },
+    "because": "Fordi du arbeider med kildekritikk.",
+    "history": [],
+    "schema": "hg_nextup_tri_v1",
+    "mode": { "mode": "learn" },
+    "active_path": { "summary": { "title": "Historie" } },
+    "learning_signal": {
+      "preferred_nextup_types": [],
+      "ignored_nextup_types": [],
+      "dominant_modes": [{ "mode": "learn", "count": 1 }],
+      "active_path_summary": {
+        "title": "Historie",
+        "description": "",
+        "place_ids": [],
+        "emne_ids": [],
+        "story_ids": [],
+        "dominant_types": [],
+        "step_count": 0
+      },
+      "dominant_topics": [
+        { "topic": "historie", "count": 1 },
+        { "topic": "samfunn", "count": 1 }
+      ],
+      "dominant_sources": [],
+      "learning_style": "variert",
+      "inferred_interests": [],
+      "recommended_learning_paths": [],
+      "interpretation_texts": ["NextUp-valgene dine peker mot tydelige læringstemaer."],
+      "confidence": 0.15
+    }
+  },
+  "nextup_learning_signal": {
+    "preferred_nextup_types": [],
+    "ignored_nextup_types": [],
+    "dominant_modes": [{ "mode": "learn", "count": 1 }],
+    "active_path_summary": {
+      "title": "Historie",
+      "description": "",
+      "place_ids": [],
+      "emne_ids": [],
+      "story_ids": [],
+      "dominant_types": [],
+      "step_count": 0
+    },
+    "dominant_topics": [
+      { "topic": "historie", "count": 1 },
+      { "topic": "samfunn", "count": 1 }
+    ],
+    "dominant_sources": [],
+    "learning_style": "variert",
+    "inferred_interests": [],
+    "recommended_learning_paths": [],
+    "interpretation_texts": ["NextUp-valgene dine peker mot tydelige læringstemaer."],
+    "confidence": 0.15
+  },
+  "hg_nextup_tri": { "schema": "hg_nextup_tri_v1" },
+  "hg_nextup_history_v1": [],
+  "hg_nextup_because": "Fordi du arbeider med kildekritikk.",
+  "hg_nextup_mode_v1": { "mode": "learn" },
+  "hg_active_path_v1": { "summary": { "title": "Historie" } },
+  "nextup_profile": { "active_path_summary": { "title": "Historie" } },
+  "notes": [
+    { "title": "Notat om kilder", "text": "Avsender og situasjon må vurderes sammen." }
+  ],
+  "dialogs": [
+    { "title": "Samtale om demokrati", "text": "Hvordan skapes offentlighet?" }
+  ],
+  "privacy": {
+    "scope": "private_user",
+    "public_sharing": false,
+    "model_training_allowed": false
+  }
+}

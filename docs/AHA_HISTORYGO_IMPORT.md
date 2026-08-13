@@ -9,6 +9,12 @@ Den kanoniske maskinlesbare kontrakten er
 Runtimegrensen håndheves av `js/ahaHistoryGoImportContract.js` før én eneste
 source event skrives.
 
+Produsentfixturet
+`docs/fixtures/historygo-import/history-go-export-array-visited-v1.json` er en
+faktisk `exportHistoryGoData()`-payload fra History Go. Det låser både hele
+feltsettet og den historiske listeformen for `visited_places`; v1 tillater
+derfor både objektkart og liste for akkurat dette feltet.
+
 ## Versjonspolitikk
 
 - Eksplisitt `schema_version: "aha_import_payload_v1"` valideres strengt.
@@ -19,6 +25,9 @@ source event skrives.
   gjetter ikke, degraderer ikke lydløst og delimporterer ikke payloaden.
 - Ugyldig struktur avvises før `AHAIngest`, storage apply, databasepersist og
   importlogg.
+- En kanonisk fingerprint beregnes etter validering. En allerede fullført,
+  identisk payload returneres som `duplicate: true` med null nye signaler,
+  null ny importlogg, null storage-write og null databasekall.
 
 V1 er en privat brukerimport. Kontrakten krever derfor at offentlig deling og
 modelltrening er avslått i `privacy`-feltet.
@@ -31,6 +40,11 @@ innsikter, importlogger eller databasekall kan opprettes. Den aktive
 `historygo.html`-flaten krever en avkryssing som gjelder én import og nullstilles
 etter vellykket import. Importknappene på Home åpner denne forhåndsvisnings- og
 samtykkeflaten; de importerer ikke direkte.
+
+Alle sider som laster importadapteren (`historygo.html`, `index.html`,
+`chat.html` og `status.html`) laster kontraktmodulen først. Begge offentlige
+innganger—direkte payload og shared storage—går gjennom samme samtykke,
+runtimekontrakt og duplikatport.
 
 AHA-EchoNet skal ikke bruke `ahaEmneMatcher.js` for å gjette History Go-emner på nytt. History Go har egen lokal lærings- og innsiktsmotor, og importadapteren skal lese det History Go allerede har eksportert.
 
@@ -112,6 +126,10 @@ Hvert item blir et AHA-signal.
 History Go er en valgfri kilde til AHA. History Go er ikke grunnlaget for personlig AHA.
 
 AHA skal primært forstå brukerens selvlagde materiale: chat, notes, galleri, feed, Insta, egne tekster og minner.
+
+Standardflyten skriver bare den kompakte AHA-importloggen og AHA sine egne
+source events/innsikter. History Go-eide nøkler endres ikke, og databasepersist
+er fortsatt avslått som standard.
 
 ## ahaEmneMatcher kjøres ikke på History Go-import
 
