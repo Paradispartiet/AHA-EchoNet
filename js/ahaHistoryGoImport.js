@@ -126,6 +126,8 @@
       payload_exported_at: s(p.exported_at || p.exportedAt || p.updated_at || p.updatedAt || ""),
       payload_schema_version: s(p.schema_version || ""),
       payload_migrated_from: s(c.payload_migrated_from || "") || null,
+      consent_confirmed: c.consent_confirmed === true,
+      consent_method: s(c.consent_method || "") || null,
       payload_keys: Object.keys(p),
       counts: {
         nextup: c.nextup || 0,
@@ -361,6 +363,14 @@
     };
   }
 
+  function consentRequiredResult() {
+    return {
+      error: "Bekreft privat History Go-import før AHA leser payloaden.",
+      error_code: "explicit_consent_required",
+      importedSignals: 0
+    };
+  }
+
   function collectNoteSignals(items, sourceType, fallbackTimestamp, importContext) {
     let count = 0;
     arr(items).forEach((item) => {
@@ -385,7 +395,10 @@
     return count;
   }
 
-  function importHistoryGoData(payload) {
+  function importHistoryGoData(payload, options = {}) {
+    const importOptions = obj(options);
+    if (importOptions.confirmed !== true) return consentRequiredResult();
+
     const contract = global.AHAHistoryGoImportContract;
     if (!contract || typeof contract.preparePayload !== "function") {
       return {
@@ -423,6 +436,8 @@
       payload_schema_version: prepared.contract_id,
       payload_contract_version: prepared.contract_version,
       payload_migrated_from: prepared.migrated_from,
+      consent_confirmed: true,
+      consent_method: s(importOptions.consent_method || "explicit_runtime_confirmation"),
       nextup: collectNextUpSignal(chamber, p.nextup_learning_signal || p.nextup?.learning_signal, fallbackTimestamp, importContext),
       learning_log: collectLearningLogSignals(chamber, p.hg_learning_log_v1, fallbackTimestamp, importContext),
       insight_events: collectInsightEventSignals(chamber, p.hg_insights_events_v1, fallbackTimestamp, importContext),
@@ -446,12 +461,14 @@
     return counts;
   }
 
-  function importHistoryGoDataFromSharedStorage() {
+  function importHistoryGoDataFromSharedStorage(options = {}) {
+    const importOptions = obj(options);
+    if (importOptions.confirmed !== true) return consentRequiredResult();
     const raw = localStorage.getItem(PAYLOAD_KEY);
     if (!raw) {
       throw new Error("Fant ingen aha_import_payload_v1 i localStorage.");
     }
-    return importHistoryGoData(raw);
+    return importHistoryGoData(raw, importOptions);
   }
 
   // Import-knapp håndteres av historygo.html for å unngå dobbelt-binding.

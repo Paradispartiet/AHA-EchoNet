@@ -2983,36 +2983,13 @@
   }
 
 
-  function bindHistoryGoImportTrigger() {
-    const importButton = $("btn-import-hg");
-    if (!importButton || importButton.dataset.ahaDashboardBound === "true") return;
-    importButton.dataset.ahaDashboardBound = "true";
-    importButton.addEventListener("click", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      if (typeof window.AHAHistoryGoImport?.importHistoryGoDataFromSharedStorage !== "function") {
-        console.warn("AHADashboard: importfunksjon for History Go mangler");
-        return;
-      }
-
-      try {
-        window.AHAHistoryGoImport.importHistoryGoDataFromSharedStorage();
-      } catch (error) {
-        console.warn("AHADashboard: History Go-import feilet", error);
-      }
-    });
-  }
-
   function bindImportButtons() {
     const importButtons = ["btn-import-hg-primary", "btn-import-hg-secondary"];
     importButtons.forEach((id) => {
       const button = $(id);
       if (!button || button.dataset.ahaDashboardBound === "true") return;
       button.dataset.ahaDashboardBound = "true";
-      button.addEventListener("click", () => {
-        const importTrigger = $("btn-import-hg");
-        if (importTrigger) importTrigger.click();
-      });
+      button.addEventListener("click", () => { window.location.href = "historygo.html"; });
     });
   }
 
@@ -3052,7 +3029,6 @@
 
       safeRender("renderModules", function () { renderModules(moduleHealth); });
       safeRender("bindHistoryGoHomeTile", bindHistoryGoHomeTile);
-      safeRender("bindHistoryGoImportTrigger", bindHistoryGoImportTrigger);
       safeRender("bindImportButtons", bindImportButtons);
       renderIdentity(authState);
       safeRender("renderProfileStats", () => renderProfileStats(stats, sourceLabel));
@@ -3068,7 +3044,6 @@
       lastState = { authState, stats, sourceLabel: "localStorage", moduleHealth, error };
       safeRender("renderModules", function () { renderModules(moduleHealth); });
       safeRender("bindHistoryGoHomeTile", bindHistoryGoHomeTile);
-      safeRender("bindHistoryGoImportTrigger", bindHistoryGoImportTrigger);
       safeRender("bindImportButtons", bindImportButtons);
       renderIdentity(authState);
       safeRender("renderProfileStats", () => renderProfileStats(stats, "localStorage"));

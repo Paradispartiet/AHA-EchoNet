@@ -23,9 +23,18 @@
         <a class="aha-tile-btn aha-tile-btn-secondary" href="index.html">Tilbake til AHA Home</a>
         <a class="aha-tile-btn aha-tile-btn-primary" href="/History-Go/">Åpne History Go</a>
         <button class="aha-tile-btn aha-tile-btn-secondary" id="btn-hg-refresh" type="button">Oppdater</button>
-        <button class="aha-tile-btn aha-tile-btn-primary" id="btn-hg-import" type="button">Importer fra History Go</button>
+        <button class="aha-tile-btn aha-tile-btn-primary" id="btn-hg-import" type="button" disabled>Importer fra History Go</button>
       </div>
       <p id="hg-import-status" class="aha-muted"></p>
+    </section>
+
+    <section class="aha-panel" aria-labelledby="hg-consent-title">
+      <h2 id="hg-consent-title">Bekreft privat import</h2>
+      <label>
+        <input id="hg-import-consent" type="checkbox" />
+        Jeg vil importere den viste History Go-payloaden som private AHA source events og innsikter.
+      </label>
+      <p class="aha-muted">Importen aktiverer ikke offentlig deling eller modelltrening. Bekreftelsen gjelder bare neste import og nullstilles etterpå.</p>
     </section>
 
     <section class="aha-panel">
@@ -117,18 +126,29 @@
       }
 
       function importFromHistoryGo() {
+        var consent = document.getElementById("hg-import-consent");
+        if (!consent || consent.checked !== true) {
+          setStatus("Bekreft privat import før du fortsetter.");
+          return;
+        }
         if (!window.AHAHistoryGoImport || typeof window.AHAHistoryGoImport.importHistoryGoDataFromSharedStorage !== "function") {
           setStatus("Importadapter mangler.");
           return;
         }
         try {
-          var counts = window.AHAHistoryGoImport.importHistoryGoDataFromSharedStorage();
+          var counts = window.AHAHistoryGoImport.importHistoryGoDataFromSharedStorage({
+            confirmed: true,
+            consent_method: "historygo_page_checkbox"
+          });
           if (counts && counts.error) {
             setStatus(counts.error);
             refreshStatus();
             return;
           }
           setStatus("Import fullført: " + JSON.stringify(counts));
+          consent.checked = false;
+          var importButton = document.getElementById("btn-hg-import");
+          if (importButton) importButton.disabled = true;
         } catch (error) {
           setStatus(error && error.message ? error.message : "Import feilet.");
         }
@@ -142,6 +162,14 @@
 
         var importBtn = document.getElementById("btn-hg-import");
         if (importBtn) importBtn.addEventListener("click", importFromHistoryGo);
+
+        var consent = document.getElementById("hg-import-consent");
+        if (consent && importBtn) {
+          consent.addEventListener("change", function () {
+            importBtn.disabled = consent.checked !== true;
+            if (consent.checked) setStatus("Klar for privat import.");
+          });
+        }
 
         window.addEventListener("aha:historygo-imported", refreshStatus);
       });
