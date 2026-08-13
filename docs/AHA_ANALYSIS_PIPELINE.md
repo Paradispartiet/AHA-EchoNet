@@ -1,6 +1,6 @@
 # AHA Analysis Pipeline
 
-Dette dokumentet beskriver den faktiske analyseflyten slik repoet står nå. Det er skrevet etter kodegjennomgang av `chat.html`, `js/ahaChat.js`, `js/ahaChatAnalysisPolicy.js`, `js/ahaChatConceptPolicy.js`, `js/ahaChatKnowledgeView.js`, `js/ahaChatAnalysisRunContract.js`, `js/ahaChatAcademicInsightView.js`, `js/ahaChatAnalysis.js`, `js/ahaChatExport.js`, `js/ahaEngineClient.js`, `js/ahaIngest.js`, `js/ahaSources.js` og `js/ahaAnalysisQualityLayer.js`.
+Dette dokumentet beskriver den faktiske analyseflyten slik repoet står nå. Det er skrevet etter kodegjennomgang av `chat.html`, `js/ahaChat.js`, `js/ahaChatAnalysisPolicy.js`, `js/ahaChatConceptPolicy.js`, `js/ahaChatKnowledgeView.js`, `js/ahaChatConversationView.js`, `js/ahaChatAnalysisRunContract.js`, `js/ahaChatAcademicInsightView.js`, `js/ahaChatAnalysis.js`, `js/ahaChatExport.js`, `js/ahaEngineClient.js`, `js/ahaIngest.js`, `js/ahaSources.js` og `js/ahaAnalysisQualityLayer.js`.
 
 Målet er å gjøre det tydelig hva som er kildetekst, hva som er minne, hva som er etterarbeid, hva som er cache, og hva som bare er visning.
 
@@ -110,9 +110,11 @@ tolking av merkede innsikter og bygging av syntetiske innsiktskort eies av
 `chat.academicInsightView`. Begrepskanonisering, filtrering og prioritering av
 synlige grafkanter eies av den DOM-frie `chat.conceptPolicy`, mens aktiv
 analyse-/kunnskapskontekst og kartvisning eies av `chat.knowledgeView`.
-Hovedfila orkestrerer modulene uten å duplisere domene- eller konseptpolicy.
-Uttrekkene er delegert gjennom samme offentlige modulgrense og endrer ikke den
-kildegrunnede output-kontrakten.
+Meldingsrendering, fagchips, highlights-rail og samtalens tom-/svarstatus eies av
+`chat.conversationView`; varig lokal samtalelagring og Data Intake-utvalg forblir
+et separat ansvar i `ahaChatPersistence`. Hovedfila orkestrerer modulene uten å
+duplisere domene-, konsept- eller view-policy. Uttrekkene er delegert gjennom
+samme offentlige modulgrense og endrer ikke den kildegrunnede output-kontrakten.
 
 ### `ahaEngineClient.js`
 

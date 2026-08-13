@@ -11,6 +11,7 @@ const insightViewAt = chatHtml.indexOf('js/ahaChatInsightView.js');
 const autoAnalysisAt = chatHtml.indexOf('js/ahaChatAutoAnalysis.js');
 const autoOutputViewAt = chatHtml.indexOf('js/ahaChatAutoOutputView.js');
 const conceptPolicyAt = chatHtml.indexOf('js/ahaChatConceptPolicy.js');
+const conversationViewAt = chatHtml.indexOf('js/ahaChatConversationView.js');
 const canonicalAnalysisAt = chatHtml.indexOf('js/ahaChatCanonicalAnalysis.js');
 const academicInsightViewAt = chatHtml.indexOf('js/ahaChatAcademicInsightView.js');
 const analysisRunContractAt = chatHtml.indexOf('js/ahaChatAnalysisRunContract.js');
@@ -23,10 +24,11 @@ assert.ok(insightViewAt > -1 && insightViewAt < autoAnalysisAt, 'insight view mu
 assert.ok(autoAnalysisAt > -1 && autoAnalysisAt < autoOutputViewAt, 'auto-analysis must load before the auto-output view');
 assert.ok(autoOutputViewAt > -1 && autoOutputViewAt < canonicalAnalysisAt, 'auto-output view must load before canonical analysis');
 assert.ok(conceptPolicyAt > -1 && conceptPolicyAt < chatAt, 'concept policy must load before ahaChat.js');
+assert.ok(conversationViewAt > -1 && conversationViewAt < chatAt, 'conversation view must load before ahaChat.js');
 assert.ok(canonicalAnalysisAt > -1 && canonicalAnalysisAt < chatAt, 'canonical analysis must load before ahaChat.js');
 assert.ok(academicInsightViewAt > -1 && academicInsightViewAt < chatAt, 'academic insight view must load before ahaChat.js');
 assert.ok(analysisRunContractAt > -1 && analysisRunContractAt < runContextAt, 'analysis run contract must load before the run context');
-const chatSource = fs.readFileSync('js/ahaChatInsightPipeline.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatPersonalUi.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatAnalysisRunContract.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatAcademicInsightView.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChat.js', 'utf8');
+const chatSource = fs.readFileSync('js/ahaChatInsightPipeline.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatPersonalUi.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatConversationView.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatAnalysisRunContract.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatAcademicInsightView.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChat.js', 'utf8');
 const chatOrchestratorSource = fs.readFileSync('js/ahaChat.js', 'utf8');
 assert.doesNotMatch(chatSource, /\blet activeAnalysisRun\b/, 'ahaChat.js must not keep a second active-run owner');
 assert.doesNotMatch(chatSource, /function createAnalysisRun\s*\(/, 'run creation must remain extracted');
@@ -49,6 +51,7 @@ assert.doesNotMatch(chatOrchestratorSource, /const (?:ACADEMIC_PHRASE_CONCEPTS|A
 assert.doesNotMatch(chatOrchestratorSource, /function (?:isGenericDisplayConcept|extractAcademicPhraseConcepts|normalizeSimpleStringList|normalizeTheoreticalLinks|extractAcademicTheoryLinks|mergeTheoryLinks|buildAcademicConceptCandidates)\s*\(/, 'academic concept and theory policy must remain extracted');
 assert.doesNotMatch(chatOrchestratorSource, /function (?:collectTheoryNodeLabels|buildConceptEdgeContext|resolveActiveAnalysisContext|prioritizeVisibleConceptEdges|applyPhraseConceptDisplayPreference|filterConceptLabels|canonicalizeDisplayConcept)\s*\(/, 'concept policy and active knowledge context must remain extracted');
 assert.doesNotMatch(chatOrchestratorSource, /\bWEAK_CONCEPT_WORDS\b/, 'weak concept policy must remain extracted');
+assert.doesNotMatch(chatOrchestratorSource, /function (?:normalizePreview|makeStableMessageId|loadHighlights|saveHighlights|dedupeSubjectMatches|renderSubjectChips|appendChat|previewText|toggleHighlight|isHighlighted|syncMessageHighlightState|renderHighlightsRail|updateEmptyState|updateAnswerActionsVisibility|setComposerText)\s*\(/, 'conversation rendering and highlight ownership must remain extracted');
 assert.match(fs.readFileSync('js/ahaExplorer.js', 'utf8'), /contractVersion === "aha_analysis_run_v1"/, 'Explorer must render through the versioned analysis-run view model');
 
 class El { constructor(){ this.dataset={}; this._html=''; this.textContent=''; this.disabled=false; this.hidden=false; this.className=''; this.classList={toggle(){},add(){},remove(){}}; } set innerHTML(v){this._html=String(v||'');} get innerHTML(){return this._html;} querySelector(){return null;} querySelectorAll(){return [];} addEventListener(){} appendChild(){} }
@@ -57,7 +60,7 @@ function ctx(){
   ['aha-auto-output','aha-answer-composer-status','aha-answer-composer-details','aha-answer-evaluation-status','aha-processing-indicator','aha-processing-text','btn-send'].forEach(id=>els.set(id,new El()));
   const c={ window:null, console, document:{readyState:'loading', addEventListener(){}, body:new El(), getElementById:id=>els.get(id)||null, querySelectorAll:()=>[], createElement:()=>new El()}, localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,String(v)),removeItem:k=>store.delete(k)}, navigator:{clipboard:{}}, Event:function(t){this.type=t;}, CustomEvent:function(t,o){this.type=t;this.detail=o&&o.detail;}, setTimeout, clearTimeout, Date, Math, URL:{createObjectURL(){},revokeObjectURL(){}}, Blob:function(){}, fetch:async()=>({ok:true,json:async()=>({reply:'ok'})})};
   c.window=c; c.globalThis=c;
-  ['js/ahaChatTextUtils.js','js/ahaChatSignals.js','js/ahaChatSubjects.js','js/ahaChatAnalysis.js','js/ahaChatReplyFormat.js','js/ahaChatExport.js','js/ahaChatMemoryControls.js','js/ahaChatAfterwork.js','js/ahaChatMemoryRuntime.js','js/ahaChatRunContext.js','js/ahaChatInsightView.js','js/ahaChatAutoAnalysis.js', 'js/ahaChatAutoOutputView.js','js/ahaChatAnalysisPolicy.js', 'js/ahaChatConceptPolicy.js', 'js/ahaChatCanonicalAnalysis.js', 'js/ahaChatKnowledgeView.js', 'js/ahaChatInsightPipeline.js', 'js/ahaChatPersonalUi.js', 'js/ahaChatAnalysisRunContract.js', 'js/ahaChatAcademicInsightView.js', 'js/ahaChat.js'].forEach(f=>vm.runInNewContext(fs.readFileSync(f,'utf8'),c,{filename:f}));
+  ['js/ahaChatTextUtils.js','js/ahaChatSignals.js','js/ahaChatSubjects.js','js/ahaChatAnalysis.js','js/ahaChatReplyFormat.js','js/ahaChatExport.js','js/ahaChatMemoryControls.js','js/ahaChatAfterwork.js','js/ahaChatMemoryRuntime.js','js/ahaChatRunContext.js','js/ahaChatInsightView.js','js/ahaChatAutoAnalysis.js', 'js/ahaChatAutoOutputView.js','js/ahaChatAnalysisPolicy.js', 'js/ahaChatConceptPolicy.js', 'js/ahaChatCanonicalAnalysis.js', 'js/ahaChatKnowledgeView.js', 'js/ahaChatInsightPipeline.js', 'js/ahaChatPersonalUi.js', 'js/ahaChatConversationView.js', 'js/ahaChatAnalysisRunContract.js', 'js/ahaChatAcademicInsightView.js', 'js/ahaChat.js'].forEach(f=>vm.runInNewContext(fs.readFileSync(f,'utf8'),c,{filename:f}));
   return {c,els,store};
 }
 
