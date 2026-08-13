@@ -23,6 +23,15 @@ source event skrives.
 V1 er en privat brukerimport. Kontrakten krever derfor at offentlig deling og
 modelltrening er avslått i `privacy`-feltet.
 
+## Eksplisitt samtykke
+
+Import-API-et avviser alle kall uten `confirmed: true` med
+`explicit_consent_required`, før shared storage leses eller noen source events,
+innsikter, importlogger eller databasekall kan opprettes. Den aktive
+`historygo.html`-flaten krever en avkryssing som gjelder én import og nullstilles
+etter vellykket import. Importknappene på Home åpner denne forhåndsvisnings- og
+samtykkeflaten; de importerer ikke direkte.
+
 AHA-EchoNet skal ikke bruke `ahaEmneMatcher.js` for å gjette History Go-emner på nytt. History Go har egen lokal lærings- og innsiktsmotor, og importadapteren skal lese det History Go allerede har eksportert.
 
 ## Riktig flyt
