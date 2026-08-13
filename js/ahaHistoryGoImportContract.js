@@ -20,7 +20,6 @@
     "hg_knowledge_memory_v1",
     "knowledge_universe",
     "merits_by_category",
-    "visited_places",
     "quiz_progress",
     "historygo_progress",
     "trivia_universe",
@@ -36,6 +35,12 @@
     "nextup_profile"
   ];
 
+  const OBJECT_OR_ARRAY_FIELDS = [
+    "visited_places",
+    "people_collected",
+    "hg_unlocks_v1"
+  ];
+
   const ALLOWED_KEYS = new Set([
     "schema_version",
     "contract_version",
@@ -48,8 +53,7 @@
     "aha_display_name",
     ...REQUIRED_ARRAYS,
     ...OBJECT_FIELDS,
-    "people_collected",
-    "hg_unlocks_v1",
+    ...OBJECT_OR_ARRAY_FIELDS,
     "hg_nextup_history_v1",
     "hg_nextup_because",
     "privacy"
@@ -188,7 +192,7 @@
         errors.push(issue("invalid_field_type", `$.${key}`, `${key} må være et objekt.`));
       }
     }
-    for (const key of ["people_collected", "hg_unlocks_v1"]) {
+    for (const key of OBJECT_OR_ARRAY_FIELDS) {
       if (payload[key] !== undefined && !isObject(payload[key]) && !Array.isArray(payload[key])) {
         errors.push(issue("invalid_field_type", `$.${key}`, `${key} må være et objekt eller en liste.`));
       }
@@ -264,6 +268,7 @@
     LEGACY_VERSION,
     TOP_LEVEL_KEYS: Object.freeze(Array.from(ALLOWED_KEYS).sort()),
     REQUIRED_ARRAYS: Object.freeze(REQUIRED_ARRAYS.slice()),
+    OBJECT_OR_ARRAY_FIELDS: Object.freeze(OBJECT_OR_ARRAY_FIELDS.slice()),
     preparePayload,
     validatePayload,
     migrateLegacyPayload,
@@ -273,6 +278,6 @@
   global.AHAModuleApi?.register?.("historyGo.contract", api, {
     version: 1,
     legacyGlobal: "AHAHistoryGoImportContract",
-    exports: ["CONTRACT_ID", "CONTRACT_VERSION", "LEGACY_VERSION", "TOP_LEVEL_KEYS", "REQUIRED_ARRAYS", "preparePayload", "validatePayload", "migrateLegacyPayload", "isRecognizedLegacyPayload"]
+    exports: ["CONTRACT_ID", "CONTRACT_VERSION", "LEGACY_VERSION", "TOP_LEVEL_KEYS", "REQUIRED_ARRAYS", "OBJECT_OR_ARRAY_FIELDS", "preparePayload", "validatePayload", "migrateLegacyPayload", "isRecognizedLegacyPayload"]
   });
 })(window);

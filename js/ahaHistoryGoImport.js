@@ -120,6 +120,39 @@
     }
   }
 
+  function stableSerialize(value) {
+    if (Array.isArray(value)) return `[${value.map(stableSerialize).join(",")}]`;
+    if (value && typeof value === "object") {
+      return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${stableSerialize(value[key])}`).join(",")}}`;
+    }
+    const serialized = JSON.stringify(value);
+    return serialized === undefined ? "null" : serialized;
+  }
+
+  function payloadFingerprint(payload) {
+    const input = stableSerialize(payload);
+    let high = 0xdeadbeef ^ input.length;
+    let low = 0x41c6ce57 ^ input.length;
+    for (let index = 0; index < input.length; index += 1) {
+      const code = input.charCodeAt(index);
+      high = Math.imul(high ^ code, 2654435761);
+      low = Math.imul(low ^ code, 1597334677);
+    }
+    high = Math.imul(high ^ (high >>> 16), 2246822507) ^ Math.imul(low ^ (low >>> 13), 3266489909);
+    low = Math.imul(low ^ (low >>> 16), 2246822507) ^ Math.imul(high ^ (high >>> 13), 3266489909);
+    const hex = (number) => (number >>> 0).toString(16).padStart(8, "0");
+    return `aha_historygo_payload_v1_${hex(high)}${hex(low)}`;
+  }
+
+  function findCompletedImport(payloadFingerprintValue) {
+    if (!payloadFingerprintValue) return null;
+    return arr(readJsonFromStorage(IMPORT_LOG_KEY, [])).find((entry) => (
+      entry?.payload_fingerprint === payloadFingerprintValue
+      && entry?.consent_confirmed === true
+      && Number(entry?.counts?.imported_signals ?? entry?.imported_signal_count ?? 0) >= 0
+    )) || null;
+  }
+
   function appendImportLog(payload, counts, options = {}) {
     const p = obj(payload);
     const c = obj(counts);
@@ -131,6 +164,7 @@
       payload_exported_at: s(p.exported_at || p.exportedAt || p.updated_at || p.updatedAt || ""),
       payload_schema_version: s(p.schema_version || ""),
       payload_migrated_from: s(c.payload_migrated_from || "") || null,
+      payload_fingerprint: s(c.payload_fingerprint || options.payload_fingerprint || "") || null,
       consent_confirmed: c.consent_confirmed === true,
       consent_method: s(c.consent_method || "") || null,
       payload_keys: Object.keys(p),
@@ -141,7 +175,8 @@
         knowledge: c.knowledge || 0,
         notes: c.notes || 0,
         dialogs: c.dialogs || 0,
-        storage_keys_applied: c.storage_keys_applied || 0
+        storage_keys_applied: c.storage_keys_applied || 0,
+        imported_signals: c.importedSignals || 0
       },
       local_only: true,
       database_persist_enabled: isDatabasePersistEnabled(),
@@ -425,6 +460,22 @@
     }
 
     const p = prepared.payload;
+    const fingerprint = payloadFingerprint(p);
+    const completedImport = findCompletedImport(fingerprint);
+    if (completedImport) {
+      return {
+        duplicate: true,
+        duplicate_of_import_id: s(completedImport.id || "") || null,
+        payload_fingerprint: fingerprint,
+        payload_schema_version: prepared.contract_id,
+        payload_contract_version: prepared.contract_version,
+        consent_confirmed: true,
+        importedSignals: 0,
+        storage_keys_applied: 0,
+        import_log_written: false,
+        database_persist_result: { ok: false, skipped: true, reason: "duplicate_payload" }
+      };
+    }
     const fallbackTimestamp = p.exported_at || new Date().toISOString();
     const chamber = null;
     const importId = `historygo_import_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
@@ -442,6 +493,7 @@
       payload_schema_version: prepared.contract_id,
       payload_contract_version: prepared.contract_version,
       payload_migrated_from: prepared.migrated_from,
+      payload_fingerprint: fingerprint,
       consent_confirmed: true,
       consent_method: s(importOptions.consent_method || "explicit_runtime_confirmation"),
       nextup: collectNextUpSignal(chamber, p.nextup_learning_signal || p.nextup?.learning_signal, fallbackTimestamp, importContext),
@@ -456,7 +508,7 @@
     };
     counts.importedSignals = counts.nextup + counts.learning_log + counts.insight_events + counts.knowledge + counts.notes + counts.dialogs;
 
-    const importLogResult = appendImportLog(p, counts, { import_id: importId, historygo_storage_apply_result: storageApplyResult });
+    const importLogResult = appendImportLog(p, counts, { import_id: importId, payload_fingerprint: fingerprint, historygo_storage_apply_result: storageApplyResult });
     counts.import_log_written = importLogResult.ok === true;
     counts.database_persist_result = persistImport(p, counts);
 
@@ -487,6 +539,8 @@
     applyPayloadToRuntimeAndStorage,
     persistImport,
     appendImportLog,
+    payloadFingerprint,
+    findCompletedImport,
     importHistoryGoData,
     importHistoryGoDataFromSharedStorage,
     collectKnowledgeSignals,
