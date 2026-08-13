@@ -59,3 +59,7 @@ npm run check:aha-engine-comparison
 ```
 
 Kommandoen genererer aktuell comparison-data med samme lokale JS/Python-logikk som `npm run compare:aha-engines` og sammenligner feltstatus mot `docs/reports/aha-engine-fixture-comparison-baseline.json`. Full JS/Python parity er ikke påkrevd: forbedringer fra `mismatch` til `partial` eller fra `partial` til `match` er tillatt. Gate-en feiler først når et overvåket felt får lavere rangert status enn baseline, for eksempel `match` → `partial`, `partial` → `not_checked` eller `partial` → `mismatch`.
+
+## Golden Chat output gate
+
+`npm run test:golden-chat-output` kjører alle 16 fixtures gjennom den faktiske deterministiske JavaScript Chat-runtime-en og krever eksakt samsvar med de menneskelig gjennomgåtte canonical-objektene. Den låser også auto-output, synlig svarform, påkrevde/forbudte domenetermer, source hash og isolasjon mellom påfølgende analyser. Se `docs/AHA_GOLDEN_CHAT_OUTPUT_V1.md`.

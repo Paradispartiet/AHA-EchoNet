@@ -8,6 +8,7 @@ The release snapshot is documented in:
 
 - `docs/AHA_RELEASE_READINESS_SNAPSHOT.md`
 - `docs/AHA_RELEASE_READINESS_SNAPSHOT.json`
+- `docs/AHA_GOLDEN_CHAT_OUTPUT_V1.md`
 
 Current intentional non-ready modules:
 
