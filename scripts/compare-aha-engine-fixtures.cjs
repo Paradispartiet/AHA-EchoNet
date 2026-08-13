@@ -94,6 +94,7 @@ function createChatContext() {
     'js/ahaChatInsightView.js',
     'js/ahaChatAutoAnalysis.js', 'js/ahaChatAutoOutputView.js',
     'js/ahaChatAnalysisPolicy.js',
+    'js/ahaChatConceptPolicy.js',
     'js/ahaChatCanonicalAnalysis.js',
     'js/ahaChatKnowledgeView.js', 'js/ahaChatInsightPipeline.js', 'js/ahaChatPersonalUi.js', 'js/ahaChatAnalysisRunContract.js', 'js/ahaChatAcademicInsightView.js', 'js/ahaChat.js'
   ]) {
