@@ -144,6 +144,7 @@ const chatModules = [
   ['chat.conversationView', 'AHAChatConversationView', 'js/ahaChatConversationView.js'],
   ['chat.autoAnalysis', 'AHAChatAutoAnalysis', 'js/ahaChatAutoAnalysis.js'],
   ['chat.autoOutputView', 'AHAChatAutoOutputView', 'js/ahaChatAutoOutputView.js'],
+  ['chat.analysisStateView', 'AHAChatAnalysisStateView', 'js/ahaChatAnalysisStateView.js'],
   ['chat.canonicalAnalysis', 'AHAChatCanonicalAnalysis', 'js/ahaChatCanonicalAnalysis.js']
 ];
 for (const [moduleName, legacyGlobal, file] of chatModules) {
