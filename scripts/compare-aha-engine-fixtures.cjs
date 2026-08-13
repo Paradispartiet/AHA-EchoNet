@@ -92,7 +92,7 @@ function createChatContext() {
     'js/ahaChatMemoryRuntime.js',
     'js/ahaChatRunContext.js',
     'js/ahaChatInsightView.js',
-    'js/ahaChatAutoAnalysis.js', 'js/ahaChatAutoOutputView.js',
+    'js/ahaChatAutoAnalysis.js', 'js/ahaChatAutoOutputView.js', 'js/ahaChatAnalysisStateView.js',
     'js/ahaChatAnalysisPolicy.js',
     'js/ahaChatConceptPolicy.js',
     'js/ahaChatCanonicalAnalysis.js',

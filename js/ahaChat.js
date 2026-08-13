@@ -326,6 +326,24 @@
   const updateEmptyState = conversationView.updateEmptyState;
   const updateAnswerActionsVisibility = conversationView.updateAnswerActionsVisibility;
 
+  const analysisStateView = chatModule("analysisStateView", "AHAChatAnalysisStateView")?.create?.({
+    getActiveAnalysisRun,
+    setActiveAnalysisRun,
+    clearAutoOutputs,
+    escHtml,
+    renderAhaPersonalRetrieval,
+    renderAhaAnswerComposer,
+    renderPanel,
+    renderHighlightsRail,
+    updateEmptyState
+  });
+  if (!analysisStateView) throw new Error("AHAChatAnalysisStateView må lastes før ahaChat.js.");
+  const renderAnalysisDebugPanel = analysisStateView.renderAnalysisDebugPanel;
+  const setExportButtonsEnabled = analysisStateView.setExportButtonsEnabled;
+  const setAhaProcessing = analysisStateView.setProcessing;
+  const clearActiveAnalysisState = analysisStateView.clearActiveAnalysisState;
+  const resetAnalysisStateView = analysisStateView.resetView;
+
   const autoAnalysis = chatModule("autoAnalysis", "AHAChatAutoAnalysis")?.create?.({
     cleanArticleText,
     toSentences,
@@ -553,46 +571,6 @@
     const sourceText = String(document.getElementById("aha-auto-output")?.dataset?.sourceText || "");
     return runContext.analysisTopicMismatch(payload, run, sourceText);
   }
-
-  function renderAnalysisDebugPanel(payload = {}) {
-    const canonical = payload?.canonicalAnalysis && typeof payload.canonicalAnalysis === "object" ? payload.canonicalAnalysis : {};
-    const afterwork = payload && typeof payload === "object" ? payload : {};
-    const run = getActiveAnalysisRun() || {};
-    const activeRunId = run.analysisRunId || run.runId || "";
-    return `<aside class="aha-analysis-debug" data-dev-info="analysis-run"><strong>Dev analysebinding</strong><dl>` +
-      `<div><dt>activeRunId</dt><dd>${escHtml(activeRunId)}</dd></div>` +
-      `<div><dt>canonicalAnalysis.runId</dt><dd>${escHtml(canonical.analysisRunId || canonical.runId || "")}</dd></div>` +
-      `<div><dt>afterwork.runId</dt><dd>${escHtml(afterwork.analysisRunId || afterwork.runId || "")}</dd></div>` +
-      `<div><dt>sourceHash</dt><dd>${escHtml(afterwork.sourceHash || afterwork.sourceTextHash || run.sourceHash || "")}</dd></div>` +
-      `<div><dt>sourceKind</dt><dd>${escHtml(afterwork.sourceKind || run.sourceKind || "")}</dd></div>` +
-      `<div><dt>lastUpdated</dt><dd>${escHtml(afterwork.lastUpdated || afterwork.createdAt || new Date().toISOString())}</dd></div>` +
-      `</dl></aside>`;
-  }
-
-  function clearActiveAnalysisState(run, message = "AHA analyserer ny kilde …") {
-    if (run) setActiveAnalysisRun(run);
-    clearAutoOutputs();
-    const host = document.getElementById("aha-auto-output");
-    if (host) {
-      host.dataset.analysisId = run?.analysisId || "";
-      host.dataset.analysisRunId = run?.analysisRunId || run?.runId || "";
-      host.dataset.runId = run?.runId || run?.analysisRunId || "";
-      host.dataset.sourceId = run?.sourceId || "";
-      host.dataset.sourceTextHash = run?.sourceHash || "";
-      host.dataset.sourceTextPreview = run?.sourcePreview || "";
-      host.innerHTML = `<div class="auto-output-head"><h2>AHA etterarbeid</h2><p>${escHtml(message)}</p></div>${renderAnalysisDebugPanel({})}`;
-    }
-    renderAhaPersonalRetrieval(null);
-    renderAhaAnswerComposer(null);
-    renderPanel("");
-    const afterworkPanel = document.getElementById("afterwork-panel");
-    if (afterworkPanel) afterworkPanel.innerHTML = "";
-    try { global.AHAExplorer?.clear?.(run); } catch (err) { console.warn("AHA Explorer clear feilet", err); }
-    const evaluationStatus = document.getElementById("aha-answer-evaluation-status");
-    if (evaluationStatus) evaluationStatus.textContent = "Svar-evaluering venter på aktiv analyse.";
-    setExportButtonsEnabled(false);
-  }
-
 
   const AHA_INSIGHT_CONTRACT = Object.freeze({
     FUNCTIONAL_TYPES: new Set([
@@ -951,24 +929,7 @@
     localStorage.removeItem(AFTERWORK_STORAGE_KEY);
     out("AHA-kammer nullstilt.");
     setStatusNote("Nullstilt lokalt kammer og highlights.");
-    renderPanel("");
-    const log = document.getElementById("chat-log");
-    if (log) log.innerHTML = "";
-    const autoOutput = document.getElementById("aha-auto-output");
-    if (autoOutput) autoOutput.innerHTML = "";
-    const metaProfilePanel = document.getElementById("meta-profile-panel");
-    if (metaProfilePanel) metaProfilePanel.innerHTML = "";
-    const afterworkPanel = document.getElementById("afterwork-panel");
-    if (afterworkPanel) afterworkPanel.innerHTML = "";
-    ["aha-auto-output", "afterwork-panel"].forEach((id) => {
-      const el = document.getElementById(id);
-      if (!el?.dataset) return;
-      delete el.dataset.sourceText;
-      delete el.dataset.sourceTextHash;
-      delete el.dataset.sourceTextPreview;
-    });
-    renderHighlightsRail();
-    updateEmptyState();
+    resetAnalysisStateView();
   }
 
   function cleanArticleText(raw) {
@@ -985,31 +946,6 @@
 
   function detectTextType(raw) {
     return chatModule("signals", "AHAChatSignals").detectTextType(raw);
-  }
-
-  function setAhaProcessing(isProcessing, message = "AHA analyserer teksten …") {
-    const indicator = document.getElementById("aha-processing-indicator");
-    const text = document.getElementById("aha-processing-text");
-    const sendBtn = document.getElementById("btn-send");
-
-    if (text) text.textContent = message;
-    if (indicator) indicator.hidden = !isProcessing;
-    if (sendBtn) sendBtn.disabled = Boolean(isProcessing);
-    document.body.classList.toggle("aha-is-processing", Boolean(isProcessing));
-  }
-
-  function setExportButtonsEnabled(enabled) {
-    const isEnabled = Boolean(enabled);
-    [
-      "btn-export-analysis",
-      "btn-export-analysis-json",
-      "btn-export-analysis-main",
-      "btn-export-analysis-json-main",
-      "btn-export"
-    ].forEach((id) => {
-      const btn = document.getElementById(id);
-      if (btn) btn.disabled = !isEnabled;
-    });
   }
 
   // Fag-/emne-anriking ligger i ahaChatSubjects.js; her beholdes tynne delegerende wrappere.

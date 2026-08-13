@@ -112,7 +112,9 @@ nøkkelordrangering eies av `chat.textUtils`, slik at analysis-run, etterarbeid,
 eksport og view-lag deler samme kildeidentitet. Nøkkel, cacheformat,
 bakoverkompatibel lesing, kildebundet skriving og sletting for auto-output eies
 av `chat.autoOutputStore`; orkestratoren og auto-output-runtime bruker bare
-store-kontrakten. Lesing av siste akademiske kontekst,
+store-kontrakten. Synlig analysis-run-state, debugbinding, processing,
+eksporttilgjengelighet og visuell reset eies av `chat.analysisStateView`, mens
+orkestratoren fortsatt bestemmer når state og lagring skal endres. Lesing av siste akademiske kontekst,
 tolking av merkede innsikter og bygging av syntetiske innsiktskort eies av
 `chat.academicInsightView`. Begrepskanonisering, filtrering og prioritering av
 synlige grafkanter eies av den DOM-frie `chat.conceptPolicy`, mens aktiv
@@ -120,7 +122,7 @@ analyse-/kunnskapskontekst og kartvisning eies av `chat.knowledgeView`.
 Meldingsrendering, fagchips, highlights-rail og samtalens tom-/svarstatus eies av
 `chat.conversationView`; varig lokal samtalelagring og Data Intake-utvalg forblir
 et separat ansvar i `ahaChatPersistence`. Hovedfila orkestrerer modulene uten å
-duplisere cache-, kildeidentitets-, autoanalyse-, domene-, konsept- eller view-policy. Uttrekkene er delegert gjennom
+duplisere cache-, analyse-state-, kildeidentitets-, autoanalyse-, domene-, konsept- eller view-policy. Uttrekkene er delegert gjennom
 samme offentlige modulgrense og endrer ikke den kildegrunnede output-kontrakten.
 
 ### `ahaEngineClient.js`
