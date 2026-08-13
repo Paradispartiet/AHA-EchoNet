@@ -1,6 +1,6 @@
 # AHA Analysis Pipeline
 
-Dette dokumentet beskriver den faktiske analyseflyten slik repoet står nå. Det er skrevet etter kodegjennomgang av `chat.html`, `js/ahaChat.js`, `js/ahaChatAnalysisPolicy.js`, `js/ahaChatAnalysisRunContract.js`, `js/ahaChatAcademicInsightView.js`, `js/ahaChatAnalysis.js`, `js/ahaChatExport.js`, `js/ahaEngineClient.js`, `js/ahaIngest.js`, `js/ahaSources.js` og `js/ahaAnalysisQualityLayer.js`.
+Dette dokumentet beskriver den faktiske analyseflyten slik repoet står nå. Det er skrevet etter kodegjennomgang av `chat.html`, `js/ahaChat.js`, `js/ahaChatAnalysisPolicy.js`, `js/ahaChatConceptPolicy.js`, `js/ahaChatKnowledgeView.js`, `js/ahaChatAnalysisRunContract.js`, `js/ahaChatAcademicInsightView.js`, `js/ahaChatAnalysis.js`, `js/ahaChatExport.js`, `js/ahaEngineClient.js`, `js/ahaIngest.js`, `js/ahaSources.js` og `js/ahaAnalysisQualityLayer.js`.
 
 Målet er å gjøre det tydelig hva som er kildetekst, hva som er minne, hva som er etterarbeid, hva som er cache, og hva som bare er visning.
 
@@ -107,9 +107,12 @@ fagfrase- og teoriuttrekket, begrepskandidatene, normaliseringen, fagkoblingene
 og den kanoniske kildegrunningsporten eies av den versjonerte
 `chat.analysisPolicy`-modulen. Lesing av siste akademiske kontekst,
 tolking av merkede innsikter og bygging av syntetiske innsiktskort eies av
-`chat.academicInsightView`. Hovedfila orkestrerer begge modulene uten å duplisere
-domenepolicy. Uttrekket er delegert gjennom samme offentlige modulgrense og
-endrer ikke den kildegrunnede output-kontrakten.
+`chat.academicInsightView`. Begrepskanonisering, filtrering og prioritering av
+synlige grafkanter eies av den DOM-frie `chat.conceptPolicy`, mens aktiv
+analyse-/kunnskapskontekst og kartvisning eies av `chat.knowledgeView`.
+Hovedfila orkestrerer modulene uten å duplisere domene- eller konseptpolicy.
+Uttrekkene er delegert gjennom samme offentlige modulgrense og endrer ikke den
+kildegrunnede output-kontrakten.
 
 ### `ahaEngineClient.js`
 

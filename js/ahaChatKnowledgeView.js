@@ -8,29 +8,148 @@
     const {
       subjectId: SUBJECT_ID,
       loadChamberFromStorage,
+      loadAutoOutputs,
+      loadAfterworkEntries,
       getThemeId,
       out,
       currentInsights,
       filterConceptLabels,
       canonicalizeDisplayConcept,
+      normalizeConceptKey,
+      getCanonicalConceptLabel,
+      getCanonicalConceptKey,
+      isBlockedStandaloneConcept,
       escHtml,
-      resolveActiveAnalysisContext,
       extractAcademicPhraseConcepts,
       extractAcademicTheoryLinks,
       prioritizeVisibleConceptEdges,
       isGenericDisplayConcept,
-      normalizeConceptSurface,
-      normalizeVisibleAcademicLabel,
       normalizeAfterworkConcept,
       applyPhraseConceptDisplayPreference,
       detectPublicAdministrationReformSignal,
-      buildConceptEdgeContext,
-      collectTheoryNodeLabels,
       readLatestAcademicContext,
       detectAutoAnalysisDomain,
       renderAuxPanel,
       renderPanel
     } = deps;
+
+  function collectTheoryNodeLabels(chamber) {
+    const labels = new Map();
+    const add = (value) => {
+      const label = String(value || "").trim();
+      if (!label) return;
+      const key = label.toLowerCase();
+      if (!labels.has(key)) labels.set(key, label);
+    };
+    (Array.isArray(chamber?.insights) ? chamber.insights : []).forEach((insight) => {
+      (Array.isArray(insight?.thinkers) ? insight.thinkers : []).forEach(add);
+      (Array.isArray(insight?.theories) ? insight.theories : []).forEach(add);
+      (Array.isArray(insight?.theoretical_links) ? insight.theoretical_links : []).forEach((link) => {
+        add(link?.thinker);
+        add(link?.theory);
+        add(link?.name);
+      });
+      (Array.isArray(insight?.theoryLinks) ? insight.theoryLinks : []).forEach((link) => {
+        add(link?.thinker);
+        add(link?.theory);
+        add(link?.name);
+      });
+      const insightText = [insight?.title, insight?.summary, insight?.text, insight?.source_text].filter(Boolean).join(" ");
+      extractAcademicTheoryLinks(insightText).forEach((link) => {
+        add(link?.thinker);
+        add(link?.theory);
+      });
+    });
+    return Array.from(labels.values());
+  }
+
+  function buildConceptEdgeContext(chamber, theoryLinks) {
+    const safeChamber = chamber && typeof chamber === "object" ? chamber : {};
+    const insights = Array.isArray(safeChamber?.insights) ? safeChamber.insights : [];
+    const autoOutputs = Array.isArray(safeChamber?.auto_outputs) ? safeChamber.auto_outputs : [];
+    const textParts = [];
+    const concepts = [];
+    const keywords = [];
+    const phraseConcepts = [];
+    const subjectLinks = [];
+    const addText = (value) => {
+      const text = String(value || "").trim();
+      if (text) textParts.push(text);
+    };
+    insights.forEach((insight) => {
+      addText(insight?.title);
+      addText(insight?.summary);
+      addText(insight?.text);
+      addText(insight?.source_text);
+      (Array.isArray(insight?.concepts) ? insight.concepts : []).forEach((item) => concepts.push(item));
+      (Array.isArray(insight?.keywords) ? insight.keywords : []).forEach((item) => keywords.push(item));
+      (Array.isArray(insight?.phraseConcepts) ? insight.phraseConcepts : []).forEach((item) => phraseConcepts.push(item));
+      (Array.isArray(insight?.subjectLinks) ? insight.subjectLinks : []).forEach((item) => subjectLinks.push(item));
+    });
+    autoOutputs.forEach((entry) => addText(entry?.content || entry?.text || entry?.summary));
+    const activeSource = resolveActiveAnalysisContext();
+    addText(activeSource?.sourceText);
+    (Array.isArray(activeSource?.concepts) ? activeSource.concepts : []).forEach((item) => concepts.push(item));
+    (Array.isArray(activeSource?.keywords) ? activeSource.keywords : []).forEach((item) => keywords.push(item));
+    (Array.isArray(activeSource?.phraseConcepts) ? activeSource.phraseConcepts : []).forEach((item) => phraseConcepts.push(item));
+    (Array.isArray(activeSource?.subjectLinks) ? activeSource.subjectLinks : []).forEach((item) => subjectLinks.push(item));
+    return { text: textParts.join("\n"), concepts, keywords, phraseConcepts, subjectLinks, theoryLinks };
+  }
+
+  function resolveActiveAnalysisContext() {
+    const context = { sourceText: "", concepts: [], keywords: [], phraseConcepts: [], subjectLinks: [] };
+    const addUnique = (target, items) => {
+      (Array.isArray(items) ? items : []).forEach((item) => {
+        const value = typeof item === "string" ? item : (item?.label || item?.name || item?.title || item?.key || item?.term || item?.value || item);
+        if (value == null) return;
+        if (target.some((existing) => JSON.stringify(existing) === JSON.stringify(item))) return;
+        target.push(item);
+      });
+    };
+    const usePayload = (payload) => {
+      if (!payload || typeof payload !== "object") return;
+      addUnique(context.concepts, payload?.concepts);
+      addUnique(context.keywords, payload?.keywords);
+      addUnique(context.phraseConcepts, payload?.phraseConcepts);
+      addUnique(context.subjectLinks, payload?.subjectLinks || payload?.subject_matches || payload?.subjectMatches);
+    };
+
+    try {
+      const cache = loadAutoOutputs();
+      if (cache && typeof cache === "object") {
+        const activeText = String(cache?.sourceText || cache?.payload?.sourceText || "").trim();
+        if (activeText) context.sourceText = activeText;
+        usePayload(cache?.payload);
+      }
+    } catch (err) {
+      console.warn("Kunne ikke lese aktiv auto-output fra cache", err);
+    }
+
+    try {
+      const host = typeof document !== "undefined" ? document.getElementById("aha-auto-output") : null;
+      const domText = String(host?.dataset?.sourceText || "").trim();
+      if (domText) context.sourceText = domText;
+    } catch (err) {
+      console.warn("Kunne ikke lese aktiv auto-output fra DOM", err);
+    }
+
+    try {
+      if (!context.sourceText) {
+        const entries = loadAfterworkEntries();
+        const latest = Array.isArray(entries) ? entries[entries.length - 1] : null;
+        const previewText = String(latest?.sourceTextPreview || "").trim();
+        if (previewText) context.sourceText = previewText;
+        usePayload(latest);
+      }
+    } catch (err) {
+      console.warn("Kunne ikke lese afterwork fallback", err);
+    }
+
+    if (!Array.isArray(context.phraseConcepts) || !context.phraseConcepts.length) {
+      context.phraseConcepts = extractAcademicPhraseConcepts(context.sourceText || "");
+    }
+    return context;
+  }
 
   function showStatus() {
     const chamber = loadChamberFromStorage();
@@ -262,32 +381,6 @@
 
   function displayConceptLabel(value) {
     return getCanonicalConceptLabel(value);
-  }
-
-  function normalizeConceptKey(value) {
-    return getCanonicalConceptKey(value);
-  }
-
-  function getCanonicalConceptLabel(value) {
-    return canonicalizeDisplayConcept(normalizeVisibleAcademicLabel(normalizeConceptSurface(value))).trim();
-  }
-
-  function getCanonicalConceptKey(value) {
-    return normalizeAfterworkConcept(getCanonicalConceptLabel(value));
-  }
-
-  function isBlockedStandaloneConcept(value) {
-    const key = getCanonicalConceptKey(value);
-    return [
-      "retning",
-      "retninger",
-      "størrelse",
-      "oppmerksomhet",
-      "mulighet",
-      "virksomhet",
-      "påtilknytning",
-      "navkontore"
-    ].includes(key);
   }
 
   function buildCanonicalConceptPair(source, target) {

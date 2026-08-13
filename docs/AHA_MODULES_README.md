@@ -77,8 +77,10 @@ Eksisterende filer:
 - `chat.html`
 - `js/ahaChat.js`
 - `js/ahaChatAnalysisPolicy.js`
+- `js/ahaChatConceptPolicy.js`
 - `js/ahaChatAnalysisRunContract.js`
 - `js/ahaChatAcademicInsightView.js`
+- `js/ahaChatKnowledgeView.js`
 - `aha-chat.css`
 
 Status:
@@ -89,7 +91,11 @@ Status:
 - har importknapp for History Go
 - eier akademiske fagfraser, teoriregler, begrepskandidater og canonical
   kildegrunning i den versjonerte `chat.analysisPolicy`-modulen
-- bruker `ahaChat.js` som orkestrator uten en parallell akademisk policyblokk
+- eier begrepskanonisering og prioritering av synlige grafkanter i den
+  DOM-frie, versjonerte `chat.conceptPolicy`-modulen
+- eier aktiv analyse-/kunnskapskontekst og kartvisning i `chat.knowledgeView`
+- bruker `ahaChat.js` som orkestrator uten parallelle policy- eller
+  kunnskapskontekstblokker
 
 Mangler før ferdig:
 - tydelig bokmerke-kolonne
