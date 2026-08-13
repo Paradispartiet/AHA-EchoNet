@@ -12,13 +12,12 @@
     const required = [
       "cleanArticleText", "toSentences", "takeKeywords", "short",
       "detectTextType", "normalizeSubjectMatches", "normalizeAcademicAfterworkPayload",
-      "collectLiteraryDiaryEvidence", "buildLiteraryDiarySortItems",
       "collectOpinionArticleEvidence", "buildOpinionArticleQualityAnalysis",
-      "currentInsights", "sourceHasAny", "inferReligiousLexiconEvidence",
+      "currentInsights", "inferReligiousLexiconEvidence",
       "detectAutoAnalysisDomain", "detectInstitutionalMediaHistorySignal",
       "detectLiteraryAttachmentSignal", "detectPublicAdministrationReformSignal",
       "extractAcademicPhraseConcepts", "extractAcademicTheoryLinks",
-      "extractMainInstitutionName", "lowerFirst", "sentence"
+      "extractMainInstitutionName"
     ];
     required.forEach((name) => {
       if (typeof deps[name] !== "function") throw new Error(`AHAChatAutoAnalysis mangler avhengighet: ${name}`);
@@ -26,13 +25,172 @@
     const {
       cleanArticleText, toSentences, takeKeywords, short, detectTextType,
       normalizeSubjectMatches, normalizeAcademicAfterworkPayload,
-      collectLiteraryDiaryEvidence, buildLiteraryDiarySortItems,
       collectOpinionArticleEvidence, buildOpinionArticleQualityAnalysis, currentInsights,
-      sourceHasAny, inferReligiousLexiconEvidence, detectAutoAnalysisDomain,
+      inferReligiousLexiconEvidence, detectAutoAnalysisDomain,
       detectInstitutionalMediaHistorySignal, detectLiteraryAttachmentSignal,
       detectPublicAdministrationReformSignal, extractAcademicPhraseConcepts,
-      extractAcademicTheoryLinks, extractMainInstitutionName, lowerFirst, sentence
+      extractAcademicTheoryLinks, extractMainInstitutionName
     } = deps;
+
+    function stripTrailingPunctuation(text) {
+      return String(text || "")
+        .trim()
+        .replace(/[.!?;,:\s…]+$/u, "")
+        .trim();
+    }
+
+    function lowerFirst(text) {
+      const value = String(text || "").trim();
+      if (!value) return "";
+      return value.charAt(0).toLowerCase() + value.slice(1);
+    }
+
+    function sentence(text) {
+      const cleaned = stripTrailingPunctuation(text);
+      if (!cleaned) return "";
+      return `${cleaned}.`;
+    }
+
+    function sourceHasTerm(sourceText, terms) {
+      const src = String(sourceText || "").toLowerCase();
+      const list = Array.isArray(terms) ? terms : [terms];
+      return list.some((term) => {
+        const value = String(term || "").toLowerCase().trim();
+        if (!value) return false;
+        return src.includes(value);
+      });
+    }
+
+    function sourceHasAny(sourceText, patterns) {
+      const src = String(sourceText || "");
+      const list = Array.isArray(patterns) ? patterns : [patterns];
+      return list.some((pattern) => {
+        if (!pattern) return false;
+        if (pattern instanceof RegExp) return pattern.test(src);
+        return sourceHasTerm(src, String(pattern));
+      });
+    }
+
+    function buildLiteraryDiarySortItems(raw, sentences) {
+      const text = String(raw || "");
+      const normalizedText = ` ${text.toLowerCase()} `;
+      const hasSName = sourceHasAny(text, [/\bS\b/, /\b\sS\s*[:\-]/]);
+      const categoryDefs = [
+        {
+          label: "Åpningsscene / sted",
+          signals: ["kurbad", "hageanlegg", "park", "leilighet", "sted", "badet", "middelhavet", "utkikkspunkt", "parker"],
+          summary: "Stedsscener forankrer teksten i konkrete omgivelser."
+        },
+        {
+          label: "Relasjonen til S",
+          signals: [" s ", " henne", " ring", "ringer", "telefon", "slutt å ring", "tilbake", "såret", "sint", "kjærlighet", "prinsesse"],
+          summary: "Relasjonen til S er et tydelig spor i dagbokbevegelsen."
+        },
+        {
+          label: "Sosial uro og selvbilde",
+          signals: ["fjern", "snakke med noen", "selvhevdende", "dårlig samvittighet", "ikke jeg heller", "burde", "skam", "skyld", "uro"],
+          summary: "Sosial uro og selvvurdering preger fortellerstemmen."
+        },
+        {
+          label: "Møter med fremmede",
+          signals: ["kongo", "mann", "fyr", "longboard", "sykepleier", "vingård", "kompisen", "venn", "hule", "knivdrap"],
+          summary: "Møter med fremmede utvider tekstens sosiale rom."
+        },
+        {
+          label: "Reise, nomadisme og forfatterliv",
+          signals: ["england", "fotballkamper", "reise", "biarriz", "campe", "middelhavet", "nomader", "forfatter", "poetisk", "leve vilt"],
+          summary: "Reise, nomadisme eller skrivende selvbilde er til stede i teksten."
+        },
+        {
+          label: "Rus og drift",
+          signals: ["røyka", "weed", "feber", "trøkk", "vilt"],
+          summary: "Rus eller intensitet markerer et eget driftsspor."
+        },
+        {
+          label: "Skyld, skam og selvforsvar",
+          signals: ["dårlig samvittighet", "skyld", "skam", "såret", "sint", "dårlig behandlet", "behandlet henne", "ingen rett"],
+          summary: "Skyld, skam eller selvforsvar skaper tydelig indre friksjon."
+        }
+      ];
+
+      const normalize = (value) => ` ${String(value || "").toLowerCase()} `;
+      const matchesForCategory = (def) => {
+        const found = (sentences || []).find((line) => {
+          const normalized = normalize(line);
+          return def.signals.some((signal) => normalized.includes(normalize(signal)));
+        });
+        return found ? short(found) : "";
+      };
+
+      const sortItems = categoryDefs
+        .map((def) => {
+          if (def.label === "Relasjonen til S" && !hasSName) return null;
+          const hit = matchesForCategory(def);
+          if (!hit) return null;
+          if (def.label === "Relasjonen til S") {
+            const hasConflict = ["slutt å ring", "såret", "sint", "dårlig behandlet", "ingen rett"].some((signal) => normalizedText.includes(normalize(signal)));
+            if (hasConflict) return { label: def.label, text: "Relasjonen til S kombinerer kontaktbehov med tydelig konflikt." };
+            return { label: def.label, text: "Relasjonen til S er et tydelig relasjonelt spor." };
+          }
+          return { label: def.label, text: def.summary };
+        })
+        .filter(Boolean)
+        .slice(0, 5);
+
+      if (sortItems.length) return sortItems;
+      return [
+        { label: "Scener og observasjoner", text: "Teksten bygger mening gjennom konkrete scener og observerende blikk." },
+        { label: "Relasjonelt spor", text: "Relasjonelle spenninger driver den indre bevegelsen fremover." },
+        { label: "Indre uro", text: "Understrømmen er uro, selvforklaring og søken etter frihet." }
+      ];
+    }
+
+    function collectLiteraryDiaryEvidence(raw, sentences) {
+      const text = String(raw || "");
+      const normalizedText = ` ${text.toLowerCase()} `;
+      const normalize = (value) => ` ${String(value || "").toLowerCase()} `;
+      const hasAny = (signals) => signals.some((signal) => normalizedText.includes(normalize(signal)));
+      const matchLine = (signals) => (sentences || []).find((line) => {
+        const normalized = normalize(line);
+        return signals.some((signal) => normalized.includes(normalize(signal)));
+      }) || "";
+
+      const hasSName = sourceHasAny(text, [/\bS\b/, /\b\sS\s*[:\-]/]);
+      const evidence = {
+        hasPlaceScene: hasAny(["kurbad", "hageanlegg", "park", "leilighet", "badet", "middelhavet", "utkikkspunkt", "sted", "by"]),
+        hasSRelation: hasSName && hasAny([" s ", " henne", "tilbake", "såret", "sint", "prinsesse", "kjærlighet", "slutt å ring"]),
+        hasPhone: hasAny(["ring", "ringer", "telefon", "svarte", "hørte", "slutt å ring"]),
+        hasStrangers: hasAny(["kongo", "mann", "fyr", "longboard", "sykepleier", "vingård", "kompisen", "venn", "hule", "knivdrap"]),
+        hasTravel: hasAny(["reise", "reiste", "flytte", "flyttet", "hotell", "tog", "fly", "vei", "veien", "bytte by", "byskifte", "england", "biarriz", "campe", "middelhavet", "fotballkamper"]),
+        hasNomadism: hasAny(["nomade", "nomader", "nomadisme"]),
+        hasWriterLife: hasAny(["forfatter", "poetisk", "skrive", "tekst", "leve vilt"]),
+        hasShameGuilt: hasAny(["skyld", "skam", "dårlig samvittighet", "såret", "sint", "dårlig behandlet", "ingen rett"]),
+        hasSocialUnease: hasAny(["fjern", "snakke med noen", "selvhevdende", "ikke jeg heller", "fremmedhet", "uro"]),
+        hasSubstanceOrIntensity: hasAny(["røyka", "weed", "feber", "trøkk", "vilt"]),
+        hasInnerMonologue: hasAny(["jeg trodde", "jeg burde", "jeg er lei", "jeg skjønner", "jeg tenkte", "jeg burde tenkt"]),
+        matchedThemes: []
+      };
+
+      const themes = [];
+      if (evidence.hasPlaceScene) themes.push("sted");
+      if (evidence.hasSRelation) themes.push("relasjon");
+      if (evidence.hasPhone) themes.push("telefonkontakt");
+      if (evidence.hasStrangers) themes.push("møter");
+      if (evidence.hasTravel) themes.push("reise");
+      if (evidence.hasNomadism) themes.push("nomadisme");
+      if (evidence.hasWriterLife) themes.push("forfatterliv");
+      if (evidence.hasShameGuilt) themes.push("skyld/skam");
+      if (evidence.hasSocialUnease) themes.push("sosial uro");
+      if (evidence.hasSubstanceOrIntensity) themes.push("intensitet");
+      if (evidence.hasInnerMonologue) themes.push("indre monolog");
+      evidence.matchedThemes = themes;
+      evidence.textSnippets = {
+        place: matchLine(["kurbad", "hageanlegg", "park", "leilighet", "badet", "middelhavet", "utkikkspunkt", "sted", "by"]),
+        relation: matchLine([" s ", " henne", "tilbake", "såret", "sint", "prinsesse", "kjærlighet", "slutt å ring"]),
+        phone: matchLine(["ring", "ringer", "telefon", "svarte", "hørte", "slutt å ring"])
+      };
+      return evidence;
+    }
 
     function getUrlDominanceInfo(text) {
       const raw = String(text || "").trim();
