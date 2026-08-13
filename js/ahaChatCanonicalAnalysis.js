@@ -130,12 +130,15 @@
       const policyAcademic = !AHA_RUNTIME_KNOWLEDGE_POLICY.legacyArticleTemplatesEnabled && detectTextType(sourceText || "") === "academic_article";
       const domain = detectAutoAnalysisDomain(sourceText || "", safePayload || {});
       const existingHistoryLinks = safePayload?.historyGoLinks || safePayload?.history_go_links || [];
-      const derivedHistoryLinks = policyAcademic
+      const subjectHistoryLinks = policyAcademic
         ? normalizeSubjectMatches(safePayload?.subjectMatches || []).slice(0, 5).map((match) => {
             const title = String(match?.title || match?.label || match?.subject_label || match?.subject_id || "Fagverk").trim();
             const id = String(match?.subject_id || match?.id || title).trim().toLowerCase().replace(/[^a-z0-9æøå]+/gi, "_").replace(/^_+|_+$/g, "");
             return { type: "subject", id, title, reason: "Kildebasert fagkobling fra AHA Fagverk-kalibrering." };
           }).filter((item) => item.id)
+        : [];
+      const derivedHistoryLinks = subjectHistoryLinks.length
+        ? subjectHistoryLinks
         : buildHistoryGoLinksFromDomain(domain, sourceText || "", canonicalSer);
       return {
         contentType: String(safePayload?.textType || detectTextType(sourceText || "")),

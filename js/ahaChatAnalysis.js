@@ -163,28 +163,37 @@
   }
 
   function buildHistoryGoLinksFromDomain(domain, sourceText, canonicalSer) {
-    if (domain === "institutional_media_history") {
+    const normalized = String(sourceText || "").toLowerCase();
+    if (domain === "institutional_media_history" && /(morgenbladet|idédebatt|kulturkritikk|redaksjonell profil|offentlighet|avis)/i.test(normalized)) {
       return [{
         type: "topic",
         id: "morgenbladet",
         title: "Morgenbladet",
-        reason: "Teksten handler om pressehistorie, offentlighet og institusjonell utvikling."
+        reason: "Avisen beskrives eksplisitt som del av norsk offentlighet over tid, som støtter en historisk kobling til medieinstitusjoners utvikling."
       }];
     }
-    if (domain === "public_administration_reform") {
+    if (domain === "public_administration_reform" && /(nav-reformen|velferdsforvaltningen|etatskulturer|styringsutfordringer|samordning)/i.test(normalized)) {
       return [{
         type: "topic",
         id: "nav_reformen",
         title: "NAV-reformen",
-        reason: "Teksten drøfter måloppnåelse, styring og organisering i offentlig forvaltning."
+        reason: "Teksten omtaler en konkret historisk reformprosess i norsk velferdsforvaltning med tydelig tidslig og institusjonell forankring."
       }];
     }
-    if (domain === "literary_attachment") {
+    if (domain === "constitutional_democratic_history" && /(eidsvoll|1814|grunnloven)/i.test(normalized)) {
       return [{
-        type: "topic",
-        id: "tilknytningsteori_litteratur",
-        title: "Tilknytningsteori i litteratur",
-        reason: "Teksten kobler litterær analyse og psykologiske begreper."
+        type: "conceptual_topic",
+        id: "eidsvoll-grunnloven",
+        title: "Eidsvoll og Grunnloven",
+        reason: "Konseptuell History Go-kobling: repoet har ingen verifisert Eidsvoll- eller Grunnloven-ID, men teksten peker tydelig mot sted, hendelse og demokratihistorisk tema."
+      }];
+    }
+    if (domain === "urban_sports_history" && /(bislett|stadion)/i.test(normalized)) {
+      return [{
+        type: "conceptual_topic",
+        id: "bislett-stadion",
+        title: "Bislett stadion",
+        reason: "Konseptuell History Go-kobling: repoet har ingen verifisert Bislett- eller stadion-ID, men teksten omtaler et konkret sted og dets idretts- og byhistoriske betydning."
       }];
     }
     return [];
