@@ -20,7 +20,7 @@ assert.ok(insightViewAt > -1 && insightViewAt < autoAnalysisAt, 'insight view mu
 assert.ok(autoAnalysisAt > -1 && autoAnalysisAt < autoOutputViewAt, 'auto-analysis must load before the auto-output view');
 assert.ok(autoOutputViewAt > -1 && autoOutputViewAt < canonicalAnalysisAt, 'auto-output view must load before canonical analysis');
 assert.ok(canonicalAnalysisAt > -1 && canonicalAnalysisAt < chatAt, 'canonical analysis must load before ahaChat.js');
-const chatSource = fs.readFileSync('js/ahaChat.js', 'utf8');
+const chatSource = fs.readFileSync('js/ahaChatPersonalUi.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChat.js', 'utf8');
 assert.doesNotMatch(chatSource, /\blet activeAnalysisRun\b/, 'ahaChat.js must not keep a second active-run owner');
 assert.doesNotMatch(chatSource, /function createAnalysisRun\s*\(/, 'run creation must remain extracted');
 assert.doesNotMatch(chatSource, /function loadAhaMemoryControls\s*\(/, 'memory control storage must remain extracted');
@@ -44,7 +44,7 @@ function ctx(){
   ['aha-auto-output','aha-answer-composer-status','aha-answer-composer-details','aha-answer-evaluation-status','aha-processing-indicator','aha-processing-text','btn-send'].forEach(id=>els.set(id,new El()));
   const c={ window:null, console, document:{readyState:'loading', addEventListener(){}, body:new El(), getElementById:id=>els.get(id)||null, querySelectorAll:()=>[], createElement:()=>new El()}, localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,String(v)),removeItem:k=>store.delete(k)}, navigator:{clipboard:{}}, Event:function(t){this.type=t;}, CustomEvent:function(t,o){this.type=t;this.detail=o&&o.detail;}, setTimeout, clearTimeout, Date, Math, URL:{createObjectURL(){},revokeObjectURL(){}}, Blob:function(){}, fetch:async()=>({ok:true,json:async()=>({reply:'ok'})})};
   c.window=c; c.globalThis=c;
-  ['js/ahaChatTextUtils.js','js/ahaChatSignals.js','js/ahaChatSubjects.js','js/ahaChatAnalysis.js','js/ahaChatReplyFormat.js','js/ahaChatExport.js','js/ahaChatMemoryControls.js','js/ahaChatAfterwork.js','js/ahaChatMemoryRuntime.js','js/ahaChatRunContext.js','js/ahaChatInsightView.js','js/ahaChatAutoAnalysis.js', 'js/ahaChatAutoOutputView.js','js/ahaChatCanonicalAnalysis.js','js/ahaChatKnowledgeView.js', 'js/ahaChat.js'].forEach(f=>vm.runInNewContext(fs.readFileSync(f,'utf8'),c,{filename:f}));
+  ['js/ahaChatTextUtils.js','js/ahaChatSignals.js','js/ahaChatSubjects.js','js/ahaChatAnalysis.js','js/ahaChatReplyFormat.js','js/ahaChatExport.js','js/ahaChatMemoryControls.js','js/ahaChatAfterwork.js','js/ahaChatMemoryRuntime.js','js/ahaChatRunContext.js','js/ahaChatInsightView.js','js/ahaChatAutoAnalysis.js', 'js/ahaChatAutoOutputView.js','js/ahaChatCanonicalAnalysis.js','js/ahaChatKnowledgeView.js', 'js/ahaChatPersonalUi.js', 'js/ahaChat.js'].forEach(f=>vm.runInNewContext(fs.readFileSync(f,'utf8'),c,{filename:f}));
   return {c,els,store};
 }
 

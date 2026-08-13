@@ -4,6 +4,7 @@ const fs = require("fs");
 const DOC_FILE = "docs/AHA_PERSONAL_AI_LOOP_CHAT_READINESS_SURFACE.md";
 const STATUS_FILE = "docs/AHA_IMPLEMENTATION_STATUS.md";
 const CHAT_FILE = "js/ahaChat.js";
+const CHAT_PERSONAL_UI_FILE = "js/ahaChatPersonalUi.js";
 const HOME_FILE = "index.html";
 
 function read(file) { return fs.readFileSync(file, "utf8"); }
@@ -159,7 +160,7 @@ includesAll(STATUS_FILE, "implementation status", [
   "feat: add Personal AI Loop Chat readiness status"
 ]);
 
-const chatCode = read(CHAT_FILE);
+const chatCode = `${read(CHAT_PERSONAL_UI_FILE)}\n${read(CHAT_FILE)}`;
 const readinessFunction = extractFunction(chatCode, "renderAhaPersonalAiLoopStatus");
 assert.ok(readinessFunction.includes("loadLastAudit"), "Chat status may only read cached audit summary");
 for (const forbidden of [
