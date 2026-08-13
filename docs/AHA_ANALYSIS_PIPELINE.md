@@ -99,7 +99,7 @@ Ansvar:
 - innsiktskandidater
 - etterarbeid
 - rendering til panels/Explorer
-- localStorage for auto-output og afterwork
+- versjonert localStorage-cache for auto-output og separat afterwork-lagring
 ```
 
 `ahaChat.js` orkestrerer disse delene. Den akademiske domenepolicyen,
@@ -109,7 +109,10 @@ og den kanoniske kildegrunningsporten eies av den versjonerte
 litterær dagboksortering/evidens eies av den versjonerte
 `chat.autoAnalysis`-modulen. Normalisert kildehash, deterministisk kort-hash og
 nøkkelordrangering eies av `chat.textUtils`, slik at analysis-run, etterarbeid,
-eksport og view-lag deler samme kildeidentitet. Lesing av siste akademiske kontekst,
+eksport og view-lag deler samme kildeidentitet. Nøkkel, cacheformat,
+bakoverkompatibel lesing, kildebundet skriving og sletting for auto-output eies
+av `chat.autoOutputStore`; orkestratoren og auto-output-runtime bruker bare
+store-kontrakten. Lesing av siste akademiske kontekst,
 tolking av merkede innsikter og bygging av syntetiske innsiktskort eies av
 `chat.academicInsightView`. Begrepskanonisering, filtrering og prioritering av
 synlige grafkanter eies av den DOM-frie `chat.conceptPolicy`, mens aktiv
@@ -117,7 +120,7 @@ analyse-/kunnskapskontekst og kartvisning eies av `chat.knowledgeView`.
 Meldingsrendering, fagchips, highlights-rail og samtalens tom-/svarstatus eies av
 `chat.conversationView`; varig lokal samtalelagring og Data Intake-utvalg forblir
 et separat ansvar i `ahaChatPersistence`. Hovedfila orkestrerer modulene uten å
-duplisere kildeidentitets-, autoanalyse-, domene-, konsept- eller view-policy. Uttrekkene er delegert gjennom
+duplisere cache-, kildeidentitets-, autoanalyse-, domene-, konsept- eller view-policy. Uttrekkene er delegert gjennom
 samme offentlige modulgrense og endrer ikke den kildegrunnede output-kontrakten.
 
 ### `ahaEngineClient.js`

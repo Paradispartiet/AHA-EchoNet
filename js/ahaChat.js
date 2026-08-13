@@ -9,7 +9,6 @@
   const HIGHLIGHTS_STORAGE_KEY = "aha_chat_highlights_v1";
   const CHAT_THREAD_ID = "default_thread";
 
-  const AUTO_OUTPUT_STORAGE_KEY = "aha_chat_auto_outputs_v1";
   const AFTERWORK_STORAGE_KEY = "aha_afterwork_v1";
   const PENDING_CHAT_PROMPT_KEY = "aha_pending_chat_prompt_v1";
   let personalUi = null;
@@ -32,6 +31,15 @@
   if (typeof shortHash !== "function" || typeof takeKeywords !== "function" || typeof sourceHash !== "function") {
     throw new Error("AHAChatTextUtils må eksponere shortHash, takeKeywords og sourceHash.");
   }
+
+  const autoOutputStore = chatModule("autoOutputStore", "AHAChatAutoOutputStore")?.create?.({
+    sourceHash,
+    defaultConversationId: CHAT_THREAD_ID
+  });
+  if (!autoOutputStore) throw new Error("AHAChatAutoOutputStore må lastes før ahaChat.js.");
+  const loadAutoOutputs = autoOutputStore.load;
+  const saveAutoOutputs = autoOutputStore.save;
+  const clearAutoOutputs = autoOutputStore.clear;
 
   const analysisPolicy = chatModule("analysisPolicy", "AHAChatAnalysisPolicy")?.create?.({
     signals: chatModule("signals", "AHAChatSignals"),
@@ -407,7 +415,6 @@
   const buildHistoryGoLinksFromDomain = canonicalAnalysis.buildHistoryGoLinksFromDomain;
 
   const autoOutputRuntime = chatModule("autoOutputView", "AHAChatAutoOutputView")?.createRuntime?.({
-    storageKey: AUTO_OUTPUT_STORAGE_KEY,
     defaultConversationId: CHAT_THREAD_ID,
     runtimeKnowledgePolicy: AHA_RUNTIME_KNOWLEDGE_POLICY,
     getActiveAnalysisRun,
@@ -435,6 +442,7 @@
     renderAutoOutputPayload,
     setExportButtonsEnabled,
     loadAutoOutputs,
+    saveAutoOutputs,
     setActiveAnalysisRun,
     takeKeywords,
     refreshAhaExplorer
@@ -563,7 +571,7 @@
 
   function clearActiveAnalysisState(run, message = "AHA analyserer ny kilde …") {
     if (run) setActiveAnalysisRun(run);
-    try { global.localStorage?.removeItem(AUTO_OUTPUT_STORAGE_KEY); } catch {}
+    clearAutoOutputs();
     const host = document.getElementById("aha-auto-output");
     if (host) {
       host.dataset.analysisId = run?.analysisId || "";
@@ -939,7 +947,7 @@
   function reset() {
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(HIGHLIGHTS_STORAGE_KEY);
-    localStorage.removeItem(AUTO_OUTPUT_STORAGE_KEY);
+    clearAutoOutputs();
     localStorage.removeItem(AFTERWORK_STORAGE_KEY);
     out("AHA-kammer nullstilt.");
     setStatusNote("Nullstilt lokalt kammer og highlights.");
@@ -978,19 +986,6 @@
   function detectTextType(raw) {
     return chatModule("signals", "AHAChatSignals").detectTextType(raw);
   }
-
-  function loadAutoOutputs() {
-    try {
-      const raw = localStorage.getItem(AUTO_OUTPUT_STORAGE_KEY);
-      if (!raw) return null;
-      const parsed = JSON.parse(raw);
-      if (!parsed || typeof parsed !== "object") return null;
-      // Bakoverkompatibilitet: gammel cache var ren payload.
-      if (parsed.payload && typeof parsed.payload === "object") return parsed;
-      return { payload: parsed };
-    } catch { return null; }
-  }
-
 
   function setAhaProcessing(isProcessing, message = "AHA analyserer teksten …") {
     const indicator = document.getElementById("aha-processing-indicator");

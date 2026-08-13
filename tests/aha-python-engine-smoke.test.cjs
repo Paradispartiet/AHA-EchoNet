@@ -98,6 +98,7 @@ function buildContext(seed = {}) {
     'js/ahaChatExport.js',
     'js/ahaChatSubjects.js',
     'js/ahaChatAnalysis.js',
+    'js/ahaChatReplyFormat.js',
     'js/ahaEngineClient.js',
     'js/ahaChatMemoryControls.js',
     'js/ahaChatAfterwork.js',

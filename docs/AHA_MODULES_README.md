@@ -76,6 +76,7 @@ Ansvar:
 Eksisterende filer:
 - `chat.html`
 - `js/ahaChat.js`
+- `js/ahaChatAutoOutputView.js`
 - `js/ahaChatAutoAnalysis.js`
 - `js/ahaChatAnalysisPolicy.js`
 - `js/ahaChatConceptPolicy.js`
@@ -95,6 +96,8 @@ Status:
   kildegrunning i den versjonerte `chat.analysisPolicy`-modulen
 - eier auto-output-ruting, litterær dagboksortering og tilhørende evidens i den
   versjonerte `chat.autoAnalysis`-modulen
+- eier auto-output-cachens nøkkel, format, legacy-lesing og sletting i den
+  versjonerte `chat.autoOutputStore`-modulen
 - eier normalisert kildeidentitet, deterministisk kort-hash og nøkkelordrangering
   i den versjonerte `chat.textUtils`-modulen
 - eier begrepskanonisering og prioritering av synlige grafkanter i den
@@ -102,8 +105,8 @@ Status:
 - eier aktiv analyse-/kunnskapskontekst og kartvisning i `chat.knowledgeView`
 - eier meldingsrendering, fagchips, highlights og samtalens tom-/svarstatus i
   `chat.conversationView`, separat fra den lokale `ahaChatPersistence`-lagringen
-- bruker `ahaChat.js` som orkestrator uten parallelle kildeidentitets-, analyse-,
-  policy- eller view-implementasjoner
+- bruker `ahaChat.js` som orkestrator uten parallelle cache-, kildeidentitets-,
+  analyse-, policy- eller view-implementasjoner
 
 Mangler før ferdig:
 - tydelig bokmerke-kolonne
