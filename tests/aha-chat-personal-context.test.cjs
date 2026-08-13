@@ -136,7 +136,7 @@ function richContext() {
 
 // Chat-integrasjon: riktig felt sendes til agentpayload.
 {
-  const chat = fs.readFileSync('js/ahaChatPersonalUi.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChat.js', 'utf8');
+  const chat = fs.readFileSync('js/ahaChatInsightPipeline.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatPersonalUi.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChat.js', 'utf8');
   assert.ok(chat.includes('buildAhaPersonalMessageContext'), 'chat skal bygge personlig kontekst før svar');
   assert.ok(chat.includes('personal_context'), 'chat skal sende personal_context i agentpayload');
   assert.ok(chat.includes('AHA personlig kontekst aktiv'), 'chat skal vise aktiv status');
