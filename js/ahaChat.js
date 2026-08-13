@@ -286,10 +286,16 @@
     isActiveAnalysisRun,
     bindAnalysisArtifact,
     renderAutoOutputPayload,
-    setExportButtonsEnabled
+    setExportButtonsEnabled,
+    loadAutoOutputs,
+    setActiveAnalysisRun,
+    takeKeywords,
+    refreshAhaExplorer
   });
   if (!autoOutputRuntime) throw new Error("AHAChatAutoOutputRuntime må lastes før ahaChat.js.");
   const renderAutoOutputs = autoOutputRuntime.renderAutoOutputs;
+  const focusAutoCard = autoOutputRuntime.focusAutoCard;
+  const restoreAutoOutputFromStorage = autoOutputRuntime.restoreAutoOutputFromStorage;
 
   const replySubjectPolicy = global.AHAChatReplyFormat?.createSubjectPolicy?.({
     detectAutoAnalysisDomain,
@@ -4054,44 +4060,6 @@
   // ligger i ahaChatReplyFormat.js; her beholdes en tynn delegerende wrapper.
   function normalizeAhaVisibleReply(rawReply, userText) {
     return global.AHAChatReplyFormat.normalizeAhaVisibleReply(rawReply, userText);
-  }
-
-  function focusAutoCard(action) {
-    const host = document.getElementById("aha-auto-output");
-    if (!host) return;
-    host.querySelectorAll(".auto-card").forEach((card) => card.classList.remove("is-focused"));
-    const target = host.querySelector(`[data-auto-card="${action}"]`);
-    if (!target) return;
-    target.classList.add("is-focused");
-    target.scrollIntoView({ behavior: "smooth", block: "nearest" });
-  }
-
-  function restoreAutoOutputFromStorage() {
-    const cache = loadAutoOutputs();
-    setExportButtonsEnabled(Boolean(cache?.payload));
-    if (!cache) {
-      // Ingen lagret analyse, men kammeret kan ha innsikter og kart som
-      // Explorer-fanene skal vise ved sidelast.
-      refreshAhaExplorer();
-      return;
-    }
-    const payload = cache?.payload && typeof cache.payload === "object" ? cache.payload : cache;
-    const sourceText = String(cache?.sourceText || "");
-    const cachedRun = { analysisId: cache.analysisId || payload.analysisId || `analysis_${cache.sourceTextHash || sourceHash(sourceText)}`, analysisRunId: cache.analysisRunId || cache.runId || payload.analysisRunId || payload.runId || "restored", runId: cache.runId || cache.analysisRunId || payload.runId || payload.analysisRunId || "restored", conversationId: cache.conversationId || cache.sessionId || payload.conversationId || payload.sessionId || CHAT_THREAD_ID, turnId: cache.turnId || payload.turnId || "", sourceId: cache.sourceId || payload.sourceId || `source_${cache.sourceTextHash || sourceHash(sourceText)}`, sourceKind: cache.sourceKind || payload.sourceKind || "chat", topicLabel: cache.topicLabel || payload.topicLabel || takeKeywords(sourceText, 4).join(" · "), sessionId: cache.sessionId || cache.conversationId || payload.sessionId || payload.conversationId || CHAT_THREAD_ID, createdAt: cache.createdAt || payload.createdAt || new Date().toISOString(), sourceHash: cache.sourceHash || cache.sourceTextHash || sourceHash(sourceText), sourceFingerprint: cache.sourceFingerprint || cache.sourceTextHash || sourceHash(sourceText) };
-    setActiveAnalysisRun(cachedRun);
-    bindAnalysisArtifact(payload, cachedRun);
-    const host = document.getElementById("aha-auto-output");
-    if (host) {
-      host.dataset.sourceText = sourceText;
-      host.dataset.analysisId = payload.analysisId || "";
-      host.dataset.analysisRunId = payload.analysisRunId || payload.runId || "";
-      host.dataset.runId = payload.runId || payload.analysisRunId || "";
-      host.dataset.sourceId = payload.sourceId || "";
-      host.dataset.sourceTextHash = sourceHash(sourceText);
-      host.dataset.sourceTextPreview = sourceText.replace(/\s+/g, " ").slice(0, 180);
-    }
-    renderAutoOutputPayload(payload);
-    setExportButtonsEnabled(true);
   }
 
   function consumePendingChatPrompt() {
