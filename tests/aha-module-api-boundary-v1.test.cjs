@@ -156,12 +156,17 @@ for (const [moduleName, legacyGlobal, file] of chatModules) {
 for (const name of ['shortHash', 'takeKeywords', 'sourceHash']) {
   assert.equal(typeof context.AHAModuleApi.get('chat.textUtils', { version: 1 })[name], 'function', `chat.textUtils must expose ${name}`);
 }
+const autoOutputStore = context.AHAModuleApi.get('chat.autoOutputStore', { version: 1 });
+assert.equal(Object.isFrozen(autoOutputStore), true, 'chat.autoOutputStore facade must be frozen');
+assert.equal(autoOutputStore.STORAGE_KEY, 'aha_chat_auto_outputs_v1');
+assert.equal(typeof autoOutputStore.create, 'function');
 
 const chatSource = fs.readFileSync('js/ahaChat.js', 'utf8');
 assert.match(chatSource, /function chatModule\(/, 'Chat must resolve extracted modules through the boundary');
 for (const [, legacyGlobal] of chatModules) {
   assert.doesNotMatch(chatSource, new RegExp(`global\\.${legacyGlobal}\\b`), `Chat must not reach directly into ${legacyGlobal}`);
 }
+assert.doesNotMatch(chatSource, /global\.AHAChatAutoOutputStore\b/, 'Chat must resolve the auto-output store through the module boundary');
 
 for (const file of ['js/ahaContracts.js', 'js/ahaChatInsightFeedback.js']) {
   const code = fs.readFileSync(file, 'utf8');

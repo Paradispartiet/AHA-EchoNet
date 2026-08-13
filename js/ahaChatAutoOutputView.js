@@ -1,13 +1,85 @@
 // ahaChatAutoOutputView.js
-// Presentasjon av autoanalysen og det kanoniske «AHA ser»-kortet.
+// Presentasjon av autoanalysen, det kanoniske «AHA ser»-kortet og den
+// versjonerte lokale auto-output-cachen.
 //
-// Modulen eier bare visningslaget. Analyse, run-binding, lagring og Explorer-
-// oppdatering injiseres eksplisitt av ahaChat.js, slik at samme kilde- og
-// stale-run-porter fortsatt gjelder. Eksponerer window.AHAChatAutoOutputView.
+// Analyse, run-binding og Explorer-oppdatering injiseres eksplisitt av
+// ahaChat.js, slik at samme kilde- og stale-run-porter fortsatt gjelder.
+// Eksponerer window.AHAChatAutoOutputView og window.AHAChatAutoOutputStore.
 // Lastes før ahaChat.js.
 
 (function (global) {
   "use strict";
+
+  const AUTO_OUTPUT_STORAGE_KEY = "aha_chat_auto_outputs_v1";
+
+  function createStore(deps = {}) {
+    if (typeof deps.sourceHash !== "function") {
+      throw new Error("AHAChatAutoOutputStore mangler avhengighet: sourceHash");
+    }
+    const storage = deps.storage || global.localStorage;
+    const storageKey = deps.storageKey || AUTO_OUTPUT_STORAGE_KEY;
+    const defaultConversationId = deps.defaultConversationId || "default_thread";
+    const now = typeof deps.now === "function" ? deps.now : () => new Date().toISOString();
+
+    function load() {
+      try {
+        const raw = storage?.getItem?.(storageKey);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed !== "object") return null;
+        // Bakoverkompatibilitet: gammel cache var ren payload.
+        if (parsed.payload && typeof parsed.payload === "object") return parsed;
+        return { payload: parsed };
+      } catch {
+        return null;
+      }
+    }
+
+    function save(input = {}) {
+      const payload = input.payload;
+      if (!payload || typeof payload !== "object" || Array.isArray(payload)) return null;
+      const sourceText = String(input.sourceText || "");
+      const activeRun = input.activeRun && typeof input.activeRun === "object" ? input.activeRun : null;
+      const fingerprint = deps.sourceHash(sourceText);
+      const cache = {
+        activeRun,
+        payload,
+        sourceText,
+        analysisId: payload.analysisId || "",
+        analysisRunId: payload.analysisRunId || payload.runId || "",
+        runId: payload.runId || payload.analysisRunId || "",
+        conversationId: payload.conversationId || payload.sessionId || defaultConversationId,
+        turnId: payload.turnId || "",
+        sourceId: payload.sourceId || "",
+        sourceKind: payload.sourceKind || input.sourceKind || "pasted_text",
+        sessionId: payload.sessionId || payload.conversationId || defaultConversationId,
+        sourceHash: payload.sourceHash || fingerprint,
+        sourceFingerprint: payload.sourceFingerprint || fingerprint,
+        sourceTextHash: fingerprint,
+        sourceTextPreview: sourceText.replace(/\s+/g, " ").slice(0, 180),
+        createdAt: now()
+      };
+      try {
+        if (typeof storage?.setItem !== "function") return null;
+        storage.setItem(storageKey, JSON.stringify(cache));
+        return cache;
+      } catch {
+        return null;
+      }
+    }
+
+    function clear() {
+      try {
+        if (typeof storage?.removeItem !== "function") return false;
+        storage.removeItem(storageKey);
+        return true;
+      } catch {
+        return false;
+      }
+    }
+
+    return Object.freeze({ load, save, clear });
+  }
 
   function create(deps = {}) {
     const required = [
@@ -196,7 +268,7 @@
       "getLiterarySubjectMatches", "getLiteraryAttachmentLearningPath", "isSportsArticleAnalysis",
       "applyRuntimeKnowledgePolicy", "filterCrossDomainAutoPayload", "enforceCanonicalSourceGrounding",
       "buildCanonicalAnalysis", "resolveCanonicalAnalysisWithOptionalPythonEngine", "isActiveAnalysisRun",
-      "bindAnalysisArtifact", "renderAutoOutputPayload", "setExportButtonsEnabled", "loadAutoOutputs",
+      "bindAnalysisArtifact", "renderAutoOutputPayload", "setExportButtonsEnabled", "loadAutoOutputs", "saveAutoOutputs",
       "setActiveAnalysisRun", "updateAnalysisRun", "takeKeywords", "refreshAhaExplorer"
     ];
     required.forEach((name) => {
@@ -286,24 +358,12 @@
         subjectMatches: payload.subjectMatches || payload.subjectLinks
       }, activeRun);
       if (options.persist !== false) {
-        global.localStorage.setItem(deps.storageKey, JSON.stringify({
+        deps.saveAutoOutputs({
           activeRun: activeRun || null,
           payload,
           sourceText,
-          analysisId: payload.analysisId || "",
-          analysisRunId: payload.analysisRunId || payload.runId || "",
-          runId: payload.runId || payload.analysisRunId || "",
-          conversationId: payload.conversationId || payload.sessionId || deps.defaultConversationId,
-          turnId: payload.turnId || "",
-          sourceId: payload.sourceId || "",
-          sourceKind: payload.sourceKind || (linkInfo.isSourceAction ? "url" : "pasted_text"),
-          sessionId: payload.sessionId || payload.conversationId || deps.defaultConversationId,
-          sourceHash: payload.sourceHash || deps.sourceHash(sourceText),
-          sourceFingerprint: payload.sourceFingerprint || deps.sourceHash(sourceText),
-          sourceTextHash: deps.sourceHash(sourceText),
-          sourceTextPreview: sourceText.replace(/\s+/g, " ").slice(0, 180),
-          createdAt: new Date().toISOString()
-        }));
+          sourceKind: linkInfo.isSourceAction ? "url" : "pasted_text"
+        });
       }
       if (host) {
         host.dataset.sourceText = sourceText;
@@ -378,6 +438,10 @@
 
     return { renderAutoOutputs, focusAutoCard, restoreAutoOutputFromStorage };
   }
+
+  const storeApi = { STORAGE_KEY: AUTO_OUTPUT_STORAGE_KEY, create: createStore };
+  global.AHAChatAutoOutputStore = storeApi;
+  global.AHAModuleApi?.register?.("chat.autoOutputStore", storeApi, { version: 1, legacyGlobal: "AHAChatAutoOutputStore", exports: Object.keys(storeApi) });
 
   const publicApi = Object.assign({}, global.AHAChatAutoOutputView || {}, { create, createRuntime });
   global.AHAChatAutoOutputView = publicApi;
