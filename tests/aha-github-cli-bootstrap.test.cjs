@@ -1,5 +1,7 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
 const { execFileSync } = require('node:child_process');
 
 const devcontainer = JSON.parse(fs.readFileSync('.devcontainer/devcontainer.json', 'utf8'));
@@ -20,13 +22,58 @@ assert.match(ensureGh, /github\.com\/cli\/cli\/releases\/download/);
 assert.match(ensureGh, /\/workspace\/bin\/gh/);
 assert.match(ensureGh, /repair_with_apt/);
 assert.match(ensureGh, /install_local_release/);
+assert.match(ensureGh, /--print-path/);
 
 assert.match(activateTools, /export PATH=/);
+assert.doesNotMatch(activateTools, /set -[A-Za-z]*[Eeuo]/);
 assert.match(launcher, /ensure-gh\.sh/);
+assert.match(launcher, /--print-path/);
+assert.doesNotMatch(launcher, /command -v gh/);
 assert.match(agentInstructions, /Never conclude that this repository lacks GitHub CLI/);
 assert.match(agentInstructions, /source \.devcontainer\/activate-tools\.sh/);
 
 const version = execFileSync('bash', ['scripts/gh', '--version'], { encoding: 'utf8' });
 assert.match(version, /^gh version \d+\.\d+\.\d+/m);
+
+const fakeBin = fs.mkdtempSync(path.join(os.tmpdir(), 'aha-stale-gh-'));
+const fakeGh = path.join(fakeBin, 'gh');
+fs.writeFileSync(fakeGh, '#!/usr/bin/env bash\necho "gh version 1.0.0 (stale-test)"\n', { mode: 0o755 });
+const supportedGh = execFileSync('bash', ['.devcontainer/ensure-gh.sh', '--print-path'], { encoding: 'utf8' }).trim();
+const supportedBin = path.dirname(supportedGh);
+const remainingPath = String(process.env.PATH || '')
+  .split(path.delimiter)
+  .filter((entry) => entry && entry !== fakeBin && entry !== supportedBin)
+  .join(path.delimiter);
+
+const staleEnvironment = {
+  ...process.env,
+  AHA_GH_BIN_DIR: fakeBin,
+  PATH: [fakeBin, supportedBin, remainingPath].filter(Boolean).join(path.delimiter)
+};
+const repairedVersion = execFileSync('bash', ['scripts/gh', '--version'], {
+  encoding: 'utf8',
+  env: staleEnvironment
+});
+assert.match(repairedVersion, /^gh version (?!1\.0\.0)\d+\.\d+\.\d+/m, 'launcher must execute the validated binary, not stale PATH gh');
+
+const activationCheck = execFileSync('bash', ['-c', `
+  set +e +u +E
+  set +o pipefail
+  source .devcontainer/activate-tools.sh >/dev/null
+  first_path="$(command -v gh)"
+  source .devcontainer/activate-tools.sh >/dev/null
+  second_path="$(command -v gh)"
+  case "$-" in *e*|*u*|*E*) exit 21 ;; esac
+  [[ "$(set -o | awk '$1 == "pipefail" { print $2 }')" == "off" ]] || exit 22
+  [[ "$first_path" == "$second_path" ]] || exit 23
+  [[ "$(gh version | awk 'NR == 1 { print $3 }')" != "1.0.0" ]] || exit 24
+`], {
+  cwd: process.cwd(),
+  encoding: 'utf8',
+  env: staleEnvironment
+});
+assert.equal(activationCheck, '', 'activation must be quiet when redirected');
+
+fs.rmSync(fakeBin, { recursive: true, force: true });
 
 console.log('aha-github-cli-bootstrap.test.cjs passed');

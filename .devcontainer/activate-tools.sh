@@ -3,24 +3,35 @@
 # Source this file in shells that do not apply devcontainer remoteEnv:
 #   source .devcontainer/activate-tools.sh
 
-set -Eeuo pipefail
+aha_activate_repository_tools() {
+  local repo_root=""
+  local resolved=""
+  local bin_dir=""
+  local path_entry=""
+  local normalized_path=""
+  local status=0
 
-readonly AHA_TOOLS_REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+  repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)" || status=$?
+  if (( status == 0 )); then
+    resolved="$(bash "$repo_root/.devcontainer/ensure-gh.sh" --print-path)" || status=$?
+  fi
+  if (( status == 0 )) && [[ ! -x "$resolved" ]]; then
+    echo "[tools] GitHub CLI activation returned an invalid binary: $resolved" >&2
+    status=1
+  fi
+  if (( status == 0 )); then
+    bin_dir="$(dirname "$resolved")"
+    while IFS= read -r path_entry; do
+      [[ "$path_entry" == "$bin_dir" ]] && continue
+      normalized_path="${normalized_path:+$normalized_path:}$path_entry"
+    done < <(printf '%s' "${PATH:-}" | tr ':' '\n')
+    export PATH="$bin_dir${normalized_path:+:$normalized_path}"
+    hash -r 2>/dev/null || true
+    "$resolved" --version | head -n 1 || status=$?
+  fi
 
-bash "$AHA_TOOLS_REPO_ROOT/.devcontainer/ensure-gh.sh"
+  unset -f aha_activate_repository_tools
+  return "$status"
+}
 
-for candidate in \
-  "${AHA_GH_BIN_DIR:-}" \
-  "/workspace/bin" \
-  "$AHA_TOOLS_REPO_ROOT/.tools/bin"; do
-  [[ -n "$candidate" && -x "$candidate/gh" ]] || continue
-  export PATH="$candidate:$PATH"
-  break
-done
-
-if ! command -v gh >/dev/null 2>&1; then
-  echo "[tools] GitHub CLI activation failed." >&2
-  return 1 2>/dev/null || exit 1
-fi
-
-gh --version | head -n 1
+aha_activate_repository_tools

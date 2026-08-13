@@ -71,19 +71,24 @@ repair_with_apt() {
   command -v apt-get >/dev/null 2>&1 || return 1
   sudo -n true >/dev/null 2>&1 || return 1
 
-  echo "[tools] Repairing GitHub CLI with the official APT repository..."
-  sudo apt-get update
-  sudo apt-get install -y ca-certificates curl
+  echo "[tools] Repairing GitHub CLI with the official APT repository..." >&2
+  sudo apt-get update >&2
+  sudo apt-get install -y ca-certificates curl >&2
   sudo install -d -m 0755 /etc/apt/keyrings
   curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo tee "$GH_KEYRING" >/dev/null
   sudo chmod go+r "$GH_KEYRING"
   echo "deb [arch=$(dpkg --print-architecture) signed-by=$GH_KEYRING] https://cli.github.com/packages stable main" | sudo tee "$GH_SOURCE" >/dev/null
-  sudo apt-get update
-  sudo apt-get install -y gh
+  sudo apt-get update >&2
+  sudo apt-get install -y gh >&2
 
   local repaired=""
-  repaired="$(command -v gh 2>/dev/null || true)"
-  [[ -n "$repaired" ]] && usable_gh "$repaired"
+  for repaired in /usr/bin/gh /usr/local/bin/gh "$(command -v gh 2>/dev/null || true)"; do
+    if [[ -n "$repaired" ]] && usable_gh "$repaired"; then
+      printf '%s\n' "$repaired"
+      return 0
+    fi
+  done
+  return 1
 }
 
 install_local_release() {
@@ -145,15 +150,13 @@ install_local_release() {
   printf '%s\n' "$bin_dir/gh"
 }
 
-main() {
+resolve_gh() {
   local resolved=""
   if resolved="$(find_usable_gh)"; then
-    "$resolved" --version | head -n 1
-    return 0
-  fi
-
-  if repair_with_apt; then
-    resolved="$(command -v gh)"
+    printf '%s\n' "$resolved"
+    return
+  elif resolved="$(repair_with_apt)"; then
+    :
   else
     resolved="$(install_local_release)"
   fi
@@ -161,6 +164,18 @@ main() {
   if ! usable_gh "$resolved"; then
     echo "[tools] GitHub CLI repair failed: no usable gh binary was found." >&2
     return 1
+  fi
+
+  printf '%s\n' "$resolved"
+}
+
+main() {
+  local resolved=""
+  resolved="$(resolve_gh)" || return 1
+
+  if [[ "${1:-}" == "--print-path" ]]; then
+    printf '%s\n' "$resolved"
+    return 0
   fi
 
   "$resolved" --version | head -n 1
