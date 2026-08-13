@@ -1,10 +1,10 @@
 {
-  "version": 1,
-  "description": "Minimum acceptable AHA Engine comparison statuses after deterministic semantic classification and History Go parity. Improvements are allowed; lower-ranked statuses fail the gate.",
+  "version": 2,
+  "description": "Minimum acceptable AHA Engine comparison statuses after full deterministic canonical-field parity. Lower-ranked statuses fail the gate.",
   "generatedFrom": "docs/reports/aha-engine-fixture-comparison.md",
   "statusRank": {
     "match": 3,
-    "partial": 2,
+    "match": 2,
     "not_checked": 1,
     "mismatch": 0
   },
@@ -27,13 +27,13 @@
       "minimumStatuses": {
         "contentType": "match",
         "domain": "match",
-        "theme": "partial",
-        "mainTension": "partial",
-        "keyInsight": "partial",
-        "fieldConnections": "partial",
+        "theme": "match",
+        "mainTension": "match",
+        "keyInsight": "match",
+        "fieldConnections": "match",
         "historyGoLinks": "match",
-        "suggestedActions": "partial",
-        "confidence": "partial",
+        "suggestedActions": "match",
+        "confidence": "match",
         "warnings": "match"
       }
     },
@@ -43,13 +43,13 @@
       "minimumStatuses": {
         "contentType": "match",
         "domain": "match",
-        "theme": "partial",
-        "mainTension": "partial",
-        "keyInsight": "partial",
-        "fieldConnections": "partial",
+        "theme": "match",
+        "mainTension": "match",
+        "keyInsight": "match",
+        "fieldConnections": "match",
         "historyGoLinks": "match",
-        "suggestedActions": "partial",
-        "confidence": "partial",
+        "suggestedActions": "match",
+        "confidence": "match",
         "warnings": "match"
       }
     },
@@ -59,13 +59,13 @@
       "minimumStatuses": {
         "contentType": "match",
         "domain": "match",
-        "theme": "partial",
-        "mainTension": "partial",
-        "keyInsight": "partial",
-        "fieldConnections": "partial",
+        "theme": "match",
+        "mainTension": "match",
+        "keyInsight": "match",
+        "fieldConnections": "match",
         "historyGoLinks": "match",
-        "suggestedActions": "partial",
-        "confidence": "partial",
+        "suggestedActions": "match",
+        "confidence": "match",
         "warnings": "match"
       }
     },
@@ -75,13 +75,13 @@
       "minimumStatuses": {
         "contentType": "match",
         "domain": "match",
-        "theme": "partial",
-        "mainTension": "partial",
-        "keyInsight": "partial",
-        "fieldConnections": "partial",
+        "theme": "match",
+        "mainTension": "match",
+        "keyInsight": "match",
+        "fieldConnections": "match",
         "historyGoLinks": "match",
-        "suggestedActions": "partial",
-        "confidence": "partial",
+        "suggestedActions": "match",
+        "confidence": "match",
         "warnings": "match"
       }
     },
@@ -91,13 +91,13 @@
       "minimumStatuses": {
         "contentType": "match",
         "domain": "match",
-        "theme": "partial",
-        "mainTension": "partial",
-        "keyInsight": "partial",
-        "fieldConnections": "partial",
+        "theme": "match",
+        "mainTension": "match",
+        "keyInsight": "match",
+        "fieldConnections": "match",
         "historyGoLinks": "match",
-        "suggestedActions": "partial",
-        "confidence": "partial",
+        "suggestedActions": "match",
+        "confidence": "match",
         "warnings": "match"
       }
     },
@@ -107,13 +107,13 @@
       "minimumStatuses": {
         "contentType": "match",
         "domain": "match",
-        "theme": "partial",
-        "mainTension": "partial",
-        "keyInsight": "partial",
-        "fieldConnections": "partial",
+        "theme": "match",
+        "mainTension": "match",
+        "keyInsight": "match",
+        "fieldConnections": "match",
         "historyGoLinks": "match",
-        "suggestedActions": "partial",
-        "confidence": "partial",
+        "suggestedActions": "match",
+        "confidence": "match",
         "warnings": "match"
       }
     },
@@ -123,13 +123,13 @@
       "minimumStatuses": {
         "contentType": "match",
         "domain": "match",
-        "theme": "partial",
-        "mainTension": "partial",
-        "keyInsight": "partial",
-        "fieldConnections": "partial",
+        "theme": "match",
+        "mainTension": "match",
+        "keyInsight": "match",
+        "fieldConnections": "match",
         "historyGoLinks": "match",
-        "suggestedActions": "partial",
-        "confidence": "partial",
+        "suggestedActions": "match",
+        "confidence": "match",
         "warnings": "match"
       }
     },
@@ -139,14 +139,14 @@
       "minimumStatuses": {
         "contentType": "match",
         "domain": "match",
-        "theme": "partial",
-        "mainTension": "partial",
-        "keyInsight": "partial",
-        "fieldConnections": "partial",
+        "theme": "match",
+        "mainTension": "match",
+        "keyInsight": "match",
+        "fieldConnections": "match",
         "historyGoLinks": "match",
-        "suggestedActions": "partial",
-        "confidence": "partial",
-        "warnings": "partial"
+        "suggestedActions": "match",
+        "confidence": "match",
+        "warnings": "match"
       }
     },
     {
@@ -155,13 +155,13 @@
       "minimumStatuses": {
         "contentType": "match",
         "domain": "match",
-        "theme": "partial",
-        "mainTension": "partial",
-        "keyInsight": "partial",
-        "fieldConnections": "partial",
+        "theme": "match",
+        "mainTension": "match",
+        "keyInsight": "match",
+        "fieldConnections": "match",
         "historyGoLinks": "match",
-        "suggestedActions": "partial",
-        "confidence": "partial",
+        "suggestedActions": "match",
+        "confidence": "match",
         "warnings": "match"
       }
     },
@@ -171,13 +171,13 @@
       "minimumStatuses": {
         "contentType": "match",
         "domain": "match",
-        "theme": "partial",
-        "mainTension": "partial",
-        "keyInsight": "partial",
-        "fieldConnections": "partial",
+        "theme": "match",
+        "mainTension": "match",
+        "keyInsight": "match",
+        "fieldConnections": "match",
         "historyGoLinks": "match",
-        "suggestedActions": "partial",
-        "confidence": "partial",
+        "suggestedActions": "match",
+        "confidence": "match",
         "warnings": "match"
       }
     },
@@ -187,13 +187,13 @@
       "minimumStatuses": {
         "contentType": "match",
         "domain": "match",
-        "theme": "partial",
-        "mainTension": "partial",
-        "keyInsight": "partial",
-        "fieldConnections": "partial",
+        "theme": "match",
+        "mainTension": "match",
+        "keyInsight": "match",
+        "fieldConnections": "match",
         "historyGoLinks": "match",
-        "suggestedActions": "partial",
-        "confidence": "partial",
+        "suggestedActions": "match",
+        "confidence": "match",
         "warnings": "match"
       }
     },
@@ -203,14 +203,14 @@
       "minimumStatuses": {
         "contentType": "match",
         "domain": "match",
-        "theme": "partial",
-        "mainTension": "partial",
-        "keyInsight": "partial",
-        "fieldConnections": "partial",
+        "theme": "match",
+        "mainTension": "match",
+        "keyInsight": "match",
+        "fieldConnections": "match",
         "historyGoLinks": "match",
-        "suggestedActions": "partial",
-        "confidence": "partial",
-        "warnings": "partial"
+        "suggestedActions": "match",
+        "confidence": "match",
+        "warnings": "match"
       }
     },
     {
@@ -219,14 +219,14 @@
       "minimumStatuses": {
         "contentType": "match",
         "domain": "match",
-        "theme": "partial",
-        "mainTension": "partial",
-        "keyInsight": "partial",
-        "fieldConnections": "partial",
+        "theme": "match",
+        "mainTension": "match",
+        "keyInsight": "match",
+        "fieldConnections": "match",
         "historyGoLinks": "match",
-        "suggestedActions": "partial",
-        "confidence": "partial",
-        "warnings": "partial"
+        "suggestedActions": "match",
+        "confidence": "match",
+        "warnings": "match"
       }
     },
     {
@@ -235,14 +235,14 @@
       "minimumStatuses": {
         "contentType": "match",
         "domain": "match",
-        "theme": "partial",
-        "mainTension": "partial",
-        "keyInsight": "partial",
-        "fieldConnections": "partial",
+        "theme": "match",
+        "mainTension": "match",
+        "keyInsight": "match",
+        "fieldConnections": "match",
         "historyGoLinks": "match",
-        "suggestedActions": "partial",
-        "confidence": "partial",
-        "warnings": "partial"
+        "suggestedActions": "match",
+        "confidence": "match",
+        "warnings": "match"
       }
     },
     {
@@ -251,14 +251,14 @@
       "minimumStatuses": {
         "contentType": "match",
         "domain": "match",
-        "theme": "partial",
-        "mainTension": "partial",
-        "keyInsight": "partial",
-        "fieldConnections": "partial",
+        "theme": "match",
+        "mainTension": "match",
+        "keyInsight": "match",
+        "fieldConnections": "match",
         "historyGoLinks": "match",
-        "suggestedActions": "partial",
-        "confidence": "partial",
-        "warnings": "partial"
+        "suggestedActions": "match",
+        "confidence": "match",
+        "warnings": "match"
       }
     },
     {
@@ -267,13 +267,13 @@
       "minimumStatuses": {
         "contentType": "match",
         "domain": "match",
-        "theme": "partial",
-        "mainTension": "partial",
-        "keyInsight": "partial",
-        "fieldConnections": "partial",
+        "theme": "match",
+        "mainTension": "match",
+        "keyInsight": "match",
+        "fieldConnections": "match",
         "historyGoLinks": "match",
-        "suggestedActions": "partial",
-        "confidence": "partial",
+        "suggestedActions": "match",
+        "confidence": "match",
         "warnings": "match"
       }
     }
