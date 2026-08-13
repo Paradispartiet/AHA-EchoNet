@@ -187,7 +187,8 @@
       "getLiterarySubjectMatches", "getLiteraryAttachmentLearningPath", "isSportsArticleAnalysis",
       "applyRuntimeKnowledgePolicy", "filterCrossDomainAutoPayload", "enforceCanonicalSourceGrounding",
       "buildCanonicalAnalysis", "resolveCanonicalAnalysisWithOptionalPythonEngine", "isActiveAnalysisRun",
-      "bindAnalysisArtifact", "renderAutoOutputPayload", "setExportButtonsEnabled"
+      "bindAnalysisArtifact", "renderAutoOutputPayload", "setExportButtonsEnabled", "loadAutoOutputs",
+      "setActiveAnalysisRun", "takeKeywords", "refreshAhaExplorer"
     ];
     required.forEach((name) => {
       if (typeof deps[name] !== "function") throw new Error(`AHAChatAutoOutputRuntime mangler avhengighet: ${name}`);
@@ -300,7 +301,56 @@
       deps.setExportButtonsEnabled(true);
     }
 
-    return { renderAutoOutputs };
+    function focusAutoCard(action) {
+      const host = global.document.getElementById("aha-auto-output");
+      if (!host) return;
+      host.querySelectorAll(".auto-card").forEach((card) => card.classList.remove("is-focused"));
+      const target = host.querySelector(`[data-auto-card="${action}"]`);
+      if (!target) return;
+      target.classList.add("is-focused");
+      target.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+
+    function restoreAutoOutputFromStorage() {
+      const cache = deps.loadAutoOutputs();
+      deps.setExportButtonsEnabled(Boolean(cache?.payload));
+      if (!cache) {
+        deps.refreshAhaExplorer();
+        return;
+      }
+      const payload = cache?.payload && typeof cache.payload === "object" ? cache.payload : cache;
+      const sourceText = String(cache?.sourceText || "");
+      const cachedRun = {
+        analysisId: cache.analysisId || payload.analysisId || `analysis_${cache.sourceTextHash || deps.sourceHash(sourceText)}`,
+        analysisRunId: cache.analysisRunId || cache.runId || payload.analysisRunId || payload.runId || "restored",
+        runId: cache.runId || cache.analysisRunId || payload.runId || payload.analysisRunId || "restored",
+        conversationId: cache.conversationId || cache.sessionId || payload.conversationId || payload.sessionId || deps.defaultConversationId,
+        turnId: cache.turnId || payload.turnId || "",
+        sourceId: cache.sourceId || payload.sourceId || `source_${cache.sourceTextHash || deps.sourceHash(sourceText)}`,
+        sourceKind: cache.sourceKind || payload.sourceKind || "chat",
+        topicLabel: cache.topicLabel || payload.topicLabel || deps.takeKeywords(sourceText, 4).join(" · "),
+        sessionId: cache.sessionId || cache.conversationId || payload.sessionId || payload.conversationId || deps.defaultConversationId,
+        createdAt: cache.createdAt || payload.createdAt || new Date().toISOString(),
+        sourceHash: cache.sourceHash || cache.sourceTextHash || deps.sourceHash(sourceText),
+        sourceFingerprint: cache.sourceFingerprint || cache.sourceTextHash || deps.sourceHash(sourceText)
+      };
+      deps.setActiveAnalysisRun(cachedRun);
+      deps.bindAnalysisArtifact(payload, cachedRun);
+      const host = global.document.getElementById("aha-auto-output");
+      if (host) {
+        host.dataset.sourceText = sourceText;
+        host.dataset.analysisId = payload.analysisId || "";
+        host.dataset.analysisRunId = payload.analysisRunId || payload.runId || "";
+        host.dataset.runId = payload.runId || payload.analysisRunId || "";
+        host.dataset.sourceId = payload.sourceId || "";
+        host.dataset.sourceTextHash = deps.sourceHash(sourceText);
+        host.dataset.sourceTextPreview = sourceText.replace(/\s+/g, " ").slice(0, 180);
+      }
+      deps.renderAutoOutputPayload(payload);
+      deps.setExportButtonsEnabled(true);
+    }
+
+    return { renderAutoOutputs, focusAutoCard, restoreAutoOutputFromStorage };
   }
 
   global.AHAChatAutoOutputView = Object.assign({}, global.AHAChatAutoOutputView || {}, { create, createRuntime });
