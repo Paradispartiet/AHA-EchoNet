@@ -106,7 +106,7 @@ function buildContext(seed = {}) {
     'js/ahaChatInsightView.js',
     'js/ahaChatAutoAnalysis.js', 'js/ahaChatAutoOutputView.js',
     'js/ahaChatCanonicalAnalysis.js',
-    'js/ahaChat.js',
+    'js/ahaChatKnowledgeView.js', 'js/ahaChat.js',
     'js/ahaChatPythonSmoke.js'
   ];
 
