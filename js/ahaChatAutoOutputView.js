@@ -15,7 +15,7 @@
       "analysisTopicMismatch", "renderAnalysisDebugPanel", "setExportButtonsEnabled",
       "safeMarkupSortItems", "safeMarkupList", "safeMarkupText", "detectTextType",
       "buildHistoryGoSuggestion", "filterCrossDomainAutoPayload", "saveAutoOutputAsAfterwork",
-      "setStatusNote", "refreshAhaExplorer", "normalizeConceptKey",
+      "setStatusNote", "refreshAhaExplorer", "updateAnalysisRun", "normalizeConceptKey",
       "detectPublicAdministrationReformSignal", "detectAutoAnalysisDomain",
       "detectLiteraryAttachmentSignal", "filterConceptLabels", "canonicalizeDisplayConcept",
       "detectInstitutionalMediaHistorySignal", "parseLabeledInsightCards",
@@ -104,6 +104,14 @@
       const safePath = deps.safeMarkupList(payload.path);
       const textTypeLabel = String(payload.contentType || "").trim() || humanizeTextType(payload.textType || deps.detectTextType(host.dataset.sourceText || ""));
       const ahaSer = buildAhaSerCard(payload, host.dataset.sourceText || "");
+      deps.updateAnalysisRun({
+        sourceText: host.dataset.sourceText || "",
+        canonicalAnalysis: payload?.canonicalAnalysis,
+        ahaSer,
+        concepts: payload?.concepts || payload?.keywords,
+        subjectMatches: payload?.subjectMatches || payload?.subjectLinks,
+        rawAutoPayload: payload
+      }, activeRun);
       const historyGoSuggestion = deps.buildHistoryGoSuggestion(payload, host.dataset.sourceText || "");
       host.innerHTML = `
         <div class="auto-output-head">
@@ -159,6 +167,7 @@
         saveButton.addEventListener("click", () => {
           const filteredPayload = deps.filterCrossDomainAutoPayload(payload, host.dataset.sourceText || "");
           const result = deps.saveAutoOutputAsAfterwork(filteredPayload, host.dataset.sourceText || "", { subjectMatches: payload?.subjectMatches });
+          if (result?.entry) deps.updateAnalysisRun({ afterwork: result.entry }, activeRun);
           if (result.reason === "missing_source_text") {
             deps.setStatusNote("Kan ikke lagre: kildetekst mangler. Send teksten på nytt.");
             if (statusEl) statusEl.textContent = "Kildetekst mangler. Analyser teksten på nytt.";
@@ -188,7 +197,7 @@
       "applyRuntimeKnowledgePolicy", "filterCrossDomainAutoPayload", "enforceCanonicalSourceGrounding",
       "buildCanonicalAnalysis", "resolveCanonicalAnalysisWithOptionalPythonEngine", "isActiveAnalysisRun",
       "bindAnalysisArtifact", "renderAutoOutputPayload", "setExportButtonsEnabled", "loadAutoOutputs",
-      "setActiveAnalysisRun", "takeKeywords", "refreshAhaExplorer"
+      "setActiveAnalysisRun", "updateAnalysisRun", "takeKeywords", "refreshAhaExplorer"
     ];
     required.forEach((name) => {
       if (typeof deps[name] !== "function") throw new Error(`AHAChatAutoOutputRuntime mangler avhengighet: ${name}`);
@@ -266,8 +275,16 @@
       payload.canonicalAnalysis = resolvedCanonical.analysis;
       payload.canonicalAnalysisMeta = resolvedCanonical.meta;
       payload = deps.enforceCanonicalSourceGrounding(payload, effectiveSourceText);
-      deps.bindAnalysisArtifact(payload, activeRun);
-      if (payload.canonicalAnalysis && typeof payload.canonicalAnalysis === "object") deps.bindAnalysisArtifact(payload.canonicalAnalysis, activeRun);
+      deps.bindAnalysisArtifact(payload, activeRun, "rawAutoPayload");
+      if (payload.canonicalAnalysis && typeof payload.canonicalAnalysis === "object") deps.bindAnalysisArtifact(payload.canonicalAnalysis, activeRun, "canonicalAnalysis");
+      deps.updateAnalysisRun({
+        sourceText,
+        sourceType: linkInfo.isSourceAction ? "url" : "pasted_text",
+        rawAutoPayload: payload,
+        canonicalAnalysis: payload.canonicalAnalysis,
+        concepts: payload.concepts || payload.keywords,
+        subjectMatches: payload.subjectMatches || payload.subjectLinks
+      }, activeRun);
       if (options.persist !== false) {
         global.localStorage.setItem(deps.storageKey, JSON.stringify({
           activeRun: activeRun || null,
@@ -335,7 +352,16 @@
         sourceFingerprint: cache.sourceFingerprint || cache.sourceTextHash || deps.sourceHash(sourceText)
       };
       deps.setActiveAnalysisRun(cachedRun);
-      deps.bindAnalysisArtifact(payload, cachedRun);
+      deps.bindAnalysisArtifact(payload, cachedRun, "rawAutoPayload");
+      if (payload.canonicalAnalysis && typeof payload.canonicalAnalysis === "object") deps.bindAnalysisArtifact(payload.canonicalAnalysis, cachedRun, "canonicalAnalysis");
+      deps.updateAnalysisRun({
+        sourceText,
+        rawAutoPayload: payload,
+        canonicalAnalysis: payload.canonicalAnalysis,
+        ahaSer: payload.ahaSer,
+        concepts: payload.concepts || payload.keywords,
+        subjectMatches: payload.subjectMatches || payload.subjectLinks
+      }, cachedRun);
       const host = global.document.getElementById("aha-auto-output");
       if (host) {
         host.dataset.sourceText = sourceText;

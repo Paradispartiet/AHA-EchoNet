@@ -4,6 +4,7 @@ const path = require("node:path");
 const vm = require("node:vm");
 
 const repoRoot = path.resolve(__dirname, "..");
+const contractCode = fs.readFileSync(path.join(repoRoot, "js/ahaChatAnalysisRunContract.js"), "utf8");
 const code = fs.readFileSync(path.join(repoRoot, "js/ahaChatExport.js"), "utf8");
 
 function loadExportApi() {
@@ -22,6 +23,8 @@ function loadExportApi() {
     WeakSet,
     RegExp
   };
+  sandbox.window.window = sandbox.window;
+  vm.runInNewContext(contractCode, sandbox, { filename: "ahaChatAnalysisRunContract.js" });
   vm.runInNewContext(code, sandbox, { filename: "ahaChatExport.js" });
   return sandbox.window.AHAChatExport;
 }
@@ -99,6 +102,8 @@ assert.equal(typeof api.buildAhaAnalysisExportBundle, "function");
   assert.equal(bundle.rawAutoPayload.source_binding.valid, false);
   assert.equal(bundle.rejectedRawAutoPayload.sourceTextHash, "old_hash");
   assert.equal(bundle.ahaSer.tema, "Konseptuelle artikler i medievitenskap");
+  assert.equal(bundle.contractVersion, "aha_analysis_run_v1");
+  assert.equal(bundle.analysisBinding.valid, false);
 }
 
 {

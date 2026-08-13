@@ -330,11 +330,12 @@
   function buildAhaAnalysisExportBundle(deps) {
     const nowIso = new Date().toISOString();
     const auto = deps.loadAutoOutputs() || {};
-    const autoSourceText = String(auto?.sourceText || "");
+    const liveRun = safeObject(typeof deps.getActiveAnalysisRun === "function" ? deps.getActiveAnalysisRun() : null);
+    const autoSourceText = String(liveRun?.sourceText || auto?.sourceText || "");
     const sourceText = autoSourceText;
-    const activeRun = safeObject(auto?.activeRun);
-    const analysisRunId = String(auto?.analysisRunId || auto?.runId || activeRun.analysisRunId || activeRun.runId || auto?.payload?.analysisRunId || auto?.payload?.runId || "");
-    const sourceTextHash = normalizeSourceHash(auto?.sourceTextHash || deps.sourceHash(sourceText));
+    const activeRun = Object.keys(liveRun).length ? liveRun : safeObject(auto?.activeRun);
+    const analysisRunId = String(activeRun.analysisRunId || activeRun.runId || auto?.analysisRunId || auto?.runId || auto?.payload?.analysisRunId || auto?.payload?.runId || "");
+    const sourceTextHash = normalizeSourceHash(activeRun.sourceTextHash || activeRun.sourceHash || auto?.sourceTextHash || deps.sourceHash(sourceText));
     const autoBinding = makeSourceBinding("auto", auto, sourceTextHash, {
       allowInferredSameRun: Boolean(sourceTextHash),
       inferredStatus: "inferred_current_auto_wrapper",
@@ -364,7 +365,8 @@
     const rejectedSelectedAfterwork = selectedAfterworkBinding.valid ? null : selectedAfterworkCandidate;
 
     const chatLog = Array.isArray(chamber?.chatLog) ? chamber.chatLog : [];
-    const latestAhaReplyText = deps.getLatestAhaReplyFromDom();
+    const currentRunReply = String(activeRun?.ahaReply || "").trim();
+    const latestAhaReplyText = currentRunReply || deps.getLatestAhaReplyFromDom();
     const subjectMatches = deps.normalizeSubjectLinks(selectedAfterwork?.subjectLinks || payload?.subjectMatches || []);
     const insights = Array.isArray(selectedAfterwork?.insights) ? selectedAfterwork.insights : [];
     const concepts = Array.isArray(selectedAfterwork?.concepts) ? selectedAfterwork.concepts : [];
@@ -455,7 +457,7 @@
       topicConsistency
     });
 
-    return {
+    const bundle = {
       version: "aha_analysis_export_v1",
       exportedAt: nowIso,
       analysisRunId,
@@ -463,17 +465,17 @@
       activeRun,
       sourceHash: sourceTextHash,
       normalizedSourceHash: sourceTextHash,
-      createdAt: String(auto?.createdAt || selectedAfterwork?.createdAt || nowIso),
+      createdAt: String(activeRun?.createdAt || auto?.createdAt || selectedAfterwork?.createdAt || nowIso),
       sourceTextHash,
       sourceText,
-      sourceTextPreview: String(auto?.sourceTextPreview || selectedAfterwork?.sourceTextPreview || sourceText.replace(/\s+/g, " ").slice(0, 180)),
+      sourceTextPreview: String(activeRun?.sourceTextPreview || activeRun?.sourcePreview || auto?.sourceTextPreview || selectedAfterwork?.sourceTextPreview || sourceText.replace(/\s+/g, " ").slice(0, 180)),
       ahaReply: latestAhaReplyText || String(explicitAhaSer?.kortSvar || payload?.kortSvar || ""),
       ahaReplySourceBinding: {
         field: "ahaReply",
-        status: latestAhaReplyText ? "dom_fallback_unverified" : "payload_or_empty",
-        valid: !latestAhaReplyText,
+        status: currentRunReply ? "current_run" : (latestAhaReplyText ? "dom_fallback_unverified" : "payload_or_empty"),
+        valid: Boolean(currentRunReply) || !latestAhaReplyText,
         currentSourceTextHash: sourceTextHash || null,
-        reason: latestAhaReplyText ? "latest_reply_read_from_dom_not_run_object" : "no_dom_reply_used"
+        reason: currentRunReply ? "reply_bound_to_current_run" : (latestAhaReplyText ? "latest_reply_read_from_dom_not_run_object" : "no_dom_reply_used")
       },
       ahaSer,
       canonicalAnalysis,
@@ -502,6 +504,9 @@
       quality,
       sourceBinding: quality.sourceBinding
     };
+    const contract = deps?.analysisRunContract || global.AHAChatAnalysisRunContract;
+    if (!contract?.finalizeExport) throw new Error("AHAChatExport krever AHAAnalysisRun-kontrakten.");
+    return contract.finalizeExport(bundle);
   }
 
   function normalizeAhaAnalysis(rawAnalysis) {

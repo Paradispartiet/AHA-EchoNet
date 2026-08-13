@@ -70,6 +70,9 @@
   const filterDomainInsightCards = analysisPolicy.filterDomainInsightCards;
   const normalizeAcademicAfterworkPayload = analysisPolicy.normalizeAcademicAfterworkPayload;
 
+  const analysisRunContract = chatModule("analysisRunContract", "AHAChatAnalysisRunContract");
+  if (!analysisRunContract) throw new Error("AHAChatAnalysisRunContract må lastes før ahaChat.js.");
+
   const memoryControls = chatModule("memoryControls", "AHAChatMemoryControls")?.create?.({
     loadChamber: loadChamberFromStorage,
     renderControls: renderAhaMemoryControls,
@@ -149,6 +152,7 @@
   const buildAhaLearningContractReply = memoryRuntime.buildAhaLearningContractReply;
 
   const runContext = chatModule("runContext", "AHAChatRunContext")?.create?.({
+    analysisRunContract,
     sourceHash,
     shortHash,
     takeKeywords,
@@ -161,6 +165,7 @@
   const getActiveAnalysisRun = runContext.getActiveAnalysisRun;
   const setActiveAnalysisRun = runContext.setActiveAnalysisRun;
   const createAnalysisRun = runContext.createAnalysisRun;
+  const updateAnalysisRun = runContext.updateAnalysisRun;
   const bindAnalysisArtifact = runContext.bindAnalysisArtifact;
   const artifactMatchesActiveRun = runContext.artifactMatchesActiveRun;
   const isActiveAnalysisRun = runContext.isActiveAnalysisRun;
@@ -324,6 +329,7 @@
     canonicalizeDisplayConcept,
     detectInstitutionalMediaHistorySignal,
     parseLabeledInsightCards,
+    updateAnalysisRun,
     getSongLyricChildCultureSubjectMatches,
     getLiterarySubjectMatches
   });
@@ -379,6 +385,7 @@
     resolveCanonicalAnalysisWithOptionalPythonEngine,
     isActiveAnalysisRun,
     bindAnalysisArtifact,
+    updateAnalysisRun,
     renderAutoOutputPayload,
     setExportButtonsEnabled,
     loadAutoOutputs,
@@ -456,6 +463,7 @@
     },
     analysis: {
       createAnalysisRun,
+      updateAnalysisRun,
       setActiveAnalysisRun,
       clearActiveAnalysisState,
       isActiveAnalysisRun,
@@ -2010,6 +2018,8 @@
   function getAhaExportDeps() {
     return {
       loadAutoOutputs,
+      analysisRunContract,
+      getActiveAnalysisRun,
       loadAfterworkEntries,
       sourceHash,
       buildCanonicalAnalysis,
@@ -2309,7 +2319,7 @@
 
   global.loadChamberFromStorage = global.loadChamberFromStorage || loadChamberFromStorage;
   global.saveChamberToStorage = global.saveChamberToStorage || saveChamberToStorage;
-  global.AHATestHooks = Object.assign({}, global.AHATestHooks || {}, { detectTextType, buildCanonicalAnalysis, buildAhaAnalysisExportBundle, formatAhaAnalysisExportMarkdown, buildAutoOutputs, renderAutoOutputs, detectAutoAnalysisDomain, buildAcademicConceptCandidates, buildSourceGroundedAcademicPayload, applyRuntimeKnowledgePolicy, isTransientAnalysisDocument, AHA_RUNTIME_KNOWLEDGE_POLICY, normalizeFagkoblinger, resolveCanonicalAnalysisWithOptionalPythonEngine, isAhaMemoryQuestion, buildAhaLearningContractReply, buildAhaMemoryStatus, shouldUseAhaMemory, buildAhaMemoryContext, buildAhaMemoryOffContext, loadAhaMemoryControls, saveAhaMemoryControls, setAhaMemoryControl, isAhaSavingEnabled, isAhaMemoryUseEnabled, loadAhaMemoryExclusions, saveAhaMemoryExclusions, getAhaMemoryInsightStableKey, getAhaMemoryInsightKey, isAhaMemoryInsightExcluded, excludeAhaMemoryInsight, includeAhaMemoryInsight, resetAhaMemoryExclusions, getAhaExcludedMemoryItems, renderAhaMemoryControls, bindAhaMemoryControls, submitAhaChatMessage, findRelevantLocalMemory, formatAhaMemoryContextForAgent, isAhaMemoryDebugEnabled, buildAhaMemoryTransparency, formatAhaMemoryTransparencyDetails, renderAhaMemoryTransparency, appendChat, updateAnswerActionsVisibility, getActiveMetaAiSession, startMetaAiSession, renderMetaAiSessionBox, renderMetaAiClaims, maybeHandleMetaAiAgentReply, saveMetaAiClaimFeedback, buildAhaPersonalAiLoopChatReadinessStatus, renderAhaPersonalAiLoopStatus, buildAhaAnswerPackage, renderAhaAnswerComposer, createAnalysisRun, bindAnalysisArtifact, artifactMatchesActiveRun, clearActiveAnalysisState, renderAutoOutputPayload, enforceCanonicalSourceGrounding, filterRetrievalForActiveSource, scoreRetrievalAgainstSource, filterMemoryContextForActiveSource, isActiveAnalysisRun });
+  global.AHATestHooks = Object.assign({}, global.AHATestHooks || {}, { detectTextType, buildCanonicalAnalysis, buildAhaAnalysisExportBundle, formatAhaAnalysisExportMarkdown, buildAutoOutputs, renderAutoOutputs, detectAutoAnalysisDomain, buildAcademicConceptCandidates, buildSourceGroundedAcademicPayload, applyRuntimeKnowledgePolicy, isTransientAnalysisDocument, AHA_RUNTIME_KNOWLEDGE_POLICY, normalizeFagkoblinger, resolveCanonicalAnalysisWithOptionalPythonEngine, isAhaMemoryQuestion, buildAhaLearningContractReply, buildAhaMemoryStatus, shouldUseAhaMemory, buildAhaMemoryContext, buildAhaMemoryOffContext, loadAhaMemoryControls, saveAhaMemoryControls, setAhaMemoryControl, isAhaSavingEnabled, isAhaMemoryUseEnabled, loadAhaMemoryExclusions, saveAhaMemoryExclusions, getAhaMemoryInsightStableKey, getAhaMemoryInsightKey, isAhaMemoryInsightExcluded, excludeAhaMemoryInsight, includeAhaMemoryInsight, resetAhaMemoryExclusions, getAhaExcludedMemoryItems, renderAhaMemoryControls, bindAhaMemoryControls, submitAhaChatMessage, findRelevantLocalMemory, formatAhaMemoryContextForAgent, isAhaMemoryDebugEnabled, buildAhaMemoryTransparency, formatAhaMemoryTransparencyDetails, renderAhaMemoryTransparency, appendChat, updateAnswerActionsVisibility, getActiveMetaAiSession, startMetaAiSession, renderMetaAiSessionBox, renderMetaAiClaims, maybeHandleMetaAiAgentReply, saveMetaAiClaimFeedback, buildAhaPersonalAiLoopChatReadinessStatus, renderAhaPersonalAiLoopStatus, buildAhaAnswerPackage, renderAhaAnswerComposer, createAnalysisRun, updateAnalysisRun, bindAnalysisArtifact, artifactMatchesActiveRun, clearActiveAnalysisState, renderAutoOutputPayload, enforceCanonicalSourceGrounding, filterRetrievalForActiveSource, scoreRetrievalAgainstSource, filterMemoryContextForActiveSource, isActiveAnalysisRun });
 
   global.AHAActiveRun = {
     get() { return getActiveAnalysisRun(); },
@@ -2360,6 +2370,7 @@
     buildAhaAnswerPackage,
     renderAhaAnswerComposer,
     createAnalysisRun,
+    updateAnalysisRun,
     bindAnalysisArtifact,
     artifactMatchesActiveRun,
     clearActiveAnalysisState,
