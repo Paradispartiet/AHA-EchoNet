@@ -177,7 +177,7 @@
     };
   }
 
-  global.AHAChatReplyFormat = Object.assign({}, global.AHAChatReplyFormat || {}, {
+  const publicApi = Object.assign({}, global.AHAChatReplyFormat || {}, {
     chooseAhaChatReplyMode,
     normalizeAhaChatSectionHeading,
     compactAhaChatReplyPart,
@@ -187,4 +187,6 @@
     normalizeAhaVisibleReply,
     createSubjectPolicy
   });
+  global.AHAChatReplyFormat = publicApi;
+  global.AHAModuleApi?.register?.("chat.replyFormat", publicApi, { version: 1, legacyGlobal: "AHAChatReplyFormat", exports: Object.keys(publicApi) });
 })(window);

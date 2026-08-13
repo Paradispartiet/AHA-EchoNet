@@ -31,7 +31,7 @@ assert.equal(unknown.compactOnly, true);
 assert.equal(unknown.redacted, true);
 assert.equal(unknown.requiresManualReview, true);
 
-assert.ok(chatSource.includes("AHAChatPersonalUi?.create?.("));
+assert.ok(chatSource.includes('chatModule("personalUi", "AHAChatPersonalUi")?.create?.('));
 assert.ok(chatSource.includes("AHAChatPersonalUi må lastes før ahaChat.js."));
 assert.equal(chatSource.includes("Lagre som training example"), false, "Personal AI UI implementation must live outside ahaChat.js");
 assert.ok(chatHtml.indexOf("js/ahaChatPersonalUi.js") < chatHtml.indexOf("js/ahaChat.js"));

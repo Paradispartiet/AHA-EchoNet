@@ -267,5 +267,7 @@
     });
   }
 
-  global.AHAChatInsightPipeline = Object.freeze({ create });
+  const publicApi = Object.freeze({ create });
+  global.AHAChatInsightPipeline = publicApi;
+  global.AHAModuleApi?.register?.("chat.insightPipeline", publicApi, { version: 1, legacyGlobal: "AHAChatInsightPipeline", exports: ["create"] });
 })(typeof window !== "undefined" ? window : globalThis);

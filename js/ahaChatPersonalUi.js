@@ -544,5 +544,7 @@
     });
   }
 
-  global.AHAChatPersonalUi = Object.freeze({ create });
+  const publicApi = Object.freeze({ create });
+  global.AHAChatPersonalUi = publicApi;
+  global.AHAModuleApi?.register?.("chat.personalUi", publicApi, { version: 1, legacyGlobal: "AHAChatPersonalUi", exports: ["create"] });
 })(typeof window !== "undefined" ? window : globalThis);

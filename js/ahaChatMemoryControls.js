@@ -306,5 +306,7 @@
     });
   }
 
-  global.AHAChatMemoryControls = Object.freeze({ create });
+  const publicApi = Object.freeze({ create });
+  global.AHAChatMemoryControls = publicApi;
+  global.AHAModuleApi?.register?.("chat.memoryControls", publicApi, { version: 1, legacyGlobal: "AHAChatMemoryControls", exports: ["create"] });
 })(window);

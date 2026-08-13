@@ -29,7 +29,7 @@ const candidates = pipeline.buildSemanticInsightCandidates("Lek og læring treng
 assert.equal(candidates.length, 3);
 assert.ok(candidates.every((candidate) => candidate.candidate_type === "semantic"));
 
-assert.ok(chatSource.includes("AHAChatInsightPipeline?.create?.("));
+assert.ok(chatSource.includes('chatModule("insightPipeline", "AHAChatInsightPipeline")?.create?.('));
 assert.equal(chatSource.includes("function buildPlayCityFallbackCandidates"), false, "candidate generation implementation must live outside ahaChat.js");
 assert.ok(chatHtml.indexOf("js/ahaChatInsightPipeline.js") < chatHtml.indexOf("js/ahaChat.js"));
 

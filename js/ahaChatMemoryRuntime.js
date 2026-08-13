@@ -580,5 +580,7 @@
     });
   }
 
-  global.AHAChatMemoryRuntime = Object.freeze({ create });
+  const publicApi = Object.freeze({ create });
+  global.AHAChatMemoryRuntime = publicApi;
+  global.AHAModuleApi?.register?.("chat.memoryRuntime", publicApi, { version: 1, legacyGlobal: "AHAChatMemoryRuntime", exports: ["create"] });
 })(window);
