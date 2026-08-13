@@ -4,6 +4,12 @@
 (function (global) {
   "use strict";
 
+  const FUNCTIONAL_TYPES = Object.freeze([
+    "observation", "question", "task", "problem", "solution",
+    "decision", "definition", "contradiction", "learning_point", "pattern", "memory", "principle"
+  ]);
+  const DEFAULT_FUNCTIONAL_TYPES = new Set(FUNCTIONAL_TYPES);
+
   function create(deps = {}) {
     const {
       filterConceptLabels,
@@ -14,7 +20,11 @@
       functionalTypes,
       weakConceptWords
     } = deps;
-    const AHA_INSIGHT_CONTRACT = { FUNCTIONAL_TYPES: functionalTypes && typeof functionalTypes.has === "function" ? functionalTypes : new Set() };
+    const AHA_INSIGHT_CONTRACT = Object.freeze({
+      FUNCTIONAL_TYPES: functionalTypes && typeof functionalTypes.has === "function"
+        ? functionalTypes
+        : DEFAULT_FUNCTIONAL_TYPES
+    });
     const WEAK_CONCEPT_WORDS = weakConceptWords && typeof weakConceptWords.has === "function" ? weakConceptWords : new Set();
 
   function buildAhaAgentUrl(path) {
@@ -267,7 +277,7 @@
     });
   }
 
-  const publicApi = Object.freeze({ create });
+  const publicApi = Object.freeze({ FUNCTIONAL_TYPES, create });
   global.AHAChatInsightPipeline = publicApi;
-  global.AHAModuleApi?.register?.("chat.insightPipeline", publicApi, { version: 1, legacyGlobal: "AHAChatInsightPipeline", exports: ["create"] });
+  global.AHAModuleApi?.register?.("chat.insightPipeline", publicApi, { version: 1, legacyGlobal: "AHAChatInsightPipeline", exports: Object.keys(publicApi) });
 })(typeof window !== "undefined" ? window : globalThis);

@@ -102,6 +102,8 @@ Status:
   versjonerte `chat.autoOutputStore`-modulen
 - eier innsiktskammerets nøkkel, fallback, lokale skrivestempel,
   `aha:chamber-saved`-signal og sletting i `chat.chamberStore`
+- eier kanoniske funksjonstyper, kandidatnormalisering, semantisk fallback og
+  svakhetsfiltrering i `chat.insightPipeline`
 - eier synlig analysis-run-state, debugfelt, processing, eksporttilgjengelighet
   og visuell reset i den versjonerte `chat.analysisStateView`-modulen
 - eier normalisert kildeidentitet, deterministisk kort-hash og nøkkelordrangering
@@ -111,7 +113,7 @@ Status:
 - eier aktiv analyse-/kunnskapskontekst og kartvisning i `chat.knowledgeView`
 - eier meldingsrendering, fagchips, highlights og samtalens tom-/svarstatus i
   `chat.conversationView`, separat fra den lokale `ahaChatPersistence`-lagringen
-- bruker `ahaChat.js` som orkestrator uten parallelle kammerlager-, cache-, analyse-state-,
+- bruker `ahaChat.js` som orkestrator uten parallelle innsiktspipeline-, kammerlager-, cache-, analyse-state-,
   kildeidentitets-, analyse-, policy- eller view-implementasjoner
 
 Mangler før ferdig:

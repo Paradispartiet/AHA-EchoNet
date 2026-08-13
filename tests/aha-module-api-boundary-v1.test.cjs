@@ -166,6 +166,9 @@ const chamberStore = context.AHAModuleApi.get('chat.chamberStore', { version: 1 
 assert.equal(chamberStore.STORAGE_KEY, 'aha_insight_chamber_v1');
 assert.equal(chamberStore.SAVED_EVENT, 'aha:chamber-saved');
 assert.equal(typeof chamberStore.create, 'function');
+const insightPipeline = context.AHAModuleApi.get('chat.insightPipeline', { version: 1 });
+assert.equal(Object.isFrozen(insightPipeline.FUNCTIONAL_TYPES), true);
+assert.equal(insightPipeline.FUNCTIONAL_TYPES.includes('contradiction'), true);
 
 const chatSource = fs.readFileSync('js/ahaChat.js', 'utf8');
 assert.match(chatSource, /function chatModule\(/, 'Chat must resolve extracted modules through the boundary');
