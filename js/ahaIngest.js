@@ -7,6 +7,27 @@
   const CHAMBER_KEY = "aha_insight_chamber_v1";
   const ANALYSIS_NOISE_TERMS = Object.freeze(["illustrasjon","logo","annonsørinnhold","annonsorinnhold","annonse","sponset","les også","les ogsa","årets","arets","populære","populaere","kjole","kjoler","bryllupsgjesten","sesongens","favoritter"]);
   const ANALYSIS_NOISE_WORDS = new Set(ANALYSIS_NOISE_TERMS.flatMap((v) => String(v).split(/\s+/)));
+  const candidateMiddlewares = new Map();
+
+  function resolveModule(name, legacyGlobal) {
+    return global.AHAModuleApi?.resolve?.(name, legacyGlobal, { version: 1 }) || global[legacyGlobal] || null;
+  }
+
+  function insightsApi() {
+    return resolveModule("insights", "InsightsEngine");
+  }
+
+  function sourcesApi() {
+    return resolveModule("sources", "AHASources");
+  }
+
+  function emneMatcherApi() {
+    return resolveModule("emneMatcher", "AHAEmneMatcher");
+  }
+
+  function embeddingsApi() {
+    return resolveModule("embeddings", "AHAEmbeddings");
+  }
 
   function cleanTextForAnalysis(raw) {
     const lines = String(raw || "").split(/\r?\n/);
@@ -37,10 +58,10 @@
   function readChamberFallback() {
     try {
       const raw = localStorage.getItem(CHAMBER_KEY);
-      if (!raw) return global.InsightsEngine?.createEmptyChamber?.() || { insights: [] };
+      if (!raw) return insightsApi()?.createEmptyChamber?.() || { insights: [] };
       return JSON.parse(raw);
     } catch {
-      return global.InsightsEngine?.createEmptyChamber?.() || { insights: [] };
+      return insightsApi()?.createEmptyChamber?.() || { insights: [] };
     }
   }
 
@@ -151,7 +172,7 @@
   }
 
   function ingest(input) {
-    const sourceEvent = global.AHASources?.addSourceEvent?.(input) || null;
+    const sourceEvent = sourcesApi()?.addSourceEvent?.(input) || null;
     // AHASources.createSourceEvent stripper top-level theme_id / subject_id /
     // field_id og beholder bare det som er en del av source-event-schemaet.
     // For å unngå at theme_id forsvinner inn i ingest, leser vi fra both
@@ -173,7 +194,8 @@
       return { ok: true, sourceEvent: src, signal: null, meta: null, skipped_insight: true };
     }
 
-    if (!global.InsightsEngine) return { ok: false, reason: "missing_InsightsEngine", sourceEvent };
+    const engine = insightsApi();
+    if (!engine) return { ok: false, reason: "missing_InsightsEngine", sourceEvent };
 
     const themeId = String(
       src.theme_id || inp.theme_id || src.meta?.theme_id || src.source_type || "self"
@@ -194,7 +216,7 @@
     const fallbackEmner = Array.isArray(src.meta?.related_emner) ? src.meta.related_emner : [];
     const calibrationEmner = (fallbackEmner.length || !Array.isArray(calibrationResult?.matched_emner)) ? [] : calibrationResult.matched_emner.map((m) => m.emne_id).filter(Boolean);
 
-    const signal = global.InsightsEngine.createSignalFromMessage(
+    const signal = engine.createSignalFromMessage(
       text,
       subjectId,
       themeId,
@@ -227,10 +249,10 @@
 
     const chamber = loadChamber();
     let meta = null;
-    if (typeof global.InsightsEngine.addSignalToChamberWithMeta === "function") {
-      meta = global.InsightsEngine.addSignalToChamberWithMeta(chamber, signal);
+    if (typeof engine.addSignalToChamberWithMeta === "function") {
+      meta = engine.addSignalToChamberWithMeta(chamber, signal);
     } else {
-      global.InsightsEngine.addSignalToChamber(chamber, signal);
+      engine.addSignalToChamber(chamber, signal);
     }
     markInsightImportSource(chamber, meta, signal.source_app);
     saveChamber(chamber);
@@ -256,18 +278,19 @@
     return { ok: true, sourceEvent: src, signal, meta };
   }
 
-  function ingestWithCandidates(input, candidates) {
+  function ingestWithCandidatesCore(input, candidates) {
     const baseInput = Object.assign({}, input || {}, { skip_insight: true });
     const sourceOnly = ingest(baseInput);
     if (!sourceOnly?.ok) return sourceOnly;
     if (
-      !global.InsightsEngine ||
-      typeof global.InsightsEngine.createSignalFromMessage !== "function"
+      !insightsApi() ||
+      typeof insightsApi().createSignalFromMessage !== "function"
     ) {
       return { ok: false, reason: "insights_engine_unavailable", items: [] };
     }
 
     const sourceEvent = sourceOnly.sourceEvent || input || {};
+    const engine = insightsApi();
     const themeId = String(
       sourceEvent.theme_id || input?.theme_id || sourceEvent.meta?.theme_id || sourceEvent.source_type || "self"
     ).trim() || "self";
@@ -291,7 +314,7 @@
       const candidateTheories = isObjectCandidate ? normalizeSimpleStringList(candidate.theories, 5) : [];
       const candidateTraditions = isObjectCandidate ? normalizeSimpleStringList(candidate.traditions, 5) : [];
       const candidateTheoreticalLinks = isObjectCandidate ? normalizeTheoreticalLinks(candidate.theoretical_links, 5) : [];
-      const signal = global.InsightsEngine.createSignalFromMessage(
+      const signal = engine.createSignalFromMessage(
         normalizedCandidateText,
         subjectId,
         themeId,
@@ -331,10 +354,10 @@
       }
 
       let meta = null;
-      if (typeof global.InsightsEngine.addSignalToChamberWithMeta === "function") {
-        meta = global.InsightsEngine.addSignalToChamberWithMeta(chamber, signal);
+      if (typeof engine.addSignalToChamberWithMeta === "function") {
+        meta = engine.addSignalToChamberWithMeta(chamber, signal);
       } else {
-        global.InsightsEngine.addSignalToChamber(chamber, signal);
+        engine.addSignalToChamber(chamber, signal);
       }
       markInsightImportSource(chamber, meta, signal.source_app);
       items.push({ signal, meta });
@@ -353,6 +376,51 @@
     return { ok: true, sourceEvent, items };
   }
 
+  function useCandidateMiddleware(idInput, handler, options = {}) {
+    const id = String(idInput || "").trim();
+    if (!/^[a-z][a-zA-Z0-9._-]*$/.test(id)) throw new TypeError("Candidate middleware må ha en stabil id.");
+    if (typeof handler !== "function") throw new TypeError(`Candidate middleware ${id} må være en funksjon.`);
+    const priority = Number.isFinite(Number(options.priority)) ? Number(options.priority) : 100;
+    const existing = candidateMiddlewares.get(id);
+    if (existing?.handler === handler && existing.priority === priority) return false;
+    if (existing && options.replace !== true) throw new Error(`Candidate middleware ${id} er allerede registrert.`);
+    candidateMiddlewares.set(id, Object.freeze({ id, handler, priority }));
+    return true;
+  }
+
+  function removeCandidateMiddleware(idInput) {
+    return candidateMiddlewares.delete(String(idInput || "").trim());
+  }
+
+  function hasCandidateMiddleware(idInput) {
+    return candidateMiddlewares.has(String(idInput || "").trim());
+  }
+
+  function listCandidateMiddlewares() {
+    return Array.from(candidateMiddlewares.values())
+      .sort((a, b) => a.priority - b.priority || a.id.localeCompare(b.id))
+      .map(({ id, priority }) => Object.freeze({ id, priority }));
+  }
+
+  function ingestWithCandidates(input, candidates) {
+    const pipeline = Array.from(candidateMiddlewares.values())
+      .sort((a, b) => a.priority - b.priority || a.id.localeCompare(b.id));
+    function dispatch(index, nextInput, nextCandidates) {
+      const entry = pipeline[index];
+      if (!entry) return ingestWithCandidatesCore(nextInput, nextCandidates);
+      let continued = false;
+      return entry.handler(
+        Object.freeze({ input: nextInput, candidates: nextCandidates }),
+        (forwardInput = nextInput, forwardCandidates = nextCandidates) => {
+          if (continued) throw new Error(`Candidate middleware ${entry.id} kalte next mer enn én gang.`);
+          continued = true;
+          return dispatch(index + 1, forwardInput, forwardCandidates);
+        }
+      );
+    }
+    return dispatch(0, input, candidates);
+  }
+
   function isHistoryGoSignal(signal) {
     if (!signal) return false;
     if (signal.imported === true) return true;
@@ -368,13 +436,14 @@
 
   async function enrichWithEmneMatcher(signal, meta) {
     if (!signal || !signal.text) return;
-    if (!global.AHAEmneMatcher || typeof global.AHAEmneMatcher.matchAllSubjects !== "function") return;
+    const emneMatcher = emneMatcherApi();
+    if (!emneMatcher || typeof emneMatcher.matchAllSubjects !== "function") return;
     // History Go har egen lærings-/innsiktsmotor og eksporterer allerede
     // concepts, related_emner og categoryId. AHA skal stole på det og
     // ikke gjette emner på nytt for importert materiale.
     if (isHistoryGoSignal(signal)) return;
 
-    const matches = await global.AHAEmneMatcher.matchAllSubjects(cleanTextForAnalysis(signal.text), { topN: 3 });
+    const matches = await emneMatcher.matchAllSubjects(cleanTextForAnalysis(signal.text), { topN: 3 });
     if (!Array.isArray(matches) || !matches.length) return;
 
     const chamber = loadChamber();
@@ -446,8 +515,9 @@
 
   async function enrichWithEmbedding(signal, meta) {
     if (!signal || !signal.text) return;
-    if (!global.AHAEmbeddings || typeof global.AHAEmbeddings.embedAndStore !== "function") return;
-    if (typeof global.AHAEmbeddings.isConfigured === "function" && !global.AHAEmbeddings.isConfigured()) return;
+    const embeddings = embeddingsApi();
+    if (!embeddings || typeof embeddings.embedAndStore !== "function") return;
+    if (typeof embeddings.isConfigured === "function" && !embeddings.isConfigured()) return;
 
     const chamber = loadChamber();
     const insights = chamber?.insights || [];
@@ -469,7 +539,7 @@
     }
     if (!target) return;
 
-    const result = await global.AHAEmbeddings.embedAndStore(target);
+    const result = await embeddings.embedAndStore(target);
     if (!result?.ok) return;
 
     try {
@@ -483,15 +553,15 @@
     // grunn til å foreslå en merge. Ingen mutasjon, ingen merged_into,
     // bare et event UI/devtools kan lytte på.
     if (meta?.action !== "created") return;
-    if (typeof global.AHAEmbeddings.findMergeCandidate !== "function") return;
+    if (typeof embeddings.findMergeCandidate !== "function") return;
 
     try {
-      const suggestion = await global.AHAEmbeddings.findMergeCandidate(target, chamber);
+      const suggestion = await embeddings.findMergeCandidate(target, chamber);
       if (!suggestion?.ok || !suggestion.candidate) return;
 
       // Skip pairs the user has already dismissed. Avoids re-surfacing
       // the same suggestion every time a new signal lands on either side.
-      const engine = global.InsightsEngine || {};
+      const engine = insightsApi() || {};
       if (typeof engine.isMergeDismissed === "function" &&
           engine.isMergeDismissed(chamber, target.id, suggestion.candidate.id)) {
         return;
@@ -533,7 +603,25 @@
     }
   }
 
-  global.AHAIngest = { ingest, ingestWithCandidates, enrichWithEmneMatcher, enrichWithEmbedding, cleanTextForAnalysis, ANALYSIS_NOISE_TERMS, ANALYSIS_NOISE_WORDS };
+  const api = {
+    ingest,
+    ingestWithCandidates,
+    useCandidateMiddleware,
+    removeCandidateMiddleware,
+    hasCandidateMiddleware,
+    listCandidateMiddlewares,
+    enrichWithEmneMatcher,
+    enrichWithEmbedding,
+    cleanTextForAnalysis,
+    ANALYSIS_NOISE_TERMS,
+    ANALYSIS_NOISE_WORDS
+  };
+  global.AHAIngest = api;
+  global.AHAModuleApi?.register?.("ingest", api, {
+    version: 1,
+    legacyGlobal: "AHAIngest",
+    exports: Object.keys(api)
+  });
   global.AHAAnalysisText = global.AHAAnalysisText || {};
   global.AHAAnalysisText.cleanTextForAnalysis = cleanTextForAnalysis;
   global.AHAAnalysisText.noiseTerms = ANALYSIS_NOISE_TERMS.slice();

@@ -885,7 +885,7 @@
     };
   }
 
-  global.AHAEmbeddings = {
+  const api = {
     embedAndStore,
     embedAllPending,
     findSimilarToText,
@@ -898,4 +898,10 @@
     buildEmbeddingText,
     DEFAULT_MODEL
   };
+  global.AHAEmbeddings = api;
+  global.AHAModuleApi?.register?.("embeddings", api, {
+    version: 1,
+    legacyGlobal: "AHAEmbeddings",
+    exports: Object.keys(api)
+  });
 })(window);

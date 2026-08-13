@@ -188,7 +188,8 @@
     const candidates = safeCandidates(data.candidates);
     const safeAnalysis = buildSafeArticleAnalysis(data, url, candidates);
     setLatestArticleAnalysis(safeAnalysis);
-    const ingestResult = global.AHAIngest?.ingestWithCandidates?.(sourcePayload, candidates);
+    const ingest = global.AHAModuleApi?.resolve?.("ingest", "AHAIngest", { version: 1 }) || global.AHAIngest;
+    const ingestResult = ingest?.ingestWithCandidates?.(sourcePayload, candidates);
     global.refreshAhaExplorer?.();
     return { url, data, sourcePayload, analysis: safeAnalysis, candidate_count: candidates.length, ingestResult };
   }

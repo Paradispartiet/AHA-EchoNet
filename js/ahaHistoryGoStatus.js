@@ -1,6 +1,10 @@
 (function (global) {
   "use strict";
 
+  function resolveModule(name, legacyGlobal) {
+    return global.AHAModuleApi?.resolve?.(name, legacyGlobal, { version: 1 }) || global[legacyGlobal] || null;
+  }
+
   const KEYS = {
     importPayload: "aha_import_payload_v1",
     unlocks: "hg_unlocks_v1",
@@ -83,7 +87,7 @@
   function collectImportPayloadSummary() {
     const raw = readRaw(KEYS.importPayload);
     const payload = asObject(safeParse(raw, {}));
-    const contract = global.AHAHistoryGoImportContract;
+    const contract = resolveModule("historyGo.contract", "AHAHistoryGoImportContract");
     const prepared = contract && typeof contract.preparePayload === "function"
       ? contract.preparePayload(raw || payload)
       : null;
@@ -288,7 +292,7 @@
     render();
   }
 
-  global.AHAHistoryGoStatus = {
+  const api = {
     collectHistoryGoStatus,
     collectImportPayloadSummary,
     collectImportedAhaEvents,
@@ -297,4 +301,10 @@
     render,
     refresh
   };
+  global.AHAHistoryGoStatus = api;
+  global.AHAModuleApi?.register?.("historyGo.status", api, {
+    version: 1,
+    legacyGlobal: "AHAHistoryGoStatus",
+    exports: Object.keys(api)
+  });
 })(window);

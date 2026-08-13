@@ -268,7 +268,8 @@
         });
       }
       if (urlInfo.isSourceAction) {
-        global.AHAIngest?.ingest?.({
+        const ingest = global.AHAModuleApi?.resolve?.("ingest", "AHAIngest", { version: 1 }) || global.AHAIngest;
+        ingest?.ingest?.({
           source_type: "chat_source_action",
           source_app: "aha_chat",
           content_type: "url",
@@ -454,7 +455,8 @@
           } catch (afterErr) {
             global.console.warn("Auto-etterarbeid feilet", afterErr);
           }
-          global.AHAIngest?.ingest?.({
+          const ingest = global.AHAModuleApi?.resolve?.("ingest", "AHAIngest", { version: 1 }) || global.AHAIngest;
+          ingest?.ingest?.({
             source_type: "aha_agent",
             source_app: "aha_chat",
             content_type: "text",

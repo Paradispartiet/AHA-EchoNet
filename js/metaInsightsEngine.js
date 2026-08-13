@@ -2214,5 +2214,10 @@
     module.exports = MetaInsightsEngine;
   } else {
     global.MetaInsightsEngine = MetaInsightsEngine;
+    global.AHAModuleApi?.register?.("metaInsights", MetaInsightsEngine, {
+      version: 1,
+      legacyGlobal: "MetaInsightsEngine",
+      exports: Object.keys(MetaInsightsEngine)
+    });
   }
 })(this);

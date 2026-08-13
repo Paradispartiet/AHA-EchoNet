@@ -3122,5 +3122,10 @@ function getConceptsForTheme(chamber, subjectId, themeId) {
     module.exports = InsightsEngine;
   } else {
     global.InsightsEngine = InsightsEngine;
+    global.AHAModuleApi?.register?.("insights", InsightsEngine, {
+      version: 1,
+      legacyGlobal: "InsightsEngine",
+      exports: Object.keys(InsightsEngine)
+    });
   }
 })(this);

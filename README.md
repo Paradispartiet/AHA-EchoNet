@@ -20,6 +20,8 @@ This baseline does not activate backend, account login, EchoNet, social sharing,
 
 `js/ahaModules.js` is the runtime module registry.
 
+Cross-module code contracts use the separate, versioned `js/ahaModuleApi.js` registry. The launch-critical v1 boundary and migration rules are documented in `docs/AHA_MODULE_API_BOUNDARY_V1.md`.
+
 `docs/AHA_MODULE_MATURITY_MATRIX.md` is the documented maturity and boundary audit for the same module IDs.
 
 Every module in the registry must have one matching matrix row, and every matrix module row must have one registry entry.

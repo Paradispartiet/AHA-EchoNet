@@ -729,7 +729,7 @@
     return errors.length ? { ok: false, counts, errors } : { ok: true, counts };
   }
 
-  global.AHARepository = {
+  const api = {
     saveSourceEvent,
     writeAhaManualSyncAuditLog,
     createAhaManualSyncAuditEntry: writeAhaManualSyncAuditLog,
@@ -766,4 +766,10 @@
     loadChamber,
     loadDashboardCounts
   };
+  global.AHARepository = api;
+  global.AHAModuleApi?.register?.("repository", api, {
+    version: 1,
+    legacyGlobal: "AHARepository",
+    exports: Object.keys(api)
+  });
 })(window);

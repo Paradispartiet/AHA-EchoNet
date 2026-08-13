@@ -15,6 +15,14 @@
   let personalUi = null;
   let insightPipeline = null;
 
+  function resolveModule(name, legacyGlobal) {
+    return global.AHAModuleApi?.resolve?.(name, legacyGlobal, { version: 1 }) || global[legacyGlobal] || null;
+  }
+
+  function insightsApi() { return resolveModule("insights", "InsightsEngine"); }
+  function ingestApi() { return resolveModule("ingest", "AHAIngest"); }
+  function sourcesApi() { return resolveModule("sources", "AHASources"); }
+
   const memoryControls = global.AHAChatMemoryControls?.create?.({
     loadChamber: loadChamberFromStorage,
     renderControls: renderAhaMemoryControls,
@@ -670,11 +678,11 @@
   function loadChamberFromStorage() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return global.InsightsEngine.createEmptyChamber();
+      if (!raw) return insightsApi().createEmptyChamber();
       return JSON.parse(raw);
     } catch (e) {
       console.warn("Kunne ikke laste innsiktskammer, lager nytt.", e);
-      return global.InsightsEngine.createEmptyChamber();
+      return insightsApi().createEmptyChamber();
     }
   }
 
@@ -953,8 +961,9 @@
 
   function currentInsights() {
     const chamber = loadChamberFromStorage();
-    const active = typeof global.InsightsEngine.getActiveInsights === "function"
-      ? global.InsightsEngine.getActiveInsights(chamber)
+    const engine = insightsApi();
+    const active = typeof engine?.getActiveInsights === "function"
+      ? engine.getActiveInsights(chamber)
       : (chamber?.insights || []);
     return active.filter(
       (ins) => ins.subject_id === SUBJECT_ID && ins.theme_id === getThemeId()
@@ -993,14 +1002,16 @@
 
   function ingestUserMessageWithCandidates(messageText, candidates) {
     const text = String(messageText || "").trim();
-    if (!text || !global.InsightsEngine) return 0;
+    const engine = insightsApi();
+    if (!text || !engine) return 0;
 
     const themeId = getThemeId();
     const fieldId = getFieldId();
     const localCandidates = buildSemanticInsightCandidates(text, { minInsights: 1, maxInsights: 5 });
     const chunks = Array.isArray(candidates) && candidates.length ? candidates : localCandidates;
 
-    if (global.AHAIngest && typeof global.AHAIngest.ingest === "function") {
+    const ingest = ingestApi();
+    if (ingest && typeof ingest.ingest === "function") {
       // AHAIngest håndterer både source event-loggen, signal-konstruksjon
       // og innlegging i innsiktskammeret. Dobbeltlagring av source events
       // unngås ved at vi ikke lenger kaller AHASources.addSourceEvent her.
@@ -1018,10 +1029,10 @@
         field_id: fieldId,
         meta: { theme_id: themeId, field_id: fieldId }
       };
-      if (typeof global.AHAIngest.ingestWithCandidates === "function") {
-        global.AHAIngest.ingestWithCandidates(payload, chunks);
+      if (typeof ingest.ingestWithCandidates === "function") {
+        ingest.ingestWithCandidates(payload, chunks);
       } else {
-        chunks.forEach((chunk) => global.AHAIngest.ingest(Object.assign({}, payload, { text: chunk })));
+        chunks.forEach((chunk) => ingest.ingest(Object.assign({}, payload, { text: chunk })));
       }
       return chunks.length;
     }
@@ -1032,17 +1043,17 @@
     chunks.forEach((chunk) => {
       const text = typeof chunk === "string" ? chunk : String(chunk?.text || chunk?.summary || chunk?.title || "").trim();
       if (!text) return;
-      const signal = global.InsightsEngine.createSignalFromMessage(
+      const signal = engine.createSignalFromMessage(
         text,
         SUBJECT_ID,
         themeId,
         { field_id: fieldId }
       );
-      chamber = global.InsightsEngine.addSignalToChamber(chamber, signal);
+      chamber = engine.addSignalToChamber(chamber, signal);
     });
     saveChamberToStorage(chamber);
 
-    global.AHASources?.addSourceEvent?.({
+    sourcesApi()?.addSourceEvent?.({
       source_type: "chat",
       source_app: "aha_chat",
       content_type: "text",
@@ -1063,7 +1074,7 @@
 
   async function handleUserMessageInsightCandidatesInBackground(messageText) {
     const text = String(messageText || "").trim();
-    if (!text || !global.InsightsEngine) return 0;
+    if (!text || !insightsApi()) return 0;
     const themeId = getThemeId();
     const fieldId = getFieldId();
     const aiCandidates = await generateAIInsightCandidates(text, {
@@ -2625,8 +2636,8 @@
           ? global.AHACalibration.getStatus()
           : {}),
       buildMetaProfile: (chamber) =>
-        (typeof global.InsightsEngine?.buildMetaProfile === "function"
-          ? (global.InsightsEngine.buildMetaProfile(chamber) || {})
+        (typeof insightsApi()?.buildMetaProfile === "function"
+          ? (insightsApi().buildMetaProfile(chamber) || {})
           : (chamber?.meta || {})),
       setStatusNote,
       out
@@ -2920,7 +2931,7 @@
     bind(artifact) { return bindAnalysisArtifact(artifact, getActiveAnalysisRun()); }
   };
 
-  global.AHAChat = {
+  const chatApi = {
     loadChamberFromStorage,
     saveChamberToStorage,
     handleUserMessage,
@@ -2971,6 +2982,12 @@
     filterMemoryContextForActiveSource,
     isActiveAnalysisRun
   };
+  global.AHAChat = chatApi;
+  global.AHAModuleApi?.register?.("chat", chatApi, {
+    version: 1,
+    legacyGlobal: "AHAChat",
+    exports: Object.keys(chatApi)
+  });
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bind);
   else bind();

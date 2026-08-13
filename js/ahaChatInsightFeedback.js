@@ -6,8 +6,13 @@
 
   const STATUS_ID = "chat-status-note";
   const MAX_RUNS = 20;
+  const FEEDBACK_MIDDLEWARE_ID = "chat.insightFeedback";
   const feedbackByRun = new Map();
   const personalAnswerTransparencyQueue = [];
+
+  function resolveModule(name, legacyGlobal) {
+    return global.AHAModuleApi?.resolve?.(name, legacyGlobal, { version: 1 }) || global[legacyGlobal] || null;
+  }
 
   function text(value) {
     return String(value == null ? "" : value).trim();
@@ -132,18 +137,17 @@
     if (!statusNode) return false;
 
     // Important isolation boundary: do not even read AHAIngest outside Chat.
-    const ingestApi = global.AHAIngest;
-    if (!ingestApi || typeof ingestApi.ingestWithCandidates !== "function") return false;
-    if (ingestApi.__ahaChatInsightFeedbackInstalled === true) return true;
+    const ingestApi = resolveModule("ingest", "AHAIngest");
+    if (!ingestApi || typeof ingestApi.useCandidateMiddleware !== "function") return false;
+    if (ingestApi.hasCandidateMiddleware?.(FEEDBACK_MIDDLEWARE_ID)) return true;
 
-    const original = ingestApi.ingestWithCandidates;
-    ingestApi.ingestWithCandidates = function feedbackWrappedIngest(input, candidates) {
-      const result = original.call(this, input, candidates);
+    function feedbackMiddleware(context, next) {
+      const result = next(context?.input, context?.candidates);
       const summary = summarizeInsightIngestResult(result);
       scheduleInsightFeedback(summary);
       return result;
-    };
-    ingestApi.__ahaChatInsightFeedbackInstalled = true;
+    }
+    ingestApi.useCandidateMiddleware(FEEDBACK_MIDDLEWARE_ID, feedbackMiddleware, { priority: 50 });
     return true;
   }
 
@@ -373,7 +377,7 @@
     personalAnswerTransparencyQueue.length = 0;
   }
 
-  global.AHAChatInsightFeedback = {
+  const api = {
     normalizeAction,
     summarizeInsightIngestResult,
     formatInsightFeedback,
@@ -390,8 +394,15 @@
     renderPersonalAnswerTransparency,
     installPersonalAnswerEvaluationCapture,
     installPersonalAnswerTransparencyObserver,
-    resetFeedbackForTests
+    resetFeedbackForTests,
+    FEEDBACK_MIDDLEWARE_ID
   };
+  global.AHAChatInsightFeedback = api;
+  global.AHAModuleApi?.register?.("chat.insightFeedback", api, {
+    version: 1,
+    legacyGlobal: "AHAChatInsightFeedback",
+    exports: Object.keys(api)
+  });
 
   function init() {
     installInsightIngestFeedback();
