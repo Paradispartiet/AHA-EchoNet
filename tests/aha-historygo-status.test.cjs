@@ -2,6 +2,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 
+const contractSource = fs.readFileSync('js/ahaHistoryGoImportContract.js', 'utf8');
 const source = fs.readFileSync('js/ahaHistoryGoStatus.js', 'utf8');
 
 function makeLocalStorage() {
@@ -16,7 +17,7 @@ function makeLocalStorage() {
 }
 
 const localStorage = makeLocalStorage();
-localStorage.seed('aha_import_payload_v1', { exported_at: '2026-07-07T00:00:00.000Z', hg_learning_log_v1: [{ id: 1 }], hg_insights_events_v1: [{ id: 2 }], knowledge_universe: { a: { b: [1] } }, notes: [{}], dialogs: [{}], nextup_learning_signal: {} });
+localStorage.seed('aha_import_payload_v1', { schema_version: 'aha_import_payload_v1', contract_version: 1, source: 'historygo', exported_at: '2026-07-07T00:00:00.000Z', hg_knowledge_entries_v2: [{ id: 'k1' }], hg_learning_log_v1: [{ id: 1 }], hg_insights_events_v1: [{ id: 2 }], knowledge_universe: { a: { b: [1] } }, notes: [{}], dialogs: [{}], nextup_learning_signal: {}, privacy: { scope: 'private_user', public_sharing: false, model_training_allowed: false } });
 localStorage.seed('visited_places', [{ id: 'oslo' }]);
 localStorage.seed('people_collected', [{ id: 'person' }]);
 localStorage.seed('hg_unlocks_v1', { byQuiz: { q1: true, q2: true } });
@@ -27,8 +28,9 @@ localStorage.seed('aha_source_events_v1', [
 localStorage.seed('aha_insight_chamber_v1', { insights: [{ id: 'i1', source_event_ids: ['e1'] }] });
 localStorage.seed('aha_historygo_imports_v1', [{ id: 'historygo_import_1', imported_at: '2026-07-07T01:00:00.000Z', historygo_storage_apply_enabled: false, database_persist_enabled: false, historygo_storage_apply_result: { skipped: true, reason: 'historygo_storage_apply_disabled' } }]);
 
-const context = { console, localStorage, document: { getElementById: () => null }, window: null };
+const context = { console, localStorage, document: { getElementById: () => null }, window: null, Date, JSON, Object, Array, Set, Number, String };
 context.window = context;
+vm.runInNewContext(contractSource, context, { filename: 'js/ahaHistoryGoImportContract.js' });
 vm.runInNewContext(source, context, { filename: 'js/ahaHistoryGoStatus.js' });
 const status = context.AHAHistoryGoStatus;
 
@@ -37,6 +39,9 @@ assert.equal(status.collectHistoryGoStatus().visitedPlacesCount, 1);
 const payload = status.collectImportPayloadSummary();
 assert.equal(payload.learningLogCount, 1);
 assert.equal(payload.insightEventsCount, 1);
+assert.equal(payload.knowledgeEntriesCount, 1);
+assert.equal(payload.schemaVersion, 'aha_import_payload_v1');
+assert.equal(payload.contractStatus, 'Gyldig v1');
 assert.ok(payload.payloadKeys.includes('hg_learning_log_v1'));
 const imported = status.collectImportedAhaEvents();
 assert.equal(imported.totalCount, 1);

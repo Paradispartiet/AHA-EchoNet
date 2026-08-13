@@ -81,11 +81,22 @@
   }
 
   function collectImportPayloadSummary() {
-    const payload = asObject(safeParse(readRaw(KEYS.importPayload), {}));
+    const raw = readRaw(KEYS.importPayload);
+    const payload = asObject(safeParse(raw, {}));
+    const contract = global.AHAHistoryGoImportContract;
+    const prepared = contract && typeof contract.preparePayload === "function"
+      ? contract.preparePayload(raw || payload)
+      : null;
+    const firstError = prepared?.ok === false ? asObject(asArray(prepared.errors)[0]) : {};
     return {
+      schemaVersion: String(payload.schema_version || "legacy/ukjent"),
+      contractStatus: prepared?.ok === true
+        ? (prepared.migrated_from ? `Migreres fra ${prepared.migrated_from}` : "Gyldig v1")
+        : (prepared?.ok === false ? `Avvist: ${String(firstError.code || "invalid_payload")}` : "Ikke kontrollert"),
       nextupLearningSignalExists: Boolean(payload.nextup_learning_signal && typeof payload.nextup_learning_signal === "object"),
       learningLogCount: countBestEffort(payload.hg_learning_log_v1),
       insightEventsCount: countBestEffort(payload.hg_insights_events_v1),
+      knowledgeEntriesCount: countBestEffort(payload.hg_knowledge_entries_v2),
       knowledgeUniverseCount: countBestEffort(payload.knowledge_universe),
       notesCount: countBestEffort(payload.notes),
       dialogsCount: countBestEffort(payload.dialogs),
@@ -208,9 +219,12 @@
     const payloadEl = document.getElementById("hg-payload-summary");
     if (payloadEl) {
       payloadEl.innerHTML = `
+        <li>Schema version: <strong>${escapeHtml(payload.schemaVersion)}</strong></li>
+        <li>Contract status: <strong>${escapeHtml(payload.contractStatus)}</strong></li>
         <li>NextUp learning signal: <strong>${payload.nextupLearningSignalExists ? "Funnet" : "Ikke funnet"}</strong></li>
         <li>Learning log count: <strong>${escapeHtml(String(payload.learningLogCount))}</strong></li>
         <li>Insight events count: <strong>${escapeHtml(String(payload.insightEventsCount))}</strong></li>
+        <li>Knowledge V2 count: <strong>${escapeHtml(String(payload.knowledgeEntriesCount))}</strong></li>
         <li>Knowledge universe count: <strong>${escapeHtml(String(payload.knowledgeUniverseCount))}</strong></li>
         <li>Notes count: <strong>${escapeHtml(String(payload.notesCount))}</strong></li>
         <li>Dialogs count: <strong>${escapeHtml(String(payload.dialogsCount))}</strong></li>

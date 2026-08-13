@@ -2,6 +2,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 
+const contractSource = fs.readFileSync('js/ahaHistoryGoImportContract.js', 'utf8');
 const source = fs.readFileSync('js/ahaHistoryGoImport.js', 'utf8');
 
 function makeLocalStorage() {
@@ -37,13 +38,18 @@ function loadContext(overrides = {}) {
   context.window = context;
   context.__ingestCalls = ingestCalls;
   context.__saveCalls = saveCalls;
+  vm.runInNewContext(contractSource, context, { filename: 'js/ahaHistoryGoImportContract.js' });
   vm.runInNewContext(source, context, { filename: 'js/ahaHistoryGoImport.js' });
   return context;
 }
 
 (async () => {
 const payload = {
+  schema_version: 'aha_import_payload_v1',
+  contract_version: 1,
+  source: 'historygo',
   exported_at: '2026-07-07T00:00:00.000Z',
+  hg_knowledge_entries_v2: [{ id: 'kv2', subject_id: 'historie', topic: 'Kildekritikk', text: 'Kontekst er viktig.' }],
   nextup_learning_signal: { learning_style: 'utforskende', inferred_interests: ['historie'] },
   hg_learning_log_v1: [{ type: 'quiz', name: 'Quiz', note: 'Bra', concepts: ['kilde'] }],
   hg_insights_events_v1: [{ concepts: ['demokrati'], categoryId: 'samfunn' }],
@@ -51,12 +57,13 @@ const payload = {
   notes: [{ title: 'Notat', text: 'tekst' }],
   dialogs: [{ title: 'Dialog', text: 'tekst' }],
   merits_by_category: { history: ['badge'] },
-  people_collected: [{ id: 'p1' }]
+  people_collected: [{ id: 'p1' }],
+  privacy: { scope: 'private_user', public_sharing: false, model_training_allowed: false }
 };
 
 let ctx = loadContext();
 const invalid = ctx.AHAHistoryGoImport.importHistoryGoData(null);
-assert.equal(invalid.error, 'Ugyldig payload.');
+assert.equal(invalid.error_code, 'invalid_payload_type');
 assert.equal(invalid.importedSignals, 0);
 ctx = loadContext({ AHAIngest: null });
 assert.equal(ctx.AHAHistoryGoImport.importHistoryGoData(payload).error, 'AHAIngest mangler.');
@@ -64,6 +71,9 @@ assert.equal(ctx.AHAHistoryGoImport.importHistoryGoData(payload).error, 'AHAInge
 ctx = loadContext();
 const counts = ctx.AHAHistoryGoImport.importHistoryGoData(payload);
 assert.equal(counts.local_only, true);
+assert.equal(counts.payload_schema_version, 'aha_import_payload_v1');
+assert.equal(counts.payload_contract_version, 1);
+assert.equal(counts.payload_migrated_from, null);
 assert.equal(counts.source_app, 'historygo');
 assert.equal(counts.database_persist_enabled, false);
 assert.equal(counts.historygo_storage_apply_enabled, false);
@@ -87,6 +97,7 @@ for (const key of ['knowledge_universe', 'hg_learning_log_v1', 'hg_insights_even
 const logEntries = JSON.parse(ctx.localStorage.getItem('aha_historygo_imports_v1'));
 assert.equal(logEntries.length, 1);
 assert.equal(logEntries[0].id, counts.import_id);
+assert.equal(logEntries[0].payload_schema_version, 'aha_import_payload_v1');
 assert.equal(logEntries[0].local_only, true);
 assert.deepEqual(logEntries[0].payload_keys.sort(), Object.keys(payload).sort());
 assert.equal(Object.prototype.hasOwnProperty.call(logEntries[0], 'knowledge_universe'), false);
@@ -113,6 +124,29 @@ assert.equal(source.includes('ahaEmneMatcher'), false, 'History Go import should
 for (const forbidden of ['fetch(', 'EchoNet', 'Sync Hub', 'createClient', 'supabase']) {
   assert.equal(source.includes(forbidden), false, `import boundary should not include ${forbidden}`);
 }
+
+ctx = loadContext();
+const future = ctx.AHAHistoryGoImport.importHistoryGoData({ schema_version: 'aha_import_payload_v2', contract_version: 2, source: 'historygo' });
+assert.equal(future.error_code, 'unsupported_contract_version');
+assert.equal(ctx.__ingestCalls.length, 0, 'future version must fail before ingest');
+assert.equal(ctx.localStorage.getItem('aha_historygo_imports_v1'), null, 'rejected payload must not create import log');
+
+ctx = loadContext();
+const malformed = ctx.AHAHistoryGoImport.importHistoryGoData({ ...payload, hg_learning_log_v1: {}, privacy: { scope: 'public', public_sharing: true, model_training_allowed: true } });
+assert.equal(malformed.error_code, 'invalid_field_type');
+assert.ok(malformed.validation_errors.length >= 4);
+assert.equal(ctx.__ingestCalls.length, 0, 'invalid shape must fail atomically');
+
+ctx = loadContext();
+const legacy = { ...payload };
+delete legacy.schema_version;
+delete legacy.contract_version;
+delete legacy.privacy;
+const legacyCounts = ctx.AHAHistoryGoImport.importHistoryGoData(legacy);
+assert.equal(legacyCounts.payload_schema_version, 'aha_import_payload_v1');
+assert.equal(legacyCounts.payload_migrated_from, 'aha_import_payload_legacy_v0');
+
+assert.equal(source.includes('collectKnowledgeEntrySignals'), true, 'canonical Knowledge V2 must be imported');
 
 console.log('aha-historygo-import-boundary.test.cjs passed');
 })();

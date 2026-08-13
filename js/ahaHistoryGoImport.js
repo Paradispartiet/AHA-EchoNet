@@ -124,6 +124,8 @@
       source_app: "historygo",
       imported_at: new Date().toISOString(),
       payload_exported_at: s(p.exported_at || p.exportedAt || p.updated_at || p.updatedAt || ""),
+      payload_schema_version: s(p.schema_version || ""),
+      payload_migrated_from: s(c.payload_migrated_from || "") || null,
       payload_keys: Object.keys(p),
       counts: {
         nextup: c.nextup || 0,
@@ -315,6 +317,50 @@
     return count;
   }
 
+  function collectKnowledgeEntrySignals(chamber, entries, fallbackTimestamp, importContext) {
+    let count = 0;
+    arr(entries).forEach((item) => {
+      const k = obj(item);
+      const category = s(k.subject_id || k.subjectId || k.fagkart_category_id || k.category || "historygo");
+      const topic = s(k.topic || k.title || k.knowledge_unit_id || k.id || "Kunnskap");
+      const text = s(k.text || k.content || k.summary || k.description || "");
+      if (!topic && !text) return;
+
+      ingestSignal({
+        source_type: "historygo_knowledge_item_v2",
+        source_app: "historygo",
+        content_type: "text",
+        title: topic,
+        text: [topic, text].filter(Boolean).join(": "),
+        theme_id: category || "historygo_knowledge",
+        user_created: false,
+        imported: true,
+        created_at: k.last_seen_at || k.learned_at || k.created_at || fallbackTimestamp,
+        meta: {
+          knowledge_id: k.knowledge_unit_id || k.id || null,
+          dimension: k.dimension || null,
+          concept_ids: arr(k.concept_ids),
+          term_ids: arr(k.term_ids),
+          raw: k
+        }
+      }, importContext);
+      count += 1;
+    });
+    return count;
+  }
+
+  function invalidImportResult(prepared) {
+    const errors = arr(prepared?.errors);
+    const primary = errors[0] || {};
+    const message = s(primary.message || "Ugyldig History Go-payload.");
+    return {
+      error: message,
+      error_code: s(primary.code || "invalid_payload"),
+      validation_errors: errors,
+      importedSignals: 0
+    };
+  }
+
   function collectNoteSignals(items, sourceType, fallbackTimestamp, importContext) {
     let count = 0;
     arr(items).forEach((item) => {
@@ -340,12 +386,17 @@
   }
 
   function importHistoryGoData(payload) {
-    if (!payload || (typeof payload !== "object" && typeof payload !== "string")) {
+    const contract = global.AHAHistoryGoImportContract;
+    if (!contract || typeof contract.preparePayload !== "function") {
       return {
-        error: "Ugyldig payload.",
+        error: "History Go-importkontrakten mangler.",
+        error_code: "contract_runtime_missing",
         importedSignals: 0
       };
     }
+
+    const prepared = contract.preparePayload(payload);
+    if (!prepared?.ok) return invalidImportResult(prepared);
 
     if (!global.AHAIngest || typeof global.AHAIngest.ingest !== "function") {
       return {
@@ -354,19 +405,7 @@
       };
     }
 
-    let p;
-    if (typeof payload === "string") {
-      try {
-        p = JSON.parse(payload);
-      } catch {
-        return {
-          error: "Ugyldig payload.",
-          importedSignals: 0
-        };
-      }
-    } else {
-      p = obj(payload);
-    }
+    const p = prepared.payload;
     const fallbackTimestamp = p.exported_at || new Date().toISOString();
     const chamber = null;
     const importId = `historygo_import_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
@@ -381,10 +420,15 @@
       database_persist_enabled: isDatabasePersistEnabled(),
       historygo_storage_apply_enabled: isHistoryGoStorageApplyEnabled(),
       historygo_storage_apply_result: storageApplyResult,
+      payload_schema_version: prepared.contract_id,
+      payload_contract_version: prepared.contract_version,
+      payload_migrated_from: prepared.migrated_from,
       nextup: collectNextUpSignal(chamber, p.nextup_learning_signal || p.nextup?.learning_signal, fallbackTimestamp, importContext),
       learning_log: collectLearningLogSignals(chamber, p.hg_learning_log_v1, fallbackTimestamp, importContext),
       insight_events: collectInsightEventSignals(chamber, p.hg_insights_events_v1, fallbackTimestamp, importContext),
-      knowledge: collectKnowledgeSignals(chamber, p.knowledge_universe, fallbackTimestamp, importContext),
+      knowledge: arr(p.hg_knowledge_entries_v2).length
+        ? collectKnowledgeEntrySignals(chamber, p.hg_knowledge_entries_v2, fallbackTimestamp, importContext)
+        : collectKnowledgeSignals(chamber, p.knowledge_universe, fallbackTimestamp, importContext),
       notes: collectNoteSignals(p.notes, "historygo_note", fallbackTimestamp, importContext),
       dialogs: collectNoteSignals(p.dialogs, "historygo_dialog", fallbackTimestamp, importContext),
       storage_keys_applied: appliedStorageKeys.length
@@ -423,6 +467,7 @@
     importHistoryGoData,
     importHistoryGoDataFromSharedStorage,
     collectKnowledgeSignals,
+    collectKnowledgeEntrySignals,
     collectLearningLogSignals,
     collectInsightEventSignals,
     collectNextUpSignal
