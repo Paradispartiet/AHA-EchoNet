@@ -24,6 +24,15 @@
   function sourcesApi() { return resolveModule("sources", "AHASources"); }
   function chatModule(name, legacyGlobal) { return resolveModule(`chat.${name}`, legacyGlobal); }
 
+  const textUtils = chatModule("textUtils", "AHAChatTextUtils");
+  if (!textUtils) throw new Error("AHAChatTextUtils må lastes før ahaChat.js.");
+  const shortHash = textUtils.shortHash;
+  const takeKeywords = textUtils.takeKeywords;
+  const sourceHash = textUtils.sourceHash;
+  if (typeof shortHash !== "function" || typeof takeKeywords !== "function" || typeof sourceHash !== "function") {
+    throw new Error("AHAChatTextUtils må eksponere shortHash, takeKeywords og sourceHash.");
+  }
+
   const analysisPolicy = chatModule("analysisPolicy", "AHAChatAnalysisPolicy")?.create?.({
     signals: chatModule("signals", "AHAChatSignals"),
     resolveConceptTerm,
@@ -587,16 +596,6 @@
   const LEADING_PUNCTUATION_PATTERN = /^[\s"'“”«».,:;|\-–—]+/;
   const LES_OGSA_TEASER_PATTERN = /(«|»|"|')?\s*les\s+også\s*:?\s*[^.!?\n]*(?:[.!?]|$)/ig;
   const TEASER_TITLE_PATTERN = /^(når\s+vekst\s+blir\s+en\s+trussel)\b/i;
-  function shortHash(input) {
-    let hash = 5381;
-    const value = String(input || "");
-    for (let i = 0; i < value.length; i += 1) {
-      hash = ((hash << 5) + hash) + value.charCodeAt(i);
-      hash |= 0;
-    }
-    return Math.abs(hash).toString(36);
-  }
-
   function loadChamberFromStorage() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -965,46 +964,19 @@
   }
 
   function cleanArticleText(raw) {
-    return chatModule("textUtils", "AHAChatTextUtils").cleanArticleText(raw);
+    return textUtils.cleanArticleText(raw);
   }
 
   function toSentences(text) {
-    return chatModule("textUtils", "AHAChatTextUtils").toSentences(text);
+    return textUtils.toSentences(text);
   }
 
   function collectOpinionArticleEvidence(raw, sentences) {
-    return chatModule("textUtils", "AHAChatTextUtils").collectOpinionArticleEvidence(raw, sentences);
+    return textUtils.collectOpinionArticleEvidence(raw, sentences);
   }
 
   function detectTextType(raw) {
     return chatModule("signals", "AHAChatSignals").detectTextType(raw);
-  }
-
-
-  function takeKeywords(text, maxItems) {
-    const tokens = String(text || "").toLowerCase().match(/[a-zæøå0-9]{2,}/g) || [];
-    const stop = new Set(["litt","henne","han","hun","hadde","har","var","være","vært","blir","ble","blitt","dette","denne","disse","fordi","kanskje","hvorfor","etter","veldig","ikke","bare","også","med","som","skal","mellom","uten","noen","noe","alle","der","her","nå","fortsatt","først","tredje","runden","gammel","gamle","unge","godt","dårlig","helt","ennå","eller","men","jeg","meg","min","mine","du","deg","din","de","dem","den","det","en","ei","et","på","i","av","til","fra","og","å","norske","norsk","moderne","viktig","viktigste","store","små","nye","gamle","tydelig","særlig","mildt","sagt"]);
-    const weakVerbs = new Set(["gjorde","gjør","gjort","tenkte","tenker","synes","sier","sa","våknet","hentet","leverte","dro","kom","går","gikk"]);
-    const whitelist = new Set(["kurbad","hageanlegg","dame","telefon","kongo","relasjon","kjærlighet","skyld","skam","fremmedhet","ensomhet","uro","observasjon","nomade","nomadisme","begjær","forfatter","forfatterliv","reise","frihet","kontroll","rus","kropp","språk","møte","minner","konflikt","lengsel","by","park","sted","leilighet","samtale","vennskap","risiko","momsfritak","mediepolitikk","redaktørstyrte","medier","ytringsfrihet","medieøkonomi","journalistikk","regjering","kulturminister","finansdepartementet","annonseinntekter","plattformer","offentlighet","handlingsrom","schibsted","medietilsynet"]);
-    const counts = new Map();
-    const scores = new Map();
-    tokens.forEach((token) => {
-      if (token.length < 4) return;
-      if (stop.has(token)) return;
-      if (weakVerbs.has(token)) return;
-      const freq = (counts.get(token) || 0) + 1;
-      counts.set(token, freq);
-      let score = freq;
-      if (whitelist.has(token)) score += 3;
-      if (token.length >= 8) score += 1;
-      scores.set(token, score);
-    });
-    return Array.from(scores.entries()).sort((a,b)=>b[1]-a[1]).slice(0, maxItems).map(([word]) => word);
-  }
-
-  function sourceHash(text) {
-    const normalized = String(text || "").toLowerCase().replace(/\s+/g, " ").trim();
-    return normalized ? shortHash(normalized) : "";
   }
 
   function loadAutoOutputs() {

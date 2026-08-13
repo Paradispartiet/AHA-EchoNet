@@ -89,6 +89,42 @@
     return String(text || "").split(/(?<=[.!?])\s+|\n+/).map((part) => part.trim()).filter(Boolean);
   }
 
+  function shortHash(input) {
+    let hash = 5381;
+    const value = String(input || "");
+    for (let i = 0; i < value.length; i += 1) {
+      hash = ((hash << 5) + hash) + value.charCodeAt(i);
+      hash |= 0;
+    }
+    return Math.abs(hash).toString(36);
+  }
+
+  function takeKeywords(text, maxItems) {
+    const tokens = String(text || "").toLowerCase().match(/[a-zæøå0-9]{2,}/g) || [];
+    const stop = new Set(["litt","henne","han","hun","hadde","har","var","være","vært","blir","ble","blitt","dette","denne","disse","fordi","kanskje","hvorfor","etter","veldig","ikke","bare","også","med","som","skal","mellom","uten","noen","noe","alle","der","her","nå","fortsatt","først","tredje","runden","gammel","gamle","unge","godt","dårlig","helt","ennå","eller","men","jeg","meg","min","mine","du","deg","din","de","dem","den","det","en","ei","et","på","i","av","til","fra","og","å","norske","norsk","moderne","viktig","viktigste","store","små","nye","gamle","tydelig","særlig","mildt","sagt"]);
+    const weakVerbs = new Set(["gjorde","gjør","gjort","tenkte","tenker","synes","sier","sa","våknet","hentet","leverte","dro","kom","går","gikk"]);
+    const whitelist = new Set(["kurbad","hageanlegg","dame","telefon","kongo","relasjon","kjærlighet","skyld","skam","fremmedhet","ensomhet","uro","observasjon","nomade","nomadisme","begjær","forfatter","forfatterliv","reise","frihet","kontroll","rus","kropp","språk","møte","minner","konflikt","lengsel","by","park","sted","leilighet","samtale","vennskap","risiko","momsfritak","mediepolitikk","redaktørstyrte","medier","ytringsfrihet","medieøkonomi","journalistikk","regjering","kulturminister","finansdepartementet","annonseinntekter","plattformer","offentlighet","handlingsrom","schibsted","medietilsynet"]);
+    const counts = new Map();
+    const scores = new Map();
+    tokens.forEach((token) => {
+      if (token.length < 4) return;
+      if (stop.has(token)) return;
+      if (weakVerbs.has(token)) return;
+      const freq = (counts.get(token) || 0) + 1;
+      counts.set(token, freq);
+      let score = freq;
+      if (whitelist.has(token)) score += 3;
+      if (token.length >= 8) score += 1;
+      scores.set(token, score);
+    });
+    return Array.from(scores.entries()).sort((a,b)=>b[1]-a[1]).slice(0, maxItems).map(([word]) => word);
+  }
+
+  function sourceHash(text) {
+    const normalized = String(text || "").toLowerCase().replace(/\s+/g, " ").trim();
+    return normalized ? shortHash(normalized) : "";
+  }
+
   function collectOpinionArticleEvidence(raw, sentences) {
     const text = cleanArticleText(raw);
     const lowered = String(text || "").toLowerCase();
@@ -144,6 +180,9 @@
   const publicApi = {
     cleanArticleText,
     toSentences,
+    shortHash,
+    takeKeywords,
+    sourceHash,
     dedupeSentenceLikeContent,
     fixSplitNorwegianWords,
     isBoilerplateLine,
