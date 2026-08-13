@@ -75,7 +75,8 @@ Ansvar:
 
 Eksisterende filer:
 - `chat.html`
-- `ahaChat.js`
+- `js/ahaChat.js`
+- `js/ahaChatAnalysisPolicy.js`
 - `aha-chat.css`
 
 Status:
@@ -645,6 +646,7 @@ Les først faktisk:
 - insta.html
 - ahaDashboard.js
 - ahaChat.js
+- ahaChatAnalysisPolicy.js
 - ahaSources.js
 - ahaIngest.js
 - ahaHistoryGoImport.js
