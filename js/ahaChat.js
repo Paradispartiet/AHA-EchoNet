@@ -266,6 +266,16 @@
   if (!autoOutputRuntime) throw new Error("AHAChatAutoOutputRuntime må lastes før ahaChat.js.");
   const renderAutoOutputs = autoOutputRuntime.renderAutoOutputs;
 
+  const replySubjectPolicy = global.AHAChatReplyFormat?.createSubjectPolicy?.({
+    detectAutoAnalysisDomain,
+    getLiterarySubjectMatches,
+    getInstitutionalMediaHistorySubjectMatches
+  });
+  if (!replySubjectPolicy) throw new Error("AHAChatReplySubjectPolicy må lastes før ahaChat.js.");
+  const forceLiteraryFagkoblingerInReply = replySubjectPolicy.forceLiteraryFagkoblingerInReply;
+  const forceInstitutionalMediaHistoryFagkoblingerInReply = replySubjectPolicy.forceInstitutionalMediaHistoryFagkoblingerInReply;
+  const stripFagkoblingerSections = replySubjectPolicy.stripFagkoblingerSections;
+
   function analysisTopicMismatch(payload, run = getActiveAnalysisRun()) {
     const sourceText = String(document.getElementById("aha-auto-output")?.dataset?.sourceText || "");
     return runContext.analysisTopicMismatch(payload, run, sourceText);
@@ -4352,41 +4362,6 @@
       }
     };
   }
-
-  function forceLiteraryFagkoblingerInReply(replyText, sourceText, payload = {}) {
-    if (detectAutoAnalysisDomain(sourceText, payload) !== "literary_attachment") return String(replyText || "");
-    const section = ["FAGKOBLINGER", ...getLiterarySubjectMatches().map((item) => item?.title || item?.subject_label || "").filter(Boolean)].join("\n");
-    return replaceAllFagkoblingerSections(replyText, section);
-  }
-
-  function forceInstitutionalMediaHistoryFagkoblingerInReply(replyText, sourceText, payload = {}) {
-    if (detectAutoAnalysisDomain(sourceText, payload) !== "institutional_media_history") return String(replyText || "");
-    const section = ["FAGKOBLINGER", ...getInstitutionalMediaHistorySubjectMatches(sourceText, payload).map((item) => item?.title || item?.subject_label || "").filter(Boolean)].join("\n");
-    return replaceAllFagkoblingerSections(replyText, section);
-  }
-
-  function replaceAllFagkoblingerSections(replyText, section) {
-    const text = String(replyText || "");
-    const normalizedSection = String(section || "").trim();
-    if (!normalizedSection) return text;
-    const sectionRegex = /(?:^|\n)FAGKOBLINGER[\s\S]*?(?=\n[A-ZÆØÅ][A-ZÆØÅ0-9 _-]{2,}\n|$)/gi;
-    const matches = text.match(sectionRegex) || [];
-    const normalizedMatches = matches.map((item) => String(item || "").trim()).filter(Boolean);
-    if (normalizedMatches.length === 1 && normalizedMatches[0] === normalizedSection) return text;
-    const stripped = text
-      .replace(sectionRegex, "\n")
-      .replace(/\n{3,}/g, "\n\n")
-      .trim();
-    return `${stripped}\n\n${normalizedSection}`.trim();
-  }
-
-  function stripFagkoblingerSections(replyText) {
-    return String(replyText || "")
-      .replace(/(?:^|\n)FAGKOBLINGER[\s\S]*?(?=\n[A-ZÆØÅ][A-ZÆØÅ0-9 _-]{2,}\n|$)/gi, "\n")
-      .replace(/\n{3,}/g, "\n\n")
-      .trim();
-  }
-
 
   // AHA Chat viser ett relevant hovedsvar med passende lengde. Tekstnormaliseringen
   // ligger i ahaChatReplyFormat.js; her beholdes en tynn delegerende wrapper.

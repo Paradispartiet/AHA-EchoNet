@@ -3,7 +3,7 @@ const fs = require("fs");
 const vm = require("vm");
 
 const CHAT_FILE = "js/ahaChat.js";
-const source = fs.readFileSync("js/ahaChatMemoryControls.js", "utf8") + "\n" + fs.readFileSync("js/ahaChatAfterwork.js", "utf8") + "\n" + fs.readFileSync("js/ahaChatMemoryRuntime.js", "utf8") + "\n" + fs.readFileSync("js/ahaChatRunContext.js", "utf8") + "\n" + fs.readFileSync("js/ahaChatInsightView.js", "utf8") + "\n" + fs.readFileSync("js/ahaChatAutoAnalysis.js", "utf8") + "\n" + fs.readFileSync("js/ahaChatAutoOutputView.js", "utf8") + "\n" + fs.readFileSync("js/ahaChatCanonicalAnalysis.js", "utf8") + "\n" + fs.readFileSync(CHAT_FILE, "utf8");
+const source = fs.readFileSync("js/ahaChatMemoryControls.js", "utf8") + "\n" + fs.readFileSync("js/ahaChatAfterwork.js", "utf8") + "\n" + fs.readFileSync("js/ahaChatMemoryRuntime.js", "utf8") + "\n" + fs.readFileSync("js/ahaChatRunContext.js", "utf8") + "\n" + fs.readFileSync("js/ahaChatInsightView.js", "utf8") + "\n" + fs.readFileSync("js/ahaChatAutoAnalysis.js", "utf8") + "\n" + fs.readFileSync("js/ahaChatAutoOutputView.js", "utf8") + "\n" + fs.readFileSync("js/ahaChatCanonicalAnalysis.js", "utf8") + "\n" + fs.readFileSync("js/ahaChatReplyFormat.js", "utf8") + "\n" + fs.readFileSync(CHAT_FILE, "utf8");
 const REQUIRED_KEYS = [
   "state", "label", "message", "blockerCount", "warningCount", "topBlockers", "topWarnings",
   "operatorNextStep", "source", "compactOnly", "redacted", "requiresManualReview"

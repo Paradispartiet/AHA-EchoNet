@@ -124,6 +124,58 @@
     return visible || raw;
   }
 
+  function createSubjectPolicy(deps = {}) {
+    const required = [
+      "detectAutoAnalysisDomain",
+      "getLiterarySubjectMatches",
+      "getInstitutionalMediaHistorySubjectMatches"
+    ];
+    required.forEach((name) => {
+      if (typeof deps[name] !== "function") throw new Error(`AHAChatReplySubjectPolicy mangler avhengighet: ${name}`);
+    });
+
+    function replaceAllFagkoblingerSections(replyText, section) {
+      const text = String(replyText || "");
+      const normalizedSection = String(section || "").trim();
+      if (!normalizedSection) return text;
+      const sectionRegex = /(?:^|\n)FAGKOBLINGER[\s\S]*?(?=\n[A-ZÆØÅ][A-ZÆØÅ0-9 _-]{2,}\n|$)/gi;
+      const matches = text.match(sectionRegex) || [];
+      const normalizedMatches = matches.map((item) => String(item || "").trim()).filter(Boolean);
+      if (normalizedMatches.length === 1 && normalizedMatches[0] === normalizedSection) return text;
+      const stripped = text
+        .replace(sectionRegex, "\n")
+        .replace(/\n{3,}/g, "\n\n")
+        .trim();
+      return `${stripped}\n\n${normalizedSection}`.trim();
+    }
+
+    function stripFagkoblingerSections(replyText) {
+      return String(replyText || "")
+        .replace(/(?:^|\n)FAGKOBLINGER[\s\S]*?(?=\n[A-ZÆØÅ][A-ZÆØÅ0-9 _-]{2,}\n|$)/gi, "\n")
+        .replace(/\n{3,}/g, "\n\n")
+        .trim();
+    }
+
+    function forceLiteraryFagkoblingerInReply(replyText, sourceText, payload = {}) {
+      if (deps.detectAutoAnalysisDomain(sourceText, payload) !== "literary_attachment") return String(replyText || "");
+      const section = ["FAGKOBLINGER", ...deps.getLiterarySubjectMatches().map((item) => item?.title || item?.subject_label || "").filter(Boolean)].join("\n");
+      return replaceAllFagkoblingerSections(replyText, section);
+    }
+
+    function forceInstitutionalMediaHistoryFagkoblingerInReply(replyText, sourceText, payload = {}) {
+      if (deps.detectAutoAnalysisDomain(sourceText, payload) !== "institutional_media_history") return String(replyText || "");
+      const section = ["FAGKOBLINGER", ...deps.getInstitutionalMediaHistorySubjectMatches(sourceText, payload).map((item) => item?.title || item?.subject_label || "").filter(Boolean)].join("\n");
+      return replaceAllFagkoblingerSections(replyText, section);
+    }
+
+    return {
+      replaceAllFagkoblingerSections,
+      stripFagkoblingerSections,
+      forceLiteraryFagkoblingerInReply,
+      forceInstitutionalMediaHistoryFagkoblingerInReply
+    };
+  }
+
   global.AHAChatReplyFormat = Object.assign({}, global.AHAChatReplyFormat || {}, {
     chooseAhaChatReplyMode,
     normalizeAhaChatSectionHeading,
@@ -131,6 +183,7 @@
     parseLegacyAhaReplySections,
     getLegacyAhaReplySection,
     tryNormalizeJsonAhaReply,
-    normalizeAhaVisibleReply
+    normalizeAhaVisibleReply,
+    createSubjectPolicy
   });
 })(window);
