@@ -19,7 +19,6 @@
       inferReligiousLexiconEvidence,
       detectTextType,
       applyRuntimeKnowledgePolicy,
-      filterDomainInsightCards,
       getRuntimeKnowledgePolicy
     } = deps;
 
@@ -413,6 +412,21 @@
     return hasSortLabelSignal || hasTopicSignal;
   }
 
+  function filterDomainInsightCards(cards, sourceText) {
+    const list = Array.isArray(cards) ? cards : [];
+    const src = String(sourceText || "");
+    const sourceHasPublicAdmin = Boolean(detectPublicAdministrationReformSignal(src)?.strong);
+    const sourceHasSahelMali = /(sahel|mali|politisk økologi|knapphetsskolen|ressursknapphet|miljødegradering)/i.test(src);
+    const blocked = sourceHasPublicAdmin
+      ? /(sahel|mali|knapphetsskolen|politisk økologi|ressursknapphet|miljødegradering|miljøsikkerhet|klima og miljø kan være bakgrunnsfaktorer|konfliktutvikling|marginalisering av pastoralister|environmental security|makt- og produksjonsforhold)/i
+      : (sourceHasSahelMali ? /(nav|nav-reformen|nav-kontorene|offentlig forvaltning|velferdsstat|arbeidslinja|bakkebyråkrati|stat–kommune|stat-kommune|arbeidsrettet oppfølging|kommunale målsetninger)/i : null);
+    if (!blocked) return list;
+    return list.filter((card) => {
+      const body = `${card?.title || ""} ${card?.summary || ""} ${(Array.isArray(card?.concepts) ? card.concepts : []).join(" ")}`;
+      return !blocked.test(body);
+    });
+  }
+
   function normalizeAcademicAfterworkPayload(payload, sourceText, textType) {
     const safePayload = payload && typeof payload === "object" ? payload : {};
     const src = String(sourceText || "");
@@ -575,6 +589,7 @@
       getLiteraryAttachmentLearningPath,
       short,
       hasAcademicSignals,
+      filterDomainInsightCards,
       normalizeAcademicAfterworkPayload
     });
   }

@@ -5,7 +5,7 @@ const DOC_FILE = "docs/AHA_PERSONAL_AI_LOOP_EXPORT_REPORT_SURFACE.md";
 const STATUS_FILE = "docs/AHA_IMPLEMENTATION_STATUS.md";
 const JS_FILES = [
   "js/ahaPersonalAiLoopAudit.js",
-  "js/ahaChat.js",
+  "js/ahaChatAcademicInsightView.js", "js/ahaChat.js",
   "js/metaInsightsAgent.js",
   "js/ahaTrainingDashboard.js"
 ];

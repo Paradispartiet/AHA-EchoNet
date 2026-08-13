@@ -74,4 +74,11 @@ assert.equal(song.textType, 'academic_article');
 assert.equal(song.canonicalAnalysis.theme, 'Sang og sanglyrikk i barnekulturen');
 assert.ok(song.subjectMatches.some((item) => item.title === 'Barnelitteratur'));
 
+const adminCards = policy.filterDomainInsightCards([
+  { title: 'NAV-reformen', summary: 'Stat og kommune i arbeidsrettet oppfølging.' },
+  { title: 'Sahel', summary: 'Politisk økologi og ressursknapphet i Mali.' }
+], 'NAV-reformen samlet statlige og kommunale tjenester i NAV-kontorene.');
+assert.equal(adminCards.length, 1);
+assert.equal(adminCards[0].title, 'NAV-reformen');
+
 console.log('aha-chat-analysis-policy passed');
