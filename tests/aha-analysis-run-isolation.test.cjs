@@ -60,6 +60,7 @@ assert.doesNotMatch(chatOrchestratorSource, /function (?:stripTrailingPunctuatio
 assert.doesNotMatch(chatOrchestratorSource, /function (?:shortHash|takeKeywords|sourceHash)\s*\(/, 'source identity and keyword primitives must remain extracted');
 assert.doesNotMatch(chatOrchestratorSource, /aha_chat_auto_outputs_v1|function loadAutoOutputs\s*\(/, 'auto-output cache key and compatibility loading must remain extracted');
 assert.doesNotMatch(chatOrchestratorSource, /aha_insight_chamber_v1|function (?:loadChamberFromStorage|saveChamberToStorage)\s*\(/, 'chamber key and persistence must remain extracted');
+assert.doesNotMatch(chatOrchestratorSource, /AHA_INSIGHT_CONTRACT|INSIGHT_NOISE_PATTERN|function getInsightPipeline\s*\(/, 'insight candidate contract and pipeline ownership must remain extracted');
 assert.doesNotMatch(chatOrchestratorSource, /function (?:renderAnalysisDebugPanel|clearActiveAnalysisState|setAhaProcessing|setExportButtonsEnabled)\s*\(/, 'analysis-state DOM ownership must remain extracted');
 assert.doesNotMatch(fs.readFileSync('js/ahaChatAutoOutputView.js', 'utf8'), /global\.localStorage\.setItem\s*\(/, 'auto-output runtime must persist through the versioned store');
 assert.match(fs.readFileSync('js/ahaExplorer.js', 'utf8'), /contractVersion === "aha_analysis_run_v1"/, 'Explorer must render through the versioned analysis-run view model');

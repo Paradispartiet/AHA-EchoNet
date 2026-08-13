@@ -11,7 +11,6 @@
   const AFTERWORK_STORAGE_KEY = "aha_afterwork_v1";
   const PENDING_CHAT_PROMPT_KEY = "aha_pending_chat_prompt_v1";
   let personalUi = null;
-  let insightPipeline = null;
 
   function resolveModule(name, legacyGlobal) {
     return global.AHAModuleApi?.resolve?.(name, legacyGlobal, { version: 1 }) || global[legacyGlobal] || null;
@@ -247,6 +246,18 @@
   const normalizeAfterworkConcept = afterworkAutoAdapter.normalizeAfterworkConcept;
   const saveAutoOutputAsAfterwork = afterworkAutoAdapter.saveAutoOutputAsAfterwork;
   const ensureAfterworkForLatestAnalysis = afterworkAutoAdapter.ensureAfterworkForLatestAnalysis;
+
+  const insightPipeline = chatModule("insightPipeline", "AHAChatInsightPipeline")?.create?.({
+    filterConceptLabels,
+    normalizeSimpleStringList,
+    normalizeTheoreticalLinks,
+    extractAcademicPhraseConcepts,
+    normalizeAfterworkConcept,
+    weakConceptWords: { has: conceptPolicy.isWeakConceptWord }
+  });
+  if (!insightPipeline) throw new Error("AHAChatInsightPipeline må lastes før ahaChat.js.");
+  const generateAIInsightCandidates = insightPipeline.generateAIInsightCandidates;
+  const buildSemanticInsightCandidates = insightPipeline.buildSemanticInsightCandidates;
 
   const academicInsightView = chatModule("academicInsightView", "AHAChatAcademicInsightView")?.create?.({
     loadAutoOutputs,
@@ -579,16 +590,6 @@
     return runContext.analysisTopicMismatch(payload, run, sourceText);
   }
 
-  const AHA_INSIGHT_CONTRACT = Object.freeze({
-    FUNCTIONAL_TYPES: new Set([
-      "observation", "question", "task", "problem", "solution",
-      "decision", "definition", "contradiction", "learning_point", "pattern", "memory", "principle"
-    ])
-  });
-  const INSIGHT_NOISE_PATTERN = /\b(les også|les ogsa|annonsørinnhold|annonsorinnhold|logo|illustrasjon|annonse|sponset|kjolefavoritter|bryllupsgjesten)\b/ig;
-  const LEADING_PUNCTUATION_PATTERN = /^[\s"'“”«».,:;|\-–—]+/;
-  const LES_OGSA_TEASER_PATTERN = /(«|»|"|')?\s*les\s+også\s*:?\s*[^.!?\n]*(?:[.!?]|$)/ig;
-  const TEASER_TITLE_PATTERN = /^(når\s+vekst\s+blir\s+en\s+trussel)\b/i;
   function getThemeId() {
     const input = document.getElementById("theme-id");
     const value = input && String(input.value || "").trim();
@@ -655,31 +656,6 @@
     const panel = document.getElementById("panel");
     if (panel) panel.innerHTML = html;
   }
-
-  function getInsightPipeline() {
-    if (!insightPipeline) {
-      insightPipeline = chatModule("insightPipeline", "AHAChatInsightPipeline")?.create?.({
-        filterConceptLabels,
-        normalizeSimpleStringList,
-        normalizeTheoreticalLinks,
-        extractAcademicPhraseConcepts,
-        normalizeAfterworkConcept,
-        functionalTypes: AHA_INSIGHT_CONTRACT.FUNCTIONAL_TYPES,
-        weakConceptWords: { has: conceptPolicy.isWeakConceptWord }
-      });
-    }
-    if (!insightPipeline) throw new Error("AHAChatInsightPipeline må lastes før ahaChat.js.");
-    return insightPipeline;
-  }
-
-  function generateAIInsightCandidates(...args) { return getInsightPipeline().generateAIInsightCandidates(...args); }
-  function normalizeInsightCandidate(...args) { return getInsightPipeline().normalizeInsightCandidate(...args); }
-  function isWeakInsightCandidate(...args) { return getInsightPipeline().isWeakInsightCandidate(...args); }
-  function buildSemanticInsightCandidates(...args) { return getInsightPipeline().buildSemanticInsightCandidates(...args); }
-  function normalizeFunctionalType(...args) { return getInsightPipeline().normalizeFunctionalType(...args); }
-  function normalizeCandidateConcepts(...args) { return getInsightPipeline().normalizeCandidateConcepts(...args); }
-
-
 
   function ingestUserMessageWithCandidates(messageText, candidates) {
     const text = String(messageText || "").trim();

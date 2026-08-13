@@ -117,7 +117,10 @@ eksporttilgjengelighet og visuell reset eies av `chat.analysisStateView`, mens
 orkestratoren fortsatt bestemmer når state og lagring skal endres. Det kanoniske
 innsiktskammerets nøkkel, fallback-lesing, lokale skrivestempel,
 `aha:chamber-saved`-signal og sletting eies av `chat.chamberStore`; forbrukerne
-får fortsatt eksplisitt injiserte `load`/`save`-funksjoner. Lesing av siste akademiske kontekst,
+får fortsatt eksplisitt injiserte `load`/`save`-funksjoner. Kanoniske
+funksjonstyper, kandidatnormalisering, semantisk fallback og svakhetsfiltrering
+eies samlet av `chat.insightPipeline`; orkestratoren bruker bare genererings- og
+fallback-metodene. Lesing av siste akademiske kontekst,
 tolking av merkede innsikter og bygging av syntetiske innsiktskort eies av
 `chat.academicInsightView`. Begrepskanonisering, filtrering og prioritering av
 synlige grafkanter eies av den DOM-frie `chat.conceptPolicy`, mens aktiv
@@ -125,7 +128,7 @@ analyse-/kunnskapskontekst og kartvisning eies av `chat.knowledgeView`.
 Meldingsrendering, fagchips, highlights-rail og samtalens tom-/svarstatus eies av
 `chat.conversationView`; varig lokal samtalelagring og Data Intake-utvalg forblir
 et separat ansvar i `ahaChatPersistence`. Hovedfila orkestrerer modulene uten å
-duplisere kammerlager-, cache-, analyse-state-, kildeidentitets-, autoanalyse-, domene-, konsept- eller view-policy. Uttrekkene er delegert gjennom
+duplisere innsiktspipeline-, kammerlager-, cache-, analyse-state-, kildeidentitets-, autoanalyse-, domene-, konsept- eller view-policy. Uttrekkene er delegert gjennom
 samme offentlige modulgrense og endrer ikke den kildegrunnede output-kontrakten.
 
 ### `ahaEngineClient.js`
