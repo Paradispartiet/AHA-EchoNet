@@ -25,6 +25,7 @@ assert.ok(canonicalAnalysisAt > -1 && canonicalAnalysisAt < chatAt, 'canonical a
 assert.ok(academicInsightViewAt > -1 && academicInsightViewAt < chatAt, 'academic insight view must load before ahaChat.js');
 assert.ok(analysisRunContractAt > -1 && analysisRunContractAt < runContextAt, 'analysis run contract must load before the run context');
 const chatSource = fs.readFileSync('js/ahaChatInsightPipeline.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatPersonalUi.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatAnalysisRunContract.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatAcademicInsightView.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChat.js', 'utf8');
+const chatOrchestratorSource = fs.readFileSync('js/ahaChat.js', 'utf8');
 assert.doesNotMatch(chatSource, /\blet activeAnalysisRun\b/, 'ahaChat.js must not keep a second active-run owner');
 assert.doesNotMatch(chatSource, /function createAnalysisRun\s*\(/, 'run creation must remain extracted');
 assert.doesNotMatch(chatSource, /function loadAhaMemoryControls\s*\(/, 'memory control storage must remain extracted');
@@ -42,6 +43,8 @@ assert.doesNotMatch(chatSource, /function renderAutoOutputPayload\s*\(/, 'auto-o
 assert.doesNotMatch(chatSource, /function buildAhaSerCard\s*\(/, 'AHA ser presentation must remain extracted');
 assert.doesNotMatch(chatSource, /function buildCanonicalAnalysis\s*\(/, 'canonical analysis synthesis must remain extracted');
 assert.doesNotMatch(chatSource, /function resolveCanonicalAnalysisWithOptionalPythonEngine\s*\(/, 'Python engine adapter must remain extracted');
+assert.doesNotMatch(chatOrchestratorSource, /const (?:ACADEMIC_PHRASE_CONCEPTS|ACADEMIC_THEORY_RULES|GENERIC_DISPLAY_CONCEPTS)\b/, 'academic policy tables must remain extracted');
+assert.doesNotMatch(chatOrchestratorSource, /function (?:isGenericDisplayConcept|extractAcademicPhraseConcepts|normalizeSimpleStringList|normalizeTheoreticalLinks|extractAcademicTheoryLinks|mergeTheoryLinks|buildAcademicConceptCandidates)\s*\(/, 'academic concept and theory policy must remain extracted');
 assert.match(fs.readFileSync('js/ahaExplorer.js', 'utf8'), /contractVersion === "aha_analysis_run_v1"/, 'Explorer must render through the versioned analysis-run view model');
 
 class El { constructor(){ this.dataset={}; this._html=''; this.textContent=''; this.disabled=false; this.hidden=false; this.className=''; this.classList={toggle(){},add(){},remove(){}}; } set innerHTML(v){this._html=String(v||'');} get innerHTML(){return this._html;} querySelector(){return null;} querySelectorAll(){return [];} addEventListener(){} appendChild(){} }

@@ -45,7 +45,8 @@ const policy = context.AHAChatAnalysisPolicy.create({
   detectTextType: () => 'academic_article',
   applyRuntimeKnowledgePolicy: (payload) => ({ ...payload, runtimePolicyApplied: true }),
   filterDomainInsightCards: (cards) => Array.isArray(cards) ? cards : [],
-  getRuntimeKnowledgePolicy: () => ({ legacyArticleTemplatesEnabled: true })
+  getRuntimeKnowledgePolicy: () => ({ legacyArticleTemplatesEnabled: true }),
+  normalizeAfterworkConcept: normalizeKey
 });
 
 assert.equal(policy.normalizeVisibleAcademicLabel('navkontorene og nav reformen'), 'NAV-kontorene og NAV-reformen');
@@ -80,5 +81,36 @@ const adminCards = policy.filterDomainInsightCards([
 ], 'NAV-reformen samlet statlige og kommunale tjenester i NAV-kontorene.');
 assert.equal(adminCards.length, 1);
 assert.equal(adminCards[0].title, 'NAV-reformen');
+
+assert.deepEqual(
+  Array.from(policy.extractAcademicPhraseConcepts('Politisk økologi utfordrer knapphetsskolen i Sahel.')),
+  ['politisk økologi', 'knapphetsskolen', 'Sahel']
+);
+
+const theoryLinks = policy.extractAcademicTheoryLinks(
+  'Thomas Homer-Dixon representerer knapphetsskolen, mens politisk økologi vektlegger maktforhold.'
+);
+assert.ok(theoryLinks.some((link) => link.thinker === 'Thomas Homer-Dixon'));
+assert.ok(theoryLinks.some((link) => link.thinker === 'Politisk økologi'));
+
+const mergedTheoryLinks = policy.mergeTheoryLinks(
+  [{ thinker: 'Politisk økologi', theory: 'Politisk økologi', score: 0.5, connection: 'eldre' }],
+  [{ thinker: 'Politisk økologi', theory: 'Politisk økologi', score: 0.82, connection: 'kildebundet' }],
+  5
+);
+assert.equal(mergedTheoryLinks.length, 1);
+assert.equal(mergedTheoryLinks[0].connection, 'kildebundet');
+
+assert.deepEqual(
+  Array.from(policy.buildAcademicConceptCandidates(
+    'Pinse og Den hellige ånd drøftes gjennom politisk økologi.',
+    {
+      concepts: ['Teologi'],
+      keywords: ['ritual'],
+      subjectMatches: [{ matched_terms: ['Den hellige ånd', 'ikke i kilden'] }]
+    }
+  )),
+  ['Den hellige ånd', 'Teologi', 'ritual', 'politisk økologi', 'Pinse']
+);
 
 console.log('aha-chat-analysis-policy passed');
