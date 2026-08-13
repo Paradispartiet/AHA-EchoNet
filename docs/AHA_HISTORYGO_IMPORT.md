@@ -4,6 +4,25 @@
 
 AHA-EchoNet skal importere History Go-data via `aha_import_payload_v1`.
 
+Den kanoniske maskinlesbare kontrakten er
+`schemas/aha_import_payload_v1.schema.json` (JSON Schema Draft 2020-12).
+Runtimegrensen håndheves av `js/ahaHistoryGoImportContract.js` før én eneste
+source event skrives.
+
+## Versjonspolitikk
+
+- Eksplisitt `schema_version: "aha_import_payload_v1"` valideres strengt.
+- Eldre payload uten versjonsfelt migreres bare når den gjenkjennes gjennom
+  etablerte History Go-signalfelt. Migrasjonen merkes
+  `aha_import_payload_legacy_v0` i importloggen.
+- Ukjent hovedversjon, for eksempel `aha_import_payload_v2`, avvises. AHA
+  gjetter ikke, degraderer ikke lydløst og delimporterer ikke payloaden.
+- Ugyldig struktur avvises før `AHAIngest`, storage apply, databasepersist og
+  importlogg.
+
+V1 er en privat brukerimport. Kontrakten krever derfor at offentlig deling og
+modelltrening er avslått i `privacy`-feltet.
+
 AHA-EchoNet skal ikke bruke `ahaEmneMatcher.js` for å gjette History Go-emner på nytt. History Go har egen lokal lærings- og innsiktsmotor, og importadapteren skal lese det History Go allerede har eksportert.
 
 ## Riktig flyt
@@ -31,7 +50,8 @@ History Go-data
 1. nextup_learning_signal
 2. hg_learning_log_v1
 3. hg_insights_events_v1
-4. knowledge_universe
+4. hg_knowledge_entries_v2 (canonical), med knowledge_universe som eksplisitt
+   legacy-fallback
 5. notes
 6. dialogs
 ```
@@ -63,7 +83,12 @@ Importeres som concept events med tekst på formen:
 History Go begreper: X, Y, Z
 ```
 
-### knowledge_universe
+### hg_knowledge_entries_v2
+
+Importeres som canonical Knowledge V2-elementer. `subject_id`/kategori,
+begreps-ID-er, term-ID-er og original proveniens følger source eventet.
+
+### knowledge_universe (legacy)
 
 Importeres fra strukturen:
 

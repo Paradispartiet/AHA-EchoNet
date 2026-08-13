@@ -1,0 +1,14 @@
+{
+  "exported_at": "2026-07-07T00:00:00.000Z",
+  "hg_learning_log_v1": [
+    {
+      "type": "quiz",
+      "name": "Kildequiz",
+      "concepts": ["kildekritikk"]
+    }
+  ],
+  "hg_insights_events_v1": [],
+  "knowledge_universe": {},
+  "notes": [],
+  "dialogs": []
+}

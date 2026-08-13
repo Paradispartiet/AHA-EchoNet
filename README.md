@@ -108,7 +108,7 @@ EchoNet er et senere kollektivt lag og er ikke aktivert. All senere aktivering k
 
 ## AHA / History Go import boundary
 
-History Go er et eget samlings- og læringsunivers. AHA leser bare den delte eksportnøkkelen `aha_import_payload_v1`, og import skjer manuelt når brukeren trykker importknappen i `historygo.html`.
+History Go er et eget samlings- og læringsunivers. AHA leser bare den delte eksportnøkkelen `aha_import_payload_v1`, og import skjer manuelt når brukeren trykker importknappen i `historygo.html`. Payloaden valideres mot den kanoniske Draft 2020-12-kontrakten i `schemas/aha_import_payload_v1.schema.json`; ukjente hovedversjoner og ugyldige payloads avvises før import.
 
 Importen lager AHA source events/insights via eksisterende `AHAIngest`; den bygger ikke ny AHA-motor og endrer ikke History Go-motoren. AHA skriver ikke tilbake til History Go-storage som standard. Slik write-back til `knowledge_universe`, `hg_learning_log_v1`, `hg_insights_events_v1`, `merits_by_category` og `people_collected` krever eksplisitt dev/test-flagg: `AHA_CONFIG.historygo.allowApplyToHistoryGoStorage === true`.
 
