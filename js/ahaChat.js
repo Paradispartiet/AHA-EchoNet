@@ -325,6 +325,74 @@
   const renderMetaAiClaims = metaAiSession.renderMetaAiClaims;
   const maybeHandleMetaAiAgentReply = metaAiSession.maybeHandleMetaAiAgentReply;
 
+  const submissionRuntime = global.AHAChatRunContext?.createSubmissionRuntime?.({
+    config: {
+      threadId: CHAT_THREAD_ID,
+      subjectId: SUBJECT_ID
+    },
+    input: {
+      getUrlDominanceInfo,
+      isTransientAnalysisDocument,
+      isAhaSavingEnabled,
+      getThemeId,
+      getFieldId,
+      handleUserMessage,
+      handleUserMessageInsightCandidatesInBackground
+    },
+    memory: {
+      isMemoryQuestion: isAhaMemoryQuestion,
+      buildMemoryStatus: buildAhaMemoryStatus,
+      renderMemoryStatus: renderAhaMemoryStatus,
+      buildLearningContractReply: buildAhaLearningContractReply,
+      updateMemoryStatus: updateAhaMemoryStatus,
+      isMemoryUseEnabled: isAhaMemoryUseEnabled,
+      buildMemoryContext: buildAhaMemoryContext,
+      buildMemoryOffContext: buildAhaMemoryOffContext,
+      filterMemoryContextForActiveSource,
+      suggestCategoryChips
+    },
+    retrieval: {
+      filterForActiveSource: filterRetrievalForActiveSource,
+      buildPersonalMessageContext: buildAhaPersonalMessageContext,
+      buildAnswerPackage: buildAhaAnswerPackage,
+      renderPersonalRetrieval: renderAhaPersonalRetrieval,
+      renderAnswerComposer: renderAhaAnswerComposer,
+      renderPersonalContextStatus: renderAhaPersonalContextStatus,
+      renderPersonalAiLoopStatus: renderAhaPersonalAiLoopStatus
+    },
+    analysis: {
+      createAnalysisRun,
+      setActiveAnalysisRun,
+      clearActiveAnalysisState,
+      isActiveAnalysisRun,
+      buildArticleSourceTextFromAnalysis,
+      askAgent: askAhaAgent,
+      cleanArticleText,
+      detectTextType,
+      enrichSubjectMatchesForClimateConflict,
+      enrichSubjectMatchesForPublicAdministration,
+      detectAutoAnalysisDomain,
+      getLiterarySubjectMatches,
+      getInstitutionalMediaHistorySubjectMatches,
+      stripFagkoblingerSections,
+      forceLiteraryFagkoblingerInReply,
+      forceInstitutionalMediaHistoryFagkoblingerInReply,
+      normalizeVisibleReply: normalizeAhaVisibleReply,
+      evaluateAnswerForChat: evaluateAhaAnswerForChat,
+      maybeHandleMetaAiAgentReply,
+      renderAutoOutputs,
+      ensureAfterworkForLatestAnalysis
+    },
+    ui: {
+      renderChatMemoryStatus: renderAhaChatMemoryStatus,
+      appendChat,
+      setProcessing: setAhaProcessing,
+      setStatusNote
+    }
+  });
+  if (!submissionRuntime) throw new Error("AHAChatSubmissionRuntime må lastes før ahaChat.js.");
+  const submitAhaChatMessage = submissionRuntime.submitAhaChatMessage;
+
   function analysisTopicMismatch(payload, run = getActiveAnalysisRun()) {
     const sourceText = String(document.getElementById("aha-auto-output")?.dataset?.sourceText || "");
     return runContext.analysisTopicMismatch(payload, run, sourceText);
@@ -4085,184 +4153,6 @@
       return;
     }
     setStatusNote("Klar til å bygge videre fra AHA Home.");
-  }
-
-  async function submitAhaChatMessage(text, textarea = null) {
-    const cleanText = String(text || "").trim();
-    if (!cleanText) return null;
-    const urlInfo = getUrlDominanceInfo(cleanText);
-    const transientAnalysisDocument = isTransientAnalysisDocument(cleanText, urlInfo);
-    const savingEnabled = isAhaSavingEnabled();
-    const persistedUserMessage = savingEnabled ? global.AHAChatPersistence?.appendUserMessage?.(cleanText, { source: "aha_chat", threadId: CHAT_THREAD_ID, skip_insight: urlInfo.isSourceAction || transientAnalysisDocument, sourceRole: transientAnalysisDocument ? "analysis_source" : "user_memory", knowledgeEligible: !transientAnalysisDocument, memoryEligible: !transientAnalysisDocument, curationRequired: transientAnalysisDocument }) : null;
-    renderAhaChatMemoryStatus();
-    appendChat("user", cleanText);
-    let linkReadPromise = null;
-    if (global.AHALinkReader?.hasUrls?.(cleanText)) {
-      linkReadPromise = global.AHALinkReader.processUrlsFromMessage(cleanText, {
-        subject_id: SUBJECT_ID,
-        theme_id: getThemeId(),
-        field_id: getFieldId()
-      }).catch((err) => {
-        console.warn("AHA Link Reader feilet", err?.message || err);
-      });
-    }
-    if (urlInfo.isSourceAction) {
-      global.AHAIngest?.ingest?.({ source_type: "chat_source_action", source_app: "aha_chat", content_type: "url", title: "AHA Chat-lenke", text: cleanText, user_created: true, imported: false, skip_insight: true, created_at: new Date().toISOString(), meta: { skip_insight: true, url_only: urlInfo.urlOnly, url_dominated: urlInfo.urlDominated } });
-    }
-    if (isAhaMemoryQuestion(cleanText)) {
-      if (textarea) textarea.value = "";
-      setAhaProcessing(true, "AHA leser minnestatus …");
-      try {
-        const memoryStatus = await buildAhaMemoryStatus();
-        renderAhaMemoryStatus(memoryStatus);
-        const learningReply = buildAhaLearningContractReply(memoryStatus);
-        if (savingEnabled) global.AHAChatPersistence?.appendAssistantMessage?.(learningReply, { source: "aha_chat", threadId: CHAT_THREAD_ID, tags: ["minne", "læring", "innsiktskammer"] });
-        renderAhaChatMemoryStatus();
-        appendChat("aha", learningReply, { categoryChips: ["minne", "læring", "innsiktskammer"] });
-        return { type: "learning_contract", memoryStatus };
-      } catch (err) {
-        console.warn("AHA Learning Contract kunne ikke lese status", err);
-        if (savingEnabled) global.AHAChatPersistence?.appendAssistantMessage?.("Minnestatus kunne ikke leses akkurat nå.", { source: "aha_chat", threadId: CHAT_THREAD_ID, tags: ["status"] });
-        renderAhaChatMemoryStatus();
-        appendChat("aha", "Minnestatus kunne ikke leses akkurat nå.");
-        return { type: "learning_contract", error: err };
-      } finally {
-        setAhaProcessing(false);
-        void updateAhaMemoryStatus();
-      }
-    }
-
-    const sourceKind = urlInfo.isSourceAction ? "url" : "pasted_text";
-    const analysisRun = createAnalysisRun(cleanText, { sourceId: persistedUserMessage?.id ? `chat_message_${persistedUserMessage.id}` : undefined, sourceKind });
-    setActiveAnalysisRun(analysisRun);
-    clearActiveAnalysisState(analysisRun);
-    const memoryUseEnabled = isAhaMemoryUseEnabled();
-    setAhaProcessing(true, memoryUseEnabled ? "AHA vurderer relevant minne …" : "AHA svarer uten tidligere minne …");
-    if (urlInfo.isSourceAction && linkReadPromise) {
-      setAhaProcessing(true, "AHA leser artikkelen …");
-      await linkReadPromise;
-    }
-    const analysisInputText = urlInfo.isSourceAction ? (buildArticleSourceTextFromAnalysis(global.AHALinkReader?.getLatestArticleAnalysis?.() || {}) || cleanText) : cleanText;
-    const rawMemoryContext = memoryUseEnabled ? await buildAhaMemoryContext(analysisInputText) : buildAhaMemoryOffContext();
-    if (!isActiveAnalysisRun(analysisRun)) return null;
-    const memoryContext = filterMemoryContextForActiveSource(rawMemoryContext, analysisInputText, analysisRun);
-    const personalContext = filterRetrievalForActiveSource(buildAhaPersonalMessageContext(analysisInputText), analysisInputText, analysisRun);
-    const answerPackage = filterRetrievalForActiveSource(buildAhaAnswerPackage(analysisInputText), analysisInputText, analysisRun);
-    if (!isActiveAnalysisRun(analysisRun)) return null;
-    if (personalContext && answerPackage) personalContext.answerPackage = answerPackage;
-    renderAhaPersonalRetrieval(personalContext?.retrieval);
-    renderAhaAnswerComposer(answerPackage);
-    if (personalContext?.retrieval?.results?.length) {
-      setStatusNote(`Personlig kontekst aktiv · Personlig søk aktiv · ${personalContext.retrieval.results.length} relevante treff.`);
-    } else if (personalContext?.prompt) setStatusNote("Personlig kontekst aktiv.");
-    if (answerPackage?.status?.ready) setStatusNote(`AHA Answer Composer aktiv · ${answerPackage.status.intent} · ${answerPackage.status.selectedSourceCount} kilder.`);
-    renderAhaPersonalContextStatus();
-    renderAhaPersonalAiLoopStatus();
-    let count = 0;
-    if (savingEnabled && !urlInfo.isSourceAction && !transientAnalysisDocument) {
-      count = handleUserMessage(cleanText);
-      void handleUserMessageInsightCandidatesInBackground(cleanText)
-        .then((aiCount) => {
-          if (aiCount > 0) setStatusNote(`Beriket med ${aiCount} AI-signal${aiCount === 1 ? "" : "er"} i bakgrunnen.`);
-        })
-        .catch((err) => {
-          console.warn("AI insight-candidates bakgrunnsjobb feilet", err);
-        });
-    }
-    if (textarea) textarea.value = "";
-    if (savingEnabled && count > 0) setStatusNote(`Lagret ${count} signal${count === 1 ? "" : "er"} i bakgrunnen.`);
-    if (!savingEnabled) setStatusNote("Lagring av nye innsikter er slått av.");
-    if (memoryContext.used) setStatusNote("Bruker relevant AHA-minne.");
-    void updateAhaMemoryStatus();
-    setAhaProcessing(true, "AHA analyserer teksten …");
-    try {
-      setAhaProcessing(true, savingEnabled ? "AHA lager svar og etterarbeid …" : "AHA lager svar uten å lagre nye innsikter …");
-      const agent = await askAhaAgent(analysisInputText, { memoryContext, personalContext });
-      if (!isActiveAnalysisRun(analysisRun)) return null;
-      const reply = String(agent?.reply || "").trim() || "AHA-agenten returnerte tomt svar.";
-      const analysisText = cleanArticleText(analysisInputText);
-      const rawSubjectMatches = global.AHASubjectEngine?.matchText
-        ? await global.AHASubjectEngine.matchText(analysisText, { source: "chat", textType: detectTextType(cleanText) })
-        : [];
-      if (!isActiveAnalysisRun(analysisRun)) return null;
-      const climateEnriched = enrichSubjectMatchesForClimateConflict(analysisText, rawSubjectMatches);
-      const publicAdminEnriched = enrichSubjectMatchesForPublicAdministration(analysisText, climateEnriched);
-      const domain = detectAutoAnalysisDomain(analysisText, { reflection: reply, subjectMatches: publicAdminEnriched });
-      const subjectMatches = domain === "literary_attachment"
-        ? getLiterarySubjectMatches()
-        : domain === "institutional_media_history"
-          ? getInstitutionalMediaHistorySubjectMatches(analysisText)
-          : publicAdminEnriched;
-      let safeReply = reply;
-      if (domain === "literary_attachment" || domain === "institutional_media_history") {
-        safeReply = stripFagkoblingerSections(safeReply);
-      } else {
-        safeReply = forceLiteraryFagkoblingerInReply(safeReply, analysisText, { subjectMatches });
-        safeReply = forceInstitutionalMediaHistoryFagkoblingerInReply(safeReply, analysisText, { subjectMatches });
-      }
-      const visibleReply = normalizeAhaVisibleReply(safeReply, cleanText) || safeReply;
-      if (!isActiveAnalysisRun(analysisRun)) return null;
-      const categoryChips = memoryUseEnabled ? suggestCategoryChips() : [];
-      const persistedAssistantMessage = savingEnabled ? global.AHAChatPersistence?.appendAssistantMessage?.(visibleReply, { source: "aha_chat", threadId: CHAT_THREAD_ID, answerPackageId: answerPackage?.id, intent: answerPackage?.status?.intent, retrievalSummary: personalContext?.retrieval?.summary || memoryContext?.reason || "", tags: categoryChips, concepts: subjectMatches?.map?.((m)=>m.label||m.title||m.id).filter(Boolean) }) : null;
-      if (persistedAssistantMessage?.id && answerPackage) global.AHAChatPersistence?.attachAnswerPackage?.(persistedAssistantMessage.id, answerPackage);
-      renderAhaChatMemoryStatus();
-      const ahaRow = appendChat("aha", visibleReply, { categoryChips, subjectMatches, memoryContext });
-      const answerEvaluation = evaluateAhaAnswerForChat(cleanText, visibleReply, answerPackage, ahaRow);
-      if (persistedAssistantMessage?.id && answerEvaluation) global.AHAChatPersistence?.attachAnswerEvaluation?.(persistedAssistantMessage.id, answerEvaluation);
-      renderAhaChatMemoryStatus();
-      // Meta Insights AI-session: parse rå-svaret (før visningsnormalisering)
-      // til claims med feedback-knapper.
-      try { maybeHandleMetaAiAgentReply(reply); } catch (metaErr) { console.warn("Meta Insights AI-claims feilet", metaErr); }
-      if (!isActiveAnalysisRun(analysisRun)) return null;
-      try { await renderAutoOutputs(cleanText, safeReply, { subjectMatches: urlInfo.isSourceAction ? [] : subjectMatches, persist: savingEnabled, analysisRun }); } catch (autoErr) { console.warn("Auto-output feilet", autoErr); }
-      if (!isActiveAnalysisRun(analysisRun)) return null;
-      if (savingEnabled) {
-        try { ensureAfterworkForLatestAnalysis(cleanText, { subjectMatches: urlInfo.isSourceAction ? [] : subjectMatches, ...analysisRun }); } catch (afterErr) { console.warn("Auto-etterarbeid feilet", afterErr); }
-        // AHA-agentens egne svar skal vises i chatten og logges som
-        // source event, men IKKE bli en ordinær brukerinnsikt. AI-
-        // oppsummeringer hører ikke hjemme i innsiktskammeret. skip_insight
-        // får AHAIngest til å stoppe etter source-event-loggen.
-        global.AHAIngest?.ingest?.({
-          source_type: "aha_agent",
-          source_app: "aha_chat",
-          content_type: "text",
-          title: "AHA-agent svar",
-          text: visibleReply,
-          user_created: false,
-          imported: false,
-          skip_insight: true,
-          created_at: new Date().toISOString(),
-          meta: {
-            response_id: agent?.response_id || null,
-            model: agent?.model || null,
-            raw_reply: visibleReply === safeReply ? null : safeReply,
-            memory_context_used: Boolean(memoryContext.used),
-            memory_context_reason: memoryContext.used ? memoryContext.reason : null,
-            personal_context_used: Boolean(personalContext?.prompt),
-            personal_context_evidence: personalContext?.context?.evidence || null,
-            answer_composer_status: answerPackage?.status || null,
-            answer_evaluation: answerEvaluation ? { status: answerEvaluation.status, score: answerEvaluation.score } : null
-          }
-        });
-      }
-      return { type: "agent_reply", agent, memoryContext, personalContext, answerPackage, savingEnabled, memoryUseEnabled };
-    } catch (err) {
-      console.warn("AHA-agent utilgjengelig", err);
-      if (!isActiveAnalysisRun(analysisRun)) return null;
-      if (savingEnabled) global.AHAChatPersistence?.appendAssistantMessage?.("AHA-agenten er ikke tilgjengelig akkurat nå.", { source: "aha_chat", threadId: CHAT_THREAD_ID, tags: ["status"] });
-      renderAhaChatMemoryStatus();
-      appendChat("aha", "AHA-agenten er ikke tilgjengelig akkurat nå.");
-      try { await renderAutoOutputs(cleanText, "", { subjectMatches: [], persist: savingEnabled, analysisRun }); } catch (autoErr) { console.warn("Auto-output feilet", autoErr); }
-      if (savingEnabled && isActiveAnalysisRun(analysisRun)) {
-        try { ensureAfterworkForLatestAnalysis(cleanText, { subjectMatches: [], ...analysisRun }); } catch (afterErr) { console.warn("Auto-etterarbeid feilet", afterErr); }
-      }
-      return { type: "agent_error", error: err, memoryContext, personalContext, answerPackage, savingEnabled, memoryUseEnabled };
-    } finally {
-      if (isActiveAnalysisRun(analysisRun)) {
-        setAhaProcessing(false);
-        void updateAhaMemoryStatus();
-      }
-    }
   }
 
   function renderAhaChatMemoryStatus() {

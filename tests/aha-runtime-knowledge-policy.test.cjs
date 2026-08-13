@@ -10,6 +10,7 @@ const exportCode = fs.readFileSync(path.join(repoRoot, "js/ahaChatExport.js"), "
 const autoAnalysisCode = fs.readFileSync(path.join(repoRoot, "js/ahaChatAutoAnalysis.js"), "utf8");
 const canonicalAnalysisCode = fs.readFileSync(path.join(repoRoot, "js/ahaChatCanonicalAnalysis.js"), "utf8");
 const chatCode = fs.readFileSync(path.join(repoRoot, "js/ahaChat.js"), "utf8");
+const submissionCode = fs.readFileSync(path.join(repoRoot, "js/ahaChatRunContext.js"), "utf8");
 
 const windowObj = {};
 const sandbox = { window: windowObj, console, Set, Map, WeakSet, Date, JSON, String, Number, Boolean, Array, Object, Math, RegExp };
@@ -52,8 +53,8 @@ const buildStart = autoAnalysisCode.indexOf("function buildAutoOutputs");
 const academicBranch = autoAnalysisCode.indexOf('if (textType === "academic_article" && !AHA_RUNTIME_KNOWLEDGE_POLICY.legacyArticleTemplatesEnabled)', buildStart);
 const legacyAcademicBranch = autoAnalysisCode.indexOf('else if (textType === "academic_article")', buildStart);
 assert.ok(buildStart >= 0 && academicBranch > buildStart && academicBranch < legacyAcademicBranch, "source-grounded academic early return must precede legacy templates");
-assert.match(chatCode, /skip_insight:\s*urlInfo\.isSourceAction \|\| transientAnalysisDocument/);
-assert.match(chatCode, /savingEnabled && !urlInfo\.isSourceAction && !transientAnalysisDocument/);
+assert.match(submissionCode, /skip_insight:\s*urlInfo\.isSourceAction \|\| transientAnalysisDocument/);
+assert.match(submissionCode, /savingEnabled && !urlInfo\.isSourceAction && !transientAnalysisDocument/);
 assert.match(canonicalAnalysisCode, /const domain = detectAutoAnalysisDomain\(sourceText \|\| "", safePayload \|\| \{\}\);/);
 assert.doesNotMatch(canonicalAnalysisCode, /policyAcademic \? "fagverk_routed_academic"/);
 assert.match(canonicalAnalysisCode, /Kildebasert fagkobling fra AHA Fagverk-kalibrering/);
