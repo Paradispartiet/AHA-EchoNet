@@ -179,5 +179,129 @@
     return { humanizeTextType, buildAhaSerCard, renderAutoOutputPayload };
   }
 
-  global.AHAChatAutoOutputView = Object.assign({}, global.AHAChatAutoOutputView || {}, { create });
+  function createRuntime(deps = {}) {
+    const required = [
+      "getActiveAnalysisRun", "sourceHash", "buildAutoOutputs", "detectTextType", "short",
+      "buildAutoOutputFallbackPayload", "getUrlDominanceInfo", "buildArticleSourceTextFromAnalysis",
+      "detectAutoAnalysisDomain", "normalizeSubjectMatches", "subjectMatchesFromCalibration",
+      "getLiterarySubjectMatches", "getLiteraryAttachmentLearningPath", "isSportsArticleAnalysis",
+      "applyRuntimeKnowledgePolicy", "filterCrossDomainAutoPayload", "enforceCanonicalSourceGrounding",
+      "buildCanonicalAnalysis", "resolveCanonicalAnalysisWithOptionalPythonEngine", "isActiveAnalysisRun",
+      "bindAnalysisArtifact", "renderAutoOutputPayload", "setExportButtonsEnabled"
+    ];
+    required.forEach((name) => {
+      if (typeof deps[name] !== "function") throw new Error(`AHAChatAutoOutputRuntime mangler avhengighet: ${name}`);
+    });
+    if (!deps.runtimeKnowledgePolicy || typeof deps.runtimeKnowledgePolicy !== "object") {
+      throw new Error("AHAChatAutoOutputRuntime mangler avhengighet: runtimeKnowledgePolicy");
+    }
+
+    async function renderAutoOutputs(userText, ahaReply, options = {}) {
+      const sourceText = String(userText || "");
+      const host = global.document.getElementById("aha-auto-output");
+      if (!sourceText.trim()) {
+        if (host) {
+          const run = options.analysisRun || deps.getActiveAnalysisRun() || {};
+          host.dataset.sourceText = sourceText;
+          host.dataset.analysisId = run.analysisId || "";
+          host.dataset.runId = run.runId || "";
+          host.dataset.sourceId = run.sourceId || "";
+          host.dataset.sourceTextHash = deps.sourceHash(sourceText);
+          host.dataset.sourceTextPreview = sourceText.replace(/\s+/g, " ").slice(0, 180);
+        }
+        return;
+      }
+      let payload;
+      try {
+        payload = deps.buildAutoOutputs(userText, ahaReply);
+      } catch (err) {
+        global.console.warn("buildAutoOutputs feilet; bruker fallback-payload", {
+          error: err?.message || String(err),
+          stack: err?.stack || "",
+          textType: deps.detectTextType(sourceText),
+          sourcePreview: deps.short(sourceText, 220)
+        });
+        payload = deps.buildAutoOutputFallbackPayload(userText, ahaReply, options);
+      }
+      const linkInfo = deps.getUrlDominanceInfo(sourceText);
+      const articleAnalysis = linkInfo.isSourceAction ? (payload.articleAnalysis || global.AHALinkReader?.getLatestArticleAnalysis?.()) : null;
+      const effectiveSourceText = articleAnalysis ? deps.buildArticleSourceTextFromAnalysis(articleAnalysis) : sourceText;
+      const domain = deps.detectAutoAnalysisDomain(effectiveSourceText, payload);
+      const primarySubjectMatches = deps.normalizeSubjectMatches(Array.isArray(options.subjectMatches) ? options.subjectMatches : []);
+      payload.subjectMatches = primarySubjectMatches;
+      if (!articleAnalysis && !primarySubjectMatches.length && global.AHACalibration?.matchText) {
+        try {
+          const calibrated = global.AHACalibration.matchText(sourceText, { topN: 10 });
+          const calibratedMatches = deps.subjectMatchesFromCalibration(calibrated);
+          if (calibratedMatches.length) payload.subjectMatches = calibratedMatches;
+        } catch (err) {
+          global.console.warn("AHACalibration.matchText feilet", err);
+        }
+      }
+      if (domain === "literary_attachment") {
+        payload.subjectMatches = deps.getLiterarySubjectMatches();
+        payload.subjectLinks = deps.getLiterarySubjectMatches();
+        payload.path = deps.getLiteraryAttachmentLearningPath();
+      }
+      if (articleAnalysis && deps.isSportsArticleAnalysis(articleAnalysis)) {
+        payload.subjectMatches = payload.subjectMatches || [];
+        payload.subjectLinks = payload.subjectMatches;
+        payload.theoryLinks = [];
+        if (payload.ahaSer) payload.ahaSer.fagkoblinger = ["Sport", "Fotball", "Turneringsspill", "Prestasjon", "Psykologi/press", "Medier/sportsjournalistikk"].filter((item) => (articleAnalysis.concepts || []).join(" ").toLowerCase().includes(item.toLowerCase().split("/")[0]) || ["Sport", "Fotball", "Turneringsspill", "Prestasjon", "Psykologi/press", "Medier/sportsjournalistikk"].includes(item));
+      }
+      payload = (!deps.runtimeKnowledgePolicy.legacyArticleTemplatesEnabled && deps.detectTextType(effectiveSourceText) === "academic_article")
+        ? deps.applyRuntimeKnowledgePolicy(payload, effectiveSourceText)
+        : deps.filterCrossDomainAutoPayload(payload, effectiveSourceText);
+      payload = deps.enforceCanonicalSourceGrounding(payload, effectiveSourceText);
+      const jsCanonicalAnalysis = deps.buildCanonicalAnalysis(payload, effectiveSourceText);
+      const resolvedCanonical = await deps.resolveCanonicalAnalysisWithOptionalPythonEngine({
+        message: effectiveSourceText,
+        assistantReply: ahaReply,
+        historyGoContext: { subjectMatches: payload.subjectMatches || [] },
+        fallbackAnalysis: jsCanonicalAnalysis
+      });
+      const activeRun = options.analysisRun || deps.getActiveAnalysisRun();
+      if (!deps.isActiveAnalysisRun(activeRun)) return;
+      payload.canonicalAnalysis = resolvedCanonical.analysis;
+      payload.canonicalAnalysisMeta = resolvedCanonical.meta;
+      payload = deps.enforceCanonicalSourceGrounding(payload, effectiveSourceText);
+      deps.bindAnalysisArtifact(payload, activeRun);
+      if (payload.canonicalAnalysis && typeof payload.canonicalAnalysis === "object") deps.bindAnalysisArtifact(payload.canonicalAnalysis, activeRun);
+      if (options.persist !== false) {
+        global.localStorage.setItem(deps.storageKey, JSON.stringify({
+          activeRun: activeRun || null,
+          payload,
+          sourceText,
+          analysisId: payload.analysisId || "",
+          analysisRunId: payload.analysisRunId || payload.runId || "",
+          runId: payload.runId || payload.analysisRunId || "",
+          conversationId: payload.conversationId || payload.sessionId || deps.defaultConversationId,
+          turnId: payload.turnId || "",
+          sourceId: payload.sourceId || "",
+          sourceKind: payload.sourceKind || (linkInfo.isSourceAction ? "url" : "pasted_text"),
+          sessionId: payload.sessionId || payload.conversationId || deps.defaultConversationId,
+          sourceHash: payload.sourceHash || deps.sourceHash(sourceText),
+          sourceFingerprint: payload.sourceFingerprint || deps.sourceHash(sourceText),
+          sourceTextHash: deps.sourceHash(sourceText),
+          sourceTextPreview: sourceText.replace(/\s+/g, " ").slice(0, 180),
+          createdAt: new Date().toISOString()
+        }));
+      }
+      if (host) {
+        host.dataset.sourceText = sourceText;
+        host.dataset.analysisId = payload.analysisId || "";
+        host.dataset.analysisRunId = payload.analysisRunId || payload.runId || "";
+        host.dataset.runId = payload.runId || payload.analysisRunId || "";
+        host.dataset.sourceId = payload.sourceId || "";
+        host.dataset.sourceTextHash = deps.sourceHash(sourceText);
+        host.dataset.sourceTextPreview = sourceText.replace(/\s+/g, " ").slice(0, 180);
+      }
+      deps.renderAutoOutputPayload(payload);
+      deps.setExportButtonsEnabled(true);
+    }
+
+    return { renderAutoOutputs };
+  }
+
+  global.AHAChatAutoOutputView = Object.assign({}, global.AHAChatAutoOutputView || {}, { create, createRuntime });
 })(window);
