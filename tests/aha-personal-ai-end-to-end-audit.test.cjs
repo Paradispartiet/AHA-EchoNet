@@ -194,6 +194,8 @@ assert.equal(control.historygo_writeback_enabled, false);
 
 // 9. Lock the production Chat wiring that hands this package to the answer path and evaluates the resulting response.
 const chatCode = fs.readFileSync('js/ahaChat.js', 'utf8');
+const submissionCode = fs.readFileSync('js/ahaChatRunContext.js', 'utf8');
+const chatWiringCode = `${chatCode}\n${submissionCode}`;
 for (const required of [
   'buildAhaPersonalMessageContext',
   'buildAhaAnswerPackage',
@@ -202,10 +204,10 @@ for (const required of [
   'personal_context',
   'evaluateAhaAnswerForChat'
 ]) {
-  assert.ok(chatCode.includes(required), `Chat must retain Personal AI wiring: ${required}`);
+  assert.ok(chatWiringCode.includes(required), `Chat must retain Personal AI wiring: ${required}`);
 }
 assert.ok(
-  chatCode.indexOf('buildAhaPersonalMessageContext') < chatCode.lastIndexOf('personal_context'),
+  chatWiringCode.indexOf('buildAhaPersonalMessageContext') < chatWiringCode.lastIndexOf('personal_context'),
   'Chat must build personal context before sending personal_context'
 );
 
