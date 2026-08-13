@@ -96,7 +96,7 @@ function createChatContext() {
     'js/ahaChatAnalysisPolicy.js',
     'js/ahaChatConceptPolicy.js',
     'js/ahaChatCanonicalAnalysis.js',
-    'js/ahaChatKnowledgeView.js', 'js/ahaChatInsightPipeline.js', 'js/ahaChatPersonalUi.js', 'js/ahaChatAnalysisRunContract.js', 'js/ahaChatAcademicInsightView.js', 'js/ahaChat.js'
+    'js/ahaChatKnowledgeView.js', 'js/ahaChatInsightPipeline.js', 'js/ahaChatPersonalUi.js', 'js/ahaChatConversationView.js', 'js/ahaChatAnalysisRunContract.js', 'js/ahaChatAcademicInsightView.js', 'js/ahaChat.js'
   ]) {
     const code = readFileSync(path.join(repoRoot, fileName), 'utf8');
     vm.runInContext(code, context, { filename: fileName });

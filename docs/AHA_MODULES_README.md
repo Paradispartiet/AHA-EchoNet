@@ -81,6 +81,7 @@ Eksisterende filer:
 - `js/ahaChatAnalysisRunContract.js`
 - `js/ahaChatAcademicInsightView.js`
 - `js/ahaChatKnowledgeView.js`
+- `js/ahaChatConversationView.js`
 - `aha-chat.css`
 
 Status:
@@ -94,8 +95,10 @@ Status:
 - eier begrepskanonisering og prioritering av synlige grafkanter i den
   DOM-frie, versjonerte `chat.conceptPolicy`-modulen
 - eier aktiv analyse-/kunnskapskontekst og kartvisning i `chat.knowledgeView`
+- eier meldingsrendering, fagchips, highlights og samtalens tom-/svarstatus i
+  `chat.conversationView`, separat fra den lokale `ahaChatPersistence`-lagringen
 - bruker `ahaChat.js` som orkestrator uten parallelle policy- eller
-  kunnskapskontekstblokker
+  view-implementasjoner
 
 Mangler før ferdig:
 - tydelig bokmerke-kolonne

@@ -8,7 +8,7 @@ const exportCode = fs.readFileSync('js/ahaChatExport.js', 'utf8');
 const subjectsCode = fs.readFileSync('js/ahaChatSubjects.js', 'utf8');
 const analysisCode = fs.readFileSync('js/ahaChatAnalysis.js', 'utf8');
 const replyFormatCode = fs.readFileSync('js/ahaChatReplyFormat.js', 'utf8');
-const chatCode = fs.readFileSync('js/ahaChatMemoryControls.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatAfterwork.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatMemoryRuntime.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatRunContext.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatInsightView.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatAutoAnalysis.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatAutoOutputView.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatAnalysisPolicy.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatConceptPolicy.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatCanonicalAnalysis.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatKnowledgeView.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatInsightPipeline.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatPersonalUi.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatAnalysisRunContract.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatAcademicInsightView.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChat.js', 'utf8');
+const chatCode = fs.readFileSync('js/ahaChatMemoryControls.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatAfterwork.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatMemoryRuntime.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatRunContext.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatInsightView.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatAutoAnalysis.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatAutoOutputView.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatAnalysisPolicy.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatConceptPolicy.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatCanonicalAnalysis.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatKnowledgeView.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatInsightPipeline.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatPersonalUi.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatConversationView.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatAnalysisRunContract.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatAcademicInsightView.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChat.js', 'utf8');
 
 class TestElement {
   constructor(tagName) {
@@ -154,12 +154,20 @@ const log = ctx.__elementsById.get('chat-log');
 const empty = ctx.__elementsById.get('empty-state');
 const rail = ctx.__elementsById.get('chat-highlights-rail');
 
+assert.equal(typeof ctx.AHAChatConversationView?.create, 'function', 'conversation view must expose its versioned factory');
+
 hooks.updateAnswerActionsVisibility();
 assert.equal(ctx.__answerActions.classList.contains('has-aha-answer'), false, 'answer actions should be hidden before AHA has answered');
 
 hooks.appendChat('user', 'Første spørsmål');
 assert.equal(empty.style.display, 'none', 'empty state should hide as soon as the first user message is appended');
 assert.equal(ctx.__answerActions.classList.contains('has-aha-answer'), false, 'answer actions should remain hidden after only a user message');
+const firstHighlightButton = log.children[0].querySelector('.highlight-toggle-btn');
+firstHighlightButton.eventListeners.click();
+assert.equal(log.children[0].classList.contains('is-highlighted'), true, 'highlight click should mark the message');
+assert.equal(rail.classList.contains('is-empty'), false, 'highlight rail should become visible for a highlighted message');
+firstHighlightButton.eventListeners.click();
+assert.equal(log.children[0].classList.contains('is-highlighted'), false, 'second highlight click should remove the mark');
 
 hooks.appendChat('aha', 'Første svar');
 hooks.appendChat('user', 'Andre spørsmål');
@@ -175,5 +183,6 @@ const css = fs.readFileSync('css/aha-chat.css', 'utf8');
 assert.match(html, /chat-highlights-rail is-empty/, 'highlights rail should start empty in markup');
 assert.match(css, /\.chat-highlights-rail\.is-empty \{ display: none; \}/, 'empty highlights rail should not occupy visible space');
 assert.match(css, /\.chat-conversation \.chat-log \{ min-height: 0; max-height: none; \}/, 'chat log should not reserve a large empty panel');
+assert.ok(html.indexOf('js/ahaChatConversationView.js') < html.indexOf('js/ahaChat.js'), 'conversation view must load before the chat orchestrator');
 
 console.log('aha-chat-conversation-order ok');

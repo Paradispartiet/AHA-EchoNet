@@ -141,6 +141,7 @@ const chatModules = [
   ['chat.knowledgeView', 'AHAChatKnowledgeView', 'js/ahaChatKnowledgeView.js'],
   ['chat.insightPipeline', 'AHAChatInsightPipeline', 'js/ahaChatInsightPipeline.js'],
   ['chat.personalUi', 'AHAChatPersonalUi', 'js/ahaChatPersonalUi.js'],
+  ['chat.conversationView', 'AHAChatConversationView', 'js/ahaChatConversationView.js'],
   ['chat.autoAnalysis', 'AHAChatAutoAnalysis', 'js/ahaChatAutoAnalysis.js'],
   ['chat.autoOutputView', 'AHAChatAutoOutputView', 'js/ahaChatAutoOutputView.js'],
   ['chat.canonicalAnalysis', 'AHAChatCanonicalAnalysis', 'js/ahaChatCanonicalAnalysis.js']
