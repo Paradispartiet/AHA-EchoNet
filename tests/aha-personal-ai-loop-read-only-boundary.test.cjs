@@ -6,6 +6,7 @@ const AUDIT_KEY = "aha_personal_ai_loop_audit_v1";
 const AUDIT_FILE = "js/ahaPersonalAiLoopAudit.js";
 const TRAINING_FILE = "js/ahaTrainingDashboard.js";
 const CHAT_FILE = "js/ahaChat.js";
+const CHAT_PERSONAL_UI_FILE = "js/ahaChatPersonalUi.js";
 const META_FILE = "js/metaInsightsAgent.js";
 
 function read(file) {
@@ -54,7 +55,7 @@ function makeAuditContext(overrides = {}) {
 
 const auditCode = read(AUDIT_FILE);
 const trainingCode = read(TRAINING_FILE);
-const chatCode = read(CHAT_FILE);
+const chatCode = `${read(CHAT_PERSONAL_UI_FILE)}\n${read(CHAT_FILE)}`;
 const metaCode = read(META_FILE);
 
 // A. Public audit API is explicit and stable.

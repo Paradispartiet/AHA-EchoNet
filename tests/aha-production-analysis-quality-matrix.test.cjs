@@ -160,7 +160,7 @@ function makeProductContext() {
     'js/ahaChatInsightView.js',
     'js/ahaChatAutoAnalysis.js', 'js/ahaChatAutoOutputView.js',
     'js/ahaChatCanonicalAnalysis.js',
-    'js/ahaChatKnowledgeView.js', 'js/ahaChat.js',
+    'js/ahaChatKnowledgeView.js', 'js/ahaChatPersonalUi.js', 'js/ahaChat.js',
     'js/ahaLists.js',
     'js/ahaPaths.js',
     'js/ahaMindmap.js',

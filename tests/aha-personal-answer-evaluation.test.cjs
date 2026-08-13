@@ -22,7 +22,7 @@ const answer="Status: AHA-EchoNet bruker personlig grunnlag fra Answer Composer 
  const agent=ctx.AHAMetaInsightsAgent.buildAgentContext({ meta_insight:{}, temporal:{} }); assert.ok(agent.answerEvaluationPack.available);
 }
 {
- const chatHtml=fs.readFileSync("chat.html","utf8"), chatJs=fs.readFileSync("js/ahaChat.js","utf8"), training=fs.readFileSync("training.html","utf8"), dashboard=fs.readFileSync("js/ahaTrainingDashboard.js","utf8");
+ const chatHtml=fs.readFileSync("chat.html","utf8"), chatJs=fs.readFileSync("js/ahaChatPersonalUi.js","utf8"), training=fs.readFileSync("training.html","utf8"), dashboard=fs.readFileSync("js/ahaTrainingDashboard.js","utf8");
  assert.ok(chatHtml.includes("js/ahaPersonalAnswerEvaluation.js")); assert.ok(chatJs.includes("Svar-evaluering")); assert.ok(chatJs.includes("Lagre som training example"));
  assert.ok(training.includes("Answer Evaluation")); assert.ok(dashboard.includes("renderAnswerEvaluation")); assert.ok(fs.readFileSync("js/ahaPersonalAiLoopAudit.js","utf8").includes("answerEvaluation")); assert.ok(fs.readFileSync("js/metaInsightsAgent.js","utf8").includes("answerEvaluationPack"));
 }

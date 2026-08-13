@@ -7,6 +7,7 @@ const STATUS_FILE = "docs/AHA_IMPLEMENTATION_STATUS.md";
 const AUDIT_FILE = "js/ahaPersonalAiLoopAudit.js";
 const TRAINING_FILE = "js/ahaTrainingDashboard.js";
 const CHAT_FILE = "js/ahaChat.js";
+const CHAT_PERSONAL_UI_FILE = "js/ahaChatPersonalUi.js";
 const META_FILE = "js/metaInsightsAgent.js";
 const AUDIT_KEY = "aha_personal_ai_loop_audit_v1";
 
@@ -129,7 +130,7 @@ assert.equal(/DOMContentLoaded[\s\S]*runAudit|runAudit\s*\([\s\S]*DOMContentLoad
 assert.equal(/function\s+render[\s\S]*runAudit\s*\(/.test(auditSource), false, "audit must not auto-run via render");
 const trainingHandler = extractFunction(read(TRAINING_FILE), "handleAiLoopAudit");
 const renderTraining = extractFunction(read(TRAINING_FILE), "renderAiLoopAudit");
-const chatStatus = extractFunction(read(CHAT_FILE), "renderAhaPersonalAiLoopStatus");
+const chatStatus = extractFunction(read(CHAT_PERSONAL_UI_FILE), "renderAhaPersonalAiLoopStatus");
 const packBuilder = extractFunction(read(META_FILE), "buildPersonalAiLoopPackSafe");
 for (const [label, source] of [["Training audit handler", trainingHandler], ["Training render", renderTraining], ["Chat status", chatStatus], ["Meta Insights pack", packBuilder]]) {
   for (const pattern of forbiddenStatic) assert.equal(pattern.test(source), false, `${label} must not contain ${pattern}`);
