@@ -111,6 +111,30 @@
   const filterRetrievalForActiveSource = runContext.filterRetrievalForActiveSource;
   const filterMemoryContextForActiveSource = runContext.filterMemoryContextForActiveSource;
 
+  const afterworkAutoAdapter = global.AHAChatAfterwork?.createAutoOutputAdapter?.({
+    defaultConversationId: CHAT_THREAD_ID,
+    sourceHash,
+    shortHash,
+    resolveConceptTerm,
+    cleanTextForConceptExtraction: cleanArticleText,
+    extractAcademicPhraseConcepts,
+    normalizeAcademicAfterworkPayload,
+    detectTextType,
+    normalizeSubjectLinks,
+    takeKeywords,
+    extractAcademicTheoryLinks,
+    mergeTheoryLinks,
+    normalizeSimpleStringList,
+    getActiveAnalysisRun,
+    loadAfterworkEntries,
+    saveAfterworkEntries,
+    loadAutoOutputs
+  });
+  if (!afterworkAutoAdapter) throw new Error("AHAChatAfterworkAutoAdapter må lastes før ahaChat.js.");
+  const normalizeAfterworkConcept = afterworkAutoAdapter.normalizeAfterworkConcept;
+  const saveAutoOutputAsAfterwork = afterworkAutoAdapter.saveAutoOutputAsAfterwork;
+  const ensureAfterworkForLatestAnalysis = afterworkAutoAdapter.ensureAfterworkForLatestAnalysis;
+
   const insightView = global.AHAChatInsightView?.create?.({
     escHtml,
     normalizeConceptKey,
@@ -3791,202 +3815,6 @@
       return String(term?.label || term?.title || term?.key || term?.term || term?.name || term?.subject_label || term?.subject_id || term?.id || term?.value || "");
     }
     return String(term || "");
-  }
-
-  function normalizeAfterworkConcept(term) {
-    return resolveConceptTerm(term).toLowerCase().replace(/[“”"'`´]/g, "").replace(/\s+/g, " ").trim();
-  }
-
-  function isGoodAfterworkConcept(term, options) {
-    const normalized = normalizeAfterworkConcept(term);
-    if (!normalized || normalized.length < 3) return false;
-    const hasMultiWords = normalized.includes(" ");
-    const source = String(options?.source || "generic");
-    const blocked = new Set([
-      "annonsørinnhold","annonse","logo","illustrasjon","les også","kjolevalg","kjole","kjoler","bryllupsgjesten","terrasse","plank","garanti","årets","populære","sikre","nydelige",
-      "markussen","norge","omstilles","fortsetter","bygge","naturens","retning","retninger","bekostning","dette","tekst","sier","skal","gjøre","være","blir","kommer","spør","svarer"
-    ]);
-    if (blocked.has(normalized)) return false;
-    const genericWords = new Set(["med","som","for","mot","inn","ut","opp","ned","der","her","alle","flere","kan","vil","må","når","hvor","hvorfor","hva"]);
-    if (!hasMultiWords && genericWords.has(normalized)) return false;
-    const weakSingleWords = new Set(["politikk","samfunn","klima","debatt","endring"]);
-    if (!hasMultiWords && source !== "matched_terms" && weakSingleWords.has(normalized)) return false;
-    if (!hasMultiWords && /^(\p{Lu}[\p{L}-]+)$/u.test(String(term || ""))) return false;
-    return true;
-  }
-
-  function deriveConceptsFromAfterwork(payload, fallbackKeywords, subjectLinks, sourceText) {
-    const concepts = [];
-    const seen = new Set();
-    const safePayloadKeywords = Array.isArray(payload?.keywords) ? payload.keywords : [];
-    const safeFallbackKeywords = Array.isArray(fallbackKeywords) ? fallbackKeywords : [];
-    const safeSubjectLinks = Array.isArray(subjectLinks) ? subjectLinks : [];
-    const cleanedSource = cleanTextForConceptExtraction(sourceText || "").toLowerCase();
-    const phraseConcepts = extractAcademicPhraseConcepts(sourceText || "");
-
-    function addConcept(term, source) {
-      const normalized = normalizeAfterworkConcept(term);
-      if (!isGoodAfterworkConcept(normalized, { source })) return;
-      if (seen.has(normalized)) return;
-      seen.add(normalized);
-      concepts.push(normalized);
-    }
-
-    phraseConcepts.forEach((phrase) => addConcept(phrase, "phrase_concept"));
-    safeSubjectLinks.forEach((link) => {
-      (Array.isArray(link?.matched_terms) ? link.matched_terms : []).forEach((term) => addConcept(term, "matched_terms"));
-    });
-
-    safePayloadKeywords.forEach((word) => addConcept(word, "payload_keywords"));
-    safeFallbackKeywords.forEach((word) => addConcept(word, "fallback_keywords"));
-
-    const textType = String(payload?.textType || "").trim().toLowerCase();
-    const hasClimateTransition = safeSubjectLinks.some((link) => {
-      const id = String(link?.id || "").toLowerCase();
-      const subjectId = String(link?.subject_id || "").toLowerCase();
-      const title = String(link?.title || "").toLowerCase();
-      return id.includes("climate_transition") || subjectId.includes("climate_transition") || title.includes("klima") || title.includes("omstilling");
-    }) || /klima|omstilling|olje|fornybar|bærekraft/.test(cleanedSource);
-
-    if (textType === "opinion_article" && hasClimateTransition) {
-      const domainConcepts = [
-        "omstilling","oljeavhengighet","bærekraft","naturhensyn","arealnøytralitet","fornybar energi","lokalsamfunn","sirkulærøkonomi","samiske rettigheter","naturens tålegrenser","grønn verdiskaping","grønne jobber"
-      ];
-      domainConcepts.forEach((concept) => {
-        const normalized = normalizeAfterworkConcept(concept);
-        const foundInMatchedTerms = safeSubjectLinks.some((link) => (Array.isArray(link?.matched_terms) ? link.matched_terms : []).some((term) => normalizeAfterworkConcept(term) === normalized));
-        if (foundInMatchedTerms || cleanedSource.includes(normalized)) addConcept(concept, "domain_fallback");
-      });
-    }
-
-    if (textType) addConcept(textType, "text_type");
-    return concepts.slice(0, 16);
-  }
-
-  function makeAfterworkObject(payload, sourceText, options) {
-    const source = String(sourceText || "").trim();
-    const basePayload = payload && typeof payload === "object" ? payload : {};
-    const normalizedPayload = normalizeAcademicAfterworkPayload(basePayload, source, basePayload.textType || detectTextType(source));
-    const sourceTextHash = sourceHash(source);
-    const safeSortItems = Array.isArray(normalizedPayload.sortItems) ? normalizedPayload.sortItems : [];
-    const safeThoughts = normalizedPayload.thoughts && typeof normalizedPayload.thoughts === "object" ? normalizedPayload.thoughts : {};
-    const safeList = Array.isArray(normalizedPayload.list) ? normalizedPayload.list : [];
-    const safeInsights = Array.isArray(normalizedPayload.insightCards) ? normalizedPayload.insightCards : [];
-    const safePath = Array.isArray(normalizedPayload.path) ? normalizedPayload.path : [];
-    const safeSubjectMatches = Array.isArray(options?.subjectMatches) ? options.subjectMatches : (Array.isArray(normalizedPayload.subjectMatches) ? normalizedPayload.subjectMatches : []);
-    const subjectLinks = normalizeSubjectLinks(safeSubjectMatches);
-    const analysisSource = cleanTextForConceptExtraction(source);
-    const keywords = takeKeywords(analysisSource, 8);
-    const concepts = deriveConceptsFromAfterwork(normalizedPayload, keywords, subjectLinks, source);
-    const extractedTheoryLinks = extractAcademicTheoryLinks(source);
-    const theoryLinks = mergeTheoryLinks(normalizedPayload?.theoryLinks || normalizedPayload?.theoretical_links, extractedTheoryLinks, 5);
-    const thinkers = normalizeSimpleStringList((normalizedPayload?.thinkers || []).concat(theoryLinks.map((item) => item.thinker).filter(Boolean)), 8);
-    const theories = normalizeSimpleStringList((normalizedPayload?.theories || []).concat(theoryLinks.map((item) => item.theory).filter(Boolean)), 8);
-    const structuralLabels = safeSortItems
-      .map((item) => String(item?.label || "").trim())
-      .filter(Boolean)
-      .slice(0, 12);
-    const activeRun = getActiveAnalysisRun();
-    return {
-      id: `afterwork_${Date.now()}_${shortHash(`${sourceTextHash}|${JSON.stringify(normalizedPayload)}`)}`,
-      analysisId: options?.analysisId || activeRun?.analysisId || "",
-      analysisRunId: options?.analysisRunId || options?.runId || activeRun?.analysisRunId || activeRun?.runId || "",
-      runId: options?.runId || options?.analysisRunId || activeRun?.runId || activeRun?.analysisRunId || "",
-      conversationId: options?.conversationId || options?.sessionId || activeRun?.conversationId || activeRun?.sessionId || CHAT_THREAD_ID,
-      turnId: options?.turnId || activeRun?.turnId || "",
-      sourceId: options?.sourceId || activeRun?.sourceId || (sourceTextHash ? `source_${sourceTextHash}` : ""),
-      sourceKind: options?.sourceKind || activeRun?.sourceKind || "chat",
-      topicLabel: options?.topicLabel || activeRun?.topicLabel || takeKeywords(source, 4).join(" · "),
-      sessionId: options?.sessionId || options?.conversationId || activeRun?.sessionId || activeRun?.conversationId || CHAT_THREAD_ID,
-      type: "aha_afterwork",
-      source: "chat",
-      textType: normalizedPayload.textType || detectTextType(source),
-      createdAt: new Date().toISOString(),
-      sourceText,
-      sourceTextHash,
-      sourceHash: sourceTextHash,
-      sourceFingerprint: sourceTextHash,
-      sourceTextPreview: source.replace(/\s+/g, " ").slice(0, 180),
-      reflection: String(normalizedPayload.reflection || ""),
-      sortItems: safeSortItems,
-      daySummary: String(normalizedPayload.day || ""),
-      thoughtSorting: {
-        hovedspor: String(safeThoughts.hovedspor || ""),
-        lose_tanker: String(safeThoughts.lose_tanker || ""),
-        neste_steg: String(safeThoughts.neste_steg || "")
-      },
-      list: safeList,
-      insights: safeInsights,
-      learningPath: safePath,
-      subjectLinks,
-      keywords,
-      concepts,
-      structuralLabels,
-      theoryLinks,
-      thinkers,
-      theories
-    };
-  }
-
-  function saveAutoOutputAsAfterwork(payload, sourceText, options) {
-    const source = String(sourceText || "").trim();
-    if (!source) return { saved: false, reason: "missing_source_text", entry: null };
-    const entry = makeAfterworkObject(payload, source, options);
-    const entries = loadAfterworkEntries();
-    const payloadSignature = shortHash(JSON.stringify({
-      reflection: entry.reflection,
-      sortItems: entry.sortItems,
-      daySummary: entry.daySummary,
-      thoughtSorting: entry.thoughtSorting,
-      list: entry.list,
-      insights: entry.insights,
-      learningPath: entry.learningPath
-    }));
-    const exists = entries.some((item) => {
-      const existingSignature = shortHash(JSON.stringify({
-        reflection: item?.reflection || "",
-        sortItems: Array.isArray(item?.sortItems) ? item.sortItems : [],
-        daySummary: item?.daySummary || "",
-        thoughtSorting: item?.thoughtSorting || {},
-        list: Array.isArray(item?.list) ? item.list : [],
-        insights: Array.isArray(item?.insights) ? item.insights : [],
-        learningPath: Array.isArray(item?.learningPath) ? item.learningPath : []
-      }));
-      return String(item?.sourceTextHash || "") === entry.sourceTextHash && existingSignature === payloadSignature;
-    });
-    if (exists) return { saved: false, reason: "duplicate", entry: null };
-    entries.push(entry);
-    saveAfterworkEntries(entries);
-    return { saved: true, reason: "saved", entry };
-  }
-
-
-  function ensureAfterworkForLatestAnalysis(sourceText, options = {}) {
-    const source = String(sourceText || "").trim();
-    if (!source) return { saved: false, reason: "missing_source_text", entry: null };
-    const auto = loadAutoOutputs();
-    const payload = auto?.payload && typeof auto.payload === "object" ? auto.payload : null;
-    if (!payload) return { saved: false, reason: "missing_payload", entry: null };
-    const autoSourceHash = String(auto?.sourceTextHash || sourceHash(auto?.sourceText || source));
-    const currentHash = sourceHash(source);
-    if (!autoSourceHash || autoSourceHash !== currentHash) return { saved: false, reason: "hash_mismatch", entry: null };
-    const activeRun = getActiveAnalysisRun();
-    const expectedRunId = String(options?.analysisRunId || options?.runId || activeRun?.analysisRunId || activeRun?.runId || "");
-    const gotRunId = String(auto?.analysisRunId || auto?.runId || payload?.analysisRunId || payload?.runId || "");
-    if (expectedRunId && gotRunId && expectedRunId !== gotRunId) {
-      console.warn(`Skipped stale AHA analysis payload: expected ${expectedRunId}, got ${gotRunId}.`);
-      return { saved: false, reason: "run_mismatch", entry: null };
-    }
-    const result = saveAutoOutputAsAfterwork(payload, source, options);
-    if (result.reason === "duplicate") {
-      const entries = loadAfterworkEntries();
-      const match = entries.find((entry) => String(entry?.sourceTextHash || "") === currentHash);
-      if (match) {
-        match.lastReferencedAt = new Date().toISOString();
-        saveAfterworkEntries(entries);
-      }
-    }
-    return result;
   }
 
   function getLatestAhaReplyFromDom() {
