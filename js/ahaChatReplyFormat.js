@@ -27,7 +27,8 @@
     const raw = String(userText || "").trim();
     const text = raw.toLowerCase();
     const wordCount = raw.split(/\s+/).filter(Boolean).length;
-    const wantsShort = /\b(kort svar|kort|oppsummer kort|gi meg kortversjon|ja eller nei|hva nå|er dette riktig)\b/i.test(text)
+    const wantsShort = /(?:^|\s)hva nå(?:\s|[?!.]|$)/i.test(text)
+      || /\b(kort svar|kort|oppsummer kort|gi meg kortversjon|ja eller nei|er dette riktig)\b/i.test(text)
       || (/\bhva betyr dette\b/i.test(text) && wordCount <= 12);
     if (wantsShort) return "short";
     const wantsDetailed = /\b(grundig|forklar grundig|plan|arkitektur|vurder|analyser|hvordan bygger vi|hvordan gjør vi|strategi)\b/i.test(text)

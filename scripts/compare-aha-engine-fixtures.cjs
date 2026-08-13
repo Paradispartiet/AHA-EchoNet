@@ -345,6 +345,7 @@ module.exports = {
   buildComparison,
   canonicalFields,
   compareFixtures,
+  createChatContext,
   fieldStatus,
   readFixtures,
   renderReport,

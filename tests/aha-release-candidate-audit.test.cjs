@@ -139,6 +139,7 @@ function auditInsightQuality() {
 
 function auditCriticalUserJourney() {
   const criticalTests = [
+    'tests/aha-chat-golden-output-regression.test.cjs',
     'tests/aha-longitudinal-user-robustness.test.cjs',
     'tests/aha-chat-insight-end-to-end-audit.test.cjs',
     'tests/aha-product-user-journey-end-to-end.test.cjs',
