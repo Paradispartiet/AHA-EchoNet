@@ -6,3 +6,4 @@ ahaConfig.local.js
 node_modules/
 __pycache__/
 *.pyc
+.tools/
