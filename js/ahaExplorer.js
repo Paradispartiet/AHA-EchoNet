@@ -713,22 +713,25 @@
 
   function render(bundle) {
     if (!bundle || typeof bundle !== "object") return;
+    const analysisRun = bundle.contractVersion === "aha_analysis_run_v1"
+      ? bundle
+      : (global.AHAChatAnalysisRunContract?.finalizeExport?.(bundle) || bundle);
     init();
-    if (!bundleMatchesActiveRun(bundle)) return;
-    currentBundle = bundle;
-    renderAhaNow(bundle);
-    renderInnsikter(bundle);
-    renderBegreper(bundle);
-    renderSamtalespor(bundle);
-    renderFag(bundle);
+    if (!bundleMatchesActiveRun(analysisRun)) return;
+    currentBundle = analysisRun;
+    renderAhaNow(analysisRun);
+    renderInnsikter(analysisRun);
+    renderBegreper(analysisRun);
+    renderSamtalespor(analysisRun);
+    renderFag(analysisRun);
     renderKilder();
-    renderStruktur(bundle);
-    renderEtterarbeid(bundle);
-    renderKart(bundle);
-    renderData(bundle);
-    setCardCount("innsikter", uniqueText(bundle.insights).length + asList(bundle.chamberInsights).length);
-    setCardCount("begreper", uniqueText(asList(bundle.concepts).concat(asList(bundle.ahaSer?.begreper))).length);
-    setCardCount("fag", uniqueText(asList(bundle.ahaSer?.fagkoblinger).concat(asList(bundle.subjectMatches).map((match) => match?.title || match?.subject_label))).length);
+    renderStruktur(analysisRun);
+    renderEtterarbeid(analysisRun);
+    renderKart(analysisRun);
+    renderData(analysisRun);
+    setCardCount("innsikter", uniqueText(analysisRun.insights).length + asList(analysisRun.chamberInsights).length);
+    setCardCount("begreper", uniqueText(asList(analysisRun.concepts).concat(asList(analysisRun.ahaSer?.begreper))).length);
+    setCardCount("fag", uniqueText(asList(analysisRun.ahaSer?.fagkoblinger).concat(asList(analysisRun.subjectMatches).map((match) => match?.title || match?.subject_label))).length);
     setCardCount("kilder", loadWebArticleSourceEvents().length);
   }
 

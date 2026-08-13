@@ -117,8 +117,8 @@
     if (!api?.evaluateAnswer) return null;
     try {
       const activeRun = getActiveAnalysisRun();
-      const evaluation = bindAnalysisArtifact(api.evaluateAnswer(userMessage, answerText, answerPackage), activeRun);
-      const saved = api.saveEvaluation ? bindAnalysisArtifact(api.saveEvaluation(evaluation), activeRun) : evaluation;
+      const evaluation = bindAnalysisArtifact(api.evaluateAnswer(userMessage, answerText, answerPackage), activeRun, "answerEvaluation");
+      const saved = api.saveEvaluation ? bindAnalysisArtifact(api.saveEvaluation(evaluation), activeRun, "answerEvaluation") : evaluation;
       renderAhaAnswerEvaluation(row, saved);
       return saved;
     } catch (err) {

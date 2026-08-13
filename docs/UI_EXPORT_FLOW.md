@@ -154,7 +154,7 @@ DOM kan brukes som fallback, men må merkes.
 
 Den endrer ikke rådata og skal ikke brukes som sikkerhets- eller source-grounding-lag.
 
-## Riktig visningsmodell
+## Aktiv visningsmodell
 
 ```text
 AHAAnalysisRun
@@ -162,6 +162,10 @@ AHAAnalysisRun
 → Explorer
 → Export
 ```
+
+Denne kjeden materialiseres nå som `aha_analysis_run_v1` av
+`chat.analysisRunContract`. Legacy-feltene i eksporten beholdes for kompatibilitet,
+men visningsmodellen valideres samlet før Explorer eller eksportformatene leser den.
 
 Ikke:
 

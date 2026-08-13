@@ -144,13 +144,14 @@ Ved rar analyse:
 8. Sjekk memory controls: `useExistingMemory`.
 ```
 
-## Anbefalt ny kontrakt
+## Aktiv analysekontrakt
 
 ```text
 AHAAnalysisRun
 ```
 
-bør bli eneste kilde til Explorer/export for én analyse.
+er den versjonerte `chat.analysisRunContract`-modellen og er view-modellen som
+Explorer/export mottar for én analyse.
 
 Minimumsfelt:
 

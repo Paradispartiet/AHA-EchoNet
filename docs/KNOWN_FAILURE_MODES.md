@@ -253,5 +253,5 @@ P0: stale payload/afterwork forkastes
 P0: score ceiling ved mismatch
 P1: topic-consistency gate
 P1: fixture forbiddenTerms
-P2: AHAAnalysisRun view model
+P2: AHAAnalysisRun view model ✅ (`chat.analysisRunContract`, `aha_analysis_run_v1`)
 ```

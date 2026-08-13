@@ -1,6 +1,6 @@
 # AHA Analysis Pipeline
 
-Dette dokumentet beskriver den faktiske analyseflyten slik repoet står nå. Det er skrevet etter kodegjennomgang av `chat.html`, `js/ahaChat.js`, `js/ahaChatAnalysisPolicy.js`, `js/ahaChatAcademicInsightView.js`, `js/ahaChatAnalysis.js`, `js/ahaChatExport.js`, `js/ahaEngineClient.js`, `js/ahaIngest.js`, `js/ahaSources.js` og `js/ahaAnalysisQualityLayer.js`.
+Dette dokumentet beskriver den faktiske analyseflyten slik repoet står nå. Det er skrevet etter kodegjennomgang av `chat.html`, `js/ahaChat.js`, `js/ahaChatAnalysisPolicy.js`, `js/ahaChatAnalysisRunContract.js`, `js/ahaChatAcademicInsightView.js`, `js/ahaChatAnalysis.js`, `js/ahaChatExport.js`, `js/ahaEngineClient.js`, `js/ahaIngest.js`, `js/ahaSources.js` og `js/ahaAnalysisQualityLayer.js`.
 
 Målet er å gjøre det tydelig hva som er kildetekst, hva som er minne, hva som er etterarbeid, hva som er cache, og hva som bare er visning.
 
@@ -250,9 +250,9 @@ og hvilket felt kommer fra tidligere chamber/cache/minne?
 
 `ahaAnalysisQualityLayer.js` kan rydde tekst og skjule duplikater, men det kan ikke bevise at analysen er riktig. Kilde-låsing må skje før data når UI/eksport.
 
-## Neste tekniske forbedring
+## Felles analysekontrakt
 
-Lag én felles analyse-kontrakt:
+`chat.analysisRunContract` materialiserer nå én versjonert analysemodell:
 
 ```text
 AHAAnalysisRun {
@@ -272,4 +272,9 @@ AHAAnalysisRun {
 }
 ```
 
-Denne bør være eneste objekt som Explorer og export leser fra når de viser analyse av en kildetekst.
+Denne er nå view-modellen som Explorer og export leser fra når de viser analyse av en kildetekst.
+
+`ahaChatRunContext.js` oppretter og oppdaterer dette objektet gjennom hele kjøringen.
+`ahaChatExport.js` avslutter kildevalideringen ved å materialisere samme kontrakt, og
+Explorer rendrer den kontraktfestede view-modellen. Historiske chamber-felt beholdes
+kun som eksplisitte eksport-/debugfelt og kan ikke erstatte source-bound analysefelt.

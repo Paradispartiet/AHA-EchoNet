@@ -12,9 +12,10 @@
     const formatMemoryContextForAgent = dependencies.formatMemoryContextForAgent;
     const buildMemoryOffContext = dependencies.buildMemoryOffContext;
     const defaultConversationId = dependencies.defaultConversationId || "default_thread";
+    const analysisRunContract = dependencies.analysisRunContract || global.AHAChatAnalysisRunContract;
 
-    if (typeof sourceHash !== "function" || typeof shortHash !== "function" || typeof takeKeywords !== "function") {
-      throw new Error("AHAChatRunContext krever sourceHash, shortHash og takeKeywords.");
+    if (typeof sourceHash !== "function" || typeof shortHash !== "function" || typeof takeKeywords !== "function" || !analysisRunContract?.create) {
+      throw new Error("AHAChatRunContext krever sourceHash, shortHash, takeKeywords og AHAAnalysisRun-kontrakten.");
     }
 
     let activeAnalysisRun = null;
@@ -24,7 +25,7 @@
     }
 
     function setActiveAnalysisRun(run) {
-      activeAnalysisRun = run || null;
+      activeAnalysisRun = run ? analysisRunContract.update(run, {}) : null;
       return activeAnalysisRun;
     }
 
@@ -36,7 +37,7 @@
       const analysisRunId = options.analysisRunId || options.runId || `run_${shortHash(`${base}|run`)}`;
       const conversationId = options.conversationId || options.sessionId || defaultConversationId;
       const topicLabel = options.topicLabel || takeKeywords(source, 4).join(" · ") || "ukjent tema";
-      return {
+      return analysisRunContract.create({
         analysisId: options.analysisId || `analysis_${shortHash(base)}`,
         analysisRunId,
         runId: analysisRunId,
@@ -45,6 +46,10 @@
         turnId: options.turnId || `turn_${shortHash(`${conversationId}|${analysisRunId}|${createdAt}`)}`,
         sourceId: options.sourceId || `source_${fingerprint || shortHash(base)}`,
         sourceKind: options.sourceKind || "chat",
+        sourceType: options.sourceType || options.sourceKind || "chat",
+        sourceText: source,
+        memoryAllowed: options.memoryAllowed === true,
+        memoryMode: options.memoryMode || (options.memoryAllowed === true ? "allowed" : "off"),
         createdAt,
         topicLabel,
         sourceHash: fingerprint,
@@ -52,28 +57,18 @@
         sourceTextHash: fingerprint,
         sourceFingerprint: fingerprint,
         sourcePreview: source.replace(/\s+/g, " ").slice(0, 180)
-      };
+      });
     }
 
-    function bindAnalysisArtifact(artifact, run = activeAnalysisRun) {
+    function updateAnalysisRun(patch, run = activeAnalysisRun) {
+      return analysisRunContract.update(run, patch);
+    }
+
+    function bindAnalysisArtifact(artifact, run = activeAnalysisRun, field = "") {
       if (!artifact || typeof artifact !== "object" || !run) return artifact;
-      return Object.assign(artifact, {
-        analysisId: run.analysisId,
-        analysisRunId: run.analysisRunId || run.runId,
-        runId: run.runId || run.analysisRunId,
-        conversationId: run.conversationId || run.sessionId,
-        turnId: run.turnId,
-        sourceId: run.sourceId,
-        sourceKind: run.sourceKind || artifact.sourceKind || "chat",
-        topicLabel: run.topicLabel || artifact.topicLabel || "",
-        sessionId: run.sessionId || run.conversationId,
-        createdAt: artifact.createdAt || run.createdAt,
-        sourceHash: run.sourceHash || artifact.sourceHash,
-        normalizedSourceHash: run.normalizedSourceHash || run.sourceHash || artifact.normalizedSourceHash,
-        sourceTextHash: run.sourceTextHash || run.sourceHash || artifact.sourceTextHash || artifact.sourceHash,
-        sourceFingerprint: run.sourceFingerprint || run.sourceHash || artifact.sourceFingerprint,
-        sourcePreview: run.sourcePreview || artifact.sourcePreview || artifact.sourceTextPreview || ""
-      });
+      analysisRunContract.bindArtifact(artifact, run, field);
+      artifact.topicLabel = run.topicLabel || artifact.topicLabel || "";
+      return artifact;
     }
 
     function artifactMatchesActiveRun(artifact, run = activeAnalysisRun) {
@@ -220,6 +215,7 @@
       getActiveAnalysisRun,
       setActiveAnalysisRun,
       createAnalysisRun,
+      updateAnalysisRun,
       bindAnalysisArtifact,
       artifactMatchesActiveRun,
       isActiveAnalysisRun,
@@ -330,6 +326,12 @@
       analysis.setActiveAnalysisRun(analysisRun);
       analysis.clearActiveAnalysisState(analysisRun);
       const memoryUseEnabled = memory.isMemoryUseEnabled();
+      analysis.updateAnalysisRun?.({
+        sourceText: cleanText,
+        sourceType: sourceKind,
+        memoryAllowed: memoryUseEnabled,
+        memoryMode: memoryUseEnabled ? "allowed" : "off"
+      }, analysisRun);
       ui.setProcessing(true, memoryUseEnabled ? "AHA vurderer relevant minne …" : "AHA svarer uten tidligere minne …");
       if (urlInfo.isSourceAction && linkReadPromise) {
         ui.setProcessing(true, "AHA leser artikkelen …");
@@ -408,6 +410,7 @@
         }
         const visibleReply = analysis.normalizeVisibleReply(safeReply, cleanText) || safeReply;
         if (!analysis.isActiveAnalysisRun(analysisRun)) return null;
+        analysis.updateAnalysisRun?.({ ahaReply: visibleReply, subjectMatches }, analysisRun);
         const categoryChips = memoryUseEnabled ? memory.suggestCategoryChips() : [];
         const persistedAssistantMessage = savingEnabled
           ? global.AHAChatPersistence?.appendAssistantMessage?.(visibleReply, {
@@ -448,10 +451,11 @@
         if (!analysis.isActiveAnalysisRun(analysisRun)) return null;
         if (savingEnabled) {
           try {
-            analysis.ensureAfterworkForLatestAnalysis(cleanText, {
+            const afterworkResult = analysis.ensureAfterworkForLatestAnalysis(cleanText, {
               subjectMatches: urlInfo.isSourceAction ? [] : subjectMatches,
               ...analysisRun
             });
+            if (afterworkResult?.entry) analysis.updateAnalysisRun?.({ afterwork: afterworkResult.entry }, analysisRun);
           } catch (afterErr) {
             global.console.warn("Auto-etterarbeid feilet", afterErr);
           }
@@ -499,7 +503,8 @@
         }
         if (savingEnabled && analysis.isActiveAnalysisRun(analysisRun)) {
           try {
-            analysis.ensureAfterworkForLatestAnalysis(cleanText, { subjectMatches: [], ...analysisRun });
+            const afterworkResult = analysis.ensureAfterworkForLatestAnalysis(cleanText, { subjectMatches: [], ...analysisRun });
+            if (afterworkResult?.entry) analysis.updateAnalysisRun?.({ afterwork: afterworkResult.entry }, analysisRun);
           } catch (afterErr) {
             global.console.warn("Auto-etterarbeid feilet", afterErr);
           }
