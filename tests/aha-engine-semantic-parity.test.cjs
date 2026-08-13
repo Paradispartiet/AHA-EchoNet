@@ -1,6 +1,7 @@
 const assert = require('node:assert/strict');
 
 const {
+  canonicalFields,
   readFixtures,
   runJavaScriptEngine,
   runPythonEngine,
@@ -20,32 +21,21 @@ for (const fixture of fixtures) {
   const javascript = javascriptOutputs.get(fixture.id);
   const python = pythonOutputs?.get(fixture.id);
 
-  for (const field of ['contentType', 'domain']) {
-    assert.equal(
-      javascript[field],
-      expected[field],
-      `${fixture.id}.${field} must match the reviewed fixture expectation`,
-    );
+  for (const field of canonicalFields) {
+    const javascriptValue = JSON.parse(JSON.stringify(javascript[field]));
+    if (field === 'historyGoLinks') {
+      const linkContract = (items) => items.map(({ type, id, title }) => ({ type, id, title }));
+      assert.deepEqual(linkContract(javascriptValue), linkContract(expected[field]), `${fixture.id}.${field} must match the reviewed link contract`);
+    } else {
+      assert.deepEqual(javascriptValue, expected[field], `${fixture.id}.${field} must match the reviewed fixture expectation`);
+    }
     if (python) {
-      assert.equal(
-        javascript[field],
+      assert.deepEqual(
+        javascriptValue,
         python[field],
         `${fixture.id}.${field} must have exact JavaScript/Python parity`,
       );
     }
-  }
-
-  const javascriptHistoryContract = JSON.parse(JSON.stringify(javascript.historyGoLinks))
-    .map(({ type, id, title }) => ({ type, id, title }));
-  const expectedHistoryContract = expected.historyGoLinks
-    .map(({ type, id, title }) => ({ type, id, title }));
-  assert.deepEqual(javascriptHistoryContract, expectedHistoryContract, `${fixture.id}.historyGoLinks must match the reviewed link contract`);
-  if (python) {
-    assert.deepEqual(
-      JSON.parse(JSON.stringify(javascript.historyGoLinks)),
-      python.historyGoLinks,
-      `${fixture.id}.historyGoLinks must have exact JavaScript/Python parity`,
-    );
   }
 }
 
