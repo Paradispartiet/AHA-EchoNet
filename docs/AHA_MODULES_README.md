@@ -85,6 +85,7 @@ Eksisterende filer:
 - `js/ahaChatAnalysisRunContract.js`
 - `js/ahaChatAcademicInsightView.js`
 - `js/ahaChatKnowledgeView.js`
+- `js/ahaChatIngestRuntime.js`
 - `js/ahaChatConversationView.js`
 - `aha-chat.css`
 
@@ -104,6 +105,8 @@ Status:
   `aha:chamber-saved`-signal og sletting i `chat.chamberStore`
 - eier kanoniske funksjonstyper, kandidatnormalisering, semantisk fallback og
   svakhetsfiltrering i `chat.insightPipeline`
+- eier kanonisk `AHAIngest`-ruting, source-event-grensen og den eksplisitte
+  cache-/legacy-fallbacken i `chat.ingestRuntime`
 - eier synlig analysis-run-state, debugfelt, processing, eksporttilgjengelighet
   og visuell reset i den versjonerte `chat.analysisStateView`-modulen
 - eier normalisert kildeidentitet, deterministisk kort-hash og nøkkelordrangering
@@ -113,8 +116,8 @@ Status:
 - eier aktiv analyse-/kunnskapskontekst og kartvisning i `chat.knowledgeView`
 - eier meldingsrendering, fagchips, highlights og samtalens tom-/svarstatus i
   `chat.conversationView`, separat fra den lokale `ahaChatPersistence`-lagringen
-- bruker `ahaChat.js` som orkestrator uten parallelle innsiktspipeline-, kammerlager-, cache-, analyse-state-,
-  kildeidentitets-, analyse-, policy- eller view-implementasjoner
+- bruker `ahaChat.js` som orkestrator uten parallelle ingest-, innsiktspipeline-, kammerlager-, cache-,
+  analyse-state-, kildeidentitets-, analyse-, policy- eller view-implementasjoner
 
 Mangler før ferdig:
 - tydelig bokmerke-kolonne

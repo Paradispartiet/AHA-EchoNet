@@ -119,8 +119,10 @@ innsiktskammerets nøkkel, fallback-lesing, lokale skrivestempel,
 `aha:chamber-saved`-signal og sletting eies av `chat.chamberStore`; forbrukerne
 får fortsatt eksplisitt injiserte `load`/`save`-funksjoner. Kanoniske
 funksjonstyper, kandidatnormalisering, semantisk fallback og svakhetsfiltrering
-eies samlet av `chat.insightPipeline`; orkestratoren bruker bare genererings- og
-fallback-metodene. Lesing av siste akademiske kontekst,
+eies samlet av `chat.insightPipeline`; `chat.ingestRuntime` eier deretter
+kanonisk `AHAIngest`-ruting, én source-event-grense og den eksplisitte
+legacy-fallbacken. Orkestratoren bruker bare de offentlige inngangene. Lesing av
+siste akademiske kontekst,
 tolking av merkede innsikter og bygging av syntetiske innsiktskort eies av
 `chat.academicInsightView`. Begrepskanonisering, filtrering og prioritering av
 synlige grafkanter eies av den DOM-frie `chat.conceptPolicy`, mens aktiv
