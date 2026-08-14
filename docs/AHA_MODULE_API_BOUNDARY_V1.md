@@ -41,6 +41,11 @@ connects its change notifications after `chat.personalUi` has been created. This
 keeps the initialization order visible without mutable Personal UI placeholders
 or late-binding wrapper functions in `ahaChat.js`.
 
+`chat.export.createRuntime(...)` binds the export pipeline to the active analysis,
+stores, DOM reply fallback and academic afterwork policy once during Chat startup.
+The runtime facade is frozen and owns bundle, Markdown, clipboard and JSON export
+entry points; `ahaChat.js` only wires the declared dependencies.
+
 ## Candidate-ingest extension point
 
 Code outside `ahaIngest.js` must not replace `ingestWithCandidates`. Candidate processing is extended through:

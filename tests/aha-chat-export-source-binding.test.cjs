@@ -26,7 +26,7 @@ function loadExportApi() {
   sandbox.window.window = sandbox.window;
   vm.runInNewContext(contractCode, sandbox, { filename: "ahaChatAnalysisRunContract.js" });
   vm.runInNewContext(code, sandbox, { filename: "ahaChatExport.js" });
-  return sandbox.window.AHAChatExport;
+  return { api: sandbox.window.AHAChatExport, window: sandbox.window };
 }
 
 function baseDeps(overrides = {}) {
@@ -84,8 +84,38 @@ function baseDeps(overrides = {}) {
   };
 }
 
-const api = loadExportApi();
+const loaded = loadExportApi();
+const api = loaded.api;
 assert.equal(typeof api.buildAhaAnalysisExportBundle, "function");
+assert.equal(typeof api.createRuntime, "function");
+
+{
+  assert.throws(() => api.createRuntime({}), /mangler avhengighet: loadAutoOutputs/);
+  const runtime = api.createRuntime({
+    ...baseDeps({
+      afterworks: [{
+        sourceTextHash: "hash_current",
+        textType: "day_log",
+        summary: "Kort dagsoppsummering: feil format",
+        reflection: "Dette er en dagslogg",
+        learningPath: ["Oppsummer hendelsene kort"]
+      }]
+    }),
+    getActiveAnalysisRun: () => null,
+    analysisRunContract: loaded.window.AHAChatAnalysisRunContract,
+    isAcademicLikeType: (type) => ["academic_article", "theory_idea"].includes(String(type || "")),
+    document: {
+      querySelectorAll: () => [{ textContent: "Eldre svar" }, { textContent: "Siste synlige AHA-svar" }]
+    }
+  });
+  assert.equal(Object.isFrozen(runtime), true, "bound export runtime must be immutable");
+  const bundle = runtime.buildAhaAnalysisExportBundle();
+  assert.equal(bundle.ahaReply, "Siste synlige AHA-svar");
+  assert.match(bundle.afterwork.summary, /Kort fagoppsummering/);
+  assert.doesNotMatch(bundle.afterwork.summary, /Kort dagsoppsummering/);
+  assert.doesNotMatch(bundle.afterwork.reflection, /dagslogg/i);
+  assert.equal(runtime.formatAhaAnalysisExportMarkdown(bundle), api.formatAhaAnalysisExportMarkdown(bundle));
+}
 
 {
   const bundle = api.buildAhaAnalysisExportBundle(baseDeps({
