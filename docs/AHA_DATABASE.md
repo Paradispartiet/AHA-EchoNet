@@ -2,6 +2,16 @@
 
 AHA-EchoNet har et valgfritt Supabase/Postgres-lag.
 
+## Dokumentgrense
+
+Denne filen beskriver databasekoden som **faktisk finnes nå**. Den planlagte overgangen til autoritativ PostgreSQL, IndexedDB/outbox, NestJS, eventuell Hasura, pgvector/Milvus-adapter og Azure er dokumentert i:
+
+```text
+docs/AHA_BACKEND_FOUNDATION_ROADMAP_V1.md
+```
+
+Roadmapen er målarkitektur og migreringsrekkefølge. Den endrer ikke dagens runtime alene. Før en migreringsfase er testet og eksplisitt aktivert, gjelder fortsatt den valgfrie Supabase-kontrakten nedenfor.
+
 Database-laget er et tillegg til localStorage-MVP-en:
 
 ```text
@@ -95,7 +105,9 @@ AHAAuth sender aha:auth-ready
 → UI rendres fra oppdatert datasett
 ```
 
-Denne regelen hindrer at lokale data forsvinner ved innlogging, samtidig som Supabase blir sann kilde når bruker er innlogget.
+Denne regelen hindrer at lokale data forsvinner ved innlogging, samtidig som Supabase blir sann kilde for de nåværende databaseaktiverte modulene når bruker er innlogget.
+
+Dette er ikke den endelige fler-enhetskontrakten. Dagens implementasjon har ikke en generell outbox, device cursor, objektvise revisjoner eller full konfliktløsing. Backend Foundation v1 skal erstatte denne begrensningen trinnvis, ikke ved å slå på skjult sync.
 
 ## Repository-read
 
@@ -133,12 +145,65 @@ loadDashboardCounts()
 Hvis Supabase / auth / repository ikke er tilgjengelig, oppfører
 modulen seg som no-op. localStorage er alltid sann kilde lokalt.
 
+## Planlagt system-of-record-overgang
+
+Backend Foundation v1 skal gjøre PostgreSQL autoritativt bare for data som brukeren har valgt å knytte til en synkronisert konto eller et arbeidsrom.
+
+Målgrensen er:
+
+```text
+local-only object
+→ blir på enheten
+
+private synced object
+→ IndexedDB cache/outbox
+→ NestJS command boundary
+→ PostgreSQL system of record
+
+shared workspace object
+→ explicit share preview and consent
+→ NestJS authorization
+→ PostgreSQL workspace scope
+```
+
+Overgangen krever før aktivering:
+
+- canonical schema og migrasjoner
+- mapping av alle eksisterende localStorage-objekter
+- idempotent førstegangsimport
+- revisionsnummer og optimistic concurrency
+- tombstones
+- device cursor og outbox
+- eier-/medlem-/redaktør-/uvedkommende-tester
+- eksport-, sletting-, rollback- og restore-test
+
+Eksisterende Supabase-schema og pgvector-filer skal brukes som migreringsgrunnlag der de passer, men de er ikke alene bevis på at Backend Foundation v1 er ferdig.
+
+## Semantisk lagring
+
+Dagens `supabase/embeddings.sql` er første `pgvector`-implementasjon. Roadmapen låser følgende rekkefølge:
+
+```text
+PgVectorStore først
+→ mål latency, recall, filterpresisjon og lekkasje
+→ Milvus-adapter bare ved dokumentert behov
+```
+
+PostgreSQL forblir system of record selv dersom en senere Milvus-indeks aktiveres.
+
 ## Ikke gjort ennå
 
 ```text
 - filopplasting
 - Supabase Storage
 - bilde-/videoanalyse
-- sanntids/live sync (real-time channels)
-- multi-device konfliktoppløsning utover last-write-wins
+- generell sanntids/live sync
+- robust multi-device konfliktoppløsning
+- IndexedDB outbox og device cursors
+- canonical normalisert PostgreSQL-modell for alle AHA-objekter
+- NestJS command/API boundary
+- Hasura proof of value
+- LangGraph job orchestration
+- Milvus adapter
+- Azure staging/production
 ```

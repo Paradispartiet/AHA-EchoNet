@@ -11,6 +11,27 @@ AHA-EchoNet = den overordnede personlige AHA-motoren
 
 AHA-EchoNet eier den personlige AHA-flaten. History Go er en separat samlings- og læringsmotor som kan sende data til AHA som valgfri import.
 
+## Nåværende runtime og målarkitektur
+
+Dagens aktiverte produktgrense er fortsatt local-first. Lokal lagring, den eksisterende AHA-motoren, eksplisitt History Go-import og de versjonerte analyse-/minnegrensene er autoritative for det som kjører nå.
+
+Den planlagte overgangen til kontoer, fler-enhetssynk, grupper og kollektiv EchoNet-hukommelse er låst i:
+
+```text
+docs/AHA_BACKEND_FOUNDATION_ROADMAP_V1.md
+```
+
+Roadmapen beskriver en trinnvis migrering der:
+
+- PostgreSQL blir system of record for synkroniserte konto- og arbeidsromdata
+- local-first beholdes som offline-cache, outbox og eksplisitt local-only-modus
+- NestJS eier kommandoer, validering, samtykke, deling, audit og jobbstart
+- Hasura bare kan eie read models/subscriptions etter en egen port
+- pgvector brukes før eventuell Milvus-aktivering
+- Azure Container Apps vurderes før AKS
+
+Dette er målarkitektur, ikke aktiv runtime. Ingen eksisterende NO-GO-grense for backend, sync, EchoNet, ekstern deling, modelltrening eller History Go write-back endres av dokumentet alene.
+
 ## Eksisterende canonical motor
 
 AHA-EchoNet har allerede en motor. Den skal beholdes.
@@ -166,9 +187,12 @@ hopper over `enrichWithEmneMatcher` for alt med `imported: true`,
 
 ## Operasjonelle arkitekturdokumenter
 
-Denne filen beskriver hovedarkitekturen. For analyseflyt, kildebinding, cache og feilsøking skal disse dokumentene brukes som arbeidsgrunnlag:
+Denne filen beskriver hovedarkitekturen. For analyseflyt, kildebinding, cache, backendmål og feilsøking skal disse dokumentene brukes som arbeidsgrunnlag:
 
 ```text
+docs/AHA_BACKEND_FOUNDATION_ROADMAP_V1.md
+= målarkitektur, migreringsfaser og porter fra local-first AHA til flerbruker-EchoNet.
+
 docs/AHA_ANALYSIS_PIPELINE.md
 = faktisk runtime-flyt for AHA Chat-analyse, fra sourceText til export bundle.
 
