@@ -82,7 +82,7 @@ function buildContext() {
   const store = new Map();
   const elementsById = new Map();
   const body = new TestElement('body');
-  ['chat-log', 'empty-state', 'chat-highlights-rail', 'chat-status-note'].forEach((id) => {
+  ['chat-log', 'chat-highlights-rail', 'chat-status-note'].forEach((id) => {
     const el = new TestElement('div');
     el.id = id;
     if (id === 'chat-highlights-rail') el.className = 'chat-highlights-rail is-empty';
@@ -151,7 +151,6 @@ function buildContext() {
 const ctx = buildContext();
 const hooks = ctx.AHATestHooks;
 const log = ctx.__elementsById.get('chat-log');
-const empty = ctx.__elementsById.get('empty-state');
 const rail = ctx.__elementsById.get('chat-highlights-rail');
 
 assert.equal(typeof ctx.AHAChatConversationView?.create, 'function', 'conversation view must expose its versioned factory');
@@ -160,7 +159,6 @@ hooks.updateAnswerActionsVisibility();
 assert.equal(ctx.__answerActions.classList.contains('has-aha-answer'), false, 'answer actions should be hidden before AHA has answered');
 
 hooks.appendChat('user', 'Første spørsmål');
-assert.equal(empty.style.display, 'none', 'empty state should hide as soon as the first user message is appended');
 assert.equal(ctx.__answerActions.classList.contains('has-aha-answer'), false, 'answer actions should remain hidden after only a user message');
 const firstHighlightButton = log.children[0].querySelector('.highlight-toggle-btn');
 firstHighlightButton.eventListeners.click();
@@ -181,6 +179,10 @@ assert.equal(rail.classList.contains('is-empty'), true, 'highlights rail should 
 const html = fs.readFileSync('chat.html', 'utf8');
 const css = fs.readFileSync('css/aha-chat.css', 'utf8');
 assert.match(html, /chat-highlights-rail is-empty/, 'highlights rail should start empty in markup');
+assert.doesNotMatch(html, /id="empty-state"/, 'legacy prompt box must not return above the composer');
+assert.equal((html.match(/<h2>Hva vil du forstå i dag\?<\/h2>/g) || []).length, 1, 'the main prompt heading must appear only in the composer');
+assert.doesNotMatch(html, /Skriv til AHA nedenfor/, 'legacy duplicate prompt copy must stay removed');
+assert.doesNotMatch(css, /\.chat-conversation \.empty-state|^\.empty-state/m, 'legacy prompt styling must stay removed');
 assert.match(css, /\.chat-highlights-rail\.is-empty \{ display: none; \}/, 'empty highlights rail should not occupy visible space');
 assert.match(css, /\.chat-conversation \.chat-log \{ min-height: 0; max-height: none; \}/, 'chat log should not reserve a large empty panel');
 assert.ok(html.indexOf('js/ahaChatConversationView.js') < html.indexOf('js/ahaChat.js'), 'conversation view must load before the chat orchestrator');

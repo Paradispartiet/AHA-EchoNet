@@ -75,9 +75,6 @@ textarea, select { width:100%; border-radius: 10px; border:1px solid var(--aha-b
 .action-chip { border-radius: 999px; padding: 6px 10px; font-size: 12px; background: #141c3a; }
 .action-chips-row .action-chip { padding: 5px 10px; font-size: 11px; }
 
-.empty-state { background: rgba(16,26,54,0.54); border:1px dashed rgba(255,211,71,0.3); border-radius: 14px; padding: 10px 12px; margin: 0; min-height: 0; }
-.empty-state h2 { margin:0 0 4px; font-size: 16px; }
-.empty-state p { margin:0; color: var(--aha-muted); font-size: 13px; line-height: 1.45; }
 
 .chat-log-shell { position: relative; }
 .chat-log { min-height: 0; max-height: none; overflow: visible; padding: 2px 0; display:flex; flex-direction:column; gap:18px; }
@@ -400,7 +397,6 @@ pre#out { max-height: 22vh; overflow:auto; white-space: pre-wrap; }
   padding: 10px;
 }
 .chat-conversation .chat-log { min-height: 0; max-height: none; }
-.chat-conversation .empty-state { margin-top: 8px; min-height: 0; }
 
 .answer-actions {
   display: none;
