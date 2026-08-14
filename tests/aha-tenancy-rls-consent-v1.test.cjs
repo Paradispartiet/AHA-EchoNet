@@ -106,7 +106,9 @@ for (const backendOnly of ["audit_events", "idempotency_keys", "outbox_events"])
 }
 
 assert.match(docs, /fail-closed kontrakt — ikke aktiv runtime/i);
-assert.match(docs, /user_metadata[\s\S]*brukes \*\*ikke\*\* som autorisasjonskilde/i);
+assert.match(docs, /Følgende brukes \*\*ikke\*\* som autorisasjonskilde/i);
+assert.match(docs, /user_metadata/);
+assert.match(docs, /raw_user_meta_data/);
 assert.match(docs, /BYPASSRLS/i);
 assert.match(docs, /runtime-rollen skal ikke eie `aha\.\*`-tabellene/i);
 assert.match(docs, /36 `FOR SELECT`-policyer/i);
