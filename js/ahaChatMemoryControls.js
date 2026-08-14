@@ -19,12 +19,22 @@
       .replace(/\s+/g, " ")
       .trim();
     const loadChamber = dependencies.loadChamber;
-    const renderControls = dependencies.renderControls;
-    const updateStatus = dependencies.updateStatus;
+    let viewBindings = Object.freeze({ renderControls: null, updateStatus: null });
+
+    function bindView(bindings = {}) {
+      viewBindings = Object.freeze({
+        renderControls: typeof bindings.renderControls === "function" ? bindings.renderControls : null,
+        updateStatus: typeof bindings.updateStatus === "function" ? bindings.updateStatus : null
+      });
+      return Object.freeze({
+        renderControlsBound: Boolean(viewBindings.renderControls),
+        updateStatusBound: Boolean(viewBindings.updateStatus)
+      });
+    }
 
     function notifyUi(controls) {
-      try { renderControls?.(controls); } catch {}
-      try { void updateStatus?.(); } catch {}
+      try { viewBindings.renderControls?.(controls); } catch {}
+      try { void viewBindings.updateStatus?.(); } catch {}
     }
 
     function normalizeAhaMemoryExclusionList(items) {
@@ -302,7 +312,8 @@
       resetAhaMemoryControls,
       isAhaSavingEnabled,
       isAhaMemoryUseEnabled,
-      buildAhaMemoryOffContext
+      buildAhaMemoryOffContext,
+      bindView
     });
   }
 
