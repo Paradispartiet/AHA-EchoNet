@@ -11,10 +11,17 @@ for (const relative of [
   "backend/api/tsconfig.json",
   "backend/api/tsconfig.build.json",
   "backend/api/README.md",
+  "backend/api/contracts/aha-backend-v1.openapi.json",
   "backend/api/src/main.ts",
   "backend/api/src/app.module.ts",
   "backend/api/src/bootstrap.ts",
   "backend/api/src/config/app-config.ts",
+  "backend/api/src/api/api-contract.ts",
+  "backend/api/src/api/api-exception.filter.ts",
+  "backend/api/src/database/canonical-database.service.ts",
+  "backend/api/src/database/pg-connection.provider.ts",
+  "backend/api/src/profiles/profile.controller.ts",
+  "backend/api/src/profiles/profile.repository.ts",
   "backend/api/src/auth/auth.guard.ts",
   "backend/api/src/auth/jose-token-verifier.ts",
   "backend/api/src/audit/audit.interceptor.ts",
@@ -22,12 +29,14 @@ for (const relative of [
   "backend/api/src/health.controller.ts",
   "backend/api/src/auth-context.controller.ts",
   "backend/api/test/foundation.test.mjs",
+  "backend/api/test/database.test.mjs",
   ".github/workflows/aha-nestjs-api-tests.yml"
 ]) {
   assert.equal(fs.existsSync(path.join(root, relative)), true, `${relative} mangler`);
 }
 
 const pkg = JSON.parse(read("backend/api/package.json"));
+assert.equal(pkg.version, "0.2.0");
 assert.equal(pkg.private, true);
 assert.equal(pkg.type, "module");
 assert.equal(pkg.engines.node, ">=20.11.0");
@@ -43,16 +52,18 @@ assert.deepEqual(pkg.dependencies, {
   "class-transformer": "0.5.1",
   "class-validator": "0.14.2",
   jose: "6.2.3",
+  pg: "8.22.0",
   "reflect-metadata": "0.2.2",
   rxjs: "7.8.2"
 });
-for (const forbidden of ["pg", "typeorm", "prisma", "@prisma/client", "langchain", "@langchain/langgraph", "@zilliz/milvus2-sdk-node"]) {
-  assert.equal(pkg.dependencies[forbidden], undefined, `${forbidden} skal ikke inn i foundation-PR-en`);
+assert.equal(pkg.devDependencies["@types/pg"], "8.20.0");
+for (const forbidden of ["typeorm", "prisma", "@prisma/client", "langchain", "@langchain/langgraph", "@zilliz/milvus2-sdk-node"]) {
+  assert.equal(pkg.dependencies[forbidden], undefined, `${forbidden} skal ikke inn i repository-PR-en`);
 }
 
 const lock = JSON.parse(read("backend/api/package-lock.json"));
 assert.equal(lock.name, "@aha/nest-api");
-assert.equal(lock.version, "0.1.0");
+assert.equal(lock.version, "0.2.0");
 assert.equal(lock.lockfileVersion, 3);
 assert.equal(lock.requires, true);
 assert.deepEqual(lock.packages[""].dependencies, pkg.dependencies);
@@ -76,6 +87,9 @@ const sourceFiles = [
   "backend/api/src/config/app-config.ts",
   "backend/api/src/common/request-context.ts",
   "backend/api/src/common/request-context.middleware.ts",
+  "backend/api/src/api/api-contract.ts",
+  "backend/api/src/api/api-exception.ts",
+  "backend/api/src/api/api-exception.filter.ts",
   "backend/api/src/auth/auth.types.ts",
   "backend/api/src/auth/public.decorator.ts",
   "backend/api/src/auth/auth.guard.ts",
@@ -83,23 +97,45 @@ const sourceFiles = [
   "backend/api/src/audit/audit.types.ts",
   "backend/api/src/audit/safe-audit.service.ts",
   "backend/api/src/audit/audit.interceptor.ts",
+  "backend/api/src/database/database-config.ts",
+  "backend/api/src/database/database.types.ts",
+  "backend/api/src/database/database.errors.ts",
+  "backend/api/src/database/pg-connection.provider.ts",
+  "backend/api/src/database/canonical-database.service.ts",
+  "backend/api/src/database/database.module.ts",
+  "backend/api/src/profiles/profile.repository.ts",
+  "backend/api/src/profiles/profile.controller.ts",
+  "backend/api/src/profiles/profiles.module.ts",
   "backend/api/src/health.controller.ts",
   "backend/api/src/auth-context.controller.ts",
   "backend/api/src/foundation-command.dto.ts"
 ];
 const source = sourceFiles.map(read).join("\n");
-assert.doesNotMatch(source, /@(Post|Put|Patch|Delete)\s*\(/, "foundation skal ikke ha produktmutasjoner");
-assert.doesNotMatch(source, /from ["'](pg|typeorm|@prisma\/client|langchain|@langchain\/langgraph)/);
+assert.doesNotMatch(source, /@(Post|Put|Patch|Delete)\s*\(/, "repository foundation skal ikke ha produktmutasjoner");
+assert.doesNotMatch(source, /from ["'](typeorm|@prisma\/client|langchain|@langchain\/langgraph)/);
 assert.doesNotMatch(source, /user_metadata|raw_user_meta_data/);
 assert.match(source, /runtimeActivated:\s*false/);
 assert.match(source, /databaseConnected:\s*false/);
 assert.match(source, /existingExpressRuntimePrimary:\s*true/);
 assert.match(read("backend/api/src/app.module.ts"), /provide:\s*APP_GUARD[\s\S]*useClass:\s*AuthGuard/);
+assert.match(read("backend/api/src/app.module.ts"), /provide:\s*APP_FILTER[\s\S]*useClass:\s*ApiExceptionFilter/);
 assert.match(read("backend/api/src/auth/auth.guard.ts"), /getAllAndOverride[\s\S]*IS_PUBLIC_ROUTE/);
 assert.match(read("backend/api/src/auth/jose-token-verifier.ts"), /jwtVerify[\s\S]*issuer:[\s\S]*audience:/);
 assert.match(read("backend/api/src/bootstrap.ts"), /whitelist:\s*true/);
 assert.match(read("backend/api/src/bootstrap.ts"), /forbidNonWhitelisted:\s*true/);
 assert.match(read("backend/api/src/bootstrap.ts"), /AHA_ALLOWED_ORIGINS|allowedOrigins/);
+
+const databaseProvider = read("backend/api/src/database/pg-connection.provider.ts");
+assert.match(databaseProvider, /from "pg"/);
+assert.doesNotMatch(source.replace(databaseProvider, ""), /from ["']pg["']/);
+const databaseService = read("backend/api/src/database/canonical-database.service.ts");
+assert.match(databaseService, /set transaction read only/);
+assert.match(databaseService, /set_config\('request\.jwt\.claims', \$1, true\)/);
+assert.match(databaseService, /set_config\('row_security', 'on', true\)/);
+assert.match(databaseService, /rolbypassrls/);
+assert.match(databaseService, /can_assume_table_owner/);
+assert.match(databaseService, /rollback/);
+assert.doesNotMatch(databaseService, /connectionString|AHA_DATABASE_URL/);
 
 const auditInterceptor = read("backend/api/src/audit/audit.interceptor.ts");
 assert.doesNotMatch(auditInterceptor, /request\.(headers|query|body)/);
@@ -113,18 +149,30 @@ assert.match(health, /@Public\(\)/);
 assert.match(health, /@Get\("health"\)/);
 assert.match(health, /runtimeActivated/);
 assert.match(health, /existingExpressRuntimePrimary/);
-assert.match(health, /canonicalSchema:\s*"not_connected"/);
+assert.match(health, /canonicalSchemaPresent \? "present" : "not_connected"/);
 
 const authContext = read("backend/api/src/auth-context.controller.ts");
 assert.doesNotMatch(authContext, /@Public\(\)/);
+assert.match(authContext, /apiSuccess/);
 assert.match(authContext, /subject:[\s\S]*provider:[\s\S]*issuer:[\s\S]*audience:/);
 assert.doesNotMatch(authContext, /token|email|metadata/i);
+
+const profileRepository = read("backend/api/src/profiles/profile.repository.ts");
+assert.match(profileRepository, /where id = aha\.current_profile_id\(\)/);
+assert.doesNotMatch(profileRepository, /select \*|auth_subject|metadata/i);
+const profileController = read("backend/api/src/profiles/profile.controller.ts");
+assert.match(profileController, /@Get\("profile"\)/);
+assert.doesNotMatch(profileController, /@(Post|Put|Patch|Delete)\s*\(/);
 
 const config = read("backend/api/src/config/app-config.ts");
 assert.match(config, /AHA auth configuration is required in production/);
 assert.match(config, /AHA_ALLOWED_ORIGINS is required in production/);
 assert.match(config, /cannot contain a wildcard/);
 assert.match(config, /at least 32 characters in production/);
+const databaseConfig = read("backend/api/src/database/database-config.ts");
+assert.match(databaseConfig, /AHA_DATABASE_ENABLED/);
+assert.match(databaseConfig, /verify-full in production/);
+assert.match(databaseConfig, /AHA_DATABASE_URL is required/);
 
 const workflow = read(".github/workflows/aha-nestjs-api-tests.yml");
 assert.match(workflow, /permissions:\s*\n\s*contents:\s*read/);
@@ -137,6 +185,17 @@ assert.match(workflow, /npm run build/);
 assert.match(workflow, /node --test test\/\*\.test\.mjs/);
 assert.doesNotMatch(workflow, /npm install --package-lock-only|Upload generated lockfile|git push|contents:\s*write/);
 
+const openApi = JSON.parse(read("backend/api/contracts/aha-backend-v1.openapi.json"));
+assert.equal(openApi.openapi, "3.1.0");
+assert.equal(openApi.info.version, "0.2.0");
+assert.deepEqual(Object.keys(openApi.paths).sort(), ["/v1/auth/context", "/v1/health", "/v1/profile"]);
+for (const pathItem of Object.values(openApi.paths)) {
+  assert.equal(pathItem.post, undefined);
+  assert.equal(pathItem.put, undefined);
+  assert.equal(pathItem.patch, undefined);
+  assert.equal(pathItem.delete, undefined);
+}
+
 const rootPackage = JSON.parse(read("package.json"));
 assert.equal(rootPackage.main, "server.js");
 assert.equal(rootPackage.scripts.start, "node server.js");
@@ -144,7 +203,8 @@ assert.doesNotMatch(read("server.js"), /backend\/api|aha-nest-api/);
 assert.doesNotMatch(read("render.yaml"), /rootDir:\s*backend\/api|name:\s*aha-nest-api/);
 
 assert.match(read("backend/api/README.md"), /ikke aktiv AHA-runtime/i);
-assert.match(read("backend/api/README.md"), /ingen databaseklient|databaseklient eller runtime-grants/i);
-assert.match(read("backend/api/README.md"), /NestJS command boundary|non-owner/i);
+assert.match(read("backend/api/README.md"), /runtime-grants/i);
+assert.match(read("backend/api/README.md"), /non-owner|BYPASSRLS/i);
+assert.match(read("docs/AHA_BACKEND_API_CONTRACT_V1.md"), /read-only adapterkontrakt — ikke aktiv frontend- eller synk-runtime/i);
 
 console.log("aha-nestjs-api-foundation.test.cjs passed");
