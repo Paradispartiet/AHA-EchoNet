@@ -10,7 +10,6 @@
 
   const AFTERWORK_STORAGE_KEY = "aha_afterwork_v1";
   const PENDING_CHAT_PROMPT_KEY = "aha_pending_chat_prompt_v1";
-  let personalUi = null;
 
   function resolveModule(name, legacyGlobal) {
     return global.AHAModuleApi?.resolve?.(name, legacyGlobal, { version: 1 }) || global[legacyGlobal] || null;
@@ -124,11 +123,10 @@
   if (!analysisRunContract) throw new Error("AHAChatAnalysisRunContract må lastes før ahaChat.js.");
 
   const memoryControls = chatModule("memoryControls", "AHAChatMemoryControls")?.create?.({
-    loadChamber: loadChamberFromStorage,
-    renderControls: renderAhaMemoryControls,
-    updateStatus: updateAhaMemoryStatus
+    loadChamber: loadChamberFromStorage
   });
   if (!memoryControls) throw new Error("AHAChatMemoryControls må lastes før ahaChat.js.");
+  if (typeof memoryControls.bindView !== "function") throw new Error("AHAChatMemoryControls må eksponere bindView.");
 
   const normalizeAhaMemoryControls = memoryControls.normalizeAhaMemoryControls;
   const loadAhaMemoryControls = memoryControls.loadAhaMemoryControls;
@@ -342,7 +340,7 @@
   const renderMergeSuggestionsSection = insightView.renderMergeSuggestionsSection;
   const showInsights = insightView.showInsights;
 
-  personalUi = chatModule("personalUi", "AHAChatPersonalUi")?.create?.({
+  const personalUi = chatModule("personalUi", "AHAChatPersonalUi")?.create?.({
     getActiveAnalysisRun,
     bindAnalysisArtifact,
     buildAhaMemoryTransparency,
@@ -359,6 +357,20 @@
     buildAhaMemoryStatus
   });
   if (!personalUi) throw new Error("AHAChatPersonalUi må lastes før ahaChat.js.");
+
+  memoryControls.bindView({
+    renderControls: personalUi.renderAhaMemoryControls,
+    updateStatus: personalUi.updateAhaMemoryStatus
+  });
+
+  const {
+    buildAhaPersonalMessageContext, buildAhaAnswerPackage,
+    renderAhaAnswerComposer, renderAhaAnswerEvaluation, evaluateAhaAnswerForChat,
+    renderAhaPersonalContextStatus, renderAhaPersonalRetrieval,
+    buildAhaPersonalAiLoopChatReadinessStatus, renderAhaPersonalAiLoopStatus,
+    renderAhaMemoryTransparency, renderAhaMemoryStatus, renderAhaMemoryControls,
+    bindAhaMemoryControls, updateAhaMemoryStatus
+  } = personalUi;
 
   const conversationView = chatModule("conversationView", "AHAChatConversationView")?.create?.({
     storageKey: HIGHLIGHTS_STORAGE_KEY,
@@ -649,21 +661,6 @@
       .replace(/'/g, "&#039;");
   }
 
-  function getAhaPersonalContextApi(...args) { return personalUi?.getAhaPersonalContextApi(...args) ?? null; }
-  function buildAhaPersonalMessageContext(...args) { return personalUi?.buildAhaPersonalMessageContext(...args) ?? null; }
-  function buildAhaAnswerPackage(...args) { return personalUi?.buildAhaAnswerPackage(...args) ?? null; }
-  function renderAhaAnswerComposer(...args) { return personalUi?.renderAhaAnswerComposer(...args); }
-  function renderAhaAnswerEvaluation(...args) { return personalUi?.renderAhaAnswerEvaluation(...args); }
-  function evaluateAhaAnswerForChat(...args) { return personalUi?.evaluateAhaAnswerForChat(...args) ?? null; }
-  function renderAhaPersonalContextStatus(...args) { return personalUi?.renderAhaPersonalContextStatus(...args) ?? null; }
-  function renderAhaPersonalRetrieval(...args) { return personalUi?.renderAhaPersonalRetrieval(...args); }
-  function buildAhaPersonalAiLoopChatReadinessStatus(...args) { return personalUi?.buildAhaPersonalAiLoopChatReadinessStatus(...args); }
-  function renderAhaPersonalAiLoopStatus(...args) { return personalUi?.renderAhaPersonalAiLoopStatus(...args) ?? null; }
-  function renderAhaMemoryTransparency(...args) { return personalUi?.renderAhaMemoryTransparency(...args) ?? null; }
-  function renderAhaMemoryStatus(...args) { return personalUi?.renderAhaMemoryStatus(...args); }
-  function renderAhaMemoryControls(...args) { return personalUi?.renderAhaMemoryControls(...args) ?? null; }
-  function bindAhaMemoryControls(...args) { return personalUi?.bindAhaMemoryControls(...args); }
-  async function updateAhaMemoryStatus(...args) { return personalUi?.updateAhaMemoryStatus(...args) ?? null; }
   function renderAuxPanel(targetId, markup) {
     const el = document.getElementById(targetId);
     if (!el) return;

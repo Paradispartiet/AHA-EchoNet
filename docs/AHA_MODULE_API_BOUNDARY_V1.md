@@ -36,6 +36,11 @@ The legacy name is an intentional compatibility fallback during migration. New c
 
 The registered surface covers `insights`, `metaInsights`, `sources`, `repository`, `emneMatcher`, `embeddings`, `ingest`, `contracts`, `chat`, `chat.insightFeedback`, `historyGo.contract`, `historyGo.import`, and `historyGo.status` on pages where those modules are loaded. The extracted Chat providers also register under `chat.*`: text utilities with canonical source identity and keyword primitives, the versioned chamber store, signals, academic analysis/source-grounding policy, concept canonicalization/graph-prioritization policy, the versioned analysis-run contract, academic context and synthetic insight view, subjects, analysis, export, reply formatting, memory controls/runtime, afterwork, run context, insight/knowledge/conversation views, the insight pipeline with canonical functional types and candidate-quality policy, the agent runtime with its memory-gated request and HTTP boundary, the ingest runtime with canonical routing and one explicit legacy fallback, Personal UI, auto analysis, the versioned auto-output store, auto-output view/runtime, analysis-state view, and canonical analysis.
 
+`chat.memoryControls` has one explicit two-phase view boundary: `bindView(...)`
+connects its change notifications after `chat.personalUi` has been created. This
+keeps the initialization order visible without mutable Personal UI placeholders
+or late-binding wrapper functions in `ahaChat.js`.
+
 ## Candidate-ingest extension point
 
 Code outside `ahaIngest.js` must not replace `ingestWithCandidates`. Candidate processing is extended through:

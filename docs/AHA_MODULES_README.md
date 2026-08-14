@@ -119,6 +119,9 @@ Status:
 - eier aktiv analyse-/kunnskapskontekst og kartvisning i `chat.knowledgeView`
 - eier meldingsrendering, fagchips, highlights og samtalens tom-/svarstatus i
   `chat.conversationView`, separat fra den lokale `ahaChatPersistence`-lagringen
+- kobler `chat.memoryControls` til `chat.personalUi` gjennom den eksplisitte
+  tofasete `bindView`-kontrakten; øvrige Personal UI-kall brukes direkte uten
+  sent-bindende orkestratorwrappere
 - bruker `ahaChat.js` som orkestrator uten parallelle agent-, ingest-, innsiktspipeline-, kammerlager-, cache-,
   analyse-state-, kildeidentitets-, analyse-, policy- eller view-implementasjoner
 
