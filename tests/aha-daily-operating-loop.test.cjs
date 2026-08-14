@@ -17,10 +17,11 @@ assert.equal(c.AHADailyOperatingLoop.buildNextBestAction({meta:{counts:{workflow
 const prompts=c.AHADailyOperatingLoop.buildSuggestedPrompts({meta:{counts:{trainingReady:1}}}); assert.ok(prompts.length>=3&&prompts.length<=6); assert.ok(prompts.every(p=>p.href==='chat.html'&&/[æøåAHA]/i.test(p.prompt)));
 const queue=c.AHADailyOperatingLoop.buildActionQueue({meta:{counts:{workflowScore:90,intakeReview:1,curationReview:1},workflowStatus:'strong',mapNodes:1}}); assert.ok(queue.length>=3); assert.equal(queue[0].id,'review_data_intake');
 const before=JSON.stringify(c.localStorage._m); c.AHADailyOperatingLoop.refreshDailyLoop({save:false}); assert.equal(JSON.stringify(c.localStorage._m),before);
-const html=fs.readFileSync('index.html','utf8'); assert.ok(html.includes('js/ahaDailyOperatingLoop.js')); assert.ok(html.includes('Dagens AHA-løype')); assert.ok(html.includes('aha-local-home-daily-loop'));
+const html=fs.readFileSync('index.html','utf8'); assert.ok(html.includes('js/ahaDailyOperatingLoop.js')); assert.ok(!html.includes('aha-local-home-daily-loop')); assert.ok(!html.includes('aha-local-home-next-action'));
 const homeDash=fs.readFileSync('js/ahaLocalInsightHomeDashboard.js','utf8'); assert.ok(homeDash.includes('nextBestAction')); assert.ok(homeDash.includes('suggestedPrompts'));
-const chat=fs.readFileSync('chat.html','utf8'); assert.ok(chat.includes('Dagens AHA-løype')); assert.ok(chat.includes('data-daily-prompt')); assert.ok(!chat.includes('btn-send.click()'));
-const wb=fs.readFileSync('knowledge-workbench.html','utf8')+fs.readFileSync('js/ahaKnowledgeWorkbenchDashboard.js','utf8'); assert.ok(wb.includes('workbench-daily-loop')); assert.ok(wb.includes('Dette er neste steg i daglig løype.'));
+const chat=fs.readFileSync('chat.html','utf8'); assert.ok(!chat.includes('aha-chat-daily-loop')); assert.ok(!chat.includes('data-daily-prompt')); assert.ok(!chat.includes('btn-send.click()'));
+const wbHtml=fs.readFileSync('knowledge-workbench.html','utf8'); assert.ok(!wbHtml.includes('workbench-daily-loop')); assert.ok(!wbHtml.includes('Dette er neste steg i daglig løype.'));
+const globalNav=fs.readFileSync('js/ahaGlobalNav.js','utf8'); assert.ok(globalNav.includes('Dagens AHA-løype')); assert.ok(globalNav.includes('data-aha-daily-prompt')); assert.ok(globalNav.includes('buildDailyLoopStatus?.({ save: false')); assert.ok(globalNav.includes('loadDailyLoopModule'));
 assert.ok(fs.readFileSync('js/ahaProductIntegration.js','utf8').includes('dailyOperatingLoop'));
 assert.ok(fs.readFileSync('js/ahaPersonalAiControl.js','utf8').includes('dailyOperatingLoop'));
 assert.ok(fs.readFileSync('js/metaInsightsAgent.js','utf8').includes('dailyOperatingLoopPack'));

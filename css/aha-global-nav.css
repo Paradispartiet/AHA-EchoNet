@@ -311,12 +311,172 @@ body.aha-product-shell main.aha-dashboard > details.aha-panel + .aha-panel {
   margin-top: 14px;
 }
 
+/* Én global, smal footer for profil og dagens løype. */
+body.aha-product-shell {
+  padding-bottom: calc(66px + env(safe-area-inset-bottom));
+}
+
+body.aha-global-daily-open { overflow: hidden; }
+
+.aha-global-footer {
+  position: fixed;
+  z-index: 960;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  padding: 5px max(12px, env(safe-area-inset-right)) max(5px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+  color: var(--gnav-text);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  pointer-events: none;
+}
+
+.aha-global-footer-inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  width: min(100%, 620px);
+  min-height: 50px;
+  margin: 0 auto;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, .15);
+  border-radius: 16px;
+  background: rgba(9, 10, 16, .94);
+  box-shadow: 0 -10px 34px rgba(0, 0, 0, .34);
+  backdrop-filter: blur(18px);
+  pointer-events: auto;
+}
+
+.aha-global-footer-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-width: 0;
+  min-height: 50px;
+  padding: 6px 14px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--gnav-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.aha-global-footer-action + .aha-global-footer-action { border-left: 1px solid var(--gnav-line); }
+.aha-global-footer-action:hover,
+.aha-global-footer-action[aria-expanded="true"] { background: var(--gnav-accent-soft); }
+
+.aha-global-footer-profile-mark,
+.aha-global-footer-daily-mark {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  background: var(--gnav-accent);
+  color: #14110a;
+  font-size: .78rem;
+  font-weight: 900;
+}
+
+.aha-global-footer-daily-mark { background: var(--gnav-accent-soft); color: var(--gnav-accent); }
+.aha-global-footer-copy { display: grid; min-width: 0; line-height: 1.05; }
+.aha-global-footer-copy > span { overflow: hidden; font-size: .82rem; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+.aha-global-footer-copy small { margin-top: 3px; color: var(--gnav-muted); font-size: .66rem; }
+
+.aha-global-daily-sheet {
+  position: fixed;
+  z-index: 950;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  min-height: 100dvh;
+  padding: 12px 12px calc(66px + env(safe-area-inset-bottom));
+  color: var(--gnav-text);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.aha-global-daily-sheet[hidden] { display: none !important; }
+.aha-global-daily-backdrop { position: absolute; inset: 0; border: 0; background: rgba(0, 0, 0, .62); cursor: default; }
+
+.aha-global-daily-panel {
+  position: relative;
+  width: min(100%, 680px);
+  max-height: min(74dvh, 720px);
+  overflow: auto;
+  border: 1px solid rgba(246, 200, 0, .3);
+  border-radius: 22px 22px 16px 16px;
+  background: #0d1120;
+  box-shadow: 0 -22px 60px rgba(0, 0, 0, .58);
+  overscroll-behavior: contain;
+  animation: aha-global-daily-rise .2s ease-out;
+}
+
+@keyframes aha-global-daily-rise {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.aha-global-daily-header {
+  position: sticky;
+  z-index: 1;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 17px 18px 14px;
+  border-bottom: 1px solid var(--gnav-line);
+  background: rgba(13, 17, 32, .96);
+  backdrop-filter: blur(12px);
+}
+
+.aha-global-daily-header p,
+.aha-global-daily-header h2 { margin: 0; }
+.aha-global-daily-header p { color: var(--gnav-accent); font-size: .68rem; font-weight: 850; letter-spacing: .12em; text-transform: uppercase; }
+.aha-global-daily-header h2 { margin-top: 3px; font-size: 1.18rem; }
+.aha-global-daily-close { flex: 0 0 auto; width: 40px; height: 40px; border: 1px solid var(--gnav-line); border-radius: 999px; background: rgba(255,255,255,.04); color: var(--gnav-text); font-size: 1.5rem; cursor: pointer; }
+.aha-global-daily-content { display: grid; gap: 12px; padding: 16px 18px 20px; }
+.aha-global-daily-summary p,
+.aha-global-daily-summary h3,
+.aha-global-daily-next p { margin: 0; }
+.aha-global-daily-summary .aha-global-daily-day { color: var(--gnav-muted); font-size: .76rem; text-transform: capitalize; }
+.aha-global-daily-summary h3 { margin-top: 5px; font-size: 1.08rem; line-height: 1.3; }
+.aha-global-daily-summary h3 + p { margin-top: 5px; color: var(--gnav-muted); font-size: .82rem; }
+
+.aha-global-daily-next {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 5px 12px;
+  padding: 14px;
+  border: 1px solid rgba(246, 200, 0, .25);
+  border-radius: 14px;
+  background: var(--gnav-accent-soft);
+}
+.aha-global-daily-next > span { grid-column: 1 / -1; color: var(--gnav-accent); font-size: .68rem; font-weight: 850; letter-spacing: .09em; text-transform: uppercase; }
+.aha-global-daily-next strong { font-size: .95rem; }
+.aha-global-daily-next p { grid-column: 1; color: var(--gnav-muted); font-size: .78rem; line-height: 1.45; }
+.aha-global-daily-primary { grid-column: 2; grid-row: 2 / span 2; align-self: center; display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 8px 14px; border-radius: 999px; background: var(--gnav-accent); color: #17130a; font-size: .78rem; font-weight: 850; text-decoration: none; }
+.aha-global-daily-queue { display: grid; gap: 6px; }
+.aha-global-daily-queue-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 42px; padding: 8px 12px; border: 1px solid var(--gnav-line); border-radius: 12px; color: var(--gnav-text); font-size: .8rem; font-weight: 720; text-decoration: none; }
+.aha-global-daily-prompts { display: flex; flex-wrap: wrap; gap: 7px; }
+.aha-global-daily-prompt { display: inline-flex; align-items: center; min-height: 36px; padding: 7px 11px; border: 1px solid rgba(246, 200, 0, .24); border-radius: 999px; color: var(--gnav-text); background: rgba(255,255,255,.035); font-size: .75rem; text-decoration: none; }
+.aha-global-daily-empty { display: grid; gap: 8px; color: var(--gnav-muted); }
+.aha-global-daily-empty p { margin: 0; }
+.aha-global-daily-empty .aha-global-daily-primary { grid-column: auto; grid-row: auto; justify-self: start; }
+
+/* De lokale bunnmenyene og de gamle konto-/løypeflatene erstattes av footeren. */
+body.aha-product-shell .aha-mobile-nav,
+body.aha-route-index .aha-home-header-simplified .aha-header-profile,
+body.aha-route-index .aha-home-header-simplified .aha-header-actions,
+body.aha-route-chat .aha-chat-header-simplified .chat-profile-card { display: none !important; }
+
 /* Home: én merkevare, én produktnav og færre konkurrerende oversikter. */
 body.aha-route-index .aha-home-header-simplified .aha-app-header { grid-template-columns: 1fr auto; gap: 10px; padding: 0 14px 10px; }
 body.aha-route-index .aha-home-header-simplified .aha-brand { display: none; }
 body.aha-route-index .aha-home-header-simplified #aha-global-nav { grid-column: 1 / -1; grid-row: 1; margin: 0 -14px; }
-body.aha-route-index .aha-home-header-simplified .aha-header-profile { grid-column: 1; grid-row: 2; min-width: 0; }
-body.aha-route-index .aha-home-header-simplified .aha-header-actions { grid-column: 2; grid-row: 2; }
 body.aha-route-index .aha-home-header-simplified .aha-profile-avatar { width: 38px; height: 38px; font-size: .95rem; }
 body.aha-route-index .aha-home-header-simplified .aha-profile-copy p,
 body.aha-route-index .aha-home-header-simplified .aha-profile-id-row,
@@ -330,7 +490,7 @@ body.aha-route-index .aha-modules-panel[hidden] { display: none !important; }
 body.aha-route-chat .aha-chat-header-simplified .back-link,
 body.aha-route-chat .aha-chat-header-simplified .chat-brand,
 body.aha-route-chat .aha-chat-header-simplified .profile-indicator { display: none !important; }
-body.aha-route-chat .aha-chat-header-simplified { grid-template-columns: minmax(0, 1fr) auto auto; }
+body.aha-route-chat .aha-chat-header-simplified { grid-template-columns: minmax(0, 1fr) auto; }
 
 /* Release-candidate touch gate: keep primary navigation and page actions comfortably tappable
    on iPad/iPhone/coarse-pointer devices without changing desktop density. */
@@ -338,6 +498,10 @@ body.aha-route-chat .aha-chat-header-simplified { grid-template-columns: minmax(
   .aha-global-nav-primary-link,
   .aha-global-nav-toggle,
   .aha-global-nav-close,
+  .aha-global-footer-action,
+  .aha-global-daily-close,
+  .aha-global-daily-queue-item,
+  .aha-global-daily-prompt,
   body.aha-product-shell .aha-module-shell .aha-module-actions a,
   body.aha-product-shell .aha-module-shell .aha-module-actions button {
     min-height: 44px;
@@ -370,4 +534,15 @@ body.aha-route-chat .aha-chat-header-simplified { grid-template-columns: minmax(
   body.aha-route-index .aha-home-header-simplified .aha-profile-id-row { display: none !important; }
   body.aha-product-shell main.aha-dashboard { padding-top: 16px; }
   body.aha-product-shell .aha-module-shell-header h1 { font-size: clamp(1.55rem, 8vw, 2rem); }
+  .aha-global-daily-sheet { padding-inline: 6px; }
+  .aha-global-daily-panel { border-radius: 18px 18px 12px 12px; }
+  .aha-global-daily-content { padding-inline: 13px; }
+  .aha-global-daily-next { grid-template-columns: 1fr; }
+  .aha-global-daily-next p,
+  .aha-global-daily-primary { grid-column: 1; grid-row: auto; }
+  .aha-global-daily-primary { justify-self: start; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aha-global-daily-panel { animation: none; }
 }

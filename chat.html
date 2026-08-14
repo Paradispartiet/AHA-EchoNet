@@ -26,14 +26,6 @@
         <p>En rolig chatflate med innsikter underveis.</p>
       </div>
       <span class="status-pill">Klar</span>
-      <div class="chat-profile-card" aria-live="polite">
-        <div id="aha-chat-profile-avatar" class="chat-profile-avatar">A</div>
-        <div class="chat-profile-copy">
-          <strong id="aha-chat-profile-name">Min AHA-profil</strong>
-          <span id="aha-chat-auth-status">Sjekker innlogging …</span>
-          <span class="chat-profile-id-row"><em>AHA-ID</em><strong id="aha-chat-profile-id">Ikke innlogget</strong></span>
-        </div>
-      </div>
       <a class="profile-indicator" href="profile.html">Min AHA</a><a class="profile-indicator" href="knowledge-workbench.html">Åpne Knowledge Workbench</a><a class="profile-indicator" href="personal-ai.html">Se Personal AI-status</a><a class="profile-indicator" href="training.html">Godkjenn materiale</a>
     </header>
 
@@ -75,12 +67,6 @@
             </div>
             <div id="chat-status-note" class="chat-status-note" aria-live="polite"></div>
           </div>
-        </section>
-
-
-        <section id="aha-chat-daily-loop" class="aha-now-card" aria-label="Dagens AHA-løype">
-          <header><p class="eyebrow">Dagens AHA-løype</p><h2>Dagens AHA-løype</h2></header>
-          <div id="aha-chat-daily-loop-content"><p class="aha-calm-empty">Laster dagens neste handling …</p></div>
         </section>
 
         <section class="answer-actions" aria-label="Handlinger for AHA-svar">
@@ -314,36 +300,6 @@
   <script src="js/ahaHistoryGoImport.js"></script>
   <script>
     (function () {
-      const nameEl = document.getElementById("aha-chat-profile-name");
-      const statusEl = document.getElementById("aha-chat-auth-status");
-      const idEl = document.getElementById("aha-chat-profile-id");
-      const avatarEl = document.getElementById("aha-chat-profile-avatar");
-
-      function updateProfileCard(event) {
-        const detail = event && event.detail ? event.detail : null;
-        const eventDisplayName = String(detail?.profile?.display_name || "").trim();
-        const eventUserId = String(detail?.user?.id || "").trim();
-        const cachedName = String(localStorage.getItem("aha_profile_name") || "").trim();
-        const cachedProfileId = String(localStorage.getItem("aha_profile_id") || "").trim();
-
-        const displayName = eventDisplayName || cachedName || "Min AHA-profil";
-        const profileId = eventUserId || cachedProfileId;
-
-        if (nameEl) nameEl.textContent = displayName;
-        if (idEl) idEl.textContent = profileId || "Ikke innlogget";
-        if (statusEl) statusEl.textContent = profileId ? "Logget inn" : "Lokal modus";
-
-        const initial = String(displayName || "A").trim().charAt(0).toUpperCase() || "A";
-        if (avatarEl) avatarEl.textContent = initial;
-      }
-
-      updateProfileCard();
-      window.addEventListener("aha:auth-ready", updateProfileCard);
-    })();
-  </script>
-
-  <script>
-    (function () {
       // Svar-handlinger over chatten: oppdater analysen og flytt fokus til
       // riktig boks. data-chat-action / knapp-id håndteres av ahaChat.js.
       document.querySelectorAll('[data-open-card]').forEach((btn) => {
@@ -364,21 +320,6 @@
           }
         });
       });
-    })();
-  </script>
-
-  <script>
-    (function(){
-      const esc=(v)=>String(v==null?"":v).replace(/[&<>"']/g,(c)=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
-      const short=(v,n=96)=>{const t=String(v||"").replace(/\s+/g," ").trim();return t.length>n?t.slice(0,n-1).trim()+"…":t;};
-      function render(){
-        const loop=window.AHADailyOperatingLoop?.refreshDailyLoop?.({save:true,lightweight:true});
-        const el=document.getElementById("aha-chat-daily-loop-content"); if(!el||!loop) return;
-        const a=loop.nextBestAction||{}; const prompts=(loop.suggestedPrompts||[]).slice(0,3);
-        el.innerHTML=`<p><strong>${esc(a.label||"Åpne Chat")}</strong> — ${esc(short(a.description||"Bruk AHA med dagens status."))}</p><div class="chips">${prompts.map(p=>`<button class="action-chip" type="button" data-daily-prompt="${esc(p.prompt)}">${esc(p.label)}</button>`).join("")}<a class="action-chip" href="knowledge-workbench.html">Åpne Workbench</a></div>`;
-        el.querySelectorAll("[data-daily-prompt]").forEach((btn)=>btn.addEventListener("click",()=>{const input=document.getElementById("msg"); if(input){input.value=btn.dataset.dailyPrompt||""; input.focus();}}));
-      }
-      document.addEventListener("DOMContentLoaded", render);
     })();
   </script>
 

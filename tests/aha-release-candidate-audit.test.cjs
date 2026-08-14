@@ -141,6 +141,7 @@ function auditCriticalUserJourney() {
   const criticalTests = [
     'tests/aha-launch-journey-v1.test.cjs',
     'tests/aha-safari-device-evidence-surface.test.cjs',
+    'tests/aha-global-footer-daily-sheet.test.cjs',
     'tests/aha-chat-golden-output-regression.test.cjs',
     'tests/aha-longitudinal-user-robustness.test.cjs',
     'tests/aha-chat-insight-end-to-end-audit.test.cjs',
