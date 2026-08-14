@@ -117,7 +117,7 @@ export function loadAppConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     environment,
     port: parsePort(env.PORT),
     serviceName: "aha-nest-api",
-    serviceVersion: nonEmpty(env.AHA_API_VERSION || "0.1.0"),
+    serviceVersion: nonEmpty(env.AHA_API_VERSION || "0.2.0"),
     allowedOrigins: parseOrigins(env.AHA_ALLOWED_ORIGINS, environment),
     auditHashSalt: parseAuditSalt(env.AHA_AUDIT_HASH_SALT, environment),
     auth: parseAuth(env, environment),
