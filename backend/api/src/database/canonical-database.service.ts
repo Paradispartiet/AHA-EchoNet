@@ -1,5 +1,4 @@
 import { Inject, Injectable, type OnModuleDestroy } from "@nestjs/common";
-import type { QueryResultRow } from "pg";
 import type { AuthPrincipal } from "../auth/auth.types.js";
 import { DATABASE_CONFIG, type DatabaseConfig } from "./database-config.js";
 import { CanonicalDatabaseError } from "./database.errors.js";
@@ -10,7 +9,7 @@ import {
   type DatabaseReadiness
 } from "./database.types.js";
 
-interface RuntimeSafetyRow extends QueryResultRow {
+interface RuntimeSafetyRow {
   row_security_on: boolean;
   bypasses_rls: boolean;
   can_assume_table_owner: boolean;
