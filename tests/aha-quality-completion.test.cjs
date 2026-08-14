@@ -31,10 +31,15 @@ assert.deepEqual(
 
 const profileSource = fs.readFileSync("js/ahaAnalysisQualityProfile.js", "utf8");
 assert.match(profileSource, /ahaQualityCompletion\.js/);
+assert.match(profileSource, /ahaMemoryRevision\.js/);
+assert.match(profileSource, /ahaMemoryRetrievalGuard\.js/);
 assert.match(profileSource, /loadQualityCompletion/);
 const serviceWorker = fs.readFileSync("sw.js", "utf8");
-assert.match(serviceWorker, /aha-chat-v4\.0\.423/);
+assert.match(serviceWorker, /aha-chat-v4\.0\.424/);
 assert.match(serviceWorker, /js\/ahaQualityCompletion\.js/);
 assert.match(serviceWorker, /js\/ahaAdaptiveArtifacts\.js/);
+assert.match(serviceWorker, /js\/ahaChatChamberStore\.js/);
+assert.match(serviceWorker, /js\/ahaMemoryRevision\.js/);
+assert.match(serviceWorker, /js\/ahaMemoryRetrievalGuard\.js/);
 
 console.log("aha-quality-completion.test.cjs passed");
