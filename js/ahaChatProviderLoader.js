@@ -14,7 +14,11 @@
 
   const CHAT_PROVIDERS = Object.freeze({
     textUtils: spec("AHAChatTextUtils", ["shortHash", "takeKeywords", "sourceHash", "cleanArticleText", "toSentences", "collectOpinionArticleEvidence"]),
-    signals: spec("AHAChatSignals", ["detectTextType", "detectPublicAdministrationReformSignal", "detectPublicAdministrationSignal", "inferReligiousLexiconEvidence"]),
+    signals: spec("AHAChatSignals", [
+      "detectTextType", "detectPublicAdministrationReformSignal", "detectPublicAdministrationSignal",
+      "inferReligiousLexiconEvidence", "detectCanonicalAnalysisDomain",
+      "detectInstitutionalMediaHistorySignal", "detectLiteraryAttachmentSignal"
+    ]),
     subjects: spec("AHAChatSubjects", ["normalizeSubjectLinks", "enrichSubjectMatchesForClimateConflict", "enrichSubjectMatchesForPublicAdministration", "normalizeFagkoblinger", "isAcademicLikeType"]),
     analysis: spec("AHAChatAnalysis", ["buildOpinionArticleQualityAnalysis"]),
     replyFormat: spec("AHAChatReplyFormat", ["normalizeAhaVisibleReply", "createSubjectPolicy"]),
@@ -39,6 +43,7 @@
     autoAnalysis: spec("AHAChatAutoAnalysis", ["create"], "create"),
     autoOutputView: spec("AHAChatAutoOutputView", ["create", "createRuntime"], "create"),
     canonicalAnalysis: spec("AHAChatCanonicalAnalysis", ["create"], "create"),
+    capabilityBindings: spec("AHAChatCapabilityBindings", ["bind"]),
     export: spec("AHAChatExport", ["createRuntime"]),
     knowledgeView: spec("AHAChatKnowledgeView", ["create"]),
     runtimeFacade: spec("AHAChatRuntimeFacade", ["create"]),

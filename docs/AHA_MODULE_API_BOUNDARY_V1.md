@@ -78,6 +78,13 @@ aliases and required factory methods. `ahaChat.js` resolves and instantiates
 providers through this boundary, while non-Chat core modules still use the same
 version-1 registry with their explicit legacy fallback.
 
+`chat.capabilityBindings` is the canonical allowlist for the provider-instance
+surfaces consumed by the Chat composition root. Each named group validates its
+required functions or values, returns a frozen facade, renames storage and shell
+adapters where needed, and excludes undeclared provider internals. Provider
+loading/factory ownership remains in `chat.providerLoader`; capability ownership
+does not move analysis, import or persistence logic into the composition root.
+
 ## Candidate-ingest extension point
 
 Code outside `ahaIngest.js` must not replace `ingestWithCandidates`. Candidate processing is extended through:
