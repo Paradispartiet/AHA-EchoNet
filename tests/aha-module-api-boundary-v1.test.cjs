@@ -150,6 +150,7 @@ const chatModules = [
   ['chat.analysisStateView', 'AHAChatAnalysisStateView', 'js/ahaChatAnalysisStateView.js'],
   ['chat.canonicalAnalysis', 'AHAChatCanonicalAnalysis', 'js/ahaChatCanonicalAnalysis.js'],
   ['chat.uiRuntime', 'AHAChatUiRuntime', 'js/ahaChatUiRuntime.js'],
+  ['chat.providerLoader', 'AHAChatProviderLoader', 'js/ahaChatProviderLoader.js'],
   ['chat.runtimeFacade', 'AHAChatRuntimeFacade', 'js/ahaChatRuntimeFacade.js'],
   ['chat.runtimeComposition', 'AHAChatRuntimeComposition', 'js/ahaChatRuntimeComposition.js']
 ];
@@ -182,14 +183,19 @@ const exportModule = context.AHAModuleApi.get('chat.export', { version: 1 });
 assert.equal(typeof exportModule.createRuntime, 'function');
 const uiRuntime = context.AHAModuleApi.get('chat.uiRuntime', { version: 1 });
 assert.equal(typeof uiRuntime.createShell, 'function');
+const providerLoader = context.AHAModuleApi.get('chat.providerLoader', { version: 1 });
+assert.equal(typeof providerLoader.create, 'function');
+assert.equal(Object.isFrozen(providerLoader.CHAT_PROVIDERS), true);
 const runtimeFacade = context.AHAModuleApi.get('chat.runtimeFacade', { version: 1 });
 assert.equal(typeof runtimeFacade.create, 'function');
 const runtimeComposition = context.AHAModuleApi.get('chat.runtimeComposition', { version: 1 });
 assert.equal(typeof runtimeComposition.create, 'function');
 
 const chatSource = fs.readFileSync('js/ahaChat.js', 'utf8');
-assert.match(chatSource, /function chatModule\(/, 'Chat must resolve extracted modules through the boundary');
+assert.match(chatSource, /providerLoader\.(?:require|instantiate)\(/, 'Chat must resolve extracted modules through the provider boundary');
+assert.doesNotMatch(chatSource, /function (?:resolveModule|chatModule)\(/, 'module resolution must remain extracted');
 for (const [, legacyGlobal] of chatModules) {
+  if (legacyGlobal === 'AHAChatProviderLoader') continue; // bootstrap fallback for the loader itself
   assert.doesNotMatch(chatSource, new RegExp(`global\\.${legacyGlobal}\\b`), `Chat must not reach directly into ${legacyGlobal}`);
 }
 assert.doesNotMatch(chatSource, /global\.AHAChatAutoOutputStore\b/, 'Chat must resolve the auto-output store through the module boundary');
