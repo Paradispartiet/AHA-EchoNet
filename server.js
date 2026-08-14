@@ -248,6 +248,19 @@ function sanitizeInsightCandidate(candidate, fallbackText) {
     })
     .filter(Boolean)
     .slice(0, 5);
+  const source = String(fallbackText || "").replace(/\s+/g, " ").trim();
+  const evidence_quotes = (Array.isArray(candidate.evidence_quotes) ? candidate.evidence_quotes : [])
+    .map((item) => String(item || "").replace(/\s+/g, " ").trim())
+    .filter((quote) => quote && source.includes(quote))
+    .slice(0, 3);
+  const requestedUncertainty = String(candidate.uncertainty || "").trim().toLowerCase();
+  const uncertainty = ["supported", "interpretive", "hypothesis"].includes(requestedUncertainty)
+    ? requestedUncertainty
+    : "interpretive";
+  const requestedClaimKind = String(candidate.claim_kind || "").trim().toLowerCase();
+  const claim_kind = ["source_observation", "interpretation", "hypothesis", "question", "action"].includes(requestedClaimKind)
+    ? requestedClaimKind
+    : "interpretation";
 
   return {
     title: rawTitle.slice(0, 140),
@@ -259,6 +272,12 @@ function sanitizeInsightCandidate(candidate, fallbackText) {
     theories,
     traditions,
     theoretical_links,
+    evidence_quotes,
+    evidence_status: evidence_quotes.length ? "verified_against_request_source" : "missing",
+    uncertainty: evidence_quotes.length ? uncertainty : "hypothesis",
+    claim_kind: evidence_quotes.length ? claim_kind : "hypothesis",
+    why_it_matters: normalizeWhitespace(candidate.why_it_matters, 280),
+    next_test: normalizeWhitespace(candidate.next_test, 280),
     candidate_type: "ai"
   };
 }
@@ -459,7 +478,7 @@ app.post("/api/aha-agent/insight-candidates", async (req, res) => {
       return res.status(400).json({ ok: false, error: "invalid_context" });
     }
 
-    const systemInstruction = "Du lager insight candidates for AHA. Returner KUN gyldig JSON, uten markdown eller forklarende tekst utenfor JSON. Returner et objekt med feltet candidates (array). Lag 2–5 candidates for mellomlange eller lange tekster, og 1–3 for korte tekster. Ikke bruk generiske titler som «Observasjon», «Innsikt» eller «Analyse» når teksten har tydelig tema. Hver candidate skal ha presis norsk title og summary (1–2 setninger) som tilfører semantisk verdi, ikke rå avskrift av tekststarten. Concepts skal være korte, konkrete og meningsfulle begreper. functional_type må være en av: principle, observation, pattern, question, problem, solution, learning_point, definition, contradiction, memory, task, decision. Hvis teksten handler om lek, byrom, offentlighet, fellesskap, hverdagsliv eller læring, skal minst én relevant candidate få teorikobling når det faglig passer. Vurder særlig Johan Huizinga, D.W. Winnicott, Jane Jacobs, Henri Lefebvre og Richard Sennett. Bruk teorikoblinger bare når de faktisk passer teksten. theoretical_links skal være objekter med feltene name og relation, der relation forklarer hvorfor koblingen passer.";
+    const systemInstruction = "Du lager kvalitetsvurderte innsiktskandidater for AHA. Returner KUN gyldig JSON, uten markdown eller tekst utenfor JSON. Returner et objekt med candidates (array). Lag 3–5 ulike kandidater for mellomlange/lange tekster og 1–3 for korte tekster. Kandidatene skal konkurrere: de må uttrykke ulike funn, spenninger eller konsekvenser, ikke samme poeng med nye ord. Ikke bruk generiske titler som «Observasjon», «Innsikt» eller «Analyse». Hver kandidat skal ha presis norsk title, summary (1–2 setninger), why_it_matters og next_test. summary skal tilføre syntese uten å påstå mer enn kilden tillater. evidence_quotes skal inneholde 1–2 korte, ordrette sitater fra den mottatte teksten; aldri konstruer sitater. claim_kind må være source_observation, interpretation, hypothesis, question eller action. uncertainty må være supported, interpretive eller hypothesis. Bruk supported bare for direkte kildeobservasjoner; tolkninger er interpretive; antakelser uten tydelig belegg er hypothesis. Concepts skal være konkrete. functional_type må være en av: principle, observation, pattern, question, problem, solution, learning_point, definition, contradiction, memory, task, decision. Teorikoblinger skal bare brukes når teksten faktisk støtter dem, og theoretical_links skal ha name og relation.";
     const userPayload = JSON.stringify({
       text,
       context: context || {},
