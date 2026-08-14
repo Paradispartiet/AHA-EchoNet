@@ -32,6 +32,7 @@
 
   const CHAT_EXPORTS = Object.freeze([
     "loadChamberFromStorage", "saveChamberToStorage", "handleUserMessage", "askAhaAgent",
+    "buildAhaAnalysisExportBundle",
     "buildAIState", "isAhaMemoryQuestion", "buildAhaLearningContractReply",
     "buildAhaMemoryStatus", "shouldUseAhaMemory", "buildAhaMemoryContext",
     "buildAhaMemoryOffContext", "loadAhaMemoryControls", "saveAhaMemoryControls",

@@ -62,7 +62,7 @@ const bootstrapWindow = {
   AHAMetaInsightsAgent: { id: "meta" },
   MetaInsightsEngine: { buildUserMetaProfile: () => ({ id: "profile" }) },
   fetch: () => "fetched",
-  buildAhaAnalysisExportBundle: () => "bundle",
+  AHAChat: { buildAhaAnalysisExportBundle: () => "bundle" },
   AHAModuleApi: {
     resolve(name) {
       assert.equal(name, "chat.providerLoader");

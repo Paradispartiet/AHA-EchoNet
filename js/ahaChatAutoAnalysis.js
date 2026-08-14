@@ -273,14 +273,18 @@
       persistAnalysisDocumentsAsMemory: false
     });
 
-    function pickAcademicSourceSentence(sentences, patterns, fallbackIndex = 0) {
+    function pickAcademicSourceSentence(sentences, patterns, fallbackIndex = 0, excluded = new Set()) {
       const list = Array.isArray(sentences) ? sentences.filter(Boolean) : [];
-      const hit = list.find((sentenceText) => (Array.isArray(patterns) ? patterns : []).some((pattern) => pattern.test(sentenceText)));
-      return String(hit || list[fallbackIndex] || list[0] || "").trim();
+      const available = list.filter((sentenceText) => !excluded.has(String(sentenceText || "").trim()));
+      const hit = available.find((sentenceText) => (Array.isArray(patterns) ? patterns : []).some((pattern) => pattern.test(sentenceText)));
+      const fallback = list[fallbackIndex] && !excluded.has(String(list[fallbackIndex]).trim())
+        ? list[fallbackIndex]
+        : available[0];
+      return String(hit || fallback || "").trim();
     }
 
 
-    function pickBestAcademicSourceSentence(sentences, kind, fallbackIndex = 0) {
+    function pickBestAcademicSourceSentence(sentences, kind, fallbackIndex = 0, excluded = new Set()) {
       const list = Array.isArray(sentences) ? sentences.filter(Boolean) : [];
       if (!list.length) return "";
       const rules = kind === "finding"
@@ -301,13 +305,18 @@
       let best = { text: String(list[fallbackIndex] || list[0] || "").trim(), score: -1 };
       list.forEach((sentenceText, index) => {
         const text = String(sentenceText || "").trim();
+        if (excluded.has(text)) return;
         let score = 0;
         rules.forEach(([pattern, weight]) => { if (pattern.test(text)) score += weight; });
         if (kind === "evidence" && /\b\d+\s*(?:prosent|%)\b/i.test(text)) score += 4;
         if (kind === "finding" && index >= Math.floor(list.length * 0.45)) score += 0.75;
         if (score > best.score) best = { text, score };
       });
-      return best.score > 0 ? best.text : String(list[fallbackIndex] || list[0] || "").trim();
+      if (best.score > 0 && !excluded.has(best.text)) return best.text;
+      const fallback = list[fallbackIndex] && !excluded.has(String(list[fallbackIndex]).trim())
+        ? list[fallbackIndex]
+        : list.find((item) => !excluded.has(String(item || "").trim()));
+      return String(fallback || "").trim();
     }
 
     function buildSourceGroundedAcademicPayload(sourceText) {
@@ -315,14 +324,23 @@
       const sentences = toSentences(source).map((item) => String(item || "").trim()).filter(Boolean);
       const keywords = takeKeywords(source, 8);
       const first = sentences[0] || "";
-      const problem = pickAcademicSourceSentence(sentences, [/\b(formål|problemstilling|undersøker|undersøke|spørsmål|hensikt|målet med|denne artikkelen|studien)\b/i], 0);
-      const finding = pickBestAcademicSourceSentence(sentences, "finding", 0);
-      const evidence = pickBestAcademicSourceSentence(sentences, "evidence", 1);
-      const tension = pickAcademicSourceSentence(sentences, [/\b(men|samtidig|imidlertid|derimot|på den ene siden|på den andre siden|utfordring|kritikk|spenning)\b/i], 1);
+      const usedSourceSentences = new Set();
+      const choose = (value) => {
+        const text = String(value || "").trim();
+        if (text) usedSourceSentences.add(text);
+        return text;
+      };
+      const problem = choose(pickAcademicSourceSentence(sentences, [/\b(formål|problemstilling|undersøker|undersøke|spørsmål|hensikt|målet med|denne artikkelen|studien)\b/i], 0, usedSourceSentences));
+      const finding = choose(pickBestAcademicSourceSentence(sentences, "finding", 0, usedSourceSentences));
+      const evidence = choose(pickBestAcademicSourceSentence(sentences, "evidence", 1, usedSourceSentences));
+      const tension = choose(pickAcademicSourceSentence(sentences, [/\b(men|samtidig|imidlertid|derimot|på den ene siden|på den andre siden|utfordring|kritikk|spenning)\b/i], 1, usedSourceSentences));
+      const evidenceLabel = /\b(survey|datainnsamling|intervju|utvalg|metode|empiri|kvalitativ|kvantitativ|respondent|prosent|%)\b/i.test(evidence)
+        ? "Empiri / metode"
+        : "Kildebelegg / utdyping";
       const sortItems = [
         { label: "Problemstilling / formål", text: problem },
         { label: "Hovedfunn / hovedpoeng", text: finding || first },
-        { label: "Empiri / metode", text: evidence },
+        { label: evidenceLabel, text: evidence },
         { label: "Faglig spenning", text: tension }
       ].filter((item) => item.text);
       const insightCards = sortItems.slice(0, 4).map((item, index) => ({
