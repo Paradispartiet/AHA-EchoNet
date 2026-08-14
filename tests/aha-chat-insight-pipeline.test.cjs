@@ -3,7 +3,7 @@ const fs = require("fs");
 const vm = require("vm");
 
 const source = fs.readFileSync("js/ahaChatInsightPipeline.js", "utf8");
-const chatSource = fs.readFileSync("js/ahaChatAnalysisRunContract.js", "utf8") + "\n" + fs.readFileSync("js/ahaChatAcademicInsightView.js", "utf8") + "\n" + fs.readFileSync("js/ahaChatUiRuntime.js", "utf8") + "\n" + fs.readFileSync("js/ahaChat.js", "utf8");
+const chatSource = fs.readFileSync("js/ahaChatAnalysisRunContract.js", "utf8") + "\n" + fs.readFileSync("js/ahaChatAcademicInsightView.js", "utf8") + "\n" + fs.readFileSync("js/ahaChatUiRuntime.js", "utf8") + "\n" + fs.readFileSync("js/ahaChatRuntimeFacade.js", "utf8") + "\n" + fs.readFileSync("js/ahaChat.js", "utf8");
 const chatHtml = fs.readFileSync("chat.html", "utf8");
 const context = { window: null, console };
 context.window = context;

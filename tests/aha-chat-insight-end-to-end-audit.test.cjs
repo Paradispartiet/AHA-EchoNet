@@ -6,7 +6,7 @@ const ingestCode = fs.readFileSync('js/ahaIngest.js', 'utf8');
 const contractsCode = fs.readFileSync('js/ahaContracts.js', 'utf8');
 const snapshotCode = fs.readFileSync('js/ahaConversationInsightSnapshot.js', 'utf8');
 const feedbackCode = fs.readFileSync('js/ahaChatInsightFeedback.js', 'utf8');
-const chatCode = fs.readFileSync('js/ahaChatInsightPipeline.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatAgentRuntime.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatIngestRuntime.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatPersonalUi.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatConversationView.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatAnalysisRunContract.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatAcademicInsightView.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatUiRuntime.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChat.js', 'utf8');
+const chatCode = fs.readFileSync('js/ahaChatInsightPipeline.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatAgentRuntime.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatIngestRuntime.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatPersonalUi.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatConversationView.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatAnalysisRunContract.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatAcademicInsightView.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatUiRuntime.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatRuntimeFacade.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChat.js', 'utf8');
 const chatHtml = fs.readFileSync('chat.html', 'utf8');
 
 // Lock the browser wiring: canonical ingest + contracts must load before Chat,
@@ -24,7 +24,7 @@ assert.ok(scriptOrder.every((index) => index >= 0), 'all Chat insight-chain scri
 for (let i = 1; i < scriptOrder.length; i += 1) {
   assert.ok(scriptOrder[i] > scriptOrder[i - 1], 'Chat insight-chain scripts must preserve canonical load order');
 }
-assert.match(chatCode, /global\.AHAActiveRun\s*=\s*\{/, 'Chat must expose the active analysis run');
+assert.match(chatCode, /global\.AHAActiveRun\s*=\s*\{/, 'Chat runtime facade must expose the active analysis run');
 assert.match(chatCode, /ingestWithCandidates/, 'Chat must route insight candidates through canonical ingest');
 
 class MockHost {

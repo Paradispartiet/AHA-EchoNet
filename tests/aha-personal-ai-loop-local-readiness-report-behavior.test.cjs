@@ -4,7 +4,7 @@ const vm = require("vm");
 
 const AUDIT_FILE = "js/ahaPersonalAiLoopAudit.js";
 const source = fs.readFileSync(AUDIT_FILE, "utf8");
-const RUNTIME_FILES = ["js/ahaPersonalAiLoopAudit.js", "js/ahaTrainingDashboard.js", "js/ahaChatAnalysisRunContract.js", "js/ahaChatAcademicInsightView.js", "js/ahaChatUiRuntime.js", "js/ahaChat.js", "js/metaInsightsAgent.js"];
+const RUNTIME_FILES = ["js/ahaPersonalAiLoopAudit.js", "js/ahaTrainingDashboard.js", "js/ahaChatAnalysisRunContract.js", "js/ahaChatAcademicInsightView.js", "js/ahaChatUiRuntime.js", "js/ahaChatRuntimeFacade.js", "js/ahaChat.js", "js/metaInsightsAgent.js"];
 const REQUIRED_KEYS = [
   "state", "title", "summary", "auditStatus", "blockerCount", "warningCount", "topBlockers", "topWarnings",
   "operatorNextStep", "chatReadinessState", "metaInsightsRecommendationState", "manualReviewRequired", "generatedAt",

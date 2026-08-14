@@ -65,7 +65,7 @@ function load(context) { ["js/metaInsightsMemory.js","js/ahaTrainingCorpus.js","
 
 {
   const chatHtml = fs.readFileSync("chat.html", "utf8");
-  const chatJs = fs.readFileSync("js/ahaChatInsightPipeline.js", "utf8") + "\n" + fs.readFileSync("js/ahaChatAgentRuntime.js", "utf8") + "\n" + fs.readFileSync("js/ahaChatIngestRuntime.js", "utf8") + "\n" + fs.readFileSync("js/ahaChatPersonalUi.js", "utf8") + "\n" + fs.readFileSync("js/ahaChatConversationView.js", "utf8") + "\n" + fs.readFileSync("js/ahaChatAnalysisRunContract.js", "utf8") + "\n" + fs.readFileSync("js/ahaChatAcademicInsightView.js", "utf8") + "\n" + fs.readFileSync("js/ahaChatUiRuntime.js", "utf8") + "\n" + fs.readFileSync("js/ahaChat.js", "utf8");
+  const chatJs = fs.readFileSync("js/ahaChatInsightPipeline.js", "utf8") + "\n" + fs.readFileSync("js/ahaChatAgentRuntime.js", "utf8") + "\n" + fs.readFileSync("js/ahaChatIngestRuntime.js", "utf8") + "\n" + fs.readFileSync("js/ahaChatPersonalUi.js", "utf8") + "\n" + fs.readFileSync("js/ahaChatConversationView.js", "utf8") + "\n" + fs.readFileSync("js/ahaChatAnalysisRunContract.js", "utf8") + "\n" + fs.readFileSync("js/ahaChatAcademicInsightView.js", "utf8") + "\n" + fs.readFileSync("js/ahaChatUiRuntime.js", "utf8") + "\n" + fs.readFileSync("js/ahaChatRuntimeFacade.js", "utf8") + "\n" + fs.readFileSync("js/ahaChat.js", "utf8");
   const training = fs.readFileSync("training.html", "utf8");
   const dashboard = fs.readFileSync("js/ahaTrainingDashboard.js", "utf8");
   assert.ok(chatHtml.includes("js/ahaPersonalAnswerComposer.js"));

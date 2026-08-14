@@ -88,6 +88,7 @@ Eksisterende filer:
 - `js/ahaChatAgentRuntime.js`
 - `js/ahaChatIngestRuntime.js`
 - `js/ahaChatUiRuntime.js`
+- `js/ahaChatRuntimeFacade.js`
 - `js/ahaChatConversationView.js`
 - `aha-chat.css`
 
@@ -131,6 +132,8 @@ Status:
   chatminnestatus
 - lar `chat.canonicalAnalysis` eie normalisering og deduplisering av History Go-
   lenker sammen med den kanoniske analysesyntesen
+- lar `chat.runtimeFacade` eie kompatibilitetsglobaler, konsollkontroller,
+  `AHATestHooks`, aktiv-run-fasaden, offentlig `chat`-registrering og DOM-bootstrap
 - binder eksportens data-, DOM- og analyseavhengigheter én gang gjennom
   `chat.export.createRuntime(...)`; `ahaChat.js` bygger ikke lenger en ny
   eksportbro ved hvert kall

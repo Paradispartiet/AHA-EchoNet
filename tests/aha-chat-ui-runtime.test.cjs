@@ -132,6 +132,9 @@ assert.ok(chatSource.includes('uiRuntimeModule?.create?.('));
 assert.ok(chatSource.includes("AHAChatUiRuntime må lastes før ahaChat.js."));
 assert.doesNotMatch(chatSource, /function (?:consumePendingChatPrompt|bindActionChips|bind|reset)\s*\(/, "UI bootstrap implementation must remain outside ahaChat.js");
 assert.doesNotMatch(chatSource, /function (?:resolveConceptTerm|suggestCategoryChips|refreshAhaExplorer|renderAhaChatMemoryStatus)\s*\(/, "shared shell adapters must remain outside ahaChat.js");
-assert.ok(chatHtml.indexOf("js/ahaChatUiRuntime.js") < chatHtml.indexOf("js/ahaChat.js"));
+const uiRuntimeAt = chatHtml.indexOf("js/ahaChatUiRuntime.js");
+const runtimeFacadeAt = chatHtml.indexOf("js/ahaChatRuntimeFacade.js");
+const chatAt = chatHtml.indexOf("js/ahaChat.js");
+assert.ok(uiRuntimeAt < runtimeFacadeAt && runtimeFacadeAt < chatAt);
 
 console.log("aha-chat-ui-runtime passed");
