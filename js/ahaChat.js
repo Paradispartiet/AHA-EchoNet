@@ -53,6 +53,18 @@
     throw new Error("AHAChatSubjects må eksponere alle fagkoblingsprimitiver.");
   }
 
+  const analysis = chatModule("analysis", "AHAChatAnalysis");
+  const buildOpinionArticleQualityAnalysis = analysis?.buildOpinionArticleQualityAnalysis;
+  if (typeof buildOpinionArticleQualityAnalysis !== "function") {
+    throw new Error("AHAChatAnalysis må eksponere buildOpinionArticleQualityAnalysis.");
+  }
+
+  const replyFormat = chatModule("replyFormat", "AHAChatReplyFormat");
+  const normalizeAhaVisibleReply = replyFormat?.normalizeAhaVisibleReply;
+  if (typeof normalizeAhaVisibleReply !== "function") {
+    throw new Error("AHAChatReplyFormat må eksponere normalizeAhaVisibleReply.");
+  }
+
   const chamberStore = chatModule("chamberStore", "AHAChatChamberStore")?.create?.({
     createEmptyChamber: () => insightsApi().createEmptyChamber()
   });
@@ -465,15 +477,12 @@
     enforceCanonicalSourceGrounding,
     getActiveAnalysisRun,
     artifactMatchesActiveRun,
-    analysisTopicMismatch,
+    analysisTopicMismatch: runContext.analysisTopicMismatch,
     renderAnalysisDebugPanel,
     setExportButtonsEnabled,
-    safeMarkupSortItems,
-    safeMarkupList,
-    safeMarkupText,
+    escHtml,
+    cleanArticleText,
     detectTextType,
-    buildHistoryGoSuggestion,
-    filterCrossDomainAutoPayload,
     saveAutoOutputAsAfterwork,
     setStatusNote,
     refreshAhaExplorer,
@@ -487,13 +496,15 @@
     parseLabeledInsightCards,
     updateAnalysisRun,
     getSongLyricChildCultureSubjectMatches,
-    getLiterarySubjectMatches
+    getLiterarySubjectMatches,
+    getLiteraryAttachmentLearningPath
   });
   if (!autoOutputView) throw new Error("AHAChatAutoOutputView må lastes før ahaChat.js.");
 
   const humanizeTextType = autoOutputView.humanizeTextType;
   const buildAhaSerCard = autoOutputView.buildAhaSerCard;
   const renderAutoOutputPayload = autoOutputView.renderAutoOutputPayload;
+  const filterCrossDomainAutoPayload = autoOutputView.filterCrossDomainAutoPayload;
 
   const canonicalAnalysis = chatModule("canonicalAnalysis", "AHAChatCanonicalAnalysis")?.create?.({
     buildAhaSerCard,
@@ -580,7 +591,7 @@
   const focusAutoCard = autoOutputRuntime.focusAutoCard;
   const restoreAutoOutputFromStorage = autoOutputRuntime.restoreAutoOutputFromStorage;
 
-  const replySubjectPolicy = chatModule("replyFormat", "AHAChatReplyFormat")?.createSubjectPolicy?.({
+  const replySubjectPolicy = replyFormat?.createSubjectPolicy?.({
     detectAutoAnalysisDomain,
     getLiterarySubjectMatches,
     getInstitutionalMediaHistorySubjectMatches
@@ -677,11 +688,6 @@
   if (!submissionRuntime) throw new Error("AHAChatSubmissionRuntime må lastes før ahaChat.js.");
   const submitAhaChatMessage = submissionRuntime.submitAhaChatMessage;
 
-  function analysisTopicMismatch(payload, run = getActiveAnalysisRun()) {
-    const sourceText = String(document.getElementById("aha-auto-output")?.dataset?.sourceText || "");
-    return runContext.analysisTopicMismatch(payload, run, sourceText);
-  }
-
   function getThemeId() {
     const input = document.getElementById("theme-id");
     const value = input && String(input.value || "").trim();
@@ -732,19 +738,6 @@
   function renderPanel(html) {
     const panel = document.getElementById("panel");
     if (panel) panel.innerHTML = html;
-  }
-
-  function safeMarkupText(value) {
-    return escHtml(cleanArticleText(String(value || "")).replace(/\s+/g, " ").trim());
-  }
-  function safeMarkupList(values) {
-    return (Array.isArray(values) ? values : []).map((item) => safeMarkupText(item));
-  }
-  function safeMarkupSortItems(items) {
-    return (Array.isArray(items) ? items : []).map((item) => ({
-      label: safeMarkupText(item?.label),
-      text: safeMarkupText(item?.text)
-    }));
   }
 
   function normalizeDisplayText(value) {
@@ -841,67 +834,6 @@
     }, 150);
   }
   global.refreshAhaExplorer = refreshAhaExplorer;
-  // Analyse-hjelpere ligger i ahaChatAnalysis.js; her beholdes tynne delegerende wrappere.
-  function buildOpinionArticleQualityAnalysis(raw, evidence, sentences) {
-    return chatModule("analysis", "AHAChatAnalysis").buildOpinionArticleQualityAnalysis(raw, evidence, sentences);
-  }
-
-  function buildHistoryGoSuggestion(payload, sourceText) {
-    const source = String(sourceText || "");
-    const text = `${source} ${(Array.isArray(payload?.insightCards) ? payload.insightCards.join(" ") : "")}`.toLowerCase();
-    const navSignal = detectPublicAdministrationReformSignal(source || text);
-    const literarySignal = detectLiteraryAttachmentSignal(source || text);
-    if (navSignal?.strong) {
-      return `<article class="auto-card" data-auto-card="historygo">
-        <h4>History Go-kobling funnet</h4>
-        <p><strong>Tema:</strong> Offentlig forvaltning</p>
-        <p><strong>Mulig History Go-kategori:</strong> politikk — Politikk & samfunn</p>
-        <p><strong>Kan brukes til:</strong> quizspørsmål · leksikonoppføring · læringssti · begrepskort · fagkobling</p>
-      </article>`;
-    }
-    if (literarySignal?.strong) {
-      return `<article class="auto-card" data-auto-card="historygo">
-        <h4>History Go-kobling funnet</h4>
-        <p><strong>Tema:</strong> Litteratur og psykologi</p>
-        <p><strong>Mulig History Go-kategori:</strong> litteratur — Litteratur</p>
-        <p><strong>Kan brukes til:</strong> forfatterkort · verk-leksikon · begrepskort · litteraturquiz · fagkobling mellom psykologi og litteratur</p>
-      </article>`;
-    }
-    return "";
-  }
-
-  function filterCrossDomainAutoPayload(payload, sourceText) {
-    const safe = payload && typeof payload === "object" ? payload : {};
-    const src = String(sourceText || "").toLowerCase();
-    const domain = detectAutoAnalysisDomain(src, safe);
-    if (domain !== "literary_attachment") return safe;
-    const blocked = /(sahel|mali|klima som konfliktforklaring|klimaforklaring|knapphetsskolen|ressursknapphet|miljøsikkerhet|politisk økologi|environmental security|climate conflict|makt- og produksjonsforhold)/i;
-    const filterArray = (arr) => (Array.isArray(arr) ? arr.filter((item) => !blocked.test(typeof item === "string" ? item : `${item?.label || ""} ${item?.text || ""} ${item?.title || ""} ${item?.summary || ""}`)) : []);
-    return {
-      ...safe,
-      reflection: blocked.test(String(safe.reflection || "")) ? "" : String(safe.reflection || ""),
-      sortItems: filterArray(safe.sortItems),
-      list: filterArray(safe.list),
-      insightCards: filterArray(safe.insightCards),
-      path: getLiteraryAttachmentLearningPath(),
-      keywords: filterArray(safe.keywords),
-      subjectMatches: getLiterarySubjectMatches(),
-      subjectLinks: getLiterarySubjectMatches(),
-      theoryLinks: filterArray(safe.theoryLinks),
-      thoughts: {
-        hovedspor: blocked.test(String(safe?.thoughts?.hovedspor || "")) ? "" : String(safe?.thoughts?.hovedspor || ""),
-        lose_tanker: blocked.test(String(safe?.thoughts?.lose_tanker || "")) ? "" : String(safe?.thoughts?.lose_tanker || ""),
-        neste_steg: blocked.test(String(safe?.thoughts?.neste_steg || "")) ? "" : String(safe?.thoughts?.neste_steg || "")
-      }
-    };
-  }
-
-  // AHA Chat viser ett relevant hovedsvar med passende lengde. Tekstnormaliseringen
-  // ligger i ahaChatReplyFormat.js; her beholdes en tynn delegerende wrapper.
-  function normalizeAhaVisibleReply(rawReply, userText) {
-    return chatModule("replyFormat", "AHAChatReplyFormat").normalizeAhaVisibleReply(rawReply, userText);
-  }
-
   function renderAhaChatMemoryStatus() {
     const host = document.getElementById("aha-chat-memory-status");
     if (!host) return null;
