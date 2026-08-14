@@ -13,6 +13,7 @@
     "test:analysis-quality": "node tests/aha-production-analysis-quality-matrix.test.cjs",
     "test:longitudinal-robustness": "node tests/aha-longitudinal-user-robustness.test.cjs",
     "test:release-candidate": "node tests/aha-release-candidate-audit.test.cjs",
+    "test:launch-gate": "node scripts/run-launch-gate-v1.mjs",
     "test:golden-chat-output": "node tests/aha-chat-golden-output-regression.test.cjs",
     "build:music-historygo-bridge": "node scripts/build-music-history-go-bridge.cjs",
     "validate:aha-fixtures": "node scripts/validate-aha-analysis-fixtures.mjs",
