@@ -8,8 +8,14 @@
   const CHAMBER_KEY = "aha_insight_chamber_v1";
   const RESPONSE_IMPORTANT = "important";
   const RESPONSE_NOT_INSIGHT = "not_insight";
+  const RESPONSE_USEFUL = "useful";
+  const RESPONSE_TOO_GENERIC = "too_generic";
+  const RESPONSE_MISINTERPRETED = "misinterpreted";
+  const RESPONSE_MISSING_EVIDENCE = "missing_evidence";
   const RESPONSE_UNDO = "undo";
-  const FEEDBACK_VALUES = new Set([RESPONSE_IMPORTANT, RESPONSE_NOT_INSIGHT, RESPONSE_UNDO]);
+  const ACTIVE_ANALYSIS_FEEDBACK_VALUES = new Set([RESPONSE_USEFUL, RESPONSE_TOO_GENERIC, RESPONSE_MISINTERPRETED, RESPONSE_MISSING_EVIDENCE, RESPONSE_UNDO]);
+  const FEEDBACK_VALUES = new Set([RESPONSE_IMPORTANT, RESPONSE_NOT_INSIGHT, ...ACTIVE_ANALYSIS_FEEDBACK_VALUES]);
+  const AUTO_OUTPUT_KEY = "aha_chat_auto_outputs_v1";
   const text = (value) => String(value == null ? "" : value).replace(/\s+/g, " ").trim();
   const arr = (value) => Array.isArray(value) ? value : [];
   const obj = (value) => value && typeof value === "object" && !Array.isArray(value) ? value : {};
@@ -62,6 +68,7 @@
       status: insight?.status ?? null,
       user_priority: insight?.user_priority ?? null,
       user_quality_status: insight?.user_quality_status ?? null,
+      user_quality_reason: insight?.user_quality_reason ?? null,
       user_quality_updated_at: insight?.user_quality_updated_at ?? null,
       rejected_at: insight?.rejected_at ?? null,
       rejection_reason: insight?.rejection_reason ?? null
@@ -69,7 +76,7 @@
   }
 
   function restoreSnapshot(insight, before) {
-    const fields = ["status", "user_priority", "user_quality_status", "user_quality_updated_at", "rejected_at", "rejection_reason"];
+    const fields = ["status", "user_priority", "user_quality_status", "user_quality_reason", "user_quality_updated_at", "rejected_at", "rejection_reason"];
     fields.forEach((field) => {
       if (before && before[field] !== null && before[field] !== undefined) insight[field] = before[field];
       else delete insight[field];
@@ -107,6 +114,8 @@
     if (normalized === RESPONSE_NOT_INSIGHT && String(insight.status || "").toLowerCase() === "rejected" && insight.rejection_reason === "user_not_insight") {
       return { ok: true, response: normalized, insight, chamber, noChange: true };
     }
+    const latestActive = history.slice().reverse().find((item) => item && !item.undone_at && item.response !== RESPONSE_UNDO);
+    if (latestActive?.response === normalized) return { ok: true, response: normalized, insight, chamber, noChange: true };
 
     const before = snapshotUserQuality(insight);
     history.push({ response: normalized, created_at: now, source: VERSION, before });
@@ -121,10 +130,64 @@
       insight.user_quality_status = "rejected";
       insight.user_quality_updated_at = now;
       delete insight.user_priority;
+    } else if (normalized === RESPONSE_USEFUL) {
+      insight.user_quality_status = "useful";
+      delete insight.user_quality_reason;
+      insight.user_quality_updated_at = now;
+    } else {
+      insight.user_quality_status = "needs_review";
+      insight.user_quality_reason = normalized;
+      insight.user_quality_updated_at = now;
     }
     insight.last_updated = now;
     if (options.save !== false) writeChamber(chamber);
     return { ok: true, response: normalized, insight, chamber };
+  }
+
+  function applyActiveAnalysisFeedback(response, options = {}) {
+    const normalized = text(response).toLowerCase();
+    if (!ACTIVE_ANALYSIS_FEEDBACK_VALUES.has(normalized)) return { ok: false, reason: "invalid_response" };
+    const storage = options.storage || global.localStorage;
+    let cache;
+    try {
+      const raw = storage?.getItem?.(AUTO_OUTPUT_KEY);
+      cache = raw ? JSON.parse(raw) : null;
+    } catch {
+      return { ok: false, reason: "read_failed" };
+    }
+    if (!cache || typeof cache !== "object") return { ok: false, reason: "analysis_not_found" };
+    if (!cache.payload || typeof cache.payload !== "object") cache = { payload: cache };
+    const payload = cache.payload;
+    if (!payload.analysisQuality || typeof payload.analysisQuality !== "object") payload.analysisQuality = {};
+    if (!Array.isArray(payload.analysisQuality.userFeedback)) payload.analysisQuality.userFeedback = [];
+    const history = payload.analysisQuality.userFeedback;
+    const now = options.now || new Date().toISOString();
+    if (normalized === RESPONSE_UNDO) {
+      const previous = history.slice().reverse().find((item) => item && item.response !== RESPONSE_UNDO && !item.undone_at);
+      if (!previous) return { ok: false, reason: "nothing_to_undo", cache };
+      previous.undone_at = now;
+      history.push({ response: RESPONSE_UNDO, created_at: now, target_created_at: previous.created_at || null, source: VERSION });
+      const prior = history.slice(0, -1).reverse().find((item) => item && item.response !== RESPONSE_UNDO && !item.undone_at);
+      payload.analysisQuality.latestUserFeedback = prior?.response || "";
+    } else {
+      const latest = history.slice().reverse().find((item) => item && item.response !== RESPONSE_UNDO && !item.undone_at);
+      if (latest?.response === normalized) return { ok: true, response: normalized, cache, noChange: true };
+      history.push({
+        response: normalized,
+        created_at: now,
+        source: VERSION,
+        analysis_source_hash: text(cache.sourceHash || cache.sourceTextHash || payload?.canonicalAnalysis?.sourceHash) || null
+      });
+      payload.analysisQuality.latestUserFeedback = normalized;
+    }
+    if (options.save !== false) {
+      try {
+        storage?.setItem?.(AUTO_OUTPUT_KEY, JSON.stringify(cache));
+      } catch {
+        return { ok: false, reason: "write_failed", cache };
+      }
+    }
+    return { ok: true, response: normalized, cache, restored: normalized === RESPONSE_UNDO };
   }
 
   function activeInsight(insight) {
@@ -193,6 +256,10 @@
     return `<div class="aha-insight-quality-actions" aria-label="Vurder innsikten">
       <button type="button" data-insight-quality="important"${important ? " disabled" : ""}>${important ? "Viktig ✓" : "Viktig"}</button>
       <button type="button" data-insight-quality="not_insight"${rejected ? " disabled" : ""}>${rejected ? "Ikke en innsikt ✓" : "Dette var ikke en innsikt"}</button>
+      <button type="button" data-insight-quality="useful">Nyttig</button>
+      <button type="button" data-insight-quality="too_generic">For generelt</button>
+      <button type="button" data-insight-quality="misinterpreted">Feil tolket</button>
+      <button type="button" data-insight-quality="missing_evidence">Mangler belegg</button>
       <button type="button" data-insight-quality="undo">Angre</button>
       <span class="aha-insight-quality-status" aria-live="polite"></span>
     </div>`;
@@ -206,7 +273,15 @@
         const result = applyFeedback(insight, button.dataset.insightQuality);
         const status = host.querySelector?.(".aha-insight-quality-status");
         if (status) status.textContent = result.ok
-          ? (result.response === RESPONSE_IMPORTANT ? "Markert som viktig." : result.response === RESPONSE_NOT_INSIGHT ? "Fjernet fra aktive innsikter." : "Siste vurdering er angret.")
+          ? ({
+            [RESPONSE_IMPORTANT]: "Markert som viktig.",
+            [RESPONSE_NOT_INSIGHT]: "Fjernet fra aktive innsikter.",
+            [RESPONSE_USEFUL]: "Markert som nyttig.",
+            [RESPONSE_TOO_GENERIC]: "Markert som for generell.",
+            [RESPONSE_MISINTERPRETED]: "Markert som feiltolket.",
+            [RESPONSE_MISSING_EVIDENCE]: "Markert som manglende belegg.",
+            [RESPONSE_UNDO]: "Siste vurdering er angret."
+          }[result.response] || "Vurderingen ble lagret.")
           : (result.reason === "nothing_to_undo" ? "Ingenting å angre." : "Kunne ikke lagre vurderingen.");
         if (result.ok && !result.noChange) {
           global.AHAInsights?.refresh?.();
@@ -318,6 +393,7 @@
     readChamber,
     writeChamber,
     applyFeedback,
+    applyActiveAnalysisFeedback,
     activeInsight,
     similarity,
     weakHeuristic,
