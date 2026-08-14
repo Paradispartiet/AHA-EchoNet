@@ -62,6 +62,12 @@ adapters out of `ahaChat.js`.
 with canonical synthesis. This keeps alias handling, stable IDs and duplicate
 suppression on the same side of the canonical-analysis boundary.
 
+`chat.runtimeFacade.create(...)` installs the browser compatibility aliases,
+memory/debug consoles, active-run facade, test hooks, public `chat` API and the
+DOMContentLoaded bootstrap from one declared binding table. Export whitelists
+live in the module, so `ahaChat.js` no longer duplicates or directly installs
+the public runtime surface.
+
 ## Candidate-ingest extension point
 
 Code outside `ahaIngest.js` must not replace `ingestWithCandidates`. Candidate processing is extended through:

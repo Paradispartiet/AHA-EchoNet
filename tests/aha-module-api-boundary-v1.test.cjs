@@ -149,7 +149,8 @@ const chatModules = [
   ['chat.autoOutputView', 'AHAChatAutoOutputView', 'js/ahaChatAutoOutputView.js'],
   ['chat.analysisStateView', 'AHAChatAnalysisStateView', 'js/ahaChatAnalysisStateView.js'],
   ['chat.canonicalAnalysis', 'AHAChatCanonicalAnalysis', 'js/ahaChatCanonicalAnalysis.js'],
-  ['chat.uiRuntime', 'AHAChatUiRuntime', 'js/ahaChatUiRuntime.js']
+  ['chat.uiRuntime', 'AHAChatUiRuntime', 'js/ahaChatUiRuntime.js'],
+  ['chat.runtimeFacade', 'AHAChatRuntimeFacade', 'js/ahaChatRuntimeFacade.js']
 ];
 for (const [moduleName, legacyGlobal, file] of chatModules) {
   vm.runInContext(fs.readFileSync(file, 'utf8'), context, { filename: file });
@@ -180,6 +181,8 @@ const exportModule = context.AHAModuleApi.get('chat.export', { version: 1 });
 assert.equal(typeof exportModule.createRuntime, 'function');
 const uiRuntime = context.AHAModuleApi.get('chat.uiRuntime', { version: 1 });
 assert.equal(typeof uiRuntime.createShell, 'function');
+const runtimeFacade = context.AHAModuleApi.get('chat.runtimeFacade', { version: 1 });
+assert.equal(typeof runtimeFacade.create, 'function');
 
 const chatSource = fs.readFileSync('js/ahaChat.js', 'utf8');
 assert.match(chatSource, /function chatModule\(/, 'Chat must resolve extracted modules through the boundary');

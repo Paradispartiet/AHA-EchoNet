@@ -106,7 +106,6 @@
     refreshAhaExplorer,
     renderChatMemoryStatus: renderAhaChatMemoryStatus
   } = shellRuntime;
-  global.refreshAhaExplorer = refreshAhaExplorer;
 
   const analysisPolicy = chatModule("analysisPolicy", "AHAChatAnalysisPolicy")?.create?.({
     signals,
@@ -230,7 +229,6 @@
   const buildAfterworkPrompt = afterwork.buildAfterworkPrompt;
   const buildFromAfterworkEntry = afterwork.buildFromAfterworkEntry;
   const deleteAfterworkEntry = afterwork.deleteAfterworkEntry;
-  global.showSavedAfterwork = showSavedAfterwork;
 
   const memoryRuntime = chatModule("memoryRuntime", "AHAChatMemoryRuntime")?.create?.({
     loadChamber: loadChamberFromStorage,
@@ -743,7 +741,6 @@
   });
   if (!knowledgeView) throw new Error("AHAChatKnowledgeView må lastes før ahaChat.js.");
   const { showStatus, showConcepts, showMeta, showKnowledgeMap } = knowledgeView;
-  global.showMeta = showMeta;
 
   const uiRuntime = uiRuntimeModule?.create?.({
     pendingPromptKey: PENDING_CHAT_PROMPT_KEY,
@@ -778,101 +775,32 @@
   if (!uiRuntime) throw new Error("AHAChatUiRuntime må lastes før ahaChat.js.");
   const bind = uiRuntime.bind;
 
-  global.AHAMemoryControls = {
-    get() { return loadAhaMemoryControls(); },
-    set(key, value) { return setAhaMemoryControl(key, value); },
-    enableSaving() { return setAhaMemoryControl("saveNewInsights", true); },
-    disableSaving() { return setAhaMemoryControl("saveNewInsights", false); },
-    enableMemoryUse() { return setAhaMemoryControl("useExistingMemory", true); },
-    disableMemoryUse() { return setAhaMemoryControl("useExistingMemory", false); },
-    reset() { return resetAhaMemoryControls(); }
-  };
-
-  global.AHAMemoryDebug = {
-    enable() { global.localStorage?.setItem("aha_memory_debug", "true"); },
-    disable() { global.localStorage?.removeItem("aha_memory_debug"); },
-    isEnabled() { return isAhaMemoryDebugEnabled(); }
-  };
-
-  global.AHAMemoryExclusions = {
-    get() { return loadAhaMemoryExclusions(); },
-    exclude(insightOrId, reason) { return excludeAhaMemoryInsight(insightOrId, reason); },
-    include(insightOrId) { return includeAhaMemoryInsight(insightOrId); },
-    reset() { return resetAhaMemoryExclusions(); },
-    items() { return getAhaExcludedMemoryItems(); },
-    isExcluded(insightOrId) { return isAhaMemoryInsightExcluded(insightOrId); }
-  };
-
-  global.loadChamberFromStorage = global.loadChamberFromStorage || loadChamberFromStorage;
-  global.saveChamberToStorage = global.saveChamberToStorage || saveChamberToStorage;
-  global.AHATestHooks = Object.assign({}, global.AHATestHooks || {}, { detectTextType, buildCanonicalAnalysis, buildAhaAnalysisExportBundle, formatAhaAnalysisExportMarkdown, buildAutoOutputs, renderAutoOutputs, detectAutoAnalysisDomain, buildAcademicConceptCandidates, buildSourceGroundedAcademicPayload, applyRuntimeKnowledgePolicy, isTransientAnalysisDocument, AHA_RUNTIME_KNOWLEDGE_POLICY, normalizeFagkoblinger, resolveCanonicalAnalysisWithOptionalPythonEngine, isAhaMemoryQuestion, buildAhaLearningContractReply, buildAhaMemoryStatus, shouldUseAhaMemory, buildAhaMemoryContext, buildAhaMemoryOffContext, loadAhaMemoryControls, saveAhaMemoryControls, setAhaMemoryControl, isAhaSavingEnabled, isAhaMemoryUseEnabled, loadAhaMemoryExclusions, saveAhaMemoryExclusions, getAhaMemoryInsightStableKey, getAhaMemoryInsightKey, isAhaMemoryInsightExcluded, excludeAhaMemoryInsight, includeAhaMemoryInsight, resetAhaMemoryExclusions, getAhaExcludedMemoryItems, renderAhaMemoryControls, bindAhaMemoryControls, submitAhaChatMessage, findRelevantLocalMemory, formatAhaMemoryContextForAgent, isAhaMemoryDebugEnabled, buildAhaMemoryTransparency, formatAhaMemoryTransparencyDetails, renderAhaMemoryTransparency, appendChat, updateAnswerActionsVisibility, getActiveMetaAiSession, startMetaAiSession, renderMetaAiSessionBox, renderMetaAiClaims, maybeHandleMetaAiAgentReply, saveMetaAiClaimFeedback, buildAhaPersonalAiLoopChatReadinessStatus, renderAhaPersonalAiLoopStatus, buildAhaAnswerPackage, renderAhaAnswerComposer, createAnalysisRun, updateAnalysisRun, bindAnalysisArtifact, artifactMatchesActiveRun, clearActiveAnalysisState, renderAutoOutputPayload, enforceCanonicalSourceGrounding, filterRetrievalForActiveSource, scoreRetrievalAgainstSource, filterMemoryContextForActiveSource, isActiveAnalysisRun });
-
-  global.AHAActiveRun = {
-    get() { return getActiveAnalysisRun(); },
-    isActive(run) { return isActiveAnalysisRun(run); },
-    matches(artifact) { return artifactMatchesActiveRun(artifact, getActiveAnalysisRun()); },
-    bind(artifact) { return bindAnalysisArtifact(artifact, getActiveAnalysisRun()); }
-  };
-
-  const chatApi = {
-    loadChamberFromStorage,
-    saveChamberToStorage,
-    handleUserMessage,
-    askAhaAgent,
-    buildAIState,
-    isAhaMemoryQuestion,
-    buildAhaLearningContractReply,
-    buildAhaMemoryStatus,
-    shouldUseAhaMemory,
-    buildAhaMemoryContext,
-    buildAhaMemoryOffContext,
-    loadAhaMemoryControls,
-    saveAhaMemoryControls,
-    setAhaMemoryControl,
-    isAhaSavingEnabled,
-    isAhaMemoryUseEnabled,
-    loadAhaMemoryExclusions,
-    saveAhaMemoryExclusions,
-    getAhaMemoryInsightStableKey,
-    getAhaMemoryInsightKey,
-    isAhaMemoryInsightExcluded,
-    excludeAhaMemoryInsight,
-    includeAhaMemoryInsight,
-    resetAhaMemoryExclusions,
-    getAhaExcludedMemoryItems,
-    renderAhaMemoryControls,
-    bindAhaMemoryControls,
-    submitAhaChatMessage,
-    findRelevantLocalMemory,
-    formatAhaMemoryContextForAgent,
-    isAhaMemoryDebugEnabled,
-    buildAhaMemoryTransparency,
-    formatAhaMemoryTransparencyDetails,
-    renderAhaMemoryTransparency,
-    appendChat,
-    updateAhaMemoryStatus,
-    buildAhaPersonalAiLoopChatReadinessStatus,
-    renderAhaPersonalAiLoopStatus,
-    buildAhaAnswerPackage,
-    renderAhaAnswerComposer,
-    createAnalysisRun,
-    updateAnalysisRun,
-    bindAnalysisArtifact,
-    artifactMatchesActiveRun,
-    clearActiveAnalysisState,
-    renderAutoOutputPayload,
-    filterRetrievalForActiveSource,
-    scoreRetrievalAgainstSource,
-    filterMemoryContextForActiveSource,
-    isActiveAnalysisRun
-  };
-  global.AHAChat = chatApi;
-  global.AHAModuleApi?.register?.("chat", chatApi, {
-    version: 1,
-    legacyGlobal: "AHAChat",
-    exports: Object.keys(chatApi)
+  const runtimeFacade = chatModule("runtimeFacade", "AHAChatRuntimeFacade")?.create?.({
+    bindings: {
+      refreshAhaExplorer, showSavedAfterwork, showMeta, bind,
+      loadChamberFromStorage, saveChamberToStorage, handleUserMessage, askAhaAgent, buildAIState,
+      detectTextType, buildCanonicalAnalysis, buildAhaAnalysisExportBundle, formatAhaAnalysisExportMarkdown,
+      buildAutoOutputs, renderAutoOutputs, detectAutoAnalysisDomain, buildAcademicConceptCandidates,
+      buildSourceGroundedAcademicPayload, applyRuntimeKnowledgePolicy, isTransientAnalysisDocument,
+      AHA_RUNTIME_KNOWLEDGE_POLICY, normalizeFagkoblinger, resolveCanonicalAnalysisWithOptionalPythonEngine,
+      isAhaMemoryQuestion, buildAhaLearningContractReply, buildAhaMemoryStatus, shouldUseAhaMemory,
+      buildAhaMemoryContext, buildAhaMemoryOffContext, loadAhaMemoryControls, saveAhaMemoryControls,
+      setAhaMemoryControl, resetAhaMemoryControls, isAhaSavingEnabled, isAhaMemoryUseEnabled,
+      loadAhaMemoryExclusions, saveAhaMemoryExclusions, getAhaMemoryInsightStableKey,
+      getAhaMemoryInsightKey, isAhaMemoryInsightExcluded, excludeAhaMemoryInsight,
+      includeAhaMemoryInsight, resetAhaMemoryExclusions, getAhaExcludedMemoryItems,
+      renderAhaMemoryControls, bindAhaMemoryControls, submitAhaChatMessage, findRelevantLocalMemory,
+      formatAhaMemoryContextForAgent, isAhaMemoryDebugEnabled, buildAhaMemoryTransparency,
+      formatAhaMemoryTransparencyDetails, renderAhaMemoryTransparency, appendChat,
+      updateAnswerActionsVisibility, updateAhaMemoryStatus, getActiveMetaAiSession, startMetaAiSession,
+      renderMetaAiSessionBox, renderMetaAiClaims, maybeHandleMetaAiAgentReply, saveMetaAiClaimFeedback,
+      buildAhaPersonalAiLoopChatReadinessStatus, renderAhaPersonalAiLoopStatus, buildAhaAnswerPackage,
+      renderAhaAnswerComposer, createAnalysisRun, updateAnalysisRun, getActiveAnalysisRun,
+      bindAnalysisArtifact, artifactMatchesActiveRun, clearActiveAnalysisState, renderAutoOutputPayload,
+      enforceCanonicalSourceGrounding, filterRetrievalForActiveSource, scoreRetrievalAgainstSource,
+      filterMemoryContextForActiveSource, isActiveAnalysisRun
+    }
   });
-
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bind);
-  else bind();
+  if (!runtimeFacade) throw new Error("AHAChatRuntimeFacade må lastes før ahaChat.js.");
+  runtimeFacade.install();
 })(window);
