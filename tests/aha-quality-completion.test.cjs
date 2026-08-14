@@ -33,7 +33,8 @@ const profileSource = fs.readFileSync("js/ahaAnalysisQualityProfile.js", "utf8")
 assert.match(profileSource, /ahaQualityCompletion\.js/);
 assert.match(profileSource, /loadQualityCompletion/);
 const serviceWorker = fs.readFileSync("sw.js", "utf8");
-assert.match(serviceWorker, /aha-chat-v4\.0\.422/);
+assert.match(serviceWorker, /aha-chat-v4\.0\.423/);
 assert.match(serviceWorker, /js\/ahaQualityCompletion\.js/);
+assert.match(serviceWorker, /js\/ahaAdaptiveArtifacts\.js/);
 
 console.log("aha-quality-completion.test.cjs passed");
