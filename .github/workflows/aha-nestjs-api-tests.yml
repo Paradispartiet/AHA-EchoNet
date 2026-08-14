@@ -33,8 +33,6 @@ jobs:
         uses: actions/setup-node@v5
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: backend/api/package-lock.json
 
       - name: Generate initial lockfile when absent
         run: |
