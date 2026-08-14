@@ -1,6 +1,6 @@
 # AHA Database
 
-AHA-EchoNet har et eksisterende, valgfritt Supabase/PostgreSQL-lag og et nytt canonical schema-grunnlag. De må ikke forveksles.
+AHA-EchoNet har et eksisterende, valgfritt Supabase/PostgreSQL-lag og et nytt canonical schema- og policygrunnlag. De må ikke forveksles.
 
 ## Statusoversikt
 
@@ -9,7 +9,8 @@ AHA-EchoNet har et eksisterende, valgfritt Supabase/PostgreSQL-lag og et nytt ca
 | `public.aha_*` / `public.music_*` | Eksisterende Supabase-MVP | Valgfritt aktivt per modul |
 | `public.aha_insight_chambers` | Legacy chamber-sync som JSONB | Valgfritt aktivt |
 | `public.aha_insight_embeddings` | Første pgvector-lag | Valgfritt aktivt |
-| `aha.*` | Canonical PostgreSQL Schema v1 | **Ikke aktivert** |
+| `aha.*` schema | Canonical PostgreSQL Schema v1 | **Ikke aktivert** |
+| `aha.*` RLS/consent | 36 read-policyer + exact consent triggers | **Ikke aktivert; ingen grants** |
 
 Backendretningen er dokumentert i:
 
@@ -18,9 +19,11 @@ docs/AHA_BACKEND_FOUNDATION_ROADMAP_V1.md
 docs/adr/README.md
 docs/AHA_CANONICAL_POSTGRESQL_SCHEMA_V1.md
 docs/AHA_LOCAL_TO_CANONICAL_MAPPING_V1.md
+docs/AHA_TENANCY_RLS_CONSENT_V1.md
+docs/AHA_TENANCY_RLS_CONSENT_MATRIX_V1.json
 ```
 
-Runtime-kode og grønne kontraktstester beskriver hva som faktisk kjører. Canonical schema og ADR-er beskriver neste migreringsgrunnlag; de aktiverer ikke cloudlagring eller EchoNet alene.
+Runtime-kode og grønne kontraktstester beskriver hva som faktisk kjører. Canonical schema, policyer og ADR-er beskriver migreringsgrunnlaget; de aktiverer ikke cloudlagring eller EchoNet alene.
 
 ## Dagens databasekode
 
@@ -58,6 +61,9 @@ supabase/chamber.sql
 
 supabase/embeddings.sql
 = public.aha_insight_embeddings + pgvector
+
+supabase/migrations/*.sql
+= det nye, ikke-aktiverte canonical aha.*-schemaet og policygrunnlaget
 ```
 
 Frontend leser:
@@ -84,10 +90,10 @@ Dette er ikke den endelige fler-enhetskontrakten. Dagens modell mangler blant an
 
 - generell IndexedDB-outbox
 - per-device cursor
-- objektvise revisjoner
+- objektvise revisjoner i aktiv runtime
 - robust konfliktløsing
 - eksplisitt førstegangsimport med preview
-- arbeidsrom og medlemskap
+- reelle arbeidsrom og medlemskap i runtime
 - objektspecifikk deling og tilbaketrekking
 
 ## Canonical PostgreSQL Schema v1
@@ -156,22 +162,72 @@ aha.ai_jobs
 - Lokale tekst-ID-er kan bevares ved import; nye server-ID-er kan være UUID-as-text.
 - Redigerbare objekter har monoton `revision` og tombstones der sync krever det.
 - Innsikter og artikler har egne versjonstabeller og deferrable current-version-referanser.
-- Sharing grants og offentlig publisering krever samtykkespor.
 - Import har batch- og per-item-kvittering med idempotensgrunnlag.
 - Outbox og AI-jobs er varige domeneobjekter, ikke bare prosessminne.
 
-## Fail-closed RLS
+## Tenancy, RLS og samtykke v1
 
-Schema v1 aktiverer Row Level Security på domenetabellene, men oppretter ingen brukerpolicyer eller frontendgrants.
-
-Dette er med vilje:
+Den sjuende migrasjonen etablerer kontrakten for tenantisolasjon og samtykke:
 
 ```text
-PR 2 = datamodell
-PR 3 = tenancy-, RLS- og samtykkekontrakt
+supabase/migrations/20260814220000_aha_tenancy_rls_consent_v1.sql
 ```
 
-Ingen browserruntime skal få tilgang til `aha.*` før PR 3 og tilhørende cross-tenant-tester er merget. Sensitive writes skal også senere gå gjennom NestJS, ikke gjennom en alternativ direkte databasevei.
+### Identitet
+
+Verifisert JWT-subjekt og provider kobles til:
+
+```text
+aha.profiles.auth_subject
+aha.profiles.auth_provider
+```
+
+Brukerredigerbar metadata brukes ikke som rolle- eller tilgangskilde. Arbeidsromroller leses fra canonical medlemskap for hvert request.
+
+### Policyer
+
+Kontrakten oppretter:
+
+- 36 eksplisitte `FOR SELECT`-policyer
+- null direkte `INSERT`-, `UPDATE`-, `DELETE`- eller `ALL`-policyer
+- ingen table grants
+- ingen function grants
+- tilbakekalt standard-`EXECUTE` fra `PUBLIC` på policy helpers
+
+Policyene er derfor fail-closed og fremdeles inaktive for klientroller.
+
+Tre tabeller har ingen direkte SELECT-policy:
+
+```text
+aha.audit_events
+aha.idempotency_keys
+aha.outbox_events
+```
+
+De skal senere eksponeres gjennom avgrensede backendflater, ikke rå databasequeries.
+
+### Samtykkeporter
+
+Database-trigger validerer eksakt samtykke for:
+
+```text
+account_import
+workspace_share
+public_publish
+```
+
+Scope er objekt-/payloadspesifikt. En generell toggle, innlogging eller gammel privacy setting teller ikke som receipt.
+
+### Runtime-rolle
+
+En senere backend må bruke en dedikert runtime-rolle som:
+
+- ikke eier tabellene
+- ikke har `BYPASSRLS`
+- ikke er migration-/service-owner
+- bare har nødvendige schema/table/function-rettigheter
+
+PostgreSQL table owners og `BYPASSRLS`-roller kan omgå RLS. Derfor er rolle- og secretgrensen like viktig som selve policyteksten.
 
 ## Local-to-canonical mapping
 
@@ -186,7 +242,7 @@ aha_paths_v1
 aha_articles_v1
 ```
 
-Følgende er eksplisitt deferred eller local-only i denne leveransen:
+Følgende er eksplisitt deferred eller local-only:
 
 ```text
 aha_lists_v1 generelle samlinger
@@ -237,26 +293,28 @@ PostgreSQL forblir system of record selv om en senere Milvus-indeks aktiveres. V
 
 ## Aktiveringsport
 
-Canonical schema v1 er ikke ferdig backend. Før runtime kan kobles til det, gjenstår minst:
+Canonical schema og policykontrakt er ikke en ferdig backend. Før runtime kan kobles til `aha.*`, gjenstår minst:
 
-1. tenancy-, RLS- og samtykkekontrakt
-2. installasjonstest mot ren PostgreSQL/Supabase staging
-3. migration rehearsal og rollback
-4. idempotent førstegangsimport med preview
-5. IndexedDB outbox og device cursors
-6. import/export-paritet
-7. backup og faktisk restore-test
-8. NestJS command/API boundary
-9. feature flags og rollback til local-first
-10. dokumentert null opplasting av local-only/deferred materiale
+1. installasjonstest mot ren PostgreSQL/Supabase staging
+2. migration rehearsal og rollback
+3. verifisert JWT-kontekst end-to-end
+4. dedikert non-owner/no-`BYPASSRLS` runtime-rolle og minste grants
+5. full cross-tenant- og samtykketest mot faktisk database
+6. NestJS auth-/command-/audit-foundation
+7. idempotent førstegangsimport med preview
+8. IndexedDB outbox og device cursors i runtime
+9. import/export-paritet
+10. backup og faktisk restore-test
+11. feature flags og rollback til local-first
+12. dokumentert null opplasting av local-only/deferred materiale
 
 ## Fortsatt ikke implementert eller aktivert
 
 ```text
 - canonical runtime mot aha.*
+- faktiske runtime-grants for aha.*
 - kontoimport
 - generell bidireksjonal sync
-- tenancy-/RLS-policyene for aha.*
 - NestJS command backend
 - Hasura proof of value
 - LangGraph job orchestration

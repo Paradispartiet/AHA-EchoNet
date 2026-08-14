@@ -1,0 +1,81 @@
+{
+  "version": "aha_tenancy_rls_consent_v1",
+  "status": "contract_only",
+  "runtimeActivated": false,
+  "frontendGrantsCreated": false,
+  "directDatabaseWrites": "backend_only",
+  "identity": {
+    "source": "verified_jwt_subject",
+    "profileResolution": "profiles.auth_provider + profiles.auth_subject",
+    "authorizationClaims": ["sub", "aha_provider"],
+    "forbiddenAuthorizationClaims": ["user_metadata", "raw_user_meta_data"]
+  },
+  "roles": {
+    "owner": 100,
+    "editor": 70,
+    "member": 40,
+    "observer": 10
+  },
+  "shareableObjectTypes": [
+    "insight",
+    "concept_list",
+    "knowledge_path",
+    "article"
+  ],
+  "consentPurposes": [
+    "account_import",
+    "workspace_share",
+    "public_publish"
+  ],
+  "tables": [
+    { "table": "profiles", "read": "self", "write": "backend_only" },
+    { "table": "devices", "read": "self", "write": "backend_only" },
+    { "table": "workspace_roles", "read": "authenticated_catalog", "write": "migration_only" },
+    { "table": "workspaces", "read": "active_workspace_member_or_owner", "write": "backend_only" },
+    { "table": "workspace_memberships", "read": "active_workspace_member_or_owner", "write": "backend_only" },
+    { "table": "workspace_invitations", "read": "workspace_admin_or_accepted_profile", "write": "backend_only" },
+    { "table": "conversations", "read": "active_workspace_member_or_owner", "write": "backend_only" },
+    { "table": "conversation_participants", "read": "active_workspace_member_or_owner", "write": "backend_only" },
+    { "table": "messages", "read": "active_workspace_member_or_owner", "write": "backend_only" },
+    { "table": "source_events", "read": "active_workspace_member_or_owner", "write": "backend_only" },
+    { "table": "source_attachments", "read": "active_workspace_member_or_owner", "write": "backend_only" },
+    { "table": "analysis_runs", "read": "active_workspace_member_or_owner", "write": "backend_only" },
+    { "table": "analysis_claims", "read": "active_workspace_member_or_owner", "write": "backend_only" },
+    { "table": "analysis_evidence", "read": "active_workspace_member_or_owner", "write": "backend_only" },
+    { "table": "insights", "read": "workspace_or_active_object_share", "write": "backend_only" },
+    { "table": "insight_versions", "read": "workspace_or_active_object_share", "write": "backend_only" },
+    { "table": "insight_relations", "read": "both_linked_insights_readable", "write": "backend_only" },
+    { "table": "insight_feedback", "read": "feedback_owner_or_workspace_admin", "write": "backend_only" },
+    { "table": "memory_revisions", "read": "linked_insights_readable", "write": "backend_only" },
+    { "table": "concept_lists", "read": "workspace_or_active_object_share", "write": "backend_only" },
+    { "table": "concept_list_items", "read": "parent_list_readable", "write": "backend_only" },
+    { "table": "knowledge_paths", "read": "workspace_or_active_object_share", "write": "backend_only" },
+    { "table": "knowledge_path_steps", "read": "parent_path_readable", "write": "backend_only" },
+    { "table": "articles", "read": "workspace_or_active_object_share", "write": "backend_only" },
+    { "table": "article_versions", "read": "parent_article_readable", "write": "backend_only" },
+    { "table": "article_references", "read": "parent_article_readable", "write": "backend_only" },
+    { "table": "publications", "read": "source_workspace_member_or_owner", "write": "backend_only" },
+    { "table": "consent_receipts", "read": "consent_owner", "write": "backend_only" },
+    { "table": "sharing_grants", "read": "grantor_or_source_or_target_workspace_admin", "write": "backend_only" },
+    { "table": "import_batches", "read": "import_owner", "write": "backend_only" },
+    { "table": "import_items", "read": "import_owner", "write": "backend_only" },
+    { "table": "device_sync_cursors", "read": "device_owner", "write": "backend_only" },
+    { "table": "data_exports", "read": "request_owner", "write": "backend_only" },
+    { "table": "deletion_requests", "read": "request_owner", "write": "backend_only" },
+    { "table": "audit_events", "read": "backend_redacted_api_only", "write": "backend_only" },
+    { "table": "idempotency_keys", "read": "backend_only", "write": "backend_only" },
+    { "table": "outbox_events", "read": "backend_only", "write": "backend_only" },
+    { "table": "ai_jobs", "read": "requester_or_workspace_admin", "write": "backend_only" },
+    { "table": "schema_versions", "read": "authenticated_catalog", "write": "migration_only" }
+  ],
+  "activationRequirements": [
+    "verified JWT integration in staging",
+    "least-privilege non-owner runtime database role",
+    "explicit EXECUTE grants only for policy helper functions",
+    "no table grants for browser write operations",
+    "cross-tenant RLS test matrix",
+    "withdrawn and expired consent tests",
+    "backend command and audit boundary",
+    "rollback to local-first runtime"
+  ]
+}
