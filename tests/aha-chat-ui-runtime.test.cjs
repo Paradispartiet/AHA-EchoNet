@@ -136,9 +136,10 @@ assert.doesNotMatch(chatSource, /function (?:consumePendingChatPrompt|bindAction
 assert.doesNotMatch(chatSource, /function (?:resolveConceptTerm|suggestCategoryChips|refreshAhaExplorer|renderAhaChatMemoryStatus)\s*\(/, "shared shell adapters must remain outside ahaChat.js");
 const uiRuntimeAt = chatHtml.indexOf("js/ahaChatUiRuntime.js");
 const providerLoaderAt = chatHtml.indexOf("js/ahaChatProviderLoader.js");
+const capabilityBindingsAt = chatHtml.indexOf("js/ahaChatCapabilityBindings.js");
 const runtimeFacadeAt = chatHtml.indexOf("js/ahaChatRuntimeFacade.js");
 const runtimeCompositionAt = chatHtml.indexOf("js/ahaChatRuntimeComposition.js");
 const chatAt = chatHtml.indexOf("js/ahaChat.js");
-assert.ok(uiRuntimeAt < providerLoaderAt && providerLoaderAt < runtimeFacadeAt && runtimeFacadeAt < runtimeCompositionAt && runtimeCompositionAt < chatAt);
+assert.ok(uiRuntimeAt < providerLoaderAt && providerLoaderAt < capabilityBindingsAt && capabilityBindingsAt < runtimeFacadeAt && runtimeFacadeAt < runtimeCompositionAt && runtimeCompositionAt < chatAt);
 
 console.log("aha-chat-ui-runtime passed");

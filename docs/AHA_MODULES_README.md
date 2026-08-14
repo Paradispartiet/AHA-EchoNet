@@ -140,6 +140,8 @@ Status:
   auto-output, svarpolicy, Meta-AI, submission, kunnskapsvisning, UI og offentlig fasade
 - lar `chat.providerLoader` eie det versjonerte provider-manifestet, legacy-oppslag,
   obligatoriske fabrikkmetoder og fail-fast-validering av modulkontraktene
+- lar `chat.capabilityBindings` eie de eksplisitte, frosne capability-gruppene
+  som `ahaChat.js` faktisk konsumerer; ubrukte provider-internals krysser ikke grensen
 - binder eksportens data-, DOM- og analyseavhengigheter én gang gjennom
   `chat.export.createRuntime(...)`; `ahaChat.js` bygger ikke lenger en ny
   eksportbro ved hvert kall

@@ -16,52 +16,49 @@
   ) || global.AHAChatProviderLoader;
   if (!providerLoaderApi) throw new Error("AHAChatProviderLoader må lastes før ahaChat.js.");
   const providerLoader = providerLoaderApi.create({ moduleApi: global.AHAModuleApi, legacyRoot: global });
+  const capabilityBindings = providerLoader.require("capabilityBindings");
 
   function insightsApi() { return providerLoader.resolve("insights", "InsightsEngine"); }
   function ingestApi() { return providerLoader.resolve("ingest", "AHAIngest"); }
   function sourcesApi() { return providerLoader.resolve("sources", "AHASources"); }
 
-  const textUtils = providerLoader.require("textUtils");
-  const shortHash = textUtils.shortHash;
-  const takeKeywords = textUtils.takeKeywords;
-  const sourceHash = textUtils.sourceHash;
-  const cleanArticleText = textUtils.cleanArticleText;
-  const toSentences = textUtils.toSentences;
-  const collectOpinionArticleEvidence = textUtils.collectOpinionArticleEvidence;
+  const {
+    shortHash, takeKeywords, sourceHash, cleanArticleText, toSentences,
+    collectOpinionArticleEvidence
+  } = capabilityBindings.bind("textUtils", providerLoader.require("textUtils"));
 
-  const signals = providerLoader.require("signals");
-  const detectTextType = signals.detectTextType;
-  const detectPublicAdministrationReformSignal = signals.detectPublicAdministrationReformSignal;
-  const detectPublicAdministrationSignal = signals.detectPublicAdministrationSignal;
-  const inferReligiousLexiconEvidence = signals.inferReligiousLexiconEvidence;
+  const signals = capabilityBindings.bind("signals", providerLoader.require("signals"));
+  const {
+    detectTextType, detectPublicAdministrationReformSignal,
+    detectPublicAdministrationSignal, inferReligiousLexiconEvidence
+  } = signals;
 
-  const subjects = providerLoader.require("subjects");
-  const normalizeSubjectLinks = subjects.normalizeSubjectLinks;
-  const enrichSubjectMatchesForClimateConflict = subjects.enrichSubjectMatchesForClimateConflict;
-  const enrichSubjectMatchesForPublicAdministration = subjects.enrichSubjectMatchesForPublicAdministration;
-  const normalizeFagkoblinger = subjects.normalizeFagkoblinger;
-  const isAcademicLikeType = subjects.isAcademicLikeType;
+  const {
+    normalizeSubjectLinks, enrichSubjectMatchesForClimateConflict,
+    enrichSubjectMatchesForPublicAdministration, normalizeFagkoblinger, isAcademicLikeType
+  } = capabilityBindings.bind("subjects", providerLoader.require("subjects"));
 
-  const analysis = providerLoader.require("analysis");
-  const buildOpinionArticleQualityAnalysis = analysis.buildOpinionArticleQualityAnalysis;
+  const { buildOpinionArticleQualityAnalysis } = capabilityBindings.bind(
+    "analysis", providerLoader.require("analysis")
+  );
 
-  const replyFormat = providerLoader.require("replyFormat");
-  const normalizeAhaVisibleReply = replyFormat.normalizeAhaVisibleReply;
+  const replyFormat = capabilityBindings.bind("replyFormat", providerLoader.require("replyFormat"));
+  const { normalizeAhaVisibleReply } = replyFormat;
 
-  const chamberStore = providerLoader.instantiate("chamberStore", {
-    createEmptyChamber: () => insightsApi().createEmptyChamber()
-  });
-  const loadChamberFromStorage = chamberStore.load;
-  const saveChamberToStorage = chamberStore.save;
-  const clearChamberStorage = chamberStore.clear;
+  const { loadChamberFromStorage, saveChamberToStorage, clearChamberStorage } = capabilityBindings.bind(
+    "chamberStore",
+    providerLoader.instantiate("chamberStore", {
+      createEmptyChamber: () => insightsApi().createEmptyChamber()
+    })
+  );
 
-  const autoOutputStore = providerLoader.instantiate("autoOutputStore", {
-    sourceHash,
-    defaultConversationId: CHAT_THREAD_ID
-  });
-  const loadAutoOutputs = autoOutputStore.load;
-  const saveAutoOutputs = autoOutputStore.save;
-  const clearAutoOutputs = autoOutputStore.clear;
+  const { loadAutoOutputs, saveAutoOutputs, clearAutoOutputs } = capabilityBindings.bind(
+    "autoOutputStore",
+    providerLoader.instantiate("autoOutputStore", {
+      sourceHash,
+      defaultConversationId: CHAT_THREAD_ID
+    })
+  );
 
   const uiRuntimeModule = providerLoader.require("uiRuntime");
   const shellRuntime = providerLoader.instantiate("uiRuntime", {
@@ -84,10 +81,19 @@
     resolveConceptTerm,
     suggestCategoryChips,
     refreshAhaExplorer,
-    renderChatMemoryStatus: renderAhaChatMemoryStatus
-  } = shellRuntime;
+    renderAhaChatMemoryStatus
+  } = capabilityBindings.bind("shellRuntime", shellRuntime);
 
-  const analysisPolicy = providerLoader.instantiate("analysisPolicy", {
+  const {
+    normalizeConceptSurface, normalizeVisibleAcademicLabel, detectLiteraryAttachmentSignal,
+    detectInstitutionalMediaHistorySignal, extractMainInstitutionName, subjectMatchesFromCalibration,
+    detectAutoAnalysisDomain, getSongLyricChildCultureSubjectMatches, enforceCanonicalSourceGrounding,
+    normalizeSubjectMatches, getLiterarySubjectMatches, getInstitutionalMediaHistorySubjectMatches,
+    getLiteraryAttachmentLearningPath, short, hasAcademicSignals, filterDomainInsightCards,
+    normalizeAcademicAfterworkPayload, isGenericDisplayConcept, extractAcademicPhraseConcepts,
+    normalizeSimpleStringList, normalizeTheoreticalLinks, extractAcademicTheoryLinks,
+    mergeTheoryLinks, buildAcademicConceptCandidates
+  } = capabilityBindings.bind("analysisPolicy", providerLoader.instantiate("analysisPolicy", {
     signals,
     resolveConceptTerm,
     normalizeDisplayText,
@@ -103,88 +109,36 @@
     applyRuntimeKnowledgePolicy: (...args) => applyRuntimeKnowledgePolicy(...args),
     getRuntimeKnowledgePolicy: () => AHA_RUNTIME_KNOWLEDGE_POLICY,
     normalizeAfterworkConcept: (...args) => normalizeAfterworkConcept(...args)
-  });
+  }));
 
-  const normalizeConceptSurface = analysisPolicy.normalizeConceptSurface;
-  const normalizeVisibleAcademicLabel = analysisPolicy.normalizeVisibleAcademicLabel;
-  const normalizeAcademicConceptLabel = analysisPolicy.normalizeAcademicConceptLabel;
-  const filterCrossDomainTextItems = analysisPolicy.filterCrossDomainTextItems;
-  const detectLiteraryAttachmentSignal = analysisPolicy.detectLiteraryAttachmentSignal;
-  const detectSahelClimateConflictSignal = analysisPolicy.detectSahelClimateConflictSignal;
-  const detectInstitutionalMediaHistorySignal = analysisPolicy.detectInstitutionalMediaHistorySignal;
-  const extractMainInstitutionName = analysisPolicy.extractMainInstitutionName;
-  const subjectMatchesFromCalibration = analysisPolicy.subjectMatchesFromCalibration;
-  const detectAutoAnalysisDomain = analysisPolicy.detectAutoAnalysisDomain;
-  const detectSongLyricChildCultureSignal = analysisPolicy.detectSongLyricChildCultureSignal;
-  const sourceSupportsMediaInstitutionTerms = analysisPolicy.sourceSupportsMediaInstitutionTerms;
-  const firstUnsupportedCanonicalDomainTerm = analysisPolicy.firstUnsupportedCanonicalDomainTerm;
-  const containsUnsupportedCanonicalDomainTerm = analysisPolicy.containsUnsupportedCanonicalDomainTerm;
-  const stripUnsupportedCanonicalItems = analysisPolicy.stripUnsupportedCanonicalItems;
-  const getSongLyricChildCultureSubjectMatches = analysisPolicy.getSongLyricChildCultureSubjectMatches;
-  const buildSongLyricChildCulturePayload = analysisPolicy.buildSongLyricChildCulturePayload;
-  const enforceCanonicalSourceGrounding = analysisPolicy.enforceCanonicalSourceGrounding;
-  const buildCanonicalEvidenceAnchors = analysisPolicy.buildCanonicalEvidenceAnchors;
-  const normalizeSubjectMatches = analysisPolicy.normalizeSubjectMatches;
-  const getLiterarySubjectMatches = analysisPolicy.getLiterarySubjectMatches;
-  const getInstitutionalMediaHistorySubjectMatches = analysisPolicy.getInstitutionalMediaHistorySubjectMatches;
-  const getLiteraryAttachmentLearningPath = analysisPolicy.getLiteraryAttachmentLearningPath;
-  const short = analysisPolicy.short;
-  const hasAcademicSignals = analysisPolicy.hasAcademicSignals;
-  const filterDomainInsightCards = analysisPolicy.filterDomainInsightCards;
-  const normalizeAcademicAfterworkPayload = analysisPolicy.normalizeAcademicAfterworkPayload;
-  const isGenericDisplayConcept = analysisPolicy.isGenericDisplayConcept;
-  const extractAcademicPhraseConcepts = analysisPolicy.extractAcademicPhraseConcepts;
-  const normalizeSimpleStringList = analysisPolicy.normalizeSimpleStringList;
-  const normalizeTheoreticalLinks = analysisPolicy.normalizeTheoreticalLinks;
-  const extractAcademicTheoryLinks = analysisPolicy.extractAcademicTheoryLinks;
-  const mergeTheoryLinks = analysisPolicy.mergeTheoryLinks;
-  const buildAcademicConceptCandidates = analysisPolicy.buildAcademicConceptCandidates;
-
-  const conceptPolicy = providerLoader.instantiate("conceptPolicy", {
+  const conceptPolicy = capabilityBindings.bind("conceptPolicy", providerLoader.instantiate("conceptPolicy", {
     normalizeAfterworkConcept: (...args) => normalizeAfterworkConcept(...args),
     normalizeConceptSurface,
     normalizeVisibleAcademicLabel,
     isGenericDisplayConcept,
     detectPublicAdministrationReformSignal,
     extractAcademicPhraseConcepts
-  });
-
-  const normalizeConceptKey = conceptPolicy.normalizeConceptKey;
-  const getCanonicalConceptLabel = conceptPolicy.getCanonicalConceptLabel;
-  const getCanonicalConceptKey = conceptPolicy.getCanonicalConceptKey;
-  const isBlockedStandaloneConcept = conceptPolicy.isBlockedStandaloneConcept;
-  const prioritizeVisibleConceptEdges = conceptPolicy.prioritizeVisibleConceptEdges;
-  const applyPhraseConceptDisplayPreference = conceptPolicy.applyPhraseConceptDisplayPreference;
-  const filterConceptLabels = conceptPolicy.filterConceptLabels;
-  const canonicalizeDisplayConcept = conceptPolicy.canonicalizeDisplayConcept;
+  }));
+  const {
+    normalizeConceptKey, getCanonicalConceptLabel, getCanonicalConceptKey, isBlockedStandaloneConcept,
+    prioritizeVisibleConceptEdges, applyPhraseConceptDisplayPreference, filterConceptLabels,
+    canonicalizeDisplayConcept
+  } = conceptPolicy;
 
   const analysisRunContract = providerLoader.require("analysisRunContract");
 
-  const memoryControls = providerLoader.instantiate("memoryControls", {
+  const memoryControls = capabilityBindings.bind("memoryControls", providerLoader.instantiate("memoryControls", {
     loadChamber: loadChamberFromStorage
-  });
-  if (typeof memoryControls.bindView !== "function") throw new Error("AHAChatMemoryControls må eksponere bindView.");
+  }));
+  const {
+    normalizeAhaMemoryControls, loadAhaMemoryControls, saveAhaMemoryControls, setAhaMemoryControl,
+    resetAhaMemoryControls, isAhaSavingEnabled, isAhaMemoryUseEnabled, buildAhaMemoryOffContext,
+    loadAhaMemoryExclusions, saveAhaMemoryExclusions, getAhaMemoryInsightStableKey,
+    getAhaMemoryInsightKey, isAhaMemoryInsightExcluded, excludeAhaMemoryInsight,
+    includeAhaMemoryInsight, resetAhaMemoryExclusions, getAhaExcludedMemoryItems
+  } = memoryControls;
 
-  const normalizeAhaMemoryControls = memoryControls.normalizeAhaMemoryControls;
-  const loadAhaMemoryControls = memoryControls.loadAhaMemoryControls;
-  const saveAhaMemoryControls = memoryControls.saveAhaMemoryControls;
-  const setAhaMemoryControl = memoryControls.setAhaMemoryControl;
-  const resetAhaMemoryControls = memoryControls.resetAhaMemoryControls;
-  const isAhaSavingEnabled = memoryControls.isAhaSavingEnabled;
-  const isAhaMemoryUseEnabled = memoryControls.isAhaMemoryUseEnabled;
-  const buildAhaMemoryOffContext = memoryControls.buildAhaMemoryOffContext;
-  const loadAhaMemoryExclusions = memoryControls.loadAhaMemoryExclusions;
-  const saveAhaMemoryExclusions = memoryControls.saveAhaMemoryExclusions;
-  const getAhaMemoryInsightStableKey = memoryControls.getAhaMemoryInsightStableKey;
-  const getAhaMemoryInsightKey = memoryControls.getAhaMemoryInsightKey;
-  const getAhaMemoryExclusionCount = memoryControls.getAhaMemoryExclusionCount;
-  const isAhaMemoryInsightExcluded = memoryControls.isAhaMemoryInsightExcluded;
-  const excludeAhaMemoryInsight = memoryControls.excludeAhaMemoryInsight;
-  const includeAhaMemoryInsight = memoryControls.includeAhaMemoryInsight;
-  const resetAhaMemoryExclusions = memoryControls.resetAhaMemoryExclusions;
-  const getAhaExcludedMemoryItems = memoryControls.getAhaExcludedMemoryItems;
-
-  const afterwork = providerLoader.instantiate("afterwork", {
+  const afterwork = capabilityBindings.bind("afterwork", providerLoader.instantiate("afterwork", {
     storageKey: AFTERWORK_STORAGE_KEY,
     sourceHash,
     escHtml,
@@ -194,18 +148,13 @@
     renderAuxPanel,
     renderPanel,
     setStatusNote
-  });
+  }));
+  const {
+    loadAfterworkEntries, saveAfterworkEntries, showSavedAfterwork,
+    buildFromAfterworkEntry, deleteAfterworkEntry
+  } = afterwork;
 
-  const loadAfterworkEntries = afterwork.loadAfterworkEntries;
-  const saveAfterworkEntries = afterwork.saveAfterworkEntries;
-  const formatAfterworkDate = afterwork.formatAfterworkDate;
-  const renderAfterworkEntry = afterwork.renderAfterworkEntry;
-  const showSavedAfterwork = afterwork.showSavedAfterwork;
-  const buildAfterworkPrompt = afterwork.buildAfterworkPrompt;
-  const buildFromAfterworkEntry = afterwork.buildFromAfterworkEntry;
-  const deleteAfterworkEntry = afterwork.deleteAfterworkEntry;
-
-  const memoryRuntime = providerLoader.instantiate("memoryRuntime", {
+  const memoryRuntime = capabilityBindings.bind("memoryRuntime", providerLoader.instantiate("memoryRuntime", {
     loadChamber: loadChamberFromStorage,
     loadAfterworkEntries,
     loadControls: loadAhaMemoryControls,
@@ -213,26 +162,15 @@
     loadExclusions: loadAhaMemoryExclusions,
     isExcluded: isAhaMemoryInsightExcluded,
     getInsightKey: getAhaMemoryInsightKey
-  });
+  }));
+  const {
+    memoryConceptLabel, isAhaMemoryQuestion, findRelevantLocalMemory, shouldUseAhaMemory,
+    formatAhaMemoryContextForAgent, buildAhaMemoryContext, isAhaMemoryDebugEnabled,
+    buildAhaMemoryTransparency, formatAhaMemoryTransparencyDetails, formatAhaMemoryTimestamp,
+    buildAhaMemoryStatus, buildAhaLearningContractReply
+  } = memoryRuntime;
 
-  const normalizeAhaMemoryText = memoryRuntime.normalizeAhaMemoryText;
-  const memoryConceptLabel = memoryRuntime.memoryConceptLabel;
-  const isAhaMemoryQuestion = memoryRuntime.isAhaMemoryQuestion;
-  const findRelevantLocalMemory = memoryRuntime.findRelevantLocalMemory;
-  const shouldUseAhaMemory = memoryRuntime.shouldUseAhaMemory;
-  const formatAhaMemoryContextForAgent = memoryRuntime.formatAhaMemoryContextForAgent;
-  const buildAhaMemoryContext = memoryRuntime.buildAhaMemoryContext;
-  const isAhaMemoryDebugEnabled = memoryRuntime.isAhaMemoryDebugEnabled;
-  const buildAhaMemoryTransparency = memoryRuntime.buildAhaMemoryTransparency;
-  const formatAhaMemoryTransparencyDetails = memoryRuntime.formatAhaMemoryTransparencyDetails;
-  const formatAhaMemoryTimestamp = memoryRuntime.formatAhaMemoryTimestamp;
-  const describeAhaEmbeddingStatus = memoryRuntime.describeAhaEmbeddingStatus;
-  const explainAhaEmbeddingStatus = memoryRuntime.explainAhaEmbeddingStatus;
-  const getAhaEmbeddingHealthWithTimeout = memoryRuntime.getAhaEmbeddingHealthWithTimeout;
-  const buildAhaMemoryStatus = memoryRuntime.buildAhaMemoryStatus;
-  const buildAhaLearningContractReply = memoryRuntime.buildAhaLearningContractReply;
-
-  const runContext = providerLoader.instantiate("runContext", {
+  const runContext = capabilityBindings.bind("runContext", providerLoader.instantiate("runContext", {
     analysisRunContract,
     sourceHash,
     shortHash,
@@ -240,20 +178,14 @@
     formatMemoryContextForAgent: formatAhaMemoryContextForAgent,
     buildMemoryOffContext: buildAhaMemoryOffContext,
     defaultConversationId: CHAT_THREAD_ID
-  });
+  }));
+  const {
+    getActiveAnalysisRun, setActiveAnalysisRun, createAnalysisRun, updateAnalysisRun,
+    bindAnalysisArtifact, artifactMatchesActiveRun, isActiveAnalysisRun, scoreRetrievalAgainstSource,
+    filterRetrievalForActiveSource, filterMemoryContextForActiveSource
+  } = runContext;
 
-  const getActiveAnalysisRun = runContext.getActiveAnalysisRun;
-  const setActiveAnalysisRun = runContext.setActiveAnalysisRun;
-  const createAnalysisRun = runContext.createAnalysisRun;
-  const updateAnalysisRun = runContext.updateAnalysisRun;
-  const bindAnalysisArtifact = runContext.bindAnalysisArtifact;
-  const artifactMatchesActiveRun = runContext.artifactMatchesActiveRun;
-  const isActiveAnalysisRun = runContext.isActiveAnalysisRun;
-  const scoreRetrievalAgainstSource = runContext.scoreRetrievalAgainstSource;
-  const filterRetrievalForActiveSource = runContext.filterRetrievalForActiveSource;
-  const filterMemoryContextForActiveSource = runContext.filterMemoryContextForActiveSource;
-
-  const afterworkAutoAdapter = providerLoader.instantiate("afterwork", {
+  const afterworkAutoAdapter = capabilityBindings.bind("afterworkAutoAdapter", providerLoader.instantiate("afterwork", {
     defaultConversationId: CHAT_THREAD_ID,
     sourceHash,
     shortHash,
@@ -271,23 +203,22 @@
     loadAfterworkEntries,
     saveAfterworkEntries,
     loadAutoOutputs
-  }, { factory: "createAutoOutputAdapter", label: "AHAChatAfterworkAutoAdapter" });
-  const normalizeAfterworkConcept = afterworkAutoAdapter.normalizeAfterworkConcept;
-  const saveAutoOutputAsAfterwork = afterworkAutoAdapter.saveAutoOutputAsAfterwork;
-  const ensureAfterworkForLatestAnalysis = afterworkAutoAdapter.ensureAfterworkForLatestAnalysis;
+  }, { factory: "createAutoOutputAdapter", label: "AHAChatAfterworkAutoAdapter" }));
+  const {
+    normalizeAfterworkConcept, saveAutoOutputAsAfterwork, ensureAfterworkForLatestAnalysis
+  } = afterworkAutoAdapter;
 
-  const insightPipeline = providerLoader.instantiate("insightPipeline", {
+  const insightPipeline = capabilityBindings.bind("insightPipeline", providerLoader.instantiate("insightPipeline", {
     filterConceptLabels,
     normalizeSimpleStringList,
     normalizeTheoreticalLinks,
     extractAcademicPhraseConcepts,
     normalizeAfterworkConcept,
     weakConceptWords: { has: conceptPolicy.isWeakConceptWord }
-  });
-  const generateAIInsightCandidates = insightPipeline.generateAIInsightCandidates;
-  const buildSemanticInsightCandidates = insightPipeline.buildSemanticInsightCandidates;
+  }));
+  const { generateAIInsightCandidates, buildSemanticInsightCandidates } = insightPipeline;
 
-  const agentRuntime = providerLoader.instantiate("agentRuntime", {
+  const agentRuntime = capabilityBindings.bind("agentRuntime", providerLoader.instantiate("agentRuntime", {
     subjectId: SUBJECT_ID,
     getApiBase: () => global.AHA_AGENT_API,
     fetchImpl: (...args) => global.fetch(...args),
@@ -296,11 +227,10 @@
     memoryConceptLabel,
     buildUserMetaProfile: (chamber, subjectId) =>
       global.MetaInsightsEngine?.buildUserMetaProfile?.(chamber, subjectId) || {}
-  });
-  const buildAIState = agentRuntime.buildAIState;
-  const askAhaAgent = agentRuntime.askAhaAgent;
+  }));
+  const { buildAIState, askAhaAgent } = agentRuntime;
 
-  const ingestRuntime = providerLoader.instantiate("ingestRuntime", {
+  const ingestRuntime = capabilityBindings.bind("ingestRuntime", providerLoader.instantiate("ingestRuntime", {
     subjectId: SUBJECT_ID,
     getInsightsApi: insightsApi,
     getIngestApi: ingestApi,
@@ -312,11 +242,10 @@
     buildAIState,
     loadChamber: loadChamberFromStorage,
     saveChamber: saveChamberToStorage
-  });
-  const handleUserMessage = ingestRuntime.handleUserMessage;
-  const handleUserMessageInsightCandidatesInBackground = ingestRuntime.handleUserMessageInsightCandidatesInBackground;
+  }));
+  const { handleUserMessage, handleUserMessageInsightCandidatesInBackground } = ingestRuntime;
 
-  const academicInsightView = providerLoader.instantiate("academicInsightView", {
+  const academicInsightView = capabilityBindings.bind("academicInsightView", providerLoader.instantiate("academicInsightView", {
     loadAutoOutputs,
     loadAfterworkEntries,
     detectTextType,
@@ -329,12 +258,12 @@
     normalizeConceptKey,
     detectAutoAnalysisDomain,
     extractMainInstitutionName
-  });
-  const parseLabeledInsightCards = academicInsightView.parseLabeledInsightCards;
-  const readLatestAcademicContext = academicInsightView.readLatestAcademicContext;
-  const buildAcademicSyntheticInsightCards = academicInsightView.buildAcademicSyntheticInsightCards;
+  }));
+  const {
+    parseLabeledInsightCards, readLatestAcademicContext, buildAcademicSyntheticInsightCards
+  } = academicInsightView;
 
-  const insightView = providerLoader.instantiate("insightView", {
+  const insightView = capabilityBindings.bind("insightView", providerLoader.instantiate("insightView", {
     escHtml,
     normalizeConceptKey,
     normalizeDisplayText,
@@ -353,20 +282,10 @@
     setStatusNote,
     renderPanel,
     loadAutoOutputs
-  });
+  }));
+  const { isFragmentaryInsightCard, bindPanelActionHandler, showInsights } = insightView;
 
-  const renderInsightCard = insightView.renderInsightCard;
-  const isFragmentaryInsightCard = insightView.isFragmentaryInsightCard;
-  const getDisplayInsights = insightView.getDisplayInsights;
-  const resolvePanelAction = insightView.resolvePanelAction;
-  const applyEmneSuggestionAction = insightView.applyEmneSuggestionAction;
-  const applyMergeAction = insightView.applyMergeAction;
-  const handleResolvedPanelAction = insightView.handleResolvedPanelAction;
-  const bindPanelActionHandler = insightView.bindPanelActionHandler;
-  const renderMergeSuggestionsSection = insightView.renderMergeSuggestionsSection;
-  const showInsights = insightView.showInsights;
-
-  const personalUi = providerLoader.instantiate("personalUi", {
+  const personalUi = capabilityBindings.bind("personalUi", providerLoader.instantiate("personalUi", {
     getActiveAnalysisRun,
     bindAnalysisArtifact,
     buildAhaMemoryTransparency,
@@ -381,7 +300,7 @@
     includeAhaMemoryInsight,
     resetAhaMemoryExclusions,
     buildAhaMemoryStatus
-  });
+  }));
 
   memoryControls.bindView({
     renderControls: personalUi.renderAhaMemoryControls,
@@ -397,7 +316,7 @@
     bindAhaMemoryControls, updateAhaMemoryStatus
   } = personalUi;
 
-  const conversationView = providerLoader.instantiate("conversationView", {
+  const conversationView = capabilityBindings.bind("conversationView", providerLoader.instantiate("conversationView", {
     storageKey: HIGHLIGHTS_STORAGE_KEY,
     threadId: CHAT_THREAD_ID,
     shortHash,
@@ -405,13 +324,10 @@
     renderAhaMemoryTransparency,
     renderAhaAnswerEvaluation,
     refreshAhaExplorer
-  });
-  const appendChat = conversationView.appendChat;
-  const renderHighlightsRail = conversationView.renderHighlightsRail;
-  const updateEmptyState = conversationView.updateEmptyState;
-  const updateAnswerActionsVisibility = conversationView.updateAnswerActionsVisibility;
+  }));
+  const { appendChat, renderHighlightsRail, updateEmptyState, updateAnswerActionsVisibility } = conversationView;
 
-  const analysisStateView = providerLoader.instantiate("analysisStateView", {
+  const analysisStateView = capabilityBindings.bind("analysisStateView", providerLoader.instantiate("analysisStateView", {
     getActiveAnalysisRun,
     setActiveAnalysisRun,
     clearAutoOutputs,
@@ -421,14 +337,13 @@
     renderPanel,
     renderHighlightsRail,
     updateEmptyState
-  });
-  const renderAnalysisDebugPanel = analysisStateView.renderAnalysisDebugPanel;
-  const setExportButtonsEnabled = analysisStateView.setExportButtonsEnabled;
-  const setAhaProcessing = analysisStateView.setProcessing;
-  const clearActiveAnalysisState = analysisStateView.clearActiveAnalysisState;
-  const resetAnalysisStateView = analysisStateView.resetView;
+  }));
+  const {
+    renderAnalysisDebugPanel, setExportButtonsEnabled, setAhaProcessing,
+    clearActiveAnalysisState, resetAnalysisStateView
+  } = analysisStateView;
 
-  const autoAnalysis = providerLoader.instantiate("autoAnalysis", {
+  const autoAnalysis = capabilityBindings.bind("autoAnalysis", providerLoader.instantiate("autoAnalysis", {
     cleanArticleText,
     toSentences,
     takeKeywords,
@@ -447,20 +362,14 @@
     extractAcademicPhraseConcepts,
     extractAcademicTheoryLinks,
     extractMainInstitutionName
-  });
+  }));
+  const {
+    getUrlDominanceInfo, isSportsArticleAnalysis, buildArticleSourceTextFromAnalysis,
+    AHA_RUNTIME_KNOWLEDGE_POLICY, buildSourceGroundedAcademicPayload, applyRuntimeKnowledgePolicy,
+    isTransientAnalysisDocument, buildAutoOutputs, buildAutoOutputFallbackPayload
+  } = autoAnalysis;
 
-  const getUrlDominanceInfo = autoAnalysis.getUrlDominanceInfo;
-  const isSportsArticleAnalysis = autoAnalysis.isSportsArticleAnalysis;
-  const buildArticleSourceTextFromAnalysis = autoAnalysis.buildArticleSourceTextFromAnalysis;
-  const buildArticleAutoOutputsFromAnalysis = autoAnalysis.buildArticleAutoOutputsFromAnalysis;
-  const AHA_RUNTIME_KNOWLEDGE_POLICY = autoAnalysis.AHA_RUNTIME_KNOWLEDGE_POLICY;
-  const buildSourceGroundedAcademicPayload = autoAnalysis.buildSourceGroundedAcademicPayload;
-  const applyRuntimeKnowledgePolicy = autoAnalysis.applyRuntimeKnowledgePolicy;
-  const isTransientAnalysisDocument = autoAnalysis.isTransientAnalysisDocument;
-  const buildAutoOutputs = autoAnalysis.buildAutoOutputs;
-  const buildAutoOutputFallbackPayload = autoAnalysis.buildAutoOutputFallbackPayload;
-
-  const autoOutputView = providerLoader.instantiate("autoOutputView", {
+  const autoOutputView = capabilityBindings.bind("autoOutputView", providerLoader.instantiate("autoOutputView", {
     enforceCanonicalSourceGrounding,
     getActiveAnalysisRun,
     artifactMatchesActiveRun,
@@ -485,14 +394,10 @@
     getSongLyricChildCultureSubjectMatches,
     getLiterarySubjectMatches,
     getLiteraryAttachmentLearningPath
-  });
+  }));
+  const { buildAhaSerCard, renderAutoOutputPayload, filterCrossDomainAutoPayload } = autoOutputView;
 
-  const humanizeTextType = autoOutputView.humanizeTextType;
-  const buildAhaSerCard = autoOutputView.buildAhaSerCard;
-  const renderAutoOutputPayload = autoOutputView.renderAutoOutputPayload;
-  const filterCrossDomainAutoPayload = autoOutputView.filterCrossDomainAutoPayload;
-
-  const canonicalAnalysis = providerLoader.instantiate("canonicalAnalysis", {
+  const canonicalAnalysis = capabilityBindings.bind("canonicalAnalysis", providerLoader.instantiate("canonicalAnalysis", {
     buildAhaSerCard,
     AHA_RUNTIME_KNOWLEDGE_POLICY,
     detectTextType,
@@ -501,16 +406,8 @@
     normalizeFagkoblinger,
     normalizeConceptKey,
     buildAcademicConceptCandidates
-  });
-
-  const isPythonEngineFeatureEnabled = canonicalAnalysis.isPythonEngineFeatureEnabled;
-  const isValidCanonicalAnalysisShape = canonicalAnalysis.isValidCanonicalAnalysisShape;
-  const buildPythonFallbackMeta = canonicalAnalysis.buildPythonFallbackMeta;
-  const resolveCanonicalAnalysisWithOptionalPythonEngine = canonicalAnalysis.resolveCanonicalAnalysisWithOptionalPythonEngine;
-  const buildCanonicalAnalysis = canonicalAnalysis.buildCanonicalAnalysis;
-  const normalizeAnalysisConfidence = canonicalAnalysis.normalizeAnalysisConfidence;
-  const normalizeAnalysisWarnings = canonicalAnalysis.normalizeAnalysisWarnings;
-  const buildHistoryGoLinksFromDomain = canonicalAnalysis.buildHistoryGoLinksFromDomain;
+  }));
+  const { resolveCanonicalAnalysisWithOptionalPythonEngine, buildCanonicalAnalysis } = canonicalAnalysis;
 
   const runtimeComposition = providerLoader.instantiate("runtimeComposition", {
     config: {

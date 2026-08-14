@@ -28,6 +28,7 @@ assert.equal(Object.isFrozen(api), true);
 assert.equal(Object.isFrozen(api.CHAT_PROVIDERS), true);
 assert.equal(Object.isFrozen(api.CHAT_PROVIDERS.textUtils), true);
 assert.equal(Object.isFrozen(api.CHAT_PROVIDERS.textUtils.functions), true);
+assert.deepEqual(Array.from(api.CHAT_PROVIDERS.capabilityBindings.functions), ["bind"]);
 assert.equal(registrations.some(({ name }) => name === "chat.providerLoader"), true);
 
 const loader = api.create({ moduleApi: context.AHAModuleApi, legacyRoot });
@@ -40,6 +41,13 @@ legacyRoot.AHAChatTextUtils = {
   toSentences() {}, collectOpinionArticleEvidence() {}
 };
 assert.strictEqual(loader.require("textUtils"), legacyRoot.AHAChatTextUtils);
+
+registeredProviders.set("chat.signals", {
+  detectTextType() {}, detectPublicAdministrationReformSignal() {}, detectPublicAdministrationSignal() {},
+  inferReligiousLexiconEvidence() {}, detectCanonicalAnalysisDomain() {},
+  detectInstitutionalMediaHistorySignal() {}, detectLiteraryAttachmentSignal() {}
+});
+assert.strictEqual(loader.require("signals"), registeredProviders.get("chat.signals"));
 
 registeredProviders.set("chat.analysis", { buildOpinionArticleQualityAnalysis() {} });
 legacyRoot.AHAChatAnalysis = { buildOpinionArticleQualityAnalysis: null };

@@ -151,6 +151,7 @@ const chatModules = [
   ['chat.canonicalAnalysis', 'AHAChatCanonicalAnalysis', 'js/ahaChatCanonicalAnalysis.js'],
   ['chat.uiRuntime', 'AHAChatUiRuntime', 'js/ahaChatUiRuntime.js'],
   ['chat.providerLoader', 'AHAChatProviderLoader', 'js/ahaChatProviderLoader.js'],
+  ['chat.capabilityBindings', 'AHAChatCapabilityBindings', 'js/ahaChatCapabilityBindings.js'],
   ['chat.runtimeFacade', 'AHAChatRuntimeFacade', 'js/ahaChatRuntimeFacade.js'],
   ['chat.runtimeComposition', 'AHAChatRuntimeComposition', 'js/ahaChatRuntimeComposition.js']
 ];
@@ -186,6 +187,9 @@ assert.equal(typeof uiRuntime.createShell, 'function');
 const providerLoader = context.AHAModuleApi.get('chat.providerLoader', { version: 1 });
 assert.equal(typeof providerLoader.create, 'function');
 assert.equal(Object.isFrozen(providerLoader.CHAT_PROVIDERS), true);
+const capabilityBindings = context.AHAModuleApi.get('chat.capabilityBindings', { version: 1 });
+assert.equal(typeof capabilityBindings.bind, 'function');
+assert.equal(Object.isFrozen(capabilityBindings.CHAT_CAPABILITY_GROUPS), true);
 const runtimeFacade = context.AHAModuleApi.get('chat.runtimeFacade', { version: 1 });
 assert.equal(typeof runtimeFacade.create, 'function');
 const runtimeComposition = context.AHAModuleApi.get('chat.runtimeComposition', { version: 1 });
@@ -193,6 +197,7 @@ assert.equal(typeof runtimeComposition.create, 'function');
 
 const chatSource = fs.readFileSync('js/ahaChat.js', 'utf8');
 assert.match(chatSource, /providerLoader\.(?:require|instantiate)\(/, 'Chat must resolve extracted modules through the provider boundary');
+assert.match(chatSource, /capabilityBindings\.bind\(/, 'Chat must bind provider surfaces through explicit capability groups');
 assert.doesNotMatch(chatSource, /function (?:resolveModule|chatModule)\(/, 'module resolution must remain extracted');
 for (const [, legacyGlobal] of chatModules) {
   if (legacyGlobal === 'AHAChatProviderLoader') continue; // bootstrap fallback for the loader itself
