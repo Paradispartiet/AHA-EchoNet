@@ -1,15 +1,24 @@
-# Supabase for AHA-EchoNet
+# Supabase / PostgreSQL for AHA-EchoNet
 
-Dette er første database-lag for AHA-EchoNet.
+Repoet inneholder nå to tydelig adskilte databaselag:
 
-## Kjør schema
+1. dagens valgfrie Supabase-MVP i `public.aha_*`
+2. det nye canonical schema-grunnlaget i `aha.*`
 
-1. Åpne Supabase-prosjektet.
-2. Gå til SQL Editor.
-3. Lim inn innholdet fra `supabase/schema.sql`.
-4. Kjør SQL-en.
+Ingen av de nye canonical migrasjonene er koblet til browserruntime, kontoimport eller sync ennå.
 
-Schemaet oppretter tabeller for:
+## Dagens aktive, valgfrie MVP-lag
+
+For eksisterende Supabase-funksjoner brukes fortsatt:
+
+```text
+supabase/schema.sql
+supabase/policies.sql
+supabase/chamber.sql
+supabase/embeddings.sql
+```
+
+`supabase/schema.sql` oppretter blant annet:
 
 - `aha_profiles`
 - `aha_source_events`
@@ -19,39 +28,77 @@ Schemaet oppretter tabeller for:
 - `aha_insta_posts`
 - `aha_imports`
 
-For semantisk søk i innsiktskammeret:
+For semantisk søk:
 
-- `supabase/embeddings.sql` oppretter `aha_insight_embeddings` + pgvector + RPC-en `aha_match_insights`.
+- `supabase/embeddings.sql` oppretter `aha_insight_embeddings`, pgvector og RPC-en `aha_match_insights`.
 
-For sync av hele insight-kammeret per innlogget profil:
+For dagens valgfrie chamber-sync:
 
-- `supabase/chamber.sql` oppretter `aha_insight_chambers` (én rad per profile_id med kammeret som JSONB).
-- `supabase/chamber.sql` er trygg å kjøre flere ganger (policyer droppes med `if exists` før de opprettes på nytt).
+- `supabase/chamber.sql` oppretter `aha_insight_chambers`, én JSONB-rad per profil.
 
-## Kjør policies
+### Installere dagens MVP-schema
 
-Etter at tabellene finnes:
+1. Åpne Supabase-prosjektet.
+2. Kjør `supabase/schema.sql`.
+3. Kjør `supabase/policies.sql`.
+4. Kjør valgfritt `supabase/embeddings.sql`.
+5. Kjør valgfritt `supabase/chamber.sql`.
 
-1. Åpne SQL Editor.
-2. Lim inn innholdet fra `supabase/policies.sql`.
-3. Kjør SQL-en.
-4. Kjør `supabase/embeddings.sql` hvis du vil ha semantisk søk + AHA-agent.
-5. Kjør `supabase/chamber.sql` hvis du vil ha chamber-sync på tvers av enheter.
-
-Policy-modellen i denne første versjonen er enkel:
+Dagens enkle policygrunnlag er:
 
 ```text
 Supabase auth user id = aha_profiles.id
 Alle AHA-rader må ha profile_id = auth.uid()
 ```
 
-## RLS
+Frontend kan bruke dette laget bare når Supabase er konfigurert, brukeren er innlogget og den enkelte modulen har eksplisitt database-sync aktivert. LocalStorage fortsetter ellers å fungere.
 
-Row Level Security er aktivert på alle tabeller.
+## Canonical PostgreSQL Schema v1
 
-Frontend kan skrive til Supabase først når bruker er innlogget med Supabase Auth og policyene er kjørt. LocalStorage fortsetter å fungere uansett.
+Den planlagte flerbruker- og synkmodellen ligger som seks additive migrasjoner:
 
-## Frontend-konfig
+```text
+supabase/migrations/20260814215000_aha_identity_workspaces_v1.sql
+supabase/migrations/20260814215100_aha_conversations_sources_v1.sql
+supabase/migrations/20260814215200_aha_analysis_insights_v1.sql
+supabase/migrations/20260814215300_aha_artifacts_v1.sql
+supabase/migrations/20260814215400_aha_governance_v1.sql
+supabase/migrations/20260814215500_aha_schema_guards_v1.sql
+```
+
+De oppretter et separat schema:
+
+```text
+aha.*
+```
+
+Canonical v1 normaliserer:
+
+- identitet, enheter, arbeidsrom, medlemskap og roller
+- samtaler, deltakere, meldinger, source events og vedlegg
+- analysekjøringer, påstander og kildebelegg
+- innsikter, versjoner, relasjoner, feedback og minnelivssyklus
+- begrepslister, stier, artikler og publisering
+- samtykke, deling, import, sync cursors, audit, outbox og AI-jobber
+
+Migrasjonene:
+
+- endrer ikke `public.aha_*` eller `public.music_*`
+- aktiverer ingen frontend eller sync
+- oppretter ingen brukerpolicyer eller frontendgrants
+- aktiverer RLS fail-closed på domenetabellene
+- registrerer `runtime_activated: false` i schema-kvitteringen
+
+Les først:
+
+- `supabase/migrations/README.md`
+- `docs/AHA_CANONICAL_POSTGRESQL_SCHEMA_V1.md`
+- `docs/AHA_LOCAL_TO_CANONICAL_MAPPING_V1.md`
+- `docs/adr/README.md`
+
+Canonical migrasjoner skal foreløpig bare kjøres i en kontrollert utviklings- eller stagingdatabase. Neste leveranse er tenancy-, RLS- og samtykkekontrakten. Browserruntime skal ikke kobles til `aha.*` før denne og de øvrige aktiveringsportene er grønne.
+
+## Frontend-konfig for dagens MVP
 
 Frontend leser:
 
@@ -60,8 +107,8 @@ window.AHA_SUPABASE_URL
 window.AHA_SUPABASE_PUBLISHABLE_KEY
 ```
 
-For lokal test kan du kopiere `ahaConfig.example.js` til `ahaConfig.local.js`, men `ahaConfig.local.js` skal ikke committes.
+For lokal test kan `ahaConfig.example.js` kopieres til `ahaConfig.local.js`. `ahaConfig.local.js` skal ikke committes.
 
-## Viktig
+## Hemmeligheter
 
-Ikke legg databasepassord, service role keys eller andre serverhemmeligheter i frontend eller i repoet.
+Ikke legg databasepassord, service-role keys, API-nøkler eller andre serverhemmeligheter i frontend eller repoet. Canonical backend skal senere bruke server-side identitet, least privilege og et eksplisitt secrets-lager.
