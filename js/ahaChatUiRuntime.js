@@ -4,6 +4,87 @@
 (function (global) {
   "use strict";
 
+  function createShell(deps = {}) {
+    if (typeof deps.loadChamberFromStorage !== "function") {
+      throw new Error("AHAChatShellRuntime mangler avhengighet: loadChamberFromStorage");
+    }
+    if (typeof deps.getInsightsApi !== "function") {
+      throw new Error("AHAChatShellRuntime mangler avhengighet: getInsightsApi");
+    }
+    const subjectId = String(deps.subjectId || "").trim();
+    if (!subjectId) throw new Error("AHAChatShellRuntime mangler avhengighet: subjectId");
+
+    const documentRef = deps.document || global.document;
+    const defaultThemeId = String(deps.defaultThemeId || "th_default");
+
+    function getThemeId() {
+      const input = documentRef?.getElementById?.("theme-id");
+      const value = input && String(input.value || "").trim();
+      return value || defaultThemeId;
+    }
+
+    function getFieldId() {
+      return null;
+    }
+
+    function out(message) {
+      const el = documentRef?.getElementById?.("out");
+      if (el) el.textContent = String(message || "");
+    }
+
+    function setStatusNote(message) {
+      const el = documentRef?.getElementById?.("chat-status-note");
+      if (el) el.textContent = String(message || "");
+    }
+
+    function escHtml(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function renderAuxPanel(targetId, markup) {
+      const el = documentRef?.getElementById?.(targetId);
+      if (el) el.innerHTML = String(markup || "");
+    }
+
+    function renderPanel(html) {
+      const panel = documentRef?.getElementById?.("panel");
+      if (panel) panel.innerHTML = String(html || "");
+    }
+
+    function currentInsights() {
+      const chamber = deps.loadChamberFromStorage();
+      const engine = deps.getInsightsApi();
+      const active = typeof engine?.getActiveInsights === "function"
+        ? engine.getActiveInsights(chamber)
+        : chamber?.insights;
+      return (Array.isArray(active) ? active : []).filter(
+        (insight) => insight?.subject_id === subjectId && insight?.theme_id === getThemeId()
+      );
+    }
+
+    function normalizeDisplayText(value) {
+      return String(value || "")
+        .replace(/underviser(\s+)viktigheten/gi, (_match, gap) => `understreker${gap}viktigheten`);
+    }
+
+    return Object.freeze({
+      getThemeId,
+      getFieldId,
+      out,
+      setStatusNote,
+      escHtml,
+      renderAuxPanel,
+      renderPanel,
+      currentInsights,
+      normalizeDisplayText
+    });
+  }
+
   function create(deps = {}) {
     const required = [
       "submitMessage", "showInsights", "showStatus", "showConcepts", "showMeta",
@@ -135,11 +216,11 @@
     return Object.freeze({ bind, reset, consumePendingChatPrompt, bindActionChips });
   }
 
-  const publicApi = Object.freeze({ create });
+  const publicApi = Object.freeze({ create, createShell });
   global.AHAChatUiRuntime = publicApi;
   global.AHAModuleApi?.register?.("chat.uiRuntime", publicApi, {
     version: 1,
     legacyGlobal: "AHAChatUiRuntime",
-    exports: ["create"]
+    exports: ["create", "createShell"]
   });
 })(window);

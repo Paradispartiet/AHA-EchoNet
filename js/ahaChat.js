@@ -82,6 +82,25 @@
   const saveAutoOutputs = autoOutputStore.save;
   const clearAutoOutputs = autoOutputStore.clear;
 
+  const uiRuntimeModule = chatModule("uiRuntime", "AHAChatUiRuntime");
+  const shellRuntime = uiRuntimeModule?.createShell?.({
+    subjectId: SUBJECT_ID,
+    loadChamberFromStorage,
+    getInsightsApi: insightsApi
+  });
+  if (!shellRuntime) throw new Error("AHAChatShellRuntime må lastes før ahaChat.js.");
+  const {
+    getThemeId,
+    getFieldId,
+    out,
+    setStatusNote,
+    escHtml,
+    renderAuxPanel,
+    renderPanel,
+    currentInsights,
+    normalizeDisplayText
+  } = shellRuntime;
+
   const analysisPolicy = chatModule("analysisPolicy", "AHAChatAnalysisPolicy")?.create?.({
     signals,
     resolveConceptTerm,
@@ -688,62 +707,6 @@
   if (!submissionRuntime) throw new Error("AHAChatSubmissionRuntime må lastes før ahaChat.js.");
   const submitAhaChatMessage = submissionRuntime.submitAhaChatMessage;
 
-  function getThemeId() {
-    const input = document.getElementById("theme-id");
-    const value = input && String(input.value || "").trim();
-    return value || "th_default";
-  }
-
-  function getFieldId() { return null; }
-
-  function out(message) {
-    const el = document.getElementById("out");
-    if (!el) return;
-    el.textContent = String(message || "");
-  }
-  function setStatusNote(message) {
-    const el = document.getElementById("chat-status-note");
-    if (!el) return;
-    el.textContent = String(message || "");
-  }
-
-  function escHtml(value) {
-    return String(value ?? "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
-  }
-
-  function renderAuxPanel(targetId, markup) {
-    const el = document.getElementById(targetId);
-    if (!el) return;
-    el.innerHTML = String(markup || "");
-  }
-
-
-
-  function currentInsights() {
-    const chamber = loadChamberFromStorage();
-    const engine = insightsApi();
-    const active = typeof engine?.getActiveInsights === "function"
-      ? engine.getActiveInsights(chamber)
-      : (chamber?.insights || []);
-    return active.filter(
-      (ins) => ins.subject_id === SUBJECT_ID && ins.theme_id === getThemeId()
-    );
-  }
-
-  function renderPanel(html) {
-    const panel = document.getElementById("panel");
-    if (panel) panel.innerHTML = html;
-  }
-
-  function normalizeDisplayText(value) {
-    return String(value || "")
-      .replace(/underviser(\s+)viktigheten/gi, (_match, gap) => `understreker${gap}viktigheten`);
-  }
   const knowledgeView = chatModule("knowledgeView", "AHAChatKnowledgeView")?.create?.({
     subjectId: SUBJECT_ID,
     loadChamberFromStorage,
@@ -848,7 +811,7 @@
     return stats;
   }
 
-  const uiRuntime = chatModule("uiRuntime", "AHAChatUiRuntime")?.create?.({
+  const uiRuntime = uiRuntimeModule?.create?.({
     pendingPromptKey: PENDING_CHAT_PROMPT_KEY,
     highlightsStorageKey: HIGHLIGHTS_STORAGE_KEY,
     afterworkStorageKey: AFTERWORK_STORAGE_KEY,

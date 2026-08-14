@@ -126,7 +126,9 @@ elements.get("panel").panelVisible = true;
 globalListeners["aha:merge-suggested"]();
 assert.ok(calls.filter(([name]) => name === "showInsights").length >= 2);
 
-assert.ok(chatSource.includes('chatModule("uiRuntime", "AHAChatUiRuntime")?.create?.('));
+assert.ok(chatSource.includes('const uiRuntimeModule = chatModule("uiRuntime", "AHAChatUiRuntime")'));
+assert.ok(chatSource.includes('uiRuntimeModule?.createShell?.('));
+assert.ok(chatSource.includes('uiRuntimeModule?.create?.('));
 assert.ok(chatSource.includes("AHAChatUiRuntime må lastes før ahaChat.js."));
 assert.doesNotMatch(chatSource, /function (?:consumePendingChatPrompt|bindActionChips|bind|reset)\s*\(/, "UI bootstrap implementation must remain outside ahaChat.js");
 assert.ok(chatHtml.indexOf("js/ahaChatUiRuntime.js") < chatHtml.indexOf("js/ahaChat.js"));
