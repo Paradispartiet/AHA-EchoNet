@@ -153,7 +153,8 @@ const chatModules = [
   ['chat.providerLoader', 'AHAChatProviderLoader', 'js/ahaChatProviderLoader.js'],
   ['chat.capabilityBindings', 'AHAChatCapabilityBindings', 'js/ahaChatCapabilityBindings.js'],
   ['chat.runtimeFacade', 'AHAChatRuntimeFacade', 'js/ahaChatRuntimeFacade.js'],
-  ['chat.runtimeComposition', 'AHAChatRuntimeComposition', 'js/ahaChatRuntimeComposition.js']
+  ['chat.runtimeComposition', 'AHAChatRuntimeComposition', 'js/ahaChatRuntimeComposition.js'],
+  ['chat.applicationComposition', 'AHAChatApplicationComposition', 'js/ahaChatApplicationComposition.js']
 ];
 for (const [moduleName, legacyGlobal, file] of chatModules) {
   vm.runInContext(fs.readFileSync(file, 'utf8'), context, { filename: file });
@@ -195,11 +196,16 @@ assert.equal(typeof runtimeFacade.create, 'function');
 const runtimeComposition = context.AHAModuleApi.get('chat.runtimeComposition', { version: 1 });
 assert.equal(typeof runtimeComposition.create, 'function');
 assert.equal(Object.isFrozen(runtimeComposition.REQUIRED_CAPABILITY_GROUPS), true);
+const applicationComposition = context.AHAModuleApi.get('chat.applicationComposition', { version: 1 });
+assert.equal(typeof applicationComposition.create, 'function');
 
 const chatSource = fs.readFileSync('js/ahaChat.js', 'utf8');
-assert.match(chatSource, /providerLoader\.(?:require|instantiate)\(/, 'Chat must resolve extracted modules through the provider boundary');
-assert.match(chatSource, /capabilityBindings\.bind\(/, 'Chat must bind provider surfaces through explicit capability groups');
+const applicationCompositionSource = fs.readFileSync('js/ahaChatApplicationComposition.js', 'utf8');
+assert.match(chatSource, /providerLoader\.instantiate\("applicationComposition", \{/, 'Chat bootstrap must enter through the application-composition provider');
+assert.match(applicationCompositionSource, /providerLoader\.(?:require|instantiate)\(/, 'Application composition must resolve extracted modules through the provider boundary');
+assert.match(applicationCompositionSource, /capabilityBindings\.bind\(/, 'Application composition must bind provider surfaces through explicit capability groups');
 assert.doesNotMatch(chatSource, /function (?:resolveModule|chatModule)\(/, 'module resolution must remain extracted');
+assert.doesNotMatch(chatSource, /capabilityBindings\.bind\(|providerLoader\.(?:require|instantiate)\("(?:agentRuntime|ingestRuntime|runtimeComposition)"/, 'Chat bootstrap must not contain the provider graph');
 for (const [, legacyGlobal] of chatModules) {
   if (legacyGlobal === 'AHAChatProviderLoader') continue; // bootstrap fallback for the loader itself
   assert.doesNotMatch(chatSource, new RegExp(`global\\.${legacyGlobal}\\b`), `Chat must not reach directly into ${legacyGlobal}`);

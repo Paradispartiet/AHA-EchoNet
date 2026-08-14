@@ -158,7 +158,7 @@ function makeProductContext() {
     'js/ahaChatMemoryRuntime.js',
     'js/ahaChatRunContext.js',
     'js/ahaChatInsightView.js',
-    'js/ahaChatAutoAnalysis.js', 'js/ahaChatAutoOutputView.js', 'js/ahaChatAnalysisStateView.js', 'js/ahaChatChamberStore.js', 'js/ahaChatAnalysisPolicy.js', 'js/ahaChatConceptPolicy.js', 'js/ahaChatCanonicalAnalysis.js', 'js/ahaChatKnowledgeView.js', 'js/ahaChatInsightPipeline.js', 'js/ahaChatAgentRuntime.js', 'js/ahaChatIngestRuntime.js', 'js/ahaChatPersonalUi.js', 'js/ahaChatConversationView.js', 'js/ahaChatAnalysisRunContract.js', 'js/ahaChatAcademicInsightView.js', 'js/ahaChatUiRuntime.js', 'js/ahaChatProviderLoader.js', 'js/ahaChatCapabilityBindings.js', 'js/ahaChatRuntimeFacade.js', 'js/ahaChatRuntimeComposition.js', 'js/ahaChat.js',
+    'js/ahaChatAutoAnalysis.js', 'js/ahaChatAutoOutputView.js', 'js/ahaChatAnalysisStateView.js', 'js/ahaChatChamberStore.js', 'js/ahaChatAnalysisPolicy.js', 'js/ahaChatConceptPolicy.js', 'js/ahaChatCanonicalAnalysis.js', 'js/ahaChatKnowledgeView.js', 'js/ahaChatInsightPipeline.js', 'js/ahaChatAgentRuntime.js', 'js/ahaChatIngestRuntime.js', 'js/ahaChatPersonalUi.js', 'js/ahaChatConversationView.js', 'js/ahaChatAnalysisRunContract.js', 'js/ahaChatAcademicInsightView.js', 'js/ahaChatUiRuntime.js', 'js/ahaChatProviderLoader.js', 'js/ahaChatCapabilityBindings.js', 'js/ahaChatRuntimeFacade.js', 'js/ahaChatRuntimeComposition.js', 'js/ahaChatApplicationComposition.js', 'js/ahaChat.js',
     'js/ahaLists.js',
     'js/ahaPaths.js',
     'js/ahaMindmap.js',

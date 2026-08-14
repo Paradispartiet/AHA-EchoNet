@@ -5,7 +5,7 @@ const DOC_FILE = "docs/AHA_PERSONAL_AI_LOOP_EXPORT_REPORT_SURFACE.md";
 const STATUS_FILE = "docs/AHA_IMPLEMENTATION_STATUS.md";
 const JS_FILES = [
   "js/ahaPersonalAiLoopAudit.js",
-  "js/ahaChatAnalysisRunContract.js", "js/ahaChatAcademicInsightView.js", "js/ahaChatUiRuntime.js", "js/ahaChatProviderLoader.js", "js/ahaChatCapabilityBindings.js", "js/ahaChatRuntimeFacade.js", "js/ahaChatRuntimeComposition.js", "js/ahaChat.js",
+  "js/ahaChatAnalysisRunContract.js", "js/ahaChatAcademicInsightView.js", "js/ahaChatUiRuntime.js", "js/ahaChatProviderLoader.js", "js/ahaChatCapabilityBindings.js", "js/ahaChatRuntimeFacade.js", "js/ahaChatRuntimeComposition.js", 'js/ahaChatApplicationComposition.js', "js/ahaChat.js",
   "js/metaInsightsAgent.js",
   "js/ahaTrainingDashboard.js"
 ];

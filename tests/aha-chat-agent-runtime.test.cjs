@@ -3,7 +3,7 @@ const fs = require("fs");
 const vm = require("vm");
 
 const source = fs.readFileSync("js/ahaChatAgentRuntime.js", "utf8");
-const chatSource = fs.readFileSync("js/ahaChat.js", "utf8");
+const chatSource = fs.readFileSync("js/ahaChatApplicationComposition.js", "utf8");
 const chatHtml = fs.readFileSync("chat.html", "utf8");
 const context = { window: null };
 context.window = context;
