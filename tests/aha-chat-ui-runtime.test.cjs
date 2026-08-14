@@ -4,6 +4,7 @@ const vm = require("vm");
 
 const source = fs.readFileSync("js/ahaChatUiRuntime.js", "utf8");
 const chatSource = fs.readFileSync("js/ahaChat.js", "utf8");
+const compositionSource = fs.readFileSync("js/ahaChatRuntimeComposition.js", "utf8");
 const chatHtml = fs.readFileSync("chat.html", "utf8");
 
 const context = { window: null };
@@ -128,13 +129,14 @@ assert.ok(calls.filter(([name]) => name === "showInsights").length >= 2);
 
 assert.ok(chatSource.includes('const uiRuntimeModule = chatModule("uiRuntime", "AHAChatUiRuntime")'));
 assert.ok(chatSource.includes('uiRuntimeModule?.createShell?.('));
-assert.ok(chatSource.includes('uiRuntimeModule?.create?.('));
-assert.ok(chatSource.includes("AHAChatUiRuntime må lastes før ahaChat.js."));
+assert.ok(compositionSource.includes('modules.uiRuntime.create({'));
+assert.ok(compositionSource.includes("AHAChatUiRuntime må lastes før ahaChat.js."));
 assert.doesNotMatch(chatSource, /function (?:consumePendingChatPrompt|bindActionChips|bind|reset)\s*\(/, "UI bootstrap implementation must remain outside ahaChat.js");
 assert.doesNotMatch(chatSource, /function (?:resolveConceptTerm|suggestCategoryChips|refreshAhaExplorer|renderAhaChatMemoryStatus)\s*\(/, "shared shell adapters must remain outside ahaChat.js");
 const uiRuntimeAt = chatHtml.indexOf("js/ahaChatUiRuntime.js");
 const runtimeFacadeAt = chatHtml.indexOf("js/ahaChatRuntimeFacade.js");
+const runtimeCompositionAt = chatHtml.indexOf("js/ahaChatRuntimeComposition.js");
 const chatAt = chatHtml.indexOf("js/ahaChat.js");
-assert.ok(uiRuntimeAt < runtimeFacadeAt && runtimeFacadeAt < chatAt);
+assert.ok(uiRuntimeAt < runtimeFacadeAt && runtimeFacadeAt < runtimeCompositionAt && runtimeCompositionAt < chatAt);
 
 console.log("aha-chat-ui-runtime passed");
