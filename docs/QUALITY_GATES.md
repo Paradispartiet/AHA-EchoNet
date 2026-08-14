@@ -23,6 +23,12 @@ Gjenstående arbeid i dette dokumentets opprinnelige quality-gate-liste er forts
 - memoryIsolation
 - score ceiling
 
+## AHA launch gate v1
+
+Den samlede local-first-reisen er låst av `npm run test:launch-gate` og dokumentert i `docs/AHA_LAUNCH_GATE_V1.md`. Porten dekker produksjonsrekkefølge, Chat-bootstrap/application composition, golden output, kildebundet analyse/eksport, reload av session/minnekontroller/etterarbeid, samtykkestyrt History Go-import, idempotens og null skjult backend/sync/EchoNet/write-back.
+
+Reell iPhone/iPad Safari og Split View forblir en eksplisitt manuell releaseport; Node CI kan ikke sertifisere fysisk Safari.
+
 
 ## AHA Quality Status Surface V1 global safety gate
 

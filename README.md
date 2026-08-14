@@ -9,6 +9,9 @@ The release snapshot is documented in:
 - `docs/AHA_RELEASE_READINESS_SNAPSHOT.md`
 - `docs/AHA_RELEASE_READINESS_SNAPSHOT.json`
 - `docs/AHA_GOLDEN_CHAT_OUTPUT_V1.md`
+- `docs/AHA_LAUNCH_GATE_V1.md`
+
+`ahaChat.js` is now a 27-line bootstrap. The provider graph, factory order, capability groups, environment adapters and late cycle-breaking callbacks live behind versioned `chat.*` boundaries. `npm run test:launch-gate` is the permanent cross-page/reload gate for Chat, source-bound export and consent-gated History Go import.
 
 Current intentional non-ready modules:
 
