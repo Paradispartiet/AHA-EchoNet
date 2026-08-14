@@ -130,6 +130,9 @@
   }
 
   async function persistPath(path) {
+    if (path?.meta?.createdBy === "aha_analysis_artifacts_v1") {
+      return { ok: false, fallback: "localOnly", analysis_artifact_local_only: true };
+    }
     if (!isDatabaseSyncEnabled()) {
       return { ok: false, fallback: "localOnly", database_sync_disabled: true };
     }

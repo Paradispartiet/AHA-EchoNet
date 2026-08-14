@@ -204,13 +204,24 @@
       ["insight", "Viktigste innsikt", canonical?.keyInsight]
     ].forEach(([id, label, value]) => {
       if (!String(value || "").trim()) return;
+      const rankedEvidence = claims.filter((claim) => claim.kind === "source_evidence" && claim.sourceMatch === "verbatim")
+        .map((claim) => ({ claim, score: overlap(claim.text, value) }))
+        .sort((left, right) => right.score - left.score);
+      const bestEvidence = rankedEvidence[0];
       claims.push({
         id,
         kind: "interpretation",
         label,
         text: String(value).trim(),
         sourceMatch: exactSourceMatch(sourceText, value) ? "verbatim" : "interpreted",
-        sourceOverlap: round(bestSourceOverlap(sourceText, value))
+        sourceOverlap: round(bestSourceOverlap(sourceText, value)),
+        evidenceIds: bestEvidence && bestEvidence.score >= 0.12 ? [bestEvidence.claim.id] : [],
+        evidenceText: bestEvidence && bestEvidence.score >= 0.12 ? bestEvidence.claim.text : "",
+        evidenceStatus: bestEvidence && bestEvidence.score >= 0.12 ? "source_quote" : "missing_direct_evidence",
+        confidence: bestEvidence?.score >= 0.45 ? "medium" : "low",
+        uncertainty: bestEvidence && bestEvidence.score >= 0.12
+          ? "Belegget støtter tolkningen, men avgjør den ikke alene."
+          : "Ingen direkte kildepassasje er koblet til denne tolkningen."
       });
     });
     unique(canonical?.suggestedActions || safe.path).forEach((value, index) => {
@@ -220,6 +231,66 @@
       claims.push({ id: `warning_${index + 1}`, kind: "uncertainty", label: "Usikkerhet", text: value });
     });
     return claims;
+  }
+
+  function extractEvidenceSentences(sourceText, focusText = "", limit = 2) {
+    return sentences(sourceText)
+      .filter((sentence) => sentence.length >= 24 && words(sentence, true).length >= 5)
+      .map((sentence, index) => ({ sentence, index, score: overlap(sentence, focusText) + Math.min(0.2, words(sentence).length / 100) }))
+      .sort((left, right) => right.score - left.score || left.index - right.index)
+      .slice(0, limit)
+      .map((item) => item.sentence);
+  }
+
+  function improveAnalysisOnce(payload, sourceText, options = {}) {
+    const safe = payload && typeof payload === "object" ? payload : {};
+    const initialReport = evaluateAnalysis(safe, sourceText, { thresholds: options.thresholds });
+    const sourceWords = words(sourceText, true);
+    if (initialReport.status === "passed") {
+      return { payload: safe, attempted: false, improved: false, needsMoreSource: false, initialReport, finalReport: initialReport };
+    }
+    if (sourceWords.length < 12 || String(sourceText || "").trim().length < 60) {
+      return { payload: safe, attempted: false, improved: false, needsMoreSource: true, initialReport, finalReport: initialReport };
+    }
+
+    const canonical = safe.canonicalAnalysis && typeof safe.canonicalAnalysis === "object" ? safe.canonicalAnalysis : {};
+    const focus = [canonical.theme, canonical.mainTension, canonical.keyInsight].filter(Boolean).join(" ");
+    const extracted = extractEvidenceSentences(sourceText, focus, 2);
+    const verifiedExisting = (Array.isArray(safe.sortItems) ? safe.sortItems : []).filter((item) => exactSourceMatch(sourceText, item?.text));
+    const evidence = unique([...verifiedExisting.map((item) => item.text), ...extracted]).slice(0, 3);
+    const revisedCanonical = {
+      ...canonical,
+      warnings: unique([
+        ...(Array.isArray(canonical.warnings) ? canonical.warnings : []),
+        ...(initialReport.critical.includes("uncertainty_not_disclosed") ? ["Tolkningen må leses som foreløpig og prøves mot mer kildebelegg."] : []),
+        ...(options?.profile?.recommendations?.useConservativeInterpretation ? ["Tidligere tilbakemelding tilsier at AHA bør tolke dette materialet mer forsiktig."] : [])
+      ])
+    };
+    const actions = unique(canonical.suggestedActions).filter((action) => !GENERIC_PATTERNS.some((pattern) => pattern.test(action)));
+    if ((!actions.length || initialReport.dimensions.actionability < Number(options?.thresholds?.actionability || THRESHOLDS.actionability)) && evidence[0]) {
+      actions.unshift(`Kontroller om kildebelegget «${evidence[0].slice(0, 150)}» faktisk støtter hovedinnsikten, og noter ett moteksempel.`);
+    }
+    revisedCanonical.suggestedActions = unique(actions).slice(0, 3);
+    const revised = {
+      ...safe,
+      canonicalAnalysis: revisedCanonical,
+      sortItems: evidence.map((item, index) => ({ label: `Kildebelegg ${index + 1}`, text: item })),
+      qualityRevision: {
+        version: "aha_analysis_quality_revision_v1",
+        attempts: 1,
+        reasons: [...initialReport.critical, ...initialReport.failures.map((item) => item.dimension)],
+        source_quotes_added: evidence.length
+      }
+    };
+    const finalReport = evaluateAnalysis(revised, sourceText, { thresholds: options.thresholds });
+    return {
+      payload: revised,
+      attempted: true,
+      improved: finalReport.overall > initialReport.overall || finalReport.critical.length < initialReport.critical.length,
+      needsMoreSource: finalReport.status === "blocked",
+      initialReport,
+      finalReport
+    };
   }
 
   function sourceGroundingScore(payload, sourceText, claims) {
@@ -317,6 +388,8 @@
     distinctnessScore,
     buildClaimRegister,
     evaluateAnalysis,
+    extractEvidenceSentences,
+    improveAnalysisOnce,
     selectBestCandidates
   });
 

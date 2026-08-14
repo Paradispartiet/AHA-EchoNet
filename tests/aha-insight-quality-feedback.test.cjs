@@ -134,6 +134,11 @@ const activeStorage = {
   getItem(key) { return activeStore.get(key) || null; },
   setItem(key, value) { activeStore.set(key, value); }
 };
+const profileCalls = [];
+context.AHAAnalysisQualityProfile = {
+  recordFeedback(cache, response) { profileCalls.push(['record', cache.sourceHash, response]); },
+  undoFeedback(cache) { profileCalls.push(['undo', cache.sourceHash]); }
+};
 result = api.applyActiveAnalysisFeedback('missing_evidence', { storage: activeStorage, now: '2026-08-12T00:16:00.000Z' });
 assert.equal(result.ok, true);
 let activeCache = JSON.parse(activeStore.get('aha_chat_auto_outputs_v1'));
@@ -141,6 +146,7 @@ assert.equal(activeCache.payload.analysisQuality.score, 72, 'feedback must prese
 assert.equal(activeCache.payload.analysisQuality.latestUserFeedback, 'missing_evidence');
 assert.equal(activeCache.payload.analysisQuality.userFeedback.length, 1);
 assert.equal(activeCache.payload.analysisQuality.userFeedback[0].analysis_source_hash, 'hash_active');
+assert.deepEqual(profileCalls[0], ['record', 'hash_active', 'missing_evidence']);
 result = api.applyActiveAnalysisFeedback('missing_evidence', { storage: activeStorage, now: '2026-08-12T00:16:10.000Z' });
 assert.equal(result.noChange, true, 'identical active-analysis feedback must be idempotent');
 result = api.applyActiveAnalysisFeedback('undo', { storage: activeStorage, now: '2026-08-12T00:16:20.000Z' });
@@ -148,6 +154,7 @@ assert.equal(result.restored, true);
 activeCache = JSON.parse(activeStore.get('aha_chat_auto_outputs_v1'));
 assert.equal(activeCache.payload.analysisQuality.latestUserFeedback, '');
 assert.ok(activeCache.payload.analysisQuality.userFeedback[0].undone_at, 'undo must preserve the audit trail');
+assert.deepEqual(profileCalls.at(-1), ['undo', 'hash_active']);
 
 assert.match(engineCode, /status !== "archived" && status !== "rejected" && status !== "merged"/, 'canonical InsightsEngine must already exclude rejected insights');
 assert.match(navCode, /activeFile === "chat\.html" \|\| activeFile === "insights\.html"/, 'quality controls should load only on Chat and Insights surfaces');

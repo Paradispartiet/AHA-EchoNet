@@ -100,6 +100,15 @@ const activeView = context.AHAChatKnowledgeView.create({
         fieldConnections: ['pedagogikk', 'teknologi'],
         suggestedActions: ['Test kildenes usikkerhet.']
       },
+      analysisQuality: {
+        claims: [{
+          kind: 'interpretation',
+          label: 'Viktigste innsikt',
+          text: 'AI bør støtte kritisk egenarbeid.',
+          evidenceText: 'AI i læring',
+          uncertainty: 'Belegget støtter tolkningen, men avgjør den ikke alene.'
+        }]
+      },
       ahaSer: { nesteSteg: 'Test kildenes usikkerhet.' }
     }
   }),
@@ -112,6 +121,9 @@ assert.match(activeRendered.at(-1), /Aktiv tekst · dette ser AHA nå/);
 assert.match(activeRendered.at(-1), /AI og læring/);
 assert.match(activeRendered.at(-1), /automatisering kontra egen vurdering/);
 assert.match(activeRendered.at(-1), /pedagogikk ↔ teknologi/);
+assert.match(activeRendered.at(-1), /Se belegg og usikkerhet/);
+assert.match(activeRendered.at(-1), /AI i læring/);
+assert.match(activeRendered.at(-1), /avgjør den ikke alene/);
 assert.match(activeRendered.at(-1), /data-analysis-artifact="mindmap"/);
 assert.match(activeRendered.at(-1), /data-analysis-artifact="path"/);
 assert.match(activeRendered.at(-1), /data-analysis-quality="useful"/);

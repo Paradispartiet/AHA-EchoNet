@@ -544,6 +544,12 @@
       : Array.isArray(activeAhaSer.fagkoblinger) ? activeAhaSer.fagkoblinger : [])
       .map((item) => String(item || "").trim()).filter(Boolean).slice(0, 4);
     const activeNextStep = String(activeAhaSer.nesteSteg || (Array.isArray(activeCanonical.suggestedActions) ? activeCanonical.suggestedActions[0] : "") || "").trim();
+    const activeClaims = (Array.isArray(activePayload?.analysisQuality?.claims) ? activePayload.analysisQuality.claims : [])
+      .filter((claim) => claim?.kind === "interpretation");
+    const activeQualityWithheld = activePayload?.qualityGate?.suppressClaims === true;
+    const activeEvidenceMarkup = activeClaims.length ? `<details class="aha-claim-evidence"><summary>Se belegg og usikkerhet</summary>
+      ${activeClaims.map((claim) => `<div class="aha-claim-evidence-item"><p class="knowledge-sub"><strong>${escHtml(claim.label || "Tolkning")}:</strong> ${escHtml(claim.text || "")}</p><p class="knowledge-sub"><strong>Belegg:</strong> ${claim.evidenceText ? `«${escHtml(claim.evidenceText)}»` : "Mangler direkte kildebelegg."}</p><p class="knowledge-sub"><strong>Usikkerhet:</strong> ${escHtml(claim.uncertainty || "Tolkningen må prøves mot kilden.")}</p></div>`).join("")}
+    </details>` : "";
     const latestContextSource = String(latestAcademicContext?.sourceText || "").toLowerCase();
     const institutionalMediaSource = isInstitutionalMediaHistorySource(latestContextSource, latestAcademicContext?.payload || {});
     const theoryAllowedForInstitutionalMedia = !institutionalMediaSource || sourceMentionsTheoryForInstitutionalHistory(latestContextSource);
@@ -607,13 +613,14 @@
     const edgeWarning = lowData && topEdges.length ? `<p class="knowledge-sub">Sterk kobling, men lite datagrunnlag. Forekomst: ${totalInsights} tekster/innsikter. Sikkerhet: lav/middels.</p>` : "";
     return `<section class="knowledge-map-block">
       <h3>Kunnskapskart for hele chamberet</h3>
-      ${activeTheme || activeInsight ? `<article class="knowledge-card knowledge-card-active">
+      ${activeQualityWithheld ? `<article class="knowledge-card knowledge-card-active"><h4>AHA trenger mer grunnlag</h4><p class="knowledge-sub">${escHtml(activePayload?.qualityGate?.message || "Legg til mer konkret kildetekst før analysen brukes videre.")}</p></article>` : activeTheme || activeInsight ? `<article class="knowledge-card knowledge-card-active">
         <h4>Aktiv tekst · dette ser AHA nå</h4>
         ${activeTheme ? `<p class="knowledge-sub"><strong>Tema:</strong> ${escHtml(activeTheme)}</p>` : ""}
         ${activeTension ? `<p class="knowledge-sub"><strong>Spenning:</strong> ${escHtml(activeTension)}</p>` : ""}
         ${activeInsight ? `<p class="knowledge-sub"><strong>Innsikt:</strong> ${escHtml(activeInsight)}</p>` : ""}
         ${activeFields.length ? `<p class="knowledge-sub"><strong>Koblinger:</strong> ${activeFields.map(escHtml).join(" ↔ ")}</p>` : ""}
         ${activeNextStep ? `<p class="knowledge-sub"><strong>Neste steg:</strong> ${escHtml(activeNextStep)}</p>` : ""}
+        ${activeEvidenceMarkup}
         <div class="aha-analysis-artifact-actions" aria-label="Bruk den aktive analysen">
           <button type="button" data-analysis-artifact="mindmap">Lagre som tankekart</button>
           <button type="button" data-analysis-artifact="path">Lagre som sti</button>

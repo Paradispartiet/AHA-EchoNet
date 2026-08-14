@@ -123,6 +123,7 @@ assert.throws(
 );
 
 const chatModules = [
+  ['analysis.qualityProfile', 'AHAAnalysisQualityProfile', 'js/ahaAnalysisQualityProfile.js'],
   ['chat.textUtils', 'AHAChatTextUtils', 'js/ahaChatTextUtils.js'],
   ['chat.chamberStore', 'AHAChatChamberStore', 'js/ahaChatChamberStore.js'],
   ['chat.signals', 'AHAChatSignals', 'js/ahaChatSignals.js'],

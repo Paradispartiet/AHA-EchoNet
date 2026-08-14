@@ -54,4 +54,29 @@ const duplicateSelection = evaluator.selectBestCandidates([
 assert.equal(duplicateSelection.selected.length, 2, 'candidate selector must remove semantic near-duplicates');
 assert.ok(duplicateSelection.rejected.some((item) => item.reason === 'duplicate'));
 
+const revisionSource = 'Kommunen vil innføre en digital søknadsordning i september. Eldrerådet advarer om at innbyggere uten BankID kan falle utenfor. Kommunen lover fysisk veiledning på biblioteket.';
+const weakPayload = {
+  canonicalAnalysis: {
+    theme: 'Digital søknadsordning',
+    mainTension: 'Innbyggere uten BankID kan falle utenfor',
+    keyInsight: 'Fysisk veiledning på biblioteket kan dempe utenforskap.',
+    suggestedActions: ['Undersøk temaet videre.'],
+    confidence: { theme: 0.7, mainTension: 0.5, keyInsight: 0.5 }
+  },
+  sortItems: [{ label: 'Ubekreftet', text: 'Alle eldre vil bli utestengt.' }]
+};
+const revision = evaluator.improveAnalysisOnce(weakPayload, revisionSource);
+assert.equal(revision.attempted, true, 'a weak analysis with enough source must receive one controlled improvement pass');
+assert.equal(revision.payload.qualityRevision.attempts, 1, 'the automatic pass must never loop');
+assert.ok(revision.payload.sortItems.length >= 1);
+for (const item of revision.payload.sortItems) {
+  assert.ok(revisionSource.includes(item.text), 'every added evidence quote must be copied exactly from the active source');
+}
+assert.doesNotMatch(JSON.stringify(revision.payload), /Alle eldre vil bli utestengt/, 'unverified evidence must be removed during revision');
+assert.ok(revision.finalReport.claims.some((claim) => claim.kind === 'interpretation' && claim.evidenceStatus === 'source_quote'), 'interpretations must expose linked evidence');
+
+const thinRevision = evaluator.improveAnalysisOnce(weakPayload, 'Kort notat uten nok sammenheng.');
+assert.equal(thinRevision.attempted, false);
+assert.equal(thinRevision.needsMoreSource, true, 'thin source must ask for more material instead of inventing a better analysis');
+
 console.log(`AHA analysis quality contract: ${goldenPassed} golden + ${production.cases.length} runtime subject + ${stress.cases.length} stress cases = ${contract.review_population.total}`);
