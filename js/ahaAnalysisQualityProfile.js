@@ -177,11 +177,24 @@
     return { ok: Boolean(updated), message: updated || message };
   }
 
-  const api = Object.freeze({ VERSION, collectFeedbackEvents, buildProfile, adjustedThresholds, recordFeedback, undoFeedback });
+  function loadQualityCompletion() {
+    const doc = global.document;
+    if (!doc?.head || !doc.createElement || global.AHAQualityCompletion) return false;
+    if (doc.querySelector?.('script[data-aha-quality-completion="true"]')) return true;
+    const script = doc.createElement("script");
+    script.src = "js/ahaQualityCompletion.js";
+    script.async = false;
+    script.dataset.ahaQualityCompletion = "true";
+    doc.head.appendChild(script);
+    return true;
+  }
+
+  const api = Object.freeze({ VERSION, collectFeedbackEvents, buildProfile, adjustedThresholds, recordFeedback, undoFeedback, loadQualityCompletion });
   global.AHAAnalysisQualityProfile = api;
   global.AHAModuleApi?.register?.("analysis.qualityProfile", api, {
     version: 1,
     legacyGlobal: "AHAAnalysisQualityProfile",
     exports: Object.keys(api)
   });
+  loadQualityCompletion();
 })(typeof window !== "undefined" ? window : globalThis);
