@@ -58,7 +58,8 @@ assert.equal(JSON.stringify(refreshed.sources.intake), before);
 const index = read('index.html');
 assert.match(index, /js\/ahaLocalInsightHome\.js/);
 assert.match(index, /js\/ahaLocalInsightHomeDashboard\.js/);
-for (const id of ['aha-local-home-hero','aha-local-home-next-action','aha-local-home-highlights','aha-local-home-active-work','aha-local-home-projects','aha-local-home-recent','aha-local-home-module-tiles']) assert.match(index, new RegExp(id));
+for (const id of ['aha-local-home-hero','aha-local-home-highlights','aha-local-home-active-work','aha-local-home-projects','aha-local-home-recent','aha-local-home-module-tiles']) assert.match(index, new RegExp(id));
+assert.doesNotMatch(index, /aha-local-home-next-action|aha-local-home-daily-loop/, 'Daily Loop is now exposed by the shared product footer');
 assert.doesNotMatch(index, /scanAllSources\(|approveIntake\(|approveCuration\(|sendToTraining\(/);
 
 assert.match(read('js/ahaProductIntegration.js'), /localInsightHome/);

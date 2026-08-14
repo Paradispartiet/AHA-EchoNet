@@ -1,7 +1,8 @@
 // ahaGlobalNav.js
 // Felles produktnavigasjon for AHA. Hovednivået viser brukerens viktigste
 // destinasjoner. Rå moduler og driftsverktøy ligger ett nivå dypere.
-// Ingen localStorage, sync eller backend-kall; ren visning/navigasjon.
+// Footeren leser eksisterende lokal profil- og Daily Loop-status. Ingen sync
+// eller backend-kall, og ingen ny datamodell.
 
 (function (global) {
   "use strict";
@@ -71,6 +72,9 @@
     { moduleId: "sync-hub", label: "Sync Hub" }
   ]);
 
+  const DAILY_LOOP_STORAGE_KEY = "aha_daily_operating_loop_v1";
+  const PENDING_CHAT_PROMPT_KEY = "aha_pending_chat_prompt_v1";
+
   function escapeHtml(value) {
     return String(value ?? "")
       .replace(/&/g, "&amp;")
@@ -78,6 +82,206 @@
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&#39;");
+  }
+
+  function shortText(value, max = 120) {
+    const text = String(value ?? "").replace(/\s+/g, " ").trim();
+    return text.length > max ? `${text.slice(0, max - 1).trim()}…` : text;
+  }
+
+  function readLocalStorage(key) {
+    try { return global.localStorage?.getItem(key) || null; } catch { return null; }
+  }
+
+  function parseJson(value, fallback = null) {
+    try { return value ? JSON.parse(value) : fallback; } catch { return fallback; }
+  }
+
+  function profileState(detail = null) {
+    const profileId = String(detail?.user?.id || readLocalStorage("aha_profile_id") || "").trim();
+    const displayName = String(detail?.profile?.display_name || readLocalStorage("aha_profile_name") || "").trim();
+    return {
+      signedIn: Boolean(profileId),
+      label: profileId ? (displayName || "Min profil") : "Logg inn",
+      initial: (displayName || "A").charAt(0).toUpperCase() || "A"
+    };
+  }
+
+  function loadDailyLoopStatus() {
+    try {
+      return global.AHADailyOperatingLoop?.buildDailyLoopStatus?.({ save: false, lightweight: true })
+        || global.AHADailyOperatingLoop?.loadDailyLoopStatus?.()
+        || parseJson(readLocalStorage(DAILY_LOOP_STORAGE_KEY), null);
+    } catch {
+      return parseJson(readLocalStorage(DAILY_LOOP_STORAGE_KEY), null);
+    }
+  }
+
+  function dailyLoopContentMarkup(loop) {
+    if (!loop) {
+      return `<div class="aha-global-daily-empty">
+        <strong>AHA gjør dagens løype klar</strong>
+        <p>Du kan starte i Chat mens AHA samler neste steg.</p>
+        <a class="aha-global-daily-primary" href="chat.html">Åpne Chat</a>
+      </div>`;
+    }
+
+    const action = loop.nextBestAction || {};
+    const queue = Array.isArray(loop.actionQueue) ? loop.actionQueue.slice(0, 4) : [];
+    const prompts = Array.isArray(loop.suggestedPrompts) ? loop.suggestedPrompts.slice(0, 3) : [];
+    const queueMarkup = queue.map((item) => `<a class="aha-global-daily-queue-item" href="${escapeHtml(item.href || "chat.html")}">
+      <span>${escapeHtml(item.label || "Neste steg")}</span><span aria-hidden="true">→</span>
+    </a>`).join("");
+    const promptMarkup = prompts.map((item) => `<a class="aha-global-daily-prompt" href="chat.html" data-aha-daily-prompt="${escapeHtml(item.prompt || "")}">${escapeHtml(item.label || "Spør AHA")}</a>`).join("");
+
+    return `<div class="aha-global-daily-summary">
+      <p class="aha-global-daily-day">${escapeHtml(loop.dayLabel || "I dag")}</p>
+      <h3>${escapeHtml(shortText(loop.currentFocus || action.label || "Neste beste handling", 90))}</h3>
+      <p>${escapeHtml(loop.changedSinceLastRun?.summary || "Ingen tydelige endringer siden sist.")}</p>
+    </div>
+    <section class="aha-global-daily-next" aria-label="Neste beste handling">
+      <span>Neste beste handling</span>
+      <strong>${escapeHtml(action.label || "Åpne Chat")}</strong>
+      <p>${escapeHtml(shortText(action.description || "Bruk AHA med dagens status.", 150))}</p>
+      <a class="aha-global-daily-primary" href="${escapeHtml(action.href || "chat.html")}">Fortsett</a>
+    </section>
+    ${queueMarkup ? `<nav class="aha-global-daily-queue" aria-label="Dagens handlinger">${queueMarkup}</nav>` : ""}
+    ${promptMarkup ? `<div class="aha-global-daily-prompts" aria-label="Forslag til Chat">${promptMarkup}</div>` : ""}`;
+  }
+
+  function renderDailyLoopContent() {
+    const content = global.document.getElementById("aha-global-daily-content");
+    if (!content) return false;
+    content.innerHTML = dailyLoopContentMarkup(loadDailyLoopStatus());
+    bindDailyPromptLinks(content);
+    return true;
+  }
+
+  function loadDailyLoopModule() {
+    if (!global.document?.head) return false;
+    if (global.AHADailyOperatingLoop) return renderDailyLoopContent();
+    const existing = global.document.querySelector('script[data-aha-daily-loop="true"], script[src$="/ahaDailyOperatingLoop.js"], script[src="js/ahaDailyOperatingLoop.js"]');
+    if (existing) {
+      existing.addEventListener?.("load", renderDailyLoopContent, { once: true });
+      return true;
+    }
+    const script = global.document.createElement("script");
+    script.src = "js/ahaDailyOperatingLoop.js";
+    script.async = false;
+    script.dataset.ahaDailyLoop = "true";
+    script.addEventListener("load", renderDailyLoopContent, { once: true });
+    global.document.head.appendChild(script);
+    return true;
+  }
+
+  function bindDailyPromptLinks(root) {
+    root.querySelectorAll("[data-aha-daily-prompt]").forEach((link) => {
+      link.addEventListener("click", (event) => {
+        const prompt = String(link.dataset.ahaDailyPrompt || "").trim();
+        if (!prompt) return;
+        const input = global.document.getElementById("msg");
+        if (input) {
+          event.preventDefault();
+          input.value = prompt;
+          if (typeof global.Event === "function") input.dispatchEvent(new global.Event("input", { bubbles: true }));
+          closeDailySheet();
+          input.focus();
+          return;
+        }
+        try {
+          global.localStorage?.setItem(PENDING_CHAT_PROMPT_KEY, JSON.stringify({
+            type: "daily_loop",
+            prompt,
+            createdAt: new Date().toISOString()
+          }));
+        } catch {}
+      });
+    });
+  }
+
+  function closeDailySheet({ restoreFocus = true } = {}) {
+    const sheet = global.document.getElementById("aha-global-daily-sheet");
+    const toggle = global.document.getElementById("aha-global-footer-daily-toggle");
+    if (!sheet || sheet.hidden) return;
+    sheet.hidden = true;
+    toggle?.setAttribute("aria-expanded", "false");
+    global.document.body?.classList.remove("aha-global-daily-open");
+    if (restoreFocus) toggle?.focus();
+  }
+
+  function openDailySheet() {
+    const sheet = global.document.getElementById("aha-global-daily-sheet");
+    const toggle = global.document.getElementById("aha-global-footer-daily-toggle");
+    if (!sheet || !toggle) return;
+    renderDailyLoopContent();
+    sheet.hidden = false;
+    toggle.setAttribute("aria-expanded", "true");
+    global.document.body?.classList.add("aha-global-daily-open");
+    sheet.querySelector(".aha-global-daily-close")?.focus();
+  }
+
+  function updateFooterProfile(detail = null) {
+    const state = profileState(detail);
+    const action = global.document.getElementById("aha-global-footer-profile");
+    if (!action) return;
+    action.dataset.signedIn = state.signedIn ? "true" : "false";
+    action.setAttribute("aria-label", state.signedIn ? `Åpne ${state.label}` : "Logg inn i AHA");
+    const mark = action.querySelector(".aha-global-footer-profile-mark");
+    const label = action.querySelector(".aha-global-footer-profile-label");
+    if (mark) mark.textContent = state.initial;
+    if (label) label.textContent = state.label;
+  }
+
+  function renderGlobalFooter(activeFile) {
+    if (!global.document?.body) return false;
+    global.document.getElementById("aha-global-footer")?.remove();
+    global.document.getElementById("aha-global-daily-sheet")?.remove();
+    global.document.body.insertAdjacentHTML("beforeend", `<footer class="aha-global-footer" id="aha-global-footer" aria-label="AHA hurtigfelt">
+      <div class="aha-global-footer-inner">
+        <button type="button" class="aha-global-footer-action aha-global-footer-profile" id="aha-global-footer-profile" aria-label="Logg inn i AHA">
+          <span class="aha-global-footer-profile-mark" aria-hidden="true">A</span>
+          <span class="aha-global-footer-copy"><span class="aha-global-footer-profile-label">Logg inn</span><small>Profil</small></span>
+        </button>
+        <button type="button" class="aha-global-footer-action aha-global-footer-daily-toggle" id="aha-global-footer-daily-toggle" aria-haspopup="dialog" aria-expanded="false" aria-controls="aha-global-daily-sheet">
+          <span class="aha-global-footer-daily-mark" aria-hidden="true">↑</span>
+          <span class="aha-global-footer-copy"><span>Dagens</span><small>AHA-løype</small></span>
+        </button>
+      </div>
+    </footer>
+    <section class="aha-global-daily-sheet" id="aha-global-daily-sheet" hidden>
+      <button type="button" class="aha-global-daily-backdrop" data-aha-global-daily-close tabindex="-1" aria-label="Lukk dagens AHA-løype"></button>
+      <div class="aha-global-daily-panel" role="dialog" aria-modal="true" aria-labelledby="aha-global-daily-title">
+        <header class="aha-global-daily-header">
+          <div><p>Dagens AHA-løype</p><h2 id="aha-global-daily-title">Dette er viktigst nå</h2></div>
+          <button type="button" class="aha-global-daily-close" data-aha-global-daily-close aria-label="Lukk dagens AHA-løype">&times;</button>
+        </header>
+        <div class="aha-global-daily-content" id="aha-global-daily-content">${dailyLoopContentMarkup(loadDailyLoopStatus())}</div>
+      </div>
+    </section>`);
+
+    updateFooterProfile();
+    const footer = global.document.getElementById("aha-global-footer");
+    const sheet = global.document.getElementById("aha-global-daily-sheet");
+    const profile = global.document.getElementById("aha-global-footer-profile");
+    const dailyToggle = global.document.getElementById("aha-global-footer-daily-toggle");
+
+    profile?.addEventListener("click", () => {
+      const signedIn = profile.dataset.signedIn === "true";
+      if (signedIn) {
+        global.location.href = "profile.html";
+        return;
+      }
+      const localLogin = activeFile === "index.html" ? global.document.getElementById("aha-open-login-modal") : null;
+      if (localLogin) localLogin.click();
+      else global.location.href = "index.html#login";
+    });
+    dailyToggle?.addEventListener("click", () => sheet?.hidden ? openDailySheet() : closeDailySheet());
+    sheet?.querySelectorAll("[data-aha-global-daily-close]").forEach((item) => item.addEventListener("click", () => closeDailySheet()));
+    sheet?.addEventListener("keydown", (event) => { if (event.key === "Escape") closeDailySheet(); });
+    bindDailyPromptLinks(global.document.getElementById("aha-global-daily-content"));
+    global.addEventListener?.("aha:auth-ready", (event) => updateFooterProfile(event.detail));
+    loadDailyLoopModule();
+    return Boolean(footer && sheet);
   }
 
   function currentFile() {
@@ -269,6 +473,7 @@
     if (overlay && overlay.parentElement !== global.document.body) global.document.body.appendChild(overlay);
     applyProductShellCleanup(activeFile);
     bindEvents(mount, overlay);
+    renderGlobalFooter(activeFile);
   }
 
   function bindEvents(mount, overlay) {
@@ -302,7 +507,11 @@
     isTechnicalEyebrow,
     loadHomeContinueExperience,
     loadInsightQualityFeedback,
-    loadInsightAvailabilityBridge
+    loadInsightAvailabilityBridge,
+    loadDailyLoopModule,
+    renderDailyLoopContent,
+    renderGlobalFooter,
+    profileState
   };
 
   if (global.document.readyState === "loading") global.document.addEventListener("DOMContentLoaded", () => render());
