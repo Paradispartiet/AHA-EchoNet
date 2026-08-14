@@ -11,86 +11,66 @@
   const AFTERWORK_STORAGE_KEY = "aha_afterwork_v1";
   const PENDING_CHAT_PROMPT_KEY = "aha_pending_chat_prompt_v1";
 
-  function resolveModule(name, legacyGlobal) {
-    return global.AHAModuleApi?.resolve?.(name, legacyGlobal, { version: 1 }) || global[legacyGlobal] || null;
-  }
+  const providerLoaderApi = global.AHAModuleApi?.resolve?.(
+    "chat.providerLoader", "AHAChatProviderLoader", { version: 1 }
+  ) || global.AHAChatProviderLoader;
+  if (!providerLoaderApi) throw new Error("AHAChatProviderLoader må lastes før ahaChat.js.");
+  const providerLoader = providerLoaderApi.create({ moduleApi: global.AHAModuleApi, legacyRoot: global });
 
-  function insightsApi() { return resolveModule("insights", "InsightsEngine"); }
-  function ingestApi() { return resolveModule("ingest", "AHAIngest"); }
-  function sourcesApi() { return resolveModule("sources", "AHASources"); }
-  function chatModule(name, legacyGlobal) { return resolveModule(`chat.${name}`, legacyGlobal); }
+  function insightsApi() { return providerLoader.resolve("insights", "InsightsEngine"); }
+  function ingestApi() { return providerLoader.resolve("ingest", "AHAIngest"); }
+  function sourcesApi() { return providerLoader.resolve("sources", "AHASources"); }
 
-  const textUtils = chatModule("textUtils", "AHAChatTextUtils");
-  if (!textUtils) throw new Error("AHAChatTextUtils må lastes før ahaChat.js.");
+  const textUtils = providerLoader.require("textUtils");
   const shortHash = textUtils.shortHash;
   const takeKeywords = textUtils.takeKeywords;
   const sourceHash = textUtils.sourceHash;
   const cleanArticleText = textUtils.cleanArticleText;
   const toSentences = textUtils.toSentences;
   const collectOpinionArticleEvidence = textUtils.collectOpinionArticleEvidence;
-  if ([shortHash, takeKeywords, sourceHash, cleanArticleText, toSentences, collectOpinionArticleEvidence].some((fn) => typeof fn !== "function")) {
-    throw new Error("AHAChatTextUtils må eksponere alle tekst- og kildeprimitiver.");
-  }
 
-  const signals = chatModule("signals", "AHAChatSignals");
-  if (!signals) throw new Error("AHAChatSignals må lastes før ahaChat.js.");
+  const signals = providerLoader.require("signals");
   const detectTextType = signals.detectTextType;
   const detectPublicAdministrationReformSignal = signals.detectPublicAdministrationReformSignal;
   const detectPublicAdministrationSignal = signals.detectPublicAdministrationSignal;
   const inferReligiousLexiconEvidence = signals.inferReligiousLexiconEvidence;
-  if ([detectTextType, detectPublicAdministrationReformSignal, detectPublicAdministrationSignal, inferReligiousLexiconEvidence].some((fn) => typeof fn !== "function")) {
-    throw new Error("AHAChatSignals må eksponere alle signalprimitiver.");
-  }
 
-  const subjects = chatModule("subjects", "AHAChatSubjects");
-  if (!subjects) throw new Error("AHAChatSubjects må lastes før ahaChat.js.");
+  const subjects = providerLoader.require("subjects");
   const normalizeSubjectLinks = subjects.normalizeSubjectLinks;
   const enrichSubjectMatchesForClimateConflict = subjects.enrichSubjectMatchesForClimateConflict;
   const enrichSubjectMatchesForPublicAdministration = subjects.enrichSubjectMatchesForPublicAdministration;
   const normalizeFagkoblinger = subjects.normalizeFagkoblinger;
   const isAcademicLikeType = subjects.isAcademicLikeType;
-  if ([normalizeSubjectLinks, enrichSubjectMatchesForClimateConflict, enrichSubjectMatchesForPublicAdministration, normalizeFagkoblinger, isAcademicLikeType].some((fn) => typeof fn !== "function")) {
-    throw new Error("AHAChatSubjects må eksponere alle fagkoblingsprimitiver.");
-  }
 
-  const analysis = chatModule("analysis", "AHAChatAnalysis");
-  const buildOpinionArticleQualityAnalysis = analysis?.buildOpinionArticleQualityAnalysis;
-  if (typeof buildOpinionArticleQualityAnalysis !== "function") {
-    throw new Error("AHAChatAnalysis må eksponere buildOpinionArticleQualityAnalysis.");
-  }
+  const analysis = providerLoader.require("analysis");
+  const buildOpinionArticleQualityAnalysis = analysis.buildOpinionArticleQualityAnalysis;
 
-  const replyFormat = chatModule("replyFormat", "AHAChatReplyFormat");
-  const normalizeAhaVisibleReply = replyFormat?.normalizeAhaVisibleReply;
-  if (typeof normalizeAhaVisibleReply !== "function") {
-    throw new Error("AHAChatReplyFormat må eksponere normalizeAhaVisibleReply.");
-  }
+  const replyFormat = providerLoader.require("replyFormat");
+  const normalizeAhaVisibleReply = replyFormat.normalizeAhaVisibleReply;
 
-  const chamberStore = chatModule("chamberStore", "AHAChatChamberStore")?.create?.({
+  const chamberStore = providerLoader.instantiate("chamberStore", {
     createEmptyChamber: () => insightsApi().createEmptyChamber()
   });
-  if (!chamberStore) throw new Error("AHAChatChamberStore må lastes før ahaChat.js.");
   const loadChamberFromStorage = chamberStore.load;
   const saveChamberToStorage = chamberStore.save;
   const clearChamberStorage = chamberStore.clear;
 
-  const autoOutputStore = chatModule("autoOutputStore", "AHAChatAutoOutputStore")?.create?.({
+  const autoOutputStore = providerLoader.instantiate("autoOutputStore", {
     sourceHash,
     defaultConversationId: CHAT_THREAD_ID
   });
-  if (!autoOutputStore) throw new Error("AHAChatAutoOutputStore må lastes før ahaChat.js.");
   const loadAutoOutputs = autoOutputStore.load;
   const saveAutoOutputs = autoOutputStore.save;
   const clearAutoOutputs = autoOutputStore.clear;
 
-  const uiRuntimeModule = chatModule("uiRuntime", "AHAChatUiRuntime");
-  const shellRuntime = uiRuntimeModule?.createShell?.({
+  const uiRuntimeModule = providerLoader.require("uiRuntime");
+  const shellRuntime = providerLoader.instantiate("uiRuntime", {
     subjectId: SUBJECT_ID,
     loadChamberFromStorage,
     getInsightsApi: insightsApi,
     filterConceptLabels: (...args) => filterConceptLabels(...args),
     buildExportBundle: (...args) => buildAhaAnalysisExportBundle(...args)
-  });
-  if (!shellRuntime) throw new Error("AHAChatShellRuntime må lastes før ahaChat.js.");
+  }, { factory: "createShell", label: "AHAChatShellRuntime" });
   const {
     getThemeId,
     getFieldId,
@@ -107,7 +87,7 @@
     renderChatMemoryStatus: renderAhaChatMemoryStatus
   } = shellRuntime;
 
-  const analysisPolicy = chatModule("analysisPolicy", "AHAChatAnalysisPolicy")?.create?.({
+  const analysisPolicy = providerLoader.instantiate("analysisPolicy", {
     signals,
     resolveConceptTerm,
     normalizeDisplayText,
@@ -124,7 +104,6 @@
     getRuntimeKnowledgePolicy: () => AHA_RUNTIME_KNOWLEDGE_POLICY,
     normalizeAfterworkConcept: (...args) => normalizeAfterworkConcept(...args)
   });
-  if (!analysisPolicy) throw new Error("AHAChatAnalysisPolicy må lastes før ahaChat.js.");
 
   const normalizeConceptSurface = analysisPolicy.normalizeConceptSurface;
   const normalizeVisibleAcademicLabel = analysisPolicy.normalizeVisibleAcademicLabel;
@@ -161,7 +140,7 @@
   const mergeTheoryLinks = analysisPolicy.mergeTheoryLinks;
   const buildAcademicConceptCandidates = analysisPolicy.buildAcademicConceptCandidates;
 
-  const conceptPolicy = chatModule("conceptPolicy", "AHAChatConceptPolicy")?.create?.({
+  const conceptPolicy = providerLoader.instantiate("conceptPolicy", {
     normalizeAfterworkConcept: (...args) => normalizeAfterworkConcept(...args),
     normalizeConceptSurface,
     normalizeVisibleAcademicLabel,
@@ -169,7 +148,6 @@
     detectPublicAdministrationReformSignal,
     extractAcademicPhraseConcepts
   });
-  if (!conceptPolicy) throw new Error("AHAChatConceptPolicy må lastes før ahaChat.js.");
 
   const normalizeConceptKey = conceptPolicy.normalizeConceptKey;
   const getCanonicalConceptLabel = conceptPolicy.getCanonicalConceptLabel;
@@ -180,13 +158,11 @@
   const filterConceptLabels = conceptPolicy.filterConceptLabels;
   const canonicalizeDisplayConcept = conceptPolicy.canonicalizeDisplayConcept;
 
-  const analysisRunContract = chatModule("analysisRunContract", "AHAChatAnalysisRunContract");
-  if (!analysisRunContract) throw new Error("AHAChatAnalysisRunContract må lastes før ahaChat.js.");
+  const analysisRunContract = providerLoader.require("analysisRunContract");
 
-  const memoryControls = chatModule("memoryControls", "AHAChatMemoryControls")?.create?.({
+  const memoryControls = providerLoader.instantiate("memoryControls", {
     loadChamber: loadChamberFromStorage
   });
-  if (!memoryControls) throw new Error("AHAChatMemoryControls må lastes før ahaChat.js.");
   if (typeof memoryControls.bindView !== "function") throw new Error("AHAChatMemoryControls må eksponere bindView.");
 
   const normalizeAhaMemoryControls = memoryControls.normalizeAhaMemoryControls;
@@ -208,7 +184,7 @@
   const resetAhaMemoryExclusions = memoryControls.resetAhaMemoryExclusions;
   const getAhaExcludedMemoryItems = memoryControls.getAhaExcludedMemoryItems;
 
-  const afterwork = chatModule("afterwork", "AHAChatAfterwork")?.create?.({
+  const afterwork = providerLoader.instantiate("afterwork", {
     storageKey: AFTERWORK_STORAGE_KEY,
     sourceHash,
     escHtml,
@@ -219,7 +195,6 @@
     renderPanel,
     setStatusNote
   });
-  if (!afterwork) throw new Error("AHAChatAfterwork må lastes før ahaChat.js.");
 
   const loadAfterworkEntries = afterwork.loadAfterworkEntries;
   const saveAfterworkEntries = afterwork.saveAfterworkEntries;
@@ -230,7 +205,7 @@
   const buildFromAfterworkEntry = afterwork.buildFromAfterworkEntry;
   const deleteAfterworkEntry = afterwork.deleteAfterworkEntry;
 
-  const memoryRuntime = chatModule("memoryRuntime", "AHAChatMemoryRuntime")?.create?.({
+  const memoryRuntime = providerLoader.instantiate("memoryRuntime", {
     loadChamber: loadChamberFromStorage,
     loadAfterworkEntries,
     loadControls: loadAhaMemoryControls,
@@ -239,7 +214,6 @@
     isExcluded: isAhaMemoryInsightExcluded,
     getInsightKey: getAhaMemoryInsightKey
   });
-  if (!memoryRuntime) throw new Error("AHAChatMemoryRuntime må lastes før ahaChat.js.");
 
   const normalizeAhaMemoryText = memoryRuntime.normalizeAhaMemoryText;
   const memoryConceptLabel = memoryRuntime.memoryConceptLabel;
@@ -258,7 +232,7 @@
   const buildAhaMemoryStatus = memoryRuntime.buildAhaMemoryStatus;
   const buildAhaLearningContractReply = memoryRuntime.buildAhaLearningContractReply;
 
-  const runContext = chatModule("runContext", "AHAChatRunContext")?.create?.({
+  const runContext = providerLoader.instantiate("runContext", {
     analysisRunContract,
     sourceHash,
     shortHash,
@@ -267,7 +241,6 @@
     buildMemoryOffContext: buildAhaMemoryOffContext,
     defaultConversationId: CHAT_THREAD_ID
   });
-  if (!runContext) throw new Error("AHAChatRunContext må lastes før ahaChat.js.");
 
   const getActiveAnalysisRun = runContext.getActiveAnalysisRun;
   const setActiveAnalysisRun = runContext.setActiveAnalysisRun;
@@ -280,7 +253,7 @@
   const filterRetrievalForActiveSource = runContext.filterRetrievalForActiveSource;
   const filterMemoryContextForActiveSource = runContext.filterMemoryContextForActiveSource;
 
-  const afterworkAutoAdapter = chatModule("afterwork", "AHAChatAfterwork")?.createAutoOutputAdapter?.({
+  const afterworkAutoAdapter = providerLoader.instantiate("afterwork", {
     defaultConversationId: CHAT_THREAD_ID,
     sourceHash,
     shortHash,
@@ -298,13 +271,12 @@
     loadAfterworkEntries,
     saveAfterworkEntries,
     loadAutoOutputs
-  });
-  if (!afterworkAutoAdapter) throw new Error("AHAChatAfterworkAutoAdapter må lastes før ahaChat.js.");
+  }, { factory: "createAutoOutputAdapter", label: "AHAChatAfterworkAutoAdapter" });
   const normalizeAfterworkConcept = afterworkAutoAdapter.normalizeAfterworkConcept;
   const saveAutoOutputAsAfterwork = afterworkAutoAdapter.saveAutoOutputAsAfterwork;
   const ensureAfterworkForLatestAnalysis = afterworkAutoAdapter.ensureAfterworkForLatestAnalysis;
 
-  const insightPipeline = chatModule("insightPipeline", "AHAChatInsightPipeline")?.create?.({
+  const insightPipeline = providerLoader.instantiate("insightPipeline", {
     filterConceptLabels,
     normalizeSimpleStringList,
     normalizeTheoreticalLinks,
@@ -312,11 +284,10 @@
     normalizeAfterworkConcept,
     weakConceptWords: { has: conceptPolicy.isWeakConceptWord }
   });
-  if (!insightPipeline) throw new Error("AHAChatInsightPipeline må lastes før ahaChat.js.");
   const generateAIInsightCandidates = insightPipeline.generateAIInsightCandidates;
   const buildSemanticInsightCandidates = insightPipeline.buildSemanticInsightCandidates;
 
-  const agentRuntime = chatModule("agentRuntime", "AHAChatAgentRuntime")?.create?.({
+  const agentRuntime = providerLoader.instantiate("agentRuntime", {
     subjectId: SUBJECT_ID,
     getApiBase: () => global.AHA_AGENT_API,
     fetchImpl: (...args) => global.fetch(...args),
@@ -326,11 +297,10 @@
     buildUserMetaProfile: (chamber, subjectId) =>
       global.MetaInsightsEngine?.buildUserMetaProfile?.(chamber, subjectId) || {}
   });
-  if (!agentRuntime) throw new Error("AHAChatAgentRuntime må lastes før ahaChat.js.");
   const buildAIState = agentRuntime.buildAIState;
   const askAhaAgent = agentRuntime.askAhaAgent;
 
-  const ingestRuntime = chatModule("ingestRuntime", "AHAChatIngestRuntime")?.create?.({
+  const ingestRuntime = providerLoader.instantiate("ingestRuntime", {
     subjectId: SUBJECT_ID,
     getInsightsApi: insightsApi,
     getIngestApi: ingestApi,
@@ -343,11 +313,10 @@
     loadChamber: loadChamberFromStorage,
     saveChamber: saveChamberToStorage
   });
-  if (!ingestRuntime) throw new Error("AHAChatIngestRuntime må lastes før ahaChat.js.");
   const handleUserMessage = ingestRuntime.handleUserMessage;
   const handleUserMessageInsightCandidatesInBackground = ingestRuntime.handleUserMessageInsightCandidatesInBackground;
 
-  const academicInsightView = chatModule("academicInsightView", "AHAChatAcademicInsightView")?.create?.({
+  const academicInsightView = providerLoader.instantiate("academicInsightView", {
     loadAutoOutputs,
     loadAfterworkEntries,
     detectTextType,
@@ -361,12 +330,11 @@
     detectAutoAnalysisDomain,
     extractMainInstitutionName
   });
-  if (!academicInsightView) throw new Error("AHAChatAcademicInsightView må lastes før ahaChat.js.");
   const parseLabeledInsightCards = academicInsightView.parseLabeledInsightCards;
   const readLatestAcademicContext = academicInsightView.readLatestAcademicContext;
   const buildAcademicSyntheticInsightCards = academicInsightView.buildAcademicSyntheticInsightCards;
 
-  const insightView = chatModule("insightView", "AHAChatInsightView")?.create?.({
+  const insightView = providerLoader.instantiate("insightView", {
     escHtml,
     normalizeConceptKey,
     normalizeDisplayText,
@@ -386,7 +354,6 @@
     renderPanel,
     loadAutoOutputs
   });
-  if (!insightView) throw new Error("AHAChatInsightView må lastes før ahaChat.js.");
 
   const renderInsightCard = insightView.renderInsightCard;
   const isFragmentaryInsightCard = insightView.isFragmentaryInsightCard;
@@ -399,7 +366,7 @@
   const renderMergeSuggestionsSection = insightView.renderMergeSuggestionsSection;
   const showInsights = insightView.showInsights;
 
-  const personalUi = chatModule("personalUi", "AHAChatPersonalUi")?.create?.({
+  const personalUi = providerLoader.instantiate("personalUi", {
     getActiveAnalysisRun,
     bindAnalysisArtifact,
     buildAhaMemoryTransparency,
@@ -415,7 +382,6 @@
     resetAhaMemoryExclusions,
     buildAhaMemoryStatus
   });
-  if (!personalUi) throw new Error("AHAChatPersonalUi må lastes før ahaChat.js.");
 
   memoryControls.bindView({
     renderControls: personalUi.renderAhaMemoryControls,
@@ -431,7 +397,7 @@
     bindAhaMemoryControls, updateAhaMemoryStatus
   } = personalUi;
 
-  const conversationView = chatModule("conversationView", "AHAChatConversationView")?.create?.({
+  const conversationView = providerLoader.instantiate("conversationView", {
     storageKey: HIGHLIGHTS_STORAGE_KEY,
     threadId: CHAT_THREAD_ID,
     shortHash,
@@ -440,13 +406,12 @@
     renderAhaAnswerEvaluation,
     refreshAhaExplorer
   });
-  if (!conversationView) throw new Error("AHAChatConversationView må lastes før ahaChat.js.");
   const appendChat = conversationView.appendChat;
   const renderHighlightsRail = conversationView.renderHighlightsRail;
   const updateEmptyState = conversationView.updateEmptyState;
   const updateAnswerActionsVisibility = conversationView.updateAnswerActionsVisibility;
 
-  const analysisStateView = chatModule("analysisStateView", "AHAChatAnalysisStateView")?.create?.({
+  const analysisStateView = providerLoader.instantiate("analysisStateView", {
     getActiveAnalysisRun,
     setActiveAnalysisRun,
     clearAutoOutputs,
@@ -457,14 +422,13 @@
     renderHighlightsRail,
     updateEmptyState
   });
-  if (!analysisStateView) throw new Error("AHAChatAnalysisStateView må lastes før ahaChat.js.");
   const renderAnalysisDebugPanel = analysisStateView.renderAnalysisDebugPanel;
   const setExportButtonsEnabled = analysisStateView.setExportButtonsEnabled;
   const setAhaProcessing = analysisStateView.setProcessing;
   const clearActiveAnalysisState = analysisStateView.clearActiveAnalysisState;
   const resetAnalysisStateView = analysisStateView.resetView;
 
-  const autoAnalysis = chatModule("autoAnalysis", "AHAChatAutoAnalysis")?.create?.({
+  const autoAnalysis = providerLoader.instantiate("autoAnalysis", {
     cleanArticleText,
     toSentences,
     takeKeywords,
@@ -484,7 +448,6 @@
     extractAcademicTheoryLinks,
     extractMainInstitutionName
   });
-  if (!autoAnalysis) throw new Error("AHAChatAutoAnalysis må lastes før ahaChat.js.");
 
   const getUrlDominanceInfo = autoAnalysis.getUrlDominanceInfo;
   const isSportsArticleAnalysis = autoAnalysis.isSportsArticleAnalysis;
@@ -497,7 +460,7 @@
   const buildAutoOutputs = autoAnalysis.buildAutoOutputs;
   const buildAutoOutputFallbackPayload = autoAnalysis.buildAutoOutputFallbackPayload;
 
-  const autoOutputView = chatModule("autoOutputView", "AHAChatAutoOutputView")?.create?.({
+  const autoOutputView = providerLoader.instantiate("autoOutputView", {
     enforceCanonicalSourceGrounding,
     getActiveAnalysisRun,
     artifactMatchesActiveRun,
@@ -523,14 +486,13 @@
     getLiterarySubjectMatches,
     getLiteraryAttachmentLearningPath
   });
-  if (!autoOutputView) throw new Error("AHAChatAutoOutputView må lastes før ahaChat.js.");
 
   const humanizeTextType = autoOutputView.humanizeTextType;
   const buildAhaSerCard = autoOutputView.buildAhaSerCard;
   const renderAutoOutputPayload = autoOutputView.renderAutoOutputPayload;
   const filterCrossDomainAutoPayload = autoOutputView.filterCrossDomainAutoPayload;
 
-  const canonicalAnalysis = chatModule("canonicalAnalysis", "AHAChatCanonicalAnalysis")?.create?.({
+  const canonicalAnalysis = providerLoader.instantiate("canonicalAnalysis", {
     buildAhaSerCard,
     AHA_RUNTIME_KNOWLEDGE_POLICY,
     detectTextType,
@@ -540,7 +502,6 @@
     normalizeConceptKey,
     buildAcademicConceptCandidates
   });
-  if (!canonicalAnalysis) throw new Error("AHAChatCanonicalAnalysis må lastes før ahaChat.js.");
 
   const isPythonEngineFeatureEnabled = canonicalAnalysis.isPythonEngineFeatureEnabled;
   const isValidCanonicalAnalysisShape = canonicalAnalysis.isValidCanonicalAnalysisShape;
@@ -551,7 +512,7 @@
   const normalizeAnalysisWarnings = canonicalAnalysis.normalizeAnalysisWarnings;
   const buildHistoryGoLinksFromDomain = canonicalAnalysis.buildHistoryGoLinksFromDomain;
 
-  const runtimeComposition = chatModule("runtimeComposition", "AHAChatRuntimeComposition")?.create?.({
+  const runtimeComposition = providerLoader.instantiate("runtimeComposition", {
     config: {
       subjectId: SUBJECT_ID,
       threadId: CHAT_THREAD_ID,
@@ -560,14 +521,14 @@
       afterworkStorageKey: AFTERWORK_STORAGE_KEY
     },
     modules: {
-      export: chatModule("export", "AHAChatExport"),
-      autoOutputView: chatModule("autoOutputView", "AHAChatAutoOutputView"),
+      export: providerLoader.require("export"),
+      autoOutputView: providerLoader.require("autoOutputView"),
       replyFormat,
       metaInsightsAgent: global.AHAMetaInsightsAgent,
-      runContext: chatModule("runContext", "AHAChatRunContext"),
-      knowledgeView: chatModule("knowledgeView", "AHAChatKnowledgeView"),
+      runContext: providerLoader.require("runContext"),
+      knowledgeView: providerLoader.require("knowledgeView"),
       uiRuntime: uiRuntimeModule,
-      runtimeFacade: chatModule("runtimeFacade", "AHAChatRuntimeFacade")
+      runtimeFacade: providerLoader.require("runtimeFacade")
     },
     bindings: {
       loadAutoOutputs, analysisRunContract, getActiveAnalysisRun, loadAfterworkEntries, sourceHash,
@@ -610,6 +571,5 @@
       scoreRetrievalAgainstSource, artifactMatchesActiveRun, buildAhaPersonalAiLoopChatReadinessStatus
     }
   });
-  if (!runtimeComposition) throw new Error("AHAChatRuntimeComposition må lastes før ahaChat.js.");
   runtimeComposition.install();
 })(window);

@@ -110,7 +110,7 @@ function createHarness(options = {}) {
   const failing = createHarness({ fetchOk: false }).runtime;
   await assert.rejects(() => failing.askAhaAgent("Hei"), /chat_http_503/);
 
-  assert.match(chatSource, /chatModule\("agentRuntime", "AHAChatAgentRuntime"\)\?\.create\?\./);
+  assert.match(chatSource, /providerLoader\.instantiate\("agentRuntime", \{/);
   assert.doesNotMatch(chatSource, /function (?:buildAIState|askAhaAgent)\s*\(/);
   assert.doesNotMatch(chatSource, /memory_context:|personal_context:|similar_insights:/);
   assert.ok(chatHtml.indexOf("js/ahaChatAgentRuntime.js") < chatHtml.indexOf("js/ahaChat.js"));

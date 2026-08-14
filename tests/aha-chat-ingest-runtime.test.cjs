@@ -114,7 +114,7 @@ async function verifyBackgroundIngest() {
   assert.equal(calls.canonical.length, 0);
 }
 
-assert.match(chatSource, /chatModule\("ingestRuntime", "AHAChatIngestRuntime"\)\?\.create\?\./);
+assert.match(chatSource, /providerLoader\.instantiate\("ingestRuntime", \{/);
 assert.doesNotMatch(chatSource, /function (?:ingestUserMessageWithCandidates|handleUserMessageInsightCandidatesInBackground)\s*\(/);
 assert.doesNotMatch(chatSource, /ingestWithCandidates|addSourceEvent\?\.\(/);
 assert.ok(chatHtml.indexOf("js/ahaChatIngestRuntime.js") < chatHtml.indexOf("js/ahaChat.js"));

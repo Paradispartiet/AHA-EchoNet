@@ -73,6 +73,11 @@ the already versioned export, auto-output, reply policy, Meta-AI, submission,
 knowledge-view, UI and runtime-facade modules. It accepts an explicit module map,
 configuration and binding table; it contains no analysis or import engine logic.
 
+`chat.providerLoader` is the canonical manifest for Chat provider names, legacy
+aliases and required factory methods. `ahaChat.js` resolves and instantiates
+providers through this boundary, while non-Chat core modules still use the same
+version-1 registry with their explicit legacy fallback.
+
 ## Candidate-ingest extension point
 
 Code outside `ahaIngest.js` must not replace `ingestWithCandidates`. Candidate processing is extended through:

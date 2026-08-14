@@ -127,16 +127,18 @@ elements.get("panel").panelVisible = true;
 globalListeners["aha:merge-suggested"]();
 assert.ok(calls.filter(([name]) => name === "showInsights").length >= 2);
 
-assert.ok(chatSource.includes('const uiRuntimeModule = chatModule("uiRuntime", "AHAChatUiRuntime")'));
-assert.ok(chatSource.includes('uiRuntimeModule?.createShell?.('));
+assert.ok(chatSource.includes('const uiRuntimeModule = providerLoader.require("uiRuntime")'));
+assert.ok(chatSource.includes('providerLoader.instantiate("uiRuntime", {'));
+assert.ok(chatSource.includes('label: "AHAChatShellRuntime"'));
 assert.ok(compositionSource.includes('modules.uiRuntime.create({'));
 assert.ok(compositionSource.includes("AHAChatUiRuntime må lastes før ahaChat.js."));
 assert.doesNotMatch(chatSource, /function (?:consumePendingChatPrompt|bindActionChips|bind|reset)\s*\(/, "UI bootstrap implementation must remain outside ahaChat.js");
 assert.doesNotMatch(chatSource, /function (?:resolveConceptTerm|suggestCategoryChips|refreshAhaExplorer|renderAhaChatMemoryStatus)\s*\(/, "shared shell adapters must remain outside ahaChat.js");
 const uiRuntimeAt = chatHtml.indexOf("js/ahaChatUiRuntime.js");
+const providerLoaderAt = chatHtml.indexOf("js/ahaChatProviderLoader.js");
 const runtimeFacadeAt = chatHtml.indexOf("js/ahaChatRuntimeFacade.js");
 const runtimeCompositionAt = chatHtml.indexOf("js/ahaChatRuntimeComposition.js");
 const chatAt = chatHtml.indexOf("js/ahaChat.js");
-assert.ok(uiRuntimeAt < runtimeFacadeAt && runtimeFacadeAt < runtimeCompositionAt && runtimeCompositionAt < chatAt);
+assert.ok(uiRuntimeAt < providerLoaderAt && providerLoaderAt < runtimeFacadeAt && runtimeFacadeAt < runtimeCompositionAt && runtimeCompositionAt < chatAt);
 
 console.log("aha-chat-ui-runtime passed");

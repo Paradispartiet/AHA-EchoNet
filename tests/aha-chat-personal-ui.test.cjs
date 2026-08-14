@@ -4,7 +4,7 @@ const vm = require("vm");
 
 const source = fs.readFileSync("js/ahaChatPersonalUi.js", "utf8");
 const memoryControlsSource = fs.readFileSync("js/ahaChatMemoryControls.js", "utf8");
-const chatSource = fs.readFileSync("js/ahaChatAnalysisRunContract.js", "utf8") + "\n" + fs.readFileSync("js/ahaChatAcademicInsightView.js", "utf8") + "\n" + fs.readFileSync("js/ahaChatUiRuntime.js", "utf8") + "\n" + fs.readFileSync("js/ahaChatRuntimeFacade.js", "utf8") + "\n" + fs.readFileSync("js/ahaChatRuntimeComposition.js", "utf8") + "\n" + fs.readFileSync("js/ahaChat.js", "utf8");
+const chatSource = fs.readFileSync("js/ahaChatAnalysisRunContract.js", "utf8") + "\n" + fs.readFileSync("js/ahaChatAcademicInsightView.js", "utf8") + "\n" + fs.readFileSync("js/ahaChatUiRuntime.js", "utf8") + "\n" + fs.readFileSync("js/ahaChatProviderLoader.js", "utf8") + "\n" + fs.readFileSync("js/ahaChatRuntimeFacade.js", "utf8") + "\n" + fs.readFileSync("js/ahaChatRuntimeComposition.js", "utf8") + "\n" + fs.readFileSync("js/ahaChat.js", "utf8");
 const chatHtml = fs.readFileSync("chat.html", "utf8");
 const context = { window: null, console, document: { getElementById() { return null; } } };
 context.window = context;
@@ -32,8 +32,8 @@ assert.equal(unknown.compactOnly, true);
 assert.equal(unknown.redacted, true);
 assert.equal(unknown.requiresManualReview, true);
 
-assert.ok(chatSource.includes('chatModule("personalUi", "AHAChatPersonalUi")?.create?.('));
-assert.ok(chatSource.includes("AHAChatPersonalUi må lastes før ahaChat.js."));
+assert.ok(chatSource.includes('providerLoader.instantiate("personalUi", {'));
+assert.ok(chatSource.includes('personalUi: spec("AHAChatPersonalUi"'));
 assert.ok(chatSource.includes("memoryControls.bindView({"), "memory controls must bind to Personal UI through the explicit view contract");
 assert.equal(chatSource.includes("let personalUi = null"), false, "Personal UI must not rely on a mutable late-binding placeholder");
 assert.equal(/function\s+(?:getAhaPersonalContextApi|buildAhaPersonalMessageContext|buildAhaAnswerPackage|renderAhaAnswerComposer|renderAhaAnswerEvaluation|evaluateAhaAnswerForChat|renderAhaPersonalContextStatus|renderAhaPersonalRetrieval|buildAhaPersonalAiLoopChatReadinessStatus|renderAhaPersonalAiLoopStatus|renderAhaMemoryTransparency|renderAhaMemoryStatus|renderAhaMemoryControls|bindAhaMemoryControls|updateAhaMemoryStatus)\s*\(/.test(chatSource), false, "Personal UI methods must be wired directly without orchestration wrappers");
