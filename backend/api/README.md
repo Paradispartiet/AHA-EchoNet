@@ -14,6 +14,8 @@ Denne tjenesten er PR 4 i `AHA_BACKEND_FOUNDATION_ROADMAP_V1.md`. Den etablerer 
 - eksplisitt CORS-allowlist
 - redigert audit-event uten token, body, query eller rå subject
 - e2e- og kontrakttester
+- committet npm lockfile v3 for reproducerbare installs
+- read-only CI som bygger og tester med `npm ci`
 
 ## Dette finnes ikke
 
@@ -63,15 +65,11 @@ Tjenesten starter ikke i production hvis auth, origins eller audit-salt mangler.
 
 ```bash
 cd backend/api
-npm install
+npm ci --ignore-scripts --no-audit --no-fund
 npm test
 ```
 
-Etter at `package-lock.json` er generert og committet skal CI og lokale rene installs bruke:
-
-```bash
-npm ci
-```
+`package-lock.json` er committet og skal oppdateres sammen med enhver tilsiktet avhengighetsendring. CI har bare `contents: read` og kan ikke omskrive lockfilen eller PR-branchen.
 
 ## Auth-grense
 
