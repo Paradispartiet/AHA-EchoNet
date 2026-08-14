@@ -112,9 +112,17 @@ assert.match(activeRendered.at(-1), /Aktiv tekst · dette ser AHA nå/);
 assert.match(activeRendered.at(-1), /AI og læring/);
 assert.match(activeRendered.at(-1), /automatisering kontra egen vurdering/);
 assert.match(activeRendered.at(-1), /pedagogikk ↔ teknologi/);
+assert.match(activeRendered.at(-1), /data-analysis-artifact="mindmap"/);
+assert.match(activeRendered.at(-1), /data-analysis-artifact="path"/);
+assert.match(activeRendered.at(-1), /data-analysis-quality="useful"/);
+assert.match(activeRendered.at(-1), /data-analysis-quality="too_generic"/);
+assert.match(activeRendered.at(-1), /data-analysis-quality="misinterpreted"/);
+assert.match(activeRendered.at(-1), /data-analysis-quality="missing_evidence"/);
 assert.doesNotMatch(activeRendered.at(-1), /ikke nok innsikter/);
 
 const html = fs.readFileSync('chat.html', 'utf8');
 assert.ok(html.indexOf('js/ahaChatKnowledgeView.js') < html.indexOf('js/ahaChat.js'));
+assert.ok(html.indexOf('js/ahaLists.js') < html.indexOf('js/ahaAnalysisArtifacts.js'));
+assert.ok(html.indexOf('js/ahaPaths.js') < html.indexOf('js/ahaAnalysisArtifacts.js'));
 
 console.log('aha-chat-knowledge-view passed');

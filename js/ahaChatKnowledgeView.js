@@ -614,6 +614,20 @@
         ${activeInsight ? `<p class="knowledge-sub"><strong>Innsikt:</strong> ${escHtml(activeInsight)}</p>` : ""}
         ${activeFields.length ? `<p class="knowledge-sub"><strong>Koblinger:</strong> ${activeFields.map(escHtml).join(" ↔ ")}</p>` : ""}
         ${activeNextStep ? `<p class="knowledge-sub"><strong>Neste steg:</strong> ${escHtml(activeNextStep)}</p>` : ""}
+        <div class="aha-analysis-artifact-actions" aria-label="Bruk den aktive analysen">
+          <button type="button" data-analysis-artifact="mindmap">Lagre som tankekart</button>
+          <button type="button" data-analysis-artifact="path">Lagre som sti</button>
+          <a href="mindmap.html">Åpne tankekart</a>
+          <a href="paths.html">Åpne stier</a>
+        </div>
+        <div class="aha-analysis-quality-actions" aria-label="Vurder den aktive analysen">
+          <span>Var dette treffende?</span>
+          <button type="button" data-analysis-quality="useful">Nyttig</button>
+          <button type="button" data-analysis-quality="too_generic">For generelt</button>
+          <button type="button" data-analysis-quality="misinterpreted">Feil tolket</button>
+          <button type="button" data-analysis-quality="missing_evidence">Mangler belegg</button>
+        </div>
+        <p class="aha-analysis-artifact-status" data-analysis-artifact-status aria-live="polite"></p>
       </article>` : ""}
       <p class="knowledge-sub"><strong>Historiske chamber-mønstre</strong> (holdes adskilt fra aktiv tekst).</p>
       ${lowDataBanner}

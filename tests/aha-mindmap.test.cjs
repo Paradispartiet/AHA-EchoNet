@@ -47,6 +47,8 @@ const store = new Map(Object.entries({
     { id: 'concept-list-1', title: 'Demokrati', terms: [
       { id: 'term-1', term: 'valg', definition: 'Velgerne avgir stemmer.' },
       { id: 'term-2', term: 'representasjon' }
+    ], relations: [
+      { from: 'valg', to: 'representasjon', type: 'enables', label: 'muliggjør', explanation: 'Valg muliggjør representasjon.' }
     ] }
   ]),
   aha_paths_v1: JSON.stringify([
@@ -139,6 +141,7 @@ assert.equal(context.AHAMindmap.isUnavailableRecord({ archived: true }), true);
 assert.ok(graph.edges.some((edge) => edge.type === 'source_to_insight' && edge.from === 'source_event::aha_source_events::source-1' && edge.to === 'insight::aha_insights::insight-1'));
 assert.ok(graph.edges.some((edge) => edge.type === 'list_contains' && edge.to === 'insight::aha_insights::insight-1'));
 assert.equal(graph.edges.filter((edge) => edge.type === 'concept_list_contains').length, 2, 'concept lists should branch to their terms');
+assert.ok(graph.edges.some((edge) => edge.type === 'concept_relation' && edge.label === 'muliggjør'), 'semantic relations should connect concept terms');
 assert.ok(graph.edges.some((edge) => edge.type === 'path_contains' && edge.to === 'list::aha_lists::list-1'));
 assert.ok(graph.edges.some((edge) => edge.type === 'article_references' && edge.to === 'path::aha_paths::path-1'));
 assert.ok(graph.edges.some((edge) => edge.type === 'group_references' && edge.to === 'article::aha_avisa::article-1'));

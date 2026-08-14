@@ -315,11 +315,27 @@
 
     asArray(raw.conceptLists).filter((list) => !isUnavailableRecord(list)).forEach((list) => {
       const fromId = nodeId("concept_list", "aha_concept_lists", asText(list?.id, ""));
+      const termNodes = new Map();
       asArray(list?.terms || list?.concepts).forEach((term, index) => {
         const termTitle = asText(typeof term === "string" ? term : term?.term || term?.title || term?.label, "");
         if (!termTitle) return;
         const termRefId = `${asText(list?.id, "")}:${asText(term?.id, `term_${index}`)}`;
-        addEdge(fromId, nodeId("concept", "aha_concept_lists", termRefId), "concept_list_contains", "begrep", { created_from: "concept_lists", termId: asText(term?.id, "") });
+        const termNodeId = nodeId("concept", "aha_concept_lists", termRefId);
+        addEdge(fromId, termNodeId, "concept_list_contains", "begrep", { created_from: "concept_lists", termId: asText(term?.id, "") });
+        termNodes.set(asText(term?.id, "").toLowerCase(), termNodeId);
+        termNodes.set(termTitle.toLowerCase(), termNodeId);
+      });
+      asArray(list?.relations).forEach((relation) => {
+        const fromTerm = asText(relation?.from || relation?.source || relation?.fromTerm || relation?.from_term, "").toLowerCase();
+        const toTerm = asText(relation?.to || relation?.target || relation?.toTerm || relation?.to_term, "").toLowerCase();
+        const relationType = asText(relation?.type, "related_to");
+        addEdge(
+          termNodes.get(fromTerm),
+          termNodes.get(toTerm),
+          "concept_relation",
+          asText(relation?.label || relationType, "relatert til"),
+          { created_from: "concept_relations", relationType, explanation: asText(relation?.explanation || relation?.reason, "") }
+        );
       });
       const relatedReferences = asArray(list?.references);
       relatedReferences.forEach((reference) => {

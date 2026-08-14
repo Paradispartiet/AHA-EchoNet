@@ -134,6 +134,21 @@
     };
   }
 
+  function normalizeConceptRelation(relation, index = 0) {
+    const input = relation && typeof relation === "object" && !Array.isArray(relation) ? relation : {};
+    const from = asText(input.from || input.source || input.fromTerm || input.from_term, "");
+    const to = asText(input.to || input.target || input.toTerm || input.to_term, "");
+    if (!from || !to || from.toLocaleLowerCase("no") === to.toLocaleLowerCase("no")) return null;
+    return {
+      id: asText(input.id, stableId("concept_relation", `${from}:${to}:${input.type || input.label || index}`)),
+      from,
+      to,
+      type: asText(input.type, "related_to"),
+      label: asText(input.label || input.type, "relatert til"),
+      explanation: asText(input.explanation || input.reason, "")
+    };
+  }
+
   function normalizeConceptList(list) {
     const now = new Date().toISOString();
     return {
@@ -143,10 +158,21 @@
       terms: asArray(list?.terms || list?.concepts)
         .map((term, index) => normalizeConceptTerm(term, index, list?.id || list?.title))
         .filter((term) => term.term),
+      relations: asArray(list?.relations)
+        .map((relation, index) => normalizeConceptRelation(relation, index))
+        .filter(Boolean),
+      references: asArray(list?.references).map((reference) => ({
+        id: asText(reference?.id, uid("concept_reference")),
+        source: asText(reference?.source, "aha"),
+        refId: asText(reference?.refId || reference?.ref_id, ""),
+        type: asText(reference?.type, "reference"),
+        title: asText(reference?.title, "")
+      })).filter((reference) => reference.refId),
       createdAt: list?.createdAt || list?.created_at || now,
       updatedAt: list?.updatedAt || list?.updated_at || now,
       source: "aha_concept_lists",
       local_only: true,
+      meta: list && typeof list.meta === "object" && !Array.isArray(list.meta) ? list.meta : {},
       deletedAt: list?.deletedAt || list?.deleted_at || ""
     };
   }
@@ -181,6 +207,9 @@
       title,
       description: input?.description,
       terms: parseInitialTerms(input?.terms),
+      relations: input?.relations,
+      references: input?.references,
+      meta: input?.meta,
       createdAt: now,
       updatedAt: now
     });

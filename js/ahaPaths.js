@@ -12,7 +12,7 @@
 
   const ALLOWED_PATH_TYPES = ["learning", "process", "project", "habit", "reading", "historygo", "publishing"];
   const ALLOWED_STEP_STATUS = ["planned", "active", "done", "skipped"];
-  const ALLOWED_STEP_SOURCES = ["aha_insights", "aha_lists", "aha_concept_lists", "aha_notes"];
+  const ALLOWED_STEP_SOURCES = ["aha_insights", "aha_lists", "aha_concept_lists", "aha_notes", "aha_analysis"];
   const ALLOWED_PATH_MODES = ["learning", "narrative", "process"];
   let selectedPathId = "";
 
@@ -259,14 +259,15 @@
       createdAt: now,
       updatedAt: now,
       tags: input?.tags,
-      steps: [],
+      steps: asArray(input?.steps),
       source: "aha_paths",
       local_only: true,
       published_external: false,
       echonet_shared: false,
       sync_enabled: false,
       meta: {
-        createdBy: "paths_ui",
+        ...(input && typeof input.meta === "object" && !Array.isArray(input.meta) ? input.meta : {}),
+        createdBy: asText(input?.meta?.createdBy, "paths_ui"),
         local_only: true,
         published_external: false,
         echonet_shared: false,
@@ -565,6 +566,23 @@
         });
       });
 
+    asArray(loadRawByKey(PATHS_KEY, []))
+      .filter((path) => !isUnavailableRecord(path))
+      .forEach((path) => {
+        asArray(path?.steps).filter((step) => step?.source === "aha_analysis").forEach((step) => {
+          const refId = asText(step?.refId || step?.ref_id, "");
+          if (!refId) return;
+          out.push({
+            id: `analysis_${refId}`,
+            title: asText(step?.title, "Analysesteg"),
+            type: asText(step?.type, "analysis_step"),
+            source: "aha_analysis",
+            refId,
+            meta: step?.meta || {}
+          });
+        });
+      });
+
     return out;
   }
 
@@ -584,6 +602,19 @@
     if (!source) return { ok: false, reason: "missing_source" };
     if (!refId) return { ok: false, reason: "missing_refId" };
     if (!ALLOWED_STEP_SOURCES.includes(source)) return { ok: false, reason: "unknown_source" };
+    if (source === "aha_analysis" && stepInput?.meta?.inline === true) {
+      return {
+        ok: true,
+        item: {
+          id: `analysis_${refId}`,
+          title: asText(stepInput?.title, "Analysesteg"),
+          type: asText(stepInput?.type, "analysis_step"),
+          source,
+          refId,
+          meta: stepInput.meta
+        }
+      };
+    }
     const item = buildAvailableStepIndex(availableItems).get(`${source}::${refId}`);
     if (!item) return { ok: false, reason: "unavailable_reference" };
     if (isUnavailableRecord(item)) return { ok: false, reason: "unavailable_reference" };

@@ -27,6 +27,7 @@ vm.runInContext(code, context, { filename: 'js/ahaInsightQualityFeedback.js' });
 const api = context.AHAInsightQualityFeedback;
 assert.ok(api, 'Insight quality API should exist');
 assert.equal(typeof api.applyFeedback, 'function');
+assert.equal(typeof api.applyActiveAnalysisFeedback, 'function');
 assert.equal(typeof api.buildQualityAudit, 'function');
 
 const chamber = {
@@ -99,6 +100,16 @@ const nothing = api.applyFeedback('ins_b', 'undo', { chamber, now: '2026-08-12T0
 assert.equal(nothing.ok, false);
 assert.equal(nothing.reason, 'nothing_to_undo');
 
+result = api.applyFeedback('ins_weak', 'too_generic', { chamber, now: '2026-08-12T00:14:10.000Z', save: false });
+assert.equal(result.ok, true);
+assert.equal(chamber.insights[2].status, 'suggested', 'quality criticism must not reject the insight');
+assert.equal(chamber.insights[2].user_quality_status, 'needs_review');
+assert.equal(chamber.insights[2].user_quality_reason, 'too_generic');
+result = api.applyFeedback('ins_weak', 'useful', { chamber, now: '2026-08-12T00:14:20.000Z', save: false });
+assert.equal(result.ok, true);
+assert.equal(chamber.insights[2].user_quality_status, 'useful');
+assert.equal(chamber.insights[2].user_quality_reason, undefined);
+
 const audit = api.buildQualityAudit(chamber);
 assert.equal(audit.advisoryOnly, true);
 assert.equal(audit.total, 3);
@@ -114,6 +125,29 @@ const afterReject = api.buildQualityAudit(chamber);
 assert.equal(afterReject.active, 2, 'user-rejected insight must be excluded from active audit');
 assert.equal(afterReject.userRejected, 1);
 assert.equal(afterReject.duplicatePairs, 0, 'rejected insight must not participate in duplicate review');
+
+const activeStore = new Map([['aha_chat_auto_outputs_v1', JSON.stringify({
+  sourceHash: 'hash_active',
+  payload: { canonicalAnalysis: { theme: 'Aktiv analyse', keyInsight: 'Et kildebundet funn.' }, analysisQuality: { score: 72 } }
+})]]);
+const activeStorage = {
+  getItem(key) { return activeStore.get(key) || null; },
+  setItem(key, value) { activeStore.set(key, value); }
+};
+result = api.applyActiveAnalysisFeedback('missing_evidence', { storage: activeStorage, now: '2026-08-12T00:16:00.000Z' });
+assert.equal(result.ok, true);
+let activeCache = JSON.parse(activeStore.get('aha_chat_auto_outputs_v1'));
+assert.equal(activeCache.payload.analysisQuality.score, 72, 'feedback must preserve evaluator output');
+assert.equal(activeCache.payload.analysisQuality.latestUserFeedback, 'missing_evidence');
+assert.equal(activeCache.payload.analysisQuality.userFeedback.length, 1);
+assert.equal(activeCache.payload.analysisQuality.userFeedback[0].analysis_source_hash, 'hash_active');
+result = api.applyActiveAnalysisFeedback('missing_evidence', { storage: activeStorage, now: '2026-08-12T00:16:10.000Z' });
+assert.equal(result.noChange, true, 'identical active-analysis feedback must be idempotent');
+result = api.applyActiveAnalysisFeedback('undo', { storage: activeStorage, now: '2026-08-12T00:16:20.000Z' });
+assert.equal(result.restored, true);
+activeCache = JSON.parse(activeStore.get('aha_chat_auto_outputs_v1'));
+assert.equal(activeCache.payload.analysisQuality.latestUserFeedback, '');
+assert.ok(activeCache.payload.analysisQuality.userFeedback[0].undone_at, 'undo must preserve the audit trail');
 
 assert.match(engineCode, /status !== "archived" && status !== "rejected" && status !== "merged"/, 'canonical InsightsEngine must already exclude rejected insights');
 assert.match(navCode, /activeFile === "chat\.html" \|\| activeFile === "insights\.html"/, 'quality controls should load only on Chat and Insights surfaces');
