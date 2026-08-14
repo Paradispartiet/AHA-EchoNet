@@ -1,0 +1,107 @@
+{
+  "version": "aha_analysis_quality_stress_v1",
+  "cases": [
+    {
+      "id": "strong_project_decision",
+      "expectedStatus": "passed",
+      "sourceText": "Prosjektgruppen skal velge mellom å lansere fredag eller utsette til mandag. Fredagslansering gir raskere tilbakemelding, men overvåkingen er bare bemannet i to timer. Mandagslansering gir full beredskap og tid til å verifisere datamigreringen.",
+      "payload": {
+        "sortItems": [
+          { "label": "Alternativ", "text": "Fredagslansering gir raskere tilbakemelding, men overvåkingen er bare bemannet i to timer." },
+          { "label": "Alternativ", "text": "Mandagslansering gir full beredskap og tid til å verifisere datamigreringen." }
+        ],
+        "canonicalAnalysis": {
+          "theme": "valg av lanseringstidspunkt og operativ beredskap",
+          "mainTension": "rask tilbakemelding kontra trygg overvåking av datamigreringen",
+          "keyInsight": "Bemanningen gjør lanseringstidspunktet til en risikobeslutning, ikke bare et spørsmål om tempo.",
+          "suggestedActions": ["Kontroller datamigreringen før lansering og dokumenter hvem som overvåker de første timene."],
+          "confidence": { "theme": 0.91, "mainTension": 0.88 },
+          "warnings": []
+        }
+      }
+    },
+    {
+      "id": "strong_legal_distinction",
+      "expectedStatus": "passed",
+      "sourceText": "Vedtaket begrenser demonstrasjonen til tidsrommet 12–14. Politiet viser til trafikkfare, men har ikke vurdert om omlegging av bussruten kan redusere risikoen. Et mindre inngripende tiltak må vurderes før forbud kan forsvares.",
+      "payload": {
+        "sortItems": [
+          { "label": "Vedtak", "text": "Vedtaket begrenser demonstrasjonen til tidsrommet 12–14." },
+          { "label": "Manglende vurdering", "text": "Politiet viser til trafikkfare, men har ikke vurdert om omlegging av bussruten kan redusere risikoen." }
+        ],
+        "canonicalAnalysis": {
+          "theme": "forholdsmessighet i begrensningen av demonstrasjonen",
+          "mainTension": "trafikksikkerhet kontra retten til å demonstrere",
+          "keyInsight": "Manglende vurdering av bussomlegging svekker begrunnelsen for det mer inngripende tidsvedtaket.",
+          "suggestedActions": ["Dokumenter om bussomleggingen faktisk kan redusere trafikkfaren før vedtakets forholdsmessighet konkluderes."],
+          "confidence": { "theme": 0.9, "mainTension": 0.86 },
+          "warnings": []
+        }
+      }
+    },
+    {
+      "id": "honest_fragment",
+      "expectedStatus": "needs_review",
+      "sourceText": "Møtet gikk bedre. Kanskje planen virker.",
+      "payload": {
+        "sortItems": [{ "label": "Observasjon", "text": "Møtet gikk bedre." }],
+        "canonicalAnalysis": {
+          "theme": "mulig fremgang etter et møte",
+          "mainTension": "positiv opplevelse kontra manglende grunnlag for å forklare virkningen",
+          "keyInsight": "Notatet antyder fremgang, men sier ikke hva i planen som kan ha påvirket møtet.",
+          "suggestedActions": ["Noter hvilket konkret tiltak i planen som ble prøvd i neste møte."],
+          "confidence": { "theme": 0.42, "mainTension": 0.35 },
+          "warnings": ["Teksten er kort, og sammenhengen mellom planen og møtet er bare en hypotese."]
+        }
+      }
+    },
+    {
+      "id": "generic_paraphrase",
+      "expectedStatus": "needs_review",
+      "sourceText": "Kommunen åpnet biblioteket på søndager i en prøveperiode. Besøkstallet økte med 18 prosent, men personalkostnaden steg også.",
+      "payload": {
+        "sortItems": [{ "label": "Kilde", "text": "Besøkstallet økte med 18 prosent, men personalkostnaden steg også." }],
+        "canonicalAnalysis": {
+          "theme": "bibliotek",
+          "mainTension": "ulike perspektiver",
+          "keyInsight": "Teksten handler om bibliotek.",
+          "suggestedActions": ["Undersøk temaet videre."],
+          "confidence": { "theme": 0.8 },
+          "warnings": []
+        }
+      }
+    },
+    {
+      "id": "unsupported_certainty",
+      "expectedStatus": "blocked",
+      "sourceText": "Tre elever fortalte at de likte den nye oppgaven.",
+      "payload": {
+        "sortItems": [{ "label": "Observasjon", "text": "Tre elever fortalte at de likte den nye oppgaven." }],
+        "canonicalAnalysis": {
+          "theme": "elevrespons på en ny oppgave",
+          "mainTension": "positiv respons kontra svært lite datagrunnlag",
+          "keyInsight": "Den nye oppgaven forbedrer læringsutbyttet for alle elever.",
+          "suggestedActions": ["Mål læringsutbyttet i en større elevgruppe før effekten konkluderes."],
+          "confidence": { "theme": 0.31, "mainTension": 0.28 },
+          "warnings": []
+        }
+      }
+    },
+    {
+      "id": "missing_evidence",
+      "expectedStatus": "blocked",
+      "sourceText": "Rapporten sammenligner sykkelfelt i tre bydeler og registrerer færre konflikter i kryss etter ombygging.",
+      "payload": {
+        "sortItems": [],
+        "canonicalAnalysis": {
+          "theme": "trafikksikkerhet etter ombygging",
+          "mainTension": "fremkommelighet kontra sikkerhet",
+          "keyInsight": "Ombyggingen kan ha redusert konfliktnivået i de undersøkte kryssene.",
+          "suggestedActions": ["Sammenlign registreringsperiodene og kontroller om trafikkmengden var den samme."],
+          "confidence": { "theme": 0.75 },
+          "warnings": []
+        }
+      }
+    }
+  ]
+}
