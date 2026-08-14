@@ -32,6 +32,8 @@ Node CI kan kontrollere viewport-, safe-area-, dynamisk viewport- og touchkontra
 
 Denne manuelle enhetsporten er eksplisitt og kan ikke markeres som bestått av en simulert Node- eller Chromium-kjøring.
 
+`safari-release-check.html` gjør porten kjørbar på fysisk enhet. Siden avviser andre iOS-nettlesere, feil enhetsfamilie og feil iPhone-orientering, og krever alle manuelle kontroller samt en eksplisitt bekreftelse på fysisk Safari før en testøkt kan lagres som bestått. Fire separate profiler kreves: iPhone stående, iPhone liggende, iPad fullskjerm og iPad Split View. Evidensen lagres kun i `aha_safari_device_evidence_v1` på den aktuelle enheten og kan eksporteres/importeres som JSON for å samle øktene fra to enheter uten backend. Automatiserte tester låser kontrakten, men kan aldri opprette bestått fysisk evidens.
+
 ## Sikkerhetsgrense
 
 Porten aktiverer ikke backend, databasepersist, konto/login, Sync Hub, EchoNet, ekstern publisering, modelltrening, fine-tuning eller History Go-tilbakeskriving.

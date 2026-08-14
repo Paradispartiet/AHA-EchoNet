@@ -7,6 +7,7 @@ import path from "node:path";
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const tests = [
   "tests/aha-launch-journey-v1.test.cjs",
+  "tests/aha-safari-device-evidence-surface.test.cjs",
   "tests/aha-chat-application-composition.test.cjs",
   "tests/aha-chat-golden-output-regression.test.cjs",
   "tests/aha-chat-insight-end-to-end-audit.test.cjs",
