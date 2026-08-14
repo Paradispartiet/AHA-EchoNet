@@ -34,7 +34,7 @@ The legacy name is an intentional compatibility fallback during migration. New c
 - Loading the registry more than once is safe.
 - Version mismatches fail explicitly.
 
-The registered surface covers `insights`, `metaInsights`, `sources`, `repository`, `emneMatcher`, `embeddings`, `ingest`, `contracts`, `chat`, `chat.insightFeedback`, `historyGo.contract`, `historyGo.import`, and `historyGo.status` on pages where those modules are loaded. The extracted Chat providers also register under `chat.*`: text utilities with canonical source identity and keyword primitives, the versioned chamber store, signals, academic analysis/source-grounding policy, concept canonicalization/graph-prioritization policy, the versioned analysis-run contract, academic context and synthetic insight view, subjects, analysis, export, reply formatting, memory controls/runtime, afterwork, run context, insight/knowledge/conversation views, the insight pipeline with canonical functional types and candidate-quality policy, the agent runtime with its memory-gated request and HTTP boundary, the ingest runtime with canonical routing and one explicit legacy fallback, Personal UI, UI runtime/bootstrap, auto analysis, the versioned auto-output store, auto-output view/runtime, analysis-state view, and canonical analysis.
+The registered surface covers `insights`, `metaInsights`, `sources`, `repository`, `emneMatcher`, `embeddings`, `ingest`, `contracts`, `chat`, `chat.insightFeedback`, `historyGo.contract`, `historyGo.import`, and `historyGo.status` on pages where those modules are loaded. The extracted Chat providers also register under `chat.*`: text utilities with canonical source identity and keyword primitives, the versioned chamber store, signals, academic analysis/source-grounding policy, concept canonicalization/graph-prioritization policy, the versioned analysis-run contract, academic context and synthetic insight view, subjects, analysis, export, reply formatting, memory controls/runtime, afterwork, run context, insight/knowledge/conversation views, the insight pipeline with canonical functional types and candidate-quality policy, the agent runtime with its memory-gated request and HTTP boundary, the ingest runtime with canonical routing and one explicit legacy fallback, Personal UI, UI runtime/bootstrap, auto analysis, the versioned auto-output store, auto-output view/runtime, analysis-state view, canonical analysis, runtime composition, and application composition.
 
 `chat.memoryControls` has one explicit two-phase view boundary: `bindView(...)`
 connects its change notifications after `chat.personalUi` has been created. This
@@ -78,9 +78,9 @@ not forwarded to the public runtime facade. The module contains no analysis or
 import engine logic.
 
 `chat.providerLoader` is the canonical manifest for Chat provider names, legacy
-aliases and required factory methods. `ahaChat.js` resolves and instantiates
-providers through this boundary, while non-Chat core modules still use the same
-version-1 registry with their explicit legacy fallback.
+aliases and required factory methods. `chat.applicationComposition` resolves and
+instantiates the provider graph through this boundary, while non-Chat core modules
+still use the same version-1 registry with their explicit legacy fallback.
 
 `chat.capabilityBindings` is the canonical allowlist for the provider-instance
 surfaces consumed by the Chat composition root. Each named group validates its
@@ -88,6 +88,13 @@ required functions or values, returns a frozen facade, renames storage and shell
 adapters where needed, and excludes undeclared provider internals. Provider
 loading/factory ownership remains in `chat.providerLoader`; capability ownership
 does not move analysis, import or persistence logic into the composition root.
+
+`chat.applicationComposition.create(...)` owns provider factory order, the
+two-phase memory-view binding, grouped runtime capabilities and the small set of
+late callbacks required to break initialization cycles. Browser environment
+access enters through five explicit adapters. It returns one frozen `install`
+facade; `ahaChat.js` is limited to resolving the provider loader, supplying those
+environment adapters and installing the composed application exactly once.
 
 ## Candidate-ingest extension point
 

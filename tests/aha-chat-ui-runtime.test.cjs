@@ -5,6 +5,7 @@ const vm = require("vm");
 const source = fs.readFileSync("js/ahaChatUiRuntime.js", "utf8");
 const chatSource = fs.readFileSync("js/ahaChat.js", "utf8");
 const compositionSource = fs.readFileSync("js/ahaChatRuntimeComposition.js", "utf8");
+const applicationCompositionSource = fs.readFileSync("js/ahaChatApplicationComposition.js", "utf8");
 const chatHtml = fs.readFileSync("chat.html", "utf8");
 
 const context = { window: null };
@@ -127,9 +128,9 @@ elements.get("panel").panelVisible = true;
 globalListeners["aha:merge-suggested"]();
 assert.ok(calls.filter(([name]) => name === "showInsights").length >= 2);
 
-assert.ok(chatSource.includes('const uiRuntimeModule = providerLoader.require("uiRuntime")'));
-assert.ok(chatSource.includes('providerLoader.instantiate("uiRuntime", {'));
-assert.ok(chatSource.includes('label: "AHAChatShellRuntime"'));
+assert.ok(applicationCompositionSource.includes('const uiRuntimeModule = providerLoader.require("uiRuntime")'));
+assert.ok(applicationCompositionSource.includes('providerLoader.instantiate("uiRuntime", {'));
+assert.ok(applicationCompositionSource.includes('label: "AHAChatShellRuntime"'));
 assert.ok(compositionSource.includes('modules.uiRuntime.create({'));
 assert.ok(compositionSource.includes("AHAChatUiRuntime må lastes før ahaChat.js."));
 assert.doesNotMatch(chatSource, /function (?:consumePendingChatPrompt|bindActionChips|bind|reset)\s*\(/, "UI bootstrap implementation must remain outside ahaChat.js");
@@ -139,7 +140,8 @@ const providerLoaderAt = chatHtml.indexOf("js/ahaChatProviderLoader.js");
 const capabilityBindingsAt = chatHtml.indexOf("js/ahaChatCapabilityBindings.js");
 const runtimeFacadeAt = chatHtml.indexOf("js/ahaChatRuntimeFacade.js");
 const runtimeCompositionAt = chatHtml.indexOf("js/ahaChatRuntimeComposition.js");
+const applicationCompositionAt = chatHtml.indexOf("js/ahaChatApplicationComposition.js");
 const chatAt = chatHtml.indexOf("js/ahaChat.js");
-assert.ok(uiRuntimeAt < providerLoaderAt && providerLoaderAt < capabilityBindingsAt && capabilityBindingsAt < runtimeFacadeAt && runtimeFacadeAt < runtimeCompositionAt && runtimeCompositionAt < chatAt);
+assert.ok(uiRuntimeAt < providerLoaderAt && providerLoaderAt < capabilityBindingsAt && capabilityBindingsAt < runtimeFacadeAt && runtimeFacadeAt < runtimeCompositionAt && runtimeCompositionAt < applicationCompositionAt && applicationCompositionAt < chatAt);
 
 console.log("aha-chat-ui-runtime passed");

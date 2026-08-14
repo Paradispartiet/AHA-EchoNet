@@ -47,7 +47,8 @@
     export: spec("AHAChatExport", ["createRuntime"]),
     knowledgeView: spec("AHAChatKnowledgeView", ["create"]),
     runtimeFacade: spec("AHAChatRuntimeFacade", ["create"]),
-    runtimeComposition: spec("AHAChatRuntimeComposition", ["create"], "create")
+    runtimeComposition: spec("AHAChatRuntimeComposition", ["create"], "create"),
+    applicationComposition: spec("AHAChatApplicationComposition", ["create"], "create")
   });
 
   function create(deps = {}) {

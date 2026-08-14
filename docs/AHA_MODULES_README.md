@@ -89,8 +89,10 @@ Eksisterende filer:
 - `js/ahaChatIngestRuntime.js`
 - `js/ahaChatUiRuntime.js`
 - `js/ahaChatProviderLoader.js`
+- `js/ahaChatCapabilityBindings.js`
 - `js/ahaChatRuntimeFacade.js`
 - `js/ahaChatRuntimeComposition.js`
+- `js/ahaChatApplicationComposition.js`
 - `js/ahaChatConversationView.js`
 - `aha-chat.css`
 
@@ -142,15 +144,18 @@ Status:
 - lar `chat.providerLoader` eie det versjonerte provider-manifestet, legacy-oppslag,
   obligatoriske fabrikkmetoder og fail-fast-validering av modulkontraktene
 - lar `chat.capabilityBindings` eie de eksplisitte, frosne capability-gruppene
-  som `ahaChat.js` faktisk konsumerer; ubrukte provider-internals krysser ikke grensen
+  som komposisjonsroten faktisk konsumerer; ubrukte provider-internals krysser ikke grensen
+- lar `chat.applicationComposition` eie hele provider-instansieringsgrafen,
+  fabrikkrekkefølgen, miljøadapterne og de eksplisitte late callbackene som bryter
+  initieringssyklene; modulen leverer én frossen `install`-inngang
 - binder eksportens data-, DOM- og analyseavhengigheter én gang gjennom
   `chat.export.createRuntime(...)`; `ahaChat.js` bygger ikke lenger en ny
   eksportbro ved hvert kall
 - lar `chat.autoOutputView` eie sikker markup, History Go-forslag,
   kryssdomene-filtrering og kilde/run-mismatch for auto-output; orkestratoren
   leverer bare de underliggende kontraktene
-- bruker `ahaChat.js` som orkestrator uten parallelle agent-, ingest-, innsiktspipeline-, kammerlager-, cache-,
-  analyse-state-, kildeidentitets-, analyse-, policy- eller view-implementasjoner
+- bruker `ahaChat.js` kun som minimal bootstrap: den oppretter provider-loaderen,
+  instansierer `chat.applicationComposition` og installerer den ferdig komponerte appen
 
 Mangler før ferdig:
 - tydelig bokmerke-kolonne

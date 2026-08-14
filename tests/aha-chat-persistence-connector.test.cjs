@@ -33,7 +33,7 @@ assert.equal(c.AHADataIntake.collectIntakeStats().trainingReady, 0, 'chat candid
 
 assert.ok(fs.readFileSync('intake.html','utf8').includes('Skann Chat'));
 assert.ok(fs.readFileSync('chat.html','utf8').includes('js/ahaChatPersistence.js'));
-const chatSource = fs.readFileSync('js/ahaChat.js','utf8');
+const chatSource = fs.readFileSync('js/ahaChatApplicationComposition.js','utf8');
 const submissionSource = fs.readFileSync('js/ahaChatRunContext.js','utf8');
 assert.match(chatSource, /isAhaSavingEnabled,/i, 'chat must inject the save-new-insights control into submission runtime');
 assert.match(submissionSource, /const savingEnabled = input\.isAhaSavingEnabled\(\);[\s\S]*global\.AHAChatPersistence\?\.appendUserMessage/, 'user chat persistence must respect the save-new-insights toggle');
