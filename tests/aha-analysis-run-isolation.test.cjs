@@ -9,6 +9,8 @@ const memoryRuntimeAt = chatHtml.indexOf('js/ahaChatMemoryRuntime.js');
 const runContextAt = chatHtml.indexOf('js/ahaChatRunContext.js');
 const insightViewAt = chatHtml.indexOf('js/ahaChatInsightView.js');
 const autoAnalysisAt = chatHtml.indexOf('js/ahaChatAutoAnalysis.js');
+const qualityEvaluatorAt = chatHtml.indexOf('js/ahaAnalysisQualityEvaluator.js');
+const qualityProfileAt = chatHtml.indexOf('js/ahaAnalysisQualityProfile.js');
 const autoOutputViewAt = chatHtml.indexOf('js/ahaChatAutoOutputView.js');
 const analysisStateViewAt = chatHtml.indexOf('js/ahaChatAnalysisStateView.js');
 const chamberStoreAt = chatHtml.indexOf('js/ahaChatChamberStore.js');
@@ -30,6 +32,8 @@ assert.ok(memoryRuntimeAt > -1 && memoryRuntimeAt < runContextAt, 'memory runtim
 assert.ok(runContextAt > -1 && runContextAt < insightViewAt, 'run context must load before the insight view');
 assert.ok(insightViewAt > -1 && insightViewAt < autoAnalysisAt, 'insight view must load before auto-analysis');
 assert.ok(autoAnalysisAt > -1 && autoAnalysisAt < autoOutputViewAt, 'auto-analysis must load before the auto-output view');
+assert.ok(qualityEvaluatorAt > autoAnalysisAt && qualityEvaluatorAt < qualityProfileAt, 'quality evaluator must load before the local profile');
+assert.ok(qualityProfileAt > qualityEvaluatorAt && qualityProfileAt < autoOutputViewAt, 'quality profile must load before the auto-output quality gate');
 assert.ok(autoOutputViewAt > -1 && autoOutputViewAt < canonicalAnalysisAt, 'auto-output view must load before canonical analysis');
 assert.ok(analysisStateViewAt > autoOutputViewAt && analysisStateViewAt < chatAt, 'analysis state view must load after auto-output view and before ahaChat.js');
 assert.ok(chamberStoreAt > -1 && chamberStoreAt < chatAt, 'chamber store must load before ahaChat.js');

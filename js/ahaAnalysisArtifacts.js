@@ -268,6 +268,12 @@
       .aha-analysis-quality-actions{padding-top:10px;border-top:1px solid rgba(255,255,255,.1)}
       .aha-analysis-quality-actions>span,.aha-analysis-artifact-status{font-size:.78rem;opacity:.78}
       .aha-analysis-artifact-status{min-height:1.2em;margin:8px 0 0}
+      .aha-claim-evidence{margin-top:14px;padding-top:10px;border-top:1px solid rgba(255,255,255,.1)}
+      .aha-claim-evidence summary{color:#ffd24a;font-size:.82rem;font-weight:750;cursor:pointer}
+      .aha-claim-evidence-list{display:grid;gap:8px;margin-top:10px}
+      .aha-claim-evidence-item{margin-top:8px;padding:9px 11px;border:1px solid rgba(255,255,255,.09);border-radius:10px;background:rgba(255,255,255,.025)}
+      .aha-claim-evidence-item h5,.aha-claim-evidence-item p{margin:0 0 6px}
+      .aha-claim-evidence-item p:last-child{margin-bottom:0}
     `;
     global.document.head.appendChild(style);
   }

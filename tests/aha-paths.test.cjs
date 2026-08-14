@@ -110,5 +110,11 @@ function makeContext({ seed = {}, repository, config } = {}) {
   assert.ok(enabledRepoCalls.some(([name]) => name === 'savePath'), 'repository savePath should work when database sync flag is true');
   assert.ok(enabledRepoCalls.some(([name]) => name === 'loadPaths'), 'repository loadPaths should work when database sync flag is true');
 
+  const callsBeforeGeneratedPath = enabledRepoCalls.filter(([name]) => name === 'savePath').length;
+  const generatedPath = enabled.Paths.createPath({ title: 'Analysis path', meta: { createdBy: 'aha_analysis_artifacts_v1' } });
+  enabled.Paths.updatePath(generatedPath.id, { title: 'Analysis path updated' });
+  const callsAfterGeneratedPath = enabledRepoCalls.filter(([name]) => name === 'savePath').length;
+  assert.equal(callsAfterGeneratedPath, callsBeforeGeneratedPath, 'feedback-generated analysis paths must remain local even when database sync is enabled');
+
   console.log('aha-paths.test.cjs passed');
 })().catch((error) => { console.error(error); process.exitCode = 1; });

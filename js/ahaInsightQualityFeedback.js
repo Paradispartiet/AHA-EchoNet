@@ -186,6 +186,8 @@
       } catch {
         return { ok: false, reason: "write_failed", cache };
       }
+      if (normalized === RESPONSE_UNDO) global.AHAAnalysisQualityProfile?.undoFeedback?.(cache, { now });
+      else global.AHAAnalysisQualityProfile?.recordFeedback?.(cache, normalized, { now });
     }
     return { ok: true, response: normalized, cache, restored: normalized === RESPONSE_UNDO };
   }

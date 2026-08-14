@@ -94,6 +94,54 @@
     return harmonized;
   }
 
+  function finalizeAnalysisQuality(payload, sourceText = "") {
+    const safe = payload && typeof payload === "object" ? payload : {};
+    const evaluator = global.AHAAnalysisQualityEvaluator;
+    if (!evaluator?.evaluateAnalysis || !evaluator?.improveAnalysisOnce) return safe;
+    const profileApi = global.AHAAnalysisQualityProfile;
+    const profile = profileApi?.buildProfile?.({
+      domain: safe?.canonicalAnalysis?.domain || safe?.canonicalAnalysis?.contentType || safe?.textType,
+      cache: { payload: safe, sourceHash: safe.sourceHash, sourceTextHash: safe.sourceTextHash }
+    }) || null;
+    const thresholds = profileApi?.adjustedThresholds?.(profile) || {};
+    const revision = evaluator.improveAnalysisOnce(safe, sourceText, { profile, thresholds });
+    const finalPayload = revision.payload && typeof revision.payload === "object" ? revision.payload : safe;
+    const report = evaluator.evaluateAnalysis(finalPayload, sourceText, { thresholds });
+    finalPayload.analysisQuality = {
+      ...report,
+      revision: {
+        attempted: revision.attempted,
+        improved: revision.improved,
+        attempts: revision.attempted ? 1 : 0,
+        initialOverall: revision.initialReport?.overall ?? report.overall,
+        finalOverall: report.overall
+      }
+    };
+    finalPayload.analysisQualityProfile = profile ? {
+      version: profile.version,
+      domain: profile.domain,
+      sampleSize: profile.sampleSize,
+      scope: profile.scope,
+      recommendations: profile.recommendations,
+      adaptive: profile.adaptive,
+      boundary: profile.boundary
+    } : null;
+    finalPayload.qualityGate = {
+      version: "aha_visible_analysis_quality_gate_v1",
+      status: revision.needsMoreSource ? "needs_more_source" : report.status === "passed" ? (revision.attempted ? "improved" : "passed") : "needs_review",
+      attempts: revision.attempted ? 1 : 0,
+      suppressClaims: revision.needsMoreSource,
+      message: revision.needsMoreSource
+        ? "AHA trenger mer konkret kildetekst før den kan vise en trygg analyse. Legg til hvem eller hva teksten gjelder, ett konkret eksempel og relevant sammenheng."
+        : revision.improved
+          ? "AHA forbedret analysen én gang etter kvalitetskontrollen."
+          : revision.attempted
+            ? "AHA forsøkte én forbedring, men analysen bør fortsatt leses med forbehold."
+            : "Analysen bestod kvalitetskontrollen."
+    };
+    return finalPayload;
+  }
+
   function createStore(deps = {}) {
     if (typeof deps.sourceHash !== "function") {
       throw new Error("AHAChatAutoOutputStore mangler avhengighet: sourceHash");
@@ -192,6 +240,20 @@
         label: safeMarkupText(item?.label),
         text: safeMarkupText(item?.text)
       }));
+    }
+
+    function buildClaimEvidenceMarkup(payload) {
+      const claims = (Array.isArray(payload?.analysisQuality?.claims) ? payload.analysisQuality.claims : [])
+        .filter((claim) => claim?.kind === "interpretation");
+      if (!claims.length) return "";
+      return `<details class="aha-claim-evidence"><summary>Belegg, tolkning og usikkerhet</summary><div class="aha-claim-evidence-list">
+        ${claims.map((claim) => `<article class="aha-claim-evidence-item">
+          <h5>${safeMarkupText(claim.label)}</h5>
+          <p><strong>Tolkning:</strong> ${safeMarkupText(claim.text)}</p>
+          <p><strong>Kildebelegg:</strong> ${claim.evidenceText ? `«${safeMarkupText(claim.evidenceText)}»` : "Mangler direkte kildebelegg."}</p>
+          <p><strong>Usikkerhet:</strong> ${safeMarkupText(claim.uncertainty || "Tolkningen må prøves mot kilden.")}</p>
+        </article>`).join("")}
+      </div></details>`;
     }
 
     function buildHistoryGoSuggestion(payload, sourceText) {
@@ -317,6 +379,16 @@
         deps.setExportButtonsEnabled(false);
         return;
       }
+      if (payload?.qualityGate?.suppressClaims === true) {
+        host.innerHTML = `<div class="auto-output-head"><h2>AHA etterarbeid</h2><p>Automatisk analyse av siste melding og svar.</p></div>
+          <section class="auto-output-group auto-output-primary" data-group="quality-gate">
+            <h3>AHA trenger mer grunnlag</h3>
+            <article class="auto-card auto-card-primary"><p>${safeMarkupText(payload.qualityGate.message)}</p><p><strong>Ingen analysepåstander er lagret eller vist som kvalitetssikret.</strong></p></article>
+          </section>${deps.renderAnalysisDebugPanel(payload)}`;
+        deps.setExportButtonsEnabled(false);
+        deps.refreshAhaExplorer();
+        return;
+      }
       const safeSortItems = safeMarkupSortItems(payload.sortItems);
       const safeList = safeMarkupList(payload.list);
       const safeInsightCards = safeMarkupList(payload.insightCards);
@@ -348,6 +420,7 @@
               <div><dt>Fagkoblinger</dt><dd>${safeMarkupText(ahaSer.fagkoblinger)}</dd></div>
               <div><dt>Neste steg</dt><dd>${safeMarkupText(ahaSer.nesteSteg)}</dd></div>
             </dl>
+            ${buildClaimEvidenceMarkup(payload)}
           </article>
         </section>
         <section class="auto-output-group" data-group="samtale">
@@ -412,7 +485,8 @@
       safeMarkupList,
       safeMarkupSortItems,
       buildHistoryGoSuggestion,
-      filterCrossDomainAutoPayload
+      filterCrossDomainAutoPayload,
+      buildClaimEvidenceMarkup
     });
   }
 
@@ -504,6 +578,7 @@
       payload.canonicalAnalysisMeta = resolvedCanonical.meta;
       payload = harmonizeAnalysisPayload(payload, effectiveSourceText);
       payload = deps.enforceCanonicalSourceGrounding(payload, effectiveSourceText);
+      payload = finalizeAnalysisQuality(payload, effectiveSourceText);
       deps.bindAnalysisArtifact(payload, activeRun, "rawAutoPayload");
       if (payload.canonicalAnalysis && typeof payload.canonicalAnalysis === "object") deps.bindAnalysisArtifact(payload.canonicalAnalysis, activeRun, "canonicalAnalysis");
       deps.updateAnalysisRun({
@@ -600,7 +675,7 @@
   global.AHAChatAutoOutputStore = storeApi;
   global.AHAModuleApi?.register?.("chat.autoOutputStore", storeApi, { version: 1, legacyGlobal: "AHAChatAutoOutputStore", exports: Object.keys(storeApi) });
 
-  const publicApi = Object.assign({}, global.AHAChatAutoOutputView || {}, { create, createRuntime, harmonizeAnalysisPayload });
+  const publicApi = Object.assign({}, global.AHAChatAutoOutputView || {}, { create, createRuntime, harmonizeAnalysisPayload, finalizeAnalysisQuality });
   global.AHAChatAutoOutputView = publicApi;
   global.AHAModuleApi?.register?.("chat.autoOutputView", publicApi, { version: 1, legacyGlobal: "AHAChatAutoOutputView", exports: Object.keys(publicApi) });
 })(window);

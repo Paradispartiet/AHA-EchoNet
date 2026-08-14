@@ -23,11 +23,13 @@ const context = {
 };
 context.window = context;
 vm.createContext(context);
+vm.runInContext(fs.readFileSync("js/ahaAnalysisQualityEvaluator.js", "utf8"), context, { filename: "js/ahaAnalysisQualityEvaluator.js" });
 vm.runInContext(fs.readFileSync("js/ahaChatAutoOutputView.js", "utf8"), context, { filename: "js/ahaChatAutoOutputView.js" });
 
 const api = context.AHAChatAutoOutputView;
 assert.equal(typeof api.create, "function");
 assert.equal(typeof api.harmonizeAnalysisPayload, "function");
+assert.equal(typeof api.finalizeAnalysisQuality, "function");
 assert.throws(() => api.create({}), /mangler avhengighet: enforceCanonicalSourceGrounding/);
 
 const harmonized = api.harmonizeAnalysisPayload({
@@ -57,6 +59,26 @@ assert.ok(harmonized.path.some((step) => /automatisert tilgang/i.test(step)), "l
 assert.ok(harmonized.path.some((step) => /læringssituasjoner/i.test(step)), "learning path must use the reviewed next action");
 assert.ok(harmonized.path.some((step) => /pedagogikk/i.test(step)), "learning path must use active field connections");
 assert.equal(harmonized.qualityProfile.sourceBound, true);
+
+const qualitySource = "Kommunen tester en ny skolemodell i høst. Lærerne får to timer ekstra planlegging hver uke. Elevene skal vurderes før og etter forsøket.";
+const finalized = api.finalizeAnalysisQuality({
+  canonicalAnalysis: {
+    theme: "Ny skolemodell",
+    mainTension: "Tid til planlegging kontra måling av effekt",
+    keyInsight: "Forsøket må vurderes med både arbeidsvilkår og elevresultater.",
+    suggestedActions: ["Se nærmere på temaet."],
+    confidence: { theme: 0.7, mainTension: 0.5, keyInsight: 0.5 }
+  },
+  sortItems: [{ label: "Feil", text: "Alle elever får bedre karakterer." }]
+}, qualitySource);
+assert.equal(finalized.analysisQuality.revision.attempts, 1);
+assert.equal(finalized.qualityRevision.attempts, 1);
+assert.ok(finalized.sortItems.every((item) => qualitySource.includes(item.text)), "visible evidence must be exact source text");
+assert.ok(["improved", "needs_review"].includes(finalized.qualityGate.status));
+
+const withheld = api.finalizeAnalysisQuality({ canonicalAnalysis: { theme: "Skole", keyInsight: "Et mulig funn." } }, "For kort.");
+assert.equal(withheld.qualityGate.status, "needs_more_source");
+assert.equal(withheld.qualityGate.suppressClaims, true);
 
 let mismatchArgs = null;
 let exportEnabled = null;
@@ -92,6 +114,10 @@ const view = api.create(deps);
 assert.equal(Object.isFrozen(view), true, "auto-output view facade must be immutable");
 assert.equal(view.safeMarkupText("<script>fare</script>\nvidere"), "&lt;script&gt;fare&lt;/script&gt; videre");
 assert.match(view.buildHistoryGoSuggestion({}, "NAV-reform i offentlig forvaltning"), /Politikk & samfunn/);
+const evidenceMarkup = view.buildClaimEvidenceMarkup({ analysisQuality: { claims: [{ kind: "interpretation", label: "Tema", text: "<script>tolkning</script>", evidenceText: "Kilde & belegg", uncertainty: "Foreløpig" }] } });
+assert.match(evidenceMarkup, /Belegg, tolkning og usikkerhet/);
+assert.doesNotMatch(evidenceMarkup, /<script>/);
+assert.match(evidenceMarkup, /&lt;script&gt;/);
 
 const contaminated = {
   reflection: "Sahel og politisk økologi",
