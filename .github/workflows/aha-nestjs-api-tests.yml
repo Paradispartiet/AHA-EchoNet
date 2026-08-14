@@ -17,6 +17,9 @@ on:
       - ".github/workflows/aha-nestjs-api-tests.yml"
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   api-foundation:
     name: NestJS API build and tests
@@ -26,8 +29,10 @@ jobs:
         working-directory: backend/api
 
     steps:
-      - name: Checkout repository
+      - name: Checkout repository branch head
         uses: actions/checkout@v5
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
 
       - name: Setup Node
         uses: actions/setup-node@v5
@@ -56,3 +61,18 @@ jobs:
           path: backend/api/package-lock.json
           if-no-files-found: error
           retention-days: 7
+
+      - name: Commit generated lockfile to PR branch once
+        if: github.event_name == 'pull_request'
+        working-directory: .
+        env:
+          HEAD_BRANCH: ${{ github.head_ref }}
+        run: |
+          if [ -z "$(git status --porcelain -- backend/api/package-lock.json)" ]; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add backend/api/package-lock.json
+          git commit -m "Lock NestJS API dependencies"
+          git push origin "HEAD:${HEAD_BRANCH}"
