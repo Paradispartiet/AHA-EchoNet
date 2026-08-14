@@ -128,6 +128,9 @@ Status:
 - binder eksportens data-, DOM- og analyseavhengigheter én gang gjennom
   `chat.export.createRuntime(...)`; `ahaChat.js` bygger ikke lenger en ny
   eksportbro ved hvert kall
+- lar `chat.autoOutputView` eie sikker markup, History Go-forslag,
+  kryssdomene-filtrering og kilde/run-mismatch for auto-output; orkestratoren
+  leverer bare de underliggende kontraktene
 - bruker `ahaChat.js` som orkestrator uten parallelle agent-, ingest-, innsiktspipeline-, kammerlager-, cache-,
   analyse-state-, kildeidentitets-, analyse-, policy- eller view-implementasjoner
 

@@ -85,17 +85,82 @@
     const required = [
       "enforceCanonicalSourceGrounding", "getActiveAnalysisRun", "artifactMatchesActiveRun",
       "analysisTopicMismatch", "renderAnalysisDebugPanel", "setExportButtonsEnabled",
-      "safeMarkupSortItems", "safeMarkupList", "safeMarkupText", "detectTextType",
-      "buildHistoryGoSuggestion", "filterCrossDomainAutoPayload", "saveAutoOutputAsAfterwork",
+      "escHtml", "cleanArticleText", "detectTextType", "saveAutoOutputAsAfterwork",
       "setStatusNote", "refreshAhaExplorer", "updateAnalysisRun", "normalizeConceptKey",
       "detectPublicAdministrationReformSignal", "detectAutoAnalysisDomain",
       "detectLiteraryAttachmentSignal", "filterConceptLabels", "canonicalizeDisplayConcept",
       "detectInstitutionalMediaHistorySignal", "parseLabeledInsightCards",
-      "getSongLyricChildCultureSubjectMatches", "getLiterarySubjectMatches"
+      "getSongLyricChildCultureSubjectMatches", "getLiterarySubjectMatches",
+      "getLiteraryAttachmentLearningPath"
     ];
     required.forEach((name) => {
       if (typeof deps[name] !== "function") throw new Error(`AHAChatAutoOutputView mangler avhengighet: ${name}`);
     });
+
+    function safeMarkupText(value) {
+      return deps.escHtml(deps.cleanArticleText(String(value || "")).replace(/\s+/g, " ").trim());
+    }
+
+    function safeMarkupList(values) {
+      return (Array.isArray(values) ? values : []).map((item) => safeMarkupText(item));
+    }
+
+    function safeMarkupSortItems(items) {
+      return (Array.isArray(items) ? items : []).map((item) => ({
+        label: safeMarkupText(item?.label),
+        text: safeMarkupText(item?.text)
+      }));
+    }
+
+    function buildHistoryGoSuggestion(payload, sourceText) {
+      const source = String(sourceText || "");
+      const text = `${source} ${(Array.isArray(payload?.insightCards) ? payload.insightCards.join(" ") : "")}`.toLowerCase();
+      const navSignal = deps.detectPublicAdministrationReformSignal(source || text);
+      const literarySignal = deps.detectLiteraryAttachmentSignal(source || text);
+      if (navSignal?.strong) {
+        return `<article class="auto-card" data-auto-card="historygo">
+          <h4>History Go-kobling funnet</h4>
+          <p><strong>Tema:</strong> Offentlig forvaltning</p>
+          <p><strong>Mulig History Go-kategori:</strong> politikk — Politikk & samfunn</p>
+          <p><strong>Kan brukes til:</strong> quizspørsmål · leksikonoppføring · læringssti · begrepskort · fagkobling</p>
+        </article>`;
+      }
+      if (literarySignal?.strong) {
+        return `<article class="auto-card" data-auto-card="historygo">
+          <h4>History Go-kobling funnet</h4>
+          <p><strong>Tema:</strong> Litteratur og psykologi</p>
+          <p><strong>Mulig History Go-kategori:</strong> litteratur — Litteratur</p>
+          <p><strong>Kan brukes til:</strong> forfatterkort · verk-leksikon · begrepskort · litteraturquiz · fagkobling mellom psykologi og litteratur</p>
+        </article>`;
+      }
+      return "";
+    }
+
+    function filterCrossDomainAutoPayload(payload, sourceText) {
+      const safe = payload && typeof payload === "object" ? payload : {};
+      const src = String(sourceText || "").toLowerCase();
+      const domain = deps.detectAutoAnalysisDomain(src, safe);
+      if (domain !== "literary_attachment") return safe;
+      const blocked = /(sahel|mali|klima som konfliktforklaring|klimaforklaring|knapphetsskolen|ressursknapphet|miljøsikkerhet|politisk økologi|environmental security|climate conflict|makt- og produksjonsforhold)/i;
+      const filterArray = (arr) => (Array.isArray(arr) ? arr.filter((item) => !blocked.test(typeof item === "string" ? item : `${item?.label || ""} ${item?.text || ""} ${item?.title || ""} ${item?.summary || ""}`)) : []);
+      return {
+        ...safe,
+        reflection: blocked.test(String(safe.reflection || "")) ? "" : String(safe.reflection || ""),
+        sortItems: filterArray(safe.sortItems),
+        list: filterArray(safe.list),
+        insightCards: filterArray(safe.insightCards),
+        path: deps.getLiteraryAttachmentLearningPath(),
+        keywords: filterArray(safe.keywords),
+        subjectMatches: deps.getLiterarySubjectMatches(),
+        subjectLinks: deps.getLiterarySubjectMatches(),
+        theoryLinks: filterArray(safe.theoryLinks),
+        thoughts: {
+          hovedspor: blocked.test(String(safe?.thoughts?.hovedspor || "")) ? "" : String(safe?.thoughts?.hovedspor || ""),
+          lose_tanker: blocked.test(String(safe?.thoughts?.lose_tanker || "")) ? "" : String(safe?.thoughts?.lose_tanker || ""),
+          neste_steg: blocked.test(String(safe?.thoughts?.neste_steg || "")) ? "" : String(safe?.thoughts?.neste_steg || "")
+        }
+      };
+    }
 
     function humanizeTextType(type) {
       const key = String(type || "").trim().toLowerCase();
@@ -165,15 +230,15 @@
         deps.setExportButtonsEnabled(false);
         return;
       }
-      if (deps.analysisTopicMismatch(payload, activeRun)) {
+      if (deps.analysisTopicMismatch(payload, activeRun, host.dataset.sourceText || "")) {
         host.innerHTML = '<div class="auto-output-head"><h2>AHA etterarbeid</h2><p>Analyseobjektet matcher ikke aktiv tekst. Kjør analysen på nytt.</p></div>' + deps.renderAnalysisDebugPanel(payload);
         deps.setExportButtonsEnabled(false);
         return;
       }
-      const safeSortItems = deps.safeMarkupSortItems(payload.sortItems);
-      const safeList = deps.safeMarkupList(payload.list);
-      const safeInsightCards = deps.safeMarkupList(payload.insightCards);
-      const safePath = deps.safeMarkupList(payload.path);
+      const safeSortItems = safeMarkupSortItems(payload.sortItems);
+      const safeList = safeMarkupList(payload.list);
+      const safeInsightCards = safeMarkupList(payload.insightCards);
+      const safePath = safeMarkupList(payload.path);
       const textTypeLabel = String(payload.contentType || "").trim() || humanizeTextType(payload.textType || deps.detectTextType(host.dataset.sourceText || ""));
       const ahaSer = buildAhaSerCard(payload, host.dataset.sourceText || "");
       deps.updateAnalysisRun({
@@ -184,7 +249,7 @@
         subjectMatches: payload?.subjectMatches || payload?.subjectLinks,
         rawAutoPayload: payload
       }, activeRun);
-      const historyGoSuggestion = deps.buildHistoryGoSuggestion(payload, host.dataset.sourceText || "");
+      const historyGoSuggestion = buildHistoryGoSuggestion(payload, host.dataset.sourceText || "");
       host.innerHTML = `
         <div class="auto-output-head">
           <h2>AHA etterarbeid</h2>
@@ -194,25 +259,25 @@
           <h3>AHA ser</h3>
           <article class="auto-card auto-card-primary" data-auto-card="aha_ser">
             <dl class="aha-ser-list">
-              <div><dt>Innholdstype</dt><dd>${deps.safeMarkupText(textTypeLabel)}</dd></div>
-              <div><dt>Tema</dt><dd>${deps.safeMarkupText(ahaSer.tema)}</dd></div>
-              <div><dt>Hovedspenning</dt><dd>${deps.safeMarkupText(ahaSer.hovedspenning)}</dd></div>
-              <div><dt>Viktigste innsikt</dt><dd>${deps.safeMarkupText(ahaSer.viktigsteInnsikt)}</dd></div>
-              <div><dt>Fagkoblinger</dt><dd>${deps.safeMarkupText(ahaSer.fagkoblinger)}</dd></div>
-              <div><dt>Neste steg</dt><dd>${deps.safeMarkupText(ahaSer.nesteSteg)}</dd></div>
+              <div><dt>Innholdstype</dt><dd>${safeMarkupText(textTypeLabel)}</dd></div>
+              <div><dt>Tema</dt><dd>${safeMarkupText(ahaSer.tema)}</dd></div>
+              <div><dt>Hovedspenning</dt><dd>${safeMarkupText(ahaSer.hovedspenning)}</dd></div>
+              <div><dt>Viktigste innsikt</dt><dd>${safeMarkupText(ahaSer.viktigsteInnsikt)}</dd></div>
+              <div><dt>Fagkoblinger</dt><dd>${safeMarkupText(ahaSer.fagkoblinger)}</dd></div>
+              <div><dt>Neste steg</dt><dd>${safeMarkupText(ahaSer.nesteSteg)}</dd></div>
             </dl>
           </article>
         </section>
         <section class="auto-output-group" data-group="samtale">
           <h3>Samtale</h3>
           <div class="auto-output-grid">
-            <article class="auto-card" data-auto-card="oppsummer"><h4>Oppsummer · Hva sier teksten?</h4><p>${deps.safeMarkupText(ahaSer.kortSvar)}</p></article>
-            <article class="auto-card" data-auto-card="lag_innsikt"><h4>Lag innsikt · Hovedpoeng som kan lagres</h4><p>${deps.safeMarkupText(ahaSer.viktigsteInnsikt)}</p></article>
-            <article class="auto-card" data-auto-card="reflekter"><h4>Reflekter · Betydning, spenning, kritikk</h4><p>${deps.safeMarkupText(payload.reflection)}</p></article>
+            <article class="auto-card" data-auto-card="oppsummer"><h4>Oppsummer · Hva sier teksten?</h4><p>${safeMarkupText(ahaSer.kortSvar)}</p></article>
+            <article class="auto-card" data-auto-card="lag_innsikt"><h4>Lag innsikt · Hovedpoeng som kan lagres</h4><p>${safeMarkupText(ahaSer.viktigsteInnsikt)}</p></article>
+            <article class="auto-card" data-auto-card="reflekter"><h4>Reflekter · Betydning, spenning, kritikk</h4><p>${safeMarkupText(payload.reflection)}</p></article>
             <article class="auto-card" data-auto-card="sorter"><h4>Sorter · Struktur videre</h4><ul>${safeSortItems.map((item)=>`<li><strong>${item.label}:</strong> ${item.text}</li>`).join("")}</ul></article>
             <article class="auto-card" data-auto-card="lag_laringssti"><h4>Lag læringssti · Neste progresjon</h4><ol>${safePath.map((step)=>`<li>${step}</li>`).join("")}</ol></article>
-            <article class="auto-card" data-auto-card="oppsummer_dagen"><h4>Oppsummer dagen min</h4><p>${deps.safeMarkupText(payload.day)}</p></article>
-            <article class="auto-card" data-auto-card="sorter_tanker"><h4>Sorter tankene mine</h4><p><strong>Hovedspor:</strong> ${deps.safeMarkupText(payload?.thoughts?.hovedspor)}</p><p><strong>Løse tanker:</strong> ${deps.safeMarkupText(payload?.thoughts?.lose_tanker)}</p><p><strong>Mulig neste steg:</strong> ${deps.safeMarkupText(payload?.thoughts?.neste_steg)}</p></article>
+            <article class="auto-card" data-auto-card="oppsummer_dagen"><h4>Oppsummer dagen min</h4><p>${safeMarkupText(payload.day)}</p></article>
+            <article class="auto-card" data-auto-card="sorter_tanker"><h4>Sorter tankene mine</h4><p><strong>Hovedspor:</strong> ${safeMarkupText(payload?.thoughts?.hovedspor)}</p><p><strong>Løse tanker:</strong> ${safeMarkupText(payload?.thoughts?.lose_tanker)}</p><p><strong>Mulig neste steg:</strong> ${safeMarkupText(payload?.thoughts?.neste_steg)}</p></article>
             ${historyGoSuggestion}
           </div>
         </section>
@@ -237,7 +302,7 @@
           if (statusEl) statusEl.textContent = "Kildetekst mangler. Analyser teksten på nytt for å kunne lagre etterarbeid.";
         }
         saveButton.addEventListener("click", () => {
-          const filteredPayload = deps.filterCrossDomainAutoPayload(payload, host.dataset.sourceText || "");
+          const filteredPayload = filterCrossDomainAutoPayload(payload, host.dataset.sourceText || "");
           const result = deps.saveAutoOutputAsAfterwork(filteredPayload, host.dataset.sourceText || "", { subjectMatches: payload?.subjectMatches });
           if (result?.entry) deps.updateAnalysisRun({ afterwork: result.entry }, activeRun);
           if (result.reason === "missing_source_text") {
@@ -257,7 +322,16 @@
       deps.refreshAhaExplorer();
     }
 
-    return { humanizeTextType, buildAhaSerCard, renderAutoOutputPayload };
+    return Object.freeze({
+      humanizeTextType,
+      buildAhaSerCard,
+      renderAutoOutputPayload,
+      safeMarkupText,
+      safeMarkupList,
+      safeMarkupSortItems,
+      buildHistoryGoSuggestion,
+      filterCrossDomainAutoPayload
+    });
   }
 
   function createRuntime(deps = {}) {
