@@ -6,6 +6,8 @@ import {
 import type { AppConfig } from "./config/app-config.js";
 import { RequestContextMiddleware } from "./common/request-context.middleware.js";
 
+type CorsDecision = (error: Error | null, allow?: boolean) => void;
+
 export function createGlobalValidationPipe(): ValidationPipe {
   return new ValidationPipe({
     transform: true,
@@ -31,7 +33,7 @@ export function configureApplication(app: INestApplication, config: AppConfig): 
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["authorization", "content-type", "idempotency-key", "x-request-id"],
     exposedHeaders: ["x-request-id"],
-    origin(origin, callback) {
+    origin(origin: string | undefined, callback: CorsDecision): void {
       if (!origin || config.allowedOrigins.includes(origin)) {
         callback(null, true);
         return;
