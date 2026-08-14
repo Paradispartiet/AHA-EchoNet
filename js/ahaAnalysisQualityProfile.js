@@ -177,19 +177,25 @@
     return { ok: Boolean(updated), message: updated || message };
   }
 
-  function loadQualityCompletion() {
+  function loadScript(src, marker, available) {
     const doc = global.document;
-    if (!doc?.head || !doc.createElement || global.AHAQualityCompletion) return false;
-    if (doc.querySelector?.('script[data-aha-quality-completion="true"]')) return true;
+    if (!doc?.head || !doc.createElement || available?.()) return false;
+    if (doc.querySelector?.(`script[data-aha-quality-module="${marker}"]`)) return true;
     const script = doc.createElement("script");
-    script.src = "js/ahaQualityCompletion.js";
+    script.src = src;
     script.async = false;
-    script.dataset.ahaQualityCompletion = "true";
+    script.dataset.ahaQualityModule = marker;
     doc.head.appendChild(script);
     return true;
   }
 
-  const api = Object.freeze({ VERSION, collectFeedbackEvents, buildProfile, adjustedThresholds, recordFeedback, undoFeedback, loadQualityCompletion });
+  function loadQualityCompletion() {
+    const completion = loadScript("js/ahaQualityCompletion.js", "completion", () => Boolean(global.AHAQualityCompletion));
+    const artifacts = loadScript("js/ahaAdaptiveArtifacts.js", "adaptive-artifacts", () => Boolean(global.AHAAdaptiveArtifacts));
+    return completion || artifacts;
+  }
+
+  const api = Object.freeze({ VERSION, collectFeedbackEvents, buildProfile, adjustedThresholds, recordFeedback, undoFeedback, loadScript, loadQualityCompletion });
   global.AHAAnalysisQualityProfile = api;
   global.AHAModuleApi?.register?.("analysis.qualityProfile", api, {
     version: 1,
