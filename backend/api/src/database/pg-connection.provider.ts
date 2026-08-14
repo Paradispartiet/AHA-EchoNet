@@ -5,7 +5,8 @@ import { CanonicalDatabaseError } from "./database.errors.js";
 import type {
   DatabaseClient,
   DatabaseConnectionProvider,
-  DatabaseQueryResult
+  DatabaseQueryResult,
+  DatabaseRow
 } from "./database.types.js";
 
 const { Pool: PgPool } = pg;
@@ -13,12 +14,15 @@ const { Pool: PgPool } = pg;
 class PgClientAdapter implements DatabaseClient {
   constructor(private readonly client: PoolClient) {}
 
-  async query<Row extends QueryResultRow = QueryResultRow>(
+  async query<Row extends DatabaseRow = Record<string, unknown>>(
     statement: string,
     values: readonly unknown[] = []
   ): Promise<DatabaseQueryResult<Row>> {
-    const result = await this.client.query<Row>(statement, [...values]);
-    return { rows: result.rows, rowCount: result.rowCount };
+    const result = await this.client.query<QueryResultRow>(statement, [...values]);
+    return {
+      rows: result.rows as Row[],
+      rowCount: result.rowCount
+    };
   }
 
   release(): void {
