@@ -53,8 +53,14 @@ without parallel implementations in `ahaChat.js`.
 
 `chat.uiRuntime.createShell(...)` owns the small shared browser shell: theme and
 field context, status/output targets, auxiliary and main panel writes, HTML
-escaping, display-text normalization and the active-insight query. The returned
-facade is frozen and keeps DOM selection out of `ahaChat.js`.
+escaping, display-text normalization, the active-insight query, concept-label
+adaptation, category-chip suggestions, debounced Explorer refresh and the local
+chat-memory status. The returned facade is frozen and keeps these browser
+adapters out of `ahaChat.js`.
+
+`chat.canonicalAnalysis.create(...)` owns History Go link normalization together
+with canonical synthesis. This keeps alias handling, stable IDs and duplicate
+suppression on the same side of the canonical-analysis boundary.
 
 ## Candidate-ingest extension point
 

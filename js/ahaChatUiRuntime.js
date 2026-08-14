@@ -11,11 +11,23 @@
     if (typeof deps.getInsightsApi !== "function") {
       throw new Error("AHAChatShellRuntime mangler avhengighet: getInsightsApi");
     }
+    if (typeof deps.filterConceptLabels !== "function") {
+      throw new Error("AHAChatShellRuntime mangler avhengighet: filterConceptLabels");
+    }
+    if (typeof deps.buildExportBundle !== "function") {
+      throw new Error("AHAChatShellRuntime mangler avhengighet: buildExportBundle");
+    }
     const subjectId = String(deps.subjectId || "").trim();
     if (!subjectId) throw new Error("AHAChatShellRuntime mangler avhengighet: subjectId");
 
     const documentRef = deps.document || global.document;
     const defaultThemeId = String(deps.defaultThemeId || "th_default");
+    const getExplorerApi = deps.getExplorerApi || (() => global.AHAExplorer);
+    const getPersistenceApi = deps.getPersistenceApi || (() => global.AHAChatPersistence);
+    const setTimeoutRef = deps.setTimeout || global.setTimeout;
+    const clearTimeoutRef = deps.clearTimeout || global.clearTimeout;
+    const warn = deps.warn || ((...args) => global.console?.warn?.(...args));
+    let explorerRefreshTimer = null;
 
     function getThemeId() {
       const input = documentRef?.getElementById?.("theme-id");
@@ -72,6 +84,54 @@
         .replace(/underviser(\s+)viktigheten/gi, (_match, gap) => `understreker${gap}viktigheten`);
     }
 
+    function resolveConceptTerm(term) {
+      if (term == null) return "";
+      if (typeof term === "string") return term;
+      if (typeof term === "number") return String(term);
+      if (typeof term === "object") {
+        return String(term?.label || term?.title || term?.key || term?.term || term?.name || term?.subject_label || term?.subject_id || term?.id || term?.value || "");
+      }
+      return String(term || "");
+    }
+
+    function suggestCategoryChips() {
+      const labels = [];
+      currentInsights().slice(0, 6).forEach((insight) => {
+        (insight.emner || []).forEach((emne) => labels.push(emne));
+        (insight.concepts || []).forEach((concept) => labels.push(concept?.label || concept?.key));
+        (insight.patterns || []).forEach((pattern) => labels.push(pattern?.label || pattern?.key));
+      });
+      return [...new Set(deps.filterConceptLabels(labels))].slice(0, 8);
+    }
+
+    function refreshAhaExplorer() {
+      const explorer = getExplorerApi();
+      if (!explorer?.render || typeof setTimeoutRef !== "function") return;
+      if (explorerRefreshTimer && typeof clearTimeoutRef === "function") clearTimeoutRef(explorerRefreshTimer);
+      explorerRefreshTimer = setTimeoutRef(() => {
+        explorerRefreshTimer = null;
+        try {
+          explorer.render(deps.buildExportBundle());
+        } catch (err) {
+          warn("AHA Explorer-oppdatering feilet", err);
+        }
+      }, 150);
+    }
+
+    function renderChatMemoryStatus() {
+      const host = documentRef?.getElementById?.("aha-chat-memory-status");
+      if (!host) return null;
+      const api = getPersistenceApi();
+      if (!api?.collectChatStats) {
+        host.textContent = "Chat-minne er ikke aktivt. Samtaler brukes ikke som treningsgrunnlag før du har godkjent dem i Data Intake.";
+        return null;
+      }
+      const session = api.getOrCreateCurrentSession?.();
+      const stats = api.collectChatStats();
+      host.textContent = `Lagring aktiv. Session: ${session?.id || "ukjent"}. Meldinger i session: ${(session?.messages || []).length}. Totalt: ${stats.messages}. Samtaler brukes ikke som treningsgrunnlag før du har godkjent dem i Data Intake.`;
+      return stats;
+    }
+
     return Object.freeze({
       getThemeId,
       getFieldId,
@@ -81,7 +141,11 @@
       renderAuxPanel,
       renderPanel,
       currentInsights,
-      normalizeDisplayText
+      normalizeDisplayText,
+      resolveConceptTerm,
+      suggestCategoryChips,
+      refreshAhaExplorer,
+      renderChatMemoryStatus
     });
   }
 
