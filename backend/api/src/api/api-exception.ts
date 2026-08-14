@@ -2,9 +2,11 @@ import { HttpException } from "@nestjs/common";
 
 export type ApiErrorCode =
   | "AUTH_REQUIRED"
+  | "FORBIDDEN"
   | "VALIDATION_FAILED"
   | "NOT_FOUND"
   | "PROFILE_NOT_FOUND"
+  | "CONFLICT"
   | "DATABASE_NOT_CONFIGURED"
   | "DATABASE_UNAVAILABLE"
   | "DATABASE_UNSAFE_RUNTIME_ROLE"
