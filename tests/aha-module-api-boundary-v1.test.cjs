@@ -194,6 +194,7 @@ const runtimeFacade = context.AHAModuleApi.get('chat.runtimeFacade', { version: 
 assert.equal(typeof runtimeFacade.create, 'function');
 const runtimeComposition = context.AHAModuleApi.get('chat.runtimeComposition', { version: 1 });
 assert.equal(typeof runtimeComposition.create, 'function');
+assert.equal(Object.isFrozen(runtimeComposition.REQUIRED_CAPABILITY_GROUPS), true);
 
 const chatSource = fs.readFileSync('js/ahaChat.js', 'utf8');
 assert.match(chatSource, /providerLoader\.(?:require|instantiate)\(/, 'Chat must resolve extracted modules through the provider boundary');

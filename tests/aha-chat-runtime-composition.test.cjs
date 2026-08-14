@@ -23,7 +23,11 @@ vm.runInContext(fs.readFileSync("js/ahaChatRuntimeComposition.js", "utf8"), cont
 
 const api = context.AHAChatRuntimeComposition;
 assert.equal(Object.isFrozen(api), true);
-assert.equal(Object.isFrozen(api.REQUIRED_BINDINGS), true);
+assert.equal(Object.isFrozen(api.REQUIRED_CAPABILITY_GROUPS), true);
+Object.values(api.REQUIRED_CAPABILITY_GROUPS).forEach((group) => assert.equal(Object.isFrozen(group), true));
+assert.equal(Object.hasOwn(api, "REQUIRED_BINDINGS"), false, "the flat binding contract must stay removed");
+const requiredCapabilities = Object.values(api.REQUIRED_CAPABILITY_GROUPS).flat();
+assert.equal(new Set(requiredCapabilities).size, requiredCapabilities.length, "capabilities must have one owner");
 assert.equal(registrations.some(({ name }) => name === "chat.runtimeComposition"), true);
 assert.throws(() => api.create({}), /mangler avhengighet: config/);
 
@@ -78,15 +82,19 @@ const modules = {
   }
 };
 
-const bindings = {};
-api.REQUIRED_BINDINGS.forEach((name) => { bindings[name] = () => name; });
-bindings.analysisRunContract = { version: "aha_analysis_run_v1" };
-bindings.AHA_RUNTIME_KNOWLEDGE_POLICY = { legacyArticleTemplatesEnabled: false };
-bindings.getInsightsApi = () => ({ buildMetaProfile: () => ({ profile: "meta" }) });
-bindings.renderAhaMemoryTransparency = () => "transparency";
-bindings.bindAhaMemoryControls = () => "bind-memory";
-bindings.renderAhaPersonalAiLoopStatus = () => "personal-status";
-bindings.buildAhaPersonalAiLoopChatReadinessStatus = () => "readiness";
+const capabilities = {};
+Object.entries(api.REQUIRED_CAPABILITY_GROUPS).forEach(([groupName, required]) => {
+  capabilities[groupName] = {};
+  required.forEach((name) => { capabilities[groupName][name] = () => name; });
+});
+capabilities.core.analysisRunContract = { version: "aha_analysis_run_v1" };
+capabilities.analysis.AHA_RUNTIME_KNOWLEDGE_POLICY = { legacyArticleTemplatesEnabled: false };
+capabilities.core.getInsightsApi = () => ({ buildMetaProfile: () => ({ profile: "meta" }) });
+capabilities.memory.renderAhaMemoryTransparency = () => "transparency";
+capabilities.memory.bindAhaMemoryControls = () => "bind-memory";
+capabilities.memory.renderAhaPersonalAiLoopStatus = () => "personal-status";
+capabilities.memory.buildAhaPersonalAiLoopChatReadinessStatus = () => "readiness";
+capabilities.analysis.hiddenProviderInternal = () => "hidden";
 
 const runtime = api.create({
   config: {
@@ -97,7 +105,7 @@ const runtime = api.create({
     afterworkStorageKey: "afterwork"
   },
   modules,
-  bindings
+  capabilities
 });
 
 assert.equal(Object.isFrozen(runtime), true);
@@ -116,20 +124,37 @@ assert.strictEqual(calls.facade.bindings.buildAhaAnalysisExportBundle, exported.
 assert.strictEqual(calls.facade.bindings.renderAutoOutputs, auto.renderAutoOutputs);
 assert.strictEqual(calls.facade.bindings.showMeta, knowledge.showMeta);
 assert.strictEqual(calls.facade.bindings.bind, ui.bind);
+assert.equal(Object.hasOwn(calls.facade.bindings, "hiddenProviderInternal"), false);
 assert.strictEqual(runtime.install(), installed);
 assert.equal(calls.install, true);
 
 assert.throws(
-  () => api.create({ config: { subjectId: "sub" }, modules, bindings }),
+  () => api.create({ config: { subjectId: "sub" }, modules, capabilities }),
   /mangler config: threadId/
 );
 assert.throws(
   () => api.create({
     config: { subjectId: "sub", threadId: "thread", pendingPromptKey: "p", highlightsStorageKey: "h", afterworkStorageKey: "a" },
     modules: { ...modules, uiRuntime: {} },
-    bindings
+    capabilities
   }),
   /krever modulmetode: uiRuntime\.create/
+);
+assert.throws(
+  () => api.create({
+    config: { subjectId: "sub", threadId: "thread", pendingPromptKey: "p", highlightsStorageKey: "h", afterworkStorageKey: "a" },
+    modules,
+    capabilities: { ...capabilities, execution: {} }
+  }),
+  /mangler capability: execution\.getActiveAnalysisRun/
+);
+assert.throws(
+  () => api.create({
+    config: { subjectId: "sub", threadId: "thread", pendingPromptKey: "p", highlightsStorageKey: "h", afterworkStorageKey: "a" },
+    modules,
+    capabilities: { ...capabilities, core: { ...capabilities.core, analysisRunContract: null } }
+  }),
+  /krever verdicapability: core\.analysisRunContract/
 );
 
 console.log("aha-chat-runtime-composition.test.cjs passed");

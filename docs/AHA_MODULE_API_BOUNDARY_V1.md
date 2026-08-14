@@ -71,7 +71,11 @@ the public runtime surface.
 `chat.runtimeComposition.create(...)` owns the final application wiring between
 the already versioned export, auto-output, reply policy, Meta-AI, submission,
 knowledge-view, UI and runtime-facade modules. It accepts an explicit module map,
-configuration and binding table; it contains no analysis or import engine logic.
+configuration and six responsibility-owned capability groups (`core`,
+`persistence`, `analysis`, `execution`, `memory`, `view`). Each group is
+allowlisted and type-validated before composition; undeclared capabilities are
+not forwarded to the public runtime facade. The module contains no analysis or
+import engine logic.
 
 `chat.providerLoader` is the canonical manifest for Chat provider names, legacy
 aliases and required factory methods. `ahaChat.js` resolves and instantiates

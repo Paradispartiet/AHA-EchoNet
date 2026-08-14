@@ -85,6 +85,8 @@ assert.doesNotMatch(chatOrchestratorSource, /document\.addEventListener\("DOMCon
 assert.doesNotMatch(chatOrchestratorSource, /\.createSubmissionRuntime\?\.\(|\.createSubjectPolicy\?\.\(|const (?:exportRuntime|autoOutputRuntime|submissionRuntime|knowledgeView|uiRuntime|runtimeFacade)\b/, 'final runtime assembly must remain extracted');
 assert.doesNotMatch(chatOrchestratorSource, /function (?:resolveModule|chatModule)\s*\(/, 'provider resolution must remain extracted');
 assert.doesNotMatch(chatOrchestratorSource, /^  const \w+ = \w+\.\w+;/m, 'provider surfaces must not return to one-off alias bindings');
+assert.match(chatOrchestratorSource, /capabilities: \{[\s\S]*core: Object\.freeze\([\s\S]*persistence: Object\.freeze\([\s\S]*analysis: Object\.freeze\([\s\S]*execution: Object\.freeze\([\s\S]*memory: Object\.freeze\([\s\S]*view: Object\.freeze\(/, 'runtime composition inputs must remain grouped by capability ownership');
+assert.doesNotMatch(chatOrchestratorSource, /\n    bindings: \{/, 'the flat runtime-composition binding table must stay removed');
 assert.doesNotMatch(fs.readFileSync('js/ahaChatAutoOutputView.js', 'utf8'), /global\.localStorage\.setItem\s*\(/, 'auto-output runtime must persist through the versioned store');
 assert.match(fs.readFileSync('js/ahaExplorer.js', 'utf8'), /contractVersion === "aha_analysis_run_v1"/, 'Explorer must render through the versioned analysis-run view model');
 
