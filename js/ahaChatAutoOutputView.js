@@ -56,7 +56,7 @@
       ? `Den viktigste prøven på tolkningen er om kildebelegget faktisk belyser hovedspenningen «${tension}». ${actions[1] || firstAction}`
       : `Den viktigste prøven på tolkningen er om kildebelegget støtter hovedinnsikten. ${firstAction}`;
 
-    return {
+    const harmonized = {
       ...safe,
       reflection,
       sortItems: sourceItems.length ? sourceItems : safe.sortItems,
@@ -87,6 +87,11 @@
           .filter((key) => Array.isArray(canonical[key]) ? canonical[key].length : Boolean(canonical[key]))
       }
     };
+    const evaluator = global.AHAAnalysisQualityEvaluator;
+    if (evaluator && typeof evaluator.evaluateAnalysis === "function") {
+      harmonized.analysisQuality = evaluator.evaluateAnalysis(harmonized, sourceText);
+    }
+    return harmonized;
   }
 
   function createStore(deps = {}) {

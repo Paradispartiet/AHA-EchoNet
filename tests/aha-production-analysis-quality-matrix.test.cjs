@@ -158,7 +158,7 @@ function makeProductContext() {
     'js/ahaChatMemoryRuntime.js',
     'js/ahaChatRunContext.js',
     'js/ahaChatInsightView.js',
-    'js/ahaChatAutoAnalysis.js', 'js/ahaChatAutoOutputView.js', 'js/ahaChatAnalysisStateView.js', 'js/ahaChatChamberStore.js', 'js/ahaChatAnalysisPolicy.js', 'js/ahaChatConceptPolicy.js', 'js/ahaChatCanonicalAnalysis.js', 'js/ahaChatKnowledgeView.js', 'js/ahaChatInsightPipeline.js', 'js/ahaChatAgentRuntime.js', 'js/ahaChatIngestRuntime.js', 'js/ahaChatPersonalUi.js', 'js/ahaChatConversationView.js', 'js/ahaChatAnalysisRunContract.js', 'js/ahaChatAcademicInsightView.js', 'js/ahaChatUiRuntime.js', 'js/ahaChatProviderLoader.js', 'js/ahaChatCapabilityBindings.js', 'js/ahaChatRuntimeFacade.js', 'js/ahaChatRuntimeComposition.js', 'js/ahaChatApplicationComposition.js', 'js/ahaChat.js',
+    'js/ahaChatAutoAnalysis.js', 'js/ahaAnalysisQualityEvaluator.js', 'js/ahaChatAutoOutputView.js', 'js/ahaChatAnalysisStateView.js', 'js/ahaChatChamberStore.js', 'js/ahaChatAnalysisPolicy.js', 'js/ahaChatConceptPolicy.js', 'js/ahaChatCanonicalAnalysis.js', 'js/ahaChatKnowledgeView.js', 'js/ahaChatInsightPipeline.js', 'js/ahaChatAgentRuntime.js', 'js/ahaChatIngestRuntime.js', 'js/ahaChatPersonalUi.js', 'js/ahaChatConversationView.js', 'js/ahaChatAnalysisRunContract.js', 'js/ahaChatAcademicInsightView.js', 'js/ahaChatUiRuntime.js', 'js/ahaChatProviderLoader.js', 'js/ahaChatCapabilityBindings.js', 'js/ahaChatRuntimeFacade.js', 'js/ahaChatRuntimeComposition.js', 'js/ahaChatApplicationComposition.js', 'js/ahaChat.js',
     'js/ahaLists.js',
     'js/ahaPaths.js',
     'js/ahaMindmap.js',
@@ -249,6 +249,8 @@ vm.runInNewContext(read('js/ahaSubjectEngine.js'), subjectContext, { filename: '
 
     assert.ok(payload.ahaSer?.viktigsteInnsikt, `${item.id}: AHA Ser insight missing`);
     assert.ok(payload.canonicalAnalysis?.keyInsight, `${item.id}: canonical key insight missing`);
+    assert.ok(payload.analysisQuality, `${item.id}: analysis quality report missing`);
+    assert.notEqual(payload.analysisQuality.status, 'blocked', `${item.id}: production analysis hit a critical quality block`);
     assert.ok(Array.isArray(payload.sortItems) && payload.sortItems.length >= 3, `${item.id}: structured source analysis missing`);
     payload.sortItems.forEach((field) => {
       assert.equal(sourceContains(item.sourceText, field.text), true, `${item.id}: structured field is not a verbatim source sentence: ${field.label}`);

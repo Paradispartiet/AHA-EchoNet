@@ -1,0 +1,25 @@
+{
+  "schema": "aha_analysis_quality_contract_v1",
+  "version": "1.0.0",
+  "purpose": "A permanent release gate for source-bound, specific, transformed, actionable, distinct and uncertainty-aware AHA analysis output.",
+  "dimensions": {
+    "sourceGrounding": { "minimum": 0.58, "meaning": "Visible analysis has verbatim source evidence and interprets the active source rather than unrelated memory." },
+    "specificity": { "minimum": 0.52, "meaning": "Claims and actions retain concrete concepts, actors, distinctions or measurable details." },
+    "transformation": { "minimum": 0.45, "meaning": "The key insight adds synthesis instead of copying a source sentence." },
+    "actionability": { "minimum": 0.5, "meaning": "Next steps use concrete operations and remain connected to the active source." },
+    "distinctness": { "minimum": 0.72, "meaning": "Theme, tension, insight and next steps do different jobs without semantic repetition." },
+    "uncertaintyHonesty": { "minimum": 1, "meaning": "Low-confidence or fragmentary material carries an explicit warning." }
+  },
+  "critical_blocks": [
+    "missing_key_insight",
+    "missing_suggested_action",
+    "missing_verbatim_source_evidence",
+    "uncertainty_not_disclosed"
+  ],
+  "review_population": {
+    "canonical_golden_cases": 16,
+    "runtime_subject_cases": 8,
+    "quality_stress_cases": 6,
+    "total": 30
+  }
+}

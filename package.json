@@ -11,6 +11,7 @@
     "start": "node server.js",
     "test": "node scripts/run-node-tests.mjs",
     "test:analysis-quality": "node tests/aha-production-analysis-quality-matrix.test.cjs",
+    "test:quality-contract": "node tests/aha-analysis-quality-contract.test.cjs",
     "test:longitudinal-robustness": "node tests/aha-longitudinal-user-robustness.test.cjs",
     "test:release-candidate": "node tests/aha-release-candidate-audit.test.cjs",
     "test:launch-gate": "node scripts/run-launch-gate-v1.mjs",
