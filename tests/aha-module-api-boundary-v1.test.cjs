@@ -148,7 +148,8 @@ const chatModules = [
   ['chat.autoAnalysis', 'AHAChatAutoAnalysis', 'js/ahaChatAutoAnalysis.js'],
   ['chat.autoOutputView', 'AHAChatAutoOutputView', 'js/ahaChatAutoOutputView.js'],
   ['chat.analysisStateView', 'AHAChatAnalysisStateView', 'js/ahaChatAnalysisStateView.js'],
-  ['chat.canonicalAnalysis', 'AHAChatCanonicalAnalysis', 'js/ahaChatCanonicalAnalysis.js']
+  ['chat.canonicalAnalysis', 'AHAChatCanonicalAnalysis', 'js/ahaChatCanonicalAnalysis.js'],
+  ['chat.uiRuntime', 'AHAChatUiRuntime', 'js/ahaChatUiRuntime.js']
 ];
 for (const [moduleName, legacyGlobal, file] of chatModules) {
   vm.runInContext(fs.readFileSync(file, 'utf8'), context, { filename: file });

@@ -87,6 +87,7 @@ Eksisterende filer:
 - `js/ahaChatKnowledgeView.js`
 - `js/ahaChatAgentRuntime.js`
 - `js/ahaChatIngestRuntime.js`
+- `js/ahaChatUiRuntime.js`
 - `js/ahaChatConversationView.js`
 - `aha-chat.css`
 
@@ -122,6 +123,8 @@ Status:
 - kobler `chat.memoryControls` til `chat.personalUi` gjennom den eksplisitte
   tofasete `bindView`-kontrakten; øvrige Personal UI-kall brukes direkte uten
   sent-bindende orkestratorwrappere
+- eier pending prompt, lokal reset, action chips og DOM-eventbindinger i den
+  versjonerte `chat.uiRuntime`-modulen
 - bruker `ahaChat.js` som orkestrator uten parallelle agent-, ingest-, innsiktspipeline-, kammerlager-, cache-,
   analyse-state-, kildeidentitets-, analyse-, policy- eller view-implementasjoner
 
