@@ -190,9 +190,11 @@
   }
 
   function loadQualityCompletion() {
+    const revision = loadScript("js/ahaMemoryRevision.js", "memory-revision", () => Boolean(global.AHAMemoryRevision));
+    const guard = loadScript("js/ahaMemoryRetrievalGuard.js", "memory-retrieval-guard", () => Boolean(global.AHAMemoryRetrievalGuard));
     const completion = loadScript("js/ahaQualityCompletion.js", "completion", () => Boolean(global.AHAQualityCompletion));
     const artifacts = loadScript("js/ahaAdaptiveArtifacts.js", "adaptive-artifacts", () => Boolean(global.AHAAdaptiveArtifacts));
-    return completion || artifacts;
+    return revision || guard || completion || artifacts;
   }
 
   const api = Object.freeze({ VERSION, collectFeedbackEvents, buildProfile, adjustedThresholds, recordFeedback, undoFeedback, loadScript, loadQualityCompletion });
