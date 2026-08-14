@@ -8,6 +8,7 @@ import { AUTH_TOKEN_VERIFIER } from "../dist/auth/auth.types.js";
 import { configureApplication, createGlobalValidationPipe } from "../dist/bootstrap.js";
 import { APP_CONFIG, loadAppConfig } from "../dist/config/app-config.js";
 import { FoundationCommandEnvelope } from "../dist/foundation-command.dto.js";
+import { CURRENT_PROFILE_REPOSITORY } from "../dist/profiles/profile.repository.js";
 
 class MemoryAuditSink {
   events = [];
@@ -34,7 +35,7 @@ function testConfig(overrides = {}) {
     environment: "test",
     port: 3100,
     serviceName: "aha-nest-api",
-    serviceVersion: "0.1.0-test",
+    serviceVersion: "0.2.0-test",
     allowedOrigins: Object.freeze(["https://app.example"]),
     auditHashSalt: "test-audit-salt-with-more-than-32-characters",
     auth: Object.freeze({
@@ -50,16 +51,21 @@ function testConfig(overrides = {}) {
   });
 }
 
-async function createTestApp(config = testConfig()) {
+async function createTestApp(config = testConfig(), profileRepository = null) {
   const sink = new MemoryAuditSink();
-  const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
+  let builder = Test.createTestingModule({ imports: [AppModule] })
     .overrideProvider(APP_CONFIG)
     .useValue(config)
     .overrideProvider(AUTH_TOKEN_VERIFIER)
     .useValue(fakeVerifier)
     .overrideProvider(AUDIT_SINK)
-    .useValue(sink)
-    .compile();
+    .useValue(sink);
+
+  if (profileRepository) {
+    builder = builder.overrideProvider(CURRENT_PROFILE_REPOSITORY).useValue(profileRepository);
+  }
+
+  const moduleRef = await builder.compile();
   const app = moduleRef.createNestApplication();
   configureApplication(app, config);
   await app.init();
@@ -70,7 +76,7 @@ async function settleAudit() {
   await new Promise((resolve) => setImmediate(resolve));
 }
 
-test("health is public and reports the foundation boundary truthfully", async (t) => {
+test("health is public and reports the disabled database boundary truthfully", async (t) => {
   const { app } = await createTestApp();
   t.after(() => app.close());
 
@@ -79,14 +85,18 @@ test("health is public and reports the foundation boundary truthfully", async (t
     .expect(200);
 
   assert.equal(response.body.status, "ok");
+  assert.equal(response.body.version, "0.2.0-test");
   assert.equal(response.body.runtimeActivated, false);
   assert.equal(response.body.existingExpressRuntimePrimary, true);
+  assert.equal(response.body.database.configured, false);
   assert.equal(response.body.database.connected, false);
+  assert.equal(response.body.database.status, "disabled");
+  assert.equal(response.body.database.safeRuntimeRole, false);
   assert.equal(response.body.database.canonicalSchema, "not_connected");
   assert.equal(response.body.auth.configured, true);
 });
 
-test("protected routes reject missing and invalid bearer tokens without verifier details", async (t) => {
+test("protected routes reject missing and invalid bearer tokens through the stable error envelope", async (t) => {
   const { app } = await createTestApp();
   t.after(() => app.close());
 
@@ -94,7 +104,10 @@ test("protected routes reject missing and invalid bearer tokens without verifier
     .get("/v1/auth/context")
     .expect(401)
     .expect(({ body }) => {
-      assert.equal(body.message, "A valid bearer token is required");
+      assert.equal(body.error.code, "AUTH_REQUIRED");
+      assert.equal(body.error.message, "A valid bearer token is required");
+      assert.equal(body.error.status, 401);
+      assert.equal(body.meta.apiVersion, "0.2.0-test");
       assert.doesNotMatch(JSON.stringify(body), /signature_details|jwks|issuer\.example/i);
     });
 
@@ -103,12 +116,12 @@ test("protected routes reject missing and invalid bearer tokens without verifier
     .set("authorization", "Bearer invalid-test-token")
     .expect(401)
     .expect(({ body }) => {
-      assert.equal(body.message, "A valid bearer token is required");
+      assert.equal(body.error.code, "AUTH_REQUIRED");
       assert.doesNotMatch(JSON.stringify(body), /signature_details_must_not_leak/i);
     });
 });
 
-test("verified auth context exposes only immutable principal fields", async (t) => {
+test("verified auth context uses the stable response envelope and immutable principal fields", async (t) => {
   const { app } = await createTestApp();
   t.after(() => app.close());
 
@@ -120,16 +133,76 @@ test("verified auth context exposes only immutable principal fields", async (t) 
     .expect(200);
 
   assert.deepEqual(response.body, {
-    authenticated: true,
-    requestId: "req-auth-12345678",
-    principal: {
-      subject: "profile-subject-123",
-      provider: "test-provider",
-      issuer: "https://issuer.example",
-      audience: ["aha-api"]
+    data: {
+      authenticated: true,
+      principal: {
+        subject: "profile-subject-123",
+        provider: "test-provider",
+        issuer: "https://issuer.example",
+        audience: ["aha-api"]
+      }
+    },
+    meta: {
+      requestId: "req-auth-12345678",
+      apiVersion: "0.2.0-test"
     }
   });
   assert.doesNotMatch(JSON.stringify(response.body), /valid-test-token|user_metadata|raw_user_meta_data/i);
+});
+
+test("current profile is a bounded protected read model", async (t) => {
+  const profileRepository = {
+    async findCurrent(principal) {
+      assert.equal(principal.subject, "profile-subject-123");
+      return Object.freeze({
+        id: "profile-1",
+        displayName: "Test User",
+        locale: "nb-NO",
+        timezone: "Europe/Oslo",
+        status: "active",
+        createdAt: "2026-08-14T00:00:00.000Z",
+        updatedAt: "2026-08-14T01:00:00.000Z",
+        revision: 3
+      });
+    }
+  };
+  const { app } = await createTestApp(testConfig(), profileRepository);
+  t.after(() => app.close());
+
+  const response = await request(app.getHttpServer())
+    .get("/v1/profile")
+    .set("authorization", "Bearer valid-test-token")
+    .set("x-request-id", "req-profile-12345")
+    .expect(200);
+
+  assert.equal(response.body.data.id, "profile-1");
+  assert.equal(response.body.data.revision, 3);
+  assert.equal(response.body.meta.requestId, "req-profile-12345");
+  assert.deepEqual(Object.keys(response.body.data).sort(), [
+    "createdAt",
+    "displayName",
+    "id",
+    "locale",
+    "revision",
+    "status",
+    "timezone",
+    "updatedAt"
+  ]);
+  assert.doesNotMatch(JSON.stringify(response.body), /auth_subject|metadata|profile-subject-123/i);
+});
+
+test("canonical profile read fails closed while the database adapter is disabled", async (t) => {
+  const { app } = await createTestApp();
+  t.after(() => app.close());
+
+  const response = await request(app.getHttpServer())
+    .get("/v1/profile")
+    .set("authorization", "Bearer valid-test-token")
+    .expect(503);
+
+  assert.equal(response.body.error.code, "DATABASE_NOT_CONFIGURED");
+  assert.equal(response.body.error.status, 503);
+  assert.doesNotMatch(JSON.stringify(response.body), /postgres|connection|string|stack|sql/i);
 });
 
 test("request IDs are preserved only when valid and generated otherwise", async (t) => {
@@ -193,7 +266,7 @@ test("global DTO validation rejects unknown fields and accepts a strict envelope
   assert.equal(value.workspaceId, "workspace-1");
 });
 
-test("production configuration is fail-closed", () => {
+test("production application configuration is fail-closed", () => {
   assert.throws(
     () => loadAppConfig({ NODE_ENV: "production" }),
     /AHA_ALLOWED_ORIGINS|auth configuration|AUDIT_HASH_SALT/
@@ -212,13 +285,15 @@ test("production configuration is fail-closed", () => {
   );
 });
 
-test("foundation contains no product write routes", async (t) => {
+test("repository contract contains no product write routes", async (t) => {
   const { app } = await createTestApp();
   t.after(() => app.close());
 
-  await request(app.getHttpServer())
+  const response = await request(app.getHttpServer())
     .post("/v1/insights")
     .set("authorization", "Bearer valid-test-token")
     .send({ title: "must not write" })
     .expect(404);
+
+  assert.equal(response.body.error.code, "NOT_FOUND");
 });
