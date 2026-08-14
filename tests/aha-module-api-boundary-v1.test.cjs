@@ -141,6 +141,7 @@ const chatModules = [
   ['chat.insightView', 'AHAChatInsightView', 'js/ahaChatInsightView.js'],
   ['chat.knowledgeView', 'AHAChatKnowledgeView', 'js/ahaChatKnowledgeView.js'],
   ['chat.insightPipeline', 'AHAChatInsightPipeline', 'js/ahaChatInsightPipeline.js'],
+  ['chat.agentRuntime', 'AHAChatAgentRuntime', 'js/ahaChatAgentRuntime.js'],
   ['chat.ingestRuntime', 'AHAChatIngestRuntime', 'js/ahaChatIngestRuntime.js'],
   ['chat.personalUi', 'AHAChatPersonalUi', 'js/ahaChatPersonalUi.js'],
   ['chat.conversationView', 'AHAChatConversationView', 'js/ahaChatConversationView.js'],
@@ -170,6 +171,8 @@ assert.equal(typeof chamberStore.create, 'function');
 const insightPipeline = context.AHAModuleApi.get('chat.insightPipeline', { version: 1 });
 assert.equal(Object.isFrozen(insightPipeline.FUNCTIONAL_TYPES), true);
 assert.equal(insightPipeline.FUNCTIONAL_TYPES.includes('contradiction'), true);
+const agentRuntime = context.AHAModuleApi.get('chat.agentRuntime', { version: 1 });
+assert.equal(typeof agentRuntime.create, 'function');
 const ingestRuntime = context.AHAModuleApi.get('chat.ingestRuntime', { version: 1 });
 assert.equal(typeof ingestRuntime.create, 'function');
 

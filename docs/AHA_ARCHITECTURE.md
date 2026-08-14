@@ -123,6 +123,13 @@ input.skip_insight === true
 Brukermeldinger fra chat ingestes som vanlig (uten `skip_insight`).
 Agent-svaret ingestes med `skip_insight: true`.
 
+### Agentrequesten har én eier
+
+Den versjonerte `chat.agentRuntime`-modulen bygger `ai_state`, filtrerer
+`memory_context` gjennom den eksisterende `used`-porten, former den godkjente
+`personal_context`-pakken og utfører `/chat`-kallet. `ahaChat.js` bestemmer når
+agenten skal kalles, men bygger ikke en parallell request eller nettverksrute.
+
 ## ahaEmneMatcher er et forslagssystem
 
 `ahaEmneMatcher.js` brukes av `AHAIngest` til å foreslå hvilke emner en

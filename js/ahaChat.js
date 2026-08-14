@@ -259,6 +259,20 @@
   const generateAIInsightCandidates = insightPipeline.generateAIInsightCandidates;
   const buildSemanticInsightCandidates = insightPipeline.buildSemanticInsightCandidates;
 
+  const agentRuntime = chatModule("agentRuntime", "AHAChatAgentRuntime")?.create?.({
+    subjectId: SUBJECT_ID,
+    getApiBase: () => global.AHA_AGENT_API,
+    fetchImpl: (...args) => global.fetch(...args),
+    loadChamber: loadChamberFromStorage,
+    getCurrentInsights: currentInsights,
+    memoryConceptLabel,
+    buildUserMetaProfile: (chamber, subjectId) =>
+      global.MetaInsightsEngine?.buildUserMetaProfile?.(chamber, subjectId) || {}
+  });
+  if (!agentRuntime) throw new Error("AHAChatAgentRuntime må lastes før ahaChat.js.");
+  const buildAIState = agentRuntime.buildAIState;
+  const askAhaAgent = agentRuntime.askAhaAgent;
+
   const ingestRuntime = chatModule("ingestRuntime", "AHAChatIngestRuntime")?.create?.({
     subjectId: SUBJECT_ID,
     getInsightsApi: insightsApi,
@@ -672,75 +686,6 @@
   function renderPanel(html) {
     const panel = document.getElementById("panel");
     if (panel) panel.innerHTML = html;
-  }
-
-  function buildAIState(options = {}) {
-    const includeMemory = options?.includeMemory !== false;
-    if (!includeMemory) {
-      return {
-        top_insights: [],
-        concepts: [],
-        meta_profile: {}
-      };
-    }
-
-    const chamber = loadChamberFromStorage();
-    const insights = currentInsights();
-    const topInsights = insights.slice(0, 8).map((ins) => ({
-      id: ins.id,
-      title: ins.title || "Innsikt",
-      summary: ins.summary || "",
-      concepts: (ins.concepts || []).map(memoryConceptLabel).filter(Boolean),
-      theme_id: ins.theme_id || null,
-      subject_id: ins.subject_id || null
-    }));
-    const concepts = [];
-    topInsights.forEach((ins) => (ins.concepts || []).forEach((c) => concepts.push(c)));
-    const metaProfile = global.MetaInsightsEngine?.buildUserMetaProfile?.(chamber, SUBJECT_ID) || {};
-    return {
-      top_insights: topInsights,
-      concepts,
-      meta_profile: metaProfile
-    };
-  }
-
-  async function askAhaAgent(message, options = {}) {
-    const apiBase = String(global.AHA_AGENT_API || "").trim().replace(/\/$/, "");
-    if (!apiBase) throw new Error("missing_api_base");
-
-    const memoryContext = options?.memoryContext && options.memoryContext.used ? options.memoryContext : null;
-    const personalContext = options?.personalContext && typeof options.personalContext === "object" ? options.personalContext : null;
-    const body = {
-      message,
-      ai_state: buildAIState({ includeMemory: Boolean(memoryContext), includePersonalContext: Boolean(personalContext?.prompt) }),
-      memory_context: memoryContext,
-      personal_context: personalContext ? {
-        prompt: personalContext.answerPackage?.prompt || personalContext.prompt || "",
-        answer_composer_prompt: personalContext.answerPackage?.prompt || "",
-        answer_composer: personalContext.answerPackage || null,
-        relevant: personalContext.relevant || {},
-        retrieval: personalContext.retrieval || null,
-        evidence: personalContext.context?.evidence || {},
-        status: personalContext.context ? {
-          readinessLevel: personalContext.context.readiness?.level || "ukjent",
-          readinessScore: Number(personalContext.context.readiness?.score) || 0,
-          approvedCorpus: Number(personalContext.context.evidence?.approvedCorpus) || 0,
-          approvedExamples: Number(personalContext.context.evidence?.approvedExamples) || 0,
-          confirmedClaims: Number(personalContext.context.evidence?.confirmedClaims) || 0
-        } : {}
-      } : null,
-      // Bakoverkompatibelt felt for eldre agentkode, men fylles bare når
-      // Memory Relevance Gate faktisk har valgt relevante minnetreff.
-      similar_insights: memoryContext?.semanticMatches || [],
-      profile: {}
-    };
-    const res = await fetch(`${apiBase}/chat`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body)
-    });
-    if (!res.ok) throw new Error(`chat_http_${res.status}`);
-    return res.json();
   }
 
   function safeMarkupText(value) {

@@ -2002,7 +2002,7 @@ AHA Chat kan nå bruke godkjent selvinnsikt, godkjent corpus og godkjente traini
 - `js/metaInsightsAgent.js` legger `chatPersonalContextPack` i `agentContext`, slik at Meta Insights AI forstår at AHA Chat kan bruke personlig kontekst.
 - Dette er broen mellom Training Corpus og senere **AHA Personal Model**: første versjon bruker godkjente data som prompt-kontekst, mens senere versjoner kan bruke RAG, embeddings eller modelltilpasning.
 
-Chatflyten styres i V1 av `chat.html` (scriptrekkefølge og panel), `js/ahaChat.js` (pending prompt, melding, agentpayload, chatlogg/localStorage og status), `js/ahaChatPersonalContext.js` (kontekstbygging/relevans) og `js/metaInsightsAgent.js` (Meta Insights AI-agentContext). Personal context passer inn rett etter eksisterende AHA Memory Gate og før `askAhaAgent()`, slik at brukerens nye melding holdes adskilt fra den godkjente konteksten. Datakildene i første versjon er Meta Insights Memory, Training Corpus, Training Examples og Personal Model Readiness.
+Chatflyten styres i V1 av `chat.html` (scriptrekkefølge og panel), `js/ahaChat.js` (pending prompt, meldingsorkestrering, chatlogg/localStorage og status), `js/ahaChatAgentRuntime.js` (agentpayload, minneport og HTTP-grense), `js/ahaChatPersonalContext.js` (kontekstbygging/relevans) og `js/metaInsightsAgent.js` (Meta Insights AI-agentContext). Personal context passer inn rett etter eksisterende AHA Memory Gate og før `chat.agentRuntime.askAhaAgent()`, slik at brukerens nye melding holdes adskilt fra den godkjente konteksten. Datakildene i første versjon er Meta Insights Memory, Training Corpus, Training Examples og Personal Model Readiness.
 
 ### AHA Personal Retrieval / RAG V1
 
