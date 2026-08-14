@@ -27,7 +27,36 @@ vm.runInContext(fs.readFileSync("js/ahaChatAutoOutputView.js", "utf8"), context,
 
 const api = context.AHAChatAutoOutputView;
 assert.equal(typeof api.create, "function");
+assert.equal(typeof api.harmonizeAnalysisPayload, "function");
 assert.throws(() => api.create({}), /mangler avhengighet: enforceCanonicalSourceGrounding/);
+
+const harmonized = api.harmonizeAnalysisPayload({
+  canonicalAnalysis: {
+    contentType: "academic_article",
+    theme: "AI som støtte for læring og kollektiv kunnskapsbygging",
+    mainTension: "automatisert tilgang til kunnskap kontra menneskelig vurdering og forståelse",
+    keyInsight: "Læringsteknologi bør styrke kritisk egenarbeid, ikke bare levere raske svar.",
+    fieldConnections: ["pedagogikk", "teknologi", "pedagogikk", "kunnskapsteori"],
+    suggestedActions: [
+      "Presiser hvilke læringssituasjoner som støttes av AI.",
+      "Legg til kriterier for å skille nyttig oppsummering fra ukritisk fasitbruk."
+    ]
+  },
+  sortItems: [
+    { label: "Problem", text: "AI endrer forholdet mellom individuell læring og kollektiv kunnskap." },
+    { label: "Funn", text: "AI endrer forholdet mellom individuell læring og kollektiv kunnskap." },
+    { label: "Spenning", text: "Svarene kan skjule usikkerhet dersom de tas som fasit." }
+  ],
+  list: ["Første kildepunkt", "Første kildepunkt", "Andre kildepunkt"]
+}, "En aktiv tekst om AI og læring.");
+assert.equal(harmonized.ahaSer.tema, "AI som støtte for læring og kollektiv kunnskapsbygging");
+assert.equal(harmonized.ahaSer.viktigsteInnsikt, "Læringsteknologi bør styrke kritisk egenarbeid, ikke bare levere raske svar.");
+assert.equal(harmonized.sortItems.length, 2, "visible structure must remove repeated source sentences");
+assert.equal(harmonized.list.length, 2, "visible list must remove repeated items");
+assert.ok(harmonized.path.some((step) => /automatisert tilgang/i.test(step)), "learning path must use the active tension");
+assert.ok(harmonized.path.some((step) => /læringssituasjoner/i.test(step)), "learning path must use the reviewed next action");
+assert.ok(harmonized.path.some((step) => /pedagogikk/i.test(step)), "learning path must use active field connections");
+assert.equal(harmonized.qualityProfile.sourceBound, true);
 
 let mismatchArgs = null;
 let exportEnabled = null;

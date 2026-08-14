@@ -527,6 +527,23 @@
     const themes14d = filterGenericConceptItems(visibleThemes14d, (item) => item?.key).slice(0, 3);
     const themes30d = filterGenericConceptItems(visibleThemes30d, (item) => item?.key).slice(0, 3);
     const latestAcademicContext = readLatestAcademicContext();
+    const activePayload = latestAcademicContext?.payload && typeof latestAcademicContext.payload === "object"
+      ? latestAcademicContext.payload
+      : {};
+    const activeCanonical = activePayload?.canonicalAnalysis && typeof activePayload.canonicalAnalysis === "object"
+      ? activePayload.canonicalAnalysis
+      : {};
+    const activeAhaSer = activePayload?.ahaSer && typeof activePayload.ahaSer === "object"
+      ? activePayload.ahaSer
+      : {};
+    const activeTheme = String(activeCanonical.theme || activeAhaSer.tema || "").trim();
+    const activeTension = String(activeCanonical.mainTension || activeAhaSer.hovedspenning || "").trim();
+    const activeInsight = String(activeCanonical.keyInsight || activeAhaSer.viktigsteInnsikt || "").trim();
+    const activeFields = (Array.isArray(activeCanonical.fieldConnections)
+      ? activeCanonical.fieldConnections
+      : Array.isArray(activeAhaSer.fagkoblinger) ? activeAhaSer.fagkoblinger : [])
+      .map((item) => String(item || "").trim()).filter(Boolean).slice(0, 4);
+    const activeNextStep = String(activeAhaSer.nesteSteg || (Array.isArray(activeCanonical.suggestedActions) ? activeCanonical.suggestedActions[0] : "") || "").trim();
     const latestContextSource = String(latestAcademicContext?.sourceText || "").toLowerCase();
     const institutionalMediaSource = isInstitutionalMediaHistorySource(latestContextSource, latestAcademicContext?.payload || {});
     const theoryAllowedForInstitutionalMedia = !institutionalMediaSource || sourceMentionsTheoryForInstitutionalHistory(latestContextSource);
@@ -590,7 +607,15 @@
     const edgeWarning = lowData && topEdges.length ? `<p class="knowledge-sub">Sterk kobling, men lite datagrunnlag. Forekomst: ${totalInsights} tekster/innsikter. Sikkerhet: lav/middels.</p>` : "";
     return `<section class="knowledge-map-block">
       <h3>Kunnskapskart for hele chamberet</h3>
-      <p class="knowledge-sub"><strong>Historiske chamber-mønstre</strong> (kan avvike fra siste tekst).</p>
+      ${activeTheme || activeInsight ? `<article class="knowledge-card knowledge-card-active">
+        <h4>Aktiv tekst · dette ser AHA nå</h4>
+        ${activeTheme ? `<p class="knowledge-sub"><strong>Tema:</strong> ${escHtml(activeTheme)}</p>` : ""}
+        ${activeTension ? `<p class="knowledge-sub"><strong>Spenning:</strong> ${escHtml(activeTension)}</p>` : ""}
+        ${activeInsight ? `<p class="knowledge-sub"><strong>Innsikt:</strong> ${escHtml(activeInsight)}</p>` : ""}
+        ${activeFields.length ? `<p class="knowledge-sub"><strong>Koblinger:</strong> ${activeFields.map(escHtml).join(" ↔ ")}</p>` : ""}
+        ${activeNextStep ? `<p class="knowledge-sub"><strong>Neste steg:</strong> ${escHtml(activeNextStep)}</p>` : ""}
+      </article>` : ""}
+      <p class="knowledge-sub"><strong>Historiske chamber-mønstre</strong> (holdes adskilt fra aktiv tekst).</p>
       ${lowDataBanner}
       <div class="knowledge-map-grid">
         <article class="knowledge-card">
@@ -622,6 +647,16 @@
 
   function chamberHasKnowledgeMapData(chamber) {
     return Boolean(chamber && Array.isArray(chamber.insights) && chamber.insights.length);
+  }
+
+  function activeAnalysisHasKnowledgeMapData() {
+    try {
+      const context = readLatestAcademicContext();
+      const payload = context?.payload && typeof context.payload === "object" ? context.payload : {};
+      return Boolean(payload?.canonicalAnalysis?.theme || payload?.canonicalAnalysis?.keyInsight || payload?.ahaSer?.tema || payload?.ahaSer?.viktigsteInnsikt);
+    } catch {
+      return false;
+    }
   }
 
   function aggregateVisibleConceptCounts(items, keyField = "key", countField = "count") {
@@ -869,7 +904,7 @@
 
   function showKnowledgeMap() {
     const chamber = loadChamberFromStorage();
-    const hasData = chamberHasKnowledgeMapData(chamber);
+    const hasData = chamberHasKnowledgeMapData(chamber) || activeAnalysisHasKnowledgeMapData();
     if (!global.MetaInsightsEngine?.buildUserMetaProfile) {
       out("MetaInsightsEngine mangler buildUserMetaProfile.");
       return;

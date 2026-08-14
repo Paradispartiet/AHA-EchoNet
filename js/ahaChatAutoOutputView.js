@@ -12,6 +12,83 @@
 
   const AUTO_OUTPUT_STORAGE_KEY = "aha_chat_auto_outputs_v1";
 
+  function uniqueText(values) {
+    const seen = new Set();
+    return (Array.isArray(values) ? values : []).map((value) => String(value || "").replace(/\s+/g, " ").trim()).filter((value) => {
+      const key = value.toLowerCase().replace(/[.!?;,:\s]+$/u, "");
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
+  function harmonizeAnalysisPayload(payload, sourceText = "") {
+    const safe = payload && typeof payload === "object" ? payload : {};
+    const canonical = safe.canonicalAnalysis && typeof safe.canonicalAnalysis === "object"
+      ? safe.canonicalAnalysis
+      : null;
+    if (!canonical?.theme || !canonical?.keyInsight) return safe;
+
+    const theme = String(canonical.theme || "").trim();
+    const tension = String(canonical.mainTension || "").trim();
+    const insight = String(canonical.keyInsight || "").trim();
+    const fields = uniqueText(canonical.fieldConnections).slice(0, 6);
+    const actions = uniqueText(canonical.suggestedActions).slice(0, 3);
+    const sourceItems = [];
+    const seenSourceItems = new Set();
+    (Array.isArray(safe.sortItems) ? safe.sortItems : []).forEach((item) => {
+      const text = String(item?.text || "").replace(/\s+/g, " ").trim();
+      const key = text.toLowerCase().replace(/[.!?;,:\s]+$/u, "");
+      if (!text || seenSourceItems.has(key)) return;
+      seenSourceItems.add(key);
+      sourceItems.push({ ...item, text });
+    });
+
+    const path = uniqueText([
+      theme ? `Avgrens hovedtemaet: ${theme}.` : "",
+      tension ? `Undersøk hovedspenningen: ${tension}.` : "",
+      ...actions,
+      fields.length ? `Koble kildebelegget til ${fields.slice(0, 3).join(", ")} og marker hva kilden ikke avgjør.` : ""
+    ]).slice(0, 5);
+    const firstAction = actions[0] || path[0] || "Velg ett kildebundet neste steg.";
+    const summary = theme ? `Temaet er ${theme}.` : insight;
+    const reflection = tension
+      ? `Den viktigste prøven på tolkningen er om kildebelegget faktisk belyser hovedspenningen «${tension}». ${actions[1] || firstAction}`
+      : `Den viktigste prøven på tolkningen er om kildebelegget støtter hovedinnsikten. ${firstAction}`;
+
+    return {
+      ...safe,
+      reflection,
+      sortItems: sourceItems.length ? sourceItems : safe.sortItems,
+      list: uniqueText(Array.isArray(safe.list) ? safe.list : []).slice(0, 6),
+      path: path.length ? path : safe.path,
+      thoughts: {
+        ...(safe.thoughts && typeof safe.thoughts === "object" ? safe.thoughts : {}),
+        hovedspor: theme,
+        lose_tanker: tension || "Skill mellom kildebelegg, tolkning og åpne spørsmål.",
+        neste_steg: firstAction
+      },
+      ahaSer: {
+        ...(safe.ahaSer && typeof safe.ahaSer === "object" ? safe.ahaSer : {}),
+        innholdstype: String(canonical.contentType || safe.textType || "").trim(),
+        tema: theme,
+        hovedspenning: tension || "Ingen tydelig hovedspenning identifisert ennå.",
+        viktigsteInnsikt: insight,
+        fagkoblinger: fields,
+        nesteSteg: firstAction,
+        kortSvar: summary
+      },
+      qualityProfile: {
+        version: "aha_visible_analysis_quality_v1",
+        sourceBound: Boolean(String(sourceText || "").trim()),
+        distinctSourceItems: sourceItems.length,
+        specificPathSteps: path.length,
+        canonicalFieldsUsed: ["theme", "mainTension", "keyInsight", "fieldConnections", "suggestedActions"]
+          .filter((key) => Array.isArray(canonical[key]) ? canonical[key].length : Boolean(canonical[key]))
+      }
+    };
+  }
+
   function createStore(deps = {}) {
     if (typeof deps.sourceHash !== "function") {
       throw new Error("AHAChatAutoOutputStore mangler avhengighet: sourceHash");
@@ -420,6 +497,7 @@
       if (!deps.isActiveAnalysisRun(activeRun)) return;
       payload.canonicalAnalysis = resolvedCanonical.analysis;
       payload.canonicalAnalysisMeta = resolvedCanonical.meta;
+      payload = harmonizeAnalysisPayload(payload, effectiveSourceText);
       payload = deps.enforceCanonicalSourceGrounding(payload, effectiveSourceText);
       deps.bindAnalysisArtifact(payload, activeRun, "rawAutoPayload");
       if (payload.canonicalAnalysis && typeof payload.canonicalAnalysis === "object") deps.bindAnalysisArtifact(payload.canonicalAnalysis, activeRun, "canonicalAnalysis");
@@ -517,7 +595,7 @@
   global.AHAChatAutoOutputStore = storeApi;
   global.AHAModuleApi?.register?.("chat.autoOutputStore", storeApi, { version: 1, legacyGlobal: "AHAChatAutoOutputStore", exports: Object.keys(storeApi) });
 
-  const publicApi = Object.assign({}, global.AHAChatAutoOutputView || {}, { create, createRuntime });
+  const publicApi = Object.assign({}, global.AHAChatAutoOutputView || {}, { create, createRuntime, harmonizeAnalysisPayload });
   global.AHAChatAutoOutputView = publicApi;
   global.AHAModuleApi?.register?.("chat.autoOutputView", publicApi, { version: 1, legacyGlobal: "AHAChatAutoOutputView", exports: Object.keys(publicApi) });
 })(window);

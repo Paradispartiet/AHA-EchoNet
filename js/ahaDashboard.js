@@ -49,6 +49,15 @@
     return items.filter((item) => !item?.deleted_at).length;
   }
 
+  function readArray(key) {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(key) || "[]");
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+
   function localStats() {
     const imports = readArray("aha_imports_v1").length;
     return {

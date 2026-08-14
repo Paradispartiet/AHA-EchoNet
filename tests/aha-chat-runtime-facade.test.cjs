@@ -76,6 +76,7 @@ assert.equal(calls.some(([name]) => name === "bind"), false, "loading documents 
 assert.strictEqual(context.loadChamberFromStorage, existingLoader, "existing compatibility loaders must be preserved");
 assert.equal(context.AHATestHooks.preservedHook(), "preserved");
 assert.deepEqual(Object.keys(context.AHAChat).sort(), Array.from(api.CHAT_EXPORTS).sort());
+assert.equal(typeof context.AHAChat.buildAhaAnalysisExportBundle, "function", "Explorer export builder must be part of the production Chat API");
 assert.equal(registrations.some(({ name }) => name === "chat.runtimeFacade"), true);
 assert.equal(registrations.some(({ name }) => name === "chat"), true);
 

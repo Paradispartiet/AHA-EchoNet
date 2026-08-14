@@ -20,7 +20,10 @@
       buildUserMetaProfile: (chamber, subjectId) =>
         global.MetaInsightsEngine?.buildUserMetaProfile?.(chamber, subjectId) || {},
       getMetaInsightsAgent: () => global.AHAMetaInsightsAgent,
-      getExportBundleBuilder: () => global.buildAhaAnalysisExportBundle
+      getExportBundleBuilder: () =>
+        global.AHAChat?.buildAhaAnalysisExportBundle ||
+        global.AHATestHooks?.buildAhaAnalysisExportBundle ||
+        global.buildAhaAnalysisExportBundle
     })
   });
   applicationComposition.install();
