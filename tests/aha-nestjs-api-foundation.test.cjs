@@ -3,11 +3,11 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 const root = process.cwd();
-const apiRoot = path.join(root, "backend", "api");
 const read = (relative) => fs.readFileSync(path.join(root, relative), "utf8");
 
 for (const relative of [
   "backend/api/package.json",
+  "backend/api/package-lock.json",
   "backend/api/tsconfig.json",
   "backend/api/tsconfig.build.json",
   "backend/api/README.md",
@@ -42,12 +42,25 @@ assert.deepEqual(pkg.dependencies, {
   "@nestjs/platform-express": "11.1.28",
   "class-transformer": "0.5.1",
   "class-validator": "0.14.2",
-  "jose": "6.2.3",
+  jose: "6.2.3",
   "reflect-metadata": "0.2.2",
-  "rxjs": "7.8.2"
+  rxjs: "7.8.2"
 });
-for (const forbidden of ["pg", "typeorm", "prisma", "@prisma/client", "langchain", "@langchain/langgraph", "@zilliz/milvus2-sdk-node"] ) {
+for (const forbidden of ["pg", "typeorm", "prisma", "@prisma/client", "langchain", "@langchain/langgraph", "@zilliz/milvus2-sdk-node"]) {
   assert.equal(pkg.dependencies[forbidden], undefined, `${forbidden} skal ikke inn i foundation-PR-en`);
+}
+
+const lock = JSON.parse(read("backend/api/package-lock.json"));
+assert.equal(lock.name, "@aha/nest-api");
+assert.equal(lock.version, "0.1.0");
+assert.equal(lock.lockfileVersion, 3);
+assert.equal(lock.requires, true);
+assert.deepEqual(lock.packages[""].dependencies, pkg.dependencies);
+assert.deepEqual(lock.packages[""].devDependencies, pkg.devDependencies);
+assert.deepEqual(lock.packages[""].engines, pkg.engines);
+for (const entry of Object.values(lock.packages).filter(Boolean)) {
+  if (entry.resolved) assert.match(entry.resolved, /^https:\/\/registry\.npmjs\.org\//);
+  if (entry.integrity) assert.match(entry.integrity, /^sha512-/);
 }
 
 const tsconfig = JSON.parse(read("backend/api/tsconfig.json"));
@@ -114,13 +127,15 @@ assert.match(config, /cannot contain a wildcard/);
 assert.match(config, /at least 32 characters in production/);
 
 const workflow = read(".github/workflows/aha-nestjs-api-tests.yml");
+assert.match(workflow, /permissions:\s*\n\s*contents:\s*read/);
 assert.match(workflow, /working-directory:\s*backend\/api/);
 assert.match(workflow, /node-version:\s*22/);
-assert.match(workflow, /npm install --package-lock-only/);
-assert.match(workflow, /npm ci --ignore-scripts/);
+assert.match(workflow, /cache:\s*npm/);
+assert.match(workflow, /cache-dependency-path:\s*backend\/api\/package-lock\.json/);
+assert.match(workflow, /npm ci --ignore-scripts --no-audit --no-fund/);
 assert.match(workflow, /npm run build/);
 assert.match(workflow, /node --test test\/\*\.test\.mjs/);
-assert.match(workflow, /Upload generated lockfile/);
+assert.doesNotMatch(workflow, /npm install --package-lock-only|Upload generated lockfile|git push|contents:\s*write/);
 
 const rootPackage = JSON.parse(read("package.json"));
 assert.equal(rootPackage.main, "server.js");
