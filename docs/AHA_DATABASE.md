@@ -1,18 +1,30 @@
 # AHA Database
 
-AHA-EchoNet har et valgfritt Supabase/Postgres-lag.
+AHA-EchoNet har et eksisterende, valgfritt Supabase/PostgreSQL-lag og et nytt canonical schema-grunnlag. De må ikke forveksles.
 
-## Dokumentgrense
+## Statusoversikt
 
-Denne filen beskriver databasekoden som **faktisk finnes nå**. Den planlagte overgangen til autoritativ PostgreSQL, IndexedDB/outbox, NestJS, eventuell Hasura, pgvector/Milvus-adapter og Azure er dokumentert i:
+| Lag | Status | Runtime |
+|---|---|---|
+| `public.aha_*` / `public.music_*` | Eksisterende Supabase-MVP | Valgfritt aktivt per modul |
+| `public.aha_insight_chambers` | Legacy chamber-sync som JSONB | Valgfritt aktivt |
+| `public.aha_insight_embeddings` | Første pgvector-lag | Valgfritt aktivt |
+| `aha.*` | Canonical PostgreSQL Schema v1 | **Ikke aktivert** |
+
+Backendretningen er dokumentert i:
 
 ```text
 docs/AHA_BACKEND_FOUNDATION_ROADMAP_V1.md
+docs/adr/README.md
+docs/AHA_CANONICAL_POSTGRESQL_SCHEMA_V1.md
+docs/AHA_LOCAL_TO_CANONICAL_MAPPING_V1.md
 ```
 
-Roadmapen er målarkitektur og migreringsrekkefølge. Den endrer ikke dagens runtime alene. Før en migreringsfase er testet og eksplisitt aktivert, gjelder fortsatt den valgfrie Supabase-kontrakten nedenfor.
+Runtime-kode og grønne kontraktstester beskriver hva som faktisk kjører. Canonical schema og ADR-er beskriver neste migreringsgrunnlag; de aktiverer ikke cloudlagring eller EchoNet alene.
 
-Database-laget er et tillegg til localStorage-MVP-en:
+## Dagens databasekode
+
+Dagens database-lag er et tillegg til localStorage-MVP-en:
 
 ```text
 localStorage fungerer alltid
@@ -20,7 +32,7 @@ Supabase brukes hvis konfigurert og bruker er innlogget
 appen skal ikke krasje hvis Supabase mangler
 ```
 
-## Filer
+### Filer
 
 ```text
 ahaDb.js
@@ -30,124 +42,167 @@ ahaAuth.js
 = Supabase Auth-bro og auth-ready event
 
 ahaRepository.js
-= felles repository-lag for database-save og database-read
+= database-save og database-read for eksisterende MVP-tabeller
 
 ahaChamberSync.js
-= toveis sync av insight-kammer mellom localStorage og Supabase
+= toveis sync av hele insight-kammeret mellom localStorage og Supabase
 
 supabase/schema.sql
-= tabeller
+= eksisterende public.aha_* og Music-tabeller
 
 supabase/policies.sql
-= RLS policies
+= eksisterende enkle profilbaserte RLS-policyer
 
 supabase/chamber.sql
-= aha_insight_chambers + RLS for chamber-sync
+= public.aha_insight_chambers + RLS
 
 supabase/embeddings.sql
-= aha_insight_embeddings + pgvector for semantisk søk
-
-supabase/README.md
-= hvordan schema og policies kjøres
-
-ahaConfig.js
-= runtime-konfig
-
-ahaConfig.example.js
-= eksempel for lokal konfig
+= public.aha_insight_embeddings + pgvector
 ```
 
-## Runtime-konfig
-
-Frontend leser disse globale verdiene:
+Frontend leser:
 
 ```js
 window.AHA_SUPABASE_URL
 window.AHA_SUPABASE_PUBLISHABLE_KEY
 ```
 
-Hvis disse mangler, returnerer `AHADb.isConfigured()` false og appen bruker localStorage videre.
+Hvis konfigurasjonen mangler, returnerer `AHADb.isConfigured()` false og appen bruker lokal lagring.
 
-## Tabeller
-
-```text
-aha_profiles
-aha_source_events
-aha_notes
-aha_gallery_items
-aha_feed_posts
-aha_insta_posts
-aha_insta_profiles (Insta-profil, valgfri)
-aha_insta_likes (Insta-likes, valgfri)
-aha_insta_comments (Insta-kommentarer, valgfri)
-aha_insta_follows (Insta-følginger, valgfri)
-aha_imports
-aha_insight_embeddings (semantic search, valgfri)
-aha_insight_chambers (chamber-sync, valgfri)
-```
-
-## Modulflyt ved lagring
+## Dagens lagringsflyt
 
 ```text
 Notes/Galleri/Feed/Insta/History Go-import
 → localStorage-save
-→ AHARepository forsøker Supabase-save
+→ AHARepository kan forsøke Supabase-save når modulen er eksplisitt aktivert
 → AHAIngest sender tekstlig materiale til eksisterende AHA-motor
 ```
 
-## Modulflyt ved innlogging / sync
+Ved dagens innlogging/sync kan enkelte moduler pushe lokale data og lese tilbake remote data. Chamber-sync bruker én JSONB-rad per profil og last-write-wins basert på tidsstempel.
+
+Dette er ikke den endelige fler-enhetskontrakten. Dagens modell mangler blant annet:
+
+- generell IndexedDB-outbox
+- per-device cursor
+- objektvise revisjoner
+- robust konfliktløsing
+- eksplisitt førstegangsimport med preview
+- arbeidsrom og medlemskap
+- objektspecifikk deling og tilbaketrekking
+
+## Canonical PostgreSQL Schema v1
+
+PR 2 i Backend Foundation-roadmapen leverer seks ordnede migrasjoner under `supabase/migrations/`.
+
+Canonical data ligger i separat schema:
 
 ```text
-AHAAuth sender aha:auth-ready
-→ modulen pusher lokale elementer til Supabase med upsert
-→ modulen leser samme tabell tilbake fra Supabase
-→ localStorage oppdateres som cache
-→ UI rendres fra oppdatert datasett
+aha.*
 ```
 
-Denne regelen hindrer at lokale data forsvinner ved innlogging, samtidig som Supabase blir sann kilde for de nåværende databaseaktiverte modulene når bruker er innlogget.
+Dette gjør at eksisterende `public.aha_*`-runtime kan fortsette uendret mens den nye modellen installeres og testes i et kontrollert miljø.
 
-Dette er ikke den endelige fler-enhetskontrakten. Dagens implementasjon har ikke en generell outbox, device cursor, objektvise revisjoner eller full konfliktløsing. Backend Foundation v1 skal erstatte denne begrensningen trinnvis, ikke ved å slå på skjult sync.
-
-## Repository-read
-
-`ahaRepository.js` har read-funksjoner for:
+### Canonical domener
 
 ```text
-loadSourceEvents()
-loadNotes()
-loadGalleryItems()
-loadFeedPosts()
-loadInstaPosts()
-loadImports()
-loadDashboardCounts()
+identity/workspaces
+conversations/sources
+analysis/evidence
+insights/versions/relations/feedback/memory
+concept lists/paths/articles/publications
+consent/sharing/import/sync/audit/jobs
 ```
 
-## Chamber-sync
-
-`aha_insight_chambers` lagrer hele insight-kammeret per profile som JSONB.
-`ahaChamberSync.js` håndterer toveis sync:
+Modellen inneholder 39 tabeller, blant annet:
 
 ```text
-- Lokale Chat-skriv via `chat.chamberStore` og øvrige skriv via
-  `saveChamberFallback` setter `chamber._local_updated_at` og dispatcher
-  `aha:chamber-saved`.
-- ahaChamberSync lytter og pusher til Supabase via AHARepository.saveChamber
-  med 1.5 s debounce.
-- På aha:auth-ready trekker ahaChamberSync remote chamber via
-  AHARepository.loadChamber og sammenligner:
-    - remote tomt        → push local
-    - local tomt         → ta remote (writeLocal + aha:chamber-replaced)
-    - begge har innhold  → last write wins via _local_updated_at vs
-                           updated_at
+aha.profiles
+aha.devices
+aha.workspaces
+aha.workspace_memberships
+aha.conversations
+aha.messages
+aha.source_events
+aha.analysis_runs
+aha.analysis_claims
+aha.analysis_evidence
+aha.insights
+aha.insight_versions
+aha.insight_relations
+aha.insight_feedback
+aha.memory_revisions
+aha.concept_lists
+aha.knowledge_paths
+aha.articles
+aha.article_versions
+aha.publications
+aha.consent_receipts
+aha.sharing_grants
+aha.import_batches
+aha.import_items
+aha.device_sync_cursors
+aha.audit_events
+aha.idempotency_keys
+aha.outbox_events
+aha.ai_jobs
 ```
 
-Hvis Supabase / auth / repository ikke er tilgjengelig, oppfører
-modulen seg som no-op. localStorage er alltid sann kilde lokalt.
+### Viktige schemaegenskaper
 
-## Planlagt system-of-record-overgang
+- PostgreSQL er system of record bare for eksplisitt synkroniserte konto- og arbeidsromdata.
+- `local_only` forblir en device-/importgrense og er ikke en vanlig cloudkolonne.
+- `workspace_id` er tenantanker for delte domeneobjekter.
+- Sammensatte foreign keys hindrer koblinger på tvers av arbeidsrom der dette kan håndheves i schema.
+- Lokale tekst-ID-er kan bevares ved import; nye server-ID-er kan være UUID-as-text.
+- Redigerbare objekter har monoton `revision` og tombstones der sync krever det.
+- Innsikter og artikler har egne versjonstabeller og deferrable current-version-referanser.
+- Sharing grants og offentlig publisering krever samtykkespor.
+- Import har batch- og per-item-kvittering med idempotensgrunnlag.
+- Outbox og AI-jobs er varige domeneobjekter, ikke bare prosessminne.
 
-Backend Foundation v1 skal gjøre PostgreSQL autoritativt bare for data som brukeren har valgt å knytte til en synkronisert konto eller et arbeidsrom.
+## Fail-closed RLS
+
+Schema v1 aktiverer Row Level Security på domenetabellene, men oppretter ingen brukerpolicyer eller frontendgrants.
+
+Dette er med vilje:
+
+```text
+PR 2 = datamodell
+PR 3 = tenancy-, RLS- og samtykkekontrakt
+```
+
+Ingen browserruntime skal få tilgang til `aha.*` før PR 3 og tilhørende cross-tenant-tester er merget. Sensitive writes skal også senere gå gjennom NestJS, ikke gjennom en alternativ direkte databasevei.
+
+## Local-to-canonical mapping
+
+Følgende lokale kilder har mapping i v1:
+
+```text
+aha_chat_sessions_v1
+aha_source_events_v1
+aha_insight_chamber_v1.insights
+aha_concept_lists_v1
+aha_paths_v1
+aha_articles_v1
+```
+
+Følgende er eksplisitt deferred eller local-only i denne leveransen:
+
+```text
+aha_lists_v1 generelle samlinger
+aha_notes_v1
+aha_gallery_v1
+aha_feed_posts_v1
+aha_insta_posts_v1 og sosial graf
+AHA Music
+Training corpus/examples
+Personal AI/workbench state
+lokale filer og dataURL-er
+```
+
+De blir ikke skjult konvertert til en «nesten lik» canonical tabell. Detaljert mapping og begrunnelse finnes i `AHA_LOCAL_TO_CANONICAL_MAPPING_V1.md`.
+
+## System-of-record-overgang
 
 Målgrensen er:
 
@@ -158,7 +213,7 @@ local-only object
 private synced object
 → IndexedDB cache/outbox
 → NestJS command boundary
-→ PostgreSQL system of record
+→ aha.* PostgreSQL system of record
 
 shared workspace object
 → explicit share preview and consent
@@ -166,22 +221,11 @@ shared workspace object
 → PostgreSQL workspace scope
 ```
 
-Overgangen krever før aktivering:
-
-- canonical schema og migrasjoner
-- mapping av alle eksisterende localStorage-objekter
-- idempotent førstegangsimport
-- revisionsnummer og optimistic concurrency
-- tombstones
-- device cursor og outbox
-- eier-/medlem-/redaktør-/uvedkommende-tester
-- eksport-, sletting-, rollback- og restore-test
-
-Eksisterende Supabase-schema og pgvector-filer skal brukes som migreringsgrunnlag der de passer, men de er ikke alene bevis på at Backend Foundation v1 er ferdig.
+Innlogging alene er ikke samtykke til å laste opp historiske data.
 
 ## Semantisk lagring
 
-Dagens `supabase/embeddings.sql` er første `pgvector`-implementasjon. Roadmapen låser følgende rekkefølge:
+Dagens `supabase/embeddings.sql` er første pgvector-implementasjon. ADR-005 låser rekkefølgen:
 
 ```text
 PgVectorStore først
@@ -189,21 +233,36 @@ PgVectorStore først
 → Milvus-adapter bare ved dokumentert behov
 ```
 
-PostgreSQL forblir system of record selv dersom en senere Milvus-indeks aktiveres.
+PostgreSQL forblir system of record selv om en senere Milvus-indeks aktiveres. Vektorlageret er en regenererbar søkeindeks, ikke den eneste kopien av innsikt eller samtykke.
 
-## Ikke gjort ennå
+## Aktiveringsport
+
+Canonical schema v1 er ikke ferdig backend. Før runtime kan kobles til det, gjenstår minst:
+
+1. tenancy-, RLS- og samtykkekontrakt
+2. installasjonstest mot ren PostgreSQL/Supabase staging
+3. migration rehearsal og rollback
+4. idempotent førstegangsimport med preview
+5. IndexedDB outbox og device cursors
+6. import/export-paritet
+7. backup og faktisk restore-test
+8. NestJS command/API boundary
+9. feature flags og rollback til local-first
+10. dokumentert null opplasting av local-only/deferred materiale
+
+## Fortsatt ikke implementert eller aktivert
 
 ```text
-- filopplasting
-- Supabase Storage
-- bilde-/videoanalyse
-- generell sanntids/live sync
-- robust multi-device konfliktoppløsning
-- IndexedDB outbox og device cursors
-- canonical normalisert PostgreSQL-modell for alle AHA-objekter
-- NestJS command/API boundary
+- canonical runtime mot aha.*
+- kontoimport
+- generell bidireksjonal sync
+- tenancy-/RLS-policyene for aha.*
+- NestJS command backend
 - Hasura proof of value
 - LangGraph job orchestration
 - Milvus adapter
 - Azure staging/production
+- ekstern publisering
+- EchoNet-deling
+- History Go write-back
 ```
