@@ -1,25 +1,27 @@
-# AHA NestJS API foundation
+# AHA NestJS API and repository foundation
 
 Status: **separat, fail-closed backendgrunnlag — ikke aktiv AHA-runtime**
 
-Denne tjenesten er PR 4 i `AHA_BACKEND_FOUNDATION_ROADMAP_V1.md`. Den etablerer en modulær NestJS-grunnmur for senere auth-, kommando-, database- og auditflyt uten å overta dagens `server.js`/Express-runtime.
+Denne tjenesten dekker PR 4–5 i `AHA_BACKEND_FOUNDATION_ROADMAP_V1.md`: NestJS-grunnmur, verifisert auth, stabil HTTP-kontrakt og første PostgreSQL repository-adapter. Den overtar ikke dagens `server.js`/Express-runtime og er ikke koblet fra frontend eller Render.
 
 ## Dette finnes
 
-- `GET /v1/health` — offentlig liveness/status
-- `GET /v1/auth/context` — beskyttet kontroll av verifisert principal
+- `GET /v1/health` — offentlig liveness og sann foundationstatus
+- `GET /v1/auth/context` — beskyttet, verifisert principal i stabil envelope
+- `GET /v1/profile` — første canonical RLS-bound read contract
 - global Bearer/JWKS-verifisering
 - validert request-ID
 - streng global DTO-validering
 - eksplisitt CORS-allowlist
-- redigert audit-event uten token, body, query eller rå subject
-- e2e- og kontrakttester
-- committet npm lockfile v3 for reproducerbare installs
-- read-only CI som bygger og tester med `npm ci`
+- stabil success/error-envelope
+- redigert audit-event uten token, body, query, SQL eller rå subject
+- opt-in `pg`-adapter bak leverandørnøytral repository-port
+- read-only transaksjon med transaksjonslokale JWT claims og RLS-sikkerhetskontroll
+- committet npm lockfile v3 og read-only CI med `npm ci`
 
 ## Dette finnes ikke
 
-- databaseklient eller runtime-grants
+- runtime-grants til `aha.*`
 - canonical PostgreSQL-writes
 - kontoimport
 - bidireksjonal sync
@@ -32,26 +34,31 @@ Denne tjenesten er PR 4 i `AHA_BACKEND_FOUNDATION_ROADMAP_V1.md`. Den etablerer 
 - EchoNet-deling
 - ekstern publisering
 
-Health-responsen rapporterer derfor:
+## Health-grensen
+
+Health åpner ikke en databaseconnection. Den rapporterer siste kjente adapterstatus:
 
 ```json
 {
   "runtimeActivated": false,
   "existingExpressRuntimePrimary": true,
   "database": {
+    "configured": false,
     "connected": false,
+    "status": "disabled",
+    "safeRuntimeRole": false,
     "canonicalSchema": "not_connected"
   }
 }
 ```
 
-## Miljøvariabler
+## Applikasjonsmiljø
 
 | Variabel | Påkrevd i production | Formål |
 |---|---:|---|
 | `NODE_ENV` | ja | `development`, `test` eller `production` |
 | `PORT` | nei | standard `3100` |
-| `AHA_API_VERSION` | nei | serviceversjon i health/audit |
+| `AHA_API_VERSION` | nei | serviceversjon, standard `0.2.0` |
 | `AHA_ALLOWED_ORIGINS` | ja | kommaseparert liste uten wildcard |
 | `AHA_AUTH_ISSUER` | ja | verifisert JWT issuer |
 | `AHA_AUTH_AUDIENCE` | ja | forventet JWT audience |
@@ -61,6 +68,21 @@ Health-responsen rapporterer derfor:
 
 Tjenesten starter ikke i production hvis auth, origins eller audit-salt mangler.
 
+## Databasemiljø
+
+| Variabel | Standard | Formål |
+|---|---|---|
+| `AHA_DATABASE_ENABLED` | `false` | Må være eksplisitt `true` for å opprette pool. |
+| `AHA_DATABASE_URL` | tom | Påkrevd når adapteren er aktivert. |
+| `AHA_DATABASE_SSL_MODE` | lokalt `disable` | Production krever `verify-full`. |
+| `AHA_DATABASE_POOL_MAX` | `8` | Maks 32. |
+| `AHA_DATABASE_CONNECTION_TIMEOUT_MS` | `5000` | Connection fail-fast. |
+| `AHA_DATABASE_IDLE_TIMEOUT_MS` | `30000` | Pool idle timeout. |
+| `AHA_DATABASE_STATEMENT_TIMEOUT_MS` | `8000` | Transaksjonslokal statement timeout. |
+| `AHA_DATABASE_LOCK_TIMEOUT_MS` | `2000` | Transaksjonslokal lock timeout. |
+
+Connection string og driverfeil logges ikke.
+
 ## Lokal bygg og test
 
 ```bash
@@ -69,41 +91,41 @@ npm ci --ignore-scripts --no-audit --no-fund
 npm test
 ```
 
-`package-lock.json` er committet og skal oppdateres sammen med enhver tilsiktet avhengighetsendring. CI har bare `contents: read` og kan ikke omskrive lockfilen eller PR-branchen.
+`package-lock.json` skal oppdateres sammen med enhver tilsiktet dependency-endring. CI har bare `contents: read`.
 
-## Auth-grense
+## Auth- og databasegrense
 
-JWT verifiseres med signatur, issuer og audience gjennom `jose` og remote JWKS. Den interne principalen inneholder bare:
+JWT verifiseres med signatur, issuer og audience. Databasekonteksten får bare:
 
 ```text
-subject
-provider
-issuer
-audience
+sub
+aha_provider
+iss
+aud
 ```
+
+Hver repository-lesing kjører i read-only transaksjon. Før SELECT avvises rollen dersom den er superuser, har `BYPASSRLS`, kan anta tabell-owner, mangler `row_security=on`, eller canonical schema ikke finnes.
 
 Rå token, e-post, profilnavn, `user_metadata`, `raw_user_meta_data` og klientoppgitte roller brukes ikke som autorisasjonssannhet.
 
-## Audit-grense
+## API-kontrakt
 
-Audit-event inneholder bare:
+OpenAPI 3.1:
 
 ```text
-eventId
-occurredAt
-requestId
-salted principalHash
-method
-route template
-statusCode
-durationMs
-outcome
-safe errorCode
-service/version
+backend/api/contracts/aha-backend-v1.openapi.json
 ```
 
-Audit transport er foreløpig en redigert konsollsink. Den er ikke canonical auditlagring. Senere databasepersist skal gå gjennom en backend-only adapter til `aha.audit_events`.
+Full kontrakt og aktiveringsgrenser:
+
+```text
+docs/AHA_BACKEND_API_CONTRACT_V1.md
+```
+
+## Audit-grense
+
+Audit-event inneholder bare event/time/request-ID, salted principal hash, method, route-template, status, duration, outcome og safe error code. Canonical persist til `aha.audit_events` er fortsatt ikke aktivert.
 
 ## Neste steg
 
-Neste leveranse er repository-/databaseadapteren og stabile API-kontrakter. Før databasekobling må tjenesten få en dedikert non-owner/no-`BYPASSRLS` runtime-rolle, eksplisitte minimumsgrants og faktiske PostgreSQL/RLS-integrasjonstester.
+Neste leveranse er eksplisitt lokal import til PostgreSQL med preview, confirmation, idempotency og import receipts. Den skal ikke gjøre innlogging til opplastingssamtykke og skal ikke importere `local_only` eller `deferred` materiale.
