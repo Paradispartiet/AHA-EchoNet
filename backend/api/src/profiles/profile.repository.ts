@@ -1,5 +1,4 @@
 import { Injectable } from "@nestjs/common";
-import type { QueryResultRow } from "pg";
 import type { AuthPrincipal } from "../auth/auth.types.js";
 import { CanonicalDatabaseService } from "../database/canonical-database.service.js";
 
@@ -20,7 +19,7 @@ export interface CurrentProfileRepository {
 
 export const CURRENT_PROFILE_REPOSITORY = Symbol("CURRENT_PROFILE_REPOSITORY");
 
-interface CurrentProfileRow extends QueryResultRow {
+interface CurrentProfileRow {
   id: string;
   display_name: string | null;
   locale: string;
