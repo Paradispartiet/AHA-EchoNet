@@ -86,7 +86,9 @@
   const shellRuntime = uiRuntimeModule?.createShell?.({
     subjectId: SUBJECT_ID,
     loadChamberFromStorage,
-    getInsightsApi: insightsApi
+    getInsightsApi: insightsApi,
+    filterConceptLabels: (...args) => filterConceptLabels(...args),
+    buildExportBundle: (...args) => buildAhaAnalysisExportBundle(...args)
   });
   if (!shellRuntime) throw new Error("AHAChatShellRuntime må lastes før ahaChat.js.");
   const {
@@ -98,8 +100,13 @@
     renderAuxPanel,
     renderPanel,
     currentInsights,
-    normalizeDisplayText
+    normalizeDisplayText,
+    resolveConceptTerm,
+    suggestCategoryChips,
+    refreshAhaExplorer,
+    renderChatMemoryStatus: renderAhaChatMemoryStatus
   } = shellRuntime;
+  global.refreshAhaExplorer = refreshAhaExplorer;
 
   const analysisPolicy = chatModule("analysisPolicy", "AHAChatAnalysisPolicy")?.create?.({
     signals,
@@ -532,7 +539,7 @@
     detectAutoAnalysisDomain,
     normalizeSubjectMatches,
     normalizeFagkoblinger,
-    normalizeHistoryGoLinks,
+    normalizeConceptKey,
     buildAcademicConceptCandidates
   });
   if (!canonicalAnalysis) throw new Error("AHAChatCanonicalAnalysis må lastes før ahaChat.js.");
@@ -738,79 +745,6 @@
   const { showStatus, showConcepts, showMeta, showKnowledgeMap } = knowledgeView;
   global.showMeta = showMeta;
 
-  function resolveConceptTerm(term) {
-    if (term == null) return "";
-    if (typeof term === "string") return term;
-    if (typeof term === "number") return String(term);
-    if (typeof term === "object") {
-      return String(term?.label || term?.title || term?.key || term?.term || term?.name || term?.subject_label || term?.subject_id || term?.id || term?.value || "");
-    }
-    return String(term || "");
-  }
-
-  function normalizeHistoryGoLinks(value) {
-    const items = Array.isArray(value) ? value : [];
-    const out = [];
-    const seen = new Set();
-    items.forEach((item) => {
-      if (item && typeof item === "object" && !Array.isArray(item)) {
-        const normalized = {
-          type: String(item.type || item.kind || "topic").trim() || "topic",
-          id: String(item.id || item.slug || item.key || item.title || "").trim(),
-          title: String(item.title || item.label || item.name || item.id || "").trim(),
-          reason: String(item.reason || item.why || item.explanation || "").trim()
-        };
-        if (!normalized.id && normalized.title) normalized.id = normalizeConceptKey(normalized.title).replace(/\s+/g, "_");
-        if (!normalized.title) normalized.title = normalized.id;
-        if (!normalized.id && !normalized.title) return;
-        const sig = `${normalized.type}::${normalized.id}::${normalized.title}`.toLowerCase();
-        if (seen.has(sig)) return;
-        seen.add(sig);
-        out.push(normalized);
-        return;
-      }
-      const text = String(item || "").trim();
-      if (!text) return;
-      const id = normalizeConceptKey(text).replace(/\s+/g, "_");
-      const sig = `topic::${id}::${text}`.toLowerCase();
-      if (seen.has(sig)) return;
-      seen.add(sig);
-      out.push({ type: "topic", id, title: text, reason: "" });
-    });
-    return out;
-  }
-
-  // AHA Analyse Explorer: fanene under chatten rendres fra samme
-  // eksportbundle som Kopier analyse / Eksporter JSON bruker. Debounce
-  // fordi bundlen bygges på nytt ved hver oppdatering.
-  let explorerRefreshTimer = null;
-  function refreshAhaExplorer() {
-    if (!global.AHAExplorer?.render) return;
-    if (explorerRefreshTimer) clearTimeout(explorerRefreshTimer);
-    explorerRefreshTimer = setTimeout(() => {
-      explorerRefreshTimer = null;
-      try {
-        global.AHAExplorer.render(buildAhaAnalysisExportBundle());
-      } catch (err) {
-        console.warn("AHA Explorer-oppdatering feilet", err);
-      }
-    }, 150);
-  }
-  global.refreshAhaExplorer = refreshAhaExplorer;
-  function renderAhaChatMemoryStatus() {
-    const host = document.getElementById("aha-chat-memory-status");
-    if (!host) return null;
-    const api = global.AHAChatPersistence;
-    if (!api?.collectChatStats) {
-      host.textContent = "Chat-minne er ikke aktivt. Samtaler brukes ikke som treningsgrunnlag før du har godkjent dem i Data Intake.";
-      return null;
-    }
-    const session = api.getOrCreateCurrentSession?.();
-    const stats = api.collectChatStats();
-    host.textContent = `Lagring aktiv. Session: ${session?.id || "ukjent"}. Meldinger i session: ${(session?.messages || []).length}. Totalt: ${stats.messages}. Samtaler brukes ikke som treningsgrunnlag før du har godkjent dem i Data Intake.`;
-    return stats;
-  }
-
   const uiRuntime = uiRuntimeModule?.create?.({
     pendingPromptKey: PENDING_CHAT_PROMPT_KEY,
     highlightsStorageKey: HIGHLIGHTS_STORAGE_KEY,
@@ -843,18 +777,6 @@
   });
   if (!uiRuntime) throw new Error("AHAChatUiRuntime må lastes før ahaChat.js.");
   const bind = uiRuntime.bind;
-
-  function suggestCategoryChips() {
-    const insights = currentInsights().slice(0, 6);
-    const labels = [];
-    insights.forEach((ins) => {
-      (ins.emner || []).forEach((emne) => labels.push(emne));
-      (ins.concepts || []).forEach((concept) => labels.push(concept?.label || concept?.key));
-      (ins.patterns || []).forEach((pattern) => labels.push(pattern?.label || pattern?.key));
-    });
-    const filteredLabels = filterConceptLabels(labels);
-    return [...new Set(filteredLabels)].slice(0, 8);
-  }
 
   global.AHAMemoryControls = {
     get() { return loadAhaMemoryControls(); },

@@ -126,7 +126,11 @@ Status:
 - eier pending prompt, lokal reset, action chips og DOM-eventbindinger i den
   versjonerte `chat.uiRuntime`-modulen
 - binder tema-/feltkontekst, status- og outputfelt, panelskrivning, HTML-escaping
-  og aktive innsikter gjennom den frosne `chat.uiRuntime.createShell(...)`-fasaden
+  og aktive innsikter gjennom den frosne `chat.uiRuntime.createShell(...)`-fasaden;
+  samme fasade eier konseptetiketter, kategori-chips, Explorer-refresh og lokal
+  chatminnestatus
+- lar `chat.canonicalAnalysis` eie normalisering og deduplisering av History Go-
+  lenker sammen med den kanoniske analysesyntesen
 - binder eksportens data-, DOM- og analyseavhengigheter én gang gjennom
   `chat.export.createRuntime(...)`; `ahaChat.js` bygger ikke lenger en ny
   eksportbro ved hvert kall

@@ -10,7 +10,7 @@
   function create(deps = {}) {
     const requiredFunctions = [
       "buildAhaSerCard", "detectTextType", "detectAutoAnalysisDomain",
-      "normalizeSubjectMatches", "normalizeFagkoblinger", "normalizeHistoryGoLinks",
+      "normalizeSubjectMatches", "normalizeFagkoblinger", "normalizeConceptKey",
       "buildAcademicConceptCandidates"
     ];
     requiredFunctions.forEach((name) => {
@@ -27,9 +27,41 @@
       detectAutoAnalysisDomain,
       normalizeSubjectMatches,
       normalizeFagkoblinger,
-      normalizeHistoryGoLinks,
+      normalizeConceptKey,
       buildAcademicConceptCandidates
     } = deps;
+
+    function normalizeHistoryGoLinks(value) {
+      const items = Array.isArray(value) ? value : [];
+      const out = [];
+      const seen = new Set();
+      items.forEach((item) => {
+        if (item && typeof item === "object" && !Array.isArray(item)) {
+          const normalized = {
+            type: String(item.type || item.kind || "topic").trim() || "topic",
+            id: String(item.id || item.slug || item.key || item.title || "").trim(),
+            title: String(item.title || item.label || item.name || item.id || "").trim(),
+            reason: String(item.reason || item.why || item.explanation || "").trim()
+          };
+          if (!normalized.id && normalized.title) normalized.id = normalizeConceptKey(normalized.title).replace(/\s+/g, "_");
+          if (!normalized.title) normalized.title = normalized.id;
+          if (!normalized.id && !normalized.title) return;
+          const signature = `${normalized.type}::${normalized.id}::${normalized.title}`.toLowerCase();
+          if (seen.has(signature)) return;
+          seen.add(signature);
+          out.push(normalized);
+          return;
+        }
+        const text = String(item || "").trim();
+        if (!text) return;
+        const id = normalizeConceptKey(text).replace(/\s+/g, "_");
+        const signature = `topic::${id}::${text}`.toLowerCase();
+        if (seen.has(signature)) return;
+        seen.add(signature);
+        out.push({ type: "topic", id, title: text, reason: "" });
+      });
+      return out;
+    }
 
     function isPythonEngineFeatureEnabled() {
       try {
@@ -273,7 +305,7 @@
       return global.AHAChatAnalysis.buildHistoryGoLinksFromDomain(domain, sourceText, canonicalSer);
     }
 
-    return {
+    return Object.freeze({
       isPythonEngineFeatureEnabled,
       isValidCanonicalAnalysisShape,
       buildPythonFallbackMeta,
@@ -281,8 +313,9 @@
       buildCanonicalAnalysis,
       normalizeAnalysisConfidence,
       normalizeAnalysisWarnings,
-      buildHistoryGoLinksFromDomain
-    };
+      buildHistoryGoLinksFromDomain,
+      normalizeHistoryGoLinks
+    });
   }
 
   const publicApi = Object.assign({}, global.AHAChatCanonicalAnalysis || {}, { create });
