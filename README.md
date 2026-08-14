@@ -13,6 +13,8 @@ The release snapshot is documented in:
 
 `ahaChat.js` is now a 27-line bootstrap. The provider graph, factory order, capability groups, environment adapters and late cycle-breaking callbacks live behind versioned `chat.*` boundaries. `npm run test:launch-gate` is the permanent cross-page/reload gate for Chat, source-bound export and consent-gated History Go import.
 
+Physical iPhone/iPad Safari release evidence is recorded locally through `safari-release-check.html`. The page requires four real-device profiles and cannot be approved by Node, Chromium or another iOS browser.
+
 Current intentional non-ready modules:
 
 - `meet`: shell

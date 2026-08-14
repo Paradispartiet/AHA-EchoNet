@@ -29,6 +29,8 @@ Den samlede local-first-reisen er låst av `npm run test:launch-gate` og dokumen
 
 Reell iPhone/iPad Safari og Split View forblir en eksplisitt manuell releaseport; Node CI kan ikke sertifisere fysisk Safari.
 
+Den lokale evidenssiden `safari-release-check.html` registrerer de fire påkrevde fysiske testøktene og eksporterer/importerer `aha_safari_device_evidence_v1` uten backend- eller synkroniseringskall. `tests/aha-safari-device-evidence-surface.test.cjs` låser at Chrome på iOS, feil enhetsfamilie, feil iPhone-orientering og manipulert import avvises, at alle manuelle kontroller kreves, og at automatisering aldri kan godkjenne den fysiske porten.
+
 
 ## AHA Quality Status Surface V1 global safety gate
 

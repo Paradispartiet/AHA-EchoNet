@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>AHA Safari releasekontroll</title>
+  <link rel="stylesheet" href="css/aha-safari-device-evidence.css" />
+</head>
+<body>
+  <main class="safari-check-shell" id="safari-check-main">
+    <header class="safari-check-hero">
+      <p class="eyebrow">AHA launch gate v1</p>
+      <h1>Fysisk Safari-kontroll</h1>
+      <p>Denne siden registrerer manuell release-evidens lokalt på enheten. Den sender ingenting til backend, Sync Hub eller EchoNet.</p>
+      <p id="safari-environment-status" class="status-badge" role="status">Kontrollerer nettleseren …</p>
+    </header>
+
+    <section class="check-panel" aria-labelledby="environment-title">
+      <h2 id="environment-title">Enhetsmiljø</h2>
+      <dl class="environment-grid">
+        <div><dt>Nettleser</dt><dd id="safari-browser-value">–</dd></div>
+        <div><dt>Viewport</dt><dd id="safari-viewport-value">–</dd></div>
+        <div><dt>Skjerm</dt><dd id="safari-screen-value">–</dd></div>
+        <div><dt>Safe area</dt><dd id="safari-safe-area-value">–</dd></div>
+      </dl>
+      <details>
+        <summary>Teknisk miljøinfo</summary>
+        <code id="safari-user-agent-value">–</code>
+      </details>
+    </section>
+
+    <form id="safari-evidence-form" class="check-panel">
+      <h2>Testøkt</h2>
+      <label for="safari-device-profile">Velg økten som faktisk utføres</label>
+      <select id="safari-device-profile" name="deviceProfile" required>
+        <option value="iphone_portrait">iPhone · stående</option>
+        <option value="iphone_landscape">iPhone · liggende</option>
+        <option value="ipad_fullscreen">iPad · fullskjerm</option>
+        <option value="ipad_split_view">iPad · Split View</option>
+      </select>
+
+      <nav class="journey-links" aria-label="Åpne testflater">
+        <a href="index.html" target="_blank" rel="noopener">Åpne Home</a>
+        <a href="chat.html" target="_blank" rel="noopener">Åpne Chat</a>
+        <a href="historygo.html" target="_blank" rel="noopener">Åpne History Go</a>
+      </nav>
+
+      <fieldset>
+        <legend>Manuelle kontroller</legend>
+        <label><input type="checkbox" name="check" value="home_to_chat" /> Home → Chat åpner riktig flate</label>
+        <label><input type="checkbox" name="check" value="chat_send_analyze" /> Chat kan sende og analysere</label>
+        <label><input type="checkbox" name="check" value="chat_reload_persistence" /> Session, minnekontroller og etterarbeid består reload</label>
+        <label><input type="checkbox" name="check" value="source_bound_export" /> Eksporten er bundet til riktig kilde og analyse</label>
+        <label><input type="checkbox" name="check" value="historygo_consent" /> History Go leses først etter eksplisitt samtykke</label>
+        <label><input type="checkbox" name="check" value="historygo_import" /> Første import gir forventede signaler</label>
+        <label><input type="checkbox" name="check" value="historygo_reload_idempotency" /> Reload og gjentatt import gir ingen duplikater</label>
+        <label><input type="checkbox" name="check" value="keyboard_scroll_safe_area" /> Tastatur, scrolling og safe area fungerer</label>
+        <label><input type="checkbox" name="check" value="touch_targets_navigation" /> Trykkmål er minst 44 px og global navigasjon kan lukkes</label>
+        <label><input type="checkbox" name="check" value="no_duplicate_outputs" /> Ingen doble meldinger, innsikter eller History Go-signaler</label>
+      </fieldset>
+
+      <label for="safari-evidence-notes">Notater</label>
+      <textarea id="safari-evidence-notes" name="notes" rows="4" placeholder="Valgfritt: modell, OS-versjon eller observasjoner"></textarea>
+
+      <label class="physical-confirmation">
+        <input id="safari-physical-confirmation" type="checkbox" />
+        Jeg bekrefter at kontrollen ble utført på en fysisk iPhone/iPad i Safari.
+      </label>
+
+      <div class="button-row">
+        <button id="safari-save-evidence" type="submit">Lagre denne testøkten</button>
+        <button id="safari-export-evidence" type="button" class="secondary">Eksporter JSON</button>
+        <label class="file-button" for="safari-import-evidence">Importer JSON</label>
+        <input id="safari-import-evidence" type="file" accept="application/json,.json" />
+      </div>
+      <p id="safari-form-status" role="status"></p>
+    </form>
+
+    <section class="check-panel" aria-labelledby="release-status-title">
+      <h2 id="release-status-title">Samlet fysisk port</h2>
+      <p id="safari-release-status">Ingen testøkter lagret.</p>
+      <ul id="safari-profile-status-list"></ul>
+      <p class="boundary-note">Automatiserte tester kan kontrollere denne evidenskontrakten, men kan aldri fylle ut eller godkjenne den fysiske porten.</p>
+      <p class="boundary-note">Eksporter evidensen fra den første enheten og importer JSON-filen på den andre for å samle iPhone- og iPad-øktene lokalt.</p>
+    </section>
+  </main>
+  <script src="js/ahaSafariDeviceEvidence.js"></script>
+</body>
+</html>
