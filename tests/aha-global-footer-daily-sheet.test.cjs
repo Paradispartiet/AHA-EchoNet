@@ -23,7 +23,11 @@ assert.match(nav, /aha_pending_chat_prompt_v1/, 'Daily suggestions should use th
 assert.doesNotMatch(nav, /fetch\(|AHARepository|AHAChamberSync/, 'the global footer must not add backend or sync behavior');
 
 assert.match(css, /\.aha-global-footer\s*\{[^}]*position:\s*fixed;[^}]*bottom:\s*0;/s);
-assert.match(css, /body\.aha-product-shell\s*\{[^}]*padding-bottom:\s*calc\(66px \+ env\(safe-area-inset-bottom\)\)/s);
+assert.match(css, /\.aha-global-nav\s*\{[^}]*position:\s*fixed;[^}]*top:\s*0;[^}]*right:\s*0;[^}]*left:\s*0;/s, 'the shared header must stay fixed across AHA');
+assert.match(css, /body\.aha-product-shell\s*\{[^}]*padding-top:\s*calc\(var\(--aha-global-header-height\) \+ env\(safe-area-inset-top\)\);[^}]*padding-bottom:\s*calc\(var\(--aha-global-footer-height\) \+ env\(safe-area-inset-bottom\)\)/s);
+assert.match(css, /body\.aha-route-index \.aha-fixed-header\s*\{[^}]*position:\s*fixed;/s, 'Home header must use the same fixed contract');
+assert.match(css, /\.aha-global-footer\s*\{[^}]*padding:\s*0;[^}]*background:/s, 'footer must touch the viewport edge without outer air');
+assert.match(css, /\.aha-global-footer-inner\s*\{[^}]*width:\s*100%;[^}]*margin:\s*0;[^}]*padding:\s*0 env\(safe-area-inset-right\) env\(safe-area-inset-bottom\) env\(safe-area-inset-left\);[^}]*border-radius:\s*0;/s, 'footer must span the full page width and carry safe area inside its background');
 assert.match(css, /\.aha-global-daily-sheet\s*\{[^}]*min-height:\s*100dvh;/s);
 assert.match(css, /\.aha-global-daily-panel\s*\{[^}]*max-height:\s*min\(74dvh, 720px\);/s);
 assert.match(css, /body\.aha-product-shell \.aha-mobile-nav,[\s\S]*\.aha-header-profile,[\s\S]*\.chat-profile-card\s*\{ display: none !important; \}/);
