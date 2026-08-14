@@ -1,0 +1,49 @@
+name: AHA NestJS API foundation
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "backend/api/**"
+      - "tests/aha-nestjs-api-foundation.test.cjs"
+      - ".github/workflows/aha-nestjs-api-tests.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "backend/api/**"
+      - "tests/aha-nestjs-api-foundation.test.cjs"
+      - ".github/workflows/aha-nestjs-api-tests.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  api-foundation:
+    name: NestJS API build and tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend/api
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: backend/api/package-lock.json
+
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Build strict TypeScript service
+        run: npm run build
+
+      - name: Run NestJS foundation tests
+        run: node --test test/*.test.mjs
