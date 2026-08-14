@@ -125,6 +125,9 @@ Status:
   sent-bindende orkestratorwrappere
 - eier pending prompt, lokal reset, action chips og DOM-eventbindinger i den
   versjonerte `chat.uiRuntime`-modulen
+- binder eksportens data-, DOM- og analyseavhengigheter én gang gjennom
+  `chat.export.createRuntime(...)`; `ahaChat.js` bygger ikke lenger en ny
+  eksportbro ved hvert kall
 - bruker `ahaChat.js` som orkestrator uten parallelle agent-, ingest-, innsiktspipeline-, kammerlager-, cache-,
   analyse-state-, kildeidentitets-, analyse-, policy- eller view-implementasjoner
 

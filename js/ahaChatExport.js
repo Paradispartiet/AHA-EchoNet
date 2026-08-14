@@ -724,6 +724,62 @@ ${"```"}
     }
   }
 
+  function createRuntime(deps = {}) {
+    const required = [
+      "loadAutoOutputs", "getActiveAnalysisRun", "loadAfterworkEntries", "sourceHash",
+      "buildCanonicalAnalysis", "normalizeSubjectLinks", "normalizeFagkoblinger",
+      "isAcademicLikeType", "loadChamberFromStorage", "buildMetaProfile",
+      "setStatusNote", "out"
+    ];
+    required.forEach((name) => {
+      if (typeof deps[name] !== "function") throw new Error(`AHAChatExportRuntime mangler avhengighet: ${name}`);
+    });
+    if (!deps.analysisRunContract?.finalizeExport) {
+      throw new Error("AHAChatExportRuntime krever AHAAnalysisRun-kontrakten.");
+    }
+
+    const documentRef = deps.document || global.document;
+
+    function getLatestAhaReplyFromDom() {
+      const rows = Array.from(documentRef?.querySelectorAll?.(".chat-line-aha") || []);
+      return String(rows[rows.length - 1]?.textContent || "").trim();
+    }
+
+    function ensureAcademicAfterworkShape(afterwork = {}, canonical = {}) {
+      if (!deps.isAcademicLikeType(canonical?.contentType)) return afterwork;
+      const out = Object.assign({}, afterwork);
+      const summary = String(out.summary || "").trim();
+      if (!summary || /kort dagsoppsummering/i.test(summary) || /ikke dagbokmateriale/i.test(summary)) {
+        const groundedSummary = String(canonical?.keyInsight || canonical?.reflection || canonical?.theme || "").trim();
+        out.summary = groundedSummary ? `Kort fagoppsummering: ${groundedSummary}` : "Kort fagoppsummering: Kilden analyseres ut fra sitt eget faglige innhold.";
+      }
+      const reflection = String(out.reflection || "").trim();
+      if (!reflection || /dagslogg/i.test(reflection)) out.reflection = String(canonical?.reflection || "");
+      const path = Array.isArray(out.path) ? out.path : [];
+      const dayLogPathSignals = /(oppsummer hendelsene kort|finn ett mønster eller én følelse|velg én ting du tar med videre i morgen)/i;
+      if (!path.length || path.some((step) => dayLogPathSignals.test(String(step || "")))) {
+        out.path = Array.isArray(canonical?.path) ? canonical.path : [];
+      }
+      return out;
+    }
+
+    const runtimeDeps = Object.freeze({
+      ...deps,
+      getLatestAhaReplyFromDom,
+      ensureAcademicAfterworkShape,
+      getCalibrationStatus: typeof deps.getCalibrationStatus === "function"
+        ? deps.getCalibrationStatus
+        : () => (typeof global.AHACalibration?.getStatus === "function" ? global.AHACalibration.getStatus() : {})
+    });
+
+    return Object.freeze({
+      buildAhaAnalysisExportBundle: () => buildAhaAnalysisExportBundle(runtimeDeps),
+      formatAhaAnalysisExportMarkdown,
+      copyAhaAnalysisExportMarkdown: () => copyAhaAnalysisExportMarkdown(runtimeDeps),
+      exportAhaAnalysisJson: () => exportAhaAnalysisJson(runtimeDeps)
+    });
+  }
+
   global.AHAChatExportTestHooks = { extractTopicTerms, inferTopicConsistencyContract, buildTopicConsistencyReport };
 
   const publicApi = {
@@ -731,7 +787,8 @@ ${"```"}
     buildAhaAnalysisExportBundle,
     formatAhaAnalysisExportMarkdown,
     copyAhaAnalysisExportMarkdown,
-    exportAhaAnalysisJson
+    exportAhaAnalysisJson,
+    createRuntime
   };
   global.AHAChatExport = publicApi;
   global.AHAModuleApi?.register?.("chat.export", publicApi, { version: 1, legacyGlobal: "AHAChatExport", exports: Object.keys(publicApi) });

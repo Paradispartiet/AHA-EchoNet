@@ -176,6 +176,8 @@ const agentRuntime = context.AHAModuleApi.get('chat.agentRuntime', { version: 1 
 assert.equal(typeof agentRuntime.create, 'function');
 const ingestRuntime = context.AHAModuleApi.get('chat.ingestRuntime', { version: 1 });
 assert.equal(typeof ingestRuntime.create, 'function');
+const exportModule = context.AHAModuleApi.get('chat.export', { version: 1 });
+assert.equal(typeof exportModule.createRuntime, 'function');
 
 const chatSource = fs.readFileSync('js/ahaChat.js', 'utf8');
 assert.match(chatSource, /function chatModule\(/, 'Chat must resolve extracted modules through the boundary');

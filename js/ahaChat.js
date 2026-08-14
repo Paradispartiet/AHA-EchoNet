@@ -25,8 +25,32 @@
   const shortHash = textUtils.shortHash;
   const takeKeywords = textUtils.takeKeywords;
   const sourceHash = textUtils.sourceHash;
-  if (typeof shortHash !== "function" || typeof takeKeywords !== "function" || typeof sourceHash !== "function") {
-    throw new Error("AHAChatTextUtils må eksponere shortHash, takeKeywords og sourceHash.");
+  const cleanArticleText = textUtils.cleanArticleText;
+  const toSentences = textUtils.toSentences;
+  const collectOpinionArticleEvidence = textUtils.collectOpinionArticleEvidence;
+  if ([shortHash, takeKeywords, sourceHash, cleanArticleText, toSentences, collectOpinionArticleEvidence].some((fn) => typeof fn !== "function")) {
+    throw new Error("AHAChatTextUtils må eksponere alle tekst- og kildeprimitiver.");
+  }
+
+  const signals = chatModule("signals", "AHAChatSignals");
+  if (!signals) throw new Error("AHAChatSignals må lastes før ahaChat.js.");
+  const detectTextType = signals.detectTextType;
+  const detectPublicAdministrationReformSignal = signals.detectPublicAdministrationReformSignal;
+  const detectPublicAdministrationSignal = signals.detectPublicAdministrationSignal;
+  const inferReligiousLexiconEvidence = signals.inferReligiousLexiconEvidence;
+  if ([detectTextType, detectPublicAdministrationReformSignal, detectPublicAdministrationSignal, inferReligiousLexiconEvidence].some((fn) => typeof fn !== "function")) {
+    throw new Error("AHAChatSignals må eksponere alle signalprimitiver.");
+  }
+
+  const subjects = chatModule("subjects", "AHAChatSubjects");
+  if (!subjects) throw new Error("AHAChatSubjects må lastes før ahaChat.js.");
+  const normalizeSubjectLinks = subjects.normalizeSubjectLinks;
+  const enrichSubjectMatchesForClimateConflict = subjects.enrichSubjectMatchesForClimateConflict;
+  const enrichSubjectMatchesForPublicAdministration = subjects.enrichSubjectMatchesForPublicAdministration;
+  const normalizeFagkoblinger = subjects.normalizeFagkoblinger;
+  const isAcademicLikeType = subjects.isAcademicLikeType;
+  if ([normalizeSubjectLinks, enrichSubjectMatchesForClimateConflict, enrichSubjectMatchesForPublicAdministration, normalizeFagkoblinger, isAcademicLikeType].some((fn) => typeof fn !== "function")) {
+    throw new Error("AHAChatSubjects må eksponere alle fagkoblingsprimitiver.");
   }
 
   const chamberStore = chatModule("chamberStore", "AHAChatChamberStore")?.create?.({
@@ -47,7 +71,7 @@
   const clearAutoOutputs = autoOutputStore.clear;
 
   const analysisPolicy = chatModule("analysisPolicy", "AHAChatAnalysisPolicy")?.create?.({
-    signals: chatModule("signals", "AHAChatSignals"),
+    signals,
     resolveConceptTerm,
     normalizeDisplayText,
     detectPublicAdministrationReformSignal,
@@ -492,6 +516,32 @@
   const normalizeAnalysisWarnings = canonicalAnalysis.normalizeAnalysisWarnings;
   const buildHistoryGoLinksFromDomain = canonicalAnalysis.buildHistoryGoLinksFromDomain;
 
+  const exportRuntime = chatModule("export", "AHAChatExport")?.createRuntime?.({
+    loadAutoOutputs,
+    analysisRunContract,
+    getActiveAnalysisRun,
+    loadAfterworkEntries,
+    sourceHash,
+    buildCanonicalAnalysis,
+    normalizeSubjectLinks,
+    normalizeFagkoblinger,
+    isAcademicLikeType,
+    loadChamberFromStorage,
+    buildMetaProfile: (chamber) =>
+      (typeof insightsApi()?.buildMetaProfile === "function"
+        ? (insightsApi().buildMetaProfile(chamber) || {})
+        : (chamber?.meta || {})),
+    setStatusNote,
+    out
+  });
+  if (!exportRuntime) throw new Error("AHAChatExportRuntime må lastes før ahaChat.js.");
+  const {
+    buildAhaAnalysisExportBundle,
+    formatAhaAnalysisExportMarkdown,
+    copyAhaAnalysisExportMarkdown,
+    exportAhaAnalysisJson
+  } = exportRuntime;
+
   const autoOutputRuntime = chatModule("autoOutputView", "AHAChatAutoOutputView")?.createRuntime?.({
     defaultConversationId: CHAT_THREAD_ID,
     runtimeKnowledgePolicy: AHA_RUNTIME_KNOWLEDGE_POLICY,
@@ -732,39 +782,6 @@
   const { showStatus, showConcepts, showMeta, showKnowledgeMap } = knowledgeView;
   global.showMeta = showMeta;
 
-  function cleanArticleText(raw) {
-    return textUtils.cleanArticleText(raw);
-  }
-
-  function toSentences(text) {
-    return textUtils.toSentences(text);
-  }
-
-  function collectOpinionArticleEvidence(raw, sentences) {
-    return textUtils.collectOpinionArticleEvidence(raw, sentences);
-  }
-
-  function detectTextType(raw) {
-    return chatModule("signals", "AHAChatSignals").detectTextType(raw);
-  }
-
-  // Fag-/emne-anriking ligger i ahaChatSubjects.js; her beholdes tynne delegerende wrappere.
-  function normalizeSubjectLinks(subjectMatches) {
-    return chatModule("subjects", "AHAChatSubjects").normalizeSubjectLinks(subjectMatches);
-  }
-  function enrichSubjectMatchesForClimateConflict(text, subjectMatches) {
-    return chatModule("subjects", "AHAChatSubjects").enrichSubjectMatchesForClimateConflict(text, subjectMatches);
-  }
-  function detectPublicAdministrationReformSignal(text) {
-    return chatModule("signals", "AHAChatSignals").detectPublicAdministrationReformSignal(text);
-  }
-  function detectPublicAdministrationSignal(text) {
-    return chatModule("signals", "AHAChatSignals").detectPublicAdministrationSignal(text);
-  }
-  function enrichSubjectMatchesForPublicAdministration(text, subjectMatches) {
-    return chatModule("subjects", "AHAChatSubjects").enrichSubjectMatchesForPublicAdministration(text, subjectMatches);
-  }
-
   function resolveConceptTerm(term) {
     if (term == null) return "";
     if (typeof term === "string") return term;
@@ -773,17 +790,6 @@
       return String(term?.label || term?.title || term?.key || term?.term || term?.name || term?.subject_label || term?.subject_id || term?.id || term?.value || "");
     }
     return String(term || "");
-  }
-
-  function getLatestAhaReplyFromDom() {
-    const rows = Array.from(document.querySelectorAll(".chat-line-aha"));
-    const last = rows[rows.length - 1];
-    return String(last?.textContent || "").trim();
-  }
-
-
-  function normalizeFagkoblinger(value) {
-    return chatModule("subjects", "AHAChatSubjects").normalizeFagkoblinger(value);
   }
 
   function normalizeHistoryGoLinks(value) {
@@ -816,76 +822,6 @@
       out.push({ type: "topic", id, title: text, reason: "" });
     });
     return out;
-  }
-
-  function inferReligiousLexiconEvidence(rawText = "") {
-    return chatModule("signals", "AHAChatSignals").inferReligiousLexiconEvidence(rawText);
-  }
-
-  function isAcademicLikeType(type) {
-    return chatModule("subjects", "AHAChatSubjects").isAcademicLikeType(type);
-  }
-
-  function isDayLogType(type) {
-    return chatModule("subjects", "AHAChatSubjects").isDayLogType(type);
-  }
-
-  function ensureAcademicAfterworkShape(afterwork = {}, canonical = {}) {
-    if (!isAcademicLikeType(canonical?.contentType)) return afterwork;
-    const out = Object.assign({}, afterwork);
-    const summary = String(out.summary || "").trim();
-    if (!summary || /kort dagsoppsummering/i.test(summary) || /ikke dagbokmateriale/i.test(summary)) {
-      const groundedSummary = String(canonical?.keyInsight || canonical?.reflection || canonical?.theme || "").trim();
-      out.summary = groundedSummary ? `Kort fagoppsummering: ${groundedSummary}` : "Kort fagoppsummering: Kilden analyseres ut fra sitt eget faglige innhold.";
-    }
-    const reflection = String(out.reflection || "").trim();
-    if (!reflection || /dagslogg/i.test(reflection)) out.reflection = String(canonical?.reflection || "");
-    const path = Array.isArray(out.path) ? out.path : [];
-    const dayLogPathSignals = /(oppsummer hendelsene kort|finn ett mønster eller én følelse|velg én ting du tar med videre i morgen)/i;
-    if (!path.length || path.some((step) => dayLogPathSignals.test(String(step || "")))) out.path = Array.isArray(canonical?.path) ? canonical.path : [];
-    return out;
-  }
-
-  function getAhaExportDeps() {
-    return {
-      loadAutoOutputs,
-      analysisRunContract,
-      getActiveAnalysisRun,
-      loadAfterworkEntries,
-      sourceHash,
-      buildCanonicalAnalysis,
-      ensureAcademicAfterworkShape,
-      normalizeSubjectLinks,
-      normalizeFagkoblinger,
-      getLatestAhaReplyFromDom,
-      loadChamberFromStorage,
-      getCalibrationStatus: () =>
-        (typeof global.AHACalibration?.getStatus === "function"
-          ? global.AHACalibration.getStatus()
-          : {}),
-      buildMetaProfile: (chamber) =>
-        (typeof insightsApi()?.buildMetaProfile === "function"
-          ? (insightsApi().buildMetaProfile(chamber) || {})
-          : (chamber?.meta || {})),
-      setStatusNote,
-      out
-    };
-  }
-
-  function buildAhaAnalysisExportBundle() {
-    return chatModule("export", "AHAChatExport").buildAhaAnalysisExportBundle(getAhaExportDeps());
-  }
-
-  function formatAhaAnalysisExportMarkdown(bundle) {
-    return chatModule("export", "AHAChatExport").formatAhaAnalysisExportMarkdown(bundle);
-  }
-
-  async function copyAhaAnalysisExportMarkdown() {
-    return chatModule("export", "AHAChatExport").copyAhaAnalysisExportMarkdown(getAhaExportDeps());
-  }
-
-  function exportAhaAnalysisJson() {
-    return chatModule("export", "AHAChatExport").exportAhaAnalysisJson(getAhaExportDeps());
   }
 
   // AHA Analyse Explorer: fanene under chatten rendres fra samme
