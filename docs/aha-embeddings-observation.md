@@ -59,7 +59,7 @@ Faktisk flyt for AHA Chat-melding basert på kildekoden:
 
 ```text
 AHA Chat brukerinput
-→ ahaChat.js / ingestUserMessageWithCandidates(messageText, candidates)
+→ chat.ingestRuntime / ingestUserMessageWithCandidates(messageText, candidates)
 → AHAIngest.ingestWithCandidates(payload, chunks)
 → AHAIngest.ingest(baseInput med skip_insight: true) logger source event
 → InsightsEngine.createSignalFromMessage(...)

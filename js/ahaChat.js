@@ -259,6 +259,23 @@
   const generateAIInsightCandidates = insightPipeline.generateAIInsightCandidates;
   const buildSemanticInsightCandidates = insightPipeline.buildSemanticInsightCandidates;
 
+  const ingestRuntime = chatModule("ingestRuntime", "AHAChatIngestRuntime")?.create?.({
+    subjectId: SUBJECT_ID,
+    getInsightsApi: insightsApi,
+    getIngestApi: ingestApi,
+    getSourcesApi: sourcesApi,
+    getThemeId,
+    getFieldId,
+    buildSemanticInsightCandidates,
+    generateAIInsightCandidates,
+    buildAIState,
+    loadChamber: loadChamberFromStorage,
+    saveChamber: saveChamberToStorage
+  });
+  if (!ingestRuntime) throw new Error("AHAChatIngestRuntime må lastes før ahaChat.js.");
+  const handleUserMessage = ingestRuntime.handleUserMessage;
+  const handleUserMessageInsightCandidatesInBackground = ingestRuntime.handleUserMessageInsightCandidatesInBackground;
+
   const academicInsightView = chatModule("academicInsightView", "AHAChatAcademicInsightView")?.create?.({
     loadAutoOutputs,
     loadAfterworkEntries,
@@ -656,94 +673,6 @@
     const panel = document.getElementById("panel");
     if (panel) panel.innerHTML = html;
   }
-
-  function ingestUserMessageWithCandidates(messageText, candidates) {
-    const text = String(messageText || "").trim();
-    const engine = insightsApi();
-    if (!text || !engine) return 0;
-
-    const themeId = getThemeId();
-    const fieldId = getFieldId();
-    const localCandidates = buildSemanticInsightCandidates(text, { minInsights: 1, maxInsights: 5 });
-    const chunks = Array.isArray(candidates) && candidates.length ? candidates : localCandidates;
-
-    const ingest = ingestApi();
-    if (ingest && typeof ingest.ingest === "function") {
-      // AHAIngest håndterer både source event-loggen, signal-konstruksjon
-      // og innlegging i innsiktskammeret. Dobbeltlagring av source events
-      // unngås ved at vi ikke lenger kaller AHASources.addSourceEvent her.
-      const payload = {
-        source_type: "chat",
-        source_app: "aha_chat",
-        content_type: "text",
-        title: "AHA Chat-melding",
-        text,
-        user_created: true,
-        imported: false,
-        created_at: new Date().toISOString(),
-        subject_id: SUBJECT_ID,
-        theme_id: themeId,
-        field_id: fieldId,
-        meta: { theme_id: themeId, field_id: fieldId }
-      };
-      if (typeof ingest.ingestWithCandidates === "function") {
-        ingest.ingestWithCandidates(payload, chunks);
-      } else {
-        chunks.forEach((chunk) => ingest.ingest(Object.assign({}, payload, { text: chunk })));
-      }
-      return chunks.length;
-    }
-
-    // Fallback hvis AHAIngest ikke er lastet: skriv direkte til motoren
-    // og logg source event manuelt slik vi alltid har gjort.
-    let chamber = loadChamberFromStorage();
-    chunks.forEach((chunk) => {
-      const text = typeof chunk === "string" ? chunk : String(chunk?.text || chunk?.summary || chunk?.title || "").trim();
-      if (!text) return;
-      const signal = engine.createSignalFromMessage(
-        text,
-        SUBJECT_ID,
-        themeId,
-        { field_id: fieldId }
-      );
-      chamber = engine.addSignalToChamber(chamber, signal);
-    });
-    saveChamberToStorage(chamber);
-
-    sourcesApi()?.addSourceEvent?.({
-      source_type: "chat",
-      source_app: "aha_chat",
-      content_type: "text",
-      title: "AHA Chat-melding",
-      text,
-      user_created: true,
-      imported: false,
-      created_at: new Date().toISOString(),
-      meta: { theme_id: themeId, field_id: fieldId }
-    });
-
-    return chunks.length;
-  }
-
-  function handleUserMessage(messageText) {
-    return ingestUserMessageWithCandidates(messageText);
-  }
-
-  async function handleUserMessageInsightCandidatesInBackground(messageText) {
-    const text = String(messageText || "").trim();
-    if (!text || !insightsApi()) return 0;
-    const themeId = getThemeId();
-    const fieldId = getFieldId();
-    const aiCandidates = await generateAIInsightCandidates(text, {
-      subject_id: SUBJECT_ID,
-      theme_id: themeId,
-      field_id: fieldId,
-      ai_state: buildAIState()
-    });
-    if (!aiCandidates.length) return 0;
-    return ingestUserMessageWithCandidates(text, aiCandidates);
-  }
-
 
   function buildAIState(options = {}) {
     const includeMemory = options?.includeMemory !== false;

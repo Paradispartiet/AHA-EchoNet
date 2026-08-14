@@ -94,14 +94,16 @@ History Go-import er valgfri og skal merkes tydelig som importert materiale.
 
 ## AHA Chat går gjennom AHAIngest
 
-AHA Chat sine bruker-meldinger sendes via `AHAIngest.ingest(...)` på linje
+AHA Chat sine bruker-meldinger sendes av den versjonerte
+`chat.ingestRuntime`-modulen via `AHAIngest.ingestWithCandidates(...)` på linje
 med Notes, Galleri, Feed, Insta og History Go-import. Felles ingest-rør
 sørger for at samme source-event-logg, embedding-berikelse og
 merge-suggestion-flyt brukes for alle AHA-moduler.
 
-Hvis `AHAIngest` ikke er lastet på siden (f.eks. en eldre cache), faller
-chat tilbake til å skrive direkte til `InsightsEngine.addSignalToChamber`
-og logge source event manuelt. Standardflyten er ingest.
+Hvis `AHAIngest` ikke er lastet på siden (f.eks. en eldre cache), eier
+`chat.ingestRuntime` den eneste fallbacken som skriver direkte til
+`InsightsEngine.addSignalToChamber` og logger én source event manuelt.
+`ahaChat.js` velger ikke mellom skriverutene; standardflyten er alltid ingest.
 
 ### AHA-agentens svar er ikke brukerinnsikter
 

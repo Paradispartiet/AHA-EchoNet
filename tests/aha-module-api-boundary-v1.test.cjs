@@ -141,6 +141,7 @@ const chatModules = [
   ['chat.insightView', 'AHAChatInsightView', 'js/ahaChatInsightView.js'],
   ['chat.knowledgeView', 'AHAChatKnowledgeView', 'js/ahaChatKnowledgeView.js'],
   ['chat.insightPipeline', 'AHAChatInsightPipeline', 'js/ahaChatInsightPipeline.js'],
+  ['chat.ingestRuntime', 'AHAChatIngestRuntime', 'js/ahaChatIngestRuntime.js'],
   ['chat.personalUi', 'AHAChatPersonalUi', 'js/ahaChatPersonalUi.js'],
   ['chat.conversationView', 'AHAChatConversationView', 'js/ahaChatConversationView.js'],
   ['chat.autoAnalysis', 'AHAChatAutoAnalysis', 'js/ahaChatAutoAnalysis.js'],
@@ -169,6 +170,8 @@ assert.equal(typeof chamberStore.create, 'function');
 const insightPipeline = context.AHAModuleApi.get('chat.insightPipeline', { version: 1 });
 assert.equal(Object.isFrozen(insightPipeline.FUNCTIONAL_TYPES), true);
 assert.equal(insightPipeline.FUNCTIONAL_TYPES.includes('contradiction'), true);
+const ingestRuntime = context.AHAModuleApi.get('chat.ingestRuntime', { version: 1 });
+assert.equal(typeof ingestRuntime.create, 'function');
 
 const chatSource = fs.readFileSync('js/ahaChat.js', 'utf8');
 assert.match(chatSource, /function chatModule\(/, 'Chat must resolve extracted modules through the boundary');
