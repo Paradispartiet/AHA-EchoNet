@@ -68,6 +68,11 @@ DOMContentLoaded bootstrap from one declared binding table. Export whitelists
 live in the module, so `ahaChat.js` no longer duplicates or directly installs
 the public runtime surface.
 
+`chat.runtimeComposition.create(...)` owns the final application wiring between
+the already versioned export, auto-output, reply policy, Meta-AI, submission,
+knowledge-view, UI and runtime-facade modules. It accepts an explicit module map,
+configuration and binding table; it contains no analysis or import engine logic.
+
 ## Candidate-ingest extension point
 
 Code outside `ahaIngest.js` must not replace `ingestWithCandidates`. Candidate processing is extended through:

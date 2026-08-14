@@ -551,256 +551,65 @@
   const normalizeAnalysisWarnings = canonicalAnalysis.normalizeAnalysisWarnings;
   const buildHistoryGoLinksFromDomain = canonicalAnalysis.buildHistoryGoLinksFromDomain;
 
-  const exportRuntime = chatModule("export", "AHAChatExport")?.createRuntime?.({
-    loadAutoOutputs,
-    analysisRunContract,
-    getActiveAnalysisRun,
-    loadAfterworkEntries,
-    sourceHash,
-    buildCanonicalAnalysis,
-    normalizeSubjectLinks,
-    normalizeFagkoblinger,
-    isAcademicLikeType,
-    loadChamberFromStorage,
-    buildMetaProfile: (chamber) =>
-      (typeof insightsApi()?.buildMetaProfile === "function"
-        ? (insightsApi().buildMetaProfile(chamber) || {})
-        : (chamber?.meta || {})),
-    setStatusNote,
-    out
-  });
-  if (!exportRuntime) throw new Error("AHAChatExportRuntime må lastes før ahaChat.js.");
-  const {
-    buildAhaAnalysisExportBundle,
-    formatAhaAnalysisExportMarkdown,
-    copyAhaAnalysisExportMarkdown,
-    exportAhaAnalysisJson
-  } = exportRuntime;
-
-  const autoOutputRuntime = chatModule("autoOutputView", "AHAChatAutoOutputView")?.createRuntime?.({
-    defaultConversationId: CHAT_THREAD_ID,
-    runtimeKnowledgePolicy: AHA_RUNTIME_KNOWLEDGE_POLICY,
-    getActiveAnalysisRun,
-    sourceHash,
-    buildAutoOutputs,
-    detectTextType,
-    short,
-    buildAutoOutputFallbackPayload,
-    getUrlDominanceInfo,
-    buildArticleSourceTextFromAnalysis,
-    detectAutoAnalysisDomain,
-    normalizeSubjectMatches,
-    subjectMatchesFromCalibration,
-    getLiterarySubjectMatches,
-    getLiteraryAttachmentLearningPath,
-    isSportsArticleAnalysis,
-    applyRuntimeKnowledgePolicy,
-    filterCrossDomainAutoPayload,
-    enforceCanonicalSourceGrounding,
-    buildCanonicalAnalysis,
-    resolveCanonicalAnalysisWithOptionalPythonEngine,
-    isActiveAnalysisRun,
-    bindAnalysisArtifact,
-    updateAnalysisRun,
-    renderAutoOutputPayload,
-    setExportButtonsEnabled,
-    loadAutoOutputs,
-    saveAutoOutputs,
-    setActiveAnalysisRun,
-    takeKeywords,
-    refreshAhaExplorer
-  });
-  if (!autoOutputRuntime) throw new Error("AHAChatAutoOutputRuntime må lastes før ahaChat.js.");
-  const renderAutoOutputs = autoOutputRuntime.renderAutoOutputs;
-  const focusAutoCard = autoOutputRuntime.focusAutoCard;
-  const restoreAutoOutputFromStorage = autoOutputRuntime.restoreAutoOutputFromStorage;
-
-  const replySubjectPolicy = replyFormat?.createSubjectPolicy?.({
-    detectAutoAnalysisDomain,
-    getLiterarySubjectMatches,
-    getInstitutionalMediaHistorySubjectMatches
-  });
-  if (!replySubjectPolicy) throw new Error("AHAChatReplySubjectPolicy må lastes før ahaChat.js.");
-  const forceLiteraryFagkoblingerInReply = replySubjectPolicy.forceLiteraryFagkoblingerInReply;
-  const forceInstitutionalMediaHistoryFagkoblingerInReply = replySubjectPolicy.forceInstitutionalMediaHistoryFagkoblingerInReply;
-  const stripFagkoblingerSections = replySubjectPolicy.stripFagkoblingerSections;
-
-  const metaAiSession = global.AHAMetaInsightsAgent?.createChatSession?.({
-    updateEmptyState,
-    setStatusNote
-  }) || {
-    getActiveMetaAiSession: () => null,
-    renderMetaAiSessionBox: () => null,
-    startMetaAiSession: () => null,
-    saveMetaAiClaimFeedback: () => null,
-    renderMetaAiClaims: () => null,
-    maybeHandleMetaAiAgentReply: () => null
-  };
-  const getActiveMetaAiSession = metaAiSession.getActiveMetaAiSession;
-  const renderMetaAiSessionBox = metaAiSession.renderMetaAiSessionBox;
-  const startMetaAiSession = metaAiSession.startMetaAiSession;
-  const saveMetaAiClaimFeedback = metaAiSession.saveMetaAiClaimFeedback;
-  const renderMetaAiClaims = metaAiSession.renderMetaAiClaims;
-  const maybeHandleMetaAiAgentReply = metaAiSession.maybeHandleMetaAiAgentReply;
-
-  const submissionRuntime = chatModule("runContext", "AHAChatRunContext")?.createSubmissionRuntime?.({
+  const runtimeComposition = chatModule("runtimeComposition", "AHAChatRuntimeComposition")?.create?.({
     config: {
+      subjectId: SUBJECT_ID,
       threadId: CHAT_THREAD_ID,
-      subjectId: SUBJECT_ID
+      pendingPromptKey: PENDING_CHAT_PROMPT_KEY,
+      highlightsStorageKey: HIGHLIGHTS_STORAGE_KEY,
+      afterworkStorageKey: AFTERWORK_STORAGE_KEY
     },
-    input: {
-      getUrlDominanceInfo,
-      isTransientAnalysisDocument,
-      isAhaSavingEnabled,
-      getThemeId,
-      getFieldId,
-      handleUserMessage,
-      handleUserMessageInsightCandidatesInBackground
+    modules: {
+      export: chatModule("export", "AHAChatExport"),
+      autoOutputView: chatModule("autoOutputView", "AHAChatAutoOutputView"),
+      replyFormat,
+      metaInsightsAgent: global.AHAMetaInsightsAgent,
+      runContext: chatModule("runContext", "AHAChatRunContext"),
+      knowledgeView: chatModule("knowledgeView", "AHAChatKnowledgeView"),
+      uiRuntime: uiRuntimeModule,
+      runtimeFacade: chatModule("runtimeFacade", "AHAChatRuntimeFacade")
     },
-    memory: {
-      isMemoryQuestion: isAhaMemoryQuestion,
-      buildMemoryStatus: buildAhaMemoryStatus,
-      renderMemoryStatus: renderAhaMemoryStatus,
-      buildLearningContractReply: buildAhaLearningContractReply,
-      updateMemoryStatus: updateAhaMemoryStatus,
-      isMemoryUseEnabled: isAhaMemoryUseEnabled,
-      buildMemoryContext: buildAhaMemoryContext,
-      buildMemoryOffContext: buildAhaMemoryOffContext,
-      filterMemoryContextForActiveSource,
-      suggestCategoryChips
-    },
-    retrieval: {
-      filterForActiveSource: filterRetrievalForActiveSource,
-      buildPersonalMessageContext: buildAhaPersonalMessageContext,
-      buildAnswerPackage: buildAhaAnswerPackage,
-      renderPersonalRetrieval: renderAhaPersonalRetrieval,
-      renderAnswerComposer: renderAhaAnswerComposer,
-      renderPersonalContextStatus: renderAhaPersonalContextStatus,
-      renderPersonalAiLoopStatus: renderAhaPersonalAiLoopStatus
-    },
-    analysis: {
-      createAnalysisRun,
-      updateAnalysisRun,
-      setActiveAnalysisRun,
-      clearActiveAnalysisState,
-      isActiveAnalysisRun,
-      buildArticleSourceTextFromAnalysis,
-      askAgent: askAhaAgent,
-      cleanArticleText,
-      detectTextType,
-      enrichSubjectMatchesForClimateConflict,
-      enrichSubjectMatchesForPublicAdministration,
-      detectAutoAnalysisDomain,
-      getLiterarySubjectMatches,
-      getInstitutionalMediaHistorySubjectMatches,
-      stripFagkoblingerSections,
-      forceLiteraryFagkoblingerInReply,
-      forceInstitutionalMediaHistoryFagkoblingerInReply,
-      normalizeVisibleReply: normalizeAhaVisibleReply,
-      evaluateAnswerForChat: evaluateAhaAnswerForChat,
-      maybeHandleMetaAiAgentReply,
-      renderAutoOutputs,
-      ensureAfterworkForLatestAnalysis
-    },
-    ui: {
-      renderChatMemoryStatus: renderAhaChatMemoryStatus,
-      appendChat,
-      setProcessing: setAhaProcessing,
-      setStatusNote
-    }
-  });
-  if (!submissionRuntime) throw new Error("AHAChatSubmissionRuntime må lastes før ahaChat.js.");
-  const submitAhaChatMessage = submissionRuntime.submitAhaChatMessage;
-
-  const knowledgeView = chatModule("knowledgeView", "AHAChatKnowledgeView")?.create?.({
-    subjectId: SUBJECT_ID,
-    loadChamberFromStorage,
-    loadAutoOutputs,
-    loadAfterworkEntries,
-    getThemeId,
-    out,
-    currentInsights,
-    filterConceptLabels,
-    canonicalizeDisplayConcept,
-    normalizeConceptKey,
-    getCanonicalConceptLabel,
-    getCanonicalConceptKey,
-    isBlockedStandaloneConcept,
-    escHtml,
-    extractAcademicPhraseConcepts,
-    extractAcademicTheoryLinks,
-    prioritizeVisibleConceptEdges,
-    isGenericDisplayConcept,
-    normalizeAfterworkConcept,
-    applyPhraseConceptDisplayPreference,
-    detectPublicAdministrationReformSignal,
-    readLatestAcademicContext,
-    detectAutoAnalysisDomain,
-    renderAuxPanel,
-    renderPanel
-  });
-  if (!knowledgeView) throw new Error("AHAChatKnowledgeView må lastes før ahaChat.js.");
-  const { showStatus, showConcepts, showMeta, showKnowledgeMap } = knowledgeView;
-
-  const uiRuntime = uiRuntimeModule?.create?.({
-    pendingPromptKey: PENDING_CHAT_PROMPT_KEY,
-    highlightsStorageKey: HIGHLIGHTS_STORAGE_KEY,
-    afterworkStorageKey: AFTERWORK_STORAGE_KEY,
-    submitMessage: submitAhaChatMessage,
-    showInsights,
-    showStatus,
-    showConcepts,
-    showMeta,
-    showKnowledgeMap,
-    showSavedAfterwork,
-    exportAnalysisJson: exportAhaAnalysisJson,
-    copyAnalysisMarkdown: copyAhaAnalysisExportMarkdown,
-    clearChamber: clearChamberStorage,
-    clearAutoOutputs,
-    out,
-    setStatusNote,
-    resetAnalysisView: resetAnalysisStateView,
-    focusAutoCard,
-    bindMemoryControls: bindAhaMemoryControls,
-    bindPanelActions: bindPanelActionHandler,
-    setProcessing: setAhaProcessing,
-    restoreAutoOutput: restoreAutoOutputFromStorage,
-    startMetaAiSession,
-    updateMemoryStatus: updateAhaMemoryStatus,
-    renderChatMemoryStatus: renderAhaChatMemoryStatus,
-    renderPersonalContextStatus: renderAhaPersonalContextStatus,
-    updateEmptyState,
-    renderHighlightsRail
-  });
-  if (!uiRuntime) throw new Error("AHAChatUiRuntime må lastes før ahaChat.js.");
-  const bind = uiRuntime.bind;
-
-  const runtimeFacade = chatModule("runtimeFacade", "AHAChatRuntimeFacade")?.create?.({
     bindings: {
-      refreshAhaExplorer, showSavedAfterwork, showMeta, bind,
-      loadChamberFromStorage, saveChamberToStorage, handleUserMessage, askAhaAgent, buildAIState,
-      detectTextType, buildCanonicalAnalysis, buildAhaAnalysisExportBundle, formatAhaAnalysisExportMarkdown,
-      buildAutoOutputs, renderAutoOutputs, detectAutoAnalysisDomain, buildAcademicConceptCandidates,
-      buildSourceGroundedAcademicPayload, applyRuntimeKnowledgePolicy, isTransientAnalysisDocument,
-      AHA_RUNTIME_KNOWLEDGE_POLICY, normalizeFagkoblinger, resolveCanonicalAnalysisWithOptionalPythonEngine,
-      isAhaMemoryQuestion, buildAhaLearningContractReply, buildAhaMemoryStatus, shouldUseAhaMemory,
-      buildAhaMemoryContext, buildAhaMemoryOffContext, loadAhaMemoryControls, saveAhaMemoryControls,
-      setAhaMemoryControl, resetAhaMemoryControls, isAhaSavingEnabled, isAhaMemoryUseEnabled,
+      loadAutoOutputs, analysisRunContract, getActiveAnalysisRun, loadAfterworkEntries, sourceHash,
+      buildCanonicalAnalysis, normalizeSubjectLinks, normalizeFagkoblinger, isAcademicLikeType,
+      loadChamberFromStorage, saveChamberToStorage, getInsightsApi: insightsApi, setStatusNote, out,
+      AHA_RUNTIME_KNOWLEDGE_POLICY, buildAutoOutputs, detectTextType, short,
+      buildAutoOutputFallbackPayload, getUrlDominanceInfo, buildArticleSourceTextFromAnalysis,
+      detectAutoAnalysisDomain, normalizeSubjectMatches, subjectMatchesFromCalibration,
+      getLiterarySubjectMatches, getLiteraryAttachmentLearningPath, isSportsArticleAnalysis,
+      applyRuntimeKnowledgePolicy, filterCrossDomainAutoPayload, enforceCanonicalSourceGrounding,
+      resolveCanonicalAnalysisWithOptionalPythonEngine, isActiveAnalysisRun, bindAnalysisArtifact,
+      updateAnalysisRun, renderAutoOutputPayload, setExportButtonsEnabled, saveAutoOutputs,
+      setActiveAnalysisRun, takeKeywords, refreshAhaExplorer, getInstitutionalMediaHistorySubjectMatches,
+      updateEmptyState, isTransientAnalysisDocument, isAhaSavingEnabled, getThemeId, getFieldId,
+      handleUserMessage, handleUserMessageInsightCandidatesInBackground, isAhaMemoryQuestion,
+      buildAhaMemoryStatus, renderAhaMemoryStatus, buildAhaLearningContractReply, updateAhaMemoryStatus,
+      isAhaMemoryUseEnabled, buildAhaMemoryContext, buildAhaMemoryOffContext,
+      filterMemoryContextForActiveSource, suggestCategoryChips, filterRetrievalForActiveSource,
+      buildAhaPersonalMessageContext, buildAhaAnswerPackage, renderAhaPersonalRetrieval,
+      renderAhaAnswerComposer, renderAhaPersonalContextStatus, renderAhaPersonalAiLoopStatus,
+      createAnalysisRun, clearActiveAnalysisState, askAhaAgent, cleanArticleText,
+      enrichSubjectMatchesForClimateConflict, enrichSubjectMatchesForPublicAdministration,
+      normalizeAhaVisibleReply, evaluateAhaAnswerForChat, ensureAfterworkForLatestAnalysis,
+      renderAhaChatMemoryStatus, appendChat, setAhaProcessing, currentInsights, filterConceptLabels,
+      canonicalizeDisplayConcept, normalizeConceptKey, getCanonicalConceptLabel,
+      getCanonicalConceptKey, isBlockedStandaloneConcept, escHtml, extractAcademicPhraseConcepts,
+      extractAcademicTheoryLinks, prioritizeVisibleConceptEdges, isGenericDisplayConcept,
+      normalizeAfterworkConcept, applyPhraseConceptDisplayPreference,
+      detectPublicAdministrationReformSignal, readLatestAcademicContext, renderAuxPanel, renderPanel,
+      showInsights, showSavedAfterwork, clearChamberStorage, clearAutoOutputs, resetAnalysisStateView,
+      bindAhaMemoryControls, bindPanelActionHandler, renderHighlightsRail, buildAIState,
+      buildAcademicConceptCandidates, buildSourceGroundedAcademicPayload, shouldUseAhaMemory,
+      loadAhaMemoryControls, saveAhaMemoryControls, setAhaMemoryControl, resetAhaMemoryControls,
       loadAhaMemoryExclusions, saveAhaMemoryExclusions, getAhaMemoryInsightStableKey,
       getAhaMemoryInsightKey, isAhaMemoryInsightExcluded, excludeAhaMemoryInsight,
       includeAhaMemoryInsight, resetAhaMemoryExclusions, getAhaExcludedMemoryItems,
-      renderAhaMemoryControls, bindAhaMemoryControls, submitAhaChatMessage, findRelevantLocalMemory,
+      renderAhaMemoryControls, bindAhaMemoryControls, findRelevantLocalMemory,
       formatAhaMemoryContextForAgent, isAhaMemoryDebugEnabled, buildAhaMemoryTransparency,
-      formatAhaMemoryTransparencyDetails, renderAhaMemoryTransparency, appendChat,
-      updateAnswerActionsVisibility, updateAhaMemoryStatus, getActiveMetaAiSession, startMetaAiSession,
-      renderMetaAiSessionBox, renderMetaAiClaims, maybeHandleMetaAiAgentReply, saveMetaAiClaimFeedback,
-      buildAhaPersonalAiLoopChatReadinessStatus, renderAhaPersonalAiLoopStatus, buildAhaAnswerPackage,
-      renderAhaAnswerComposer, createAnalysisRun, updateAnalysisRun, getActiveAnalysisRun,
-      bindAnalysisArtifact, artifactMatchesActiveRun, clearActiveAnalysisState, renderAutoOutputPayload,
-      enforceCanonicalSourceGrounding, filterRetrievalForActiveSource, scoreRetrievalAgainstSource,
-      filterMemoryContextForActiveSource, isActiveAnalysisRun
+      formatAhaMemoryTransparencyDetails, renderAhaMemoryTransparency, updateAnswerActionsVisibility,
+      scoreRetrievalAgainstSource, artifactMatchesActiveRun, buildAhaPersonalAiLoopChatReadinessStatus
     }
   });
-  if (!runtimeFacade) throw new Error("AHAChatRuntimeFacade må lastes før ahaChat.js.");
-  runtimeFacade.install();
+  if (!runtimeComposition) throw new Error("AHAChatRuntimeComposition må lastes før ahaChat.js.");
+  runtimeComposition.install();
 })(window);
