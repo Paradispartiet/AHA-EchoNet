@@ -1,12 +1,12 @@
-import type { QueryResultRow } from "pg";
+export type DatabaseRow = object;
 
-export interface DatabaseQueryResult<Row extends QueryResultRow = QueryResultRow> {
+export interface DatabaseQueryResult<Row extends DatabaseRow = Record<string, unknown>> {
   rows: Row[];
   rowCount: number | null;
 }
 
 export interface DatabaseClient {
-  query<Row extends QueryResultRow = QueryResultRow>(
+  query<Row extends DatabaseRow = Record<string, unknown>>(
     statement: string,
     values?: readonly unknown[]
   ): Promise<DatabaseQueryResult<Row>>;
