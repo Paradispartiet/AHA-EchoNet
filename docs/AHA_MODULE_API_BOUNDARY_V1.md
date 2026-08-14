@@ -51,6 +51,11 @@ cards, literary cross-domain filtering and source-aware topic-mismatch handling.
 Its frozen facade exposes these policies to `chat.autoOutputView.createRuntime(...)`
 without parallel implementations in `ahaChat.js`.
 
+`chat.uiRuntime.createShell(...)` owns the small shared browser shell: theme and
+field context, status/output targets, auxiliary and main panel writes, HTML
+escaping, display-text normalization and the active-insight query. The returned
+facade is frozen and keeps DOM selection out of `ahaChat.js`.
+
 ## Candidate-ingest extension point
 
 Code outside `ahaIngest.js` must not replace `ingestWithCandidates`. Candidate processing is extended through:
