@@ -199,13 +199,14 @@
       if (seen.has(fingerprint)) { duplicatesSkipped += 1; return; }
       seen.add(fingerprint);
       const origin = candidateOrigin(candidate);
-      const quality = {
+      const upstreamQuality = candidate && typeof candidate === "object" ? safeObject(candidate.candidate_quality) : {};
+      const quality = Object.assign({}, upstreamQuality, {
         version: QUALITY_VERSION,
         status: "accepted_for_ingest",
         origin,
         acceptance_basis: acceptanceBasis(origin),
         candidate_fingerprint: fingerprint
-      };
+      });
       const confidence = candidate && typeof candidate === "object" ? Number(candidate.confidence) : NaN;
       if (Number.isFinite(confidence)) quality.confidence = confidence;
       const next = candidate && typeof candidate === "object" && !Array.isArray(candidate)

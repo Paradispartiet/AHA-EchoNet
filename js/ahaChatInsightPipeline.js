@@ -59,11 +59,11 @@
       if (!res.ok) return [];
       const data = await res.json();
       const candidates = Array.isArray(data?.candidates) ? data.candidates : (Array.isArray(data) ? data : []);
-      return candidates
+      const normalized = candidates
         .map((candidate) => normalizeInsightCandidate(candidate))
         .filter(Boolean)
-        .filter((candidate) => !isWeakInsightCandidate(candidate, raw))
-        .slice(0, 5);
+        .filter((candidate) => !isWeakInsightCandidate(candidate, raw));
+      return reviewInsightCandidates(normalized, raw, { limit: 5 }).selected;
     } catch (err) {
       console.warn("AI insight-candidates utilgjengelig", err);
       return [];
@@ -83,6 +83,9 @@
     const theories = normalizeSimpleStringList(candidate.theories, 5);
     const traditions = normalizeSimpleStringList(candidate.traditions, 5);
     const theoreticalLinks = normalizeTheoreticalLinks(candidate.theoretical_links, 5);
+    const evidenceQuotes = normalizeSimpleStringList(candidate.evidence_quotes, 3);
+    const uncertainty = normalizeUncertainty(candidate.uncertainty);
+    const claimKind = normalizeClaimKind(candidate.claim_kind);
 
     return {
       title,
@@ -94,8 +97,130 @@
       theories,
       traditions,
       theoretical_links: theoreticalLinks,
+      evidence_quotes: evidenceQuotes,
+      uncertainty,
+      claim_kind: claimKind,
+      why_it_matters: String(candidate.why_it_matters || "").replace(/\s+/g, " ").trim().slice(0, 280),
+      next_test: String(candidate.next_test || "").replace(/\s+/g, " ").trim().slice(0, 280),
       candidate_type: "ai"
     };
+  }
+
+  function normalizeUncertainty(value) {
+    const normalized = String(value || "").trim().toLowerCase();
+    return ["supported", "interpretive", "hypothesis"].includes(normalized) ? normalized : "interpretive";
+  }
+
+  function normalizeClaimKind(value) {
+    const normalized = String(value || "").trim().toLowerCase();
+    return ["source_observation", "interpretation", "hypothesis", "question", "action"].includes(normalized)
+      ? normalized
+      : "interpretation";
+  }
+
+  function candidateSummary(candidate) {
+    return String(candidate?.summary || candidate?.text || candidate?.title || "").replace(/\s+/g, " ").trim();
+  }
+
+  function evidenceQuotesForCandidate(candidate, sourceText) {
+    const evaluator = global.AHAAnalysisQualityEvaluator;
+    const sourceSentences = splitIntoSentences(sourceText);
+    const provided = normalizeSimpleStringList(candidate?.evidence_quotes, 3)
+      .filter((quote) => evaluator?.exactSourceMatch?.(sourceText, quote)
+        || String(sourceText || "").replace(/\s+/g, " ").includes(String(quote || "").replace(/\s+/g, " ")));
+    if (provided.length) return provided.slice(0, 2);
+    const summary = candidateSummary(candidate);
+    const scored = sourceSentences.map((quote, index) => ({
+      quote,
+      index,
+      score: evaluator?.overlap?.(summary, quote) || 0
+    })).sort((left, right) => right.score - left.score || left.index - right.index);
+    const minimum = summary && sourceSentences.length > 1 ? 0.18 : 0;
+    return scored.filter((item) => item.score >= minimum).slice(0, 2).map((item) => item.quote);
+  }
+
+  function scoreInsightCandidate(candidate, sourceText, evidenceQuotes) {
+    const evaluator = global.AHAAnalysisQualityEvaluator;
+    const summary = candidateSummary(candidate);
+    if (!evaluator || typeof evaluator.specificityScore !== "function") {
+      return summary.length >= 45 && evidenceQuotes.length ? 0.6 : 0.35;
+    }
+    const specificity = evaluator.specificityScore(summary);
+    const transformation = evaluator.transformationScore(sourceText, summary);
+    const grounding = evidenceQuotes.length
+      ? evidenceQuotes.reduce((best, quote) => Math.max(best, evaluator.overlap(summary, quote)), 0)
+      : 0;
+    const usefulness = Math.max(
+      evaluator.specificityScore(candidate?.why_it_matters),
+      evaluator.specificityScore(candidate?.next_test)
+    );
+    return Number(Math.min(1, (specificity * 0.3) + (transformation * 0.25) + (Math.min(1, grounding + 0.25) * 0.3) + (usefulness * 0.15)).toFixed(3));
+  }
+
+  function enrichInsightCandidate(candidate, sourceText) {
+    const evaluator = global.AHAAnalysisQualityEvaluator;
+    const summary = candidateSummary(candidate);
+    const evidenceQuotes = evidenceQuotesForCandidate(candidate, sourceText);
+    const exact = evaluator?.exactSourceMatch?.(sourceText, summary) || false;
+    let uncertainty = normalizeUncertainty(candidate?.uncertainty);
+    let claimKind = normalizeClaimKind(candidate?.claim_kind);
+    if (!evidenceQuotes.length) {
+      uncertainty = "hypothesis";
+      claimKind = "hypothesis";
+    } else if (exact) {
+      uncertainty = "supported";
+      claimKind = "source_observation";
+    } else if (uncertainty === "supported") {
+      uncertainty = "interpretive";
+    }
+    const qualityScore = scoreInsightCandidate(candidate, sourceText, evidenceQuotes);
+    return {
+      ...candidate,
+      summary,
+      text: summary,
+      evidence_quotes: evidenceQuotes,
+      evidence: evidenceQuotes.map((quote, index) => ({
+        id: `source_sentence_${splitIntoSentences(sourceText).indexOf(quote) + 1 || index + 1}`,
+        quote,
+        relation: claimKind === "source_observation" ? "direct_source_observation" : "supports_interpretation"
+      })),
+      claim_kind: claimKind,
+      uncertainty,
+      quality_score: qualityScore,
+      candidate_quality: {
+        version: "aha_insight_candidate_quality_v2",
+        status: qualityScore >= 0.5 ? "accepted" : "needs_review",
+        score: qualityScore,
+        evidence_count: evidenceQuotes.length,
+        claim_kind: claimKind,
+        uncertainty
+      }
+    };
+  }
+
+  function reviewInsightCandidates(candidates, sourceText, options = {}) {
+    const evaluator = global.AHAAnalysisQualityEvaluator;
+    const limit = Math.max(1, Number(options.limit || 5));
+    const minimumScore = Number.isFinite(Number(options.minimumScore)) ? Number(options.minimumScore) : 0.46;
+    const enriched = (Array.isArray(candidates) ? candidates : []).map((candidate) => enrichInsightCandidate(candidate, sourceText));
+    const selected = [];
+    const rejected = [];
+    enriched.sort((left, right) => right.quality_score - left.quality_score);
+    enriched.forEach((candidate) => {
+      const summary = candidateSummary(candidate);
+      const duplicate = selected.some((existing) => {
+        if (!evaluator) return candidateSummary(existing).toLowerCase() === summary.toLowerCase();
+        return evaluator.jaccard(candidateSummary(existing), summary) >= 0.4
+          || evaluator.overlap(candidateSummary(existing), summary) >= 0.55;
+      });
+      if (duplicate || candidate.quality_score < minimumScore) {
+        rejected.push({ ...candidate, rejection_reason: duplicate ? "semantic_duplicate" : "below_quality_threshold" });
+        return;
+      }
+      if (selected.length < limit) selected.push(candidate);
+      else rejected.push({ ...candidate, rejection_reason: "rank_limit" });
+    });
+    return { selected, rejected, considered: enriched.length, minimumScore };
   }
 
   function isWeakInsightCandidate(candidate, sourceText) {
@@ -137,10 +262,10 @@
     const raw = String(text || "").trim();
     if (!raw) return [];
     const playCityFallback = buildPlayCityFallbackCandidates(raw);
-    if (playCityFallback.length) return playCityFallback;
+    if (playCityFallback.length) return reviewInsightCandidates(playCityFallback, raw, { limit: 3, minimumScore: 0.42 }).selected;
     const sentences = splitIntoSentences(raw);
     if (sentences.length <= 2 || raw.length < 180) {
-      return [toCandidateObject(raw, "observation")];
+      return reviewInsightCandidates([toCandidateObject(raw, "observation")], raw, { limit: 1, minimumScore: 0.35 }).selected;
     }
 
     const minInsights = Number(options?.minInsights || 1);
@@ -183,10 +308,8 @@
       deduped.push(toCandidateObject(clean, group.type));
     });
 
-    if (!deduped.length) return [toCandidateObject(raw, "observation")];
-    if (deduped.length <= target) return deduped;
-
-    return deduped.slice(0, target);
+    if (!deduped.length) return reviewInsightCandidates([toCandidateObject(raw, "observation")], raw, { limit: 1, minimumScore: 0.35 }).selected;
+    return reviewInsightCandidates(deduped, raw, { limit: target, minimumScore: 0.4 }).selected;
   }
 
   function normalizeFunctionalType(value) {
@@ -244,6 +367,9 @@
       text: clean,
       functional_type: normalizeFunctionalType(functionalType),
       concepts,
+      evidence_quotes: [clean],
+      claim_kind: "source_observation",
+      uncertainty: "supported",
       candidate_type: "semantic"
     };
   }
@@ -268,6 +394,11 @@
       generateAIInsightCandidates,
       normalizeInsightCandidate,
       isWeakInsightCandidate,
+      normalizeUncertainty,
+      normalizeClaimKind,
+      evidenceQuotesForCandidate,
+      enrichInsightCandidate,
+      reviewInsightCandidates,
       buildSemanticInsightCandidates,
       normalizeFunctionalType,
       normalizeCandidateConcepts,
