@@ -160,10 +160,8 @@
     }
 
     function updateEmptyState() {
-      const empty = document.getElementById("empty-state");
       const log = document.getElementById("chat-log");
-      if (!empty || !log) return;
-      empty.style.display = log.children.length ? "none" : "block";
+      if (!log) return;
       renderHighlightsRail();
       updateAnswerActionsVisibility();
     }
