@@ -6,6 +6,7 @@ const vm = require("node:vm");
 const repoRoot = path.resolve(__dirname, "..");
 const contractCode = fs.readFileSync(path.join(repoRoot, "js/ahaChatAnalysisRunContract.js"), "utf8");
 const code = fs.readFileSync(path.join(repoRoot, "js/ahaChatExport.js"), "utf8");
+const smokeCode = fs.readFileSync(path.join(repoRoot, "js/ahaChatPythonSmoke.js"), "utf8");
 
 function loadExportApi() {
   const sandbox = {
@@ -24,9 +25,10 @@ function loadExportApi() {
     RegExp
   };
   sandbox.window.window = sandbox.window;
-  vm.runInNewContext(contractCode, sandbox, { filename: "ahaChatAnalysisRunContract.js" });
-  vm.runInNewContext(code, sandbox, { filename: "ahaChatExport.js" });
-  return { api: sandbox.window.AHAChatExport, window: sandbox.window };
+  vm.createContext(sandbox);
+  vm.runInContext(contractCode, sandbox, { filename: "ahaChatAnalysisRunContract.js" });
+  vm.runInContext(code, sandbox, { filename: "ahaChatExport.js" });
+  return { api: sandbox.window.AHAChatExport, window: sandbox.window, sandbox };
 }
 
 function baseDeps(overrides = {}) {
@@ -171,6 +173,43 @@ assert.equal(typeof api.createRuntime, "function");
   assert.equal(bundle.selectedAfterwork.source_binding.valid, true);
   assert.equal(bundle.afterwork.source_binding.valid, true);
   assert.equal(bundle.afterwork.summary, "Kildebundet etterarbeid");
+}
+
+{
+  const lateGuard = loadExportApi();
+  const sourceText = Array(10).fill("Evaluering kvalitet forvaltning oppfølging styring samfunnsnytte beslutninger").join(". ");
+  const deps = baseDeps({ sourceText, payload: {} });
+  deps.buildCanonicalAnalysis = () => ({
+    contentType: "academic_article",
+    theme: "Pinse og Den hellige ånd",
+    mainTension: "Tungetale kontra Babels tårn",
+    keyInsight: "Apostlene mottar Den hellige ånd og kirken blir født.",
+    fieldConnections: ["Kristendom", "Kirkehistorie"],
+    suggestedActions: ["Sammenlign pinse med Babels tårn og undersøk tungetale."],
+    confidence: { theme: 0.8, mainTension: 0.8, keyInsight: 0.8 },
+    ahaSer: {
+      tema: "Pinse og Den hellige ånd",
+      hovedspenning: "Tungetale kontra Babels tårn",
+      viktigsteInnsikt: "Apostlene mottar Den hellige ånd.",
+      nesteSteg: "Undersøk tungetale i kristne tradisjoner."
+    }
+  });
+  const runtime = lateGuard.api.createRuntime({
+    ...deps,
+    getActiveAnalysisRun: () => null,
+    analysisRunContract: lateGuard.window.AHAChatAnalysisRunContract,
+    isAcademicLikeType: () => true
+  });
+
+  // Production loads the smoke/integrity layer after Chat has already bound
+  // its runtime. The existing runtime must still call the newly guarded public
+  // builder rather than its captured pre-guard implementation.
+  vm.runInContext(smokeCode, lateGuard.sandbox, { filename: "ahaChatPythonSmoke.js" });
+  const bundle = runtime.buildAhaAnalysisExportBundle();
+  assert.equal(bundle.quality.topicConsistency.checkedAt, "post_export_semantic_guard");
+  assert.equal(bundle.quality.failClosed, true);
+  assert.equal(bundle.analysisBinding.valid, false, "post-build semantic rejection must be re-finalized into the run contract");
+  assert.ok(bundle.invalidFields.some((item) => item.field === "topicConsistency"));
 }
 
 console.log("aha-chat-export-source-binding.test.cjs passed");

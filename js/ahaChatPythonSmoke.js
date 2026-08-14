@@ -346,7 +346,8 @@
         overlappingAnchorTerms: semanticReport.overlappingAnchorTerms
       });
     }
-    return bundle;
+    const contract = global.AHAChatAnalysisRunContract;
+    return contract?.finalizeExport ? contract.finalizeExport(bundle) : bundle;
   }
 
   function installExportIntegrityGuard() {

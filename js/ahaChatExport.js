@@ -690,8 +690,17 @@ ${"```"}
 `;
   }
 
-  async function copyAhaAnalysisExportMarkdown(deps) {
-    const bundle = buildAhaAnalysisExportBundle(deps);
+  function resolveCurrentExportBuilder() {
+    const current = global.AHAChatExport?.buildAhaAnalysisExportBundle;
+    return typeof current === "function" ? current : buildAhaAnalysisExportBundle;
+  }
+
+  function buildCurrentExportBundle(deps) {
+    return resolveCurrentExportBuilder()(deps);
+  }
+
+  async function copyAhaAnalysisExportMarkdown(deps, bundleBuilder) {
+    const bundle = typeof bundleBuilder === "function" ? bundleBuilder() : buildCurrentExportBundle(deps);
     const markdown = formatAhaAnalysisExportMarkdown(bundle);
     try {
       await navigator.clipboard.writeText(markdown);
@@ -702,8 +711,8 @@ ${"```"}
     }
   }
 
-  function exportAhaAnalysisJson(deps) {
-    const bundle = buildAhaAnalysisExportBundle(deps);
+  function exportAhaAnalysisJson(deps, bundleBuilder) {
+    const bundle = typeof bundleBuilder === "function" ? bundleBuilder() : buildCurrentExportBundle(deps);
     const json = JSON.stringify(safeSerializeForExport(bundle), null, 2);
     const now = new Date();
     const filename = `aha-analysis-${now.getUTCFullYear()}-${String(now.getUTCMonth()+1).padStart(2,"0")}-${String(now.getUTCDate()).padStart(2,"0")}-${String(now.getUTCHours()).padStart(2,"0")}${String(now.getUTCMinutes()).padStart(2,"0")}.json`;
@@ -771,12 +780,16 @@ ${"```"}
         ? deps.getCalibrationStatus
         : () => (typeof global.AHACalibration?.getStatus === "function" ? global.AHACalibration.getStatus() : {})
     });
+    // The semantic integrity guard is installed after Chat composition in the
+    // production page. Resolve the public builder at call time so an early-bound
+    // runtime can never bypass a later fail-closed wrapper.
+    const buildBoundBundle = () => buildCurrentExportBundle(runtimeDeps);
 
     return Object.freeze({
-      buildAhaAnalysisExportBundle: () => buildAhaAnalysisExportBundle(runtimeDeps),
+      buildAhaAnalysisExportBundle: buildBoundBundle,
       formatAhaAnalysisExportMarkdown,
-      copyAhaAnalysisExportMarkdown: () => copyAhaAnalysisExportMarkdown(runtimeDeps),
-      exportAhaAnalysisJson: () => exportAhaAnalysisJson(runtimeDeps)
+      copyAhaAnalysisExportMarkdown: () => copyAhaAnalysisExportMarkdown(runtimeDeps, buildBoundBundle),
+      exportAhaAnalysisJson: () => exportAhaAnalysisJson(runtimeDeps, buildBoundBundle)
     });
   }
 
