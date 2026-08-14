@@ -137,7 +137,8 @@ Status:
 - lar `chat.runtimeFacade` eie kompatibilitetsglobaler, konsollkontroller,
   `AHATestHooks`, aktiv-run-fasaden, offentlig `chat`-registrering og DOM-bootstrap
 - lar `chat.runtimeComposition` være én eksplisitt komposisjonsrot for eksport,
-  auto-output, svarpolicy, Meta-AI, submission, kunnskapsvisning, UI og offentlig fasade
+  auto-output, svarpolicy, Meta-AI, submission, kunnskapsvisning, UI og offentlig fasade;
+  inngangene er seks ansvarseide capability-grupper i stedet for én flat bindingtabell
 - lar `chat.providerLoader` eie det versjonerte provider-manifestet, legacy-oppslag,
   obligatoriske fabrikkmetoder og fail-fast-validering av modulkontraktene
 - lar `chat.capabilityBindings` eie de eksplisitte, frosne capability-gruppene

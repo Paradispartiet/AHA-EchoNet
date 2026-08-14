@@ -17,48 +17,68 @@
     "subjectId", "threadId", "pendingPromptKey", "highlightsStorageKey", "afterworkStorageKey"
   ]);
 
-  const REQUIRED_BINDINGS = Object.freeze([
-    "loadAutoOutputs", "analysisRunContract", "getActiveAnalysisRun", "loadAfterworkEntries",
-    "sourceHash", "buildCanonicalAnalysis", "normalizeSubjectLinks", "normalizeFagkoblinger",
-    "isAcademicLikeType", "loadChamberFromStorage", "saveChamberToStorage", "getInsightsApi",
-    "setStatusNote", "out", "AHA_RUNTIME_KNOWLEDGE_POLICY", "buildAutoOutputs", "detectTextType",
-    "short", "buildAutoOutputFallbackPayload", "getUrlDominanceInfo",
-    "buildArticleSourceTextFromAnalysis", "detectAutoAnalysisDomain", "normalizeSubjectMatches",
-    "subjectMatchesFromCalibration", "getLiterarySubjectMatches", "getLiteraryAttachmentLearningPath",
-    "isSportsArticleAnalysis", "applyRuntimeKnowledgePolicy", "filterCrossDomainAutoPayload",
-    "enforceCanonicalSourceGrounding", "resolveCanonicalAnalysisWithOptionalPythonEngine",
-    "isActiveAnalysisRun", "bindAnalysisArtifact", "updateAnalysisRun", "renderAutoOutputPayload",
-    "setExportButtonsEnabled", "saveAutoOutputs", "setActiveAnalysisRun", "takeKeywords",
-    "refreshAhaExplorer", "getInstitutionalMediaHistorySubjectMatches", "updateEmptyState",
-    "isTransientAnalysisDocument", "isAhaSavingEnabled", "getThemeId", "getFieldId",
-    "handleUserMessage", "handleUserMessageInsightCandidatesInBackground", "isAhaMemoryQuestion",
-    "buildAhaMemoryStatus", "renderAhaMemoryStatus", "buildAhaLearningContractReply",
-    "updateAhaMemoryStatus", "isAhaMemoryUseEnabled", "buildAhaMemoryContext",
-    "buildAhaMemoryOffContext", "filterMemoryContextForActiveSource", "suggestCategoryChips",
-    "filterRetrievalForActiveSource", "buildAhaPersonalMessageContext", "buildAhaAnswerPackage",
-    "renderAhaPersonalRetrieval", "renderAhaAnswerComposer", "renderAhaPersonalContextStatus",
-    "renderAhaPersonalAiLoopStatus", "createAnalysisRun", "clearActiveAnalysisState", "askAhaAgent",
-    "cleanArticleText", "enrichSubjectMatchesForClimateConflict",
-    "enrichSubjectMatchesForPublicAdministration", "normalizeAhaVisibleReply",
-    "evaluateAhaAnswerForChat", "ensureAfterworkForLatestAnalysis", "renderAhaChatMemoryStatus",
-    "appendChat", "setAhaProcessing", "loadAfterworkEntries", "currentInsights",
-    "filterConceptLabels", "canonicalizeDisplayConcept", "normalizeConceptKey",
-    "getCanonicalConceptLabel", "getCanonicalConceptKey", "isBlockedStandaloneConcept", "escHtml",
-    "extractAcademicPhraseConcepts", "extractAcademicTheoryLinks", "prioritizeVisibleConceptEdges",
-    "isGenericDisplayConcept", "normalizeAfterworkConcept", "applyPhraseConceptDisplayPreference",
-    "detectPublicAdministrationReformSignal", "readLatestAcademicContext", "renderAuxPanel",
-    "renderPanel", "showInsights", "showSavedAfterwork", "clearChamberStorage", "clearAutoOutputs",
-    "resetAnalysisStateView", "bindAhaMemoryControls", "bindPanelActionHandler", "renderHighlightsRail",
-    "buildAIState", "buildAcademicConceptCandidates", "buildSourceGroundedAcademicPayload",
-    "shouldUseAhaMemory", "loadAhaMemoryControls", "saveAhaMemoryControls", "setAhaMemoryControl",
-    "resetAhaMemoryControls", "loadAhaMemoryExclusions", "saveAhaMemoryExclusions",
-    "getAhaMemoryInsightStableKey", "getAhaMemoryInsightKey", "isAhaMemoryInsightExcluded",
-    "excludeAhaMemoryInsight", "includeAhaMemoryInsight", "resetAhaMemoryExclusions",
-    "getAhaExcludedMemoryItems", "renderAhaMemoryControls", "findRelevantLocalMemory",
-    "formatAhaMemoryContextForAgent", "isAhaMemoryDebugEnabled", "buildAhaMemoryTransparency",
-    "formatAhaMemoryTransparencyDetails", "updateAnswerActionsVisibility", "scoreRetrievalAgainstSource",
-    "artifactMatchesActiveRun"
-  ]);
+  function names(...entries) { return Object.freeze(entries); }
+
+  const REQUIRED_CAPABILITY_GROUPS = Object.freeze({
+    core: names(
+      "analysisRunContract", "getInsightsApi", "sourceHash", "takeKeywords", "cleanArticleText",
+      "detectTextType", "detectPublicAdministrationReformSignal", "normalizeSubjectLinks",
+      "normalizeFagkoblinger", "isAcademicLikeType", "enrichSubjectMatchesForClimateConflict",
+      "enrichSubjectMatchesForPublicAdministration", "normalizeAhaVisibleReply"
+    ),
+    persistence: names(
+      "loadAutoOutputs", "saveAutoOutputs", "clearAutoOutputs", "loadChamberFromStorage",
+      "saveChamberToStorage", "clearChamberStorage", "loadAfterworkEntries", "showSavedAfterwork"
+    ),
+    analysis: names(
+      "buildCanonicalAnalysis", "AHA_RUNTIME_KNOWLEDGE_POLICY", "buildAutoOutputs", "short",
+      "buildAutoOutputFallbackPayload", "getUrlDominanceInfo", "buildArticleSourceTextFromAnalysis",
+      "detectAutoAnalysisDomain", "normalizeSubjectMatches", "subjectMatchesFromCalibration",
+      "getLiterarySubjectMatches", "getLiteraryAttachmentLearningPath", "isSportsArticleAnalysis",
+      "applyRuntimeKnowledgePolicy", "filterCrossDomainAutoPayload", "enforceCanonicalSourceGrounding",
+      "resolveCanonicalAnalysisWithOptionalPythonEngine", "getInstitutionalMediaHistorySubjectMatches",
+      "isTransientAnalysisDocument", "filterConceptLabels", "canonicalizeDisplayConcept",
+      "normalizeConceptKey", "getCanonicalConceptLabel", "getCanonicalConceptKey",
+      "isBlockedStandaloneConcept", "extractAcademicPhraseConcepts", "extractAcademicTheoryLinks",
+      "prioritizeVisibleConceptEdges", "isGenericDisplayConcept", "normalizeAfterworkConcept",
+      "applyPhraseConceptDisplayPreference", "readLatestAcademicContext", "buildAcademicConceptCandidates",
+      "buildSourceGroundedAcademicPayload", "renderAutoOutputPayload", "ensureAfterworkForLatestAnalysis"
+    ),
+    execution: names(
+      "getActiveAnalysisRun", "setActiveAnalysisRun", "createAnalysisRun", "updateAnalysisRun",
+      "bindAnalysisArtifact", "artifactMatchesActiveRun", "isActiveAnalysisRun",
+      "scoreRetrievalAgainstSource", "filterRetrievalForActiveSource",
+      "filterMemoryContextForActiveSource", "handleUserMessage",
+      "handleUserMessageInsightCandidatesInBackground", "buildAIState", "askAhaAgent"
+    ),
+    memory: names(
+      "isAhaSavingEnabled", "isAhaMemoryUseEnabled", "buildAhaMemoryOffContext",
+      "loadAhaMemoryControls", "saveAhaMemoryControls", "setAhaMemoryControl",
+      "resetAhaMemoryControls", "loadAhaMemoryExclusions", "saveAhaMemoryExclusions",
+      "getAhaMemoryInsightStableKey", "getAhaMemoryInsightKey", "isAhaMemoryInsightExcluded",
+      "excludeAhaMemoryInsight", "includeAhaMemoryInsight", "resetAhaMemoryExclusions",
+      "getAhaExcludedMemoryItems", "isAhaMemoryQuestion", "findRelevantLocalMemory",
+      "shouldUseAhaMemory", "formatAhaMemoryContextForAgent", "buildAhaMemoryContext",
+      "isAhaMemoryDebugEnabled", "buildAhaMemoryTransparency", "formatAhaMemoryTransparencyDetails",
+      "buildAhaMemoryStatus", "buildAhaLearningContractReply", "buildAhaPersonalMessageContext",
+      "buildAhaAnswerPackage", "renderAhaAnswerComposer", "evaluateAhaAnswerForChat",
+      "renderAhaPersonalContextStatus", "renderAhaPersonalRetrieval",
+      "buildAhaPersonalAiLoopChatReadinessStatus", "renderAhaPersonalAiLoopStatus",
+      "renderAhaMemoryTransparency", "renderAhaMemoryStatus", "renderAhaMemoryControls",
+      "bindAhaMemoryControls", "updateAhaMemoryStatus"
+    ),
+    view: names(
+      "setStatusNote", "out", "refreshAhaExplorer", "updateEmptyState", "getThemeId", "getFieldId",
+      "suggestCategoryChips", "renderAhaChatMemoryStatus", "appendChat", "setAhaProcessing",
+      "currentInsights", "escHtml", "renderAuxPanel", "renderPanel", "showInsights",
+      "resetAnalysisStateView", "bindPanelActionHandler", "renderHighlightsRail",
+      "updateAnswerActionsVisibility", "setExportButtonsEnabled", "clearActiveAnalysisState"
+    )
+  });
+
+  const VALUE_CAPABILITIES = Object.freeze(new Set([
+    "analysisRunContract", "AHA_RUNTIME_KNOWLEDGE_POLICY"
+  ]));
 
   function requireObject(value, label) {
     if (!value || typeof value !== "object" || Array.isArray(value)) {
@@ -70,7 +90,7 @@
   function create(deps = {}) {
     const config = requireObject(deps.config, "config");
     const modules = requireObject(deps.modules, "modules");
-    const b = requireObject(deps.bindings, "bindings");
+    const capabilities = requireObject(deps.capabilities, "capabilities");
 
     REQUIRED_CONFIG.forEach((name) => {
       if (typeof config[name] !== "string" || !config[name]) {
@@ -82,9 +102,25 @@
         throw new Error(`AHAChatRuntimeComposition krever modulmetode: ${name}.${method}`);
       }
     });
-    REQUIRED_BINDINGS.forEach((name) => {
-      if (!(name in b)) throw new Error(`AHAChatRuntimeComposition mangler binding: ${name}`);
+    const bindings = {};
+    Object.entries(REQUIRED_CAPABILITY_GROUPS).forEach(([groupName, required]) => {
+      const group = requireObject(capabilities[groupName], `capabilities.${groupName}`);
+      required.forEach((name) => {
+        if (!(name in group)) {
+          throw new Error(`AHAChatRuntimeComposition mangler capability: ${groupName}.${name}`);
+        }
+        if (VALUE_CAPABILITIES.has(name) && (
+          !group[name] || typeof group[name] !== "object" || Array.isArray(group[name])
+        )) {
+          throw new Error(`AHAChatRuntimeComposition krever verdicapability: ${groupName}.${name}`);
+        }
+        if (!VALUE_CAPABILITIES.has(name) && typeof group[name] !== "function") {
+          throw new Error(`AHAChatRuntimeComposition krever funksjonscapability: ${groupName}.${name}`);
+        }
+        bindings[name] = group[name];
+      });
     });
+    const b = Object.freeze(bindings);
 
     const exportRuntime = modules.export.createRuntime({
       loadAutoOutputs: b.loadAutoOutputs,
@@ -312,7 +348,9 @@
     });
   }
 
-  const publicApi = Object.freeze({ create, REQUIRED_MODULE_METHODS, REQUIRED_CONFIG, REQUIRED_BINDINGS });
+  const publicApi = Object.freeze({
+    create, REQUIRED_MODULE_METHODS, REQUIRED_CONFIG, REQUIRED_CAPABILITY_GROUPS
+  });
   global.AHAChatRuntimeComposition = publicApi;
   global.AHAModuleApi?.register?.("chat.runtimeComposition", publicApi, {
     version: 1,

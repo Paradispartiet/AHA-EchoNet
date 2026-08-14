@@ -22,10 +22,11 @@
   function ingestApi() { return providerLoader.resolve("ingest", "AHAIngest"); }
   function sourcesApi() { return providerLoader.resolve("sources", "AHASources"); }
 
+  const textUtils = capabilityBindings.bind("textUtils", providerLoader.require("textUtils"));
   const {
     shortHash, takeKeywords, sourceHash, cleanArticleText, toSentences,
     collectOpinionArticleEvidence
-  } = capabilityBindings.bind("textUtils", providerLoader.require("textUtils"));
+  } = textUtils;
 
   const signals = capabilityBindings.bind("signals", providerLoader.require("signals"));
   const {
@@ -33,10 +34,11 @@
     detectPublicAdministrationSignal, inferReligiousLexiconEvidence
   } = signals;
 
+  const subjects = capabilityBindings.bind("subjects", providerLoader.require("subjects"));
   const {
     normalizeSubjectLinks, enrichSubjectMatchesForClimateConflict,
     enrichSubjectMatchesForPublicAdministration, normalizeFagkoblinger, isAcademicLikeType
-  } = capabilityBindings.bind("subjects", providerLoader.require("subjects"));
+  } = subjects;
 
   const { buildOpinionArticleQualityAnalysis } = capabilityBindings.bind(
     "analysis", providerLoader.require("analysis")
@@ -45,29 +47,31 @@
   const replyFormat = capabilityBindings.bind("replyFormat", providerLoader.require("replyFormat"));
   const { normalizeAhaVisibleReply } = replyFormat;
 
-  const { loadChamberFromStorage, saveChamberToStorage, clearChamberStorage } = capabilityBindings.bind(
+  const chamberStore = capabilityBindings.bind(
     "chamberStore",
     providerLoader.instantiate("chamberStore", {
       createEmptyChamber: () => insightsApi().createEmptyChamber()
     })
   );
+  const { loadChamberFromStorage, saveChamberToStorage, clearChamberStorage } = chamberStore;
 
-  const { loadAutoOutputs, saveAutoOutputs, clearAutoOutputs } = capabilityBindings.bind(
+  const autoOutputStore = capabilityBindings.bind(
     "autoOutputStore",
     providerLoader.instantiate("autoOutputStore", {
       sourceHash,
       defaultConversationId: CHAT_THREAD_ID
     })
   );
+  const { loadAutoOutputs, saveAutoOutputs, clearAutoOutputs } = autoOutputStore;
 
   const uiRuntimeModule = providerLoader.require("uiRuntime");
-  const shellRuntime = providerLoader.instantiate("uiRuntime", {
+  const shellRuntime = capabilityBindings.bind("shellRuntime", providerLoader.instantiate("uiRuntime", {
     subjectId: SUBJECT_ID,
     loadChamberFromStorage,
     getInsightsApi: insightsApi,
     filterConceptLabels: (...args) => filterConceptLabels(...args),
     buildExportBundle: (...args) => buildAhaAnalysisExportBundle(...args)
-  }, { factory: "createShell", label: "AHAChatShellRuntime" });
+  }, { factory: "createShell", label: "AHAChatShellRuntime" }));
   const {
     getThemeId,
     getFieldId,
@@ -82,18 +86,9 @@
     suggestCategoryChips,
     refreshAhaExplorer,
     renderAhaChatMemoryStatus
-  } = capabilityBindings.bind("shellRuntime", shellRuntime);
+  } = shellRuntime;
 
-  const {
-    normalizeConceptSurface, normalizeVisibleAcademicLabel, detectLiteraryAttachmentSignal,
-    detectInstitutionalMediaHistorySignal, extractMainInstitutionName, subjectMatchesFromCalibration,
-    detectAutoAnalysisDomain, getSongLyricChildCultureSubjectMatches, enforceCanonicalSourceGrounding,
-    normalizeSubjectMatches, getLiterarySubjectMatches, getInstitutionalMediaHistorySubjectMatches,
-    getLiteraryAttachmentLearningPath, short, hasAcademicSignals, filterDomainInsightCards,
-    normalizeAcademicAfterworkPayload, isGenericDisplayConcept, extractAcademicPhraseConcepts,
-    normalizeSimpleStringList, normalizeTheoreticalLinks, extractAcademicTheoryLinks,
-    mergeTheoryLinks, buildAcademicConceptCandidates
-  } = capabilityBindings.bind("analysisPolicy", providerLoader.instantiate("analysisPolicy", {
+  const analysisPolicy = capabilityBindings.bind("analysisPolicy", providerLoader.instantiate("analysisPolicy", {
     signals,
     resolveConceptTerm,
     normalizeDisplayText,
@@ -110,6 +105,16 @@
     getRuntimeKnowledgePolicy: () => AHA_RUNTIME_KNOWLEDGE_POLICY,
     normalizeAfterworkConcept: (...args) => normalizeAfterworkConcept(...args)
   }));
+  const {
+    normalizeConceptSurface, normalizeVisibleAcademicLabel, detectLiteraryAttachmentSignal,
+    detectInstitutionalMediaHistorySignal, extractMainInstitutionName, subjectMatchesFromCalibration,
+    detectAutoAnalysisDomain, getSongLyricChildCultureSubjectMatches, enforceCanonicalSourceGrounding,
+    normalizeSubjectMatches, getLiterarySubjectMatches, getInstitutionalMediaHistorySubjectMatches,
+    getLiteraryAttachmentLearningPath, short, hasAcademicSignals, filterDomainInsightCards,
+    normalizeAcademicAfterworkPayload, isGenericDisplayConcept, extractAcademicPhraseConcepts,
+    normalizeSimpleStringList, normalizeTheoreticalLinks, extractAcademicTheoryLinks,
+    mergeTheoryLinks, buildAcademicConceptCandidates
+  } = analysisPolicy;
 
   const conceptPolicy = capabilityBindings.bind("conceptPolicy", providerLoader.instantiate("conceptPolicy", {
     normalizeAfterworkConcept: (...args) => normalizeAfterworkConcept(...args),
@@ -427,45 +432,21 @@
       uiRuntime: uiRuntimeModule,
       runtimeFacade: providerLoader.require("runtimeFacade")
     },
-    bindings: {
-      loadAutoOutputs, analysisRunContract, getActiveAnalysisRun, loadAfterworkEntries, sourceHash,
-      buildCanonicalAnalysis, normalizeSubjectLinks, normalizeFagkoblinger, isAcademicLikeType,
-      loadChamberFromStorage, saveChamberToStorage, getInsightsApi: insightsApi, setStatusNote, out,
-      AHA_RUNTIME_KNOWLEDGE_POLICY, buildAutoOutputs, detectTextType, short,
-      buildAutoOutputFallbackPayload, getUrlDominanceInfo, buildArticleSourceTextFromAnalysis,
-      detectAutoAnalysisDomain, normalizeSubjectMatches, subjectMatchesFromCalibration,
-      getLiterarySubjectMatches, getLiteraryAttachmentLearningPath, isSportsArticleAnalysis,
-      applyRuntimeKnowledgePolicy, filterCrossDomainAutoPayload, enforceCanonicalSourceGrounding,
-      resolveCanonicalAnalysisWithOptionalPythonEngine, isActiveAnalysisRun, bindAnalysisArtifact,
-      updateAnalysisRun, renderAutoOutputPayload, setExportButtonsEnabled, saveAutoOutputs,
-      setActiveAnalysisRun, takeKeywords, refreshAhaExplorer, getInstitutionalMediaHistorySubjectMatches,
-      updateEmptyState, isTransientAnalysisDocument, isAhaSavingEnabled, getThemeId, getFieldId,
-      handleUserMessage, handleUserMessageInsightCandidatesInBackground, isAhaMemoryQuestion,
-      buildAhaMemoryStatus, renderAhaMemoryStatus, buildAhaLearningContractReply, updateAhaMemoryStatus,
-      isAhaMemoryUseEnabled, buildAhaMemoryContext, buildAhaMemoryOffContext,
-      filterMemoryContextForActiveSource, suggestCategoryChips, filterRetrievalForActiveSource,
-      buildAhaPersonalMessageContext, buildAhaAnswerPackage, renderAhaPersonalRetrieval,
-      renderAhaAnswerComposer, renderAhaPersonalContextStatus, renderAhaPersonalAiLoopStatus,
-      createAnalysisRun, clearActiveAnalysisState, askAhaAgent, cleanArticleText,
-      enrichSubjectMatchesForClimateConflict, enrichSubjectMatchesForPublicAdministration,
-      normalizeAhaVisibleReply, evaluateAhaAnswerForChat, ensureAfterworkForLatestAnalysis,
-      renderAhaChatMemoryStatus, appendChat, setAhaProcessing, currentInsights, filterConceptLabels,
-      canonicalizeDisplayConcept, normalizeConceptKey, getCanonicalConceptLabel,
-      getCanonicalConceptKey, isBlockedStandaloneConcept, escHtml, extractAcademicPhraseConcepts,
-      extractAcademicTheoryLinks, prioritizeVisibleConceptEdges, isGenericDisplayConcept,
-      normalizeAfterworkConcept, applyPhraseConceptDisplayPreference,
-      detectPublicAdministrationReformSignal, readLatestAcademicContext, renderAuxPanel, renderPanel,
-      showInsights, showSavedAfterwork, clearChamberStorage, clearAutoOutputs, resetAnalysisStateView,
-      bindAhaMemoryControls, bindPanelActionHandler, renderHighlightsRail, buildAIState,
-      buildAcademicConceptCandidates, buildSourceGroundedAcademicPayload, shouldUseAhaMemory,
-      loadAhaMemoryControls, saveAhaMemoryControls, setAhaMemoryControl, resetAhaMemoryControls,
-      loadAhaMemoryExclusions, saveAhaMemoryExclusions, getAhaMemoryInsightStableKey,
-      getAhaMemoryInsightKey, isAhaMemoryInsightExcluded, excludeAhaMemoryInsight,
-      includeAhaMemoryInsight, resetAhaMemoryExclusions, getAhaExcludedMemoryItems,
-      renderAhaMemoryControls, bindAhaMemoryControls, findRelevantLocalMemory,
-      formatAhaMemoryContextForAgent, isAhaMemoryDebugEnabled, buildAhaMemoryTransparency,
-      formatAhaMemoryTransparencyDetails, renderAhaMemoryTransparency, updateAnswerActionsVisibility,
-      scoreRetrievalAgainstSource, artifactMatchesActiveRun, buildAhaPersonalAiLoopChatReadinessStatus
+    capabilities: {
+      core: Object.freeze({
+        ...textUtils, ...signals, ...subjects, ...replyFormat,
+        analysisRunContract, getInsightsApi: insightsApi
+      }),
+      persistence: Object.freeze({ ...chamberStore, ...autoOutputStore, ...afterwork }),
+      analysis: Object.freeze({
+        ...analysisPolicy, ...conceptPolicy, ...academicInsightView, ...afterworkAutoAdapter,
+        ...autoAnalysis, ...autoOutputView, ...canonicalAnalysis
+      }),
+      execution: Object.freeze({ ...runContext, ...agentRuntime, ...ingestRuntime }),
+      memory: Object.freeze({ ...memoryControls, ...memoryRuntime, ...personalUi }),
+      view: Object.freeze({
+        ...shellRuntime, ...insightView, ...conversationView, ...analysisStateView
+      })
     }
   });
   runtimeComposition.install();
