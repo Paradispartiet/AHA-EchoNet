@@ -50,7 +50,7 @@ AHAEmbeddings.embedAndStore feilet Error { }
 
 ### Relatert embedding-bruk uten `embedAndStore`
 
-- `ahaChat.js` bruker `AHAEmbeddings.findSimilarToText(message, { limit: 5, chamber })` i `askAhaAgent(message)` for å sende `similar_insights` til agent-backend. Dette er også beskyttet med `try/catch` og logges som `Klarte ikke hente similar insights` uten å blokkere chat-kallet.
+- `chat.memoryRuntime` henter semantiske minnetreff gjennom den eksisterende Memory Relevance Gate. `chat.agentRuntime` videresender bare `similar_insights` når den ferdige `memoryContext`-pakken har `used: true`; agentrequesten starter ikke et parallelt embedding-søk.
 - `docs/AHA_EMBEDDINGS.md` beskriver at `ahaIngest.js` fyrer `AHAEmbeddings.embedAndStore(insight)` som fire-and-forget etter lagring av nye signaler i kammeret, og at hovedflyten ikke venter på dette.
 
 ## Foreløpig flyt

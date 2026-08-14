@@ -193,7 +193,7 @@ assert.equal(control.echonet_shared, false);
 assert.equal(control.historygo_writeback_enabled, false);
 
 // 9. Lock the production Chat wiring that hands this package to the answer path and evaluates the resulting response.
-const chatCode = fs.readFileSync('js/ahaChatInsightPipeline.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatIngestRuntime.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatPersonalUi.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatConversationView.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatAnalysisRunContract.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatAcademicInsightView.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChat.js', 'utf8');
+const chatCode = fs.readFileSync('js/ahaChatInsightPipeline.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatAgentRuntime.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatIngestRuntime.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatPersonalUi.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatConversationView.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatAnalysisRunContract.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChatAcademicInsightView.js', 'utf8') + "\n" + fs.readFileSync('js/ahaChat.js', 'utf8');
 const submissionCode = fs.readFileSync('js/ahaChatRunContext.js', 'utf8');
 const chatWiringCode = `${chatCode}\n${submissionCode}`;
 for (const required of [
