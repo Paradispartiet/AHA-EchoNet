@@ -8,19 +8,15 @@ import { AuthGuard } from "./auth/auth.guard.js";
 import { AUTH_TOKEN_VERIFIER } from "./auth/auth.types.js";
 import { JoseTokenVerifier } from "./auth/jose-token-verifier.js";
 import { AuthContextController } from "./auth-context.controller.js";
-import { APP_CONFIG, loadAppConfig } from "./config/app-config.js";
+import { ConfigModule } from "./config/config.module.js";
 import { DatabaseModule } from "./database/database.module.js";
 import { HealthController } from "./health.controller.js";
 import { ProfilesModule } from "./profiles/profiles.module.js";
 
 @Module({
-  imports: [DatabaseModule, ProfilesModule],
+  imports: [ConfigModule, DatabaseModule, ProfilesModule],
   controllers: [HealthController, AuthContextController],
   providers: [
-    {
-      provide: APP_CONFIG,
-      useFactory: () => loadAppConfig()
-    },
     {
       provide: AUTH_TOKEN_VERIFIER,
       useClass: JoseTokenVerifier
