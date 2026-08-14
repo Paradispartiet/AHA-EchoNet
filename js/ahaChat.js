@@ -168,7 +168,6 @@
   const buildAfterworkPrompt = afterwork.buildAfterworkPrompt;
   const buildFromAfterworkEntry = afterwork.buildFromAfterworkEntry;
   const deleteAfterworkEntry = afterwork.deleteAfterworkEntry;
-  global.showMeta = showMeta;
   global.showSavedAfterwork = showSavedAfterwork;
 
   const memoryRuntime = chatModule("memoryRuntime", "AHAChatMemoryRuntime")?.create?.({
@@ -730,32 +729,8 @@
     renderPanel
   });
   if (!knowledgeView) throw new Error("AHAChatKnowledgeView må lastes før ahaChat.js.");
-
-  function showStatus() {
-    return knowledgeView.showStatus();
-  }
-
-  function showConcepts() {
-    return knowledgeView.showConcepts();
-  }
-
-  function showMeta() {
-    return knowledgeView.showMeta();
-  }
-
-  function showKnowledgeMap() {
-    return knowledgeView.showKnowledgeMap();
-  }
-
-  function reset() {
-    clearChamberStorage();
-    localStorage.removeItem(HIGHLIGHTS_STORAGE_KEY);
-    clearAutoOutputs();
-    localStorage.removeItem(AFTERWORK_STORAGE_KEY);
-    out("AHA-kammer nullstilt.");
-    setStatusNote("Nullstilt lokalt kammer og highlights.");
-    resetAnalysisStateView();
-  }
+  const { showStatus, showConcepts, showMeta, showKnowledgeMap } = knowledgeView;
+  global.showMeta = showMeta;
 
   function cleanArticleText(raw) {
     return textUtils.cleanArticleText(raw);
@@ -991,31 +966,6 @@
     return chatModule("replyFormat", "AHAChatReplyFormat").normalizeAhaVisibleReply(rawReply, userText);
   }
 
-  function consumePendingChatPrompt() {
-    const raw = localStorage.getItem(PENDING_CHAT_PROMPT_KEY);
-    if (!raw) return;
-    let payload = null;
-    try {
-      payload = JSON.parse(raw);
-    } catch {
-      return;
-    }
-    const prompt = String(payload?.prompt || "").trim();
-    if (!prompt) return;
-    const msg = document.getElementById("msg");
-    if (!msg) return;
-    if (String(msg.value || "").trim()) return;
-    msg.value = prompt;
-    msg.dispatchEvent(new Event("input", { bubbles: true }));
-    msg.focus();
-    localStorage.removeItem(PENDING_CHAT_PROMPT_KEY);
-    if (String(payload?.type || "") === "meta_insights_ai_session") {
-      startMetaAiSession(payload);
-      return;
-    }
-    setStatusNote("Klar til å bygge videre fra AHA Home.");
-  }
-
   function renderAhaChatMemoryStatus() {
     const host = document.getElementById("aha-chat-memory-status");
     if (!host) return null;
@@ -1030,60 +980,38 @@
     return stats;
   }
 
-  function bind() {
-    const button = document.getElementById("btn-send");
-    const textarea = document.getElementById("msg");
-    if (button && textarea) {
-      button.addEventListener("click", async () => {
-        const text = textarea.value.trim();
-        if (!text) return;
-        await submitAhaChatMessage(text, textarea);
-      });
-    }
-
-    document.getElementById("btn-insights")?.addEventListener("click", showInsights);
-    document.getElementById("btn-status")?.addEventListener("click", showStatus);
-    document.getElementById("btn-concepts")?.addEventListener("click", showConcepts);
-    document.getElementById("btn-meta")?.addEventListener("click", showMeta);
-    document.getElementById("btn-knowledge-map")?.addEventListener("click", showKnowledgeMap);
-    document.getElementById("btn-saved-afterwork")?.addEventListener("click", showSavedAfterwork);
-    document.getElementById("btn-export")?.addEventListener("click", exportAhaAnalysisJson);
-    document.getElementById("btn-export-analysis")?.addEventListener("click", () => { void copyAhaAnalysisExportMarkdown(); });
-    document.getElementById("btn-export-analysis-json")?.addEventListener("click", exportAhaAnalysisJson);
-    document.getElementById("btn-export-analysis-main")?.addEventListener("click", () => { void copyAhaAnalysisExportMarkdown(); });
-    document.getElementById("btn-export-analysis-json-main")?.addEventListener("click", exportAhaAnalysisJson);
-    document.getElementById("btn-reset")?.addEventListener("click", reset);
-    bindActionChips();
-    bindAhaMemoryControls();
-
-    bindPanelActionHandler();
-    setAhaProcessing(false);
-    restoreAutoOutputFromStorage();
-    consumePendingChatPrompt();
-
-    // Når et nytt merge-forslag persisteres på chamberet, re-rendr
-    // panelet hvis det vises. UI-en henter forslagene rett fra
-    // localStorage, så den trenger bare et signal om å oppdatere seg.
-    global.addEventListener("aha:merge-suggested", () => {
-      const panel = document.getElementById("panel");
-      if (panel && panel.querySelector(".insight-panel")) showInsights();
-    });
-
-    ["aha:chamber-saved", "aha:embedding-stored", "aha:embeddings-bulk-complete"].forEach((eventName) => {
-      global.addEventListener(eventName, () => { void updateAhaMemoryStatus(); });
-    });
-    void updateAhaMemoryStatus();
-    renderAhaChatMemoryStatus();
-    renderAhaPersonalContextStatus();
-
-    updateEmptyState();
-    renderHighlightsRail();
-    const log = document.getElementById("chat-log");
-    if (log) {
-      log.addEventListener("scroll", renderHighlightsRail);
-      window.addEventListener("resize", renderHighlightsRail);
-    }
-  }
+  const uiRuntime = chatModule("uiRuntime", "AHAChatUiRuntime")?.create?.({
+    pendingPromptKey: PENDING_CHAT_PROMPT_KEY,
+    highlightsStorageKey: HIGHLIGHTS_STORAGE_KEY,
+    afterworkStorageKey: AFTERWORK_STORAGE_KEY,
+    submitMessage: submitAhaChatMessage,
+    showInsights,
+    showStatus,
+    showConcepts,
+    showMeta,
+    showKnowledgeMap,
+    showSavedAfterwork,
+    exportAnalysisJson: exportAhaAnalysisJson,
+    copyAnalysisMarkdown: copyAhaAnalysisExportMarkdown,
+    clearChamber: clearChamberStorage,
+    clearAutoOutputs,
+    out,
+    setStatusNote,
+    resetAnalysisView: resetAnalysisStateView,
+    focusAutoCard,
+    bindMemoryControls: bindAhaMemoryControls,
+    bindPanelActions: bindPanelActionHandler,
+    setProcessing: setAhaProcessing,
+    restoreAutoOutput: restoreAutoOutputFromStorage,
+    startMetaAiSession,
+    updateMemoryStatus: updateAhaMemoryStatus,
+    renderChatMemoryStatus: renderAhaChatMemoryStatus,
+    renderPersonalContextStatus: renderAhaPersonalContextStatus,
+    updateEmptyState,
+    renderHighlightsRail
+  });
+  if (!uiRuntime) throw new Error("AHAChatUiRuntime må lastes før ahaChat.js.");
+  const bind = uiRuntime.bind;
 
   function suggestCategoryChips() {
     const insights = currentInsights().slice(0, 6);
@@ -1095,25 +1023,6 @@
     });
     const filteredLabels = filterConceptLabels(labels);
     return [...new Set(filteredLabels)].slice(0, 8);
-  }
-
-  function bindActionChips() {
-    document.querySelectorAll("[data-chat-action]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const action = btn.getAttribute("data-chat-action");
-        if (action === "import_hg") {
-          document.getElementById("btn-import-hg")?.click();
-          return;
-        }
-        if (action === "koble_hg") {
-          setStatusNote("Koblinger vises gjennom innsikter og fagkoblinger i chatten.");
-          return;
-        }
-        if (action === "lag_innsikt") showInsights();
-        focusAutoCard(action);
-        setStatusNote("Viser valgt analysekort.");
-      });
-    });
   }
 
   global.AHAMemoryControls = {
