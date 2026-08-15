@@ -11,35 +11,44 @@ require_secret() {
 
 require_secret AHA_STAGING_ADMIN_DATABASE_URL
 require_secret AHA_STAGING_RUNTIME_DATABASE_URL
-require_secret AHA_STAGING_DATABASE_FINGERPRINT
+
+if [[ -z "${AHA_STAGING_PROJECT_REF:-}" || ! "$AHA_STAGING_PROJECT_REF" =~ ^[a-z0-9]{20}$ ]]; then
+  echo "Hosted staging requires a pinned Supabase project ref." >&2
+  exit 1
+fi
 
 if [[ "${AHA_HOSTED_STAGING_CONFIRMATION:-}" != "RUN_AHA_HOSTED_STAGING_PREFLIGHT" ]]; then
   echo "Hosted staging preflight requires the exact manual confirmation token." >&2
   exit 1
 fi
 
+check_supabase_project_ref() {
+  local label="$1"
+  local url="$2"
+  if ! AHA_DSN_TO_CHECK="$url" AHA_PROJECT_REF_TO_CHECK="$AHA_STAGING_PROJECT_REF" python3 - <<'PY'
+import os
+from urllib.parse import unquote, urlparse
+
+parsed = urlparse(os.environ['AHA_DSN_TO_CHECK'])
+ref = os.environ['AHA_PROJECT_REF_TO_CHECK']
+host = (parsed.hostname or '').lower()
+user = unquote(parsed.username or '')
+
+direct = host == f'db.{ref}.supabase.co'
+pooler = host.endswith('.pooler.supabase.com') and user.endswith(f'.{ref}')
+raise SystemExit(0 if direct or pooler else 1)
+PY
+  then
+    echo "${label} DSN does not identify the pinned AHA Supabase staging project." >&2
+    exit 1
+  fi
+}
+
 readonly_psql() {
   local url="$1"
   shift
   PGOPTIONS='-c default_transaction_read_only=on -c statement_timeout=8000 -c lock_timeout=2000' \
     psql "$url" -X -v ON_ERROR_STOP=1 -A -t -q "$@"
-}
-
-check_marker() {
-  local label="$1"
-  local url="$2"
-  local marker
-  marker="$(readonly_psql "$url" -c "select coalesce(current_setting('aha.environment', true), ''), coalesce(current_setting('aha.environment_fingerprint', true), '')")"
-  local environment fingerprint
-  IFS='|' read -r environment fingerprint <<<"$marker"
-  if [[ "$environment" != "staging" ]]; then
-    echo "${label} connection is not explicitly marked as AHA staging." >&2
-    exit 1
-  fi
-  if [[ "$fingerprint" != "$AHA_STAGING_DATABASE_FINGERPRINT" ]]; then
-    echo "${label} connection fingerprint does not match the protected staging environment." >&2
-    exit 1
-  fi
 }
 
 check_ssl() {
@@ -53,8 +62,8 @@ check_ssl() {
   fi
 }
 
-check_marker admin "$AHA_STAGING_ADMIN_DATABASE_URL"
-check_marker runtime "$AHA_STAGING_RUNTIME_DATABASE_URL"
+check_supabase_project_ref admin "$AHA_STAGING_ADMIN_DATABASE_URL"
+check_supabase_project_ref runtime "$AHA_STAGING_RUNTIME_DATABASE_URL"
 check_ssl admin "$AHA_STAGING_ADMIN_DATABASE_URL"
 check_ssl runtime "$AHA_STAGING_RUNTIME_DATABASE_URL"
 
@@ -114,5 +123,5 @@ if [[ "$canonical_schema_present" == "1" ]]; then
   fi
 fi
 
-# This script deliberately emits no DSN, hostname, username or fingerprint.
+# This script deliberately emits no DSN, hostname or username.
 echo "AHA hosted PostgreSQL staging preflight: PASS (schema_present=${canonical_schema_present})"
