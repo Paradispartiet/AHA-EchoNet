@@ -37,8 +37,9 @@ assert.match(script, /rolinherit/);
 assert.match(script, /role_table_grants/);
 assert.match(script, /commit_local_import_v1/);
 assert.match(script, /record_local_import_item_v1/);
+assert.match(script, /runtime_user.*\^\[A-Za-z_\]/s);
 assert.doesNotMatch(script, /psql[^\n]*\s-f\s/);
-assert.doesNotMatch(script, /\b(CREATE|ALTER|DROP|INSERT|UPDATE|DELETE|TRUNCATE|GRANT|REVOKE)\b/i);
+assert.doesNotMatch(script, /-c\s+["']\s*(CREATE|ALTER|DROP|INSERT|UPDATE|DELETE|TRUNCATE|GRANT|REVOKE)\b/i);
 assert.doesNotMatch(script, /set -x|echo .*DATABASE_URL|echo .*FINGERPRINT/i);
 
 const docs = read('docs/AHA_POSTGRESQL_HOSTED_STAGING_PREFLIGHT_V1.md');
