@@ -30,6 +30,8 @@ export const CANONICAL_SYNC_OBJECT_TYPES = Object.freeze([
 export type CanonicalSyncObjectType = (typeof CANONICAL_SYNC_OBJECT_TYPES)[number];
 export type CanonicalSyncOperation = "upsert" | "delete";
 
+const MAX_SAFE_CURSOR = Number.MAX_SAFE_INTEGER;
+
 export class SyncBootstrapQueryDto {
   @IsString()
   @MinLength(1)
@@ -45,6 +47,7 @@ export class SyncBootstrapQueryDto {
   @Type(() => Number)
   @IsInt()
   @Min(0)
+  @Max(MAX_SAFE_CURSOR)
   highWatermark?: number;
 
   @IsOptional()
@@ -65,6 +68,7 @@ export class SyncPullQueryDto {
   @Type(() => Number)
   @IsInt()
   @Min(0)
+  @Max(MAX_SAFE_CURSOR)
   afterCursor?: number;
 
   @IsOptional()
@@ -107,6 +111,7 @@ export class SyncPushRequestDto {
   @Type(() => Number)
   @IsInt()
   @Min(0)
+  @Max(MAX_SAFE_CURSOR)
   baseRevision!: number;
 
   @IsString()
