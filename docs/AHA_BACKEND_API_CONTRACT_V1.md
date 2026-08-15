@@ -1,15 +1,21 @@
 # AHA Backend API and Repository Contract v1
 
-Status: **read-only adapterkontrakt — ikke aktiv frontend- eller synk-runtime**  
-Dato: 14. august 2026  
+Status: **read-only adapterkontrakt — ikke aktiv frontend- eller synk-runtime; supplert med avgrenset lokal importkommando**  
+Dato: 15. august 2026  
 API-versjon: `0.2.0`
 
-Denne leveransen er PR 5 i `AHA_BACKEND_FOUNDATION_ROADMAP_V1.md`. Den kobler NestJS-grunnmuren til en eksplisitt PostgreSQL repository-port og definerer de første stabile HTTP-kontraktene uten å aktivere browserbruk, import, sync, EchoNet eller produktwrites.
+Denne kontrakten ble etablert i PR 5 i `AHA_BACKEND_FOUNDATION_ROADMAP_V1.md` og er nå supplert av PR 6. PR 5 koblet NestJS-grunnmuren til en eksplisitt PostgreSQL repository-port og definerte de første stabile HTTP-kontraktene. PR 6 legger til én særskilt, samtykkestyrt lokal-importgrense uten å aktivere browserruntime, generell synk, EchoNet eller generelle produktwrites.
 
 OpenAPI-kontrakten ligger i:
 
 ```text
 backend/api/contracts/aha-backend-v1.openapi.json
+```
+
+Den detaljerte importkontrakten ligger i:
+
+```text
+docs/AHA_LOCAL_IMPORT_POSTGRESQL_V1.md
 ```
 
 ## 1. Aktiv status
@@ -19,9 +25,11 @@ Følgende er sant etter denne leveransen:
 - `server.js`/Express er fortsatt den aktive AHA-agent-backenden.
 - NestJS-tjenesten er ikke koblet fra frontend eller Render.
 - `AHA_DATABASE_ENABLED` er `false` som standard.
-- Ingen databaseforbindelse åpnes når flagget er av.
-- Det finnes ingen canonical write-ruter.
-- Det finnes ingen runtime-grants til `aha.*`.
+- `AHA_LOCAL_IMPORT_ENABLED` er `false` som standard.
+- Ingen databaseforbindelse åpnes når databaseflagget er av.
+- Det finnes ingen generelle canonical write-ruter.
+- Det finnes to avgrensede, autentiserte importkommandoer i den ikke-aktiverte NestJS-tjenesten: confirmation og commit.
+- Det finnes ingen runtime-grants til `aha.*` i repo-migrasjonene; deployment må eksplisitt gi den dedikerte runtime-rollen EXECUTE på importkommandoen.
 - Migrasjonene er ennå ikke kjørt og testet mot en faktisk stagingdatabase i denne leveransen.
 
 ## 2. Databasekonfigurasjon
@@ -39,11 +47,20 @@ PostgreSQL-adapteren er opt-in:
 | `AHA_DATABASE_STATEMENT_TIMEOUT_MS` | `8000` | Settes transaksjonslokalt. |
 | `AHA_DATABASE_LOCK_TIMEOUT_MS` | `2000` | Settes transaksjonslokalt. |
 
-Connection string, driverfeil og databasebrukernavn skal aldri logges eller returneres i API-respons.
+Importgrensen har i tillegg egne opt-in-variabler:
 
-## 3. Repository-grense
+| Variabel | Standard | Regel |
+|---|---|---|
+| `AHA_LOCAL_IMPORT_ENABLED` | `false` | Importkommandoene avviser kall når flagget er av. |
+| `AHA_IMPORT_CONFIRMATION_SECRET` | tom | Minst 32 tegn når import er aktivert. |
+| `AHA_IMPORT_CONFIRMATION_TTL_SECONDS` | `600` | Mellom 60 og 1800 sekunder. |
+| `AHA_LOCAL_IMPORT_MAX_OBJECTS` | `25000` | Hard grense; maksimalt 100000. |
 
-Domenekode bruker en leverandørnøytral port:
+Connection string, driverfeil, hemmeligheter og databasebrukernavn skal aldri logges eller returneres i API-respons.
+
+## 3. Repository- og kommandogrense
+
+Domenekode bruker en leverandørnøytral port for lesing:
 
 ```text
 DatabaseConnectionProvider
@@ -54,11 +71,10 @@ DatabaseConnectionProvider
 
 `pg` er bare implementasjonen bak porten. Controllers og domeneobjekter importerer ikke `pg` direkte.
 
-Første repository er:
+Første leserepository er:
 
 ```text
 CurrentProfileRepository
-→ PgCurrentProfileRepository
 → GET /v1/profile
 ```
 
@@ -77,7 +93,19 @@ revision
 
 Den eksponerer ikke auth subject, auth provider, e-post, metadata, secrets eller rå databaseobjekt.
 
-## 4. RLS-bundet read session
+PR 6 legger til en separat, smal kommandogrense:
+
+```text
+LocalImportController
+→ LocalImportService
+→ LocalImportRepository
+→ CanonicalDatabaseService.withCommandSession(...)
+→ aha.commit_local_import_v1(...)
+```
+
+`withCommandSession` gir ikke generelle tabellwrites. Den finnes bare for eksplisitt granted canonical command-funksjoner og beholder samme JWT-, RLS-, timeout- og runtime-role-sperrer som read-sessionen.
+
+## 4. RLS-bundne sessions
 
 Hver canonical repository-lesing kjører i en separat databaseconnection og read-only transaksjon:
 
@@ -92,6 +120,8 @@ validate runtime role and aha schema
 run repository SELECT
 COMMIT
 ```
+
+Den avgrensede importkommandoen bruker samme session-grense uten `SET TRANSACTION READ ONLY`, fordi selve write-operasjonen ligger i den ene eksplisitt tillatte databasefunksjonen. Browserroller får fortsatt ingen generelle tabellgrants eller write-policyer.
 
 Ved feil:
 
@@ -114,7 +144,7 @@ Rå token og brukerredigerbar metadata går ikke inn i databasekonteksten.
 
 ## 5. Runtime-role gate
 
-Før repository-query kjøres, kontrollerer adapteren:
+Før repository-query eller canonical command kjøres, kontrollerer adapteren:
 
 - `row_security` er `on`
 - rollen er ikke superuser
@@ -166,6 +196,32 @@ Mulige resultater:
 - `503 DATABASE_UNSAFE_RUNTIME_ROLE`
 - `503 CANONICAL_SCHEMA_NOT_READY`
 
+### `POST /v1/local-imports/confirmation`
+
+Krever gyldig Bearer JWT og eksplisitt aktivert lokal import. Endepunktet mottar bare:
+
+- source kind/version
+- payload hash
+- plan hash
+- objekttellinger
+
+Det mottar **ikke** samtaletekst, innsiktstekst, artikler eller andre importobjekter. Responsen inneholder et kortlivet, HMAC-bundet confirmation token som er bundet til verified principal, hashes, tellinger, policyversjon og personlig workspace-scope.
+
+### `POST /v1/local-imports/commit`
+
+Krever samme verified principal, et gyldig uforløpt confirmation token og nøyaktig samme planhash/tellinger som confirmation. Serveren revaliderer planen og beregner planhashen på nytt før databasekommandoen kan kjøre.
+
+Committen bruker:
+
+- eksakt `account_import`-samtykkescope
+- idempotency key
+- payload- og planhash
+- én `SECURITY DEFINER`-kommando med låst search path
+- per-objekt import receipts
+- full transaksjonsrollback ved kollisjon eller ugyldig foreldreobjekt
+
+Local-only/deferred områder er ikke del av den tillatte planen.
+
 ## 7. Standard response envelope
 
 Beskyttede success-responser:
@@ -199,24 +255,26 @@ Feil:
 
 Response envelope skal ikke inneholde stack, SQL, drivercode, connection string, token, query string eller request body.
 
-## 8. Audit
+## 8. Audit og samtykke
 
 Eksisterende redigerte auditkontrakt beholdes. Repository- og databasefeil reduseres til safe error code. Audit inneholder ikke databasefeilobjektet eller connection details.
 
-Canonical persist til `aha.audit_events` er fortsatt ikke aktivert. Det kommer gjennom en senere backend-only write adapter.
+Canonical persist til `aha.audit_events` er fortsatt ikke aktivert som generell audit-writeadapter.
+
+Lokal import skriver derimot en eksplisitt `consent_receipt` inne i samme transaksjon som importbatchen. Receipt-scope bindes til personlig workspace, source kind og payload hash. En identisk payload eller idempotency key kan replayes uten å materialisere objektene på nytt.
 
 ## 9. Dependency- og supply-chain-grense
 
 NestJS-pakken bruker committet npm lockfile og read-only CI med `npm ci --ignore-scripts`.
 
-PR 5 legger til:
+Repositorylaget bruker:
 
 ```text
 pg
 @types/pg
 ```
 
-Ingen ORM, Prisma, TypeORM, LangChain, Milvus eller Hasura legges inn i denne adapterleveransen.
+Ingen ORM, Prisma, TypeORM, LangChain, Milvus eller Hasura legges inn i denne adapter-/importleveransen.
 
 ## 10. Tester
 
@@ -224,7 +282,8 @@ Testene dekker uten ekstern database:
 
 - database disabled uten connection attempt
 - eksplisitt enable og TLS-regler
-- read-only transaction
+- read-only transaction for repositorylesing
+- avgrenset command session uten superuser/`BYPASSRLS`/table-owner
 - parameteriserte verified claims
 - statement- og lock-timeout
 - safe runtime-role gate
@@ -234,17 +293,28 @@ Testene dekker uten ekstern database:
 - profilrepository uten `select *` eller sensitive felt
 - stabile success/error envelopes
 - protected profile endpoint
-- null produktwrite-ruter
-- OpenAPI uten muterende operasjoner
+- ingen generelle produktwrite-ruter
+- bare de to eksplisitte lokal-import-POST-operasjonene i OpenAPI
+- lokal preview uten nettverk
+- null local-only/deferred innhold i canonical-planen
+- confirmation uten rå importdata
+- planhash-binding og endringsavvisning etter preview
+- idempotency- og receipt-kontrakt
+- locked-search-path SHA-256 uten avhengighet av `public`/extension-schema
 
-Disse er kontrakt- og adaptertester. Før aktivering kreves fortsatt en ekte PostgreSQL/Supabase stagingtest med migrasjoner, non-owner runtime role, grants og cross-tenant fixtures.
+Disse er kontrakt-, adapter- og statiske migrasjonstester. Før **runtime-aktivering** kreves fortsatt en ekte PostgreSQL/Supabase stagingtest med alle migrasjoner, non-owner runtime role, eksplisitt EXECUTE-grant og cross-tenant fixtures.
 
-## 11. Neste leveranse
+## 11. PR 6-status og neste port
 
-Neste roadmapsteg er:
+PR 6 — lokal import til PostgreSQL — er implementert i kode med:
 
 ```text
-PR 6 — Lokal import til PostgreSQL
+lokal preview
+→ hash/tellinger
+→ eksplisitt confirmation
+→ server-side revalidering
+→ idempotent canonical commit
+→ samtykke- og objektkvitteringer
 ```
 
-Den skal først bygge preview, eksplisitt confirmation, idempotency og import receipts. Den skal ikke gjøre innlogging til automatisk opplasting og skal bevise null import av `local_only` og `deferred` materiale.
+Dette betyr ikke at import er produksjonsaktivert. Neste port er å kjøre migrasjonene mot en isolert stagingdatabase og bevise runtime-grants, RLS, rollback, retry og cross-tenant-isolasjon med den faktiske database-rollen før `AHA_DATABASE_ENABLED` og `AHA_LOCAL_IMPORT_ENABLED` kan slås på i en deploy.
