@@ -97,6 +97,22 @@ if [[ "$is_super" != "0" || "$bypass_rls" != "0" || "$create_db" != "0" || "$cre
   exit 1
 fi
 
+# NOINHERIT is not sufficient: a login role may still SET ROLE into a privileged
+# group role. MEMBER is intentionally used instead of version-specific SET so
+# this fail-closed check works on PostgreSQL 15+; on newer PostgreSQL it may
+# conservatively reject a membership whose SET option is disabled.
+privileged_role_memberships="$(readonly_psql "$AHA_STAGING_RUNTIME_DATABASE_URL" -c "
+  select count(*)
+  from pg_roles privileged_role
+  where privileged_role.rolname <> current_user
+    and (privileged_role.rolsuper or privileged_role.rolbypassrls)
+    and pg_has_role(current_user, privileged_role.oid, 'member')
+")"
+if [[ "$privileged_role_memberships" != "0" ]]; then
+  echo "Hosted staging runtime role belongs to a superuser/BYPASSRLS role and is unsafe for canonical runtime." >&2
+  exit 1
+fi
+
 owned_canonical_tables="$(readonly_psql "$AHA_STAGING_RUNTIME_DATABASE_URL" -c "select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='aha' and c.relkind in ('r','p') and pg_get_userbyid(c.relowner)=current_user")"
 if [[ "$owned_canonical_tables" != "0" ]]; then
   echo "Hosted staging runtime role owns canonical AHA tables." >&2
