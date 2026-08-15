@@ -1,15 +1,16 @@
 // ahaCanonicalSyncStore.js
-// Local-only persistence boundary for future canonical bidirectional sync.
+// Local-only persistence boundary for canonical bidirectional sync metadata.
 // No network calls, no login hooks and no automatic execution.
 
 (function () {
   "use strict";
 
   const DB_NAME = "aha_canonical_sync_v1";
-  const DB_VERSION = 1;
+  const DB_VERSION = 2;
   const OUTBOX_STORE = "outbox";
   const CURSOR_STORE = "cursors";
   const TOMBSTONE_STORE = "tombstones";
+  const OBJECT_STATE_STORE = "object_states";
 
   const ALLOWED_OBJECT_TYPES = Object.freeze([
     "conversation",
@@ -36,6 +37,7 @@
   ]);
 
   const OPERATIONS = Object.freeze(["upsert", "delete"]);
+  const OUTBOX_STATUSES = Object.freeze(["pending", "retry", "synced", "conflict", "rejected"]);
 
   function clone(value) {
     return value == null ? value : JSON.parse(JSON.stringify(value));
@@ -47,10 +49,15 @@
     return text;
   }
 
-  function normalizeRevision(value) {
+  function normalizeRevision(value, field = "baseRevision") {
     const revision = Number(value || 0);
-    if (!Number.isInteger(revision) || revision < 0) throw new Error("baseRevision must be a non-negative integer");
+    if (!Number.isInteger(revision) || revision < 0) throw new Error(`${field} must be a non-negative integer`);
     return revision;
+  }
+
+  function normalizeOptionalInteger(value, field) {
+    if (value === null || value === undefined || value === "") return null;
+    return normalizeRevision(value, field);
   }
 
   function normalizeHash(value) {
@@ -59,11 +66,22 @@
     return hash;
   }
 
+  function normalizeOptionalHash(value, field = "payloadHash") {
+    if (value === null || value === undefined || value === "") return null;
+    const hash = String(value).trim().toLowerCase();
+    if (!/^[a-f0-9]{64}$/.test(hash)) throw new Error(`${field} must be a sha256 hex digest`);
+    return hash;
+  }
+
   function assertSyncableObjectType(objectType) {
     const type = nonEmpty(objectType, "objectType");
     if (FORBIDDEN_LOCAL_ONLY_TYPES.includes(type)) throw new Error(`local-only object type cannot enter sync outbox: ${type}`);
     if (!ALLOWED_OBJECT_TYPES.includes(type)) throw new Error(`unsupported canonical sync object type: ${type}`);
     return type;
+  }
+
+  function objectStateId(workspaceId, objectType, objectId) {
+    return `${nonEmpty(workspaceId, "workspaceId")}:${assertSyncableObjectType(objectType)}:${nonEmpty(objectId, "objectId")}`;
   }
 
   function normalizeOutboxEvent(input) {
@@ -98,7 +116,14 @@
       retryCount: 0,
       createdAt: now,
       updatedAt: now,
-      lastError: null
+      lastError: null,
+      serverRevision: null,
+      serverPayloadHash: null,
+      serverCursor: null,
+      conflictReason: null,
+      conflictId: null,
+      serverState: null,
+      deletedAt: null
     };
   }
 
@@ -111,7 +136,16 @@
     if (!Number.isInteger(pullCursor) || pullCursor < 0 || !Number.isInteger(pushCursor) || pushCursor < 0) {
       throw new Error("sync cursors must be non-negative integers");
     }
-    return { id: `${deviceId}:${workspaceId}`, workspaceId, deviceId, pullCursor, pushCursor, updatedAt: source.updatedAt || new Date().toISOString() };
+    return {
+      id: `${deviceId}:${workspaceId}`,
+      workspaceId,
+      deviceId,
+      pullCursor,
+      pushCursor,
+      bootstrapCompleted: source.bootstrapCompleted === true,
+      bootstrapHighWatermark: normalizeOptionalInteger(source.bootstrapHighWatermark, "bootstrapHighWatermark"),
+      updatedAt: source.updatedAt || new Date().toISOString()
+    };
   }
 
   function normalizeTombstone(input) {
@@ -122,9 +156,28 @@
       workspaceId: String(source.workspaceId),
       objectType,
       objectId: String(source.objectId),
-      revision: normalizeRevision(source.revision),
+      revision: normalizeRevision(source.revision, "revision"),
       deletedAt: nonEmpty(source.deletedAt, "deletedAt"),
       source: source.source === "server" ? "server" : "local"
+    };
+  }
+
+  function normalizeObjectState(input) {
+    const source = input && typeof input === "object" ? input : {};
+    const workspaceId = nonEmpty(source.workspaceId, "workspaceId");
+    const objectType = assertSyncableObjectType(source.objectType);
+    const objectId = nonEmpty(source.objectId, "objectId");
+    return {
+      id: objectStateId(workspaceId, objectType, objectId),
+      workspaceId,
+      objectType,
+      objectId,
+      revision: normalizeRevision(source.revision, "revision"),
+      serverPayloadHash: normalizeOptionalHash(source.serverPayloadHash, "serverPayloadHash"),
+      localPayloadHash: normalizeOptionalHash(source.localPayloadHash, "localPayloadHash"),
+      deletedAt: source.deletedAt ? String(source.deletedAt) : null,
+      source: ["bootstrap", "pull", "push"].includes(String(source.source || "")) ? String(source.source) : "pull",
+      updatedAt: source.updatedAt || new Date().toISOString()
     };
   }
 
@@ -144,6 +197,11 @@
         if (!db.objectStoreNames.contains(TOMBSTONE_STORE)) {
           const store = db.createObjectStore(TOMBSTONE_STORE, { keyPath: "id" });
           store.createIndex("workspace_object", ["workspaceId", "objectType", "objectId"], { unique: true });
+        }
+        if (!db.objectStoreNames.contains(OBJECT_STATE_STORE)) {
+          const store = db.createObjectStore(OBJECT_STATE_STORE, { keyPath: "id" });
+          store.createIndex("workspace_object", ["workspaceId", "objectType", "objectId"], { unique: true });
+          store.createIndex("workspace", "workspaceId", { unique: false });
         }
       };
       request.onsuccess = () => resolve(request.result);
@@ -173,19 +231,32 @@
     return withDb(options, (db) => transactionRequest(db, OUTBOX_STORE, "readwrite", (store) => store.put(event)));
   }
 
-  async function listPending(options = {}) {
+  async function readOutbox(options = {}) {
     return withDb(options, (db) => new Promise((resolve, reject) => {
       const tx = db.transaction(OUTBOX_STORE, "readonly");
       const request = tx.objectStore(OUTBOX_STORE).getAll();
-      request.onsuccess = () => resolve((request.result || []).filter((item) => item.status === "pending" || item.status === "retry").sort((a, b) => String(a.createdAt).localeCompare(String(b.createdAt))).map(clone));
+      request.onsuccess = () => resolve((request.result || []).sort((a, b) => String(a.createdAt).localeCompare(String(b.createdAt))).map(clone));
       request.onerror = () => reject(request.error || new Error("IndexedDB read failed"));
     }));
+  }
+
+  async function listPending(options = {}) {
+    const rows = await readOutbox(options);
+    return rows.filter((item) => item.status === "pending" || item.status === "retry");
+  }
+
+  async function listConflicts(options = {}) {
+    const rows = await readOutbox(options);
+    return rows.filter((item) => item.status === "conflict");
   }
 
   async function markOutboxResult(id, result, options = {}) {
     const eventId = nonEmpty(id, "id");
     const status = String(result?.status || "");
-    if (!["pending", "retry", "synced", "conflict", "rejected"].includes(status)) throw new Error("invalid outbox result status");
+    if (!OUTBOX_STATUSES.includes(status)) throw new Error("invalid outbox result status");
+    const serverRevision = normalizeOptionalInteger(result?.serverRevision, "serverRevision");
+    const serverPayloadHash = normalizeOptionalHash(result?.serverPayloadHash, "serverPayloadHash");
+    const serverCursor = normalizeOptionalInteger(result?.cursor ?? result?.serverCursor, "serverCursor");
     return withDb(options, (db) => new Promise((resolve, reject) => {
       const tx = db.transaction(OUTBOX_STORE, "readwrite");
       const store = tx.objectStore(OUTBOX_STORE);
@@ -193,7 +264,20 @@
       get.onsuccess = () => {
         const current = get.result;
         if (!current) { tx.abort(); reject(new Error("outbox event not found")); return; }
-        const updated = { ...current, status, retryCount: status === "retry" ? Number(current.retryCount || 0) + 1 : Number(current.retryCount || 0), updatedAt: new Date().toISOString(), lastError: result?.error ? String(result.error) : null };
+        const updated = {
+          ...current,
+          status,
+          retryCount: status === "retry" ? Number(current.retryCount || 0) + 1 : Number(current.retryCount || 0),
+          updatedAt: new Date().toISOString(),
+          lastError: result?.error ? String(result.error) : null,
+          serverRevision,
+          serverPayloadHash,
+          serverCursor,
+          conflictReason: result?.conflictReason || result?.reason ? String(result?.conflictReason || result?.reason) : null,
+          conflictId: result?.conflictId ? String(result.conflictId) : null,
+          serverState: result?.serverState == null ? null : clone(result.serverState),
+          deletedAt: result?.deletedAt ? String(result.deletedAt) : null
+        };
         store.put(updated);
       };
       tx.oncomplete = () => resolve(true);
@@ -204,13 +288,18 @@
 
   async function getCursor(workspaceId, deviceId, options = {}) {
     const cursor = normalizeCursor({ workspaceId, deviceId });
-    return withDb(options, (db) => transactionRequest(db, CURSOR_STORE, "readonly", (store) => store.get(cursor.id))).then((stored) => stored || cursor);
+    return withDb(options, (db) => transactionRequest(db, CURSOR_STORE, "readonly", (store) => store.get(cursor.id))).then((stored) => stored ? normalizeCursor(stored) : cursor);
   }
 
   async function advanceCursor(input, options = {}) {
-    const next = normalizeCursor(input);
-    const current = await getCursor(next.workspaceId, next.deviceId, options);
-    if (next.pullCursor < Number(current.pullCursor || 0) || next.pushCursor < Number(current.pushCursor || 0)) throw new Error("sync cursor cannot move backwards");
+    const requested = normalizeCursor(input);
+    const current = await getCursor(requested.workspaceId, requested.deviceId, options);
+    if (requested.pullCursor < Number(current.pullCursor || 0) || requested.pushCursor < Number(current.pushCursor || 0)) throw new Error("sync cursor cannot move backwards");
+    const next = normalizeCursor({
+      ...requested,
+      bootstrapCompleted: current.bootstrapCompleted || requested.bootstrapCompleted,
+      bootstrapHighWatermark: requested.bootstrapHighWatermark ?? current.bootstrapHighWatermark
+    });
     return withDb(options, (db) => transactionRequest(db, CURSOR_STORE, "readwrite", (store) => store.put(next)));
   }
 
@@ -229,19 +318,77 @@
     return withDb(options, (db) => transactionRequest(db, TOMBSTONE_STORE, "readonly", (store) => store.get(id)));
   }
 
+  async function putObjectState(input, options = {}) {
+    const next = normalizeObjectState(input);
+    return withDb(options, async (db) => {
+      const current = await transactionRequest(db, OBJECT_STATE_STORE, "readonly", (store) => store.get(next.id));
+      if (current && Number(current.revision || 0) > next.revision) return normalizeObjectState(current);
+      const merged = normalizeObjectState({
+        ...current,
+        ...next,
+        localPayloadHash: next.localPayloadHash ?? current?.localPayloadHash ?? null,
+        serverPayloadHash: next.serverPayloadHash ?? current?.serverPayloadHash ?? null
+      });
+      await transactionRequest(db, OBJECT_STATE_STORE, "readwrite", (store) => store.put(merged));
+      return merged;
+    });
+  }
+
+  async function getObjectState(workspaceId, objectType, objectId, options = {}) {
+    const id = objectStateId(workspaceId, objectType, objectId);
+    const value = await withDb(options, (db) => transactionRequest(db, OBJECT_STATE_STORE, "readonly", (store) => store.get(id)));
+    return value ? normalizeObjectState(value) : null;
+  }
+
+  async function listObjectStates(workspaceId, options = {}) {
+    const targetWorkspace = nonEmpty(workspaceId, "workspaceId");
+    return withDb(options, (db) => new Promise((resolve, reject) => {
+      const tx = db.transaction(OBJECT_STATE_STORE, "readonly");
+      const request = tx.objectStore(OBJECT_STATE_STORE).getAll();
+      request.onsuccess = () => resolve((request.result || [])
+        .filter((item) => item.workspaceId === targetWorkspace)
+        .map(normalizeObjectState)
+        .sort((a, b) => `${a.objectType}:${a.objectId}`.localeCompare(`${b.objectType}:${b.objectId}`)));
+      request.onerror = () => reject(request.error || new Error("IndexedDB object state read failed"));
+    }));
+  }
+
   function getStatus() {
     return {
-      version: "aha_canonical_sync_store_v1",
+      version: "aha_canonical_sync_store_v2",
       database: DB_NAME,
+      databaseVersion: DB_VERSION,
       networkEnabled: false,
       autoSync: false,
       loginTriggersSync: false,
       allowedObjectTypes: ALLOWED_OBJECT_TYPES.slice(),
-      forbiddenLocalOnlyTypes: FORBIDDEN_LOCAL_ONLY_TYPES.slice()
+      forbiddenLocalOnlyTypes: FORBIDDEN_LOCAL_ONLY_TYPES.slice(),
+      stores: [OUTBOX_STORE, CURSOR_STORE, TOMBSTONE_STORE, OBJECT_STATE_STORE]
     };
   }
 
-  const api = { ALLOWED_OBJECT_TYPES, FORBIDDEN_LOCAL_ONLY_TYPES, normalizeOutboxEvent, normalizeCursor, normalizeTombstone, assertSyncableObjectType, enqueue, listPending, markOutboxResult, getCursor, advanceCursor, putTombstone, getTombstone, getStatus };
+  const api = {
+    ALLOWED_OBJECT_TYPES,
+    FORBIDDEN_LOCAL_ONLY_TYPES,
+    normalizeOutboxEvent,
+    normalizeCursor,
+    normalizeTombstone,
+    normalizeObjectState,
+    assertSyncableObjectType,
+    objectStateId,
+    enqueue,
+    listPending,
+    listConflicts,
+    markOutboxResult,
+    getCursor,
+    advanceCursor,
+    putTombstone,
+    getTombstone,
+    putObjectState,
+    getObjectState,
+    listObjectStates,
+    getStatus
+  };
   if (typeof window !== "undefined") window.AHACanonicalSyncStore = api;
   if (typeof module !== "undefined" && module.exports) module.exports = api;
 })();
