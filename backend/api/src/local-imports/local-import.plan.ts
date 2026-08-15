@@ -52,10 +52,18 @@ function validateRow(key: PlanArrayKey, value: unknown): void {
   if (!value || typeof value !== "object" || Array.isArray(value)) throw invalidPlan();
   const row = value as Record<string, unknown>;
   requireId(row.id);
-  if (key === "messages") requireId(row.conversationId);
+
+  if (key === "messages") {
+    requireId(row.conversationId);
+    requireText(row.content);
+  }
+  if (key === "sourceEvents" && !String(row.title ?? "").trim() && !String(row.sourceText ?? "").trim()) throw invalidPlan();
   if (key === "conceptListItems") requireId(row.listId);
   if (key === "knowledgePathSteps") requireId(row.pathId);
-  if (key === "articleReferences") requireId(row.articleId);
+  if (key === "articleReferences") {
+    requireId(row.articleId);
+    requireId(row.refId);
+  }
 
   for (const field of ["title", "content", "sourceText", "insightText", "body"] as const) {
     if (typeof row[field] === "string" && row[field].length > 2_000_000) throw invalidPlan();
@@ -65,6 +73,10 @@ function validateRow(key: PlanArrayKey, value: unknown): void {
 function requireId(value: unknown): void {
   const id = String(value ?? "").trim();
   if (!id || id.length > 240) throw invalidPlan();
+}
+
+function requireText(value: unknown): void {
+  if (!String(value ?? "").trim()) throw invalidPlan();
 }
 
 function invalidPlan(): ApiException {
