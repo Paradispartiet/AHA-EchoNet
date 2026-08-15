@@ -72,6 +72,10 @@ if [[ "$admin_user" == "$runtime_user" ]]; then
   echo "Admin and runtime DSNs must use separate database roles." >&2
   exit 1
 fi
+if [[ ! "$runtime_user" =~ ^[A-Za-z_][A-Za-z0-9_.\$-]*$ ]]; then
+  echo "Hosted staging runtime role name is outside the allowed safety pattern." >&2
+  exit 1
+fi
 if (( admin_version < 150000 || runtime_version < 150000 )); then
   echo "Hosted staging requires PostgreSQL 15 or newer." >&2
   exit 1
