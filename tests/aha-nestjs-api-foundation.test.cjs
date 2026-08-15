@@ -193,19 +193,35 @@ assert.deepEqual(Object.keys(openApi.paths).sort(), [
   "/v1/health",
   "/v1/local-imports/commit",
   "/v1/local-imports/confirmation",
-  "/v1/profile"
+  "/v1/profile",
+  "/v1/sync/bootstrap",
+  "/v1/sync/pull",
+  "/v1/sync/push"
 ]);
+const explicitPostCommands = new Set([
+  "/v1/local-imports/commit",
+  "/v1/local-imports/confirmation",
+  "/v1/sync/push"
+]);
+const explicitSyncReads = new Set(["/v1/sync/bootstrap", "/v1/sync/pull"]);
 for (const [route, pathItem] of Object.entries(openApi.paths)) {
-  const isLocalImportCommand = route === "/v1/local-imports/commit" || route === "/v1/local-imports/confirmation";
-  if (isLocalImportCommand) {
-    assert.ok(pathItem.post, `${route} skal eksponere kun eksplisitt POST-kommando`);
+  if (explicitPostCommands.has(route)) {
+    assert.ok(pathItem.post, `${route} skal eksponere kun den eksplisitte POST-kommandoen`);
+    assert.equal(pathItem.get, undefined, `${route} skal ikke også bli en leserute`);
   } else {
     assert.equal(pathItem.post, undefined, `${route} skal forbli read-only`);
+    assert.ok(pathItem.get, `${route} skal være eksplisitt GET`);
+  }
+  if (explicitSyncReads.has(route)) {
+    assert.equal(pathItem.get.security?.[0]?.bearerAuth?.length, 0, `${route} skal være autentisert`);
   }
   assert.equal(pathItem.put, undefined);
   assert.equal(pathItem.patch, undefined);
   assert.equal(pathItem.delete, undefined);
 }
+assert.equal(openApi.paths["/v1/sync/push"].post.security?.[0]?.bearerAuth?.length, 0);
+assert.equal(openApi.components.schemas.CanonicalSyncObjectType.enum.length, 10);
+assert.equal(openApi.components.schemas.CanonicalSyncObjectType.enum.includes("note"), false);
 
 const rootPackage = JSON.parse(read("package.json"));
 assert.equal(rootPackage.main, "server.js");
@@ -216,6 +232,8 @@ assert.doesNotMatch(read("render.yaml"), /rootDir:\s*backend\/api|name:\s*aha-ne
 assert.match(read("backend/api/README.md"), /ikke aktiv AHA-runtime/i);
 assert.match(read("backend/api/README.md"), /runtime-grants/i);
 assert.match(read("backend/api/README.md"), /non-owner|BYPASSRLS/i);
-assert.match(read("docs/AHA_BACKEND_API_CONTRACT_V1.md"), /read-only adapterkontrakt — ikke aktiv frontend- eller synk-runtime/i);
+assert.match(read("docs/AHA_BACKEND_API_CONTRACT_V1.md"), /fail-closed backend foundation[\s\S]*frontend runtime not activated/i);
+assert.match(read("docs/AHA_BACKEND_API_CONTRACT_V1.md"), /AHA_CANONICAL_SYNC_ENABLED=false/i);
+assert.match(read("docs/AHA_BACKEND_API_CONTRACT_V1.md"), /POST \/v1\/sync\/push/i);
 
 console.log("aha-nestjs-api-foundation.test.cjs passed");

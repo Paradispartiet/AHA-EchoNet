@@ -13,9 +13,10 @@ import { DatabaseModule } from "./database/database.module.js";
 import { HealthController } from "./health.controller.js";
 import { LocalImportModule } from "./local-imports/local-import.module.js";
 import { ProfilesModule } from "./profiles/profiles.module.js";
+import { CanonicalSyncModule } from "./sync/sync.module.js";
 
 @Module({
-  imports: [ConfigModule, DatabaseModule, ProfilesModule, LocalImportModule],
+  imports: [ConfigModule, DatabaseModule, ProfilesModule, LocalImportModule, CanonicalSyncModule],
   controllers: [HealthController, AuthContextController],
   providers: [
     {

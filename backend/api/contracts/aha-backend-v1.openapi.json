@@ -3,7 +3,7 @@
   "info": {
     "title": "AHA Backend API",
     "version": "0.2.0",
-    "description": "Fail-closed backend contract. Express remains primary. Canonical reads are opt-in; local account import is opt-in and requires an on-device preview plus an explicit hash-bound commit."
+    "description": "Fail-closed backend contract. Express remains primary. Canonical reads, local account import and personal/private canonical sync are separate opt-in boundaries. Login never implies import or sync."
   },
   "paths": {
     "/v1/health": {
@@ -91,6 +91,73 @@
           "409": { "$ref": "#/components/responses/ImportConflict" },
           "413": { "$ref": "#/components/responses/ImportTooLarge" },
           "503": { "$ref": "#/components/responses/ImportUnavailable" }
+        }
+      }
+    },
+    "/v1/sync/bootstrap": {
+      "get": {
+        "operationId": "bootstrapCanonicalSync",
+        "summary": "Read an initial personal/private canonical sync snapshot",
+        "description": "Opt-in read boundary for a first device or pre-journal account state. The first page returns a highWatermark that must be reused for later bootstrap pages before delta pull begins. This route never writes and never activates sync by login.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "workspaceId", "in": "query", "required": true, "schema": { "type": "string", "minLength": 1, "maxLength": 256 } },
+          { "name": "afterKey", "in": "query", "required": false, "schema": { "type": "string", "maxLength": 1024, "default": "" } },
+          { "name": "highWatermark", "in": "query", "required": false, "schema": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 } },
+          { "name": "limit", "in": "query", "required": false, "schema": { "type": "integer", "minimum": 1, "maximum": 500 } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Canonical snapshot page. Deleted objects have payload=null.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SyncBootstrapResponse" } } }
+          },
+          "400": { "$ref": "#/components/responses/ValidationFailed" },
+          "401": { "$ref": "#/components/responses/AuthRequired" },
+          "503": { "$ref": "#/components/responses/SyncUnavailable" }
+        }
+      }
+    },
+    "/v1/sync/pull": {
+      "get": {
+        "operationId": "pullCanonicalSyncChanges",
+        "summary": "Read monotone canonical sync changes after a cursor",
+        "description": "Opt-in delta read. Multiple journal rows for the same object collapse to its latest state in the requested window. Tombstones never return raw object payload.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "workspaceId", "in": "query", "required": true, "schema": { "type": "string", "minLength": 1, "maxLength": 256 } },
+          { "name": "afterCursor", "in": "query", "required": false, "schema": { "type": "integer", "minimum": 0, "maximum": 9007199254740991, "default": 0 } },
+          { "name": "limit", "in": "query", "required": false, "schema": { "type": "integer", "minimum": 1, "maximum": 500 } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Canonical delta page",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SyncPullResponse" } } }
+          },
+          "400": { "$ref": "#/components/responses/ValidationFailed" },
+          "401": { "$ref": "#/components/responses/AuthRequired" },
+          "503": { "$ref": "#/components/responses/SyncUnavailable" }
+        }
+      }
+    },
+    "/v1/sync/push": {
+      "post": {
+        "operationId": "pushCanonicalSyncChange",
+        "summary": "Explicitly push one hash-bound canonical personal/private change",
+        "description": "The NestJS boundary recomputes SHA-256 over deterministic canonical JSON before the database command runs. For delete, payload is null and payloadHash is the SHA-256 of canonical JSON null. Expected stale-base/tombstone conflicts are returned as a 200 success envelope whose data.status is conflict; they are never resolved automatically.",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SyncPushRequest" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "Change applied/replayed, safe no-op, or explicit conflict business result",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SyncPushResponse" } } }
+          },
+          "400": { "$ref": "#/components/responses/ValidationFailed" },
+          "401": { "$ref": "#/components/responses/AuthRequired" },
+          "413": { "$ref": "#/components/responses/SyncPayloadTooLarge" },
+          "503": { "$ref": "#/components/responses/SyncUnavailable" }
         }
       }
     }
@@ -320,6 +387,97 @@
           },
           "meta": { "$ref": "#/components/schemas/ApiMeta" }
         }
+      },
+      "CanonicalSyncObjectType": {
+        "type": "string",
+        "enum": ["conversation", "message", "source_event", "insight", "concept_list", "concept_list_item", "knowledge_path", "knowledge_path_step", "article", "article_reference"]
+      },
+      "CanonicalSyncPayload": {
+        "type": "object",
+        "description": "Canonical snake_case personal/private object payload. Server-owned workspace/profile identity fields are forbidden. The database command performs object-type-specific validation and never accepts local-only object types.",
+        "additionalProperties": true
+      },
+      "SyncPushRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["workspaceId", "deviceId", "idempotencyKey", "objectType", "objectId", "operation", "baseRevision", "payloadHash"],
+        "properties": {
+          "workspaceId": { "type": "string", "minLength": 1, "maxLength": 256 },
+          "deviceId": { "type": "string", "minLength": 1, "maxLength": 256 },
+          "idempotencyKey": { "type": "string", "minLength": 8, "maxLength": 256 },
+          "objectType": { "$ref": "#/components/schemas/CanonicalSyncObjectType" },
+          "objectId": { "type": "string", "minLength": 1, "maxLength": 512 },
+          "operation": { "type": "string", "enum": ["upsert", "delete"] },
+          "baseRevision": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+          "payloadHash": { "type": "string", "pattern": "^[a-f0-9]{64}$", "description": "SHA-256 of deterministic canonical JSON. For delete this is SHA-256 of JSON null." },
+          "payload": {
+            "oneOf": [
+              { "$ref": "#/components/schemas/CanonicalSyncPayload" },
+              { "type": "null" }
+            ],
+            "description": "Required object for upsert; null or omitted for delete."
+          }
+        }
+      },
+      "SyncObjectEnvelope": {
+        "type": "object",
+        "additionalProperties": true,
+        "description": "Canonical sync object/change descriptor. Tombstones have payload=null and never expose raw deleted content."
+      },
+      "SyncBootstrapResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["data", "meta"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": true,
+            "required": ["workspaceId", "highWatermark", "nextKey", "returnedCount", "hasMore", "objects"],
+            "properties": {
+              "workspaceId": { "type": "string" },
+              "highWatermark": { "type": "integer", "minimum": 0 },
+              "nextKey": { "type": "string" },
+              "returnedCount": { "type": "integer", "minimum": 0 },
+              "hasMore": { "type": "boolean" },
+              "objects": { "type": "array", "items": { "$ref": "#/components/schemas/SyncObjectEnvelope" } }
+            }
+          },
+          "meta": { "$ref": "#/components/schemas/ApiMeta" }
+        }
+      },
+      "SyncPullResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["data", "meta"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": true,
+            "required": ["workspaceId", "highWatermark", "nextCursor", "returnedCount", "hasMore", "changes"],
+            "properties": {
+              "workspaceId": { "type": "string" },
+              "highWatermark": { "type": "integer", "minimum": 0 },
+              "nextCursor": { "type": "integer", "minimum": 0 },
+              "returnedCount": { "type": "integer", "minimum": 0 },
+              "hasMore": { "type": "boolean" },
+              "changes": { "type": "array", "items": { "$ref": "#/components/schemas/SyncObjectEnvelope" } }
+            }
+          },
+          "meta": { "$ref": "#/components/schemas/ApiMeta" }
+        }
+      },
+      "SyncPushResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["data", "meta"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "status is synced or conflict. Conflict data includes reason/baseRevision/serverRevision and serverState when safe. No automatic resolution occurs."
+          },
+          "meta": { "$ref": "#/components/schemas/ApiMeta" }
+        }
       }
     },
     "responses": {
@@ -332,15 +490,19 @@
         "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorBody" } } }
       },
       "ValidationFailed": {
-        "description": "Request or canonical import plan validation failed",
+        "description": "Request validation, sync hash validation or canonical payload validation failed",
         "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorBody" } } }
       },
       "ImportConflict": {
-        "description": "The confirmation expired, the plan changed, or the idempotency key conflicts",
+        "description": "The import confirmation expired, the plan changed, or the idempotency key conflicts",
         "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorBody" } } }
       },
       "ImportTooLarge": {
         "description": "The configured local import object limit was exceeded",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorBody" } } }
+      },
+      "SyncPayloadTooLarge": {
+        "description": "The canonical sync payload exceeds the configured API size limit",
         "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorBody" } } }
       },
       "DatabaseUnavailable": {
@@ -349,6 +511,10 @@
       },
       "ImportUnavailable": {
         "description": "Local import or its canonical database command is not enabled/available",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorBody" } } }
+      },
+      "SyncUnavailable": {
+        "description": "Canonical sync is disabled or the canonical database is unavailable/unsafe/not ready",
         "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorBody" } } }
       }
     }
