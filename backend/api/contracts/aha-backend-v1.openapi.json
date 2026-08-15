@@ -3,7 +3,7 @@
   "info": {
     "title": "AHA Backend API",
     "version": "0.2.0",
-    "description": "Read-only foundation contract. The existing Express service remains primary and no canonical write API is active."
+    "description": "Fail-closed backend contract. Express remains primary. Canonical reads are opt-in; local account import is opt-in and requires an on-device preview plus an explicit hash-bound commit."
   },
   "paths": {
     "/v1/health": {
@@ -14,11 +14,7 @@
         "responses": {
           "200": {
             "description": "Service is alive",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/HealthResponse" }
-              }
-            }
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/HealthResponse" } } }
           }
         }
       }
@@ -31,11 +27,7 @@
         "responses": {
           "200": {
             "description": "Verified principal context",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/AuthContextResponse" }
-              }
-            }
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuthContextResponse" } } }
           },
           "401": { "$ref": "#/components/responses/AuthRequired" }
         }
@@ -49,15 +41,56 @@
         "responses": {
           "200": {
             "description": "Bounded current profile read model",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ProfileResponse" }
-              }
-            }
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ProfileResponse" } } }
           },
           "401": { "$ref": "#/components/responses/AuthRequired" },
           "404": { "$ref": "#/components/responses/NotFound" },
           "503": { "$ref": "#/components/responses/DatabaseUnavailable" }
+        }
+      }
+    },
+    "/v1/local-imports/confirmation": {
+      "post": {
+        "operationId": "createLocalImportConfirmation",
+        "summary": "Create a short-lived confirmation challenge from local preview hashes and counts",
+        "description": "The preview itself is built on-device. This endpoint must never receive the raw local dataset or canonical import plan.",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LocalImportConfirmationRequest" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "Short-lived confirmation challenge; no import data was uploaded",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LocalImportConfirmationResponse" } } }
+          },
+          "400": { "$ref": "#/components/responses/ValidationFailed" },
+          "401": { "$ref": "#/components/responses/AuthRequired" },
+          "413": { "$ref": "#/components/responses/ImportTooLarge" },
+          "503": { "$ref": "#/components/responses/ImportUnavailable" }
+        }
+      }
+    },
+    "/v1/local-imports/commit": {
+      "post": {
+        "operationId": "commitLocalImport",
+        "summary": "Explicitly commit the exact hash-bound local import plan",
+        "description": "This is the first request allowed to contain the canonicalized plan. The server recalculates planHash, verifies the principal-bound confirmation and commits through one idempotent canonical database command.",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LocalImportCommitRequest" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "Import committed or replayed idempotently",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LocalImportCommitResponse" } } }
+          },
+          "400": { "$ref": "#/components/responses/ValidationFailed" },
+          "401": { "$ref": "#/components/responses/AuthRequired" },
+          "409": { "$ref": "#/components/responses/ImportConflict" },
+          "413": { "$ref": "#/components/responses/ImportTooLarge" },
+          "503": { "$ref": "#/components/responses/ImportUnavailable" }
         }
       }
     }
@@ -125,10 +158,7 @@
             "properties": {
               "configured": { "type": "boolean" },
               "connected": { "type": "boolean" },
-              "status": {
-                "type": "string",
-                "enum": ["disabled", "unknown", "ready", "unsafe_role", "schema_missing", "unavailable"]
-              },
+              "status": { "type": "string", "enum": ["disabled", "unknown", "ready", "unsafe_role", "schema_missing", "unavailable"] },
               "safeRuntimeRole": { "type": "boolean" },
               "canonicalSchema": { "type": "string", "enum": ["present", "not_connected"] }
             }
@@ -137,9 +167,7 @@
             "type": "object",
             "additionalProperties": false,
             "required": ["configured"],
-            "properties": {
-              "configured": { "type": "boolean" }
-            }
+            "properties": { "configured": { "type": "boolean" } }
           }
         }
       },
@@ -157,11 +185,7 @@
               "subject": { "type": "string" },
               "provider": { "type": "string" },
               "issuer": { "type": "string", "format": "uri" },
-              "audience": {
-                "type": "array",
-                "minItems": 1,
-                "items": { "type": "string" }
-              }
+              "audience": { "type": "array", "minItems": 1, "items": { "type": "string" } }
             }
           }
         }
@@ -198,32 +222,134 @@
           "data": { "$ref": "#/components/schemas/ProfileData" },
           "meta": { "$ref": "#/components/schemas/ApiMeta" }
         }
+      },
+      "LocalImportCounts": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["conversations", "messages", "sourceEvents", "insights", "conceptLists", "conceptListItems", "knowledgePaths", "knowledgePathSteps", "articles", "articleReferences", "total"],
+        "properties": {
+          "conversations": { "type": "integer", "minimum": 0 },
+          "messages": { "type": "integer", "minimum": 0 },
+          "sourceEvents": { "type": "integer", "minimum": 0 },
+          "insights": { "type": "integer", "minimum": 0 },
+          "conceptLists": { "type": "integer", "minimum": 0 },
+          "conceptListItems": { "type": "integer", "minimum": 0 },
+          "knowledgePaths": { "type": "integer", "minimum": 0 },
+          "knowledgePathSteps": { "type": "integer", "minimum": 0 },
+          "articles": { "type": "integer", "minimum": 0 },
+          "articleReferences": { "type": "integer", "minimum": 0 },
+          "total": { "type": "integer", "minimum": 0 }
+        }
+      },
+      "LocalImportConfirmationRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["sourceKind", "sourceVersion", "payloadHash", "planHash", "counts"],
+        "properties": {
+          "sourceKind": { "const": "aha_local_backup" },
+          "sourceVersion": { "const": "v1" },
+          "payloadHash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+          "planHash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+          "counts": { "$ref": "#/components/schemas/LocalImportCounts" }
+        }
+      },
+      "LocalImportConfirmationResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["data", "meta"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["confirmationToken", "expiresAt", "policyVersion", "binds", "dataUploaded", "nextAction"],
+            "properties": {
+              "confirmationToken": { "type": "string" },
+              "expiresAt": { "type": "string", "format": "date-time" },
+              "policyVersion": { "const": "aha_account_import_v1" },
+              "binds": { "$ref": "#/components/schemas/LocalImportConfirmationRequest" },
+              "dataUploaded": { "const": false },
+              "nextAction": { "const": "show_exact_local_preview_then_require_user_confirmation" }
+            }
+          },
+          "meta": { "$ref": "#/components/schemas/ApiMeta" }
+        }
+      },
+      "LocalImportPlan": {
+        "type": "object",
+        "description": "Canonicalized allow-listed plan generated locally. Unknown root keys are rejected by the service.",
+        "required": ["version", "sourceKind", "sourceVersion", "conversations", "messages", "sourceEvents", "insights", "conceptLists", "conceptListItems", "knowledgePaths", "knowledgePathSteps", "articles", "articleReferences"],
+        "properties": {
+          "version": { "const": "aha_local_import_plan_v1" },
+          "sourceKind": { "const": "aha_local_backup" },
+          "sourceVersion": { "const": "v1" },
+          "conversations": { "type": "array", "items": { "type": "object" } },
+          "messages": { "type": "array", "items": { "type": "object" } },
+          "sourceEvents": { "type": "array", "items": { "type": "object" } },
+          "insights": { "type": "array", "items": { "type": "object" } },
+          "conceptLists": { "type": "array", "items": { "type": "object" } },
+          "conceptListItems": { "type": "array", "items": { "type": "object" } },
+          "knowledgePaths": { "type": "array", "items": { "type": "object" } },
+          "knowledgePathSteps": { "type": "array", "items": { "type": "object" } },
+          "articles": { "type": "array", "items": { "type": "object" } },
+          "articleReferences": { "type": "array", "items": { "type": "object" } }
+        },
+        "additionalProperties": false
+      },
+      "LocalImportCommitRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["sourceKind", "sourceVersion", "payloadHash", "planHash", "idempotencyKey", "confirmationToken", "plan"],
+        "properties": {
+          "sourceKind": { "const": "aha_local_backup" },
+          "sourceVersion": { "const": "v1" },
+          "payloadHash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+          "planHash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+          "idempotencyKey": { "type": "string", "minLength": 8, "maxLength": 160 },
+          "confirmationToken": { "type": "string", "minLength": 32 },
+          "plan": { "$ref": "#/components/schemas/LocalImportPlan" }
+        }
+      },
+      "LocalImportCommitResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["data", "meta"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "description": "Contains import batch/workspace/consent receipt identifiers, result counts, hashes and replay status."
+          },
+          "meta": { "$ref": "#/components/schemas/ApiMeta" }
+        }
       }
     },
     "responses": {
       "AuthRequired": {
         "description": "A valid bearer token is required",
-        "content": {
-          "application/json": {
-            "schema": { "$ref": "#/components/schemas/ErrorBody" }
-          }
-        }
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorBody" } } }
       },
       "NotFound": {
         "description": "The requested canonical object was not found",
-        "content": {
-          "application/json": {
-            "schema": { "$ref": "#/components/schemas/ErrorBody" }
-          }
-        }
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorBody" } } }
+      },
+      "ValidationFailed": {
+        "description": "Request or canonical import plan validation failed",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorBody" } } }
+      },
+      "ImportConflict": {
+        "description": "The confirmation expired, the plan changed, or the idempotency key conflicts",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorBody" } } }
+      },
+      "ImportTooLarge": {
+        "description": "The configured local import object limit was exceeded",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorBody" } } }
       },
       "DatabaseUnavailable": {
         "description": "The canonical database is disabled, unavailable, unsafe or not ready",
-        "content": {
-          "application/json": {
-            "schema": { "$ref": "#/components/schemas/ErrorBody" }
-          }
-        }
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorBody" } } }
+      },
+      "ImportUnavailable": {
+        "description": "Local import or its canonical database command is not enabled/available",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorBody" } } }
       }
     }
   }

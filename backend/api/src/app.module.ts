@@ -11,10 +11,11 @@ import { AuthContextController } from "./auth-context.controller.js";
 import { ConfigModule } from "./config/config.module.js";
 import { DatabaseModule } from "./database/database.module.js";
 import { HealthController } from "./health.controller.js";
+import { LocalImportModule } from "./local-imports/local-import.module.js";
 import { ProfilesModule } from "./profiles/profiles.module.js";
 
 @Module({
-  imports: [ConfigModule, DatabaseModule, ProfilesModule],
+  imports: [ConfigModule, DatabaseModule, ProfilesModule, LocalImportModule],
   controllers: [HealthController, AuthContextController],
   providers: [
     {
