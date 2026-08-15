@@ -22,7 +22,6 @@ jobs:
       AHA_CANONICAL_SYNC_HOSTED_STAGING_CONFIRMATION: ${{ inputs.confirmation }}
       AHA_STAGING_PROJECT_REF: sstuzwppsheivczyqrim
       AHA_STAGING_ADMIN_DATABASE_URL: ${{ secrets.AHA_STAGING_ADMIN_DATABASE_URL }}
-      AHA_STAGING_RUNTIME_DATABASE_URL: ${{ secrets.AHA_STAGING_RUNTIME_DATABASE_URL }}
       AHA_AUTH_PROVIDER: supabase
       AHA_AUDIT_HASH_SALT: hosted-staging-e2e-audit-salt-not-for-production-2026
       AHA_STAGING_SYNC_WORKSPACE_ID: aha-staging-sync-e2e-workspace-v1
@@ -39,7 +38,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
 
-      - name: Validate exact staging confirmation and existing DB secrets
+      - name: Validate exact staging confirmation and admin DB secret
         shell: bash
         run: |
           set -euo pipefail
@@ -47,12 +46,10 @@ jobs:
             echo "Exact hosted canonical-sync staging confirmation is required." >&2
             exit 1
           fi
-          for name in AHA_STAGING_ADMIN_DATABASE_URL AHA_STAGING_RUNTIME_DATABASE_URL; do
-            if [[ -z "${!name:-}" ]]; then
-              echo "Missing required staging setting: ${name}" >&2
-              exit 1
-            fi
-          done
+          if [[ -z "${AHA_STAGING_ADMIN_DATABASE_URL:-}" ]]; then
+            echo "Missing required staging setting: AHA_STAGING_ADMIN_DATABASE_URL" >&2
+            exit 1
+          fi
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -66,6 +63,10 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y postgresql-client
+
+      - name: Provision run-scoped least-privilege AHA runtime role
+        shell: bash
+        run: bash scripts/aha-canonical-sync-hosted-staging-runtime-role.sh create
 
       - name: Re-run read-only hosted PostgreSQL safety preflight
         shell: bash
@@ -115,10 +116,13 @@ jobs:
       - name: Start NestJS locally against hosted AHA Staging
         working-directory: backend/api
         shell: bash
-        env:
-          AHA_DATABASE_URL: ${{ secrets.AHA_STAGING_RUNTIME_DATABASE_URL }}
         run: |
           set -euo pipefail
+          if [[ -z "${AHA_STAGING_RUNTIME_DATABASE_URL:-}" ]]; then
+            echo "Ephemeral AHA runtime DSN is unavailable." >&2
+            exit 1
+          fi
+          export AHA_DATABASE_URL="$AHA_STAGING_RUNTIME_DATABASE_URL"
           node dist/main.js > "$RUNNER_TEMP/aha-canonical-sync-staging-api.log" 2>&1 &
           echo $! > "$RUNNER_TEMP/aha-canonical-sync-staging-api.pid"
 
@@ -144,6 +148,11 @@ jobs:
               fi
             fi
           done
+
+      - name: Drop run-scoped AHA runtime role
+        if: always()
+        shell: bash
+        run: bash scripts/aha-canonical-sync-hosted-staging-runtime-role.sh drop
 
       - name: Show sanitized API tail on failure
         if: failure()

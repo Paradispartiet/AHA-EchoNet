@@ -2,7 +2,7 @@
 
 Status: **manuell staging-only HTTP → NestJS → hosted PostgreSQL rehearsal; ingen production activation**.
 
-Denne porten kommer etter `AHA_CANONICAL_SYNC_STAGING_ACTIVATION_V1`. Browserflaten og manual runneren er allerede implementert. Her beviser vi neste ledd: den faktiske NestJS sync-grensen mot den isolerte **AHA Staging**-databasen, med signaturverifisert JWT, RLS og minst privilegert runtime-role.
+Denne porten kommer etter `AHA_CANONICAL_SYNC_STAGING_ACTIVATION_V1`. Browserflaten og manual runneren er allerede implementert. Her beviser vi neste ledd: den faktiske NestJS sync-grensen mot den isolerte **AHA Staging**-databasen, med signaturverifisert JWT, RLS og en run-scoped minst privilegert runtime-role.
 
 ## Ingen offentlig backenddeploy
 
@@ -36,18 +36,73 @@ RUN_AHA_CANONICAL_SYNC_HOSTED_STAGING_REHEARSAL
 
 Ingen `push`, `pull_request`, `schedule` eller automatisk trigger er tillatt.
 
-## Bare eksisterende staging-hemmeligheter
+## Bare ett eksisterende database-secret
 
-Rehearsalen trenger nå bare de **to eksisterende database-secrets** som den hostede PostgreSQL-preflighten allerede bruker:
+Rehearsalen trenger nå bare **ett eksisterende database-secret**:
 
 ```text
 AHA_STAGING_ADMIN_DATABASE_URL
-AHA_STAGING_RUNTIME_DATABASE_URL
 ```
 
-Det kreves ikke lenger lagret bearer-token, auth issuer/audience/JWKS eller eget audit-salt i GitHub Environment.
+Den lagrede `AHA_STAGING_RUNTIME_DATABASE_URL` brukes ikke av canonical sync-rehearsalen. Dette er bevisst: direkte inspeksjon av AHA Staging viste at det ikke finnes noen persistent LOGIN-role som tilfredsstiller den herdede AHA-definisjonen for canonical runtime, og Supabases innebygde infrastrukturroller skal ikke lånes som NestJS-runtime.
 
-Auth-fixturen er selvforsynt og ephemeral:
+I stedet oppretter hver workflow-run en egen rolle:
+
+```text
+aha_sync_e2e_<github_run_id>_<run_attempt>
+```
+
+Rollen får et tilfeldig 64-heks-tegns passord, og runtime-DSN-en bygges fra den allerede validerte admin-targeten. Direkte Supabase-tilkobling bruker rollen som databasebruker; Supavisor/pooler bruker `<rolle>.<project-ref>` i tråd med Supabases connection-format.
+
+Det genererte passordet og runtime-DSN-en maskeres umiddelbart og legges bare i runnerens `GITHUB_ENV`. De lagres ikke som GitHub secrets, artifacts eller repo-data.
+
+## Ephemeral runtime-role
+
+Lifecycle-script:
+
+```text
+scripts/aha-canonical-sync-hosted-staging-runtime-role.sh
+```
+
+Rollen opprettes eksplisitt som:
+
+```text
+LOGIN
+NOSUPERUSER
+NOBYPASSRLS
+NOCREATEDB
+NOCREATEROLE
+NOINHERIT
+CONNECTION LIMIT 4
+```
+
+Den får ingen role memberships. Etter opprettelse må scriptet bevise:
+
+- korrekt intrinsic privilege-shape;
+- null medlemskap i andre `SUPERUSER`/`BYPASSRLS`-roller;
+- null direkte canonical table-write-grants;
+- `USAGE` på `aha`-schema;
+- `EXECUTE` på den allerede etablerte top-level `aha.commit_local_import_v1(...)`-kommandoen;
+- ingen direkte `EXECUTE` på intern `aha.record_local_import_item_v1(...)`.
+
+Dette gjør at den eksisterende read-only hosted PostgreSQL-preflighten kan kjøres mot akkurat den nyopprettede rollen før sync-grants gis.
+
+Ved `always()`-cleanup skjer denne rekkefølgen:
+
+```text
+stopp NestJS/JWKS
+→ terminate eventuelle connections for run-rollen
+→ DROP OWNED BY aha_sync_e2e_...
+→ DROP ROLE aha_sync_e2e_...
+```
+
+Cleanup nekter å droppe en rolle utenfor det beskyttede `aha_sync_e2e_<digits>_<digits>`-navnerommet, og nekter også hvis rollens privilege-shape plutselig er blitt privilegert.
+
+Dermed trenger rehearsalen ikke en langlivet databasecredential. En senere offentlig staging-API må fortsatt få sin egen persistent, dedikert AHA runtime-identitet; Actions-fixturen er ikke den produksjonsmodellen.
+
+## Ephemeral auth-fixture
+
+Auth-fixturen er også selvforsynt og ephemeral:
 
 ```text
 scripts/aha-canonical-sync-hosted-staging-auth-fixture.cjs
@@ -60,29 +115,25 @@ På hver workflow-run:
 3. en RS256-JWT signeres med unik `kid`;
 4. tokenet får fast, dedikert fixture-`sub`, korrekt lokal issuer/audience og 15 minutters levetid;
 5. token/JWKS-path legges i runnerens `GITHUB_ENV`, ikke i repo eller workflow-logg;
-6. private key beholdes bare i minnet til generatorprosessen og skrives aldri til repo eller artifact.
+6. private key beholdes bare i minnet til generatorprosessen.
 
-NestJS verifiserer fortsatt ekte kryptografisk signatur, `kid`, issuer og audience gjennom sin ordinære JOSE/JWKS-kjede. Forskjellen er bare at auth-provider-fixturen er lokal og kortlivet, slik at database-rehearsalen ikke er avhengig av en lagret brukercredential.
+NestJS verifiserer fortsatt kryptografisk signatur, `kid`, issuer og audience gjennom ordinær JOSE/JWKS-kjede.
 
 ## Pinned database target
 
-Begge DSN-er må identifisere den repo-pinnede Supabase staging-refen:
+Admin-DSN-en må identifisere den repo-pinnede Supabase staging-refen:
 
 ```text
 sstuzwppsheivczyqrim
 ```
 
-Før noen grant eller fixture-write kjøres, kjøres den eksisterende read-only hosted preflighten igjen. TLS, project-ref, separate admin/runtime-roller, `NOSUPERUSER`, `NOBYPASSRLS`, `NOCREATEDB`, `NOCREATEROLE`, `NOINHERIT`, null table ownership og null direkte canonical write-grants må fortsatt være grønne.
+Den genererte runtime-DSN-en arver samme database/host/query-parametere og endrer bare credentials til den nye AHA-runner-rollen.
 
-## Runtime-grants
+Etter rolleopprettelsen kjøres den eksisterende read-only hosted preflighten igjen. TLS, project-ref, separate admin/runtime-roller, `NOSUPERUSER`, `NOBYPASSRLS`, `NOCREATEDB`, `NOCREATEROLE`, `NOINHERIT`, null privilegerte role memberships, null table ownership og null direkte canonical write-grants må alle være grønne.
 
-Canonical sync-migrasjonene gjør med vilje:
+## Sync-grants
 
-```text
-REVOKE ALL ... FROM PUBLIC
-```
-
-Rehearsalen gir staging-runtime-rollen bare `EXECUTE` på tre top-level-funksjoner:
+Først etter grønn read-only preflight gir `aha-canonical-sync-hosted-staging-prepare.sh` run-rollen `EXECUTE` på tre top-level-funksjoner:
 
 ```text
 aha.bootstrap_sync_snapshot_v1(text,text,bigint,integer)
@@ -131,15 +182,15 @@ AHA_DATABASE_ENABLED=true
 AHA_DATABASE_SSL_MODE=verify-full
 AHA_CANONICAL_SYNC_ENABLED=true
 AHA_LOCAL_IMPORT_ENABLED=false
-AHA_DATABASE_URL=<staging runtime DSN>
+AHA_DATABASE_URL=<ephemeral staging runtime DSN>
 AHA_ALLOWED_ORIGINS=http://127.0.0.1:4173
 AHA_AUTH_ISSUER=http://127.0.0.1:3210
 AHA_AUTH_JWKS_URL=http://127.0.0.1:3210/.well-known/jwks.json
 ```
 
-`NODE_ENV=development` brukes **kun** fordi auth-fixturens JWKS-server er localhost HTTP. Databaseforbindelsen er fortsatt eksplisitt `verify-full`, og alle runtime-role-sikkerhetskontroller i `CanonicalDatabaseService` er uendret: verified claims settes transaksjonslokalt, `row_security=on` tvinges, og superuser/BYPASSRLS/table-owner avvises.
+`NODE_ENV=development` brukes kun fordi auth-fixturens JWKS-server er localhost HTTP. Databaseforbindelsen er fortsatt eksplisitt `verify-full`. `CanonicalDatabaseService` krever i tillegg at runtime-rollen ikke selv har eller gjennom medlemskap kan nå `SUPERUSER`/`BYPASSRLS`, tvinger `row_security=on` og avviser table-owner-path.
 
-Audit-saltet i denne isolerte rehearsalen er en tydelig testkonstant, ikke en production-secret og ikke en production-konfigurasjon.
+Audit-saltet i denne isolerte rehearsalen er en tydelig testkonstant, ikke en production-secret.
 
 ## Reell HTTP-matrise
 
@@ -163,16 +214,19 @@ Objekt-ID og idempotency keys inkluderer GitHub run-id/run-attempt, så runs kol
 
 Testobjektet avsluttes som canonical tombstone. Journal, audit og idempotency-data er stagingbevis og slettes ikke skjult etter en vellykket run. Fixture-profil/workspace gjenbrukes, mens hvert testobjekt er run-scoped.
 
+Selve `aha_sync_e2e_...`-runtime-rollen slettes alltid etter kjøringen.
+
 ## Logging og hemmeligheter
 
 Workflow/scripts har disse sperrene:
 
 - ingen `set -x`;
 - ingen `env`/`printenv`;
-- ingen echo/printf av DSN eller bearer-token;
+- admin-DSN er GitHub secret;
+- generert password og runtime-DSN maskeres før senere steg;
+- ingen echo/printf av bearer-token;
 - ephemeral JWT skrives bare til `GITHUB_ENV`;
-- API-feil summeres til HTTP status + error code/message;
-- success-logg viser bare run-scoped fixture-ID, cursors, revisions, counts og konflikttype;
+- success-logg viser ikke role name, databasebruker, auth subject eller credentials;
 - API-loggtail på feil redigerer DSN- og Bearer-lignende tekst.
 
 ## Hva en grønn run beviser
@@ -180,12 +234,13 @@ Workflow/scripts har disse sperrene:
 ```text
 ephemeral signed JWT
 → NestJS JOSE / JWKS / issuer / audience verification
-→ CanonicalDatabaseService
-→ least-privilege PostgreSQL runtime role
+→ hardened CanonicalDatabaseService
+→ ephemeral dedicated least-privilege PostgreSQL LOGIN role
 → top-level canonical sync functions
 → RLS-bound personal workspace
 → sync journal + idempotency + conflicts + tombstone
 → NestJS HTTP response
+→ runtime-role cleanup
 ```
 
 Dette er ekte hosted database- og HTTP-bevis, men ikke ennå browser-klikkbeviset fra `canonical-sync-staging.html`, fordi Actions-NestJS bare finnes på runnerens localhost.
@@ -203,4 +258,4 @@ Dette er ekte hosted database- og HTTP-bevis, men ikke ennå browser-klikkbevise
 
 ## Neste port
 
-Etter grønn hosted HTTP-rehearsal er neste tekniske port liten: deploy samme NestJS-build til en isolert autentisert staging-origin og kjør den allerede implementerte `canonical-sync-staging.html`-flaten i en ekte browser. Først da er browser → NestJS → PostgreSQL → browser matrisen komplett.
+Etter grønn hosted HTTP-rehearsal er neste tekniske port liten: deploy samme NestJS-build til en isolert autentisert staging-origin med en egen persistent, dedikert AHA runtime-role og kjør den allerede implementerte `canonical-sync-staging.html`-flaten i en ekte browser. Først da er browser → NestJS → PostgreSQL → browser matrisen komplett.
