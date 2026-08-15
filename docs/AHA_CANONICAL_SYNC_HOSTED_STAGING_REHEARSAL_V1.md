@@ -38,7 +38,7 @@ Ingen `push`, `pull_request`, `schedule` eller automatisk trigger er tillatt.
 
 ## Bare ett eksisterende database-secret
 
-Rehearsalen trenger nå bare **ett eksisterende database-secret**:
+Rehearsalen trenger bare **ett eksisterende database-secret**:
 
 ```text
 AHA_STAGING_ADMIN_DATABASE_URL
@@ -52,7 +52,7 @@ I stedet oppretter hver workflow-run en egen rolle:
 aha_sync_e2e_<github_run_id>_<run_attempt>
 ```
 
-Rollen får et tilfeldig 64-heks-tegns passord, og runtime-DSN-en bygges fra den allerede validerte admin-targeten. Direkte Supabase-tilkobling bruker rollen som databasebruker; Supavisor/pooler bruker `<rolle>.<project-ref>` i tråd med Supabases connection-format.
+Rollen får et tilfeldig 64-heks-tegns passord, og runtime-DSN-en bygges fra den allerede validerte admin-targeten. Direkte Supabase-tilkobling bruker rollen som databasebruker; Supavisor/pooler bruker `<rolle>.<project-ref>`.
 
 Det genererte passordet og runtime-DSN-en maskeres umiddelbart og legges bare i runnerens `GITHUB_ENV`. De lagres ikke som GitHub secrets, artifacts eller repo-data.
 
@@ -92,11 +92,17 @@ Ved `always()`-cleanup skjer denne rekkefølgen:
 ```text
 stopp NestJS/JWKS
 → terminate eventuelle connections for run-rollen
-→ DROP OWNED BY aha_sync_e2e_...
+→ verifiser fortsatt minst-privilegert rolleform
+→ verifiser null privilegerte role memberships
+→ verifiser at rollen ikke eier databaseobjekter
+→ REVOKE nøyaktig de fire tillatte function-grantene
+→ REVOKE USAGE ON SCHEMA aha
 → DROP ROLE aha_sync_e2e_...
 ```
 
-Cleanup nekter å droppe en rolle utenfor det beskyttede `aha_sync_e2e_<digits>_<digits>`-navnerommet, og nekter også hvis rollens privilege-shape plutselig er blitt privilegert.
+**`DROP OWNED` brukes med vilje ikke.** Cleanup skal ikke skjule privilege- eller ownership-drift ved å slette ukjente avhengigheter. Hvis noen har gitt run-rollen en ny ukjent rettighet eller latt den eie et objekt, skal eksplisitt `DROP ROLE` feile og gjøre avviket synlig i rehearsalen.
+
+Cleanup nekter også å droppe en rolle utenfor det beskyttede `aha_sync_e2e_<digits>_<digits>`-navnerommet, en rolle med endret privilegieform eller en rolle som har fått medlemskap i en privilegert rolle.
 
 Dermed trenger rehearsalen ikke en langlivet databasecredential. En senere offentlig staging-API må fortsatt få sin egen persistent, dedikert AHA runtime-identitet; Actions-fixturen er ikke den produksjonsmodellen.
 
@@ -214,7 +220,7 @@ Objekt-ID og idempotency keys inkluderer GitHub run-id/run-attempt, så runs kol
 
 Testobjektet avsluttes som canonical tombstone. Journal, audit og idempotency-data er stagingbevis og slettes ikke skjult etter en vellykket run. Fixture-profil/workspace gjenbrukes, mens hvert testobjekt er run-scoped.
 
-Selve `aha_sync_e2e_...`-runtime-rollen slettes alltid etter kjøringen.
+Selve `aha_sync_e2e_...`-runtime-rollen slettes alltid etter kjøringen når cleanup-kontrakten er intakt. Hvis cleanup finner privilege/ownership-drift, skal den feile synlig i stedet for å fjerne beviset med en bred oppryddingskommando.
 
 ## Logging og hemmeligheter
 
@@ -240,7 +246,7 @@ ephemeral signed JWT
 → RLS-bound personal workspace
 → sync journal + idempotency + conflicts + tombstone
 → NestJS HTTP response
-→ runtime-role cleanup
+→ eksplisitt, fail-closed runtime-role cleanup
 ```
 
 Dette er ekte hosted database- og HTTP-bevis, men ikke ennå browser-klikkbeviset fra `canonical-sync-staging.html`, fordi Actions-NestJS bare finnes på runnerens localhost.
