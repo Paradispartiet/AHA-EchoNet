@@ -79,8 +79,19 @@ assert.match(runtimeRole, /\.pooler\.supabase\.com/);
 assert.match(runtimeRole, /username = f'\{role\}\.\{ref\}'/);
 assert.match(runtimeRole, /db\.\{ref\}\.supabase\.co/);
 assert.match(runtimeRole, /pg_terminate_backend/);
-assert.match(runtimeRole, /drop owned by :\\"role_name\\"/);
+assert.match(runtimeRole, /Refusing to hide unexpected database ownership/);
+assert.match(runtimeRole, /Refusing to clean up an AHA rehearsal role with privileged memberships/);
+for (const grant of [
+  "aha.bootstrap_sync_snapshot_v1(text,text,bigint,integer)",
+  "aha.pull_sync_changes_v1(text,bigint,integer)",
+  "aha.push_sync_change_v1(text,text,text,text,text,text,bigint,text,jsonb)",
+  "aha.commit_local_import_v1(text,text,text,text,text,text,jsonb)"
+]) {
+  assert.ok(runtimeRole.includes(`revoke execute on function ${grant}`), `cleanup must explicitly revoke ${grant}`);
+}
+assert.match(runtimeRole, /revoke usage on schema aha/);
 assert.match(runtimeRole, /drop role :\\"role_name\\"/);
+assert.doesNotMatch(runtimeRole, /drop owned by/i, "cleanup must not silently erase unknown privilege drift");
 assert.match(runtimeRole, /Refusing to clean up a role outside the protected AHA rehearsal namespace/);
 assert.doesNotMatch(runtimeRole, /\bset\s+-x\b/);
 assert.doesNotMatch(runtimeRole, /^\s*(?:env|printenv)(?:\s|$)/m);
@@ -170,7 +181,8 @@ for (const evidence of [
   "stale_base_revision",
   "payload=null",
   "ingen offentlig URL",
-  "ett eksisterende database-secret"
+  "ett eksisterende database-secret",
+  "DROP OWNED"
 ]) {
   assert.ok(docs.includes(evidence), `hosted rehearsal docs must retain: ${evidence}`);
 }
