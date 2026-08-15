@@ -95,7 +95,7 @@
     const payloadHash = normalizeHash(source.payloadHash);
     const baseRevision = normalizeRevision(source.baseRevision);
     const now = source.createdAt || new Date().toISOString();
-    const id = nonEmpty(source.id || `${deviceId}:${workspaceId}:${objectType}:${objectId}:${operation}:${payloadHash}`, "id");
+    const id = nonEmpty(source.id || `${deviceId}:${workspaceId}:${objectType}:${objectId}:${operation}:${baseRevision}:${payloadHash}`, "id");
 
     if (operation === "upsert" && (!source.payload || typeof source.payload !== "object" || Array.isArray(source.payload))) {
       throw new Error("upsert outbox event requires an object payload");
@@ -273,7 +273,7 @@
           serverRevision,
           serverPayloadHash,
           serverCursor,
-          conflictReason: result?.conflictReason || result?.reason ? String(result?.conflictReason || result?.reason) : null,
+          conflictReason: (result?.conflictReason || result?.reason) ? String(result?.conflictReason || result?.reason) : null,
           conflictId: result?.conflictId ? String(result.conflictId) : null,
           serverState: result?.serverState == null ? null : clone(result.serverState),
           deletedAt: result?.deletedAt ? String(result.deletedAt) : null
