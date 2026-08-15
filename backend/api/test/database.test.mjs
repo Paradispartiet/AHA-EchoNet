@@ -31,6 +31,7 @@ function safeRoleRow(overrides = {}) {
   return {
     row_security_on: true,
     bypasses_rls: false,
+    has_privileged_role_membership: false,
     can_assume_table_owner: false,
     profiles_table_present: true,
     schema_versions_table_present: true,
@@ -147,6 +148,7 @@ test("read sessions are transactional, read-only, parameterized and RLS-bound", 
 test("unsafe runtime roles and missing canonical schema fail before repository access", async () => {
   for (const scenario of [
     { row: safeRoleRow({ bypasses_rls: true }), code: "DATABASE_UNSAFE_RUNTIME_ROLE" },
+    { row: safeRoleRow({ has_privileged_role_membership: true }), code: "DATABASE_UNSAFE_RUNTIME_ROLE" },
     { row: safeRoleRow({ can_assume_table_owner: true }), code: "DATABASE_UNSAFE_RUNTIME_ROLE" },
     { row: safeRoleRow({ row_security_on: false }), code: "DATABASE_UNSAFE_RUNTIME_ROLE" },
     { row: safeRoleRow({ profiles_table_present: false }), code: "CANONICAL_SCHEMA_NOT_READY" }
@@ -166,6 +168,18 @@ test("unsafe runtime roles and missing canonical schema fail before repository a
     assert.equal(client.queries.some((entry) => entry.statement === "rollback"), true);
     assert.equal(client.released, true);
   }
+});
+
+test("runtime safety query rejects membership in superuser or BYPASSRLS roles", async () => {
+  const client = new FakeClient();
+  const database = new CanonicalDatabaseService(databaseConfig(), new FakeConnections(true, client));
+  await database.probe();
+  const safetyQuery = client.queries.find((entry) => entry.statement.includes("current_setting('row_security')"));
+  assert.ok(safetyQuery);
+  assert.match(safetyQuery.statement, /privileged_role\.rolsuper\s+or\s+privileged_role\.rolbypassrls/);
+  assert.match(safetyQuery.statement, /pg_has_role\(current_user,\s*privileged_role\.oid,\s*'member'\)/);
+  assert.match(safetyQuery.statement, /has_privileged_role_membership/);
+  assert.doesNotMatch(safetyQuery.statement, /service_role|authenticator|postgres/);
 });
 
 test("driver failures roll back and expose only a safe database code", async () => {
