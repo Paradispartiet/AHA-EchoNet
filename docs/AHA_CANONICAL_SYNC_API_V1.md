@@ -92,6 +92,8 @@ NestJS bruker samme algoritme. For `delete` er payload canonical JSON `null`, og
 null
 ```
 
+`js/ahaCanonicalFrontendSyncAdapter.js` implementerer nå den eksplisitte frontend-adapteren, men er fortsatt ikke lastet eller produktaktivert. Den gjenbruker `AHALocalAccountImport.buildPlan()` som eksisterende mapper fra dagens lokale AHA-modeller, projiserer kun de ti canonical typene til serverens snake_case-kontrakt, håndhever privat/personal scope, beregner payload-hash via `AHACanonicalSyncHash` og kan eksplisitt legge ferdig validerte events i `AHACanonicalSyncStore`-outboxen. Den har ingen nettverkskall eller login-hook.
+
 ## HTTP-grense
 
 ### `GET /v1/sync/bootstrap`
@@ -248,16 +250,18 @@ Alle DB-sesjoner beholder:
 - statement/lock timeout
 - transaction rollback ved feil
 
-## Hva denne leveransen ikke gjør
+## Hva som fortsatt ikke er aktivert
 
-Den:
+API-et og frontend-adapteren:
 
 - laster ikke sync-script i produkt-UI
 - kobler ikke login til sync
 - starter ikke background sync
 - aktiverer ikke EchoNet/gruppedeling
 - konverterer ikke legacy `syncFromDatabase()` til canonical sync
+- kaller ennå ikke bootstrap/pull/push fra Sync Hub
+- applicerer ennå ikke pulled server-state tilbake til lokale modeller
 - lager ikke konflikt-UI
 - aktiverer ikke runtime environment flagg
 
-Neste frontend-port må være en eksplisitt adapter som oversetter lokale modeller til den canonical snake_case payload-kontrakten, beregner hash med `AHACanonicalSyncHash`, legger events i IndexedDB-outbox og bare kaller API etter en eksplisitt sync-handling/aktivert brukerinnstilling.
+Neste frontend-leveranse er derfor den eksplisitte manuelle ende-til-ende-runneren: `IndexedDB outbox → POST /v1/sync/push → bootstrap/delta-pull → lokal apply`. Den skal bare starte etter brukerhandling, og konfliktresultater skal beholdes synlige for eksplisitt valg i stedet for automatisk merge.
