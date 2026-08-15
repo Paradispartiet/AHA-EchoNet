@@ -19,7 +19,7 @@ Den er bevisst:
 - isolert fra den gamle `AHASyncHub`/`AHAManualSyncAdapter`-kjeden;
 - uten Lists/Paths/Groups/AHAavisa runtime;
 - uten `ahaAuth.js`;
-- uten automatisk nettverk ved page load.
+- uten sync-, auth- eller databasekall ved page load. Vanlige statiske CSS/JS-ressurser lastes som normalt.
 
 Siden laster bare minimal Supabase browser bootstrap (`ahaConfig.js` + `ahaDb.js`) og canonical sync-kjeden:
 
@@ -81,7 +81,7 @@ til manual runneren.
 
 ## API-origin-regler
 
-Stagingflaten accepterer bare en ren origin:
+Stagingflaten aksepterer bare en ren origin:
 
 ```text
 https://aha-api-staging.example
@@ -174,7 +174,7 @@ Dette er **staging-only**. Ingen av disse flaggene skal endres i production som 
 Når NestJS staging-origin er tilgjengelig, kjøres denne sekvensen i en ekte browser med en eksplisitt personal workspace:
 
 1. åpne `canonical-sync-staging.html?ahaCanonicalStaging=1`;
-2. kontroller at ingen request skjer før submit;
+2. kontroller at ingen sync-, auth- eller database-request skjer før submit;
 3. oppgi staging API-origin + workspace-ID;
 4. skriv confirmation phrase og bekreft consent;
 5. kjør første sync;
