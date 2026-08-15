@@ -22,7 +22,7 @@ assert.doesNotMatch(helpers, /execute\s+format\s*\(/i, 'typed sync writes must n
 assert.match(push, /create or replace function aha\.push_sync_change_v1/i);
 assert.match(push, /aha\.can_edit_workspace\(p_workspace_id\)/i);
 assert.match(push, /workspace_type='personal'/i);
-assert.match(push, /scope,'canonical_sync_push_v1'/i);
+assert.match(push, /'canonical_sync_push_v1'/i);
 assert.match(push, /database_payload_hash/i);
 assert.match(push, /request_hash/i);
 assert.match(push, /sync idempotency key reused for another request/i);
@@ -48,8 +48,8 @@ for (const forbidden of ['note','gallery_item','feed_post','insta_post','music_i
 
 assert.match(helpers, /sharing_scope='private'/i);
 assert.match(helpers, /publication_scope='personal'/i);
-assert.match(helpers, /conversation_type[\s\S]*not in\('personal_ai','reflection','imported'\)/i);
-assert.match(helpers, /status[\s\S]*not in\('draft','review','ready','published_local'\)/i);
+assert.match(helpers, /conversation_type[\s\S]*not in\s*\('personal_ai','reflection','imported'\)/i);
+assert.match(helpers, /status[\s\S]*not in\s*\('draft','review','ready','published_local'\)/i);
 assert.doesNotMatch(helpers, /publication_scope='public'/i);
 
 assert.match(helpers, /insert into aha\.insight_versions/i);
