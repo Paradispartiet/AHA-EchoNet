@@ -1,0 +1,68 @@
+name: AHA PostgreSQL staging rehearsal
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "supabase/migrations/**"
+      - "supabase/tests/aha_postgresql_staging_rehearsal_v1.sql"
+      - "scripts/aha-postgresql-staging-rehearsal.sh"
+      - "tests/aha-postgresql-staging-rehearsal.test.cjs"
+      - "docs/AHA_POSTGRESQL_STAGING_REHEARSAL_V1.md"
+      - ".github/workflows/aha-postgresql-staging-rehearsal.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "supabase/migrations/**"
+      - "supabase/tests/aha_postgresql_staging_rehearsal_v1.sql"
+      - "scripts/aha-postgresql-staging-rehearsal.sh"
+      - "tests/aha-postgresql-staging-rehearsal.test.cjs"
+      - "docs/AHA_POSTGRESQL_STAGING_REHEARSAL_V1.md"
+      - ".github/workflows/aha-postgresql-staging-rehearsal.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  canonical-postgresql-rehearsal:
+    name: PostgreSQL 16 canonical import rehearsal
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: aha_rehearsal
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d aha_rehearsal"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: "5432"
+      PGDATABASE: aha_rehearsal
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      AHA_RUNTIME_PASSWORD: rehearsal-runtime-password-not-production
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Run clean canonical PostgreSQL rehearsal
+        run: bash scripts/aha-postgresql-staging-rehearsal.sh
