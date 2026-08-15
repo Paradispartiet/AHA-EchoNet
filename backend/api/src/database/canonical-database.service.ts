@@ -83,6 +83,25 @@ export class CanonicalDatabaseService implements OnModuleDestroy {
     principal: AuthPrincipal,
     operation: (client: DatabaseClient) => Promise<T>
   ): Promise<T> {
+    return this.withSession(principal, true, operation);
+  }
+
+  // Command sessions do not grant table writes. They exist solely so tightly
+  // scoped, explicitly granted canonical command functions can run through the
+  // NestJS command boundary while RLS/JWT context and runtime-role safety remain
+  // enforced. Browser roles still receive no direct write policy or table grant.
+  async withCommandSession<T>(
+    principal: AuthPrincipal,
+    operation: (client: DatabaseClient) => Promise<T>
+  ): Promise<T> {
+    return this.withSession(principal, false, operation);
+  }
+
+  private async withSession<T>(
+    principal: AuthPrincipal,
+    readOnly: boolean,
+    operation: (client: DatabaseClient) => Promise<T>
+  ): Promise<T> {
     if (!this.connections.configured) {
       throw new CanonicalDatabaseError("DATABASE_NOT_CONFIGURED");
     }
@@ -92,7 +111,7 @@ export class CanonicalDatabaseService implements OnModuleDestroy {
     try {
       await client.query("begin");
       transactionStarted = true;
-      await client.query("set transaction read only");
+      if (readOnly) await client.query("set transaction read only");
       await client.query(
         `select
            set_config('request.jwt.claims', $1, true),
