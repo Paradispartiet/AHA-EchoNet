@@ -68,6 +68,7 @@ GRANT EXECUTE ON FUNCTION aha.can_read_workspace(text) TO aha_runtime_rehearsal;
 GRANT EXECUTE ON FUNCTION aha.commit_local_import_v1(text,text,text,text,text,text,jsonb) TO aha_runtime_rehearsal;
 GRANT EXECUTE ON FUNCTION aha.bootstrap_sync_snapshot_v1(text,text,bigint,integer) TO aha_runtime_rehearsal;
 GRANT EXECUTE ON FUNCTION aha.pull_sync_changes_v1(text,bigint,integer) TO aha_runtime_rehearsal;
+GRANT EXECUTE ON FUNCTION aha.push_sync_change_v1(text,text,text,text,text,text,bigint,text,jsonb) TO aha_runtime_rehearsal;
 
 DO $do$
 DECLARE
@@ -90,8 +91,9 @@ BEGIN
      OR has_table_privilege('aha_runtime_rehearsal', 'aha.workspaces', 'UPDATE')
      OR has_table_privilege('aha_runtime_rehearsal', 'aha.conversations', 'DELETE')
      OR has_table_privilege('aha_runtime_rehearsal', 'aha.sync_changes', 'INSERT')
-     OR has_table_privilege('aha_runtime_rehearsal', 'aha.sync_conflicts', 'SELECT') THEN
-    RAISE EXCEPTION 'runtime rehearsal role has direct canonical or sync-journal table privilege';
+     OR has_table_privilege('aha_runtime_rehearsal', 'aha.sync_conflicts', 'SELECT')
+     OR has_table_privilege('aha_runtime_rehearsal', 'aha.idempotency_keys', 'SELECT') THEN
+    RAISE EXCEPTION 'runtime rehearsal role has direct canonical/governance table privilege';
   END IF;
 
   IF NOT has_function_privilege('aha_runtime_rehearsal', 'aha.commit_local_import_v1(text,text,text,text,text,text,jsonb)', 'EXECUTE') THEN
@@ -103,12 +105,20 @@ BEGIN
     RAISE EXCEPTION 'runtime rehearsal role cannot execute the narrow sync read boundary';
   END IF;
 
-  IF has_function_privilege('aha_runtime_rehearsal', 'aha.record_local_import_item_v1(text,text,text,text,text,text,text,text,text)', 'EXECUTE') THEN
-    RAISE EXCEPTION 'runtime rehearsal role can execute internal import helper directly';
+  IF NOT has_function_privilege('aha_runtime_rehearsal', 'aha.push_sync_change_v1(text,text,text,text,text,text,bigint,text,jsonb)', 'EXECUTE') THEN
+    RAISE EXCEPTION 'runtime rehearsal role cannot execute the explicit sync push command';
   END IF;
 
-  IF has_function_privilege('aha_runtime_rehearsal', 'aha.sync_object_snapshot_v1(text,text,text)', 'EXECUTE') THEN
-    RAISE EXCEPTION 'runtime rehearsal role can execute internal sync snapshot helper directly';
+  IF has_function_privilege('aha_runtime_rehearsal', 'aha.record_local_import_item_v1(text,text,text,text,text,text,text,text,text)', 'EXECUTE')
+     OR has_function_privilege('aha_runtime_rehearsal', 'aha.sync_object_snapshot_v1(text,text,text)', 'EXECUTE')
+     OR has_function_privilege('aha_runtime_rehearsal', 'aha.sync_lock_object_state_v1(text,text,text)', 'EXECUTE')
+     OR has_function_privilege('aha_runtime_rehearsal', 'aha.assert_sync_private_scope_v1(text,text,jsonb)', 'EXECUTE')
+     OR has_function_privilege('aha_runtime_rehearsal', 'aha.assert_sync_upsert_payload_v1(text,text,bigint,jsonb)', 'EXECUTE')
+     OR has_function_privilege('aha_runtime_rehearsal', 'aha.sync_server_payload_hash_v1(text,text,text)', 'EXECUTE')
+     OR has_function_privilege('aha_runtime_rehearsal', 'aha.sync_apply_upsert_v1(text,text,text,text,jsonb,boolean)', 'EXECUTE')
+     OR has_function_privilege('aha_runtime_rehearsal', 'aha.sync_apply_delete_v1(text,text,text)', 'EXECUTE')
+     OR has_function_privilege('aha_runtime_rehearsal', 'aha.record_sync_conflict_v1(text,text,text,text,text,text,bigint,bigint,text,text,text,text,jsonb)', 'EXECUTE') THEN
+    RAISE EXCEPTION 'runtime rehearsal role can execute an internal import/sync helper directly';
   END IF;
 END
 $do$;
@@ -118,6 +128,11 @@ PGPASSWORD="$AHA_RUNTIME_PASSWORD" \
   psql -X -v ON_ERROR_STOP=1 \
   -h "$PGHOST" -p "$PGPORT" -d "$PGDATABASE" -U aha_runtime_rehearsal \
   -f supabase/tests/aha_postgresql_staging_rehearsal_v1.sql
+
+PGPASSWORD="$AHA_RUNTIME_PASSWORD" \
+  psql -X -v ON_ERROR_STOP=1 \
+  -h "$PGHOST" -p "$PGPORT" -d "$PGDATABASE" -U aha_runtime_rehearsal \
+  -f supabase/tests/aha_postgresql_sync_push_rehearsal_v1.sql
 
 admin_psql <<'SQL'
 DO $do$
@@ -134,24 +149,57 @@ BEGIN
   IF n <> 4 THEN RAISE EXCEPTION 'expected 4 object receipts, got %', n; END IF;
 
   SELECT count(*) INTO n FROM aha.conversations WHERE id IN ('conversation_a', 'collision_conversation');
-  IF n <> 2 THEN RAISE EXCEPTION 'conversation parity failed'; END IF;
+  IF n <> 2 THEN RAISE EXCEPTION 'conversation import parity failed'; END IF;
 
   SELECT count(*) INTO n FROM aha.messages WHERE id IN ('message_a', 'collision_message');
-  IF n <> 2 THEN RAISE EXCEPTION 'message parity failed'; END IF;
+  IF n <> 2 THEN RAISE EXCEPTION 'message import parity failed'; END IF;
 
   IF (SELECT content FROM aha.messages WHERE id='message_a') <> 'Tillatt importinnhold A' THEN
     RAISE EXCEPTION 'imported message content changed';
   END IF;
 
   IF EXISTS (SELECT 1 FROM aha.conversations WHERE id='should_not_survive_collision') THEN
-    RAISE EXCEPTION 'cross-tenant collision left partial data';
+    RAISE EXCEPTION 'cross-tenant import collision left partial data';
   END IF;
 
   SELECT count(*) INTO n FROM aha.sync_changes;
-  IF n <> 0 THEN RAISE EXCEPTION 'read-only sync rehearsal unexpectedly wrote journal rows: %', n; END IF;
+  IF n <> 15 THEN RAISE EXCEPTION 'expected 15 canonical sync journal rows, got %', n; END IF;
 
   SELECT count(*) INTO n FROM aha.sync_conflicts;
-  IF n <> 0 THEN RAISE EXCEPTION 'read-only sync rehearsal unexpectedly wrote conflict rows: %', n; END IF;
+  IF n <> 2 THEN RAISE EXCEPTION 'expected 2 explicit canonical sync conflicts, got %', n; END IF;
+
+  SELECT count(*) INTO n FROM aha.idempotency_keys WHERE scope='canonical_sync_push_v1';
+  IF n <> 18 THEN RAISE EXCEPTION 'expected 18 sync idempotency records, got %', n; END IF;
+
+  IF (SELECT revision FROM aha.conversations WHERE id='sync_conv') <> 3
+     OR (SELECT status FROM aha.conversations WHERE id='sync_conv') <> 'deleted'
+     OR (SELECT deleted_at FROM aha.conversations WHERE id='sync_conv') IS NULL THEN
+    RAISE EXCEPTION 'conversation tombstone/revision parity failed';
+  END IF;
+
+  SELECT count(*) INTO n FROM aha.insight_versions WHERE insight_id='sync_ins';
+  IF n <> 2 OR (SELECT current_version FROM aha.insights WHERE id='sync_ins') <> 2 OR (SELECT revision FROM aha.insights WHERE id='sync_ins') <> 2 THEN
+    RAISE EXCEPTION 'insight append-only version/revision parity failed';
+  END IF;
+
+  SELECT count(*) INTO n FROM aha.article_versions WHERE article_id='sync_art';
+  IF n <> 2 OR (SELECT current_version FROM aha.articles WHERE id='sync_art') <> 2 OR (SELECT revision FROM aha.articles WHERE id='sync_art') <> 2 THEN
+    RAISE EXCEPTION 'article append-only version/revision parity failed';
+  END IF;
+
+  IF (SELECT revision FROM aha.article_references WHERE id='sync_ref') <> 2 THEN
+    RAISE EXCEPTION 'article_reference bump_revision trigger parity failed';
+  END IF;
+
+  IF EXISTS (
+    SELECT 1 FROM aha.sync_changes
+    WHERE object_type NOT IN(
+      'conversation','message','source_event','insight','concept_list','concept_list_item',
+      'knowledge_path','knowledge_path_step','article','article_reference'
+    )
+  ) THEN
+    RAISE EXCEPTION 'sync journal contains a non-canonical object type';
+  END IF;
 END
 $do$;
 SQL
