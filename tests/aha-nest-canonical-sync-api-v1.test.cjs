@@ -70,6 +70,6 @@ assert.match(docs, /Login aktiverer aldri|Innlogging alene starter aldri/i);
 assert.match(docs, /Local-only områder er eksplisitt utenfor/i);
 assert.match(docs, /stale_base_revision/);
 assert.match(docs, /server_tombstone/);
-assert.match(docs, /Legacy `syncFromDatabase\(\)` skal ikke gjenbrukes/i);
+assert.match(docs, /konverterer ikke legacy `syncFromDatabase\(\)` til canonical sync/i);
 
 console.log('aha-nest-canonical-sync-api-v1.test.cjs passed');
