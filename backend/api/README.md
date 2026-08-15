@@ -2,13 +2,15 @@
 
 Status: **separat, fail-closed backendgrunnlag — ikke aktiv AHA-runtime**
 
-Denne tjenesten dekker PR 4–5 i `AHA_BACKEND_FOUNDATION_ROADMAP_V1.md`: NestJS-grunnmur, verifisert auth, stabil HTTP-kontrakt og første PostgreSQL repository-adapter. Den overtar ikke dagens `server.js`/Express-runtime og er ikke koblet fra frontend eller Render.
+Denne tjenesten dekker Backend Foundation PR 4–6: NestJS-grunnmur, verifisert auth, stabil HTTP-kontrakt, PostgreSQL repository-adapter og den første eksplisitte local-first kontoimporten. Den overtar ikke dagens `server.js`/Express-runtime og er ikke koblet til frontend eller Render.
 
 ## Dette finnes
 
 - `GET /v1/health` — offentlig liveness og sann foundationstatus
 - `GET /v1/auth/context` — beskyttet, verifisert principal i stabil envelope
-- `GET /v1/profile` — første canonical RLS-bound read contract
+- `GET /v1/profile` — canonical RLS-bound read contract
+- `POST /v1/local-imports/confirmation` — mottar bare lokal preview-hash + tellinger
+- `POST /v1/local-imports/commit` — eksplisitt, hash-bundet kontoimport
 - global Bearer/JWKS-verifisering
 - validert request-ID
 - streng global DTO-validering
@@ -16,21 +18,49 @@ Denne tjenesten dekker PR 4–5 i `AHA_BACKEND_FOUNDATION_ROADMAP_V1.md`: NestJS
 - stabil success/error-envelope
 - redigert audit-event uten token, body, query, SQL eller rå subject
 - opt-in `pg`-adapter bak leverandørnøytral repository-port
-- read-only transaksjon med transaksjonslokale JWT claims og RLS-sikkerhetskontroll
+- read-only database sessions for reads
+- begrenset command session for eksplisitte canonical command functions
+- runtime-sperre mot superuser, `BYPASSRLS`, table-owner og manglende `row_security`
 - committet npm lockfile v3 og read-only CI med `npm ci`
 
-## Dette finnes ikke
+## Local account import
 
-- runtime-grants til `aha.*`
-- canonical PostgreSQL-writes
-- kontoimport
-- bidireksjonal sync
-- produktmutasjoner
-- Hasura
+Importpreview bygges lokalt av:
+
+```text
+js/ahaLocalAccountImport.js
+```
+
+Første nettverkskall inneholder **ikke** den lokale datasamlingen eller canonical planen. Det inneholder bare:
+
+```text
+sourceKind
+sourceVersion
+payloadHash
+planHash
+counts
+```
+
+Serveren lager et kortlivet HMAC-token bundet til principal, payloadHash, planHash, tellinger og policyversjon. Brukeren skal deretter eksplisitt bekrefte den viste lokale previewen. Først ved `POST /v1/local-imports/commit` sendes den allow-listede canonical planen.
+
+Detaljert kontrakt:
+
+```text
+docs/AHA_LOCAL_IMPORT_POSTGRESQL_V1.md
+```
+
+## Dette finnes fortsatt ikke
+
+- automatisk kontoimport ved innlogging
+- frontendaktivering av local import
+- generelle runtime-grants til `aha.*`
+- direkte browserwrites til canonical tabeller
+- generell bidireksjonal sync
+- IndexedDB outbox/device cursor-runtime
+- Hasura write path
 - LangGraph/LangChain
-- Milvus
+- Milvus-produksjonsadapter
 - Azure-deploy
-- frontendkobling
 - EchoNet-deling
 - ekstern publisering
 
@@ -83,6 +113,15 @@ Tjenesten starter ikke i production hvis auth, origins eller audit-salt mangler.
 
 Connection string og driverfeil logges ikke.
 
+## Importmiljø
+
+| Variabel | Standard | Formål |
+|---|---|---|
+| `AHA_LOCAL_IMPORT_ENABLED` | `false` | Må være eksplisitt `true` før confirmation/commit. |
+| `AHA_IMPORT_CONFIRMATION_SECRET` | tom | Minst 32 tegn når import er aktivert. Brukes bare til kortlivet HMAC. |
+| `AHA_IMPORT_CONFIRMATION_TTL_SECONDS` | `600` | Mellom 60 og 1800 sekunder. |
+| `AHA_LOCAL_IMPORT_MAX_OBJECTS` | `25000` | Hard grense for ett canonical importplan. |
+
 ## Lokal bygg og test
 
 ```bash
@@ -104,7 +143,9 @@ iss
 aud
 ```
 
-Hver repository-lesing kjører i read-only transaksjon. Før SELECT avvises rollen dersom den er superuser, har `BYPASSRLS`, kan anta tabell-owner, mangler `row_security=on`, eller canonical schema ikke finnes.
+Før både read- og command-session avvises rollen dersom den er superuser, har `BYPASSRLS`, kan anta table-owner, mangler `row_security=on`, eller canonical schema ikke finnes.
+
+En command session betyr ikke generelle table writes. Local import får kun gå gjennom den eksplisitte `aha.commit_local_import_v1(...)`-funksjonen, som er `SECURITY DEFINER`, har låst `search_path` og er revoked fra `PUBLIC`. Et senere staging-/produksjonsoppsett må eksplisitt gi `EXECUTE` kun til den dedikerte NestJS runtime-rollen.
 
 Rå token, e-post, profilnavn, `user_metadata`, `raw_user_meta_data` og klientoppgitte roller brukes ikke som autorisasjonssannhet.
 
@@ -116,7 +157,7 @@ OpenAPI 3.1:
 backend/api/contracts/aha-backend-v1.openapi.json
 ```
 
-Full kontrakt og aktiveringsgrenser:
+Full generell kontrakt og aktiveringsgrenser:
 
 ```text
 docs/AHA_BACKEND_API_CONTRACT_V1.md
@@ -124,8 +165,8 @@ docs/AHA_BACKEND_API_CONTRACT_V1.md
 
 ## Audit-grense
 
-Audit-event inneholder bare event/time/request-ID, salted principal hash, method, route-template, status, duration, outcome og safe error code. Canonical persist til `aha.audit_events` er fortsatt ikke aktivert.
+HTTP-audit-event inneholder bare event/time/request-ID, salted principal hash, method, route-template, status, duration, outcome og safe error code. Local import-prosedyren skriver i tillegg et canonical audit-event med batch-ID, payload-/planhash og tellinger — aldri samtaletekst eller annet råinnhold.
 
 ## Neste steg
 
-Neste leveranse er eksplisitt lokal import til PostgreSQL med preview, confirmation, idempotency og import receipts. Den skal ikke gjøre innlogging til opplastingssamtykke og skal ikke importere `local_only` eller `deferred` materiale.
+Etter denne kontrakten er neste migreringsfase IndexedDB/outbox + device cursor og en eksplisitt sync-protokoll. Før det aktiveres må local account import først rehearse mot en ren stagingdatabase og dokumentere null datatap, null duplikater og null local-only-opplasting.
