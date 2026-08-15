@@ -4,18 +4,21 @@ const { execFileSync } = require("node:child_process");
 
 const WORKFLOW = ".github/workflows/aha-canonical-sync-hosted-staging-rehearsal.yml";
 const PREPARE = "scripts/aha-canonical-sync-hosted-staging-prepare.sh";
+const AUTH_FIXTURE = "scripts/aha-canonical-sync-hosted-staging-auth-fixture.cjs";
 const E2E = "scripts/aha-canonical-sync-hosted-staging-e2e.cjs";
 const DOC = "docs/AHA_CANONICAL_SYNC_HOSTED_STAGING_REHEARSAL_V1.md";
 
-for (const file of [WORKFLOW, PREPARE, E2E, DOC]) {
+for (const file of [WORKFLOW, PREPARE, AUTH_FIXTURE, E2E, DOC]) {
   assert.equal(fs.existsSync(file), true, `${file} mangler`);
 }
 
 execFileSync("bash", ["-n", PREPARE], { stdio: "pipe" });
+execFileSync(process.execPath, ["--check", AUTH_FIXTURE], { stdio: "pipe" });
 execFileSync(process.execPath, ["--check", E2E], { stdio: "pipe" });
 
 const workflow = fs.readFileSync(WORKFLOW, "utf8");
 const prepare = fs.readFileSync(PREPARE, "utf8");
+const authFixture = fs.readFileSync(AUTH_FIXTURE, "utf8");
 const e2e = fs.readFileSync(E2E, "utf8");
 const docs = fs.readFileSync(DOC, "utf8");
 
@@ -32,17 +35,35 @@ assert.match(workflow, /AHA_DATABASE_ENABLED:\s*["']true["']/);
 assert.match(workflow, /AHA_CANONICAL_SYNC_ENABLED:\s*["']true["']/);
 assert.match(workflow, /AHA_LOCAL_IMPORT_ENABLED:\s*["']false["']/);
 assert.match(workflow, /AHA_DATABASE_SSL_MODE:\s*verify-full/);
-assert.match(workflow, /AHA_STAGING_SYNC_BEARER_TOKEN:\s*\$\{\{\s*secrets\.AHA_STAGING_SYNC_BEARER_TOKEN\s*\}\}/);
-assert.match(workflow, /AHA_STAGING_AUDIT_HASH_SALT:\s*\$\{\{\s*secrets\.AHA_STAGING_AUDIT_HASH_SALT\s*\}\}/);
-for (const variable of ["AHA_STAGING_AUTH_ISSUER", "AHA_STAGING_AUTH_AUDIENCE", "AHA_STAGING_AUTH_JWKS_URL"]) {
-  assert.match(workflow, new RegExp(`vars\\.${variable}`));
-}
+assert.match(workflow, /NODE_ENV:\s*development/);
+assert.match(workflow, /AHA_STAGING_ADMIN_DATABASE_URL:\s*\$\{\{\s*secrets\.AHA_STAGING_ADMIN_DATABASE_URL\s*\}\}/);
+assert.match(workflow, /AHA_STAGING_RUNTIME_DATABASE_URL:\s*\$\{\{\s*secrets\.AHA_STAGING_RUNTIME_DATABASE_URL\s*\}\}/);
+assert.doesNotMatch(workflow, /secrets\.AHA_STAGING_SYNC_BEARER_TOKEN|secrets\.AHA_STAGING_AUDIT_HASH_SALT/);
+assert.doesNotMatch(workflow, /vars\.AHA_STAGING_AUTH_(?:ISSUER|AUDIENCE|JWKS_URL)/);
+assert.match(workflow, /aha-canonical-sync-hosted-staging-auth-fixture\.cjs/);
+assert.match(workflow, /generate[\s\S]*\$GITHUB_ENV/);
+assert.match(workflow, /serve[\s\S]*AHA_STAGING_JWKS_FILE/);
+assert.match(workflow, /127\.0\.0\.1:3210\/health/);
 assert.doesNotMatch(workflow, /AHA_PRODUCTION|PRODUCTION_DATABASE|PROD_DATABASE|production.*secret/i);
 assert.match(workflow, /127\.0\.0\.1:3100/);
 assert.doesNotMatch(workflow, /vercel|render\.com|kubectl|docker\s+push|az\s+webapp|azure\/webapps-deploy/i, "hosted rehearsal must not deploy a public API");
 assert.match(workflow, /aha-postgresql-hosted-staging-preflight\.sh/);
 assert.match(workflow, /aha-canonical-sync-hosted-staging-prepare\.sh/);
 assert.match(workflow, /aha-canonical-sync-hosted-staging-e2e\.cjs/);
+
+// Ephemeral auth must be short-lived, locally served and never printed.
+assert.match(authFixture, /generateKeyPairSync\("rsa"/);
+assert.match(authFixture, /alg:\s*"RS256"/);
+assert.match(authFixture, /aha-canonical-sync-hosted-staging-ci/);
+assert.match(authFixture, /exp:\s*now\s*\+\s*15\s*\*\s*60/);
+assert.match(authFixture, /127\.0\.0\.1/);
+assert.match(authFixture, /\.well-known\/jwks\.json/);
+assert.match(authFixture, /AHA_STAGING_SYNC_BEARER_TOKEN=/);
+assert.match(authFixture, /AHA_AUTH_ISSUER=/);
+assert.match(authFixture, /AHA_AUTH_AUDIENCE=/);
+assert.match(authFixture, /AHA_AUTH_JWKS_URL=/);
+assert.doesNotMatch(authFixture, /console\.log\s*\(/);
+assert.doesNotMatch(authFixture, /process\.stdout\.write\([^)]*token/i);
 
 // Preparation may use admin only for the three top-level grants + a dedicated fixture.
 assert.match(prepare, /set -euo pipefail/);
@@ -106,11 +127,12 @@ assert.doesNotMatch(e2e, /localStorage|indexedDB|AHARepository/);
 for (const evidence of [
   "ingen production activation",
   "workflow_dispatch",
-  "AHA_STAGING_SYNC_BEARER_TOKEN",
+  "ephemeral",
   "aha-staging-sync-e2e-workspace-v1",
   "stale_base_revision",
   "payload=null",
-  "ingen offentlig URL"
+  "ingen offentlig URL",
+  "to eksisterende database-secrets"
 ]) {
   assert.ok(docs.includes(evidence), `hosted rehearsal docs must retain: ${evidence}`);
 }

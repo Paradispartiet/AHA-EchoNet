@@ -23,12 +23,8 @@ jobs:
       AHA_STAGING_PROJECT_REF: sstuzwppsheivczyqrim
       AHA_STAGING_ADMIN_DATABASE_URL: ${{ secrets.AHA_STAGING_ADMIN_DATABASE_URL }}
       AHA_STAGING_RUNTIME_DATABASE_URL: ${{ secrets.AHA_STAGING_RUNTIME_DATABASE_URL }}
-      AHA_STAGING_SYNC_BEARER_TOKEN: ${{ secrets.AHA_STAGING_SYNC_BEARER_TOKEN }}
-      AHA_STAGING_AUDIT_HASH_SALT: ${{ secrets.AHA_STAGING_AUDIT_HASH_SALT }}
-      AHA_AUTH_ISSUER: ${{ vars.AHA_STAGING_AUTH_ISSUER }}
-      AHA_AUTH_AUDIENCE: ${{ vars.AHA_STAGING_AUTH_AUDIENCE }}
-      AHA_AUTH_JWKS_URL: ${{ vars.AHA_STAGING_AUTH_JWKS_URL }}
       AHA_AUTH_PROVIDER: supabase
+      AHA_AUDIT_HASH_SALT: hosted-staging-e2e-audit-salt-not-for-production-2026
       AHA_STAGING_SYNC_WORKSPACE_ID: aha-staging-sync-e2e-workspace-v1
       AHA_STAGING_SYNC_API_BASE_URL: http://127.0.0.1:3100
       AHA_ALLOWED_ORIGINS: http://127.0.0.1:4173
@@ -36,14 +32,14 @@ jobs:
       AHA_DATABASE_SSL_MODE: verify-full
       AHA_CANONICAL_SYNC_ENABLED: "true"
       AHA_LOCAL_IMPORT_ENABLED: "false"
-      NODE_ENV: production
+      NODE_ENV: development
       PORT: "3100"
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
 
-      - name: Validate exact staging confirmation and auth settings
+      - name: Validate exact staging confirmation and existing DB secrets
         shell: bash
         run: |
           set -euo pipefail
@@ -51,24 +47,12 @@ jobs:
             echo "Exact hosted canonical-sync staging confirmation is required." >&2
             exit 1
           fi
-          for name in \
-            AHA_STAGING_ADMIN_DATABASE_URL \
-            AHA_STAGING_RUNTIME_DATABASE_URL \
-            AHA_STAGING_SYNC_BEARER_TOKEN \
-            AHA_STAGING_AUDIT_HASH_SALT \
-            AHA_AUTH_ISSUER \
-            AHA_AUTH_AUDIENCE \
-            AHA_AUTH_JWKS_URL
-          do
+          for name in AHA_STAGING_ADMIN_DATABASE_URL AHA_STAGING_RUNTIME_DATABASE_URL; do
             if [[ -z "${!name:-}" ]]; then
               echo "Missing required staging setting: ${name}" >&2
               exit 1
             fi
           done
-          if (( ${#AHA_STAGING_AUDIT_HASH_SALT} < 32 )); then
-            echo "AHA_STAGING_AUDIT_HASH_SALT must contain at least 32 characters." >&2
-            exit 1
-          fi
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -89,6 +73,16 @@ jobs:
           AHA_HOSTED_STAGING_CONFIRMATION: RUN_AHA_HOSTED_STAGING_PREFLIGHT
         run: bash scripts/aha-postgresql-hosted-staging-preflight.sh
 
+      - name: Generate ephemeral signed staging JWT and JWKS
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/aha-canonical-sync-auth"
+          node scripts/aha-canonical-sync-hosted-staging-auth-fixture.cjs \
+            generate \
+            "$RUNNER_TEMP/aha-canonical-sync-auth" \
+            "$GITHUB_ENV"
+
       - name: Prepare dedicated sync fixture and least-privilege grants
         shell: bash
         run: bash scripts/aha-canonical-sync-hosted-staging-prepare.sh
@@ -100,12 +94,29 @@ jobs:
           npm ci --ignore-scripts --no-audit --no-fund
           npm run build
 
+      - name: Start ephemeral JWKS server
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/aha-canonical-sync-hosted-staging-auth-fixture.cjs \
+            serve \
+            "$AHA_STAGING_JWKS_FILE" \
+            > "$RUNNER_TEMP/aha-canonical-sync-staging-jwks.log" 2>&1 &
+          echo $! > "$RUNNER_TEMP/aha-canonical-sync-staging-jwks.pid"
+          for attempt in {1..20}; do
+            if curl --silent --show-error --fail http://127.0.0.1:3210/health >/dev/null; then
+              exit 0
+            fi
+            sleep 0.25
+          done
+          echo "Ephemeral JWKS server did not become healthy." >&2
+          exit 1
+
       - name: Start NestJS locally against hosted AHA Staging
         working-directory: backend/api
         shell: bash
         env:
           AHA_DATABASE_URL: ${{ secrets.AHA_STAGING_RUNTIME_DATABASE_URL }}
-          AHA_AUDIT_HASH_SALT: ${{ secrets.AHA_STAGING_AUDIT_HASH_SALT }}
         run: |
           set -euo pipefail
           node dist/main.js > "$RUNNER_TEMP/aha-canonical-sync-staging-api.log" 2>&1 &
@@ -117,17 +128,22 @@ jobs:
           AHA_STAGING_SYNC_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
         run: node scripts/aha-canonical-sync-hosted-staging-e2e.cjs
 
-      - name: Stop staging NestJS process
+      - name: Stop staging processes
         if: always()
         shell: bash
         run: |
-          if [[ -f "$RUNNER_TEMP/aha-canonical-sync-staging-api.pid" ]]; then
-            pid="$(cat "$RUNNER_TEMP/aha-canonical-sync-staging-api.pid")"
-            if [[ "$pid" =~ ^[0-9]+$ ]]; then
-              kill "$pid" 2>/dev/null || true
-              wait "$pid" 2>/dev/null || true
+          for file in \
+            "$RUNNER_TEMP/aha-canonical-sync-staging-api.pid" \
+            "$RUNNER_TEMP/aha-canonical-sync-staging-jwks.pid"
+          do
+            if [[ -f "$file" ]]; then
+              pid="$(cat "$file")"
+              if [[ "$pid" =~ ^[0-9]+$ ]]; then
+                kill "$pid" 2>/dev/null || true
+                wait "$pid" 2>/dev/null || true
+              fi
             fi
-          fi
+          done
 
       - name: Show sanitized API tail on failure
         if: failure()
