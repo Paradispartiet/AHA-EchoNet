@@ -31,6 +31,7 @@ export type CanonicalSyncObjectType = (typeof CANONICAL_SYNC_OBJECT_TYPES)[numbe
 export type CanonicalSyncOperation = "upsert" | "delete";
 
 const MAX_SAFE_CURSOR = Number.MAX_SAFE_INTEGER;
+const CANONICAL_SYNC_OBJECT_TYPE_VALUES = [...CANONICAL_SYNC_OBJECT_TYPES];
 
 export class SyncBootstrapQueryDto {
   @IsString()
@@ -96,7 +97,7 @@ export class SyncPushRequestDto {
   idempotencyKey!: string;
 
   @IsString()
-  @IsIn(CANONICAL_SYNC_OBJECT_TYPES)
+  @IsIn(CANONICAL_SYNC_OBJECT_TYPE_VALUES)
   objectType!: CanonicalSyncObjectType;
 
   @IsString()
