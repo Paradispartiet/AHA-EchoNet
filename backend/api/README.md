@@ -2,7 +2,7 @@
 
 Status: **separat, fail-closed backendgrunnlag — ikke aktiv AHA-runtime**
 
-Denne tjenesten dekker Backend Foundation PR 4–6: NestJS-grunnmur, verifisert auth, stabil HTTP-kontrakt, PostgreSQL repository-adapter og den første eksplisitte local-first kontoimporten. Den overtar ikke dagens `server.js`/Express-runtime og er ikke koblet til frontend eller Render.
+Denne tjenesten inneholder NestJS-grunnmur, verifisert auth, canonical PostgreSQL repository-adapter, eksplisitt local-first kontoimport og en eksplisitt personal/private canonical sync-grense. Den overtar ikke dagens `server.js`/Express-runtime og er ikke automatisk koblet til frontend eller deploy.
 
 ## Dette finnes
 
@@ -11,17 +11,18 @@ Denne tjenesten dekker Backend Foundation PR 4–6: NestJS-grunnmur, verifisert 
 - `GET /v1/profile` — canonical RLS-bound read contract
 - `POST /v1/local-imports/confirmation` — mottar bare lokal preview-hash + tellinger
 - `POST /v1/local-imports/commit` — eksplisitt, hash-bundet kontoimport
+- `GET /v1/sync/bootstrap` — første canonical snapshot/pre-journal state
+- `GET /v1/sync/pull` — monotone canonical deltaer
+- `POST /v1/sync/push` — én eksplisitt hash-/revision-/idempotency-bundet canonical command
 - global Bearer/JWKS-verifisering
-- validert request-ID
-- streng global DTO-validering
-- eksplisitt CORS-allowlist
+- streng DTO-validering og CORS-allowlist
 - stabil success/error-envelope
-- redigert audit-event uten token, body, query, SQL eller rå subject
+- redigert audit uten token, body, query, SQL eller rå subject
 - opt-in `pg`-adapter bak leverandørnøytral repository-port
-- read-only database sessions for reads
-- begrenset command session for eksplisitte canonical command functions
-- runtime-sperre mot superuser, `BYPASSRLS`, table-owner og manglende `row_security`
-- committet npm lockfile v3 og read-only CI med `npm ci`
+- read-only DB-session for reads
+- command session kun for eksplisitte canonical command functions
+- runtime-sperre mot superuser, `BYPASSRLS`, table-owner og `row_security=off`
+- committet npm lockfile og read-only `npm ci` i CI
 
 ## Local account import
 
@@ -31,17 +32,7 @@ Importpreview bygges lokalt av:
 js/ahaLocalAccountImport.js
 ```
 
-Første nettverkskall inneholder **ikke** den lokale datasamlingen eller canonical planen. Det inneholder bare:
-
-```text
-sourceKind
-sourceVersion
-payloadHash
-planHash
-counts
-```
-
-Serveren lager et kortlivet HMAC-token bundet til principal, payloadHash, planHash, tellinger og policyversjon. Brukeren skal deretter eksplisitt bekrefte den viste lokale previewen. Først ved `POST /v1/local-imports/commit` sendes den allow-listede canonical planen.
+Første nettverkskall inneholder ikke lokal datasamling eller canonical plan, bare source kind/version, hashes og tellinger. Først etter eksplisitt brukerbekreftelse sendes den allow-listede canonical planen til commit.
 
 Detaljert kontrakt:
 
@@ -49,38 +40,52 @@ Detaljert kontrakt:
 docs/AHA_LOCAL_IMPORT_POSTGRESQL_V1.md
 ```
 
+## Canonical sync
+
+Lokal persistence ligger i:
+
+```text
+js/ahaCanonicalSyncStore.js
+```
+
+med IndexedDB-stores for outbox, cursors og tombstones.
+
+Deterministisk browser-hash ligger i:
+
+```text
+js/ahaCanonicalSyncHash.js
+```
+
+NestJS speiler nøyaktig samme canonical JSON + SHA-256-kontrakt før push får nå repositoryet.
+
+Sync er begrenset til ti canonical personal/private objekttyper og aktiverer ikke group/EchoNet/public sharing. Local-only Notes, Gallery, Feed, Insta, Music, Training, Personal AI og workbench-state er utenfor kontrakten.
+
+Detaljert kontrakt:
+
+```text
+docs/AHA_CANONICAL_SYNC_API_V1.md
+```
+
 ## Dette finnes fortsatt ikke
 
 - automatisk kontoimport ved innlogging
-- frontendaktivering av local import
+- automatisk sync ved innlogging
+- frontendaktivering av local import eller canonical sync
+- background sync/timer/WebSocket/beacon
 - generelle runtime-grants til `aha.*`
 - direkte browserwrites til canonical tabeller
-- generell bidireksjonal sync
-- IndexedDB outbox/device cursor-runtime
+- gjenbruk av legacy `syncFromDatabase()` som canonical sync-motor
+- automatisk konfliktmerge eller tombstone-resurrection
 - Hasura write path
-- LangGraph/LangChain
-- Milvus-produksjonsadapter
-- Azure-deploy
+- LangGraph/LangChain worker-runtime
+- pgvector retrieval-runtime
+- Azure deploy
 - EchoNet-deling
-- ekstern publisering
+- automatisk ekstern publisering
 
 ## Health-grensen
 
-Health åpner ikke en databaseconnection. Den rapporterer siste kjente adapterstatus:
-
-```json
-{
-  "runtimeActivated": false,
-  "existingExpressRuntimePrimary": true,
-  "database": {
-    "configured": false,
-    "connected": false,
-    "status": "disabled",
-    "safeRuntimeRole": false,
-    "canonicalSchema": "not_connected"
-  }
-}
-```
+Health åpner ikke en databaseconnection. Den rapporterer siste kjente adapterstatus og viser ikke DSN, databasebruker, host eller driverfeil.
 
 ## Applikasjonsmiljø
 
@@ -94,7 +99,7 @@ Health åpner ikke en databaseconnection. Den rapporterer siste kjente adapterst
 | `AHA_AUTH_AUDIENCE` | ja | forventet JWT audience |
 | `AHA_AUTH_JWKS_URL` | ja | HTTPS JWKS-endepunkt |
 | `AHA_AUTH_PROVIDER` | nei | canonical provider-navn, standard `supabase` |
-| `AHA_AUDIT_HASH_SALT` | ja | minst 32 tegn; hasher principal før audit |
+| `AHA_AUDIT_HASH_SALT` | ja | minst 32 tegn; hasher principal før HTTP-audit |
 
 Tjenesten starter ikke i production hvis auth, origins eller audit-salt mangler.
 
@@ -111,16 +116,23 @@ Tjenesten starter ikke i production hvis auth, origins eller audit-salt mangler.
 | `AHA_DATABASE_STATEMENT_TIMEOUT_MS` | `8000` | Transaksjonslokal statement timeout. |
 | `AHA_DATABASE_LOCK_TIMEOUT_MS` | `2000` | Transaksjonslokal lock timeout. |
 
-Connection string og driverfeil logges ikke.
-
 ## Importmiljø
 
 | Variabel | Standard | Formål |
 |---|---|---|
 | `AHA_LOCAL_IMPORT_ENABLED` | `false` | Må være eksplisitt `true` før confirmation/commit. |
-| `AHA_IMPORT_CONFIRMATION_SECRET` | tom | Minst 32 tegn når import er aktivert. Brukes bare til kortlivet HMAC. |
-| `AHA_IMPORT_CONFIRMATION_TTL_SECONDS` | `600` | Mellom 60 og 1800 sekunder. |
-| `AHA_LOCAL_IMPORT_MAX_OBJECTS` | `25000` | Hard grense for ett canonical importplan. |
+| `AHA_IMPORT_CONFIRMATION_SECRET` | tom | Minst 32 tegn når import er aktivert. |
+| `AHA_IMPORT_CONFIRMATION_TTL_SECONDS` | `600` | 60–1800 sekunder. |
+| `AHA_LOCAL_IMPORT_MAX_OBJECTS` | `25000` | Hard grense for én canonical importplan. |
+
+## Syncmiljø
+
+| Variabel | Standard | Formål |
+|---|---|---|
+| `AHA_CANONICAL_SYNC_ENABLED` | `false` | Må være eksplisitt `true` før bootstrap/pull/push. |
+| `AHA_CANONICAL_SYNC_DEFAULT_LIMIT` | `200` | Standard bootstrap/pull-side. |
+| `AHA_CANONICAL_SYNC_MAX_LIMIT` | `500` | Deployment-grense, maks 500. |
+| `AHA_CANONICAL_SYNC_MAX_PUSH_BYTES` | `262144` | Maks canonical JSON-størrelse før repository-kall. |
 
 ## Lokal bygg og test
 
@@ -129,8 +141,6 @@ cd backend/api
 npm ci --ignore-scripts --no-audit --no-fund
 npm test
 ```
-
-`package-lock.json` skal oppdateres sammen med enhver tilsiktet dependency-endring. CI har bare `contents: read`.
 
 ## Auth- og databasegrense
 
@@ -143,11 +153,9 @@ iss
 aud
 ```
 
-Før både read- og command-session avvises rollen dersom den er superuser, har `BYPASSRLS`, kan anta table-owner, mangler `row_security=on`, eller canonical schema ikke finnes.
+Før read- og command-session avvises rollen dersom den er superuser, har `BYPASSRLS`, kan anta table-owner, mangler `row_security=on`, eller canonical schema ikke finnes.
 
-En command session betyr ikke generelle table writes. Local import får kun gå gjennom den eksplisitte `aha.commit_local_import_v1(...)`-funksjonen, som er `SECURITY DEFINER`, har låst `search_path` og er revoked fra `PUBLIC`. Et senere staging-/produksjonsoppsett må eksplisitt gi `EXECUTE` kun til den dedikerte NestJS runtime-rollen.
-
-Rå token, e-post, profilnavn, `user_metadata`, `raw_user_meta_data` og klientoppgitte roller brukes ikke som autorisasjonssannhet.
+En command session betyr ikke generelle table writes. Local import og canonical sync kan bare gå gjennom sine eksplisitte databasekommandoer. Internal helpers og tabeller er ikke runtime-API.
 
 ## API-kontrakt
 
@@ -157,16 +165,16 @@ OpenAPI 3.1:
 backend/api/contracts/aha-backend-v1.openapi.json
 ```
 
-Full generell kontrakt og aktiveringsgrenser:
+Full generell kontrakt:
 
 ```text
 docs/AHA_BACKEND_API_CONTRACT_V1.md
 ```
 
-## Audit-grense
+## PostgreSQL- og stagingbevis
 
-HTTP-audit-event inneholder bare event/time/request-ID, salted principal hash, method, route-template, status, duration, outcome og safe error code. Local import-prosedyren skriver i tillegg et canonical audit-event med batch-ID, payload-/planhash og tellinger — aldri samtaletekst eller annet råinnhold.
+Canonical migrasjoner er kjørt på isolert AHA Staging og i ren PostgreSQL 16 CI. Rehearsalen dekker minst-privilegert runtime-role, RLS, import, bootstrap, pull, push for alle ti objekttyper, idempotency, conflicts, tombstones, append-only insight/article-versjoner, private scope og cross-tenant denial.
 
 ## Neste steg
 
-Etter denne kontrakten er neste migreringsfase IndexedDB/outbox + device cursor og en eksplisitt sync-protokoll. Før det aktiveres må local account import først rehearse mot en ren stagingdatabase og dokumentere null datatap, null duplikater og null local-only-opplasting.
+Neste port er en eksplisitt frontend-adapter som oversetter eksisterende lokale modeller til canonical snake_case payload, beregner hash med `AHACanonicalSyncHash`, bruker IndexedDB-outbox/cursors/tombstones og kaller API bare etter eksplisitt sync-aktivering/brukerhandling. Legacy `syncFromDatabase()` skal ikke kobles inn som en parallell motor.
