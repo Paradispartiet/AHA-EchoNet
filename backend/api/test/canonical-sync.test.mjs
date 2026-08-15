@@ -54,7 +54,8 @@ test("canonical sync is fail-closed by default and its limits are bounded", () =
 
 test("browser and NestJS use the same deterministic SHA-256 payload contract", async () => {
   const context = vm.createContext({ window: {}, module: { exports: {} }, exports: {}, console, crypto: webcrypto, TextEncoder, Uint8Array, Array, Object, JSON, Number, String, Boolean });
-  vm.runInContext(fs.readFileSync("../js/ahaCanonicalSyncHash.js", "utf8"), context, { filename: "ahaCanonicalSyncHash.js" });
+  const browserHashFile = new URL("../../../js/ahaCanonicalSyncHash.js", import.meta.url);
+  vm.runInContext(fs.readFileSync(browserHashFile, "utf8"), context, { filename: "ahaCanonicalSyncHash.js" });
   const browser = context.window.AHACanonicalSyncHash;
   assert.ok(browser);
 
