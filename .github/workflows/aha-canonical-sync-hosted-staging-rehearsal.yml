@@ -1,0 +1,140 @@
+name: AHA canonical sync hosted staging rehearsal
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: "Skriv RUN_AHA_CANONICAL_SYNC_HOSTED_STAGING_REHEARSAL for å kjøre ekte NestJS ↔ PostgreSQL staging-sync"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  canonical-sync-hosted-staging:
+    name: Canonical sync hosted staging HTTP rehearsal
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: aha-postgresql-staging
+
+    env:
+      AHA_CANONICAL_SYNC_HOSTED_STAGING_CONFIRMATION: ${{ inputs.confirmation }}
+      AHA_STAGING_PROJECT_REF: sstuzwppsheivczyqrim
+      AHA_STAGING_ADMIN_DATABASE_URL: ${{ secrets.AHA_STAGING_ADMIN_DATABASE_URL }}
+      AHA_STAGING_RUNTIME_DATABASE_URL: ${{ secrets.AHA_STAGING_RUNTIME_DATABASE_URL }}
+      AHA_STAGING_SYNC_BEARER_TOKEN: ${{ secrets.AHA_STAGING_SYNC_BEARER_TOKEN }}
+      AHA_STAGING_AUDIT_HASH_SALT: ${{ secrets.AHA_STAGING_AUDIT_HASH_SALT }}
+      AHA_AUTH_ISSUER: ${{ vars.AHA_STAGING_AUTH_ISSUER }}
+      AHA_AUTH_AUDIENCE: ${{ vars.AHA_STAGING_AUTH_AUDIENCE }}
+      AHA_AUTH_JWKS_URL: ${{ vars.AHA_STAGING_AUTH_JWKS_URL }}
+      AHA_AUTH_PROVIDER: supabase
+      AHA_STAGING_SYNC_WORKSPACE_ID: aha-staging-sync-e2e-workspace-v1
+      AHA_STAGING_SYNC_API_BASE_URL: http://127.0.0.1:3100
+      AHA_ALLOWED_ORIGINS: http://127.0.0.1:4173
+      AHA_DATABASE_ENABLED: "true"
+      AHA_DATABASE_SSL_MODE: verify-full
+      AHA_CANONICAL_SYNC_ENABLED: "true"
+      AHA_LOCAL_IMPORT_ENABLED: "false"
+      NODE_ENV: production
+      PORT: "3100"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Validate exact staging confirmation and auth settings
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$AHA_CANONICAL_SYNC_HOSTED_STAGING_CONFIRMATION" != "RUN_AHA_CANONICAL_SYNC_HOSTED_STAGING_REHEARSAL" ]]; then
+            echo "Exact hosted canonical-sync staging confirmation is required." >&2
+            exit 1
+          fi
+          for name in \
+            AHA_STAGING_ADMIN_DATABASE_URL \
+            AHA_STAGING_RUNTIME_DATABASE_URL \
+            AHA_STAGING_SYNC_BEARER_TOKEN \
+            AHA_STAGING_AUDIT_HASH_SALT \
+            AHA_AUTH_ISSUER \
+            AHA_AUTH_AUDIENCE \
+            AHA_AUTH_JWKS_URL
+          do
+            if [[ -z "${!name:-}" ]]; then
+              echo "Missing required staging setting: ${name}" >&2
+              exit 1
+            fi
+          done
+          if (( ${#AHA_STAGING_AUDIT_HASH_SALT} < 32 )); then
+            echo "AHA_STAGING_AUDIT_HASH_SALT must contain at least 32 characters." >&2
+            exit 1
+          fi
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: backend/api/package-lock.json
+
+      - name: Install PostgreSQL client
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Re-run read-only hosted PostgreSQL safety preflight
+        shell: bash
+        env:
+          AHA_HOSTED_STAGING_CONFIRMATION: RUN_AHA_HOSTED_STAGING_PREFLIGHT
+        run: bash scripts/aha-postgresql-hosted-staging-preflight.sh
+
+      - name: Prepare dedicated sync fixture and least-privilege grants
+        shell: bash
+        run: bash scripts/aha-canonical-sync-hosted-staging-prepare.sh
+
+      - name: Install and build NestJS API
+        working-directory: backend/api
+        shell: bash
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run build
+
+      - name: Start NestJS locally against hosted AHA Staging
+        working-directory: backend/api
+        shell: bash
+        env:
+          AHA_DATABASE_URL: ${{ secrets.AHA_STAGING_RUNTIME_DATABASE_URL }}
+          AHA_AUDIT_HASH_SALT: ${{ secrets.AHA_STAGING_AUDIT_HASH_SALT }}
+        run: |
+          set -euo pipefail
+          node dist/main.js > "$RUNNER_TEMP/aha-canonical-sync-staging-api.log" 2>&1 &
+          echo $! > "$RUNNER_TEMP/aha-canonical-sync-staging-api.pid"
+
+      - name: Run real canonical sync HTTP rehearsal
+        shell: bash
+        env:
+          AHA_STAGING_SYNC_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
+        run: node scripts/aha-canonical-sync-hosted-staging-e2e.cjs
+
+      - name: Stop staging NestJS process
+        if: always()
+        shell: bash
+        run: |
+          if [[ -f "$RUNNER_TEMP/aha-canonical-sync-staging-api.pid" ]]; then
+            pid="$(cat "$RUNNER_TEMP/aha-canonical-sync-staging-api.pid")"
+            if [[ "$pid" =~ ^[0-9]+$ ]]; then
+              kill "$pid" 2>/dev/null || true
+              wait "$pid" 2>/dev/null || true
+            fi
+          fi
+
+      - name: Show sanitized API tail on failure
+        if: failure()
+        shell: bash
+        run: |
+          if [[ -f "$RUNNER_TEMP/aha-canonical-sync-staging-api.log" ]]; then
+            tail -n 80 "$RUNNER_TEMP/aha-canonical-sync-staging-api.log" \
+              | sed -E 's#postgres(ql)?://[^[:space:]]+#<redacted-dsn>#g' \
+              | sed -E 's#Bearer[[:space:]]+[A-Za-z0-9._~-]+#Bearer <redacted>#g'
+          fi
