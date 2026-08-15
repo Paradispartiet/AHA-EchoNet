@@ -111,7 +111,7 @@ const sourceFiles = [
   "backend/api/src/foundation-command.dto.ts"
 ];
 const source = sourceFiles.map(read).join("\n");
-assert.doesNotMatch(source, /@(Post|Put|Patch|Delete)\s*\(/, "repository foundation skal ikke ha produktmutasjoner");
+assert.doesNotMatch(source, /@(Post|Put|Patch|Delete)\s*\(/, "repository foundation skal ikke ha generelle produktmutasjoner");
 assert.doesNotMatch(source, /from ["'](typeorm|@prisma\/client|langchain|@langchain\/langgraph)/);
 assert.doesNotMatch(source, /user_metadata|raw_user_meta_data/);
 assert.match(source, /runtimeActivated:\s*false/);
@@ -188,9 +188,20 @@ assert.doesNotMatch(workflow, /npm install --package-lock-only|Upload generated 
 const openApi = JSON.parse(read("backend/api/contracts/aha-backend-v1.openapi.json"));
 assert.equal(openApi.openapi, "3.1.0");
 assert.equal(openApi.info.version, "0.2.0");
-assert.deepEqual(Object.keys(openApi.paths).sort(), ["/v1/auth/context", "/v1/health", "/v1/profile"]);
-for (const pathItem of Object.values(openApi.paths)) {
-  assert.equal(pathItem.post, undefined);
+assert.deepEqual(Object.keys(openApi.paths).sort(), [
+  "/v1/auth/context",
+  "/v1/health",
+  "/v1/local-imports/commit",
+  "/v1/local-imports/confirmation",
+  "/v1/profile"
+]);
+for (const [route, pathItem] of Object.entries(openApi.paths)) {
+  const isLocalImportCommand = route === "/v1/local-imports/commit" || route === "/v1/local-imports/confirmation";
+  if (isLocalImportCommand) {
+    assert.ok(pathItem.post, `${route} skal eksponere kun eksplisitt POST-kommando`);
+  } else {
+    assert.equal(pathItem.post, undefined, `${route} skal forbli read-only`);
+  }
   assert.equal(pathItem.put, undefined);
   assert.equal(pathItem.patch, undefined);
   assert.equal(pathItem.delete, undefined);
