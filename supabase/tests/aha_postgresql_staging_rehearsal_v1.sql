@@ -132,3 +132,75 @@ BEGIN
 END
 $do$;
 COMMIT;
+
+-- Canonical sync read boundary: imported/pre-journal data must bootstrap, while
+-- delta pull is empty until a future explicit push writes journal entries.
+BEGIN;
+SELECT set_config('request.jwt.claims','{"sub":"rehearsal-user-a","aha_provider":"supabase"}',true);
+DO $do$
+DECLARE
+  bootstrap jsonb;
+  pull_result jsonb;
+  tenant_denied boolean := false;
+  forged_watermark_denied boolean := false;
+BEGIN
+  bootstrap := aha.bootstrap_sync_snapshot_v1('workspace_a','',null,100);
+
+  IF (bootstrap->>'highWatermark')::bigint <> 0 THEN
+    RAISE EXCEPTION 'bootstrap watermark must be zero before sync journal activation: %', bootstrap;
+  END IF;
+  IF (bootstrap->>'returnedCount')::integer <> 2 THEN
+    RAISE EXCEPTION 'bootstrap should return imported conversation + message: %', bootstrap;
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM jsonb_array_elements(bootstrap->'objects') x
+    WHERE x->>'objectType'='conversation' AND x->>'objectId'='conversation_a'
+  ) THEN
+    RAISE EXCEPTION 'bootstrap omitted conversation_a: %', bootstrap;
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM jsonb_array_elements(bootstrap->'objects') x
+    WHERE x->>'objectType'='message' AND x->>'objectId'='message_a'
+  ) THEN
+    RAISE EXCEPTION 'bootstrap omitted message_a: %', bootstrap;
+  END IF;
+  IF EXISTS (
+    SELECT 1 FROM jsonb_array_elements(bootstrap->'objects') x
+    WHERE x->>'objectId' IN ('collision_conversation','collision_message')
+  ) THEN
+    RAISE EXCEPTION 'bootstrap leaked tenant B objects: %', bootstrap;
+  END IF;
+  IF EXISTS (
+    SELECT 1 FROM jsonb_array_elements(bootstrap->'objects') x
+    WHERE x->'payload' ?| array['workspace_id','created_by_profile_id','author_profile_id']
+  ) THEN
+    RAISE EXCEPTION 'bootstrap leaked tenant/ownership columns in payload: %', bootstrap;
+  END IF;
+
+  pull_result := aha.pull_sync_changes_v1('workspace_a',0,100);
+  IF (pull_result->>'returnedCount')::integer <> 0
+     OR jsonb_array_length(pull_result->'changes') <> 0
+     OR (pull_result->>'highWatermark')::bigint <> 0 THEN
+    RAISE EXCEPTION 'delta pull should be empty before explicit push exists: %', pull_result;
+  END IF;
+
+  BEGIN
+    PERFORM aha.bootstrap_sync_snapshot_v1('workspace_b','',null,10);
+  EXCEPTION WHEN insufficient_privilege THEN
+    tenant_denied := true;
+  END;
+  IF NOT tenant_denied THEN
+    RAISE EXCEPTION 'tenant A was allowed to bootstrap tenant B';
+  END IF;
+
+  BEGIN
+    PERFORM aha.bootstrap_sync_snapshot_v1('workspace_a','',1,10);
+  EXCEPTION WHEN invalid_parameter_value THEN
+    forged_watermark_denied := true;
+  END;
+  IF NOT forged_watermark_denied THEN
+    RAISE EXCEPTION 'bootstrap accepted a watermark beyond current journal state';
+  END IF;
+END
+$do$;
+COMMIT;

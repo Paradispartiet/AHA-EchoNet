@@ -66,6 +66,8 @@ GRANT SELECT ON aha.profiles, aha.workspaces TO aha_runtime_rehearsal;
 GRANT EXECUTE ON FUNCTION aha.current_profile_id() TO aha_runtime_rehearsal;
 GRANT EXECUTE ON FUNCTION aha.can_read_workspace(text) TO aha_runtime_rehearsal;
 GRANT EXECUTE ON FUNCTION aha.commit_local_import_v1(text,text,text,text,text,text,jsonb) TO aha_runtime_rehearsal;
+GRANT EXECUTE ON FUNCTION aha.bootstrap_sync_snapshot_v1(text,text,bigint,integer) TO aha_runtime_rehearsal;
+GRANT EXECUTE ON FUNCTION aha.pull_sync_changes_v1(text,bigint,integer) TO aha_runtime_rehearsal;
 
 DO $do$
 DECLARE
@@ -86,16 +88,27 @@ BEGIN
 
   IF has_table_privilege('aha_runtime_rehearsal', 'aha.profiles', 'INSERT')
      OR has_table_privilege('aha_runtime_rehearsal', 'aha.workspaces', 'UPDATE')
-     OR has_table_privilege('aha_runtime_rehearsal', 'aha.conversations', 'DELETE') THEN
-    RAISE EXCEPTION 'runtime rehearsal role has direct canonical write privilege';
+     OR has_table_privilege('aha_runtime_rehearsal', 'aha.conversations', 'DELETE')
+     OR has_table_privilege('aha_runtime_rehearsal', 'aha.sync_changes', 'INSERT')
+     OR has_table_privilege('aha_runtime_rehearsal', 'aha.sync_conflicts', 'SELECT') THEN
+    RAISE EXCEPTION 'runtime rehearsal role has direct canonical or sync-journal table privilege';
   END IF;
 
   IF NOT has_function_privilege('aha_runtime_rehearsal', 'aha.commit_local_import_v1(text,text,text,text,text,text,jsonb)', 'EXECUTE') THEN
     RAISE EXCEPTION 'runtime rehearsal role cannot execute the explicit import command';
   END IF;
 
+  IF NOT has_function_privilege('aha_runtime_rehearsal', 'aha.bootstrap_sync_snapshot_v1(text,text,bigint,integer)', 'EXECUTE')
+     OR NOT has_function_privilege('aha_runtime_rehearsal', 'aha.pull_sync_changes_v1(text,bigint,integer)', 'EXECUTE') THEN
+    RAISE EXCEPTION 'runtime rehearsal role cannot execute the narrow sync read boundary';
+  END IF;
+
   IF has_function_privilege('aha_runtime_rehearsal', 'aha.record_local_import_item_v1(text,text,text,text,text,text,text,text,text)', 'EXECUTE') THEN
     RAISE EXCEPTION 'runtime rehearsal role can execute internal import helper directly';
+  END IF;
+
+  IF has_function_privilege('aha_runtime_rehearsal', 'aha.sync_object_snapshot_v1(text,text,text)', 'EXECUTE') THEN
+    RAISE EXCEPTION 'runtime rehearsal role can execute internal sync snapshot helper directly';
   END IF;
 END
 $do$;
@@ -133,6 +146,12 @@ BEGIN
   IF EXISTS (SELECT 1 FROM aha.conversations WHERE id='should_not_survive_collision') THEN
     RAISE EXCEPTION 'cross-tenant collision left partial data';
   END IF;
+
+  SELECT count(*) INTO n FROM aha.sync_changes;
+  IF n <> 0 THEN RAISE EXCEPTION 'read-only sync rehearsal unexpectedly wrote journal rows: %', n; END IF;
+
+  SELECT count(*) INTO n FROM aha.sync_conflicts;
+  IF n <> 0 THEN RAISE EXCEPTION 'read-only sync rehearsal unexpectedly wrote conflict rows: %', n; END IF;
 END
 $do$;
 SQL
