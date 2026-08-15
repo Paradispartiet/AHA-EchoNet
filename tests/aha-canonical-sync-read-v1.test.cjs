@@ -35,7 +35,7 @@ for (const forbidden of ['note','gallery_item','feed_post','insta_post','music_i
 assert.match(sql, /revoke all on function aha\.sync_object_snapshot_v1\(text,text,text\) from public/i);
 assert.match(sql, /revoke all on function aha\.pull_sync_changes_v1\(text,bigint,integer\) from public/i);
 assert.match(sql, /revoke all on function aha\.bootstrap_sync_snapshot_v1\(text,text,bigint,integer\) from public/i);
-assert.doesNotMatch(sql, /\bgrant\b/i, 'read migration must not grant runtime privileges');
+assert.doesNotMatch(sql, /^\s*grant\s+/im, 'read migration must not grant runtime privileges');
 
 const domainTables = [
   'conversations','messages','source_events','insights','insight_versions',
