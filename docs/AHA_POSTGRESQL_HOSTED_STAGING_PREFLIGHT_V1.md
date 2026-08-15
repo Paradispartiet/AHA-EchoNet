@@ -72,6 +72,20 @@ PGOPTIONS='-c default_transaction_read_only=on ...'
 
 Preflighten kjører ikke schema- eller datawrites mot hosted database og bruker ikke `psql -f`.
 
+## Runtime-role: NOINHERIT er ikke nok
+
+En login-role kan være `NOINHERIT` og samtidig være medlem av en privilegert rolle som den kan gå inn i med `SET ROLE`. Derfor er det ikke tilstrekkelig å bare kontrollere runtime-rollens egne `rolsuper`/`rolbypassrls`-flagg.
+
+AHA bruker en versjonskompatibel og konservativ regel for PostgreSQL 15+:
+
+```text
+runtime-role må ha null medlemskap i andre roller med SUPERUSER eller BYPASSRLS
+```
+
+Preflighten bruker `pg_has_role(current_user, privileged_role, 'member')`. På PostgreSQL 15 tilsvarer medlemskap retten til `SET ROLE`. Nyere PostgreSQL har finere `SET`-opsjoner, men AHA beholder den strengere medlemskapsregelen som fail-closed least-privilege-policy. En runtime-identitet som er knyttet til en BYPASSRLS-rolle skal ikke brukes selv om den aktuelle membershipen en dag er konfigurert med svakere arv/SET-semantikk.
+
+Dette er særlig relevant i Supabase: den innebygde `authenticator`-rollen er en PostgREST-infrastrukturrolle som er laget for rollebytte etter JWT. Den er derfor ikke en generell NestJS application runtime-role for AHA.
+
 ## Kontroller
 
 Preflighten krever:
@@ -88,30 +102,31 @@ Preflighten krever:
 10. runtime-role har ikke `BYPASSRLS`;
 11. runtime-role har ikke `CREATEDB` eller `CREATEROLE`;
 12. runtime-role har `NOINHERIT`;
-13. runtime-role eier ingen canonical `aha`-tabeller;
-14. runtime-role har ingen direkte `INSERT/UPDATE/DELETE/TRUNCATE/REFERENCES/TRIGGER` på `aha.*`;
-15. hvis canonical schema finnes, må runtime-role kunne kjøre den eksplisitte local-import-kommandoen og ikke den interne receipt-helperen.
+13. runtime-role er ikke medlem av noen annen rolle med `SUPERUSER` eller `BYPASSRLS`;
+14. runtime-role eier ingen canonical `aha`-tabeller;
+15. runtime-role har ingen direkte `INSERT/UPDATE/DELETE/TRUNCATE/REFERENCES/TRIGGER` på `aha.*`;
+16. hvis canonical schema finnes, må runtime-role kunne kjøre den eksplisitte local-import-kommandoen og ikke den interne receipt-helperen.
+
+NestJS gjør den samme medlemskapskontrollen inne i `CanonicalDatabaseService` før repository-kode får kjøre. Hosted preflight og runtime-sjekk skal derfor feile på samme privilegieklasse.
 
 ## Hosted rehearsal-status
 
-Den isolerte `AHA Staging`-databasen er allerede brukt til en direkte hosted rehearsal via Supabase-administrasjonskoblingen:
+Den isolerte `AHA Staging`-databasen er brukt til direkte canonical hosted rehearsals via Supabase-administrasjonskoblingen:
 
-- 39/39 canonical tabeller med RLS;
-- 36 read-policyer;
+- canonical schema med RLS;
+- tenant-isolasjon;
+- import/idempotency/conflict-rehearsal;
 - ingen `PUBLIC EXECUTE` på canonical SECURITY DEFINER-funksjoner;
-- to isolerte tenants;
-- første import + idempotent retry;
-- cross-tenant ID-kollisjon med full rollback;
-- testfixtures og rehearsal-role ryddet bort etter verifikasjon;
-- Supabase Security Advisor uten canonical WARN etter search-path-hardening;
-- Supabase Performance Advisor uten `unindexed_foreign_keys` etter FK-index-hardening.
+- Supabase Security/Performance Advisor-gjennomganger.
 
-Dette er stagingbevis, ikke produksjonsaktivering.
+En tidligere rehearsal-role ble ryddet bort etter verifikasjon. Dette historiske stagingbeviset betyr derfor ikke at en egnet persistent NestJS runtime-role finnes i databasen i dag; den må alltid bevises på nytt av denne preflighten.
 
 ## Hva en grønn preflight betyr
 
-En grønn kjøring betyr at de lagrede GitHub-staging-DSN-ene treffer riktig Supabase-prosjekt over TLS og at runtime-rollen har forventet minst privilegium. Den betyr ikke at frontendimport, automatisk sync, EchoNet eller produksjonsbackend er aktivert.
+En grønn kjøring betyr at de lagrede GitHub-staging-DSN-ene treffer riktig Supabase-prosjekt over TLS og at runtime-rollen har forventet minst privilegium, **inkludert null privilegie-eskalering via role membership**. Den betyr ikke at frontendimport, automatisk sync, EchoNet eller produksjonsbackend er aktivert.
+
+Hosted preflighten aktiverer heller ikke browserlagets `IndexedDB outbox`; outbox, cursors og tombstones forblir en separat, eksplisitt frontend-sync-grense.
 
 ## Neste port
 
-Etter hosted database-rehearsal går backend-roadmapen videre til **IndexedDB outbox + eksplisitt bidirectional sync**, fortsatt bak fail-closed runtime-flagg. Hosted preflight skal forbli en separat manuell sikkerhetsport.
+Hosted preflight forblir en separat manuell sikkerhetsport foran enhver staging-runtime- eller canonical sync-aktivering. En rolle som feiler medlemskapskontrollen skal erstattes av en egen minst-privilegert AHA runtime-identitet; kontrollen skal ikke svekkes for å få staging grønn.
