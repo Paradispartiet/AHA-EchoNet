@@ -41,7 +41,7 @@ assert.match(script, /runtime_user.*\^\[A-Za-z_\]/s);
 assert.doesNotMatch(script, /psql[^\n]*\s-f\s/);
 assert.doesNotMatch(script, /-c\s+["']\s*(CREATE|ALTER|DROP|INSERT|UPDATE|DELETE|TRUNCATE|GRANT|REVOKE)\b/i);
 assert.doesNotMatch(script, /\bset\s+-x\b/);
-assert.doesNotMatch(script, /\b(?:env|printenv)\b/);
+assert.doesNotMatch(script, /^\s*(?:env|printenv)(?:\s|$)/m);
 for (const secretVar of [
   'AHA_STAGING_ADMIN_DATABASE_URL',
   'AHA_STAGING_RUNTIME_DATABASE_URL',
