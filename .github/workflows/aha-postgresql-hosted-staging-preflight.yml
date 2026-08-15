@@ -20,9 +20,9 @@ jobs:
 
     env:
       AHA_HOSTED_STAGING_CONFIRMATION: ${{ inputs.confirmation }}
+      AHA_STAGING_PROJECT_REF: sstuzwppsheivczyqrim
       AHA_STAGING_ADMIN_DATABASE_URL: ${{ secrets.AHA_STAGING_ADMIN_DATABASE_URL }}
       AHA_STAGING_RUNTIME_DATABASE_URL: ${{ secrets.AHA_STAGING_RUNTIME_DATABASE_URL }}
-      AHA_STAGING_DATABASE_FINGERPRINT: ${{ secrets.AHA_STAGING_DATABASE_FINGERPRINT }}
 
     steps:
       - name: Checkout repository
