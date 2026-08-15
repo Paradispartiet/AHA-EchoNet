@@ -12,6 +12,7 @@ import {
 interface RuntimeSafetyRow {
   row_security_on: boolean;
   bypasses_rls: boolean;
+  has_privileged_role_membership: boolean;
   can_assume_table_owner: boolean;
   profiles_table_present: boolean;
   schema_versions_table_present: boolean;
@@ -25,6 +26,13 @@ const RUNTIME_SAFETY_QUERY = `
       from pg_roles r
       where r.rolname = current_user
     ), true) as bypasses_rls,
+    exists(
+      select 1
+      from pg_roles privileged_role
+      where privileged_role.rolname <> current_user
+        and (privileged_role.rolsuper or privileged_role.rolbypassrls)
+        and pg_has_role(current_user, privileged_role.oid, 'member')
+    ) as has_privileged_role_membership,
     coalesce((
       select pg_has_role(current_user, owner_role.rolname, 'member')
       from pg_class c
@@ -187,7 +195,9 @@ function readinessFromRow(row: RuntimeSafetyRow | undefined): DatabaseReadiness 
     });
   }
 
-  const safeRuntimeRole = !row.bypasses_rls && !row.can_assume_table_owner;
+  const safeRuntimeRole = !row.bypasses_rls
+    && !row.has_privileged_role_membership
+    && !row.can_assume_table_owner;
   const canonicalSchemaPresent = row.profiles_table_present && row.schema_versions_table_present;
   const status: DatabaseReadiness["status"] = !safeRuntimeRole
     ? "unsafe_role"
