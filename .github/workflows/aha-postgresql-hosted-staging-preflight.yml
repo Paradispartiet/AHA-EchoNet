@@ -1,0 +1,45 @@
+name: AHA PostgreSQL hosted staging preflight
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: "Skriv RUN_AHA_HOSTED_STAGING_PREFLIGHT for å kjøre read-only stagingkontroll"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  hosted-staging-preflight:
+    name: Hosted PostgreSQL staging read-only preflight
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: aha-postgresql-staging
+
+    env:
+      AHA_HOSTED_STAGING_CONFIRMATION: ${{ inputs.confirmation }}
+      AHA_STAGING_ADMIN_DATABASE_URL: ${{ secrets.AHA_STAGING_ADMIN_DATABASE_URL }}
+      AHA_STAGING_RUNTIME_DATABASE_URL: ${{ secrets.AHA_STAGING_RUNTIME_DATABASE_URL }}
+      AHA_STAGING_DATABASE_FINGERPRINT: ${{ secrets.AHA_STAGING_DATABASE_FINGERPRINT }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Validate explicit staging confirmation
+        shell: bash
+        run: |
+          if [[ "$AHA_HOSTED_STAGING_CONFIRMATION" != "RUN_AHA_HOSTED_STAGING_PREFLIGHT" ]]; then
+            echo "Exact hosted-staging confirmation is required." >&2
+            exit 1
+          fi
+
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Run fail-closed read-only hosted staging preflight
+        run: bash scripts/aha-postgresql-hosted-staging-preflight.sh
