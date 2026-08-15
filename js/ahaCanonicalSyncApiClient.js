@@ -12,6 +12,11 @@
     if (!result) throw new Error(`${field} is required`);
     return result;
   }
+  function boundedText(value, field, min, max) {
+    const result = requiredText(value, field);
+    if (result.length < min || result.length > max) throw new Error(`${field} must contain between ${min} and ${max} characters`);
+    return result;
+  }
   function nonNegativeInteger(value, field) {
     const number = Number(value ?? 0);
     if (!Number.isInteger(number) || number < 0) throw new Error(`${field} must be a non-negative integer`);
@@ -107,7 +112,7 @@
       body: {
         workspaceId: requiredText(row.workspaceId, "workspaceId"),
         deviceId: requiredText(row.deviceId, "deviceId"),
-        idempotencyKey: requiredText(row.idempotencyKey || row.id, "idempotencyKey"),
+        idempotencyKey: boundedText(row.idempotencyKey, "idempotencyKey", 8, 256),
         objectType: requiredText(row.objectType, "objectType"),
         objectId: requiredText(row.objectId, "objectId"),
         operation: requiredText(row.operation, "operation"),
