@@ -74,9 +74,10 @@ Stores:
 outbox
 cursors
 tombstones
+object_states
 ```
 
-`js/ahaCanonicalSyncStore.js` håndterer kun lokal persistence. Den har ikke nettverkskall.
+`js/ahaCanonicalSyncStore.js` håndterer kun lokal sync-metadata. Store v2 legger til `object_states` for sist kjente server-revisjon/hash og lokal baseline-hash. Den har ikke nettverkskall.
 
 `js/ahaCanonicalSyncHash.js` definerer den eneste client-side payload-hashkontrakten. Den:
 
@@ -92,7 +93,13 @@ NestJS bruker samme algoritme. For `delete` er payload canonical JSON `null`, og
 null
 ```
 
-`js/ahaCanonicalFrontendSyncAdapter.js` implementerer nå den eksplisitte frontend-adapteren, men er fortsatt ikke lastet eller produktaktivert. Den gjenbruker `AHALocalAccountImport.buildPlan()` som eksisterende mapper fra dagens lokale AHA-modeller, projiserer kun de ti canonical typene til serverens snake_case-kontrakt, håndhever privat/personal scope, beregner payload-hash via `AHACanonicalSyncHash` og kan eksplisitt legge ferdig validerte events i `AHACanonicalSyncStore`-outboxen. Den har ingen nettverkskall eller login-hook.
+`js/ahaCanonicalFrontendSyncAdapter.js` er den eksplisitte lokale → canonical-adapteren. Den gjenbruker `AHALocalAccountImport.buildPlan()`, projiserer bare de ti canonical typene, håndhever privat/personal scope og beregner payload-hash via `AHACanonicalSyncHash`.
+
+`js/ahaCanonicalLocalApplyAdapter.js` er den motsatte canonical → lokale grensen. Den kan bare skrive tilbake til de seks eksisterende canonical-kildene i AHA og berører aldri Notes/Gallery/Feed/Insta/Music/Training/Personal AI/workbench.
+
+`js/ahaCanonicalSyncApiClient.js` inneholder bare eksplisitte kall til `push`, `bootstrap` og `pull`. Den gjør ingen request når scriptet lastes og leser først auth-session inne i et faktisk kall.
+
+`js/ahaCanonicalManualSyncRunner.js` orkestrerer den manuelle kjeden, men er fortsatt ikke lastet eller produktaktivert. Den krever både `explicitUserAction: true` og en eksplisitt `workspaceId`. Første kjøring gjør push → bootstrap → umiddelbar delta-pull fra bootstrap-watermark; senere kjøringer bruker vanlig delta-pull. Konfliktobjekter blir blokkert fra server→lokal apply til brukeren senere tar et eksplisitt valg.
 
 ## HTTP-grense
 
@@ -199,7 +206,7 @@ API-et returnerer disse i standard success-envelope med:
 data.status = "conflict"
 ```
 
-Dette er bevisst: outbox kan lagre konflikten deterministisk og UI kan senere tilby eksplisitt brukerbeslutning. Ingen last-write-wins eller automatisk tombstone-resurrection brukes.
+Dette er bevisst: outbox lagrer konflikten deterministisk og runneren hopper over server→lokal apply for samme objekt. Senere konflikt-UI skal vise lokal og servertilstand og kreve eksplisitt brukerbeslutning. Ingen last-write-wins eller automatisk tombstone-resurrection brukes.
 
 ## Idempotency
 
@@ -214,6 +221,8 @@ Dette er bevisst: outbox kan lagre konflikten deterministisk og UI kan senere ti
 - databasen sin hash av mottatt JSON
 
 Nøyaktig retry returnerer lagret resultat med `idempotentReplay: true`. Samme key brukt på en annen request avvises.
+
+Frontend-runneren sender ikke den potensielt lange IndexedDB-event-ID-en direkte som HTTP-idempotency-key. Den avleder i stedet en bounded `sync:<sha256(...)>` som inkluderer device, workspace, objekt, operasjon, `baseRevision` og payload-hash. Dermed endres nøkkelen når den semantiske push-kommandoen endres og holder seg innen DTO-grensen på 8–256 tegn.
 
 ## Compound objekter
 
@@ -252,16 +261,16 @@ Alle DB-sesjoner beholder:
 
 ## Hva som fortsatt ikke er aktivert
 
-API-et og frontend-adapteren:
+API-et og de nye frontendbibliotekene:
 
-- laster ikke sync-script i produkt-UI
+- laster ikke canonical sync-script i produkt-UI
 - kobler ikke login til sync
 - starter ikke background sync
 - aktiverer ikke EchoNet/gruppedeling
 - konverterer ikke legacy `syncFromDatabase()` til canonical sync
-- kaller ennå ikke bootstrap/pull/push fra Sync Hub
-- applicerer ennå ikke pulled server-state tilbake til lokale modeller
+- kobler ikke den eksisterende Sync Hub-knappen til canonical runner
 - lager ikke konflikt-UI
+- oppdager ikke personal workspace automatisk; staging-/aktiveringslaget må foreløpig levere eksplisitt `workspaceId`
 - aktiverer ikke runtime environment flagg
 
-Neste frontend-leveranse er derfor den eksplisitte manuelle ende-til-ende-runneren: `IndexedDB outbox → POST /v1/sync/push → bootstrap/delta-pull → lokal apply`. Den skal bare starte etter brukerhandling, og konfliktresultater skal beholdes synlige for eksplisitt valg i stedet for automatisk merge.
+Neste leveranse er **AHA Staging activation bridge**: last bibliotekene kun i kontrollert staging, koble én eksplisitt brukerhandling, lever eksplisitt personal `workspaceId` og kjør browser → NestJS → PostgreSQL → browser-testmatrisen før produksjonsaktivering.
