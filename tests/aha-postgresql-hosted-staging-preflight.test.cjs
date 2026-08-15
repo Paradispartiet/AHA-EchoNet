@@ -53,7 +53,7 @@ for (const secretVar of [
 
 const docs = read('docs/AHA_POSTGRESQL_HOSTED_STAGING_PREFLIGHT_V1.md');
 assert.match(docs, /read-only/i);
-assert.match(docs, /ikke.*produksjonsaktivering/i);
+assert.match(docs, /ingen\s+migrasjon\s+eller\s+produksjonsaktivering/i);
 assert.match(docs, /hosted migration \+ import rehearsal/i);
 
 console.log('aha-postgresql-hosted-staging-preflight.test.cjs passed');
