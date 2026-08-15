@@ -258,7 +258,7 @@ API-et og frontend-adapteren:
 - kobler ikke login til sync
 - starter ikke background sync
 - aktiverer ikke EchoNet/gruppedeling
-- bruker ikke legacy `syncFromDatabase()` som canonical sync-vei
+- konverterer ikke legacy `syncFromDatabase()` til canonical sync
 - kaller ennå ikke bootstrap/pull/push fra Sync Hub
 - applicerer ennå ikke pulled server-state tilbake til lokale modeller
 - lager ikke konflikt-UI
