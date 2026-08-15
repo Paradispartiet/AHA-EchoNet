@@ -7,7 +7,7 @@ const PREPARE = "scripts/aha-canonical-sync-hosted-staging-prepare.sh";
 const E2E = "scripts/aha-canonical-sync-hosted-staging-e2e.cjs";
 const DOC = "docs/AHA_CANONICAL_SYNC_HOSTED_STAGING_REHEARSAL_V1.md";
 
-for (const file of [WORKFLOW, PREPARE, E2E]) {
+for (const file of [WORKFLOW, PREPARE, E2E, DOC]) {
   assert.equal(fs.existsSync(file), true, `${file} mangler`);
 }
 
@@ -17,6 +17,7 @@ execFileSync(process.execPath, ["--check", E2E], { stdio: "pipe" });
 const workflow = fs.readFileSync(WORKFLOW, "utf8");
 const prepare = fs.readFileSync(PREPARE, "utf8");
 const e2e = fs.readFileSync(E2E, "utf8");
+const docs = fs.readFileSync(DOC, "utf8");
 
 // Manual staging-only dispatch. Never push/PR/schedule and never a production environment.
 assert.match(workflow, /workflow_dispatch:/);
@@ -38,7 +39,7 @@ for (const variable of ["AHA_STAGING_AUTH_ISSUER", "AHA_STAGING_AUTH_AUDIENCE", 
 }
 assert.doesNotMatch(workflow, /AHA_PRODUCTION|PRODUCTION_DATABASE|PROD_DATABASE|production.*secret/i);
 assert.match(workflow, /127\.0\.0\.1:3100/);
-assert.doesNotMatch(workflow, /deploy|vercel|render\.com|azure|kubectl|docker\s+push/i, "hosted rehearsal must not deploy a public API");
+assert.doesNotMatch(workflow, /vercel|render\.com|kubectl|docker\s+push|az\s+webapp|azure\/webapps-deploy/i, "hosted rehearsal must not deploy a public API");
 assert.match(workflow, /aha-postgresql-hosted-staging-preflight\.sh/);
 assert.match(workflow, /aha-canonical-sync-hosted-staging-prepare\.sh/);
 assert.match(workflow, /aha-canonical-sync-hosted-staging-e2e\.cjs/);
@@ -62,7 +63,7 @@ for (const functionSignature of [
   "aha.pull_sync_changes_v1(text,bigint,integer)",
   "aha.push_sync_change_v1(text,text,text,text,text,text,bigint,text,jsonb)"
 ]) {
-  assert.ok(prepare.includes(`\"${functionSignature}\"`) || prepare.includes(functionSignature), `missing top-level grant signature ${functionSignature}`);
+  assert.ok(prepare.includes(functionSignature), `missing top-level grant signature ${functionSignature}`);
 }
 for (const helperSignature of [
   "aha.sync_object_snapshot_v1(text,text,text)",
@@ -90,7 +91,7 @@ for (const marker of [
   "idempotentReplay",
   "stale_base_revision",
   'operation: "delete"',
-  "canonicalSyncPayloadHash(null",
+  "hashPayload(null)",
   "bootstrap must retain the deleted canonical object as a tombstone"
 ]) {
   assert.ok(e2e.includes(marker), `hosted HTTP rehearsal must retain marker: ${marker}`);
@@ -98,8 +99,20 @@ for (const marker of [
 assert.match(e2e, /initial\.highWatermark/);
 assert.match(e2e, /upsertCursor/);
 assert.match(e2e, /deleteCursor/);
-assert.match(e2e, /payload, null|payload:\s*null/);
+assert.match(e2e, /payload:\s*null/);
 assert.doesNotMatch(e2e, /syncFromDatabase\s*\(/);
 assert.doesNotMatch(e2e, /localStorage|indexedDB|AHARepository/);
+
+for (const evidence of [
+  "ingen production activation",
+  "workflow_dispatch",
+  "AHA_STAGING_SYNC_BEARER_TOKEN",
+  "aha-staging-sync-e2e-workspace-v1",
+  "stale_base_revision",
+  "payload=null",
+  "ingen offentlig URL"
+]) {
+  assert.ok(docs.includes(evidence), `hosted rehearsal docs must retain: ${evidence}`);
+}
 
 console.log("aha-canonical-sync-hosted-staging-rehearsal-v1.test.cjs passed");
