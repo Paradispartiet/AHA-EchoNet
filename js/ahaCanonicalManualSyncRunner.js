@@ -21,7 +21,9 @@
     if (!Number.isInteger(number) || number < 0) throw new Error(`${field} must be a non-negative integer`);
     return number;
   }
-  function objectKey(objectType, objectId) { return `${requiredText(objectType, "objectType")}:${requiredText(objectId, "objectId")}`; }
+  function objectKey(objectType, objectId) {
+    return `${requiredText(objectType, "objectType")}:${requiredText(objectId, "objectId")}`;
+  }
 
   function dependencies(options = {}) {
     const store = options.store || global.AHACanonicalSyncStore;
@@ -35,7 +37,7 @@
     if (!localImport?.snapshotFromStorage) throw new Error("AHALocalAccountImport unavailable");
     if (!localApply?.prepareEntries || !localApply?.writePrepared) throw new Error("AHACanonicalLocalApplyAdapter unavailable");
     if (!hash?.canonicalSyncPayloadHash) throw new Error("AHACanonicalSyncHash unavailable");
-    if (!api?.profile || !api?.push || !api?.bootstrap || !api?.pull) throw new Error("AHACanonicalSyncApiClient unavailable");
+    if (!api?.push || !api?.bootstrap || !api?.pull) throw new Error("AHACanonicalSyncApiClient unavailable");
     return { store, frontend, localImport, localApply, hash, api };
   }
 
@@ -53,6 +55,10 @@
       auth: options.auth || global.AHAAuth,
       fetch: options.fetch || global.fetch
     };
+  }
+
+  function resolveWorkspaceId(options = {}) {
+    return requiredText(options.workspaceId, "workspaceId");
   }
 
   function randomDeviceId(options = {}) {
@@ -77,17 +83,25 @@
     return next;
   }
 
-  async function resolveWorkspaceId(api, options = {}) {
-    const explicit = text(options.workspaceId);
-    if (explicit) return explicit;
-    const profile = await api.profile(apiOptions(options));
-    const workspaceId = text(profile?.personalWorkspaceId);
-    if (!workspaceId) throw new Error("canonical profile has no active personalWorkspaceId");
-    return workspaceId;
+  async function idempotencyKeyForEvent(event, hash) {
+    const row = obj(event);
+    const digest = await hash.canonicalSyncPayloadHash({
+      deviceId: requiredText(row.deviceId, "deviceId"),
+      workspaceId: requiredText(row.workspaceId, "workspaceId"),
+      objectType: requiredText(row.objectType, "objectType"),
+      objectId: requiredText(row.objectId, "objectId"),
+      operation: requiredText(row.operation, "operation"),
+      baseRevision: nonNegativeInteger(row.baseRevision, "baseRevision"),
+      payloadHash: requiredText(row.payloadHash, "payloadHash")
+    });
+    return `sync:${digest}`;
   }
 
   function revisionsMap(states) {
-    return Object.fromEntries(arr(states).map((state) => [objectKey(state.objectType, state.objectId), nonNegativeInteger(state.revision, "revision")]));
+    return Object.fromEntries(arr(states).map((state) => [
+      objectKey(state.objectType, state.objectId),
+      nonNegativeInteger(state.revision, "revision")
+    ]));
   }
 
   function conflictKeySet(conflicts, workspaceId) {
@@ -141,7 +155,8 @@
 
   async function enqueueChangedEvents(context, local, options = {}) {
     const { store } = context.deps;
-    const pending = (await store.listPending(storeOptions(options))).filter((item) => item.workspaceId === context.workspaceId && item.deviceId === context.deviceId);
+    const pending = (await store.listPending(storeOptions(options)))
+      .filter((item) => item.workspaceId === context.workspaceId && item.deviceId === context.deviceId);
     const pendingByObject = new Map();
     for (const event of pending) {
       const key = objectKey(event.objectType, event.objectId);
@@ -166,7 +181,7 @@
   }
 
   async function pushOutbox(context, options = {}) {
-    const { store, api } = context.deps;
+    const { store, api, hash } = context.deps;
     const pending = (await store.listPending(storeOptions(options)))
       .filter((item) => item.workspaceId === context.workspaceId && item.deviceId === context.deviceId)
       .sort((a, b) => String(a.createdAt).localeCompare(String(b.createdAt)));
@@ -177,7 +192,8 @@
       summary.attempted += 1;
       let result;
       try {
-        result = await api.push({ ...event, idempotencyKey: event.id }, apiOptions(options));
+        const idempotencyKey = await idempotencyKeyForEvent(event, hash);
+        result = await api.push({ ...event, idempotencyKey }, apiOptions(options));
       } catch (error) {
         const retryable = error?.retryable === true;
         await store.markOutboxResult(event.id, {
@@ -373,9 +389,9 @@
   async function run(options = {}) {
     if (options.explicitUserAction !== true) throw new Error("canonical manual sync requires explicitUserAction=true");
     const deps = dependencies(options);
+    const workspaceId = resolveWorkspaceId(options);
     const localStorage = storage(options);
     const deviceId = resolveDeviceId(options);
-    const workspaceId = await resolveWorkspaceId(deps.api, options);
     const context = { deps, localStorage, deviceId, workspaceId };
 
     const local = await prepareCurrentLocalEvents(context, options);
@@ -398,11 +414,30 @@
       mode: "explicit_manual_canonical_sync",
       workspaceId,
       deviceId,
-      local: { prepared: local.prepared.length, changed: local.changed.length, blockedByExistingConflict: local.blocked.size },
+      local: {
+        prepared: local.prepared.length,
+        changed: local.changed.length,
+        blockedByExistingConflict: local.blocked.size
+      },
       enqueue,
-      push: { attempted: pushed.attempted, synced: pushed.synced, conflicts: pushed.conflicts, rejected: pushed.rejected, retry: pushed.retry },
-      bootstrap: bootstrapResult ? { pages: bootstrapResult.pages, applied: bootstrapResult.applied, skippedConflicts: bootstrapResult.skippedConflicts, highWatermark: bootstrapResult.highWatermark } : null,
-      pull: { pages: pullResult.pages, applied: pullResult.applied, skippedConflicts: pullResult.skippedConflicts },
+      push: {
+        attempted: pushed.attempted,
+        synced: pushed.synced,
+        conflicts: pushed.conflicts,
+        rejected: pushed.rejected,
+        retry: pushed.retry
+      },
+      bootstrap: bootstrapResult ? {
+        pages: bootstrapResult.pages,
+        applied: bootstrapResult.applied,
+        skippedConflicts: bootstrapResult.skippedConflicts,
+        highWatermark: bootstrapResult.highWatermark
+      } : null,
+      pull: {
+        pages: pullResult.pages,
+        applied: pullResult.applied,
+        skippedConflicts: pullResult.skippedConflicts
+      },
       conflicts: conflicts.filter((item) => item.workspaceId === workspaceId).map((item) => ({
         id: item.id,
         objectType: item.objectType,
@@ -429,6 +464,8 @@
       loginTriggersSync: false,
       executesOnLoad: false,
       requiresExplicitUserAction: true,
+      requiresExplicitWorkspaceId: true,
+      workspaceDiscovery: false,
       legacySyncRoutesUsed: false,
       nextActivation: "staging_explicit_control_only"
     };
@@ -439,6 +476,7 @@
     DEVICE_ID_STORAGE_KEY,
     resolveDeviceId,
     resolveWorkspaceId,
+    idempotencyKeyForEvent,
     prepareCurrentLocalEvents,
     enqueueChangedEvents,
     pushOutbox,
