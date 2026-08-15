@@ -134,6 +134,11 @@ PGPASSWORD="$AHA_RUNTIME_PASSWORD" \
   -h "$PGHOST" -p "$PGPORT" -d "$PGDATABASE" -U aha_runtime_rehearsal \
   -f supabase/tests/aha_postgresql_sync_push_rehearsal_v1.sql
 
+PGPASSWORD="$AHA_RUNTIME_PASSWORD" \
+  psql -X -v ON_ERROR_STOP=1 \
+  -h "$PGHOST" -p "$PGPORT" -d "$PGDATABASE" -U aha_runtime_rehearsal \
+  -f supabase/tests/aha_postgresql_sync_scope_rehearsal_v1.sql
+
 admin_psql <<'SQL'
 DO $do$
 DECLARE
