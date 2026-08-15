@@ -11,6 +11,7 @@ export interface CurrentProfileReadModel {
   createdAt: string;
   updatedAt: string;
   revision: number;
+  personalWorkspaceId: string | null;
 }
 
 export interface CurrentProfileRepository {
@@ -28,6 +29,7 @@ interface CurrentProfileRow {
   created_at: Date | string;
   updated_at: Date | string;
   revision: string | number;
+  personal_workspace_id: string | null;
 }
 
 @Injectable()
@@ -38,18 +40,28 @@ export class PgCurrentProfileRepository implements CurrentProfileRepository {
     return this.database.withReadSession(principal, async (client) => {
       const result = await client.query<CurrentProfileRow>(`
         select
-          id,
-          display_name,
-          locale,
-          timezone,
-          status,
-          created_at,
-          updated_at,
-          revision
-        from aha.profiles
-        where id = aha.current_profile_id()
-          and status = 'active'
-          and deleted_at is null
+          p.id,
+          p.display_name,
+          p.locale,
+          p.timezone,
+          p.status,
+          p.created_at,
+          p.updated_at,
+          p.revision,
+          (
+            select w.id
+            from aha.workspaces w
+            where w.owner_profile_id = p.id
+              and w.workspace_type = 'personal'
+              and w.status = 'active'
+              and w.deleted_at is null
+            order by w.created_at asc, w.id asc
+            limit 1
+          ) as personal_workspace_id
+        from aha.profiles p
+        where p.id = aha.current_profile_id()
+          and p.status = 'active'
+          and p.deleted_at is null
         limit 1
       `);
       const row = result.rows[0];
@@ -63,7 +75,8 @@ export class PgCurrentProfileRepository implements CurrentProfileRepository {
         status: "active",
         createdAt: iso(row.created_at),
         updatedAt: iso(row.updated_at),
-        revision: Number(row.revision)
+        revision: Number(row.revision),
+        personalWorkspaceId: row.personal_workspace_id || null
       });
     });
   }
