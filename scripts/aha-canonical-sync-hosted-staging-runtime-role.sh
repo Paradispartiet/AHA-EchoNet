@@ -190,7 +190,7 @@ drop_role() {
     exit 1
   fi
 
-  local role_exists role_safety
+  local role_exists role_safety owned_objects privileged_memberships
   role_exists="$(admin_psql -v role_name="$role_name" -c "select exists(select 1 from pg_roles where rolname=:'role_name')::int")"
   if [[ "$role_exists" == "0" ]]; then
     echo "AHA canonical sync ephemeral staging runtime: already absent"
@@ -198,20 +198,52 @@ drop_role() {
   fi
 
   role_safety="$(admin_psql -v role_name="$role_name" -c "
-    select rolsuper::int, rolbypassrls::int, rolcreatedb::int, rolcreaterole::int, rolcanlogin::int
+    select rolsuper::int, rolbypassrls::int, rolcreatedb::int, rolcreaterole::int, rolinherit::int, rolcanlogin::int
     from pg_roles where rolname=:'role_name'
   ")"
-  if [[ "$role_safety" != "0|0|0|0|1" ]]; then
+  if [[ "$role_safety" != "0|0|0|0|0|1" ]]; then
     echo "Refusing to drop an AHA rehearsal role whose privilege shape changed unexpectedly." >&2
     exit 1
   fi
 
+  privileged_memberships="$(admin_psql -v role_name="$role_name" -c "
+    select count(*)
+    from pg_roles runtime_role
+    cross join pg_roles privileged_role
+    where runtime_role.rolname=:'role_name'
+      and privileged_role.rolname <> runtime_role.rolname
+      and (privileged_role.rolsuper or privileged_role.rolbypassrls)
+      and pg_has_role(runtime_role.oid, privileged_role.oid, 'member')
+  ")"
+  if [[ "$privileged_memberships" != "0" ]]; then
+    echo "Refusing to clean up an AHA rehearsal role with privileged memberships." >&2
+    exit 1
+  fi
+
+  owned_objects="$(admin_psql -v role_name="$role_name" -c "
+    select count(*)
+    from pg_class c
+    join pg_roles r on r.oid=c.relowner
+    where r.rolname=:'role_name'
+  ")"
+  if [[ "$owned_objects" != "0" ]]; then
+    echo "Refusing to hide unexpected database ownership during AHA runtime cleanup." >&2
+    exit 1
+  fi
+
+  # Revoke only the privileges this rehearsal is allowed to grant. If some unknown
+  # dependency was added to the role, DROP ROLE must fail rather than DROP OWNED
+  # silently erasing evidence of privilege drift.
   admin_psql -v role_name="$role_name" -c "
     select pg_terminate_backend(pid)
     from pg_stat_activity
     where usename=:'role_name'
       and pid <> pg_backend_pid();
-    drop owned by :\"role_name\";
+    revoke execute on function aha.bootstrap_sync_snapshot_v1(text,text,bigint,integer) from :\"role_name\";
+    revoke execute on function aha.pull_sync_changes_v1(text,bigint,integer) from :\"role_name\";
+    revoke execute on function aha.push_sync_change_v1(text,text,text,text,text,text,bigint,text,jsonb) from :\"role_name\";
+    revoke execute on function aha.commit_local_import_v1(text,text,text,text,text,text,jsonb) from :\"role_name\";
+    revoke usage on schema aha from :\"role_name\";
     drop role :\"role_name\";
   " >/dev/null
 
