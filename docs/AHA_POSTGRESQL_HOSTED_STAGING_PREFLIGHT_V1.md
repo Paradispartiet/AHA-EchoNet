@@ -125,6 +125,8 @@ En tidligere rehearsal-role ble ryddet bort etter verifikasjon. Dette historiske
 
 En grønn kjøring betyr at de lagrede GitHub-staging-DSN-ene treffer riktig Supabase-prosjekt over TLS og at runtime-rollen har forventet minst privilegium, **inkludert null privilegie-eskalering via role membership**. Den betyr ikke at frontendimport, automatisk sync, EchoNet eller produksjonsbackend er aktivert.
 
+Hosted preflighten aktiverer heller ikke browserlagets `IndexedDB outbox`; outbox, cursors og tombstones forblir en separat, eksplisitt frontend-sync-grense.
+
 ## Neste port
 
 Hosted preflight forblir en separat manuell sikkerhetsport foran enhver staging-runtime- eller canonical sync-aktivering. En rolle som feiler medlemskapskontrollen skal erstattes av en egen minst-privilegert AHA runtime-identitet; kontrollen skal ikke svekkes for å få staging grønn.
