@@ -101,10 +101,6 @@
     return body.data;
   }
 
-  async function profile(options = {}) {
-    return request("/v1/profile", {}, options);
-  }
-
   async function push(event, options = {}) {
     const row = obj(event);
     return request("/v1/sync/push", {
@@ -155,7 +151,7 @@
     };
   }
 
-  const api = Object.freeze({ VERSION, request, profile, push, bootstrap, pull, getStatus });
+  const api = Object.freeze({ VERSION, request, push, bootstrap, pull, getStatus });
   global.AHACanonicalSyncApiClient = api;
   if (typeof module !== "undefined" && module.exports) module.exports = api;
 })(typeof window !== "undefined" ? window : globalThis);
