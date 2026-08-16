@@ -121,7 +121,7 @@ PY
 }
 
 preflight_role() {
-  local intrinsic privileged_memberships direct_write_grants owned_objects schema_usage routines local_import helper_count
+  local intrinsic privileged_memberships direct_write_grants owned_objects schema_usage accessible_routines
 
   intrinsic="$(admin_psql -v role_name="$ROLE_NAME" -c "
     select rolcanlogin::int, rolsuper::int, rolbypassrls::int, rolcreatedb::int, rolcreaterole::int, rolinherit::int
@@ -150,26 +150,24 @@ preflight_role() {
     select count(*) from pg_class c join pg_roles r on r.oid=c.relowner where r.rolname=:'role_name'
   ")"
   schema_usage="$(admin_psql -v role_name="$ROLE_NAME" -c "select has_schema_privilege(:'role_name','aha','USAGE')::int")"
-  routines="$(admin_psql -v role_name="$ROLE_NAME" -c "
-    select coalesce(string_agg(routine_name, ',' order by routine_name),'')
-    from information_schema.role_routine_grants
-    where grantee=:'role_name' and routine_schema='aha' and privilege_type='EXECUTE'
-  ")"
-  local_import="$(admin_psql -v role_name="$ROLE_NAME" -c "select has_function_privilege(:'role_name','aha.commit_local_import_v1(text,text,text,text,text,text,jsonb)','EXECUTE')::int")"
-  helper_count="$(admin_psql -v role_name="$ROLE_NAME" -c "
-    select
-      has_function_privilege(:'role_name','aha.sync_object_snapshot_v1(text,text,text)','EXECUTE')::int +
-      has_function_privilege(:'role_name','aha.record_sync_conflict_v1(text,text,text,text,text,text,bigint,bigint,text,text,text,text,jsonb)','EXECUTE')::int +
-      has_function_privilege(:'role_name','aha.sync_apply_upsert_v1(text,text,text,text,jsonb,boolean)','EXECUTE')::int +
-      has_function_privilege(:'role_name','aha.sync_apply_delete_v1(text,text,text)','EXECUTE')::int
+
+  # Check the effective EXECUTE surface across every function in schema aha,
+  # including privileges inherited through PUBLIC. This catches future helpers
+  # becoming callable even when no direct grant was added to this role.
+  accessible_routines="$(admin_psql -v role_name="$ROLE_NAME" -c "
+    select coalesce(string_agg(p.proname, ',' order by p.proname),'')
+    from pg_proc p
+    join pg_namespace n on n.oid=p.pronamespace
+    where n.nspname='aha'
+      and has_function_privilege(:'role_name', p.oid, 'EXECUTE')
   ")"
 
   if [[ "$privileged_memberships" != "0" || "$direct_write_grants" != "0" || "$owned_objects" != "0" || "$schema_usage" != "1" ]]; then
     echo "Persistent staging role failed its least-privilege database boundary." >&2
     exit 1
   fi
-  if [[ "$routines" != "$EXPECTED_ROUTINES" || "$local_import" != "0" || "$helper_count" != "0" ]]; then
-    echo "Persistent staging role failed its exact canonical-sync function boundary." >&2
+  if [[ "$accessible_routines" != "$EXPECTED_ROUTINES" ]]; then
+    echo "Persistent staging role failed its exact effective canonical-sync function boundary." >&2
     exit 1
   fi
 
