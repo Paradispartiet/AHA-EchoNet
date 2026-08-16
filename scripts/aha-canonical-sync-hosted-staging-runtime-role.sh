@@ -13,8 +13,39 @@ require_env() {
 }
 
 admin_psql() {
+  local -a psql_args=()
+  local sql_command=""
+  local has_sql_command=0
+
+  while (($# > 0)); do
+    case "$1" in
+      -c|--command)
+        if [[ $# -lt 2 || $has_sql_command -eq 1 ]]; then
+          echo "admin_psql accepts exactly one SQL command." >&2
+          exit 1
+        fi
+        sql_command="$2"
+        has_sql_command=1
+        shift 2
+        ;;
+      *)
+        psql_args+=("$1")
+        shift
+        ;;
+    esac
+  done
+
+  if ((has_sql_command == 1)); then
+    # psql -c sends server-parsable SQL directly and does not perform psql
+    # variable interpolation. Feed SQL through stdin so :'var' / :"var"
+    # remain quoted by psql before the server sees the statement.
+    PGOPTIONS='-c statement_timeout=8000 -c lock_timeout=2000' \
+      psql "$AHA_STAGING_ADMIN_DATABASE_URL" -X -v ON_ERROR_STOP=1 -A -t -q "${psql_args[@]}" <<<"$sql_command"
+    return
+  fi
+
   PGOPTIONS='-c statement_timeout=8000 -c lock_timeout=2000' \
-    psql "$AHA_STAGING_ADMIN_DATABASE_URL" -X -v ON_ERROR_STOP=1 -A -t -q "$@"
+    psql "$AHA_STAGING_ADMIN_DATABASE_URL" -X -v ON_ERROR_STOP=1 -A -t -q "${psql_args[@]}"
 }
 
 check_admin_target() {
