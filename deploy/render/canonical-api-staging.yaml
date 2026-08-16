@@ -2,6 +2,10 @@
 # This is intentionally NOT the repository-root render.yaml, so merging this
 # file cannot alter the existing Render services until an operator explicitly
 # creates a Blueprint that points at this custom path.
+#
+# The service starts DB/sync-disabled. A separate manual, fail-closed activation
+# workflow injects the short-livedly generated runtime credential + CA directly
+# into Render and only then enables canonical sync.
 
 services:
   - type: web
@@ -21,13 +25,13 @@ services:
       - key: NODE_ENV
         value: production
       - key: AHA_DATABASE_ENABLED
-        value: "true"
+        value: "false"
       - key: AHA_DATABASE_SSL_MODE
         value: verify-full
       - key: AHA_DATABASE_POOL_MAX
         value: "4"
       - key: AHA_CANONICAL_SYNC_ENABLED
-        value: "true"
+        value: "false"
       - key: AHA_LOCAL_IMPORT_ENABLED
         value: "false"
       - key: AHA_ALLOWED_ORIGINS
@@ -42,7 +46,3 @@ services:
         value: https://wshmybqyksrwkawqleiz.supabase.co/auth/v1/.well-known/jwks.json
       - key: AHA_AUDIT_HASH_SALT
         generateValue: true
-      - key: AHA_DATABASE_URL
-        sync: false
-      - key: AHA_DATABASE_SSL_CA_CERT
-        sync: false
