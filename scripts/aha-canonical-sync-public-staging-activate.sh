@@ -227,13 +227,23 @@ rollback_role() {
     return 0
   fi
 
-  admin_psql -v role_name="$ROLE_NAME" -c "alter role :\"role_name\" nologin password null;" >/dev/null
-  local intrinsic
+  # Cut off new sessions and invalidate the generated credential first, then
+  # terminate any pool connections that were opened during the incomplete run.
+  admin_psql -v role_name="$ROLE_NAME" -c "
+    alter role :\"role_name\" nologin password null;
+    select pg_terminate_backend(pid)
+    from pg_stat_activity
+    where usename=:'role_name'
+      and pid <> pg_backend_pid();
+  " >/dev/null
+
+  local intrinsic active_connections
   intrinsic="$(admin_psql -v role_name="$ROLE_NAME" -c "
     select rolcanlogin::int, rolsuper::int, rolbypassrls::int, rolcreatedb::int, rolcreaterole::int, rolinherit::int
     from pg_roles where rolname=:'role_name'
   ")"
-  if [[ "$intrinsic" != "0|0|0|0|0|0" ]]; then
+  active_connections="$(admin_psql -v role_name="$ROLE_NAME" -c "select count(*) from pg_stat_activity where usename=:'role_name' and pid <> pg_backend_pid()")"
+  if [[ "$intrinsic" != "0|0|0|0|0|0" || "$active_connections" != "0" ]]; then
     echo "Persistent staging role rollback failed." >&2
     exit 1
   fi
