@@ -19,9 +19,15 @@ for name in \
   AHA_STAGING_RUNTIME_DATABASE_URL \
   AHA_STAGING_PROJECT_REF \
   AHA_STAGING_SYNC_BEARER_TOKEN \
+  AHA_POSTGRES_SSL_ROOT_CERT \
   AHA_CANONICAL_SYNC_HOSTED_STAGING_CONFIRMATION
   do require_env "$name"
 done
+
+if [[ ! -r "$AHA_POSTGRES_SSL_ROOT_CERT" ]]; then
+  echo "Pinned PostgreSQL CA certificate is not readable." >&2
+  exit 1
+fi
 
 if [[ "$AHA_CANONICAL_SYNC_HOSTED_STAGING_CONFIRMATION" != "$CONFIRMATION" ]]; then
   echo "Hosted canonical-sync staging rehearsal requires the exact confirmation token." >&2
@@ -56,11 +62,15 @@ PY
 readonly_psql() {
   local dsn="$1"
   shift
+  PGSSLMODE=verify-full \
+  PGSSLROOTCERT="$AHA_POSTGRES_SSL_ROOT_CERT" \
   PGOPTIONS='-c default_transaction_read_only=on -c statement_timeout=8000 -c lock_timeout=2000' \
     psql "$dsn" -X -v ON_ERROR_STOP=1 -A -t -q "$@"
 }
 
 admin_psql() {
+  PGSSLMODE=verify-full \
+  PGSSLROOTCERT="$AHA_POSTGRES_SSL_ROOT_CERT" \
   PGOPTIONS='-c statement_timeout=8000 -c lock_timeout=2000' \
     psql "$AHA_STAGING_ADMIN_DATABASE_URL" -X -v ON_ERROR_STOP=1 -A -t -q "$@"
 }

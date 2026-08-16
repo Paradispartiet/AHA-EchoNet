@@ -36,13 +36,30 @@ RUN_AHA_CANONICAL_SYNC_HOSTED_STAGING_REHEARSAL
 
 Ingen `push`, `pull_request`, `schedule` eller automatisk trigger er tillatt.
 
-## Bare ett eksisterende database-secret
+## Bare ett eksisterende database-secret + ett CA trust anchor
 
-Rehearsalen trenger bare **ett eksisterende database-secret**:
+Rehearsalen trenger fortsatt bare **ett eksisterende database-secret** som faktisk er en credential:
 
 ```text
 AHA_STAGING_ADMIN_DATABASE_URL
 ```
+
+I tillegg trenger workflowen Supabases offentlige Server root certificate som trust anchor:
+
+```text
+AHA_STAGING_DATABASE_CA_CERT
+```
+
+CA-sertifikatet hentes manuelt fra **AHA Staging → Database Settings → SSL Configuration** og legges i GitHub Environment. Det er ikke et passord, men legges i samme beskyttede miljø slik at workflowen ikke er avhengig av et eksternt nedlastingsendepunkt eller en system-CA som ikke stoler på Supabases database-CA.
+
+`scripts/aha-postgresql-materialize-ca.sh` skriver sertifikatet til en runner-lokal fil, validerer det som X.509 og eksporterer:
+
+```text
+AHA_POSTGRES_SSL_ROOT_CERT=<runner-lokal cert-fil>
+NODE_EXTRA_CA_CERTS=<samme cert-fil>
+```
+
+Dermed bruker både libpq/`psql` og Node/NestJS den samme eksplisitte trust anchoret, mens `verify-full` beholdes.
 
 Den lagrede `AHA_STAGING_RUNTIME_DATABASE_URL` brukes ikke av canonical sync-rehearsalen. Dette er bevisst: direkte inspeksjon av AHA Staging viste at det ikke finnes noen persistent LOGIN-role som tilfredsstiller den herdede AHA-definisjonen for canonical runtime, og Supabases innebygde infrastrukturroller skal ikke lånes som NestJS-runtime.
 
@@ -85,7 +102,7 @@ Den får ingen role memberships. Etter opprettelse må scriptet bevise:
 - `EXECUTE` på den allerede etablerte top-level `aha.commit_local_import_v1(...)`-kommandoen;
 - ingen direkte `EXECUTE` på intern `aha.record_local_import_item_v1(...)`.
 
-Dette gjør at den eksisterende read-only hosted PostgreSQL-preflighten kan kjøres mot akkurat den nyopprettede rollen før sync-grants gis.
+Alle lifecycle-kall mot admin-databasen bruker `PGSSLMODE=verify-full` og den materialiserte Supabase-CA-en. Dette gjør at den eksisterende read-only hosted PostgreSQL-preflighten kan kjøres mot akkurat den nyopprettede rollen før sync-grants gis.
 
 Ved `always()`-cleanup skjer denne rekkefølgen:
 
@@ -102,7 +119,7 @@ stopp NestJS/JWKS
 
 **`DROP OWNED` brukes med vilje ikke.** Cleanup skal ikke skjule privilege- eller ownership-drift ved å slette ukjente avhengigheter. Hvis noen har gitt run-rollen en ny ukjent rettighet eller latt den eie et objekt, skal eksplisitt `DROP ROLE` feile og gjøre avviket synlig i rehearsalen.
 
-Cleanup nekter også å droppe en rolle utenfor det beskyttede `aha_sync_e2e_<digits>_<digits>`-navnerommet, en rolle med endret privilegieform eller en rolle som har fått medlemskap i en privilegert rolle.
+Cleanup sjekker nå også om run-role metadata faktisk finnes før den krever databaseforbindelse. En feil før rolleopprettelse gir derfor en ren no-op cleanup i stedet for en sekundær feil. Hvis rollen finnes, forblir cleanup fail-closed og nekter å droppe en rolle utenfor det beskyttede `aha_sync_e2e_<digits>_<digits>`-navnerommet, en rolle med endret privilegieform eller en rolle som har fått medlemskap i en privilegert rolle.
 
 Dermed trenger rehearsalen ikke en langlivet databasecredential. En senere offentlig staging-API må fortsatt få sin egen persistent, dedikert AHA runtime-identitet; Actions-fixturen er ikke den produksjonsmodellen.
 
@@ -125,7 +142,7 @@ På hver workflow-run:
 
 NestJS verifiserer fortsatt kryptografisk signatur, `kid`, issuer og audience gjennom ordinær JOSE/JWKS-kjede.
 
-## Pinned database target
+## Pinned database target og TLS
 
 Admin-DSN-en må identifisere den repo-pinnede Supabase staging-refen:
 
@@ -135,7 +152,9 @@ sstuzwppsheivczyqrim
 
 Den genererte runtime-DSN-en arver samme database/host/query-parametere og endrer bare credentials til den nye AHA-runner-rollen.
 
-Etter rolleopprettelsen kjøres den eksisterende read-only hosted preflighten igjen. TLS, project-ref, separate admin/runtime-roller, `NOSUPERUSER`, `NOBYPASSRLS`, `NOCREATEDB`, `NOCREATEROLE`, `NOINHERIT`, null privilegerte role memberships, null table ownership og null direkte canonical write-grants må alle være grønne.
+Etter rolleopprettelsen kjøres den eksisterende read-only hosted preflighten igjen. Den beviser TLS fra **client-siden** med `verify-full`, eksplisitt Supabase Server root certificate og hostname-verifikasjon. Dette er viktig når Session pooler brukes, fordi `pg_stat_ssl` på PostgreSQL-siden beskriver pooler→Postgres-hoppet og ikke nødvendigvis GitHub-runner→pooler-hoppet.
+
+Project-ref, separate admin/runtime-roller, `NOSUPERUSER`, `NOBYPASSRLS`, `NOCREATEDB`, `NOCREATEROLE`, `NOINHERIT`, null privilegerte role memberships, null table ownership og null direkte canonical write-grants må alle være grønne.
 
 ## Sync-grants
 
@@ -147,7 +166,7 @@ aha.pull_sync_changes_v1(text,bigint,integer)
 aha.push_sync_change_v1(text,text,text,text,text,text,bigint,text,jsonb)
 ```
 
-Ingen canonical tabell-write-grants gis. Følgende interne helpers testes eksplisitt som direkte utilgjengelige:
+Prepareringen bruker også `verify-full` med samme Supabase-CA. Ingen canonical tabell-write-grants gis. Følgende interne helpers testes eksplisitt som direkte utilgjengelige:
 
 ```text
 aha.sync_object_snapshot_v1(...)
@@ -189,12 +208,13 @@ AHA_DATABASE_SSL_MODE=verify-full
 AHA_CANONICAL_SYNC_ENABLED=true
 AHA_LOCAL_IMPORT_ENABLED=false
 AHA_DATABASE_URL=<ephemeral staging runtime DSN>
+NODE_EXTRA_CA_CERTS=<materialisert Supabase Server root certificate>
 AHA_ALLOWED_ORIGINS=http://127.0.0.1:4173
 AHA_AUTH_ISSUER=http://127.0.0.1:3210
 AHA_AUTH_JWKS_URL=http://127.0.0.1:3210/.well-known/jwks.json
 ```
 
-`NODE_ENV=development` brukes kun fordi auth-fixturens JWKS-server er localhost HTTP. Databaseforbindelsen er fortsatt eksplisitt `verify-full`. `CanonicalDatabaseService` krever i tillegg at runtime-rollen ikke selv har eller gjennom medlemskap kan nå `SUPERUSER`/`BYPASSRLS`, tvinger `row_security=on` og avviser table-owner-path.
+`NODE_ENV=development` brukes kun fordi auth-fixturens JWKS-server er localhost HTTP. Databaseforbindelsen er fortsatt eksplisitt `verify-full`, og Node-prosessen får Supabase-CA-en før den startes. `CanonicalDatabaseService` krever i tillegg at runtime-rollen ikke selv har eller gjennom medlemskap kan nå `SUPERUSER`/`BYPASSRLS`, tvinger `row_security=on` og avviser table-owner-path.
 
 Audit-saltet i denne isolerte rehearsalen er en tydelig testkonstant, ikke en production-secret.
 
@@ -229,6 +249,7 @@ Workflow/scripts har disse sperrene:
 - ingen `set -x`;
 - ingen `env`/`printenv`;
 - admin-DSN er GitHub secret;
+- Supabase-CA er trust anchor og materialiseres bare til runnerens temp-område;
 - generert password og runtime-DSN maskeres før senere steg;
 - ingen echo/printf av bearer-token;
 - ephemeral JWT skrives bare til `GITHUB_ENV`;
@@ -240,6 +261,7 @@ Workflow/scripts har disse sperrene:
 ```text
 ephemeral signed JWT
 → NestJS JOSE / JWKS / issuer / audience verification
+→ hostname- og CA-verifisert TLS til Supabase
 → hardened CanonicalDatabaseService
 → ephemeral dedicated least-privilege PostgreSQL LOGIN role
 → top-level canonical sync functions

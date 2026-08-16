@@ -7,6 +7,7 @@ const read = (p) => fs.readFileSync(path.join(root, p), 'utf8');
 
 for (const file of [
   '.github/workflows/aha-postgresql-hosted-staging-preflight.yml',
+  'scripts/aha-postgresql-materialize-ca.sh',
   'scripts/aha-postgresql-hosted-staging-preflight.sh',
   'docs/AHA_POSTGRESQL_HOSTED_STAGING_PREFLIGHT_V1.md'
 ]) assert.equal(fs.existsSync(path.join(root, file)), true, `${file} mangler`);
@@ -16,13 +17,21 @@ assert.match(workflow, /workflow_dispatch:/);
 assert.doesNotMatch(workflow, /^\s*(push|pull_request|schedule):/m);
 assert.match(workflow, /environment:\s*aha-postgresql-staging/);
 assert.match(workflow, /permissions:\s*\n\s*contents:\s*read/);
-for (const secret of ['AHA_STAGING_ADMIN_DATABASE_URL', 'AHA_STAGING_RUNTIME_DATABASE_URL']) {
+for (const secret of ['AHA_STAGING_ADMIN_DATABASE_URL', 'AHA_STAGING_RUNTIME_DATABASE_URL', 'AHA_STAGING_DATABASE_CA_CERT']) {
   assert.match(workflow, new RegExp(`secrets\\.${secret}`));
 }
+assert.match(workflow, /aha-postgresql-materialize-ca\.sh/);
 assert.doesNotMatch(workflow, /AHA_STAGING_DATABASE_FINGERPRINT/);
 assert.match(workflow, /AHA_STAGING_PROJECT_REF:\s*sstuzwppsheivczyqrim/);
 assert.match(workflow, /RUN_AHA_HOSTED_STAGING_PREFLIGHT/);
 assert.doesNotMatch(workflow, /contents:\s*write|pull-requests:\s*write/);
+
+const materialize = read('scripts/aha-postgresql-materialize-ca.sh');
+assert.match(materialize, /AHA_STAGING_DATABASE_CA_CERT/);
+assert.match(materialize, /openssl x509 -in "\$ca_file" -noout/);
+assert.match(materialize, /AHA_POSTGRES_SSL_ROOT_CERT=/);
+assert.match(materialize, /NODE_EXTRA_CA_CERTS=/);
+assert.doesNotMatch(materialize, /\bset\s+-x\b/);
 
 const script = read('scripts/aha-postgresql-hosted-staging-preflight.sh');
 assert.match(script, /default_transaction_read_only=on/);
@@ -33,8 +42,9 @@ assert.match(script, /user\.endswith\(f'\.\{ref\}'\)/);
 assert.doesNotMatch(script, /aha\.environment(?:_fingerprint)?/);
 assert.doesNotMatch(script, /DATABASE_FINGERPRINT/);
 assert.match(script, /PGSSLMODE=verify-full/);
-assert.match(script, /PGSSLROOTCERT=/);
-assert.match(script, /ca-certificates\.crt/);
+assert.match(script, /AHA_POSTGRES_SSL_ROOT_CERT/);
+assert.match(script, /PGSSLROOTCERT="\$AHA_POSTGRES_SSL_ROOT_CERT"/);
+assert.doesNotMatch(script, /ca-certificates\.crt/);
 assert.match(script, /\\conninfo/);
 assert.match(script, /SSL connection/);
 assert.doesNotMatch(script, /pg_stat_ssl/);
@@ -67,6 +77,7 @@ assert.match(docs, /ingen\s+migrasjon\s+eller\s+produksjonsaktivering/i);
 assert.match(docs, /custom databaseparametere/i);
 assert.match(docs, /project-ref/i);
 assert.match(docs, /client.*TLS|TLS.*client/i);
+assert.match(docs, /AHA_STAGING_DATABASE_CA_CERT/);
 assert.match(docs, /SET ROLE/i);
 assert.match(docs, /BYPASSRLS/i);
 assert.match(docs, /IndexedDB outbox/i);
