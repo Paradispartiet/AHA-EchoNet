@@ -49,16 +49,20 @@ assert.match(blueprint, /AHA_CANONICAL_SYNC_ENABLED[\s\S]*value:\s*["']false["']
 assert.doesNotMatch(blueprint, /AHA_DATABASE_URL|AHA_DATABASE_SSL_CA_CERT/);
 assert.match(blueprint, /autoDeployTrigger:\s*off/);
 
-// Persistent role activation is one-time and fail-closed.
+// Persistent role activation is one-time and fail-closed. Its EXECUTE check is
+// effective, not merely direct: pg_proc + has_function_privilege catches a
+// future AHA function accidentally exposed through PUBLIC or role membership.
 assert.match(role, /ROLE_NAME='aha_canonical_staging_runtime'/);
 assert.match(role, /EXPECTED_ROUTINES='bootstrap_sync_snapshot_v1,pull_sync_changes_v1,push_sync_change_v1'/);
 assert.match(role, /rolcanlogin::int, rolsuper::int, rolbypassrls::int, rolcreatedb::int, rolcreaterole::int, rolinherit::int/);
 assert.match(role, /pg_has_role\(runtime_role\.oid, privileged_role\.oid, 'member'\)/);
 assert.match(role, /direct_write_grants/);
 assert.match(role, /owned_objects/);
-assert.match(role, /commit_local_import_v1/);
-assert.match(role, /sync_object_snapshot_v1/);
-assert.match(role, /sync_apply_upsert_v1/);
+assert.match(role, /from pg_proc p/);
+assert.match(role, /join pg_namespace n on n\.oid=p\.pronamespace/);
+assert.match(role, /has_function_privilege\(:'role_name', p\.oid, 'EXECUTE'\)/);
+assert.match(role, /accessible_routines/);
+assert.match(role, /exact effective canonical-sync function boundary/);
 assert.match(role, /alter role :\\"role_name\\" login password :'role_password'/);
 assert.match(role, /alter role :\\"role_name\\" nologin password null/);
 assert.match(role, /pg_terminate_backend/);
