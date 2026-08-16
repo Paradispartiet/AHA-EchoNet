@@ -160,21 +160,23 @@ Aktiveringsrekkefølgen er fail-closed:
 13. krev HTTP 200 fra offentlig `/v1/health`;
 14. marker aktiveringen committed.
 
-Render API-kall bruker kun den spesifikke service-env-var-endepunktet og deploy-endepunktet. Credentialverdier skrives aldri til stdout.
+Render API-kall bruker kun de spesifikke service-env-var-endepunktene og deploy-endepunktet. Credentialverdier skrives aldri til stdout.
 
 ## Automatisk rollback før commit-punktet
 
-Workflowen har en `always()`-cleanup. Hvis et hvilket som helst steg feiler før offentlig health er grønn, kjøres **rollback** i denne rekkefølgen:
+Workflowen har en `always()`-cleanup. Hvis et hvilket som helst steg feiler etter at den persistente rollen ble berørt, kuttes databaseadgangen **før** deployment-konfigurasjonen ryddes:
 
 ```text
-AHA_CANONICAL_SYNC_ENABLED=false
+ALTER ROLE aha_canonical_staging_runtime NOLOGIN PASSWORD NULL
+→ terminer alle aktive sesjoner for rollen
+→ verifiser null aktive sesjoner
+→ AHA_CANONICAL_SYNC_ENABLED=false
 → AHA_DATABASE_ENABLED=false
 → fjern AHA_DATABASE_URL fra Render
 → fjern AHA_DATABASE_SSL_CA_CERT fra Render
-→ ALTER ROLE aha_canonical_staging_runtime NOLOGIN PASSWORD NULL
 ```
 
-Dermed blir en halvferdig aktivering ikke stående med en brukbar database-login eller aktiv sync. Hvis aktiveringen når commit-punktet etter grønn deploy + health, hopper rollbacken over den ferdige runtimeen.
+Dette lukker både nye og allerede åpne databaseforbindelser før en halvferdig Render-runtime får fortsette. Hvis aktiveringen når commit-punktet etter grønn deploy + health, hopper rollbacken over den ferdige runtimeen.
 
 Dette er en én-gangs aktiveringsport, ikke en generell credential-rotator. Hvis Render allerede inneholder databasecredentialen, nekter workflowen å overskrive den.
 
