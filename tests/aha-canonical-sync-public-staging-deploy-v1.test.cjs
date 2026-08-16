@@ -23,7 +23,8 @@ assert.match(blueprint, /name:\s*aha-canonical-api-staging/);
 assert.match(blueprint, /rootDir:\s*backend\/api/);
 assert.match(blueprint, /branch:\s*main/);
 assert.match(blueprint, /healthCheckPath:\s*\/v1\/health/);
-assert.match(blueprint, /autoDeploy:\s*false/);
+assert.match(blueprint, /autoDeployTrigger:\s*off/);
+assert.doesNotMatch(blueprint, /\bautoDeploy:\s*/);
 assert.doesNotMatch(rootBlueprint, /aha-canonical-api-staging/);
 
 // The staging API runs only canonical sync, never local import or production
@@ -48,10 +49,13 @@ assert.doesNotMatch(blueprint, /postgres(?:ql)?:\/\//i);
 assert.doesNotMatch(blueprint, /-----BEGIN CERTIFICATE-----/);
 
 // The native NestJS pg adapter accepts an explicit CA without weakening
-// certificate or hostname verification.
+// certificate or hostname verification. With a custom CA, DSN SSL parameters
+// that would replace node-postgres' ssl object are rejected.
 assert.match(dbConfig, /sslCaCertificate:\s*string \| null/);
 assert.match(dbConfig, /AHA_DATABASE_SSL_CA_CERT/);
 assert.match(dbConfig, /requires AHA_DATABASE_SSL_MODE=verify-full/);
+assert.match(dbConfig, /\["sslmode", "sslcert", "sslkey", "sslrootcert"\]/);
+assert.match(dbConfig, /must not contain \$\{key\}/);
 assert.match(pgProvider, /rejectUnauthorized:\s*config\.sslMode === "verify-full"/);
 assert.match(pgProvider, /config\.sslCaCertificate \? \{ ca: config\.sslCaCertificate \}/);
 
