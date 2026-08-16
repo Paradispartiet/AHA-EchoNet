@@ -34,17 +34,20 @@ Workflowen bruker miljøet:
 aha-postgresql-staging
 ```
 
-Miljøet trenger to secrets:
+Miljøet trenger tre stagingverdier:
 
 ```text
 AHA_STAGING_ADMIN_DATABASE_URL
 AHA_STAGING_RUNTIME_DATABASE_URL
+AHA_STAGING_DATABASE_CA_CERT
 ```
 
 DSN-ene skal bruke forskjellige roller mot samme stagingdatabase:
 
 - admin-DSN: kontrollert schema-/stagingadministrasjon;
 - runtime-DSN: minst privilegert NestJS-runtime-role.
+
+`AHA_STAGING_DATABASE_CA_CERT` er Supabases **Server root certificate** fra **Database Settings → SSL Configuration**. Sertifikatet er en offentlig trust anchor, ikke et passord, men lagres i GitHub Environment slik at workflowen ikke er avhengig av et eksternt nedlastingsendepunkt eller en uversjonert system-CA.
 
 Ingen DSN, host eller runtime-brukernavn skal skrives i workflow-logg.
 
@@ -67,23 +70,16 @@ RUN_AHA_HOSTED_STAGING_PREFLIGHT
 Alle `psql`-kall kjøres med:
 
 ```text
+PGSSLMODE=verify-full
+PGSSLROOTCERT=<materialisert Supabase Server root certificate>
 PGOPTIONS='-c default_transaction_read_only=on ...'
 ```
 
+`scripts/aha-postgresql-materialize-ca.sh` skriver trust anchoret til en runner-lokal fil, validerer at innholdet er et X.509-sertifikat og eksporterer både `AHA_POSTGRES_SSL_ROOT_CERT` og `NODE_EXTRA_CA_CERTS`. Sertifikatet committes ikke til repoet og hentes ikke fra nettet under kjøringen.
+
+TLS bevises på **client-siden**: libpq må etablere `verify-full` mot det oppgitte Supabase-hostnavnet med den eksplisitte Supabase-CA-en, og `psql \conninfo` må rapportere en SSL-forbindelse. Dette er nødvendig fordi en Session pooler kan terminere klient-TLS foran den backendforbindelsen som er synlig gjennom PostgreSQLs `pg_stat_ssl`.
+
 Preflighten kjører ikke schema- eller datawrites mot hosted database og bruker ikke `psql -f`.
-
-## TLS-verifikasjon mot direct og Supabase pooler
-
-Preflighten måler TLS fra **client-siden**. Det er viktig for Supabase Session pooler: en server-side `pg_stat_ssl`-rad beskriver forbindelsen fra pooleren videre mot Postgres, ikke nødvendigvis TLS-forbindelsen mellom GitHub-runneren og pooler-endepunktet. Den kan derfor rapportere `false` selv når klientforbindelsen faktisk er TLS-beskyttet.
-
-AHA tvinger derfor libpq/`psql` til:
-
-```text
-PGSSLMODE=verify-full
-PGSSLROOTCERT=/etc/ssl/certs/ca-certificates.crt
-```
-
-og bekrefter den etablerte client-TLS-sesjonen med `\conninfo`. Dermed verifiseres både kryptering, sertifikatkjede og hostname uten å logge DSN, host eller brukernavn.
 
 ## Runtime-role: NOINHERIT er ikke nok
 
@@ -104,21 +100,22 @@ Dette er særlig relevant i Supabase: den innebygde `authenticator`-rollen er en
 Preflighten krever:
 
 1. begge DSN-er er konfigurert;
-2. eksakt manuell confirmation;
-3. repoet har en gyldig, eksplisitt pinnet Supabase staging project-ref;
-4. både admin- og runtime-DSN identifiserer akkurat denne project-refen;
-5. begge client-tilkoblinger bruker TLS med `verify-full` sertifikat- og hostname-verifikasjon;
-6. admin og runtime peker på samme database;
-7. admin- og runtime-role er forskjellige;
-8. PostgreSQL er minst versjon 15;
-9. runtime-role er ikke superuser;
-10. runtime-role har ikke `BYPASSRLS`;
-11. runtime-role har ikke `CREATEDB` eller `CREATEROLE`;
-12. runtime-role har `NOINHERIT`;
-13. runtime-role er ikke medlem av noen annen rolle med `SUPERUSER` eller `BYPASSRLS`;
-14. runtime-role eier ingen canonical `aha`-tabeller;
-15. runtime-role har ingen direkte `INSERT/UPDATE/DELETE/TRUNCATE/REFERENCES/TRIGGER` på `aha.*`;
-16. hvis canonical schema finnes, må runtime-role kunne kjøre den eksplisitte local-import-kommandoen og ikke den interne receipt-helperen.
+2. den eksplisitte Supabase Server root certificate er konfigurert og lesbar;
+3. eksakt manuell confirmation;
+4. repoet har en gyldig, eksplisitt pinnet Supabase staging project-ref;
+5. både admin- og runtime-DSN identifiserer akkurat denne project-refen;
+6. begge klientforbindelser består `verify-full` med Supabase-CA og korrekt hostname;
+7. admin og runtime peker på samme database;
+8. admin- og runtime-role er forskjellige;
+9. PostgreSQL er minst versjon 15;
+10. runtime-role er ikke superuser;
+11. runtime-role har ikke `BYPASSRLS`;
+12. runtime-role har ikke `CREATEDB` eller `CREATEROLE`;
+13. runtime-role har `NOINHERIT`;
+14. runtime-role er ikke medlem av noen annen rolle med `SUPERUSER` eller `BYPASSRLS`;
+15. runtime-role eier ingen canonical `aha`-tabeller;
+16. runtime-role har ingen direkte `INSERT/UPDATE/DELETE/TRUNCATE/REFERENCES/TRIGGER` på `aha.*`;
+17. hvis canonical schema finnes, må runtime-role kunne kjøre den eksplisitte local-import-kommandoen og ikke den interne receipt-helperen.
 
 NestJS gjør den samme medlemskapskontrollen inne i `CanonicalDatabaseService` før repository-kode får kjøre. Hosted preflight og runtime-sjekk skal derfor feile på samme privilegieklasse.
 
@@ -136,7 +133,7 @@ En tidligere rehearsal-role ble ryddet bort etter verifikasjon. Dette historiske
 
 ## Hva en grønn preflight betyr
 
-En grønn kjøring betyr at de lagrede GitHub-staging-DSN-ene treffer riktig Supabase-prosjekt over verifisert client-TLS og at runtime-rollen har forventet minst privilegium, **inkludert null privilegie-eskalering via role membership**. Den betyr ikke at frontendimport, automatisk sync, EchoNet eller produksjonsbackend er aktivert.
+En grønn kjøring betyr at de lagrede GitHub-staging-DSN-ene treffer riktig Supabase-prosjekt gjennom en hostname- og CA-verifisert client-TLS-forbindelse, og at runtime-rollen har forventet minst privilegium, **inkludert null privilegie-eskalering via role membership**. Den betyr ikke at frontendimport, automatisk sync, EchoNet eller produksjonsbackend er aktivert.
 
 Hosted preflighten aktiverer heller ikke browserlagets `IndexedDB outbox`; outbox, cursors og tombstones forblir en separat, eksplisitt frontend-sync-grense.
 
