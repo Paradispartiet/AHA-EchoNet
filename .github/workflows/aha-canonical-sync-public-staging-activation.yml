@@ -87,12 +87,14 @@ jobs:
             exit 0
           fi
 
-          render_status=0
           role_status=0
-          node scripts/aha-canonical-sync-public-staging-render.cjs rollback-runtime || render_status=$?
+          render_status=0
+          # Cut database access and terminate any pool sessions first. Then
+          # disable/remove the staged Render runtime values.
           bash scripts/aha-canonical-sync-public-staging-activate.sh rollback || role_status=$?
+          node scripts/aha-canonical-sync-public-staging-render.cjs rollback-runtime || render_status=$?
 
-          if ((render_status != 0 || role_status != 0)); then
+          if ((role_status != 0 || render_status != 0)); then
             echo "Canonical public staging rollback did not complete cleanly." >&2
             exit 1
           fi
