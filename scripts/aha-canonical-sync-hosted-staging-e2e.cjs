@@ -4,7 +4,7 @@
 const assert = require("node:assert/strict");
 const { webcrypto } = require("node:crypto");
 const { TextEncoder } = require("node:util");
-const { canonicalSyncPayloadHash } = require("../js/ahaCanonicalSyncHash.js");
+const { canonicalSyncPayloadHash } = require("./aha-canonical-sync-hash-node.cjs");
 
 const API_BASE = String(process.env.AHA_STAGING_SYNC_API_BASE_URL || "http://127.0.0.1:3100").replace(/\/+$/, "");
 const TOKEN = String(process.env.AHA_STAGING_SYNC_BEARER_TOKEN || "").trim();
