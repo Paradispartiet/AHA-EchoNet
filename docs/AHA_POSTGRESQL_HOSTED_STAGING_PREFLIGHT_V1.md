@@ -72,6 +72,19 @@ PGOPTIONS='-c default_transaction_read_only=on ...'
 
 Preflighten kjører ikke schema- eller datawrites mot hosted database og bruker ikke `psql -f`.
 
+## TLS-verifikasjon mot direct og Supabase pooler
+
+Preflighten måler TLS fra **client-siden**. Det er viktig for Supabase Session pooler: en server-side `pg_stat_ssl`-rad beskriver forbindelsen fra pooleren videre mot Postgres, ikke nødvendigvis TLS-forbindelsen mellom GitHub-runneren og pooler-endepunktet. Den kan derfor rapportere `false` selv når klientforbindelsen faktisk er TLS-beskyttet.
+
+AHA tvinger derfor libpq/`psql` til:
+
+```text
+PGSSLMODE=verify-full
+PGSSLROOTCERT=/etc/ssl/certs/ca-certificates.crt
+```
+
+og bekrefter den etablerte client-TLS-sesjonen med `\conninfo`. Dermed verifiseres både kryptering, sertifikatkjede og hostname uten å logge DSN, host eller brukernavn.
+
 ## Runtime-role: NOINHERIT er ikke nok
 
 En login-role kan være `NOINHERIT` og samtidig være medlem av en privilegert rolle som den kan gå inn i med `SET ROLE`. Derfor er det ikke tilstrekkelig å bare kontrollere runtime-rollens egne `rolsuper`/`rolbypassrls`-flagg.
@@ -94,7 +107,7 @@ Preflighten krever:
 2. eksakt manuell confirmation;
 3. repoet har en gyldig, eksplisitt pinnet Supabase staging project-ref;
 4. både admin- og runtime-DSN identifiserer akkurat denne project-refen;
-5. begge tilkoblinger bruker TLS;
+5. begge client-tilkoblinger bruker TLS med `verify-full` sertifikat- og hostname-verifikasjon;
 6. admin og runtime peker på samme database;
 7. admin- og runtime-role er forskjellige;
 8. PostgreSQL er minst versjon 15;
@@ -123,7 +136,7 @@ En tidligere rehearsal-role ble ryddet bort etter verifikasjon. Dette historiske
 
 ## Hva en grønn preflight betyr
 
-En grønn kjøring betyr at de lagrede GitHub-staging-DSN-ene treffer riktig Supabase-prosjekt over TLS og at runtime-rollen har forventet minst privilegium, **inkludert null privilegie-eskalering via role membership**. Den betyr ikke at frontendimport, automatisk sync, EchoNet eller produksjonsbackend er aktivert.
+En grønn kjøring betyr at de lagrede GitHub-staging-DSN-ene treffer riktig Supabase-prosjekt over verifisert client-TLS og at runtime-rollen har forventet minst privilegium, **inkludert null privilegie-eskalering via role membership**. Den betyr ikke at frontendimport, automatisk sync, EchoNet eller produksjonsbackend er aktivert.
 
 Hosted preflighten aktiverer heller ikke browserlagets `IndexedDB outbox`; outbox, cursors og tombstones forblir en separat, eksplisitt frontend-sync-grense.
 
