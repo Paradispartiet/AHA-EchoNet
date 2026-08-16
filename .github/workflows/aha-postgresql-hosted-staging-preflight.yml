@@ -23,6 +23,7 @@ jobs:
       AHA_STAGING_PROJECT_REF: sstuzwppsheivczyqrim
       AHA_STAGING_ADMIN_DATABASE_URL: ${{ secrets.AHA_STAGING_ADMIN_DATABASE_URL }}
       AHA_STAGING_RUNTIME_DATABASE_URL: ${{ secrets.AHA_STAGING_RUNTIME_DATABASE_URL }}
+      AHA_STAGING_DATABASE_CA_CERT: ${{ secrets.AHA_STAGING_DATABASE_CA_CERT }}
 
     steps:
       - name: Checkout repository
@@ -31,8 +32,13 @@ jobs:
       - name: Validate explicit staging confirmation
         shell: bash
         run: |
+          set -euo pipefail
           if [[ "$AHA_HOSTED_STAGING_CONFIRMATION" != "RUN_AHA_HOSTED_STAGING_PREFLIGHT" ]]; then
             echo "Exact hosted-staging confirmation is required." >&2
+            exit 1
+          fi
+          if [[ -z "${AHA_STAGING_DATABASE_CA_CERT:-}" ]]; then
+            echo "Missing required staging setting: AHA_STAGING_DATABASE_CA_CERT" >&2
             exit 1
           fi
 
@@ -40,6 +46,10 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y postgresql-client
+
+      - name: Materialize pinned Supabase database CA
+        shell: bash
+        run: bash scripts/aha-postgresql-materialize-ca.sh
 
       - name: Run fail-closed read-only hosted staging preflight
         run: bash scripts/aha-postgresql-hosted-staging-preflight.sh
