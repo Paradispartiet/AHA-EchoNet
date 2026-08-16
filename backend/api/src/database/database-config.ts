@@ -4,6 +4,7 @@ export interface DatabaseConfig {
   enabled: boolean;
   connectionString: string | null;
   sslMode: DatabaseSslMode;
+  sslCaCertificate: string | null;
   poolMax: number;
   connectionTimeoutMs: number;
   idleTimeoutMs: number;
@@ -44,6 +45,18 @@ function sslMode(value: unknown, production: boolean): DatabaseSslMode {
   return normalized as DatabaseSslMode;
 }
 
+function sslCaCertificate(value: unknown, mode: DatabaseSslMode): string | null {
+  const certificate = text(value);
+  if (!certificate) return null;
+  if (mode !== "verify-full") {
+    throw new Error("AHA_DATABASE_SSL_CA_CERT requires AHA_DATABASE_SSL_MODE=verify-full");
+  }
+  if (!certificate.includes("-----BEGIN CERTIFICATE-----") || !certificate.includes("-----END CERTIFICATE-----")) {
+    throw new Error("AHA_DATABASE_SSL_CA_CERT must contain a PEM certificate");
+  }
+  return certificate;
+}
+
 function connectionString(value: unknown, enabled: boolean): string | null {
   const raw = text(value);
   if (!enabled) return null;
@@ -60,10 +73,12 @@ function connectionString(value: unknown, enabled: boolean): string | null {
 export function loadDatabaseConfig(env: NodeJS.ProcessEnv = process.env): DatabaseConfig {
   const production = text(env.NODE_ENV).toLowerCase() === "production";
   const enabled = booleanFlag(env.AHA_DATABASE_ENABLED, "AHA_DATABASE_ENABLED");
+  const mode = sslMode(env.AHA_DATABASE_SSL_MODE, production && enabled);
   const config: DatabaseConfig = {
     enabled,
     connectionString: connectionString(env.AHA_DATABASE_URL, enabled),
-    sslMode: sslMode(env.AHA_DATABASE_SSL_MODE, production && enabled),
+    sslMode: mode,
+    sslCaCertificate: sslCaCertificate(env.AHA_DATABASE_SSL_CA_CERT, mode),
     poolMax: integer(env.AHA_DATABASE_POOL_MAX, 8, 1, 32, "AHA_DATABASE_POOL_MAX"),
     connectionTimeoutMs: integer(env.AHA_DATABASE_CONNECTION_TIMEOUT_MS, 5_000, 250, 30_000, "AHA_DATABASE_CONNECTION_TIMEOUT_MS"),
     idleTimeoutMs: integer(env.AHA_DATABASE_IDLE_TIMEOUT_MS, 30_000, 1_000, 300_000, "AHA_DATABASE_IDLE_TIMEOUT_MS"),
