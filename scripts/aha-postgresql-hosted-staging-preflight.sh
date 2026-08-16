@@ -47,6 +47,8 @@ PY
 readonly_psql() {
   local url="$1"
   shift
+  PGSSLMODE=verify-full \
+  PGSSLROOTCERT="${AHA_POSTGRES_SSL_ROOT_CERT:-/etc/ssl/certs/ca-certificates.crt}" \
   PGOPTIONS='-c default_transaction_read_only=on -c statement_timeout=8000 -c lock_timeout=2000' \
     psql "$url" -X -v ON_ERROR_STOP=1 -A -t -q "$@"
 }
@@ -54,9 +56,12 @@ readonly_psql() {
 check_ssl() {
   local label="$1"
   local url="$2"
-  local ssl
-  ssl="$(readonly_psql "$url" -c "select coalesce((select ssl::text from pg_stat_ssl where pid = pg_backend_pid()), 'false')")"
-  if [[ "$ssl" != "true" && "$ssl" != "t" ]]; then
+  local conninfo
+  if ! conninfo="$(readonly_psql "$url" -c '\conninfo' 2>&1)"; then
+    echo "${label} connection failed TLS certificate/hostname verification." >&2
+    exit 1
+  fi
+  if [[ "$conninfo" != *"SSL connection"* ]]; then
     echo "${label} connection is not using TLS." >&2
     exit 1
   fi
