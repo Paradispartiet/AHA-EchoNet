@@ -27,9 +27,11 @@ assert.match(blueprint, /autoDeployTrigger:\s*off/);
 assert.doesNotMatch(blueprint, /\bautoDeploy:\s*/);
 assert.doesNotMatch(rootBlueprint, /aha-canonical-api-staging/);
 
-// The staging API runs only canonical sync, never local import or production
-// activation, and accepts browser CORS only from the AHA static origin.
-assert.match(blueprint, /AHA_CANONICAL_SYNC_ENABLED[\s\S]*value:\s*["']true["']/);
+// A newly created public staging service is health-only and dormant. The
+// separate manual activation workflow is the only place allowed to turn DB and
+// canonical sync on.
+assert.match(blueprint, /AHA_DATABASE_ENABLED[\s\S]*value:\s*["']false["']/);
+assert.match(blueprint, /AHA_CANONICAL_SYNC_ENABLED[\s\S]*value:\s*["']false["']/);
 assert.match(blueprint, /AHA_LOCAL_IMPORT_ENABLED[\s\S]*value:\s*["']false["']/);
 assert.match(blueprint, /AHA_DATABASE_SSL_MODE[\s\S]*value:\s*verify-full/);
 assert.match(blueprint, /AHA_ALLOWED_ORIGINS[\s\S]*value:\s*https:\/\/paradispartiet\.github\.io/);
@@ -42,9 +44,11 @@ assert.match(blueprint, /AHA_AUTH_ISSUER[\s\S]*wshmybqyksrwkawqleiz\.supabase\.c
 assert.match(blueprint, /AHA_AUTH_AUDIENCE[\s\S]*value:\s*authenticated/);
 assert.match(blueprint, /AHA_AUTH_JWKS_URL[\s\S]*wshmybqyksrwkawqleiz\.supabase\.co\/auth\/v1\/\.well-known\/jwks\.json/);
 
-// Long-lived runtime DB credentials and the Supabase root CA stay out of Git.
-assert.match(blueprint, /AHA_DATABASE_URL\s*\n\s*sync:\s*false/);
-assert.match(blueprint, /AHA_DATABASE_SSL_CA_CERT\s*\n\s*sync:\s*false/);
+// Long-lived runtime DB credentials and the Supabase root CA are neither
+// hard-coded nor requested by Blueprint creation. They are injected only by the
+// manual activation gate after the target and role pass preflight.
+assert.doesNotMatch(blueprint, /AHA_DATABASE_URL/);
+assert.doesNotMatch(blueprint, /AHA_DATABASE_SSL_CA_CERT/);
 assert.doesNotMatch(blueprint, /postgres(?:ql)?:\/\//i);
 assert.doesNotMatch(blueprint, /-----BEGIN CERTIFICATE-----/);
 

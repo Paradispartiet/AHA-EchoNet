@@ -1,0 +1,101 @@
+name: AHA canonical sync public staging activation
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: "Skriv RUN_AHA_CANONICAL_PUBLIC_STAGING_ACTIVATION for å aktivere isolert public staging"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  activate-public-staging:
+    name: Activate isolated canonical public staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment: aha-postgresql-staging
+
+    env:
+      AHA_CANONICAL_PUBLIC_STAGING_CONFIRMATION: ${{ inputs.confirmation }}
+      AHA_STAGING_PROJECT_REF: sstuzwppsheivczyqrim
+      AHA_STAGING_ADMIN_DATABASE_URL: ${{ secrets.AHA_STAGING_ADMIN_DATABASE_URL }}
+      AHA_STAGING_DATABASE_CA_CERT: ${{ secrets.AHA_STAGING_DATABASE_CA_CERT }}
+      RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Validate exact activation confirmation and secret inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$AHA_CANONICAL_PUBLIC_STAGING_CONFIRMATION" != "RUN_AHA_CANONICAL_PUBLIC_STAGING_ACTIVATION" ]]; then
+            echo "Exact canonical public staging activation confirmation is required." >&2
+            exit 1
+          fi
+          for name in AHA_STAGING_ADMIN_DATABASE_URL AHA_STAGING_DATABASE_CA_CERT RENDER_API_KEY; do
+            if [[ -z "${!name:-}" ]]; then
+              echo "Missing required public staging setting: ${name}" >&2
+              exit 1
+            fi
+          done
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Materialize pinned Supabase database CA
+        shell: bash
+        run: bash scripts/aha-postgresql-materialize-ca.sh
+
+      - name: Verify Render target and asymmetric AHA Auth JWKS
+        shell: bash
+        run: node scripts/aha-canonical-sync-public-staging-render.cjs discover
+
+      - name: Activate persistent least-privilege AHA staging runtime role
+        shell: bash
+        run: bash scripts/aha-canonical-sync-public-staging-activate.sh activate
+
+      - name: Stage runtime credential and CA directly in Render
+        shell: bash
+        run: node scripts/aha-canonical-sync-public-staging-render.cjs stage-runtime
+
+      - name: Deploy exact main commit and verify public health
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/aha-canonical-sync-public-staging-render.cjs deploy
+          printf 'AHA_PUBLIC_STAGING_ACTIVATION_COMMITTED=1\n' >> "$GITHUB_ENV"
+
+      - name: Roll back incomplete public staging activation
+        if: always()
+        shell: bash
+        run: |
+          set +e
+          if [[ "${AHA_PUBLIC_STAGING_ACTIVATION_COMMITTED:-0}" == "1" ]]; then
+            echo "AHA canonical public staging activation: COMMITTED"
+            exit 0
+          fi
+
+          role_status=0
+          render_status=0
+          # Cut database access and terminate any pool sessions first. Then
+          # disable/remove the staged Render runtime values.
+          bash scripts/aha-canonical-sync-public-staging-activate.sh rollback || role_status=$?
+          node scripts/aha-canonical-sync-public-staging-render.cjs rollback-runtime || render_status=$?
+
+          if ((role_status != 0 || render_status != 0)); then
+            echo "Canonical public staging rollback did not complete cleanly." >&2
+            exit 1
+          fi
+          echo "AHA canonical public staging activation: ROLLED_BACK"
