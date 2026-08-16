@@ -14,7 +14,7 @@ services:
     buildCommand: npm ci --ignore-scripts --no-audit --no-fund && npm run build
     startCommand: node dist/main.js
     healthCheckPath: /v1/health
-    autoDeploy: false
+    autoDeployTrigger: off
     envVars:
       - key: NODE_VERSION
         value: 22
