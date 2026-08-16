@@ -12,6 +12,11 @@ require_secret() {
 require_secret AHA_STAGING_ADMIN_DATABASE_URL
 require_secret AHA_STAGING_RUNTIME_DATABASE_URL
 
+if [[ -z "${AHA_POSTGRES_SSL_ROOT_CERT:-}" || ! -r "$AHA_POSTGRES_SSL_ROOT_CERT" ]]; then
+  echo "Hosted staging requires a readable pinned PostgreSQL CA certificate." >&2
+  exit 1
+fi
+
 if [[ -z "${AHA_STAGING_PROJECT_REF:-}" || ! "$AHA_STAGING_PROJECT_REF" =~ ^[a-z0-9]{20}$ ]]; then
   echo "Hosted staging requires a pinned Supabase project ref." >&2
   exit 1
@@ -48,7 +53,7 @@ readonly_psql() {
   local url="$1"
   shift
   PGSSLMODE=verify-full \
-  PGSSLROOTCERT="${AHA_POSTGRES_SSL_ROOT_CERT:-/etc/ssl/certs/ca-certificates.crt}" \
+  PGSSLROOTCERT="$AHA_POSTGRES_SSL_ROOT_CERT" \
   PGOPTIONS='-c default_transaction_read_only=on -c statement_timeout=8000 -c lock_timeout=2000' \
     psql "$url" -X -v ON_ERROR_STOP=1 -A -t -q "$@"
 }
