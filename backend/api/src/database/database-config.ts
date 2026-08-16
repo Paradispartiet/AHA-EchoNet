@@ -57,7 +57,7 @@ function sslCaCertificate(value: unknown, mode: DatabaseSslMode): string | null 
   return certificate;
 }
 
-function connectionString(value: unknown, enabled: boolean): string | null {
+function connectionString(value: unknown, enabled: boolean, hasExplicitCa: boolean): string | null {
   const raw = text(value);
   if (!enabled) return null;
   if (!raw) throw new Error("AHA_DATABASE_URL is required when AHA_DATABASE_ENABLED=true");
@@ -67,6 +67,14 @@ function connectionString(value: unknown, enabled: boolean): string | null {
     throw new Error("AHA_DATABASE_URL must use postgres:// or postgresql://");
   }
   if (!parsed.hostname) throw new Error("AHA_DATABASE_URL must include a host");
+
+  if (hasExplicitCa) {
+    for (const key of ["sslmode", "sslcert", "sslkey", "sslrootcert"]) {
+      if (parsed.searchParams.has(key)) {
+        throw new Error(`AHA_DATABASE_URL must not contain ${key} when AHA_DATABASE_SSL_CA_CERT is configured`);
+      }
+    }
+  }
   return raw;
 }
 
@@ -74,11 +82,12 @@ export function loadDatabaseConfig(env: NodeJS.ProcessEnv = process.env): Databa
   const production = text(env.NODE_ENV).toLowerCase() === "production";
   const enabled = booleanFlag(env.AHA_DATABASE_ENABLED, "AHA_DATABASE_ENABLED");
   const mode = sslMode(env.AHA_DATABASE_SSL_MODE, production && enabled);
+  const caCertificate = sslCaCertificate(env.AHA_DATABASE_SSL_CA_CERT, mode);
   const config: DatabaseConfig = {
     enabled,
-    connectionString: connectionString(env.AHA_DATABASE_URL, enabled),
+    connectionString: connectionString(env.AHA_DATABASE_URL, enabled, Boolean(caCertificate)),
     sslMode: mode,
-    sslCaCertificate: sslCaCertificate(env.AHA_DATABASE_SSL_CA_CERT, mode),
+    sslCaCertificate: caCertificate,
     poolMax: integer(env.AHA_DATABASE_POOL_MAX, 8, 1, 32, "AHA_DATABASE_POOL_MAX"),
     connectionTimeoutMs: integer(env.AHA_DATABASE_CONNECTION_TIMEOUT_MS, 5_000, 250, 30_000, "AHA_DATABASE_CONNECTION_TIMEOUT_MS"),
     idleTimeoutMs: integer(env.AHA_DATABASE_IDLE_TIMEOUT_MS, 30_000, 1_000, 300_000, "AHA_DATABASE_IDLE_TIMEOUT_MS"),
