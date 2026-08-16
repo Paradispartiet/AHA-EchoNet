@@ -1,0 +1,48 @@
+# Isolated public staging origin for the canonical NestJS sync API.
+# This is intentionally NOT the repository-root render.yaml, so merging this
+# file cannot alter the existing Render services until an operator explicitly
+# creates a Blueprint that points at this custom path.
+
+services:
+  - type: web
+    name: aha-canonical-api-staging
+    runtime: node
+    plan: free
+    region: frankfurt
+    branch: main
+    rootDir: backend/api
+    buildCommand: npm ci --ignore-scripts --no-audit --no-fund && npm run build
+    startCommand: node dist/main.js
+    healthCheckPath: /v1/health
+    autoDeploy: false
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: NODE_ENV
+        value: production
+      - key: AHA_DATABASE_ENABLED
+        value: "true"
+      - key: AHA_DATABASE_SSL_MODE
+        value: verify-full
+      - key: AHA_DATABASE_POOL_MAX
+        value: "4"
+      - key: AHA_CANONICAL_SYNC_ENABLED
+        value: "true"
+      - key: AHA_LOCAL_IMPORT_ENABLED
+        value: "false"
+      - key: AHA_ALLOWED_ORIGINS
+        value: https://paradispartiet.github.io
+      - key: AHA_AUTH_PROVIDER
+        value: supabase
+      - key: AHA_AUTH_ISSUER
+        value: https://wshmybqyksrwkawqleiz.supabase.co/auth/v1
+      - key: AHA_AUTH_AUDIENCE
+        value: authenticated
+      - key: AHA_AUTH_JWKS_URL
+        value: https://wshmybqyksrwkawqleiz.supabase.co/auth/v1/.well-known/jwks.json
+      - key: AHA_AUDIT_HASH_SALT
+        generateValue: true
+      - key: AHA_DATABASE_URL
+        sync: false
+      - key: AHA_DATABASE_SSL_CA_CERT
+        sync: false
