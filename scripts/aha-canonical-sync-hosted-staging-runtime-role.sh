@@ -13,6 +13,12 @@ require_env() {
 }
 
 admin_psql() {
+  require_env AHA_POSTGRES_SSL_ROOT_CERT
+  if [[ ! -r "$AHA_POSTGRES_SSL_ROOT_CERT" ]]; then
+    echo "Pinned PostgreSQL CA certificate is not readable." >&2
+    exit 1
+  fi
+
   local -a psql_args=()
   local sql_command=""
   local has_sql_command=0
@@ -39,11 +45,15 @@ admin_psql() {
     # psql -c sends server-parsable SQL directly and does not perform psql
     # variable interpolation. Feed SQL through stdin so :'var' / :"var"
     # remain quoted by psql before the server sees the statement.
+    PGSSLMODE=verify-full \
+    PGSSLROOTCERT="$AHA_POSTGRES_SSL_ROOT_CERT" \
     PGOPTIONS='-c statement_timeout=8000 -c lock_timeout=2000' \
       psql "$AHA_STAGING_ADMIN_DATABASE_URL" -X -v ON_ERROR_STOP=1 -A -t -q "${psql_args[@]}" <<<"$sql_command"
     return
   fi
 
+  PGSSLMODE=verify-full \
+  PGSSLROOTCERT="$AHA_POSTGRES_SSL_ROOT_CERT" \
   PGOPTIONS='-c statement_timeout=8000 -c lock_timeout=2000' \
     psql "$AHA_STAGING_ADMIN_DATABASE_URL" -X -v ON_ERROR_STOP=1 -A -t -q "${psql_args[@]}"
 }
@@ -51,6 +61,11 @@ admin_psql() {
 check_admin_target() {
   require_env AHA_STAGING_ADMIN_DATABASE_URL
   require_env AHA_STAGING_PROJECT_REF
+  require_env AHA_POSTGRES_SSL_ROOT_CERT
+  if [[ ! -r "$AHA_POSTGRES_SSL_ROOT_CERT" ]]; then
+    echo "Pinned PostgreSQL CA certificate is not readable." >&2
+    exit 1
+  fi
   if [[ ! "$AHA_STAGING_PROJECT_REF" =~ ^[a-z0-9]{20}$ ]]; then
     echo "Ephemeral runtime role requires a pinned Supabase project ref." >&2
     exit 1
@@ -210,12 +225,13 @@ PY
 }
 
 drop_role() {
-  check_admin_target
   local role_name="${AHA_STAGING_EPHEMERAL_RUNTIME_ROLE:-}"
   if [[ -z "$role_name" ]]; then
     echo "AHA canonical sync ephemeral staging runtime: no role metadata; cleanup skipped"
     return 0
   fi
+
+  check_admin_target
   if [[ ! "$role_name" =~ ^aha_sync_e2e_[0-9]+_[0-9]+$ ]]; then
     echo "Refusing to clean up a role outside the protected AHA rehearsal namespace." >&2
     exit 1
