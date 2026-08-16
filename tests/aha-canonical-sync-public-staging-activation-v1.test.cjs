@@ -40,7 +40,7 @@ const stageIndex = workflow.indexOf("aha-canonical-sync-public-staging-render.cj
 const deployIndex = workflow.indexOf("aha-canonical-sync-public-staging-render.cjs deploy");
 assert.ok(discoverIndex >= 0 && discoverIndex < activateIndex);
 assert.ok(activateIndex < stageIndex && stageIndex < deployIndex);
-assert.match(workflow, /if:\s*always\(\)[\s\S]*rollback-runtime[\s\S]*activate\.sh rollback/);
+assert.match(workflow, /if:\s*always\(\)[\s\S]*activate\.sh rollback[\s\S]*rollback-runtime/);
 assert.match(workflow, /AHA_PUBLIC_STAGING_ACTIVATION_COMMITTED=1/);
 
 // Blueprint creation itself is health-only/dormant and contains no runtime DB secret.
@@ -61,6 +61,8 @@ assert.match(role, /sync_object_snapshot_v1/);
 assert.match(role, /sync_apply_upsert_v1/);
 assert.match(role, /alter role :\\"role_name\\" login password :'role_password'/);
 assert.match(role, /alter role :\\"role_name\\" nologin password null/);
+assert.match(role, /pg_terminate_backend/);
+assert.match(role, /active_connections/);
 assert.match(role, /PGSSLMODE=verify-full/);
 assert.match(role, /PGSSLROOTCERT="\$AHA_POSTGRES_SSL_ROOT_CERT"/);
 assert.match(role, /::add-mask::/);
