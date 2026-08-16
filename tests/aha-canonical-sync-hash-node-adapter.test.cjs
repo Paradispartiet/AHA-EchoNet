@@ -1,4 +1,5 @@
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
 const { webcrypto } = require("node:crypto");
 const { TextEncoder } = require("node:util");
 
@@ -6,6 +7,10 @@ const {
   canonicalSyncStringify,
   canonicalSyncPayloadHash
 } = require("../scripts/aha-canonical-sync-hash-node.cjs");
+
+const e2e = fs.readFileSync("scripts/aha-canonical-sync-hosted-staging-e2e.cjs", "utf8");
+assert.match(e2e, /require\("\.\/aha-canonical-sync-hash-node\.cjs"\)/);
+assert.doesNotMatch(e2e, /require\("\.\.\/js\/ahaCanonicalSyncHash\.js"\)/);
 
 assert.equal(typeof canonicalSyncStringify, "function");
 assert.equal(typeof canonicalSyncPayloadHash, "function");
