@@ -44,7 +44,10 @@ export class PgConnectionProvider implements DatabaseConnectionProvider {
 
     const ssl = config.sslMode === "disable"
       ? false
-      : { rejectUnauthorized: config.sslMode === "verify-full" };
+      : {
+          rejectUnauthorized: config.sslMode === "verify-full",
+          ...(config.sslCaCertificate ? { ca: config.sslCaCertificate } : {})
+        };
 
     this.pool = new PgPool({
       connectionString: config.connectionString,
@@ -57,8 +60,8 @@ export class PgConnectionProvider implements DatabaseConnectionProvider {
     });
 
     this.pool.on("error", () => {
-      // Never log the connection string or driver error object. Operational
-      // telemetry is added through a later redacted database event sink.
+      // Never log the connection string, CA contents or driver error object.
+      // Operational telemetry is added through a later redacted database event sink.
       this.logger.error("Unexpected idle PostgreSQL connection error");
     });
   }
