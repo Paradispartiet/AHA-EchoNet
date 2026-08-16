@@ -58,7 +58,7 @@ og er låst til:
 - `AHA_LOCAL_IMPORT_ENABLED=false`;
 - CORS kun fra `https://paradispartiet.github.io`;
 - health på `/v1/health`;
-- `autoDeploy: false`.
+- `autoDeployTrigger: off`.
 
 Render brukes her kun som en avgrenset offentlig **staging-origin** fordi repoet allerede har en Render-driftsoverflate. Dette endrer ikke den aksepterte langsiktige driftsbeslutningen i **ADR-006**: Azure Container Apps er fortsatt første Azure-mål før AKS. Denne browserporten aktiverer ikke Azure, og den gjør heller ikke Render til ny produksjonsarkitektur.
 
@@ -93,7 +93,7 @@ sstuzwppsheivczyqrim
 
 Den offentlige API-en får **aldri** admin-DSN-en. Den skal bruke en egen persistent login-role, separat fra både `postgres`, Supabase-infrastrukturroller og de ephemeral `aha_sync_e2e_*`-rollene som brukes av Actions-rehearsalen.
 
-Persistent runtime-role skal minst være:
+Sluttformen for persistent runtime-role skal minst være:
 
 ```text
 LOGIN
@@ -113,7 +113,29 @@ og ha:
 - `EXECUTE` kun på de top-level sync-funksjonene som browser-sync faktisk trenger;
 - ingen direkte `EXECUTE` på interne sync-helpers.
 
-Persistent rolle opprettes **ikke** av denne repo-PR-en. Det er bevisst: vi skal ikke generere et databasepassord før vi har et faktisk hemmelighetslager i deployment-overflaten som kan motta det uten å skrive credentialen i repo, Actions-logg eller chat.
+### Nåværende inert rollebaseline
+
+AHA Staging har nå en eksplisitt rollebaseline:
+
+```text
+aha_canonical_staging_runtime
+```
+
+Den er bevisst **NOLOGIN** inntil deployment secret store er klar for en runtime-credential. Rollen er kontrollert med:
+
+- `NOSUPERUSER`;
+- `NOBYPASSRLS`;
+- `NOCREATEDB`;
+- `NOCREATEROLE`;
+- `NOINHERIT`;
+- null privilegerte role memberships;
+- null direkte canonical table-write-grants;
+- null eide databaseobjekter;
+- `USAGE` på `aha`;
+- `EXECUTE` på `bootstrap_sync_snapshot_v1`, `pull_sync_changes_v1` og `push_sync_change_v1`;
+- ingen direkte `EXECUTE` på de kontrollerte interne sync-helperne.
+
+Ingen password ble generert, lagret eller vist da baseline-rollen ble opprettet. LOGIN aktiveres først når samme nye credential kan legges direkte i deployment secret store uten repo-, Actions-logg- eller chat-lekkasje.
 
 ## TLS uten runner-lokal fil
 
@@ -127,7 +149,9 @@ AHA_DATABASE_SSL_CA_CERT
 
 `PgConnectionProvider` sender denne som `ca` til `pg` samtidig som `rejectUnauthorized=true` beholdes under `verify-full`. Custom CA kan ikke kombineres med den svakere `require`-modusen.
 
-Blueprinten har to hemmelige runtime-verdier som må fylles ut i deploymentplattformen:
+Når en eksplisitt CA brukes, avvises dessuten `sslmode`, `sslcert`, `sslkey` og `sslrootcert` i `AHA_DATABASE_URL`. Dette hindrer at connection-string-parsing erstatter det eksplisitte `pg.ssl`-objektet og dermed fjerner CA-/verify-full-innstillingene.
+
+Blueprinten har to runtime-verdier som må fylles ut i deploymentplattformen:
 
 ```text
 AHA_DATABASE_URL
@@ -141,7 +165,7 @@ CA-en er offentlig trust material, men holdes utenfor blueprinten slik at sertif
 Den:
 
 - oppretter ingen Render-tjeneste;
-- oppretter ingen persistent database-login;
+- aktiverer ikke LOGIN eller password på den inerte persistent database-rollen;
 - aktiverer ikke canonical sync på Home;
 - kobler ikke sync til login;
 - starter ingen background sync;
@@ -158,7 +182,7 @@ Porten skal tas i denne rekkefølgen:
 
 1. merge deploykontrakten etter grønn CI;
 2. verifiser at det eksisterende AHA Auth-prosjektet har usable JWKS for browser-sessionen;
-3. opprett en dedikert persistent AHA Staging runtime-role og kjør least-privilege-preflight;
+3. aktiver `aha_canonical_staging_runtime` som LOGIN med en ny credential som går direkte til deployment secret store, og kjør least-privilege-preflight på sluttformen;
 4. opprett den isolerte staging-tjenesten fra `deploy/render/canonical-api-staging.yaml`;
 5. legg bare runtime-DSN og `AHA_DATABASE_SSL_CA_CERT` i deployment secret store;
 6. deploy manuelt og verifiser `/v1/health` over HTTPS;
