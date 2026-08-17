@@ -53,6 +53,17 @@ module platform './platform.bicep' = {
   }
 }
 
+module operations './operations.bicep' = {
+  name: 'aha-production-operations'
+  scope: productionRg
+  params: {
+    location: location
+    prefix: prefix
+    acrName: platform.outputs.acrName
+    tags: tags
+  }
+}
+
 module postgresConfig './postgres-config.bicep' = {
   name: 'aha-production-postgres-config'
   scope: productionRg
@@ -61,11 +72,20 @@ module postgresConfig './postgres-config.bicep' = {
   }
 }
 
-module deploymentAccess './deployment-access.bicep' = {
-  name: 'aha-production-deployment-access'
+module runtimeDeploymentAccess './deployment-access.bicep' = {
+  name: 'aha-production-runtime-secret-deployment-access'
   scope: productionRg
   params: {
     keyVaultName: platform.outputs.keyVaultName
+    deploymentPrincipalObjectId: deploymentPrincipalObjectId
+  }
+}
+
+module operationsDeploymentAccess './deployment-access.bicep' = {
+  name: 'aha-production-ops-secret-deployment-access'
+  scope: productionRg
+  params: {
+    keyVaultName: operations.outputs.operationsKeyVaultName
     deploymentPrincipalObjectId: deploymentPrincipalObjectId
   }
 }
@@ -76,13 +96,18 @@ output containerAppsEnvironmentName string = platform.outputs.containerAppsEnvir
 output containerAppsEnvironmentId string = platform.outputs.containerAppsEnvironmentId
 output managedIdentityName string = platform.outputs.managedIdentityName
 output managedIdentityId string = platform.outputs.managedIdentityId
+output migrationIdentityName string = operations.outputs.migrationIdentityName
+output migrationIdentityId string = operations.outputs.migrationIdentityId
 output keyVaultName string = platform.outputs.keyVaultName
 output keyVaultUri string = platform.outputs.keyVaultUri
+output operationsKeyVaultName string = operations.outputs.operationsKeyVaultName
+output operationsKeyVaultUri string = operations.outputs.operationsKeyVaultUri
 output acrName string = platform.outputs.acrName
 output acrLoginServer string = platform.outputs.acrLoginServer
 output postgresServerName string = platform.outputs.postgresServerName
 output postgresFqdn string = platform.outputs.postgresFqdn
 output postgresDatabaseName string = platform.outputs.postgresDatabaseName
 output postgresAllowedExtensions string = postgresConfig.outputs.allowedExtensionsValue
-output deploymentSecretWriteGranted bool = deploymentAccess.outputs.deploymentSecretWriteGranted
+output runtimeDeploymentSecretWriteGranted bool = runtimeDeploymentAccess.outputs.deploymentSecretWriteGranted
+output operationsDeploymentSecretWriteGranted bool = operationsDeploymentAccess.outputs.deploymentSecretWriteGranted
 output applicationInsightsConnectionString string = platform.outputs.applicationInsightsConnectionString
