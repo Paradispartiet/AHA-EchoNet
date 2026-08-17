@@ -16,6 +16,9 @@ param postgresAdministratorLogin string = 'ahaadmin'
 @description('PostgreSQL administrator password. Supply only from a protected deployment environment.')
 param postgresAdministratorPassword string
 
+@description('Object ID of the GitHub OIDC deployment service principal. Used only for scoped Key Vault secret lifecycle access.')
+param deploymentPrincipalObjectId string
+
 @allowed([
   'Disabled'
   'SameZone'
@@ -58,6 +61,15 @@ module postgresConfig './postgres-config.bicep' = {
   }
 }
 
+module deploymentAccess './deployment-access.bicep' = {
+  name: 'aha-production-deployment-access'
+  scope: productionRg
+  params: {
+    keyVaultName: platform.outputs.keyVaultName
+    deploymentPrincipalObjectId: deploymentPrincipalObjectId
+  }
+}
+
 output resourceGroupName string = productionRg.name
 output resourceGroupId string = productionRg.id
 output containerAppsEnvironmentName string = platform.outputs.containerAppsEnvironmentName
@@ -72,4 +84,5 @@ output postgresServerName string = platform.outputs.postgresServerName
 output postgresFqdn string = platform.outputs.postgresFqdn
 output postgresDatabaseName string = platform.outputs.postgresDatabaseName
 output postgresAllowedExtensions string = postgresConfig.outputs.allowedExtensionsValue
+output deploymentSecretWriteGranted bool = deploymentAccess.outputs.deploymentSecretWriteGranted
 output applicationInsightsConnectionString string = platform.outputs.applicationInsightsConnectionString
