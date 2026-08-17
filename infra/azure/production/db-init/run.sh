@@ -39,7 +39,10 @@ case "$lower_dsn" in
     ;;
 esac
 
-ca_file="$(mktemp /tmp/aha-production-ca.XXXXXX.crt)"
+# BusyBox mktemp (used by postgres:16-alpine) requires the XXXXXX placeholder
+# to be the final characters in the template. A suffix after XXXXXX fails with
+# "mktemp: Invalid argument" before TLS/database verification can start.
+ca_file="$(mktemp /tmp/aha-production-ca.XXXXXX)"
 trap 'rm -f "$ca_file"' EXIT HUP INT TERM
 printf '%s\n' "$AHA_PRODUCTION_DATABASE_CA_CERT" > "$ca_file"
 chmod 0600 "$ca_file"
