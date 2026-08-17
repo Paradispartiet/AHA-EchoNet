@@ -14,8 +14,14 @@ begin
 end
 $role$;
 
+-- PostgreSQL 16 implicitly gives a non-superuser CREATEROLE creator ADMIN OPTION
+-- on roles it creates, which is enough for password/login-state maintenance.
+-- Do not repeat SUPERUSER/BYPASSRLS/CREATEDB/CREATEROLE attributes here: Azure
+-- PostgreSQL administrators are deliberately not superusers, and PostgreSQL 16
+-- restricts ALTER of those privileged attributes. Exact fail-closed values are
+-- verified below instead of repaired.
 alter role aha_canonical_production_readiness
-  login nosuperuser nobypassrls nocreatedb nocreaterole noinherit
+  login noinherit
   password :'readiness_password';
 alter role aha_canonical_production_readiness set row_security = on;
 
@@ -38,7 +44,7 @@ end
 $role$;
 
 alter role aha_canonical_production_runtime
-  nologin nosuperuser nobypassrls nocreatedb nocreaterole noinherit
+  nologin noinherit
   password null;
 alter role aha_canonical_production_runtime set row_security = on;
 
