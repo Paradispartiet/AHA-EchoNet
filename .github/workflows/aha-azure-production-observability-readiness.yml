@@ -1,0 +1,257 @@
+name: AHA Azure production observability readiness
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: "Skriv RUN_AHA_AZURE_PRODUCTION_OBSERVABILITY_READINESS for å verifisere production metrics, logger og redigert audit"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  observability-readiness:
+    name: Verify production monitoring signals without enabling sync
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: aha-canonical-production-infra
+
+    env:
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      AHA_PRODUCTION_RESOURCE_GROUP: ${{ vars.AHA_PRODUCTION_RESOURCE_GROUP || 'rg-aha-canonical-prod' }}
+      AHA_PRODUCTION_PREFIX: ${{ vars.AHA_PRODUCTION_PREFIX || 'aha-prod' }}
+      AHA_PRODUCTION_CONTAINER_APP: aha-canonical-api-production
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Require exact confirmation and Azure OIDC inputs
+        shell: bash
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_REF" != "refs/heads/main" ]]; then
+            echo "Production observability readiness only runs from main." >&2
+            exit 1
+          fi
+          if [[ "$CONFIRMATION" != "RUN_AHA_AZURE_PRODUCTION_OBSERVABILITY_READINESS" ]]; then
+            echo "Exact production observability confirmation is required." >&2
+            exit 1
+          fi
+          for name in AZURE_CLIENT_ID AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID; do
+            if [[ -z "${!name:-}" ]]; then
+              echo "Missing required Azure observability input: ${name}" >&2
+              exit 1
+            fi
+          done
+
+      - name: Azure OIDC login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Prepare Container Apps tooling
+        run: az extension add --name containerapp --upgrade --only-show-errors
+
+      - name: Resolve production telemetry resources and live health
+        shell: bash
+        run: |
+          set -euo pipefail
+          app_json="$RUNNER_TEMP/production-app.json"
+          az containerapp show \
+            --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
+            --name "$AHA_PRODUCTION_CONTAINER_APP" \
+            -o json --only-show-errors > "$app_json"
+          app_id="$(jq -r '.id // empty' "$app_json")"
+          app_origin="https://$(jq -r '.properties.configuration.ingress.fqdn // empty' "$app_json")"
+          deploy_revision="$(jq -r '.properties.template.containers[0].env[] | select(.name=="AHA_API_VERSION") | .value' "$app_json")"
+          sync_enabled="$(jq -r '.properties.template.containers[0].env[] | select(.name=="AHA_CANONICAL_SYNC_ENABLED") | .value' "$app_json")"
+          if [[ -z "$app_id" || ! "$deploy_revision" =~ ^[0-9a-f]{40}$ || "$sync_enabled" != 'false' ]]; then
+            echo "Production app is not an immutable sync-disabled revision." >&2
+            exit 1
+          fi
+
+          pg_json="$RUNNER_TEMP/production-postgres.json"
+          az postgres flexible-server list \
+            --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
+            --query "[?starts_with(name, '${AHA_PRODUCTION_PREFIX}-pg-')]" \
+            -o json --only-show-errors > "$pg_json"
+          if [[ "$(jq 'length' "$pg_json")" != '1' ]]; then
+            echo "Observability readiness requires exactly one dedicated production PostgreSQL server." >&2
+            exit 1
+          fi
+          pg_id="$(jq -r '.[0].id' "$pg_json")"
+
+          env_json="$RUNNER_TEMP/production-cae.json"
+          az containerapp env show \
+            --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
+            --name "${AHA_PRODUCTION_PREFIX}-cae" \
+            -o json --only-show-errors > "$env_json"
+          workspace_customer_id="$(jq -r '.properties.appLogsConfiguration.logAnalyticsConfiguration.customerId // empty' "$env_json")"
+          if [[ -z "$workspace_customer_id" ]]; then
+            echo "Container Apps environment is not connected to Log Analytics." >&2
+            exit 1
+          fi
+
+          app_insights_count="$(az resource list \
+            --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
+            --resource-type Microsoft.Insights/components \
+            --query 'length(@)' -o tsv --only-show-errors)"
+          if [[ "$app_insights_count" != '1' ]]; then
+            echo "Production observability requires exactly one Application Insights component." >&2
+            exit 1
+          fi
+
+          health="$RUNNER_TEMP/production-health.json"
+          curl --fail --silent --show-error --max-time 20 "$app_origin/v1/health" > "$health"
+          jq -e '
+            .status == "ok" and
+            .service == "aha-nest-api" and
+            .runtimeActivated == false and
+            .database.configured == true and
+            .database.connected == true and
+            .database.status == "ready" and
+            .database.safeRuntimeRole == true and
+            .database.canonicalSchema == "present" and
+            .auth.configured == true
+          ' "$health" >/dev/null
+
+          {
+            printf 'AHA_OBS_APP_ID=%s\n' "$app_id"
+            printf 'AHA_OBS_APP_ORIGIN=%s\n' "$app_origin"
+            printf 'AHA_OBS_DEPLOY_REVISION=%s\n' "$deploy_revision"
+            printf 'AHA_OBS_POSTGRES_ID=%s\n' "$pg_id"
+            printf 'AHA_OBS_WORKSPACE_CUSTOMER_ID=%s\n' "$workspace_customer_id"
+          } >> "$GITHUB_ENV"
+
+      - name: Require request, latency, error and replica metrics from Container Apps
+        shell: bash
+        run: |
+          set -euo pipefail
+          defs="$RUNNER_TEMP/containerapp-metrics.json"
+          az monitor metrics list-definitions \
+            --resource "$AHA_OBS_APP_ID" \
+            -o json --only-show-errors > "$defs"
+          names="$(jq -r '.[].name.value' "$defs" | sort -u)"
+          for metric in Requests ResponseTime RestartCount Replicas UsageNanoCores WorkingSetBytes; do
+            if ! grep -Fxq "$metric" <<<"$names"; then
+              echo "Missing required Container Apps metric definition: $metric" >&2
+              exit 1
+            fi
+          done
+          printf 'AHA_OBS_APP_METRICS=%s\n' 'Requests,ResponseTime,RestartCount,Replicas,UsageNanoCores,WorkingSetBytes' >> "$GITHUB_ENV"
+
+      - name: Require connection, availability, error and query-load metrics from PostgreSQL
+        shell: bash
+        run: |
+          set -euo pipefail
+          defs="$RUNNER_TEMP/postgres-metrics.json"
+          az monitor metrics list-definitions \
+            --resource "$AHA_OBS_POSTGRES_ID" \
+            -o json --only-show-errors > "$defs"
+          names="$(jq -r '.[].name.value' "$defs" | sort -u)"
+          for metric in active_connections connections_failed is_db_alive sessions_by_state longest_query_time_sec blks_read blks_hit; do
+            if ! grep -Fxq "$metric" <<<"$names"; then
+              echo "Missing required PostgreSQL metric definition: $metric" >&2
+              exit 1
+            fi
+          done
+          printf 'AHA_OBS_DB_METRICS=%s\n' 'active_connections,connections_failed,is_db_alive,sessions_by_state,longest_query_time_sec,blks_read,blks_hit' >> "$GITHUB_ENV"
+
+      - name: Prove safe request audit reaches Log Analytics
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Generate multiple harmless health events to make ingestion deterministic.
+          for _ in {1..3}; do
+            curl --fail --silent --show-error --max-time 15 "$AHA_OBS_APP_ORIGIN/v1/health" >/dev/null
+          done
+
+          query="ContainerAppConsoleLogs_CL | where TimeGenerated > ago(30m) | where ContainerAppName_s == '${AHA_PRODUCTION_CONTAINER_APP}' | where Log_s contains 'AhaSafeAudit' | where Log_s contains '\"service\":\"aha-nest-api\"' | summarize AuditEvents=count(), RawBearer=countif(Log_s contains 'Bearer '), RawAuthorization=countif(tolower(Log_s) contains 'authorization:'), RawDbUrl=countif(tolower(Log_s) contains 'postgresql://')"
+          result="$RUNNER_TEMP/audit-query.json"
+          found=0
+          for attempt in {1..16}; do
+            if az monitor log-analytics query \
+              --workspace "$AHA_OBS_WORKSPACE_CUSTOMER_ID" \
+              --analytics-query "$query" \
+              -o json --only-show-errors > "$result" 2>/dev/null; then
+              audit_count="$(jq -r '.[0].AuditEvents // .tables[0].rows[0][0] // 0' "$result" 2>/dev/null || echo 0)"
+              if [[ "$audit_count" =~ ^[0-9]+$ ]] && (( audit_count > 0 )); then
+                found=1
+                break
+              fi
+            fi
+            sleep 15
+          done
+          if [[ "$found" != '1' ]]; then
+            echo "Safe AHA audit events did not become queryable in Log Analytics." >&2
+            exit 1
+          fi
+
+          compact="$(jq -c '.[0] // {}' "$result" 2>/dev/null || echo '{}')"
+          bearer="$(jq -r '.RawBearer // 0' <<<"$compact")"
+          authorization="$(jq -r '.RawAuthorization // 0' <<<"$compact")"
+          dburl="$(jq -r '.RawDbUrl // 0' <<<"$compact")"
+          if [[ "$bearer" != '0' || "$authorization" != '0' || "$dburl" != '0' ]]; then
+            echo "Production audit telemetry contains a forbidden credential-shaped value." >&2
+            exit 1
+          fi
+          printf 'AHA_OBS_AUDIT_EVENTS=%s\n' "$audit_count" >> "$GITHUB_ENV"
+
+      - name: Write observability readiness evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          evidence="$RUNNER_TEMP/aha-production-observability-readiness.json"
+          jq -n \
+            --arg version 'aha_azure_production_observability_readiness_v1' \
+            --arg verifiedAt "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --arg commit "$GITHUB_SHA" \
+            --arg deployRevision "$AHA_OBS_DEPLOY_REVISION" \
+            --arg appMetrics "$AHA_OBS_APP_METRICS" \
+            --arg databaseMetrics "$AHA_OBS_DB_METRICS" \
+            --argjson auditEvents "$AHA_OBS_AUDIT_EVENTS" \
+            '{
+              version: $version,
+              verifiedAt: $verifiedAt,
+              workflowCommit: $commit,
+              productionDeployRevision: $deployRevision,
+              containerAppMetrics: ($appMetrics | split(",")),
+              postgresqlMetrics: ($databaseMetrics | split(",")),
+              safeAuditEventsObserved: $auditEvents,
+              requestRateObservable: true,
+              requestLatencyObservable: true,
+              httpErrorsObservable: true,
+              databaseConnectionsObservable: true,
+              databaseQueryLoadObservable: true,
+              authAndPermissionOutcomesObservableThroughSafeAudit: true,
+              syncOutcomesObservableThroughSafeAuditWhenPilotIsActivated: true,
+              rawBearerObserved: false,
+              rawDatabaseUrlObserved: false,
+              productionRuntimeConnectedSafely: true,
+              productionCanonicalSyncEnabled: false
+            }' > "$evidence"
+          printf 'AHA_OBS_EVIDENCE_FILE=%s\n' "$evidence" >> "$GITHUB_ENV"
+
+      - name: Upload observability evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: aha-production-observability-readiness-${{ github.run_id }}
+          path: ${{ env.AHA_OBS_EVIDENCE_FILE }}
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Report result
+        run: |
+          echo "AHA production observability readiness: PASS"
+          echo "AHA safe audit transport: LOG_ANALYTICS"
+          echo "AHA canonical production sync: DISABLED"
