@@ -1,24 +1,35 @@
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
+const vm = require("node:vm");
 
 const HYDRATOR = "js/ahaCanonicalStagingSourceHydrator.js";
 const LOCAL_IMPORT = "js/ahaLocalAccountImport.js";
 
 for (const file of [HYDRATOR, LOCAL_IMPORT]) assert.equal(fs.existsSync(file), true, `${file} mangler`);
 
-const source = fs.readFileSync(HYDRATOR, "utf8");
-assert.match(source, /aha_source_events/);
-assert.match(source, /profile_id/);
-assert.match(source, /aha_notes/);
-assert.match(source, /aha_gallery/);
-assert.match(source, /writesPrimaryDatabase:\s*false/);
-assert.match(source, /executesOnLoad:\s*false/);
-assert.doesNotMatch(source, /onAuthStateChange|SIGNED_IN|TOKEN_REFRESHED/);
-assert.doesNotMatch(source, /\bsetInterval\s*\(|\bsetTimeout\s*\(/);
-assert.doesNotMatch(source, /\.insert\s*\(|\.upsert\s*\(|\.update\s*\(|\.delete\s*\(/);
+const hydratorSource = fs.readFileSync(HYDRATOR, "utf8");
+const localImportSource = fs.readFileSync(LOCAL_IMPORT, "utf8");
+assert.match(hydratorSource, /aha_source_events/);
+assert.match(hydratorSource, /profile_id/);
+assert.match(hydratorSource, /aha_notes/);
+assert.match(hydratorSource, /aha_gallery/);
+assert.match(hydratorSource, /writesPrimaryDatabase:\s*false/);
+assert.match(hydratorSource, /executesOnLoad:\s*false/);
+assert.doesNotMatch(hydratorSource, /onAuthStateChange|SIGNED_IN|TOKEN_REFRESHED/);
+assert.doesNotMatch(hydratorSource, /\bsetInterval\s*\(|\bsetTimeout\s*\(/);
+assert.doesNotMatch(hydratorSource, /\.insert\s*\(|\.upsert\s*\(|\.update\s*\(|\.delete\s*\(/);
 
-const hydrator = require(`../${HYDRATOR}`);
-const localImport = require(`../${LOCAL_IMPORT}`);
+function loadModules() {
+  const context = { window: null, globalThis: null, console };
+  context.window = context;
+  context.globalThis = context;
+  vm.runInNewContext(localImportSource, context, { filename: LOCAL_IMPORT });
+  vm.runInNewContext(hydratorSource, context, { filename: HYDRATOR });
+  return {
+    hydrator: context.AHACanonicalStagingSourceHydrator,
+    localImport: context.AHALocalAccountImport
+  };
+}
 
 function makeStorage(entries = {}) {
   const values = new Map(Object.entries(entries).map(([key, value]) => [key, String(value)]));
@@ -49,6 +60,9 @@ function makeClient(rows, calls) {
 }
 
 async function run() {
+  const { hydrator, localImport } = loadModules();
+  assert.ok(hydrator);
+  assert.ok(localImport);
   const status = hydrator.getStatus();
   assert.equal(status.sourceTable, "aha_source_events");
   assert.equal(status.primaryReadOnly, true);
@@ -87,7 +101,7 @@ async function run() {
     pageSize: 2
   });
 
-  assert.deepEqual(hydrated.stats, {
+  assert.deepEqual(JSON.parse(JSON.stringify(hydrated.stats)), {
     fetched: 5,
     included: 3,
     excluded: 2,
