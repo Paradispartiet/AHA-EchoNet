@@ -1,0 +1,145 @@
+name: AHA Azure production API rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      revision:
+        description: "Eksakt 40-tegns Git SHA for en tidligere production-image"
+        required: true
+        type: string
+      confirmation:
+        description: "Skriv RUN_AHA_AZURE_PRODUCTION_API_ROLLBACK"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  rollback-api:
+    name: Roll back production API while canonical sync stays disabled
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: aha-canonical-production-infra
+
+    env:
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      AHA_PRODUCTION_RESOURCE_GROUP: ${{ vars.AHA_PRODUCTION_RESOURCE_GROUP || 'rg-aha-canonical-prod' }}
+      AHA_PRODUCTION_CONTAINER_APP: aha-canonical-api-production
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Require exact rollback revision and confirmation
+        shell: bash
+        env:
+          REVISION: ${{ inputs.revision }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_REF" != "refs/heads/main" ]]; then
+            echo "Production API rollback only runs from main." >&2
+            exit 1
+          fi
+          if [[ "$CONFIRMATION" != "RUN_AHA_AZURE_PRODUCTION_API_ROLLBACK" ]]; then
+            echo "Exact production API rollback confirmation is required." >&2
+            exit 1
+          fi
+          if [[ ! "$REVISION" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "Rollback revision must be a full 40-character Git SHA." >&2
+            exit 1
+          fi
+          printf 'AHA_ROLLBACK_REVISION=%s\n' "$REVISION" >> "$GITHUB_ENV"
+
+      - name: Azure OIDC login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Prepare Container Apps tooling
+        run: az extension add --name containerapp --upgrade --only-show-errors
+
+      - name: Refuse rollback if canonical sync is already activated
+        shell: bash
+        run: |
+          set -euo pipefail
+          sync_state="$(az containerapp show \
+            --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
+            --name "$AHA_PRODUCTION_CONTAINER_APP" \
+            --query "properties.template.containers[0].env[?name=='AHA_CANONICAL_SYNC_ENABLED'].value | [0]" \
+            -o tsv --only-show-errors)"
+          if [[ "$sync_state" != 'false' ]]; then
+            echo "This readiness-era rollback refuses an already activated production sync runtime." >&2
+            exit 1
+          fi
+
+      - name: Verify immutable rollback image exists
+        shell: bash
+        run: |
+          set -euo pipefail
+          acr_json="$(az acr list --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" -o json --only-show-errors)"
+          if [[ "$(jq 'length' <<<"$acr_json")" != '1' ]]; then
+            echo "Production API rollback requires exactly one ACR." >&2
+            exit 1
+          fi
+          acr_name="$(jq -r '.[0].name' <<<"$acr_json")"
+          acr_login="$(jq -r '.[0].loginServer' <<<"$acr_json")"
+          az acr repository show \
+            --name "$acr_name" \
+            --image "aha-canonical-api:${AHA_ROLLBACK_REVISION}" \
+            --only-show-errors >/dev/null
+          printf 'AHA_ROLLBACK_IMAGE=%s/aha-canonical-api:%s\n' "$acr_login" "$AHA_ROLLBACK_REVISION" >> "$GITHUB_ENV"
+
+      - name: Roll back API image without enabling canonical sync
+        shell: bash
+        run: |
+          set -euo pipefail
+          az containerapp update \
+            --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
+            --name "$AHA_PRODUCTION_CONTAINER_APP" \
+            --image "$AHA_ROLLBACK_IMAGE" \
+            --set-env-vars \
+              AHA_API_VERSION="$AHA_ROLLBACK_REVISION" \
+              AHA_CANONICAL_SYNC_ENABLED=false \
+              AHA_LOCAL_IMPORT_ENABLED=false \
+            --only-show-errors >/dev/null
+
+      - name: Verify rolled-back API is healthy and sync-disabled
+        shell: bash
+        run: |
+          set -euo pipefail
+          fqdn="$(az containerapp show \
+            --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
+            --name "$AHA_PRODUCTION_CONTAINER_APP" \
+            --query properties.configuration.ingress.fqdn -o tsv --only-show-errors)"
+          health="$RUNNER_TEMP/rollback-health.json"
+          for attempt in {1..60}; do
+            if curl --fail --silent --show-error --max-time 15 "https://${fqdn}/v1/health" > "$health"; then
+              if jq -e --arg revision "$AHA_ROLLBACK_REVISION" '
+                .status == "ok" and
+                .service == "aha-nest-api" and
+                .version == $revision and
+                .runtimeActivated == false and
+                .database.configured == true and
+                .database.connected == true and
+                .database.safeRuntimeRole == true and
+                .database.canonicalSchema == "present"
+              ' "$health" >/dev/null; then
+                break
+              fi
+            fi
+            if [[ "$attempt" == 60 ]]; then
+              echo "Production API rollback did not reach safe health." >&2
+              exit 1
+            fi
+            sleep 10
+          done
+          echo "AHA production API rollback: PASS"
+          echo "AHA rollback revision: $AHA_ROLLBACK_REVISION"
+          echo "AHA canonical production sync: DISABLED"
