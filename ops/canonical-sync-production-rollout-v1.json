@@ -1,0 +1,113 @@
+{
+  "version": "aha_canonical_sync_production_rollout_v1",
+  "status": "blocked_until_remote_readiness",
+  "productionActivationEnabled": false,
+  "hosting": {
+    "target": "azure_container_apps",
+    "adr": "docs/adr/ADR-006-azure-container-apps-before-aks.md",
+    "renderProductionAllowed": false,
+    "euEeaRegionRequired": true,
+    "infrastructureAsCodeRequired": true
+  },
+  "database": {
+    "target": "dedicated_production_postgresql",
+    "stagingReuseAllowed": false,
+    "legacyPrimaryReuseAllowed": false,
+    "tlsMode": "verify-full",
+    "runtimeRole": "aha_canonical_production_runtime",
+    "runtimeRoleMustStartNoLogin": true,
+    "adminCredentialInRuntimeAllowed": false
+  },
+  "frontend": {
+    "allowedOrigin": "https://paradispartiet.github.io",
+    "automaticSync": false,
+    "loginTriggeredSync": false,
+    "authReadyTriggeredSync": false,
+    "backgroundSync": false,
+    "legacySyncHubActivation": false
+  },
+  "pilot": {
+    "mode": "single_profile_allowlist",
+    "maxProfiles": 1,
+    "profileIdentifierMustComeFromProtectedEnvironment": true,
+    "publicProfileIdentifierAllowed": false,
+    "automaticExpansionAllowed": false,
+    "groupOrPublicSharingAllowed": false
+  },
+  "canonicalObjectTypes": [
+    "conversation",
+    "message",
+    "source_event",
+    "insight",
+    "concept_list",
+    "concept_list_item",
+    "knowledge_path",
+    "knowledge_path_step",
+    "article",
+    "article_reference"
+  ],
+  "migration": {
+    "required": true,
+    "stagingRehearsalRequired": true,
+    "productionSchemaReadinessRequired": true,
+    "backupBeforeMigrationRequired": true,
+    "restoreTestRequired": true,
+    "destructiveMigrationInPilotAllowed": false,
+    "productionDataCopiedToStagingAllowed": false,
+    "rollback": {
+      "previousApiRevisionRequired": true,
+      "databaseCredentialCutoffRequired": true,
+      "activeSessionTerminationRequired": true,
+      "schemaStrategy": "forward_fix_or_verified_restore",
+      "automaticDestructiveDownMigrationAllowed": false
+    }
+  },
+  "observability": {
+    "required": true,
+    "rawConversationTextInDefaultTelemetryAllowed": false,
+    "tokensOrSecretsInTelemetryAllowed": false,
+    "requiredSignals": [
+      "request_rate",
+      "request_latency",
+      "http_errors",
+      "database_connections",
+      "database_query_load",
+      "auth_rejections",
+      "permission_rejections",
+      "sync_conflicts",
+      "sync_push_results",
+      "deployment_revision",
+      "migration_revision",
+      "data_export_events",
+      "data_deletion_events"
+    ]
+  },
+  "stagingEvidence": {
+    "path": "ops/evidence/canonical-sync-browser-staging-proof-v1.json",
+    "required": true,
+    "idempotenceRequired": true,
+    "zeroConflictRequired": true,
+    "excludedLocalDeferredSourcesRequired": true
+  },
+  "remoteReadiness": {
+    "githubEnvironment": "aha-canonical-production-readiness",
+    "exactConfirmation": "RUN_AHA_CANONICAL_PRODUCTION_ROLLOUT_GATE",
+    "requiredProtectedValues": [
+      "AHA_PRODUCTION_API_ORIGIN",
+      "AHA_PRODUCTION_ADMIN_DATABASE_URL",
+      "AHA_PRODUCTION_DATABASE_CA_CERT",
+      "AHA_PRODUCTION_PILOT_PROFILE_ID",
+      "AHA_PRODUCTION_ROLLBACK_REVISION",
+      "AHA_PRODUCTION_MIGRATION_REHEARSAL_EVIDENCE",
+      "AHA_PRODUCTION_BACKUP_RESTORE_EVIDENCE",
+      "AHA_PRODUCTION_OBSERVABILITY_EVIDENCE",
+      "AHA_PRODUCTION_SYNC_RUNTIME_STATE"
+    ]
+  },
+  "activation": {
+    "separateWorkflowRequired": true,
+    "rolloutGateMustPassFirst": true,
+    "enabled": false,
+    "exactPilotConfirmation": "RUN_AHA_CANONICAL_PRODUCTION_PILOT_ACTIVATION"
+  }
+}

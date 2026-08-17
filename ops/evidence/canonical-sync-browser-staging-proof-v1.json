@@ -1,0 +1,44 @@
+{
+  "version": "aha_canonical_sync_browser_staging_proof_v1",
+  "verifiedDate": "2026-08-17",
+  "environment": "isolated_staging",
+  "productionActivation": false,
+  "browserRun": {
+    "primarySourceEventsFetched": 87,
+    "canonicalEligibleIncluded": 85,
+    "localDeferredExcluded": 2,
+    "canonicalObjectsPrepared": 85,
+    "changed": 85,
+    "enqueued": 85,
+    "pushed": 85,
+    "bootstrapApplied": 85,
+    "deltaApplied": 0,
+    "conflicts": 0
+  },
+  "idempotentReplay": {
+    "changed": 0,
+    "enqueued": 0,
+    "pushed": 0,
+    "conflicts": 0,
+    "serverSyncChangeCountBefore": 85,
+    "serverSyncChangeCountAfter": 85
+  },
+  "databaseAfterReplay": {
+    "sourceEvents": 85,
+    "syncChanges": 85,
+    "syncConflicts": 0,
+    "auditEvents": 85,
+    "objectType": "source_event",
+    "operation": "upsert",
+    "minRevision": 1,
+    "maxRevision": 1
+  },
+  "securityBoundaries": {
+    "primaryAhaReadOnly": true,
+    "notesAndGalleryExcluded": true,
+    "automaticSync": false,
+    "loginTriggeredSync": false,
+    "backgroundSync": false,
+    "productionDatabaseTouched": false
+  }
+}

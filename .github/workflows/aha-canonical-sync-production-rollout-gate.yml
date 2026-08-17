@@ -1,0 +1,76 @@
+name: AHA canonical sync production rollout gate
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: "Skriv RUN_AHA_CANONICAL_PRODUCTION_ROLLOUT_GATE for å kjøre read-only production readiness"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  production-rollout-gate:
+    name: Verify canonical production rollout readiness
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: aha-canonical-production-readiness
+
+    env:
+      AHA_CANONICAL_PRODUCTION_ROLLOUT_CONFIRMATION: ${{ inputs.confirmation }}
+      AHA_PRODUCTION_API_ORIGIN: ${{ vars.AHA_PRODUCTION_API_ORIGIN }}
+      AHA_PRODUCTION_ADMIN_DATABASE_URL: ${{ secrets.AHA_PRODUCTION_ADMIN_DATABASE_URL }}
+      AHA_PRODUCTION_DATABASE_CA_CERT: ${{ secrets.AHA_PRODUCTION_DATABASE_CA_CERT }}
+      AHA_PRODUCTION_PILOT_PROFILE_ID: ${{ secrets.AHA_PRODUCTION_PILOT_PROFILE_ID }}
+      AHA_PRODUCTION_ROLLBACK_REVISION: ${{ vars.AHA_PRODUCTION_ROLLBACK_REVISION }}
+      AHA_PRODUCTION_MIGRATION_REHEARSAL_EVIDENCE: ${{ vars.AHA_PRODUCTION_MIGRATION_REHEARSAL_EVIDENCE }}
+      AHA_PRODUCTION_BACKUP_RESTORE_EVIDENCE: ${{ vars.AHA_PRODUCTION_BACKUP_RESTORE_EVIDENCE }}
+      AHA_PRODUCTION_OBSERVABILITY_EVIDENCE: ${{ vars.AHA_PRODUCTION_OBSERVABILITY_EVIDENCE }}
+      AHA_PRODUCTION_SYNC_RUNTIME_STATE: ${{ vars.AHA_PRODUCTION_SYNC_RUNTIME_STATE }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Require main and exact manual confirmation
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_REF" != "refs/heads/main" ]]; then
+            echo "Production rollout gate only runs from main." >&2
+            exit 1
+          fi
+          if [[ "$AHA_CANONICAL_PRODUCTION_ROLLOUT_CONFIRMATION" != "RUN_AHA_CANONICAL_PRODUCTION_ROLLOUT_GATE" ]]; then
+            echo "Exact production rollout gate confirmation is required." >&2
+            exit 1
+          fi
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Verify immutable rollout contract and staging proof
+        run: node scripts/aha-canonical-sync-production-rollout-gate.cjs contract
+
+      - name: Verify production API readiness while sync remains disabled
+        run: node scripts/aha-canonical-sync-production-rollout-gate.cjs readiness
+
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Verify dedicated production PostgreSQL and NOLOGIN runtime role read-only
+        shell: bash
+        run: bash scripts/aha-canonical-sync-production-db-readiness.sh
+
+      - name: Mark production rollout gate passed without activating production
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "AHA canonical production rollout gate: PASS"
+          echo "AHA canonical production activation: DISABLED"
+          echo "Pilot scope after a future activation: MAX_1_PROFILE"
