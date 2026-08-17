@@ -193,6 +193,10 @@ PY
 
   printf '::add-mask::%s\n' "$password"
   printf '::add-mask::%s\n' "$runtime_dsn"
+  # GITHUB_ENV is only loaded by subsequent workflow steps. The post-activation
+  # login check runs in this same shell, so the freshly generated DSN must also
+  # exist in the current process before runtime_psql is called.
+  export AHA_STAGING_RUNTIME_DATABASE_URL="$runtime_dsn"
   printf 'AHA_STAGING_RUNTIME_DATABASE_URL=%s\n' "$runtime_dsn" >> "$GITHUB_ENV"
   printf 'AHA_PUBLIC_STAGING_ROLE_TOUCHED=1\n' >> "$GITHUB_ENV"
 
