@@ -31,7 +31,20 @@ export function configureApplication(app: INestApplication, config: AppConfig): 
   app.enableCors({
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["authorization", "content-type", "idempotency-key", "x-request-id"],
+    // The browser canonical-sync client uses fetch(cache: "no-store"). On
+    // WebKit/Chromium this can add Cache-Control/Pragma to the actual request,
+    // which makes them part of the CORS preflight header set. Keep the allowlist
+    // explicit, but include those cache directives so an authenticated browser
+    // request is not blocked before it reaches NestJS.
+    allowedHeaders: [
+      "accept",
+      "authorization",
+      "cache-control",
+      "content-type",
+      "idempotency-key",
+      "pragma",
+      "x-request-id"
+    ],
     exposedHeaders: ["x-request-id"],
     origin(origin: string | undefined, callback: CorsDecision): void {
       if (!origin || config.allowedOrigins.includes(origin)) {
