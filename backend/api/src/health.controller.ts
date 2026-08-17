@@ -2,11 +2,13 @@ import { Controller, Get, Inject } from "@nestjs/common";
 import { Public } from "./auth/public.decorator.js";
 import { APP_CONFIG, type AppConfig } from "./config/app-config.js";
 import { CanonicalDatabaseService } from "./database/canonical-database.service.js";
+import { CANONICAL_SYNC_CONFIG, type CanonicalSyncConfig } from "./sync/sync.config.js";
 
 @Controller("v1")
 export class HealthController {
   constructor(
     @Inject(APP_CONFIG) private readonly config: AppConfig,
+    @Inject(CANONICAL_SYNC_CONFIG) private readonly canonicalSync: CanonicalSyncConfig,
     private readonly database: CanonicalDatabaseService
   ) {}
 
@@ -24,6 +26,9 @@ export class HealthController {
       version: this.config.serviceVersion,
       runtimeActivated: this.config.runtimeActivated,
       existingExpressRuntimePrimary: this.config.existingExpressRuntimePrimary,
+      canonicalSync: {
+        enabled: this.canonicalSync.enabled
+      },
       database: {
         configured: database.configured,
         connected: database.reachable,
