@@ -34,7 +34,8 @@
 
       <div class="aha-canonical-staging-warning" role="note">
         <strong>Fail-closed.</strong>
-        <p>Ingen sync skjer ved page load, innlogging, auth-ready, storage-event eller timer. URL-porten må åpnes eksplisitt med <code>?ahaCanonicalStaging=1</code>, og selve kjøringen krever staging-API, personal workspace-ID, samtykke og eksakt bekreftelsesfrase.</p>
+        <p>Ingen sync eller primærdata-henting skjer ved page load, innlogging, auth-ready, storage-event eller timer. URL-porten må åpnes eksplisitt med <code>?ahaCanonicalStaging=1</code>, og selve kjøringen krever staging-API, personal workspace-ID, samtykke og eksakt bekreftelsesfrase.</p>
+        <p>Når du trykker Kjør staging-sync, leses canonical-eligible kildehendelser for den innloggede AHA-brukeren fra primær AHA i read-only-modus. De slås sammen med de seks støttede lokale canonical-lagrene før staging-sync. Notes, Gallery, Feed, Insta, Music, Training, Personal AI, Workbench og andre deferred/lokale flater filtreres bort.</p>
       </div>
 
       <p id="aha-canonical-staging-status" role="status" aria-live="polite">Kontrollerer staging-port …</p>
@@ -60,7 +61,7 @@
 
         <label class="aha-canonical-staging-consent">
           <input name="explicitConsent" type="checkbox" required />
-          <span>Jeg bekrefter at dette er en kontrollert staging-kjøring og at canonical private data fra de seks støttede lokale AHA-flatene kan pushes til den oppgitte staging-API-en.</span>
+          <span>Jeg bekrefter at dette er en kontrollert staging-kjøring. Canonical private data fra de seks støttede lokale AHA-flatene og canonical-eligible kildehendelser som leses fra min primære AHA-konto kan pushes til den oppgitte staging-API-en. Lokale/deferred flater filtreres bort.</span>
         </label>
 
         <div class="aha-canonical-staging-actions">
@@ -87,6 +88,7 @@
   <script src="js/ahaCanonicalLocalApplyAdapter.js"></script>
   <script src="js/ahaCanonicalSyncApiClient.js"></script>
   <script src="js/ahaCanonicalManualSyncRunner.js"></script>
+  <script src="js/ahaCanonicalStagingSourceHydrator.js"></script>
   <script src="js/ahaCanonicalSyncStagingBridge.js"></script>
 </body>
 </html>
