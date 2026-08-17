@@ -60,29 +60,44 @@
 
   function createLazySessionProvider(options = {}) {
     let touched = false;
+    let cachedClient = null;
+    let cachedSession = null;
+    let sessionResolved = false;
+
+    function getClient() {
+      if (cachedClient) return cachedClient;
+      const db = options.db || global.AHADb;
+      cachedClient = db?.getClient?.() || null;
+      if (!cachedClient?.auth || typeof cachedClient.auth.getSession !== "function") {
+        throw new Error("AHA Supabase session provider unavailable");
+      }
+      return cachedClient;
+    }
+
     return Object.freeze({
       async getSession() {
+        if (sessionResolved) return cachedSession;
         touched = true;
-        const db = options.db || global.AHADb;
-        const client = db?.getClient?.();
-        if (!client?.auth || typeof client.auth.getSession !== "function") {
-          throw new Error("AHA Supabase session provider unavailable");
-        }
+        const client = getClient();
         const { data, error } = await client.auth.getSession();
         if (error) throw new Error("Could not read the authenticated AHA session");
-        return data?.session || null;
+        cachedSession = data?.session || null;
+        sessionResolved = true;
+        return cachedSession;
       },
+      getClient,
       get touched() { return touched; }
     });
   }
 
-  function summarizeResult(result) {
+  function summarizeResult(result, hydrationStats = {}) {
     const source = obj(result);
     const local = obj(source.local);
     const enqueue = obj(source.enqueue);
     const push = obj(source.push);
     const bootstrap = source.bootstrap == null ? null : obj(source.bootstrap);
     const pull = obj(source.pull);
+    const hydration = obj(hydrationStats);
     const conflicts = Array.isArray(source.conflicts) ? source.conflicts : [];
     const conflictReasons = {};
     for (const conflict of conflicts) {
@@ -94,6 +109,10 @@
       mode: "explicit_manual_canonical_sync_staging",
       workspaceId: text(source.workspaceId),
       deviceId: text(source.deviceId),
+      primarySourceEventsFetched: Number(hydration.fetched || 0),
+      primarySourceEventsIncluded: Number(hydration.included || 0),
+      primarySourceEventsExcluded: Number(hydration.excluded || 0),
+      hydratedSourceEventsMerged: Number(hydration.mergedSourceEvents || 0),
       localPrepared: Number(local.prepared || 0),
       localChanged: Number(local.changed || 0),
       blockedByExistingConflict: Number(local.blockedByExistingConflict || 0),
@@ -129,21 +148,38 @@
     const execution = assertExecutionInput(input, options);
     const runner = options.runner || global.AHACanonicalManualSyncRunner;
     if (!runner || typeof runner.run !== "function") throw new Error("AHACanonicalManualSyncRunner unavailable");
+    const hydrator = options.hydrator || global.AHACanonicalStagingSourceHydrator;
+    if (!hydrator || typeof hydrator.hydrateStorage !== "function") throw new Error("AHACanonicalStagingSourceHydrator unavailable");
 
+    const baseStorage = options.storage || global.localStorage;
     const sessionProvider = createLazySessionProvider(options);
     running = true;
     try {
+      const session = await sessionProvider.getSession();
+      if (!text(session?.access_token) || !text(session?.user?.id)) {
+        throw new Error("Logg inn i AHA før canonical staging-sync kjøres");
+      }
+      const hydration = await hydrator.hydrateStorage({
+        client: sessionProvider.getClient(),
+        session,
+        storage: baseStorage,
+        localImport: options.localImport || global.AHALocalAccountImport
+      });
+      if (!hydration?.storage || typeof hydration.storage.getItem !== "function") {
+        throw new Error("canonical staging source hydration did not produce a storage snapshot");
+      }
+
       const result = await runner.run({
         explicitUserAction: true,
         workspaceId: execution.workspaceId,
         apiBaseUrl: execution.apiBaseUrl,
         auth: sessionProvider,
-        storage: options.storage || global.localStorage,
+        storage: hydration.storage,
         fetch: options.fetch || global.fetch,
         crypto: options.crypto || global.crypto,
         indexedDB: options.indexedDB || global.indexedDB
       });
-      return summarizeResult(result);
+      return summarizeResult(result, hydration.stats);
     } finally {
       running = false;
     }
@@ -184,6 +220,10 @@
     if (!output) return;
     const lines = [
       `Status: fullført`,
+      `Primære AHA-kildehendelser hentet: ${summary.primarySourceEventsFetched}`,
+      `Inkludert etter canonical-filter: ${summary.primarySourceEventsIncluded}`,
+      `Ekskludert lokale/deferred kilder: ${summary.primarySourceEventsExcluded}`,
+      `Kildehendelser i hydrert snapshot: ${summary.hydratedSourceEventsMerged}`,
       `Lokale canonical objekter: ${summary.localPrepared}`,
       `Endret: ${summary.localChanged}`,
       `Lagt i outbox: ${summary.enqueued}`,
@@ -213,7 +253,7 @@
       event.preventDefault();
       const submit = form.querySelector?.('[type="submit"]');
       if (submit) submit.disabled = true;
-      setStatus(status, "Kjører eksplisitt canonical staging-sync …", "running");
+      setStatus(status, "Henter canonical-eligible AHA-kilder og kjører eksplisitt staging-sync …", "running");
       if (output) output.textContent = "";
       try {
         const summary = await execute(readForm(form), options);
@@ -242,6 +282,8 @@
       requiresExplicitConsent: true,
       requiresExplicitApiBaseUrl: true,
       requiresExplicitWorkspaceId: true,
+      primarySourceHydration: "explicit_run_only",
+      primarySourceHydrationReadOnly: true,
       rawPayloadRendered: false,
       serverStateRendered: false
     });
