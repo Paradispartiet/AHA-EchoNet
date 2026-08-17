@@ -15,7 +15,7 @@ services:
     region: frankfurt
     branch: main
     rootDir: backend/api
-    buildCommand: npm ci --ignore-scripts --no-audit --no-fund && npm run build
+    buildCommand: npm ci --include=dev --ignore-scripts --no-audit --no-fund && npm run build && npm prune --omit=dev --ignore-scripts --no-audit --no-fund
     startCommand: node dist/main.js
     healthCheckPath: /v1/health
     autoDeployTrigger: off

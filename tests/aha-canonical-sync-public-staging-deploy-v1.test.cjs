@@ -27,6 +27,12 @@ assert.match(blueprint, /autoDeployTrigger:\s*off/);
 assert.doesNotMatch(blueprint, /\bautoDeploy:\s*/);
 assert.doesNotMatch(rootBlueprint, /aha-canonical-api-staging/);
 
+// NODE_ENV=production is present during Render's build, so TypeScript and
+// @types/node must be installed explicitly for tsc. Dev dependencies are then
+// pruned again after the build so the runtime stays production-only.
+assert.match(blueprint, /buildCommand:\s*npm ci --include=dev[^\n]*&& npm run build[^\n]*&& npm prune --omit=dev/);
+assert.match(blueprint, /NODE_ENV[\s\S]*value:\s*production/);
+
 // A newly created public staging service is health-only and dormant. The
 // separate manual activation workflow is the only place allowed to turn DB and
 // canonical sync on.
