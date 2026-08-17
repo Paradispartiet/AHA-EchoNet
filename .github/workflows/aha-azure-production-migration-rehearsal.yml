@@ -1,0 +1,177 @@
+name: AHA Azure production migration rehearsal
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: "Skriv RUN_AHA_AZURE_PRODUCTION_MIGRATION_REHEARSAL for å rehearsere production-schemaet mot ren PostgreSQL 16"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  rehearse-production-migrations:
+    name: Rehearse production canonical migrations and roles
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: aha_production_rehearsal
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: rehearsal-admin-password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d aha_production_rehearsal"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: "5432"
+      PGDATABASE: aha_production_rehearsal
+      PGUSER: postgres
+      PGPASSWORD: rehearsal-admin-password
+      AHA_REHEARSAL_READINESS_PASSWORD: rehearsal-readiness-password-not-production
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Require exact manual confirmation
+        shell: bash
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_REF" != "refs/heads/main" ]]; then
+            echo "Production migration rehearsal only runs from main." >&2
+            exit 1
+          fi
+          if [[ "$CONFIRMATION" != "RUN_AHA_AZURE_PRODUCTION_MIGRATION_REHEARSAL" ]]; then
+            echo "Exact production migration rehearsal confirmation is required." >&2
+            exit 1
+          fi
+
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Apply the exact ordered canonical migration set
+        shell: bash
+        run: |
+          set -euo pipefail
+          migration_count=0
+          while IFS= read -r migration; do
+            echo "Rehearsing $(basename "$migration")"
+            psql -X -v ON_ERROR_STOP=1 -f "$migration" >/dev/null
+            migration_count=$((migration_count + 1))
+          done < <(find supabase/migrations -maxdepth 1 -type f -name '*.sql' | sort)
+          if (( migration_count < 10 )); then
+            echo "Migration rehearsal found an unexpectedly small migration set." >&2
+            exit 1
+          fi
+          printf 'AHA_REHEARSAL_MIGRATION_COUNT=%s\n' "$migration_count" >> "$GITHUB_ENV"
+
+      - name: Apply production role boundary with sync runtime NOLOGIN
+        shell: bash
+        run: |
+          set -euo pipefail
+          psql -X -v ON_ERROR_STOP=1 \
+            -v readiness_password="$AHA_REHEARSAL_READINESS_PASSWORD" \
+            -f infra/azure/production/db-init/roles.sql >/dev/null
+
+      - name: Verify production schema and exact least-privilege role shape
+        shell: bash
+        run: |
+          set -euo pipefail
+          readiness_shape="$(psql -X -A -t -q -v ON_ERROR_STOP=1 -c "
+            select rolcanlogin::int || '|' || rolsuper::int || '|' || rolbypassrls::int || '|' ||
+                   rolcreatedb::int || '|' || rolcreaterole::int || '|' || rolinherit::int
+            from pg_roles where rolname='aha_canonical_production_readiness'
+          ")"
+          runtime_shape="$(psql -X -A -t -q -v ON_ERROR_STOP=1 -c "
+            select rolcanlogin::int || '|' || rolsuper::int || '|' || rolbypassrls::int || '|' ||
+                   rolcreatedb::int || '|' || rolcreaterole::int || '|' || rolinherit::int
+            from pg_roles where rolname='aha_canonical_production_runtime'
+          ")"
+          functions="$(psql -X -A -t -q -v ON_ERROR_STOP=1 -c "
+            select coalesce(string_agg(p.proname, ',' order by p.proname),'')
+            from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+            where n.nspname='aha'
+              and has_function_privilege('aha_canonical_production_runtime',p.oid,'EXECUTE')
+          ")"
+          direct_writes="$(psql -X -A -t -q -v ON_ERROR_STOP=1 -c "
+            select count(*) from information_schema.role_table_grants
+            where grantee='aha_canonical_production_runtime' and table_schema='aha'
+              and privilege_type in ('INSERT','UPDATE','DELETE','TRUNCATE','REFERENCES','TRIGGER')
+          ")"
+          schema_receipts="$(psql -X -A -t -q -v ON_ERROR_STOP=1 -c "select count(*) from aha.schema_versions")"
+
+          [[ "$readiness_shape" == '1|0|0|0|0|0' ]]
+          [[ "$runtime_shape" == '0|0|0|0|0|0' ]]
+          [[ "$functions" == 'bootstrap_sync_snapshot_v1,pull_sync_changes_v1,push_sync_change_v1' ]]
+          [[ "$direct_writes" == '0' ]]
+          [[ "$schema_receipts" =~ ^[0-9]+$ ]]
+
+          {
+            printf 'AHA_REHEARSAL_READINESS_SHAPE=%s\n' "$readiness_shape"
+            printf 'AHA_REHEARSAL_RUNTIME_SHAPE=%s\n' "$runtime_shape"
+            printf 'AHA_REHEARSAL_FUNCTIONS=%s\n' "$functions"
+            printf 'AHA_REHEARSAL_SCHEMA_RECEIPTS=%s\n' "$schema_receipts"
+          } >> "$GITHUB_ENV"
+
+      - name: Write machine-readable rehearsal evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          evidence="$RUNNER_TEMP/aha-production-migration-rehearsal.json"
+          jq -n \
+            --arg version 'aha_azure_production_migration_rehearsal_v1' \
+            --arg commit "$GITHUB_SHA" \
+            --arg runId "$GITHUB_RUN_ID" \
+            --arg runAttempt "$GITHUB_RUN_ATTEMPT" \
+            --arg verifiedAt "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --argjson migrationCount "$AHA_REHEARSAL_MIGRATION_COUNT" \
+            --arg readinessShape "$AHA_REHEARSAL_READINESS_SHAPE" \
+            --arg runtimeShape "$AHA_REHEARSAL_RUNTIME_SHAPE" \
+            --arg functions "$AHA_REHEARSAL_FUNCTIONS" \
+            --argjson schemaReceipts "$AHA_REHEARSAL_SCHEMA_RECEIPTS" \
+            '{
+              version: $version,
+              verifiedAt: $verifiedAt,
+              commit: $commit,
+              workflowRunId: $runId,
+              workflowRunAttempt: $runAttempt,
+              postgresqlMajor: 16,
+              canonicalMigrationCount: $migrationCount,
+              schemaReceipts: $schemaReceipts,
+              productionReadinessRoleShape: $readinessShape,
+              productionRuntimeRoleShape: $runtimeShape,
+              productionRuntimeEffectiveFunctions: ($functions | split(",")),
+              productionRuntimeDirectTableWrites: 0,
+              productionDatabaseTouched: false,
+              productionActivation: false
+            }' > "$evidence"
+          printf 'AHA_REHEARSAL_EVIDENCE_FILE=%s\n' "$evidence" >> "$GITHUB_ENV"
+
+      - name: Upload immutable rehearsal evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: aha-production-migration-rehearsal-${{ github.sha }}
+          path: ${{ env.AHA_REHEARSAL_EVIDENCE_FILE }}
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Report result
+        run: |
+          echo "AHA production migration rehearsal: PASS"
+          echo "AHA production database touched: NO"
+          echo "AHA production canonical sync: DISABLED"

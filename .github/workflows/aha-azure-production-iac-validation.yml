@@ -1,0 +1,144 @@
+name: AHA Azure production IaC validation
+
+on:
+  pull_request:
+    paths:
+      - 'infra/azure/production/**'
+      - 'supabase/migrations/**'
+      - 'backend/api/Dockerfile'
+      - 'backend/api/.dockerignore'
+      - 'backend/api/src/health.controller.ts'
+      - 'backend/api/src/sync/sync.module.ts'
+      - '.github/workflows/aha-azure-production-*.yml'
+      - 'scripts/aha-canonical-sync-production-rollout-gate.cjs'
+      - 'tests/aha-azure-production-platform-v1.test.cjs'
+      - 'tests/aha-canonical-sync-production-rollout-gate-v1.test.cjs'
+  push:
+    branches:
+      - main
+    paths:
+      - 'infra/azure/production/**'
+      - 'supabase/migrations/**'
+      - 'backend/api/Dockerfile'
+      - 'backend/api/.dockerignore'
+      - 'backend/api/src/health.controller.ts'
+      - 'backend/api/src/sync/sync.module.ts'
+      - '.github/workflows/aha-azure-production-*.yml'
+      - 'scripts/aha-canonical-sync-production-rollout-gate.cjs'
+      - 'tests/aha-azure-production-platform-v1.test.cjs'
+      - 'tests/aha-canonical-sync-production-rollout-gate-v1.test.cjs'
+
+permissions:
+  contents: read
+
+jobs:
+  validate-production-iac:
+    name: Validate Bicep, images, migrations and production roles
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Install current Bicep CLI through Azure CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+          az bicep install
+          az bicep version
+
+      - name: Compile every production Bicep entrypoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          for file in \
+            infra/azure/production/main.bicep \
+            infra/azure/production/platform.bicep \
+            infra/azure/production/operations.bicep \
+            infra/azure/production/deployment-access.bicep \
+            infra/azure/production/postgres-config.bicep \
+            infra/azure/production/db-init-job.bicep \
+            infra/azure/production/app.bicep; do
+            echo "Compiling $file"
+            az bicep build --file "$file" --stdout >/dev/null
+          done
+
+      - name: Build production NestJS image locally
+        run: docker build -f backend/api/Dockerfile backend/api
+
+      - name: Build production migration image locally
+        run: docker build -f infra/azure/production/db-init/Dockerfile .
+
+      - name: Exercise exact canonical migrations and production role boundary on PostgreSQL 16
+        shell: bash
+        run: |
+          set -euo pipefail
+          container="aha-production-migration-ci-${GITHUB_RUN_ID}"
+          docker run -d --rm \
+            --name "$container" \
+            -e POSTGRES_DB=aha_production_ci \
+            -e POSTGRES_USER=postgres \
+            -e POSTGRES_PASSWORD=production-ci-password \
+            postgres:16 >/dev/null
+          cleanup() { docker rm -f "$container" >/dev/null 2>&1 || true; }
+          trap cleanup EXIT
+
+          for attempt in {1..30}; do
+            if docker exec "$container" pg_isready -U postgres -d aha_production_ci >/dev/null 2>&1; then
+              break
+            fi
+            if [[ "$attempt" == 30 ]]; then
+              echo "PostgreSQL 16 CI rehearsal did not become ready." >&2
+              exit 1
+            fi
+            sleep 2
+          done
+
+          migration_count=0
+          while IFS= read -r migration; do
+            echo "CI migration: $(basename "$migration")"
+            docker exec -i "$container" \
+              psql -U postgres -d aha_production_ci -X -v ON_ERROR_STOP=1 \
+              < "$migration" >/dev/null
+            migration_count=$((migration_count + 1))
+          done < <(find supabase/migrations -maxdepth 1 -type f -name '*.sql' | sort)
+          if (( migration_count < 10 )); then
+            echo "Unexpectedly small production migration set." >&2
+            exit 1
+          fi
+
+          docker exec -i "$container" \
+            psql -U postgres -d aha_production_ci -X -v ON_ERROR_STOP=1 \
+              -v readiness_password='production-ci-readiness-not-a-secret' \
+            < infra/azure/production/db-init/roles.sql >/dev/null
+
+          readiness_shape="$(docker exec "$container" psql -U postgres -d aha_production_ci -X -A -t -q -c "
+            select rolcanlogin::int || '|' || rolsuper::int || '|' || rolbypassrls::int || '|' ||
+                   rolcreatedb::int || '|' || rolcreaterole::int || '|' || rolinherit::int
+            from pg_roles where rolname='aha_canonical_production_readiness'
+          ")"
+          runtime_shape="$(docker exec "$container" psql -U postgres -d aha_production_ci -X -A -t -q -c "
+            select rolcanlogin::int || '|' || rolsuper::int || '|' || rolbypassrls::int || '|' ||
+                   rolcreatedb::int || '|' || rolcreaterole::int || '|' || rolinherit::int
+            from pg_roles where rolname='aha_canonical_production_runtime'
+          ")"
+          routines="$(docker exec "$container" psql -U postgres -d aha_production_ci -X -A -t -q -c "
+            select coalesce(string_agg(p.proname, ',' order by p.proname),'')
+            from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+            where n.nspname='aha'
+              and has_function_privilege('aha_canonical_production_runtime',p.oid,'EXECUTE')
+          ")"
+          writes="$(docker exec "$container" psql -U postgres -d aha_production_ci -X -A -t -q -c "
+            select count(*) from information_schema.role_table_grants
+            where grantee='aha_canonical_production_runtime' and table_schema='aha'
+              and privilege_type in ('INSERT','UPDATE','DELETE','TRUNCATE','REFERENCES','TRIGGER')
+          ")"
+
+          [[ "$readiness_shape" == '1|0|0|0|0|0' ]]
+          [[ "$runtime_shape" == '0|0|0|0|0|0' ]]
+          [[ "$routines" == 'bootstrap_sync_snapshot_v1,pull_sync_changes_v1,push_sync_change_v1' ]]
+          [[ "$writes" == '0' ]]
+          echo "Production migration/role CI rehearsal: PASS (${migration_count} migrations)"
+
+      - name: Run deterministic production platform contract test
+        run: node tests/aha-azure-production-platform-v1.test.cjs

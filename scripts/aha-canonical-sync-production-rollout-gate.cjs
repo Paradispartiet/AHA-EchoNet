@@ -147,6 +147,7 @@ async function readiness() {
   if (health?.database?.canonicalSchema !== "present") fail("production canonical schema is not present");
   if (health?.database?.safeRuntimeRole !== true) fail("production API is not using a safe runtime database role");
   if (health?.runtimeActivated === true) fail("production canonical runtime must not be activated before the rollout gate completes");
+  if (health?.canonicalSync?.enabled !== false) fail("production canonical sync must be explicitly disabled in live health before rollout readiness can pass");
 
   return { origin, health };
 }

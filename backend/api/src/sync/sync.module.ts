@@ -13,6 +13,7 @@ import { CanonicalSyncService } from "./sync.service.js";
     },
     CanonicalSyncRepository,
     CanonicalSyncService
-  ]
+  ],
+  exports: [CANONICAL_SYNC_CONFIG]
 })
 export class CanonicalSyncModule {}
