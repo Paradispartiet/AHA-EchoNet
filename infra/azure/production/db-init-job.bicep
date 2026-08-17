@@ -9,6 +9,11 @@ param image string
 param adminDatabaseUrlSecretUri string
 param databaseCaSecretUri string
 param readinessPasswordSecretUri string
+@allowed([
+  'apply'
+  'verify_restore'
+])
+param mode string = 'apply'
 param tags object = {}
 
 resource managedEnvironment 'Microsoft.App/managedEnvironments@2025-01-01' existing = {
@@ -26,7 +31,9 @@ resource registry 'Microsoft.ContainerRegistry/registries@2023-07-01' existing =
 resource job 'Microsoft.App/jobs@2025-01-01' = {
   name: jobName
   location: location
-  tags: tags
+  tags: union(tags, {
+    dbInitMode: mode
+  })
   identity: {
     type: 'UserAssigned'
     userAssignedIdentities: {
@@ -75,6 +82,10 @@ resource job 'Microsoft.App/jobs@2025-01-01' = {
           image: image
           env: [
             {
+              name: 'AHA_DB_INIT_MODE'
+              value: mode
+            }
+            {
               name: 'AHA_PRODUCTION_ADMIN_DATABASE_URL'
               secretRef: 'admin-database-url'
             }
@@ -99,3 +110,4 @@ resource job 'Microsoft.App/jobs@2025-01-01' = {
 
 output jobName string = job.name
 output jobId string = job.id
+output mode string = mode
