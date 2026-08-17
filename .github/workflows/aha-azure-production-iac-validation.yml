@@ -1,0 +1,65 @@
+name: AHA Azure production IaC validation
+
+on:
+  pull_request:
+    paths:
+      - 'infra/azure/production/**'
+      - 'backend/api/Dockerfile'
+      - 'backend/api/.dockerignore'
+      - 'backend/api/src/health.controller.ts'
+      - '.github/workflows/aha-azure-production-*.yml'
+      - 'tests/aha-azure-production-platform-v1.test.cjs'
+  push:
+    branches:
+      - main
+    paths:
+      - 'infra/azure/production/**'
+      - 'backend/api/Dockerfile'
+      - 'backend/api/.dockerignore'
+      - 'backend/api/src/health.controller.ts'
+      - '.github/workflows/aha-azure-production-*.yml'
+      - 'tests/aha-azure-production-platform-v1.test.cjs'
+
+permissions:
+  contents: read
+
+jobs:
+  validate-production-iac:
+    name: Validate Bicep and production container images
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Install current Bicep CLI through Azure CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+          az bicep install
+          az bicep version
+
+      - name: Compile every production Bicep entrypoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          for file in \
+            infra/azure/production/main.bicep \
+            infra/azure/production/platform.bicep \
+            infra/azure/production/operations.bicep \
+            infra/azure/production/deployment-access.bicep \
+            infra/azure/production/postgres-config.bicep \
+            infra/azure/production/db-init-job.bicep \
+            infra/azure/production/app.bicep; do
+            echo "Compiling $file"
+            az bicep build --file "$file" --stdout >/dev/null
+          done
+
+      - name: Build production NestJS image locally
+        run: docker build -f backend/api/Dockerfile backend/api
+
+      - name: Build production migration image locally
+        run: docker build -f infra/azure/production/db-init/Dockerfile .
+
+      - name: Run deterministic production platform contract test
+        run: node tests/aha-azure-production-platform-v1.test.cjs
