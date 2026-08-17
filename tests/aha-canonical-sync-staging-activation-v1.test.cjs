@@ -4,20 +4,22 @@ const vm = require("node:vm");
 
 const PAGE = "canonical-sync-staging.html";
 const BRIDGE = "js/ahaCanonicalSyncStagingBridge.js";
+const HYDRATOR = "js/ahaCanonicalStagingSourceHydrator.js";
 const HOME = "index.html";
-const DOC = "docs/AHA_CANONICAL_SYNC_STAGING_ACTIVATION_V1.md";
 
-for (const file of [PAGE, BRIDGE, HOME]) {
+for (const file of [PAGE, BRIDGE, HYDRATOR, HOME]) {
   assert.equal(fs.existsSync(file), true, `${file} mangler`);
 }
 
 const page = fs.readFileSync(PAGE, "utf8");
 const bridgeSource = fs.readFileSync(BRIDGE, "utf8");
+const hydratorSource = fs.readFileSync(HYDRATOR, "utf8");
 const home = fs.readFileSync(HOME, "utf8");
 
-// Home remains the old read-only Sync Hub/status surface. Canonical staging is direct-URL only.
-assert.equal(home.includes(PAGE), false, "Home must not link to canonical staging execution");
-assert.equal(home.includes(BRIDGE), false, "Home must not load canonical staging bridge");
+// Home remains the read-only legacy Sync Hub/status surface. Canonical staging is direct-URL only.
+for (const stagingOnly of [PAGE, BRIDGE, HYDRATOR]) {
+  assert.equal(home.includes(stagingOnly), false, `Home must not load/link ${stagingOnly}`);
+}
 for (const runtime of [
   "ahaCanonicalSyncHash.js",
   "ahaCanonicalSyncStore.js",
@@ -29,7 +31,7 @@ for (const runtime of [
   assert.equal(home.includes(runtime), false, `Home must not load ${runtime}`);
 }
 
-// The staging page loads only the canonical chain plus the minimal Supabase client bootstrap.
+// The staging page loads only the canonical chain plus minimal Supabase bootstrap and the staging hydrator.
 for (const required of [
   "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2",
   "js/ahaConfig.js",
@@ -41,7 +43,8 @@ for (const required of [
   "js/ahaCanonicalLocalApplyAdapter.js",
   "js/ahaCanonicalSyncApiClient.js",
   "js/ahaCanonicalManualSyncRunner.js",
-  "js/ahaCanonicalSyncStagingBridge.js"
+  HYDRATOR,
+  BRIDGE
 ]) {
   assert.ok(page.includes(required), `staging page must load ${required}`);
 }
@@ -50,6 +53,7 @@ for (const forbidden of [
   "js/ahaSyncHub.js",
   "js/ahaManualSyncAdapter.js",
   "js/ahaManualSyncStateMachine.js",
+  "js/ahaRepository.js",
   "js/ahaLists.js",
   "js/ahaPaths.js",
   "js/ahaGroups.js",
@@ -61,7 +65,9 @@ assert.match(page, /name="robots"\s+content="noindex,nofollow"/);
 assert.match(page, /\?ahaCanonicalStaging=1/);
 assert.match(page, /RUN_AHA_CANONICAL_STAGING_SYNC/);
 assert.match(page, /name="explicitConsent"/);
-assert.doesNotMatch(page, /name=["'](?:accessToken|bearerToken|jwt)["']/i, "staging page must not ask the operator to paste bearer tokens");
+assert.match(page, /read-only-modus/);
+assert.match(page, /Notes, Gallery, Feed, Insta, Music, Training, Personal AI, Workbench/);
+assert.doesNotMatch(page, /name=["'](?:accessToken|bearerToken|jwt)["']/i, "staging page must not ask operator to paste bearer tokens");
 
 const orderedScripts = [
   "js/ahaConfig.js",
@@ -73,24 +79,26 @@ const orderedScripts = [
   "js/ahaCanonicalLocalApplyAdapter.js",
   "js/ahaCanonicalSyncApiClient.js",
   "js/ahaCanonicalManualSyncRunner.js",
-  "js/ahaCanonicalSyncStagingBridge.js"
+  HYDRATOR,
+  BRIDGE
 ];
 for (let index = 1; index < orderedScripts.length; index += 1) {
   assert.ok(page.indexOf(orderedScripts[index - 1]) < page.indexOf(orderedScripts[index]), `${orderedScripts[index - 1]} must load before ${orderedScripts[index]}`);
 }
 
-// The bridge has exactly one passive page-load behavior: bind the form. No auth/storage/timer sync triggers.
+// Both staging modules are passive until explicit submit.
 assert.match(bridgeSource, /explicitUserAction:\s*true/);
-assert.match(bridgeSource, /explicitConsent/);
-assert.match(bridgeSource, /ahaCanonicalStaging/);
+assert.match(bridgeSource, /AHACanonicalStagingSourceHydrator/);
 assert.match(bridgeSource, /RUN_AHA_CANONICAL_STAGING_SYNC/);
-assert.match(bridgeSource, /createLazySessionProvider/);
-assert.doesNotMatch(bridgeSource, /aha:auth-ready|onAuthStateChange|SIGNED_IN|TOKEN_REFRESHED/);
-assert.doesNotMatch(bridgeSource, /addEventListener\s*\(\s*["'](?:storage|visibilitychange)["']/);
-assert.doesNotMatch(bridgeSource, /\bsetInterval\s*\(|\bsetTimeout\s*\(/);
-assert.doesNotMatch(bridgeSource, /syncFromDatabase\s*\(/);
-assert.doesNotMatch(bridgeSource, /console\.(?:log|warn|error)\s*\(/);
-assert.doesNotMatch(bridgeSource, /localStorage\s*\.\s*(?:setItem|removeItem)\s*\(/);
+assert.match(hydratorSource, /writesPrimaryDatabase:\s*false/);
+assert.match(hydratorSource, /executesOnLoad:\s*false/);
+for (const source of [bridgeSource, hydratorSource]) {
+  assert.doesNotMatch(source, /aha:auth-ready|onAuthStateChange|SIGNED_IN|TOKEN_REFRESHED/);
+  assert.doesNotMatch(source, /addEventListener\s*\(\s*["'](?:storage|visibilitychange)["']/);
+  assert.doesNotMatch(source, /\bsetInterval\s*\(|\bsetTimeout\s*\(/);
+  assert.doesNotMatch(source, /console\.(?:log|warn|error)\s*\(/);
+}
+assert.doesNotMatch(hydratorSource, /\.insert\s*\(|\.upsert\s*\(|\.update\s*\(|\.delete\s*\(/);
 
 function loadBridge(extra = {}) {
   const context = {
@@ -119,21 +127,58 @@ function loadBridge(extra = {}) {
 async function run() {
   let runnerTouches = 0;
   let dbTouches = 0;
+  let hydratorTouches = 0;
+  const hydratedStorage = {
+    getItem() { return null; },
+    setItem() {},
+    removeItem() {}
+  };
+  const session = {
+    access_token: "TOKEN_MUST_NOT_RENDER",
+    user: { id: "user-123" }
+  };
+  const client = {
+    auth: {
+      async getSession() {
+        return { data: { session }, error: null };
+      }
+    }
+  };
+  const db = {
+    getClient() {
+      dbTouches += 1;
+      return client;
+    }
+  };
+  const hydrator = {
+    async hydrateStorage(options) {
+      hydratorTouches += 1;
+      assert.equal(options.client, client);
+      assert.equal(options.session.user.id, "user-123");
+      return {
+        storage: hydratedStorage,
+        stats: { fetched: 87, included: 85, excluded: 2, localSourceEvents: 0, mergedSourceEvents: 85 }
+      };
+    }
+  };
   const runner = {
     async run(options) {
       runnerTouches += 1;
       assert.equal(options.explicitUserAction, true);
       assert.equal(options.workspaceId, "workspace-personal-1");
       assert.equal(options.apiBaseUrl, "https://aha-api-staging.example");
+      assert.equal(options.storage, hydratedStorage, "runner must receive the hydrated virtual staging storage");
       assert.equal(typeof options.auth?.getSession, "function");
+      const cachedSession = await options.auth.getSession();
+      assert.equal(cachedSession.user.id, "user-123");
       return {
         workspaceId: options.workspaceId,
         deviceId: "device-1",
-        local: { prepared: 10, changed: 2, blockedByExistingConflict: 0 },
-        enqueue: { enqueued: 2, superseded: 0 },
-        push: { synced: 2, conflicts: 1, rejected: 0, retry: 0 },
-        bootstrap: { pages: 1, applied: 4 },
-        pull: { pages: 1, applied: 1 },
+        local: { prepared: 85, changed: 85, blockedByExistingConflict: 0 },
+        enqueue: { enqueued: 85, superseded: 0 },
+        push: { synced: 85, conflicts: 1, rejected: 0, retry: 0 },
+        bootstrap: { pages: 1, applied: 85 },
+        pull: { pages: 1, applied: 0 },
         conflicts: [{
           objectType: "insight",
           objectId: "secret-object-id-must-not-render",
@@ -144,98 +189,61 @@ async function run() {
       };
     }
   };
-  const db = {
-    getClient() {
-      dbTouches += 1;
-      return {
-        auth: {
-          async getSession() {
-            return { data: { session: { access_token: "TOKEN_MUST_NOT_RENDER" } }, error: null };
-          }
-        }
-      };
-    }
-  };
+
   const openLocation = { search: "?ahaCanonicalStaging=1", origin: "https://paradispartiet.github.io" };
   const closedLocation = { search: "", origin: "https://paradispartiet.github.io" };
-  const context = loadBridge({ location: closedLocation });
+  const context = loadBridge({ location: closedLocation, AHACanonicalStagingSourceHydrator: hydrator });
   const bridge = context.AHACanonicalSyncStagingBridge;
   assert.ok(bridge);
   assert.equal(runnerTouches, 0, "loading staging bridge must not touch runner");
   assert.equal(dbTouches, 0, "loading staging bridge must not touch auth/session provider");
+  assert.equal(hydratorTouches, 0, "loading staging bridge must not hydrate primary AHA");
   assert.equal(bridge.getStatus({ location: closedLocation }).gateOpen, false);
   assert.equal(bridge.getStatus({ location: openLocation }).gateOpen, true);
   assert.equal(bridge.getStatus({ location: openLocation }).loginTriggersSync, false);
   assert.equal(bridge.getStatus({ location: openLocation }).authReadyTriggersSync, false);
   assert.equal(bridge.getStatus({ location: openLocation }).executesOnLoad, false);
+  assert.equal(bridge.getStatus({ location: openLocation }).primarySourceHydration, "explicit_run_only");
 
-  await assert.rejects(() => bridge.execute({
+  const validInput = {
     apiBaseUrl: "https://aha-api-staging.example",
     workspaceId: "workspace-personal-1",
     confirmation: bridge.CONFIRMATION_PHRASE,
     explicitConsent: true
-  }, { location: closedLocation, runner, db }), /URL gate is closed|staging URL gate is closed/);
-  assert.equal(runnerTouches, 0);
-  assert.equal(dbTouches, 0);
+  };
 
-  await assert.rejects(() => bridge.execute({
-    apiBaseUrl: "https://aha-api-staging.example",
-    workspaceId: "workspace-personal-1",
-    confirmation: "WRONG",
-    explicitConsent: true
-  }, { location: openLocation, runner, db }), /confirmation phrase is incorrect/);
+  await assert.rejects(() => bridge.execute(validInput, { location: closedLocation, runner, db }), /staging URL gate is closed/);
+  await assert.rejects(() => bridge.execute({ ...validInput, confirmation: "WRONG" }, { location: openLocation, runner, db }), /confirmation phrase is incorrect/);
+  await assert.rejects(() => bridge.execute({ ...validInput, explicitConsent: false }, { location: openLocation, runner, db }), /explicit staging consent is required/);
+  await assert.rejects(() => bridge.execute({ ...validInput, apiBaseUrl: "http://remote.example" }, { location: openLocation, runner, db }), /must use HTTPS/);
+  await assert.rejects(() => bridge.execute({ ...validInput, apiBaseUrl: "https://paradispartiet.github.io" }, { location: openLocation, runner, db }), /separate origin/);
+  await assert.rejects(() => bridge.execute({ ...validInput, apiBaseUrl: "https://user:pass@aha-api-staging.example" }, { location: openLocation, runner, db }), /must not contain credentials/);
   assert.equal(runnerTouches, 0);
-  assert.equal(dbTouches, 0);
-
-  await assert.rejects(() => bridge.execute({
-    apiBaseUrl: "https://aha-api-staging.example",
-    workspaceId: "workspace-personal-1",
-    confirmation: bridge.CONFIRMATION_PHRASE,
-    explicitConsent: false
-  }, { location: openLocation, runner, db }), /explicit staging consent is required/);
-  assert.equal(runnerTouches, 0);
-
-  await assert.rejects(() => bridge.execute({
-    apiBaseUrl: "http://remote.example",
-    workspaceId: "workspace-personal-1",
-    confirmation: bridge.CONFIRMATION_PHRASE,
-    explicitConsent: true
-  }, { location: openLocation, runner, db }), /must use HTTPS/);
-  await assert.rejects(() => bridge.execute({
-    apiBaseUrl: "https://paradispartiet.github.io",
-    workspaceId: "workspace-personal-1",
-    confirmation: bridge.CONFIRMATION_PHRASE,
-    explicitConsent: true
-  }, { location: openLocation, runner, db }), /separate origin/);
-  await assert.rejects(() => bridge.execute({
-    apiBaseUrl: "https://user:pass@aha-api-staging.example",
-    workspaceId: "workspace-personal-1",
-    confirmation: bridge.CONFIRMATION_PHRASE,
-    explicitConsent: true
-  }, { location: openLocation, runner, db }), /must not contain credentials/);
-  assert.equal(runnerTouches, 0);
+  assert.equal(dbTouches, 0, "invalid/gated requests must not touch auth");
+  assert.equal(hydratorTouches, 0, "invalid/gated requests must not read primary AHA");
 
   const lazy = bridge.createLazySessionProvider({ db });
   assert.equal(lazy.touched, false);
   assert.equal(dbTouches, 0, "creating the session provider must remain lazy");
-  const session = await lazy.getSession();
+  assert.equal((await lazy.getSession()).user.id, "user-123");
   assert.equal(lazy.touched, true);
   assert.equal(dbTouches, 1);
-  assert.equal(session.access_token, "TOKEN_MUST_NOT_RENDER");
+  assert.equal((await lazy.getSession()).user.id, "user-123");
+  assert.equal(dbTouches, 1, "session provider must cache the same authenticated session for hydration and API auth");
 
-  const summary = await bridge.execute({
-    apiBaseUrl: "https://aha-api-staging.example/",
-    workspaceId: "workspace-personal-1",
-    confirmation: bridge.CONFIRMATION_PHRASE,
-    explicitConsent: true
-  }, { location: openLocation, runner, db });
+  const summary = await bridge.execute({ ...validInput, apiBaseUrl: "https://aha-api-staging.example/" }, { location: openLocation, runner, db });
   assert.equal(runnerTouches, 1);
+  assert.equal(hydratorTouches, 1);
+  assert.equal(dbTouches, 2, "explicit execution may resolve the primary AHA client exactly once");
   assert.equal(summary.ok, true);
-  assert.equal(summary.localPrepared, 10);
-  assert.equal(summary.localChanged, 2);
-  assert.equal(summary.pushed, 2);
-  assert.equal(summary.bootstrapApplied, 4);
-  assert.equal(summary.pullApplied, 1);
+  assert.equal(summary.primarySourceEventsFetched, 87);
+  assert.equal(summary.primarySourceEventsIncluded, 85);
+  assert.equal(summary.primarySourceEventsExcluded, 2);
+  assert.equal(summary.hydratedSourceEventsMerged, 85);
+  assert.equal(summary.localPrepared, 85);
+  assert.equal(summary.localChanged, 85);
+  assert.equal(summary.pushed, 85);
+  assert.equal(summary.bootstrapApplied, 85);
   assert.equal(summary.conflictCount, 1);
   assert.equal(summary.conflictReasons.stale_base_revision, 1);
   assert.equal(summary.rawPayloadIncluded, false);
@@ -251,18 +259,9 @@ async function run() {
       return new Promise((resolve) => { releaseRun = resolve; });
     }
   };
-  const first = bridge.execute({
-    apiBaseUrl: "https://aha-api-staging.example",
-    workspaceId: "workspace-personal-1",
-    confirmation: bridge.CONFIRMATION_PHRASE,
-    explicitConsent: true
-  }, { location: openLocation, runner: slowRunner, db });
-  await assert.rejects(() => bridge.execute({
-    apiBaseUrl: "https://aha-api-staging.example",
-    workspaceId: "workspace-personal-1",
-    confirmation: bridge.CONFIRMATION_PHRASE,
-    explicitConsent: true
-  }, { location: openLocation, runner: slowRunner, db }), /already running/);
+  const first = bridge.execute(validInput, { location: openLocation, runner: slowRunner, db });
+  await assert.rejects(() => bridge.execute(validInput, { location: openLocation, runner: slowRunner, db }), /already running/);
+  while (typeof releaseRun !== "function") await Promise.resolve();
   releaseRun({ workspaceId: "workspace-personal-1", deviceId: "device-1", local: {}, enqueue: {}, push: {}, pull: {}, conflicts: [] });
   await first;
 
