@@ -170,17 +170,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          restore_dsn="$(python3 - <<'PY'
-import os
-from urllib.parse import quote
-print(
-    f"postgresql://{quote(os.environ['AHA_PRODUCTION_POSTGRES_ADMIN_LOGIN'], safe='')}:"
-    f"{quote(os.environ['AHA_PRODUCTION_POSTGRES_ADMIN_PASSWORD'], safe='')}@"
-    f"{os.environ['AHA_RESTORE_POSTGRES_FQDN']}:5432/aha",
-    end=''
-)
-PY
-)"
+          restore_dsn="$(python3 -c 'import os; from urllib.parse import quote; print("postgresql://{}:{}@{}:5432/aha".format(quote(os.environ["AHA_PRODUCTION_POSTGRES_ADMIN_LOGIN"], safe=""), quote(os.environ["AHA_PRODUCTION_POSTGRES_ADMIN_PASSWORD"], safe=""), os.environ["AHA_RESTORE_POSTGRES_FQDN"]), end="")')"
           printf '::add-mask::%s\n' "$restore_dsn"
           expires="$(date -u -d '+1 day' +%Y-%m-%dT%H:%M:%SZ)"
           az keyvault secret set \
