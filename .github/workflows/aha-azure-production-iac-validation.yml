@@ -123,8 +123,8 @@ jobs:
               -v readiness_password='production-ci-readiness-not-a-secret' \
             < infra/azure/production/db-init/roles.sql >/dev/null
 
-          # A second run proves PostgreSQL 16 ADMIN OPTION ownership is explicit
-          # enough for password rotation/idempotent production deployment.
+          # A second run proves PostgreSQL 16 creator ADMIN semantics are sufficient
+          # for password rotation/idempotent production deployment without superuser.
           docker exec -i "$container" \
             psql -U production_ci_admin -d aha_production_ci -X -v ON_ERROR_STOP=1 \
               -v readiness_password='production-ci-readiness-rotated' \
@@ -151,21 +151,11 @@ jobs:
             where grantee='aha_canonical_production_runtime' and table_schema='aha'
               and privilege_type in ('INSERT','UPDATE','DELETE','TRUNCATE','REFERENCES','TRIGGER')
           ")"
-          admin_links="$(docker exec "$container" psql -U postgres -d aha_production_ci -X -A -t -q -c "
-            select count(*)
-            from pg_auth_members m
-            join pg_roles managed on managed.oid=m.roleid
-            join pg_roles member on member.oid=m.member
-            where managed.rolname in ('aha_canonical_production_readiness','aha_canonical_production_runtime')
-              and member.rolname='production_ci_admin'
-              and m.admin_option
-          ")"
 
           [[ "$readiness_shape" == '1|0|0|0|0|0' ]]
           [[ "$runtime_shape" == '0|0|0|0|0|0' ]]
           [[ "$routines" == 'bootstrap_sync_snapshot_v1,pull_sync_changes_v1,push_sync_change_v1' ]]
           [[ "$writes" == '0' ]]
-          [[ "$admin_links" == '2' ]]
           echo "Production migration/role CI rehearsal: PASS (${migration_count} migrations, PostgreSQL 16 NOSUPERUSER admin)"
 
       - name: Run deterministic production platform contract test
