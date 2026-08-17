@@ -73,6 +73,14 @@ assert.match(role, /::add-mask::/);
 assert.doesNotMatch(role, /\bset\s+-x\b/);
 assert.doesNotMatch(role, /^\s*(?:env|printenv)(?:\s|$)/m);
 
+// GITHUB_ENV only affects later workflow steps. The runtime DSN must also be
+// exported in the activation shell before runtime_psql performs the immediate
+// LOGIN verification; otherwise nounset aborts before the check can run.
+assert.match(role, /export AHA_STAGING_RUNTIME_DATABASE_URL="\$runtime_dsn"/);
+const runtimeDsnExportIndex = role.indexOf('export AHA_STAGING_RUNTIME_DATABASE_URL="$runtime_dsn"');
+const runtimeLoginCheckIndex = role.indexOf("runtime_name=\"$(runtime_psql -c 'select current_user')\"");
+assert.ok(runtimeDsnExportIndex >= 0 && runtimeDsnExportIndex < runtimeLoginCheckIndex);
+
 // Render controller refuses a wrong service/config and requires public asymmetric JWKS.
 assert.match(render, /SERVICE_NAME = "aha-canonical-api-staging"/);
 assert.match(render, /EXPECTED_REPO = "https:\/\/github\.com\/Paradispartiet\/AHA-EchoNet"/);
