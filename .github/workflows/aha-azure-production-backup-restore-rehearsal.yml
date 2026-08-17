@@ -1,0 +1,315 @@
+name: AHA Azure production backup restore rehearsal
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: "Skriv RUN_AHA_AZURE_PRODUCTION_BACKUP_RESTORE_REHEARSAL for å PITR-restaurere production til et separat privat testmål"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  backup-restore-rehearsal:
+    name: Restore production PostgreSQL and verify it read-only
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    environment: aha-canonical-production-infra
+
+    env:
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      AHA_PRODUCTION_POSTGRES_ADMIN_PASSWORD: ${{ secrets.AHA_PRODUCTION_POSTGRES_ADMIN_PASSWORD }}
+      AHA_PRODUCTION_DATABASE_CA_CERT: ${{ secrets.AHA_PRODUCTION_DATABASE_CA_CERT }}
+      AHA_AZURE_LOCATION: ${{ vars.AHA_PRODUCTION_AZURE_LOCATION || 'westeurope' }}
+      AHA_PRODUCTION_RESOURCE_GROUP: ${{ vars.AHA_PRODUCTION_RESOURCE_GROUP || 'rg-aha-canonical-prod' }}
+      AHA_PRODUCTION_PREFIX: ${{ vars.AHA_PRODUCTION_PREFIX || 'aha-prod' }}
+      AHA_PRODUCTION_POSTGRES_ADMIN_LOGIN: ${{ vars.AHA_PRODUCTION_POSTGRES_ADMIN_LOGIN || 'ahaadmin' }}
+      AHA_PRODUCTION_CONTAINER_APP: aha-canonical-api-production
+      AHA_RESTORE_VERIFY_JOB: aha-canonical-restore-verify
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Require exact confirmation and protected Azure inputs
+        shell: bash
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_REF" != "refs/heads/main" ]]; then
+            echo "Production restore rehearsal only runs from main." >&2
+            exit 1
+          fi
+          if [[ "$CONFIRMATION" != "RUN_AHA_AZURE_PRODUCTION_BACKUP_RESTORE_REHEARSAL" ]]; then
+            echo "Exact production backup/restore confirmation is required." >&2
+            exit 1
+          fi
+          for name in AZURE_CLIENT_ID AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID AHA_PRODUCTION_POSTGRES_ADMIN_PASSWORD AHA_PRODUCTION_DATABASE_CA_CERT; do
+            if [[ -z "${!name:-}" ]]; then
+              echo "Missing required protected restore input: ${name}" >&2
+              exit 1
+            fi
+          done
+          printf '::add-mask::%s\n' "$AHA_PRODUCTION_POSTGRES_ADMIN_PASSWORD"
+          printf '::add-mask::%s\n' "$AHA_PRODUCTION_DATABASE_CA_CERT"
+
+      - name: Azure OIDC login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Prepare Azure Container Apps tooling
+        run: az extension add --name containerapp --upgrade --only-show-errors
+
+      - name: Resolve exactly one dedicated production platform
+        shell: bash
+        run: |
+          set -euo pipefail
+          source_json="$RUNNER_TEMP/source-postgres.json"
+          az postgres flexible-server list \
+            --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
+            --query "[?starts_with(name, '${AHA_PRODUCTION_PREFIX}-pg-')]" \
+            -o json --only-show-errors > "$source_json"
+          source_count="$(jq 'length' "$source_json")"
+          if [[ "$source_count" != '1' ]]; then
+            echo "Restore rehearsal requires exactly one dedicated production PostgreSQL server; found ${source_count}." >&2
+            exit 1
+          fi
+          source_name="$(jq -r '.[0].name' "$source_json")"
+          source_id="$(jq -r '.[0].id' "$source_json")"
+          subnet_id="$(jq -r '.[0].network.delegatedSubnetResourceId // empty' "$source_json")"
+          dns_id="$(jq -r '.[0].network.privateDnsZoneArmResourceId // empty' "$source_json")"
+          if [[ -z "$source_name" || -z "$source_id" || -z "$subnet_id" || -z "$dns_id" ]]; then
+            echo "Production PostgreSQL is not the expected private VNet target." >&2
+            exit 1
+          fi
+
+          cae_name="${AHA_PRODUCTION_PREFIX}-cae"
+          migration_identity="${AHA_PRODUCTION_PREFIX}-migration-id"
+          acr_json="$(az acr list --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" -o json --only-show-errors)"
+          if [[ "$(jq 'length' <<<"$acr_json")" != '1' ]]; then
+            echo "Restore rehearsal requires exactly one production ACR." >&2
+            exit 1
+          fi
+          acr_name="$(jq -r '.[0].name' <<<"$acr_json")"
+          acr_login="$(jq -r '.[0].loginServer' <<<"$acr_json")"
+          ops_vaults="$(az keyvault list --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" --query "[?tags.credentialScope=='migration-operations-only']" -o json --only-show-errors)"
+          if [[ "$(jq 'length' <<<"$ops_vaults")" != '1' ]]; then
+            echo "Restore rehearsal requires exactly one operations-only Key Vault." >&2
+            exit 1
+          fi
+          ops_vault_name="$(jq -r '.[0].name' <<<"$ops_vaults")"
+          ops_vault_uri="$(jq -r '.[0].properties.vaultUri' <<<"$ops_vaults")"
+
+          deploy_revision="$(az containerapp show \
+            --name "$AHA_PRODUCTION_CONTAINER_APP" \
+            --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
+            --query "properties.template.containers[0].env[?name=='AHA_API_VERSION'].value | [0]" \
+            -o tsv --only-show-errors)"
+          if [[ ! "$deploy_revision" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "Production API does not expose an immutable 40-character deployment revision." >&2
+            exit 1
+          fi
+          if ! az acr repository show --name "$acr_name" --image "aha-canonical-db-init:${deploy_revision}" --only-show-errors >/dev/null; then
+            echo "Matching immutable production database verification image is missing." >&2
+            exit 1
+          fi
+
+          restore_name="${AHA_PRODUCTION_PREFIX}-restore-${GITHUB_RUN_ID}"
+          restore_name="${restore_name:0:63}"
+          temp_secret="aha-restore-url-${GITHUB_RUN_ID}"
+          {
+            printf 'AHA_SOURCE_POSTGRES_NAME=%s\n' "$source_name"
+            printf 'AHA_SOURCE_POSTGRES_ID=%s\n' "$source_id"
+            printf 'AHA_POSTGRES_SUBNET_ID=%s\n' "$subnet_id"
+            printf 'AHA_POSTGRES_DNS_ID=%s\n' "$dns_id"
+            printf 'AHA_PRODUCTION_CAE_NAME=%s\n' "$cae_name"
+            printf 'AHA_PRODUCTION_MIGRATION_IDENTITY_NAME=%s\n' "$migration_identity"
+            printf 'AHA_PRODUCTION_ACR_NAME=%s\n' "$acr_name"
+            printf 'AHA_PRODUCTION_ACR_LOGIN_SERVER=%s\n' "$acr_login"
+            printf 'AHA_PRODUCTION_OPS_KEYVAULT=%s\n' "$ops_vault_name"
+            printf 'AHA_PRODUCTION_OPS_KEYVAULT_URI=%s\n' "$ops_vault_uri"
+            printf 'AHA_PRODUCTION_DEPLOY_REVISION=%s\n' "$deploy_revision"
+            printf 'AHA_RESTORE_POSTGRES_NAME=%s\n' "$restore_name"
+            printf 'AHA_RESTORE_TEMP_SECRET=%s\n' "$temp_secret"
+          } >> "$GITHUB_ENV"
+
+      - name: Perform a real point-in-time restore to a separate private server
+        shell: bash
+        run: |
+          set -euo pipefail
+          az postgres flexible-server restore \
+            --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
+            --name "$AHA_RESTORE_POSTGRES_NAME" \
+            --source-server "$AHA_SOURCE_POSTGRES_ID" \
+            --subnet "$AHA_POSTGRES_SUBNET_ID" \
+            --private-dns-zone "$AHA_POSTGRES_DNS_ID" \
+            --yes --only-show-errors >/dev/null
+          restored_json="$RUNNER_TEMP/restored-postgres.json"
+          az postgres flexible-server show \
+            --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
+            --name "$AHA_RESTORE_POSTGRES_NAME" \
+            -o json --only-show-errors > "$restored_json"
+          restored_fqdn="$(jq -r '.fullyQualifiedDomainName // empty' "$restored_json")"
+          restored_public="$(jq -r '.network.publicNetworkAccess // empty' "$restored_json")"
+          if [[ -z "$restored_fqdn" || "$restored_public" != 'Disabled' ]]; then
+            echo "Restored PostgreSQL did not preserve the expected private network boundary." >&2
+            exit 1
+          fi
+          printf 'AHA_RESTORE_POSTGRES_FQDN=%s\n' "$restored_fqdn" >> "$GITHUB_ENV"
+
+      - name: Stage a short-lived restored-server verification credential
+        shell: bash
+        run: |
+          set -euo pipefail
+          restore_dsn="$(python3 - <<'PY'
+import os
+from urllib.parse import quote
+print(
+    f"postgresql://{quote(os.environ['AHA_PRODUCTION_POSTGRES_ADMIN_LOGIN'], safe='')}:"
+    f"{quote(os.environ['AHA_PRODUCTION_POSTGRES_ADMIN_PASSWORD'], safe='')}@"
+    f"{os.environ['AHA_RESTORE_POSTGRES_FQDN']}:5432/aha",
+    end=''
+)
+PY
+)"
+          printf '::add-mask::%s\n' "$restore_dsn"
+          expires="$(date -u -d '+1 day' +%Y-%m-%dT%H:%M:%SZ)"
+          az keyvault secret set \
+            --vault-name "$AHA_PRODUCTION_OPS_KEYVAULT" \
+            --name "$AHA_RESTORE_TEMP_SECRET" \
+            --value "$restore_dsn" \
+            --expires "$expires" \
+            --only-show-errors >/dev/null
+
+      - name: Deploy read-only restore verification job
+        shell: bash
+        run: |
+          set -euo pipefail
+          az deployment group create \
+            --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
+            --name "aha-restore-verify-job-${GITHUB_RUN_ID}" \
+            --template-file infra/azure/production/db-init-job.bicep \
+            --parameters \
+              location="$AHA_AZURE_LOCATION" \
+              jobName="$AHA_RESTORE_VERIFY_JOB" \
+              containerAppsEnvironmentName="$AHA_PRODUCTION_CAE_NAME" \
+              managedIdentityName="$AHA_PRODUCTION_MIGRATION_IDENTITY_NAME" \
+              acrName="$AHA_PRODUCTION_ACR_NAME" \
+              image="$AHA_PRODUCTION_ACR_LOGIN_SERVER/aha-canonical-db-init:${AHA_PRODUCTION_DEPLOY_REVISION}" \
+              adminDatabaseUrlSecretUri="${AHA_PRODUCTION_OPS_KEYVAULT_URI}secrets/${AHA_RESTORE_TEMP_SECRET}" \
+              databaseCaSecretUri="${AHA_PRODUCTION_OPS_KEYVAULT_URI}secrets/aha-production-database-ca" \
+              readinessPasswordSecretUri="${AHA_PRODUCTION_OPS_KEYVAULT_URI}secrets/aha-production-readiness-password" \
+              mode=verify_restore \
+            --only-show-errors >/dev/null
+
+      - name: Verify restored canonical schema and role boundary read-only
+        shell: bash
+        run: |
+          set -euo pipefail
+          execution="$(az containerapp job start \
+            --name "$AHA_RESTORE_VERIFY_JOB" \
+            --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
+            --query name -o tsv --only-show-errors)"
+          [[ -n "$execution" ]]
+          for attempt in {1..120}; do
+            status="$(az containerapp job execution show \
+              --name "$AHA_RESTORE_VERIFY_JOB" \
+              --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
+              --job-execution-name "$execution" \
+              --query properties.status -o tsv --only-show-errors 2>/dev/null || true)"
+            case "$status" in
+              Succeeded) break ;;
+              Failed)
+                echo "Restored database verification job failed." >&2
+                exit 1
+                ;;
+            esac
+            if [[ "$attempt" == 120 ]]; then
+              echo "Timed out waiting for restored database verification." >&2
+              exit 1
+            fi
+            sleep 10
+          done
+          printf 'AHA_RESTORE_VERIFICATION_EXECUTION=%s\n' "$execution" >> "$GITHUB_ENV"
+
+      - name: Write backup/restore evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          evidence="$RUNNER_TEMP/aha-production-backup-restore-rehearsal.json"
+          jq -n \
+            --arg version 'aha_azure_production_backup_restore_rehearsal_v1' \
+            --arg verifiedAt "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --arg commit "$GITHUB_SHA" \
+            --arg sourceServer "$AHA_SOURCE_POSTGRES_NAME" \
+            --arg restoredServer "$AHA_RESTORE_POSTGRES_NAME" \
+            --arg verificationExecution "$AHA_RESTORE_VERIFICATION_EXECUTION" \
+            --arg deployRevision "$AHA_PRODUCTION_DEPLOY_REVISION" \
+            '{
+              version: $version,
+              verifiedAt: $verifiedAt,
+              workflowCommit: $commit,
+              sourceServer: $sourceServer,
+              restoredServer: $restoredServer,
+              verificationExecution: $verificationExecution,
+              verifiedDeployRevision: $deployRevision,
+              restoreMode: "point_in_time_restore",
+              privateNetworkPreserved: true,
+              canonicalSchemaVerified: true,
+              productionRuntimeRoleStillNoLogin: true,
+              verificationReadOnly: true,
+              productionSourceMutated: false,
+              stagingDatabaseTouched: false,
+              productionActivation: false
+            }' > "$evidence"
+          printf 'AHA_RESTORE_EVIDENCE_FILE=%s\n' "$evidence" >> "$GITHUB_ENV"
+
+      - name: Upload restore evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: aha-production-backup-restore-rehearsal-${{ github.run_id }}
+          path: ${{ env.AHA_RESTORE_EVIDENCE_FILE }}
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Cleanup temporary restore resources
+        if: always()
+        shell: bash
+        run: |
+          set +e
+          if [[ -n "${AHA_RESTORE_VERIFY_JOB:-}" ]]; then
+            az resource delete \
+              --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
+              --resource-type Microsoft.App/jobs \
+              --name "$AHA_RESTORE_VERIFY_JOB" \
+              --only-show-errors >/dev/null 2>&1 || true
+          fi
+          if [[ -n "${AHA_RESTORE_TEMP_SECRET:-}" && -n "${AHA_PRODUCTION_OPS_KEYVAULT:-}" ]]; then
+            az keyvault secret set-attributes \
+              --vault-name "$AHA_PRODUCTION_OPS_KEYVAULT" \
+              --name "$AHA_RESTORE_TEMP_SECRET" \
+              --enabled false \
+              --only-show-errors >/dev/null 2>&1 || true
+          fi
+          if [[ -n "${AHA_RESTORE_POSTGRES_NAME:-}" ]]; then
+            az postgres flexible-server delete \
+              --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
+              --name "$AHA_RESTORE_POSTGRES_NAME" \
+              --yes --only-show-errors >/dev/null 2>&1 || true
+          fi
+
+      - name: Report result
+        if: success()
+        run: |
+          echo "AHA production backup/restore rehearsal: PASS"
+          echo "AHA restore verification mode: READ_ONLY_VERIFY_FULL"
+          echo "AHA canonical production sync: DISABLED"
