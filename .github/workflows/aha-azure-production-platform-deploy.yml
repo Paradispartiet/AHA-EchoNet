@@ -1,0 +1,366 @@
+name: AHA Azure production platform deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: "Skriv RUN_AHA_AZURE_PRODUCTION_PLATFORM_DEPLOY for å bygge production-plattformen uten å aktivere canonical sync"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy-production-platform:
+    name: Deploy canonical production platform with sync disabled
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    environment: aha-canonical-production-infra
+
+    env:
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      AZURE_DEPLOY_PRINCIPAL_OBJECT_ID: ${{ secrets.AZURE_DEPLOY_PRINCIPAL_OBJECT_ID }}
+      AHA_PRODUCTION_POSTGRES_ADMIN_PASSWORD: ${{ secrets.AHA_PRODUCTION_POSTGRES_ADMIN_PASSWORD }}
+      AHA_PRODUCTION_DATABASE_CA_CERT: ${{ secrets.AHA_PRODUCTION_DATABASE_CA_CERT }}
+      AHA_PRODUCTION_AUDIT_HASH_SALT: ${{ secrets.AHA_PRODUCTION_AUDIT_HASH_SALT }}
+      AHA_AZURE_LOCATION: ${{ vars.AHA_PRODUCTION_AZURE_LOCATION || 'westeurope' }}
+      AHA_PRODUCTION_RESOURCE_GROUP: ${{ vars.AHA_PRODUCTION_RESOURCE_GROUP || 'rg-aha-canonical-prod' }}
+      AHA_PRODUCTION_PREFIX: ${{ vars.AHA_PRODUCTION_PREFIX || 'aha-prod' }}
+      AHA_PRODUCTION_POSTGRES_ADMIN_LOGIN: ${{ vars.AHA_PRODUCTION_POSTGRES_ADMIN_LOGIN || 'ahaadmin' }}
+      AHA_PRODUCTION_CONTAINER_APP: aha-canonical-api-production
+      AHA_PRODUCTION_DB_INIT_JOB: aha-canonical-db-init-production
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Validate exact confirmation and protected deployment inputs
+        shell: bash
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_REF" != "refs/heads/main" ]]; then
+            echo "Azure production platform deployment only runs from main." >&2
+            exit 1
+          fi
+          if [[ "$CONFIRMATION" != "RUN_AHA_AZURE_PRODUCTION_PLATFORM_DEPLOY" ]]; then
+            echo "Exact Azure production platform deployment confirmation is required." >&2
+            exit 1
+          fi
+          for name in \
+            AZURE_CLIENT_ID AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID AZURE_DEPLOY_PRINCIPAL_OBJECT_ID \
+            AHA_PRODUCTION_POSTGRES_ADMIN_PASSWORD AHA_PRODUCTION_DATABASE_CA_CERT AHA_PRODUCTION_AUDIT_HASH_SALT; do
+            if [[ -z "${!name:-}" ]]; then
+              echo "Missing required protected production platform input: ${name}" >&2
+              exit 1
+            fi
+          done
+          if [[ ${#AHA_PRODUCTION_AUDIT_HASH_SALT} -lt 32 ]]; then
+            echo "Production audit hash salt must contain at least 32 characters." >&2
+            exit 1
+          fi
+          printf '::add-mask::%s\n' "$AHA_PRODUCTION_POSTGRES_ADMIN_PASSWORD"
+          printf '::add-mask::%s\n' "$AHA_PRODUCTION_DATABASE_CA_CERT"
+          printf '::add-mask::%s\n' "$AHA_PRODUCTION_AUDIT_HASH_SALT"
+
+      - name: Azure OIDC login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Prepare Azure CLI, Bicep and Container Apps tooling
+        shell: bash
+        run: |
+          set -euo pipefail
+          az bicep install
+          az extension add --name containerapp --upgrade --only-show-errors
+          for provider in Microsoft.App Microsoft.OperationalInsights Microsoft.Insights Microsoft.Network Microsoft.DBforPostgreSQL Microsoft.KeyVault Microsoft.ContainerRegistry Microsoft.ManagedIdentity; do
+            az provider register --namespace "$provider" --wait --only-show-errors
+          done
+
+      - name: Validate production Bicep before mutation
+        shell: bash
+        run: |
+          set -euo pipefail
+          az deployment sub validate \
+            --location "$AHA_AZURE_LOCATION" \
+            --template-file infra/azure/production/main.bicep \
+            --parameters \
+              location="$AHA_AZURE_LOCATION" \
+              resourceGroupName="$AHA_PRODUCTION_RESOURCE_GROUP" \
+              prefix="$AHA_PRODUCTION_PREFIX" \
+              postgresAdministratorLogin="$AHA_PRODUCTION_POSTGRES_ADMIN_LOGIN" \
+              postgresAdministratorPassword="$AHA_PRODUCTION_POSTGRES_ADMIN_PASSWORD" \
+              deploymentPrincipalObjectId="$AZURE_DEPLOY_PRINCIPAL_OBJECT_ID" \
+            --only-show-errors >/dev/null
+
+      - name: Deploy isolated production foundation
+        shell: bash
+        run: |
+          set -euo pipefail
+          outputs="$RUNNER_TEMP/aha-production-foundation-outputs.json"
+          az deployment sub create \
+            --name "aha-production-platform-${GITHUB_RUN_ID}" \
+            --location "$AHA_AZURE_LOCATION" \
+            --template-file infra/azure/production/main.bicep \
+            --parameters \
+              location="$AHA_AZURE_LOCATION" \
+              resourceGroupName="$AHA_PRODUCTION_RESOURCE_GROUP" \
+              prefix="$AHA_PRODUCTION_PREFIX" \
+              postgresAdministratorLogin="$AHA_PRODUCTION_POSTGRES_ADMIN_LOGIN" \
+              postgresAdministratorPassword="$AHA_PRODUCTION_POSTGRES_ADMIN_PASSWORD" \
+              deploymentPrincipalObjectId="$AZURE_DEPLOY_PRINCIPAL_OBJECT_ID" \
+            --query properties.outputs -o json --only-show-errors > "$outputs"
+
+          export_value() {
+            local name="$1"
+            local key="$2"
+            local value
+            value="$(jq -r --arg key "$key" '.[$key].value // empty' "$outputs")"
+            if [[ -z "$value" ]]; then
+              echo "Missing foundation output: $key" >&2
+              exit 1
+            fi
+            printf '%s=%s\n' "$name" "$value" >> "$GITHUB_ENV"
+          }
+
+          export_value AHA_PRODUCTION_CAE_NAME containerAppsEnvironmentName
+          export_value AHA_PRODUCTION_RUNTIME_IDENTITY_NAME managedIdentityName
+          export_value AHA_PRODUCTION_MIGRATION_IDENTITY_NAME migrationIdentityName
+          export_value AHA_PRODUCTION_RUNTIME_KEYVAULT keyVaultName
+          export_value AHA_PRODUCTION_RUNTIME_KEYVAULT_URI keyVaultUri
+          export_value AHA_PRODUCTION_OPS_KEYVAULT operationsKeyVaultName
+          export_value AHA_PRODUCTION_OPS_KEYVAULT_URI operationsKeyVaultUri
+          export_value AHA_PRODUCTION_ACR_NAME acrName
+          export_value AHA_PRODUCTION_ACR_LOGIN_SERVER acrLoginServer
+          export_value AHA_PRODUCTION_POSTGRES_FQDN postgresFqdn
+          export_value AHA_PRODUCTION_DATABASE_NAME postgresDatabaseName
+          export_value AHA_PRODUCTION_APPINSIGHTS_CONNECTION_STRING applicationInsightsConnectionString
+
+      - name: Build immutable production API and database-init images
+        shell: bash
+        run: |
+          set -euo pipefail
+          api_image="$AHA_PRODUCTION_ACR_LOGIN_SERVER/aha-canonical-api:${GITHUB_SHA}"
+          db_init_image="$AHA_PRODUCTION_ACR_LOGIN_SERVER/aha-canonical-db-init:${GITHUB_SHA}"
+          az acr build \
+            --registry "$AHA_PRODUCTION_ACR_NAME" \
+            --image "aha-canonical-api:${GITHUB_SHA}" \
+            --file backend/api/Dockerfile \
+            backend/api \
+            --only-show-errors >/dev/null
+          az acr build \
+            --registry "$AHA_PRODUCTION_ACR_NAME" \
+            --image "aha-canonical-db-init:${GITHUB_SHA}" \
+            --file infra/azure/production/db-init/Dockerfile \
+            . \
+            --only-show-errors >/dev/null
+          printf 'AHA_PRODUCTION_API_IMAGE=%s\n' "$api_image" >> "$GITHUB_ENV"
+          printf 'AHA_PRODUCTION_DB_INIT_IMAGE=%s\n' "$db_init_image" >> "$GITHUB_ENV"
+
+      - name: Derive rotated readiness credential and isolated DSNs
+        shell: bash
+        run: |
+          set -euo pipefail
+          readiness_password="$(python3 - <<'PY'
+import secrets
+print(secrets.token_urlsafe(48), end='')
+PY
+)"
+          printf '::add-mask::%s\n' "$readiness_password"
+          export AHA_GENERATED_READINESS_PASSWORD="$readiness_password"
+
+          mapfile -t dsns < <(python3 - <<'PY'
+import os
+from urllib.parse import quote
+
+host = os.environ['AHA_PRODUCTION_POSTGRES_FQDN']
+db = os.environ['AHA_PRODUCTION_DATABASE_NAME']
+admin_user = os.environ['AHA_PRODUCTION_POSTGRES_ADMIN_LOGIN']
+admin_password = os.environ['AHA_PRODUCTION_POSTGRES_ADMIN_PASSWORD']
+readiness_password = os.environ['AHA_GENERATED_READINESS_PASSWORD']
+
+def dsn(user, password):
+    return f"postgresql://{quote(user, safe='')}:{quote(password, safe='')}@{host}:5432/{quote(db, safe='')}"
+
+print(dsn(admin_user, admin_password))
+print(dsn('aha_canonical_production_readiness', readiness_password))
+PY
+)
+          admin_dsn="${dsns[0]}"
+          readiness_dsn="${dsns[1]}"
+          printf '::add-mask::%s\n' "$admin_dsn"
+          printf '::add-mask::%s\n' "$readiness_dsn"
+          {
+            printf 'AHA_PRODUCTION_READINESS_PASSWORD=%s\n' "$readiness_password"
+            printf 'AHA_PRODUCTION_ADMIN_DSN=%s\n' "$admin_dsn"
+            printf 'AHA_PRODUCTION_READINESS_DSN=%s\n' "$readiness_dsn"
+          } >> "$GITHUB_ENV"
+
+      - name: Store operations-only and runtime-only secrets in separate Key Vaults
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Azure RBAC assignments can take a short time to become effective.
+          for attempt in {1..18}; do
+            if az keyvault secret set \
+              --vault-name "$AHA_PRODUCTION_RUNTIME_KEYVAULT" \
+              --name aha-production-audit-salt \
+              --value "$AHA_PRODUCTION_AUDIT_HASH_SALT" \
+              --only-show-errors >/dev/null 2>&1; then
+              break
+            fi
+            if [[ "$attempt" == 18 ]]; then
+              echo "Runtime Key Vault deployment role did not become effective." >&2
+              exit 1
+            fi
+            sleep 10
+          done
+
+          az keyvault secret set --vault-name "$AHA_PRODUCTION_RUNTIME_KEYVAULT" --name aha-production-database-url --value "$AHA_PRODUCTION_READINESS_DSN" --only-show-errors >/dev/null
+          az keyvault secret set --vault-name "$AHA_PRODUCTION_RUNTIME_KEYVAULT" --name aha-production-database-ca --value "$AHA_PRODUCTION_DATABASE_CA_CERT" --only-show-errors >/dev/null
+
+          for attempt in {1..18}; do
+            if az keyvault secret set \
+              --vault-name "$AHA_PRODUCTION_OPS_KEYVAULT" \
+              --name aha-production-admin-database-url \
+              --value "$AHA_PRODUCTION_ADMIN_DSN" \
+              --only-show-errors >/dev/null 2>&1; then
+              break
+            fi
+            if [[ "$attempt" == 18 ]]; then
+              echo "Operations Key Vault deployment role did not become effective." >&2
+              exit 1
+            fi
+            sleep 10
+          done
+
+          az keyvault secret set --vault-name "$AHA_PRODUCTION_OPS_KEYVAULT" --name aha-production-database-ca --value "$AHA_PRODUCTION_DATABASE_CA_CERT" --only-show-errors >/dev/null
+          az keyvault secret set --vault-name "$AHA_PRODUCTION_OPS_KEYVAULT" --name aha-production-readiness-password --value "$AHA_PRODUCTION_READINESS_PASSWORD" --only-show-errors >/dev/null
+
+      - name: Deploy migration job inside the production VNet
+        shell: bash
+        run: |
+          set -euo pipefail
+          az deployment group create \
+            --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
+            --name "aha-production-db-init-job-${GITHUB_RUN_ID}" \
+            --template-file infra/azure/production/db-init-job.bicep \
+            --parameters \
+              location="$AHA_AZURE_LOCATION" \
+              jobName="$AHA_PRODUCTION_DB_INIT_JOB" \
+              containerAppsEnvironmentName="$AHA_PRODUCTION_CAE_NAME" \
+              managedIdentityName="$AHA_PRODUCTION_MIGRATION_IDENTITY_NAME" \
+              acrName="$AHA_PRODUCTION_ACR_NAME" \
+              image="$AHA_PRODUCTION_DB_INIT_IMAGE" \
+              adminDatabaseUrlSecretUri="${AHA_PRODUCTION_OPS_KEYVAULT_URI}secrets/aha-production-admin-database-url" \
+              databaseCaSecretUri="${AHA_PRODUCTION_OPS_KEYVAULT_URI}secrets/aha-production-database-ca" \
+              readinessPasswordSecretUri="${AHA_PRODUCTION_OPS_KEYVAULT_URI}secrets/aha-production-readiness-password" \
+            --only-show-errors >/dev/null
+
+      - name: Run canonical migrations and create fail-closed roles
+        shell: bash
+        run: |
+          set -euo pipefail
+          execution="$(az containerapp job start \
+            --name "$AHA_PRODUCTION_DB_INIT_JOB" \
+            --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
+            --query name -o tsv --only-show-errors)"
+          if [[ -z "$execution" ]]; then
+            echo "Production database initialization did not return an execution name." >&2
+            exit 1
+          fi
+          echo "Production DB init execution: $execution"
+          for attempt in {1..120}; do
+            status="$(az containerapp job execution show \
+              --name "$AHA_PRODUCTION_DB_INIT_JOB" \
+              --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
+              --job-execution-name "$execution" \
+              --query properties.status -o tsv --only-show-errors 2>/dev/null || true)"
+            case "$status" in
+              Succeeded)
+                echo "Production canonical migration job: SUCCEEDED"
+                break
+                ;;
+              Failed)
+                echo "Production canonical migration job failed." >&2
+                exit 1
+                ;;
+            esac
+            if [[ "$attempt" == 120 ]]; then
+              echo "Timed out waiting for production canonical migration job." >&2
+              exit 1
+            fi
+            sleep 10
+          done
+
+      - name: Deploy production API with canonical sync disabled
+        shell: bash
+        run: |
+          set -euo pipefail
+          app_outputs="$RUNNER_TEMP/aha-production-app-outputs.json"
+          az deployment group create \
+            --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
+            --name "aha-production-api-${GITHUB_RUN_ID}" \
+            --template-file infra/azure/production/app.bicep \
+            --parameters \
+              location="$AHA_AZURE_LOCATION" \
+              containerAppName="$AHA_PRODUCTION_CONTAINER_APP" \
+              containerAppsEnvironmentName="$AHA_PRODUCTION_CAE_NAME" \
+              managedIdentityName="$AHA_PRODUCTION_RUNTIME_IDENTITY_NAME" \
+              acrName="$AHA_PRODUCTION_ACR_NAME" \
+              keyVaultName="$AHA_PRODUCTION_RUNTIME_KEYVAULT" \
+              image="$AHA_PRODUCTION_API_IMAGE" \
+              deployRevision="$GITHUB_SHA" \
+              databaseUrlSecretUri="${AHA_PRODUCTION_RUNTIME_KEYVAULT_URI}secrets/aha-production-database-url" \
+              databaseCaSecretUri="${AHA_PRODUCTION_RUNTIME_KEYVAULT_URI}secrets/aha-production-database-ca" \
+              auditSaltSecretUri="${AHA_PRODUCTION_RUNTIME_KEYVAULT_URI}secrets/aha-production-audit-salt" \
+              applicationInsightsConnectionString="$AHA_PRODUCTION_APPINSIGHTS_CONNECTION_STRING" \
+            --query properties.outputs -o json --only-show-errors > "$app_outputs"
+          origin="$(jq -r '.productionApiOrigin.value // empty' "$app_outputs")"
+          if [[ -z "$origin" ]]; then
+            echo "Production API deployment did not emit an HTTPS origin." >&2
+            exit 1
+          fi
+          printf 'AHA_PRODUCTION_API_ORIGIN=%s\n' "$origin" >> "$GITHUB_ENV"
+
+      - name: Verify production health and prove canonical runtime remains disabled
+        shell: bash
+        run: |
+          set -euo pipefail
+          health_file="$RUNNER_TEMP/aha-production-health.json"
+          for attempt in {1..60}; do
+            if curl --fail --silent --show-error --max-time 15 \
+              "$AHA_PRODUCTION_API_ORIGIN/v1/health" > "$health_file"; then
+              if jq -e '
+                .status == "ok" and
+                .service == "aha-nest-api" and
+                .runtimeActivated == false and
+                .auth.configured == true and
+                .database.configured == true and
+                .database.connected == true and
+                .database.status == "ready" and
+                .database.safeRuntimeRole == true and
+                .database.canonicalSchema == "present"
+              ' "$health_file" >/dev/null; then
+                break
+              fi
+            fi
+            if [[ "$attempt" == 60 ]]; then
+              echo "Production API did not reach safe database-connected readiness with sync disabled." >&2
+              jq '{status, service, runtimeActivated, database, auth}' "$health_file" 2>/dev/null || true
+              exit 1
+            fi
+            sleep 10
+          done
+          echo "AHA Azure production platform: READY"
+          echo "AHA production database: PRIVATE_DEDICATED_POSTGRESQL"
+          echo "AHA production runtime role: NOLOGIN"
+          echo "AHA canonical production sync: DISABLED"
