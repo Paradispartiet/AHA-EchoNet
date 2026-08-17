@@ -169,31 +169,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          readiness_password="$(python3 - <<'PY'
-import secrets
-print(secrets.token_urlsafe(48), end='')
-PY
-)"
+          readiness_password="$(python3 -c 'import secrets; print(secrets.token_urlsafe(48), end="")')"
           printf '::add-mask::%s\n' "$readiness_password"
           export AHA_GENERATED_READINESS_PASSWORD="$readiness_password"
 
-          mapfile -t dsns < <(python3 - <<'PY'
-import os
-from urllib.parse import quote
-
-host = os.environ['AHA_PRODUCTION_POSTGRES_FQDN']
-db = os.environ['AHA_PRODUCTION_DATABASE_NAME']
-admin_user = os.environ['AHA_PRODUCTION_POSTGRES_ADMIN_LOGIN']
-admin_password = os.environ['AHA_PRODUCTION_POSTGRES_ADMIN_PASSWORD']
-readiness_password = os.environ['AHA_GENERATED_READINESS_PASSWORD']
-
-def dsn(user, password):
-    return f"postgresql://{quote(user, safe='')}:{quote(password, safe='')}@{host}:5432/{quote(db, safe='')}"
-
-print(dsn(admin_user, admin_password))
-print(dsn('aha_canonical_production_readiness', readiness_password))
-PY
-)
+          mapfile -t dsns < <(python3 -c 'import os; from urllib.parse import quote; host=os.environ["AHA_PRODUCTION_POSTGRES_FQDN"]; db=os.environ["AHA_PRODUCTION_DATABASE_NAME"]; admin_user=os.environ["AHA_PRODUCTION_POSTGRES_ADMIN_LOGIN"]; admin_password=os.environ["AHA_PRODUCTION_POSTGRES_ADMIN_PASSWORD"]; readiness_password=os.environ["AHA_GENERATED_READINESS_PASSWORD"]; dsn=lambda user,password: "postgresql://{}:{}@{}:5432/{}".format(quote(user, safe=""), quote(password, safe=""), host, quote(db, safe="")); print(dsn(admin_user, admin_password)); print(dsn("aha_canonical_production_readiness", readiness_password))')
           admin_dsn="${dsns[0]}"
           readiness_dsn="${dsns[1]}"
           printf '::add-mask::%s\n' "$admin_dsn"
