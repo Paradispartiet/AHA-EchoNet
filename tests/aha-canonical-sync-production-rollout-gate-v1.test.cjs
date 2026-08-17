@@ -76,11 +76,13 @@ assert.match(dbGate, /wshmybqyksrwkawqleiz/);
 assert.match(dbGate, /bootstrap_sync_snapshot_v1,pull_sync_changes_v1,push_sync_change_v1/);
 assert.doesNotMatch(dbGate, /\b(?:insert\s+into|update\s+aha\.|delete\s+from|truncate\s+|alter\s+role|create\s+role|drop\s+role)\b/i);
 
-// Readiness code must insist that sync is still disabled and a safe runtime role is visible in health.
+// Readiness code must insist that both the protected operator state and live API say sync is disabled.
 assert.match(gate, /AHA_PRODUCTION_SYNC_RUNTIME_STATE/);
 assert.match(gate, /must still be disabled/);
 assert.match(gate, /safeRuntimeRole/);
 assert.match(gate, /runtimeActivated === true/);
+assert.match(gate, /canonicalSync\?\.enabled !== false/);
+assert.match(gate, /must be explicitly disabled in live health/);
 assert.match(gate, /onrender\.com/);
 
 const contractRun = spawnSync(process.execPath, [GATE, "contract"], { encoding: "utf8" });
