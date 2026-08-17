@@ -12,8 +12,12 @@ export class HealthController {
 
   @Public()
   @Get("health")
-  health() {
-    const database = this.database.snapshot();
+  async health() {
+    // Health is the production rollout readiness boundary. Probe on request so a
+    // newly started Container App reports the live least-privilege database
+    // state instead of a stale process-local snapshot. The probe reads only
+    // PostgreSQL catalogs and never canonical user payloads.
+    const database = await this.database.probe();
     return {
       status: "ok",
       service: this.config.serviceName,
