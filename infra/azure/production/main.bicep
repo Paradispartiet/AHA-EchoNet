@@ -50,6 +50,14 @@ module platform './platform.bicep' = {
   }
 }
 
+module postgresConfig './postgres-config.bicep' = {
+  name: 'aha-production-postgres-config'
+  scope: productionRg
+  params: {
+    postgresServerName: platform.outputs.postgresServerName
+  }
+}
+
 output resourceGroupName string = productionRg.name
 output resourceGroupId string = productionRg.id
 output containerAppsEnvironmentName string = platform.outputs.containerAppsEnvironmentName
@@ -63,4 +71,5 @@ output acrLoginServer string = platform.outputs.acrLoginServer
 output postgresServerName string = platform.outputs.postgresServerName
 output postgresFqdn string = platform.outputs.postgresFqdn
 output postgresDatabaseName string = platform.outputs.postgresDatabaseName
+output postgresAllowedExtensions string = postgresConfig.outputs.allowedExtensionsValue
 output applicationInsightsConnectionString string = platform.outputs.applicationInsightsConnectionString
