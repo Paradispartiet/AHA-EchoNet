@@ -43,9 +43,6 @@ case "$lower_dsn" in
     ;;
 esac
 
-# BusyBox mktemp (used by postgres:16-alpine) requires the XXXXXX placeholder
-# to be the final characters in the template. A suffix after XXXXXX fails with
-# "mktemp: Invalid argument" before TLS/database verification can start.
 ca_file="$(mktemp /tmp/aha-production-ca.XXXXXX)"
 trap 'rm -f "$ca_file"' EXIT HUP INT TERM
 printf '%s\n' "$AHA_PRODUCTION_DATABASE_CA_CERT" > "$ca_file"
@@ -65,6 +62,23 @@ fi
 
 psql_safe() {
   psql "$AHA_PRODUCTION_ADMIN_DATABASE_URL" -X -v ON_ERROR_STOP=1 "$@"
+}
+
+runtime_control_membership_shape() {
+  psql_safe -A -t -q -c "
+    select coalesce(
+      string_agg(
+        m.admin_option::int::text || '|' || m.inherit_option::int::text || '|' || m.set_option::int::text,
+        ',' order by m.admin_option desc, m.inherit_option desc, m.set_option desc
+      ),
+      ''
+    )
+    from pg_auth_members m
+    join pg_roles granted on granted.oid=m.roleid
+    join pg_roles member on member.oid=m.member
+    where granted.rolname='aha_canonical_production_runtime'
+      and member.rolname=session_user
+  "
 }
 
 verify_runtime_privileges() {
@@ -279,17 +293,21 @@ SQL
 }
 
 deactivate_pilot() {
+  control_membership_baseline="$(runtime_control_membership_shape)"
+  if [ -z "$control_membership_baseline" ]; then
+    echo "Production pilot cutoff requires an existing control-plane ADMIN membership for the runtime role." >&2
+    exit 1
+  fi
+
   # Cut new access first in its own committed command. If later termination fails,
-  # the runtime role still remains NOLOGIN and cannot create new sessions.
+  # the runtime role remains NOLOGIN and cannot create new sessions.
   psql_safe -q -c "alter role aha_canonical_production_runtime nologin noinherit password null;"
 
-  # PostgreSQL 16 requires the caller to have privileges of the target role (or
-  # pg_signal_backend) to terminate its sessions. A CREATEROLE creator has ADMIN
-  # OPTION but is not automatically an effective member when INHERIT is false.
-  # Create a transient membership with SET permission, SET ROLE only while
-  # terminating runtime backends, then revoke the membership in the same
-  # transaction. Any failure rolls the transient grant back, while NOLOGIN above
-  # remains committed.
+  # PostgreSQL 16 automatically grants the CREATEROLE creator an ADMIN TRUE,
+  # INHERIT FALSE, SET FALSE membership that the creator itself cannot remove.
+  # Use ADMIN OPTION to add a temporary SET TRUE grant, become the runtime role
+  # only while signalling its backends, then revoke that temporary grant. The
+  # permanent creator membership must return exactly to its pre-cutoff shape.
   psql_safe -q <<'SQL'
 begin;
 grant aha_canonical_production_runtime to current_user with inherit false, set true;
@@ -309,19 +327,14 @@ SQL
     echo "Production pilot database cutoff left active runtime sessions." >&2
     exit 1
   fi
-  lingering_admin_membership="$(psql_safe -A -t -q -c "
-    select count(*)
-    from pg_auth_members m
-    join pg_roles granted on granted.oid=m.roleid
-    join pg_roles member on member.oid=m.member
-    where granted.rolname='aha_canonical_production_runtime'
-      and member.rolname=current_user
-  ")"
-  if [ "$lingering_admin_membership" != '0' ]; then
-    echo "Production pilot cutoff left a control-plane membership on the runtime role." >&2
+
+  control_membership_after="$(runtime_control_membership_shape)"
+  if [ "$control_membership_after" != "$control_membership_baseline" ]; then
+    echo "Production pilot cutoff changed the control-plane runtime membership baseline." >&2
     exit 1
   fi
-  echo 'AHA production pilot database activation: CUT_OFF_NOLOGIN_ZERO_SESSIONS'
+
+  echo 'AHA production pilot database activation: CUT_OFF_NOLOGIN_ZERO_SESSIONS_BASELINE_MEMBERSHIP_RESTORED'
 }
 
 if [ "$mode" = 'verify_restore' ]; then
