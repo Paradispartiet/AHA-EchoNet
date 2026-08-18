@@ -9,10 +9,13 @@ assert.equal(fs.existsSync(hubPath), true, `${hubPath} mangler`);
 const source = fs.readFileSync(controlPath, "utf8");
 const hubSource = fs.readFileSync(hubPath, "utf8");
 
+// The controller is a side-effect-free library until explicitly invoked.
 assert.match(source, /aha_canonical_production_home_sync_v1/);
 assert.match(source, /https:\/\/aha-canonical-api-production\.redground-9c6e20c2\.northeurope\.azurecontainerapps\.io/);
 assert.match(source, /https:\/\/paradispartiet\.github\.io/);
 assert.doesNotMatch(source, /aha-echonet\.vercel\.app/);
+assert.doesNotMatch(source, /MutationObserver/);
+assert.doesNotMatch(source, /DOMContentLoaded/);
 assert.doesNotMatch(source, /setInterval\s*\(/);
 assert.doesNotMatch(source, /onAuthStateChange|SIGNED_IN|TOKEN_REFRESHED/);
 assert.match(source, /explicitUserAction !== true/);
@@ -24,17 +27,28 @@ assert.match(source, /rawPayloadRendered:\s*false/);
 assert.match(source, /serverStateRendered:\s*false/);
 assert.match(source, /AHACanonicalManualSyncRunner/);
 assert.match(source, /AHACanonicalSyncProductionPilotBridge/);
-assert.match(source, /Synkroniser nå/);
-assert.match(source, /Bekreft og synkroniser/);
 
-const startup = source.slice(source.lastIndexOf("if (global.document)"));
-assert.doesNotMatch(startup, /execute\s*\(/, "Home-load must not execute canonical sync");
-assert.doesNotMatch(startup, /ensureCanonicalDependencies\s*\(/, "Home-load must not load canonical sync stack");
-
+// Sync Hub may render a passive manual control at Home load, but it must not
+// load the production controller/canonical stack until the confirmed run click.
 assert.match(hubSource, /js\/ahaCanonicalProductionHomeSync\.js/);
+assert.match(hubSource, /Synkroniser nå/);
+assert.match(hubSource, /Bekreft og synkroniser/);
 assert.match(hubSource, /DOMContentLoaded/);
+assert.doesNotMatch(hubSource, /MutationObserver/);
+assert.doesNotMatch(hubSource, /setInterval\s*\(/);
+assert.doesNotMatch(hubSource, /onAuthStateChange|SIGNED_IN|TOKEN_REFRESHED/);
 assert.doesNotMatch(hubSource, /AHACanonicalManualSyncRunner\.run/);
 assert.doesNotMatch(hubSource, /AHA_CANONICAL_SYNC_ENABLED\s*=\s*true/);
+
+const runHandlerIndex = hubSource.indexOf('run?.addEventListener("click"');
+const lazyLoadCallIndex = hubSource.indexOf("await loadProductionControl()", runHandlerIndex);
+assert.ok(runHandlerIndex >= 0, "confirmed run click handler is required");
+assert.ok(lazyLoadCallIndex > runHandlerIndex, "production controller must load only inside confirmed run click");
+
+const startupIndex = hubSource.lastIndexOf('if (typeof document !== "undefined")');
+const startup = startupIndex >= 0 ? hubSource.slice(startupIndex) : "";
+assert.doesNotMatch(startup, /loadProductionControl\s*\(/, "Home startup must not load production controller");
+assert.doesNotMatch(startup, /AHACanonicalProductionHomeSync/, "Home startup must not touch production controller");
 
 const api = require(`../${controlPath}`);
 assert.equal(api.PRODUCTION_API_ORIGIN, "https://aha-canonical-api-production.redground-9c6e20c2.northeurope.azurecontainerapps.io");
@@ -132,7 +146,7 @@ const runner = {
 
   const result = await api.execute(
     { explicitUserAction: true, explicitConsent: true, origin: "https://paradispartiet.github.io" },
-    { bridge, runner, storage, fetch: async () => { throw new Error("test fetch should be owned by mocked runner"); } }
+    { bridge, runner, storage }
   );
   assert.equal(authReads, 1);
   assert.equal(runnerCalls, 1);
