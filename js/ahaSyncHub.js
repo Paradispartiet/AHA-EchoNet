@@ -135,7 +135,6 @@
         autoSync: false,
         loginTriggersSync: false,
         authReadyTriggersSync: false,
-        backgroundSync: false,
         requiresExplicitUserAction: true,
         requiresExplicitConsent: true,
         controlLoaded: Boolean(window.AHACanonicalProductionHomeSync)
