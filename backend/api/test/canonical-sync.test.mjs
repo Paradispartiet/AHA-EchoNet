@@ -47,7 +47,7 @@ test("canonical sync is fail-closed by default and its limits and pilot allowlis
   assert.equal(disabled.maxPushBytes, 262_144);
 
   assert.throws(() => loadCanonicalSyncConfig({ AHA_CANONICAL_SYNC_ENABLED: "yes" }), /must be true or false/);
-  assert.throws(() => loadCanonicalSyncConfig({ AHA_CANONICAL_SYNC_ENABLED: "true" }), /pilot profile id is required/i);
+  assert.throws(() => loadCanonicalSyncConfig({ AHA_CANONICAL_SYNC_ENABLED: "true" }), /AHA_CANONICAL_SYNC_PILOT_PROFILE_ID is required when canonical sync is enabled/);
   assert.throws(
     () => loadCanonicalSyncConfig({ AHA_CANONICAL_SYNC_ENABLED: "true", AHA_CANONICAL_SYNC_PILOT_PROFILE_ID: "not-a-uuid" }),
     /must be a UUID/
