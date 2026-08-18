@@ -90,6 +90,7 @@ jobs:
         run: |
           set -euo pipefail
           az deployment sub validate \
+            --name "aha-production-validate-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" \
             --location "$AHA_AZURE_LOCATION" \
             --template-file infra/azure/production/main.bicep \
             --parameters \
@@ -107,7 +108,7 @@ jobs:
           set -euo pipefail
           outputs="$RUNNER_TEMP/aha-production-foundation-outputs.json"
           az deployment sub create \
-            --name "aha-production-platform-${GITHUB_RUN_ID}" \
+            --name "aha-production-platform-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" \
             --location "$AHA_AZURE_LOCATION" \
             --template-file infra/azure/production/main.bicep \
             --parameters \
@@ -231,7 +232,7 @@ jobs:
           set -euo pipefail
           az deployment group create \
             --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
-            --name "aha-production-db-init-job-${GITHUB_RUN_ID}" \
+            --name "aha-production-db-init-job-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" \
             --template-file infra/azure/production/db-init-job.bicep \
             --parameters \
               location="$AHA_AZURE_LOCATION" \
@@ -288,7 +289,7 @@ jobs:
           app_outputs="$RUNNER_TEMP/aha-production-app-outputs.json"
           az deployment group create \
             --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
-            --name "aha-production-api-${GITHUB_RUN_ID}" \
+            --name "aha-production-api-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" \
             --template-file infra/azure/production/app.bicep \
             --parameters \
               location="$AHA_AZURE_LOCATION" \
