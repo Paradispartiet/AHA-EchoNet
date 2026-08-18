@@ -233,14 +233,16 @@ Denne er også database-first:
 
 1. bruker det immutable `aha-canonical-db-init:<live revision>`-imaget;
 2. kjører `deactivate_pilot` inne i production-VNet;
-3. setter runtime-role `NOLOGIN`, nuller credential og terminerer sessions;
-4. bruker kortlivet `NOINHERIT` membership i runtime-rollen bare mens PostgreSQL terminerer runtime-backends, og revoker membership igjen før kontrollen fullføres;
-5. rekonstruerer readiness-DSN fra operations Key Vault og gjenoppretter den i runtime Key Vault;
-6. slår av runtime/sync i Container App uten å endre det immutable API-imaget;
-7. krever safe sync-disabled health;
-8. beholder pilotdata urørt.
+3. committer først runtime-role `NOLOGIN`, nuller credential og blokkerer dermed nye sessions før videre cleanup;
+4. PostgreSQL 16 gir en ikke-superuser med `CREATEROLE` en automatisk creator-membership på roller den oppretter: `ADMIN TRUE`, `INHERIT FALSE`, `SET FALSE`. Denne baseline-raden kan ikke fjernes av creator-rollen selv;
+5. cutoffen bruker creatorens `ADMIN OPTION` til en midlertidig `SET TRUE`-grant, gjør `SET ROLE aha_canonical_production_runtime` bare mens aktive runtime-backends termineres, deretter `RESET ROLE` og `REVOKE` av den midlertidige granten;
+6. etter cutoff må membership-formen være nøyaktig tilbake til baseline — ingen ekstra `SET TRUE`- eller `INHERIT TRUE`-grant får bli stående;
+7. rekonstruerer readiness-DSN fra operations Key Vault og gjenoppretter den i runtime Key Vault;
+8. slår av runtime/sync i Container App uten å endre det immutable API-imaget;
+9. krever safe sync-disabled health;
+10. beholder pilotdata urørt.
 
-PostgreSQL-16 CI tester denne cutoffen med en faktisk runtime-sesjon under samme `NOSUPERUSER + CREATEROLE`-privilegiumform som production-adminen. Porten krever etter cutoff `NOLOGIN`, null aktive runtime-sesjoner, null hengende membership, fortsatt eksakt tre sync-rutiner og null direkte canonical table writes.
+PostgreSQL-16 CI tester cutoffen med en faktisk runtime-sesjon under samme `NOSUPERUSER + CREATEROLE`-privilegiumform som production-adminen. Porten krever etter cutoff `NOLOGIN`, null aktive runtime-sesjoner, creator-membership tilbake til eksakt `ADMIN TRUE / INHERIT FALSE / SET FALSE`, fortsatt eksakt tre sync-rutiner og null direkte canonical table writes.
 
 Når sync igjen er av kan den separate immutable API rollback-workflowen brukes dersom selve API-imaget også må rulles tilbake til en tidligere Git-SHA.
 
