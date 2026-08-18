@@ -1,0 +1,514 @@
+name: AHA canonical sync production pilot activation
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: "Skriv RUN_AHA_CANONICAL_PRODUCTION_PILOT_ACTIVATION for å aktivere nøyaktig én beskyttet production-profil"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+  id-token: write
+
+concurrency:
+  group: aha-canonical-production-pilot-control
+  cancel-in-progress: false
+
+jobs:
+  activate-production-pilot:
+    name: Activate one canonical production pilot profile
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    environment: aha-canonical-production-infra
+
+    env:
+      GH_TOKEN: ${{ github.token }}
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      AHA_PRODUCTION_PILOT_PROFILE_ID: ${{ secrets.AHA_PRODUCTION_PILOT_PROFILE_ID }}
+      AHA_AZURE_LOCATION: ${{ vars.AHA_PRODUCTION_AZURE_LOCATION || 'westeurope' }}
+      AHA_PRODUCTION_RESOURCE_GROUP: ${{ vars.AHA_PRODUCTION_RESOURCE_GROUP || 'rg-aha-canonical-prod' }}
+      AHA_PRODUCTION_CONTAINER_APP: aha-canonical-api-production
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Require main, exact activation confirmation and one protected pilot profile
+        shell: bash
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_REF" != 'refs/heads/main' ]]; then
+            echo "Production pilot activation only runs from main." >&2
+            exit 1
+          fi
+          if [[ "$CONFIRMATION" != 'RUN_AHA_CANONICAL_PRODUCTION_PILOT_ACTIVATION' ]]; then
+            echo "Exact production pilot activation confirmation is required." >&2
+            exit 1
+          fi
+          if [[ ! "$AHA_PRODUCTION_PILOT_PROFILE_ID" =~ ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$ ]]; then
+            echo "AHA_PRODUCTION_PILOT_PROFILE_ID must be one protected UUID." >&2
+            exit 1
+          fi
+          printf '::add-mask::%s\n' "$AHA_PRODUCTION_PILOT_PROFILE_ID"
+
+      - name: Require a successful production rollout gate on this exact main SHA
+        shell: bash
+        run: |
+          set -euo pipefail
+          gate_run="$(gh run list \
+            --repo "$GITHUB_REPOSITORY" \
+            --workflow aha-canonical-sync-production-rollout-gate.yml \
+            --branch main \
+            --event workflow_dispatch \
+            --status success \
+            --limit 20 \
+            --json databaseId,headSha,conclusion \
+            --jq ".[] | select(.headSha == \"${GITHUB_SHA}\" and .conclusion == \"success\") | .databaseId" \
+            | head -n1)"
+          if [[ -z "$gate_run" ]]; then
+            echo "Pilot activation requires a successful rollout gate on this exact main SHA." >&2
+            exit 1
+          fi
+          echo "Verified same-SHA rollout gate run: ${gate_run}"
+
+      - name: Azure OIDC login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Prepare Container Apps tooling
+        shell: bash
+        run: |
+          set -euo pipefail
+          az extension add --name containerapp --upgrade --only-show-errors
+          printf 'AHA_PILOT_AZURE_READY=1\n' >> "$GITHUB_ENV"
+
+      - name: Resolve live production resources and prove sync is still disabled
+        shell: bash
+        run: |
+          set -euo pipefail
+          app_json="$RUNNER_TEMP/pilot-live-app.json"
+          az containerapp show \
+            --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
+            --name "$AHA_PRODUCTION_CONTAINER_APP" \
+            -o json --only-show-errors > "$app_json"
+
+          fqdn="$(jq -r '.properties.configuration.ingress.fqdn // empty' "$app_json")"
+          current_sync="$(jq -r '[.properties.template.containers[0].env[] | select(.name=="AHA_CANONICAL_SYNC_ENABLED") | .value][0] // "false"' "$app_json")"
+          current_runtime="$(jq -r '[.properties.template.containers[0].env[] | select(.name=="AHA_RUNTIME_ACTIVATED") | .value][0] // "false"' "$app_json")"
+          appinsights="$(jq -r '[.properties.template.containers[0].env[] | select(.name=="APPLICATIONINSIGHTS_CONNECTION_STRING") | .value][0] // empty' "$app_json")"
+          cae_id="$(jq -r '.properties.environmentId // empty' "$app_json")"
+          runtime_identity_id="$(jq -r '.identity.userAssignedIdentities | keys[0] // empty' "$app_json")"
+          runtime_vault_url="$(jq -r '[.properties.configuration.secrets[] | select(.name=="database-url") | .keyVaultUrl][0] // empty' "$app_json")"
+
+          if [[ -z "$fqdn" || -z "$appinsights" || -z "$cae_id" || -z "$runtime_identity_id" || -z "$runtime_vault_url" ]]; then
+            echo "Could not resolve the complete live production runtime shape." >&2
+            exit 1
+          fi
+          if [[ "$current_sync" != 'false' || "$current_runtime" != 'false' ]]; then
+            echo "Pilot activation refuses a production runtime that is already activated." >&2
+            exit 1
+          fi
+
+          cae_name="${cae_id##*/}"
+          runtime_identity_name="${runtime_identity_id##*/}"
+          runtime_vault="$(AHA_VAULT_URL="$runtime_vault_url" python3 - <<'PY'
+import os
+from urllib.parse import urlparse
+host = urlparse(os.environ['AHA_VAULT_URL']).hostname or ''
+if not host.endswith('.vault.azure.net'):
+    raise SystemExit(2)
+print(host.split('.')[0], end='')
+PY
+)"
+
+          acr_json="$(az acr list --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" -o json --only-show-errors)"
+          if [[ "$(jq 'length' <<<"$acr_json")" != '1' ]]; then
+            echo "Pilot activation requires exactly one production ACR." >&2
+            exit 1
+          fi
+          acr_name="$(jq -r '.[0].name' <<<"$acr_json")"
+          acr_login="$(jq -r '.[0].loginServer' <<<"$acr_json")"
+
+          ops_vaults="$(az keyvault list \
+            --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
+            --query "[?tags.credentialScope=='migration-operations-only']" \
+            -o json --only-show-errors)"
+          if [[ "$(jq 'length' <<<"$ops_vaults")" != '1' ]]; then
+            echo "Pilot activation requires exactly one operations-only Key Vault." >&2
+            exit 1
+          fi
+          ops_vault="$(jq -r '.[0].name' <<<"$ops_vaults")"
+          ops_vault_uri="$(jq -r '.[0].properties.vaultUri' <<<"$ops_vaults")"
+          runtime_vault_uri="$(az keyvault show --name "$runtime_vault" --query properties.vaultUri -o tsv --only-show-errors)"
+
+          migration_identities="$(az identity list \
+            --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
+            --query "[?ends_with(name, '-migration-id')]" \
+            -o json --only-show-errors)"
+          if [[ "$(jq 'length' <<<"$migration_identities")" != '1' ]]; then
+            echo "Pilot activation requires exactly one migration identity." >&2
+            exit 1
+          fi
+          migration_identity_name="$(jq -r '.[0].name' <<<"$migration_identities")"
+
+          baseline_dsn="$(az keyvault secret show \
+            --vault-name "$runtime_vault" \
+            --name aha-production-database-url \
+            --query value -o tsv --only-show-errors)"
+          if [[ -z "$baseline_dsn" ]]; then
+            echo "Production readiness database URL is unavailable." >&2
+            exit 1
+          fi
+          printf '::add-mask::%s\n' "$baseline_dsn"
+
+          health="$RUNNER_TEMP/pilot-preflight-health.json"
+          curl --fail --silent --show-error --max-time 20 "https://${fqdn}/v1/health" > "$health"
+          jq -e '
+            .status == "ok" and
+            .service == "aha-nest-api" and
+            .runtimeActivated == false and
+            .canonicalSync.enabled == false and
+            .database.configured == true and
+            .database.connected == true and
+            .database.safeRuntimeRole == true and
+            .database.canonicalSchema == "present" and
+            .auth.configured == true
+          ' "$health" >/dev/null
+
+          {
+            printf 'AHA_PILOT_API_FQDN=%s\n' "$fqdn"
+            printf 'AHA_PILOT_APPINSIGHTS=%s\n' "$appinsights"
+            printf 'AHA_PILOT_CAE_NAME=%s\n' "$cae_name"
+            printf 'AHA_PILOT_RUNTIME_IDENTITY_NAME=%s\n' "$runtime_identity_name"
+            printf 'AHA_PILOT_RUNTIME_KEYVAULT=%s\n' "$runtime_vault"
+            printf 'AHA_PILOT_RUNTIME_KEYVAULT_URI=%s\n' "$runtime_vault_uri"
+            printf 'AHA_PILOT_OPS_KEYVAULT=%s\n' "$ops_vault"
+            printf 'AHA_PILOT_OPS_KEYVAULT_URI=%s\n' "$ops_vault_uri"
+            printf 'AHA_PILOT_MIGRATION_IDENTITY_NAME=%s\n' "$migration_identity_name"
+            printf 'AHA_PILOT_ACR_NAME=%s\n' "$acr_name"
+            printf 'AHA_PILOT_ACR_LOGIN=%s\n' "$acr_login"
+            printf 'AHA_PILOT_BASELINE_DATABASE_URL=%s\n' "$baseline_dsn"
+          } >> "$GITHUB_ENV"
+
+      - name: Build immutable activation API and database-control images
+        shell: bash
+        run: |
+          set -euo pipefail
+          az acr build \
+            --registry "$AHA_PILOT_ACR_NAME" \
+            --image "aha-canonical-api:${GITHUB_SHA}" \
+            --file backend/api/Dockerfile \
+            backend/api \
+            --only-show-errors >/dev/null
+          az acr build \
+            --registry "$AHA_PILOT_ACR_NAME" \
+            --image "aha-canonical-db-init:${GITHUB_SHA}" \
+            --file infra/azure/production/db-init/Dockerfile \
+            . \
+            --only-show-errors >/dev/null
+          {
+            printf 'AHA_PILOT_API_IMAGE=%s/aha-canonical-api:%s\n' "$AHA_PILOT_ACR_LOGIN" "$GITHUB_SHA"
+            printf 'AHA_PILOT_DB_IMAGE=%s/aha-canonical-db-init:%s\n' "$AHA_PILOT_ACR_LOGIN" "$GITHUB_SHA"
+          } >> "$GITHUB_ENV"
+
+      - name: Stage protected pilot identity and one rotated runtime credential
+        shell: bash
+        run: |
+          set -euo pipefail
+          runtime_password="$(python3 -c 'import secrets; print(secrets.token_urlsafe(48), end="")')"
+          printf '::add-mask::%s\n' "$runtime_password"
+
+          runtime_dsn="$(AHA_BASE_DSN="$AHA_PILOT_BASELINE_DATABASE_URL" AHA_RUNTIME_PASSWORD="$runtime_password" python3 - <<'PY'
+import os
+from urllib.parse import parse_qsl, quote, urlencode, urlparse, urlunparse
+parsed = urlparse(os.environ['AHA_BASE_DSN'])
+if parsed.scheme not in {'postgres', 'postgresql'} or not parsed.hostname:
+    raise SystemExit(2)
+host = parsed.hostname.lower()
+if 'sstuzwppsheivczyqrim' in host or 'wshmybqyksrwkawqleiz' in host:
+    raise SystemExit(3)
+netloc = f"{quote('aha_canonical_production_runtime', safe='')}:{quote(os.environ['AHA_RUNTIME_PASSWORD'], safe='')}@{host}"
+if parsed.port:
+    netloc += f":{parsed.port}"
+blocked = {'sslmode','sslcert','sslkey','sslrootcert'}
+query = urlencode([(k,v) for k,v in parse_qsl(parsed.query, keep_blank_values=True) if k.lower() not in blocked])
+print(urlunparse((parsed.scheme, netloc, parsed.path, parsed.params, query, '')), end='')
+PY
+)"
+          printf '::add-mask::%s\n' "$runtime_dsn"
+
+          password_secret="aha-production-pilot-runtime-password-${GITHUB_RUN_ID}"
+          az keyvault secret set \
+            --vault-name "$AHA_PILOT_OPS_KEYVAULT" \
+            --name "$password_secret" \
+            --value "$runtime_password" \
+            --only-show-errors >/dev/null
+          az keyvault secret set \
+            --vault-name "$AHA_PILOT_OPS_KEYVAULT" \
+            --name aha-production-pilot-profile-id \
+            --value "$AHA_PRODUCTION_PILOT_PROFILE_ID" \
+            --only-show-errors >/dev/null
+          az keyvault secret set \
+            --vault-name "$AHA_PILOT_RUNTIME_KEYVAULT" \
+            --name aha-production-pilot-profile-id \
+            --value "$AHA_PRODUCTION_PILOT_PROFILE_ID" \
+            --only-show-errors >/dev/null
+
+          {
+            printf 'AHA_PILOT_RUNTIME_DATABASE_URL=%s\n' "$runtime_dsn"
+            printf 'AHA_PILOT_RUNTIME_PASSWORD_SECRET=%s\n' "$password_secret"
+          } >> "$GITHUB_ENV"
+
+      - name: Deploy private database-first pilot activation job
+        shell: bash
+        run: |
+          set -euo pipefail
+          job_name="aha-pilot-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          az deployment group create \
+            --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
+            --name "aha-pilot-db-activate-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" \
+            --template-file infra/azure/production/db-init-job.bicep \
+            --parameters \
+              location="$AHA_AZURE_LOCATION" \
+              jobName="$job_name" \
+              containerAppsEnvironmentName="$AHA_PILOT_CAE_NAME" \
+              managedIdentityName="$AHA_PILOT_MIGRATION_IDENTITY_NAME" \
+              acrName="$AHA_PILOT_ACR_NAME" \
+              image="$AHA_PILOT_DB_IMAGE" \
+              adminDatabaseUrlSecretUri="${AHA_PILOT_OPS_KEYVAULT_URI}secrets/aha-production-admin-database-url" \
+              databaseCaSecretUri="${AHA_PILOT_OPS_KEYVAULT_URI}secrets/aha-production-database-ca" \
+              runtimePasswordSecretUri="${AHA_PILOT_OPS_KEYVAULT_URI}secrets/${AHA_PILOT_RUNTIME_PASSWORD_SECRET}" \
+              pilotProfileIdSecretUri="${AHA_PILOT_OPS_KEYVAULT_URI}secrets/aha-production-pilot-profile-id" \
+              mode=activate_pilot \
+            --only-show-errors >/dev/null
+          printf 'AHA_PILOT_CONTROL_JOB=%s\n' "$job_name" >> "$GITHUB_ENV"
+          printf 'AHA_PILOT_DB_JOB_TOUCHED=1\n' >> "$GITHUB_ENV"
+
+      - name: Open only the exact least-privilege runtime role for the protected profile
+        shell: bash
+        run: |
+          set -euo pipefail
+          execution="$(az containerapp job start \
+            --name "$AHA_PILOT_CONTROL_JOB" \
+            --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
+            --query name -o tsv --only-show-errors)"
+          if [[ -z "$execution" ]]; then
+            echo "Production pilot activation did not return a database execution name." >&2
+            exit 1
+          fi
+          for attempt in {1..90}; do
+            status="$(az containerapp job execution show \
+              --name "$AHA_PILOT_CONTROL_JOB" \
+              --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
+              --job-execution-name "$execution" \
+              --query properties.status -o tsv --only-show-errors 2>/dev/null || true)"
+            case "$status" in
+              Succeeded)
+                printf 'AHA_PILOT_DB_ACTIVATED=1\n' >> "$GITHUB_ENV"
+                echo "Production pilot database role: LOGIN_READY_ONE_PROFILE"
+                break
+                ;;
+              Failed)
+                echo "Production pilot database activation failed." >&2
+                exit 1
+                ;;
+            esac
+            if [[ "$attempt" == 90 ]]; then
+              echo "Timed out waiting for production pilot database activation." >&2
+              exit 1
+            fi
+            sleep 10
+          done
+
+      - name: Switch runtime Key Vault from readiness identity to the rotated pilot runtime identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          az keyvault secret set \
+            --vault-name "$AHA_PILOT_RUNTIME_KEYVAULT" \
+            --name aha-production-database-url \
+            --value "$AHA_PILOT_RUNTIME_DATABASE_URL" \
+            --only-show-errors >/dev/null
+          printf 'AHA_PILOT_RUNTIME_DSN_SWITCHED=1\n' >> "$GITHUB_ENV"
+
+      - name: Deploy immutable API with canonical sync enabled only for the protected pilot profile
+        shell: bash
+        run: |
+          set -euo pipefail
+          az deployment group create \
+            --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
+            --name "aha-production-pilot-api-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" \
+            --template-file infra/azure/production/app.bicep \
+            --parameters \
+              location="$AHA_AZURE_LOCATION" \
+              containerAppName="$AHA_PRODUCTION_CONTAINER_APP" \
+              containerAppsEnvironmentName="$AHA_PILOT_CAE_NAME" \
+              managedIdentityName="$AHA_PILOT_RUNTIME_IDENTITY_NAME" \
+              acrName="$AHA_PILOT_ACR_NAME" \
+              keyVaultName="$AHA_PILOT_RUNTIME_KEYVAULT" \
+              image="$AHA_PILOT_API_IMAGE" \
+              deployRevision="$GITHUB_SHA" \
+              databaseUrlSecretUri="${AHA_PILOT_RUNTIME_KEYVAULT_URI}secrets/aha-production-database-url" \
+              databaseCaSecretUri="${AHA_PILOT_RUNTIME_KEYVAULT_URI}secrets/aha-production-database-ca" \
+              auditSaltSecretUri="${AHA_PILOT_RUNTIME_KEYVAULT_URI}secrets/aha-production-audit-salt" \
+              pilotProfileIdSecretUri="${AHA_PILOT_RUNTIME_KEYVAULT_URI}secrets/aha-production-pilot-profile-id" \
+              canonicalSyncEnabled=true \
+              runtimeActivated=true \
+              applicationInsightsConnectionString="$AHA_PILOT_APPINSIGHTS" \
+            --only-show-errors >/dev/null
+
+      - name: Verify live one-profile pilot health before committing activation
+        shell: bash
+        run: |
+          set -euo pipefail
+          health="$RUNNER_TEMP/pilot-activated-health.json"
+          for attempt in {1..60}; do
+            if curl --fail --silent --show-error --max-time 20 "https://${AHA_PILOT_API_FQDN}/v1/health" > "$health"; then
+              if jq -e --arg revision "$GITHUB_SHA" '
+                .status == "ok" and
+                .service == "aha-nest-api" and
+                .version == $revision and
+                .runtimeActivated == true and
+                .canonicalSync.enabled == true and
+                .database.configured == true and
+                .database.connected == true and
+                .database.safeRuntimeRole == true and
+                .database.canonicalSchema == "present" and
+                .auth.configured == true
+              ' "$health" >/dev/null; then
+                printf 'AHA_PILOT_ACTIVATION_COMMITTED=1\n' >> "$GITHUB_ENV"
+                echo "AHA canonical production pilot activation: COMMITTED_ONE_PROFILE"
+                exit 0
+              fi
+            fi
+            sleep 10
+          done
+          echo "Production pilot API did not reach the exact activated health contract." >&2
+          exit 1
+
+      - name: Database-first rollback of an incomplete pilot activation
+        if: always()
+        shell: bash
+        run: |
+          set +e
+          if [[ "${AHA_PILOT_ACTIVATION_COMMITTED:-0}" == '1' ]]; then
+            echo "Production pilot activation committed; incomplete-activation rollback skipped."
+            exit 0
+          fi
+          if [[ "${AHA_PILOT_DB_JOB_TOUCHED:-0}" != '1' ]]; then
+            echo "Production pilot database was never touched; rollback not required."
+            exit 0
+          fi
+
+          rollback_status=0
+          az deployment group create \
+            --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
+            --name "aha-pilot-db-cutoff-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" \
+            --template-file infra/azure/production/db-init-job.bicep \
+            --parameters \
+              location="$AHA_AZURE_LOCATION" \
+              jobName="$AHA_PILOT_CONTROL_JOB" \
+              containerAppsEnvironmentName="$AHA_PILOT_CAE_NAME" \
+              managedIdentityName="$AHA_PILOT_MIGRATION_IDENTITY_NAME" \
+              acrName="$AHA_PILOT_ACR_NAME" \
+              image="$AHA_PILOT_DB_IMAGE" \
+              adminDatabaseUrlSecretUri="${AHA_PILOT_OPS_KEYVAULT_URI}secrets/aha-production-admin-database-url" \
+              databaseCaSecretUri="${AHA_PILOT_OPS_KEYVAULT_URI}secrets/aha-production-database-ca" \
+              mode=deactivate_pilot \
+            --only-show-errors >/dev/null || rollback_status=$?
+
+          if ((rollback_status == 0)); then
+            execution="$(az containerapp job start \
+              --name "$AHA_PILOT_CONTROL_JOB" \
+              --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
+              --query name -o tsv --only-show-errors 2>/dev/null)" || rollback_status=$?
+            if [[ -n "${execution:-}" && $rollback_status -eq 0 ]]; then
+              cutoff_ok=0
+              for attempt in {1..90}; do
+                status="$(az containerapp job execution show \
+                  --name "$AHA_PILOT_CONTROL_JOB" \
+                  --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
+                  --job-execution-name "$execution" \
+                  --query properties.status -o tsv --only-show-errors 2>/dev/null || true)"
+                if [[ "$status" == 'Succeeded' ]]; then cutoff_ok=1; break; fi
+                if [[ "$status" == 'Failed' ]]; then break; fi
+                sleep 10
+              done
+              if [[ "$cutoff_ok" != '1' ]]; then rollback_status=1; fi
+            fi
+          fi
+
+          if ((rollback_status != 0)); then
+            echo "Database-first pilot cutoff failed; refusing to claim rollback." >&2
+            exit 1
+          fi
+
+          az keyvault secret set \
+            --vault-name "$AHA_PILOT_RUNTIME_KEYVAULT" \
+            --name aha-production-database-url \
+            --value "$AHA_PILOT_BASELINE_DATABASE_URL" \
+            --only-show-errors >/dev/null || rollback_status=$?
+
+          az containerapp update \
+            --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
+            --name "$AHA_PRODUCTION_CONTAINER_APP" \
+            --set-env-vars \
+              AHA_RUNTIME_ACTIVATED=false \
+              AHA_CANONICAL_SYNC_ENABLED=false \
+              AHA_LOCAL_IMPORT_ENABLED=false \
+            --remove-env-vars AHA_CANONICAL_SYNC_PILOT_PROFILE_ID \
+            --only-show-errors >/dev/null || rollback_status=$?
+
+          if ((rollback_status != 0)); then
+            echo "Pilot database was cut off, but API/readiness restoration was incomplete." >&2
+            exit 1
+          fi
+
+          health="$RUNNER_TEMP/pilot-rollback-health.json"
+          safe=0
+          for attempt in {1..60}; do
+            if curl --fail --silent --show-error --max-time 20 "https://${AHA_PILOT_API_FQDN}/v1/health" > "$health"; then
+              if jq -e '
+                .status == "ok" and
+                .runtimeActivated == false and
+                .canonicalSync.enabled == false and
+                .database.connected == true and
+                .database.safeRuntimeRole == true
+              ' "$health" >/dev/null; then safe=1; break; fi
+            fi
+            sleep 10
+          done
+          if [[ "$safe" != '1' ]]; then
+            echo "Pilot rollback did not restore safe sync-disabled health." >&2
+            exit 1
+          fi
+          echo "AHA canonical production pilot activation: ROLLED_BACK_DATABASE_FIRST"
+
+      - name: Cleanup short-lived pilot control resources
+        if: always()
+        shell: bash
+        run: |
+          set +e
+          if [[ "${AHA_PILOT_AZURE_READY:-0}" != '1' ]]; then exit 0; fi
+          if [[ -n "${AHA_PILOT_CONTROL_JOB:-}" ]]; then
+            az containerapp job delete \
+              --name "$AHA_PILOT_CONTROL_JOB" \
+              --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
+              --yes --only-show-errors >/dev/null 2>&1 || true
+          fi
+          if [[ -n "${AHA_PILOT_RUNTIME_PASSWORD_SECRET:-}" && -n "${AHA_PILOT_OPS_KEYVAULT:-}" ]]; then
+            az keyvault secret delete \
+              --vault-name "$AHA_PILOT_OPS_KEYVAULT" \
+              --name "$AHA_PILOT_RUNTIME_PASSWORD_SECRET" \
+              --only-show-errors >/dev/null 2>&1 || true
+          fi
