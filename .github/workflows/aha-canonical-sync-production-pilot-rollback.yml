@@ -80,36 +80,19 @@ jobs:
           fi
 
           cae_name="${cae_id##*/}"
-          runtime_vault="$(AHA_VAULT_URL="$runtime_vault_url" python3 - <<'PY'
-import os
-from urllib.parse import urlparse
-host = urlparse(os.environ['AHA_VAULT_URL']).hostname or ''
-if not host.endswith('.vault.azure.net'):
-    raise SystemExit(2)
-print(host.split('.')[0], end='')
-PY
-)"
+          runtime_vault="$(AHA_VAULT_URL="$runtime_vault_url" python3 -c 'import os; from urllib.parse import urlparse; host=urlparse(os.environ["AHA_VAULT_URL"]).hostname or ""; assert host.endswith(".vault.azure.net"); print(host.split(".")[0],end="")')"
 
           acr_json="$(az acr list --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" -o json --only-show-errors)"
-          if [[ "$(jq 'length' <<<"$acr_json")" != '1' ]]; then
-            echo "Production pilot rollback requires exactly one ACR." >&2
-            exit 1
-          fi
+          [[ "$(jq 'length' <<<"$acr_json")" == '1' ]] || { echo "Production pilot rollback requires exactly one ACR." >&2; exit 1; }
           acr_name="$(jq -r '.[0].name' <<<"$acr_json")"
           acr_login="$(jq -r '.[0].loginServer' <<<"$acr_json")"
-          az acr repository show \
-            --name "$acr_name" \
-            --image "aha-canonical-db-init:${deploy_revision}" \
-            --only-show-errors >/dev/null
+          az acr repository show --name "$acr_name" --image "aha-canonical-db-init:${deploy_revision}" --only-show-errors >/dev/null
 
           ops_vaults="$(az keyvault list \
             --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
             --query "[?tags.credentialScope=='migration-operations-only']" \
             -o json --only-show-errors)"
-          if [[ "$(jq 'length' <<<"$ops_vaults")" != '1' ]]; then
-            echo "Production pilot rollback requires exactly one operations-only Key Vault." >&2
-            exit 1
-          fi
+          [[ "$(jq 'length' <<<"$ops_vaults")" == '1' ]] || { echo "Production pilot rollback requires exactly one operations-only Key Vault." >&2; exit 1; }
           ops_vault="$(jq -r '.[0].name' <<<"$ops_vaults")"
           ops_vault_uri="$(jq -r '.[0].properties.vaultUri' <<<"$ops_vaults")"
 
@@ -117,40 +100,15 @@ PY
             --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
             --query "[?ends_with(name, '-migration-id')]" \
             -o json --only-show-errors)"
-          if [[ "$(jq 'length' <<<"$migration_identities")" != '1' ]]; then
-            echo "Production pilot rollback requires exactly one migration identity." >&2
-            exit 1
-          fi
+          [[ "$(jq 'length' <<<"$migration_identities")" == '1' ]] || { echo "Production pilot rollback requires exactly one migration identity." >&2; exit 1; }
           migration_identity_name="$(jq -r '.[0].name' <<<"$migration_identities")"
 
-          admin_dsn="$(az keyvault secret show \
-            --vault-name "$ops_vault" \
-            --name aha-production-admin-database-url \
-            --query value -o tsv --only-show-errors)"
-          readiness_password="$(az keyvault secret show \
-            --vault-name "$ops_vault" \
-            --name aha-production-readiness-password \
-            --query value -o tsv --only-show-errors)"
+          admin_dsn="$(az keyvault secret show --vault-name "$ops_vault" --name aha-production-admin-database-url --query value -o tsv --only-show-errors)"
+          readiness_password="$(az keyvault secret show --vault-name "$ops_vault" --name aha-production-readiness-password --query value -o tsv --only-show-errors)"
           printf '::add-mask::%s\n' "$admin_dsn"
           printf '::add-mask::%s\n' "$readiness_password"
 
-          readiness_dsn="$(AHA_ADMIN_DSN="$admin_dsn" AHA_READINESS_PASSWORD="$readiness_password" python3 - <<'PY'
-import os
-from urllib.parse import parse_qsl, quote, urlencode, urlparse, urlunparse
-parsed = urlparse(os.environ['AHA_ADMIN_DSN'])
-if parsed.scheme not in {'postgres', 'postgresql'} or not parsed.hostname:
-    raise SystemExit(2)
-host = parsed.hostname.lower()
-if 'sstuzwppsheivczyqrim' in host or 'wshmybqyksrwkawqleiz' in host:
-    raise SystemExit(3)
-netloc = f"{quote('aha_canonical_production_readiness', safe='')}:{quote(os.environ['AHA_READINESS_PASSWORD'], safe='')}@{host}"
-if parsed.port:
-    netloc += f":{parsed.port}"
-blocked = {'sslmode','sslcert','sslkey','sslrootcert'}
-query = urlencode([(k,v) for k,v in parse_qsl(parsed.query, keep_blank_values=True) if k.lower() not in blocked])
-print(urlunparse((parsed.scheme, netloc, parsed.path, parsed.params, query, '')), end='')
-PY
-)"
+          readiness_dsn="$(AHA_ADMIN_DSN="$admin_dsn" AHA_READINESS_PASSWORD="$readiness_password" python3 -c 'import os; from urllib.parse import parse_qsl,quote,urlencode,urlparse,urlunparse; p=urlparse(os.environ["AHA_ADMIN_DSN"]); assert p.scheme in {"postgres","postgresql"} and p.hostname; h=p.hostname.lower(); assert "sstuzwppsheivczyqrim" not in h and "wshmybqyksrwkawqleiz" not in h; n=quote("aha_canonical_production_readiness",safe="")+":"+quote(os.environ["AHA_READINESS_PASSWORD"],safe="")+"@"+h; n += (":"+str(p.port)) if p.port else ""; blocked={"sslmode","sslcert","sslkey","sslrootcert"}; q=urlencode([(k,v) for k,v in parse_qsl(p.query,keep_blank_values=True) if k.lower() not in blocked]); print(urlunparse((p.scheme,n,p.path,p.params,q,"")),end="")')"
           printf '::add-mask::%s\n' "$readiness_dsn"
           runtime_vault_uri="$(az keyvault show --name "$runtime_vault" --query properties.vaultUri -o tsv --only-show-errors)"
 
@@ -189,34 +147,23 @@ PY
             --only-show-errors >/dev/null
           printf 'AHA_PILOT_ROLLBACK_JOB=%s\n' "$job_name" >> "$GITHUB_ENV"
 
-          execution="$(az containerapp job start \
-            --name "$job_name" \
-            --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
-            --query name -o tsv --only-show-errors)"
-          if [[ -z "$execution" ]]; then
-            echo "Production pilot cutoff did not return an execution name." >&2
-            exit 1
-          fi
+          execution="$(az containerapp job start --name "$job_name" --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" --query name -o tsv --only-show-errors)"
+          [[ -n "$execution" ]] || { echo "Production pilot cutoff did not return an execution name." >&2; exit 1; }
+
           for attempt in {1..90}; do
-            status="$(az containerapp job execution show \
-              --name "$job_name" \
-              --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
-              --job-execution-name "$execution" \
-              --query properties.status -o tsv --only-show-errors 2>/dev/null || true)"
+            status="$(az containerapp job execution show --name "$job_name" --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" --job-execution-name "$execution" --query properties.status -o tsv --only-show-errors 2>/dev/null || true)"
             if [[ "$status" == 'Succeeded' ]]; then
               echo "AHA production pilot database cutoff: NOLOGIN_ZERO_SESSIONS"
-              break
+              exit 0
             fi
             if [[ "$status" == 'Failed' ]]; then
               echo "Production pilot database cutoff failed; API state will not be changed." >&2
               exit 1
             fi
-            if [[ "$attempt" == 90 ]]; then
-              echo "Timed out waiting for production pilot database cutoff." >&2
-              exit 1
-            fi
             sleep 10
           done
+          echo "Timed out waiting for production pilot database cutoff." >&2
+          exit 1
 
       - name: Restore readiness database identity only after database cutoff
         shell: bash
