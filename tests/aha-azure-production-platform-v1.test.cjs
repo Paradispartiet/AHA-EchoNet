@@ -118,6 +118,10 @@ assert.match(source.deploy, /AHA canonical production sync: DISABLED/);
 assert.match(source.deploy, /azure\/login@v2/);
 assert.match(source.deploy, /az acr build/);
 assert.match(source.deploy, /AHA_PRODUCTION_MIGRATION_IDENTITY_NAME/);
+assert.match(source.deploy, /az deployment sub validate[\s\S]*?--name "aha-production-validate-\$\{GITHUB_RUN_ID\}-\$\{GITHUB_RUN_ATTEMPT\}"/);
+assert.match(source.deploy, /--name "aha-production-platform-\$\{GITHUB_RUN_ID\}-\$\{GITHUB_RUN_ATTEMPT\}"/);
+assert.match(source.deploy, /--name "aha-production-db-init-job-\$\{GITHUB_RUN_ID\}-\$\{GITHUB_RUN_ATTEMPT\}"/);
+assert.match(source.deploy, /--name "aha-production-api-\$\{GITHUB_RUN_ID\}-\$\{GITHUB_RUN_ATTEMPT\}"/);
 
 // Migration rehearsal is an isolated PostgreSQL 16 proof and never touches production.
 assert.match(source.migrationRehearsal, /RUN_AHA_AZURE_PRODUCTION_MIGRATION_REHEARSAL/);
