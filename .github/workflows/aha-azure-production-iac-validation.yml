@@ -150,14 +150,27 @@ jobs:
             where grantee='aha_canonical_production_runtime' and table_schema='aha'
               and privilege_type in ('INSERT','UPDATE','DELETE','TRUNCATE','REFERENCES','TRIGGER')
           ")"
+          creator_membership_baseline="$(docker exec "$container" psql -U production_ci_admin -d aha_production_ci -X -A -t -q -c "
+            select coalesce(string_agg(
+              m.admin_option::int::text || '|' || m.inherit_option::int::text || '|' || m.set_option::int::text,
+              ',' order by m.admin_option desc, m.inherit_option desc, m.set_option desc
+            ),'')
+            from pg_auth_members m
+            join pg_roles granted on granted.oid=m.roleid
+            join pg_roles member on member.oid=m.member
+            where granted.rolname='aha_canonical_production_runtime'
+              and member.rolname=session_user
+          ")"
           echo "pre_activation_readiness_shape=$readiness_shape"
           echo "pre_activation_runtime_shape=$runtime_shape"
           echo "pre_activation_routines=$routines"
           echo "pre_activation_direct_writes=$writes"
+          echo "creator_membership_baseline=$creator_membership_baseline"
           [[ "$readiness_shape" == '1|0|0|0|0|0' ]]
           [[ "$runtime_shape" == '0|0|0|0|0|0' ]]
           [[ "$routines" == 'bootstrap_sync_snapshot_v1,pull_sync_changes_v1,push_sync_change_v1' ]]
           [[ "$writes" == '0' ]]
+          [[ "$creator_membership_baseline" == '1|0|0' ]]
 
           docker exec "$container" \
             psql -U production_ci_admin -d aha_production_ci -X -v ON_ERROR_STOP=1 -c \
@@ -213,16 +226,23 @@ jobs:
           cutoff_shape="$(docker exec "$container" psql -U production_ci_admin -d aha_production_ci -X -A -t -q -c "
             select
               (select rolcanlogin::int from pg_roles where rolname='aha_canonical_production_runtime')::text || '|' ||
-              (select count(*) from pg_stat_activity where usename='aha_canonical_production_runtime' and pid <> pg_backend_pid())::text || '|' ||
-              (select count(*)
-                 from pg_auth_members m
-                 join pg_roles granted on granted.oid=m.roleid
-                 join pg_roles member on member.oid=m.member
-                where granted.rolname='aha_canonical_production_runtime'
-                  and member.rolname=current_user)::text
+              (select count(*) from pg_stat_activity where usename='aha_canonical_production_runtime' and pid <> pg_backend_pid())::text
+          ")"
+          creator_membership_after="$(docker exec "$container" psql -U production_ci_admin -d aha_production_ci -X -A -t -q -c "
+            select coalesce(string_agg(
+              m.admin_option::int::text || '|' || m.inherit_option::int::text || '|' || m.set_option::int::text,
+              ',' order by m.admin_option desc, m.inherit_option desc, m.set_option desc
+            ),'')
+            from pg_auth_members m
+            join pg_roles granted on granted.oid=m.roleid
+            join pg_roles member on member.oid=m.member
+            where granted.rolname='aha_canonical_production_runtime'
+              and member.rolname=session_user
           ")"
           echo "post_cutoff_shape=$cutoff_shape"
-          [[ "$cutoff_shape" == '0|0|0' ]]
+          echo "creator_membership_after=$creator_membership_after"
+          [[ "$cutoff_shape" == '0|0' ]]
+          [[ "$creator_membership_after" == "$creator_membership_baseline" ]]
 
           routines_after_cutoff="$(docker exec "$container" psql -U postgres -d aha_production_ci -X -A -t -q -c "
             select coalesce(string_agg(p.proname, ',' order by p.proname),'')
