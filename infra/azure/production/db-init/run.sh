@@ -27,7 +27,6 @@ fi
 if [ "$mode" = 'activate_pilot' ]; then
   require_env AHA_PRODUCTION_RUNTIME_PASSWORD
   require_env AHA_PRODUCTION_PILOT_PROFILE_ID
-  require_env AHA_PRODUCTION_PILOT_WORKSPACE_ID
 fi
 
 lower_dsn="$(printf '%s' "$AHA_PRODUCTION_ADMIN_DATABASE_URL" | tr '[:upper:]' '[:lower:]')"
@@ -151,11 +150,8 @@ validate_pilot_inputs() {
     echo "Production pilot profile id must be a UUID." >&2
     exit 1
   fi
-  expected_workspace="personal-${AHA_PRODUCTION_PILOT_PROFILE_ID}"
-  if [ "$AHA_PRODUCTION_PILOT_WORKSPACE_ID" != "$expected_workspace" ]; then
-    echo "Production pilot workspace id must be derived exactly from the protected pilot profile id." >&2
-    exit 1
-  fi
+  AHA_PRODUCTION_PILOT_WORKSPACE_ID="personal-${AHA_PRODUCTION_PILOT_PROFILE_ID}"
+  export AHA_PRODUCTION_PILOT_WORKSPACE_ID
 }
 
 activate_pilot() {
