@@ -100,10 +100,6 @@ jobs:
             sleep 2
           done
 
-          # Azure Flexible Server exposes a high-privilege administrator that is
-          # deliberately NOSUPERUSER. Exercise migrations and role management with
-          # the same PostgreSQL 16 privilege shape so superuser-only ALTER ROLE
-          # statements cannot pass CI and then fail in production.
           docker exec "$container" \
             psql -U postgres -d postgres -X -v ON_ERROR_STOP=1 -c \
             "create role production_ci_admin login nosuperuser createdb createrole inherit password 'production-ci-admin-password';"
@@ -128,9 +124,6 @@ jobs:
             psql -U production_ci_admin -d aha_production_ci -X -v ON_ERROR_STOP=1 \
               -v readiness_password='production-ci-readiness-not-a-secret' \
             < infra/azure/production/db-init/roles.sql >/dev/null
-
-          # A second run proves PostgreSQL 16 creator ADMIN semantics are sufficient
-          # for password rotation/idempotent production deployment without superuser.
           docker exec -i "$container" \
             psql -U production_ci_admin -d aha_production_ci -X -v ON_ERROR_STOP=1 \
               -v readiness_password='production-ci-readiness-rotated' \
@@ -157,14 +150,15 @@ jobs:
             where grantee='aha_canonical_production_runtime' and table_schema='aha'
               and privilege_type in ('INSERT','UPDATE','DELETE','TRUNCATE','REFERENCES','TRIGGER')
           ")"
-
+          echo "pre_activation_readiness_shape=$readiness_shape"
+          echo "pre_activation_runtime_shape=$runtime_shape"
+          echo "pre_activation_routines=$routines"
+          echo "pre_activation_direct_writes=$writes"
           [[ "$readiness_shape" == '1|0|0|0|0|0' ]]
           [[ "$runtime_shape" == '0|0|0|0|0|0' ]]
           [[ "$routines" == 'bootstrap_sync_snapshot_v1,pull_sync_changes_v1,push_sync_change_v1' ]]
           [[ "$writes" == '0' ]]
 
-          # Prove the production admin can activate the exact runtime role without
-          # becoming superuser and that the role still has no direct table writes.
           docker exec "$container" \
             psql -U production_ci_admin -d aha_production_ci -X -v ON_ERROR_STOP=1 -c \
             "alter role aha_canonical_production_runtime login noinherit password 'production-ci-runtime-password'; alter role aha_canonical_production_runtime set row_security = on;"
@@ -173,10 +167,9 @@ jobs:
                    rolcreatedb::int || '|' || rolcreaterole::int || '|' || rolinherit::int
             from pg_roles where rolname='aha_canonical_production_runtime'
           ")"
+          echo "post_activation_runtime_shape=$runtime_shape"
           [[ "$runtime_shape" == '1|0|0|0|0|0' ]]
 
-          # Start an actual runtime backend so the cutoff is tested against a live
-          # PostgreSQL 16 session rather than only catalog state.
           docker exec -d \
             -e PGPASSWORD=production-ci-runtime-password \
             "$container" \
@@ -195,14 +188,12 @@ jobs:
             fi
             sleep 1
           done
+          echo "runtime_sessions_before_cutoff=$runtime_session_count"
 
-          # Cut new connections first and commit that state independently. Then
-          # prove the NOSUPERUSER CREATEROLE admin can create a transient SET ROLE
-          # path, terminate sessions while acting as the runtime role itself, and
-          # revoke the membership atomically. If this block fails, NOLOGIN remains.
           docker exec "$container" \
             psql -U production_ci_admin -d aha_production_ci -X -v ON_ERROR_STOP=1 -c \
             "alter role aha_canonical_production_runtime nologin noinherit password null;" >/dev/null
+          echo "runtime_nologin_committed=1"
 
           docker exec "$container" \
             psql -U production_ci_admin -d aha_production_ci -X -v ON_ERROR_STOP=1 -c "
@@ -217,6 +208,7 @@ jobs:
               revoke aha_canonical_production_runtime from current_user;
               commit;
             " >/dev/null
+          echo "runtime_terminate_transaction_committed=1"
 
           cutoff_shape="$(docker exec "$container" psql -U production_ci_admin -d aha_production_ci -X -A -t -q -c "
             select
@@ -229,6 +221,7 @@ jobs:
                 where granted.rolname='aha_canonical_production_runtime'
                   and member.rolname=current_user)::text
           ")"
+          echo "post_cutoff_shape=$cutoff_shape"
           [[ "$cutoff_shape" == '0|0|0' ]]
 
           routines_after_cutoff="$(docker exec "$container" psql -U postgres -d aha_production_ci -X -A -t -q -c "
@@ -242,6 +235,8 @@ jobs:
             where grantee='aha_canonical_production_runtime' and table_schema='aha'
               and privilege_type in ('INSERT','UPDATE','DELETE','TRUNCATE','REFERENCES','TRIGGER')
           ")"
+          echo "post_cutoff_routines=$routines_after_cutoff"
+          echo "post_cutoff_direct_writes=$writes_after_cutoff"
           [[ "$routines_after_cutoff" == 'bootstrap_sync_snapshot_v1,pull_sync_changes_v1,push_sync_change_v1' ]]
           [[ "$writes_after_cutoff" == '0' ]]
 
