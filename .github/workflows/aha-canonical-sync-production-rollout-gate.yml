@@ -12,17 +12,17 @@ permissions:
   contents: read
 
 jobs:
-  production-rollout-gate:
-    name: Verify canonical production rollout readiness
+  production-readiness:
+    name: Verify canonical production rollout contract and API readiness
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    permissions:
+      contents: read
     environment: aha-canonical-production-readiness
 
     env:
       AHA_CANONICAL_PRODUCTION_ROLLOUT_CONFIRMATION: ${{ inputs.confirmation }}
       AHA_PRODUCTION_API_ORIGIN: ${{ vars.AHA_PRODUCTION_API_ORIGIN }}
-      AHA_PRODUCTION_ADMIN_DATABASE_URL: ${{ secrets.AHA_PRODUCTION_ADMIN_DATABASE_URL }}
-      AHA_PRODUCTION_DATABASE_CA_CERT: ${{ secrets.AHA_PRODUCTION_DATABASE_CA_CERT }}
       AHA_PRODUCTION_PILOT_PROFILE_ID: ${{ secrets.AHA_PRODUCTION_PILOT_PROFILE_ID }}
       AHA_PRODUCTION_ROLLBACK_REVISION: ${{ vars.AHA_PRODUCTION_ROLLBACK_REVISION }}
       AHA_PRODUCTION_MIGRATION_REHEARSAL_EVIDENCE: ${{ vars.AHA_PRODUCTION_MIGRATION_REHEARSAL_EVIDENCE }}
@@ -58,16 +58,197 @@ jobs:
       - name: Verify production API readiness while sync remains disabled
         run: node scripts/aha-canonical-sync-production-rollout-gate.cjs readiness
 
-      - name: Install PostgreSQL client
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y postgresql-client
+  private-database-readiness:
+    name: Verify private production PostgreSQL read-only inside the VNet
+    needs: production-readiness
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write
+    environment: aha-canonical-production-infra
 
-      - name: Verify dedicated production PostgreSQL and NOLOGIN runtime role read-only
+    env:
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      AHA_AZURE_LOCATION: ${{ vars.AHA_PRODUCTION_AZURE_LOCATION || 'westeurope' }}
+      AHA_PRODUCTION_RESOURCE_GROUP: ${{ vars.AHA_PRODUCTION_RESOURCE_GROUP || 'rg-aha-canonical-prod' }}
+      AHA_PRODUCTION_PREFIX: ${{ vars.AHA_PRODUCTION_PREFIX || 'aha-prod' }}
+      AHA_PRODUCTION_CONTAINER_APP: aha-canonical-api-production
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Azure OIDC login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Prepare Container Apps tooling
+        run: az extension add --name containerapp --upgrade --only-show-errors
+
+      - name: Resolve immutable private verification inputs and re-prove sync disabled
         shell: bash
-        run: bash scripts/aha-canonical-sync-production-db-readiness.sh
+        run: |
+          set -euo pipefail
 
-      - name: Mark production rollout gate passed without activating production
+          app_json="$RUNNER_TEMP/production-rollout-app.json"
+          az containerapp show \
+            --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
+            --name "$AHA_PRODUCTION_CONTAINER_APP" \
+            -o json --only-show-errors > "$app_json"
+
+          deploy_revision="$(jq -r '.properties.template.containers[0].env[] | select(.name=="AHA_API_VERSION") | .value' "$app_json")"
+          sync_enabled="$(jq -r '.properties.template.containers[0].env[] | select(.name=="AHA_CANONICAL_SYNC_ENABLED") | .value' "$app_json")"
+          if [[ ! "$deploy_revision" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "Production API does not expose an immutable 40-character deployment revision." >&2
+            exit 1
+          fi
+          if [[ "$sync_enabled" != 'false' ]]; then
+            echo "Private database readiness refuses an already activated canonical sync runtime." >&2
+            exit 1
+          fi
+
+          acr_json="$(az acr list --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" -o json --only-show-errors)"
+          if [[ "$(jq 'length' <<<"$acr_json")" != '1' ]]; then
+            echo "Private database readiness requires exactly one production ACR." >&2
+            exit 1
+          fi
+          acr_name="$(jq -r '.[0].name' <<<"$acr_json")"
+          acr_login="$(jq -r '.[0].loginServer' <<<"$acr_json")"
+          if ! az acr repository show \
+            --name "$acr_name" \
+            --image "aha-canonical-db-init:${deploy_revision}" \
+            --only-show-errors >/dev/null; then
+            echo "Matching immutable production database verification image is missing." >&2
+            exit 1
+          fi
+
+          ops_vaults="$(az keyvault list \
+            --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
+            --query "[?tags.credentialScope=='migration-operations-only']" \
+            -o json --only-show-errors)"
+          if [[ "$(jq 'length' <<<"$ops_vaults")" != '1' ]]; then
+            echo "Private database readiness requires exactly one operations-only Key Vault." >&2
+            exit 1
+          fi
+          ops_vault_uri="$(jq -r '.[0].properties.vaultUri' <<<"$ops_vaults")"
+
+          cae_name="${AHA_PRODUCTION_PREFIX}-cae"
+          migration_identity="${AHA_PRODUCTION_PREFIX}-migration-id"
+          az containerapp env show \
+            --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
+            --name "$cae_name" \
+            --only-show-errors >/dev/null
+          az identity show \
+            --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
+            --name "$migration_identity" \
+            --only-show-errors >/dev/null
+
+          verify_job="aha-rollout-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          if (( ${#verify_job} > 32 )); then
+            echo "Generated rollout verification job name is too long." >&2
+            exit 1
+          fi
+
+          {
+            printf 'AHA_ROLLOUT_DEPLOY_REVISION=%s\n' "$deploy_revision"
+            printf 'AHA_ROLLOUT_ACR_NAME=%s\n' "$acr_name"
+            printf 'AHA_ROLLOUT_ACR_LOGIN_SERVER=%s\n' "$acr_login"
+            printf 'AHA_ROLLOUT_OPS_KEYVAULT_URI=%s\n' "$ops_vault_uri"
+            printf 'AHA_ROLLOUT_CAE_NAME=%s\n' "$cae_name"
+            printf 'AHA_ROLLOUT_MIGRATION_IDENTITY_NAME=%s\n' "$migration_identity"
+            printf 'AHA_ROLLOUT_VERIFY_JOB=%s\n' "$verify_job"
+          } >> "$GITHUB_ENV"
+
+      - name: Deploy short-lived read-only verification job inside production VNet
+        shell: bash
+        run: |
+          set -euo pipefail
+          az deployment group create \
+            --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
+            --name "aha-rollout-private-verify-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" \
+            --template-file infra/azure/production/db-init-job.bicep \
+            --parameters \
+              location="$AHA_AZURE_LOCATION" \
+              jobName="$AHA_ROLLOUT_VERIFY_JOB" \
+              containerAppsEnvironmentName="$AHA_ROLLOUT_CAE_NAME" \
+              managedIdentityName="$AHA_ROLLOUT_MIGRATION_IDENTITY_NAME" \
+              acrName="$AHA_ROLLOUT_ACR_NAME" \
+              image="$AHA_ROLLOUT_ACR_LOGIN_SERVER/aha-canonical-db-init:${AHA_ROLLOUT_DEPLOY_REVISION}" \
+              adminDatabaseUrlSecretUri="${AHA_ROLLOUT_OPS_KEYVAULT_URI}secrets/aha-production-admin-database-url" \
+              databaseCaSecretUri="${AHA_ROLLOUT_OPS_KEYVAULT_URI}secrets/aha-production-database-ca" \
+              readinessPasswordSecretUri="${AHA_ROLLOUT_OPS_KEYVAULT_URI}secrets/aha-production-readiness-password" \
+              mode=verify_restore \
+            --only-show-errors >/dev/null
+
+      - name: Verify canonical schema and fail-closed roles read-only inside production VNet
+        shell: bash
+        run: |
+          set -euo pipefail
+          execution="$(az containerapp job start \
+            --name "$AHA_ROLLOUT_VERIFY_JOB" \
+            --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
+            --query name -o tsv --only-show-errors)"
+          if [[ -z "$execution" ]]; then
+            echo "Private production database verification did not return an execution name." >&2
+            exit 1
+          fi
+          echo "Private production DB readiness execution: $execution"
+
+          for attempt in {1..90}; do
+            status="$(az containerapp job execution show \
+              --name "$AHA_ROLLOUT_VERIFY_JOB" \
+              --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
+              --job-execution-name "$execution" \
+              --query properties.status -o tsv --only-show-errors 2>/dev/null || true)"
+            case "$status" in
+              Succeeded)
+                echo "AHA canonical production database readiness: PASS"
+                echo "AHA canonical production database check mode: PRIVATE_VNET_READ_ONLY_VERIFY_FULL"
+                echo "AHA canonical production activation: STILL_DISABLED"
+                break
+                ;;
+              Failed)
+                echo "Private production database verification job failed: $execution" >&2
+                exit 1
+                ;;
+            esac
+            if [[ "$attempt" == 90 ]]; then
+              echo "Timed out waiting for private production database verification." >&2
+              exit 1
+            fi
+            sleep 10
+          done
+
+      - name: Cleanup short-lived rollout verification job
+        if: always()
+        shell: bash
+        run: |
+          set +e
+          if [[ -n "${AHA_ROLLOUT_VERIFY_JOB:-}" ]]; then
+            az resource delete \
+              --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
+              --resource-type Microsoft.App/jobs \
+              --name "$AHA_ROLLOUT_VERIFY_JOB" \
+              --only-show-errors >/dev/null 2>&1 || true
+          fi
+
+  rollout-gate-passed:
+    name: Mark canonical production rollout gate passed without activation
+    needs:
+      - production-readiness
+      - private-database-readiness
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Report rollout readiness
         shell: bash
         run: |
           set -euo pipefail

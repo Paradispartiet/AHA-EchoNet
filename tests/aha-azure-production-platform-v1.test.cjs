@@ -17,6 +17,9 @@ const files = {
   restoreRehearsal: ".github/workflows/aha-azure-production-backup-restore-rehearsal.yml",
   observability: ".github/workflows/aha-azure-production-observability-readiness.yml",
   rollback: ".github/workflows/aha-azure-production-api-rollback.yml",
+  rolloutGate: ".github/workflows/aha-canonical-sync-production-rollout-gate.yml",
+  rolloutGateScript: "scripts/aha-canonical-sync-production-rollout-gate.cjs",
+  rolloutGateDoc: "docs/AHA_CANONICAL_SYNC_PRODUCTION_ROLLOUT_GATE_V1.md",
   validation: ".github/workflows/aha-azure-production-iac-validation.yml",
   health: "backend/api/src/health.controller.ts",
   docs: "docs/AHA_AZURE_PRODUCTION_PLATFORM_V1.md",
@@ -74,7 +77,7 @@ assert.match(source.app, /AHA_CANONICAL_SYNC_ENABLED/);
 assert.match(source.app, /AHA_CANONICAL_SYNC_ENABLED'[\s\S]*?value:\s*'false'/);
 assert.match(source.app, /AHA_LOCAL_IMPORT_ENABLED'[\s\S]*?value:\s*'false'/);
 assert.doesNotMatch(source.app, /onrender\.com/i);
-for (const workflow of [source.deploy, source.migrationRehearsal, source.restoreRehearsal, source.observability, source.rollback]) {
+for (const workflow of [source.deploy, source.migrationRehearsal, source.restoreRehearsal, source.observability, source.rollback, source.rolloutGate]) {
   assert.doesNotMatch(workflow, /RUN_AHA_CANONICAL_PRODUCTION_PILOT_ACTIVATION/);
   assert.doesNotMatch(workflow, /AHA_CANONICAL_SYNC_ENABLED\s*=\s*true/i);
 }
@@ -149,6 +152,38 @@ assert.match(source.observability, /ContainerAppConsoleLogs_CL/);
 assert.match(source.observability, /AhaSafeAudit/);
 assert.match(source.observability, /RawBearer/);
 assert.match(source.observability, /productionCanonicalSyncEnabled:\s*false/);
+
+// Rollout API checks may run on GitHub-hosted infrastructure, but direct access to
+// private production PostgreSQL must remain inside the production VNet. Admin DSN
+// and CA therefore stay behind the operations vault / infra environment.
+assert.match(source.rolloutGate, /production-readiness:/);
+assert.match(source.rolloutGate, /private-database-readiness:/);
+assert.match(source.rolloutGate, /environment:\s*aha-canonical-production-readiness/);
+assert.match(source.rolloutGate, /environment:\s*aha-canonical-production-infra/);
+assert.match(source.rolloutGate, /id-token:\s*write/);
+assert.match(source.rolloutGate, /azure\/login@v2/);
+assert.match(source.rolloutGate, /infra\/azure\/production\/db-init-job\.bicep/);
+assert.match(source.rolloutGate, /mode=verify_restore/);
+assert.match(source.rolloutGate, /aha-canonical-db-init:\$\{AHA_ROLLOUT_DEPLOY_REVISION\}/);
+assert.match(source.rolloutGate, /AHA_CANONICAL_SYNC_ENABLED/);
+assert.match(source.rolloutGate, /migration-operations-only/);
+assert.match(source.rolloutGate, /Microsoft\.App\/jobs/);
+assert.match(source.rolloutGate, /PRIVATE_VNET_READ_ONLY_VERIFY_FULL/);
+assert.doesNotMatch(source.rolloutGate, /scripts\/aha-canonical-sync-production-db-readiness\.sh/);
+assert.doesNotMatch(source.rolloutGate, /AHA_PRODUCTION_ADMIN_DATABASE_URL:\s*\$\{\{\s*secrets\./);
+assert.doesNotMatch(source.rolloutGate, /AHA_PRODUCTION_DATABASE_CA_CERT:\s*\$\{\{\s*secrets\./);
+assert.doesNotMatch(source.rolloutGateScript, /AHA_PRODUCTION_ADMIN_DATABASE_URL/);
+assert.doesNotMatch(source.rolloutGateScript, /AHA_PRODUCTION_DATABASE_CA_CERT/);
+assert.equal(rollout.remoteReadiness.requiredProtectedValues.includes("AHA_PRODUCTION_ADMIN_DATABASE_URL"), false);
+assert.equal(rollout.remoteReadiness.requiredProtectedValues.includes("AHA_PRODUCTION_DATABASE_CA_CERT"), false);
+assert.equal(rollout.privateDatabaseReadiness.githubEnvironment, "aha-canonical-production-infra");
+assert.equal(rollout.privateDatabaseReadiness.executionBoundary, "production_vnet");
+assert.equal(rollout.privateDatabaseReadiness.verificationMode, "verify_restore");
+assert.equal(rollout.privateDatabaseReadiness.liveSyncMustRemainDisabled, true);
+assert.equal(rollout.privateDatabaseReadiness.adminCredentialSource, "operations_key_vault");
+assert.equal(rollout.privateDatabaseReadiness.publicRunnerDirectDatabaseAccessAllowed, false);
+assert.match(source.rolloutGateDoc, /production-VNet/i);
+assert.match(source.rolloutGateDoc, /operations Key Vault/i);
 
 // Readiness-era rollback is immutable-image based and refuses an active sync runtime.
 assert.match(source.rollback, /RUN_AHA_AZURE_PRODUCTION_API_ROLLBACK/);

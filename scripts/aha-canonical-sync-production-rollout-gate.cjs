@@ -18,10 +18,6 @@ const EXPECTED_TYPES = [
   "article",
   "article_reference"
 ];
-const FORBIDDEN_DATABASE_REFS = [
-  "sstuzwppsheivczyqrim",
-  "wshmybqyksrwkawqleiz"
-];
 
 function fail(message) {
   throw new Error(message);
@@ -68,6 +64,14 @@ function contract() {
   if (policy.database?.tlsMode !== "verify-full") fail("production database TLS must be verify-full");
   if (policy.database?.runtimeRole !== "aha_canonical_production_runtime") fail("unexpected production runtime role");
   if (policy.database?.runtimeRoleMustStartNoLogin !== true || policy.database?.adminCredentialInRuntimeAllowed !== false) fail("production runtime role boundary is not fail-closed");
+
+  const privateReadiness = policy.privateDatabaseReadiness || {};
+  if (privateReadiness.githubEnvironment !== "aha-canonical-production-infra") fail("private database readiness must use the protected production infrastructure environment");
+  if (privateReadiness.executionBoundary !== "production_vnet") fail("private database readiness must execute inside the production VNet");
+  if (privateReadiness.verificationMode !== "verify_restore") fail("private database readiness must use the read-only verify_restore mode");
+  if (privateReadiness.liveSyncMustRemainDisabled !== true) fail("private database readiness must re-prove canonical sync disabled");
+  if (privateReadiness.adminCredentialSource !== "operations_key_vault") fail("production admin credentials must stay behind the operations Key Vault");
+  if (privateReadiness.publicRunnerDirectDatabaseAccessAllowed !== false) fail("public GitHub runners must not connect directly to private production PostgreSQL");
 
   for (const field of ["automaticSync", "loginTriggeredSync", "authReadyTriggeredSync", "backgroundSync", "legacySyncHubActivation"]) {
     if (policy.frontend?.[field] !== false) fail(`frontend.${field} must remain false before pilot activation`);
@@ -129,11 +133,6 @@ async function readiness() {
   }
 
   const origin = validateOrigin(process.env.AHA_PRODUCTION_API_ORIGIN);
-  const adminDatabaseUrl = text(process.env.AHA_PRODUCTION_ADMIN_DATABASE_URL).toLowerCase();
-  for (const ref of FORBIDDEN_DATABASE_REFS) {
-    if (adminDatabaseUrl.includes(ref)) fail("production rollout gate refused a staging/legacy-primary database target");
-  }
-
   const pilotProfileId = text(process.env.AHA_PRODUCTION_PILOT_PROFILE_ID);
   if (pilotProfileId.length > 200 || /\s/.test(pilotProfileId)) fail("protected pilot profile id is invalid");
   if (!/^[0-9a-f]{40}$/i.test(text(process.env.AHA_PRODUCTION_ROLLBACK_REVISION))) fail("AHA_PRODUCTION_ROLLBACK_REVISION must be a full 40-character Git commit SHA");

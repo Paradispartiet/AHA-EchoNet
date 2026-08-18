@@ -94,8 +94,6 @@
     "exactConfirmation": "RUN_AHA_CANONICAL_PRODUCTION_ROLLOUT_GATE",
     "requiredProtectedValues": [
       "AHA_PRODUCTION_API_ORIGIN",
-      "AHA_PRODUCTION_ADMIN_DATABASE_URL",
-      "AHA_PRODUCTION_DATABASE_CA_CERT",
       "AHA_PRODUCTION_PILOT_PROFILE_ID",
       "AHA_PRODUCTION_ROLLBACK_REVISION",
       "AHA_PRODUCTION_MIGRATION_REHEARSAL_EVIDENCE",
@@ -103,6 +101,14 @@
       "AHA_PRODUCTION_OBSERVABILITY_EVIDENCE",
       "AHA_PRODUCTION_SYNC_RUNTIME_STATE"
     ]
+  },
+  "privateDatabaseReadiness": {
+    "githubEnvironment": "aha-canonical-production-infra",
+    "executionBoundary": "production_vnet",
+    "verificationMode": "verify_restore",
+    "liveSyncMustRemainDisabled": true,
+    "adminCredentialSource": "operations_key_vault",
+    "publicRunnerDirectDatabaseAccessAllowed": false
   },
   "activation": {
     "separateWorkflowRequired": true,
