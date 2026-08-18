@@ -199,16 +199,16 @@
     const allowed = isAllowedProductionFrontend();
     return `
       <section id="${CARD_ID}" class="aha-sync-validation-block" aria-label="Canonical production sync">
-        <p class="eyebrow">Canonical production</p>
+        <p class="eyebrow">Synkronisering</p>
         <h4>Synkroniser AHA</h4>
         <p id="${STATUS_ID}" class="aha-sync-prep-notice" role="status" aria-live="polite">${allowed
-          ? "Manuell production-sync er tilgjengelig. Ingenting synkroniseres ved innlogging eller i bakgrunnen."
-          : "Production-sync er blokkert på denne frontenden."}</p>
+          ? "Manuell synkronisering er tilgjengelig. Ingenting synkroniseres ved innlogging eller i bakgrunnen."
+          : "Synkronisering er blokkert på denne frontenden."}</p>
         <div class="aha-tile-actions">
           <button id="${OPEN_ID}" class="aha-tile-btn aha-tile-btn-primary" type="button"${allowed ? "" : " disabled aria-disabled=\"true\""}>Synkroniser nå</button>
         </div>
         <div id="${CONFIRM_ID}" hidden>
-          <p class="aha-sync-prep-notice"><strong>Én eksplisitt kjøring.</strong> Endrede canonical data sendes til production, og serverendringer kan anvendes tilbake på ditt lokale AHA-lager.</p>
+          <p class="aha-sync-prep-notice"><strong>Én eksplisitt kjøring.</strong> Endrede AHA-data sendes til production, og serverendringer kan anvendes tilbake på ditt lokale AHA-lager.</p>
           <label class="aha-sync-prep-notice">
             <input id="${CONSENT_ID}" type="checkbox" />
             Jeg vil synkronisere AHA nå.
@@ -262,7 +262,7 @@
     cancel?.addEventListener("click", () => {
       if (confirm) confirm.hidden = true;
       if (consent) consent.checked = false;
-      setProductionStatus("Manuell production-sync er tilgjengelig. Ingenting synkroniseres ved innlogging eller i bakgrunnen.", "ready");
+      setProductionStatus("Manuell synkronisering er tilgjengelig. Ingenting synkroniseres ved innlogging eller i bakgrunnen.", "ready");
     });
 
     run?.addEventListener("click", async () => {
@@ -309,13 +309,26 @@
     if (typeof document === "undefined" || !document.getElementById) {
       return { mounted: false, reason: "document_unavailable" };
     }
-    const mount = document.getElementById("aha-sync-hub-status");
-    if (!mount) return { mounted: false, reason: "sync_hub_mount_unavailable" };
-    if (!document.getElementById(CARD_ID)) {
-      mount.insertAdjacentHTML("afterbegin", productionCardMarkup());
+
+    const visibleHomeAnchor = document.getElementById("aha-local-home-technical-details");
+    const legacySyncHubMount = document.getElementById("aha-sync-hub-status");
+    if (!visibleHomeAnchor && !legacySyncHubMount) {
+      return { mounted: false, reason: "sync_hub_mount_unavailable" };
     }
+
+    if (!document.getElementById(CARD_ID)) {
+      if (visibleHomeAnchor?.insertAdjacentHTML) {
+        visibleHomeAnchor.insertAdjacentHTML("beforebegin", productionCardMarkup());
+      } else {
+        legacySyncHubMount.insertAdjacentHTML("afterbegin", productionCardMarkup());
+      }
+    }
+
     bindProductionCard();
-    return { mounted: true, reason: "manual_control_ready" };
+    return {
+      mounted: true,
+      reason: visibleHomeAnchor ? "visible_home_manual_control_ready" : "legacy_sync_hub_manual_control_ready"
+    };
   }
 
   function scheduleProductionCanonicalManualSyncControl() {
