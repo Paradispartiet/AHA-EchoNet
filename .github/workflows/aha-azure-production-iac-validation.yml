@@ -175,10 +175,8 @@ jobs:
           ")"
           [[ "$runtime_shape" == '1|0|0|0|0|0' ]]
 
-          # Start an actual runtime backend. PostgreSQL 16 allows pg_terminate_backend
-          # for a member of the target role, while CREATEROLE only gives the creator
-          # implicit ADMIN OPTION. The cutoff therefore creates a transient,
-          # non-inheriting membership, signals the runtime backend, and revokes it.
+          # Start an actual runtime backend so the cutoff is tested against a live
+          # PostgreSQL 16 session rather than only catalog state.
           docker exec -d \
             -e PGPASSWORD=production-ci-runtime-password \
             "$container" \
@@ -198,15 +196,24 @@ jobs:
             sleep 1
           done
 
+          # Cut new connections first and commit that state independently. Then
+          # prove the NOSUPERUSER CREATEROLE admin can create a transient SET ROLE
+          # path, terminate sessions while acting as the runtime role itself, and
+          # revoke the membership atomically. If this block fails, NOLOGIN remains.
+          docker exec "$container" \
+            psql -U production_ci_admin -d aha_production_ci -X -v ON_ERROR_STOP=1 -c \
+            "alter role aha_canonical_production_runtime nologin noinherit password null;" >/dev/null
+
           docker exec "$container" \
             psql -U production_ci_admin -d aha_production_ci -X -v ON_ERROR_STOP=1 -c "
               begin;
-              alter role aha_canonical_production_runtime nologin noinherit password null;
-              grant aha_canonical_production_runtime to current_user with inherit false;
+              grant aha_canonical_production_runtime to current_user with inherit false, set true;
+              set role aha_canonical_production_runtime;
               select pg_terminate_backend(pid, 5000)
               from pg_stat_activity
               where usename='aha_canonical_production_runtime'
                 and pid <> pg_backend_pid();
+              reset role;
               revoke aha_canonical_production_runtime from current_user;
               commit;
             " >/dev/null
