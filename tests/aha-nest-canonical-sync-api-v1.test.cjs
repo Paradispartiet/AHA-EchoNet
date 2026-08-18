@@ -14,7 +14,10 @@ const docs = fs.readFileSync('docs/AHA_CANONICAL_SYNC_API_V1.md', 'utf8');
 
 assert.match(appModule, /CanonicalSyncModule/);
 assert.match(config, /AHA_CANONICAL_SYNC_ENABLED/);
-assert.match(config, /enabled:\s*bool\(env\.AHA_CANONICAL_SYNC_ENABLED/);
+assert.match(config, /const enabled = bool\(env\.AHA_CANONICAL_SYNC_ENABLED/);
+assert.match(config, /AHA_CANONICAL_SYNC_PILOT_PROFILE_ID/);
+assert.match(config, /required when canonical sync is enabled/);
+assert.match(config, /pilotProfileId:\s*pilotProfileId\(/);
 assert.match(config, /262_144/);
 assert.match(dto, /Number\.MAX_SAFE_INTEGER/);
 assert.match(dto, /CANONICAL_SYNC_OBJECT_TYPES/);
@@ -31,6 +34,10 @@ assert.match(service, /canonicalSyncPayloadBytes\(payload\)/);
 assert.match(service, /SYNC_PAYLOAD_HASH_INVALID/);
 assert.match(service, /SYNC_PAYLOAD_TOO_LARGE/);
 assert.match(service, /CANONICAL_SYNC_DISABLED/);
+assert.match(service, /assertEnabledForPilot\(principal\)/);
+assert.match(service, /principal\.subject/);
+assert.match(service, /CANONICAL_SYNC_PILOT_FORBIDDEN/);
+assert.match(service, /ApiException\(403/);
 assert.match(service, /body\.operation === "delete" && body\.payload != null/);
 
 assert.match(repository, /withReadSession/);
