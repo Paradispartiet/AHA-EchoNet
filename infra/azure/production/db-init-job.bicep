@@ -10,8 +10,7 @@ param adminDatabaseUrlSecretUri string
 param databaseCaSecretUri string
 param readinessPasswordSecretUri string = ''
 param runtimePasswordSecretUri string = ''
-param pilotProfileId string = ''
-param pilotWorkspaceId string = ''
+param pilotProfileIdSecretUri string = ''
 @allowed([
   'apply'
   'verify_restore'
@@ -52,10 +51,15 @@ var readinessSecrets = mode == 'apply' ? [
     identity: runtimeIdentity.id
   }
 ] : []
-var runtimeSecrets = mode == 'activate_pilot' ? [
+var activationSecrets = mode == 'activate_pilot' ? [
   {
     name: 'runtime-password'
     keyVaultUrl: runtimePasswordSecretUri
+    identity: runtimeIdentity.id
+  }
+  {
+    name: 'pilot-profile-id'
+    keyVaultUrl: pilotProfileIdSecretUri
     identity: runtimeIdentity.id
   }
 ] : []
@@ -87,11 +91,7 @@ var activationEnvironment = mode == 'activate_pilot' ? [
   }
   {
     name: 'AHA_PRODUCTION_PILOT_PROFILE_ID'
-    value: pilotProfileId
-  }
-  {
-    name: 'AHA_PRODUCTION_PILOT_WORKSPACE_ID'
-    value: pilotWorkspaceId
+    secretRef: 'pilot-profile-id'
   }
 ] : []
 
@@ -124,7 +124,7 @@ resource job 'Microsoft.App/jobs@2025-01-01' = {
           identity: runtimeIdentity.id
         }
       ]
-      secrets: concat(baseSecrets, readinessSecrets, runtimeSecrets)
+      secrets: concat(baseSecrets, readinessSecrets, activationSecrets)
     }
     template: {
       containers: [
