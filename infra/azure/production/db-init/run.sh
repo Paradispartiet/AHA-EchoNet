@@ -279,13 +279,20 @@ SQL
 }
 
 deactivate_pilot() {
+  # PostgreSQL 16 grants a CREATEROLE creator ADMIN OPTION on roles it creates,
+  # but pg_terminate_backend requires actual membership (or pg_signal_backend).
+  # Create only a transaction-scoped membership path with INHERIT disabled,
+  # signal runtime sessions, then revoke it before commit. Runtime privileges
+  # themselves never change and no pg_signal_backend grant is required.
   psql_safe -q <<'SQL'
 begin;
 alter role aha_canonical_production_runtime nologin noinherit password null;
-select pg_terminate_backend(pid)
+grant aha_canonical_production_runtime to current_user with inherit false;
+select pg_terminate_backend(pid, 5000)
 from pg_stat_activity
 where usename='aha_canonical_production_runtime'
   and pid <> pg_backend_pid();
+revoke aha_canonical_production_runtime from current_user;
 commit;
 SQL
   verify_runtime_privileges 0
@@ -294,7 +301,19 @@ SQL
     echo "Production pilot database cutoff left active runtime sessions." >&2
     exit 1
   fi
-  echo 'AHA production pilot database activation: CUT_OFF_NOLOGIN'
+  lingering_admin_membership="$(psql_safe -A -t -q -c "
+    select count(*)
+    from pg_auth_members m
+    join pg_roles granted on granted.oid=m.roleid
+    join pg_roles member on member.oid=m.member
+    where granted.rolname='aha_canonical_production_runtime'
+      and member.rolname=current_user
+  ")"
+  if [ "$lingering_admin_membership" != '0' ]; then
+    echo "Production pilot cutoff left a control-plane membership on the runtime role." >&2
+    exit 1
+  fi
+  echo 'AHA production pilot database activation: CUT_OFF_NOLOGIN_ZERO_SESSIONS'
 }
 
 if [ "$mode" = 'verify_restore' ]; then
