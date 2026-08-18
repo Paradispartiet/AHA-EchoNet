@@ -198,18 +198,18 @@ jobs:
             sleep 1
           done
 
-          docker exec -i "$container" \
-            psql -U production_ci_admin -d aha_production_ci -X -v ON_ERROR_STOP=1 >/dev/null <<'SQL'
-begin;
-alter role aha_canonical_production_runtime nologin noinherit password null;
-grant aha_canonical_production_runtime to current_user with inherit false;
-select pg_terminate_backend(pid, 5000)
-from pg_stat_activity
-where usename='aha_canonical_production_runtime'
-  and pid <> pg_backend_pid();
-revoke aha_canonical_production_runtime from current_user;
-commit;
-SQL
+          docker exec "$container" \
+            psql -U production_ci_admin -d aha_production_ci -X -v ON_ERROR_STOP=1 -c "
+              begin;
+              alter role aha_canonical_production_runtime nologin noinherit password null;
+              grant aha_canonical_production_runtime to current_user with inherit false;
+              select pg_terminate_backend(pid, 5000)
+              from pg_stat_activity
+              where usename='aha_canonical_production_runtime'
+                and pid <> pg_backend_pid();
+              revoke aha_canonical_production_runtime from current_user;
+              commit;
+            " >/dev/null
 
           cutoff_shape="$(docker exec "$container" psql -U production_ci_admin -d aha_production_ci -X -A -t -q -c "
             select
