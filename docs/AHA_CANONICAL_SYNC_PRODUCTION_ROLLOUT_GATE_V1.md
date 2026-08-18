@@ -37,6 +37,7 @@ Den låser følgende:
 - gammel Sync Hub aktiveres ikke automatisk.
 - første pilot er én eksplisitt allowlistet profil; ingen automatisk utvidelse, gruppe- eller offentlig deling.
 - pilotprofilen håndheves server-side på verifisert JWT-subject, ikke bare i klienten.
+- production-pilotens browserflate er separat fra staging og kan bare kjøres eksplisitt; workspace utledes fra innlogget subject og kan ikke skrives inn av brukeren.
 - destructive migrations eller destruktiv pilot-rollback er ikke tillatt.
 - backup, PITR restore-test, migration rehearsal, observability og rollout-gate er obligatorisk.
 - direkte databaseforbindelse fra offentlig GitHub-runner til privat production PostgreSQL er forbudt.
@@ -164,6 +165,43 @@ API-et håndhever pilotgrensen server-side i `CanonicalSyncService`: alle andre 
 
 Første pilot aktiverer **ikke** automatisk, login-triggered eller background sync. Sync må fortsatt initieres eksplisitt av brukeren/operatøren gjennom den manuelle canonical sync-kjeden.
 
+### Eksplisitt browserkjøring etter committed aktivering
+
+Den separate operatorflaten ligger på:
+
+```text
+canonical-sync-production-pilot.html
+```
+
+Den er ikke lenket inn som normal brukerflyt og har `noindex,nofollow`. For å åpne kontrollen må siden besøkes med:
+
+```text
+?ahaCanonicalProductionPilot=1
+```
+
+Selve kjøringen krever i tillegg eksakt frase:
+
+```text
+RUN_AHA_CANONICAL_PRODUCTION_PILOT_SYNC
+```
+
+og eksplisitt samtykke i skjemaet.
+
+Browserbroen `js/ahaCanonicalSyncProductionPilotBridge.js` er bevisst forskjellig fra staging-broen:
+
+1. den utfører ingen auth-lesing, storage-write eller nettverkskall ved page load;
+2. production API-origin skrives eksplisitt inn for hver kontrollert kjøring og må være HTTPS/separat fra static AHA-origin;
+3. først etter submit leses den eksisterende AHA/Supabase-sessionen;
+4. personal workspace-ID kan ikke oppgis manuelt, men utledes deterministisk som `personal-<authenticated subject>`;
+5. den beskyttede pilot-ID-en finnes fortsatt bare server-side/Key Vault og eksponeres ikke i browserkonfigurasjon;
+6. `AHACanonicalManualSyncRunner` kalles med `explicitUserAction=true` og den aktuelle access tokenen;
+7. i motsetning til staging brukes det ekte lokale canonical-lageret, slik at bootstrap/pull faktisk kan anvendes på pilotens lokale AHA-state;
+8. staging source hydrator brukes ikke i production-piloten; ingen skjult lesing fra legacy/primær Supabase-kildetabell legges til;
+9. resultatflaten viser bare tellinger og konflikttyper — aldri JWT-subject, workspace-ID, access token, rå payload eller `serverState`;
+10. serverens `CANONICAL_SYNC_PILOT_FORBIDDEN`-kontroll er fortsatt autoritativ dersom en annen innlogget profil forsøker å bruke flaten.
+
+Denne browserflaten aktiverer heller ikke sync i infrastrukturen. Hvis activation-workflowen ikke allerede har committed production-piloten, vil API/DB-grensen fortsatt avvise eller være utilgjengelig.
+
 ### Ufullstendig aktivering rulles tilbake database-first
 
 Hvis et steg etter at DB-jobben er opprettet feiler, workflowen:
@@ -196,10 +234,13 @@ Denne er også database-first:
 1. bruker det immutable `aha-canonical-db-init:<live revision>`-imaget;
 2. kjører `deactivate_pilot` inne i production-VNet;
 3. setter runtime-role `NOLOGIN`, nuller credential og terminerer sessions;
-4. rekonstruerer readiness-DSN fra operations Key Vault og gjenoppretter den i runtime Key Vault;
-5. slår av runtime/sync i Container App uten å endre det immutable API-imaget;
-6. krever safe sync-disabled health;
-7. beholder pilotdata urørt.
+4. bruker kortlivet `NOINHERIT` membership i runtime-rollen bare mens PostgreSQL terminerer runtime-backends, og revoker membership igjen før kontrollen fullføres;
+5. rekonstruerer readiness-DSN fra operations Key Vault og gjenoppretter den i runtime Key Vault;
+6. slår av runtime/sync i Container App uten å endre det immutable API-imaget;
+7. krever safe sync-disabled health;
+8. beholder pilotdata urørt.
+
+PostgreSQL-16 CI tester denne cutoffen med en faktisk runtime-sesjon under samme `NOSUPERUSER + CREATEROLE`-privilegiumform som production-adminen. Porten krever etter cutoff `NOLOGIN`, null aktive runtime-sesjoner, null hengende membership, fortsatt eksakt tre sync-rutiner og null direkte canonical table writes.
 
 Når sync igjen er av kan den separate immutable API rollback-workflowen brukes dersom selve API-imaget også må rulles tilbake til en tidligere Git-SHA.
 
@@ -214,7 +255,7 @@ migration rehearsal
    remote/API readiness
    → privat VNet database readiness
 → separat same-SHA one-profile pilot activation
-→ eksplisitt manuell pilot-sync
+→ eksplisitt manuell pilot-sync fra production-pilotflaten
 ```
 
 Staging eller den gamle primære AHA-databasen skal aldri brukes som snarvei for production-data eller production-schema.
