@@ -39,6 +39,7 @@ assert.doesNotMatch(hubSource, /setInterval\s*\(/);
 assert.doesNotMatch(hubSource, /onAuthStateChange|SIGNED_IN|TOKEN_REFRESHED/);
 assert.doesNotMatch(hubSource, /AHACanonicalManualSyncRunner\.run/);
 assert.doesNotMatch(hubSource, /AHA_CANONICAL_SYNC_ENABLED\s*=\s*true/);
+assert.doesNotMatch(hubSource, /backgroundSync/);
 
 const runHandlerIndex = hubSource.indexOf('run?.addEventListener("click"');
 const lazyLoadCallIndex = hubSource.indexOf("await loadProductionControl()", runHandlerIndex);
@@ -50,7 +51,9 @@ const startup = startupIndex >= 0 ? hubSource.slice(startupIndex) : "";
 assert.doesNotMatch(startup, /loadProductionControl\s*\(/, "Home startup must not load production controller");
 assert.doesNotMatch(startup, /AHACanonicalProductionHomeSync/, "Home startup must not touch production controller");
 
-const api = require(`../${controlPath}`);
+require(`../${controlPath}`);
+const api = global.AHACanonicalProductionHomeSync;
+assert.ok(api && typeof api.execute === "function", "production controller must register its global ESM-compatible API");
 assert.equal(api.PRODUCTION_API_ORIGIN, "https://aha-canonical-api-production.redground-9c6e20c2.northeurope.azurecontainerapps.io");
 assert.equal(api.PRODUCTION_FRONTEND_ORIGIN, "https://paradispartiet.github.io");
 assert.equal(api.isAllowedFrontendOrigin("https://paradispartiet.github.io"), true);
