@@ -8,11 +8,14 @@ on:
       - 'backend/api/Dockerfile'
       - 'backend/api/.dockerignore'
       - 'backend/api/src/health.controller.ts'
-      - 'backend/api/src/sync/sync.module.ts'
+      - 'backend/api/src/sync/**'
+      - 'backend/api/src/config/app-config.ts'
       - '.github/workflows/aha-azure-production-*.yml'
+      - '.github/workflows/aha-canonical-sync-production-*.yml'
       - 'scripts/aha-canonical-sync-production-rollout-gate.cjs'
       - 'tests/aha-azure-production-platform-v1.test.cjs'
       - 'tests/aha-canonical-sync-production-rollout-gate-v1.test.cjs'
+      - 'tests/aha-canonical-sync-production-pilot-activation-v1.test.cjs'
   push:
     branches:
       - main
@@ -22,11 +25,14 @@ on:
       - 'backend/api/Dockerfile'
       - 'backend/api/.dockerignore'
       - 'backend/api/src/health.controller.ts'
-      - 'backend/api/src/sync/sync.module.ts'
+      - 'backend/api/src/sync/**'
+      - 'backend/api/src/config/app-config.ts'
       - '.github/workflows/aha-azure-production-*.yml'
+      - '.github/workflows/aha-canonical-sync-production-*.yml'
       - 'scripts/aha-canonical-sync-production-rollout-gate.cjs'
       - 'tests/aha-azure-production-platform-v1.test.cjs'
       - 'tests/aha-canonical-sync-production-rollout-gate-v1.test.cjs'
+      - 'tests/aha-canonical-sync-production-pilot-activation-v1.test.cjs'
 
 permissions:
   contents: read
@@ -69,7 +75,7 @@ jobs:
       - name: Build production migration image locally
         run: docker build -f infra/azure/production/db-init/Dockerfile .
 
-      - name: Exercise exact canonical migrations and production role boundary on PostgreSQL 16
+      - name: Exercise exact canonical migrations, pilot login and database-first cutoff on PostgreSQL 16
         shell: bash
         run: |
           set -euo pipefail
@@ -156,7 +162,85 @@ jobs:
           [[ "$runtime_shape" == '0|0|0|0|0|0' ]]
           [[ "$routines" == 'bootstrap_sync_snapshot_v1,pull_sync_changes_v1,push_sync_change_v1' ]]
           [[ "$writes" == '0' ]]
-          echo "Production migration/role CI rehearsal: PASS (${migration_count} migrations, PostgreSQL 16 NOSUPERUSER admin)"
 
-      - name: Run deterministic production platform contract test
-        run: node tests/aha-azure-production-platform-v1.test.cjs
+          # Prove the production admin can activate the exact runtime role without
+          # becoming superuser and that the role still has no direct table writes.
+          docker exec "$container" \
+            psql -U production_ci_admin -d aha_production_ci -X -v ON_ERROR_STOP=1 -c \
+            "alter role aha_canonical_production_runtime login noinherit password 'production-ci-runtime-password'; alter role aha_canonical_production_runtime set row_security = on;"
+          runtime_shape="$(docker exec "$container" psql -U postgres -d aha_production_ci -X -A -t -q -c "
+            select rolcanlogin::int || '|' || rolsuper::int || '|' || rolbypassrls::int || '|' ||
+                   rolcreatedb::int || '|' || rolcreaterole::int || '|' || rolinherit::int
+            from pg_roles where rolname='aha_canonical_production_runtime'
+          ")"
+          [[ "$runtime_shape" == '1|0|0|0|0|0' ]]
+
+          # Start an actual runtime backend. PostgreSQL 16 allows pg_terminate_backend
+          # for a member of the target role, while CREATEROLE only gives the creator
+          # implicit ADMIN OPTION. The cutoff therefore creates a transient,
+          # non-inheriting membership, signals the runtime backend, and revokes it.
+          docker exec -d \
+            -e PGPASSWORD=production-ci-runtime-password \
+            "$container" \
+            psql -h 127.0.0.1 -U aha_canonical_production_runtime -d aha_production_ci \
+              -X -v ON_ERROR_STOP=1 -c "select pg_sleep(120);"
+
+          runtime_session_count=0
+          for attempt in {1..20}; do
+            runtime_session_count="$(docker exec "$container" \
+              psql -U production_ci_admin -d aha_production_ci -X -A -t -q -c \
+              "select count(*) from pg_stat_activity where usename='aha_canonical_production_runtime' and pid <> pg_backend_pid()")"
+            if [[ "$runtime_session_count" != '0' ]]; then break; fi
+            if [[ "$attempt" == 20 ]]; then
+              echo "Runtime session did not become visible in PostgreSQL 16 cutoff rehearsal." >&2
+              exit 1
+            fi
+            sleep 1
+          done
+
+          docker exec -i "$container" \
+            psql -U production_ci_admin -d aha_production_ci -X -v ON_ERROR_STOP=1 >/dev/null <<'SQL'
+begin;
+alter role aha_canonical_production_runtime nologin noinherit password null;
+grant aha_canonical_production_runtime to current_user with inherit false;
+select pg_terminate_backend(pid, 5000)
+from pg_stat_activity
+where usename='aha_canonical_production_runtime'
+  and pid <> pg_backend_pid();
+revoke aha_canonical_production_runtime from current_user;
+commit;
+SQL
+
+          cutoff_shape="$(docker exec "$container" psql -U production_ci_admin -d aha_production_ci -X -A -t -q -c "
+            select
+              (select rolcanlogin::int from pg_roles where rolname='aha_canonical_production_runtime')::text || '|' ||
+              (select count(*) from pg_stat_activity where usename='aha_canonical_production_runtime' and pid <> pg_backend_pid())::text || '|' ||
+              (select count(*)
+                 from pg_auth_members m
+                 join pg_roles granted on granted.oid=m.roleid
+                 join pg_roles member on member.oid=m.member
+                where granted.rolname='aha_canonical_production_runtime'
+                  and member.rolname=current_user)::text
+          ")"
+          [[ "$cutoff_shape" == '0|0|0' ]]
+
+          routines_after_cutoff="$(docker exec "$container" psql -U postgres -d aha_production_ci -X -A -t -q -c "
+            select coalesce(string_agg(p.proname, ',' order by p.proname),'')
+            from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+            where n.nspname='aha'
+              and has_function_privilege('aha_canonical_production_runtime',p.oid,'EXECUTE')
+          ")"
+          writes_after_cutoff="$(docker exec "$container" psql -U postgres -d aha_production_ci -X -A -t -q -c "
+            select count(*) from information_schema.role_table_grants
+            where grantee='aha_canonical_production_runtime' and table_schema='aha'
+              and privilege_type in ('INSERT','UPDATE','DELETE','TRUNCATE','REFERENCES','TRIGGER')
+          ")"
+          [[ "$routines_after_cutoff" == 'bootstrap_sync_snapshot_v1,pull_sync_changes_v1,push_sync_change_v1' ]]
+          [[ "$writes_after_cutoff" == '0' ]]
+
+          echo "Production migration/role/pilot-cutoff CI rehearsal: PASS (${migration_count} migrations, PostgreSQL 16 NOSUPERUSER admin)"
+
+      - name: Run deterministic production platform contract tests
+        run: |
+          node tests/aha-azure-production-platform-v1.test.cjs
+          node tests/aha-canonical-sync-production-pilot-activation-v1.test.cjs
