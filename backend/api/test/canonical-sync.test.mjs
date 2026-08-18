@@ -10,15 +10,16 @@ import { canonicalSyncPayloadBytes, canonicalSyncPayloadHash, canonicalSyncStrin
 import { CanonicalSyncRepository } from "../dist/sync/sync.repository.js";
 import { CanonicalSyncService } from "../dist/sync/sync.service.js";
 
+const PILOT_SUBJECT = "11111111-1111-4111-8111-111111111111";
 const principal = Object.freeze({
-  subject: "sync-subject",
+  subject: PILOT_SUBJECT,
   provider: "supabase",
   issuer: "https://issuer.example",
   audience: Object.freeze(["aha-api"])
 });
 
 function syncConfig(overrides = {}) {
-  return Object.freeze({ enabled: true, defaultLimit: 200, maxLimit: 500, maxPushBytes: 262_144, ...overrides });
+  return Object.freeze({ enabled: true, pilotProfileId: PILOT_SUBJECT, defaultLimit: 200, maxLimit: 500, maxPushBytes: 262_144, ...overrides });
 }
 
 class FakeSyncRepository {
@@ -37,14 +38,24 @@ class FakeSyncRepository {
   }
 }
 
-test("canonical sync is fail-closed by default and its limits are bounded", () => {
+test("canonical sync is fail-closed by default and its limits and pilot allowlist are bounded", () => {
   const disabled = loadCanonicalSyncConfig({});
   assert.equal(disabled.enabled, false);
+  assert.equal(disabled.pilotProfileId, null);
   assert.equal(disabled.defaultLimit, 200);
   assert.equal(disabled.maxLimit, 500);
   assert.equal(disabled.maxPushBytes, 262_144);
 
   assert.throws(() => loadCanonicalSyncConfig({ AHA_CANONICAL_SYNC_ENABLED: "yes" }), /must be true or false/);
+  assert.throws(() => loadCanonicalSyncConfig({ AHA_CANONICAL_SYNC_ENABLED: "true" }), /pilot profile id is required/i);
+  assert.throws(
+    () => loadCanonicalSyncConfig({ AHA_CANONICAL_SYNC_ENABLED: "true", AHA_CANONICAL_SYNC_PILOT_PROFILE_ID: "not-a-uuid" }),
+    /must be a UUID/
+  );
+  const enabled = loadCanonicalSyncConfig({ AHA_CANONICAL_SYNC_ENABLED: "true", AHA_CANONICAL_SYNC_PILOT_PROFILE_ID: PILOT_SUBJECT });
+  assert.equal(enabled.enabled, true);
+  assert.equal(enabled.pilotProfileId, PILOT_SUBJECT);
+
   assert.throws(() => loadCanonicalSyncConfig({ AHA_CANONICAL_SYNC_MAX_LIMIT: "501" }), /between 1 and 500/);
   assert.throws(
     () => loadCanonicalSyncConfig({ AHA_CANONICAL_SYNC_MAX_LIMIT: "50", AHA_CANONICAL_SYNC_DEFAULT_LIMIT: "51" }),
@@ -145,12 +156,20 @@ test("delete hash is the canonical JSON null hash and conflicts remain business 
   );
 });
 
-test("disabled service and deployment-specific page limit stop before repository access", async () => {
+test("disabled, non-pilot and deployment-specific page limits stop before repository access", async () => {
   const repository = new FakeSyncRepository();
   const disabled = new CanonicalSyncService(syncConfig({ enabled: false }), repository);
   await assert.rejects(
     disabled.pull(principal, { workspaceId: "workspace-1", afterCursor: 0, limit: 10 }),
     (error) => error instanceof ApiException && error.code === "CANONICAL_SYNC_DISABLED"
+  );
+  assert.equal(repository.calls.length, 0);
+
+  const nonPilot = Object.freeze({ ...principal, subject: "22222222-2222-4222-8222-222222222222" });
+  const pilotOnly = new CanonicalSyncService(syncConfig(), repository);
+  await assert.rejects(
+    pilotOnly.pull(nonPilot, { workspaceId: "workspace-1", afterCursor: 0, limit: 10 }),
+    (error) => error instanceof ApiException && error.code === "CANONICAL_SYNC_PILOT_FORBIDDEN" && error.getStatus() === 403
   );
   assert.equal(repository.calls.length, 0);
 
