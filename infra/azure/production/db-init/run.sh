@@ -279,22 +279,30 @@ SQL
 }
 
 deactivate_pilot() {
-  # PostgreSQL 16 grants a CREATEROLE creator ADMIN OPTION on roles it creates,
-  # but pg_terminate_backend requires actual membership (or pg_signal_backend).
-  # Create only a transaction-scoped membership path with INHERIT disabled,
-  # signal runtime sessions, then revoke it before commit. Runtime privileges
-  # themselves never change and no pg_signal_backend grant is required.
+  # Cut new access first in its own committed command. If later termination fails,
+  # the runtime role still remains NOLOGIN and cannot create new sessions.
+  psql_safe -q -c "alter role aha_canonical_production_runtime nologin noinherit password null;"
+
+  # PostgreSQL 16 requires the caller to have privileges of the target role (or
+  # pg_signal_backend) to terminate its sessions. A CREATEROLE creator has ADMIN
+  # OPTION but is not automatically an effective member when INHERIT is false.
+  # Create a transient membership with SET permission, SET ROLE only while
+  # terminating runtime backends, then revoke the membership in the same
+  # transaction. Any failure rolls the transient grant back, while NOLOGIN above
+  # remains committed.
   psql_safe -q <<'SQL'
 begin;
-alter role aha_canonical_production_runtime nologin noinherit password null;
-grant aha_canonical_production_runtime to current_user with inherit false;
+grant aha_canonical_production_runtime to current_user with inherit false, set true;
+set role aha_canonical_production_runtime;
 select pg_terminate_backend(pid, 5000)
 from pg_stat_activity
 where usename='aha_canonical_production_runtime'
   and pid <> pg_backend_pid();
+reset role;
 revoke aha_canonical_production_runtime from current_user;
 commit;
 SQL
+
   verify_runtime_privileges 0
   active_connections="$(psql_safe -A -t -q -c "select count(*) from pg_stat_activity where usename='aha_canonical_production_runtime' and pid <> pg_backend_pid()")"
   if [ "$active_connections" != '0' ]; then
