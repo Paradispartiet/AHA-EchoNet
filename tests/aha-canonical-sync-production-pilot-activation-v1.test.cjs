@@ -21,6 +21,17 @@ for (const path of Object.values(paths)) {
 const source = Object.fromEntries(Object.entries(paths).map(([key, path]) => [key, fs.readFileSync(path, "utf8")]));
 const policy = JSON.parse(source.policy);
 
+// GitHub only registers workflow_dispatch when the workflow YAML parses. A prior
+// regression placed Python heredoc bodies at column zero inside run: |, which
+// made the file exist on main while GitHub returned HTTP 422 on dispatch.
+for (const [name, workflow] of Object.entries({ activation: source.activation, rollback: source.rollback })) {
+  assert.doesNotMatch(
+    workflow,
+    /<<-?['"]?[A-Z][A-Z0-9_]*['"]?\n\S/m,
+    `${name} workflow has an unindented heredoc body that can invalidate GitHub Actions YAML`
+  );
+}
+
 // Activation remains an explicit, isolated production operation.
 assert.match(source.activation, /workflow_dispatch:/);
 assert.doesNotMatch(source.activation, /^\s{2}(push|schedule):/m);
