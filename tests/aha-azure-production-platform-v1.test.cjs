@@ -69,14 +69,19 @@ assert.match(source.deploy, /AHA_PRODUCTION_OPS_KEYVAULT/);
 assert.match(source.deploy, /aha-production-admin-database-url/);
 assert.match(source.deploy, /aha-production-database-url/);
 
-// The API deploy is production-shaped but canonical sync remains disabled.
+// The reusable API template can support a future explicit pilot, but defaults
+// remain fail-closed and the normal production deploy never opts into activation.
 assert.match(source.app, /AHA_DATABASE_ENABLED/);
 assert.match(source.app, /AHA_DATABASE_SSL_MODE/);
 assert.match(source.app, /value:\s*'verify-full'/);
-assert.match(source.app, /AHA_CANONICAL_SYNC_ENABLED/);
-assert.match(source.app, /AHA_CANONICAL_SYNC_ENABLED'[\s\S]*?value:\s*'false'/);
+assert.match(source.app, /param canonicalSyncEnabled bool = false/);
+assert.match(source.app, /param runtimeActivated bool = false/);
+assert.match(source.app, /param pilotProfileIdSecretUri string = ''/);
+assert.match(source.app, /AHA_CANONICAL_SYNC_ENABLED'[\s\S]*?canonicalSyncEnabled \? 'true' : 'false'/);
+assert.match(source.app, /AHA_RUNTIME_ACTIVATED'[\s\S]*?runtimeActivated \? 'true' : 'false'/);
 assert.match(source.app, /AHA_LOCAL_IMPORT_ENABLED'[\s\S]*?value:\s*'false'/);
 assert.doesNotMatch(source.app, /onrender\.com/i);
+assert.doesNotMatch(source.deploy, /canonicalSyncEnabled=true|runtimeActivated=true/);
 for (const workflow of [source.deploy, source.migrationRehearsal, source.restoreRehearsal, source.observability, source.rollback, source.rolloutGate]) {
   assert.doesNotMatch(workflow, /RUN_AHA_CANONICAL_PRODUCTION_PILOT_ACTIVATION/);
   assert.doesNotMatch(workflow, /AHA_CANONICAL_SYNC_ENABLED\s*=\s*true/i);
@@ -98,7 +103,7 @@ assert.match(source.roles, /bootstrap_sync_snapshot_v1\(text,text,bigint,integer
 assert.match(source.roles, /pull_sync_changes_v1\(text,bigint,integer\)/);
 assert.match(source.roles, /push_sync_change_v1\(text,text,text,text,text,text,bigint,text,jsonb\)/);
 assert.doesNotMatch(source.roles, /grant\s+(insert|update|delete|truncate)/i);
-assert.match(source.job, /'apply'[\s\S]*'verify_restore'/);
+assert.match(source.job, /'apply'[\s\S]*'verify_restore'[\s\S]*'activate_pilot'[\s\S]*'deactivate_pilot'/);
 assert.match(source.job, /AHA_DB_INIT_MODE/);
 
 // Production images run without root and pin the Node major/minor patch used by the tested build.
