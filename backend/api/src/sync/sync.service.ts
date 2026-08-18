@@ -14,7 +14,7 @@ export class CanonicalSyncService {
   ) {}
 
   async bootstrap(principal: AuthPrincipal, query: SyncBootstrapQueryDto): Promise<Record<string, unknown>> {
-    this.assertEnabled();
+    this.assertEnabledForPilot(principal);
     return this.repository.bootstrap(principal, {
       workspaceId: query.workspaceId,
       afterKey: query.afterKey || "",
@@ -24,7 +24,7 @@ export class CanonicalSyncService {
   }
 
   async pull(principal: AuthPrincipal, query: SyncPullQueryDto): Promise<Record<string, unknown>> {
-    this.assertEnabled();
+    this.assertEnabledForPilot(principal);
     return this.repository.pull(principal, {
       workspaceId: query.workspaceId,
       afterCursor: query.afterCursor ?? 0,
@@ -33,7 +33,7 @@ export class CanonicalSyncService {
   }
 
   async push(principal: AuthPrincipal, body: SyncPushRequestDto): Promise<Record<string, unknown>> {
-    this.assertEnabled();
+    this.assertEnabledForPilot(principal);
 
     const payload = body.operation === "upsert" ? body.payload : null;
     if (body.operation === "upsert" && (!payload || typeof payload !== "object" || Array.isArray(payload))) {
@@ -80,9 +80,13 @@ export class CanonicalSyncService {
     return limit;
   }
 
-  private assertEnabled(): void {
+  private assertEnabledForPilot(principal: AuthPrincipal): void {
     if (!this.config.enabled) {
       throw new ApiException(503, "CANONICAL_SYNC_DISABLED", "Canonical sync is not enabled on this API deployment");
+    }
+    const pilotProfileId = String(this.config.pilotProfileId || "").toLowerCase();
+    if (!pilotProfileId || String(principal.subject || "").toLowerCase() !== pilotProfileId) {
+      throw new ApiException(403, "CANONICAL_SYNC_PILOT_FORBIDDEN", "Canonical sync is restricted to the protected production pilot profile");
     }
   }
 }

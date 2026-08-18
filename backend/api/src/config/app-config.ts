@@ -15,7 +15,7 @@ export interface AppConfig {
   allowedOrigins: readonly string[];
   auditHashSalt: string;
   auth: AuthConfig | null;
-  runtimeActivated: false;
+  runtimeActivated: boolean;
   databaseConnected: false;
   existingExpressRuntimePrimary: true;
 }
@@ -40,6 +40,13 @@ function parsePort(value: unknown): number {
     throw new Error("PORT must be an integer between 1 and 65535");
   }
   return port;
+}
+
+function parseBoolean(value: unknown, fallback: boolean, name: string): boolean {
+  const normalized = nonEmpty(value === undefined || value === null || value === "" ? String(fallback) : value).toLowerCase();
+  if (normalized === "true") return true;
+  if (normalized === "false") return false;
+  throw new Error(`${name} must be true or false`);
 }
 
 function parseOrigins(value: unknown, environment: AppEnvironment): readonly string[] {
@@ -121,7 +128,7 @@ export function loadAppConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     allowedOrigins: parseOrigins(env.AHA_ALLOWED_ORIGINS, environment),
     auditHashSalt: parseAuditSalt(env.AHA_AUDIT_HASH_SALT, environment),
     auth: parseAuth(env, environment),
-    runtimeActivated: false,
+    runtimeActivated: parseBoolean(env.AHA_RUNTIME_ACTIVATED, false, "AHA_RUNTIME_ACTIVATED"),
     databaseConnected: false,
     existingExpressRuntimePrimary: true
   };

@@ -24,13 +24,25 @@
     "loginTriggeredSync": false,
     "authReadyTriggeredSync": false,
     "backgroundSync": false,
-    "legacySyncHubActivation": false
+    "legacySyncHubActivation": false,
+    "manualProductionPilotBridgeImplemented": true,
+    "manualProductionPilotBridgePage": "canonical-sync-production-pilot.html",
+    "manualProductionPilotRequiresExplicitUrlGate": true,
+    "manualProductionPilotRequiresExplicitConsent": true,
+    "manualProductionPilotRequiresExplicitApiOrigin": true,
+    "manualProductionPilotWorkspaceDerivedFromAuthenticatedSubject": true,
+    "manualProductionPilotUserSelectableWorkspace": false,
+    "manualProductionPilotPrimarySourceHydration": false,
+    "manualProductionPilotAppliesServerStateToRealLocalCanonicalStorage": true,
+    "manualProductionPilotRendersRawPayload": false,
+    "manualProductionPilotRendersProfileOrWorkspaceIdentifier": false
   },
   "pilot": {
     "mode": "single_profile_allowlist",
     "maxProfiles": 1,
     "profileIdentifierMustComeFromProtectedEnvironment": true,
     "publicProfileIdentifierAllowed": false,
+    "serverSideAllowlistRequired": true,
     "automaticExpansionAllowed": false,
     "groupOrPublicSharingAllowed": false
   },
@@ -112,8 +124,27 @@
   },
   "activation": {
     "separateWorkflowRequired": true,
+    "workflowImplemented": true,
+    "githubEnvironment": "aha-canonical-production-infra",
     "rolloutGateMustPassFirst": true,
+    "sameShaRolloutGateRequired": true,
+    "protectedPilotProfileRequired": true,
+    "serverSidePilotAllowlistRequired": true,
+    "databaseFirstActivationRequired": true,
+    "runtimeCredentialRotationRequired": true,
+    "runtimeRoleLoginOnlyDuringActivePilot": true,
+    "localImportEnabled": false,
+    "automaticSyncEnabled": false,
+    "loginTriggeredSyncEnabled": false,
+    "backgroundSyncEnabled": false,
+    "databaseFirstRollbackRequired": true,
+    "activeSessionTerminationOnRollbackRequired": true,
+    "destructivePilotDataRollbackAllowed": false,
+    "emergencyRollbackWorkflowImplemented": true,
+    "manualPilotSyncRequiresSeparateExplicitUserAction": true,
+    "manualPilotSyncConfirmation": "RUN_AHA_CANONICAL_PRODUCTION_PILOT_SYNC",
     "enabled": false,
-    "exactPilotConfirmation": "RUN_AHA_CANONICAL_PRODUCTION_PILOT_ACTIVATION"
+    "exactPilotConfirmation": "RUN_AHA_CANONICAL_PRODUCTION_PILOT_ACTIVATION",
+    "exactPilotRollbackConfirmation": "RUN_AHA_CANONICAL_PRODUCTION_PILOT_ROLLBACK"
   }
 }

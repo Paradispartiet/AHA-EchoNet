@@ -8,11 +8,14 @@ on:
       - 'backend/api/Dockerfile'
       - 'backend/api/.dockerignore'
       - 'backend/api/src/health.controller.ts'
-      - 'backend/api/src/sync/sync.module.ts'
+      - 'backend/api/src/sync/**'
+      - 'backend/api/src/config/app-config.ts'
       - '.github/workflows/aha-azure-production-*.yml'
+      - '.github/workflows/aha-canonical-sync-production-*.yml'
       - 'scripts/aha-canonical-sync-production-rollout-gate.cjs'
       - 'tests/aha-azure-production-platform-v1.test.cjs'
       - 'tests/aha-canonical-sync-production-rollout-gate-v1.test.cjs'
+      - 'tests/aha-canonical-sync-production-pilot-activation-v1.test.cjs'
   push:
     branches:
       - main
@@ -22,11 +25,14 @@ on:
       - 'backend/api/Dockerfile'
       - 'backend/api/.dockerignore'
       - 'backend/api/src/health.controller.ts'
-      - 'backend/api/src/sync/sync.module.ts'
+      - 'backend/api/src/sync/**'
+      - 'backend/api/src/config/app-config.ts'
       - '.github/workflows/aha-azure-production-*.yml'
+      - '.github/workflows/aha-canonical-sync-production-*.yml'
       - 'scripts/aha-canonical-sync-production-rollout-gate.cjs'
       - 'tests/aha-azure-production-platform-v1.test.cjs'
       - 'tests/aha-canonical-sync-production-rollout-gate-v1.test.cjs'
+      - 'tests/aha-canonical-sync-production-pilot-activation-v1.test.cjs'
 
 permissions:
   contents: read
@@ -69,7 +75,7 @@ jobs:
       - name: Build production migration image locally
         run: docker build -f infra/azure/production/db-init/Dockerfile .
 
-      - name: Exercise exact canonical migrations and production role boundary on PostgreSQL 16
+      - name: Exercise exact canonical migrations, pilot login and database-first cutoff on PostgreSQL 16
         shell: bash
         run: |
           set -euo pipefail
@@ -94,10 +100,6 @@ jobs:
             sleep 2
           done
 
-          # Azure Flexible Server exposes a high-privilege administrator that is
-          # deliberately NOSUPERUSER. Exercise migrations and role management with
-          # the same PostgreSQL 16 privilege shape so superuser-only ALTER ROLE
-          # statements cannot pass CI and then fail in production.
           docker exec "$container" \
             psql -U postgres -d postgres -X -v ON_ERROR_STOP=1 -c \
             "create role production_ci_admin login nosuperuser createdb createrole inherit password 'production-ci-admin-password';"
@@ -122,9 +124,6 @@ jobs:
             psql -U production_ci_admin -d aha_production_ci -X -v ON_ERROR_STOP=1 \
               -v readiness_password='production-ci-readiness-not-a-secret' \
             < infra/azure/production/db-init/roles.sql >/dev/null
-
-          # A second run proves PostgreSQL 16 creator ADMIN semantics are sufficient
-          # for password rotation/idempotent production deployment without superuser.
           docker exec -i "$container" \
             psql -U production_ci_admin -d aha_production_ci -X -v ON_ERROR_STOP=1 \
               -v readiness_password='production-ci-readiness-rotated' \
@@ -151,12 +150,119 @@ jobs:
             where grantee='aha_canonical_production_runtime' and table_schema='aha'
               and privilege_type in ('INSERT','UPDATE','DELETE','TRUNCATE','REFERENCES','TRIGGER')
           ")"
-
+          creator_membership_baseline="$(docker exec "$container" psql -U production_ci_admin -d aha_production_ci -X -A -t -q -c "
+            select coalesce(string_agg(
+              m.admin_option::int::text || '|' || m.inherit_option::int::text || '|' || m.set_option::int::text,
+              ',' order by m.admin_option desc, m.inherit_option desc, m.set_option desc
+            ),'')
+            from pg_auth_members m
+            join pg_roles granted on granted.oid=m.roleid
+            join pg_roles member on member.oid=m.member
+            where granted.rolname='aha_canonical_production_runtime'
+              and member.rolname=session_user
+          ")"
+          echo "pre_activation_readiness_shape=$readiness_shape"
+          echo "pre_activation_runtime_shape=$runtime_shape"
+          echo "pre_activation_routines=$routines"
+          echo "pre_activation_direct_writes=$writes"
+          echo "creator_membership_baseline=$creator_membership_baseline"
           [[ "$readiness_shape" == '1|0|0|0|0|0' ]]
           [[ "$runtime_shape" == '0|0|0|0|0|0' ]]
           [[ "$routines" == 'bootstrap_sync_snapshot_v1,pull_sync_changes_v1,push_sync_change_v1' ]]
           [[ "$writes" == '0' ]]
-          echo "Production migration/role CI rehearsal: PASS (${migration_count} migrations, PostgreSQL 16 NOSUPERUSER admin)"
+          [[ "$creator_membership_baseline" == '1|0|0' ]]
 
-      - name: Run deterministic production platform contract test
-        run: node tests/aha-azure-production-platform-v1.test.cjs
+          docker exec "$container" \
+            psql -U production_ci_admin -d aha_production_ci -X -v ON_ERROR_STOP=1 -c \
+            "alter role aha_canonical_production_runtime login noinherit password 'production-ci-runtime-password'; alter role aha_canonical_production_runtime set row_security = on;"
+          runtime_shape="$(docker exec "$container" psql -U postgres -d aha_production_ci -X -A -t -q -c "
+            select rolcanlogin::int || '|' || rolsuper::int || '|' || rolbypassrls::int || '|' ||
+                   rolcreatedb::int || '|' || rolcreaterole::int || '|' || rolinherit::int
+            from pg_roles where rolname='aha_canonical_production_runtime'
+          ")"
+          echo "post_activation_runtime_shape=$runtime_shape"
+          [[ "$runtime_shape" == '1|0|0|0|0|0' ]]
+
+          docker exec -d \
+            -e PGPASSWORD=production-ci-runtime-password \
+            "$container" \
+            psql -h 127.0.0.1 -U aha_canonical_production_runtime -d aha_production_ci \
+              -X -v ON_ERROR_STOP=1 -c "select pg_sleep(120);"
+
+          runtime_session_count=0
+          for attempt in {1..20}; do
+            runtime_session_count="$(docker exec "$container" \
+              psql -U production_ci_admin -d aha_production_ci -X -A -t -q -c \
+              "select count(*) from pg_stat_activity where usename='aha_canonical_production_runtime' and pid <> pg_backend_pid()")"
+            if [[ "$runtime_session_count" != '0' ]]; then break; fi
+            if [[ "$attempt" == 20 ]]; then
+              echo "Runtime session did not become visible in PostgreSQL 16 cutoff rehearsal." >&2
+              exit 1
+            fi
+            sleep 1
+          done
+          echo "runtime_sessions_before_cutoff=$runtime_session_count"
+
+          docker exec "$container" \
+            psql -U production_ci_admin -d aha_production_ci -X -v ON_ERROR_STOP=1 -c \
+            "alter role aha_canonical_production_runtime nologin noinherit password null;" >/dev/null
+          echo "runtime_nologin_committed=1"
+
+          docker exec "$container" \
+            psql -U production_ci_admin -d aha_production_ci -X -v ON_ERROR_STOP=1 -c "
+              begin;
+              grant aha_canonical_production_runtime to current_user with inherit false, set true;
+              set role aha_canonical_production_runtime;
+              select pg_terminate_backend(pid, 5000)
+              from pg_stat_activity
+              where usename='aha_canonical_production_runtime'
+                and pid <> pg_backend_pid();
+              reset role;
+              revoke aha_canonical_production_runtime from current_user;
+              commit;
+            " >/dev/null
+          echo "runtime_terminate_transaction_committed=1"
+
+          cutoff_shape="$(docker exec "$container" psql -U production_ci_admin -d aha_production_ci -X -A -t -q -c "
+            select
+              (select rolcanlogin::int from pg_roles where rolname='aha_canonical_production_runtime')::text || '|' ||
+              (select count(*) from pg_stat_activity where usename='aha_canonical_production_runtime' and pid <> pg_backend_pid())::text
+          ")"
+          creator_membership_after="$(docker exec "$container" psql -U production_ci_admin -d aha_production_ci -X -A -t -q -c "
+            select coalesce(string_agg(
+              m.admin_option::int::text || '|' || m.inherit_option::int::text || '|' || m.set_option::int::text,
+              ',' order by m.admin_option desc, m.inherit_option desc, m.set_option desc
+            ),'')
+            from pg_auth_members m
+            join pg_roles granted on granted.oid=m.roleid
+            join pg_roles member on member.oid=m.member
+            where granted.rolname='aha_canonical_production_runtime'
+              and member.rolname=session_user
+          ")"
+          echo "post_cutoff_shape=$cutoff_shape"
+          echo "creator_membership_after=$creator_membership_after"
+          [[ "$cutoff_shape" == '0|0' ]]
+          [[ "$creator_membership_after" == "$creator_membership_baseline" ]]
+
+          routines_after_cutoff="$(docker exec "$container" psql -U postgres -d aha_production_ci -X -A -t -q -c "
+            select coalesce(string_agg(p.proname, ',' order by p.proname),'')
+            from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+            where n.nspname='aha'
+              and has_function_privilege('aha_canonical_production_runtime',p.oid,'EXECUTE')
+          ")"
+          writes_after_cutoff="$(docker exec "$container" psql -U postgres -d aha_production_ci -X -A -t -q -c "
+            select count(*) from information_schema.role_table_grants
+            where grantee='aha_canonical_production_runtime' and table_schema='aha'
+              and privilege_type in ('INSERT','UPDATE','DELETE','TRUNCATE','REFERENCES','TRIGGER')
+          ")"
+          echo "post_cutoff_routines=$routines_after_cutoff"
+          echo "post_cutoff_direct_writes=$writes_after_cutoff"
+          [[ "$routines_after_cutoff" == 'bootstrap_sync_snapshot_v1,pull_sync_changes_v1,push_sync_change_v1' ]]
+          [[ "$writes_after_cutoff" == '0' ]]
+
+          echo "Production migration/role/pilot-cutoff CI rehearsal: PASS (${migration_count} migrations, PostgreSQL 16 NOSUPERUSER admin)"
+
+      - name: Run deterministic production platform contract tests
+        run: |
+          node tests/aha-azure-production-platform-v1.test.cjs
+          node tests/aha-canonical-sync-production-pilot-activation-v1.test.cjs

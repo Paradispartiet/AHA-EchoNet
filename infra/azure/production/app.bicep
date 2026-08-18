@@ -15,6 +15,9 @@ param authJwksUrl string = 'https://wshmybqyksrwkawqleiz.supabase.co/auth/v1/.we
 param databaseUrlSecretUri string
 param databaseCaSecretUri string
 param auditSaltSecretUri string
+param pilotProfileIdSecretUri string = ''
+param canonicalSyncEnabled bool = false
+param runtimeActivated bool = false
 param applicationInsightsConnectionString string
 param tags object = {}
 
@@ -33,6 +36,114 @@ resource registry 'Microsoft.ContainerRegistry/registries@2023-07-01' existing =
 resource keyVault 'Microsoft.KeyVault/vaults@2025-05-01' existing = {
   name: keyVaultName
 }
+
+var baseSecrets = [
+  {
+    name: 'database-url'
+    keyVaultUrl: databaseUrlSecretUri
+    identity: runtimeIdentity.id
+  }
+  {
+    name: 'database-ca'
+    keyVaultUrl: databaseCaSecretUri
+    identity: runtimeIdentity.id
+  }
+  {
+    name: 'audit-salt'
+    keyVaultUrl: auditSaltSecretUri
+    identity: runtimeIdentity.id
+  }
+]
+
+var pilotSecrets = empty(pilotProfileIdSecretUri) ? [] : [
+  {
+    name: 'pilot-profile-id'
+    keyVaultUrl: pilotProfileIdSecretUri
+    identity: runtimeIdentity.id
+  }
+]
+
+var baseEnvironment = [
+  {
+    name: 'NODE_ENV'
+    value: 'production'
+  }
+  {
+    name: 'PORT'
+    value: '3100'
+  }
+  {
+    name: 'AHA_API_VERSION'
+    value: deployRevision
+  }
+  {
+    name: 'AHA_ALLOWED_ORIGINS'
+    value: allowedOrigin
+  }
+  {
+    name: 'AHA_AUTH_PROVIDER'
+    value: 'supabase'
+  }
+  {
+    name: 'AHA_AUTH_ISSUER'
+    value: authIssuer
+  }
+  {
+    name: 'AHA_AUTH_AUDIENCE'
+    value: authAudience
+  }
+  {
+    name: 'AHA_AUTH_JWKS_URL'
+    value: authJwksUrl
+  }
+  {
+    name: 'AHA_AUDIT_HASH_SALT'
+    secretRef: 'audit-salt'
+  }
+  {
+    name: 'AHA_DATABASE_ENABLED'
+    value: 'true'
+  }
+  {
+    name: 'AHA_DATABASE_URL'
+    secretRef: 'database-url'
+  }
+  {
+    name: 'AHA_DATABASE_SSL_MODE'
+    value: 'verify-full'
+  }
+  {
+    name: 'AHA_DATABASE_SSL_CA_CERT'
+    secretRef: 'database-ca'
+  }
+  {
+    name: 'AHA_DATABASE_POOL_MAX'
+    value: '4'
+  }
+  {
+    name: 'AHA_RUNTIME_ACTIVATED'
+    value: runtimeActivated ? 'true' : 'false'
+  }
+  {
+    name: 'AHA_CANONICAL_SYNC_ENABLED'
+    value: canonicalSyncEnabled ? 'true' : 'false'
+  }
+  {
+    name: 'AHA_LOCAL_IMPORT_ENABLED'
+    value: 'false'
+  }
+  {
+    name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
+    value: applicationInsightsConnectionString
+  }
+]
+
+var pilotEnvironment = empty(pilotProfileIdSecretUri) ? [] : [
+  {
+    name: 'AHA_CANONICAL_SYNC_PILOT_PROFILE_ID'
+    secretRef: 'pilot-profile-id'
+  }
+]
 
 resource api 'Microsoft.App/containerApps@2025-01-01' = {
   name: containerAppName
@@ -67,99 +178,14 @@ resource api 'Microsoft.App/containerApps@2025-01-01' = {
           identity: runtimeIdentity.id
         }
       ]
-      secrets: [
-        {
-          name: 'database-url'
-          keyVaultUrl: databaseUrlSecretUri
-          identity: runtimeIdentity.id
-        }
-        {
-          name: 'database-ca'
-          keyVaultUrl: databaseCaSecretUri
-          identity: runtimeIdentity.id
-        }
-        {
-          name: 'audit-salt'
-          keyVaultUrl: auditSaltSecretUri
-          identity: runtimeIdentity.id
-        }
-      ]
+      secrets: concat(baseSecrets, pilotSecrets)
     }
     template: {
       containers: [
         {
           name: 'aha-nest-api'
           image: image
-          env: [
-            {
-              name: 'NODE_ENV'
-              value: 'production'
-            }
-            {
-              name: 'PORT'
-              value: '3100'
-            }
-            {
-              name: 'AHA_API_VERSION'
-              value: deployRevision
-            }
-            {
-              name: 'AHA_ALLOWED_ORIGINS'
-              value: allowedOrigin
-            }
-            {
-              name: 'AHA_AUTH_PROVIDER'
-              value: 'supabase'
-            }
-            {
-              name: 'AHA_AUTH_ISSUER'
-              value: authIssuer
-            }
-            {
-              name: 'AHA_AUTH_AUDIENCE'
-              value: authAudience
-            }
-            {
-              name: 'AHA_AUTH_JWKS_URL'
-              value: authJwksUrl
-            }
-            {
-              name: 'AHA_AUDIT_HASH_SALT'
-              secretRef: 'audit-salt'
-            }
-            {
-              name: 'AHA_DATABASE_ENABLED'
-              value: 'true'
-            }
-            {
-              name: 'AHA_DATABASE_URL'
-              secretRef: 'database-url'
-            }
-            {
-              name: 'AHA_DATABASE_SSL_MODE'
-              value: 'verify-full'
-            }
-            {
-              name: 'AHA_DATABASE_SSL_CA_CERT'
-              secretRef: 'database-ca'
-            }
-            {
-              name: 'AHA_DATABASE_POOL_MAX'
-              value: '4'
-            }
-            {
-              name: 'AHA_CANONICAL_SYNC_ENABLED'
-              value: 'false'
-            }
-            {
-              name: 'AHA_LOCAL_IMPORT_ENABLED'
-              value: 'false'
-            }
-            {
-              name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
-              value: applicationInsightsConnectionString
-            }
-          ]
+          env: concat(baseEnvironment, pilotEnvironment)
           resources: {
             cpu: json('0.5')
             memory: '1Gi'
@@ -214,5 +240,6 @@ resource api 'Microsoft.App/containerApps@2025-01-01' = {
 output containerAppName string = api.name
 output containerAppFqdn string = api.properties.configuration.ingress.fqdn
 output productionApiOrigin string = 'https://${api.properties.configuration.ingress.fqdn}'
-output syncEnabled bool = false
+output syncEnabled bool = canonicalSyncEnabled
+output runtimeActivated bool = runtimeActivated
 output deployRevision string = deployRevision

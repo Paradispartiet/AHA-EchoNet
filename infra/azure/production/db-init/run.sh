@@ -12,9 +12,9 @@ require_env() {
 
 mode="${AHA_DB_INIT_MODE:-apply}"
 case "$mode" in
-  apply|verify_restore) ;;
+  apply|verify_restore|activate_pilot|deactivate_pilot) ;;
   *)
-    echo "AHA_DB_INIT_MODE must be apply or verify_restore." >&2
+    echo "AHA_DB_INIT_MODE must be apply, verify_restore, activate_pilot or deactivate_pilot." >&2
     exit 1
     ;;
 esac
@@ -23,6 +23,10 @@ require_env AHA_PRODUCTION_ADMIN_DATABASE_URL
 require_env AHA_PRODUCTION_DATABASE_CA_CERT
 if [ "$mode" = 'apply' ]; then
   require_env AHA_PRODUCTION_READINESS_PASSWORD
+fi
+if [ "$mode" = 'activate_pilot' ]; then
+  require_env AHA_PRODUCTION_RUNTIME_PASSWORD
+  require_env AHA_PRODUCTION_PILOT_PROFILE_ID
 fi
 
 lower_dsn="$(printf '%s' "$AHA_PRODUCTION_ADMIN_DATABASE_URL" | tr '[:upper:]' '[:lower:]')"
@@ -39,9 +43,6 @@ case "$lower_dsn" in
     ;;
 esac
 
-# BusyBox mktemp (used by postgres:16-alpine) requires the XXXXXX placeholder
-# to be the final characters in the template. A suffix after XXXXXX fails with
-# "mktemp: Invalid argument" before TLS/database verification can start.
 ca_file="$(mktemp /tmp/aha-production-ca.XXXXXX)"
 trap 'rm -f "$ca_file"' EXIT HUP INT TERM
 printf '%s\n' "$AHA_PRODUCTION_DATABASE_CA_CERT" > "$ca_file"
@@ -63,12 +64,25 @@ psql_safe() {
   psql "$AHA_PRODUCTION_ADMIN_DATABASE_URL" -X -v ON_ERROR_STOP=1 "$@"
 }
 
-verify_canonical_state() {
-  readiness_shape="$(psql_safe -A -t -q -c "
-    select rolcanlogin::int || '|' || rolsuper::int || '|' || rolbypassrls::int || '|' ||
-           rolcreatedb::int || '|' || rolcreaterole::int || '|' || rolinherit::int
-    from pg_roles where rolname='aha_canonical_production_readiness'
-  ")"
+runtime_control_membership_shape() {
+  psql_safe -A -t -q -c "
+    select coalesce(
+      string_agg(
+        m.admin_option::int::text || '|' || m.inherit_option::int::text || '|' || m.set_option::int::text,
+        ',' order by m.admin_option desc, m.inherit_option desc, m.set_option desc
+      ),
+      ''
+    )
+    from pg_auth_members m
+    join pg_roles granted on granted.oid=m.roleid
+    join pg_roles member on member.oid=m.member
+    where granted.rolname='aha_canonical_production_runtime'
+      and member.rolname=session_user
+  "
+}
+
+verify_runtime_privileges() {
+  expected_login="$1"
   runtime_shape="$(psql_safe -A -t -q -c "
     select rolcanlogin::int || '|' || rolsuper::int || '|' || rolbypassrls::int || '|' ||
            rolcreatedb::int || '|' || rolcreaterole::int || '|' || rolinherit::int
@@ -88,6 +102,27 @@ verify_canonical_state() {
       and table_schema='aha'
       and privilege_type in ('INSERT','UPDATE','DELETE','TRUNCATE','REFERENCES','TRIGGER')
   ")"
+
+  if [ "$runtime_shape" != "${expected_login}|0|0|0|0|0" ]; then
+    echo "Production runtime role failed its intrinsic privilege boundary." >&2
+    exit 1
+  fi
+  if [ "$runtime_functions" != 'bootstrap_sync_snapshot_v1,pull_sync_changes_v1,push_sync_change_v1' ]; then
+    echo "Production runtime role has unexpected effective function privileges." >&2
+    exit 1
+  fi
+  if [ "$runtime_writes" != '0' ]; then
+    echo "Production runtime role has direct canonical table write privileges." >&2
+    exit 1
+  fi
+}
+
+verify_canonical_state() {
+  readiness_shape="$(psql_safe -A -t -q -c "
+    select rolcanlogin::int || '|' || rolsuper::int || '|' || rolbypassrls::int || '|' ||
+           rolcreatedb::int || '|' || rolcreaterole::int || '|' || rolinherit::int
+    from pg_roles where rolname='aha_canonical_production_readiness'
+  ")"
   schema_receipts="$(psql_safe -A -t -q -c "select count(*) from aha.schema_versions")"
   schema_present="$(psql_safe -A -t -q -c "select (to_regclass('aha.profiles') is not null and to_regclass('aha.sync_changes') is not null)::int")"
   data_shape="$(psql_safe -A -t -q -c "
@@ -103,18 +138,7 @@ verify_canonical_state() {
     echo "Production readiness role failed its intrinsic privilege boundary." >&2
     exit 1
   fi
-  if [ "$runtime_shape" != '0|0|0|0|0|0' ]; then
-    echo "Production runtime role is not fail-closed NOLOGIN." >&2
-    exit 1
-  fi
-  if [ "$runtime_functions" != 'bootstrap_sync_snapshot_v1,pull_sync_changes_v1,push_sync_change_v1' ]; then
-    echo "Production runtime role has unexpected effective function privileges." >&2
-    exit 1
-  fi
-  if [ "$runtime_writes" != '0' ]; then
-    echo "Production runtime role has direct canonical table write privileges." >&2
-    exit 1
-  fi
+  verify_runtime_privileges 0
   if [ "$schema_present" != '1' ]; then
     echo "Production canonical schema is incomplete." >&2
     exit 1
@@ -135,11 +159,199 @@ verify_canonical_state() {
   printf 'AHA production canonical state: schema_receipts=%s data_shape=%s\n' "$schema_receipts" "$data_shape"
 }
 
+validate_pilot_inputs() {
+  if [ "${#AHA_PRODUCTION_PILOT_PROFILE_ID}" -ne 36 ] || ! printf '%s' "$AHA_PRODUCTION_PILOT_PROFILE_ID" | grep -Eq '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$'; then
+    echo "Production pilot profile id must be a UUID." >&2
+    exit 1
+  fi
+  AHA_PRODUCTION_PILOT_WORKSPACE_ID="personal-${AHA_PRODUCTION_PILOT_PROFILE_ID}"
+  export AHA_PRODUCTION_PILOT_WORKSPACE_ID
+}
+
+activate_pilot() {
+  validate_pilot_inputs
+
+  psql_safe \
+    -v pilot_profile_id="$AHA_PRODUCTION_PILOT_PROFILE_ID" \
+    -v pilot_workspace_id="$AHA_PRODUCTION_PILOT_WORKSPACE_ID" \
+    -v runtime_password="$AHA_PRODUCTION_RUNTIME_PASSWORD" <<'SQL'
+begin;
+
+select set_config('aha.activation.pilot_profile_id', :'pilot_profile_id', false);
+select set_config('aha.activation.pilot_workspace_id', :'pilot_workspace_id', false);
+
+do $pilot$
+declare
+  pilot_profile_id text := current_setting('aha.activation.pilot_profile_id');
+  pilot_workspace_id text := current_setting('aha.activation.pilot_workspace_id');
+begin
+  if exists (
+    select 1 from aha.profiles
+    where deleted_at is null and id <> pilot_profile_id
+  ) then
+    raise exception using errcode='42501', message='production pilot activation refuses additional canonical profiles';
+  end if;
+
+  if exists (
+    select 1 from aha.profiles
+    where id = pilot_profile_id
+      and not (
+        auth_provider = 'supabase'
+        and auth_subject = pilot_profile_id
+        and status = 'active'
+        and deleted_at is null
+      )
+  ) then
+    raise exception using errcode='42501', message='production pilot profile identity does not match the protected auth subject';
+  end if;
+
+  if not exists (select 1 from aha.profiles where id = pilot_profile_id) then
+    insert into aha.profiles(id, auth_provider, auth_subject, display_name, status, metadata)
+    values(
+      pilot_profile_id,
+      'supabase',
+      pilot_profile_id,
+      'AHA production pilot',
+      'active',
+      jsonb_build_object('pilot', 'aha_canonical_production_pilot_v1')
+    );
+  end if;
+
+  if exists (
+    select 1 from aha.workspaces
+    where deleted_at is null and id <> pilot_workspace_id
+  ) then
+    raise exception using errcode='42501', message='production pilot activation refuses additional canonical workspaces';
+  end if;
+
+  if exists (
+    select 1 from aha.workspaces
+    where id = pilot_workspace_id
+      and not (
+        owner_profile_id = pilot_profile_id
+        and workspace_type = 'personal'
+        and visibility = 'private'
+        and status = 'active'
+        and deleted_at is null
+      )
+  ) then
+    raise exception using errcode='42501', message='production pilot workspace does not match the protected pilot profile';
+  end if;
+
+  if not exists (select 1 from aha.workspaces where id = pilot_workspace_id) then
+    insert into aha.workspaces(id, owner_profile_id, workspace_type, name, visibility, status, metadata)
+    values(
+      pilot_workspace_id,
+      pilot_profile_id,
+      'personal',
+      'AHA production pilot',
+      'private',
+      'active',
+      jsonb_build_object('pilot', 'aha_canonical_production_pilot_v1')
+    );
+  end if;
+end
+$pilot$;
+
+alter role aha_canonical_production_runtime
+  login noinherit
+  password :'runtime_password';
+alter role aha_canonical_production_runtime set row_security = on;
+
+commit;
+SQL
+
+  verify_runtime_privileges 1
+  pilot_shape="$(psql_safe \
+    -v pilot_profile_id="$AHA_PRODUCTION_PILOT_PROFILE_ID" \
+    -v pilot_workspace_id="$AHA_PRODUCTION_PILOT_WORKSPACE_ID" \
+    -A -t -q <<'SQL'
+select
+  (select count(*) from aha.profiles where deleted_at is null)::text || '|' ||
+  (select count(*) from aha.profiles
+     where id=:'pilot_profile_id'
+       and auth_provider='supabase'
+       and auth_subject=:'pilot_profile_id'
+       and status='active'
+       and deleted_at is null)::text || '|' ||
+  (select count(*) from aha.workspaces where deleted_at is null)::text || '|' ||
+  (select count(*) from aha.workspaces
+     where id=:'pilot_workspace_id'
+       and owner_profile_id=:'pilot_profile_id'
+       and workspace_type='personal'
+       and visibility='private'
+       and status='active'
+       and deleted_at is null)::text;
+SQL
+  )"
+  if [ "$pilot_shape" != '1|1|1|1' ]; then
+    echo "Production pilot identity/workspace boundary failed after activation." >&2
+    exit 1
+  fi
+
+  echo 'AHA production pilot database activation: LOGIN_READY_ONE_PROFILE'
+}
+
+deactivate_pilot() {
+  control_membership_baseline="$(runtime_control_membership_shape)"
+  if [ -z "$control_membership_baseline" ]; then
+    echo "Production pilot cutoff requires an existing control-plane ADMIN membership for the runtime role." >&2
+    exit 1
+  fi
+
+  # Cut new access first in its own committed command. If later termination fails,
+  # the runtime role remains NOLOGIN and cannot create new sessions.
+  psql_safe -q -c "alter role aha_canonical_production_runtime nologin noinherit password null;"
+
+  # PostgreSQL 16 automatically grants the CREATEROLE creator an ADMIN TRUE,
+  # INHERIT FALSE, SET FALSE membership that the creator itself cannot remove.
+  # Use ADMIN OPTION to add a temporary SET TRUE grant, become the runtime role
+  # only while signalling its backends, then revoke that temporary grant. The
+  # permanent creator membership must return exactly to its pre-cutoff shape.
+  psql_safe -q <<'SQL'
+begin;
+grant aha_canonical_production_runtime to current_user with inherit false, set true;
+set role aha_canonical_production_runtime;
+select pg_terminate_backend(pid, 5000)
+from pg_stat_activity
+where usename='aha_canonical_production_runtime'
+  and pid <> pg_backend_pid();
+reset role;
+revoke aha_canonical_production_runtime from current_user;
+commit;
+SQL
+
+  verify_runtime_privileges 0
+  active_connections="$(psql_safe -A -t -q -c "select count(*) from pg_stat_activity where usename='aha_canonical_production_runtime' and pid <> pg_backend_pid()")"
+  if [ "$active_connections" != '0' ]; then
+    echo "Production pilot database cutoff left active runtime sessions." >&2
+    exit 1
+  fi
+
+  control_membership_after="$(runtime_control_membership_shape)"
+  if [ "$control_membership_after" != "$control_membership_baseline" ]; then
+    echo "Production pilot cutoff changed the control-plane runtime membership baseline." >&2
+    exit 1
+  fi
+
+  echo 'AHA production pilot database activation: CUT_OFF_NOLOGIN_ZERO_SESSIONS_BASELINE_MEMBERSHIP_RESTORED'
+}
+
 if [ "$mode" = 'verify_restore' ]; then
   verify_canonical_state
   echo 'AHA production restore verification: PASS_READ_ONLY_VERIFY_FULL'
   echo 'AHA production sync runtime role: NOLOGIN_EXACT_THREE_ROUTINES'
   echo 'AHA production canonical sync activation: DISABLED'
+  exit 0
+fi
+
+if [ "$mode" = 'activate_pilot' ]; then
+  activate_pilot
+  exit 0
+fi
+
+if [ "$mode" = 'deactivate_pilot' ]; then
+  deactivate_pilot
   exit 0
 fi
 

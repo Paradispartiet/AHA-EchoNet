@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>AHA Canonical Sync · Production pilot</title>
+  <link rel="stylesheet" href="css/aha-chat.css" />
+  <link rel="stylesheet" href="css/aha-dashboard.css" />
+  <style>
+    body { min-height: 100vh; }
+    .aha-canonical-production-pilot-shell { width: min(860px, calc(100% - 32px)); margin: 48px auto; }
+    .aha-canonical-production-pilot-card { display: grid; gap: 18px; }
+    .aha-canonical-production-pilot-warning { border: 1px solid currentColor; padding: 14px; border-radius: 14px; }
+    .aha-canonical-production-pilot-form { display: grid; gap: 16px; }
+    .aha-canonical-production-pilot-field { display: grid; gap: 7px; }
+    .aha-canonical-production-pilot-field input[type="url"],
+    .aha-canonical-production-pilot-field input[type="text"] { width: 100%; box-sizing: border-box; padding: 12px 14px; }
+    .aha-canonical-production-pilot-consent { display: flex; gap: 10px; align-items: flex-start; }
+    .aha-canonical-production-pilot-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+    #aha-canonical-production-pilot-status[data-state="blocked"],
+    #aha-canonical-production-pilot-status[data-state="error"] { font-weight: 700; }
+    #aha-canonical-production-pilot-output { white-space: pre-wrap; overflow-wrap: anywhere; }
+  </style>
+</head>
+<body>
+  <main class="aha-canonical-production-pilot-shell" aria-labelledby="aha-canonical-production-pilot-title">
+    <section class="aha-panel aha-canonical-production-pilot-card">
+      <div>
+        <p class="eyebrow">AHA · beskyttet operatorflate</p>
+        <h1 id="aha-canonical-production-pilot-title">Canonical Sync · Production pilot</h1>
+        <p>Denne siden er kun for den første eksplisitte én-profil-piloten etter at production-aktivering er gjennomført. Den er ikke koblet til Home, login eller bakgrunnskjøring.</p>
+      </div>
+
+      <div class="aha-canonical-production-pilot-warning" role="note">
+        <strong>Fail-closed og én profil.</strong>
+        <p>Ingen auth-lesing, nettverkskall eller sync skjer ved page load. URL-porten må åpnes eksplisitt med <code>?ahaCanonicalProductionPilot=1</code>. Selve kjøringen krever production-API-origin, samtykke og eksakt bekreftelsesfrase.</p>
+        <p>Workspace kan ikke skrives inn. Ved eksplisitt kjøring utledes det som <code>personal-&lt;innlogget JWT-subjekt&gt;</code>, samme identitet som production-databasen bootstrapper. NestJS-serveren avviser samtidig alle andre profiler med sin beskyttede pilot-allowlist.</p>
+        <p><strong>Viktig:</strong> I motsetning til staging bruker denne piloten det ekte lokale canonical-lageret. Bootstrap og pull kan derfor oppdatere lokale AHA-data. Rå payload, JWT-subjekt, workspace-ID og serverState vises ikke i resultatflaten.</p>
+      </div>
+
+      <p id="aha-canonical-production-pilot-status" role="status" aria-live="polite">Kontrollerer production-pilotport …</p>
+
+      <form id="aha-canonical-production-pilot-form" class="aha-canonical-production-pilot-form" autocomplete="off">
+        <label class="aha-canonical-production-pilot-field">
+          <span>Production NestJS API-origin</span>
+          <input name="apiBaseUrl" type="url" inputmode="url" placeholder="https://aha-api-production.example" spellcheck="false" required />
+          <small>Kun origin. Ingen credentials, path, query eller fragment. HTTPS kreves utenfor localhost. API-et skal være separat fra den statiske AHA-siden.</small>
+        </label>
+
+        <label class="aha-canonical-production-pilot-field">
+          <span>Bekreftelsesfrase</span>
+          <input name="confirmation" type="text" value="" placeholder="RUN_AHA_CANONICAL_PRODUCTION_PILOT_SYNC" spellcheck="false" required />
+          <small>Skriv nøyaktig <code>RUN_AHA_CANONICAL_PRODUCTION_PILOT_SYNC</code>.</small>
+        </label>
+
+        <label class="aha-canonical-production-pilot-consent">
+          <input name="explicitConsent" type="checkbox" required />
+          <span>Jeg bekrefter at production-piloten allerede er aktivert for min beskyttede profil, og at denne eksplisitte kjøringen kan pushe canonical data til production og anvende bootstrap/pull tilbake på mitt ekte lokale AHA-lager.</span>
+        </label>
+
+        <div class="aha-canonical-production-pilot-actions">
+          <button class="aha-cta-primary" type="submit">Kjør production pilot-sync</button>
+          <a class="aha-cta-secondary" href="index.html">Tilbake til AHA Home</a>
+        </div>
+      </form>
+
+      <section aria-labelledby="aha-canonical-production-pilot-output-title">
+        <h2 id="aha-canonical-production-pilot-output-title">Resultat</h2>
+        <p>Resultatflaten viser bare tellinger og konflikttyper. Profil-ID, workspace-ID, rå payload og serverState renderes aldri her.</p>
+        <pre id="aha-canonical-production-pilot-output" aria-live="polite"></pre>
+      </section>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/ahaConfig.js"></script>
+  <script src="js/ahaDb.js"></script>
+  <script src="js/ahaCanonicalSyncHash.js"></script>
+  <script src="js/ahaCanonicalSyncStore.js"></script>
+  <script src="js/ahaLocalAccountImport.js"></script>
+  <script src="js/ahaCanonicalFrontendSyncAdapter.js"></script>
+  <script src="js/ahaCanonicalLocalApplyAdapter.js"></script>
+  <script src="js/ahaCanonicalSyncApiClient.js"></script>
+  <script src="js/ahaCanonicalManualSyncRunner.js"></script>
+  <script src="js/ahaCanonicalSyncProductionPilotBridge.js"></script>
+</body>
+</html>
