@@ -10,6 +10,8 @@
     { id: "avisa", label: "AHAavisa", key: "aha_articles_v1", table: "aha_articles", moduleName: "AHAAvisa", syncFunction: "syncFromDatabase" }
   ];
 
+  const PRODUCTION_HOME_SYNC_CONTROL = "js/ahaCanonicalProductionHomeSync.js";
+
   function safeReadArray(key) {
     try {
       const parsed = JSON.parse(window.localStorage.getItem(key) || "[]");
@@ -99,8 +101,39 @@
       sync_enabled: false,
       echonet_enabled: false,
       backend_enabled: false,
+      productionCanonicalManualSync: window.AHACanonicalProductionHomeSync?.getStatus?.() || {
+        available: false,
+        reason: "production_home_sync_control_not_loaded",
+        autoSync: false,
+        loginTriggersSync: false,
+        backgroundSync: false
+      },
       modules: MODULES.map(inspectModule)
     };
+  }
+
+  function productionControlScriptPresent() {
+    return Array.from(document.querySelectorAll("script[src]")).some((script) => {
+      const src = String(script.getAttribute("src") || "");
+      return src === PRODUCTION_HOME_SYNC_CONTROL || src.endsWith(`/${PRODUCTION_HOME_SYNC_CONTROL}`);
+    });
+  }
+
+  function mountProductionCanonicalManualSyncControl() {
+    if (typeof document === "undefined") return { mounted: false, reason: "document_unavailable" };
+    if (window.AHACanonicalProductionHomeSync?.bind) {
+      return window.AHACanonicalProductionHomeSync.bind();
+    }
+    if (productionControlScriptPresent()) return { mounted: false, reason: "control_loading" };
+
+    const script = document.createElement("script");
+    script.src = PRODUCTION_HOME_SYNC_CONTROL;
+    script.async = false;
+    script.dataset.ahaSyncHubProductionManualControl = "true";
+    script.addEventListener("load", () => window.AHACanonicalProductionHomeSync?.bind?.(), { once: true });
+    script.addEventListener("error", () => console.warn("AHASyncHub: production canonical manual sync control failed to load"), { once: true });
+    document.head.appendChild(script);
+    return { mounted: true, reason: "control_script_added" };
   }
 
   window.AHASyncHub = {
@@ -113,6 +146,15 @@
     isDeletedRecord,
     countActiveRecords,
     inspectModule,
-    inspectAll
+    inspectAll,
+    mountProductionCanonicalManualSyncControl
   };
+
+  if (typeof document !== "undefined") {
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", mountProductionCanonicalManualSyncControl, { once: true });
+    } else {
+      mountProductionCanonicalManualSyncControl();
+    }
+  }
 })();
