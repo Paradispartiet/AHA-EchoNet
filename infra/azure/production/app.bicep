@@ -19,6 +19,11 @@ param pilotProfileIdSecretUri string = ''
 param allowedProfileIdsSecretUri string = ''
 param canonicalSyncEnabled bool = false
 param runtimeActivated bool = false
+param fysenIntegrationEnabled bool = true
+param fysenRedirectUris string = 'https://fysen-matsgran-8572s-projects.vercel.app/api/aha/callback'
+@minValue(60)
+@maxValue(600)
+param fysenAuthorizationTtlSeconds int = 180
 param applicationInsightsConnectionString string
 param tags object = {}
 
@@ -142,6 +147,18 @@ var baseEnvironment = [
     value: 'false'
   }
   {
+    name: 'AHA_FYSEN_INTEGRATION_ENABLED'
+    value: fysenIntegrationEnabled ? 'true' : 'false'
+  }
+  {
+    name: 'AHA_FYSEN_AUTHORIZATION_TTL_SECONDS'
+    value: string(fysenAuthorizationTtlSeconds)
+  }
+  {
+    name: 'AHA_FYSEN_REDIRECT_URIS'
+    value: fysenRedirectUris
+  }
+  {
     name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
     value: applicationInsightsConnectionString
   }
@@ -259,3 +276,5 @@ output productionApiOrigin string = 'https://${api.properties.configuration.ingr
 output syncEnabled bool = canonicalSyncEnabled
 output runtimeActivated bool = runtimeActivated
 output deployRevision string = deployRevision
+output fysenIntegrationEnabled bool = fysenIntegrationEnabled
+output fysenRedirectUris string = fysenRedirectUris

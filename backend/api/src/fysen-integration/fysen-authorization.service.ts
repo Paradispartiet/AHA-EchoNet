@@ -6,6 +6,7 @@ import type { FysenAuthorizationExchangeRequestDto, FysenAuthorizationRequestDto
 import { FYSEN_INTEGRATION_CONFIG, type FysenIntegrationConfig } from "./fysen-integration.config.js";
 
 const SCOPES = Object.freeze(["fysen:min_mat", "fysen:analysis_handoff"] as const);
+const SIGNING_KEY_CONTEXT = "aha-fysen-authorization-signing-key-v1";
 
 interface AuthorizationPayload {
   v: 1;
@@ -109,9 +110,12 @@ export class FysenAuthorizationService {
   }
 
   private sign(encodedPayload: string): string {
-    const secret = this.config.authorizationSecret;
-    if (!secret) throw disabled();
-    return createHmac("sha256", secret).update(encodedPayload, "utf8").digest("base64url");
+    const rootSecret = this.config.authorizationSecret;
+    if (!rootSecret) throw disabled();
+    const signingKey = createHmac("sha256", rootSecret)
+      .update(SIGNING_KEY_CONTEXT, "utf8")
+      .digest();
+    return createHmac("sha256", signingKey).update(encodedPayload, "utf8").digest("base64url");
   }
 
   private allowedRedirect(value: string): string {

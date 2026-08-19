@@ -27,7 +27,7 @@ function config(overrides = {}) {
 function verifier() { return "a".repeat(64); }
 function challenge(value = verifier()) { return createHash("sha256").update(value, "utf8").digest("base64url"); }
 
-test("Fysen integration is fail-closed by default", () => {
+test("Fysen integration is fail-closed by default and can use the protected runtime root", () => {
   const disabled = loadFysenIntegrationConfig({});
   assert.equal(disabled.enabled, false);
   assert.equal(disabled.authorizationSecret, null);
@@ -40,6 +40,16 @@ test("Fysen integration is fail-closed by default", () => {
     () => loadFysenIntegrationConfig({ AHA_FYSEN_INTEGRATION_ENABLED: "true", AHA_FYSEN_AUTHORIZATION_SECRET: "x".repeat(40) }),
     /at least one exact redirect URI/
   );
+
+  const productionStyle = loadFysenIntegrationConfig({
+    AHA_FYSEN_INTEGRATION_ENABLED: "true",
+    AHA_AUDIT_HASH_SALT: "protected-runtime-root-secret-that-is-longer-than-thirty-two-characters",
+    AHA_FYSEN_REDIRECT_URIS: redirectUri,
+    AHA_FYSEN_AUTHORIZATION_TTL_SECONDS: "180"
+  });
+  assert.equal(productionStyle.enabled, true);
+  assert.equal(productionStyle.authorizationSecret, "protected-runtime-root-secret-that-is-longer-than-thirty-two-characters");
+  assert.deepEqual(productionStyle.allowedRedirectUris, [redirectUri]);
 });
 
 test("authorization code is principal-, redirect- and PKCE-bound without sharing AHA data", () => {
