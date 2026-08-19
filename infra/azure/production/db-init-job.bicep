@@ -15,6 +15,8 @@ param pilotProfileIdSecretUri string = ''
   'apply'
   'verify_restore'
   'activate_pilot'
+  'verify_pilot_expansion'
+  'add_pilot_profile'
   'deactivate_pilot'
 ])
 param mode string = 'apply'
@@ -51,12 +53,18 @@ var readinessSecrets = mode == 'apply' ? [
     identity: runtimeIdentity.id
   }
 ] : []
-var activationSecrets = mode == 'activate_pilot' ? [
+var runtimePasswordSecrets = mode == 'activate_pilot' ? [
   {
     name: 'runtime-password'
     keyVaultUrl: runtimePasswordSecretUri
     identity: runtimeIdentity.id
   }
+] : []
+var pilotIdentitySecrets = contains([
+  'activate_pilot'
+  'verify_pilot_expansion'
+  'add_pilot_profile'
+], mode) ? [
   {
     name: 'pilot-profile-id'
     keyVaultUrl: pilotProfileIdSecretUri
@@ -84,11 +92,17 @@ var readinessEnvironment = mode == 'apply' ? [
     secretRef: 'readiness-password'
   }
 ] : []
-var activationEnvironment = mode == 'activate_pilot' ? [
+var runtimePasswordEnvironment = mode == 'activate_pilot' ? [
   {
     name: 'AHA_PRODUCTION_RUNTIME_PASSWORD'
     secretRef: 'runtime-password'
   }
+] : []
+var pilotIdentityEnvironment = contains([
+  'activate_pilot'
+  'verify_pilot_expansion'
+  'add_pilot_profile'
+], mode) ? [
   {
     name: 'AHA_PRODUCTION_PILOT_PROFILE_ID'
     secretRef: 'pilot-profile-id'
@@ -124,14 +138,14 @@ resource job 'Microsoft.App/jobs@2025-01-01' = {
           identity: runtimeIdentity.id
         }
       ]
-      secrets: concat(baseSecrets, readinessSecrets, activationSecrets)
+      secrets: concat(baseSecrets, readinessSecrets, runtimePasswordSecrets, pilotIdentitySecrets)
     }
     template: {
       containers: [
         {
           name: 'canonical-db-init'
           image: image
-          env: concat(baseEnvironment, readinessEnvironment, activationEnvironment)
+          env: concat(baseEnvironment, readinessEnvironment, runtimePasswordEnvironment, pilotIdentityEnvironment)
           resources: {
             cpu: json('0.5')
             memory: '1Gi'
