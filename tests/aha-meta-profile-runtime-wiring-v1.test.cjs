@@ -17,8 +17,10 @@ assert(insightsScript >= 0, 'profile.html must load canonical InsightsEngine');
 assert(metaScript > insightsScript, 'profile.html must load MetaInsightsEngine after InsightsEngine');
 assert(profileScript > metaScript, 'profile.html must load ahaProfile only after MetaInsightsEngine');
 
-assert.match(chatBootstrap, /MetaInsightsEngine\.buildUserMetaProfile\(chamber, "sub_laring"\)/,
-  'chat export compatibility seam must delegate meta profile building to MetaInsightsEngine');
+assert.match(providerLoader, /metaInsights\.buildUserMetaProfile\(chamber, "sub_laring"\)/,
+  'legacy export seam must delegate meta profile building to MetaInsightsEngine');
+assert.doesNotMatch(chatBootstrap, /buildMetaProfile/,
+  'ahaChat.js must remain a minimal bootstrap without meta compatibility logic');
 assert.doesNotMatch(providerLoader, /Semantic quality bridge v1/,
   'provider loader must not install the removed AI-reply semantic bridge');
 assert.doesNotMatch(providerLoader, /assistantReply|bestReplySemanticSentence/,
