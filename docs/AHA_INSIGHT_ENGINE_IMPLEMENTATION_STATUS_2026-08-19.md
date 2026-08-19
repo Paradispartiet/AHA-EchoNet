@@ -11,8 +11,9 @@ Phase 1A — SemanticDocument evidence/provenance     implemented + merged
 Phase 1B — Entities + Concepts V1                  implemented + merged
 Phase 1C — Claims + Relations V1                   implemented + merged
 Phase 2A — Dedicated Semantic Model Contract V1    implemented + merged
-Phase 2B — Semantic Model Endpoint V1              implemented
-Next — shadow client integration                   pending
+Phase 2B — Semantic Model Endpoint V1              implemented + merged
+Phase 2C — Semantic Model Shadow Bridge V1         implemented, opt-in shadow
+Next — semantic evaluation + synthesis quality gate
 Canonical Insight behavior                         unchanged
 Visible product behavior                           unchanged
 Persistent SemanticDocument storage                disabled
@@ -21,15 +22,16 @@ Meta semantic quality                              provisional
 
 Se:
 
-- `AHA_SEMANTIC_DOCUMENT_V1.md` for browser/shadow-kontrakten
-- `AHA_SEMANTIC_MODEL_CONTRACT_V1.md` for server/model-kontrakten
-- `AHA_SEMANTIC_MODEL_ENDPOINT_V1.md` for HTTP-seamen
+- `AHA_SEMANTIC_DOCUMENT_V1.md` — deterministisk browser/shadow-kontrakt
+- `AHA_SEMANTIC_MODEL_CONTRACT_V1.md` — server/model-kontrakt
+- `AHA_SEMANTIC_MODEL_ENDPOINT_V1.md` — HTTP-seam
+- `AHA_SEMANTIC_MODEL_SHADOW_BRIDGE_V1.md` — browser-integrasjon og sammenligning
 
 ---
 
 ## 1. Phase 1A–1C — source-grounded SemanticDocument
 
-De tre første fasene har etablert:
+De tre første fasene etablerte:
 
 - SHA-256 source identity og evidence anchors
 - exact-source Entity/Concept mentions
@@ -40,19 +42,19 @@ De tre første fasene har etablert:
 - `synthesis_allowed = false`
 - ingen persistent/canonical/Meta-write
 
-Browser-runtime kjører fortsatt dette i shadow mode.
+Den deterministiske runtimeen er fortsatt baseline for shadow-evalueringen.
 
 ---
 
 ## 2. Phase 2A — Dedicated Semantic Model Contract V1
 
-`server/ahaSemanticModelContract.js` innfører:
+`server/ahaSemanticModelContract.js` innfører strict Structured Output-kontrakten:
 
 ```text
 aha_semantic_model_output_v1
 ```
 
-med strict JSON Schema Structured Output for:
+for:
 
 - entities
 - concepts
@@ -60,139 +62,171 @@ med strict JSON Schema Structured Output for:
 - typed semantic relations
 - unresolved inferences
 - confidence
-- evidence quotes
+- exact-source evidence quotes
 - epistemisk status
 
-Server-side validering er fail-closed:
-
-- Entity/Concept source surface må finnes ordrett i source
-- evidence quotes må finnes ordrett i source
-- `source_claim.text` må finnes ordrett i source
-- ukjente felt/enums avvises
-- assistant/chat-response-data avvises
-- `candidate_insights` og `meta_profile` er forbudt output
+Post-model-valideringen er fail-closed. Entity/Concept source surface, evidence quotes og `source_claim.text` må kunne verifiseres mot source. Assistant/chat-response-data, ukjente felt og produktoutput som `candidate_insights`/`meta_profile` avvises.
 
 ---
 
 ## 3. Phase 2B — Semantic Model Endpoint V1
 
-Ny route i eksisterende AHA-agent-backend:
+Eksisterende AHA-agent-backend eksponerer:
 
 ```text
 POST /api/aha-agent/semantic-document
 ```
 
-Root `server.js` registrerer en testbar handler fra:
+Ruten:
 
-```text
-server/ahaSemanticModelEndpoint.js
-```
-
-Endpointet bruker samme `OPENAI_MODEL` og OpenAI-klient som backend allerede har, men har strengere failure-policy enn eldre analyse-endepunkter.
-
----
-
-## 4. Responses-only policy
-
-Semantic Model Endpoint krever:
-
-```text
-openai.responses.create
-```
-
-Hvis Responses-seamen ikke finnes:
-
-```text
-503 semantic_model_responses_unavailable
-```
-
-Det finnes ingen chat-completions-fallback for denne ruten.
-
-Dette er bevisst: SemanticDocument skal ikke degraderes til fri JSON-output dersom strict Structured Output-seamen mangler.
+- krever `openai.responses.create`
+- har ingen chat-completions-fallback
+- bygger bare request gjennom Semantic Model Contract
+- validerer modelloutput på nytt mot source
+- returnerer ingen rå model/source/provider-feil ved failure
+- har null canonical/persistent/Meta writes
+- beholder `synthesis_allowed = false`
 
 ---
 
-## 5. Request gate
+## 4. Phase 2C — Semantic Model Shadow Bridge V1
 
-Endpointet avviser før modellkall:
-
-- manglende OpenAI key
-- tom/ugyldig text
-- text over 8000 tegn
-- ugyldig context
-- feil format-versjon
-- assistant/chat-response-data i context
-
-Gyldig request bygges kun gjennom:
+Ny browsermodul:
 
 ```text
-buildSemanticModelResponsesRequest(...)
+js/ahaSemanticModelShadowBridge.js
+AHASemanticModelShadowBridge
+semanticModelShadowBridge@1
+```
+
+Bridge-en lytter til:
+
+```text
+aha:semantic-document-shadow
+```
+
+og kobler samme SourceEvent til semantic endpointet.
+
+Den deterministiske SemanticDocument-representasjonen overskrives ikke. Modellresultatet ligger separat som:
+
+```text
+aha_semantic_model_shadow_v1
+```
+
+kun i runtime-minne.
+
+---
+
+## 5. Opt-in policy
+
+Bridge-scriptet lastes i AHA Chat, men nettverkskallet er **deaktivert som standard**.
+
+Aktivering krever:
+
+```text
+?ahaSemanticModelShadow=1
+```
+
+eller:
+
+```js
+window.AHA_SEMANTIC_MODEL_SHADOW = true
+```
+
+Dermed påvirker Phase 2C ikke normal produksjonskostnad eller normal brukerflyt før shadow-evalueringen er gjennomført.
+
+---
+
+## 6. Source identity gate
+
+Før endpoint-kall må følgende være samme kilde:
+
+```text
+event.source_event_id
+= deterministic SemanticDocument.source_event_id
+= SourceEvent.id
+
+event.source_text_hash
+= deterministic SemanticDocument.source_text_hash
+= sha256(SourceEvent.text)
+```
+
+Mismatch stopper før fetch.
+
+---
+
+## 7. Browser-side fail-closed evidence mapping
+
+Servervalidering er ikke siste port.
+
+Browser-bridge-en mapper også modellens:
+
+- Entity/Concept source surfaces
+- evidence quotes
+- source-claim text
+
+mot eksakte source offsets og eksisterende deterministic evidence anchors.
+
+Hvis et felt ikke kan mappes:
+
+```text
+model shadow = rejected
+canonical/Meta/persistent writes = 0
 ```
 
 ---
 
-## 6. Post-model fail-closed gate
+## 8. Deterministic ↔ model comparison
 
-Etter modellkallet kjøres:
-
-```text
-requireValidSemanticModelPayload(payload, sourceText)
-```
-
-Hallusinert evidence eller annen kontraktsfeil gir:
+Phase 2C materialiserer observasjonsmetrics for:
 
 ```text
-502 semantic_model_validation_failed
+entity overlap
+concept overlap
+source-claim overlap
+interpretation count
+inference count
+semantic relation count
+unresolved inference count
 ```
 
-Failure response returnerer korte feilkoder, men ikke:
+samt separate deterministic/model item-counts.
 
-- raw model output
-- source text
-- hallusinerte strings fra model payload
-
-Upstream-feil returnerer heller ikke provider error message/body.
+Dette er ennå ikke en autoritativ kvalitetsscore. Det er rå evalueringsgrunnlag for neste fase.
 
 ---
 
-## 7. Safe success/failure policy
+## 9. Race safety
 
-Både success- og failure-grensen holder følgende invariant:
+Model-fetchen er asynkron. En monoton request-sekvens sikrer:
 
 ```text
-source_text_returned = false
+nyere source event vinner
+eldre sen completion forkastes
+```
+
+Dermed kan en treg modellrespons ikke erstatte shadow-statusen for en nyere melding.
+
+---
+
+## 10. Safety policy er fortsatt lukket
+
+Model shadow holder:
+
+```text
 canonical_write = false
 persistent_write = false
 meta_write = false
+visible_output_changed = false
 synthesis_allowed = false
+source_text_stored = false
 ```
 
-Failure-grensen har i tillegg:
-
-```text
-raw_model_output_returned = false
-```
-
-Endpointets `analysis` er derfor validert semantisk modelloutput, ikke en canonical Insight.
+Deterministisk SemanticDocument og model-assisted shadow er begge observasjon/evaluering, ikke nye canonical Insights.
 
 ---
 
-## 8. Eksisterende produktflyt er uendret
-
-Phase 2B endrer ikke:
-
-- `/api/aha-agent/chat`
-- `/api/aha-agent/insight-candidates`
-- dagens browser candidate/Insight-flow
-- canonical sync
-- Meta
-- persistent SemanticDocument storage
-
-Server-diffen for root `server.js` er begrenset til import + registrering av den nye route-handleren.
-
----
-
-## 9. Meta-status
+## 11. Meta-status
 
 Meta er fortsatt:
 
@@ -201,25 +235,33 @@ runtime: operational
 semantic quality: provisional
 ```
 
-Meta skal ikke konsumere Semantic Model output som canonical profilgrunnlag ennå.
+Meta skal ikke konsumere model shadow som canonical profilgrunnlag ennå.
 
 ---
 
-## 10. Neste konkrete byggejobb
+## 12. Neste konkrete byggejobb
 
-Neste etappe er:
+Neste fase er:
 
 ```text
-Semantic Model → SemanticDocument shadow integration
+Semantic Evaluation + Synthesized Insight Quality Gate
 ```
 
-Mål:
+Den skal måle minst:
 
-1. browser-source event bygger dagens deterministiske SemanticDocument shadow
-2. samme source sendes source-direct til `/api/aha-agent/semantic-document`
-3. validert modelloutput konverteres/merges inn i en separat model-assisted shadow-representasjon
-4. deterministic vs model-assisted output sammenlignes
-5. semantic quality/evaluation metrics materialiseres
-6. null canonical/Meta/persistent writes beholdes
+- source/evidence fidelity
+- entity/concept precision
+- proposition fidelity
+- interpretation/inference separation
+- relation precision
+- deterministic ↔ model overlap/divergence
 
-Etter denne shadow-integrasjonen kommer en egen **Synthesized Insight Quality Gate** før V2 kan materialisere nye canonical Insights.
+Deretter kan en egen quality gate avgjøre om et modellforslag kvalifiserer som synthesized Insight candidate.
+
+Før denne gaten er bevist forblir:
+
+```text
+synthesis_allowed = false
+canonical Insight write = false
+Meta write = false
+```
