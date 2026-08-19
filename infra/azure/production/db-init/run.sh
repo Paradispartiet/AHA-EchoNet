@@ -12,9 +12,9 @@ require_env() {
 
 mode="${AHA_DB_INIT_MODE:-apply}"
 case "$mode" in
-  apply|verify_restore|activate_pilot|deactivate_pilot) ;;
+  apply|verify_restore|activate_pilot|verify_pilot_expansion|add_pilot_profile|deactivate_pilot) ;;
   *)
-    echo "AHA_DB_INIT_MODE must be apply, verify_restore, activate_pilot or deactivate_pilot." >&2
+    echo "AHA_DB_INIT_MODE must be apply, verify_restore, activate_pilot, verify_pilot_expansion, add_pilot_profile or deactivate_pilot." >&2
     exit 1
     ;;
 esac
@@ -26,8 +26,12 @@ if [ "$mode" = 'apply' ]; then
 fi
 if [ "$mode" = 'activate_pilot' ]; then
   require_env AHA_PRODUCTION_RUNTIME_PASSWORD
-  require_env AHA_PRODUCTION_PILOT_PROFILE_ID
 fi
+case "$mode" in
+  activate_pilot|verify_pilot_expansion|add_pilot_profile)
+    require_env AHA_PRODUCTION_PILOT_PROFILE_ID
+    ;;
+esac
 
 lower_dsn="$(printf '%s' "$AHA_PRODUCTION_ADMIN_DATABASE_URL" | tr '[:upper:]' '[:lower:]')"
 case "$lower_dsn" in
@@ -54,7 +58,7 @@ fi
 
 export PGSSLMODE=verify-full
 export PGSSLROOTCERT="$ca_file"
-if [ "$mode" = 'verify_restore' ]; then
+if [ "$mode" = 'verify_restore' ] || [ "$mode" = 'verify_pilot_expansion' ]; then
   export PGOPTIONS='-c default_transaction_read_only=on -c statement_timeout=60000 -c lock_timeout=5000'
 else
   export PGOPTIONS='-c statement_timeout=60000 -c lock_timeout=5000'
@@ -164,8 +168,59 @@ validate_pilot_inputs() {
     echo "Production pilot profile id must be a UUID." >&2
     exit 1
   fi
+  AHA_PRODUCTION_PILOT_PROFILE_ID="$(printf '%s' "$AHA_PRODUCTION_PILOT_PROFILE_ID" | tr '[:upper:]' '[:lower:]')"
   AHA_PRODUCTION_PILOT_WORKSPACE_ID="personal-${AHA_PRODUCTION_PILOT_PROFILE_ID}"
-  export AHA_PRODUCTION_PILOT_WORKSPACE_ID
+  export AHA_PRODUCTION_PILOT_PROFILE_ID AHA_PRODUCTION_PILOT_WORKSPACE_ID
+}
+
+pilot_fleet_shape() {
+  psql_safe -A -t -q -c "
+    select
+      (select count(*) from aha.profiles where status='active' and deleted_at is null)::text || '|' ||
+      (select count(*) from aha.workspaces where status='active' and deleted_at is null)::text || '|' ||
+      (select count(*) from aha.profiles p
+         where p.status='active' and p.deleted_at is null
+           and not (p.auth_provider='supabase' and p.auth_subject=p.id))::text || '|' ||
+      (select count(*) from aha.workspaces w
+         where w.status='active' and w.deleted_at is null
+           and not (
+             w.id='personal-' || w.owner_profile_id
+             and w.workspace_type='personal'
+             and w.visibility='private'
+             and exists (
+               select 1 from aha.profiles p
+               where p.id=w.owner_profile_id
+                 and p.status='active'
+                 and p.deleted_at is null
+             )
+           ))::text
+  "
+}
+
+verify_pilot_fleet() {
+  minimum_profiles="$1"
+  maximum_profiles="$2"
+  shape="$(pilot_fleet_shape)"
+  profiles="$(printf '%s' "$shape" | cut -d'|' -f1)"
+  workspaces="$(printf '%s' "$shape" | cut -d'|' -f2)"
+  bad_profiles="$(printf '%s' "$shape" | cut -d'|' -f3)"
+  bad_workspaces="$(printf '%s' "$shape" | cut -d'|' -f4)"
+
+  case "$profiles|$workspaces|$bad_profiles|$bad_workspaces" in
+    *[!0-9\|]*|'')
+      echo "Production pilot fleet verification returned an unexpected shape." >&2
+      exit 1
+      ;;
+  esac
+  if [ "$profiles" -lt "$minimum_profiles" ] || [ "$profiles" -gt "$maximum_profiles" ]; then
+    echo "Production pilot fleet is outside the allowed profile-count boundary." >&2
+    exit 1
+  fi
+  if [ "$workspaces" != "$profiles" ] || [ "$bad_profiles" != '0' ] || [ "$bad_workspaces" != '0' ]; then
+    echo "Production pilot fleet identity/workspace isolation shape is invalid." >&2
+    exit 1
+  fi
+  printf '%s' "$profiles"
 }
 
 activate_pilot() {
@@ -292,6 +347,98 @@ SQL
   echo 'AHA production pilot database activation: LOGIN_READY_ONE_PROFILE'
 }
 
+verify_pilot_expansion() {
+  validate_pilot_inputs
+  verify_runtime_privileges 1
+  current_profiles="$(verify_pilot_fleet 1 9)"
+
+  target_shape="$(psql_safe \
+    -v pilot_profile_id="$AHA_PRODUCTION_PILOT_PROFILE_ID" \
+    -v pilot_workspace_id="$AHA_PRODUCTION_PILOT_WORKSPACE_ID" \
+    -A -t -q -c "
+      select
+        (select count(*) from aha.profiles where id=:'pilot_profile_id')::text || '|' ||
+        (select count(*) from aha.workspaces where id=:'pilot_workspace_id')::text
+    ")"
+  if [ "$target_shape" != '0|0' ]; then
+    echo "Production pilot expansion candidate already exists in canonical production." >&2
+    exit 1
+  fi
+
+  printf 'AHA production pilot expansion readiness: READY_ADD_ONE_PROFILE current_profiles=%s\n' "$current_profiles"
+}
+
+add_pilot_profile() {
+  validate_pilot_inputs
+  verify_runtime_privileges 1
+  current_profiles="$(verify_pilot_fleet 1 10)"
+
+  target_shape="$(psql_safe \
+    -v pilot_profile_id="$AHA_PRODUCTION_PILOT_PROFILE_ID" \
+    -v pilot_workspace_id="$AHA_PRODUCTION_PILOT_WORKSPACE_ID" \
+    -A -t -q -c "
+      select
+        (select count(*) from aha.profiles
+          where id=:'pilot_profile_id'
+            and auth_provider='supabase'
+            and auth_subject=:'pilot_profile_id'
+            and status='active'
+            and deleted_at is null)::text || '|' ||
+        (select count(*) from aha.workspaces
+          where id=:'pilot_workspace_id'
+            and owner_profile_id=:'pilot_profile_id'
+            and workspace_type='personal'
+            and visibility='private'
+            and status='active'
+            and deleted_at is null)::text || '|' ||
+        (select count(*) from aha.profiles where id=:'pilot_profile_id')::text || '|' ||
+        (select count(*) from aha.workspaces where id=:'pilot_workspace_id')::text
+    ")"
+
+  if [ "$target_shape" = '1|1|1|1' ]; then
+    echo 'AHA production pilot expansion: PROFILE_ALREADY_PRESENT_IDEMPOTENT'
+    return 0
+  fi
+  if [ "$target_shape" != '0|0|0|0' ]; then
+    echo "Production pilot expansion candidate conflicts with an existing identity/workspace." >&2
+    exit 1
+  fi
+  if [ "$current_profiles" -ge 10 ]; then
+    echo "Production pilot expansion refuses more than 10 active profiles." >&2
+    exit 1
+  fi
+
+  psql_safe \
+    -v pilot_profile_id="$AHA_PRODUCTION_PILOT_PROFILE_ID" \
+    -v pilot_workspace_id="$AHA_PRODUCTION_PILOT_WORKSPACE_ID" <<'SQL'
+begin;
+insert into aha.profiles(id, auth_provider, auth_subject, display_name, status, metadata)
+values(
+  :'pilot_profile_id',
+  'supabase',
+  :'pilot_profile_id',
+  'AHA production pilot',
+  'active',
+  jsonb_build_object('pilot', 'aha_canonical_production_pilot_expansion_v1')
+);
+insert into aha.workspaces(id, owner_profile_id, workspace_type, name, visibility, status, metadata)
+values(
+  :'pilot_workspace_id',
+  :'pilot_profile_id',
+  'personal',
+  'AHA production pilot',
+  'private',
+  'active',
+  jsonb_build_object('pilot', 'aha_canonical_production_pilot_expansion_v1')
+);
+commit;
+SQL
+
+  verify_runtime_privileges 1
+  expanded_profiles="$(verify_pilot_fleet 2 10)"
+  echo "AHA production pilot expansion: ADDED_PROFILE_NO_RUNTIME_CREDENTIAL_CHANGE active_profiles=${expanded_profiles}"
+}
+
 deactivate_pilot() {
   control_membership_baseline="$(runtime_control_membership_shape)"
   if [ -z "$control_membership_baseline" ]; then
@@ -347,6 +494,16 @@ fi
 
 if [ "$mode" = 'activate_pilot' ]; then
   activate_pilot
+  exit 0
+fi
+
+if [ "$mode" = 'verify_pilot_expansion' ]; then
+  verify_pilot_expansion
+  exit 0
+fi
+
+if [ "$mode" = 'add_pilot_profile' ]; then
+  add_pilot_profile
   exit 0
 fi
 

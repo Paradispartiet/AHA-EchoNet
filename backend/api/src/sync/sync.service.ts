@@ -84,9 +84,9 @@ export class CanonicalSyncService {
     if (!this.config.enabled) {
       throw new ApiException(503, "CANONICAL_SYNC_DISABLED", "Canonical sync is not enabled on this API deployment");
     }
-    const pilotProfileId = String(this.config.pilotProfileId || "").toLowerCase();
-    if (!pilotProfileId || String(principal.subject || "").toLowerCase() !== pilotProfileId) {
-      throw new ApiException(403, "CANONICAL_SYNC_PILOT_FORBIDDEN", "Canonical sync is restricted to the protected production pilot profile");
+    const subject = String(principal.subject || "").toLowerCase();
+    if (!subject || !this.config.allowedProfileIds.includes(subject)) {
+      throw new ApiException(403, "CANONICAL_SYNC_PILOT_FORBIDDEN", "Canonical sync is restricted to the protected production pilot allowlist");
     }
   }
 }

@@ -27,7 +27,9 @@ export class HealthController {
       runtimeActivated: this.config.runtimeActivated,
       existingExpressRuntimePrimary: this.config.existingExpressRuntimePrimary,
       canonicalSync: {
-        enabled: this.canonicalSync.enabled
+        enabled: this.canonicalSync.enabled,
+        profileLimitMode: "protected_allowlist",
+        allowedProfileCount: this.canonicalSync.allowedProfileCount
       },
       database: {
         configured: database.configured,

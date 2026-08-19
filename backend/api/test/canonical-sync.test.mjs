@@ -5,12 +5,14 @@ import test from "node:test";
 import vm from "node:vm";
 import { TextEncoder } from "node:util";
 import { ApiException } from "../dist/api/api-exception.js";
-import { loadCanonicalSyncConfig } from "../dist/sync/sync.config.js";
+import { loadCanonicalSyncConfig, MAX_PRODUCTION_PILOT_PROFILES } from "../dist/sync/sync.config.js";
 import { canonicalSyncPayloadBytes, canonicalSyncPayloadHash, canonicalSyncStringify } from "../dist/sync/sync.hash.js";
 import { CanonicalSyncRepository } from "../dist/sync/sync.repository.js";
 import { CanonicalSyncService } from "../dist/sync/sync.service.js";
 
 const PILOT_SUBJECT = "11111111-1111-4111-8111-111111111111";
+const SECOND_PILOT_SUBJECT = "22222222-2222-4222-8222-222222222222";
+const THIRD_SUBJECT = "33333333-3333-4333-8333-333333333333";
 const principal = Object.freeze({
   subject: PILOT_SUBJECT,
   provider: "supabase",
@@ -19,7 +21,16 @@ const principal = Object.freeze({
 });
 
 function syncConfig(overrides = {}) {
-  return Object.freeze({ enabled: true, pilotProfileId: PILOT_SUBJECT, defaultLimit: 200, maxLimit: 500, maxPushBytes: 262_144, ...overrides });
+  return Object.freeze({
+    enabled: true,
+    pilotProfileId: PILOT_SUBJECT,
+    allowedProfileIds: Object.freeze([PILOT_SUBJECT]),
+    allowedProfileCount: 1,
+    defaultLimit: 200,
+    maxLimit: 500,
+    maxPushBytes: 262_144,
+    ...overrides
+  });
 }
 
 class FakeSyncRepository {
@@ -38,23 +49,76 @@ class FakeSyncRepository {
   }
 }
 
-test("canonical sync is fail-closed by default and its limits and pilot allowlist are bounded", () => {
+test("canonical sync is fail-closed by default and its limits and protected allowlist are bounded", () => {
   const disabled = loadCanonicalSyncConfig({});
   assert.equal(disabled.enabled, false);
   assert.equal(disabled.pilotProfileId, null);
+  assert.deepEqual(disabled.allowedProfileIds, []);
+  assert.equal(disabled.allowedProfileCount, 0);
   assert.equal(disabled.defaultLimit, 200);
   assert.equal(disabled.maxLimit, 500);
   assert.equal(disabled.maxPushBytes, 262_144);
+  assert.equal(MAX_PRODUCTION_PILOT_PROFILES, 10);
 
   assert.throws(() => loadCanonicalSyncConfig({ AHA_CANONICAL_SYNC_ENABLED: "yes" }), /must be true or false/);
-  assert.throws(() => loadCanonicalSyncConfig({ AHA_CANONICAL_SYNC_ENABLED: "true" }), /AHA_CANONICAL_SYNC_PILOT_PROFILE_ID is required when canonical sync is enabled/);
+  assert.throws(
+    () => loadCanonicalSyncConfig({ AHA_CANONICAL_SYNC_ENABLED: "true" }),
+    /required when canonical sync is enabled/
+  );
   assert.throws(
     () => loadCanonicalSyncConfig({ AHA_CANONICAL_SYNC_ENABLED: "true", AHA_CANONICAL_SYNC_PILOT_PROFILE_ID: "not-a-uuid" }),
     /must be a UUID/
   );
-  const enabled = loadCanonicalSyncConfig({ AHA_CANONICAL_SYNC_ENABLED: "true", AHA_CANONICAL_SYNC_PILOT_PROFILE_ID: PILOT_SUBJECT });
-  assert.equal(enabled.enabled, true);
-  assert.equal(enabled.pilotProfileId, PILOT_SUBJECT);
+
+  const enabledLegacy = loadCanonicalSyncConfig({
+    AHA_CANONICAL_SYNC_ENABLED: "true",
+    AHA_CANONICAL_SYNC_PILOT_PROFILE_ID: PILOT_SUBJECT
+  });
+  assert.equal(enabledLegacy.enabled, true);
+  assert.equal(enabledLegacy.pilotProfileId, PILOT_SUBJECT);
+  assert.deepEqual(enabledLegacy.allowedProfileIds, [PILOT_SUBJECT]);
+  assert.equal(enabledLegacy.allowedProfileCount, 1);
+
+  const enabledAllowlist = loadCanonicalSyncConfig({
+    AHA_CANONICAL_SYNC_ENABLED: "true",
+    AHA_CANONICAL_SYNC_PILOT_PROFILE_ID: PILOT_SUBJECT,
+    AHA_CANONICAL_SYNC_ALLOWED_PROFILE_IDS_JSON: JSON.stringify([PILOT_SUBJECT, SECOND_PILOT_SUBJECT])
+  });
+  assert.equal(enabledAllowlist.pilotProfileId, PILOT_SUBJECT);
+  assert.deepEqual(enabledAllowlist.allowedProfileIds, [PILOT_SUBJECT, SECOND_PILOT_SUBJECT]);
+  assert.equal(enabledAllowlist.allowedProfileCount, 2);
+
+  assert.throws(
+    () => loadCanonicalSyncConfig({
+      AHA_CANONICAL_SYNC_ENABLED: "true",
+      AHA_CANONICAL_SYNC_ALLOWED_PROFILE_IDS_JSON: "not-json"
+    }),
+    /JSON array of UUIDs/
+  );
+  assert.throws(
+    () => loadCanonicalSyncConfig({
+      AHA_CANONICAL_SYNC_ENABLED: "true",
+      AHA_CANONICAL_SYNC_ALLOWED_PROFILE_IDS_JSON: JSON.stringify([PILOT_SUBJECT, PILOT_SUBJECT])
+    }),
+    /must not contain duplicate/
+  );
+  assert.throws(
+    () => loadCanonicalSyncConfig({
+      AHA_CANONICAL_SYNC_ENABLED: "true",
+      AHA_CANONICAL_SYNC_PILOT_PROFILE_ID: PILOT_SUBJECT,
+      AHA_CANONICAL_SYNC_ALLOWED_PROFILE_IDS_JSON: JSON.stringify([SECOND_PILOT_SUBJECT])
+    }),
+    /legacy production pilot profile must remain present/
+  );
+  assert.throws(
+    () => loadCanonicalSyncConfig({
+      AHA_CANONICAL_SYNC_ENABLED: "true",
+      AHA_CANONICAL_SYNC_ALLOWED_PROFILE_IDS_JSON: JSON.stringify(
+        Array.from({ length: 11 }, (_, index) => `00000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`)
+      )
+    }),
+    /between 1 and 10 profile IDs/
+  );
 
   assert.throws(() => loadCanonicalSyncConfig({ AHA_CANONICAL_SYNC_MAX_LIMIT: "501" }), /between 1 and 500/);
   assert.throws(
@@ -156,7 +220,7 @@ test("delete hash is the canonical JSON null hash and conflicts remain business 
   );
 });
 
-test("disabled, non-pilot and deployment-specific page limits stop before repository access", async () => {
+test("disabled, unauthorized identities and deployment-specific page limits stop before repository access", async () => {
   const repository = new FakeSyncRepository();
   const disabled = new CanonicalSyncService(syncConfig({ enabled: false }), repository);
   await assert.rejects(
@@ -165,10 +229,21 @@ test("disabled, non-pilot and deployment-specific page limits stop before reposi
   );
   assert.equal(repository.calls.length, 0);
 
-  const nonPilot = Object.freeze({ ...principal, subject: "22222222-2222-4222-8222-222222222222" });
-  const pilotOnly = new CanonicalSyncService(syncConfig(), repository);
+  const secondPilot = Object.freeze({ ...principal, subject: SECOND_PILOT_SUBJECT });
+  const third = Object.freeze({ ...principal, subject: THIRD_SUBJECT });
+  const expandedPilot = new CanonicalSyncService(
+    syncConfig({
+      allowedProfileIds: Object.freeze([PILOT_SUBJECT, SECOND_PILOT_SUBJECT]),
+      allowedProfileCount: 2
+    }),
+    repository
+  );
+  await expandedPilot.pull(secondPilot, { workspaceId: "workspace-2", afterCursor: 0, limit: 10 });
+  assert.equal(repository.calls.length, 1, "second protected pilot identity should reach repository boundary");
+  repository.calls.length = 0;
+
   await assert.rejects(
-    pilotOnly.pull(nonPilot, { workspaceId: "workspace-1", afterCursor: 0, limit: 10 }),
+    expandedPilot.pull(third, { workspaceId: "workspace-3", afterCursor: 0, limit: 10 }),
     (error) => error instanceof ApiException && error.code === "CANONICAL_SYNC_PILOT_FORBIDDEN" && error.getStatus() === 403
   );
   assert.equal(repository.calls.length, 0);
