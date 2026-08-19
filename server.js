@@ -10,6 +10,7 @@ import cors from "cors";
 import OpenAI from "openai";
 import dns from "node:dns/promises";
 import net from "node:net";
+import { createSemanticModelHandler } from "./server/ahaSemanticModelEndpoint.js";
 
 const PORT = Number(process.env.PORT || 3030);
 const VOYAGE_API_KEY = process.env.VOYAGE_API_KEY;
@@ -554,6 +555,11 @@ app.post("/api/aha-agent/insight-candidates", async (req, res) => {
   }
 });
 
+app.post("/api/aha-agent/semantic-document", createSemanticModelHandler({
+  openai,
+  model: OPENAI_MODEL,
+  hasOpenAIKey: Boolean(OPENAI_API_KEY)
+}));
 
 app.post("/api/aha-agent/analyze-url", async (req, res) => {
   try {
