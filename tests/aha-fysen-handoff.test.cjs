@@ -1,6 +1,18 @@
 const assert = require('assert');
-const handoff = require('../js/ahaFysenHandoff.js');
+const fs = require('fs');
+const vm = require('vm');
 
+function loadBrowserModule() {
+  const context = { console, Date, Math, JSON, URLSearchParams };
+  context.window = context;
+  context.globalThis = context;
+  vm.createContext(context);
+  vm.runInContext(fs.readFileSync('js/ahaFysenHandoff.js', 'utf8'), context, { filename: 'js/ahaFysenHandoff.js' });
+  assert.ok(context.AHAFysenHandoff, 'browser module should expose window.AHAFysenHandoff');
+  return context.AHAFysenHandoff;
+}
+
+const handoff = loadBrowserModule();
 const token = 'a'.repeat(64);
 const location = { hash: `#handoff=${token}`, pathname: '/AHA-EchoNet/fysen.html', search: '', assign: (value) => { location.assigned = value; } };
 assert.equal(handoff.handoffToken(location), token);

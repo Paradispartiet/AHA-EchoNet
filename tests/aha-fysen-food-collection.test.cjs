@@ -1,6 +1,18 @@
 const assert = require('assert');
-const collection = require('../js/ahaFysenFoodCollection.js');
+const fs = require('fs');
+const vm = require('vm');
 
+function loadBrowserModule() {
+  const context = { console, Date, Math, JSON, Intl };
+  context.window = context;
+  context.globalThis = context;
+  vm.createContext(context);
+  vm.runInContext(fs.readFileSync('js/ahaFysenFoodCollection.js', 'utf8'), context, { filename: 'js/ahaFysenFoodCollection.js' });
+  assert.ok(context.AHAFysenFoodCollection, 'browser module should expose window.AHAFysenFoodCollection');
+  return context.AHAFysenFoodCollection;
+}
+
+const collection = loadBrowserModule();
 const payload = {
   version: 'fysen_food_collection_v1',
   source: 'fysen',
