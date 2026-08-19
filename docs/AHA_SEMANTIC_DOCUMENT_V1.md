@@ -2,24 +2,31 @@
 
 ## Status
 
-`SemanticDocumentV1` er nå påbegynt i runtime som **shadow-only evidence core**.
+`SemanticDocumentV1` bygges fortsatt i **shadow mode**, men kontrakten er nå kommet til Phase 1B:
 
-Implementasjonen eksponeres som den egne modulkontrakten:
+```text
+Phase 1A: evidence anchors                 implemented
+Phase 1B: entities + concepts              implemented in shadow
+Phase 1C: claims + relations               not implemented
+Synthesized canonical insights             blocked
+Persistent SemanticDocument write          disabled
+Visible product behavior                    unchanged
+```
+
+Modulgrensen er:
 
 ```text
 AHASemanticDocument
 AHAModuleApi: semanticDocument@1
 ```
 
-I første implementeringsetappe er modulen fysisk samlokalisert med `js/ahaChatIngestRuntime.js`. Dette er bevisst: vi unngår en ny produksjonskritisk script-/load-order-endring før kontrakten er bevist. Den kan senere flyttes til egen fil uten å endre det offentlige modulgrensesnittet.
-
-Denne fasen endrer **ikke** synlige innsikter, Meta-profil, lister, stier eller tankekart.
+Modulen er fortsatt fysisk samlokalisert med `js/ahaChatIngestRuntime.js`. Det offentlige modulgrensesnittet er separat, slik at koden senere kan flyttes til egen fil uten kontraktsbrudd.
 
 ---
 
 ## 1. Rolle i canonical flyt
 
-Målarkitekturen er fortsatt:
+Målarkitekturen er:
 
 ```text
 SourceEvent
@@ -30,21 +37,22 @@ SourceEvent
 → Meta / produkter
 ```
 
-Men PR1 kjører parallelt med dagens flyt:
+Under shadow-migreringen kjører dagens produksjonsflyt parallelt:
 
 ```text
 SourceEvent
 ├─→ dagens canonical candidate/Insight-flow
-└─→ SemanticDocumentV1 shadow evidence-only
+└─→ SemanticDocumentV1 shadow
+    ├─ evidence anchors
+    ├─ entities
+    └─ concepts
 ```
 
-Shadow-dokumentet er observasjon og validering av den nye representasjonen. Det er ikke canonical sannhet ennå.
+`SemanticDocumentV1` er derfor ennå ikke canonical sannhet for Insights eller Meta.
 
 ---
 
 ## 2. Nåværende kontrakt
-
-Første runtime-shape er:
 
 ```text
 SemanticDocumentV1 {
@@ -52,7 +60,7 @@ SemanticDocumentV1 {
   schema = "aha_semantic_document_v1"
   version = 1
   mode = "shadow"
-  status = "evidence_only"
+  status = "entities_concepts_shadow"
 
   source_event_id?
   source_text_hash
@@ -60,13 +68,13 @@ SemanticDocumentV1 {
   source_type
   language
 
-  analyzer_origin = "deterministic_shadow"
+  analyzer_origin
   analyzer_version
 
   evidence_anchors[]
+  entities[]
+  concepts[]
 
-  entities = []
-  concepts = []
   claims = []
   relations = []
   tensions = []
@@ -77,37 +85,24 @@ SemanticDocumentV1 {
 }
 ```
 
-De semantiske arrayene er med i kontrakten nå, men skal være tomme i PR1. Dermed kan senere PR-er fylle dem uten å introdusere en ny top-level representasjon.
+Phase 1B åpner bare `entities` og `concepts`. De semantiske lagene som kan uttrykke påstander eller syntese er fortsatt hardt lukket av validatoren.
 
 ---
 
-## 3. Source hash
+## 3. Source identity og evidence anchors
 
-`source_text_hash` er ekte SHA-256 over nøyaktig source text i UTF-8.
+`source_text_hash` er SHA-256 over nøyaktig source text i UTF-8.
 
-Hashen brukes i denne fasen til:
-
-- stabil dokumentidentitet
-- stabile evidence-anchor-ID-er
-- regresjonstesting
-- senere replay/migrering
-
-Den brukes **ikke** i PR1 til automatisk merge eller canonical deduplisering.
-
----
-
-## 4. Evidence anchors
-
-PR1 segmenterer kilden deterministisk på avsnittsgrenser.
-
-Hvert anchor har:
+Evidence anchors segmenterer source deterministisk på avsnittsgrenser:
 
 ```text
-id
-index
-start_offset
-end_offset
-text
+EvidenceAnchor {
+  id
+  index
+  start_offset
+  end_offset
+  text
+}
 ```
 
 Hard invariant:
@@ -116,17 +111,171 @@ Hard invariant:
 source_text.slice(start_offset, end_offset) === anchor.text
 ```
 
-Dermed er evidence et faktisk utsnitt av kilden og ikke en rekonstruksjon eller en språkmodellformulering.
-
-Anchor-ID-en avledes fra source hash + stabil indeks. Samme tekst gir derfor samme anchor-ID-er.
-
-Blankt separator-whitespace trenger ikke være del av et anchor. `source_coverage_non_whitespace` måler derfor dekningsgraden for kildebærende tegn.
+Anchor-ID-er avledes fra source hash + stabil indeks. Dermed kan entities, concepts og senere claims peke til stabilt kildebelegg i stedet for rekonstruert tekst.
 
 ---
 
-## 5. Shadow safety
+## 4. Entities V1
 
-PR1 har følgende eksplisitte grenser:
+Entity-shapen er:
+
+```text
+EntityV1 {
+  id
+  label
+  normalized_key
+  type
+  evidence_anchor_ids[]
+  mentions[]
+  canonical_matches[]
+  source
+}
+```
+
+En mention er alltid source-grounded:
+
+```text
+MentionV1 {
+  anchor_id
+  start_offset
+  end_offset
+  text
+}
+```
+
+Hard invariant:
+
+```text
+source_text.slice(start_offset, end_offset) === mention.text
+```
+
+### Entity-kilder i Phase 1B
+
+Runtime kan materialisere:
+
+- flerordsnavn som faktisk står i source
+- tydelige akronymer som faktisk står i source
+- Subject Engine `thinker`-matches som faktisk står i source
+
+Subject Engine kan oppgradere en kildeentity til f.eks. `type: "person"`, men får ikke opprette en entity som source ikke inneholder.
+
+`canonical_matches` er **reference support**, ikke source evidence.
+
+---
+
+## 5. Concepts V1
+
+Concept-shapen er:
+
+```text
+ConceptV1 {
+  id
+  label
+  normalized_key
+  source_term
+  evidence_anchor_ids[]
+  mentions[]
+  canonical_matches[]
+  source
+}
+```
+
+Phase 1B er bevisst canonical-first og konservativ:
+
+1. `AHASubjectEngine.matchText(source_text)` finner relevante canonical fag-/emnematcher.
+2. Bare `matched_terms` som også finnes bokstavelig i source kan materialiseres som Concept.
+3. Generiske/noise-termer filtreres.
+4. Flerordsbegreper foretrekkes fremfor svak single-token-redundans i samme match.
+5. En term som allerede er Entity blir ikke samtidig materialisert som Concept.
+6. Et Concept må ha både source mention og canonical reference support.
+
+Dette betyr at Phase 1B heller returnerer **for få** concepts enn å gjette seg til term-suppe.
+
+Ugoverned concept discovery skal ikke improviseres med en ny parallell heuristikk. Rikere concept extraction kommer når den dedikerte semantiske modellkontrakten bygges.
+
+---
+
+## 6. Subject Engine og Fagverk-provenance
+
+`AHASubjectEngine` er runtime-seamen for canonical støtte i denne fasen.
+
+Subject Engine-provenance kan blant annet være:
+
+```text
+kind = "canonical_fagverk"
+evidence_role = "reference_support_not_source_evidence"
+```
+
+Dette skillet er normativt:
+
+```text
+Source offsets
+= bevis for at termen faktisk finnes i kilden
+
+Subject Engine / Fagverk
+= støtte for hva termen kan canonicaliseres/kobles til
+```
+
+Fagverk skal aldri brukes til å late som om noe sto i brukerens source når det ikke gjorde det.
+
+---
+
+## 7. Asynkron enrichment og race-safety
+
+Subject Engine kan måtte laste fagdata før `matchText(...)` fullfører. Semantic enrichment kjøres derfor asynkront etter at dagens canonical ingest har opprettet SourceEvent.
+
+Den eksisterende `handleUserMessage(...)`-returkontrakten forblir synkron og uendret.
+
+Runtime bruker en monoton shadow-sekvens slik at:
+
+```text
+melding B fullfører enrichment før melding A
+→ melding A får ikke overskrive shadow-statusen for melding B
+```
+
+Shadow-laget representerer dermed siste source event, ikke siste asynkrone completion.
+
+---
+
+## 8. Subject Engine-feil
+
+Mens laget er shadow-only gjelder:
+
+```text
+Subject Engine unavailable/failed
+→ source-grounded entity extraction kan fortsatt kjøre
+→ concepts uten canonical support opprettes ikke
+→ dagens canonical ingest fortsetter
+```
+
+Dette er en midlertidig shadow-policy. Før SemanticDocument får skrive synthesized canonical Insights skal semantic failure-porten bli **fail closed**.
+
+---
+
+## 9. Validatorens Phase 1B-invarianter
+
+Validatoren krever nå blant annet:
+
+- gyldig schema/version/mode/status
+- gyldig SHA-256 source hash
+- eksakte evidence-anchor slices
+- ordnede, ikke-overlappende anchors
+- Entity/Concept-ID
+- `normalized_key`
+- minst én evidence anchor per Entity/Concept
+- minst én exact-source mention per Entity/Concept
+- gyldige mention offsets
+- Concept må ha canonical reference support
+- `claims`, `relations`, `tensions`, `candidate_insights` skal fortsatt være tomme
+- `canonical_write === false`
+- `persistent_write === false`
+- ingen chat-response-/assistant-response-avhengighet
+
+---
+
+## 10. Shadow safety
+
+Phase 1B endrer fortsatt ikke brukersynlig eller persistent produktdata:
 
 ```text
 canonical_write = false
@@ -134,9 +283,7 @@ persistent_write = false
 visible_output_changed = false
 ```
 
-`recordShadowSemanticDocument(...)` holder bare siste validerte shadow-dokument i runtime-minne.
-
-Det skrives ikke til:
+Det skrives ikke SemanticDocument til:
 
 - localStorage
 - Supabase
@@ -144,20 +291,22 @@ Det skrives ikke til:
 - Insight Chamber
 - Meta memory
 
-Det sendes et valgfritt `aha:semantic-document-shadow`-event med bare sikker metadata:
+`aha:semantic-document-shadow`-eventet inneholder bare sikker metadata:
 
 - schema/version/status
 - source event-id
 - source hash
-- antall evidence anchors
+- anchor count
+- entity count
+- concept count
 
-Rå source text sendes ikke i eventet.
+Rå source text, entities og concepts sendes ikke i eventet.
 
 ---
 
-## 6. Ingen chat-response-avhengighet
+## 11. Ingen chat-response-avhengighet
 
-Validatoren avviser feltnavn som indikerer at SemanticDocument forsøker å gjøre brukerens AI-svar til analysekilde, blant annet:
+Validatoren avviser felter som:
 
 ```text
 assistantReply
@@ -167,65 +316,38 @@ ai_response
 model_response
 ```
 
-Det normative skillet er fortsatt:
+Normativ analyseflyt:
 
 ```text
-kildetekst → semantic analysis
+kildetekst
+→ SemanticDocument
+→ senere semantic synthesis
 ```
 
-ikke:
+Ikke:
 
 ```text
-kildetekst → brukerrettet AI-svar → canonical semantic truth
+kildetekst
+→ brukerrettet AI-svar
+→ canonical semantic truth
 ```
 
 ---
 
-## 7. Runtime-wiring
+## 12. Neste implementeringsetappe
 
-På normal AHA Chat-flyt skjer shadow-materialiseringen etter at canonical `AHAIngest.ingestWithCandidates(...)` har opprettet SourceEvent.
-
-Det betyr at shadow-dokumentet kan få den faktiske `source_event_id` som provenance.
-
-På legacy fallback bygges det også maksimalt ett shadow-dokument per source event.
-
-PR1 har en midlertidig sikkerhetsregel:
-
-> Feil i SemanticDocument shadow må ikke stoppe dagens canonical ingest.
-
-Dette er riktig kun mens laget er shadow-only. Før SemanticDocument blir authoritative input til nye canonical insights skal grensen endres til **fail closed**: ugyldig semantisk analyse skal da ikke få produsere synthesized canonical insights.
-
----
-
-## 8. Hva PR1 beviser
-
-Tester skal bevise:
-
-1. SHA-256 er deterministisk og korrekt også for norsk/unicode tekst.
-2. Evidence anchors er eksakte source slices.
-3. Anchor-offsets er ordnet og ikke-overlappende.
-4. Anchor-ID-er er stabile og unike.
-5. Samme kilde og metadata gir samme dokumentstruktur.
-6. Semantic arrays er tomme i evidence-only shadow.
-7. Shadow-eventet eksponerer ikke rå source text.
-8. Recorder returnerer defensive kopier.
-9. Ett source event lager ett shadow-dokument, ikke ett dokument per Insight candidate.
-10. Shadow-feil stopper ikke dagens canonical flow i PR1.
-
----
-
-## 9. Neste implementeringsetappe
-
-Neste PR skal bygge **Entities + Concepts V1** på dette dokumentet.
-
-Riktig rekkefølge er:
+Neste fase er:
 
 ```text
-Evidence anchors
-→ entities
-→ meaningful concept phrases
-→ Subject Engine / Fagverk canonicalization
-→ concept quality gate
+Phase 1C: Claims + Relations V1
 ```
 
-Det skal ikke innføres synthesized insights før claims/relations og den semantiske quality gate er på plass.
+Den skal minst innføre:
+
+- source-grounded propositions/claims
+- typed relations mellom entities/concepts/claims
+- evidence-binding per claim/relation
+- eksplisitt skille mellom source claim, modellfortolkning og uavklart inference
+- semantic quality gate før noe kan bli synthesized Insight
+
+Før denne porten finnes skal `candidate_insights` forbli tomt og SemanticDocument skal ikke skrive nye canonical Insights.
