@@ -32,7 +32,9 @@ for (const [name, workflow] of Object.entries({ activation: source.activation, r
   );
 }
 
-// Activation remains an explicit, isolated production operation.
+// Initial activation remains an explicit, isolated production operation. It is
+// still the one-profile bootstrap primitive even though the live bounded pilot
+// has since expanded to two verified profiles through the expansion workflow.
 assert.match(source.activation, /workflow_dispatch:/);
 assert.doesNotMatch(source.activation, /^\s{2}(push|schedule):/m);
 assert.match(source.activation, /RUN_AHA_CANONICAL_PRODUCTION_PILOT_ACTIVATION/);
@@ -43,7 +45,7 @@ assert.match(source.activation, /group:\s*aha-canonical-production-pilot-control
 assert.match(source.activation, /AHA_PRODUCTION_PILOT_PROFILE_ID:\s*\$\{\{\s*secrets\.AHA_PRODUCTION_PILOT_PROFILE_ID\s*\}\}/);
 assert.doesNotMatch(source.activation, /AHA_PRODUCTION_PILOT_PROFILE_ID:\s*[0-9a-f]{8}-[0-9a-f-]{27,}/i);
 
-// A stale rollout gate must never authorize activation.
+// A stale rollout gate must never authorize initial activation.
 assert.match(source.activation, /aha-canonical-sync-production-rollout-gate\.yml/);
 assert.match(source.activation, /--status success/);
 assert.match(source.activation, /\.headSha == \\"\$\{GITHUB_SHA\}\\"/);
@@ -60,7 +62,7 @@ assert.match(source.activation, /runtimeActivated=true/);
 assert.match(source.activation, /AHA_LOCAL_IMPORT_ENABLED=false|AHA_LOCAL_IMPORT_ENABLED'[\s\S]*?'false'/);
 assert.match(source.activation, /COMMITTED_ONE_PROFILE/);
 
-// Incomplete activation rollback is database-first and destructive data cleanup is forbidden.
+// Incomplete initial activation rollback is database-first and destructive data cleanup is forbidden.
 const rollbackBlock = source.activation.slice(source.activation.indexOf("Database-first rollback of an incomplete pilot activation"));
 const cutoffIndex = rollbackBlock.indexOf("mode=deactivate_pilot");
 const syncDisableIndex = rollbackBlock.indexOf("AHA_CANONICAL_SYNC_ENABLED=false");
@@ -131,11 +133,12 @@ assert.match(source.dbRunner, /personal-\$\{AHA_PRODUCTION_PILOT_PROFILE_ID\}/);
 assert.match(source.dbRunner, /bootstrap_sync_snapshot_v1,pull_sync_changes_v1,push_sync_change_v1/);
 assert.doesNotMatch(source.dbRunner, /grant\s+(insert|update|delete|truncate)/i);
 
-// Policy stays default-off while proving the guarded first-pilot workflows exist.
-// The initial activation still commits exactly one profile; the repository-level
-// fleet ceiling is now 10, with later additions restricted to one per explicit expansion activation.
-assert.equal(policy.productionActivationEnabled, false);
-assert.equal(policy.activation.enabled, false);
+// Repository policy reflects the live bounded manual pilot. The initial activation
+// workflow remains one-profile only; later profiles can only be added one at a time
+// through the separately guarded expansion workflow.
+assert.equal(policy.productionActivationEnabled, true);
+assert.equal(policy.activation.enabled, true);
+assert.equal(policy.status, "active_bounded_manual_pilot");
 assert.equal(policy.activation.workflowImplemented, true);
 assert.equal(policy.activation.sameShaRolloutGateRequired, true);
 assert.equal(policy.activation.protectedPilotProfileRequired, true);
@@ -152,8 +155,14 @@ assert.equal(policy.activation.backgroundSyncEnabled, false);
 assert.equal(policy.pilot.mode, "bounded_manual_allowlist");
 assert.equal(policy.pilot.maxProfiles, 10);
 assert.equal(policy.pilot.profilesAddedPerActivation, 1);
+assert.equal(policy.pilot.currentVerifiedProfileCount, 2);
+assert.equal(policy.pilot.nextExpansionPaused, true);
+assert.equal(policy.pilot.nextExpansionRequiresTwoProfileRoundTripEvidence, true);
 assert.equal(policy.pilot.automaticExpansionAllowed, false);
 assert.equal(policy.pilot.serverSideAllowlistRequired, true);
+assert.equal(policy.activation.roundTrip.requiredBeforeNextExpansion, true);
+assert.equal(policy.activation.roundTrip.requiredVerifiedProfiles, 2);
+assert.equal(policy.activation.roundTrip.automaticExecutionAllowed, false);
 assert.match(source.docs, /same-SHA/i);
 assert.match(source.docs, /database-first/i);
 assert.match(source.docs, /CANONICAL_SYNC_PILOT_FORBIDDEN/);
