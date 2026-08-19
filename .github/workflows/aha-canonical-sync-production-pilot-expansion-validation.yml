@@ -4,31 +4,43 @@ on:
   pull_request:
     paths:
       - 'backend/api/src/sync/**'
+      - 'backend/api/src/database/**'
+      - 'backend/api/src/api/api-exception.filter.ts'
       - 'backend/api/src/health.controller.ts'
       - 'backend/api/test/canonical-sync.test.mjs'
+      - 'backend/api/test/database-authorization.test.mjs'
       - 'infra/azure/production/app.bicep'
       - 'infra/azure/production/db-init-job.bicep'
       - 'infra/azure/production/db-init/run.sh'
       - '.github/workflows/aha-canonical-sync-production-pilot-expansion-*.yml'
       - '.github/workflows/aha-canonical-sync-production-pilot-profile-rollback.yml'
+      - '.github/workflows/aha-canonical-sync-production-pilot-post-activation-verification.yml'
       - 'ops/canonical-sync-production-rollout-v1.json'
+      - 'docs/AHA_CANONICAL_PRODUCTION_PILOT_POST_ACTIVATION_VERIFICATION_V1.md'
       - 'tests/aha-canonical-sync-production-pilot-expansion-v1.test.cjs'
       - 'tests/aha-canonical-sync-production-pilot-expansion-activation-v1.test.cjs'
+      - 'tests/aha-canonical-sync-production-pilot-post-activation-verification-v1.test.cjs'
   push:
     branches:
       - main
     paths:
       - 'backend/api/src/sync/**'
+      - 'backend/api/src/database/**'
+      - 'backend/api/src/api/api-exception.filter.ts'
       - 'backend/api/src/health.controller.ts'
       - 'backend/api/test/canonical-sync.test.mjs'
+      - 'backend/api/test/database-authorization.test.mjs'
       - 'infra/azure/production/app.bicep'
       - 'infra/azure/production/db-init-job.bicep'
       - 'infra/azure/production/db-init/run.sh'
       - '.github/workflows/aha-canonical-sync-production-pilot-expansion-*.yml'
       - '.github/workflows/aha-canonical-sync-production-pilot-profile-rollback.yml'
+      - '.github/workflows/aha-canonical-sync-production-pilot-post-activation-verification.yml'
       - 'ops/canonical-sync-production-rollout-v1.json'
+      - 'docs/AHA_CANONICAL_PRODUCTION_PILOT_POST_ACTIVATION_VERIFICATION_V1.md'
       - 'tests/aha-canonical-sync-production-pilot-expansion-v1.test.cjs'
       - 'tests/aha-canonical-sync-production-pilot-expansion-activation-v1.test.cjs'
+      - 'tests/aha-canonical-sync-production-pilot-post-activation-verification-v1.test.cjs'
 
 permissions:
   contents: read
@@ -56,12 +68,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
 
-      - name: Build NestJS API and run canonical sync unit tests
+      - name: Build NestJS API and run canonical sync authorization tests
         working-directory: backend/api
         run: |
           npm ci
           npm run build
-          node --test test/canonical-sync.test.mjs
+          node --test test/canonical-sync.test.mjs test/database-authorization.test.mjs
 
       - name: Create Azure-like non-superuser production admin
         env:
@@ -196,3 +208,4 @@ jobs:
         run: |
           node tests/aha-canonical-sync-production-pilot-expansion-v1.test.cjs
           node tests/aha-canonical-sync-production-pilot-expansion-activation-v1.test.cjs
+          node tests/aha-canonical-sync-production-pilot-post-activation-verification-v1.test.cjs

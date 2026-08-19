@@ -45,6 +45,12 @@ const RUNTIME_SAFETY_QUERY = `
     to_regclass('aha.schema_versions') is not null as schema_versions_table_present
 `;
 
+const CANONICAL_AUTHORIZATION_DENIALS = new Set([
+  "authenticated canonical profile required",
+  "workspace access denied",
+  "workspace edit denied"
+]);
+
 @Injectable()
 export class CanonicalDatabaseService implements OnModuleDestroy {
   private readiness: DatabaseReadiness;
@@ -152,6 +158,9 @@ export class CanonicalDatabaseService implements OnModuleDestroy {
         }
       }
       if (error instanceof CanonicalDatabaseError) throw error;
+      if (isCanonicalAuthorizationDenied(error)) {
+        throw new CanonicalDatabaseError("DATABASE_FORBIDDEN", error);
+      }
       throw new CanonicalDatabaseError("DATABASE_UNAVAILABLE", error);
     } finally {
       client.release();
@@ -170,6 +179,14 @@ function toDatabaseClaims(principal: AuthPrincipal): Readonly<Record<string, unk
     iss: principal.issuer,
     aud: [...principal.audience]
   });
+}
+
+function isCanonicalAuthorizationDenied(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const candidate = error as { code?: unknown; message?: unknown };
+  if (candidate.code !== "42501") return false;
+  const message = String(candidate.message || "").trim().toLowerCase();
+  return CANONICAL_AUTHORIZATION_DENIALS.has(message);
 }
 
 function initialReadiness(configured: boolean): DatabaseReadiness {

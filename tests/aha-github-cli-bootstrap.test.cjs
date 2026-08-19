@@ -35,26 +35,37 @@ assert.match(agentInstructions, /source \.devcontainer\/activate-tools\.sh/);
 const version = execFileSync('bash', ['scripts/gh', '--version'], { encoding: 'utf8' });
 assert.match(version, /^gh version \d+\.\d+\.\d+/m);
 
+// Keep this regression fully deterministic. The production repair script still
+// contains and statically verifies the official APT + checksum-verified release
+// fallbacks above, but this unit test must not depend on external package mirrors.
+// It instead puts a stale gh first in PATH and exposes the already validated gh
+// through the explicit local-bin contract. The launcher must reject stale PATH
+// and resolve the supported fallback without contacting the network.
 const fakeBin = fs.mkdtempSync(path.join(os.tmpdir(), 'aha-stale-gh-'));
 const fakeGh = path.join(fakeBin, 'gh');
 fs.writeFileSync(fakeGh, '#!/usr/bin/env bash\necho "gh version 1.0.0 (stale-test)"\n', { mode: 0o755 });
+
 const supportedGh = execFileSync('bash', ['.devcontainer/ensure-gh.sh', '--print-path'], { encoding: 'utf8' }).trim();
 const supportedBin = path.dirname(supportedGh);
+const deterministicBin = fs.mkdtempSync(path.join(os.tmpdir(), 'aha-supported-gh-'));
+const deterministicGh = path.join(deterministicBin, 'gh');
+fs.symlinkSync(supportedGh, deterministicGh);
+
 const remainingPath = String(process.env.PATH || '')
   .split(path.delimiter)
-  .filter((entry) => entry && entry !== fakeBin && entry !== supportedBin)
+  .filter((entry) => entry && entry !== fakeBin && entry !== supportedBin && entry !== deterministicBin)
   .join(path.delimiter);
 
 const staleEnvironment = {
   ...process.env,
-  AHA_GH_BIN_DIR: fakeBin,
-  PATH: [fakeBin, supportedBin, remainingPath].filter(Boolean).join(path.delimiter)
+  AHA_GH_BIN_DIR: deterministicBin,
+  PATH: [fakeBin, deterministicBin, remainingPath].filter(Boolean).join(path.delimiter)
 };
 const repairedVersion = execFileSync('bash', ['scripts/gh', '--version'], {
   encoding: 'utf8',
   env: staleEnvironment
 });
-assert.match(repairedVersion, /^gh version (?!1\.0\.0)\d+\.\d+\.\d+/m, 'launcher must execute the validated binary, not stale PATH gh');
+assert.match(repairedVersion, /^gh version (?!1\.0\.0)\d+\.\d+\.\d+/m, 'launcher must execute the validated fallback binary, not stale PATH gh');
 
 const activationCheck = execFileSync('bash', ['-c', `
   set +e +u +E
@@ -75,5 +86,6 @@ const activationCheck = execFileSync('bash', ['-c', `
 assert.equal(activationCheck, '', 'activation must be quiet when redirected');
 
 fs.rmSync(fakeBin, { recursive: true, force: true });
+fs.rmSync(deterministicBin, { recursive: true, force: true });
 
 console.log('aha-github-cli-bootstrap.test.cjs passed');

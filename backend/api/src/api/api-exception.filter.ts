@@ -108,5 +108,8 @@ function databaseError(code: CanonicalDatabaseError["code"]): SafeError {
   if (code === "CANONICAL_SCHEMA_NOT_READY") {
     return { status: 503, code, message: "The canonical database schema is not ready" };
   }
+  if (code === "DATABASE_FORBIDDEN") {
+    return { status: 403, code: "FORBIDDEN", message: "The requested canonical workspace is not permitted" };
+  }
   return { status: 503, code: "DATABASE_UNAVAILABLE", message: "The canonical database is unavailable" };
 }
