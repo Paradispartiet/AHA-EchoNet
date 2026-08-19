@@ -10,7 +10,10 @@ on:
       - 'infra/azure/production/db-init-job.bicep'
       - 'infra/azure/production/db-init/run.sh'
       - '.github/workflows/aha-canonical-sync-production-pilot-expansion-*.yml'
+      - '.github/workflows/aha-canonical-sync-production-pilot-profile-rollback.yml'
+      - 'ops/canonical-sync-production-rollout-v1.json'
       - 'tests/aha-canonical-sync-production-pilot-expansion-v1.test.cjs'
+      - 'tests/aha-canonical-sync-production-pilot-expansion-activation-v1.test.cjs'
   push:
     branches:
       - main
@@ -22,7 +25,10 @@ on:
       - 'infra/azure/production/db-init-job.bicep'
       - 'infra/azure/production/db-init/run.sh'
       - '.github/workflows/aha-canonical-sync-production-pilot-expansion-*.yml'
+      - '.github/workflows/aha-canonical-sync-production-pilot-profile-rollback.yml'
+      - 'ops/canonical-sync-production-rollout-v1.json'
       - 'tests/aha-canonical-sync-production-pilot-expansion-v1.test.cjs'
+      - 'tests/aha-canonical-sync-production-pilot-expansion-activation-v1.test.cjs'
 
 permissions:
   contents: read
@@ -186,5 +192,7 @@ jobs:
           [[ "$writes" == '0' ]]
           echo "pilot_expansion_postgresql16_isolation=PASS"
 
-      - name: Run static pilot expansion contract
-        run: node tests/aha-canonical-sync-production-pilot-expansion-v1.test.cjs
+      - name: Run static pilot expansion contracts
+        run: |
+          node tests/aha-canonical-sync-production-pilot-expansion-v1.test.cjs
+          node tests/aha-canonical-sync-production-pilot-expansion-activation-v1.test.cjs
