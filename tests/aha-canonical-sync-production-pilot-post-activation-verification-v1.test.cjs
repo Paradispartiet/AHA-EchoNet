@@ -5,6 +5,10 @@ const paths = {
   verify: ".github/workflows/aha-canonical-sync-production-pilot-post-activation-verification.yml",
   activation: ".github/workflows/aha-canonical-sync-production-pilot-expansion-activation.yml",
   rollback: ".github/workflows/aha-canonical-sync-production-pilot-profile-rollback.yml",
+  databaseService: "backend/api/src/database/canonical-database.service.ts",
+  databaseErrors: "backend/api/src/database/database.errors.ts",
+  apiFilter: "backend/api/src/api/api-exception.filter.ts",
+  databaseAuthorizationTest: "backend/api/test/database-authorization.test.mjs",
   policy: "ops/canonical-sync-production-rollout-v1.json",
   docs: "docs/AHA_CANONICAL_PRODUCTION_PILOT_POST_ACTIVATION_VERIFICATION_V1.md"
 };
@@ -65,6 +69,27 @@ assert.match(source.verify, /\.data\.workspaceId == \$workspace/);
 assert.match(source.verify, /denied_status[^\n]*== '403'/);
 assert.match(source.verify, /\.error\.status == 403/);
 assert.match(source.verify, /crossProfileReadDenied[^\n]*true/);
+
+// PostgreSQL tenancy denials remain authoritative but are normalized to a safe
+// generic HTTP 403. Only the known canonical 42501 messages are mapped; unrelated
+// PostgreSQL privilege failures must continue to fail closed as unavailable.
+assert.match(source.databaseErrors, /DATABASE_FORBIDDEN/);
+assert.match(source.databaseService, /CANONICAL_AUTHORIZATION_DENIALS/);
+assert.match(source.databaseService, /authenticated canonical profile required/);
+assert.match(source.databaseService, /workspace access denied/);
+assert.match(source.databaseService, /workspace edit denied/);
+assert.match(source.databaseService, /candidate\.code !== "42501"/);
+assert.match(source.databaseService, /CanonicalDatabaseError\("DATABASE_FORBIDDEN"/);
+assert.match(source.databaseService, /CanonicalDatabaseError\("DATABASE_UNAVAILABLE"/);
+assert.match(source.apiFilter, /code === "DATABASE_FORBIDDEN"/);
+assert.match(source.apiFilter, /status: 403, code: "FORBIDDEN"/);
+assert.match(source.apiFilter, /requested canonical workspace is not permitted/i);
+assert.match(source.databaseAuthorizationTest, /workspace access denied/);
+assert.match(source.databaseAuthorizationTest, /workspace edit denied/);
+assert.match(source.databaseAuthorizationTest, /permission denied for function unexpected_future_function/);
+assert.match(source.databaseAuthorizationTest, /DATABASE_UNAVAILABLE/);
+assert.match(source.databaseAuthorizationTest, /body\.error\.code, "FORBIDDEN"/);
+assert.match(source.databaseAuthorizationTest, /body\.error\.status, 403/);
 
 // Rollback readiness is only calculated in memory. This workflow must never
 // create a Key Vault version, deploy an API revision, run a DB-control job or push
