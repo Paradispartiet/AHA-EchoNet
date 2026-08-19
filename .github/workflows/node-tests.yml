@@ -23,28 +23,20 @@ jobs:
         with:
           node-version: 22
 
-      # Temporary branch-level diagnostics for PR #793. The remaining failure is
-      # inside files 181-210. Remove these split steps before merge.
-      - name: Diagnose suite chunk 181-190
+      # Temporary diagnostics for PR #793. Remaining failure is in files 191-200.
+      - name: Diagnose suite chunk 191-195
         shell: bash
         run: |
           set -euo pipefail
           mapfile -t files < <(find tests -maxdepth 1 -type f \( -name '*.test.cjs' -o -name '*.test.mjs' -o -name '*.cjs' \) ! -name 'aha-python-engine-smoke.test.cjs' | sort)
-          for file in "${files[@]:180:10}"; do echo "RUN $file"; node "$file"; done
+          for file in "${files[@]:190:5}"; do echo "RUN $file"; node "$file"; done
 
-      - name: Diagnose suite chunk 191-200
+      - name: Diagnose suite chunk 196-200
         shell: bash
         run: |
           set -euo pipefail
           mapfile -t files < <(find tests -maxdepth 1 -type f \( -name '*.test.cjs' -o -name '*.test.mjs' -o -name '*.cjs' \) ! -name 'aha-python-engine-smoke.test.cjs' | sort)
-          for file in "${files[@]:190:10}"; do echo "RUN $file"; node "$file"; done
-
-      - name: Diagnose suite chunk 201-210
-        shell: bash
-        run: |
-          set -euo pipefail
-          mapfile -t files < <(find tests -maxdepth 1 -type f \( -name '*.test.cjs' -o -name '*.test.mjs' -o -name '*.cjs' \) ! -name 'aha-python-engine-smoke.test.cjs' | sort)
-          for file in "${files[@]:200:10}"; do echo "RUN $file"; node "$file"; done
+          for file in "${files[@]:195:5}"; do echo "RUN $file"; node "$file"; done
 
       - name: Run deterministic Node test suite
         run: npm test
