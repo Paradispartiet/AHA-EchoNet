@@ -1,0 +1,75 @@
+{
+  "version": "aha_canonical_sync_production_pilot_proof_v1",
+  "status": "verified_single_profile_manual_sync",
+  "capturedDate": "2026-08-19",
+  "production": {
+    "platform": "azure_container_apps",
+    "database": "dedicated_private_postgresql_16",
+    "activationRevision": "e620543a12df445fd9e507245192cd4cb66d934c",
+    "rolloutGate": {
+      "runId": 32125812197,
+      "conclusion": "success",
+      "gitSha": "e620543a12df445fd9e507245192cd4cb66d934c",
+      "sameShaAsActivation": true
+    },
+    "activation": {
+      "runId": 32126107290,
+      "conclusion": "success",
+      "gitSha": "e620543a12df445fd9e507245192cd4cb66d934c",
+      "mode": "single_profile_allowlist",
+      "committed": true
+    }
+  },
+  "browserRoundtrip": {
+    "evidenceType": "operator_observed_browser_result",
+    "firstSuccessfulRun": {
+      "pushed": 1,
+      "conflicts": 0,
+      "serverStateAppliedLocally": true
+    },
+    "idempotentRepeat": {
+      "localPrepared": 1,
+      "localChanged": 0,
+      "enqueued": 0,
+      "pushed": 0,
+      "bootstrapApplied": 0,
+      "pullApplied": 0,
+      "conflicts": 0
+    },
+    "homeHydrationRun": {
+      "localPreparedBeforeBootstrap": 0,
+      "bootstrapApplied": 1,
+      "pushed": 0,
+      "conflicts": 0,
+      "note": "localPrepared is measured before bootstrap in AHACanonicalManualSyncRunner"
+    }
+  },
+  "homeIntegration": {
+    "manualSyncPrs": [780, 781, 782],
+    "frontendMainAtEvidence": "ed947cf4bfdb3f36eef2e8ccf453ae27d089c73e",
+    "visibleOnHome": true,
+    "explicitUserActionRequired": true,
+    "explicitConsentRequired": true,
+    "automaticSync": false,
+    "loginTriggeredSync": false,
+    "authReadyTriggeredSync": false,
+    "backgroundSync": false,
+    "automaticRetry": false
+  },
+  "securityBoundary": {
+    "serverSidePilotAllowlist": true,
+    "maxProfiles": 1,
+    "workspaceDerivedFromAuthenticatedSubject": true,
+    "userSelectableWorkspace": false,
+    "rawPayloadRendered": false,
+    "profileIdentifierRendered": false,
+    "accessTokenRendered": false,
+    "localImportEnabled": false,
+    "emergencyDatabaseFirstRollbackAvailable": true
+  },
+  "nextBoundary": {
+    "automaticExpansionAllowed": false,
+    "multiProfileActivationRequiresSeparateReviewedChange": true,
+    "backgroundSyncRequiresSeparateReviewedChange": true
+  }
+}
