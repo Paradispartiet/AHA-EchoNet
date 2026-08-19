@@ -77,7 +77,12 @@ function contract() {
     if (policy.frontend?.[field] !== false) fail(`frontend.${field} must remain false before pilot activation`);
   }
 
-  if (policy.pilot?.mode !== "single_profile_allowlist" || policy.pilot?.maxProfiles !== 1) fail("first production rollout must be limited to exactly one allowlisted profile");
+  if (
+    policy.pilot?.mode !== "bounded_manual_allowlist" ||
+    policy.pilot?.maxProfiles !== 10 ||
+    policy.pilot?.profilesAddedPerActivation !== 1 ||
+    policy.pilot?.serverSideAllowlistRequired !== true
+  ) fail("production pilot policy must remain bounded manual: max 10 profiles, one profile per explicit activation, server-side allowlist required");
   if (policy.pilot?.profileIdentifierMustComeFromProtectedEnvironment !== true || policy.pilot?.publicProfileIdentifierAllowed !== false) fail("pilot profile identity must stay protected");
   if (policy.pilot?.automaticExpansionAllowed !== false || policy.pilot?.groupOrPublicSharingAllowed !== false) fail("pilot scope must not expand automatically");
 
