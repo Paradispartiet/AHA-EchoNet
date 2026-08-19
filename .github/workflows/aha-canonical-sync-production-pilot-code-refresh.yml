@@ -1,0 +1,440 @@
+name: AHA canonical sync production pilot code refresh
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: "Skriv RUN_AHA_CANONICAL_PRODUCTION_PILOT_CODE_REFRESH for å oppdatere API-koden uten å endre den aktive to-profil-piloten"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: aha-canonical-production-pilot-control
+  cancel-in-progress: false
+
+jobs:
+  refresh-production-pilot-code:
+    name: Refresh immutable API while preserving exactly two pilot profiles
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    environment: aha-canonical-production-infra
+
+    env:
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      AHA_AZURE_LOCATION: ${{ vars.AHA_PRODUCTION_AZURE_LOCATION || 'westeurope' }}
+      AHA_PRODUCTION_RESOURCE_GROUP: ${{ vars.AHA_PRODUCTION_RESOURCE_GROUP || 'rg-aha-canonical-prod' }}
+      AHA_PRODUCTION_CONTAINER_APP: aha-canonical-api-production
+      AHA_FYSEN_CALLBACK: https://fysen-matsgran-8572s-projects.vercel.app/api/aha/callback
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Require main and exact code-refresh confirmation
+        shell: bash
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_REF" != 'refs/heads/main' ]]; then
+            echo "Production pilot code refresh only runs from main." >&2
+            exit 1
+          fi
+          if [[ "$CONFIRMATION" != 'RUN_AHA_CANONICAL_PRODUCTION_PILOT_CODE_REFRESH' ]]; then
+            echo "Exact production pilot code-refresh confirmation is required." >&2
+            exit 1
+          fi
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Run same-SHA deterministic repository tests
+        run: npm test
+
+      - name: Install and test the same-SHA NestJS API
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --prefix backend/api
+          npm test --prefix backend/api
+
+      - name: Compile the same-SHA production app template before Azure mutation
+        shell: bash
+        run: |
+          set -euo pipefail
+          az bicep install
+          az bicep build --file infra/azure/production/app.bicep --stdout >/dev/null
+
+      - name: Azure OIDC login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Prepare Container Apps tooling
+        shell: bash
+        run: |
+          set -euo pipefail
+          az extension add --name containerapp --upgrade --only-show-errors
+          printf 'AHA_REFRESH_AZURE_READY=1\n' >> "$GITHUB_ENV"
+
+      - name: Resolve and lock the active two-profile production boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          app_json="$RUNNER_TEMP/code-refresh-live-app.json"
+          az containerapp show \
+            --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
+            --name "$AHA_PRODUCTION_CONTAINER_APP" \
+            -o json --only-show-errors > "$app_json"
+
+          fqdn="$(jq -r '.properties.configuration.ingress.fqdn // empty' "$app_json")"
+          current_sync="$(jq -r '[.properties.template.containers[0].env[] | select(.name=="AHA_CANONICAL_SYNC_ENABLED") | .value][0] // "false"' "$app_json")"
+          current_runtime="$(jq -r '[.properties.template.containers[0].env[] | select(.name=="AHA_RUNTIME_ACTIVATED") | .value][0] // "false"' "$app_json")"
+          current_revision="$(jq -r '[.properties.template.containers[0].env[] | select(.name=="AHA_API_VERSION") | .value][0] // empty' "$app_json")"
+          current_image="$(jq -r '.properties.template.containers[0].image // empty' "$app_json")"
+          allowed_origin="$(jq -r '[.properties.template.containers[0].env[] | select(.name=="AHA_ALLOWED_ORIGINS") | .value][0] // empty' "$app_json")"
+          auth_issuer="$(jq -r '[.properties.template.containers[0].env[] | select(.name=="AHA_AUTH_ISSUER") | .value][0] // empty' "$app_json")"
+          auth_audience="$(jq -r '[.properties.template.containers[0].env[] | select(.name=="AHA_AUTH_AUDIENCE") | .value][0] // empty' "$app_json")"
+          auth_jwks_url="$(jq -r '[.properties.template.containers[0].env[] | select(.name=="AHA_AUTH_JWKS_URL") | .value][0] // empty' "$app_json")"
+          cae_id="$(jq -r '.properties.environmentId // empty' "$app_json")"
+          runtime_identity_id="$(jq -r '.identity.userAssignedIdentities | keys[0] // empty' "$app_json")"
+          appinsights="$(jq -r '[.properties.template.containers[0].env[] | select(.name=="APPLICATIONINSIGHTS_CONNECTION_STRING") | .value][0] // empty' "$app_json")"
+          database_uri="$(jq -r '[.properties.configuration.secrets[] | select(.name=="database-url") | .keyVaultUrl][0] // empty' "$app_json")"
+          database_ca_uri="$(jq -r '[.properties.configuration.secrets[] | select(.name=="database-ca") | .keyVaultUrl][0] // empty' "$app_json")"
+          audit_salt_uri="$(jq -r '[.properties.configuration.secrets[] | select(.name=="audit-salt") | .keyVaultUrl][0] // empty' "$app_json")"
+          legacy_pilot_uri="$(jq -r '[.properties.configuration.secrets[] | select(.name=="pilot-profile-id") | .keyVaultUrl][0] // empty' "$app_json")"
+          allowlist_uri="$(jq -r '[.properties.configuration.secrets[] | select(.name=="pilot-profile-ids-json") | .keyVaultUrl][0] // empty' "$app_json")"
+          tags_json="$(jq -c '.tags // {}' "$app_json")"
+
+          [[ -n "$fqdn" && -n "$current_image" && -n "$cae_id" && -n "$runtime_identity_id" && -n "$appinsights" ]] || {
+            echo "Could not resolve the complete active production runtime shape." >&2
+            exit 1
+          }
+          [[ -n "$allowed_origin" && -n "$auth_issuer" && -n "$auth_audience" && -n "$auth_jwks_url" ]] || {
+            echo "Code refresh refuses to infer live auth or origin configuration." >&2
+            exit 1
+          }
+          [[ -n "$database_uri" && -n "$database_ca_uri" && -n "$audit_salt_uri" && -n "$legacy_pilot_uri" && -n "$allowlist_uri" ]] || {
+            echo "Code refresh requires the complete protected production secret boundary." >&2
+            exit 1
+          }
+          [[ "$current_sync" == 'true' && "$current_runtime" == 'true' ]] || {
+            echo "Code refresh requires an already active canonical production pilot." >&2
+            exit 1
+          }
+          [[ "$current_revision" =~ ^[0-9a-f]{40}$ ]] || {
+            echo "Active production pilot is not an immutable Git revision." >&2
+            exit 1
+          }
+          [[ "$tags_json" == '{}' ]] || {
+            echo "Code refresh refuses to mutate a tagged Container App until tags are explicitly preserved." >&2
+            exit 1
+          }
+          [[ "$allowlist_uri" =~ ^https://[^/]+\.vault\.azure\.net/secrets/aha-production-pilot-profile-ids-json/[^/]+$ ]] || {
+            echo "Code refresh requires a version-pinned two-profile allowlist secret URI." >&2
+            exit 1
+          }
+
+          runtime_vault="$(AHA_VAULT_URL="$database_uri" python3 -c 'import os; from urllib.parse import urlparse; host=urlparse(os.environ["AHA_VAULT_URL"]).hostname or ""; assert host.endswith(".vault.azure.net"); print(host.split(".")[0], end="")')"
+          current_allowlist="$(az keyvault secret show --id "$allowlist_uri" --query value -o tsv --only-show-errors)"
+          current_allowlist="$(jq -c 'map(ascii_downcase)' <<<"$current_allowlist")"
+          jq -e '
+            type == "array" and
+            length == 2 and
+            all(.[]; type == "string" and test("^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$")) and
+            length == (unique | length)
+          ' <<<"$current_allowlist" >/dev/null || {
+            echo "Code refresh requires exactly two unique protected pilot profiles." >&2
+            exit 1
+          }
+          printf '::add-mask::%s\n' "$current_allowlist"
+
+          legacy_anchor="$(az keyvault secret show --id "$legacy_pilot_uri" --query value -o tsv --only-show-errors)"
+          legacy_anchor="${legacy_anchor,,}"
+          printf '::add-mask::%s\n' "$legacy_anchor"
+          jq -e --arg anchor "$legacy_anchor" 'index($anchor) != null' <<<"$current_allowlist" >/dev/null || {
+            echo "The protected legacy pilot anchor is not present in the active two-profile allowlist." >&2
+            exit 1
+          }
+
+          health="$RUNNER_TEMP/code-refresh-preflight-health.json"
+          curl --fail --silent --show-error --max-time 20 "https://${fqdn}/v1/health" > "$health"
+          jq -e --arg revision "$current_revision" '
+            .status == "ok" and
+            .service == "aha-nest-api" and
+            .version == $revision and
+            .runtimeActivated == true and
+            .canonicalSync.enabled == true and
+            .canonicalSync.profileLimitMode == "protected_allowlist" and
+            .canonicalSync.allowedProfileCount == 2 and
+            .database.configured == true and
+            .database.connected == true and
+            .database.safeRuntimeRole == true and
+            .database.canonicalSchema == "present" and
+            .auth.configured == true
+          ' "$health" >/dev/null || {
+            echo "Active production pilot failed the exact two-profile pre-refresh health contract." >&2
+            exit 1
+          }
+
+          acr_json="$(az acr list --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" -o json --only-show-errors)"
+          [[ "$(jq 'length' <<<"$acr_json")" == '1' ]] || {
+            echo "Code refresh requires exactly one production ACR." >&2
+            exit 1
+          }
+          acr_name="$(jq -r '.[0].name' <<<"$acr_json")"
+          acr_login="$(jq -r '.[0].loginServer' <<<"$acr_json")"
+
+          {
+            printf 'AHA_REFRESH_API_FQDN=%s\n' "$fqdn"
+            printf 'AHA_REFRESH_PREVIOUS_REVISION=%s\n' "$current_revision"
+            printf 'AHA_REFRESH_PREVIOUS_IMAGE=%s\n' "$current_image"
+            printf 'AHA_REFRESH_CAE_NAME=%s\n' "${cae_id##*/}"
+            printf 'AHA_REFRESH_RUNTIME_IDENTITY_NAME=%s\n' "${runtime_identity_id##*/}"
+            printf 'AHA_REFRESH_RUNTIME_KEYVAULT=%s\n' "$runtime_vault"
+            printf 'AHA_REFRESH_APPINSIGHTS=%s\n' "$appinsights"
+            printf 'AHA_REFRESH_ALLOWED_ORIGIN=%s\n' "$allowed_origin"
+            printf 'AHA_REFRESH_AUTH_ISSUER=%s\n' "$auth_issuer"
+            printf 'AHA_REFRESH_AUTH_AUDIENCE=%s\n' "$auth_audience"
+            printf 'AHA_REFRESH_AUTH_JWKS_URL=%s\n' "$auth_jwks_url"
+            printf 'AHA_REFRESH_DATABASE_SECRET_URI=%s\n' "$database_uri"
+            printf 'AHA_REFRESH_DATABASE_CA_SECRET_URI=%s\n' "$database_ca_uri"
+            printf 'AHA_REFRESH_AUDIT_SALT_SECRET_URI=%s\n' "$audit_salt_uri"
+            printf 'AHA_REFRESH_LEGACY_PILOT_SECRET_URI=%s\n' "$legacy_pilot_uri"
+            printf 'AHA_REFRESH_ALLOWLIST_SECRET_URI=%s\n' "$allowlist_uri"
+            printf 'AHA_REFRESH_ACR_NAME=%s\n' "$acr_name"
+            printf 'AHA_REFRESH_ACR_LOGIN=%s\n' "$acr_login"
+          } >> "$GITHUB_ENV"
+
+      - name: Build the immutable same-SHA API image
+        shell: bash
+        run: |
+          set -euo pipefail
+          az acr build \
+            --registry "$AHA_REFRESH_ACR_NAME" \
+            --image "aha-canonical-api:${GITHUB_SHA}" \
+            --file backend/api/Dockerfile \
+            backend/api \
+            --only-show-errors >/dev/null
+          printf 'AHA_REFRESH_API_IMAGE=%s/aha-canonical-api:%s\n' "$AHA_REFRESH_ACR_LOGIN" "$GITHUB_SHA" >> "$GITHUB_ENV"
+
+      - name: Deploy the new API revision without changing pilot state
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf 'AHA_REFRESH_API_TOUCHED=1\n' >> "$GITHUB_ENV"
+          az deployment group create \
+            --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
+            --name "aha-production-pilot-code-refresh-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" \
+            --template-file infra/azure/production/app.bicep \
+            --parameters \
+              location="$AHA_AZURE_LOCATION" \
+              containerAppName="$AHA_PRODUCTION_CONTAINER_APP" \
+              containerAppsEnvironmentName="$AHA_REFRESH_CAE_NAME" \
+              managedIdentityName="$AHA_REFRESH_RUNTIME_IDENTITY_NAME" \
+              acrName="$AHA_REFRESH_ACR_NAME" \
+              keyVaultName="$AHA_REFRESH_RUNTIME_KEYVAULT" \
+              image="$AHA_REFRESH_API_IMAGE" \
+              deployRevision="$GITHUB_SHA" \
+              allowedOrigin="$AHA_REFRESH_ALLOWED_ORIGIN" \
+              authIssuer="$AHA_REFRESH_AUTH_ISSUER" \
+              authAudience="$AHA_REFRESH_AUTH_AUDIENCE" \
+              authJwksUrl="$AHA_REFRESH_AUTH_JWKS_URL" \
+              databaseUrlSecretUri="$AHA_REFRESH_DATABASE_SECRET_URI" \
+              databaseCaSecretUri="$AHA_REFRESH_DATABASE_CA_SECRET_URI" \
+              auditSaltSecretUri="$AHA_REFRESH_AUDIT_SALT_SECRET_URI" \
+              pilotProfileIdSecretUri="$AHA_REFRESH_LEGACY_PILOT_SECRET_URI" \
+              allowedProfileIdsSecretUri="$AHA_REFRESH_ALLOWLIST_SECRET_URI" \
+              canonicalSyncEnabled=true \
+              runtimeActivated=true \
+              fysenIntegrationEnabled=true \
+              fysenRedirectUris="$AHA_FYSEN_CALLBACK" \
+              fysenAuthorizationTtlSeconds=180 \
+              applicationInsightsConnectionString="$AHA_REFRESH_APPINSIGHTS" \
+            --only-show-errors >/dev/null
+
+      - name: Verify new revision, unchanged two-profile boundary and Fysen exchange
+        shell: bash
+        run: |
+          set -euo pipefail
+          health="$RUNNER_TEMP/code-refresh-health.json"
+          ready=0
+          for attempt in {1..60}; do
+            if curl --fail --silent --show-error --max-time 20 "https://${AHA_REFRESH_API_FQDN}/v1/health" > "$health"; then
+              if jq -e --arg revision "$GITHUB_SHA" '
+                .status == "ok" and
+                .service == "aha-nest-api" and
+                .version == $revision and
+                .runtimeActivated == true and
+                .canonicalSync.enabled == true and
+                .canonicalSync.profileLimitMode == "protected_allowlist" and
+                .canonicalSync.allowedProfileCount == 2 and
+                .database.configured == true and
+                .database.connected == true and
+                .database.safeRuntimeRole == true and
+                .database.canonicalSchema == "present" and
+                .auth.configured == true
+              ' "$health" >/dev/null; then
+                ready=1
+                break
+              fi
+            fi
+            sleep 10
+          done
+          [[ "$ready" == '1' ]] || {
+            echo "Refreshed production API did not reach the exact two-profile health contract." >&2
+            exit 1
+          }
+
+          app_json="$RUNNER_TEMP/code-refresh-post-app.json"
+          az containerapp show \
+            --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
+            --name "$AHA_PRODUCTION_CONTAINER_APP" \
+            -o json --only-show-errors > "$app_json"
+          post_allowlist_uri="$(jq -r '[.properties.configuration.secrets[] | select(.name=="pilot-profile-ids-json") | .keyVaultUrl][0] // empty' "$app_json")"
+          fysen_enabled="$(jq -r '[.properties.template.containers[0].env[] | select(.name=="AHA_FYSEN_INTEGRATION_ENABLED") | .value][0] // empty' "$app_json")"
+          fysen_redirects="$(jq -r '[.properties.template.containers[0].env[] | select(.name=="AHA_FYSEN_REDIRECT_URIS") | .value][0] // empty' "$app_json")"
+          fysen_ttl="$(jq -r '[.properties.template.containers[0].env[] | select(.name=="AHA_FYSEN_AUTHORIZATION_TTL_SECONDS") | .value][0] // empty' "$app_json")"
+          [[ "$post_allowlist_uri" == "$AHA_REFRESH_ALLOWLIST_SECRET_URI" ]] || {
+            echo "Code refresh changed the version-pinned production allowlist reference." >&2
+            exit 1
+          }
+          [[ "$fysen_enabled" == 'true' && "$fysen_redirects" == "$AHA_FYSEN_CALLBACK" && "$fysen_ttl" == '180' ]] || {
+            echo "Code refresh did not persist the exact Fysen production wiring." >&2
+            exit 1
+          }
+
+          exchange_body="$RUNNER_TEMP/code-refresh-fysen-exchange.json"
+          exchange_status="$(curl --silent --show-error --max-time 20 \
+            --output "$exchange_body" \
+            --write-out '%{http_code}' \
+            --request POST \
+            --header 'content-type: application/json' \
+            --data "{\"clientId\":\"fysen\",\"redirectUri\":\"${AHA_FYSEN_CALLBACK}\",\"codeVerifier\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"authorizationCode\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\"}" \
+            "https://${AHA_REFRESH_API_FQDN}/v1/integrations/fysen/exchange")"
+          [[ "$exchange_status" == '409' ]] || {
+            echo "Fysen exchange did not reject an invalid signed code at the expected post-allowlist stage; status=${exchange_status}." >&2
+            exit 1
+          }
+
+          printf 'AHA_REFRESH_COMMITTED=1\n' >> "$GITHUB_ENV"
+          echo "AHA bounded production pilot code refresh: COMMITTED_TWO_PROFILE_BOUNDARY_UNCHANGED"
+
+      - name: Write non-identifying code-refresh evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/evidence"
+          jq -n \
+            --arg sha "$GITHUB_SHA" \
+            --arg previous "$AHA_REFRESH_PREVIOUS_REVISION" \
+            '{
+              version: "aha_canonical_production_pilot_code_refresh_v1",
+              status: "pass",
+              refreshGitSha: $sha,
+              previousLiveRevision: $previous,
+              allowedProfileCountBefore: 2,
+              allowedProfileCountAfter: 2,
+              allowlistSecretReferenceUnchanged: true,
+              profileAdded: false,
+              allowlistChanged: false,
+              databaseCredentialChanged: false,
+              productionCanonicalDataMutated: false,
+              canonicalSyncEnabled: true,
+              runtimeActivated: true,
+              fysenIntegrationEnabled: true,
+              exactFysenCallbackAllowlisted: true,
+              invalidSignedFysenCodeStatus: 409
+            }' > "$RUNNER_TEMP/evidence/pilot-code-refresh.json"
+
+      - name: Upload immutable code-refresh evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: aha-production-pilot-code-refresh-${{ github.run_id }}
+          path: ${{ runner.temp }}/evidence/pilot-code-refresh.json
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Restore the previous API revision if refresh verification is incomplete
+        if: always()
+        shell: bash
+        run: |
+          set +e
+          if [[ "${AHA_REFRESH_COMMITTED:-0}" == '1' ]]; then
+            echo "Code refresh committed; API rollback skipped."
+            exit 0
+          fi
+          if [[ "${AHA_REFRESH_API_TOUCHED:-0}" != '1' ]]; then
+            echo "Production API was never changed; rollback not required."
+            exit 0
+          fi
+
+          az deployment group create \
+            --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
+            --name "aha-production-pilot-code-refresh-restore-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" \
+            --template-file infra/azure/production/app.bicep \
+            --parameters \
+              location="$AHA_AZURE_LOCATION" \
+              containerAppName="$AHA_PRODUCTION_CONTAINER_APP" \
+              containerAppsEnvironmentName="$AHA_REFRESH_CAE_NAME" \
+              managedIdentityName="$AHA_REFRESH_RUNTIME_IDENTITY_NAME" \
+              acrName="$AHA_REFRESH_ACR_NAME" \
+              keyVaultName="$AHA_REFRESH_RUNTIME_KEYVAULT" \
+              image="$AHA_REFRESH_PREVIOUS_IMAGE" \
+              deployRevision="$AHA_REFRESH_PREVIOUS_REVISION" \
+              allowedOrigin="$AHA_REFRESH_ALLOWED_ORIGIN" \
+              authIssuer="$AHA_REFRESH_AUTH_ISSUER" \
+              authAudience="$AHA_REFRESH_AUTH_AUDIENCE" \
+              authJwksUrl="$AHA_REFRESH_AUTH_JWKS_URL" \
+              databaseUrlSecretUri="$AHA_REFRESH_DATABASE_SECRET_URI" \
+              databaseCaSecretUri="$AHA_REFRESH_DATABASE_CA_SECRET_URI" \
+              auditSaltSecretUri="$AHA_REFRESH_AUDIT_SALT_SECRET_URI" \
+              pilotProfileIdSecretUri="$AHA_REFRESH_LEGACY_PILOT_SECRET_URI" \
+              allowedProfileIdsSecretUri="$AHA_REFRESH_ALLOWLIST_SECRET_URI" \
+              canonicalSyncEnabled=true \
+              runtimeActivated=true \
+              fysenIntegrationEnabled=false \
+              fysenRedirectUris="$AHA_FYSEN_CALLBACK" \
+              fysenAuthorizationTtlSeconds=180 \
+              applicationInsightsConnectionString="$AHA_REFRESH_APPINSIGHTS" \
+            --only-show-errors >/dev/null || {
+              echo "Code refresh failed and the previous pilot API revision could not be restored." >&2
+              exit 1
+            }
+
+          health="$RUNNER_TEMP/code-refresh-restored-health.json"
+          restored=0
+          for attempt in {1..60}; do
+            if curl --fail --silent --show-error --max-time 20 "https://${AHA_REFRESH_API_FQDN}/v1/health" > "$health"; then
+              if jq -e --arg revision "$AHA_REFRESH_PREVIOUS_REVISION" '
+                .status == "ok" and
+                .service == "aha-nest-api" and
+                .version == $revision and
+                .runtimeActivated == true and
+                .canonicalSync.enabled == true and
+                .canonicalSync.profileLimitMode == "protected_allowlist" and
+                .canonicalSync.allowedProfileCount == 2 and
+                .database.connected == true and
+                .database.safeRuntimeRole == true
+              ' "$health" >/dev/null; then
+                restored=1
+                break
+              fi
+            fi
+            sleep 10
+          done
+          [[ "$restored" == '1' ]] || {
+            echo "Previous two-profile pilot health was not restored after incomplete code refresh." >&2
+            exit 1
+          }
+          echo "AHA bounded production pilot code refresh: ROLLED_BACK_PREVIOUS_API_REVISION_TWO_PROFILE_BOUNDARY_PRESERVED"
