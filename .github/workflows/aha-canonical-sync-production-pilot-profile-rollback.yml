@@ -1,0 +1,289 @@
+name: AHA canonical sync production pilot profile rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: "Skriv RUN_AHA_CANONICAL_PRODUCTION_PILOT_PROFILE_ROLLBACK for å fjerne én utvidet pilotprofil fra API-allowlisten"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: aha-canonical-production-pilot-control
+  cancel-in-progress: false
+
+jobs:
+  rollback-one-expanded-pilot:
+    name: Remove exactly one expanded pilot from API access and retain canonical data
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    environment: aha-canonical-production-infra
+
+    env:
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      AHA_PRODUCTION_PILOT_ROLLBACK_PROFILE_ID: ${{ secrets.AHA_PRODUCTION_PILOT_ROLLBACK_PROFILE_ID }}
+      AHA_AZURE_LOCATION: ${{ vars.AHA_PRODUCTION_AZURE_LOCATION || 'westeurope' }}
+      AHA_PRODUCTION_RESOURCE_GROUP: ${{ vars.AHA_PRODUCTION_RESOURCE_GROUP || 'rg-aha-canonical-prod' }}
+      AHA_PRODUCTION_CONTAINER_APP: aha-canonical-api-production
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Require main, exact rollback confirmation and one protected target
+        shell: bash
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_REF" != 'refs/heads/main' ]]; then
+            echo "Per-profile production pilot rollback only runs from main." >&2
+            exit 1
+          fi
+          if [[ "$CONFIRMATION" != 'RUN_AHA_CANONICAL_PRODUCTION_PILOT_PROFILE_ROLLBACK' ]]; then
+            echo "Exact per-profile production pilot rollback confirmation is required." >&2
+            exit 1
+          fi
+          if [[ ! "$AHA_PRODUCTION_PILOT_ROLLBACK_PROFILE_ID" =~ ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$ ]]; then
+            echo "AHA_PRODUCTION_PILOT_ROLLBACK_PROFILE_ID must be one protected UUID." >&2
+            exit 1
+          fi
+          printf '::add-mask::%s\n' "$AHA_PRODUCTION_PILOT_ROLLBACK_PROFILE_ID"
+          target_lower="${AHA_PRODUCTION_PILOT_ROLLBACK_PROFILE_ID,,}"
+          target_fingerprint="$(printf '%s' "$target_lower" | sha256sum | awk '{print $1}')"
+          {
+            printf 'AHA_PROFILE_ROLLBACK_TARGET_LOWER=%s\n' "$target_lower"
+            printf 'AHA_PROFILE_ROLLBACK_TARGET_FINGERPRINT=%s\n' "$target_fingerprint"
+          } >> "$GITHUB_ENV"
+
+      - name: Azure OIDC login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Prepare Container Apps tooling
+        shell: bash
+        run: |
+          set -euo pipefail
+          az extension add --name containerapp --upgrade --only-show-errors
+
+      - name: Resolve active expanded allowlist and forbid rollback of the legacy anchor
+        shell: bash
+        run: |
+          set -euo pipefail
+          app_json="$RUNNER_TEMP/profile-rollback-live-app.json"
+          az containerapp show \
+            --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
+            --name "$AHA_PRODUCTION_CONTAINER_APP" \
+            -o json --only-show-errors > "$app_json"
+
+          fqdn="$(jq -r '.properties.configuration.ingress.fqdn // empty' "$app_json")"
+          current_sync="$(jq -r '[.properties.template.containers[0].env[] | select(.name=="AHA_CANONICAL_SYNC_ENABLED") | .value][0] // "false"' "$app_json")"
+          current_runtime="$(jq -r '[.properties.template.containers[0].env[] | select(.name=="AHA_RUNTIME_ACTIVATED") | .value][0] // "false"' "$app_json")"
+          current_revision="$(jq -r '[.properties.template.containers[0].env[] | select(.name=="AHA_API_VERSION") | .value][0] // empty' "$app_json")"
+          current_image="$(jq -r '.properties.template.containers[0].image // empty' "$app_json")"
+          cae_id="$(jq -r '.properties.environmentId // empty' "$app_json")"
+          runtime_identity_id="$(jq -r '.identity.userAssignedIdentities | keys[0] // empty' "$app_json")"
+          appinsights="$(jq -r '[.properties.template.containers[0].env[] | select(.name=="APPLICATIONINSIGHTS_CONNECTION_STRING") | .value][0] // empty' "$app_json")"
+          database_uri="$(jq -r '[.properties.configuration.secrets[] | select(.name=="database-url") | .keyVaultUrl][0] // empty' "$app_json")"
+          database_ca_uri="$(jq -r '[.properties.configuration.secrets[] | select(.name=="database-ca") | .keyVaultUrl][0] // empty' "$app_json")"
+          audit_salt_uri="$(jq -r '[.properties.configuration.secrets[] | select(.name=="audit-salt") | .keyVaultUrl][0] // empty' "$app_json")"
+          legacy_pilot_uri="$(jq -r '[.properties.configuration.secrets[] | select(.name=="pilot-profile-id") | .keyVaultUrl][0] // empty' "$app_json")"
+          current_allowlist_uri="$(jq -r '[.properties.configuration.secrets[] | select(.name=="pilot-profile-ids-json") | .keyVaultUrl][0] // empty' "$app_json")"
+
+          [[ "$current_sync" == 'true' && "$current_runtime" == 'true' ]] || {
+            echo "Per-profile rollback requires an active canonical production pilot runtime." >&2
+            exit 1
+          }
+          [[ "$current_revision" =~ ^[0-9a-f]{40}$ && -n "$current_image" ]] || {
+            echo "Per-profile rollback requires an immutable active API revision and image." >&2
+            exit 1
+          }
+          [[ -n "$fqdn" && -n "$cae_id" && -n "$runtime_identity_id" && -n "$appinsights" ]] || {
+            echo "Could not resolve complete active production runtime shape." >&2
+            exit 1
+          }
+          [[ -n "$database_uri" && -n "$database_ca_uri" && -n "$audit_salt_uri" && -n "$legacy_pilot_uri" && -n "$current_allowlist_uri" ]] || {
+            echo "Per-profile rollback requires a version-pinned expanded JSON allowlist." >&2
+            exit 1
+          }
+
+          runtime_vault="$(AHA_VAULT_URL="$database_uri" python3 -c 'import os; from urllib.parse import urlparse; host=urlparse(os.environ["AHA_VAULT_URL"]).hostname or ""; assert host.endswith(".vault.azure.net"); print(host.split(".")[0], end="")')"
+          anchor="$(az keyvault secret show --id "$legacy_pilot_uri" --query value -o tsv --only-show-errors)"
+          anchor_lower="${anchor,,}"
+          printf '::add-mask::%s\n' "$anchor"
+          if [[ "$anchor_lower" == "$AHA_PROFILE_ROLLBACK_TARGET_LOWER" ]]; then
+            echo "The legacy protected pilot anchor cannot be removed by per-profile rollback. Use the full pilot rollback workflow for global cutoff." >&2
+            exit 1
+          fi
+
+          current_allowlist="$(az keyvault secret show --id "$current_allowlist_uri" --query value -o tsv --only-show-errors)"
+          current_allowlist="$(jq -c 'map(ascii_downcase)' <<<"$current_allowlist")"
+          jq -e --arg anchor "$anchor_lower" --arg target "$AHA_PROFILE_ROLLBACK_TARGET_LOWER" '
+            type == "array" and
+            length >= 2 and length <= 10 and
+            length == (unique | length) and
+            index($anchor) != null and
+            index($target) != null
+          ' <<<"$current_allowlist" >/dev/null || {
+            echo "Rollback target is not one member of a valid expanded protected allowlist." >&2
+            exit 1
+          }
+          current_count="$(jq 'length' <<<"$current_allowlist")"
+          reduced_allowlist="$(jq -c --arg target "$AHA_PROFILE_ROLLBACK_TARGET_LOWER" 'map(select(. != $target))' <<<"$current_allowlist")"
+          reduced_count="$(jq 'length' <<<"$reduced_allowlist")"
+          [[ "$reduced_count" -eq $((current_count - 1)) && "$reduced_count" -ge 1 ]] || {
+            echo "Per-profile rollback must remove exactly one allowlisted profile." >&2
+            exit 1
+          }
+          jq -e --arg anchor "$anchor_lower" --arg target "$AHA_PROFILE_ROLLBACK_TARGET_LOWER" 'index($anchor) != null and index($target) == null' <<<"$reduced_allowlist" >/dev/null
+
+          health="$RUNNER_TEMP/profile-rollback-preflight-health.json"
+          curl --fail --silent --show-error --max-time 20 "https://${fqdn}/v1/health" > "$health"
+          jq -e --arg revision "$current_revision" --argjson count "$current_count" '
+            .status == "ok" and
+            .version == $revision and
+            .runtimeActivated == true and
+            .canonicalSync.enabled == true and
+            .canonicalSync.allowedProfileCount == $count and
+            .database.connected == true and
+            .database.safeRuntimeRole == true
+          ' "$health" >/dev/null
+
+          acr_json="$(az acr list --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" -o json --only-show-errors)"
+          [[ "$(jq 'length' <<<"$acr_json")" == '1' ]] || { echo "Per-profile rollback requires exactly one production ACR." >&2; exit 1; }
+          acr_name="$(jq -r '.[0].name' <<<"$acr_json")"
+
+          printf '::add-mask::%s\n' "$current_allowlist"
+          printf '::add-mask::%s\n' "$reduced_allowlist"
+          {
+            printf 'AHA_PROFILE_ROLLBACK_FQDN=%s\n' "$fqdn"
+            printf 'AHA_PROFILE_ROLLBACK_REVISION=%s\n' "$current_revision"
+            printf 'AHA_PROFILE_ROLLBACK_IMAGE=%s\n' "$current_image"
+            printf 'AHA_PROFILE_ROLLBACK_CAE_NAME=%s\n' "${cae_id##*/}"
+            printf 'AHA_PROFILE_ROLLBACK_RUNTIME_IDENTITY_NAME=%s\n' "${runtime_identity_id##*/}"
+            printf 'AHA_PROFILE_ROLLBACK_APPINSIGHTS=%s\n' "$appinsights"
+            printf 'AHA_PROFILE_ROLLBACK_DATABASE_SECRET_URI=%s\n' "$database_uri"
+            printf 'AHA_PROFILE_ROLLBACK_DATABASE_CA_SECRET_URI=%s\n' "$database_ca_uri"
+            printf 'AHA_PROFILE_ROLLBACK_AUDIT_SALT_SECRET_URI=%s\n' "$audit_salt_uri"
+            printf 'AHA_PROFILE_ROLLBACK_LEGACY_PILOT_SECRET_URI=%s\n' "$legacy_pilot_uri"
+            printf 'AHA_PROFILE_ROLLBACK_CURRENT_ALLOWLIST_SECRET_URI=%s\n' "$current_allowlist_uri"
+            printf 'AHA_PROFILE_ROLLBACK_RUNTIME_KEYVAULT=%s\n' "$runtime_vault"
+            printf 'AHA_PROFILE_ROLLBACK_ACR_NAME=%s\n' "$acr_name"
+            printf 'AHA_PROFILE_ROLLBACK_CURRENT_COUNT=%s\n' "$current_count"
+            printf 'AHA_PROFILE_ROLLBACK_REDUCED_COUNT=%s\n' "$reduced_count"
+            printf 'AHA_PROFILE_ROLLBACK_REDUCED_ALLOWLIST=%s\n' "$reduced_allowlist"
+          } >> "$GITHUB_ENV"
+
+      - name: Create a version-pinned reduced allowlist before any other rollback action
+        shell: bash
+        run: |
+          set -euo pipefail
+          new_allowlist_uri="$(az keyvault secret set \
+            --vault-name "$AHA_PROFILE_ROLLBACK_RUNTIME_KEYVAULT" \
+            --name aha-production-pilot-profile-ids-json \
+            --value "$AHA_PROFILE_ROLLBACK_REDUCED_ALLOWLIST" \
+            --query id -o tsv --only-show-errors)"
+          [[ "$new_allowlist_uri" == https://*.vault.azure.net/secrets/aha-production-pilot-profile-ids-json/* ]] || {
+            echo "Per-profile rollback failed to create a version-pinned reduced allowlist." >&2
+            exit 1
+          }
+          printf 'AHA_PROFILE_ROLLBACK_NEW_ALLOWLIST_SECRET_URI=%s\n' "$new_allowlist_uri" >> "$GITHUB_ENV"
+
+      - name: Remove the target from API access while preserving the exact live image and revision
+        shell: bash
+        run: |
+          set -euo pipefail
+          az deployment group create \
+            --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
+            --name "aha-production-pilot-profile-rollback-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" \
+            --template-file infra/azure/production/app.bicep \
+            --parameters \
+              location="$AHA_AZURE_LOCATION" \
+              containerAppName="$AHA_PRODUCTION_CONTAINER_APP" \
+              containerAppsEnvironmentName="$AHA_PROFILE_ROLLBACK_CAE_NAME" \
+              managedIdentityName="$AHA_PROFILE_ROLLBACK_RUNTIME_IDENTITY_NAME" \
+              acrName="$AHA_PROFILE_ROLLBACK_ACR_NAME" \
+              keyVaultName="$AHA_PROFILE_ROLLBACK_RUNTIME_KEYVAULT" \
+              image="$AHA_PROFILE_ROLLBACK_IMAGE" \
+              deployRevision="$AHA_PROFILE_ROLLBACK_REVISION" \
+              databaseUrlSecretUri="$AHA_PROFILE_ROLLBACK_DATABASE_SECRET_URI" \
+              databaseCaSecretUri="$AHA_PROFILE_ROLLBACK_DATABASE_CA_SECRET_URI" \
+              auditSaltSecretUri="$AHA_PROFILE_ROLLBACK_AUDIT_SALT_SECRET_URI" \
+              pilotProfileIdSecretUri="$AHA_PROFILE_ROLLBACK_LEGACY_PILOT_SECRET_URI" \
+              allowedProfileIdsSecretUri="$AHA_PROFILE_ROLLBACK_NEW_ALLOWLIST_SECRET_URI" \
+              canonicalSyncEnabled=true \
+              runtimeActivated=true \
+              applicationInsightsConnectionString="$AHA_PROFILE_ROLLBACK_APPINSIGHTS" \
+            --only-show-errors >/dev/null
+
+      - name: Verify exactly one profile lost API eligibility and all others remain active
+        shell: bash
+        run: |
+          set -euo pipefail
+          health="$RUNNER_TEMP/profile-rollback-health.json"
+          for attempt in {1..60}; do
+            if curl --fail --silent --show-error --max-time 20 "https://${AHA_PROFILE_ROLLBACK_FQDN}/v1/health" > "$health"; then
+              if jq -e --arg revision "$AHA_PROFILE_ROLLBACK_REVISION" --argjson count "$AHA_PROFILE_ROLLBACK_REDUCED_COUNT" '
+                .status == "ok" and
+                .service == "aha-nest-api" and
+                .version == $revision and
+                .runtimeActivated == true and
+                .canonicalSync.enabled == true and
+                .canonicalSync.profileLimitMode == "protected_allowlist" and
+                .canonicalSync.allowedProfileCount == $count and
+                .database.configured == true and
+                .database.connected == true and
+                .database.safeRuntimeRole == true and
+                .database.canonicalSchema == "present" and
+                .auth.configured == true
+              ' "$health" >/dev/null; then
+                echo "AHA canonical production pilot per-profile rollback: PASS_API_ACCESS_REMOVED_DATA_RETAINED"
+                exit 0
+              fi
+            fi
+            sleep 10
+          done
+          echo "Per-profile rollback did not reach the reduced protected allowlist health contract." >&2
+          exit 1
+
+      - name: Write non-identifying per-profile rollback evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/evidence"
+          cat > "$RUNNER_TEMP/evidence/pilot-profile-rollback.json" <<JSON
+          {
+            "version": "aha_canonical_production_pilot_profile_rollback_v1",
+            "status": "pass",
+            "rollbackGitSha": "${GITHUB_SHA}",
+            "liveApiRevisionPreserved": "${AHA_PROFILE_ROLLBACK_REVISION}",
+            "targetFingerprintSha256": "${AHA_PROFILE_ROLLBACK_TARGET_FINGERPRINT}",
+            "previousAllowedProfileCount": ${AHA_PROFILE_ROLLBACK_CURRENT_COUNT},
+            "newAllowedProfileCount": ${AHA_PROFILE_ROLLBACK_REDUCED_COUNT},
+            "removedExactlyOneProfileFromApiAllowlist": true,
+            "legacyPilotAnchorRetained": true,
+            "runtimeCredentialChanged": false,
+            "databaseRoleChanged": false,
+            "canonicalProfileDeleted": false,
+            "canonicalWorkspaceDeleted": false,
+            "canonicalDataRetained": true,
+            "targetIdentityRendered": false
+          }
+          JSON
+
+      - name: Upload immutable per-profile rollback evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: aha-production-pilot-profile-rollback-${{ github.run_id }}
+          path: ${{ runner.temp }}/evidence/pilot-profile-rollback.json
+          if-no-files-found: error
+          retention-days: 90
