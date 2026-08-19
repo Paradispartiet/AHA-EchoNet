@@ -1,9 +1,8 @@
 // ahaChatIngestRuntime.js
 // Orkestrerer AHA Chat-kandidater inn i kanonisk AHAIngest med eksplisitt legacy-fallback.
-// Filen eier også første shadow-implementasjon av SemanticDocumentV1. Den er en
-// separat modulkontrakt (AHASemanticDocument), men samlokalisert her i PR1 for å
-// unngå å endre produksjonens script-/load-order før den semantiske kjernen har
-// bevist kontrakten sin.
+// Filen eier også shadow-implementasjonen av SemanticDocumentV1. SemanticDocument
+// er en separat modulkontrakt (AHASemanticDocument), men er fortsatt samlokalisert
+// her mens V2 bygges i shadow mode uten å endre canonical Insight-output.
 
 (function (global) {
   "use strict";
@@ -11,7 +10,11 @@
   const SEMANTIC_DOCUMENT_SCHEMA = "aha_semantic_document_v1";
   const SEMANTIC_DOCUMENT_VERSION = 1;
   const SEMANTIC_DOCUMENT_MODE = "shadow";
-  const SEMANTIC_DOCUMENT_STATUS = "evidence_only";
+  const SEMANTIC_DOCUMENT_STATUS = "entities_concepts_shadow";
+  const SEMANTIC_GENERIC_TERMS = new Set([
+    "kunnskap", "mennesker", "sted", "samfunn", "refleksjon", "innsikt", "samtale", "analyse",
+    "illustrasjon", "logo", "annonse", "sponset", "nødvendighet", "nodvendighet"
+  ]);
   const SHA256_K = Object.freeze([
     0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
     0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
@@ -121,6 +124,16 @@
     return h.map((word) => word.toString(16).padStart(8, "0")).join("");
   }
 
+  function normalizeSemanticKey(value) {
+    return String(value || "")
+      .toLowerCase()
+      .normalize("NFKD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^\p{L}\p{N}\s-]/gu, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
   function trimRange(source, rawStart, rawEnd) {
     let start = Math.max(0, rawStart);
     let end = Math.min(source.length, rawEnd);
@@ -194,8 +207,12 @@
       tensions: [],
       candidate_insights: [],
       quality: {
-        status: "shadow_evidence_only",
+        status: "shadow_entities_concepts_pending",
         anchor_count: evidenceAnchors.length,
+        entity_count: 0,
+        concept_count: 0,
+        canonical_subject_match_count: 0,
+        subject_engine_status: "not_run",
         source_coverage_non_whitespace: sourceNonWhitespace
           ? Number(Math.min(1, coveredNonWhitespace / sourceNonWhitespace).toFixed(6))
           : 0
@@ -206,9 +223,276 @@
         generated_at: generatedAt,
         canonical_write: false,
         persistent_write: false,
-        visible_output_changed: false
+        visible_output_changed: false,
+        source_evidence_authority: "source_text_offsets",
+        reference_support_authority: "subject_engine_fagverk_not_source_evidence"
       }
     };
+  }
+
+  function anchorForOffset(anchors, start, end) {
+    return (Array.isArray(anchors) ? anchors : []).find((anchor) => (
+      start >= anchor.start_offset && end <= anchor.end_offset
+    )) || null;
+  }
+
+  function escapeRegex(value) {
+    return String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+
+  function findLiteralMentions(sourceText, term, anchors) {
+    const source = String(sourceText || "");
+    const needle = String(term || "").trim();
+    if (!source || !needle) return [];
+    let expression;
+    try {
+      expression = new RegExp(escapeRegex(needle), "giu");
+    } catch {
+      return [];
+    }
+    const mentions = [];
+    let match;
+    while ((match = expression.exec(source)) !== null) {
+      const start = match.index;
+      const end = start + match[0].length;
+      const before = start > 0 ? source[start - 1] : "";
+      const after = end < source.length ? source[end] : "";
+      if ((before && /[\p{L}\p{N}]/u.test(before)) || (after && /[\p{L}\p{N}]/u.test(after))) continue;
+      const anchor = anchorForOffset(anchors, start, end);
+      if (!anchor) continue;
+      mentions.push({
+        anchor_id: anchor.id,
+        start_offset: start,
+        end_offset: end,
+        text: source.slice(start, end)
+      });
+      if (match[0].length === 0) expression.lastIndex += 1;
+    }
+    return mentions;
+  }
+
+  function uniqueMentions(mentions) {
+    const seen = new Set();
+    return (Array.isArray(mentions) ? mentions : []).filter((mention) => {
+      const key = `${mention?.start_offset}:${mention?.end_offset}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    }).sort((a, b) => a.start_offset - b.start_offset);
+  }
+
+  function looksLikeEntitySurface(value) {
+    const text = String(value || "").trim();
+    if (!text) return false;
+    if (/^[\p{Lu}]{2,}$/u.test(text)) return true;
+    const words = text.split(/\s+/).filter(Boolean);
+    if (words.length === 1) return /^\p{Lu}[\p{L}\p{M}'’.-]{2,}$/u.test(text);
+    return /^\p{Lu}/u.test(words[0]) && words.some((word, index) => (
+      index > 0 && /^\p{Lu}/u.test(word)
+    ));
+  }
+
+  function collectProperEntitySurfaces(sourceText) {
+    const source = String(sourceText || "");
+    const out = [];
+    const seen = new Set();
+    const add = (value) => {
+      const label = String(value || "").trim();
+      const key = normalizeSemanticKey(label);
+      if (!label || !key || seen.has(key)) return;
+      seen.add(key);
+      out.push(label);
+    };
+
+    const multiword = /\p{Lu}[\p{L}\p{M}'’.-]*(?:\s+(?:(?:von|van|de|da|del|di|du|af|av|la|le)\s+)?\p{Lu}[\p{L}\p{M}'’.-]*)+/gu;
+    let match;
+    while ((match = multiword.exec(source)) !== null) add(match[0]);
+
+    const acronym = /(?:^|[^\p{L}\p{N}])(\p{Lu}{2,})(?=$|[^\p{L}\p{N}])/gu;
+    while ((match = acronym.exec(source)) !== null) add(match[1]);
+    return out;
+  }
+
+  function compactCanonicalSupport(match) {
+    if (!match || typeof match !== "object") return null;
+    return {
+      subject_id: match.subject_id || null,
+      subject_label: match.subject_label || null,
+      emne_id: match.emne_id || null,
+      title: match.title || null,
+      match_type: match.type || null,
+      score: Number.isFinite(Number(match.score)) ? Number(match.score) : null,
+      provenance: match.provenance && typeof match.provenance === "object" ? clone(match.provenance) : null
+    };
+  }
+
+  function supportKey(support) {
+    return [support?.subject_id || "", support?.emne_id || "", support?.title || "", support?.match_type || ""].join("|");
+  }
+
+  function mergeEntity(map, surface, type, sourceText, anchors, canonicalSupport) {
+    const label = String(surface || "").trim();
+    const key = normalizeSemanticKey(label);
+    if (!key) return;
+    const mentions = findLiteralMentions(sourceText, label, anchors);
+    if (!mentions.length) return;
+    const current = map.get(key) || {
+      id: "",
+      label,
+      normalized_key: key,
+      type: type || "unknown",
+      evidence_anchor_ids: [],
+      mentions: [],
+      canonical_matches: [],
+      source: "literal_source_entity"
+    };
+    if (current.type === "unknown" && type && type !== "unknown") current.type = type;
+    current.mentions = uniqueMentions(current.mentions.concat(mentions));
+    current.evidence_anchor_ids = Array.from(new Set(current.mentions.map((mention) => mention.anchor_id)));
+    if (canonicalSupport) {
+      const existing = new Set(current.canonical_matches.map(supportKey));
+      const support = compactCanonicalSupport(canonicalSupport);
+      const keySupport = supportKey(support);
+      if (support && !existing.has(keySupport)) current.canonical_matches.push(support);
+    }
+    map.set(key, current);
+  }
+
+  function conceptTermEligible(term, match, siblingTerms) {
+    const label = String(term || "").trim();
+    const key = normalizeSemanticKey(label);
+    if (!key || key.length < 4 || SEMANTIC_GENERIC_TERMS.has(key)) return false;
+    if (/[.!?]\s*$/u.test(label)) return false;
+    const words = key.split(/\s+/).filter(Boolean);
+    if (words.length > 6) return false;
+    if (words.length === 1) {
+      if (match?.type !== "concept" || key.length < 5) return false;
+      const richerSibling = (Array.isArray(siblingTerms) ? siblingTerms : []).some((other) => {
+        const otherKey = normalizeSemanticKey(other);
+        return otherKey !== key && otherKey.split(/\s+/).length > 1 && otherKey.split(/\s+/).includes(key);
+      });
+      if (richerSibling) return false;
+    }
+    return true;
+  }
+
+  function mergeConcept(map, surface, sourceText, anchors, canonicalSupport, entityKeys) {
+    const sourceTerm = String(surface || "").trim();
+    const key = normalizeSemanticKey(sourceTerm);
+    if (!key || entityKeys.has(key)) return;
+    const mentions = findLiteralMentions(sourceText, sourceTerm, anchors);
+    if (!mentions.length) return;
+    const current = map.get(key) || {
+      id: "",
+      label: sourceTerm,
+      normalized_key: key,
+      source_term: sourceTerm,
+      evidence_anchor_ids: [],
+      mentions: [],
+      canonical_matches: [],
+      source: "subject_engine_literal_match"
+    };
+    current.mentions = uniqueMentions(current.mentions.concat(mentions));
+    current.evidence_anchor_ids = Array.from(new Set(current.mentions.map((mention) => mention.anchor_id)));
+    if (canonicalSupport) {
+      const existing = new Set(current.canonical_matches.map(supportKey));
+      const support = compactCanonicalSupport(canonicalSupport);
+      const keySupport = supportKey(support);
+      if (support && !existing.has(keySupport)) current.canonical_matches.push(support);
+    }
+    map.set(key, current);
+  }
+
+  function applyEntitiesConcepts(document, sourceText, subjectMatches = [], options = {}) {
+    const doc = clone(document);
+    const source = String(sourceText || "");
+    const anchors = Array.isArray(doc?.evidence_anchors) ? doc.evidence_anchors : [];
+    const matches = Array.isArray(subjectMatches) ? subjectMatches : [];
+    const entityMap = new Map();
+
+    collectProperEntitySurfaces(source).forEach((surface) => {
+      mergeEntity(entityMap, surface, /^[\p{Lu}]{2,}$/u.test(surface) ? "organization" : "unknown", source, anchors, null);
+    });
+
+    matches.forEach((match) => {
+      if (match?.type !== "thinker") return;
+      (Array.isArray(match.matched_terms) ? match.matched_terms : []).forEach((term) => {
+        if (!looksLikeEntitySurface(term)) return;
+        mergeEntity(entityMap, term, "person", source, anchors, match);
+      });
+    });
+
+    const entities = Array.from(entityMap.values()).sort((a, b) => (
+      (a.mentions[0]?.start_offset ?? Number.MAX_SAFE_INTEGER) - (b.mentions[0]?.start_offset ?? Number.MAX_SAFE_INTEGER)
+      || a.normalized_key.localeCompare(b.normalized_key)
+    ));
+    entities.forEach((entity, index) => {
+      entity.id = `ent_${doc.source_text_hash.slice(0, 12)}_${String(index + 1).padStart(3, "0")}`;
+    });
+    const entityKeys = new Set(entities.map((entity) => entity.normalized_key));
+
+    const conceptMap = new Map();
+    matches.forEach((match) => {
+      const terms = Array.from(new Set((Array.isArray(match?.matched_terms) ? match.matched_terms : [])
+        .map((term) => String(term || "").trim()).filter(Boolean)));
+      terms.forEach((term) => {
+        if (!conceptTermEligible(term, match, terms)) return;
+        mergeConcept(conceptMap, term, source, anchors, match, entityKeys);
+      });
+    });
+
+    const concepts = Array.from(conceptMap.values()).sort((a, b) => (
+      (a.mentions[0]?.start_offset ?? Number.MAX_SAFE_INTEGER) - (b.mentions[0]?.start_offset ?? Number.MAX_SAFE_INTEGER)
+      || a.normalized_key.localeCompare(b.normalized_key)
+    ));
+    concepts.forEach((concept, index) => {
+      concept.id = `con_${doc.source_text_hash.slice(0, 12)}_${String(index + 1).padStart(3, "0")}`;
+    });
+
+    doc.entities = entities;
+    doc.concepts = concepts;
+    doc.quality = Object.assign({}, doc.quality, {
+      status: "shadow_entities_concepts_ready",
+      entity_count: entities.length,
+      concept_count: concepts.length,
+      canonical_subject_match_count: matches.length,
+      subject_engine_status: String(options.subject_engine_status || (matches.length ? "matched" : "no_matches"))
+    });
+    doc.analyzer_origin = matches.length
+      ? "deterministic_shadow+subject_engine_reference"
+      : "deterministic_shadow";
+    return doc;
+  }
+
+  async function buildEnrichedShadowSemanticDocument(input = {}, options = {}) {
+    const sourceText = String(input.source_text ?? input.text ?? "");
+    const base = buildShadowSemanticDocument(input, options);
+    let matches = Array.isArray(options.subjectMatches) ? options.subjectMatches : null;
+    let subjectEngineStatus = matches ? "provided_matches" : "unavailable";
+
+    if (matches === null) {
+      const subjectEngine = options.subjectEngine || null;
+      if (subjectEngine && typeof subjectEngine.matchText === "function") {
+        try {
+          const result = await subjectEngine.matchText(sourceText, {
+            source: "semantic_document_shadow",
+            maxResults: 6
+          });
+          matches = Array.isArray(result) ? result : [];
+          subjectEngineStatus = matches.length ? "matched" : "no_matches";
+        } catch (error) {
+          matches = [];
+          subjectEngineStatus = "failed";
+          if (options.logSubjectEngineFailure !== false) {
+            console.warn("AHASemanticDocument: Subject Engine enrichment failed", error);
+          }
+        }
+      } else {
+        matches = [];
+      }
+    }
+
+    return applyEntitiesConcepts(base, sourceText, matches, { subject_engine_status: subjectEngineStatus });
   }
 
   function containsForbiddenResponseKeys(value) {
@@ -227,6 +511,44 @@
     return visit(value);
   }
 
+  function validateGroundedSemanticItem(item, kind, index, source, anchorIds, errors) {
+    if (!item || typeof item !== "object") {
+      errors.push(`invalid_${kind}:${index}`);
+      return;
+    }
+    if (!String(item.id || "").trim()) errors.push(`missing_${kind}_id:${index}`);
+    if (!String(item.label || "").trim()) errors.push(`missing_${kind}_label:${index}`);
+    if (!String(item.normalized_key || "").trim()) errors.push(`missing_${kind}_key:${index}`);
+    const evidenceIds = Array.isArray(item.evidence_anchor_ids) ? item.evidence_anchor_ids : [];
+    if (!evidenceIds.length) errors.push(`missing_${kind}_evidence:${index}`);
+    evidenceIds.forEach((anchorId) => {
+      if (!anchorIds.has(anchorId)) errors.push(`unknown_${kind}_anchor:${index}`);
+    });
+    const mentions = Array.isArray(item.mentions) ? item.mentions : [];
+    if (!mentions.length) errors.push(`missing_${kind}_mentions:${index}`);
+    mentions.forEach((mention, mentionIndex) => {
+      if (!mention || typeof mention !== "object") {
+        errors.push(`invalid_${kind}_mention:${index}:${mentionIndex}`);
+        return;
+      }
+      if (!anchorIds.has(mention.anchor_id)) errors.push(`unknown_${kind}_mention_anchor:${index}:${mentionIndex}`);
+      if (!Number.isInteger(mention.start_offset) || !Number.isInteger(mention.end_offset) || mention.end_offset <= mention.start_offset) {
+        errors.push(`invalid_${kind}_mention_offsets:${index}:${mentionIndex}`);
+        return;
+      }
+      if (source != null) {
+        if (mention.start_offset < 0 || mention.end_offset > source.length) {
+          errors.push(`${kind}_mention_out_of_bounds:${index}:${mentionIndex}`);
+        } else if (source.slice(mention.start_offset, mention.end_offset) !== mention.text) {
+          errors.push(`${kind}_mention_not_exact_source_slice:${index}:${mentionIndex}`);
+        }
+      }
+    });
+    if (kind === "concept" && !Array.isArray(item.canonical_matches)) {
+      errors.push(`missing_concept_canonical_matches:${index}`);
+    }
+  }
+
   function validateSemanticDocument(document, sourceText) {
     const errors = [];
     const doc = document && typeof document === "object" && !Array.isArray(document) ? document : null;
@@ -243,12 +565,12 @@
     semanticArrays.forEach((key) => {
       if (!Array.isArray(doc[key])) errors.push(`missing_array:${key}`);
     });
-    ["entities", "concepts", "claims", "relations", "tensions", "candidate_insights"].forEach((key) => {
+    ["claims", "relations", "tensions", "candidate_insights"].forEach((key) => {
       if (Array.isArray(doc[key]) && doc[key].length) errors.push(`shadow_semantic_array_not_empty:${key}`);
     });
 
     const anchors = Array.isArray(doc.evidence_anchors) ? doc.evidence_anchors : [];
-    const ids = new Set();
+    const anchorIds = new Set();
     let previousEnd = -1;
     const source = sourceText == null ? null : String(sourceText);
     anchors.forEach((anchor, index) => {
@@ -257,8 +579,8 @@
         return;
       }
       const id = String(anchor.id || "");
-      if (!id || ids.has(id)) errors.push(`invalid_anchor_id:${index}`);
-      ids.add(id);
+      if (!id || anchorIds.has(id)) errors.push(`invalid_anchor_id:${index}`);
+      anchorIds.add(id);
       if (!Number.isInteger(anchor.start_offset) || !Number.isInteger(anchor.end_offset)) {
         errors.push(`invalid_anchor_offsets:${index}`);
         return;
@@ -271,6 +593,24 @@
         else if (source.slice(anchor.start_offset, anchor.end_offset) !== anchor.text) errors.push(`anchor_not_exact_source_slice:${index}`);
       }
     });
+
+    const itemIds = new Set();
+    (Array.isArray(doc.entities) ? doc.entities : []).forEach((entity, index) => {
+      validateGroundedSemanticItem(entity, "entity", index, source, anchorIds, errors);
+      const id = String(entity?.id || "");
+      if (id && itemIds.has(id)) errors.push(`duplicate_semantic_item_id:${id}`);
+      if (id) itemIds.add(id);
+    });
+    (Array.isArray(doc.concepts) ? doc.concepts : []).forEach((concept, index) => {
+      validateGroundedSemanticItem(concept, "concept", index, source, anchorIds, errors);
+      const id = String(concept?.id || "");
+      if (id && itemIds.has(id)) errors.push(`duplicate_semantic_item_id:${id}`);
+      if (id) itemIds.add(id);
+      if (!Array.isArray(concept?.canonical_matches) || concept.canonical_matches.length === 0) {
+        errors.push(`concept_without_reference_support:${index}`);
+      }
+    });
+
     if (containsForbiddenResponseKeys(doc)) errors.push("forbidden_chat_response_dependency");
     if (doc.provenance?.canonical_write !== false) errors.push("shadow_canonical_write_must_be_false");
     if (doc.provenance?.persistent_write !== false) errors.push("shadow_persistent_write_must_be_false");
@@ -288,7 +628,9 @@
           status: document.status,
           source_event_id: document.source_event_id,
           source_text_hash: document.source_text_hash,
-          evidence_anchor_count: document.evidence_anchors.length
+          evidence_anchor_count: document.evidence_anchors.length,
+          entity_count: document.entities.length,
+          concept_count: document.concepts.length
         }
       }));
     } catch {}
@@ -318,8 +660,12 @@
     SCHEMA: SEMANTIC_DOCUMENT_SCHEMA,
     VERSION: SEMANTIC_DOCUMENT_VERSION,
     sha256Hex,
+    normalizeSemanticKey,
     buildEvidenceAnchors,
     buildShadowSemanticDocument,
+    findLiteralMentions,
+    applyEntitiesConcepts,
+    buildEnrichedShadowSemanticDocument,
     validateSemanticDocument,
     recordShadowSemanticDocument,
     getLastShadowSemanticDocument,
@@ -350,8 +696,14 @@
         || global.AHASemanticDocument
         || null
       ),
+      getSubjectEngineApi = () => (
+        global.AHAModuleApi?.resolve?.("subjectEngine", "AHASubjectEngine", { version: 1 })
+        || global.AHASubjectEngine
+        || null
+      ),
       now = () => new Date().toISOString()
     } = deps;
+    let semanticShadowSequence = 0;
 
     function buildChatPayload(text, themeId, fieldId) {
       return {
@@ -370,18 +722,29 @@
       };
     }
 
-    function recordSemanticDocumentShadow(payload, ingestResult) {
+    async function recordSemanticDocumentShadow(payload, ingestResult) {
+      const sequence = ++semanticShadowSequence;
       const api = typeof getSemanticDocumentApi === "function" ? getSemanticDocumentApi() : null;
       if (!api?.buildShadowSemanticDocument || !api?.recordShadowSemanticDocument) return null;
       try {
         const sourceEvent = ingestResult?.sourceEvent || null;
-        const document = api.buildShadowSemanticDocument({
+        const semanticInput = {
           source_event_id: sourceEvent?.id || null,
           source_text: payload.text,
           source_type: sourceEvent?.source_type || payload.source_type,
           language: payload.meta?.language || "no",
           generated_at: payload.created_at
-        });
+        };
+        const subjectEngine = typeof getSubjectEngineApi === "function" ? getSubjectEngineApi() : null;
+        const document = typeof api.buildEnrichedShadowSemanticDocument === "function"
+          ? await api.buildEnrichedShadowSemanticDocument(semanticInput, { subjectEngine })
+          : api.buildShadowSemanticDocument(semanticInput);
+
+        // To raske meldinger kan gjøre Subject Engine ferdig i motsatt rekkefølge.
+        // Shadow-recorderen skal alltid representere siste source event, ikke siste
+        // asynkrone completion.
+        if (sequence !== semanticShadowSequence) return null;
+
         const validation = api.validateSemanticDocument?.(document, payload.text);
         if (validation && validation.ok === false) {
           console.warn("AHAChatIngestRuntime: SemanticDocument shadow validation failed", validation.errors);
@@ -389,9 +752,9 @@
         }
         return api.recordShadowSemanticDocument(document);
       } catch (error) {
-        // PR1 er shadow-only. En feil i den nye representasjonen skal derfor
-        // aldri stoppe dagens canonical ingest. Når V2 blir authoritative må
-        // denne grensen endres til fail-closed før canonical insight-write.
+        // V2 er fortsatt shadow-only. En feil i den nye representasjonen skal
+        // ikke stoppe dagens canonical ingest. Når laget blir authoritative må
+        // denne grensen endres til fail-closed før canonical Insight-write.
         console.warn("AHAChatIngestRuntime: SemanticDocument shadow failed", error);
         return null;
       }
@@ -425,7 +788,7 @@
         created_at: payload.created_at,
         meta: payload.meta
       }) || null;
-      recordSemanticDocumentShadow(payload, { sourceEvent });
+      void recordSemanticDocumentShadow(payload, { sourceEvent });
     }
 
     function ingestUserMessageWithCandidates(messageText, candidates) {
@@ -443,7 +806,7 @@
       if (ingest && typeof ingest.ingest === "function") {
         if (typeof ingest.ingestWithCandidates === "function") {
           const ingestResult = ingest.ingestWithCandidates(payload, chunks);
-          recordSemanticDocumentShadow(payload, ingestResult);
+          void recordSemanticDocumentShadow(payload, ingestResult);
         } else {
           chunks.forEach((chunk) => ingest.ingest(Object.assign({}, payload, { text: chunk })));
         }
