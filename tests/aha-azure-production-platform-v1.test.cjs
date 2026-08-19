@@ -34,8 +34,17 @@ for (const path of Object.values(files)) {
 const source = Object.fromEntries(Object.entries(files).map(([key, path]) => [key, fs.readFileSync(path, "utf8")]));
 const rollout = JSON.parse(source.rollout);
 
-assert.equal(rollout.productionActivationEnabled, false);
-assert.equal(rollout.activation.enabled, false);
+// The reusable platform still deploys fail-closed by default, while current
+// operational policy records the separately activated bounded manual pilot.
+assert.equal(rollout.productionActivationEnabled, true);
+assert.equal(rollout.activation.enabled, true);
+assert.equal(rollout.status, "active_bounded_manual_pilot");
+assert.equal(rollout.pilot.mode, "bounded_manual_allowlist");
+assert.equal(rollout.pilot.currentVerifiedProfileCount, 2);
+assert.equal(rollout.pilot.maxProfiles, 10);
+assert.equal(rollout.pilot.profilesAddedPerActivation, 1);
+assert.equal(rollout.pilot.nextExpansionPaused, true);
+assert.equal(rollout.pilot.nextExpansionRequiresTwoProfileRoundTripEvidence, true);
 assert.equal(rollout.hosting.target, "azure_container_apps");
 assert.equal(rollout.database.stagingReuseAllowed, false);
 assert.equal(rollout.database.legacyPrimaryReuseAllowed, false);
@@ -69,8 +78,8 @@ assert.match(source.deploy, /AHA_PRODUCTION_OPS_KEYVAULT/);
 assert.match(source.deploy, /aha-production-admin-database-url/);
 assert.match(source.deploy, /aha-production-database-url/);
 
-// The reusable API template can support a future explicit pilot, but defaults
-// remain fail-closed and the normal production deploy never opts into activation.
+// The reusable API template supports the explicitly activated pilot, but defaults
+// remain fail-closed and the normal platform deploy never opts into activation.
 assert.match(source.app, /AHA_DATABASE_ENABLED/);
 assert.match(source.app, /AHA_DATABASE_SSL_MODE/);
 assert.match(source.app, /value:\s*'verify-full'/);
@@ -204,14 +213,21 @@ assert.match(source.validation, /az bicep build/);
 assert.match(source.validation, /docker build -f backend\/api\/Dockerfile/);
 assert.match(source.validation, /docker build -f infra\/azure\/production\/db-init\/Dockerfile/);
 
-// Merge alone still creates no Azure resources. The runbook, however, is a current-state
-// document: production is deployed and a separately gated one-profile pilot is active.
+// Merge alone still creates no Azure resources. The runbook is a current-state
+// document: production is deployed, the reusable deploy defaults remain disabled,
+// and the separately activated bounded pilot contains exactly two verified profiles.
 assert.match(source.docs, /deployet i Azure North Europe/i);
-assert.match(source.docs, /én-profil canonical pilot er aktiv/i);
+assert.match(source.docs, /bounded manual production-pilot med nøyaktig 2 verifiserte profiler/i);
+assert.match(source.docs, /fail-closed deploy-default/i);
 assert.match(source.docs, /AHA_CANONICAL_SYNC_ENABLED=false/);
 assert.match(source.docs, /AHA_CANONICAL_SYNC_ENABLED=true/);
+assert.match(source.docs, /protected allowlist med \*\*nøyaktig 2 verifiserte profiler\*\*/i);
+assert.match(source.docs, /COMMITTED_ONE_PROFILE/);
+assert.match(source.docs, /ikke dagens fleet-status/i);
+assert.match(source.docs, /Profil #3 er pauset/i);
 assert.match(source.docs, /AHA_CANONICAL_PRODUCTION_PILOT_STATUS\.md/);
 assert.doesNotMatch(source.docs, /Status:\s*\*\*produksjonsplattform definert i kode; ikke deployet/i);
+assert.doesNotMatch(source.docs, /én-profil canonical pilot er aktiv/i);
 assert.match(source.infraReadme, /no Azure production resources are created by merge/i);
 assert.match(source.infraReadme, /Mandatory execution order/);
 
