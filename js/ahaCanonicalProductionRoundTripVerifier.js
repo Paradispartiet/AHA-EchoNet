@@ -18,6 +18,7 @@
     const number = Number(value || 0);
     return Number.isFinite(number) && number >= 0 ? number : 0;
   }
+  function isSha256Hex(value) { return /^[a-f0-9]{64}$/i.test(text(value)); }
   function cursorShape(value) {
     const source = obj(value);
     return Object.freeze({
@@ -65,6 +66,12 @@
   function cursorMovedForward(before, after) {
     return after.pushCursor > before.pushCursor || after.pullCursor > before.pullCursor;
   }
+
+  // serverPayloadHash and localPayloadHash deliberately describe different
+  // representations. The server hash is the materialized server snapshot/journal
+  // domain, while the local hash is the frontend canonical projection used for
+  // local change detection. Equality is diagnostic only; integrity requires both
+  // domains to be present and well-formed for active state, then stable on replay.
   async function buildStateHashAudit(states, hash, options = {}) {
     const normalized = arr(states)
       .map((state) => ({
@@ -84,15 +91,41 @@
     let serverOnly = 0;
     let localOnly = 0;
     let deleted = 0;
+    let activeStateCount = 0;
+    let activeHashPairs = 0;
+    let missingServerHashes = 0;
+    let missingLocalHashes = 0;
+    let invalidServerHashes = 0;
+    let invalidLocalHashes = 0;
+
     for (const state of normalized) {
       if (state.deleted) deleted += 1;
+      else activeStateCount += 1;
+
       if (state.serverPayloadHash && state.localPayloadHash) {
         comparable += 1;
         if (state.serverPayloadHash === state.localPayloadHash) matches += 1;
         else mismatches += 1;
       } else if (state.serverPayloadHash) serverOnly += 1;
       else if (state.localPayloadHash) localOnly += 1;
+
+      if (state.deleted) continue;
+      const serverValid = isSha256Hex(state.serverPayloadHash);
+      const localValid = isSha256Hex(state.localPayloadHash);
+      if (!state.serverPayloadHash) missingServerHashes += 1;
+      else if (!serverValid) invalidServerHashes += 1;
+      if (!state.localPayloadHash) missingLocalHashes += 1;
+      else if (!localValid) invalidLocalHashes += 1;
+      if (serverValid && localValid) activeHashPairs += 1;
     }
+
+    const hashDomainsComplete =
+      activeStateCount > 0 &&
+      activeHashPairs === activeStateCount &&
+      missingServerHashes === 0 &&
+      missingLocalHashes === 0 &&
+      invalidServerHashes === 0 &&
+      invalidLocalHashes === 0;
 
     const digest = await hash.canonicalSyncPayloadHash(normalized, {
       crypto: options.crypto || global.crypto,
@@ -101,17 +134,35 @@
 
     return Object.freeze({
       stateCount: normalized.length,
+      activeStateCount,
+      activeHashPairs,
       comparable,
       matches,
       mismatches,
       serverOnly,
       localOnly,
       deleted,
+      missingServerHashes,
+      missingLocalHashes,
+      invalidServerHashes,
+      invalidLocalHashes,
+      hashDomainsComplete,
+      crossDomainEqualityRequired: false,
       batchDigestSha256: digest,
       objectIdentifiersIncluded: false,
       payloadIncluded: false
     });
   }
+
+  function hashDomainsReady(hashAudit) {
+    const audit = obj(hashAudit);
+    if (audit.hashDomainsComplete === true) return true;
+    if (audit.hashDomainsComplete === false) return false;
+    // Compatibility for older deterministic test fixtures. Live audits always
+    // expose hashDomainsComplete explicitly.
+    return count(audit.mismatches) === 0;
+  }
+
   function conflictReasonCounts(conflicts) {
     const result = {};
     for (const conflict of arr(conflicts)) {
@@ -139,7 +190,7 @@
       count(push.conflicts) === 0 &&
       count(push.rejected) === 0 &&
       conflicts.length === 0 &&
-      hashAudit.mismatches === 0 &&
+      hashDomainsReady(hashAudit) &&
       cursorNonDecreasing &&
       cursorAdvanced;
 
@@ -188,7 +239,7 @@
       count(replay.pushConflicts) === 0 &&
       count(replay.pushRejected) === 0 &&
       count(replay.conflictCount) === 0 &&
-      count(replay?.hashAudit?.mismatches) === 0 &&
+      hashDomainsReady(replay?.hashAudit) &&
       cursorNonDecreasing &&
       digestStable;
     return Object.freeze({
@@ -201,6 +252,7 @@
       conflictCount: count(replay.conflictCount),
       pushRejected: count(replay.pushRejected),
       cursorNonDecreasing,
+      hashDomainsComplete: hashDomainsReady(replay?.hashAudit),
       hashDigestStable: digestStable,
       rawPayloadIncluded: false,
       profileSubjectIncluded: false,
@@ -257,6 +309,9 @@
   }
   function renderEvidence(output, evidence, replay = null) {
     if (!output) return;
+    const audit = obj(evidence.hashAudit);
+    const invalidHashes = count(audit.invalidServerHashes) + count(audit.invalidLocalHashes);
+    const missingHashes = count(audit.missingServerHashes) + count(audit.missingLocalHashes);
     const lines = [
       `Round-trip: ${evidence.roundTripPass ? "PASS" : "IKKE BESTÅTT"}`,
       `Lokale endringer: ${evidence.localChanged}`,
@@ -267,9 +322,12 @@
       `Konflikter: ${evidence.conflictCount}`,
       `Rejected: ${evidence.pushRejected}`,
       `Cursor fremover: ${evidence.cursorAdvanced ? "ja" : "nei"}`,
-      `Hash-sammenligninger: ${evidence.hashAudit.comparable}`,
-      `Hash-mismatch: ${evidence.hashAudit.mismatches}`,
-      `Batch digest: ${evidence.hashAudit.batchDigestSha256}`
+      `Hash-domener komplette: ${hashDomainsReady(audit) ? "ja" : "nei"}`,
+      `Aktive hash-par: ${count(audit.activeHashPairs)}/${count(audit.activeStateCount)}`,
+      `Manglende aktive hashverdier: ${missingHashes}`,
+      `Ugyldige hashverdier: ${invalidHashes}`,
+      `Server/lokal hash ulike (diagnostikk): ${count(audit.mismatches)}`,
+      `Batch digest: ${audit.batchDigestSha256}`
     ];
     if (replay) {
       lines.push(
@@ -279,10 +337,12 @@
         `Replay outbox: ${replay.enqueued}`,
         `Replay pushed: ${replay.pushed}`,
         `Replay konflikter: ${replay.conflictCount}`,
+        `Hash-domener komplette: ${replay.hashDomainsComplete ? "ja" : "nei"}`,
         `Hash digest stabil: ${replay.hashDigestStable ? "ja" : "nei"}`
       );
     }
-    lines.push("", "Ingen profil-ID, workspace-ID, access token eller rå payload er inkludert.");
+    lines.push("", "Serverhash og lokalhash dekker ulike canonical representasjoner og skal ikke kreves identiske.");
+    lines.push("Ingen profil-ID, workspace-ID, access token eller rå payload er inkludert.");
     output.textContent = lines.join("\n");
   }
   function bind(options = {}) {
@@ -383,6 +443,7 @@
     assertExplicitExecution,
     cursorShape,
     buildStateHashAudit,
+    hashDomainsReady,
     safeRunEvidence,
     evaluateReplay,
     runOnce,
