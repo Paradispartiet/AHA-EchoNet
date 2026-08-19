@@ -1,0 +1,190 @@
+name: AHA canonical production pilot expansion validation
+
+on:
+  pull_request:
+    paths:
+      - 'backend/api/src/sync/**'
+      - 'backend/api/src/health.controller.ts'
+      - 'backend/api/test/canonical-sync.test.mjs'
+      - 'infra/azure/production/app.bicep'
+      - 'infra/azure/production/db-init-job.bicep'
+      - 'infra/azure/production/db-init/run.sh'
+      - '.github/workflows/aha-canonical-sync-production-pilot-expansion-*.yml'
+      - 'tests/aha-canonical-sync-production-pilot-expansion-v1.test.cjs'
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/api/src/sync/**'
+      - 'backend/api/src/health.controller.ts'
+      - 'backend/api/test/canonical-sync.test.mjs'
+      - 'infra/azure/production/app.bicep'
+      - 'infra/azure/production/db-init-job.bicep'
+      - 'infra/azure/production/db-init/run.sh'
+      - '.github/workflows/aha-canonical-sync-production-pilot-expansion-*.yml'
+      - 'tests/aha-canonical-sync-production-pilot-expansion-v1.test.cjs'
+
+permissions:
+  contents: read
+
+jobs:
+  validate-pilot-expansion:
+    name: Validate bounded allowlist and cross-profile isolation on PostgreSQL 16
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: expansion-ci-postgres-password
+          POSTGRES_DB: aha_expansion_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d aha_expansion_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Build NestJS API and run canonical sync unit tests
+        working-directory: backend/api
+        run: |
+          npm ci
+          npm run build
+          node --test test/canonical-sync.test.mjs
+
+      - name: Create Azure-like non-superuser production admin
+        env:
+          PGPASSWORD: expansion-ci-postgres-password
+        run: |
+          set -euo pipefail
+          psql -h 127.0.0.1 -U postgres -d postgres -X -v ON_ERROR_STOP=1 -c \
+            "create role expansion_ci_admin login nosuperuser createdb createrole inherit password 'expansion-ci-admin-password';"
+          psql -h 127.0.0.1 -U postgres -d postgres -X -v ON_ERROR_STOP=1 -c \
+            "alter database aha_expansion_ci owner to expansion_ci_admin;"
+
+      - name: Apply exact canonical migrations and production role boundary
+        env:
+          PGPASSWORD: expansion-ci-admin-password
+        run: |
+          set -euo pipefail
+          migration_count=0
+          while IFS= read -r migration; do
+            echo "Expansion CI migration: $(basename "$migration")"
+            psql -h 127.0.0.1 -U expansion_ci_admin -d aha_expansion_ci -X -v ON_ERROR_STOP=1 \
+              < "$migration" >/dev/null
+            migration_count=$((migration_count + 1))
+          done < <(find supabase/migrations -maxdepth 1 -type f -name '*.sql' | sort)
+          (( migration_count >= 10 ))
+          psql -h 127.0.0.1 -U expansion_ci_admin -d aha_expansion_ci -X -v ON_ERROR_STOP=1 \
+            -v readiness_password='expansion-ci-readiness-password' \
+            < infra/azure/production/db-init/roles.sql >/dev/null
+          psql -h 127.0.0.1 -U expansion_ci_admin -d aha_expansion_ci -X -v ON_ERROR_STOP=1 -c \
+            "alter role aha_canonical_production_runtime login noinherit password 'expansion-ci-runtime-password'; alter role aha_canonical_production_runtime set row_security = on;" >/dev/null
+
+      - name: Materialize two private pilot identities without memberships
+        env:
+          PGPASSWORD: expansion-ci-admin-password
+        run: |
+          set -euo pipefail
+          psql -h 127.0.0.1 -U expansion_ci_admin -d aha_expansion_ci -X -v ON_ERROR_STOP=1 <<'SQL'
+          insert into aha.profiles(id,auth_provider,auth_subject,display_name,status,metadata)
+          values
+            ('11111111-1111-4111-8111-111111111111','supabase','11111111-1111-4111-8111-111111111111','Pilot A','active','{"pilot":"expansion_ci"}'::jsonb),
+            ('22222222-2222-4222-8222-222222222222','supabase','22222222-2222-4222-8222-222222222222','Pilot B','active','{"pilot":"expansion_ci"}'::jsonb);
+          insert into aha.workspaces(id,owner_profile_id,workspace_type,name,visibility,status,metadata)
+          values
+            ('personal-11111111-1111-4111-8111-111111111111','11111111-1111-4111-8111-111111111111','personal','Pilot A','private','active','{"pilot":"expansion_ci"}'::jsonb),
+            ('personal-22222222-2222-4222-8222-222222222222','22222222-2222-4222-8222-222222222222','personal','Pilot B','private','active','{"pilot":"expansion_ci"}'::jsonb);
+          SQL
+
+      - name: Prove each profile can read its own private workspace
+        env:
+          PGPASSWORD: expansion-ci-runtime-password
+        run: |
+          set -euo pipefail
+          psql -h 127.0.0.1 -U aha_canonical_production_runtime -d aha_expansion_ci -X -v ON_ERROR_STOP=1 <<'SQL' >/dev/null
+          begin;
+          select set_config('request.jwt.claim.sub','11111111-1111-4111-8111-111111111111',true);
+          select set_config('aha.auth_provider','supabase',true);
+          select aha.bootstrap_sync_snapshot_v1('personal-11111111-1111-4111-8111-111111111111','',null,10);
+          rollback;
+          begin;
+          select set_config('request.jwt.claim.sub','22222222-2222-4222-8222-222222222222',true);
+          select set_config('aha.auth_provider','supabase',true);
+          select aha.bootstrap_sync_snapshot_v1('personal-22222222-2222-4222-8222-222222222222','',null,10);
+          rollback;
+          SQL
+          echo "own_workspace_bootstrap=PASS"
+
+      - name: Prove profile A cannot read profile B private workspace
+        env:
+          PGPASSWORD: expansion-ci-runtime-password
+        run: |
+          set -euo pipefail
+          if psql -h 127.0.0.1 -U aha_canonical_production_runtime -d aha_expansion_ci -X -v ON_ERROR_STOP=1 <<'SQL' >/tmp/cross-read.out 2>/tmp/cross-read.err; then
+          begin;
+          select set_config('request.jwt.claim.sub','11111111-1111-4111-8111-111111111111',true);
+          select set_config('aha.auth_provider','supabase',true);
+          select aha.bootstrap_sync_snapshot_v1('personal-22222222-2222-4222-8222-222222222222','',null,10);
+          rollback;
+          SQL
+            echo "Cross-profile bootstrap unexpectedly succeeded." >&2
+            exit 1
+          fi
+          grep -qi 'workspace access denied' /tmp/cross-read.err
+          echo "cross_profile_read=DENIED"
+
+      - name: Prove profile A cannot write profile B private workspace
+        env:
+          PGPASSWORD: expansion-ci-runtime-password
+        run: |
+          set -euo pipefail
+          if psql -h 127.0.0.1 -U aha_canonical_production_runtime -d aha_expansion_ci -X -v ON_ERROR_STOP=1 <<'SQL' >/tmp/cross-write.out 2>/tmp/cross-write.err; then
+          begin;
+          select set_config('request.jwt.claim.sub','11111111-1111-4111-8111-111111111111',true);
+          select set_config('aha.auth_provider','supabase',true);
+          select aha.push_sync_change_v1(
+            'personal-22222222-2222-4222-8222-222222222222',
+            'device-a',
+            'cross-write-0001',
+            'conversation',
+            'cross-object',
+            'delete',
+            0,
+            repeat('0',64),
+            null
+          );
+          rollback;
+          SQL
+            echo "Cross-profile push unexpectedly succeeded." >&2
+            exit 1
+          fi
+          grep -qi 'workspace edit denied' /tmp/cross-write.err
+          echo "cross_profile_write=DENIED"
+
+      - name: Verify runtime role remains least privilege after isolation test
+        env:
+          PGPASSWORD: expansion-ci-admin-password
+        run: |
+          set -euo pipefail
+          shape="$(psql -h 127.0.0.1 -U expansion_ci_admin -d aha_expansion_ci -X -A -t -q -c "
+            select rolcanlogin::int || '|' || rolsuper::int || '|' || rolbypassrls::int || '|' ||
+                   rolcreatedb::int || '|' || rolcreaterole::int || '|' || rolinherit::int
+            from pg_roles where rolname='aha_canonical_production_runtime'
+          ")"
+          writes="$(psql -h 127.0.0.1 -U expansion_ci_admin -d aha_expansion_ci -X -A -t -q -c "
+            select count(*) from information_schema.role_table_grants
+            where grantee='aha_canonical_production_runtime' and table_schema='aha'
+              and privilege_type in ('INSERT','UPDATE','DELETE','TRUNCATE','REFERENCES','TRIGGER')
+          ")"
+          [[ "$shape" == '1|0|0|0|0|0' ]]
+          [[ "$writes" == '0' ]]
+          echo "pilot_expansion_postgresql16_isolation=PASS"
+
+      - name: Run static pilot expansion contract
+        run: node tests/aha-canonical-sync-production-pilot-expansion-v1.test.cjs
