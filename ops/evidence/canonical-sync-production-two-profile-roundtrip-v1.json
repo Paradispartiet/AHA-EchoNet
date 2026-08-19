@@ -1,0 +1,71 @@
+{
+  "version": "aha_canonical_sync_production_two_profile_roundtrip_evidence_v1",
+  "status": "one_of_two_profiles_verified",
+  "capturedAt": "2026-08-19T19:46:00+02:00",
+  "requiredProfileSlots": 2,
+  "verifiedProfileSlots": 1,
+  "closeoutComplete": false,
+  "profile3ExpansionUnlocked": false,
+  "verifier": {
+    "build": "hash-domains-v2",
+    "operatorSurface": "canonical-sync-production-roundtrip.html",
+    "mainRevisionAtEvidence": "e2a3b8e499a07a73b55369b7265125e6b7a10d7a",
+    "evidenceType": "operator_observed_browser_result"
+  },
+  "profiles": [
+    {
+      "slot": "pilot_slot_1",
+      "status": "verified",
+      "identityIncluded": false,
+      "firstRoundTrip": {
+        "pass": true,
+        "localChanged": 6,
+        "enqueued": 6,
+        "pushed": 6,
+        "bootstrapApplied": 38,
+        "pullApplied": 0,
+        "conflicts": 0,
+        "rejected": 0,
+        "cursorAdvanced": true,
+        "hashDomainsComplete": true,
+        "activeHashPairs": 38,
+        "activeStateCount": 38,
+        "missingActiveHashValues": 0,
+        "invalidHashValues": 0,
+        "crossDomainUnequalDiagnostic": 38,
+        "batchDigestSha256": "09c64ae7067ee358a76c05bfab17a129664f51f78f9cbe17aead1bef46109073"
+      },
+      "idempotentReplay": {
+        "pass": true,
+        "localChanged": 0,
+        "enqueued": 0,
+        "pushed": 0,
+        "conflicts": 0,
+        "hashDomainsComplete": true,
+        "hashDigestStable": true
+      }
+    },
+    {
+      "slot": "pilot_slot_2",
+      "status": "pending",
+      "identityIncluded": false
+    }
+  ],
+  "privacyBoundary": {
+    "profileIdentifierIncluded": false,
+    "workspaceIdentifierIncluded": false,
+    "accessTokenIncluded": false,
+    "rawCanonicalPayloadIncluded": false,
+    "rawAhaConversationTextIncluded": false,
+    "objectIdentifiersIncluded": false
+  },
+  "nextBoundary": {
+    "secondProfileRoundTripRequired": true,
+    "secondProfileIdempotentReplayRequired": true,
+    "nextExpansionPaused": true,
+    "profile3Approved": false,
+    "automaticSync": false,
+    "loginTriggeredSync": false,
+    "backgroundSync": false
+  }
+}
