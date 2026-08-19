@@ -23,36 +23,28 @@ jobs:
         with:
           node-version: 22
 
-      # Temporary branch-level diagnostics for PR #793. The connector cannot
-      # expose raw npm-test stdout, so alphabetic chunks identify the remaining
-      # failing standalone test from Actions step metadata. Remove before merge.
-      - name: Diagnose suite chunk 001-060
+      # Temporary branch-level diagnostics for PR #793. The first 180 files are
+      # already green; split only the remaining alphabetic tail. Remove before merge.
+      - name: Diagnose suite chunk 181-210
         shell: bash
         run: |
           set -euo pipefail
           mapfile -t files < <(find tests -maxdepth 1 -type f \( -name '*.test.cjs' -o -name '*.test.mjs' -o -name '*.cjs' \) ! -name 'aha-python-engine-smoke.test.cjs' | sort)
-          for file in "${files[@]:0:60}"; do echo "RUN $file"; node "$file"; done
+          for file in "${files[@]:180:30}"; do echo "RUN $file"; node "$file"; done
 
-      - name: Diagnose suite chunk 061-120
+      - name: Diagnose suite chunk 211-240
         shell: bash
         run: |
           set -euo pipefail
           mapfile -t files < <(find tests -maxdepth 1 -type f \( -name '*.test.cjs' -o -name '*.test.mjs' -o -name '*.cjs' \) ! -name 'aha-python-engine-smoke.test.cjs' | sort)
-          for file in "${files[@]:60:60}"; do echo "RUN $file"; node "$file"; done
+          for file in "${files[@]:210:30}"; do echo "RUN $file"; node "$file"; done
 
-      - name: Diagnose suite chunk 121-180
+      - name: Diagnose suite chunk 241+
         shell: bash
         run: |
           set -euo pipefail
           mapfile -t files < <(find tests -maxdepth 1 -type f \( -name '*.test.cjs' -o -name '*.test.mjs' -o -name '*.cjs' \) ! -name 'aha-python-engine-smoke.test.cjs' | sort)
-          for file in "${files[@]:120:60}"; do echo "RUN $file"; node "$file"; done
-
-      - name: Diagnose suite chunk 181+
-        shell: bash
-        run: |
-          set -euo pipefail
-          mapfile -t files < <(find tests -maxdepth 1 -type f \( -name '*.test.cjs' -o -name '*.test.mjs' -o -name '*.cjs' \) ! -name 'aha-python-engine-smoke.test.cjs' | sort)
-          for file in "${files[@]:180}"; do echo "RUN $file"; node "$file"; done
+          for file in "${files[@]:240}"; do echo "RUN $file"; node "$file"; done
 
       - name: Run deterministic Node test suite
         run: npm test
