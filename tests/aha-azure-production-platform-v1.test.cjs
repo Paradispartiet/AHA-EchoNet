@@ -204,9 +204,14 @@ assert.match(source.validation, /az bicep build/);
 assert.match(source.validation, /docker build -f backend\/api\/Dockerfile/);
 assert.match(source.validation, /docker build -f infra\/azure\/production\/db-init\/Dockerfile/);
 
-// Documentation must stay explicit that merge alone creates no Azure production resources.
-assert.match(source.docs, /ikke deployet/i);
-assert.match(source.docs, /canonical production sync er AV/i);
+// Merge alone still creates no Azure resources. The runbook, however, is a current-state
+// document: production is deployed and a separately gated one-profile pilot is active.
+assert.match(source.docs, /deployet i Azure North Europe/i);
+assert.match(source.docs, /én-profil canonical pilot er aktiv/i);
+assert.match(source.docs, /AHA_CANONICAL_SYNC_ENABLED=false/);
+assert.match(source.docs, /AHA_CANONICAL_SYNC_ENABLED=true/);
+assert.match(source.docs, /AHA_CANONICAL_PRODUCTION_PILOT_STATUS\.md/);
+assert.doesNotMatch(source.docs, /Status:\s*\*\*produksjonsplattform definert i kode; ikke deployet/i);
 assert.match(source.infraReadme, /no Azure production resources are created by merge/i);
 assert.match(source.infraReadme, /Mandatory execution order/);
 
