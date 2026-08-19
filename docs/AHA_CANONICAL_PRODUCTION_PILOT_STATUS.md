@@ -23,6 +23,7 @@ migration rehearsal
 → two-profile round-trip pilot_slot_1 PASS + replay PASS
 → two-profile round-trip pilot_slot_2 PASS + replay PASS
 → two-profile round-trip closeout COMPLETE
+→ temporary expansion access token cleanup COMPLETE
 ```
 
 Production bruker Azure Container Apps og dedikert privat PostgreSQL 16. Staging/legacy-databaser brukes ikke som production-database.
@@ -123,11 +124,11 @@ API-et håndhever protected server-side allowlist. Workspace utledes fra innlogg
 
 Emergency rollback er database-first. Per-profile rollback kan fjerne én utvidet profil fra API-allowlisten uten å slette canonical data eller slå av de andre pilotprofilene.
 
-## Midlertidig candidate-token
+## Midlertidig candidate-token — ryddet
 
 `AHA_PRODUCTION_PILOT_EXPANSION_ACCESS_TOKEN` ble bare brukt for den read-only post-activation-verifikasjonen av profil #2. Runtime, Home-sync og den permanente allowlist-modellen er ikke avhengig av dette tokenet.
 
-Etter vellykket post-activation closeout skal denne midlertidige secreten fjernes fra alle GitHub environments der den ble lagt inn. Repoet skal aldri inneholde tokenverdien.
+Operator har 2026-08-19 bekreftet at den midlertidige GitHub environment-secreten er slettet. Ikke-identifiserende cleanup-evidence er registrert i `ops/evidence/canonical-sync-production-expansion-token-cleanup-v1.json`. Repoet inneholder ikke tokenverdien.
 
 ## Neste obligatoriske gate: stabilitet med de samme to profilene
 
