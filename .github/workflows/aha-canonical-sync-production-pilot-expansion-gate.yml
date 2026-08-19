@@ -207,6 +207,24 @@ jobs:
           set -euo pipefail
           execution="$(az containerapp job start --name "$AHA_EXPANSION_GATE_JOB" --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" --query name -o tsv --only-show-errors)"
           [[ -n "$execution" ]] || { echo "Expansion gate did not return a database execution name." >&2; exit 1; }
+
+          print_execution_logs() {
+            for log_attempt in {1..6}; do
+              if az containerapp job logs show \
+                --name "$AHA_EXPANSION_GATE_JOB" \
+                --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
+                --execution "$execution" \
+                --container canonical-db-init \
+                --tail 200 \
+                --format text; then
+                return 0
+              fi
+              sleep 5
+            done
+            echo "Could not retrieve Container Apps Job execution logs before cleanup." >&2
+            return 0
+          }
+
           for attempt in {1..90}; do
             status="$(az containerapp job execution show --name "$AHA_EXPANSION_GATE_JOB" --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" --job-execution-name "$execution" --query properties.status -o tsv --only-show-errors 2>/dev/null || true)"
             case "$status" in
@@ -215,13 +233,15 @@ jobs:
                 exit 0
                 ;;
               Failed)
-                echo "Production pilot expansion database gate failed." >&2
+                echo "Production pilot expansion database gate failed; capturing execution logs before cleanup." >&2
+                print_execution_logs
                 exit 1
                 ;;
             esac
             sleep 10
           done
-          echo "Timed out waiting for production pilot expansion verification." >&2
+          echo "Timed out waiting for production pilot expansion verification; capturing execution logs before cleanup." >&2
+          print_execution_logs
           exit 1
 
       - name: Write non-identifying expansion gate evidence
