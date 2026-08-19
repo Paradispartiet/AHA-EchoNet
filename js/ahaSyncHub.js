@@ -15,6 +15,7 @@
   const CARD_ID = "aha-canonical-production-home-sync";
   const STATUS_ID = "aha-canonical-production-home-sync-status";
   const RESULT_ID = "aha-canonical-production-home-sync-result";
+  const TECHNICAL_RESULT_ID = "aha-canonical-production-home-sync-technical-result";
   const OPEN_ID = "aha-canonical-production-home-sync-open";
   const CONFIRM_ID = "aha-canonical-production-home-sync-confirm";
   const CONSENT_ID = "aha-canonical-production-home-sync-consent";
@@ -195,31 +196,51 @@
     return productionControlPromise;
   }
 
+  function summarizeProductionResult(summary = {}) {
+    const pushed = Number(summary.pushed || 0);
+    const received = Number(summary.bootstrapApplied || 0) + Number(summary.pullApplied || 0);
+    const conflicts = Number(summary.conflictCount || 0);
+
+    if (conflicts > 0) {
+      return `Synkronisering fullført med ${conflicts} konflikt${conflicts === 1 ? "" : "er"}. Se tekniske detaljer.`;
+    }
+    if (pushed === 0 && received === 0) return "AHA er allerede oppdatert.";
+
+    const parts = [];
+    if (pushed > 0) parts.push(`${pushed} endring${pushed === 1 ? "" : "er"} lagret`);
+    if (received > 0) parts.push(`${received} oppdatering${received === 1 ? "" : "er"} hentet`);
+    return `AHA er synkronisert. ${parts.join(" · ")}.`;
+  }
+
   function productionCardMarkup() {
     const allowed = isAllowedProductionFrontend();
     return `
-      <section id="${CARD_ID}" class="aha-sync-validation-block" aria-label="Canonical production sync">
+      <section id="${CARD_ID}" class="aha-sync-validation-block" aria-label="AHA synkronisering">
         <p class="eyebrow">Synkronisering</p>
         <h4>Synkroniser AHA</h4>
         <p id="${STATUS_ID}" class="aha-sync-prep-notice" role="status" aria-live="polite">${allowed
-          ? "Manuell synkronisering er tilgjengelig. Ingenting synkroniseres ved innlogging eller i bakgrunnen."
-          : "Synkronisering er blokkert på denne frontenden."}</p>
+          ? "Hold AHA-dataene dine oppdatert på tvers av økter. Synkronisering skjer bare når du ber om det."
+          : "Synkronisering er ikke tilgjengelig på denne siden."}</p>
         <div class="aha-tile-actions">
           <button id="${OPEN_ID}" class="aha-tile-btn aha-tile-btn-primary" type="button"${allowed ? "" : " disabled aria-disabled=\"true\""}>Synkroniser nå</button>
         </div>
         <div id="${CONFIRM_ID}" hidden>
-          <p class="aha-sync-prep-notice"><strong>Én eksplisitt kjøring.</strong> Endrede AHA-data sendes til production, og serverendringer kan anvendes tilbake på ditt lokale AHA-lager.</p>
+          <p class="aha-sync-prep-notice"><strong>Synkroniser nå?</strong> Nye og endrede AHA-data kan lagres, og oppdateringer kan hentes tilbake til denne enheten.</p>
           <label class="aha-sync-prep-notice">
             <input id="${CONSENT_ID}" type="checkbox" />
-            Jeg vil synkronisere AHA nå.
+            Ja, synkroniser AHA nå.
           </label>
           <div class="aha-tile-actions">
             <button id="${RUN_ID}" class="aha-tile-btn aha-tile-btn-primary" type="button" disabled aria-disabled="true">Bekreft og synkroniser</button>
             <button id="${CANCEL_ID}" class="aha-tile-btn" type="button">Avbryt</button>
           </div>
         </div>
-        <pre id="${RESULT_ID}" class="aha-dashboard-output" aria-live="polite"></pre>
-        <p class="aha-sync-prep-notice">Pilotgrensen håndheves på serveren. Profil-ID, workspace-ID, token, rå payload og serverState vises ikke her.</p>
+        <p id="${RESULT_ID}" class="aha-sync-prep-notice" aria-live="polite"></p>
+        <details class="aha-tech-status">
+          <summary>Tekniske detaljer</summary>
+          <pre id="${TECHNICAL_RESULT_ID}" class="aha-dashboard-output"></pre>
+        </details>
+        <p class="aha-sync-prep-notice">Profil, innloggingstoken og rådata vises ikke i synkroniseringsresultatet.</p>
       </section>
     `;
   }
@@ -239,6 +260,7 @@
     const run = document.getElementById(RUN_ID);
     const cancel = document.getElementById(CANCEL_ID);
     const output = document.getElementById(RESULT_ID);
+    const technicalOutput = document.getElementById(TECHNICAL_RESULT_ID);
     if (!open || open.dataset.ahaCanonicalProductionHomeSyncBound === "true") return false;
     open.dataset.ahaCanonicalProductionHomeSyncBound = "true";
 
@@ -250,7 +272,7 @@
         run.disabled = true;
         run.setAttribute("aria-disabled", "true");
       }
-      setProductionStatus("Bekreft én manuell production-sync. Ingen kjøring har startet ennå.", "confirm");
+      setProductionStatus("Bekreft én manuell synkronisering. Ingenting er sendt eller hentet ennå.", "confirm");
     });
 
     consent?.addEventListener("change", () => {
@@ -262,7 +284,7 @@
     cancel?.addEventListener("click", () => {
       if (confirm) confirm.hidden = true;
       if (consent) consent.checked = false;
-      setProductionStatus("Manuell synkronisering er tilgjengelig. Ingenting synkroniseres ved innlogging eller i bakgrunnen.", "ready");
+      setProductionStatus("Hold AHA-dataene dine oppdatert på tvers av økter. Synkronisering skjer bare når du ber om det.", "ready");
     });
 
     run?.addEventListener("click", async () => {
@@ -271,26 +293,27 @@
       run.disabled = true;
       open.disabled = true;
       if (output) output.textContent = "";
-      setProductionStatus("Laster production-sync etter eksplisitt bekreftelse …", "running");
+      if (technicalOutput) technicalOutput.textContent = "";
+      setProductionStatus("Synkroniserer AHA …", "running");
 
       try {
         const control = await loadProductionControl();
-        setProductionStatus("Synkroniserer eksplisitt mot production …", "running");
         const summary = await control.execute({
           explicitUserAction: true,
           explicitConsent: true,
           origin: window.location?.origin || ""
         });
-        if (output) output.textContent = control.renderResult(summary);
+        if (output) output.textContent = summarizeProductionResult(summary);
+        if (technicalOutput) technicalOutput.textContent = control.renderResult(summary);
         const conflicts = Number(summary?.conflictCount || 0);
-        setProductionStatus(conflicts ? "Production-sync fullført med konflikter." : "Production-sync fullført.", conflicts ? "warning" : "success");
+        setProductionStatus(conflicts ? "Synkronisering fullført med konflikter." : "Synkronisering fullført.", conflicts ? "warning" : "success");
         if (confirm) confirm.hidden = true;
         if (consent) consent.checked = false;
       } catch (error) {
         const control = window.AHACanonicalProductionHomeSync;
         const message = control?.safeErrorMessage
           ? control.safeErrorMessage(error)
-          : "Production-sync feilet før canonical-kjøringen kunne starte. Ingen automatisk retry kjøres.";
+          : "Synkronisering feilet før kjøringen kunne starte. Ingen automatisk retry kjøres.";
         setProductionStatus(message, "error");
       } finally {
         productionRunInFlight = false;
@@ -354,6 +377,7 @@
     inspectAll,
     isAllowedProductionFrontend,
     loadProductionControl,
+    summarizeProductionResult,
     productionCardMarkup,
     bindProductionCard,
     mountProductionCanonicalManualSyncControl,
