@@ -162,8 +162,19 @@
       "perProfileRollbackMayRemoveLegacyAnchor": false,
       "destructiveExpandedProfileRollbackAllowed": false,
       "canonicalDataRetainedOnRollback": true,
+      "postActivationVerificationWorkflowImplemented": true,
+      "postActivationVerificationRequiredBeforePilotApproval": true,
+      "postActivationVerificationRequiresProtectedCandidateToken": true,
+      "postActivationVerificationCandidateBoundActivationEvidenceRequired": true,
+      "postActivationVerificationLiveRevisionMustMatchActivation": true,
+      "postActivationVerificationOwnBootstrapRequired": true,
+      "postActivationVerificationCrossProfileReadDenialRequired": true,
+      "postActivationRollbackDryRunRequired": true,
+      "postActivationVerificationMutationAllowed": false,
+      "postActivationVerificationAutomaticExecutionAllowed": false,
       "exactExpansionConfirmation": "RUN_AHA_CANONICAL_PRODUCTION_PILOT_EXPANSION_ACTIVATION",
-      "exactPerProfileRollbackConfirmation": "RUN_AHA_CANONICAL_PRODUCTION_PILOT_PROFILE_ROLLBACK"
+      "exactPerProfileRollbackConfirmation": "RUN_AHA_CANONICAL_PRODUCTION_PILOT_PROFILE_ROLLBACK",
+      "exactPostActivationVerificationConfirmation": "RUN_AHA_CANONICAL_PRODUCTION_PILOT_POST_ACTIVATION_VERIFY"
     }
   }
 }
