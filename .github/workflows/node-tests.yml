@@ -23,20 +23,41 @@ jobs:
         with:
           node-version: 22
 
-      # Temporary diagnostics for PR #793. Remaining failure is in files 191-200.
-      - name: Diagnose suite chunk 191-195
+      # Temporary diagnostics for PR #793. Remaining failure is one of files 196-200.
+      - name: Diagnose suite file 196
         shell: bash
         run: |
           set -euo pipefail
           mapfile -t files < <(find tests -maxdepth 1 -type f \( -name '*.test.cjs' -o -name '*.test.mjs' -o -name '*.cjs' \) ! -name 'aha-python-engine-smoke.test.cjs' | sort)
-          for file in "${files[@]:190:5}"; do echo "RUN $file"; node "$file"; done
+          file="${files[195]}"; echo "RUN $file"; node "$file"
 
-      - name: Diagnose suite chunk 196-200
+      - name: Diagnose suite file 197
         shell: bash
         run: |
           set -euo pipefail
           mapfile -t files < <(find tests -maxdepth 1 -type f \( -name '*.test.cjs' -o -name '*.test.mjs' -o -name '*.cjs' \) ! -name 'aha-python-engine-smoke.test.cjs' | sort)
-          for file in "${files[@]:195:5}"; do echo "RUN $file"; node "$file"; done
+          file="${files[196]}"; echo "RUN $file"; node "$file"
+
+      - name: Diagnose suite file 198
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t files < <(find tests -maxdepth 1 -type f \( -name '*.test.cjs' -o -name '*.test.mjs' -o -name '*.cjs' \) ! -name 'aha-python-engine-smoke.test.cjs' | sort)
+          file="${files[197]}"; echo "RUN $file"; node "$file"
+
+      - name: Diagnose suite file 199
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t files < <(find tests -maxdepth 1 -type f \( -name '*.test.cjs' -o -name '*.test.mjs' -o -name '*.cjs' \) ! -name 'aha-python-engine-smoke.test.cjs' | sort)
+          file="${files[198]}"; echo "RUN $file"; node "$file"
+
+      - name: Diagnose suite file 200
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t files < <(find tests -maxdepth 1 -type f \( -name '*.test.cjs' -o -name '*.test.mjs' -o -name '*.cjs' \) ! -name 'aha-python-engine-smoke.test.cjs' | sort)
+          file="${files[199]}"; echo "RUN $file"; node "$file"
 
       - name: Run deterministic Node test suite
         run: npm test
