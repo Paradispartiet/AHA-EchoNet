@@ -1,6 +1,6 @@
 # AHA Canonical Production Pilot — current status
 
-Status: **AKTIV bounded manual production-pilot i Azure med nøyaktig 2 verifiserte profiler, eksplisitt manuell sync og null automatic/login/background sync.**
+Status: **AKTIV bounded manual production-pilot i Azure med nøyaktig 2 verifiserte profiler, eksplisitt manuell sync og null automatic/login/background sync. To-profil round-trip closeout er 1 av 2 bestått.**
 
 Dette dokumentet er den operative statuskilden for canonical production-piloten. Eldre arkitektur-/rolloutdokumenter kan beskrive pre-deploy-, pre-activation- eller én-profil-tilstanden; der slike statuslinjer avviker, gjelder denne filen for faktisk operasjonell status.
 
@@ -20,6 +20,7 @@ migration rehearsal
 → same-SHA expansion activation for profil #2
 → post-activation production verification
 → manuell production-sync integrert i AHA Home
+→ two-profile round-trip pilot_slot_1 PASS + idempotent replay PASS
 ```
 
 Production bruker Azure Container Apps og dedikert privat PostgreSQL 16. Staging/legacy-databaser brukes ikke som production-database.
@@ -54,6 +55,24 @@ nextExpansionPaused = true
 ```
 
 **Profil #3 er eksplisitt pauset** til to-profil round-trip med ekte AHA-data er bevist for begge eksisterende profiler.
+
+## Round-trip closeout-status
+
+Den eksplisitte to-profil-porten har nå live evidence for én av de to ikke-identifiserende pilot-slottene:
+
+```text
+pilot_slot_1 = VERIFIED
+first round-trip = PASS
+idempotent replay = PASS
+pilot_slot_2 = PENDING
+verifiedProfileSlots = 1 / 2
+closeoutComplete = false
+profil #3 = IKKE GODKJENT
+```
+
+Evidence er lagret i `ops/evidence/canonical-sync-production-two-profile-roundtrip-v1.json` uten profil-ID, workspace-ID, access token, rå canonical payload, rå samtaletekst eller objekt-ID-er.
+
+`pilot_slot_1` brukte verifier build `hash-domains-v2`. Første run hadde 6 lokale endringer, 6 enqueued, 6 pushes, 38 bootstrap-applies, 0 konflikter og 0 rejected. Alle 38 aktive object states hadde komplette gyldige server-/lokalhash-domener. Identisk replay ga 0 lokale endringer, 0 enqueued, 0 pushes, 0 konflikter og stabilt batch-digest.
 
 ## Første profil: browser roundtrip og idempotens
 
@@ -119,9 +138,9 @@ Emergency rollback er database-first: runtime-login og aktive sessions kuttes f�
 
 Etter vellykket post-activation closeout skal denne midlertidige secreten fjernes fra alle GitHub environments der den ble lagt inn. Repoet skal aldri inneholde tokenverdien.
 
-## Neste obligatoriske gate: ekte to-profil round-trip
+## Neste obligatoriske gate: fullfør ekte to-profil round-trip
 
-Før profil #3 kan vurderes skal **begge** de to eksisterende production-profilene gjennomføre en kontrollert round-trip med reelle, små AHA-datasett:
+Før profil #3 kan vurderes skal **begge** de to eksisterende production-profilene gjennomføre en kontrollert round-trip med reelle, små AHA-datasett. `pilot_slot_1` er nå ferdig; `pilot_slot_2` gjenstår.
 
 ```text
 lokal AHA-endring
@@ -139,12 +158,13 @@ For hver profil skal evidence minst bevise:
 - minst én kontrollert lokal canonical endring ble faktisk pushet;
 - serverstate kom tilbake via bootstrap eller pull og ble anvendt lokalt;
 - cursor/journalposisjon gikk fremover og aldri bakover;
-- local/server hash-state er konsistent etter apply/rebaseline;
+- aktive server-/lokalhash-domener er komplette og gyldige etter apply/rebaseline;
 - ingen uventede konflikter eller rejected writes;
 - identisk replay gir `changed = 0`, `enqueued = 0` og `pushed = 0`;
+- batch-digest er stabilt gjennom replay;
 - evidence inneholder ikke profil-ID, workspace-ID, access token eller rå AHA-payload.
 
-Før begge profilene har slikt evidence forblir:
+Før `pilot_slot_2` også har slikt evidence forblir:
 
 ```text
 nextExpansionPaused = true
