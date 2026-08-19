@@ -59,6 +59,26 @@
       return moduleApi?.resolve?.(name, legacyGlobal, { version: 1 }) || legacyRoot[legacyGlobal] || null;
     }
 
+    // RuntimeComposition har fortsatt en legacy export-seam som spør
+    // InsightsEngine etter buildMetaProfile(). Eierskapet ligger i
+    // MetaInsightsEngine. Hold denne overgangen read-only og smal til
+    // composition-seamen kan migreres direkte uten å gjøre ahaChat.js større.
+    const insights = resolve("insights", "InsightsEngine");
+    const metaInsights = legacyRoot.MetaInsightsEngine;
+    if (
+      insights &&
+      typeof insights.buildMetaProfile !== "function" &&
+      typeof metaInsights?.buildUserMetaProfile === "function"
+    ) {
+      Object.defineProperty(insights, "buildMetaProfile", {
+        configurable: true,
+        enumerable: false,
+        value(chamber) {
+          return metaInsights.buildUserMetaProfile(chamber, "sub_laring") || {};
+        }
+      });
+    }
+
     function getSpec(key) {
       const providerSpec = CHAT_PROVIDERS[key];
       if (!providerSpec) throw new Error(`Ukjent AHA Chat-provider: ${key}`);
