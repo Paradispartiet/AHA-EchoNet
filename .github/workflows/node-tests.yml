@@ -23,5 +23,32 @@ jobs:
         with:
           node-version: 22
 
+      # Temporary branch-level diagnostics for PR #793. These named steps make a
+      # failing production closeout regression visible through the Actions job
+      # metadata even when raw job logs are unavailable to the GitHub connector.
+      - name: Diagnose rollout contract
+        run: node tests/aha-canonical-sync-production-rollout-gate-v1.test.cjs
+
+      - name: Diagnose Azure platform status
+        run: node tests/aha-azure-production-platform-v1.test.cjs
+
+      - name: Diagnose Azure current status
+        run: node tests/aha-azure-production-current-status-v1.test.cjs
+
+      - name: Diagnose initial pilot activation
+        run: node tests/aha-canonical-sync-production-pilot-activation-v1.test.cjs
+
+      - name: Diagnose pilot expansion
+        run: node tests/aha-canonical-sync-production-pilot-expansion-v1.test.cjs
+
+      - name: Diagnose post-activation verification
+        run: node tests/aha-canonical-sync-production-pilot-post-activation-verification-v1.test.cjs
+
+      - name: Diagnose historical first-profile proof
+        run: node tests/aha-canonical-production-pilot-proof-v1.test.cjs
+
+      - name: Diagnose two-profile round-trip verifier
+        run: node tests/aha-canonical-production-round-trip-verifier-v1.test.cjs
+
       - name: Run deterministic Node test suite
         run: npm test
