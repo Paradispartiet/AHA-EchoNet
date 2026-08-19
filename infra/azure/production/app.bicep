@@ -16,6 +16,7 @@ param databaseUrlSecretUri string
 param databaseCaSecretUri string
 param auditSaltSecretUri string
 param pilotProfileIdSecretUri string = ''
+param allowedProfileIdsSecretUri string = ''
 param canonicalSyncEnabled bool = false
 param runtimeActivated bool = false
 param applicationInsightsConnectionString string
@@ -55,10 +56,18 @@ var baseSecrets = [
   }
 ]
 
-var pilotSecrets = empty(pilotProfileIdSecretUri) ? [] : [
+var legacyPilotSecrets = empty(pilotProfileIdSecretUri) ? [] : [
   {
     name: 'pilot-profile-id'
     keyVaultUrl: pilotProfileIdSecretUri
+    identity: runtimeIdentity.id
+  }
+]
+
+var allowlistSecrets = empty(allowedProfileIdsSecretUri) ? [] : [
+  {
+    name: 'pilot-profile-ids-json'
+    keyVaultUrl: allowedProfileIdsSecretUri
     identity: runtimeIdentity.id
   }
 ]
@@ -138,10 +147,17 @@ var baseEnvironment = [
   }
 ]
 
-var pilotEnvironment = empty(pilotProfileIdSecretUri) ? [] : [
+var legacyPilotEnvironment = empty(pilotProfileIdSecretUri) ? [] : [
   {
     name: 'AHA_CANONICAL_SYNC_PILOT_PROFILE_ID'
     secretRef: 'pilot-profile-id'
+  }
+]
+
+var allowlistEnvironment = empty(allowedProfileIdsSecretUri) ? [] : [
+  {
+    name: 'AHA_CANONICAL_SYNC_ALLOWED_PROFILE_IDS_JSON'
+    secretRef: 'pilot-profile-ids-json'
   }
 ]
 
@@ -178,14 +194,14 @@ resource api 'Microsoft.App/containerApps@2025-01-01' = {
           identity: runtimeIdentity.id
         }
       ]
-      secrets: concat(baseSecrets, pilotSecrets)
+      secrets: concat(baseSecrets, legacyPilotSecrets, allowlistSecrets)
     }
     template: {
       containers: [
         {
           name: 'aha-nest-api'
           image: image
-          env: concat(baseEnvironment, pilotEnvironment)
+          env: concat(baseEnvironment, legacyPilotEnvironment, allowlistEnvironment)
           resources: {
             cpu: json('0.5')
             memory: '1Gi'
