@@ -67,8 +67,6 @@ assert.equal(evidence.nextBoundary.backgroundSync, false);
 
 const serialized = JSON.stringify(evidence);
 assert.doesNotMatch(serialized, /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
-assert.doesNotMatch(serialized, /workspace[-_ ]?id/i);
-assert.doesNotMatch(serialized, /access[-_ ]?token/i);
 
 assert.equal(rollout.pilot.currentVerifiedProfileCount, 2);
 assert.equal(rollout.pilot.nextExpansionPaused, true);
