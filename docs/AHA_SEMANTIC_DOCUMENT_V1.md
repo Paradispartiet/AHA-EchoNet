@@ -2,25 +2,26 @@
 
 ## Status
 
-`SemanticDocumentV1` bygges fortsatt i **shadow mode**, men kontrakten er nå kommet til Phase 1B:
+`SemanticDocumentV1` bygges fortsatt i **shadow mode**. Phase 1C er nå implementert i runtime:
 
 ```text
 Phase 1A: evidence anchors                 implemented
 Phase 1B: entities + concepts              implemented in shadow
-Phase 1C: claims + relations               not implemented
+Phase 1C: claims + structural relations    implemented in shadow
+Dedicated semantic model contract          not authoritative yet
 Synthesized canonical insights             blocked
 Persistent SemanticDocument write          disabled
 Visible product behavior                    unchanged
 ```
 
-Modulgrensen er:
+Modulgrensen er fortsatt:
 
 ```text
 AHASemanticDocument
 AHAModuleApi: semanticDocument@1
 ```
 
-Modulen er fortsatt fysisk samlokalisert med `js/ahaChatIngestRuntime.js`. Det offentlige modulgrensesnittet er separat, slik at koden senere kan flyttes til egen fil uten kontraktsbrudd.
+Modulen er fysisk samlokalisert med `js/ahaChatIngestRuntime.js`, men har et separat offentlig API slik at den senere kan flyttes uten kontraktsbrudd.
 
 ---
 
@@ -32,12 +33,12 @@ Målarkitekturen er:
 SourceEvent
 → SemanticDocument
 → semantic quality gate
-→ Insight candidate(s)
+→ synthesized Insight candidate(s)
 → insightsChamber
 → Meta / produkter
 ```
 
-Under shadow-migreringen kjører dagens produksjonsflyt parallelt:
+Shadow-flyten er nå:
 
 ```text
 SourceEvent
@@ -45,10 +46,12 @@ SourceEvent
 └─→ SemanticDocumentV1 shadow
     ├─ evidence anchors
     ├─ entities
-    └─ concepts
+    ├─ concepts
+    ├─ source claims
+    └─ structural relations
 ```
 
-`SemanticDocumentV1` er derfor ennå ikke canonical sannhet for Insights eller Meta.
+`SemanticDocumentV1` skriver fortsatt ikke til canonical Insight eller Meta.
 
 ---
 
@@ -60,7 +63,7 @@ SemanticDocumentV1 {
   schema = "aha_semantic_document_v1"
   version = 1
   mode = "shadow"
-  status = "entities_concepts_shadow"
+  status = "claims_relations_shadow"
 
   source_event_id?
   source_text_hash
@@ -74,9 +77,9 @@ SemanticDocumentV1 {
   evidence_anchors[]
   entities[]
   concepts[]
+  claims[]
+  relations[]
 
-  claims = []
-  relations = []
   tensions = []
   candidate_insights = []
 
@@ -85,15 +88,13 @@ SemanticDocumentV1 {
 }
 ```
 
-Phase 1B åpner bare `entities` og `concepts`. De semantiske lagene som kan uttrykke påstander eller syntese er fortsatt hardt lukket av validatoren.
+Phase 1C åpner `claims` og `relations`, men bare for semantikk som er direkte forankret i kilden. `tensions` og `candidate_insights` er fortsatt hardt blokkert.
 
 ---
 
 ## 3. Source identity og evidence anchors
 
 `source_text_hash` er SHA-256 over nøyaktig source text i UTF-8.
-
-Evidence anchors segmenterer source deterministisk på avsnittsgrenser:
 
 ```text
 EvidenceAnchor {
@@ -111,13 +112,11 @@ Hard invariant:
 source_text.slice(start_offset, end_offset) === anchor.text
 ```
 
-Anchor-ID-er avledes fra source hash + stabil indeks. Dermed kan entities, concepts og senere claims peke til stabilt kildebelegg i stedet for rekonstruert tekst.
+Samme offset-invariant gjelder Entity/Concept mentions, Claim spans og Relation evidence spans.
 
 ---
 
 ## 4. Entities V1
-
-Entity-shapen er:
 
 ```text
 EntityV1 {
@@ -132,40 +131,11 @@ EntityV1 {
 }
 ```
 
-En mention er alltid source-grounded:
-
-```text
-MentionV1 {
-  anchor_id
-  start_offset
-  end_offset
-  text
-}
-```
-
-Hard invariant:
-
-```text
-source_text.slice(start_offset, end_offset) === mention.text
-```
-
-### Entity-kilder i Phase 1B
-
-Runtime kan materialisere:
-
-- flerordsnavn som faktisk står i source
-- tydelige akronymer som faktisk står i source
-- Subject Engine `thinker`-matches som faktisk står i source
-
-Subject Engine kan oppgradere en kildeentity til f.eks. `type: "person"`, men får ikke opprette en entity som source ikke inneholder.
-
-`canonical_matches` er **reference support**, ikke source evidence.
+Entities materialiseres bare når termen faktisk står i source. Subject Engine kan gi canonical klassifisering/støtte, men får ikke skape source evidence.
 
 ---
 
 ## 5. Concepts V1
-
-Concept-shapen er:
 
 ```text
 ConceptV1 {
@@ -180,102 +150,222 @@ ConceptV1 {
 }
 ```
 
-Phase 1B er bevisst canonical-first og konservativ:
+Concepts er fortsatt canonical-first og konservative:
 
-1. `AHASubjectEngine.matchText(source_text)` finner relevante canonical fag-/emnematcher.
-2. Bare `matched_terms` som også finnes bokstavelig i source kan materialiseres som Concept.
-3. Generiske/noise-termer filtreres.
-4. Flerordsbegreper foretrekkes fremfor svak single-token-redundans i samme match.
-5. En term som allerede er Entity blir ikke samtidig materialisert som Concept.
-6. Et Concept må ha både source mention og canonical reference support.
+```text
+Subject Engine/Fagverk match
++ literal source mention
++ concept quality gate
+= ConceptV1
+```
 
-Dette betyr at Phase 1B heller returnerer **for få** concepts enn å gjette seg til term-suppe.
-
-Ugoverned concept discovery skal ikke improviseres med en ny parallell heuristikk. Rikere concept extraction kommer når den dedikerte semantiske modellkontrakten bygges.
+Et Concept uten canonical reference support validerer ikke.
 
 ---
 
-## 6. Subject Engine og Fagverk-provenance
+## 6. Claims V1
 
-`AHASubjectEngine` er runtime-seamen for canonical støtte i denne fasen.
-
-Subject Engine-provenance kan blant annet være:
+Phase 1C introduserer **source claims**, ikke modellgenererte påstander.
 
 ```text
-kind = "canonical_fagverk"
-evidence_role = "reference_support_not_source_evidence"
+ClaimV1 {
+  id
+  kind = "source_claim"
+  text
+  normalized_key
+  epistemic_status = "source_explicit"
+  interpretation_status = "not_interpreted"
+  evidence_anchor_ids[]
+  spans[]
+  mentioned_entity_ids[]
+  mentioned_concept_ids[]
+  source = "literal_source_sentence"
+}
 ```
 
-Dette skillet er normativt:
+Første extractor er bevisst streng:
+
+- claim er en eksakt setningsslice fra source
+- spørsmål blir ikke claims
+- korte fragmenter blir ikke claims
+- Phase 1C bruker punktum-avsluttede eksplisitte source-setninger
+- ingen parafrase
+- ingen modellfortolkning
+- ingen inference
+
+Hard invariant:
+
+```text
+claim.text === claim.spans[0].text
+source_text.slice(start_offset, end_offset) === claim.text
+```
+
+Dette er ikke den endelige semantiske claim-extractoren. Det er et trygt source-grounded kontraktslag som den dedikerte semantiske modellen senere må forbedre uten å bryte provenance.
+
+---
+
+## 7. Relations V1
+
+Phase 1C tillater bare to strukturelle relasjonstyper:
+
+```text
+claim_mentions_entity
+claim_mentions_concept
+```
+
+Shape:
+
+```text
+RelationV1 {
+  id
+  type
+  from_id = claim.id
+  to_id = entity.id | concept.id
+  epistemic_status = "source_structural"
+  evidence_anchor_ids[]
+  evidence_spans[]
+  source = "co_occurrence_within_source_claim"
+}
+```
+
+En relasjon opprettes bare når en Entity/Concept mention faktisk ligger innenfor Claim-spennet.
+
+Phase 1C tillater **ikke** semantiske/infererte relasjonstyper som:
+
+```text
+causes
+supports
+contradicts
+explains
+implies
+influences
+```
+
+Slike relasjoner krever senere en eksplisitt semantic model/inference-policy med evidence og epistemisk merking. De skal ikke gjette seg frem fra co-occurrence.
+
+---
+
+## 8. Epistemisk skille
+
+Phase 1C låser tre kategorier i arkitekturen:
+
+```text
+source claim
+interpretation
+unresolved inference
+```
+
+Men runtime genererer foreløpig bare:
+
+```text
+kind = source_claim
+epistemic_status = source_explicit
+interpretation_status = not_interpreted
+```
+
+Quality gate krever derfor:
+
+```text
+interpretation_count = 0
+unresolved_inference_count = 0
+```
+
+Det skal være umulig å få en modellfortolkning inn i source-claim-laget ved å gi den et mer overbevisende språk.
+
+---
+
+## 9. Semantic quality gate
+
+`quality.semantic_quality_gate` er nå eksplisitt:
+
+```text
+stage = "claims_relations_shadow"
+source_grounded = true
+structural_relations_only = true
+interpretation_count = 0
+unresolved_inference_count = 0
+synthesis_allowed = false
+```
+
+`synthesis_allowed` skal være `false` selv når hele dokumentet ellers validerer.
+
+Nåværende blocking reasons er:
+
+```text
+dedicated_semantic_model_not_authoritative
+synthesized_insight_quality_gate_not_implemented
+```
+
+Dermed kan Phase 1C bevise source-semantikken uten at resultatet automatisk blir presentert som en ny AHA Insight.
+
+---
+
+## 10. Subject Engine og Fagverk-provenance
+
+Fagverk forblir **reference support**, ikke source evidence.
 
 ```text
 Source offsets
-= bevis for at termen faktisk finnes i kilden
+= hva brukerens/kildens tekst faktisk inneholder
 
 Subject Engine / Fagverk
-= støtte for hva termen kan canonicaliseres/kobles til
+= støtte for canonicalisering og faglig referanseramme
 ```
 
-Fagverk skal aldri brukes til å late som om noe sto i brukerens source når det ikke gjorde det.
+Denne separasjonen gjelder nå også Claim/Relation-laget: relasjoner bygges fra source spans, ikke fra at Fagverket assosierer to ting.
 
 ---
 
-## 7. Asynkron enrichment og race-safety
+## 11. Asynkron enrichment og race-safety
 
-Subject Engine kan måtte laste fagdata før `matchText(...)` fullfører. Semantic enrichment kjøres derfor asynkront etter at dagens canonical ingest har opprettet SourceEvent.
+Subject Engine enrichment kan være asynkron. Dagens `handleUserMessage(...)`-returkontrakt forblir synkron.
 
-Den eksisterende `handleUserMessage(...)`-returkontrakten forblir synkron og uendret.
+En monoton shadow-sekvens hindrer eldre, tregere analyser i å overskrive nyere SemanticDocument-status.
 
-Runtime bruker en monoton shadow-sekvens slik at:
+Phase 1C kjører etter Entity/Concept enrichment i samme shadow-jobb:
 
 ```text
-melding B fullfører enrichment før melding A
-→ melding A får ikke overskrive shadow-statusen for melding B
+source
+→ evidence
+→ Subject Engine reference matching
+→ entities/concepts
+→ source claims
+→ structural relations
+→ validation
+→ in-memory shadow recorder
 ```
-
-Shadow-laget representerer dermed siste source event, ikke siste asynkrone completion.
 
 ---
 
-## 8. Subject Engine-feil
+## 12. Validatorens Phase 1C-invarianter
 
-Mens laget er shadow-only gjelder:
-
-```text
-Subject Engine unavailable/failed
-→ source-grounded entity extraction kan fortsatt kjøre
-→ concepts uten canonical support opprettes ikke
-→ dagens canonical ingest fortsetter
-```
-
-Dette er en midlertidig shadow-policy. Før SemanticDocument får skrive synthesized canonical Insights skal semantic failure-porten bli **fail closed**.
-
----
-
-## 9. Validatorens Phase 1B-invarianter
-
-Validatoren krever nå blant annet:
+Validatoren krever blant annet:
 
 - gyldig schema/version/mode/status
-- gyldig SHA-256 source hash
-- eksakte evidence-anchor slices
-- ordnede, ikke-overlappende anchors
-- Entity/Concept-ID
-- `normalized_key`
-- minst én evidence anchor per Entity/Concept
-- minst én exact-source mention per Entity/Concept
-- gyldige mention offsets
-- Concept må ha canonical reference support
-- `claims`, `relations`, `tensions`, `candidate_insights` skal fortsatt være tomme
-- `canonical_write === false`
-- `persistent_write === false`
-- ingen chat-response-/assistant-response-avhengighet
+- SHA-256 source identity
+- eksakte evidence anchors
+- eksakte Entity/Concept mentions
+- Concept har canonical reference support
+- Claim har `kind: source_claim`
+- Claim har `epistemic_status: source_explicit`
+- Claim har `interpretation_status: not_interpreted`
+- Claim har nøyaktig ett source span i Phase 1C
+- Claim text er identisk med source span
+- Claim entity/concept-ID-er peker på eksisterende semantic items
+- Relation type er i den strukturelle allowlisten
+- Relation starter i eksisterende Claim
+- Relation target finnes og har riktig type
+- Relation evidence inneholder både Claim-spennet og target mention i samme Claim
+- semantic quality gate blokkerer synthesis
+- `tensions` og `candidate_insights` er tomme
+- ingen assistant/chat response dependency
+- ingen persistent/canonical write
 
 ---
 
-## 10. Shadow safety
+## 13. Shadow safety
 
-Phase 1B endrer fortsatt ikke brukersynlig eller persistent produktdata:
+Fortsatt:
 
 ```text
 canonical_write = false
@@ -283,71 +373,30 @@ persistent_write = false
 visible_output_changed = false
 ```
 
-Det skrives ikke SemanticDocument til:
+SemanticDocument lagres ikke til localStorage, Supabase, canonical sync, Insight Chamber eller Meta.
 
-- localStorage
-- Supabase
-- canonical sync
-- Insight Chamber
-- Meta memory
-
-`aha:semantic-document-shadow`-eventet inneholder bare sikker metadata:
+`aha:semantic-document-shadow` sender bare metadata:
 
 - schema/version/status
-- source event-id
-- source hash
-- anchor count
-- entity count
-- concept count
+- source event-id/hash
+- anchor/entity/concept/claim/relation counts
+- `synthesis_allowed`
 
-Rå source text, entities og concepts sendes ikke i eventet.
+Rå source eller semantisk innhold sendes ikke i eventet.
 
 ---
 
-## 11. Ingen chat-response-avhengighet
+## 14. Neste implementeringsetappe
 
-Validatoren avviser felter som:
+Neste fase er den **dedikerte semantiske modellkontrakten** i den eksisterende AHA-agent-backenden.
 
-```text
-assistantReply
-assistant_reply
-chat_response
-ai_response
-model_response
-```
+Målet er å gå fra den nå deterministiske, konservative shadow-analysen til strukturert modell-output for:
 
-Normativ analyseflyt:
+- richer entities/concepts
+- source-grounded propositions
+- typed semantic relations
+- eksplisitte interpretations/inferences
+- confidence/uncertainty
+- evidence bindings
 
-```text
-kildetekst
-→ SemanticDocument
-→ senere semantic synthesis
-```
-
-Ikke:
-
-```text
-kildetekst
-→ brukerrettet AI-svar
-→ canonical semantic truth
-```
-
----
-
-## 12. Neste implementeringsetappe
-
-Neste fase er:
-
-```text
-Phase 1C: Claims + Relations V1
-```
-
-Den skal minst innføre:
-
-- source-grounded propositions/claims
-- typed relations mellom entities/concepts/claims
-- evidence-binding per claim/relation
-- eksplisitt skille mellom source claim, modellfortolkning og uavklart inference
-- semantic quality gate før noe kan bli synthesized Insight
-
-Før denne porten finnes skal `candidate_insights` forbli tomt og SemanticDocument skal ikke skrive nye canonical Insights.
+Den nye modellen skal ikke få omgå Phase 1A–1C-invariantene. Modelloutput må valideres inn i samme SemanticDocument-kontrakt før synthesized Insight quality gate kan åpnes.

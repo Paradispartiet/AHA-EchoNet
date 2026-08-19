@@ -70,7 +70,7 @@ async function run() {
     JSON.parse(JSON.stringify(enrichedAgain)),
     "samme source + Subject Engine-matches skal gi samme entities/concepts"
   );
-  assert.equal(enriched.status, "entities_concepts_shadow");
+  assert.equal(enriched.status, "claims_relations_shadow");
   assert.equal(enriched.quality.status, "shadow_entities_concepts_ready");
   assert.equal(enriched.quality.entity_count, 2);
   assert.equal(enriched.quality.concept_count, 1);
@@ -115,7 +115,7 @@ async function run() {
   tampered.concepts[0].mentions[0].text = "ikke source";
   const tamperedValidation = api.validateSemanticDocument(tampered, sourceText);
   assert.equal(tamperedValidation.ok, false);
-  assert.ok(tamperedValidation.errors.includes("concept_mention_not_exact_source_slice:0:0"));
+  assert.ok(tamperedValidation.errors.includes("concept_mention:0:0_not_exact_source_slice"));
 
   const unsupported = JSON.parse(JSON.stringify(enriched));
   unsupported.concepts[0].canonical_matches = [];
@@ -142,6 +142,7 @@ async function run() {
   assert.equal(viaEngine.entities.length, 2);
   assert.equal(viaEngine.concepts.length, 1);
   assert.equal(viaEngine.quality.subject_engine_status, "matched");
+  assert.equal(viaEngine.quality.semantic_quality_gate.synthesis_allowed, false);
 
   const originalWarn = console.warn;
   console.warn = () => {};

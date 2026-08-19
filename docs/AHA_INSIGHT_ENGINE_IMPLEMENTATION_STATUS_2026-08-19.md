@@ -8,8 +8,9 @@ Nåværende byggepunkt:
 
 ```text
 Phase 1A — SemanticDocument evidence/provenance     implemented + merged
-Phase 1B — Entities + Concepts V1                  implemented in shadow
-Phase 1C — Claims + Relations V1                   next
+Phase 1B — Entities + Concepts V1                  implemented + merged
+Phase 1C — Claims + Relations V1                   implemented in shadow
+Next — dedicated semantic model contract           pending
 Canonical Insight behavior                         unchanged
 Visible product behavior                           unchanged
 Persistent SemanticDocument storage                disabled
@@ -22,31 +23,26 @@ Se `AHA_SEMANTIC_DOCUMENT_V1.md` for den normative runtime-kontrakten.
 
 ## 1. Autoritativ server-seam
 
-Tidligere kodeaudit var for forsiktig på ett punkt. Root `server.js` inneholder allerede:
+Root `server.js` inneholder allerede:
 
 ```text
 POST /api/aha-agent/insight-candidates
 ```
 
-Endepunktet:
+Endepunktet bruker OpenAI når `OPENAI_API_KEY` finnes, analyserer source-direct materiale og returnerer strukturert `insight_candidates_v1` separat fra det brukerrettede `/chat`-svaret.
 
-- bruker OpenAI når `OPENAI_API_KEY` finnes
-- analyserer source-direct materiale
-- returnerer strukturert `insight_candidates_v1`
-- er separat fra det brukerrettede `/chat`-svaret
-
-Korrekt status er derfor:
+Korrekt status er:
 
 ```text
 source-direct structured AI analysis seam: exists
-full SemanticDocument server contract: not implemented yet
+full SemanticDocument model contract: not authoritative yet
 ```
 
-V2 skal ikke opprette en unødvendig parallell AI-backend. Når Claims/Relations-kontrakten er låst skal den eksisterende agent-backenden enten utvides eller få et versjonert SemanticDocument-endepunkt i samme backend.
+Neste serverarbeid skal bygge videre i samme AHA-agent-backend, ikke lage en parallell AI-backend.
 
 ---
 
-## 2. Phase 1A — ferdig fundament
+## 2. Phase 1A — evidence/provenance
 
 Phase 1A etablerte:
 
@@ -61,130 +57,172 @@ Phase 1A etablerte:
 - eksplisitt forbud mot chat-response som analysekilde
 - ingen persistent/canonical write
 
-Dette fundamentet er beholdt uendret i Phase 1B.
-
 ---
 
 ## 3. Phase 1B — Entities + Concepts V1
 
-Phase 1B fyller nå to tidligere tomme felt:
+Phase 1B åpnet:
 
 ```text
 entities[]
 concepts[]
 ```
 
-Følgende felt er fortsatt hardt stengt:
+Entities og Concepts må være source-grounded med eksakte mentions. Concepts må i tillegg ha canonical Subject Engine/Fagverk reference support.
+
+Normativt skille:
 
 ```text
-claims = []
-relations = []
-tensions = []
-candidate_insights = []
+Source offsets  → hva source faktisk inneholder
+Fagverk         → canonical/reference support, ikke source evidence
 ```
 
-### Entities
-
-Entities materialiseres bare når det finnes literal source evidence med eksakte offsets.
-
-Første støtte omfatter:
-
-- flerordsnavn i source
-- tydelige akronymer i source
-- Subject Engine `thinker`-matches som faktisk finnes i source
-
-Subject Engine kan gi canonical støtte/klassifisering, men kan ikke skape source evidence.
-
-### Concepts
-
-Concepts er canonical-first og konservative:
-
-```text
-AHASubjectEngine.matchText(source)
-→ matched_terms
-→ literal source check
-→ generic/noise gate
-→ entity/concept separation
-→ evidence mentions
-→ canonical reference support
-```
-
-Et Concept må både:
-
-1. finnes i source med eksakte offsets, og
-2. ha canonical Subject Engine/Fagverk-støtte.
-
-Phase 1B improviserer derfor ikke en ny fri heuristisk term-extractor. Det er bevisst bedre å få for få concepts enn ny term-suppe.
+Phase 1B er bevisst konservativ og foretrekker for få concepts fremfor term-suppe.
 
 ---
 
-## 4. Fagverk er støtte, ikke kildebelegg
+## 4. Phase 1C — Claims + Relations V1
 
-Subject Engine-provenance kan eksplisitt si:
-
-```text
-kind = canonical_fagverk
-evidence_role = reference_support_not_source_evidence
-```
-
-Denne semantikken er nå bevart i `canonical_matches`.
-
-Det normative skillet er:
+Phase 1C åpner nå:
 
 ```text
-Source offsets  → hva kilden faktisk sier/nevner
-Fagverk         → hvordan en source-grounded term kan forstås/canonicaliseres
+claims[]
+relations[]
 ```
 
-Dette skillet skal også gjelde Claims/Relations og senere Insight-syntese.
+men bare som source-grounded struktur.
+
+### Claims
+
+Første Claim-kontrakt er:
+
+```text
+kind = source_claim
+epistemic_status = source_explicit
+interpretation_status = not_interpreted
+source = literal_source_sentence
+```
+
+Claim text er et eksakt source span. Spørsmål og korte fragmenter blir ikke Claims.
+
+Phase 1C gjør ingen parafrase og ingen modellfortolkning.
+
+### Relations
+
+Tillatte typer er foreløpig bare:
+
+```text
+claim_mentions_entity
+claim_mentions_concept
+```
+
+Relasjonen krever at target mention faktisk ligger innenfor source Claim-spennet.
+
+Phase 1C tillater ikke:
+
+```text
+causes
+supports
+contradicts
+explains
+implies
+influences
+```
+
+Co-occurrence skal ikke feilpresenteres som kausalitet, støtte eller motsetning.
 
 ---
 
-## 5. Asynkron shadow-wiring
+## 5. Epistemisk policy
 
-`AHASubjectEngine.matchText(...)` kan laste fagdata og er asynkron.
+Arkitekturen skiller nå eksplisitt mellom:
 
-Phase 1B lar derfor semantic enrichment kjøre fire-and-forget etter dagens canonical ingest. `handleUserMessage(...)` sin eksisterende synkrone returkontrakt endres ikke.
+```text
+source claim
+interpretation
+unresolved inference
+```
 
-En monoton shadow-sekvens hindrer at en treg eldre analyse overskriver shadow-dokumentet for en nyere melding.
+Phase 1C genererer bare første kategori.
+
+Quality gate krever derfor:
+
+```text
+interpretation_count = 0
+unresolved_inference_count = 0
+```
+
+Dette skillet skal bevares når den dedikerte semantiske modellen senere får lov til å foreslå fortolkninger og inferenser.
 
 ---
 
-## 6. Midlertidig failure-policy
+## 6. Semantic quality gate
 
-Mens `mode === "shadow"` gjelder:
+`quality.semantic_quality_gate` inneholder nå eksplisitt:
+
+```text
+stage = claims_relations_shadow
+source_grounded = true
+structural_relations_only = true
+synthesis_allowed = false
+```
+
+Selv et fullt gyldig Phase 1C-dokument får altså ikke produsere nye canonical Insights.
+
+Blocking reasons:
+
+```text
+dedicated_semantic_model_not_authoritative
+synthesized_insight_quality_gate_not_implemented
+```
+
+Dette er den sentrale sikkerhetsporten mellom semantisk analyse og produktpåstanden «Insight».
+
+---
+
+## 7. Validatoren
+
+Phase 1C-validatoren beviser nå blant annet:
+
+- SHA-256/source-anchor-integritet
+- exact-source Entity/Concept mentions
+- canonical support på Concepts
+- exact-source Claim spans
+- Claim epistemic/source-status
+- gyldige Claim→Entity/Concept-ID-er
+- strukturell relation allowlist
+- Claim og target finnes
+- Relation evidence inneholder Claim-spenn + target mention i samme Claim
+- ingen syntese
+- ingen interpretations/inferences
+- ingen chat-response dependency
+- ingen persistent/canonical write
+
+`tensions` og `candidate_insights` er fortsatt hardt tomme.
+
+---
+
+## 8. Runtime- og failure-policy
+
+Subject Engine enrichment kan være asynkron, men dagens `handleUserMessage(...)`-kontrakt er fortsatt synkron.
+
+Shadow-sekvensen hindrer eldre async-completions i å overskrive en nyere melding.
+
+Mens laget er shadow-only:
 
 ```text
 Subject Engine failure
-→ canonical chat ingest fortsetter
-→ source-grounded entities kan fortsatt finnes
+→ dagens canonical chat ingest fortsetter
+→ source entities og source claims kan fortsatt materialiseres
 → unsupported concepts opprettes ikke
+→ ingen synthesized Insight skrives
 ```
 
-Dette er kun en migreringspolicy. Før SemanticDocument blir autoritativt input til synthesized Insights skal semantic failure være **fail closed** for nye Insight-writes.
+Før V2 blir authoritative skal semantic failure bli fail-closed for nye synthesized Insight-writes.
 
 ---
 
-## 7. Hva Phase 1B-testene skal bevise
-
-Repo-portene og deterministic tester skal bevise minst:
-
-- fortsatt korrekt SHA-256 og evidence anchors
-- Entity/Concept mentions er eksakte source slices
-- Subject Engine-term uten source mention blir avvist
-- generiske terms blir ikke Concepts
-- Entity blir ikke samtidig Concept
-- rikere phrase concept kan undertrykke svak single-token-redundans i samme canonical match
-- gjentatte concept-mentions samles i ett Concept
-- Fagverk-provenance beholdes som reference support
-- Concept uten canonical support validerer ikke
-- Claims/Relations/Tensions/Candidate Insights forblir tomme
-- Subject Engine-feil lager ikke oppdiktede concepts
-- canonical ingest-resultatet endres ikke av shadow-laget
-
----
-
-## 8. Meta-status
+## 9. Meta-status
 
 Meta er fortsatt:
 
@@ -193,24 +231,28 @@ runtime: operational
 semantic quality: provisional
 ```
 
-Entities/Concepts gir et bedre semantisk fundament, men Meta skal ikke konsumere shadow-dokumentet ennå. Det mangler source-grounded propositions, typed relations og Insight quality gate.
+Meta skal ikke konsumere SemanticDocument-shadow som canonical profilgrunnlag ennå. Selv om source claims/relations nå finnes, mangler en authoritative semantic model contract og synthesized Insight quality gate.
 
 ---
 
-## 9. Neste konkrete byggejobb
+## 10. Neste konkrete byggejobb
 
 Neste etappe er:
 
 ```text
-SemanticDocument Claims + Relations V1
+Dedicated Semantic Model Contract V1
 ```
 
-Den skal etablere:
+Den skal bruke den eksisterende AHA-agent-backenden og levere strukturert modelloutput som kan valideres inn i samme SemanticDocument-kontrakt.
 
-- eksplisitte source claims/propositions
-- typed relations
-- evidence-binding på hvert claim/relation
-- skille mellom source claim, interpretation og unresolved inference
-- streng semantic quality gate
+Den skal støtte rikere:
 
-Før denne porten er bevist skal `candidate_insights` forbli tomt og ingen ny V2-syntese skrives til canonical Insight Chamber eller Meta.
+- entities/concepts
+- propositions
+- typed semantic relations
+- interpretations
+- unresolved inferences
+- uncertainty/confidence
+- evidence bindings
+
+Men modelloutput får ikke omgå Phase 1A–1C-invariantene. Etter denne serverkontrakten kommer en egen **Synthesized Insight Quality Gate** før V2 kan skrive nye canonical Insights.
