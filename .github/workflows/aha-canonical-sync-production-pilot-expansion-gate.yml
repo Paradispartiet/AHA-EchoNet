@@ -1,0 +1,267 @@
+name: AHA canonical sync production pilot expansion gate
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: "Skriv RUN_AHA_CANONICAL_PRODUCTION_PILOT_EXPANSION_GATE for å verifisere én beskyttet kandidat uten å aktivere den"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: aha-canonical-production-pilot-control
+  cancel-in-progress: false
+
+jobs:
+  verify-expansion-readiness:
+    name: Verify one additional pilot candidate read-only inside production VNet
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: aha-canonical-production-infra
+
+    env:
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      AHA_PRODUCTION_PILOT_EXPANSION_PROFILE_ID: ${{ secrets.AHA_PRODUCTION_PILOT_EXPANSION_PROFILE_ID }}
+      AHA_AZURE_LOCATION: ${{ vars.AHA_PRODUCTION_AZURE_LOCATION || 'westeurope' }}
+      AHA_PRODUCTION_RESOURCE_GROUP: ${{ vars.AHA_PRODUCTION_RESOURCE_GROUP || 'rg-aha-canonical-prod' }}
+      AHA_PRODUCTION_CONTAINER_APP: aha-canonical-api-production
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Require main, exact confirmation and one protected candidate
+        shell: bash
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_REF" != 'refs/heads/main' ]]; then
+            echo "Production pilot expansion gate only runs from main." >&2
+            exit 1
+          fi
+          if [[ "$CONFIRMATION" != 'RUN_AHA_CANONICAL_PRODUCTION_PILOT_EXPANSION_GATE' ]]; then
+            echo "Exact production pilot expansion gate confirmation is required." >&2
+            exit 1
+          fi
+          if [[ ! "$AHA_PRODUCTION_PILOT_EXPANSION_PROFILE_ID" =~ ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$ ]]; then
+            echo "AHA_PRODUCTION_PILOT_EXPANSION_PROFILE_ID must be one protected UUID." >&2
+            exit 1
+          fi
+          printf '::add-mask::%s\n' "$AHA_PRODUCTION_PILOT_EXPANSION_PROFILE_ID"
+
+      - name: Azure OIDC login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Prepare Container Apps tooling
+        shell: bash
+        run: |
+          set -euo pipefail
+          az extension add --name containerapp --upgrade --only-show-errors
+          printf 'AHA_EXPANSION_AZURE_READY=1\n' >> "$GITHUB_ENV"
+
+      - name: Resolve active one-profile production pilot without mutation
+        shell: bash
+        run: |
+          set -euo pipefail
+          app_json="$RUNNER_TEMP/expansion-live-app.json"
+          az containerapp show \
+            --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
+            --name "$AHA_PRODUCTION_CONTAINER_APP" \
+            -o json --only-show-errors > "$app_json"
+
+          fqdn="$(jq -r '.properties.configuration.ingress.fqdn // empty' "$app_json")"
+          current_sync="$(jq -r '[.properties.template.containers[0].env[] | select(.name=="AHA_CANONICAL_SYNC_ENABLED") | .value][0] // "false"' "$app_json")"
+          current_runtime="$(jq -r '[.properties.template.containers[0].env[] | select(.name=="AHA_RUNTIME_ACTIVATED") | .value][0] // "false"' "$app_json")"
+          current_revision="$(jq -r '[.properties.template.containers[0].env[] | select(.name=="AHA_API_VERSION") | .value][0] // empty' "$app_json")"
+          cae_id="$(jq -r '.properties.environmentId // empty' "$app_json")"
+          runtime_vault_url="$(jq -r '[.properties.configuration.secrets[] | select(.name=="database-url") | .keyVaultUrl][0] // empty' "$app_json")"
+
+          [[ -n "$fqdn" && -n "$current_revision" && -n "$cae_id" && -n "$runtime_vault_url" ]] || {
+            echo "Could not resolve the active production pilot shape." >&2
+            exit 1
+          }
+          [[ "$current_sync" == 'true' && "$current_runtime" == 'true' ]] || {
+            echo "Expansion gate requires an already active manual production pilot." >&2
+            exit 1
+          }
+          [[ "$current_revision" =~ ^[0-9a-f]{40}$ ]] || {
+            echo "Active production pilot is not an immutable Git revision." >&2
+            exit 1
+          }
+
+          health="$RUNNER_TEMP/expansion-health.json"
+          curl --fail --silent --show-error --max-time 20 "https://${fqdn}/v1/health" > "$health"
+          jq -e '
+            .status == "ok" and
+            .service == "aha-nest-api" and
+            .runtimeActivated == true and
+            .canonicalSync.enabled == true and
+            .database.configured == true and
+            .database.connected == true and
+            .database.safeRuntimeRole == true and
+            .database.canonicalSchema == "present" and
+            .auth.configured == true
+          ' "$health" >/dev/null
+
+          runtime_vault="$(AHA_VAULT_URL="$runtime_vault_url" python3 -c 'import os; from urllib.parse import urlparse; host=urlparse(os.environ["AHA_VAULT_URL"]).hostname or ""; assert host.endswith(".vault.azure.net"); print(host.split(".")[0], end="")')"
+          current_pilot="$(az keyvault secret show --vault-name "$runtime_vault" --name aha-production-pilot-profile-id --query value -o tsv --only-show-errors)"
+          [[ "$current_pilot" =~ ^[0-9a-fA-F-]{36}$ ]] || { echo "Current protected pilot identity is unavailable." >&2; exit 1; }
+          printf '::add-mask::%s\n' "$current_pilot"
+          if [[ "${current_pilot,,}" == "${AHA_PRODUCTION_PILOT_EXPANSION_PROFILE_ID,,}" ]]; then
+            echo "Expansion candidate must differ from the active pilot profile." >&2
+            exit 1
+          fi
+
+          ops_vaults="$(az keyvault list --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" --query "[?tags.credentialScope=='migration-operations-only']" -o json --only-show-errors)"
+          [[ "$(jq 'length' <<<"$ops_vaults")" == '1' ]] || { echo "Expansion gate requires exactly one operations-only Key Vault." >&2; exit 1; }
+          ops_vault="$(jq -r '.[0].name' <<<"$ops_vaults")"
+          ops_vault_uri="$(jq -r '.[0].properties.vaultUri' <<<"$ops_vaults")"
+
+          migration_identities="$(az identity list --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" --query "[?ends_with(name, '-migration-id')]" -o json --only-show-errors)"
+          [[ "$(jq 'length' <<<"$migration_identities")" == '1' ]] || { echo "Expansion gate requires exactly one migration identity." >&2; exit 1; }
+          migration_identity_name="$(jq -r '.[0].name' <<<"$migration_identities")"
+
+          acr_json="$(az acr list --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" -o json --only-show-errors)"
+          [[ "$(jq 'length' <<<"$acr_json")" == '1' ]] || { echo "Expansion gate requires exactly one production ACR." >&2; exit 1; }
+          acr_name="$(jq -r '.[0].name' <<<"$acr_json")"
+          acr_login="$(jq -r '.[0].loginServer' <<<"$acr_json")"
+
+          {
+            printf 'AHA_EXPANSION_API_FQDN=%s\n' "$fqdn"
+            printf 'AHA_EXPANSION_CURRENT_REVISION=%s\n' "$current_revision"
+            printf 'AHA_EXPANSION_CAE_NAME=%s\n' "${cae_id##*/}"
+            printf 'AHA_EXPANSION_OPS_KEYVAULT=%s\n' "$ops_vault"
+            printf 'AHA_EXPANSION_OPS_KEYVAULT_URI=%s\n' "$ops_vault_uri"
+            printf 'AHA_EXPANSION_MIGRATION_IDENTITY_NAME=%s\n' "$migration_identity_name"
+            printf 'AHA_EXPANSION_ACR_NAME=%s\n' "$acr_name"
+            printf 'AHA_EXPANSION_ACR_LOGIN=%s\n' "$acr_login"
+          } >> "$GITHUB_ENV"
+
+      - name: Build immutable read-only database verification image
+        shell: bash
+        run: |
+          set -euo pipefail
+          az acr build \
+            --registry "$AHA_EXPANSION_ACR_NAME" \
+            --image "aha-canonical-db-init:${GITHUB_SHA}" \
+            --file infra/azure/production/db-init/Dockerfile . \
+            --only-show-errors >/dev/null
+          printf 'AHA_EXPANSION_DB_IMAGE=%s/aha-canonical-db-init:%s\n' "$AHA_EXPANSION_ACR_LOGIN" "$GITHUB_SHA" >> "$GITHUB_ENV"
+
+      - name: Stage short-lived protected expansion candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          candidate_secret="aha-pilot-expansion-candidate-${GITHUB_RUN_ID}"
+          az keyvault secret set \
+            --vault-name "$AHA_EXPANSION_OPS_KEYVAULT" \
+            --name "$candidate_secret" \
+            --value "$AHA_PRODUCTION_PILOT_EXPANSION_PROFILE_ID" \
+            --only-show-errors >/dev/null
+          printf 'AHA_EXPANSION_CANDIDATE_SECRET=%s\n' "$candidate_secret" >> "$GITHUB_ENV"
+
+      - name: Deploy short-lived read-only expansion verification job inside production VNet
+        shell: bash
+        run: |
+          set -euo pipefail
+          job_name="aha-pilot-expand-gate-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          az deployment group create \
+            --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
+            --name "aha-pilot-expand-gate-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" \
+            --template-file infra/azure/production/db-init-job.bicep \
+            --parameters \
+              location="$AHA_AZURE_LOCATION" \
+              jobName="$job_name" \
+              containerAppsEnvironmentName="$AHA_EXPANSION_CAE_NAME" \
+              managedIdentityName="$AHA_EXPANSION_MIGRATION_IDENTITY_NAME" \
+              acrName="$AHA_EXPANSION_ACR_NAME" \
+              image="$AHA_EXPANSION_DB_IMAGE" \
+              adminDatabaseUrlSecretUri="${AHA_EXPANSION_OPS_KEYVAULT_URI}secrets/aha-production-admin-database-url" \
+              databaseCaSecretUri="${AHA_EXPANSION_OPS_KEYVAULT_URI}secrets/aha-production-database-ca" \
+              pilotProfileIdSecretUri="${AHA_EXPANSION_OPS_KEYVAULT_URI}secrets/${AHA_EXPANSION_CANDIDATE_SECRET}" \
+              mode=verify_pilot_expansion \
+            --only-show-errors >/dev/null
+          printf 'AHA_EXPANSION_GATE_JOB=%s\n' "$job_name" >> "$GITHUB_ENV"
+
+      - name: Verify candidate and fleet read-only inside production VNet
+        shell: bash
+        run: |
+          set -euo pipefail
+          execution="$(az containerapp job start --name "$AHA_EXPANSION_GATE_JOB" --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" --query name -o tsv --only-show-errors)"
+          [[ -n "$execution" ]] || { echo "Expansion gate did not return a database execution name." >&2; exit 1; }
+          for attempt in {1..90}; do
+            status="$(az containerapp job execution show --name "$AHA_EXPANSION_GATE_JOB" --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" --job-execution-name "$execution" --query properties.status -o tsv --only-show-errors 2>/dev/null || true)"
+            case "$status" in
+              Succeeded)
+                echo "Production pilot expansion gate: PRIVATE_VNET_READ_ONLY_READY_ADD_ONE_PROFILE"
+                exit 0
+                ;;
+              Failed)
+                echo "Production pilot expansion database gate failed." >&2
+                exit 1
+                ;;
+            esac
+            sleep 10
+          done
+          echo "Timed out waiting for production pilot expansion verification." >&2
+          exit 1
+
+      - name: Write non-identifying expansion gate evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/evidence"
+          cat > "$RUNNER_TEMP/evidence/pilot-expansion-gate.json" <<JSON
+          {
+            "version": "aha_canonical_production_pilot_expansion_gate_v1",
+            "status": "pass",
+            "gateGitSha": "${GITHUB_SHA}",
+            "liveProductionRevision": "${AHA_EXPANSION_CURRENT_REVISION}",
+            "livePilotStillActive": true,
+            "privateDatabaseVerification": true,
+            "verificationReadOnly": true,
+            "candidateIdentityRendered": false,
+            "productionCanonicalDataMutated": false,
+            "profileAdded": false,
+            "allowlistChanged": false,
+            "apiDeploymentChanged": false
+          }
+          JSON
+
+      - name: Upload immutable expansion gate evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: aha-production-pilot-expansion-gate-${{ github.run_id }}
+          path: ${{ runner.temp }}/evidence/pilot-expansion-gate.json
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Cleanup short-lived expansion verification resources
+        if: always()
+        shell: bash
+        run: |
+          set +e
+          if [[ "${AHA_EXPANSION_AZURE_READY:-0}" != '1' ]]; then exit 0; fi
+          if [[ -n "${AHA_EXPANSION_GATE_JOB:-}" ]]; then
+            az containerapp job delete \
+              --name "$AHA_EXPANSION_GATE_JOB" \
+              --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
+              --yes --only-show-errors >/dev/null 2>&1 || true
+          fi
+          if [[ -n "${AHA_EXPANSION_CANDIDATE_SECRET:-}" && -n "${AHA_EXPANSION_OPS_KEYVAULT:-}" ]]; then
+            az keyvault secret delete \
+              --vault-name "$AHA_EXPANSION_OPS_KEYVAULT" \
+              --name "$AHA_EXPANSION_CANDIDATE_SECRET" \
+              --only-show-errors >/dev/null 2>&1 || true
+          fi
