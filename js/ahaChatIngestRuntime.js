@@ -10,11 +10,15 @@
   const SEMANTIC_DOCUMENT_SCHEMA = "aha_semantic_document_v1";
   const SEMANTIC_DOCUMENT_VERSION = 1;
   const SEMANTIC_DOCUMENT_MODE = "shadow";
-  const SEMANTIC_DOCUMENT_STATUS = "entities_concepts_shadow";
+  const SEMANTIC_DOCUMENT_STATUS = "claims_relations_shadow";
   const SEMANTIC_GENERIC_TERMS = new Set([
     "kunnskap", "mennesker", "sted", "samfunn", "refleksjon", "innsikt", "samtale", "analyse",
     "illustrasjon", "logo", "annonse", "sponset", "nødvendighet", "nodvendighet"
   ]);
+  const ALLOWED_STRUCTURAL_RELATION_TYPES = Object.freeze(new Set([
+    "claim_mentions_entity",
+    "claim_mentions_concept"
+  ]));
   const SHA256_K = Object.freeze([
     0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
     0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
@@ -176,6 +180,21 @@
     return (String(value || "").match(/\S/gu) || []).length;
   }
 
+  function buildSemanticQualityGate(overrides = {}) {
+    return Object.assign({
+      stage: "claims_relations_shadow",
+      source_grounded: true,
+      structural_relations_only: true,
+      interpretation_count: 0,
+      unresolved_inference_count: 0,
+      synthesis_allowed: false,
+      blocking_reasons: [
+        "dedicated_semantic_model_not_authoritative",
+        "synthesized_insight_quality_gate_not_implemented"
+      ]
+    }, overrides);
+  }
+
   function buildShadowSemanticDocument(input = {}, options = {}) {
     const sourceText = String(input.source_text ?? input.text ?? "");
     if (!sourceText.trim()) throw new Error("semantic_document_empty_source");
@@ -207,12 +226,15 @@
       tensions: [],
       candidate_insights: [],
       quality: {
-        status: "shadow_entities_concepts_pending",
+        status: "shadow_claims_relations_pending",
         anchor_count: evidenceAnchors.length,
         entity_count: 0,
         concept_count: 0,
+        claim_count: 0,
+        relation_count: 0,
         canonical_subject_match_count: 0,
         subject_engine_status: "not_run",
+        semantic_quality_gate: buildSemanticQualityGate(),
         source_coverage_non_whitespace: sourceNonWhitespace
           ? Number(Math.min(1, coveredNonWhitespace / sourceNonWhitespace).toFixed(6))
           : 0
@@ -464,6 +486,137 @@
     return doc;
   }
 
+  function sentenceSpansForAnchor(sourceText, anchor) {
+    const source = String(sourceText || "");
+    if (!anchor || typeof anchor !== "object") return [];
+    const localText = source.slice(anchor.start_offset, anchor.end_offset);
+    const pattern = /[^.!?\n]+(?:[.!?]+|$)/gu;
+    const spans = [];
+    let match;
+    while ((match = pattern.exec(localText)) !== null) {
+      const rawStart = anchor.start_offset + match.index;
+      const rawEnd = rawStart + match[0].length;
+      const range = trimRange(source, rawStart, rawEnd);
+      if (range.end <= range.start) continue;
+      spans.push({
+        anchor_id: anchor.id,
+        start_offset: range.start,
+        end_offset: range.end,
+        text: source.slice(range.start, range.end)
+      });
+    }
+    return spans;
+  }
+
+  function isSourceClaimSpan(span) {
+    const text = String(span?.text || "").trim();
+    if (!text || !/\.$/u.test(text) || /\?/u.test(text)) return false;
+    const words = normalizeSemanticKey(text).split(/\s+/).filter(Boolean);
+    return words.length >= 5 && words.length <= 80 && /\p{L}/u.test(text);
+  }
+
+  function mentionsInsideSpan(items, span) {
+    return (Array.isArray(items) ? items : []).filter((item) => (
+      (Array.isArray(item?.mentions) ? item.mentions : []).some((mention) => (
+        mention.start_offset >= span.start_offset && mention.end_offset <= span.end_offset
+      ))
+    ));
+  }
+
+  function buildSourceClaims(document, sourceText) {
+    const doc = document && typeof document === "object" ? document : {};
+    const source = String(sourceText || "");
+    const spans = (Array.isArray(doc.evidence_anchors) ? doc.evidence_anchors : [])
+      .flatMap((anchor) => sentenceSpansForAnchor(source, anchor))
+      .filter(isSourceClaimSpan)
+      .sort((a, b) => a.start_offset - b.start_offset);
+
+    return spans.map((span, index) => {
+      const mentionedEntities = mentionsInsideSpan(doc.entities, span);
+      const mentionedConcepts = mentionsInsideSpan(doc.concepts, span);
+      return {
+        id: `clm_${doc.source_text_hash.slice(0, 12)}_${String(index + 1).padStart(3, "0")}`,
+        kind: "source_claim",
+        text: span.text,
+        normalized_key: normalizeSemanticKey(span.text),
+        epistemic_status: "source_explicit",
+        interpretation_status: "not_interpreted",
+        evidence_anchor_ids: [span.anchor_id],
+        spans: [clone(span)],
+        mentioned_entity_ids: mentionedEntities.map((item) => item.id),
+        mentioned_concept_ids: mentionedConcepts.map((item) => item.id),
+        source: "literal_source_sentence"
+      };
+    });
+  }
+
+  function relationEvidenceSpans(claim, target) {
+    const claimSpan = Array.isArray(claim?.spans) ? claim.spans[0] : null;
+    if (!claimSpan) return [];
+    const targetMentions = (Array.isArray(target?.mentions) ? target.mentions : []).filter((mention) => (
+      mention.start_offset >= claimSpan.start_offset && mention.end_offset <= claimSpan.end_offset
+    ));
+    return [clone(claimSpan)].concat(targetMentions.map(clone));
+  }
+
+  function buildStructuralRelations(document) {
+    const doc = document && typeof document === "object" ? document : {};
+    const entityById = new Map((Array.isArray(doc.entities) ? doc.entities : []).map((item) => [item.id, item]));
+    const conceptById = new Map((Array.isArray(doc.concepts) ? doc.concepts : []).map((item) => [item.id, item]));
+    const pending = [];
+
+    (Array.isArray(doc.claims) ? doc.claims : []).forEach((claim) => {
+      (Array.isArray(claim.mentioned_entity_ids) ? claim.mentioned_entity_ids : []).forEach((entityId) => {
+        const target = entityById.get(entityId);
+        if (!target) return;
+        pending.push({
+          type: "claim_mentions_entity",
+          from_id: claim.id,
+          to_id: entityId,
+          epistemic_status: "source_structural",
+          evidence_anchor_ids: Array.from(new Set(claim.evidence_anchor_ids.concat(target.evidence_anchor_ids || []))),
+          evidence_spans: relationEvidenceSpans(claim, target),
+          source: "co_occurrence_within_source_claim"
+        });
+      });
+      (Array.isArray(claim.mentioned_concept_ids) ? claim.mentioned_concept_ids : []).forEach((conceptId) => {
+        const target = conceptById.get(conceptId);
+        if (!target) return;
+        pending.push({
+          type: "claim_mentions_concept",
+          from_id: claim.id,
+          to_id: conceptId,
+          epistemic_status: "source_structural",
+          evidence_anchor_ids: Array.from(new Set(claim.evidence_anchor_ids.concat(target.evidence_anchor_ids || []))),
+          evidence_spans: relationEvidenceSpans(claim, target),
+          source: "co_occurrence_within_source_claim"
+        });
+      });
+    });
+
+    return pending.map((relation, index) => Object.assign({
+      id: `rel_${doc.source_text_hash.slice(0, 12)}_${String(index + 1).padStart(3, "0")}`
+    }, relation));
+  }
+
+  function applyClaimsRelations(document, sourceText) {
+    const doc = clone(document);
+    doc.claims = buildSourceClaims(doc, sourceText);
+    doc.relations = buildStructuralRelations(doc);
+    doc.quality = Object.assign({}, doc.quality, {
+      status: "shadow_claims_relations_ready",
+      claim_count: doc.claims.length,
+      relation_count: doc.relations.length,
+      semantic_quality_gate: buildSemanticQualityGate({
+        claim_count: doc.claims.length,
+        relation_count: doc.relations.length,
+        entity_count: Array.isArray(doc.entities) ? doc.entities.length : 0,
+        concept_count: Array.isArray(doc.concepts) ? doc.concepts.length : 0
+      })
+    });
+    return doc;
+  }
+
   async function buildEnrichedShadowSemanticDocument(input = {}, options = {}) {
     const sourceText = String(input.source_text ?? input.text ?? "");
     const base = buildShadowSemanticDocument(input, options);
@@ -492,7 +645,10 @@
       }
     }
 
-    return applyEntitiesConcepts(base, sourceText, matches, { subject_engine_status: subjectEngineStatus });
+    const withEntitiesConcepts = applyEntitiesConcepts(base, sourceText, matches, {
+      subject_engine_status: subjectEngineStatus
+    });
+    return applyClaimsRelations(withEntitiesConcepts, sourceText);
   }
 
   function containsForbiddenResponseKeys(value) {
@@ -511,6 +667,26 @@
     return visit(value);
   }
 
+  function validateExactSourceSpan(span, label, source, anchorIds, errors) {
+    if (!span || typeof span !== "object") {
+      errors.push(`invalid_${label}`);
+      return false;
+    }
+    if (!anchorIds.has(span.anchor_id)) errors.push(`unknown_${label}_anchor`);
+    if (!Number.isInteger(span.start_offset) || !Number.isInteger(span.end_offset) || span.end_offset <= span.start_offset) {
+      errors.push(`invalid_${label}_offsets`);
+      return false;
+    }
+    if (source != null) {
+      if (span.start_offset < 0 || span.end_offset > source.length) {
+        errors.push(`${label}_out_of_bounds`);
+      } else if (source.slice(span.start_offset, span.end_offset) !== span.text) {
+        errors.push(`${label}_not_exact_source_slice`);
+      }
+    }
+    return true;
+  }
+
   function validateGroundedSemanticItem(item, kind, index, source, anchorIds, errors) {
     if (!item || typeof item !== "object") {
       errors.push(`invalid_${kind}:${index}`);
@@ -527,25 +703,92 @@
     const mentions = Array.isArray(item.mentions) ? item.mentions : [];
     if (!mentions.length) errors.push(`missing_${kind}_mentions:${index}`);
     mentions.forEach((mention, mentionIndex) => {
-      if (!mention || typeof mention !== "object") {
-        errors.push(`invalid_${kind}_mention:${index}:${mentionIndex}`);
-        return;
-      }
-      if (!anchorIds.has(mention.anchor_id)) errors.push(`unknown_${kind}_mention_anchor:${index}:${mentionIndex}`);
-      if (!Number.isInteger(mention.start_offset) || !Number.isInteger(mention.end_offset) || mention.end_offset <= mention.start_offset) {
-        errors.push(`invalid_${kind}_mention_offsets:${index}:${mentionIndex}`);
-        return;
-      }
-      if (source != null) {
-        if (mention.start_offset < 0 || mention.end_offset > source.length) {
-          errors.push(`${kind}_mention_out_of_bounds:${index}:${mentionIndex}`);
-        } else if (source.slice(mention.start_offset, mention.end_offset) !== mention.text) {
-          errors.push(`${kind}_mention_not_exact_source_slice:${index}:${mentionIndex}`);
-        }
-      }
+      validateExactSourceSpan(mention, `${kind}_mention:${index}:${mentionIndex}`, source, anchorIds, errors);
     });
     if (kind === "concept" && !Array.isArray(item.canonical_matches)) {
       errors.push(`missing_concept_canonical_matches:${index}`);
+    }
+  }
+
+  function validateClaim(claim, index, source, anchorIds, entityIds, conceptIds, errors) {
+    if (!claim || typeof claim !== "object") {
+      errors.push(`invalid_claim:${index}`);
+      return;
+    }
+    if (!String(claim.id || "").trim()) errors.push(`missing_claim_id:${index}`);
+    if (claim.kind !== "source_claim") errors.push(`invalid_claim_kind:${index}`);
+    if (claim.epistemic_status !== "source_explicit") errors.push(`invalid_claim_epistemic_status:${index}`);
+    if (claim.interpretation_status !== "not_interpreted") errors.push(`invalid_claim_interpretation_status:${index}`);
+    if (claim.source !== "literal_source_sentence") errors.push(`invalid_claim_source:${index}`);
+    const evidenceIds = Array.isArray(claim.evidence_anchor_ids) ? claim.evidence_anchor_ids : [];
+    if (!evidenceIds.length) errors.push(`missing_claim_evidence:${index}`);
+    evidenceIds.forEach((anchorId) => {
+      if (!anchorIds.has(anchorId)) errors.push(`unknown_claim_anchor:${index}`);
+    });
+    const spans = Array.isArray(claim.spans) ? claim.spans : [];
+    if (spans.length !== 1) errors.push(`invalid_claim_span_count:${index}`);
+    spans.forEach((span, spanIndex) => {
+      validateExactSourceSpan(span, `claim_span:${index}:${spanIndex}`, source, anchorIds, errors);
+      if (spanIndex === 0 && String(claim.text || "") !== String(span?.text || "")) {
+        errors.push(`claim_text_not_span:${index}`);
+      }
+    });
+    (Array.isArray(claim.mentioned_entity_ids) ? claim.mentioned_entity_ids : []).forEach((id) => {
+      if (!entityIds.has(id)) errors.push(`unknown_claim_entity:${index}`);
+    });
+    (Array.isArray(claim.mentioned_concept_ids) ? claim.mentioned_concept_ids : []).forEach((id) => {
+      if (!conceptIds.has(id)) errors.push(`unknown_claim_concept:${index}`);
+    });
+  }
+
+  function sameSpan(left, right) {
+    return Boolean(left && right)
+      && left.anchor_id === right.anchor_id
+      && left.start_offset === right.start_offset
+      && left.end_offset === right.end_offset
+      && left.text === right.text;
+  }
+
+  function validateRelation(relation, index, source, anchorIds, claimById, entityById, conceptById, errors) {
+    if (!relation || typeof relation !== "object") {
+      errors.push(`invalid_relation:${index}`);
+      return;
+    }
+    if (!String(relation.id || "").trim()) errors.push(`missing_relation_id:${index}`);
+    if (!ALLOWED_STRUCTURAL_RELATION_TYPES.has(relation.type)) errors.push(`invalid_relation_type:${index}`);
+    if (relation.epistemic_status !== "source_structural") errors.push(`invalid_relation_epistemic_status:${index}`);
+    if (relation.source !== "co_occurrence_within_source_claim") errors.push(`invalid_relation_source:${index}`);
+    const claim = claimById.get(relation.from_id);
+    if (!claim) errors.push(`unknown_relation_claim:${index}`);
+    const target = relation.type === "claim_mentions_entity"
+      ? entityById.get(relation.to_id)
+      : relation.type === "claim_mentions_concept"
+        ? conceptById.get(relation.to_id)
+        : null;
+    if (!target) errors.push(`unknown_relation_target:${index}`);
+
+    const evidenceIds = Array.isArray(relation.evidence_anchor_ids) ? relation.evidence_anchor_ids : [];
+    if (!evidenceIds.length) errors.push(`missing_relation_evidence:${index}`);
+    evidenceIds.forEach((anchorId) => {
+      if (!anchorIds.has(anchorId)) errors.push(`unknown_relation_anchor:${index}`);
+    });
+    const spans = Array.isArray(relation.evidence_spans) ? relation.evidence_spans : [];
+    if (spans.length < 2) errors.push(`insufficient_relation_evidence_spans:${index}`);
+    spans.forEach((span, spanIndex) => {
+      validateExactSourceSpan(span, `relation_span:${index}:${spanIndex}`, source, anchorIds, errors);
+    });
+    if (claim && Array.isArray(claim.spans) && claim.spans[0] && !spans.some((span) => sameSpan(span, claim.spans[0]))) {
+      errors.push(`relation_missing_claim_span:${index}`);
+    }
+    if (claim && target) {
+      const claimSpan = claim.spans?.[0];
+      const targetMentions = (Array.isArray(target.mentions) ? target.mentions : []).filter((mention) => (
+        claimSpan && mention.start_offset >= claimSpan.start_offset && mention.end_offset <= claimSpan.end_offset
+      ));
+      if (!targetMentions.length) errors.push(`relation_target_not_in_claim:${index}`);
+      if (targetMentions.length && !targetMentions.some((mention) => spans.some((span) => sameSpan(span, mention)))) {
+        errors.push(`relation_missing_target_span:${index}`);
+      }
     }
   }
 
@@ -565,7 +808,7 @@
     semanticArrays.forEach((key) => {
       if (!Array.isArray(doc[key])) errors.push(`missing_array:${key}`);
     });
-    ["claims", "relations", "tensions", "candidate_insights"].forEach((key) => {
+    ["tensions", "candidate_insights"].forEach((key) => {
       if (Array.isArray(doc[key]) && doc[key].length) errors.push(`shadow_semantic_array_not_empty:${key}`);
     });
 
@@ -595,21 +838,56 @@
     });
 
     const itemIds = new Set();
-    (Array.isArray(doc.entities) ? doc.entities : []).forEach((entity, index) => {
+    const entities = Array.isArray(doc.entities) ? doc.entities : [];
+    const concepts = Array.isArray(doc.concepts) ? doc.concepts : [];
+    const claims = Array.isArray(doc.claims) ? doc.claims : [];
+    const relations = Array.isArray(doc.relations) ? doc.relations : [];
+    const entityIds = new Set();
+    const conceptIds = new Set();
+    const claimIds = new Set();
+
+    entities.forEach((entity, index) => {
       validateGroundedSemanticItem(entity, "entity", index, source, anchorIds, errors);
       const id = String(entity?.id || "");
       if (id && itemIds.has(id)) errors.push(`duplicate_semantic_item_id:${id}`);
-      if (id) itemIds.add(id);
+      if (id) { itemIds.add(id); entityIds.add(id); }
     });
-    (Array.isArray(doc.concepts) ? doc.concepts : []).forEach((concept, index) => {
+    concepts.forEach((concept, index) => {
       validateGroundedSemanticItem(concept, "concept", index, source, anchorIds, errors);
       const id = String(concept?.id || "");
       if (id && itemIds.has(id)) errors.push(`duplicate_semantic_item_id:${id}`);
-      if (id) itemIds.add(id);
+      if (id) { itemIds.add(id); conceptIds.add(id); }
       if (!Array.isArray(concept?.canonical_matches) || concept.canonical_matches.length === 0) {
         errors.push(`concept_without_reference_support:${index}`);
       }
     });
+    claims.forEach((claim, index) => {
+      validateClaim(claim, index, source, anchorIds, entityIds, conceptIds, errors);
+      const id = String(claim?.id || "");
+      if (id && itemIds.has(id)) errors.push(`duplicate_semantic_item_id:${id}`);
+      if (id) { itemIds.add(id); claimIds.add(id); }
+    });
+
+    const claimById = new Map(claims.map((claim) => [claim.id, claim]));
+    const entityById = new Map(entities.map((entity) => [entity.id, entity]));
+    const conceptById = new Map(concepts.map((concept) => [concept.id, concept]));
+    relations.forEach((relation, index) => {
+      validateRelation(relation, index, source, anchorIds, claimById, entityById, conceptById, errors);
+      const id = String(relation?.id || "");
+      if (id && itemIds.has(id)) errors.push(`duplicate_semantic_item_id:${id}`);
+      if (id) itemIds.add(id);
+    });
+
+    const gate = doc.quality?.semantic_quality_gate;
+    if (!gate || typeof gate !== "object") errors.push("missing_semantic_quality_gate");
+    else {
+      if (gate.stage !== "claims_relations_shadow") errors.push("invalid_semantic_quality_gate_stage");
+      if (gate.source_grounded !== true) errors.push("semantic_quality_gate_not_source_grounded");
+      if (gate.structural_relations_only !== true) errors.push("semantic_quality_gate_relations_not_structural_only");
+      if (gate.synthesis_allowed !== false) errors.push("semantic_quality_gate_must_block_synthesis");
+      if (Number(gate.interpretation_count || 0) !== 0) errors.push("semantic_quality_gate_interpretation_not_zero");
+      if (Number(gate.unresolved_inference_count || 0) !== 0) errors.push("semantic_quality_gate_inference_not_zero");
+    }
 
     if (containsForbiddenResponseKeys(doc)) errors.push("forbidden_chat_response_dependency");
     if (doc.provenance?.canonical_write !== false) errors.push("shadow_canonical_write_must_be_false");
@@ -630,7 +908,10 @@
           source_text_hash: document.source_text_hash,
           evidence_anchor_count: document.evidence_anchors.length,
           entity_count: document.entities.length,
-          concept_count: document.concepts.length
+          concept_count: document.concepts.length,
+          claim_count: document.claims.length,
+          relation_count: document.relations.length,
+          synthesis_allowed: document.quality?.semantic_quality_gate?.synthesis_allowed === true
         }
       }));
     } catch {}
@@ -665,6 +946,10 @@
     buildShadowSemanticDocument,
     findLiteralMentions,
     applyEntitiesConcepts,
+    sentenceSpansForAnchor,
+    buildSourceClaims,
+    buildStructuralRelations,
+    applyClaimsRelations,
     buildEnrichedShadowSemanticDocument,
     validateSemanticDocument,
     recordShadowSemanticDocument,
@@ -740,9 +1025,6 @@
           ? await api.buildEnrichedShadowSemanticDocument(semanticInput, { subjectEngine })
           : api.buildShadowSemanticDocument(semanticInput);
 
-        // To raske meldinger kan gjøre Subject Engine ferdig i motsatt rekkefølge.
-        // Shadow-recorderen skal alltid representere siste source event, ikke siste
-        // asynkrone completion.
         if (sequence !== semanticShadowSequence) return null;
 
         const validation = api.validateSemanticDocument?.(document, payload.text);
