@@ -1,7 +1,7 @@
 {
   "version": "aha_canonical_sync_production_rollout_v1",
-  "status": "blocked_until_remote_readiness",
-  "productionActivationEnabled": false,
+  "status": "active_bounded_manual_pilot",
+  "productionActivationEnabled": true,
   "hosting": {
     "target": "azure_container_apps",
     "adr": "docs/adr/ADR-006-azure-container-apps-before-aks.md",
@@ -35,17 +35,24 @@
     "manualProductionPilotPrimarySourceHydration": false,
     "manualProductionPilotAppliesServerStateToRealLocalCanonicalStorage": true,
     "manualProductionPilotRendersRawPayload": false,
-    "manualProductionPilotRendersProfileOrWorkspaceIdentifier": false
+    "manualProductionPilotRendersProfileOrWorkspaceIdentifier": false,
+    "manualProductionHomeSyncImplemented": true,
+    "manualProductionHomeSyncUsesConfiguredEndpoint": true,
+    "manualProductionHomeSyncRequiresExplicitUserAction": true,
+    "manualProductionHomeSyncRequiresExplicitConsent": true
   },
   "pilot": {
     "mode": "bounded_manual_allowlist",
     "maxProfiles": 10,
     "profilesAddedPerActivation": 1,
+    "currentVerifiedProfileCount": 2,
     "profileIdentifierMustComeFromProtectedEnvironment": true,
     "publicProfileIdentifierAllowed": false,
     "serverSideAllowlistRequired": true,
     "automaticExpansionAllowed": false,
-    "groupOrPublicSharingAllowed": false
+    "groupOrPublicSharingAllowed": false,
+    "nextExpansionPaused": true,
+    "nextExpansionRequiresTwoProfileRoundTripEvidence": true
   },
   "canonicalObjectTypes": [
     "conversation",
@@ -144,9 +151,22 @@
     "emergencyRollbackWorkflowImplemented": true,
     "manualPilotSyncRequiresSeparateExplicitUserAction": true,
     "manualPilotSyncConfirmation": "RUN_AHA_CANONICAL_PRODUCTION_PILOT_SYNC",
-    "enabled": false,
+    "enabled": true,
+    "currentVerifiedProfileCount": 2,
     "exactPilotConfirmation": "RUN_AHA_CANONICAL_PRODUCTION_PILOT_ACTIVATION",
     "exactPilotRollbackConfirmation": "RUN_AHA_CANONICAL_PRODUCTION_PILOT_ROLLBACK",
+    "roundTrip": {
+      "requiredBeforeNextExpansion": true,
+      "requiredVerifiedProfiles": 2,
+      "requiresRealLocalAhaData": true,
+      "requiresPush": true,
+      "requiresBootstrapOrPull": true,
+      "requiresCursorEvidence": true,
+      "requiresHashConsistencyEvidence": true,
+      "requiresZeroUnexpectedConflicts": true,
+      "requiresIdempotentReplay": true,
+      "automaticExecutionAllowed": false
+    },
     "expansion": {
       "workflowImplemented": true,
       "sameShaExpansionGateRequired": true,
