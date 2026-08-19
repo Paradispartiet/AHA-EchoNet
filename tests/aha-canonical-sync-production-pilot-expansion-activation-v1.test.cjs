@@ -21,6 +21,9 @@ assert.match(source.gate, /gateGitSha[^\n]*GITHUB_SHA/);
 assert.match(source.gate, /candidateIdentityRendered[^\n]*false/);
 assert.match(source.gate, /mode=verify_pilot_expansion/);
 assert.doesNotMatch(source.gate, /mode=add_pilot_profile/);
+assert.match(source.gate, /job_name="aha-exp-gate-\$\{GITHUB_RUN_ID\}-\$\{GITHUB_RUN_ATTEMPT\}"/);
+assert.match(source.gate, /\$\{#job_name\} > 32/);
+assert.doesNotMatch(source.gate, /job_name="aha-pilot-expand-gate-/);
 
 // Expansion activation is manual, serialized with the other pilot controls and
 // requires both the same SHA and the exact candidate-bound gate artifact.
@@ -48,6 +51,9 @@ assert.match(source.dbRunner, /add_pilot_profile\(\)/);
 assert.match(source.dbRunner, /PROFILE_ALREADY_PRESENT_IDEMPOTENT/);
 assert.match(source.activation, /AHA_EXPANSION_CURRENT_COUNT \+ 1/);
 assert.match(source.activation, /new_count[^\n]*-le 10/);
+assert.match(source.activation, /job_name="aha-exp-act-\$\{GITHUB_RUN_ID\}-\$\{GITHUB_RUN_ATTEMPT\}"/);
+assert.match(source.activation, /\$\{#job_name\} > 32/);
+assert.doesNotMatch(source.activation, /job_name="aha-pilot-expand-activate-/);
 assert.doesNotMatch(source.activation, /AHA_PRODUCTION_RUNTIME_PASSWORD/);
 assert.doesNotMatch(source.activation, /mode=deactivate_pilot/);
 assert.doesNotMatch(source.activation, /alter role aha_canonical_production_runtime/i);
