@@ -38,8 +38,9 @@
     "manualProductionPilotRendersProfileOrWorkspaceIdentifier": false
   },
   "pilot": {
-    "mode": "single_profile_allowlist",
-    "maxProfiles": 1,
+    "mode": "bounded_manual_allowlist",
+    "maxProfiles": 10,
+    "profilesAddedPerActivation": 1,
     "profileIdentifierMustComeFromProtectedEnvironment": true,
     "publicProfileIdentifierAllowed": false,
     "serverSideAllowlistRequired": true,
@@ -145,6 +146,24 @@
     "manualPilotSyncConfirmation": "RUN_AHA_CANONICAL_PRODUCTION_PILOT_SYNC",
     "enabled": false,
     "exactPilotConfirmation": "RUN_AHA_CANONICAL_PRODUCTION_PILOT_ACTIVATION",
-    "exactPilotRollbackConfirmation": "RUN_AHA_CANONICAL_PRODUCTION_PILOT_ROLLBACK"
+    "exactPilotRollbackConfirmation": "RUN_AHA_CANONICAL_PRODUCTION_PILOT_ROLLBACK",
+    "expansion": {
+      "workflowImplemented": true,
+      "sameShaExpansionGateRequired": true,
+      "candidateBoundGateEvidenceRequired": true,
+      "protectedCandidateProfileRequired": true,
+      "oneProfilePerActivationRequired": true,
+      "versionPinnedAllowlistSecretRequired": true,
+      "runtimeCredentialRotationAllowed": false,
+      "sharedRuntimeRoleMutationAllowed": false,
+      "automaticExecutionAllowed": false,
+      "perProfileRollbackWorkflowImplemented": true,
+      "perProfileRollbackRemovesApiAllowlistFirst": true,
+      "perProfileRollbackMayRemoveLegacyAnchor": false,
+      "destructiveExpandedProfileRollbackAllowed": false,
+      "canonicalDataRetainedOnRollback": true,
+      "exactExpansionConfirmation": "RUN_AHA_CANONICAL_PRODUCTION_PILOT_EXPANSION_ACTIVATION",
+      "exactPerProfileRollbackConfirmation": "RUN_AHA_CANONICAL_PRODUCTION_PILOT_PROFILE_ROLLBACK"
+    }
   }
 }

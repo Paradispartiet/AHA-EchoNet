@@ -131,7 +131,9 @@ assert.match(source.dbRunner, /personal-\$\{AHA_PRODUCTION_PILOT_PROFILE_ID\}/);
 assert.match(source.dbRunner, /bootstrap_sync_snapshot_v1,pull_sync_changes_v1,push_sync_change_v1/);
 assert.doesNotMatch(source.dbRunner, /grant\s+(insert|update|delete|truncate)/i);
 
-// Policy stays default-off while proving the guarded workflows exist.
+// Policy stays default-off while proving the guarded first-pilot workflows exist.
+// The initial activation still commits exactly one profile; the repository-level
+// fleet ceiling is now 10, with later additions restricted to one per explicit expansion activation.
 assert.equal(policy.productionActivationEnabled, false);
 assert.equal(policy.activation.enabled, false);
 assert.equal(policy.activation.workflowImplemented, true);
@@ -147,7 +149,10 @@ assert.equal(policy.activation.emergencyRollbackWorkflowImplemented, true);
 assert.equal(policy.activation.automaticSyncEnabled, false);
 assert.equal(policy.activation.loginTriggeredSyncEnabled, false);
 assert.equal(policy.activation.backgroundSyncEnabled, false);
-assert.equal(policy.pilot.maxProfiles, 1);
+assert.equal(policy.pilot.mode, "bounded_manual_allowlist");
+assert.equal(policy.pilot.maxProfiles, 10);
+assert.equal(policy.pilot.profilesAddedPerActivation, 1);
+assert.equal(policy.pilot.automaticExpansionAllowed, false);
 assert.equal(policy.pilot.serverSideAllowlistRequired, true);
 assert.match(source.docs, /same-SHA/i);
 assert.match(source.docs, /database-first/i);

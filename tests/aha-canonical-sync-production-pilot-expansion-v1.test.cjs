@@ -86,6 +86,8 @@ assert.match(source.gate, /environment:\s*aha-canonical-production-infra/);
 assert.match(source.gate, /id-token:\s*write/);
 assert.match(source.gate, /group:\s*aha-canonical-production-pilot-control/);
 assert.match(source.gate, /AHA_PRODUCTION_PILOT_EXPANSION_PROFILE_ID:\s*\$\{\{\s*secrets\.AHA_PRODUCTION_PILOT_EXPANSION_PROFILE_ID\s*\}\}/);
+assert.match(source.gate, /candidateFingerprintSha256/);
+assert.match(source.gate, /sha256sum/);
 assert.match(source.gate, /mode=verify_pilot_expansion/);
 assert.match(source.gate, /verificationReadOnly[^\n]*true/);
 assert.match(source.gate, /productionCanonicalDataMutated[^\n]*false/);
@@ -99,13 +101,23 @@ assert.doesNotMatch(source.gate, /runtimeActivated=true/);
 assert.doesNotMatch(source.gate, /aha-production-pilot-profile-ids-json/);
 assert.doesNotMatch(source.gate, /az containerapp update/);
 
-// Merging the foundation does not expand the live pilot. Policy remains one
-// profile until a separate reviewed activation change explicitly changes it.
+// The repository policy now authorizes only bounded, explicitly dispatched
+// expansion. Merging this code still does not mutate the live Azure allowlist.
 assert.equal(policy.productionActivationEnabled, false);
-assert.equal(policy.pilot.maxProfiles, 1);
+assert.equal(policy.pilot.mode, "bounded_manual_allowlist");
+assert.equal(policy.pilot.maxProfiles, 10);
+assert.equal(policy.pilot.profilesAddedPerActivation, 1);
+assert.equal(policy.pilot.automaticExpansionAllowed, false);
 assert.equal(policy.activation.automaticSyncEnabled, false);
 assert.equal(policy.activation.loginTriggeredSyncEnabled, false);
 assert.equal(policy.activation.backgroundSyncEnabled, false);
+assert.equal(policy.activation.expansion.workflowImplemented, true);
+assert.equal(policy.activation.expansion.sameShaExpansionGateRequired, true);
+assert.equal(policy.activation.expansion.candidateBoundGateEvidenceRequired, true);
+assert.equal(policy.activation.expansion.runtimeCredentialRotationAllowed, false);
+assert.equal(policy.activation.expansion.sharedRuntimeRoleMutationAllowed, false);
+assert.equal(policy.activation.expansion.automaticExecutionAllowed, false);
+assert.equal(policy.activation.expansion.destructiveExpandedProfileRollbackAllowed, false);
 
 // Protected identities must never be hardcoded into the foundation or gate.
 const combined = [source.syncConfig, source.syncService, source.app, source.dbJob, source.dbRunner, source.gate].join("\n");
