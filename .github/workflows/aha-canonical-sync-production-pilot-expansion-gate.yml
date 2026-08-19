@@ -55,6 +55,9 @@ jobs:
             exit 1
           fi
           printf '::add-mask::%s\n' "$AHA_PRODUCTION_PILOT_EXPANSION_PROFILE_ID"
+          candidate_lower="${AHA_PRODUCTION_PILOT_EXPANSION_PROFILE_ID,,}"
+          candidate_fingerprint="$(printf '%s' "$candidate_lower" | sha256sum | awk '{print $1}')"
+          printf 'AHA_EXPANSION_CANDIDATE_FINGERPRINT=%s\n' "$candidate_fingerprint" >> "$GITHUB_ENV"
 
       - name: Azure OIDC login
         uses: azure/login@v2
@@ -228,6 +231,7 @@ jobs:
             "status": "pass",
             "gateGitSha": "${GITHUB_SHA}",
             "liveProductionRevision": "${AHA_EXPANSION_CURRENT_REVISION}",
+            "candidateFingerprintSha256": "${AHA_EXPANSION_CANDIDATE_FINGERPRINT}",
             "livePilotStillActive": true,
             "privateDatabaseVerification": true,
             "verificationReadOnly": true,
