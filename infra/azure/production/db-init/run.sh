@@ -355,11 +355,12 @@ verify_pilot_expansion() {
   target_shape="$(psql_safe \
     -v pilot_profile_id="$AHA_PRODUCTION_PILOT_PROFILE_ID" \
     -v pilot_workspace_id="$AHA_PRODUCTION_PILOT_WORKSPACE_ID" \
-    -A -t -q -c "
-      select
-        (select count(*) from aha.profiles where id=:'pilot_profile_id')::text || '|' ||
-        (select count(*) from aha.workspaces where id=:'pilot_workspace_id')::text
-    ")"
+    -A -t -q <<'SQL'
+select
+  (select count(*) from aha.profiles where id=:'pilot_profile_id')::text || '|' ||
+  (select count(*) from aha.workspaces where id=:'pilot_workspace_id')::text;
+SQL
+  )"
   if [ "$target_shape" != '0|0' ]; then
     echo "Production pilot expansion candidate already exists in canonical production." >&2
     exit 1
@@ -376,24 +377,25 @@ add_pilot_profile() {
   target_shape="$(psql_safe \
     -v pilot_profile_id="$AHA_PRODUCTION_PILOT_PROFILE_ID" \
     -v pilot_workspace_id="$AHA_PRODUCTION_PILOT_WORKSPACE_ID" \
-    -A -t -q -c "
-      select
-        (select count(*) from aha.profiles
-          where id=:'pilot_profile_id'
-            and auth_provider='supabase'
-            and auth_subject=:'pilot_profile_id'
-            and status='active'
-            and deleted_at is null)::text || '|' ||
-        (select count(*) from aha.workspaces
-          where id=:'pilot_workspace_id'
-            and owner_profile_id=:'pilot_profile_id'
-            and workspace_type='personal'
-            and visibility='private'
-            and status='active'
-            and deleted_at is null)::text || '|' ||
-        (select count(*) from aha.profiles where id=:'pilot_profile_id')::text || '|' ||
-        (select count(*) from aha.workspaces where id=:'pilot_workspace_id')::text
-    ")"
+    -A -t -q <<'SQL'
+select
+  (select count(*) from aha.profiles
+    where id=:'pilot_profile_id'
+      and auth_provider='supabase'
+      and auth_subject=:'pilot_profile_id'
+      and status='active'
+      and deleted_at is null)::text || '|' ||
+  (select count(*) from aha.workspaces
+    where id=:'pilot_workspace_id'
+      and owner_profile_id=:'pilot_profile_id'
+      and workspace_type='personal'
+      and visibility='private'
+      and status='active'
+      and deleted_at is null)::text || '|' ||
+  (select count(*) from aha.profiles where id=:'pilot_profile_id')::text || '|' ||
+  (select count(*) from aha.workspaces where id=:'pilot_workspace_id')::text;
+SQL
+  )"
 
   if [ "$target_shape" = '1|1|1|1' ]; then
     echo 'AHA production pilot expansion: PROFILE_ALREADY_PRESENT_IDEMPOTENT'
