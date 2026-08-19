@@ -1,6 +1,6 @@
 # AHA Canonical Production Two-Profile Round-Trip v1
 
-Status: **IMPLEMENTERT SOM EKSPLISITT VERIFIKASJONSPORT. LIVE EVIDENCE MANGLER FORTSATT FOR BEGGE PROFILER. PROFIL #3 ER PAUSET.**
+Status: **IMPLEMENTERT SOM EKSPLISITT VERIFIKASJONSPORT. LIVE EVIDENCE: 1 AV 2 PROFILER BESTÅTT. DEN ANDRE PILOT-SLOTTEN GJENSTÅR. PROFIL #3 ER PAUSET.**
 
 ## Formål
 
@@ -189,9 +189,58 @@ idempotent replay = PASS
 
 Evidence skal registreres operativt med tidspunkt/run-kontekst og hvilken av de to **ikke-identifiserende pilot-slottene** som ble testet, uten å publisere den faktiske profilidentiteten.
 
+### Live evidence 2026-08-19
+
+Canonical operatørevidence ligger i:
+
+```text
+ops/evidence/canonical-sync-production-two-profile-roundtrip-v1.json
+```
+
+Status er nå:
+
+```text
+pilot_slot_1 = VERIFIED
+first round-trip = PASS
+idempotent replay = PASS
+pilot_slot_2 = PENDING
+verifiedProfileSlots = 1 / 2
+closeoutComplete = false
+```
+
+`pilot_slot_1`-beviset ble kjørt med verifier build `hash-domains-v2` og viste:
+
+```text
+localChanged = 6
+enqueued = 6
+pushed = 6
+bootstrapApplied = 38
+pullApplied = 0
+conflicts = 0
+rejected = 0
+cursorAdvanced = true
+hashDomainsComplete = true
+activeHashPairs = 38 / 38
+missingActiveHashValues = 0
+invalidHashValues = 0
+```
+
+Identisk replay viste:
+
+```text
+localChanged = 0
+enqueued = 0
+pushed = 0
+conflicts = 0
+hashDomainsComplete = true
+hashDigestStable = true
+```
+
+Ingen profilidentitet, workspace-ID, access token, rå canonical payload, rå samtaletekst eller objekt-ID-er er lagret i evidence-filen.
+
 ## Profil #3
 
-`ops/canonical-sync-production-rollout-v1.json` låser nå:
+`ops/canonical-sync-production-rollout-v1.json` låser fortsatt:
 
 ```text
 currentVerifiedProfileCount = 2
@@ -199,7 +248,7 @@ nextExpansionPaused = true
 nextExpansionRequiresTwoProfileRoundTripEvidence = true
 ```
 
-Profil #3 skal ikke gå gjennom expansion gate eller activation før begge profilbevisene over er fullført og reviewet.
+Profil #3 skal ikke gå gjennom expansion gate eller activation før `pilot_slot_2` også har både første round-trip og identisk replay som PASS, og to-profil-evidencen er fullført og reviewet.
 
 ## Etter closeout
 
