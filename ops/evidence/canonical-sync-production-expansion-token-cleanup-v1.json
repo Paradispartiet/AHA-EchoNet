@@ -1,0 +1,19 @@
+{
+  "version": "aha_canonical_sync_production_expansion_token_cleanup_v1",
+  "status": "completed",
+  "capturedAt": "2026-08-19T20:13:00+02:00",
+  "evidenceType": "operator_confirmation",
+  "secretName": "AHA_PRODUCTION_PILOT_EXPANSION_ACCESS_TOKEN",
+  "secretValueIncluded": false,
+  "removedFromGitHubEnvironment": true,
+  "runtimeDependency": false,
+  "homeSyncDependency": false,
+  "permanentAllowlistDependency": false,
+  "nextBoundary": {
+    "twoProfileRoundTripCloseoutComplete": true,
+    "stabilityObservationRequired": true,
+    "stabilityObservationComplete": false,
+    "nextExpansionPaused": true,
+    "profile3Approved": false
+  }
+}

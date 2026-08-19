@@ -71,9 +71,11 @@ for (const source of [evidenceSource, status]) {
 // The operative status has advanced beyond the historical first-profile proof.
 assert.match(status, /AKTIV bounded manual production-pilot/i);
 assert.match(status, /nøyaktig 2 profiler/i);
-assert.match(status, /Første profil: browser roundtrip og idempotens/i);
-assert.match(status, /Profil #3 er eksplisitt pauset/i);
-assert.match(status, /ekte to-profil round-trip/i);
+assert.match(status, /To-profil round-trip closeout er FULLFØRT 2 av 2/i);
+assert.match(status, /pilot_slot_1\s*=\s*VERIFIED/i);
+assert.match(status, /pilot_slot_2\s*=\s*VERIFIED/i);
+assert.match(status, /Neste obligatoriske gate:\s*stabilitet/i);
+assert.match(status, /profil #3\s*=\s*IKKE GODKJENT/i);
 assert.match(status, /automatic sync[\s\S]*login-triggered sync[\s\S]*background sync/i);
 assert.doesNotMatch(status, /AKTIV én-profil-pilot/i);
 
