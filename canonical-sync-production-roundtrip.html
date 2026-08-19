@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>AHA Canonical Sync · Two-profile round-trip</title>
+  <link rel="stylesheet" href="css/aha-chat.css" />
+  <link rel="stylesheet" href="css/aha-dashboard.css" />
+  <style>
+    body { min-height: 100vh; }
+    .aha-canonical-production-roundtrip-shell { width: min(900px, calc(100% - 32px)); margin: 48px auto; }
+    .aha-canonical-production-roundtrip-card { display: grid; gap: 18px; }
+    .aha-canonical-production-roundtrip-note { border: 1px solid currentColor; padding: 14px; border-radius: 14px; }
+    .aha-canonical-production-roundtrip-form { display: grid; gap: 16px; }
+    .aha-canonical-production-roundtrip-field { display: grid; gap: 7px; }
+    .aha-canonical-production-roundtrip-field input[type="text"] { width: 100%; box-sizing: border-box; padding: 12px 14px; }
+    .aha-canonical-production-roundtrip-consent { display: flex; gap: 10px; align-items: flex-start; }
+    .aha-canonical-production-roundtrip-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+    #aha-canonical-production-roundtrip-status[data-state="blocked"],
+    #aha-canonical-production-roundtrip-status[data-state="error"] { font-weight: 700; }
+    #aha-canonical-production-roundtrip-output { white-space: pre-wrap; overflow-wrap: anywhere; }
+  </style>
+</head>
+<body>
+  <main class="aha-canonical-production-roundtrip-shell" aria-labelledby="aha-canonical-production-roundtrip-title">
+    <section class="aha-panel aha-canonical-production-roundtrip-card">
+      <div>
+        <p class="eyebrow">AHA · beskyttet dataintegritetskontroll</p>
+        <h1 id="aha-canonical-production-roundtrip-title">Canonical Sync · Two-profile round-trip</h1>
+        <p>Denne operatorflaten brukes til å lukke den siste dataintegritetsporten for de to allerede verifiserte production-profilene. Den aktiverer ingen ny profil og endrer ikke rollout-policy automatisk.</p>
+      </div>
+
+      <div class="aha-canonical-production-roundtrip-note" role="note">
+        <strong>Én profil om gangen.</strong>
+        <p>Logg inn som den pilotprofilen som skal verifiseres. Lag deretter én liten, kontrollert endring i ekte lokale AHA-data som inngår i canonical adapteren. Ikke bruk testdata som erstatter den vanlige lokale AHA-modellen.</p>
+        <p>Første kjøring skal bevise <code>lokal endring → outbox → push → production → bootstrap/pull → lokal apply</code>. Når den er grønn, kjører du identisk replay uten å endre data. Replay skal gi null nye endringer, null nye outbox-events og null nye pushes.</p>
+        <p>Production-endpoint og privat workspace fylles ikke inn her. Endpointet kommer fra AHA sin production-konfigurasjon, mens workspace utledes fra den innloggede Supabase-identiteten. Ingen profil-ID, workspace-ID, access token eller rå AHA-payload vises i evidence.</p>
+        <p>Denne prosedyren må bestås separat av begge eksisterende profiler før profil #3 kan vurderes.</p>
+      </div>
+
+      <p id="aha-canonical-production-roundtrip-status" role="status" aria-live="polite">Kontrollerer round-trip-port …</p>
+
+      <form id="aha-canonical-production-roundtrip-form" class="aha-canonical-production-roundtrip-form" autocomplete="off">
+        <label class="aha-canonical-production-roundtrip-field">
+          <span>Bekreftelsesfrase</span>
+          <input name="confirmation" type="text" value="" placeholder="RUN_AHA_CANONICAL_TWO_PROFILE_ROUND_TRIP" spellcheck="false" required />
+          <small>Skriv nøyaktig <code>RUN_AHA_CANONICAL_TWO_PROFILE_ROUND_TRIP</code>.</small>
+        </label>
+
+        <label class="aha-canonical-production-roundtrip-consent">
+          <input name="explicitConsent" type="checkbox" required />
+          <span>Jeg bekrefter at jeg har laget én liten kontrollert lokal AHA-endring i denne profilen, og at den eksplisitte kjøringen kan pushe canonical data til production og anvende serverstate tilbake lokalt.</span>
+        </label>
+
+        <div class="aha-canonical-production-roundtrip-actions">
+          <button id="aha-canonical-production-roundtrip-first" class="aha-cta-primary" type="button">Kjør første round-trip</button>
+          <button id="aha-canonical-production-roundtrip-replay" class="aha-cta-secondary" type="button">Kjør identisk replay</button>
+          <a class="aha-cta-secondary" href="index.html">Tilbake til AHA Home</a>
+        </div>
+      </form>
+
+      <section aria-labelledby="aha-canonical-production-roundtrip-output-title">
+        <h2 id="aha-canonical-production-roundtrip-output-title">Evidence</h2>
+        <p>Evidence viser bare tekniske tellere, cursor-fremdrift, hash-konsistens og et ugjennomsiktig SHA-256-digest. Identitet og råinnhold renderes ikke.</p>
+        <pre id="aha-canonical-production-roundtrip-output" aria-live="polite"></pre>
+      </section>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/ahaConfig.js"></script>
+  <script src="js/ahaDb.js"></script>
+  <script src="js/ahaCanonicalSyncHash.js"></script>
+  <script src="js/ahaCanonicalSyncStore.js"></script>
+  <script src="js/ahaLocalAccountImport.js"></script>
+  <script src="js/ahaCanonicalFrontendSyncAdapter.js"></script>
+  <script src="js/ahaCanonicalLocalApplyAdapter.js"></script>
+  <script src="js/ahaCanonicalSyncApiClient.js"></script>
+  <script src="js/ahaCanonicalManualSyncRunner.js"></script>
+  <script src="js/ahaCanonicalSyncProductionPilotBridge.js"></script>
+  <script src="js/ahaCanonicalProductionHomeSync.js"></script>
+  <script src="js/ahaCanonicalProductionRoundTripVerifier.js"></script>
+  <script>
+    window.AHACanonicalProductionRoundTripVerifier?.bind();
+  </script>
+</body>
+</html>

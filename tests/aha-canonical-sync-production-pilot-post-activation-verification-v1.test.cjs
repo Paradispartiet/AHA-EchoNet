@@ -107,6 +107,11 @@ assert.doesNotMatch(source.verify, /\/v1\/sync\/push/);
 assert.doesNotMatch(source.verify, /mode=(?:add_pilot_profile|activate_pilot|deactivate_pilot)/);
 
 const expansion = policy.activation.expansion;
+assert.equal(policy.productionActivationEnabled, true);
+assert.equal(policy.activation.enabled, true);
+assert.equal(policy.pilot.currentVerifiedProfileCount, 2);
+assert.equal(policy.pilot.nextExpansionPaused, true);
+assert.equal(policy.activation.roundTrip.requiredBeforeNextExpansion, true);
 assert.equal(expansion.postActivationVerificationWorkflowImplemented, true);
 assert.equal(expansion.postActivationVerificationRequiredBeforePilotApproval, true);
 assert.equal(expansion.postActivationVerificationRequiresProtectedCandidateToken, true);
@@ -119,11 +124,15 @@ assert.equal(expansion.postActivationVerificationMutationAllowed, false);
 assert.equal(expansion.postActivationVerificationAutomaticExecutionAllowed, false);
 assert.equal(expansion.exactPostActivationVerificationConfirmation, "RUN_AHA_CANONICAL_PRODUCTION_PILOT_POST_ACTIVATION_VERIFY");
 
+assert.match(source.docs, /KJØRT OG BESTÅTT for production-profil #2/i);
 assert.match(source.docs, /read-only/i);
 assert.match(source.docs, /candidate access token/i);
 assert.match(source.docs, /403/);
 assert.match(source.docs, /rollback dry-run/i);
-assert.match(source.docs, /ingen production-mutasjon/i);
+assert.match(source.docs, /ingen (?:canonical )?production-mutasjon/i);
+assert.match(source.docs, /AHA_PRODUCTION_PILOT_EXPANSION_ACCESS_TOKEN/);
+assert.match(source.docs, /fjernes fra alle GitHub environments/i);
+assert.match(source.docs, /AHA_CANONICAL_PRODUCTION_TWO_PROFILE_ROUND_TRIP_V1\.md/);
 
 // No known real profile identity, token or database DSN may be committed here.
 const combined = [source.verify, source.docs].join("\n");

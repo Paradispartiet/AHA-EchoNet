@@ -2,12 +2,12 @@
 
 - Status: **Accepted**
 - Dato: 14. august 2026
-- Implementert: Nei
+- Implementert: Ja
 - Omfang: Backend Foundation v1 og senere produksjonsdrift
 
 ## Kontekst
 
-Dagens frontend driftes på GitHub Pages, mens Node-backend og FastAPI-staging er beskrevet gjennom Render. Den langsiktige prosjektplanen peker på Azure for skalerbarhet, sikkerhet og institusjonelle krav.
+Dagens frontend driftes på GitHub Pages, mens canonical production-backend nå kjører i Azure Container Apps med dedikert production PostgreSQL. Render beholdes som staging-/taktisk plattform, ikke som canonical production-hosting. Den langsiktige prosjektplanen peker fortsatt på Azure for skalerbarhet, sikkerhet og institusjonelle krav.
 
 AKS kan gi omfattende kontroll, men introduserer Kubernetes-drift, nettverk, clusteroppgraderinger, policyhåndtering og høyere operasjonell kompleksitet. Backend Foundation v1 trenger først og fremst stabil containerdrift, varige jobber, database, kø, hemmeligheter og observability.
 
@@ -119,6 +119,12 @@ Stagingporten skal inkludere:
 
 En backup som aldri er gjenopprettet teller ikke som verifisert beredskap.
 
+## Implementert produksjonsgrunnlag
+
+Canonical production-piloten har materialisert beslutningen i denne ADR-en med Azure Container Apps, dedikert production PostgreSQL, Azure Key Vault, immutable revisions, least-privilege runtime-role, migration/restore-rehearsal, observability og rollback. Dette betyr at ADR-ens plattformvalg er implementert; det betyr ikke at all senere Backend Foundation-funksjonalitet eller generell production-sync er ferdig.
+
+Production er fortsatt en **bounded manual pilot**. Automatisk sync, login-triggered sync, background sync og generell brukeraktivering er fortsatt separate senere beslutninger.
+
 ## AKS-port
 
 AKS kan vurderes hvis minst ett dokumentert behov foreligger:
@@ -150,19 +156,20 @@ Valg av AKS krever ny ADR med kostnad, kompetansebehov, sikkerhetsmodell og roll
 
 ## Aktiveringsport
 
-ADR-en kan markeres `Implemented` først når Azure staging har:
+ADR-en regnes nå som implementert fordi canonical production-grunnlaget har:
 
 - reproducerbar IaC
-- NestJS, worker og FastAPI med separate identiteter
-- PostgreSQL med testet migrasjon
-- varig kø og dead-letter-test
+- NestJS API i Azure Container Apps
+- dedikert PostgreSQL med testet migrasjon
 - Key Vault uten repo-secrets
-- traces og metrics på tvers av tjenester
+- production observability/readiness-signaler
 - backup og faktisk restore-test
-- sikker containerbuild og sårbarhetsskanning
-- EU/EØS-datalokasjon og nødvendige avtaler dokumentert
-- null automatisk produksjonsdeling eller datamigrering
-- rollback til tidligere stagingdrift
+- immutable containerbuild/revisions
+- EU/EØS production-region
+- eksplisitt rollback
+- null automatisk produksjonsdeling eller background/login-sync
+
+Eventuelle senere krav om flere workers, køer, Hasura eller AKS vurderes separat og endrer ikke at Container Apps-beslutningen allerede er implementert for canonical production-piloten.
 
 ## Forkastede alternativer
 

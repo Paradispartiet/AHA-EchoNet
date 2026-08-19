@@ -29,14 +29,15 @@
       <div>
         <p class="eyebrow">AHA · beskyttet operatorflate</p>
         <h1 id="aha-canonical-production-pilot-title">Canonical Sync · Production pilot</h1>
-        <p>Denne siden er kun for den første eksplisitte én-profil-piloten etter at production-aktivering er gjennomført. Den er ikke koblet til Home, login eller bakgrunnskjøring.</p>
+        <p>Denne siden er en diagnostisk operatorflate for den aktive bounded production-piloten. Vanlig pilotbruk skjer fra AHA Home via «Synkroniser nå». Ingen sync er koblet til login eller bakgrunnskjøring.</p>
       </div>
 
       <div class="aha-canonical-production-pilot-warning" role="note">
-        <strong>Fail-closed og én profil.</strong>
+        <strong>Fail-closed og protected allowlist.</strong>
         <p>Ingen auth-lesing, nettverkskall eller sync skjer ved page load. URL-porten må åpnes eksplisitt med <code>?ahaCanonicalProductionPilot=1</code>. Selve kjøringen krever production-API-origin, samtykke og eksakt bekreftelsesfrase.</p>
-        <p>Workspace kan ikke skrives inn. Ved eksplisitt kjøring utledes det som <code>personal-&lt;innlogget JWT-subjekt&gt;</code>, samme identitet som production-databasen bootstrapper. NestJS-serveren avviser samtidig alle andre profiler med sin beskyttede pilot-allowlist.</p>
+        <p>Workspace kan ikke skrives inn. Ved eksplisitt kjøring utledes det som <code>personal-&lt;innlogget JWT-subjekt&gt;</code>, samme identitet som production-databasen bruker. NestJS-serveren tillater bare profiler som finnes i den beskyttede bounded pilot-allowlisten.</p>
         <p><strong>Viktig:</strong> I motsetning til staging bruker denne piloten det ekte lokale canonical-lageret. Bootstrap og pull kan derfor oppdatere lokale AHA-data. Rå payload, JWT-subjekt, workspace-ID og serverState vises ikke i resultatflaten.</p>
+        <p>Production har nå to verifiserte pilotprofiler. Denne siden velger aldri profil eller workspace manuelt; innlogget Supabase-identitet bestemmer alltid privat workspace, og cross-profile tilgang skal fortsatt avvises.</p>
       </div>
 
       <p id="aha-canonical-production-pilot-status" role="status" aria-live="polite">Kontrollerer production-pilotport …</p>
@@ -45,7 +46,7 @@
         <label class="aha-canonical-production-pilot-field">
           <span>Production NestJS API-origin</span>
           <input name="apiBaseUrl" type="url" inputmode="url" placeholder="https://aha-api-production.example" spellcheck="false" required />
-          <small>Kun origin. Ingen credentials, path, query eller fragment. HTTPS kreves utenfor localhost. API-et skal være separat fra den statiske AHA-siden.</small>
+          <small>Diagnostisk operatorfelt. Vanlig AHA Home-sync bruker det konfigurerte production-endpointet automatisk. Her godtas kun origin uten credentials, path, query eller fragment; HTTPS kreves utenfor localhost.</small>
         </label>
 
         <label class="aha-canonical-production-pilot-field">
@@ -56,7 +57,7 @@
 
         <label class="aha-canonical-production-pilot-consent">
           <input name="explicitConsent" type="checkbox" required />
-          <span>Jeg bekrefter at production-piloten allerede er aktivert for min beskyttede profil, og at denne eksplisitte kjøringen kan pushe canonical data til production og anvende bootstrap/pull tilbake på mitt ekte lokale AHA-lager.</span>
+          <span>Jeg bekrefter at production-piloten er aktivert for min allowlistede profil, og at denne eksplisitte kjøringen kan pushe canonical data til production og anvende bootstrap/pull tilbake på mitt ekte lokale AHA-lager.</span>
         </label>
 
         <div class="aha-canonical-production-pilot-actions">

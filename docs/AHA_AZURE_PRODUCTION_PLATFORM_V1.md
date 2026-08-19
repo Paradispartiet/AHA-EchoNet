@@ -1,15 +1,15 @@
 # AHA Azure Production Platform v1
 
-Status: **deployet i Azure North Europe; production-readiness er gjennomført; en separat, eksplisitt én-profil canonical pilot er aktiv. Automatisk/login-triggered/background sync er fortsatt AV.**
+Status: **deployet i Azure North Europe; production-readiness er gjennomført; canonical sync kjører som en bounded manual production-pilot med nøyaktig 2 verifiserte profiler. Automatisk/login-triggered/auth-ready/background sync er fortsatt AV.**
 
 Den operative sannhetskilden for den aktive piloten er:
 
 ```text
 docs/AHA_CANONICAL_PRODUCTION_PILOT_STATUS.md
-ops/evidence/canonical-sync-production-pilot-proof-v1.json
+ops/canonical-sync-production-rollout-v1.json
 ```
 
-Denne filen beskriver selve Azure-plattformen, dens fail-closed deploy-default og de operative portene. Historiske formuleringer om «ikke deployet» eller «activation kommer senere» er ikke lenger gjeldende.
+`ops/evidence/canonical-sync-production-pilot-proof-v1.json` beholdes som historisk bevis for den første pilotprofilens production roundtrip. Denne filen beskriver selve Azure-plattformen, dens fail-closed deploy-default og de operative portene. Historiske formuleringer om «ikke deployet», «activation kommer senere» eller at dagens pilot bare består av én profil er ikke lenger gjeldende.
 
 ## Faktisk production-topologi
 
@@ -47,13 +47,21 @@ AHA_LOCAL_IMPORT_ENABLED=false
 
 Det er med vilje **deploy-defaulten**, ikke en beskrivelse av dagens separat aktiverte pilot.
 
-Etter grønn migration/restore/observability/rollout-gate ble én-profil-piloten aktivert gjennom den separate workflowen:
+Etter grønn migration/restore/observability/rollout-gate ble den første profilen aktivert gjennom:
 
 ```text
 .github/workflows/aha-canonical-sync-production-pilot-activation.yml
 ```
 
-Den committed pilot-revisjonen kjører med:
+Deretter ble profil #2 lagt til gjennom den separate bounded expansion-kjeden:
+
+```text
+.github/workflows/aha-canonical-sync-production-pilot-expansion-gate.yml
+→ .github/workflows/aha-canonical-sync-production-pilot-expansion-activation.yml
+→ .github/workflows/aha-canonical-sync-production-pilot-post-activation-verification.yml
+```
+
+Den aktive pilot-revisjonen kjører med:
 
 ```text
 AHA_RUNTIME_ACTIVATED=true
@@ -61,15 +69,15 @@ AHA_CANONICAL_SYNC_ENABLED=true
 AHA_LOCAL_IMPORT_ENABLED=false
 ```
 
-Sync er server-side begrenset til én protected pilotprofil. Den er fortsatt ikke automatisk: browseren må initiere hver sync eksplisitt.
+Sync er server-side begrenset til en protected allowlist med **nøyaktig 2 verifiserte profiler**. Browseren må fortsatt initiere hver sync eksplisitt.
 
 ## Credential- og rollegrenser
 
 Production har tre separate credential-grenser:
 
 1. **Migration/admin** — admin-DSN finnes bare i operations Key Vault og brukes av migration/operations-identiteten.
-2. **Readiness** — før pilotaktivering kunne API-et koble seg til med `aha_canonical_production_readiness`, uten canonical lese-/skriveprivilegier.
-3. **Sync runtime** — `aha_canonical_production_runtime` ble opprettet `NOLOGIN` og uten direkte table writes. Under den committed én-profil-piloten er rollen åpnet med en rotert runtime-credential, men beholder fail-closed rolleformen og bare den eksakte canonical sync-funksjonsflaten.
+2. **Readiness** — den read-only rollout-gaten verifiserer production uten å gi offentlig runner direkte tilgang til private PostgreSQL.
+3. **Sync runtime** — `aha_canonical_production_runtime` ble opprettet `NOLOGIN` og uten direkte table writes. Under aktiv pilot åpnes rollen med least-privilege runtime-credential og bare den eksakte canonical sync-funksjonsflaten.
 
 API-runtimeidentiteten har ikke tilgang til operations-vaulten med admin-DSN.
 
@@ -132,7 +140,7 @@ Den manuelle read-only gaten ligger i:
 .github/workflows/aha-canonical-sync-production-rollout-gate.yml
 ```
 
-Den er gjennomført grønt og er delt i to sikkerhetsdomener:
+Den er gjennomført grønt og er delt i to sikkerhetsdomener.
 
 ### Remote/API readiness
 
@@ -154,9 +162,9 @@ aha-canonical-production-infra
 
 Den bruker GitHub OIDC og et kortlivet Container Apps verification-job **inne i production-VNet-et**. Admin-DSN og CA leses bare via operations Key Vault-referanser. Offentlig GitHub-runner kobler aldri direkte til private PostgreSQL.
 
-Gaten aktiverer ikke pilot i seg selv. Aktiv pilot krever den separate same-SHA activation-workflowen.
+Gaten aktiverer ikke pilot i seg selv. Første activation og senere expansion er separate eksplisitte same-SHA operasjoner.
 
-## Én-profil activation
+## Første profil: initial activation
 
 Workflow:
 
@@ -179,15 +187,33 @@ Activation krever en grønn rollout-gate på **samme Git-SHA**. Den:
 5. åpner bare least-privilege runtime-rollen;
 6. aktiverer server-side pilot-allowlist;
 7. deployer API med runtime/sync aktiv bare for piloten;
-8. krever live health før `COMMITTED_ONE_PROFILE`.
+8. krever live health før det historiske activation-resultatet `COMMITTED_ONE_PROFILE`.
 
-Denne kjeden er gjennomført og dokumentert i `AHA_CANONICAL_PRODUCTION_PILOT_STATUS.md`.
+`COMMITTED_ONE_PROFILE` beskriver bare den første activation-workflowens resultat. Det er ikke dagens fleet-status.
+
+## Profil #2: bounded expansion og isolasjon
+
+Profil #2 ble lagt til med én-profil-per-activation-regelen og samme immutable activation-revisjon.
+
+Post-activation-verifikasjonen beviste:
+
+```text
+protected allowlist count = 2
+candidate own private workspace bootstrap = HTTP 200
+candidate → annen pilotprofils private workspace = HTTP 403
+per-profile rollback = READY_REMOVE_ONE_PROFILE_NO_MUTATION
+canonical data deleted = false
+```
+
+Profil-ID-er, private workspace-ID-er og access token inngår ikke i publisert evidence.
+
+Per-profile rollback kan fjerne en utvidet profil fra API-allowlisten uten å slå av de andre pilotprofilene eller slette canonical data.
 
 ## Browser/Home sync
 
-Den første production roundtripen og en identisk idempotens-kjøring er gjennomført med null konflikter.
+Den første production-profilen har allerede et production roundtrip- og idempotensbevis med null konflikter.
 
-Normal pilotbruk finnes nå på AHA Home som en **manuell** `Synkroniser AHA`-handling. Den krever eksplisitt brukerhandling og samtykke for hver kjøring. Canonical controller/dependencies lazy-loades først etter bekreftelsen.
+Normal pilotbruk finnes på AHA Home som en **manuell** `Synkroniser nå`-handling. Den krever eksplisitt brukerhandling og samtykke for hver kjøring. Canonical controller/dependencies lazy-loades først etter bekreftelsen og bruker det konfigurerte production-endpointet automatisk.
 
 Følgende forblir av:
 
@@ -198,16 +224,50 @@ auth-ready-triggered sync
 background sync
 automatic retry
 local import
-multi-profile expansion
+automatic profile expansion
+group/public canonical sharing
 ```
 
 Den separate `canonical-sync-production-pilot.html` beholdes som kontrollert operator-/diagnostikkflate, ikke som normal hovedflyt.
 
+## To-profil real-data round-trip er neste port
+
+Det som fortsatt mangler er normal, kontrollert round-trip av ekte AHA-data for **begge** nåværende profiler.
+
+Operatorflate:
+
+```text
+canonical-sync-production-roundtrip.html?ahaCanonicalProductionRoundTrip=1
+```
+
+Dokumentasjon:
+
+```text
+docs/AHA_CANONICAL_PRODUCTION_TWO_PROFILE_ROUND_TRIP_V1.md
+```
+
+For hver profil skal én liten lokal AHA-endring bevise:
+
+```text
+lokal AHA-endring
+→ canonical adapter
+→ IndexedDB outbox
+→ push
+→ production journal
+→ bootstrap/pull
+→ local apply/rebaseline
+→ identisk replay
+```
+
+Kravene inkluderer faktisk push, serverstate tilbake til lokalt lager, monotone cursors, null hash-mismatch, null uventede konflikter/rejections og replay med `changed=0`, `enqueued=0`, `pushed=0`.
+
+**Profil #3 er pauset** til begge dagens profiler har bestått denne porten.
+
 ## Rollback og emergency cutoff
 
-To forskjellige rollback-grenser finnes:
+Tre forskjellige rollback-grenser finnes.
 
-### Aktiv pilot: database-first cutoff
+### Hele aktive piloten: database-first cutoff
 
 Workflow:
 
@@ -229,6 +289,16 @@ Den:
 4. setter runtime/sync av i API-et;
 5. krever safe sync-disabled health;
 6. beholder pilotdata — ingen destruktiv down-migration.
+
+### Én utvidet profil: allowlist-first rollback
+
+Workflow:
+
+```text
+.github/workflows/aha-canonical-sync-production-pilot-profile-rollback.yml
+```
+
+Den fjerner én ikke-anchor profil fra den protected API-allowlisten, beholder shared runtime role og sletter ikke canonical profil, workspace eller data.
 
 ### Sync-disabled API rollback
 
@@ -254,40 +324,42 @@ aha-canonical-production-readiness
 
 Her ligger ikke admin-DSN/CA. Miljøet inneholder bare protected readiness-kontraktverdier som API-origin, pilot-identifikator, rollback revision og evidence-pekere. Privat DB-verifikasjon går via `aha-canonical-production-infra` og operations Key Vault.
 
-## Produksjonsrekkefølgen — gjennomført for første pilot
+Den midlertidige `AHA_PRODUCTION_PILOT_EXPANSION_ACCESS_TOKEN` som ble brukt for post-activation-verifikasjonen av profil #2 skal fjernes fra alle environments der den midlertidig ble lagt inn. Tokenet er ikke en runtime-avhengighet.
+
+## Produksjonsrekkefølgen — gjennomført til to verifiserte profiler
 
 ```text
-PR/CI: Bicep + Docker + contract
+PR/CI: Bicep + Docker + contract                 ✓
         ↓
-migration rehearsal                      ✓
+migration rehearsal                              ✓
         ↓
-Azure production platform deploy         ✓
+Azure production platform deploy                 ✓
         ↓
-real backup/PITR restore rehearsal       ✓
+real backup/PITR restore rehearsal               ✓
         ↓
-observability readiness                  ✓
+observability readiness                          ✓
         ↓
-production rollout gate                  ✓
+production rollout gate                          ✓
         ↓
-same-SHA one-profile pilot activation    ✓
+same-SHA initial pilot activation                ✓
         ↓
-manual browser roundtrip                 ✓
+profile #1 browser roundtrip + idempotence       ✓
         ↓
-idempotent repeat                        ✓
+manual Home sync integration                     ✓
         ↓
-manual Home sync integration             ✓
+bounded expansion gate for profile #2            ✓
+        ↓
+same-SHA expansion activation                    ✓
+        ↓
+profile #2 post-activation isolation verify      ✓
+        ↓
+real-data roundtrip for BOTH profiles             MÅ GJØRES
 ```
 
 ## Neste sikkerhetsgrense
 
-En grønn én-profil-pilot er **ikke** automatisk godkjenning for flere profiler eller bakgrunnssync.
+En grønn to-profil isolasjonspilot er **ikke** automatisk godkjenning for profil #3, generell production-sync eller bakgrunnssync.
 
-Før pilotutvidelse må en separat reviewet leveranse definere og teste blant annet:
+Før neste expansion krever policyen real-data round-trip og idempotent replay for begge eksisterende profiler. Deretter følger stabilitetsobservasjon av auth-avslag, permission-avslag, sync conflicts, push-resultater, latency og databasebelastning.
 
-- allowlist/invitasjonsmodell;
-- cross-profile/tenant-isolasjon;
-- per-profile observability uten identitetslekkasje;
-- per-profile cutoff/rollback;
-- eksplisitt utvidelses-gate og evidence.
-
-Background/login-triggered sync er en enda senere separat beslutning.
+Først når dette er grønt kan bounded-piloten vurderes utvidet til 3–5 profiler og senere opptil maksgrensen på 10. General production-sync og automatic/background sync er separate senere beslutninger.

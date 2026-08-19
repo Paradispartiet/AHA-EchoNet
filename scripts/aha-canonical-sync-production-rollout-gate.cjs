@@ -52,8 +52,8 @@ function contract() {
   if (!fs.existsSync(POLICY_PATH)) fail("production rollout policy is missing");
   const policy = readJson(POLICY_PATH);
   if (policy.version !== "aha_canonical_sync_production_rollout_v1") fail("unexpected production rollout policy version");
-  if (policy.productionActivationEnabled !== false || policy.activation?.enabled !== false) fail("production activation must remain disabled in the rollout-gate contract");
-  if (policy.status !== "blocked_until_remote_readiness") fail("rollout policy must remain blocked until remote readiness passes");
+  if (policy.productionActivationEnabled !== true || policy.activation?.enabled !== true) fail("production policy must reflect the active bounded manual pilot");
+  if (policy.status !== "active_bounded_manual_pilot") fail("rollout policy must reflect the active bounded manual pilot");
 
   if (policy.hosting?.target !== "azure_container_apps") fail("ADR-006 requires Azure Container Apps as the production hosting target");
   if (policy.hosting?.renderProductionAllowed !== false) fail("Render must remain staging-only for canonical sync");
@@ -69,12 +69,15 @@ function contract() {
   if (privateReadiness.githubEnvironment !== "aha-canonical-production-infra") fail("private database readiness must use the protected production infrastructure environment");
   if (privateReadiness.executionBoundary !== "production_vnet") fail("private database readiness must execute inside the production VNet");
   if (privateReadiness.verificationMode !== "verify_restore") fail("private database readiness must use the read-only verify_restore mode");
-  if (privateReadiness.liveSyncMustRemainDisabled !== true) fail("private database readiness must re-prove canonical sync disabled");
+  if (privateReadiness.liveSyncMustRemainDisabled !== true) fail("private database readiness must re-prove canonical sync disabled when the readiness gate is used");
   if (privateReadiness.adminCredentialSource !== "operations_key_vault") fail("production admin credentials must stay behind the operations Key Vault");
   if (privateReadiness.publicRunnerDirectDatabaseAccessAllowed !== false) fail("public GitHub runners must not connect directly to private production PostgreSQL");
 
   for (const field of ["automaticSync", "loginTriggeredSync", "authReadyTriggeredSync", "backgroundSync", "legacySyncHubActivation"]) {
-    if (policy.frontend?.[field] !== false) fail(`frontend.${field} must remain false before pilot activation`);
+    if (policy.frontend?.[field] !== false) fail(`frontend.${field} must remain false in the bounded production pilot`);
+  }
+  if (policy.frontend?.manualProductionHomeSyncImplemented !== true || policy.frontend?.manualProductionHomeSyncUsesConfiguredEndpoint !== true) {
+    fail("bounded production pilot must expose only explicit Home sync through the configured production endpoint");
   }
 
   if (
@@ -83,8 +86,16 @@ function contract() {
     policy.pilot?.profilesAddedPerActivation !== 1 ||
     policy.pilot?.serverSideAllowlistRequired !== true
   ) fail("production pilot policy must remain bounded manual: max 10 profiles, one profile per explicit activation, server-side allowlist required");
+  if (policy.pilot?.currentVerifiedProfileCount !== 2) fail("production pilot policy must record exactly two verified profiles before round-trip closeout");
+  if (policy.pilot?.nextExpansionPaused !== true || policy.pilot?.nextExpansionRequiresTwoProfileRoundTripEvidence !== true) fail("profile #3 must remain paused until two-profile round-trip evidence exists");
   if (policy.pilot?.profileIdentifierMustComeFromProtectedEnvironment !== true || policy.pilot?.publicProfileIdentifierAllowed !== false) fail("pilot profile identity must stay protected");
   if (policy.pilot?.automaticExpansionAllowed !== false || policy.pilot?.groupOrPublicSharingAllowed !== false) fail("pilot scope must not expand automatically");
+
+  const roundTrip = policy.activation?.roundTrip || {};
+  for (const field of ["requiredBeforeNextExpansion", "requiresRealLocalAhaData", "requiresPush", "requiresBootstrapOrPull", "requiresCursorEvidence", "requiresHashConsistencyEvidence", "requiresZeroUnexpectedConflicts", "requiresIdempotentReplay"]) {
+    if (roundTrip[field] !== true) fail(`activation.roundTrip.${field} must be required`);
+  }
+  if (roundTrip.requiredVerifiedProfiles !== 2 || roundTrip.automaticExecutionAllowed !== false) fail("round-trip closeout must cover exactly the two verified profiles and remain explicit/manual");
 
   if (!sameArray(policy.canonicalObjectTypes, EXPECTED_TYPES)) fail("canonical object type contract drifted");
 
@@ -99,7 +110,7 @@ function contract() {
   if (policy.observability?.required !== true) fail("production observability is mandatory");
   if (policy.observability?.rawConversationTextInDefaultTelemetryAllowed !== false || policy.observability?.tokensOrSecretsInTelemetryAllowed !== false) fail("production telemetry privacy boundary is unsafe");
   const signals = new Set(policy.observability?.requiredSignals || []);
-  for (const signal of ["request_rate", "request_latency", "http_errors", "database_connections", "auth_rejections", "permission_rejections", "sync_conflicts", "deployment_revision", "migration_revision"]) {
+  for (const signal of ["request_rate", "request_latency", "http_errors", "database_connections", "auth_rejections", "permission_rejections", "sync_conflicts", "sync_push_results", "deployment_revision", "migration_revision"]) {
     if (!signals.has(signal)) fail(`missing required observability signal: ${signal}`);
   }
 
@@ -116,12 +127,12 @@ function contract() {
 
   const adrPath = path.join(ROOT, policy.hosting.adr);
   const adr = fs.readFileSync(adrPath, "utf8");
-  if (!adr.includes("Status: **Accepted**") || !adr.includes("Implementert: Nei")) fail("ADR-006 state changed; re-review production rollout policy");
+  if (!adr.includes("Status: **Accepted**") || !adr.includes("Implementert: Ja")) fail("ADR-006 must reflect the implemented Azure production platform");
   if (!adr.includes("Azure Container Apps før AKS")) fail("ADR-006 no longer pins the expected production hosting direction");
 
   const home = fs.readFileSync(path.join(ROOT, "index.html"), "utf8");
   for (const runtime of ["ahaCanonicalManualSyncRunner.js", "ahaCanonicalSyncStagingBridge.js", "ahaCanonicalStagingSourceHydrator.js"]) {
-    if (home.includes(runtime)) fail(`Home must not load canonical rollout runtime before pilot activation: ${runtime}`);
+    if (home.includes(runtime)) fail(`Home must not eagerly load canonical sync runtime: ${runtime}`);
   }
 
   return { policy, evidence };
@@ -150,8 +161,8 @@ async function readiness() {
   if (health?.database?.configured !== true || health?.database?.connected !== true) fail("production canonical database is not connected");
   if (health?.database?.canonicalSchema !== "present") fail("production canonical schema is not present");
   if (health?.database?.safeRuntimeRole !== true) fail("production API is not using a safe runtime database role");
-  if (health?.runtimeActivated === true) fail("production canonical runtime must not be activated before the rollout gate completes");
-  if (health?.canonicalSync?.enabled !== false) fail("production canonical sync must be explicitly disabled in live health before rollout readiness can pass");
+  if (health?.runtimeActivated === true) fail("production canonical runtime must not be activated while the rollout readiness gate runs");
+  if (health?.canonicalSync?.enabled !== false) fail("production canonical sync must be explicitly disabled in live health while rollout readiness runs");
 
   return { origin, health };
 }
@@ -161,13 +172,13 @@ async function main() {
   if (mode === "contract") {
     contract();
     console.log("AHA canonical production rollout contract: READY");
-    console.log("AHA canonical production activation: DISABLED");
+    console.log("AHA canonical production activation: ACTIVE_BOUNDED_MANUAL_PILOT");
     return;
   }
   if (mode === "readiness") {
     await readiness();
     console.log("AHA canonical production remote readiness: PASS");
-    console.log("AHA canonical production activation: STILL_DISABLED");
+    console.log("AHA canonical production activation: RUNTIME_DISABLED_FOR_EXPLICIT_GATE");
     return;
   }
   fail(`unsupported production rollout gate mode: ${mode}`);

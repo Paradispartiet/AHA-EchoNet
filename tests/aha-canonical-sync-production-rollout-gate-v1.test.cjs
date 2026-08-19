@@ -18,10 +18,11 @@ const evidence = JSON.parse(fs.readFileSync(EVIDENCE, "utf8"));
 const gate = fs.readFileSync(GATE, "utf8");
 const dbGate = fs.readFileSync(DB_GATE, "utf8");
 const workflow = fs.readFileSync(WORKFLOW, "utf8");
+const adr = fs.readFileSync(ADR, "utf8");
 
-assert.equal(policy.productionActivationEnabled, false);
-assert.equal(policy.activation.enabled, false);
-assert.equal(policy.status, "blocked_until_remote_readiness");
+assert.equal(policy.productionActivationEnabled, true);
+assert.equal(policy.activation.enabled, true);
+assert.equal(policy.status, "active_bounded_manual_pilot");
 assert.equal(policy.hosting.target, "azure_container_apps");
 assert.equal(policy.hosting.renderProductionAllowed, false);
 assert.equal(policy.database.target, "dedicated_production_postgresql");
@@ -32,11 +33,26 @@ assert.equal(policy.database.runtimeRole, "aha_canonical_production_runtime");
 assert.equal(policy.pilot.mode, "bounded_manual_allowlist");
 assert.equal(policy.pilot.maxProfiles, 10);
 assert.equal(policy.pilot.profilesAddedPerActivation, 1);
+assert.equal(policy.pilot.currentVerifiedProfileCount, 2);
+assert.equal(policy.pilot.nextExpansionPaused, true);
+assert.equal(policy.pilot.nextExpansionRequiresTwoProfileRoundTripEvidence, true);
 assert.equal(policy.pilot.automaticExpansionAllowed, false);
 assert.equal(policy.frontend.automaticSync, false);
 assert.equal(policy.frontend.loginTriggeredSync, false);
 assert.equal(policy.frontend.authReadyTriggeredSync, false);
 assert.equal(policy.frontend.backgroundSync, false);
+assert.equal(policy.frontend.manualProductionHomeSyncImplemented, true);
+assert.equal(policy.frontend.manualProductionHomeSyncUsesConfiguredEndpoint, true);
+assert.equal(policy.activation.roundTrip.requiredBeforeNextExpansion, true);
+assert.equal(policy.activation.roundTrip.requiredVerifiedProfiles, 2);
+assert.equal(policy.activation.roundTrip.requiresRealLocalAhaData, true);
+assert.equal(policy.activation.roundTrip.requiresPush, true);
+assert.equal(policy.activation.roundTrip.requiresBootstrapOrPull, true);
+assert.equal(policy.activation.roundTrip.requiresCursorEvidence, true);
+assert.equal(policy.activation.roundTrip.requiresHashConsistencyEvidence, true);
+assert.equal(policy.activation.roundTrip.requiresZeroUnexpectedConflicts, true);
+assert.equal(policy.activation.roundTrip.requiresIdempotentReplay, true);
+assert.equal(policy.activation.roundTrip.automaticExecutionAllowed, false);
 assert.equal(policy.migration.backupBeforeMigrationRequired, true);
 assert.equal(policy.migration.restoreTestRequired, true);
 assert.equal(policy.migration.rollback.databaseCredentialCutoffRequired, true);
@@ -50,6 +66,8 @@ assert.equal(policy.privateDatabaseReadiness.adminCredentialSource, "operations_
 assert.equal(policy.privateDatabaseReadiness.publicRunnerDirectDatabaseAccessAllowed, false);
 assert.equal(policy.remoteReadiness.requiredProtectedValues.includes("AHA_PRODUCTION_ADMIN_DATABASE_URL"), false);
 assert.equal(policy.remoteReadiness.requiredProtectedValues.includes("AHA_PRODUCTION_DATABASE_CA_CERT"), false);
+assert.match(adr, /Implementert: Ja/);
+assert.match(adr, /bounded manual pilot/i);
 
 assert.equal(evidence.browserRun.primarySourceEventsFetched, 87);
 assert.equal(evidence.browserRun.canonicalEligibleIncluded, 85);
@@ -64,9 +82,9 @@ assert.equal(evidence.idempotentReplay.serverSyncChangeCountAfter, 85);
 assert.equal(evidence.databaseAfterReplay.syncConflicts, 0);
 assert.equal(evidence.securityBoundaries.productionDatabaseTouched, false);
 
-// The rollout gate remains explicit and sync-disabled. Remote/API readiness has
-// only read access; the private DB verification gets Azure OIDC only in the
-// protected infra job so PostgreSQL can remain private/VNet-only.
+// The original rollout gate remains explicit and is only valid while the live
+// runtime is disabled. Current production state is represented separately by
+// the active bounded-pilot policy and the expansion/post-activation controls.
 assert.match(workflow, /workflow_dispatch:/);
 assert.doesNotMatch(workflow, /^\s{2}(push|schedule):/m);
 assert.match(workflow, /production-readiness:/);
@@ -107,14 +125,14 @@ assert.match(dbGate, /wshmybqyksrwkawqleiz/);
 assert.match(dbGate, /bootstrap_sync_snapshot_v1,pull_sync_changes_v1,push_sync_change_v1/);
 assert.doesNotMatch(dbGate, /\b(?:insert\s+into|update\s+aha\.|delete\s+from|truncate\s+|alter\s+role|create\s+role|drop\s+role)\b/i);
 
-// Remote readiness must insist that both the protected operator state and live
-// API say sync is disabled, while production DB credentials stay out of this code.
+// Remote readiness still insists that both the protected operator state and live
+// API say sync is disabled while that legacy/pre-activation gate is running.
 assert.match(gate, /AHA_PRODUCTION_SYNC_RUNTIME_STATE/);
 assert.match(gate, /must still be disabled/);
 assert.match(gate, /safeRuntimeRole/);
 assert.match(gate, /runtimeActivated === true/);
 assert.match(gate, /canonicalSync\?\.enabled !== false/);
-assert.match(gate, /must be explicitly disabled in live health/);
+assert.match(gate, /explicitly disabled in live health/);
 assert.match(gate, /onrender\.com/);
 assert.doesNotMatch(gate, /AHA_PRODUCTION_ADMIN_DATABASE_URL/);
 assert.doesNotMatch(gate, /AHA_PRODUCTION_DATABASE_CA_CERT/);
@@ -122,7 +140,7 @@ assert.doesNotMatch(gate, /AHA_PRODUCTION_DATABASE_CA_CERT/);
 const contractRun = spawnSync(process.execPath, [GATE, "contract"], { encoding: "utf8" });
 assert.equal(contractRun.status, 0, contractRun.stderr || contractRun.stdout);
 assert.match(contractRun.stdout, /production rollout contract: READY/);
-assert.match(contractRun.stdout, /production activation: DISABLED/);
+assert.match(contractRun.stdout, /production activation: ACTIVE_BOUNDED_MANUAL_PILOT/);
 
 const blockedReadiness = spawnSync(process.execPath, [GATE, "readiness"], {
   encoding: "utf8",
