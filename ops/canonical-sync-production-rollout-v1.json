@@ -52,7 +52,10 @@
     "automaticExpansionAllowed": false,
     "groupOrPublicSharingAllowed": false,
     "nextExpansionPaused": true,
-    "nextExpansionRequiresTwoProfileRoundTripEvidence": true
+    "nextExpansionRequiresTwoProfileRoundTripEvidence": true,
+    "twoProfileRoundTripEvidenceComplete": true,
+    "nextExpansionRequiresStabilityObservation": true,
+    "stabilityObservationComplete": false
   },
   "canonicalObjectTypes": [
     "conversation",
@@ -158,6 +161,9 @@
     "roundTrip": {
       "requiredBeforeNextExpansion": true,
       "requiredVerifiedProfiles": 2,
+      "verifiedProfileSlots": 2,
+      "closeoutComplete": true,
+      "evidencePath": "ops/evidence/canonical-sync-production-two-profile-roundtrip-v1.json",
       "requiresRealLocalAhaData": true,
       "requiresPush": true,
       "requiresBootstrapOrPull": true,

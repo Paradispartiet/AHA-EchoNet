@@ -1,15 +1,16 @@
 {
   "version": "aha_canonical_sync_production_two_profile_roundtrip_evidence_v1",
-  "status": "one_of_two_profiles_verified",
-  "capturedAt": "2026-08-19T19:46:00+02:00",
+  "status": "two_of_two_profiles_verified_roundtrip_closeout_complete",
+  "capturedAt": "2026-08-19T20:03:00+02:00",
   "requiredProfileSlots": 2,
-  "verifiedProfileSlots": 1,
-  "closeoutComplete": false,
+  "verifiedProfileSlots": 2,
+  "closeoutComplete": true,
   "profile3ExpansionUnlocked": false,
   "verifier": {
     "build": "hash-domains-v2",
     "operatorSurface": "canonical-sync-production-roundtrip.html",
-    "mainRevisionAtEvidence": "e2a3b8e499a07a73b55369b7265125e6b7a10d7a",
+    "firstProfileMainRevisionAtEvidence": "e2a3b8e499a07a73b55369b7265125e6b7a10d7a",
+    "secondProfileMainRevisionAtEvidence": "ecfecf529d1a72ddec2873a68c059dc009802d67",
     "evidenceType": "operator_observed_browser_result"
   },
   "profiles": [
@@ -47,8 +48,35 @@
     },
     {
       "slot": "pilot_slot_2",
-      "status": "pending",
-      "identityIncluded": false
+      "status": "verified",
+      "identityIncluded": false,
+      "firstRoundTrip": {
+        "pass": true,
+        "localChanged": 6,
+        "enqueued": 6,
+        "pushed": 6,
+        "bootstrapApplied": 7,
+        "pullApplied": 0,
+        "conflicts": 0,
+        "rejected": 0,
+        "cursorAdvanced": true,
+        "hashDomainsComplete": true,
+        "activeHashPairs": 7,
+        "activeStateCount": 7,
+        "missingActiveHashValues": 0,
+        "invalidHashValues": 0,
+        "crossDomainUnequalDiagnostic": 7,
+        "batchDigestSha256": "28fd14ddaae9aef10e0338e2a132e076bad60a0320f24236f1f414453659f8ef"
+      },
+      "idempotentReplay": {
+        "pass": true,
+        "localChanged": 0,
+        "enqueued": 0,
+        "pushed": 0,
+        "conflicts": 0,
+        "hashDomainsComplete": true,
+        "hashDigestStable": true
+      }
     }
   ],
   "privacyBoundary": {
@@ -60,8 +88,11 @@
     "objectIdentifiersIncluded": false
   },
   "nextBoundary": {
-    "secondProfileRoundTripRequired": true,
-    "secondProfileIdempotentReplayRequired": true,
+    "secondProfileRoundTripRequired": false,
+    "secondProfileIdempotentReplayRequired": false,
+    "twoProfileRoundTripCloseoutComplete": true,
+    "stabilityObservationRequired": true,
+    "stabilityObservationComplete": false,
     "nextExpansionPaused": true,
     "profile3Approved": false,
     "automaticSync": false,
