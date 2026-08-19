@@ -11,9 +11,12 @@ on:
       - 'infra/azure/production/db-init/run.sh'
       - '.github/workflows/aha-canonical-sync-production-pilot-expansion-*.yml'
       - '.github/workflows/aha-canonical-sync-production-pilot-profile-rollback.yml'
+      - '.github/workflows/aha-canonical-sync-production-pilot-post-activation-verification.yml'
       - 'ops/canonical-sync-production-rollout-v1.json'
+      - 'docs/AHA_CANONICAL_PRODUCTION_PILOT_POST_ACTIVATION_VERIFICATION_V1.md'
       - 'tests/aha-canonical-sync-production-pilot-expansion-v1.test.cjs'
       - 'tests/aha-canonical-sync-production-pilot-expansion-activation-v1.test.cjs'
+      - 'tests/aha-canonical-sync-production-pilot-post-activation-verification-v1.test.cjs'
   push:
     branches:
       - main
@@ -26,9 +29,12 @@ on:
       - 'infra/azure/production/db-init/run.sh'
       - '.github/workflows/aha-canonical-sync-production-pilot-expansion-*.yml'
       - '.github/workflows/aha-canonical-sync-production-pilot-profile-rollback.yml'
+      - '.github/workflows/aha-canonical-sync-production-pilot-post-activation-verification.yml'
       - 'ops/canonical-sync-production-rollout-v1.json'
+      - 'docs/AHA_CANONICAL_PRODUCTION_PILOT_POST_ACTIVATION_VERIFICATION_V1.md'
       - 'tests/aha-canonical-sync-production-pilot-expansion-v1.test.cjs'
       - 'tests/aha-canonical-sync-production-pilot-expansion-activation-v1.test.cjs'
+      - 'tests/aha-canonical-sync-production-pilot-post-activation-verification-v1.test.cjs'
 
 permissions:
   contents: read
@@ -196,3 +202,4 @@ jobs:
         run: |
           node tests/aha-canonical-sync-production-pilot-expansion-v1.test.cjs
           node tests/aha-canonical-sync-production-pilot-expansion-activation-v1.test.cjs
+          node tests/aha-canonical-sync-production-pilot-post-activation-verification-v1.test.cjs
