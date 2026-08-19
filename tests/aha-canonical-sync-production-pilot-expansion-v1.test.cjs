@@ -101,6 +101,13 @@ assert.doesNotMatch(source.gate, /runtimeActivated=true/);
 assert.doesNotMatch(source.gate, /aha-production-pilot-profile-ids-json/);
 assert.doesNotMatch(source.gate, /az containerapp update/);
 
+// A failed VNet database execution must emit that exact execution's container
+// logs before cleanup deletes the short-lived job. This is observability only.
+assert.match(source.gate, /az containerapp job logs show/);
+assert.match(source.gate, /--execution "\$execution"/);
+assert.match(source.gate, /--container canonical-db-init/);
+assert.match(source.gate, /capturing execution logs before cleanup/i);
+
 // The repository policy now authorizes only bounded, explicitly dispatched
 // expansion. Merging this code still does not mutate the live Azure allowlist.
 assert.equal(policy.productionActivationEnabled, false);
