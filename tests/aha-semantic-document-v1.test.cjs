@@ -55,10 +55,12 @@ assert.deepEqual(JSON.parse(JSON.stringify(first)), JSON.parse(JSON.stringify(se
 assert.equal(first.source_text_hash, expectedHash);
 assert.equal(first.source_text_hash_algorithm, "sha256");
 assert.equal(first.mode, "shadow");
-assert.equal(first.status, "entities_concepts_shadow");
+assert.equal(first.status, "claims_relations_shadow");
 assert.equal(first.source_event_id, "src_fixture_1");
 assert.equal(first.evidence_anchors.length, 2, "blanklinje skal gi to stabile avsnittsankre");
 assert.equal(first.quality.source_coverage_non_whitespace, 1);
+assert.equal(first.quality.semantic_quality_gate.synthesis_allowed, false);
+assert.equal(first.quality.semantic_quality_gate.structural_relations_only, true);
 
 for (const anchor of first.evidence_anchors) {
   assert.equal(
@@ -93,6 +95,12 @@ const responseValidation = api.validateSemanticDocument(responseDependent, sourc
 assert.equal(responseValidation.ok, false);
 assert.ok(responseValidation.errors.includes("forbidden_chat_response_dependency"));
 
+const synthesisEnabled = JSON.parse(JSON.stringify(first));
+synthesisEnabled.quality.semantic_quality_gate.synthesis_allowed = true;
+const synthesisValidation = api.validateSemanticDocument(synthesisEnabled, sourceText);
+assert.equal(synthesisValidation.ok, false);
+assert.ok(synthesisValidation.errors.includes("semantic_quality_gate_must_block_synthesis"));
+
 api.clearLastShadowSemanticDocument();
 assert.equal(api.getLastShadowSemanticDocument(), null);
 const recorded = api.recordShadowSemanticDocument(first);
@@ -103,6 +111,9 @@ assert.equal(events[0].detail.source_text_hash, expectedHash);
 assert.equal(events[0].detail.evidence_anchor_count, 2);
 assert.equal(events[0].detail.entity_count, 0);
 assert.equal(events[0].detail.concept_count, 0);
+assert.equal(events[0].detail.claim_count, 0);
+assert.equal(events[0].detail.relation_count, 0);
+assert.equal(events[0].detail.synthesis_allowed, false);
 assert.equal(Object.prototype.hasOwnProperty.call(events[0].detail, "text"), false, "shadow-eventet skal ikke eksponere rå kildetekst");
 
 const readBack = api.getLastShadowSemanticDocument();
