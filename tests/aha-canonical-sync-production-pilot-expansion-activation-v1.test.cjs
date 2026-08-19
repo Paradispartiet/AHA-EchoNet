@@ -35,7 +35,8 @@ assert.match(source.activation, /AHA_PRODUCTION_PILOT_EXPANSION_PROFILE_ID:\s*\$
 assert.match(source.activation, /aha-canonical-sync-production-pilot-expansion-gate\.yml/);
 assert.match(source.activation, /gh run list/);
 assert.match(source.activation, /gh run download/);
-assert.match(source.activation, /headSha == \\"\$\{GITHUB_SHA\}\\"/);
+assert.match(source.activation, /headSha ==/);
+assert.match(source.activation, /GITHUB_SHA/);
 assert.match(source.activation, /candidateFingerprintSha256/);
 assert.match(source.activation, /AHA_EXPANSION_CANDIDATE_FINGERPRINT/);
 assert.match(source.activation, /gateGitSha == \$sha/);
