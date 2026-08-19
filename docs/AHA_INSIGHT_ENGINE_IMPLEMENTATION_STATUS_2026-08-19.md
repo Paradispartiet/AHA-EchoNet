@@ -9,15 +9,19 @@ Nåværende byggepunkt:
 ```text
 Phase 1A — SemanticDocument evidence/provenance     implemented + merged
 Phase 1B — Entities + Concepts V1                  implemented + merged
-Phase 1C — Claims + Relations V1                   implemented in shadow
-Next — dedicated semantic model contract           pending
+Phase 1C — Claims + Relations V1                   implemented + merged
+Phase 2A — Dedicated Semantic Model Contract V1    implemented, contract-only
+Next — semantic-document HTTP endpoint             pending
 Canonical Insight behavior                         unchanged
 Visible product behavior                           unchanged
 Persistent SemanticDocument storage                disabled
 Meta semantic quality                              provisional
 ```
 
-Se `AHA_SEMANTIC_DOCUMENT_V1.md` for den normative runtime-kontrakten.
+Se:
+
+- `AHA_SEMANTIC_DOCUMENT_V1.md` for browser/shadow-kontrakten
+- `AHA_SEMANTIC_MODEL_CONTRACT_V1.md` for server/model-kontrakten
 
 ---
 
@@ -29,16 +33,9 @@ Root `server.js` inneholder allerede:
 POST /api/aha-agent/insight-candidates
 ```
 
-Endepunktet bruker OpenAI når `OPENAI_API_KEY` finnes, analyserer source-direct materiale og returnerer strukturert `insight_candidates_v1` separat fra det brukerrettede `/chat`-svaret.
+Endepunktet bruker OpenAI når `OPENAI_API_KEY` finnes, analyserer source-direct materiale og returnerer strukturert analyse separat fra det brukerrettede `/chat`-svaret.
 
-Korrekt status er:
-
-```text
-source-direct structured AI analysis seam: exists
-full SemanticDocument model contract: not authoritative yet
-```
-
-Neste serverarbeid skal bygge videre i samme AHA-agent-backend, ikke lage en parallell AI-backend.
+V2 bygger videre i samme AHA-agent-backend. Det opprettes ikke en parallell AI-tjeneste.
 
 ---
 
@@ -83,18 +80,14 @@ Phase 1B er bevisst konservativ og foretrekker for få concepts fremfor term-sup
 
 ## 4. Phase 1C — Claims + Relations V1
 
-Phase 1C åpner nå:
+Phase 1C åpnet source-grounded:
 
 ```text
 claims[]
 relations[]
 ```
 
-men bare som source-grounded struktur.
-
-### Claims
-
-Første Claim-kontrakt er:
+Første Claim-kontrakt:
 
 ```text
 kind = source_claim
@@ -105,28 +98,11 @@ source = literal_source_sentence
 
 Claim text er et eksakt source span. Spørsmål og korte fragmenter blir ikke Claims.
 
-Phase 1C gjør ingen parafrase og ingen modellfortolkning.
-
-### Relations
-
-Tillatte typer er foreløpig bare:
+Tillatte deterministiske relation types er foreløpig bare:
 
 ```text
 claim_mentions_entity
 claim_mentions_concept
-```
-
-Relasjonen krever at target mention faktisk ligger innenfor source Claim-spennet.
-
-Phase 1C tillater ikke:
-
-```text
-causes
-supports
-contradicts
-explains
-implies
-influences
 ```
 
 Co-occurrence skal ikke feilpresenteres som kausalitet, støtte eller motsetning.
@@ -135,7 +111,7 @@ Co-occurrence skal ikke feilpresenteres som kausalitet, støtte eller motsetning
 
 ## 5. Epistemisk policy
 
-Arkitekturen skiller nå eksplisitt mellom:
+Arkitekturen skiller eksplisitt mellom:
 
 ```text
 source claim
@@ -143,86 +119,103 @@ interpretation
 unresolved inference
 ```
 
-Phase 1C genererer bare første kategori.
+Den deterministiske Phase 1C-runtime genererer bare første kategori.
 
-Quality gate krever derfor:
-
-```text
-interpretation_count = 0
-unresolved_inference_count = 0
-```
-
-Dette skillet skal bevares når den dedikerte semantiske modellen senere får lov til å foreslå fortolkninger og inferenser.
+Dette skillet må bevares når språkmodellen får foreslå rikere semantikk.
 
 ---
 
-## 6. Semantic quality gate
+## 6. Phase 2A — Dedicated Semantic Model Contract V1
 
-`quality.semantic_quality_gate` inneholder nå eksplisitt:
+Ny pure ESM-modul:
 
 ```text
-stage = claims_relations_shadow
-source_grounded = true
-structural_relations_only = true
+server/ahaSemanticModelContract.js
+```
+
+Kontrakten innfører:
+
+```text
+aha_semantic_model_output_v1
+```
+
+med:
+
+- entities
+- concepts
+- propositions
+- typed relations
+- unresolved inferences
+- confidence
+- evidence quotes
+- eksplisitt epistemisk status
+
+Modellrequesten bygges som strict JSON Schema Structured Output.
+
+Denne etappen kobler **ikke** modellen til et nytt HTTP-endepunkt ennå. Formålet er å bevise schema og fail-closed source/evidence-validering først.
+
+---
+
+## 7. Server-side source/evidence gate
+
+Semantic Model Contract krever blant annet:
+
+- Entity `source_surface` finnes ordrett i source
+- Concept `source_surface` finnes ordrett i source
+- alle evidence quotes finnes ordrett i source
+- `source_claim.text` finnes ordrett i source
+- interpretation/inference er eksplisitt merket
+- obligatorisk evidence kan ikke mangle
+- ukjente enum-verdier avvises
+- ukjente felter avvises
+- assistant/chat response-data avvises rekursivt
+- `candidate_insights` og `meta_profile` er forbudt modelloutput
+
+Valideringen er fail-closed: en payload med hallusinert evidence blir ikke delvis godkjent ved å droppe det dårlige feltet.
+
+---
+
+## 8. Semantic quality gate er fortsatt lukket
+
+Browser/shadow-kontrakten beholder:
+
+```text
 synthesis_allowed = false
 ```
 
-Selv et fullt gyldig Phase 1C-dokument får altså ikke produsere nye canonical Insights.
-
-Blocking reasons:
+Servermodellens safe response envelope beholder også:
 
 ```text
-dedicated_semantic_model_not_authoritative
-synthesized_insight_quality_gate_not_implemented
+source_text_returned = false
+canonical_write = false
+persistent_write = false
+meta_write = false
+synthesis_allowed = false
 ```
 
-Dette er den sentrale sikkerhetsporten mellom semantisk analyse og produktpåstanden «Insight».
+At modellen nå kan foreslå `interpretation`, `inference` og rikere relation types betyr derfor ikke at de blir canonical Insights.
 
 ---
 
-## 7. Validatoren
+## 9. Runtime- og failure-policy
 
-Phase 1C-validatoren beviser nå blant annet:
+Dagens AHA Chat/Insight-flow er fortsatt autoritativ og uendret mens V2 er shadow-only.
 
-- SHA-256/source-anchor-integritet
-- exact-source Entity/Concept mentions
-- canonical support på Concepts
-- exact-source Claim spans
-- Claim epistemic/source-status
-- gyldige Claim→Entity/Concept-ID-er
-- strukturell relation allowlist
-- Claim og target finnes
-- Relation evidence inneholder Claim-spenn + target mention i samme Claim
-- ingen syntese
-- ingen interpretations/inferences
-- ingen chat-response dependency
-- ingen persistent/canonical write
-
-`tensions` og `candidate_insights` er fortsatt hardt tomme.
-
----
-
-## 8. Runtime- og failure-policy
-
-Subject Engine enrichment kan være asynkron, men dagens `handleUserMessage(...)`-kontrakt er fortsatt synkron.
-
-Shadow-sekvensen hindrer eldre async-completions i å overskrive en nyere melding.
-
-Mens laget er shadow-only:
+Ved semantic model failure i kommende endpoint skal regelen være:
 
 ```text
-Subject Engine failure
-→ dagens canonical chat ingest fortsetter
-→ source entities og source claims kan fortsatt materialiseres
-→ unsupported concepts opprettes ikke
-→ ingen synthesized Insight skrives
+invalid model output
+→ semantic model response fails closed
+→ ingen synthesized Insight
+→ ingen Meta-write
+→ ingen persistent SemanticDocument-write
 ```
 
-Før V2 blir authoritative skal semantic failure bli fail-closed for nye synthesized Insight-writes.
+Dagens eksisterende chat-flyt skal ikke bruke en svak JSON-fallback som erstatning for en ugyldig Semantic Model response.
 
 ---
 
-## 9. Meta-status
+## 10. Meta-status
 
 Meta er fortsatt:
 
@@ -231,28 +224,27 @@ runtime: operational
 semantic quality: provisional
 ```
 
-Meta skal ikke konsumere SemanticDocument-shadow som canonical profilgrunnlag ennå. Selv om source claims/relations nå finnes, mangler en authoritative semantic model contract og synthesized Insight quality gate.
+Meta skal ikke konsumere SemanticDocument-shadow eller Semantic Model output som canonical profilgrunnlag ennå.
 
 ---
 
-## 10. Neste konkrete byggejobb
+## 11. Neste konkrete byggejobb
 
 Neste etappe er:
 
 ```text
-Dedicated Semantic Model Contract V1
+POST /api/aha-agent/semantic-document
 ```
 
-Den skal bruke den eksisterende AHA-agent-backenden og levere strukturert modelloutput som kan valideres inn i samme SemanticDocument-kontrakt.
+Den skal:
 
-Den skal støtte rikere:
+1. validere request source/context
+2. bruke `buildSemanticModelResponsesRequest(...)`
+3. kreve Responses/Structured Output-seamen
+4. parse model output
+5. kjøre `requireValidSemanticModelPayload(...)`
+6. returnere safe response envelope
+7. returnere fail-closed feil uten rå modellpayload/source ved valideringsfeil
+8. gjøre null canonical/persistent/Meta writes
 
-- entities/concepts
-- propositions
-- typed semantic relations
-- interpretations
-- unresolved inferences
-- uncertainty/confidence
-- evidence bindings
-
-Men modelloutput får ikke omgå Phase 1A–1C-invariantene. Etter denne serverkontrakten kommer en egen **Synthesized Insight Quality Gate** før V2 kan skrive nye canonical Insights.
+Etter endpoint + shadow-klientintegrasjon kommer en egen **Synthesized Insight Quality Gate** før V2 kan materialisere nye canonical Insights.
