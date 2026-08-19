@@ -206,19 +206,37 @@ jobs:
 
           health="$RUNNER_TEMP/expansion-activation-preflight-health.json"
           curl --fail --silent --show-error --max-time 20 "https://${fqdn}/v1/health" > "$health"
-          jq -e --argjson count "$current_count" '
+          jq -e '
             .status == "ok" and
             .service == "aha-nest-api" and
             .runtimeActivated == true and
             .canonicalSync.enabled == true and
-            .canonicalSync.profileLimitMode == "protected_allowlist" and
-            .canonicalSync.allowedProfileCount == $count and
             .database.configured == true and
             .database.connected == true and
             .database.safeRuntimeRole == true and
             .database.canonicalSchema == "present" and
             .auth.configured == true
-          ' "$health" >/dev/null
+          ' "$health" >/dev/null || {
+            echo "Active production pilot failed the base health contract before expansion." >&2
+            exit 1
+          }
+
+          previous_health_contract=''
+          if jq -e --argjson count "$current_count" '
+            .canonicalSync.profileLimitMode == "protected_allowlist" and
+            .canonicalSync.allowedProfileCount == $count
+          ' "$health" >/dev/null; then
+            previous_health_contract='protected_allowlist'
+          elif [[ -z "$previous_allowlist_uri" && "$current_count" == '1' ]] && jq -e '
+            (.canonicalSync | has("profileLimitMode") | not) and
+            (.canonicalSync | has("allowedProfileCount") | not)
+          ' "$health" >/dev/null; then
+            previous_health_contract='legacy_one_profile'
+          else
+            echo "Active production pilot health contract does not match its protected allowlist state." >&2
+            exit 1
+          fi
+          echo "Accepted pre-expansion health contract: ${previous_health_contract}"
 
           ops_vaults="$(az keyvault list --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" --query "[?tags.credentialScope=='migration-operations-only']" -o json --only-show-errors)"
           [[ "$(jq 'length' <<<"$ops_vaults")" == '1' ]] || { echo "Expansion activation requires exactly one operations-only Key Vault." >&2; exit 1; }
@@ -249,6 +267,7 @@ jobs:
             printf 'AHA_EXPANSION_PREVIOUS_ALLOWLIST_SECRET_URI=%s\n' "$previous_allowlist_uri"
             printf 'AHA_EXPANSION_CURRENT_ALLOWLIST=%s\n' "$current_allowlist"
             printf 'AHA_EXPANSION_CURRENT_COUNT=%s\n' "$current_count"
+            printf 'AHA_EXPANSION_PREVIOUS_HEALTH_CONTRACT=%s\n' "$previous_health_contract"
             printf 'AHA_EXPANSION_RUNTIME_KEYVAULT=%s\n' "$runtime_vault"
             printf 'AHA_EXPANSION_RUNTIME_KEYVAULT_URI=%s\n' "$runtime_vault_uri"
             printf 'AHA_EXPANSION_OPS_KEYVAULT=%s\n' "$ops_vault"
@@ -431,6 +450,7 @@ jobs:
             "candidateFingerprintSha256": "${AHA_EXPANSION_CANDIDATE_FINGERPRINT}",
             "sameShaGateRun": "${AHA_EXPANSION_GATE_RUN}",
             "previousLiveRevision": "${AHA_EXPANSION_PREVIOUS_REVISION}",
+            "previousHealthContract": "${AHA_EXPANSION_PREVIOUS_HEALTH_CONTRACT}",
             "previousAllowedProfileCount": ${AHA_EXPANSION_CURRENT_COUNT},
             "newAllowedProfileCount": ${AHA_EXPANSION_NEW_COUNT},
             "profileAddedOneAtATime": true,
@@ -500,17 +520,38 @@ jobs:
           restored=0
           for attempt in {1..60}; do
             if curl --fail --silent --show-error --max-time 20 "https://${AHA_EXPANSION_API_FQDN}/v1/health" > "$health"; then
-              if jq -e --arg revision "$AHA_EXPANSION_PREVIOUS_REVISION" --argjson count "$AHA_EXPANSION_CURRENT_COUNT" '
+              if jq -e --arg revision "$AHA_EXPANSION_PREVIOUS_REVISION" '
                 .status == "ok" and
+                .service == "aha-nest-api" and
                 .version == $revision and
                 .runtimeActivated == true and
                 .canonicalSync.enabled == true and
-                .canonicalSync.allowedProfileCount == $count and
                 .database.connected == true and
                 .database.safeRuntimeRole == true
               ' "$health" >/dev/null; then
-                restored=1
-                break
+                contract_ok=0
+                case "${AHA_EXPANSION_PREVIOUS_HEALTH_CONTRACT:-}" in
+                  protected_allowlist)
+                    if jq -e --argjson count "$AHA_EXPANSION_CURRENT_COUNT" '
+                      .canonicalSync.profileLimitMode == "protected_allowlist" and
+                      .canonicalSync.allowedProfileCount == $count
+                    ' "$health" >/dev/null; then
+                      contract_ok=1
+                    fi
+                    ;;
+                  legacy_one_profile)
+                    if [[ -z "${AHA_EXPANSION_PREVIOUS_ALLOWLIST_SECRET_URI:-}" && "$AHA_EXPANSION_CURRENT_COUNT" == '1' ]] && jq -e '
+                      (.canonicalSync | has("profileLimitMode") | not) and
+                      (.canonicalSync | has("allowedProfileCount") | not)
+                    ' "$health" >/dev/null; then
+                      contract_ok=1
+                    fi
+                    ;;
+                esac
+                if [[ "$contract_ok" == '1' ]]; then
+                  restored=1
+                  break
+                fi
               fi
             fi
             sleep 10
