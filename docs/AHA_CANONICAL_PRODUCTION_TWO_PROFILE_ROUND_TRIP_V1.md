@@ -94,12 +94,12 @@ bootstrapApplied + pullApplied > 0
 pushConflicts = 0
 pushRejected = 0
 conflictCount = 0
-hash mismatches = 0
+alle aktive object states har gyldig serverhash og lokalhash
 cursor går aldri bakover
 pushCursor eller pullCursor går fremover
 ```
 
-Dette beviser at det faktisk skjedde en lokal endring, at den ble sendt til production, at serverstate kom tilbake gjennom den vanlige read-pathen, og at den lokale canonical tilstanden ble rebaselinet mot samme payload-hashes.
+Dette beviser at det faktisk skjedde en lokal endring, at den ble sendt til production, at serverstate kom tilbake gjennom den vanlige read-pathen, og at begge hash-domenene er materialisert etter lokal rebaseline.
 
 ## Cursor-/journalbevis
 
@@ -113,23 +113,25 @@ og minst én cursor må øke
 
 `bootstrapHighWatermark` registreres også i det tekniske evidence-laget. Dette er klientens observerbare binding til production-journalen; ingen separat database-query eller admin-credential trengs for browser-verifikasjonen.
 
-## Hash-konsistens
+## Hash-konsistens: to separate hash-domener
 
-Etter runnerens apply/rebaseline leser verifieren sync-store object state og teller:
+`serverPayloadHash` og `localPayloadHash` er med vilje to forskjellige bevisdomener og skal **ikke** kreves å være identiske.
+
+- `serverPayloadHash` beskriver serverens materialiserte snapshot/journal-state. Serverrepresentasjonen kan inneholde servereide felt som revision, tidsstempler og andre materialiserte felt.
+- `localPayloadHash` beskriver frontendens canonical projection av den lokale AHA-modellen og brukes av klienten til change detection og lokal rebaseline.
+
+En direkte likhetstest mellom de to verdiene blander derfor to ulike representasjoner. Den tidligere verifier-implementasjonen gjorde nettopp dette og kunne gi falsk feil selv når push, bootstrap/pull og apply var vellykket.
+
+Etter runnerens apply/rebaseline leser verifieren sync-store object state og krever for alle **aktive** states:
 
 ```text
-states
-server+local hash comparable
-matches
-mismatches
-server-only
-local-only
-deleted
+serverPayloadHash finnes og er gyldig SHA-256 hex
+localPayloadHash finnes og er gyldig SHA-256 hex
 ```
 
-Kravet for closeout er `mismatches = 0`.
+Verifieren kan fortsatt telle hvor mange server-/lokalhash-par som tilfeldigvis er like eller ulike, men dette er bare diagnostikk og inngår ikke som equality-invariant i closeout-porten.
 
-Verifieren lager i tillegg ett SHA-256 batch-digest for å kunne sammenligne første run med replay uten å vise rå AHA-payload. Evidence returnerer ikke objekt-ID-er, profil-ID, workspace-ID eller access token.
+Verifieren lager i tillegg ett SHA-256 batch-digest over den normaliserte object-state-evidencen. Dette gjør at første run og replay kan sammenlignes uten å vise rå AHA-payload eller objektidentifikatorer i output.
 
 ## Identisk replay: idempotens
 
@@ -144,12 +146,12 @@ pushed = 0
 pushConflicts = 0
 pushRejected = 0
 conflictCount = 0
-hash mismatches = 0
+aktive server-/lokalhash-domener er komplette og gyldige
 cursor går aldri bakover
 batch digest er stabilt
 ```
 
-Dette er closeout-beviset på at den synkroniserte tilstanden ikke genererer duplikate writes eller falske lokale endringer ved neste eksplisitte sync.
+Dette er den endelige hash-/idempotensprøven: den synkroniserte tilstanden skal ikke generere nye writes eller falske lokale endringer, og begge lagrede hash-domener skal være uendret gjennom en identisk replay.
 
 ## Privacy/evidence boundary
 
@@ -157,7 +159,8 @@ Operatorflaten kan vise:
 
 - tekniske tellinger;
 - cursor-fremdrift som tall;
-- hash-match/mismatch counts;
+- kompletthet/gyldighet for server- og lokalhash-domener;
+- diagnostisk telling av ulike server-/lokalhash-par;
 - opaque SHA-256 batch digest;
 - PASS/IKKE BESTÅTT.
 
