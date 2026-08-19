@@ -44,6 +44,21 @@ assert.match(source.activation, /candidateFingerprintSha256/);
 assert.match(source.activation, /AHA_EXPANSION_CANDIDATE_FINGERPRINT/);
 assert.match(source.activation, /gateGitSha == \$sha/);
 
+// The first expansion may start from the already-live legacy one-profile health
+// shape, but only when there is no JSON allowlist and the protected fleet count is
+// exactly one. Every later expansion must use the new protected_allowlist health
+// contract, and rollback must verify the same contract that was active beforehand.
+assert.match(source.activation, /AHA_EXPANSION_PREVIOUS_HEALTH_CONTRACT/);
+assert.match(source.activation, /previous_health_contract='protected_allowlist'/);
+assert.match(source.activation, /previous_health_contract='legacy_one_profile'/);
+assert.match(source.activation, /-z "\$previous_allowlist_uri" && "\$current_count" == '1'/);
+assert.match(source.activation, /has\("profileLimitMode"\) \| not/);
+assert.match(source.activation, /has\("allowedProfileCount"\) \| not/);
+assert.match(source.activation, /Accepted pre-expansion health contract/);
+assert.match(source.activation, /previousHealthContract/);
+assert.match(source.activation, /AHA_EXPANSION_PREVIOUS_ALLOWLIST_SECRET_URI:-/);
+assert.match(source.activation, /"\$AHA_EXPANSION_CURRENT_COUNT" == '1'/);
+
 // Exactly one DB profile/workspace may be materialized, idempotently, before
 // the API gains access. Runtime credentials and the shared runtime role stay put.
 assert.match(source.activation, /mode=add_pilot_profile/);
@@ -67,6 +82,7 @@ assert.match(source.activation, /aha-canonical-api:\$\{GITHUB_SHA\}/);
 assert.match(source.activation, /deployRevision="\$GITHUB_SHA"/);
 assert.match(source.activation, /canonicalSyncEnabled=true/);
 assert.match(source.activation, /runtimeActivated=true/);
+assert.match(source.activation, /profileLimitMode == "protected_allowlist"/);
 assert.match(source.activation, /allowedProfileCount == \$count/);
 assert.match(source.activation, /runtimeCredentialRotated[^\n]*false/);
 assert.match(source.activation, /automaticSyncEnabled[^\n]*false/);
