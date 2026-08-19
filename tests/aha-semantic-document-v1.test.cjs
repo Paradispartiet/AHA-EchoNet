@@ -55,7 +55,7 @@ assert.deepEqual(JSON.parse(JSON.stringify(first)), JSON.parse(JSON.stringify(se
 assert.equal(first.source_text_hash, expectedHash);
 assert.equal(first.source_text_hash_algorithm, "sha256");
 assert.equal(first.mode, "shadow");
-assert.equal(first.status, "evidence_only");
+assert.equal(first.status, "entities_concepts_shadow");
 assert.equal(first.source_event_id, "src_fixture_1");
 assert.equal(first.evidence_anchors.length, 2, "blanklinje skal gi to stabile avsnittsankre");
 assert.equal(first.quality.source_coverage_non_whitespace, 1);
@@ -101,6 +101,8 @@ assert.equal(events.length, 1);
 assert.equal(events[0].type, "aha:semantic-document-shadow");
 assert.equal(events[0].detail.source_text_hash, expectedHash);
 assert.equal(events[0].detail.evidence_anchor_count, 2);
+assert.equal(events[0].detail.entity_count, 0);
+assert.equal(events[0].detail.concept_count, 0);
 assert.equal(Object.prototype.hasOwnProperty.call(events[0].detail, "text"), false, "shadow-eventet skal ikke eksponere rå kildetekst");
 
 const readBack = api.getLastShadowSemanticDocument();
