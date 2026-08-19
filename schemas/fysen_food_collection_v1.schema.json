@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://paradispartiet.github.io/AHA-EchoNet/schemas/fysen_food_collection_v1.schema.json",
+  "title": "Fysen Min mat to AHA handoff v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "source", "purpose", "generatedAt", "privacy", "items"],
+  "properties": {
+    "version": { "const": "fysen_food_collection_v1" },
+    "source": { "const": "fysen" },
+    "purpose": { "const": "user_requested_analysis" },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "privacy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scope", "includesSearchHistory", "publicSharing", "modelTrainingAllowed"],
+      "properties": {
+        "scope": { "const": "private_user" },
+        "includesSearchHistory": { "const": false },
+        "publicSharing": { "const": false },
+        "modelTrainingAllowed": { "const": false }
+      }
+    },
+    "items": {
+      "type": "array",
+      "maxItems": 50,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["savedItemId", "menuItemId", "dishName", "restaurantName", "restaurantSlug", "city", "savedAt"],
+        "properties": {
+          "savedItemId": { "type": "string", "format": "uuid" },
+          "menuItemId": { "type": "string", "format": "uuid" },
+          "dishName": { "type": "string", "minLength": 1, "maxLength": 300 },
+          "restaurantName": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "restaurantSlug": { "type": "string", "minLength": 1, "maxLength": 160 },
+          "city": { "type": "string", "minLength": 1, "maxLength": 120 },
+          "priceMinor": { "type": ["integer", "null"], "minimum": 0 },
+          "currency": { "type": "string", "minLength": 3, "maxLength": 3 },
+          "savedAt": { "type": "string", "format": "date-time" }
+        }
+      }
+    }
+  }
+}

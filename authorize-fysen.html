@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>Koble Fysen til AHA</title>
+  <link rel="stylesheet" href="css/aha-chat.css" />
+  <link rel="stylesheet" href="css/aha-dashboard.css" />
+  <link rel="stylesheet" href="css/ahaModule.css" />
+</head>
+<body>
+  <main class="aha-dashboard" style="max-width: 680px;">
+    <section class="aha-panel aha-module-shell" aria-labelledby="aha-fysen-title">
+      <header class="aha-module-shell-header">
+        <div>
+          <p class="eyebrow">AHA × Fysen</p>
+          <h1 id="aha-fysen-title">Koble Fysen til AHA</h1>
+          <p class="aha-module-purpose">AHA bekrefter identiteten din. Fysen får ikke AHA-passordet eller Supabase-sessiontokenet.</p>
+        </div>
+      </header>
+
+      <div class="aha-panel" role="note">
+        <strong>Dette gir Fysen tilgang til:</strong>
+        <ul>
+          <li><code>fysen:min_mat</code> – lagre det du selv velger i «Min mat».</li>
+          <li><code>fysen:analysis_handoff</code> – sende akkurat den eksplisitt valgte samlingen tilbake til AHA når du ber om analyse.</li>
+        </ul>
+        <p>Dette gir ikke Fysen tilgang til AHA-samtaler, øvrig minne, History Go-data eller restaurant-/Fysen Pro-tilgang. Søkehistorikk i Fysen kobles ikke til AHA-identiteten.</p>
+      </div>
+
+      <p id="aha-fysen-status" role="status" aria-live="polite">Kontrollerer AHA-innlogging …</p>
+
+      <form id="aha-fysen-login-form" hidden>
+        <label>
+          <span>E-post for AHA</span>
+          <input id="aha-fysen-email" type="email" autocomplete="email" required />
+        </label>
+        <div class="aha-module-actions" style="margin-top: 12px;">
+          <button class="aha-tile-btn aha-tile-btn-primary" type="submit">Logg inn med AHA</button>
+        </div>
+      </form>
+
+      <div class="aha-module-actions">
+        <button id="aha-fysen-authorize" class="aha-tile-btn aha-tile-btn-primary" type="button" hidden>Koble til Fysen</button>
+        <a class="aha-tile-btn" href="index.html">Avbryt</a>
+      </div>
+    </section>
+  </main>
+
+  <script>window.AHA_AUTH_REDIRECT_URL = window.location.href;</script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/ahaConfig.js"></script>
+  <script src="js/ahaDb.js"></script>
+  <script src="js/ahaAuth.js"></script>
+  <script src="js/ahaFysenAuthorization.js"></script>
+</body>
+</html>
