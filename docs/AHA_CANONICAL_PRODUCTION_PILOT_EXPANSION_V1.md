@@ -133,6 +133,8 @@ Rollback-target kommer fra et separat protected environment-secret:
 AHA_PRODUCTION_PILOT_ROLLBACK_PROFILE_ID
 ```
 
+Dette secretet skal **ikke** forhåndssettes av denne leveransen. Det settes først når en konkret utvidet pilotprofil faktisk er valgt for rollback.
+
 Denne rollbacken er laget for **én utvidet profil**, ikke for å slå av hele piloten.
 
 Den:
