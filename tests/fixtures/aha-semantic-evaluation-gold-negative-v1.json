@@ -1,0 +1,121 @@
+{
+  "schema": "aha_semantic_gold_fixture_set_v1",
+  "version": 1,
+  "purpose": "negative_semantic_regression_cases",
+  "production_gate_authority": false,
+  "fixtures": [
+    {
+      "schema": "aha_semantic_gold_fixture_v1",
+      "id": "question_not_claim_v1",
+      "source_event_id": "gold_neg_001",
+      "source_text": "Hvorfor oppstår offentlighet? Offentlighet gjør politisk handling synlig.",
+      "gold": {
+        "entities": [],
+        "concepts": [{ "label": "offentlighet", "aliases": ["Offentlighet"] }],
+        "source_claims": [{ "text": "Offentlighet gjør politisk handling synlig." }],
+        "relations": [],
+        "interpretations": []
+      },
+      "model_shadow": {
+        "source_event_id": "gold_neg_001",
+        "entities": [],
+        "concepts": [{ "source_surface": "offentlighet", "canonical_label": "Offentlighet" }],
+        "propositions": [
+          { "kind": "source_claim", "text": "Hvorfor oppstår offentlighet?", "evidence": [{ "quote": "Hvorfor oppstår offentlighet?" }] },
+          { "kind": "source_claim", "text": "Offentlighet gjør politisk handling synlig.", "evidence": [{ "quote": "Offentlighet gjør politisk handling synlig." }] }
+        ],
+        "relations": []
+      }
+    },
+    {
+      "schema": "aha_semantic_gold_fixture_v1",
+      "id": "causal_overreach_v1",
+      "source_event_id": "gold_neg_002",
+      "source_text": "Institusjonelle rammer og miljøvalg varierer sammen. Teksten fastslår ikke hva som forårsaker hva.",
+      "gold": {
+        "entities": [],
+        "concepts": [
+          { "label": "institusjonelle rammer", "aliases": ["rammer"] },
+          { "label": "miljøvalg", "aliases": [] }
+        ],
+        "source_claims": [{ "text": "Institusjonelle rammer og miljøvalg varierer sammen." }],
+        "relations": [
+          { "relation_type": "associated_with", "from_label": "institusjonelle rammer", "to_label": "miljøvalg", "epistemic_status": "source_explicit" }
+        ],
+        "interpretations": []
+      },
+      "model_shadow": {
+        "source_event_id": "gold_neg_002",
+        "entities": [],
+        "concepts": [
+          { "source_surface": "Institusjonelle rammer", "canonical_label": "institusjonelle rammer" },
+          { "source_surface": "miljøvalg", "canonical_label": "miljøvalg" }
+        ],
+        "propositions": [
+          { "kind": "source_claim", "text": "Institusjonelle rammer og miljøvalg varierer sammen.", "evidence": [{ "quote": "Institusjonelle rammer og miljøvalg varierer sammen." }] }
+        ],
+        "relations": [
+          { "relation_type": "causes", "from_label": "institusjonelle rammer", "to_label": "miljøvalg", "epistemic_status": "inference" }
+        ]
+      }
+    },
+    {
+      "schema": "aha_semantic_gold_fixture_v1",
+      "id": "entity_concept_ambiguity_v1",
+      "source_event_id": "gold_neg_003",
+      "source_text": "Arbeiderpartiet diskuterte sosialdemokrati i programarbeidet.",
+      "gold": {
+        "entities": [{ "label": "Arbeiderpartiet", "entity_type": "organization", "aliases": [] }],
+        "concepts": [{ "label": "sosialdemokrati", "aliases": [] }],
+        "source_claims": [{ "text": "Arbeiderpartiet diskuterte sosialdemokrati i programarbeidet." }],
+        "relations": [],
+        "interpretations": []
+      },
+      "model_shadow": {
+        "source_event_id": "gold_neg_003",
+        "entities": [
+          { "source_surface": "Arbeiderpartiet", "canonical_label": "Arbeiderpartiet", "entity_type": "organization" },
+          { "source_surface": "sosialdemokrati", "canonical_label": "sosialdemokrati", "entity_type": "other" }
+        ],
+        "concepts": [
+          { "source_surface": "sosialdemokrati", "canonical_label": "sosialdemokrati" },
+          { "source_surface": "Arbeiderpartiet", "canonical_label": "Arbeiderpartiet" }
+        ],
+        "propositions": [
+          { "kind": "source_claim", "text": "Arbeiderpartiet diskuterte sosialdemokrati i programarbeidet.", "evidence": [{ "quote": "Arbeiderpartiet diskuterte sosialdemokrati i programarbeidet." }] }
+        ],
+        "relations": []
+      }
+    },
+    {
+      "schema": "aha_semantic_gold_fixture_v1",
+      "id": "interpretation_evidence_mismatch_v1",
+      "source_event_id": "gold_neg_004",
+      "source_text": "Institusjonelle rammer påvirker hvilke muligheter som er tilgjengelige.",
+      "gold": {
+        "entities": [],
+        "concepts": [{ "label": "institusjonelle rammer", "aliases": ["rammer"] }],
+        "source_claims": [{ "text": "Institusjonelle rammer påvirker hvilke muligheter som er tilgjengelige." }],
+        "relations": [],
+        "interpretations": [
+          {
+            "id": "interp_constraints_opportunities",
+            "required_terms": ["rammer", "muligheter"],
+            "forbidden_terms": [],
+            "evidence_quotes": ["Institusjonelle rammer påvirker hvilke muligheter som er tilgjengelige."]
+          }
+        ]
+      },
+      "model_shadow": {
+        "source_event_id": "gold_neg_004",
+        "entities": [],
+        "concepts": [{ "source_surface": "Institusjonelle rammer", "canonical_label": "institusjonelle rammer" }],
+        "propositions": [
+          { "kind": "source_claim", "text": "Institusjonelle rammer påvirker hvilke muligheter som er tilgjengelige.", "evidence": [{ "quote": "Institusjonelle rammer påvirker hvilke muligheter som er tilgjengelige." }] },
+          { "kind": "interpretation", "text": "Rammer former muligheter.", "evidence": [{ "quote": "feil evidence" }] }
+        ],
+        "relations": []
+      }
+    }
+  ]
+}
