@@ -1,0 +1,334 @@
+name: AHA canonical sync production pilot post-activation verification
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: "Skriv RUN_AHA_CANONICAL_PRODUCTION_PILOT_POST_ACTIVATION_VERIFY for å verifisere én aktivert utvidet pilotprofil read-only"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+  id-token: write
+
+concurrency:
+  group: aha-canonical-production-pilot-control
+  cancel-in-progress: false
+
+jobs:
+  verify-one-expanded-pilot:
+    name: Verify one activated pilot end-to-end without production mutation
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    environment: aha-canonical-production-infra
+
+    env:
+      GH_TOKEN: ${{ github.token }}
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      AHA_PRODUCTION_PILOT_EXPANSION_PROFILE_ID: ${{ secrets.AHA_PRODUCTION_PILOT_EXPANSION_PROFILE_ID }}
+      AHA_PRODUCTION_PILOT_EXPANSION_ACCESS_TOKEN: ${{ secrets.AHA_PRODUCTION_PILOT_EXPANSION_ACCESS_TOKEN }}
+      AHA_PRODUCTION_RESOURCE_GROUP: ${{ vars.AHA_PRODUCTION_RESOURCE_GROUP || 'rg-aha-canonical-prod' }}
+      AHA_PRODUCTION_CONTAINER_APP: aha-canonical-api-production
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Require main, exact verification confirmation and protected candidate credentials
+        shell: bash
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_REF" != 'refs/heads/main' ]]; then
+            echo "Post-activation production pilot verification only runs from main." >&2
+            exit 1
+          fi
+          if [[ "$CONFIRMATION" != 'RUN_AHA_CANONICAL_PRODUCTION_PILOT_POST_ACTIVATION_VERIFY' ]]; then
+            echo "Exact post-activation verification confirmation is required." >&2
+            exit 1
+          fi
+          if [[ ! "$AHA_PRODUCTION_PILOT_EXPANSION_PROFILE_ID" =~ ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$ ]]; then
+            echo "AHA_PRODUCTION_PILOT_EXPANSION_PROFILE_ID must be one protected UUID." >&2
+            exit 1
+          fi
+          if [[ ${#AHA_PRODUCTION_PILOT_EXPANSION_ACCESS_TOKEN} -lt 32 ]]; then
+            echo "A protected candidate access token is required for end-to-end post-activation verification." >&2
+            exit 1
+          fi
+          printf '::add-mask::%s\n' "$AHA_PRODUCTION_PILOT_EXPANSION_PROFILE_ID"
+          printf '::add-mask::%s\n' "$AHA_PRODUCTION_PILOT_EXPANSION_ACCESS_TOKEN"
+          candidate_lower="${AHA_PRODUCTION_PILOT_EXPANSION_PROFILE_ID,,}"
+          candidate_fingerprint="$(printf '%s' "$candidate_lower" | sha256sum | awk '{print $1}')"
+          {
+            printf 'AHA_POST_VERIFY_CANDIDATE_LOWER=%s\n' "$candidate_lower"
+            printf 'AHA_POST_VERIFY_CANDIDATE_FINGERPRINT=%s\n' "$candidate_fingerprint"
+          } >> "$GITHUB_ENV"
+
+      - name: Require successful activation evidence for this exact protected candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t activation_runs < <(gh run list \
+            --repo "$GITHUB_REPOSITORY" \
+            --workflow aha-canonical-sync-production-pilot-expansion-activation.yml \
+            --branch main \
+            --event workflow_dispatch \
+            --status success \
+            --limit 50 \
+            --json databaseId,conclusion \
+            --jq '.[] | select(.conclusion == "success") | .databaseId')
+
+          selected=''
+          selected_sha=''
+          selected_count=''
+          for activation_run in "${activation_runs[@]}"; do
+            evidence_dir="$RUNNER_TEMP/activation-${activation_run}"
+            rm -rf "$evidence_dir"
+            mkdir -p "$evidence_dir"
+            if ! gh run download "$activation_run" \
+              --repo "$GITHUB_REPOSITORY" \
+              --name "aha-production-pilot-expansion-activation-${activation_run}" \
+              --dir "$evidence_dir" >/dev/null 2>&1; then
+              continue
+            fi
+            evidence="$evidence_dir/pilot-expansion-activation.json"
+            [[ -f "$evidence" ]] || continue
+            if ! jq -e \
+              --arg fingerprint "$AHA_POST_VERIFY_CANDIDATE_FINGERPRINT" '
+                .version == "aha_canonical_production_pilot_expansion_activation_v1" and
+                .status == "pass" and
+                .candidateFingerprintSha256 == $fingerprint and
+                .profileAddedOneAtATime == true and
+                .runtimeCredentialRotated == false and
+                .automaticSyncEnabled == false and
+                .loginSyncEnabled == false and
+                .backgroundSyncEnabled == false
+              ' "$evidence" >/dev/null; then
+              continue
+            fi
+            activation_sha="$(jq -r '.activationGitSha // empty' "$evidence")"
+            expected_count="$(jq -r '.newAllowedProfileCount // empty' "$evidence")"
+            run_head_sha="$(gh run view "$activation_run" --repo "$GITHUB_REPOSITORY" --json headSha --jq '.headSha')"
+            [[ "$activation_sha" =~ ^[0-9a-f]{40}$ ]] || continue
+            [[ "$run_head_sha" == "$activation_sha" ]] || continue
+            [[ "$expected_count" =~ ^[0-9]+$ && "$expected_count" -ge 2 && "$expected_count" -le 10 ]] || continue
+            selected="$activation_run"
+            selected_sha="$activation_sha"
+            selected_count="$expected_count"
+            break
+          done
+
+          if [[ -z "$selected" ]]; then
+            echo "Post-activation verification requires a successful candidate-bound expansion activation artifact." >&2
+            exit 1
+          fi
+          {
+            printf 'AHA_POST_VERIFY_ACTIVATION_RUN=%s\n' "$selected"
+            printf 'AHA_POST_VERIFY_ACTIVATION_SHA=%s\n' "$selected_sha"
+            printf 'AHA_POST_VERIFY_EXPECTED_COUNT=%s\n' "$selected_count"
+          } >> "$GITHUB_ENV"
+          echo "Verified candidate-bound activation evidence from run ${selected}."
+
+      - name: Azure OIDC login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Prepare Container Apps tooling
+        shell: bash
+        run: |
+          set -euo pipefail
+          az extension add --name containerapp --upgrade --only-show-errors
+
+      - name: Verify live revision, version-pinned allowlist and health contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          app_json="$RUNNER_TEMP/post-activation-live-app.json"
+          az containerapp show \
+            --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
+            --name "$AHA_PRODUCTION_CONTAINER_APP" \
+            -o json --only-show-errors > "$app_json"
+
+          fqdn="$(jq -r '.properties.configuration.ingress.fqdn // empty' "$app_json")"
+          current_sync="$(jq -r '[.properties.template.containers[0].env[] | select(.name=="AHA_CANONICAL_SYNC_ENABLED") | .value][0] // "false"' "$app_json")"
+          current_runtime="$(jq -r '[.properties.template.containers[0].env[] | select(.name=="AHA_RUNTIME_ACTIVATED") | .value][0] // "false"' "$app_json")"
+          current_revision="$(jq -r '[.properties.template.containers[0].env[] | select(.name=="AHA_API_VERSION") | .value][0] // empty' "$app_json")"
+          current_image="$(jq -r '.properties.template.containers[0].image // empty' "$app_json")"
+          legacy_pilot_uri="$(jq -r '[.properties.configuration.secrets[] | select(.name=="pilot-profile-id") | .keyVaultUrl][0] // empty' "$app_json")"
+          allowlist_uri="$(jq -r '[.properties.configuration.secrets[] | select(.name=="pilot-profile-ids-json") | .keyVaultUrl][0] // empty' "$app_json")"
+
+          [[ -n "$fqdn" && "$current_sync" == 'true' && "$current_runtime" == 'true' ]] || {
+            echo "Post-activation verification requires an active healthy canonical pilot runtime." >&2
+            exit 1
+          }
+          [[ "$current_revision" == "$AHA_POST_VERIFY_ACTIVATION_SHA" ]] || {
+            echo "Live API revision no longer matches the candidate activation evidence." >&2
+            exit 1
+          }
+          [[ "$current_image" == *"/aha-canonical-api:${AHA_POST_VERIFY_ACTIVATION_SHA}" ]] || {
+            echo "Live API image is not the immutable image built by the verified activation." >&2
+            exit 1
+          }
+          [[ -n "$legacy_pilot_uri" ]] || { echo "Legacy protected pilot anchor secret is unavailable." >&2; exit 1; }
+          [[ "$allowlist_uri" == https://*.vault.azure.net/secrets/aha-production-pilot-profile-ids-json/* ]] || {
+            echo "Live expanded allowlist must use an immutable version-pinned Key Vault URI." >&2
+            exit 1
+          }
+
+          anchor="$(az keyvault secret show --id "$legacy_pilot_uri" --query value -o tsv --only-show-errors)"
+          anchor_lower="${anchor,,}"
+          allowlist="$(az keyvault secret show --id "$allowlist_uri" --query value -o tsv --only-show-errors)"
+          allowlist="$(jq -c 'map(ascii_downcase)' <<<"$allowlist")"
+          printf '::add-mask::%s\n' "$anchor"
+          printf '::add-mask::%s\n' "$allowlist"
+          if [[ "$anchor_lower" == "$AHA_POST_VERIFY_CANDIDATE_LOWER" ]]; then
+            echo "Post-activation candidate cannot be the legacy pilot anchor." >&2
+            exit 1
+          fi
+          jq -e \
+            --arg anchor "$anchor_lower" \
+            --arg candidate "$AHA_POST_VERIFY_CANDIDATE_LOWER" \
+            --argjson count "$AHA_POST_VERIFY_EXPECTED_COUNT" '
+              type == "array" and
+              length == $count and
+              length >= 2 and length <= 10 and
+              length == (unique | length) and
+              index($anchor) != null and
+              index($candidate) != null
+            ' <<<"$allowlist" >/dev/null || {
+              echo "Live allowlist does not match the verified activation count/candidate contract." >&2
+              exit 1
+            }
+
+          health="$RUNNER_TEMP/post-activation-health.json"
+          curl --fail --silent --show-error --max-time 20 "https://${fqdn}/v1/health" > "$health"
+          jq -e \
+            --arg revision "$AHA_POST_VERIFY_ACTIVATION_SHA" \
+            --argjson count "$AHA_POST_VERIFY_EXPECTED_COUNT" '
+              .status == "ok" and
+              .service == "aha-nest-api" and
+              .version == $revision and
+              .runtimeActivated == true and
+              .canonicalSync.enabled == true and
+              .canonicalSync.profileLimitMode == "protected_allowlist" and
+              .canonicalSync.allowedProfileCount == $count and
+              .database.configured == true and
+              .database.connected == true and
+              .database.safeRuntimeRole == true and
+              .database.canonicalSchema == "present" and
+              .auth.configured == true
+            ' "$health" >/dev/null
+
+          {
+            printf 'AHA_POST_VERIFY_FQDN=%s\n' "$fqdn"
+            printf 'AHA_POST_VERIFY_ANCHOR_LOWER=%s\n' "$anchor_lower"
+            printf 'AHA_POST_VERIFY_CURRENT_ALLOWLIST=%s\n' "$allowlist"
+          } >> "$GITHUB_ENV"
+
+      - name: Prove the activated candidate can bootstrap only its own private workspace
+        shell: bash
+        run: |
+          set -euo pipefail
+          own_workspace="personal-${AHA_POST_VERIFY_CANDIDATE_LOWER}"
+          own_response="$RUNNER_TEMP/post-activation-own-bootstrap.json"
+          own_status="$(curl --silent --show-error --max-time 20 \
+            --output "$own_response" \
+            --write-out '%{http_code}' \
+            --header 'accept: application/json' \
+            --header "authorization: Bearer ${AHA_PRODUCTION_PILOT_EXPANSION_ACCESS_TOKEN}" \
+            --get \
+            --data-urlencode "workspaceId=${own_workspace}" \
+            --data-urlencode 'limit=1' \
+            "https://${AHA_POST_VERIFY_FQDN}/v1/sync/bootstrap")"
+          [[ "$own_status" == '200' ]] || {
+            echo "Activated candidate could not bootstrap its own canonical workspace (HTTP ${own_status})." >&2
+            exit 1
+          }
+          jq -e \
+            --arg workspace "$own_workspace" \
+            --arg revision "$AHA_POST_VERIFY_ACTIVATION_SHA" '
+              .data.workspaceId == $workspace and
+              (.data.objects | type == "array") and
+              .meta.apiVersion == $revision
+            ' "$own_response" >/dev/null
+
+          anchor_workspace="personal-${AHA_POST_VERIFY_ANCHOR_LOWER}"
+          denied_response="$RUNNER_TEMP/post-activation-cross-profile-denied.json"
+          denied_status="$(curl --silent --show-error --max-time 20 \
+            --output "$denied_response" \
+            --write-out '%{http_code}' \
+            --header 'accept: application/json' \
+            --header "authorization: Bearer ${AHA_PRODUCTION_PILOT_EXPANSION_ACCESS_TOKEN}" \
+            --get \
+            --data-urlencode "workspaceId=${anchor_workspace}" \
+            --data-urlencode 'limit=1' \
+            "https://${AHA_POST_VERIFY_FQDN}/v1/sync/bootstrap")"
+          [[ "$denied_status" == '403' ]] || {
+            echo "Activated candidate unexpectedly reached the legacy pilot private workspace (HTTP ${denied_status})." >&2
+            exit 1
+          }
+          jq -e '.error.status == 403' "$denied_response" >/dev/null
+          echo "AHA canonical production pilot post-activation access isolation: PASS"
+
+      - name: Dry-run per-profile rollback calculation without mutation
+        shell: bash
+        run: |
+          set -euo pipefail
+          reduced="$(jq -c --arg target "$AHA_POST_VERIFY_CANDIDATE_LOWER" 'map(select(. != $target))' <<<"$AHA_POST_VERIFY_CURRENT_ALLOWLIST")"
+          current_count="$(jq 'length' <<<"$AHA_POST_VERIFY_CURRENT_ALLOWLIST")"
+          reduced_count="$(jq 'length' <<<"$reduced")"
+          [[ "$current_count" -eq "$AHA_POST_VERIFY_EXPECTED_COUNT" ]]
+          [[ "$reduced_count" -eq $((current_count - 1)) && "$reduced_count" -ge 1 ]]
+          jq -e \
+            --arg anchor "$AHA_POST_VERIFY_ANCHOR_LOWER" \
+            --arg target "$AHA_POST_VERIFY_CANDIDATE_LOWER" '
+              index($anchor) != null and index($target) == null
+            ' <<<"$reduced" >/dev/null
+          echo "AHA canonical production pilot rollback dry-run: READY_REMOVE_ONE_PROFILE_NO_MUTATION"
+
+      - name: Write non-identifying post-activation verification evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/evidence"
+          cat > "$RUNNER_TEMP/evidence/pilot-post-activation-verification.json" <<JSON
+          {
+            "version": "aha_canonical_production_pilot_post_activation_verification_v1",
+            "status": "pass",
+            "verificationGitSha": "${GITHUB_SHA}",
+            "activationGitSha": "${AHA_POST_VERIFY_ACTIVATION_SHA}",
+            "activationRun": "${AHA_POST_VERIFY_ACTIVATION_RUN}",
+            "candidateFingerprintSha256": "${AHA_POST_VERIFY_CANDIDATE_FINGERPRINT}",
+            "allowedProfileCount": ${AHA_POST_VERIFY_EXPECTED_COUNT},
+            "liveRevisionMatchesActivation": true,
+            "versionPinnedAllowlistVerified": true,
+            "candidateOwnBootstrapVerified": true,
+            "crossProfileReadDenied": true,
+            "rollbackDryRunReady": true,
+            "productionMutationPerformed": false,
+            "keyVaultWritten": false,
+            "apiDeploymentChanged": false,
+            "canonicalDataMutated": false,
+            "candidateIdentityRendered": false,
+            "accessTokenRendered": false,
+            "automaticSyncEnabled": false,
+            "loginSyncEnabled": false,
+            "backgroundSyncEnabled": false
+          }
+          JSON
+
+      - name: Upload immutable post-activation verification evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: aha-production-pilot-post-activation-verification-${{ github.run_id }}
+          path: ${{ runner.temp }}/evidence/pilot-post-activation-verification.json
+          if-no-files-found: error
+          retention-days: 90
