@@ -10,6 +10,9 @@ const evidenceSource = fs.readFileSync(evidencePath, "utf8");
 const evidence = JSON.parse(evidenceSource);
 const status = fs.readFileSync(statusPath, "utf8");
 
+// This artifact is intentionally historical: it proves the first production
+// pilot profile's activation, real browser round-trip and idempotent replay. It
+// must not be rewritten to pretend it was originally a two-profile proof.
 assert.equal(evidence.version, "aha_canonical_sync_production_pilot_proof_v1");
 assert.equal(evidence.status, "verified_single_profile_manual_sync");
 assert.equal(evidence.production.platform, "azure_container_apps");
@@ -44,6 +47,9 @@ for (const [key, expected] of Object.entries({
   assert.equal(evidence.homeIntegration[key], expected, `homeIntegration.${key}`);
 }
 
+// These fields describe the historical first-profile boundary at the time that
+// evidence was captured. Current bounded-pilot limits live in rollout policy and
+// the operative status document, not in this immutable proof artifact.
 assert.equal(evidence.securityBoundary.serverSidePilotAllowlist, true);
 assert.equal(evidence.securityBoundary.maxProfiles, 1);
 assert.equal(evidence.securityBoundary.userSelectableWorkspace, false);
@@ -62,10 +68,13 @@ for (const source of [evidenceSource, status]) {
   assert.doesNotMatch(source, /access[_ -]?token\s*[:=]/i);
 }
 
-assert.match(status, /AKTIV én-profil-pilot/i);
-assert.match(status, /COMMITTED_ONE_PROFILE/);
-assert.match(status, /idempotens/i);
-assert.match(status, /ingen automatisk retry/i);
-assert.match(status, /multi-profile expansion/i);
+// The operative status has advanced beyond the historical first-profile proof.
+assert.match(status, /AKTIV bounded manual production-pilot/i);
+assert.match(status, /nøyaktig 2 profiler/i);
+assert.match(status, /Første profil: browser roundtrip og idempotens/i);
+assert.match(status, /Profil #3 er eksplisitt pauset/i);
+assert.match(status, /ekte to-profil round-trip/i);
+assert.match(status, /automatic sync[\s\S]*login-triggered sync[\s\S]*background sync/i);
+assert.doesNotMatch(status, /AKTIV én-profil-pilot/i);
 
 console.log("aha-canonical-production-pilot-proof-v1.test.cjs passed");
