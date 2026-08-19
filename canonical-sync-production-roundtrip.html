@@ -4,6 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="robots" content="noindex,nofollow" />
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <title>AHA Canonical Sync · Two-profile round-trip</title>
   <link rel="stylesheet" href="css/aha-chat.css" />
   <link rel="stylesheet" href="css/aha-dashboard.css" />
@@ -37,6 +40,7 @@
         <p>Første kjøring skal bevise <code>lokal endring → outbox → push → production → bootstrap/pull → lokal apply</code>. Når den er grønn, kjører du identisk replay uten å endre data. Replay skal gi null nye endringer, null nye outbox-events og null nye pushes.</p>
         <p>Production-endpoint og privat workspace fylles ikke inn her. Endpointet kommer fra AHA sin production-konfigurasjon, mens workspace utledes fra den innloggede Supabase-identiteten. Ingen profil-ID, workspace-ID, access token eller rå AHA-payload vises i evidence.</p>
         <p>Denne prosedyren må bestås separat av begge eksisterende profiler før profil #3 kan vurderes.</p>
+        <p><strong>Verifier build:</strong> <code>hash-domains-v2</code>. Hvis denne teksten ikke vises, skal testen ikke kjøres fordi nettleseren viser en eldre operatorflate.</p>
       </div>
 
       <p id="aha-canonical-production-roundtrip-status" role="status" aria-live="polite">Kontrollerer round-trip-port …</p>
@@ -80,7 +84,7 @@
   <script src="js/ahaCanonicalManualSyncRunner.js"></script>
   <script src="js/ahaCanonicalSyncProductionPilotBridge.js"></script>
   <script src="js/ahaCanonicalProductionHomeSync.js"></script>
-  <script src="js/ahaCanonicalProductionRoundTripVerifier.js"></script>
+  <script src="js/ahaCanonicalProductionRoundTripVerifier.js?v=hash-domains-v2"></script>
   <script>
     window.AHACanonicalProductionRoundTripVerifier?.bind();
   </script>
