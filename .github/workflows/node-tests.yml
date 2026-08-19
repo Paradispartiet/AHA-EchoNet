@@ -23,32 +23,36 @@ jobs:
         with:
           node-version: 22
 
-      # Temporary branch-level diagnostics for PR #793. These named steps make a
-      # failing production closeout regression visible through the Actions job
-      # metadata even when raw job logs are unavailable to the GitHub connector.
-      - name: Diagnose rollout contract
-        run: node tests/aha-canonical-sync-production-rollout-gate-v1.test.cjs
+      # Temporary branch-level diagnostics for PR #793. The connector cannot
+      # expose raw npm-test stdout, so alphabetic chunks identify the remaining
+      # failing standalone test from Actions step metadata. Remove before merge.
+      - name: Diagnose suite chunk 001-060
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t files < <(find tests -maxdepth 1 -type f \( -name '*.test.cjs' -o -name '*.test.mjs' -o -name '*.cjs' \) ! -name 'aha-python-engine-smoke.test.cjs' | sort)
+          for file in "${files[@]:0:60}"; do echo "RUN $file"; node "$file"; done
 
-      - name: Diagnose Azure platform status
-        run: node tests/aha-azure-production-platform-v1.test.cjs
+      - name: Diagnose suite chunk 061-120
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t files < <(find tests -maxdepth 1 -type f \( -name '*.test.cjs' -o -name '*.test.mjs' -o -name '*.cjs' \) ! -name 'aha-python-engine-smoke.test.cjs' | sort)
+          for file in "${files[@]:60:60}"; do echo "RUN $file"; node "$file"; done
 
-      - name: Diagnose Azure current status
-        run: node tests/aha-azure-production-current-status-v1.test.cjs
+      - name: Diagnose suite chunk 121-180
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t files < <(find tests -maxdepth 1 -type f \( -name '*.test.cjs' -o -name '*.test.mjs' -o -name '*.cjs' \) ! -name 'aha-python-engine-smoke.test.cjs' | sort)
+          for file in "${files[@]:120:60}"; do echo "RUN $file"; node "$file"; done
 
-      - name: Diagnose initial pilot activation
-        run: node tests/aha-canonical-sync-production-pilot-activation-v1.test.cjs
-
-      - name: Diagnose pilot expansion
-        run: node tests/aha-canonical-sync-production-pilot-expansion-v1.test.cjs
-
-      - name: Diagnose post-activation verification
-        run: node tests/aha-canonical-sync-production-pilot-post-activation-verification-v1.test.cjs
-
-      - name: Diagnose historical first-profile proof
-        run: node tests/aha-canonical-production-pilot-proof-v1.test.cjs
-
-      - name: Diagnose two-profile round-trip verifier
-        run: node tests/aha-canonical-production-round-trip-verifier-v1.test.cjs
+      - name: Diagnose suite chunk 181+
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t files < <(find tests -maxdepth 1 -type f \( -name '*.test.cjs' -o -name '*.test.mjs' -o -name '*.cjs' \) ! -name 'aha-python-engine-smoke.test.cjs' | sort)
+          for file in "${files[@]:180}"; do echo "RUN $file"; node "$file"; done
 
       - name: Run deterministic Node test suite
         run: npm test
