@@ -1,16 +1,26 @@
 # AHA Canonical Production Pilot – Post-activation verification v1
 
-Status: **implementert i repoet, men ikke kjørt mot en ny production-profil.**
+Status: **KJØRT OG BESTÅTT for production-profil #2. Porten forblir implementert for senere eksplisitte pilotutvidelser.**
 
-Denne porten brukes først etter at én utvidet pilotprofil faktisk er aktivert gjennom den eksisterende candidate-bound expansion gate + same-SHA activation-flyten. Merge av denne leveransen verifiserer eller aktiverer ingen profil i production.
+Denne porten brukes etter at én utvidet pilotprofil faktisk er aktivert gjennom candidate-bound expansion gate + same-SHA activation. Den er read-only og gjør ingen canonical production-mutasjon.
 
-## Formål
+## Verifisert profil #2
 
-Activation alene beviser at kandidaten ble bootstrappet og lagt til i den beskyttede allowlisten. Post-activation verification skal i tillegg bevise at den virkelige kandidaten faktisk kan bruke den eksakte aktive API-revisjonen, at kandidatens private workspace fungerer, og at kandidaten fortsatt ikke kan lese legacy-pilotens private workspace.
+Den første reelle post-activation-kjøringen for den utvidede production-profilen fullførte med `success` og beviste:
 
-Porten er **read-only**. Den gjør ingen production-mutasjon.
+```text
+live API revision = kandidatens immutable activation revision
+protected allowlist count = 2
+candidate own private workspace bootstrap = HTTP 200
+candidate → legacy pilot private workspace = HTTP 403
+per-profile rollback calculation = READY_REMOVE_ONE_PROFILE_NO_MUTATION
+production mutation performed = false
+canonical data deleted = false
+```
 
-Workflow:
+Dette er production-beviset på at den andre piloten både er aktiv gjennom den faktiske API-/databasekjeden og isolert fra den første pilotens private workspace.
+
+## Workflow
 
 ```text
 .github/workflows/aha-canonical-sync-production-pilot-post-activation-verification.yml
@@ -24,55 +34,51 @@ RUN_AHA_CANONICAL_PRODUCTION_PILOT_POST_ACTIVATION_VERIFY
 
 ## Protected values
 
-Kandidatens identitet kommer fortsatt fra:
+Kandidatens identitet kommer fra:
 
 ```text
 AHA_PRODUCTION_PILOT_EXPANSION_PROFILE_ID
 ```
 
-I tillegg kreves et kortlivet eller eksplisitt forvaltet **candidate access token** for den faktiske aktiverte kandidaten:
+For den faktiske access-verifikasjonen brukes et kortlivet eller eksplisitt forvaltet candidate access token:
 
 ```text
 AHA_PRODUCTION_PILOT_EXPANSION_ACCESS_TOKEN
 ```
 
-Tokenet skal være kandidatens virkelige production access-token. Det lagres som protected environment secret, maskeres før bruk og skrives aldri til evidence.
+Tokenet er bare et verifikasjonscredential. Det er **ikke** en runtime-avhengighet for production API, AHA Home-sync eller den permanente allowlisten.
 
-Tokenet skal ikke settes før en konkret profil #2 faktisk er valgt og aktivert.
+Etter at post-activation closeout er bestått skal `AHA_PRODUCTION_PILOT_EXPANSION_ACCESS_TOKEN` fjernes fra alle GitHub environments der det ble lagt inn. Tokenverdien skal aldri ligge i repo eller evidence.
 
 ## Port 1 – bind til faktisk activation
 
-Workflowen leter bare etter vellykket expansion-activation evidence for den samme beskyttede kandidaten.
-
-Den krever:
+Workflowen aksepterer bare vellykket expansion-activation evidence for den samme beskyttede kandidaten og krever blant annet:
 
 ```text
 version = aha_canonical_production_pilot_expansion_activation_v1
 status = pass
 candidate fingerprint = dagens protected kandidat
-activationGitSha = GitHub Actions-runens faktiske head SHA
+activationGitSha = activation-runens faktiske head SHA
 newAllowedProfileCount = 2..10
 profileAddedOneAtATime = true
 runtimeCredentialRotated = false
 automatic/login/background sync = false
 ```
 
-Dermed kan evidence fra kandidat A ikke brukes for kandidat B.
-
-Post-verification-workflowens egen Git-SHA kan være nyere enn activation-SHA-en. Det som er autoritativt er at den live API-revisjonen fortsatt er nøyaktig activation-SHA-en som evidence beskriver.
+Evidence fra kandidat A kan dermed ikke gjenbrukes for kandidat B.
 
 ## Port 2 – live immutable revision og protected allowlist
 
 Workflowen leser dagens Container App og krever:
 
-- canonical sync er fortsatt aktiv bare som eksplisitt pilot;
+- canonical sync er aktiv bare innen bounded pilot;
 - runtime er aktiv;
 - `AHA_API_VERSION` er identisk med activation-SHA;
 - live image er `aha-canonical-api:<activation SHA>`;
-- JSON-allowlisten bruker en **versjonspinnet** Key Vault-URI;
+- JSON-allowlisten bruker en versjonspinnet Key Vault-URI;
 - allowlisten inneholder legacy anchor og kandidaten;
 - allowlist-antallet er identisk med activation evidence;
-- listen har unike profiler og er fortsatt innenfor grensen 2–10;
+- listen har unike profiler og er innenfor 2–10;
 - public health rapporterer samme revision og samme `allowedProfileCount`;
 - database er connected, canonical schema finnes og runtime-rollen er safe.
 
@@ -80,9 +86,9 @@ Ingen profil-ID skrives til evidence.
 
 ## Port 3 – ekte kandidat, ende til ende
 
-Med kandidatens protected access token utføres bare to GET-kall mot den virkelige production-API-en.
+Med kandidatens protected access token utføres to read-only kall mot production API.
 
-### Kandidaten må kunne lese sitt eget workspace
+### Eget workspace
 
 ```text
 GET /v1/sync/bootstrap
@@ -98,10 +104,10 @@ data.workspaceId = kandidatens private workspace
 meta.apiVersion = activation SHA
 ```
 
-Dette beviser samtidig:
+Dette beviser den virkelige kjeden:
 
 ```text
-virkelig JWT
+JWT
 → server-side protected allowlist
 → NestJS auth
 → runtime PostgreSQL role
@@ -111,26 +117,19 @@ virkelig JWT
 → bootstrap_sync_snapshot_v1()
 ```
 
-### Kandidaten må fortsatt avvises fra legacy-pilotens workspace
+### Annen profil sitt workspace
 
-Samme access token brukes read-only mot:
-
-```text
-GET /v1/sync/bootstrap
-workspaceId = personal-<legacy anchor>
-```
-
-Krav:
+Samme token brukes mot legacy-pilotens private workspace. Kravet er:
 
 ```text
 HTTP 403
 ```
 
-Dette er production-beviset på at profil #2 ikke får lese profil #1 sitt private workspace gjennom den faktiske API-/databasekjeden.
+Dette er den negative production-isolasjonstesten.
 
 ## Port 4 – rollback dry-run
 
-Etter vellykket tilgangsverifikasjon beregnes en rollback **kun i minnet**:
+Etter vellykket tilgangsverifikasjon beregnes rollback kun i minnet:
 
 ```text
 current protected allowlist
@@ -139,26 +138,7 @@ current protected allowlist
 → nytt antall = gammelt antall - 1
 ```
 
-Krav:
-
-- kandidaten finnes i dagens allowlist;
-- kandidaten er ikke legacy anchor;
-- nøyaktig én profil fjernes;
-- legacy anchor står igjen;
-- minst én profil står igjen.
-
-Dette er bare en **rollback dry-run**. Workflowen kjører ikke:
-
-```text
-az keyvault secret set
-az deployment group create
-az containerapp job
-add_pilot_profile
-deactivate_pilot
-POST /v1/sync/push
-```
-
-Den eksisterende per-profile rollback-workflowen er fortsatt den eneste operasjonen som faktisk kan redusere allowlisten.
+Workflowen skriver ikke ny Key Vault-secret, deployer ikke API, kjører ikke DB-control mutation og sletter ikke canonical data.
 
 ## Evidence
 
@@ -168,45 +148,17 @@ En vellykket kjøring produserer et non-identifying artifact:
 pilot-post-activation-verification.json
 ```
 
-Evidence inneholder blant annet:
+Evidence inneholder tekniske bindings- og resultatfelter, men ikke kandidatens UUID, private workspace-ID eller access token.
+
+## Dagens neste gate
+
+Post-activation-verifikasjonen er nå **lukket for profil #2**, men dette er ikke det samme som å ha bevist normal brukerdataflyt for begge pilotene.
+
+Før profil #3 kan vurderes skal begge eksisterende profiler bestå den separate real-data round-trip-porten dokumentert i:
 
 ```text
-activation Git SHA
-verification Git SHA
-activation run id
-candidate fingerprint
-allowed profile count
-live revision matches activation = true
-version-pinned allowlist verified = true
-candidate own bootstrap verified = true
-cross-profile read denied = true
-rollback dry-run ready = true
-production mutation performed = false
-Key Vault written = false
-API deployment changed = false
-canonical data mutated = false
-candidate identity rendered = false
-access token rendered = false
+docs/AHA_CANONICAL_PRODUCTION_TWO_PROFILE_ROUND_TRIP_V1.md
+canonical-sync-production-roundtrip.html
 ```
 
-## Ingen production-mutasjon
-
-Denne workflowen er med vilje ute av stand til å endre production. Den har ingen Key Vault-write, ingen deployment, ingen DB-control job og ingen canonical push.
-
-Merge av workflowen gjør heller ikke noe automatisk. Den kan bare startes manuelt etter at en faktisk ny pilotprofil er valgt, aktivert og har fått et protected candidate access token.
-
-## Operativ sekvens for profil #2
-
-Når profil #2 faktisk skal tas inn, er sekvensen nå:
-
-```text
-1. velg profil #2
-2. sett protected AHA_PRODUCTION_PILOT_EXPANSION_PROFILE_ID
-3. kjør read-only expansion gate
-4. kjør same-SHA expansion activation
-5. sett protected AHA_PRODUCTION_PILOT_EXPANSION_ACCESS_TOKEN
-6. kjør post-activation verification
-7. godkjenn først deretter profil #2 som verifisert production-pilot
-```
-
-Hvis post-activation verification feiler, skal profilen ikke regnes som godkjent. Den eksisterende per-profile rollback-workflowen kan da brukes for å fjerne kandidatens API-eligibility uten å slette canonical data eller slå av de øvrige pilotprofilene.
+Den porten krever ekte lokal AHA-endring, push, server round-trip/local apply, cursor/hash-konsistens og identisk idempotens-replay.
