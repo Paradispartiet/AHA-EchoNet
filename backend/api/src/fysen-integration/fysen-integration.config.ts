@@ -50,11 +50,13 @@ function parseRedirectUris(value: unknown): readonly string[] {
 
 export function loadFysenIntegrationConfig(env: NodeJS.ProcessEnv = process.env): FysenIntegrationConfig {
   const enabled = bool(env.AHA_FYSEN_INTEGRATION_ENABLED, "AHA_FYSEN_INTEGRATION_ENABLED");
-  const secret = text(env.AHA_FYSEN_AUTHORIZATION_SECRET);
+  const explicitSecret = text(env.AHA_FYSEN_AUTHORIZATION_SECRET);
+  const protectedRuntimeRoot = text(env.AHA_AUDIT_HASH_SALT);
+  const secret = explicitSecret || protectedRuntimeRoot;
   const allowedRedirectUris = parseRedirectUris(env.AHA_FYSEN_REDIRECT_URIS);
 
   if (enabled && secret.length < 32) {
-    throw new Error("AHA_FYSEN_AUTHORIZATION_SECRET must contain at least 32 characters when Fysen integration is enabled");
+    throw new Error("AHA_FYSEN_AUTHORIZATION_SECRET or AHA_AUDIT_HASH_SALT must contain at least 32 characters when Fysen integration is enabled");
   }
   if (enabled && allowedRedirectUris.length === 0) {
     throw new Error("AHA_FYSEN_REDIRECT_URIS must contain at least one exact redirect URI when Fysen integration is enabled");

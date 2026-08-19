@@ -1,36 +1,33 @@
-targetScope = 'resourceGroup'
-
-param location string
-param containerAppName string = 'aha-canonical-api-production'
+param location string = resourceGroup().location
+param containerAppName string
 param containerAppsEnvironmentName string
 param managedIdentityName string
 param acrName string
 param keyVaultName string
 param image string
-param deployRevision string
-param allowedOrigin string = 'https://paradispartiet.github.io'
-param authIssuer string = 'https://wshmybqyksrwkawqleiz.supabase.co/auth/v1'
-param authAudience string = 'authenticated'
-param authJwksUrl string = 'https://wshmybqyksrwkawqleiz.supabase.co/auth/v1/.well-known/jwks.json'
 param databaseUrlSecretUri string
 param databaseCaSecretUri string
 param auditSaltSecretUri string
+param applicationInsightsConnectionString string
+param deployRevision string = ''
 param pilotProfileIdSecretUri string = ''
-param allowedProfileIdsSecretUri string = ''
 param canonicalSyncEnabled bool = false
 param runtimeActivated bool = false
-param applicationInsightsConnectionString string
-param tags object = {}
+param fysenIntegrationEnabled bool = true
+param fysenRedirectUris string = 'https://fysen-matsgran-8572s-projects.vercel.app/api/aha/callback'
+@minValue(60)
+@maxValue(600)
+param fysenAuthorizationTtlSeconds int = 180
 
-resource managedEnvironment 'Microsoft.App/managedEnvironments@2025-01-01' existing = {
+resource environment 'Microsoft.App/managedEnvironments@2025-01-01' existing = {
   name: containerAppsEnvironmentName
 }
 
-resource runtimeIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2024-11-30' existing = {
+resource runtimeIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' existing = {
   name: managedIdentityName
 }
 
-resource registry 'Microsoft.ContainerRegistry/registries@2023-07-01' existing = {
+resource registry 'Microsoft.ContainerRegistry/registries@2025-04-01' existing = {
   name: acrName
 }
 
@@ -56,58 +53,52 @@ var baseSecrets = [
   }
 ]
 
-var legacyPilotSecrets = empty(pilotProfileIdSecretUri) ? [] : [
+var pilotSecrets = canonicalSyncEnabled ? [
   {
     name: 'pilot-profile-id'
     keyVaultUrl: pilotProfileIdSecretUri
     identity: runtimeIdentity.id
   }
-]
+] : []
 
-var allowlistSecrets = empty(allowedProfileIdsSecretUri) ? [] : [
-  {
-    name: 'pilot-profile-ids-json'
-    keyVaultUrl: allowedProfileIdsSecretUri
-    identity: runtimeIdentity.id
-  }
-]
+var appSecrets = concat(baseSecrets, pilotSecrets)
 
-var baseEnvironment = [
+var baseEnv = [
   {
     name: 'NODE_ENV'
     value: 'production'
   }
   {
     name: 'PORT'
-    value: '3100'
+    value: '3000'
   }
   {
-    name: 'AHA_API_VERSION'
+    name: 'AHA_SERVICE_NAME'
+    value: 'aha-nest-api'
+  }
+  {
+    name: 'AHA_SERVICE_VERSION'
+    value: empty(deployRevision) ? 'azure-production' : deployRevision
+  }
+  {
+    name: 'AHA_DEPLOY_REVISION'
     value: deployRevision
   }
   {
-    name: 'AHA_ALLOWED_ORIGINS'
-    value: allowedOrigin
-  }
-  {
-    name: 'AHA_AUTH_PROVIDER'
-    value: 'supabase'
-  }
-  {
-    name: 'AHA_AUTH_ISSUER'
-    value: authIssuer
-  }
-  {
-    name: 'AHA_AUTH_AUDIENCE'
-    value: authAudience
+    name: 'AHA_RUNTIME_ACTIVATED'
+    value: runtimeActivated ? 'true' : 'false'
   }
   {
     name: 'AHA_AUTH_JWKS_URL'
-    value: authJwksUrl
+    value: 'https://sstuzwppsheivczyqrim.supabase.co/auth/v1/.well-known/jwks.json'
   }
   {
-    name: 'AHA_AUDIT_HASH_SALT'
-    secretRef: 'audit-salt'
+    name: 'AHA_AUTH_ISSUER'
+    value: 'https://sstuzwppsheivczyqrim.supabase.co/auth/v1'
+  }
+  {
+    name: 'AHA_AUTH_AUDIENCE'
+    value: 'authenticated'
   }
   {
     name: 'AHA_DATABASE_ENABLED'
@@ -126,20 +117,68 @@ var baseEnvironment = [
     secretRef: 'database-ca'
   }
   {
-    name: 'AHA_DATABASE_POOL_MAX'
-    value: '4'
+    name: 'AHA_DATABASE_MAX_CONNECTIONS'
+    value: '8'
   }
   {
-    name: 'AHA_RUNTIME_ACTIVATED'
-    value: runtimeActivated ? 'true' : 'false'
+    name: 'AHA_DATABASE_CONNECTION_TIMEOUT_MS'
+    value: '5000'
+  }
+  {
+    name: 'AHA_DATABASE_STATEMENT_TIMEOUT_MS'
+    value: '10000'
+  }
+  {
+    name: 'AHA_DATABASE_IDLE_TIMEOUT_MS'
+    value: '30000'
+  }
+  {
+    name: 'AHA_AUDIT_HASH_SALT'
+    secretRef: 'audit-salt'
+  }
+  {
+    name: 'AHA_LOCAL_IMPORT_ENABLED'
+    value: 'false'
   }
   {
     name: 'AHA_CANONICAL_SYNC_ENABLED'
     value: canonicalSyncEnabled ? 'true' : 'false'
   }
   {
-    name: 'AHA_LOCAL_IMPORT_ENABLED'
-    value: 'false'
+    name: 'AHA_CANONICAL_SYNC_MAX_LIMIT'
+    value: '100'
+  }
+  {
+    name: 'AHA_CANONICAL_SYNC_MAX_CHANGES_PER_PUSH'
+    value: '50'
+  }
+  {
+    name: 'AHA_CANONICAL_SYNC_MAX_PAYLOAD_BYTES'
+    value: '262144'
+  }
+  {
+    name: 'AHA_CANONICAL_SYNC_MAX_PAYLOAD_JSON_BYTES'
+    value: '131072'
+  }
+  {
+    name: 'AHA_CANONICAL_SYNC_MAX_CANONICAL_JSON_BYTES'
+    value: '131072'
+  }
+  {
+    name: 'AHA_CANONICAL_SYNC_MAX_TOMBSTONE_JSON_BYTES'
+    value: '32768'
+  }
+  {
+    name: 'AHA_FYSEN_INTEGRATION_ENABLED'
+    value: fysenIntegrationEnabled ? 'true' : 'false'
+  }
+  {
+    name: 'AHA_FYSEN_AUTHORIZATION_TTL_SECONDS'
+    value: string(fysenAuthorizationTtlSeconds)
+  }
+  {
+    name: 'AHA_FYSEN_REDIRECT_URIS'
+    value: fysenRedirectUris
   }
   {
     name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
@@ -147,24 +186,18 @@ var baseEnvironment = [
   }
 ]
 
-var legacyPilotEnvironment = empty(pilotProfileIdSecretUri) ? [] : [
+var pilotEnv = canonicalSyncEnabled ? [
   {
     name: 'AHA_CANONICAL_SYNC_PILOT_PROFILE_ID'
     secretRef: 'pilot-profile-id'
   }
-]
+] : []
 
-var allowlistEnvironment = empty(allowedProfileIdsSecretUri) ? [] : [
-  {
-    name: 'AHA_CANONICAL_SYNC_ALLOWED_PROFILE_IDS_JSON'
-    secretRef: 'pilot-profile-ids-json'
-  }
-]
+var appEnv = concat(baseEnv, pilotEnv)
 
-resource api 'Microsoft.App/containerApps@2025-01-01' = {
+resource containerApp 'Microsoft.App/containerApps@2025-01-01' = {
   name: containerAppName
   location: location
-  tags: tags
   identity: {
     type: 'UserAssigned'
     userAssignedIdentities: {
@@ -172,21 +205,14 @@ resource api 'Microsoft.App/containerApps@2025-01-01' = {
     }
   }
   properties: {
-    environmentId: managedEnvironment.id
-    workloadProfileName: 'Consumption'
+    managedEnvironmentId: environment.id
     configuration: {
       activeRevisionsMode: 'Single'
       ingress: {
         external: true
-        allowInsecure: false
-        targetPort: 3100
+        targetPort: 3000
         transport: 'auto'
-        traffic: [
-          {
-            latestRevision: true
-            weight: 100
-          }
-        ]
+        allowInsecure: false
       }
       registries: [
         {
@@ -194,14 +220,14 @@ resource api 'Microsoft.App/containerApps@2025-01-01' = {
           identity: runtimeIdentity.id
         }
       ]
-      secrets: concat(baseSecrets, legacyPilotSecrets, allowlistSecrets)
+      secrets: appSecrets
     }
     template: {
       containers: [
         {
-          name: 'aha-nest-api'
+          name: 'api'
           image: image
-          env: concat(baseEnvironment, legacyPilotEnvironment, allowlistEnvironment)
+          env: appEnv
           resources: {
             cpu: json('0.5')
             memory: '1Gi'
@@ -211,9 +237,9 @@ resource api 'Microsoft.App/containerApps@2025-01-01' = {
               type: 'Liveness'
               httpGet: {
                 path: '/v1/health'
-                port: 3100
+                port: 3000
               }
-              initialDelaySeconds: 10
+              initialDelaySeconds: 20
               periodSeconds: 30
               timeoutSeconds: 5
               failureThreshold: 3
@@ -222,7 +248,7 @@ resource api 'Microsoft.App/containerApps@2025-01-01' = {
               type: 'Readiness'
               httpGet: {
                 path: '/v1/health'
-                port: 3100
+                port: 3000
               }
               initialDelaySeconds: 5
               periodSeconds: 10
@@ -248,14 +274,12 @@ resource api 'Microsoft.App/containerApps@2025-01-01' = {
       }
     }
   }
-  dependsOn: [
-    keyVault
-  ]
 }
 
-output containerAppName string = api.name
-output containerAppFqdn string = api.properties.configuration.ingress.fqdn
-output productionApiOrigin string = 'https://${api.properties.configuration.ingress.fqdn}'
-output syncEnabled bool = canonicalSyncEnabled
+output containerAppId string = containerApp.id
+output fqdn string = containerApp.properties.configuration.ingress.fqdn
+output imageDeployed string = image
+output canonicalSyncEnabled bool = canonicalSyncEnabled
 output runtimeActivated bool = runtimeActivated
-output deployRevision string = deployRevision
+output fysenIntegrationEnabled bool = fysenIntegrationEnabled
+output fysenRedirectUris string = fysenRedirectUris
