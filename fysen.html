@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>Min mat fra Fysen · AHA</title>
+  <link rel="stylesheet" href="css/aha-chat.css" />
+  <link rel="stylesheet" href="css/aha-dashboard.css" />
+  <link rel="stylesheet" href="css/ahaModule.css" />
+</head>
+<body>
+  <main class="aha-dashboard" style="max-width: 720px;">
+    <section class="aha-panel aha-module-shell" aria-labelledby="aha-fysen-handoff-title">
+      <header class="aha-module-shell-header">
+        <div>
+          <p class="eyebrow">AHA × Fysen</p>
+          <h1 id="aha-fysen-handoff-title">Min mat fra Fysen</h1>
+          <p class="aha-module-purpose">Dette er en engangshandoff av det du eksplisitt har lagret i «Min mat».</p>
+        </div>
+      </header>
+
+      <p id="aha-fysen-handoff-status" role="status" aria-live="polite">Åpner den kortlivede Fysen-handoff-en …</p>
+      <p id="aha-fysen-handoff-count"></p>
+      <ul id="aha-fysen-handoff-items"></ul>
+
+      <div class="aha-panel" role="note">
+        <p><strong>Personvern:</strong> Handoff-en inneholder ikke Fysen-søkehistorikk, AHA-samtaler eller offentlig deling. Materialet sendes ikke automatisk til AHA-agenten.</p>
+      </div>
+
+      <div class="aha-module-actions">
+        <button id="aha-fysen-handoff-continue" class="aha-tile-btn aha-tile-btn-primary" type="button" disabled>Analyser i AHA</button>
+        <a class="aha-tile-btn" href="index.html">Avbryt</a>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/ahaFysenFoodCollection.js"></script>
+  <script src="js/ahaFysenHandoff.js"></script>
+</body>
+</html>
