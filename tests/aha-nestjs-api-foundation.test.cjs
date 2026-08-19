@@ -232,9 +232,12 @@ assert.equal(rootPackage.scripts.start, "node server.js");
 assert.doesNotMatch(read("server.js"), /backend\/api|aha-nest-api/);
 assert.doesNotMatch(read("render.yaml"), /rootDir:\s*backend\/api|name:\s*aha-nest-api/);
 
-assert.match(read("backend/api/README.md"), /ikke aktiv AHA-runtime/i);
-assert.match(read("backend/api/README.md"), /runtime-grants/i);
-assert.match(read("backend/api/README.md"), /non-owner|BYPASSRLS/i);
+const backendReadme = read("backend/api/README.md");
+assert.match(backendReadme, /aktiv canonical production-backend[\s\S]*bounded manual pilot[\s\S]*2 verifiserte profiler/i);
+assert.match(backendReadme, /Ikke generell production-sync/i);
+assert.match(backendReadme, /runtime-grants/i);
+assert.match(backendReadme, /non-owner|BYPASSRLS/i);
+assert.match(backendReadme, /automatic sync = false[\s\S]*background sync = false/i);
 assert.match(read("docs/AHA_BACKEND_API_CONTRACT_V1.md"), /fail-closed backend foundation[\s\S]*frontend runtime not activated/i);
 assert.match(read("docs/AHA_BACKEND_API_CONTRACT_V1.md"), /AHA_CANONICAL_SYNC_ENABLED=false/i);
 assert.match(read("docs/AHA_BACKEND_API_CONTRACT_V1.md"), /POST \/v1\/sync\/push/i);
