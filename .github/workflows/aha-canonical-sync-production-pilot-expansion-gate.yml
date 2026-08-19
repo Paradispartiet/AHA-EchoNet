@@ -178,7 +178,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          job_name="aha-pilot-expand-gate-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          job_name="aha-exp-gate-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          if (( ${#job_name} > 32 )); then
+            echo "Generated Container Apps Job name exceeds the Azure 32-character limit." >&2
+            exit 1
+          fi
           az deployment group create \
             --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
             --name "aha-pilot-expand-gate-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" \
