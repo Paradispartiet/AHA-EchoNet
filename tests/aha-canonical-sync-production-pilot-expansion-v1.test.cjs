@@ -16,6 +16,15 @@ for (const path of Object.values(paths)) assert.equal(fs.existsSync(path), true,
 const source = Object.fromEntries(Object.entries(paths).map(([key, path]) => [key, fs.readFileSync(path, "utf8")]));
 const policy = JSON.parse(source.policy);
 
+function shellFunctionBlock(shellSource, functionName, nextFunctionName) {
+  const startMarker = `${functionName}() {`;
+  const start = shellSource.indexOf(startMarker);
+  assert.ok(start >= 0, `${functionName} shell function is required`);
+  const end = nextFunctionName ? shellSource.indexOf(`${nextFunctionName}() {`, start + startMarker.length) : shellSource.length;
+  assert.ok(end > start, `${functionName} shell function boundary is required`);
+  return shellSource.slice(start, end);
+}
+
 // API foundation accepts a bounded protected set, while the legacy one-profile
 // secret remains a valid exact fallback for the already activated pilot.
 assert.match(source.syncConfig, /allowedProfileIds:\s*readonly string\[\]/);
@@ -52,7 +61,11 @@ assert.match(source.dbRunner, /refuses more than 10 active profiles/);
 assert.match(source.dbRunner, /personal-\$\{AHA_PRODUCTION_PILOT_PROFILE_ID\}/);
 assert.match(source.dbRunner, /auth_provider='supabase'/);
 assert.match(source.dbRunner, /auth_subject=p\.id/);
-assert.doesNotMatch(source.dbRunner, /add_pilot_profile[\s\S]*alter role aha_canonical_production_runtime[\s\S]*password/);
+const addPilotProfileBlock = shellFunctionBlock(source.dbRunner, "add_pilot_profile", "deactivate_pilot");
+assert.doesNotMatch(addPilotProfileBlock, /AHA_PRODUCTION_RUNTIME_PASSWORD/);
+assert.doesNotMatch(addPilotProfileBlock, /alter role aha_canonical_production_runtime/);
+assert.doesNotMatch(addPilotProfileBlock, /password\s+/i);
+assert.doesNotMatch(addPilotProfileBlock, /grant\s+(insert|update|delete|truncate)/i);
 assert.doesNotMatch(source.dbRunner, /grant\s+(insert|update|delete|truncate)/i);
 
 // The new PostgreSQL 16 test proves private workspace isolation in both directions.
