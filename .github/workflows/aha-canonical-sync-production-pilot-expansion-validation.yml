@@ -4,8 +4,11 @@ on:
   pull_request:
     paths:
       - 'backend/api/src/sync/**'
+      - 'backend/api/src/database/**'
+      - 'backend/api/src/api/api-exception.filter.ts'
       - 'backend/api/src/health.controller.ts'
       - 'backend/api/test/canonical-sync.test.mjs'
+      - 'backend/api/test/database-authorization.test.mjs'
       - 'infra/azure/production/app.bicep'
       - 'infra/azure/production/db-init-job.bicep'
       - 'infra/azure/production/db-init/run.sh'
@@ -22,8 +25,11 @@ on:
       - main
     paths:
       - 'backend/api/src/sync/**'
+      - 'backend/api/src/database/**'
+      - 'backend/api/src/api/api-exception.filter.ts'
       - 'backend/api/src/health.controller.ts'
       - 'backend/api/test/canonical-sync.test.mjs'
+      - 'backend/api/test/database-authorization.test.mjs'
       - 'infra/azure/production/app.bicep'
       - 'infra/azure/production/db-init-job.bicep'
       - 'infra/azure/production/db-init/run.sh'
@@ -62,12 +68,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
 
-      - name: Build NestJS API and run canonical sync unit tests
+      - name: Build NestJS API and run canonical sync authorization tests
         working-directory: backend/api
         run: |
           npm ci
           npm run build
-          node --test test/canonical-sync.test.mjs
+          node --test test/canonical-sync.test.mjs test/database-authorization.test.mjs
 
       - name: Create Azure-like non-superuser production admin
         env:
