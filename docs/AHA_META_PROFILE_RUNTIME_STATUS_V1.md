@@ -74,13 +74,13 @@ Meta-profil: {}
 
 ### Reparasjon
 
-Chat-bootstrap har nå en liten read-only compatibility-delegasjon fra den gamle export-seamen til:
+Provider-laget har nå en liten read-only compatibility-delegasjon fra den gamle export-seamen til:
 
 ```text
 MetaInsightsEngine.buildUserMetaProfile(chamber, "sub_laring")
 ```
 
-Dette skriver ikke Meta-data til chamberet. Det gjenoppretter bare riktig beregning for export mens runtime-composition-seamen senere kan migreres direkte.
+Dette skriver ikke Meta-data til chamberet og gjør ikke `ahaChat.js` større. Det gjenoppretter bare riktig beregning for export mens runtime-composition-seamen senere kan migreres direkte.
 
 ## Viktig skille: tom Meta-profil vs svak Meta-profil
 
@@ -116,9 +116,9 @@ Det kan brukes som QA-referanse i utvikling, men Meta-profilens sannhetsgrunnlag
 
 ## Verifikasjon
 
-Regresjonen skal bevise:
+Verifikasjonen samlet skal bevise:
 
 1. `profile.html` laster InsightsEngine før MetaInsightsEngine og MetaInsightsEngine før `ahaProfile.js`.
-2. Chat-exportens compatibility-seam delegerer Meta-bygging til MetaInsightsEngine.
-3. Et ikke-tomt chamber for `sub_laring` gir en ikke-tom `meta_insight`.
+2. Chat-exportens compatibility-seam delegerer Meta-bygging til MetaInsightsEngine uten å gjøre `ahaChat.js` større.
+3. De eksisterende Meta-engine/profile-testene beviser at et chamber med relevant materiale gir en beregnet Meta-profil.
 4. Provider-laget inneholder ikke den fjernede AI-reply semantic fallbacken.
