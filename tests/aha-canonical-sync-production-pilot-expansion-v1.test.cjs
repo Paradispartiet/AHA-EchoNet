@@ -75,7 +75,7 @@ assert.doesNotMatch(addPilotProfileBlock, /password\s+/i);
 assert.doesNotMatch(addPilotProfileBlock, /grant\s+(insert|update|delete|truncate)/i);
 assert.doesNotMatch(source.dbRunner, /grant\s+(insert|update|delete|truncate)/i);
 
-// The new PostgreSQL 16 test proves private workspace isolation in both directions.
+// The PostgreSQL 16 validation proves private workspace isolation in both directions.
 assert.match(source.validation, /postgres:16/);
 assert.match(source.validation, /own_workspace_bootstrap=PASS/);
 assert.match(source.validation, /cross_profile_read=DENIED/);
@@ -115,16 +115,24 @@ assert.match(source.gate, /--execution "\$execution"/);
 assert.match(source.gate, /--container canonical-db-init/);
 assert.match(source.gate, /capturing execution logs before cleanup/i);
 
-// The repository policy now authorizes only bounded, explicitly dispatched
-// expansion. Merging this code still does not mutate the live Azure allowlist.
-assert.equal(policy.productionActivationEnabled, false);
+// Repository policy reflects the already-active bounded pilot while still
+// authorizing only explicitly dispatched expansion. The next addition is paused
+// until both existing profiles have real-data round-trip evidence.
+assert.equal(policy.productionActivationEnabled, true);
+assert.equal(policy.activation.enabled, true);
+assert.equal(policy.status, "active_bounded_manual_pilot");
 assert.equal(policy.pilot.mode, "bounded_manual_allowlist");
 assert.equal(policy.pilot.maxProfiles, 10);
 assert.equal(policy.pilot.profilesAddedPerActivation, 1);
+assert.equal(policy.pilot.currentVerifiedProfileCount, 2);
+assert.equal(policy.pilot.nextExpansionPaused, true);
+assert.equal(policy.pilot.nextExpansionRequiresTwoProfileRoundTripEvidence, true);
 assert.equal(policy.pilot.automaticExpansionAllowed, false);
 assert.equal(policy.activation.automaticSyncEnabled, false);
 assert.equal(policy.activation.loginTriggeredSyncEnabled, false);
 assert.equal(policy.activation.backgroundSyncEnabled, false);
+assert.equal(policy.activation.roundTrip.requiredBeforeNextExpansion, true);
+assert.equal(policy.activation.roundTrip.requiredVerifiedProfiles, 2);
 assert.equal(policy.activation.expansion.workflowImplemented, true);
 assert.equal(policy.activation.expansion.sameShaExpansionGateRequired, true);
 assert.equal(policy.activation.expansion.candidateBoundGateEvidenceRequired, true);
