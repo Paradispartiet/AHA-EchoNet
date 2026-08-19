@@ -1,0 +1,160 @@
+{
+  "schema": "aha_semantic_gold_fixture_set_v1",
+  "version": 1,
+  "purpose": "offline_semantic_precision_recall_regression_only",
+  "production_gate_authority": false,
+  "fixtures": [
+    {
+      "schema": "aha_semantic_gold_fixture_v1",
+      "id": "political_ecology_perfect_v1",
+      "source_event_id": "gold_src_001",
+      "source_text": "Karl von Appen arbeidet med politisk økologi ved NRK.\n\nPolitisk økologi undersøker hvordan makt og miljø henger sammen i samfunn.",
+      "gold": {
+        "entities": [
+          { "label": "Karl von Appen", "entity_type": "person", "aliases": [] },
+          { "label": "NRK", "entity_type": "organization", "aliases": [] }
+        ],
+        "concepts": [
+          { "label": "politisk økologi", "aliases": ["Politisk økologi"] }
+        ],
+        "source_claims": [
+          { "text": "Politisk økologi undersøker hvordan makt og miljø henger sammen i samfunn." }
+        ],
+        "relations": [
+          {
+            "relation_type": "associated_with",
+            "from_label": "Karl von Appen",
+            "to_label": "politisk økologi",
+            "epistemic_status": "source_explicit"
+          }
+        ],
+        "interpretations": [
+          {
+            "id": "interp_power_environment",
+            "required_terms": ["makt", "miljø"],
+            "forbidden_terms": [],
+            "evidence_quotes": ["Politisk økologi undersøker hvordan makt og miljø henger sammen i samfunn."]
+          }
+        ]
+      },
+      "model_shadow": {
+        "source_event_id": "gold_src_001",
+        "entities": [
+          { "source_surface": "Karl von Appen", "canonical_label": "Karl von Appen", "entity_type": "person" },
+          { "source_surface": "NRK", "canonical_label": "NRK", "entity_type": "organization" }
+        ],
+        "concepts": [
+          { "source_surface": "politisk økologi", "canonical_label": "Politisk økologi" }
+        ],
+        "propositions": [
+          {
+            "kind": "source_claim",
+            "text": "Politisk økologi undersøker hvordan makt og miljø henger sammen i samfunn.",
+            "evidence": [
+              { "quote": "Politisk økologi undersøker hvordan makt og miljø henger sammen i samfunn." }
+            ]
+          },
+          {
+            "kind": "interpretation",
+            "text": "Teksten tolker politisk økologi som et perspektiv på hvordan makt og miljø henger sammen.",
+            "evidence": [
+              { "quote": "Politisk økologi undersøker hvordan makt og miljø henger sammen i samfunn." }
+            ]
+          }
+        ],
+        "relations": [
+          {
+            "relation_type": "associated_with",
+            "from_label": "Karl von Appen",
+            "to_label": "Politisk økologi",
+            "epistemic_status": "source_explicit"
+          }
+        ]
+      },
+      "expected": {
+        "entities": { "precision": 1, "recall": 1, "f1": 1 },
+        "concepts": { "precision": 1, "recall": 1, "f1": 1 },
+        "source_claims": { "precision": 1, "recall": 1, "f1": 1 },
+        "relations": { "precision": 1, "recall": 1, "f1": 1 },
+        "interpretations": { "precision": 1, "recall": 1, "f1": 1 },
+        "macro_f1": 1
+      }
+    },
+    {
+      "schema": "aha_semantic_gold_fixture_v1",
+      "id": "public_sphere_imperfect_v1",
+      "source_event_id": "gold_src_002",
+      "source_text": "Hannah Arendt skrev om offentlighet og handling.\n\nOffentlighet gjør politisk handling synlig for andre.",
+      "gold": {
+        "entities": [
+          { "label": "Hannah Arendt", "entity_type": "person", "aliases": [] }
+        ],
+        "concepts": [
+          { "label": "offentlighet", "aliases": ["Offentlighet"] },
+          { "label": "handling", "aliases": ["politisk handling"] }
+        ],
+        "source_claims": [
+          { "text": "Offentlighet gjør politisk handling synlig for andre." }
+        ],
+        "relations": [
+          {
+            "relation_type": "associated_with",
+            "from_label": "offentlighet",
+            "to_label": "handling",
+            "epistemic_status": "source_explicit"
+          }
+        ],
+        "interpretations": [
+          {
+            "id": "interp_public_visibility",
+            "required_terms": ["offentlighet", "politisk synlighet"],
+            "forbidden_terms": [],
+            "evidence_quotes": ["Offentlighet gjør politisk handling synlig for andre."]
+          }
+        ]
+      },
+      "model_shadow": {
+        "source_event_id": "gold_src_002",
+        "entities": [
+          { "source_surface": "Hannah Arendt", "canonical_label": "Hannah Arendt", "entity_type": "person" },
+          { "source_surface": "Oslo", "canonical_label": "Oslo", "entity_type": "place" }
+        ],
+        "concepts": [
+          { "source_surface": "offentlighet", "canonical_label": "Offentlighet" }
+        ],
+        "propositions": [
+          {
+            "kind": "source_claim",
+            "text": "Offentlighet gjør politisk handling synlig for andre.",
+            "evidence": [
+              { "quote": "Offentlighet gjør politisk handling synlig for andre." }
+            ]
+          },
+          {
+            "kind": "interpretation",
+            "text": "Offentlighet er viktig.",
+            "evidence": [
+              { "quote": "Offentlighet gjør politisk handling synlig for andre." }
+            ]
+          }
+        ],
+        "relations": [
+          {
+            "relation_type": "associated_with",
+            "from_label": "Hannah Arendt",
+            "to_label": "offentlighet",
+            "epistemic_status": "source_explicit"
+          }
+        ]
+      },
+      "expected": {
+        "entities": { "precision": 0.5, "recall": 1, "f1": 0.666667 },
+        "concepts": { "precision": 1, "recall": 0.5, "f1": 0.666667 },
+        "source_claims": { "precision": 1, "recall": 1, "f1": 1 },
+        "relations": { "precision": 0, "recall": 0, "f1": 0 },
+        "interpretations": { "precision": 0, "recall": 0, "f1": 0 },
+        "macro_f1": 0.466667
+      }
+    }
+  ]
+}
