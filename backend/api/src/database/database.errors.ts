@@ -2,7 +2,8 @@ export type DatabaseErrorCode =
   | "DATABASE_NOT_CONFIGURED"
   | "DATABASE_UNAVAILABLE"
   | "DATABASE_UNSAFE_RUNTIME_ROLE"
-  | "CANONICAL_SCHEMA_NOT_READY";
+  | "CANONICAL_SCHEMA_NOT_READY"
+  | "DATABASE_FORBIDDEN";
 
 export class CanonicalDatabaseError extends Error {
   readonly code: DatabaseErrorCode;
