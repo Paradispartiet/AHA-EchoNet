@@ -8,6 +8,12 @@ import {
   requireValidSynthesisPayload,
   buildSynthesisResponseEnvelope
 } from "./ahaInsightSynthesisContractV2.js";
+import {
+  MAX_VALIDATION_ATTEMPTS,
+  applyStabilityRequestPolicy,
+  validateStabilitySynthesis,
+  addRetryInstruction
+} from "./ahaInsightSynthesisStabilityV2.js";
 
 function synthesisFailurePolicy() {
   return {
@@ -74,12 +80,12 @@ function createInsightSynthesisHandlerV2({ openai, model, hasOpenAIKey } = {}) {
     const sourceText = body.text;
     let request;
     try {
-      request = buildSynthesisResponsesRequest({
+      request = applyStabilityRequestPolicy(buildSynthesisResponsesRequest({
         model,
         sourceText,
         semanticContext: body.semantic_context,
         context: body.context || {}
-      });
+      }));
     } catch (error) {
       return sendJson(res, 400, synthesisErrorBody("invalid_insight_synthesis_request", {
         reason: String(error?.message || "invalid_request").slice(0, 180),
@@ -87,25 +93,46 @@ function createInsightSynthesisHandlerV2({ openai, model, hasOpenAIKey } = {}) {
       }));
     }
 
-    let response;
-    try {
-      response = await openai.responses.create(request);
-    } catch (error) {
-      return sendJson(res, 502, synthesisErrorBody("insight_synthesis_openai_error", {
-        status: error?.status || error?.code || null
-      }));
+    let response = null;
+    let synthesis = null;
+    let lastValidationErrors = [];
+
+    for (let attempt = 1; attempt <= MAX_VALIDATION_ATTEMPTS; attempt += 1) {
+      try {
+        response = await openai.responses.create(request);
+      } catch (error) {
+        return sendJson(res, 502, synthesisErrorBody("insight_synthesis_openai_error", {
+          status: error?.status || error?.code || null
+        }));
+      }
+
+      const rawPayload = response?.output_parsed && typeof response.output_parsed === "object"
+        ? response.output_parsed
+        : response?.output_text;
+
+      try {
+        synthesis = requireValidSynthesisPayload(rawPayload, sourceText);
+        lastValidationErrors = [];
+      } catch (error) {
+        synthesis = null;
+        lastValidationErrors = safeValidationErrors(error);
+      }
+
+      if (synthesis) {
+        const stability = validateStabilitySynthesis(synthesis, sourceText);
+        if (stability.ok) break;
+        lastValidationErrors = stability.errors.map((item) => String(item).slice(0, 180)).slice(0, 32);
+        synthesis = null;
+      }
+
+      if (attempt < MAX_VALIDATION_ATTEMPTS) {
+        request = addRetryInstruction(request, lastValidationErrors);
+      }
     }
 
-    const rawPayload = response?.output_parsed && typeof response.output_parsed === "object"
-      ? response.output_parsed
-      : response?.output_text;
-
-    let synthesis;
-    try {
-      synthesis = requireValidSynthesisPayload(rawPayload, sourceText);
-    } catch (error) {
+    if (!synthesis) {
       return sendJson(res, 502, synthesisErrorBody("insight_synthesis_validation_failed", {
-        validation_errors: safeValidationErrors(error)
+        validation_errors: lastValidationErrors
       }));
     }
 
