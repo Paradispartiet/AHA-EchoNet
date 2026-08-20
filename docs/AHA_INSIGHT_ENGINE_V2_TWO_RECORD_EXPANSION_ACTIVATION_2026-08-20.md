@@ -2,17 +2,34 @@
 
 Date: 2026-08-20
 
-## Purpose
+## Current status
 
-The expansion decision gate is now 12/12 green for one exact scope:
+The exact two-record local V2 activation is now **production-verified**.
+
+Scope:
 
 `bounded_local_chamber_two_record_candidate_v1`
 
-This document defines the separate activation implementation required by that decision. It does not open normal Chat persistence or any broad V2 write path.
+Current production write boundary:
 
-## Activation scope
+```text
+max lifetime local Chamber records = 2
+activation mode = manual sequential
+review approval = required per record
+canonical approval = required per record
+rollback approval = required per record
+source binding = required per record
+rollback replenishes budget = false
+normal Chat persistence = CLOSED
+```
 
-The production activation wrapper is:
+Permanent post-activation proof:
+
+`ops/evidence/aha-v2-two-record-expansion-activation-live-proof-v1.json`
+
+## Activation implementation
+
+Production wrapper:
 
 `js/ahaV2ControlledWriteExpansionActivation.js`
 
@@ -24,25 +41,25 @@ Operator adapter:
 
 `js/ahaInsightExpansionOperatorV2.js`
 
-The wrapper uses the existing production-proven `AHAInsightActivationV2` controller. It does not implement a new persistence engine.
+The wrapper uses the already production-proven `AHAInsightActivationV2` controller. It does not implement a second persistence engine.
 
 ## Authorization chain
 
-Before the wrapper can expose any manual action, it requires:
+Before the wrapper exposes any manual action, it requires:
 
 1. exact operator intent `bounded_local_chamber_two_record_candidate_v1`;
-2. permanent current expansion evidence evaluates to `BOUNDED_EXPANSION_PILOT_ELIGIBLE` with 12/12 checks green;
+2. permanent expansion evidence evaluates to `BOUNDED_EXPANSION_PILOT_ELIGIBLE` with 12/12 checks green;
 3. the permanent one-record production proof remains valid;
-4. the exact two-record scope contract validates and still has the locked fingerprint;
-5. the permanent two-record expansion live proof remains `production_evidence_verified`;
-6. that live proof still proves two canaries, exact rollback, exact compensation, state-drift fail-closed, unchanged browser storage, zero unexpected write requests and zero wider authority;
-7. the candidate-only scope remains exactly two records, manual sequential, batch=false and automatic=false.
+4. the exact two-record scope contract validates and retains its immutable fingerprint;
+5. the permanent two-record expansion decision proof remains valid;
+6. the selected scope remains exactly two records, manual sequential, `batch=false` and `automatic=false`;
+7. all broader write authorities remain false.
 
 Any mismatch fails closed.
 
 ## Lifetime budget
 
-The two-record budget is **total lifetime canonical creations in the existing controlled review history**.
+The two-record budget is the **total lifetime canonical creation count in the existing controlled review history**.
 
 ```text
 historical canonical records = 0  → 2 slots available
@@ -53,7 +70,7 @@ historical canonical records > 2  → invalid state, fail closed
 
 A record continues to consume a slot after exact rollback because its review retains `canonical_insight_id`.
 
-This means a device/profile that already consumed the old one-record pilot slot can create at most one additional record under the two-record expansion.
+A device/profile that already consumed the old one-record pilot slot can therefore create at most one additional record under the two-record scope.
 
 Rollback never replenishes the lifetime budget.
 
@@ -61,9 +78,9 @@ Rollback never replenishes the lifetime budget.
 
 At most one unpromoted `reviewed` item may exist at a time.
 
-A promoted first record is a completed canonical step, so a second review may be started while the first record remains active. A second in-progress review cannot run in parallel.
+A promoted first record is a completed canonical step, so a second review can begin while the first record remains active. Two review/canonical sequences cannot run in parallel.
 
-Each record requires its own three approval phases:
+Each record requires its own approval sequence:
 
 ```text
 REVIEW challenge
@@ -71,11 +88,11 @@ CANONICAL challenge
 optional ROLLBACK challenge
 ```
 
-The underlying controller keeps each challenge single-use and expiry-bound.
+The underlying controller keeps each challenge single-use, expiry-bound and state-bound.
 
 ## Source and duplicate binding
 
-`AHAInsightActivationV2` already binds each review to:
+`AHAInsightActivationV2` binds each review to:
 
 - source event ID;
 - source text SHA-256;
@@ -86,18 +103,19 @@ The underlying controller keeps each challenge single-use and expiry-bound.
 
 It re-checks the current source hash before committing review/canonical state.
 
-The expansion wrapper adds one more rule: a candidate signature that has already produced a canonical record cannot consume the second slot. The duplicate is rejected before the review write.
+The expansion wrapper additionally prevents a candidate signature that already produced a canonical record from consuming the second slot.
 
 ## Exact rollback
 
-Rollback remains the existing `AHAInsightActivationV2` exact signature-bound rollback.
+Rollback remains the existing `AHAInsightActivationV2` signature-bound exact rollback.
 
-The expansion wrapper additionally verifies after rollback that:
+The expansion wrapper verifies after rollback that:
 
-- lifetime created-record count did not decrease;
-- the target review moved to `rolled_back`;
+- lifetime created-record count does not decrease;
+- the target review moves to `rolled_back`;
 - the target is no longer promoted;
-- other promoted reviews remain promoted and untouched.
+- other promoted reviews remain untouched;
+- unrelated Chamber records remain untouched.
 
 Two active records can therefore be rolled back independently, including in reverse order.
 
@@ -107,13 +125,125 @@ Two active records can therefore be rolled back independently, including in reve
 
 `src="about:blank"`
 
-The Chat iframe is navigated only after the exact two-record operator intent is present and the load handler has been installed.
+The Chat iframe navigates only after the exact two-record operator intent is present and the load handler is installed.
 
-The operator loads the permanent expansion evidence, one-record proof, two-record live proof and exact scope contract before creating the wrapper.
+The operator loads the permanent expansion evidence, one-record proof, two-record decision proof and exact scope contract before constructing the wrapper. The raw `AHAInsightActivationV2` controller is not exported as operator authority.
 
-The raw `AHAInsightActivationV2` controller is never exported by the operator page.
+## Production proof — PR #863
 
-## Still closed
+Temporary PR #863 was isolated to two TEMP proof files, had zero product diff and was closed without merge after a successful run.
+
+Proof identity:
+
+```text
+production main:   4b74504a25a4b41585c3c62280a7ec275356d4b6
+TEMP PR:           #863 — closed without merge
+TEMP branch head:  f0ac1dc915b2246bff5284f491e1b3fd9e910b2b
+workflow run:      32416552359
+workflow job:      96578895412
+artifact id:       9424127989
+artifact digest:   sha256:bd9c046d754d3266504abfff026ed575bf03beccc804cbf129448fbfe400f0a0
+product diff:      0 files
+Pages status:      built, exact main on attempt 1
+```
+
+Twelve selected activation/operator/evidence/safety assets matched production main byte-for-byte.
+
+### Operator proof
+
+Without exact intent:
+
+```text
+iframe:                    about:blank
+Chat requests:             0
+all controls disabled:     true
+unexpected write requests: 0
+page errors:               0
+console errors:            0
+```
+
+With exact intent:
+
+```text
+authorized:                true
+gate decision:             BOUNDED_EXPANSION_PILOT_ELIGIBLE
+iframe ready:              true
+unexpected write requests: 0
+page errors:               0
+console errors:            0
+```
+
+### Live source-bound activation proof
+
+Two distinct permanent reviewed fixtures produced review-eligible live synthesis candidates:
+
+```text
+record 1 source:  standardization-flexibility-v1.json
+record 1 quality: 0.832889
+record 2 source:  constraints-creativity-v1.json
+record 2 quality: 0.85084
+model:            gpt-4.1-mini-2025-04-14
+```
+
+For both records, review approval left Chamber unchanged and source binding was verified before canonical creation.
+
+Result:
+
+```text
+created record count after record 1: 1
+created record count after record 2: 2
+remaining budget after record 2:     0
+third write:                          expansion_record_budget_exhausted
+repository save/load calls:          0 / 0
+sync push:                            blocked before repository access
+sync pull:                            blocked before repository access
+```
+
+Rollback proof:
+
+```text
+record 2 rollback:                   rolled_back
+record 1 preserved after rollback 2: true
+record 1 rollback:                   rolled_back
+final Chamber:                       sentinel only
+unrelated sentinel preserved:        true
+lifetime count after rollbacks:      2
+fresh-wrapper third write:           expansion_record_budget_exhausted
+audit events:                        18
+```
+
+No user production data was modified; the activation write sequence used an in-memory Chamber fixture only. The artifact contains no raw source text, evidence quotes, candidate signatures or canonical signatures.
+
+## Permanent regression
+
+`tests/aha-v2-two-record-expansion-activation-live-proof.test.cjs`
+
+The regression locks:
+
+- #863 run/job/artifact identity;
+- exact production runtime commit;
+- all twelve deployed asset hashes;
+- operator no-intent and exact-intent behavior;
+- the two distinct live sources and quality floor;
+- source-bound review/canonical behavior;
+- lifetime max=2 and blocked third write;
+- repository calls 0/0 and sync blocking;
+- independent exact rollbacks and sentinel preservation;
+- post-rollback lifetime exhaustion after a fresh wrapper;
+- redaction boundaries;
+- absence of the #863 TEMP files from the permanent branch.
+
+## What is open
+
+Only this bounded local manual scope is open:
+
+```text
+manual review-queue write            OPEN inside controlled V2 activation
+manual local Chamber write           OPEN, max 2 lifetime canonical creations
+exact rollback                       OPEN for those controlled records
+```
+
+## What remains closed
 
 ```text
 normal Chat automatic V2 persistence       CLOSED
@@ -128,44 +258,8 @@ Meta writes                                CLOSED
 remote V2 writes                           CLOSED
 ```
 
-## Required pre-merge regressions
+No production proof in this chain authorizes widening beyond two local lifetime records.
 
-`tests/aha-v2-controlled-write-expansion-activation.test.cjs` proves:
+Authoritative status:
 
-- authorization only for the exact green scope;
-- record 1 and record 2 can be created sequentially;
-- record 3 is blocked;
-- rollback of record 2 does not alter record 1;
-- rollback does not reopen budget;
-- a fresh wrapper after both rollbacks still blocks record 3;
-- a prior one-record canonical history leaves only one slot;
-- a duplicate candidate signature is blocked before review write;
-- invalid scope/evidence/live proof fails closed;
-- history above two records fails closed;
-- all broader authority flags remain false;
-- wrapper contains no direct storage/network/Supabase persistence path.
-
-`tests/aha-insight-expansion-operator-v2.test.cjs` locks the dedicated operator boot and transport boundary.
-
-## Required production proof after merge
-
-Repo CI is not production proof.
-
-After merge, a temporary non-merged GitHub Pages/browser proof must establish:
-
-1. Pages commit and selected activation/operator/safety assets exactly match main;
-2. page without exact operator intent remains `about:blank` and does not request Chat;
-3. exact operator intent reaches authorized two-record state;
-4. first source/candidate passes separate REVIEW and CANONICAL approvals and creates exactly one local record;
-5. second distinct source/candidate passes a separate REVIEW and CANONICAL sequence and creates exactly the second local record;
-6. a third review/write is blocked with lifetime budget exhausted;
-7. repository save/load remain 0/0 while local-only records exist;
-8. exact rollback of record 2 preserves record 1 and unrelated sentinel state;
-9. exact rollback of record 1 removes only record 1;
-10. fresh wrapper after both rollbacks still blocks a third record because lifetime count remains two;
-11. no backend/Meta/remote/backfill/projection/normal-Chat write authority opens;
-12. proof artifact is redacted and the TEMP PR closes without merge.
-
-Until that post-merge proof exists:
-
-> **Two-record activation code: bounded and pending production proof. Production-verified write boundary remains the one-record pilot. Broad/normal V2 persistence remains CLOSED.**
+> **Two-record local controlled V2 activation: production-verified. Lifetime max=2. Third write fails closed. Exact rollback proven. Broad/normal V2 persistence remains CLOSED.**
