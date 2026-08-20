@@ -110,18 +110,20 @@
     "depends_on_invalidated_two_record_proof": true,
     "historical_gate_evidence_bytes_are_current": false,
     "historical_two_record_proof_bytes_are_current": false,
-    "cross_instance_rollback_serialization_missing": true,
+    "cross_instance_rollback_serialization_missing": false,
+    "cross_instance_rollback_serialization_hardened_after_observation": true,
+    "cross_instance_rollback_regression_path": "tests/aha-v2-controlled-write-expansion-cross-tab-rollback.test.cjs",
     "deployed_execution_byte_binding_missing": true,
     "unrelated_sentinel_full_content_check_missing": true,
     "fresh_corrected_gate_proof_required": true,
-    "activation_runtime_hardening_required_before_reauthorization": true,
+    "activation_runtime_hardening_required_before_reauthorization": false,
     "fresh_post_gate_activation_proof_required": true,
     "review_threads": [
       "PRRT_kwDOQgS1AM6a9LzR",
       "PRRT_kwDOQgS1AM6a9Pio",
       "PRRT_kwDOQgS1AM6a9Pis"
     ],
-    "reason": "PR #863 authorized against the #860-derived 12/12 gate state that post-merge review later invalidated. Additional review found that concurrent cross-tab rollbacks need cross-instance serialization, that the activation proof did not hash-bind the exact controller bytes refetched for execution after the parity step, and that sentinel preservation was asserted by ID rather than full record contents. PR #864 permanentized the downstream observation before these invalidations were applied."
+    "reason": "PR #863 authorized against the #860-derived 12/12 gate state that post-merge review later invalidated. Cross-instance rollback serialization has since been hardened with an exclusive same-origin Web Lock and an adversarial two-wrapper stale-snapshot regression. The historical activation proof remains invalid because it did not hash-bind the exact controller bytes refetched for execution after the parity step and sentinel preservation was asserted by ID rather than full record contents. A corrected upstream gate proof and a fresh post-gate activation proof remain required."
   },
   "policy": {
     "normal_chat_persistence_open": false,

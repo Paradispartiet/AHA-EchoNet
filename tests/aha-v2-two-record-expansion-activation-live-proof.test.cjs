@@ -75,10 +75,15 @@ assert.equal(proof.review_invalidation.upstream_expansion_gate_invalidated, true
 assert.equal(proof.review_invalidation.depends_on_invalidated_two_record_proof, true);
 assert.equal(proof.review_invalidation.historical_gate_evidence_bytes_are_current, false);
 assert.equal(proof.review_invalidation.historical_two_record_proof_bytes_are_current, false);
-assert.equal(proof.review_invalidation.cross_instance_rollback_serialization_missing, true);
+assert.equal(proof.review_invalidation.cross_instance_rollback_serialization_missing, false);
+assert.equal(proof.review_invalidation.cross_instance_rollback_serialization_hardened_after_observation, true);
+assert.equal(
+  proof.review_invalidation.cross_instance_rollback_regression_path,
+  "tests/aha-v2-controlled-write-expansion-cross-tab-rollback.test.cjs"
+);
 assert.equal(proof.review_invalidation.deployed_execution_byte_binding_missing, true);
 assert.equal(proof.review_invalidation.unrelated_sentinel_full_content_check_missing, true);
-assert.equal(proof.review_invalidation.activation_runtime_hardening_required_before_reauthorization, true);
+assert.equal(proof.review_invalidation.activation_runtime_hardening_required_before_reauthorization, false);
 assert.equal(proof.review_invalidation.fresh_corrected_gate_proof_required, true);
 assert.equal(proof.review_invalidation.fresh_post_gate_activation_proof_required, true);
 assert.deepEqual(proof.review_invalidation.review_threads, [
@@ -105,4 +110,4 @@ assert.equal(proof.redaction.in_memory_chamber_fixture_only, true);
 assert.equal(fs.existsSync(".github/workflows/TEMP-aha-v2-two-record-expansion-activation-live-proof.yml"), false);
 assert.equal(fs.existsSync("scripts/TEMP-aha-v2-two-record-expansion-activation-live-proof.cjs"), false);
 
-console.log("aha-v2-two-record-expansion-activation-live-proof.test.cjs: historical #863 proof retained but current authority invalidated");
+console.log("aha-v2-two-record-expansion-activation-live-proof.test.cjs: historical proof remains invalid; cross-tab rollback hardening is recorded");
