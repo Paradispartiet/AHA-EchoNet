@@ -20,66 +20,49 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Capture remaining production semantic model cases
+      - name: Capture replacement production semantic model case
         shell: bash
         run: |
           set -u -o pipefail
           endpoint='https://aha-agent-7a3y.onrender.com/api/aha-agent/semantic-document'
           mkdir -p semantic-live-capture
+          id='standardization_flexibility_live_v1'
+          text='Et prosjekt brukte én felles mal for alle rapporter. Det gjorde sammenligning enklere, men tvang også svært ulike saker inn i samme struktur. Da malen fikk noen faste felt og noen valgfrie felt, beholdt rapportene en felles kjerne samtidig som de kunne tilpasses saken.'
+          payload="$(jq -n --arg text "$text" --arg source_event_id "$id" '{text:$text,format:"aha_semantic_model_output_v1",context:{source_event_id:$source_event_id,source_type:"text",language:"no"}}')"
 
-          capture() {
-            local id="$1"
-            local text="$2"
-            local payload
-            local attempt
-            payload="$(jq -n \
-              --arg text "$text" \
-              --arg source_event_id "$id" \
-              '{text:$text,format:"aha_semantic_model_output_v1",context:{source_event_id:$source_event_id,source_type:"text",language:"no"}}')"
+          for attempt in 1 2 3 4 5; do
+            raw="semantic-live-capture/${id}.attempt-${attempt}.raw.json"
+            out="semantic-live-capture/${id}.json"
+            http_code="$(curl --silent --show-error --max-time 90 \
+              -H 'Content-Type: application/json' \
+              -X POST "$endpoint" \
+              --data "$payload" \
+              --output "$raw" \
+              --write-out '%{http_code}' || true)"
+            echo "${id} attempt=${attempt} http=${http_code}"
+            if [ "$http_code" = "200" ] && jq -e '.ok == true and .schema == "aha_semantic_model_contract_v1" and .analysis.schema == "aha_semantic_model_output_v1"' "$raw" >/dev/null 2>&1; then
+              jq -n \
+                --arg id "$id" \
+                --arg text "$text" \
+                --arg captured_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+                --arg attempt "$attempt" \
+                --slurpfile response "$raw" \
+                '{id:$id,source_text:$text,captured_at:$captured_at,successful_attempt:($attempt|tonumber),response:$response[0]}' > "$out"
+              echo "===== ${id} SUCCESS ====="
+              jq -c . "$out"
+              find semantic-live-capture -name "${id}.attempt-*.raw.json" -delete
+              exit 0
+            fi
+            if [ -s "$raw" ]; then
+              jq -c '{ok,error,validation_errors,policy}' "$raw" 2>/dev/null || cat "$raw"
+            fi
+            sleep 2
+          done
 
-            for attempt in 1 2 3 4 5; do
-              local raw="semantic-live-capture/${id}.attempt-${attempt}.raw.json"
-              local out="semantic-live-capture/${id}.json"
-              local http_code
-              http_code="$(curl --silent --show-error --max-time 90 \
-                -H 'Content-Type: application/json' \
-                -X POST "$endpoint" \
-                --data "$payload" \
-                --output "$raw" \
-                --write-out '%{http_code}' || true)"
+          echo "===== ${id} FAILED ====="
+          exit 0
 
-              echo "${id} attempt=${attempt} http=${http_code}"
-              if [ "$http_code" = "200" ] && jq -e '.ok == true and .schema == "aha_semantic_model_contract_v1" and .analysis.schema == "aha_semantic_model_output_v1"' "$raw" >/dev/null 2>&1; then
-                jq -n \
-                  --arg id "$id" \
-                  --arg text "$text" \
-                  --arg captured_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-                  --arg attempt "$attempt" \
-                  --slurpfile response "$raw" \
-                  '{id:$id,source_text:$text,captured_at:$captured_at,successful_attempt:($attempt|tonumber),response:$response[0]}' > "$out"
-                echo "===== ${id} SUCCESS ====="
-                jq -c . "$out"
-                find semantic-live-capture -name "${id}.attempt-*.raw.json" -delete
-                return 0
-              fi
-
-              if [ -s "$raw" ]; then
-                jq -c '{ok,error,validation_errors,policy}' "$raw" 2>/dev/null || cat "$raw"
-              fi
-              sleep 2
-            done
-
-            echo "===== ${id} FAILED ====="
-            return 0
-          }
-
-          capture 'delegation_bottleneck_live_v1' 'Et lite produktteam tok først alle viktige beslutninger i fellesskap. Det ga høy konsistens, men lanseringer stoppet når nøkkelpersoner var borte. Etter at beslutningsmyndighet ble delegert innen tydelige rammer, gikk lokale valg raskere, mens uenighet oftere samlet seg i grensene mellom ansvarsområdene.'
-
-          capture 'modularity_interfaces_live_v1' 'Da to utviklingsteam stadig endret den samme monolittiske kodebasen, ble små leveranser ofte forsinket av koordinering. Etter at systemet ble delt i moduler med tydelige grensesnitt, kunne flere lokale endringer gjøres uavhengig. Samtidig oppstod en større andel av feilene i antakelsene teamene gjorde om grensesnittene mellom modulene.'
-
-          capture 'museum_attention_live_v1' 'I en museumsutstilling ga lange forklarende tekster besøkende flere fakta om gjenstandene, men observasjonene viste også at de brukte mindre tid på å se på selve objektene. Kortere tekster med ett åpent spørsmål ga færre detaljer på forhånd, men mer tid rettet mot gjenstanden.'
-
-      - name: Upload production captures
+      - name: Upload production capture
         if: always()
         uses: actions/upload-artifact@v4
         with:
