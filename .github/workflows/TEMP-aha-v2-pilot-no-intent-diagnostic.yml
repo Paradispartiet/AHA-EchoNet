@@ -1,0 +1,68 @@
+name: TEMP AHA V2 pilot no-intent diagnostic
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    if: github.head_ref == 'probe/v2-controlled-write-pilot-live-proof-v2'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Diagnose deployed no-intent operator boot
+        run: |
+          node <<'NODE'
+          const { chromium } = require('playwright');
+          (async () => {
+            const browser = await chromium.launch({headless:true});
+            const page = await browser.newPage();
+            const requests = [];
+            const responses = [];
+            const errors = [];
+            const consoleErrors = [];
+            page.on('request', r => requests.push({method:r.method(), url:r.url()}));
+            page.on('response', r => { if (/ahaInsightActivationOperatorV2|insight-activation-v2|chat\.html/.test(r.url())) responses.push({status:r.status(), url:r.url()}); });
+            page.on('pageerror', e => errors.push(String(e?.stack || e?.message || e)));
+            page.on('console', m => { if (m.type()==='error') consoleErrors.push(m.text()); });
+            const url = `https://paradispartiet.github.io/AHA-EchoNet/insight-activation-v2.html?proof_no_intent_diag=${Date.now()}`;
+            const response = await page.goto(url,{waitUntil:'domcontentloaded',timeout:45000});
+            await page.waitForTimeout(4000);
+            const state = await page.evaluate(() => ({
+              href: location.href,
+              readyState: document.readyState,
+              title: document.title,
+              status: document.querySelector('#page-status')?.textContent || null,
+              gateStatus: document.querySelector('#gate-status')?.textContent || null,
+              iframeAttr: document.querySelector('#chat-frame')?.getAttribute('src') || null,
+              iframeResolved: document.querySelector('#chat-frame')?.src || null,
+              buttons: [...document.querySelectorAll('button')].map(b => ({id:b.id,disabled:b.disabled})),
+              scripts: [...document.scripts].map(s => ({src:s.src,readyState:s.readyState || null}))
+            }));
+            const out = {
+              topStatus: response?.status() || null,
+              state,
+              operatorResponses: responses,
+              chatRequests: requests.filter(x => /\/chat\.html(?:[?#]|$)/.test(x.url)),
+              nonGetRequests: requests.filter(x => !['GET','HEAD'].includes(x.method)),
+              pageErrors: errors,
+              consoleErrors
+            };
+            console.log(JSON.stringify(out,null,2));
+            await browser.close();
+            if (out.nonGetRequests.length) process.exitCode = 2;
+          })().catch(e => { console.error(e); process.exitCode=1; });
+          NODE
