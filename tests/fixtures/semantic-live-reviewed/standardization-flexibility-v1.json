@@ -1,0 +1,70 @@
+{
+  "schema":"aha_semantic_gold_fixture_v1",
+  "id":"standardization_flexibility_live_v1",
+  "source_event_id":"standardization_flexibility_live_v1",
+  "source_text":"Et prosjekt brukte én felles mal for alle rapporter. Det gjorde sammenligning enklere, men tvang også svært ulike saker inn i samme struktur. Da malen fikk noen faste felt og noen valgfrie felt, beholdt rapportene en felles kjerne samtidig som de kunne tilpasses saken.",
+  "provenance":{"kind":"live_production_capture","captured_at":"2026-08-20T02:15:40Z","model":"gpt-4.1-mini-2025-04-14","response_id":"resp_00429698cf169f9e006a86634269e881a2b8fd65fd9713447c","workflow_run_id":32323986811,"workflow_job_id":96291425436,"endpoint_path":"/api/aha-agent/semantic-document","successful_attempt":1},
+  "gold":{
+    "entities":[
+      {"label":"prosjekt","entity_type":"other","aliases":["Et prosjekt"]},
+      {"label":"mal","entity_type":"other","aliases":[]},
+      {"label":"rapporter","entity_type":"other","aliases":[]}
+    ],
+    "concepts":[
+      {"label":"standardisering","aliases":["én felles mal for alle rapporter","felles mal"]},
+      {"label":"sammenlignbarhet","aliases":["sammenligning enklere"]},
+      {"label":"strukturell tvang","aliases":["tvang også svært ulike saker inn i samme struktur","samme struktur"]},
+      {"label":"faste felt","aliases":[]},
+      {"label":"valgfrie felt","aliases":[]},
+      {"label":"felles kjerne","aliases":[]},
+      {"label":"tilpasning","aliases":["tilpasses saken"]}
+    ],
+    "source_claims":[
+      {"text":"Et prosjekt brukte én felles mal for alle rapporter."},
+      {"text":"Det gjorde sammenligning enklere, men tvang også svært ulike saker inn i samme struktur."},
+      {"text":"Da malen fikk noen faste felt og noen valgfrie felt, beholdt rapportene en felles kjerne samtidig som de kunne tilpasses saken."}
+    ],
+    "relations":[
+      {"relation_type":"causes","from_label":"standardisering","to_label":"sammenlignbarhet","epistemic_status":"source_explicit"},
+      {"relation_type":"causes","from_label":"standardisering","to_label":"strukturell tvang","epistemic_status":"source_explicit"},
+      {"relation_type":"associated_with","from_label":"faste felt","to_label":"felles kjerne","epistemic_status":"source_explicit"},
+      {"relation_type":"associated_with","from_label":"valgfrie felt","to_label":"tilpasning","epistemic_status":"source_explicit"}
+    ],
+    "interpretations":[{"id":"partial_standardization_balances_consistency_flexibility","required_terms":["standardisering","fleksibilitet"],"forbidden_terms":[],"evidence_quotes":["Da malen fikk noen faste felt og noen valgfrie felt, beholdt rapportene en felles kjerne samtidig som de kunne tilpasses saken."]}]
+  },
+  "model_shadow":{
+    "source_event_id":"standardization_flexibility_live_v1",
+    "entities":[
+      {"source_surface":"prosjekt","canonical_label":"prosjekt","entity_type":"other"},
+      {"source_surface":"mal","canonical_label":"mal","entity_type":"other"},
+      {"source_surface":"rapporter","canonical_label":"rapporter","entity_type":"other"}
+    ],
+    "concepts":[
+      {"source_surface":"felles kjerne","canonical_label":"felles kjerne"},
+      {"source_surface":"faste felt","canonical_label":"faste felt"},
+      {"source_surface":"valgfrie felt","canonical_label":"valgfrie felt"},
+      {"source_surface":"sammenligning enklere","canonical_label":"sammenligning enklere"},
+      {"source_surface":"tilpasses saken","canonical_label":"tilpasses saken"}
+    ],
+    "propositions":[
+      {"kind":"source_claim","text":"Et prosjekt brukte én felles mal for alle rapporter."},
+      {"kind":"source_claim","text":"Det gjorde sammenligning enklere, men tvang også svært ulike saker inn i samme struktur."},
+      {"kind":"source_claim","text":"Da malen fikk noen faste felt og noen valgfrie felt, beholdt rapportene en felles kjerne samtidig som de kunne tilpasses saken."},
+      {"kind":"interpretation","text":"Bruken av en felles mal gjorde sammenligning enklere, men skapte utfordringer ved å tvinge ulike saker inn i samme struktur.","evidence":[{"quote":"Det gjorde sammenligning enklere, men tvang også svært ulike saker inn i samme struktur."}]},
+      {"kind":"interpretation","text":"Innføringen av faste og valgfrie felt i malen skapte en balanse mellom standardisering og fleksibilitet.","evidence":[{"quote":"Da malen fikk noen faste felt og noen valgfrie felt, beholdt rapportene en felles kjerne samtidig som de kunne tilpasses saken."}]}
+    ],
+    "relations":[
+      {"relation_type":"causes","from_label":"én felles mal for alle rapporter","to_label":"sammenligning enklere","epistemic_status":"source_explicit"},
+      {"relation_type":"causes","from_label":"én felles mal for alle rapporter","to_label":"tvang også svært ulike saker inn i samme struktur","epistemic_status":"source_explicit"},
+      {"relation_type":"supports","from_label":"faste felt og noen valgfrie felt","to_label":"beholdt rapportene en felles kjerne samtidig som de kunne tilpasses saken","epistemic_status":"source_explicit"}
+    ]
+  },
+  "expected":{
+    "entities":{"precision":1.0,"recall":1.0,"f1":1.0},
+    "concepts":{"precision":1.0,"recall":0.714286,"f1":0.833333},
+    "source_claims":{"precision":1.0,"recall":1.0,"f1":1.0},
+    "relations":{"precision":0.666667,"recall":0.5,"f1":0.571429},
+    "interpretations":{"precision":0.5,"recall":1.0,"f1":0.666667},
+    "macro_f1":0.814286
+  }
+}
