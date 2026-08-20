@@ -8,6 +8,7 @@
   const ROLLBACK_PROOF_BASE = "tests/fixtures/semantic-live-reviewed-v2/controlled-activation-production-v1/";
   const PRODUCTION_EVIDENCE = "ops/evidence/aha-v2-production-write-gate-current-v1.json";
   const OPERATOR_INTENT = "single_local_chamber_insight_v1";
+  const FRAME_URL = "chat.html?ahaSemanticModelShadow=1&ahaInsightSynthesisV2=1";
   const FRAME_SCRIPTS = [
     "js/ahaSemanticInsightQualityGate.js",
     "js/ahaSemanticEvaluationRuntime.js",
@@ -63,7 +64,6 @@
     if (operatorIntent !== OPERATOR_INTENT) {
       pageStatus.textContent = "Pilot lukket: eksplisitt operator-intent mangler.";
       gateStatus.textContent = `Åpne bare kontrollert med ?pilot=${OPERATOR_INTENT}`;
-      frame.src = "about:blank";
       return;
     }
 
@@ -170,6 +170,10 @@
         reportError(error);
       }
     });
+
+    // The iframe starts at about:blank in HTML. Only exact operator intent may
+    // navigate it to Chat, and the load handler is installed before navigation.
+    frame.src = FRAME_URL;
 
     prepareReviewButton.addEventListener("click", async () => {
       try {
