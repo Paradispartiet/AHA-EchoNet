@@ -21,9 +21,13 @@ Phase 4B — Insight Quality Gate V2                   merged in PR #820
 Phase 4C — first live V2 round                       completed
 Phase 4D — causal calibration #1                     merged/deployed in PR #822
 Phase 4E — causal language calibration #2            merged/deployed in PR #823
-Phase 4F — Semantic Insight Review Evaluator V2      implemented in PR #824
-Measured semantic-review F1                          V1 0.166667 → V2 0.833333
-Remaining reviewed synthesis miss                    delegation → responsibility boundaries
+Phase 4F — Semantic Insight Review Evaluator V2      merged in PR #824
+Phase 4G — delegation responsibility boundaries      merged in PR #825
+Phase 4H — fail-closed stochastic stability layer    merged in PR #827
+Phase 4I — targeted stability corrections            merged in PRs #829–#832
+Phase 4J — authoritative two-round live stability    6/6 + F1 1.0 in both rounds
+Measured historical semantic-review F1               V1 0.166667 → V2 0.833333
+Final live semantic-review F1                        V2 1.000000 / 1.000000
 Canonical Insight synthesis write                   disabled
 Chamber write from V2                               disabled
 Meta write from semantic shadow                     disabled
@@ -198,25 +202,40 @@ V2 semantic-review: TP 5/6, precision 0.833333, recall 0.833333, F1 0.833333
 
 This is the first deterministic like-for-like measurement showing a large interpretation/synthesis improvement.
 
-## Remaining reviewed miss
+## Post-review stability work
 
-The only V2 review miss is `delegation_bottleneck_live_v1`.
+PR #825 fixed the only deterministic review miss by preserving delegation responsibility boundaries. A two-round probe then showed that the broader production output was still stochastic even though delegation matched 2/2.
 
-The candidate correctly says that decision structure changes the placement of disagreement, but does not explicitly preserve the higher-order mechanism that disagreement/coordination moves to the **boundaries between responsibility areas**. Review-gold therefore keeps the case false-negative.
+PR #827 introduced the permanent stability layer: temperature `0.2`, stronger source/canonical-term preservation, explicit causal-limit preservation, and at most four internal fail-closed regenerations. PRs #829 and #830 eliminated causal retry lock and constrained non-causal rewrites. PRs #831 and #832 added strict evidence coverage for the two remaining stochastic omissions: modularity coordination-delay and retrieval method/outcome.
 
-Evidence contains the boundary wording, but evidence is not allowed to substitute for missing candidate meaning.
+Gold, evaluator, attempt ceiling, and write policy were not weakened.
 
-## Next required work
+## Authoritative final live result
 
-After #824 merges:
+The unchanged six-case review gold was run twice against production after #832.
 
-1. tighten the delegation synthesis so the responsibility-boundary mechanism is explicit without forcing unsupported causality
-2. rerun the six live-reviewed cases against the same review-gold
-3. verify the server causal fail-closed rules remain active
-4. require a stable post-fix review result before considering controlled Chamber/canonical review
-5. keep Meta after canonical Insight quality is proven
+```text
+workflow run:    32366046900
+artifact id:     9405381366
+artifact digest: sha256:0284594f709bf224076f2a93e9d7cdb9c200d91c8bbc8aec92f7fc040337dbac
+production main: 02521a405c46294f40e7a9361564cde120e656a0
 
-Do **not** open canonical write solely because one run reached 5/6.
+round 1: 6/6 valid, V2 F1 1.000000, 7 attempts
+round 2: 6/6 valid, V2 F1 1.000000, 6 attempts
+stable_all_six_match: true
+all_rounds_six_valid: true
+```
+
+Round 1 exercised one internal fail-closed retry for preservation of the explicit mixed-use causal limitation. Round 2 required no retry. Both returned six review matches.
+
+Permanent artifact snapshots and provenance:
+
+```text
+tests/fixtures/semantic-live-reviewed-v2/post-stability-two-round-v1/
+tests/aha-insight-synthesis-v2-stability-live-gold.test.cjs
+```
+
+The shadow quality/stability proof is complete. Any future Chamber, canonical, Meta, persistent-write, or production-authority activation remains a separate decision and is not part of this result.
 
 ## Safety invariants
 

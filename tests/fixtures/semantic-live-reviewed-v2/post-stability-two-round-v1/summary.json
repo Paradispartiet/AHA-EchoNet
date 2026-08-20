@@ -1,0 +1,198 @@
+{
+  "schema": "aha_insight_synthesis_v2_delegation_postfix_live_gold_v1",
+  "measured_at": "2026-08-20T11:56:09.230Z",
+  "endpoint": "https://aha-agent-7a3y.onrender.com/api/aha-agent/semantic-document",
+  "round_count": 2,
+  "rounds": [
+    {
+      "round": 1,
+      "valid_output_count": 6,
+      "total_attempt_count": 7,
+      "validation_code_counts": {
+        "candidate:0:source_limitation_wording_not_preserved:peker_ikke_ut": 1
+      },
+      "v1_review": {
+        "true_positive": 1,
+        "predicted": 6,
+        "expected": 6,
+        "false_positive": 5,
+        "false_negative": 5,
+        "precision": 0.166667,
+        "recall": 0.166667,
+        "f1": 0.166667
+      },
+      "v2_review": {
+        "true_positive": 6,
+        "predicted": 6,
+        "expected": 6,
+        "false_positive": 0,
+        "false_negative": 0,
+        "precision": 1,
+        "recall": 1,
+        "f1": 1
+      },
+      "delegation_review": {
+        "fixture_id": "delegation_bottleneck_live_v1",
+        "decisions": [
+          {
+            "candidate_index": 0,
+            "matched": true,
+            "reasons": [],
+            "meaning_groups": [
+              {
+                "id": "delegation",
+                "matched": true,
+                "aliases": [
+                  "delegasjon",
+                  "delegert",
+                  "beslutningsmyndighet"
+                ]
+              },
+              {
+                "id": "local_coordination",
+                "matched": true,
+                "aliases": [
+                  "lokale valg",
+                  "samordningseffektivitet",
+                  "raskere lokale",
+                  "smidighet"
+                ]
+              },
+              {
+                "id": "responsibility_boundaries",
+                "matched": true,
+                "aliases": [
+                  "grensene mellom ansvarsområdene",
+                  "ansvarsgrenser",
+                  "grenseområdene mellom ansvarsområder",
+                  "grensesnitt mellom ansvarsområder"
+                ]
+              }
+            ],
+            "evidence_requirements": [
+              {
+                "required": "delegert innen tydelige rammer",
+                "matched": true
+              },
+              {
+                "required": "uenighet oftere samlet seg i grensene mellom ansvarsområdene",
+                "matched": true
+              }
+            ],
+            "evidence_sentence_count": 2,
+            "minimum_evidence_sentences": 2,
+            "review_text": "nar beslutningsmyndighet i et lite produktteam flyttes fra felles beslutninger til delegert myndighet innen tydelige rammer oppstar et mønster der lokale valg blir raskere samtidig som uenighet konsentreres ved grensene mellom ansvarsomradene denne innsikten kobler endringen i beslutningsstruktur med samtidige endringer i beslutningshastighet og lokalisering av uenighet og beskriver et mønster i hvordan koordinering og konflikt fordeles i teamet"
+          }
+        ],
+        "metrics": {
+          "true_positive": 1,
+          "predicted": 1,
+          "expected": 1,
+          "false_positive": 0,
+          "false_negative": 0,
+          "precision": 1,
+          "recall": 1,
+          "f1": 1
+        }
+      }
+    },
+    {
+      "round": 2,
+      "valid_output_count": 6,
+      "total_attempt_count": 6,
+      "validation_code_counts": {},
+      "v1_review": {
+        "true_positive": 1,
+        "predicted": 6,
+        "expected": 6,
+        "false_positive": 5,
+        "false_negative": 5,
+        "precision": 0.166667,
+        "recall": 0.166667,
+        "f1": 0.166667
+      },
+      "v2_review": {
+        "true_positive": 6,
+        "predicted": 6,
+        "expected": 6,
+        "false_positive": 0,
+        "false_negative": 0,
+        "precision": 1,
+        "recall": 1,
+        "f1": 1
+      },
+      "delegation_review": {
+        "fixture_id": "delegation_bottleneck_live_v1",
+        "decisions": [
+          {
+            "candidate_index": 0,
+            "matched": true,
+            "reasons": [],
+            "meaning_groups": [
+              {
+                "id": "delegation",
+                "matched": true,
+                "aliases": [
+                  "delegasjon",
+                  "delegert",
+                  "beslutningsmyndighet"
+                ]
+              },
+              {
+                "id": "local_coordination",
+                "matched": true,
+                "aliases": [
+                  "lokale valg",
+                  "samordningseffektivitet",
+                  "raskere lokale",
+                  "smidighet"
+                ]
+              },
+              {
+                "id": "responsibility_boundaries",
+                "matched": true,
+                "aliases": [
+                  "grensene mellom ansvarsområdene",
+                  "ansvarsgrenser",
+                  "grenseområdene mellom ansvarsområder",
+                  "grensesnitt mellom ansvarsområder"
+                ]
+              }
+            ],
+            "evidence_requirements": [
+              {
+                "required": "delegert innen tydelige rammer",
+                "matched": true
+              },
+              {
+                "required": "uenighet oftere samlet seg i grensene mellom ansvarsområdene",
+                "matched": true
+              }
+            ],
+            "evidence_sentence_count": 3,
+            "minimum_evidence_sentences": 2,
+            "review_text": "nar et lite produktteam først tok alle viktige beslutninger i fellesskap oppstod høy konsistens samtidig som lanseringer stoppet nar nøkkelpersoner var borte etter at beslutningsmyndighet ble delegert innen tydelige rammer gikk lokale valg raskere samtidig som uenighet oftere samlet seg i grensene mellom ansvarsomradene denne innsikten kobler beslutningsstrukturens endring fra felles beslutninger til delegert myndighet med en forskyvning i hvor utfordringer oppstar fra avhengighet av nøkkelpersoner til konsentrasjon av uenighet ved ansvarsgrenser"
+          }
+        ],
+        "metrics": {
+          "true_positive": 1,
+          "predicted": 1,
+          "expected": 1,
+          "false_positive": 0,
+          "false_negative": 0,
+          "precision": 1,
+          "recall": 1,
+          "f1": 1
+        }
+      }
+    }
+  ],
+  "stable_all_six_match": true,
+  "all_rounds_six_valid": true,
+  "production_gate_authority": false,
+  "synthesis_allowed": false,
+  "canonical_write": false,
+  "chamber_write": false,
+  "meta_write": false,
+  "persistent_write": false
+}
