@@ -1,0 +1,97 @@
+name: TEMP AHA V2 live browser proof retry
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: read
+
+jobs:
+  proof-retry:
+    if: github.head_ref == 'probe/v2-live-migration-chat-proof'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      EXPECTED_MAIN: b1f1df798a72a62cd815cc8f869052f397719b45
+      PAGES_ORIGIN: https://paradispartiet.github.io/AHA-EchoNet
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: probe/v2-live-migration-chat-proof
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Re-prove Pages main before browser execution
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          mkdir -p probe-evidence
+          latest_json="$(curl -fsSL \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${REPOSITORY}/pages/builds/latest")"
+          pages_commit="$(printf '%s' "$latest_json" | jq -r '.commit // empty')"
+          pages_status="$(printf '%s' "$latest_json" | jq -r '.status // empty')"
+          echo "Pages commit=$pages_commit status=$pages_status"
+          [[ "$pages_commit" == "$EXPECTED_MAIN" ]]
+          [[ "$pages_status" == "built" ]]
+          printf '%s\n' "$latest_json" > probe-evidence/pages-build-latest-retry.json
+
+          assets=(
+            "chat.html"
+            "js/ahaChatMemoryRuntime.js"
+            "js/ahaChatAgentRuntime.js"
+            "js/ahaV2ProductIntegrationGate.js"
+            "js/ahaV2ChatReadOnlyContext.js"
+            "js/ahaV2ProductionWriteGate.js"
+            "js/ahaV2BackfillStagingStore.js"
+            "js/ahaV2ProductionMigrationRehearsal.js"
+            "v2-production-migration-rehearsal.html"
+            "js/ahaV2ControlledWritePilotRollback.js"
+          )
+          for asset in "${assets[@]}"; do
+            expected_sha="$(sha256sum "$asset" | awk '{print $1}')"
+            actual_sha="$(curl -fsSL -H 'Cache-Control: no-cache' "${PAGES_ORIGIN}/${asset}?aha_v2_live_retry=${GITHUB_RUN_ID}" | sha256sum | awk '{print $1}')"
+            echo "$asset expected=$expected_sha deployed=$actual_sha"
+            [[ "$expected_sha" == "$actual_sha" ]]
+          done
+
+      - name: Install Playwright where the temporary ESM script resolves packages
+        run: |
+          set -euo pipefail
+          npm install --prefix /tmp --no-save playwright@1.55.0
+          /tmp/node_modules/.bin/playwright install --with-deps chromium
+
+      - name: Extract unchanged proof script from attempt 1
+        run: |
+          set -euo pipefail
+          awk '
+            /cat > \/tmp\/aha-v2-live-proof\.mjs <<'"'"'NODE'"'"'/ { capture=1; next }
+            capture && /^          NODE$/ { exit }
+            capture { sub(/^          /, ""); print }
+          ' .github/workflows/TEMP-aha-v2-live-migration-chat-proof.yml > /tmp/aha-v2-live-proof.mjs
+          test -s /tmp/aha-v2-live-proof.mjs
+          grep -q "import { chromium } from 'playwright';" /tmp/aha-v2-live-proof.mjs
+          grep -q "expected 3 live chat requests" /tmp/aha-v2-live-proof.mjs
+          grep -q "read-only Chat canaries changed localStorage" /tmp/aha-v2-live-proof.mjs
+
+      - name: Run unchanged live migration rehearsal and Chat canaries
+        env:
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+        run: node /tmp/aha-v2-live-proof.mjs
+
+      - name: Upload retry evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aha-v2-live-browser-proof-retry-${{ github.run_id }}
+          path: probe-evidence/
+          if-no-files-found: warn
