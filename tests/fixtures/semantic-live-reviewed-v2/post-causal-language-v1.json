@@ -1,0 +1,134 @@
+{
+  "schema": "aha_insight_synthesis_v2_review_snapshot_v1",
+  "version": 1,
+  "provenance": {
+    "measured_at": "2026-08-20T06:58:48.388Z",
+    "endpoint_path": "/api/aha-agent/semantic-document",
+    "workflow_run_id": 32341795351,
+    "artifact_id": 9396621144,
+    "artifact_digest": "sha256:774dde8dabd0f847d19bf4953b0ac66e263f5335841f5aa407f860d6d97c23e4",
+    "source_branch": "eval/insight-synthesis-v2-post-causal-language-gold",
+    "source_head": "50663eda7047797894d1990f0aee22e29c123d5a",
+    "model": "gpt-4.1-mini-2025-04-14"
+  },
+  "policy": {"production_gate_authority": false, "canonical_write": false, "chamber_write": false, "meta_write": false, "persistent_write": false},
+  "cases": [
+    {
+      "fixture_id": "constraints_creativity_live_v1",
+      "response_id": "resp_0f3df7e8e88db939006a86a557b81487d2a6411745fade757e",
+      "attempts": [{"attempt": 1, "status": 200, "ok": true, "error": null, "validation_errors": []}],
+      "candidates": [{
+        "insight": "Begrensninger i dramatisk innhold og praktiske rammer for scenografer begrenser ikke nødvendigvis den kunstneriske friheten i uttrykk men forskyver kreativiteten slik at den manifesterer seg gjennom variasjon i form og teknikk, som å skifte mellom detaljrike tegninger og enkle tekstflater.",
+        "type": "mechanism",
+        "abstraction": "Sammenkobling av hvordan faste rammer ikke bare begrenser frihet, men samtidig kan omdirigere kreativt uttrykk til form- og teknikkvalg hos scenografer.",
+        "evidence": [
+          {"quote": "En scenograf får et ferdig dramatisk innhold og faste praktiske rammer", "role": "supports"},
+          {"quote": "Likevel varierer hun uttrykket fra detaljrike tegninger til enkle tekstflater", "role": "supports"},
+          {"quote": "begrensninger ikke bare reduserer kunstnerisk frihet; de kan flytte kreativiteten over i valg av form og teknikk", "role": "supports"}
+        ],
+        "why_it_matters": "Denne forståelsen gir innsikt i hvordan begrensninger kan ha en produktiv rolle i kreative prosesser ved å styre kunstnerisk kreativitet mot nye uttrykksformer, noe som kan påvirke hvordan kreative fagplaner og arbeidsmetoder utvikles.",
+        "confidence": "high", "uncertainty": "", "causal_status": "source_explicit"
+      }],
+      "gate_decisions": [{"candidate_index": 0, "eligible_for_insight_review": true, "blocking_reasons": [], "quality_score": 0.854629}]
+    },
+    {
+      "fixture_id": "retrieval_learning_live_v1",
+      "response_id": "resp_05d7f55ec175739f006a86a55cf90881a098f6f553730eb2d4",
+      "attempts": [{"attempt": 1, "status": 200, "ok": true, "error": null, "validation_errors": []}],
+      "candidates": [{
+        "insight": "Å bruke aktiv gjenhenting av informasjon mellom lesingene oppleves som vanskeligere, men er forbundet med bedre langtidslagring av materiale sammenlignet med å lese teksten flere ganger med samme totale tidsbruk.",
+        "type": "mechanism",
+        "abstraction": "Denne innsikten kobler opplevd kognitiv anstrengelse ved testing av hukommelsen med økt langtids hukommelse, under like tidsvilkår for lesing.",
+        "evidence": [
+          {"quote": "Den ene leste teksten flere ganger, mens den andre forsøkte å hente fram innholdet fra hukommelsen mellom lesingene.", "role": "supports"},
+          {"quote": "Gruppen som testet seg selv opplevde arbeidet som vanskeligere, men husket mer en uke senere.", "role": "supports"}
+        ],
+        "why_it_matters": "Denne forståelsen er viktig for undervisning og studieteknikk fordi den fremhever at mer krevende læringsstrategier kan gi bedre varig hukommelse, selv om de ikke forkorter læringstiden, noe som kan motivere til bruk av slike metoder tross ekstra anstrengelse.",
+        "confidence": "high", "uncertainty": "", "causal_status": "not_causal"
+      }],
+      "gate_decisions": [{"candidate_index": 0, "eligible_for_insight_review": true, "blocking_reasons": [], "quality_score": 0.818621}]
+    },
+    {
+      "fixture_id": "mixed_use_street_live_v1",
+      "response_id": "resp_092bd0e4cd2d8197006a86a561886087d2893df9c1541bff25",
+      "attempts": [{"attempt": 1, "status": 200, "ok": true, "error": null, "validation_errors": []}],
+      "candidates": [{
+        "insight": "Samtidig forekomst av ulike bruksformer som boliger, små butikker, serveringssteder og arbeidsplasser i ett område er forbundet med et bredere og jevnere tidsmønster i fotgjengertrafikken, som også strekker seg utover ordinær arbeidstid.",
+        "type": "pattern",
+        "abstraction": "Koblingen mellom mangfold av bruksformer i en gate og hvordan dette underminerer tradisjonelle tidsbegrensninger i aktivitetsfordeling.",
+        "evidence": [
+          {"quote": "En gate fikk over tid flere boliger, små butikker, serveringssteder og arbeidsplasser.", "role": "supports"},
+          {"quote": "Fotgjengertrafikken ble jevnere fordelt gjennom dagen, også etter ordinær arbeidstid.", "role": "supports"},
+          {"quote": "Materialet peker ikke ut ett enkelt tiltak som årsak, men viser at flere bruksformer opptrer samtidig med et bredere tidsmønster i aktiviteten.", "role": "supports"}
+        ],
+        "why_it_matters": "Denne innsikten hjelper planleggere å forstå at det ikke nødvendigvis er ett enkelt tiltak som skaper mer variert byaktivitet, men kombinasjonen av forskjellige bruksformer som sammen endrer aktivitetsmønsteret gjennom døgnet, noe som kan bidra til økt byliv og trygghet.",
+        "confidence": "high",
+        "uncertainty": "Materialet fastslår ikke en entydig årsakssammenheng mellom bruksformer og tidsmønster, men dokumenterer deres samtidige forekomst.",
+        "causal_status": "not_causal"
+      }],
+      "gate_decisions": [{"candidate_index": 0, "eligible_for_insight_review": true, "blocking_reasons": [], "quality_score": 0.850833}]
+    },
+    {
+      "fixture_id": "delegation_bottleneck_live_v1",
+      "response_id": "resp_0623edd4a500c292006a86a583ce2081a1a2bf8679e009e311",
+      "attempts": [
+        {"attempt": 1, "status": 502, "ok": false, "error": "insight_synthesis_validation_failed", "validation_errors": ["candidate:0:source_explicit_causality_not_in_evidence"]},
+        {"attempt": 2, "status": 502, "ok": false, "error": "insight_synthesis_validation_failed", "validation_errors": ["candidate:0:source_explicit_causality_not_in_evidence", "candidate:1:source_explicit_causality_not_in_evidence"]},
+        {"attempt": 3, "status": 502, "ok": false, "error": "insight_synthesis_validation_failed", "validation_errors": ["candidate:0:source_explicit_causality_not_in_evidence"]},
+        {"attempt": 4, "status": 200, "ok": true, "error": null, "validation_errors": []}
+      ],
+      "candidates": [{
+        "insight": "I et lite produktteam påvirker måten beslutninger tas – enten i fellesskap eller ved delegasjon innen rammer – både samordningseffektiviteten og plasseringen av uenighet i teamet.",
+        "type": "pattern",
+        "abstraction": "Sammenheng mellom beslutningsstruktur, konsistens, lokale valg og geografisk fordeling av uenighet i organisasjoner.",
+        "evidence": [
+          {"quote": "Et lite produktteam tok først alle viktige beslutninger i fellesskap.", "role": "supports"},
+          {"quote": "Det ga høy konsistens, men lanseringer stoppet når nøkkelpersoner var borte.", "role": "supports"},
+          {"quote": "Etter at beslutningsmyndighet ble delegert innen tydelige rammer, gikk lokale valg raskere, mens uenighet oftere samlet seg i grensene mellom ansvarsområdene.", "role": "supports"}
+        ],
+        "why_it_matters": "Denne forståelsen hjelper organisasjoner å balansere behovet for konsistens mot behovet for smidighet og viser hvordan beslutningsmyndighet påvirker konfliktlokalisering.",
+        "confidence": "high", "uncertainty": "", "causal_status": "not_causal"
+      }],
+      "gate_decisions": [{"candidate_index": 0, "eligible_for_insight_review": true, "blocking_reasons": [], "quality_score": 0.793232}]
+    },
+    {
+      "fixture_id": "modularity_interfaces_live_v1",
+      "response_id": "resp_09a21299652066e6006a86a589d08887d2ac11a0725b5c2dad",
+      "attempts": [{"attempt": 1, "status": 200, "ok": true, "error": null, "validation_errors": []}],
+      "candidates": [{
+        "insight": "Når et monolittisk system deles i moduler med tydelige grensesnitt, kan utviklingsteam gjøre flere lokale endringer uavhengig, noe som samtidig er forbundet med en økning i feil knyttet til antakelser om disse grensesnittene.",
+        "type": "pattern",
+        "abstraction": "Kobler sammen endringen fra monolitisk kodebase til modulær oppdeling og de samtidige effektene på koordinering og feil relatert til grensesnittsantakelser.",
+        "evidence": [
+          {"quote": "Da to utviklingsteam stadig endret den samme monolittiske kodebasen, ble små leveranser ofte forsinket av koordinering.", "role": "supports"},
+          {"quote": "Etter at systemet ble delt i moduler med tydelige grensesnitt, kunne flere lokale endringer gjøres uavhengig.", "role": "supports"},
+          {"quote": "Samtidig oppstod en større andel av feilene i antakelsene teamene gjorde om grensesnittene mellom modulene.", "role": "supports"}
+        ],
+        "why_it_matters": "Forståelsen viser at modulær arkitektur endrer både hvordan team kan jobbe mer autonomt og hvordan nye typer feil kan oppstå, noe som er sentralt for å balansere fordelene ved modularisering med behovet for presis koordinering om grensesnitt.",
+        "confidence": "high", "uncertainty": "", "causal_status": "not_causal"
+      }],
+      "gate_decisions": [{"candidate_index": 0, "eligible_for_insight_review": true, "blocking_reasons": [], "quality_score": 0.798214}]
+    },
+    {
+      "fixture_id": "standardization_flexibility_live_v1",
+      "response_id": "resp_04ac4a9450688fa6006a86a5a29ea081919373d0b0aed318bb",
+      "attempts": [
+        {"attempt": 1, "status": 502, "ok": false, "error": "insight_synthesis_validation_failed", "validation_errors": ["candidate:0:source_explicit_causality_not_in_evidence"]},
+        {"attempt": 2, "status": 502, "ok": false, "error": "insight_synthesis_validation_failed", "validation_errors": ["candidate:0:source_explicit_causality_not_in_evidence"]},
+        {"attempt": 3, "status": 200, "ok": true, "error": null, "validation_errors": []}
+      ],
+      "candidates": [{
+        "insight": "Å kombinere faste og valgfrie felt i en felles mal tillater rapporter å opprettholde en felles kjerne samtidig som de kan tilpasses ulike saker, noe som balanserer behovet for standardisering og fleksibilitet.",
+        "type": "pattern",
+        "abstraction": "Kobler sammen felles mal, faste og valgfrie felt som en mekanisme for å oppnå både standardisering og tilpasning.",
+        "evidence": [
+          {"quote": "Et prosjekt brukte én felles mal for alle rapporter.", "role": "supports"},
+          {"quote": "Da malen fikk noen faste felt og noen valgfrie felt, beholdt rapportene en felles kjerne samtidig som de kunne tilpasses saken.", "role": "supports"}
+        ],
+        "why_it_matters": "Denne innsikten gir en praktisk modell for hvordan organisasjoner kan strukturere dokumentasjon slik at den både er sammenlignbar og fleksibel, noe som forbedrer brukbarheten av rapporter i varierte situasjoner.",
+        "confidence": "high", "uncertainty": "", "causal_status": "not_causal"
+      }],
+      "gate_decisions": [{"candidate_index": 0, "eligible_for_insight_review": true, "blocking_reasons": [], "quality_score": 0.813889}]
+    }
+  ]
+}
