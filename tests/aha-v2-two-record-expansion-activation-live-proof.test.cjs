@@ -11,7 +11,7 @@ function sha256File(file) {
 
 assert.equal(proof.schema, "aha_v2_two_record_expansion_activation_live_proof_v1");
 assert.equal(proof.version, 1);
-assert.equal(proof.status, "invalidated_by_upstream_gate_review");
+assert.equal(proof.status, "invalidated_pending_corrected_activation_proof");
 assert.equal(proof.expected_production_main, "4b74504a25a4b41585c3c62280a7ec275356d4b6");
 assert.equal(proof.proof_identity.temporary_pull_request, 863);
 assert.equal(proof.proof_identity.temporary_pull_request_disposition, "closed_without_merge");
@@ -33,6 +33,8 @@ for (const asset of proof.deployment.assets) {
   assert.match(asset.sha256, /^[a-f0-9]{64}$/u);
 }
 
+// Historical #863 authorized against older gate/live-proof bytes. The current
+// corrected gate proof must therefore not be silently represented by those bytes.
 for (const path of [
   "ops/evidence/aha-v2-controlled-write-expansion-gate-current-v1.json",
   "ops/evidence/aha-v2-two-record-expansion-live-proof-v1.json"
@@ -42,7 +44,7 @@ for (const path of [
   assert.notEqual(
     sha256File(path),
     historical.sha256,
-    `${path} must differ from the bytes that authorized the invalidated #863 observation`
+    `${path} must differ from the historical #863 authorization bytes`
   );
 }
 
@@ -70,9 +72,20 @@ assert.equal(proof.activation_observation.lifetime_count_after_rollbacks, 2);
 assert.equal(proof.activation_observation.fresh_wrapper_third_write_error, "expansion_record_budget_exhausted");
 assert.equal(proof.activation_observation.all_broader_authorities_false, true);
 
-assert.equal(proof.review_invalidation.current_activation_authority_usable, false);
-assert.equal(proof.review_invalidation.upstream_expansion_gate_invalidated, true);
-assert.equal(proof.review_invalidation.depends_on_invalidated_two_record_proof, true);
+assert.equal(proof.gate_reproof.corrected_gate_proof_available, true);
+assert.equal(proof.gate_reproof.temporary_pull_request, 867);
+assert.equal(proof.gate_reproof.temporary_pull_request_disposition, "closed_without_merge");
+assert.equal(proof.gate_reproof.workflow_run_id, 32421978733);
+assert.equal(proof.gate_reproof.workflow_job_id, 96595761534);
+assert.equal(proof.gate_reproof.artifact_id, 9426036702);
+assert.equal(proof.gate_reproof.artifact_digest, "sha256:86051351653dd468180d4a91d5df07ebb51635baf9ff14ab31cf6d2fde82de41");
+assert.equal(proof.gate_reproof.production_main, "cc82b9a4b3cab6fdd62472f62facb025fbea4b75");
+assert.equal(proof.gate_reproof.decision, "BOUNDED_EXPANSION_PILOT_ELIGIBLE");
+assert.equal(proof.gate_reproof.activation_production_verified, false);
+
+assert.equal(proof.review_invalidation.current_activation_proof_usable, false);
+assert.equal(proof.review_invalidation.upstream_expansion_gate_invalidated, false);
+assert.equal(proof.review_invalidation.depends_on_invalidated_two_record_proof, false);
 assert.equal(proof.review_invalidation.historical_gate_evidence_bytes_are_current, false);
 assert.equal(proof.review_invalidation.historical_two_record_proof_bytes_are_current, false);
 assert.equal(proof.review_invalidation.cross_instance_rollback_serialization_missing, false);
@@ -84,10 +97,10 @@ assert.equal(
 assert.equal(proof.review_invalidation.deployed_execution_byte_binding_missing, true);
 assert.equal(proof.review_invalidation.unrelated_sentinel_full_content_check_missing, true);
 assert.equal(proof.review_invalidation.activation_runtime_hardening_required_before_reauthorization, false);
-assert.equal(proof.review_invalidation.fresh_corrected_gate_proof_required, true);
+assert.equal(proof.review_invalidation.fresh_corrected_gate_proof_required, false);
 assert.equal(proof.review_invalidation.fresh_post_gate_activation_proof_required, true);
-assert.deepEqual(proof.review_invalidation.review_threads, [
-  "PRRT_kwDOQgS1AM6a9LzR",
+assert.deepEqual(proof.review_invalidation.resolved_review_threads, ["PRRT_kwDOQgS1AM6a9LzR"]);
+assert.deepEqual(proof.review_invalidation.open_proof_review_threads, [
   "PRRT_kwDOQgS1AM6a9Pio",
   "PRRT_kwDOQgS1AM6a9Pis"
 ]);
@@ -107,7 +120,9 @@ for (const field of [
 
 assert.equal(proof.redaction.user_production_data_modified, false);
 assert.equal(proof.redaction.in_memory_chamber_fixture_only, true);
-assert.equal(fs.existsSync(".github/workflows/TEMP-aha-v2-two-record-expansion-activation-live-proof.yml"), false);
-assert.equal(fs.existsSync("scripts/TEMP-aha-v2-two-record-expansion-activation-live-proof.cjs"), false);
+for (const file of [
+  ".github/workflows/TEMP-aha-v2-two-record-expansion-activation-live-proof.yml",
+  "scripts/TEMP-aha-v2-two-record-expansion-activation-live-proof.cjs"
+]) assert.equal(fs.existsSync(file), false, `${file} must not be permanent`);
 
-console.log("aha-v2-two-record-expansion-activation-live-proof.test.cjs: historical proof remains invalid; cross-tab rollback hardening is recorded");
+console.log("aha-v2-two-record-expansion-activation-live-proof.test.cjs: corrected gate is green; historical activation proof remains pending replacement");
