@@ -2,7 +2,7 @@
 
 This document is the authoritative completion boundary for the nine-block semantic Insight Engine V2 rebuild and its controlled production rollout.
 
-## Nine-block build
+## Semantic build
 
 All **9/9 semantic build blocks are implemented**:
 
@@ -13,26 +13,18 @@ All **9/9 semantic build blocks are implemented**:
 | 3 | Normalized claims and typed relations | implemented |
 | 4 | Separate source-direct semantic model call | implemented |
 | 5 | Insight Synthesis V2 + quality gate | implemented and production-measured |
-| 6 | Equivalence vs resonance | implemented in PR #836 |
-| 7 | Insight Saturation V2 + quality-aware Meta | implemented in PR #837 |
-| 8 | Shared semantic projections | implemented in PR #838 |
-| 9 | Controlled migration/backfill | implemented in PR #839 |
+| 6 | Equivalence vs resonance | implemented |
+| 7 | Insight Saturation V2 + quality-aware Meta | implemented |
+| 8 | Shared semantic projections | implemented |
+| 9 | Controlled migration/backfill | implemented |
 
 There is no tenth semantic build block.
 
-Architecture rules remain unchanged:
+Architecture rules remain unchanged: resonance is not equivalence; legacy existence is not V2 trust; migration remains staging-first and rollbackable; projection rewrites remain non-authoritative candidates; V2 quality does not inherit authority from legacy saturation.
 
-- resonance is not equivalence and is never dedupe by itself;
-- legacy object existence is not V2 trust;
-- migration is dry-run/staging-first and exact-rollback capable;
-- List/Path/Mindmap rewrites remain non-authoritative candidates;
-- V2 quality does not inherit authority from legacy `avg_saturation`.
+## Read-only production foundation
 
-## Read-only production rollout
-
-After 9/9 completion, V2 stayed read-only while the production boundary was closed through PRs #840–#853.
-
-Permanent production evidence established:
+The permanent production decision evidence established the read-only V2 foundation before any controlled write pilot:
 
 ```text
 production decision checks: 12/12 green
@@ -46,17 +38,11 @@ unexpected persistence writes: 0
 authority leaks: 0
 ```
 
-Decision:
-
-> **CONTROLLED_WRITE_PILOT_ELIGIBLE**
-
 Normal Chat V2 persistence remained closed.
 
-## Production-verified one-record controlled-write pilot
+## Production-verified one-record pilot
 
-PR #854 activated only the explicitly bounded local pilot permitted by the green decision gate. PR #855 hardened the browser boot boundary. Temporary PR #856 proved the deployed pilot and was closed without merge; PR #857 permanentized that proof.
-
-Pilot boundary:
+PRs #854–#857 established and production-proved the current verified write boundary:
 
 ```text
 scope = single_local_chamber_insight
@@ -84,26 +70,11 @@ Permanent proof:
 
 `ops/evidence/aha-v2-controlled-write-pilot-live-proof-v1.json`
 
-The one-record pilot remains **production-verified**. The later two-record review does not invalidate it.
+This remains the **production-verified max=1 boundary** until a corrected two-record activation proof is completed and permanentized.
 
-## Permanent synthesis quality baseline
+## Two-record candidate and review correction
 
-The source-bound synthesis baseline remains:
-
-```text
-round 1: 6/6 valid, V2 semantic-review F1 1.0
-round 2: 6/6 valid, V2 semantic-review F1 1.0
-```
-
-The controlled-write work supplements this baseline; it does not replace it.
-
-## Two-record expansion candidate
-
-PR #858 introduced a pure fail-closed expansion decision gate. PR #859 selected the minimum bounded expansion beyond max=1: exactly two local Chamber records.
-
-Scope contract:
-
-`ops/contracts/aha-v2-controlled-write-expansion-scope-two-record-v1.json`
+PR #858 added a fail-closed expansion decision gate. PR #859 selected the minimum bounded wider candidate:
 
 ```text
 scope_id = bounded_local_chamber_two_record_candidate_v1
@@ -112,75 +83,93 @@ activation_mode = manual_sequential
 review/canonical/rollback approval = required per record
 source binding = required per record
 lifetime budget persists after rollback = true
-unrelated Chamber state preserved = true
 batch activation = false
 automatic activation = false
 candidate_only = true
 activation_authority = false
 ```
 
-The candidate scope itself remains valid, but it is **not currently eligible for activation**.
+The initial temporary #860 proof appeared green and was permanentized by #861. Post-merge review then found five material weaknesses: mutable scope binding, missing replay cleanup, missing rollback-remove compensation, IndexedDB count-only comparison, and drift only on the first rollback target.
 
-## #860 proof — historical but invalidated as current authority
+PR #865 therefore fail-closed the gate and hardened the rehearsal runtime. The historical #860 proof was retained as provenance but withdrawn as current authority.
 
-Temporary PR #860 captured an initially green-looking two-record production proof and was correctly closed without merge. PR #861 permanentized that result and temporarily moved the decision to 12/12 green.
+## Cross-tab activation hardening
 
-Historical proof identity:
+The activation implementation created in #862 also received post-merge review. A P1 showed that two operator tabs could race independent rollbacks against stale shared snapshots.
+
+PR #866 fixed this with an exclusive same-origin Web Lock across the complete rollback transaction and added an adversarial two-wrapper stale-snapshot regression.
+
+Current runtime state:
 
 ```text
-production main:  2a0c6e0b19d92681cc4a51bd46efc3e2b824fc8c
-TEMP PR:          #860 — closed without merge
-workflow run:     32415006998
-workflow job:     96574038093
-artifact id:      9423564833
-artifact digest:  sha256:a2a30b3e0380345dddf346f090780fda4cec5c7497865cf91878b61622d504d6
-product diff:     0 files
-Pages status:     built, exact main on attempt 1
+cross-instance rollback serialization missing = false
+exclusive same-origin rollback lock             = implemented
+fresh state read inside lock                    = implemented
+raw rollback + verification inside lock         = implemented
+browser without Web Locks                       = fail closed
 ```
 
-Post-merge review then found five material gaps:
+That runtime P1 is resolved.
 
-1. the rehearsal accepted a modified scope when the retained fingerprint merely looked like SHA-256;
-2. a second/replay apply failure could leave the first apply in staging;
-3. a rollback `remove` failure after an earlier successful removal could leave a partial rollback;
-4. IndexedDB was compared by store row count rather than stable key/value contents;
-5. the drift test modified the first rollback record and therefore did not prove all-target preflight against drift on a later record.
+## Corrected two-record gate/rehearsal proof — #867
 
-The historical proof is retained at:
+Temporary PR #867 was created from production main `cc82b9a4b3cab6fdd62472f62facb025fbea4b75`, contained exactly two TEMP files and zero product diff, and was closed without merge after a green corrected proof.
+
+Proof identity:
+
+```text
+TEMP PR:          #867 — closed without merge
+probe head:       84e1f101079591968150832c902b01b1c9d08c8a
+workflow run:     32421978733
+workflow job:     96595761534
+artifact id:      9426036702
+artifact digest:  sha256:86051351653dd468180d4a91d5df07ebb51635baf9ff14ab31cf6d2fde82de41
+product diff:     0 files
+TEMP files:       2
+Pages:            exact expected main, built, attempt 1
+```
+
+Five selected deployed assets matched production main byte-for-byte. The proof captured those deployed bytes and executed the same hash-verified copies, eliminating the refetch ambiguity present in earlier proof designs.
+
+Corrected evidence demonstrated:
+
+```text
+immutable max=2 scope mutation            blocked
+first apply writes                        2
+identical replay writes                   0
+identical replay no-ops                   2
+normal rollback                           exact, count 2
+partial apply failure compensation        exact
+rollback remove failure                   compensated exactly
+replay failure cleanup                    exact
+state drift target                        record 2
+rolled back before later drift detected   0
+record 1 preserved                        true
+full sentinel contents preserved          true
+localStorage unchanged                    true
+sessionStorage unchanged                  true
+IndexedDB snapshot mode                   stable_keys_values_sha256
+IndexedDB content digest unchanged        true
+unexpected requests                       0
+unexpected write requests                 0
+page errors                               0
+console errors                            0
+```
+
+Permanent proof:
 
 `ops/evidence/aha-v2-two-record-expansion-live-proof-v1.json`
 
-Its current status is:
+Status:
 
 ```text
-invalidated_by_post_merge_review
-current_gate_usable = false
-fresh_corrected_production_proof_required = true
+production_evidence_verified
+proof_revision = corrected_v2
 ```
 
-The old observation is useful provenance, but it no longer authorizes a green expansion decision.
+The old #860 identity remains under superseded provenance for auditability.
 
-## Hardened two-record rehearsal
-
-The rehearsal runtime is hardened to fail closed on the review findings:
-
-- exact two-record scope ID is pinned;
-- exact scope fingerprint is pinned;
-- exact max=2 is pinned;
-- replay failure cleans up the first apply before rethrow;
-- rollback remove failure compensates already-removed records back to exact pre-run state;
-- drift preflight covers every target before destructive rollback begins.
-
-Regression coverage now includes:
-
-```text
-tests/aha-v2-controlled-write-expansion-rehearsal.test.cjs
-tests/aha-v2-controlled-write-expansion-hardening.test.cjs
-```
-
-The hardening regression explicitly checks forged max=3 scope, replay cleanup, remove-failure compensation and drift on record 2.
-
-## Current two-record decision
+## Current expansion decision
 
 Machine-readable evidence:
 
@@ -189,24 +178,14 @@ Machine-readable evidence:
 Current decision:
 
 ```text
-NO_GO
+BOUNDED_EXPANSION_PILOT_ELIGIBLE
 required checks: 12
-passed: 6
-failed: 6
+passed: 12
+failed: 0
+blockers: 0
 ```
 
-Current blockers:
-
-```text
-expansion_no_write_observation_missing
-expansion_production_canary_proof_missing
-idempotent_multi_record_replay_proof_missing
-multi_record_rollback_proof_missing
-multi_record_state_drift_proof_missing
-partial_failure_compensation_proof_missing
-```
-
-The gate still guarantees:
+The gate still explicitly returns:
 
 ```text
 eligible_for_expansion_activation = false
@@ -216,64 +195,82 @@ current_one_record_pilot_budget_may_change = false
 expansion_runtime_open = false
 ```
 
-## What is actually open now
+This is eligibility for the bounded activation proof path, not production verification of the two-record write boundary.
 
-Production-verified one-record pilot:
+## Activation implementation vs activation proof
+
+The two-record activation implementation already exists and is cross-tab hardened:
+
+```text
+js/ahaV2ControlledWriteExpansionActivation.js
+js/ahaInsightExpansionOperatorV2.js
+insight-expansion-v2.html
+```
+
+The historical activation production proof from #863/#864 remains **invalidated pending corrected activation proof**.
+
+The upstream gate issue has now been corrected; the remaining activation-proof gaps are narrower and independent:
+
+1. #863 did not hash-bind the exact controller bytes refetched for execution after parity;
+2. #863 proved sentinel presence by ID, not complete sentinel-record equality.
+
+Therefore current state is:
+
+```text
+semantic build                              9/9 implemented
+one-record controlled-write pilot           production-verified, max=1
+two-record gate/rehearsal evidence           corrected, 12/12 green
+two-record activation implementation         exists + cross-tab hardened
+two-record activation production proof       pending corrected replacement
+normal/broad V2 persistence                  closed
+```
+
+## What is actually production-verified now
 
 ```text
 manual local review-queue write      OPEN inside one-record pilot
 manual local Chamber write           OPEN inside one-record pilot, max 1 lifetime record
-exact rollback                       OPEN for that record
+exact rollback                       OPEN for that one-record pilot
 ```
 
-Two-record expansion:
+Not yet promoted to a production-verified wider boundary:
 
 ```text
-scope contract                       DEFINED
-hardened rehearsal runtime           IMPLEMENTED
-current production decision          NO_GO
-activation implementation            CLOSED
-production write budget              STILL max 1
+two-record activation                PENDING corrected activation proof
+normal Chat automatic V2 persistence CLOSED
+automatic Chamber activation         CLOSED
+batch activation                     CLOSED
+backend persistent V2 sync           CLOSED
+automatic projection writes          CLOSED
+automatic legacy backfill            CLOSED
+Meta write authority                 CLOSED
+remote V2 write authority            CLOSED
 ```
 
-Everything broader remains deliberately closed:
+## Next phase
 
-```text
-normal Chat automatic V2 persistence       CLOSED
-automatic Chamber activation               CLOSED
-batch activation                           CLOSED
-broad canonical V2 write                   CLOSED
-backend persistent V2 sync                 CLOSED
-automatic product-store projection writes  CLOSED
-automatic legacy backfill                   CLOSED
-Meta write authority                       CLOSED
-remote V2 write authority                  CLOSED
-```
+The next engineering phase is **not another activation implementation PR**. The implementation already exists.
 
-## Required corrected production proof
+The next valid step is one corrected, isolated, non-merged activation production proof that must demonstrate:
 
-The next valid engineering phase is **fresh temporary production reproof of the hardened two-record candidate**, not activation.
+1. exact deployed activation/operator/gate bytes are hash-bound to expected main and those same verified bytes are executed;
+2. exact operator intent reaches the bounded two-record path;
+3. two distinct source-bound records are created with independent REVIEW/CANONICAL approvals;
+4. a third write is blocked;
+5. repository save/load calls remain 0/0;
+6. record-2 rollback preserves record 1 and the complete unrelated sentinel record;
+7. record-1 rollback is exact;
+8. cross-tab rollback remains serialized under the production Web Lock;
+9. lifetime count remains 2 after rollback and a fresh wrapper still blocks record 3;
+10. all broad/automatic/backend/projection/Meta/remote authorities remain false;
+11. no user production data is modified;
+12. the TEMP PR closes without merge.
 
-The replacement proof must demonstrate:
-
-1. exact immutable scope binding to the canonical ID, fingerprint and max=2;
-2. first apply writes 2;
-3. identical replay writes 0 and returns 2 no-ops;
-4. replay failure cleans up the first apply to exact pre-run state;
-5. exact rollback of both records;
-6. rollback remove failure compensates exact pre-run state;
-7. drift on record 2 blocks removal of record 1;
-8. unrelated sentinel/state remains unchanged;
-9. localStorage/sessionStorage remain unchanged;
-10. IndexedDB is compared by stable key/value digest, not count;
-11. unexpected persistence write requests remain 0;
-12. deployed hardened assets match the expected candidate main and all broader authorities remain false.
-
-Only after that proof is green may the decision gate return to `BOUNDED_EXPANSION_PILOT_ELIGIBLE`. Even then, a **separate explicit activation PR** plus fresh post-activation production proof remain mandatory.
+Only after that corrected activation proof is permanentized may the production-verified write boundary move from max=1 to the exact bounded max=2 scope.
 
 ## Regressions
 
-Core rollout regressions include:
+Core rollout regressions now include:
 
 ```text
 tests/aha-v2-production-write-gate.test.cjs
@@ -281,9 +278,12 @@ tests/aha-v2-controlled-write-pilot-live-proof.test.cjs
 tests/aha-v2-controlled-write-expansion-gate.test.cjs
 tests/aha-v2-controlled-write-expansion-rehearsal.test.cjs
 tests/aha-v2-controlled-write-expansion-hardening.test.cjs
+tests/aha-v2-controlled-write-expansion-cross-tab-rollback.test.cjs
 tests/aha-v2-two-record-expansion-live-proof.test.cjs
+tests/aha-v2-controlled-write-expansion-activation.test.cjs
+tests/aha-v2-two-record-expansion-activation-live-proof.test.cjs
 ```
 
 Authoritative status:
 
-> **Insight Engine V2 build: 9/9 implemented. One-record local controlled-write pilot: production-verified, max=1. Two-record candidate: hardened but current decision NO_GO pending corrected production reproof. Two-record activation: CLOSED. Broad/normal V2 persistence: CLOSED.**
+> **Insight Engine V2 build: 9/9 implemented. One-record controlled-write pilot: production-verified, max=1. Corrected two-record gate: 12/12 green. Two-record activation implementation: present and cross-tab hardened. Corrected activation production proof: still pending. Broad/normal V2 persistence: CLOSED.**
