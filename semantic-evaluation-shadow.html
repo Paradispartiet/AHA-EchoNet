@@ -11,8 +11,9 @@
     header, .status { padding: 12px 16px; border-bottom: 1px solid color-mix(in srgb, CanvasText 18%, transparent); }
     header h1 { margin: 0 0 4px; font-size: 1.05rem; }
     header p, .status p { margin: 0; font-size: .88rem; line-height: 1.4; }
-    .status { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .status { display: flex; gap: 12px; align-items: flex-start; flex-wrap: wrap; }
     .pill { border: 1px solid color-mix(in srgb, CanvasText 22%, transparent); border-radius: 999px; padding: 3px 8px; font-size: .78rem; }
+    .metrics { display: grid; gap: 6px; flex: 1 1 520px; }
     #chat-frame { width: 100%; min-height: 78vh; border: 0; visibility: hidden; }
     #chat-frame.ready { visibility: visible; }
     pre { margin: 0; white-space: pre-wrap; font-size: .76rem; max-width: 100%; }
@@ -22,17 +23,21 @@
   <div class="shell">
     <header>
       <h1>AHA Semantic Evaluation Shadow</h1>
-      <p>Eksplisitt QA-flate. Normal AHA Chat endres ikke. Semantic model, quality gate og evaluation runtime kjører bare i denne operatorflyten.</p>
+      <p>Eksplisitt QA-flate. Normal AHA Chat endres ikke. Semantic model, Interpretation / Insight Synthesis V2 og quality gates kjører bare i denne operatorflyten.</p>
     </header>
     <section class="status" aria-live="polite">
       <span id="load-status" class="pill">Laster QA-runtime …</span>
-      <span id="evaluation-status" class="pill">Ingen evaluering ennå</span>
-      <pre id="evaluation-metrics"></pre>
+      <span id="evaluation-status" class="pill">Semantic: ingen evaluering</span>
+      <span id="synthesis-status" class="pill">Synthesis V2: ingen evaluering</span>
+      <div class="metrics">
+        <pre id="evaluation-metrics"></pre>
+        <pre id="synthesis-metrics"></pre>
+      </div>
     </section>
     <iframe
       id="chat-frame"
       title="AHA Chat med semantic shadow QA"
-      src="chat.html?ahaSemanticModelShadow=1"
+      src="chat.html?ahaSemanticModelShadow=1&amp;ahaInsightSynthesisV2=1"
     ></iframe>
   </div>
 
@@ -42,11 +47,16 @@
       const frame = document.getElementById("chat-frame");
       const loadStatus = document.getElementById("load-status");
       const evaluationStatus = document.getElementById("evaluation-status");
+      const synthesisStatus = document.getElementById("synthesis-status");
       const metrics = document.getElementById("evaluation-metrics");
+      const synthesisMetrics = document.getElementById("synthesis-metrics");
       const scripts = [
         "js/ahaSemanticInsightQualityGate.js",
         "js/ahaSemanticEvaluationRuntime.js",
-        "js/ahaSemanticEvaluationBootstrap.js"
+        "js/ahaSemanticEvaluationBootstrap.js",
+        "js/ahaInsightQualityGateV2.js",
+        "js/ahaInsightSynthesisRuntimeV2.js",
+        "js/ahaInsightSynthesisBootstrapV2.js"
       ];
 
       function loadScript(doc, src) {
@@ -68,8 +78,9 @@
           win.addEventListener("aha:semantic-evaluation-shadow", (event) => {
             const detail = event?.detail || {};
             const gate = detail.gate || {};
-            evaluationStatus.textContent = detail.valid ? "Evaluering: gyldig shadow" : "Evaluering: ugyldig shadow";
+            evaluationStatus.textContent = detail.valid ? "Semantic: gyldig shadow" : "Semantic: ugyldig shadow";
             metrics.textContent = JSON.stringify({
+              layer: "semantic_model_v1",
               source_event_id: detail.source_event_id || null,
               valid: detail.valid === true,
               metrics: detail.metrics || {},
@@ -78,6 +89,31 @@
                 synthesis_review_available: gate.synthesis_review_available === true,
                 synthesis_allowed: gate.synthesis_allowed === true,
                 gold_evaluation_required: gate.gold_evaluation_required !== false
+              }
+            }, null, 2);
+          });
+          win.addEventListener("aha:insight-quality-v2-shadow", (event) => {
+            const detail = event?.detail || {};
+            const gate = detail.gate || {};
+            synthesisStatus.textContent = detail.valid
+              ? `Synthesis V2: ${Number(detail.eligible_count || 0)} godkjent / ${Number(detail.candidate_count || 0)}`
+              : "Synthesis V2: ugyldig shadow";
+            synthesisMetrics.textContent = JSON.stringify({
+              layer: "interpretation_insight_synthesis_v2",
+              source_event_id: detail.source_event_id || null,
+              valid: detail.valid === true,
+              candidate_count: detail.candidate_count || 0,
+              eligible_count: detail.eligible_count || 0,
+              rejected_count: detail.rejected_count || 0,
+              average_quality_score: detail.average_quality_score ?? null,
+              gate: {
+                authoritative: gate.authoritative === true,
+                live_gold_required: gate.live_gold_required !== false,
+                production_gate_authority: gate.production_gate_authority === true,
+                synthesis_allowed: gate.synthesis_allowed === true,
+                canonical_write: gate.canonical_write === true,
+                chamber_write: gate.chamber_write === true,
+                meta_write: gate.meta_write === true
               }
             }, null, 2);
           });
