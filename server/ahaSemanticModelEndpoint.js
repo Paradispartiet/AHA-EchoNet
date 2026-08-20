@@ -1,5 +1,6 @@
 // server/ahaSemanticModelEndpoint.js
-// Testable HTTP handler for the source-direct Semantic Model V1 endpoint.
+// Testable HTTP handler for source-direct Semantic Model V1 plus shadow-only
+// Interpretation / Insight Synthesis V2. Both stay fail-closed and write-disabled.
 
 import {
   SEMANTIC_MODEL_SCHEMA,
@@ -8,6 +9,8 @@ import {
   requireValidSemanticModelPayload,
   buildSemanticModelResponseEnvelope
 } from "./ahaSemanticModelContract.js";
+import { SYNTHESIS_OUTPUT_SCHEMA } from "./ahaInsightSynthesisContractV2.js";
+import { createInsightSynthesisHandlerV2 } from "./ahaInsightSynthesisEndpointV2.js";
 
 function failurePolicy() {
   return {
@@ -42,7 +45,17 @@ function semanticModelErrorBody(error, extra = {}) {
 }
 
 function createSemanticModelHandler({ openai, model, hasOpenAIKey } = {}) {
+  const synthesisHandler = createInsightSynthesisHandlerV2({ openai, model, hasOpenAIKey });
+
   return async function semanticModelHandler(req, res) {
+    const body = req?.body && typeof req.body === "object" && !Array.isArray(req.body) ? req.body : {};
+
+    // V2 is a separate model step behind the same already-deployed source-direct
+    // semantic route. The explicit format value is the dispatch boundary.
+    if (body.format === SYNTHESIS_OUTPUT_SCHEMA) {
+      return synthesisHandler(req, res);
+    }
+
     if (!hasOpenAIKey || !openai) {
       return sendJson(res, 503, semanticModelErrorBody("missing_openai_api_key"));
     }
@@ -50,7 +63,6 @@ function createSemanticModelHandler({ openai, model, hasOpenAIKey } = {}) {
       return sendJson(res, 503, semanticModelErrorBody("semantic_model_responses_unavailable"));
     }
 
-    const body = req?.body && typeof req.body === "object" && !Array.isArray(req.body) ? req.body : {};
     if (body.format != null && body.format !== SEMANTIC_MODEL_SCHEMA) {
       return sendJson(res, 400, semanticModelErrorBody("invalid_semantic_model_format", {
         expected_format: SEMANTIC_MODEL_SCHEMA
