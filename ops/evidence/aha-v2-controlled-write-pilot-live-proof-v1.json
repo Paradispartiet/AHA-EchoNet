@@ -1,0 +1,129 @@
+{
+  "schema": "aha_v2_controlled_write_pilot_live_proof_v1",
+  "version": 1,
+  "measured_at": "2026-08-20T19:57:26.605Z",
+  "status": "production_verified",
+  "production_proof_passed": true,
+  "expected_production_main": "486c9f53096e381bc9aeb4e20521d3700633366d",
+  "frontend_origin": "https://paradispartiet.github.io/AHA-EchoNet",
+  "proof_identity": {
+    "temporary_pull_request": 856,
+    "temporary_pull_request_disposition": "closed_without_merge",
+    "probe_head": "4664f40512148548d064ae1b1623b490c125d0b6",
+    "merge_base": "486c9f53096e381bc9aeb4e20521d3700633366d",
+    "product_diff_count": 0,
+    "workflow_run_id": 32411347026,
+    "workflow_job_id": 96562241212,
+    "workflow_run_attempt": 1,
+    "artifact_id": 9422272974,
+    "artifact_name": "aha-v2-controlled-write-pilot-live-proof-32411347026",
+    "artifact_digest": "sha256:deb7f90b9151e867d71010bc909a7597c386716e62064264c171556d90e9f8fc",
+    "artifact_size_bytes": 4013
+  },
+  "deployment": {
+    "github_pages_commit": "486c9f53096e381bc9aeb4e20521d3700633366d",
+    "github_pages_status": "built",
+    "all_assets_match": true,
+    "assets": [
+      {"path": "insight-activation-v2.html", "sha256": "cd6e7e25c6b5b1a48caec584d23517a015c3a272e9a51cb54b7380a11057e6ac", "match": true},
+      {"path": "js/ahaInsightActivationOperatorV2.js", "sha256": "261c149ef4bb5a14da394613df3a5a7d2fa9ee285c23116f62645e2e49876573", "match": true},
+      {"path": "js/ahaV2ControlledWritePilotActivation.js", "sha256": "66d6f756ca69a8d34e28cc0708d8f62c9172e0d5b2d4a42b6d8e80a3642e6ea4", "match": true},
+      {"path": "js/ahaInsightActivationV2.js", "sha256": "faf8cb91805241f524235c90f275c317f3a2a6a1b683fab61fc6b9e854a28e63", "match": true},
+      {"path": "js/ahaV2ProductionWriteGate.js", "sha256": "59805eae7d4d9ec1b79b63ac378991aec932e6ccec42d3fdc56eee02c1c406e1", "match": true},
+      {"path": "js/ahaV2ControlledWritePilotRollback.js", "sha256": "a185e12d491340e74fdc742d238eec5beb3fc9d20c56944ad7a128c980894b5a", "match": true},
+      {"path": "js/ahaInsightQualityGateV2.js", "sha256": "6040849c09c7c29c3848bd113e627218cea886bb3cc6492324c5e981e65490c2", "match": true},
+      {"path": "js/insightsChamber.js", "sha256": "8068ed184559bef7795c967d437cd46462f39061aa0d5ca524e0c7de4fd26a7b", "match": true},
+      {"path": "js/ahaChamberSync.js", "sha256": "89224ed58e40f17e78131bb5810f5bb65a93f40c561eac4c7d322ddafcead97b", "match": true},
+      {"path": "chat.html", "sha256": "68216a41e329014d4f1afb80aa52fe0c2f7cc8a67e2b5aee3159a1eb0994fd07", "match": true}
+    ]
+  },
+  "operator_browser": {
+    "no_intent": {
+      "status_closed": true,
+      "status_text": "Pilot lukket: eksplisitt operator-intent mangler.",
+      "iframe_about_blank": true,
+      "disabled_buttons": 6,
+      "button_count": 6,
+      "chat_request_count": 0,
+      "unexpected_write_request_count": 0,
+      "page_error_count": 0,
+      "console_error_count": 0
+    },
+    "operator_asset_response": {
+      "status": 200,
+      "from_service_worker": false,
+      "sha256": "261c149ef4bb5a14da394613df3a5a7d2fa9ee285c23116f62645e2e49876573"
+    },
+    "exact_intent": {
+      "authority_ready": true,
+      "production_gate_decision": "CONTROLLED_WRITE_PILOT_ELIGIBLE",
+      "rollback_status": "ready",
+      "chat_request_count": 1,
+      "iframe_ready": true,
+      "unexpected_write_request_count": 0,
+      "page_error_count": 0
+    }
+  },
+  "synthesis": {
+    "endpoint": "https://aha-agent-7a3y.onrender.com/api/aha-agent/semantic-document",
+    "model": "gpt-4.1-mini-2025-04-14",
+    "candidate_count": 1,
+    "eligible_count": 1,
+    "selected_candidate_index": 0,
+    "selected_quality_score": 0.812283
+  },
+  "pilot": {
+    "scope": "single_local_chamber_insight",
+    "max_chamber_records_created": 1,
+    "initial_phase": "available",
+    "initial_created_record_count": 0,
+    "review_chamber_unchanged": true,
+    "review_id_present": true,
+    "canonical_added_count": 1,
+    "created_record_count_after_canonical": 1,
+    "second_activation_before_rollback_error": "pilot_record_budget_exhausted",
+    "sync_push": {"ok": false, "reason": "local_only_insight_activation_present"},
+    "sync_pull": {"ok": false, "reason": "local_only_insight_activation_present"},
+    "repository_save_calls": 0,
+    "repository_load_calls": 0,
+    "rollback_status": "rolled_back",
+    "sentinel_preserved_after_rollback": true,
+    "chamber_count_after_rollback": 1,
+    "created_record_count_after_rollback": 1,
+    "second_activation_after_rollback_error": "pilot_record_budget_exhausted",
+    "reload_phase": "rolled_back_complete",
+    "reload_created_record_count": 1,
+    "reload_second_activation_error": "pilot_record_budget_exhausted",
+    "audit_event_count": 9,
+    "dispatched_action_count": 3,
+    "browser_local_storage_only": true,
+    "user_production_data_modified": false,
+    "representative_fixture_only": true,
+    "initial_chamber_sentinel_preserved": true,
+    "final_chamber_sentinel_preserved": true
+  },
+  "policy": {
+    "automatic_activation_open": false,
+    "batch_activation_open": false,
+    "normal_chat_persistence_open": false,
+    "automatic_backfill_open": false,
+    "backend_sync_open": false,
+    "backend_persistent_write_open": false,
+    "broad_canonical_write_open": false,
+    "projection_store_write_open": false,
+    "meta_write_open": false,
+    "remote_write_open": false
+  },
+  "redaction": {
+    "raw_source_text_in_evidence": false,
+    "raw_evidence_quotes_in_evidence": false,
+    "candidate_signature_in_evidence": false,
+    "canonical_signature_in_evidence": false
+  },
+  "notes": [
+    "The proof used a representative isolated browser-local Chamber fixture with an unrelated sentinel; no user production data was modified.",
+    "The first temporary run timed out before any pilot write and was superseded by workflow run 32411347026.",
+    "The successful browser diagnostic showed the operator script was served directly, not by a service worker, with the expected production hash.",
+    "This proof verifies only the bounded one-record local pilot. It does not open normal V2 persistence or any broader write authority."
+  ]
+}
