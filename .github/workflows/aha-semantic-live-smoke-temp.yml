@@ -1,0 +1,61 @@
+name: AHA semantic live smoke temporary
+
+on:
+  push:
+    branches:
+      - ops/semantic-live-smoke-20260820
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: POST semantic-document live smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          endpoint='https://aha-agent-7a3y.onrender.com/api/aha-agent/semantic-document'
+          payload='{"text":"Kunstneriske rammer kan påvirke hvilke formvalg som blir mulige.","format":"aha_semantic_model_output_v1","context":{"source_event_id":"live_smoke_20260820","source_type":"manual_qa","language":"no"}}'
+
+          status="$(curl --retry 2 --retry-delay 4 --connect-timeout 30 --max-time 150 -sS -o /tmp/semantic-live.json -w '%{http_code}' -X POST "$endpoint" -H 'Content-Type: application/json' --data "$payload")"
+          echo "HTTP status: $status"
+
+          HTTP_STATUS="$status" node <<'NODE'
+          const fs = require('fs');
+          const status = Number(process.env.HTTP_STATUS || 0);
+          let body = {};
+          try { body = JSON.parse(fs.readFileSync('/tmp/semantic-live.json', 'utf8')); }
+          catch { console.error('semantic smoke: response was not valid JSON'); process.exit(1); }
+
+          if (status !== 200) {
+            console.error(`semantic smoke failed: http=${status} error=${String(body?.error || 'unknown')}`);
+            process.exit(1);
+          }
+          if (body?.ok !== true) throw new Error('semantic smoke: ok != true');
+          if (body?.schema !== 'aha_semantic_model_contract_v1') throw new Error(`semantic smoke: wrong envelope schema ${body?.schema}`);
+          if (body?.analysis?.schema !== 'aha_semantic_model_output_v1') throw new Error(`semantic smoke: wrong analysis schema ${body?.analysis?.schema}`);
+          const p = body?.policy || {};
+          for (const key of ['source_text_returned','canonical_write','persistent_write','meta_write','synthesis_allowed']) {
+            if (p[key] !== false) throw new Error(`semantic smoke: unsafe policy ${key}=${p[key]}`);
+          }
+          if (Object.prototype.hasOwnProperty.call(body, 'source_text')) throw new Error('semantic smoke: source_text leaked');
+          if (Object.prototype.hasOwnProperty.call(body, 'raw_model_output')) throw new Error('semantic smoke: raw_model_output leaked');
+
+          const a = body.analysis;
+          console.log(JSON.stringify({
+            status: 'PASS',
+            envelope_schema: body.schema,
+            analysis_schema: a.schema,
+            model: body.model || null,
+            response_id_present: Boolean(body.response_id),
+            entities: Array.isArray(a.entities) ? a.entities.length : null,
+            concepts: Array.isArray(a.concepts) ? a.concepts.length : null,
+            propositions: Array.isArray(a.propositions) ? a.propositions.length : null,
+            relations: Array.isArray(a.relations) ? a.relations.length : null,
+            unresolved_inferences: Array.isArray(a.unresolved_inferences) ? a.unresolved_inferences.length : null,
+            synthesis_allowed: p.synthesis_allowed
+          }, null, 2));
+          NODE
