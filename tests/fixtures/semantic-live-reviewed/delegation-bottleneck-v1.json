@@ -1,0 +1,67 @@
+{
+  "schema":"aha_semantic_gold_fixture_v1",
+  "id":"delegation_bottleneck_live_v1",
+  "source_event_id":"delegation_bottleneck_live_v1",
+  "source_text":"Et lite produktteam tok først alle viktige beslutninger i fellesskap. Det ga høy konsistens, men lanseringer stoppet når nøkkelpersoner var borte. Etter at beslutningsmyndighet ble delegert innen tydelige rammer, gikk lokale valg raskere, mens uenighet oftere samlet seg i grensene mellom ansvarsområdene.",
+  "provenance":{"kind":"live_production_capture","captured_at":"2026-08-20T02:12:53Z","model":"gpt-4.1-mini-2025-04-14","response_id":"resp_0280100b55c519d9006a86629d3ed487d2a95bf038fa39670a","workflow_run_id":32323809783,"workflow_job_id":96290941159,"endpoint_path":"/api/aha-agent/semantic-document","successful_attempt":2},
+  "gold":{
+    "entities":[
+      {"label":"produktteam","entity_type":"organization","aliases":["Et lite produktteam","lite produktteam"]},
+      {"label":"nøkkelpersoner","entity_type":"person","aliases":[]}
+    ],
+    "concepts":[
+      {"label":"felles beslutningstaking","aliases":["beslutninger i fellesskap"]},
+      {"label":"konsistens","aliases":["høy konsistens"]},
+      {"label":"nøkkelpersonavhengighet","aliases":["lanseringer stoppet når nøkkelpersoner var borte"]},
+      {"label":"beslutningsmyndighet","aliases":[]},
+      {"label":"tydelige rammer","aliases":[]},
+      {"label":"lokale valg","aliases":["lokale valg raskere"]},
+      {"label":"uenighet","aliases":[]},
+      {"label":"ansvarsgrenser","aliases":["grensene mellom ansvarsområdene","uenighet oftere samlet seg i grensene mellom ansvarsområdene"]}
+    ],
+    "source_claims":[
+      {"text":"Et lite produktteam tok først alle viktige beslutninger i fellesskap."},
+      {"text":"Det ga høy konsistens, men lanseringer stoppet når nøkkelpersoner var borte."},
+      {"text":"Etter at beslutningsmyndighet ble delegert innen tydelige rammer, gikk lokale valg raskere, mens uenighet oftere samlet seg i grensene mellom ansvarsområdene."}
+    ],
+    "relations":[
+      {"relation_type":"causes","from_label":"felles beslutningstaking","to_label":"konsistens","epistemic_status":"source_explicit"},
+      {"relation_type":"associated_with","from_label":"nøkkelpersoner","to_label":"nøkkelpersonavhengighet","epistemic_status":"source_explicit"},
+      {"relation_type":"influences","from_label":"beslutningsmyndighet","to_label":"lokale valg","epistemic_status":"source_explicit"},
+      {"relation_type":"associated_with","from_label":"beslutningsmyndighet","to_label":"ansvarsgrenser","epistemic_status":"source_explicit"}
+    ],
+    "interpretations":[{"id":"delegation_moves_coordination_to_boundaries","required_terms":["delegasjon","grensene"],"forbidden_terms":[],"evidence_quotes":["Etter at beslutningsmyndighet ble delegert innen tydelige rammer, gikk lokale valg raskere, mens uenighet oftere samlet seg i grensene mellom ansvarsområdene."]}]
+  },
+  "model_shadow":{
+    "source_event_id":"delegation_bottleneck_live_v1",
+    "entities":[
+      {"source_surface":"Et lite produktteam","canonical_label":"lite produktteam","entity_type":"organization"},
+      {"source_surface":"nøkkelpersoner","canonical_label":"nøkkelpersoner","entity_type":"person"}
+    ],
+    "concepts":[
+      {"source_surface":"beslutningsmyndighet","canonical_label":"beslutningsmyndighet"},
+      {"source_surface":"beslutninger i fellesskap","canonical_label":"beslutninger i fellesskap"},
+      {"source_surface":"uenighet","canonical_label":"uenighet"},
+      {"source_surface":"lokale valg","canonical_label":"lokale valg"}
+    ],
+    "propositions":[
+      {"kind":"source_claim","text":"Et lite produktteam tok først alle viktige beslutninger i fellesskap."},
+      {"kind":"source_claim","text":"Det ga høy konsistens, men lanseringer stoppet når nøkkelpersoner var borte."},
+      {"kind":"source_claim","text":"Etter at beslutningsmyndighet ble delegert innen tydelige rammer, gikk lokale valg raskere, mens uenighet oftere samlet seg i grensene mellom ansvarsområdene."}
+    ],
+    "relations":[
+      {"relation_type":"causes","from_label":"beslutninger i fellesskap","to_label":"høy konsistens","epistemic_status":"source_explicit"},
+      {"relation_type":"causes","from_label":"beslutninger i fellesskap","to_label":"lanseringer stoppet når nøkkelpersoner var borte","epistemic_status":"source_explicit"},
+      {"relation_type":"causes","from_label":"beslutningsmyndighet","to_label":"lokale valg raskere","epistemic_status":"source_explicit"},
+      {"relation_type":"causes","from_label":"beslutningsmyndighet","to_label":"uenighet oftere samlet seg i grensene mellom ansvarsområdene","epistemic_status":"source_explicit"}
+    ]
+  },
+  "expected":{
+    "entities":{"precision":1.0,"recall":1.0,"f1":1.0},
+    "concepts":{"precision":1.0,"recall":0.5,"f1":0.666667},
+    "source_claims":{"precision":1.0,"recall":1.0,"f1":1.0},
+    "relations":{"precision":0.25,"recall":0.25,"f1":0.25},
+    "interpretations":{"precision":0,"recall":0.0,"f1":0},
+    "macro_f1":0.583333
+  }
+}
