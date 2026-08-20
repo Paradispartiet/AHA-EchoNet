@@ -546,6 +546,35 @@
       </article>`;
   }
 
+  function renderProjectionListPreviews() {
+    const shell = document.getElementById("v2-list-preview-shell");
+    const mount = document.getElementById("v2-list-previews");
+    if (!shell || !mount) return;
+    const model = global.AHAProjectionRuntimeSourceV2?.build?.();
+    const candidates = model?.status === "ready" && model?.validation?.valid === true
+      ? asArray(model?.surfaces?.lists)
+      : [];
+    shell.hidden = candidates.length === 0;
+    if (!candidates.length) {
+      mount.replaceChildren();
+      return;
+    }
+    mount.innerHTML = candidates.map((list) => {
+      const score = Number(list?.quality?.score);
+      const quality = Number.isFinite(score) ? `${Math.round(score * 100)} % kvalitetsport` : "Kvalitetsgodkjent";
+      const items = asArray(list.items).map((item) => `<li><strong>${escapeHtml(item.title)}</strong></li>`).join("");
+      return `<article class="aha-v2-list-preview-card" data-v2-list-preview="${escapeHtml(list.id)}">
+        <div class="aha-list-header">
+          <div><p class="aha-list-card-kicker">${escapeHtml(list.meta?.semantic_basis_label || "Semantisk sammenheng")}</p><h3>${escapeHtml(list.title)}</h3></div>
+          <span class="aha-list-badge">${list.items.length} innsikter</span>
+        </div>
+        <p>${escapeHtml(list.description)}</p>
+        <ul class="aha-v2-preview-items">${items}</ul>
+        <div class="aha-list-meta"><span>${escapeHtml(quality)}</span><span>Ikke lagret</span><span>Read-only</span></div>
+      </article>`;
+    }).join("");
+  }
+
   function renderSelectedPreview(list, allItems, groups) {
     if (!list) {
       return `<aside class="aha-panel aha-list-preview aha-list-preview-empty" aria-label="List preview">
@@ -712,6 +741,7 @@
 
   function render() {
     try {
+      renderProjectionListPreviews();
       renderConceptLists();
       renderContent();
     } catch {
@@ -869,6 +899,7 @@
     collectAvailableItems,
     buildAvailableItemIndex,
     validateListReference,
+    renderProjectionListPreviews,
     syncFromDatabase,
     selectList(id) {
       selectedListId = asText(id, "");
