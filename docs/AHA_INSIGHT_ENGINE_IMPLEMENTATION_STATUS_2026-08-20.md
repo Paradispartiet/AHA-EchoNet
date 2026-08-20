@@ -26,13 +26,16 @@ Phase 4G — delegation responsibility boundaries      merged in PR #825
 Phase 4H — fail-closed stochastic stability layer    merged in PR #827
 Phase 4I — targeted stability corrections            merged in PRs #829–#832
 Phase 4J — authoritative two-round live stability    6/6 + F1 1.0 in both rounds
+Phase 5A — controlled local review/Chamber boundary  implemented
 Measured historical semantic-review F1               V1 0.166667 → V2 0.833333
 Final live semantic-review F1                        V2 1.000000 / 1.000000
-Canonical Insight synthesis write                   disabled
-Chamber write from V2                               disabled
+Automatic Canonical Insight synthesis write         disabled
+Operator-approved local Chamber write from V2       enabled, one candidate at a time
+Dedicated local V2 review queue                     enabled, explicit approval required
 Meta write from semantic shadow                     disabled
 Persistent SemanticDocument storage                 disabled
-Production gate authority                           disabled
+Backend Chamber sync for local V2 records           fail-closed/disabled
+Endpoint and shadow-gate production authority       disabled
 ```
 
 ## Runtime chain
@@ -47,10 +50,15 @@ SourceEvent
 → server-side synthesis validation
 → Insight Quality Gate V2
 → Semantic Insight Review Evaluator V2 [QA only]
-→ shadow review only
+→ permanent two-round production proof
+→ operator-only review queue [explicit approval]
+→ bounded local Chamber write [second explicit approval]
 ```
 
-The model and synthesis layers remain opt-in and non-authoritative.
+The model and synthesis layers remain opt-in and non-authoritative. The separate
+activation controller can promote one eligible candidate only after validating
+the exact permanent production proof and two distinct, expiring approval
+challenges.
 
 ## Measured baseline before V2
 
@@ -235,16 +243,20 @@ tests/fixtures/semantic-live-reviewed-v2/post-stability-two-round-v1/
 tests/aha-insight-synthesis-v2-stability-live-gold.test.cjs
 ```
 
-The shadow quality/stability proof is complete. Any future Chamber, canonical, Meta, persistent-write, or production-authority activation remains a separate decision and is not part of this result.
+The shadow quality/stability proof is complete. It now authorizes only the
+separate controlled local activation boundary documented in
+`AHA_INSIGHT_SYNTHESIS_V2_CONTROLLED_ACTIVATION_2026-08-20.md`. Automatic writes,
+backend persistence, Meta and broad production authority remain separate gates.
 
 ## Safety invariants
 
 ```text
-canonical_write = false
-chamber_write = false
-persistent_write = false
+endpoint canonical_write = false
+shadow chamber_write = false
+automatic canonical_write = false
+operator review queue write = explicit approval only
+bounded local Chamber write = second explicit approval only
+backend persistent/sync write = false while a local V2 record exists
 meta_write = false
-visible_output_changed = false
-synthesis_allowed = false
-production_gate_authority = false
+normal chat activation = false
 ```

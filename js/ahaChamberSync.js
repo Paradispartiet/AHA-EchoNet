@@ -88,6 +88,13 @@
     return Array.isArray(chamber?.insights) ? chamber.insights.length : 0;
   }
 
+  function hasLocalOnlyInsightActivation(chamber) {
+    return Array.isArray(chamber?.insights) && chamber.insights.some((insight) =>
+      insight?.activation_v2?.schema === "aha_insight_activation_v2"
+      && insight.activation_v2.backend_sync_allowed === false
+    );
+  }
+
   function isReady() {
     if (syncDisabled) return false;
     return Boolean(global.AHARepository?.saveChamber && global.AHARepository?.loadChamber);
@@ -112,6 +119,9 @@
     }
     const chamber = readLocal();
     if (!chamber) return { ok: false, reason: "no_local" };
+    if (hasLocalOnlyInsightActivation(chamber)) {
+      return { ok: false, reason: "local_only_insight_activation_present" };
+    }
 
     pushInflight = true;
     try {
@@ -139,6 +149,13 @@
   async function pull() {
     if (!isReady()) return { ok: false, reason: "no_repository" };
 
+    const localChamber = readLocal();
+    // Do not even begin a remote reconciliation while the controlled V2
+    // record is explicitly local-only.
+    if (hasLocalOnlyInsightActivation(localChamber)) {
+      return { ok: false, reason: "local_only_insight_activation_present" };
+    }
+
     const remoteResult = await global.AHARepository.loadChamber();
     if (!remoteResult?.ok) {
       if (remoteResult?.error) console.warn("AHAChamberSync: pull feilet", remoteResult.error);
@@ -148,7 +165,6 @@
     const remoteRow = remoteResult.data || null;
     const remoteChamber = remoteRow?.chamber || null;
     const remoteUpdatedAt = remoteRow?.updated_at || null;
-    const localChamber = readLocal();
 
     const remoteCount = insightCount(remoteChamber);
     const localCount = insightCount(localChamber);
@@ -209,6 +225,7 @@
     pull,
     push: pushNow,
     schedulePush,
-    isReady
+    isReady,
+    hasLocalOnlyInsightActivation
   };
 })(window);

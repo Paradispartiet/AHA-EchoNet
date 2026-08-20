@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="no">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AHA Insight Activation V2</title>
+  <style>
+    :root { color-scheme: light dark; font-family: system-ui, sans-serif; }
+    body { margin: 0; background: Canvas; color: CanvasText; }
+    .shell { display: grid; gap: 0; min-height: 100vh; }
+    header, .controls, .evidence { padding: 14px 18px; border-bottom: 1px solid color-mix(in srgb, CanvasText 18%, transparent); }
+    h1, h2 { margin: 0 0 6px; }
+    h1 { font-size: 1.12rem; }
+    h2 { font-size: .95rem; }
+    p { margin: 4px 0; line-height: 1.45; }
+    .status { font-weight: 650; }
+    .controls { display: grid; gap: 12px; }
+    .steps { display: flex; flex-wrap: wrap; gap: 8px; }
+    button, input { font: inherit; padding: 8px 10px; }
+    button { cursor: pointer; }
+    button:disabled { cursor: not-allowed; opacity: .45; }
+    .approval { display: grid; grid-template-columns: minmax(220px, 1fr) auto; gap: 8px; max-width: 760px; }
+    code { user-select: all; }
+    .evidence { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+    pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: .76rem; max-height: 360px; overflow: auto; }
+    #chat-frame { width: 100%; min-height: 62vh; border: 0; visibility: hidden; }
+    #chat-frame.ready { visibility: visible; }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <h1>AHA Insight Activation V2</h1>
+      <p>Operatørflate for kontrollert aktivering. Review-kø og lokal Chamber krever hver sin engangsgodkjenning. Automatisk canonical write, backend-sync, Meta og SemanticDocument-lagring er stengt.</p>
+      <p id="page-status" class="status" aria-live="polite">Laster permanent produksjonsbevis og isolert runtime …</p>
+      <p id="gate-status" aria-live="polite">Venter på en kvalifisert V2-kandidat.</p>
+    </header>
+    <section class="controls" aria-label="Kontrollert aktivering">
+      <div class="steps">
+        <button id="prepare-review" type="button" disabled>1. Forbered review</button>
+        <button id="approve-review" type="button" disabled>2. Godkjenn til review-kø</button>
+        <button id="prepare-canonical" type="button" disabled>3. Forbered Chamber-write</button>
+        <button id="approve-canonical" type="button" disabled>4. Godkjenn én Chamber-innsikt</button>
+        <button id="prepare-rollback" type="button" disabled>Forbered rollback</button>
+        <button id="approve-rollback" type="button" disabled>Godkjenn rollback</button>
+      </div>
+      <p>Engangsfrase: <code id="approval-phrase">Ingen aktiv engangsgodkjenning.</code></p>
+      <div class="approval">
+        <input id="approval-input" type="text" autocomplete="off" spellcheck="false" aria-label="Skriv engangsfrasen" disabled />
+      </div>
+    </section>
+    <section class="evidence">
+      <div><h2>Kandidat og gate</h2><pre id="candidate-output">Ingen kandidat forberedt.</pre></div>
+      <div><h2>Aktiveringsstatus og siste audit-hendelser</h2><pre id="audit-output">Ingen hendelser.</pre></div>
+    </section>
+    <iframe
+      id="chat-frame"
+      title="AHA Chat med kontrollert Insight V2-aktivering"
+      src="chat.html?ahaSemanticModelShadow=1&amp;ahaInsightSynthesisV2=1"
+    ></iframe>
+  </main>
+  <script src="js/ahaInsightActivationOperatorV2.js"></script>
+</body>
+</html>
