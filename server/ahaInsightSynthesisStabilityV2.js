@@ -119,7 +119,9 @@ function retryInstruction(validationErrors = []) {
   }
   if (hasValidationCode(errors, "not_causal_contains_causal_language")) {
     instructions.push(
-      "MANDATORY WORDING CORRECTION: Keep causal_status=not_causal, but remove causal verbs such as 'fører til', 'skaper', 'gir', 'øker', 'reduserer' and 'muliggjør' from insight. State only the grounded association or tension."
+      "MANDATORY WORDING CORRECTION: Keep causal_status=not_causal, but remove causal verbs such as 'fører til', 'skaper', 'gir', 'øker', 'reduserer' and 'muliggjør' from insight. State only the grounded association or tension.",
+      "The rewritten insight MUST use this non-causal sentence frame: '[source-grounded structure or method] er forbundet med [source-grounded observation], samtidig som [source-grounded contrast or second observation].'",
+      "In the rewritten insight, use only neutral relation verbs such as 'er', 'har', 'består av', 'opptrer sammen med' or 'er forbundet med'. Do not reuse the rejected sentence, do not use a causal synonym, and do not change causal_status away from not_causal."
     );
   }
   return instructions.join("\n");
@@ -127,7 +129,9 @@ function retryInstruction(validationErrors = []) {
 
 function addRetryInstruction(requestInput, validationErrors) {
   const errors = Array.isArray(validationErrors) ? validationErrors.map(String).filter(Boolean) : [];
-  const request = hasValidationCode(errors, "source_explicit_causality_not_in_evidence")
+  const removeRelations = hasValidationCode(errors, "source_explicit_causality_not_in_evidence")
+    || hasValidationCode(errors, "not_causal_contains_causal_language");
+  const request = removeRelations
     ? removeRelationHints(requestInput)
     : clone(requestInput) || {};
   const input = Array.isArray(request.input) ? request.input : [];
