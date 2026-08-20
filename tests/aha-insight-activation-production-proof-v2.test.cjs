@@ -16,10 +16,53 @@ assert.equal(proof.workflow_run_id, 32369823544);
 assert.equal(proof.workflow_run_attempt, 1);
 assert.equal(proof.expected_production_main, "ed1db452088232146702fabdf9f9543bb9f0d959");
 assert.equal(proof.frontend.origin, "https://paradispartiet.github.io/AHA-EchoNet");
-Object.entries(proof.frontend.assets).forEach(([file, evidence]) => {
-  assert.equal(sha256File(file), evidence.sha256, `${file} must still match the deployed production asset`);
-  assert.equal(evidence.fetch_attempts, 1);
+
+// PR #834 is immutable historical proof. Lock the exact hashes it actually
+// observed; never rewrite that fixture to claim it proved later operator code.
+const historicalAssetHashes = {
+  "insight-activation-v2.html": "e6ed518ff831308f25ebe05a0e1b7065696c73e67f66f942bf808f5ba2d1b34c",
+  "js/ahaInsightActivationV2.js": "faf8cb91805241f524235c90f275c317f3a2a6a1b683fab61fc6b9e854a28e63",
+  "js/ahaInsightActivationOperatorV2.js": "22625621dda992c4f66ddd7b1b30b9b40a09c675b34d0fc0d18ee35943372713",
+  "js/ahaInsightQualityGateV2.js": "6040849c09c7c29c3848bd113e627218cea886bb3cc6492324c5e981e65490c2",
+  "js/insightsChamber.js": "8068ed184559bef7795c967d437cd46462f39061aa0d5ca524e0c7de4fd26a7b",
+  "js/ahaChamberSync.js": "89224ed58e40f17e78131bb5810f5bb65a93f40c561eac4c7d322ddafcead97b"
+};
+assert.deepEqual(Object.keys(proof.frontend.assets).sort(), Object.keys(historicalAssetHashes).sort());
+Object.entries(historicalAssetHashes).forEach(([file, sha256]) => {
+  assert.equal(proof.frontend.assets[file].sha256, sha256, `${file} historical proof hash must remain immutable`);
+  assert.equal(proof.frontend.assets[file].fetch_attempts, 1);
 });
+
+// The write controller and its safety dependencies are intentionally unchanged
+// by the new production-gated pilot operator and must still match live #834.
+for (const file of [
+  "js/ahaInsightActivationV2.js",
+  "js/ahaInsightQualityGateV2.js",
+  "js/insightsChamber.js",
+  "js/ahaChamberSync.js"
+]) {
+  assert.equal(
+    sha256File(file),
+    historicalAssetHashes[file],
+    `${file} must still match the historically production-proven activation path`
+  );
+}
+
+// The operator HTML/adapter are deliberately changed by the separate pilot
+// activation PR. Their old #834 hashes remain historical evidence only; the
+// new versions require their own post-merge GitHub Pages + browser proof.
+for (const file of ["insight-activation-v2.html", "js/ahaInsightActivationOperatorV2.js"]) {
+  assert.notEqual(
+    sha256File(file),
+    historicalAssetHashes[file],
+    `${file} is intentionally outside the old #834 asset proof and must receive new live proof`
+  );
+}
+const activationDoc = fs.readFileSync("docs/AHA_INSIGHT_ENGINE_V2_CONTROLLED_WRITE_PILOT_ACTIVATION_2026-08-20.md", "utf8");
+assert.match(activationDoc, /not considered production-proven merely because repo CI is green/);
+assert.match(activationDoc, /temporary workflow must be closed without merge/);
+assert.match(activationDoc, /production page without operator intent remains closed/);
+assert.match(activationDoc, /post-rollback second activation attempt remains blocked/);
 
 assert.equal(proof.synthesis.endpoint, "https://aha-agent-7a3y.onrender.com/api/aha-agent/semantic-document");
 assert.equal(proof.synthesis.model, "gpt-4.1-mini-2025-04-14");
@@ -63,4 +106,4 @@ assert.equal(provenance.deployment_context.github_pages_main, "deployed_and_hash
 assert.equal(fs.existsSync(".github/workflows/TEMP-aha-insight-v2-activation-production-proof.yml"), false);
 assert.equal(fs.existsSync("scripts/TEMP-aha-insight-v2-activation-production-proof.cjs"), false);
 
-console.log("aha-insight-activation-production-proof-v2 passed: deployed review, one local Chamber write, sync block and exact rollback");
+console.log("aha-insight-activation-production-proof-v2 passed: immutable #834 proof retained; unchanged controller/safety assets still match; new pilot operator requires separate live proof");

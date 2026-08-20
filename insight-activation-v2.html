@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AHA Insight Activation V2</title>
+  <title>AHA Insight Activation V2 — kontrollert pilot</title>
   <style>
     :root { color-scheme: light dark; font-family: system-ui, sans-serif; }
     body { margin: 0; background: Canvas; color: CanvasText; }
@@ -30,18 +30,20 @@
 <body>
   <main class="shell">
     <header>
-      <h1>AHA Insight Activation V2</h1>
-      <p>Operatørflate for kontrollert aktivering. Review-kø og lokal Chamber krever hver sin engangsgodkjenning. Automatisk canonical write, backend-sync, Meta og SemanticDocument-lagring er stengt.</p>
-      <p id="page-status" class="status" aria-live="polite">Laster permanent produksjonsbevis og isolert runtime …</p>
-      <p id="gate-status" aria-live="polite">Venter på en kvalifisert V2-kandidat.</p>
+      <h1>AHA Insight Activation V2 — kontrollert én-record-pilot</h1>
+      <p>Denne operatørflaten kan bare åpne pilot-authority når permanent production gate er 12/12 grønn, den låste rollback-proofen fortsatt validerer, og URL-en inneholder eksplisitt <code>?pilot=single_local_chamber_insight_v1</code>.</p>
+      <p>Piloten kan opprette maksimalt én lokal Chamber-record totalt. Review, canonical write og rollback krever hver sin engangsfrase. Rollback åpner ikke record-budsjettet igjen.</p>
+      <p>Normal Chat-persistens, automatisk aktivering/backfill, backend-sync, remote writes, Meta og projection-store writes er stengt.</p>
+      <p id="page-status" class="status" aria-live="polite">Validerer operator-intent og permanente production-bevis …</p>
+      <p id="gate-status" aria-live="polite">Pilot-authority er ikke etablert ennå.</p>
     </header>
-    <section class="controls" aria-label="Kontrollert aktivering">
+    <section class="controls" aria-label="Kontrollert én-record-aktivering">
       <div class="steps">
         <button id="prepare-review" type="button" disabled>1. Forbered review</button>
         <button id="approve-review" type="button" disabled>2. Godkjenn til review-kø</button>
-        <button id="prepare-canonical" type="button" disabled>3. Forbered Chamber-write</button>
+        <button id="prepare-canonical" type="button" disabled>3. Forbered pilotens Chamber-write</button>
         <button id="approve-canonical" type="button" disabled>4. Godkjenn én Chamber-innsikt</button>
-        <button id="prepare-rollback" type="button" disabled>Forbered rollback</button>
+        <button id="prepare-rollback" type="button" disabled>Forbered exact rollback</button>
         <button id="approve-rollback" type="button" disabled>Godkjenn rollback</button>
       </div>
       <p>Engangsfrase: <code id="approval-phrase">Ingen aktiv engangsgodkjenning.</code></p>
@@ -50,12 +52,12 @@
       </div>
     </section>
     <section class="evidence">
-      <div><h2>Kandidat og gate</h2><pre id="candidate-output">Ingen kandidat forberedt.</pre></div>
-      <div><h2>Aktiveringsstatus og siste audit-hendelser</h2><pre id="audit-output">Ingen hendelser.</pre></div>
+      <div><h2>Kandidat og quality gate</h2><pre id="candidate-output">Ingen kandidat forberedt.</pre></div>
+      <div><h2>Pilotstatus og siste audit-hendelser</h2><pre id="audit-output">Ingen hendelser.</pre></div>
     </section>
     <iframe
       id="chat-frame"
-      title="AHA Chat med kontrollert Insight V2-aktivering"
+      title="AHA Chat med kontrollert Insight V2 én-record-pilot"
       src="chat.html?ahaSemanticModelShadow=1&amp;ahaInsightSynthesisV2=1"
     ></iframe>
   </main>
