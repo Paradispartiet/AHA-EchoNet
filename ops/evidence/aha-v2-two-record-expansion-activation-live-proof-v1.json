@@ -1,7 +1,7 @@
 {
   "schema": "aha_v2_two_record_expansion_activation_live_proof_v1",
   "version": 1,
-  "status": "invalidated_by_upstream_gate_review",
+  "status": "invalidated_pending_corrected_activation_proof",
   "observed_at": "2026-08-20T20:54:44.091Z",
   "expected_production_main": "4b74504a25a4b41585c3c62280a7ec275356d4b6",
   "proof_identity": {
@@ -104,10 +104,22 @@
     "audit_event_count": 18,
     "all_broader_authorities_false": true
   },
+  "gate_reproof": {
+    "corrected_gate_proof_available": true,
+    "temporary_pull_request": 867,
+    "temporary_pull_request_disposition": "closed_without_merge",
+    "workflow_run_id": 32421978733,
+    "workflow_job_id": 96595761534,
+    "artifact_id": 9426036702,
+    "artifact_digest": "sha256:86051351653dd468180d4a91d5df07ebb51635baf9ff14ab31cf6d2fde82de41",
+    "production_main": "cc82b9a4b3cab6fdd62472f62facb025fbea4b75",
+    "decision": "BOUNDED_EXPANSION_PILOT_ELIGIBLE",
+    "activation_production_verified": false
+  },
   "review_invalidation": {
-    "current_activation_authority_usable": false,
-    "upstream_expansion_gate_invalidated": true,
-    "depends_on_invalidated_two_record_proof": true,
+    "current_activation_proof_usable": false,
+    "upstream_expansion_gate_invalidated": false,
+    "depends_on_invalidated_two_record_proof": false,
     "historical_gate_evidence_bytes_are_current": false,
     "historical_two_record_proof_bytes_are_current": false,
     "cross_instance_rollback_serialization_missing": false,
@@ -115,15 +127,17 @@
     "cross_instance_rollback_regression_path": "tests/aha-v2-controlled-write-expansion-cross-tab-rollback.test.cjs",
     "deployed_execution_byte_binding_missing": true,
     "unrelated_sentinel_full_content_check_missing": true,
-    "fresh_corrected_gate_proof_required": true,
+    "fresh_corrected_gate_proof_required": false,
     "activation_runtime_hardening_required_before_reauthorization": false,
     "fresh_post_gate_activation_proof_required": true,
-    "review_threads": [
-      "PRRT_kwDOQgS1AM6a9LzR",
+    "resolved_review_threads": [
+      "PRRT_kwDOQgS1AM6a9LzR"
+    ],
+    "open_proof_review_threads": [
       "PRRT_kwDOQgS1AM6a9Pio",
       "PRRT_kwDOQgS1AM6a9Pis"
     ],
-    "reason": "PR #863 authorized against the #860-derived 12/12 gate state that post-merge review later invalidated. Cross-instance rollback serialization has since been hardened with an exclusive same-origin Web Lock and an adversarial two-wrapper stale-snapshot regression. The historical activation proof remains invalid because it did not hash-bind the exact controller bytes refetched for execution after the parity step and sentinel preservation was asserted by ID rather than full record contents. A corrected upstream gate proof and a fresh post-gate activation proof remain required."
+    "reason": "The upstream two-record gate has been re-proven with corrected PR #867 evidence and the cross-tab rollback P1 is hardened. The historical #863/#864 activation observation is still not sufficient as current production proof because the exact execution bytes were not hash-bound after parity and unrelated sentinel preservation was not checked by full record contents. A fresh corrected activation proof is required."
   },
   "policy": {
     "normal_chat_persistence_open": false,

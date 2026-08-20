@@ -9,7 +9,7 @@ const oneRecordPilotProof = JSON.parse(fs.readFileSync("ops/evidence/aha-v2-cont
 const expansionLiveProof = JSON.parse(fs.readFileSync("ops/evidence/aha-v2-two-record-expansion-live-proof-v1.json", "utf8"));
 const scopeContract = JSON.parse(fs.readFileSync("ops/contracts/aha-v2-controlled-write-expansion-scope-two-record-v1.json", "utf8"));
 
-const clone = (value) => JSON.parse(JSON.stringify(value));
+const clone = (value) => value == null ? value : JSON.parse(JSON.stringify(value));
 
 function loadApi(extra = {}) {
   const context = { console, setTimeout, clearTimeout, ...extra };
@@ -21,34 +21,12 @@ function loadApi(extra = {}) {
   return context.AHAV2ControlledWriteExpansionActivation;
 }
 
-function syntheticGreenInput(api) {
-  const evidence = clone(expansionEvidence);
-  for (const field of [
-    "multi_record_rollback_rehearsal_proven",
-    "rollback_each_record_exactly_bound",
-    "partial_failure_compensation_proven",
-    "compensation_restores_exact_pre_run_state",
-    "idempotent_multi_record_replay_proven",
-    "identical_replay_write_count_zero",
-    "multi_record_state_drift_fail_closed_proven",
-    "production_expansion_canary_proof",
-    "production_canary_coverage_complete",
-    "no_unexpected_persistence_write_observed"
-  ]) evidence[field] = true;
-  evidence.current_decision = "BOUNDED_EXPANSION_PILOT_ELIGIBLE";
-  evidence.expected_blockers = [];
-
-  const proof = clone(expansionLiveProof);
-  proof.status = "production_evidence_verified";
-  proof.canaries.coverage_complete = true;
-  proof.browser_boundary.indexeddb_unchanged = true;
-  proof.decision = clone(proof.decision_at_observation_time);
-
+function currentGreenInput(api) {
   return {
     operatorIntent: api.OPERATOR_INTENT,
-    expansionEvidence: evidence,
-    oneRecordPilotProof,
-    expansionLiveProof: proof,
+    expansionEvidence: clone(expansionEvidence),
+    oneRecordPilotProof: clone(oneRecordPilotProof),
+    expansionLiveProof: clone(expansionLiveProof),
     scopeContract: clone(scopeContract)
   };
 }
@@ -130,6 +108,9 @@ function makeStaleSnapshotActivationApi(shared) {
 
 (async () => {
   const api = loadApi();
+  assert.equal(expansionEvidence.current_decision, "BOUNDED_EXPANSION_PILOT_ELIGIBLE");
+  assert.equal(expansionLiveProof.status, "production_evidence_verified");
+  assert.equal(expansionLiveProof.proof_revision, "corrected_v2");
   assert.equal(api.ROLLBACK_LOCK_NAME, "aha-v2-controlled-write-expansion-rollback-v1");
   assert.equal(api.policy().cross_instance_rollback_serialization_required, true);
   assert.equal(api.policy().cross_instance_rollback_serialization, "web_locks_exclusive");
@@ -152,7 +133,7 @@ function makeStaleSnapshotActivationApi(shared) {
   };
   const lockManager = makeExclusiveLockManager();
   const activationApi = makeStaleSnapshotActivationApi(shared);
-  const input = syntheticGreenInput(api);
+  const input = currentGreenInput(api);
 
   const first = api.create(input, { activationApi, rollbackLockManager: lockManager });
   const second = api.create(input, { activationApi, rollbackLockManager: lockManager });
@@ -181,7 +162,7 @@ function makeStaleSnapshotActivationApi(shared) {
 
   // Production browser contexts must not silently fall back to a per-tab lock.
   const browserApi = loadApi({ document: {} });
-  const browserInput = syntheticGreenInput(browserApi);
+  const browserInput = currentGreenInput(browserApi);
   const browserShared = {
     reviews: [{
       id: "review_browser",

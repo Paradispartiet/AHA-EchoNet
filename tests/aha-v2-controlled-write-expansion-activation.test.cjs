@@ -17,10 +17,12 @@ assert.equal(api.ACTIVATION_SCHEMA, "aha_v2_controlled_write_expansion_activatio
 assert.equal(api.EXPANSION_ENABLED, true);
 assert.equal(api.OPERATOR_INTENT, "bounded_local_chamber_two_record_candidate_v1");
 assert.equal(api.MAX_RECORDS, 2);
+assert.equal(api.ROLLBACK_LOCK_NAME, "aha-v2-controlled-write-expansion-rollback-v1");
 
 const expansionEvidence = JSON.parse(fs.readFileSync("ops/evidence/aha-v2-controlled-write-expansion-gate-current-v1.json", "utf8"));
 const oneRecordPilotProof = JSON.parse(fs.readFileSync("ops/evidence/aha-v2-controlled-write-pilot-live-proof-v1.json", "utf8"));
 const expansionLiveProof = JSON.parse(fs.readFileSync("ops/evidence/aha-v2-two-record-expansion-live-proof-v1.json", "utf8"));
+const activationLiveProof = JSON.parse(fs.readFileSync("ops/evidence/aha-v2-two-record-expansion-activation-live-proof-v1.json", "utf8"));
 const scopeContract = JSON.parse(fs.readFileSync("ops/contracts/aha-v2-controlled-write-expansion-scope-two-record-v1.json", "utf8"));
 const clone = (value) => JSON.parse(JSON.stringify(value));
 
@@ -32,58 +34,16 @@ const currentInput = {
   scopeContract
 };
 
-// The real current repo state is intentionally NO_GO after post-merge review.
-assert.equal(expansionEvidence.current_decision, "NO_GO");
-assert.equal(expansionLiveProof.status, "invalidated_by_post_merge_review");
-assert.throws(() => api.assessAuthorization(currentInput), /expansion_gate_not_green/);
+assert.equal(expansionEvidence.current_decision, "BOUNDED_EXPANSION_PILOT_ELIGIBLE");
+assert.equal(expansionLiveProof.status, "production_evidence_verified");
+assert.equal(expansionLiveProof.proof_revision, "corrected_v2");
+assert.equal(activationLiveProof.status, "invalidated_pending_corrected_activation_proof");
+assert.equal(activationLiveProof.review_invalidation.current_activation_proof_usable, false);
+assert.equal(activationLiveProof.review_invalidation.fresh_post_gate_activation_proof_required, true);
 
-let rawControllerCreated = false;
-assert.throws(
-  () => api.create(currentInput, {
-    activationApi: {
-      create() {
-        rawControllerCreated = true;
-        throw new Error("raw_controller_must_not_start");
-      }
-    }
-  }),
-  /expansion_gate_not_green/
-);
-assert.equal(rawControllerCreated, false, "NO_GO must block before raw activation controller creation");
-
-// Build an in-memory hypothetical replacement proof to keep the activation
-// implementation regression-testable without pretending current evidence is green.
-const greenEvidence = clone(expansionEvidence);
-for (const field of [
-  "multi_record_rollback_rehearsal_proven",
-  "rollback_each_record_exactly_bound",
-  "partial_failure_compensation_proven",
-  "compensation_restores_exact_pre_run_state",
-  "idempotent_multi_record_replay_proven",
-  "multi_record_state_drift_fail_closed_proven",
-  "production_expansion_canary_proof",
-  "production_canary_coverage_complete",
-  "no_unexpected_persistence_write_observed"
-]) greenEvidence[field] = true;
-
-greenEvidence.current_decision = "BOUNDED_EXPANSION_PILOT_ELIGIBLE";
-greenEvidence.expected_blockers = [];
-
-const greenProof = clone(expansionLiveProof);
-greenProof.status = "production_evidence_verified";
-greenProof.canaries.coverage_complete = true;
-greenProof.browser_boundary.indexeddb_unchanged = true;
-greenProof.decision = clone(greenProof.decision_at_observation_time);
-
-const greenInput = {
-  operatorIntent: api.OPERATOR_INTENT,
-  expansionEvidence: greenEvidence,
-  oneRecordPilotProof,
-  expansionLiveProof: greenProof,
-  scopeContract
-};
-
-const authorization = api.assessAuthorization(greenInput);
+// Gate eligibility authorizes only the explicit bounded operator implementation;
+// it does not turn the historical #863 activation artifact into production proof.
+const authorization = api.assessAuthorization(currentInput);
 assert.equal(authorization.authorized, true);
 assert.equal(authorization.scope_id, "bounded_local_chamber_two_record_candidate_v1");
 assert.equal(authorization.max_chamber_records_created, 2);
@@ -102,13 +62,14 @@ function makeActivationApi(initialReviews = []) {
   };
 }
 
-let controller = api.create(greenInput, { activationApi: makeActivationApi() });
+let controller = api.create(currentInput, { activationApi: makeActivationApi() });
 let status = controller.getStatus();
 assert.equal(status.created_record_count, 0);
 assert.equal(status.remaining_record_budget, 2);
 assert.equal(status.may_prepare_review, true);
+assert.equal(status.expansion_gate_decision, "BOUNDED_EXPANSION_PILOT_ELIGIBLE");
 
-controller = api.create(greenInput, { activationApi: makeActivationApi([
+controller = api.create(currentInput, { activationApi: makeActivationApi([
   {
     id: "prior-one-record",
     status: "rolled_back",
@@ -120,7 +81,7 @@ status = controller.getStatus();
 assert.equal(status.created_record_count, 1);
 assert.equal(status.remaining_record_budget, 1);
 
-controller = api.create(greenInput, { activationApi: makeActivationApi([
+controller = api.create(currentInput, { activationApi: makeActivationApi([
   { id: "r1", status: "rolled_back", candidate_signature: "1".repeat(64), canonical_insight_id: "i1" },
   { id: "r2", status: "rolled_back", candidate_signature: "2".repeat(64), canonical_insight_id: "i2" }
 ]) });
@@ -129,7 +90,7 @@ assert.equal(status.created_record_count, 2);
 assert.equal(status.remaining_record_budget, 0);
 assert.equal(status.expansion_budget_exhausted, true);
 
-const corrupt = api.create(greenInput, { activationApi: makeActivationApi([
+const corrupt = api.create(currentInput, { activationApi: makeActivationApi([
   { id: "r1", status: "rolled_back", candidate_signature: "1".repeat(64), canonical_insight_id: "i1" },
   { id: "r2", status: "rolled_back", candidate_signature: "2".repeat(64), canonical_insight_id: "i2" },
   { id: "r3", status: "rolled_back", candidate_signature: "3".repeat(64), canonical_insight_id: "i3" }
@@ -137,21 +98,36 @@ const corrupt = api.create(greenInput, { activationApi: makeActivationApi([
 assert.throws(() => corrupt.getStatus(), /expansion_historical_record_count_exceeded/);
 
 assert.throws(
-  () => api.assessAuthorization({ ...greenInput, operatorIntent: "" }),
+  () => api.assessAuthorization({ ...currentInput, operatorIntent: "" }),
   /expansion_operator_intent_missing/
 );
 assert.throws(
-  () => api.assessAuthorization({ ...greenInput, scopeContract: { ...scopeContract, max_chamber_records_created: 3 } }),
+  () => api.assessAuthorization({ ...currentInput, scopeContract: { ...scopeContract, max_chamber_records_created: 3 } }),
   /expansion_scope_contract_mismatch/
 );
 assert.throws(
-  () => api.assessAuthorization({ ...greenInput, expansionLiveProof: { ...greenProof, status: "unverified" } }),
+  () => api.assessAuthorization({ ...currentInput, expansionLiveProof: { ...expansionLiveProof, status: "unverified" } }),
   /expansion_live_proof_invalid/
 );
-const widened = clone(greenEvidence);
+
+const missingBrowserBoundary = clone(expansionLiveProof);
+missingBrowserBoundary.browser_boundary.indexeddb_unchanged = false;
+assert.throws(
+  () => api.assessAuthorization({ ...currentInput, expansionLiveProof: missingBrowserBoundary }),
+  /expansion_live_proof_browser_boundary_invalid/
+);
+
+const widened = clone(expansionEvidence);
 widened.backend_persistent_write_open = true;
 assert.throws(
-  () => api.assessAuthorization({ ...greenInput, expansionEvidence: widened }),
+  () => api.assessAuthorization({ ...currentInput, expansionEvidence: widened }),
+  /expansion_gate_not_green/
+);
+
+const missingGateProof = clone(expansionEvidence);
+missingGateProof.multi_record_state_drift_fail_closed_proven = false;
+assert.throws(
+  () => api.assessAuthorization({ ...currentInput, expansionEvidence: missingGateProof }),
   /expansion_gate_not_green/
 );
 
@@ -159,6 +135,8 @@ const policy = api.policy();
 assert.equal(policy.max_chamber_records_created, 2);
 assert.equal(policy.activation_mode, "manual_sequential");
 assert.equal(policy.lifetime_budget_persists_after_rollback, true);
+assert.equal(policy.cross_instance_rollback_serialization_required, true);
+assert.equal(policy.cross_instance_rollback_serialization, "web_locks_exclusive");
 for (const key of [
   "automatic_activation_open",
   "batch_activation_open",
@@ -178,5 +156,7 @@ assert.doesNotMatch(source, /sessionStorage\s*\./u);
 assert.doesNotMatch(source, /indexedDB\s*\./u);
 assert.doesNotMatch(source, /\bfetch\s*\(/u);
 assert.doesNotMatch(source, /supabase\s*\./iu);
+assert.match(source, /rollbackLockManager/u);
+assert.match(source, /mode:\s*"exclusive"/u);
 
-console.log("aha-v2-controlled-write-expansion-activation.test.cjs: current NO_GO blocks activation; hypothetical fresh green proof remains testable");
+console.log("aha-v2-controlled-write-expansion-activation.test.cjs: corrected gate authorizes bounded proof path while activation production proof remains pending");
