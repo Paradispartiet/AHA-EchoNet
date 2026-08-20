@@ -1,6 +1,6 @@
 # AHA Insight Engine V2 — production write gate (2026-08-20)
 
-The nine-block V2 semantic rebuild is complete on `main`. The post-build safety chain now includes:
+The nine-block V2 semantic rebuild is complete. The post-build safety chain now includes:
 
 - PR #840 — trusted legacy knowledge → shared read-only projections
 - PR #841 — bounded V2 semantic context transport for Chat
@@ -8,108 +8,153 @@ The nine-block V2 semantic rebuild is complete on `main`. The post-build safety 
 - PR #843 — explicit production write decision gate
 - PR #844 — isolated IndexedDB migration rehearsal operator surface
 - PR #846 — exact one-record controlled-write rollback readiness contract
+- PR #849 — preserve trust-ready full records after Memory Relevance Gate selection without extra V2 reads or provenance leakage
+- PR #851 — repair the live Chat bootstrap failure caused by mutating a frozen `InsightsEngine` provider
 
-This does **not** open normal V2 persistence.
+Normal V2 persistence is **not** opened by any of these changes.
 
 ## Current decision
 
-Authoritative evidence file:
+Authoritative evidence:
 
-`ops/evidence/aha-v2-production-write-gate-current-v1.json`
+```text
+ops/evidence/aha-v2-production-write-gate-current-v1.json
+ops/evidence/aha-v2-live-production-proof-2026-08-20.json
+```
 
 Decision produced by `AHAV2ProductionWriteGate.evaluate(...)`:
 
-> **NO_GO**
+> **CONTROLLED_WRITE_PILOT_ELIGIBLE**
 
-Current production evidence cut:
+All **12/12 required production checks** are now green.
 
-```text
-main commit:          196e94ef8135a657a3e2588672c80b304dc2b647
-GitHub Pages commit:  196e94ef8135a657a3e2588672c80b304dc2b647
-Pages status:         built
-runtime assets:       9/9 SHA-256 match
-```
+This decision means exactly one thing: a **separate explicit activation PR may propose a bounded controlled write pilot**. It does not execute a write and does not authorize normal Chat persistence, automatic backfill, broad canonical writes, projection-store writes, Meta writes or remote V2 writes.
 
-Deployment parity is therefore proven for the AHA frontend production origin.
+## Proven production runtime cut
 
-## Frontend production proof authority
-
-For AHA, the production frontend proof authority is the configured GitHub Pages origin:
-
-`https://paradispartiet.github.io/AHA-EchoNet`
-
-This is the same proof authority used by the earlier controlled activation production proof. Vercel build status is not authoritative for this gate.
-
-Temporary PR #847 reproduced that proof pattern and was closed without merge. Its workflow queried the GitHub Pages API and fetched the deployed runtime assets directly.
-
-Permanent probe identity:
+The final live proof exercised this exact runtime cut:
 
 ```text
-workflow run:    32391781228
-job:             96499363224
-artifact id:     9415099667
-artifact digest: sha256:b00d7a6a3d58d2999f6a065529670da374a57336b1601b45f48e3027f1d80394
-Pages commit:    196e94ef8135a657a3e2588672c80b304dc2b647
-Pages status:    built
-probe attempt:   1
+production runtime commit: 497fa06eee5c910fce146281c2703a4c76fb0081
+GitHub Pages commit:        497fa06eee5c910fce146281c2703a4c76fb0081
+Pages status:               built
+runtime assets:             11/11 SHA-256 match
 ```
 
-The following production assets matched the same commit byte-for-byte by SHA-256:
+`main_commit_sha` in the evidence file denotes the exact production runtime cut tested by the browser proof. A later evidence/docs-only commit may have a newer repository SHA without changing the runtime assets proven here; the evidence does not mislabel that metadata commit as the tested runtime.
+
+GitHub Pages is the AHA frontend production proof authority. Vercel `build-rate-limit` status is non-authoritative for this gate.
+
+## Final live production proof — PR #852
+
+Temporary PR #852 contained exactly two TEMP proof files and **zero product-file differences** from the proven runtime cut. It was closed without merge after the successful run.
+
+Permanent proof identity:
 
 ```text
-chat.html
-js/ahaV2ProductIntegrationGate.js
-js/ahaV2ChatReadOnlyContext.js
-js/ahaChatAgentRuntime.js
-js/ahaV2ProductionWriteGate.js
-js/ahaV2BackfillStagingStore.js
-js/ahaV2ProductionMigrationRehearsal.js
-v2-production-migration-rehearsal.html
-js/ahaV2ControlledWritePilotRollback.js
+TEMP PR:          #852 — closed without merge
+TEMP head:        4eacd1cbe75d99a4fa64a0bad2f2192295bcb8b7
+product diff:     0 files
+workflow run:     32396576869
+workflow job:     96514684814
+artifact id:      9416895737
+artifact digest:  sha256:3863d04353f6ca9b7b7eccf7c44004d6021548f945fbc22afccf12d0799902f9
+workflow result:  success
 ```
 
-The temporary workflow was never merged to `main`.
+The workflow required the TEMP branch to differ from the tested production cut only by the workflow and browser-proof script. It then queried GitHub Pages, required the deployed commit to equal `497fa06e…`, and compared the selected deployed runtime files byte-for-byte against that commit.
 
-Vercel may still report `build-rate-limit`; that is a separate hosting status and does not override the verified GitHub Pages production state.
+## Live migration rehearsal proof
 
-## Separate canonical production platform
+The deployed operator surface completed the required sequence against a representative browser-local Chamber fixture:
 
-AHA's canonical backend production platform is Azure Container Apps with dedicated PostgreSQL and a bounded manual two-profile canonical-sync pilot. That platform already has migration, restore, observability and rollback controls.
+```text
+dry-run reviewed:              true
+trusted candidates:            1
+enrichment candidates:         1
+planned staging writes:        2
+first apply writes:            2
+identical second apply writes: 0
+second apply idempotent:       true
+exact rollback count:          2
+staging count after rollback:  0
+Chamber unchanged:             true
+localStorage unchanged:        true
+user production data modified: false
+```
 
-This is a separate production boundary from Insight Engine V2 semantic persistence. A green canonical-sync pilot does **not** imply that normal V2 semantic Chat persistence or automatic backfill is enabled.
+The only write target was the isolated IndexedDB `v2_backfill_staging` store. The rehearsal did not write Chamber, Lists, Paths, Mindmap, Meta, canonical storage or remote storage. The permanent proof contains no raw insight evidence or candidate signature.
 
-## Already proven
+This closes both production migration blockers:
 
-The V2 production gate currently accepts these as proven:
+- `migration_dry_run_reviewed = true`
+- `staging_apply_rollback_production_proof = true`
 
-1. **V2 build 9/9 complete.**
-2. **Insight Synthesis production quality:** two production rounds, all reviewed cases valid, minimum V2 semantic-review F1 = `1.0`.
-3. **Trusted read-only integration merged** through PR #840.
-4. **Read-only Chat transport merged** through PR #841.
-5. **Read-only Chat runtime gate merged** through PR #842.
-6. **Exact production frontend deployment parity** at GitHub Pages.
-7. **Production rollback readiness** for the only permitted future controlled pilot shape.
+## Live read-only Chat proof
 
-## Production rollback readiness
+The same production-proof run then booted the real deployed `chat.html` and ran three actual Chat requests with:
 
-PR #846 does not introduce a new rollback mechanism. It locks any future write pilot to the already production-proven `AHAInsightActivationV2` flow.
+```text
+saveNewInsights = false
+useExistingMemory = true
+memory_context.used = true
+```
 
-Permanent live rollback proof:
+All three requests reached:
+
+`https://aha-agent-7a3y.onrender.com/api/aha-agent/chat`
+
+Observed result:
+
+```text
+live samples:                         3/3
+responses received:                   3/3
+replies present:                      3/3
+V2 context used:                      3/3
+V2 trusted insights per sample:       1
+minimum V2 quality score:             0.93
+all V2 authority/write flags false:   true
+unexpected browser write requests:    0
+localStorage unchanged:               true
+IndexedDB unchanged:                  true
+raw activation_v2 in memory_context:  false
+raw evidence in request:              false
+raw candidate signature in request:   false
+```
+
+The normal Memory Relevance Gate was allowed to select both the trusted and weak legacy record, but V2 semantic context admitted only the trust-ready record. This is the intended #849 seam behavior.
+
+This closes the remaining live Chat blockers:
+
+- `live_readonly_chat_proof = true`
+- `live_readonly_chat_sample_count = 3`
+- `no_persistence_write_observed = true`
+- `no_authority_leak_observed = true`
+
+## Production bug discovered and repaired during proof
+
+The first browser attempt revealed a real production bootstrap defect before any Chat proof was counted:
+
+`ahaChatProviderLoader.js` attempted to add `buildMetaProfile` to a frozen/non-extensible `InsightsEngine` object.
+
+PR #851 replaced that mutation with a stable, frozen compatibility view that inherits the provider and supplies only the missing legacy seam. All four normal repo gates passed before it was merged. Final PR #852 then proved the repaired deployed runtime.
+
+## Rollback readiness remains proven
+
+PR #846 locks any future controlled pilot to the already production-proven `AHAInsightActivationV2` one-record flow.
+
+Existing rollback proof:
 
 ```text
 workflow run:    32369823544
 workflow job:    96427555521
 artifact id:     9406690486
 artifact digest: sha256:711124204415c7082987c79cd99e64000a68a001ff0d5db3d990272b2a12e305
-production main: ed1db452088232146702fabdf9f9543bb9f0d959
-frontend:        https://paradispartiet.github.io/AHA-EchoNet
 rollback status: rolled_back
 repository calls: 0 save / 0 load
 ```
 
-The proof added exactly one signed local V2 Chamber record next to a sentinel record, blocked both sync directions before repository access, then removed only the V2 record through signature-bound rollback and preserved the sentinel.
-
-The only allowed future pilot scope is:
+The future pilot boundary remains:
 
 ```text
 single_local_chamber_insight
@@ -125,85 +170,48 @@ automatic backfill = false
 projection-store write = false
 ```
 
-Rollback readiness is only a prerequisite. It does not activate a pilot.
+## Gate state
 
-## Migration rehearsal boundary
-
-The production-deployed operator surface is:
-
-`v2-production-migration-rehearsal.html?ahaV2ProductionRehearsal=1`
-
-It uses the separate IndexedDB database:
-
-`aha_v2_backfill_staging_v1`
-
-Required sequence:
-
-1. read existing Chamber insights only;
-2. run zero-write dry-run;
-3. operator reviews redacted counts;
-4. exact confirmation token is entered;
-5. apply only to `v2_backfill_staging`;
-6. identical second apply must produce zero writes;
-7. exact rollback must return staging count to zero;
-8. evidence must contain no raw Chamber payload or raw insight text.
-
-The page never writes Chamber, Lists, Paths, Mindmap, Meta, canonical storage or remote storage. It performs no network request.
-
-The operator surface is deployed and hash-verified, but it has not yet been executed against real browser-local Chamber data. Therefore both migration production-proof fields remain false.
-
-## Current blockers
-
-The gate remains NO-GO until all of the following are production-proven:
-
-- representative migration dry-run has been run and reviewed on the deployed operator surface;
-- bounded IndexedDB staging apply + idempotent replay + exact rollback has been proven live;
-- at least three live read-only Chat samples have been verified;
-- those live samples show zero unintended persistence writes;
-- those live samples show zero V2 authority leaks.
-
-Deployment parity and production rollback readiness are no longer blockers.
-
-## What a fully green gate means
-
-A fully green `AHAV2ProductionWriteGate` decision is:
-
-`CONTROLLED_WRITE_PILOT_ELIGIBLE`
-
-That wording is deliberate. Even a green gate does **not** by itself activate:
-
-- normal Chat V2 persistence;
-- automatic legacy backfill;
-- automatic Chamber activation;
-- broad canonical writes;
-- projection writes into Lists, Paths or Mindmaps;
-- Meta write authority.
-
-A separate explicit activation PR is still required for a narrowly scoped controlled write pilot.
-
-## Runtime state after PR #842
-
-V2 semantic context may enter Chat only when all three runtime conditions are true:
+The production decision gate now has no missing evidence blockers:
 
 ```text
-useExistingMemory == true
-saveNewInsights == false
-memory_context.used == true
+required checks: 12
+passed:          12
+failed:           0
+blocking reasons: []
 ```
 
-The V2 context is built only from the already-selected Memory Relevance Gate insights. It performs no additional Chamber load for V2. If V2 dependencies fail to load or no selected insight is V2 trust-ready, the V2 context is omitted and normal Chat continues without it.
+The gate itself remains pure and read-only. Every individual requirement is regression-tested to fail closed back to `NO_GO` if its evidence disappears or deployment SHA equality is broken.
+
+## What remains closed
+
+A green decision does **not** activate any of the following:
+
+```text
+normal Chat V2 persistence       CLOSED
+automatic legacy backfill        CLOSED
+automatic Chamber activation     CLOSED
+broad canonical V2 writes        CLOSED
+projection-store writes          CLOSED
+Meta writes                      CLOSED
+remote V2 writes                 CLOSED
+```
 
 ## Next production work
 
-The remaining correct sequence is:
+The next phase is no longer another production-evidence collection round. The next valid step is a **separate, narrowly scoped controlled-write pilot activation PR**.
 
-1. run and review the deployed block-9 migration dry-run;
-2. perform the deployed IndexedDB staging apply + idempotent replay + exact rollback rehearsal;
-3. run at least three live read-only Chat canaries with saving disabled;
-4. inspect storage/audit state and confirm no unintended write or authority escalation;
-5. refresh the evidence JSON and re-evaluate the production write gate;
-6. only after `CONTROLLED_WRITE_PILOT_ELIGIBLE`, propose a separate narrowly scoped write-pilot activation PR.
+That PR must:
 
-Until then, the correct status is:
+1. use the already proven `AHAInsightActivationV2` path;
+2. permit at most one local Chamber insight per controlled activation;
+3. require explicit operator/manual activation;
+4. preserve signature-bound exact rollback;
+5. keep backend sync, remote persistence, Meta, projections, automatic backfill and normal Chat saving disabled;
+6. contain its own activation/rollback verification and kill switch.
 
-> **V2 build complete. Read-only runtime is deployed. Deployment parity and rollback readiness are proven. Migration rehearsal and live Chat canaries remain. Normal V2 persistence: NO-GO.**
+Only evidence from that pilot may justify discussing a later expansion. It must not be interpreted as permission to open normal V2 persistence.
+
+Current status:
+
+> **Insight Engine V2 build: 9/9 complete. Production decision gate: 12/12 green. Controlled write pilot: eligible for a separate activation PR. Normal V2 persistence: CLOSED.**
