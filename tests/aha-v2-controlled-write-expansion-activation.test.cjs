@@ -17,6 +17,7 @@ assert.equal(api.ACTIVATION_SCHEMA, "aha_v2_controlled_write_expansion_activatio
 assert.equal(api.EXPANSION_ENABLED, true);
 assert.equal(api.OPERATOR_INTENT, "bounded_local_chamber_two_record_candidate_v1");
 assert.equal(api.MAX_RECORDS, 2);
+assert.equal(api.ROLLBACK_LOCK_NAME, "aha-v2-controlled-write-expansion-rollback-v1");
 
 const expansionEvidence = JSON.parse(fs.readFileSync("ops/evidence/aha-v2-controlled-write-expansion-gate-current-v1.json", "utf8"));
 const oneRecordPilotProof = JSON.parse(fs.readFileSync("ops/evidence/aha-v2-controlled-write-pilot-live-proof-v1.json", "utf8"));
@@ -109,10 +110,10 @@ assert.throws(
   /expansion_live_proof_invalid/
 );
 
-const missingDigest = clone(expansionLiveProof);
-missingDigest.browser_boundary.indexeddb_unchanged = false;
+const missingBrowserBoundary = clone(expansionLiveProof);
+missingBrowserBoundary.browser_boundary.indexeddb_unchanged = false;
 assert.throws(
-  () => api.assessAuthorization({ ...currentInput, expansionLiveProof: missingDigest }),
+  () => api.assessAuthorization({ ...currentInput, expansionLiveProof: missingBrowserBoundary }),
   /expansion_live_proof_browser_boundary_invalid/
 );
 
@@ -134,8 +135,8 @@ const policy = api.policy();
 assert.equal(policy.max_chamber_records_created, 2);
 assert.equal(policy.activation_mode, "manual_sequential");
 assert.equal(policy.lifetime_budget_persists_after_rollback, true);
-assert.equal(policy.rollback_cross_instance_serialized, true);
-assert.equal(policy.rollback_lock_name, "aha-v2-controlled-write-expansion-rollback-v1");
+assert.equal(policy.cross_instance_rollback_serialization_required, true);
+assert.equal(policy.cross_instance_rollback_serialization, "web_locks_exclusive");
 for (const key of [
   "automatic_activation_open",
   "batch_activation_open",
