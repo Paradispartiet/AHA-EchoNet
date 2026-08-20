@@ -1,0 +1,30 @@
+{
+  "schema": "aha_semantic_live_corpus_source_temp_v1",
+  "version": 1,
+  "cases": [
+    {
+      "id": "constraints_creativity_live_v1",
+      "text": "En scenograf får et ferdig dramatisk innhold og faste praktiske rammer. Likevel varierer hun uttrykket fra detaljrike tegninger til enkle tekstflater. Eksemplet antyder at begrensninger ikke bare reduserer kunstnerisk frihet; de kan flytte kreativiteten over i valg av form og teknikk."
+    },
+    {
+      "id": "question_not_claim_live_v1",
+      "text": "Hvorfor oppstår offentlighet? Offentlighet gjør politisk handling synlig for andre, men teksten sier ikke at synlighet alene skaper demokratisk deltakelse."
+    },
+    {
+      "id": "correlation_not_causation_live_v1",
+      "text": "I tre bydeler økte både tredekning og rapportert trivsel i samme periode. Materialet viser samvariasjon, men gir ingen dokumentasjon på at flere trær forårsaket høyere trivsel. Andre endringer i områdene kan ha påvirket begge deler."
+    },
+    {
+      "id": "entity_concept_ambiguity_live_v1",
+      "text": "Apple lanserte et nytt verktøy for personvern. I teksten er Apple navnet på selskapet, mens personvern er et begrep som beskriver beskyttelse av personopplysninger."
+    },
+    {
+      "id": "historical_argument_live_v1",
+      "text": "Et museum viser skisser av scenografen Lea Berg fra tre oppsetninger ved Nordteatret. I den første bruker hun realistiske interiører, i den andre tomme flater og projisert tekst, og i den tredje flyttbare konstruksjoner. Kuratoren argumenterer for at variasjonen ikke skyldes mangel på stil, men at Berg lar formen følge den dramaturgiske oppgaven. Utstillingen brukes dermed som eksempel på at en konsistent kunstnerisk metode kan gi svært ulike visuelle uttrykk."
+    },
+    {
+      "id": "personal_reflection_live_v1",
+      "text": "Jeg merker at jeg lærer bedre når jeg skriver korte forklaringer etter å ha lest. Det er en personlig observasjon, ikke bevis for at metoden virker for andre. Jeg vil teste om effekten holder seg når stoffet blir vanskeligere."
+    }
+  ]
+}
