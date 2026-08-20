@@ -1,0 +1,30 @@
+name: Insight Synthesis V2 delegation post-fix live gold temp
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - scripts/insight-synthesis-v2-delegation-postfix-live-gold-temp.cjs
+      - .github/workflows/insight-synthesis-v2-delegation-postfix-live-gold-temp.yml
+
+permissions:
+  contents: read
+
+jobs:
+  measure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+      - name: Measure delegation post-fix V2 twice
+        run: node scripts/insight-synthesis-v2-delegation-postfix-live-gold-temp.cjs
+      - name: Upload delegation post-fix measurement
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: insight-synthesis-v2-delegation-postfix-live-gold
+          path: v2-delegation-postfix-results/*.json
+          if-no-files-found: error
+          retention-days: 2
