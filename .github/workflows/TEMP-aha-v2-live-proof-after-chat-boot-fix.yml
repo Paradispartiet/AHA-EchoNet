@@ -19,11 +19,33 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ env.EXPECTED_MAIN }}
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+
+      - name: Prove TEMP branch is product-identical to expected main
+        run: |
+          set -euo pipefail
+          mkdir -p probe-evidence
+          merge_base="$(git merge-base "$EXPECTED_MAIN" HEAD)"
+          [[ "$merge_base" == "$EXPECTED_MAIN" ]]
+
+          mapfile -t changed < <(git diff --name-only "$EXPECTED_MAIN"...HEAD | sort)
+          expected=(
+            ".github/workflows/TEMP-aha-v2-live-proof-after-chat-boot-fix.yml"
+            "scripts/TEMP-aha-v2-live-proof-after-chat-boot-fix.mjs"
+          )
+          [[ ${#changed[@]} -eq ${#expected[@]} ]]
+          for i in "${!expected[@]}"; do
+            [[ "${changed[$i]}" == "${expected[$i]}" ]]
+          done
+
+          printf '{\n  "schema":"aha_v2_temp_probe_isolation_v1",\n  "expected_main":"%s",\n  "probe_head":"%s",\n  "merge_base":"%s",\n  "product_diff_count":0,\n  "temp_files":["%s","%s"]\n}\n' \
+            "$EXPECTED_MAIN" "$(git rev-parse HEAD)" "$merge_base" "${expected[0]}" "${expected[1]}" \
+            > probe-evidence/temp-probe-isolation.json
 
       - name: Prove deployed GitHub Pages commit and runtime hashes
         env:
@@ -31,7 +53,6 @@ jobs:
           REPOSITORY: ${{ github.repository }}
         run: |
           set -euo pipefail
-          mkdir -p probe-evidence
           latest_json=''
           pages_commit=''
           pages_status=''
@@ -67,7 +88,7 @@ jobs:
           printf '{\n  "schema":"aha_v2_live_pages_parity_v2",\n  "expected_main":"%s",\n  "pages_commit":"%s",\n  "pages_status":"%s",\n  "assets":[\n' "$EXPECTED_MAIN" "$pages_commit" "$pages_status" > probe-evidence/pages-parity.json
           first=1
           for asset in "${assets[@]}"; do
-            expected_sha="$(sha256sum "$asset" | awk '{print $1}')"
+            expected_sha="$(git show "$EXPECTED_MAIN:$asset" | sha256sum | awk '{print $1}')"
             tmp="$(mktemp)"
             curl -fsSL -H "Cache-Control: no-cache" "${PAGES_ORIGIN}/${asset}?aha_v2_live_fix=${GITHUB_RUN_ID}" > "$tmp"
             actual_sha="$(sha256sum "$tmp" | awk '{print $1}')"
