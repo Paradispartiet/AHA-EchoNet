@@ -421,6 +421,39 @@
       </article>`;
   }
 
+  function projectionStageLabel(stage) {
+    return { orientation: "Kilde og påstand", comparison: "Sammenligning", synthesis: "Syntese og neste spørsmål" }[stage] || "Undersøkelse";
+  }
+
+  function renderProjectionPathPreviews() {
+    const shell = document.getElementById("v2-path-preview-shell");
+    const mount = document.getElementById("v2-path-previews");
+    if (!shell || !mount) return;
+    const model = global.AHAProjectionRuntimeSourceV2?.build?.();
+    const candidates = model?.status === "ready" && model?.validation?.valid === true
+      ? asArray(model?.surfaces?.paths)
+      : [];
+    shell.hidden = candidates.length === 0;
+    if (!candidates.length) {
+      mount.replaceChildren();
+      return;
+    }
+    mount.innerHTML = candidates.map((path) => {
+      const score = Number(path?.quality?.score);
+      const quality = Number.isFinite(score) ? `${Math.round(score * 100)} % kvalitetsport` : "Kvalitetsgodkjent";
+      const steps = asArray(path.steps).slice().sort((a, b) => a.order - b.order).map((step) => `<li class="aha-v2-path-step">
+        <span>${step.order + 1}</span><div><small>${escapeHtml(projectionStageLabel(step.meta?.stage))}</small><strong>${escapeHtml(step.title)}</strong><p>${escapeHtml(step.narrative)}</p><p class="aha-path-step-outcome"><strong>Læringspunkt:</strong> ${escapeHtml(step.learningOutcome)}</p></div>
+      </li>`).join("");
+      return `<article class="aha-v2-path-preview-card" data-v2-path-preview="${escapeHtml(path.id)}">
+        <div class="aha-path-header"><div><p class="aha-path-card-kicker">Semantisk læringssti</p><h3>${escapeHtml(path.title)}</h3></div><span class="aha-path-badge">${renderStepCount(path.steps.length)}</span></div>
+        <p>${escapeHtml(path.description)}</p>
+        <p class="aha-path-goal"><strong>Mål:</strong> ${escapeHtml(path.goal)}</p>
+        <ol class="aha-v2-path-steps">${steps}</ol>
+        <div class="aha-path-meta"><span>${escapeHtml(quality)}</span><span>Ikke lagret</span><span>Read-only</span></div>
+      </article>`;
+    }).join("");
+  }
+
   function renderSelectedPreview(path, availableItems, groups) {
     if (!path) {
       return `<aside class="aha-panel aha-path-preview aha-path-preview-empty" aria-label="Path preview">
@@ -682,6 +715,7 @@
 
   function render() {
     try {
+      renderProjectionPathPreviews();
       renderContent();
     } catch {
       selectedPathId = "";
@@ -807,6 +841,7 @@
     collectAvailablePathItems,
     buildAvailableStepIndex,
     validatePathStepReference,
+    renderProjectionPathPreviews,
     isDatabaseSyncEnabled,
     selectPath(id) {
       selectedPathId = asText(id, "");

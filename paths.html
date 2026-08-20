@@ -16,6 +16,13 @@
       <header class="aha-module-shell-header"><div><p class="eyebrow">AHA kunnskapsstruktur</p><h1 id="paths-module-title">Kunnskapsstier</h1><p class="aha-module-purpose">Bygg narrative forløp og læringsreiser i tydelige trinn. Hvert steg kan forklare hva det betyr, hvorfor det følger, og hva du skal sitte igjen med.</p></div><span id="aha-module-health" class="aha-module-health-badge aha-module-health-unknown" role="status" aria-label="Kunnskapsstier: Unknown"><span>Unknown</span></span></header>
       <div class="aha-module-actions" aria-label="Paths actions"><a class="aha-tile-btn aha-tile-btn-primary" href="#paths-create">Lag sti</a><button id="paths-refresh" class="aha-tile-btn" type="button">Oppdater</button><a class="aha-tile-btn" href="index.html">Tilbake til AHA Home</a></div>
     </section>
+    <section id="v2-path-preview-shell" class="aha-panel aha-v2-path-shell" aria-labelledby="v2-path-preview-title" hidden>
+      <div class="aha-v2-path-heading">
+        <div><p class="eyebrow">AHA V2 · skrivebeskyttet forslag</p><h2 id="v2-path-preview-title">AHA foreslår læringsstier</h2><p>Hver sti har en kontrollert progresjon fra kildeorientering til sammenligning og syntese. Forslagene er ikke lagret.</p></div>
+        <span class="aha-v2-path-preview-badge">Preview</span>
+      </div>
+      <div id="v2-path-previews" class="aha-v2-path-preview-grid" aria-live="polite"></div>
+    </section>
     <section id="paths-create" class="aha-panel">
       <h2>Lag sti</h2>
       <form id="path-create-form" class="aha-path-form">
@@ -35,6 +42,15 @@
   <script src="js/ahaModules.js"></script>
   <script src="js/ahaContracts.js"></script>
   <script src="js/ahaGroups.js"></script>
+  <script src="js/ahaInsightRelationClassifierV2.js"></script>
+  <script src="js/ahaInsightSaturationV2.js"></script>
+  <script src="js/ahaKnowledgeMigrationV2.js"></script>
+  <script src="js/ahaSemanticProjectionsV2.js"></script>
+  <script src="js/ahaV2ProductIntegrationGate.js"></script>
+  <script src="js/ahaProjectionProductContractV2.js"></script>
+  <script src="js/ahaProjectionArtifactQualityV2.js"></script>
+  <script src="js/ahaProjectionProductReadModelV2.js"></script>
+  <script src="js/ahaProjectionRuntimeSourceV2.js"></script>
   <script src="js/ahaPaths.js"></script>
   <script src="js/ahaOrganizationRoles.js"></script>
   <script src="js/ahaOrganizationFlow.js"></script>
