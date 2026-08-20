@@ -26,7 +26,9 @@
   // live constraints/creativity source states that relation literally. Generic
   // before/after wording remains excluded.
   const EXPLICIT_CAUSAL_SOURCE = /\b(fordi|forårsaker|forårsaket|fører til|førte til|gjør at|gjorde at|resulterer i|resulterte i|på grunn av|som følge av|derfor|kan\s+flytte|causes?|caused|leads? to|led to|results? in|because)\b/i;
-  const ANTI_CAUSAL_SOURCE = /\b(peker\s+ikke\s+ut|fastslår\s+ikke|viser\s+ikke|identifiserer\s+ikke|kan\s+ikke\s+fastslå|uten\s+å\s+fastslå)[^.!?]{0,160}\b(årsak|årsaken|kausal|kausalitet|forårsaker)\b/i;
+  // Do not use ASCII-style \b around Norwegian words such as "årsak": in JavaScript
+  // \b is based on ASCII \w semantics and can miss boundaries before letters like å.
+  const ANTI_CAUSAL_SOURCE = /(?:peker\s+ikke\s+ut|fastslår\s+ikke|viser\s+ikke|identifiserer\s+ikke|kan\s+ikke\s+fastslå|uten\s+å\s+fastslå)[^.!?]{0,160}(?:årsak|årsaken|kausal|kausalitet|forårsaker)/i;
 
   function clone(value) {
     return value == null ? value : JSON.parse(JSON.stringify(value));
