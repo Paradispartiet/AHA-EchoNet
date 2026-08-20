@@ -14,6 +14,7 @@
       memoryConceptLabel,
       buildUserMetaProfile
     } = deps;
+    let v2ModuleLoadPromise = null;
 
     function buildAIState(options = {}) {
       if (options?.includeMemory === false) {
@@ -133,6 +134,77 @@
       };
     }
 
+    function readChatMemoryControlState() {
+      const chat = global.AHAChat;
+      if (!chat || typeof chat.isAhaSavingEnabled !== "function" || typeof chat.isAhaMemoryUseEnabled !== "function") {
+        return { available: false, savingEnabled: true, memoryUseEnabled: false };
+      }
+      try {
+        return {
+          available: true,
+          savingEnabled: chat.isAhaSavingEnabled() !== false,
+          memoryUseEnabled: chat.isAhaMemoryUseEnabled() !== false
+        };
+      } catch {
+        return { available: false, savingEnabled: true, memoryUseEnabled: false };
+      }
+    }
+
+    function selectedMemoryInsights(memoryContext) {
+      return (Array.isArray(memoryContext?.selectedInsights) ? memoryContext.selectedInsights : [])
+        .map((entry) => entry?.insight && typeof entry.insight === "object" ? entry.insight : entry)
+        .filter((entry) => entry && typeof entry === "object");
+    }
+
+    async function ensureV2ChatReadOnlyContextApi() {
+      if (global.AHAV2ChatReadOnlyContext?.build) return global.AHAV2ChatReadOnlyContext;
+      if (v2ModuleLoadPromise) return v2ModuleLoadPromise;
+      const base = global.document?.baseURI || global.location?.href || "";
+      if (!base || typeof URL !== "function") return null;
+      const modulePaths = [
+        "js/ahaInsightRelationClassifierV2.js",
+        "js/ahaInsightSaturationV2.js",
+        "js/ahaKnowledgeMigrationV2.js",
+        "js/ahaSemanticProjectionsV2.js",
+        "js/ahaV2ProductIntegrationGate.js",
+        "js/ahaV2ChatReadOnlyContext.js"
+      ];
+      v2ModuleLoadPromise = (async () => {
+        for (const path of modulePaths) {
+          await import(new URL(path, base).href);
+        }
+        return global.AHAV2ChatReadOnlyContext?.build ? global.AHAV2ChatReadOnlyContext : null;
+      })().catch((error) => {
+        global.console?.warn?.("AHA V2 read-only Chat context kunne ikke lastes", error?.message || error);
+        return null;
+      });
+      return v2ModuleLoadPromise;
+    }
+
+    async function buildAutomaticV2SemanticContext(message, options = {}) {
+      if (options?.semanticContextV2) return options.semanticContextV2;
+      const memoryContext = options?.memoryContext?.used ? options.memoryContext : null;
+      if (!memoryContext) return null;
+      const controls = readChatMemoryControlState();
+      if (!controls.available || controls.savingEnabled !== false || controls.memoryUseEnabled !== true) return null;
+      const insights = selectedMemoryInsights(memoryContext);
+      if (!insights.length) return null;
+      const builder = await ensureV2ChatReadOnlyContextApi();
+      if (!builder?.build) return null;
+      try {
+        const built = builder.build({
+          source_text: message,
+          legacy_insights: insights,
+          memory_allowed: true,
+          persistence_disabled: true
+        });
+        return built?.used === true ? built : null;
+      } catch (error) {
+        global.console?.warn?.("AHA V2 read-only Chat context ble droppet", error?.message || error);
+        return null;
+      }
+    }
+
     function buildAgentRequestBody(message, options = {}) {
       const memoryContext = options?.memoryContext?.used ? options.memoryContext : null;
       const personalContext = options?.personalContext && typeof options.personalContext === "object"
@@ -160,10 +232,14 @@
     async function askAhaAgent(message, options = {}) {
       const apiBase = String(getApiBase() || "").trim().replace(/\/$/, "");
       if (!apiBase) throw new Error("missing_api_base");
+      const semanticContextV2 = await buildAutomaticV2SemanticContext(message, options);
+      const requestOptions = semanticContextV2 === options?.semanticContextV2
+        ? options
+        : { ...options, semanticContextV2 };
       const response = await fetchImpl(`${apiBase}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(buildAgentRequestBody(message, options))
+        body: JSON.stringify(buildAgentRequestBody(message, requestOptions))
       });
       if (!response.ok) throw new Error(`chat_http_${response.status}`);
       return response.json();
@@ -173,6 +249,10 @@
       buildAIState,
       buildPersonalContextPayload,
       buildV2SemanticContextPayload,
+      readChatMemoryControlState,
+      selectedMemoryInsights,
+      ensureV2ChatReadOnlyContextApi,
+      buildAutomaticV2SemanticContext,
       buildAgentRequestBody,
       askAhaAgent
     });
