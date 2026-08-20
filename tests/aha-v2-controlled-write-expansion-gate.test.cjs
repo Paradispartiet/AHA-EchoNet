@@ -51,6 +51,7 @@ assert.equal(scope.scope_fingerprint, "ee6952eef3517af8a868c83e4424125c70591af42
 const evidenceRequirements = [
   ["multi_record_rollback_rehearsal_proven", "multi_record_rollback_proof_missing"],
   ["rollback_each_record_exactly_bound", "multi_record_rollback_proof_missing"],
+  ["unrelated_chamber_records_preserved", "multi_record_rollback_proof_missing"],
   ["partial_failure_compensation_proven", "partial_failure_compensation_proof_missing"],
   ["compensation_restores_exact_pre_run_state", "partial_failure_compensation_proof_missing"],
   ["idempotent_multi_record_replay_proven", "idempotent_multi_record_replay_proof_missing"],
@@ -61,10 +62,10 @@ const evidenceRequirements = [
   ["deployment_commit_matches_candidate_main", "expansion_deploy_parity_missing"],
   ["no_unexpected_persistence_write_observed", "expansion_no_write_observation_missing"],
   ["no_authority_leak_observed", "expansion_authority_leak_observation_missing"],
-  ["production_evidence_redacted", "expansion_redacted_evidence_missing"],
-  ["current_one_record_pilot_budget_unchanged", "current_one_record_pilot_boundary_changed"],
-  ["separate_activation_pr_required", "expansion_activation_boundary_missing"],
-  ["fresh_post_activation_production_proof_required", "expansion_activation_boundary_missing"]
+  ["production_evidence_redacted", "expansion_proof_redaction_missing"],
+  ["current_one_record_pilot_budget_unchanged", "current_pilot_boundary_not_preserved"],
+  ["separate_activation_pr_required", "current_pilot_boundary_not_preserved"],
+  ["fresh_post_activation_production_proof_required", "current_pilot_boundary_not_preserved"]
 ];
 for (const [field, expectedBlocker] of evidenceRequirements) {
   const value = clone(evidence);
@@ -73,6 +74,20 @@ for (const [field, expectedBlocker] of evidenceRequirements) {
   assert.equal(result.decision, "NO_GO", `${field} must fail closed`);
   assert.ok(Array.from(result.blocking_reasons).includes(expectedBlocker), `${field} should report ${expectedBlocker}`);
 }
+
+for (const field of ["raw_source_text_in_evidence", "raw_evidence_quotes_in_evidence", "signatures_in_evidence"]) {
+  const value = clone(evidence);
+  value[field] = true;
+  const result = gate.evaluate({ evidence: value, one_record_pilot_proof: oneRecordProof });
+  assert.equal(result.decision, "NO_GO", `${field} must fail closed`);
+  assert.ok(Array.from(result.blocking_reasons).includes("expansion_proof_redaction_missing"));
+}
+
+const badMax = clone(evidence);
+badMax.current_one_record_pilot_max_records = 2;
+const badMaxResult = gate.evaluate({ evidence: badMax, one_record_pilot_proof: oneRecordProof });
+assert.equal(badMaxResult.decision, "NO_GO");
+assert.ok(Array.from(badMaxResult.blocking_reasons).includes("current_pilot_boundary_not_preserved"));
 
 const unsafeScope = clone(evidence);
 unsafeScope.expansion_scope_contract.max_chamber_records_created = 3;
@@ -96,7 +111,7 @@ const brokenBaseline = clone(oneRecordProof);
 brokenBaseline.status = "invalid";
 const brokenBaselineResult = gate.evaluate({ evidence, one_record_pilot_proof: brokenBaseline });
 assert.equal(brokenBaselineResult.decision, "NO_GO");
-assert.ok(Array.from(brokenBaselineResult.blocking_reasons).includes("one_record_pilot_proof_missing_or_invalid"));
+assert.ok(Array.from(brokenBaselineResult.blocking_reasons).includes("one_record_pilot_proof_not_ready"));
 
 assert.doesNotMatch(source, /localStorage\.|sessionStorage\.|indexedDB\.|fetch\(|XMLHttpRequest|saveChamber|setItem\(|removeItem\(/u);
 assert.match(source, /current_one_record_pilot_max_records: 1/u);
