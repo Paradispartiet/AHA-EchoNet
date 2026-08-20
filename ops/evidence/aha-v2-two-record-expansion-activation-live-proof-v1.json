@@ -110,9 +110,18 @@
     "depends_on_invalidated_two_record_proof": true,
     "historical_gate_evidence_bytes_are_current": false,
     "historical_two_record_proof_bytes_are_current": false,
+    "cross_instance_rollback_serialization_missing": true,
+    "deployed_execution_byte_binding_missing": true,
+    "unrelated_sentinel_full_content_check_missing": true,
     "fresh_corrected_gate_proof_required": true,
+    "activation_runtime_hardening_required_before_reauthorization": true,
     "fresh_post_gate_activation_proof_required": true,
-    "reason": "PR #863 authorized against the #860-derived 12/12 gate state that post-merge review later invalidated; PR #864 permanentized that downstream observation before the upstream invalidation was applied."
+    "review_threads": [
+      "PRRT_kwDOQgS1AM6a9LzR",
+      "PRRT_kwDOQgS1AM6a9Pio",
+      "PRRT_kwDOQgS1AM6a9Pis"
+    ],
+    "reason": "PR #863 authorized against the #860-derived 12/12 gate state that post-merge review later invalidated. Additional review found that concurrent cross-tab rollbacks need cross-instance serialization, that the activation proof did not hash-bind the exact controller bytes refetched for execution after the parity step, and that sentinel preservation was asserted by ID rather than full record contents. PR #864 permanentized the downstream observation before these invalidations were applied."
   },
   "policy": {
     "normal_chat_persistence_open": false,
