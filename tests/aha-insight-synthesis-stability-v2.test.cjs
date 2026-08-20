@@ -106,6 +106,29 @@ async function run() {
   preserved.candidates[0].uncertainty = "Materialet peker ikke ut ett enkelt tiltak som årsak.";
   assert.equal(stability.validateStabilitySynthesis(preserved, mixedUseSource).ok, true);
 
+  {
+    const modularitySource = "Da to utviklingsteam stadig endret den samme monolittiske kodebasen, ble små leveranser ofte forsinket av koordinering. Etter at systemet ble delt i moduler med tydelige grensesnitt, kunne flere lokale endringer gjøres uavhengig. Samtidig oppstod en større andel av feilene i antakelsene teamene gjorde om grensesnittene mellom modulene.";
+    const modularityCandidate = {
+      insight: "Moduler er forbundet med uavhengige lokale endringer samtidig som feil samler seg ved grensesnittene.",
+      abstraction: "Kobler lokal uavhengighet og grensesnittfeil.",
+      uncertainty: "",
+      evidence: [
+        { quote: "Etter at systemet ble delt i moduler med tydelige grensesnitt, kunne flere lokale endringer gjøres uavhengig." },
+        { quote: "Samtidig oppstod en større andel av feilene i antakelsene teamene gjorde om grensesnittene mellom modulene." }
+      ]
+    };
+    const missingPremise = stability.validateStabilitySynthesis({ candidates: [modularityCandidate] }, modularitySource);
+    assert.equal(missingPremise.ok, false);
+    assert.ok(missingPremise.errors.includes("candidate:0:source_evidence_premise_not_preserved:coordination_delay"));
+    const covered = structuredClone(modularityCandidate);
+    covered.evidence.unshift({ quote: "Da to utviklingsteam stadig endret den samme monolittiske kodebasen, ble små leveranser ofte forsinket av koordinering." });
+    assert.equal(stability.validateStabilitySynthesis({ candidates: [covered] }, modularitySource).ok, true);
+    const correction = stability.retryInstruction(missingPremise.errors);
+    assert.match(correction, /MANDATORY EVIDENCE CORRECTION/i);
+    assert.match(correction, /exactly three distinct evidence quotes/i);
+    assert.match(correction, /forsinket av koordinering/i);
+  }
+
   const endpointUrl = `${pathToFileURL(path.resolve("server/ahaSemanticModelEndpoint.js")).href}?stability=${Date.now()}`;
   const { createSemanticModelHandler } = await import(endpointUrl);
 
@@ -230,6 +253,56 @@ async function run() {
     assert.equal(res.statusCode, 200);
     assert.equal(calls, 2);
     assert.match(res.body.synthesis.candidates[0].uncertainty, /peker ikke ut ett enkelt tiltak som årsak/i);
+  }
+
+  {
+    const modularitySource = "Da to utviklingsteam stadig endret den samme monolittiske kodebasen, ble små leveranser ofte forsinket av koordinering. Etter at systemet ble delt i moduler med tydelige grensesnitt, kunne flere lokale endringer gjøres uavhengig. Samtidig oppstod en større andel av feilene i antakelsene teamene gjorde om grensesnittene mellom modulene.";
+    const modularityContext = {
+      entities: [],
+      concepts: [{ label: "moduler" }, { label: "grensesnitt" }, { label: "koordinering" }],
+      source_claims: [
+        { text: "Da to utviklingsteam stadig endret den samme monolittiske kodebasen, ble små leveranser ofte forsinket av koordinering." },
+        { text: "Etter at systemet ble delt i moduler med tydelige grensesnitt, kunne flere lokale endringer gjøres uavhengig." },
+        { text: "Samtidig oppstod en større andel av feilene i antakelsene teamene gjorde om grensesnittene mellom modulene." }
+      ],
+      relations: []
+    };
+    const modularityCandidate = {
+      insight: "Moduler er forbundet med uavhengige lokale endringer samtidig som feil samler seg ved grensesnittene.",
+      type: "tension",
+      abstraction: "Kobler lokal uavhengighet og grensesnittfeil med det tidligere koordineringspremisset.",
+      evidence: [
+        { quote: "Etter at systemet ble delt i moduler med tydelige grensesnitt, kunne flere lokale endringer gjøres uavhengig.", role: "supports" },
+        { quote: "Samtidig oppstod en større andel av feilene i antakelsene teamene gjorde om grensesnittene mellom modulene.", role: "supports" }
+      ],
+      why_it_matters: "Synliggjør både lokal uavhengighet og grensesnittkostnaden.",
+      confidence: "high",
+      uncertainty: "",
+      causal_status: "not_causal"
+    };
+    let calls = 0;
+    const captured = [];
+    const handler = createSemanticModelHandler({
+      hasOpenAIKey: true,
+      model: "gpt-test",
+      openai: { responses: { create: async (req) => {
+        calls += 1;
+        captured.push(req);
+        const candidate = structuredClone(modularityCandidate);
+        if (calls > 1) {
+          candidate.evidence.unshift({
+            quote: "Da to utviklingsteam stadig endret den samme monolittiske kodebasen, ble små leveranser ofte forsinket av koordinering.",
+            role: "supports"
+          });
+        }
+        return { id: `modularity_${calls}`, model: "gpt-test", output_parsed: { schema: "aha_insight_synthesis_output_v2", candidates: [candidate] } };
+      } } }
+    });
+    const res = await invoke(handler, { format: "aha_insight_synthesis_output_v2", text: modularitySource, semantic_context: modularityContext });
+    assert.equal(res.statusCode, 200);
+    assert.equal(calls, 2);
+    assert.match(captured[1].input[0].content, /MANDATORY EVIDENCE CORRECTION/i);
+    assert.equal(res.body.synthesis.candidates[0].evidence.length, 3);
   }
 
   {
