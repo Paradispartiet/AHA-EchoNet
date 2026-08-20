@@ -8,7 +8,7 @@ The bounded Insight Engine V2 write pilot is now **production-verified** on GitH
 
 The production decision gate remains `CONTROLLED_WRITE_PILOT_ELIGIBLE` with 12/12 required checks green. PR #854 added the separate fail-closed pilot authority, PR #855 tightened no-intent browser boot, and temporary PR #856 proved the deployed flow end to end before being closed without merge.
 
-Activation code is not considered production-proven merely because repo CI is green. The production-verified status comes from the separate deployed GitHub Pages/browser proof in PR #856.
+Activation code is not considered production-proven merely because repo CI is green. The temporary workflow must be closed without merge after proof capture; only redacted permanent evidence may be merged. The production page without operator intent remains closed. A post-rollback second activation attempt remains blocked. The production-verified status comes from the separate deployed GitHub Pages/browser proof in PR #856.
 
 This does **not** mean normal V2 persistence is open.
 
