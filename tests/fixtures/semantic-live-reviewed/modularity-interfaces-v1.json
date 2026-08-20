@@ -1,0 +1,74 @@
+{
+  "schema":"aha_semantic_gold_fixture_v1",
+  "id":"modularity_interfaces_live_v1",
+  "source_event_id":"modularity_interfaces_live_v1",
+  "source_text":"Da to utviklingsteam stadig endret den samme monolittiske kodebasen, ble små leveranser ofte forsinket av koordinering. Etter at systemet ble delt i moduler med tydelige grensesnitt, kunne flere lokale endringer gjøres uavhengig. Samtidig oppstod en større andel av feilene i antakelsene teamene gjorde om grensesnittene mellom modulene.",
+  "provenance":{"kind":"live_production_capture","captured_at":"2026-08-20T02:13:41Z","model":"gpt-4.1-mini-2025-04-14","response_id":"resp_0a08eef1d376320a006a8662c9812087d2bbd3e6acdc548d80","workflow_run_id":32323809783,"workflow_job_id":96290941159,"endpoint_path":"/api/aha-agent/semantic-document","successful_attempt":4},
+  "gold":{
+    "entities":[
+      {"label":"utviklingsteam","entity_type":"other","aliases":[]},
+      {"label":"kodebase","entity_type":"other","aliases":["kodebasen","monolittiske kodebasen","monolitisk kodebase"]},
+      {"label":"system","entity_type":"other","aliases":["systemet"]},
+      {"label":"modul","entity_type":"other","aliases":["moduler"]},
+      {"label":"grensesnitt","entity_type":"other","aliases":[]}
+    ],
+    "concepts":[
+      {"label":"koordinering","aliases":[]},
+      {"label":"leveranseforsinkelse","aliases":["små leveranser ofte forsinket av koordinering"]},
+      {"label":"uavhengige lokale endringer","aliases":["lokale endringer","flere lokale endringer gjøres uavhengig"]},
+      {"label":"grensesnittantakelser","aliases":["antakelsene teamene gjorde om grensesnittene","antakelser om grensesnitt"]},
+      {"label":"grensefeil","aliases":["feilene i antakelsene teamene gjorde om grensesnittene mellom modulene","feil"]}
+    ],
+    "source_claims":[
+      {"text":"Da to utviklingsteam stadig endret den samme monolittiske kodebasen, ble små leveranser ofte forsinket av koordinering."},
+      {"text":"Etter at systemet ble delt i moduler med tydelige grensesnitt, kunne flere lokale endringer gjøres uavhengig."},
+      {"text":"Samtidig oppstod en større andel av feilene i antakelsene teamene gjorde om grensesnittene mellom modulene."}
+    ],
+    "relations":[
+      {"relation_type":"associated_with","from_label":"kodebase","to_label":"koordinering","epistemic_status":"source_explicit"},
+      {"relation_type":"part_of","from_label":"modul","to_label":"system","epistemic_status":"source_explicit"},
+      {"relation_type":"influences","from_label":"modul","to_label":"uavhengige lokale endringer","epistemic_status":"source_explicit"},
+      {"relation_type":"associated_with","from_label":"grensesnittantakelser","to_label":"grensefeil","epistemic_status":"source_explicit"}
+    ],
+    "interpretations":[{"id":"modularity_moves_complexity_to_interfaces","required_terms":["flytter","grensesnitt"],"forbidden_terms":[],"evidence_quotes":["Da to utviklingsteam stadig endret den samme monolittiske kodebasen, ble små leveranser ofte forsinket av koordinering.","Samtidig oppstod en større andel av feilene i antakelsene teamene gjorde om grensesnittene mellom modulene."]}]
+  },
+  "model_shadow":{
+    "source_event_id":"modularity_interfaces_live_v1",
+    "entities":[
+      {"source_surface":"utviklingsteam","canonical_label":"utviklingsteam","entity_type":"other"},
+      {"source_surface":"kodebasen","canonical_label":"kodebase","entity_type":"other"},
+      {"source_surface":"systemet","canonical_label":"system","entity_type":"other"},
+      {"source_surface":"moduler","canonical_label":"modul","entity_type":"other"},
+      {"source_surface":"grensesnitt","canonical_label":"grensesnitt","entity_type":"other"},
+      {"source_surface":"feilene","canonical_label":"feil","entity_type":"other"}
+    ],
+    "concepts":[
+      {"source_surface":"monolittiske kodebasen","canonical_label":"Monolitisk kodebase"},
+      {"source_surface":"koordinering","canonical_label":"koordinering"},
+      {"source_surface":"lokale endringer","canonical_label":"lokale endringer"},
+      {"source_surface":"antakelsene teamene gjorde om grensesnittene","canonical_label":"antakelser om grensesnitt"}
+    ],
+    "propositions":[
+      {"kind":"source_claim","text":"Da to utviklingsteam stadig endret den samme monolittiske kodebasen, ble små leveranser ofte forsinket av koordinering."},
+      {"kind":"source_claim","text":"Etter at systemet ble delt i moduler med tydelige grensesnitt, kunne flere lokale endringer gjøres uavhengig."},
+      {"kind":"source_claim","text":"Samtidig oppstod en større andel av feilene i antakelsene teamene gjorde om grensesnittene mellom modulene."},
+      {"kind":"interpretation","text":"Deling av systemet i moduler med tydelige grensesnitt reduserte behovet for koordinering og muliggjorde uavhengige endringer.","evidence":[{"quote":"Etter at systemet ble delt i moduler med tydelige grensesnitt, kunne flere lokale endringer gjøres uavhengig."}]},
+      {"kind":"interpretation","text":"Feil i systemet økte som følge av misforståelser i grensesnittene mellom modulene.","evidence":[{"quote":"en større andel av feilene i antakelsene teamene gjorde om grensesnittene mellom modulene"}]}
+    ],
+    "relations":[
+      {"relation_type":"causes","from_label":"monolitisk kodebase","to_label":"koordinering","epistemic_status":"source_explicit"},
+      {"relation_type":"part_of","from_label":"moduler","to_label":"system","epistemic_status":"source_explicit"},
+      {"relation_type":"supports","from_label":"Deling av systemet i moduler med tydelige grensesnitt reduserte behovet for koordinering og muliggjorde uavhengige endringer.","to_label":"flere lokale endringer gjøres uavhengig","epistemic_status":"interpretation"},
+      {"relation_type":"causes","from_label":"antakelser om grensesnitt","to_label":"feil","epistemic_status":"source_explicit"}
+    ],
+    "unresolved_inferences":[{"text":"Hvordan påvirket deling i moduler den totale utviklingshastigheten?","evidence":[{"quote":"Etter at systemet ble delt i moduler med tydelige grensesnitt, kunne flere lokale endringer gjøres uavhengig."}],"confidence":"medium"}]
+  },
+  "expected":{
+    "entities":{"precision":0.833333,"recall":1.0,"f1":0.909091},
+    "concepts":{"precision":0.75,"recall":0.6,"f1":0.666667},
+    "source_claims":{"precision":1.0,"recall":1.0,"f1":1.0},
+    "relations":{"precision":0.25,"recall":0.25,"f1":0.25},
+    "interpretations":{"precision":0.0,"recall":0.0,"f1":0},
+    "macro_f1":0.565152
+  }
+}
