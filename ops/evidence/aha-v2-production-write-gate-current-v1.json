@@ -1,11 +1,12 @@
 {
   "schema": "aha_v2_production_write_gate_evidence_v1",
   "version": 1,
-  "evidence_id": "aha-v2-production-write-gate-2026-08-20-main-a1b83920",
-  "observed_at": "2026-08-20T17:46:17+02:00",
-  "source": "repository_and_operator_review",
-  "main_commit_sha": "a1b83920f1852999573d18cea8cc63d31e446609",
-  "deployed_commit_sha": "",
+  "evidence_id": "aha-v2-production-write-gate-2026-08-20-main-98b0d56f",
+  "observed_at": "2026-08-20T18:13:02+02:00",
+  "source": "repository_deployment_status_and_operator_review",
+  "main_commit_sha": "98b0d56fd718c44d35148699dab507bd48562df5",
+  "deployed_commit_sha": "28dc264076a838f98793010fc8e0375958719a5f",
+  "last_known_successful_vercel_commit_sha": "28dc264076a838f98793010fc8e0375958719a5f",
   "v2_build_9_of_9": true,
   "production_synthesis_rounds": 2,
   "production_synthesis_f1_min": 1.0,
@@ -13,6 +14,7 @@
   "trusted_readonly_integration_merged": true,
   "chat_readonly_transport_merged": true,
   "chat_readonly_runtime_merged": true,
+  "migration_rehearsal_operator_surface_merged": true,
   "deployment_commit_matches_main": false,
   "migration_dry_run_reviewed": false,
   "staging_apply_rollback_production_proof": false,
@@ -21,13 +23,25 @@
   "no_persistence_write_observed": false,
   "no_authority_leak_observed": false,
   "production_rollback_ready": false,
+  "deployment_observation": {
+    "frontend_homepage": "https://aha-echonet.vercel.app",
+    "current_main_vercel_status": "failure_build_rate_limit",
+    "last_known_successful_vercel_status": "success",
+    "vercel_scope_required": "mats-grans-projects",
+    "vercel_connector_scope_authorized": false,
+    "canonical_backend_hosting": "azure_container_apps",
+    "canonical_frontend_allowed_origin": "https://paradispartiet.github.io"
+  },
   "notes": [
     "All nine V2 build blocks are merged on main through PR #839.",
     "Trusted-only read-only projection integration is merged through PR #840.",
     "Read-only Chat transport is merged through PR #841.",
     "Read-only Chat runtime activation with saving disabled is merged through PR #842.",
-    "Repository tests prove migration dry-run/apply/rollback semantics, but this evidence file does not upgrade test proof into production rehearsal proof.",
-    "Vercel PR statuses currently report build-rate-limit, so deployment parity with current main is not claimed.",
+    "The explicit V2 production write decision gate is merged through PR #843.",
+    "The isolated IndexedDB migration rehearsal operator surface is merged through PR #844, but it has not yet been run on a deployed production frontend with real browser IndexedDB staging and therefore does not satisfy the migration production-proof checks.",
+    "The last known successful Vercel deployment status is commit 28dc264076a838f98793010fc8e0375958719a5f (PR #839 / block 9). Subsequent V2 integration commits through current main 98b0d56fd718c44d35148699dab507bd48562df5 report Vercel build-rate-limit.",
+    "The connected Vercel integration is not authorized to the mats-grans-projects scope that owns aha-echonet.vercel.app, so deployment parity cannot be repaired or independently inspected from the current connector.",
+    "AHA canonical production backend remains Azure Container Apps with a bounded manual two-profile canonical sync pilot; that existing canonical pilot does not imply that V2 semantic normal persistence is open.",
     "Normal Chat V2 persistence and automatic backfill remain closed."
   ]
 }

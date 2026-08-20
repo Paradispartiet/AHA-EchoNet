@@ -34,7 +34,15 @@ assert.deepEqual(Array.from(result.blocking_reasons), [
 assert.equal(result.checks.filter((check) => check.passed).length, 5);
 assert.equal(result.checks.filter((check) => !check.passed).length, 7);
 assert.equal(result.evidence.main_commit_sha, current.main_commit_sha);
-assert.equal(result.evidence.deployed_commit_sha, "");
+assert.equal(result.evidence.deployed_commit_sha, current.deployed_commit_sha);
+assert.equal(current.deployed_commit_sha, current.last_known_successful_vercel_commit_sha);
+assert.notEqual(current.deployed_commit_sha, current.main_commit_sha, "current frontend deploy must remain explicitly behind main");
+assert.equal(current.deployment_commit_matches_main, false);
+assert.equal(current.migration_rehearsal_operator_surface_merged, true);
+assert.equal(current.migration_dry_run_reviewed, false);
+assert.equal(current.staging_apply_rollback_production_proof, false);
+assert.equal(current.deployment_observation.current_main_vercel_status, "failure_build_rate_limit");
+assert.equal(current.deployment_observation.vercel_connector_scope_authorized, false);
 assert.equal(JSON.stringify(current), currentBefore, "gate evaluation must not mutate evidence");
 for (const [key, value] of Object.entries(result.policy)) {
   if (key === "gate_is_decision_only" || key === "controlled_write_pilot_requires_separate_activation_pr") assert.equal(value, true, `${key} must stay true`);
