@@ -15,6 +15,15 @@
     return global.AHAProjectionProductContractV2 || null;
   }
 
+  function qualityApi() {
+    return global.AHAProjectionArtifactQualityV2 || null;
+  }
+
+  function withProductQuality(model) {
+    const quality = qualityApi();
+    return quality?.filterReadModel ? quality.filterReadModel(model) : model;
+  }
+
   function unavailable(reasons) {
     const contract = contractApi();
     if (contract?.blocked) return contract.blocked(reasons);
@@ -33,7 +42,7 @@
   function fromIntegration(integration) {
     const contract = contractApi();
     if (!contract?.build) return unavailable(["projection_product_contract_v2_unavailable"]);
-    return contract.build(integration);
+    return withProductQuality(contract.build(integration));
   }
 
   function build(input = {}) {
@@ -43,7 +52,7 @@
     if (!integration?.preview) missing.push("v2_product_integration_gate_unavailable");
     if (!contract?.build) missing.push("projection_product_contract_v2_unavailable");
     if (missing.length) return unavailable(missing);
-    return contract.build(integration.preview(input));
+    return withProductQuality(contract.build(integration.preview(input)));
   }
 
   function surface(model, name) {
@@ -51,7 +60,7 @@
     return contract?.surface ? contract.surface(model, name) : null;
   }
 
-  const api = Object.freeze({ MODULE_SCHEMA, MODULE_VERSION, build, fromIntegration, surface });
+  const api = Object.freeze({ MODULE_SCHEMA, MODULE_VERSION, build, fromIntegration, surface, withProductQuality });
   global.AHAProjectionProductReadModelV2 = api;
   global.AHAModuleApi?.register?.("projectionProductReadModelV2", api, {
     version: MODULE_VERSION,
