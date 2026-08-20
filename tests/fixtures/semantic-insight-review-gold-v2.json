@@ -1,0 +1,86 @@
+{
+  "schema": "aha_semantic_insight_review_gold_v2",
+  "version": 2,
+  "purpose": "Semantic-equivalence review for synthesized Insights. Applied identically to V1 interpretation output and V2 gate-eligible synthesis output; does not replace the historical V1 evaluator.",
+  "cases": [
+    {
+      "fixture_id": "constraints_creativity_live_v1",
+      "gold_id": "constraints_shift_creativity",
+      "expected_insight_count": 1,
+      "min_evidence_sentences": 2,
+      "required_meaning_groups": [
+        {"id": "constraints", "aliases": ["begrensninger", "praktiske rammer", "faste rammer"]},
+        {"id": "creativity", "aliases": ["kreativitet", "kreativiteten", "kreativt uttrykk"]},
+        {"id": "form_technique_shift", "aliases": ["form og teknikk", "form- og teknikk", "form- og teknikkvalg", "uttrykksform", "form og teknikkvalg"]}
+      ],
+      "required_evidence_substrings": ["faste praktiske rammer", "kan flytte kreativiteten over i valg av form og teknikk"],
+      "forbidden_meanings": []
+    },
+    {
+      "fixture_id": "retrieval_learning_live_v1",
+      "gold_id": "retrieval_difficulty_retention_tradeoff",
+      "expected_insight_count": 1,
+      "min_evidence_sentences": 2,
+      "required_meaning_groups": [
+        {"id": "retrieval", "aliases": ["aktiv gjenhenting", "hente fram", "testing av hukommelsen", "testet seg selv"]},
+        {"id": "difficulty", "aliases": ["vanskeligere", "kognitiv anstrengelse", "mer krevende"]},
+        {"id": "retention", "aliases": ["hukommelse", "langtidslagring", "langtids hukommelse", "husket mer", "varig hukommelse"]}
+      ],
+      "required_evidence_substrings": ["hente fram innholdet fra hukommelsen", "opplevde arbeidet som vanskeligere, men husket mer en uke senere"],
+      "forbidden_meanings": []
+    },
+    {
+      "fixture_id": "mixed_use_street_live_v1",
+      "gold_id": "mixed_use_temporal_activity_without_single_cause",
+      "expected_insight_count": 1,
+      "min_evidence_sentences": 2,
+      "required_meaning_groups": [
+        {"id": "mixed_use", "aliases": ["flere bruksformer", "ulike bruksformer", "mangfold av bruksformer", "bruksblanding"]},
+        {"id": "temporal_pattern", "aliases": ["tidsmønster", "tidsfordeling", "fotgjengertrafikken", "fotgjengertrafikk"]},
+        {"id": "causal_limit", "aliases": ["ikke ett enkelt tiltak", "ikke en entydig årsak", "fastslår ikke", "peker ikke ut", "uten at ett enkelt tiltak"]}
+      ],
+      "required_evidence_substrings": ["Fotgjengertrafikken ble jevnere fordelt", "peker ikke ut ett enkelt tiltak som årsak"],
+      "forbidden_meanings": []
+    },
+    {
+      "fixture_id": "delegation_bottleneck_live_v1",
+      "gold_id": "delegation_moves_coordination_to_boundaries",
+      "expected_insight_count": 1,
+      "min_evidence_sentences": 2,
+      "required_meaning_groups": [
+        {"id": "delegation", "aliases": ["delegasjon", "delegert", "beslutningsmyndighet"]},
+        {"id": "local_coordination", "aliases": ["lokale valg", "samordningseffektivitet", "raskere lokale", "smidighet"]},
+        {"id": "responsibility_boundaries", "aliases": ["grensene mellom ansvarsområdene", "ansvarsgrenser", "grenseområdene mellom ansvarsområder", "grensesnitt mellom ansvarsområder"]}
+      ],
+      "required_evidence_substrings": ["delegert innen tydelige rammer", "uenighet oftere samlet seg i grensene mellom ansvarsområdene"],
+      "forbidden_meanings": []
+    },
+    {
+      "fixture_id": "modularity_interfaces_live_v1",
+      "gold_id": "modularity_moves_complexity_to_interfaces",
+      "expected_insight_count": 1,
+      "min_evidence_sentences": 3,
+      "required_meaning_groups": [
+        {"id": "modularity", "aliases": ["moduler", "modulær", "modularisering", "modulær oppdeling"]},
+        {"id": "local_autonomy_or_coordination", "aliases": ["uavhengig", "autonomt", "lokale endringer", "koordinering"]},
+        {"id": "interfaces", "aliases": ["grensesnitt", "grensesnittsantakelser", "antakelser om disse grensesnittene"]},
+        {"id": "shifted_problem", "aliases": ["feil", "kompleksitet", "nye typer feil"]}
+      ],
+      "required_evidence_substrings": ["forsinket av koordinering", "lokale endringer gjøres uavhengig", "feilene i antakelsene teamene gjorde om grensesnittene"],
+      "forbidden_meanings": []
+    },
+    {
+      "fixture_id": "standardization_flexibility_live_v1",
+      "gold_id": "partial_standardization_balances_consistency_flexibility",
+      "expected_insight_count": 1,
+      "min_evidence_sentences": 1,
+      "required_meaning_groups": [
+        {"id": "standardization", "aliases": ["standardisering", "felles kjerne", "felles mal"]},
+        {"id": "flexibility", "aliases": ["fleksibilitet", "tilpasning", "tilpasses", "valgfrie felt"]},
+        {"id": "balance", "aliases": ["balanse", "balanserer", "både standardisering og fleksibilitet", "samtidig som"]}
+      ],
+      "required_evidence_substrings": ["faste felt og noen valgfrie felt"],
+      "forbidden_meanings": []
+    }
+  ]
+}
