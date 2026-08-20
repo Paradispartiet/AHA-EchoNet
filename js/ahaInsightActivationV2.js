@@ -91,6 +91,7 @@
     if (shadow?.schema !== "aha_insight_synthesis_shadow_v2" || shadow.version !== 2) fail("activation_shadow_invalid");
     if (gate?.schema !== "aha_insight_quality_gate_v2" || gate.version !== 2 || gate.valid !== true) fail("activation_gate_invalid");
     if (!shadow.source_event_id || !shadow.source_text_hash) fail("activation_source_binding_missing");
+    if (!/^[a-f0-9]{64}$/u.test(String(shadow.source_text_hash))) fail("activation_source_hash_invalid");
     if (gate.source_event_id !== shadow.source_event_id || gate.source_text_hash !== shadow.source_text_hash) fail("activation_gate_binding_mismatch");
     ["production_gate_authority", "synthesis_allowed", "canonical_write", "chamber_write", "persistent_write", "meta_write"]
       .forEach((field) => {
@@ -136,6 +137,12 @@
 
     function hashSync(value) {
       const digest = sha256Hex(value);
+      if (typeof digest !== "string" || !/^[a-f0-9]{64}$/u.test(digest)) fail("activation_hash_invalid");
+      return digest;
+    }
+
+    async function hashAsync(value) {
+      const digest = await sha256Hex(value);
       if (typeof digest !== "string" || !/^[a-f0-9]{64}$/u.test(digest)) fail("activation_hash_invalid");
       return digest;
     }
@@ -196,13 +203,13 @@
       const sourceEvent = getSourceEvent(sourceEventId);
       const sourceText = String(sourceEvent?.text || "");
       if (!sourceText) fail("activation_source_missing");
-      const actualHash = await sha256Hex(sourceText);
+      const actualHash = await hashAsync(sourceText);
       if (actualHash !== expectedHash) fail("activation_source_stale");
       return { sourceEvent, sourceText };
     }
 
     async function candidateSignature(shadow, candidateIndex, candidate, decision) {
-      return sha256Hex(stableStringify({
+      return hashAsync(stableStringify({
         schema: ACTIVATION_SCHEMA,
         source_event_id: shadow.source_event_id,
         source_text_hash: shadow.source_text_hash,
@@ -214,7 +221,7 @@
     }
 
     async function candidateSignatureFromReview(review) {
-      return sha256Hex(stableStringify({
+      return hashAsync(stableStringify({
         schema: ACTIVATION_SCHEMA,
         source_event_id: review.source_event_id,
         source_text_hash: review.source_text_hash,
@@ -431,7 +438,7 @@
         backend_sync_allowed: false,
         meta_write_allowed: false
       };
-      const signature = await sha256Hex(stableStringify(insight.activation_v2));
+      const signature = await hashAsync(stableStringify(insight));
       insight.activation_v2.canonical_signature = signature;
       return { insight, signature };
     }
@@ -521,9 +528,9 @@
         if (index < 0 || insight?.activation_v2?.review_id !== review.id || insight?.activation_v2?.canonical_signature !== review.canonical_signature) {
           fail("activation_rollback_target_mismatch");
         }
-        const activationForSignature = clone(insight.activation_v2);
-        delete activationForSignature.canonical_signature;
-        if (await sha256Hex(stableStringify(activationForSignature)) !== review.canonical_signature) fail("activation_rollback_target_modified");
+        const insightForSignature = clone(insight);
+        delete insightForSignature.activation_v2.canonical_signature;
+        if (await hashAsync(stableStringify(insightForSignature)) !== review.canonical_signature) fail("activation_rollback_target_modified");
         chamber.insights.splice(index, 1);
         chamber._local_updated_at = now();
         writeVerified(chamberStorageKey, chamber);

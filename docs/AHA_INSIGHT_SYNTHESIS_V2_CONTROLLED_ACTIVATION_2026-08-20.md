@@ -124,7 +124,7 @@ all of these still match:
 - canonical Insight ID;
 - review ID;
 - stored canonical signature;
-- recalculated canonical activation-envelope signature.
+- recalculated signature for the complete canonical Insight record.
 
 Other Chamber insights are left untouched. The review record changes to
 `rolled_back`, and the rollback is appended to the audit chain.
