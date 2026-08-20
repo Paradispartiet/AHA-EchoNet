@@ -59,7 +59,7 @@ for (const file of ["insight-activation-v2.html", "js/ahaInsightActivationOperat
   );
 }
 const activationDoc = fs.readFileSync("docs/AHA_INSIGHT_ENGINE_V2_CONTROLLED_WRITE_PILOT_ACTIVATION_2026-08-20.md", "utf8");
-assert.match(activationDoc, /Repo CI is not production proof/);
+assert.match(activationDoc, /not considered production-proven merely because repo CI is green/);
 assert.match(activationDoc, /temporary workflow must be closed without merge/);
 assert.match(activationDoc, /production page without operator intent remains closed/);
 assert.match(activationDoc, /post-rollback second activation attempt remains blocked/);
