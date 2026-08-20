@@ -1,0 +1,101 @@
+name: TEMP AHA V2 Pages production parity
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    env:
+      EXPECTED_MAIN: 196e94ef8135a657a3e2588672c80b304dc2b647
+      PAGES_ORIGIN: https://paradispartiet.github.io/AHA-EchoNet
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.EXPECTED_MAIN }}
+
+      - name: Verify Pages build commit and deployed runtime assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          mkdir -p probe-evidence
+
+          latest_json=''
+          pages_commit=''
+          pages_status=''
+          for attempt in $(seq 1 12); do
+            latest_json="$(curl -fsSL \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer ${GH_TOKEN}" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "https://api.github.com/repos/${REPOSITORY}/pages/builds/latest")"
+            pages_commit="$(printf '%s' "$latest_json" | jq -r '.commit // empty')"
+            pages_status="$(printf '%s' "$latest_json" | jq -r '.status // empty')"
+            echo "Pages attempt ${attempt}: commit=${pages_commit:-missing} status=${pages_status:-missing}"
+            if [[ "$pages_commit" == "$EXPECTED_MAIN" && "$pages_status" == "built" ]]; then
+              break
+            fi
+            sleep 10
+          done
+
+          printf '%s\n' "$latest_json" > probe-evidence/pages-build-latest.json
+          if [[ "$pages_commit" != "$EXPECTED_MAIN" ]]; then
+            echo "GitHub Pages commit mismatch: expected $EXPECTED_MAIN, got ${pages_commit:-missing}" >&2
+            exit 1
+          fi
+          if [[ "$pages_status" != "built" ]]; then
+            echo "GitHub Pages latest build is not built: ${pages_status:-missing}" >&2
+            exit 1
+          fi
+
+          assets=(
+            "chat.html"
+            "js/ahaV2ProductIntegrationGate.js"
+            "js/ahaV2ChatReadOnlyContext.js"
+            "js/ahaChatAgentRuntime.js"
+            "js/ahaV2ProductionWriteGate.js"
+            "js/ahaV2BackfillStagingStore.js"
+            "js/ahaV2ProductionMigrationRehearsal.js"
+            "v2-production-migration-rehearsal.html"
+            "js/ahaV2ControlledWritePilotRollback.js"
+          )
+
+          printf '{\n  "schema": "aha_v2_pages_production_parity_probe_v1",\n  "expected_main": "%s",\n  "pages_commit": "%s",\n  "pages_status": "%s",\n  "assets": [\n' \
+            "$EXPECTED_MAIN" "$pages_commit" "$pages_status" > probe-evidence/probe.json
+
+          first=1
+          for asset in "${assets[@]}"; do
+            expected_sha="$(sha256sum "$asset" | awk '{print $1}')"
+            tmp="$(mktemp)"
+            curl -fsSL \
+              -H "Cache-Control: no-cache" \
+              "${PAGES_ORIGIN}/${asset}?aha_v2_probe=${GITHUB_RUN_ID}" > "$tmp"
+            actual_sha="$(sha256sum "$tmp" | awk '{print $1}')"
+            rm -f "$tmp"
+            echo "$asset expected=$expected_sha deployed=$actual_sha"
+            if [[ "$expected_sha" != "$actual_sha" ]]; then
+              echo "Deployed asset mismatch: $asset" >&2
+              exit 1
+            fi
+            if [[ $first -eq 0 ]]; then printf ',\n' >> probe-evidence/probe.json; fi
+            first=0
+            printf '    {"path":"%s","sha256":"%s","match":true}' "$asset" "$actual_sha" >> probe-evidence/probe.json
+          done
+          printf '\n  ],\n  "all_assets_match": true\n}\n' >> probe-evidence/probe.json
+          cat probe-evidence/probe.json
+
+      - name: Upload parity evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aha-v2-pages-production-parity-${{ github.run_id }}
+          path: probe-evidence/
+          if-no-files-found: warn
