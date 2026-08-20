@@ -129,6 +129,31 @@ async function run() {
     assert.match(correction, /forsinket av koordinering/i);
   }
 
+  {
+    const retrievalSource = "To elevgrupper brukte like lang tid på samme kapittel. Den ene leste teksten flere ganger, mens den andre forsøkte å hente fram innholdet fra hukommelsen mellom lesingene. Gruppen som testet seg selv opplevde arbeidet som vanskeligere, men husket mer en uke senere.";
+    const retrievalCandidate = {
+      insight: "Aktiv gjenhenting oppleves vanskeligere og er forbundet med bedre senere hukommelse.",
+      abstraction: "Kobler gjenhentingsøvelse, vanskelighet og senere hukommelse.",
+      uncertainty: "",
+      evidence: [
+        { quote: "To elevgrupper brukte like lang tid på samme kapittel." },
+        { quote: "Gruppen som testet seg selv opplevde arbeidet som vanskeligere, men husket mer en uke senere." }
+      ]
+    };
+    const missingMethod = stability.validateStabilitySynthesis({ candidates: [retrievalCandidate] }, retrievalSource);
+    assert.equal(missingMethod.ok, false);
+    assert.ok(missingMethod.errors.includes("candidate:0:source_evidence_premise_not_preserved:retrieval_method"));
+    const covered = structuredClone(retrievalCandidate);
+    covered.evidence = [
+      { quote: "Den ene leste teksten flere ganger, mens den andre forsøkte å hente fram innholdet fra hukommelsen mellom lesingene." },
+      { quote: "Gruppen som testet seg selv opplevde arbeidet som vanskeligere, men husket mer en uke senere." }
+    ];
+    assert.equal(stability.validateStabilitySynthesis({ candidates: [covered] }, retrievalSource).ok, true);
+    const correction = stability.retryInstruction(missingMethod.errors);
+    assert.match(correction, /MANDATORY RETRIEVAL EVIDENCE CORRECTION/i);
+    assert.match(correction, /exactly two distinct evidence quotes/i);
+  }
+
   const endpointUrl = `${pathToFileURL(path.resolve("server/ahaSemanticModelEndpoint.js")).href}?stability=${Date.now()}`;
   const { createSemanticModelHandler } = await import(endpointUrl);
 
@@ -303,6 +328,56 @@ async function run() {
     assert.equal(calls, 2);
     assert.match(captured[1].input[0].content, /MANDATORY EVIDENCE CORRECTION/i);
     assert.equal(res.body.synthesis.candidates[0].evidence.length, 3);
+  }
+
+  {
+    const retrievalSource = "To elevgrupper brukte like lang tid på samme kapittel. Den ene leste teksten flere ganger, mens den andre forsøkte å hente fram innholdet fra hukommelsen mellom lesingene. Gruppen som testet seg selv opplevde arbeidet som vanskeligere, men husket mer en uke senere.";
+    const retrievalContext = {
+      entities: [],
+      concepts: [{ label: "aktiv gjenhenting" }, { label: "hukommelse" }],
+      source_claims: [
+        { text: "To elevgrupper brukte like lang tid på samme kapittel." },
+        { text: "Den ene leste teksten flere ganger, mens den andre forsøkte å hente fram innholdet fra hukommelsen mellom lesingene." },
+        { text: "Gruppen som testet seg selv opplevde arbeidet som vanskeligere, men husket mer en uke senere." }
+      ],
+      relations: []
+    };
+    const baseCandidate = {
+      insight: "Aktiv gjenhenting oppleves vanskeligere og er forbundet med bedre senere hukommelse.",
+      type: "tension",
+      abstraction: "Kobler gjenhentingsøvelse, vanskelighet og senere hukommelse.",
+      evidence: [
+        { quote: "To elevgrupper brukte like lang tid på samme kapittel.", role: "supports" },
+        { quote: "Gruppen som testet seg selv opplevde arbeidet som vanskeligere, men husket mer en uke senere.", role: "supports" }
+      ],
+      why_it_matters: "Synliggjør forholdet mellom læringsopplevelse og senere hukommelse.",
+      confidence: "high",
+      uncertainty: "",
+      causal_status: "not_causal"
+    };
+    let calls = 0;
+    const captured = [];
+    const handler = createSemanticModelHandler({
+      hasOpenAIKey: true,
+      model: "gpt-test",
+      openai: { responses: { create: async (req) => {
+        calls += 1;
+        captured.push(req);
+        const candidate = structuredClone(baseCandidate);
+        if (calls > 1) {
+          candidate.evidence = [
+            { quote: "Den ene leste teksten flere ganger, mens den andre forsøkte å hente fram innholdet fra hukommelsen mellom lesingene.", role: "supports" },
+            { quote: "Gruppen som testet seg selv opplevde arbeidet som vanskeligere, men husket mer en uke senere.", role: "supports" }
+          ];
+        }
+        return { id: `retrieval_${calls}`, model: "gpt-test", output_parsed: { schema: "aha_insight_synthesis_output_v2", candidates: [candidate] } };
+      } } }
+    });
+    const res = await invoke(handler, { format: "aha_insight_synthesis_output_v2", text: retrievalSource, semantic_context: retrievalContext });
+    assert.equal(res.statusCode, 200);
+    assert.equal(calls, 2);
+    assert.match(captured[1].input[0].content, /MANDATORY RETRIEVAL EVIDENCE CORRECTION/i);
+    assert.equal(res.body.synthesis.candidates[0].evidence.length, 2);
   }
 
   {
