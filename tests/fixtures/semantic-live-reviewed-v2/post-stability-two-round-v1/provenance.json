@@ -1,0 +1,18 @@
+{
+  "schema": "aha_insight_synthesis_v2_two_round_provenance_v1",
+  "version": 1,
+  "measured_at": "2026-08-20T11:56:09.230Z",
+  "endpoint": "https://aha-agent-7a3y.onrender.com/api/aha-agent/semantic-document",
+  "workflow_run_id": 32366046900,
+  "artifact_id": 9405381366,
+  "artifact_digest": "sha256:0284594f709bf224076f2a93e9d7cdb9c200d91c8bbc8aec92f7fc040337dbac",
+  "source_branch": "eval/insight-synthesis-v2-stability-postdeploy-gold",
+  "source_head": "e59fc69b45e64f602f8cd57dc86bea1d76e7178e",
+  "production_main": "02521a405c46294f40e7a9361564cde120e656a0",
+  "model": "gpt-4.1-mini-2025-04-14",
+  "files": {
+    "summary.json": "sha256:58a9c3ccb58c544bc79782246c2145bf98512bd373f38caf176e4f3d1611c94c",
+    "round-1.json": "sha256:bf1748396139726fa641e4b005292a35bb4bc4b84ed9fa467582100085052138",
+    "round-2.json": "sha256:105eede93f9b5d730ae47a97f99e4660bfd8bedd36dbaf6c0164494835a591ca"
+  }
+}

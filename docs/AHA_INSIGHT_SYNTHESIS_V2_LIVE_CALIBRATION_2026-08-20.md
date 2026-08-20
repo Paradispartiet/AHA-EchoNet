@@ -186,40 +186,72 @@ Node-suiten låser eksplisitt:
 aha-semantic-insight-review-evaluator-v2 passed: V1 F1 0.166667 -> V2 F1 0.833333
 ```
 
-## 8. Den ene gjenværende review-feilen
+## 8. Stabilitetssekvens etter PR #824
 
-Fem post-#823-cases matcher review-gold:
-
-1. constraints → kreativitet flyttes mot form/teknikk
-2. retrieval → vanskeligere aktiv gjenhenting sammen med bedre senere hukommelse
-3. mixed-use → bredere aktivitetsmønster uten enkel årsakspåstand
-4. modularity → autonomi/koordinering flyttes mot grensesnittproblemer
-5. standardization → faste + valgfrie felt balanserer standardisering og fleksibilitet
-
-Delegation er fortsatt underkjent.
-
-Kandidaten sier at beslutningsstruktur påvirker `plasseringen av uenighet`, men gjør ikke den avgjørende høyereordens forståelsen eksplisitt nok: at delegering flytter koordinerings-/uenighetsproblemet til **grensene mellom ansvarsområder**.
-
-Review-evaluatoren holder derfor dette som false negative med manglende `responsibility_boundaries`-meningsgruppe. Evidence-sitatet inneholder ordet `grensene`, men evidence får ikke lov til å fylle inn mening som kandidaten selv ikke uttrykker.
-
-## 9. Beslutning etter post-#823-runden
-
-V2 har nå et målt og stort kvalitetsløft over V1:
+PR #824 gjorde Semantic Insight Review Evaluator V2 permanent og låste like-for-like-målingen `V1 F1 0.166667 → V2 F1 0.833333`. Gold og evaluator ble deretter holdt uendret gjennom hele stabilitetsarbeidet.
 
 ```text
-semantic-review F1: 0.166667 → 0.833333
+#825  bevarte delegation → eksplisitte ansvarsgrenser
+#826  to-runders probe: delegation 2/2, men bredere stokastisk ustabilitet; lukket uten merge
+#827  temperatur 0.2, source/canonical-bevaring, causal-limit-bevaring og fire fail-closed forsøk
+#829  brøt causal retry-lock og fjernet ikke-evidensielle relation-hints på retry
+#830  låste not_causal-retry til nøytral relasjonsordlyd
+#831  krevde tre modularity-evidence-sider, inkludert forsinket koordinering
+#832  krevde retrieval-metoden og det samlede vanskelighet/hukommelse-utfallet i evidence
 ```
 
-Dette er tilstrekkelig til å gå videre fra generell prompt-/gate-feilsøking. Det er **ikke** tilstrekkelig til å åpne canonical write ennå.
+To diagnostiske #828-runder ble korrekt avvist før sluttmålingen:
 
-Neste arbeid skal være smalt:
+- run `32363802802`, artifact `9404596154`: 6/6 gyldige i begge runder, men modularity manglet koordinering-premisset i runde 1
+- run `32364904124`, artifact `9404954145`, digest `sha256:0ed9ad0ccb05c9afed37aec3f27e4f10b17b710ff3d2a8aeb89df35d89755a50`: modularity var stabil, men retrieval manglet metode-evidence i runde 1
 
-1. få delegation-caset til eksplisitt å bevare ansvarsgrense-mekanismen
-2. kjøre en ny produksjonsrunde mot samme review-gold
-3. bekrefte at causal fail-closed-reglene fortsatt virker
-4. kreve stabilt review-resultat før kontrollert Chamber/canonical-review vurderes
+Begge beholdt `stable_all_six_match=false`; ingen av dem ble brukt som akseptbevis.
 
-## 10. Write-policy
+## 9. Autoritativ to-runders sluttmåling
+
+Etter produksjonsdeploy av #832 ble samme seks-case review-gold kjørt uendret to ganger.
+
+Permanent provenance og de eksakte artifact-filene ligger i:
+
+```text
+tests/fixtures/semantic-live-reviewed-v2/post-stability-two-round-v1/
+```
+
+Produksjonsbevis:
+
+```text
+workflow run:    32366046900
+artifact id:     9405381366
+artifact digest: sha256:0284594f709bf224076f2a93e9d7cdb9c200d91c8bbc8aec92f7fc040337dbac
+source head:     e59fc69b45e64f602f8cd57dc86bea1d76e7178e
+production main: 02521a405c46294f40e7a9361564cde120e656a0
+model:           gpt-4.1-mini-2025-04-14
+```
+
+Resultat:
+
+```text
+runde 1: 6/6 gyldige, 7 modellforsøk, V1 F1 0.166667, V2 F1 1.000000
+runde 2: 6/6 gyldige, 6 modellforsøk, V1 F1 0.166667, V2 F1 1.000000
+all_rounds_six_valid = true
+stable_all_six_match = true
+```
+
+Det ekstra forsøket i runde 1 var en forventet intern, fail-closed regenerering etter `source_limitation_wording_not_preserved:peker_ikke_ut`. Ugyldig output ble ikke returnert til klienten.
+
+## 10. Beslutning
+
+Den strenge seks-case review-målingen er nå stabil over to uavhengige produksjonsrunder. Dette fullfører kvalitets- og stabilitetsbeviset for shadow-laget; det åpner ikke automatisk noen produksjonsautoritet.
+
+CI låser nå både det permanente historiske løftet og sluttmålingen:
+
+```text
+historisk like-for-like: V1 F1 0.166667 → V2 F1 0.833333
+sluttmåling runde 1:     V2 F1 1.000000
+sluttmåling runde 2:     V2 F1 1.000000
+```
+
+## 11. Write-policy
 
 Fortsatt uendret:
 

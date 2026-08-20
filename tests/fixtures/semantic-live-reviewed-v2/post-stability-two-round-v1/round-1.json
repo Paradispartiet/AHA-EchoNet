@@ -1,0 +1,1262 @@
+{
+  "round": 1,
+  "measured_at": "2026-08-20T11:55:09.600Z",
+  "endpoint": "https://aha-agent-7a3y.onrender.com/api/aha-agent/semantic-document",
+  "valid_output_count": 6,
+  "total_attempt_count": 7,
+  "validation_code_counts": {
+    "candidate:0:source_limitation_wording_not_preserved:peker_ikke_ut": 1
+  },
+  "snapshot": {
+    "schema": "aha_insight_synthesis_v2_delegation_postfix_snapshot_v1",
+    "version": 1,
+    "round": 1,
+    "cases": [
+      {
+        "fixture_id": "constraints_creativity_live_v1",
+        "valid_live_output": true,
+        "model": "gpt-4.1-mini-2025-04-14",
+        "response_id": "resp_0577b4cd517fac34006a86eacf868487d2b9214c2ea20bb041",
+        "attempts": [
+          {
+            "attempt": 1,
+            "status": 200,
+            "ok": true,
+            "error": null,
+            "validation_errors": []
+          }
+        ],
+        "candidates": [
+          {
+            "insight": "Begrensninger i form av ferdig dramatisk innhold og praktiske rammer påvirker ikke bare scenografens kunstneriske frihet ved å redusere den, men flytter også kreativiteten til å fokusere på valg av form og teknikk, som vist ved variasjonen fra detaljrike tegninger til enkle tekstflater.",
+            "type": "mechanism",
+            "abstraction": "Kobler sammen hvordan faste rammer begrenser frihet samtidig som de omdirigerer kreativ utfoldelse mot form- og teknikkvalg.",
+            "evidence": [
+              {
+                "quote": "En scenograf får et ferdig dramatisk innhold og faste praktiske rammer",
+                "role": "supports"
+              },
+              {
+                "quote": "Likevel varierer hun uttrykket fra detaljrike tegninger til enkle tekstflater",
+                "role": "supports"
+              },
+              {
+                "quote": "begrensninger ikke bare reduserer kunstnerisk frihet; de kan flytte kreativiteten over i valg av form og teknikk",
+                "role": "supports"
+              }
+            ],
+            "why_it_matters": "Denne forståelsen viser at begrensninger kan fungere som en kreativ katalysator ved å endre fokus for kunstnerisk uttrykk, noe som kan informere hvordan man designer rammer for kreative prosesser.",
+            "confidence": "high",
+            "uncertainty": "",
+            "causal_status": "source_explicit"
+          }
+        ],
+        "gate_decisions": [
+          {
+            "candidate_index": 0,
+            "type": "mechanism",
+            "confidence": "high",
+            "causal_status": "source_explicit",
+            "eligible_for_insight_review": true,
+            "blocking_reasons": [],
+            "metrics": {
+              "quality_score": 0.85084,
+              "semantic_transform_score": 0.764706,
+              "max_source_sentence_similarity": 0.235294,
+              "evidence_grounding_score": 0.607143,
+              "evidence_sentence_count": 3,
+              "abstraction_score": 1,
+              "usefulness_score": 1,
+              "causal_discipline_score": 1,
+              "evidence_has_explicit_causality": true,
+              "source_rejects_simple_causality": false
+            }
+          }
+        ]
+      },
+      {
+        "fixture_id": "retrieval_learning_live_v1",
+        "valid_live_output": true,
+        "model": "gpt-4.1-mini-2025-04-14",
+        "response_id": "resp_0700f06ce70290a2006a86ead3e49487d289d7341a9350ed41",
+        "attempts": [
+          {
+            "attempt": 1,
+            "status": 200,
+            "ok": true,
+            "error": null,
+            "validation_errors": []
+          }
+        ],
+        "candidates": [
+          {
+            "insight": "To elevgrupper som brukte like lang tid på et kapittel, viste at gruppen som hentet fram innhold fra hukommelsen mellom lesingene opplevde arbeidet som vanskeligere samtidig som de husket mer enn en uke senere, i motsetning til gruppen som leste teksten flere ganger.",
+            "type": "pattern",
+            "abstraction": "Sammenhengen mellom like tidsbruk, opplevd vanskelighet ved aktiv gjenhenting, og bedre langtids hukommelse.",
+            "evidence": [
+              {
+                "quote": "To elevgrupper brukte like lang tid på samme kapittel.",
+                "role": "supports"
+              },
+              {
+                "quote": "Gruppen som testet seg selv opplevde arbeidet som vanskeligere, men husket mer en uke senere.",
+                "role": "supports"
+              },
+              {
+                "quote": "Den ene leste teksten flere ganger, mens den andre forsøkte å hente fram innholdet fra hukommelsen mellom lesingene.",
+                "role": "supports"
+              }
+            ],
+            "why_it_matters": "Denne forståelsen viser at selv om aktiv gjenhenting oppleves som mer krevende, kan det føre til bedre langtids hukommelse uten ekstra tidsbruk, noe som er viktig for effektiv læringsstrategiutforming.",
+            "confidence": "high",
+            "uncertainty": "",
+            "causal_status": "not_causal"
+          }
+        ],
+        "gate_decisions": [
+          {
+            "candidate_index": 0,
+            "type": "pattern",
+            "confidence": "high",
+            "causal_status": "not_causal",
+            "eligible_for_insight_review": true,
+            "blocking_reasons": [],
+            "metrics": {
+              "quality_score": 0.871538,
+              "semantic_transform_score": 0.733333,
+              "max_source_sentence_similarity": 0.266667,
+              "evidence_grounding_score": 0.807692,
+              "evidence_sentence_count": 3,
+              "abstraction_score": 0.916667,
+              "usefulness_score": 1,
+              "causal_discipline_score": 1,
+              "evidence_has_explicit_causality": false,
+              "source_rejects_simple_causality": false
+            }
+          }
+        ]
+      },
+      {
+        "fixture_id": "mixed_use_street_live_v1",
+        "valid_live_output": true,
+        "model": "gpt-4.1-mini-2025-04-14",
+        "response_id": "resp_00c2da1f8528fe69006a86eafbd9c487d2ba1db3030180d2a7",
+        "attempts": [
+          {
+            "attempt": 1,
+            "status": 502,
+            "ok": false,
+            "error": "insight_synthesis_validation_failed",
+            "validation_errors": [
+              "candidate:0:source_limitation_wording_not_preserved:peker_ikke_ut"
+            ]
+          },
+          {
+            "attempt": 2,
+            "status": 200,
+            "ok": true,
+            "error": null,
+            "validation_errors": []
+          }
+        ],
+        "candidates": [
+          {
+            "insight": "Når en gate utvikler flere bruksformer som boliger, små butikker, serveringssteder og arbeidsplasser, opptrer disse samtidig med et bredere tidsmønster i aktiviteten, noe som korresponderer med at fotgjengertrafikken blir jevnere fordelt gjennom dagen, også etter ordinær arbeidstid. Materialet peker ikke ut ett enkelt tiltak som årsak, men viser et mønster der mangfold i bruksformer er forbundet med en utvidet og mer balansert tidsfordeling av aktivitet.",
+            "type": "pattern",
+            "abstraction": "Syntese av samtidige bruksformer og deres sammenheng med utvidet tidsmønster i aktivitet og fotgjengertrafikk.",
+            "evidence": [
+              {
+                "quote": "En gate fikk over tid flere boliger, små butikker, serveringssteder og arbeidsplasser.",
+                "role": "supports"
+              },
+              {
+                "quote": "Fotgjengertrafikken ble jevnere fordelt gjennom dagen, også etter ordinær arbeidstid.",
+                "role": "supports"
+              },
+              {
+                "quote": "Materialet peker ikke ut ett enkelt tiltak som årsak, men viser at flere bruksformer opptrer samtidig med et bredere tidsmønster i aktiviteten.",
+                "role": "supports"
+              }
+            ],
+            "why_it_matters": "Denne forståelsen er nyttig fordi den viser at en kombinasjon av ulike bruksformer kan bidra til en mer balansert og kontinuerlig aktivitet i byrommet, noe som kan forbedre bylivets kvalitet og sikkerhet uten at man kan peke på én enkelt årsak eller tiltak.",
+            "confidence": "high",
+            "uncertainty": "",
+            "causal_status": "not_causal"
+          }
+        ],
+        "gate_decisions": [
+          {
+            "candidate_index": 0,
+            "type": "pattern",
+            "confidence": "high",
+            "causal_status": "not_causal",
+            "eligible_for_insight_review": true,
+            "blocking_reasons": [],
+            "metrics": {
+              "quality_score": 0.800233,
+              "semantic_transform_score": 0.651163,
+              "max_source_sentence_similarity": 0.348837,
+              "evidence_grounding_score": 0.674419,
+              "evidence_sentence_count": 3,
+              "abstraction_score": 0.75,
+              "usefulness_score": 1,
+              "causal_discipline_score": 1,
+              "evidence_has_explicit_causality": false,
+              "source_rejects_simple_causality": true
+            }
+          }
+        ]
+      },
+      {
+        "fixture_id": "delegation_bottleneck_live_v1",
+        "valid_live_output": true,
+        "model": "gpt-4.1-mini-2025-04-14",
+        "response_id": "resp_07f80037f2872a85006a86eb071b0081a09de193385227418f",
+        "attempts": [
+          {
+            "attempt": 1,
+            "status": 200,
+            "ok": true,
+            "error": null,
+            "validation_errors": []
+          }
+        ],
+        "candidates": [
+          {
+            "insight": "Når beslutningsmyndighet i et lite produktteam flyttes fra felles beslutninger til delegert myndighet innen tydelige rammer, oppstår et mønster der lokale valg blir raskere samtidig som uenighet konsentreres ved grensene mellom ansvarsområdene.",
+            "type": "pattern",
+            "abstraction": "Denne innsikten kobler endringen i beslutningsstruktur med samtidige endringer i beslutningshastighet og lokalisering av uenighet, og beskriver et mønster i hvordan koordinering og konflikt fordeles i teamet.",
+            "evidence": [
+              {
+                "quote": "Et lite produktteam tok først alle viktige beslutninger i fellesskap.",
+                "role": "supports"
+              },
+              {
+                "quote": "Etter at beslutningsmyndighet ble delegert innen tydelige rammer, gikk lokale valg raskere, mens uenighet oftere samlet seg i grensene mellom ansvarsområdene.",
+                "role": "supports"
+              }
+            ],
+            "why_it_matters": "Å forstå dette mønsteret hjelper ledere og team med å balansere behovet for raskere beslutninger med utfordringer knyttet til koordinering og konflikt ved ansvarsgrenser, noe som kan forbedre teamets effektivitet og samarbeid.",
+            "confidence": "high",
+            "uncertainty": "",
+            "causal_status": "not_causal"
+          }
+        ],
+        "gate_decisions": [
+          {
+            "candidate_index": 0,
+            "type": "pattern",
+            "confidence": "high",
+            "causal_status": "not_causal",
+            "eligible_for_insight_review": true,
+            "blocking_reasons": [],
+            "metrics": {
+              "quality_score": 0.803882,
+              "semantic_transform_score": 0.607143,
+              "max_source_sentence_similarity": 0.392857,
+              "evidence_grounding_score": 0.608696,
+              "evidence_sentence_count": 2,
+              "abstraction_score": 1,
+              "usefulness_score": 1,
+              "causal_discipline_score": 1,
+              "evidence_has_explicit_causality": false,
+              "source_rejects_simple_causality": false
+            }
+          }
+        ]
+      },
+      {
+        "fixture_id": "modularity_interfaces_live_v1",
+        "valid_live_output": true,
+        "model": "gpt-4.1-mini-2025-04-14",
+        "response_id": "resp_00eeea9298d9245f006a86eb0b869887d282b90a9c26bbfe48",
+        "attempts": [
+          {
+            "attempt": 1,
+            "status": 200,
+            "ok": true,
+            "error": null,
+            "validation_errors": []
+          }
+        ],
+        "candidates": [
+          {
+            "insight": "Deling av en monolitisk kodebase i moduler med tydelige grensesnitt gjør det mulig for utviklingsteam å utføre flere lokale endringer uavhengig, samtidig som det konsentrerer feil i antakelser om grensesnittene mellom modulene ved ansvarsgrensene.",
+            "type": "tension",
+            "abstraction": "Denne innsikten kobler endringen i systemarkitektur fra en monolitisk kodebase til modulær struktur med tydelige grensesnitt, og viser hvordan dette forskyver koordinasjonsbyrden fra kontinuerlig koordinering til feil ved modulgrensene.",
+            "evidence": [
+              {
+                "quote": "Da to utviklingsteam stadig endret den samme monolittiske kodebasen, ble små leveranser ofte forsinket av koordinering.",
+                "role": "supports"
+              },
+              {
+                "quote": "Etter at systemet ble delt i moduler med tydelige grensesnitt, kunne flere lokale endringer gjøres uavhengig.",
+                "role": "supports"
+              },
+              {
+                "quote": "Samtidig oppstod en større andel av feilene i antakelsene teamene gjorde om grensesnittene mellom modulene.",
+                "role": "supports"
+              }
+            ],
+            "why_it_matters": "Forståelsen hjelper organisasjoner med å balansere fordelene ved lokal autonomi i utvikling med behovet for å håndtere feil og misforståelser ved modulgrensene, noe som er kritisk for effektiv systemutvikling og vedlikehold.",
+            "confidence": "high",
+            "uncertainty": "",
+            "causal_status": "not_causal"
+          }
+        ],
+        "gate_decisions": [
+          {
+            "candidate_index": 0,
+            "type": "tension",
+            "confidence": "high",
+            "causal_status": "not_causal",
+            "eligible_for_insight_review": true,
+            "blocking_reasons": [],
+            "metrics": {
+              "quality_score": 0.807738,
+              "semantic_transform_score": 0.708333,
+              "max_source_sentence_similarity": 0.291667,
+              "evidence_grounding_score": 0.47619,
+              "evidence_sentence_count": 3,
+              "abstraction_score": 1,
+              "usefulness_score": 1,
+              "causal_discipline_score": 1,
+              "evidence_has_explicit_causality": false,
+              "source_rejects_simple_causality": false
+            }
+          }
+        ]
+      },
+      {
+        "fixture_id": "standardization_flexibility_live_v1",
+        "valid_live_output": true,
+        "model": "gpt-4.1-mini-2025-04-14",
+        "response_id": "resp_09107cd1eab97d9e006a86eb19706487d2af9cbdfb4b6cabde",
+        "attempts": [
+          {
+            "attempt": 1,
+            "status": 200,
+            "ok": true,
+            "error": null,
+            "validation_errors": []
+          }
+        ],
+        "candidates": [
+          {
+            "insight": "Bruken av en felles mal med både faste og valgfrie felt er forbundet med at rapportene beholder en felles kjerne, samtidig som de kan tilpasses svært ulike saker.",
+            "type": "pattern",
+            "abstraction": "Kombinasjonen av faste og valgfrie felt i en felles mal skaper en balanse mellom standardisering og fleksibilitet i rapportering.",
+            "evidence": [
+              {
+                "quote": "Et prosjekt brukte én felles mal for alle rapporter.",
+                "role": "supports"
+              },
+              {
+                "quote": "Det gjorde sammenligning enklere, men tvang også svært ulike saker inn i samme struktur.",
+                "role": "supports"
+              },
+              {
+                "quote": "Da malen fikk noen faste felt og noen valgfrie felt, beholdt rapportene en felles kjerne samtidig som de kunne tilpasses saken.",
+                "role": "supports"
+              }
+            ],
+            "why_it_matters": "Denne forståelsen hjelper til med å designe rapporteringsmaler som både muliggjør effektiv sammenligning og samtidig ivaretar behovet for tilpasning til ulike saker, noe som kan forbedre både konsistens og relevans i rapporteringen.",
+            "confidence": "high",
+            "uncertainty": "",
+            "causal_status": "not_causal"
+          }
+        ],
+        "gate_decisions": [
+          {
+            "candidate_index": 0,
+            "type": "pattern",
+            "confidence": "high",
+            "causal_status": "not_causal",
+            "eligible_for_insight_review": true,
+            "blocking_reasons": [],
+            "metrics": {
+              "quality_score": 0.831667,
+              "semantic_transform_score": 0.65,
+              "max_source_sentence_similarity": 0.35,
+              "evidence_grounding_score": 0.733333,
+              "evidence_sentence_count": 3,
+              "abstraction_score": 0.916667,
+              "usefulness_score": 1,
+              "causal_discipline_score": 1,
+              "evidence_has_explicit_causality": false,
+              "source_rejects_simple_causality": false
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "review": {
+    "schema": "aha_semantic_insight_review_evaluator_v2",
+    "valid": true,
+    "errors": [],
+    "case_count": 6,
+    "v1": {
+      "metrics": {
+        "true_positive": 1,
+        "predicted": 6,
+        "expected": 6,
+        "false_positive": 5,
+        "false_negative": 5,
+        "precision": 0.166667,
+        "recall": 0.166667,
+        "f1": 0.166667
+      },
+      "cases": [
+        {
+          "fixture_id": "constraints_creativity_live_v1",
+          "decisions": [],
+          "metrics": {
+            "true_positive": 0,
+            "predicted": 0,
+            "expected": 1,
+            "false_positive": 0,
+            "false_negative": 1,
+            "precision": 0,
+            "recall": 0,
+            "f1": 0
+          }
+        },
+        {
+          "fixture_id": "retrieval_learning_live_v1",
+          "decisions": [
+            {
+              "candidate_index": 0,
+              "matched": false,
+              "reasons": [
+                "evidence_requirement_missing:hente fram innholdet fra hukommelsen",
+                "evidence_requirement_missing:opplevde arbeidet som vanskeligere, men husket mer en uke senere",
+                "evidence_sentence_count_below:2"
+              ],
+              "meaning_groups": [
+                {
+                  "id": "retrieval",
+                  "matched": true,
+                  "aliases": [
+                    "aktiv gjenhenting",
+                    "hente fram",
+                    "testing av hukommelsen",
+                    "testet seg selv"
+                  ]
+                },
+                {
+                  "id": "difficulty",
+                  "matched": true,
+                  "aliases": [
+                    "vanskeligere",
+                    "kognitiv anstrengelse",
+                    "mer krevende"
+                  ]
+                },
+                {
+                  "id": "retention",
+                  "matched": true,
+                  "aliases": [
+                    "hukommelse",
+                    "langtidslagring",
+                    "langtids hukommelse",
+                    "husket mer",
+                    "varig hukommelse"
+                  ]
+                }
+              ],
+              "evidence_requirements": [
+                {
+                  "required": "hente fram innholdet fra hukommelsen",
+                  "matched": false
+                },
+                {
+                  "required": "opplevde arbeidet som vanskeligere, men husket mer en uke senere",
+                  "matched": false
+                }
+              ],
+              "evidence_sentence_count": 1,
+              "minimum_evidence_sentences": 2,
+              "review_text": "a hente fram innhold fra hukommelsen mellom lesingene oppleves som vanskeligere arbeid enn a bare lese teksten flere ganger"
+            },
+            {
+              "candidate_index": 1,
+              "matched": false,
+              "reasons": [
+                "meaning_group_missing:difficulty",
+                "evidence_requirement_missing:hente fram innholdet fra hukommelsen",
+                "evidence_sentence_count_below:2"
+              ],
+              "meaning_groups": [
+                {
+                  "id": "retrieval",
+                  "matched": true,
+                  "aliases": [
+                    "aktiv gjenhenting",
+                    "hente fram",
+                    "testing av hukommelsen",
+                    "testet seg selv"
+                  ]
+                },
+                {
+                  "id": "difficulty",
+                  "matched": false,
+                  "aliases": [
+                    "vanskeligere",
+                    "kognitiv anstrengelse",
+                    "mer krevende"
+                  ]
+                },
+                {
+                  "id": "retention",
+                  "matched": true,
+                  "aliases": [
+                    "hukommelse",
+                    "langtidslagring",
+                    "langtids hukommelse",
+                    "husket mer",
+                    "varig hukommelse"
+                  ]
+                }
+              ],
+              "evidence_requirements": [
+                {
+                  "required": "hente fram innholdet fra hukommelsen",
+                  "matched": false
+                },
+                {
+                  "required": "opplevde arbeidet som vanskeligere, men husket mer en uke senere",
+                  "matched": true
+                }
+              ],
+              "evidence_sentence_count": 1,
+              "minimum_evidence_sentences": 2,
+              "review_text": "a hente fram innhold fra hukommelsen mellom lesingene gir bedre hukommelse etter mer enn en uke"
+            }
+          ],
+          "metrics": {
+            "true_positive": 0,
+            "predicted": 2,
+            "expected": 1,
+            "false_positive": 2,
+            "false_negative": 1,
+            "precision": 0,
+            "recall": 0,
+            "f1": 0
+          }
+        },
+        {
+          "fixture_id": "mixed_use_street_live_v1",
+          "decisions": [],
+          "metrics": {
+            "true_positive": 0,
+            "predicted": 0,
+            "expected": 1,
+            "false_positive": 0,
+            "false_negative": 1,
+            "precision": 0,
+            "recall": 0,
+            "f1": 0
+          }
+        },
+        {
+          "fixture_id": "delegation_bottleneck_live_v1",
+          "decisions": [],
+          "metrics": {
+            "true_positive": 0,
+            "predicted": 0,
+            "expected": 1,
+            "false_positive": 0,
+            "false_negative": 1,
+            "precision": 0,
+            "recall": 0,
+            "f1": 0
+          }
+        },
+        {
+          "fixture_id": "modularity_interfaces_live_v1",
+          "decisions": [
+            {
+              "candidate_index": 0,
+              "matched": false,
+              "reasons": [
+                "meaning_group_missing:shifted_problem",
+                "evidence_requirement_missing:forsinket av koordinering",
+                "evidence_requirement_missing:feilene i antakelsene teamene gjorde om grensesnittene",
+                "evidence_sentence_count_below:3"
+              ],
+              "meaning_groups": [
+                {
+                  "id": "modularity",
+                  "matched": true,
+                  "aliases": [
+                    "moduler",
+                    "modulær",
+                    "modularisering",
+                    "modulær oppdeling"
+                  ]
+                },
+                {
+                  "id": "local_autonomy_or_coordination",
+                  "matched": true,
+                  "aliases": [
+                    "uavhengig",
+                    "autonomt",
+                    "lokale endringer",
+                    "koordinering"
+                  ]
+                },
+                {
+                  "id": "interfaces",
+                  "matched": true,
+                  "aliases": [
+                    "grensesnitt",
+                    "grensesnittsantakelser",
+                    "antakelser om disse grensesnittene"
+                  ]
+                },
+                {
+                  "id": "shifted_problem",
+                  "matched": false,
+                  "aliases": [
+                    "feil",
+                    "kompleksitet",
+                    "nye typer feil"
+                  ]
+                }
+              ],
+              "evidence_requirements": [
+                {
+                  "required": "forsinket av koordinering",
+                  "matched": false
+                },
+                {
+                  "required": "lokale endringer gjøres uavhengig",
+                  "matched": true
+                },
+                {
+                  "required": "feilene i antakelsene teamene gjorde om grensesnittene",
+                  "matched": false
+                }
+              ],
+              "evidence_sentence_count": 1,
+              "minimum_evidence_sentences": 3,
+              "review_text": "deling av systemet i moduler med tydelige grensesnitt reduserte behovet for koordinering og muliggjorde uavhengige endringer"
+            },
+            {
+              "candidate_index": 1,
+              "matched": false,
+              "reasons": [
+                "meaning_group_missing:modularity",
+                "meaning_group_missing:local_autonomy_or_coordination",
+                "evidence_requirement_missing:forsinket av koordinering",
+                "evidence_requirement_missing:lokale endringer gjøres uavhengig",
+                "evidence_sentence_count_below:3"
+              ],
+              "meaning_groups": [
+                {
+                  "id": "modularity",
+                  "matched": false,
+                  "aliases": [
+                    "moduler",
+                    "modulær",
+                    "modularisering",
+                    "modulær oppdeling"
+                  ]
+                },
+                {
+                  "id": "local_autonomy_or_coordination",
+                  "matched": false,
+                  "aliases": [
+                    "uavhengig",
+                    "autonomt",
+                    "lokale endringer",
+                    "koordinering"
+                  ]
+                },
+                {
+                  "id": "interfaces",
+                  "matched": true,
+                  "aliases": [
+                    "grensesnitt",
+                    "grensesnittsantakelser",
+                    "antakelser om disse grensesnittene"
+                  ]
+                },
+                {
+                  "id": "shifted_problem",
+                  "matched": true,
+                  "aliases": [
+                    "feil",
+                    "kompleksitet",
+                    "nye typer feil"
+                  ]
+                }
+              ],
+              "evidence_requirements": [
+                {
+                  "required": "forsinket av koordinering",
+                  "matched": false
+                },
+                {
+                  "required": "lokale endringer gjøres uavhengig",
+                  "matched": false
+                },
+                {
+                  "required": "feilene i antakelsene teamene gjorde om grensesnittene",
+                  "matched": true
+                }
+              ],
+              "evidence_sentence_count": 1,
+              "minimum_evidence_sentences": 3,
+              "review_text": "feil i systemet økte som følge av misforstaelser i grensesnittene mellom modulene"
+            }
+          ],
+          "metrics": {
+            "true_positive": 0,
+            "predicted": 2,
+            "expected": 1,
+            "false_positive": 2,
+            "false_negative": 1,
+            "precision": 0,
+            "recall": 0,
+            "f1": 0
+          }
+        },
+        {
+          "fixture_id": "standardization_flexibility_live_v1",
+          "decisions": [
+            {
+              "candidate_index": 0,
+              "matched": false,
+              "reasons": [
+                "meaning_group_missing:flexibility",
+                "meaning_group_missing:balance",
+                "evidence_requirement_missing:faste felt og noen valgfrie felt"
+              ],
+              "meaning_groups": [
+                {
+                  "id": "standardization",
+                  "matched": true,
+                  "aliases": [
+                    "standardisering",
+                    "felles kjerne",
+                    "felles mal"
+                  ]
+                },
+                {
+                  "id": "flexibility",
+                  "matched": false,
+                  "aliases": [
+                    "fleksibilitet",
+                    "tilpasning",
+                    "tilpasses",
+                    "valgfrie felt"
+                  ]
+                },
+                {
+                  "id": "balance",
+                  "matched": false,
+                  "aliases": [
+                    "balanse",
+                    "balanserer",
+                    "både standardisering og fleksibilitet",
+                    "samtidig som"
+                  ]
+                }
+              ],
+              "evidence_requirements": [
+                {
+                  "required": "faste felt og noen valgfrie felt",
+                  "matched": false
+                }
+              ],
+              "evidence_sentence_count": 1,
+              "minimum_evidence_sentences": 1,
+              "review_text": "bruken av en felles mal gjorde sammenligning enklere men skapte utfordringer ved a tvinge ulike saker inn i samme struktur"
+            },
+            {
+              "candidate_index": 1,
+              "matched": true,
+              "reasons": [],
+              "meaning_groups": [
+                {
+                  "id": "standardization",
+                  "matched": true,
+                  "aliases": [
+                    "standardisering",
+                    "felles kjerne",
+                    "felles mal"
+                  ]
+                },
+                {
+                  "id": "flexibility",
+                  "matched": true,
+                  "aliases": [
+                    "fleksibilitet",
+                    "tilpasning",
+                    "tilpasses",
+                    "valgfrie felt"
+                  ]
+                },
+                {
+                  "id": "balance",
+                  "matched": true,
+                  "aliases": [
+                    "balanse",
+                    "balanserer",
+                    "både standardisering og fleksibilitet",
+                    "samtidig som"
+                  ]
+                }
+              ],
+              "evidence_requirements": [
+                {
+                  "required": "faste felt og noen valgfrie felt",
+                  "matched": true
+                }
+              ],
+              "evidence_sentence_count": 1,
+              "minimum_evidence_sentences": 1,
+              "review_text": "innføringen av faste og valgfrie felt i malen skapte en balanse mellom standardisering og fleksibilitet"
+            }
+          ],
+          "metrics": {
+            "true_positive": 1,
+            "predicted": 2,
+            "expected": 1,
+            "false_positive": 1,
+            "false_negative": 0,
+            "precision": 0.5,
+            "recall": 1,
+            "f1": 0.666667
+          }
+        }
+      ]
+    },
+    "v2": {
+      "metrics": {
+        "true_positive": 6,
+        "predicted": 6,
+        "expected": 6,
+        "false_positive": 0,
+        "false_negative": 0,
+        "precision": 1,
+        "recall": 1,
+        "f1": 1
+      },
+      "cases": [
+        {
+          "fixture_id": "constraints_creativity_live_v1",
+          "decisions": [
+            {
+              "candidate_index": 0,
+              "matched": true,
+              "reasons": [],
+              "meaning_groups": [
+                {
+                  "id": "constraints",
+                  "matched": true,
+                  "aliases": [
+                    "begrensninger",
+                    "praktiske rammer",
+                    "faste rammer"
+                  ]
+                },
+                {
+                  "id": "creativity",
+                  "matched": true,
+                  "aliases": [
+                    "kreativitet",
+                    "kreativiteten",
+                    "kreativt uttrykk"
+                  ]
+                },
+                {
+                  "id": "form_technique_shift",
+                  "matched": true,
+                  "aliases": [
+                    "form og teknikk",
+                    "form- og teknikk",
+                    "form- og teknikkvalg",
+                    "uttrykksform",
+                    "form og teknikkvalg"
+                  ]
+                }
+              ],
+              "evidence_requirements": [
+                {
+                  "required": "faste praktiske rammer",
+                  "matched": true
+                },
+                {
+                  "required": "kan flytte kreativiteten over i valg av form og teknikk",
+                  "matched": true
+                }
+              ],
+              "evidence_sentence_count": 3,
+              "minimum_evidence_sentences": 2,
+              "review_text": "begrensninger i form av ferdig dramatisk innhold og praktiske rammer pavirker ikke bare scenografens kunstneriske frihet ved a redusere den men flytter ogsa kreativiteten til a fokusere pa valg av form og teknikk som vist ved variasjonen fra detaljrike tegninger til enkle tekstflater kobler sammen hvordan faste rammer begrenser frihet samtidig som de omdirigerer kreativ utfoldelse mot form- og teknikkvalg"
+            }
+          ],
+          "metrics": {
+            "true_positive": 1,
+            "predicted": 1,
+            "expected": 1,
+            "false_positive": 0,
+            "false_negative": 0,
+            "precision": 1,
+            "recall": 1,
+            "f1": 1
+          }
+        },
+        {
+          "fixture_id": "retrieval_learning_live_v1",
+          "decisions": [
+            {
+              "candidate_index": 0,
+              "matched": true,
+              "reasons": [],
+              "meaning_groups": [
+                {
+                  "id": "retrieval",
+                  "matched": true,
+                  "aliases": [
+                    "aktiv gjenhenting",
+                    "hente fram",
+                    "testing av hukommelsen",
+                    "testet seg selv"
+                  ]
+                },
+                {
+                  "id": "difficulty",
+                  "matched": true,
+                  "aliases": [
+                    "vanskeligere",
+                    "kognitiv anstrengelse",
+                    "mer krevende"
+                  ]
+                },
+                {
+                  "id": "retention",
+                  "matched": true,
+                  "aliases": [
+                    "hukommelse",
+                    "langtidslagring",
+                    "langtids hukommelse",
+                    "husket mer",
+                    "varig hukommelse"
+                  ]
+                }
+              ],
+              "evidence_requirements": [
+                {
+                  "required": "hente fram innholdet fra hukommelsen",
+                  "matched": true
+                },
+                {
+                  "required": "opplevde arbeidet som vanskeligere, men husket mer en uke senere",
+                  "matched": true
+                }
+              ],
+              "evidence_sentence_count": 3,
+              "minimum_evidence_sentences": 2,
+              "review_text": "to elevgrupper som brukte like lang tid pa et kapittel viste at gruppen som hentet fram innhold fra hukommelsen mellom lesingene opplevde arbeidet som vanskeligere samtidig som de husket mer enn en uke senere i motsetning til gruppen som leste teksten flere ganger sammenhengen mellom like tidsbruk opplevd vanskelighet ved aktiv gjenhenting og bedre langtids hukommelse"
+            }
+          ],
+          "metrics": {
+            "true_positive": 1,
+            "predicted": 1,
+            "expected": 1,
+            "false_positive": 0,
+            "false_negative": 0,
+            "precision": 1,
+            "recall": 1,
+            "f1": 1
+          }
+        },
+        {
+          "fixture_id": "mixed_use_street_live_v1",
+          "decisions": [
+            {
+              "candidate_index": 0,
+              "matched": true,
+              "reasons": [],
+              "meaning_groups": [
+                {
+                  "id": "mixed_use",
+                  "matched": true,
+                  "aliases": [
+                    "flere bruksformer",
+                    "ulike bruksformer",
+                    "mangfold av bruksformer",
+                    "bruksblanding"
+                  ]
+                },
+                {
+                  "id": "temporal_pattern",
+                  "matched": true,
+                  "aliases": [
+                    "tidsmønster",
+                    "tidsfordeling",
+                    "fotgjengertrafikken",
+                    "fotgjengertrafikk"
+                  ]
+                },
+                {
+                  "id": "causal_limit",
+                  "matched": true,
+                  "aliases": [
+                    "ikke ett enkelt tiltak",
+                    "ikke en entydig årsak",
+                    "fastslår ikke",
+                    "peker ikke ut",
+                    "uten at ett enkelt tiltak"
+                  ]
+                }
+              ],
+              "evidence_requirements": [
+                {
+                  "required": "Fotgjengertrafikken ble jevnere fordelt",
+                  "matched": true
+                },
+                {
+                  "required": "peker ikke ut ett enkelt tiltak som årsak",
+                  "matched": true
+                }
+              ],
+              "evidence_sentence_count": 3,
+              "minimum_evidence_sentences": 2,
+              "review_text": "nar en gate utvikler flere bruksformer som boliger sma butikker serveringssteder og arbeidsplasser opptrer disse samtidig med et bredere tidsmønster i aktiviteten noe som korresponderer med at fotgjengertrafikken blir jevnere fordelt gjennom dagen ogsa etter ordinær arbeidstid materialet peker ikke ut ett enkelt tiltak som arsak men viser et mønster der mangfold i bruksformer er forbundet med en utvidet og mer balansert tidsfordeling av aktivitet syntese av samtidige bruksformer og deres sammenheng med utvidet tidsmønster i aktivitet og fotgjengertrafikk"
+            }
+          ],
+          "metrics": {
+            "true_positive": 1,
+            "predicted": 1,
+            "expected": 1,
+            "false_positive": 0,
+            "false_negative": 0,
+            "precision": 1,
+            "recall": 1,
+            "f1": 1
+          }
+        },
+        {
+          "fixture_id": "delegation_bottleneck_live_v1",
+          "decisions": [
+            {
+              "candidate_index": 0,
+              "matched": true,
+              "reasons": [],
+              "meaning_groups": [
+                {
+                  "id": "delegation",
+                  "matched": true,
+                  "aliases": [
+                    "delegasjon",
+                    "delegert",
+                    "beslutningsmyndighet"
+                  ]
+                },
+                {
+                  "id": "local_coordination",
+                  "matched": true,
+                  "aliases": [
+                    "lokale valg",
+                    "samordningseffektivitet",
+                    "raskere lokale",
+                    "smidighet"
+                  ]
+                },
+                {
+                  "id": "responsibility_boundaries",
+                  "matched": true,
+                  "aliases": [
+                    "grensene mellom ansvarsområdene",
+                    "ansvarsgrenser",
+                    "grenseområdene mellom ansvarsområder",
+                    "grensesnitt mellom ansvarsområder"
+                  ]
+                }
+              ],
+              "evidence_requirements": [
+                {
+                  "required": "delegert innen tydelige rammer",
+                  "matched": true
+                },
+                {
+                  "required": "uenighet oftere samlet seg i grensene mellom ansvarsområdene",
+                  "matched": true
+                }
+              ],
+              "evidence_sentence_count": 2,
+              "minimum_evidence_sentences": 2,
+              "review_text": "nar beslutningsmyndighet i et lite produktteam flyttes fra felles beslutninger til delegert myndighet innen tydelige rammer oppstar et mønster der lokale valg blir raskere samtidig som uenighet konsentreres ved grensene mellom ansvarsomradene denne innsikten kobler endringen i beslutningsstruktur med samtidige endringer i beslutningshastighet og lokalisering av uenighet og beskriver et mønster i hvordan koordinering og konflikt fordeles i teamet"
+            }
+          ],
+          "metrics": {
+            "true_positive": 1,
+            "predicted": 1,
+            "expected": 1,
+            "false_positive": 0,
+            "false_negative": 0,
+            "precision": 1,
+            "recall": 1,
+            "f1": 1
+          }
+        },
+        {
+          "fixture_id": "modularity_interfaces_live_v1",
+          "decisions": [
+            {
+              "candidate_index": 0,
+              "matched": true,
+              "reasons": [],
+              "meaning_groups": [
+                {
+                  "id": "modularity",
+                  "matched": true,
+                  "aliases": [
+                    "moduler",
+                    "modulær",
+                    "modularisering",
+                    "modulær oppdeling"
+                  ]
+                },
+                {
+                  "id": "local_autonomy_or_coordination",
+                  "matched": true,
+                  "aliases": [
+                    "uavhengig",
+                    "autonomt",
+                    "lokale endringer",
+                    "koordinering"
+                  ]
+                },
+                {
+                  "id": "interfaces",
+                  "matched": true,
+                  "aliases": [
+                    "grensesnitt",
+                    "grensesnittsantakelser",
+                    "antakelser om disse grensesnittene"
+                  ]
+                },
+                {
+                  "id": "shifted_problem",
+                  "matched": true,
+                  "aliases": [
+                    "feil",
+                    "kompleksitet",
+                    "nye typer feil"
+                  ]
+                }
+              ],
+              "evidence_requirements": [
+                {
+                  "required": "forsinket av koordinering",
+                  "matched": true
+                },
+                {
+                  "required": "lokale endringer gjøres uavhengig",
+                  "matched": true
+                },
+                {
+                  "required": "feilene i antakelsene teamene gjorde om grensesnittene",
+                  "matched": true
+                }
+              ],
+              "evidence_sentence_count": 3,
+              "minimum_evidence_sentences": 3,
+              "review_text": "deling av en monolitisk kodebase i moduler med tydelige grensesnitt gjør det mulig for utviklingsteam a utføre flere lokale endringer uavhengig samtidig som det konsentrerer feil i antakelser om grensesnittene mellom modulene ved ansvarsgrensene denne innsikten kobler endringen i systemarkitektur fra en monolitisk kodebase til modulær struktur med tydelige grensesnitt og viser hvordan dette forskyver koordinasjonsbyrden fra kontinuerlig koordinering til feil ved modulgrensene"
+            }
+          ],
+          "metrics": {
+            "true_positive": 1,
+            "predicted": 1,
+            "expected": 1,
+            "false_positive": 0,
+            "false_negative": 0,
+            "precision": 1,
+            "recall": 1,
+            "f1": 1
+          }
+        },
+        {
+          "fixture_id": "standardization_flexibility_live_v1",
+          "decisions": [
+            {
+              "candidate_index": 0,
+              "matched": true,
+              "reasons": [],
+              "meaning_groups": [
+                {
+                  "id": "standardization",
+                  "matched": true,
+                  "aliases": [
+                    "standardisering",
+                    "felles kjerne",
+                    "felles mal"
+                  ]
+                },
+                {
+                  "id": "flexibility",
+                  "matched": true,
+                  "aliases": [
+                    "fleksibilitet",
+                    "tilpasning",
+                    "tilpasses",
+                    "valgfrie felt"
+                  ]
+                },
+                {
+                  "id": "balance",
+                  "matched": true,
+                  "aliases": [
+                    "balanse",
+                    "balanserer",
+                    "både standardisering og fleksibilitet",
+                    "samtidig som"
+                  ]
+                }
+              ],
+              "evidence_requirements": [
+                {
+                  "required": "faste felt og noen valgfrie felt",
+                  "matched": true
+                }
+              ],
+              "evidence_sentence_count": 3,
+              "minimum_evidence_sentences": 1,
+              "review_text": "bruken av en felles mal med bade faste og valgfrie felt er forbundet med at rapportene beholder en felles kjerne samtidig som de kan tilpasses svært ulike saker kombinasjonen av faste og valgfrie felt i en felles mal skaper en balanse mellom standardisering og fleksibilitet i rapportering"
+            }
+          ],
+          "metrics": {
+            "true_positive": 1,
+            "predicted": 1,
+            "expected": 1,
+            "false_positive": 0,
+            "false_negative": 0,
+            "precision": 1,
+            "recall": 1,
+            "f1": 1
+          }
+        }
+      ]
+    },
+    "policy": {
+      "replaces_v1_gold_evaluator": false,
+      "canonical_write": false,
+      "chamber_write": false,
+      "meta_write": false,
+      "persistent_write": false,
+      "production_gate_authority": false
+    }
+  },
+  "production_gate_authority": false,
+  "synthesis_allowed": false,
+  "canonical_write": false,
+  "chamber_write": false,
+  "meta_write": false,
+  "persistent_write": false
+}
