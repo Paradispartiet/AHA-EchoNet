@@ -2,7 +2,7 @@
   "schema": "aha_v2_controlled_write_expansion_gate_evidence_v1",
   "version": 1,
   "evidence_id": "aha_v2_expansion_gate_current_2026_08_20",
-  "observed_at": "2026-08-20T22:12:00+02:00",
+  "observed_at": "2026-08-20T21:51:00+02:00",
   "source": "post_one_record_pilot_production_review",
   "one_record_pilot_proof_permanent": true,
   "one_record_pilot_proof_path": "ops/evidence/aha-v2-controlled-write-pilot-live-proof-v1.json",
