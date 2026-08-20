@@ -183,9 +183,10 @@ Hard rejection skjer blant annet ved:
 - svak/manglende abstraction
 - semantisk disconnect fra evidence
 - kausalt språk med `causal_status=not_causal`
-- `source_explicit` kausalitet uten eksplisitt kausal source
+- `source_explicit` kausalitet uten eksplisitt kausal evidence
 - interpretiv kausalitet uten uncertainty
 - interpretiv kausalitet med `confidence=high`
+- kausal kandidat når source uttrykkelig sier at materialet ikke fastslår/peker ut en årsak
 
 Quality score er sekundær til hard gates. En kandidat kan ikke score seg forbi en evidence- eller kausalitetsfeil.
 
@@ -249,7 +250,7 @@ ahaInsightSynthesisBootstrapV2.js
 
 Vanlige brukere får derfor ikke et ekstra synthesis-kall eller nye synlige Insights i denne fasen.
 
-## 10. Live-reviewed gold er neste autoritet
+## 10. Live-reviewed baseline før V2
 
 V1-baseline fra seks produksjonscaser er:
 
@@ -261,19 +262,87 @@ relations F1       0.523810
 interpretations F1 0.166667
 ```
 
-V2 skal vurderes mot **de samme seks source/gold-casene**.
+V2 vurderes mot **de samme seks source/gold-casene**.
 
-Målet i neste målerunde er ikke å forbedre source claims — de er allerede perfekte i corpuset. Målet er å vise at V2 produserer flere gold-matchede, generaliserbare interpretations uten å ofre evidence fidelity eller introdusere kausal overreach.
+## 11. Første live V2-runde — abstraksjon løftet, kausalitet feilkalibrert
 
-Canonical write vurderes ikke før:
+Etter merge av første V2-shadow ble de seks samme source-casene kjørt gjennom den deployede produksjonsruten i to uavhengige målinger.
 
-1. V2 er deployet shadow-only
-2. alle seks live cases er kjørt gjennom den nye synthesis-ruten
-3. output er hånd-/gold-evaluert
-4. Quality Gate V2 avviser source-nære og kausalt svake kandidater
-5. interpretation-resultatet er klart bedre enn live baseline
+Begge målingene viste samme hovedresultat:
 
-## 11. Write-policy
+```text
+valid V2 outputs: 6 / 6
+synthesis candidates: 6
+quality score range: ca. 0.57–0.74
+gate eligible: 0 / 6
+```
+
+Dette var ikke en tilbakegang til source-parafrase. Candidate-tekstene viste tvert imot et klart abstraksjonsløft. V2 formulerte blant annet forståelser tilsvarende:
+
+- begrensninger kan flytte kreativiteten fra innholdsvalg til form/teknikk
+- aktiv gjenhenting kan kombinere høyere opplevd vanskelighet med bedre senere hukommelse
+- delegasjon kan flytte koordineringsproblemer mot ansvarsgrenser
+- modularitet kan flytte kompleksitet fra delt kodebase til grensesnitt mellom moduler
+- faste + valgfrie felt kan balansere sammenlignbarhet og fleksibilitet
+
+Problemet var epistemisk kalibrering. Modellen merket sammensatte mekanismer for ofte som:
+
+```text
+causal_status = source_explicit
+confidence = high
+```
+
+eller:
+
+```text
+causal_status = interpretive
+confidence = high
+```
+
+Quality Gate V2 avviste derfor alle kandidatene. Det var riktig å holde write-porten lukket, men live-runden viste at neste forbedring skulle ligge i **synthesis-kontrakten**, ikke i å fjerne kausalitetsgaten.
+
+Mixed-use-gatecaset var spesielt viktig: source sier uttrykkelig at materialet **ikke peker ut ett enkelt tiltak som årsak**, mens første V2-runde likevel produserte en kausal mekanisme. Dette skal fortsatt være hard rejection.
+
+## 12. Causal calibration etter første live-runde
+
+Kontrakten er derfor skjerpet:
+
+```text
+source_explicit
+→ bare når hele kausalrelasjonen i synthesized insight faktisk er uttrykt i source
+
+interpretive causal synthesis
+→ confidence må være medium eller low
+→ uncertainty må være ikke-tom
+
+source avviser/ikke fastslår årsak
+→ ingen kausal mechanism
+→ foretrekk pattern / tension / generalization
+→ causal_status = not_causal
+```
+
+Servervalidatoren håndhever nå `interpretive + high` og manglende uncertainty fail-closed før output når browseren.
+
+Quality Gate V2 vurderer source-explicit kausalitet mot kandidatens faktiske evidence quotes, ikke bare om et kausalt ord finnes et tilfeldig sted i hele source. Samtidig finnes en egen hard blokkering for source som eksplisitt avviser enkel kausalitet.
+
+Dette gjør gaten mer presis uten å gjøre den svakere.
+
+## 13. Neste målerunde
+
+Den kalibrerte kontrakten skal deployes shadow-only og deretter kjøres mot de samme seks live-gold-casene igjen.
+
+Neste runde skal måle:
+
+1. server-valid output-rate
+2. candidate count
+3. Quality Gate V2 eligibility
+4. kausal rejection rate
+5. gold interpretation precision/recall/F1
+6. forskjellen mot baseline `0.166667`
+
+Canonical write vurderes ikke før interpretation-resultatet er klart bedre enn baseline **og** mixed-use/andre kausalt svake cases fortsatt stoppes korrekt.
+
+## 14. Write-policy
 
 Alle V2-lag holder:
 

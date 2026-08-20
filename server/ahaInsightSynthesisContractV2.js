@@ -182,10 +182,14 @@ function buildSynthesisInstruction() {
     "Hver kandidat må kombinere minst to distinkte ordrette evidence quotes fra SOURCE_TEXT og tilføre en tydelig semantisk transformasjon.",
     "abstraction skal kort forklare hva som er abstrahert eller koblet sammen utover de enkelte source claims.",
     "why_it_matters skal forklare hvorfor forståelsen er nyttig, ikke bare si at den er viktig.",
-    "Vær særlig varsom med kausalitet. Co-occurrence, tidsrekkefølge eller before/after er ikke automatisk årsak.",
-    "Hvis insight bruker eksplisitt årsaksspråk, sett causal_status=source_explicit bare når SOURCE_TEXT faktisk uttrykker årsaken. Ellers bruk interpretive eller formuler ikke kausalt.",
+    "Vær særlig varsom med kausalitet. Co-occurrence, tidsrekkefølge, før/etter og flere samtidige observasjoner er ikke automatisk årsak.",
+    "causal_status=source_explicit er bare tillatt når hele årsaksrelasjonen i selve synthesized insight er uttrykt eksplisitt i SOURCE_TEXT, ikke bare én lokal delrelasjon.",
+    "En mekanisme som kobler sammen flere source claims til en ny årsaksforklaring er interpretive selv om enkelte delrelasjoner er source-explicit.",
+    "Når causal_status=interpretive må confidence være medium eller low og uncertainty må være ikke-tom og konkret beskrive hva source ikke beviser.",
+    "Hvis SOURCE_TEXT uttrykkelig sier at materialet ikke fastslår, peker ut eller identifiserer en årsak, skal kandidaten ikke bruke en kausal mekanisme. Velg pattern, tension eller generalization, sett causal_status=not_causal og behold den kausale begrensningen synlig.",
+    "Ved observasjonelle før/etter-mønstre uten eksplisitt komplett kausalitet: foretrekk pattern eller tension fremfor mechanism.",
     "Bruk uncertainty aktivt når evidensen begrenser generalisering, kausalitet eller rekkevidde. Tom streng er tillatt bare når ingen materiell usikkerhet må synliggjøres.",
-    "Returner heller null kandidater enn svake, generiske eller source-nære kandidater.",
+    "Returner heller null kandidater enn svake, generiske, source-nære eller kausalt overtolkede kandidater.",
     "Ikke foreslå lagring, canonical write, Chamber-write eller Meta-write."
   ].join("\n");
 }
@@ -250,6 +254,12 @@ function validateSynthesisPayload(payloadInput, sourceText) {
     validateEnum(candidate?.confidence, CONFIDENCE_VALUES, `${label}:confidence`, errors);
     validateText(candidate?.uncertainty, `${label}:uncertainty`, errors, 320, true);
     validateEnum(candidate?.causal_status, CAUSAL_STATUS_VALUES, `${label}:causal_status`, errors);
+    if (candidate?.causal_status === "interpretive") {
+      if (candidate?.confidence === "high") errors.push(`${label}:interpretive_causality_confidence_must_not_be_high`);
+      if (typeof candidate?.uncertainty !== "string" || !candidate.uncertainty.trim()) {
+        errors.push(`${label}:interpretive_causality_uncertainty_required`);
+      }
+    }
 
     const insight = typeof candidate?.insight === "string" ? candidate.insight : "";
     if (insight && source.includes(insight)) errors.push(`${label}:insight_is_literal_source`);
