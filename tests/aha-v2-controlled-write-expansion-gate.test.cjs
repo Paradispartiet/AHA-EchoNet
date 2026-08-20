@@ -89,11 +89,24 @@ const badMaxResult = gate.evaluate({ evidence: badMax, one_record_pilot_proof: o
 assert.equal(badMaxResult.decision, "NO_GO");
 assert.ok(Array.from(badMaxResult.blocking_reasons).includes("current_pilot_boundary_not_preserved"));
 
-const unsafeScope = clone(evidence);
-unsafeScope.expansion_scope_contract.max_chamber_records_created = 3;
-const unsafeResult = gate.evaluate({ evidence: unsafeScope, one_record_pilot_proof: oneRecordProof });
-assert.equal(unsafeResult.decision, "NO_GO");
-assert.ok(Array.from(unsafeResult.blocking_reasons).includes("expansion_scope_contract_missing_or_invalid"));
+// The decision gate intentionally accepts bounded multi-record contracts larger
+// than two at the schema layer. With only two production canaries, max=3 must
+// still fail closed on coverage. Exact immutable max=2 binding is enforced by
+// the rehearsal/runtime proof and separately regression-tested there.
+const uncoveredScope = clone(evidence);
+uncoveredScope.expansion_scope_contract.max_chamber_records_created = 3;
+const uncoveredResult = gate.evaluate({ evidence: uncoveredScope, one_record_pilot_proof: oneRecordProof });
+assert.equal(uncoveredResult.decision, "NO_GO");
+assert.ok(Array.from(uncoveredResult.blocking_reasons).includes("expansion_production_canary_proof_missing"));
+assert.equal(gate.validateScopeContract(uncoveredScope.expansion_scope_contract).valid, true);
+
+// A real scope-contract violation must fail the dedicated scope check.
+const invalidScope = clone(evidence);
+invalidScope.expansion_scope_contract.activation_mode = "automatic";
+const invalidScopeResult = gate.evaluate({ evidence: invalidScope, one_record_pilot_proof: oneRecordProof });
+assert.equal(invalidScopeResult.decision, "NO_GO");
+assert.ok(Array.from(invalidScopeResult.blocking_reasons).includes("expansion_scope_contract_missing_or_invalid"));
+assert.equal(gate.validateScopeContract(invalidScope.expansion_scope_contract).valid, false);
 
 for (const field of [
   "normal_chat_persistence_open", "automatic_backfill_open", "backend_sync_open",
