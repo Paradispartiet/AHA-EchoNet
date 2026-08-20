@@ -1,9 +1,9 @@
 name: AHA semantic live smoke temporary
 
 on:
-  push:
+  pull_request:
     branches:
-      - ops/semantic-live-smoke-20260820
+      - main
 
 permissions:
   contents: read
