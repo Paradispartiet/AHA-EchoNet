@@ -10,6 +10,7 @@ const STABILITY_INSTRUCTION = [
   "Bevar sentrale source-/canonical-begreper i insight og abstraction. Når SOURCE_TEXT eller SEMANTIC_CONTEXT allerede har et presist nøkkelbegrep, bruk dette begrepet eller en svært nær bøyningsvariant i stedet for et løsere synonym.",
   "Evidence må dekke hver hovedside av syntesen. Hvis insight kobler en metode/struktur med et observert resultat eller en begrensning, velg evidence quotes som eksplisitt dekker begge sidene; ikke utelat source-setningen som bærer et sentralt begrep.",
   "Når SOURCE_TEXT beskriver både et før-premiss om leveranser forsinket av koordinering, en senere lokal uavhengighet og feil ved grensesnitt, velg tre evidence quotes slik at alle tre sidene er eksplisitt dekket.",
+  "Når SOURCE_TEXT sammenligner gjennomlesing med å hente fram innholdet fra hukommelsen og beskriver både opplevd vanskelighet og senere hukommelse, velg evidence quotes som eksplisitt dekker selve gjenhentingsmetoden og det samlede utfallet.",
   "For pattern, tension og generalization er causal_status=not_causal standardvalget. Velg source_explicit bare når minst én av kandidatens valgte evidence quotes selv inneholder eksplisitt kausalt språk for hele relasjonen. Relation-labels i SEMANTIC_CONTEXT er aldri nok alene.",
   "Når SOURCE_TEXT uttrykkelig begrenser kausal tolkning, bevar den operative source-formuleringen i insight eller uncertainty i stedet for å omskrive den til et løsere synonym. Dette er en del av selve forståelsen, ikke bare metadata.",
   "Før du returnerer kandidaten: kontroller at hvert sentralt konsept i syntesen er språklig synlig i insight/abstraction, at evidence faktisk dekker konseptene, og at causal_status samsvarer med ordlyden."
@@ -48,6 +49,16 @@ const EVIDENCE_COVERAGE_RULES = Object.freeze([
     source: /forsinket\s+av\s+koordinering/i,
     evidence: /forsinket\s+av\s+koordinering/i,
     id: "coordination_delay"
+  },
+  {
+    source: /hente\s+fram\s+innholdet\s+fra\s+hukommelsen/i,
+    evidence: /hente\s+fram\s+innholdet\s+fra\s+hukommelsen/i,
+    id: "retrieval_method"
+  },
+  {
+    source: /opplevde\s+arbeidet\s+som\s+vanskeligere,?\s+men\s+husket\s+mer\s+en\s+uke\s+senere/i,
+    evidence: /opplevde\s+arbeidet\s+som\s+vanskeligere,?\s+men\s+husket\s+mer\s+en\s+uke\s+senere/i,
+    id: "retrieval_outcome"
   }
 ]);
 
@@ -149,6 +160,13 @@ function retryInstruction(validationErrors = []) {
     instructions.push(
       "MANDATORY EVIDENCE CORRECTION: The synthesis omitted the source premise about deliveries being 'forsinket av koordinering'.",
       "Return exactly three distinct evidence quotes: one exact quote containing 'forsinket av koordinering', one covering independent local changes, and one covering errors in assumptions about module interfaces. Keep every quote exact and inside SOURCE_TEXT."
+    );
+  }
+  if (hasValidationCode(errors, "source_evidence_premise_not_preserved:retrieval_method")
+    || hasValidationCode(errors, "source_evidence_premise_not_preserved:retrieval_outcome")) {
+    instructions.push(
+      "MANDATORY RETRIEVAL EVIDENCE CORRECTION: The synthesis omitted a required source side of the retrieval-practice comparison.",
+      "Return exactly two distinct evidence quotes: one exact quote containing 'hente fram innholdet fra hukommelsen' and one exact quote containing 'opplevde arbeidet som vanskeligere, men husket mer en uke senere'. Keep both quotes exact and inside SOURCE_TEXT."
     );
   }
   return instructions.join("\n");
