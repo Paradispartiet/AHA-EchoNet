@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://paradispartiet.github.io/AHA-EchoNet/schemas/aha-projection-product-read-model-v2.schema.json",
+  "title": "AHA Projection Product Read Model V2",
+  "type": "object",
+  "required": ["schema", "version", "mode", "status", "surfaces", "validation", "policy"],
+  "properties": {
+    "schema": { "const": "aha_projection_product_read_model_v2" },
+    "version": { "const": 2 },
+    "mode": { "const": "read_only" },
+    "status": { "enum": ["ready", "blocked"] },
+    "gate_id": { "type": ["string", "null"] },
+    "projection_id": { "type": ["string", "null"] },
+    "surfaces": {
+      "type": "object",
+      "required": ["insights", "concepts", "lists", "paths", "mindmap"],
+      "properties": {
+        "insights": { "type": "array" },
+        "concepts": { "type": "array" },
+        "lists": { "type": "array" },
+        "paths": { "type": "array" },
+        "mindmap": {
+          "type": "object",
+          "required": ["nodes", "edges", "read_only"],
+          "properties": {
+            "nodes": { "type": "array" },
+            "edges": { "type": "array" },
+            "read_only": { "const": true }
+          }
+        }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "required": ["valid", "errors"],
+      "properties": {
+        "valid": { "type": "boolean" },
+        "errors": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "policy": { "type": "object" }
+  }
+}
