@@ -63,9 +63,26 @@ async function run() {
   }
 
   {
-    const wordingRetry = stability.retryInstruction(["candidate:0:not_causal_contains_causal_language"]);
-    assert.match(wordingRetry, /MANDATORY WORDING CORRECTION/i);
-    assert.match(wordingRetry, /Keep causal_status=not_causal/i);
+    const wordingRetry = stability.addRetryInstruction({
+      input: [
+        { role: "system", content: "base instruction" },
+        {
+          role: "user",
+          content: JSON.stringify({
+            semantic_context: {
+              relations: [{ relation_type: "causes", epistemic_status: "source_explicit" }]
+            }
+          })
+        }
+      ]
+    }, ["candidate:0:not_causal_contains_causal_language"]);
+    assert.match(wordingRetry.input[0].content, /MANDATORY WORDING CORRECTION/i);
+    assert.match(wordingRetry.input[0].content, /Keep causal_status=not_causal/i);
+    assert.match(wordingRetry.input[0].content, /MUST use this non-causal sentence frame/i);
+    assert.match(wordingRetry.input[0].content, /er forbundet med.*samtidig som/i);
+    assert.match(wordingRetry.input[0].content, /do not use a causal synonym/i);
+    const retryPayload = JSON.parse(wordingRetry.input[1].content);
+    assert.deepEqual(retryPayload.semantic_context.relations, []);
   }
 
   const mixedUseSource = "En gate fikk flere boliger og butikker. Fotgjengertrafikken ble jevnere fordelt. Materialet peker ikke ut ett enkelt tiltak som årsak, men viser at flere bruksformer opptrer samtidig med et bredere tidsmønster.";
