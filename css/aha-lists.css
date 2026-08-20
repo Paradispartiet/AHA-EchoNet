@@ -3,6 +3,62 @@
   gap: 16px;
 }
 
+.aha-v2-projection-shell {
+  display: grid;
+  gap: 14px;
+  border-color: rgba(123, 211, 184, .48);
+  background: linear-gradient(145deg, rgba(33, 89, 75, .2), rgba(122, 198, 255, .045));
+}
+
+.aha-v2-projection-shell[hidden] { display: none; }
+
+.aha-v2-projection-heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.aha-v2-projection-heading h2,
+.aha-v2-projection-heading p { margin-top: 0; }
+
+.aha-v2-preview-badge {
+  border: 1px solid rgba(123, 211, 184, .58);
+  border-radius: 999px;
+  padding: 5px 10px;
+  color: #bcefdc;
+  background: rgba(123, 211, 184, .09);
+  font-size: .78rem;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+
+.aha-v2-list-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.aha-v2-list-preview-card {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid rgba(123, 211, 184, .3);
+  border-radius: 14px;
+  background: rgba(5, 20, 24, .44);
+}
+
+.aha-v2-list-preview-card h3,
+.aha-v2-list-preview-card p { margin: 0; }
+
+.aha-v2-preview-items {
+  margin: 0;
+  padding-left: 20px;
+  display: grid;
+  gap: 7px;
+}
+
 .aha-concept-list-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
