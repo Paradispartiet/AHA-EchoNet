@@ -48,16 +48,35 @@ It requires all of the following at runtime:
 7. proof, scope and decision identities agree;
 8. every broader write authority remains closed.
 
-Post-merge review invalidated the old #860 proof and returned current evidence to `NO_GO`. Therefore the current runtime must fail with `expansion_gate_not_green` before the raw activation controller is created.
+Post-merge review invalidated the old #860 proof and returned current evidence to `NO_GO`. Therefore the current runtime fails with `expansion_gate_not_green` before the raw activation controller is created.
 
 Regression:
 
 `tests/aha-v2-controlled-write-expansion-activation.test.cjs`
 
-The regression now proves both sides of the contract:
+The regression proves both sides of the contract:
 
 - **real current repo evidence is rejected** and the raw controller is never created;
-- a synthetic fully re-proven fixture can still authorize the implementation, so the code remains testable without pretending production evidence is green.
+- a synthetic fully re-proven fixture can still exercise the implementation contract without pretending current production evidence is green.
+
+## Additional activation-runtime blocker from #862 review
+
+Post-merge review of #862 found a separate P1 issue in the two-active-record case: two operator tabs can approve rollback of different records concurrently. Without cross-instance serialization, both raw controllers can read the same review queue and Chamber snapshot, then one can write stale state after the other has completed. A rollback that appeared successful in one tab could therefore be partially resurrected by the other tab.
+
+Current production remains protected because the `NO_GO` gate prevents the activation controller from being created. However, the activation implementation must **not be re-authorized** until the complete rollback transaction is serialized across same-origin tabs/instances (or is otherwise made atomically compare-and-write safe), followed by an adversarial concurrency regression.
+
+Tracked review thread:
+
+`PRRT_kwDOQgS1AM6a9LzR`
+
+Required remediation before reauthorization:
+
+```text
+cross-instance rollback serialization = REQUIRED
+fresh state read inside exclusive boundary = REQUIRED
+full rollback + verification inside same boundary = REQUIRED
+concurrent two-tab rollback regression = REQUIRED
+```
 
 ## Candidate scope remains unchanged
 
@@ -78,7 +97,7 @@ A previous canonical creation under the one-record pilot consumes one of the two
 
 ## Existing implementation boundaries
 
-When and only when fresh evidence becomes green, the wrapper still enforces:
+When and only when both the runtime hardening and fresh evidence are green, the wrapper is intended to enforce:
 
 - at most two lifetime canonical creations;
 - record 3 blocked with `expansion_record_budget_exhausted`;
@@ -88,17 +107,41 @@ When and only when fresh evidence becomes green, the wrapper still enforces:
 - no direct localStorage/sessionStorage/IndexedDB/network/Supabase persistence path in the wrapper;
 - all normal Chat/backend/backfill/projection/Meta/remote authorities remain false.
 
-## Status of PR #863
+## Status of PR #863 / #864 proof
 
-Temporary PR #863 exercised the activation implementation against the then-current 12/12 evidence and was closed without merge.
+Temporary PR #863 exercised the activation implementation against the then-current 12/12 evidence and was closed without merge. PR #864 permanentized that downstream observation.
 
-That observation cannot override the later review invalidation because its authorization chain depended on the same #860-derived green gate state that is now withdrawn. It is historical evidence, not current authority.
+That proof is now historical only. It cannot override the upstream #860 invalidation, and review found two additional proof-quality gaps:
 
-A future corrected proof must run against the **hardened rehearsal runtime and corrected current evidence**, not against the old eligible state.
+1. **Executed-byte TOCTOU:** after the initial Pages parity check, the proof refetched controller assets for execution without hashing those exact response bytes against the expected commit. A concurrent Pages deployment could therefore cause the artifact to attribute execution to the wrong commit.
+2. **Sentinel content not proven:** rollback isolation asserted that the unrelated sentinel ID still existed, but did not compare the full sentinel record before and after rollback. Mutated sentinel contents could have passed.
 
-## Required next proof
+Tracked proof-review threads:
 
-Before this activation can become usable again, a new temporary production proof must first restore the **decision gate** itself by proving the hardened two-record candidate:
+```text
+PRRT_kwDOQgS1AM6a9Pio
+PRRT_kwDOQgS1AM6a9Pis
+```
+
+Permanent historical evidence:
+
+`ops/evidence/aha-v2-two-record-expansion-activation-live-proof-v1.json`
+
+Current status:
+
+```text
+status = invalidated_by_upstream_gate_review
+current_activation_authority_usable = false
+cross_instance_rollback_serialization_missing = true
+deployed_execution_byte_binding_missing = true
+unrelated_sentinel_full_content_check_missing = true
+fresh_corrected_gate_proof_required = true
+fresh_post_gate_activation_proof_required = true
+```
+
+## Required corrected proof chain
+
+Before activation can become usable again, the **gate/rehearsal** must first be freshly production-proven against the hardened runtime. That replacement proof must establish:
 
 - immutable scope ID + fingerprint + max=2 binding;
 - replay-failure cleanup;
@@ -109,9 +152,18 @@ Before this activation can become usable again, a new temporary production proof
 - deployed hardened asset parity;
 - all broader authorities false.
 
-Only after that corrected proof may the decision return to `BOUNDED_EXPANSION_PILOT_ELIGIBLE`.
+Only after that gate proof is green may the decision return to `BOUNDED_EXPANSION_PILOT_ELIGIBLE`.
 
-Then the activation implementation needs a fresh post-authorization production proof before the two-record write boundary can be called production-verified.
+Before activation itself can then be called production-verified, all of the following must also be true:
+
+1. cross-instance rollback serialization is implemented and regression-tested;
+2. the exact bytes executed by the proof are either the already hash-verified copies or are re-hashed immediately before execution and bound to expected main;
+3. the complete unrelated sentinel record is snapshotted and byte/stable-digest compared before and after both rollbacks;
+4. two distinct records remain independently rollback-safe;
+5. third write remains blocked and lifetime count remains two after rollback;
+6. repository calls remain 0/0 and all broader authorities remain false.
+
+The old #863 artifact cannot be reused as the corrected proof.
 
 ## Still closed
 
@@ -131,4 +183,4 @@ remote V2 writes                             CLOSED
 
 Authoritative status:
 
-> **Activation code exists, but the current gate is NO_GO and blocks it before controller creation. Production-verified write boundary remains the one-record pilot, max=1.**
+> **Activation code exists, but current gate is NO_GO and blocks it before controller creation. Cross-instance rollback serialization is also required before any reauthorization. Production-verified write boundary remains the one-record pilot, max=1.**
