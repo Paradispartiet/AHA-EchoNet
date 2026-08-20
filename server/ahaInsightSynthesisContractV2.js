@@ -186,6 +186,8 @@ function buildSynthesisInstruction() {
     "abstraction skal kort forklare hva som er abstrahert eller koblet sammen utover de enkelte source claims.",
     "why_it_matters skal forklare hvorfor forståelsen er nyttig, ikke bare si at den er viktig.",
     "Foretrekk etablerte canonical concept-labels fra SEMANTIC_CONTEXT når de presist uttrykker forståelsen; unngå unødvendige synonymer som gjør betydningen mindre stabil.",
+    "Når SOURCE_TEXT beskriver at en endring i koordinering eller beslutningsstruktur gjør lokale valg eller arbeid lettere samtidig som uenighet, feil eller koordineringspress samler seg ved grenser mellom ansvar, moduler eller team, skal insight eller abstraction navngi selve forskyvningen: hva som blir lettere og hvilken grense den nye spenningen konsentreres ved.",
+    "Behold source-groundede boundary-begreper eksplisitt, for eksempel 'ansvarsgrenser', 'grensene mellom ansvarsområdene' eller konkrete modul-/teamgrensesnitt. Ikke generaliser dem bort til bare 'plasseringen av uenighet' eller 'konfliktlokalisering'. Når source bare viser før/etter eller samvariasjon, formuler dette som pattern eller tension uten kausal påstand; bruk interpretive + uncertainty bare dersom du uttrykkelig formulerer en mulig mekanisme.",
     "Vær særlig varsom med kausalitet. Co-occurrence, tidsrekkefølge, før/etter og flere samtidige observasjoner er ikke automatisk årsak.",
     "causal_status=source_explicit er bare tillatt når hele årsaksrelasjonen i selve synthesized insight er uttrykt eksplisitt i kandidatens evidence quotes, ikke bare én lokal delrelasjon et annet sted i SOURCE_TEXT.",
     "En mekanisme som kobler sammen flere source claims til en ny årsaksforklaring er interpretive selv om enkelte delrelasjoner er source-explicit.",
