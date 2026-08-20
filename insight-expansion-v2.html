@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="no">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AHA Insight V2 — kontrollert to-record-utvidelse</title>
+  <style>
+    :root { color-scheme: light dark; font-family: system-ui, sans-serif; }
+    body { margin: 0; background: Canvas; color: CanvasText; }
+    .shell { display: grid; gap: 0; min-height: 100vh; }
+    header, .controls, .evidence { padding: 14px 18px; border-bottom: 1px solid color-mix(in srgb, CanvasText 18%, transparent); }
+    h1, h2 { margin: 0 0 6px; }
+    h1 { font-size: 1.12rem; }
+    h2 { font-size: .95rem; }
+    p { margin: 4px 0; line-height: 1.45; }
+    .status { font-weight: 650; }
+    .controls { display: grid; gap: 12px; }
+    .steps { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    button, input, select { font: inherit; padding: 8px 10px; }
+    button { cursor: pointer; }
+    button:disabled, input:disabled, select:disabled { cursor: not-allowed; opacity: .45; }
+    .approval { display: grid; grid-template-columns: minmax(220px, 1fr) auto; gap: 8px; max-width: 760px; }
+    code { user-select: all; }
+    .evidence { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+    pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: .76rem; max-height: 360px; overflow: auto; }
+    #chat-frame { width: 100%; min-height: 62vh; border: 0; visibility: hidden; }
+    #chat-frame.ready { visibility: visible; }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <h1>AHA Insight V2 — kontrollert to-record-utvidelse</h1>
+      <p>Denne separate operatørflaten gjelder bare det ferdig evidensierte scope-et <code>bounded_local_chamber_two_record_candidate_v1</code>.</p>
+      <p>Maksimalt to lokale Chamber-records kan opprettes totalt i den delte review-historikken. Hver record krever separat REVIEW- og CANONICAL-godkjenning; hver rollback krever separat ROLLBACK-godkjenning.</p>
+      <p>Rollback åpner aldri lifetime-budsjettet igjen. Samme kandidat-signatur kan ikke bruke begge plassene. En tidligere brukt én-record-slot teller mot totalen på to.</p>
+      <p>Normal Chat-persistens, automatisk aktivering/backfill, backend-sync, remote writes, Meta og projection-store writes er fortsatt stengt.</p>
+      <p id="page-status" class="status" aria-live="polite">Validerer operator-intent og permanent expansion-evidence …</p>
+      <p id="gate-status" aria-live="polite">Expansion-authority er ikke etablert ennå.</p>
+    </header>
+
+    <section class="controls" aria-label="Kontrollert to-record-aktivering">
+      <div class="steps">
+        <label for="candidate-index">Kandidatindeks</label>
+        <input id="candidate-index" type="number" min="0" step="1" value="0" disabled />
+        <button id="prepare-review" type="button" disabled>1. Forbered review</button>
+        <button id="approve-review" type="button" disabled>2. Godkjenn review</button>
+        <button id="prepare-canonical" type="button" disabled>3. Forbered Chamber-write</button>
+        <button id="approve-canonical" type="button" disabled>4. Godkjenn Chamber-write</button>
+      </div>
+      <div class="steps">
+        <label for="rollback-review">Aktiv record for rollback</label>
+        <select id="rollback-review" disabled><option value="">Ingen aktiv record</option></select>
+        <button id="prepare-rollback" type="button" disabled>Forbered exact rollback</button>
+        <button id="approve-rollback" type="button" disabled>Godkjenn rollback</button>
+      </div>
+      <p>Engangsfrase: <code id="approval-phrase">Ingen aktiv engangsgodkjenning.</code></p>
+      <div class="approval">
+        <input id="approval-input" type="text" autocomplete="off" spellcheck="false" aria-label="Skriv engangsfrasen" disabled />
+      </div>
+    </section>
+
+    <section class="evidence">
+      <div><h2>Kandidat og quality gate</h2><pre id="candidate-output">Ingen kandidat forberedt.</pre></div>
+      <div><h2>Expansionstatus og siste audit-hendelser</h2><pre id="audit-output">Ingen hendelser.</pre></div>
+    </section>
+
+    <iframe
+      id="chat-frame"
+      title="AHA Chat med kontrollert Insight V2 to-record-utvidelse"
+      src="about:blank"
+    ></iframe>
+  </main>
+  <script src="js/ahaInsightExpansionOperatorV2.js"></script>
+</body>
+</html>
