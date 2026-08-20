@@ -1,0 +1,70 @@
+{
+  "schema": "aha_semantic_gold_fixture_v1",
+  "id": "retrieval_learning_live_v1",
+  "source_event_id": "retrieval_learning_live_v1",
+  "source_text": "To elevgrupper brukte like lang tid på samme kapittel. Den ene leste teksten flere ganger, mens den andre forsøkte å hente fram innholdet fra hukommelsen mellom lesingene. Gruppen som testet seg selv opplevde arbeidet som vanskeligere, men husket mer en uke senere.",
+  "provenance": {"kind":"live_production_capture","captured_at":"2026-08-20T02:09:25Z","model":"gpt-4.1-mini-2025-04-14","response_id":"resp_04ec11fe65d1290e006a8661ca575c87d2bc7e7962edc5b42a","workflow_run_id":32323558861,"workflow_job_id":96290244027,"endpoint_path":"/api/aha-agent/semantic-document"},
+  "gold": {
+    "entities": [
+      {"label":"elevgrupper","entity_type":"other","aliases":["To elevgrupper"]},
+      {"label":"elevgruppe med repetert lesing","entity_type":"other","aliases":["Den ene","Den ene elevgruppen som leste teksten flere ganger"]},
+      {"label":"elevgruppe med aktiv gjenhenting","entity_type":"other","aliases":["den andre","Den andre elevgruppen som forsøkte å hente fram innholdet fra hukommelsen","Gruppen som testet seg selv","Gruppen som testet seg selv ved å hente fram innhold fra hukommelsen"]}
+    ],
+    "concepts": [
+      {"label":"lik tidsbruk","aliases":["brukte like lang tid på samme kapittel","like lang tid brukt på kapittel"]},
+      {"label":"gjentatt lesing","aliases":["leste teksten flere ganger","flere gjennomlesinger"]},
+      {"label":"aktiv gjenhenting","aliases":["hente fram innholdet fra hukommelsen mellom lesingene","hente fram innhold fra hukommelsen mellom lesingene"]},
+      {"label":"opplevd vanskelighet","aliases":["opplevde arbeidet som vanskeligere","oppfattelse av vanskeligere arbeid"]},
+      {"label":"senere hukommelse","aliases":["husket mer en uke senere","bedre langtids hukommelse"]}
+    ],
+    "source_claims": [
+      {"text":"To elevgrupper brukte like lang tid på samme kapittel."},
+      {"text":"Den ene leste teksten flere ganger, mens den andre forsøkte å hente fram innholdet fra hukommelsen mellom lesingene."},
+      {"text":"Gruppen som testet seg selv opplevde arbeidet som vanskeligere, men husket mer en uke senere."}
+    ],
+    "relations": [
+      {"relation_type":"associated_with","from_label":"elevgruppe med repetert lesing","to_label":"lik tidsbruk","epistemic_status":"source_explicit"},
+      {"relation_type":"associated_with","from_label":"elevgruppe med aktiv gjenhenting","to_label":"lik tidsbruk","epistemic_status":"source_explicit"},
+      {"relation_type":"associated_with","from_label":"elevgruppe med aktiv gjenhenting","to_label":"opplevd vanskelighet","epistemic_status":"source_explicit"},
+      {"relation_type":"associated_with","from_label":"elevgruppe med aktiv gjenhenting","to_label":"senere hukommelse","epistemic_status":"source_explicit"}
+    ],
+    "interpretations": [{"id":"retrieval_difficulty_retention_tradeoff","required_terms":["vanskeligere","hukommelse"],"forbidden_terms":[],"evidence_quotes":["Gruppen som testet seg selv opplevde arbeidet som vanskeligere","husket mer en uke senere"]}]
+  },
+  "model_shadow": {
+    "source_event_id":"retrieval_learning_live_v1",
+    "entities":[
+      {"source_surface":"To elevgrupper","canonical_label":"To elevgrupper","entity_type":"other"},
+      {"source_surface":"Den ene","canonical_label":"Den ene elevgruppen som leste teksten flere ganger","entity_type":"other"},
+      {"source_surface":"den andre","canonical_label":"Den andre elevgruppen som forsøkte å hente fram innholdet fra hukommelsen","entity_type":"other"},
+      {"source_surface":"Gruppen som testet seg selv","canonical_label":"Gruppen som testet seg selv ved å hente fram innhold fra hukommelsen","entity_type":"other"}
+    ],
+    "concepts":[
+      {"source_surface":"brukte like lang tid på samme kapittel","canonical_label":"like lang tid brukt på kapittel"},
+      {"source_surface":"leste teksten flere ganger","canonical_label":"flere gjennomlesinger"},
+      {"source_surface":"hente fram innholdet fra hukommelsen mellom lesingene","canonical_label":"hente fram innhold fra hukommelsen mellom lesingene"},
+      {"source_surface":"opplevde arbeidet som vanskeligere","canonical_label":"oppfattelse av vanskeligere arbeid"},
+      {"source_surface":"husket mer en uke senere","canonical_label":"bedre langtids hukommelse"}
+    ],
+    "propositions":[
+      {"kind":"source_claim","text":"To elevgrupper brukte like lang tid på samme kapittel."},
+      {"kind":"source_claim","text":"Den ene leste teksten flere ganger, mens den andre forsøkte å hente fram innholdet fra hukommelsen mellom lesingene."},
+      {"kind":"source_claim","text":"Gruppen som testet seg selv opplevde arbeidet som vanskeligere, men husket mer en uke senere."},
+      {"kind":"interpretation","text":"Å hente fram innhold fra hukommelsen mellom lesingene oppleves som vanskeligere arbeid enn å bare lese teksten flere ganger.","evidence":[{"quote":"Gruppen som testet seg selv opplevde arbeidet som vanskeligere"}]},
+      {"kind":"interpretation","text":"Å hente fram innhold fra hukommelsen mellom lesingene gir bedre hukommelse etter mer enn en uke.","evidence":[{"quote":"husket mer en uke senere"}]}
+    ],
+    "relations":[
+      {"relation_type":"associated_with","from_label":"Den ene elevgruppen som leste teksten flere ganger","to_label":"brukte like lang tid på samme kapittel","epistemic_status":"source_explicit"},
+      {"relation_type":"associated_with","from_label":"Den andre elevgruppen som forsøkte å hente fram innholdet fra hukommelsen","to_label":"brukte like lang tid på samme kapittel","epistemic_status":"source_explicit"},
+      {"relation_type":"associated_with","from_label":"Gruppen som testet seg selv ved å hente fram innhold fra hukommelsen","to_label":"opplevde arbeidet som vanskeligere","epistemic_status":"source_explicit"},
+      {"relation_type":"associated_with","from_label":"Gruppen som testet seg selv ved å hente fram innhold fra hukommelsen","to_label":"husket mer en uke senere","epistemic_status":"source_explicit"}
+    ]
+  },
+  "expected": {
+    "entities":{"precision":0.75,"recall":1.0,"f1":0.857143},
+    "concepts":{"precision":1.0,"recall":1.0,"f1":1.0},
+    "source_claims":{"precision":1.0,"recall":1.0,"f1":1.0},
+    "relations":{"precision":1.0,"recall":1.0,"f1":1.0},
+    "interpretations":{"precision":0.0,"recall":0.0,"f1":0},
+    "macro_f1":0.771429
+  }
+}
