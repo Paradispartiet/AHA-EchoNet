@@ -35,6 +35,39 @@ async function run() {
   assert.match(request.input[0].content, /Evidence må dekke hver hovedside/i);
   assert.match(request.input[0].content, /not_causal standardvalget/i);
 
+  {
+    const causalRetryRequest = stability.addRetryInstruction({
+      input: [
+        { role: "system", content: "base instruction" },
+        {
+          role: "user",
+          content: JSON.stringify({
+            source_text: "Etter delegering gikk lokale valg raskere.",
+            semantic_context: {
+              relations: [{
+                relation_type: "causes",
+                from_label: "delegering",
+                to_label: "lokale valg",
+                epistemic_status: "source_explicit"
+              }]
+            }
+          })
+        }
+      ]
+    }, ["candidate:0:source_explicit_causality_not_in_evidence"]);
+    assert.match(causalRetryRequest.input[0].content, /MANDATORY CAUSAL CORRECTION/i);
+    assert.match(causalRetryRequest.input[0].content, /set causal_status=not_causal/i);
+    assert.match(causalRetryRequest.input[0].content, /Do not repeat the rejected causal_status/i);
+    const retryPayload = JSON.parse(causalRetryRequest.input[1].content);
+    assert.deepEqual(retryPayload.semantic_context.relations, []);
+  }
+
+  {
+    const wordingRetry = stability.retryInstruction(["candidate:0:not_causal_contains_causal_language"]);
+    assert.match(wordingRetry, /MANDATORY WORDING CORRECTION/i);
+    assert.match(wordingRetry, /Keep causal_status=not_causal/i);
+  }
+
   const mixedUseSource = "En gate fikk flere boliger og butikker. Fotgjengertrafikken ble jevnere fordelt. Materialet peker ikke ut ett enkelt tiltak som årsak, men viser at flere bruksformer opptrer samtidig med et bredere tidsmønster.";
   const missingLimit = {
     schema: "aha_insight_synthesis_output_v2",
@@ -109,6 +142,37 @@ async function run() {
     assert.equal(captured[0].temperature, 0.2);
     assert.match(captured[1].input[0].content, /PREVIOUS SYNTHESIS ATTEMPT FAILED VALIDATION/i);
     assert.match(captured[1].input[0].content, /quote_not_in_source/i);
+  }
+
+  {
+    let calls = 0;
+    const captured = [];
+    const causalContext = structuredClone(semanticContext);
+    causalContext.relations = [{
+      relation_type: "causes",
+      from_label: "felles mal",
+      to_label: "sammenligning enklere",
+      epistemic_status: "source_explicit"
+    }];
+    const invalidCausal = structuredClone(valid);
+    invalidCausal.candidates[0].causal_status = "source_explicit";
+    const handler = createSemanticModelHandler({
+      hasOpenAIKey: true,
+      model: "gpt-test",
+      openai: { responses: { create: async (req) => {
+        calls += 1;
+        captured.push(req);
+        return calls === 1
+          ? { id: "causal_bad_1", model: "gpt-test", output_parsed: invalidCausal }
+          : { id: "causal_good_2", model: "gpt-test", output_parsed: valid };
+      } } }
+    });
+    const res = await invoke(handler, { format: "aha_insight_synthesis_output_v2", text: source, semantic_context: causalContext });
+    assert.equal(res.statusCode, 200);
+    assert.equal(calls, 2);
+    assert.match(captured[1].input[0].content, /MANDATORY CAUSAL CORRECTION/i);
+    const retryPayload = JSON.parse(captured[1].input[1].content);
+    assert.deepEqual(retryPayload.semantic_context.relations, []);
   }
 
   {
