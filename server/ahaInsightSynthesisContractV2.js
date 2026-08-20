@@ -1,0 +1,326 @@
+// server/ahaInsightSynthesisContractV2.js
+// Strict shadow-only contract for higher-order Interpretation / Insight Synthesis V2.
+// Source text remains the only evidence authority. No canonical, Chamber, Meta or persistent writes.
+
+const SYNTHESIS_OUTPUT_SCHEMA = "aha_insight_synthesis_output_v2";
+const SYNTHESIS_CONTRACT = "aha_insight_synthesis_contract_v2";
+const SYNTHESIS_MAX_SOURCE_CHARS = 8000;
+const INSIGHT_TYPES = Object.freeze(["principle", "mechanism", "pattern", "tension", "consequence", "generalization"]);
+const CONFIDENCE_VALUES = Object.freeze(["high", "medium", "low"]);
+const CAUSAL_STATUS_VALUES = Object.freeze(["not_causal", "source_explicit", "interpretive"]);
+const EVIDENCE_ROLE_VALUES = Object.freeze(["supports", "limits"]);
+const RELATION_TYPES = Object.freeze(["associated_with", "part_of", "influences", "causes", "supports", "contradicts", "explains", "precedes", "other"]);
+const EPISTEMIC_VALUES = Object.freeze(["source_explicit", "interpretation", "inference"]);
+const FORBIDDEN_KEYS = Object.freeze(new Set([
+  "assistantreply", "assistant_reply", "chatresponse", "chat_response", "airesponse", "ai_response",
+  "candidate_insights", "candidateinsights", "meta_profile", "metaprofile", "chamber", "memory"
+]));
+
+const SYNTHESIS_JSON_SCHEMA = Object.freeze({
+  type: "object",
+  additionalProperties: false,
+  required: ["schema", "candidates"],
+  properties: {
+    schema: { type: "string", enum: [SYNTHESIS_OUTPUT_SCHEMA] },
+    candidates: {
+      type: "array",
+      maxItems: 5,
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["insight", "type", "abstraction", "evidence", "why_it_matters", "confidence", "uncertainty", "causal_status"],
+        properties: {
+          insight: { type: "string", minLength: 1, maxLength: 600 },
+          type: { type: "string", enum: INSIGHT_TYPES.slice() },
+          abstraction: { type: "string", minLength: 1, maxLength: 400 },
+          evidence: {
+            type: "array",
+            minItems: 2,
+            maxItems: 3,
+            items: {
+              type: "object",
+              additionalProperties: false,
+              required: ["quote", "role"],
+              properties: {
+                quote: { type: "string", minLength: 1, maxLength: 420 },
+                role: { type: "string", enum: EVIDENCE_ROLE_VALUES.slice() }
+              }
+            }
+          },
+          why_it_matters: { type: "string", minLength: 1, maxLength: 400 },
+          confidence: { type: "string", enum: CONFIDENCE_VALUES.slice() },
+          uncertainty: { type: "string", maxLength: 320 },
+          causal_status: { type: "string", enum: CAUSAL_STATUS_VALUES.slice() }
+        }
+      }
+    }
+  }
+});
+
+function normalizeWhitespace(value) {
+  return String(value || "").replace(/\s+/g, " ").trim();
+}
+
+function normalizeForComparison(value) {
+  return normalizeWhitespace(value).toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "");
+}
+
+function safeObject(value) {
+  return value && typeof value === "object" && !Array.isArray(value) ? value : null;
+}
+
+function containsForbiddenKeys(value) {
+  const visit = (item) => {
+    if (!item || typeof item !== "object") return false;
+    for (const [key, nested] of Object.entries(item)) {
+      if (FORBIDDEN_KEYS.has(String(key || "").toLowerCase())) return true;
+      if (visit(nested)) return true;
+    }
+    return false;
+  };
+  return visit(value);
+}
+
+function exactKeys(value, allowedKeys, label, errors) {
+  const object = safeObject(value);
+  if (!object) {
+    errors.push(`${label}_not_object`);
+    return false;
+  }
+  const allowed = new Set(allowedKeys);
+  Object.keys(object).forEach((key) => {
+    if (!allowed.has(key)) errors.push(`${label}_unexpected_key:${key}`);
+  });
+  allowedKeys.forEach((key) => {
+    if (!Object.prototype.hasOwnProperty.call(object, key)) errors.push(`${label}_missing_key:${key}`);
+  });
+  return true;
+}
+
+function validateText(value, label, errors, maxLength, allowEmpty = false) {
+  if (typeof value !== "string" || (!allowEmpty && !value.trim())) {
+    errors.push(`${label}_invalid_text`);
+    return false;
+  }
+  if (value.length > maxLength) errors.push(`${label}_too_long`);
+  return true;
+}
+
+function validateEnum(value, allowed, label, errors) {
+  if (!allowed.includes(value)) errors.push(`${label}_invalid_enum`);
+}
+
+function validateSourceText(sourceText) {
+  const source = String(sourceText || "");
+  if (!source.trim()) throw new TypeError("insight_synthesis_source_text_required");
+  if (source.length > SYNTHESIS_MAX_SOURCE_CHARS) {
+    throw new RangeError(`insight_synthesis_source_text_too_long:${SYNTHESIS_MAX_SOURCE_CHARS}`);
+  }
+  return source;
+}
+
+function validateSemanticContext(input, sourceText) {
+  const source = String(sourceText || "");
+  const context = safeObject(input);
+  if (!context) throw new TypeError("insight_synthesis_semantic_context_required");
+  if (containsForbiddenKeys(context)) throw new TypeError("insight_synthesis_semantic_context_forbidden_data");
+  const errors = [];
+  exactKeys(context, ["entities", "concepts", "source_claims", "relations"], "semantic_context", errors);
+
+  const entities = Array.isArray(context.entities) ? context.entities : [];
+  const concepts = Array.isArray(context.concepts) ? context.concepts : [];
+  const claims = Array.isArray(context.source_claims) ? context.source_claims : [];
+  const relations = Array.isArray(context.relations) ? context.relations : [];
+  if (!Array.isArray(context.entities)) errors.push("semantic_context_entities_not_array");
+  if (!Array.isArray(context.concepts)) errors.push("semantic_context_concepts_not_array");
+  if (!Array.isArray(context.source_claims)) errors.push("semantic_context_source_claims_not_array");
+  if (!Array.isArray(context.relations)) errors.push("semantic_context_relations_not_array");
+  if (entities.length > 16) errors.push("semantic_context_entities_too_many");
+  if (concepts.length > 20) errors.push("semantic_context_concepts_too_many");
+  if (claims.length > 16) errors.push("semantic_context_source_claims_too_many");
+  if (relations.length > 20) errors.push("semantic_context_relations_too_many");
+
+  entities.forEach((item, index) => {
+    exactKeys(item, ["label", "entity_type"], `semantic_entity:${index}`, errors);
+    validateText(item?.label, `semantic_entity:${index}:label`, errors, 180);
+    validateText(item?.entity_type, `semantic_entity:${index}:entity_type`, errors, 40);
+  });
+  concepts.forEach((item, index) => {
+    exactKeys(item, ["label"], `semantic_concept:${index}`, errors);
+    validateText(item?.label, `semantic_concept:${index}:label`, errors, 180);
+  });
+  claims.forEach((item, index) => {
+    exactKeys(item, ["text"], `semantic_claim:${index}`, errors);
+    if (validateText(item?.text, `semantic_claim:${index}:text`, errors, 800) && !source.includes(item.text)) {
+      errors.push(`semantic_claim:${index}:not_exact_source`);
+    }
+  });
+  relations.forEach((item, index) => {
+    exactKeys(item, ["relation_type", "from_label", "to_label", "epistemic_status"], `semantic_relation:${index}`, errors);
+    validateEnum(item?.relation_type, RELATION_TYPES, `semantic_relation:${index}:relation_type`, errors);
+    validateText(item?.from_label, `semantic_relation:${index}:from_label`, errors, 180);
+    validateText(item?.to_label, `semantic_relation:${index}:to_label`, errors, 180);
+    validateEnum(item?.epistemic_status, EPISTEMIC_VALUES, `semantic_relation:${index}:epistemic_status`, errors);
+  });
+
+  if (!claims.length) errors.push("semantic_context_source_claims_required");
+  if (errors.length) {
+    const error = new TypeError(`insight_synthesis_semantic_context_invalid:${errors.join(",")}`);
+    error.validation = { ok: false, errors };
+    throw error;
+  }
+  return JSON.parse(JSON.stringify(context));
+}
+
+function buildSynthesisInstruction() {
+  return [
+    "Du er AHA Interpretation / Insight Synthesis V2. Returner bare data som passer JSON-schemaet.",
+    "SOURCE_TEXT er eneste evidensautoritet. SEMANTIC_CONTEXT er strukturhjelp, ikke selvstendig bevis.",
+    "Ikke bruk tidligere interpretationer, assistant-svar, Meta, minne eller Chamber som råstoff.",
+    "Målet er høyereordens forståelse: prinsipp, mekanisme, mønster, spenning, konsekvens eller generaliserbar forståelse.",
+    "Et source-utdrag, en lett parafrase, en oppsummering av én setning eller en omdøpt source claim er IKKE en synthesized Insight.",
+    "Hver kandidat må kombinere minst to distinkte ordrette evidence quotes fra SOURCE_TEXT og tilføre en tydelig semantisk transformasjon.",
+    "abstraction skal kort forklare hva som er abstrahert eller koblet sammen utover de enkelte source claims.",
+    "why_it_matters skal forklare hvorfor forståelsen er nyttig, ikke bare si at den er viktig.",
+    "Vær særlig varsom med kausalitet. Co-occurrence, tidsrekkefølge eller before/after er ikke automatisk årsak.",
+    "Hvis insight bruker eksplisitt årsaksspråk, sett causal_status=source_explicit bare når SOURCE_TEXT faktisk uttrykker årsaken. Ellers bruk interpretive eller formuler ikke kausalt.",
+    "Bruk uncertainty aktivt når evidensen begrenser generalisering, kausalitet eller rekkevidde. Tom streng er tillatt bare når ingen materiell usikkerhet må synliggjøres.",
+    "Returner heller null kandidater enn svake, generiske eller source-nære kandidater.",
+    "Ikke foreslå lagring, canonical write, Chamber-write eller Meta-write."
+  ].join("\n");
+}
+
+function buildSynthesisResponsesRequest({ model, sourceText, semanticContext, context = {} } = {}) {
+  const source = validateSourceText(sourceText);
+  const semantic = validateSemanticContext(semanticContext, source);
+  const requestContext = safeObject(context);
+  if (!requestContext) throw new TypeError("insight_synthesis_context_must_be_object");
+  if (containsForbiddenKeys(requestContext)) throw new TypeError("insight_synthesis_context_forbidden_data");
+  const modelName = normalizeWhitespace(model);
+  if (!modelName) throw new TypeError("insight_synthesis_model_required");
+
+  return {
+    model: modelName,
+    input: [
+      { role: "system", content: buildSynthesisInstruction() },
+      { role: "user", content: JSON.stringify({ contract: SYNTHESIS_CONTRACT, source_text: source, semantic_context: semantic, context: requestContext }) }
+    ],
+    text: {
+      format: {
+        type: "json_schema",
+        name: SYNTHESIS_OUTPUT_SCHEMA,
+        strict: true,
+        schema: SYNTHESIS_JSON_SCHEMA
+      }
+    }
+  };
+}
+
+function parseSynthesisPayload(raw) {
+  if (typeof raw === "string") {
+    const trimmed = raw.trim();
+    if (!trimmed) return null;
+    try { return parseSynthesisPayload(JSON.parse(trimmed)); }
+    catch { return null; }
+  }
+  return safeObject(raw);
+}
+
+function validateSynthesisPayload(payloadInput, sourceText) {
+  const source = String(sourceText || "");
+  const payload = parseSynthesisPayload(payloadInput);
+  const errors = [];
+  if (!payload) return { ok: false, errors: ["payload_not_object"] };
+  if (!source.trim()) return { ok: false, errors: ["source_text_required"] };
+  if (source.length > SYNTHESIS_MAX_SOURCE_CHARS) errors.push("source_text_too_long");
+  if (containsForbiddenKeys(payload)) errors.push("forbidden_response_dependency");
+  exactKeys(payload, ["schema", "candidates"], "payload", errors);
+  if (payload.schema !== SYNTHESIS_OUTPUT_SCHEMA) errors.push("invalid_schema");
+  const candidates = Array.isArray(payload.candidates) ? payload.candidates : [];
+  if (!Array.isArray(payload.candidates)) errors.push("candidates_not_array");
+  if (candidates.length > 5) errors.push("candidates_too_many");
+
+  candidates.forEach((candidate, index) => {
+    const label = `candidate:${index}`;
+    exactKeys(candidate, ["insight", "type", "abstraction", "evidence", "why_it_matters", "confidence", "uncertainty", "causal_status"], label, errors);
+    validateText(candidate?.insight, `${label}:insight`, errors, 600);
+    validateEnum(candidate?.type, INSIGHT_TYPES, `${label}:type`, errors);
+    validateText(candidate?.abstraction, `${label}:abstraction`, errors, 400);
+    validateText(candidate?.why_it_matters, `${label}:why_it_matters`, errors, 400);
+    validateEnum(candidate?.confidence, CONFIDENCE_VALUES, `${label}:confidence`, errors);
+    validateText(candidate?.uncertainty, `${label}:uncertainty`, errors, 320, true);
+    validateEnum(candidate?.causal_status, CAUSAL_STATUS_VALUES, `${label}:causal_status`, errors);
+
+    const insight = typeof candidate?.insight === "string" ? candidate.insight : "";
+    if (insight && source.includes(insight)) errors.push(`${label}:insight_is_literal_source`);
+    const evidence = Array.isArray(candidate?.evidence) ? candidate.evidence : [];
+    if (!Array.isArray(candidate?.evidence) || evidence.length < 2 || evidence.length > 3) {
+      errors.push(`${label}:evidence_count_invalid`);
+    }
+    const seenQuotes = new Set();
+    evidence.forEach((item, evidenceIndex) => {
+      const evidenceLabel = `${label}:evidence:${evidenceIndex}`;
+      exactKeys(item, ["quote", "role"], evidenceLabel, errors);
+      validateText(item?.quote, `${evidenceLabel}:quote`, errors, 420);
+      validateEnum(item?.role, EVIDENCE_ROLE_VALUES, `${evidenceLabel}:role`, errors);
+      if (typeof item?.quote === "string" && item.quote && !source.includes(item.quote)) {
+        errors.push(`${evidenceLabel}:quote_not_in_source`);
+      }
+      const key = normalizeForComparison(item?.quote);
+      if (key && seenQuotes.has(key)) errors.push(`${evidenceLabel}:duplicate_quote`);
+      if (key) seenQuotes.add(key);
+      if (insight && key && normalizeForComparison(insight) === key) errors.push(`${label}:insight_equals_evidence`);
+    });
+  });
+
+  return { ok: errors.length === 0, errors };
+}
+
+function requireValidSynthesisPayload(payloadInput, sourceText) {
+  const payload = parseSynthesisPayload(payloadInput);
+  const validation = validateSynthesisPayload(payload, sourceText);
+  if (!validation.ok) {
+    const error = new Error(`insight_synthesis_validation_failed:${validation.errors.join(",")}`);
+    error.code = "insight_synthesis_validation_failed";
+    error.validation = validation;
+    throw error;
+  }
+  return JSON.parse(JSON.stringify(payload));
+}
+
+function buildSynthesisResponseEnvelope({ synthesis, model, responseId } = {}) {
+  if (!safeObject(synthesis)) throw new TypeError("insight_synthesis_payload_required");
+  return {
+    ok: true,
+    schema: SYNTHESIS_CONTRACT,
+    synthesis: JSON.parse(JSON.stringify(synthesis)),
+    model: normalizeWhitespace(model) || null,
+    response_id: normalizeWhitespace(responseId) || null,
+    policy: {
+      source_text_returned: false,
+      raw_model_output_returned: false,
+      shadow_synthesis_generated: true,
+      production_gate_authority: false,
+      synthesis_allowed: false,
+      canonical_write: false,
+      chamber_write: false,
+      persistent_write: false,
+      meta_write: false
+    }
+  };
+}
+
+export {
+  SYNTHESIS_OUTPUT_SCHEMA,
+  SYNTHESIS_CONTRACT,
+  SYNTHESIS_MAX_SOURCE_CHARS,
+  SYNTHESIS_JSON_SCHEMA,
+  INSIGHT_TYPES,
+  buildSynthesisInstruction,
+  buildSynthesisResponsesRequest,
+  parseSynthesisPayload,
+  validateSynthesisPayload,
+  requireValidSynthesisPayload,
+  validateSemanticContext,
+  buildSynthesisResponseEnvelope
+};
