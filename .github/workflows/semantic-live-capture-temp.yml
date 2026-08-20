@@ -1,0 +1,70 @@
+name: Semantic live capture temp
+
+on:
+  push:
+    branches:
+      - feat/semantic-live-reviewed-gold-v1
+    paths:
+      - .github/workflows/semantic-live-capture-temp.yml
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Capture five production semantic model cases
+        shell: bash
+        run: |
+          set -euo pipefail
+          endpoint='https://aha-agent-7a3y.onrender.com/api/aha-agent/semantic-document'
+          mkdir -p semantic-live-capture
+
+          capture() {
+            local id="$1"
+            local text="$2"
+            local raw="semantic-live-capture/${id}.raw.json"
+            local out="semantic-live-capture/${id}.json"
+            local payload
+            payload="$(jq -n \
+              --arg text "$text" \
+              --arg source_event_id "$id" \
+              '{text:$text,format:"aha_semantic_model_output_v1",context:{source_event_id:$source_event_id,source_type:"text",language:"no"}}')"
+
+            curl --fail-with-body --silent --show-error \
+              --retry 3 --retry-delay 5 --max-time 90 \
+              -H 'Content-Type: application/json' \
+              -X POST "$endpoint" \
+              --data "$payload" > "$raw"
+
+            jq -e '.ok == true and .schema == "aha_semantic_model_contract_v1" and .analysis.schema == "aha_semantic_model_output_v1"' "$raw" >/dev/null
+            jq -n \
+              --arg id "$id" \
+              --arg text "$text" \
+              --arg captured_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+              --slurpfile response "$raw" \
+              '{id:$id,source_text:$text,captured_at:$captured_at,response:$response[0]}' > "$out"
+            rm "$raw"
+            echo "===== ${id} ====="
+            jq -c . "$out"
+          }
+
+          capture 'delegation_bottleneck_live_v1' 'Et lite produktteam tok først alle viktige beslutninger i fellesskap. Det ga høy konsistens, men lanseringer stoppet når nøkkelpersoner var borte. Etter at beslutningsmyndighet ble delegert innen tydelige rammer, gikk lokale valg raskere, mens uenighet oftere samlet seg i grensene mellom ansvarsområdene.'
+
+          capture 'retrieval_learning_live_v1' 'To elevgrupper brukte like lang tid på samme kapittel. Den ene leste teksten flere ganger, mens den andre forsøkte å hente fram innholdet fra hukommelsen mellom lesingene. Gruppen som testet seg selv opplevde arbeidet som vanskeligere, men husket mer en uke senere.'
+
+          capture 'mixed_use_street_live_v1' 'En gate fikk over tid flere boliger, små butikker, serveringssteder og arbeidsplasser. Fotgjengertrafikken ble jevnere fordelt gjennom dagen, også etter ordinær arbeidstid. Materialet peker ikke ut ett enkelt tiltak som årsak, men viser at flere bruksformer opptrer samtidig med et bredere tidsmønster i aktiviteten.'
+
+          capture 'modularity_interfaces_live_v1' 'Da to utviklingsteam stadig endret den samme monolittiske kodebasen, ble små leveranser ofte forsinket av koordinering. Etter at systemet ble delt i moduler med tydelige grensesnitt, kunne flere lokale endringer gjøres uavhengig. Samtidig oppstod en større andel av feilene i antakelsene teamene gjorde om grensesnittene mellom modulene.'
+
+          capture 'museum_attention_live_v1' 'I en museumsutstilling ga lange forklarende tekster besøkende flere fakta om gjenstandene, men observasjonene viste også at de brukte mindre tid på å se på selve objektene. Kortere tekster med ett åpent spørsmål ga færre detaljer på forhånd, men mer tid rettet mot gjenstanden.'
+
+      - name: Upload production captures
+        uses: actions/upload-artifact@v4
+        with:
+          name: semantic-live-capture
+          path: semantic-live-capture/*.json
+          if-no-files-found: error
+          retention-days: 1
