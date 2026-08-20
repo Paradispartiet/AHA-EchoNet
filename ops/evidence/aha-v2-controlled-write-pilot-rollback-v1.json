@@ -1,0 +1,60 @@
+{
+  "schema": "aha_v2_controlled_write_pilot_rollback_readiness_evidence_v1",
+  "version": 1,
+  "observed_at": "2026-08-20T18:18:00+02:00",
+  "status": "ready",
+  "production_rollback_ready": true,
+  "eligible_for_controlled_write_pilot_activation": false,
+  "pilot_scope": "single_local_chamber_insight",
+  "max_chamber_records_created": 1,
+  "activation_controller": "AHAInsightActivationV2",
+  "activation_controller_schema": "aha_insight_activation_v2",
+  "rollback_prepare_method": "prepareRollback",
+  "rollback_approve_method": "approveRollback",
+  "rollback_requires_distinct_one_time_approval": true,
+  "rollback_exact_target_binding": [
+    "canonical_insight_id",
+    "review_id",
+    "canonical_signature",
+    "recalculated_canonical_signature"
+  ],
+  "state_drift_behavior": "fail_closed",
+  "unrelated_chamber_records_preserved": true,
+  "backend_sync_allowed": false,
+  "backend_persistent_write_allowed": false,
+  "meta_write_allowed": false,
+  "remote_write_allowed": false,
+  "normal_chat_persistence_allowed": false,
+  "automatic_backfill_allowed": false,
+  "projection_store_write_allowed": false,
+  "production_proof": {
+    "schema": "aha_insight_synthesis_v2_controlled_activation_production_proof_v1",
+    "workflow_run_id": 32369823544,
+    "workflow_job_id": 96427555521,
+    "artifact_id": 9406690486,
+    "artifact_digest": "sha256:711124204415c7082987c79cd99e64000a68a001ff0d5db3d990272b2a12e305",
+    "production_main": "ed1db452088232146702fabdf9f9543bb9f0d959",
+    "frontend_origin": "https://paradispartiet.github.io/AHA-EchoNet",
+    "github_pages_main": "deployed_and_hash_verified",
+    "rollback_status": "rolled_back",
+    "repository_save_calls": 0,
+    "repository_load_calls": 0,
+    "sync_push_reason": "local_only_insight_activation_present",
+    "sync_pull_reason": "local_only_insight_activation_present",
+    "audit_event_count": 9,
+    "temporary_probe_pr": 834,
+    "temporary_probe_disposition": "closed_without_merge"
+  },
+  "decision_boundary": {
+    "readiness_only": true,
+    "may_prepare_activation": false,
+    "may_approve_activation": false,
+    "may_execute_rollback": false,
+    "separate_activation_pr_required": true
+  },
+  "notes": [
+    "This readiness reuses the already production-proven one-record local activation and exact rollback flow from PR #833 with the temporary live proof in PR #834.",
+    "The permanent proof showed one signed local Chamber record added next to a sentinel, both sync directions stopped before repository access, exact rollback removed only the V2 record, and the sentinel remained.",
+    "This evidence does not make any controlled write pilot active and does not open normal Chat V2 persistence."
+  ]
+}
