@@ -16,30 +16,53 @@ function assertSafeEnvelope(body, id) {
 }
 
 async function postCase(item) {
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      text: item.text,
-      format: 'aha_semantic_model_output_v1',
-      context: {
-        source_event_id: item.id,
-        source_type: 'live_gold_qa',
-        language: 'no'
-      }
-    })
-  });
-  const body = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(`${item.id}: http=${response.status} error=${String(body?.error || 'unknown')}`);
-  assertSafeEnvelope(body, item.id);
-  return {
-    id: item.id,
-    source_text: item.text,
-    model: body.model || null,
-    response_id: body.response_id || null,
-    analysis: body.analysis,
-    policy: body.policy
-  };
+  try {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text: item.text,
+        format: 'aha_semantic_model_output_v1',
+        context: {
+          source_event_id: item.id,
+          source_type: 'live_gold_qa',
+          language: 'no'
+        }
+      })
+    });
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      return {
+        id: item.id,
+        source_text: item.text,
+        ok: false,
+        http_status: response.status,
+        error: String(body?.error || 'unknown'),
+        validation_errors: Array.isArray(body?.validation_errors) ? body.validation_errors : [],
+        policy: body?.policy || null
+      };
+    }
+    assertSafeEnvelope(body, item.id);
+    return {
+      id: item.id,
+      source_text: item.text,
+      ok: true,
+      http_status: response.status,
+      model: body.model || null,
+      response_id: body.response_id || null,
+      analysis: body.analysis,
+      policy: body.policy
+    };
+  } catch (error) {
+    return {
+      id: item.id,
+      source_text: item.text,
+      ok: false,
+      http_status: null,
+      error: String(error?.message || error),
+      validation_errors: []
+    };
+  }
 }
 
 (async () => {
@@ -47,9 +70,20 @@ async function postCase(item) {
   for (const item of corpus.cases) {
     const result = await postCase(item);
     results.push(result);
+    if (!result.ok) {
+      console.log(JSON.stringify({
+        id: result.id,
+        status: 'REJECTED',
+        http_status: result.http_status,
+        error: result.error,
+        validation_error_count: result.validation_errors.length
+      }));
+      continue;
+    }
     const a = result.analysis;
     console.log(JSON.stringify({
       id: result.id,
+      status: 'PASS',
       model: result.model,
       entities: a.entities.length,
       concepts: a.concepts.length,
@@ -64,9 +98,11 @@ async function postCase(item) {
     schema: 'aha_semantic_live_capture_v1',
     captured_at: new Date().toISOString(),
     case_count: results.length,
+    success_count: results.filter((item) => item.ok).length,
+    rejected_count: results.filter((item) => !item.ok).length,
     results
   }, null, 2));
-  console.log(`captured ${results.length} live semantic cases`);
+  console.log(`captured ${results.length} live semantic cases; success=${results.filter((item) => item.ok).length}; rejected=${results.filter((item) => !item.ok).length}`);
 })().catch((error) => {
   console.error(error.message || error);
   process.exitCode = 1;
