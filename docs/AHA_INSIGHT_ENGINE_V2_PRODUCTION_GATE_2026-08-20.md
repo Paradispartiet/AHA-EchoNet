@@ -7,6 +7,7 @@ The nine-block V2 semantic rebuild is complete on `main`. The post-build safety 
 - PR #842 — automatic read-only Chat context only when existing memory is allowed and new saving is disabled
 - PR #843 — explicit production write decision gate
 - PR #844 — isolated IndexedDB migration rehearsal operator surface
+- PR #846 — exact one-record controlled-write rollback readiness contract
 
 This does **not** open normal V2 persistence.
 
@@ -20,17 +21,56 @@ Decision produced by `AHAV2ProductionWriteGate.evaluate(...)`:
 
 > **NO_GO**
 
-Current `main` at the evidence cut:
+Current production evidence cut:
 
-`98b0d56fd718c44d35148699dab507bd48562df5`
+```text
+main commit:          196e94ef8135a657a3e2588672c80b304dc2b647
+GitHub Pages commit:  196e94ef8135a657a3e2588672c80b304dc2b647
+Pages status:         built
+runtime assets:       9/9 SHA-256 match
+```
 
-Last known Vercel commit with a successful deployment status:
+Deployment parity is therefore proven for the AHA frontend production origin.
 
-`28dc264076a838f98793010fc8e0375958719a5f`
+## Frontend production proof authority
 
-That successful deployment is the block-9 merge. The later read-only integration, Chat transport/runtime gates, production decision gate and migration-rehearsal surface are present on `main` but have not received a successful Vercel build because the Vercel integration reports `build-rate-limit`.
+For AHA, the production frontend proof authority is the configured GitHub Pages origin:
 
-The connected Vercel tooling available to this operator session is not authorized to the `mats-grans-projects` scope that owns `aha-echonet.vercel.app`, so the deployment cannot be repaired or independently inspected from that connector. Deployment parity therefore remains explicitly false.
+`https://paradispartiet.github.io/AHA-EchoNet`
+
+This is the same proof authority used by the earlier controlled activation production proof. Vercel build status is not authoritative for this gate.
+
+Temporary PR #847 reproduced that proof pattern and was closed without merge. Its workflow queried the GitHub Pages API and fetched the deployed runtime assets directly.
+
+Permanent probe identity:
+
+```text
+workflow run:    32391781228
+job:             96499363224
+artifact id:     9415099667
+artifact digest: sha256:b00d7a6a3d58d2999f6a065529670da374a57336b1601b45f48e3027f1d80394
+Pages commit:    196e94ef8135a657a3e2588672c80b304dc2b647
+Pages status:    built
+probe attempt:   1
+```
+
+The following production assets matched the same commit byte-for-byte by SHA-256:
+
+```text
+chat.html
+js/ahaV2ProductIntegrationGate.js
+js/ahaV2ChatReadOnlyContext.js
+js/ahaChatAgentRuntime.js
+js/ahaV2ProductionWriteGate.js
+js/ahaV2BackfillStagingStore.js
+js/ahaV2ProductionMigrationRehearsal.js
+v2-production-migration-rehearsal.html
+js/ahaV2ControlledWritePilotRollback.js
+```
+
+The temporary workflow was never merged to `main`.
+
+Vercel may still report `build-rate-limit`; that is a separate hosting status and does not override the verified GitHub Pages production state.
 
 ## Separate canonical production platform
 
@@ -47,14 +87,49 @@ The V2 production gate currently accepts these as proven:
 3. **Trusted read-only integration merged** through PR #840.
 4. **Read-only Chat transport merged** through PR #841.
 5. **Read-only Chat runtime gate merged** through PR #842.
-6. **Explicit production decision gate merged** through PR #843.
-7. **Production-like migration rehearsal tooling merged** through PR #844.
+6. **Exact production frontend deployment parity** at GitHub Pages.
+7. **Production rollback readiness** for the only permitted future controlled pilot shape.
 
-Repository tests prove the mechanics of dry-run, staging apply, idempotent replay and rollback. PR #844 additionally provides a real browser IndexedDB staging target and an operator-only rehearsal surface. Neither fact is counted as live migration evidence until that surface is successfully deployed and run against real browser-local Chamber data.
+## Production rollback readiness
+
+PR #846 does not introduce a new rollback mechanism. It locks any future write pilot to the already production-proven `AHAInsightActivationV2` flow.
+
+Permanent live rollback proof:
+
+```text
+workflow run:    32369823544
+workflow job:    96427555521
+artifact id:     9406690486
+artifact digest: sha256:711124204415c7082987c79cd99e64000a68a001ff0d5db3d990272b2a12e305
+production main: ed1db452088232146702fabdf9f9543bb9f0d959
+frontend:        https://paradispartiet.github.io/AHA-EchoNet
+rollback status: rolled_back
+repository calls: 0 save / 0 load
+```
+
+The proof added exactly one signed local V2 Chamber record next to a sentinel record, blocked both sync directions before repository access, then removed only the V2 record through signature-bound rollback and preserved the sentinel.
+
+The only allowed future pilot scope is:
+
+```text
+single_local_chamber_insight
+max records created = 1
+batch activation = false
+automatic activation = false
+backend sync = false
+backend persistence = false
+Meta write = false
+remote write = false
+normal Chat persistence = false
+automatic backfill = false
+projection-store write = false
+```
+
+Rollback readiness is only a prerequisite. It does not activate a pilot.
 
 ## Migration rehearsal boundary
 
-Live operator surface:
+The production-deployed operator surface is:
 
 `v2-production-migration-rehearsal.html?ahaV2ProductionRehearsal=1`
 
@@ -75,17 +150,19 @@ Required sequence:
 
 The page never writes Chamber, Lists, Paths, Mindmap, Meta, canonical storage or remote storage. It performs no network request.
 
+The operator surface is deployed and hash-verified, but it has not yet been executed against real browser-local Chamber data. Therefore both migration production-proof fields remain false.
+
 ## Current blockers
 
 The gate remains NO-GO until all of the following are production-proven:
 
-- deployment commit matches current `main` exactly;
 - representative migration dry-run has been run and reviewed on the deployed operator surface;
-- bounded IndexedDB staging apply + exact rollback has been proven live;
+- bounded IndexedDB staging apply + idempotent replay + exact rollback has been proven live;
 - at least three live read-only Chat samples have been verified;
 - those live samples show zero unintended persistence writes;
-- those live samples show zero V2 authority leaks;
-- production rollback procedure is ready for the proposed V2 write pilot.
+- those live samples show zero V2 authority leaks.
+
+Deployment parity and production rollback readiness are no longer blockers.
 
 ## What a fully green gate means
 
@@ -118,17 +195,15 @@ The V2 context is built only from the already-selected Memory Relevance Gate ins
 
 ## Next production work
 
-The next correct sequence is:
+The remaining correct sequence is:
 
-1. restore exact frontend deployment parity with current `main`;
-2. run and review the deployed block-9 migration dry-run;
-3. perform the deployed IndexedDB staging apply + idempotent replay + exact rollback rehearsal;
-4. run live read-only Chat canaries with saving disabled;
-5. inspect storage/audit state and confirm no unintended write or authority escalation;
-6. establish the rollback contract for the proposed controlled V2 write pilot;
-7. refresh the evidence JSON and re-evaluate the production write gate;
-8. only after `CONTROLLED_WRITE_PILOT_ELIGIBLE`, propose a separate narrowly scoped write-pilot activation PR.
+1. run and review the deployed block-9 migration dry-run;
+2. perform the deployed IndexedDB staging apply + idempotent replay + exact rollback rehearsal;
+3. run at least three live read-only Chat canaries with saving disabled;
+4. inspect storage/audit state and confirm no unintended write or authority escalation;
+5. refresh the evidence JSON and re-evaluate the production write gate;
+6. only after `CONTROLLED_WRITE_PILOT_ELIGIBLE`, propose a separate narrowly scoped write-pilot activation PR.
 
 Until then, the correct status is:
 
-> **V2 build complete. Read-only integration is merged but frontend deployment is behind main. Normal V2 persistence: NO-GO.**
+> **V2 build complete. Read-only runtime is deployed. Deployment parity and rollback readiness are proven. Migration rehearsal and live Chat canaries remain. Normal V2 persistence: NO-GO.**
