@@ -17,7 +17,7 @@ Ingen av målingene nedenfor åpner write-porten.
 
 ## 1. Sammenligningsgrunnlag
 
-Det håndmerkede live-corpuset består av seks produksjonscases. V1-baseline for interpretation var:
+Det håndmerkede live-corpuset består av seks produksjonscases. Historisk V1-baseline for interpretation er fortsatt:
 
 ```text
 precision 0.166667
@@ -25,28 +25,20 @@ recall    0.166667
 F1        0.166667
 ```
 
-Source claims hadde samtidig F1 `1.0`. Målet med V2 er derfor ikke bedre ekstraksjon, men reell semantisk syntese.
+Source claims hadde samtidig F1 `1.0`. Målet med V2 er derfor høyereordens semantisk syntese, ikke bedre source-ekstraksjon.
 
-## 2. Første V2-runde før kausal kalibrering
+## 2. Første V2-runde
 
-Første produksjonsrunde etter at Synthesis V2 ble bygget ga:
+Før kausal kalibrering ga produksjonsmodellen:
 
 ```text
-valid production outputs: 6 / 6
-candidates:                6
-gate eligible:             0 / 6
-quality scores:            ca. 0.57–0.74
+valid outputs:  6 / 6
+candidates:     6
+gate eligible:  0 / 6
+quality scores: ca. 0.57–0.74
 ```
 
-Candidate-tekstene viste et klart abstraksjonsløft. Modellen fant blant annet:
-
-- begrensninger som flytter kreativitet mot form/teknikk
-- opplevd læringsvanskelighet i spenning med senere hukommelse
-- delegasjon som flytter koordinasjonsproblemer mot ansvarsgrenser
-- modularitet som flytter kompleksitet mot grensesnitt
-- delvis standardisering som balanserer sammenlignbarhet og fleksibilitet
-
-Flaskehalsen var epistemisk merking. Modellen brukte for ofte `source_explicit/high` eller `interpretive/high` på sammensatte mekanismer.
+Candidate-tekstene viste allerede et tydelig abstraksjonsløft, men sammensatte mekanismer ble for ofte merket `source_explicit/high` eller `interpretive/high`.
 
 ## 3. Kalibrering #1 — PR #822
 
@@ -61,64 +53,30 @@ source_explicit
 → må være støttet av kandidatens egne evidence quotes
 
 source avviser enkel årsak
-→ causal mechanism skal blokkeres
+→ causal mechanism blokkeres
 ```
 
-Den norske anti-causal-regelen ble også gjort Unicode-sikker; JavaScript ASCII-`\b` kunne ellers overse ord som `årsak`.
+Produksjonsdeployen ble direkte bevist da retrieval først returnerte 502 med de nye valideringskodene for `interpretive + high` og manglende uncertainty før et nytt forsøk passerte.
 
-## 4. Post-deploy-bevis for kalibrering #1
-
-Etter merge av #822 ble produksjonsendepunktet kjørt på nytt mot de samme seks casene.
-
-Deployen ble direkte bevist av retrieval-caset. Første modellforsøk ble avvist server-side med de nye feilkodene:
+Første post-deploy-resultat:
 
 ```text
-candidate:0:interpretive_causality_confidence_must_not_be_high
-candidate:0:interpretive_causality_uncertainty_required
+valid outputs:                  6 / 6
+gate eligible:                  3 / 6
+strict historical F1:           0.000000
+evidence-granularity proxy F1:  0.222222
 ```
 
-Et senere forsøk ga gyldig output. Dermed var målingen faktisk mot den kalibrerte serverkontrakten, ikke gammel deploy.
+To av de tre gate-godkjente kandidatene var falske positive i selve språkdisiplinen: retrieval var merket `not_causal` men sa `førte ... til`, og mixed-use var merket `not_causal` men sa `skapes` selv om source eksplisitt avviste enkel årsaksidentifikasjon.
 
-Resultatet i den første post-deploy-runden var:
+## 4. Kalibrering #2 — PR #823
 
-```text
-valid production outputs: 6 / 6
-candidates:                6
-gate eligible:             3 / 6
-strict historical gold F1: 0.000000
-evidence-granularity proxy F1: 0.222222
-```
+Kalibrering #2 flyttet grammatisk kausalitetskontroll inn i både browser-gate og serverkontrakt.
 
-Det historiske gold-tallet ble bevisst ikke omskrevet. Dagens V1-evaluator krever at candidate-evidence er nøyaktig samme quote-string som håndmerket gold. V2 bruker ofte en hel source-setning som inneholder det kortere gold-utdraget. Derfor registreres evidence-granularity-proxyen separat og er ikke en erstatning for baseline.
-
-## 5. To falske positive i Quality Gate V2
-
-Av de tre gate-godkjente kandidatene var constraints/creativity epistemisk konsistent. To andre viste språk/metadata-mismatch:
-
-### Retrieval
-
-Kandidaten var merket:
+`not_causal` avvises ved kausale konstruksjoner som blant annet:
 
 ```text
-causal_status = not_causal
-```
-
-men skrev i selve insight at aktiv gjenhenting **«førte det ... til»** en bestemt effekt.
-
-### Mixed-use street
-
-Kandidaten var merket `not_causal`, men brukte formuleringen **«skapes et bredere tidsmønster»**, samtidig som source uttrykkelig sier at materialet ikke peker ut ett enkelt tiltak som årsak.
-
-Dette viste at metadatafelt alene ikke er nok. Quality Gate må kontrollere faktisk grammatisk kausalitet i insight-teksten.
-
-## 6. Kalibrering #2
-
-Andre kalibreringsrunde utvider derfor kausalitetskontrollen i både browser-gate og serverkontrakt.
-
-`not_causal` avvises dersom insight bruker kausale konstruksjoner som blant annet:
-
-```text
-fører ... til
+fører / førte ... til
 skaper / skapes
 gir
 øker
@@ -128,73 +86,138 @@ gjør at
 bidrar til
 ```
 
-Serveren validerer nå også:
+Serveren validerer også fail-closed:
 
 ```text
 not_causal + causal wording
-→ fail closed
-
 source_explicit uten eksplisitt kausalitet i candidate evidence
-→ fail closed
-
-source uttrykkelig avviser årsak + causal candidate wording/status
-→ fail closed
+causal wording/status som strider mot eksplisitt source-begrensning
 ```
 
-Prompten instruerer samtidig modellen til å bruke ikke-kausale formuleringer som `samtidig som`, `opptrer sammen med` og `er forbundet med` når evidensen bare viser mønster eller samvariasjon.
+Prompten ber ikke-kausale kandidater bruke formuleringer som `samtidig som`, `opptrer sammen med` og `er forbundet med` og beholde kildebegrensningen synlig.
 
-## 7. Gate-verifikasjon før server-kalibrering #2 er deployet
+En pre-merge local-gate-runde mot #822-serveren ga 2/6 eligible og bekreftet at de to tidligere falske positive ikke lenger slapp gjennom.
 
-Før merge av kalibrering #2 ble den nye lokale gaten kjørt mot dagens deployede #822-server.
+## 5. Autoritativ post-#823 produksjonsrunde
 
-Resultat:
+Etter merge av #823 ble de samme seks casene kjørt mot produksjonsendepunktet på nytt.
+
+Provenance er lagret permanent i:
 
 ```text
-valid production outputs: 6 / 6
-gate eligible:             2 / 6
-strict historical gold F1: 0.000000
-evidence-granularity proxy F1: 0.250000
+tests/fixtures/semantic-live-reviewed-v2/post-causal-language-v1.json
 ```
 
-De to tidligere falske positive oppførte seg nå korrekt:
-
-- retrieval med `førte ... til` ble avvist
-- mixed-use passerte bare i et nytt modellforsøk der insight faktisk var ikke-kausal: bruksformer **korresponderte** med tidsmønsteret, og kandidaten gjorde årsaksbegrensningen eksplisitt
-
-Constraints/creativity var den andre gate-godkjente kandidaten og hadde eksplisitt source-belegg for at begrensninger `kan flytte` kreativitet mot form/teknikk.
-
-Delegation, modularity og standardization ble fortsatt avvist fordi produksjonsmodellen merket sammensatte sammenhenger `source_explicit` uten at kandidatens evidence uttrykte hele den kausale relasjonen eksplisitt.
-
-Dette er forventet før serverprompten fra kalibrering #2 er deployet.
-
-## 8. Hva tallene betyr — og ikke betyr
-
-`2 / 6` er **ikke** den nye autoritative V2-kvaliteten. Den runden brukte ny lokal gate, men fortsatt serverprompten fra #822.
-
-Den neste relevante målingen må skje etter at kalibrering #2 er merget og deployet. Da skal modellen selv tvinges til enten:
-
-- korrekt `pattern` / `tension` + `not_causal`
-- korrekt `interpretive` + medium/low + uncertainty
-- eller fail-closed output som må regenereres
-
-før Quality Gate vurderer kandidaten.
-
-## 9. Neste autoritative måling
-
-Etter deploy av kalibrering #2 kjøres de samme seks casene igjen. Rapporten skal minst inneholde:
+Produksjonsbevis:
 
 ```text
-valid output rate
-validation-retry rate
-candidate count
-gate eligibility
-causal rejection reasons
-strict historical interpretation P/R/F1
-evidence-granularity proxy P/R/F1
-human review of semantic equivalence
+workflow run: 32341795351
+artifact id:  9396621144
+artifact sha: sha256:774dde8dabd0f847d19bf4953b0ac66e263f5335841f5aa407f860d6d97c23e4
+model:        gpt-4.1-mini-2025-04-14
 ```
 
-Det historiske evaluator-resultatet beholdes uendret for sammenlignbarhet. Hvis human review viser systematiske false negatives på grunn av synonymi/evidence-granularitet, skal en separat V2-gold-evaluator spesifiseres og baseline beregnes på nytt med samme evaluator for både V1 og V2 — ikke ved å endre gammel score i etterkant.
+Målingen ga:
+
+```text
+valid outputs:                  6 / 6
+total model attempts:           11
+candidates:                     6
+gate eligible:                  6 / 6
+strict historical P/R/F1:      0.166667 / 0.166667 / 0.166667
+evidence-granularity proxy F1:  0.333333
+```
+
+Serveren avviste seks `source_explicit_causality_not_in_evidence`-forekomster før regenerering. Det beviser at #823-kontrakten var deployet og aktiv, og at ugyldig kausal merking ble stoppet før browser-gaten.
+
+## 6. Hvorfor historisk F1 ikke lenger beskriver synthesis-kvaliteten godt
+
+Den historiske V1-evaluatoren beholdes uendret. Den krever blant annet eksakt håndmerket termbruk og eksakte evidence-quote-strenger. V2 returnerer ofte semantisk ekvivalente formuleringer og lengre ordrette source-sitater.
+
+Eksempler fra post-#823-runden:
+
+- retrieval uttrykker `vanskeligere` + bedre langtidslagring/hukommelse uten å bruke nøyaktig samme termstreng som gammel gold
+- mixed-use uttrykker den kausale begrensningen korrekt uten nødvendigvis å bruke ordet `årsak` i insight-feltet
+- constraints bruker hele source-setningen som evidence mens gammel gold bruker et kortere delutdrag
+
+Derfor blir den historiske scoren stående som kompatibilitetsmåling, men brukes ikke alene til å avgjøre om V2 faktisk har syntetisert riktig forståelse.
+
+## 7. Semantic Insight Review Evaluator V2
+
+En separat evaluator er nå spesifisert i:
+
+```text
+js/ahaSemanticInsightReviewEvaluatorV2.js
+tests/fixtures/semantic-insight-review-gold-v2.json
+tests/aha-semantic-insight-review-evaluator-v2.test.cjs
+```
+
+Reglene er symmetriske for V1 og V2:
+
+- samme seks gold-cases vurderes
+- semantiske meningsgrupper må finnes i kandidatens `insight`, `abstraction` eller `uncertainty`
+- `why_it_matters` kan ikke levere manglende kjernebetydning
+- source evidence kan ikke levere manglende kjernebetydning
+- evidence brukes til grounding og cross-claim-krav
+- kontrollerte aliaser/synonymer er tillatt der review-gold eksplisitt definerer dem
+- en forventet insight kan matches høyst én gang
+
+Det gamle V1-tallet omskrives ikke. Review-evaluatoren beregner i stedet en ny, lik måling på begge output-sett.
+
+Resultat låst i CI:
+
+```text
+V1 semantic-review:
+TP 1 / predicted 6 / expected 6
+precision 0.166667
+recall    0.166667
+F1        0.166667
+
+V2 semantic-review:
+TP 5 / predicted 6 / expected 6
+precision 0.833333
+recall    0.833333
+F1        0.833333
+```
+
+Node-suiten låser eksplisitt:
+
+```text
+aha-semantic-insight-review-evaluator-v2 passed: V1 F1 0.166667 -> V2 F1 0.833333
+```
+
+## 8. Den ene gjenværende review-feilen
+
+Fem post-#823-cases matcher review-gold:
+
+1. constraints → kreativitet flyttes mot form/teknikk
+2. retrieval → vanskeligere aktiv gjenhenting sammen med bedre senere hukommelse
+3. mixed-use → bredere aktivitetsmønster uten enkel årsakspåstand
+4. modularity → autonomi/koordinering flyttes mot grensesnittproblemer
+5. standardization → faste + valgfrie felt balanserer standardisering og fleksibilitet
+
+Delegation er fortsatt underkjent.
+
+Kandidaten sier at beslutningsstruktur påvirker `plasseringen av uenighet`, men gjør ikke den avgjørende høyereordens forståelsen eksplisitt nok: at delegering flytter koordinerings-/uenighetsproblemet til **grensene mellom ansvarsområder**.
+
+Review-evaluatoren holder derfor dette som false negative med manglende `responsibility_boundaries`-meningsgruppe. Evidence-sitatet inneholder ordet `grensene`, men evidence får ikke lov til å fylle inn mening som kandidaten selv ikke uttrykker.
+
+## 9. Beslutning etter post-#823-runden
+
+V2 har nå et målt og stort kvalitetsløft over V1:
+
+```text
+semantic-review F1: 0.166667 → 0.833333
+```
+
+Dette er tilstrekkelig til å gå videre fra generell prompt-/gate-feilsøking. Det er **ikke** tilstrekkelig til å åpne canonical write ennå.
+
+Neste arbeid skal være smalt:
+
+1. få delegation-caset til eksplisitt å bevare ansvarsgrense-mekanismen
+2. kjøre en ny produksjonsrunde mot samme review-gold
+3. bekrefte at causal fail-closed-reglene fortsatt virker
+4. kreve stabilt review-resultat før kontrollert Chamber/canonical-review vurderes
 
 ## 10. Write-policy
 
