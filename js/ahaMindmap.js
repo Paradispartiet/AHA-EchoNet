@@ -19,6 +19,7 @@
   };
 
   const TYPE_LABELS = {
+    theme: "Hovedidé",
     insight: "Innsikt",
     source_event: "Kildehendelse",
     list: "Liste",
@@ -432,6 +433,42 @@
     return graph;
   }
 
+  function collectProjectionGraphData() {
+    const model = global.AHAProjectionRuntimeSourceV2?.build?.();
+    const candidate = model?.status === "ready" && model?.validation?.valid === true
+      ? model?.surfaces?.mindmap
+      : null;
+    const nodes = asArray(candidate?.nodes).map((node) => ({
+      ...node,
+      source: "aha_semantic_v2",
+      refId: asText(node?.refId || node?.id, ""),
+      href: node?.type === "concept" ? "lists.html" : "insights.html",
+      meta: {
+        ...(node?.meta && typeof node.meta === "object" ? node.meta : {}),
+        source_key: "v2_projection_preview",
+        read_only: true,
+        local_only: true,
+        projection_preview: true,
+        published_external: false,
+        echonet_shared: false,
+        sync_enabled: false
+      }
+    }));
+    const nodeIds = new Set(nodes.map((node) => node.id));
+    const edges = asArray(candidate?.edges).filter((edge) => nodeIds.has(edge.from) && nodeIds.has(edge.to)).map((edge) => ({
+      ...edge,
+      meta: {
+        ...(edge?.meta && typeof edge.meta === "object" ? edge.meta : {}),
+        read_only: true,
+        source: "aha_semantic_v2",
+        projection_preview: true
+      }
+    }));
+    const graph = { nodes, edges, meta: { root_id: candidate?.meta?.root_id || "", projection_id: model?.projection_id || null } };
+    graph.summary = { ...summarizeGraphOrigins(graph, 0), preview: true, projectionId: model?.projection_id || null, quality: candidate?.quality || null };
+    return graph;
+  }
+
   function truncateLabel(value, max = 24) {
     const label = asText(value, "Uten tittel");
     return label.length > max ? `${label.slice(0, max - 1)}…` : label;
@@ -698,7 +735,9 @@
     const panel = document.getElementById("mindmap-origin-summary");
     if (!panel) return;
     panel.innerHTML = `
-      <p>Denne siden leser lokale AHA-nøkler og viser referanser mellom dem. Den skriver ikke data, reparerer ikke manglende koblinger og aktiverer ikke sync eller ${"Echo" + "Net"}.</p>
+      <p>${summary?.preview
+        ? "Dette er en kvalitetsgodkjent, skrivebeskyttet V2-projeksjon. Kartet lagres ikke og åpner ingen sync eller produkt-write."
+        : `Denne siden leser lokale AHA-nøkler og viser referanser mellom dem. Den skriver ikke data, reparerer ikke manglende koblinger og aktiverer ikke sync eller ${"Echo" + "Net"}.`}</p>
       ${renderCountList("Noder per source", summary.nodesBySource)}
       ${renderCountList("Noder per type", summary.nodesByType)}
       ${renderCountList("Edges per type", summary.edgesByType)}
@@ -753,14 +792,23 @@
   }
 
   function refresh() {
-    const graph = collectGraphData();
+    const previewMode = document.getElementById("mindmap-data-source")?.value === "v2";
+    const graph = previewMode ? collectProjectionGraphData() : collectGraphData();
     graphState.nodes = graph.nodes;
     graphState.edges = graph.edges;
     graphState.summary = graph.summary;
+    graphState.selectedNodeId = previewMode ? asText(graph.meta?.root_id, "") : "";
+    graphState.view = { x: 0, y: 0, scale: 1 };
+
+    const modeNote = document.getElementById("mindmap-mode-note");
+    if (modeNote) modeNote.textContent = previewMode
+      ? "AHA V2-preview: hovedidé, semantiske grener og resonansforbindelser. Kartet er kvalitetsfiltrert og ikke lagret."
+      : "Velg en node for å gjøre den til hovedidé. Dra i bakgrunnen for å flytte kartet, eller bruk zoom.";
 
     const nodeSelect = document.getElementById("mindmap-node-type");
     const edgeSelect = document.getElementById("mindmap-edge-type");
-    if (nodeSelect && nodeSelect.options.length <= 1) {
+    if (nodeSelect) {
+      while (nodeSelect.options.length > 1) nodeSelect.remove(1);
       const types = Array.from(new Set(graphState.nodes.map((n) => n.type))).sort();
       types.forEach((type) => {
         const option = document.createElement("option");
@@ -769,7 +817,8 @@
         nodeSelect.appendChild(option);
       });
     }
-    if (edgeSelect && edgeSelect.options.length <= 1) {
+    if (edgeSelect) {
+      while (edgeSelect.options.length > 1) edgeSelect.remove(1);
       const types = Array.from(new Set(graphState.edges.map((e) => e.type))).sort();
       types.forEach((type) => {
         const option = document.createElement("option");
@@ -785,6 +834,7 @@
 
   function bindUi() {
     document.getElementById("mindmap-refresh")?.addEventListener("click", refresh);
+    document.getElementById("mindmap-data-source")?.addEventListener("change", refresh);
     document.getElementById("mindmap-zoom-in")?.addEventListener("click", () => zoomMindmap(.15));
     document.getElementById("mindmap-zoom-out")?.addEventListener("click", () => zoomMindmap(-.15));
     document.getElementById("mindmap-reset-view")?.addEventListener("click", resetMindmapView);
@@ -795,6 +845,7 @@
 
   global.AHAMindmap = {
     collectGraphData,
+    collectProjectionGraphData,
     buildNodes,
     buildEdges,
     isUnavailableRecord,

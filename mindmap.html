@@ -18,13 +18,14 @@
     </section>
     <section class="aha-panel mindmap-stats"><div class="mindmap-stat"><strong id="mindmap-stats-nodes">0</strong><span>Noder</span></div><div class="mindmap-stat"><strong id="mindmap-stats-edges">0</strong><span>Koblinger</span></div><div class="mindmap-stat"><strong id="mindmap-stats-node-types">0</strong><span>Node-typer</span></div><div class="mindmap-stat"><strong id="mindmap-stats-edge-types">0</strong><span>Edge-typer</span></div></section>
     <section class="aha-panel mindmap-filters">
+      <label>Kartgrunnlag<select id="mindmap-data-source"><option value="local">Min lokale kunnskap</option><option value="v2">AHA V2 semantisk preview</option></select></label>
       <label>Node-type<select id="mindmap-node-type"><option value="all">Alle</option></select></label>
       <label>Edge-type<select id="mindmap-edge-type"><option value="all">Alle</option></select></label>
       <label>Søk<input id="mindmap-search" type="search" placeholder="Søk i tittel, type, source, refId" /></label>
     </section>
     <section class="aha-panel mindmap-visual-panel" aria-labelledby="mindmap-visual-title">
       <div class="mindmap-visual-header">
-        <div><p class="eyebrow">Studievisning</p><h2 id="mindmap-visual-title">Grafisk tankekart</h2><p class="module-meta">Velg en node for å gjøre den til hovedidé. Dra i bakgrunnen for å flytte kartet, eller bruk zoom.</p></div>
+        <div><p class="eyebrow">Studievisning</p><h2 id="mindmap-visual-title">Grafisk tankekart</h2><p id="mindmap-mode-note" class="module-meta">Velg en node for å gjøre den til hovedidé. Dra i bakgrunnen for å flytte kartet, eller bruk zoom.</p></div>
         <div class="mindmap-visual-controls" aria-label="Kontroller for tankekart"><button id="mindmap-zoom-out" type="button" aria-label="Zoom ut">−</button><button id="mindmap-reset-view" type="button">Tilpass</button><button id="mindmap-zoom-in" type="button" aria-label="Zoom inn">+</button></div>
       </div>
       <div id="mindmap-visual" class="mindmap-visual" role="application" aria-label="Interaktivt grafisk tankekart"></div>
@@ -34,6 +35,15 @@
     <details class="aha-panel mindmap-technical"><summary>Relasjonsdata og teknisk kontroll</summary><div class="mindmap-origin-summary"><h2>Opprinnelse og grenser</h2><div id="mindmap-origin-summary"></div></div><div class="mindmap-grid"><section><h2>Noder</h2><div id="mindmap-node-list" class="mindmap-list"></div></section><section><h2>Koblinger</h2><div id="mindmap-edge-list" class="mindmap-list"></div></section></div></details>
   </main>
   <script src="js/ahaContracts.js"></script>
+  <script src="js/ahaInsightRelationClassifierV2.js"></script>
+  <script src="js/ahaInsightSaturationV2.js"></script>
+  <script src="js/ahaKnowledgeMigrationV2.js"></script>
+  <script src="js/ahaSemanticProjectionsV2.js"></script>
+  <script src="js/ahaV2ProductIntegrationGate.js"></script>
+  <script src="js/ahaProjectionProductContractV2.js"></script>
+  <script src="js/ahaProjectionArtifactQualityV2.js"></script>
+  <script src="js/ahaProjectionProductReadModelV2.js"></script>
+  <script src="js/ahaProjectionRuntimeSourceV2.js"></script>
   <script src="js/ahaMindmap.js"></script>
   <script src="js/ahaOrganizationRoles.js"></script>
   <script src="js/ahaOrganizationFlow.js"></script>
