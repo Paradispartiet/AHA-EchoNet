@@ -22,6 +22,21 @@
 
 .mindmap-filters label { display: flex; flex-direction: column; gap: 6px; }
 
+.mindmap-filters select,
+.mindmap-filters input {
+  min-height: 42px;
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: 9px;
+  background: rgba(255,255,255,.04);
+  color: inherit;
+  padding: 8px 10px;
+}
+
+#mindmap-data-source {
+  border-color: rgba(123, 211, 184, .42);
+  background: rgba(123, 211, 184, .07);
+}
+
 .mindmap-visual-panel { overflow: hidden; }
 
 .mindmap-visual-header {
