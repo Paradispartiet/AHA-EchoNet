@@ -123,6 +123,53 @@ const goodCandidate = {
 }
 
 {
+  // Regression from the post-#822 live run: not_causal cannot hide a causal
+  // relation inside the grammatical variant "førte det ... til".
+  const retrievalSource = "To elevgrupper brukte like lang tid på samme kapittel. Den ene leste teksten flere ganger, mens den andre forsøkte å hente fram innholdet fra hukommelsen mellom lesingene. Gruppen som testet seg selv opplevde arbeidet som vanskeligere, men husket mer en uke senere.";
+  const candidate = {
+    insight: "Selv om gruppene brukte like lang tid, førte det å hente fram innhold fra hukommelsen til større opplevd vanskelighet samtidig som langtidsminnet ble styrket.",
+    type: "mechanism",
+    abstraction: "Kobler arbeidsopplevelse og senere hukommelse på tvers av de observerte gruppene.",
+    evidence: [
+      { quote: "To elevgrupper brukte like lang tid på samme kapittel.", role: "supports" },
+      { quote: "Den ene leste teksten flere ganger, mens den andre forsøkte å hente fram innholdet fra hukommelsen mellom lesingene.", role: "supports" },
+      { quote: "Gruppen som testet seg selv opplevde arbeidet som vanskeligere, men husket mer en uke senere.", role: "supports" }
+    ],
+    why_it_matters: "Det skiller opplevd vanskelighet under læring fra hva som huskes senere.",
+    confidence: "high",
+    uncertainty: "",
+    causal_status: "not_causal"
+  };
+  const decision = api.evaluateCandidate(candidate, retrievalSource, 0);
+  assert.equal(decision.eligible_for_insight_review, false);
+  assert.ok(decision.blocking_reasons.includes("causal_language_status_mismatch"));
+}
+
+{
+  // Regression from the same live run: passive causal wording such as "skapes"
+  // remains causal even when metadata says not_causal.
+  const mixedUseSource = "En gate fikk over tid flere boliger, små butikker, serveringssteder og arbeidsplasser. Fotgjengertrafikken ble jevnere fordelt gjennom dagen, også etter ordinær arbeidstid. Materialet peker ikke ut ett enkelt tiltak som årsak, men viser at flere bruksformer opptrer samtidig med et bredere tidsmønster i aktiviteten.";
+  const candidate = {
+    insight: "Når flere bruksformer opptrer i samme gate, skapes et bredere tidsmønster i fotgjengertrafikken uten at materialet fastslår én årsak.",
+    type: "pattern",
+    abstraction: "Kobler bruksblanding, døgnmønster og kildebegrensningen om årsak.",
+    evidence: [
+      { quote: "En gate fikk over tid flere boliger, små butikker, serveringssteder og arbeidsplasser.", role: "supports" },
+      { quote: "Fotgjengertrafikken ble jevnere fordelt gjennom dagen, også etter ordinær arbeidstid.", role: "supports" },
+      { quote: "Materialet peker ikke ut ett enkelt tiltak som årsak, men viser at flere bruksformer opptrer samtidig med et bredere tidsmønster i aktiviteten.", role: "limits" }
+    ],
+    why_it_matters: "Det bevarer mønsteret uten å gjøre samvariasjon om til sikker årsak.",
+    confidence: "high",
+    uncertainty: "",
+    causal_status: "not_causal"
+  };
+  const decision = api.evaluateCandidate(candidate, mixedUseSource, 0);
+  assert.equal(decision.eligible_for_insight_review, false);
+  assert.ok(decision.blocking_reasons.includes("causal_language_status_mismatch"));
+  assert.ok(decision.blocking_reasons.includes("causality_contradicted_by_source"));
+}
+
+{
   const constraintsSource = "En scenograf får et ferdig dramatisk innhold og faste praktiske rammer. Likevel varierer hun uttrykket fra detaljrike tegninger til enkle tekstflater. Eksemplet antyder at begrensninger ikke bare reduserer kunstnerisk frihet; de kan flytte kreativiteten over i valg av form og teknikk.";
   const candidate = {
     insight: "Begrensninger kan flytte kreativ innsats fra innholdsvalg til valg av form og teknikk når deler av innholdet allerede er gitt.",

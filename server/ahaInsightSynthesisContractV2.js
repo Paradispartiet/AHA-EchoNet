@@ -15,6 +15,9 @@ const FORBIDDEN_KEYS = Object.freeze(new Set([
   "assistantreply", "assistant_reply", "chatresponse", "chat_response", "airesponse", "ai_response",
   "candidate_insights", "candidateinsights", "meta_profile", "metaprofile", "chamber", "memory"
 ]));
+const CAUSAL_LANGUAGE = /(?:\b(?:fordi|forårsaker|forårsaket|fører til|førte til|gjør at|gjorde at|resulterer i|resulterte i|på grunn av|som følge av|derfor|drivkraft|omformer|reduserer behovet|introduserer kompleksitet|bidrar til|causes?|caused|leads? to|led to|results? in|because)\b|\bfør(?:er|te)[^.!?]{0,100}\btil\b|(?:^|[^\p{L}\p{N}_])(?:skaper|skapes|skapte|skapt|gir|ga|øker|økte|reduserer|reduserte|muliggjør|muliggjorde|kanaliserer|kanaliserte)(?![\p{L}\p{N}_]))/iu;
+const EXPLICIT_CAUSAL_SOURCE = /\b(fordi|forårsaker|forårsaket|fører til|førte til|gjør at|gjorde at|resulterer i|resulterte i|på grunn av|som følge av|derfor|kan\s+flytte|causes?|caused|leads? to|led to|results? in|because)\b/i;
+const ANTI_CAUSAL_SOURCE = /(?:peker\s+ikke\s+ut|fastslår\s+ikke|viser\s+ikke|identifiserer\s+ikke|kan\s+ikke\s+fastslå|uten\s+å\s+fastslå)[^.!?]{0,160}(?:årsak|årsaken|kausal|kausalitet|forårsaker)/i;
 
 const SYNTHESIS_JSON_SCHEMA = Object.freeze({
   type: "object",
@@ -182,12 +185,14 @@ function buildSynthesisInstruction() {
     "Hver kandidat må kombinere minst to distinkte ordrette evidence quotes fra SOURCE_TEXT og tilføre en tydelig semantisk transformasjon.",
     "abstraction skal kort forklare hva som er abstrahert eller koblet sammen utover de enkelte source claims.",
     "why_it_matters skal forklare hvorfor forståelsen er nyttig, ikke bare si at den er viktig.",
+    "Foretrekk etablerte canonical concept-labels fra SEMANTIC_CONTEXT når de presist uttrykker forståelsen; unngå unødvendige synonymer som gjør betydningen mindre stabil.",
     "Vær særlig varsom med kausalitet. Co-occurrence, tidsrekkefølge, før/etter og flere samtidige observasjoner er ikke automatisk årsak.",
-    "causal_status=source_explicit er bare tillatt når hele årsaksrelasjonen i selve synthesized insight er uttrykt eksplisitt i SOURCE_TEXT, ikke bare én lokal delrelasjon.",
+    "causal_status=source_explicit er bare tillatt når hele årsaksrelasjonen i selve synthesized insight er uttrykt eksplisitt i kandidatens evidence quotes, ikke bare én lokal delrelasjon et annet sted i SOURCE_TEXT.",
     "En mekanisme som kobler sammen flere source claims til en ny årsaksforklaring er interpretive selv om enkelte delrelasjoner er source-explicit.",
     "Når causal_status=interpretive må confidence være medium eller low og uncertainty må være ikke-tom og konkret beskrive hva source ikke beviser.",
-    "Hvis SOURCE_TEXT uttrykkelig sier at materialet ikke fastslår, peker ut eller identifiserer en årsak, skal kandidaten ikke bruke en kausal mekanisme. Velg pattern, tension eller generalization, sett causal_status=not_causal og behold den kausale begrensningen synlig.",
-    "Ved observasjonelle før/etter-mønstre uten eksplisitt komplett kausalitet: foretrekk pattern eller tension fremfor mechanism.",
+    "Når causal_status=not_causal må selve insight-formuleringen også være ikke-kausal. Unngå uttrykk som 'fører ... til', 'skaper/skapes', 'gir', 'øker', 'reduserer', 'muliggjør', 'gjør at' og tilsvarende. Bruk heller 'samtidig som', 'opptrer sammen med', 'er forbundet med' eller en tydelig spenning/mønster-formulering.",
+    "Hvis SOURCE_TEXT uttrykkelig sier at materialet ikke fastslår, peker ut eller identifiserer en årsak, skal kandidaten ikke bruke en kausal mekanisme. Velg pattern, tension eller generalization, sett causal_status=not_causal og gjør selve årsaksbegrensningen synlig i insight eller uncertainty.",
+    "Ved observasjonelle før/etter-mønstre uten eksplisitt komplett kausalitet: foretrekk pattern eller tension. Hvis den mest nyttige forståelsen likevel er en mulig mekanisme, merk den interpretive med medium/low confidence og konkret uncertainty.",
     "Bruk uncertainty aktivt når evidensen begrenser generalisering, kausalitet eller rekkevidde. Tom streng er tillatt bare når ingen materiell usikkerhet må synliggjøres.",
     "Returner heller null kandidater enn svake, generiske, source-nære eller kausalt overtolkede kandidater.",
     "Ikke foreslå lagring, canonical write, Chamber-write eller Meta-write."
@@ -254,12 +259,6 @@ function validateSynthesisPayload(payloadInput, sourceText) {
     validateEnum(candidate?.confidence, CONFIDENCE_VALUES, `${label}:confidence`, errors);
     validateText(candidate?.uncertainty, `${label}:uncertainty`, errors, 320, true);
     validateEnum(candidate?.causal_status, CAUSAL_STATUS_VALUES, `${label}:causal_status`, errors);
-    if (candidate?.causal_status === "interpretive") {
-      if (candidate?.confidence === "high") errors.push(`${label}:interpretive_causality_confidence_must_not_be_high`);
-      if (typeof candidate?.uncertainty !== "string" || !candidate.uncertainty.trim()) {
-        errors.push(`${label}:interpretive_causality_uncertainty_required`);
-      }
-    }
 
     const insight = typeof candidate?.insight === "string" ? candidate.insight : "";
     if (insight && source.includes(insight)) errors.push(`${label}:insight_is_literal_source`);
@@ -281,6 +280,27 @@ function validateSynthesisPayload(payloadInput, sourceText) {
       if (key) seenQuotes.add(key);
       if (insight && key && normalizeForComparison(insight) === key) errors.push(`${label}:insight_equals_evidence`);
     });
+
+    const causalStatus = String(candidate?.causal_status || "");
+    const confidence = String(candidate?.confidence || "");
+    const uncertainty = String(candidate?.uncertainty || "").trim();
+    const usesCausalLanguage = CAUSAL_LANGUAGE.test(insight);
+    const evidenceHasExplicitCausality = evidence.some((item) => EXPLICIT_CAUSAL_SOURCE.test(String(item?.quote || "")));
+    const sourceRejectsSimpleCausality = ANTI_CAUSAL_SOURCE.test(source);
+
+    if (causalStatus === "interpretive") {
+      if (confidence === "high") errors.push(`${label}:interpretive_causality_confidence_must_not_be_high`);
+      if (!uncertainty) errors.push(`${label}:interpretive_causality_uncertainty_required`);
+    }
+    if (causalStatus === "not_causal" && usesCausalLanguage) {
+      errors.push(`${label}:not_causal_contains_causal_language`);
+    }
+    if (causalStatus === "source_explicit" && !evidenceHasExplicitCausality) {
+      errors.push(`${label}:source_explicit_causality_not_in_evidence`);
+    }
+    if (sourceRejectsSimpleCausality && (causalStatus !== "not_causal" || usesCausalLanguage)) {
+      errors.push(`${label}:causal_claim_contradicts_source_limitation`);
+    }
   });
 
   return { ok: errors.length === 0, errors };

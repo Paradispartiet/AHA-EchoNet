@@ -21,7 +21,10 @@
     /kan ha betydning$/i,
     /^teksten (viser|sier|beskriver)/i
   ];
-  const CAUSAL_LANGUAGE = /\b(fordi|forårsaker|forårsaket|fører til|førte til|gjør at|gjorde at|resulterer i|resulterte i|på grunn av|som følge av|derfor|drivkraft|omformer|reduserer behovet|introduserer kompleksitet|causes?|caused|leads? to|led to|results? in|because)\b/i;
+  // Causal language is intentionally broader than explicit-source causality.
+  // In particular, not_causal candidates must not smuggle causality through
+  // grammatical variants such as "førte det ... til" or "skapes".
+  const CAUSAL_LANGUAGE = /(?:\b(?:fordi|forårsaker|forårsaket|fører til|førte til|gjør at|gjorde at|resulterer i|resulterte i|på grunn av|som følge av|derfor|drivkraft|omformer|reduserer behovet|introduserer kompleksitet|bidrar til|causes?|caused|leads? to|led to|results? in|because)\b|\bfør(?:er|te)[^.!?]{0,100}\btil\b|(?:^|[^\p{L}\p{N}_])(?:skaper|skapes|skapte|skapt|gir|ga|øker|økte|reduserer|reduserte|muliggjør|muliggjorde|kanaliserer|kanaliserte)(?![\p{L}\p{N}_]))/iu;
   // Conservative source-explicit markers. "kan flytte" is included because the
   // live constraints/creativity source states that relation literally. Generic
   // before/after wording remains excluded.
