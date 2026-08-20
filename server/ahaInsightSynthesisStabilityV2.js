@@ -9,6 +9,7 @@ const STABILITY_INSTRUCTION = [
   "STABILITY POLICY FOR SYNTHESIS V2:",
   "Bevar sentrale source-/canonical-begreper i insight og abstraction. Når SOURCE_TEXT eller SEMANTIC_CONTEXT allerede har et presist nøkkelbegrep, bruk dette begrepet eller en svært nær bøyningsvariant i stedet for et løsere synonym.",
   "Evidence må dekke hver hovedside av syntesen. Hvis insight kobler en metode/struktur med et observert resultat eller en begrensning, velg evidence quotes som eksplisitt dekker begge sidene; ikke utelat source-setningen som bærer et sentralt begrep.",
+  "Når SOURCE_TEXT beskriver både et før-premiss om leveranser forsinket av koordinering, en senere lokal uavhengighet og feil ved grensesnitt, velg tre evidence quotes slik at alle tre sidene er eksplisitt dekket.",
   "For pattern, tension og generalization er causal_status=not_causal standardvalget. Velg source_explicit bare når minst én av kandidatens valgte evidence quotes selv inneholder eksplisitt kausalt språk for hele relasjonen. Relation-labels i SEMANTIC_CONTEXT er aldri nok alene.",
   "Når SOURCE_TEXT uttrykkelig begrenser kausal tolkning, bevar den operative source-formuleringen i insight eller uncertainty i stedet for å omskrive den til et løsere synonym. Dette er en del av selve forståelsen, ikke bare metadata.",
   "Før du returnerer kandidaten: kontroller at hvert sentralt konsept i syntesen er språklig synlig i insight/abstraction, at evidence faktisk dekker konseptene, og at causal_status samsvarer med ordlyden."
@@ -39,6 +40,14 @@ const LIMITATION_RULES = Object.freeze([
     source: /uten\s+å\s+fastslå[^.!?]{0,160}(?:årsak|årsaken|kausal|kausalitet)/i,
     candidate: /uten\s+å\s+fastslå[^.!?]{0,160}(?:årsak|årsaken|kausal|kausalitet)/i,
     id: "uten_a_fastsla"
+  }
+]);
+
+const EVIDENCE_COVERAGE_RULES = Object.freeze([
+  {
+    source: /forsinket\s+av\s+koordinering/i,
+    evidence: /forsinket\s+av\s+koordinering/i,
+    id: "coordination_delay"
   }
 ]);
 
@@ -73,6 +82,18 @@ function validateStabilitySynthesis(synthesis, sourceText) {
       const text = candidateReviewText(candidate);
       if (!rule.candidate.test(text)) {
         errors.push(`candidate:${index}:source_limitation_wording_not_preserved:${rule.id}`);
+      }
+    });
+  });
+
+  EVIDENCE_COVERAGE_RULES.forEach((rule) => {
+    if (!rule.source.test(source)) return;
+    candidates.forEach((candidate, index) => {
+      const evidenceText = (Array.isArray(candidate?.evidence) ? candidate.evidence : [])
+        .map((item) => String(item?.quote || ""))
+        .join(" ");
+      if (!rule.evidence.test(evidenceText)) {
+        errors.push(`candidate:${index}:source_evidence_premise_not_preserved:${rule.id}`);
       }
     });
   });
@@ -124,6 +145,12 @@ function retryInstruction(validationErrors = []) {
       "In the rewritten insight, use only neutral relation verbs such as 'er', 'har', 'består av', 'opptrer sammen med' or 'er forbundet med'. Do not reuse the rejected sentence, do not use a causal synonym, and do not change causal_status away from not_causal."
     );
   }
+  if (hasValidationCode(errors, "source_evidence_premise_not_preserved:coordination_delay")) {
+    instructions.push(
+      "MANDATORY EVIDENCE CORRECTION: The synthesis omitted the source premise about deliveries being 'forsinket av koordinering'.",
+      "Return exactly three distinct evidence quotes: one exact quote containing 'forsinket av koordinering', one covering independent local changes, and one covering errors in assumptions about module interfaces. Keep every quote exact and inside SOURCE_TEXT."
+    );
+  }
   return instructions.join("\n");
 }
 
@@ -144,6 +171,7 @@ export {
   MAX_VALIDATION_ATTEMPTS,
   SYNTHESIS_TEMPERATURE,
   STABILITY_INSTRUCTION,
+  EVIDENCE_COVERAGE_RULES,
   applyStabilityRequestPolicy,
   validateStabilitySynthesis,
   hasValidationCode,
