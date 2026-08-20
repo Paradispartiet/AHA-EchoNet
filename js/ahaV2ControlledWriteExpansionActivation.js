@@ -19,6 +19,7 @@
   const SCOPE_ID = OPERATOR_INTENT;
   const MAX_RECORDS = 2;
   const EXPANSION_ENABLED = true;
+  const ROLLBACK_LOCK_NAME = "aha-v2-controlled-write-expansion-rollback-v1";
 
   function clone(value) {
     return value == null ? value : JSON.parse(JSON.stringify(value));
@@ -51,6 +52,8 @@
       lifetime_budget_persists_after_rollback: true,
       duplicate_candidate_consumes_second_slot: false,
       unrelated_chamber_records_preserved: true,
+      cross_instance_rollback_serialization_required: true,
+      cross_instance_rollback_serialization: "web_locks_exclusive",
       automatic_activation_open: false,
       batch_activation_open: false,
       normal_chat_persistence_open: false,
@@ -210,6 +213,20 @@
     const policySnapshot = policy();
     const reviewRequestBindings = new Map();
     const rollbackRequestBindings = new Map();
+    const rollbackLockManager = deps.rollbackLockManager || global.navigator?.locks || null;
+
+    async function withRollbackLock(task) {
+      if (rollbackLockManager && typeof rollbackLockManager.request === "function") {
+        return rollbackLockManager.request(ROLLBACK_LOCK_NAME, { mode: "exclusive" }, async (lock) => {
+          if (!lock) fail("expansion_rollback_lock_unavailable");
+          return task();
+        });
+      }
+      // Browser production must never silently downgrade to per-tab locking.
+      // Non-browser deterministic tests may omit navigator and execute inline.
+      if (typeof global.document !== "undefined") fail("expansion_rollback_lock_unavailable");
+      return task();
+    }
 
     function reviews() {
       const items = controller?.listReviews?.();
@@ -344,24 +361,30 @@
 
     async function approveRollback(args = {}) {
       const reviewId = rollbackRequestBindings.get(args.request_id);
-      rollbackRequestBindings.delete(args.request_id);
       if (!reviewId) fail("expansion_rollback_request_unbound");
-      const before = requirePromoted(reviewId);
-      const createdBefore = before.created_record_count;
-      const promotedBefore = before.promoted_review_ids.slice();
-      const review = await controller.approveRollback(args);
-      const after = inspect();
-      if (
-        review?.id !== reviewId ||
-        review?.status !== "rolled_back" ||
-        after.created_record_count !== createdBefore ||
-        after.promoted_review_ids.includes(reviewId) ||
-        !after.rolled_back_review_ids.includes(reviewId)
-      ) fail("expansion_exact_rollback_boundary_failed");
-      promotedBefore.filter((id) => id !== reviewId).forEach((id) => {
-        if (!after.promoted_review_ids.includes(id)) fail("expansion_unrelated_promoted_record_changed");
+
+      return withRollbackLock(async () => {
+        // Consume the wrapper binding only after the cross-instance lock has
+        // been acquired. Every state read below therefore sees the result of
+        // any earlier rollback from another same-origin operator instance.
+        rollbackRequestBindings.delete(args.request_id);
+        const before = requirePromoted(reviewId);
+        const createdBefore = before.created_record_count;
+        const promotedBefore = before.promoted_review_ids.slice();
+        const review = await controller.approveRollback(args);
+        const after = inspect();
+        if (
+          review?.id !== reviewId ||
+          review?.status !== "rolled_back" ||
+          after.created_record_count !== createdBefore ||
+          after.promoted_review_ids.includes(reviewId) ||
+          !after.rolled_back_review_ids.includes(reviewId)
+        ) fail("expansion_exact_rollback_boundary_failed");
+        promotedBefore.filter((id) => id !== reviewId).forEach((id) => {
+          if (!after.promoted_review_ids.includes(id)) fail("expansion_unrelated_promoted_record_changed");
+        });
+        return review;
       });
-      return review;
     }
 
     function getStatus() {
@@ -400,6 +423,7 @@
     SCOPE_ID,
     MAX_RECORDS,
     EXPANSION_ENABLED,
+    ROLLBACK_LOCK_NAME,
     policy,
     validateExpansionLiveProof,
     assessAuthorization,
