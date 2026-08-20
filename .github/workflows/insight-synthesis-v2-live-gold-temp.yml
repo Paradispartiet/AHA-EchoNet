@@ -1,0 +1,261 @@
+name: Insight Synthesis V2 live gold temp
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/insight-synthesis-v2-live-gold-temp.yml
+
+permissions:
+  contents: read
+
+jobs:
+  measure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Measure deployed V2 against six live-gold cases
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const vm = require('vm');
+
+          const endpoint = 'https://aha-agent-7a3y.onrender.com/api/aha-agent/semantic-document';
+          const fixturePaths = [
+            'tests/fixtures/semantic-live-reviewed/constraints-creativity-v1.json',
+            'tests/fixtures/semantic-live-reviewed/retrieval-learning-v1.json',
+            'tests/fixtures/semantic-live-reviewed/mixed-use-street-v1.json',
+            'tests/fixtures/semantic-live-reviewed/delegation-bottleneck-v1.json',
+            'tests/fixtures/semantic-live-reviewed/modularity-interfaces-v1.json',
+            'tests/fixtures/semantic-live-reviewed/standardization-flexibility-v1.json'
+          ];
+
+          const context = { window: null, console };
+          context.window = context;
+          vm.runInNewContext(fs.readFileSync('js/ahaInsightQualityGateV2.js', 'utf8'), context, { filename: 'js/ahaInsightQualityGateV2.js' });
+          vm.runInNewContext(fs.readFileSync('js/ahaSemanticGoldEvaluator.js', 'utf8'), context, { filename: 'js/ahaSemanticGoldEvaluator.js' });
+          const qualityGate = context.AHAInsightQualityGateV2;
+          const goldEvaluator = context.AHASemanticGoldEvaluator;
+          if (!qualityGate?.evaluateSynthesisShadow || !goldEvaluator?.evaluateGoldFixture) throw new Error('evaluation_modules_unavailable');
+
+          const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+          const safeArray = (value) => Array.isArray(value) ? value : [];
+          const uniqueBy = (items, fn) => {
+            const seen = new Set();
+            return safeArray(items).filter((item) => {
+              const key = String(fn(item) || '').trim().toLowerCase();
+              if (!key || seen.has(key)) return false;
+              seen.add(key);
+              return true;
+            });
+          };
+
+          function semanticContext(fixture) {
+            const shadow = fixture.model_shadow || {};
+            return {
+              entities: uniqueBy(shadow.entities, (item) => item?.canonical_label || item?.source_surface).slice(0, 16).map((item) => ({
+                label: String(item?.canonical_label || item?.source_surface || '').trim(),
+                entity_type: String(item?.entity_type || 'other').trim() || 'other'
+              })),
+              concepts: uniqueBy(shadow.concepts, (item) => item?.canonical_label || item?.source_surface).slice(0, 20).map((item) => ({
+                label: String(item?.canonical_label || item?.source_surface || '').trim()
+              })),
+              source_claims: uniqueBy(safeArray(shadow.propositions).filter((item) => item?.kind === 'source_claim'), (item) => item?.text).slice(0, 16).map((item) => ({
+                text: String(item?.text || '')
+              })),
+              relations: safeArray(shadow.relations).filter((item) => item?.epistemic_status === 'source_explicit').slice(0, 20).map((item) => ({
+                relation_type: String(item?.relation_type || 'other'),
+                from_label: String(item?.from_label || ''),
+                to_label: String(item?.to_label || ''),
+                epistemic_status: 'source_explicit'
+              }))
+            };
+          }
+
+          async function callV2(fixture) {
+            const body = {
+              text: fixture.source_text,
+              format: 'aha_insight_synthesis_output_v2',
+              semantic_context: semanticContext(fixture),
+              context: { source_event_id: fixture.source_event_id, source_type: 'live_gold_evaluation', language: 'no' }
+            };
+            const attempts = [];
+            for (let attempt = 1; attempt <= 8; attempt += 1) {
+              let status = 0;
+              let data = null;
+              let error = null;
+              try {
+                const response = await fetch(endpoint, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(body),
+                  signal: AbortSignal.timeout(90000)
+                });
+                status = response.status;
+                data = await response.json().catch(() => null);
+              } catch (err) {
+                error = String(err?.message || err);
+              }
+              attempts.push({ attempt, status, ok: data?.ok === true, error: data?.error || error || null, validation_errors: data?.validation_errors || [] });
+              console.log(`LIVE_ATTEMPT ${fixture.id} #${attempt} status=${status} ok=${data?.ok === true} error=${data?.error || error || ''}`);
+              if (status === 200 && data?.ok === true && data?.schema === 'aha_insight_synthesis_contract_v2' && data?.synthesis?.schema === 'aha_insight_synthesis_output_v2') {
+                return { envelope: data, attempts };
+              }
+              await sleep(attempt === 1 ? 12000 : 5000);
+            }
+            return { envelope: null, attempts };
+          }
+
+          function evaluateFixture(fixture, envelope, attempts) {
+            const candidates = safeArray(envelope?.synthesis?.candidates);
+            const synthesisShadow = {
+              schema: 'aha_insight_synthesis_shadow_v2',
+              source_event_id: fixture.source_event_id,
+              source_text_hash: null,
+              candidates,
+              policy: {
+                production_gate_authority: false,
+                synthesis_allowed: false,
+                canonical_write: false,
+                chamber_write: false,
+                meta_write: false,
+                persistent_write: false
+              }
+            };
+            const gate = qualityGate.evaluateSynthesisShadow({ source_text: fixture.source_text, synthesis_shadow: synthesisShadow });
+            const eligibleIndexes = new Set(safeArray(gate.decisions).filter((item) => item?.eligible_for_insight_review).map((item) => item.candidate_index));
+            const eligibleCandidates = candidates.filter((_candidate, index) => eligibleIndexes.has(index));
+            const adaptedShadow = {
+              source_event_id: fixture.source_event_id,
+              entities: [],
+              concepts: [],
+              relations: [],
+              propositions: eligibleCandidates.map((candidate) => ({
+                kind: 'interpretation',
+                text: String(candidate?.insight || ''),
+                evidence: safeArray(candidate?.evidence).map((item) => ({ quote: String(item?.quote || '') }))
+              }))
+            };
+            const gold = goldEvaluator.evaluateGoldFixture({ gold_fixture: fixture, model_shadow: adaptedShadow });
+            return {
+              fixture_id: fixture.id,
+              model: envelope?.model || null,
+              response_id: envelope?.response_id || null,
+              attempts,
+              candidate_count: candidates.length,
+              eligible_count: eligibleCandidates.length,
+              rejected_count: candidates.length - eligibleCandidates.length,
+              gate_decisions: gate.decisions,
+              candidates,
+              eligible_candidates: eligibleCandidates,
+              interpretation_metrics: gold.dimensions?.interpretations || null,
+              production_gate_authority: false,
+              synthesis_allowed: false,
+              canonical_write: false,
+              chamber_write: false,
+              meta_write: false,
+              persistent_write: false
+            };
+          }
+
+          function metric(tp, predicted, expected) {
+            const precision = predicted > 0 ? tp / predicted : (expected > 0 ? 0 : null);
+            const recall = expected > 0 ? tp / expected : null;
+            const f1 = precision != null && recall != null && (precision + recall) > 0
+              ? (2 * precision * recall) / (precision + recall)
+              : (precision === 0 && recall === 0 ? 0 : null);
+            const round = (value) => value == null ? null : Number(value.toFixed(6));
+            return { true_positive: tp, predicted, expected, false_positive: Math.max(0, predicted - tp), false_negative: Math.max(0, expected - tp), precision: round(precision), recall: round(recall), f1: round(f1) };
+          }
+
+          (async () => {
+            fs.mkdirSync('v2-live-results', { recursive: true });
+            const results = [];
+            for (const fixturePath of fixturePaths) {
+              const fixture = JSON.parse(fs.readFileSync(fixturePath, 'utf8'));
+              const live = await callV2(fixture);
+              if (!live.envelope) {
+                const failed = { fixture_id: fixture.id, valid_live_output: false, attempts: live.attempts };
+                results.push(failed);
+                fs.writeFileSync(`v2-live-results/${fixture.id}.json`, JSON.stringify(failed, null, 2));
+                console.log(`LIVE_RESULT ${fixture.id} NO_VALID_OUTPUT`);
+                continue;
+              }
+              const result = evaluateFixture(fixture, live.envelope, live.attempts);
+              result.valid_live_output = true;
+              results.push(result);
+              fs.writeFileSync(`v2-live-results/${fixture.id}.json`, JSON.stringify(result, null, 2));
+              console.log(`LIVE_RESULT ${fixture.id} candidates=${result.candidate_count} eligible=${result.eligible_count} TP=${result.interpretation_metrics?.true_positive ?? 0} P=${result.interpretation_metrics?.precision ?? null} R=${result.interpretation_metrics?.recall ?? null} F1=${result.interpretation_metrics?.f1 ?? null}`);
+              result.eligible_candidates.forEach((candidate, index) => {
+                console.log(`LIVE_ELIGIBLE ${fixture.id} #${index + 1} type=${candidate.type} confidence=${candidate.confidence} causal=${candidate.causal_status} insight=${JSON.stringify(candidate.insight)}`);
+              });
+              safeArray(result.gate_decisions).filter((item) => !item.eligible_for_insight_review).forEach((decision) => {
+                console.log(`LIVE_REJECTED ${fixture.id} candidate=${decision.candidate_index} reasons=${decision.blocking_reasons.join('|')} quality=${decision.metrics?.quality_score ?? null}`);
+              });
+            }
+
+            const valid = results.filter((item) => item.valid_live_output === true && item.interpretation_metrics);
+            const totals = valid.reduce((sum, item) => {
+              sum.tp += Number(item.interpretation_metrics.true_positive || 0);
+              sum.predicted += Number(item.interpretation_metrics.predicted || 0);
+              sum.expected += Number(item.interpretation_metrics.expected || 0);
+              sum.candidates += Number(item.candidate_count || 0);
+              sum.eligible += Number(item.eligible_count || 0);
+              return sum;
+            }, { tp: 0, predicted: 0, expected: 0, candidates: 0, eligible: 0 });
+            const aggregate = metric(totals.tp, totals.predicted, totals.expected);
+            const summary = {
+              schema: 'aha_insight_synthesis_v2_live_gold_measurement_v1',
+              measured_at: new Date().toISOString(),
+              endpoint,
+              fixture_count: results.length,
+              valid_live_output_count: valid.length,
+              invalid_live_output_count: results.length - valid.length,
+              candidate_count: totals.candidates,
+              gate_eligible_count: totals.eligible,
+              gate_rejected_count: totals.candidates - totals.eligible,
+              interpretation: aggregate,
+              baseline_interpretation_f1: 0.166667,
+              f1_delta: aggregate.f1 == null ? null : Number((aggregate.f1 - 0.166667).toFixed(6)),
+              production_gate_authority: false,
+              synthesis_allowed: false,
+              canonical_write: false,
+              chamber_write: false,
+              meta_write: false,
+              persistent_write: false,
+              results
+            };
+            fs.writeFileSync('v2-live-results/summary.json', JSON.stringify(summary, null, 2));
+            console.log('LIVE_SUMMARY ' + JSON.stringify({
+              valid_live_output_count: summary.valid_live_output_count,
+              invalid_live_output_count: summary.invalid_live_output_count,
+              candidate_count: summary.candidate_count,
+              gate_eligible_count: summary.gate_eligible_count,
+              gate_rejected_count: summary.gate_rejected_count,
+              interpretation: summary.interpretation,
+              baseline_interpretation_f1: summary.baseline_interpretation_f1,
+              f1_delta: summary.f1_delta
+            }));
+            if (valid.length < 4) {
+              console.error('Too few valid live V2 outputs to evaluate reliably.');
+              process.exitCode = 2;
+            }
+          })().catch((error) => {
+            console.error(error);
+            process.exitCode = 1;
+          });
+          NODE
+
+      - name: Upload V2 live-gold measurement
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: insight-synthesis-v2-live-gold
+          path: v2-live-results/*.json
+          if-no-files-found: error
+          retention-days: 2
