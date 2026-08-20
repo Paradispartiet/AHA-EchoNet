@@ -1,0 +1,69 @@
+{
+  "schema":"aha_semantic_gold_fixture_v1",
+  "id":"mixed_use_street_live_v1",
+  "source_event_id":"mixed_use_street_live_v1",
+  "source_text":"En gate fikk over tid flere boliger, små butikker, serveringssteder og arbeidsplasser. Fotgjengertrafikken ble jevnere fordelt gjennom dagen, også etter ordinær arbeidstid. Materialet peker ikke ut ett enkelt tiltak som årsak, men viser at flere bruksformer opptrer samtidig med et bredere tidsmønster i aktiviteten.",
+  "provenance":{"kind":"live_production_capture","captured_at":"2026-08-20T02:09:35Z","model":"gpt-4.1-mini-2025-04-14","response_id":"resp_09709972c6d20767006a8661d6678c87d2a4dcb94771d7a27d","workflow_run_id":32323558861,"workflow_job_id":96290244027,"endpoint_path":"/api/aha-agent/semantic-document"},
+  "gold":{
+    "entities":[
+      {"label":"gate","entity_type":"place","aliases":["En gate"]},
+      {"label":"boliger","entity_type":"other","aliases":[]},
+      {"label":"små butikker","entity_type":"organization","aliases":[]},
+      {"label":"serveringssteder","entity_type":"organization","aliases":[]},
+      {"label":"arbeidsplasser","entity_type":"place","aliases":[]},
+      {"label":"fotgjengertrafikk","entity_type":"other","aliases":["Fotgjengertrafikken"]}
+    ],
+    "concepts":[
+      {"label":"bruksblanding","aliases":["flere bruksformer"]},
+      {"label":"aktivitetsmønster over dagen","aliases":["bredere tidsmønster i aktiviteten"]},
+      {"label":"jevnere fotgjengeraktivitet","aliases":["Fotgjengertrafikken ble jevnere fordelt gjennom dagen"]},
+      {"label":"aktivitet etter arbeidstid","aliases":["etter ordinær arbeidstid"]},
+      {"label":"kausal usikkerhet","aliases":["peker ikke ut ett enkelt tiltak som årsak"]}
+    ],
+    "source_claims":[
+      {"text":"En gate fikk over tid flere boliger, små butikker, serveringssteder og arbeidsplasser."},
+      {"text":"Fotgjengertrafikken ble jevnere fordelt gjennom dagen, også etter ordinær arbeidstid."},
+      {"text":"Materialet peker ikke ut ett enkelt tiltak som årsak, men viser at flere bruksformer opptrer samtidig med et bredere tidsmønster i aktiviteten."}
+    ],
+    "relations":[
+      {"relation_type":"associated_with","from_label":"fotgjengertrafikk","to_label":"aktivitetsmønster over dagen","epistemic_status":"source_explicit"},
+      {"relation_type":"associated_with","from_label":"bruksblanding","to_label":"aktivitetsmønster over dagen","epistemic_status":"source_explicit"}
+    ],
+    "interpretations":[{"id":"mixed_use_temporal_activity_without_single_cause","required_terms":["bruksformer","årsak"],"forbidden_terms":[],"evidence_quotes":["Materialet peker ikke ut ett enkelt tiltak som årsak, men viser at flere bruksformer opptrer samtidig med et bredere tidsmønster i aktiviteten."]}]
+  },
+  "model_shadow":{
+    "source_event_id":"mixed_use_street_live_v1",
+    "entities":[
+      {"source_surface":"boliger","canonical_label":"boliger","entity_type":"other"},
+      {"source_surface":"små butikker","canonical_label":"små butikker","entity_type":"organization"},
+      {"source_surface":"serveringssteder","canonical_label":"serveringssteder","entity_type":"organization"},
+      {"source_surface":"arbeidsplasser","canonical_label":"arbeidsplasser","entity_type":"place"},
+      {"source_surface":"Fotgjengertrafikken","canonical_label":"Fotgjengertrafikken","entity_type":"other"}
+    ],
+    "concepts":[
+      {"source_surface":"flere bruksformer","canonical_label":"flere bruksformer"},
+      {"source_surface":"bredere tidsmønster i aktiviteten","canonical_label":"bredere tidsmønster i aktiviteten"}
+    ],
+    "propositions":[
+      {"kind":"source_claim","text":"En gate fikk over tid flere boliger, små butikker, serveringssteder og arbeidsplasser."},
+      {"kind":"source_claim","text":"Fotgjengertrafikken ble jevnere fordelt gjennom dagen, også etter ordinær arbeidstid."},
+      {"kind":"source_claim","text":"Materialet peker ikke ut ett enkelt tiltak som årsak, men viser at flere bruksformer opptrer samtidig med et bredere tidsmønster i aktiviteten."}
+    ],
+    "relations":[
+      {"relation_type":"associated_with","from_label":"boliger","to_label":"små butikker","epistemic_status":"source_explicit"},
+      {"relation_type":"associated_with","from_label":"boliger","to_label":"serveringssteder","epistemic_status":"source_explicit"},
+      {"relation_type":"associated_with","from_label":"boliger","to_label":"arbeidsplasser","epistemic_status":"source_explicit"},
+      {"relation_type":"associated_with","from_label":"Fotgjengertrafikken","to_label":"bredere tidsmønster i aktiviteten","epistemic_status":"source_explicit"},
+      {"relation_type":"supports","from_label":"flere bruksformer","to_label":"bredere tidsmønster i aktiviteten","epistemic_status":"source_explicit"}
+    ],
+    "unresolved_inferences":[{"text":"Hvilke spesifikke tiltak påvirket utviklingen av gaten?","evidence":[{"quote":"Materialet peker ikke ut ett enkelt tiltak som årsak"}],"confidence":"high"}]
+  },
+  "expected":{
+    "entities":{"precision":1.0,"recall":0.833333,"f1":0.909091},
+    "concepts":{"precision":1.0,"recall":0.4,"f1":0.571429},
+    "source_claims":{"precision":1.0,"recall":1.0,"f1":1.0},
+    "relations":{"precision":0.2,"recall":0.5,"f1":0.285714},
+    "interpretations":{"precision":0,"recall":0.0,"f1":0},
+    "macro_f1":0.553247
+  }
+}
