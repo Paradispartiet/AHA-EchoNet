@@ -1,0 +1,24 @@
+name: AHA semantic live corpus temporary
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Capture live semantic corpus
+        run: node scripts/aha-semantic-live-corpus-temp.cjs
+      - name: Upload live semantic corpus
+        uses: actions/upload-artifact@v4
+        with:
+          name: aha-semantic-live-corpus-20260820
+          path: /tmp/aha-semantic-live-corpus/results.json
+          retention-days: 1
