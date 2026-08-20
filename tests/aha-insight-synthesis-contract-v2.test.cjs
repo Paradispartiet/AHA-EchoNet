@@ -48,6 +48,11 @@ async function run() {
   assert.match(request.input[0].content, /causal_status=not_causal/i);
   assert.match(request.input[0].content, /fører \.\.\. til/);
   assert.match(request.input[0].content, /canonical concept-labels/i);
+  assert.match(request.input[0].content, /navngi selve forskyvningen/i);
+  assert.match(request.input[0].content, /ansvarsgrenser/i);
+  assert.match(request.input[0].content, /grensene mellom ansvarsområdene/i);
+  assert.match(request.input[0].content, /plasseringen av uenighet/i);
+  assert.match(request.input[0].content, /pattern eller tension/i);
 
   assert.throws(() => api.buildSynthesisResponsesRequest({
     model: "gpt-test",
