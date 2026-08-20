@@ -1,0 +1,27 @@
+{
+  "schema": "aha_projection_product_human_review_v2",
+  "version": 2,
+  "corpus": "tests/fixtures/aha-projection-product-evaluation-v2.json",
+  "status": "agent_pre_review_complete_independent_human_review_open",
+  "rubric": {
+    "scale": "1-5",
+    "lists": ["tematisk_koherens", "ikke_triviell", "begrunnet_medlemskap", "kildebevaring"],
+    "paths": ["progresjon", "overganger", "laeringsutbytte", "aapent_spoersmaal"],
+    "mindmap": ["hierarki", "meningsfulle_grener", "stoeykontroll", "resonans_semantikk"]
+  },
+  "release_rule": {
+    "minimum_acceptable_share": 0.8,
+    "critical_provenance_errors_allowed": 0,
+    "automatic_persistence_allowed": false
+  },
+  "review_rows": [
+    { "case_group": "news", "cases": 3, "agent_pre_review": "acceptable", "independent_human_review": "open" },
+    { "case_group": "research", "cases": 3, "agent_pre_review": "acceptable", "independent_human_review": "open" },
+    { "case_group": "essay", "cases": 3, "agent_pre_review": "acceptable", "independent_human_review": "open" },
+    { "case_group": "policy", "cases": 3, "agent_pre_review": "acceptable", "independent_human_review": "open" },
+    { "case_group": "personal_reflection", "cases": 3, "agent_pre_review": "acceptable", "independent_human_review": "open" },
+    { "case_group": "data_heavy", "cases": 3, "agent_pre_review": "acceptable", "independent_human_review": "open" },
+    { "case_group": "ambiguous", "cases": 3, "agent_pre_review": "correctly_suppressed", "independent_human_review": "open" },
+    { "case_group": "contradictory", "cases": 3, "agent_pre_review": "acceptable", "independent_human_review": "open" }
+  ]
+}
