@@ -85,9 +85,67 @@ The migration contract guarantees:
 
 Regression coverage is in `tests/aha-knowledge-migration-v2.test.cjs`.
 
-## Production boundary after 9/9 implementation
+## Post-build production gates are now complete
 
-The semantic rebuild is now feature-complete at the architecture/build level. The following remain deliberately **closed** until separate production gates prove them safe:
+After 9/9 implementation, V2 was deliberately kept read-only while the production chain was proven. That chain is now complete through the final live browser proof:
+
+```text
+#840 trusted legacy -> read-only shared projections
+#841 bounded V2 Chat transport
+#842 automatic read-only Chat context with saving disabled
+#843 explicit production decision gate
+#844 isolated IndexedDB migration rehearsal surface
+#846 one-record controlled-pilot rollback readiness
+#849 trust-ready record preservation after Memory Relevance Gate selection
+#851 live Chat bootstrap repair for frozen InsightsEngine provider
+#852 final TEMP live proof, closed without merge
+```
+
+The final proof exercised production runtime cut:
+
+`497fa06eee5c910fce146281c2703a4c76fb0081`
+
+GitHub Pages reported that exact commit as `built` on the first probe attempt, and **11/11 selected runtime assets** matched it byte-for-byte by SHA-256.
+
+The live migration rehearsal proved:
+
+```text
+dry-run reviewed:              true
+first isolated staging writes: 2
+identical replay writes:       0
+exact rollback:                2
+staging after rollback:        0
+Chamber/localStorage changed:  false
+```
+
+The live Chat proof then ran **3/3** actual production-agent requests with `saveNewInsights=false`, each carrying bounded trust-ready V2 context, returning a reply, leaving browser storage unchanged, and showing no V2 authority leak or unintended persistence write.
+
+Permanent evidence:
+
+```text
+ops/evidence/aha-v2-production-write-gate-current-v1.json
+ops/evidence/aha-v2-live-production-proof-2026-08-20.json
+```
+
+## Current production decision
+
+All twelve required production decision checks are green:
+
+```text
+required checks: 12
+passed:          12
+failed:           0
+```
+
+The decision is:
+
+> **CONTROLLED_WRITE_PILOT_ELIGIBLE**
+
+This is not equivalent to “production persistence enabled”. The decision gate is pure/read-only and can execute no write itself.
+
+## What remains deliberately closed
+
+Even with the green gate, the following remain closed:
 
 ```text
 normal Chat automatic V2 persistence       CLOSED
@@ -97,9 +155,26 @@ backend persistent V2 sync                 CLOSED
 automatic product-store projection writes  CLOSED
 automatic legacy backfill                   CLOSED
 Meta write authority                       CLOSED
+remote V2 write authority                   CLOSED
 ```
 
-The existing controlled local activation from block 5 remains the only bounded V2 write path and still requires its explicit approval contract.
+The only next write step that may be proposed is a separate, explicit, bounded pilot using the already production-proven `AHAInsightActivationV2` flow.
+
+That pilot remains limited to:
+
+```text
+single local Chamber insight
+max records created = 1
+manual/operator activation only
+signature-bound exact rollback
+backend sync = false
+backend persistence = false
+Meta write = false
+remote write = false
+normal Chat persistence = false
+automatic backfill = false
+projection-store write = false
+```
 
 ## Evidence retained from block 5
 
@@ -111,19 +186,22 @@ round 1: 6/6 valid, V2 semantic-review F1 1.0
 round 2: 6/6 valid, V2 semantic-review F1 1.0
 ```
 
-This result proves the source-bound synthesis layer. It does not by itself authorize automatic migration or normal product persistence.
+This result proves the source-bound synthesis layer. The later production gate proves read-only integration, migration rehearsal, Chat transport/runtime behavior and rollback readiness. Neither automatically authorizes broad writes.
 
-## Next phase: production activation gates
+## Next phase: bounded controlled-write pilot
 
-No tenth semantic build block is implied. The next work is controlled product integration and production proof:
+No tenth semantic build block is implied, and no additional generic evidence round is required before proposing the next bounded step.
 
-1. run block-9 migration in dry-run against representative legacy data;
-2. review inventory, conflicts, enrichment-required records and reference rewrite candidates;
-3. prove a bounded staging apply + rollback with no product-store mutation;
-4. feed only trusted V2 objects into the shared projection layer in shadow/read-only mode;
-5. prove Chat/Chamber behavior with persistence still disabled;
-6. define and pass an explicit production gate before opening any normal Chat V2 write path.
+The next correct work is a **separate activation PR** for one controlled local Chamber write, with:
 
-Until those gates pass, the correct status is:
+1. explicit manual/operator activation;
+2. one-record maximum scope;
+3. existing trust/quality gate requirements;
+4. signature-bound exact rollback;
+5. a kill switch;
+6. backend/remote/Meta/projection/backfill/normal-Chat persistence still disabled;
+7. production verification of activation and rollback before any later expansion is discussed.
 
-> **Insight Engine V2 build: 9/9 implemented. Broad production persistence: not activated.**
+Current status:
+
+> **Insight Engine V2 build: 9/9 implemented. Production decision gate: 12/12 green. Controlled write pilot: eligible for a separate activation PR. Broad production persistence: not activated.**
