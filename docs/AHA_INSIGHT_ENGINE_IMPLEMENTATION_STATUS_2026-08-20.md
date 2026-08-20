@@ -16,9 +16,10 @@ Phase 3B — Gold Evaluation + Evaluation Runtime    merged
 Phase 3C — Semantic Evaluation Shadow Operator     merged
 Phase 3D — Gold Suite + negative semantic cases    merged
 Phase 3E — Live-reviewed production gold baseline  merged in PR #819
-Phase 4A — Interpretation / Insight Synthesis V2    implemented in shadow on this branch
-Phase 4B — Insight Quality Gate V2                  implemented in shadow on this branch
-Next — deploy shadow V2 and measure six live-gold cases
+Phase 4A — Interpretation / Insight Synthesis V2    merged in PR #820
+Phase 4B — Insight Quality Gate V2                  merged in PR #820
+Phase 4C — first live V2 calibration round          completed; causal calibration patch in PR #822
+Next — deploy calibrated V2 and rerun six live-gold cases
 Canonical Insight synthesis write                  disabled
 Chamber write from V2                              disabled
 Meta write from semantic shadow                    disabled
@@ -68,7 +69,7 @@ See `docs/AHA_SEMANTIC_LIVE_REVIEWED_GOLD_V1.md` for the baseline.
 
 ## Phase 4A — Interpretation / Insight Synthesis V2
 
-V2 is a new model step after validated semantic extraction. It does **not** receive the old V1 interpretations as input.
+V2 is a separate model step after validated semantic extraction. It does **not** receive the old V1 interpretations as input.
 
 Its semantic context contains only:
 
@@ -81,7 +82,7 @@ source-explicit relations
 
 `SOURCE_TEXT` remains the only evidence authority.
 
-The synthesis model explicitly seeks:
+The synthesis model seeks:
 
 ```text
 principle
@@ -91,8 +92,6 @@ tension
 consequence
 generalization
 ```
-
-and is instructed that source excerpts, one-sentence summaries and light paraphrases are not synthesized Insights.
 
 Candidate contract:
 
@@ -122,7 +121,7 @@ The existing deployed `/api/aha-agent/semantic-document` route dispatches to V2 
 format = aha_insight_synthesis_output_v2
 ```
 
-No parallel backend or API base is introduced.
+No parallel backend or API base exists.
 
 ## Phase 4B — Insight Quality Gate V2
 
@@ -141,11 +140,12 @@ It hard-rejects candidates for:
 - weak abstraction
 - semantic disconnect from evidence
 - unsupported causal language
-- source-explicit causality without explicit causal source wording
+- source-explicit causality without explicit causal evidence
 - interpretive causality without uncertainty
 - overconfident interpretive causality
+- causal synthesis contradicted by an explicit source disclaimer
 
-It also records a quality score, but hard evidence/causality gates cannot be bypassed by a high score.
+A numeric quality score cannot override hard evidence/causality gates.
 
 ## Browser shadow runtime
 
@@ -183,24 +183,84 @@ with explicit flags:
 
 Normal `chat.html` does not load the V2 gate/runtime/bootstrap, so normal product traffic does not incur a second model call.
 
-See `docs/AHA_INTERPRETATION_INSIGHT_SYNTHESIS_V2.md` for the normative contract.
+## Phase 4C — first live V2 round
 
-## Next required work — live V2 measurement
+The deployed V2 route was measured against the same six live-reviewed sources in two independent production runs.
 
-After this shadow implementation is green and merged:
+Observed in both runs:
 
-1. verify production deploy exposes `aha_insight_synthesis_output_v2`
-2. run the same six live-reviewed sources through V2
-3. retain only server-valid synthesis outputs
-4. run Quality Gate V2 on all candidates
-5. score approved synthesis output against the existing gold interpretations
-6. iterate prompt/gate until interpretation quality is clearly better than the `0.166667` baseline
+```text
+valid V2 output: 6 / 6
+candidate count: 6
+candidate quality scores: roughly 0.57–0.74
+gate eligible: 0 / 6
+```
 
-Do not open canonical Chamber-write merely because one or two examples look good.
+The candidate text itself showed a substantial abstraction improvement over Semantic Model V1. Representative synthesized ideas included:
+
+- constraints can shift creative work toward form/technique
+- retrieval effort can feel harder while improving later recall
+- delegation can shift coordination problems toward responsibility boundaries
+- modularity can shift complexity toward interfaces
+- partial standardization can balance comparability and flexibility
+
+The failure was epistemic calibration: the model labeled composite mechanisms too often as `source_explicit/high` or `interpretive/high`.
+
+Quality Gate V2 correctly kept all six out of canonical review. The zero eligible count therefore does not justify weakening the gate or opening write authority.
+
+The mixed-use case is the critical negative control: source explicitly says it does not identify one measure as the cause, yet first-round V2 still emitted a causal mechanism. This must remain a hard rejection.
+
+## Causal calibration patch in PR #822
+
+The synthesis contract is now tightened so that:
+
+```text
+source_explicit
+→ only when the complete causal relation in the synthesized insight is itself source-explicit
+
+composite causal synthesis across claims
+→ interpretive
+→ confidence medium/low
+→ non-empty uncertainty required
+
+source explicitly rejects/does not identify cause
+→ do not emit causal mechanism
+→ prefer pattern/tension/generalization
+→ causal_status not_causal
+```
+
+The server validator now fails closed on:
+
+```text
+interpretive + confidence high
+interpretive + empty uncertainty
+```
+
+Quality Gate V2 now:
+
+- checks source-explicit causality against the candidate's actual evidence quotes rather than unrelated source text
+- recognizes the literal `kan flytte` causal formulation used in the constraints/creativity source
+- hard-rejects causal synthesis when source explicitly disclaims causal identification
+
+This calibration is designed to accept stronger abstraction only when epistemic labeling also improves.
+
+See `docs/AHA_INTERPRETATION_INSIGHT_SYNTHESIS_V2.md` for the normative details.
+
+## Next required work
+
+After the causal calibration patch is green and merged:
+
+1. verify the calibrated contract is deployed
+2. rerun the same six live-reviewed sources
+3. retain only server-valid V2 output
+4. run Quality Gate V2
+5. score gate-approved candidates against the existing gold interpretations
+6. compare against interpretation F1 baseline `0.166667`
+7. inspect any remaining false positives/false negatives before changing write authority
+
+Canonical Chamber-write remains closed regardless of individual good-looking examples.
 
 ## Safety invariants
-
-Until the live V2 evaluation is complete and an explicit production decision is made:
 
 ```text
 canonical_write = false
