@@ -14,21 +14,7 @@ const RUN_ATTEMPT = Number(process.env.GITHUB_RUN_ATTEMPT || 0) || null;
 
 if (!/^[a-f0-9]{40}$/u.test(EXPECTED_MAIN)) throw new Error("EXPECTED_MAIN_SHA is required");
 
-function clone(value) {
-  return value == null ? value : JSON.parse(JSON.stringify(value));
-}
-
-function stable(value) {
-  if (Array.isArray(value)) return value.map(stable);
-  if (!value || typeof value !== "object") return value;
-  return Object.fromEntries(Object.keys(value).sort().map((key) => [key, stable(value[key])]));
-}
-
-function same(left, right) {
-  return JSON.stringify(stable(left)) === JSON.stringify(stable(right));
-}
-
-function sha256Buffer(value) {
+function sha256(value) {
   return crypto.createHash("sha256").update(value).digest("hex");
 }
 
@@ -42,12 +28,11 @@ function readVerifiedAsset(repositoryPath, parity) {
     throw new Error(`deployed_asset_not_verified:${repositoryPath}`);
   }
   const bytes = fs.readFileSync(deployedAssetPath(repositoryPath));
-  const actual = sha256Buffer(bytes);
-  if (actual !== entry.sha256) throw new Error(`execution_copy_hash_mismatch:${repositoryPath}`);
+  if (sha256(bytes) !== entry.sha256) throw new Error(`execution_copy_hash_mismatch:${repositoryPath}`);
   return bytes;
 }
 
-async function storageSnapshot(page) {
+async function browserStorageSnapshot(page) {
   return page.evaluate(async () => {
     async function normalize(value) {
       if (value === undefined) return { __type: "undefined" };
@@ -61,9 +46,7 @@ async function storageSnapshot(page) {
       }
       if (typeof value === "bigint") return { __type: "bigint", value: value.toString() };
       if (value instanceof Date) return { __type: "date", value: value.toISOString() };
-      if (value instanceof ArrayBuffer) {
-        return { __type: "arraybuffer", bytes: Array.from(new Uint8Array(value)) };
-      }
+      if (value instanceof ArrayBuffer) return { __type: "arraybuffer", bytes: Array.from(new Uint8Array(value)) };
       if (ArrayBuffer.isView(value)) {
         return {
           __type: value.constructor?.name || "typed-array",
@@ -71,8 +54,12 @@ async function storageSnapshot(page) {
         };
       }
       if (typeof Blob !== "undefined" && value instanceof Blob) {
-        const bytes = Array.from(new Uint8Array(await value.arrayBuffer()));
-        const out = { __type: value instanceof File ? "file" : "blob", type: value.type, size: value.size, bytes };
+        const out = {
+          __type: typeof File !== "undefined" && value instanceof File ? "file" : "blob",
+          type: value.type,
+          size: value.size,
+          bytes: Array.from(new Uint8Array(await value.arrayBuffer()))
+        };
         if (typeof File !== "undefined" && value instanceof File) {
           out.name = value.name;
           out.lastModified = value.lastModified;
@@ -81,19 +68,19 @@ async function storageSnapshot(page) {
       }
       if (value instanceof Map) {
         const entries = [];
-        for (const [key, entryValue] of value.entries()) entries.push([await normalize(key), await normalize(entryValue)]);
+        for (const [key, item] of value.entries()) entries.push([await normalize(key), await normalize(item)]);
         entries.sort((a, b) => JSON.stringify(a[0]).localeCompare(JSON.stringify(b[0])));
         return { __type: "map", entries };
       }
       if (value instanceof Set) {
         const values = [];
-        for (const entryValue of value.values()) values.push(await normalize(entryValue));
+        for (const item of value.values()) values.push(await normalize(item));
         values.sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
         return { __type: "set", values };
       }
       if (Array.isArray(value)) {
         const out = [];
-        for (const entry of value) out.push(await normalize(entry));
+        for (const item of value) out.push(await normalize(item));
         return out;
       }
       const out = {};
@@ -171,6 +158,7 @@ async function run() {
   assert.equal(parity.pages_commit, EXPECTED_MAIN);
   assert.equal(parity.pages_status, "built");
   assert.equal(parity.all_assets_match, true);
+  assert.equal(parity.execution_source, "captured_hash_verified_deployed_bytes");
 
   const gateSource = readVerifiedAsset("js/ahaV2ControlledWriteExpansionGate.js", parity).toString("utf8");
   const rehearsalSource = readVerifiedAsset("js/ahaV2ControlledWriteExpansionRehearsal.js", parity).toString("utf8");
@@ -186,20 +174,15 @@ async function run() {
   const consoleErrors = [];
   const requests = [];
   page.on("pageerror", (error) => pageErrors.push(String(error?.message || error)));
-  page.on("console", (message) => {
-    if (message.type() === "error") consoleErrors.push(message.text());
-  });
+  page.on("console", (message) => { if (message.type() === "error") consoleErrors.push(message.text()); });
   page.on("request", (request) => requests.push({ method: request.method(), url: request.url() }));
 
   try {
-    // Use a passive same-origin JSON document only to establish the Pages origin.
-    // Every proof module/data byte executed below comes from the hash-verified
-    // copies captured by the parity step, not from a later network refetch.
     await page.goto(`${ORIGIN}/ops/contracts/aha-v2-controlled-write-expansion-scope-two-record-v1.json?origin_probe=${RUN_ID || Date.now()}`, {
       waitUntil: "domcontentloaded",
       timeout: 45000
     });
-    const before = await storageSnapshot(page);
+    const before = await browserStorageSnapshot(page);
     requests.length = 0;
     pageErrors.length = 0;
     consoleErrors.length = 0;
@@ -209,12 +192,18 @@ async function run() {
 
     const scenario = await page.evaluate(async ({ exactScope }) => {
       const clone = (value) => value == null ? value : JSON.parse(JSON.stringify(value));
-      const stable = (value) => {
-        if (Array.isArray(value)) return value.map(stable);
-        if (!value || typeof value !== "object") return value;
-        return Object.fromEntries(Object.keys(value).sort().map((key) => [key, stable(value[key])]));
+      const stableStringify = (value) => {
+        if (Array.isArray(value)) return `[${value.map(stableStringify).join(",")}]`;
+        if (value && typeof value === "object") {
+          return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${stableStringify(value[key])}`).join(",")}}`;
+        }
+        return JSON.stringify(value);
       };
-      const eq = (a, b) => JSON.stringify(stable(a)) === JSON.stringify(stable(b));
+      const equal = (left, right) => stableStringify(left) === stableStringify(right);
+      const canonicalState = async (adapter) => stableStringify(
+        (await adapter.list()).map(clone).sort((a, b) => String(a?.id || "").localeCompare(String(b?.id || "")))
+      );
+
       const gate = window.AHAV2ControlledWriteExpansionGate;
       const rehearsal = window.AHAV2ControlledWriteExpansionRehearsal;
       if (!gate || !rehearsal) throw new Error("expansion_live_modules_unavailable");
@@ -274,8 +263,6 @@ async function run() {
         };
       }
 
-      // Exact immutable-scope binding: retaining the old fingerprint must not
-      // authorize a mutated max=3 plan.
       const mutatedPlan = clone(plan);
       mutatedPlan.scope_contract.max_chamber_records_created = 3;
       mutatedPlan.records.push({
@@ -294,18 +281,17 @@ async function run() {
       }
 
       const normalAdapter = makeAdapter();
-      const normalBefore = await normalAdapter.list();
+      const normalBefore = await canonicalState(normalAdapter);
       const rehearsalProof = await rehearsal.rehearse(plan, normalAdapter, { explicit_rehearsal_authorization: true });
       if (rehearsalProof.status !== "verified") throw new Error("expansion_live_rehearsal_not_verified");
-      if (!eq(await normalAdapter.list(), normalBefore)) throw new Error("expansion_live_exact_state_not_restored");
-      if (!eq(normalAdapter.rawGet(sentinel.id), sentinel)) throw new Error("expansion_live_sentinel_content_changed");
+      if ((await canonicalState(normalAdapter)) !== normalBefore) throw new Error("expansion_live_exact_state_not_restored");
+      if (!equal(normalAdapter.rawGet(sentinel.id), sentinel)) throw new Error("expansion_live_sentinel_content_changed");
 
-      // Partial failure after the second record is actually written.
-      const failureAdapter = makeAdapter({ failPutId: records[1].id, writeThenThrow: true });
-      const failureBefore = await failureAdapter.list();
+      const partialAdapter = makeAdapter({ failPutId: records[1].id, writeThenThrow: true });
+      const partialBefore = await canonicalState(partialAdapter);
       let partialCompensation = null;
       try {
-        await rehearsal.apply(plan, failureAdapter, { explicit_rehearsal_authorization: true });
+        await rehearsal.apply(plan, partialAdapter, { explicit_rehearsal_authorization: true });
         throw new Error("expansion_live_partial_failure_not_triggered");
       } catch (error) {
         if (error.message === "expansion_live_partial_failure_not_triggered") throw error;
@@ -314,40 +300,34 @@ async function run() {
       if (partialCompensation?.status !== "compensated" || partialCompensation?.exact !== true) {
         throw new Error("expansion_live_partial_compensation_not_exact");
       }
-      if (!eq(await failureAdapter.list(), failureBefore)) throw new Error("expansion_live_partial_compensation_state_mismatch");
-      if (!eq(failureAdapter.rawGet(sentinel.id), sentinel)) throw new Error("expansion_live_partial_sentinel_changed");
+      if ((await canonicalState(partialAdapter)) !== partialBefore) throw new Error("expansion_live_partial_compensation_state_mismatch");
+      if (!equal(partialAdapter.rawGet(sentinel.id), sentinel)) throw new Error("expansion_live_partial_sentinel_changed");
 
-      // Remove record 1 successfully, fail on record 2, then require exact
-      // compensation of the already removed record.
-      const removeFailureAdapter = makeAdapter({ failRemoveId: records[1].id });
-      const removeReceipt = await rehearsal.apply(plan, removeFailureAdapter, { explicit_rehearsal_authorization: true });
-      const removeBeforeRollback = await removeFailureAdapter.list();
-      const removeFailureRollback = await rehearsal.rollback(removeReceipt, removeFailureAdapter);
+      const removeAdapter = makeAdapter({ failRemoveId: records[1].id });
+      const removeReceipt = await rehearsal.apply(plan, removeAdapter, { explicit_rehearsal_authorization: true });
+      const removeBefore = await canonicalState(removeAdapter);
+      const removeRollback = await rehearsal.rollback(removeReceipt, removeAdapter);
       if (
-        removeFailureRollback.status !== "manual_review_required" ||
-        removeFailureRollback.rolled_back_count !== 0 ||
-        removeFailureRollback.reason !== "expansion_rehearsal_rollback_remove_failed" ||
-        removeFailureRollback.compensation?.exact !== true
+        removeRollback.status !== "manual_review_required" ||
+        removeRollback.rolled_back_count !== 0 ||
+        removeRollback.reason !== "expansion_rehearsal_rollback_remove_failed" ||
+        removeRollback.compensation?.exact !== true
       ) throw new Error("expansion_live_remove_failure_not_compensated");
-      if (!eq(await removeFailureAdapter.list(), removeBeforeRollback)) throw new Error("expansion_live_remove_compensation_state_mismatch");
-      if (!eq(removeFailureAdapter.rawGet(sentinel.id), sentinel)) throw new Error("expansion_live_remove_sentinel_changed");
+      if ((await canonicalState(removeAdapter)) !== removeBefore) throw new Error("expansion_live_remove_compensation_state_mismatch");
+      if (!equal(removeAdapter.rawGet(sentinel.id), sentinel)) throw new Error("expansion_live_remove_sentinel_changed");
 
-      // First apply consumes six get() calls. Fail the first replay read and
-      // require rehearse() to clean the first receipt back to exact pre-run state.
-      const replayFailureAdapter = makeAdapter({ failGetAt: 7 });
-      const replayBefore = await replayFailureAdapter.list();
+      const replayAdapter = makeAdapter({ failGetAt: 7 });
+      const replayBefore = await canonicalState(replayAdapter);
       let replayError = null;
-      try { await rehearsal.rehearse(plan, replayFailureAdapter, { explicit_rehearsal_authorization: true }); }
+      try { await rehearsal.rehearse(plan, replayAdapter, { explicit_rehearsal_authorization: true }); }
       catch (error) { replayError = error; }
       if (!replayError || replayError.message !== "synthetic_live_replay_get_failure") throw new Error("expansion_live_replay_failure_not_observed");
       if (replayError.rehearsal_cleanup?.status !== "rolled_back" || replayError.rehearsal_cleanup?.exact !== true) {
         throw new Error("expansion_live_replay_cleanup_not_exact");
       }
-      if (!eq(await replayFailureAdapter.list(), replayBefore)) throw new Error("expansion_live_replay_cleanup_state_mismatch");
-      if (!eq(replayFailureAdapter.rawGet(sentinel.id), sentinel)) throw new Error("expansion_live_replay_sentinel_changed");
+      if ((await canonicalState(replayAdapter)) !== replayBefore) throw new Error("expansion_live_replay_cleanup_state_mismatch");
+      if (!equal(replayAdapter.rawGet(sentinel.id), sentinel)) throw new Error("expansion_live_replay_sentinel_changed");
 
-      // Drift the LATER rollback target (record 2). Record 1 must not be
-      // deleted before the drift is detected.
       const driftAdapter = makeAdapter();
       const driftReceipt = await rehearsal.apply(plan, driftAdapter, { explicit_rehearsal_authorization: true });
       const driftedSecond = clone(records[1]);
@@ -357,9 +337,9 @@ async function run() {
       if (driftRollback.status !== "manual_review_required" || driftRollback.rolled_back_count !== 0) {
         throw new Error("expansion_live_state_drift_not_fail_closed");
       }
-      if (!eq(driftAdapter.rawGet(records[0].id), records[0])) throw new Error("expansion_live_earlier_record_deleted_before_later_drift");
-      if (!eq(driftAdapter.rawGet(records[1].id), driftedSecond)) throw new Error("expansion_live_drifted_record_changed");
-      if (!eq(driftAdapter.rawGet(sentinel.id), sentinel)) throw new Error("expansion_live_drift_sentinel_changed");
+      if (!equal(driftAdapter.rawGet(records[0].id), records[0])) throw new Error("expansion_live_earlier_record_deleted_before_later_drift");
+      if (!equal(driftAdapter.rawGet(records[1].id), driftedSecond)) throw new Error("expansion_live_drifted_record_changed");
+      if (!equal(driftAdapter.rawGet(sentinel.id), sentinel)) throw new Error("expansion_live_drift_sentinel_changed");
 
       const policy = rehearsal.policy();
       const policyOpen = Object.entries(policy)
@@ -381,65 +361,50 @@ async function run() {
         exact_pre_run_state_restored: rehearsalProof.exact_pre_run_state_restored,
         partial_failure_compensation_status: partialCompensation?.status || null,
         partial_failure_compensation_exact: partialCompensation?.exact === true,
-        rollback_remove_failure_status: removeFailureRollback.status,
-        rollback_remove_failure_rolled_back_count: removeFailureRollback.rolled_back_count,
-        rollback_remove_failure_reason: removeFailureRollback.reason,
-        rollback_remove_failure_compensation_exact: removeFailureRollback.compensation?.exact === true,
-        rollback_remove_failure_state_restored: eq(await removeFailureAdapter.list(), removeBeforeRollback),
+        rollback_remove_failure_status: removeRollback.status,
+        rollback_remove_failure_rolled_back_count: removeRollback.rolled_back_count,
+        rollback_remove_failure_reason: removeRollback.reason,
+        rollback_remove_failure_compensation_exact: removeRollback.compensation?.exact === true,
+        rollback_remove_failure_state_restored: (await canonicalState(removeAdapter)) === removeBefore,
         replay_failure_message: replayError.message,
         replay_failure_cleanup_status: replayError.rehearsal_cleanup?.status || null,
         replay_failure_cleanup_exact: replayError.rehearsal_cleanup?.exact === true,
-        replay_failure_exact_pre_run_state_restored: eq(await replayFailureAdapter.list(), replayBefore),
-        drift_target_ordinal: 2,
-        drift_rollback_status: driftRollback.status,
-        drift_rolled_back_count: driftRollback.rolled_back_count,
-        earlier_record_preserved_on_later_drift: eq(driftAdapter.rawGet(records[0].id), records[0]),
-        drifted_record_preserved: eq(driftAdapter.rawGet(records[1].id), driftedSecond),
-        unrelated_sentinel_full_content_preserved: [
-          normalAdapter,
-          failureAdapter,
-          removeFailureAdapter,
-          replayFailureAdapter,
-          driftAdapter
-        ].every((adapter) => eq(adapter.rawGet(sentinel.id), sentinel)),
+        replay_failure_exact_pre_run_state_restored: (await canonicalState(replayAdapter)) === replayBefore,
+        state_drift_target_ordinal: 2,
+        state_drift_status: driftRollback.status,
+        state_drift_rolled_back_count: driftRollback.rolled_back_count,
+        earlier_record_preserved_on_later_drift: equal(driftAdapter.rawGet(records[0].id), records[0]),
+        drifted_record_preserved: equal(driftAdapter.rawGet(records[1].id), driftedSecond),
+        unrelated_sentinel_full_content_preserved: [normalAdapter, partialAdapter, removeAdapter, replayAdapter, driftAdapter]
+          .every((adapter) => equal(adapter.rawGet(sentinel.id), sentinel)),
         rehearsal_policy_all_write_authorities_false: policyOpen.length === 0
       };
     }, { exactScope: scope });
 
-    const afterScenarios = await storageSnapshot(page);
-    const unexpectedRequests = requests.slice();
+    const afterScenarios = await browserStorageSnapshot(page);
     const browserBoundaryGreen =
-      same(before.local, afterScenarios.local) &&
-      same(before.session, afterScenarios.session) &&
-      same(before.indexed, afterScenarios.indexed) &&
-      unexpectedRequests.length === 0 &&
+      JSON.stringify(before.local) === JSON.stringify(afterScenarios.local) &&
+      JSON.stringify(before.session) === JSON.stringify(afterScenarios.session) &&
+      JSON.stringify(before.indexed) === JSON.stringify(afterScenarios.indexed) &&
+      requests.length === 0 &&
       pageErrors.length === 0 &&
       consoleErrors.length === 0;
-
-    assert.equal(browserBoundaryGreen, true, JSON.stringify({ before, afterScenarios, unexpectedRequests, pageErrors, consoleErrors }));
+    assert.equal(browserBoundaryGreen, true, JSON.stringify({ before, afterScenarios, requests, pageErrors, consoleErrors }));
 
     const evidence = {
       evidence_id: "aha_v2_two_record_expansion_corrected_temp_live_proof_v2",
       observed_at: new Date().toISOString(),
       source: "github_pages_hash_bound_two_record_expansion_live_canary_v2",
       one_record_pilot_proof_permanent: true,
-      expansion_scope_contract: clone(scope),
+      expansion_scope_contract: JSON.parse(JSON.stringify(scope)),
       multi_record_rollback_rehearsal_proven: scenario.rollback_status === "rolled_back" && scenario.rollback_exact === true,
       rollback_each_record_exactly_bound: scenario.rollback_count === 2,
       unrelated_chamber_records_preserved: scenario.unrelated_sentinel_full_content_preserved === true,
-      partial_failure_compensation_proven:
-        scenario.partial_failure_compensation_exact === true &&
-        scenario.rollback_remove_failure_compensation_exact === true,
-      compensation_restores_exact_pre_run_state:
-        scenario.rollback_remove_failure_state_restored === true &&
-        scenario.replay_failure_exact_pre_run_state_restored === true,
-      idempotent_multi_record_replay_proven:
-        scenario.identical_replay_write_count === 0 && scenario.identical_replay_no_op_count === 2,
+      partial_failure_compensation_proven: scenario.partial_failure_compensation_exact === true && scenario.rollback_remove_failure_compensation_exact === true,
+      compensation_restores_exact_pre_run_state: scenario.rollback_remove_failure_state_restored === true && scenario.replay_failure_exact_pre_run_state_restored === true,
+      idempotent_multi_record_replay_proven: scenario.identical_replay_write_count === 0 && scenario.identical_replay_no_op_count === 2,
       identical_replay_write_count_zero: scenario.identical_replay_write_count === 0,
-      multi_record_state_drift_fail_closed_proven:
-        scenario.drift_target_ordinal === 2 &&
-        scenario.drift_rolled_back_count === 0 &&
-        scenario.earlier_record_preserved_on_later_drift === true,
+      multi_record_state_drift_fail_closed_proven: scenario.state_drift_target_ordinal === 2 && scenario.state_drift_rolled_back_count === 0 && scenario.earlier_record_preserved_on_later_drift === true,
       production_expansion_canary_proof: true,
       production_expansion_canary_count: 2,
       production_canary_coverage_complete: true,
@@ -469,12 +434,14 @@ async function run() {
     };
 
     const gateDecision = await page.evaluate(({ exactEvidence, exactBaselineProof }) => {
-      const gate = window.AHAV2ControlledWriteExpansionGate;
-      return gate.evaluate({ evidence: exactEvidence, one_record_pilot_proof: exactBaselineProof });
+      return window.AHAV2ControlledWriteExpansionGate.evaluate({
+        evidence: exactEvidence,
+        one_record_pilot_proof: exactBaselineProof
+      });
     }, { exactEvidence: evidence, exactBaselineProof: baselineProof });
 
-    const finalSnapshot = await storageSnapshot(page);
-    assert.equal(same(before, finalSnapshot), true, "browser storage changed during gate decision");
+    const finalSnapshot = await browserStorageSnapshot(page);
+    assert.equal(JSON.stringify(before), JSON.stringify(finalSnapshot), "browser storage changed during gate decision");
     assert.equal(requests.length, 0, JSON.stringify(requests));
     assert.equal(pageErrors.length, 0, JSON.stringify(pageErrors));
     assert.equal(consoleErrors.length, 0, JSON.stringify(consoleErrors));
@@ -534,18 +501,18 @@ async function run() {
         replay_failure_cleanup_status: scenario.replay_failure_cleanup_status,
         replay_failure_cleanup_exact: scenario.replay_failure_cleanup_exact,
         replay_failure_exact_pre_run_state_restored: scenario.replay_failure_exact_pre_run_state_restored,
-        state_drift_target_ordinal: scenario.drift_target_ordinal,
-        state_drift_status: scenario.drift_rollback_status,
-        state_drift_rolled_back_count: scenario.drift_rolled_back_count,
+        state_drift_target_ordinal: scenario.state_drift_target_ordinal,
+        state_drift_status: scenario.state_drift_status,
+        state_drift_rolled_back_count: scenario.state_drift_rolled_back_count,
         earlier_record_preserved_on_later_drift: scenario.earlier_record_preserved_on_later_drift,
         drifted_record_preserved: scenario.drifted_record_preserved,
         unrelated_sentinel_full_content_preserved: scenario.unrelated_sentinel_full_content_preserved
       },
       browser_boundary: {
-        local_storage_unchanged: same(before.local, finalSnapshot.local),
-        session_storage_unchanged: same(before.session, finalSnapshot.session),
-        indexeddb_unchanged: same(before.indexed, finalSnapshot.indexed),
-        indexeddb_content_digest_unchanged: same(before.indexed, finalSnapshot.indexed),
+        local_storage_unchanged: JSON.stringify(before.local) === JSON.stringify(finalSnapshot.local),
+        session_storage_unchanged: JSON.stringify(before.session) === JSON.stringify(finalSnapshot.session),
+        indexeddb_unchanged: JSON.stringify(before.indexed) === JSON.stringify(finalSnapshot.indexed),
+        indexeddb_content_digest_unchanged: JSON.stringify(before.indexed) === JSON.stringify(finalSnapshot.indexed),
         indexeddb_snapshot_mode: finalSnapshot.indexed_snapshot_mode,
         unexpected_request_count: requests.length,
         unexpected_write_request_count: requests.filter((request) => request.method !== "GET" && request.method !== "HEAD").length,
@@ -602,7 +569,6 @@ async function run() {
     console.log(JSON.stringify({
       production_evidence_verified: true,
       proof_revision: proof.proof_revision,
-      canary_count: proof.canaries.count,
       immutable_scope_mutation_blocked: proof.scope.immutable_scope_mutation_blocked,
       replay_failure_cleanup_exact: proof.canaries.replay_failure_cleanup_exact,
       rollback_remove_failure_compensation_exact: proof.canaries.rollback_remove_failure_compensation_exact,
