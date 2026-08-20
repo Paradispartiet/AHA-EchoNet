@@ -1,11 +1,6 @@
 // ahaV2ControlledWriteExpansionRehearsal.js
 // Isolated staging rehearsal for a future bounded multi-record V2 pilot.
-//
-// This module never writes Insight Chamber, backend, Meta, projections or any
-// product store. It accepts only the dedicated rehearsal adapter scope and
-// synthetic/source-bound record metadata. The current production pilot remains
-// max=1 regardless of rehearsal outcome.
-
+// The current production pilot remains max=1 regardless of rehearsal outcome.
 (function (global) {
   "use strict";
 
@@ -14,23 +9,14 @@
   const RECORD_SCHEMA = "aha_v2_controlled_write_expansion_rehearsal_record_v1";
   const ADAPTER_SCOPE = "v2_expansion_rehearsal_staging";
   const TARGET_KIND = "v2_expansion_rehearsal_candidate";
+  const EXPECTED_SCOPE_ID = "bounded_local_chamber_two_record_candidate_v1";
+  const EXPECTED_SCOPE_FINGERPRINT = "ee6952eef3517af8a868c83e4424125c70591af42ff4f568e76a8bba4aa3b5f8";
+  const EXPECTED_MAX_RECORDS = 2;
 
-  function clone(value) {
-    return value == null ? value : JSON.parse(JSON.stringify(value));
-  }
-
-  function text(value) {
-    return String(value == null ? "" : value).trim();
-  }
-
-  function arr(value) {
-    return Array.isArray(value) ? value : [];
-  }
-
-  function sha256Like(value) {
-    return /^[a-f0-9]{64}$/u.test(text(value));
-  }
-
+  function clone(value) { return value == null ? value : JSON.parse(JSON.stringify(value)); }
+  function text(value) { return String(value == null ? "" : value).trim(); }
+  function arr(value) { return Array.isArray(value) ? value : []; }
+  function sha256Like(value) { return /^[a-f0-9]{64}$/u.test(text(value)); }
   function stableStringify(value) {
     if (Array.isArray(value)) return `[${value.map(stableStringify).join(",")}]`;
     if (value && typeof value === "object") {
@@ -38,11 +24,7 @@
     }
     return JSON.stringify(value);
   }
-
-  function equal(left, right) {
-    return stableStringify(left) === stableStringify(right);
-  }
-
+  function equal(left, right) { return stableStringify(left) === stableStringify(right); }
   function fail(code, detail = null) {
     const error = new Error(code);
     error.code = code;
@@ -75,16 +57,22 @@
     if (typeof validator !== "function") fail("expansion_rehearsal_gate_unavailable");
     const result = validator(scope);
     if (!result?.valid) fail("expansion_rehearsal_scope_invalid", result?.blocking_reasons || []);
+    if (
+      result.scope_id !== EXPECTED_SCOPE_ID ||
+      result.scope_fingerprint !== EXPECTED_SCOPE_FINGERPRINT ||
+      result.max_records !== EXPECTED_MAX_RECORDS
+    ) {
+      fail("expansion_rehearsal_scope_not_committed_candidate", {
+        expected_scope_id: EXPECTED_SCOPE_ID,
+        expected_scope_fingerprint: EXPECTED_SCOPE_FINGERPRINT,
+        expected_max_records: EXPECTED_MAX_RECORDS
+      });
+    }
     if (scope?.candidate_only !== true || scope?.activation_authority !== false) fail("expansion_rehearsal_scope_not_candidate_only");
     const closedFields = [
-      "normal_chat_persistence_open",
-      "automatic_backfill_open",
-      "backend_sync_open",
-      "backend_persistent_write_open",
-      "broad_canonical_write_open",
-      "projection_store_write_open",
-      "meta_write_open",
-      "remote_write_open"
+      "normal_chat_persistence_open", "automatic_backfill_open", "backend_sync_open",
+      "backend_persistent_write_open", "broad_canonical_write_open", "projection_store_write_open",
+      "meta_write_open", "remote_write_open"
     ];
     closedFields.forEach((field) => {
       if (scope?.[field] !== false) fail(`expansion_rehearsal_scope_authority_open:${field}`);
@@ -138,32 +126,71 @@
     return result;
   }
 
-  async function restoreTargets(records, before, adapter) {
-    // Preflight every target before compensation. We only compensate when the
-    // current state is either the exact pre-run state or the exact planned
-    // record. Unknown drift fails closed without destructive guessing.
+  async function restoreTargets(records, desired, adapter) {
     for (const record of records) {
       const current = clone(await adapter.get(record.id));
-      const previous = before[record.id];
-      if (!equal(current, previous) && !equal(current, record)) {
+      const target = desired[record.id];
+      if (!equal(current, target) && !equal(current, record)) {
         return { status: "manual_review_required", exact: false, restored_count: 0, reason: "expansion_rehearsal_compensation_state_drift" };
       }
     }
     let restored = 0;
+    const errors = [];
     for (const record of records) {
-      const previous = before[record.id];
+      const target = desired[record.id];
       const current = clone(await adapter.get(record.id));
-      if (equal(current, previous)) continue;
-      if (previous == null) await adapter.remove(record.id);
-      else await adapter.put(record.id, clone(previous));
-      restored += 1;
-    }
-    for (const record of records) {
-      if (!equal(clone(await adapter.get(record.id)), before[record.id])) {
-        return { status: "manual_review_required", exact: false, restored_count: restored, reason: "expansion_rehearsal_compensation_verification_failed" };
+      if (equal(current, target)) continue;
+      try {
+        if (target == null) await adapter.remove(record.id);
+        else await adapter.put(record.id, clone(target));
+        restored += 1;
+      } catch (error) {
+        errors.push(text(error?.message || error));
       }
     }
-    return { status: "compensated", exact: true, restored_count: restored, reason: null };
+    let exact = true;
+    for (const record of records) {
+      if (!equal(clone(await adapter.get(record.id)), desired[record.id])) exact = false;
+    }
+    return {
+      status: exact ? "compensated" : "manual_review_required",
+      exact,
+      restored_count: restored,
+      reason: exact ? null : "expansion_rehearsal_compensation_verification_failed",
+      operation_errors: errors
+    };
+  }
+
+  async function restoreCreatedRecords(created, adapter) {
+    for (const record of created) {
+      const current = clone(await adapter.get(record.id));
+      if (current != null && !equal(current, record)) {
+        return { status: "manual_review_required", exact: false, restored_count: 0, reason: "expansion_rehearsal_rollback_compensation_state_drift" };
+      }
+    }
+    let restored = 0;
+    const errors = [];
+    for (const record of created) {
+      const current = clone(await adapter.get(record.id));
+      if (equal(current, record)) continue;
+      try {
+        await adapter.put(record.id, clone(record));
+        restored += 1;
+      } catch (error) {
+        errors.push(text(error?.message || error));
+      }
+    }
+    let exact = true;
+    for (const record of created) {
+      if (!equal(clone(await adapter.get(record.id)), record)) exact = false;
+    }
+    return {
+      status: exact ? "compensated" : "manual_review_required",
+      exact,
+      restored_count: restored,
+      reason: exact ? null : "expansion_rehearsal_rollback_compensation_verification_failed",
+      operation_errors: errors
+    };
   }
 
   async function apply(planInput, adapterInput, options = {}) {
@@ -178,8 +205,7 @@
         const existing = clone(await adapter.get(record.id));
         if (existing == null) {
           await adapter.put(record.id, clone(record));
-          const verified = clone(await adapter.get(record.id));
-          if (!equal(verified, record)) fail("expansion_rehearsal_write_verification_failed");
+          if (!equal(clone(await adapter.get(record.id)), record)) fail("expansion_rehearsal_write_verification_failed");
           created.push(clone(record));
         } else if (equal(existing, record)) {
           noOps += 1;
@@ -194,17 +220,9 @@
       throw error;
     }
     return clone({
-      schema: REHEARSAL_SCHEMA,
-      version: 1,
-      status: "applied",
-      adapter_scope: adapter.scope,
-      scope_id: scope.scope_id,
-      scope_fingerprint: scope.scope_fingerprint,
-      max_records: scope.max_records,
-      write_count: created.length,
-      no_op_count: noOps,
-      created_records: created,
-      target_pre_state: before,
+      schema: REHEARSAL_SCHEMA, version: 1, status: "applied", adapter_scope: adapter.scope,
+      scope_id: scope.scope_id, scope_fingerprint: scope.scope_fingerprint, max_records: scope.max_records,
+      write_count: created.length, no_op_count: noOps, created_records: created, target_pre_state: before,
       policy: policy()
     });
   }
@@ -216,89 +234,85 @@
     if (receipt.adapter_scope !== ADAPTER_SCOPE) fail("expansion_rehearsal_receipt_scope_invalid");
     const created = arr(receipt.created_records);
 
-    // Exact preflight across every created record: if any target drifted, remove
-    // nothing and require manual review.
     for (const record of created) {
       const current = clone(await adapter.get(record.id));
       if (!equal(current, record)) {
-        return clone({
-          schema: REHEARSAL_SCHEMA,
-          version: 1,
-          status: "manual_review_required",
-          exact: false,
-          rolled_back_count: 0,
-          reason: "expansion_rehearsal_rollback_state_drift",
-          policy: policy()
-        });
+        return clone({ schema: REHEARSAL_SCHEMA, version: 1, status: "manual_review_required", exact: false, rolled_back_count: 0, reason: "expansion_rehearsal_rollback_state_drift", policy: policy() });
       }
     }
 
-    for (const record of created) await adapter.remove(record.id);
+    let removeError = null;
+    for (const record of created) {
+      try { await adapter.remove(record.id); }
+      catch (error) { removeError = error; break; }
+    }
+    if (removeError) {
+      const compensation = await restoreCreatedRecords(created, adapter);
+      return clone({
+        schema: REHEARSAL_SCHEMA, version: 1, status: "manual_review_required", exact: false,
+        rolled_back_count: 0,
+        reason: compensation.exact ? "expansion_rehearsal_rollback_remove_failed" : "expansion_rehearsal_rollback_remove_failed_compensation_incomplete",
+        compensation,
+        policy: policy()
+      });
+    }
+
+    let verified = true;
     for (const record of created) {
       const previous = receipt.target_pre_state?.[record.id] ?? null;
-      const current = clone(await adapter.get(record.id));
-      if (!equal(current, previous)) {
-        return clone({
-          schema: REHEARSAL_SCHEMA,
-          version: 1,
-          status: "manual_review_required",
-          exact: false,
-          rolled_back_count: created.length,
-          reason: "expansion_rehearsal_rollback_verification_failed",
-          policy: policy()
-        });
-      }
+      if (!equal(clone(await adapter.get(record.id)), previous)) verified = false;
+    }
+    if (!verified) {
+      const compensation = await restoreCreatedRecords(created, adapter);
+      return clone({
+        schema: REHEARSAL_SCHEMA, version: 1, status: "manual_review_required", exact: false,
+        rolled_back_count: 0,
+        reason: compensation.exact ? "expansion_rehearsal_rollback_verification_failed" : "expansion_rehearsal_rollback_verification_failed_compensation_incomplete",
+        compensation,
+        policy: policy()
+      });
     }
 
-    return clone({
-      schema: REHEARSAL_SCHEMA,
-      version: 1,
-      status: "rolled_back",
-      exact: true,
-      rolled_back_count: created.length,
-      reason: null,
-      policy: policy()
-    });
+    return clone({ schema: REHEARSAL_SCHEMA, version: 1, status: "rolled_back", exact: true, rolled_back_count: created.length, reason: null, policy: policy() });
   }
 
   async function rehearse(plan, adapter, options = {}) {
     requireAdapter(adapter);
     const before = await exactSnapshot(adapter);
     const first = await apply(plan, adapter, options);
-    const second = await apply(plan, adapter, options);
+    let second;
+    try {
+      second = await apply(plan, adapter, options);
+    } catch (error) {
+      try {
+        const cleanup = await rollback(first, adapter);
+        error.rehearsal_cleanup = clone(cleanup);
+        if (cleanup.status !== "rolled_back" || cleanup.exact !== true) {
+          error.code = "expansion_rehearsal_replay_failure_cleanup_incomplete";
+        }
+      } catch (cleanupError) {
+        error.rehearsal_cleanup_error = text(cleanupError?.message || cleanupError);
+        error.code = "expansion_rehearsal_replay_failure_cleanup_incomplete";
+      }
+      throw error;
+    }
     const rollbackResult = await rollback(first, adapter);
     const after = await exactSnapshot(adapter);
     const expectedCount = validatePlan(plan).scope.max_records;
     const verified = first.write_count === expectedCount && second.write_count === 0 && second.no_op_count === expectedCount && rollbackResult.status === "rolled_back" && rollbackResult.rolled_back_count === expectedCount && before === after;
     return clone({
-      schema: REHEARSAL_SCHEMA,
-      version: 1,
-      status: verified ? "verified" : "failed",
-      isolated_rehearsal_verified: verified,
-      adapter_scope: ADAPTER_SCOPE,
-      first_apply_write_count: first.write_count,
-      identical_replay_write_count: second.write_count,
-      identical_replay_no_op_count: second.no_op_count,
-      rollback_status: rollbackResult.status,
-      rollback_exact: rollbackResult.exact,
-      rollback_count: rollbackResult.rolled_back_count,
-      exact_pre_run_state_restored: before === after,
-      policy: policy()
+      schema: REHEARSAL_SCHEMA, version: 1, status: verified ? "verified" : "failed",
+      isolated_rehearsal_verified: verified, adapter_scope: ADAPTER_SCOPE,
+      first_apply_write_count: first.write_count, identical_replay_write_count: second.write_count,
+      identical_replay_no_op_count: second.no_op_count, rollback_status: rollbackResult.status,
+      rollback_exact: rollbackResult.exact, rollback_count: rollbackResult.rolled_back_count,
+      exact_pre_run_state_restored: before === after, policy: policy()
     });
   }
 
   const api = Object.freeze({
-    REHEARSAL_SCHEMA,
-    PLAN_SCHEMA,
-    RECORD_SCHEMA,
-    ADAPTER_SCOPE,
-    TARGET_KIND,
-    stableStringify,
-    validatePlan,
-    apply,
-    rollback,
-    rehearse,
-    policy
+    REHEARSAL_SCHEMA, PLAN_SCHEMA, RECORD_SCHEMA, ADAPTER_SCOPE, TARGET_KIND,
+    stableStringify, validatePlan, apply, rollback, rehearse, policy
   });
   global.AHAV2ControlledWriteExpansionRehearsal = api;
   global.AHAModuleApi?.register?.("v2ControlledWriteExpansionRehearsal", api, {

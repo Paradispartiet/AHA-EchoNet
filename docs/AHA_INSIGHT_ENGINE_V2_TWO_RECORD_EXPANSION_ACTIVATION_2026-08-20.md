@@ -4,36 +4,26 @@ Date: 2026-08-20
 
 ## Current status
 
-The exact two-record local V2 activation is now **production-verified**.
+The two-record activation implementation exists on `main`, but **current authorization is fail-closed**.
 
-Scope:
-
-`bounded_local_chamber_two_record_candidate_v1`
-
-Current production write boundary:
+Current decision:
 
 ```text
-max lifetime local Chamber records = 2
-activation mode = manual sequential
-review approval = required per record
-canonical approval = required per record
-rollback approval = required per record
-source binding = required per record
-rollback replenishes budget = false
-normal Chat persistence = CLOSED
+expansion decision = NO_GO
+eligible_for_bounded_expansion_pilot = false
+eligible_for_expansion_activation = false
+current one-record pilot max = 1
 ```
 
-Permanent post-activation proof:
+The activation code must not be interpreted as current write authority.
 
-`ops/evidence/aha-v2-two-record-expansion-activation-live-proof-v1.json`
+## Implementation
 
-## Activation implementation
-
-Production wrapper:
+Activation wrapper:
 
 `js/ahaV2ControlledWriteExpansionActivation.js`
 
-Dedicated operator surface:
+Dedicated operator:
 
 `insight-expansion-v2.html?pilot=bounded_local_chamber_two_record_candidate_v1`
 
@@ -41,225 +31,156 @@ Operator adapter:
 
 `js/ahaInsightExpansionOperatorV2.js`
 
-The wrapper uses the already production-proven `AHAInsightActivationV2` controller. It does not implement a second persistence engine.
+The wrapper reuses the already production-verified `AHAInsightActivationV2` controller. It does not create a second persistence engine.
 
-## Authorization chain
+## Why activation is blocked now
 
-Before the wrapper exposes any manual action, it requires:
+The activation wrapper calls the current expansion gate before it constructs the raw activation controller.
+
+It requires all of the following at runtime:
 
 1. exact operator intent `bounded_local_chamber_two_record_candidate_v1`;
-2. permanent expansion evidence evaluates to `BOUNDED_EXPANSION_PILOT_ELIGIBLE` with 12/12 checks green;
-3. the permanent one-record production proof remains valid;
-4. the exact two-record scope contract validates and retains its immutable fingerprint;
-5. the permanent two-record expansion decision proof remains valid;
-6. the selected scope remains exactly two records, manual sequential, `batch=false` and `automatic=false`;
-7. all broader write authorities remain false.
+2. current permanent expansion evidence evaluates to `BOUNDED_EXPANSION_PILOT_ELIGIBLE`;
+3. all 12 required expansion checks are green with zero blockers;
+4. the production-verified one-record baseline remains valid;
+5. the exact two-record scope contract remains valid;
+6. the permanent two-record live proof has status `production_evidence_verified`;
+7. proof, scope and decision identities agree;
+8. every broader write authority remains closed.
 
-Any mismatch fails closed.
+Post-merge review invalidated the old #860 proof and returned current evidence to `NO_GO`. Therefore the current runtime fails with `expansion_gate_not_green` before the raw activation controller is created.
 
-## Lifetime budget
+Regression:
 
-The two-record budget is the **total lifetime canonical creation count in the existing controlled review history**.
+`tests/aha-v2-controlled-write-expansion-activation.test.cjs`
 
-```text
-historical canonical records = 0  → 2 slots available
-historical canonical records = 1  → 1 slot available
-historical canonical records = 2  → 0 slots available
-historical canonical records > 2  → invalid state, fail closed
-```
+The regression proves both sides of the contract:
 
-A record continues to consume a slot after exact rollback because its review retains `canonical_insight_id`.
+- **real current repo evidence is rejected** and the raw controller is never created;
+- a synthetic fully re-proven fixture can still exercise the implementation contract without pretending current production evidence is green.
 
-A device/profile that already consumed the old one-record pilot slot can therefore create at most one additional record under the two-record scope.
+## Additional activation-runtime blocker from #862 review
 
-Rollback never replenishes the lifetime budget.
+Post-merge review of #862 found a separate P1 issue in the two-active-record case: two operator tabs can approve rollback of different records concurrently. Without cross-instance serialization, both raw controllers can read the same review queue and Chamber snapshot, then one can write stale state after the other has completed. A rollback that appeared successful in one tab could therefore be partially resurrected by the other tab.
 
-## Sequential activation
+Current production remains protected because the `NO_GO` gate prevents the activation controller from being created. However, the activation implementation must **not be re-authorized** until the complete rollback transaction is serialized across same-origin tabs/instances (or is otherwise made atomically compare-and-write safe), followed by an adversarial concurrency regression.
 
-At most one unpromoted `reviewed` item may exist at a time.
+Tracked review thread:
 
-A promoted first record is a completed canonical step, so a second review can begin while the first record remains active. Two review/canonical sequences cannot run in parallel.
+`PRRT_kwDOQgS1AM6a9LzR`
 
-Each record requires its own approval sequence:
+Required remediation before reauthorization:
 
 ```text
-REVIEW challenge
-CANONICAL challenge
-optional ROLLBACK challenge
+cross-instance rollback serialization = REQUIRED
+fresh state read inside exclusive boundary = REQUIRED
+full rollback + verification inside same boundary = REQUIRED
+concurrent two-tab rollback regression = REQUIRED
 ```
 
-The underlying controller keeps each challenge single-use, expiry-bound and state-bound.
-
-## Source and duplicate binding
-
-`AHAInsightActivationV2` binds each review to:
-
-- source event ID;
-- source text SHA-256;
-- synthesis response;
-- candidate index;
-- candidate payload;
-- quality-gate decision.
-
-It re-checks the current source hash before committing review/canonical state.
-
-The expansion wrapper additionally prevents a candidate signature that already produced a canonical record from consuming the second slot.
-
-## Exact rollback
-
-Rollback remains the existing `AHAInsightActivationV2` signature-bound exact rollback.
-
-The expansion wrapper verifies after rollback that:
-
-- lifetime created-record count does not decrease;
-- the target review moves to `rolled_back`;
-- the target is no longer promoted;
-- other promoted reviews remain untouched;
-- unrelated Chamber records remain untouched.
-
-Two active records can therefore be rolled back independently, including in reverse order.
-
-## Operator boot boundary
-
-`insight-expansion-v2.html` starts with:
-
-`src="about:blank"`
-
-The Chat iframe navigates only after the exact two-record operator intent is present and the load handler is installed.
-
-The operator loads the permanent expansion evidence, one-record proof, two-record decision proof and exact scope contract before constructing the wrapper. The raw `AHAInsightActivationV2` controller is not exported as operator authority.
-
-## Production proof — PR #863
-
-Temporary PR #863 was isolated to two TEMP proof files, had zero product diff and was closed without merge after a successful run.
-
-Proof identity:
+## Candidate scope remains unchanged
 
 ```text
-production main:   4b74504a25a4b41585c3c62280a7ec275356d4b6
-TEMP PR:           #863 — closed without merge
-TEMP branch head:  f0ac1dc915b2246bff5284f491e1b3fd9e910b2b
-workflow run:      32416552359
-workflow job:      96578895412
-artifact id:       9424127989
-artifact digest:   sha256:bd9c046d754d3266504abfff026ed575bf03beccc804cbf129448fbfe400f0a0
-product diff:      0 files
-Pages status:      built, exact main on attempt 1
+scope_id = bounded_local_chamber_two_record_candidate_v1
+max lifetime canonical creations = 2
+activation mode = manual_sequential
+separate REVIEW approval per record = required
+separate CANONICAL approval per record = required
+separate ROLLBACK approval per record = required
+source binding per record = required
+rollback replenishes lifetime budget = false
+batch activation = false
+automatic activation = false
 ```
 
-Twelve selected activation/operator/evidence/safety assets matched production main byte-for-byte.
+A previous canonical creation under the one-record pilot consumes one of the two total historical slots if the two-record candidate is ever re-authorized.
 
-### Operator proof
+## Existing implementation boundaries
 
-Without exact intent:
+When and only when both the runtime hardening and fresh evidence are green, the wrapper is intended to enforce:
+
+- at most two lifetime canonical creations;
+- record 3 blocked with `expansion_record_budget_exhausted`;
+- rollback does not replenish budget;
+- duplicate historical candidate signatures do not consume another slot;
+- at most one unpromoted reviewed item at a time;
+- no direct localStorage/sessionStorage/IndexedDB/network/Supabase persistence path in the wrapper;
+- all normal Chat/backend/backfill/projection/Meta/remote authorities remain false.
+
+## Status of PR #863 / #864 proof
+
+Temporary PR #863 exercised the activation implementation against the then-current 12/12 evidence and was closed without merge. PR #864 permanentized that downstream observation.
+
+That proof is now historical only. It cannot override the upstream #860 invalidation, and review found two additional proof-quality gaps:
+
+1. **Executed-byte TOCTOU:** after the initial Pages parity check, the proof refetched controller assets for execution without hashing those exact response bytes against the expected commit. A concurrent Pages deployment could therefore cause the artifact to attribute execution to the wrong commit.
+2. **Sentinel content not proven:** rollback isolation asserted that the unrelated sentinel ID still existed, but did not compare the full sentinel record before and after rollback. Mutated sentinel contents could have passed.
+
+Tracked proof-review threads:
 
 ```text
-iframe:                    about:blank
-Chat requests:             0
-all controls disabled:     true
-unexpected write requests: 0
-page errors:               0
-console errors:            0
+PRRT_kwDOQgS1AM6a9Pio
+PRRT_kwDOQgS1AM6a9Pis
 ```
 
-With exact intent:
+Permanent historical evidence:
+
+`ops/evidence/aha-v2-two-record-expansion-activation-live-proof-v1.json`
+
+Current status:
 
 ```text
-authorized:                true
-gate decision:             BOUNDED_EXPANSION_PILOT_ELIGIBLE
-iframe ready:              true
-unexpected write requests: 0
-page errors:               0
-console errors:            0
+status = invalidated_by_upstream_gate_review
+current_activation_authority_usable = false
+cross_instance_rollback_serialization_missing = true
+deployed_execution_byte_binding_missing = true
+unrelated_sentinel_full_content_check_missing = true
+fresh_corrected_gate_proof_required = true
+fresh_post_gate_activation_proof_required = true
 ```
 
-### Live source-bound activation proof
+## Required corrected proof chain
 
-Two distinct permanent reviewed fixtures produced review-eligible live synthesis candidates:
+Before activation can become usable again, the **gate/rehearsal** must first be freshly production-proven against the hardened runtime. That replacement proof must establish:
+
+- immutable scope ID + fingerprint + max=2 binding;
+- replay-failure cleanup;
+- rollback remove-failure compensation;
+- drift on a later rollback target with zero earlier deletion;
+- exact browser persistent-state comparison including IndexedDB keys and values;
+- zero unexpected writes;
+- deployed hardened asset parity;
+- all broader authorities false.
+
+Only after that gate proof is green may the decision return to `BOUNDED_EXPANSION_PILOT_ELIGIBLE`.
+
+Before activation itself can then be called production-verified, all of the following must also be true:
+
+1. cross-instance rollback serialization is implemented and regression-tested;
+2. the exact bytes executed by the proof are either the already hash-verified copies or are re-hashed immediately before execution and bound to expected main;
+3. the complete unrelated sentinel record is snapshotted and byte/stable-digest compared before and after both rollbacks;
+4. two distinct records remain independently rollback-safe;
+5. third write remains blocked and lifetime count remains two after rollback;
+6. repository calls remain 0/0 and all broader authorities remain false.
+
+The old #863 artifact cannot be reused as the corrected proof.
+
+## Still closed
 
 ```text
-record 1 source:  standardization-flexibility-v1.json
-record 1 quality: 0.832889
-record 2 source:  constraints-creativity-v1.json
-record 2 quality: 0.85084
-model:            gpt-4.1-mini-2025-04-14
+two-record activation write authority       CLOSED
+normal Chat automatic V2 persistence         CLOSED
+automatic activation                         CLOSED
+batch activation                             CLOSED
+automatic legacy backfill                    CLOSED
+backend sync                                 CLOSED
+backend persistent V2 write                  CLOSED
+broad canonical V2 write                     CLOSED
+projection-store writes                      CLOSED
+Meta writes                                  CLOSED
+remote V2 writes                             CLOSED
 ```
-
-For both records, review approval left Chamber unchanged and source binding was verified before canonical creation.
-
-Result:
-
-```text
-created record count after record 1: 1
-created record count after record 2: 2
-remaining budget after record 2:     0
-third write:                          expansion_record_budget_exhausted
-repository save/load calls:          0 / 0
-sync push:                            blocked before repository access
-sync pull:                            blocked before repository access
-```
-
-Rollback proof:
-
-```text
-record 2 rollback:                   rolled_back
-record 1 preserved after rollback 2: true
-record 1 rollback:                   rolled_back
-final Chamber:                       sentinel only
-unrelated sentinel preserved:        true
-lifetime count after rollbacks:      2
-fresh-wrapper third write:           expansion_record_budget_exhausted
-audit events:                        18
-```
-
-No user production data was modified; the activation write sequence used an in-memory Chamber fixture only. The artifact contains no raw source text, evidence quotes, candidate signatures or canonical signatures.
-
-## Permanent regression
-
-`tests/aha-v2-two-record-expansion-activation-live-proof.test.cjs`
-
-The regression locks:
-
-- #863 run/job/artifact identity;
-- exact production runtime commit;
-- all twelve deployed asset hashes;
-- operator no-intent and exact-intent behavior;
-- the two distinct live sources and quality floor;
-- source-bound review/canonical behavior;
-- lifetime max=2 and blocked third write;
-- repository calls 0/0 and sync blocking;
-- independent exact rollbacks and sentinel preservation;
-- post-rollback lifetime exhaustion after a fresh wrapper;
-- redaction boundaries;
-- absence of the #863 TEMP files from the permanent branch.
-
-## What is open
-
-Only this bounded local manual scope is open:
-
-```text
-manual review-queue write            OPEN inside controlled V2 activation
-manual local Chamber write           OPEN, max 2 lifetime canonical creations
-exact rollback                       OPEN for those controlled records
-```
-
-## What remains closed
-
-```text
-normal Chat automatic V2 persistence       CLOSED
-automatic activation                       CLOSED
-batch activation                           CLOSED
-automatic legacy backfill                  CLOSED
-backend sync                               CLOSED
-backend persistent V2 write                CLOSED
-broad canonical V2 write                   CLOSED
-projection-store writes                    CLOSED
-Meta writes                                CLOSED
-remote V2 writes                           CLOSED
-```
-
-No production proof in this chain authorizes widening beyond two local lifetime records.
 
 Authoritative status:
 
-> **Two-record local controlled V2 activation: production-verified. Lifetime max=2. Third write fails closed. Exact rollback proven. Broad/normal V2 persistence remains CLOSED.**
+> **Activation code exists, but current gate is NO_GO and blocks it before controller creation. Cross-instance rollback serialization is also required before any reauthorization. Production-verified write boundary remains the one-record pilot, max=1.**
