@@ -45,6 +45,9 @@ async function run() {
   assert.match(request.input[0].content, /confidence være medium eller low/i);
   assert.match(request.input[0].content, /ikke fastslår, peker ut eller identifiserer en årsak/i);
   assert.match(request.input[0].content, /pattern, tension eller generalization/i);
+  assert.match(request.input[0].content, /causal_status=not_causal/i);
+  assert.match(request.input[0].content, /fører \.\.\. til/);
+  assert.match(request.input[0].content, /canonical concept-labels/i);
 
   assert.throws(() => api.buildSynthesisResponsesRequest({
     model: "gpt-test",
@@ -103,6 +106,56 @@ async function run() {
     const result = api.validateSynthesisPayload(invalid, source);
     assert.equal(result.ok, false);
     assert.ok(result.errors.includes("candidate:0:interpretive_causality_uncertainty_required"));
+  }
+
+  {
+    const invalid = structuredClone(validPayload);
+    invalid.candidates[0].causal_status = "not_causal";
+    invalid.candidates[0].confidence = "high";
+    invalid.candidates[0].uncertainty = "";
+    invalid.candidates[0].insight = "Delegeringen førte teamet til raskere lokale valg samtidig som uenighet samlet seg ved grensene.";
+    const result = api.validateSynthesisPayload(invalid, source);
+    assert.equal(result.ok, false);
+    assert.ok(result.errors.includes("candidate:0:not_causal_contains_causal_language"));
+  }
+
+  {
+    const invalid = structuredClone(validPayload);
+    invalid.candidates[0].causal_status = "source_explicit";
+    invalid.candidates[0].confidence = "high";
+    invalid.candidates[0].uncertainty = "";
+    const result = api.validateSynthesisPayload(invalid, source);
+    assert.equal(result.ok, false);
+    assert.ok(result.errors.includes("candidate:0:source_explicit_causality_not_in_evidence"));
+  }
+
+  {
+    const mixedUseSource = "En gate fikk over tid flere boliger, små butikker, serveringssteder og arbeidsplasser. Fotgjengertrafikken ble jevnere fordelt gjennom dagen, også etter ordinær arbeidstid. Materialet peker ikke ut ett enkelt tiltak som årsak, men viser at flere bruksformer opptrer samtidig med et bredere tidsmønster i aktiviteten.";
+    const validNonCausal = {
+      schema: "aha_insight_synthesis_output_v2",
+      candidates: [{
+        insight: "Flere bruksformer opptrer samtidig med et bredere tidsmønster i fotgjengertrafikken, uten at materialet fastslår én årsak.",
+        type: "pattern",
+        abstraction: "Kobler bruksblanding, tidsmønster og den eksplisitte årsaksbegrensningen.",
+        evidence: [
+          { quote: "Fotgjengertrafikken ble jevnere fordelt gjennom dagen, også etter ordinær arbeidstid.", role: "supports" },
+          { quote: "Materialet peker ikke ut ett enkelt tiltak som årsak, men viser at flere bruksformer opptrer samtidig med et bredere tidsmønster i aktiviteten.", role: "limits" }
+        ],
+        why_it_matters: "Det bevarer et nyttig aktivitetsmønster uten å gjøre samvariasjon om til sikker årsak.",
+        confidence: "high",
+        uncertainty: "",
+        causal_status: "not_causal"
+      }]
+    };
+    const valid = api.validateSynthesisPayload(validNonCausal, mixedUseSource);
+    assert.equal(valid.ok, true, JSON.stringify(valid.errors));
+
+    const invalid = structuredClone(validNonCausal);
+    invalid.candidates[0].insight = "Når flere bruksformer opptrer i samme gate, skapes et bredere tidsmønster uten at materialet fastslår én årsak.";
+    const result = api.validateSynthesisPayload(invalid, mixedUseSource);
+    assert.equal(result.ok, false);
+    assert.ok(result.errors.includes("candidate:0:not_causal_contains_causal_language"));
+    assert.ok(result.errors.includes("candidate:0:causal_claim_contradicts_source_limitation"));
   }
 
   {
