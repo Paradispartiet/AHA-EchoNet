@@ -1,0 +1,89 @@
+{
+  "schema": "aha_insight_synthesis_v2_controlled_activation_production_proof_v1",
+  "version": 1,
+  "measured_at": "2026-08-20T12:37:58.442Z",
+  "workflow_run_id": 32369823544,
+  "workflow_run_attempt": 1,
+  "workflow_head": "1884f2d5672296a1f2922f667123dda9671330ff",
+  "expected_production_main": "ed1db452088232146702fabdf9f9543bb9f0d959",
+  "frontend": {
+    "origin": "https://paradispartiet.github.io/AHA-EchoNet",
+    "assets": {
+      "insight-activation-v2.html": {
+        "sha256": "e6ed518ff831308f25ebe05a0e1b7065696c73e67f66f942bf808f5ba2d1b34c",
+        "fetch_attempts": 1
+      },
+      "js/ahaInsightActivationV2.js": {
+        "sha256": "faf8cb91805241f524235c90f275c317f3a2a6a1b683fab61fc6b9e854a28e63",
+        "fetch_attempts": 1
+      },
+      "js/ahaInsightActivationOperatorV2.js": {
+        "sha256": "22625621dda992c4f66ddd7b1b30b9b40a09c675b34d0fc0d18ee35943372713",
+        "fetch_attempts": 1
+      },
+      "js/ahaInsightQualityGateV2.js": {
+        "sha256": "6040849c09c7c29c3848bd113e627218cea886bb3cc6492324c5e981e65490c2",
+        "fetch_attempts": 1
+      },
+      "js/insightsChamber.js": {
+        "sha256": "8068ed184559bef7795c967d437cd46462f39061aa0d5ca524e0c7de4fd26a7b",
+        "fetch_attempts": 1
+      },
+      "js/ahaChamberSync.js": {
+        "sha256": "89224ed58e40f17e78131bb5810f5bb65a93f40c561eac4c7d322ddafcead97b",
+        "fetch_attempts": 1
+      }
+    }
+  },
+  "synthesis": {
+    "endpoint": "https://aha-agent-7a3y.onrender.com/api/aha-agent/semantic-document",
+    "model": "gpt-4.1-mini-2025-04-14",
+    "response_id": "resp_0e7e8fe642c526f9006a86f5220fa481a0b15e2eefa1e91cc6",
+    "candidate_count": 1,
+    "eligible_count": 1,
+    "selected_candidate_index": 0,
+    "selected_quality_score": 0.831667
+  },
+  "activation": {
+    "review_id": "review_v2_fc7b9794-c5bf-4288-8456-6db95e09f64e",
+    "candidate_signature": "2fb9da3678b48540bd312c2caff4d87fc38b6304e14586dbadecdac3ab014669",
+    "canonical_insight_id": "ins_v2_fc7b9794-c5bf-4288-8456-6db95e09f64e",
+    "canonical_signature": "e6ef48f3e3a9552c0f38b711933a1d52c4428cc898c2e415539495b16403732e",
+    "chamber_ids_after_review": [
+      "existing_production_proof"
+    ],
+    "chamber_ids_after_promotion": [
+      "existing_production_proof",
+      "ins_v2_fc7b9794-c5bf-4288-8456-6db95e09f64e"
+    ],
+    "sync_push": {
+      "ok": false,
+      "reason": "local_only_insight_activation_present"
+    },
+    "sync_pull": {
+      "ok": false,
+      "reason": "local_only_insight_activation_present"
+    },
+    "repository_save_calls": 0,
+    "repository_load_calls": 0,
+    "rollback_status": "rolled_back",
+    "chamber_ids_after_rollback": [
+      "existing_production_proof"
+    ],
+    "audit_event_count": 9,
+    "audit_tail_hash": "9feffdc53d59aea14d5f4e8deaf6ffe1eb5750e1e393e59566cc60397d0c35d7",
+    "dispatched_actions": [
+      "review_committed",
+      "canonical_committed",
+      "canonical_rolled_back"
+    ]
+  },
+  "policy": {
+    "automatic_canonical_write": false,
+    "backend_persistent_write": false,
+    "backend_sync": false,
+    "meta_write": false,
+    "normal_chat_activation": false,
+    "production_proof_passed": true
+  }
+}
