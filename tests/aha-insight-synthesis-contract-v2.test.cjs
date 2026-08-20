@@ -41,6 +41,10 @@ async function run() {
   assert.match(request.input[0].content, /prinsipp, mekanisme, mønster, spenning, konsekvens/i);
   assert.match(request.input[0].content, /lett parafrase/i);
   assert.match(request.input[0].content, /minst to distinkte/i);
+  assert.match(request.input[0].content, /hele årsaksrelasjonen/i);
+  assert.match(request.input[0].content, /confidence være medium eller low/i);
+  assert.match(request.input[0].content, /ikke fastslår, peker ut eller identifiserer en årsak/i);
+  assert.match(request.input[0].content, /pattern, tension eller generalization/i);
 
   assert.throws(() => api.buildSynthesisResponsesRequest({
     model: "gpt-test",
@@ -84,6 +88,22 @@ async function run() {
   const validation = api.validateSynthesisPayload(validPayload, source);
   assert.equal(validation.ok, true, JSON.stringify(validation.errors));
   assert.deepEqual(api.requireValidSynthesisPayload(validPayload, source), validPayload);
+
+  {
+    const invalid = structuredClone(validPayload);
+    invalid.candidates[0].confidence = "high";
+    const result = api.validateSynthesisPayload(invalid, source);
+    assert.equal(result.ok, false);
+    assert.ok(result.errors.includes("candidate:0:interpretive_causality_confidence_must_not_be_high"));
+  }
+
+  {
+    const invalid = structuredClone(validPayload);
+    invalid.candidates[0].uncertainty = "";
+    const result = api.validateSynthesisPayload(invalid, source);
+    assert.equal(result.ok, false);
+    assert.ok(result.errors.includes("candidate:0:interpretive_causality_uncertainty_required"));
+  }
 
   {
     const invalid = structuredClone(validPayload);
