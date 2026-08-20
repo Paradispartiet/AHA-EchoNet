@@ -36,6 +36,7 @@
 
   const BRANCH_COLORS = ["#7ac6ff", "#7bd3b8", "#f5ba67", "#c99cff", "#ff8f9d", "#84d66b", "#71d5e8", "#d8c36a"];
   let graphState = { nodes: [], edges: [], selectedNodeId: "", view: { x: 0, y: 0, scale: 1 } };
+  let projectionReceipt = null;
 
   function safeParse(raw, fallback) {
     try {
@@ -804,6 +805,13 @@
     if (modeNote) modeNote.textContent = previewMode
       ? "AHA V2-preview: hovedidé, semantiske grener og resonansforbindelser. Kartet er kvalitetsfiltrert og ikke lagret."
       : "Velg en node for å gjøre den til hovedidé. Dra i bakgrunnen for å flytte kartet, eller bruk zoom.";
+    const materializeButton = document.getElementById("mindmap-v2-materialize");
+    const undoButton = document.getElementById("mindmap-v2-undo");
+    const materializeStatus = document.getElementById("mindmap-v2-materialize-status");
+    const materializable = previewMode && graph.summary?.quality?.passed === true;
+    if (materializeButton) materializeButton.hidden = !materializable;
+    if (undoButton) undoButton.hidden = !materializable || !projectionReceipt;
+    if (materializeStatus && !previewMode) materializeStatus.textContent = "";
 
     const nodeSelect = document.getElementById("mindmap-node-type");
     const edgeSelect = document.getElementById("mindmap-edge-type");
@@ -841,6 +849,34 @@
     document.getElementById("mindmap-node-type")?.addEventListener("change", render);
     document.getElementById("mindmap-edge-type")?.addEventListener("change", render);
     document.getElementById("mindmap-search")?.addEventListener("input", render);
+    document.getElementById("mindmap-v2-materialize")?.addEventListener("click", () => {
+      const model = global.AHAProjectionRuntimeSourceV2?.build?.();
+      const result = global.AHAProjectionMaterializerV2?.materialize?.({
+        model,
+        artifact_type: "mindmap",
+        artifact_id: model?.projection_id,
+        user_confirmed: true
+      });
+      const status = document.getElementById("mindmap-v2-materialize-status");
+      if (!result?.ok) {
+        if (status) status.textContent = "Kunne ikke lagre: kartet besto ikke den kontrollerte write-grensen.";
+        return;
+      }
+      projectionReceipt = result.receipt || null;
+      if (status) status.textContent = result.existing ? "Begrepsgrafen finnes allerede lokalt." : "Begrepsgrafen er lagret lokalt. Ingen sync ble åpnet.";
+      const undoButton = document.getElementById("mindmap-v2-undo");
+      if (undoButton) undoButton.hidden = !projectionReceipt;
+    });
+    document.getElementById("mindmap-v2-undo")?.addEventListener("click", () => {
+      const result = global.AHAProjectionMaterializerV2?.undo?.(projectionReceipt, { user_confirmed: true });
+      const status = document.getElementById("mindmap-v2-materialize-status");
+      if (result?.ok) {
+        projectionReceipt = null;
+        if (status) status.textContent = "Den lokale begrepsgrafen ble fjernet igjen.";
+        const undoButton = document.getElementById("mindmap-v2-undo");
+        if (undoButton) undoButton.hidden = true;
+      } else if (status) status.textContent = "Kunne ikke angre; begrepsgrafen kan ha blitt endret etter lagring.";
+    });
   }
 
   global.AHAMindmap = {

@@ -14,6 +14,7 @@
 
   const ALLOWED_TYPES = ["favorites", "todo", "concepts", "process", "quality", "ai", "shared_later"];
   let selectedListId = "";
+  const projectionReceipts = new Map();
 
   function safeParse(raw, fallback) {
     try {
@@ -265,6 +266,9 @@
   }
 
   async function persistList(list) {
+    if (list?.meta?.createdBy === "aha_projection_materializer_v2") {
+      return { ok: false, fallback: "localOnly", projection_artifact_local_only: true };
+    }
     if (!isDatabaseSyncEnabled()) {
       return { ok: false, fallback: "localOnly", database_sync_disabled: true };
     }
@@ -486,6 +490,19 @@
       out.push({ id: `insta_${post.id}`, title: asText(post?.title || post?.caption, "Insta-post"), type: "insta_post", source: "aha_insta", refId: asText(post?.id, ""), meta: {} });
     });
 
+    asArray(loadRawByKey(LISTS_KEY, [])).filter((list) => !isUnavailableRecord(list)).forEach((list) => {
+      asArray(list?.items).filter((item) => item?.source === "aha_projection_v2" && item?.meta?.inline === true).forEach((item) => {
+        out.push({
+          id: asText(item?.id, `projection_${item?.refId}`),
+          title: asText(item?.title || item?.meta?.snapshot?.title, "V2-innsikt"),
+          type: asText(item?.type || item?.meta?.snapshot?.type, "insight"),
+          source: "aha_projection_v2",
+          refId: asText(item?.refId, ""),
+          meta: item?.meta || {}
+        });
+      });
+    });
+
     return out.filter((item) => item.refId);
   }
 
@@ -500,12 +517,23 @@
   }
 
   function validateListReference(itemInput, availableItems = collectAvailableItems()) {
-    const allowedSources = new Set(["aha_insights", "aha_notes", "aha_feed", "aha_gallery", "aha_insta"]);
+    const allowedSources = new Set(["aha_insights", "aha_notes", "aha_feed", "aha_gallery", "aha_insta", "aha_projection_v2"]);
     const source = asText(itemInput?.source, "");
     const refId = asText(itemInput?.refId || itemInput?.ref_id, "");
     if (!source) return { ok: false, reason: "missing_source" };
     if (!allowedSources.has(source)) return { ok: false, reason: "unknown_source" };
     if (!refId) return { ok: false, reason: "missing_refId" };
+    if (source === "aha_projection_v2") {
+      const snapshot = itemInput?.meta?.snapshot;
+      if (itemInput?.meta?.inline !== true
+        || itemInput?.meta?.immutable !== true
+        || !asText(itemInput?.meta?.projection_id, "")
+        || !asText(itemInput?.meta?.projection_artifact_id, "")
+        || !asText(snapshot?.id, "")
+        || !asText(snapshot?.title, "")
+        || snapshot?.source !== "aha_semantic_v2") return { ok: false, reason: "incomplete_projection_snapshot" };
+      return { ok: true, item: itemInput };
+    }
     const item = buildAvailableItemIndex(availableItems).get(`${source}::${refId}`);
     if (!item) return { ok: false, reason: "source_missing" };
     if (isUnavailableRecord(item)) return { ok: false, reason: "source_unavailable" };
@@ -571,6 +599,11 @@
         <p>${escapeHtml(list.description)}</p>
         <ul class="aha-v2-preview-items">${items}</ul>
         <div class="aha-list-meta"><span>${escapeHtml(quality)}</span><span>Ikke lagret</span><span>Read-only</span></div>
+        <div class="aha-v2-materialize-actions">
+          <button type="button" class="aha-tile-btn aha-tile-btn-primary" data-v2-list-materialize="${escapeHtml(list.id)}">Lagre som min liste</button>
+          <button type="button" class="aha-tile-btn" data-v2-list-undo="${escapeHtml(list.id)}" hidden>Angre lagring</button>
+          <span class="module-meta" data-v2-list-materialize-status="${escapeHtml(list.id)}" aria-live="polite">Krever et eksplisitt klikk og lagres bare lokalt.</span>
+        </div>
       </article>`;
     }).join("");
   }
@@ -757,6 +790,43 @@
 
   function bind() {
     document.getElementById("lists-refresh")?.addEventListener("click", refresh);
+
+    document.getElementById("v2-list-previews")?.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      const artifactId = target.dataset.v2ListMaterialize;
+      const undoId = target.dataset.v2ListUndo;
+      const id = artifactId || undoId;
+      if (!id) return;
+      const status = document.querySelector(`[data-v2-list-materialize-status="${id}"]`);
+      const undoButton = document.querySelector(`[data-v2-list-undo="${id}"]`);
+      if (undoId) {
+        const receipt = projectionReceipts.get(id);
+        const result = global.AHAProjectionMaterializerV2?.undo?.(receipt, { user_confirmed: true });
+        if (result?.ok) {
+          projectionReceipts.delete(id);
+          if (status instanceof HTMLElement) status.textContent = "Den lokale listen ble fjernet igjen.";
+          if (undoButton instanceof HTMLElement) undoButton.hidden = true;
+          renderContent();
+        } else if (status instanceof HTMLElement) status.textContent = "Kunne ikke angre; listen kan ha blitt endret etter lagring.";
+        return;
+      }
+      const model = global.AHAProjectionRuntimeSourceV2?.build?.();
+      const result = global.AHAProjectionMaterializerV2?.materialize?.({
+        model,
+        artifact_type: "list",
+        artifact_id: id,
+        user_confirmed: true
+      });
+      if (!result?.ok) {
+        if (status instanceof HTMLElement) status.textContent = "Kunne ikke lagre: forslaget besto ikke den kontrollerte write-grensen.";
+        return;
+      }
+      if (result.receipt) projectionReceipts.set(id, result.receipt);
+      if (status instanceof HTMLElement) status.textContent = result.existing ? "Listen finnes allerede lokalt." : "Listen er lagret lokalt. Ingen sync ble åpnet.";
+      if (undoButton instanceof HTMLElement) undoButton.hidden = !result.receipt;
+      renderContent();
+    });
 
     document.getElementById("concept-list-create-form")?.addEventListener("submit", (event) => {
       event.preventDefault();

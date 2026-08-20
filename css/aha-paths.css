@@ -77,6 +77,16 @@
 .aha-v2-path-step small { color: #9fd7ff; text-transform: uppercase; letter-spacing: .05em; }
 .aha-v2-path-step p { margin: 0; }
 
+.aha-v2-materialize-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+.aha-v2-materialize-actions .module-meta { flex-basis: 100%; }
+
 .aha-path-form input,
 .aha-path-form select,
 .aha-path-form textarea,
