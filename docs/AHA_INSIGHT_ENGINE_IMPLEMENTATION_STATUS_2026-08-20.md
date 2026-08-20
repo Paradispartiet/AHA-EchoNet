@@ -26,7 +26,8 @@ Phase 4G — delegation responsibility boundaries      merged in PR #825
 Phase 4H — fail-closed stochastic stability layer    merged in PR #827
 Phase 4I — targeted stability corrections            merged in PRs #829–#832
 Phase 4J — authoritative two-round live stability    6/6 + F1 1.0 in both rounds
-Phase 5A — controlled local review/Chamber boundary  implemented
+Phase 5A — controlled local review/Chamber boundary  merged in PR #833
+Phase 5B — controlled activation production proof    passed
 Measured historical semantic-review F1               V1 0.166667 → V2 0.833333
 Final live semantic-review F1                        V2 1.000000 / 1.000000
 Automatic Canonical Insight synthesis write         disabled
@@ -36,6 +37,19 @@ Meta write from semantic shadow                     disabled
 Persistent SemanticDocument storage                 disabled
 Backend Chamber sync for local V2 records           fail-closed/disabled
 Endpoint and shadow-gate production authority       disabled
+```
+
+Phase 5B production proof:
+
+```text
+workflow run:       32369823544
+artifact id:        9406690486
+artifact digest:    sha256:711124204415c7082987c79cd99e64000a68a001ff0d5db3d990272b2a12e305
+production main:    ed1db452088232146702fabdf9f9543bb9f0d959
+live candidate:     1/1 gate-eligible, quality 0.831667
+repository calls:   0 save, 0 load
+audit events:       9, hash chain valid
+rollback:           rolled_back; unrelated Chamber item preserved
 ```
 
 ## Runtime chain

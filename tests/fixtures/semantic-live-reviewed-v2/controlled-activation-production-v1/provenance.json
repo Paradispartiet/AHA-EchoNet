@@ -1,0 +1,25 @@
+{
+  "schema": "aha_insight_synthesis_v2_controlled_activation_provenance_v1",
+  "version": 1,
+  "measured_at": "2026-08-20T12:37:58.442Z",
+  "production_main": "ed1db452088232146702fabdf9f9543bb9f0d959",
+  "workflow_run_id": 32369823544,
+  "workflow_job_id": 96427555521,
+  "workflow_run_attempt": 1,
+  "source_branch": "eval/insight-v2-controlled-activation-production-proof",
+  "source_head": "1884f2d5672296a1f2922f667123dda9671330ff",
+  "temporary_pull_request": 834,
+  "temporary_pull_request_disposition": "closed_without_merge",
+  "artifact_id": 9406690486,
+  "artifact_name": "aha-insight-v2-controlled-activation-production-proof-32369823544",
+  "artifact_digest": "sha256:711124204415c7082987c79cd99e64000a68a001ff0d5db3d990272b2a12e305",
+  "proof_file": "proof.json",
+  "proof_file_digest": "sha256:907dd5482bf6909845df8fcf3c60b0bc55973de769a8f4feb6ad0b39c45e2b88",
+  "production_frontend": "https://paradispartiet.github.io/AHA-EchoNet",
+  "production_synthesis_endpoint": "https://aha-agent-7a3y.onrender.com/api/aha-agent/semantic-document",
+  "deployment_context": {
+    "github_pages_main": "deployed_and_hash_verified",
+    "vercel_main": "not_used_build_rate_limit",
+    "vercel_preview_for_pr_833": "ready"
+  }
+}

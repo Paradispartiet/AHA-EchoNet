@@ -169,3 +169,47 @@ persistent SemanticDocument writes
 ```
 
 Each requires a separate proof and activation decision.
+
+## Authoritative production proof
+
+After PR #833 merged as `ed1db452088232146702fabdf9f9543bb9f0d959`, the
+complete controlled flow was executed against the deployed GitHub Pages main
+and the live Render synthesis endpoint.
+
+```text
+workflow run:        32369823544
+workflow job:        96427555521
+artifact id:         9406690486
+artifact digest:     sha256:711124204415c7082987c79cd99e64000a68a001ff0d5db3d990272b2a12e305
+production main:     ed1db452088232146702fabdf9f9543bb9f0d959
+frontend origin:     https://paradispartiet.github.io/AHA-EchoNet
+model:               gpt-4.1-mini-2025-04-14
+live gate result:    1/1 eligible, quality 0.831667
+audit event count:   9
+repository calls:    0 save, 0 load
+rollback status:     rolled_back
+```
+
+All six deployed runtime assets matched the merged files byte-for-byte on the
+first fetch. Review approval left the Chamber unchanged. The second approval
+added exactly one signed insight next to a sentinel insight. Both sync push and
+pull stopped before repository access. Exact rollback then removed only the V2
+record and preserved the sentinel.
+
+The temporary probe lived only in PR #834, which was closed without merge.
+Neither the TEMP workflow nor the TEMP script is present on main. Permanent
+artifact output and provenance are stored under:
+
+```text
+tests/fixtures/semantic-live-reviewed-v2/controlled-activation-production-v1/
+tests/aha-insight-activation-production-proof-v2.test.cjs
+```
+
+The repository's Vercel main deployment reported a build-rate-limit failure at
+this merge, while the Vercel PR preview was ready. Vercel was not used as proof
+authority. The configured public GitHub Pages production origin was deployed,
+returned the exact merged assets, and is the frontend origin recorded above.
+
+This proof opens no additional authority beyond Phase 5A. Backend persistence,
+Meta, normal-Chat activation, batch promotion and automatic canonical writes
+remain closed.
