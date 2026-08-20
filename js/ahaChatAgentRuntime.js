@@ -25,8 +25,11 @@
         };
       }
 
-      const chamber = loadChamber();
-      const topInsights = getCurrentInsights().slice(0, 8).map((insight) => ({
+      const chamber = options?.preloadedChamber || loadChamber();
+      const currentInsights = Array.isArray(options?.preloadedCurrentInsights)
+        ? options.preloadedCurrentInsights
+        : getCurrentInsights();
+      const topInsights = currentInsights.slice(0, 8).map((insight) => ({
         id: insight.id,
         title: insight.title || "Innsikt",
         summary: insight.summary || "",
@@ -156,6 +159,39 @@
         .filter((entry) => entry && typeof entry === "object");
     }
 
+    function insightIdentity(value) {
+      const item = value?.insight && typeof value.insight === "object" ? value.insight : value;
+      return String(
+        item?.id
+        || item?.insight_id
+        || item?.canonical_insight_id
+        || item?.candidate_signature
+        || ""
+      ).trim();
+    }
+
+    function resolveSelectedMemoryInsights(memoryContext, options = {}) {
+      const selected = selectedMemoryInsights(memoryContext);
+      if (!selected.length) return [];
+
+      const fullRecords = [
+        ...(Array.isArray(options?.preloadedChamber?.insights) ? options.preloadedChamber.insights : []),
+        ...(Array.isArray(options?.preloadedCurrentInsights) ? options.preloadedCurrentInsights : [])
+      ].filter((entry) => entry && typeof entry === "object");
+      if (!fullRecords.length) return selected;
+
+      const byId = new Map();
+      fullRecords.forEach((record) => {
+        const id = insightIdentity(record);
+        if (id && !byId.has(id)) byId.set(id, record);
+      });
+
+      return selected.map((entry) => {
+        const id = insightIdentity(entry);
+        return id && byId.has(id) ? byId.get(id) : entry;
+      }).filter((entry) => entry && typeof entry === "object");
+    }
+
     async function ensureV2ChatReadOnlyContextApi() {
       if (global.AHAV2ChatReadOnlyContext?.build) return global.AHAV2ChatReadOnlyContext;
       if (v2ModuleLoadPromise) return v2ModuleLoadPromise;
@@ -187,7 +223,7 @@
       if (!memoryContext) return null;
       const controls = readChatMemoryControlState();
       if (!controls.available || controls.savingEnabled !== false || controls.memoryUseEnabled !== true) return null;
-      const insights = selectedMemoryInsights(memoryContext);
+      const insights = resolveSelectedMemoryInsights(memoryContext, options);
       if (!insights.length) return null;
       const builder = await ensureV2ChatReadOnlyContextApi();
       if (!builder?.build) return null;
@@ -215,7 +251,9 @@
         message,
         ai_state: buildAIState({
           includeMemory: Boolean(memoryContext),
-          includePersonalContext: Boolean(personalContext?.prompt)
+          includePersonalContext: Boolean(personalContext?.prompt),
+          preloadedChamber: options?.preloadedChamber,
+          preloadedCurrentInsights: options?.preloadedCurrentInsights
         }),
         memory_context: memoryContext,
         personal_context: buildPersonalContextPayload(personalContext),
@@ -232,10 +270,19 @@
     async function askAhaAgent(message, options = {}) {
       const apiBase = String(getApiBase() || "").trim().replace(/\/$/, "");
       if (!apiBase) throw new Error("missing_api_base");
-      const semanticContextV2 = await buildAutomaticV2SemanticContext(message, options);
+
+      const memoryContext = options?.memoryContext?.used ? options.memoryContext : null;
+      const preloadedOptions = memoryContext
+        ? {
+            preloadedChamber: loadChamber(),
+            preloadedCurrentInsights: getCurrentInsights()
+          }
+        : {};
+      const semanticOptions = { ...options, ...preloadedOptions };
+      const semanticContextV2 = await buildAutomaticV2SemanticContext(message, semanticOptions);
       const requestOptions = semanticContextV2 === options?.semanticContextV2
-        ? options
-        : { ...options, semanticContextV2 };
+        ? semanticOptions
+        : { ...semanticOptions, semanticContextV2 };
       const response = await fetchImpl(`${apiBase}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -251,6 +298,7 @@
       buildV2SemanticContextPayload,
       readChatMemoryControlState,
       selectedMemoryInsights,
+      resolveSelectedMemoryInsights,
       ensureV2ChatReadOnlyContextApi,
       buildAutomaticV2SemanticContext,
       buildAgentRequestBody,
