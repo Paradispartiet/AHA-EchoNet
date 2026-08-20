@@ -21,8 +21,12 @@
     /kan ha betydning$/i,
     /^teksten (viser|sier|beskriver)/i
   ];
-  const CAUSAL_LANGUAGE = /\b(fordi|forårsaker|forårsaket|fører til|førte til|gjør at|gjorde at|resulterer i|resulterte i|på grunn av|som følge av|derfor|causes?|caused|leads? to|led to|results? in|because)\b/i;
-  const EXPLICIT_CAUSAL_SOURCE = /\b(fordi|forårsaker|forårsaket|fører til|førte til|gjør at|gjorde at|resulterer i|resulterte i|på grunn av|som følge av|derfor|causes?|caused|leads? to|led to|results? in|because)\b/i;
+  const CAUSAL_LANGUAGE = /\b(fordi|forårsaker|forårsaket|fører til|førte til|gjør at|gjorde at|resulterer i|resulterte i|på grunn av|som følge av|derfor|drivkraft|omformer|reduserer behovet|introduserer kompleksitet|causes?|caused|leads? to|led to|results? in|because)\b/i;
+  // Conservative source-explicit markers. "kan flytte" is included because the
+  // live constraints/creativity source states that relation literally. Generic
+  // before/after wording remains excluded.
+  const EXPLICIT_CAUSAL_SOURCE = /\b(fordi|forårsaker|forårsaket|fører til|førte til|gjør at|gjorde at|resulterer i|resulterte i|på grunn av|som følge av|derfor|kan\s+flytte|causes?|caused|leads? to|led to|results? in|because)\b/i;
+  const ANTI_CAUSAL_SOURCE = /\b(peker\s+ikke\s+ut|fastslår\s+ikke|viser\s+ikke|identifiserer\s+ikke|kan\s+ikke\s+fastslå|uten\s+å\s+fastslå)[^.!?]{0,160}\b(årsak|årsaken|kausal|kausalitet|forårsaker)\b/i;
 
   function clone(value) {
     return value == null ? value : JSON.parse(JSON.stringify(value));
@@ -148,7 +152,7 @@
       const key = normalize(quote);
       if (key && uniqueQuotes.has(key)) reasons.push(`evidence_duplicate:${evidenceIndex}`);
       if (key) uniqueQuotes.add(key);
-      if (!['supports', 'limits'].includes(String(item?.role || ""))) reasons.push(`evidence_role_invalid:${evidenceIndex}`);
+      if (!["supports", "limits"].includes(String(item?.role || ""))) reasons.push(`evidence_role_invalid:${evidenceIndex}`);
       if (normalize(insight) === key) reasons.push(`insight_equals_evidence:${evidenceIndex}`);
     });
 
@@ -163,9 +167,13 @@
     if (groundingScore < 0.08) reasons.push("evidence_semantic_disconnect");
 
     const usesCausalLanguage = CAUSAL_LANGUAGE.test(insight);
-    const sourceHasExplicitCausality = EXPLICIT_CAUSAL_SOURCE.test(source);
+    const evidenceHasExplicitCausality = evidence.some((item) => EXPLICIT_CAUSAL_SOURCE.test(String(item?.quote || "")));
+    const sourceRejectsSimpleCausality = ANTI_CAUSAL_SOURCE.test(source);
+    if (sourceRejectsSimpleCausality && (causalStatus !== "not_causal" || usesCausalLanguage)) {
+      reasons.push("causality_contradicted_by_source");
+    }
     if (usesCausalLanguage && causalStatus === "not_causal") reasons.push("causal_language_status_mismatch");
-    if (causalStatus === "source_explicit" && !sourceHasExplicitCausality) reasons.push("causality_not_source_explicit");
+    if (causalStatus === "source_explicit" && !evidenceHasExplicitCausality) reasons.push("causality_not_source_explicit");
     if (causalStatus === "interpretive") {
       if (!uncertainty) reasons.push("interpretive_causality_requires_uncertainty");
       if (confidence === "high") reasons.push("interpretive_causality_overconfident");
@@ -200,7 +208,9 @@
         evidence_sentence_count: evidenceSentenceCount,
         abstraction_score: abstractionScore,
         usefulness_score: usefulnessScore,
-        causal_discipline_score: causalDisciplineScore
+        causal_discipline_score: causalDisciplineScore,
+        evidence_has_explicit_causality: evidenceHasExplicitCausality,
+        source_rejects_simple_causality: sourceRejectsSimpleCausality
       }
     };
   }
