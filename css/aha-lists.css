@@ -52,6 +52,16 @@
 .aha-v2-list-preview-card h3,
 .aha-v2-list-preview-card p { margin: 0; }
 
+.aha-v2-materialize-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+.aha-v2-materialize-actions .module-meta { flex-basis: 100%; }
+
 .aha-v2-preview-items {
   margin: 0;
   padding-left: 20px;

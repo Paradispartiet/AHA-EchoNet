@@ -27,8 +27,12 @@ No module in this chain has automatic persistence, remote write, sync or product
 
 The automated release suite expects 21 grounded cases to yield all three product artifacts and three weak cases to be suppressed. It also checks determinism and zero storage access.
 
-The structured review worksheet is `ops/evaluation/aha-projection-product-human-review-v2.json`. Agent pre-review is complete. Indepent human review remains explicitly open and cannot be replaced by the automated suite. Automatic persistence remains forbidden regardless of the evaluation result.
+The structured review worksheet is `ops/evaluation/aha-projection-product-human-review-v2.json`. Agent pre-review is complete. Independent human review remains explicitly open and cannot be replaced by the automated suite. Automatic persistence remains forbidden regardless of the evaluation result.
 
-## Next controlled boundary
+## Controlled local materialization
 
-The next step is an explicit, one-artifact-at-a-time materializer. It must be idempotent, reversible and separately authorized from the controlled V2 insight write pilot. Mindmap persistence should materialize concepts and relations into the existing concept-list model rather than introduce a competing graph store.
+`AHAProjectionMaterializerV2` is the sole write boundary for projection artifacts. It accepts only a valid, quality-filtered product read model and exactly one list, path or mindmap candidate per explicit user action. Lists are stored in `aha_lists_v1`, paths in `aha_paths_v1`, and mindmaps become concept graphs in the existing `aha_concept_lists_v1` model.
+
+Every projected insight is stored as an immutable inline snapshot, so a product artifact does not depend on an unpersisted chamber record. Repeating the same action is idempotent. A new write returns a scoped receipt that can undo only the unchanged record it created; undo fails closed after user edits. Repository calls, sync, automatic persistence, Chamber writes and Meta writes remain forbidden.
+
+The older `ahaAnalysisArtifacts` click path now prefers an available V2 candidate and falls back to its legacy builder only when the V2 runtime is unavailable. This does not create a background write path: both routes still require the existing explicit artifact button click.

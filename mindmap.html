@@ -14,7 +14,7 @@
   <main class="aha-dashboard" style="max-width: 1200px;">
     <section class="aha-panel aha-module-shell">
       <header class="aha-module-shell-header"><div><p class="eyebrow">Visuell kunnskapsstruktur</p><h1>Tankekart</h1><p class="aha-module-purpose">Et grafisk tankekart med en sentral idé, grener og undergrener. Kartet bygger på eksisterende lokale AHA-koblinger og lar deg utforske hvordan tanker, innsikter og materiale henger sammen.</p></div></header>
-      <div class="aha-module-actions"><a class="aha-tile-btn aha-tile-btn-primary" href="index.html">Tilbake til AHA Home</a><button id="mindmap-refresh" type="button" class="aha-tile-btn">Oppdater</button></div>
+      <div class="aha-module-actions"><a class="aha-tile-btn aha-tile-btn-primary" href="index.html">Tilbake til AHA Home</a><button id="mindmap-refresh" type="button" class="aha-tile-btn">Oppdater</button><button id="mindmap-v2-materialize" type="button" class="aha-tile-btn aha-tile-btn-primary" hidden>Lagre begrepsgraf lokalt</button><button id="mindmap-v2-undo" type="button" class="aha-tile-btn" hidden>Angre lagring</button><span id="mindmap-v2-materialize-status" class="module-meta" aria-live="polite"></span></div>
     </section>
     <section class="aha-panel mindmap-stats"><div class="mindmap-stat"><strong id="mindmap-stats-nodes">0</strong><span>Noder</span></div><div class="mindmap-stat"><strong id="mindmap-stats-edges">0</strong><span>Koblinger</span></div><div class="mindmap-stat"><strong id="mindmap-stats-node-types">0</strong><span>Node-typer</span></div><div class="mindmap-stat"><strong id="mindmap-stats-edge-types">0</strong><span>Edge-typer</span></div></section>
     <section class="aha-panel mindmap-filters">
@@ -44,6 +44,7 @@
   <script src="js/ahaProjectionArtifactQualityV2.js"></script>
   <script src="js/ahaProjectionProductReadModelV2.js"></script>
   <script src="js/ahaProjectionRuntimeSourceV2.js"></script>
+  <script src="js/ahaProjectionMaterializerV2.js"></script>
   <script src="js/ahaMindmap.js"></script>
   <script src="js/ahaOrganizationRoles.js"></script>
   <script src="js/ahaOrganizationFlow.js"></script>

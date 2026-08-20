@@ -37,6 +37,8 @@
   background: rgba(123, 211, 184, .07);
 }
 
+#mindmap-v2-materialize-status { flex-basis: 100%; }
+
 .mindmap-visual-panel { overflow: hidden; }
 
 .mindmap-visual-header {

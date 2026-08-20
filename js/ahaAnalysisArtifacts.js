@@ -227,6 +227,25 @@
     return created ? { ok: true, artifact: created, mindmap: mindmap.artifact, existing: false } : { ok: false, reason: "save_failed" };
   }
 
+  function saveV2ProjectionArtifact(artifactType) {
+    if (!global.AHAProjectionRuntimeSourceV2?.build || !global.AHAProjectionMaterializerV2?.materialize) {
+      return { ok: false, reason: "v2_unavailable", fallback_allowed: true };
+    }
+    const model = global.AHAProjectionRuntimeSourceV2.build();
+    if (model?.status !== "ready" || model?.validation?.valid !== true) {
+      return { ok: false, reason: "no_v2_candidate", fallback_allowed: true };
+    }
+    const isPath = artifactType === "path";
+    const candidateId = isPath ? arr(model?.surfaces?.paths)[0]?.id : model.projection_id;
+    if (!candidateId) return { ok: false, reason: "no_v2_candidate", fallback_allowed: true };
+    return global.AHAProjectionMaterializerV2.materialize({
+      model,
+      artifact_type: isPath ? "path" : "mindmap",
+      artifact_id: candidateId,
+      user_confirmed: true
+    });
+  }
+
   function setStatus(message) {
     global.document?.querySelectorAll?.("[data-analysis-artifact-status]")?.forEach?.((node) => { node.textContent = message; });
   }
@@ -243,11 +262,13 @@
   function handleClick(event) {
     const artifactButton = event.target?.closest?.("[data-analysis-artifact]");
     if (artifactButton) {
-      const result = artifactButton.dataset.analysisArtifact === "path"
-        ? savePathFromActiveAnalysis()
-        : saveMindmapFromActiveAnalysis();
+      const artifactType = artifactButton.dataset.analysisArtifact === "path" ? "path" : "mindmap";
+      const v2Result = saveV2ProjectionArtifact(artifactType);
+      const result = v2Result.ok || !v2Result.fallback_allowed
+        ? v2Result
+        : (artifactType === "path" ? savePathFromActiveAnalysis() : saveMindmapFromActiveAnalysis());
       setStatus(result.ok
-        ? (artifactButton.dataset.analysisArtifact === "path" ? "Læringsstien er klar under Stier." : "Tankekartet er klart under Kart.")
+        ? (artifactType === "path" ? "Læringsstien er klar under Stier." : "Tankekartet er klart under Kart.")
         : "Kunne ikke lagre: analyser en tekst først.");
       return;
     }
@@ -291,6 +312,7 @@
     buildPathArtifact,
     saveMindmapFromActiveAnalysis,
     savePathFromActiveAnalysis,
+    saveV2ProjectionArtifact,
     init
   };
 

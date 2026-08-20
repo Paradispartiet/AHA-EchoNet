@@ -12,9 +12,10 @@
 
   const ALLOWED_PATH_TYPES = ["learning", "process", "project", "habit", "reading", "historygo", "publishing"];
   const ALLOWED_STEP_STATUS = ["planned", "active", "done", "skipped"];
-  const ALLOWED_STEP_SOURCES = ["aha_insights", "aha_lists", "aha_concept_lists", "aha_notes", "aha_analysis"];
+  const ALLOWED_STEP_SOURCES = ["aha_insights", "aha_lists", "aha_concept_lists", "aha_notes", "aha_analysis", "aha_projection_v2"];
   const ALLOWED_PATH_MODES = ["learning", "narrative", "process"];
   let selectedPathId = "";
+  const projectionReceipts = new Map();
 
   function safeParse(raw, fallback) {
     try {
@@ -130,8 +131,8 @@
   }
 
   async function persistPath(path) {
-    if (path?.meta?.createdBy === "aha_analysis_artifacts_v1") {
-      return { ok: false, fallback: "localOnly", analysis_artifact_local_only: true };
+    if (["aha_analysis_artifacts_v1", "aha_projection_materializer_v2"].includes(path?.meta?.createdBy)) {
+      return { ok: false, fallback: "localOnly", generated_artifact_local_only: true };
     }
     if (!isDatabaseSyncEnabled()) {
       return { ok: false, fallback: "localOnly", database_sync_disabled: true };
@@ -450,6 +451,11 @@
         <p class="aha-path-goal"><strong>Mål:</strong> ${escapeHtml(path.goal)}</p>
         <ol class="aha-v2-path-steps">${steps}</ol>
         <div class="aha-path-meta"><span>${escapeHtml(quality)}</span><span>Ikke lagret</span><span>Read-only</span></div>
+        <div class="aha-v2-materialize-actions">
+          <button type="button" class="aha-tile-btn aha-tile-btn-primary" data-v2-path-materialize="${escapeHtml(path.id)}">Lagre som min sti</button>
+          <button type="button" class="aha-tile-btn" data-v2-path-undo="${escapeHtml(path.id)}" hidden>Angre lagring</button>
+          <span class="module-meta" data-v2-path-materialize-status="${escapeHtml(path.id)}" aria-live="polite">Krever et eksplisitt klikk og lagres bare lokalt.</span>
+        </div>
       </article>`;
     }).join("");
   }
@@ -605,14 +611,14 @@
     asArray(loadRawByKey(PATHS_KEY, []))
       .filter((path) => !isUnavailableRecord(path))
       .forEach((path) => {
-        asArray(path?.steps).filter((step) => step?.source === "aha_analysis").forEach((step) => {
+        asArray(path?.steps).filter((step) => ["aha_analysis", "aha_projection_v2"].includes(step?.source)).forEach((step) => {
           const refId = asText(step?.refId || step?.ref_id, "");
           if (!refId) return;
           out.push({
-            id: `analysis_${refId}`,
-            title: asText(step?.title, "Analysesteg"),
-            type: asText(step?.type, "analysis_step"),
-            source: "aha_analysis",
+            id: `${step.source === "aha_projection_v2" ? "projection" : "analysis"}_${refId}`,
+            title: asText(step?.title, step.source === "aha_projection_v2" ? "V2-innsikt" : "Analysesteg"),
+            type: asText(step?.type, step.source === "aha_projection_v2" ? "insight" : "analysis_step"),
+            source: step.source,
             refId,
             meta: step?.meta || {}
           });
@@ -638,6 +644,17 @@
     if (!source) return { ok: false, reason: "missing_source" };
     if (!refId) return { ok: false, reason: "missing_refId" };
     if (!ALLOWED_STEP_SOURCES.includes(source)) return { ok: false, reason: "unknown_source" };
+    if (source === "aha_projection_v2") {
+      const snapshot = stepInput?.meta?.snapshot;
+      if (stepInput?.meta?.inline !== true
+        || stepInput?.meta?.immutable !== true
+        || !asText(stepInput?.meta?.projection_id, "")
+        || !asText(stepInput?.meta?.projection_artifact_id, "")
+        || !asText(snapshot?.id, "")
+        || !asText(snapshot?.title, "")
+        || snapshot?.source !== "aha_semantic_v2") return { ok: false, reason: "incomplete_projection_snapshot" };
+      return { ok: true, item: stepInput };
+    }
     if (source === "aha_analysis" && stepInput?.meta?.inline === true) {
       return {
         ok: true,
@@ -731,6 +748,43 @@
 
   function bind() {
     document.getElementById("paths-refresh")?.addEventListener("click", refresh);
+
+    document.getElementById("v2-path-previews")?.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      const artifactId = target.dataset.v2PathMaterialize;
+      const undoId = target.dataset.v2PathUndo;
+      const id = artifactId || undoId;
+      if (!id) return;
+      const status = document.querySelector(`[data-v2-path-materialize-status="${id}"]`);
+      const undoButton = document.querySelector(`[data-v2-path-undo="${id}"]`);
+      if (undoId) {
+        const receipt = projectionReceipts.get(id);
+        const result = global.AHAProjectionMaterializerV2?.undo?.(receipt, { user_confirmed: true });
+        if (result?.ok) {
+          projectionReceipts.delete(id);
+          if (status instanceof HTMLElement) status.textContent = "Den lokale stien ble fjernet igjen.";
+          if (undoButton instanceof HTMLElement) undoButton.hidden = true;
+          renderContent();
+        } else if (status instanceof HTMLElement) status.textContent = "Kunne ikke angre; stien kan ha blitt endret etter lagring.";
+        return;
+      }
+      const model = global.AHAProjectionRuntimeSourceV2?.build?.();
+      const result = global.AHAProjectionMaterializerV2?.materialize?.({
+        model,
+        artifact_type: "path",
+        artifact_id: id,
+        user_confirmed: true
+      });
+      if (!result?.ok) {
+        if (status instanceof HTMLElement) status.textContent = "Kunne ikke lagre: forslaget besto ikke den kontrollerte write-grensen.";
+        return;
+      }
+      if (result.receipt) projectionReceipts.set(id, result.receipt);
+      if (status instanceof HTMLElement) status.textContent = result.existing ? "Stien finnes allerede lokalt." : "Stien er lagret lokalt. Ingen sync ble åpnet.";
+      if (undoButton instanceof HTMLElement) undoButton.hidden = !result.receipt;
+      renderContent();
+    });
 
     document.getElementById("path-create-form")?.addEventListener("submit", (event) => {
       event.preventDefault();
