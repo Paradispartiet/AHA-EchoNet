@@ -33,8 +33,6 @@ for (const asset of proof.deployment.assets) {
   assert.match(asset.sha256, /^[a-f0-9]{64}$/u);
 }
 
-// The downstream #863 proof depended on two upstream bytes that are now
-// intentionally different after post-merge invalidation/hardening.
 for (const path of [
   "ops/evidence/aha-v2-controlled-write-expansion-gate-current-v1.json",
   "ops/evidence/aha-v2-two-record-expansion-live-proof-v1.json"
@@ -77,8 +75,17 @@ assert.equal(proof.review_invalidation.upstream_expansion_gate_invalidated, true
 assert.equal(proof.review_invalidation.depends_on_invalidated_two_record_proof, true);
 assert.equal(proof.review_invalidation.historical_gate_evidence_bytes_are_current, false);
 assert.equal(proof.review_invalidation.historical_two_record_proof_bytes_are_current, false);
+assert.equal(proof.review_invalidation.cross_instance_rollback_serialization_missing, true);
+assert.equal(proof.review_invalidation.deployed_execution_byte_binding_missing, true);
+assert.equal(proof.review_invalidation.unrelated_sentinel_full_content_check_missing, true);
+assert.equal(proof.review_invalidation.activation_runtime_hardening_required_before_reauthorization, true);
 assert.equal(proof.review_invalidation.fresh_corrected_gate_proof_required, true);
 assert.equal(proof.review_invalidation.fresh_post_gate_activation_proof_required, true);
+assert.deepEqual(proof.review_invalidation.review_threads, [
+  "PRRT_kwDOQgS1AM6a9LzR",
+  "PRRT_kwDOQgS1AM6a9Pio",
+  "PRRT_kwDOQgS1AM6a9Pis"
+]);
 
 for (const field of [
   "normal_chat_persistence_open",
