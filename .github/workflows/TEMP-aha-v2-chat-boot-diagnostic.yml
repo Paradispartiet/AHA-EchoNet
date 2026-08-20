@@ -1,0 +1,102 @@
+name: TEMP AHA V2 Chat boot diagnostic
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: read
+
+jobs:
+  diagnose:
+    if: github.head_ref == 'probe/v2-live-migration-chat-proof'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PAGES_ORIGIN: https://paradispartiet.github.io/AHA-EchoNet
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: probe/v2-live-migration-chat-proof
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install browser
+        run: |
+          npm install --prefix /tmp --no-save playwright@1.55.0
+          /tmp/node_modules/.bin/playwright install --with-deps chromium
+      - name: Diagnose deployed Chat bootstrap
+        env:
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          mkdir -p probe-evidence
+          cat > /tmp/aha-v2-chat-boot-diagnostic.mjs <<'NODE'
+          import fs from 'node:fs';
+          import { chromium } from 'playwright';
+
+          const origin = process.env.PAGES_ORIGIN;
+          const browser = await chromium.launch({ headless: true });
+          const context = await browser.newContext();
+          const page = await context.newPage();
+          const consoleEvents = [];
+          const pageErrors = [];
+          const requestFailures = [];
+          const badResponses = [];
+
+          page.on('console', (message) => {
+            if (['error','warning'].includes(message.type())) consoleEvents.push({ type: message.type(), text: message.text().slice(0, 1000) });
+          });
+          page.on('pageerror', (error) => pageErrors.push({ name: error.name, message: String(error.message || error).slice(0, 2000), stack: String(error.stack || '').slice(0, 4000) }));
+          page.on('requestfailed', (request) => requestFailures.push({ url: request.url(), method: request.method(), failure: request.failure()?.errorText || '' }));
+          page.on('response', (response) => {
+            if (response.status() >= 400) badResponses.push({ url: response.url(), status: response.status() });
+          });
+
+          await page.addInitScript(() => {
+            try {
+              localStorage.clear();
+              sessionStorage.clear();
+              localStorage.setItem('aha_insight_chamber_v1', JSON.stringify({ insights: [], meta: {} }));
+              localStorage.setItem('aha_memory_controls_v1', JSON.stringify({ saveNewInsights: false, useExistingMemory: true, lastUpdated: new Date().toISOString() }));
+            } catch {}
+          });
+
+          await page.goto(`${origin}/chat.html?aha_v2_boot_diag=${process.env.RUN_ID}`, { waitUntil: 'domcontentloaded', timeout: 30000 });
+          await page.waitForTimeout(12000);
+          const state = await page.evaluate(() => ({
+            readyState: document.readyState,
+            title: document.title,
+            scriptCount: document.scripts.length,
+            globals: {
+              AHAChat: Boolean(window.AHAChat),
+              AHATestHooks: Boolean(window.AHATestHooks),
+              AHAChatRuntimeFacade: Boolean(window.AHAChatRuntimeFacade),
+              AHAChatRuntimeComposition: Boolean(window.AHAChatRuntimeComposition),
+              AHAChatApplicationComposition: Boolean(window.AHAChatApplicationComposition),
+              AHAChatProviderLoader: Boolean(window.AHAChatProviderLoader),
+              AHAChatCapabilityBindings: Boolean(window.AHAChatCapabilityBindings),
+              AHAChatAgentRuntime: Boolean(window.AHAChatAgentRuntime),
+              AHAChatMemoryRuntime: Boolean(window.AHAChatMemoryRuntime),
+              AHAModuleApi: Boolean(window.AHAModuleApi),
+              AHA_AGENT_API: String(window.AHA_AGENT_API || '')
+            },
+            moduleNames: typeof window.AHAModuleApi?.list === 'function' ? window.AHAModuleApi.list() : null,
+            chatExportNames: window.AHAChat ? Object.keys(window.AHAChat).sort() : [],
+            bodyTextSample: String(document.body?.innerText || '').slice(0, 500)
+          }));
+
+          const output = { schema: 'aha_v2_chat_boot_diagnostic_v1', state, pageErrors, consoleEvents, requestFailures, badResponses };
+          fs.writeFileSync('probe-evidence/chat-boot-diagnostic.json', JSON.stringify(output, null, 2));
+          console.log(JSON.stringify(output, null, 2));
+          await browser.close();
+          if (!state.globals.AHAChat) process.exitCode = 2;
+          NODE
+          node /tmp/aha-v2-chat-boot-diagnostic.mjs
+      - name: Upload diagnostic
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aha-v2-chat-boot-diagnostic-${{ github.run_id }}
+          path: probe-evidence/chat-boot-diagnostic.json
+          if-no-files-found: warn
