@@ -80,20 +80,63 @@ function validateStabilitySynthesis(synthesis, sourceText) {
   return { ok: errors.length === 0, errors };
 }
 
+function hasValidationCode(validationErrors, code) {
+  const suffix = `:${String(code || "")}`;
+  return (Array.isArray(validationErrors) ? validationErrors : [])
+    .some((item) => String(item || "").endsWith(suffix));
+}
+
+function removeRelationHints(requestInput) {
+  const request = clone(requestInput) || {};
+  const input = Array.isArray(request.input) ? request.input : [];
+  const user = input.find((item) => item && item.role === "user" && typeof item.content === "string");
+  if (!user) return request;
+  try {
+    const payload = JSON.parse(user.content);
+    if (payload?.semantic_context && Array.isArray(payload.semantic_context.relations)) {
+      payload.semantic_context.relations = [];
+      user.content = JSON.stringify(payload);
+    }
+  } catch {
+    // The contract normally supplies JSON here. Leave an unexpected payload untouched.
+  }
+  return request;
+}
+
 function retryInstruction(validationErrors = []) {
   const errors = Array.isArray(validationErrors) ? validationErrors.map(String).filter(Boolean) : [];
-  return [
+  const instructions = [
     "PREVIOUS SYNTHESIS ATTEMPT FAILED VALIDATION. Rewrite from SOURCE_TEXT; do not defend the prior wording.",
     `Validation failures: ${errors.join(" | ") || "unspecified_validation_failure"}`,
     "Preserve central source/canonical terms, include evidence for every major side of the synthesis, default pattern/tension/generalization to not_causal, and preserve any explicit causal limitation using the source's operative wording."
-  ].join("\n");
+  ];
+  if (hasValidationCode(errors, "source_explicit_causality_not_in_evidence")) {
+    instructions.push(
+      "MANDATORY CAUSAL CORRECTION: The rejected candidate used causal_status=source_explicit without an evidence quote that explicitly states the whole causal relation.",
+      "For every candidate named by this validation code, set causal_status=not_causal and rewrite insight/abstraction without causal verbs. Use association or tension wording such as 'samtidig som', 'opptrer sammen med' or 'er forbundet med'.",
+      "Do not infer source_explicit from relation_type=causes/influences in SEMANTIC_CONTEXT. Those relation hints are removed on this retry because they are structure hints, never evidence. Do not repeat the rejected causal_status."
+    );
+  }
+  if (hasValidationCode(errors, "not_causal_contains_causal_language")) {
+    instructions.push(
+      "MANDATORY WORDING CORRECTION: Keep causal_status=not_causal, but remove causal verbs such as 'fører til', 'skaper', 'gir', 'øker', 'reduserer' and 'muliggjør' from insight. State only the grounded association or tension.",
+      "The rewritten insight MUST use this non-causal sentence frame: '[source-grounded structure or method] er forbundet med [source-grounded observation], samtidig som [source-grounded contrast or second observation].'",
+      "In the rewritten insight, use only neutral relation verbs such as 'er', 'har', 'består av', 'opptrer sammen med' or 'er forbundet med'. Do not reuse the rejected sentence, do not use a causal synonym, and do not change causal_status away from not_causal."
+    );
+  }
+  return instructions.join("\n");
 }
 
 function addRetryInstruction(requestInput, validationErrors) {
-  const request = clone(requestInput) || {};
+  const errors = Array.isArray(validationErrors) ? validationErrors.map(String).filter(Boolean) : [];
+  const removeRelations = hasValidationCode(errors, "source_explicit_causality_not_in_evidence")
+    || hasValidationCode(errors, "not_causal_contains_causal_language");
+  const request = removeRelations
+    ? removeRelationHints(requestInput)
+    : clone(requestInput) || {};
   const input = Array.isArray(request.input) ? request.input : [];
   const firstSystem = input.find((item) => item && item.role === "system" && typeof item.content === "string");
-  if (firstSystem) firstSystem.content = `${firstSystem.content}\n${retryInstruction(validationErrors)}`;
+  if (firstSystem) firstSystem.content = `${firstSystem.content}\n${retryInstruction(errors)}`;
   return request;
 }
 
@@ -103,6 +146,8 @@ export {
   STABILITY_INSTRUCTION,
   applyStabilityRequestPolicy,
   validateStabilitySynthesis,
+  hasValidationCode,
+  removeRelationHints,
   retryInstruction,
   addRetryInstruction
 };
