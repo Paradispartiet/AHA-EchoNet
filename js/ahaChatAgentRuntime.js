@@ -61,11 +61,84 @@
       };
     }
 
+    function buildV2SemanticContextPayload(value) {
+      if (!value || typeof value !== "object" || Array.isArray(value) || value.used !== true) return null;
+      if (value.schema !== "aha_v2_chat_readonly_context_v1" || value.mode !== "read_only") return null;
+      const policy = value.policy && typeof value.policy === "object" ? value.policy : {};
+      const forbiddenAuthority = [
+        "authoritative_for_chat",
+        "current_user_claim_authority",
+        "production_gate_authority",
+        "activation_authority",
+        "chamber_write",
+        "canonical_write",
+        "meta_write",
+        "persistent_write",
+        "remote_write",
+        "normal_chat_persistence_authority"
+      ].some((key) => policy[key] !== false);
+      if (forbiddenAuthority) return null;
+
+      const insights = (Array.isArray(value.insights) ? value.insights : []).slice(0, 6).map((insight) => ({
+        id: String(insight?.id || ""),
+        title: String(insight?.title || "").slice(0, 180),
+        summary: String(insight?.summary || "").slice(0, 600),
+        type: String(insight?.type || "insight").slice(0, 80),
+        causal_status: String(insight?.causal_status || "unknown").slice(0, 80),
+        relevance: Number(insight?.relevance) || 0,
+        quality_score: Number(insight?.quality_score) || 0,
+        concept_keys: (Array.isArray(insight?.concept_keys) ? insight.concept_keys : []).slice(0, 12).map((item) => String(item || "").slice(0, 120)),
+        source_refs: (Array.isArray(insight?.source_refs) ? insight.source_refs : []).slice(0, 8).map((entry) => ({
+          field: String(entry?.field || "").slice(0, 80),
+          value: String(entry?.value || "").slice(0, 240)
+        })).filter((entry) => entry.field && entry.value)
+      })).filter((insight) => insight.id && insight.summary);
+      if (!insights.length) return null;
+
+      return {
+        schema: "aha_v2_chat_readonly_context_v1",
+        version: 1,
+        mode: "read_only",
+        used: true,
+        gate_id: String(value.gate_id || ""),
+        projection_id: String(value.projection_id || ""),
+        source_hash: String(value.source_hash || ""),
+        insights,
+        concepts: (Array.isArray(value.concepts) ? value.concepts : []).slice(0, 12).map((concept) => ({
+          id: String(concept?.id || ""),
+          key: String(concept?.key || "").slice(0, 120),
+          label: String(concept?.label || "").slice(0, 180),
+          insight_ids: (Array.isArray(concept?.insight_ids) ? concept.insight_ids : []).slice(0, 6).map(String)
+        })).filter((concept) => concept.id && concept.label),
+        resonance_edges: (Array.isArray(value.resonance_edges) ? value.resonance_edges : []).slice(0, 8).map((edge) => ({
+          id: String(edge?.id || ""),
+          from: String(edge?.from || ""),
+          to: String(edge?.to || ""),
+          confidence: Number(edge?.confidence) || 0,
+          dedupe_eligible: false
+        })).filter((edge) => edge.from && edge.to),
+        usage_rules: (Array.isArray(value.usage_rules) ? value.usage_rules : []).slice(0, 8).map((rule) => String(rule || "").slice(0, 160)),
+        policy: {
+          authoritative_for_chat: false,
+          current_user_claim_authority: false,
+          production_gate_authority: false,
+          activation_authority: false,
+          chamber_write: false,
+          canonical_write: false,
+          meta_write: false,
+          persistent_write: false,
+          remote_write: false,
+          normal_chat_persistence_authority: false
+        }
+      };
+    }
+
     function buildAgentRequestBody(message, options = {}) {
       const memoryContext = options?.memoryContext?.used ? options.memoryContext : null;
       const personalContext = options?.personalContext && typeof options.personalContext === "object"
         ? options.personalContext
         : null;
+      const semanticContextV2 = buildV2SemanticContextPayload(options?.semanticContextV2);
       return {
         message,
         ai_state: buildAIState({
@@ -77,7 +150,10 @@
         // Bakoverkompatibelt felt for eldre agentkode, men fylles bare når
         // Memory Relevance Gate faktisk har valgt relevante minnetreff.
         similar_insights: memoryContext?.semanticMatches || [],
-        profile: {}
+        // Serverens eksisterende profile-felt transporterer den nye V2-
+        // konteksten uten å blande den inn i Chamber/minne/ai_state. Feltet er
+        // kun non-authoritative read-only context og åpner ingen skrivebane.
+        profile: semanticContextV2 ? { semantic_context_v2: semanticContextV2 } : {}
       };
     }
 
@@ -96,6 +172,7 @@
     return Object.freeze({
       buildAIState,
       buildPersonalContextPayload,
+      buildV2SemanticContextPayload,
       buildAgentRequestBody,
       askAhaAgent
     });
