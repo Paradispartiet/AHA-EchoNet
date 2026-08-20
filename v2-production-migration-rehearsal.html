@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="no">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>AHA V2 · Production migration rehearsal</title>
+  <style>
+    :root { color-scheme: light; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    body { margin: 0; background: #f6f7f8; color: #18201d; }
+    main { width: min(920px, calc(100% - 32px)); margin: 40px auto 80px; }
+    .card { background: white; border: 1px solid #d9dfdc; border-radius: 18px; padding: 22px; margin: 16px 0; box-shadow: 0 6px 24px rgba(20,30,25,.05); }
+    h1, h2 { margin-top: 0; }
+    .status { font-weight: 700; }
+    .blocked { color: #8b1d1d; }
+    .ready { color: #17653a; }
+    button { border: 0; border-radius: 12px; padding: 11px 15px; font: inherit; font-weight: 700; cursor: pointer; background: #173f31; color: white; margin: 5px 8px 5px 0; }
+    button[disabled] { opacity: .45; cursor: not-allowed; }
+    input[type="text"] { width: min(620px, 100%); box-sizing: border-box; padding: 10px 12px; border-radius: 10px; border: 1px solid #bcc8c1; font: inherit; }
+    code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    pre { white-space: pre-wrap; word-break: break-word; padding: 14px; border-radius: 12px; background: #111815; color: #ecf3ef; max-height: 460px; overflow: auto; }
+    .muted { color: #5e6964; }
+    .boundary { border-left: 4px solid #8b1d1d; padding-left: 14px; }
+  </style>
+</head>
+<body>
+<main>
+  <div class="card">
+    <h1>AHA V2 · Production migration rehearsal</h1>
+    <p class="boundary"><strong>Operatorflate.</strong> Denne siden kan lese eksisterende lokalt Chamber-innhold, men migreringsapply går bare til den separate IndexedDB-databasen <code>aha_v2_backfill_staging_v1</code>. Den skriver ikke til Chamber, Lists, Paths, Mindmap, Meta, canonical backend eller remote storage.</p>
+    <p id="gate-status" class="status blocked">Kontrollerer operator-gate …</p>
+    <p class="muted">Åpne bare med <code>?ahaV2ProductionRehearsal=1</code>. Ingen rehearsal starter automatisk.</p>
+  </div>
+
+  <div class="card">
+    <h2>1. Dry-run</h2>
+    <p>Dry-run leser bare <code>aha_insight_chamber_v1</code>, klassifiserer legacy-innsikter og viser redigerte tellere. Ingen staging-write utføres.</p>
+    <button id="preview-btn" disabled>Kjør dry-run</button>
+    <pre id="preview-output">Ingen dry-run kjørt.</pre>
+  </div>
+
+  <div class="card">
+    <h2>2. Operator review</h2>
+    <label><input id="review-check" type="checkbox" disabled> Jeg har gjennomgått dry-run-tellerne og ingen konflikt er skjult.</label>
+    <p>Skriv eksakt token for å autorisere den isolerte staging-rehearsalen:</p>
+    <input id="confirmation" type="text" autocomplete="off" spellcheck="false" placeholder="RUN_AHA_V2_PRODUCTION_MIGRATION_REHEARSAL" disabled>
+  </div>
+
+  <div class="card">
+    <h2>3. Apply → idempotent replay → exact rollback</h2>
+    <p>Første apply skriver kun staging-candidates. Andre apply må gi null writes. Deretter skal eksakt rollback gjøre namespace tomt igjen.</p>
+    <button id="rehearse-btn" disabled>Kjør isolert apply + rollback</button>
+    <button id="copy-btn" disabled>Kopier redigert evidence</button>
+    <pre id="evidence-output">Ingen rehearsal kjørt.</pre>
+  </div>
+</main>
+
+<script src="js/ahaInsightRelationClassifierV2.js"></script>
+<script src="js/ahaInsightSaturationV2.js"></script>
+<script src="js/ahaKnowledgeMigrationV2.js"></script>
+<script src="js/ahaV2BackfillStagingStore.js"></script>
+<script src="js/ahaV2ProductionMigrationRehearsal.js"></script>
+<script>
+(function () {
+  "use strict";
+  const EXACT_CONFIRMATION = "RUN_AHA_V2_PRODUCTION_MIGRATION_REHEARSAL";
+  const params = new URLSearchParams(location.search);
+  const gateOpen = params.get("ahaV2ProductionRehearsal") === "1";
+  const gateStatus = document.getElementById("gate-status");
+  const previewBtn = document.getElementById("preview-btn");
+  const reviewCheck = document.getElementById("review-check");
+  const confirmation = document.getElementById("confirmation");
+  const rehearseBtn = document.getElementById("rehearse-btn");
+  const copyBtn = document.getElementById("copy-btn");
+  const previewOutput = document.getElementById("preview-output");
+  const evidenceOutput = document.getElementById("evidence-output");
+  let inputSnapshot = null;
+  let adapter = null;
+  let finalEvidence = null;
+
+  function readLegacyInput() {
+    let chamber = {};
+    try {
+      chamber = JSON.parse(localStorage.getItem("aha_insight_chamber_v1") || "{}");
+    } catch (error) {
+      throw new Error(`chamber_read_failed:${error?.message || error}`);
+    }
+    return { legacy_insights: Array.isArray(chamber.insights) ? chamber.insights : [] };
+  }
+
+  function redacted(value) {
+    return JSON.stringify(value, null, 2);
+  }
+
+  function updateRehearseEnabled() {
+    rehearseBtn.disabled = !gateOpen || !inputSnapshot || !reviewCheck.checked || confirmation.value.trim() !== EXACT_CONFIRMATION;
+  }
+
+  if (!gateOpen) {
+    gateStatus.textContent = "BLOCKED · operator query-gate mangler";
+    return;
+  }
+  if (!window.AHAKnowledgeMigrationV2 || !window.AHAV2BackfillStagingStore || !window.AHAV2ProductionMigrationRehearsal) {
+    gateStatus.textContent = "BLOCKED · V2 rehearsal-avhengighet mangler";
+    return;
+  }
+
+  gateStatus.textContent = "READY · operator-gate åpen · ingen automatiske writes";
+  gateStatus.className = "status ready";
+  previewBtn.disabled = false;
+
+  previewBtn.addEventListener("click", async () => {
+    previewBtn.disabled = true;
+    rehearseBtn.disabled = true;
+    copyBtn.disabled = true;
+    finalEvidence = null;
+    try {
+      inputSnapshot = readLegacyInput();
+      const namespace = `production_rehearsal_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      adapter = window.AHAV2BackfillStagingStore.create({ namespace });
+      const preview = await window.AHAV2ProductionMigrationRehearsal.preview(inputSnapshot, adapter);
+      previewOutput.textContent = redacted(preview);
+      if (preview.status !== "review_required") throw new Error(`dry_run_not_reviewable:${preview.status}`);
+      reviewCheck.disabled = false;
+      confirmation.disabled = false;
+      updateRehearseEnabled();
+    } catch (error) {
+      previewOutput.textContent = redacted({ status: "blocked", error: String(error?.message || error) });
+      inputSnapshot = null;
+      adapter = null;
+    } finally {
+      previewBtn.disabled = false;
+    }
+  });
+
+  reviewCheck.addEventListener("change", updateRehearseEnabled);
+  confirmation.addEventListener("input", updateRehearseEnabled);
+
+  rehearseBtn.addEventListener("click", async () => {
+    rehearseBtn.disabled = true;
+    copyBtn.disabled = true;
+    finalEvidence = null;
+    try {
+      if (!adapter || !inputSnapshot) throw new Error("dry_run_required_first");
+      const evidence = await window.AHAV2ProductionMigrationRehearsal.rehearse(inputSnapshot, adapter, {
+        dry_run_reviewed: reviewCheck.checked === true,
+        explicit_authorization: confirmation.value.trim() === EXACT_CONFIRMATION
+      });
+      finalEvidence = {
+        ...evidence,
+        observed_at: new Date().toISOString(),
+        source: "live_browser_operator_rehearsal",
+        deployment_origin: location.origin,
+        deployment_path: location.pathname,
+        chamber_payload_in_evidence: false,
+        raw_insight_text_in_evidence: false
+      };
+      evidenceOutput.textContent = redacted(finalEvidence);
+      copyBtn.disabled = finalEvidence.status !== "verified";
+    } catch (error) {
+      evidenceOutput.textContent = redacted({ status: "failed", error: String(error?.message || error) });
+    } finally {
+      updateRehearseEnabled();
+    }
+  });
+
+  copyBtn.addEventListener("click", async () => {
+    if (!finalEvidence || finalEvidence.status !== "verified") return;
+    await navigator.clipboard.writeText(redacted(finalEvidence));
+    copyBtn.textContent = "Evidence kopiert";
+    setTimeout(() => { copyBtn.textContent = "Kopier redigert evidence"; }, 1200);
+  });
+})();
+</script>
+</body>
+</html>
