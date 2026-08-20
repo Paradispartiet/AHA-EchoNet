@@ -60,6 +60,9 @@ assert.match(pathsHtml, /narrative forløp og læringsreiser/, 'Paths page shoul
 assert.match(pathsHtml, /id="aha-module-health"/, 'Paths page should include a textual health badge');
 assert.match(pathsHtml, /href="#paths-create">Lag sti<\/a>/, 'localized create flow should remain the primary action');
 assert.match(pathsHtml, />Lag sti<\/button>/, 'create form submit should use Lag sti label');
+assert.match(pathsHtml, /id="v2-path-preview-shell"/, 'Paths page should reserve a separate V2 preview surface');
+assert.match(pathsHtml, /AHA foreslår læringsstier/, 'V2 candidates should be clearly labelled as suggestions');
+assert.match(pathsHtml, /ahaProjectionRuntimeSourceV2\.js/, 'Paths page should load the shared read-only projection source');
 
 const empty = makeContext({ aha_paths_v1: '[]' });
 empty.Paths.render();
@@ -134,5 +137,7 @@ assert.equal(source.includes('autoSync'), false, 'Paths experience must not add 
 assert.equal(source.includes('localStorage.setItem("aha_paths_selected'), false, 'selected preview state must not be persisted');
 assert.equal(source.includes('JSON.stringify(path.meta'), false, 'Paths UI must not stringify metadata');
 assert.equal(source.includes('AHADb.getClient'), false, 'Paths UI must not create a database client');
+assert.match(source, /function renderProjectionPathPreviews\(\)/, 'Paths should render V2 candidates through a separate preview renderer');
+assert.match(source, /Ikke lagret/, 'V2 preview must state that candidates are not persisted');
 
 console.log('aha-paths-experience.test.cjs passed');
