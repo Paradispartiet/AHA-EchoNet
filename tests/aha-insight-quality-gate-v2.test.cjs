@@ -101,6 +101,49 @@ const goodCandidate = {
 }
 
 {
+  const mixedUseSource = "En gate fikk over tid flere boliger, små butikker, serveringssteder og arbeidsplasser. Fotgjengertrafikken ble jevnere fordelt gjennom dagen, også etter ordinær arbeidstid. Materialet peker ikke ut ett enkelt tiltak som årsak, men viser at flere bruksformer opptrer samtidig med et bredere tidsmønster i aktiviteten.";
+  const candidate = {
+    insight: "Blandede bruksformer fører til jevnere fotgjengertrafikk gjennom hele dagen.",
+    type: "mechanism",
+    abstraction: "Kobler endret bruksblanding til tidsmønsteret i fotgjengeraktiviteten.",
+    evidence: [
+      { quote: "En gate fikk over tid flere boliger, små butikker, serveringssteder og arbeidsplasser.", role: "supports" },
+      { quote: "Fotgjengertrafikken ble jevnere fordelt gjennom dagen, også etter ordinær arbeidstid.", role: "supports" },
+      { quote: "Materialet peker ikke ut ett enkelt tiltak som årsak, men viser at flere bruksformer opptrer samtidig med et bredere tidsmønster i aktiviteten.", role: "limits" }
+    ],
+    why_it_matters: "Det kunne ellers friste til å gjøre et samvariasjonsmønster om til en enkel årsaksforklaring.",
+    confidence: "medium",
+    uncertainty: "Materialet viser samvariasjon og fastslår ikke hva som er årsak.",
+    causal_status: "interpretive"
+  };
+  const decision = api.evaluateCandidate(candidate, mixedUseSource, 0);
+  assert.equal(decision.eligible_for_insight_review, false);
+  assert.ok(decision.blocking_reasons.includes("causality_contradicted_by_source"));
+  assert.equal(decision.metrics.source_rejects_simple_causality, true);
+}
+
+{
+  const constraintsSource = "En scenograf får et ferdig dramatisk innhold og faste praktiske rammer. Likevel varierer hun uttrykket fra detaljrike tegninger til enkle tekstflater. Eksemplet antyder at begrensninger ikke bare reduserer kunstnerisk frihet; de kan flytte kreativiteten over i valg av form og teknikk.";
+  const candidate = {
+    insight: "Begrensninger kan flytte kreativ innsats fra innholdsvalg til valg av form og teknikk når deler av innholdet allerede er gitt.",
+    type: "mechanism",
+    abstraction: "Kobler faste rammer med variasjonen i uttrykk og source-utsagnet om at kreativiteten kan flyttes.",
+    evidence: [
+      { quote: "En scenograf får et ferdig dramatisk innhold og faste praktiske rammer.", role: "supports" },
+      { quote: "Likevel varierer hun uttrykket fra detaljrike tegninger til enkle tekstflater.", role: "supports" },
+      { quote: "Eksemplet antyder at begrensninger ikke bare reduserer kunstnerisk frihet; de kan flytte kreativiteten over i valg av form og teknikk.", role: "supports" }
+    ],
+    why_it_matters: "Det viser hvordan rammer kan endre hvor kreativ problemløsning konsentreres, i stedet for bare å redusere handlingsrommet.",
+    confidence: "high",
+    uncertainty: "",
+    causal_status: "source_explicit"
+  };
+  const decision = api.evaluateCandidate(candidate, constraintsSource, 0);
+  assert.equal(decision.eligible_for_insight_review, true, JSON.stringify(decision));
+  assert.equal(decision.metrics.evidence_has_explicit_causality, true);
+}
+
+{
   const shadow = {
     schema: "aha_insight_synthesis_shadow_v2",
     source_event_id: "src_std",
