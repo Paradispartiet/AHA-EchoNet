@@ -181,12 +181,59 @@ Meta write authority                       CLOSED
 remote V2 write authority                   CLOSED
 ```
 
+## Expansion gate
+
+The next-phase expansion decision layer is now defined in:
+
+`js/ahaV2ControlledWriteExpansionGate.js`
+
+It is pure and read-only. It does not increase the current write budget and cannot prepare or approve an activation.
+
+Current machine-readable evidence:
+
+`ops/evidence/aha-v2-controlled-write-expansion-gate-current-v1.json`
+
+Current decision:
+
+```text
+NO_GO
+required checks: 12
+passed: 3
+failed: 9
+```
+
+Current blockers:
+
+```text
+expansion_scope_contract_missing_or_invalid
+multi_record_rollback_proof_missing
+partial_failure_compensation_proof_missing
+idempotent_multi_record_replay_proof_missing
+multi_record_state_drift_proof_missing
+expansion_production_canary_proof_missing
+expansion_deploy_parity_missing
+expansion_no_write_observation_missing
+expansion_authority_leak_observation_missing
+```
+
+The gate deliberately does not invent a larger record quota. A future scope contract must explicitly define a finite multi-record budget, manual sequential activation, per-record review/canonical/rollback approvals, per-record source binding and a lifetime budget that remains consumed after rollback.
+
+Even a fully green future expansion gate returns only `BOUNDED_EXPANSION_PILOT_ELIGIBLE`; it keeps `eligible_for_expansion_activation=false`, retains the current one-record pilot maximum at `1`, and requires a separate explicit activation PR plus fresh post-activation production proof.
+
+Detailed contract:
+
+`docs/AHA_INSIGHT_ENGINE_V2_CONTROLLED_WRITE_EXPANSION_GATE_2026-08-20.md`
+
+Regression:
+
+`tests/aha-v2-controlled-write-expansion-gate.test.cjs`
+
 ## Next phase
 
-There is no tenth semantic build block and there is no automatic promotion to broad persistence.
+There is no tenth semantic build block and there is no automatic promotion to broader persistence.
 
-The next valid engineering work is **expansion-gate design**, not write expansion itself. Any broader pilot must first define a new explicit scope, write budget, rollback/compensation contract and live evidence plan in a separate PR.
+The next valid engineering work is to close the expansion blockers without changing write authority: define one exact proposed scope, design multi-record exact rollback and partial-failure compensation, prove idempotence/state-drift behavior in isolation, and only then design production canaries for that exact scope.
 
-Until such a separate expansion gate is implemented and proven, the authoritative status is:
+Until those proofs exist, the authoritative status is:
 
-> **Insight Engine V2 build: 9/9 implemented. Production decision gate: 12/12 green. One-record local controlled-write pilot: production-verified. Broad/normal V2 persistence: CLOSED.**
+> **Insight Engine V2 build: 9/9 implemented. Production decision gate: 12/12 green. One-record local controlled-write pilot: production-verified. Expansion gate: NO_GO. Broad/normal V2 persistence: CLOSED.**

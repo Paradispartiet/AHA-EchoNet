@@ -18,6 +18,7 @@ The nine-block V2 semantic rebuild is complete. The production decision chain is
 #854 activate only the bounded one-record local pilot
 #855 keep operator Chat iframe blank until exact pilot intent
 #856 live controlled-write pilot proof, TEMP closed without merge
+#857 permanentize one-record pilot live proof
 ```
 
 Normal V2 persistence is **not** opened by this chain.
@@ -165,10 +166,10 @@ console errors:            0
 Exact-intent result:
 
 ```text
-authority ready:          true
-production gate decision: CONTROLLED_WRITE_PILOT_ELIGIBLE
-rollback status:          ready
-chat iframe ready:        true
+authority ready:           true
+production gate decision:  CONTROLLED_WRITE_PILOT_ELIGIBLE
+rollback status:           ready
+chat iframe ready:         true
 unexpected write requests: 0
 ```
 
@@ -184,7 +185,7 @@ created_record_count after write:    1
 second activation before rollback:   pilot_record_budget_exhausted
 repository save calls:               0
 repository load calls:               0
-sync push/pull:                      blocked before repository access
+sync push/pull:                       blocked before repository access
 rollback status:                     rolled_back
 sentinel preserved:                  true
 created_record_count after rollback: 1
@@ -212,19 +213,86 @@ Meta writes                      CLOSED
 remote V2 writes                 CLOSED
 ```
 
+## Controlled write expansion gate
+
+A separate pure decision layer now governs any future proposal to move beyond the one-record pilot:
+
+`js/ahaV2ControlledWriteExpansionGate.js`
+
+It does not change the current pilot budget and cannot activate an expansion.
+
+Current evidence:
+
+`ops/evidence/aha-v2-controlled-write-expansion-gate-current-v1.json`
+
+Current decision:
+
+> **NO_GO**
+
+Current checks:
+
+```text
+required: 12
+passed:    3
+failed:    9
+```
+
+Current blockers:
+
+```text
+expansion_scope_contract_missing_or_invalid
+multi_record_rollback_proof_missing
+partial_failure_compensation_proof_missing
+idempotent_multi_record_replay_proof_missing
+multi_record_state_drift_proof_missing
+expansion_production_canary_proof_missing
+expansion_deploy_parity_missing
+expansion_no_write_observation_missing
+expansion_authority_leak_observation_missing
+```
+
+The gate does not choose a larger quota. A future proposal must define one exact immutable scope contract with a finite record budget greater than one, manual sequential activation, per-record review/canonical/rollback approvals, per-record source binding, unrelated-state protection and a lifetime budget that remains consumed after rollback.
+
+It then requires multi-record exact rollback, partial-failure compensation, idempotent replay, fail-closed state-drift proof, production canaries covering the whole proposed budget, exact deployment parity, zero unexpected persistence writes and zero authority leaks.
+
+Even a fully evidenced future decision returns only:
+
+`BOUNDED_EXPANSION_PILOT_ELIGIBLE`
+
+It still returns:
+
+```text
+eligible_for_expansion_activation = false
+eligible_for_normal_chat_persistence = false
+current_one_record_pilot_max_records = 1
+current_one_record_pilot_budget_may_change = false
+expansion_runtime_open = false
+separate_activation_pr_required = true
+fresh_post_activation_production_proof_required = true
+```
+
+Detailed contract:
+
+`docs/AHA_INSIGHT_ENGINE_V2_CONTROLLED_WRITE_EXPANSION_GATE_2026-08-20.md`
+
+Regression:
+
+`tests/aha-v2-controlled-write-expansion-gate.test.cjs`
+
 ## Expansion boundary
 
-There is no automatic promotion from a production-verified one-record pilot to broader persistence.
+The expansion gate being present is not evidence that expansion is safe. The current decision is deliberately `NO_GO`.
 
-Any proposed expansion requires a separate explicit PR and new decision evidence that defines:
+The next work is evidence construction only:
 
-1. the exact wider scope;
-2. a new maximum write budget;
-3. rollback/compensation for that wider scope;
-4. production canaries specific to the wider scope;
-5. preserved fail-closed behavior if state drifts;
-6. explicit proof that normal Chat saving, backend sync, Meta, projections and backfill remain closed unless each is separately authorized.
+1. define one exact proposed multi-record scope and immutable fingerprint;
+2. design exact multi-record rollback plus partial-failure compensation;
+3. prove idempotence and state-drift fail-closed behavior in an isolated rehearsal;
+4. only then construct temporary production canaries for that exact scope;
+5. require exact deploy parity, zero unexpected writes and zero authority leaks;
+6. re-evaluate the gate;
+7. only if it becomes green may a separate activation PR be proposed, followed by fresh post-activation production proof.
 
-Until such a gate exists, the correct status is:
+Until those blockers are closed, the correct status is:
 
-> **Insight Engine V2 build: 9/9 complete. Production decision gate: 12/12 green. One-record local controlled-write pilot: production-verified. Normal V2 persistence: CLOSED.**
+> **Insight Engine V2 build: 9/9 complete. Production decision gate: 12/12 green. One-record local controlled-write pilot: production-verified. Expansion gate: NO_GO. Normal/broad V2 persistence: CLOSED.**
