@@ -1,0 +1,23 @@
+{
+  "schema":"aha_semantic_live_capture_rejections_v1",
+  "version":1,
+  "production_gate_authority":false,
+  "cases":[{
+    "id":"museum_attention_live_v1",
+    "source_text":"I en museumsutstilling ga lange forklarende tekster besøkende flere fakta om gjenstandene, men observasjonene viste også at de brukte mindre tid på å se på selve objektene. Kortere tekster med ett åpent spørsmål ga færre detaljer på forhånd, men mer tid rettet mot gjenstanden.",
+    "workflow_run_id":32323809783,
+    "workflow_job_id":96290941159,
+    "endpoint_path":"/api/aha-agent/semantic-document",
+    "attempts":5,
+    "valid_model_shadow":false,
+    "included_in_gold_metrics":false,
+    "attempt_results":[
+      {"attempt":1,"http_status":502,"error":"semantic_model_validation_failed","validation_errors":["concept:3:source_surface_not_in_source","proposition:3:source_claim_text_not_in_source"]},
+      {"attempt":2,"http_status":502,"error":"semantic_model_validation_failed","validation_errors":["concept:1:source_surface_not_in_source","proposition:4_evidence_not_in_source:0"]},
+      {"attempt":3,"http_status":502,"error":"semantic_model_validation_failed","validation_errors":["concept:0_evidence_not_in_source:0","proposition:0:source_claim_text_not_in_source"]},
+      {"attempt":4,"http_status":502,"error":"semantic_model_validation_failed","validation_errors":["concept:0_evidence_not_in_source:0","proposition:3:source_claim_text_not_in_source"]},
+      {"attempt":5,"http_status":502,"error":"semantic_model_validation_failed","validation_errors":["concept:1_evidence_not_in_source:0","concept:2:source_surface_not_in_source"]}
+    ],
+    "policy":{"source_text_returned":false,"raw_model_output_returned":false,"canonical_write":false,"persistent_write":false,"meta_write":false,"synthesis_allowed":false}
+  }]
+}

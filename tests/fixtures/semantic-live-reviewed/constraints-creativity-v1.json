@@ -1,0 +1,63 @@
+{
+  "schema": "aha_semantic_gold_fixture_v1",
+  "id": "constraints_creativity_live_v1",
+  "source_event_id": "constraints_creativity_live_v1",
+  "source_text": "En scenograf får et ferdig dramatisk innhold og faste praktiske rammer. Likevel varierer hun uttrykket fra detaljrike tegninger til enkle tekstflater. Eksemplet antyder at begrensninger ikke bare reduserer kunstnerisk frihet; de kan flytte kreativiteten over i valg av form og teknikk.",
+  "provenance": {
+    "kind": "live_production_capture",
+    "captured_at": "2026-08-20T01:31:25.182Z",
+    "model": "gpt-4.1-mini-2025-04-14"
+  },
+  "gold": {
+    "entities": [],
+    "concepts": [
+      {"label": "begrensninger", "aliases": []},
+      {"label": "kunstnerisk frihet", "aliases": []},
+      {"label": "kreativitet", "aliases": ["kreativiteten"]},
+      {"label": "form og teknikk", "aliases": ["valg av form og teknikk"]},
+      {"label": "praktiske rammer", "aliases": ["faste praktiske rammer"]},
+      {"label": "dramatisk innhold", "aliases": ["ferdig dramatisk innhold"]},
+      {"label": "scenografi", "aliases": ["scenograf"]}
+    ],
+    "source_claims": [
+      {"text": "En scenograf får et ferdig dramatisk innhold og faste praktiske rammer"},
+      {"text": "Likevel varierer hun uttrykket fra detaljrike tegninger til enkle tekstflater"},
+      {"text": "begrensninger ikke bare reduserer kunstnerisk frihet; de kan flytte kreativiteten over i valg av form og teknikk"}
+    ],
+    "relations": [
+      {"relation_type": "causes", "from_label": "begrensninger", "to_label": "reduksjon i kunstnerisk frihet", "epistemic_status": "source_explicit"},
+      {"relation_type": "influences", "from_label": "begrensninger", "to_label": "kreativitet", "epistemic_status": "source_explicit"}
+    ],
+    "interpretations": [
+      {"id": "constraints_shift_creativity", "required_terms": ["begrensninger", "kreativitet"], "forbidden_terms": [], "evidence_quotes": ["de kan flytte kreativiteten over i valg av form og teknikk"]}
+    ]
+  },
+  "model_shadow": {
+    "source_event_id": "constraints_creativity_live_v1",
+    "entities": [],
+    "concepts": [
+      {"source_surface": "begrensninger", "canonical_label": "begrensninger"},
+      {"source_surface": "kunstnerisk frihet", "canonical_label": "kunstnerisk frihet"},
+      {"source_surface": "kreativiteten", "canonical_label": "kreativitet"},
+      {"source_surface": "valg av form og teknikk", "canonical_label": "valg av form og teknikk"},
+      {"source_surface": "scenograf", "canonical_label": "scenograf"}
+    ],
+    "propositions": [
+      {"kind": "source_claim", "text": "En scenograf får et ferdig dramatisk innhold og faste praktiske rammer", "evidence": [{"quote": "En scenograf får et ferdig dramatisk innhold og faste praktiske rammer"}]},
+      {"kind": "source_claim", "text": "Likevel varierer hun uttrykket fra detaljrike tegninger til enkle tekstflater", "evidence": [{"quote": "Likevel varierer hun uttrykket fra detaljrike tegninger til enkle tekstflater"}]},
+      {"kind": "source_claim", "text": "begrensninger ikke bare reduserer kunstnerisk frihet; de kan flytte kreativiteten over i valg av form og teknikk", "evidence": [{"quote": "begrensninger ikke bare reduserer kunstnerisk frihet; de kan flytte kreativiteten over i valg av form og teknikk"}]}
+    ],
+    "relations": [
+      {"relation_type": "causes", "from_label": "begrensninger", "to_label": "reduksjon i kunstnerisk frihet", "epistemic_status": "source_explicit"},
+      {"relation_type": "influences", "from_label": "begrensninger", "to_label": "kreativiteten", "epistemic_status": "source_explicit"}
+    ]
+  },
+  "expected": {
+    "entities": {"precision": null, "recall": null, "f1": null},
+    "concepts": {"precision": 1.0, "recall": 0.714286, "f1": 0.833333},
+    "source_claims": {"precision": 1.0, "recall": 1.0, "f1": 1.0},
+    "relations": {"precision": 1.0, "recall": 1.0, "f1": 1.0},
+    "interpretations": {"precision": 0, "recall": 0.0, "f1": 0},
+    "macro_f1": 0.708333
+  }
+}
