@@ -1,0 +1,111 @@
+{
+  "schema": "aha_v2_two_record_expansion_live_proof_v1",
+  "version": 1,
+  "status": "production_evidence_verified",
+  "observed_at": "2026-08-20T20:37:04.794Z",
+  "expected_production_main": "2a0c6e0b19d92681cc4a51bd46efc3e2b824fc8c",
+  "proof_identity": {
+    "temporary_pull_request": 860,
+    "temporary_pull_request_disposition": "closed_without_merge",
+    "workflow_run_id": 32415006998,
+    "workflow_run_attempt": 1,
+    "workflow_job_id": 96574038093,
+    "artifact_id": 9423564833,
+    "artifact_digest": "sha256:a2a30b3e0380345dddf346f090780fda4cec5c7497865cf91878b61622d504d6",
+    "probe_head": "b022c357f6b637a1fbf36025a164fcc848d5006b"
+  },
+  "deployment": {
+    "authority": "github_pages",
+    "origin": "https://paradispartiet.github.io/AHA-EchoNet",
+    "pages_commit": "2a0c6e0b19d92681cc4a51bd46efc3e2b824fc8c",
+    "pages_status": "built",
+    "matched_attempt": 1,
+    "product_diff_count": 0,
+    "assets": [
+      {
+        "path": "js/ahaV2ControlledWriteExpansionGate.js",
+        "sha256": "f48e41689cce50e3af59cd809f47a36d9f40205721e520931b4e977bdb032316",
+        "match": true
+      },
+      {
+        "path": "js/ahaV2ControlledWriteExpansionRehearsal.js",
+        "sha256": "86da0bd015187e0ea6f4825032d9eb085ca1d307116fcd6ab72d44130b27fe58",
+        "match": true
+      },
+      {
+        "path": "ops/contracts/aha-v2-controlled-write-expansion-scope-two-record-v1.json",
+        "sha256": "2ddca1adc4c66e76189da6fc96713279b1c4c03201a4ed352d0629234ab6d9a8",
+        "match": true
+      },
+      {
+        "path": "ops/evidence/aha-v2-controlled-write-pilot-live-proof-v1.json",
+        "sha256": "77563a44f2da01456c5dd1b5f57abbb86d94b26e87f4644e0419ca49552dd303",
+        "match": true
+      },
+      {
+        "path": "insight-activation-v2.html",
+        "sha256": "cd6e7e25c6b5b1a48caec584d23517a015c3a272e9a51cb54b7380a11057e6ac",
+        "match": true
+      }
+    ],
+    "all_assets_match": true
+  },
+  "scope": {
+    "contract_path": "ops/contracts/aha-v2-controlled-write-expansion-scope-two-record-v1.json",
+    "scope_id": "bounded_local_chamber_two_record_candidate_v1",
+    "max_chamber_records_created": 2,
+    "candidate_only": true,
+    "activation_authority": false
+  },
+  "canaries": {
+    "count": 2,
+    "coverage_complete": true,
+    "first_apply_write_count": 2,
+    "identical_replay_write_count": 0,
+    "identical_replay_no_op_count": 2,
+    "rollback_status": "rolled_back",
+    "rollback_exact": true,
+    "rollback_count": 2,
+    "exact_pre_run_state_restored": true,
+    "partial_failure_compensation_status": "compensated",
+    "partial_failure_compensation_exact": true,
+    "state_drift_status": "manual_review_required",
+    "state_drift_rolled_back_count": 0,
+    "unrelated_sentinel_preserved": true
+  },
+  "browser_boundary": {
+    "local_storage_unchanged": true,
+    "session_storage_unchanged": true,
+    "indexeddb_unchanged": true,
+    "unexpected_write_request_count": 0,
+    "page_error_count": 0,
+    "console_error_count": 0
+  },
+  "decision": {
+    "expansion_gate_decision": "BOUNDED_EXPANSION_PILOT_ELIGIBLE",
+    "eligible_for_expansion_activation": false,
+    "current_one_record_pilot_max_records": 1,
+    "current_one_record_pilot_budget_may_change": false
+  },
+  "policy": {
+    "rehearsal_write_authorities_all_false": true,
+    "normal_chat_persistence_open": false,
+    "automatic_backfill_open": false,
+    "backend_sync_open": false,
+    "backend_persistent_write_open": false,
+    "broad_canonical_write_open": false,
+    "projection_store_write_open": false,
+    "meta_write_open": false,
+    "remote_write_open": false,
+    "automatic_activation_open": false,
+    "batch_activation_open": false,
+    "separate_activation_pr_required": true,
+    "fresh_post_activation_production_proof_required": true
+  },
+  "redaction": {
+    "raw_source_text_in_evidence": false,
+    "raw_evidence_quotes_in_evidence": false,
+    "signatures_in_evidence": false,
+    "user_production_data_modified": false
+  }
+}

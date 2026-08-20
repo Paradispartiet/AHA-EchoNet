@@ -4,36 +4,35 @@ Date: 2026-08-20
 
 ## Purpose
 
-The one-record local Chamber pilot is production-verified. That success is **not** authority to increase the write budget.
+The production-verified one-record local Chamber pilot remains the active write boundary. A successful one-record pilot is not itself authority to widen persistence.
 
-`AHAV2ControlledWriteExpansionGate` is a pure decision layer for any future proposal that would create more than one controlled local Chamber record. It does not activate an expansion and does not alter the existing pilot.
+`AHAV2ControlledWriteExpansionGate` is a pure decision layer. It can decide whether one exact bounded expansion scope has enough evidence to proceed to a **separate activation PR**. It cannot execute writes, prepare activation, approve activation, change the existing one-record budget or open normal Chat persistence.
 
 Current decision:
 
-> **NO_GO**
+> **BOUNDED_EXPANSION_PILOT_ELIGIBLE**
 
-Current one-record pilot:
+This is a decision-only result:
 
 ```text
-max Chamber records created = 1
-manual review approval       = required
-manual canonical approval    = required
-manual rollback approval     = required
-normal Chat persistence      = CLOSED
+eligible_for_bounded_expansion_pilot = true
+eligible_for_expansion_activation    = false
+eligible_for_normal_chat_persistence = false
+current_one_record_pilot_max_records = 1
+current_one_record_pilot_budget_may_change = false
+expansion_runtime_open               = false
 ```
 
-## No scope is invented
+## Exact selected scope
 
-The gate deliberately does not choose a larger record budget.
+PR #859 selected the minimum possible bounded expansion beyond max=1:
 
-A future expansion must first provide an explicit scope contract with:
+`ops/contracts/aha-v2-controlled-write-expansion-scope-two-record-v1.json`
 
 ```text
-schema = aha_v2_controlled_write_expansion_scope_contract_v1
-scope_id = explicit non-empty identifier
-scope_fingerprint = 64-character immutable fingerprint
+scope_id = bounded_local_chamber_two_record_candidate_v1
 scope_kind = bounded_local_chamber_multi_record
-max_chamber_records_created >= 2
+max_chamber_records_created = 2
 activation_mode = manual_sequential
 review_approval_per_record = true
 canonical_approval_per_record = true
@@ -43,162 +42,184 @@ lifetime_budget_persists_after_rollback = true
 unrelated_chamber_records_preserved = true
 batch_activation = false
 automatic_activation = false
+candidate_only = true
+activation_authority = false
+scope_fingerprint = ee6952eef3517af8a868c83e4424125c70591af42ff4f568e76a8bba4aa3b5f8
 ```
 
-The absence of a current scope contract is intentional. The system must not infer a larger quota merely because the one-record proof succeeded.
+Two records were chosen because this is the smallest possible expansion that can exercise multi-record rollback, compensation and lifetime-budget behavior. The contract grants no production write authority.
 
-## Required checks
+## Isolated multi-record rehearsal
 
-The gate has twelve required checks:
+PR #859 also added:
 
-1. the production-verified one-record pilot proof remains valid and permanent;
-2. an exact bounded expansion scope contract exists;
-3. multi-record rollback is rehearsed with exact record binding and unrelated-state preservation;
-4. partial-failure compensation restores exact pre-run state;
-5. identical multi-record replay is idempotent and writes zero records;
-6. changed/drifting multi-record state fails closed;
-7. production canaries cover the full proposed record budget;
-8. the deployed candidate commit exactly matches the candidate main commit;
-9. no unexpected persistence write is observed;
-10. no authority leak is observed and every broader authority remains false;
-11. production evidence is redacted;
-12. the existing one-record pilot stays capped at one and a separate activation PR plus fresh post-activation production proof remain mandatory.
+`js/ahaV2ControlledWriteExpansionRehearsal.js`
 
-A green gate would return only:
+The module is restricted to the dedicated adapter scope:
 
-`BOUNDED_EXPANSION_PILOT_ELIGIBLE`
+`v2_expansion_rehearsal_staging`
 
-Even then:
+It does not access Chamber, backend, Meta, projection stores, normal Chat persistence or remote state.
+
+The permanent regression proves:
+
+- first apply writes exactly 2 synthetic staging records;
+- identical replay writes 0 and produces 2 no-ops;
+- exact rollback removes both records and restores exact pre-run state;
+- partial failure after record 2 has actually been written compensates both targets back to exact pre-run state;
+- changed target state fails closed before either target is removed;
+- unrelated sentinel state is preserved;
+- the active production one-record pilot remains max=1.
+
+Regression:
+
+`tests/aha-v2-controlled-write-expansion-rehearsal.test.cjs`
+
+## Production evidence
+
+Temporary PR #860 proved the exact scope against deployed GitHub Pages and was closed without merge.
+
+Proof identity:
 
 ```text
-eligible_for_expansion_activation = false
-eligible_for_normal_chat_persistence = false
-current_one_record_pilot_max_records = 1
-current_one_record_pilot_budget_may_change = false
-expansion_runtime_open = false
+production main:  2a0c6e0b19d92681cc4a51bd46efc3e2b824fc8c
+TEMP PR:          #860 — closed without merge
+workflow run:     32415006998
+workflow job:     96574038093
+artifact id:      9423564833
+artifact digest:  sha256:a2a30b3e0380345dddf346f090780fda4cec5c7497865cf91878b61622d504d6
+probe head:       b022c357f6b637a1fbf36025a164fcc848d5006b
+product diff:     0 files
 ```
 
-A separate explicit activation PR would still be required for the exact evaluated scope.
+GitHub Pages was the frontend proof authority. Pages reported the exact expected main as `built` on the first attempt.
 
-## Current evidence
+Five selected expansion/baseline assets matched the expected production main byte-for-byte:
 
-Machine-readable evidence:
+```text
+js/ahaV2ControlledWriteExpansionGate.js
+  f48e41689cce50e3af59cd809f47a36d9f40205721e520931b4e977bdb032316
+js/ahaV2ControlledWriteExpansionRehearsal.js
+  86da0bd015187e0ea6f4825032d9eb085ca1d307116fcd6ab72d44130b27fe58
+ops/contracts/aha-v2-controlled-write-expansion-scope-two-record-v1.json
+  2ddca1adc4c66e76189da6fc96713279b1c4c03201a4ed352d0629234ab6d9a8
+ops/evidence/aha-v2-controlled-write-pilot-live-proof-v1.json
+  77563a44f2da01456c5dd1b5f57abbb86d94b26e87f4644e0419ca49552dd303
+insight-activation-v2.html
+  cd6e7e25c6b5b1a48caec584d23517a015c3a272e9a51cb54b7380a11057e6ac
+```
+
+## Live two-record evidence
+
+The two synthetic production canaries covered the full proposed record budget:
+
+```text
+canary count:                         2
+first apply writes:                   2
+identical replay writes:              0
+identical replay no-ops:              2
+rollback:                             rolled_back
+rollback exact:                       true
+rollback count:                       2
+exact pre-run state restored:         true
+partial-failure compensation:         compensated
+partial-failure compensation exact:   true
+state-drift result:                   manual_review_required
+state-drift partial rollback count:   0
+unrelated sentinel preserved:         true
+```
+
+Browser boundary:
+
+```text
+localStorage unchanged:       true
+sessionStorage unchanged:     true
+IndexedDB unchanged:          true
+unexpected write requests:    0
+page errors:                  0
+console errors:               0
+user production data changed: false
+```
+
+The evidence artifact contains no raw source text, evidence quotes or signatures.
+
+Permanent proof:
+
+`ops/evidence/aha-v2-two-record-expansion-live-proof-v1.json`
+
+Regression:
+
+`tests/aha-v2-two-record-expansion-live-proof.test.cjs`
+
+## Required checks — current result
+
+All twelve expansion-decision checks are now green:
+
+1. production-verified one-record pilot proof remains valid and permanent;
+2. exact bounded expansion scope contract exists;
+3. exact multi-record rollback + unrelated-state preservation proven;
+4. partial-failure compensation restores exact pre-run state;
+5. identical multi-record replay is idempotent with zero writes;
+6. changed/drifting state fails closed;
+7. production canaries cover the full proposed budget of 2;
+8. deployed candidate commit exactly matches candidate main;
+9. no unexpected persistence write observed;
+10. no authority leak observed and broader authorities remain false;
+11. production evidence is redacted;
+12. current max=1 pilot remains unchanged and separate activation + fresh post-activation proof remain mandatory.
+
+Machine-readable current evidence:
 
 `ops/evidence/aha-v2-controlled-write-expansion-gate-current-v1.json`
 
-The baseline one-record proof is:
-
-`ops/evidence/aha-v2-controlled-write-pilot-live-proof-v1.json`
-
-Current gate result:
+Current result:
 
 ```text
-decision: NO_GO
+decision: BOUNDED_EXPANSION_PILOT_ELIGIBLE
 required checks: 12
-passed: 3
-failed: 9
+passed: 12
+failed: 0
+blockers: 0
 ```
-
-The three currently satisfied checks are:
-
-- production-verified one-record baseline proof;
-- permanent proof redaction boundary;
-- current one-record pilot boundary remains unchanged.
-
-## Current blockers
-
-Exactly nine blockers remain:
-
-```text
-expansion_scope_contract_missing_or_invalid
-multi_record_rollback_proof_missing
-partial_failure_compensation_proof_missing
-idempotent_multi_record_replay_proof_missing
-multi_record_state_drift_proof_missing
-expansion_production_canary_proof_missing
-expansion_deploy_parity_missing
-expansion_no_write_observation_missing
-expansion_authority_leak_observation_missing
-```
-
-These are evidence blockers, not prompts to open write paths prematurely.
-
-## Fail-closed scope rules
-
-A scope contract is rejected if any of the following happens:
-
-- record budget is still `1` or is otherwise not a larger bounded proposal;
-- batch activation becomes true;
-- automatic activation becomes true;
-- any per-record review/canonical/rollback approval is removed;
-- per-record source binding is removed;
-- rollback would reopen the lifetime budget;
-- unrelated Chamber state is not explicitly protected;
-- the scope fingerprint is missing or malformed.
 
 ## Authority boundary
 
-The expansion gate treats any of the following becoming true as an authority leak:
+A green expansion decision does **not** activate the two-record scope.
+
+Still closed:
 
 ```text
-normal_chat_persistence_open
-automatic_backfill_open
-backend_sync_open
-backend_persistent_write_open
-broad_canonical_write_open
-projection_store_write_open
-meta_write_open
-remote_write_open
-automatic_activation_open
-batch_activation_open
+expansion activation runtime         CLOSED
+normal Chat V2 persistence           CLOSED
+automatic activation                 CLOSED
+batch activation                     CLOSED
+automatic legacy backfill            CLOSED
+backend sync                         CLOSED
+backend persistent V2 write          CLOSED
+broad canonical V2 write             CLOSED
+projection-store writes              CLOSED
+Meta writes                          CLOSED
+remote V2 writes                     CLOSED
 ```
 
-All remain false in current evidence.
+The current one-record pilot remains max=1 until a separate activation implementation is reviewed, merged and then independently production-proven.
 
-## Baseline proof remains authoritative
+## Fail-closed regression
 
-The expansion gate validates the permanent #856 one-record production proof before considering any wider scope. The baseline must continue to prove:
-
-- exactly one record was created;
-- second write was blocked before rollback;
-- exact rollback succeeded;
-- second write remained blocked after a fresh wrapper/reload;
-- repository save/load calls remained 0/0;
-- unrelated Chamber sentinel state survived;
-- no-intent browser boot stayed closed;
-- broader authority flags remained false.
-
-If that baseline proof becomes invalid, expansion is automatically `NO_GO` regardless of any later evidence.
-
-## Regression
-
-Primary regression:
+Primary decision regression:
 
 `tests/aha-v2-controlled-write-expansion-gate.test.cjs`
 
-It proves:
+It now proves that current real evidence evaluates 12/12 green, while every individual evidence requirement, unsafe scope mutation, baseline-proof mutation and broader authority flag independently returns the decision to `NO_GO`.
 
-- current real evidence evaluates to `NO_GO` with the exact nine blockers;
-- the real #856 one-record proof validates as the baseline;
-- each required check fails independently;
-- any broader authority flag fails closed;
-- unsafe scope-contract variants fail closed;
-- a synthetic fully evidenced future scope can reach `BOUNDED_EXPANSION_PILOT_ELIGIBLE` only as a decision;
-- even that synthetic green decision cannot activate expansion and cannot change the current `max=1` budget;
-- the module has no storage, fetch or persistence API.
+The gate remains deterministic and contains no storage, fetch or persistence API.
 
-## Next work
+## Next valid step
 
-The next engineering work is not “increase the quota.” It is to close these blockers in order:
+The only next valid step is a **separate explicit activation PR for this exact two-record scope**. That activation must remain manual and sequential, require separate review/canonical/rollback approval per record, preserve lifetime budget after rollback, preserve unrelated Chamber state and keep all broader authorities false.
 
-1. define one exact proposed multi-record scope and immutable fingerprint;
-2. design exact multi-record rollback + partial-failure compensation;
-3. prove idempotent replay and fail-closed state drift in an isolated rehearsal;
-4. only then design temporary production canaries for the exact scope;
-5. require exact deploy parity, zero unexpected writes and zero authority leaks;
-6. return to the gate for a decision;
-7. if and only if it becomes green, use a separate activation PR and then collect fresh post-activation production proof.
+After that activation merges, a fresh temporary GitHub Pages/browser proof must demonstrate the actual two-record operator path, a blocked third write, exact rollback and post-rollback budget exhaustion before the expansion can be called production-verified.
 
-Until those proofs exist:
+Authoritative status:
 
-> **One-record local pilot: production-verified. Expansion gate: NO_GO. Normal/broad V2 persistence: CLOSED.**
+> **One-record pilot: production-verified. Two-record expansion decision: 12/12 green and eligible for a separate activation PR. Two-record activation: NOT YET OPEN. Broad/normal V2 persistence: CLOSED.**
