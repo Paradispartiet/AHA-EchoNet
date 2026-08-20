@@ -1,0 +1,37 @@
+name: TEMP AHA Insight V2 activation production proof
+
+on:
+  push:
+    branches:
+      - eval/insight-v2-controlled-activation-production-proof
+
+permissions:
+  contents: read
+
+jobs:
+  production-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      EXPECTED_MAIN_SHA: ed1db452088232146702fabdf9f9543bb9f0d959
+      AHA_FRONTEND_ORIGIN: https://paradispartiet.github.io/AHA-EchoNet
+      AHA_AGENT_ENDPOINT: https://aha-agent-7a3y.onrender.com/api/aha-agent/semantic-document
+      PROOF_OUTPUT: reports/TEMP-aha-insight-v2-activation-production-proof.json
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Verify deployed review, bounded Chamber write, sync block and rollback
+        run: node scripts/TEMP-aha-insight-v2-activation-production-proof.cjs
+
+      - name: Upload exact production proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aha-insight-v2-controlled-activation-production-proof-${{ github.run_id }}
+          path: reports/TEMP-aha-insight-v2-activation-production-proof.json
+          if-no-files-found: error
+          retention-days: 30
