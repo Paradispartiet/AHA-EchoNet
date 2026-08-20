@@ -1,0 +1,120 @@
+name: TEMP AHA V2 controlled write pilot live proof v2
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: read
+
+jobs:
+  proof:
+    if: github.head_ref == 'probe/v2-controlled-write-pilot-live-proof-v2'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      EXPECTED_MAIN_SHA: 486c9f53096e381bc9aeb4e20521d3700633366d
+      AHA_FRONTEND_ORIGIN: https://paradispartiet.github.io/AHA-EchoNet
+      AHA_AGENT_ENDPOINT: https://aha-agent-7a3y.onrender.com/api/aha-agent/semantic-document
+      PROOF_OUTPUT: probe-evidence/pilot-live-proof.json
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+
+      - name: Prove TEMP branch isolation
+        run: |
+          set -euo pipefail
+          mkdir -p probe-evidence
+          merge_base="$(git merge-base "$EXPECTED_MAIN_SHA" HEAD)"
+          [[ "$merge_base" == "$EXPECTED_MAIN_SHA" ]]
+
+          mapfile -t changed < <(git diff --name-only "$EXPECTED_MAIN_SHA"...HEAD | sort)
+          expected=(
+            ".github/workflows/TEMP-aha-v2-controlled-write-pilot-live-proof-v2.yml"
+            "scripts/TEMP-aha-v2-controlled-write-pilot-live-proof.cjs"
+          )
+          [[ ${#changed[@]} -eq ${#expected[@]} ]]
+          for i in "${!expected[@]}"; do
+            [[ "${changed[$i]}" == "${expected[$i]}" ]]
+          done
+
+          printf '{\n  "schema":"aha_v2_controlled_write_pilot_temp_isolation_v1",\n  "expected_main":"%s",\n  "probe_head":"%s",\n  "merge_base":"%s",\n  "product_diff_count":0,\n  "temp_files":["%s","%s"]\n}\n' \
+            "$EXPECTED_MAIN_SHA" "$(git rev-parse HEAD)" "$merge_base" "${expected[0]}" "${expected[1]}" \
+            > probe-evidence/temp-probe-isolation.json
+
+      - name: Prove deployed Pages commit and runtime hashes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          latest_json=''
+          pages_commit=''
+          pages_status=''
+          for attempt in $(seq 1 18); do
+            latest_json="$(curl -fsSL \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer ${GH_TOKEN}" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "https://api.github.com/repos/${REPOSITORY}/pages/builds/latest")"
+            pages_commit="$(printf '%s' "$latest_json" | jq -r '.commit // empty')"
+            pages_status="$(printf '%s' "$latest_json" | jq -r '.status // empty')"
+            echo "Pages attempt ${attempt}: commit=${pages_commit:-missing} status=${pages_status:-missing}"
+            if [[ "$pages_commit" == "$EXPECTED_MAIN_SHA" && "$pages_status" == "built" ]]; then break; fi
+            sleep 10
+          done
+          printf '%s\n' "$latest_json" > probe-evidence/pages-build-latest.json
+          [[ "$pages_commit" == "$EXPECTED_MAIN_SHA" ]]
+          [[ "$pages_status" == "built" ]]
+
+          assets=(
+            "insight-activation-v2.html"
+            "js/ahaInsightActivationOperatorV2.js"
+            "js/ahaV2ControlledWritePilotActivation.js"
+            "js/ahaInsightActivationV2.js"
+            "js/ahaV2ProductionWriteGate.js"
+            "js/ahaV2ControlledWritePilotRollback.js"
+            "js/ahaInsightQualityGateV2.js"
+            "js/insightsChamber.js"
+            "js/ahaChamberSync.js"
+            "chat.html"
+          )
+          printf '{\n  "schema":"aha_v2_controlled_write_pilot_pages_parity_v1",\n  "expected_main":"%s",\n  "pages_commit":"%s",\n  "pages_status":"%s",\n  "assets":[\n' "$EXPECTED_MAIN_SHA" "$pages_commit" "$pages_status" > probe-evidence/pages-parity.json
+          first=1
+          for asset in "${assets[@]}"; do
+            expected_sha="$(git show "$EXPECTED_MAIN_SHA:$asset" | sha256sum | awk '{print $1}')"
+            tmp="$(mktemp)"
+            curl -fsSL -H "Cache-Control: no-cache" "${AHA_FRONTEND_ORIGIN}/${asset}?aha_v2_pilot_live=${GITHUB_RUN_ID}" > "$tmp"
+            actual_sha="$(sha256sum "$tmp" | awk '{print $1}')"
+            rm -f "$tmp"
+            echo "$asset expected=$expected_sha deployed=$actual_sha"
+            [[ "$expected_sha" == "$actual_sha" ]]
+            if [[ $first -eq 0 ]]; then printf ',\n' >> probe-evidence/pages-parity.json; fi
+            first=0
+            printf '    {"path":"%s","sha256":"%s","match":true}' "$asset" "$actual_sha" >> probe-evidence/pages-parity.json
+          done
+          printf '\n  ],\n  "all_assets_match":true\n}\n' >> probe-evidence/pages-parity.json
+
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Run controlled write pilot live proof
+        run: node scripts/TEMP-aha-v2-controlled-write-pilot-live-proof.cjs
+
+      - name: Upload redacted proof evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aha-v2-controlled-write-pilot-live-proof-${{ github.run_id }}
+          path: probe-evidence/
+          if-no-files-found: warn
+          retention-days: 30
