@@ -100,8 +100,7 @@ function buildFixture() {
       canonical_label: "Politisk økologi",
       confidence: "high",
       source_surface_spans: [
-        span(sourceText, anchor1, "politisk økologi"),
-        span(sourceText, anchor2, "Politisk økologi")
+        span(sourceText, anchor1, "politisk økologi")
       ],
       evidence: evidence(sourceText, anchor2, sourceClaim)
     }],
