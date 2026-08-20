@@ -423,37 +423,28 @@
       type: "insight",
       source: "aha_semantic_v2",
       refId: unit.id,
-      meta: { read_only: true, projection_candidate: true }
+      meta: {
+        read_only: true,
+        projection_candidate: true,
+        quality_score: unit.quality.mean_score,
+        concept_keys: unit.concepts.map((concept) => concept.key)
+      }
     };
   }
 
-  function buildListCandidates(units, concepts, projectionId) {
+  function buildListCandidates(units, concepts, resonanceEdges, projectionId) {
     if (!units.length) return [];
     const byInsight = new Map(units.map((unit) => [unit.id, unit]));
     const candidates = [];
-
-    if (units.length >= 2) {
-      candidates.push({
-        id: `list_v2_${hash(`${projectionId}:core`)}`,
-        title: "V2-kjerneinnsikter",
-        type: "concepts",
-        description: "Read-only kandidat bygget fra samme kvalitetsgodkjente semantiske V2-kjerne.",
-        tags: ["AHA V2"],
-        items: units.slice().sort((a, b) => (b.quality.mean_score - a.quality.mean_score) || a.id.localeCompare(b.id)).map(listItem),
-        source: "aha_semantic_v2",
-        local_only: true,
-        meta: { createdBy: PROJECTION_SCHEMA, projection_id: projectionId, read_only: true, candidate_only: true }
-      });
-    }
 
     concepts.filter((concept) => concept.insight_ids.length >= 2).forEach((concept) => {
       const related = concept.insight_ids.map((id) => byInsight.get(id)).filter(Boolean)
         .sort((a, b) => (b.quality.mean_score - a.quality.mean_score) || a.id.localeCompare(b.id));
       candidates.push({
         id: `list_v2_${hash(`${projectionId}:concept:${concept.key}`)}`,
-        title: `Begrep: ${concept.label}`,
+        title: `Utforsk ${concept.label}`,
         type: "concepts",
-        description: `Innsikter i V2-kjernen som deler begrepet «${concept.label}».`,
+        description: `Kvalitetsgodkjente innsikter som belyser «${concept.label}» fra flere sider.`,
         tags: [concept.label, "AHA V2"],
         items: related.map(listItem),
         source: "aha_semantic_v2",
@@ -462,11 +453,61 @@
           createdBy: PROJECTION_SCHEMA,
           projection_id: projectionId,
           concept_id: concept.id,
+          semantic_basis: "shared_concept",
+          semantic_basis_label: concept.label,
           read_only: true,
           candidate_only: true
         }
       });
     });
+
+    arr(resonanceEdges).forEach((edge) => {
+      const related = [byInsight.get(edge.from), byInsight.get(edge.to)].filter(Boolean);
+      if (related.length !== 2) return;
+      const labels = related.map((unit) => unit.title);
+      candidates.push({
+        id: `list_v2_${hash(`${projectionId}:resonance:${edge.id}`)}`,
+        title: `Sammenheng: ${labels[0]} ↔ ${labels[1]}`,
+        type: "concepts",
+        description: "To selvstendige innsikter som resonerer semantisk uten å være duplikater.",
+        tags: ["Resonans", "AHA V2"],
+        items: related.map(listItem),
+        source: "aha_semantic_v2",
+        local_only: true,
+        meta: {
+          createdBy: PROJECTION_SCHEMA,
+          projection_id: projectionId,
+          resonance_edge_id: edge.id,
+          semantic_basis: "resonance",
+          semantic_basis_label: "resonans",
+          dedupe_eligible: false,
+          read_only: true,
+          candidate_only: true
+        }
+      });
+    });
+
+    if (!candidates.length && units.length >= 2) {
+      const focus = concepts.slice().sort((a, b) => b.occurrence_count - a.occurrence_count || a.key.localeCompare(b.key))[0];
+      candidates.push({
+        id: `list_v2_${hash(`${projectionId}:fallback`)}`,
+        title: focus ? `Mulig sammenheng rundt ${focus.label}` : "Mulig semantisk sammenheng",
+        type: "concepts",
+        description: "Foreløpig kandidat som krever sterkere tematisk belegg før den kan bli et produktforslag.",
+        tags: ["Krever vurdering", "AHA V2"],
+        items: units.slice().sort((a, b) => (b.quality.mean_score - a.quality.mean_score) || a.id.localeCompare(b.id)).map(listItem),
+        source: "aha_semantic_v2",
+        local_only: true,
+        meta: {
+          createdBy: PROJECTION_SCHEMA,
+          projection_id: projectionId,
+          semantic_basis: "fallback_core",
+          semantic_basis_label: focus?.label || "",
+          read_only: true,
+          candidate_only: true
+        }
+      });
+    }
 
     return candidates.sort((a, b) => a.id.localeCompare(b.id));
   }
@@ -474,26 +515,38 @@
   function buildPathCandidates(listCandidates, projectionId) {
     return arr(listCandidates).filter((list) => arr(list.items).length >= 2).slice(0, 6).map((list) => ({
       id: `path_v2_${hash(`${projectionId}:${list.id}`)}`,
-      title: list.title === "V2-kjerneinnsikter" ? "Læringssti: V2-kjerneinnsikter" : `Læringssti: ${list.title}`,
+      title: `Undersøk: ${list.meta?.semantic_basis_label || list.title}`,
       type: "learning",
       mode: "learning",
       status: "candidate",
       description: list.description,
-      goal: "Utforsk kvalitetsgodkjente innsikter fra samme semantiske kjerne uten å opprette ny kunnskap eller persistens.",
-      learningOutcome: "Kunne forklare hvordan innsiktene henger sammen og hvor de skiller lag.",
+      goal: "Undersøk hvordan innsiktene henger sammen, hvor de skiller lag og hva som fortsatt er usikkert.",
+      learningOutcome: "Kunne forklare sammenhengen med kildebelegg, en tydelig forskjell og et begrunnet neste spørsmål.",
       tags: [...arr(list.tags)],
-      steps: arr(list.items).slice(0, 6).map((item, index) => ({
-        id: `path_step_v2_${hash(`${list.id}:${item.refId}`)}`,
-        title: item.title,
-        type: "insight",
-        source: "aha_semantic_v2",
-        refId: item.refId,
-        order: index,
-        status: "planned",
-        narrative: "Les innsikten som del av den samme V2-kjernen og sammenlign den med nabostegene.",
-        learningOutcome: "Kunne gjengi innsiktens påstand og plass i den semantiske sammenhengen.",
-        meta: { projection_id: projectionId, read_only: true, candidate_only: true }
-      })),
+      steps: arr(list.items).slice(0, 6).map((item, index, items) => {
+        const last = index === items.length - 1;
+        const stage = index === 0 ? "orientation" : (last ? "synthesis" : "comparison");
+        return {
+          id: `path_step_v2_${hash(`${list.id}:${item.refId}`)}`,
+          title: item.title,
+          type: "insight",
+          source: "aha_semantic_v2",
+          refId: item.refId,
+          order: index,
+          status: "planned",
+          narrative: index === 0
+            ? "Start med påstanden og kontroller hva kildene faktisk støtter."
+            : (last
+              ? "Sett innsikten opp mot de tidligere stegene og formuler hva som holder, hva som skiller seg og hva som bør undersøkes videre."
+              : "Sammenlign innsikten med forrige steg: noter både den delte forbindelsen og den viktigste forskjellen."),
+          learningOutcome: index === 0
+            ? "Kunne gjengi påstanden og peke på kildegrunnlaget."
+            : (last
+              ? "Kunne formulere en begrunnet syntese og ett åpent spørsmål."
+              : "Kunne forklare både sammenheng og forskjell mellom to innsikter."),
+          meta: { projection_id: projectionId, stage, semantic_basis: list.meta?.semantic_basis || "", read_only: true, candidate_only: true }
+        };
+      }),
       source: "aha_semantic_v2",
       local_only: true,
       meta: { createdBy: PROJECTION_SCHEMA, projection_id: projectionId, read_only: true, candidate_only: true }
@@ -501,7 +554,18 @@
   }
 
   function buildMindmap(units, concepts, resonanceEdges, projectionId) {
+    const rankedConcepts = concepts.slice().sort((a, b) => b.occurrence_count - a.occurrence_count || a.key.localeCompare(b.key));
+    const rootConcept = rankedConcepts[0] || null;
+    const rootId = `theme_v2_${hash(`${projectionId}:${rootConcept?.key || "semantic-core"}`)}`;
     const nodes = [
+      {
+        id: rootId,
+        title: rootConcept ? `${rootConcept.label}: semantisk oversikt` : "Semantisk oversikt",
+        type: "theme",
+        source: "aha_semantic_v2",
+        refId: projectionId,
+        meta: { projection_id: projectionId, read_only: true, candidate_only: true, hierarchy_level: 0, root: true }
+      },
       ...units.map((unit) => ({
         id: unit.id,
         title: unit.title,
@@ -514,7 +578,8 @@
           candidate_only: true,
           member_ids: [...unit.member_ids],
           equivalence_collapsed: unit.equivalence_collapsed,
-          quality_score: unit.quality.mean_score
+          quality_score: unit.quality.mean_score,
+          hierarchy_level: 2
         }
       })),
       ...concepts.map((concept) => ({
@@ -528,22 +593,32 @@
           read_only: true,
           candidate_only: true,
           concept_key: concept.key,
-          occurrence_count: concept.occurrence_count
+          occurrence_count: concept.occurrence_count,
+          hierarchy_level: 1,
+          branch_rank: rankedConcepts.findIndex((entry) => entry.id === concept.id)
         }
       }))
     ].sort((a, b) => a.id.localeCompare(b.id));
 
     const edges = [];
+    concepts.forEach((concept) => edges.push({
+      id: `edge_v2_${hash(`${rootId}:${concept.id}:theme_branch`)}`,
+      from: rootId,
+      to: concept.id,
+      type: "theme_branch",
+      label: "gren",
+      meta: { projection_id: projectionId, read_only: true, candidate_only: true, hierarchy: true }
+    }));
     units.forEach((unit) => unit.concepts.forEach((concept) => {
       const conceptNode = concepts.find((node) => node.key === concept.key);
       if (!conceptNode) return;
       edges.push({
         id: `edge_v2_${hash(`${unit.id}:${conceptNode.id}:has_concept`)}`,
-        from: unit.id,
-        to: conceptNode.id,
-        type: "has_concept",
-        label: "har begrep",
-        meta: { projection_id: projectionId, read_only: true, candidate_only: true }
+        from: conceptNode.id,
+        to: unit.id,
+        type: "supports_insight",
+        label: "belyser innsikt",
+        meta: { projection_id: projectionId, read_only: true, candidate_only: true, hierarchy: true }
       });
     }));
     resonanceEdges.forEach((edge) => edges.push({
@@ -566,7 +641,14 @@
       nodes,
       edges: edges.sort((a, b) => a.id.localeCompare(b.id)),
       read_only: true,
-      meta: { createdBy: PROJECTION_SCHEMA, projection_id: projectionId, candidate_only: true }
+      meta: {
+        createdBy: PROJECTION_SCHEMA,
+        projection_id: projectionId,
+        candidate_only: true,
+        root_id: rootId,
+        hierarchy_levels: 3,
+        branch_count: concepts.length
+      }
     };
   }
 
@@ -645,7 +727,7 @@
     });
     const projectionId = `projection_v2_${hash(seed)}`;
     const projectedInsights = insightProjection(units, concepts);
-    const listCandidates = buildListCandidates(units, concepts, projectionId);
+    const listCandidates = buildListCandidates(units, concepts, resonanceEdges, projectionId);
     const pathCandidates = buildPathCandidates(listCandidates, projectionId);
     const mindmap = buildMindmap(units, concepts, resonanceEdges, projectionId);
 
