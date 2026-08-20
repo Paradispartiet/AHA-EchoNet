@@ -54,29 +54,48 @@
   function create(deps = {}) {
     const moduleApi = deps.moduleApi || global.AHAModuleApi;
     const legacyRoot = deps.legacyRoot || global;
+    let insightsCompatBase = null;
+    let insightsCompatMeta = null;
+    let insightsCompatView = null;
 
-    function resolve(name, legacyGlobal) {
+    function resolveBase(name, legacyGlobal) {
       return moduleApi?.resolve?.(name, legacyGlobal, { version: 1 }) || legacyRoot[legacyGlobal] || null;
     }
 
-    // RuntimeComposition har fortsatt en legacy export-seam som spør
-    // InsightsEngine etter buildMetaProfile(). Eierskapet ligger i
-    // MetaInsightsEngine. Hold denne overgangen read-only og smal til
-    // composition-seamen kan migreres direkte uten å gjøre ahaChat.js større.
-    const insights = resolve("insights", "InsightsEngine");
-    const metaInsights = legacyRoot.MetaInsightsEngine;
-    if (
-      insights &&
-      typeof insights.buildMetaProfile !== "function" &&
-      typeof metaInsights?.buildUserMetaProfile === "function"
-    ) {
-      Object.defineProperty(insights, "buildMetaProfile", {
-        configurable: true,
+    function buildInsightsCompatibilityView(insights) {
+      if (!insights || typeof insights.buildMetaProfile === "function") return insights;
+      const metaInsights = resolveBase("meta", "MetaInsightsEngine");
+      if (typeof metaInsights?.buildUserMetaProfile !== "function") return insights;
+      if (insightsCompatView && insightsCompatBase === insights && insightsCompatMeta === metaInsights) {
+        return insightsCompatView;
+      }
+
+      // RuntimeComposition har fortsatt en legacy export-seam som spør
+      // InsightsEngine etter buildMetaProfile(), mens eierskapet ligger i
+      // MetaInsightsEngine. Provider-objektene kan være Object.freeze()-låst i
+      // produksjon, så denne kompatibiliteten må være en read-only view og må
+      // aldri mutere den faktiske InsightsEngine-provideren.
+      const view = Object.create(insights);
+      Object.defineProperty(view, "buildMetaProfile", {
+        configurable: false,
         enumerable: false,
+        writable: false,
         value(chamber) {
           return metaInsights.buildUserMetaProfile(chamber, "sub_laring") || {};
         }
       });
+      insightsCompatBase = insights;
+      insightsCompatMeta = metaInsights;
+      insightsCompatView = Object.freeze(view);
+      return insightsCompatView;
+    }
+
+    function resolve(name, legacyGlobal) {
+      const provider = resolveBase(name, legacyGlobal);
+      if (name === "insights" || legacyGlobal === "InsightsEngine") {
+        return buildInsightsCompatibilityView(provider);
+      }
+      return provider;
     }
 
     function getSpec(key) {
