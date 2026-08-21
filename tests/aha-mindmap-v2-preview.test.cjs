@@ -64,7 +64,7 @@ assert.equal(writes, 0);
 
 const html = fs.readFileSync("mindmap.html", "utf8");
 assert.match(html, /id="mindmap-data-source"/);
-assert.match(html, /AHA V2 semantisk preview/);
+assert.match(html, /AHA foreslår fra denne analysen/);
 assert.match(html, /ahaProjectionRuntimeSourceV2\.js/);
 
 console.log("aha-mindmap-v2-preview.test.cjs: OK");

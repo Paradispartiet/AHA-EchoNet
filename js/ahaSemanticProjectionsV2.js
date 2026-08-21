@@ -513,6 +513,33 @@
   }
 
   function buildPathCandidates(listCandidates, projectionId) {
+    const stages = [
+      {
+        id: "orientation",
+        narrative: "Orienter deg i temaet: avgrens hovedspørsmålet, les den første innsikten og kontroller hvilket kildegrunnlag den bygger på.",
+        outcome: "Kunne formulere hovedspørsmålet og peke på relevant kildegrunnlag."
+      },
+      {
+        id: "claim_evidence",
+        narrative: "Undersøk den sentrale påstanden og skill tydelig mellom hva kilden sier, hvilket belegg som finnes og hva som er tolkning.",
+        outcome: "Kunne koble en påstand til konkret belegg uten å overdrive kildens rekkevidde."
+      },
+      {
+        id: "tension_counterexample",
+        narrative: "Sett innsiktene opp mot hverandre og let etter en spenning, begrensning eller et moteksempel som utfordrer den første forklaringen.",
+        outcome: "Kunne forklare den viktigste spenningen og beskrive hva et moteksempel ville endret."
+      },
+      {
+        id: "uncertainty",
+        narrative: "Kartlegg hva analysen fortsatt ikke kan avgjøre: noter usikre antakelser, manglende belegg og alternative forklaringer.",
+        outcome: "Kunne skille dokumentert kunnskap fra åpne spørsmål og begrunnet usikkerhet."
+      },
+      {
+        id: "synthesis_next_inquiry",
+        narrative: "Syntetiser det som holder etter testen, og formuler én presis neste undersøkelse som kan redusere den viktigste usikkerheten.",
+        outcome: "Kunne formulere en kildeforankret syntese og et gjennomførbart neste spørsmål."
+      }
+    ];
     return arr(listCandidates).filter((list) => arr(list.items).length >= 2).slice(0, 6).map((list) => ({
       id: `path_v2_${hash(`${projectionId}:${list.id}`)}`,
       title: `Undersøk: ${list.meta?.semantic_basis_label || list.title}`,
@@ -523,28 +550,20 @@
       goal: "Undersøk hvordan innsiktene henger sammen, hvor de skiller lag og hva som fortsatt er usikkert.",
       learningOutcome: "Kunne forklare sammenhengen med kildebelegg, en tydelig forskjell og et begrunnet neste spørsmål.",
       tags: [...arr(list.tags)],
-      steps: arr(list.items).slice(0, 6).map((item, index, items) => {
-        const last = index === items.length - 1;
-        const stage = index === 0 ? "orientation" : (last ? "synthesis" : "comparison");
+      steps: stages.map((stage, index) => {
+        const items = arr(list.items);
+        const item = items[index % items.length];
         return {
-          id: `path_step_v2_${hash(`${list.id}:${item.refId}`)}`,
-          title: item.title,
+          id: `path_step_v2_${hash(`${list.id}:${stage.id}:${item.refId}`)}`,
+          title: `${index + 1}. ${stage.id === "orientation" ? "Orientering" : stage.id === "claim_evidence" ? "Påstand og belegg" : stage.id === "tension_counterexample" ? "Spenning eller moteksempel" : stage.id === "uncertainty" ? "Usikkerhet" : "Syntese og neste undersøkelse"}`,
           type: "insight",
           source: "aha_semantic_v2",
           refId: item.refId,
           order: index,
           status: "planned",
-          narrative: index === 0
-            ? "Start med påstanden og kontroller hva kildene faktisk støtter."
-            : (last
-              ? "Sett innsikten opp mot de tidligere stegene og formuler hva som holder, hva som skiller seg og hva som bør undersøkes videre."
-              : "Sammenlign innsikten med forrige steg: noter både den delte forbindelsen og den viktigste forskjellen."),
-          learningOutcome: index === 0
-            ? "Kunne gjengi påstanden og peke på kildegrunnlaget."
-            : (last
-              ? "Kunne formulere en begrunnet syntese og ett åpent spørsmål."
-              : "Kunne forklare både sammenheng og forskjell mellom to innsikter."),
-          meta: { projection_id: projectionId, stage, semantic_basis: list.meta?.semantic_basis || "", read_only: true, candidate_only: true }
+          narrative: stage.narrative,
+          learningOutcome: stage.outcome,
+          meta: { projection_id: projectionId, stage: stage.id, semantic_basis: list.meta?.semantic_basis || "", read_only: true, candidate_only: true }
         };
       }),
       source: "aha_semantic_v2",
@@ -556,6 +575,11 @@
   function buildMindmap(units, concepts, resonanceEdges, projectionId) {
     const rankedConcepts = concepts.slice().sort((a, b) => b.occurrence_count - a.occurrence_count || a.key.localeCompare(b.key));
     const rootConcept = rankedConcepts[0] || null;
+    const repeatedConcepts = rankedConcepts.filter((concept) => concept.occurrence_count >= 2);
+    const selectedConcepts = (repeatedConcepts.length >= 2 ? repeatedConcepts : rankedConcepts).slice(0, 7);
+    const selectedConceptKeys = new Set(selectedConcepts.map((concept) => concept.key));
+    const selectedInsightIds = new Set(selectedConcepts.flatMap((concept) => concept.insight_ids));
+    const selectedUnits = units.filter((unit) => selectedInsightIds.has(unit.id));
     const rootId = `theme_v2_${hash(`${projectionId}:${rootConcept?.key || "semantic-core"}`)}`;
     const nodes = [
       {
@@ -566,7 +590,7 @@
         refId: projectionId,
         meta: { projection_id: projectionId, read_only: true, candidate_only: true, hierarchy_level: 0, root: true }
       },
-      ...units.map((unit) => ({
+      ...selectedUnits.map((unit) => ({
         id: unit.id,
         title: unit.title,
         type: "insight",
@@ -582,7 +606,7 @@
           hierarchy_level: 2
         }
       })),
-      ...concepts.map((concept) => ({
+      ...selectedConcepts.map((concept) => ({
         id: concept.id,
         title: concept.label,
         type: "concept",
@@ -601,7 +625,7 @@
     ].sort((a, b) => a.id.localeCompare(b.id));
 
     const edges = [];
-    concepts.forEach((concept) => edges.push({
+    selectedConcepts.forEach((concept) => edges.push({
       id: `edge_v2_${hash(`${rootId}:${concept.id}:theme_branch`)}`,
       from: rootId,
       to: concept.id,
@@ -609,8 +633,16 @@
       label: "gren",
       meta: { projection_id: projectionId, read_only: true, candidate_only: true, hierarchy: true }
     }));
-    units.forEach((unit) => unit.concepts.forEach((concept) => {
-      const conceptNode = concepts.find((node) => node.key === concept.key);
+    selectedUnits.forEach((unit) => unit.concepts
+      .filter((concept) => selectedConceptKeys.has(concept.key))
+      .sort((left, right) => {
+        const leftNode = selectedConcepts.find((node) => node.key === left.key);
+        const rightNode = selectedConcepts.find((node) => node.key === right.key);
+        return (rightNode?.occurrence_count || 0) - (leftNode?.occurrence_count || 0) || left.key.localeCompare(right.key);
+      })
+      .slice(0, 2)
+      .forEach((concept) => {
+      const conceptNode = selectedConcepts.find((node) => node.key === concept.key);
       if (!conceptNode) return;
       edges.push({
         id: `edge_v2_${hash(`${unit.id}:${conceptNode.id}:has_concept`)}`,
@@ -621,7 +653,7 @@
         meta: { projection_id: projectionId, read_only: true, candidate_only: true, hierarchy: true }
       });
     }));
-    resonanceEdges.forEach((edge) => edges.push({
+    resonanceEdges.filter((edge) => selectedInsightIds.has(edge.from) && selectedInsightIds.has(edge.to)).forEach((edge) => edges.push({
       id: `edge_v2_${hash(`${edge.from}:${edge.to}:resonance`)}`,
       from: edge.from,
       to: edge.to,
@@ -647,7 +679,9 @@
         candidate_only: true,
         root_id: rootId,
         hierarchy_levels: 3,
-        branch_count: concepts.length
+        branch_count: selectedConcepts.length,
+        branch_limit: 7,
+        omitted_concept_count: Math.max(0, concepts.length - selectedConcepts.length)
       }
     };
   }
@@ -680,12 +714,8 @@
     arr(projections.mindmap?.edges).forEach((edge) => {
       if (!mindmapNodes.has(edge.from) || !mindmapNodes.has(edge.to)) errors.push(`mindmap_unresolved_endpoint:${edge.id}`);
     });
-    insightIds.forEach((id) => {
-      if (!mindmapNodes.has(id)) errors.push(`mindmap_missing_insight:${id}`);
-    });
-    conceptIds.forEach((id) => {
-      if (!mindmapNodes.has(id)) errors.push(`mindmap_missing_concept:${id}`);
-    });
+    const mindmapBranches = arr(projections.mindmap?.edges).filter((edge) => edge.type === "theme_branch");
+    if (mindmapBranches.length > 7) errors.push("mindmap_branch_limit_exceeded");
 
     return { valid: errors.length === 0, errors: unique(errors).sort() };
   }

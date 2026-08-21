@@ -69,7 +69,7 @@ for (const entry of corpus.cases) {
     assert.ok(model.surfaces.lists.every((item) => item.quality?.passed === true), `${entry.id} leaked weak list`);
     assert.ok(model.surfaces.paths.every((item) => item.quality?.passed === true), `${entry.id} leaked weak path`);
     assert.equal(model.surfaces.mindmap.quality?.passed, true, `${entry.id} leaked weak mindmap`);
-    assert.ok(model.surfaces.paths.every((path) => path.steps[0].meta.stage === "orientation" && path.steps.at(-1).meta.stage === "synthesis"));
+    assert.ok(model.surfaces.paths.every((path) => path.steps.map((step) => step.meta.stage).join("|") === "orientation|claim_evidence|tension_counterexample|uncertainty|synthesis_next_inquiry"));
   }
   results.push({ id: entry.id, genre: entry.genre, visible });
 }

@@ -155,13 +155,15 @@ result.projections.paths.forEach((path) => {
     assert.equal(step.source, "aha_semantic_v2");
     assert.ok(insightIds.has(step.refId), `path ${path.id} has unresolved ${step.refId}`);
   });
+  assert.deepEqual(Array.from(path.steps, (step) => step.meta.stage), ["orientation", "claim_evidence", "tension_counterexample", "uncertainty", "synthesis_next_inquiry"]);
 });
 
 const mindmap = result.projections.mindmap;
 assert.equal(mindmap.read_only, true);
 const mindmapIds = new Set(mindmap.nodes.map((node) => node.id));
-insightIds.forEach((id) => assert.ok(mindmapIds.has(id), `mindmap missing insight ${id}`));
-conceptIds.forEach((id) => assert.ok(mindmapIds.has(id), `mindmap missing concept ${id}`));
+assert.ok(mindmap.nodes.some((node) => node.type === "insight"));
+assert.ok(mindmap.nodes.some((node) => node.type === "concept"));
+assert.ok(mindmap.meta.branch_count >= 2 && mindmap.meta.branch_count <= 7);
 mindmap.edges.forEach((edge) => {
   assert.ok(mindmapIds.has(edge.from), `mindmap unresolved from ${edge.from}`);
   assert.ok(mindmapIds.has(edge.to), `mindmap unresolved to ${edge.to}`);

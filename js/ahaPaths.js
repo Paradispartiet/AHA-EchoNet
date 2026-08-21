@@ -423,7 +423,15 @@
   }
 
   function projectionStageLabel(stage) {
-    return { orientation: "Kilde og påstand", comparison: "Sammenligning", synthesis: "Syntese og neste spørsmål" }[stage] || "Undersøkelse";
+    return {
+      orientation: "Orientering",
+      claim_evidence: "Påstand og belegg",
+      tension_counterexample: "Spenning eller moteksempel",
+      uncertainty: "Usikkerhet",
+      synthesis_next_inquiry: "Syntese og neste undersøkelse",
+      comparison: "Sammenligning",
+      synthesis: "Syntese og neste spørsmål"
+    }[stage] || "Undersøkelse";
   }
 
   function renderProjectionPathPreviews() {

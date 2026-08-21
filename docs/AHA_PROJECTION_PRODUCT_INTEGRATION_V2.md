@@ -17,7 +17,7 @@ No module in this chain has automatic persistence, remote write, sync or product
 ## Product quality
 
 - Lists require a documented semantic basis, unique members and provenance coverage.
-- Paths require at least three steps, explicit orientation/comparison/synthesis roles, transitions and learning outcomes.
+- Paths require the ordered five-stage progression orientation → claim/evidence → tension/counterexample → uncertainty → synthesis/next inquiry, with source-bound references, distinct transitions and learning outcomes.
 - Mindmaps require one root, meaningful branches, resolved endpoints and correct resonance semantics.
 - Weak or ambiguous input is allowed to produce no product candidate.
 
