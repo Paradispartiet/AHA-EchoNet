@@ -5,7 +5,7 @@ on:
     branches: [main]
 
 permissions:
-  contents: write
+  contents: read
   pages: read
 
 jobs:
@@ -30,40 +30,6 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 22
-
-      - name: Commit exact TEMP probe-head identity correction
-        env:
-          HEAD_BRANCH: ${{ github.head_ref }}
-        run: |
-          set -euo pipefail
-          python3 - <<'PY'
-          from pathlib import Path
-          path = Path("scripts/TEMP-aha-v2-two-record-expansion-activation-live-proof-v2.cjs")
-          text = path.read_text()
-          old = '      probe_head: process.env.GITHUB_SHA || null,\n'
-          new = '      probe_head: process.env.PROBE_HEAD_SHA || null,\n'
-          count = text.count(old)
-          if count == 1:
-              path.write_text(text.replace(old, new, 1))
-          elif count == 0 and new in text:
-              pass
-          else:
-              raise SystemExit(f"unexpected replacement count: {count}")
-          PY
-
-          if git diff --quiet -- scripts/TEMP-aha-v2-two-record-expansion-activation-live-proof-v2.cjs; then
-            echo "TEMP probe-head correction already committed."
-            exit 0
-          fi
-
-          git diff --check
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add scripts/TEMP-aha-v2-two-record-expansion-activation-live-proof-v2.cjs
-          git commit -m "TEMP: bind proof identity to checked-out PR head"
-          git push origin "HEAD:${HEAD_BRANCH}"
-          echo "Committed exact TEMP identity correction; stopping stale run."
-          exit 1
 
       - name: Prove TEMP branch isolation
         run: |
