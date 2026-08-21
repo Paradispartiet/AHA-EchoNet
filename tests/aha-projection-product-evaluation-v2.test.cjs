@@ -12,6 +12,7 @@ context.globalThis = context;
 vm.createContext(context);
 
 for (const file of [
+  "js/ahaChatIngestRuntime.js",
   "js/ahaInsightRelationClassifierV2.js",
   "js/ahaInsightSaturationV2.js",
   "js/ahaKnowledgeMigrationV2.js",
@@ -26,39 +27,76 @@ const corpus = JSON.parse(fs.readFileSync("tests/fixtures/aha-projection-product
 assert.equal(corpus.cases.length, 24);
 assert.equal(new Set(corpus.cases.map((entry) => entry.genre)).size, 8);
 
-function sourceHash(id) {
-  const seed = Buffer.from(id).toString("hex").slice(0, 16) || "a";
-  return seed.padEnd(64, seed[0]).slice(0, 64);
+const STOPWORDS = new Set("og i på av til er et en det som med for den de å om men at fra har blir ble kan skal eller ikke når etter før ved også dette seg sine sin sitt være var mens mot mellom bare".split(" "));
+
+function tokens(value) {
+  return String(value || "").toLocaleLowerCase("no").normalize("NFKD").replace(/[\u0300-\u036f]/g, "").match(/[a-zæøå0-9-]{4,}/gu)?.filter((token) => !STOPWORDS.has(token)) || [];
 }
 
-function makeInsights(entry) {
-  const sentences = entry.source_text.split(/(?<=[.!?])\s+/).filter(Boolean);
-  return entry.claims.map((claim, index) => ({
+function sentenceSlices(sourceText) {
+  const slices = [];
+  const pattern = /[^.!?]+[.!?]+|[^.!?]+$/gu;
+  let match;
+  while ((match = pattern.exec(sourceText))) {
+    const value = match[0].trim();
+    if (value.length >= 35) slices.push({ text: value, start: match.index, end: match.index + match[0].length });
+  }
+  return slices.slice(0, 5);
+}
+
+function makeInsightsFromRawText(entry) {
+  const semantic = context.AHASemanticDocument.buildShadowSemanticDocument({
+    source_event_id: `${entry.id}_source`,
+    source_text: entry.source_text,
+    source_type: entry.genre,
+    language: "no",
+    generated_at: "2026-08-21T00:00:00.000Z"
+  });
+  assert.equal(context.AHASemanticDocument.validateSemanticDocument(semantic, entry.source_text).ok, true);
+  const sentences = sentenceSlices(entry.source_text);
+  const counts = new Map();
+  tokens(entry.source_text).forEach((token) => counts.set(token, (counts.get(token) || 0) + 1));
+  const commonConcept = [...counts].sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]))[0]?.[0] || "kilde";
+  const eligible = entry.expected_visible === true && entry.source_text.length >= 80 && sentences.length >= 2;
+  return sentences.slice(0, 3).map((sentence, index) => {
+    const uniqueConcept = tokens(sentence.text).find((token) => token !== commonConcept) || `perspektiv_${index + 1}`;
+    const supporting = sentences[(index + 1) % sentences.length]?.text || sentence.text;
+    return {
     id: `${entry.id}_insight_${index + 1}`,
     source_event_id: `${entry.id}_source_${index + 1}`,
-    source_text_hash: sourceHash(`${entry.id}_${index}`),
-    semantic_concepts: [entry.focus, `${entry.genre}_${index + 1}`],
+    source_text_hash: semantic.source_text_hash,
+    semantic_concepts: [commonConcept, uniqueConcept],
     candidate: {
-      insight: claim,
-      type: index === 2 ? "method" : "principle",
+      insight: sentence.text,
+      type: "source_claim",
       causal_status: "not_causal",
       evidence: [
-        { quote: sentences[0] || entry.source_text, role: "supports" },
-        { quote: sentences[1] || entry.source_text, role: "limits" }
+        { quote: sentence.text, role: "supports", start_offset: sentence.start, end_offset: sentence.end },
+        { quote: supporting, role: "context" }
       ]
     },
     gate_decision: {
-      eligible_for_insight_review: entry.expected_visible === true,
-      blocking_reasons: entry.expected_visible === true ? [] : ["insufficient_evidence"],
-      metrics: { quality_score: entry.expected_visible === true ? 0.88 - index * 0.01 : 0.42 }
+      eligible_for_insight_review: eligible,
+      blocking_reasons: eligible ? [] : ["raw_text_insufficient_for_product_evaluation"],
+      metrics: { quality_score: eligible ? 0.86 - index * 0.01 : 0.42 }
     }
-  }));
+  };
+  });
 }
 
 const results = [];
 for (const entry of corpus.cases) {
-  const input = { legacy_insights: makeInsights(entry), legacy_lists: [], legacy_paths: [], legacy_mindmaps: [] };
+  const rawInsights = makeInsightsFromRawText(entry);
+  const semanticHash = context.AHASemanticDocument.sha256Hex(entry.source_text);
+  assert.ok(rawInsights.every((insight) => insight.source_text_hash === semanticHash), `${entry.id} source identity drift`);
+  rawInsights.forEach((insight) => insight.candidate.evidence.forEach((evidence) => {
+    assert.ok(entry.source_text.includes(evidence.quote), `${entry.id} evidence escaped raw source`);
+  }));
+  const input = { legacy_insights: rawInsights, legacy_lists: [], legacy_paths: [], legacy_mindmaps: [] };
   const model = context.AHAProjectionProductReadModelV2.build(input);
+  const replay = context.AHAProjectionProductReadModelV2.build({ ...input, legacy_insights: rawInsights.slice().reverse() });
+  assert.equal(replay.projection_id, model.projection_id, `${entry.id} projection id is not deterministic`);
+  assert.deepEqual(replay.surfaces, model.surfaces, `${entry.id} product surfaces are not deterministic`);
   const visible = model.status === "ready"
     && model.validation?.valid === true
     && model.surfaces.lists.length > 0
@@ -79,14 +117,23 @@ assert.equal(results.filter((entry) => !entry.visible).length, 3);
 assert.equal(storageCalls, 0);
 
 const deterministicCase = corpus.cases.find((entry) => entry.expected_visible);
-const forward = context.AHAProjectionProductReadModelV2.build({ legacy_insights: makeInsights(deterministicCase) });
-const reverse = context.AHAProjectionProductReadModelV2.build({ legacy_insights: makeInsights(deterministicCase).reverse() });
+const forward = context.AHAProjectionProductReadModelV2.build({ legacy_insights: makeInsightsFromRawText(deterministicCase) });
+const reverse = context.AHAProjectionProductReadModelV2.build({ legacy_insights: makeInsightsFromRawText(deterministicCase).reverse() });
 assert.equal(forward.projection_id, reverse.projection_id);
 assert.deepEqual(forward.surfaces, reverse.surfaces);
 
 const review = JSON.parse(fs.readFileSync("ops/evaluation/aha-projection-product-human-review-v2.json", "utf8"));
 assert.equal(review.release_rule.automatic_persistence_allowed, false);
 assert.equal(review.review_rows.reduce((sum, row) => sum + row.cases, 0), 24);
+assert.equal(review.case_reviews.length, 24);
+assert.deepEqual(review.case_reviews.map((entry) => entry.case_id), corpus.cases.map((entry) => entry.id));
+assert.ok(review.case_reviews.every((entry) => entry.lists === null && entry.paths === null && entry.mindmap === null && entry.review_status === "open"));
 assert.equal(review.status, "agent_pre_review_complete_independent_human_review_open");
+assert.equal(review.release_rule.minimum_acceptable_share, 0.8);
+assert.equal(review.release_rule.automatic_persistence_allowed, false, "human review must remain a release blocker");
 
-console.log("aha-projection-product-evaluation-v2.test.cjs: OK (24 cases)");
+const lengths = corpus.cases.map((entry) => entry.source_text.length);
+assert.ok(Math.min(...lengths) < 80, "corpus must contain deliberately insufficient short text");
+assert.ok(Math.max(...lengths) >= 800, "corpus must contain genuinely long text");
+
+console.log("aha-projection-product-evaluation-v2.test.cjs: OK (24 raw-text cases; human usefulness gate open)");
