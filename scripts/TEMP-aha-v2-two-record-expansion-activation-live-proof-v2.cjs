@@ -503,7 +503,16 @@ async function runActivationSequence(parity, executedAssets) {
   const sentinelAfterRollback1 = chamberRecord(storage, sentinel.id);
   assert.equal(same(sentinelAfterRollback1, sentinelBefore), true, "full sentinel record changed after rollback 1");
   assert.equal(chamberRecord(storage, canonicalIds[0]), null);
-  assert.equal(same(chamberSnapshot(storage), chamberBeforeActivation), true, "final Chamber must equal exact pre-activation state");
+  const finalChamber = chamberSnapshot(storage);
+  const finalBusinessState = clone(finalChamber);
+  const preActivationBusinessState = clone(chamberBeforeActivation);
+  delete finalBusinessState._local_updated_at;
+  delete preActivationBusinessState._local_updated_at;
+  const expectedFinalTopLevelKeys = [...new Set([...Object.keys(chamberBeforeActivation), "_local_updated_at"])].sort();
+  const finalTopLevelKeys = Object.keys(finalChamber).sort();
+  assert.equal(same(finalBusinessState, preActivationBusinessState), true, "final Chamber business state must equal exact pre-activation state");
+  assert.deepEqual(finalTopLevelKeys, expectedFinalTopLevelKeys, "_local_updated_at must be the only allowed top-level housekeeping delta");
+  assert.equal(typeof finalChamber._local_updated_at, "string", "final Chamber must expose _local_updated_at housekeeping timestamp");
   assert.equal(expansion.getStatus().created_record_count, 2);
   assert.equal(expansion.getStatus().expansion_complete, true);
 
@@ -548,7 +557,8 @@ async function runActivationSequence(parity, executedAssets) {
     rollback_second_full_first_record_preserved: same(firstCanonicalAfterRollback2, firstCanonicalBeforeRollbacks),
     rollback_first_status: rolled1.status,
     rollback_first_full_sentinel_preserved: same(sentinelAfterRollback1, sentinelBefore),
-    final_chamber_exact_pre_activation_state: same(chamberSnapshot(storage), chamberBeforeActivation),
+    final_chamber_exact_pre_activation_business_state: same(finalBusinessState, preActivationBusinessState),
+    final_chamber_only_local_updated_at_housekeeping_delta: same(finalTopLevelKeys, expectedFinalTopLevelKeys) && typeof finalChamber._local_updated_at === "string",
     lifetime_count_after_rollbacks: expansion.getStatus().created_record_count,
     fresh_wrapper_third_write_error: freshThirdError,
     audit_event_count: fresh.getAudit().length,
@@ -618,7 +628,8 @@ async function run() {
       rollback_second_full_first_record_preserved: activation.rollback_second_full_first_record_preserved,
       rollback_first_status: activation.rollback_first_status,
       rollback_first_full_sentinel_preserved: activation.rollback_first_full_sentinel_preserved,
-      final_chamber_exact_pre_activation_state: activation.final_chamber_exact_pre_activation_state,
+      final_chamber_exact_pre_activation_business_state: activation.final_chamber_exact_pre_activation_business_state,
+      final_chamber_only_local_updated_at_housekeeping_delta: activation.final_chamber_only_local_updated_at_housekeeping_delta,
       lifetime_count_after_rollbacks: activation.lifetime_count_after_rollbacks,
       fresh_wrapper_third_write_error: activation.fresh_wrapper_third_write_error,
       audit_event_count: activation.audit_event_count,
@@ -663,7 +674,8 @@ async function run() {
   assert.equal(proof.activation.rollback_second_full_sentinel_preserved, true);
   assert.equal(proof.activation.rollback_second_full_first_record_preserved, true);
   assert.equal(proof.activation.rollback_first_full_sentinel_preserved, true);
-  assert.equal(proof.activation.final_chamber_exact_pre_activation_state, true);
+  assert.equal(proof.activation.final_chamber_exact_pre_activation_business_state, true);
+  assert.equal(proof.activation.final_chamber_only_local_updated_at_housekeeping_delta, true);
   assert.equal(proof.activation.rollback_lock.max_active, 1);
   assert.deepEqual(proof.activation.rollback_lock.names, [ROLLBACK_LOCK_NAME, ROLLBACK_LOCK_NAME]);
   assert.deepEqual(proof.activation.rollback_lock.modes, ["exclusive", "exclusive"]);
@@ -684,7 +696,8 @@ async function run() {
     created_record_count: proof.activation.created_record_count,
     full_sentinel_preserved_after_both_rollbacks: proof.activation.rollback_second_full_sentinel_preserved && proof.activation.rollback_first_full_sentinel_preserved,
     first_record_preserved_during_second_rollback: proof.activation.rollback_second_full_first_record_preserved,
-    final_chamber_exact_pre_activation_state: proof.activation.final_chamber_exact_pre_activation_state,
+    final_chamber_exact_pre_activation_business_state: proof.activation.final_chamber_exact_pre_activation_business_state,
+    final_chamber_only_local_updated_at_housekeeping_delta: proof.activation.final_chamber_only_local_updated_at_housekeeping_delta,
     rollback_lock_max_active: proof.activation.rollback_lock.max_active,
     rollback_lock_modes: proof.activation.rollback_lock.modes,
     third_write_error: proof.activation.third_write_error,
