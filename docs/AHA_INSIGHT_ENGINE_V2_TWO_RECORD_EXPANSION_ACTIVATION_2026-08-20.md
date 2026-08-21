@@ -185,20 +185,28 @@ Its two material proof gaps were:
 
 The corrected #876 proof closes both. The historical artifact identity and invalidated status remain recorded in the permanent evidence for auditability.
 
-## Separate PR #875 local artifact boundary
+## Separate local product-artifact boundary — PR #875 / #879
 
-PR #875 introduced a different write boundary for Lists, Paths and Mindmap product artifacts:
+PR #875 introduced the explicit local materialization boundary for qualified Lists, Paths and Mindmap product artifacts. PR #879 then completed that boundary without inheriting Insight write authority.
+
+Current product-artifact behavior:
 
 ```text
-explicit user action required          true
-one local artifact per call            true
-automatic write authority              false
-remote/sync authority                   false
-Chamber/Meta authority inherited        false
-projection-store authority inherited    false
+explicit user action required                   true
+one local artifact per call                     true
+durable scoped undo across reloads              true
+rollback after user edit                        refused
+normal local relation editing                   available
+legacy/adaptive compatibility entry points      route only to V2
+V2 dependencies                                 loaded only after explicit artifact action
+protected production chat.html                  unchanged by #879
+automatic write authority                       false
+remote/sync authority                           false
+Chamber/Meta authority inherited                false
+projection-store authority inherited            false
 ```
 
-That materializer must not be interpreted as `projection_store_write` authority for the Insight activation pilot. The activation policy therefore still requires:
+The finalized materializer still must not be interpreted as `projection_store_write` authority for the Insight activation pilot. The activation policy therefore continues to require:
 
 `projection_store_write_open=false`
 
@@ -234,4 +242,4 @@ The next write-authority step is **not** to increase the record budget automatic
 
 Authoritative status:
 
-> **Two-record manual local activation is production-verified at a lifetime maximum of 2 canonical creations. Exact rollback is cross-tab serialized and fully state-proven. Normal Chat, automatic/batch/backend/projection-store/Meta/remote V2 persistence remains CLOSED. PR #875's user-click local artifact materializer remains a separate non-inherited boundary.**
+> **Two-record manual local activation is production-verified at a lifetime maximum of 2 canonical creations. Exact rollback is cross-tab serialized and fully state-proven. Normal Chat, automatic/batch/backend/projection-store/Meta/remote V2 persistence remains CLOSED. PRs #875/#879 define a separate explicit local product-artifact boundary and do not confer Insight projection-store authority.**

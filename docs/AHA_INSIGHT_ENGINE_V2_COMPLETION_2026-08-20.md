@@ -126,7 +126,9 @@ Pages:            exact b42917de…, built, attempt 1
 captured assets:  20/20 SHA-256 matched
 ```
 
-PR #878 permanentizes that corrected evidence and its regression.
+PR #878 permanentized that corrected evidence and its regression as merge commit:
+
+`36272b7b0739eddbe7c6146bed9cf9afeddede19`
 
 Permanent activation proof:
 
@@ -190,7 +192,7 @@ The V2 product layer remains separated from write authority.
 
 PRs #868–#874 established the shared read model, quality gates, read-only Lists/Paths/Mindmap previews and evaluation corpus.
 
-PR #877 then tightened the product contract on current `main`:
+PR #877 then tightened the product contract:
 
 - preview source is bound to the active analysis identity and fails closed on stale/missing matches;
 - Paths use the ordered five-stage pedagogical progression;
@@ -199,21 +201,34 @@ PR #877 then tightened the product contract on current `main`:
 
 This work remains read-only unless the separate explicit materializer boundary is invoked.
 
-## PR #875 explicit local artifact materialization
+## Finalized explicit local product-artifact materialization — #875 / #879
 
-PR #875 allows a quality-gated List, Path or Mindmap candidate to be materialized only through explicit user action.
+PR #875 introduced the quality-gated explicit materializer: one qualified List, Path or Mindmap artifact per user action.
+
+PR #879 then completed the local artifact lifecycle without widening Insight authority:
+
+- scoped undo is durable across reloads;
+- rollback is refused after the user has edited the materialized artifact;
+- concept-graph relations can be edited normally after materialization;
+- the legacy/adaptive artifact compatibility entry points route only to the V2 path;
+- V2 dependencies load lazily only after an explicit Chat artifact action;
+- protected production `chat.html` remained byte-identical.
+
+The finalized boundary is:
 
 ```text
-explicit user action required       true
-one local artifact per call         true
-idempotent/scoped undo              required
-automatic persistence               false
-remote/sync write                   false
-Chamber/Meta write                  false
+explicit user action required        true
+one local artifact per call          true
+durable scoped undo                  true
+rollback after user edit             refused
+local relation editing               available
+automatic persistence                false
+remote/sync write                    false
+Chamber/Meta write                   false
 projection-store authority inherited false
 ```
 
-This boundary is intentionally independent of the controlled Insight activation pilot. It must not be used to reinterpret `projection_store_write_open` as true.
+This boundary remains intentionally independent of the controlled Insight activation pilot. It must not be used to reinterpret `projection_store_write_open` as true.
 
 ## Still closed
 
@@ -245,14 +260,16 @@ tests/aha-v2-controlled-write-expansion-cross-tab-rollback.test.cjs
 tests/aha-v2-two-record-expansion-live-proof.test.cjs
 tests/aha-v2-controlled-write-expansion-activation.test.cjs
 tests/aha-v2-two-record-expansion-activation-live-proof.test.cjs
+tests/aha-projection-materializer-v2.test.cjs
+tests/aha-lists.test.cjs
 ```
 
 ## Next phase
 
 The semantic rebuild itself is complete. The next work should improve product usefulness, evaluation and controlled adoption **without silently widening write authority**.
 
-Any expansion beyond the exact max=2 Insight scope requires a new immutable scope contract, explicit fail-closed gate, adversarial regressions and fresh production proof. Projection artifacts remain either read-only suggestions or explicit one-artifact-per-user-action local materializations under #875.
+Any expansion beyond the exact max=2 Insight scope requires a new immutable scope contract, explicit fail-closed gate, adversarial regressions and fresh production proof. Projection artifacts remain either read-only suggestions or explicit one-artifact-per-user-action local materializations under the finalized #875/#879 boundary.
 
 Authoritative status:
 
-> **Insight Engine V2 semantic build: 9/9 implemented. Product projections: active-analysis-bound and quality-gated. Controlled local Insight activation: production-verified at exact lifetime max=2. Explicit product artifact materialization: one local artifact per user action under a separate boundary. Normal Chat, automatic/batch/backend/projection-store/Meta/remote V2 persistence: CLOSED.**
+> **Insight Engine V2 semantic build: 9/9 implemented. Product projections: active-analysis-bound and quality-gated. Controlled local Insight activation: production-verified at exact lifetime max=2. Explicit product artifact materialization: finalized by #875/#879 as one local artifact per explicit action with durable undo and local editing. Normal Chat, automatic/batch/backend/projection-store/Meta/remote V2 persistence: CLOSED.**

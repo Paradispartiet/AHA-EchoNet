@@ -155,11 +155,11 @@ fresh-wrapper third record                      blocked
 
 Therefore the **production-verified controlled local activation boundary is now max=2 lifetime canonical creations**, manual sequential only.
 
-## PR #875 is a separate local artifact boundary
+## Separate product-artifact boundary — PR #875 / #879
 
-PR #875 allows one explicit local product artifact to be materialized per user action for qualified Lists, Paths or Mindmap candidates. It remains separate from this Insight expansion chain.
+PR #875 introduced one explicit local product artifact per user action for qualified Lists, Paths or Mindmap candidates. PR #879 finalized that same boundary with durable reload-safe undo, refusal to roll back user-edited artifacts, normal local relation editing, V2-only compatibility entry points and lazy dependency loading after the explicit artifact action.
 
-It does not imply:
+The final materializer still does not imply:
 
 ```text
 projection_store_write authority  false
@@ -168,7 +168,7 @@ remote/sync authority             false
 Chamber/Meta authority            false
 ```
 
-Accordingly the activation proof and policy continue to require `projection_store_write_open=false`.
+It also leaves the protected production `chat.html` byte-identical. Accordingly the Insight activation proof and policy continue to require `projection_store_write_open=false`.
 
 ## Authority boundary
 
@@ -200,8 +200,8 @@ remote V2 writes                        CLOSED
 
 There is no implicit promotion beyond max=2. Any broader write scope must start with a new fail-closed decision gate and immutable scope contract, then receive its own adversarial regression and fresh production proof.
 
-The current product/read-model work may continue independently as read-only or through PR #875's explicit one-artifact-per-click boundary, but it may not inherit the Insight expansion authority.
+The current product/read-model work may continue independently as read-only or through the finalized #875/#879 explicit one-artifact-per-action local boundary, but it may not inherit the Insight expansion authority.
 
 Authoritative status:
 
-> **Corrected two-record gate: 12/12 green. Corrected activation proof: production-verified. Exact bounded manual local activation: max=2 lifetime canonical creations. Normal Chat, automatic/batch/backend/projection-store/Meta/remote persistence remains CLOSED.**
+> **Corrected two-record gate: 12/12 green. Corrected activation proof: production-verified. Exact bounded manual local activation: max=2 lifetime canonical creations. PRs #875/#879 define a separate local product-artifact boundary. Normal Chat, automatic/batch/backend/projection-store/Meta/remote persistence remains CLOSED.**
