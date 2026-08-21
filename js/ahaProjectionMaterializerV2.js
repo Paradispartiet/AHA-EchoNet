@@ -53,6 +53,12 @@
     return (hash >>> 0).toString(36);
   }
 
+  function recordFingerprint(record) {
+    const comparable = clone(record);
+    if (comparable?.meta) delete comparable.meta.materialization_rollback;
+    return stableHash(JSON.stringify(comparable));
+  }
+
   function blocked(reason, detail) {
     return { ok: false, reason, detail: detail || null, policy: POLICY };
   }
@@ -84,7 +90,7 @@
   function candidateQualityPassed(candidate, artifactType) {
     if (!candidate || candidate?.quality?.passed !== true) return false;
     if (artifactType === "list") return arr(candidate.items).length >= 2;
-    if (artifactType === "path") return arr(candidate.steps).length >= 3;
+    if (artifactType === "path") return arr(candidate.steps).length === 5;
     if (artifactType === "mindmap") return arr(candidate.nodes).length >= 3 && arr(candidate.edges).length >= 2;
     return false;
   }
@@ -172,7 +178,7 @@
       updatedAt: materializedAt,
       tags: [...new Set([...arr(candidate.tags), "AHA V2"])],
       steps: arr(candidate.steps).map((step, index) => ({
-        id: `path_step_projection_${stableHash(`${candidate.id}:${step?.refId || step?.id || index}`)}`,
+        id: `path_step_projection_${stableHash(`${candidate.id}:${step?.id || step?.refId || index}:${index}`)}`,
         title: text(step?.title) || `Steg ${index + 1}`,
         type: text(step?.type) || "insight",
         source: "aha_projection_v2",
@@ -271,6 +277,16 @@
     const record = builder(options.model, candidate, materializedAt);
     const priorIndex = store.records.findIndex((item) => item?.id === record.id);
     const priorRecord = priorIndex >= 0 ? clone(store.records[priorIndex]) : null;
+    record.meta.materialization_rollback = {
+      schema: "aha_projection_materialization_rollback_v2",
+      artifact_type: artifactType,
+      artifact_id: artifactId,
+      projection_id: options.model.projection_id,
+      store_key: storeKey,
+      materialized_at: materializedAt,
+      original_fingerprint: recordFingerprint(record),
+      prior_record: priorRecord
+    };
     const next = store.records.slice();
     if (priorIndex >= 0) next[priorIndex] = record;
     else next.unshift(record);
@@ -283,7 +299,7 @@
       store_key: storeKey,
       record_id: record.id,
       materialized_at: materializedAt,
-      record_fingerprint: stableHash(JSON.stringify(record)),
+      record_fingerprint: recordFingerprint(record),
       prior_record: priorRecord
     };
     return { ok: true, existing: false, artifact: clone(record), receipt, policy: POLICY };
@@ -302,7 +318,7 @@
     if (current?.meta?.createdBy !== CREATED_BY
       || current?.meta?.projection_id !== receipt.projection_id
       || current?.meta?.projection_artifact_id !== receipt.artifact_id
-      || stableHash(JSON.stringify(current)) !== receipt.record_fingerprint) {
+      || recordFingerprint(current) !== receipt.record_fingerprint) {
       return blocked("artifact_modified_since_materialization");
     }
     const next = store.records.slice();
@@ -312,7 +328,55 @@
     return { ok: true, undone: true, record_id: receipt.record_id, policy: POLICY };
   }
 
-  const api = Object.freeze({ MODULE_SCHEMA, MODULE_VERSION, POLICY, STORES, validateModel, materialize, undo });
+  function materializedMatch(record, options) {
+    return !record?.deletedAt
+      && record?.meta?.createdBy === CREATED_BY
+      && record?.meta?.projection_id === text(options.projection_id)
+      && record?.meta?.projection_artifact_id === text(options.artifact_id);
+  }
+
+  function canUndoMaterialized(options = {}) {
+    const artifactType = text(options.artifact_type);
+    const storeKey = STORES[artifactType];
+    if (!storeKey) return false;
+    const store = readStore(options.storage || global.localStorage, storeKey);
+    if (!store.ok) return false;
+    const record = store.records.find((item) => materializedMatch(item, options));
+    const rollback = record?.meta?.materialization_rollback;
+    return rollback?.schema === "aha_projection_materialization_rollback_v2"
+      && rollback.store_key === storeKey
+      && rollback.artifact_type === artifactType
+      && rollback.original_fingerprint === recordFingerprint(record);
+  }
+
+  function undoMaterialized(options = {}) {
+    if (options.user_confirmed !== true) return blocked("explicit_user_confirmation_required");
+    const artifactType = text(options.artifact_type);
+    const storeKey = STORES[artifactType];
+    if (!storeKey) return blocked("artifact_type_invalid");
+    const storage = options.storage || global.localStorage;
+    const store = readStore(storage, storeKey);
+    if (!store.ok) return store;
+    const index = store.records.findIndex((item) => materializedMatch(item, options));
+    if (index < 0) return { ok: true, existing: false, undone: true, policy: POLICY };
+    const current = store.records[index];
+    const rollback = current?.meta?.materialization_rollback;
+    if (rollback?.schema !== "aha_projection_materialization_rollback_v2"
+      || rollback.store_key !== storeKey
+      || rollback.artifact_type !== artifactType
+      || rollback.artifact_id !== text(options.artifact_id)
+      || rollback.projection_id !== text(options.projection_id)
+      || rollback.original_fingerprint !== recordFingerprint(current)) {
+      return blocked("artifact_modified_since_materialization");
+    }
+    const next = store.records.slice();
+    if (rollback.prior_record) next[index] = clone(rollback.prior_record);
+    else next.splice(index, 1);
+    storage.setItem(storeKey, JSON.stringify(next));
+    return { ok: true, undone: true, record_id: current.id, policy: POLICY };
+  }
+
+  const api = Object.freeze({ MODULE_SCHEMA, MODULE_VERSION, POLICY, STORES, validateModel, materialize, undo, canUndoMaterialized, undoMaterialized });
   global.AHAProjectionMaterializerV2 = api;
   global.AHAModuleApi?.register?.("projectionMaterializerV2", api, {
     version: MODULE_VERSION,
