@@ -37,12 +37,19 @@ const currentInput = {
 assert.equal(expansionEvidence.current_decision, "BOUNDED_EXPANSION_PILOT_ELIGIBLE");
 assert.equal(expansionLiveProof.status, "production_evidence_verified");
 assert.equal(expansionLiveProof.proof_revision, "corrected_v2");
-assert.equal(activationLiveProof.status, "invalidated_pending_corrected_activation_proof");
-assert.equal(activationLiveProof.review_invalidation.current_activation_proof_usable, false);
-assert.equal(activationLiveProof.review_invalidation.fresh_post_gate_activation_proof_required, true);
+assert.equal(activationLiveProof.status, "production_activation_verified");
+assert.equal(activationLiveProof.proof_revision, "corrected_v2");
+assert.equal(activationLiveProof.proof_identity.temporary_pull_request, 876);
+assert.equal(activationLiveProof.proof_identity.temporary_pull_request_disposition, "closed_without_merge");
+assert.equal(activationLiveProof.execution_binding.exact_deployed_bytes_used, true);
+assert.equal(activationLiveProof.activation_observation.final_chamber_exact_pre_activation_business_state, true);
+assert.equal(activationLiveProof.activation_observation.final_chamber_only_local_updated_at_housekeeping_delta, true);
+assert.equal(activationLiveProof.policy.projection_store_write_open, false);
+assert.equal(activationLiveProof.redaction.user_production_data_modified, false);
 
-// Gate eligibility authorizes only the explicit bounded operator implementation;
-// it does not turn the historical #863 activation artifact into production proof.
+// Gate eligibility authorizes only the explicit bounded operator implementation.
+// The corrected #876 artifact independently proves that exact path in production;
+// it does not widen any authority exposed by the gate or runtime policy.
 const authorization = api.assessAuthorization(currentInput);
 assert.equal(authorization.authorized, true);
 assert.equal(authorization.scope_id, "bounded_local_chamber_two_record_candidate_v1");
@@ -159,4 +166,4 @@ assert.doesNotMatch(source, /supabase\s*\./iu);
 assert.match(source, /rollbackLockManager/u);
 assert.match(source, /mode:\s*"exclusive"/u);
 
-console.log("aha-v2-controlled-write-expansion-activation.test.cjs: corrected gate authorizes bounded proof path while activation production proof remains pending");
+console.log("aha-v2-controlled-write-expansion-activation.test.cjs: bounded max=2 activation is production-verified while broader authorities remain closed");
