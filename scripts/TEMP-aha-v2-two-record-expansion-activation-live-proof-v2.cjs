@@ -591,7 +591,7 @@ async function run() {
     proof_identity: {
       workflow_run_id: RUN_ID,
       workflow_run_attempt: RUN_ATTEMPT,
-      probe_head: process.env.GITHUB_SHA || null,
+      probe_head: process.env.PROBE_HEAD_SHA || null,
       execution_source: "captured_hash_verified_deployed_bytes"
     },
     deployment: {
